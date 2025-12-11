@@ -1,0 +1,32 @@
+# Design Style Guide
+
+## Colors
+### Primary System
+- **Accent Primary (Vivid Blue)**: `#2563EB`
+  - Used for: Primary buttons, active states, key highlights.
+  - Text on top: White (`#FFFFFF`)
+
+- **Accent Secondary (Teal)**: `#00A6A6`
+  - Used for: Secondary actions, decorative elements.
+
+### Backgrounds (Dark Premium)
+- **Base (Deep Space Navy)**: `#050816`
+- **Surface**: `#111827`
+
+### Text
+- **Primary**: `#FFFFFF`
+- **Secondary**: `#D1D5DB`
+- **Inverse (for light backgrounds)**: `#0B1F3B`
+
+## Components
+### Buttons
+- **Primary Button**: 
+  - Bg: `#2563EB`
+  - Text: White
+  - Radius: `9999px` (Pill shape)
+  - Shadow: Blue glow effect
+
+### Cards (Glassmorphism)
+- Background: `rgba(25, 30, 45, 0.6)`
+- Blur: `25px`
+- Border: `1px solid rgba(255, 255, 255, 0.08)`

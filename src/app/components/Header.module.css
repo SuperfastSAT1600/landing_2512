@@ -1,0 +1,101 @@
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 1rem 0;
+    transition: all 0.3s ease;
+    background: #050816;
+    /* Solid dark background */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    /* Visible border */
+}
+
+/* Scrolled state - can increase opacity or blur if needed, 
+   but 'header' already establishes the distinct bar. 
+   We can just keep .glass for extra style or remove if solid is preferred. 
+   Let's keep .glass but make sure it reinforces the look.
+*/
+.glass {
+    background: rgba(5, 8, 22, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.8rem 0;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 5%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    /* Align left */
+    gap: 3rem;
+    /* Space between logo and menu */
+}
+
+.logoImage {
+    height: 24px;
+    width: auto;
+    object-fit: contain;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.menuItem {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+    position: relative;
+}
+
+.menuItem:hover {
+    color: white;
+}
+
+/* Specific style for active/highlighted menu if needed */
+.active {
+    color: white;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0 1rem;
+    }
+
+    .nav {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        gap: 1.5rem;
+        justify-content: center;
+        -webkit-overflow-scrolling: touch;
+        /* smooth scroll on iOS */
+    }
+
+    .nav::-webkit-scrollbar {
+        display: none;
+        /* Hide scrollbar */
+    }
+
+    .logoImage {
+        width: 140px;
+        height: auto;
+    }
+
+    .menuItem {
+        font-size: 0.9rem;
+        white-space: nowrap;
+        /* Prevent wrapping */
+    }
+}

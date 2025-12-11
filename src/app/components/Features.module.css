@@ -1,0 +1,153 @@
+.features {
+    padding: 8rem 2rem;
+    background: var(--bg-surface);
+    /* Matches global surface dark */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 6rem;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: white;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 2.5rem;
+    row-gap: 5rem;
+}
+
+.card {
+    padding: 2.5rem 2rem;
+    background: var(--bg-clay);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-soft);
+    box-shadow: var(--shadow-clay-card);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Bouncy */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Centered for icon focus */
+    text-align: center;
+    border: 1px solid var(--border-clay);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    /* Interaction hint */
+}
+
+.card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5);
+    background: rgba(40, 48, 70, 0.7);
+    border-color: rgba(37, 99, 235, 0.5);
+    /* Blue border highlight */
+}
+
+.actionIcon {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    color: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.card:hover .actionIcon {
+    color: var(--accent-primary);
+    transform: translate(4px, -4px);
+    /* Diagonal move hint */
+    opacity: 1;
+}
+
+.iconWrapper {
+    margin-bottom: 2rem;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Floating animation for icon */
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.iconImage {
+    object-fit: contain;
+    filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
+    /* Stronger shadow for 3D feel */
+    transition: transform 0.3s ease;
+}
+
+.card:hover .iconImage {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.cardTitle {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #fff;
+}
+
+.cardDescription {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+@media (max-width: 1024px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .features {
+        padding: 5rem 1.5rem;
+    }
+
+    .title {
+        font-size: 2rem;
+    }
+
+    .card {
+        align-items: center;
+        text-align: center;
+    }
+}

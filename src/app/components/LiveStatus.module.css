@@ -1,0 +1,56 @@
+.container {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    backdrop-filter: blur(10px);
+    width: fit-content;
+    height: 40px;
+    /* Fixed height to prevent layout shift */
+    overflow: hidden;
+    position: relative;
+    min-width: 320px;
+    /* Ensure enough space for messages */
+}
+
+.badgeDot {
+    width: 8px;
+    height: 8px;
+    background: #00ff88;
+    /* Green for "Live" activity */
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ff88;
+    flex-shrink: 0;
+}
+
+.textContainer {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.text {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.time {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.highlight {
+    color: var(--accent-primary);
+    font-weight: 700;
+}

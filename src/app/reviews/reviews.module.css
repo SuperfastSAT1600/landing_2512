@@ -1,0 +1,195 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 8rem 2rem;
+    min-height: 100vh;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 5rem;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Pinterest Masonry Layout */
+.grid {
+    column-count: 3;
+    column-gap: 2rem;
+    padding-bottom: 4rem;
+}
+
+/* Card Style */
+.card {
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 20px;
+    padding: 2.5rem;
+
+    display: inline-block;
+    /* Essential for Masonry */
+    width: 100%;
+    margin-bottom: 2rem;
+    break-inside: avoid;
+    /* Prevent split across columns */
+
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(37, 99, 235, 0.5);
+}
+
+/* Highlighted Animation */
+.highlighted {
+    animation: highlightPulse 3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-color: var(--accent-primary);
+    position: relative;
+    z-index: 10;
+}
+
+@keyframes highlightPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
+
+    15% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3), 0 0 50px rgba(37, 99, 235, 0.25);
+        background: rgba(37, 99, 235, 0.15);
+        /* Subtle blue tint */
+    }
+
+    40% {
+        transform: scale(1.05);
+        background: rgba(37, 99, 235, 0.15);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+        background: rgba(30, 41, 59, 0.4);
+    }
+}
+
+/* Highlight Target (Fallback) */
+.card:target {
+    border-color: var(--accent-primary);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.stars {
+    display: flex;
+    gap: 2px;
+}
+
+.categoryBadge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    background: rgba(37, 99, 235, 0.1);
+    padding: 0.25rem 0.6rem;
+    border-radius: 99px;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    white-space: nowrap;
+}
+
+.reviewTitle {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.fullContent {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 1.5rem 0;
+    width: 100%;
+}
+
+.authorArea {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.nameRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.name {
+    font-weight: 700;
+    color: white;
+    font-size: 1rem;
+}
+
+.authorType {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+}
+
+.metaInfo {
+    font-size: 0.85rem;
+    color: var(--accent-secondary);
+    font-weight: 500;
+}
+
+.dateDivider {
+    color: rgba(255, 255, 255, 0.2);
+    margin: 0 0.25rem;
+}
+
+@media (max-width: 1024px) {
+    .grid {
+        column-count: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .grid {
+        column-count: 1;
+    }
+}
