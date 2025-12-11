@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getReviews, addReview, updateReview, deleteReview, ReviewData } from '@/lib/reviews-data';
-import { v4 as uuidv4 } from 'uuid'; // Ensure user installs uuid or use helper
+// using local generateId helper instead of uuid package
+
 
 // Helper for simple ID if UUID package issue
 function generateId() {
