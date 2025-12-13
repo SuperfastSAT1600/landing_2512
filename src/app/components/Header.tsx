@@ -49,6 +49,14 @@ export default function Header() {
                     <Link href="/reviews" className={styles.menuItem}>
                         수업 후기
                     </Link>
+                    <Link
+                        href="https://www.superfastsat.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.menuItem}
+                    >
+                        SAT인강
+                    </Link>
                 </nav>
             </div>
         </header>

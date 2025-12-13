@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from './components/Header';
+import FloatingCTA from './components/FloatingCTA';
 
 export const metadata: Metadata = {
   title: "SAT 목표 점수에 가장 빠르게 | SuperfastSAT",
@@ -42,6 +43,7 @@ export default function RootLayout({
           }}
         />
         {children}
+        <FloatingCTA />
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getSortedPostsData } from '../../lib/posts';
-import SidebarLayout from '../components/SidebarLayout';
+import Footer from '../components/Footer';
 import { Clock, Tag } from 'lucide-react';
 
 export default async function Blog({
@@ -38,8 +38,8 @@ export default async function Blog({
     };
 
     return (
-        <SidebarLayout>
-            <div className="bg-[#151719] min-h-screen text-gray-100 font-sans">
+        <div className="flex flex-col min-h-screen bg-[#151719] text-gray-100 font-sans">
+            <div className="flex-1">
                 {/* Header */}
                 <header className="pt-24 pb-16 px-6 max-w-7xl mx-auto text-center">
                     <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -112,6 +112,7 @@ export default async function Blog({
                     </div>
                 </div>
             </div>
-        </SidebarLayout>
+            <Footer />
+        </div>
     );
 }

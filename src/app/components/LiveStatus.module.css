@@ -12,8 +12,10 @@
     /* Fixed height to prevent layout shift */
     overflow: hidden;
     position: relative;
-    min-width: 320px;
-    /* Ensure enough space for messages */
+    min-width: auto;
+    /* Allow shrinking */
+    max-width: 90vw;
+    /* Prevent overflow on small screens */
 }
 
 .badgeDot {
@@ -32,11 +34,16 @@
     width: 100%;
     display: flex;
     align-items: center;
+    overflow: hidden;
+    /* Hide overflow text */
+    mask-image: linear-gradient(to right, black 90%, transparent 100%);
+    /* Fade out end */
 }
 
 .text {
     color: white;
-    font-size: 0.9rem;
+    font-size: clamp(0.75rem, 3vw, 0.9rem);
+    /* Fluid font size */
     font-weight: 500;
     white-space: nowrap;
     display: flex;

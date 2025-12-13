@@ -37,7 +37,7 @@
 }
 
 .card {
-    padding: 2.5rem 2rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
     background: var(--bg-clay);
     backdrop-filter: blur(20px);
     border-radius: var(--radius-soft);
@@ -80,9 +80,9 @@
 }
 
 .iconWrapper {
-    margin-bottom: 2rem;
-    width: 120px;
-    height: 120px;
+    margin-bottom: clamp(1.5rem, 4vw, 2rem);
+    width: clamp(80px, 15vw, 120px);
+    height: clamp(80px, 15vw, 120px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -135,11 +135,13 @@
 @media (max-width: 640px) {
     .grid {
         grid-template-columns: 1fr;
-        gap: 3rem;
+        gap: 1.5rem;
+        /* Reduced from 3rem */
     }
 
     .features {
-        padding: 5rem 1.5rem;
+        padding: 4rem 1.5rem;
+        /* Reduced padding */
     }
 
     .title {
@@ -147,7 +149,29 @@
     }
 
     .card {
+        padding: 1.5rem;
+        /* Reduced padding from 2.5rem */
         align-items: center;
         text-align: center;
+        min-height: auto;
+        /* Allow auto height */
+    }
+
+    .iconWrapper {
+        width: 80px;
+        /* Reduced from 120px */
+        height: 80px;
+        margin-bottom: 1.5rem;
+    }
+
+    .actionIcon {
+        top: 1rem;
+        right: 1rem;
+        width: 20px;
+        height: 20px;
+    }
+
+    .cardTitle {
+        font-size: 1.2rem;
     }
 }

@@ -1,28 +1,28 @@
 {
     "hero": {
         "ctaText": "25년 11월 시험 목표달성 학생 인터뷰",
-        "ctaLink": "/blog"
+        "ctaLink": "http://localhost:3000/blog/1"
     },
     "features": [
         {
             "title": "일대일 라이브 온라인 수업",
             "description": "오프라인보다 더 몰입도 높은 수업을 제공합니다.",
-            "link": "/blog/live-class"
+            "link": "http://localhost:3000/blog/1"
         },
         {
             "title": "맞춤형 커리큘럼",
             "description": "진단 테스트 실시 후 맞춤형 커리큘럼으로 수업합니다.",
-            "link": "/blog/curriculum"
+            "link": "http://localhost:3000/blog/score-perfect-800"
         },
         {
             "title": "AI 밀착 모니터링",
             "description": "숙제를 풀면서 어떤 문제에서 어려움을 겪었는지 AI가 선생님에게 전부 리포팅합니다.",
-            "link": "/blog/ai-monitoring"
+            "link": "http://localhost:3000/blog/test3"
         },
         {
             "title": "Collegeboard 미러링 실전문제",
             "description": "10,000+이상의 문제들로 실전 감각을 빈틈 없이 채워보세요.",
-            "link": "/blog/practice-questions"
+            "link": "http://localhost:3000/blog/test"
         },
         {
             "title": "단어 및 오답 학습 관리",

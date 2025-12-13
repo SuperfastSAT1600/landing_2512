@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import styles from './FloatingCTA.module.css';
 
@@ -10,11 +11,15 @@ const PRE_REGISTER_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfEhZcRual8i-
 export default function FloatingCTA() {
     const [isVisible, setIsVisible] = useState(false);
     const [claimedCount, setClaimedCount] = useState(14);
+    const pathname = usePathname();
 
     useEffect(() => {
         const timer = setTimeout(() => setIsVisible(true), 1500);
         return () => clearTimeout(timer);
     }, []);
+
+    // Don't show on admin pages
+    if (pathname?.startsWith('/admin')) return null;
 
     if (!isVisible) return null;
 
