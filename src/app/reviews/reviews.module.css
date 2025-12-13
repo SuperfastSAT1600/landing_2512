@@ -1,26 +1,50 @@
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 8rem 2rem;
+    padding: 0 2rem 8rem 2rem;
+    /* Removed top padding to rely on header padding */
     min-height: 100vh;
 }
 
 .header {
     text-align: center;
-    margin-bottom: 5rem;
+    padding-top: 6rem;
+    padding-bottom: 4rem;
+    margin-bottom: 0;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
 }
 
 .title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: white;
+    font-size: 3rem;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.025em;
     margin-bottom: 1rem;
+    background: linear-gradient(to right, #6085FF, #071be9, #6085FF);
+    background-size: 200% auto;
+    /* Dynamic shimmer potential */
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+@media (min-width: 768px) {
+    .title {
+        font-size: 3.75rem;
+    }
 }
 
 .subtitle {
     font-size: 1.25rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
+    line-height: 1.75;
+    color: #9ca3af;
+    max-width: 42rem;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Pinterest Masonry Layout */
@@ -50,8 +74,11 @@
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(37, 99, 235, 0.5);
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5);
+    background: rgba(40, 48, 70, 0.7);
+    border-color: rgba(96, 133, 255, 0.5);
+    z-index: 10;
 }
 
 /* Highlighted Animation */
@@ -99,20 +126,35 @@
     margin-bottom: 1.5rem;
 }
 
-.stars {
-    display: flex;
-    gap: 2px;
-}
-
 .categoryBadge {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--accent-primary);
-    background: rgba(37, 99, 235, 0.1);
-    padding: 0.25rem 0.6rem;
+    background: #ffffff;
+    /* White background for brand color text */
+    padding: 0.25rem 0.75rem;
     border-radius: 99px;
-    border: 1px solid rgba(37, 99, 235, 0.2);
-    white-space: nowrap;
+    border: none;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    margin-right: auto;
+}
+
+.actionIcon {
+    color: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.card:hover .actionIcon {
+    color: #ffffff;
+    transform: translate(4px, -4px);
+}
+
+.headerTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .reviewTitle {
@@ -173,7 +215,8 @@
 
 .metaInfo {
     font-size: 0.85rem;
-    color: var(--accent-secondary);
+    color: rgba(255, 255, 255, 0.8);
+    /* White with slight transparency */
     font-weight: 500;
 }
 

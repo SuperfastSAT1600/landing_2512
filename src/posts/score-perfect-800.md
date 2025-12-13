@@ -1,8 +1,9 @@
 ---
-title: How to Score Perfect 800 on SAT Math
+title: 일대일 라이브 수업이 SAT에서 왜 중요할까요?
 date: '2025-01-15'
-category: 입시뉴스
-author: SuperfastSAT
+category: SAT RW
+featuredImage: /uploads/2025/12/1765630929820-538672260-_________.png
+author: Brian
 ---
 
 ## Understanding the Digital SAT Math Section

@@ -76,7 +76,7 @@ function EditorContent() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    originalId: editId, title, date, category, content, description, tags, featuredImage, author
+                    originalId: editId, title, slug, date, category, content, description, tags, featuredImage, author
                 }),
             });
             const data = await res.json();

@@ -33,11 +33,6 @@ export default function Testimonials({ reviews = [] }: TestimonialsProps) {
                             <Link href={`/reviews#review-${review.id}`} className={styles.card}>
                                 <ArrowUpRight className={styles.actionIcon} size={24} />
                                 <div className={styles.cardHeader}>
-                                    <div className={styles.stars}>
-                                        {[...Array(review.rating)].map((_, i) => (
-                                            <Star key={i} size={16} fill="#3B82F6" color="#3B82F6" />
-                                        ))}
-                                    </div>
                                     <span className={styles.categoryBadge}>{review.category}</span>
                                 </div>
 

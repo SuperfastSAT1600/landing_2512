@@ -5,11 +5,11 @@
 @tailwind utilities;
 
 :root {
-  /* Color System (SuperfastSAT - Dark Premium) */
-  --bg-base: #050816;
-  /* Deep Space Navy */
-  --bg-surface: #111827;
-  /* Slightly lighter navy for cards */
+  /* Color System (SuperfastSAT - Premium Dark) */
+  --bg-base: #000000;
+  /* Pure Black */
+  --bg-surface: #09090b;
+  /* Dark Zinc */
 
   --text-primary: #FFFFFF;
   --text-secondary: #D1D5DB;
@@ -17,8 +17,11 @@
   --text-inverse: #0B1F3B;
   /* Navy (for light buttons) */
 
-  /* Vivid Blue */
-  --accent-primary: #2563EB;
+  /* Vivid Blue (User Requested) - For Buttons/Solids */
+  --accent-primary: #071be9;
+  /* High Visibility Blue (Tint) - For Icons/Text/Glows */
+  --accent-glow: #6085FF;
+
   --accent-secondary: #00A6A6;
   /* Teal (Secondary/Legacy) */
 

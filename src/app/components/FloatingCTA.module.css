@@ -69,8 +69,8 @@
     font-size: 1rem;
     font-weight: 700;
     text-align: center;
-    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
-    /* Blue glow */
+    box-shadow: 0 10px 25px -5px rgba(7, 27, 233, 0.5);
+    /* Blue glow matching #071be9 */
     transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
     justify-content: center;
@@ -80,7 +80,7 @@
 
 .mainBtn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.6);
+    box-shadow: 0 15px 30px -5px rgba(7, 27, 233, 0.6);
 }
 
 @keyframes slideUp {

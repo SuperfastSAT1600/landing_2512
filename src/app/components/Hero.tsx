@@ -69,9 +69,8 @@ export default function Hero({ ctaText, ctaLink }: HeroProps) {
                     </h1>
 
                     <p className={styles.description}>
-                        <strong>목표 점수를 위한 가장 빠른 길</strong><br />
-                        SuperfastSAT가 제시합니다.<br />
-                        저희와 함께 수직 상승하는 점수를 경험하세요.
+                        저희와 함께 수직 상승하는<br />
+                        SAT점수를 경험하세요.<br />
                     </p>
 
                     <div className={styles.ctaGroup}>

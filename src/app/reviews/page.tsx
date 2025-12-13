@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { reviews } from '../../lib/reviews';
 import styles from './reviews.module.css';
-import { Star, Quote } from 'lucide-react';
+import { Star, Quote, ArrowUpRight } from 'lucide-react';
 import { ScrollReveal } from '../components/ScrollReveal';
 
 export default function ReviewsPage() {
@@ -50,12 +50,10 @@ export default function ReviewsPage() {
                                 style={{ scrollMarginTop: '150px' }}
                             >
                                 <div className={styles.cardHeader}>
-                                    <div className={styles.stars}>
-                                        {[...Array(review.rating)].map((_, i) => (
-                                            <Star key={i} size={16} fill="#3B82F6" color="#3B82F6" />
-                                        ))}
+                                    <div className={styles.headerTop}>
+                                        <span className={styles.categoryBadge}>{review.category}</span>
+                                        <ArrowUpRight className={styles.actionIcon} size={24} />
                                     </div>
-                                    <span className={styles.categoryBadge}>{review.category}</span>
                                 </div>
 
                                 <h3 className={styles.reviewTitle}>{review.title}</h3>

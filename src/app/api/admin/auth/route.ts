@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
 
         // In a real app, use an environment variable (process.env.ADMIN_PASSWORD)
         // For this local MVP, we use a fixed simpler code.
-        const VALID_PASSWORD = process.env.ADMIN_PASSWORD || "antigravity";
+        const VALID_PASSWORD = process.env.ADMIN_PASSWORD || "missionto1600!";
 
         if (password === VALID_PASSWORD) {
             return NextResponse.json({ success: true });

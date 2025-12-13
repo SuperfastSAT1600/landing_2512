@@ -9,8 +9,7 @@
     /* Horizontally center */
     padding-top: 0;
     /* Remove top padding for true centering */
-    background-color: #050816;
-    background: #000;
+    background-color: var(--bg-base);
 }
 
 .backgroundContainer {
@@ -77,6 +76,15 @@
     word-break: keep-all;
 }
 
+.highlight {
+    font-family: var(--font-racing), var(--font-sans);
+    font-weight: 400;
+    /* Racing Sans One only has 400 */
+    color: #FFFFFF;
+    /* Solid White as requested */
+    display: inline-block;
+}
+
 .description {
     font-size: clamp(1rem, 2.5vw, 1.35rem);
     line-height: 1.6;
@@ -139,11 +147,11 @@
 
 .graphBar {
     width: 40px;
-    /* Adding Purple (Violet) at the bottom to blend with Red tails in background */
-    background: linear-gradient(to top, rgba(139, 92, 246, 0.3) 0%, rgba(37, 99, 235, 0.6) 30%, rgba(37, 99, 235, 0.9) 100%);
+    /* Adding Purple (Violet) to blend with Glow Blue */
+    background: linear-gradient(to top, rgba(139, 92, 246, 0.3) 0%, rgba(96, 133, 255, 0.6) 30%, rgba(96, 133, 255, 0.9) 100%);
     border-radius: 8px 8px 0 0;
     position: relative;
-    box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 0 20px rgba(96, 133, 255, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-bottom: none;
     backdrop-filter: blur(5px);
@@ -187,7 +195,7 @@
     transform: translate(-50%, -50%);
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, rgba(37, 99, 235, 0.3) 0%, rgba(0, 0, 0, 0) 70%);
+    background: radial-gradient(circle, rgba(96, 133, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%);
     z-index: -1;
     pointer-events: none;
 }
@@ -202,7 +210,7 @@
         transform: translateY(-8px);
         /* Reduced movement for stability with reflection */
         opacity: 1;
-        box-shadow: 0 0 35px rgba(37, 99, 235, 0.7);
+        box-shadow: 0 0 35px rgba(96, 133, 255, 0.7);
     }
 }
 

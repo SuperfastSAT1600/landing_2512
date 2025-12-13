@@ -1,12 +1,27 @@
 .features {
     padding: 8rem 2rem;
-    background: var(--bg-surface);
-    /* Matches global surface dark */
+    position: relative;
+    /* For absolute background positioning */
+    overflow: hidden;
+}
+
+.backgroundContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    /* Allow clicks to pass through if needed */
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
+    position: relative;
+    z-index: 2;
+    /* Ensure content is above background */
 }
 
 .header {
@@ -37,31 +52,33 @@
 }
 
 .card {
-    padding: clamp(1.5rem, 4vw, 2.5rem);
+    padding: 0;
+    /* Remove padding for full image */
     background: var(--bg-clay);
     backdrop-filter: blur(20px);
-    border-radius: var(--radius-soft);
+    border-radius: var(--radius-medium);
+    /* Slightly less rounded for card look */
     box-shadow: var(--shadow-clay-card);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    /* Bouncy */
     display: flex;
     flex-direction: column;
-    align-items: center;
-    /* Centered for icon focus */
-    text-align: center;
+    /* Stack vertically */
+    align-items: flex-start;
+    /* Left align content */
+    text-align: left;
     border: 1px solid var(--border-clay);
     position: relative;
     overflow: hidden;
     cursor: pointer;
-    /* Interaction hint */
+    height: 100%;
 }
 
 .card:hover {
     transform: translateY(-10px) scale(1.02);
     box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5);
     background: rgba(40, 48, 70, 0.7);
-    border-color: rgba(37, 99, 235, 0.5);
-    /* Blue border highlight */
+    border-color: rgba(96, 133, 255, 0.5);
+    /* Glow Blue border highlight */
 }
 
 .actionIcon {
@@ -73,50 +90,66 @@
 }
 
 .card:hover .actionIcon {
-    color: var(--accent-primary);
+    color: #ffffff;
     transform: translate(4px, -4px);
     /* Diagonal move hint */
     opacity: 1;
 }
 
+.featureIcon {
+    color: #ffffff;
+    transition: color 0.3s ease;
+}
+
+.card:hover .featureIcon {
+    color: #ffffff;
+}
+
+.imageContainer {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1376 / 768;
+    /* Match usage */
+    overflow: hidden;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.featureImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.card:hover .featureImage {
+    transform: scale(1.05);
+}
+
 .iconWrapper {
-    margin-bottom: clamp(1.5rem, 4vw, 2rem);
-    width: clamp(80px, 15vw, 120px);
-    height: clamp(80px, 15vw, 120px);
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1376 / 768;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Floating animation for icon */
-    animation: float 6s ease-in-out infinite;
+    background: rgba(0, 0, 0, 0.2);
 }
 
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
+.contentWrapper {
+    padding: 1.5rem;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
-.iconImage {
-    object-fit: contain;
-    filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
-    /* Stronger shadow for 3D feel */
-    transition: transform 0.3s ease;
-}
-
-.card:hover .iconImage {
-    transform: scale(1.1) rotate(5deg);
-}
+/* Removed icon specific animations */
 
 .cardTitle {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     color: #fff;
 }
 

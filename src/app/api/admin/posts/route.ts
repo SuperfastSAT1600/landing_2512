@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
         const {
             originalId, // If editing existing
             title,
+            slug: providedSlug, // Distinct from generated
             date,
             category,
             description, // Meta Description
@@ -76,18 +77,26 @@ export async function POST(request: NextRequest) {
             content // Markdown body
         } = body;
 
-        // Generate ID (Slug) from title if not provided/editing
-        // Simple slugify: lowercase, replace spaces with hyphens, remove non-chars
-        const slug = title
-            .toLowerCase()
-            .replace(/ /g, '-')
-            .replace(/[^\w-]+/g, '');
+        // Determine final slug: Provided > or Original > or Generated from Title
+        let finalSlug = providedSlug || originalId;
 
-        // If editing and ID changed, we could delete old file, but for MVP let's stick to simple overwrite or new
-        // For safety in this MVP, we use the passed ID if editing, or new slug if new.
+        if (!finalSlug) {
+            finalSlug = title
+                .toLowerCase()
+                .replace(/ /g, '-')
+                .replace(/[^\w-]+/g, '');
+        }
 
-        const fileName = (originalId || slug) + '.md';
+        const fileName = finalSlug + '.md';
         const fullPath = path.join(postsDirectory, fileName);
+
+        // Rename logic: If originalId exists AND differs from finalSlug, rename (delete old)
+        if (originalId && originalId !== finalSlug) {
+            const oldPath = path.join(postsDirectory, `${originalId}.md`);
+            if (fs.existsSync(oldPath)) {
+                fs.unlinkSync(oldPath); // Simple rename by deleting old, writing new below
+            }
+        }
 
         const frontMatter: any = {
             title,
@@ -105,10 +114,7 @@ export async function POST(request: NextRequest) {
 
         fs.writeFileSync(fullPath, fileContent, 'utf8');
 
-        // If we renamed (originalId !== newSlug), we might want to delete old, but let's handle that in DELETE for now
-        // or just simpler update logic.
-
-        return NextResponse.json({ success: true, id: originalId || slug });
+        return NextResponse.json({ success: true, id: finalSlug });
 
     } catch (error) {
         console.error("Save Error:", error);
