@@ -5,10 +5,11 @@ import FloatingCTA from './components/FloatingCTA';
 
 export const metadata: Metadata = {
   title: "SAT 목표 점수에 가장 빠르게 | SuperfastSAT",
-  description: "Elite SAT preparation with proven strategies and expert instructors. Boost your score and get into your dream college.",
+  description: "SAT목표 점수 달성, 저희와 만들어 드립니다",
   openGraph: {
     title: "SAT 목표 점수에 가장 빠르게",
-    description: "Elite SAT preparation with proven strategies and expert instructors.",
+    description: "SAT목표 점수 달성, 저희와 만들어 드립니다",
+    images: ["/og-image.png"],
   }
 };
 
