@@ -13,7 +13,10 @@ export default function Home() {
 
   return (
     <main>
-      <Hero />
+      <Hero
+        ctaText={config.hero.ctaText}
+        ctaLink={config.hero.ctaLink}
+      />
       <Features items={config.features} />
       {/* English Curtain (Curriculum) Removed. Replaced with Customer Reviews First */}
       <Testimonials reviews={reviews} />

@@ -12,7 +12,12 @@ declare global {
     }
 }
 
-export default function Hero() {
+interface HeroProps {
+    ctaText?: string;
+    ctaLink?: string;
+}
+
+export default function Hero({ ctaText, ctaLink }: HeroProps) {
     useEffect(() => {
         const loadUnicornScript = () => {
             if (!window.UnicornStudio) {
@@ -70,8 +75,8 @@ export default function Hero() {
                     </p>
 
                     <div className={styles.ctaGroup}>
-                        <Link href="/curriculum" className={styles.primaryBtn}>
-                            25년 11월 시험 목표달성 학생 인터뷰
+                        <Link href={ctaLink || "/curriculum"} className={styles.primaryBtn}>
+                            {ctaText || "25년 11월 시험 목표달성 학생 인터뷰"}
                             <ArrowRight size={20} />
                         </Link>
                     </div>
