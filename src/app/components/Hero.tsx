@@ -54,7 +54,7 @@ export default function Hero({ ctaText, ctaLink }: HeroProps) {
         <section className={styles.hero}>
             {/* Unicorn Studio Background */}
             <div className={styles.backgroundContainer}>
-                <div data-us-project="ymb9b8sUn5vBWWI1toQZ" style={{ width: '100%', height: '100%' }}></div>
+                <div data-us-project-src="/unicorn-hero.json" style={{ width: '100%', height: '100%' }}></div>
             </div>
 
             {/* Content Overlay */}

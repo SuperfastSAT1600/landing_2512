@@ -65,7 +65,7 @@ export default function Features({ items }: FeaturesProps) {
     return (
         <section className={styles.features}>
             <div className={styles.backgroundContainer}>
-                <div data-us-project="YxeCIfXUzLhuAd01z5RS" style={{ width: '100%', height: '100%' }}></div>
+                <div data-us-project-src="/unicorn-features.json" style={{ width: '100%', height: '100%' }}></div>
             </div>
             <div className={styles.container}>
                 <ScrollReveal>
