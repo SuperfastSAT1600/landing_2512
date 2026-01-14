@@ -37,12 +37,23 @@ function EditorContent() {
     const [showPreview, setShowPreview] = useState(false);   // Preview toggle
 
     useEffect(() => {
-        if (localStorage.getItem('admin_auth') !== 'true') {
-            router.push('/admin');
+        // Auth Check
+        const key = localStorage.getItem('admin_key');
+        if (!key) {
+            // Simple prompt for now
+            const input = prompt("Enter Admin API Key:");
+            if (input) {
+                localStorage.setItem('admin_key', input);
+                // Reload to apply
+                window.location.reload();
+            } else {
+                router.push('/');
+            }
             return;
         }
+
         if (editId) loadPost(editId);
-    }, [editId]);
+    }, [editId, router]);
 
     // Auto-resize textarea
     useEffect(() => {
@@ -55,7 +66,9 @@ function EditorContent() {
     const loadPost = async (id: string) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/admin/posts?id=${id}`);
+            const res = await fetch(`/api/admin/posts?id=${id}`, {
+                headers: { 'x-admin-key': localStorage.getItem('admin_key') || '' }
+            });
             const data = await res.json();
             if (data.success && data.post) {
                 const p = data.post;
@@ -74,7 +87,10 @@ function EditorContent() {
         try {
             const res = await fetch('/api/admin/posts', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': localStorage.getItem('admin_key') || ''
+                },
                 body: JSON.stringify({
                     originalId: editId, title, slug, date, category, content, description, tags, featuredImage, author
                 }),

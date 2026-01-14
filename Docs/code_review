@@ -1,0 +1,721 @@
+Here’s a full “codebase quality rubric” you can use to review your repo like an auditor.
+ Each category is scored 0–10, and includes:
+What the category means
+
+
+Score bands (what 9–10 vs 0–2 looks like)
+
+
+How to evaluate: concrete checks for strengths/weaknesses
+Gather up the scores and create a total #/# score.
+
+0. High-level Category List
+You’ll score each of these from 0–10:
+Architecture & Design
+Modularity & Separation of Concerns (Compartmentalization)
+
+
+Layering & Boundaries (API / domain / infra)
+
+
+Domain Modeling & Abstractions
+
+
+Extensibility & Change-Tolerance
+
+
+Code Readability & Style
+Naming & Intent Clarity
+
+
+Code Structure & Formatting
+
+
+Comments & Docstrings
+
+
+Idiomatic & Consistent Use of the Language/Framework
+
+
+Correctness & Testing
+Test Coverage (Breadth & Depth)
+
+
+Test Quality & Reliability
+
+
+Error Handling & Edge Cases
+
+
+Performance, Efficiency & Latency
+Algorithmic Efficiency & Data Structures
+
+
+Latency & Throughput Under Realistic Load
+
+
+Resource & Cost Efficiency (CPU, memory, network, $$$)
+
+
+Security & Privacy
+Input Validation, Sanitization & Safe Parsing
+
+
+Authentication, Authorization & Multi-Tenancy Safety
+
+
+Secrets, Config & Sensitive Data Handling
+
+
+DevEx, Tooling & Operations
+Local Dev Experience & Onboarding
+
+
+Build, CI/CD & Automation
+
+
+Observability (Logging, Metrics, Tracing, Alerts)
+
+
+Configuration, Environments & Deployment Safety
+
+
+AI-Likeness & Data/ML Quality
+AI-Friendliness of Code (for AI dev tools/agents)
+
+
+Data Quality, Schemas & Versioning
+
+
+ML/LLM Integration Quality, Guardrails & Evaluation
+
+
+
+1. Modularity & Separation of Concerns (Compartmentalization)
+Meaning: How well responsibilities are separated into clear modules/services/components.
+Score bands
+9–10: Clear modules with single responsibilities; minimal cross-talk; boundaries are obvious from file/service layout. Changes rarely ripple across unrelated areas.
+
+
+6–8: Mostly modular, but a few “god objects” or cross-cutting utilities. Still manageable.
+
+
+3–5: Many files know too much about each other; business logic spread everywhere; tangles.
+
+
+0–2: Everything is in a few giant files/services; circular dependencies; spaghetti.
+
+
+How to evaluate
+Map out major modules/services. Can you describe each in one sentence?
+
+
+Search for modules importing each other in cycles.
+
+
+Check if business logic is mixed with UI, persistence, and networking in the same functions.
+
+
+Look for “grab bag” utility files that know too much (e.g., utils.py with 5000 lines).
+
+
+
+2. Layering & Boundaries (API / Domain / Infra)
+Meaning: Clear layering (e.g., presentation → application/service → domain → infrastructure).
+Score bands
+9–10: Layers are explicit (packages or directories). No domain logic in controllers or DB adapters. Infrastructure can be swapped with minimal change.
+
+
+6–8: Layering is there but a bit leaky (some domain logic in controllers; infra details visible above).
+
+
+3–5: Mix of layers everywhere; controllers call SQL directly; business logic in views.
+
+
+0–2: No concept of layers; everything calls everything.
+
+
+How to evaluate
+Identify a feature end-to-end (HTTP → logic → DB). Does each layer do just its job?
+
+
+Search for DB/table names in controller/handler code. That’s usually a layering smell.
+
+
+Ask: could you swap DB type (e.g., Postgres → MySQL) without rewriting half the app?
+
+
+
+3. Domain Modeling & Abstractions
+Meaning: Quality of your domain types/models and abstractions.
+Score bands
+9–10: Core concepts are represented as clean types/classes; invariants enforced; minimal primitive obsession (not just strings everywhere).
+
+
+6–8: Mostly good models; some weird edge-case fields but overall coherent.
+
+
+3–5: Heavy use of generic maps/any/JSON blobs; weak types; unclear entities.
+
+
+0–2: Domain is invisible; everything is primitive types and unstructured data.
+
+
+How to evaluate
+List domain concepts (Student, Lesson, Task, etc.). Do they exist as first-class types?
+
+
+Check if invariants are enforced in constructors/validators or left to “just don’t do that”.
+
+
+Look for generic dict/any/map[string]interface{} used where domain types should be.
+
+
+
+4. Extensibility & Change-Tolerance
+Meaning: How easy it is to add features or change behavior without breakage.
+Score bands
+9–10: New features usually mean adding new modules or extending config, not rewriting existing code. Few hard-coded special cases.
+
+
+6–8: Many features can be added, but some require modifications in many places.
+
+
+3–5: Every new feature requires touching many files; lots of copy-paste.
+
+
+0–2: Adding anything feels dangerous; code is brittle and tightly coupled.
+
+
+How to evaluate
+Think of a realistic new feature. How many files would you have to touch?
+
+
+Search for long chains of if (type === "A") / "B" / "C" – that signals poor extensibility.
+
+
+Check for configuration-driven vs hard-coded logic.
+
+
+
+5. Naming & Intent Clarity
+Meaning: Do names communicate what things do without reading the implementation?
+Score bands
+9–10: Functions/variables/classes have clear, intention-revealing names. Very few abbreviations or misleading names.
+
+
+6–8: Mostly good, some vague names but not confusing.
+
+
+3–5: Many data, info, result, process, doStuff, manager names.
+
+
+0–2: Naming is chaotic, inconsistent, cryptic.
+
+
+How to evaluate
+Pick random files and scan just names: can you explain what each function does?
+
+
+Look for inconsistent terminology for same concept across modules.
+
+
+Check for overuse of generic names (handle, utils, service, manager).
+
+
+
+6. Code Structure & Formatting
+Meaning: Layout, indentation, file organization, and adherence to style guidelines.
+Score bands
+9–10: Consistent formatting; small, focused functions; style enforced via linter/formatter.
+
+
+6–8: Mostly consistent; occasional long functions or weird formats.
+
+
+3–5: Mix of different styles; long functions; inconsistent brace/indent style.
+
+
+0–2: No standards; code hard to visually parse.
+
+
+How to evaluate
+Check for an auto-formatter config (Prettier, Black, gofmt, etc.) and CI enforcement.
+
+
+Look for giant functions (>100 lines) doing many things.
+
+
+Scan for inconsistent indentation or spacing between files.
+
+
+
+7. Comments & Docstrings
+Meaning: How well comments and docs aid understanding without duplicating code.
+Score bands
+9–10: Key modules and complex logic are documented. Public functions have docstrings. Comments explain “why”, not “what”.
+
+
+6–8: Reasonable documentation for most important parts.
+
+
+3–5: Sparse or outdated comments; random comment style.
+
+
+0–2: Almost no comments/docs, or misleading ones.
+
+
+How to evaluate
+Look for READMEs per service/module and high-level architecture docs.
+
+
+Check docstrings for public APIs, exported functions, core classes.
+
+
+Compare comments to code: are they up-to-date or lying?
+
+
+
+8. Idiomatic & Consistent Use of Language/Framework
+Meaning: How idiomatic and consistent the code is for its ecosystem.
+Score bands
+9–10: Follows language/framework conventions (directory structures, patterns, common libraries). Other experts feel “at home” immediately.
+
+
+6–8: Mostly idiomatic; a few custom patterns but understandable.
+
+
+3–5: Reinvents wheels, ignores well-known patterns; surprising code.
+
+
+0–2: Anti-idiomatic; fights the language/framework.
+
+
+How to evaluate
+Compare to reference projects or official style guides for your language/framework.
+
+
+Check for custom implementations of things that standard libs or common libs already do well.
+
+
+See if naming, packaging, and control-flow match community expectations.
+
+
+
+9. Test Coverage (Breadth & Depth)
+Meaning: How much of the meaningful code paths are exercised by tests.
+Score bands
+9–10: High coverage of critical paths; both happy and unhappy flows tested; key bugs from history have regression tests.
+
+
+6–8: Reasonable coverage for core logic; some gaps on edge cases.
+
+
+3–5: Some tests exist but coverage is shallow or focused only on trivial pieces.
+
+
+0–2: Little to no automated tests.
+
+
+How to evaluate
+Check for presence of unit, integration, and possibly end-to-end tests.
+
+
+Use coverage tools if available; inspect what’s not covered.
+
+
+Look for tests touching business logic vs only trivial utilities.
+
+
+
+10. Test Quality & Reliability
+Meaning: Test design, clarity, and how flaky or brittle they are.
+Score bands
+9–10: Tests are readable, deterministic, fast, and clearly structured; failures give actionable messages. Very few flakes.
+
+
+6–8: Tests mostly robust; occasional flakiness or overly coupled tests.
+
+
+3–5: Tests are fragile, slow, require specific environment; failures are noisy.
+
+
+0–2: Tests often fail for non-code reasons; people ignore them.
+
+
+How to evaluate
+Run the test suite multiple times. Any random failures?
+
+
+Check test names: do they clearly describe behavior under test?
+
+
+Inspect tests for heavy mocking of internals instead of testing interfaces.
+
+
+
+11. Error Handling & Edge Cases
+Meaning: How the system behaves under invalid input, failures, and weird conditions.
+Score bands
+9–10: Clear error-handling strategy; consistent use of error types; graceful degradation; meaningful error messages and logs.
+
+
+6–8: Reasonable handling with some blind spots.
+
+
+3–5: Many TODO handle error, catch (e) {} with no action; unhandled rejections/exceptions.
+
+
+0–2: Errors crash the app; no attempt at recovery or logging.
+
+
+How to evaluate
+Search for catch, try, Option/Result, error-return values and see what’s done with them.
+
+
+Check how external calls (network, DB, file) handle timeouts, retries, and failures.
+
+
+Look for explicit handling of edge cases (empty inputs, huge inputs, invalid formats).
+
+
+
+12. Algorithmic Efficiency & Data Structures
+Meaning: Choice of algorithms and data structures for workloads.
+Score bands
+9–10: Appropriate complexity (O(n), O(n log n) as needed); no obvious quadratic/cubic hotspots where they matter; good use of indexes and data structures.
+
+
+6–8: Mostly efficient; a few less-than-ideal spots but not critical.
+
+
+3–5: Several obvious inefficiencies; inefficient DB queries; naive loops over big collections.
+
+
+0–2: Severe inefficiencies visible everywhere; performance already a user pain point.
+
+
+How to evaluate
+Identify “hot paths” (e.g., request handlers, cron jobs, loops) and reason about complexity.
+
+
+Scan DB queries for N+1 patterns and missing indices.
+
+
+Check for frequent recomputation of the same expensive work.
+
+
+
+13. Latency & Throughput Under Realistic Load
+Meaning: How the system performs in terms of response time and concurrency.
+Score bands
+9–10: Performance budgets set and met; realistic load tests; no obvious serialization bottlenecks; asynchronous where appropriate.
+
+
+6–8: Reasonable latency; some endpoints heavier but acceptable.
+
+
+3–5: Performance under load is unknown; anecdotal “it seems fine”.
+
+
+0–2: Known latency issues; timeouts; requests pile up.
+
+
+How to evaluate
+Check for any load/perf test scripts or metrics dashboards.
+
+
+Inspect usage of async/parallelism vs unnecessary blocking calls.
+
+
+Identify shared resources (locks, queues) that could become bottlenecks.
+
+
+
+14. Resource & Cost Efficiency (CPU, Memory, Network, Cloud Spend)
+Meaning: How efficiently resources are used and whether costs are under control.
+Score bands
+9–10: Resource usage is measured; unnecessary allocations, chatter, and over-provisioning are minimized; cost-aware design (e.g., batch vs per-call).
+
+
+6–8: Reasonable use; no major known waste.
+
+
+3–5: Some obvious inefficiencies (e.g., big payloads, repeated downloads).
+
+
+0–2: Resource usage is out of control or unknown.
+
+
+How to evaluate
+Inspect large objects held in memory, caching strategies, and streaming vs buffering.
+
+
+Review network payloads (e.g., JSON bloat, unused fields).
+
+
+Check whether heavy tasks are batched or done per-request.
+
+
+
+15. Input Validation, Sanitization & Safe Parsing
+Meaning: Protection against malformed/malicious input (XSS, injection, etc.).
+Score bands
+9–10: All external inputs validated against schemas; centralized validation; escaping/sanitization by default.
+
+
+6–8: Main entry points validated; some gaps in edge endpoints.
+
+
+3–5: Ad-hoc checks; trust in client-side validation; missing sanitization.
+
+
+0–2: Raw inputs passed directly to DB, filesystem, or rendered HTML.
+
+
+How to evaluate
+Search for schema validators (e.g., zod, Yup, JSON Schema, DTOs).
+
+
+Check HTML rendering for proper escaping, especially user-generated content.
+
+
+Look for parameterized queries vs string concatenation for DB access.
+
+
+
+16. Authentication, Authorization & Multi-Tenancy Safety
+Meaning: Identity, permissions, and correct data isolation per user/tenant.
+Score bands
+9–10: Clear AuthN/AuthZ model; every sensitive action checks permissions; multi-tenant data strictly scoped; role/permission models explicit.
+
+
+6–8: Auth mostly correct; some manual checks in controllers.
+
+
+3–5: Mixed use of middleware and inline checks; easy to forget a permission check.
+
+
+0–2: Many handlers unauthenticated or under-authorized; tenant leaks.
+
+
+How to evaluate
+Trace how currentUser / tenantId is passed down; is it enforced or optional?
+
+
+Check for centralized authorization helpers vs per-endpoint ad-hoc logic.
+
+
+Examine queries: do they filter by user/tenant id consistently?
+
+
+
+17. Secrets, Config & Sensitive Data Handling
+Meaning: How secrets and sensitive configs/data are stored and accessed.
+Score bands
+9–10: No secrets in code; use of secret manager or env vars; strong separation of config from code; encryption at rest/in transit where needed.
+
+
+6–8: Some secrets in env; a bit of config repetition but manageable.
+
+
+3–5: Secrets or tokens appear in repo history or config files.
+
+
+0–2: Secrets hard-coded; config a mess; no awareness of sensitive data handling.
+
+
+How to evaluate
+Search repo history for API keys, tokens, passwords.
+
+
+Check how environment variables are loaded and validated.
+
+
+Verify encryption/obfuscation for PII or sensitive logs.
+
+
+
+18. Local Dev Experience & Onboarding
+Meaning: How easy it is for a new dev (or you, 6 months later) to get productive.
+Score bands
+9–10: Clear README with setup steps; one or two commands to run full stack (e.g., make dev / docker-compose up); seeded dev data; scripts to reset DB.
+
+
+6–8: Onboarding requires a bit of manual setup but documented.
+
+
+3–5: Docs outdated; tribal knowledge needed; lots of manual, error-prone steps.
+
+
+0–2: No docs; setup requires guessing and reading random config files.
+
+
+How to evaluate
+Pretend you’re new: follow only documented steps and see how far you get.
+
+
+Count how many manual steps are needed to run backend + frontend.
+
+
+Check for dev environment scripts (e.g., dev.sh, Makefile, taskfile).
+
+
+
+19. Build, CI/CD & Automation
+Meaning: How code is built, tested, and deployed automatically.
+Score bands
+9–10: CI runs tests/lint/format on every PR; clear pipelines for staging/prod; automated deployments or single-step releases.
+
+
+6–8: Some CI checks; deployments semi-automated.
+
+
+3–5: Manual deployments; CI flaky or minimal.
+
+
+0–2: No CI; build/deploy scripts are ad-hoc and undocumented.
+
+
+How to evaluate
+Inspect CI config (GitHub Actions, GitLab CI, etc.). What checks are enforced?
+
+
+Look for deployment scripts or infra-as-code.
+
+
+Check if CI is required to pass before merging.
+
+
+
+20. Observability (Logging, Metrics, Tracing, Alerts)
+Meaning: Ability to understand and debug the system in production.
+Score bands
+9–10: Structured logging; clear log levels; key metrics (latency, errors, usage) tracked; tracing across services; alerts for key SLOs.
+
+
+6–8: Good logging; some basic metrics; manual dashboard checking.
+
+
+3–5: Print-debugging style logs; no metrics; production issues hard to diagnose.
+
+
+0–2: Almost no logging; no visibility.
+
+
+How to evaluate
+Search for logging calls: are they structured and meaningful, or random prints?
+
+
+Check if there is any metrics instrumentation (prometheus, statsd, etc.).
+
+
+Ask: if something goes wrong in prod, how would you know and where would you look?
+
+
+
+21. Configuration, Environments & Deployment Safety
+Meaning: Handling of config per environment (dev, staging, prod) and safety of releases.
+Score bands
+9–10: Clear separation of env configs; feature flags for risky features; safe rollout patterns (canary, blue-green) or at least rollback plans.
+
+
+6–8: Different configs per environment; some risk mitigation for deploys.
+
+
+3–5: Config scattered or duplicated; manual editing of prod config; environment mismatches.
+
+
+0–2: Same config everywhere; manual edits in prod; high risk deployments.
+
+
+How to evaluate
+Inspect how env config is loaded and stored (files, env vars, config service).
+
+
+Look for feature flag framework vs if ENV == "prod" scattered.
+
+
+Check if there’s a documented rollback process.
+
+
+
+22. AI-Friendliness of Code (for AI Dev Tools & Agents)
+Meaning: How well the code works with AI coding assistants and agentic tools.
+ (“AI-likeness”: code that’s structured and documented so AI can extend it safely.)
+Score bands
+9–10: Clear module boundaries, explicit interfaces, descriptive docstrings; consistent patterns that agents can learn; self-describing types and schemas.
+
+
+6–8: Generally understandable; some ambiguous parts but AI tools can navigate okay.
+
+
+3–5: Many magical globals, side effects, unclear boundaries that confuse AI tools.
+
+
+0–2: Highly dynamic/implicit; lots of reflection/meta-programming with no docs.
+
+
+How to evaluate
+Ask: could an AI safely modify or extend a module by following docstrings + types?
+
+
+Check for clear public interfaces vs implicit behavior through shared mutable state.
+
+
+Look for docstrings that include parameter/return shapes in a machine-friendly way.
+
+
+
+23. Data Quality, Schemas & Versioning
+Meaning: The structure, cleanliness, and evolution of your data.
+Score bands
+9–10: Strong schemas; migrations tracked; backward-compatible changes; validation on write; clear ownership of data models.
+
+
+6–8: Schemas defined; migrations exist; some manual data fixes.
+
+
+3–5: Schemas loosely enforced; evolving DB without clear migrations.
+
+
+0–2: No clear schema; ad-hoc columns; many NULLs and inconsistent meanings.
+
+
+How to evaluate
+Review DB schemas or data model definitions; are they versioned (migrations)?
+
+
+Check for data validation logic on input or before persistence.
+
+
+Inspect actual data samples for consistency and presence of “junk” values.
+
+
+
+24. ML/LLM Integration Quality, Guardrails & Evaluation
+Meaning: For AI features: how well LLMs/ML models are integrated, controlled, and evaluated.
+Score bands
+9–10: Clear abstraction over LLM/ML calls; prompts/configs versioned; evaluation harnesses (benchmarks, regression tests); guardrails for safety and fallbacks.
+
+
+6–8: LLM usage mostly centralized; basic evaluation via logs and metrics.
+
+
+3–5: LLM prompts scattered across code; limited observability and evaluation.
+
+
+0–2: Ad-hoc string prompts inline; no monitoring; no guardrails.
+
+
+How to evaluate
+Search where LLM/ML is called. Is there a single integration layer or is it spread out?
+
+
+Check if prompts and model parameters are versioned/config-driven.
+
+
+Look for evaluation scripts, offline tests, or at least analytics on model outputs.
+
+
+Verify existence of guardrails (schema-based parsing, output validation, abuse filters).

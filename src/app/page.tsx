@@ -7,29 +7,16 @@ import Footer from './components/Footer';
 import { getHomeConfig } from '@/lib/config';
 import { getPublishedReviews } from '@/lib/reviews-data';
 
-import { getPostData } from '@/lib/posts';
+
+
+import { enrichFeaturesWithImages } from '@/lib/features';
 
 export default async function Home() {
   const config = getHomeConfig();
   const reviews = getPublishedReviews(); // Fetch from JSON
 
   // Enrich features with images from blog posts if available
-  const featuresWithImages = await Promise.all(config.features.map(async (feature) => {
-    if (feature.link && feature.link.includes('/blog/')) {
-      try {
-        const slug = feature.link.split('/blog/')[1];
-        if (slug) {
-          const post = await getPostData(slug);
-          if (post && post.featuredImage) {
-            return { ...feature, image: post.featuredImage };
-          }
-        }
-      } catch (e) {
-        // Ignore error if post not found
-      }
-    }
-    return feature;
-  }));
+  const featuresWithImages = await enrichFeaturesWithImages(config.features);
 
   return (
     <main>

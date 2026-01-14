@@ -44,16 +44,20 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "EducationalOrganization",
-              "name": "SAT Masterclass",
-              "url": "https://www.satmasterclass.com",
-              "description": "Elite SAT preparation with proven strategies and expert instructors.",
+              "name": "SuperfastSAT",
+              "legalName": "Argonaut AI Inc.",
+              "url": "https://superfastsat.com",
+              "description": "SAT목표 점수 달성, 저희와 만들어 드립니다",
               "address": {
                 "@type": "PostalAddress",
-                "addressCountry": "US"
+                "streetAddress": "302, 21 Samgae-ro",
+                "addressLocality": "Mapo-gu, Seoul",
+                "addressCountry": "KR"
               },
+              "telephone": "02-6956-0061",
+              "email": "superfastsat@argonaut.co.kr",
               "sameAs": [
-                "https://twitter.com/satmasterclass",
-                "https://instagram.com/satmasterclass"
+                // Add social links if available, otherwise keep empty or remove
               ]
             })
           }}

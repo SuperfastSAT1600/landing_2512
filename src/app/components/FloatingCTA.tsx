@@ -34,7 +34,7 @@ export default function FloatingCTA() {
 
                 {/* Main CTA Button */}
                 <Link href={PRE_REGISTER_URL} target="_blank" rel="noopener noreferrer" className={styles.mainBtn}>
-                    ⏳ 마감 임박: 3월 대비반 얼리버드 30% 할인 받기
+                    ⏳26년 3월 대비반 얼리버드 30% 할인 받기
                 </Link>
             </div>
         </div>
