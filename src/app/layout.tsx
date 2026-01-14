@@ -55,7 +55,7 @@ export default function RootLayout({
                 "addressCountry": "KR"
               },
               "telephone": "02-6956-0061",
-              "email": "superfastsat@argonaut.co.kr",
+              "email": "cs@argonautai.co.kr",
               "sameAs": [
                 // Add social links if available, otherwise keep empty or remove
               ]

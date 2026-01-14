@@ -11,11 +11,10 @@ export default function Footer() {
 
                         <div className={styles.companyInfo}>
                             <p className={styles.companyName}>Argonaut AI Inc.</p>
-                            <p>Email : superfastsat@argonaut.co.kr</p>
+                            <p>Email : cs@argonautai.co.kr</p>
                             <p>Company Address : 302, 21 Samgae-ro, Mapo-gu, Seoul, Republic of Korea</p>
-                            <p>Business registration number : 102-81-48143</p>
-                            <p>Online Business Registration Number : 2025-서울마포-0893호</p>
-                            <p>Private Academy Registration Number : 제 02202500031호 슈퍼패스트에스에이티 학원</p>
+                            <p>Business registration number : 564-85-03129</p>
+                            <p>Online Business Registration Number : 2026-서울마포-0000호</p>
                             <p>Contact : 02-6956-0061</p>
                         </div>
                     </div>
