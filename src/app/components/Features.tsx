@@ -28,45 +28,11 @@ const icons = [
     'streamline:graph-bar-increase'
 ];
 
-import { useEffect } from 'react';
+
 
 export default function Features({ items }: FeaturesProps) {
-    useEffect(() => {
-        const loadUnicornScript = () => {
-            if (!window.UnicornStudio) {
-                window.UnicornStudio = { isInitialized: false };
-                const script = document.createElement("script");
-                script.src = "https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.5.2/dist/unicornStudio.umd.js";
-                script.onload = function () {
-                    if (!window.UnicornStudio.isInitialized) {
-                        try {
-                            // @ts-ignore
-                            UnicornStudio.init();
-                            window.UnicornStudio.isInitialized = true;
-                        } catch (e) {
-                            console.error("Unicorn Studio init failed:", e);
-                        }
-                    }
-                };
-                document.head.appendChild(script);
-            } else if (!window.UnicornStudio.isInitialized) {
-                try {
-                    // @ts-ignore
-                    if (typeof UnicornStudio !== 'undefined') UnicornStudio.init();
-                } catch (e) {
-                    console.error("Unicorn Studio init failed:", e);
-                }
-            }
-        };
-
-        loadUnicornScript();
-    }, []);
-
     return (
         <section className={styles.features}>
-            <div className={styles.backgroundContainer}>
-                <div data-us-project-src="/unicorn-features.json" style={{ width: '100%', height: '100%' }}></div>
-            </div>
             <div className={styles.container}>
                 <ScrollReveal>
                     <div className={styles.header}>
@@ -88,6 +54,7 @@ export default function Features({ items }: FeaturesProps) {
 
                                     <div className={styles.imageContainer}>
                                         {feature.image ? (
+                                            /* eslint-disable-next-line @next/next/no-img-element */
                                             <img
                                                 src={feature.image}
                                                 alt={feature.title}
@@ -114,7 +81,7 @@ export default function Features({ items }: FeaturesProps) {
                         );
                     })}
                 </div>
-            </div>
-        </section>
+            </div >
+        </section >
     );
 }

@@ -62,6 +62,7 @@ export default async function Post({ params }: Props) {
                     {/* Featured Image */}
                     {postData.featuredImage && (
                         <div className="w-full aspect-video rounded-2xl overflow-hidden mb-12 border border-white/5 shadow-2xl">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={postData.featuredImage}
                                 alt={postData.title}
@@ -104,6 +105,7 @@ export default async function Post({ params }: Props) {
                                         {/* Thumbnail */}
                                         <div className="aspect-[16/9] w-full overflow-hidden relative">
                                             {post.featuredImage ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
                                                 <img
                                                     src={post.featuredImage}
                                                     alt={post.title}

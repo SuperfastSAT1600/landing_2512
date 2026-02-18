@@ -25,6 +25,7 @@ export default function LatestPosts() {
                                 {/* Top Half: Image */}
                                 <div className={styles.cardImageContainer}>
                                     {post.featuredImage ? (
+                                        /* eslint-disable-next-line @next/next/no-img-element */
                                         <img
                                             src={post.featuredImage}
                                             alt={post.title}

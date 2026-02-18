@@ -1,4 +1,5 @@
-const https = require('https');
+/* eslint-disable */
+import https from 'https';
 
 const url = 'https://raw.githubusercontent.com/iconify/icon-sets/master/json/streamline-color.json';
 

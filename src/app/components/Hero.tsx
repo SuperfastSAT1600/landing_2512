@@ -3,14 +3,9 @@
 import Link from 'next/link';
 import { ArrowRight, Star } from 'lucide-react';
 import styles from './Hero.module.css';
-import { useEffect } from 'react';
 import LiveStatus from './LiveStatus';
+import HeroBackground from './HeroBackground';
 
-declare global {
-    interface Window {
-        UnicornStudio: any;
-    }
-}
 
 interface HeroProps {
     ctaText?: string;
@@ -18,43 +13,12 @@ interface HeroProps {
 }
 
 export default function Hero({ ctaText, ctaLink }: HeroProps) {
-    useEffect(() => {
-        const loadUnicornScript = () => {
-            if (!window.UnicornStudio) {
-                window.UnicornStudio = { isInitialized: false };
-                const script = document.createElement("script");
-                script.src = "https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.5.2/dist/unicornStudio.umd.js";
-                script.onload = function () {
-                    if (!window.UnicornStudio.isInitialized) {
-                        try {
-                            // @ts-ignore
-                            UnicornStudio.init();
-                            window.UnicornStudio.isInitialized = true;
-                        } catch (e) {
-                            console.error("Unicorn Studio init failed:", e);
-                        }
-                    }
-                };
-                document.head.appendChild(script);
-            } else if (!window.UnicornStudio.isInitialized) {
-                // If script is already there but not init
-                try {
-                    // @ts-ignore
-                    if (typeof UnicornStudio !== 'undefined') UnicornStudio.init();
-                } catch (e) {
-                    console.error("Unicorn Studio init failed:", e);
-                }
-            }
-        };
-
-        loadUnicornScript();
-    }, []);
 
     return (
         <section className={styles.hero}>
-            {/* Unicorn Studio Background */}
+            {/* Custom Background */}
             <div className={styles.backgroundContainer}>
-                <div data-us-project-src="/unicorn-hero.json" style={{ width: '100%', height: '100%' }}></div>
+                <HeroBackground />
             </div>
 
             {/* Content Overlay */}
@@ -75,7 +39,7 @@ export default function Hero({ ctaText, ctaLink }: HeroProps) {
 
                     <div className={styles.ctaGroup}>
                         <Link href={ctaLink || "/curriculum"} className={styles.primaryBtn}>
-                            {ctaText || "25년 11월 시험 목표달성 학생 인터뷰"}
+                            {ctaText || "25년 11월 SAT목표 점수 달성 인터뷰"}
                             <ArrowRight size={20} />
                         </Link>
                     </div>

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "fetch_icons.js",
+    "fetch_streamline.js",
   ]),
 ]);
 

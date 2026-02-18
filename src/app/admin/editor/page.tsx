@@ -353,6 +353,7 @@ function EditorContent() {
                                 className="relative w-full h-64 mb-10 rounded-xl overflow-hidden cursor-pointer group border border-white/10"
                                 onClick={() => setShowSettings(true)}
                             >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={featuredImage} alt="Feature" className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity text-white text-sm font-bold">
                                     <span className="bg-black/50 px-3 py-1 rounded-full"><UploadCloud size={16} className="inline mr-2" />Change</span>
@@ -385,7 +386,10 @@ function EditorContent() {
                 ) : (
                     // Preview Mode
                     <div className="max-w-3xl mx-auto px-6 prose prose-invert prose-lg">
-                        {featuredImage && <img src={featuredImage} alt="Cover" className="rounded-xl mb-8 w-full h-64 object-cover" />}
+                        {featuredImage && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={featuredImage} alt="Cover" className="rounded-xl mb-8 w-full h-64 object-cover" />
+                        )}
                         <h1>{title || "Untitled Post"}</h1>
                         <div className="whitespace-pre-wrap text-gray-300 leading-relaxed font-serif">
                             {content || "No content..."}

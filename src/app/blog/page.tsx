@@ -63,6 +63,7 @@ export default async function Blog({
                                     {/* Featured Image */}
                                     <div className="relative aspect-[16/9] overflow-hidden bg-gray-800">
                                         {post.featuredImage ? (
+                                            /* eslint-disable-next-line @next/next/no-img-element */
                                             <img
                                                 src={post.featuredImage}
                                                 alt={post.title}
