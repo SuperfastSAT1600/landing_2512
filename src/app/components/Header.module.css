@@ -78,7 +78,8 @@
         overflow-x: auto;
         padding-bottom: 0.5rem;
         gap: 1.5rem;
-        justify-content: center;
+        justify-content: flex-start;
+        padding-left: 1rem;
         -webkit-overflow-scrolling: touch;
         /* smooth scroll on iOS */
     }
