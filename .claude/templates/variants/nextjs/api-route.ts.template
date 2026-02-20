@@ -1,0 +1,350 @@
+/**
+ * {{ROUTE_NAME}} API Route
+ *
+ * {{ROUTE_DESCRIPTION}}
+ *
+ * Endpoints:
+ * - GET    /api/{{ROUTE_PATH}} - List {{RESOURCE_NAME_PLURAL}}
+ * - POST   /api/{{ROUTE_PATH}} - Create {{RESOURCE_NAME}}
+ * - GET    /api/{{ROUTE_PATH}}/[id] - Get {{RESOURCE_NAME}} by ID
+ * - PATCH  /api/{{ROUTE_PATH}}/[id] - Update {{RESOURCE_NAME}}
+ * - DELETE /api/{{ROUTE_PATH}}/[id] - Delete {{RESOURCE_NAME}}
+ *
+ * Template Placeholders:
+ * - {{ROUTE_NAME}}: Route handler name (e.g., Users)
+ * - {{ROUTE_PATH}}: URL path segment (e.g., users)
+ * - {{RESOURCE_NAME}}: Singular resource name (e.g., User)
+ * - {{RESOURCE_NAME_PLURAL}}: Plural resource name (e.g., Users)
+ * - {{ROUTE_DESCRIPTION}}: Brief description
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
+
+// =============================================================================
+// Supabase Client Helper
+// =============================================================================
+
+function getSupabaseClient() {
+  const cookieStore = cookies();
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${cookieStore.get('sb-access-token')?.value}`,
+        },
+      },
+    }
+  );
+}
+
+// =============================================================================
+// Schemas
+// =============================================================================
+
+const Create{{RESOURCE_NAME}}Schema = z.object({
+  // Define required fields
+  name: z.string().min(1).max(255),
+  // Add more fields as needed
+});
+
+const Update{{RESOURCE_NAME}}Schema = Create{{RESOURCE_NAME}}Schema.partial();
+
+const QuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  perPage: z.coerce.number().int().min(1).max(100).default(20),
+  search: z.string().optional(),
+  sortBy: z.enum(['created_at', 'updated_at', 'name']).default('created_at'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+});
+
+// =============================================================================
+// Types
+// =============================================================================
+
+type Create{{RESOURCE_NAME}}Input = z.infer<typeof Create{{RESOURCE_NAME}}Schema>;
+type Update{{RESOURCE_NAME}}Input = z.infer<typeof Update{{RESOURCE_NAME}}Schema>;
+
+// =============================================================================
+// GET - List {{RESOURCE_NAME_PLURAL}}
+// =============================================================================
+
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = getSupabaseClient();
+
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      );
+    }
+
+    // Parse query parameters
+    const searchParams = Object.fromEntries(request.nextUrl.searchParams);
+    const query = QuerySchema.parse(searchParams);
+
+    // Calculate pagination
+    const from = (query.page - 1) * query.perPage;
+    const to = from + query.perPage - 1;
+
+    // Build query
+    let dbQuery = supabase
+      .from('{{ROUTE_PATH}}')
+      .select('*', { count: 'exact' })
+      .order(query.sortBy, { ascending: query.sortOrder === 'asc' })
+      .range(from, to);
+
+    // Add search filter if provided
+    if (query.search) {
+      dbQuery = dbQuery.ilike('name', `%${query.search}%`);
+    }
+
+    // Execute query
+    const { data: items, count, error } = await dbQuery;
+
+    if (error) {
+      console.error('[{{ROUTE_NAME}}] GET error:', error);
+      return NextResponse.json(
+        { error: { code: 'DATABASE_ERROR', message: error.message } },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      data: items || [],
+      meta: {
+        pagination: {
+          page: query.page,
+          perPage: query.perPage,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / query.perPage),
+        },
+      },
+    });
+  } catch (error) {
+    console.error('[{{ROUTE_NAME}}] GET error:', error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Invalid query parameters', details: error.errors } },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch {{RESOURCE_NAME_PLURAL}}' } },
+      { status: 500 }
+    );
+  }
+}
+
+// =============================================================================
+// POST - Create {{RESOURCE_NAME}}
+// =============================================================================
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = getSupabaseClient();
+
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      );
+    }
+
+    // Parse and validate body
+    const body = await request.json();
+    const data = Create{{RESOURCE_NAME}}Schema.parse(body);
+
+    // Create resource
+    const { data: item, error } = await supabase
+      .from('{{ROUTE_PATH}}')
+      .insert({
+        ...data,
+        user_id: user.id, // Add ownership if needed
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[{{ROUTE_NAME}}] POST error:', error);
+      return NextResponse.json(
+        { error: { code: 'DATABASE_ERROR', message: error.message } },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ data: item }, { status: 201 });
+  } catch (error) {
+    console.error('[{{ROUTE_NAME}}] POST error:', error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: error.errors } },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: 'Failed to create {{RESOURCE_NAME}}' } },
+      { status: 500 }
+    );
+  }
+}
+
+// =============================================================================
+// For dynamic routes: app/api/{{ROUTE_PATH}}/[id]/route.ts
+// =============================================================================
+
+/*
+// GET - Get single {{RESOURCE_NAME}}
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = getSupabaseClient();
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      );
+    }
+
+    const { data: item, error } = await supabase
+      .from('{{ROUTE_PATH}}')
+      .select('*')
+      .eq('id', params.id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') { // Not found
+        return NextResponse.json(
+          { error: { code: 'NOT_FOUND', message: '{{RESOURCE_NAME}} not found' } },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(
+        { error: { code: 'DATABASE_ERROR', message: error.message } },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ data: item });
+  } catch (error) {
+    console.error('[{{ROUTE_NAME}}] GET [id] error:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch {{RESOURCE_NAME}}' } },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Update {{RESOURCE_NAME}}
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = getSupabaseClient();
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const data = Update{{RESOURCE_NAME}}Schema.parse(body);
+
+    const { data: item, error } = await supabase
+      .from('{{ROUTE_PATH}}')
+      .update(data)
+      .eq('id', params.id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: { code: 'NOT_FOUND', message: '{{RESOURCE_NAME}} not found' } },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(
+        { error: { code: 'DATABASE_ERROR', message: error.message } },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ data: item });
+  } catch (error) {
+    console.error('[{{ROUTE_NAME}}] PATCH error:', error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: error.errors } },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: 'Failed to update {{RESOURCE_NAME}}' } },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Delete {{RESOURCE_NAME}}
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = getSupabaseClient();
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+        { status: 401 }
+      );
+    }
+
+    const { error } = await supabase
+      .from('{{ROUTE_PATH}}')
+      .delete()
+      .eq('id', params.id);
+
+    if (error) {
+      console.error('[{{ROUTE_NAME}}] DELETE error:', error);
+      return NextResponse.json(
+        { error: { code: 'DATABASE_ERROR', message: error.message } },
+        { status: 500 }
+      );
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error('[{{ROUTE_NAME}}] DELETE error:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: 'Failed to delete {{RESOURCE_NAME}}' } },
+      { status: 500 }
+    );
+  }
+}
+*/

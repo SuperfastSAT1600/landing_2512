@@ -1,0 +1,154 @@
+## Summary
+
+<!-- Brief description of what this PR does (1-3 sentences) -->
+{{PR_SUMMARY}}
+
+## Related Issues
+
+<!-- Link to related issues/tickets -->
+- Closes #{{ISSUE_NUMBER}}
+- Related to #{{RELATED_ISSUE}}
+
+## Type of Change
+
+<!-- Check all that apply -->
+- [ ] Bug fix (non-breaking change that fixes an issue)
+- [ ] New feature (non-breaking change that adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to change)
+- [ ] Refactoring (no functional changes)
+- [ ] Documentation update
+- [ ] Performance improvement
+- [ ] Test coverage improvement
+- [ ] CI/CD or build changes
+- [ ] Dependency updates
+
+## Changes Made
+
+<!-- Detailed list of changes -->
+### Added
+- {{ADDED_ITEM_1}}
+- {{ADDED_ITEM_2}}
+
+### Changed
+- {{CHANGED_ITEM_1}}
+- {{CHANGED_ITEM_2}}
+
+### Removed
+- {{REMOVED_ITEM_1}}
+
+### Fixed
+- {{FIXED_ITEM_1}}
+
+## Screenshots/Recordings
+
+<!-- If applicable, add screenshots or recordings to help explain your changes -->
+| Before | After |
+|--------|-------|
+| ![Before](url) | ![After](url) |
+
+## Test Plan
+
+<!-- Describe how this change was tested -->
+
+### Automated Tests
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] E2E tests added/updated
+- [ ] All existing tests pass
+
+### Manual Testing
+- [ ] Tested locally in development environment
+- [ ] Tested in staging environment
+- [ ] Tested on mobile/responsive views (if applicable)
+
+### Test Steps
+1. {{TEST_STEP_1}}
+2. {{TEST_STEP_2}}
+3. {{TEST_STEP_3}}
+
+### Expected Results
+- {{EXPECTED_RESULT_1}}
+- {{EXPECTED_RESULT_2}}
+
+## Checklist
+
+<!-- Mark items that apply to this PR -->
+
+### Code Quality
+- [ ] Code follows project style guidelines
+- [ ] Self-review of code completed
+- [ ] Code is well-commented where necessary
+- [ ] No console.log or debugging code left behind
+- [ ] TypeScript types are properly defined
+
+### Security
+- [ ] No sensitive data (API keys, passwords) in code
+- [ ] Input validation added for user inputs
+- [ ] Authentication/authorization properly implemented
+- [ ] SQL injection prevention measures in place
+- [ ] XSS prevention measures in place
+
+### Performance
+- [ ] No N+1 queries introduced
+- [ ] Large data sets are paginated
+- [ ] Expensive operations are cached or optimized
+- [ ] Bundle size impact considered
+
+### Documentation
+- [ ] README updated (if applicable)
+- [ ] API documentation updated (if applicable)
+- [ ] Inline code comments added where helpful
+- [ ] CHANGELOG updated (if applicable)
+
+### Database
+- [ ] Migration is reversible
+- [ ] Migration tested locally
+- [ ] Indexes added for new queries
+- [ ] No data loss in migration
+
+## Breaking Changes
+
+<!-- If this PR introduces breaking changes, describe them here -->
+
+### Breaking Changes
+- {{BREAKING_CHANGE_1}}
+
+### Migration Guide
+```
+{{MIGRATION_STEPS}}
+```
+
+## Dependencies
+
+<!-- List any dependencies that are added, updated, or removed -->
+
+### Added Dependencies
+| Package | Version | Reason |
+|---------|---------|--------|
+| {{PACKAGE_NAME}} | {{VERSION}} | {{REASON}} |
+
+### Updated Dependencies
+| Package | Old Version | New Version | Reason |
+|---------|-------------|-------------|--------|
+| {{PACKAGE_NAME}} | {{OLD_VERSION}} | {{NEW_VERSION}} | {{REASON}} |
+
+### Removed Dependencies
+| Package | Reason |
+|---------|--------|
+| {{PACKAGE_NAME}} | {{REASON}} |
+
+## Rollback Plan
+
+<!-- Describe how to rollback this change if needed -->
+1. {{ROLLBACK_STEP_1}}
+2. {{ROLLBACK_STEP_2}}
+
+## Additional Notes
+
+<!-- Any additional information that reviewers should know -->
+{{ADDITIONAL_NOTES}}
+
+---
+
+<!-- Automatically added -->
+Generated with [Claude Code](https://claude.ai/claude-code)

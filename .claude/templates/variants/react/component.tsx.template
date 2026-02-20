@@ -1,0 +1,98 @@
+/**
+ * {{COMPONENT_NAME}} Component
+ *
+ * {{COMPONENT_DESCRIPTION}}
+ *
+ * @example
+ * ```tsx
+ * <{{COMPONENT_NAME}} />
+ * ```
+ *
+ * Template Placeholders:
+ * - {{COMPONENT_NAME}}: PascalCase component name (e.g., UserProfile)
+ * - {{COMPONENT_DESCRIPTION}}: Brief description of component purpose
+ * - {{PROPS_INTERFACE}}: Props interface properties (optional)
+ */
+
+import { forwardRef, type HTMLAttributes } from 'react';
+import { cn } from '@/lib/utils';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface {{COMPONENT_NAME}}Props extends HTMLAttributes<HTMLDivElement> {
+  /**
+   * Example prop - replace with actual props
+   */
+  variant?: 'default' | 'secondary';
+  /**
+   * Whether the component is in a loading state
+   */
+  isLoading?: boolean;
+  // {{PROPS_INTERFACE}}
+}
+
+// =============================================================================
+// Component
+// =============================================================================
+
+/**
+ * {{COMPONENT_NAME}}
+ *
+ * {{COMPONENT_DESCRIPTION}}
+ */
+export const {{COMPONENT_NAME}} = forwardRef<HTMLDivElement, {{COMPONENT_NAME}}Props>(
+  ({ className, variant = 'default', isLoading = false, children, ...props }, ref) => {
+    // -------------------------------------------------------------------------
+    // Render
+    // -------------------------------------------------------------------------
+
+    if (isLoading) {
+      return (
+        <div
+          ref={ref}
+          className={cn('animate-pulse bg-muted rounded', className)}
+          {...props}
+        >
+          {/* Loading skeleton */}
+        </div>
+      );
+    }
+
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          // Base styles
+          'relative',
+          // Variant styles
+          {
+            'bg-background text-foreground': variant === 'default',
+            'bg-secondary text-secondary-foreground': variant === 'secondary',
+          },
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+
+{{COMPONENT_NAME}}.displayName = '{{COMPONENT_NAME}}';
+
+// =============================================================================
+// Subcomponents (if needed)
+// =============================================================================
+
+// export const {{COMPONENT_NAME}}Header = ...
+// export const {{COMPONENT_NAME}}Body = ...
+// export const {{COMPONENT_NAME}}Footer = ...
+
+// =============================================================================
+// Default Export
+// =============================================================================
+
+export default {{COMPONENT_NAME}};

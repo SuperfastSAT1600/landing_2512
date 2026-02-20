@@ -1,0 +1,99 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "env": {},
+      "description": "File system operations - read, write, search files"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN_HERE"
+      },
+      "disabled": true,
+      "description": "GitHub repository management - PRs, issues, files"
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF_HERE",
+      "disabled": true,
+      "description": "⭐ RECOMMENDED: Supabase database operations, auth, and storage. Authenticate via 'claude /mcp' after setup. Get project_ref from https://supabase.com/dashboard/project/_/settings/api"
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {},
+      "disabled": true,
+      "description": "⭐ RECOMMENDED: Persistent knowledge graph memory across sessions"
+    },
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "YOUR_SLACK_BOT_TOKEN_HERE",
+        "SLACK_TEAM_ID": "YOUR_SLACK_TEAM_ID_HERE"
+      },
+      "disabled": false,
+      "description": "⭐ REQUIRED: Slack workspace integration for PR notifications and team communication"
+    },
+    "render": {
+      "type": "http",
+      "url": "https://mcp.render.com/mcp",
+      "env": {
+        "RENDER_API_KEY": "YOUR_RENDER_API_KEY_HERE"
+      },
+      "disabled": true,
+      "description": "Render deployment and infrastructure management"
+    },
+    "cloudflare-docs": {
+      "type": "http",
+      "url": "https://docs.mcp.cloudflare.com",
+      "env": {},
+      "disabled": true,
+      "description": "Search Cloudflare documentation"
+    },
+    "cloudflare-workers-builds": {
+      "type": "http",
+      "url": "https://builds.mcp.cloudflare.com/mcp",
+      "env": {
+        "CLOUDFLARE_API_TOKEN": "YOUR_CLOUDFLARE_TOKEN_HERE"
+      },
+      "disabled": true,
+      "description": "Cloudflare Workers build management"
+    },
+    "cloudflare-workers-bindings": {
+      "type": "http",
+      "url": "https://bindings.mcp.cloudflare.com/mcp",
+      "env": {
+        "CLOUDFLARE_API_TOKEN": "YOUR_CLOUDFLARE_TOKEN_HERE"
+      },
+      "disabled": true,
+      "description": "Cloudflare Workers bindings (D1, R2, KV)"
+    },
+    "cloudflare-observability": {
+      "type": "http",
+      "url": "https://observability.mcp.cloudflare.com/mcp",
+      "env": {
+        "CLOUDFLARE_API_TOKEN": "YOUR_CLOUDFLARE_TOKEN_HERE"
+      },
+      "disabled": true,
+      "description": "Cloudflare monitoring and analytics"
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {},
+      "disabled": true,
+      "description": "⭐ RECOMMENDED: Up-to-date package documentation and code examples"
+    },
+    "magic-ui": {
+      "command": "npx",
+      "args": ["-y", "@magicuidesign/mcp"],
+      "env": {},
+      "disabled": true,
+      "description": "⭐ RECOMMENDED: Magic UI components library"
+    }
+  }
+}

@@ -1,0 +1,339 @@
+/**
+ * {{MIDDLEWARE_NAME}} Middleware
+ *
+ * {{MIDDLEWARE_DESCRIPTION}}
+ *
+ * @example
+ * ```typescript
+ * // Express
+ * app.use({{MIDDLEWARE_NAME_CAMEL}}Middleware);
+ *
+ * // Next.js API Route
+ * export default with{{MIDDLEWARE_NAME}}(handler);
+ *
+ * // Next.js Middleware (middleware.ts)
+ * export { {{MIDDLEWARE_NAME_CAMEL}}Middleware as middleware };
+ * ```
+ *
+ * Template Placeholders:
+ * - {{MIDDLEWARE_NAME}}: PascalCase middleware name (e.g., Auth, RateLimit, Cors)
+ * - {{MIDDLEWARE_NAME_CAMEL}}: camelCase middleware name (e.g., auth, rateLimit, cors)
+ * - {{MIDDLEWARE_DESCRIPTION}}: Brief description of middleware purpose
+ */
+
+import type { Request, Response, NextFunction, RequestHandler } from 'express';
+import {
+  NextRequest,
+  NextResponse,
+  type NextMiddleware,
+} from 'next/server';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+/**
+ * Configuration options for the middleware
+ */
+export interface {{MIDDLEWARE_NAME}}Options {
+  /**
+   * Enable/disable the middleware
+   * @default true
+   */
+  enabled?: boolean;
+  /**
+   * Paths to exclude from middleware processing
+   * Supports exact paths and patterns with wildcards
+   */
+  excludePaths?: string[];
+  /**
+   * Custom error handler
+   */
+  onError?: (error: Error) => void;
+  // Add middleware-specific options
+}
+
+/**
+ * Context added to request by this middleware
+ */
+export interface {{MIDDLEWARE_NAME}}Context {
+  // Add context properties that the middleware attaches to the request
+  // e.g., user, session, requestId, etc.
+}
+
+// Extend Express Request type
+declare global {
+  namespace Express {
+    interface Request {
+      {{MIDDLEWARE_NAME_CAMEL}}?: {{MIDDLEWARE_NAME}}Context;
+    }
+  }
+}
+
+// =============================================================================
+// Default Options
+// =============================================================================
+
+const defaultOptions: Required<{{MIDDLEWARE_NAME}}Options> = {
+  enabled: true,
+  excludePaths: [],
+  onError: (error) => console.error('{{MIDDLEWARE_NAME}} error:', error),
+};
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+/**
+ * Check if a path should be excluded from middleware processing
+ */
+function shouldExcludePath(path: string, excludePaths: string[]): boolean {
+  return excludePaths.some((pattern) => {
+    if (pattern.includes('*')) {
+      // Convert glob pattern to regex
+      const regex = new RegExp(
+        '^' + pattern.replace(/\*/g, '.*') + '$'
+      );
+      return regex.test(path);
+    }
+    return path === pattern || path.startsWith(pattern + '/');
+  });
+}
+
+/**
+ * Core middleware logic - implement your actual middleware here
+ */
+async function process{{MIDDLEWARE_NAME}}(
+  options: Required<{{MIDDLEWARE_NAME}}Options>
+): Promise<{{MIDDLEWARE_NAME}}Context | null> {
+  // Implement your middleware logic here
+  // Examples:
+  // - Auth: verify JWT token, fetch user
+  // - RateLimit: check request count, update counter
+  // - Cors: validate origin, set headers
+  // - Logging: log request details
+
+  // Placeholder implementation
+  const context: {{MIDDLEWARE_NAME}}Context = {
+    // Add context properties
+  };
+
+  return context;
+}
+
+// =============================================================================
+// Express Middleware
+// =============================================================================
+
+/**
+ * Express middleware factory
+ *
+ * @example
+ * ```typescript
+ * // Basic usage
+ * app.use(create{{MIDDLEWARE_NAME}}Middleware());
+ *
+ * // With options
+ * app.use(create{{MIDDLEWARE_NAME}}Middleware({
+ *   excludePaths: ['/health', '/api/public/*'],
+ * }));
+ * ```
+ */
+export function create{{MIDDLEWARE_NAME}}Middleware(
+  options: {{MIDDLEWARE_NAME}}Options = {}
+): RequestHandler {
+  const mergedOptions: Required<{{MIDDLEWARE_NAME}}Options> = {
+    ...defaultOptions,
+    ...options,
+  };
+
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    // Skip if disabled
+    if (!mergedOptions.enabled) {
+      return next();
+    }
+
+    // Skip excluded paths
+    if (shouldExcludePath(req.path, mergedOptions.excludePaths)) {
+      return next();
+    }
+
+    try {
+      const context = await process{{MIDDLEWARE_NAME}}(mergedOptions);
+
+      if (context) {
+        req.{{MIDDLEWARE_NAME_CAMEL}} = context;
+      }
+
+      next();
+    } catch (error) {
+      mergedOptions.onError(error instanceof Error ? error : new Error(String(error)));
+
+      // Decide how to handle errors:
+      // Option 1: Pass to error handler
+      // next(error);
+
+      // Option 2: Return error response
+      res.status(500).json({
+        error: {
+          code: '{{MIDDLEWARE_NAME}}_ERROR'.toUpperCase(),
+          message: 'Internal server error',
+        },
+      });
+    }
+  };
+}
+
+/**
+ * Pre-configured middleware instance with default options
+ */
+export const {{MIDDLEWARE_NAME_CAMEL}}Middleware = create{{MIDDLEWARE_NAME}}Middleware();
+
+// =============================================================================
+// Next.js API Route Wrapper
+// =============================================================================
+
+type NextApiHandler = (
+  request: NextRequest
+) => Promise<NextResponse> | NextResponse;
+
+/**
+ * Next.js API route middleware wrapper
+ *
+ * @example
+ * ```typescript
+ * // app/api/protected/route.ts
+ * export const GET = with{{MIDDLEWARE_NAME}}(async (req) => {
+ *   return NextResponse.json({ data: 'protected' });
+ * });
+ * ```
+ */
+export function with{{MIDDLEWARE_NAME}}(
+  handler: NextApiHandler,
+  options: {{MIDDLEWARE_NAME}}Options = {}
+): NextApiHandler {
+  const mergedOptions: Required<{{MIDDLEWARE_NAME}}Options> = {
+    ...defaultOptions,
+    ...options,
+  };
+
+  return async (request: NextRequest): Promise<NextResponse> => {
+    // Skip if disabled
+    if (!mergedOptions.enabled) {
+      return handler(request);
+    }
+
+    // Skip excluded paths
+    const path = request.nextUrl.pathname;
+    if (shouldExcludePath(path, mergedOptions.excludePaths)) {
+      return handler(request);
+    }
+
+    try {
+      const context = await process{{MIDDLEWARE_NAME}}(mergedOptions);
+
+      // You can attach context to headers for downstream handlers
+      if (context) {
+        request.headers.set(
+          'x-{{MIDDLEWARE_NAME_CAMEL}}-context',
+          JSON.stringify(context)
+        );
+      }
+
+      return handler(request);
+    } catch (error) {
+      mergedOptions.onError(error instanceof Error ? error : new Error(String(error)));
+
+      return NextResponse.json(
+        {
+          error: {
+            code: '{{MIDDLEWARE_NAME}}_ERROR'.toUpperCase(),
+            message: 'Internal server error',
+          },
+        },
+        { status: 500 }
+      );
+    }
+  };
+}
+
+// =============================================================================
+// Next.js Edge Middleware
+// =============================================================================
+
+/**
+ * Next.js Edge Middleware factory
+ *
+ * @example
+ * ```typescript
+ * // middleware.ts
+ * import { create{{MIDDLEWARE_NAME}}EdgeMiddleware } from './middleware/{{MIDDLEWARE_NAME_CAMEL}}';
+ *
+ * export const middleware = create{{MIDDLEWARE_NAME}}EdgeMiddleware({
+ *   excludePaths: ['/api/public/*', '/_next/*'],
+ * });
+ *
+ * export const config = {
+ *   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+ * };
+ * ```
+ */
+export function create{{MIDDLEWARE_NAME}}EdgeMiddleware(
+  options: {{MIDDLEWARE_NAME}}Options = {}
+): NextMiddleware {
+  const mergedOptions: Required<{{MIDDLEWARE_NAME}}Options> = {
+    ...defaultOptions,
+    ...options,
+  };
+
+  return async (request: NextRequest): Promise<NextResponse> => {
+    // Skip if disabled
+    if (!mergedOptions.enabled) {
+      return NextResponse.next();
+    }
+
+    // Skip excluded paths
+    const path = request.nextUrl.pathname;
+    if (shouldExcludePath(path, mergedOptions.excludePaths)) {
+      return NextResponse.next();
+    }
+
+    try {
+      const context = await process{{MIDDLEWARE_NAME}}(mergedOptions);
+
+      const response = NextResponse.next();
+
+      // Attach context to response headers for downstream use
+      if (context) {
+        response.headers.set(
+          'x-{{MIDDLEWARE_NAME_CAMEL}}-context',
+          JSON.stringify(context)
+        );
+      }
+
+      return response;
+    } catch (error) {
+      mergedOptions.onError(error instanceof Error ? error : new Error(String(error)));
+
+      return NextResponse.json(
+        {
+          error: {
+            code: '{{MIDDLEWARE_NAME}}_ERROR'.toUpperCase(),
+            message: 'Internal server error',
+          },
+        },
+        { status: 500 }
+      );
+    }
+  };
+}
+
+// =============================================================================
+// Default Export
+// =============================================================================
+
+export default create{{MIDDLEWARE_NAME}}Middleware;
