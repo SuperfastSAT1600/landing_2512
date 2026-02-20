@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHomeConfig, saveHomeConfig } from '@/lib/config';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export async function GET(request: NextRequest) {
+    if (!isAuthenticated(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const config = getHomeConfig();
         return NextResponse.json(config);
@@ -11,9 +15,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    if (!isAuthenticated(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const body = await request.json();
-        // Validation could go here
         saveHomeConfig(body);
         return NextResponse.json({ success: true, config: body });
     } catch (error) {

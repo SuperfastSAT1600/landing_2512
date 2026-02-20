@@ -26,9 +26,17 @@ export default function HeroBackground() {
         };
 
         const resize = () => {
-            if (!canvas) return;
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            if (!canvas || !ctx) return;
+            // High DPI support capped at 2x for performance
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            ctx.scale(dpr, dpr);
+
+            // Sync CSS display size
+            canvas.style.width = `${window.innerWidth}px`;
+            canvas.style.height = `${window.innerHeight}px`;
+
             initStreams();
         };
 
@@ -39,8 +47,6 @@ export default function HeroBackground() {
             speed: number = 0;
             progress: number = 0;
             maxProgress: number = 0;
-            curve: number = 0;
-            freq: number = 0;
             widthBase: number = 0;
             length: number = 0;
             isBright: boolean = false;
@@ -53,18 +59,15 @@ export default function HeroBackground() {
 
             reset() {
                 if (!canvas) return;
-                this.originX = canvas.width / 2;
-                this.originY = canvas.height / 2;
+                this.originX = (canvas?.width || 0) / ((window.devicePixelRatio || 1) * 2);
+                this.originY = (canvas?.height || 0) / ((window.devicePixelRatio || 1) * 2);
 
                 this.angle = Math.random() * Math.PI * 2;
                 this.speed = Math.random() * 0.007 + 0.004;
                 this.progress = 0;
                 this.maxProgress = 1.3 + Math.random() * 0.2;
 
-                this.curve = (Math.random() - 0.5) * 180;
-                this.freq = Math.random() * 2 + 0.5;
                 this.length = Math.random() * 0.5 + 0.3;
-
                 this.widthBase = Math.random() * 3.85 + 1.32;
                 this.isBright = Math.random() > 0.7;
                 this.alphaBase = Math.random() * 0.6 + 0.4;
@@ -83,12 +86,12 @@ export default function HeroBackground() {
 
                 const getPos = (prog: number) => {
                     const distMultiplier = Math.pow(Math.max(0, 1.3 - prog), 1.5);
-                    const maxDim = Math.max(canvas.width, canvas.height);
+                    const maxDim = Math.max(window.innerWidth, window.innerHeight);
                     const dist = maxDim * distMultiplier * 0.8;
                     const x = this.originX + Math.cos(this.angle) * dist;
                     const y = this.originY + Math.sin(this.angle) * dist;
 
-                    return { x: x, y: y };
+                    return { x, y };
                 };
 
                 const head = getPos(p);
@@ -108,9 +111,10 @@ export default function HeroBackground() {
                 ctx.strokeStyle = grad;
                 ctx.lineWidth = this.widthBase * (2.0 - p);
                 ctx.lineCap = 'round';
-                ctx.globalAlpha = this.alphaBase * p * 1.2; // Increase overall visibility
+                ctx.globalAlpha = this.alphaBase * p * 1.2;
 
-                if (this.isBright || p > 0.8) {
+                // Optimization: Disable expensive shadows on mobile screens
+                if (window.innerWidth > 768 && (this.isBright || p > 0.8)) {
                     ctx.shadowBlur = 15 * p;
                     ctx.shadowColor = brandColor;
                 }
@@ -123,7 +127,9 @@ export default function HeroBackground() {
 
         const initStreams = () => {
             streams = [];
-            const count = 120;
+            // Dynamic stream count: Fewer on mobile to maintain 60FPS
+            const isMobile = window.innerWidth < 768;
+            const count = isMobile ? 80 : 120;
             for (let i = 0; i < count; i++) {
                 streams.push(new Stream());
             }
@@ -131,17 +137,20 @@ export default function HeroBackground() {
 
         const animate = () => {
             if (!canvas || !ctx) return;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
             ctx.fillStyle = '#010204';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, width, height);
 
             const centerGrad = ctx.createRadialGradient(
-                canvas.width / 2, canvas.height / 2, 0,
-                canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.4
+                width / 2, height / 2, 0,
+                width / 2, height / 2, Math.max(width, height) * 0.4
             );
             centerGrad.addColorStop(0, 'rgba(7, 27, 233, 0.4)');
             centerGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
             ctx.fillStyle = centerGrad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, width, height);
 
             ctx.globalCompositeOperation = 'lighter';
             streams.forEach(s => {

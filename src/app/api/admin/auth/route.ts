@@ -4,9 +4,11 @@ export async function POST(request: NextRequest) {
     try {
         const { password } = await request.json();
 
-        // In a real app, use an environment variable (process.env.ADMIN_PASSWORD)
-        // For this local MVP, we use a fixed simpler code.
-        const VALID_PASSWORD = process.env.ADMIN_PASSWORD || "missionto1600!";
+        const VALID_PASSWORD = process.env.ADMIN_PASSWORD;
+        if (!VALID_PASSWORD) {
+            console.error("Auth blocked: ADMIN_PASSWORD is not set.");
+            return NextResponse.json({ success: false, message: "Server configuration error" }, { status: 500 });
+        }
 
         if (password === VALID_PASSWORD) {
             return NextResponse.json({ success: true });

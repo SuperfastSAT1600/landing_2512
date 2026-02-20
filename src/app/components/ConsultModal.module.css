@@ -1,0 +1,210 @@
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translate(-50%, -54%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+}
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 201;
+    width: 90vw;
+    max-width: 400px;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: slideDown 0.25s ease;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.closeBtn:hover {
+    color: #ffffff;
+}
+
+.body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.fieldGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.2px;
+}
+
+.required {
+    color: #ef4444;
+}
+
+.input,
+.select {
+    width: 100%;
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.input:focus,
+.select:focus {
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.inputError {
+    border-color: #ef4444 !important;
+}
+
+.errorMsg {
+    font-size: 12px;
+    color: #ef4444;
+    margin-top: 2px;
+}
+
+.select option {
+    background: #1f2937;
+    color: #ffffff;
+}
+
+.submitBtn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent-primary, #6366f1);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+    margin-top: 4px;
+    letter-spacing: -0.2px;
+}
+
+.submitBtn:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+.submitBtn:active {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Success state */
+.successBox {
+    padding: 36px 24px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.checkIcon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.18);
+    border: 2px solid rgba(34, 197, 94, 0.5);
+    color: #22c55e;
+    font-size: 26px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.successTitle {
+    font-size: 17px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.successSub {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+}
+
+.closeSuccessBtn {
+    margin-top: 12px;
+    padding: 11px 32px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.closeSuccessBtn:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+}

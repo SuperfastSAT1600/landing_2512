@@ -73,17 +73,22 @@ import { z } from 'zod';
 
 // ... existing code ...
 
+const optionalStr = z.string().optional().or(z.literal('').transform(() => undefined)).or(z.null().transform(() => undefined));
+
 const PostSchema = z.object({
     title: z.string().min(1, "Title is required"),
-    slug: z.string().regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens").optional().or(z.literal('')),
-    date: z.string().optional(),
+    slug: z.string().regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens").optional().or(z.literal('')).or(z.null().transform(() => undefined)),
+    date: optionalStr,
     category: z.string().default("SAT RW"),
-    description: z.string().optional(),
-    tags: z.string().optional(),
-    featuredImage: z.string().optional(),
-    author: z.string().optional(),
-    content: z.string().default(""),
-    originalId: z.string().optional(),
+    excerpt: optionalStr,
+    description: optionalStr,
+    tags: optionalStr,
+    featuredImage: optionalStr,
+    featureImage: optionalStr,
+    author: optionalStr,
+    content: z.string().default("").or(z.null().transform(() => "")),
+    originalId: optionalStr,
+    ctaFeatured: z.boolean().optional().or(z.null().transform(() => undefined)),
 });
 
 export async function POST(request: NextRequest) {
@@ -104,11 +109,14 @@ export async function POST(request: NextRequest) {
             slug: providedSlug,
             date,
             category,
+            excerpt,
             description,
             tags,
             featuredImage,
+            featureImage,
             author,
-            content
+            content,
+            ctaFeatured,
         } = validation.data;
 
         // Determine final slug: Provided > or Original > or Generated from Title
@@ -142,16 +150,35 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        // If this post is being set as CTA featured, clear it from all other posts first
+        if (ctaFeatured === true) {
+            const allFiles = fs.readdirSync(postsDirectory).filter(f => f.endsWith('.md'));
+            for (const f of allFiles) {
+                const fSlug = f.replace(/\.md$/, '');
+                if (fSlug === finalSlug) continue;
+                const fPath = path.join(postsDirectory, f);
+                const fContents = fs.readFileSync(fPath, 'utf8');
+                const parsed = matter(fContents);
+                if (parsed.data.ctaFeatured === true) {
+                    delete parsed.data.ctaFeatured;
+                    fs.writeFileSync(fPath, matter.stringify(parsed.content, parsed.data), 'utf8');
+                }
+            }
+        }
+
         const frontMatter: any = {
             title,
             date,
             category,
         };
 
+        if (excerpt) frontMatter.excerpt = excerpt;
         if (description) frontMatter.description = description;
         if (tags) frontMatter.tags = tags.split(',').map((t: string) => t.trim());
         if (featuredImage) frontMatter.featuredImage = featuredImage;
+        if (featureImage) frontMatter.featureImage = featureImage;
         if (author) frontMatter.author = author;
+        if (ctaFeatured === true) frontMatter.ctaFeatured = true;
 
         const fileContent = matter.stringify(content, frontMatter);
 
@@ -175,6 +202,10 @@ export async function DELETE(request: NextRequest) {
 
         if (!id) {
             return NextResponse.json({ success: false, error: "No ID provided" }, { status: 400 });
+        }
+
+        if (!/^[a-z0-9-]+$/.test(id)) {
+            return NextResponse.json({ success: false, error: "Invalid post ID" }, { status: 400 });
         }
 
         const fullPath = path.join(postsDirectory, `${id}.md`);

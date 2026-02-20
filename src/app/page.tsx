@@ -9,14 +9,14 @@ import { getPublishedReviews } from '@/lib/reviews-data';
 
 
 
-import { enrichFeaturesWithImages } from '@/lib/features';
+import { enrichFeaturesFromPosts } from '@/lib/features';
 
 export default async function Home() {
   const config = getHomeConfig();
   const reviews = getPublishedReviews(); // Fetch from JSON
 
   // Enrich features with images from blog posts if available
-  const featuresWithImages = await enrichFeaturesWithImages(config.features);
+  const featuresWithImages = await enrichFeaturesFromPosts(config.features);
 
   return (
     <main>

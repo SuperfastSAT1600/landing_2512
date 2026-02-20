@@ -1,87 +1,151 @@
 'use client';
 
-import { Icon } from '@iconify/react';
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import styles from './Features.module.css';
-import { ScrollReveal } from './ScrollReveal';
-
-
-
-export interface FeatureItem {
-    title: string;
-    description: string;
-    link: string;
-    image?: string;
-}
+import type { FeatureItem } from '@/lib/config';
 
 interface FeaturesProps {
     items: FeatureItem[];
 }
 
-import Link from 'next/link';
-
-const icons = [
-    'streamline:camera-video',
-    'streamline:computer-chip-1',
-    'streamline:graph-arrow-increase',
-    'streamline:help-question-1',
-    'streamline:book-reading',
-    'streamline:graph-bar-increase'
-];
-
-
+const FALLBACK_PALETTES = [
+    [styles.circle1_1, styles.circle2_1],
+    [styles.circle1_2, styles.circle2_2],
+    [styles.circle1_3, styles.circle2_3],
+] as const;
 
 export default function Features({ items }: FeaturesProps) {
+    const router = useRouter();
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(true);
+    const [warpIndex, setWarpIndex] = useState<number | null>(null);
+
+    const handleCardClick = (index: number, link: string) => {
+        if (warpIndex !== null) return;
+        setWarpIndex(index);
+        setTimeout(() => {
+            router.push(link);
+        }, 550);
+    };
+
+    const checkScroll = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        setCanScrollLeft(el.scrollLeft > 4);
+        setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+    }, []);
+
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        checkScroll();
+        el.addEventListener('scroll', checkScroll, { passive: true });
+        window.addEventListener('resize', checkScroll);
+        return () => {
+            el.removeEventListener('scroll', checkScroll);
+            window.removeEventListener('resize', checkScroll);
+        };
+    }, [checkScroll]);
+
+    const scroll = (direction: 'left' | 'right') => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const cardWidth = el.querySelector(`.${styles.card}`)?.clientWidth ?? 360;
+        const gap = 20;
+        const distance = cardWidth + gap;
+        el.scrollBy({ left: direction === 'left' ? -distance : distance, behavior: 'smooth' });
+    };
+
     return (
         <section className={styles.features}>
             <div className={styles.container}>
-                <ScrollReveal>
-                    <div className={styles.header}>
-                        <h2 className={styles.title}>왜 SuperfastSAT인가요?</h2>
-                        <p className={styles.subtitle}>
-                            단기간에 목표 점수를 달성하기 위한<br />
-                            모든 것이 준비되어 있습니다.
-                        </p>
-                    </div>
-                </ScrollReveal>
+                <div className={styles.header}>
+                    <h2 className={styles.sectionTitle}>
+                        왜 SuperfastSAT인가요?
+                    </h2>
 
-                <div className={styles.grid}>
-                    {items && items.map((feature, index) => {
-                        const iconName = icons[index % icons.length];
-                        return (
-                            <ScrollReveal key={index} delay={index * 0.05}>
-                                <Link href={feature.link || '#'} className={styles.card}>
-                                    <Icon icon="lucide:arrow-up-right" className={styles.actionIcon} width="28" height="28" />
+                    <motion.p
+                        className={styles.subtitle}
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true, margin: "0px 0px -60px 0px" }}
+                        transition={{ duration: 0.35, delay: 0.3 }}
+                    >
+                        단기간에 목표 점수를 달성하기 위한<br />
+                        모든 것이 준비되어 있습니다.
+                    </motion.p>
+                </div>
 
-                                    <div className={styles.imageContainer}>
+                {/* Carousel wrapper */}
+                <div className={styles.carouselWrapper}>
+                    {/* Navigation arrows */}
+                    <button
+                        className={`${styles.navBtn} ${styles.navBtnLeft} ${!canScrollLeft ? styles.navBtnHidden : ''}`}
+                        onClick={() => scroll('left')}
+                        aria-label="이전 카드"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </button>
+
+                    <button
+                        className={`${styles.navBtn} ${styles.navBtnRight} ${!canScrollRight ? styles.navBtnHidden : ''}`}
+                        onClick={() => scroll('right')}
+                        aria-label="다음 카드"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </button>
+
+                    <div className={styles.scrollRow} ref={scrollRef}>
+                        {items.map((feature, index) => {
+                            const [c1, c2] = FALLBACK_PALETTES[index % 3];
+                            const isWarping = warpIndex === index;
+                            const isSibling = warpIndex !== null && warpIndex !== index;
+                            return (
+                                <div
+                                    key={index}
+                                    className={`${styles.card} ${isWarping ? styles.cardWarp : ''} ${isSibling ? styles.cardFadeOut : ''}`}
+                                    onClick={() => handleCardClick(index, feature.link || '#')}
+                                >
+                                    {/* Background visual */}
+                                    <div className={styles.cardBg}>
                                         {feature.image ? (
                                             /* eslint-disable-next-line @next/next/no-img-element */
                                             <img
                                                 src={feature.image}
-                                                alt={feature.title}
-                                                className={styles.featureImage}
+                                                alt=""
+                                                className={styles.cardImage}
                                             />
                                         ) : (
-                                            <div className={styles.iconWrapper}>
-                                                <Icon
-                                                    icon={iconName}
-                                                    width="40"
-                                                    height="40"
-                                                    className={styles.featureIcon}
-                                                />
+                                            <div className={styles.cardVisualFallback}>
+                                                <div className={`${styles.circle} ${c1}`} />
+                                                <div className={`${styles.circle} ${c2}`} />
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className={styles.contentWrapper}>
-                                        <h3 className={styles.cardTitle}>{feature.title}</h3>
-                                        <p className={styles.cardDescription}>{feature.description}</p>
+                                    {/* Content overlay */}
+                                    <div className={styles.cardContent}>
+                                        <div className={styles.cardTextGrid}>
+                                            <div className={styles.cardIndex}>
+                                                {String(index + 1).padStart(2, '0')}
+                                            </div>
+                                            <h3 className={styles.cardTitle}>{feature.title}</h3>
+                                            <p className={styles.cardDescription}>{feature.description}</p>
+                                        </div>
                                     </div>
-                                </Link>
-                            </ScrollReveal>
-                        );
-                    })}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-            </div >
-        </section >
+            </div>
+        </section>
     );
 }

@@ -138,7 +138,7 @@ export default function ReviewWritePage() {
                                 <input
                                     type="text"
                                     className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-3 text-white outline-none placeholder-gray-600"
-                                    placeholder="예: 2달 만에 200점 올랐습니다!"
+                                    placeholder=""
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 />

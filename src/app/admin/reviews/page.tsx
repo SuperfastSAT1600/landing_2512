@@ -2,12 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Trash2, CheckCircle, XCircle, Star, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Trash2, CheckCircle, Star, EyeOff, Copy, Check } from 'lucide-react';
 import { ReviewData } from '@/lib/reviews-data'; // Only for type reference, actually fetches from API
 
 export default function AdminReviewsPage() {
     const [reviews, setReviews] = useState<ReviewData[]>([]);
     const [loading, setLoading] = useState(true);
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyLink = () => {
+        const url = window.location.origin + '/reviews/write';
+        navigator.clipboard.writeText(url).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
 
     useEffect(() => {
         fetchReviews();
@@ -15,7 +24,8 @@ export default function AdminReviewsPage() {
 
     const fetchReviews = async () => {
         try {
-            const res = await fetch('/api/reviews');
+            const adminKey = localStorage.getItem('admin_key') || '';
+            const res = await fetch('/api/reviews', { headers: { 'x-admin-key': adminKey } });
             const data = await res.json();
             if (data.success) {
                 setReviews(data.reviews);
@@ -37,9 +47,10 @@ export default function AdminReviewsPage() {
 
     const updateReview = async (id: string, updates: any) => {
         try {
+            const adminKey = localStorage.getItem('admin_key') || '';
             const res = await fetch('/api/reviews', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
                 body: JSON.stringify({ id, ...updates })
             });
             if (res.ok) fetchReviews();
@@ -51,7 +62,11 @@ export default function AdminReviewsPage() {
     const handleDelete = async (id: string) => {
         if (!confirm("정말 삭제하시겠습니까?")) return;
         try {
-            const res = await fetch(`/api/reviews?id=${id}`, { method: 'DELETE' });
+            const adminKey = localStorage.getItem('admin_key') || '';
+            const res = await fetch(`/api/reviews?id=${id}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-key': adminKey },
+            });
             if (res.ok) fetchReviews();
         } catch (e) {
             alert("Error deleting");
@@ -71,7 +86,24 @@ export default function AdminReviewsPage() {
                 </div>
             </header>
 
-            <main className="pt-24 pb-20 px-6 max-w-6xl mx-auto">
+            <main className="pt-24 pb-20 px-6 max-w-6xl mx-auto space-y-8">
+                {/* Share Link Card */}
+                <div className="p-5 bg-[#1e2023] rounded-2xl border border-white/5">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">고객 리뷰 링크</p>
+                    <div className="flex items-center gap-3">
+                        <span className="flex-1 bg-[#151719] border border-white/10 rounded-lg px-3 py-2 text-sm text-blue-400 truncate select-all">
+                            {typeof window !== 'undefined' ? window.location.origin : ''}/reviews/write
+                        </span>
+                        <button
+                            onClick={handleCopyLink}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all shrink-0 ${copied ? 'bg-green-600 text-white' : 'bg-white/10 hover:bg-white/20 text-gray-200'}`}
+                        >
+                            {copied ? <><Check size={14} /> 복사됨</> : <><Copy size={14} /> 복사</>}
+                        </button>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-2">이 링크를 고객에게 보내면 리뷰를 작성할 수 있습니다.</p>
+                </div>
+
                 <div className="grid gap-6">
                     {reviews.length === 0 ? (
                         <div className="text-center text-gray-500 py-10">No reviews submitted yet.</div>

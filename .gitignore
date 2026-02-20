@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# user-generated data (personal info & binary uploads)
+src/data/reviews.json
+public/uploads/
+# Added by setup script
+.env
+.env.local
+.env.*.local
+.mcp.json
+node_modules/
+dist/
+build/

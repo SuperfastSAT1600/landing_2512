@@ -11,8 +11,8 @@ interface TestimonialsProps {
 }
 
 export default function Testimonials({ reviews = [] }: TestimonialsProps) {
-    // Only show first 3 on landing page
-    const displayedReviews = reviews.slice(0, 3);
+    // Show first 6 on landing page (2 rows of 3)
+    const displayedReviews = reviews.slice(0, 6);
 
     return (
         <section className={styles.testimonials}>

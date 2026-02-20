@@ -14,6 +14,7 @@ function EditorContent() {
     const editId = searchParams.get('id');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const featureFileInputRef = useRef<HTMLInputElement>(null);
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -28,9 +29,12 @@ function EditorContent() {
 
     // SEO & Meta Data
     const [slug, setSlug] = useState('');
+    const [excerpt, setExcerpt] = useState('');
     const [description, setDescription] = useState('');
     const [tags, setTags] = useState('');
     const [featuredImage, setFeaturedImage] = useState('');
+    const [featureImage, setFeatureImage] = useState('');
+    const [ctaFeatured, setCtaFeatured] = useState(false);
 
     // UI States
     const [showSettings, setShowSettings] = useState(false); // Sidebar toggle
@@ -75,8 +79,11 @@ function EditorContent() {
                 setTitle(p.title); setSlug(p.id); setDate(p.date);
                 setCategory(p.category); setDescription(p.description || '');
                 setTags(Array.isArray(p.tags) ? p.tags.join(', ') : (p.tags || ''));
-                setFeaturedImage(p.featuredImage || ''); setContent(p.content || '');
+                setFeaturedImage(p.featuredImage || ''); setFeatureImage(p.featureImage || '');
+                setContent(p.content || '');
+                setExcerpt(p.excerpt || '');
                 setAuthor(p.author || 'SuperfastSAT');
+                setCtaFeatured(p.ctaFeatured === true);
             }
         } catch (e) { console.error(e); } finally { setLoading(false); }
     };
@@ -92,7 +99,7 @@ function EditorContent() {
                     'x-admin-key': localStorage.getItem('admin_key') || ''
                 },
                 body: JSON.stringify({
-                    originalId: editId, title, slug, date, category, content, description, tags, featuredImage, author
+                    originalId: editId, title, slug, date, category, content, excerpt, description, tags, featuredImage, featureImage, author, ctaFeatured
                 }),
             });
             const data = await res.json();
@@ -132,6 +139,28 @@ function EditorContent() {
 
     const triggerUpload = () => {
         fileInputRef.current?.click();
+    };
+
+    const handleFeatureImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                setFeatureImage(data.url);
+            } else {
+                alert('업로드 실패: ' + data.error);
+            }
+        } catch {
+            alert('업로드 중 오류 발생');
+        } finally {
+            setUploading(false);
+            if (featureFileInputRef.current) featureFileInputRef.current.value = '';
+        }
     };
 
     // Inline Image Upload Logic
@@ -275,6 +304,7 @@ function EditorContent() {
         <div className="min-h-screen bg-[#151719] text-[#E0E0E0] font-sans selection:bg-blue-500/30">
             {/* Hidden Input */}
             <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+            <input type="file" ref={featureFileInputRef} onChange={handleFeatureImageUpload} className="hidden" accept="image/*" />
 
             {/* Top Navigation (Ghost Style) */}
             <header className="fixed top-0 w-full h-16 flex items-center justify-between px-6 z-[100] bg-[#151719]/90 backdrop-blur-sm border-b border-white/5">
@@ -411,11 +441,26 @@ function EditorContent() {
                     </div>
 
                     <div className="space-y-8">
+                        {/* Excerpt */}
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                                <Search size={12} /> Excerpt
+                            </label>
+                            <textarea
+                                value={excerpt}
+                                onChange={(e) => setExcerpt(e.target.value)}
+                                placeholder="목록과 구글 검색결과에 표시될 1-2문장 요약..."
+                                rows={3}
+                                className="w-full bg-[#1e2023] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white resize-none outline-none"
+                            />
+                            <p className="text-[10px] text-right text-gray-600">{excerpt.length}/160</p>
+                        </div>
+
                         {/* Full Image URL Input */}
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1">
-                                    <ImageIcon size={12} /> Feature Image
+                                    <ImageIcon size={12} /> Blog Thumbnail
                                 </label>
                                 <button onClick={triggerUpload} className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-1">
                                     <UploadCloud size={12} /> Upload
@@ -428,6 +473,38 @@ function EditorContent() {
                                 placeholder="https://..."
                                 className="w-full bg-[#1e2023] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white placeholder-gray-600 transition-colors outline-none"
                             />
+                        </div>
+
+                        {/* Feature Card Image (세로 썸네일, 메인 카드용) */}
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                                    <ImageIcon size={12} /> Card Thumbnail
+                                </label>
+                                <button onClick={() => featureFileInputRef.current?.click()} className="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1">
+                                    <UploadCloud size={12} /> Upload
+                                </button>
+                            </div>
+                            {featureImage && (
+                                <div className="relative w-full rounded-lg overflow-hidden border border-white/10" style={{ aspectRatio: '3/5' }}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={featureImage} alt="Card thumbnail" className="w-full h-full object-cover" />
+                                    <button
+                                        onClick={() => setFeatureImage('')}
+                                        className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 transition-colors"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                </div>
+                            )}
+                            <input
+                                type="text"
+                                value={featureImage}
+                                onChange={(e) => setFeatureImage(e.target.value)}
+                                placeholder="세로 썸네일 URL (메인 Features 카드)"
+                                className="w-full bg-[#1e2023] border border-transparent focus:border-indigo-500 rounded px-3 py-2 text-sm text-white placeholder-gray-600 transition-colors outline-none"
+                            />
+                            <p className="text-[10px] text-gray-600">메인페이지 Features 카드에 표시됩니다. 비율: 3:5 세로</p>
                         </div>
 
                         {/* URL Slug */}
@@ -511,6 +588,28 @@ function EditorContent() {
                                 placeholder="SuperfastSAT"
                                 className="w-full bg-[#1e2023] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
                             />
+                        </div>
+
+                        {/* CTA Featured Toggle */}
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">플로팅 CTA 노출</label>
+                            <button
+                                type="button"
+                                onClick={() => setCtaFeatured(prev => !prev)}
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded border text-sm font-medium transition-colors ${
+                                    ctaFeatured
+                                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
+                                        : 'bg-[#1e2023] border-transparent text-gray-400 hover:border-white/10'
+                                }`}
+                            >
+                                <span>📌 랜딩 버튼에 이 글 표시</span>
+                                <span className={`w-8 h-4 rounded-full relative transition-colors ${ctaFeatured ? 'bg-indigo-500' : 'bg-gray-600'}`}>
+                                    <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${ctaFeatured ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                                </span>
+                            </button>
+                            {ctaFeatured && (
+                                <p className="text-[11px] text-indigo-400/80">저장 시 다른 포스팅의 CTA 노출이 자동 해제됩니다.</p>
+                            )}
                         </div>
 
                         <div className="pt-6 border-t border-white/10">

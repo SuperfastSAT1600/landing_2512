@@ -4,5 +4,6 @@ date: '2025-12-13'
 category: 입시뉴스
 featuredImage: /uploads/2025/12/1765631828272-113196110-____.png
 author: SuperfastSAT
+excerpt: 틀린 문제를 그냥 넘기면 같은 실수가 반복됩니다. 오답 분석이 SAT 점수를 올리는 가장 확실한 방법인 이유를 알아보세요.
 ---
 메뉴1

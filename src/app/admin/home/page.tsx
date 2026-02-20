@@ -3,20 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Save, Loader2, Link as LinkIcon } from 'lucide-react';
-
-interface FeatureItem {
-    title: string;
-    description: string;
-    link: string;
-}
-
-interface HomeConfig {
-    hero: {
-        ctaText: string;
-        ctaLink: string;
-    };
-    features: FeatureItem[];
-}
+import type { StoredFeatureItem, HomeConfig } from '@/lib/config';
 
 export default function AdminHomeConfig() {
     const [config, setConfig] = useState<HomeConfig | null>(null);
@@ -25,7 +12,8 @@ export default function AdminHomeConfig() {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        fetch('/api/admin/config')
+        const adminKey = localStorage.getItem('admin_key') || '';
+        fetch('/api/admin/config', { headers: { 'x-admin-key': adminKey } })
             .then(res => res.json())
             .then(data => {
                 setConfig(data);
@@ -41,9 +29,10 @@ export default function AdminHomeConfig() {
         if (!config) return;
         setSaving(true);
         try {
+            const adminKey = localStorage.getItem('admin_key') || '';
             const res = await fetch('/api/admin/config', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
                 body: JSON.stringify(config),
             });
             if (res.ok) {
@@ -59,7 +48,7 @@ export default function AdminHomeConfig() {
         }
     };
 
-    const updateFeature = (index: number, field: keyof FeatureItem, value: string) => {
+    const updateFeature = (index: number, field: keyof StoredFeatureItem, value: string) => {
         if (!config) return;
         const newFeatures = [...config.features];
         newFeatures[index] = { ...newFeatures[index], [field]: value };
@@ -126,6 +115,37 @@ export default function AdminHomeConfig() {
                     </div>
                 </section>
 
+                {/* Floating CTA Section */}
+                <section className="space-y-6">
+                    <h2 className="text-2xl font-bold border-b border-white/10 pb-4">Floating CTA — 할인 버튼</h2>
+                    <div className="grid gap-6 p-6 bg-[#1e2023] rounded-2xl border border-white/5">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">버튼 텍스트</label>
+                            <input
+                                type="text"
+                                className="w-full bg-[#151719] border border-white/10 rounded px-3 py-2 text-white focus:border-blue-500 outline-none transition-colors"
+                                value={config.floatingCta.discountLabel}
+                                onChange={(e) => setConfig({ ...config, floatingCta: { ...config.floatingCta, discountLabel: e.target.value } })}
+                                placeholder="여름방학 특강 할인"
+                            />
+                            <p className="text-xs text-gray-600 mt-2">🔥 앞에 표시될 텍스트 (비워두면 버튼 숨김)</p>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">연결 포스트 Slug</label>
+                            <input
+                                type="text"
+                                className="w-full bg-[#151719] border border-white/10 rounded px-3 py-2 text-blue-400 focus:border-blue-500 outline-none transition-colors"
+                                value={config.floatingCta.discountPostSlug}
+                                onChange={(e) => setConfig({ ...config, floatingCta: { ...config.floatingCta, discountPostSlug: e.target.value } })}
+                                placeholder="summer-special-2025"
+                            />
+                            {config.floatingCta.discountPostSlug && (
+                                <p className="text-xs text-gray-600 mt-2">/blog/{config.floatingCta.discountPostSlug}</p>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
                 {/* Features Section */}
                 <section className="space-y-6">
                     <h2 className="text-2xl font-bold border-b border-white/10 pb-4">Features (6 Boxes)</h2>
@@ -151,14 +171,15 @@ export default function AdminHomeConfig() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Link</label>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Post Slug</label>
                                     <input
                                         type="text"
                                         className="w-full bg-[#151719] border border-white/10 rounded px-2 py-1.5 text-blue-400 focus:border-blue-500 outline-none text-sm"
-                                        value={feature.link}
-                                        onChange={(e) => updateFeature(idx, 'link', e.target.value)}
-                                        placeholder="/blog/..."
+                                        value={feature.postSlug}
+                                        onChange={(e) => updateFeature(idx, 'postSlug', e.target.value)}
+                                        placeholder="score-perfect-800"
                                     />
+                                    <p className="text-xs text-gray-600 mt-1">/blog/{feature.postSlug || '...'}</p>
                                 </div>
                             </div>
                         ))}

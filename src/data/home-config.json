@@ -1,38 +1,42 @@
 {
     "hero": {
         "ctaText": "25년 11월 시험 목표달성 학생 인터뷰",
-        "ctaLink": "http://localhost:3000/blog/sat-nov25-score-interview"
+        "ctaLink": "/blog/sat-nov25-score-interview"
     },
     "features": [
         {
+            "postSlug": "one-one",
             "title": "일대일 라이브 온라인 수업",
-            "description": "오프라인보다 더 몰입도 높은 수업을 제공합니다.",
-            "link": "http://localhost:3000/blog/score-perfect-800"
+            "description": "오프라인보다 더 몰입도 높은 수업을 제공합니다."
         },
         {
+            "postSlug": "sat-need-custom-curriculum",
             "title": "맞춤형 커리큘럼",
-            "description": "진단 테스트 실시 후 맞춤형 커리큘럼으로 수업합니다.",
-            "link": "http://localhost:3000/blog/sat-need-custom-curriculum"
+            "description": "진단 테스트 실시 후 맞춤형 커리큘럼으로 수업합니다."
         },
         {
+            "postSlug": "why-superfastsat-uses-ai-for-monitoring",
             "title": "AI 밀착 모니터링",
-            "description": "실시간 숙제 결과를 AI가 선생님에게 전부 리포팅합니다.",
-            "link": "http://localhost:3000/blog/why-superfastsat-uses-ai-for-monitoring"
+            "description": "실시간 숙제 결과를 AI가 선생님에게 전부 리포팅합니다."
         },
         {
+            "postSlug": "sat-highscore-with-cb",
             "title": "Collegeboard 미러링 문제",
-            "description": "1만 개+ 문제들로 실전 감각을 빈틈 없이 채워보세요.",
-            "link": "http://localhost:3000/blog/sat-highscore-with-cb"
+            "description": "1만 개+ 문제들로 실전 감각을 빈틈 없이 채워보세요."
         },
         {
+            "postSlug": "sat-score-gain-from-mistakes",
             "title": "단어 및 오답 학습 관리",
-            "description": "부족한 단어와 문제 관리도 빈틈없이 진행됩니다.",
-            "link": "http://localhost:3000/blog/sat-score-gain-from-mistakes"
+            "description": "부족한 단어와 문제 관리도 빈틈없이 진행됩니다."
         },
         {
+            "postSlug": "sat-class-feedback-reasons",
             "title": "학습 리포트 제공",
-            "description": "수업 계획 및 학습 결과를 실시간으로 확인할 수 있습니다.",
-            "link": "http://localhost:3000/blog/sat-class-feedback-reasons"
+            "description": "수업 계획 및 학습 결과를 실시간으로 확인할 수 있습니다."
         }
-    ]
+    ],
+    "floatingCta": {
+        "discountLabel": "할인 혜택 보기",
+        "discountPostSlug": ""
+    }
 }

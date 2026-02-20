@@ -13,6 +13,7 @@ export interface PostData {
     category: string;
     excerpt?: string;
     featuredImage?: string;
+    featureImage?: string;
     description?: string;
     author?: string;
     tags?: string[];
@@ -47,6 +48,7 @@ export function getSortedPostsData(): PostData[] {
                 category: string;
                 excerpt?: string;
                 featuredImage?: string;
+                featureImage?: string;
                 description?: string;
                 tags?: string[];
             }),

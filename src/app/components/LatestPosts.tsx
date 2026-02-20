@@ -1,12 +1,11 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import { Clock } from 'lucide-react';
 import styles from './LatestPosts.module.css';
 import { ScrollReveal } from './ScrollReveal';
 import { getSortedPostsData } from '../../lib/posts';
 
 export default function LatestPosts() {
-    const allPosts = getSortedPostsData();
-    const latestPosts = allPosts.slice(0, 3); // Top 3
+    const latestPosts = getSortedPostsData();
 
     return (
         <section className={styles.section}>
@@ -14,44 +13,45 @@ export default function LatestPosts() {
                 <ScrollReveal>
                     <div className={styles.header}>
                         <h2 className={styles.title}>SAT학습 자료 및 입시 소식</h2>
-                        <Link href="/blog" className={styles.viewAll}>전체 보기</Link>
                     </div>
                 </ScrollReveal>
 
-                <div className={styles.grid}>
+                <div className={styles.list}>
                     {latestPosts.map((post) => (
-                        <ScrollReveal key={post.id}>
-                            <Link href={`/blog/${post.id}`} className={styles.card}>
-                                {/* Top Half: Image */}
-                                <div className={styles.cardImageContainer}>
-                                    {post.featuredImage ? (
-                                        /* eslint-disable-next-line @next/next/no-img-element */
-                                        <img
-                                            src={post.featuredImage}
-                                            alt={post.title}
-                                            className={styles.cardInfoImage}
-                                        />
-                                    ) : (
-                                        /* Abstract Fallback for no image */
-                                        <div className={styles.cardVisualFallback}>
-                                            <div className={`${styles.circle} ${styles.circle1}`} />
-                                            <div className={`${styles.circle} ${styles.circle2}`} />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Bottom Half: Content */}
-                                <div className={styles.cardContent}>
-                                    <div className={styles.metaRow}>
-                                        <span className={styles.category}>{post.category || 'SAT Tips'}</span>
-                                        <span className={styles.separator}>|</span>
-                                        <span className={styles.source}>{post.author || 'SuperfastSAT'}</span>
+                        <Link key={post.id} href={`/blog/${post.id}`} className={styles.item}>
+                            {/* Thumbnail */}
+                            <div className={styles.thumbnail}>
+                                {post.featuredImage ? (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img
+                                        src={post.featuredImage}
+                                        alt={post.title}
+                                        className={styles.thumbnailImage}
+                                    />
+                                ) : (
+                                    <div className={styles.thumbnailFallback}>
+                                        <span>Aa</span>
                                     </div>
-                                    <h3 className={styles.cardTitle}>{post.title}</h3>
-                                    <p className={styles.date}>{post.date}</p>
+                                )}
+                            </div>
+
+                            {/* Content */}
+                            <div className={styles.content}>
+                                <div className={styles.meta}>
+                                    <span className={styles.categoryBadge}>{post.category || 'SAT Tips'}</span>
                                 </div>
-                            </Link>
-                        </ScrollReveal>
+                                <h3 className={styles.postTitle}>{post.title}</h3>
+                                <p className={styles.excerpt}>
+                                    {post.excerpt || post.description || '자세한 내용을 확인해보세요...'}
+                                </p>
+                                <div className={styles.footer}>
+                                    <span className={styles.date}>
+                                        <Clock size={12} />
+                                        {post.date}
+                                    </span>
+                                </div>
+                            </div>
+                        </Link>
                     ))}
                 </div>
             </div>

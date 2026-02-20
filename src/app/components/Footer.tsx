@@ -10,9 +10,9 @@ export default function Footer() {
                     <div className={styles.brand}>
 
                         <div className={styles.companyInfo}>
-                            <p className={styles.companyName}>Argonaut AI Inc.</p>
+                            <p className={styles.companyName}>Argonaut AI TutoringLab</p>
                             <p>Email : cs@argonautai.co.kr</p>
-                            <p>Company Address : 302, 21 Samgae-ro, Mapo-gu, Seoul, Republic of Korea</p>
+                            <p>Company Address : 201-A45, 46, Mapo-daero 4na-gil, Mapo-gu, Seoul, Republic of Korea</p>
                             <p>Business registration number : 564-85-03129</p>
                             <p>Online Business Registration Number : 2026-서울마포-0000호</p>
                             <p>Contact : 02-6956-0061</p>

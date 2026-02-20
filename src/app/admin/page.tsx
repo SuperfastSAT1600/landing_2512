@@ -34,7 +34,9 @@ export default function AdminPage() {
 
     const fetchPosts = async () => {
         try {
-            const res = await fetch('/api/admin/posts');
+            const res = await fetch('/api/admin/posts', {
+                headers: { 'x-admin-key': localStorage.getItem('admin_key') || '' }
+            });
             const data = await res.json();
             if (data.success) {
                 setPosts(data.posts);
@@ -59,6 +61,7 @@ export default function AdminPage() {
             if (data.success) {
                 setIsAuthenticated(true);
                 localStorage.setItem('admin_auth', 'true');
+                localStorage.setItem('admin_key', password);
                 fetchPosts();
             } else {
                 alert('비밀번호가 틀렸습니다.');
@@ -73,7 +76,10 @@ export default function AdminPage() {
         if (!confirm('정말 삭제하시겠습니까? 복구할 수 없습니다.')) return;
 
         try {
-            const res = await fetch(`/api/admin/posts?id=${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/admin/posts?id=${id}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-key': localStorage.getItem('admin_key') || '' }
+            });
             if (res.ok) {
                 fetchPosts(); // Refresh
             } else {

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import styles from './Header.module.css';
+import LiveStatus from './LiveStatus';
 
 export default function Header() {
     const [scrolled, setScrolled] = useState(false);
@@ -59,6 +60,7 @@ export default function Header() {
                     </Link>
                 </nav>
             </div>
+            <LiveStatus />
         </header>
     );
 }
