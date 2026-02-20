@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (password === VALID_PASSWORD) {
-            return NextResponse.json({ success: true });
+            return NextResponse.json({ success: true, apiKey: process.env.ADMIN_SECRET_KEY });
         } else {
             return NextResponse.json({ success: false, message: "Invalid password" }, { status: 401 });
         }

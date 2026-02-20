@@ -61,7 +61,7 @@ export default function AdminPage() {
             if (data.success) {
                 setIsAuthenticated(true);
                 localStorage.setItem('admin_auth', 'true');
-                localStorage.setItem('admin_key', password);
+                localStorage.setItem('admin_key', data.apiKey || password);
                 fetchPosts();
             } else {
                 alert('비밀번호가 틀렸습니다.');
