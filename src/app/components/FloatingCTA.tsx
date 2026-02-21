@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import styles from './FloatingCTA.module.css';
 import { useLiveStatus } from '../context/LiveStatusContext';
-import ConsultModal from './ConsultModal';
 
-const KAKAO_URL = "#"; // Replace with actual KakaoTalk channel URL
+const CONSULT_URL = "https://forms.gle/BsGf1bixgpr1TLNH6";
+const KAKAO_URL = "https://kakao-redirect-chi.vercel.app/?src=writerB_260221_튜터링_랜딩_페이지";
 
 interface DiscountButton {
     label: string;
@@ -16,7 +16,6 @@ interface DiscountButton {
 
 export default function FloatingCTA() {
     const [isVisible, setIsVisible] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [discount, setDiscount] = useState<DiscountButton | null>(null);
     const pathname = usePathname();
     const { pushMessage } = useLiveStatus();
@@ -37,10 +36,8 @@ export default function FloatingCTA() {
     if (pathname?.startsWith('/reviews/write')) return null;
     if (!isVisible) return null;
 
-    const handleConsult = () => setIsModalOpen(true);
-
-    const handleModalSuccess = () => {
-        pushMessage({ text: '*** 님이 상담 예약을 신청하셨습니다', type: 'green' });
+    const handleConsult = () => {
+        window.open(CONSULT_URL, '_blank', 'noopener,noreferrer');
     };
 
     const handleKakao = () => {
@@ -71,12 +68,6 @@ export default function FloatingCTA() {
                 </div>
             </div>
 
-            {isModalOpen && (
-                <ConsultModal
-                    onClose={() => setIsModalOpen(false)}
-                    onSuccess={handleModalSuccess}
-                />
-            )}
         </>
     );
 }
