@@ -121,7 +121,7 @@ function EditorContent() {
         formData.append('file', file);
 
         try {
-            const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+            const res = await fetch('/api/admin/upload', { method: 'POST', headers: { 'x-admin-key': localStorage.getItem('admin_key') || '' }, body: formData });
             const data = await res.json();
             if (data.success) {
                 setFeaturedImage(data.url);
@@ -148,7 +148,7 @@ function EditorContent() {
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+            const res = await fetch('/api/admin/upload', { method: 'POST', headers: { 'x-admin-key': localStorage.getItem('admin_key') || '' }, body: formData });
             const data = await res.json();
             if (data.success) {
                 setFeatureImage(data.url);
@@ -185,7 +185,7 @@ function EditorContent() {
         formData.append('file', file);
 
         try {
-            const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+            const res = await fetch('/api/admin/upload', { method: 'POST', headers: { 'x-admin-key': localStorage.getItem('admin_key') || '' }, body: formData });
             const data = await res.json();
 
             if (data.success) {

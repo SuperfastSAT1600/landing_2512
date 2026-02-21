@@ -14,7 +14,10 @@ export default function AdminHomeConfig() {
     useEffect(() => {
         const adminKey = localStorage.getItem('admin_key') || '';
         fetch('/api/admin/config', { headers: { 'x-admin-key': adminKey } })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Unauthorized');
+                return res.json();
+            })
             .then(data => {
                 setConfig(data);
                 setLoading(false);

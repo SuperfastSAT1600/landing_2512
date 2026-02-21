@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { ChevronRight } from 'lucide-react';
 import styles from './Features.module.css';
 import type { FeatureItem } from '@/lib/config';
 
@@ -138,6 +139,10 @@ export default function Features({ items }: FeaturesProps) {
                                             </div>
                                             <h3 className={styles.cardTitle}>{feature.title}</h3>
                                             <p className={styles.cardDescription}>{feature.description}</p>
+                                        </div>
+                                        <div className={styles.learnMore}>
+                                            자세히 알아보기
+                                            <ChevronRight size={14} />
                                         </div>
                                     </div>
                                 </div>

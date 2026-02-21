@@ -17,7 +17,6 @@ interface DiscountButton {
 export default function FloatingCTA() {
     const [isVisible, setIsVisible] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [claimedCount] = useState(14);
     const [discount, setDiscount] = useState<DiscountButton | null>(null);
     const pathname = usePathname();
     const { pushMessage } = useLiveStatus();
@@ -56,15 +55,9 @@ export default function FloatingCTA() {
                     {/* Discount Announcement */}
                     {discount && (
                         <Link href={`/blog/${discount.slug}`} className={styles.announcementLink}>
-                            🔥 {discount.label}
+                            {discount.label}
                         </Link>
                     )}
-
-                    {/* Tooltip Bubble */}
-                    <div className={styles.bubble}>
-                        현재 <span className={styles.highlightCount}>{claimedCount}</span>명 할인 혜택 수령!
-                        <div className={styles.bubbleArrow}></div>
-                    </div>
 
                     {/* Button Group */}
                     <div className={styles.buttonGroup}>

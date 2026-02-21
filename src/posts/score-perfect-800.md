@@ -2,9 +2,10 @@
 title: 일대일 라이브 수업이 SAT에서 왜 중요할까요?
 date: '2025-01-15'
 category: SAT RW
+excerpt: 'Desmos 활용법, 숫자 대입 전략, 오답 정리까지 — SAT 수학 고득점을 위한 핵심 전략을 구체적으로 안내합니다.'
 featuredImage: /uploads/2025/12/1765630929820-538672260-_________.png
+featureImage: /uploads/2026/02/1771660577316-0d105176-_____.png
 author: Brian
-excerpt: Desmos 활용법, 숫자 대입 전략, 오답 정리까지 — SAT 수학 고득점을 위한 핵심 전략을 구체적으로 안내합니다.
 ---
 
 ## Understanding the Digital SAT Math Section
