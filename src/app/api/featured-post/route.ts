@@ -3,7 +3,7 @@ import { getHomeConfig } from '@/lib/config';
 
 export async function GET() {
     try {
-        const config = getHomeConfig();
+        const config = await getHomeConfig();
         const { discountLabel, discountPostSlug } = config.floatingCta;
 
         if (!discountPostSlug) {

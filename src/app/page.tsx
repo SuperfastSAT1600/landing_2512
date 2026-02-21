@@ -6,16 +6,14 @@ import Footer from './components/Footer';
 
 import { getHomeConfig } from '@/lib/config';
 import { getPublishedReviews } from '@/lib/reviews-data';
-
-
-
 import { enrichFeaturesFromPosts } from '@/lib/features';
 
-export default async function Home() {
-  const config = getHomeConfig();
-  const reviews = getPublishedReviews(); // Fetch from JSON
+export const revalidate = 60;
 
-  // Enrich features with images from blog posts if available
+export default async function Home() {
+  const config = await getHomeConfig();
+  const reviews = getPublishedReviews();
+
   const featuresWithImages = await enrichFeaturesFromPosts(config.features);
 
   return (
@@ -25,11 +23,8 @@ export default async function Home() {
         ctaLink={config.hero.ctaLink}
       />
       <Features items={featuresWithImages} />
-      {/* English Curtain (Curriculum) Removed. Replaced with Customer Reviews First */}
       <Testimonials reviews={reviews} />
-      {/* Blog Posts (Toss Style) */}
       <LatestPosts />
-
       <Footer />
     </main>
   );
