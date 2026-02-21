@@ -41,7 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # user-generated data (personal info & binary uploads)
-public/uploads/
+# public/uploads/ — tracked in git for deployment
 # Added by setup script
 .env
 .env.local
