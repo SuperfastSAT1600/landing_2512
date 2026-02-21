@@ -4,8 +4,8 @@ import styles from './LatestPosts.module.css';
 import { ScrollReveal } from './ScrollReveal';
 import { getSortedPostsData } from '../../lib/posts';
 
-export default function LatestPosts() {
-    const latestPosts = getSortedPostsData();
+export default async function LatestPosts() {
+    const latestPosts = await getSortedPostsData();
 
     return (
         <section className={styles.section}>

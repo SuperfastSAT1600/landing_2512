@@ -1,14 +1,16 @@
 import Link from 'next/link';
 import { getPostData, getAllPostIds, getRelatedPosts } from '../../../lib/posts';
 import Footer from '../../components/Footer';
-import { ChevronLeft, Calendar, Tag, ArrowLeft } from 'lucide-react';
+import { Calendar, Tag, ArrowLeft } from 'lucide-react';
+
+export const revalidate = 60;
 
 interface Props {
     params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-    const paths = getAllPostIds();
+    const paths = await getAllPostIds();
     return paths.map((path) => ({
         slug: path.params.slug,
     }));
@@ -16,20 +18,24 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props) {
     const { slug } = await params;
-    const postData = await getPostData(slug);
-    return {
-        title: `${postData.title} | SuperfastSAT Blog`,
-        description: postData.description || postData.excerpt,
-        openGraph: {
-            images: postData.featuredImage ? [postData.featuredImage] : undefined,
-        },
-    };
+    try {
+        const postData = await getPostData(slug);
+        return {
+            title: `${postData.title} | SuperfastSAT Blog`,
+            description: postData.description || postData.excerpt,
+            openGraph: {
+                images: postData.featuredImage ? [postData.featuredImage] : undefined,
+            },
+        };
+    } catch {
+        return { title: 'Post | SuperfastSAT Blog' };
+    }
 }
 
 export default async function Post({ params }: Props) {
     const { slug } = await params;
     const postData = await getPostData(slug);
-    const relatedPosts = getRelatedPosts(slug, postData.category, 3);
+    const relatedPosts = await getRelatedPosts(slug, postData.category, 3);
 
     return (
         <div className="bg-[#151719] min-h-screen text-gray-200 font-sans selection:bg-blue-500/30">

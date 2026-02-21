@@ -1,77 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-
-// Define the content directory
-const postsDirectory = path.join(process.cwd(), 'src/posts');
-
-// Ensure directory exists
-if (!fs.existsSync(postsDirectory)) {
-    fs.mkdirSync(postsDirectory, { recursive: true });
-}
-
-// ... imports
-
-export async function GET(request: NextRequest) {
-    if (!isAuthenticated(request)) {
-        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    try {
-        const { searchParams } = new URL(request.url);
-        const queryId = searchParams.get('id');
-
-        // ... (rest of the logic remains the same, but for brevity I am replacing the block)
-        // Case 1: Fetch Single Post (With Content)
-        if (queryId) {
-            const fullPath = path.join(postsDirectory, `${queryId}.md`);
-            if (fs.existsSync(fullPath)) {
-                const fileContents = fs.readFileSync(fullPath, 'utf8');
-                const matterResult = matter(fileContents);
-                return NextResponse.json({
-                    success: true,
-                    post: {
-                        id: queryId,
-                        ...matterResult.data,
-                        content: matterResult.content
-                    }
-                });
-            } else {
-                return NextResponse.json({ success: false, error: "Post not found" }, { status: 404 });
-            }
-        }
-
-        // Case 2: Fetch List (Metadata Only)
-        // Ensure directory exists for listing
-        if (!fs.existsSync(postsDirectory)) {
-            return NextResponse.json({ success: true, posts: [] });
-        }
-
-        const fileNames = fs.readdirSync(postsDirectory);
-        const posts = fileNames.map((fileName) => {
-            const id = fileName.replace(/\.md$/, '');
-            const fullPath = path.join(postsDirectory, fileName);
-            const fileContents = fs.readFileSync(fullPath, 'utf8');
-            const matterResult = matter(fileContents);
-
-            return {
-                id,
-                ...matterResult.data,
-            };
-        });
-
-        // Sort by date descending
-        posts.sort((a: any, b: any) => (a.date < b.date ? 1 : -1));
-
-        return NextResponse.json({ success: true, posts });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: "Failed to fetch posts" }, { status: 500 });
-    }
-}
-
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-
-// ... existing code ...
+import { isAuthenticated } from '@/lib/server-auth';
+import { supabaseAdmin } from '@/lib/supabase';
 
 const optionalStr = z.string().optional().or(z.literal('').transform(() => undefined)).or(z.null().transform(() => undefined));
 
@@ -90,6 +21,73 @@ const PostSchema = z.object({
     originalId: optionalStr,
     ctaFeatured: z.boolean().optional().or(z.null().transform(() => undefined)),
 });
+
+export async function GET(request: NextRequest) {
+    if (!isAuthenticated(request)) {
+        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    try {
+        const { searchParams } = new URL(request.url);
+        const queryId = searchParams.get('id');
+
+        if (queryId) {
+            const { data, error } = await supabaseAdmin
+                .from('posts')
+                .select('*')
+                .eq('id', queryId)
+                .single();
+
+            if (error || !data) {
+                return NextResponse.json({ success: false, error: "Post not found" }, { status: 404 });
+            }
+
+            return NextResponse.json({
+                success: true,
+                post: {
+                    id: data.id,
+                    title: data.title,
+                    date: data.date,
+                    category: data.category,
+                    excerpt: data.excerpt,
+                    description: data.description,
+                    featuredImage: data.featured_image,
+                    featureImage: data.feature_image,
+                    author: data.author,
+                    tags: Array.isArray(data.tags) ? data.tags.join(', ') : (data.tags || ''),
+                    ctaFeatured: data.cta_featured,
+                    content: data.content,
+                }
+            });
+        }
+
+        const { data, error } = await supabaseAdmin
+            .from('posts')
+            .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags, cta_featured')
+            .order('date', { ascending: false });
+
+        if (error) {
+            return NextResponse.json({ success: false, error: "Failed to fetch posts" }, { status: 500 });
+        }
+
+        const posts = (data || []).map((row) => ({
+            id: row.id,
+            title: row.title,
+            date: row.date,
+            category: row.category,
+            excerpt: row.excerpt,
+            description: row.description,
+            featuredImage: row.featured_image,
+            featureImage: row.feature_image,
+            author: row.author,
+            tags: row.tags,
+            ctaFeatured: row.cta_featured,
+        }));
+
+        return NextResponse.json({ success: true, posts });
+    } catch {
+        return NextResponse.json({ success: false, error: "Failed to fetch posts" }, { status: 500 });
+    }
+}
 
 export async function POST(request: NextRequest) {
     if (!isAuthenticated(request)) {
@@ -119,70 +117,62 @@ export async function POST(request: NextRequest) {
             ctaFeatured,
         } = validation.data;
 
-        // Determine final slug: Provided > or Original > or Generated from Title
+        // Determine final slug: Provided > Original > Generated from Title
         let finalSlug = providedSlug || originalId;
 
         if (!finalSlug) {
             finalSlug = title
                 .toLowerCase()
                 .replace(/ /g, '-')
-                .replace(/[^\w-]+/g, ''); // Basic sanitization for auto-generated slug
+                .replace(/[^\w-]+/g, '');
         }
 
-        // Final Safety Check on Slug (Double-check)
         if (!/^[a-z0-9-]+$/.test(finalSlug)) {
             return NextResponse.json({ success: false, error: "Invalid slug format generated" }, { status: 400 });
         }
 
-        const fileName = finalSlug + '.md';
-        const fullPath = path.join(postsDirectory, fileName);
-
-        // Prevent directory traversal (redundant check if regex passes, but good for defense in depth)
-        if (fileName.includes('..') || fileName.includes('/') || fileName.includes('\\')) {
-            return NextResponse.json({ success: false, error: "Invalid filename" }, { status: 400 });
-        }
-
-        // Rename logic: If originalId exists AND differs from finalSlug, rename (delete old)
+        // Handle rename: delete old record if ID changed
         if (originalId && originalId !== finalSlug) {
-            const oldPath = path.join(postsDirectory, `${originalId}.md`);
-            if (fs.existsSync(oldPath)) {
-                fs.unlinkSync(oldPath);
-            }
+            await supabaseAdmin.from('posts').delete().eq('id', originalId);
         }
 
-        // If this post is being set as CTA featured, clear it from all other posts first
+        // If setting as CTA featured, clear it from all other posts first
         if (ctaFeatured === true) {
-            const allFiles = fs.readdirSync(postsDirectory).filter(f => f.endsWith('.md'));
-            for (const f of allFiles) {
-                const fSlug = f.replace(/\.md$/, '');
-                if (fSlug === finalSlug) continue;
-                const fPath = path.join(postsDirectory, f);
-                const fContents = fs.readFileSync(fPath, 'utf8');
-                const parsed = matter(fContents);
-                if (parsed.data.ctaFeatured === true) {
-                    delete parsed.data.ctaFeatured;
-                    fs.writeFileSync(fPath, matter.stringify(parsed.content, parsed.data), 'utf8');
-                }
-            }
+            await supabaseAdmin
+                .from('posts')
+                .update({ cta_featured: false })
+                .eq('cta_featured', true)
+                .neq('id', finalSlug);
         }
 
-        const frontMatter: any = {
-            title,
-            date,
-            category,
-        };
+        const tagsArray = tags ? tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [];
 
-        if (excerpt) frontMatter.excerpt = excerpt;
-        if (description) frontMatter.description = description;
-        if (tags) frontMatter.tags = tags.split(',').map((t: string) => t.trim());
-        if (featuredImage) frontMatter.featuredImage = featuredImage;
-        if (featureImage) frontMatter.featureImage = featureImage;
-        if (author) frontMatter.author = author;
-        if (ctaFeatured === true) frontMatter.ctaFeatured = true;
+        const { error } = await supabaseAdmin
+            .from('posts')
+            .upsert({
+                id: finalSlug,
+                title,
+                date: date || new Date().toISOString().slice(0, 10),
+                category,
+                excerpt: excerpt || null,
+                description: description || null,
+                featured_image: featuredImage || null,
+                feature_image: featureImage || null,
+                author: author || 'SuperfastSAT',
+                tags: tagsArray,
+                content: content || '',
+                cta_featured: ctaFeatured === true,
+                updated_at: new Date().toISOString(),
+            });
 
-        const fileContent = matter.stringify(content, frontMatter);
+        if (error) {
+            console.error("Supabase upsert error:", error);
+            return NextResponse.json({ success: false, error: "Failed to save post" }, { status: 500 });
+        }
 
-        fs.writeFileSync(fullPath, fileContent, 'utf8');
+        revalidatePath('/blog');
+        revalidatePath('/');
+        revalidatePath(`/blog/${finalSlug}`);
 
         return NextResponse.json({ success: true, id: finalSlug });
 
@@ -208,27 +198,22 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ success: false, error: "Invalid post ID" }, { status: 400 });
         }
 
-        const fullPath = path.join(postsDirectory, `${id}.md`);
+        const { error } = await supabaseAdmin
+            .from('posts')
+            .delete()
+            .eq('id', id);
 
-        if (fs.existsSync(fullPath)) {
-            fs.unlinkSync(fullPath);
-            return NextResponse.json({ success: true });
-        } else {
-            return NextResponse.json({ success: false, error: "File not found" }, { status: 404 });
+        if (error) {
+            return NextResponse.json({ success: false, error: "Failed to delete post" }, { status: 500 });
         }
 
-    } catch (error) {
+        revalidatePath('/blog');
+        revalidatePath('/');
+        revalidatePath(`/blog/${id}`);
+
+        return NextResponse.json({ success: true });
+
+    } catch {
         return NextResponse.json({ success: false, error: "Failed to delete post" }, { status: 500 });
     }
-}
-
-function isAuthenticated(request: NextRequest): boolean {
-    const authHeader = request.headers.get('x-admin-key');
-    const secretKey = process.env.ADMIN_SECRET_KEY;
-    // Security: If no secret key is set in env, fail closed (secure by default)
-    if (!secretKey) {
-        console.error("Admin API blocked: ADMIN_SECRET_KEY is not set in environment.");
-        return false;
-    }
-    return authHeader === secretKey;
 }

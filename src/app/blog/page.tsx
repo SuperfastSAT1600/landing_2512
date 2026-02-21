@@ -2,13 +2,15 @@ import { getSortedPostsData } from '../../lib/posts';
 import Footer from '../components/Footer';
 import BlogList from './BlogList';
 
+export const revalidate = 60;
+
 export default async function Blog({
     searchParams,
 }: {
     searchParams: Promise<{ category?: string }>;
 }) {
     const { category } = await searchParams;
-    const allPostsData = getSortedPostsData();
+    const allPostsData = await getSortedPostsData();
 
     // Filter logic
     const filteredPosts = category

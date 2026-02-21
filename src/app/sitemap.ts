@@ -1,9 +1,9 @@
 import { MetadataRoute } from 'next';
 import { getSortedPostsData } from '../lib/posts';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-    const posts = getSortedPostsData();
-    const baseUrl = 'https://www.satmasterclass.com'; // Replace with actual domain
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    const posts = await getSortedPostsData();
+    const baseUrl = 'https://www.satmasterclass.com';
 
     const blogPosts = posts.map((post) => ({
         url: `${baseUrl}/blog/${post.id}`,

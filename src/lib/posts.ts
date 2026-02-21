@@ -1,10 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
+import { supabase } from './supabase';
 import { remark } from 'remark';
 import html from 'remark-html';
-
-const postsDirectory = path.join(process.cwd(), 'src/posts');
 
 export interface PostData {
     id: string;
@@ -18,91 +14,74 @@ export interface PostData {
     author?: string;
     tags?: string[];
     contentHtml?: string;
+    ctaFeatured?: boolean;
     [key: string]: any;
 }
 
-export function getSortedPostsData(): PostData[] {
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(postsDirectory)) {
-        fs.mkdirSync(postsDirectory, { recursive: true });
-    }
-
-    const fileNames = fs.readdirSync(postsDirectory);
-    const allPostsData = fileNames.map((fileName) => {
-        // Remove ".md" from file name to get id
-        const id = fileName.replace(/\.md$/, '');
-
-        // Read markdown file as string
-        const fullPath = path.join(postsDirectory, fileName);
-        const fileContents = fs.readFileSync(fullPath, 'utf8');
-
-        // Use gray-matter to parse the post metadata section
-        const matterResult = matter(fileContents);
-
-        // Combine the data with the id
-        return {
-            id,
-            ...(matterResult.data as {
-                date: string;
-                title: string;
-                category: string;
-                excerpt?: string;
-                featuredImage?: string;
-                featureImage?: string;
-                description?: string;
-                tags?: string[];
-            }),
-        };
-    });
-    // Sort posts by date
-    return allPostsData.sort((a, b) => {
-        if (a.date < b.date) {
-            return 1;
-        } else {
-            return -1;
-        }
-    });
-}
-
-export function getAllPostIds() {
-    if (!fs.existsSync(postsDirectory)) {
-        return [];
-    }
-    const fileNames = fs.readdirSync(postsDirectory);
-    return fileNames.map((fileName) => {
-        return {
-            params: {
-                slug: fileName.replace(/\.md$/, ''),
-            },
-        };
-    });
-}
-
-export async function getPostData(id: string): Promise<PostData> {
-    const fullPath = path.join(postsDirectory, `${id}.md`);
-    const fileContents = fs.readFileSync(fullPath, 'utf8');
-
-    // Use gray-matter to parse the post metadata section
-    const matterResult = matter(fileContents);
-
-    // Use remark to convert markdown into HTML string
-    const processedContent = await remark()
-        .use(html)
-        .process(matterResult.content);
-    const contentHtml = processedContent.toString();
-
-    // Combine the data with the id and contentHtml
+function mapRow(row: Record<string, unknown>): PostData {
     return {
-        id,
-        contentHtml,
-        ...(matterResult.data as { date: string; title: string; category: string; excerpt: string }),
+        id: row.id as string,
+        title: row.title as string,
+        date: row.date as string,
+        category: row.category as string,
+        excerpt: row.excerpt as string | undefined,
+        description: row.description as string | undefined,
+        featuredImage: row.featured_image as string | undefined,
+        featureImage: row.feature_image as string | undefined,
+        author: row.author as string | undefined,
+        tags: row.tags as string[] | undefined,
+        ctaFeatured: row.cta_featured as boolean | undefined,
     };
 }
 
-export function getRelatedPosts(currentId: string, category: string, limit: number = 3): PostData[] {
-    const allPosts = getSortedPostsData();
-    return allPosts
-        .filter(post => post.category === category && post.id !== currentId)
-        .slice(0, limit);
+export async function getSortedPostsData(): Promise<PostData[]> {
+    const { data, error } = await supabase
+        .from('posts')
+        .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags, cta_featured')
+        .order('date', { ascending: false });
+
+    if (error || !data) return [];
+    return data.map(mapRow);
 }
 
+export async function getAllPostIds() {
+    const { data, error } = await supabase
+        .from('posts')
+        .select('id');
+
+    if (error || !data) return [];
+    return data.map((row) => ({ params: { slug: row.id as string } }));
+}
+
+export async function getPostData(id: string): Promise<PostData> {
+    const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error || !data) throw new Error(`Post not found: ${id}`);
+
+    const processedContent = await remark()
+        .use(html)
+        .process((data.content as string) || '');
+    const contentHtml = processedContent.toString();
+
+    return {
+        ...mapRow(data),
+        contentHtml,
+    };
+}
+
+export async function getRelatedPosts(currentId: string, category: string, limit: number = 3): Promise<PostData[]> {
+    const { data, error } = await supabase
+        .from('posts')
+        .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags')
+        .eq('category', category)
+        .neq('id', currentId)
+        .order('date', { ascending: false })
+        .limit(limit);
+
+    if (error || !data) return [];
+    return data.map(mapRow);
+}

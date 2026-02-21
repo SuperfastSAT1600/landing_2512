@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { isAuthenticated } from '@/lib/server-auth';
+import { supabaseAdmin } from '@/lib/supabase';
 
 const ALLOWED_MIME_TYPES = new Set([
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
@@ -31,26 +30,34 @@ export async function POST(request: NextRequest) {
 
         const buffer = Buffer.from(await file.arrayBuffer());
 
-        // Create directory structure: public/uploads/YYYY/MM
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads', `${year}`, `${month}`);
-
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
 
         const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const uniqueSuffix = `${Date.now()}-${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
         const filename = `${uniqueSuffix}-${safeName}`;
-        const filePath = path.join(uploadDir, filename);
+        const storagePath = `${year}/${month}/${filename}`;
 
-        fs.writeFileSync(filePath, buffer);
+        const { error } = await supabaseAdmin.storage
+            .from('uploads')
+            .upload(storagePath, buffer, {
+                contentType: file.type,
+                upsert: false,
+            });
 
-        const publicUrl = `/uploads/${year}/${month}/${filename}`;
+        if (error) {
+            console.error("Storage upload error:", error);
+            return NextResponse.json({ success: false, error: "Upload failed" }, { status: 500 });
+        }
+
+        const { data: { publicUrl } } = supabaseAdmin.storage
+            .from('uploads')
+            .getPublicUrl(storagePath);
+
         return NextResponse.json({ success: true, url: publicUrl });
     } catch (error) {
+        console.error("Upload error:", error);
         return NextResponse.json({ success: false, error: "Upload failed" }, { status: 500 });
     }
 }

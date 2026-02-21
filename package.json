@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@iconify/react": "^6.0.2",
+    "@supabase/supabase-js": "^2.97.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.25",
     "gray-matter": "^4.0.3",
@@ -40,6 +41,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.41.0",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.1",
@@ -47,22 +49,21 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^4.0.0",
     "autoprefixer": "^10.4.22",
+    "depcheck": "^1.4.7",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
-    "jsdom": "^27.3.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5",
-    "vitest": "^4.0.16",
-    "prettier": "^3.2.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.0",
-    "@vitest/coverage-v8": "^4.0.0",
-    "@playwright/test": "^1.41.0",
-    "depcheck": "^1.4.7",
+    "jsdom": "^27.3.0",
+    "license-checker": "^25.0.1",
+    "postcss": "^8.5.6",
+    "prettier": "^3.2.0",
+    "tailwindcss": "^3.4.17",
     "ts-prune": "^0.10.3",
-    "license-checker": "^25.0.1"
+    "typescript": "^5",
+    "vitest": "^4.0.16"
   },
   "engines": {
     "node": ">=18.0.0"
