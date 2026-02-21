@@ -6,10 +6,10 @@ import { LiveStatusProvider } from './context/LiveStatusContext';
 
 export const metadata: Metadata = {
   title: "SAT 목표 점수에 가장 빠르게 | SuperfastSAT",
-  description: "SAT목표 점수 달성, 저희와 만들어 드립니다",
+  description: "SAT목표 점수, 저희가 만들어 드립니다",
   openGraph: {
     title: "SAT 목표 점수에 가장 빠르게",
-    description: "SAT목표 점수 달성, 저희와 만들어 드립니다",
+    description: "SAT목표 점수, 저희가 만들어 드립니다",
     images: ["/og-image.png"],
   }
 };
