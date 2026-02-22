@@ -38,7 +38,7 @@ function EditorContent() {
 
     // UI States
     const [showSettings, setShowSettings] = useState(false);
-    const [showPreview, setShowPreview] = useState(false);
+    const [viewMode, setViewMode] = useState<'edit' | 'split' | 'preview'>('edit');
     const [renderedHtml, setRenderedHtml] = useState('');
 
     useEffect(() => {
@@ -68,7 +68,7 @@ function EditorContent() {
 
     // Markdown preview rendering
     useEffect(() => {
-        if (!showPreview) return;
+        if (viewMode === 'edit') return;
         let cancelled = false;
         (async () => {
             const { remark } = await import('remark');
@@ -77,7 +77,7 @@ function EditorContent() {
             if (!cancelled) setRenderedHtml(processed.toString());
         })();
         return () => { cancelled = true; };
-    }, [showPreview, content]);
+    }, [viewMode, content]);
 
     const loadPost = async (id: string) => {
         setLoading(true);
@@ -323,10 +323,32 @@ function EditorContent() {
         });
     };
 
+    const insertYoutube = () => {
+        const url = window.prompt('YouTube URL:', 'https://www.youtube.com/watch?v=');
+        if (!url) return;
+        const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+        if (!match) { alert('올바른 YouTube URL이 아닙니다.'); return; }
+        const videoId = match[1];
+        const embed = `\n<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;margin:1.5rem 0"><iframe src="https://www.youtube.com/embed/${videoId}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen loading="lazy"></iframe></div>\n`;
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        setContent(c => c.substring(0, start) + embed + c.substring(start));
+        requestAnimationFrame(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + embed.length, start + embed.length);
+        });
+    };
+
     // ─── Slash Command Logic ───────────────────────────────────────────────────
 
     const [showSlashMenu, setShowSlashMenu] = useState(false);
     const [slashMenuIndex, setSlashMenuIndex] = useState(0);
+    const YouTubeSVG = () => (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+    );
     const slashOptions = [
         { label: 'Heading 1', icon: <span className="font-bold text-xs">H1</span>, action: () => insertMarkdown('# ') },
         { label: 'Heading 2', icon: <span className="font-bold text-xs">H2</span>, action: () => insertMarkdown('## ') },
@@ -338,6 +360,7 @@ function EditorContent() {
         { label: 'Divider', icon: <Minus size={16} />, action: () => insertMarkdown('\n---\n') },
         { label: 'Table', icon: <span className="text-xs font-mono">⊞</span>, action: () => { setShowSlashMenu(false); insertTable(); } },
         { label: 'Image', icon: <ImageIcon size={18} />, action: () => { setShowSlashMenu(false); inlineFileInputRef.current?.click(); } },
+        { label: 'YouTube', icon: <YouTubeSVG />, action: () => { setShowSlashMenu(false); insertYoutube(); } },
     ];
 
     const insertMarkdown = (syntax: string) => {
@@ -456,12 +479,22 @@ function EditorContent() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setShowPreview(!showPreview)}
-                        className="text-gray-400 hover:text-white px-3 py-1.5 text-sm font-medium transition-colors"
-                    >
-                        {showPreview ? 'Edit' : 'Preview'}
-                    </button>
+                    {/* 3-state view mode segment control */}
+                    <div className="flex items-center bg-white/5 rounded-lg p-0.5 gap-0">
+                        <button
+                            onClick={() => setViewMode('edit')}
+                            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${viewMode === 'edit' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
+                        >Edit</button>
+                        <button
+                            onClick={() => setViewMode('split')}
+                            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${viewMode === 'split' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
+                            title="Split view"
+                        >⣿</button>
+                        <button
+                            onClick={() => setViewMode('preview')}
+                            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${viewMode === 'preview' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
+                        >Preview</button>
+                    </div>
 
                     <button
                         onClick={handleSave}
@@ -480,7 +513,7 @@ function EditorContent() {
             </header>
 
             {/* Formatting Toolbar */}
-            {!showPreview && (
+            {viewMode !== 'preview' && (
                 <div className={`fixed top-16 w-full z-[90] bg-[#151719]/95 backdrop-blur-sm border-b border-white/5 flex items-center gap-0.5 px-4 h-11 transition-all duration-300 ${showSettings ? 'pr-[332px]' : ''}`}>
                     {/* Inline formatting */}
                     <button
@@ -582,6 +615,15 @@ function EditorContent() {
                         title="Insert image"
                         className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
                     ><ImageIcon size={14} /></button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertYoutube(); }}
+                        title="YouTube 영상 삽입"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                    </button>
                 </div>
             )}
 
@@ -609,73 +651,144 @@ function EditorContent() {
             )}
 
             {/* Main Content Area */}
-            <main className={`pt-44 pb-32 transition-all duration-300 ${showSettings ? 'mr-[320px]' : ''}`}>
-                {!showPreview ? (
-                    <div className="max-w-3xl mx-auto px-6">
-                        {/* Feature Image */}
-                        {!featuredImage ? (
-                            <button
-                                onClick={triggerUpload}
-                                className="group flex items-center gap-2 text-gray-500 hover:text-gray-300 mb-8 transition-colors text-sm font-medium"
-                                disabled={uploading}
-                            >
-                                {uploading ? 'Uploading...' : <><ImageIcon size={18} /> Add feature image</>}
-                            </button>
-                        ) : (
-                            <div
-                                className="relative w-full h-64 mb-10 rounded-xl overflow-hidden cursor-pointer group border border-white/10"
-                                onClick={() => setShowSettings(true)}
-                            >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={featuredImage} alt="Feature" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity text-white text-sm font-bold">
-                                    <span className="bg-black/50 px-3 py-1 rounded-full"><UploadCloud size={16} className="inline mr-2" />Change</span>
+            {viewMode === 'split' ? (
+                <div className={`fixed left-0 right-0 top-[108px] bottom-0 flex transition-all duration-300 ${showSettings ? 'mr-[320px]' : ''}`}>
+                    {/* Left: Editor */}
+                    <div className="w-1/2 overflow-y-auto border-r border-white/10">
+                        <div className="max-w-xl mx-auto px-6 py-8">
+                            {/* Feature Image */}
+                            {!featuredImage ? (
+                                <button
+                                    onClick={triggerUpload}
+                                    className="group flex items-center gap-2 text-gray-500 hover:text-gray-300 mb-8 transition-colors text-sm font-medium"
+                                    disabled={uploading}
+                                >
+                                    {uploading ? 'Uploading...' : <><ImageIcon size={18} /> Add feature image</>}
+                                </button>
+                            ) : (
+                                <div
+                                    className="relative w-full h-48 mb-8 rounded-xl overflow-hidden cursor-pointer group border border-white/10"
+                                    onClick={() => setShowSettings(true)}
+                                >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={featuredImage} alt="Feature" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity text-white text-sm font-bold">
+                                        <span className="bg-black/50 px-3 py-1 rounded-full"><UploadCloud size={16} className="inline mr-2" />Change</span>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* Title Input */}
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Post title"
-                            className="w-full bg-transparent text-5xl font-bold placeholder-gray-600 border-none outline-none mb-8 leading-tight focus:ring-0"
-                        />
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Post title"
+                                className="w-full bg-transparent text-4xl font-bold placeholder-gray-600 border-none outline-none mb-6 leading-tight focus:ring-0"
+                            />
 
-                        {/* Body Textarea */}
-                        <textarea
-                            ref={textareaRef}
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            onPaste={handlePaste}
-                            onDrop={handleDrop}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Begin writing your story..."
-                            className="w-full bg-transparent text-xl text-gray-300 placeholder-gray-600 border-none outline-none resize-none font-serif leading-relaxed min-h-[50vh] focus:ring-0"
-                            style={{ overflow: 'hidden' }}
-                        />
+                            <textarea
+                                ref={textareaRef}
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                onPaste={handlePaste}
+                                onDrop={handleDrop}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Begin writing your story..."
+                                className="w-full bg-transparent text-lg text-gray-300 placeholder-gray-600 border-none outline-none resize-none font-serif leading-relaxed min-h-[60vh] focus:ring-0"
+                                style={{ overflow: 'hidden' }}
+                            />
+                        </div>
                     </div>
-                ) : (
-                    // Preview Mode
-                    <div className="max-w-3xl mx-auto px-6">
-                        {featuredImage && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={featuredImage} alt="Cover" className="rounded-xl mb-8 w-full h-64 object-cover" />
-                        )}
-                        <h1 className="text-4xl font-bold text-white mb-8">{title || 'Untitled Post'}</h1>
-                        <div
-                            className="prose prose-invert prose-lg max-w-none
-                                prose-headings:font-bold prose-headings:text-white
-                                prose-a:text-blue-400 prose-code:bg-white/5
-                                prose-pre:bg-[#1e2023] prose-blockquote:border-l-blue-500
-                                prose-table:border-collapse prose-th:border prose-td:border
-                                prose-th:border-white/10 prose-td:border-white/10"
-                            dangerouslySetInnerHTML={{ __html: renderedHtml || '<p class="text-gray-600">No content...</p>' }}
-                        />
+
+                    {/* Right: Live Preview */}
+                    <div className="w-1/2 overflow-y-auto bg-[#1a1d1f]">
+                        <div className="max-w-xl mx-auto px-6 py-8">
+                            {featuredImage && (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={featuredImage} alt="Cover" className="rounded-xl mb-6 w-full h-48 object-cover" />
+                            )}
+                            <h1 className="text-4xl font-bold text-white mb-6">{title || 'Untitled'}</h1>
+                            <div
+                                className="prose prose-invert prose-lg max-w-none
+                                    prose-headings:font-bold prose-headings:text-white
+                                    prose-a:text-blue-400 prose-code:bg-white/5
+                                    prose-pre:bg-[#1e2023] prose-blockquote:border-l-blue-500
+                                    prose-table:border-collapse prose-th:border prose-td:border
+                                    prose-th:border-white/10 prose-td:border-white/10"
+                                dangerouslySetInnerHTML={{ __html: renderedHtml || '<p class="text-gray-600">No content yet...</p>' }}
+                            />
+                        </div>
                     </div>
-                )}
-            </main>
+                </div>
+            ) : (
+                <main className={`pt-44 pb-32 transition-all duration-300 ${showSettings ? 'mr-[320px]' : ''}`}>
+                    {viewMode === 'edit' ? (
+                        <div className="max-w-3xl mx-auto px-6">
+                            {/* Feature Image */}
+                            {!featuredImage ? (
+                                <button
+                                    onClick={triggerUpload}
+                                    className="group flex items-center gap-2 text-gray-500 hover:text-gray-300 mb-8 transition-colors text-sm font-medium"
+                                    disabled={uploading}
+                                >
+                                    {uploading ? 'Uploading...' : <><ImageIcon size={18} /> Add feature image</>}
+                                </button>
+                            ) : (
+                                <div
+                                    className="relative w-full h-64 mb-10 rounded-xl overflow-hidden cursor-pointer group border border-white/10"
+                                    onClick={() => setShowSettings(true)}
+                                >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={featuredImage} alt="Feature" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity text-white text-sm font-bold">
+                                        <span className="bg-black/50 px-3 py-1 rounded-full"><UploadCloud size={16} className="inline mr-2" />Change</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Title Input */}
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Post title"
+                                className="w-full bg-transparent text-5xl font-bold placeholder-gray-600 border-none outline-none mb-8 leading-tight focus:ring-0"
+                            />
+
+                            {/* Body Textarea */}
+                            <textarea
+                                ref={textareaRef}
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                onPaste={handlePaste}
+                                onDrop={handleDrop}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Begin writing your story..."
+                                className="w-full bg-transparent text-xl text-gray-300 placeholder-gray-600 border-none outline-none resize-none font-serif leading-relaxed min-h-[50vh] focus:ring-0"
+                                style={{ overflow: 'hidden' }}
+                            />
+                        </div>
+                    ) : (
+                        // Preview Mode
+                        <div className="max-w-3xl mx-auto px-6">
+                            {featuredImage && (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={featuredImage} alt="Cover" className="rounded-xl mb-8 w-full h-64 object-cover" />
+                            )}
+                            <h1 className="text-4xl font-bold text-white mb-8">{title || 'Untitled Post'}</h1>
+                            <div
+                                className="prose prose-invert prose-lg max-w-none
+                                    prose-headings:font-bold prose-headings:text-white
+                                    prose-a:text-blue-400 prose-code:bg-white/5
+                                    prose-pre:bg-[#1e2023] prose-blockquote:border-l-blue-500
+                                    prose-table:border-collapse prose-th:border prose-td:border
+                                    prose-th:border-white/10 prose-td:border-white/10"
+                                dangerouslySetInnerHTML={{ __html: renderedHtml || '<p class="text-gray-600">No content...</p>' }}
+                            />
+                        </div>
+                    )}
+                </main>
+            )}
 
             {/* Ghost-style Settings Sidebar */}
             <aside

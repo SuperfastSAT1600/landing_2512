@@ -60,14 +60,9 @@ export default async function Post({ params }: Props) {
                         </div>
                     </div>
 
-                    {/* Title */}
-                    <h1 className="text-4xl md:text-6xl font-extrabold text-white text-center mb-8 leading-tight">
-                        {postData.title}
-                    </h1>
-
                     {/* Featured Image */}
                     {postData.featuredImage && (
-                        <div className="w-full aspect-video rounded-2xl overflow-hidden mb-12 border border-white/5 shadow-2xl">
+                        <div className="w-full aspect-video rounded-2xl overflow-hidden mb-10 border border-white/5 shadow-2xl">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={postData.featuredImage}
@@ -76,6 +71,11 @@ export default async function Post({ params }: Props) {
                             />
                         </div>
                     )}
+
+                    {/* Title */}
+                    <h1 className="text-4xl md:text-6xl font-extrabold text-white text-center mb-12 leading-tight">
+                        {postData.title}
+                    </h1>
 
                     {/* Content */}
                     <div className="prose prose-invert prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-a:text-blue-400 prose-img:rounded-xl">
