@@ -420,5 +420,10 @@
     }
   ],
   "thinkingEnabled": true,
-  "autoAcceptEdits": false
+  "autoAcceptEdits": false,
+  "permissions": {
+    "allow": [
+      "Bash(npx next build:*)"
+    ]
+  }
 }

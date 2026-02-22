@@ -50,3 +50,4 @@ next-env.d.ts
 node_modules/
 dist/
 build/
+.claude/settings.local.json
