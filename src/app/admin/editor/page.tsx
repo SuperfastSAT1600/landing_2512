@@ -3,10 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, X, LayoutTemplate, Image as ImageIcon, Settings, Eye, Globe, Search, Hash, UploadCloud } from 'lucide-react';
+import { ArrowLeft, X, LayoutTemplate, Image as ImageIcon, Globe, Search, Hash, UploadCloud, Link2, Minus } from 'lucide-react';
 
 import { Suspense } from 'react';
-// ... existing imports ...
 
 function EditorContent() {
     const router = useRouter();
@@ -15,6 +14,7 @@ function EditorContent() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const featureFileInputRef = useRef<HTMLInputElement>(null);
+    const inlineFileInputRef = useRef<HTMLInputElement>(null);
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -37,18 +37,17 @@ function EditorContent() {
     const [ctaFeatured, setCtaFeatured] = useState(false);
 
     // UI States
-    const [showSettings, setShowSettings] = useState(false); // Sidebar toggle
-    const [showPreview, setShowPreview] = useState(false);   // Preview toggle
+    const [showSettings, setShowSettings] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
+    const [renderedHtml, setRenderedHtml] = useState('');
 
     useEffect(() => {
         // Auth Check
         const key = localStorage.getItem('admin_key');
         if (!key) {
-            // Simple prompt for now
             const input = prompt("Enter Admin API Key:");
             if (input) {
                 localStorage.setItem('admin_key', input);
-                // Reload to apply
                 window.location.reload();
             } else {
                 router.push('/');
@@ -66,6 +65,19 @@ function EditorContent() {
             textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
         }
     }, [content]);
+
+    // Markdown preview rendering
+    useEffect(() => {
+        if (!showPreview) return;
+        let cancelled = false;
+        (async () => {
+            const { remark } = await import('remark');
+            const html = (await import('remark-html')).default;
+            const processed = await remark().use(html, { allowDangerousHtml: true }).process(content || '');
+            if (!cancelled) setRenderedHtml(processed.toString());
+        })();
+        return () => { cancelled = true; };
+    }, [showPreview, content]);
 
     const loadPost = async (id: string) => {
         setLoading(true);
@@ -104,7 +116,7 @@ function EditorContent() {
             });
             const data = await res.json();
             if (data.success) {
-                alert('발행되었습니다.'); // "Published"
+                alert('발행되었습니다.');
                 if (!editId) router.push(`/admin/editor?id=${data.id}`);
             } else {
                 alert('오류: ' + data.error);
@@ -125,7 +137,6 @@ function EditorContent() {
             const data = await res.json();
             if (data.success) {
                 setFeaturedImage(data.url);
-                // Dont necessarily open settings, just show it
             } else {
                 alert('업로드 실패: ' + data.error);
             }
@@ -167,7 +178,6 @@ function EditorContent() {
     const handleInlineUpload = async (file: File) => {
         if (!file.type.startsWith('image/')) return;
 
-        // Insert "Uploading..." placeholder
         const placeholder = `![Uploading ${file.name}...]()...`;
         const textarea = textareaRef.current;
         if (!textarea) return;
@@ -179,7 +189,6 @@ function EditorContent() {
         const newContentWithPlaceholder = oldContent.substring(0, start) + placeholder + oldContent.substring(end);
         setContent(newContentWithPlaceholder);
 
-        // Upload
         setUploading(true);
         const formData = new FormData();
         formData.append('file', file);
@@ -189,16 +198,15 @@ function EditorContent() {
             const data = await res.json();
 
             if (data.success) {
-                // Replace placeholder with actual markdown
                 const finalMarkdown = `![${file.name}](${data.url})`;
                 setContent(prev => prev.replace(placeholder, finalMarkdown));
             } else {
                 alert('이미지 업로드 실패: ' + data.error);
-                setContent(prev => prev.replace(placeholder, '')); // Remove placeholder
+                setContent(prev => prev.replace(placeholder, ''));
             }
         } catch (e) {
             alert('이미지 업로드 중 오류 발생');
-            setContent(prev => prev.replace(placeholder, '')); // Remove placeholder
+            setContent(prev => prev.replace(placeholder, ''));
         } finally {
             setUploading(false);
         }
@@ -227,15 +235,109 @@ function EditorContent() {
         }
     };
 
-    // Slash Command Logic
+    // ─── Formatting Helper Functions ───────────────────────────────────────────
+
+    const wrapSelected = (prefix: string, suffix: string) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = content.substring(start, end);
+        const newContent = content.substring(0, start) + prefix + selected + suffix + content.substring(end);
+        setContent(newContent);
+        requestAnimationFrame(() => {
+            textarea.focus();
+            if (selected) {
+                textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+            } else {
+                textarea.setSelectionRange(start + prefix.length, start + prefix.length);
+            }
+        });
+    };
+
+    const insertAtLineStart = (prefix: string) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const text = content;
+        const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+        const lineText = text.substring(lineStart);
+        let newContent: string;
+        let newCursor: number;
+        if (lineText.startsWith(prefix)) {
+            newContent = text.substring(0, lineStart) + lineText.substring(prefix.length);
+            newCursor = Math.max(lineStart, start - prefix.length);
+        } else {
+            newContent = text.substring(0, lineStart) + prefix + lineText;
+            newCursor = start + prefix.length;
+        }
+        setContent(newContent);
+        requestAnimationFrame(() => {
+            textarea.focus();
+            textarea.setSelectionRange(newCursor, newCursor);
+        });
+    };
+
+    const insertCodeBlock = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const snippet = '\n```\ncode here\n```\n';
+        const newContent = content.substring(0, start) + snippet + content.substring(start);
+        setContent(newContent);
+        requestAnimationFrame(() => {
+            textarea.focus();
+            const codeStart = start + 5; // after '\n```\n'
+            textarea.setSelectionRange(codeStart, codeStart + 9); // select 'code here'
+        });
+    };
+
+    const insertLink = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = content.substring(start, end);
+        const url = window.prompt('URL을 입력하세요:', 'https://');
+        if (!url) return;
+        const text = selected || 'link text';
+        const markdown = `[${text}](${url})`;
+        const newContent = content.substring(0, start) + markdown + content.substring(end);
+        setContent(newContent);
+        requestAnimationFrame(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + markdown.length, start + markdown.length);
+        });
+    };
+
+    const insertTable = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const table = '\n| Header 1 | Header 2 | Header 3 |\n| --- | --- | --- |\n| Cell | Cell | Cell |\n| Cell | Cell | Cell |\n';
+        const newContent = content.substring(0, start) + table + content.substring(start);
+        setContent(newContent);
+        requestAnimationFrame(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + table.length, start + table.length);
+        });
+    };
+
+    // ─── Slash Command Logic ───────────────────────────────────────────────────
+
     const [showSlashMenu, setShowSlashMenu] = useState(false);
     const [slashMenuIndex, setSlashMenuIndex] = useState(0);
     const slashOptions = [
-        { label: 'Heading 1', icon: <Hash size={18} />, action: () => insertMarkdown('# ') },
-        { label: 'Heading 2', icon: <Hash size={16} />, action: () => insertMarkdown('## ') },
-        { label: 'Bullet List', icon: <div className="w-4 h-4 rounded-full border border-current flex items-center justify-center"><div className="w-1 h-1 bg-current rounded-full" /></div>, action: () => insertMarkdown('- ') },
+        { label: 'Heading 1', icon: <span className="font-bold text-xs">H1</span>, action: () => insertMarkdown('# ') },
+        { label: 'Heading 2', icon: <span className="font-bold text-xs">H2</span>, action: () => insertMarkdown('## ') },
+        { label: 'Heading 3', icon: <span className="font-bold text-xs">H3</span>, action: () => insertMarkdown('### ') },
+        { label: 'Bullet List', icon: <span className="text-base">•</span>, action: () => insertMarkdown('- ') },
+        { label: 'Numbered List', icon: <span className="text-xs font-mono">1.</span>, action: () => insertMarkdown('1. ') },
         { label: 'Quote', icon: <div className="text-lg font-serif italic">"</div>, action: () => insertMarkdown('> ') },
-        { label: 'Image', icon: <ImageIcon size={18} />, action: () => triggerUpload() }, // Re-use upload trigger
+        { label: 'Code Block', icon: <span className="font-mono text-xs">{`</>`}</span>, action: () => { setShowSlashMenu(false); insertCodeBlock(); } },
+        { label: 'Divider', icon: <Minus size={16} />, action: () => insertMarkdown('\n---\n') },
+        { label: 'Table', icon: <span className="text-xs font-mono">⊞</span>, action: () => { setShowSlashMenu(false); insertTable(); } },
+        { label: 'Image', icon: <ImageIcon size={18} />, action: () => { setShowSlashMenu(false); inlineFileInputRef.current?.click(); } },
     ];
 
     const insertMarkdown = (syntax: string) => {
@@ -246,15 +348,11 @@ function EditorContent() {
         const end = textarea.selectionEnd;
         const oldContent = content;
 
-        // Remove the "/" that triggered the menu if it exists right before cursor
-        // We assume the menu was triggered by "/"
-        // Logic: Replace the last "/" before cursor with the syntax
         const beforeCursor = oldContent.substring(0, start);
         if (beforeCursor.endsWith('/')) {
             const newContent = beforeCursor.slice(0, -1) + syntax + oldContent.substring(end);
             setContent(newContent);
         } else {
-            // Just insert
             const newContent = oldContent.substring(0, start) + syntax + oldContent.substring(end);
             setContent(newContent);
         }
@@ -278,23 +376,52 @@ function EditorContent() {
                 e.preventDefault();
                 setShowSlashMenu(false);
             } else {
-                // Any other key closes menu for now to keep it simple
                 setShowSlashMenu(false);
             }
-        } else {
-            if (e.key === '/') {
-                // Check if it's the start of line or preceded by space (simple check)
-                const textarea = textareaRef.current;
-                if (textarea) {
-                    const cursor = textarea.selectionStart;
-                    const textBefore = textarea.value.substring(0, cursor);
-                    const lastLine = textBefore.split('\n').pop() || '';
+            return;
+        }
 
-                    // Trigger if line is empty (start of new block)
-                    if (lastLine.trim() === '') {
-                        setShowSlashMenu(true);
-                        setSlashMenuIndex(0);
-                    }
+        // Keyboard shortcuts
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key === 'b' || e.key === 'B') {
+                e.preventDefault();
+                wrapSelected('**', '**');
+                return;
+            }
+            if (e.key === 'i' || e.key === 'I') {
+                e.preventDefault();
+                wrapSelected('*', '*');
+                return;
+            }
+            if (e.key === 'k' || e.key === 'K') {
+                e.preventDefault();
+                insertLink();
+                return;
+            }
+        }
+
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+            const start = textarea.selectionStart;
+            const newContent = content.substring(0, start) + '  ' + content.substring(start);
+            setContent(newContent);
+            requestAnimationFrame(() => {
+                textarea.setSelectionRange(start + 2, start + 2);
+            });
+            return;
+        }
+
+        if (e.key === '/') {
+            const textarea = textareaRef.current;
+            if (textarea) {
+                const cursor = textarea.selectionStart;
+                const textBefore = textarea.value.substring(0, cursor);
+                const lastLine = textBefore.split('\n').pop() || '';
+                if (lastLine.trim() === '') {
+                    setShowSlashMenu(true);
+                    setSlashMenuIndex(0);
                 }
             }
         }
@@ -302,17 +429,27 @@ function EditorContent() {
 
     return (
         <div className="min-h-screen bg-[#151719] text-[#E0E0E0] font-sans selection:bg-blue-500/30">
-            {/* Hidden Input */}
+            {/* Hidden Inputs */}
             <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
             <input type="file" ref={featureFileInputRef} onChange={handleFeatureImageUpload} className="hidden" accept="image/*" />
+            <input
+                type="file"
+                ref={inlineFileInputRef}
+                onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleInlineUpload(file);
+                    if (inlineFileInputRef.current) inlineFileInputRef.current.value = '';
+                }}
+                className="hidden"
+                accept="image/*"
+            />
 
-            {/* Top Navigation (Ghost Style) */}
+            {/* Top Navigation */}
             <header className="fixed top-0 w-full h-16 flex items-center justify-between px-6 z-[100] bg-[#151719]/90 backdrop-blur-sm border-b border-white/5">
                 <div className="flex items-center gap-4">
                     <Link href="/admin" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-medium">
                         <ArrowLeft size={16} /> Posts
                     </Link>
-                    <span className="text-gray-700">|</span>
                     <span className="text-gray-700">|</span>
                     <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20">{category}</span>
                     <span className="text-gray-400 text-sm font-medium italic">{saving ? 'Saving...' : 'Draft'}</span>
@@ -342,7 +479,113 @@ function EditorContent() {
                 </div>
             </header>
 
-            {/* Slash Command Menu Overlay (Command Palette Style) */}
+            {/* Formatting Toolbar */}
+            {!showPreview && (
+                <div className={`fixed top-16 w-full z-[90] bg-[#151719]/95 backdrop-blur-sm border-b border-white/5 flex items-center gap-0.5 px-4 h-11 transition-all duration-300 ${showSettings ? 'pr-[332px]' : ''}`}>
+                    {/* Inline formatting */}
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); wrapSelected('**', '**'); }}
+                        title="Bold (Ctrl+B)"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors font-bold text-sm"
+                    >B</button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); wrapSelected('*', '*'); }}
+                        title="Italic (Ctrl+I)"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors italic text-sm"
+                    >I</button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); wrapSelected('~~', '~~'); }}
+                        title="Strikethrough"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors line-through text-sm"
+                    >S</button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); wrapSelected('`', '`'); }}
+                        title="Inline code"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors font-mono text-xs"
+                    >{`\`c\``}</button>
+
+                    <div className="w-px h-5 bg-white/10 mx-1" />
+
+                    {/* Headings */}
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertAtLineStart('# '); }}
+                        title="Heading 1"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors text-xs font-bold"
+                    >H1</button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertAtLineStart('## '); }}
+                        title="Heading 2"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors text-xs font-bold"
+                    >H2</button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertAtLineStart('### '); }}
+                        title="Heading 3"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors text-xs font-bold"
+                    >H3</button>
+
+                    <div className="w-px h-5 bg-white/10 mx-1" />
+
+                    {/* Block elements */}
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertAtLineStart('> '); }}
+                        title="Blockquote"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors font-serif italic text-base"
+                    >&ldquo;</button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertCodeBlock(); }}
+                        title="Code block"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors font-mono text-xs"
+                    >{`</>`}</button>
+
+                    <div className="w-px h-5 bg-white/10 mx-1" />
+
+                    {/* Lists */}
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertAtLineStart('- '); }}
+                        title="Bullet list"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors text-base"
+                    >•</button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertAtLineStart('1. '); }}
+                        title="Numbered list"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors font-mono text-xs"
+                    >1.</button>
+
+                    <div className="w-px h-5 bg-white/10 mx-1" />
+
+                    {/* Insert */}
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertLink(); }}
+                        title="Link (Ctrl+K)"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    ><Link2 size={14} /></button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); setContent(c => { const textarea = textareaRef.current; if (!textarea) return c; const start = textarea.selectionStart; return c.substring(0, start) + '\n---\n' + c.substring(start); }); requestAnimationFrame(() => textareaRef.current?.focus()); }}
+                        title="Horizontal rule"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors font-bold text-sm"
+                    >—</button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); insertTable(); }}
+                        title="Table"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="3" y1="9" x2="21" y2="9"/>
+                            <line x1="3" y1="15" x2="21" y2="15"/>
+                            <line x1="9" y1="3" x2="9" y2="21"/>
+                            <line x1="15" y1="3" x2="15" y2="21"/>
+                        </svg>
+                    </button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); inlineFileInputRef.current?.click(); }}
+                        title="Insert image"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    ><ImageIcon size={14} /></button>
+                </div>
+            )}
+
+            {/* Slash Command Menu Overlay */}
             {showSlashMenu && (
                 <div className="fixed bottom-12 left-1/2 transform -translate-x-1/2 z-50 w-72 bg-[#1e2023] border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-200">
                     <div className="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-white/5">
@@ -352,7 +595,7 @@ function EditorContent() {
                         {slashOptions.map((option, idx) => (
                             <button
                                 key={idx}
-                                onClick={option.action} // Mouse click support
+                                onClick={option.action}
                                 className={`w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-colors ${idx === slashMenuIndex ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-white/5'}`}
                             >
                                 <div className={`w-6 h-6 flex items-center justify-center rounded ${idx === slashMenuIndex ? 'bg-white/20' : 'bg-white/5'}`}>
@@ -366,10 +609,10 @@ function EditorContent() {
             )}
 
             {/* Main Content Area */}
-            <main className={`pt-32 pb-32 transition-all duration-300 ${showSettings ? 'mr-[320px]' : ''}`}>
+            <main className={`pt-44 pb-32 transition-all duration-300 ${showSettings ? 'mr-[320px]' : ''}`}>
                 {!showPreview ? (
                     <div className="max-w-3xl mx-auto px-6">
-                        {/* Add Feature Image Placeholder */}
+                        {/* Feature Image */}
                         {!featuredImage ? (
                             <button
                                 onClick={triggerUpload}
@@ -415,15 +658,21 @@ function EditorContent() {
                     </div>
                 ) : (
                     // Preview Mode
-                    <div className="max-w-3xl mx-auto px-6 prose prose-invert prose-lg">
+                    <div className="max-w-3xl mx-auto px-6">
                         {featuredImage && (
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img src={featuredImage} alt="Cover" className="rounded-xl mb-8 w-full h-64 object-cover" />
                         )}
-                        <h1>{title || "Untitled Post"}</h1>
-                        <div className="whitespace-pre-wrap text-gray-300 leading-relaxed font-serif">
-                            {content || "No content..."}
-                        </div>
+                        <h1 className="text-4xl font-bold text-white mb-8">{title || 'Untitled Post'}</h1>
+                        <div
+                            className="prose prose-invert prose-lg max-w-none
+                                prose-headings:font-bold prose-headings:text-white
+                                prose-a:text-blue-400 prose-code:bg-white/5
+                                prose-pre:bg-[#1e2023] prose-blockquote:border-l-blue-500
+                                prose-table:border-collapse prose-th:border prose-td:border
+                                prose-th:border-white/10 prose-td:border-white/10"
+                            dangerouslySetInnerHTML={{ __html: renderedHtml || '<p class="text-gray-600">No content...</p>' }}
+                        />
                     </div>
                 )}
             </main>
@@ -456,7 +705,7 @@ function EditorContent() {
                             <p className="text-[10px] text-right text-gray-600">{excerpt.length}/160</p>
                         </div>
 
-                        {/* Full Image URL Input */}
+                        {/* Blog Thumbnail */}
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1">
@@ -475,7 +724,7 @@ function EditorContent() {
                             />
                         </div>
 
-                        {/* Feature Card Image (세로 썸네일, 메인 카드용) */}
+                        {/* Card Thumbnail */}
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1">
@@ -549,7 +798,7 @@ function EditorContent() {
                             />
                         </div>
 
-                        {/* Excerpt/Meta Desc */}
+                        {/* Meta Description */}
                         <div className="space-y-3">
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1">
                                 <Search size={12} /> Meta Description
