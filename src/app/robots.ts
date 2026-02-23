@@ -1,13 +1,13 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-    const baseUrl = 'https://www.satmasterclass.com'; // Replace with actual domain
+    const baseUrl = 'https://www.satmasterclass.com';
 
     return {
         rules: {
             userAgent: '*',
             allow: '/',
-            disallow: '/private/',
+            disallow: ['/private/', '/admin/', '/api/'],
         },
         sitemap: `${baseUrl}/sitemap.xml`,
     };

@@ -120,3 +120,16 @@
         text-align: center;
     }
 }
+
+@media (max-width: 480px) {
+    .companyInfo {
+        font-size: 0.75rem;
+    }
+
+    .links a {
+        font-size: 0.75rem;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+}

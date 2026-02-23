@@ -9,12 +9,17 @@ export interface PostData {
     category: string;
     excerpt?: string;
     featuredImage?: string;
+    featuredImageAlt?: string;
     featureImage?: string;
+    focusKeyword?: string;
     description?: string;
     author?: string;
     tags?: string[];
     contentHtml?: string;
     ctaFeatured?: boolean;
+    metaTitle?: string;
+    metaRobots?: string;
+    updatedAt?: string;
     [key: string]: any;
 }
 
@@ -27,17 +32,22 @@ function mapRow(row: Record<string, unknown>): PostData {
         excerpt: row.excerpt as string | undefined,
         description: row.description as string | undefined,
         featuredImage: row.featured_image as string | undefined,
+        featuredImageAlt: row.featured_image_alt as string | undefined,
         featureImage: row.feature_image as string | undefined,
+        focusKeyword: row.focus_keyword as string | undefined,
         author: row.author as string | undefined,
         tags: row.tags as string[] | undefined,
         ctaFeatured: row.cta_featured as boolean | undefined,
+        metaTitle: row.meta_title as string | undefined,
+        metaRobots: row.meta_robots as string | undefined,
+        updatedAt: row.updated_at as string | undefined,
     };
 }
 
 export async function getSortedPostsData(): Promise<PostData[]> {
     const { data, error } = await supabase
         .from('posts')
-        .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags, cta_featured')
+        .select('id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags, cta_featured, meta_title, meta_robots, updated_at')
         .order('date', { ascending: false });
 
     if (error || !data) return [];
@@ -76,7 +86,7 @@ export async function getPostData(id: string): Promise<PostData> {
 export async function getRelatedPosts(currentId: string, category: string, limit: number = 3): Promise<PostData[]> {
     const { data, error } = await supabase
         .from('posts')
-        .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags')
+        .select('id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags')
         .eq('category', category)
         .neq('id', currentId)
         .order('date', { ascending: false })

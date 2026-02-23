@@ -68,35 +68,30 @@
 
 @media (max-width: 768px) {
     .container {
-        flex-direction: column;
-        gap: 1rem;
+        flex-direction: row;
+        gap: 1.5rem;
         padding: 0 1rem;
     }
 
     .nav {
-        width: 100%;
         overflow-x: auto;
-        padding-bottom: 0.5rem;
-        gap: 1.5rem;
-        justify-content: flex-start;
-        padding-left: 1rem;
+        gap: 1rem;
+        flex-shrink: 1;
+        min-width: 0;
         -webkit-overflow-scrolling: touch;
-        /* smooth scroll on iOS */
     }
 
     .nav::-webkit-scrollbar {
         display: none;
-        /* Hide scrollbar */
     }
 
     .logoImage {
-        width: 140px;
-        height: auto;
+        height: 20px;
+        width: auto;
     }
 
     .menuItem {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         white-space: nowrap;
-        /* Prevent wrapping */
     }
 }

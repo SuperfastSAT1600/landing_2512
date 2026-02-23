@@ -236,3 +236,25 @@
         column-count: 1;
     }
 }
+
+@media (max-width: 480px) {
+    .container {
+        padding-bottom: 10rem;
+    }
+
+    .card {
+        padding: 1.5rem;
+    }
+
+    .reviewTitle {
+        font-size: 1.15rem;
+    }
+
+    .title {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+}

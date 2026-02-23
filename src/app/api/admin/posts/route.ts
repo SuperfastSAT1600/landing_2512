@@ -15,11 +15,15 @@ const PostSchema = z.object({
     description: optionalStr,
     tags: optionalStr,
     featuredImage: optionalStr,
+    featuredImageAlt: optionalStr,
     featureImage: optionalStr,
+    focusKeyword: optionalStr,
     author: optionalStr,
     content: z.string().default("").or(z.null().transform(() => "")),
     originalId: optionalStr,
     ctaFeatured: z.boolean().optional().or(z.null().transform(() => undefined)),
+    metaTitle: optionalStr,
+    metaRobots: optionalStr,
 });
 
 export async function GET(request: NextRequest) {
@@ -51,11 +55,16 @@ export async function GET(request: NextRequest) {
                     excerpt: data.excerpt,
                     description: data.description,
                     featuredImage: data.featured_image,
+                    featuredImageAlt: data.featured_image_alt,
                     featureImage: data.feature_image,
+                    focusKeyword: data.focus_keyword,
                     author: data.author,
                     tags: Array.isArray(data.tags) ? data.tags.join(', ') : (data.tags || ''),
                     ctaFeatured: data.cta_featured,
                     content: data.content,
+                    metaTitle: data.meta_title,
+                    metaRobots: data.meta_robots,
+                    updatedAt: data.updated_at,
                 }
             });
         }
@@ -111,10 +120,14 @@ export async function POST(request: NextRequest) {
             description,
             tags,
             featuredImage,
+            featuredImageAlt,
             featureImage,
+            focusKeyword,
             author,
             content,
             ctaFeatured,
+            metaTitle,
+            metaRobots,
         } = validation.data;
 
         // Determine final slug: Provided > Original > Generated from Title
@@ -157,11 +170,15 @@ export async function POST(request: NextRequest) {
                 excerpt: excerpt || null,
                 description: description || null,
                 featured_image: featuredImage || null,
+                featured_image_alt: featuredImageAlt || null,
                 feature_image: featureImage || null,
+                focus_keyword: focusKeyword || null,
                 author: author || 'SuperfastSAT',
                 tags: tagsArray,
                 content: content || '',
                 cta_featured: ctaFeatured === true,
+                meta_title: metaTitle || null,
+                meta_robots: metaRobots || null,
                 updated_at: new Date().toISOString(),
             });
 

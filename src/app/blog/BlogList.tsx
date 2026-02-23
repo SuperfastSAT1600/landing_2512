@@ -23,7 +23,7 @@ export default function BlogList({ posts }: BlogListProps) {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-6 pb-24">
+        <div className="max-w-7xl mx-auto px-6 pb-36 sm:pb-24">
             {/* Toggle Buttons */}
             <div className="flex items-center justify-between mb-8">
                 <p className="text-sm text-gray-500">

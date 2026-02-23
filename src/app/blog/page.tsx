@@ -1,6 +1,27 @@
+import { Metadata } from 'next';
 import { getSortedPostsData } from '../../lib/posts';
 import Footer from '../components/Footer';
 import BlogList from './BlogList';
+
+const BASE_URL = 'https://www.satmasterclass.com';
+
+export const metadata: Metadata = {
+    title: '입시 자료 & 학습 칼럼 | SuperfastSAT Blog',
+    description: 'SAT 고득점 비법, 최신 유학 정보, Digital SAT 문법·독해 전략을 SuperfastSAT 블로그에서 확인하세요.',
+    alternates: { canonical: `${BASE_URL}/blog` },
+    openGraph: {
+        type: 'website',
+        url: `${BASE_URL}/blog`,
+        title: '입시 자료 & 학습 칼럼 | SuperfastSAT Blog',
+        description: 'SAT 고득점 비법, 최신 유학 정보, Digital SAT 문법·독해 전략을 SuperfastSAT 블로그에서 확인하세요.',
+        siteName: 'SuperfastSAT',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: '입시 자료 & 학습 칼럼 | SuperfastSAT Blog',
+        description: 'SAT 고득점 비법, 최신 유학 정보, Digital SAT 문법·독해 전략을 SuperfastSAT 블로그에서 확인하세요.',
+    },
+};
 
 export const revalidate = 60;
 
@@ -42,8 +63,8 @@ export default async function Blog({
         <div className="flex flex-col min-h-screen bg-[#151719] text-gray-100 font-sans">
             <div className="flex-1">
                 {/* Header */}
-                <header className="pt-24 pb-16 px-6 max-w-7xl mx-auto text-center">
-                    <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
+                <header className="pt-20 pb-10 sm:pt-24 sm:pb-16 px-6 max-w-7xl mx-auto text-center">
+                    <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
                         {currentHeader.title}
                     </h1>
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
