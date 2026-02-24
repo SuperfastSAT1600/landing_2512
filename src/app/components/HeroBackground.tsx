@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
-export default function HeroBackground() {
+interface HeroBackgroundProps {
+    titleRef?: RefObject<HTMLHeadingElement | null>;
+}
+
+export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -19,6 +23,9 @@ export default function HeroBackground() {
         // Parent-relative dimensions (updated on resize)
         let parentWidth = 0;
         let parentHeight = 0;
+        // Animation origin point (where particles converge)
+        let originX = 0;
+        let originY = 0;
 
         const getPaletteColor = (t: number, alpha: number) => {
             // Priority: Stay Blue, then shift to Cyan/White-ish (not Purple)
@@ -48,6 +55,23 @@ export default function HeroBackground() {
             canvas.style.width = `${parentWidth}px`;
             canvas.style.height = `${parentHeight}px`;
 
+            // Compute origin aligned to title text center
+            // backgroundContainer has transform: rotate(180deg), so canvas (x,y)
+            // appears at screen position (parentWidth-x, parentHeight-y)
+            const heroEl = parent.parentElement;
+            if (titleRef?.current && heroEl) {
+                const heroRect = heroEl.getBoundingClientRect();
+                const titleRect = titleRef.current.getBoundingClientRect();
+                const titleCenterX = titleRect.left + titleRect.width / 2 - heroRect.left;
+                const titleCenterY = titleRect.top + titleRect.height / 2 - heroRect.top;
+                // Invert for 180deg rotation
+                originX = parentWidth - titleCenterX;
+                originY = parentHeight - titleCenterY;
+            } else {
+                originX = parentWidth / 2;
+                originY = parentHeight / 2;
+            }
+
             initStreams();
         };
 
@@ -69,8 +93,8 @@ export default function HeroBackground() {
             }
 
             reset() {
-                this.originX = parentWidth / 2;
-                this.originY = parentHeight / 2;
+                this.originX = originX;
+                this.originY = originY;
 
                 this.angle = Math.random() * Math.PI * 2;
                 this.speed = Math.random() * 0.007 + 0.004;
@@ -151,8 +175,8 @@ export default function HeroBackground() {
             ctx.fillRect(0, 0, parentWidth, parentHeight);
 
             const centerGrad = ctx.createRadialGradient(
-                parentWidth / 2, parentHeight / 2, 0,
-                parentWidth / 2, parentHeight / 2, Math.max(parentWidth, parentHeight) * 0.4
+                originX, originY, 0,
+                originX, originY, Math.max(parentWidth, parentHeight) * 0.4
             );
             centerGrad.addColorStop(0, 'rgba(7, 27, 233, 0.4)');
             centerGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');

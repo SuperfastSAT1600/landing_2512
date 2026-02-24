@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Star } from 'lucide-react';
 import styles from './Hero.module.css';
@@ -12,18 +13,19 @@ interface HeroProps {
 }
 
 export default function Hero({ ctaText, ctaLink }: HeroProps) {
+    const titleRef = useRef<HTMLHeadingElement>(null);
 
     return (
         <section className={styles.hero}>
             {/* Custom Background */}
             <div className={styles.backgroundContainer}>
-                <HeroBackground />
+                <HeroBackground titleRef={titleRef} />
             </div>
 
             {/* Content Overlay */}
             <div className={styles.content}>
                 <div className={styles.mainContent}>
-                    <h1 className={styles.title}>
+                    <h1 ref={titleRef} className={styles.title}>
                         목표 점수에<br />
                         가장 빠르게<br />
                     </h1>
