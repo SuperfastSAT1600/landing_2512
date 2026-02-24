@@ -63,7 +63,7 @@ export default async function Blog({
         <div className="flex flex-col min-h-screen bg-[#151719] text-gray-100 font-sans">
             <div className="flex-1">
                 {/* Header */}
-                <header className="pt-20 pb-10 sm:pt-24 sm:pb-16 px-6 max-w-7xl mx-auto text-center">
+                <header className="pt-28 pb-10 sm:pt-32 sm:pb-16 px-6 max-w-7xl mx-auto text-center">
                     <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
                         {currentHeader.title}
                     </h1>
