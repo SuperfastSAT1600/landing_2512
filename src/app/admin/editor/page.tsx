@@ -30,7 +30,7 @@ function BlogEditor() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const featureFileInputRef = useRef<HTMLInputElement>(null);
     const inlineFileInputRef = useRef<HTMLInputElement>(null);
-    const pendingContentRef = useRef<string | null>(null);
+    const [pendingContent, setPendingContent] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -98,11 +98,11 @@ function BlogEditor() {
 
     // Load pending content when editor becomes ready
     useEffect(() => {
-        if (editor && pendingContentRef.current !== null) {
-            editor.commands.setContent(pendingContentRef.current);
-            pendingContentRef.current = null;
+        if (editor && pendingContent !== null) {
+            editor.commands.setContent(pendingContent);
+            setPendingContent(null);
         }
-    }, [editor]);
+    }, [editor, pendingContent]);
 
     useEffect(() => {
         const key = localStorage.getItem('admin_key');
@@ -146,11 +146,7 @@ function BlogEditor() {
                 setMetaRobots(p.metaRobots || '');
 
                 const content = p.content || '';
-                if (editor) {
-                    editor.commands.setContent(content);
-                } else {
-                    pendingContentRef.current = content;
-                }
+                setPendingContent(content);
             }
         } catch (e) {
             console.error(e);
