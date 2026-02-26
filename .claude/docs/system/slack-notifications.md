@@ -6,14 +6,14 @@ Status: **FUNCTIONAL** (via `/commit-push-pr` command)
 
 ## How It Works
 
-Slack notifications are sent automatically when using the `/commit-push-pr` command. Every PR creation or push to existing PR triggers a notification to the #개발 channel.
+Slack notifications are sent automatically when using the `/commit-push-pr` command. Every PR creation or push to existing PR triggers a notification to the channel configured in `.claude/config/slack.json` (currently: #commit-업데이트).
 
 ### Working Components
 
 ✅ **Slack MCP Integration**
 - Configured and tested
 - Has `chat:write` permission
-- Can post to #개발 channel (ID: C09UT6DFUBY)
+- Can post to #commit-업데이트 channel (ID: C09UT6DFUBY)
 
 ✅ **`/commit-push-pr` Command**
 - Commits changes
@@ -48,7 +48,7 @@ Slack notifications are sent automatically when using the `/commit-push-pr` comm
 
 🔗 자세히 보기: [PR URL]
 
-🤖 Claude Code로 자동 생성됨
+🤖 {project folder name}
 ```
 
 **For pushes to existing PRs:**
@@ -67,7 +67,7 @@ Slack notifications are sent automatically when using the `/commit-push-pr` comm
 
 🔗 자세히 보기: [PR URL]
 
-🤖 Claude Code로 자동 생성됨
+🤖 {project folder name}
 ```
 
 ---
@@ -118,7 +118,7 @@ Slack notifications were tested on 2026-01-30:
 ```bash
 # Test message sent successfully
 mcp__slack__slack_post_message(
-  channel_id="개발",
+  channel_id="commit-업데이트",
   text="🧪 Test: Slack notification system check"
 )
 
@@ -136,13 +136,14 @@ mcp__slack__slack_post_message(
 - ✅ `chat:write` - Post messages (HAVE THIS)
 - ❌ `channels:read` - List channels (DON'T HAVE, DON'T NEED)
 
-We can post to #개발 using the channel name directly, so listing channels is not required.
+We can post to #commit-업데이트 using the channel name directly, so listing channels is not required.
 
 ### Channel Configuration
 
-**Channel name**: 개발 (Korean for "development")
+**Channel name**: commit-업데이트 (configured in `.claude/config/slack.json`)
 **Channel ID**: C09UT6DFUBY
 **Workspace**: T07FK3GB2NP
+**Bot name**: Auto-derived from project folder name (e.g., `landing_2512`)
 
 ---
 
@@ -170,12 +171,12 @@ We can post to #개발 using the channel name directly, so listing channels is n
 **Check:**
 1. Slack MCP enabled: `.claude/settings.local.json` → `enabledMcpjsonServers` includes "slack"
 2. Command instructions followed: `/commit-push-pr` should send notification as final step
-3. Channel accessible: User must have access to #개발 channel
+3. Channel accessible: User must have access to #commit-업데이트 channel
 
 **Test manually:**
 ```
 mcp__slack__slack_post_message(
-  channel_id="개발",
+  channel_id="commit-업데이트",
   text="Test notification"
 )
 ```
@@ -183,12 +184,20 @@ mcp__slack__slack_post_message(
 ### Wrong channel
 
 **Update channel:**
-Edit `.claude/commands/commit-push-pr.md` line 54:
-```
-- **MUST use mcp__slack__slack_post_message tool** with channel_id="개발"
+Edit `.claude/config/slack.json`:
+```json
+{
+  "channel": "your-channel-name"
+}
 ```
 
-Change "개발" to your desired channel name or ID.
+All scripts and commands read from this central config file.
+
+### New Project Setup
+
+1. Copy `.claude/config/slack.json` to the new project
+2. Update the `channel` value if needed
+3. Bot name is automatically derived from the project folder name — no configuration needed
 
 ---
 
