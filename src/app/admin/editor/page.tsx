@@ -87,9 +87,9 @@ function BlogEditor() {
 
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit.configure({ link: false }),
             CustomImage.configure({ inline: false }),
-            // Link extension provided by tiptap-markdown (no separate TiptapLink needed)
+            // Link extension provided by tiptap-markdown (StarterKit's link disabled to avoid duplicate)
             TextAlign.configure({
                 types: ['heading', 'paragraph'],
                 alignments: ['left', 'center', 'right'],
