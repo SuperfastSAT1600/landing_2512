@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import NextLink from 'next/link';
 import {
     ArrowLeft, X, LayoutTemplate, Image as ImageIcon,
-    Globe, Search, Hash, UploadCloud, Link2, Minus, Sparkles, Loader2
+    Globe, Search, Hash, UploadCloud, Link2, Minus, Sparkles, Loader2,
+    AlignLeft, AlignCenter, AlignRight
 } from 'lucide-react';
 import { Suspense } from 'react';
 import SeoPanel from '@/components/editor/seo/SeoPanel';
@@ -14,7 +15,8 @@ import SocialPreview from '@/components/editor/seo/SocialPreview';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TiptapImage from '@tiptap/extension-image';
-import TiptapLink from '@tiptap/extension-link';
+// TiptapLink removed — tiptap-markdown's Markdown extension registers its own Link internally
+import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
@@ -22,6 +24,19 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import Youtube from '@tiptap/extension-youtube';
 import { Markdown } from 'tiptap-markdown';
+
+const CustomImage = TiptapImage.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            dataAlign: {
+                default: 'center',
+                parseHTML: (el: HTMLElement) => el.getAttribute('data-align') || 'center',
+                renderHTML: (attrs: Record<string, string>) => ({ 'data-align': attrs.dataAlign }),
+            },
+        };
+    },
+});
 
 function BlogEditor() {
     const router = useRouter();
@@ -72,9 +87,14 @@ function BlogEditor() {
 
     const editor = useEditor({
         extensions: [
-            StarterKit,
-            TiptapImage.configure({ inline: false }),
-            TiptapLink.configure({ openOnClick: false }),
+            StarterKit.configure({ link: false }),
+            CustomImage.configure({ inline: false }),
+            // Link extension provided by tiptap-markdown (StarterKit's link disabled to avoid duplicate)
+            TextAlign.configure({
+                types: ['heading', 'paragraph'],
+                alignments: ['left', 'center', 'right'],
+                defaultAlignment: 'left',
+            }),
             Placeholder.configure({ placeholder: 'Tell your story...' }),
             Table.configure({ resizable: false }),
             TableRow,
@@ -92,6 +112,14 @@ function BlogEditor() {
                     'prose-pre:bg-[#1e2023] prose-blockquote:border-l-blue-500 ' +
                     'prose-table:border-collapse [&_td]:border [&_th]:border [&_td]:border-white/10 [&_th]:border-white/10 ' +
                     '[&_td]:p-2 [&_th]:p-2',
+            },
+            handleClick(_view, _pos, event) {
+                const target = event.target as HTMLElement;
+                if (target.tagName === 'A' || target.closest('a')) {
+                    event.preventDefault();
+                    return true;
+                }
+                return false;
             },
         },
         immediatelyRender: false,
@@ -177,8 +205,7 @@ function BlogEditor() {
         if (!title) return alert('제목을 입력해주세요.');
         setSaving(true);
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const markdownContent = (editor?.storage as any)?.markdown?.getMarkdown?.() ?? '';
+            const htmlContent = editor?.getHTML() ?? '';
             const res = await fetch('/api/admin/posts', {
                 method: 'POST',
                 headers: {
@@ -191,7 +218,7 @@ function BlogEditor() {
                     slug,
                     date,
                     category,
-                    content: markdownContent,
+                    content: htmlContent,
                     excerpt,
                     description,
                     tags,
@@ -357,6 +384,16 @@ function BlogEditor() {
             setAltTextDialog(null);
         }
     };
+
+    const handleAlign = (alignment: string) => {
+        if (!editor) return;
+        if (editor.isActive('image')) {
+            editor.chain().focus().updateAttributes('image', { dataAlign: alignment }).run();
+        } else {
+            editor.chain().focus().setTextAlign(alignment).run();
+        }
+    };
+
 
     const insertYoutube = () => {
         const url = window.prompt('YouTube URL:', 'https://www.youtube.com/watch?v=');
@@ -740,6 +777,31 @@ function BlogEditor() {
                         className={`w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors font-mono text-xs ${editor?.isActive('codeBlock') ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
                     >
                         {`</>`}
+                    </button>
+
+                    <div className="w-px h-5 bg-white/10 mx-1" />
+
+                    {/* Alignment */}
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); handleAlign('left'); }}
+                        title="Align left"
+                        className={`w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors ${editor?.isActive({ textAlign: 'left' }) || (!editor?.isActive({ textAlign: 'center' }) && !editor?.isActive({ textAlign: 'right' })) ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <AlignLeft size={14} />
+                    </button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); handleAlign('center'); }}
+                        title="Align center"
+                        className={`w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors ${editor?.isActive({ textAlign: 'center' }) ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <AlignCenter size={14} />
+                    </button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); handleAlign('right'); }}
+                        title="Align right"
+                        className={`w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors ${editor?.isActive({ textAlign: 'right' }) ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <AlignRight size={14} />
                     </button>
 
                     <div className="w-px h-5 bg-white/10 mx-1" />

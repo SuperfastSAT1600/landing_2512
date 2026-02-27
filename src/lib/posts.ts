@@ -72,10 +72,11 @@ export async function getPostData(id: string): Promise<PostData> {
 
     if (error || !data) throw new Error(`Post not found: ${id}`);
 
-    const processedContent = await remark()
-        .use(html, { allowDangerousHtml: true })
-        .process((data.content as string) || '');
-    const contentHtml = processedContent.toString();
+    const rawContent = (data.content as string) || '';
+    const isHtml = rawContent.trim().startsWith('<');
+    const contentHtml = isHtml
+        ? rawContent
+        : (await remark().use(html, { allowDangerousHtml: true }).process(rawContent)).toString();
 
     return {
         ...mapRow(data),
