@@ -16,15 +16,52 @@ export async function generateStaticParams() {
     }));
 }
 
+const BASE_URL = 'https://www.satmasterclass.com';
+
 export async function generateMetadata({ params }: Props) {
     const { slug } = await params;
     try {
         const postData = await getPostData(slug);
+        const description = postData.description || postData.excerpt;
+        const effectiveTitle = postData.metaTitle || `${postData.title} | SuperfastSAT Blog`;
+        const ogImage = postData.featuredImage
+            ? [{ url: postData.featuredImage, alt: postData.featuredImageAlt || postData.title }]
+            : [{ url: `${BASE_URL}/api/og?title=${encodeURIComponent(postData.title)}&category=${encodeURIComponent(postData.category)}` }];
+
+        // Parse metaRobots
+        const robotsMeta: Record<string, boolean> = {};
+        if (postData.metaRobots) {
+            const parts = postData.metaRobots.split(',').map(s => s.trim());
+            if (parts.includes('noindex')) robotsMeta.index = false;
+            if (parts.includes('nofollow')) robotsMeta.follow = false;
+        }
+
         return {
-            title: `${postData.title} | SuperfastSAT Blog`,
-            description: postData.description || postData.excerpt,
+            title: effectiveTitle,
+            description,
+            keywords: [postData.focusKeyword, ...(postData.tags || [])].filter(Boolean),
+            alternates: { canonical: `${BASE_URL}/blog/${slug}` },
+            ...(Object.keys(robotsMeta).length > 0 ? { robots: robotsMeta } : {}),
             openGraph: {
-                images: postData.featuredImage ? [postData.featuredImage] : undefined,
+                type: 'article' as const,
+                url: `${BASE_URL}/blog/${slug}`,
+                title: postData.metaTitle || postData.title,
+                description,
+                siteName: 'SuperfastSAT',
+                publishedTime: postData.date,
+                modifiedTime: postData.updatedAt || postData.date,
+                authors: [postData.author || 'SuperfastSAT'],
+                section: postData.category,
+                tags: postData.tags,
+                images: ogImage,
+            },
+            twitter: {
+                card: 'summary_large_image' as const,
+                title: postData.metaTitle || postData.title,
+                description,
+                images: postData.featuredImage
+                    ? [postData.featuredImage]
+                    : [`${BASE_URL}/api/og?title=${encodeURIComponent(postData.title)}&category=${encodeURIComponent(postData.category)}`],
             },
         };
     } catch {
@@ -39,6 +76,39 @@ export default async function Post({ params }: Props) {
 
     return (
         <div className="bg-[#151719] min-h-screen text-gray-200 font-sans selection:bg-blue-500/30">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        '@context': 'https://schema.org',
+                        '@type': 'BlogPosting',
+                        headline: postData.title,
+                        description: postData.description || postData.excerpt,
+                        datePublished: postData.date,
+                        dateModified: postData.updatedAt || postData.date,
+                        author: { '@type': 'Person', name: postData.author || 'SuperfastSAT' },
+                        publisher: {
+                            '@type': 'Organization',
+                            name: 'SuperfastSAT',
+                            url: BASE_URL,
+                            logo: {
+                                '@type': 'ImageObject',
+                                url: `${BASE_URL}/logo.png`,
+                            },
+                        },
+                        mainEntityOfPage: {
+                            '@type': 'WebPage',
+                            '@id': `${BASE_URL}/blog/${postData.id}`,
+                        },
+                        url: `${BASE_URL}/blog/${postData.id}`,
+                        image: postData.featuredImage || `${BASE_URL}/api/og?title=${encodeURIComponent(postData.title)}&category=${encodeURIComponent(postData.category)}`,
+                        keywords: [postData.focusKeyword, ...(postData.tags || [])].filter(Boolean),
+                        wordCount: (postData.contentHtml || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().split(/\s+/).length,
+                        inLanguage: 'ko-KR',
+                        articleSection: postData.category,
+                    }),
+                }}
+            />
             {/* Navigation */}
             <nav className="fixed top-0 w-full z-50 bg-[#151719]/80 backdrop-blur-md border-b border-white/5 h-16 flex items-center">
                 <div className="max-w-4xl mx-auto w-full px-6 flex justify-between items-center">
@@ -49,7 +119,7 @@ export default async function Post({ params }: Props) {
                 </div>
             </nav>
 
-            <main className="pt-24 pb-20">
+            <main className="pt-24 pb-32 sm:pb-20">
                 <article className="max-w-4xl mx-auto px-4 md:px-6">
                     {/* Header: Category & Date */}
                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 justify-center">
@@ -66,14 +136,14 @@ export default async function Post({ params }: Props) {
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={postData.featuredImage}
-                                alt={postData.title}
+                                alt={postData.featuredImageAlt || postData.title}
                                 className="w-full h-full object-cover"
                             />
                         </div>
                     )}
 
                     {/* Title */}
-                    <h1 className="text-4xl md:text-6xl font-extrabold text-white text-center mb-12 leading-tight">
+                    <h1 className="text-2xl sm:text-4xl md:text-6xl font-extrabold text-white text-center mb-6 sm:mb-12 leading-tight">
                         {postData.title}
                     </h1>
 
@@ -98,7 +168,7 @@ export default async function Post({ params }: Props) {
 
                 {/* Related Posts */}
                 {relatedPosts.length > 0 && (
-                    <div className="max-w-6xl mx-auto px-6 mt-24">
+                    <div className="max-w-6xl mx-auto px-6 mt-12 sm:mt-24">
                         <div className="flex items-center gap-4 mb-8">
                             <h3 className="text-2xl font-bold text-white">이 글도 한 번 읽어보세요.</h3>
                             <div className="h-px bg-white/10 flex-1"></div>

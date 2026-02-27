@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${racing.variable}`}>
+    <html lang="ko" className={`${outfit.variable} ${racing.variable}`}>
       <body className="font-sans antialiased">
         {/* Force Global HMR Update - Content Refresh */}
         {/* Meta Pixel */}

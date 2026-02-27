@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
-export default function HeroBackground() {
+interface HeroBackgroundProps {
+    titleRef?: RefObject<HTMLHeadingElement | null>;
+}
+
+export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -16,6 +20,13 @@ export default function HeroBackground() {
         let streams: Stream[] = [];
         const brandColor = 'rgb(7, 27, 233)';
 
+        // Parent-relative dimensions (updated on resize)
+        let parentWidth = 0;
+        let parentHeight = 0;
+        // Animation origin point (where particles converge)
+        let originX = 0;
+        let originY = 0;
+
         const getPaletteColor = (t: number, alpha: number) => {
             // Priority: Stay Blue, then shift to Cyan/White-ish (not Purple)
             // Reducing Red increment (150) and increasing Green increment (220)
@@ -27,15 +38,39 @@ export default function HeroBackground() {
 
         const resize = () => {
             if (!canvas || !ctx) return;
+            const parent = canvas.parentElement;
+            if (!parent) return;
+
+            const rect = parent.getBoundingClientRect();
+            parentWidth = rect.width;
+            parentHeight = rect.height;
+
             // High DPI support capped at 2x for performance
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
-            canvas.width = window.innerWidth * dpr;
-            canvas.height = window.innerHeight * dpr;
+            canvas.width = parentWidth * dpr;
+            canvas.height = parentHeight * dpr;
             ctx.scale(dpr, dpr);
 
             // Sync CSS display size
-            canvas.style.width = `${window.innerWidth}px`;
-            canvas.style.height = `${window.innerHeight}px`;
+            canvas.style.width = `${parentWidth}px`;
+            canvas.style.height = `${parentHeight}px`;
+
+            // Compute origin aligned to title text center
+            // backgroundContainer has transform: rotate(180deg), so canvas (x,y)
+            // appears at screen position (parentWidth-x, parentHeight-y)
+            const heroEl = parent.parentElement;
+            if (titleRef?.current && heroEl) {
+                const heroRect = heroEl.getBoundingClientRect();
+                const titleRect = titleRef.current.getBoundingClientRect();
+                const titleCenterX = titleRect.left + titleRect.width / 2 - heroRect.left;
+                const titleCenterY = titleRect.top + titleRect.height / 2 - heroRect.top;
+                // Invert for 180deg rotation
+                originX = parentWidth - titleCenterX;
+                originY = parentHeight - titleCenterY;
+            } else {
+                originX = parentWidth / 2;
+                originY = parentHeight / 2;
+            }
 
             initStreams();
         };
@@ -58,9 +93,8 @@ export default function HeroBackground() {
             }
 
             reset() {
-                if (!canvas) return;
-                this.originX = (canvas?.width || 0) / ((window.devicePixelRatio || 1) * 2);
-                this.originY = (canvas?.height || 0) / ((window.devicePixelRatio || 1) * 2);
+                this.originX = originX;
+                this.originY = originY;
 
                 this.angle = Math.random() * Math.PI * 2;
                 this.speed = Math.random() * 0.007 + 0.004;
@@ -86,7 +120,7 @@ export default function HeroBackground() {
 
                 const getPos = (prog: number) => {
                     const distMultiplier = Math.pow(Math.max(0, 1.3 - prog), 1.5);
-                    const maxDim = Math.max(window.innerWidth, window.innerHeight);
+                    const maxDim = Math.max(parentWidth, parentHeight);
                     const dist = maxDim * distMultiplier * 0.8;
                     const x = this.originX + Math.cos(this.angle) * dist;
                     const y = this.originY + Math.sin(this.angle) * dist;
@@ -114,7 +148,7 @@ export default function HeroBackground() {
                 ctx.globalAlpha = this.alphaBase * p * 1.2;
 
                 // Optimization: Disable expensive shadows on mobile screens
-                if (window.innerWidth > 768 && (this.isBright || p > 0.8)) {
+                if (parentWidth > 768 && (this.isBright || p > 0.8)) {
                     ctx.shadowBlur = 15 * p;
                     ctx.shadowColor = brandColor;
                 }
@@ -128,7 +162,7 @@ export default function HeroBackground() {
         const initStreams = () => {
             streams = [];
             // Dynamic stream count: Fewer on mobile to maintain 60FPS
-            const isMobile = window.innerWidth < 768;
+            const isMobile = parentWidth < 768;
             const count = isMobile ? 80 : 120;
             for (let i = 0; i < count; i++) {
                 streams.push(new Stream());
@@ -137,20 +171,17 @@ export default function HeroBackground() {
 
         const animate = () => {
             if (!canvas || !ctx) return;
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-
             ctx.fillStyle = '#010204';
-            ctx.fillRect(0, 0, width, height);
+            ctx.fillRect(0, 0, parentWidth, parentHeight);
 
             const centerGrad = ctx.createRadialGradient(
-                width / 2, height / 2, 0,
-                width / 2, height / 2, Math.max(width, height) * 0.4
+                originX, originY, 0,
+                originX, originY, Math.max(parentWidth, parentHeight) * 0.4
             );
             centerGrad.addColorStop(0, 'rgba(7, 27, 233, 0.4)');
             centerGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
             ctx.fillStyle = centerGrad;
-            ctx.fillRect(0, 0, width, height);
+            ctx.fillRect(0, 0, parentWidth, parentHeight);
 
             ctx.globalCompositeOperation = 'lighter';
             streams.forEach(s => {
