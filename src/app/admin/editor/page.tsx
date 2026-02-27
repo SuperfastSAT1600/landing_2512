@@ -31,6 +31,7 @@ function BlogEditor() {
     const featureFileInputRef = useRef<HTMLInputElement>(null);
     const inlineFileInputRef = useRef<HTMLInputElement>(null);
     const [pendingContent, setPendingContent] = useState<string | null>(null);
+    const pendingContentRef = useRef<string | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -94,12 +95,28 @@ function BlogEditor() {
             },
         },
         immediatelyRender: false,
+        onCreate({ editor: newEditor }) {
+            if (pendingContentRef.current !== null) {
+                try {
+                    newEditor.commands.setContent(pendingContentRef.current);
+                } catch (e) {
+                    console.error('onCreate setContent failed:', e);
+                }
+                pendingContentRef.current = null;
+                setPendingContent(null);
+            }
+        },
     });
 
     // Load pending content when editor becomes ready
     useEffect(() => {
         if (editor && pendingContent !== null) {
-            editor.commands.setContent(pendingContent);
+            try {
+                editor.commands.setContent(pendingContent);
+            } catch (e) {
+                console.error('setContent failed:', e);
+            }
+            pendingContentRef.current = null;
             setPendingContent(null);
         }
     }, [editor, pendingContent]);
@@ -146,6 +163,7 @@ function BlogEditor() {
                 setMetaRobots(p.metaRobots || '');
 
                 const content = p.content || '';
+                pendingContentRef.current = content;
                 setPendingContent(content);
             }
         } catch (e) {
@@ -495,16 +513,14 @@ function BlogEditor() {
 
     const editorHtml = editor?.getHTML() ?? '';
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-[#151719] flex items-center justify-center text-gray-400">
-                Loading...
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-[#151719] text-[#E0E0E0] font-sans selection:bg-blue-500/30">
+            {/* Loading overlay — keeps EditorContent mounted in the DOM */}
+            {loading && (
+                <div className="fixed inset-0 z-[300] bg-[#151719] flex items-center justify-center text-gray-400">
+                    Loading...
+                </div>
+            )}
             {/* Hidden Inputs */}
             <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
             <input
