@@ -394,6 +394,7 @@ function BlogEditor() {
         }
     };
 
+
     const insertYoutube = () => {
         const url = window.prompt('YouTube URL:', 'https://www.youtube.com/watch?v=');
         if (!url) return;
