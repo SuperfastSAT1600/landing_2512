@@ -6,13 +6,13 @@ import NextLink from 'next/link';
 import {
     ArrowLeft, X, LayoutTemplate, Image as ImageIcon,
     Globe, Search, Hash, UploadCloud, Link2, Minus, Sparkles, Loader2,
-    AlignLeft, AlignCenter, AlignRight
+    AlignLeft, AlignCenter, AlignRight, Trash2
 } from 'lucide-react';
 import { Suspense } from 'react';
 import SeoPanel from '@/components/editor/seo/SeoPanel';
 import SocialPreview from '@/components/editor/seo/SocialPreview';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TiptapImage from '@tiptap/extension-image';
 // TiptapLink removed — tiptap-markdown's Markdown extension registers its own Link internally
@@ -25,6 +25,48 @@ import TableCell from '@tiptap/extension-table-cell';
 import Youtube from '@tiptap/extension-youtube';
 import { Markdown } from 'tiptap-markdown';
 
+function ImageNodeView({ node, updateAttributes, deleteNode, selected }: any) {
+    const { src, alt, dataAlign } = node.attrs;
+    return (
+        <NodeViewWrapper className="relative group my-4" data-align={dataAlign}>
+            <img src={src} alt={alt || ''}
+                 className={`rounded-lg max-w-full ${selected ? 'ring-2 ring-blue-500' : ''}`}
+                 data-align={dataAlign} />
+
+            <input
+                value={alt || ''}
+                onChange={(e) => updateAttributes({ alt: e.target.value })}
+                placeholder="이미지 설명을 입력하세요..."
+                className="w-full text-center text-xs text-gray-500 bg-transparent
+                           border-none outline-none mt-1 placeholder-gray-600/50"
+            />
+
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100
+                            transition-opacity flex gap-1">
+                {(['left', 'center', 'right'] as const).map((align) => (
+                    <button key={align}
+                        onClick={() => updateAttributes({ dataAlign: align })}
+                        className={`w-7 h-7 flex items-center justify-center rounded
+                                    bg-black/60 hover:bg-black/80 text-white text-xs
+                                    ${dataAlign === align ? 'ring-1 ring-blue-400' : ''}`}
+                        title={`${align} 정렬`}>
+                        {align === 'left' ? <AlignLeft size={12}/> :
+                         align === 'center' ? <AlignCenter size={12}/> :
+                         <AlignRight size={12}/>}
+                    </button>
+                ))}
+                <button onClick={deleteNode}
+                    className="w-7 h-7 flex items-center justify-center rounded
+                               bg-red-600/80 hover:bg-red-500 text-white"
+                    title="이미지 삭제">
+                    <Trash2 size={12} />
+                </button>
+            </div>
+        </NodeViewWrapper>
+    );
+}
+
+
 const CustomImage = TiptapImage.extend({
     addAttributes() {
         return {
@@ -35,6 +77,9 @@ const CustomImage = TiptapImage.extend({
                 renderHTML: (attrs: Record<string, string>) => ({ 'data-align': attrs.dataAlign }),
             },
         };
+    },
+    addNodeView() {
+        return ReactNodeViewRenderer(ImageNodeView);
     },
 });
 
@@ -945,7 +990,7 @@ function BlogEditor() {
                             ) : (
                                 <div
                                     className="relative w-full h-48 mb-8 rounded-xl overflow-hidden cursor-pointer group border border-white/10"
-                                    onClick={() => setShowSettings(true)}
+                                    onClick={triggerUpload}
                                 >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={featuredImage} alt="Feature" className="w-full h-full object-cover" />
@@ -1030,7 +1075,7 @@ function BlogEditor() {
                             ) : (
                                 <div
                                     className="relative w-full aspect-video mb-10 rounded-2xl overflow-hidden cursor-pointer group border border-white/5 shadow-2xl"
-                                    onClick={() => setShowSettings(true)}
+                                    onClick={triggerUpload}
                                 >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={featuredImage} alt="Feature" className="w-full h-full object-cover" />
