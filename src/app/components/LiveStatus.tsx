@@ -25,7 +25,11 @@ const MESSAGES: Message[] = [
     { text: '*** 학생이 3문제 연속 정답을 기록했습니다', type: 'green' },
     { text: '*** 학생 취약 유형이 발견됐습니다', type: 'red' },
     { text: '*** 학습코치가 오답 노트에 코멘트를 남겼습니다', type: 'green' },
+    { text: '*** 학생이 진단테스트에 접속했습니다', type: 'green' },
+    { text: '*** 학생이 진단테스트를 시작했습니다', type: 'green' },
     { text: '*** 학생이 진단 테스트를 완료했습니다', type: 'green' },
+    { text: '*** 학생의 진단테스트 결과가 분석 중입니다', type: 'green' },
+    { text: '*** 학생의 진단테스트에서 취약 영역이 발견됐습니다', type: 'red' },
     { text: '*** 학생 학습 패턴에 이상 징후가 감지됐습니다', type: 'red' },
 ];
 

@@ -50,6 +50,9 @@ export default function Header() {
                     <Link href="/reviews" className={styles.menuItem}>
                         수업 후기
                     </Link>
+                    <Link href="/diagnosis" className={styles.menuItem}>
+                        진단테스트
+                    </Link>
                     <Link
                         href="https://www.superfastsat.com"
                         target="_blank"
