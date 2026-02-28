@@ -66,6 +66,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected }: any) {
     );
 }
 
+
 const CustomImage = TiptapImage.extend({
     addAttributes() {
         return {
