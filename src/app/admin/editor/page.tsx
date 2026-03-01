@@ -137,7 +137,7 @@ function BlogEditor() {
             CustomImage.configure({ inline: false }),
             // Link extension provided by tiptap-markdown (StarterKit's link disabled to avoid duplicate)
             TextAlign.configure({
-                types: ['heading', 'paragraph'],
+                types: ['heading', 'paragraph', 'tableCell', 'tableHeader'],
                 alignments: ['left', 'center', 'right', 'justify'],
                 defaultAlignment: 'left',
             }),
