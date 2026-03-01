@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { KeyRound } from 'lucide-react';
 import { useLiveStatus } from '../context/LiveStatusContext';
 
 const CODE_LENGTH = 6;
@@ -64,24 +63,17 @@ export default function DiagnosisPage() {
         <div className="min-h-screen bg-[#151719] text-gray-100 flex flex-col items-center justify-center p-4 font-sans">
             {/* Branding */}
             <div className="mb-8 text-center">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    SuperfastSAT
+                <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
+                    SAT 진단 테스트
                 </h1>
-                <p className="text-gray-500 text-sm tracking-widest mt-1 uppercase">Diagnostic Test</p>
+                <p className="text-xl text-gray-400">30분 진단테스트로 현재 내 실력을 확인해보세요.</p>
             </div>
 
             <div className="w-full max-w-md bg-[#1e2023] rounded-2xl border border-white/5 p-6 md:p-8 shadow-2xl">
-                {/* Icon */}
-                <div className="flex justify-center mb-6">
-                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center">
-                        <KeyRound size={32} className="text-blue-400" />
-                    </div>
-                </div>
-
                 {/* Title */}
                 <h2 className="text-2xl font-bold text-center mb-2">접속 코드를 입력하세요</h2>
                 <p className="text-gray-500 text-sm text-center mb-8">
-                    선생님에게 받은 6자리 코드를 입력해주세요
+                    문자/이메일로 받은 6자리 코드를 입력해주세요
                 </p>
 
                 {/* OTP-style inputs */}

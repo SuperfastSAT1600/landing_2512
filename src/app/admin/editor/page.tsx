@@ -6,11 +6,12 @@ import NextLink from 'next/link';
 import {
     ArrowLeft, X, LayoutTemplate, Image as ImageIcon,
     Globe, Search, Hash, UploadCloud, Link2, Minus, Sparkles, Loader2,
-    AlignLeft, AlignCenter, AlignRight, Trash2
+    AlignLeft, AlignCenter, AlignRight, AlignJustify, Trash2
 } from 'lucide-react';
 import { Suspense } from 'react';
 import SeoPanel from '@/components/editor/seo/SeoPanel';
 import SocialPreview from '@/components/editor/seo/SocialPreview';
+import { TableBubbleMenu } from '@/components/editor/TableBubbleMenu';
 
 import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -137,7 +138,7 @@ function BlogEditor() {
             // Link extension provided by tiptap-markdown (StarterKit's link disabled to avoid duplicate)
             TextAlign.configure({
                 types: ['heading', 'paragraph'],
-                alignments: ['left', 'center', 'right'],
+                alignments: ['left', 'center', 'right', 'justify'],
                 defaultAlignment: 'left',
             }),
             Placeholder.configure({ placeholder: 'Tell your story...' }),
@@ -830,7 +831,7 @@ function BlogEditor() {
                     <button
                         onMouseDown={(e) => { e.preventDefault(); handleAlign('left'); }}
                         title="Align left"
-                        className={`w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors ${editor?.isActive({ textAlign: 'left' }) || (!editor?.isActive({ textAlign: 'center' }) && !editor?.isActive({ textAlign: 'right' })) ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
+                        className={`w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors ${editor?.isActive({ textAlign: 'left' }) || (!editor?.isActive({ textAlign: 'center' }) && !editor?.isActive({ textAlign: 'right' }) && !editor?.isActive({ textAlign: 'justify' })) ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
                     >
                         <AlignLeft size={14} />
                     </button>
@@ -847,6 +848,13 @@ function BlogEditor() {
                         className={`w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors ${editor?.isActive({ textAlign: 'right' }) ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
                     >
                         <AlignRight size={14} />
+                    </button>
+                    <button
+                        onMouseDown={(e) => { e.preventDefault(); handleAlign('justify'); }}
+                        title="Justify"
+                        className={`w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors ${editor?.isActive({ textAlign: 'justify' }) ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <AlignJustify size={14} />
                     </button>
 
                     <div className="w-px h-5 bg-white/10 mx-1" />
@@ -1018,6 +1026,7 @@ function BlogEditor() {
                                 onKeyDown={handleEditorKeyDown}
                             >
                                 <EditorContent editor={editor} className="text-gray-200" />
+                                <TableBubbleMenu editor={editor} />
                             </div>
                         </div>
                     </div>
@@ -1105,6 +1114,7 @@ function BlogEditor() {
                                 onKeyDown={handleEditorKeyDown}
                             >
                                 <EditorContent editor={editor} className="text-gray-200" />
+                                <TableBubbleMenu editor={editor} />
                             </div>
                         </div>
                     ) : (
