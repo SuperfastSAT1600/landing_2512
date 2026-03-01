@@ -2,14 +2,56 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
 import styles from './Header.module.css';
 import LiveStatus from './LiveStatus';
 
+const NAV_ITEMS = [
+    { href: '/blog?category=SAT%20RW', label: 'SAT RW팁' },
+    { href: '/blog?category=SAT%20Math', label: 'SAT Math팁' },
+    { href: '/blog?category=입시뉴스', label: '입시뉴스' },
+    { href: '/reviews', label: '수업 후기' },
+    { href: '/diagnosis', label: '진단테스트' },
+    { href: 'https://www.superfastsat.com', label: 'SAT인강', external: true },
+] as const;
+
+function NavLinks() {
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    const isActive = (href: string) => {
+        if (href.startsWith('http')) return false;
+        const [path, query] = href.split('?');
+        if (path !== pathname) return false;
+        if (!query) return true;
+        const params = new URLSearchParams(query);
+        for (const [key, value] of params.entries()) {
+            if (searchParams.get(key) !== decodeURIComponent(value)) return false;
+        }
+        return true;
+    };
+
+    return (
+        <nav className={styles.nav}>
+            {NAV_ITEMS.map((item) => (
+                <Link
+                    key={item.href}
+                    href={item.href}
+                    {...('external' in item && item.external
+                        ? { target: '_blank', rel: 'noopener noreferrer' }
+                        : {})}
+                    className={`${styles.menuItem} ${isActive(item.href) ? styles.active : ''}`}
+                >
+                    {item.label}
+                </Link>
+            ))}
+        </nav>
+    );
+}
+
 export default function Header() {
     const [scrolled, setScrolled] = useState(false);
-
     const pathname = usePathname();
 
     useEffect(() => {
@@ -20,11 +62,10 @@ export default function Header() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Helper to check for admin pages
     if (pathname?.startsWith('/admin')) return null;
 
     return (
-        <header className={`${styles.header} ${scrolled ? styles.glass : styles.glass /* Always glass for consistency? Or clear at top? User wants Toss Style. Toss is clear at top, white/blur on scroll. But we are dark theme. Let's start clear, blur on scroll. Or just always blur if content goes under.*/}`}>
+        <header className={`${styles.header} ${scrolled ? styles.glass : ''}`}>
             <div className={styles.container}>
                 <Link href="/" aria-label="Home">
                     <Image
@@ -36,32 +77,9 @@ export default function Header() {
                         priority
                     />
                 </Link>
-
-                <nav className={styles.nav}>
-                    <Link href="/blog?category=SAT%20RW" className={styles.menuItem}>
-                        SAT RW팁
-                    </Link>
-                    <Link href="/blog?category=SAT%20Math" className={styles.menuItem}>
-                        SAT Math팁
-                    </Link>
-                    <Link href="/blog?category=입시뉴스" className={styles.menuItem}>
-                        입시뉴스
-                    </Link>
-                    <Link href="/reviews" className={styles.menuItem}>
-                        수업 후기
-                    </Link>
-                    <Link href="/diagnosis" className={styles.menuItem}>
-                        진단테스트
-                    </Link>
-                    <Link
-                        href="https://www.superfastsat.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.menuItem}
-                    >
-                        SAT인강
-                    </Link>
-                </nav>
+                <Suspense fallback={<nav className={styles.nav} />}>
+                    <NavLinks />
+                </Suspense>
             </div>
             <LiveStatus />
         </header>

@@ -4,24 +4,15 @@
     left: 0;
     width: 100%;
     z-index: 1000;
-    padding: 1rem 0;
     transition: all 0.3s ease;
     background: #050816;
-    /* Solid dark background */
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    /* Visible border */
 }
 
-/* Scrolled state - can increase opacity or blur if needed, 
-   but 'header' already establishes the distinct bar. 
-   We can just keep .glass for extra style or remove if solid is preferred. 
-   Let's keep .glass but make sure it reinforces the look.
-*/
 .glass {
     background: rgba(5, 8, 22, 0.85);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 0.8rem 0;
 }
 
 .container {
@@ -31,9 +22,9 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    /* Align left */
     gap: 3rem;
-    /* Space between logo and menu */
+    /* 메뉴 바 높이: LiveStatus(32px)보다 명확히 큰 56px */
+    min-height: 56px;
 }
 
 .logoImage {
@@ -54,16 +45,43 @@
     font-size: 0.95rem;
     transition: color 0.2s;
     position: relative;
+    /* 터치 타겟 확보를 위한 수직 패딩 */
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+}
+
+/* 언더라인 기본 상태 (숨김) */
+.menuItem::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: white;
+    transition: width 0.2s ease;
+    border-radius: 1px;
 }
 
 .menuItem:hover {
     color: white;
 }
 
-/* Specific style for active/highlighted menu if needed */
-.active {
+/* hover 시 언더라인 */
+.menuItem:hover::after {
+    width: 100%;
+}
+
+/* active 상태 */
+.menuItem.active {
     color: white;
     font-weight: 600;
+}
+
+/* active 언더라인 */
+.menuItem.active::after {
+    width: 100%;
 }
 
 @media (max-width: 768px) {
@@ -71,11 +89,13 @@
         flex-direction: row;
         gap: 1.5rem;
         padding: 0 1rem;
+        /* 모바일도 LiveStatus(32px)보다 크게 */
+        min-height: 52px;
     }
 
     .nav {
         overflow-x: auto;
-        gap: 1rem;
+        gap: 0;
         flex-shrink: 1;
         min-width: 0;
         -webkit-overflow-scrolling: touch;
@@ -93,5 +113,19 @@
     .menuItem {
         font-size: 0.8rem;
         white-space: nowrap;
+        /* 모바일 터치 타겟: 최소 44px (Apple 권장) */
+        min-height: 44px;
+        padding: 0 0.75rem;
+    }
+
+    .menuItem::after {
+        bottom: 2px;
+        left: 0.75rem;
+        width: 0;
+    }
+
+    .menuItem:hover::after,
+    .menuItem.active::after {
+        width: calc(100% - 1.5rem);
     }
 }
