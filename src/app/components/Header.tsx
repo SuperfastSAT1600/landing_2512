@@ -62,7 +62,7 @@ export default function Header() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    if (pathname?.startsWith('/admin')) return null;
+    if (pathname?.startsWith('/admin') || pathname === '/diagnosis') return null;
 
     return (
         <header className={`${styles.header} ${scrolled ? styles.glass : ''}`}>
