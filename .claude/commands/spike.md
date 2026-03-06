@@ -52,7 +52,7 @@ Agent:
 ## Agents Used
 
 - `codebase-cartographer` - Map existing patterns
-- `planner` - Evaluate approaches
+- `architect` - Evaluate approaches
 - General exploration - Research and prototype
 
 ---

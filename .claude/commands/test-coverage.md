@@ -435,9 +435,8 @@ Coverage is not the only quality metric:
 ## Related Commands
 
 - `/tdd` - Write tests first
-- `/test-and-build` - Run tests and build
-- `/security-review` - Security-specific testing
-- `/review-changes` - Include coverage in reviews
+- `/checkpoint` - Run tests, build, and full verification
+- `/review` - Include coverage in reviews
 
 ---
 

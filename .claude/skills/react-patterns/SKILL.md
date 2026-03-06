@@ -175,4 +175,16 @@ See: [performance.md](references/performance.md)
 
 ---
 
+## Templates
+
+Code templates for this domain (in `templates/`):
+- `component.tsx.template` — React component with TypeScript and variants
+- `form.tsx.template` — Form component with React Hook Form + Zod
+- `hook.ts.template` — Custom React hook with cleanup and error handling
+- `react-hook.ts.template` — React-specific hook (useDebounce, useLocalStorage, etc.)
+- `context.tsx.template` — React Context provider with type-safe state
+- `hoc.tsx.template` — Higher-Order Component with ref forwarding
+
+---
+
 For detailed implementations and code examples, see the `references/` directory.

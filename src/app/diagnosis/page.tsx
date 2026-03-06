@@ -57,7 +57,11 @@ export default function DiagnosisPage() {
   };
 
   if (phase === 'test-active') {
-    return <DiagnosticTestView testData={diagnosticTest1} />;
+    return (
+      <div style={{ minHeight: 'calc(100vh - 60px)', display: 'flex', flexDirection: 'column' }}>
+        <DiagnosticTestView testData={diagnosticTest1} />
+      </div>
+    );
   }
 
   return (

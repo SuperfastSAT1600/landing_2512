@@ -2,13 +2,21 @@
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ],
       "env": {},
-      "description": "File system operations - read, write, search files"
+      "description": "File system operations - read, write, search files",
+      "disabled": false
     },
     "github": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN_HERE"
       },
@@ -17,26 +25,32 @@
     },
     "supabase": {
       "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF_HERE",
+      "url": "https://mcp.supabase.com/mcp?project_ref=YOUR_SUPABASE_PROJECT_REF",
       "disabled": true,
-      "description": "⭐ RECOMMENDED: Supabase database operations, auth, and storage. Authenticate via 'claude /mcp' after setup. Get project_ref from https://supabase.com/dashboard/project/_/settings/api"
+      "description": "Supabase database operations, auth, and storage"
     },
     "memory": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
       "env": {},
       "disabled": true,
-      "description": "⭐ RECOMMENDED: Persistent knowledge graph memory across sessions"
+      "description": "Persistent knowledge graph memory across sessions"
     },
     "slack": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-slack"
+      ],
       "env": {
         "SLACK_BOT_TOKEN": "YOUR_SLACK_BOT_TOKEN_HERE",
         "SLACK_TEAM_ID": "YOUR_SLACK_TEAM_ID_HERE"
       },
-      "disabled": false,
-      "description": "⭐ REQUIRED: Slack workspace integration for PR notifications and team communication"
+      "disabled": true,
+      "description": "Slack workspace integration for PR notifications and team communication"
     },
     "render": {
       "type": "http",
@@ -83,17 +97,32 @@
     },
     "context7": {
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"],
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
       "env": {},
       "disabled": true,
-      "description": "⭐ RECOMMENDED: Up-to-date package documentation and code examples"
+      "description": "Up-to-date package documentation and code examples"
     },
     "magic-ui": {
       "command": "npx",
-      "args": ["-y", "@magicuidesign/mcp"],
+      "args": [
+        "-y",
+        "@magicuidesign/mcp"
+      ],
       "env": {},
       "disabled": true,
-      "description": "⭐ RECOMMENDED: Magic UI components library"
+      "description": "Magic UI components library"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ],
+      "env": {},
+      "disabled": false,
+      "description": "Browser automation - screenshot, navigate, click, fill for frontend inspection and diagnosis"
     }
   }
 }

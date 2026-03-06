@@ -34,7 +34,7 @@ Prepare and deploy a new release version.
 ---
 
 ### Step 2: Dependency Audit
-**Agent**: `dependency-manager`
+**Agent**: `devops-specialist`
 **Duration**: 15-20 minutes
 
 **Actions**:
@@ -53,7 +53,7 @@ Prepare and deploy a new release version.
 ---
 
 ### Step 3: Security Review
-**Agent**: `security-reviewer`
+**Agent**: `code-reviewer`
 **Duration**: 30-60 minutes
 
 **Actions**:

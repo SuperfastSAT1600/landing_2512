@@ -16,20 +16,47 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // prefers-reduced-motion gate — draw one static frame and return
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            const parent = canvas.parentElement;
+            if (parent) {
+                const rect = parent.getBoundingClientRect();
+                const w = rect.width || window.innerWidth;
+                const h = rect.height || window.innerHeight;
+                canvas.width = w;
+                canvas.height = h;
+                canvas.style.width = `${w}px`;
+                canvas.style.height = `${h}px`;
+                ctx.fillStyle = '#010204';
+                ctx.fillRect(0, 0, w, h);
+                const grad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.4);
+                grad.addColorStop(0, 'rgba(7, 27, 233, 0.4)');
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+            }
+            return;
+        }
+
         let animationFrameId: number;
         let streams: Stream[] = [];
         const brandColor = 'rgb(7, 27, 233)';
 
-        // Parent-relative dimensions (updated on resize)
         let parentWidth = 0;
         let parentHeight = 0;
-        // Animation origin point (where particles converge)
         let originX = 0;
         let originY = 0;
 
+        // Cached radial gradient — recreated only on resize
+        let centerGrad: CanvasGradient | null = null;
+
+        // Quality tier — determines stream count, shadows, and frame rate
+        let qualityTier: 'low' | 'medium' | 'high' = 'high';
+
+        // Frame-rate throttle state (targets ~30fps on low/medium)
+        let lastTime = 0;
+
         const getPaletteColor = (t: number, alpha: number) => {
-            // Priority: Stay Blue, then shift to Cyan/White-ish (not Purple)
-            // Reducing Red increment (150) and increasing Green increment (220)
             const r = Math.max(7, Math.min(255, 7 + t * 150));
             const g = Math.max(27, Math.min(255, 27 + t * 220));
             const b = Math.max(233, Math.min(255, 233 + t * 22));
@@ -45,31 +72,44 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
             parentWidth = rect.width;
             parentHeight = rect.height;
 
-            // High DPI support capped at 2x for performance
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
             canvas.width = parentWidth * dpr;
             canvas.height = parentHeight * dpr;
             ctx.scale(dpr, dpr);
 
-            // Sync CSS display size
             canvas.style.width = `${parentWidth}px`;
             canvas.style.height = `${parentHeight}px`;
 
-            // Compute origin aligned to title text center
-            // backgroundContainer has transform: rotate(180deg), so canvas (x,y)
-            // appears at screen position (parentWidth-x, parentHeight-y)
             const heroEl = parent.parentElement;
             if (titleRef?.current && heroEl) {
                 const heroRect = heroEl.getBoundingClientRect();
                 const titleRect = titleRef.current.getBoundingClientRect();
                 const titleCenterX = titleRect.left + titleRect.width / 2 - heroRect.left;
                 const titleCenterY = titleRect.top + titleRect.height / 2 - heroRect.top;
-                // Invert for 180deg rotation
                 originX = parentWidth - titleCenterX;
                 originY = parentHeight - titleCenterY;
             } else {
                 originX = parentWidth / 2;
                 originY = parentHeight / 2;
+            }
+
+            // Cache radial gradient — origin only changes on resize
+            centerGrad = ctx.createRadialGradient(
+                originX, originY, 0,
+                originX, originY, Math.max(parentWidth, parentHeight) * 0.4
+            );
+            centerGrad.addColorStop(0, 'rgba(7, 27, 233, 0.4)');
+            centerGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            // Adaptive quality tier: 3 levels based on screen size and CPU cores
+            const cores = navigator.hardwareConcurrency ?? 4;
+            const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+            if (parentWidth < 480 || (isMobile && cores <= 2)) {
+                qualityTier = 'low';
+            } else if (parentWidth < 768 || cores <= 4) {
+                qualityTier = 'medium';
+            } else {
+                qualityTier = 'high';
             }
 
             initStreams();
@@ -124,7 +164,6 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
                     const dist = maxDim * distMultiplier * 0.8;
                     const x = this.originX + Math.cos(this.angle) * dist;
                     const y = this.originY + Math.sin(this.angle) * dist;
-
                     return { x, y };
                 };
 
@@ -147,8 +186,8 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
                 ctx.lineCap = 'round';
                 ctx.globalAlpha = this.alphaBase * p * 1.2;
 
-                // Optimization: Disable expensive shadows on mobile screens
-                if (parentWidth > 768 && (this.isBright || p > 0.8)) {
+                // Shadows only on high tier
+                if (qualityTier === 'high' && (this.isBright || p > 0.8)) {
                     ctx.shadowBlur = 15 * p;
                     ctx.shadowColor = brandColor;
                 }
@@ -161,27 +200,33 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
 
         const initStreams = () => {
             streams = [];
-            // Dynamic stream count: Fewer on mobile to maintain 60FPS
-            const isMobile = parentWidth < 768;
-            const count = isMobile ? 80 : 120;
+            const countMap: Record<string, number> = { low: 30, medium: 60, high: 120 };
+            const count = countMap[qualityTier];
             for (let i = 0; i < count; i++) {
                 streams.push(new Stream());
             }
         };
 
-        const animate = () => {
+        const animate = (timestamp: number) => {
             if (!canvas || !ctx) return;
+
+            // Throttle to ~30fps on low/medium tiers to save battery
+            if (qualityTier !== 'high') {
+                const elapsed = timestamp - lastTime;
+                if (elapsed < 33) {
+                    animationFrameId = requestAnimationFrame(animate);
+                    return;
+                }
+                lastTime = timestamp;
+            }
+
             ctx.fillStyle = '#010204';
             ctx.fillRect(0, 0, parentWidth, parentHeight);
 
-            const centerGrad = ctx.createRadialGradient(
-                originX, originY, 0,
-                originX, originY, Math.max(parentWidth, parentHeight) * 0.4
-            );
-            centerGrad.addColorStop(0, 'rgba(7, 27, 233, 0.4)');
-            centerGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = centerGrad;
-            ctx.fillRect(0, 0, parentWidth, parentHeight);
+            if (centerGrad) {
+                ctx.fillStyle = centerGrad;
+                ctx.fillRect(0, 0, parentWidth, parentHeight);
+            }
 
             ctx.globalCompositeOperation = 'lighter';
             streams.forEach(s => {
@@ -193,13 +238,25 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
             animationFrameId = requestAnimationFrame(animate);
         };
 
+        // Page Visibility API — pause RAF when tab is hidden, resume when visible
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                cancelAnimationFrame(animationFrameId);
+            } else {
+                lastTime = 0;
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        };
+
         window.addEventListener('resize', resize);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
 
         resize();
-        animate();
+        animationFrameId = requestAnimationFrame(animate);
 
         return () => {
             window.removeEventListener('resize', resize);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
             cancelAnimationFrame(animationFrameId);
         };
     }, []);

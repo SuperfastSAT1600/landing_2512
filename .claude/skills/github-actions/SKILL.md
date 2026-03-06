@@ -172,6 +172,13 @@ jobs:
 
 ---
 
+## Templates
+
+Code templates for this domain (in `templates/`):
+- `github-workflow.yml` — GitHub Actions CI/CD pipeline template
+
+---
+
 ## Resources
 
 - **GitHub Actions Docs:** https://docs.github.com/en/actions

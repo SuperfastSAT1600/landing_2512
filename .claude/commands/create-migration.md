@@ -51,8 +51,8 @@ Create production-ready database migrations that safely evolve your schema while
 
 ## Agents Used
 
-- `migration-specialist` - Database migration expert
-- `database-architect` - Schema design validation
+- `backend-specialist` - Database migration expert
+- `backend-specialist` - Schema design validation
 
 ---
 
@@ -481,5 +481,5 @@ migrations/
 /create-migration "add status column" && npm run migrate:test
 
 # Create migration + review changes
-/create-migration "refactor user schema" && /review-changes
+/create-migration "refactor user schema" && /review
 ```

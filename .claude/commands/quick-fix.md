@@ -192,15 +192,15 @@ Fixes #456
 
 - Complex bugs requiring investigation (use `/plan` first)
 - Bugs requiring architectural changes
-- Performance issues (use performance-optimizer agent)
-- Security vulnerabilities (use `/security-review`)
+- Performance issues (use frontend-specialist agent)
+- Security vulnerabilities (use `/review`)
 
 ---
 
 ## Related Commands
 
 - `/full-feature` - For complex fixes needing planning
-- `/test-and-build` - Just run tests and build
+- `/checkpoint` - Run tests, build, and full verification
 - `/commit-push-pr` - Just create PR
 
 ---
@@ -211,7 +211,6 @@ Fixes #456
 
 | Resource | Location | When to Use |
 |----------|----------|-------------|
-| Bug Fix Workflow | `.claude/workflows/bug-fix.md` | Complex bugs needing full process |
 | Hotfix Checklist | `.claude/checklists/hotfix-checklist.md` | P0/P1 urgent production issues |
 | PR Review | `.claude/checklists/pr-review.md` | Before creating fix PR |
-| Testing Rules | `.claude/rules/testing.md` | Regression test patterns |
+| Essential Rules | `.claude/rules/essential-rules.md` | Coding standards and test patterns |

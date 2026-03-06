@@ -247,11 +247,13 @@
     animation: warpIn 0.55s cubic-bezier(0.4, 0, 0, 1) forwards;
     z-index: 20;
     pointer-events: none;
+    will-change: transform, opacity, filter;
 }
 
 .cardFadeOut {
     animation: fadeAway 0.4s cubic-bezier(0.4, 0, 1, 1) forwards;
     pointer-events: none;
+    will-change: transform, opacity, filter;
 }
 
 @keyframes warpIn {
@@ -403,5 +405,23 @@
     .cardDescription {
         font-size: 0.88rem;
         -webkit-line-clamp: 2;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card {
+        transition: none;
+    }
+
+    .cardImage {
+        transition: none;
+    }
+
+    .cardWarp {
+        animation: none;
+    }
+
+    .cardFadeOut {
+        animation: none;
     }
 }

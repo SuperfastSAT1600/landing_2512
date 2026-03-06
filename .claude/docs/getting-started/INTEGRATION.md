@@ -94,7 +94,7 @@ cp /tmp/claude-code-setup/CLAUDE.md .
 **After this step, your project has**:
 ```
 my-app/
-├── .claude/       ← NEW (33 agents, 20 commands, 13 checklists)
+├── .claude/       ← NEW (10 agents, 25 commands, 12 checklists)
 ├── CLAUDE.md      ← NEW (tech stack config)
 ├── setup.cjs      ← NEW (wizard)
 ├── lib/           ← NEW (wizard modules)
@@ -113,7 +113,7 @@ Run the setup wizard to automatically detect your tech stack and update CLAUDE.m
 # - Check and install Claude Code CLI if needed
 # - Auto-detect your framework, backend, database, and testing tools
 # - Update CLAUDE.md with your actual stack (no manual editing needed!)
-# - REQUIRE Slack MCP setup (for PR notifications to 개발 channel)
+# - REQUIRE Slack MCP setup (for PR notifications to commit-업데이트 channel)
 # - Configure other MCP servers
 # - Set up environment files
 # - Offer to install project dependencies (npm/pnpm/yarn/bun)
@@ -124,7 +124,7 @@ node setup.cjs
 - Slack Bot Token (from https://api.slack.com/apps)
 - Slack Team ID (starts with T)
 
-This is needed to auto-send PR notifications to the 개발 channel when using `/commit-push-pr`.
+This is needed to auto-send PR notifications to the commit-업데이트 channel when using `/commit-push-pr`.
 
 **What gets detected**:
 - Frontend: Next.js, React, Vue, Svelte, Angular, etc.
@@ -147,15 +147,11 @@ code CLAUDE.md
 
 Claude Code includes generic templates (test, migration, PR description) that work out of the box.
 
-If you use React/Next.js, copy those templates:
+React/Next.js templates now live with their skills:
+- React: `.claude/skills/react-patterns/templates/`
+- Next.js: `.claude/skills/nextjs-patterns/templates/`
 
-```bash
-# Using React?
-cp .claude/templates/variants/react/*.template .claude/templates/
-
-# Using Next.js?
-cp .claude/templates/variants/nextjs/*.template .claude/templates/
-```
+Load them via `Skill("react-patterns")` or `Skill("nextjs-patterns")` — no manual copying needed.
 
 ---
 
@@ -204,9 +200,9 @@ node setup.cjs
 # - Install project dependencies automatically
 # - You just confirm the detected values and you're done!
 
-# 5. Copy Next.js templates
-cp .claude/templates/variants/nextjs/*.template .claude/templates/
-cp .claude/templates/variants/react/*.template .claude/templates/
+# 5. Templates now live with skills — no copying needed
+# React: .claude/skills/react-patterns/templates/
+# Next.js: .claude/skills/nextjs-patterns/templates/
 
 # 6. Add to git
 git add .claude/ CLAUDE.md setup.cjs lib/

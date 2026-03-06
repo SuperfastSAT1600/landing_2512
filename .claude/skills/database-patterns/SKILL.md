@@ -109,6 +109,13 @@ CREATE INDEX idx_active_users ON users(email) WHERE deleted_at IS NULL;
 
 ---
 
+## Templates
+
+Code templates for this domain (in `templates/`):
+- `migration.sql.template` — Database migration script with rollback
+
+---
+
 ## Resources
 
 - PostgreSQL Official Documentation: https://www.postgresql.org/docs/current/

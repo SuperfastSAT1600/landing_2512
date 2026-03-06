@@ -36,31 +36,57 @@ Create detailed implementation plans for features.
 
 ## Output Format
 
-The planner provides:
+The architect provides a **structured spec** with traceable requirements:
 
 ### 1. Feature Overview
 - Goal and scope
 - User-facing changes
 - Technical requirements
 
-### 2. Implementation Steps
+### 2. Requirements (with IDs and Verification Tags)
+```
+### REQ-001: [Requirement title]
+- **Description**: [Observable behavior]
+- **Verification**: (TEST) | (BROWSER) | (MANUAL)
+- **Priority**: Must | Should | Could
+
+### REQ-002: [Next requirement]
+  ...
+```
+
+**Verification tags**:
+- `(TEST)` = automated unit/integration test
+- `(BROWSER)` = visual/DOM check via Playwright/Cypress
+- `(MANUAL)` = human verification (use sparingly)
+
+### 3. Traceability Matrix
+```
+| REQ ID  | Description        | Verification | Test/Check Location       |
+|---------|--------------------|-------------|---------------------------|
+| REQ-001 | User can register  | (TEST)      | src/__tests__/auth.test.ts |
+| REQ-002 | Form shows errors  | (BROWSER)   | e2e/registration.spec.ts  |
+```
+
+### 4. Implementation Steps
 ```
 Step 1: [Component Name]
   - Files to modify: [list]
   - New files needed: [list]
   - Dependencies: [what must exist first]
+  - Satisfies: REQ-001, REQ-002
   - Complexity: Low/Medium/High
 
 Step 2: [Next Component]
   ...
 ```
 
-### 3. Testing Strategy
+### 5. Testing Strategy
+- Maps to REQ IDs: `REQ-001 → unit test in AuthService.test.ts`
 - Unit tests needed
 - Integration tests
 - E2E scenarios
 
-### 4. Risks & Considerations
+### 6. Risks & Considerations
 - Potential blockers
 - Security concerns
 - Performance implications
@@ -77,153 +103,117 @@ Planner: Implementation Plan for Real-Time Notifications
 ### Overview
 Add real-time push notifications for user events using WebSockets.
 
-**User-Facing Changes:**
-- Users receive instant notifications
-- Notification badge shows unread count
-- In-app notification center
+---
 
-**Technical Requirements:**
-- WebSocket server
-- Notification storage
-- Client-side notification handling
+### Requirements
+
+#### REQ-001: Real-time notification delivery
+- **Description**: Users receive notifications within 2 seconds of the triggering event
+- **Verification**: (TEST)
+- **Priority**: Must
+
+#### REQ-002: Unread notification count
+- **Description**: Notification badge shows accurate unread count
+- **Verification**: (TEST)
+- **Priority**: Must
+
+#### REQ-003: Notification center UI
+- **Description**: Users can view, scroll, and manage all notifications in a dropdown
+- **Verification**: (BROWSER)
+- **Priority**: Must
+
+#### REQ-004: Mark as read
+- **Description**: Users can mark individual or all notifications as read
+- **Verification**: (TEST)
+- **Priority**: Must
+
+#### REQ-005: WebSocket reconnection
+- **Description**: Client auto-reconnects on connection loss without losing notifications
+- **Verification**: (TEST)
+- **Priority**: Should
+
+#### REQ-006: Cross-browser rendering
+- **Description**: Notifications render correctly in Chrome, Firefox, Safari
+- **Verification**: (BROWSER)
+- **Priority**: Should
+
+---
+
+### Traceability Matrix
+
+| REQ ID  | Description                  | Verification | Test/Check Location                   |
+|---------|------------------------------|-------------|---------------------------------------|
+| REQ-001 | Real-time delivery           | (TEST)      | src/__tests__/NotificationService.test.ts |
+| REQ-002 | Unread count                 | (TEST)      | src/__tests__/NotificationService.test.ts |
+| REQ-003 | Notification center UI       | (BROWSER)   | e2e/notifications.spec.ts             |
+| REQ-004 | Mark as read                 | (TEST)      | src/__tests__/NotificationService.test.ts |
+| REQ-005 | WebSocket reconnection       | (TEST)      | src/__tests__/NotificationSocket.test.ts  |
+| REQ-006 | Cross-browser rendering      | (BROWSER)   | e2e/notifications.spec.ts             |
 
 ---
 
 ### Implementation Steps
 
 **Step 1: Database Schema**
-Files to modify: `db/migrations/`
-New files: `YYYYMMDD_create_notifications.sql`
-Dependencies: None (can start immediately)
+Files: `db/migrations/YYYYMMDD_create_notifications.sql`
+Dependencies: None
+Satisfies: Foundation for REQ-001, REQ-002, REQ-004
 Complexity: Low
-
-Create notifications table:
-```sql
-CREATE TABLE notifications (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
-  type VARCHAR(50) NOT NULL,
-  title VARCHAR(200) NOT NULL,
-  message TEXT,
-  read BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
 
 **Step 2: Notification Service**
-Files to modify: None
-New files: `src/services/NotificationService.ts`
-Dependencies: Step 1 (database schema)
+Files: `src/services/NotificationService.ts`
+Dependencies: Step 1
+Satisfies: REQ-001, REQ-002, REQ-004
 Complexity: Medium
-
-Core notification logic:
-- Create notification
-- Mark as read
-- Get unread count
-- Get notification history
 
 **Step 3: WebSocket Server**
-Files to modify: `src/server.ts`
-New files: `src/websocket/NotificationSocket.ts`
-Dependencies: Step 2 (notification service)
+Files: `src/server.ts`, `src/websocket/NotificationSocket.ts`
+Dependencies: Step 2
+Satisfies: REQ-001, REQ-005
 Complexity: High
 
-WebSocket implementation:
-- Connection management
-- Authentication
-- Room-based broadcasting (per-user rooms)
-- Heartbeat/reconnection logic
-
-**Step 4: Frontend WebSocket Client**
-Files to modify: `src/App.tsx`
-New files: `src/hooks/useNotifications.ts`
-Dependencies: Step 3 (WebSocket server)
+**Step 4: Frontend Client**
+Files: `src/hooks/useNotifications.ts`
+Dependencies: Step 3
+Satisfies: REQ-001, REQ-005
 Complexity: Medium
 
-Client-side handling:
-- WebSocket connection hook
-- Auto-reconnection
-- Notification state management
-- Toast notifications
-
-**Step 5: Notification UI Components**
-Files to modify: None
-New files:
-  - `src/components/NotificationBell.tsx`
-  - `src/components/NotificationCenter.tsx`
-  - `src/components/NotificationItem.tsx`
-Dependencies: Step 4 (WebSocket client)
+**Step 5: UI Components**
+Files: `src/components/NotificationBell.tsx`, `NotificationCenter.tsx`, `NotificationItem.tsx`
+Dependencies: Step 4
+Satisfies: REQ-003, REQ-006
 Complexity: Low
-
-UI implementation:
-- Bell icon with badge
-- Dropdown notification center
-- Individual notification items
-- Mark as read interactions
 
 ---
 
 ### Testing Strategy
 
 **Unit Tests:**
-- NotificationService methods
-- WebSocket message handling
-- Notification state reducer
-
-**Integration Tests:**
-- Database queries
-- WebSocket server setup
-- Notification creation flow
+- REQ-001 → NotificationService.test.ts: `test('REQ-001: delivers notification within service')`
+- REQ-002 → NotificationService.test.ts: `test('REQ-002: returns accurate unread count')`
+- REQ-004 → NotificationService.test.ts: `test('REQ-004: marks notification as read')`
+- REQ-005 → NotificationSocket.test.ts: `test('REQ-005: reconnects after disconnect')`
 
 **E2E Tests:**
-- User receives notification
-- Notification appears in UI
-- Mark as read functionality
-- Unread count updates
+- REQ-003 → e2e/notifications.spec.ts: `test('REQ-003: notification center shows all notifications')`
+- REQ-006 → e2e/notifications.spec.ts: `test('REQ-006: renders correctly in target browsers')`
 
 ---
 
 ### Risks & Considerations
 
-**Scalability:**
-- WebSocket connections can be resource-intensive
-- Consider Redis for pub/sub in multi-server setup
-
-**Security:**
-- Authenticate WebSocket connections
-- Validate user can only receive their notifications
-- Rate limit notification creation
-
-**Performance:**
-- Limit notification history fetched
-- Implement pagination
-- Consider archiving old notifications
-
-**Browser Support:**
-- Fallback for browsers without WebSocket support
-- Handle connection interruptions gracefully
-
----
-
-### Recommended Implementation Order
-1. Database schema (foundation)
-2. Notification service (business logic)
-3. WebSocket server (real-time layer)
-4. Frontend client (connection)
-5. UI components (presentation)
-
-**Estimated Time**: 2-3 days for experienced developer
-
----
-
-Ready to start? I recommend beginning with Step 1 (database schema).
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| WebSocket connections resource-intensive | High | Redis pub/sub for multi-server |
+| Connection interruptions lose messages | Medium | Queue unsent notifications server-side |
+| Rate limiting needed | Medium | Max 100 notifications/min per user |
 ```
 
 ---
 
 ## Command Behavior
 
-**Delegates to**: `planner` agent
+**Delegates to**: `architect` agent
 
 **Analyzes**:
 - Existing codebase structure
@@ -272,6 +262,12 @@ Ready to start? I recommend beginning with Step 1 (database schema).
 **Files**:
 Plans are saved to `.claude/plans/[feature-name].md`
 
+**Spec Template Variants** (choose the best fit):
+- `spec.md.template` — Full-featured (default, use for general features)
+- `spec-api.md.template` — API endpoints (method/path/auth/validation)
+- `spec-bugfix.md.template` — Bug fixes (repro steps/root cause/regression guard)
+- `spec-ui.md.template` — UI components (states/interactions/accessibility)
+
 **Benefits**:
 - Reference during implementation
 - Share with team for review
@@ -283,8 +279,7 @@ Plans are saved to `.claude/plans/[feature-name].md`
 ## Related Commands
 
 - `/tdd` - Implement feature with TDD
-- `/review-changes` - Review implementation against plan
-- `/security-review` - Security audit planned changes
+- `/review` - Review implementation against plan
 
 ---
 
@@ -292,7 +287,7 @@ Plans are saved to `.claude/plans/[feature-name].md`
 
 **Be Specific**: Detailed feature descriptions yield better plans
 
-**Ask Questions**: If plan is unclear, ask planner to elaborate
+**Ask Questions**: If plan is unclear, ask architect to elaborate
 
 **Adapt as Needed**: Plans are guides, not rigid requirements
 

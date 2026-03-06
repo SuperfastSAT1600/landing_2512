@@ -78,7 +78,7 @@ check_required_files() {
         "$PROJECT_ROOT/CLAUDE.md"
         "$CLAUDE_DIR/agents/INDEX.md"
         "$CLAUDE_DIR/skills/INDEX.md"
-        "$CLAUDE_DIR/rules/coding-standards.md"
+        "$CLAUDE_DIR/rules/essential-rules.md"
         "$CLAUDE_DIR/rules/orchestration.md"
         "$CLAUDE_DIR/rules/task-protocol.md"
         "$CLAUDE_DIR/rules/self-improvement.md"
@@ -442,6 +442,8 @@ check_dead_references() {
         ".claude/rules/testing.md"
         ".claude/rules/security.md"
         ".claude/skills/github-actions.md"
+        ".claude/plans/"
+        ".claude/user/session-log.jsonl"
     )
 
     should_skip() {

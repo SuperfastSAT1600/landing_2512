@@ -23,25 +23,35 @@ Complete feature development cycle from planning through PR creation.
 
 Orchestrates a complete feature development workflow:
 
-1. **Plan**: Create implementation plan with planner agent
-2. **Implement**: Write the code following the plan
-3. **Test**: Write tests using TDD principles
-4. **Review**: Security and code quality review
-5. **Document**: Update relevant documentation
-6. **Commit**: Create PR-ready commit
+1. **Plan**: Create structured spec with REQ-XXX IDs and verification tags
+2. **Spec Audit**: Validate spec quality (all requirements have IDs and verification methods)
+3. **Implement**: Write the code following the plan
+4. **Test**: Write tests mapped to REQ-XXX IDs using TDD principles
+5. **Review**: Security and code quality review
+6. **Checkpoint**: Run full verification gate (types, lint, tests, build, security)
+7. **Document**: Update relevant documentation
+8. **Commit**: Create PR-ready commit
 
 ---
 
 ## Workflow Steps
 
-### Phase 1: Planning (Planner Agent)
+### Phase 1: Planning (Architect Agent)
 ```
 - Analyze requirements
-- Identify affected files
-- Break down into tasks
-- Identify dependencies
-- Assess risks
-- Estimate effort
+- Create structured spec with REQ-XXX IDs
+- Tag each requirement with verification method: (TEST), (BROWSER), (MANUAL)
+- Build traceability matrix (REQ → test file)
+- Identify dependencies and risks
+```
+
+### Phase 1.5: Spec Audit
+```
+- Run .claude/scripts/audit-spec.sh on the plan
+- Verify all requirements have IDs and verification tags
+- Verify at least one (TEST) verification exists
+- Verify traceability matrix is present
+- Gate: spec must pass audit before implementation begins
 ```
 
 ### Phase 2: Implementation
@@ -55,16 +65,19 @@ Orchestrates a complete feature development workflow:
 
 ### Phase 3: Testing (TDD Guide Agent)
 ```
+- Write tests mapped to REQ-XXX IDs from spec
+- Test names include REQ ID: test('REQ-001: user can register with email', ...)
 - Write unit tests (Red-Green-Refactor)
 - Write integration tests if needed
 - Ensure adequate coverage
 - Test edge cases
 - Verify error handling
+- Optionally use /test-ladder for progressive escalation
 ```
 
 ### Phase 4: Review
 ```
-- Security review (security-reviewer agent)
+- Security review (code-reviewer agent)
 - Code quality check (code-reviewer agent)
 - Performance considerations
 - Address review findings
@@ -96,7 +109,7 @@ Orchestrates a complete feature development workflow:
 
 ### Phase 1: Planning
 
-I'll delegate to the planner agent to create an implementation plan.
+I'll delegate to the architect agent to create an implementation plan.
 
 **Implementation Plan:**
 
@@ -226,9 +239,11 @@ The command pauses for confirmation at:
 
 ## Related Commands
 
-- `/plan` - Just the planning phase
+- `/plan` - Just the planning phase (with spec-driven output)
+- `/checkpoint` - Run full verification gate independently
+- `/test-ladder` - Progressive test escalation tied to spec
 - `/tdd` - Just the testing phase
-- `/security-review` - Just security review
+- `/review` - Just review phase
 - `/commit-push-pr` - Just the commit/PR phase
 
 ---

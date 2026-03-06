@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Slack PR Notification Script
-# Sends notifications to the configured Slack channel when PRs are created or pushed
+# Sends notifications to the commit-업데이트 channel when PRs are created or pushed
 # Messages are in natural Korean for non-technical team members
 #
 # Usage:
@@ -11,29 +11,13 @@
 #   - pr_created: PR was just created
 #   - push: Code was pushed to remote
 #
-# Configuration:
-#   - Channel: .claude/config/slack.json → "channel"
-#   - Bot name: Auto-derived from project folder name
+# Environment variables:
+#   - SLACK_CHANNEL: Channel name (default: commit-업데이트)
 
 set -e
 
 EVENT_TYPE="${1:-unknown}"
-
-# --- Config: Channel ---
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/../config/slack.json"
-
-if [ -f "$CONFIG_FILE" ]; then
-  if command -v jq &> /dev/null; then
-    SLACK_CHANNEL=$(jq -r '.channel // empty' "$CONFIG_FILE" 2>/dev/null)
-  else
-    SLACK_CHANNEL=$(grep -o '"channel"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | sed 's/.*"channel"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-  fi
-fi
 SLACK_CHANNEL="${SLACK_CHANNEL:-commit-업데이트}"
-
-# --- Config: Bot name (auto from folder name) ---
-BOT_NAME="$(basename "$(pwd)")"
 
 # Get current branch
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
@@ -68,25 +52,25 @@ case "$EVENT_TYPE" in
   pr_created)
     if [ -n "$PR_URL" ] && [ -n "$PR_TITLE" ]; then
       TRANSLATED_BODY=$(translate_pr_body "$PR_BODY")
-      MESSAGE="✨ *새로운 코드 리뷰 요청* #$PR_NUMBER\n\n*$PR_TITLE*\n\n👤 작성자: $AUTHOR\n\n━━━━━━━━━━━━━━━━━━━━\n\n$TRANSLATED_BODY\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔗 <$PR_URL|자세히 보기>\n\n_🤖 $BOT_NAME_"
+      MESSAGE="✨ *새로운 코드 리뷰 요청* #$PR_NUMBER\n\n*$PR_TITLE*\n\n👤 작성자: $AUTHOR\n\n━━━━━━━━━━━━━━━━━━━━\n\n$TRANSLATED_BODY\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔗 <$PR_URL|자세히 보기>\n\n_🤖 Claude Code로 자동 생성됨_"
     else
-      MESSAGE="✨ *새로운 코드 리뷰 요청*\n👤 작성자: $AUTHOR\n\n_🤖 $BOT_NAME_"
+      MESSAGE="✨ *새로운 코드 리뷰 요청*\n👤 작성자: $AUTHOR\n\n_🤖 Claude Code로 자동 생성됨_"
     fi
     ;;
 
   push)
     if [ -n "$PR_URL" ] && [ -n "$PR_TITLE" ]; then
       TRANSLATED_BODY=$(translate_pr_body "$PR_BODY")
-      MESSAGE="📤 *코드 업데이트* #$PR_NUMBER\n\n*$PR_TITLE*\n\n👤 작성자: $AUTHOR\n\n━━━━━━━━━━━━━━━━━━━━\n\n$TRANSLATED_BODY\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔗 <$PR_URL|자세히 보기>\n\n_🤖 $BOT_NAME_"
+      MESSAGE="📤 *코드 업데이트* #$PR_NUMBER\n\n*$PR_TITLE*\n\n👤 작성자: $AUTHOR\n\n━━━━━━━━━━━━━━━━━━━━\n\n$TRANSLATED_BODY\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔗 <$PR_URL|자세히 보기>\n\n_🤖 Claude Code로 자동 생성됨_"
     else
       # No PR associated, just show push info
       COMMIT_MSG=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "변경사항 없음")
-      MESSAGE="📤 *코드 업데이트*\n👤 작성자: $AUTHOR\n💬 내용: $COMMIT_MSG\n\n_🤖 $BOT_NAME_"
+      MESSAGE="📤 *코드 업데이트*\n👤 작성자: $AUTHOR\n💬 내용: $COMMIT_MSG\n\n_🤖 Claude Code로 자동 생성됨_"
     fi
     ;;
 
   *)
-    MESSAGE="📢 *작업 알림*\n👤 작성자: $AUTHOR\n\n_🤖 $BOT_NAME_"
+    MESSAGE="📢 *작업 알림*\n👤 작성자: $AUTHOR\n\n_🤖 Claude Code로 자동 생성됨_"
     ;;
 esac
 

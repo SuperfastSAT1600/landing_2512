@@ -143,12 +143,12 @@ export default async function Post({ params }: Props) {
                     )}
 
                     {/* Title */}
-                    <h1 className="text-2xl sm:text-4xl md:text-6xl font-extrabold text-white text-center mb-6 sm:mb-12 leading-tight">
+                    <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white text-center mb-6 sm:mb-12 leading-tight">
                         {postData.title}
                     </h1>
 
                     {/* Content */}
-                    <div className="prose prose-invert prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-a:text-blue-400 prose-img:rounded-xl">
+                    <div className="prose prose-invert prose-base sm:prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-a:text-blue-400 prose-img:rounded-xl">
                         <div dangerouslySetInnerHTML={{ __html: postData.contentHtml || '' }} />
                     </div>
 

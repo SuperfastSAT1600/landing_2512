@@ -19,7 +19,7 @@ Users describe what they want in plain English. Classify intent, select appropri
 **Examples**:
 - "I want users to log in" → full-feature with auth-specialist
 - "Add a checkout flow" → main agent implements via full-feature
-- "Build a dashboard" → main agent implements (optionally with planner for complex features)
+- "Build a dashboard" → main agent implements (optionally with architect for complex features)
 
 ### Bug Fixes
 **Triggers**: "Fix...", "Broken...", "Error...", "Bug...", "Not working...", "Issue with...", "Problem with..."
@@ -31,64 +31,64 @@ Users describe what they want in plain English. Classify intent, select appropri
 
 ### Code Review
 **Triggers**: "Review...", "Check...", "Is this okay?", "Look at...", "Audit...", "Examine..."
-**Route to**: `/review-changes` skill
+**Route to**: `/review` skill
 **Examples**:
-- "Review my changes" → review-changes
-- "Check if this is secure" → security-review
+- "Review my changes" → review
+- "Check if this is secure" → review
 - "Is this code good?" → code-reviewer agent
 
 ### Security Audit
 **Triggers**: "Secure?", "Safe?", "Vulnerable?", "Security...", "Hack...", "Exploit..."
-**Route to**: `/security-review` skill
+**Route to**: `/review` skill
 **Examples**:
-- "Is this secure?" → security-review
-- "Check for vulnerabilities" → security-review
-- "Audit security" → security-review
+- "Is this secure?" → review
+- "Check for vulnerabilities" → review
+- "Audit security" → review
 
 ### Performance Optimization
 **Triggers**: "Slow...", "Fast...", "Optimize...", "Speed up...", "Performance...", "Faster..."
-**Route to**: `performance-optimizer` agent
+**Route to**: `frontend-specialist` agent
 **Examples**:
-- "Make the page faster" → performance-optimizer
-- "Optimize database queries" → performance-optimizer
-- "Speed up the app" → performance-optimizer
+- "Make the page faster" → frontend-specialist
+- "Optimize database queries" → backend-specialist
+- "Speed up the app" → frontend-specialist
 
 ### Testing
 **Triggers**: "Test...", "Coverage...", "TDD...", "Verify...", "E2E...", "Unit test..."
-**Route to**: `/test-coverage`, `tdd-guide`, or `e2e-runner`
+**Route to**: `/test-coverage`, `test-writer`, or `test-writer`
 **Examples**:
 - "Add tests" → test-coverage
-- "Write unit tests" → unit-test-writer agent
-- "TDD for login" → tdd-guide agent
-- "E2E tests" → e2e-runner agent
+- "Write unit tests" → test-writer agent
+- "TDD for login" → test-writer agent
+- "E2E tests" → test-writer agent
 
 ### Documentation
 **Triggers**: "Document...", "README...", "API docs...", "Comment...", "Explain..."
 **Route to**: `/update-docs` or `doc-updater` agent
 **Examples**:
 - "Update the README" → update-docs
-- "Document the API" → api-designer agent
+- "Document the API" → backend-specialist agent
 - "Add comments" → doc-updater agent
 
 ### Refactoring
 **Triggers**: "Clean up...", "Simplify...", "Dead code...", "Modernize...", "Refactor..."
-**Route to**: `/refactor-clean` or `code-simplifier` agent
+**Route to**: `/refactor-clean` or `code-reviewer` agent
 **Examples**:
 - "Clean up the code" → refactor-clean
-- "Remove dead code" → refactor-cleaner agent
-- "Simplify this" → code-simplifier agent
+- "Remove dead code" → code-reviewer agent
+- "Simplify this" → code-reviewer agent
 
 ### Quality Improvements
 **Triggers**: "Lint...", "Format...", "Type errors...", "TypeScript...", "ESLint..."
-**Route to**: `/lint-fix` or `/type-check`
+**Route to**: `/checkpoint` or `/type-check`
 **Examples**:
-- "Fix linting errors" → lint-fix
+- "Fix linting errors" → checkpoint
 - "Fix type errors" → type-check
-- "Format the code" → lint-fix
+- "Format the code" → checkpoint
 
 ### Deployment
 **Triggers**: "Deploy...", "Release...", "Ship...", "Go live...", "Publish..."
-**Route to**: `release` workflow or `ci-cd-specialist`
+**Route to**: `release` workflow or `devops-specialist`
 **Examples**:
 - "Deploy to production" → release workflow
 - "Ship this feature" → release workflow
@@ -102,23 +102,23 @@ Users describe what they want in plain English. Classify intent, select appropri
 
 ### Database Changes
 **Triggers**: "Migration...", "Schema...", "Add field...", "Database...", "SQL..."
-**Route to**: `/create-migration` or `database-architect`
+**Route to**: `/create-migration` or `backend-specialist`
 **Examples**:
 - "Add a field to users table" → create-migration
-- "Create new table" → database-architect agent
+- "Create new table" → backend-specialist agent
 
 ## Context-Based Auto-Delegation
 
 ### By Technology Mentioned
 - Authentication/login → `auth-specialist`
-- Database/schema → `database-architect`
-- API/endpoints → `api-designer`
-- GraphQL → `graphql-specialist`
-- WebSocket/real-time → `websocket-specialist`
-- Docker/containers → `docker-specialist`
-- CI/CD/pipeline → `ci-cd-specialist`
-- Infrastructure → `iac-specialist`
-- AI/LLM/RAG → `ai-integration-specialist`
+- Database/schema → `backend-specialist`
+- API/endpoints → `backend-specialist`
+- GraphQL → `realtime-specialist`
+- WebSocket/real-time → `realtime-specialist`
+- Docker/containers → `devops-specialist`
+- CI/CD/pipeline → `devops-specialist`
+- Infrastructure → `devops-specialist`
+- AI/LLM/RAG → `realtime-specialist`
 
 ### By File Context
 - `.tsx`, `.jsx` files → Frontend work
@@ -255,8 +255,8 @@ Offer options with context for each
 ### Good Intent Matching
 - User: "Users need to reset passwords" → Feature: auth-specialist
 - User: "The cart total is wrong" → Bug: quick-fix
-- User: "Make the dashboard load faster" → Optimize: performance-optimizer
-- User: "Is this PR ready?" → Review: review-changes
+- User: "Make the dashboard load faster" → Optimize: frontend-specialist
+- User: "Is this PR ready?" → Review: review
 - User: "Ship it" → Deploy: release workflow
 
 ### Handling Vagueness

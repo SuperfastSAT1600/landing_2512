@@ -81,20 +81,7 @@ cp ../claude-code-setup/CLAUDE.md .
 cp ../claude-code-setup/setup.cjs .
 cp -r ../claude-code-setup/lib/ .
 
-# MCP 템플릿 복사 (선택 사항)
-# (MCP 템플릿은 위의 .claude/ 복사에 이미 포함되어 있습니다)
-
-# 온보딩 문서들 복사
-cp ../claude-code-setup/README.ko.md .
-
-cp -r ../claude-code-setup/.claude/ .
-cp ../claude-code-setup/CLAUDE.md .
-cp ../claude-code-setup/setup.cjs .
-cp -r ../claude-code-setup/lib/ .
-# (MCP 템플릿은 위의 .claude/ 복사에 이미 포함되어 있습니다)
-
-
-
+# MCP 템플릿 복사 (선택 사항 - 위의 .claude/ 복사에 이미 포함되어 있음)
 ```
 
 **옵션 B를 사용한 경우**, `../claude-code-setup/`를 `/tmp/claude-code-setup/`로 바꾸세요:
@@ -107,19 +94,13 @@ cp /tmp/claude-code-setup/CLAUDE.md .
 **이 단계 후 프로젝트는 다음과 같습니다**:
 ```
 my-app/
-├── .claude/       ← 새로 추가 (33개 에이전트, 20개 명령어, 13개 체크리스트)
+├── .claude/       ← 새로 추가 (10개 에이전트, 25개 명령어, 12개 체크리스트)
 ├── CLAUDE.md      ← 새로 추가 (기술 스택 구성)
 ├── setup.cjs      ← 새로 추가 (마법사)
 ├── lib/           ← 새로 추가 (마법사 모듈)
-├── INTEGRATION.ko.md ← 새로 추가 (온보딩 문서)
-├── TEMPLATE-SETUP.ko.md ← 새로 추가 (온보딩 문서)
-├── README.ko.md ← 새로 추가 (온보딩 문서)
-├── WORKFLOW.ko.md ← 새로 추가 (온보딩 문서)
 ├── src/           (기존 코드)
 └── ...
 ```
-
-여기부터는 VScode에서 프로젝트를 열고 INTEGRATION.ko.md를 열어서 아래 진행해주세요.
 
 ---
 
@@ -132,7 +113,7 @@ my-app/
 # - 필요한 경우 Claude Code CLI를 확인하고 설치합니다
 # - 프레임워크, 백엔드, 데이터베이스, 테스팅 도구를 자동 감지합니다
 # - 실제 스택으로 CLAUDE.md를 업데이트합니다 (수동 편집 불필요!)
-# - Slack MCP를 필수로 설정합니다 (개발 채널에 PR 알림용)
+# - Slack MCP를 필수로 설정합니다 (commit-업데이트 채널에 PR 알림용)
 # - 기타 MCP 서버를 구성합니다
 # - 환경 파일을 설정합니다
 # - 프로젝트 종속성 설치를 제안합니다 (npm/pnpm/yarn/bun)
@@ -143,7 +124,7 @@ node setup.cjs
 - Slack Bot Token (https://api.slack.com/apps 에서 발급)
 - Slack Team ID (T로 시작)
 
-이는 `/commit-push-pr` 명령어 사용 시 개발 채널에 자동으로 PR 알림을 보내는 데 필요합니다.
+이는 `/commit-push-pr` 명령어 사용 시 commit-업데이트 채널에 자동으로 PR 알림을 보내는 데 필요합니다.
 
 **감지되는 항목**:
 - 프론트엔드: Next.js, React, Vue, Svelte, Angular 등
@@ -166,15 +147,11 @@ code CLAUDE.md
 
 Claude Code는 기본적으로 작동하는 일반 템플릿(test, migration, PR description)을 포함합니다.
 
-React/Next.js를 사용하는 경우 해당 템플릿을 복사하세요:
+React/Next.js 템플릿은 이제 해당 스킬과 함께 있습니다:
+- React: `.claude/skills/react-patterns/templates/`
+- Next.js: `.claude/skills/nextjs-patterns/templates/`
 
-```bash
-# React를 사용하나요?
-cp .claude/templates/variants/react/*.template .claude/templates/
-
-# Next.js를 사용하나요?
-cp .claude/templates/variants/nextjs/*.template .claude/templates/
-```
+`Skill("react-patterns")` 또는 `Skill("nextjs-patterns")`로 로드하세요 — 수동 복사 불필요.
 
 ---
 
@@ -190,7 +167,7 @@ Claude에게 물어보세요:
 우리 기술 스택은 무엇인가요?
 ```
 
-Claude가 템플릿 기본값이 아닌 귀하의 스택(CLAUDE.md에서)을 설명해야 합니다.
+Claude가 템플릿 기본값이 아닌 귀하의 스택(`CLAUDE.md`에서)을 설명해야 합니다.
 
 ---
 
@@ -223,9 +200,9 @@ node setup.cjs
 # - 프로젝트 종속성을 자동으로 설치
 # - 감지된 값을 확인하면 완료!
 
-# 5. Next.js 템플릿 복사
-cp .claude/templates/variants/nextjs/*.template .claude/templates/
-cp .claude/templates/variants/react/*.template .claude/templates/
+# 5. 템플릿은 이제 스킬과 함께 있습니다 — 복사 불필요
+# React: .claude/skills/react-patterns/templates/
+# Next.js: .claude/skills/nextjs-patterns/templates/
 
 # 6. git에 추가
 git add .claude/ CLAUDE.md setup.cjs lib/
@@ -235,7 +212,7 @@ git commit -m "Add Claude Code workflow automation"
 claude
 ```
 
-이제 프로젝트에 Claude Code가 있습니다! 🎉
+이제 프로젝트에 Claude Code가 있습니다!
 
 ---
 
@@ -318,31 +295,9 @@ node setup.cjs
 
 ---
 
-## 시스템 업데이트
-
-나중에 `.claude/` 시스템을 업데이트하려면 사용자 데이터를 보존하면서 안전하게 업데이트할 수 있습니다:
-
-```bash
-# 업데이트 스크립트 실행
-./.claude/scripts/update-system.sh
-```
-
-**보존되는 항목:**
-- `.claude/user/changelog.md` - 자동 치유 기록 (50+ 항목)
-- `.claude/user/errors.md` - 오류 로그
-- `.claude/user/custom/` - 사용자 정의 에이전트/스킬/명령어
-- `.claude/settings.local.json` - 로컬 구성
-
-**업데이트되는 항목:**
-- 시스템 에이전트, 스킬, 규칙, 명령어, 워크플로우, 템플릿
-
-스크립트는 업데이트 전에 타임스탬프가 있는 백업을 생성합니다. 자세한 내용은 `.claude/user/README.md`를 참조하세요.
-
----
-
 ## 다음 단계
 
-1. [../guides/WORKFLOW.ko.md](../guides/WORKFLOW.ko.md) 읽기 - 완전한 워크플로우 가이드
+1. [../guides/WORKFLOW.md](../guides/WORKFLOW.md) 읽기 - 완전한 워크플로우 가이드
 2. `/full-feature` 시도 - Claude로 첫 번째 기능 빌드
 3. 변경 사항 커밋: `git add .claude/ CLAUDE.md && git commit -m "Add Claude Code"`
 

@@ -70,6 +70,28 @@ Use this checklist when reviewing pull requests.
 
 ---
 
+## AI-Generated Code Checks
+
+If code was AI-generated, also verify:
+
+### Consistency
+- [ ] Similar files follow same patterns (export style, naming, error handling)
+- [ ] No naming drift (`isLoading` everywhere, not `loading` in some)
+- [ ] Handler naming consistent (`handleX` or `onX`, pick one)
+
+### Over-Engineering
+- [ ] No factory functions for simple objects
+- [ ] No wrapper functions that just call another function
+- [ ] No interfaces used only once (inline instead)
+- [ ] No generic solutions for specific problems
+
+### Placeholders
+- [ ] No unaddressed TODO comments
+- [ ] No placeholder values (`your-api-key-here`)
+- [ ] No generic error messages (`Something went wrong`)
+
+---
+
 ## Final Checks
 
 - [ ] I understand what this code does

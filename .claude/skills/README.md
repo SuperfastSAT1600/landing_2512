@@ -37,7 +37,8 @@ skill-name/
 └── Bundled Resources     (optional)
     ├── scripts/          - Executable code (Python/Bash/etc.)
     ├── references/       - Documentation loaded as needed
-    └── assets/           - Files used in output (templates, icons)
+    ├── templates/        - Code templates for this domain
+    └── assets/           - Files used in output (icons, etc.)
 ```
 
 ---
@@ -483,7 +484,7 @@ See `.claude/rules/self-improvement.md` for details.
 
 ## Available Skills
 
-Currently available: 23 skills
+Currently available: 21 skills
 
 ### Meta Skills
 - **coding-standards** - Language-agnostic and language-specific patterns
@@ -669,7 +670,8 @@ skill-name/
 ├── SKILL.md              # Required: Core instructions + YAML frontmatter
 ├── scripts/              # Optional: Executable code
 ├── references/           # Optional: Detailed documentation
-└── assets/               # Optional: Templates and resources
+├── templates/            # Optional: Code templates for this domain
+└── assets/               # Optional: Icons and resources
 ```
 
 ### YAML Frontmatter

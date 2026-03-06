@@ -285,6 +285,19 @@ test.describe('User Registration', () => {
 
 ---
 
+## Playwright MCP vs CLI
+
+| Scenario | Use |
+|----------|-----|
+| Running full E2E suite | CLI: `npx playwright test` |
+| Debugging a failing test visually | MCP: `screenshot`, `navigate` |
+| Verifying a (BROWSER) REQ during development | MCP: interactive check |
+| CI/CD pipeline | CLI only (MCP not available in CI) |
+| Accessibility spot-check | MCP: screenshot + inspect |
+| Visual regression baseline | CLI: `npx playwright test --update-snapshots` |
+
+---
+
 ## Review Checklist
 
 Before merging E2E test PR:

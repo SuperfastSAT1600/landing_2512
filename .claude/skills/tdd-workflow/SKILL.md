@@ -202,6 +202,102 @@ test('checkout creates order', () => {
 
 ---
 
+## Spec-Driven TDD
+
+When working with a spec (`.claude/templates/spec.md.template`), map tests directly to requirement IDs:
+
+```typescript
+// Test names include REQ ID for traceability
+test('REQ-001: user can register with valid email', () => {
+  const result = register({ email: 'user@example.com', password: 'Str0ng!' });
+  expect(result.success).toBe(true);
+});
+
+test('REQ-002: registration rejects invalid email', () => {
+  const result = register({ email: 'invalid', password: 'Str0ng!' });
+  expect(result.error).toBe('INVALID_EMAIL');
+});
+
+test('REQ-003: confirmation email is sent after registration', () => {
+  register({ email: 'user@example.com', password: 'Str0ng!' });
+  expect(mockMailer.sent).toHaveLength(1);
+});
+```
+
+**Verification tag mapping**:
+- `(TEST)` requirements → Unit/integration tests (Phases 1-2 of test ladder)
+- `(BROWSER)` requirements → Playwright/Cypress E2E tests (Phase 3)
+- `(MANUAL)` requirements → Human checklist (Phase 4)
+
+---
+
+## Mutation Testing
+
+Mutation testing validates that your tests actually catch bugs — not just that they run green.
+
+### What It Does
+A mutation tool (like Stryker) modifies your code (e.g., changes `>` to `>=`, removes a return) and checks if your tests catch the change. If they don't, you have a "surviving mutant" — a gap in your test coverage.
+
+### When to Use
+- Critical business logic (payments, auth, data validation)
+- After achieving high line coverage but wanting confidence
+- Pre-release verification for core modules
+
+### Setup (Stryker for JS/TS)
+```bash
+npx stryker init
+```
+
+### Running
+```bash
+npx stryker run --reporters clear-text
+```
+
+### Reading Stryker Output
+```
+Mutation testing  [======================] 100% (elapsed: 12s)
+
+Kill count:    42/50
+Timeout:       3
+Survived:      5       ← These are the gaps to fix
+No coverage:   0
+
+Mutation score: 84.00%
+```
+
+**Surviving mutants** mean your tests don't detect those code changes. Focus on:
+1. Boundary conditions (`>` mutated to `>=` survived → add edge case test)
+2. Removed return statements (logic path not tested)
+3. Negated conditionals (branch not covered)
+
+### Target Scores
+- **Must-priority REQ implementations**: ≥70% mutation score
+- Critical business logic (payments, auth, validation): ≥70%
+- General code: ≥50% mutation score
+- Configuration/glue code: not required
+
+### Targeting Business Logic
+Don't run mutation testing on everything. Target high-value modules:
+```bash
+# Target specific directories
+npx stryker run --mutate 'src/services/payment/**/*.ts'
+
+# Target files implementing Must-priority REQs
+npx stryker run --mutate 'src/auth/**/*.ts,src/checkout/**/*.ts'
+```
+
+### Integration with REQ System
+For spec-driven TDD, prioritize mutation testing on modules that implement Must-priority requirements:
+1. Check spec for Must-priority REQs
+2. Identify which source files satisfy those REQs
+3. Run Stryker on those files: `npx stryker run --mutate 'src/path/**/*.ts'`
+4. Fix surviving mutants in Must-priority code first
+
+### Integration with Checkpoint
+When Stryker is configured (`stryker.conf.js` or `stryker.conf.mjs`), the `/checkpoint` command automatically runs mutation testing as an optional step.
+
+---
+
 ## When to Use TDD
 
 ### ✅ Use TDD For:
@@ -219,7 +315,15 @@ test('checkout creates order', () => {
 
 ---
 
+## Templates
+
+Code templates for this domain (in `templates/`):
+- `test.spec.ts.template` — Unit/integration test with AAA pattern
+
+---
+
 ## Resources
 
 - Test-Driven Development by Kent Beck
 - Growing Object-Oriented Software, Guided by Tests
+- Stryker Mutator: https://stryker-mutator.io

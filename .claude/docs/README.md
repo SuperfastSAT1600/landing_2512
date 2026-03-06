@@ -50,7 +50,7 @@ Complete guide to using and customizing this Claude Code workflow template.
 
 ### Template Organization
 - **`.claude/templates/`** - All templates (MCP, environment, code)
-- **`.claude/agents/`** - 33 specialized agents
+- **`.claude/agents/`** - 10 specialized agents
 - **`.claude/skills/`** - 20+ knowledge reference files
 - **`.claude/rules/`** - Core coding standards and protocols
 

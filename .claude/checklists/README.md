@@ -10,7 +10,7 @@ Checklists ensure consistent quality by providing step-by-step verification crit
 
 ---
 
-## Available Checklists (13)
+## Available Checklists (12)
 
 | Checklist | Purpose | When to Use |
 |-----------|---------|-------------|
@@ -20,7 +20,6 @@ Checklists ensure consistent quality by providing step-by-step verification crit
 | `accessibility-audit.md` | A11y compliance | UI changes, before release |
 | `pre-release.md` | Release readiness | Before every release |
 | `onboarding.md` | New developer setup | New team member joining |
-| `ai-code-review.md` | AI-generated code patterns | Detecting inconsistencies in AI-assisted code |
 | `deployment-checklist.md` | Pre-deployment verification | Before production deployments |
 | `database-migration-review.md` | Schema change validation | Before running migrations |
 | `dependency-audit.md` | Package review | Adding/updating dependencies |

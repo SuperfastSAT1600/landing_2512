@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(wc:*)",
+      "Bash(done)",
+      "Bash(find:*)",
+      "Bash(head:*)",
+      "Bash(for dir in agents checklists commands rules scripts skills templates workflows)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(test:*)",
+      "Bash(comm:*)",
+      "Bash(for agent in planner architect security-reviewer code-reviewer verify-app code-simplifier refactor-cleaner tech-debt-analyzer type-safety-enforcer tdd-guide unit-test-writer integration-test-writer e2e-runner load-test-specialist implementer api-designer database-architect auth-specialist graphql-specialist websocket-specialist build-error-resolver ci-cd-specialist docker-specialist migration-specialist dependency-manager accessibility-auditor i18n-specialist doc-updater performance-optimizer monitoring-architect runbook-writer mobile-specialist ai-integration-specialist iac-specialist)",
+      "Bash(do)",
+      "Bash(echo \"✗ MISSING: $agent\")",
+      "Bash(for cmd in full-feature quick-fix spike lint-fix type-check audit-deps dead-code new-component create-migration update-docs build-fix commit-push-pr e2e plan refactor-clean review-changes security-review tdd test-and-build test-coverage)",
+      "Bash(echo:*)",
+      "Bash(for wf in full-feature bug-fix refactor release security-audit)",
+      "Bash(for skill in react-patterns nextjs-patterns nodejs-patterns prisma-patterns github-actions rest-api-design graphql-patterns websocket-patterns coding-standards backend-patterns frontend-patterns tdd-workflow project-guidelines user-intent-patterns)",
+      "Bash(for check in pr-review security-audit performance-audit accessibility-audit pre-release onboarding ai-code-review deployment-checklist database-migration-review dependency-audit hotfix-checklist)",
+      "Bash(for tmpl in component.tsx api-route.ts test.spec.ts migration.sql pr-description.md form.tsx guard.ts hook.ts service.ts middleware.ts error-handler.ts)",
+      "Bash(for dir in agents commands rules skills workflows checklists templates scripts)",
+      "Bash(if [ -f \"C:/Users/Jason/Documents/test proj/.claude/$dir/README.md\" ])",
+      "Bash(then)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(grep:*)",
+      "Bash(while read f)",
+      "Bash({)",
+      "Bash(})",
+      "Bash(node --check:*)",
+      "WebSearch",
+      "Bash(node:*)",
+      "Bash( ls -1 checklists/*.md)",
+      "Bash(sort:*)",
+      "Bash( ls -1 commands/*.md)",
+      "Bash( ls -1 skills/*.md)",
+      "Bash( ls -1 templates/*.*)",
+      "Bash( ls -1 workflows/*.md)",
+      "Bash( ls -1 agents/*.md)",
+      "Bash( ls -1 rules/*.md)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr edit:*)",
+      "Bash(ls:*)",
+      "Bash(for f in ai-code-detection.md code-review.md documentation.md non-technical-mode.md intent-routing.md context-management.md api-design.md patterns.md performance.md error-handling.md security.md testing.md coding-style.md git-workflow.md agents.md orchestrator.md hooks.md)",
+      "Bash(do if [ -f \"$f\" ])",
+      "Bash(then mv \"$f\" _archive/)",
+      "Bash(xargs -I{} sh -c 'echo \"\"=== {} ===\"\"; head -6 {}')",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:help.openai.com)",
+      "WebFetch(domain:www.promptingguide.ai)",
+      "Bash(for:*)",
+      "Bash(do sed -i \"s/require\\(''\\\\.\\\\/\\\\\\([^'']*\\\\\\)''\\)/require\\(''.\\\\/\\\\1.cjs''\\)/g\" \"$file\")",
+      "Bash(npm install:*)",
+      "Bash(npm init:*)",
+      "Bash(npm --version:*)",
+      "Bash(\"/c/Program Files/nodejs/npm\" install read)",
+      "Bash(cd:*)",
+      "Bash(cmd.exe /c \"npm install read\")",
+      "Bash(supabase --version:*)",
+      "Bash(where:*)",
+      "Bash(supabase projects:*)",
+      "WebFetch(domain:render.com)",
+      "Bash(gh repo view:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git fetch:*)",
+      "Bash(bash:*)",
+      "Bash(git -C \"C:/Users/Jason/Documents/claude-code-setup\" status --short)",
+      "Bash(git -C \"C:/Users/Jason/Documents/claude-code-setup\" status)",
+      "Bash(git -C \"C:/Users/Jason/Documents/claude-code-setup\" log --oneline -5)",
+      "Bash(xargs:*)",
+      "Bash(python:*)",
+      "Bash(chmod:*)",
+      "Bash(tree:*)",
+      "Bash(BROWSER=none python:*)",
+      "Bash(git rebase:*)",
+      "mcp__slack__slack_list_channels",
+      "mcp__slack__slack_post_message",
+      "Bash(git pull:*)",
+      "Bash(git rm:*)",
+      "Bash(git config:*)",
+      "mcp__filesystem__directory_tree",
+      "Bash(if [ -f .claude/health/changelog.md ])",
+      "Bash(then mv .claude/health/changelog.md .claude/user/changelog.md)",
+      "Bash(else touch .claude/user/changelog.md)",
+      "Bash(./.claude/scripts/update-system.sh:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(gh pr list:*)",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_multiple_files",
+      "mcp__filesystem__read_text_file",
+      "Bash(du:*)",
+      "Skill(commit-push-pr)",
+      "mcp__filesystem__list_allowed_directories",
+      "mcp__filesystem__search_files",
+      "Bash(./.claude/scripts/detect-error-patterns.sh:*)",
+      "Bash(./.claude/scripts/mark-mcp-used.sh:*)",
+      "Bash(python3:*)",
+      "Bash(__NEW_LINE_f574cdaeb39b6a5f__ echo \"\")",
+      "Skill(review-changes)",
+      "Skill(review-changes:*)",
+      "Bash(dir:*)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs",
+      "Bash(npm run blog:generate:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx tailwindcss init -p --ts)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(test-config.mjs << 'EOF'\nimport { config } from 'dotenv';\nconfig\\(\\);\n\nconsole.log\\('=== Environment Variables ==='\\);\nconsole.log\\('ENABLE_MY_POSTS_ANALYSIS:', process.env.ENABLE_MY_POSTS_ANALYSIS\\);\nconsole.log\\('ENABLE_SAT_REFERENCES:', process.env.ENABLE_SAT_REFERENCES\\);\nconsole.log\\('ENABLE_WEB_SEARCH:', process.env.ENABLE_WEB_SEARCH\\);\nconsole.log\\('MY_POSTS_DIR:', process.env.MY_POSTS_DIR\\);\nconsole.log\\('SAT_MATERIALS_DIR:', process.env.SAT_MATERIALS_DIR\\);\nconsole.log\\(''\\);\nconsole.log\\('Expected paths:'\\);\nconsole.log\\('  My Posts MD:', process.env.MY_POSTS_DIR || './data/my-posts'\\);\nconsole.log\\('  My Posts PDF:', \\(process.env.MY_POSTS_DIR || './data/my-posts'\\) + '-pdf'\\);\nconsole.log\\('  SAT Materials MD:', process.env.SAT_MATERIALS_DIR || './data/sat-materials'\\);\nconsole.log\\('  SAT Materials PDF:', \\(process.env.SAT_MATERIALS_DIR || './data/sat-materials'\\) + '-pdf'\\);\nEOF)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(timeout:*)",
+      "Bash(netstat:*)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pdftotext:*)",
+      "Bash(npx next dev:*)",
+      "Bash(start \"\" \"http://localhost:3000/blog\")",
+      "WebFetch(domain:toss.im)"
+    ]
+  },
+  "model": "sonnet",
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "filesystem",
+    "slack",
+    "github",
+    "supabase",
+    "memory"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "tool == \"Bash\" && tool_input.command matches \"git push.*(main|master)\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[Hook] Pushing to main/master branch - ensure tests pass and code is reviewed!' >&2"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "tool in [\"Edit\", \"Write\"] && tool_input.file_path matches \"\\\\.(ts|tsx|js|jsx|json|css|scss|md)$\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "#!/bin/bash\nnpx prettier --write \"$file_path\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "tool in [\"Edit\", \"Write\"] && tool_input.file_path matches \"\\\\.(ts|tsx)$\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "#!/bin/bash\nnpx eslint --fix \"$file_path\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  },
+  "thinkingEnabled": false,
+  "autoAcceptEdits": false,
+  "allowedPrompts": [
+    {
+      "tool": "Bash",
+      "prompt": "run tests"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "build the project"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "install dependencies"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run linter"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "format code"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git status"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git diff"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git log"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git branch"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git add files"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git commit"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git push"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git checkout"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git cherry-pick"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git rm"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "git config"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "list files"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "read file contents"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "search files"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "view directory tree"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run node scripts"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run setup wizard"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "check npm version"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "npm config"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "npm cache operations"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run prettier"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run eslint"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "check winget version"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "winget install"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "gh cli commands"
+    },
+    {
+      "tool": "WebSearch",
+      "prompt": "web search"
+    }
+  ],
+  "disabledMcpServers": [
+    "postgres",
+    "sqlite",
+    "brave-search",
+    "google-maps",
+    "sequential-thinking",
+    "vercel",
+    "railway",
+    "firecrawl",
+    "cloudflare-docs",
+    "cloudflare-workers-builds",
+    "cloudflare-workers-bindings",
+    "cloudflare-observability",
+    "clickhouse",
+    "context7",
+    "magic"
+  ]
+}

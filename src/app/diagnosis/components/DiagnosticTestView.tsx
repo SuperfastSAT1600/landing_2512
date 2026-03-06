@@ -209,7 +209,7 @@ export function DiagnosticTestView({ testData }: DiagnosticTestViewProps) {
   const isFlagged = currentQuestion ? flagged.has(currentQuestion.id) : false;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#F4F5F9' }}>
+    <div className="flex flex-col flex-1 h-full" style={{ background: '#F4F5F9' }}>
       {/* Bluebook Header */}
       <div className="bluebook-header">
         <div className="bluebook-header-left">

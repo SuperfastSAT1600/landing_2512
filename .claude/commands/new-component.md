@@ -458,5 +458,5 @@ After component creation:
 
 # Create component, then review it
 /new-component UserCard
-/review-changes # Review generated code
+/review # Review generated code
 ```

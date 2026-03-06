@@ -14,7 +14,7 @@ Use this command when you've completed a feature or fix and want to create a PR 
 
 You are about to commit changes, push to remote, and create a pull request. Follow these steps:
 
-**IMPORTANT**: After creating the PR or pushing to an existing PR, you MUST send a notification to the Slack channel configured in `.claude/config/slack.json` (default: "commit-업데이트") with the PR details. Use the Slack MCP to post the message. The bot signature should use the project folder name (e.g., `basename` of the working directory).
+**IMPORTANT**: After creating the PR or pushing to an existing PR, you MUST send a notification to the Slack channel "commit-업데이트" with the PR details. Use the Slack MCP to post the message.
 
 1. **Check Current Status**
    - Run `git status` to see what files have changed
@@ -53,7 +53,7 @@ You are about to commit changes, push to remote, and create a pull request. Foll
 
 6. **Send Slack Notification** (REQUIRED - NO EXCEPTIONS)
    After PR creation or pushing to remote:
-   - **MUST use mcp__slack__slack_post_message tool** with channel_id from `.claude/config/slack.json` (default: "commit-업데이트")
+   - **MUST use mcp__slack__slack_post_message tool** with channel_id="commit-업데이트"
    - This is NOT optional - every PR/push MUST notify the team
    - **IMPORTANT**: Translate all technical content to natural, professional Korean
    - Messages should be easily understandable by non-technical team members
@@ -77,7 +77,7 @@ You are about to commit changes, push to remote, and create a pull request. Foll
 
      🔗 자세히 보기: {PR_URL}
 
-     🤖 {project folder name, e.g. landing_2512}
+     🤖 Claude Code로 자동 생성됨
      ```
    - For pushes to existing PR, use "📤 코드 업데이트 #{PR_NUMBER}" instead
    - Translate technical terms:

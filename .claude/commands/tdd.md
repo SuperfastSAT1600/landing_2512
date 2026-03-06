@@ -26,11 +26,12 @@ Guide through Test-Driven Development workflow.
 
 ## What This Command Does
 
-1. **Analyzes Feature**: Breaks down feature into testable units
-2. **Guides Red Phase**: Helps write failing tests first
-3. **Guides Green Phase**: Implements minimum code to pass tests
-4. **Guides Refactor Phase**: Improves code while keeping tests green
-5. **Verifies Coverage**: Ensures adequate test coverage
+1. **Checks for Spec**: Looks for an existing spec in `.claude/plans/` — if found, reads it first
+2. **Analyzes Feature**: Breaks down feature into testable units (or uses REQ-XXX from spec)
+3. **Guides Red Phase**: Helps write failing tests first (named `test('REQ-XXX: behavior')` when spec exists)
+4. **Guides Green Phase**: Implements minimum code to pass tests
+5. **Guides Refactor Phase**: Improves code while keeping tests green
+6. **Verifies Coverage**: Ensures every REQ-XXX in the spec has at least one test
 
 ---
 
@@ -54,12 +55,30 @@ Guide through Test-Driven Development workflow.
 
 ---
 
+## Spec-Driven Naming
+
+When a spec file exists in `.claude/plans/`, tests MUST use REQ-ID naming:
+
+```typescript
+// With spec (preferred)
+test('REQ-001: rejects invalid email format', () => { ... })
+test('REQ-002: checks email uniqueness before registration', () => { ... })
+
+// Without spec (fallback)
+test('validates email format', () => { ... })
+```
+
+This creates a traceability chain: spec → test → implementation.
+
+---
+
 ## Example Session
 
 ```
 User: /tdd user registration
 
-TDD Guide: I'll guide you through implementing user registration using TDD.
+TDD Guide: Checking for spec in .claude/plans/... none found.
+I'll guide you through implementing user registration using TDD.
 
 ### Feature Breakdown
 - Validate email format
@@ -108,7 +127,7 @@ The code is already clean for this simple case. Let's move to the next test...
 
 ## Command Behavior
 
-**Delegates to**: `tdd-guide` agent
+**Delegates to**: `test-writer` agent
 
 **Provides**:
 - Feature breakdown
@@ -170,7 +189,7 @@ The code is already clean for this simple case. Let's move to the next test...
 
 - `/test-coverage` - Analyze test coverage
 - `/refactor-clean` - Clean code with test protection
-- `/review-changes` - Review implementation
+- `/review` - Review implementation
 
 ---
 
@@ -190,9 +209,9 @@ The code is already clean for this simple case. Let's move to the next test...
 
 ## Resources
 
-- Test Template: `.claude/templates/test.spec.ts.template`
+- Test Template: `.claude/skills/tdd-workflow/templates/test.spec.ts.template`
 - TDD Workflow Skill: `.claude/skills/tdd-workflow/SKILL.md`
-- TDD Guide Agent: `.claude/agents/tdd-guide.md`
+- TDD Guide Agent: `.claude/agents/test-writer.md`
 
 ---
 
