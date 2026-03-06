@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './LiveStatus.module.css';
 import { useLiveStatus } from '../context/LiveStatusContext';
@@ -34,9 +35,13 @@ const MESSAGES: Message[] = [
 ];
 
 export default function LiveStatus() {
+    const pathname = usePathname();
     const [index, setIndex] = useState(0);
     const [relativeTime, setRelativeTime] = useState(RELATIVE_TIMES[0]);
     const { injectedMessage } = useLiveStatus();
+
+    // Hide LiveStatus on diagnosis page
+    if (pathname?.startsWith('/diagnosis')) return null;
 
     useEffect(() => {
         if (injectedMessage) return;

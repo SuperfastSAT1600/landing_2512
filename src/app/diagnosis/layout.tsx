@@ -1,6 +1,5 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import FloatingCTA from '../components/FloatingCTA';
 
 export default function DiagnosisLayout({
@@ -8,14 +7,6 @@ export default function DiagnosisLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const isTestActive = pathname === '/diagnosis/test';
-
-  return (
-    <>
-      {children}
-      {/* Hide FloatingCTA during active test */}
-      {!isTestActive && <FloatingCTA />}
-    </>
-  );
+  // Hide FloatingCTA on entire diagnosis page
+  return <>{children}</>;
 }
