@@ -39,9 +39,7 @@ export default function LiveStatus() {
     const [index, setIndex] = useState(0);
     const [relativeTime, setRelativeTime] = useState(RELATIVE_TIMES[0]);
     const { injectedMessage } = useLiveStatus();
-
-    // Hide LiveStatus on diagnosis page
-    if (pathname?.startsWith('/diagnosis')) return null;
+    const isDiagnosis = pathname?.startsWith('/diagnosis');
 
     useEffect(() => {
         if (injectedMessage) return;
@@ -54,6 +52,9 @@ export default function LiveStatus() {
 
     const current = injectedMessage ?? MESSAGES[index];
     const displayKey = injectedMessage ? `injected-${injectedMessage.text}` : `cycle-${index}`;
+
+    // Hide LiveStatus on diagnosis page
+    if (isDiagnosis) return null;
 
     return (
         <div className={styles.container}>
