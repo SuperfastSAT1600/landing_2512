@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Trash2, CheckCircle, Star, EyeOff, Copy, Check } from 'lucide-react';
+import { Trash2, CheckCircle, Star, EyeOff, Copy, Check } from 'lucide-react';
 import { ReviewData } from '@/lib/reviews-data'; // Only for type reference, actually fetches from API
 
 export default function AdminReviewsPage() {
@@ -77,16 +76,8 @@ export default function AdminReviewsPage() {
 
     return (
         <div className="min-h-screen bg-[#151719] text-gray-100 font-sans">
-            <header className="fixed top-0 w-full z-50 bg-[#151719]/80 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-6">
-                <div className="flex items-center gap-4">
-                    <Link href="/admin" className="p-2 hover:bg-white/5 rounded-full transition-colors">
-                        <ArrowLeft size={20} className="text-gray-400" />
-                    </Link>
-                    <h1 className="text-lg font-bold">Review Management</h1>
-                </div>
-            </header>
-
-            <main className="pt-24 pb-20 px-6 max-w-6xl mx-auto space-y-8">
+            <main className="p-8 pb-20 max-w-6xl space-y-8">
+                <h1 className="text-3xl font-bold text-white">Review Management</h1>
                 {/* Share Link Card */}
                 <div className="p-5 bg-[#1e2023] rounded-2xl border border-white/5">
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">고객 리뷰 링크</p>

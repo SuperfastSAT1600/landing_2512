@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Save, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Save, Loader2, Link as LinkIcon } from 'lucide-react';
 import type { StoredFeatureItem, HomeConfig } from '@/lib/config';
 
 export default function AdminHomeConfig() {
@@ -63,25 +62,18 @@ export default function AdminHomeConfig() {
 
     return (
         <div className="min-h-screen bg-[#151719] text-gray-100 font-sans">
-            {/* Header */}
-            <header className="fixed top-0 w-full z-50 bg-[#151719]/80 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-6">
-                <div className="flex items-center gap-4">
-                    <Link href="/admin" className="p-2 hover:bg-white/5 rounded-full transition-colors">
-                        <ArrowLeft size={20} className="text-gray-400" />
-                    </Link>
-                    <h1 className="text-lg font-bold">Homepage Settings</h1>
+            <main className="p-8 pb-20 max-w-4xl space-y-12">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-3xl font-bold text-white">Homepage Settings</h1>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
+                    >
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
                 </div>
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
-                >
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-            </header>
-
-            <main className="pt-24 pb-20 px-6 max-w-4xl mx-auto space-y-12">
                 {message && (
                     <div className="fixed top-20 right-6 bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-2 rounded-lg text-sm font-bold animate-fade-in z-50">
                         {message}
@@ -192,3 +184,4 @@ export default function AdminHomeConfig() {
         </div>
     );
 }
+

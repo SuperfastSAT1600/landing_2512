@@ -4,28 +4,17 @@ import { useState } from 'react';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 import { GenerateTokenTab } from './components/GenerateTokenTab';
 import { ViewResultsTab } from './components/ViewResultsTab';
+import { QuestionManagementTab } from './components/QuestionManagementTab';
 
-type Tab = 'tokens' | 'results';
+type Tab = 'tokens' | 'results' | 'questions';
 
 export default function AdminDiagnosisPage() {
-  const { isAuthenticated, adminKey } = useAdminAuth();
+  const { adminKey } = useAdminAuth();
   const [activeTab, setActiveTab] = useState<Tab>('tokens');
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-          <p className="text-gray-400">You are not authenticated as an admin.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">진단테스트 관리</h1>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="max-w-6xl mx-auto p-8">
 
         {/* Tab Navigation */}
         <div className="flex gap-4 mb-8 border-b border-gray-700">
@@ -37,7 +26,7 @@ export default function AdminDiagnosisPage() {
                 : 'text-gray-400 hover:text-gray-300'
             }`}
           >
-            토큰 생성
+            코드 관리
           </button>
           <button
             onClick={() => setActiveTab('results')}
@@ -49,12 +38,23 @@ export default function AdminDiagnosisPage() {
           >
             시험 결과
           </button>
+          <button
+            onClick={() => setActiveTab('questions')}
+            className={`px-6 py-3 font-semibold transition-colors ${
+              activeTab === 'questions'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            문항 관리
+          </button>
         </div>
 
         {/* Tab Content */}
         <div className="bg-gray-800 rounded-lg p-8">
           {activeTab === 'tokens' && <GenerateTokenTab adminKey={adminKey} />}
           {activeTab === 'results' && <ViewResultsTab adminKey={adminKey} />}
+          {activeTab === 'questions' && <QuestionManagementTab adminKey={adminKey} />}
         </div>
       </div>
     </div>
