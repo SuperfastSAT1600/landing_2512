@@ -199,7 +199,7 @@ a {
   min-height: 48px;
 }
 .bluebook-header-left { display: flex; align-items: center; gap: 12px; }
-.bluebook-header-center { display: flex; flex-direction: column; align-items: center; }
+.bluebook-header-center { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
 .bluebook-header-right { display: flex; align-items: center; gap: 8px; }
 .bluebook-section-title { font-size: 14px; font-weight: 600; white-space: nowrap; }
 .bluebook-directions-btn {
@@ -255,7 +255,7 @@ a {
 }
 
 /* Question panel */
-.test-question-panel { width: 100%; flex: 1; overflow-y: auto; background: #ffffff; }
+.test-question-panel { width: 100%; flex: 1; overflow-y: auto; background: #ffffff; padding-bottom: 100px; }
 
 /* Resizer handle (desktop only) */
 .test-resizer {
@@ -277,6 +277,8 @@ a {
 .test-passage-content { font-size: 16px; line-height: 1.85; color: #333D4B; word-break: keep-all; }
 .test-passage-content p { margin-bottom: 1em; }
 .test-passage-content p:last-child { margin-bottom: 0; }
+.test-passage-content img { max-width: 100%; height: auto; display: block; }
+.content-renderer img { max-width: 100%; height: auto; display: block; }
 
 /* ── Bluebook Option Cards ──────────────────── */
 .bluebook-option {
@@ -350,12 +352,14 @@ a {
   background: #ffffff; border-top: 1px solid #e5e7eb;
   padding: 10px 20px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
 }
 .bluebook-footer-center {
   display: flex; align-items: center; gap: 6px;
   font-size: 14px; font-weight: 600; color: #1e293b;
   cursor: pointer; padding: 6px 16px; border-radius: 20px;
   background: #1e293b; color: #ffffff; border: none;
+  position: absolute; left: 50%; transform: translateX(-50%);
 }
 .bluebook-footer-center:hover { background: #334155; }
 .bluebook-next-btn {

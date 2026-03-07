@@ -1,0 +1,126 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+
+interface TestResult {
+  id: string;
+  student_email: string;
+  student_name: string;
+  submitted_at: string;
+  total_time_seconds: number;
+}
+
+interface ViewResultsTabProps {
+  adminKey: string;
+}
+
+export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
+  const [results, setResults] = useState<TestResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    fetchResults();
+  }, []);
+
+  const fetchResults = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+
+      const response = await fetch(`/api/admin/diagnosis/results?${params}`, {
+        headers: {
+          'x-admin-key': adminKey,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('결과를 불러올 수 없습니다.');
+      }
+
+      const data = await response.json();
+      setResults(data.results || []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '요청 처리 중 오류가 발생했습니다.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}분 ${secs}초`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('ko-KR');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-4">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="학생명 또는 이메일로 검색"
+          className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          onClick={fetchResults}
+          disabled={loading}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-colors disabled:opacity-50"
+        >
+          {loading ? '검색 중...' : '검색'}
+        </button>
+      </div>
+
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      {results.length === 0 && !loading && !error && (
+        <p className="text-gray-400">시험 결과가 없습니다.</p>
+      )}
+
+      {results.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-600">
+                <th className="text-left py-3 px-4 font-semibold">학생명</th>
+                <th className="text-left py-3 px-4 font-semibold">이메일</th>
+                <th className="text-left py-3 px-4 font-semibold">응시 날짜</th>
+                <th className="text-left py-3 px-4 font-semibold">소요 시간</th>
+                <th className="text-left py-3 px-4 font-semibold">상세 보기</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.map((result) => (
+                <tr key={result.id} className="border-b border-gray-700 hover:bg-gray-700/50">
+                  <td className="py-3 px-4">{result.student_name}</td>
+                  <td className="py-3 px-4 break-all">{result.student_email}</td>
+                  <td className="py-3 px-4">{formatDate(result.submitted_at)}</td>
+                  <td className="py-3 px-4">{formatTime(result.total_time_seconds)}</td>
+                  <td className="py-3 px-4">
+                    <Link
+                      href={`/admin/diagnosis/${result.id}`}
+                      className="text-blue-400 hover:text-blue-300 underline"
+                    >
+                      보기
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -165,6 +165,9 @@ export default function AdminPage() {
                     <Link href="/" target="_blank" className="flex items-center gap-3 px-3 py-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-md transition-colors font-medium">
                         <span className="opacity-70">🌐</span> View Site
                     </Link>
+                    <Link href="/admin/diagnosis" className="flex items-center gap-3 px-3 py-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-md transition-colors font-medium">
+                        <span className="opacity-70">🩺</span> Diagnosis
+                    </Link>
                 </nav>
 
                 <div className="p-4 border-t border-white/5">

@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator as CalculatorIcon, BookOpen, MoreHorizontal } from 'lucide-react';
+import { Calculator as CalculatorIcon } from 'lucide-react';
 import { useTestTimer } from '../hooks/useTestTimer';
 import { ContentRenderer } from './ContentRenderer';
 import { TestCalculator } from './TestCalculator';
@@ -10,12 +10,21 @@ import { QuestionNavGrid } from './QuestionNavGrid';
 import { ConfidencePicker } from './ConfidencePicker';
 import { TestSubmittedScreen } from './TestSubmittedScreen';
 import type { DiagnosticTestData } from '../data/diagnostic-test-1';
+import { SubmitTestRequest } from '@/types/diagnosis';
 
 interface DiagnosticTestViewProps {
   testData: DiagnosticTestData;
+  tokenId?: string;
+  studentEmail?: string;
+  studentName?: string;
 }
 
-export function DiagnosticTestView({ testData }: DiagnosticTestViewProps) {
+export function DiagnosticTestView({
+  testData,
+  tokenId = '',
+  studentEmail = '',
+  studentName = '',
+}: DiagnosticTestViewProps) {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -36,11 +45,6 @@ export function DiagnosticTestView({ testData }: DiagnosticTestViewProps) {
   const { questions, title, timeLimit } = testData;
   const currentQuestion = questions[currentQuestionIndex];
   const hasPassage = !!currentQuestion?.passage;
-
-  // Section label based on passage presence
-  const sectionLabel = hasPassage
-    ? 'Section 1, Module 1: Reading and Writing'
-    : 'Section 2, Module 1: Math';
 
   const timer = useTestTimer(timeLimit, !!startTime);
 
@@ -133,9 +137,41 @@ export function DiagnosticTestView({ testData }: DiagnosticTestViewProps) {
     setConfidence(prev => ({ ...prev, [questionId]: level }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     recordQuestionTime();
     setSubmitting(true);
+
+    // If token-based flow, save results to Supabase
+    if (tokenId) {
+      try {
+        const submitData: SubmitTestRequest = {
+          tokenId,
+          studentEmail,
+          studentName,
+          testId: 'diagnostic-test-1',
+          startedAt: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
+          submittedAt: new Date().toISOString(),
+          totalTimeSeconds: startTime ? Math.floor((Date.now() - startTime) / 1000) : 0,
+          answers,
+          confidenceLevels: confidence,
+          flaggedQuestions: Array.from(flagged),
+          questionTimes,
+        };
+
+        const response = await fetch('/api/diagnosis/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(submitData),
+        });
+
+        if (!response.ok) {
+          console.error('Failed to save test results:', await response.text());
+        }
+      } catch (error) {
+        console.error('Error submitting test:', error);
+      }
+    }
+
     setTimeout(() => {
       setSubmitted(true);
       setSubmitting(false);
@@ -167,7 +203,7 @@ export function DiagnosticTestView({ testData }: DiagnosticTestViewProps) {
                 </svg>
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-gray-900">{title}</h1>
-              <p className="text-base text-gray-500 mt-2">SAT 진단 테스트</p>
+              <p className="text-base text-gray-500 mt-2">SAT Diagnostic Test</p>
             </div>
 
             <div className="toss-card mb-4">
@@ -181,13 +217,13 @@ export function DiagnosticTestView({ testData }: DiagnosticTestViewProps) {
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M8 4v4l3 3M8 14A6 6 0 108 2a6 6 0 000 12z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  {timeLimit ? `${timeLimit}분` : '제한없음'}
+                  {timeLimit ? `${timeLimit} min` : 'No limit'}
                 </span>
                 <span className="flex items-center gap-1">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M4 8h8M4 5h8M4 11h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  {questions.length}문제
+                  {questions.length} questions
                 </span>
               </div>
             </div>
@@ -197,7 +233,7 @@ export function DiagnosticTestView({ testData }: DiagnosticTestViewProps) {
               onClick={() => setStartTime(Date.now())}
               className="btn-toss btn-press"
             >
-              테스트 시작
+              Start Test
             </button>
           </motion.div>
         </div>
@@ -213,10 +249,6 @@ export function DiagnosticTestView({ testData }: DiagnosticTestViewProps) {
       {/* Bluebook Header */}
       <div className="bluebook-header">
         <div className="bluebook-header-left">
-          <span className="bluebook-section-title hidden sm:inline">{sectionLabel}</span>
-          <span className="bluebook-section-title sm:hidden">
-            {hasPassage ? 'Reading & Writing' : 'Math'}
-          </span>
           <button
             type="button"
             className="bluebook-directions-btn"
@@ -254,14 +286,6 @@ export function DiagnosticTestView({ testData }: DiagnosticTestViewProps) {
               <span>Reference</span>
             </button>
           )}
-          <button type="button" className="bluebook-icon-btn hidden sm:flex">
-            <BookOpen className="h-5 w-5" />
-            <span>Notes</span>
-          </button>
-          <button type="button" className="bluebook-icon-btn">
-            <MoreHorizontal className="h-5 w-5" />
-            <span>More</span>
-          </button>
         </div>
       </div>
 
