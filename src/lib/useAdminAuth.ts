@@ -9,7 +9,9 @@ export function useAdminAuth() {
 
   useEffect(() => {
     // Check if admin key is stored in localStorage
-    const storedKey = typeof window !== 'undefined' ? localStorage.getItem('adminKey') : null;
+    const storedKey = typeof window !== 'undefined'
+      ? (localStorage.getItem('admin_key') || localStorage.getItem('adminKey'))
+      : null;
 
     if (storedKey) {
       setAdminKey(storedKey);
@@ -20,13 +22,13 @@ export function useAdminAuth() {
   }, []);
 
   const login = (key: string) => {
-    localStorage.setItem('adminKey', key);
+    localStorage.setItem('admin_key', key);
     setAdminKey(key);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
-    localStorage.removeItem('adminKey');
+    localStorage.removeItem('admin_key');
     setAdminKey('');
     setIsAuthenticated(false);
   };

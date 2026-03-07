@@ -4,13 +4,15 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calculator as CalculatorIcon } from 'lucide-react';
 import { useTestTimer } from '../hooks/useTestTimer';
+import { useVocabTracker } from '../hooks/useVocabTracker';
 import { ContentRenderer } from './ContentRenderer';
+import { SelectableText } from './SelectableText';
 import { TestCalculator } from './TestCalculator';
 import { QuestionNavGrid } from './QuestionNavGrid';
 import { ConfidencePicker } from './ConfidencePicker';
 import { TestSubmittedScreen } from './TestSubmittedScreen';
 import type { DiagnosticTestData } from '../data/diagnostic-test-1';
-import { SubmitTestRequest } from '@/types/diagnosis';
+import { SubmitTestRequest, SavedWord } from '@/types/diagnosis';
 
 interface DiagnosticTestViewProps {
   testData: DiagnosticTestData;
@@ -39,9 +41,13 @@ export function DiagnosticTestView({
   const [submitting, setSubmitting] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
   const [passageWidth, setPassageWidth] = useState(50); // percentage
+  const [showVocabNotice, setShowVocabNotice] = useState(true);
+  const [selectedWord, setSelectedWord] = useState<SavedWord | null>(null);
+  const [saveButtonPosition, setSaveButtonPosition] = useState<{ top: number; left: number } | null>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
 
+  const { savedWords, toggleWord, isWordSaved } = useVocabTracker();
   const { questions, title, timeLimit } = testData;
   const currentQuestion = questions[currentQuestionIndex];
   const hasPassage = !!currentQuestion?.passage;
@@ -137,6 +143,18 @@ export function DiagnosticTestView({
     setConfidence(prev => ({ ...prev, [questionId]: level }));
   };
 
+  const handleWordClick = (word: SavedWord, position: { top: number; left: number }) => {
+    setSelectedWord(word);
+    setSaveButtonPosition(position);
+  };
+
+  const handleSaveWord = () => {
+    if (selectedWord) {
+      toggleWord(selectedWord);
+      // Keep selection visible for better UX
+    }
+  };
+
   const handleSubmit = async () => {
     recordQuestionTime();
     setSubmitting(true);
@@ -156,6 +174,7 @@ export function DiagnosticTestView({
           confidenceLevels: confidence,
           flaggedQuestions: Array.from(flagged),
           questionTimes,
+          savedWords,
         };
 
         const response = await fetch('/api/diagnosis/submit', {
@@ -309,6 +328,30 @@ export function DiagnosticTestView({
         )}
       </AnimatePresence>
 
+      {/* Vocabulary tracking notice */}
+      <AnimatePresence>
+        {showVocabNotice && currentQuestionIndex === 0 && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden bg-blue-50 border-b border-blue-200"
+          >
+            <div className="px-6 py-3 text-sm text-blue-800 leading-relaxed max-w-3xl mx-auto flex items-center justify-between">
+              <span>💡 <strong>Vocabulary Tip:</strong> Click any unknown word in the passage or options, then press "Save" to mark it for vocabulary building.</span>
+              <button
+                type="button"
+                onClick={() => setShowVocabNotice(false)}
+                className="text-blue-600 hover:text-blue-800 ml-4 flex-shrink-0"
+              >
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main content */}
       <div className="test-layout" ref={layoutRef}>
         {/* Passage (only if exists) */}
@@ -320,7 +363,13 @@ export function DiagnosticTestView({
             >
               <div style={{ padding: '24px 28px 24px 24px' }}>
                 <div className="test-passage-content">
-                  <ContentRenderer content={currentQuestion.passage!} />
+                  <SelectableText
+                    content={currentQuestion.passage!}
+                    questionId={currentQuestion.id}
+                    section="passage"
+                    savedWords={savedWords}
+                    onWordClick={handleWordClick}
+                  />
                 </div>
               </div>
             </div>
@@ -405,7 +454,15 @@ export function DiagnosticTestView({
                                   {String.fromCharCode(65 + idx)}
                                 </span>
                                 <span className="bluebook-option-text">
-                                  <ContentRenderer content={option.text} className="inline" />
+                                  <SelectableText
+                                    content={option.text}
+                                    questionId={currentQuestion.id}
+                                    section="option"
+                                    optionId={option.id}
+                                    savedWords={savedWords}
+                                    onWordClick={handleWordClick}
+                                    className="inline"
+                                  />
                                 </span>
                               </button>
                               <button
@@ -437,7 +494,7 @@ export function DiagnosticTestView({
                     )}
 
                     {/* Confidence picker */}
-                    {answers[currentQuestion.id] && (
+                    {(answers[currentQuestion.id] || !hasPassage) && (
                       <ConfidencePicker
                         questionId={currentQuestion.id}
                         confidence={confidence}
@@ -486,6 +543,29 @@ export function DiagnosticTestView({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Floating Save Word Button */}
+      <AnimatePresence>
+        {selectedWord && saveButtonPosition && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.1 }}
+            onClick={handleSaveWord}
+            className="vocab-save-btn btn-press"
+            style={{
+              position: 'fixed',
+              top: `${saveButtonPosition.top + 24}px`,
+              left: `${saveButtonPosition.left}px`,
+              zIndex: 100,
+            }}
+          >
+            {isWordSaved(selectedWord.word, selectedWord.questionId, selectedWord.positionIndex) ? 'Unsave' : 'Save'}
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Bluebook Footer */}
       <div className="bluebook-footer">

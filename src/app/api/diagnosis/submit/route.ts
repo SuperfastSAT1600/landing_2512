@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       confidenceLevels,
       flaggedQuestions,
       questionTimes,
+      savedWords,
     } = body;
 
     // Validate required fields
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
           confidence_levels: confidenceLevels || {},
           flagged_questions: flaggedQuestions || [],
           question_times: questionTimes || {},
+          saved_words: savedWords || [],
         },
       ])
       .select('id');

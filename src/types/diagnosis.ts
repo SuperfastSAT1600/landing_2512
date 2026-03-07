@@ -4,6 +4,17 @@
  */
 
 /**
+ * Saved word tracking student vocabulary learning
+ */
+export interface SavedWord {
+  word: string;                      // The word text (lowercased, trimmed)
+  questionId: string;                // Which question it was found in
+  section: 'passage' | 'option';     // Where in the UI (passage or option)
+  optionId: string | null;           // If from an option, which one (e.g., 'A', 'B', 'C', 'D')
+  positionIndex: number;             // Word index in the source text (for uniqueness)
+}
+
+/**
  * Access token record linking a token to a student
  */
 export interface AccessToken {
@@ -35,6 +46,7 @@ export interface TestResult {
   confidenceLevels: Record<string, number>;  // { questionId: confidenceLevel (1-5) }
   flaggedQuestions: string[];          // Array of question IDs flagged for review
   questionTimes: Record<string, number>; // { questionId: timeSpentSeconds }
+  savedWords?: SavedWord[];            // Words student marked as unknown
 }
 
 /**
@@ -68,6 +80,7 @@ export interface SubmitTestRequest {
   confidenceLevels: Record<string, number>;
   flaggedQuestions: string[];
   questionTimes: Record<string, number>;
+  savedWords?: SavedWord[];           // Words student marked as unknown
 }
 
 /**
