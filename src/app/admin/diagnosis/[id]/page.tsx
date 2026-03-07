@@ -8,7 +8,7 @@ import { TestResult } from '@/types/diagnosis';
 export default function AdminDiagnosisDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { isAuthenticated, adminKey } = useAdminAuth();
+  const { isAuthenticated, adminKey, loading: authLoading } = useAdminAuth();
 
   const [result, setResult] = useState<TestResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -17,13 +17,14 @@ export default function AdminDiagnosisDetailPage() {
   const resultId = params.id as string;
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       router.push('/admin');
       return;
     }
 
     fetchResult();
-  }, [isAuthenticated, resultId]);
+  }, [isAuthenticated, resultId, authLoading]);
 
   const fetchResult = async () => {
     setLoading(true);
@@ -60,7 +61,7 @@ export default function AdminDiagnosisDetailPage() {
     return `${mins}분 ${secs}초`;
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>로딩 중...</p>

@@ -69,7 +69,7 @@ export interface ValidateTokenResponse {
  * Payload for test submission API request
  */
 export interface SubmitTestRequest {
-  tokenId: string;
+  tokenId?: string;
   studentEmail: string;
   studentName: string;
   testId: string;
@@ -97,15 +97,16 @@ export interface SubmitTestResponse {
 export interface GenerateTokenRequest {
   studentEmail: string;
   studentName: string;
+  code?: string;                // Optional 6-digit code (auto-generated if not provided)
+  expiresInHours?: number;      // Default 24
 }
 
 /**
- * Payload for admin token generation API response
+ * Payload for admin code generation API response
  */
 export interface GenerateTokenResponse {
-  token: string;
+  token: string;                // 6-digit access code
   studentEmail: string;
   studentName: string;
-  expiresAt: string;            // ISO timestamp (24 hours from now)
-  testUrl: string;              // e.g., /diagnosis?token=<uuid>
+  expiresAt: string;            // ISO timestamp
 }

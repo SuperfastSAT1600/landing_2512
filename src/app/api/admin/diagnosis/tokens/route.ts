@@ -1,89 +1,114 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase';
-import { GenerateTokenRequest, GenerateTokenResponse } from '@/types/diagnosis';
 
 /**
- * POST /api/admin/diagnosis/tokens
- * Generate a new access token for a student
- * Admin-only endpoint
+ * GET /api/admin/diagnosis/tokens
+ * List all issued access codes with usage status
  */
-export async function POST(request: NextRequest) {
-  // Verify admin authentication
+export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const body: GenerateTokenRequest = await request.json();
-    const { studentEmail, studentName } = body;
-
-    // Validate required fields
-    if (!studentEmail || !studentName) {
-      return NextResponse.json(
-        { error: 'Student email and name are required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(studentEmail)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
-
-    // Generate unique token (UUID)
-    const token = crypto.randomUUID();
-
-    // Calculate expiration time: 24 hours from now
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 1);
-
-    // Insert token record into database
-    const { data: tokenData, error: insertError } = await supabaseAdmin
+    // Fetch all codes ordered by creation date
+    const { data: codes, error: codesError } = await supabaseAdmin
       .from('diagnostic_access_tokens')
-      .insert([
-        {
-          token,
-          student_email: studentEmail,
-          student_name: studentName,
-          test_id: 'diagnostic-test-1',
-          expires_at: expiresAt.toISOString(),
-          is_active: true,
-        },
-      ])
-      .select('id');
+      .select('id, token, student_email, student_name, expires_at, is_active, created_at')
+      .order('created_at', { ascending: false });
+
+    if (codesError) {
+      console.error('Error fetching codes:', codesError);
+      return NextResponse.json({ error: 'Failed to fetch codes' }, { status: 500 });
+    }
+
+    // Fetch all result token_ids to determine usage
+    const { data: results } = await supabaseAdmin
+      .from('diagnostic_test_results')
+      .select('token_id');
+
+    const usedTokenIds = new Set((results || []).map(r => r.token_id).filter(Boolean));
+    const now = new Date();
+
+    const codesWithStatus = (codes || []).map(code => {
+      let status: 'completed' | 'expired' | 'pending';
+      if (usedTokenIds.has(code.id)) {
+        status = 'completed';
+      } else if (code.expires_at && new Date(code.expires_at) < now) {
+        status = 'expired';
+      } else {
+        status = 'pending';
+      }
+      return { ...code, status };
+    });
+
+    return NextResponse.json({ codes: codesWithStatus }, { status: 200 });
+  } catch (error) {
+    console.error('Error listing codes:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * POST /api/admin/diagnosis/tokens
+ * Generate a new 6-digit access code for a student
+ */
+export async function POST(request: NextRequest) {
+  if (!isAuthenticated(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { studentEmail, studentName, code, expiresAt: expiresAtInput } = await request.json();
+
+    if (!studentEmail || !studentName || !code) {
+      return NextResponse.json({ error: 'Student email, name, and code are required' }, { status: 400 });
+    }
+
+    if (!/^\d{6}$/.test(code)) {
+      return NextResponse.json({ error: 'Code must be exactly 6 digits' }, { status: 400 });
+    }
+
+    // Check if code is already active
+    const { data: existing } = await supabaseAdmin
+      .from('diagnostic_access_tokens')
+      .select('id')
+      .eq('token', code)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ error: 'This code is already in use' }, { status: 409 });
+    }
+
+    // Use provided expiresAt or default to 24 hours from now
+    const expiresAt = expiresAtInput ? new Date(expiresAtInput) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const { error: insertError } = await supabaseAdmin
+      .from('diagnostic_access_tokens')
+      .insert([{
+        token: code,
+        student_email: studentEmail,
+        student_name: studentName,
+        test_id: 'diagnostic-test-1',
+        expires_at: expiresAt.toISOString(),
+        is_active: true,
+      }]);
 
     if (insertError) {
-      console.error('Error creating token:', insertError);
-      return NextResponse.json(
-        { error: 'Failed to create token' },
-        { status: 500 }
-      );
+      console.error('Error creating code:', insertError);
+      return NextResponse.json({ error: 'Failed to create code' }, { status: 500 });
     }
 
-    const testUrl = `/diagnosis?token=${token}`;
-
-    const response: GenerateTokenResponse = {
-      token,
+    return NextResponse.json({
+      code,
       studentEmail,
       studentName,
       expiresAt: expiresAt.toISOString(),
-      testUrl,
-    };
-
-    return NextResponse.json(response, { status: 201 });
+    }, { status: 201 });
   } catch (error) {
-    console.error('Error generating token:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error generating code:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

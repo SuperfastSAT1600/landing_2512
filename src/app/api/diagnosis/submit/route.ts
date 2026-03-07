@@ -25,26 +25,25 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!tokenId || !studentEmail || !studentName || !testId) {
+    if (!studentEmail || !studentName || !testId) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Verify token exists and is valid
-    const { data: tokenData, error: tokenError } = await supabaseAdmin
-      .from('diagnostic_access_tokens')
-      .select('id')
-      .eq('id', tokenId)
-      .eq('is_active', true)
-      .single();
+    // Verify token if provided
+    if (tokenId) {
+      const { data: tokenData, error: tokenError } = await supabaseAdmin
+        .from('diagnostic_access_tokens')
+        .select('id')
+        .eq('id', tokenId)
+        .eq('is_active', true)
+        .single();
 
-    if (tokenError || !tokenData) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
+      if (tokenError || !tokenData) {
+        console.warn('Token validation failed, saving result without token link');
+      }
     }
 
     // Insert test result
@@ -52,7 +51,7 @@ export async function POST(request: NextRequest) {
       .from('diagnostic_test_results')
       .insert([
         {
-          token_id: tokenId,
+          token_id: tokenId || null,
           student_email: studentEmail,
           student_name: studentName,
           test_id: testId,

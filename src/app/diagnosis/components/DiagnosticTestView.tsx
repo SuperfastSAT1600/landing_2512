@@ -40,7 +40,6 @@ export function DiagnosticTestView({
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
-  const [passageWidth, setPassageWidth] = useState(50); // percentage
   const [showVocabNotice, setShowVocabNotice] = useState(true);
   const [selectedWord, setSelectedWord] = useState<SavedWord | null>(null);
   const [saveButtonPosition, setSaveButtonPosition] = useState<{ top: number; left: number } | null>(null);
@@ -62,43 +61,10 @@ export function DiagnosticTestView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer.remaining]);
 
-  // Resizer drag logic
-  useEffect(() => {
-    const resizer = resizerRef.current;
-    const layout = layoutRef.current;
-    if (!resizer || !layout) return;
-
-    let isDragging = false;
-
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      e.preventDefault();
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const rect = layout.getBoundingClientRect();
-      const pct = ((e.clientX - rect.left) / rect.width) * 100;
-      setPassageWidth(Math.max(25, Math.min(75, pct)));
-    };
-
-    const onMouseUp = () => {
-      isDragging = false;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-
-    resizer.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-    return () => {
-      resizer.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-  }, [hasPassage]);
+  const clearSelection = useCallback(() => {
+    setSelectedWord(null);
+    setSaveButtonPosition(null);
+  }, []);
 
   const recordQuestionTime = useCallback(() => {
     if (!currentQuestion) return;
@@ -114,7 +80,8 @@ export function DiagnosticTestView({
     setCurrentQuestionIndex(index);
     setQuestionStartTime(Date.now());
     setShowNav(false);
-  }, [recordQuestionTime]);
+    clearSelection();
+  }, [recordQuestionTime, clearSelection]);
 
   const toggleFlag = useCallback(() => {
     if (!currentQuestion) return;
@@ -148,10 +115,32 @@ export function DiagnosticTestView({
     setSaveButtonPosition(position);
   };
 
+  // REQ-001: Click outside word/save-button clears selection
+  useEffect(() => {
+    if (!selectedWord) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (target.closest('.vocab-word-span, .vocab-save-btn')) return;
+      clearSelection();
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [selectedWord, clearSelection]);
+
+  // REQ-002: Escape key clears selection
+  useEffect(() => {
+    if (!selectedWord) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') clearSelection();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedWord, clearSelection]);
+
   const handleSaveWord = () => {
     if (selectedWord) {
       toggleWord(selectedWord);
-      // Keep selection visible for better UX
+      clearSelection();
     }
   };
 
@@ -159,36 +148,34 @@ export function DiagnosticTestView({
     recordQuestionTime();
     setSubmitting(true);
 
-    // If token-based flow, save results to Supabase
-    if (tokenId) {
-      try {
-        const submitData: SubmitTestRequest = {
-          tokenId,
-          studentEmail,
-          studentName,
-          testId: 'diagnostic-test-1',
-          startedAt: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
-          submittedAt: new Date().toISOString(),
-          totalTimeSeconds: startTime ? Math.floor((Date.now() - startTime) / 1000) : 0,
-          answers,
-          confidenceLevels: confidence,
-          flaggedQuestions: Array.from(flagged),
-          questionTimes,
-          savedWords,
-        };
+    // Always save results to Supabase
+    try {
+      const submitData: SubmitTestRequest = {
+        tokenId,
+        studentEmail,
+        studentName,
+        testId: 'diagnostic-test-1',
+        startedAt: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
+        submittedAt: new Date().toISOString(),
+        totalTimeSeconds: startTime ? Math.floor((Date.now() - startTime) / 1000) : 0,
+        answers,
+        confidenceLevels: confidence,
+        flaggedQuestions: Array.from(flagged),
+        questionTimes,
+        savedWords,
+      };
 
-        const response = await fetch('/api/diagnosis/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(submitData),
-        });
+      const response = await fetch('/api/diagnosis/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitData),
+      });
 
-        if (!response.ok) {
-          console.error('Failed to save test results:', await response.text());
-        }
-      } catch (error) {
-        console.error('Error submitting test:', error);
+      if (!response.ok) {
+        console.error('Failed to save test results:', await response.text());
       }
+    } catch (error) {
+      console.error('Error submitting test:', error);
     }
 
     setTimeout(() => {
@@ -357,10 +344,7 @@ export function DiagnosticTestView({
         {/* Passage (only if exists) */}
         {hasPassage && (
           <>
-            <div
-              className="test-passage-panel"
-              style={{ width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${passageWidth}%` : undefined }}
-            >
+            <div className="test-passage-panel">
               <div style={{ padding: '24px 28px 24px 24px' }}>
                 <div className="test-passage-content">
                   <SelectableText
@@ -378,21 +362,15 @@ export function DiagnosticTestView({
         )}
 
         {/* Question panel */}
-        <div
-          className="test-question-panel"
-          style={hasPassage && typeof window !== 'undefined' && window.innerWidth >= 768
-            ? { width: `calc(${100 - passageWidth}% - 8px)` }
-            : undefined
-          }
-        >
-          <div className="mx-auto" style={{ maxWidth: hasPassage ? 560 : 700, padding: '24px 20px 120px' }}>
-            <AnimatePresence mode="wait">
+        <div className={`test-question-panel ${hasPassage ? 'has-passage' : ''}`}>
+          <div className="mx-auto" style={{ maxWidth: 640, padding: '24px 20px 120px' }}>
+            <AnimatePresence>
               <motion.div
                 key={currentQuestion?.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.18 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.12 }}
               >
                 {currentQuestion && (
                   <div>

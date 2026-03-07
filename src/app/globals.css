@@ -251,25 +251,19 @@ a {
   background: #ffffff; max-height: 40vh;
 }
 @media (min-width: 768px) {
-  .test-passage-panel { max-height: none; border-bottom: none; border-right: 1px solid #d0d0d0; }
+  .test-passage-panel { width: 50%; max-height: none; border-bottom: none; flex-shrink: 0; scrollbar-gutter: stable; }
 }
 
 /* Question panel */
 .test-question-panel { width: 100%; flex: 1; overflow-y: auto; background: #ffffff; padding-bottom: 100px; }
-
-/* Resizer handle (desktop only) */
-.test-resizer {
-  display: none; width: 8px; cursor: col-resize;
-  background: #e5e7eb; flex-shrink: 0;
-  position: relative; z-index: 5;
-  transition: background 0.15s;
+@media (min-width: 768px) {
+  .test-question-panel.has-passage { width: calc(50% - 1px); flex: none; }
 }
-.test-resizer:hover { background: #cbd5e1; }
-.test-resizer::after {
-  content: ''; position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 4px; height: 32px; border-radius: 2px;
-  background: #94a3b8;
+
+/* Divider (desktop only) */
+.test-resizer {
+  display: none; width: 1px; flex-shrink: 0;
+  background: #e0e0e0;
 }
 @media (min-width: 768px) { .test-resizer { display: block; } }
 

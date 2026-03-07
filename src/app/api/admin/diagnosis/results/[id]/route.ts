@@ -43,10 +43,28 @@ export async function GET(
       );
     }
 
+    // Map snake_case DB fields to camelCase for frontend
+    const result = {
+      id: data.id,
+      tokenId: data.token_id,
+      studentEmail: data.student_email,
+      studentName: data.student_name,
+      testId: data.test_id,
+      createdAt: data.created_at,
+      startedAt: data.started_at,
+      submittedAt: data.submitted_at,
+      totalTimeSeconds: data.total_time_seconds,
+      answers: data.answers,
+      confidenceLevels: data.confidence_levels,
+      flaggedQuestions: data.flagged_questions,
+      questionTimes: data.question_times,
+      savedWords: data.saved_words,
+    };
+
     return NextResponse.json(
       {
         success: true,
-        result: data,
+        result,
       },
       { status: 200 }
     );
