@@ -79,7 +79,7 @@ Keep context under 80k tokens. Disable unused MCPs, delegate heavy tasks to agen
 
 **Hybrid Agent Model** - Main agent codes, specialists provide expertise
 - Main agent handles 70% of work directly (CRUD, simple features, bug fixes)
-- 33 specialized agents available for complex domains
+- 10 specialized agents available for complex domains
 - Efficient workflow: code first, delegate when specialized expertise needed
 
 **Commands** - User-triggered workflows
@@ -87,15 +87,15 @@ Keep context under 80k tokens. Disable unused MCPs, delegate heavy tasks to agen
 - Execute complete workflows in one command
 - **20 commands available** covering workflow orchestration, development, quality, and maintenance
 
-**Agents** - Specialized autonomous workers (33 total)
+**Agents** - Specialized autonomous workers (10 total)
 - Main agent codes directly for standard tasks
 - Delegate to specialists for domain expertise
 - Agents have isolated context and specific tools
-- Categories: Planning & Architecture (2), Code Quality (6), Testing (6), Development (5), Operations (6), Accessibility & i18n (2), Documentation (2), Performance (1), Specialized Domains (3)
+- See `.claude/agents/INDEX.md` for full directory
 
 **Rules** - Always-active guardrails
 - Core guidelines: `essential-rules.md` (security, coding style, TypeScript, testing, error handling, API design)
-- Workflow rules: `agent-workflow.md` (hybrid model delegation principles)
+- Workflow rules: `orchestration.md` (hybrid model delegation principles)
 - Automatically enforced on every interaction
 
 **Skills** - Reusable knowledge patterns (20 total)
@@ -883,7 +883,7 @@ Model Context Protocol (MCP) servers provide external tool integrations:
 
 **Available Integrations:**
 - **filesystem**: File operations (always enabled, REQUIRED)
-- **slack**: Team communication and PR notifications (**REQUIRED** - auto-notifies 개발 channel)
+- **slack**: Team communication and PR notifications (**REQUIRED** - auto-notifies commit-업데이트 channel)
 - **github**: GitHub API operations (issues, PRs, commits)
 - **postgres/sqlite**: Database queries and migrations
 - **vercel/railway**: Deployment to hosting platforms
@@ -901,7 +901,7 @@ Model Context Protocol (MCP) servers provide external tool integrations:
 
 **Required MCP Servers:**
 - **filesystem**: Always enabled (required for file operations)
-- **slack**: Required during setup (auto-sends PR notifications to 개발 channel)
+- **slack**: Required during setup (auto-sends PR notifications to commit-업데이트 channel)
 
 The setup wizard (`node setup.cjs`) will automatically prompt for Slack MCP credentials:
 - Slack Bot Token (from https://api.slack.com/apps)
@@ -986,15 +986,15 @@ Use for:
 ```
 Enable: slack MCP server (required)
 Use for:
-→ Auto-notify 개발 channel on PR creation
-→ Auto-notify 개발 channel on code push
+→ Auto-notify commit-업데이트 channel on PR creation
+→ Auto-notify commit-업데이트 channel on code push
 → Full PR title, description, and link included in notifications
 → Team members see all details without opening GitHub
 → Messages in natural, professional Korean for non-technical team members
 → Team communication and notifications
 
 Important: This template auto-sends Slack messages with full PR descriptions
-to the 개발 channel when using the `/commit-push-pr` command.
+to the commit-업데이트 channel when using the `/commit-push-pr` command.
 All messages are translated to natural Korean that's easily understandable
 by vibe coders and non-technical team members.
 ```
@@ -1625,7 +1625,7 @@ code-simplifier     # Remove complexity
 
 ```bash
 essential-rules.md   # Security, testing, coding standards (all consolidated)
-agent-workflow.md    # Delegation, workflows, git standards
+orchestration.md     # Delegation, workflows, git standards
 ```
 
 ### Critical Performance Thresholds

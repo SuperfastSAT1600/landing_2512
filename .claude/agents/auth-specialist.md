@@ -31,41 +31,33 @@ Security-focused expert in authentication and authorization systems. Design and 
 6. Add rate limiting and brute force protection
 7. Validate with security checklist
 
-## Key Patterns
-
-**JWT Service**: Generate access/refresh token pairs with crypto-secure JTIs and family tracking
-**OAuth with PKCE**: PKCE challenge generation, authorization URL building, code exchange, user info normalization
-**Authorization Middleware**: `requireRole()` and `requirePermission()` guards for endpoints
-**Password Security**: bcrypt hashing (12 rounds), strength validation (zxcvbn), secure reset tokens
-
 ## Coordination
 
-- Delegate database schema to database-architect
-- Security review by security-reviewer before deployment
+- Delegate database schema to backend-specialist
+- Security review by code-reviewer before deployment
 - Use templates: guard.ts, middleware.ts, service.ts, error-handler.ts
 
 ## Resources
 
 - Security Audit: `.claude/checklists/security-audit.md`
-- Backend Patterns: `.claude/skills/backend-patterns/`
-- Guard Template: `.claude/templates/guard.ts.template`
-- Middleware Template: `.claude/templates/middleware.ts.template`
-- Service Template: `.claude/templates/service.ts.template`
-- Auth Context Template: `.claude/templates/variants/react/context.tsx.template` (for AuthProvider)
-- Auth Hook Template: `.claude/templates/variants/react/hook.ts.template` (for useAuth, useSession)
-- Auth HOC Template: `.claude/templates/variants/react/hoc.tsx.template` (for withAuth, withRole)
+- Guard Template: `.claude/skills/auth-patterns/templates/guard.ts.template`
+- Middleware Template: `.claude/skills/backend-patterns/templates/middleware.ts.template`
+- Service Template: `.claude/skills/backend-patterns/templates/service.ts.template`
+- Auth Context Template: `.claude/skills/react-patterns/templates/context.tsx.template`
+- Auth Hook Template: `.claude/skills/react-patterns/templates/hook.ts.template`
+- Auth HOC Template: `.claude/skills/react-patterns/templates/hoc.tsx.template`
 
-## Resource Checklist
+## INIT Checklist
 
-- Query Context7 for auth library docs (Passport, NextAuth, Auth0, Supabase Auth) before implementation
-- Store auth pattern decisions in Memory (OAuth flow choice, token strategy, session management)
+1. **Load skills**: `Skill("auth-patterns")`, `Skill("backend-patterns")` — load those relevant to current task
+2. Query Context7 for auth library docs (Passport, NextAuth, Auth0, Supabase Auth) before implementation
+3. Search Memory for past auth pattern decisions
 
 ## Recommended MCPs
 
-Before starting work, use ToolSearch to load these MCP servers if needed:
+MCP servers available for this domain (use directly — no loading needed):
 
 - **context7**: Query OAuth, JWT, and authentication library documentation
-- **supabase**: Reference Supabase Auth patterns and configuration
 - **memory**: Store authentication decisions and security patterns
 
 ## Error Log

@@ -40,11 +40,23 @@
     cursor: pointer;
     max-width: 100%;
     white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
+    position: relative;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    animation: fadeInDown 0.4s ease, pulse 2s infinite;
+    animation: fadeInDown 0.4s ease;
     box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+    will-change: transform;
+}
+
+/* Pulsing glow via pseudo-element opacity — GPU-composited, no repaint */
+.announcementLink::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 4px 30px rgba(255, 255, 255, 0.6);
+    animation: pulseGlow 2s ease-in-out infinite;
+    pointer-events: none;
 }
 
 .announcementLink:hover {
@@ -53,9 +65,9 @@
     color: #000000;
 }
 
-@keyframes pulse {
-    0%, 100% { box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3); }
-    50% { box-shadow: 0 4px 30px rgba(255, 255, 255, 0.6); }
+@keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
 }
 
 @keyframes fadeInDown {
@@ -201,5 +213,19 @@
     .bubble {
         font-size: 0.75rem;
         padding: 0.4rem 0.8rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wrapper {
+        animation: none;
+    }
+
+    .announcementLink {
+        animation: none;
+    }
+
+    .announcementLink::after {
+        display: none;
     }
 }

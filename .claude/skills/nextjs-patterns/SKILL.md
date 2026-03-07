@@ -297,3 +297,8 @@ Export generateMetadata function with params
 - Move routes one at a time
 - Update data fetching patterns
 - Migrate layouts and error handling
+
+## Templates
+
+Code templates for this domain (in `templates/`):
+- `api-route.ts.template` — Next.js App Router API route handler

@@ -1,75 +1,56 @@
 # Task Execution Protocol (Mandatory)
 
-Every agent MUST follow this protocol. See `self-improvement.md` for error categories, patterns, triggers.
-
 ---
 
 ## Phase 0: INIT
 
-**FIRST ACTION (MANDATORY)**: Use the Read tool to read `.claude/user/errors.md` (main agent) or `.claude/user/agent-errors/{name}.md` (subagent). This MUST be your first task upon loading.
-
-**PRD** (core features): `docs/PRD.md` for scope, architecture, metrics
+1. **Read errors file FIRST** — `.claude/user/errors.md` (main) or `.claude/user/agent-errors/{name}.md` (subagent)
+2. **Load skills** — check `.claude/skills/INDEX.md` "Skill Selection by Task Type"
+3. **PRD** — `docs/PRD.md` for scope and architecture
 
 ---
 
 ## Phase 1: PRE-TASK
 
-### Delegation Check
+**Spec?** Write one if the task warrants it — see `workflow/spec-rules.md`. Quick rule: new feature, 2+ files, or parallel implementation → write spec. Typos/config tweaks → skip.
 
-Specialist required? Check `orchestration.md`:
-Database → database-architect, migration-specialist | API → api-designer, graphql-specialist | Auth → auth-specialist | Security → security-reviewer | Testing → unit-test-writer, integration-test-writer, e2e-runner | Infrastructure → docker-specialist, ci-cd-specialist | Code review → code-reviewer | Performance → performance-optimizer
+**Routing?** See `orchestration/routing.md` for specialist delegation and parallel vs sequential logic.
 
-**If specialist exists: DELEGATE. Exception**: <10 lines, no domain knowledge, follows patterns, no architecture.
-
-### Parallelization
-
-Independent files/features/domains? → PARALLEL (one message, multiple Tasks)
-Research + implementation? → PARALLEL | Review? → PARALLEL | Single atomic? → SEQUENTIAL
-
-### Task List (MANDATORY)
-
-**Create task list for**:
-- Multi-step tasks (3+ steps)
-- Non-trivial complex tasks
-- User provides multiple tasks
-- Plan mode work
-
-**Skip for**: Single straightforward tasks, trivial tasks (<3 steps), conversational requests
-
-**Mark tasks**: `in_progress` when starting, `completed` when done
+**Task list?** Create for multi-step (3+) or non-trivial tasks. Mark `in_progress` when starting, `completed` when done. Skip for single straightforward tasks.
 
 ---
 
 ## Phase 2: DURING
 
-**Error Logging (BLOCKING)**: Error → STOP → LOG → VERIFY → THEN continue
-Log: `.claude/user/errors.md`: `[category] Error: [what] | Correct: [how]`
-Self-check: "Did I log it?" If no → LOG NOW
+**Error logging (immediate, non-blocking)**: Error → LOG to errors file → continue. Format: `[category] Error: [what] | Correct: [how]`. Never skip logging. Only stop entirely when error blocks all meaningful progress.
 
-**Observations** (note mentally): HEAL (broken refs), EVOLVE (missing coverage), ADAPT (deprecated tech), REFACTOR (bloat)
+**Observations**: Note HEAL / EVOLVE / ADAPT / REFACTOR issues mentally. Report in Phase 3. See `self-improvement.md`.
 
 ---
 
-## Phase 3: POST-TASK
+## Phase 3: POST-TASK (VERIFY-FIX LOOP — MANDATORY)
 
-1. **Report**: `OBSERVATIONS: [items or "none"]`
-2. **Auto-heal**: Auto (INDEX, refs, typos) or Propose (content, components)
-3. **Verify errors logged** (from immediate logging)
-4. **Changelog** (self-initiated only)
-5. **Docs** (MANDATORY for code): Feature → README/API/changelog | API change → docs/examples/changelog | Bug → changelog/examples | Refactor → affected docs | Small (1-2 files) = direct, Large (3+) = doc-updater
+1. **Verify** — run tests, check UI (Playwright), call API endpoints. See `workflow/verification.md`.
+   - If ANYTHING fails → **FIX THE ROOT CAUSE YOURSELF**. Never report failure to user.
+   - No surface-level patches or workarounds. Trace to the fundamental source and fix that.
+   - Re-verify after fix. Loop until everything passes. Never give up.
+2. **Report** — `OBSERVATIONS: [items or "none"]`
+3. **Auto-heal** — apply safe fixes (broken refs, typos); propose anything larger
+4. **Docs** — feature → README/API/changelog | API change → docs/examples | small (1-2 files) = direct, large (3+) = doc-updater subagent
+
+**CRITICAL**: Writing code and saying "done" without verification is NEVER acceptable. The `git commit` command is blocked until verification runs. See `workflow/verification.md`.
 
 ---
 
 ## Subagent Protocol
 
-Report (main logs):
+Verify your own workstream before returning — run your tests, confirm your endpoint responds. Fix any `.claude/` issues encountered and report them.
+
+Return format:
 ```
-## Task Result
-[work]
-## Errors Encountered
-[category] Error: [what] | Correct: [how]
-## System Fixes Applied
-Fixed: [file] - [what]
+## Result: [work done]
+## Errors: [category] Error: [what] | Correct: [how]
+## Fixes: [file] - [what was fixed]
 ```
 
 ---
@@ -77,8 +58,8 @@ Fixed: [file] - [what]
 ## Quick Reference
 
 ```
-INIT:    Read errors.md FIRST → PRD
-PRE:     Delegate? Parallel? Task list?
-DURING:  Error → STOP → LOG → VERIFY → THEN
-POST:    Observations → Heal → Errors → Changelog → DOCS
+INIT:  errors.md → skills/INDEX.md → PRD
+PRE:   spec? (spec-rules.md) | skills? | route? (routing.md) | task list?
+MID:   error → LOG → continue
+POST:  verify (verification.md) → observations → heal → docs
 ```

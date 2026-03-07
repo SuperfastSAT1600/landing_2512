@@ -273,5 +273,5 @@ Brief description.
 ## Related Commands
 
 - `/full-feature` - Includes documentation phase
-- `/review-changes` - Review includes doc check
+- `/review` - Review includes doc check
 - `/commit-push-pr` - Ensures docs are committed

@@ -187,6 +187,13 @@ function requirePermission(resource: string, action: string) {
 
 ---
 
+## Templates
+
+Code templates for this domain (in `templates/`):
+- `guard.ts.template` — Route protection and authorization guards
+
+---
+
 ## Resources
 
 - [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)

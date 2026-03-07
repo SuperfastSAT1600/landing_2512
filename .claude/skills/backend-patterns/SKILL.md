@@ -285,6 +285,15 @@ Database
 
 ---
 
+## Templates
+
+Code templates for this domain (in `templates/`):
+- `service.ts.template` — Business logic service with Zod validation
+- `error-handler.ts.template` — Custom error classes and middleware
+- `middleware.ts.template` — Express/Next.js middleware factory
+
+---
+
 ## Resources
 
 - REST API Design: https://restfulapi.net/

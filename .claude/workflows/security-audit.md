@@ -46,7 +46,7 @@ npx semgrep --config auto
 ---
 
 ### Step 2: Manual Code Review
-**Agent**: `security-reviewer`
+**Agent**: `code-reviewer`
 **Duration**: 1-2 hours
 
 **Focus Areas**:
@@ -86,7 +86,7 @@ npx semgrep --config auto
 ---
 
 ### Step 3: Configuration Review
-**Agent**: `security-reviewer`
+**Agent**: `code-reviewer`
 **Duration**: 30-45 minutes
 
 **Check**:
@@ -134,7 +134,7 @@ npx semgrep --config auto
 ---
 
 ### Step 5: Generate Report
-**Agent**: `security-reviewer`
+**Agent**: `code-reviewer`
 **Duration**: 30 minutes
 
 **Report Template**:
@@ -216,7 +216,7 @@ Brief overview of findings and overall security posture.
 ---
 
 ### Step 7: Fix & Verify
-**Agent**: Main context + `security-reviewer`
+**Agent**: Main context + `code-reviewer`
 **Duration**: Variable
 
 **Auto-Gate**: 🔄 **Security Audit Checklist Auto-Triggered**

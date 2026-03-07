@@ -12,6 +12,7 @@ Complete before every release.
 - [ ] All E2E tests passing
 - [ ] Test coverage meets threshold (≥80%)
 - [ ] No skipped tests (or documented reason)
+- [ ] Mutation score ≥70% for critical business logic (if Stryker configured)
 
 ### Build
 - [ ] Production build succeeds

@@ -61,6 +61,11 @@ format_javascript() {
 
 format_typescript() {
     format_javascript "$1"
+
+    # Run ESLint after Prettier for TypeScript files
+    if has_command npx && [[ -f "$PROJECT_ROOT/package.json" ]]; then
+        npx eslint --fix "$1" 2>/dev/null || true
+    fi
 }
 
 format_json() {

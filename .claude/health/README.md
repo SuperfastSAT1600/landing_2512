@@ -11,4 +11,4 @@ The system continuously observes its own `.claude/` configuration during tasks.
 Issues are noted, then resolved after the primary task completes.
 All changes are logged here and committed to git.
 
-See `.claude/rules/self-aware-system.md` for the full behavior specification.
+See `.claude/rules/self-improvement.md` for the full behavior specification.

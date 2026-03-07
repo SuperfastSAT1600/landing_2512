@@ -1,6 +1,13 @@
 #!/bin/bash
 # Safe update script for .claude/ system files
 # Preserves user data while updating system configuration
+#
+# NOTE: All logic is wrapped in main() so the entire script is loaded into
+# memory before execution begins. This prevents issues when the script
+# overwrites itself mid-run (e.g. when updating from a codebase that uses
+# this template).
+
+main() {
 
 set -e  # Exit on error
 
@@ -24,14 +31,23 @@ echo -e "${BLUE}[1/6] Validating and updating source...${NC}"
 REPO_DIR="../claude-code-setup"
 
 if [ ! -d "$REPO_DIR" ]; then
-    echo -e "${RED}✗ Error: Repository not found: $REPO_DIR${NC}"
-    echo -e "${YELLOW}Cloning repository...${NC}"
+    REPO_URL="${CLAUDE_CODE_SETUP_REPO:-}"
+    if [ -z "$REPO_URL" ]; then
+        echo -e "${RED}✗ Error: Repository not found: $REPO_DIR${NC}"
+        echo -e "${RED}  No repository URL configured.${NC}"
+        echo -e "${YELLOW}Set the CLAUDE_CODE_SETUP_REPO environment variable or clone manually:${NC}"
+        echo -e "  export CLAUDE_CODE_SETUP_REPO=https://github.com/<your-org>/claude-code-setup.git"
+        echo -e "  # Then re-run this script, or clone directly:"
+        echo -e "  git clone https://github.com/<your-org>/claude-code-setup.git ../claude-code-setup"
+        exit 1
+    fi
+    echo -e "${YELLOW}Cloning repository from $REPO_URL...${NC}"
     cd ..
-    if ! git clone https://github.com/YOUR_REPO/claude-code-setup.git; then
+    if ! git clone "$REPO_URL"; then
         echo -e "${RED}✗ Failed to clone repository${NC}"
         echo -e "${YELLOW}Please clone manually:${NC}"
         echo -e "  cd .."
-        echo -e "  git clone https://github.com/YOUR_REPO/claude-code-setup.git"
+        echo -e "  git clone $REPO_URL"
         exit 1
     fi
     cd - > /dev/null
@@ -144,16 +160,40 @@ if [ -f "$CLAUDE_DIR/settings.local.json" ]; then
 fi
 
 # Copy system files from source (exclude user directory)
-echo -e "${YELLOW}→ Copying system files from $SOURCE_DIR${NC}"
+# Strategy: remove-then-copy for managed dirs so deletions in source propagate to target.
+# Root-level files are overwritten in place (no deletion needed there).
+echo -e "${YELLOW}→ Syncing system files from $SOURCE_DIR${NC}"
 
-# Copy all directories except user/
+# Managed directories: remove target dir entirely, then copy fresh from source.
+# This guarantees the target exactly mirrors source — no stale files survive.
+MANAGED_DIRS="agents skills rules commands workflows templates scripts checklists"
+
+for managed in $MANAGED_DIRS; do
+    SRC_DIR="$SOURCE_DIR/$managed"
+    TARGET_DIR="$CLAUDE_DIR/$managed"
+
+    if [ -d "$SRC_DIR" ]; then
+        # Remove existing target dir so deleted files don't linger
+        rm -rf "$TARGET_DIR"
+        cp -r "$SRC_DIR" "$CLAUDE_DIR/"
+        echo -e "  ✓ Synced $managed/"
+    elif [ -d "$TARGET_DIR" ]; then
+        # Source no longer has this dir — remove it from target
+        rm -rf "$TARGET_DIR"
+        echo -e "  ${RED}✗ Removed obsolete $managed/ (no longer in source)${NC}"
+    fi
+done
+
+# Copy any remaining non-managed directories from source (except user/)
 for dir in "$SOURCE_DIR"/*; do
     if [ -d "$dir" ]; then
         dirname=$(basename "$dir")
-        if [ "$dirname" != "user" ]; then
-            cp -r "$dir" "$CLAUDE_DIR/"
-            echo -e "  ✓ Updated $dirname/"
-        fi
+        # Skip managed dirs (handled above) and user/
+        case "$dirname" in
+            agents|skills|rules|commands|workflows|templates|scripts|checklists|user) continue ;;
+        esac
+        cp -r "$dir" "$CLAUDE_DIR/"
+        echo -e "  ✓ Updated $dirname/"
     fi
 done
 
@@ -168,7 +208,25 @@ for file in "$SOURCE_DIR"/*; do
     fi
 done
 
-echo -e "${GREEN}✓ System files updated${NC}"
+echo -e "${GREEN}✓ System files synced${NC}"
+
+# Step 4b: Seed root-level directories (outside .claude/)
+# These are only copied if they DON'T already exist in the target project.
+# Projects customize these for their own needs (e.g. Playwright deps in Dockerfile).
+REPO_ROOT="$(dirname "$SOURCE_DIR")"
+ROOT_SEED_DIRS=".devcontainer"
+
+for seed in $ROOT_SEED_DIRS; do
+    SRC="$REPO_ROOT/$seed"
+    TARGET="$seed"
+
+    if [ -d "$SRC" ] && [ ! -d "$TARGET" ]; then
+        cp -r "$SRC" "$TARGET"
+        echo -e "  ✓ Seeded $seed/ (new project)"
+    elif [ -d "$TARGET" ]; then
+        echo -e "  ⊘ Skipped $seed/ (already customized)"
+    fi
+done
 
 # Restore user data
 if [ "$(ls -A "$TEMP_USER_DIR" 2>/dev/null)" ]; then
@@ -223,6 +281,7 @@ echo "  - .claude/rules/ (system rules)"
 echo "  - .claude/commands/ (system commands)"
 echo "  - .claude/workflows/ (system workflows)"
 echo "  - .claude/templates/ (system templates)"
+echo "  - .devcontainer/ (seeded if missing, never overwritten)"
 
 echo -e "\n${GREEN}Preserved:${NC}"
 if [ -f "$USER_DIR/changelog.md" ]; then
@@ -250,3 +309,7 @@ echo -e "\n${GREEN}Backup location:${NC} $BACKUP_DIR"
 echo -e "${YELLOW}You can safely delete the backup after verifying everything works.${NC}"
 
 echo -e "\n${GREEN}✓ Update complete!${NC}\n"
+
+} # end main
+
+main "$@"

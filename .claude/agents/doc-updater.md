@@ -92,17 +92,20 @@ Synchronize documentation with code changes. Keep docs current and accurate.
 4. **Easy to understand** - Clear descriptions
 5. **Up to date** - Sync with every change
 
+## INIT Checklist
+
+1. **Load skills**: `Skill("documentation-patterns")` — load for current task
+2. Query Context7 for documentation standards and markdown best practices
+
 ## Resources
 
 - PR Description Template: `.claude/templates/pr-description.md.template`
 - API Documentation Template: `.claude/templates/api-documentation.md`
-- README Template: `.claude/templates/readme.template.md`
 - Documentation Patterns: `.claude/skills/documentation-patterns/`
-- Project Guidelines: `.claude/skills/project-guidelines/`
 
 ## Recommended MCPs
 
-Before starting work, use ToolSearch to load these MCP servers if needed:
+MCP servers available for this domain (use directly — no loading needed):
 
 - **context7**: Query documentation standards and markdown best practices
 - **github**: Update README and documentation files in repository

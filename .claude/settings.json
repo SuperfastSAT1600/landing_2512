@@ -1,7 +1,45 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "defaultMode": "plan",
+    "allow": [
+      "Bash(npx next build)"
+    ]
+  },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "find .claude/scripts -name '*.sh' -exec sed -i 's/\\r$//' {} + 2>/dev/null; bash ./.claude/scripts/plan-mode-session-start.sh"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
+      {
+        "matcher": "tool in [\"Edit\", \"Write\", \"Task\", \"Bash\"]",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.claude/scripts/enforce-spec-before-coding.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "tool in [\"Edit\", \"Write\"]",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.claude/scripts/enforce-tdd-order.sh"
+          }
+        ]
+      },
       {
         "matcher": "tool in [\"Edit\", \"Write\", \"Task\"]",
         "hooks": [
@@ -17,15 +55,6 @@
           {
             "type": "command",
             "command": "bash ./.claude/scripts/verify-errors-read.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "tool == \"Write\" && tool_input.file_path matches \"\\\\.(ts|tsx|js|jsx)$\"",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "#!/bin/bash\ngrep -n 'console\\.log' \"$file_path\" 2>/dev/null && echo '[Hook] Warning: console.log detected - consider using a logger' >&2 || true"
           }
         ]
       },
@@ -48,11 +77,11 @@
         ]
       },
       {
-        "matcher": "tool == \"Bash\" && tool_input.command matches \"rm -rf /\"",
+        "matcher": "tool == \"Bash\"",
         "hooks": [
           {
             "type": "command",
-            "command": "echo '[Hook] BLOCKED: Dangerous rm -rf / command detected!' >&2 && exit 2"
+            "command": "bash ./.claude/scripts/block-dangerous-commands.sh \"$tool_input_command\""
           }
         ]
       },
@@ -61,7 +90,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f \".claude/scripts/pre-commit-checks.sh\" ]; then\n  bash ./.claude/scripts/pre-commit-checks.sh 2>&1 | head -50\nfi || true"
+            "command": "bash ./.claude/scripts/block-commit-unverified.sh"
+          },
+          {
+            "type": "command",
+            "command": "if [ -f \".claude/scripts/pre-commit-checks.sh\" ]; then\n  bash ./.claude/scripts/pre-commit-checks.sh 2>&1 | head -50\nfi"
+          },
+          {
+            "type": "command",
+            "command": "if [ -f \".claude/scripts/req-coverage.sh\" ]; then\n  bash ./.claude/scripts/req-coverage.sh 2>&1 | head -30 || true\nfi"
           }
         ]
       },
@@ -70,7 +107,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f \".claude/scripts/require-tests-pass.sh\" ]; then\n  bash ./.claude/scripts/require-tests-pass.sh\nfi || true"
+            "command": "if [ -f \".claude/scripts/checkpoint.sh\" ]; then\n  bash ./.claude/scripts/checkpoint.sh\nelif [ -f \".claude/scripts/require-tests-pass.sh\" ]; then\n  bash ./.claude/scripts/require-tests-pass.sh\nfi"
           }
         ]
       },
@@ -82,47 +119,82 @@
             "command": "echo '[Hook] Publishing package - ensure version is bumped and tests pass!' >&2"
           }
         ]
-      },
-      {
-        "matcher": "tool == \"Read\" && tool_input.file_path matches \"\\\\.mcp\\\\.json$\"",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "#!/bin/bash\nENABLED=$(grep -c '\"disabled\": false' ~/.mcp.json 2>/dev/null || echo 0)\nif [ \"$ENABLED\" -gt 10 ]; then\n  echo \"[Hook] WARNING: $ENABLED MCPs enabled (max 10 recommended). Performance may degrade. Disable unused MCPs in .mcp.json\" >&2\nfi"
-          }
-        ]
-      },
-      {
-        "matcher": "tool == \"Read\" && tool_input.file_path matches \"\\\\.(agents|skills)/.*\\\\.md$\"",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "#!/bin/bash\nLINES=$(wc -l < \"$file_path\" 2>/dev/null || echo 0)\nLIMIT=500\nif [ \"$LINES\" -gt \"$LIMIT\" ]; then\n  echo \"[Hook] WARNING: File $file_path has $LINES lines (limit: $LIMIT). Consider splitting or reducing.\" >&2\nfi"
-          }
-        ]
-      },
-      {
-        "matcher": "tool in [\"Edit\", \"Write\"] && tool_input.file_path matches \"\\\\.(ts|tsx|js|jsx|py|go|rs|java|kt|swift|rb|php)$\"",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ./.claude/scripts/verify-prep-done.sh \"$file_path\""
-          }
-        ]
       }
     ],
     "SubagentStop": [
       {
-        "matcher": "subagent_name == \"security-reviewer\"",
+        "matcher": "subagent_name == \"code-reviewer\"",
         "hooks": [
           {
             "type": "command",
             "command": "if [ -f \".claude/scripts/log-security-review.sh\" ]; then\n  bash ./.claude/scripts/log-security-review.sh 2>&1 | head -10\nfi || true"
           }
         ]
+      },
+      {
+        "matcher": "subagent_name matches \".*\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f \".claude/scripts/log-session-event.sh\" ]; then\n  bash ./.claude/scripts/log-session-event.sh agent_completed subagent completed 2>/dev/null\nfi || true"
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.claude/scripts/hooks/teammate-idle-tdd.sh"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.claude/scripts/hooks/task-completed-tdd.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "OS=$(uname -s 2>/dev/null); MSG=\"${CLAUDE_NOTIFICATION_MESSAGE:-Claude needs your input}\"; case \"$OS\" in Darwin*) osascript -e \"display notification \\\"$MSG\\\" with title \\\"Claude Code\\\" sound name \\\"Ping\\\"\" 2>/dev/null;; Linux*) command -v notify-send >/dev/null 2>&1 && notify-send \"Claude Code\" \"$MSG\" || printf '\\a';; MINGW*|CYGWIN*|MSYS*) powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -Command \"Add-Type -AssemblyName System.Windows.Forms,System.Drawing; \\$n=New-Object System.Windows.Forms.NotifyIcon; \\$n.Icon=[System.Drawing.SystemIcons]::Information; \\$n.BalloonTipTitle='Claude Code'; \\$n.BalloonTipText='$MSG'; \\$n.Visible=\\$true; \\$n.ShowBalloonTip(8000); Start-Sleep 1; \\$n.Dispose()\" 2>/dev/null || printf '\\a';; *) printf '\\a';; esac"
+          }
+        ]
       }
     ],
     "PostToolUse": [
+      {
+        "matcher": "tool == \"Write\" && tool_input.file_path matches \"\\.claude/plans/.*\\.md$\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.claude/scripts/clear-plan-flag.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ./.claude/scripts/launch-parallel-tdd.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "tool == \"Edit\" && tool_input.file_path matches \"\\.claude/plans/.*\\.md$\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.claude/scripts/clear-plan-flag.sh"
+          }
+        ]
+      },
       {
         "matcher": "tool == \"Read\" && tool_input.file_path matches \"errors\\\\.md$\"",
         "hooks": [
@@ -133,29 +205,11 @@
         ]
       },
       {
-        "matcher": "tool matches \"^mcp__.*context7.*$\"",
+        "matcher": "tool in [\"Edit\", \"Write\"] && tool_input.file_path matches \"\\.sh$\"",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ./.claude/scripts/mark-mcp-used.sh context7"
-          }
-        ]
-      },
-      {
-        "matcher": "tool matches \"^mcp__memory__\"",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ./.claude/scripts/mark-mcp-used.sh memory"
-          }
-        ]
-      },
-      {
-        "matcher": "tool == \"Skill\"",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ./.claude/scripts/mark-skill-loaded.sh"
+            "command": "F=$(cat | python3 -c \"import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('file_path',''))\" 2>/dev/null) && [ -n \"$F\" ] && sed -i 's/\\r$//' \"$F\" 2>/dev/null || true"
           }
         ]
       },
@@ -178,20 +232,29 @@
         ]
       },
       {
-        "matcher": "tool in [\"Edit\", \"Write\"] && tool_input.file_path matches \"\\\\.(ts|tsx)$\"",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "#!/bin/bash\nnpx eslint --fix \"$file_path\" 2>/dev/null || true"
-          }
-        ]
-      },
-      {
         "matcher": "tool == \"Bash\" && tool_input.command matches \"npm install|yarn add|pnpm add\"",
         "hooks": [
           {
             "type": "command",
             "command": "if [ -f \".claude/scripts/sync-deps.sh\" ]; then\n  bash ./.claude/scripts/sync-deps.sh 2>&1 | head -20\nfi || true"
+          }
+        ]
+      },
+      {
+        "matcher": "tool in [\"Edit\", \"Write\"] && tool_input.file_path matches \"\\\\.(ts|tsx|js|jsx|py|go|rs|rb|java|css|scss|html|vue|svelte)$\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.claude/scripts/set-needs-verification.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "tool == \"Bash\" && tool_input.command matches \"(npm test|npx (vitest|jest|playwright|mocha)|yarn test|pnpm test|pytest|cargo test|go test|rspec|mix test|npm run build|npx tsc|yarn build|pnpm build|curl |http )\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.claude/scripts/clear-verification.sh"
           }
         ]
       }
@@ -205,6 +268,18 @@
     {
       "tool": "Bash",
       "prompt": "run tests"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run unit tests"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run e2e tests"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run type checking"
     },
     {
       "tool": "Bash",
@@ -256,10 +331,6 @@
     },
     {
       "tool": "Bash",
-      "prompt": "read file contents"
-    },
-    {
-      "tool": "Bash",
       "prompt": "start development server"
     },
     {
@@ -268,7 +339,7 @@
     },
     {
       "tool": "Bash",
-      "prompt": "check process status"
+      "prompt": "run docker commands"
     },
     {
       "tool": "Bash",
@@ -276,55 +347,7 @@
     },
     {
       "tool": "Bash",
-      "prompt": "check database status"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run docker commands"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "build docker images"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "start docker containers"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "stop docker containers"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "view docker logs"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run read-only database queries"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "backup database"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "view database schema"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "deploy to staging"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "deploy to development"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "view deployment status"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "rollback deployment"
+      "prompt": "audit dependencies"
     },
     {
       "tool": "Bash",
@@ -332,98 +355,9 @@
     },
     {
       "tool": "Bash",
-      "prompt": "check for vulnerabilities"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "audit dependencies"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run static analysis"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run performance tests"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "profile application"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run benchmarks"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "analyze bundle size"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run code coverage"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "analyze code complexity"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run type checking"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "generate documentation"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "view logs"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "tail logs"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "search logs"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run integration tests"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run e2e tests"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run unit tests"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run playwright tests"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run supabase commands"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "generate supabase types"
-    },
-    {
-      "tool": "Bash",
       "prompt": "run pre-commit checks"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "sync dependencies"
     }
   ],
   "thinkingEnabled": true,
-  "autoAcceptEdits": false,
-  "permissions": {
-    "allow": [
-      "Bash(npx next build:*)"
-    ]
-  }
+  "autoAcceptEdits": false
 }

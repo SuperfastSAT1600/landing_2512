@@ -121,7 +121,7 @@ Setup checklist for new team members.
 - [ ] Practice using commands:
   - [ ] `/plan` - Planning
   - [ ] `/tdd` - Test-driven development
-  - [ ] `/review-changes` - Code review
+  - [ ] `/review` - Code review
   - [ ] `/commit-push-pr` - Git workflow
 
 ---

@@ -6,7 +6,7 @@ Status: **FUNCTIONAL** (via `/commit-push-pr` command)
 
 ## How It Works
 
-Slack notifications are sent automatically when using the `/commit-push-pr` command. Every PR creation or push to existing PR triggers a notification to the channel configured in `.claude/config/slack.json` (currently: #commit-업데이트).
+Slack notifications are sent automatically when using the `/commit-push-pr` command. Every PR creation or push to existing PR triggers a notification to the #commit-업데이트 channel.
 
 ### Working Components
 
@@ -48,7 +48,7 @@ Slack notifications are sent automatically when using the `/commit-push-pr` comm
 
 🔗 자세히 보기: [PR URL]
 
-🤖 {project folder name}
+🤖 Claude Code로 자동 생성됨
 ```
 
 **For pushes to existing PRs:**
@@ -67,7 +67,7 @@ Slack notifications are sent automatically when using the `/commit-push-pr` comm
 
 🔗 자세히 보기: [PR URL]
 
-🤖 {project folder name}
+🤖 Claude Code로 자동 생성됨
 ```
 
 ---
@@ -140,10 +140,9 @@ We can post to #commit-업데이트 using the channel name directly, so listing 
 
 ### Channel Configuration
 
-**Channel name**: commit-업데이트 (configured in `.claude/config/slack.json`)
+**Channel name**: commit-업데이트 (Korean for "commit updates")
 **Channel ID**: C09UT6DFUBY
 **Workspace**: T07FK3GB2NP
-**Bot name**: Auto-derived from project folder name (e.g., `landing_2512`)
 
 ---
 
@@ -184,20 +183,12 @@ mcp__slack__slack_post_message(
 ### Wrong channel
 
 **Update channel:**
-Edit `.claude/config/slack.json`:
-```json
-{
-  "channel": "your-channel-name"
-}
+Edit `.claude/commands/commit-push-pr.md` line 54:
+```
+- **MUST use mcp__slack__slack_post_message tool** with channel_id="commit-업데이트"
 ```
 
-All scripts and commands read from this central config file.
-
-### New Project Setup
-
-1. Copy `.claude/config/slack.json` to the new project
-2. Update the `channel` value if needed
-3. Bot name is automatically derived from the project folder name — no configuration needed
+Change "commit-업데이트" to your desired channel name or ID.
 
 ---
 

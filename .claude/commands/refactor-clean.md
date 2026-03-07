@@ -241,7 +241,7 @@ UserService.ts is now cleaner, more maintainable, and easier to understand!
 
 ## Command Behavior
 
-**Delegates to**: `refactor-cleaner` agent
+**Delegates to**: `code-reviewer` agent
 
 **Safety Checks**:
 - Runs tests after each phase
@@ -348,8 +348,7 @@ UserService.ts is now cleaner, more maintainable, and easier to understand!
 
 - `/build-fix` - Fix errors before refactoring
 - `/test-coverage` - Ensure adequate tests
-- `/review-changes` - Review refactoring changes
-- `/security-review` - Security check after changes
+- `/review` - Review refactoring changes
 
 ---
 
@@ -359,9 +358,7 @@ UserService.ts is now cleaner, more maintainable, and easier to understand!
 
 | Resource | Location | When to Use |
 |----------|----------|-------------|
-| Refactor Workflow | `.claude/workflows/refactor.md` | Multi-step refactoring process |
-| Code Style Rules | `.claude/rules/coding-style.md` | Target code patterns |
-| AI Code Detection | `.claude/checklists/ai-code-review.md` | Detect inconsistencies |
+| Essential Rules | `.claude/rules/essential-rules.md` | Coding standards and target patterns |
 | Tech Debt Skills | `.claude/skills/coding-standards/SKILL.md` | Best practices reference |
 
 ---

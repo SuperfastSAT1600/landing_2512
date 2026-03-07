@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface Props {
     children: React.ReactNode;
@@ -9,6 +9,12 @@ interface Props {
 }
 
 export const ScrollReveal = ({ children, width = "100%", delay = 0 }: Props) => {
+    const prefersReduced = useReducedMotion();
+
+    if (prefersReduced) {
+        return <div style={{ width }}>{children}</div>;
+    }
+
     return (
         <motion.div
             style={{ width }}
