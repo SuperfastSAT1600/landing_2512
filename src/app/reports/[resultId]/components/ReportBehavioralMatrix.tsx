@@ -21,12 +21,6 @@ interface Props {
   questionDetails: QuestionDetail[];
 }
 
-const DIFFICULTY_COLOR: Record<string, string> = {
-  Easy: '#86EFAC',
-  Medium: '#FCD34D',
-  Hard: '#FCA5A5',
-};
-
 const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: QuestionDetail }[] }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
@@ -69,7 +63,6 @@ export function ReportBehavioralMatrix({ questionDetails }: Props) {
       / plotData.filter((q) => q.confidence > 0).length
     : 0;
 
-  // Quadrant labels
   const quadrants = [
     { label: 'Quick & Confident', desc: 'Strong command', x: 'high', y: 'high' },
     { label: 'Slow & Confident', desc: 'Careful but sure', x: 'low', y: 'high' },
@@ -84,53 +77,54 @@ export function ReportBehavioralMatrix({ questionDetails }: Props) {
           <p className="text-slate-400 text-center py-12">No behavioral data available.</p>
         ) : (
           <>
-            <ResponsiveContainer width="100%" height={340}>
-              <ScatterChart margin={{ top: 16, right: 24, bottom: 16, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                <XAxis
-                  dataKey="timeSeconds"
-                  type="number"
-                  name="Time"
-                  unit="s"
-                  domain={['auto', 'auto']}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#94A3B8', fontSize: 11 }}
-                  label={{ value: 'Time Spent (seconds)', position: 'insideBottom', offset: -8, fill: '#94A3B8', fontSize: 11 }}
-                />
-                <YAxis
-                  dataKey="confidence"
-                  type="number"
-                  name="Confidence"
-                  domain={[0.5, 5.5]}
-                  ticks={[1, 2, 3, 4, 5]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#94A3B8', fontSize: 11 }}
-                  label={{ value: 'Confidence (1–5)', angle: -90, position: 'insideLeft', offset: 12, fill: '#94A3B8', fontSize: 11 }}
-                  width={50}
-                />
-                {/* Average lines */}
-                {avgTime > 0 && (
-                  <ReferenceLine x={avgTime} stroke="#CBD5E1" strokeDasharray="4 2" label={{ value: 'Avg time', fill: '#94A3B8', fontSize: 10 }} />
-                )}
-                {avgConf > 0 && (
-                  <ReferenceLine y={avgConf} stroke="#CBD5E1" strokeDasharray="4 2" label={{ value: 'Avg conf.', fill: '#94A3B8', fontSize: 10, position: 'right' }} />
-                )}
-                <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
-                <Scatter data={plotData} shape="circle">
-                  {plotData.map((q) => (
-                    <Cell
-                      key={q.id}
-                      fill={q.isCorrect ? '#059669' : '#DC2626'}
-                      fillOpacity={0.75}
-                      stroke={q.flagged ? '#F59E0B' : 'transparent'}
-                      strokeWidth={q.flagged ? 2 : 0}
-                    />
-                  ))}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
+            <div className="h-[260px] sm:h-[340px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 16, right: 24, bottom: 16, left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                  <XAxis
+                    dataKey="timeSeconds"
+                    type="number"
+                    name="Time"
+                    unit="s"
+                    domain={['auto', 'auto']}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#94A3B8', fontSize: 11 }}
+                    label={{ value: 'Time (s)', position: 'insideBottom', offset: -8, fill: '#94A3B8', fontSize: 11 }}
+                  />
+                  <YAxis
+                    dataKey="confidence"
+                    type="number"
+                    name="Confidence"
+                    domain={[0.5, 5.5]}
+                    ticks={[1, 2, 3, 4, 5]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#94A3B8', fontSize: 11 }}
+                    label={{ value: 'Confidence', angle: -90, position: 'insideLeft', offset: 12, fill: '#94A3B8', fontSize: 11 }}
+                    width={50}
+                  />
+                  {avgTime > 0 && (
+                    <ReferenceLine x={avgTime} stroke="#CBD5E1" strokeDasharray="4 2" label={{ value: 'Avg time', fill: '#94A3B8', fontSize: 10 }} />
+                  )}
+                  {avgConf > 0 && (
+                    <ReferenceLine y={avgConf} stroke="#CBD5E1" strokeDasharray="4 2" label={{ value: 'Avg conf.', fill: '#94A3B8', fontSize: 10, position: 'right' }} />
+                  )}
+                  <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+                  <Scatter data={plotData} shape="circle">
+                    {plotData.map((q) => (
+                      <Cell
+                        key={q.id}
+                        fill={q.isCorrect ? '#059669' : '#DC2626'}
+                        fillOpacity={0.75}
+                        stroke={q.flagged ? '#F59E0B' : 'transparent'}
+                        strokeWidth={q.flagged ? 2 : 0}
+                      />
+                    ))}
+                  </Scatter>
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
 
             {/* Legend */}
             <div className="flex items-center justify-center gap-6 mt-4 text-xs text-slate-500">

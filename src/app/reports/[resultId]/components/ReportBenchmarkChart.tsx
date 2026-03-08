@@ -37,7 +37,6 @@ export function ReportBenchmarkChart({ sections, sectionBenchmarks }: Props) {
     return {
       name: s.name === 'Reading and Writing' ? 'R&W' : 'Math',
       You: s.accuracy,
-      'Global Avg': b?.globalAverage.accuracy ?? 0,
       'Top 10%': b?.top10.accuracy ?? 0,
     };
   });
@@ -45,37 +44,35 @@ export function ReportBenchmarkChart({ sections, sectionBenchmarks }: Props) {
   return (
     <section>
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={data} barCategoryGap="35%" barGap={4}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-            <XAxis
-              dataKey="name"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 600 }}
-            />
-            <YAxis
-              tickFormatter={(v) => `${Math.round(v * 100)}%`}
-              domain={[0, 1]}
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#94A3B8', fontSize: 11 }}
-              width={42}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F8FAFC' }} />
-            <Legend
-              iconType="square"
-              iconSize={10}
-              wrapperStyle={{ fontSize: 12, color: '#64748B', paddingTop: 12 }}
-            />
-            <Bar dataKey="You" fill="#1B2A4A" radius={[5, 5, 0, 0]} />
-            <Bar dataKey="Global Avg" fill="#93C5FD" radius={[5, 5, 0, 0]} />
-            <Bar dataKey="Top 10%" fill="#BFDBFE" radius={[5, 5, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-        <p className="text-xs text-slate-300 text-center mt-2">
-          * Benchmark figures are estimated averages and will be updated with real data over time.
-        </p>
+        <div className="h-[200px] sm:h-[280px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} barCategoryGap="35%" barGap={4}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748B', fontSize: 13, fontWeight: 600 }}
+              />
+              <YAxis
+                tickFormatter={(v) => `${Math.round(v * 100)}%`}
+                domain={[0, 1]}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94A3B8', fontSize: 11 }}
+                width={42}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F8FAFC' }} />
+              <Legend
+                iconType="square"
+                iconSize={10}
+                wrapperStyle={{ fontSize: 12, color: '#64748B', paddingTop: 12 }}
+              />
+              <Bar dataKey="You" fill="#1B2A4A" radius={[5, 5, 0, 0]} />
+              <Bar dataKey="Top 10%" fill="#BFDBFE" radius={[5, 5, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </section>
   );

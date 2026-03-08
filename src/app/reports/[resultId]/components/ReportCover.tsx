@@ -34,10 +34,6 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
       className="relative overflow-hidden print:hidden"
       style={{
         background: 'linear-gradient(160deg, #0A1628 0%, #0F2040 60%, #1B2A4A 100%)',
-        minHeight: '60vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
       }}
     >
       {/* Subtle background pattern */}
@@ -48,7 +44,7 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
         }}
       />
 
-      <div className="relative max-w-5xl mx-auto px-6 sm:px-10 py-16">
+      <div className="relative max-w-5xl mx-auto px-[6%] py-10 sm:py-16">
         {/* Label */}
         <div className="flex items-center gap-3 mb-8">
           <div className="h-px flex-1 max-w-[40px]" style={{ background: '#C9A84C' }} />
@@ -62,7 +58,7 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
           className="text-white mb-2 leading-tight"
           style={{
             fontFamily: 'var(--font-playfair, Georgia, serif)',
-            fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+            fontSize: 'clamp(2rem, 6vw, 4.5rem)',
             fontWeight: 700,
             letterSpacing: '-0.02em',
           }}
@@ -71,12 +67,12 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
         </h1>
 
         {/* Subheadline */}
-        <p className="text-slate-400 text-base mb-12">
+        <p className="text-slate-400 text-base mb-10">
           Completed {dateStr} · {formatTime(totalTimeSeconds)}
         </p>
 
         {/* Score row */}
-        <div className="flex flex-wrap gap-6">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-6">
           {/* Overall */}
           <div
             className="flex flex-col items-center justify-center rounded-2xl px-8 py-5"
@@ -117,12 +113,6 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
             );
           })}
         </div>
-
-        {/* Bottom divider */}
-        <div className="mt-12 h-px" style={{ background: 'linear-gradient(to right, rgba(201,168,76,0.4), transparent)' }} />
-        <p className="text-slate-600 text-xs mt-3">
-          SuperfastSAT · Confidential Diagnostic Assessment
-        </p>
       </div>
     </div>
   );

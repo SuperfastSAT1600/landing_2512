@@ -54,7 +54,6 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
     domain: DOMAIN_SHORT[d.domain] ?? d.domain,
     fullDomain: d.domain,
     You: d.accuracy,
-    'Global Avg': domainBenchmarks[d.domain]?.globalAverage ?? 0,
     'Top 10%': domainBenchmarks[d.domain]?.top10 ?? 0,
   }));
 
@@ -65,61 +64,54 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
   return (
     <section>
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <ResponsiveContainer width="100%" height={360}>
-          <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
-            <PolarGrid stroke="#E2E8F0" />
-            <PolarAngleAxis
-              dataKey="domain"
-              tick={{ fill: '#64748B', fontSize: 11, fontWeight: 500 }}
-            />
-            <Radar
-              name="You"
-              dataKey="You"
-              stroke="#1B2A4A"
-              fill="#1B2A4A"
-              fillOpacity={0.15}
-              strokeWidth={2}
-            />
-            <Radar
-              name="Global Avg"
-              dataKey="Global Avg"
-              stroke="#93C5FD"
-              fill="#93C5FD"
-              fillOpacity={0.1}
-              strokeWidth={1.5}
-              strokeDasharray="4 2"
-            />
-            <Radar
-              name="Top 10%"
-              dataKey="Top 10%"
-              stroke="#BFDBFE"
-              fill="none"
-              strokeWidth={1}
-              strokeDasharray="2 3"
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{ fontSize: 12, color: '#64748B', paddingTop: 12 }}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
+        <div className="h-[280px] sm:h-[360px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+              <PolarGrid stroke="#E2E8F0" />
+              <PolarAngleAxis
+                dataKey="domain"
+                tick={{ fill: '#64748B', fontSize: 11, fontWeight: 500 }}
+              />
+              <Radar
+                name="You"
+                dataKey="You"
+                stroke="#1B2A4A"
+                fill="#1B2A4A"
+                fillOpacity={0.15}
+                strokeWidth={2}
+              />
+              <Radar
+                name="Top 10%"
+                dataKey="Top 10%"
+                stroke="#BFDBFE"
+                fill="none"
+                strokeWidth={1.5}
+                strokeDasharray="4 2"
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: 12, color: '#64748B', paddingTop: 12 }}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
 
         {/* Domain table */}
         <div className="mt-4 divide-y divide-slate-50">
           {allDomains.map((d) => {
             const b = domainBenchmarks[d.domain];
             const pct = Math.round(d.accuracy * 100);
-            const vsAvg = b ? d.accuracy - b.globalAverage : 0;
+            const vsTop = b ? d.accuracy - b.top10 : 0;
             return (
-              <div key={d.domain} className="flex items-center justify-between py-2.5">
-                <div>
-                  <span className="text-sm font-medium text-slate-700">{d.domain}</span>
-                  <span className="ml-2 text-xs text-slate-400">({d.total} questions)</span>
+              <div key={d.domain} className="flex items-center justify-between py-2.5 gap-2">
+                <div className="min-w-0">
+                  <span className="text-sm font-medium text-slate-700 truncate max-w-[140px] sm:max-w-none inline-block">{d.domain}</span>
+                  <span className="ml-2 text-xs text-slate-400">({d.total}q)</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-28 bg-slate-100 rounded-full h-1.5">
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="w-28 bg-slate-100 rounded-full h-1.5 hidden sm:block">
                     <div
                       className="h-1.5 rounded-full"
                       style={{ width: `${pct}%`, background: '#1B2A4A' }}
@@ -127,8 +119,8 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
                   </div>
                   <span className="text-sm font-bold text-slate-800 w-10 text-right">{pct}%</span>
                   {b && (
-                    <span className={`text-xs font-semibold w-14 text-right ${vsAvg >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                      {vsAvg >= 0 ? '+' : ''}{Math.round(vsAvg * 100)}%
+                    <span className={`text-xs font-semibold w-14 text-right ${vsTop >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {vsTop >= 0 ? '+' : ''}{Math.round(vsTop * 100)}%
                     </span>
                   )}
                 </div>

@@ -17,12 +17,6 @@ interface Props {
   sectionBenchmarks: Record<string, SectionBenchmarks>;
 }
 
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}m ${s}s`;
-}
-
 function DeltaBadge({ value, label }: { value: number; label: string }) {
   const positive = value >= 0;
   return (
@@ -50,7 +44,6 @@ function ScoreCard({
   benchmark?: SectionBenchmarks;
 }) {
   const pct = Math.round(accuracy * 100);
-  const vsAvg = benchmark ? accuracy - benchmark.globalAverage.accuracy : null;
   const vsTop = benchmark ? accuracy - benchmark.top10.accuracy : null;
 
   // Progress arc radius
@@ -64,8 +57,8 @@ function ScoreCard({
 
       <div className="flex items-center gap-6">
         {/* Donut */}
-        <div className="relative flex-shrink-0">
-          <svg width={120} height={120} viewBox="0 0 120 120">
+        <div className="relative flex-shrink-0 w-24 h-24 sm:w-[120px] sm:h-[120px]">
+          <svg width="100%" height="100%" viewBox="0 0 120 120">
             <circle cx={60} cy={60} r={r} fill="none" stroke="#F1F5F9" strokeWidth={12} />
             <circle
               cx={60} cy={60} r={r}
@@ -89,14 +82,12 @@ function ScoreCard({
             <span className="text-slate-400"> / {totalQuestions}</span>
             <span className="text-slate-500 ml-1 text-xs">correct</span>
           </p>
-          {vsAvg !== null && <DeltaBadge value={vsAvg} label="Avg" />}
           {vsTop !== null && <DeltaBadge value={vsTop} label="Top 10%" />}
         </div>
       </div>
 
       {benchmark && (
-        <div className="space-y-1.5 pt-2 border-t border-slate-50">
-          <BenchmarkRow label="Global Average" value={benchmark.globalAverage.accuracy} yours={accuracy} />
+        <div className="pt-2 border-t border-slate-50">
           <BenchmarkRow label="Top 10%" value={benchmark.top10.accuracy} yours={accuracy} />
         </div>
       )}
@@ -122,10 +113,7 @@ function BenchmarkRow({ label, value, yours }: { label: string; value: number; y
   );
 }
 
-export function ReportExecutiveSummary({ studentName, submittedAt, totalTimeSeconds, sections, sectionBenchmarks }: Props) {
-  const totalCorrect = sections.reduce((a, s) => a + s.correctCount, 0);
-  const totalQuestions = sections.reduce((a, s) => a + s.totalQuestions, 0);
-
+export function ReportExecutiveSummary({ sections, sectionBenchmarks }: Props) {
   return (
     <section>
       {/* Score cards */}

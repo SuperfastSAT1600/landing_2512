@@ -1,6 +1,7 @@
 /**
  * Rule-based insight engine for the SAT diagnostic report.
  * Pure functions — no AI, no side effects.
+ * Benchmarks: Top 10% only (Global Average removed).
  */
 
 import { SECTION_BENCHMARKS, DOMAIN_BENCHMARKS } from './report-benchmarks';
@@ -13,7 +14,7 @@ export interface SectionInsight {
 
 export interface DomainInsight {
   domain: string;
-  delta: number; // vs global average
+  delta: number; // vs top 10%
   note: string;
 }
 
@@ -51,62 +52,44 @@ function pct(v: number) {
   return `${Math.round(v * 100)}%`;
 }
 
-function delta(a: number, b: number): string {
-  const d = Math.round((a - b) * 100);
-  return d >= 0 ? `+${d} pts` : `${d} pts`;
-}
-
 export function generateSectionInsight(section: Section): SectionInsight {
-  const bench = SECTION_BENCHMARKS[section.name];
+  const bench = SECTION_BENCHMARKS[section.name] ?? SECTION_BENCHMARKS['Diagnostic'];
   const accuracy = section.accuracy;
   const label = section.name === 'Reading and Writing' ? 'Reading & Writing' : section.name;
+  const top10 = bench.top10.accuracy;
+  const gap = top10 - accuracy;
 
-  if (!bench) {
-    return {
-      headline: `${label}: ${pct(accuracy)} accuracy`,
-      body: `The student answered ${section.correctCount} out of ${section.totalQuestions} questions correctly.`,
-      tone: accuracy >= 0.6 ? 'strength' : 'opportunity',
-    };
-  }
-
-  const vsAvg = accuracy - bench.globalAverage.accuracy;
-  const vsTop = accuracy - bench.top10.accuracy;
-
-  if (accuracy >= bench.top10.accuracy) {
+  // Tier 1: Elite — at or above top 10%
+  if (accuracy >= top10) {
     return {
       headline: `${label}: Elite-Tier Performance`,
-      body: `At ${pct(accuracy)}, the student ranks among the estimated top 10% of SAT test-takers in ${label}. This is a clear strength area — maintaining consistency and reinforcing time management under pressure will be key before test day.`,
+      body: `At ${pct(accuracy)}, the student is performing at or above the estimated top 10% threshold (${pct(top10)}). This is a clear strength area — maintaining consistency and reinforcing time management under pressure will be the key differentiator on test day.`,
       tone: 'strength',
     };
   }
 
-  if (vsAvg >= 0.08) {
+  // Tier 2: Strong — within 10 pts of top 10%
+  if (gap <= 0.10) {
     return {
-      headline: `${label}: Solid Above-Average`,
-      body: `The student scored ${pct(accuracy)} — ${delta(accuracy, bench.globalAverage.accuracy)} above the estimated average. Targeted work on the two weakest domains in this section could push performance closer to top-10% territory (${pct(bench.top10.accuracy)}).`,
+      headline: `${label}: Strong Performance — Top-Tier Within Reach`,
+      body: `At ${pct(accuracy)}, the student is just ${Math.round(gap * 100)} points below the top-10% mark (${pct(top10)}). Targeted work on the two weakest domains in this section could push performance into elite territory before test day.`,
       tone: 'strength',
     };
   }
 
-  if (vsAvg >= 0) {
+  // Tier 3: Developing — within 25 pts of top 10%
+  if (gap <= 0.25) {
     return {
-      headline: `${label}: Slightly Above Average, Room to Grow`,
-      body: `At ${pct(accuracy)}, the student is tracking just above the estimated global average (${pct(bench.globalAverage.accuracy)}). A gap of ${delta(bench.top10.accuracy, accuracy).replace('+', '')} separates them from the top 10%. Structured domain-specific drilling will close this gap efficiently.`,
+      headline: `${label}: Developing — Focused Preparation Needed`,
+      body: `At ${pct(accuracy)}, the student has a ${Math.round(gap * 100)}-point gap to the top-10% threshold (${pct(top10)}). Structured domain-specific drilling will close this gap efficiently over 6–8 weeks of consistent preparation.`,
       tone: 'opportunity',
     };
   }
 
-  if (vsAvg >= -0.10) {
-    return {
-      headline: `${label}: Below Average — Priority Focus Area`,
-      body: `At ${pct(accuracy)}, the student trails the estimated average by ${Math.round(Math.abs(vsAvg) * 100)} points. This section should be a primary focus area. Foundational concept work combined with timed practice sets is recommended before moving to test-taking strategies.`,
-      tone: 'opportunity',
-    };
-  }
-
+  // Tier 4: Critical — more than 25 pts below top 10%
   return {
-    headline: `${label}: Significant Skill Gap Detected`,
-    body: `A ${pct(accuracy)} accuracy score in ${label} signals foundational gaps requiring structured intervention. ${vsTop < -0.30 ? 'The gap to top performance is substantial — a focused 8–12 week curriculum is recommended.' : 'Consistent daily practice on core concepts will be essential.'}`,
+    headline: `${label}: Significant Gap — Structured Intervention Recommended`,
+    body: `A ${pct(accuracy)} accuracy score in ${label} (${Math.round(gap * 100)} points below the top-10% mark of ${pct(top10)}) signals foundational gaps requiring structured intervention. A focused 8–12 week curriculum targeting core concepts is recommended before moving to test-taking strategies.`,
     tone: 'critical',
   };
 }
@@ -116,16 +99,16 @@ export function generateWeakDomainInsights(sections: Section[]): DomainInsight[]
   return allDomains
     .map((d) => {
       const bench = DOMAIN_BENCHMARKS[d.domain];
-      const delta = bench ? d.accuracy - bench.globalAverage : 0;
+      const delta = bench ? d.accuracy - bench.top10 : 0;
       let note = '';
       if (d.accuracy < 0.40) {
         note = 'Critical gap — prioritize in first two weeks of preparation.';
       } else if (d.accuracy < 0.55) {
         note = 'Below average — requires targeted drill sets and concept review.';
-      } else if (d.accuracy < bench?.globalAverage) {
-        note = 'Slightly below average — a focused session can yield quick improvement.';
+      } else if (bench && d.accuracy < bench.top10) {
+        note = 'Gap to top 10% — a focused session can yield meaningful improvement.';
       } else {
-        note = 'Near or above average — maintain with periodic review.';
+        note = 'At or near top-10% level — maintain with periodic review.';
       }
       return { domain: d.domain, delta, note };
     })
@@ -144,7 +127,6 @@ export function generateBehavioralInsight(questionDetails: QuestionDetail[]): st
     : 0;
 
   const slowAndWrong = answered.filter((q) => q.timeSeconds > avgTime && !q.isCorrect).length;
-  const fastAndRight = answered.filter((q) => q.timeSeconds <= avgTime && q.isCorrect).length;
   const lowConfCorrect = confAnswered.filter((q) => q.confidence <= 2 && q.isCorrect).length;
   const flaggedCount = answered.filter((q) => q.flagged).length;
 
@@ -203,27 +185,29 @@ export function generateExecutiveSummary(sections: Section[]): string {
   const totalQuestions = sections.reduce((a, s) => a + s.totalQuestions, 0);
   const overallAccuracy = totalQuestions > 0 ? totalCorrect / totalQuestions : 0;
 
+  const top10Bench = SECTION_BENCHMARKS['Diagnostic']?.top10.accuracy ?? 0.80;
+
   const strongSections = sections.filter((s) => {
-    const b = SECTION_BENCHMARKS[s.name];
-    return b ? s.accuracy >= b.globalAverage.accuracy : s.accuracy >= 0.6;
+    const b = SECTION_BENCHMARKS[s.name] ?? SECTION_BENCHMARKS['Diagnostic'];
+    return s.accuracy >= b.top10.accuracy - 0.10;
   });
 
   const weakSections = sections.filter((s) => {
-    const b = SECTION_BENCHMARKS[s.name];
-    return b ? s.accuracy < b.globalAverage.accuracy : s.accuracy < 0.5;
+    const b = SECTION_BENCHMARKS[s.name] ?? SECTION_BENCHMARKS['Diagnostic'];
+    return s.accuracy < b.top10.accuracy - 0.25;
   });
 
-  if (overallAccuracy >= 0.80) {
-    return `Strong overall performance at ${pct(overallAccuracy)} accuracy across all sections. The student demonstrates solid SAT readiness${strongSections.length === sections.length ? ' across both sections' : ` with particular strength in ${strongSections.map((s) => s.name === 'Reading and Writing' ? 'R&W' : s.name).join(' and ')}`}. A focused review of weaker domains and test-day strategy will be the key differentiator.`;
+  if (overallAccuracy >= top10Bench) {
+    return `Elite-tier performance at ${pct(overallAccuracy)} overall accuracy — the student is performing at or above the top-10% threshold${strongSections.length === sections.length ? ' across all sections' : ` with particular strength in ${strongSections.map((s) => s.name === 'Reading and Writing' ? 'R&W' : s.name).join(' and ')}`}. Consistency and test-day strategy will be the final differentiator.`;
   }
 
-  if (overallAccuracy >= 0.60) {
+  if (overallAccuracy >= top10Bench - 0.10) {
     const focus = weakSections.length > 0 ? weakSections.map((s) => s.name === 'Reading and Writing' ? 'R&W' : s.name).join(' and ') : 'specific domains';
-    return `Above-average performance at ${pct(overallAccuracy)} overall. The student has a solid foundation with meaningful upside in ${focus}. With targeted preparation, a top-quartile score is an achievable goal.`;
+    return `Strong performance at ${pct(overallAccuracy)} overall — the student is within reach of the top-10% threshold (${pct(top10Bench)}). Targeted work in ${focus} could make the difference before test day.`;
   }
 
-  if (overallAccuracy >= 0.45) {
-    return `Moderate performance at ${pct(overallAccuracy)} overall. The diagnostic reveals clear skill gaps that, with structured preparation, are highly addressable. Both sections offer significant room for score improvement — a prioritized study plan focused on foundational concepts is the recommended starting point.`;
+  if (overallAccuracy >= top10Bench - 0.25) {
+    return `Developing performance at ${pct(overallAccuracy)} overall. The student has a solid foundation with a ${Math.round((top10Bench - overallAccuracy) * 100)}-point gap to the top-10% mark. With structured preparation across identified weak domains, reaching top-quartile performance is an achievable goal.`;
   }
 
   return `The diagnostic reveals significant foundational gaps at ${pct(overallAccuracy)} overall accuracy. This result provides a clear roadmap: with consistent, structured preparation targeting the identified weak domains, substantial score improvement is achievable. Early and focused intervention will be most effective.`;
@@ -233,15 +217,15 @@ export function generateKeyRecommendations(sections: Section[], savedWords: Save
   const recs: string[] = [];
 
   const weakDomains = generateWeakDomainInsights(sections);
-  const criticalDomains = weakDomains.filter((d) => d.delta < -0.10);
-  const opportunityDomains = weakDomains.filter((d) => d.delta >= -0.10 && d.delta < 0);
+  const criticalDomains = weakDomains.filter((d) => d.delta < -0.20);
+  const opportunityDomains = weakDomains.filter((d) => d.delta >= -0.20 && d.delta < 0);
 
   if (criticalDomains.length > 0) {
-    recs.push(`Priority focus: ${criticalDomains.map((d) => d.domain).join(', ')} — these domains are significantly below average and should anchor the first 4 weeks of preparation.`);
+    recs.push(`Priority focus: ${criticalDomains.map((d) => d.domain).join(', ')} — these domains have the largest gap to top-10% performance and should anchor the first 4 weeks of preparation.`);
   }
 
   if (opportunityDomains.length > 0) {
-    recs.push(`Quick-win domains: ${opportunityDomains.map((d) => d.domain).join(', ')} — slightly below average with high potential for rapid improvement with targeted practice.`);
+    recs.push(`Quick-win domains: ${opportunityDomains.map((d) => d.domain).join(', ')} — close to top-10% level with high potential for rapid improvement with targeted practice.`);
   }
 
   const mathSection = sections.find((s) => s.name === 'Math');
