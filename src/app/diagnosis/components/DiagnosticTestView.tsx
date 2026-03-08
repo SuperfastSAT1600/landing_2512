@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator as CalculatorIcon } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import { useTestTimer } from '../hooks/useTestTimer';
 import { useVocabTracker } from '../hooks/useVocabTracker';
 import { ContentRenderer } from './ContentRenderer';
@@ -11,14 +11,17 @@ import { TestCalculator } from './TestCalculator';
 import { QuestionNavGrid } from './QuestionNavGrid';
 import { ConfidencePicker } from './ConfidencePicker';
 import { TestSubmittedScreen } from './TestSubmittedScreen';
+import { SubmitConfirmationScreen } from './SubmitConfirmationScreen';
 import type { DiagnosticTestData } from '../data/diagnostic-test-1';
 import { SubmitTestRequest, SavedWord } from '@/types/diagnosis';
+import { calcAverageConfidence } from '../utils/calcAverageConfidence';
 
 interface DiagnosticTestViewProps {
   testData: DiagnosticTestData;
   tokenId?: string;
   studentEmail?: string;
   studentName?: string;
+  testVersionId?: string;
 }
 
 export function DiagnosticTestView({
@@ -26,6 +29,7 @@ export function DiagnosticTestView({
   tokenId = '',
   studentEmail = '',
   studentName = '',
+  testVersionId,
 }: DiagnosticTestViewProps) {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -39,6 +43,8 @@ export function DiagnosticTestView({
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [elapsedAtConfirm, setElapsedAtConfirm] = useState(0);
   const [showDirections, setShowDirections] = useState(false);
   const [showVocabNotice, setShowVocabNotice] = useState(true);
   const [selectedWord, setSelectedWord] = useState<SavedWord | null>(null);
@@ -155,6 +161,7 @@ export function DiagnosticTestView({
         studentEmail,
         studentName,
         testId: 'diagnostic-test-1',
+        testVersionId,
         startedAt: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
         submittedAt: new Date().toISOString(),
         totalTimeSeconds: startTime ? Math.floor((Date.now() - startTime) / 1000) : 0,
@@ -186,11 +193,26 @@ export function DiagnosticTestView({
 
   if (submitted) return <TestSubmittedScreen />;
 
+  if (showConfirmation) {
+    return (
+      <SubmitConfirmationScreen
+        elapsedSeconds={elapsedAtConfirm}
+        answeredCount={Object.keys(answers).length}
+        totalQuestions={questions.length}
+        avgConfidence={calcAverageConfidence(confidence)}
+        savedWordCount={savedWords.length}
+        submitting={submitting}
+        onConfirm={handleSubmit}
+        onGoBack={() => setShowConfirmation(false)}
+      />
+    );
+  }
+
   /* ── Intro screen ────────────────── */
   if (!startTime) {
     return (
-      <div className="min-h-screen" style={{ background: '#F4F5F9' }}>
-        <div className="mx-auto px-5 pt-20 pb-24" style={{ maxWidth: 460 }}>
+      <div className="min-h-screen bg-[#000000] flex items-center justify-center p-4">
+        <div className="w-full" style={{ maxWidth: 460 }}>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -198,37 +220,27 @@ export function DiagnosticTestView({
           >
             <div className="text-center mb-10">
               <div
-                className="toss-icon-box toss-icon-box-blue mx-auto mb-6"
-                style={{ width: 56, height: 56, borderRadius: 28 }}
+                className="mx-auto mb-6 flex items-center justify-center"
+                style={{ width: 56, height: 56, borderRadius: 28, background: 'rgba(7,27,233,0.15)' }}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    stroke="#3182F6" strokeWidth="2" strokeLinecap="round"
-                  />
-                </svg>
+                <Icon icon="fluent:clipboard-task-24-regular" width={28} height={28} color="#6085FF" />
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">{title}</h1>
-              <p className="text-base text-gray-500 mt-2">SAT Diagnostic Test</p>
+              <h1 className="text-3xl font-bold tracking-tight text-white">SAT Diagnostic Test</h1>
             </div>
 
-            <div className="toss-card mb-4">
+            <div className="rounded-2xl border border-white/8 bg-[#09090b] p-6 mb-4">
               {testData.directions && (
-                <div className="text-sm text-gray-500 leading-relaxed mb-4">
+                <div className="text-sm text-gray-400 leading-relaxed mb-4">
                   <ContentRenderer content={testData.directions} />
                 </div>
               )}
-              <div className="flex items-center gap-4 text-sm text-gray-400 pt-2 border-t border-gray-100">
-                <span className="flex items-center gap-1">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M8 4v4l3 3M8 14A6 6 0 108 2a6 6 0 000 12z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                  </svg>
-                  {timeLimit ? `${timeLimit} min` : 'No limit'}
+              <div className="flex items-center gap-4 text-sm text-gray-500 pt-3 border-t border-white/8">
+                <span className="flex items-center gap-1.5">
+                  <Icon icon="fluent:timer-20-regular" width={16} height={16} />
+                  {timeLimit ? `${timeLimit} min` : 'No time limit'}
                 </span>
-                <span className="flex items-center gap-1">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M4 8h8M4 5h8M4 11h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                  </svg>
+                <span className="flex items-center gap-1.5">
+                  <Icon icon="fluent:text-bullet-list-20-regular" width={16} height={16} />
                   {questions.length} questions
                 </span>
               </div>
@@ -237,9 +249,12 @@ export function DiagnosticTestView({
             <button
               type="button"
               onClick={() => setStartTime(Date.now())}
-              className="btn-toss btn-press"
+              className="w-full py-4 rounded-xl font-bold text-lg text-white transition-all shadow-lg"
+              style={{ background: '#071be9', boxShadow: '0 4px 24px rgba(7,27,233,0.2)' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#1a31f0')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#071be9')}
             >
-              Start Test
+              Begin Test
             </button>
           </motion.div>
         </div>
@@ -261,9 +276,7 @@ export function DiagnosticTestView({
             onClick={() => setShowDirections(!showDirections)}
           >
             Directions
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d={showDirections ? "M9 7.5L6 4.5 3 7.5" : "M3 4.5L6 7.5 9 4.5"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <Icon icon={showDirections ? "fluent:chevron-up-20-regular" : "fluent:chevron-down-20-regular"} width={14} height={14} />
           </button>
         </div>
 
@@ -283,15 +296,9 @@ export function DiagnosticTestView({
             onClick={() => setCalculatorOpen(true)}
             className="bluebook-icon-btn"
           >
-            <CalculatorIcon className="h-5 w-5" />
+            <Icon icon="fluent:calculator-24-regular" width={20} height={20} />
             <span>Calculator</span>
           </button>
-          {!hasPassage && (
-            <button type="button" className="bluebook-icon-btn">
-              <span style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic' }}>x²</span>
-              <span>Reference</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -412,7 +419,13 @@ export function DiagnosticTestView({
                       className="text-gray-800"
                       style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20 }}
                     >
-                      <ContentRenderer content={currentQuestion.question} />
+                      <SelectableText
+                        content={currentQuestion.question}
+                        questionId={currentQuestion.id}
+                        section="question"
+                        savedWords={savedWords}
+                        onWordClick={handleWordClick}
+                      />
                     </div>
 
                     {/* Multiple choice — Bluebook style */}
@@ -471,8 +484,8 @@ export function DiagnosticTestView({
                       />
                     )}
 
-                    {/* Confidence picker */}
-                    {(answers[currentQuestion.id] || !hasPassage) && (
+                    {/* Confidence picker — shown after answer is given */}
+                    {answers[currentQuestion.id] && (
                       <ConfidencePicker
                         questionId={currentQuestion.id}
                         confidence={confidence}
@@ -505,9 +518,7 @@ export function DiagnosticTestView({
                   onClick={() => setShowNav(false)}
                   className="text-gray-400 hover:text-gray-600 btn-press"
                 >
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M6 14l8-8M14 14L6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
+                  <Icon icon="fluent:dismiss-20-regular" width={20} height={20} />
                 </button>
               </div>
               <QuestionNavGrid
@@ -557,9 +568,7 @@ export function DiagnosticTestView({
           onClick={() => setShowNav(!showNav)}
         >
           Question {currentQuestionIndex + 1} of {questions.length}
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginLeft: 4 }}>
-            <path d={showNav ? "M4 8.5L7 5.5 10 8.5" : "M4 5.5L7 8.5 10 5.5"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <Icon icon={showNav ? "fluent:chevron-up-20-regular" : "fluent:chevron-down-20-regular"} width={14} height={14} style={{ marginLeft: 4 }} />
         </button>
 
         <div className="flex items-center gap-2">
@@ -584,11 +593,15 @@ export function DiagnosticTestView({
           ) : (
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={submitting}
-              className={`bluebook-next-btn btn-press ${submitting ? 'animate-subtle-pulse' : ''}`}
+              onClick={() => {
+                recordQuestionTime();
+                setQuestionStartTime(Date.now());
+                setElapsedAtConfirm(startTime ? Math.floor((Date.now() - startTime) / 1000) : 0);
+                setShowConfirmation(true);
+              }}
+              className="bluebook-next-btn btn-press"
             >
-              {submitting ? 'Submitting...' : 'Submit'}
+              Submit
             </button>
           )}
         </div>

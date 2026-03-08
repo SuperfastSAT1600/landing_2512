@@ -61,8 +61,8 @@ export interface ValidateTokenRequest {
  */
 export interface ValidateTokenResponse {
   tokenId: string;
-  studentEmail: string;
   studentName: string;
+  expiresAt: string | null;
 }
 
 /**
@@ -73,6 +73,7 @@ export interface SubmitTestRequest {
   studentEmail: string;
   studentName: string;
   testId: string;
+  testVersionId?: string;
   startedAt: string;
   submittedAt: string;
   totalTimeSeconds: number;
@@ -95,7 +96,6 @@ export interface SubmitTestResponse {
  * Payload for admin token generation API request
  */
 export interface GenerateTokenRequest {
-  studentEmail: string;
   studentName: string;
   code?: string;                // Optional 6-digit code (auto-generated if not provided)
   expiresInHours?: number;      // Default 24

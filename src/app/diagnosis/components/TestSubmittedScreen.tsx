@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Icon } from '@iconify/react';
 
 export function TestSubmittedScreen() {
   return (
@@ -12,12 +13,9 @@ export function TestSubmittedScreen() {
         className="text-center"
         style={{ maxWidth: 420 }}
       >
-        {/* Animated checkmark */}
-        <div className="confetti-pop mb-6">
-          <svg className="mx-auto" style={{ width: 80, height: 80 }} viewBox="0 0 52 52" fill="none">
-            <circle className="checkmark-circle" cx="26" cy="26" r="25" stroke="#3182F6" strokeWidth="2" />
-            <path className="checkmark-check" d="M15 27l7 7 15-15" stroke="#3182F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        {/* Checkmark icon */}
+        <div className="confetti-pop mb-6 flex justify-center">
+          <Icon icon="fluent:checkmark-circle-48-regular" width={80} height={80} color="#071be9" />
         </div>
 
         <h2 className="text-2xl font-bold tracking-tight text-gray-900 mb-3">

@@ -8,6 +8,12 @@ interface QuestionManagementTabProps {
   adminKey: string;
 }
 
+interface TestVersion {
+  id: string;
+  version_number: number;
+  is_current: boolean;
+}
+
 const DIFFICULTY_COLOR: Record<string, string> = {
   Easy: 'text-green-400',
   Medium: 'text-yellow-400',
@@ -23,6 +29,9 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
   const [error, setError] = useState('');
   const [selectedStat, setSelectedStat] = useState<QuestionStat | null>(null);
 
+  const [versions, setVersions] = useState<TestVersion[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState<string>('');
+
   const [filterSection, setFilterSection] = useState('');
   const [filterDomain, setFilterDomain] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
@@ -30,14 +39,38 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
   const [sortAsc, setSortAsc] = useState(true);
 
   useEffect(() => {
-    fetchStats();
+    fetchVersions();
   }, []);
 
-  const fetchStats = async () => {
+  useEffect(() => {
+    fetchStats(selectedVersionId);
+  }, [selectedVersionId]);
+
+  const fetchVersions = async () => {
+    try {
+      const res = await fetch('/api/admin/diagnosis/versions', {
+        headers: { 'x-admin-key': adminKey },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const vList: TestVersion[] = data.versions ?? [];
+        setVersions(vList);
+        const current = vList.find((v) => v.is_current);
+        if (current) setSelectedVersionId(current.id);
+      }
+    } catch {
+      // silently fail
+    }
+  };
+
+  const fetchStats = async (versionId?: string) => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/admin/diagnosis/question-stats', {
+      const url = versionId
+        ? `/api/admin/diagnosis/question-stats?versionId=${versionId}`
+        : '/api/admin/diagnosis/question-stats';
+      const response = await fetch(url, {
         headers: { 'x-admin-key': adminKey },
       });
       if (!response.ok) throw new Error('통계를 불러올 수 없습니다.');
@@ -89,7 +122,7 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
           응시 <span className="text-white font-semibold">{totalResults}</span>건
         </p>
         <button
-          onClick={fetchStats}
+          onClick={() => fetchStats(selectedVersionId)}
           className="text-sm text-blue-400 hover:text-blue-300"
         >
           새로고침
@@ -98,6 +131,20 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
+        {/* Version filter */}
+        {versions.length > 0 && (
+          <select
+            value={selectedVersionId}
+            onChange={(e) => { setSelectedVersionId(e.target.value); setFilterSection(''); setFilterDomain(''); }}
+            className="px-3 py-1.5 bg-gray-700 border border-blue-500/50 rounded-lg text-sm text-white focus:outline-none"
+          >
+            {versions.map((v) => (
+              <option key={v.id} value={v.id}>
+                v{v.version_number}{v.is_current ? ' (현재)' : ''}
+              </option>
+            ))}
+          </select>
+        )}
         <select
           value={filterSection}
           onChange={(e) => { setFilterSection(e.target.value); setFilterDomain(''); }}
@@ -216,7 +263,17 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
       </div>
 
       {selectedStat && (
-        <QuestionDetailModal stat={selectedStat} onClose={() => setSelectedStat(null)} />
+        <QuestionDetailModal
+          stat={selectedStat}
+          adminKey={adminKey}
+          versionId={selectedVersionId}
+          onClose={() => setSelectedStat(null)}
+          onVersionCreated={(newVersionId) => {
+            fetchVersions();
+            setSelectedVersionId(newVersionId);
+            setSelectedStat(null);
+          }}
+        />
       )}
     </div>
   );

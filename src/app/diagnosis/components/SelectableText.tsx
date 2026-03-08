@@ -7,7 +7,7 @@ import { SavedWord } from '@/types/diagnosis';
 interface SelectableTextProps {
   content: string;
   questionId: string;
-  section: 'passage' | 'option';
+  section: 'passage' | 'option' | 'question';
   optionId?: string | null;
   savedWords: SavedWord[];
   onWordClick: (word: SavedWord, position: { top: number; left: number }) => void;
