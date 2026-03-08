@@ -2,8 +2,13 @@
 
 import { motion } from 'framer-motion';
 import { Icon } from '@iconify/react';
+import Link from 'next/link';
 
-export function TestSubmittedScreen() {
+interface Props {
+  resultId: string | null;
+}
+
+export function TestSubmittedScreen({ resultId }: Props) {
   return (
     <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#F4F5F9' }}>
       <motion.div
@@ -26,12 +31,27 @@ export function TestSubmittedScreen() {
           You have completed the diagnostic test.
         </p>
         <p className="text-gray-500 leading-relaxed mb-8" style={{ fontSize: 15 }}>
-          Your instructor will review the results and reach out with <strong className="text-gray-700">personalized feedback</strong>.
+          Your instructor will review the results and reach out with{' '}
+          <strong className="text-gray-700">personalized feedback</strong>.
         </p>
+
+        {/* View Report CTA */}
+        {resultId && (
+          <Link
+            href={`/reports/${resultId}`}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white text-sm transition-opacity hover:opacity-90 mb-8"
+            style={{ background: '#071be9' }}
+          >
+            View Your Report
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        )}
 
         {/* Info card */}
         <div
-          className="rounded-2xl p-5 mb-8 text-left"
+          className="rounded-2xl p-5 text-left"
           style={{ background: '#EBF4FF', border: '1px solid #BFDBFE' }}
         >
           <p className="text-sm font-semibold text-blue-700 mb-1">Next Steps</p>

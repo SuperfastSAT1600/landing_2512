@@ -9,7 +9,7 @@
 export interface SavedWord {
   word: string;                      // The word text (lowercased, trimmed)
   questionId: string;                // Which question it was found in
-  section: 'passage' | 'option';     // Where in the UI (passage or option)
+  section: 'passage' | 'option' | 'question'; // Where in the UI
   optionId: string | null;           // If from an option, which one (e.g., 'A', 'B', 'C', 'D')
   positionIndex: number;             // Word index in the source text (for uniqueness)
 }

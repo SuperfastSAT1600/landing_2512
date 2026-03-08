@@ -43,6 +43,7 @@ export function DiagnosticTestView({
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [resultId, setResultId] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [elapsedAtConfirm, setElapsedAtConfirm] = useState(0);
   const [showDirections, setShowDirections] = useState(false);
@@ -178,7 +179,10 @@ export function DiagnosticTestView({
         body: JSON.stringify(submitData),
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        const data = await response.json();
+        if (data.resultId) setResultId(data.resultId);
+      } else {
         console.error('Failed to save test results:', await response.text());
       }
     } catch (error) {
@@ -191,7 +195,7 @@ export function DiagnosticTestView({
     }, 400);
   };
 
-  if (submitted) return <TestSubmittedScreen />;
+  if (submitted) return <TestSubmittedScreen resultId={resultId} />;
 
   if (showConfirmation) {
     return (
