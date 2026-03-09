@@ -5,7 +5,6 @@ import { ReportBenchmarkChart } from './components/ReportBenchmarkChart';
 import { ReportRadarChart } from './components/ReportRadarChart';
 import { ReportBehavioralMatrix } from './components/ReportBehavioralMatrix';
 import { ReportVocabularyGap } from './components/ReportVocabularyGap';
-import { ReportShareBar } from './components/ReportShareBar';
 import { SectionHeader } from './components/SectionHeader';
 import { ChapterNav } from './components/ChapterNav';
 import { InsightBlock, GenericInsightBlock } from './components/InsightBlock';
@@ -51,7 +50,7 @@ export default async function ReportPage({ params }: PageProps) {
   const editedKeys = getEditedFieldKeys(data.editedInsights);
 
   return (
-    <div style={{ background: '#F4F5F9', fontFamily: 'var(--font-sans)' }}>
+    <div className="pb-16 sm:pb-0" style={{ background: '#F4F5F9', fontFamily: 'var(--font-sans)' }}>
 
       {/* Print-only header */}
       <div className="hidden print:flex print:items-center print:justify-between px-8 py-5 border-b border-slate-200">
@@ -70,30 +69,15 @@ export default async function ReportPage({ params }: PageProps) {
         sections={data.sections}
       />
 
-      {/* Toolbar */}
-      <div
-        className="sticky top-0 z-30 print:hidden"
-        style={{ background: '#09090b', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
-      >
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-base text-white">SuperfastSAT</span>
-            <span className="text-slate-600 text-sm">·</span>
-            <span className="text-slate-400 text-sm hidden sm:inline">Diagnostic Report</span>
-          </div>
-          <ReportShareBar />
-        </div>
-      </div>
-
-      {/* Chapter navigation */}
+      {/* Chapter navigation — sticky at the very top */}
       <ChapterNav />
 
-      {/* Single-column main content */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 print:py-6">
+      {/* Single-column main content — sm:pt-14 offsets the fixed top nav */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:pt-14 print:py-6">
         <div className="space-y-10 sm:space-y-14 print:space-y-8">
 
           {/* ── SECTION 01: 전체 성적 ── */}
-          <section id="section-01" style={{ scrollMarginTop: 96 }}>
+          <section id="section-01" className="report-section">
             <SectionHeader
               number="01"
               title="전체 성적"
@@ -142,7 +126,7 @@ export default async function ReportPage({ params }: PageProps) {
           <Divider />
 
           {/* ── SECTION 02: 상위 10%와의 차이 ── */}
-          <section id="section-02" style={{ scrollMarginTop: 96 }}>
+          <section id="section-02" className="report-section">
             <SectionHeader
               number="02"
               title="상위 10%와의 차이"
@@ -165,7 +149,7 @@ export default async function ReportPage({ params }: PageProps) {
           <Divider />
 
           {/* ── SECTION 03: 문제 풀이 패턴 ── */}
-          <section id="section-03" style={{ scrollMarginTop: 96 }}>
+          <section id="section-03" className="report-section">
             <SectionHeader
               number="03"
               title="문제 풀이 패턴"
@@ -188,7 +172,7 @@ export default async function ReportPage({ params }: PageProps) {
           <Divider />
 
           {/* ── SECTION 04: 모르는 단어 ── */}
-          <section id="section-04" style={{ scrollMarginTop: 96 }}>
+          <section id="section-04" className="report-section">
             <SectionHeader
               number="04"
               title="모르는 단어"

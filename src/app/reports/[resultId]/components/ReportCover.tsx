@@ -1,3 +1,5 @@
+'use client';
+
 interface Section {
   name: string;
   accuracy: number;
@@ -16,6 +18,10 @@ function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}m ${s.toString().padStart(2, '0')}s`;
+}
+
+function scrollToReport() {
+  document.getElementById('section-01')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sections }: Props) {
@@ -108,6 +114,23 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
             );
           })}
         </div>
+      </div>
+
+      {/* Scroll hint */}
+      <div className="relative flex justify-center pb-8 pt-6">
+        <button
+          onClick={scrollToReport}
+          className="flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity"
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          <span className="text-slate-400 text-xs tracking-widest uppercase">리포트 보기</span>
+          <svg
+            className="animate-bounce"
+            width="20" height="20" viewBox="0 0 20 20" fill="none"
+          >
+            <path d="M10 4v12M4 10l6 6 6-6" stroke="#6085FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
     </div>
   );
