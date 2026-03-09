@@ -13,7 +13,7 @@ const TONE_STYLES = {
     label: 'Strength',
   },
   opportunity: {
-    border: '#C9A84C',
+    border: '#D97706',
     bg: '#FFFBEB',
     iconBg: '#FEF3C7',
     icon: '◈',
@@ -59,8 +59,8 @@ export function InsightBlock({ insight }: Props) {
             {style.label}
           </span>
         </div>
-        <p className="text-sm font-semibold text-slate-800 mb-1 leading-snug">{insight.headline}</p>
-        <p className="text-sm text-slate-600 leading-relaxed">{insight.body}</p>
+        <p className="font-semibold text-slate-800 mb-1 leading-snug" style={{ fontSize: 13 }}>{insight.headline}</p>
+        <p className="text-slate-600 leading-relaxed" style={{ fontSize: 13 }}>{insight.body}</p>
       </div>
     </div>
   );
@@ -70,23 +70,34 @@ interface GenericInsightProps {
   headline: string;
   body: string;
   icon?: string;
+  tutor?: boolean;
 }
 
-export function GenericInsightBlock({ headline, body, icon = '→' }: GenericInsightProps) {
+export function GenericInsightBlock({ headline, body, icon = '→', tutor = false }: GenericInsightProps) {
   return (
     <div
       className="rounded-xl p-5 flex gap-4"
-      style={{ background: '#F8F7F4', borderLeft: '3px solid #0A1628' }}
+      style={{ background: '#F8F7F4', borderLeft: '3px solid #09090b' }}
     >
       <div
         className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
-        style={{ background: '#0A1628' }}
+        style={{ background: '#09090b' }}
       >
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-800 mb-1 leading-snug">{headline}</p>
-        <p className="text-sm text-slate-600 leading-relaxed">{body}</p>
+        <div className="flex items-center gap-2 mb-1">
+          <p className="font-semibold text-slate-800 leading-snug" style={{ fontSize: 13 }}>{headline}</p>
+          {tutor && (
+            <span
+              className="flex-shrink-0 rounded-full px-2 py-0.5 font-medium"
+              style={{ fontSize: 10, background: '#DCFCE7', color: '#15803D' }}
+            >
+              ✓ 튜터 검수 완료
+            </span>
+          )}
+        </div>
+        <p className="text-slate-600 leading-relaxed" style={{ fontSize: 13 }}>{body}</p>
       </div>
     </div>
   );

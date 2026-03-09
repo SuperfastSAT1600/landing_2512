@@ -107,6 +107,7 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
                 <th className="text-left py-3 px-4 font-semibold">소요 시간</th>
                 <th className="text-left py-3 px-4 font-semibold">상세 보기</th>
                 <th className="text-left py-3 px-4 font-semibold">보고서 링크</th>
+                <th className="text-left py-3 px-4 font-semibold">인사이트 편집</th>
               </tr>
             </thead>
             <tbody>
@@ -135,6 +136,14 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
                     >
                       {copiedId === result.id ? '✓ 복사됨' : '링크 복사'}
                     </button>
+                  </td>
+                  <td className="py-3 px-4">
+                    <Link
+                      href={`/admin/reports/${result.id}/insights`}
+                      className="text-purple-400 hover:text-purple-300 underline text-xs"
+                    >
+                      편집
+                    </Link>
                   </td>
                 </tr>
               ))}

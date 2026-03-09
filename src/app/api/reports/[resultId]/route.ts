@@ -144,5 +144,6 @@ export async function GET(
       sections: SECTION_BENCHMARKS,
       domains: DOMAIN_BENCHMARKS,
     },
+    editedInsights: result.edited_insights ?? null,
   });
 }

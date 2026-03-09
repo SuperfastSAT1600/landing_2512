@@ -75,15 +75,15 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
               <Radar
                 name="You"
                 dataKey="You"
-                stroke="#1B2A4A"
-                fill="#1B2A4A"
+                stroke="#071be9"
+                fill="#071be9"
                 fillOpacity={0.15}
                 strokeWidth={2}
               />
               <Radar
                 name="Top 10%"
                 dataKey="Top 10%"
-                stroke="#BFDBFE"
+                stroke="#6085FF"
                 fill="none"
                 strokeWidth={1.5}
                 strokeDasharray="4 2"
@@ -114,7 +114,7 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
                   <div className="w-28 bg-slate-100 rounded-full h-1.5 hidden sm:block">
                     <div
                       className="h-1.5 rounded-full"
-                      style={{ width: `${pct}%`, background: '#1B2A4A' }}
+                      style={{ width: `${pct}%`, background: '#071be9' }}
                     />
                   </div>
                   <span className="text-sm font-bold text-slate-800 w-10 text-right">{pct}%</span>

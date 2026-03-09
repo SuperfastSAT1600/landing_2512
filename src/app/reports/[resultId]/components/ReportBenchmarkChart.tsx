@@ -68,8 +68,8 @@ export function ReportBenchmarkChart({ sections, sectionBenchmarks }: Props) {
                 iconSize={10}
                 wrapperStyle={{ fontSize: 12, color: '#64748B', paddingTop: 12 }}
               />
-              <Bar dataKey="You" fill="#1B2A4A" radius={[5, 5, 0, 0]} />
-              <Bar dataKey="Top 10%" fill="#BFDBFE" radius={[5, 5, 0, 0]} />
+              <Bar dataKey="You" fill="#071be9" radius={[5, 5, 0, 0]} />
+              <Bar dataKey="Top 10%" fill="#6085FF" radius={[5, 5, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

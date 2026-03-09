@@ -140,25 +140,23 @@ test.describe('Report Page — Complete Student Result', () => {
     await expect(toolbar).toBeVisible();
   });
 
-  test('REQ-003: Section labels 01–05 in gold appear', async ({ page }) => {
+  test('REQ-003: Section titles (Korean+English) appear — 4 sections', async ({ page }) => {
     await gotoReport(page);
 
-    await expect(page.locator('text=01 · Executive Summary')).toBeVisible();
-    await expect(page.locator('text=02 · Benchmark Comparison')).toBeVisible();
-    await expect(page.locator('text=03 · Domain Breakdown')).toBeVisible();
-    await expect(page.locator('text=04 · Behavioral Analysis')).toBeVisible();
-    await expect(page.locator('text=05 · Vocabulary Gap')).toBeVisible();
+    await expect(page.locator('text=전체 성적').first()).toBeVisible();
+    await expect(page.locator('text=상위 10%와의 차이').first()).toBeVisible();
+    await expect(page.locator('text=문제 풀이 패턴').first()).toBeVisible();
+    await expect(page.locator('text=모르는 단어').first()).toBeVisible();
   });
 
-  test('REQ-003: Mobile layout — all sections visible at 390px', async ({ page }) => {
+  test('REQ-003: Mobile layout — all 4 sections visible at 390px', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoReport(page);
 
-    await expect(page.locator('text=01 · Executive Summary')).toBeVisible();
-    await expect(page.locator('text=02 · Benchmark Comparison')).toBeVisible();
-    await expect(page.locator('text=03 · Domain Breakdown')).toBeVisible();
-    await expect(page.locator('text=04 · Behavioral Analysis')).toBeVisible();
-    await expect(page.locator('text=05 · Vocabulary Gap')).toBeVisible();
+    await expect(page.locator('text=전체 성적').first()).toBeVisible();
+    await expect(page.locator('text=상위 10%와의 차이').first()).toBeVisible();
+    await expect(page.locator('text=문제 풀이 패턴').first()).toBeVisible();
+    await expect(page.locator('text=모르는 단어').first()).toBeVisible();
   });
 
   test("REQ-003: Analyst's Take insight block appears after summary", async ({ page }) => {
@@ -194,7 +192,7 @@ test.describe('Report Page — Complete Student Result', () => {
 
   test('REQ-004: Vocabulary gap shows flagged words', async ({ page }) => {
     await gotoReport(page);
-    await expect(page.locator('text=05 · Vocabulary Gap')).toBeVisible();
+    await expect(page.locator('text=모르는 단어').first()).toBeVisible();
     await expect(page.locator('text=ephemeral')).toBeVisible();
     await expect(page.locator('text=ubiquitous')).toBeVisible();
     await expect(page.locator('text=Vocabulary Strategy')).toBeVisible();

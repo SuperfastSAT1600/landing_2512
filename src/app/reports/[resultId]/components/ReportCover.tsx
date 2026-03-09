@@ -32,23 +32,21 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
   return (
     <div
       className="relative overflow-hidden print:hidden"
-      style={{
-        background: 'linear-gradient(160deg, #0A1628 0%, #0F2040 60%, #1B2A4A 100%)',
-      }}
+      style={{ background: '#09090b' }}
     >
       {/* Subtle background pattern */}
       <div
         className="absolute inset-0 opacity-5"
         style={{
-          backgroundImage: 'radial-gradient(circle at 20% 50%, #C9A84C 0%, transparent 50%), radial-gradient(circle at 80% 20%, #4A6FA5 0%, transparent 40%)',
+          backgroundImage: 'radial-gradient(circle at 20% 50%, #6085FF 0%, transparent 50%), radial-gradient(circle at 80% 20%, #071be9 0%, transparent 40%)',
         }}
       />
 
       <div className="relative max-w-5xl mx-auto px-[6%] py-10 sm:py-16">
         {/* Label */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="h-px flex-1 max-w-[40px]" style={{ background: '#C9A84C' }} />
-          <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: '#C9A84C' }}>
+          <div className="h-px flex-1 max-w-[40px]" style={{ background: '#6085FF' }} />
+          <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: '#6085FF' }}>
             SAT Diagnostic Report
           </p>
         </div>
@@ -57,9 +55,9 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
         <h1
           className="text-white mb-2 leading-tight"
           style={{
-            fontFamily: 'var(--font-playfair, Georgia, serif)',
+            fontFamily: 'var(--font-sans)',
             fontSize: 'clamp(2rem, 6vw, 4.5rem)',
-            fontWeight: 700,
+            fontWeight: 800,
             letterSpacing: '-0.02em',
           }}
         >
@@ -76,14 +74,11 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
           {/* Overall */}
           <div
             className="flex flex-col items-center justify-center rounded-2xl px-8 py-5"
-            style={{ background: 'rgba(201, 168, 76, 0.12)', border: '1px solid rgba(201, 168, 76, 0.3)' }}
+            style={{ background: 'rgba(96, 133, 255, 0.12)', border: '1px solid rgba(96, 133, 255, 0.3)' }}
           >
             <span
               className="text-5xl font-bold leading-none"
-              style={{
-                fontFamily: 'var(--font-playfair, Georgia, serif)',
-                color: '#C9A84C',
-              }}
+              style={{ color: '#6085FF', fontFamily: 'var(--font-sans)' }}
             >
               {overallPct}%
             </span>
@@ -103,7 +98,7 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
               >
                 <span
                   className="text-4xl font-bold leading-none text-white"
-                  style={{ fontFamily: 'var(--font-playfair, Georgia, serif)' }}
+                  style={{ fontFamily: 'var(--font-sans)' }}
                 >
                   {pct}%
                 </span>

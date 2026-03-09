@@ -63,7 +63,7 @@ function ScoreCard({
             <circle
               cx={60} cy={60} r={r}
               fill="none"
-              stroke="#1B2A4A"
+              stroke="#071be9"
               strokeWidth={12}
               strokeDasharray={`${dash} ${circ - dash}`}
               strokeDashoffset={circ / 4}
@@ -72,7 +72,7 @@ function ScoreCard({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-slate-900 font-serif">{pct}%</span>
+            <span className="text-2xl font-bold text-slate-900">{pct}%</span>
           </div>
         </div>
 
@@ -103,7 +103,7 @@ function BenchmarkRow({ label, value, yours }: { label: string; value: number; y
       <span className="text-slate-400">{label}</span>
       <div className="flex items-center gap-2">
         <div className="w-24 bg-slate-100 rounded-full h-1.5">
-          <div className="h-1.5 rounded-full bg-slate-300" style={{ width: `${pct}%` }} />
+          <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: '#6085FF' }} />
         </div>
         <span className={`font-semibold w-8 text-right ${isAhead ? 'text-emerald-600' : 'text-red-500'}`}>
           {pct}%

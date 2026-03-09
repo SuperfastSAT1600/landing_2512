@@ -6,8 +6,11 @@ import { ReportRadarChart } from './components/ReportRadarChart';
 import { ReportBehavioralMatrix } from './components/ReportBehavioralMatrix';
 import { ReportVocabularyGap } from './components/ReportVocabularyGap';
 import { ReportShareBar } from './components/ReportShareBar';
+import { SectionHeader } from './components/SectionHeader';
+import { ChapterNav } from './components/ChapterNav';
 import { InsightBlock, GenericInsightBlock } from './components/InsightBlock';
 import { generateAllInsights } from '@/lib/report-insights';
+import { mergeInsights, getEditedFieldKeys } from '@/lib/merge-insights';
 import type { Metadata } from 'next';
 
 interface PageProps {
@@ -39,21 +42,21 @@ export default async function ReportPage({ params }: PageProps) {
 
   if (!data) notFound();
 
-  const insights = generateAllInsights(
+  const aiInsights = generateAllInsights(
     data.sections,
     data.questionDetails,
     data.savedWords ?? [],
   );
+  const insights = mergeInsights(aiInsights, data.editedInsights);
+  const editedKeys = getEditedFieldKeys(data.editedInsights);
 
   return (
-    <div style={{ background: '#F7F8FA', fontFamily: 'var(--font-inter, system-ui, sans-serif)' }}>
+    <div style={{ background: '#F4F5F9', fontFamily: 'var(--font-sans)' }}>
 
       {/* Print-only header */}
       <div className="hidden print:flex print:items-center print:justify-between px-8 py-5 border-b border-slate-200">
         <div>
-          <span className="font-bold text-[#0A1628] text-lg" style={{ fontFamily: 'var(--font-playfair, Georgia, serif)' }}>
-            SuperfastSAT
-          </span>
+          <span className="font-bold text-[#09090b] text-lg">SuperfastSAT</span>
           <span className="text-slate-400 text-sm ml-2">· SAT Diagnostic Report</span>
         </div>
         <span className="text-slate-400 text-sm">{new Date().toLocaleDateString('en-US')}</span>
@@ -69,31 +72,34 @@ export default async function ReportPage({ params }: PageProps) {
 
       {/* Toolbar */}
       <div
-        className="sticky top-0 z-30 border-b border-slate-200 print:hidden"
-        style={{ background: 'rgba(247, 248, 250, 0.95)', backdropFilter: 'blur(8px)' }}
+        className="sticky top-0 z-30 print:hidden"
+        style={{ background: '#09090b', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
       >
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span
-              className="font-bold text-base"
-              style={{ color: '#0A1628', fontFamily: 'var(--font-playfair, Georgia, serif)' }}
-            >
-              SuperfastSAT
-            </span>
-            <span className="text-slate-300 text-sm">·</span>
-            <span className="text-slate-500 text-sm hidden sm:inline">Diagnostic Report</span>
+            <span className="font-bold text-base text-white">SuperfastSAT</span>
+            <span className="text-slate-600 text-sm">·</span>
+            <span className="text-slate-400 text-sm hidden sm:inline">Diagnostic Report</span>
           </div>
           <ReportShareBar />
         </div>
       </div>
 
+      {/* Chapter navigation */}
+      <ChapterNav />
+
       {/* Single-column main content */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 print:py-6">
         <div className="space-y-10 sm:space-y-14 print:space-y-8">
 
-          {/* Executive Summary */}
-          <section>
-            <SectionLabel>01 · Executive Summary</SectionLabel>
+          {/* ── SECTION 01: 전체 성적 ── */}
+          <section id="section-01" style={{ scrollMarginTop: 96 }}>
+            <SectionHeader
+              number="01"
+              title="전체 성적"
+              titleEn="Overall Score"
+              subtitle="이번 시험에서 몇 문제나 맞았나요?"
+            />
             <ReportExecutiveSummary
               studentName={data.studentName}
               submittedAt={data.submittedAt}
@@ -106,15 +112,43 @@ export default async function ReportPage({ params }: PageProps) {
                 headline="Analyst's Take"
                 body={insights.executiveSummary}
                 icon="✦"
+                tutor={editedKeys.has('executiveSummary')}
               />
+            </div>
+
+            {/* Domain Breakdown — tier 2 within Section 01 */}
+            <div className="mt-8 space-y-5">
+              <p className="text-xs font-bold uppercase tracking-[0.12em]" style={{ color: '#6085FF' }}>
+                Domain Breakdown
+              </p>
+              <ReportRadarChart
+                sections={data.sections}
+                domainBenchmarks={data.benchmarks.domains}
+              />
+              {insights.topWeakDomains.length > 0 && (
+                <div className="mt-5">
+                  <GenericInsightBlock
+                    headline="Highest-Leverage Domains"
+                    body={insights.topWeakDomains
+                      .map((d) => `${d.domain}: ${d.note}`)
+                      .join('  ·  ')}
+                    icon="◎"
+                  />
+                </div>
+              )}
             </div>
           </section>
 
           <Divider />
 
-          {/* Benchmark Chart */}
-          <section>
-            <SectionLabel>02 · Benchmark Comparison</SectionLabel>
+          {/* ── SECTION 02: 상위 10%와의 차이 ── */}
+          <section id="section-02" style={{ scrollMarginTop: 96 }}>
+            <SectionHeader
+              number="02"
+              title="상위 10%와의 차이"
+              titleEn="vs. Top 10%"
+              subtitle="우리 아이는 상위권과 얼마나 다른가요?"
+            />
             <ReportBenchmarkChart
               sections={data.sections}
               sectionBenchmarks={data.benchmarks.sections}
@@ -130,31 +164,14 @@ export default async function ReportPage({ params }: PageProps) {
 
           <Divider />
 
-          {/* Domain Radar */}
-          <section>
-            <SectionLabel>03 · Domain Breakdown</SectionLabel>
-            <ReportRadarChart
-              sections={data.sections}
-              domainBenchmarks={data.benchmarks.domains}
+          {/* ── SECTION 03: 문제 풀이 패턴 ── */}
+          <section id="section-03" style={{ scrollMarginTop: 96 }}>
+            <SectionHeader
+              number="03"
+              title="문제 풀이 패턴"
+              titleEn="Test-Taking Patterns"
+              subtitle="시간 배분과 자신감은 어떤 모습인가요?"
             />
-            {insights.topWeakDomains.length > 0 && (
-              <div className="mt-5">
-                <GenericInsightBlock
-                  headline="Highest-Leverage Domains"
-                  body={insights.topWeakDomains
-                    .map((d) => `${d.domain}: ${d.note}`)
-                    .join('  ·  ')}
-                  icon="◎"
-                />
-              </div>
-            )}
-          </section>
-
-          <Divider />
-
-          {/* Behavioral Matrix */}
-          <section>
-            <SectionLabel>04 · Behavioral Analysis</SectionLabel>
             <ReportBehavioralMatrix questionDetails={data.questionDetails} />
             {insights.behavioral && (
               <div className="mt-5">
@@ -162,6 +179,7 @@ export default async function ReportPage({ params }: PageProps) {
                   headline="Pacing & Confidence Pattern"
                   body={insights.behavioral}
                   icon="⟳"
+                  tutor={editedKeys.has('behavioral')}
                 />
               </div>
             )}
@@ -169,9 +187,14 @@ export default async function ReportPage({ params }: PageProps) {
 
           <Divider />
 
-          {/* Vocabulary Gap */}
-          <section>
-            <SectionLabel>05 · Vocabulary Gap</SectionLabel>
+          {/* ── SECTION 04: 모르는 단어 ── */}
+          <section id="section-04" style={{ scrollMarginTop: 96 }}>
+            <SectionHeader
+              number="04"
+              title="모르는 단어"
+              titleEn="Vocabulary Gap"
+              subtitle="단어 때문에 틀린 문제가 있었나요?"
+            />
             <ReportVocabularyGap savedWords={data.savedWords} />
             {insights.vocabulary && (
               <div className="mt-5">
@@ -179,6 +202,7 @@ export default async function ReportPage({ params }: PageProps) {
                   headline="Vocabulary Strategy"
                   body={insights.vocabulary}
                   icon="≋"
+                  tutor={editedKeys.has('vocabulary')}
                 />
               </div>
             )}
@@ -195,7 +219,7 @@ export default async function ReportPage({ params }: PageProps) {
                 >
                   <p
                     className="text-xs font-bold uppercase tracking-widest mb-4"
-                    style={{ color: '#0A1628' }}
+                    style={{ color: '#09090b' }}
                   >
                     Key Recommendations
                   </p>
@@ -204,7 +228,7 @@ export default async function ReportPage({ params }: PageProps) {
                       <li key={i} className="flex gap-3 text-sm text-slate-600 leading-relaxed">
                         <span
                           className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white mt-0.5"
-                          style={{ background: '#0A1628' }}
+                          style={{ background: '#071be9' }}
                         >
                           {i + 1}
                         </span>
@@ -244,19 +268,6 @@ export default async function ReportPage({ params }: PageProps) {
         </div>
       </div>
     </div>
-  );
-}
-
-/* ── Helpers ── */
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      className="text-xs font-bold uppercase tracking-[0.15em] mb-6 print:mb-3"
-      style={{ color: '#C9A84C' }}
-    >
-      {children}
-    </p>
   );
 }
 
