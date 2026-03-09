@@ -143,20 +143,21 @@ test.describe('Report Page — Complete Student Result', () => {
   test('REQ-003: Section titles (Korean+English) appear — 4 sections', async ({ page }) => {
     await gotoReport(page);
 
-    await expect(page.locator('text=전체 성적').first()).toBeVisible();
-    await expect(page.locator('text=상위 10%와의 차이').first()).toBeVisible();
-    await expect(page.locator('text=문제 풀이 패턴').first()).toBeVisible();
-    await expect(page.locator('text=모르는 단어').first()).toBeVisible();
+    // Target h2 elements inside sections to avoid matching the hidden mobile ChapterNav buttons
+    await expect(page.locator('h2:has-text("전체 성적")').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("비교 성적")').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("풀이 패턴")').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("단어")').first()).toBeVisible();
   });
 
   test('REQ-003: Mobile layout — all 4 sections visible at 390px', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoReport(page);
 
-    await expect(page.locator('text=전체 성적').first()).toBeVisible();
-    await expect(page.locator('text=상위 10%와의 차이').first()).toBeVisible();
-    await expect(page.locator('text=문제 풀이 패턴').first()).toBeVisible();
-    await expect(page.locator('text=모르는 단어').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("전체 성적")').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("비교 성적")').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("풀이 패턴")').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("단어")').first()).toBeVisible();
   });
 
   test("REQ-003: Analyst's Take insight block appears after summary", async ({ page }) => {

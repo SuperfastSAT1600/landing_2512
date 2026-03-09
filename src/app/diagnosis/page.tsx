@@ -106,20 +106,9 @@ export default function DiagnosisPage() {
     }
   };
 
-  const handleEmailSubmit = async () => {
-    setEmailError('');
-    if (!emailInput.trim()) {
-      setEmailError('Please enter your email address.');
-      return;
-    }
-    if (!isValidEmail(emailInput.trim())) {
-      setEmailError('Please enter a valid email address.');
-      return;
-    }
-    setStudentEmail(emailInput.trim());
+  const loadAndStartTest = async (email: string) => {
+    setStudentEmail(email);
     setPhase('test-loading');
-
-    // Fetch test content from DB
     try {
       const url = testVersionId
         ? `/api/diagnosis/test-content?versionId=${testVersionId}`
@@ -133,6 +122,19 @@ export default function DiagnosisPage() {
       setEmailError('Failed to load test. Please try again.');
       setPhase('email-input');
     }
+  };
+
+  const handleEmailSubmit = async () => {
+    setEmailError('');
+    if (!emailInput.trim()) {
+      setEmailError('Please enter your email address.');
+      return;
+    }
+    if (!isValidEmail(emailInput.trim())) {
+      setEmailError('Please enter a valid email address.');
+      return;
+    }
+    await loadAndStartTest(emailInput.trim());
   };
 
   // Student confirmation phase
@@ -205,6 +207,12 @@ export default function DiagnosisPage() {
             className="w-full py-4 bg-[#071be9] hover:bg-[#1a31f0] rounded-xl font-bold transition-all text-lg shadow-lg shadow-[#071be9]/20"
           >
             Continue
+          </button>
+          <button
+            onClick={() => loadAndStartTest('')}
+            className="w-full mt-3 py-3 text-gray-500 hover:text-gray-300 text-sm transition-colors"
+          >
+            건너뛰기
           </button>
         </div>
       </div>

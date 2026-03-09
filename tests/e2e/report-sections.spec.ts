@@ -70,10 +70,12 @@ test.describe('REQ-003 + REQ-013: Section anchors and Korean headers', () => {
   test('REQ-013: Korean section titles are visible', async ({ page }) => {
     await page.goto(`/reports/${seededResultId}`, { waitUntil: 'networkidle' });
 
-    await expect(page.locator('text=전체 성적').first()).toBeVisible();
-    await expect(page.locator('text=상위 10%와의 차이').first()).toBeVisible();
-    await expect(page.locator('text=문제 풀이 패턴').first()).toBeVisible();
-    await expect(page.locator('text=모르는 단어').first()).toBeVisible();
+    // Use h2 selector to target section headings, not the ChapterNav buttons
+    await expect(page.locator('h2:has-text("전체 성적")').first()).toBeVisible();
+    // Section 02 was renamed from "상위 10%와의 차이" to "비교 성적"
+    await expect(page.locator('h2:has-text("비교 성적")').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("풀이 패턴")').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("단어")').first()).toBeVisible();
   });
 
   test('REQ-013: English section subtitles are visible', async ({ page }) => {
@@ -91,18 +93,22 @@ test.describe('REQ-003 + REQ-013: Section anchors and Korean headers', () => {
     // Wait for ChapterNav to mount (client component)
     await page.waitForTimeout(500);
 
-    await expect(page.locator('button:has-text("01 전체 성적")')).toBeVisible();
-    await expect(page.locator('button:has-text("02 상위 10%")')).toBeVisible();
-    await expect(page.locator('button:has-text("03 풀이 패턴")')).toBeVisible();
-    await expect(page.locator('button:has-text("04 단어")')).toBeVisible();
+    // Desktop ChapterNav (hidden sm:block) — no number prefix in labels
+    // Section 02 was renamed "상위 10%" → "비교 성적"; Section 04 "단어" → "단어 상태"
+    const desktopNav = page.locator('nav.hidden');
+    await expect(desktopNav.locator('button:has-text("전체 성적")')).toBeVisible();
+    await expect(desktopNav.locator('button:has-text("비교 성적")')).toBeVisible();
+    await expect(desktopNav.locator('button:has-text("풀이 패턴")')).toBeVisible();
+    await expect(desktopNav.locator('button:has-text("단어 상태")')).toBeVisible();
   });
 
   test('REQ-001: ChapterNav pill click scrolls to section', async ({ page }) => {
     await page.goto(`/reports/${seededResultId}`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(500);
 
-    // Click section-04 pill
-    await page.locator('button:has-text("04 단어")').click();
+    // Click section-04 pill in the desktop nav (visible at this viewport)
+    const desktopNav = page.locator('nav.hidden');
+    await desktopNav.locator('button:has-text("단어 상태")').click();
     await page.waitForTimeout(800);
 
     // section-04 should be in view
