@@ -129,9 +129,9 @@ export default async function ReportPage({ params }: PageProps) {
           <section id="section-02" className="report-section">
             <SectionHeader
               number="02"
-              title="상위 10%와의 차이"
+              title="비교 성적"
               titleEn="vs. Top 10%"
-              subtitle="우리 아이는 상위권과 얼마나 다른가요?"
+              subtitle="상위 10%와의 비교 성적"
             />
             <ReportBenchmarkChart
               sections={data.sections}

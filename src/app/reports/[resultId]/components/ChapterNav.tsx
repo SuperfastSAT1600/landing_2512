@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 const CHAPTERS = [
   { id: 'section-01', label: '전체 성적' },
-  { id: 'section-02', label: '상위 10%' },
+  { id: 'section-02', label: '비교 성적' },
   { id: 'section-03', label: '풀이 패턴' },
   { id: 'section-04', label: '단어' },
 ] as const;
