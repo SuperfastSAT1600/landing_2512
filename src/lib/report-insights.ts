@@ -5,6 +5,7 @@
  */
 
 import { SECTION_BENCHMARKS, DOMAIN_BENCHMARKS } from './report-benchmarks';
+import { difficultyToLevel, getMedianLevel, getLevelDef } from './vocab-levels';
 
 export interface SectionInsight {
   headline: string;
@@ -46,6 +47,7 @@ interface QuestionDetail {
 interface SavedWord {
   word: string;
   difficulty: string;
+  vocabLevel?: number;
 }
 
 function pct(v: number) {
@@ -166,18 +168,31 @@ export function generateBehavioralInsight(questionDetails: QuestionDetail[]): st
 export function generateVocabInsight(savedWords: SavedWord[]): string | null {
   if (savedWords.length === 0) return null;
 
-  const hard = savedWords.filter((w) => w.difficulty === 'Hard').length;
-  const medium = savedWords.filter((w) => w.difficulty === 'Medium').length;
+  const levels = savedWords.map((w) => w.vocabLevel ?? difficultyToLevel(w.difficulty));
+  const medianLevel = getMedianLevel(levels);
+  const levelDef = getLevelDef(medianLevel);
 
-  if (hard >= 5) {
-    return `${savedWords.length} unfamiliar words were flagged, with ${hard} appearing in Hard-difficulty questions. This vocabulary gap is likely suppressing the R&W score. A targeted SAT word list focused on rhetorical and analytical vocabulary is strongly recommended.`;
+  const highLevelWords = savedWords.filter((w) => (w.vocabLevel ?? difficultyToLevel(w.difficulty)) >= 8);
+  const coreWords = savedWords.filter((w) => {
+    const lv = w.vocabLevel ?? difficultyToLevel(w.difficulty);
+    return lv === 6 || lv === 7;
+  });
+
+  // Distribution note
+  let distribution = '';
+  if (highLevelWords.length > 0 && coreWords.length > 0) {
+    distribution = ` Of these, ${highLevelWords.length} are at Level 8+ (advanced academic) and ${coreWords.length} at Level 6–7 (SAT core academic).`;
+  } else if (highLevelWords.length > 0) {
+    distribution = ` Of these, ${highLevelWords.length} are at Level 8+ — advanced academic vocabulary rarely encountered outside scholarly texts.`;
+  } else if (coreWords.length > 0) {
+    distribution = ` Most of these (${coreWords.length}) fall within Level 6–7, the core academic vocabulary range targeted by SAT Reading.`;
   }
 
-  if (savedWords.length >= 10) {
-    return `${savedWords.length} words were marked as unfamiliar. With ${medium} from Medium-difficulty questions, vocabulary work should be integrated into the weekly study plan — even 15 minutes of daily word study compounds significantly over 8 weeks.`;
-  }
-
-  return `${savedWords.length} unfamiliar words flagged — a manageable vocabulary gap. Reviewing these specific words and their contextual usage in SAT passages will yield a quick accuracy boost.`;
+  return (
+    `${savedWords.length} unfamiliar word${savedWords.length > 1 ? 's' : ''} flagged during this test.${distribution} ` +
+    `The vocabulary gap is concentrated around Level ${medianLevel} — ${levelDef.description}. ` +
+    `Representative words at this level include: ${levelDef.examples.slice(0, 3).join(', ')}.`
+  );
 }
 
 export function generateExecutiveSummary(sections: Section[]): string {

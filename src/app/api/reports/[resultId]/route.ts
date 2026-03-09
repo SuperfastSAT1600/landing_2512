@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { SECTION_BENCHMARKS, DOMAIN_BENCHMARKS } from '@/lib/report-benchmarks';
+import { difficultyToLevel } from '@/lib/vocab-levels';
 import type { TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';
 
 /**
@@ -125,11 +126,13 @@ export async function GET(
   // Enrich saved words with difficulty from questions
   const enrichedSavedWords = savedWords.map((sw) => {
     const q = questions.find((q) => q.id === sw.questionId);
+    const difficulty = q?.difficulty ?? 'Medium';
     return {
       word: sw.word,
       section: sw.section,
-      difficulty: q?.difficulty ?? 'Medium',
+      difficulty,
       domain: q?.domain ?? '',
+      vocabLevel: difficultyToLevel(difficulty),
     };
   });
 

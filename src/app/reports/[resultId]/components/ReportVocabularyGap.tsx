@@ -5,6 +5,7 @@ interface SavedWord {
   section: string;
   difficulty: string;
   domain: string;
+  vocabLevel?: number;
 }
 
 interface Props {
@@ -16,6 +17,22 @@ const DIFFICULTY_STYLE: Record<string, { badge: string; dot: string }> = {
   Medium: { badge: 'bg-amber-50 text-amber-700 border-amber-100',       dot: 'bg-amber-400' },
   Hard:   { badge: 'bg-red-50 text-red-700 border-red-100',             dot: 'bg-red-400' },
 };
+
+function LevelBadge({ level }: { level: number }) {
+  const color =
+    level >= 8 ? { bg: '#EDE9FE', text: '#6D28D9' } :  // Level 8-9: purple
+    level >= 6 ? { bg: '#EFF6FF', text: '#1D4ED8' } :  // Level 6-7: blue
+                 { bg: '#F1F5F9', text: '#64748B' };    // Level 4-5: slate
+
+  return (
+    <span
+      className="rounded-full px-1.5 py-0.5 font-medium ml-1"
+      style={{ fontSize: 9, background: color.bg, color: color.text }}
+    >
+      L{level}
+    </span>
+  );
+}
 
 export function ReportVocabularyGap({ savedWords }: Props) {
   if (savedWords.length === 0) {
@@ -56,6 +73,7 @@ export function ReportVocabularyGap({ savedWords }: Props) {
                     title={`${w.domain} · ${w.section}`}
                   >
                     {w.word}
+                    {w.vocabLevel !== undefined && <LevelBadge level={w.vocabLevel} />}
                     {/* Tooltip on hover */}
                     <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       {w.domain}
@@ -68,7 +86,7 @@ export function ReportVocabularyGap({ savedWords }: Props) {
         })}
 
         <p className="text-xs text-slate-300 pt-2 border-t border-slate-50">
-          Words are grouped by the difficulty of the question where they appeared.
+          Words are grouped by question difficulty. L = vocabulary level (1–10 scale, SAT core = L6–8).
           Hover for domain context.
         </p>
       </div>
