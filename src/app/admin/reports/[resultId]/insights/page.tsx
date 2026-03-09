@@ -9,7 +9,10 @@ interface PageProps {
   params: Promise<{ resultId: string }>;
 }
 
-const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY ?? '';
+function getAdminKey() {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('admin_key') ?? localStorage.getItem('adminKey') ?? '';
+}
 
 async function fetchReport(resultId: string) {
   const res = await fetch(`/api/reports/${resultId}`, { cache: 'no-store' });
@@ -22,7 +25,7 @@ async function patchInsights(resultId: string, partial: Partial<ReportInsights>)
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      'x-admin-key': ADMIN_KEY,
+      'x-admin-key': getAdminKey(),
     },
     body: JSON.stringify(partial),
   });
