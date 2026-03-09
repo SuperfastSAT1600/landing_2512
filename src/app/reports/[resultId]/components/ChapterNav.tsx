@@ -6,7 +6,7 @@ const CHAPTERS = [
   { id: 'section-01', label: '전체 성적' },
   { id: 'section-02', label: '비교 성적' },
   { id: 'section-03', label: '풀이 패턴' },
-  { id: 'section-04', label: '단어' },
+  { id: 'section-04', label: '단어 상태' },
 ] as const;
 
 function useScrollProgress() {
