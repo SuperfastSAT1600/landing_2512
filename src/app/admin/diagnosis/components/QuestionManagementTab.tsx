@@ -20,7 +20,7 @@ const DIFFICULTY_COLOR: Record<string, string> = {
   Hard: 'text-red-400',
 };
 
-type SortKey = 'questionNumber' | 'accuracyRate' | 'avgConfidence' | 'avgTimeSeconds';
+type SortKey = 'questionNumber' | 'accuracyRate' | 'completionRate' | 'avgConfidence' | 'avgTimeSeconds';
 
 export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) {
   const [stats, setStats] = useState<QuestionStat[]>([]);
@@ -202,9 +202,15 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
               </th>
               <th
                 className="text-right py-3 px-3 cursor-pointer hover:text-white whitespace-nowrap"
+                onClick={() => handleSort('completionRate')}
+              >
+                응시율 <SortIcon k="completionRate" />
+              </th>
+              <th
+                className="text-right py-3 px-3 cursor-pointer hover:text-white whitespace-nowrap"
                 onClick={() => handleSort('avgConfidence')}
               >
-                자신감 <SortIcon k="avgConfidence" />
+                CL <SortIcon k="avgConfidence" />
               </th>
               <th
                 className="text-right py-3 px-3 cursor-pointer hover:text-white whitespace-nowrap"
@@ -245,8 +251,16 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
                     </span>
                   ) : <span className="text-gray-600">-</span>}
                 </td>
+                <td className="py-3 px-3 text-right">
+                  <span className={
+                    stat.completionRate >= 0.8 ? 'text-gray-300' :
+                    stat.completionRate >= 0.5 ? 'text-yellow-400' : 'text-red-400'
+                  }>
+                    {(stat.completionRate * 100).toFixed(0)}%
+                  </span>
+                </td>
                 <td className="py-3 px-3 text-right text-gray-300">
-                  {stat.avgConfidence > 0 ? stat.avgConfidence.toFixed(1) : '-'}
+                  {stat.avgConfidence > 0 ? `${stat.avgConfidence.toFixed(1)}%` : '-'}
                 </td>
                 <td className="py-3 px-3 text-right text-gray-300">
                   {stat.avgTimeSeconds > 0

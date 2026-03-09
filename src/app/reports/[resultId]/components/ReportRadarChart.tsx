@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip, Legend,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip, Legend,
 } from 'recharts';
 import { DomainBenchmark } from '@/lib/report-benchmarks';
 
@@ -40,7 +40,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { name
         <div key={p.name} className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-sm" style={{ background: p.stroke }} />
           <span className="text-slate-500">{p.name}:</span>
-          <span className="font-bold">{Math.round(p.value * 100)}%</span>
+          <span className="font-bold">{Math.round(p.value)}%</span>
         </div>
       ))}
     </div>
@@ -49,12 +49,15 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { name
 
 export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
   const allDomains = sections.flatMap((s) => s.domainBreakdown);
+  const hasBenchmarks = allDomains.some((d) => domainBenchmarks[d.domain]?.globalAverage);
 
   const data = allDomains.map((d) => ({
     domain: DOMAIN_SHORT[d.domain] ?? d.domain,
     fullDomain: d.domain,
-    You: d.accuracy,
-    'Top 10%': domainBenchmarks[d.domain]?.top10 ?? 0,
+    You: Math.round(d.accuracy * 100),
+    ...(hasBenchmarks && domainBenchmarks[d.domain]
+      ? { '전체 평균': Math.round(domainBenchmarks[d.domain].globalAverage * 100) }
+      : {}),
   }));
 
   if (data.length === 0) {
@@ -72,6 +75,7 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
                 dataKey="domain"
                 tick={{ fill: '#64748B', fontSize: 11, fontWeight: 500 }}
               />
+              <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
               <Radar
                 name="You"
                 dataKey="You"
@@ -80,14 +84,16 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
                 fillOpacity={0.15}
                 strokeWidth={2}
               />
-              <Radar
-                name="Top 10%"
-                dataKey="Top 10%"
-                stroke="#6085FF"
-                fill="none"
-                strokeWidth={1.5}
-                strokeDasharray="4 2"
-              />
+              {hasBenchmarks && (
+                <Radar
+                  name="전체 평균"
+                  dataKey="전체 평균"
+                  stroke="#6085FF"
+                  fill="none"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 2"
+                />
+              )}
               <Tooltip content={<CustomTooltip />} />
               <Legend
                 iconType="circle"
@@ -103,7 +109,7 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
           {allDomains.map((d) => {
             const b = domainBenchmarks[d.domain];
             const pct = Math.round(d.accuracy * 100);
-            const vsTop = b ? d.accuracy - b.top10 : 0;
+            const vsTop = b ? d.accuracy - b.globalAverage : 0;
             return (
               <div key={d.domain} className="flex items-center justify-between py-2.5 gap-2">
                 <div className="min-w-0">
@@ -119,8 +125,8 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
                   </div>
                   <span className="text-sm font-bold text-slate-800 w-10 text-right">{pct}%</span>
                   {b && (
-                    <span className={`text-xs font-semibold w-14 text-right ${vsTop >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                      {vsTop >= 0 ? '+' : ''}{Math.round(vsTop * 100)}%
+                    <span className={`text-xs font-semibold w-16 text-right ${vsTop >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {vsTop >= 0 ? '+' : ''}{Math.round(vsTop * 100)}% avg
                     </span>
                   )}
                 </div>
