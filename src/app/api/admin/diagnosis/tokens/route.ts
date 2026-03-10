@@ -60,10 +60,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { studentEmail, studentName, code, expiresAt: expiresAtInput } = await request.json();
+    const { studentName, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes } = await request.json();
 
-    if (!studentEmail || !studentName || !code) {
-      return NextResponse.json({ error: 'Student email, name, and code are required' }, { status: 400 });
+    if (!studentName || !code) {
+      return NextResponse.json({ error: 'Student name and code are required' }, { status: 400 });
     }
 
     if (!/^\d{6}$/.test(code)) {
@@ -85,15 +85,28 @@ export async function POST(request: NextRequest) {
     // Use provided expiresAt or default to 24 hours from now
     const expiresAt = expiresAtInput ? new Date(expiresAtInput) : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
+    // Resolve version: use provided testVersionId or current version
+    let resolvedVersionId = testVersionId ?? null;
+    if (!resolvedVersionId) {
+      const { data: current } = await supabaseAdmin
+        .from('diagnostic_test_versions')
+        .select('id')
+        .eq('is_current', true)
+        .maybeSingle();
+      resolvedVersionId = current?.id ?? null;
+    }
+
     const { error: insertError } = await supabaseAdmin
       .from('diagnostic_access_tokens')
       .insert([{
         token: code,
-        student_email: studentEmail,
+        student_email: null,
         student_name: studentName,
         test_id: 'diagnostic-test-1',
+        test_version_id: resolvedVersionId,
         expires_at: expiresAt.toISOString(),
         is_active: true,
+        time_limit_minutes: timeLimitMinutes && timeLimitMinutes > 0 ? timeLimitMinutes : 30,
       }]);
 
     if (insertError) {
@@ -103,7 +116,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       code,
-      studentEmail,
       studentName,
       expiresAt: expiresAt.toISOString(),
     }, { status: 201 });

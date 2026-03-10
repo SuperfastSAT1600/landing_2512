@@ -31,10 +31,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Resolve test version: use token's assigned version, or fall back to current
+    let testVersionId: string | null = tokenData.test_version_id ?? null;
+    if (!testVersionId) {
+      const { data: currentVersion } = await supabaseAdmin
+        .from('diagnostic_test_versions')
+        .select('id')
+        .eq('is_current', true)
+        .maybeSingle();
+      testVersionId = currentVersion?.id ?? null;
+    }
+
     return NextResponse.json({
       tokenId: tokenData.id,
-      studentEmail: tokenData.student_email,
       studentName: tokenData.student_name,
+      expiresAt: tokenData.expires_at,
+      testVersionId,
+      timeLimitMinutes: tokenData.time_limit_minutes ?? 30,
     }, { status: 200 });
   } catch (error) {
     console.error('Error validating code:', error);

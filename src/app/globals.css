@@ -474,3 +474,13 @@ a {
 .vocab-save-btn:hover {
   background-color: #2563EB;
 }
+
+/* Report: mobile bottom nav, desktop top nav scroll offset */
+.report-section {
+  scroll-margin-top: 16px; /* mobile: bottom nav, no top obstruction */
+}
+@media (min-width: 640px) {
+  .report-section {
+    scroll-margin-top: 52px; /* desktop: fixed top nav height */
+  }
+}

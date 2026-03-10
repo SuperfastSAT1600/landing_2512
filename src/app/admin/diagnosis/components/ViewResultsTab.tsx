@@ -20,6 +20,14 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyReportLink = (resultId: string) => {
+    const url = `${window.location.origin}/reports/${resultId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(resultId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   useEffect(() => {
     fetchResults();
@@ -98,6 +106,8 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
                 <th className="text-left py-3 px-4 font-semibold">응시 날짜</th>
                 <th className="text-left py-3 px-4 font-semibold">소요 시간</th>
                 <th className="text-left py-3 px-4 font-semibold">상세 보기</th>
+                <th className="text-left py-3 px-4 font-semibold">보고서 링크</th>
+                <th className="text-left py-3 px-4 font-semibold">인사이트 편집</th>
               </tr>
             </thead>
             <tbody>
@@ -113,6 +123,26 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
                       className="text-blue-400 hover:text-blue-300 underline"
                     >
                       보기
+                    </Link>
+                  </td>
+                  <td className="py-3 px-4">
+                    <button
+                      onClick={() => copyReportLink(result.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                        copiedId === result.id
+                          ? 'bg-green-600/20 text-green-400'
+                          : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                      }`}
+                    >
+                      {copiedId === result.id ? '✓ 복사됨' : '링크 복사'}
+                    </button>
+                  </td>
+                  <td className="py-3 px-4">
+                    <Link
+                      href={`/admin/reports/${result.id}/insights`}
+                      className="text-purple-400 hover:text-purple-300 underline text-xs"
+                    >
+                      편집
                     </Link>
                   </td>
                 </tr>

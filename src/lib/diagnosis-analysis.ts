@@ -14,6 +14,7 @@ export interface QuestionStat {
   totalAttempts: number;
   correctCount: number;
   accuracyRate: number;
+  completionRate: number;
   avgConfidence: number;
   avgTimeSeconds: number;
   answerDistribution: Record<string, number>;
@@ -83,6 +84,7 @@ export function buildQuestionStats(
       totalAttempts,
       correctCount,
       accuracyRate: totalAttempts > 0 ? correctCount / totalAttempts : 0,
+      completionRate: results.length > 0 ? totalAttempts / results.length : 0,
       avgConfidence: confidenceCount > 0 ? totalConfidence / confidenceCount : 0,
       avgTimeSeconds: timeCount > 0 ? totalTime / timeCount : 0,
       answerDistribution,

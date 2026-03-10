@@ -9,7 +9,7 @@
 export interface SavedWord {
   word: string;                      // The word text (lowercased, trimmed)
   questionId: string;                // Which question it was found in
-  section: 'passage' | 'option';     // Where in the UI (passage or option)
+  section: 'passage' | 'option' | 'question'; // Where in the UI
   optionId: string | null;           // If from an option, which one (e.g., 'A', 'B', 'C', 'D')
   positionIndex: number;             // Word index in the source text (for uniqueness)
 }
@@ -61,8 +61,8 @@ export interface ValidateTokenRequest {
  */
 export interface ValidateTokenResponse {
   tokenId: string;
-  studentEmail: string;
   studentName: string;
+  expiresAt: string | null;
 }
 
 /**
@@ -73,6 +73,7 @@ export interface SubmitTestRequest {
   studentEmail: string;
   studentName: string;
   testId: string;
+  testVersionId?: string;
   startedAt: string;
   submittedAt: string;
   totalTimeSeconds: number;
@@ -95,7 +96,6 @@ export interface SubmitTestResponse {
  * Payload for admin token generation API request
  */
 export interface GenerateTokenRequest {
-  studentEmail: string;
   studentName: string;
   code?: string;                // Optional 6-digit code (auto-generated if not provided)
   expiresInHours?: number;      // Default 24

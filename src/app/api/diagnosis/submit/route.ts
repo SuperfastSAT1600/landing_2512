@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
       studentEmail,
       studentName,
       testId,
+      testVersionId,
       startedAt,
       submittedAt,
       totalTimeSeconds,
@@ -24,25 +25,28 @@ export async function POST(request: NextRequest) {
       savedWords,
     } = body;
 
-    // Validate required fields
-    if (!studentEmail || !studentName || !testId) {
+    // Validate required fields (studentEmail is optional — student may skip)
+    if (!studentName || !testId) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Verify token if provided
+    // Fetch token to get time_limit_minutes
+    let timeLimitMinutes = 30;
     if (tokenId) {
       const { data: tokenData, error: tokenError } = await supabaseAdmin
         .from('diagnostic_access_tokens')
-        .select('id')
+        .select('id, time_limit_minutes')
         .eq('id', tokenId)
         .eq('is_active', true)
         .single();
 
       if (tokenError || !tokenData) {
         console.warn('Token validation failed, saving result without token link');
+      } else {
+        timeLimitMinutes = tokenData.time_limit_minutes ?? 30;
       }
     }
 
@@ -52,12 +56,14 @@ export async function POST(request: NextRequest) {
       .insert([
         {
           token_id: tokenId || null,
-          student_email: studentEmail,
+          student_email: studentEmail || null,
           student_name: studentName,
           test_id: testId,
+          test_version_id: testVersionId || null,
           started_at: startedAt,
           submitted_at: submittedAt,
           total_time_seconds: totalTimeSeconds,
+          time_limit_minutes: timeLimitMinutes,
           answers: answers || {},
           confidence_levels: confidenceLevels || {},
           flagged_questions: flaggedQuestions || [],

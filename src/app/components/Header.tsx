@@ -63,6 +63,7 @@ export default function Header() {
     }, []);
 
     if (pathname?.startsWith('/admin')) return null;
+    if (pathname?.startsWith('/reports')) return null;
 
     return (
         <header className={`${styles.header} ${scrolled ? styles.glass : ''}`}>

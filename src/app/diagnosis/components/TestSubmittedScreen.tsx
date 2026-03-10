@@ -1,8 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Icon } from '@iconify/react';
 
-export function TestSubmittedScreen() {
+interface Props {
+  resultId: string | null;
+}
+
+export function TestSubmittedScreen({ resultId }: Props) {
   return (
     <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#F4F5F9' }}>
       <motion.div
@@ -12,12 +17,9 @@ export function TestSubmittedScreen() {
         className="text-center"
         style={{ maxWidth: 420 }}
       >
-        {/* Animated checkmark */}
-        <div className="confetti-pop mb-6">
-          <svg className="mx-auto" style={{ width: 80, height: 80 }} viewBox="0 0 52 52" fill="none">
-            <circle className="checkmark-circle" cx="26" cy="26" r="25" stroke="#3182F6" strokeWidth="2" />
-            <path className="checkmark-check" d="M15 27l7 7 15-15" stroke="#3182F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        {/* Checkmark icon */}
+        <div className="confetti-pop mb-6 flex justify-center">
+          <Icon icon="fluent:checkmark-circle-48-regular" width={80} height={80} color="#071be9" />
         </div>
 
         <h2 className="text-2xl font-bold tracking-tight text-gray-900 mb-3">
@@ -28,12 +30,13 @@ export function TestSubmittedScreen() {
           You have completed the diagnostic test.
         </p>
         <p className="text-gray-500 leading-relaxed mb-8" style={{ fontSize: 15 }}>
-          Your instructor will review the results and reach out with <strong className="text-gray-700">personalized feedback</strong>.
+          Your instructor will review the results and reach out with{' '}
+          <strong className="text-gray-700">personalized feedback</strong>.
         </p>
 
         {/* Info card */}
         <div
-          className="rounded-2xl p-5 mb-8 text-left"
+          className="rounded-2xl p-5 text-left"
           style={{ background: '#EBF4FF', border: '1px solid #BFDBFE' }}
         >
           <p className="text-sm font-semibold text-blue-700 mb-1">Next Steps</p>
