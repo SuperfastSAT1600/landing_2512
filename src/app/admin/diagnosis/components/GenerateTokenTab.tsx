@@ -42,6 +42,7 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
   const [studentName, setStudentName] = useState('');
   const [code, setCode] = useState(generate6DigitCode());
   const [expiresAt, setExpiresAt] = useState(getDefaultExpiresAt());
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState(30);
   const [selectedVersionId, setSelectedVersionId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -113,6 +114,7 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
           code: code.trim(),
           expiresAt: new Date(expiresAt).toISOString(),
           testVersionId: selectedVersionId || undefined,
+          timeLimitMinutes,
         }),
       });
 
@@ -183,6 +185,20 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
               </select>
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">시험 시간 (분)</label>
+            <input
+              type="number"
+              value={timeLimitMinutes}
+              onChange={(e) => setTimeLimitMinutes(Math.max(5, Math.min(180, Number(e.target.value))))}
+              min={5}
+              max={180}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
+            />
+            <p className="text-xs text-gray-400 mt-1">기본값 30분. 5~180분 사이로 설정하세요.</p>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>

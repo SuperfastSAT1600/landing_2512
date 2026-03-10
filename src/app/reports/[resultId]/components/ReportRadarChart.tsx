@@ -49,15 +49,10 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { name
 
 export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
   const allDomains = sections.flatMap((s) => s.domainBreakdown);
-  const hasBenchmarks = allDomains.some((d) => domainBenchmarks[d.domain]?.globalAverage);
-
   const data = allDomains.map((d) => ({
     domain: DOMAIN_SHORT[d.domain] ?? d.domain,
     fullDomain: d.domain,
     You: Math.round(d.accuracy * 100),
-    ...(hasBenchmarks && domainBenchmarks[d.domain]
-      ? { '전체 평균': Math.round(domainBenchmarks[d.domain].globalAverage * 100) }
-      : {}),
   }));
 
   if (data.length === 0) {
@@ -84,16 +79,6 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
                 fillOpacity={0.15}
                 strokeWidth={2}
               />
-              {hasBenchmarks && (
-                <Radar
-                  name="전체 평균"
-                  dataKey="전체 평균"
-                  stroke="#6085FF"
-                  fill="none"
-                  strokeWidth={1.5}
-                  strokeDasharray="4 2"
-                />
-              )}
               <Tooltip content={<CustomTooltip />} />
               <Legend
                 iconType="circle"
@@ -109,7 +94,7 @@ export function ReportRadarChart({ sections, domainBenchmarks }: Props) {
           {allDomains.map((d) => {
             const b = domainBenchmarks[d.domain];
             const pct = Math.round(d.accuracy * 100);
-            const vsTop = b ? d.accuracy - b.globalAverage : 0;
+            const vsTop = b ? d.accuracy - b.top10 : 0;
             return (
               <div key={d.domain} className="flex items-center justify-between py-2.5 gap-2">
                 <div className="min-w-0">

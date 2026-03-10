@@ -22,6 +22,7 @@ interface DiagnosticTestViewProps {
   studentEmail?: string;
   studentName?: string;
   testVersionId?: string;
+  timeLimitMinutes?: number;
 }
 
 export function DiagnosticTestView({
@@ -30,6 +31,7 @@ export function DiagnosticTestView({
   studentEmail = '',
   studentName = '',
   testVersionId,
+  timeLimitMinutes,
 }: DiagnosticTestViewProps) {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -58,7 +60,9 @@ export function DiagnosticTestView({
   const currentQuestion = questions[currentQuestionIndex];
   const hasPassage = !!currentQuestion?.passage;
 
-  const timer = useTestTimer(timeLimit, !!startTime);
+  // Allow per-student override; fall back to test data's built-in timeLimit
+  const effectiveTimeLimit = timeLimitMinutes ? timeLimitMinutes * 60 : timeLimit;
+  const timer = useTestTimer(effectiveTimeLimit, !!startTime);
 
   // Auto-submit when time runs out
   React.useEffect(() => {

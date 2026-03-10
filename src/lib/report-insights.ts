@@ -118,7 +118,10 @@ export function generateWeakDomainInsights(sections: Section[]): DomainInsight[]
     .slice(0, 3);
 }
 
-export function generateBehavioralInsight(questionDetails: QuestionDetail[]): string {
+export function generateBehavioralInsight(
+  questionDetails: QuestionDetail[],
+  timeLimitMinutes?: number,
+): string {
   const answered = questionDetails.filter((q) => q.answered && q.timeSeconds > 0);
   if (answered.length === 0) return 'No behavioral data recorded for this test session.';
 
@@ -132,14 +135,22 @@ export function generateBehavioralInsight(questionDetails: QuestionDetail[]): st
   const lowConfCorrect = confAnswered.filter((q) => q.confidence <= 2 && q.isCorrect).length;
   const flaggedCount = answered.filter((q) => q.flagged).length;
 
+  // Dynamic pacing budget: (timeLimitMinutes * 60) / totalQuestions
+  const totalQuestions = questionDetails.length || answered.length;
+  const budgetSeconds = timeLimitMinutes
+    ? (timeLimitMinutes * 60) / totalQuestions
+    : 90; // legacy default
+  const slowThreshold = budgetSeconds * 1.2;
+  const fastThreshold = budgetSeconds * 0.55;
+
   const parts: string[] = [];
 
-  if (avgTime > 90) {
-    parts.push('Pacing is slower than the SAT time budget — the student is spending an average of ' + Math.round(avgTime) + 's per question, which may create time pressure in later sections.');
-  } else if (avgTime < 45) {
+  if (avgTime > slowThreshold) {
+    parts.push('Pacing is slower than the time budget — the student is spending an average of ' + Math.round(avgTime) + 's per question (budget: ' + Math.round(budgetSeconds) + 's), which may create time pressure in later sections.');
+  } else if (avgTime < fastThreshold) {
     parts.push('The student moves quickly through questions (' + Math.round(avgTime) + 's average), which is efficient but may indicate rushing on complex problems.');
   } else {
-    parts.push('Question pacing (' + Math.round(avgTime) + 's average) is within the typical SAT range.');
+    parts.push('Question pacing (' + Math.round(avgTime) + 's average) is within the expected range for this test.');
   }
 
   if (avgConf > 0) {
@@ -268,6 +279,7 @@ export function generateAllInsights(
   sections: Section[],
   questionDetails: QuestionDetail[],
   savedWords: SavedWord[],
+  timeLimitMinutes?: number,
 ): ReportInsights {
   const sectionInsights: Record<string, SectionInsight> = {};
   for (const section of sections) {
@@ -278,7 +290,7 @@ export function generateAllInsights(
     executiveSummary: generateExecutiveSummary(sections),
     sections: sectionInsights,
     topWeakDomains: generateWeakDomainInsights(sections),
-    behavioral: generateBehavioralInsight(questionDetails),
+    behavioral: generateBehavioralInsight(questionDetails, timeLimitMinutes),
     vocabulary: generateVocabInsight(savedWords),
     keyRecommendations: generateKeyRecommendations(sections, savedWords),
   };

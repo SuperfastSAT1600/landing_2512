@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
       studentName: tokenData.student_name,
       expiresAt: tokenData.expires_at,
       testVersionId,
+      timeLimitMinutes: tokenData.time_limit_minutes ?? 30,
     }, { status: 200 });
   } catch (error) {
     console.error('Error validating code:', error);

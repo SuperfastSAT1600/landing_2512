@@ -140,6 +140,7 @@ export async function GET(
     studentName: result.student_name,
     submittedAt: result.submitted_at,
     totalTimeSeconds: result.total_time_seconds ?? 0,
+    timeLimitMinutes: result.time_limit_minutes ?? 30,
     sections,
     questionDetails,
     savedWords: enrichedSavedWords,
@@ -148,5 +149,6 @@ export async function GET(
       domains: DOMAIN_BENCHMARKS,
     },
     editedInsights: result.edited_insights ?? null,
+    coupon: result.coupon ?? null,
   });
 }

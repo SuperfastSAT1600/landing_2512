@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { studentName, code, expiresAt: expiresAtInput, testVersionId } = await request.json();
+    const { studentName, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes } = await request.json();
 
     if (!studentName || !code) {
       return NextResponse.json({ error: 'Student name and code are required' }, { status: 400 });
@@ -106,6 +106,7 @@ export async function POST(request: NextRequest) {
         test_version_id: resolvedVersionId,
         expires_at: expiresAt.toISOString(),
         is_active: true,
+        time_limit_minutes: timeLimitMinutes && timeLimitMinutes > 0 ? timeLimitMinutes : 30,
       }]);
 
     if (insertError) {

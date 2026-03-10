@@ -38,6 +38,7 @@ export default function DiagnosisPage() {
   const [emailError, setEmailError] = useState('');
   const [studentName, setStudentName] = useState('');
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState<number>(30);
 
   const setRef = useCallback((el: HTMLInputElement | null, idx: number) => {
     inputRefs.current[idx] = el;
@@ -98,6 +99,7 @@ export default function DiagnosisPage() {
       setStudentName(data.studentName);
       setExpiresAt(data.expiresAt);
       setTestVersionId(data.testVersionId ?? null);
+      setTimeLimitMinutes(data.timeLimitMinutes ?? 30);
       setPhase('student-confirm');
     } catch {
       setError('연결 오류가 발생했습니다. 다시 시도해주세요.');
@@ -241,6 +243,7 @@ export default function DiagnosisPage() {
           studentEmail={studentEmail}
           studentName={studentName}
           testVersionId={testVersionId ?? undefined}
+          timeLimitMinutes={timeLimitMinutes}
         />
       </div>
     );

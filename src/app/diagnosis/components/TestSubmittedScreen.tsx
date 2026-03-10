@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Icon } from '@iconify/react';
-import Link from 'next/link';
 
 interface Props {
   resultId: string | null;
@@ -34,20 +33,6 @@ export function TestSubmittedScreen({ resultId }: Props) {
           Your instructor will review the results and reach out with{' '}
           <strong className="text-gray-700">personalized feedback</strong>.
         </p>
-
-        {/* View Report CTA */}
-        {resultId && (
-          <Link
-            href={`/reports/${resultId}`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white text-sm transition-opacity hover:opacity-90 mb-8"
-            style={{ background: '#071be9' }}
-          >
-            View Your Report
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-        )}
 
         {/* Info card */}
         <div

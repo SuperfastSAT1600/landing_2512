@@ -8,6 +8,7 @@ import { ReportVocabularyGap } from './components/ReportVocabularyGap';
 import { SectionHeader } from './components/SectionHeader';
 import { ChapterNav } from './components/ChapterNav';
 import { InsightBlock, GenericInsightBlock } from './components/InsightBlock';
+import { CouponCountdown } from './components/CouponCountdown';
 import { generateAllInsights } from '@/lib/report-insights';
 import { mergeInsights, getEditedFieldKeys } from '@/lib/merge-insights';
 import type { Metadata } from 'next';
@@ -45,6 +46,7 @@ export default async function ReportPage({ params }: PageProps) {
     data.sections,
     data.questionDetails,
     data.savedWords ?? [],
+    data.timeLimitMinutes,
   );
   const insights = mergeInsights(aiInsights, data.editedInsights);
   const editedKeys = getEditedFieldKeys(data.editedInsights);
@@ -223,6 +225,14 @@ export default async function ReportPage({ params }: PageProps) {
                 </div>
               </section>
             </>
+          )}
+
+          {/* Coupon Countdown */}
+          {data.coupon && (
+            <CouponCountdown
+              discountPercent={data.coupon.discountPercent}
+              expiresAt={data.coupon.expiresAt}
+            />
           )}
 
           {/* About This Report */}
