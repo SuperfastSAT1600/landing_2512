@@ -28,6 +28,7 @@ const racing = Racing_Sans_One({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-racing',
+  preload: false, // only used in Hero — don't preload on every page
 });
 
 export default function RootLayout({
