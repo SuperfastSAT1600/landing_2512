@@ -12,8 +12,15 @@ interface HeroProps {
     ctaLink?: string;
 }
 
+function normalizeCtaLink(link?: string): string {
+    if (!link) return '/curriculum';
+    if (link.startsWith('/') || link.startsWith('http')) return link;
+    return `/blog/${link}`;
+}
+
 export default function Hero({ ctaText, ctaLink }: HeroProps) {
     const titleRef = useRef<HTMLHeadingElement>(null);
+    const resolvedLink = normalizeCtaLink(ctaLink);
 
     return (
         <section className={styles.hero}>
@@ -30,7 +37,7 @@ export default function Hero({ ctaText, ctaLink }: HeroProps) {
                         가장 빠르게<br />
                     </h1>
                     <div className={styles.ctaGroup}>
-                        <Link href={ctaLink || "/curriculum"} className={styles.primaryBtn}>
+                        <Link href={resolvedLink} className={styles.primaryBtn}>
                             {ctaText || "25년 11월 SAT목표 점수 달성 인터뷰"}
                             <ArrowRight size={20} />
                         </Link>
