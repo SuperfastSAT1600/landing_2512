@@ -45,6 +45,7 @@
     border-radius: 10px;
     overflow: hidden;
     background: #1e2a42;
+    position: relative;
 }
 
 .thumbnailImage {

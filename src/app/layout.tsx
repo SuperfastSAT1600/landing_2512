@@ -15,19 +15,16 @@ export const metadata: Metadata = {
   }
 };
 
-import { Outfit, Racing_Sans_One } from 'next/font/google';
+import { Racing_Sans_One } from 'next/font/google';
 
-const outfit = Outfit({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-outfit',
-});
+// Outfit removed — body uses Pretendard via --font-sans (globals.css), not Outfit
 
 const racing = Racing_Sans_One({
   weight: '400',
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-racing',
+  preload: false, // only used in Hero — don't preload on every page
 });
 
 export default function RootLayout({
@@ -36,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${outfit.variable} ${racing.variable}`}>
+    <html lang="ko" className={racing.variable}>
       <body className="font-sans antialiased">
         {/* Force Global HMR Update - Content Refresh */}
         {/* Meta Pixel */}

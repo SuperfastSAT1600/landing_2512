@@ -9,6 +9,7 @@ export default function AdminHomeConfig() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
+    const [ctaLinkWarning, setCtaLinkWarning] = useState('');
 
     useEffect(() => {
         const adminKey = localStorage.getItem('admin_key') || '';
@@ -94,18 +95,34 @@ export default function AdminHomeConfig() {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">CTA Button Link</label>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">CTA Button Link — 포스트 Slug</label>
                             <div className="flex items-center gap-2">
-                                <LinkIcon size={16} className="text-gray-500" />
+                                <span className="text-gray-500 text-sm whitespace-nowrap">/blog/</span>
                                 <input
                                     type="text"
                                     className="w-full bg-[#151719] border border-white/10 rounded px-3 py-2 text-blue-400 focus:border-blue-500 outline-none transition-colors"
-                                    value={config.hero.ctaLink}
-                                    onChange={(e) => setConfig({ ...config, hero: { ...config.hero, ctaLink: e.target.value } })}
-                                    placeholder="/blog/your-post-slug"
+                                    value={config.hero.ctaLink.replace(/^\/blog\//, '')}
+                                    onChange={(e) => {
+                                        const slug = e.target.value.replace(/^\/blog\//, '');
+                                        setConfig({ ...config, hero: { ...config.hero, ctaLink: `/blog/${slug}` } });
+                                        setCtaLinkWarning('');
+                                    }}
+                                    onBlur={async (e) => {
+                                        const slug = e.target.value.trim().replace(/^\/blog\//, '');
+                                        if (!slug) return;
+                                        const res = await fetch(`/api/posts/${slug}/exists`);
+                                        const { exists } = await res.json();
+                                        if (!exists) {
+                                            setCtaLinkWarning(`⚠️ "${slug}" 포스트가 존재하지 않습니다. 클릭 시 404가 발생합니다.`);
+                                        }
+                                    }}
+                                    placeholder="may-sat-scholarship-event-2025"
                                 />
                             </div>
-                            <p className="text-xs text-gray-600 mt-2">Enter absolute URL or relative path (e.g., /blog/post-1)</p>
+                            {ctaLinkWarning && (
+                                <p className="text-xs text-yellow-400 mt-2 bg-yellow-400/10 border border-yellow-400/20 rounded px-2 py-1">{ctaLinkWarning}</p>
+                            )}
+                            <p className="text-xs text-gray-600 mt-2">슬러그만 입력하세요 — /blog/가 자동으로 붙습니다.</p>
                         </div>
                     </div>
                 </section>

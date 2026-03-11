@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getSortedPostsData } from '../../lib/posts';
+import { getSortedPostsData, getPostsByCategory } from '../../lib/posts';
 import Footer from '../components/Footer';
 import BlogList from './BlogList';
 
@@ -31,12 +31,9 @@ export default async function Blog({
     searchParams: Promise<{ category?: string }>;
 }) {
     const { category } = await searchParams;
-    const allPostsData = await getSortedPostsData();
-
-    // Filter logic
     const filteredPosts = category
-        ? allPostsData.filter((post) => post.category.toLowerCase().includes(category.toLowerCase()))
-        : allPostsData;
+        ? await getPostsByCategory(category)
+        : await getSortedPostsData();
 
     // Header Content Logic
     const headerContent: Record<string, { title: string; desc: string }> = {

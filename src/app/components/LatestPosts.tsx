@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Clock } from 'lucide-react';
 import styles from './LatestPosts.module.css';
 import { ScrollReveal } from './ScrollReveal';
-import { getSortedPostsData } from '../../lib/posts';
+import { getLatestPosts } from '../../lib/posts';
 
 export default async function LatestPosts() {
-    const latestPosts = await getSortedPostsData();
+    const latestPosts = await getLatestPosts(6);
 
     return (
         <section className={styles.section}>
@@ -22,11 +23,12 @@ export default async function LatestPosts() {
                             {/* Thumbnail */}
                             <div className={styles.thumbnail}>
                                 {post.featuredImage ? (
-                                    /* eslint-disable-next-line @next/next/no-img-element */
-                                    <img
+                                    <Image
                                         src={post.featuredImage}
                                         alt={post.title}
+                                        fill
                                         className={styles.thumbnailImage}
+                                        sizes="120px"
                                     />
                                 ) : (
                                     <div className={styles.thumbnailFallback}>

@@ -150,5 +150,7 @@ export async function GET(
     },
     editedInsights: result.edited_insights ?? null,
     coupon: result.coupon ?? null,
+  }, {
+    headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
   });
 }

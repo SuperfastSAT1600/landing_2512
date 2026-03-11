@@ -1,25 +1,39 @@
+import { supabase } from './supabase';
 import { StoredFeatureItem, FeatureItem } from './config';
-import { getPostData } from './posts';
 
 export async function enrichFeaturesFromPosts(
     features: StoredFeatureItem[]
 ): Promise<FeatureItem[]> {
-    return Promise.all(features.map(async (feature) => {
+    const slugs = features.map(f => f.postSlug).filter(Boolean);
+
+    if (slugs.length === 0) {
+        return features.map(f => ({
+            title: f.title,
+            description: f.description,
+            link: `/blog/${f.postSlug}`,
+        }));
+    }
+
+    const { data } = await supabase
+        .from('posts')
+        .select('id, feature_image, featured_image')
+        .in('id', slugs);
+
+    const imageMap = new Map(
+        (data ?? []).map(row => [
+            row.id as string,
+            (row.feature_image || row.featured_image) as string | undefined,
+        ])
+    );
+
+    return features.map(f => {
         const result: FeatureItem = {
-            title: feature.title,
-            description: feature.description,
-            link: `/blog/${feature.postSlug}`,
+            title: f.title,
+            description: f.description,
+            link: `/blog/${f.postSlug}`,
         };
-        try {
-            const post = await getPostData(feature.postSlug);
-            if (post) {
-                // featureImage (세로 썸네일) 우선, 없으면 featuredImage (가로) 폴백
-                const image = post.featureImage || post.featuredImage;
-                if (image) result.image = image;
-            }
-        } catch {
-            // 포스트 없으면 이미지 없이 렌더
-        }
+        const image = imageMap.get(f.postSlug);
+        if (image) result.image = image;
         return result;
-    }));
+    });
 }

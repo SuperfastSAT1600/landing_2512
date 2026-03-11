@@ -1,3 +1,4 @@
+import { unstable_cache, revalidateTag } from 'next/cache';
 import { supabase, supabaseAdmin } from './supabase';
 
 export interface StoredFeatureItem {
@@ -33,19 +34,24 @@ const DEFAULT_CONFIG: HomeConfig = {
     floatingCta: { discountLabel: "할인 혜택 보기", discountPostSlug: "" }
 };
 
-export async function getHomeConfig(): Promise<HomeConfig> {
-    const { data, error } = await supabase
-        .from('site_config')
-        .select('config')
-        .eq('id', 'home')
-        .single();
+export const getHomeConfig = unstable_cache(
+    async (): Promise<HomeConfig> => {
+        const { data, error } = await supabase
+            .from('site_config')
+            .select('config')
+            .eq('id', 'home')
+            .single();
 
-    if (error || !data) return DEFAULT_CONFIG;
-    return data.config as HomeConfig;
-}
+        if (error || !data) return DEFAULT_CONFIG;
+        return data.config as HomeConfig;
+    },
+    ['home-config'],
+    { revalidate: 300, tags: ['home-config'] }
+);
 
 export async function saveHomeConfig(config: HomeConfig): Promise<void> {
     await supabaseAdmin
         .from('site_config')
         .upsert({ id: 'home', config });
+    revalidateTag('home-config', 'default');
 }
