@@ -2,9 +2,11 @@
 
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
+import { CellSelection } from '@tiptap/pm/tables';
 import {
     Rows3, RowsIcon, Trash2,
     Columns3, ChevronLeft, ChevronRight,
+    Combine, SplitSquareHorizontal,
 } from 'lucide-react';
 
 interface TableBubbleMenuProps {
@@ -27,10 +29,11 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                 placement: 'top',
                 offset: 8,
             }}
-            shouldShow={({ editor: e }: { editor: Editor }) =>
+            shouldShow={({ editor: e, state }) =>
                 e.isActive('table') ||
                 e.isActive('tableCell') ||
-                e.isActive('tableHeader')
+                e.isActive('tableHeader') ||
+                state.selection instanceof CellSelection
             }
         >
             <div className="flex items-center gap-0.5 px-1.5 py-1 bg-[#1e2023] border border-white/10 rounded-lg shadow-xl">
@@ -111,6 +114,33 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                     className={btnBase}
                 >
                     <Columns3 size={14} className="text-red-400/70 hover:text-red-400" />
+                </button>
+
+                {divider}
+
+                {/* Merge / Split cells */}
+                <button
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().mergeCells().run();
+                    }}
+                    disabled={!editor.can().mergeCells()}
+                    title="셀 병합"
+                    className={`${btnBase} disabled:opacity-30 disabled:cursor-not-allowed`}
+                >
+                    <Combine size={14} />
+                </button>
+
+                <button
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().splitCell().run();
+                    }}
+                    disabled={!editor.can().splitCell()}
+                    title="셀 분할"
+                    className={`${btnBase} disabled:opacity-30 disabled:cursor-not-allowed`}
+                >
+                    <SplitSquareHorizontal size={14} />
                 </button>
 
                 {divider}
