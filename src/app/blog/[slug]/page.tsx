@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { getPostData, getAllPostIds, getRelatedPosts } from '../../../lib/posts';
 import Footer from '../../components/Footer';
 import { Calendar, Tag, ArrowLeft } from 'lucide-react';
@@ -132,12 +133,14 @@ export default async function Post({ params }: Props) {
 
                     {/* Featured Image */}
                     {postData.featuredImage && (
-                        <div className="w-full aspect-video rounded-2xl overflow-hidden mb-10 border border-white/5 shadow-2xl">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                        <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-10 border border-white/5 shadow-2xl">
+                            <Image
                                 src={postData.featuredImage}
                                 alt={postData.featuredImageAlt || postData.title}
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, 800px"
+                                priority
                             />
                         </div>
                     )}
@@ -181,11 +184,12 @@ export default async function Post({ params }: Props) {
                                         {/* Thumbnail */}
                                         <div className="aspect-[16/9] w-full overflow-hidden relative">
                                             {post.featuredImage ? (
-                                                /* eslint-disable-next-line @next/next/no-img-element */
-                                                <img
+                                                <Image
                                                     src={post.featuredImage}
                                                     alt={post.title}
-                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    fill
+                                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    sizes="(max-width: 768px) 100vw, 33vw"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center">

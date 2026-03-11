@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Clock, Tag } from 'lucide-react';
 import type { PostData } from '../../lib/posts';
 
@@ -26,11 +27,12 @@ export default function BlogList({ posts }: BlogListProps) {
                             {/* Featured Image */}
                             <div className="relative aspect-[16/9] overflow-hidden bg-gray-800">
                                 {post.featuredImage ? (
-                                    /* eslint-disable-next-line @next/next/no-img-element */
-                                    <img
+                                    <Image
                                         src={post.featuredImage}
                                         alt={post.title}
-                                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                                        fill
+                                        className="object-cover transform group-hover:scale-105 transition-transform duration-500"
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-gray-600">

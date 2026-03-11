@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { supabase } from './supabase';
 import { remark } from 'remark';
 import html from 'remark-html';
@@ -23,6 +24,8 @@ export interface PostData {
     [key: string]: any;
 }
 
+const LIST_COLUMNS = 'id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags, cta_featured, meta_title, meta_robots, updated_at';
+
 function mapRow(row: Record<string, unknown>): PostData {
     return {
         id: row.id as string,
@@ -44,14 +47,51 @@ function mapRow(row: Record<string, unknown>): PostData {
     };
 }
 
-export async function getSortedPostsData(): Promise<PostData[]> {
-    const { data, error } = await supabase
-        .from('posts')
-        .select('id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags, cta_featured, meta_title, meta_robots, updated_at')
-        .order('date', { ascending: false });
+export const getSortedPostsData = unstable_cache(
+    async (): Promise<PostData[]> => {
+        const { data, error } = await supabase
+            .from('posts')
+            .select(LIST_COLUMNS)
+            .order('date', { ascending: false });
 
-    if (error || !data) return [];
-    return data.map(mapRow);
+        if (error || !data) return [];
+        return data.map(mapRow);
+    },
+    ['posts-list'],
+    { revalidate: 60, tags: ['posts'] }
+);
+
+export const getLatestPosts = unstable_cache(
+    async (limit = 6): Promise<PostData[]> => {
+        const { data, error } = await supabase
+            .from('posts')
+            .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags')
+            .order('date', { ascending: false })
+            .limit(limit);
+
+        if (error || !data) return [];
+        return data.map(mapRow);
+    },
+    ['latest-posts'],
+    { revalidate: 60, tags: ['posts'] }
+);
+
+// unstable_cache는 dynamic arg를 지원하지 않으므로 category를 key에 포함하는 factory 사용
+export function getPostsByCategory(category: string) {
+    return unstable_cache(
+        async (): Promise<PostData[]> => {
+            const { data, error } = await supabase
+                .from('posts')
+                .select(LIST_COLUMNS)
+                .ilike('category', `%${category}%`)
+                .order('date', { ascending: false });
+
+            if (error || !data) return [];
+            return data.map(mapRow);
+        },
+        [`posts-by-category-${category}`],
+        { revalidate: 60, tags: ['posts'] }
+    )();
 }
 
 export async function getAllPostIds() {
@@ -82,6 +122,14 @@ export async function getPostData(id: string): Promise<PostData> {
         ...mapRow(data),
         contentHtml,
     };
+}
+
+export async function postExists(slug: string): Promise<boolean> {
+    const { count, error } = await supabase
+        .from('posts')
+        .select('id', { count: 'exact', head: true })
+        .eq('id', slug);
+    return !error && (count ?? 0) > 0;
 }
 
 export async function getRelatedPosts(currentId: string, category: string, limit: number = 3): Promise<PostData[]> {
