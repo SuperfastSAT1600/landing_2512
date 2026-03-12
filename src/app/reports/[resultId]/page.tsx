@@ -9,26 +9,28 @@ import { SectionHeader } from './components/SectionHeader';
 import { ChapterNav } from './components/ChapterNav';
 import { InsightBlock, GenericInsightBlock } from './components/InsightBlock';
 import { CouponCountdown } from './components/CouponCountdown';
-import { generateAllInsights } from '@/lib/report-insights';
+import { generateAllInsights, type ReportInsights } from '@/lib/report-insights';
 import { mergeInsights, getEditedFieldKeys } from '@/lib/merge-insights';
+// REQ-001: Call DB logic directly — no HTTP self-fetch (was crashing on tutoring.superfastsat.com)
+import { fetchReportData } from '@/lib/report-data';
 import type { Metadata } from 'next';
 
 interface PageProps {
   params: Promise<{ resultId: string }>;
 }
 
-async function getReportData(resultId: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/reports/${resultId}`, {
-    cache: 'no-store',
-  });
-  if (!res.ok) return null;
-  return res.json();
-}
+const EMPTY_INSIGHTS: ReportInsights = {
+  executiveSummary: '',
+  sections: {},
+  topWeakDomains: [],
+  behavioral: '',
+  vocabulary: null,
+  keyRecommendations: [],
+};
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { resultId } = await params;
-  const data = await getReportData(resultId);
+  const data = await fetchReportData(resultId);
   if (!data) return { title: 'Report Not Found' };
   return {
     title: `${data.studentName} — SAT Diagnostic Report`,
@@ -38,16 +40,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ReportPage({ params }: PageProps) {
   const { resultId } = await params;
-  const data = await getReportData(resultId);
+  const data = await fetchReportData(resultId);
 
   if (!data) notFound();
 
-  const aiInsights = generateAllInsights(
-    data.sections,
-    data.questionDetails,
-    data.savedWords ?? [],
-    data.timeLimitMinutes,
-  );
+  // REQ-004: generateAllInsights is guarded — malformed data won't crash the page
+  let aiInsights: ReportInsights;
+  try {
+    aiInsights = generateAllInsights(
+      data.sections,
+      data.questionDetails,
+      data.savedWords ?? [],
+      data.timeLimitMinutes,
+    );
+  } catch (err) {
+    console.error('[ReportPage] generateAllInsights failed:', err);
+    aiInsights = EMPTY_INSIGHTS;
+  }
   const insights = mergeInsights(aiInsights, data.editedInsights);
   const editedKeys = getEditedFieldKeys(data.editedInsights);
 
