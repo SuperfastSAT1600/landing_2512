@@ -35,6 +35,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${data.studentName} — SAT Diagnostic Report`,
     description: 'Detailed performance analysis from the SuperfastSAT diagnostic test.',
+    openGraph: {
+      title: `${data.studentName} — SAT Diagnostic Report`,
+      description: 'SuperfastSAT 진단 결과를 확인하세요.',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${data.studentName} — SAT Diagnostic Report`,
+      description: 'SuperfastSAT 진단 결과를 확인하세요.',
+    },
   };
 }
 
