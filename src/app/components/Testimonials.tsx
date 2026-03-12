@@ -19,7 +19,7 @@ export default function Testimonials({ reviews = [] }: TestimonialsProps) {
             <div className={styles.container}>
                 <ScrollReveal>
                     <div className={styles.header}>
-                        <h2 className={styles.title}>학생과 학부모님들의 후기</h2>
+                        <h2 className={styles.title}>SuperfastSAT 수업 후기</h2>
                         <p className={styles.subtitle}>
                             많은 학생들이 목표 점수를 달성했습니다.<br />
                             다음 주인공은 여러분입니다.

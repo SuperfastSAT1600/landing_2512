@@ -218,3 +218,12 @@
         margin-right: auto;
     }
 }
+
+/* REQ-003: backdrop-filter 모바일 제거 — 저가 폰 GPU 부하 완화 */
+@media (max-width: 768px) {
+    .card {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(30, 41, 59, 0.92);
+    }
+}

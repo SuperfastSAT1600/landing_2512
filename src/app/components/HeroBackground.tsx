@@ -6,6 +6,18 @@ interface HeroBackgroundProps {
     titleRef?: RefObject<HTMLHeadingElement | null>;
 }
 
+// REQ-002: Color LUT — computed once at module level, never again
+const COLOR_LUT: string[] = Array.from({ length: 101 }, (_, i) => {
+    const t = i / 100;
+    const r = Math.max(7, Math.min(255, Math.round(7 + t * 150)));
+    const g = Math.max(27, Math.min(255, Math.round(27 + t * 220)));
+    const b = Math.max(233, Math.min(255, Math.round(233 + t * 22)));
+    return `rgb(${r}, ${g}, ${b})`;
+});
+
+const getPaletteColor = (t: number): string =>
+    COLOR_LUT[Math.min(100, Math.round(t * 100))];
+
 export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -55,13 +67,6 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
 
         // Frame-rate throttle state (targets ~30fps on low/medium)
         let lastTime = 0;
-
-        const getPaletteColor = (t: number, alpha: number) => {
-            const r = Math.max(7, Math.min(255, 7 + t * 150));
-            const g = Math.max(27, Math.min(255, 27 + t * 220));
-            const b = Math.max(233, Math.min(255, 233 + t * 22));
-            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        };
 
         const resize = () => {
             if (!canvas || !ctx) return;
@@ -119,6 +124,9 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
             originX: number = 0;
             originY: number = 0;
             angle: number = 0;
+            // REQ-003: precomputed trig values — set once in reset(), reused every frame
+            cosAngle: number = 0;
+            sinAngle: number = 0;
             speed: number = 0;
             progress: number = 0;
             maxProgress: number = 0;
@@ -137,6 +145,9 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
                 this.originY = originY;
 
                 this.angle = Math.random() * Math.PI * 2;
+                // REQ-003: compute once here, not inside draw() every frame
+                this.cosAngle = Math.cos(this.angle);
+                this.sinAngle = Math.sin(this.angle);
                 this.speed = Math.random() * 0.007 + 0.004;
                 this.progress = 0;
                 this.maxProgress = 1.3 + Math.random() * 0.2;
@@ -158,13 +169,15 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
                 const p = this.progress;
                 const lp = Math.max(0, p - this.length);
 
+                // REQ-003: use precomputed cosAngle/sinAngle — no Math.cos/sin per frame
                 const getPos = (prog: number) => {
                     const distMultiplier = Math.pow(Math.max(0, 1.3 - prog), 1.5);
                     const maxDim = Math.max(parentWidth, parentHeight);
                     const dist = maxDim * distMultiplier * 0.8;
-                    const x = this.originX + Math.cos(this.angle) * dist;
-                    const y = this.originY + Math.sin(this.angle) * dist;
-                    return { x, y };
+                    return {
+                        x: this.originX + this.cosAngle * dist,
+                        y: this.originY + this.sinAngle * dist,
+                    };
                 };
 
                 const head = getPos(p);
@@ -175,20 +188,26 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
                 ctx.lineTo(head.x, head.y);
 
                 const intensity = this.isBright ? p : p * 0.7;
-                const color = getPaletteColor(intensity, 1.0);
+                const color = getPaletteColor(intensity);
 
-                const grad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
-                grad.addColorStop(1, 'rgba(7, 27, 233, 0)');
-                grad.addColorStop(0, color);
+                // REQ-001: Low/Medium tier — skip gradient, use solid color
+                // High tier keeps gradient for richer visuals on capable devices
+                if (qualityTier === 'high') {
+                    const grad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
+                    grad.addColorStop(1, 'rgba(7, 27, 233, 0)');
+                    grad.addColorStop(0, color);
+                    ctx.strokeStyle = grad;
+                } else {
+                    ctx.strokeStyle = color;
+                }
 
-                ctx.strokeStyle = grad;
                 ctx.lineWidth = this.widthBase * (2.0 - p);
                 ctx.lineCap = 'round';
                 ctx.globalAlpha = this.alphaBase * p * 1.2;
 
-                // Shadows only on high tier
-                if (qualityTier === 'high' && (this.isBright || p > 0.8)) {
-                    ctx.shadowBlur = 15 * p;
+                // REQ-004: Shadow only on high tier, AND condition (was OR), blur 8 (was 15)
+                if (qualityTier === 'high' && this.isBright && p > 0.7) {
+                    ctx.shadowBlur = 8 * p;
                     ctx.shadowColor = brandColor;
                 }
 
@@ -200,7 +219,8 @@ export default function HeroBackground({ titleRef }: HeroBackgroundProps) {
 
         const initStreams = () => {
             streams = [];
-            const countMap: Record<string, number> = { low: 30, medium: 60, high: 120 };
+            // REQ-005: reduced stream counts — low 20, medium 45, high 80
+            const countMap: Record<string, number> = { low: 20, medium: 45, high: 80 };
             const count = countMap[qualityTier];
             for (let i = 0; i < count; i++) {
                 streams.push(new Stream());

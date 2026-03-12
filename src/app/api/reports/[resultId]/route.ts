@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { SECTION_BENCHMARKS, DOMAIN_BENCHMARKS } from '@/lib/report-benchmarks';
 import { difficultyToLevel } from '@/lib/vocab-levels';
-import type { TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';
+import diagnosticTest1, { type TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';
 
 /**
  * GET /api/reports/[resultId]
@@ -26,7 +26,7 @@ export async function GET(
     return NextResponse.json({ error: 'Report not found' }, { status: 404 });
   }
 
-  // Fetch questions from the version (or fall back to current version)
+  // Fetch questions from the version (or fall back to current version, then hardcoded)
   let questions: TestQuestion[] = [];
   const versionId = result.test_version_id;
 
@@ -45,6 +45,11 @@ export async function GET(
       .eq('is_current', true)
       .maybeSingle();
     if (current?.questions) questions = current.questions as TestQuestion[];
+  }
+
+  // Last-resort fallback: use hardcoded test data so reports always render
+  if (questions.length === 0) {
+    questions = diagnosticTest1.questions as TestQuestion[];
   }
 
   const answers: Record<string, string> = result.answers ?? {};

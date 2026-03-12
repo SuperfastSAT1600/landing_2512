@@ -61,7 +61,8 @@ export function DiagnosticTestView({
   const hasPassage = !!currentQuestion?.passage;
 
   // Allow per-student override; fall back to test data's built-in timeLimit
-  const effectiveTimeLimit = timeLimitMinutes ? timeLimitMinutes * 60 : timeLimit;
+  // Both values are in minutes — useTestTimer handles minutes→seconds conversion internally
+  const effectiveTimeLimit = timeLimitMinutes ?? timeLimit ?? null;
   const timer = useTestTimer(effectiveTimeLimit, !!startTime);
 
   // Auto-submit when time runs out
