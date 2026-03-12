@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import styles from './LiveStatus.module.css';
 import { useLiveStatus } from '../context/LiveStatusContext';
 
@@ -40,15 +40,17 @@ export default function LiveStatus() {
     const [relativeTime, setRelativeTime] = useState(RELATIVE_TIMES[0]);
     const { injectedMessage } = useLiveStatus();
     const isDiagnosis = pathname?.startsWith('/diagnosis');
+    // REQ-007: respect prefers-reduced-motion — skip interval + animation on low-power preference
+    const prefersReduced = useReducedMotion();
 
     useEffect(() => {
-        if (injectedMessage) return;
+        if (injectedMessage || prefersReduced) return;
         const timer = setInterval(() => {
             setIndex((prev) => (prev + 1) % MESSAGES.length);
             setRelativeTime(RELATIVE_TIMES[Math.floor(Math.random() * RELATIVE_TIMES.length)]);
         }, 4000);
         return () => clearInterval(timer);
-    }, [injectedMessage]);
+    }, [injectedMessage, prefersReduced]);
 
     const current = injectedMessage ?? MESSAGES[index];
     const displayKey = injectedMessage ? `injected-${injectedMessage.text}` : `cycle-${index}`;
@@ -64,19 +66,27 @@ export default function LiveStatus() {
                 <span className={styles.divider}>|</span>
             </div>
             <div className={styles.textContainer}>
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={displayKey}
-                        initial={{ x: 20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: -20, opacity: 0 }}
-                        transition={{ duration: 0.4, ease: 'easeOut' }}
-                        className={styles.text}
-                    >
+                {prefersReduced ? (
+                    // REQ-007: static render — no JS interval or GPU compositing
+                    <div className={styles.text}>
                         <span className={styles.time}>{relativeTime}</span>
                         {current.text}
-                    </motion.div>
-                </AnimatePresence>
+                    </div>
+                ) : (
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={displayKey}
+                            initial={{ x: 20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -20, opacity: 0 }}
+                            transition={{ duration: 0.4, ease: 'easeOut' }}
+                            className={styles.text}
+                        >
+                            <span className={styles.time}>{relativeTime}</span>
+                            {current.text}
+                        </motion.div>
+                    </AnimatePresence>
+                )}
             </div>
         </div>
     );

@@ -256,7 +256,7 @@ export default function DiagnosisPage() {
         <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
           SAT 진단 테스트
         </h1>
-        <p className="text-xl text-gray-400">30분 진단테스트로 현재 내 실력을 확인해보세요.</p>
+        <p className="text-xl text-gray-400">진단테스트로 현재 실력을 확인해보세요.</p>
       </div>
 
       <div className="w-full max-w-md bg-[#09090b] rounded-2xl border border-white/5 p-6 md:p-8 shadow-2xl">

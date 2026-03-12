@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 import styles from './Features.module.css';
 import type { FeatureItem } from '@/lib/config';
 
@@ -117,11 +118,13 @@ export default function Features({ items }: FeaturesProps) {
                                     {/* Background visual */}
                                     <div className={styles.cardBg}>
                                         {feature.image ? (
-                                            /* eslint-disable-next-line @next/next/no-img-element */
-                                            <img
+                                            // REQ-002: next/image for lazy-loading + automatic WebP/AVIF
+                                            <Image
+                                                fill
                                                 src={feature.image}
                                                 alt=""
                                                 className={styles.cardImage}
+                                                sizes="(max-width: 480px) 260px, (max-width: 768px) 300px, 33vw"
                                             />
                                         ) : (
                                             <div className={styles.cardVisualFallback}>

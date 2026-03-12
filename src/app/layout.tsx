@@ -34,6 +34,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className={racing.variable}>
+      <head>
+        {/* REQ-006: preconnect to Pretendard CDN — eliminates DNS + TLS handshake delay */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+      </head>
       <body className="font-sans antialiased">
         {/* Force Global HMR Update - Content Refresh */}
         {/* Meta Pixel */}
