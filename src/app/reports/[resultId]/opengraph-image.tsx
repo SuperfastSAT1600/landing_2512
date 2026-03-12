@@ -7,7 +7,8 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: { resultId: string } }) {
   const data = await fetchReportData(params.resultId);
 
-  const name = data?.studentName ?? 'SAT Diagnostic Report';
+  const raw = data?.studentName ?? '—';
+  const name = raw.length > 3 ? raw.slice(0, 3) + '**' : raw;
   const totalCorrect = data?.sections.reduce((sum, s) => sum + s.correctCount, 0) ?? 0;
   const totalQuestions = data?.sections.reduce((sum, s) => sum + s.totalQuestions, 0) ?? 0;
   const overallPct = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
@@ -22,7 +23,8 @@ export default async function Image({ params }: { params: { resultId: string } }
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          padding: '80px 96px',
+          alignItems: 'flex-start',
+          padding: '0 120px',
           fontFamily: 'sans-serif',
           position: 'relative',
           overflow: 'hidden',
@@ -39,70 +41,60 @@ export default async function Image({ params }: { params: { resultId: string } }
           }}
         />
 
-        {/* Label row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40 }}>
-          <div style={{ height: 1, width: 40, background: '#6085FF' }} />
-          <span
-            style={{
-              fontSize: 22,
-              fontWeight: 700,
-              color: '#6085FF',
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-            }}
-          >
-            SAT Diagnostic Report · SuperfastSAT
-          </span>
-        </div>
-
-        {/* Student name */}
+        {/* SAT Diagnostic Report */}
         <div
           style={{
-            fontSize: 96,
-            fontWeight: 800,
-            color: '#ffffff',
-            lineHeight: 1.05,
-            letterSpacing: '-0.02em',
-            marginBottom: 48,
+            fontSize: 28,
+            fontWeight: 700,
+            color: '#6085FF',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            marginBottom: 36,
           }}
         >
-          {name}
+          SAT Diagnostic Report
         </div>
 
-        {/* Score */}
+        {/* 학생이름  00%  00/00 */}
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 24,
+            alignItems: 'baseline',
+            gap: 40,
+            flexWrap: 'nowrap',
           }}
         >
-          <div
+          <span
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(96, 133, 255, 0.12)',
-              border: '1px solid rgba(96, 133, 255, 0.3)',
-              borderRadius: 20,
-              padding: '28px 56px',
+              fontSize: 88,
+              fontWeight: 800,
+              color: '#ffffff',
+              letterSpacing: '-0.02em',
+              lineHeight: 1,
             }}
           >
-            <span style={{ fontSize: 80, fontWeight: 700, color: '#6085FF', lineHeight: 1 }}>
-              {overallPct}%
-            </span>
-            <span
-              style={{
-                fontSize: 20,
-                color: '#94a3b8',
-                letterSpacing: '0.15em',
-                marginTop: 10,
-              }}
-            >
-              정답률
-            </span>
-          </div>
+            {name}
+          </span>
+          <span
+            style={{
+              fontSize: 72,
+              fontWeight: 700,
+              color: '#6085FF',
+              lineHeight: 1,
+            }}
+          >
+            {overallPct}%
+          </span>
+          <span
+            style={{
+              fontSize: 52,
+              fontWeight: 600,
+              color: '#94a3b8',
+              lineHeight: 1,
+            }}
+          >
+            {totalCorrect}/{totalQuestions}
+          </span>
         </div>
       </div>
     ),
