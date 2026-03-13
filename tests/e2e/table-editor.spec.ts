@@ -297,6 +297,80 @@ test.describe('REQ-001/002 — Cell merge and split', () => {
 });
 
 // ---------------------------------------------------------------------------
+// REQ-006: 드래그 선택 후 서식 일괄 적용
+// ---------------------------------------------------------------------------
+
+test.describe('REQ-006 — Drag-select text and apply formatting', () => {
+  test('drag-select text across cell content and apply bold', async ({ page }) => {
+    await gotoEditor(page);
+    await insertTable(page);
+
+    const firstDataCell = page.locator('.ProseMirror table td').first();
+    await firstDataCell.click();
+    await page.keyboard.type('Hello World');
+
+    // Select all text in cell via keyboard (Ctrl+A selects all in ProseMirror can be unreliable; use Home/Shift+End)
+    await page.keyboard.press('Home');
+    await page.keyboard.down('Shift');
+    await page.keyboard.press('End');
+    await page.keyboard.up('Shift');
+
+    // Verify text is selected and bold button is available, then apply
+    const boldBtn = page.locator('button[title*="Bold"], button[title="굵게"]').first();
+    await expect(boldBtn).toBeVisible({ timeout: 5_000 });
+    await boldBtn.click();
+
+    await expect(firstDataCell.locator('strong')).toContainText('Hello World');
+  });
+
+  test('drag-select text across cell content and apply italic', async ({ page }) => {
+    await gotoEditor(page);
+    await insertTable(page);
+
+    const firstDataCell = page.locator('.ProseMirror table td').first();
+    await firstDataCell.click();
+    await page.keyboard.type('Italic Me');
+
+    await page.keyboard.press('Home');
+    await page.keyboard.down('Shift');
+    await page.keyboard.press('End');
+    await page.keyboard.up('Shift');
+
+    const italicBtn = page.locator('button[title*="Italic"], button[title="기울임"]').first();
+    await expect(italicBtn).toBeVisible({ timeout: 5_000 });
+    await italicBtn.click();
+
+    await expect(firstDataCell.locator('em')).toContainText('Italic Me');
+  });
+
+  test('mouse drag-select across multiple characters applies bold', async ({ page }) => {
+    await gotoEditor(page);
+    await insertTable(page);
+
+    const firstDataCell = page.locator('.ProseMirror table td').first();
+    await firstDataCell.click();
+    await page.keyboard.type('DragSelect');
+
+    // Get bounding box of the cell text and drag to select it
+    const box = await firstDataCell.boundingBox();
+    if (!box) throw new Error('Cell bounding box not found');
+
+    // Drag from start to end of text content
+    await page.mouse.move(box.x + 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 4, box.y + box.height / 2, { steps: 10 });
+    await page.mouse.up();
+
+    // Apply bold via toolbar
+    const boldBtn = page.locator('button[title*="Bold"], button[title="굵게"]').first();
+    await boldBtn.click();
+
+    // Verify bold applied
+    await expect(firstDataCell.locator('strong')).toBeVisible({ timeout: 5_000 });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Regression: Existing row/column operations still work
 // ---------------------------------------------------------------------------
 

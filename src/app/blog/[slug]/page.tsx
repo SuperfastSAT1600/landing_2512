@@ -151,7 +151,7 @@ export default async function Post({ params }: Props) {
                     </h1>
 
                     {/* Content */}
-                    <div className="prose prose-invert prose-base sm:prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-a:text-blue-400 prose-img:rounded-xl">
+                    <div className="prose prose-invert prose-base sm:prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-a:text-blue-400 prose-img:rounded-xl prose-table:border-collapse [&_td]:border [&_th]:border [&_td]:border-white/10 [&_th]:border-white/10 [&_td]:p-2 [&_th]:p-2">
                         <div dangerouslySetInnerHTML={{ __html: postData.contentHtml || '' }} />
                     </div>
 
