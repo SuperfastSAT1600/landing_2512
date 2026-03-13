@@ -12,6 +12,7 @@ import { Suspense } from 'react';
 import SeoPanel from '@/components/editor/seo/SeoPanel';
 import SocialPreview from '@/components/editor/seo/SocialPreview';
 import { TableBubbleMenu } from '@/components/editor/TableBubbleMenu';
+import { TextBubbleMenu } from '@/components/editor/TextBubbleMenu';
 
 import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -1027,6 +1028,7 @@ function BlogEditor() {
                             >
                                 <EditorContent editor={editor} className="text-gray-200" />
                                 <TableBubbleMenu editor={editor} />
+                                <TextBubbleMenu editor={editor} />
                             </div>
                         </div>
                     </div>
@@ -1115,6 +1117,7 @@ function BlogEditor() {
                             >
                                 <EditorContent editor={editor} className="text-gray-200" />
                                 <TableBubbleMenu editor={editor} />
+                                <TextBubbleMenu editor={editor} />
                             </div>
                         </div>
                     ) : (

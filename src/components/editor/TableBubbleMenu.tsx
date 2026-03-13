@@ -125,23 +125,28 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                         editor.chain().focus().mergeCells().run();
                     }}
                     disabled={!editor.can().mergeCells()}
-                    title="셀 병합"
+                    title={
+                        editor.can().mergeCells()
+                            ? '셀 병합'
+                            : '셀 병합 (여러 셀을 드래그로 선택 후 클릭)'
+                    }
                     className={`${btnBase} disabled:opacity-30 disabled:cursor-not-allowed`}
                 >
                     <Combine size={14} />
                 </button>
 
-                <button
-                    onMouseDown={(e) => {
-                        e.preventDefault();
-                        editor.chain().focus().splitCell().run();
-                    }}
-                    disabled={!editor.can().splitCell()}
-                    title="셀 분할"
-                    className={`${btnBase} disabled:opacity-30 disabled:cursor-not-allowed`}
-                >
-                    <SplitSquareHorizontal size={14} />
-                </button>
+                {editor.can().splitCell() && (
+                    <button
+                        onMouseDown={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().splitCell().run();
+                        }}
+                        title="셀 분할"
+                        className={btnBase}
+                    >
+                        <SplitSquareHorizontal size={14} />
+                    </button>
+                )}
 
                 {divider}
 
