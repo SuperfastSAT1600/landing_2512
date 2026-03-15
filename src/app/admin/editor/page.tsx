@@ -24,6 +24,7 @@ import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
+import { CellSelection, cellAround } from '@tiptap/pm/tables';
 import Youtube from '@tiptap/extension-youtube';
 import { Markdown } from 'tiptap-markdown';
 
@@ -94,6 +95,7 @@ function BlogEditor() {
     const inlineFileInputRef = useRef<HTMLInputElement>(null);
     const [pendingContent, setPendingContent] = useState<string | null>(null);
     const pendingContentRef = useRef<string | null>(null);
+    const anchorCellRef = useRef<number | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -160,11 +162,26 @@ function BlogEditor() {
                     'prose-table:border-collapse [&_td]:border [&_th]:border [&_td]:border-white/10 [&_th]:border-white/10 ' +
                     '[&_td]:p-2 [&_th]:p-2',
             },
-            handleClick(_view, _pos, event) {
+            handleClick(view, pos, event) {
+                // 링크 클릭 방지
                 const target = event.target as HTMLElement;
                 if (target.tagName === 'A' || target.closest('a')) {
                     event.preventDefault();
                     return true;
+                }
+                // Shift+클릭 CellSelection
+                const $pos = view.state.doc.resolve(pos);
+                const $cell = cellAround($pos);
+                if ($cell !== null) {
+                    const cellPos = $cell.pos;
+                    if (event.shiftKey && anchorCellRef.current !== null) {
+                        const sel = CellSelection.create(view.state.doc, anchorCellRef.current, cellPos);
+                        view.dispatch(view.state.tr.setSelection(sel));
+                        return true;
+                    }
+                    anchorCellRef.current = cellPos;
+                } else {
+                    anchorCellRef.current = null;
                 }
                 return false;
             },

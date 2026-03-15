@@ -29,12 +29,16 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                 placement: 'top',
                 offset: 8,
             }}
-            shouldShow={({ editor: e, state }) =>
-                e.isActive('table') ||
-                e.isActive('tableCell') ||
-                e.isActive('tableHeader') ||
-                state.selection instanceof CellSelection
-            }
+            shouldShow={({ editor: e, state }) => {
+                const inTable =
+                    e.isActive('table') ||
+                    e.isActive('tableCell') ||
+                    e.isActive('tableHeader');
+                if (!inTable) return false;
+                // 텍스트가 선택된 경우 TextBubbleMenu에 양보
+                if (!state.selection.empty && !(state.selection instanceof CellSelection)) return false;
+                return true;
+            }}
         >
             <div className="flex items-center gap-0.5 px-1.5 py-1 bg-[#1e2023] border border-white/10 rounded-lg shadow-xl">
                 {/* Row controls */}
