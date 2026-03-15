@@ -3,7 +3,7 @@ import { getSortedPostsData } from '../lib/posts';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const posts = await getSortedPostsData();
-    const baseUrl = 'https://www.satmasterclass.com';
+    const baseUrl = 'https://www.superfastsat.com';
 
     // Filter out noindex posts from sitemap
     const indexablePosts = posts.filter((post) => {
