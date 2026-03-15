@@ -2,6 +2,7 @@
 
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
+import { TextSelection } from '@tiptap/pm/state';
 import { CellSelection } from '@tiptap/pm/tables';
 import {
     Rows3, RowsIcon, Trash2,
@@ -35,8 +36,8 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                     e.isActive('tableCell') ||
                     e.isActive('tableHeader');
                 if (!inTable) return false;
-                // 텍스트가 선택된 경우 TextBubbleMenu에 양보
-                if (!state.selection.empty && !(state.selection instanceof CellSelection)) return false;
+                // 텍스트 드래그 선택(TextSelection, non-empty)인 경우만 TextBubbleMenu에 양보
+                if (state.selection instanceof TextSelection && !state.selection.empty) return false;
                 return true;
             }}
         >

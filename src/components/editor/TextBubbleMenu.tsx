@@ -2,6 +2,7 @@
 
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
+import { TextSelection } from '@tiptap/pm/state';
 import { CellSelection } from '@tiptap/pm/tables';
 import { Bold, Italic, Strikethrough, Code, ChevronLeft, ChevronRight, Rows3, RowsIcon } from 'lucide-react';
 
@@ -30,8 +31,8 @@ export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
             options={{ placement: 'top', offset: 8 }}
             shouldShow={({ state }) => {
                 const { selection } = state;
+                if (!(selection instanceof TextSelection)) return false;
                 if (selection.empty) return false;
-                if (selection instanceof CellSelection) return false;
                 return true;
             }}
         >
