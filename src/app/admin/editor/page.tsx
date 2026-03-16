@@ -123,6 +123,7 @@ function BlogEditor() {
     const [metaRobots, setMetaRobots] = useState('');
     const [settingsTab, setSettingsTab] = useState<'general' | 'seo'>('general');
     const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
+    const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
 
     // Inline image alt text dialog
     const [altTextDialog, setAltTextDialog] = useState<{ url: string; fileName: string } | null>(null);
@@ -307,6 +308,35 @@ function BlogEditor() {
             alert('저장 중 오류 발생');
         } finally {
             setSaving(false);
+        }
+    };
+
+    // AI SEO content generation (excerpt + meta description)
+    const handleGenerateSeo = async () => {
+        if (!title) return alert('제목을 먼저 입력해주세요.');
+        const htmlContent = editor?.getHTML() || '';
+        if (!htmlContent || htmlContent === '<p></p>') return alert('본문 내용을 먼저 입력해주세요.');
+        setIsGeneratingSeo(true);
+        try {
+            const res = await fetch('/api/admin/generate-seo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': localStorage.getItem('admin_key') || '',
+                },
+                body: JSON.stringify({ title, content: htmlContent, focusKeyword }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setExcerpt(data.excerpt);
+                setDescription(data.description);
+            } else {
+                alert('SEO 내용 생성 실패: ' + (data.error || 'Unknown error'));
+            }
+        } catch {
+            alert('SEO 내용 생성 중 오류 발생');
+        } finally {
+            setIsGeneratingSeo(false);
         }
     };
 
@@ -1206,8 +1236,17 @@ function BlogEditor() {
                         <div className="space-y-8">
                             {/* Excerpt */}
                             <div className="space-y-3">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1">
-                                    <Search size={12} /> Excerpt
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center justify-between">
+                                    <span className="flex items-center gap-1"><Search size={12} /> Excerpt</span>
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateSeo}
+                                        disabled={isGeneratingSeo || !title}
+                                        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-purple-600/20 hover:bg-purple-600/40 text-purple-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors normal-case tracking-normal"
+                                    >
+                                        {isGeneratingSeo ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                                        AI
+                                    </button>
                                 </label>
                                 <textarea
                                     value={excerpt}
@@ -1351,8 +1390,17 @@ function BlogEditor() {
 
                             {/* Meta Description */}
                             <div className="space-y-3">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1">
-                                    <Search size={12} /> Meta Description
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center justify-between">
+                                    <span className="flex items-center gap-1"><Search size={12} /> Meta Description</span>
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateSeo}
+                                        disabled={isGeneratingSeo || !title}
+                                        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-purple-600/20 hover:bg-purple-600/40 text-purple-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors normal-case tracking-normal"
+                                    >
+                                        {isGeneratingSeo ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                                        AI
+                                    </button>
                                 </label>
                                 <textarea
                                     value={description}
