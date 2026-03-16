@@ -12,8 +12,6 @@
 
 **Memory**: Store architectural decisions (`create_entities` type="decision"). Search for similar patterns before solving (`search_nodes`). Store user preferences for cross-session consistency.
 
-**Render**: Check logs/metrics before debugging production (`list_logs`, `get_metrics`). Validate workspace before creating resources.
-
 **Filesystem MCP**: Use `read_multiple_files` for batch reads. Use `directory_tree` for structure, `search_files` for patterns.
 
 **Playwright**:

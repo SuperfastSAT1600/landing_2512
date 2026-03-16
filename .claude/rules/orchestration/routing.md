@@ -14,7 +14,7 @@ Task scope?
 
 When specialist needed: delegate + work in parallel if possible; delegate + wait if not.
 **Handle directly**: <10 lines, no domain knowledge, follows existing pattern.
-**Spec always precedes parallel implementation** — see `workflow/spec-rules.md`.
+**Spec always precedes parallel implementation** — see Phase 1 of `task-protocol.md`.
 
 ---
 

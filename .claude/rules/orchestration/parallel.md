@@ -12,7 +12,7 @@
 | **Token cost** | Lower | Higher (each teammate = separate instance) |
 | **Nesting** | Teammates CAN spawn subagents | No nested teams |
 
-**Spec required**: parallel implementation subagents and Agent Teams always need a spec first. Read-only / single specialist subagents do not. See `workflow/spec-rules.md`.
+**Spec required**: parallel implementation subagents and Agent Teams always need a spec first. Read-only / single specialist subagents do not. See Phase 1 of `task-protocol.md`.
 
 ---
 
@@ -24,6 +24,35 @@
 - Task B needs Task A output → **SEQUENTIAL**
 
 **Common patterns**: Feature split (widget1 + widget2 in parallel) | Domain split (auth-specialist + backend-specialist) | Quality gate (code-reviewer + frontend-specialist) | Exploration (multiple Explore agents)
+
+---
+
+## Fixed 6-Role Agent Team Pipeline
+
+When using Agent Teams (via `/parallel-tdd`), the team structure is always this exact pipeline:
+
+```
+Lead (orchestrator)
+├── Research Agent  — libs, APIs, patterns, best practices; no code → research.md
+│       ↓
+├── Architect       — technical plan, interfaces, file tree, contracts; no code → arch.md
+│       ↓ (both builders receive arch.md + REQ split)
+├── Builder 1       — implements first half of REQs; strict TDD; worktree
+├── Builder 2       — implements second half of REQs; strict TDD; worktree
+│       ↓ (both complete)
+├── Verifier/QA     — edge cases, security, acceptance; reports bugs via SendMessage
+└── Integrator      — deps, build, migration, CI; ensures system runs in reality
+```
+
+**Task chain created by `create-tdd-team.sh`**:
+- `RESEARCH` (no blockedBy)
+- `ARCH` (blockedBy: RESEARCH)
+- `REQ-001…N/2` per REQ (blockedBy: ARCH) → assigned to Builder 1
+- `REQ-N/2+1…N` per REQ (blockedBy: ARCH) → assigned to Builder 2
+- `VERIFY` (blockedBy: all REQ tasks)
+- `INTEGRATE` (blockedBy: all REQ tasks)
+
+**Monitor**: Run `bash .claude/scripts/team-dashboard.sh <team-name>` to open a 4-pane tmux dashboard.
 
 ---
 

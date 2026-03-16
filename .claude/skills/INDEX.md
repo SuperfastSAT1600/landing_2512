@@ -2,7 +2,7 @@
 
 Lightweight directory of all available skills. Load full skill files only when needed for specific tasks.
 
-**Total Skills**: 22 (21 domain patterns + 1 meta-skill)
+**Total Skills**: 34 (32 domain patterns + 1 meta-skill + 11 GEO skills — see GEO section below)
 
 **Documentation-Based Skills** (2026-01-23):
 Nine skills are now sourced from authoritative references (OpenAPI Spec, OWASP, GraphQL Spec, PostgreSQL docs, GitHub docs, RFC standards, Anthropic/OpenAI guides, LangChain, academic research). See individual skill files for sources.
@@ -65,6 +65,26 @@ Skills now use directories for bundled resources:
 | **project-guidelines/** | Project-specific patterns and conventions | Project onboarding | - |
 | **user-intent-patterns/** | Natural language → command routing | Intent classification | - |
 
+## GEO / AI Search Optimization
+
+Generative Engine Optimization (GEO) skills for improving visibility in AI-powered search engines (ChatGPT, Perplexity, Google AI Overviews, Gemini, Bing Copilot). Use `geo/` as the entry point for full audits.
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **geo/** | Main skill: 13 GEO commands, scoring methodology, sub-skill orchestration | Any GEO/AI SEO task | - |
+| **geo-audit/** | Full audit orchestration: 5-agent parallel analysis, composite scoring | Running a complete GEO audit | - |
+| **geo-ai-visibility/** | Citability scoring, AI crawler access, llms.txt validation, brand mentions | AI visibility analysis | - |
+| **geo-brand-mentions/** | Brand scanning across Wikipedia, Reddit, YouTube, LinkedIn (14+ platforms) | Brand authority analysis | - |
+| **geo-citability/** | AI citation readiness scoring (optimal: 134-167 words/passage) | Content citability optimization | - |
+| **geo-content/** | E-E-A-T content quality assessment (4×25 pts) | Content quality audits | - |
+| **geo-crawlers/** | AI crawler detection and robots.txt validation (12+ crawlers) | Crawler access analysis | - |
+| **geo-llmstxt/** | /llms.txt file validation and generation for AI discoverability | LLM text file creation | - |
+| **geo-platform-optimizer/** | Platform-specific optimization for ChatGPT/Perplexity/Google/Gemini/Bing | Platform-specific GEO | - |
+| **geo-report/** | Markdown GEO report generation with 30-day roadmap | Report creation | - |
+| **geo-report-pdf/** | Professional PDF report generation with visualizations | Client-ready PDF reports | - |
+| **geo-schema/** | JSON-LD schema detection, validation, generation | Schema markup work | templates/ |
+| **geo-technical/** | Technical SEO: SSR dependency, Core Web Vitals, security for AI crawlers | Technical GEO audits | - |
+
 ## Meta Skills
 
 | Skill | Coverage | Load When | Resources |
@@ -121,6 +141,7 @@ Instead of loading all 23 skill directories (~45k tokens), reference this index 
 | **Database Work** | database-patterns | database-patterns/SKILL.md |
 | **CI/CD Setup** | github-actions, docker-patterns | github-actions/SKILL.md, docker-patterns/SKILL.md |
 | **AI/LLM Integration** | prompt-engineering, rag-patterns | prompt-engineering/SKILL.md, rag-patterns/SKILL.md |
+| **GEO / AI SEO Audit** | geo, geo-audit, + specific sub-skills | geo/SKILL.md, geo-audit/SKILL.md |
 | **Creating New Skill** | skill-creator | skill-creator/SKILL.md |
 
 ## Benefits

@@ -1,31 +1,32 @@
 #!/bin/bash
 # =============================================================================
-# Create TDD Team (Agent Teams version)
-# Parses spec for REQ-XXX IDs, creates git worktrees, outputs task data.
-# Parses spec, creates worktrees, outputs structured task data for the lead.
+# Create TDD Team (Fixed 6-Role Pipeline)
+# Parses spec for REQ-XXX IDs, creates 2 builder worktrees, outputs task data.
 #
-# Usage: create-tdd-team.sh [--agents N] [spec-file]
+# Usage: create-tdd-team.sh [spec-file]
+#
+# Always creates the same pipeline:
+#   Research → Architect → Builder 1 + Builder 2 → Verifier + Integrator
 #
 # Output: Structured text to stdout describing:
-#   - REQs with titles, descriptions, dependencies
-#   - Worktree paths per teammate
-#   - Instructions for team creation
+#   - REQs split in half (Builder 1 / Builder 2)
+#   - Worktree paths for both builders
+#   - Task chain with blockedBy dependencies
+#   - Role-specific spawn prompts for all 6 teammates
 #
 # The lead session reads this output and uses it to:
 #   1. Create tasks via TaskCreate with blockedBy dependencies
-#   2. Spawn teammates with worktree assignments
+#   2. Spawn 6 teammates with role-specific prompts
 # =============================================================================
 
 set -euo pipefail
 
 # --- Argument parsing ---------------------------------------------------------
 SPEC_FILE=""
-NUM_AGENTS=3
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --agents|-a) NUM_AGENTS="$2"; shift 2 ;;
-        *)           SPEC_FILE="$1"; shift ;;
+        *) SPEC_FILE="$1"; shift ;;
     esac
 done
 
@@ -56,19 +57,22 @@ validate() {
     local errors=0
 
     if [[ -z "$SPEC_FILE" ]]; then
-        log_err "Usage: $0 [--agents N] [spec-file]"
-        exit 1
+        # Auto-detect most recent plan
+        local recent
+        recent=$(ls -t "$PROJECT_ROOT/.claude/plans/"*.md 2>/dev/null | head -1)
+        if [[ -z "$recent" ]]; then
+            log_err "Usage: $0 [spec-file]"
+            log_err "No spec files found in .claude/plans/"
+            exit 1
+        fi
+        SPEC_FILE="$recent"
+        log_warn "No spec specified — using most recent: $SPEC_FILE"
     fi
 
     [[ -f "$SPEC_FILE" ]] || { log_err "Spec file not found: $SPEC_FILE"; ((errors++)); }
 
     if ! git -C "$PROJECT_ROOT" rev-parse --git-dir &>/dev/null; then
         log_err "Not a git repository: $PROJECT_ROOT"
-        ((errors++))
-    fi
-
-    if ! [[ "$NUM_AGENTS" =~ ^[0-9]+$ ]] || [[ "$NUM_AGENTS" -lt 1 ]] || [[ "$NUM_AGENTS" -gt 8 ]]; then
-        log_err "--agents must be 1–8, got: $NUM_AGENTS"
         ((errors++))
     fi
 
@@ -79,96 +83,24 @@ validate() {
 # Parse REQs + dependencies
 # =============================================================================
 
-declare -A REQ_DEPS=()
 declare -A REQ_TITLES=()
 
 parse_reqs() {
     grep -oE 'REQ-[0-9]{3}' "$SPEC_FILE" | sort -u
 }
 
-parse_dependencies() {
-    local current_req=""
-
+parse_titles() {
     while IFS= read -r line; do
-        # Track current REQ heading
-        if [[ "$line" =~ (REQ-[0-9]{3}) ]] && [[ "$line" =~ ^### ]]; then
-            current_req="${BASH_REMATCH[1]}"
-            # Extract title: everything after "### REQ-XXX: " prefix
-            local title
-            title=$(echo "$line" | sed "s/^###[[:space:]]*${current_req}:[[:space:]]*//")
-            REQ_TITLES["$current_req"]="$title"
-        fi
-        # Parse "Depends on:" lines
-        if [[ -n "$current_req" ]] && [[ "$line" =~ [Dd]epends\ on ]]; then
-            local deps_str=""
-            local remaining="$line"
-            while [[ "$remaining" =~ REQ-([0-9]{3}) ]]; do
-                local dep="REQ-${BASH_REMATCH[1]}"
-                if [[ -n "$deps_str" ]]; then
-                    deps_str="${deps_str},${dep}"
-                else
-                    deps_str="$dep"
-                fi
-                remaining="${remaining#*${BASH_REMATCH[0]}}"
-            done
-            [[ -n "$deps_str" ]] && REQ_DEPS["$current_req"]="$deps_str"
+        if [[ "$line" =~ ^###[[:space:]]*(REQ-[0-9]{3}):?[[:space:]]*(.*) ]]; then
+            local req="${BASH_REMATCH[1]}"
+            local title="${BASH_REMATCH[2]}"
+            REQ_TITLES["$req"]="$title"
         fi
     done < "$SPEC_FILE"
 }
 
-# Distribute REQs to agent buckets (dependency-aware round-robin)
-distribute_reqs() {
-    local -a reqs=("$@")
-    local total=${#reqs[@]}
-
-    if [[ $total -eq 0 ]]; then
-        log_err "No REQ-XXX IDs found in $SPEC_FILE"
-        exit 1
-    fi
-
-    if [[ $total -lt $NUM_AGENTS ]]; then
-        log_warn "$total REQs — reducing agents from $NUM_AGENTS to $total"
-        NUM_AGENTS=$total
-    fi
-
-    declare -gA WORKSTREAMS=()
-    for ((i=0; i<NUM_AGENTS; i++)); do WORKSTREAMS[$i]=""; done
-
-    declare -A req_bucket=()
-    local next_bucket=0
-
-    for ((i=0; i<total; i++)); do
-        local req="${reqs[$i]}"
-        local deps_csv="${REQ_DEPS[$req]:-}"
-        local bucket=""
-
-        if [[ -n "$deps_csv" ]]; then
-            IFS=',' read -ra dep_list <<< "$deps_csv"
-            for dep in "${dep_list[@]}"; do
-                if [[ -n "${req_bucket[$dep]:-}" ]]; then
-                    bucket="${req_bucket[$dep]}"
-                    break
-                fi
-            done
-        fi
-
-        if [[ -z "$bucket" ]]; then
-            bucket=$next_bucket
-            next_bucket=$(( (next_bucket + 1) % NUM_AGENTS ))
-        fi
-
-        req_bucket["$req"]=$bucket
-
-        if [[ -z "${WORKSTREAMS[$bucket]}" ]]; then
-            WORKSTREAMS[$bucket]="$req"
-        else
-            WORKSTREAMS[$bucket]="${WORKSTREAMS[$bucket]},$req"
-        fi
-    done
-}
-
 # =============================================================================
-# Create git worktrees
+# Create 2 builder git worktrees
 # =============================================================================
 
 declare -a WORKTREE_PATHS=()
@@ -178,10 +110,9 @@ create_worktrees() {
     local feature="$1"
     mkdir -p "$WORKTREES_DIR"
 
-    for ((i=0; i<NUM_AGENTS; i++)); do
-        local agent_n=$((i+1))
-        local branch="feat/${feature}-agent-${agent_n}"
-        local path="$WORKTREES_DIR/${feature}-agent-${agent_n}"
+    for builder_n in 1 2; do
+        local branch="feat/${feature}-builder-${builder_n}"
+        local path="$WORKTREES_DIR/${feature}-builder-${builder_n}"
 
         if [[ -d "$path" ]]; then
             log_warn "Removing stale worktree: $path"
@@ -189,7 +120,7 @@ create_worktrees() {
             git -C "$PROJECT_ROOT" branch -D "$branch" 2>/dev/null || true
         fi
 
-        log_info "Worktree $agent_n → $branch"
+        log_info "Worktree builder-${builder_n} → $branch"
         git -C "$PROJECT_ROOT" worktree add -b "$branch" "$path" HEAD
 
         WORKTREE_PATHS+=("$path")
@@ -224,9 +155,16 @@ trap cleanup_on_error EXIT
 output_team_data() {
     local feature="$1"
     local spec_abs="$2"
+    local -a all_reqs=("${@:3}")
+    local total=${#all_reqs[@]}
+
+    # Split REQs in half
+    local half=$(( (total + 1) / 2 ))
+    local builder1_reqs=("${all_reqs[@]:0:$half}")
+    local builder2_reqs=("${all_reqs[@]:$half}")
 
     cat <<EOF
-# Agent Teams: Parallel TDD Setup
+# Agent Teams: Parallel TDD Setup (Fixed 6-Role Pipeline)
 
 ## Spec
 $spec_abs
@@ -234,65 +172,97 @@ $spec_abs
 ## Feature
 $feature
 
-## Team Configuration
-- Agents: $NUM_AGENTS
-- Display: Use Agent Teams native display (in-process or tmux split-pane)
+## Pipeline
+Research → Architect → Builder 1 + Builder 2 → Verifier + Integrator
 
-## Tasks to Create
+## Worktrees
+- Builder 1: ${WORKTREE_PATHS[0]} (branch: ${BRANCH_NAMES[0]})
+- Builder 2: ${WORKTREE_PATHS[1]} (branch: ${BRANCH_NAMES[1]})
 
-Create these tasks using TaskCreate. Each REQ becomes one task.
-Task subjects MUST follow the format "REQ-XXX: title" (the TaskCompleted hook parses this).
+## Tasks to Create (in order)
+
+Create these tasks using TaskCreate. Preserve blockedBy dependencies.
+
+### Task 1: RESEARCH: Research phase
+- **blockedBy**: none
+- **Description**: Research libraries, APIs, patterns, and best practices for this feature. Output a research.md file in .claude/plans/ summarizing findings. Do NOT write any implementation code.
+
+### Task 2: ARCH: Architecture plan
+- **blockedBy**: RESEARCH task ID
+- **Description**: Based on research.md, write a technical architecture plan to .claude/plans/arch.md. Include: file tree, interfaces/types, component contracts, API shapes, migration plan (if DB). Do NOT write any implementation code.
 
 EOF
 
-    # Output each REQ as a task
-    mapfile -t all_reqs < <(parse_reqs)
-    for req in "${all_reqs[@]}"; do
+    echo "### Builder 1 REQs (blockedBy: ARCH task ID)"
+    echo ""
+    for req in "${builder1_reqs[@]}"; do
         local title="${REQ_TITLES[$req]:-$req}"
-        local deps="${REQ_DEPS[$req]:-none}"
+        echo "### Task: $req: $title"
+        echo "- **blockedBy**: ARCH task ID"
+        echo "- **Worktree**: ${WORKTREE_PATHS[0]}"
+        echo "- **Description**: Implement $req using strict TDD. Read arch.md first. Write failing test: test('$req: $title', () => { ... }), then minimal code to pass, then refactor. Commit after this REQ."
+        echo ""
+    done
 
-        cat <<EOF
-### Task: $req: $title
-- **blockedBy**: $deps
-- **Description**: Implement $req using strict TDD. Write failing test first: test('$req: $title', () => { ... }), then minimal code to pass, then refactor.
-
-EOF
+    echo "### Builder 2 REQs (blockedBy: ARCH task ID)"
+    echo ""
+    for req in "${builder2_reqs[@]}"; do
+        local title="${REQ_TITLES[$req]:-$req}"
+        echo "### Task: $req: $title"
+        echo "- **blockedBy**: ARCH task ID"
+        echo "- **Worktree**: ${WORKTREE_PATHS[1]}"
+        echo "- **Description**: Implement $req using strict TDD. Read arch.md first. Write failing test: test('$req: $title', () => { ... }), then minimal code to pass, then refactor. Commit after this REQ."
+        echo ""
     done
 
     cat <<EOF
+### Task: VERIFY: QA and acceptance
+- **blockedBy**: all REQ task IDs
+- **Description**: Review all implemented REQs. Test edge cases, security, and acceptance criteria. Report any bugs via SendMessage to the relevant builder. Verify all (BROWSER) REQs have Playwright tests.
+
+### Task: INTEGRATE: Build and integration
+- **blockedBy**: all REQ task IDs
+- **Description**: Verify the full system builds and runs correctly. Check dependencies, run migrations, confirm CI passes. Merge builder branches if needed. Report blockers via SendMessage.
+
+---
+
 ## Teammates to Spawn
 
-Create an agent team and spawn $NUM_AGENTS teammates. Each works in its own worktree.
+Create an agent team named "tdd-${feature}" and spawn these 6 teammates:
 
-EOF
+### Research Agent
+- **Role**: research
+- **Spawn prompt**: "You are the Research Agent on team tdd-${feature}. Your job is to research libraries, APIs, patterns, and best practices for the feature described in $spec_abs. Read the spec carefully. Output your findings to .claude/plans/research.md (create if missing). Do NOT write any implementation code. Claim the RESEARCH task from the shared task list and mark it complete when research.md is written."
 
-    for ((i=0; i<NUM_AGENTS; i++)); do
-        local agent_n=$((i+1))
-        local reqs_csv="${WORKSTREAMS[$i]}"
-        local path="${WORKTREE_PATHS[$i]}"
-        local branch="${BRANCH_NAMES[$i]}"
+### Architect
+- **Role**: architect
+- **Spawn prompt**: "You are the Architect on team tdd-${feature}. Wait for the RESEARCH task to complete, then read .claude/plans/research.md and $spec_abs. Write a technical architecture plan to .claude/plans/arch.md including: file tree, interfaces/types, component contracts, API shapes, DB migration plan. Do NOT write any implementation code. Claim the ARCH task and mark it complete when arch.md is written."
 
-        cat <<EOF
-### Teammate $agent_n
-- **Worktree**: $path
-- **Branch**: $branch
-- **Initial REQs**: $reqs_csv
-- **Spawn prompt**: "You are TDD agent $agent_n. Work ONLY in directory $path (branch $branch). Read the spec at $spec_abs for full context. Claim tasks from the shared task list and implement each using strict TDD: write a failing test first (test('REQ-XXX: behavior', ...)), then minimal code to pass, then refactor. Commit after each REQ. Do NOT edit files outside your worktree."
+### Builder 1
+- **Worktree**: ${WORKTREE_PATHS[0]}
+- **Branch**: ${BRANCH_NAMES[0]}
+- **Spawn prompt**: "You are Builder 1 on team tdd-${feature}. Work ONLY in directory ${WORKTREE_PATHS[0]} (branch ${BRANCH_NAMES[0]}). Wait for ARCH to complete, then read .claude/plans/arch.md and $spec_abs. Claim REQ tasks (first half) from the shared task list and implement each using strict TDD: write a failing test first (test('REQ-XXX: behavior', ...)), then minimal code to pass, then refactor. Commit after each REQ. Do NOT edit files outside your worktree."
 
-EOF
-    done
+### Builder 2
+- **Worktree**: ${WORKTREE_PATHS[1]}
+- **Branch**: ${BRANCH_NAMES[1]}
+- **Spawn prompt**: "You are Builder 2 on team tdd-${feature}. Work ONLY in directory ${WORKTREE_PATHS[1]} (branch ${BRANCH_NAMES[1]}). Wait for ARCH to complete, then read .claude/plans/arch.md and $spec_abs. Claim REQ tasks (second half) from the shared task list and implement each using strict TDD: write a failing test first (test('REQ-XXX: behavior', ...)), then minimal code to pass, then refactor. Commit after each REQ. Do NOT edit files outside your worktree."
 
-    cat <<EOF
+### Verifier/QA
+- **Spawn prompt**: "You are the Verifier/QA on team tdd-${feature}. Wait for all REQ tasks to complete. Then review all implementations against $spec_abs: test edge cases, security, and acceptance criteria. For any bugs found, send a message to the relevant Builder via SendMessage with the bug details. Verify all (BROWSER) REQs have Playwright test files. Claim the VERIFY task and mark it complete when all issues are resolved."
+
+### Integrator
+- **Spawn prompt**: "You are the Integrator on team tdd-${feature}. Wait for all REQ tasks to complete. Then verify the full system builds and runs correctly: check dependencies, run migrations, confirm CI passes. If you find integration issues, send a message to the relevant teammate via SendMessage. Claim the INTEGRATE task and mark it complete when the system runs end-to-end."
+
+---
+
 ## After All Tasks Complete
 
-Merge worktree branches back to main:
+Merge builder branches back to main:
 \`\`\`bash
 git checkout main
-EOF
-    for branch in "${BRANCH_NAMES[@]}"; do
-        echo "git merge --no-ff $branch"
-    done
-    cat <<EOF
+git merge --no-ff ${BRANCH_NAMES[0]}
+git merge --no-ff ${BRANCH_NAMES[1]}
 \`\`\`
 
 Verify:
@@ -300,14 +270,23 @@ Verify:
 bash ./.claude/scripts/verify-merge.sh
 \`\`\`
 
+Run checkpoint gate:
+\`\`\`bash
+/checkpoint
+\`\`\`
+
 Clean up:
 \`\`\`bash
 git worktree prune
+git branch -d ${BRANCH_NAMES[0]}
+git branch -d ${BRANCH_NAMES[1]}
+\`\`\`
+
+Monitor with dashboard (optional):
+\`\`\`bash
+bash .claude/scripts/team-dashboard.sh tdd-${feature}
+\`\`\`
 EOF
-    for branch in "${BRANCH_NAMES[@]}"; do
-        echo "git branch -d $branch"
-    done
-    echo '```'
 }
 
 # =============================================================================
@@ -315,7 +294,7 @@ EOF
 # =============================================================================
 
 main() {
-    log_head "Create TDD Team (Agent Teams)"
+    log_head "Create TDD Team (Fixed 6-Role Pipeline)"
 
     validate
     cd "$PROJECT_ROOT"
@@ -327,29 +306,33 @@ main() {
 
     log_info "Spec:    $SPEC_FILE"
     log_info "Feature: $feature"
-    log_info "Agents:  $NUM_AGENTS"
+    log_info "Pipeline: Research → Architect → Builder×2 → Verifier + Integrator"
 
-    # Parse + distribute
+    # Parse REQs
     log_head "Parsing Requirements"
     mapfile -t req_array < <(parse_reqs)
-    log_info "Found: ${req_array[*]}"
 
-    parse_dependencies
-    distribute_reqs "${req_array[@]}"
+    if [[ ${#req_array[@]} -eq 0 ]]; then
+        log_err "No REQ-XXX IDs found in $SPEC_FILE"
+        exit 1
+    fi
 
-    for ((i=0; i<NUM_AGENTS; i++)); do
-        log_info "  Agent $((i+1)): ${WORKSTREAMS[$i]}"
-    done
+    parse_titles
+    log_info "Found ${#req_array[@]} REQs: ${req_array[*]}"
 
-    # Worktrees
-    log_head "Creating Worktrees"
+    local half=$(( (${#req_array[@]} + 1) / 2 ))
+    log_info "Builder 1: ${req_array[*]:0:$half}"
+    log_info "Builder 2: ${req_array[*]:$half}"
+
+    # Create 2 builder worktrees
+    log_head "Creating Builder Worktrees"
     create_worktrees "$feature"
 
     # Output structured data for the lead
     log_head "Team data written to stdout"
-    output_team_data "$feature" "$spec_abs"
+    output_team_data "$feature" "$spec_abs" "${req_array[@]}"
 
-    log_ok "Worktrees ready. Agent Teams will handle teammate spawning and display."
+    log_ok "Worktrees ready. Spawn 6 teammates per the prompts above."
 }
 
 main "$@"

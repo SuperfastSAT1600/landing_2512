@@ -19,18 +19,18 @@ Complete feature development cycle from planning through PR creation.
 
 ---
 
+This command is the canonical entry point for the unified 6-phase workflow (see `task-protocol.md`). It orchestrates all phases for a complete feature from planning through PR.
+
 ## What This Command Does
 
-Orchestrates a complete feature development workflow:
+Orchestrates the complete 6-phase workflow:
 
-1. **Plan**: Create structured spec with REQ-XXX IDs and verification tags
-2. **Spec Audit**: Validate spec quality (all requirements have IDs and verification methods)
-3. **Implement**: Write the code following the plan
-4. **Test**: Write tests mapped to REQ-XXX IDs using TDD principles
-5. **Review**: Security and code quality review
-6. **Checkpoint**: Run full verification gate (types, lint, tests, build, security)
-7. **Document**: Update relevant documentation
-8. **Commit**: Create PR-ready commit
+1. **Phase 1 — Spec**: Create structured spec with REQ-XXX IDs and verification tags; audit validates before proceeding
+2. **Phase 2 — Orchestration**: Choose implementation path (main agent / subagents / Agent Team)
+3. **Phase 3 — Implement**: TDD Red→Green→Refactor per REQ
+4. **Phase 4 — Verify**: Tests + real check (Playwright/curl) per work type
+5. **Phase 5 — Gate**: `/checkpoint` → types, lint, tests, build, security
+6. **Phase 6 — Ship**: `/commit-push-pr`
 
 ---
 

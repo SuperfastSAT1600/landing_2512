@@ -3,12 +3,6 @@
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
-  "permissions": {
-    "defaultMode": "plan",
-    "allow": [
-      "Bash(npx next build)"
-    ]
-  },
   "hooks": {
     "SessionStart": [
       {
@@ -265,99 +259,33 @@
     "frontend-design@claude-plugins-official": true
   },
   "allowedPrompts": [
-    {
-      "tool": "Bash",
-      "prompt": "run tests"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run unit tests"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run e2e tests"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run type checking"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "build the project"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "install dependencies"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run linter"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "format code"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "git status"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "git diff"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "git log"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "git branch"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "git add files"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "git commit"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "git push"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "list files"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "start development server"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "stop development server"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run docker commands"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run database migrations"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "audit dependencies"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run security scans"
-    },
-    {
-      "tool": "Bash",
-      "prompt": "run pre-commit checks"
-    }
+    { "tool": "Bash", "prompt": "run tests" },
+    { "tool": "Bash", "prompt": "run unit tests" },
+    { "tool": "Bash", "prompt": "run e2e tests" },
+    { "tool": "Bash", "prompt": "run type checking" },
+    { "tool": "Bash", "prompt": "build the project" },
+    { "tool": "Bash", "prompt": "install dependencies" },
+    { "tool": "Bash", "prompt": "run linter" },
+    { "tool": "Bash", "prompt": "format code" },
+    { "tool": "Bash", "prompt": "git status" },
+    { "tool": "Bash", "prompt": "git diff" },
+    { "tool": "Bash", "prompt": "git log" },
+    { "tool": "Bash", "prompt": "git branch" },
+    { "tool": "Bash", "prompt": "git add files" },
+    { "tool": "Bash", "prompt": "git commit" },
+    { "tool": "Bash", "prompt": "git push" },
+    { "tool": "Bash", "prompt": "list files" },
+    { "tool": "Bash", "prompt": "start development server" },
+    { "tool": "Bash", "prompt": "stop development server" },
+    { "tool": "Bash", "prompt": "run docker commands" },
+    { "tool": "Bash", "prompt": "run database migrations" },
+    { "tool": "Bash", "prompt": "audit dependencies" },
+    { "tool": "Bash", "prompt": "run security scans" },
+    { "tool": "Bash", "prompt": "run pre-commit checks" }
   ],
   "thinkingEnabled": true,
-  "autoAcceptEdits": false
+  "autoAcceptEdits": false,
+  "permissions": {
+    "defaultMode": "plan"
+  }
 }

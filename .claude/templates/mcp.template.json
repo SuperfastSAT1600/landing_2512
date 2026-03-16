@@ -52,49 +52,6 @@
       "disabled": true,
       "description": "Slack workspace integration for PR notifications and team communication"
     },
-    "render": {
-      "type": "http",
-      "url": "https://mcp.render.com/mcp",
-      "env": {
-        "RENDER_API_KEY": "YOUR_RENDER_API_KEY_HERE"
-      },
-      "disabled": true,
-      "description": "Render deployment and infrastructure management"
-    },
-    "cloudflare-docs": {
-      "type": "http",
-      "url": "https://docs.mcp.cloudflare.com",
-      "env": {},
-      "disabled": true,
-      "description": "Search Cloudflare documentation"
-    },
-    "cloudflare-workers-builds": {
-      "type": "http",
-      "url": "https://builds.mcp.cloudflare.com/mcp",
-      "env": {
-        "CLOUDFLARE_API_TOKEN": "YOUR_CLOUDFLARE_TOKEN_HERE"
-      },
-      "disabled": true,
-      "description": "Cloudflare Workers build management"
-    },
-    "cloudflare-workers-bindings": {
-      "type": "http",
-      "url": "https://bindings.mcp.cloudflare.com/mcp",
-      "env": {
-        "CLOUDFLARE_API_TOKEN": "YOUR_CLOUDFLARE_TOKEN_HERE"
-      },
-      "disabled": true,
-      "description": "Cloudflare Workers bindings (D1, R2, KV)"
-    },
-    "cloudflare-observability": {
-      "type": "http",
-      "url": "https://observability.mcp.cloudflare.com/mcp",
-      "env": {
-        "CLOUDFLARE_API_TOKEN": "YOUR_CLOUDFLARE_TOKEN_HERE"
-      },
-      "disabled": true,
-      "description": "Cloudflare monitoring and analytics"
-    },
     "context7": {
       "command": "npx",
       "args": [

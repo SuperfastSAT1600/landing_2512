@@ -24,6 +24,8 @@ Guide through Test-Driven Development workflow.
 
 ---
 
+This command guides **Phases 3–4** of the unified workflow (see `task-protocol.md`) for single-agent TDD. Use `/parallel-tdd` for large features needing the 6-role pipeline.
+
 ## What This Command Does
 
 1. **Checks for Spec**: Looks for an existing spec in `.claude/plans/` — if found, reads it first

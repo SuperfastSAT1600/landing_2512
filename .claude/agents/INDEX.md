@@ -1,6 +1,6 @@
 # Agent Index
 
-Consolidated directory of 11 specialized agents. Main agent handles standard development; use these for specialized expertise.
+Consolidated directory of 16 specialized agents. Main agent handles standard development; use these for specialized expertise.
 
 ## Agent Directory
 
@@ -17,13 +17,18 @@ Consolidated directory of 11 specialized agents. Main agent handles standard dev
 | **ai-specialist** | sonnet | LLM integration, RAG, prompt engineering, embeddings | AI/ML features, LLM APIs, vector search |
 | **mobile-specialist** | sonnet | React Native, Flutter, cross-platform mobile | Mobile app development |
 | **doc-updater** | haiku | Sync documentation with code changes | After every significant code change |
+| **geo-ai-visibility** | sonnet | AI search visibility: citability scoring, crawler access, llms.txt, brand mentions | GEO audits, AI crawler analysis, brand mention scanning |
+| **geo-content** | sonnet | E-E-A-T content quality: experience, expertise, authoritativeness, trustworthiness | Content quality audits, E-E-A-T assessment |
+| **geo-platform-analysis** | sonnet | Platform optimization for ChatGPT, Perplexity, Google AI Overviews, Gemini, Bing Copilot | Platform-specific GEO optimization |
+| **geo-schema** | sonnet | JSON-LD schema detection, validation, rich result eligibility, template generation | Schema markup audits, structured data implementation |
+| **geo-technical** | sonnet | Technical SEO: SSR/JS dependency, crawlability, security, Core Web Vitals for AI crawlers | Technical GEO audits, server-side rendering analysis |
 
 ## Model Tier Guidelines
 
 | Tier | Use For | Agents |
 |------|---------|--------|
 | **haiku** | Documentation, quick tasks | `doc-updater` |
-| **sonnet** | Most specialized work (DEFAULT) | `code-reviewer`, `test-writer`, `backend-specialist`, `auth-specialist`, `devops-specialist`, `frontend-specialist`, `realtime-specialist`, `ai-specialist`, `mobile-specialist` |
+| **sonnet** | Most specialized work (DEFAULT) | `code-reviewer`, `test-writer`, `backend-specialist`, `auth-specialist`, `devops-specialist`, `frontend-specialist`, `realtime-specialist`, `ai-specialist`, `mobile-specialist`, `geo-ai-visibility`, `geo-content`, `geo-platform-analysis`, `geo-schema`, `geo-technical` |
 | **opus** | Critical architecture decisions | `architect` |
 
 **Default**: Omit model parameter (uses sonnet). Only specify for `haiku` (`doc-updater`) or `opus` (`architect`).
@@ -78,4 +83,10 @@ devops-specialist (CI/CD + Docker + monitoring)
 ### Documentation (after code)
 ```
 doc-updater (always use haiku model)
+```
+
+### Full GEO Audit (parallel analysis)
+```
+geo-ai-visibility + geo-content + geo-platform-analysis + geo-schema + geo-technical
+(all 5 run in parallel; main agent aggregates scores via geo-audit skill)
 ```
