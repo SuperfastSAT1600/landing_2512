@@ -3,25 +3,55 @@ import { getSortedPostsData, getPostsByCategory } from '../../lib/posts';
 import Footer from '../components/Footer';
 import BlogList from './BlogList';
 
-const BASE_URL = 'https://www.satmasterclass.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfastsat.com';
 
-export const metadata: Metadata = {
-    title: '입시 자료 & 학습 칼럼 | SuperfastSAT Blog',
-    description: 'SAT 고득점 비법, 최신 유학 정보, Digital SAT 문법·독해 전략을 SuperfastSAT 블로그에서 확인하세요.',
-    alternates: { canonical: `${BASE_URL}/blog` },
-    openGraph: {
-        type: 'website',
-        url: `${BASE_URL}/blog`,
-        title: '입시 자료 & 학습 칼럼 | SuperfastSAT Blog',
-        description: 'SAT 고득점 비법, 최신 유학 정보, Digital SAT 문법·독해 전략을 SuperfastSAT 블로그에서 확인하세요.',
-        siteName: 'SuperfastSAT',
+const categoryMeta: Record<string, { title: string; description: string }> = {
+    'SAT RW': {
+        title: 'SAT 리딩 & 라이팅 전략 | SuperfastSAT Blog',
+        description: 'Digital SAT 고득점을 위한 핵심 문법, 독해 전략 및 필수 어휘를 정리했습니다.',
     },
-    twitter: {
-        card: 'summary_large_image',
-        title: '입시 자료 & 학습 칼럼 | SuperfastSAT Blog',
-        description: 'SAT 고득점 비법, 최신 유학 정보, Digital SAT 문법·독해 전략을 SuperfastSAT 블로그에서 확인하세요.',
+    'SAT Math': {
+        title: 'SAT 수학 완전 정복 | SuperfastSAT Blog',
+        description: '기초 개념부터 심화 문제풀이, 만점을 위한 실전 팁까지 모두 담았습니다.',
+    },
+    '입시뉴스': {
+        title: '미국 대학 입시 뉴스 | SuperfastSAT Blog',
+        description: '최신 입시 트렌드, 대학별 전형 분석 및 합격 데이터를 신속하게 전달합니다.',
     },
 };
+
+export async function generateMetadata({
+    searchParams,
+}: {
+    searchParams: Promise<{ category?: string }>;
+}): Promise<Metadata> {
+    const { category } = await searchParams;
+    const meta = category && categoryMeta[category]
+        ? categoryMeta[category]
+        : {
+            title: '입시 자료 & 학습 칼럼 | SuperfastSAT Blog',
+            description: 'SAT 고득점 비법, 최신 유학 정보, Digital SAT 문법·독해 전략을 SuperfastSAT 블로그에서 확인하세요.',
+        };
+    const canonicalUrl = category ? `${BASE_URL}/blog?category=${encodeURIComponent(category)}` : `${BASE_URL}/blog`;
+
+    return {
+        title: meta.title,
+        description: meta.description,
+        alternates: { canonical: canonicalUrl },
+        openGraph: {
+            type: 'website',
+            url: canonicalUrl,
+            title: meta.title,
+            description: meta.description,
+            siteName: 'SuperfastSAT',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: meta.title,
+            description: meta.description,
+        },
+    };
+}
 
 export const revalidate = 60;
 
