@@ -17,7 +17,7 @@ import { TextBubbleMenu } from '@/components/editor/TextBubbleMenu';
 import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TiptapImage from '@tiptap/extension-image';
-// TiptapLink removed — tiptap-markdown's Markdown extension registers its own Link internally
+import TiptapLink from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Table } from '@tiptap/extension-table';
@@ -139,7 +139,7 @@ function BlogEditor() {
         extensions: [
             StarterKit.configure({ link: false }),
             CustomImage.configure({ inline: false }),
-            // Link extension provided by tiptap-markdown (StarterKit's link disabled to avoid duplicate)
+            TiptapLink.configure({ openOnClick: false, autolink: true }),
             TextAlign.configure({
                 types: ['heading', 'paragraph', 'tableCell', 'tableHeader'],
                 alignments: ['left', 'center', 'right', 'justify'],
@@ -501,6 +501,10 @@ function BlogEditor() {
     };
 
     const insertLink = () => {
+        if (editor?.isActive('link')) {
+            editor.chain().focus().unsetLink().run();
+            return;
+        }
         const url = window.prompt('URL을 입력하세요:', 'https://');
         if (!url) return;
         editor?.chain().focus().setLink({ href: url }).run();
@@ -938,7 +942,7 @@ function BlogEditor() {
                             insertLink();
                         }}
                         title="Link (Ctrl+K)"
-                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                        className={`w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors ${editor?.isActive('link') ? 'bg-white/15 text-blue-400' : 'text-gray-400 hover:text-white'}`}
                     >
                         <Link2 size={14} />
                     </button>

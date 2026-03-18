@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
         const { excerpt, description } = await generateSeoContent(title, content, focusKeyword);
 
         return NextResponse.json({ success: true, excerpt, description });
-    } catch {
+    } catch (err) {
+        console.error('[generate-seo] Error:', err instanceof Error ? err.message : err);
         return NextResponse.json(
             { success: false, error: 'Failed to generate SEO content' },
             { status: 500 },

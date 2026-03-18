@@ -3,7 +3,7 @@
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
-import { Bold, Italic, Strikethrough, Code, ChevronLeft, ChevronRight, Rows3, RowsIcon } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Code, Link, ChevronLeft, ChevronRight, Rows3, RowsIcon } from 'lucide-react';
 
 interface TextBubbleMenuProps {
     editor: Editor | null;
@@ -79,6 +79,24 @@ export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
                     className={btn(editor.isActive('code'))}
                 >
                     <Code size={13} />
+                </button>
+
+                <div className="w-px h-4 bg-white/10 mx-0.5" />
+
+                <button
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        if (editor.isActive('link')) {
+                            editor.chain().focus().unsetLink().run();
+                        } else {
+                            const url = window.prompt('URL을 입력하세요:', 'https://');
+                            if (url) editor.chain().focus().setLink({ href: url }).run();
+                        }
+                    }}
+                    title={editor.isActive('link') ? '링크 제거' : '링크 추가'}
+                    className={btn(editor.isActive('link'))}
+                >
+                    <Link size={13} />
                 </button>
 
                 {/* 표 안에서만: compact 행/열 컨트롤 */}
