@@ -47,7 +47,7 @@ export function ConfidencePicker({ questionId, confidence, onConfidence }: Confi
               </button>
               <span
                 className="test-confidence-tooltip"
-                style={{ '--tip-color': level.color, background: level.color } as React.CSSProperties}
+                style={{ '--tip-color': '#6B7280', background: '#6B7280' } as React.CSSProperties}
               >
                 {level.label}
               </span>
