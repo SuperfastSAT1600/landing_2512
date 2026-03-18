@@ -90,7 +90,7 @@ export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
                             editor.chain().focus().unsetLink().run();
                         } else {
                             const url = window.prompt('URL을 입력하세요:', 'https://');
-                            if (url) editor.chain().focus().setLink({ href: url }).run();
+                            if (url && url !== 'https://') editor.chain().focus().setLink({ href: url }).run();
                         }
                     }}
                     title={editor.isActive('link') ? '링크 제거' : '링크 추가'}

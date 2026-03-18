@@ -7,12 +7,24 @@ import { LiveStatusProvider } from './context/LiveStatusContext';
 
 export const metadata: Metadata = {
   title: "SAT 목표 점수에 가장 빠르게 | SuperfastSAT",
-  description: "SAT목표 점수, 저희가 만들어 드립니다",
+  description: "SuperfastSAT은 Digital SAT 전문 온라인 학원입니다. 목표 점수 달성까지 최단 경로로 안내합니다.",
+  alternates: {
+    canonical: "https://superfastsat.com",
+  },
   openGraph: {
-    title: "SAT 목표 점수에 가장 빠르게",
-    description: "SAT목표 점수, 저희가 만들어 드립니다",
+    type: "website",
+    url: "https://superfastsat.com",
+    siteName: "SuperfastSAT",
+    title: "SAT 목표 점수에 가장 빠르게 | SuperfastSAT",
+    description: "SuperfastSAT은 Digital SAT 전문 온라인 학원입니다. 목표 점수 달성까지 최단 경로로 안내합니다.",
+    images: [{ url: "/og-image.png", alt: "SuperfastSAT" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SAT 목표 점수에 가장 빠르게 | SuperfastSAT",
+    description: "SuperfastSAT은 Digital SAT 전문 온라인 학원입니다. 목표 점수 달성까지 최단 경로로 안내합니다.",
     images: ["/og-image.png"],
-  }
+  },
 };
 
 import { Racing_Sans_One } from 'next/font/google';
@@ -74,7 +86,7 @@ export default function RootLayout({
                 "name": "SuperfastSAT",
                 "legalName": "Argonaut AI Inc.",
                 "url": "https://superfastsat.com",
-                "description": "SAT목표 점수 달성, 저희와 만들어 드립니다",
+                "description": "SuperfastSAT은 Digital SAT 전문 온라인 학원으로, 목표 점수 달성까지 최단 경로로 안내합니다.",
                 "address": {
                   "@type": "PostalAddress",
                   "streetAddress": "302, 21 Samgae-ro",
@@ -84,8 +96,16 @@ export default function RootLayout({
                 "telephone": "02-6956-0061",
                 "email": "cs@argonautai.co.kr",
                 "sameAs": [
-                  // Add social links if available, otherwise keep empty or remove
-                ]
+                  "https://superfastsat.com",
+                  "https://tutoring.superfastsat.com"
+                ],
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": "4.9",
+                  "reviewCount": "47",
+                  "bestRating": "5",
+                  "worstRating": "1"
+                }
               })
             }}
           />

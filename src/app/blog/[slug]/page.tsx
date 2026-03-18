@@ -17,7 +17,7 @@ export async function generateStaticParams() {
     }));
 }
 
-const BASE_URL = 'https://www.satmasterclass.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfastsat.com';
 
 export async function generateMetadata({ params }: Props) {
     const { slug } = await params;
@@ -87,7 +87,11 @@ export default async function Post({ params }: Props) {
                         description: postData.description || postData.excerpt,
                         datePublished: postData.date,
                         dateModified: postData.updatedAt || postData.date,
-                        author: { '@type': 'Person', name: postData.author || 'SuperfastSAT' },
+                        author: {
+                            '@type': 'Person',
+                            name: postData.author || 'SuperfastSAT',
+                            url: `${BASE_URL}/blog`,
+                        },
                         publisher: {
                             '@type': 'Organization',
                             name: 'SuperfastSAT',
@@ -107,6 +111,39 @@ export default async function Post({ params }: Props) {
                         wordCount: (postData.contentHtml || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().split(/\s+/).length,
                         inLanguage: 'ko-KR',
                         articleSection: postData.category,
+                        speakable: {
+                            '@type': 'SpeakableSpecification',
+                            cssSelector: ['h1', '.prose h2', '.prose p'],
+                        },
+                    }),
+                }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        '@context': 'https://schema.org',
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                            {
+                                '@type': 'ListItem',
+                                position: 1,
+                                name: 'Home',
+                                item: BASE_URL,
+                            },
+                            {
+                                '@type': 'ListItem',
+                                position: 2,
+                                name: 'Blog',
+                                item: `${BASE_URL}/blog`,
+                            },
+                            {
+                                '@type': 'ListItem',
+                                position: 3,
+                                name: postData.title,
+                                item: `${BASE_URL}/blog/${postData.id}`,
+                            },
+                        ],
                     }),
                 }}
             />

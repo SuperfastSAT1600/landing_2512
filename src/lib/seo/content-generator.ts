@@ -43,7 +43,12 @@ export async function generateSeoContent(
     });
 
     const raw = response.choices[0]?.message?.content?.trim() || '{}';
-    const parsed = JSON.parse(raw);
+    let parsed: Record<string, string> = {};
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        console.error('[content-generator] Failed to parse LLM response:', raw);
+    }
 
     return {
         excerpt: (parsed.excerpt || '').slice(0, 120),

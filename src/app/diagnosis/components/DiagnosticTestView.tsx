@@ -65,14 +65,6 @@ export function DiagnosticTestView({
   const effectiveTimeLimit = timeLimitMinutes ?? timeLimit ?? null;
   const timer = useTestTimer(effectiveTimeLimit, !!startTime);
 
-  // Auto-submit when time runs out
-  React.useEffect(() => {
-    if (timer.remaining === 0 && startTime && !submitting) {
-      handleSubmit();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timer.remaining]);
-
   const clearSelection = useCallback(() => {
     setSelectedWord(null);
     setSaveButtonPosition(null);
@@ -199,6 +191,16 @@ export function DiagnosticTestView({
       setSubmitting(false);
     }, 400);
   };
+
+  // Auto-submit when time runs out — ref ensures latest answers/confidence are captured
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleSubmitRef = React.useRef(handleSubmit);
+  React.useEffect(() => { handleSubmitRef.current = handleSubmit; });
+  React.useEffect(() => {
+    if (timer.remaining === 0 && startTime && !submitting) {
+      handleSubmitRef.current();
+    }
+  }, [timer.remaining, startTime, submitting]);
 
   if (submitted) return <TestSubmittedScreen resultId={resultId} />;
 
