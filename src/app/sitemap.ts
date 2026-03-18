@@ -8,6 +8,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = `https://${host}`;
 
     if (host.startsWith('tutoring.')) {
+        const posts = await getSortedPostsData();
+
+        const indexablePosts = posts.filter((post) => {
+            if (!post.metaRobots) return true;
+            return !post.metaRobots.includes('noindex');
+        });
+
+        const blogPosts = indexablePosts.map((post) => ({
+            url: `${baseUrl}/blog/${post.id}`,
+            lastModified: new Date(post.updatedAt || post.date),
+            changeFrequency: 'monthly' as const,
+            priority: 0.7,
+        }));
+
         return [
             {
                 url: baseUrl,
@@ -21,24 +35,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 changeFrequency: 'monthly',
                 priority: 0.9,
             },
+            {
+                url: `${baseUrl}/blog`,
+                lastModified: new Date(),
+                changeFrequency: 'weekly',
+                priority: 0.8,
+            },
+            ...blogPosts,
         ];
     }
 
-    const posts = await getSortedPostsData();
-
-    // Filter out noindex posts from sitemap
-    const indexablePosts = posts.filter((post) => {
-        if (!post.metaRobots) return true;
-        return !post.metaRobots.includes('noindex');
-    });
-
-    const blogPosts = indexablePosts.map((post) => ({
-        url: `${baseUrl}/blog/${post.id}`,
-        lastModified: new Date(post.updatedAt || post.date),
-        changeFrequency: 'monthly' as const,
-        priority: 0.7,
-    }));
-
+    // www.superfastsat.com — landing page only
     return [
         {
             url: baseUrl,
@@ -46,12 +53,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             changeFrequency: 'yearly',
             priority: 1,
         },
-        {
-            url: `${baseUrl}/blog`,
-            lastModified: new Date(),
-            changeFrequency: 'weekly',
-            priority: 0.8,
-        },
-        ...blogPosts,
     ];
 }
