@@ -506,7 +506,7 @@ function BlogEditor() {
             return;
         }
         const url = window.prompt('URL을 입력하세요:', 'https://');
-        if (!url) return;
+        if (!url || url === 'https://') return;
         editor?.chain().focus().setLink({ href: url }).run();
     };
 

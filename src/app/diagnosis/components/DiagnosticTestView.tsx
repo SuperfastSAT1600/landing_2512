@@ -65,13 +65,14 @@ export function DiagnosticTestView({
   const effectiveTimeLimit = timeLimitMinutes ?? timeLimit ?? null;
   const timer = useTestTimer(effectiveTimeLimit, !!startTime);
 
-  // Auto-submit when time runs out
+  // Auto-submit when time runs out — ref ensures latest answers/confidence are captured
+  const handleSubmitRef = React.useRef(handleSubmit);
+  React.useEffect(() => { handleSubmitRef.current = handleSubmit; });
   React.useEffect(() => {
     if (timer.remaining === 0 && startTime && !submitting) {
-      handleSubmit();
+      handleSubmitRef.current();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timer.remaining]);
+  }, [timer.remaining, startTime, submitting]);
 
   const clearSelection = useCallback(() => {
     setSelectedWord(null);
