@@ -400,9 +400,9 @@ a {
   position: absolute; bottom: 0; left: 0; right: 0;
   background: #ffffff; border-top: 1px solid #e5e7eb;
   box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
-  padding: 16px 20px; z-index: 20;
+  padding: 16px 20px 80px; z-index: 20;
   border-radius: 16px 16px 0 0;
-  max-height: 50vh; overflow-y: auto;
+  max-height: 60vh; overflow-y: auto;
 }
 
 .content-renderer { line-height: 1.6; overflow-wrap: break-word; }

@@ -4,8 +4,9 @@ import { fetchReportData } from '@/lib/report-data';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-export default async function Image({ params }: { params: { resultId: string } }) {
-  const data = await fetchReportData(params.resultId);
+export default async function Image({ params }: { params: Promise<{ resultId: string }> }) {
+  const { resultId } = await params;
+  const data = await fetchReportData(resultId);
 
   const raw = data?.studentName ?? '—';
   const name = raw.length > 3 ? raw.slice(0, 3) + '**' : raw;

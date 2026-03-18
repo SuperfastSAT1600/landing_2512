@@ -37,12 +37,12 @@ export function ConfidencePicker({ questionId, confidence, onConfidence }: Confi
                 onMouseLeave={() => setHoveredLevel(null)}
                 className="test-confidence-btn btn-press"
                 style={{
-                  borderColor: isActive ? level.color : isHovered ? '#9CA3AF' : '#E5E8EB',
-                  background: isActive ? `${level.color}15` : isHovered ? '#F4F5F9' : '#ffffff',
-                  color: isActive ? level.color : isHovered ? '#6B7280' : '#8B95A1',
+                  borderColor: isActive ? '#3B82F6' : isHovered ? '#9CA3AF' : '#E5E8EB',
+                  background: isActive ? '#EFF6FF' : isHovered ? '#F4F5F9' : '#ffffff',
+                  color: isActive ? '#3B82F6' : isHovered ? '#6B7280' : '#8B95A1',
                 }}
               >
-                <span className="test-confidence-dot" style={{ background: isActive ? level.color : isHovered ? '#9CA3AF' : '#D1D6DB' }} />
+                <span className="test-confidence-dot" style={{ background: isActive ? '#3B82F6' : isHovered ? '#9CA3AF' : '#D1D6DB' }} />
                 {level.pct}
               </button>
               <span
