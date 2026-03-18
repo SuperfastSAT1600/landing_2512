@@ -3,7 +3,6 @@
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
-import { CellSelection } from '@tiptap/pm/tables';
 import { Bold, Italic, Strikethrough, Code, ChevronLeft, ChevronRight, Rows3, RowsIcon } from 'lucide-react';
 
 interface TextBubbleMenuProps {
