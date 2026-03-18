@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 const CONFIDENCE_LEVELS = [
   { value: 0,   pct: '0%',   label: 'No Idea',     color: '#8B95A1' },
   { value: 25,  pct: '25%',  label: 'Guessing',    color: '#F04452' },
@@ -15,6 +17,8 @@ interface ConfidencePickerProps {
 }
 
 export function ConfidencePicker({ questionId, confidence, onConfidence }: ConfidencePickerProps) {
+  const [hoveredLevel, setHoveredLevel] = useState<number | null>(null);
+
   return (
     <div style={{ marginTop: 24 }}>
       <p className="text-xs font-semibold text-gray-400" style={{ letterSpacing: '0.05em', marginBottom: 10 }}>
@@ -23,19 +27,22 @@ export function ConfidencePicker({ questionId, confidence, onConfidence }: Confi
       <div className="test-confidence-row">
         {CONFIDENCE_LEVELS.map(level => {
           const isActive = confidence[questionId] === level.value;
+          const isHovered = hoveredLevel === level.value && !isActive;
           return (
             <div key={level.value} className="test-confidence-wrap">
               <button
                 type="button"
                 onClick={() => onConfidence(questionId, level.value)}
+                onMouseEnter={() => setHoveredLevel(level.value)}
+                onMouseLeave={() => setHoveredLevel(null)}
                 className="test-confidence-btn btn-press"
                 style={{
-                  borderColor: isActive ? level.color : '#E5E8EB',
-                  background: isActive ? `${level.color}15` : '#ffffff',
-                  color: isActive ? level.color : '#8B95A1',
+                  borderColor: isActive ? level.color : isHovered ? '#9CA3AF' : '#E5E8EB',
+                  background: isActive ? `${level.color}15` : isHovered ? '#F4F5F9' : '#ffffff',
+                  color: isActive ? level.color : isHovered ? '#6B7280' : '#8B95A1',
                 }}
               >
-                <span className="test-confidence-dot" style={{ background: isActive ? level.color : '#D1D6DB' }} />
+                <span className="test-confidence-dot" style={{ background: isActive ? level.color : isHovered ? '#9CA3AF' : '#D1D6DB' }} />
                 {level.pct}
               </button>
               <span

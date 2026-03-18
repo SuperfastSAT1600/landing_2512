@@ -251,7 +251,7 @@ a {
   background: #ffffff; max-height: 40vh;
 }
 @media (min-width: 768px) {
-  .test-passage-panel { width: 50%; max-height: none; border-bottom: none; flex-shrink: 0; scrollbar-gutter: stable; }
+  .test-passage-panel { width: 50%; max-height: none; height: 100%; border-bottom: none; flex-shrink: 0; scrollbar-gutter: stable; overflow-y: auto; }
 }
 
 /* Question panel */

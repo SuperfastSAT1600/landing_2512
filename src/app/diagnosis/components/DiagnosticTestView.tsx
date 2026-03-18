@@ -603,6 +603,23 @@ export function DiagnosticTestView({
             <button
               type="button"
               onClick={() => {
+                // REQ-005: 시간 남음 + 미답 있으면 차단
+                const unansweredCount = questions.length - Object.keys(answers).length;
+                if (unansweredCount > 0 && timer.remaining !== null && timer.remaining > 0) {
+                  const firstUnansweredIdx = questions.findIndex(q => !answers[q.id]);
+                  if (firstUnansweredIdx >= 0) navigateToQuestion(firstUnansweredIdx);
+                  return;
+                }
+
+                // REQ-004: confidence 미선택 문제 있으면 차단
+                const answeredIds = Object.keys(answers);
+                const missingConfidence = answeredIds.filter(id => confidence[id] === undefined);
+                if (missingConfidence.length > 0) {
+                  const firstMissingIdx = questions.findIndex(q => missingConfidence.includes(q.id));
+                  if (firstMissingIdx >= 0) navigateToQuestion(firstMissingIdx);
+                  return;
+                }
+
                 recordQuestionTime();
                 setQuestionStartTime(Date.now());
                 setElapsedAtConfirm(startTime ? Math.floor((Date.now() - startTime) / 1000) : 0);
