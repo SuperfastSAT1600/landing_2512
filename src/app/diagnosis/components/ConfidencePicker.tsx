@@ -23,7 +23,7 @@ export function ConfidencePicker({ questionId, confidence, onConfidence, highlig
   return (
     <div style={{ marginTop: 24 }} className={highlight ? 'confidence-required' : undefined}>
       <p className="text-xs font-semibold" style={{ letterSpacing: '0.05em', marginBottom: 10, color: highlight ? '#3B82F6' : undefined }}>
-        CONFIDENCE LEVEL{highlight && <span className="ml-2 font-normal normal-case" style={{ color: '#3B82F6' }}>← 선택해주세요</span>}
+        CONFIDENCE LEVEL{highlight && <span className="ml-2 font-normal normal-case" style={{ color: '#3B82F6' }}>← Please select to continue</span>}
       </p>
       <div className="test-confidence-row">
         {CONFIDENCE_LEVELS.map(level => {
