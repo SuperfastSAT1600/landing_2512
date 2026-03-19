@@ -157,8 +157,8 @@ export default function AdminDiagnosisDetailPage() {
               <span className="font-semibold">{formatTime(result.totalTimeSeconds)}</span>
             </div>
             <div>
-              <span className="text-gray-400 block mb-1">문제 개수</span>
-              <span className="font-semibold">{Object.keys(answers).length}</span>
+              <span className="text-gray-400 block mb-1">응답 / 총 문제</span>
+              <span className="font-semibold">{Object.keys(answers).length} / {Object.keys(questionTimes).length}</span>
             </div>
           </div>
         </div>

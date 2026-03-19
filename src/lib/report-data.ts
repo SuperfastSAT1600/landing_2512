@@ -112,15 +112,13 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
 
     const answered = studentAnswer !== undefined;
 
-    if (answered) {
-      if (!domainStats[q.domain]) domainStats[q.domain] = { correct: 0, total: 0 };
-      domainStats[q.domain].total++;
-      if (isCorrect) domainStats[q.domain].correct++;
+    if (!domainStats[q.domain]) domainStats[q.domain] = { correct: 0, total: 0 };
+    domainStats[q.domain].total++;
+    if (answered && isCorrect) domainStats[q.domain].correct++;
 
-      if (!sectionStats[q.section]) sectionStats[q.section] = { correct: 0, total: 0 };
-      sectionStats[q.section].total++;
-      if (isCorrect) sectionStats[q.section].correct++;
-    }
+    if (!sectionStats[q.section]) sectionStats[q.section] = { correct: 0, total: 0 };
+    sectionStats[q.section].total++;
+    if (answered && isCorrect) sectionStats[q.section].correct++;
 
     return {
       id: q.id,

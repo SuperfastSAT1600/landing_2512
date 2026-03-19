@@ -51,6 +51,7 @@ export function DiagnosticTestView({
   const [showDirections, setShowDirections] = useState(false);
   const [showVocabNotice, setShowVocabNotice] = useState(true);
   const [selectedWord, setSelectedWord] = useState<SavedWord | null>(null);
+  const [highlightConfidence, setHighlightConfidence] = useState(false);
   const [saveButtonPosition, setSaveButtonPosition] = useState<{ top: number; left: number } | null>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -85,6 +86,7 @@ export function DiagnosticTestView({
     setQuestionStartTime(Date.now());
     setShowNav(false);
     clearSelection();
+    setHighlightConfidence(false);
   }, [recordQuestionTime, clearSelection]);
 
   const toggleFlag = useCallback(() => {
@@ -112,6 +114,7 @@ export function DiagnosticTestView({
 
   const handleConfidence = (questionId: string, level: number) => {
     setConfidence(prev => ({ ...prev, [questionId]: level }));
+    setHighlightConfidence(false);
   };
 
   const handleWordClick = (word: SavedWord, position: { top: number; left: number }) => {
@@ -501,6 +504,7 @@ export function DiagnosticTestView({
                         questionId={currentQuestion.id}
                         confidence={confidence}
                         onConfidence={handleConfidence}
+                        highlight={highlightConfidence}
                       />
                     )}
                   </div>
@@ -596,7 +600,14 @@ export function DiagnosticTestView({
           {currentQuestionIndex < questions.length - 1 ? (
             <button
               type="button"
-              onClick={() => navigateToQuestion(currentQuestionIndex + 1)}
+              onClick={() => {
+                const qId = currentQuestion?.id;
+                if (qId && answers[qId] && confidence[qId] === undefined) {
+                  setHighlightConfidence(true);
+                  return;
+                }
+                navigateToQuestion(currentQuestionIndex + 1);
+              }}
               className="bluebook-next-btn btn-press"
             >
               Next
