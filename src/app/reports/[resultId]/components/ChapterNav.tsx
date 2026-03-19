@@ -88,9 +88,9 @@ export function ChapterNav() {
                 onClick={() => scrollTo(chapter.id)}
                 className="flex-1 flex flex-col items-center justify-center transition-colors"
                 style={{
-                  paddingTop: 14,
-                  paddingBottom: 14,
-                  fontSize: 13,
+                  paddingTop: 18,
+                  paddingBottom: 18,
+                  fontSize: 14,
                   fontWeight: isActive ? 700 : 500,
                   color: isActive ? '#09090b' : '#94A3B8',
                   background: 'none',
