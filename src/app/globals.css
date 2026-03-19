@@ -411,6 +411,22 @@ a {
 .content-renderer li { margin-bottom: 0.25em; }
 .content-renderer img { max-width: 100%; height: auto; border-radius: 8px; margin: 0.5em 0; }
 
+@keyframes confidence-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+  90% { transform: translateX(2px); }
+}
+.confidence-required {
+  animation: confidence-shake 0.45s ease;
+  border-radius: 12px;
+  outline: 2px solid #3B82F6;
+  outline-offset: 4px;
+}
+
 @keyframes subtle-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
