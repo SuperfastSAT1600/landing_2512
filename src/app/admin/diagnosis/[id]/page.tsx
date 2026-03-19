@@ -51,6 +51,19 @@ export default function AdminDiagnosisDetailPage() {
     }
   };
 
+  const CONFIDENCE_MAP: Record<number, { label: string; color: string }> = {
+    0:   { label: 'No Idea',     color: '#8B95A1' },
+    25:  { label: 'Guessing',    color: '#F04452' },
+    50:  { label: 'Not Sure',    color: '#F59E0B' },
+    75:  { label: 'Fairly Sure', color: '#3182F6' },
+    100: { label: 'Very Sure',   color: '#03B26C' },
+  };
+
+  const formatConfidence = (value: number | undefined) => {
+    if (value === undefined || value === null) return null;
+    return CONFIDENCE_MAP[value] ?? { label: `${value}%`, color: '#8B95A1' };
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('ko-KR');
   };
@@ -176,14 +189,22 @@ export default function AdminDiagnosisDetailPage() {
                   <span className="font-semibold">{answers[questionId] || '미답변'}</span>
                 </div>
 
-                {confidenceLevels[questionId] !== undefined && (
-                  <div>
-                    <span className="text-gray-400 block mb-1">신뢰도</span>
-                    <span className="font-semibold">
-                      {confidenceLevels[questionId]}/5
-                    </span>
-                  </div>
-                )}
+                <div>
+                  <span className="text-gray-400 block mb-1">Confidence</span>
+                  {(() => {
+                    const conf = formatConfidence(confidenceLevels[questionId]);
+                    if (!conf) return <span className="text-gray-500 text-sm">N/A</span>;
+                    return (
+                      <span
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold px-2 py-0.5 rounded-full"
+                        style={{ background: `${conf.color}20`, color: conf.color }}
+                      >
+                        <span className="w-2 h-2 rounded-full" style={{ background: conf.color }} />
+                        {conf.label} · {confidenceLevels[questionId]}%
+                      </span>
+                    );
+                  })()}
+                </div>
               </div>
             </div>
           ))}
@@ -202,13 +223,10 @@ export default function AdminDiagnosisDetailPage() {
               <span className="font-semibold">{flaggedQuestions.length}개</span>
             </div>
             <div>
-              <span className="text-gray-400">평균 신뢰도: </span>
+              <span className="text-gray-400">평균 Confidence: </span>
               <span className="font-semibold">
                 {Object.values(confidenceLevels).length > 0
-                  ? (
-                      Object.values(confidenceLevels).reduce((a, b) => a + b, 0) /
-                      Object.values(confidenceLevels).length
-                    ).toFixed(1)
+                  ? `${(Object.values(confidenceLevels).reduce((a, b) => a + b, 0) / Object.values(confidenceLevels).length).toFixed(0)}%`
                   : 'N/A'}
               </span>
             </div>
