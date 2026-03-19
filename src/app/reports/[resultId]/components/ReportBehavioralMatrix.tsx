@@ -96,13 +96,17 @@ export function ReportBehavioralMatrix({ questionDetails }: Props) {
                     dataKey="confidence"
                     type="number"
                     name="Confidence"
-                    domain={[0.5, 5.5]}
-                    ticks={[1, 2, 3, 4, 5]}
+                    domain={[-12.5, 112.5]}
+                    ticks={[0, 25, 50, 75, 100]}
+                    tickFormatter={(v: number) => {
+                      const map: Record<number, string> = { 0: 'None', 25: '25%', 50: '50%', 75: '75%', 100: '100%' };
+                      return map[v] ?? `${v}%`;
+                    }}
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: '#94A3B8', fontSize: 11 }}
+                    tick={{ fill: '#94A3B8', fontSize: 10 }}
                     label={{ value: 'Confidence', angle: -90, position: 'insideLeft', offset: 12, fill: '#94A3B8', fontSize: 11 }}
-                    width={50}
+                    width={52}
                   />
                   {avgTime > 0 && (
                     <ReferenceLine x={avgTime} stroke="#CBD5E1" strokeDasharray="4 2" label={{ value: 'Avg time', fill: '#94A3B8', fontSize: 10 }} />
