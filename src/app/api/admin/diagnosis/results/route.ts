@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from('diagnostic_test_results')
       .select(
-        'id, student_email, student_name, submitted_at, total_time_seconds, test_id',
+        'id, student_email, student_name, submitted_at, total_time_seconds, test_id, answers, question_times',
         { count: 'exact' }
       )
       .order('submitted_at', { ascending: false })
@@ -63,10 +63,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const results = (data || []).map((item) => ({
+      id: item.id,
+      student_email: item.student_email,
+      student_name: item.student_name,
+      submitted_at: item.submitted_at,
+      total_time_seconds: item.total_time_seconds,
+      test_id: item.test_id,
+      answeredCount: Object.keys((item.answers as Record<string, string>) ?? {}).length,
+      totalQuestions: Object.keys((item.question_times as Record<string, number>) ?? {}).length,
+    }));
+
     return NextResponse.json(
       {
         success: true,
-        results: data || [],
+        results,
         total: count || 0,
         limit,
         offset,
