@@ -38,6 +38,7 @@ export interface TestResult {
   studentEmail: string;
   studentName: string;
   testId: string;                      // e.g., 'diagnostic-test-1'
+  testVersionId?: string;              // UUID of the test version (nullable for legacy results)
   createdAt: string;                   // ISO timestamp (record creation)
   startedAt: string;                   // ISO timestamp (when test started)
   submittedAt: string;                 // ISO timestamp (when submitted)
