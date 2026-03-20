@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 import { TestResult } from '@/types/diagnosis';
+import { QuestionStat } from '@/lib/diagnosis-analysis';
+import QuestionStatCard from './QuestionStatCard';
 
 export default function AdminDiagnosisDetailPage() {
   const params = useParams();
@@ -11,6 +13,7 @@ export default function AdminDiagnosisDetailPage() {
   const { isAuthenticated, adminKey, loading: authLoading } = useAdminAuth();
 
   const [result, setResult] = useState<TestResult | null>(null);
+  const [statsMap, setStatsMap] = useState<Record<string, QuestionStat> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -43,6 +46,9 @@ export default function AdminDiagnosisDetailPage() {
 
       const data = await response.json();
       setResult(data.result);
+      if (data.result?.testVersionId) {
+        fetchStats(data.result.testVersionId);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : '요청 처리 중 오류가 발생했습니다.';
       setError(message);
@@ -51,17 +57,17 @@ export default function AdminDiagnosisDetailPage() {
     }
   };
 
-  const CONFIDENCE_MAP: Record<number, { label: string; color: string }> = {
-    0:   { label: 'No Idea',     color: '#8B95A1' },
-    25:  { label: 'Guessing',    color: '#F04452' },
-    50:  { label: 'Not Sure',    color: '#F59E0B' },
-    75:  { label: 'Fairly Sure', color: '#3182F6' },
-    100: { label: 'Very Sure',   color: '#03B26C' },
-  };
-
-  const formatConfidence = (value: number | undefined) => {
-    if (value === undefined || value === null) return null;
-    return CONFIDENCE_MAP[value] ?? { label: `${value}%`, color: '#8B95A1' };
+  const fetchStats = async (versionId: string) => {
+    try {
+      const res = await fetch(`/api/admin/diagnosis/question-stats?versionId=${versionId}`, {
+        headers: { 'x-admin-key': adminKey },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const map: Record<string, QuestionStat> = {};
+      for (const s of data.stats as QuestionStat[]) map[s.questionId] = s;
+      setStatsMap(map);
+    } catch { /* stats are supplementary — fail silently */ }
   };
 
   const formatDate = (dateString: string) => {
@@ -167,46 +173,15 @@ export default function AdminDiagnosisDetailPage() {
         <div className="space-y-6">
           <h2 className="text-xl font-bold">문제별 답변</h2>
           {Object.keys(answers).map((questionId) => (
-            <div key={questionId} className="bg-gray-800 rounded-lg p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-bold">문제 {questionId}</h3>
-                  {flaggedQuestions.includes(questionId) && (
-                    <span className="text-yellow-400 text-sm">⭐ 표시됨</span>
-                  )}
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-400">소요 시간</div>
-                  <div className="font-semibold">
-                    {formatTime(questionTimes[questionId] || 0)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <span className="text-gray-400 block mb-1">선택 답변</span>
-                  <span className="font-semibold">{answers[questionId] || '미답변'}</span>
-                </div>
-
-                <div>
-                  <span className="text-gray-400 block mb-1">Confidence</span>
-                  {(() => {
-                    const conf = formatConfidence(confidenceLevels[questionId]);
-                    if (!conf) return <span className="text-gray-500 text-sm">N/A</span>;
-                    return (
-                      <span
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold px-2 py-0.5 rounded-full"
-                        style={{ background: `${conf.color}20`, color: conf.color }}
-                      >
-                        <span className="w-2 h-2 rounded-full" style={{ background: conf.color }} />
-                        {conf.label} · {confidenceLevels[questionId]}%
-                      </span>
-                    );
-                  })()}
-                </div>
-              </div>
-            </div>
+            <QuestionStatCard
+              key={questionId}
+              questionId={questionId}
+              studentAnswer={answers[questionId]}
+              confidenceValue={confidenceLevels[questionId]}
+              timeSeconds={questionTimes[questionId] || 0}
+              isFlagged={flaggedQuestions.includes(questionId)}
+              stat={statsMap?.[questionId] ?? null}
+            />
           ))}
         </div>
 

@@ -59,6 +59,7 @@ export async function GET(
       flaggedQuestions: data.flagged_questions,
       questionTimes: data.question_times,
       savedWords: data.saved_words,
+      testVersionId: data.test_version_id ?? undefined,
     };
 
     return NextResponse.json(
