@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase';
@@ -190,7 +190,6 @@ export async function POST(request: NextRequest) {
         revalidatePath('/blog');
         revalidatePath('/');
         revalidatePath(`/blog/${finalSlug}`);
-        revalidateTag('posts', 'default');
 
         return NextResponse.json({ success: true, id: finalSlug });
 
@@ -228,7 +227,6 @@ export async function DELETE(request: NextRequest) {
         revalidatePath('/blog');
         revalidatePath('/');
         revalidatePath(`/blog/${id}`);
-        revalidateTag('posts', 'default');
 
         return NextResponse.json({ success: true });
 

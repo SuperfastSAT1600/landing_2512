@@ -73,12 +73,14 @@ export function DiagnosticTestView({
 
   const recordQuestionTime = useCallback(() => {
     if (!currentQuestion) return;
-    const elapsed = Math.floor((Date.now() - questionStartTime) / 1000);
+    const raw = Math.floor((Date.now() - questionStartTime) / 1000);
+    const timeLimitSeconds = timeLimitMinutes ? timeLimitMinutes * 60 : Infinity;
+    const elapsed = Math.min(raw, timeLimitSeconds);
     setQuestionTimes(prev => ({
       ...prev,
       [currentQuestion.id]: (prev[currentQuestion.id] ?? 0) + elapsed,
     }));
-  }, [currentQuestion, questionStartTime]);
+  }, [currentQuestion, questionStartTime, timeLimitMinutes]);
 
   const navigateToQuestion = useCallback((index: number) => {
     recordQuestionTime();
@@ -151,7 +153,11 @@ export function DiagnosticTestView({
     }
   };
 
+  const isSubmittingRef = React.useRef(false);
+
   const handleSubmit = async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     recordQuestionTime();
     setSubmitting(true);
 
@@ -192,6 +198,7 @@ export function DiagnosticTestView({
     setTimeout(() => {
       setSubmitted(true);
       setSubmitting(false);
+      isSubmittingRef.current = false;
     }, 400);
   };
 
@@ -200,10 +207,10 @@ export function DiagnosticTestView({
   const handleSubmitRef = React.useRef(handleSubmit);
   React.useEffect(() => { handleSubmitRef.current = handleSubmit; });
   React.useEffect(() => {
-    if (timer.remaining === 0 && startTime && !submitting) {
+    if (timer.remaining === 0 && startTime && !submitting && !submitted) {
       handleSubmitRef.current();
     }
-  }, [timer.remaining, startTime, submitting]);
+  }, [timer.remaining, startTime, submitting, submitted]);
 
   if (submitted) return <TestSubmittedScreen resultId={resultId} />;
 

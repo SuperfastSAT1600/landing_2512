@@ -6,6 +6,7 @@ import { useAdminAuth } from '@/lib/useAdminAuth';
 import { TestResult } from '@/types/diagnosis';
 import { QuestionStat } from '@/lib/diagnosis-analysis';
 import QuestionStatCard from './QuestionStatCard';
+import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
 
 export default function AdminDiagnosisDetailPage() {
   const params = useParams();
@@ -117,6 +118,13 @@ export default function AdminDiagnosisDetailPage() {
   const questionTimes = (result.questionTimes || {}) as Record<string, number>;
   const flaggedQuestions = (result.flaggedQuestions || []) as string[];
 
+  const correctAnswersMap: Record<string, string> = {};
+  for (const q of diagnosticTest1.questions) {
+    correctAnswersMap[q.id] = q.type === 'multiple-choice'
+      ? (q.options?.find(o => o.type === 'correct')?.id ?? '')
+      : (q.answers?.[0] ?? '');
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-4xl mx-auto">
@@ -181,6 +189,8 @@ export default function AdminDiagnosisDetailPage() {
               timeSeconds={questionTimes[questionId] || 0}
               isFlagged={flaggedQuestions.includes(questionId)}
               stat={statsMap?.[questionId] ?? null}
+              correctAnswer={correctAnswersMap[questionId]}
+              timeLimitMinutes={result.timeLimitMinutes}
             />
           ))}
         </div>

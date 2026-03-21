@@ -43,6 +43,7 @@ export interface TestResult {
   startedAt: string;                   // ISO timestamp (when test started)
   submittedAt: string;                 // ISO timestamp (when submitted)
   totalTimeSeconds: number;            // e.g., 1800 for 30 minutes
+  timeLimitMinutes?: number;           // Time limit for the test (e.g., 30)
   answers: Record<string, string>;     // { questionId: selectedAnswerId }
   confidenceLevels: Record<string, number>;  // { questionId: confidenceLevel (1-5) }
   flaggedQuestions: string[];          // Array of question IDs flagged for review
