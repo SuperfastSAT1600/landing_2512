@@ -50,6 +50,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Idempotency: reject duplicate submissions within 60 seconds
+    const sixtySecondsAgo = new Date(Date.now() - 60_000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from('diagnostic_test_results')
+      .select('id')
+      .eq('test_id', testId)
+      .eq('student_email', studentEmail ?? '')
+      .gte('created_at', sixtySecondsAgo)
+      .limit(1);
+
+    if (recent && recent.length > 0) {
+      return NextResponse.json(
+        { success: true, resultId: recent[0].id },
+        { status: 200 }
+      );
+    }
+
     // Insert test result
     const { data: resultData, error: insertError } = await supabaseAdmin
       .from('diagnostic_test_results')
