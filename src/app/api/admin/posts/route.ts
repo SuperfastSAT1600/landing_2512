@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
         revalidatePath('/blog');
         revalidatePath('/');
         revalidatePath(`/blog/${finalSlug}`);
-        revalidateTag('posts', 'default');
+        revalidateTag('posts');
 
         return NextResponse.json({ success: true, id: finalSlug });
 
@@ -228,7 +228,7 @@ export async function DELETE(request: NextRequest) {
         revalidatePath('/blog');
         revalidatePath('/');
         revalidatePath(`/blog/${id}`);
-        revalidateTag('posts', 'default');
+        revalidateTag('posts');
 
         return NextResponse.json({ success: true });
 
