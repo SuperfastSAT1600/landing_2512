@@ -54,6 +54,7 @@ export async function GET(
       startedAt: data.started_at,
       submittedAt: data.submitted_at,
       totalTimeSeconds: data.total_time_seconds,
+      timeLimitMinutes: data.time_limit_minutes ?? undefined,
       answers: data.answers,
       confidenceLevels: data.confidence_levels,
       flaggedQuestions: data.flagged_questions,
