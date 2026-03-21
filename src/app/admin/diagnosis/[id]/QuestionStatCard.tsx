@@ -9,6 +9,8 @@ interface QuestionStatCardProps {
   timeSeconds: number;
   isFlagged: boolean;
   stat: QuestionStat | null;
+  correctAnswer?: string;
+  timeLimitMinutes?: number;
 }
 
 const CONFIDENCE_MAP: Record<number, { label: string; color: string }> = {
@@ -39,6 +41,8 @@ export default function QuestionStatCard({
   timeSeconds,
   isFlagged,
   stat,
+  correctAnswer,
+  timeLimitMinutes,
 }: QuestionStatCardProps) {
   const conf = confidenceValue !== undefined && confidenceValue !== null
     ? (CONFIDENCE_MAP[confidenceValue] ?? { label: `${confidenceValue}%`, color: '#8B95A1' })
@@ -83,7 +87,11 @@ export default function QuestionStatCard({
         </div>
         <div className="text-right text-sm">
           <div className="text-gray-400 mb-0.5">소요 시간</div>
-          <div className="font-semibold">{formatTime(timeSeconds)}</div>
+          <div className="font-semibold">
+            {timeLimitMinutes && timeSeconds > timeLimitMinutes * 60
+              ? '측정 불가'
+              : formatTime(timeSeconds)}
+          </div>
           {isOverTime && (
             <span className="text-yellow-400 text-xs font-semibold">⚠ 시간 초과</span>
           )}
@@ -110,9 +118,9 @@ export default function QuestionStatCard({
         <div>
           <span className="text-gray-400 block mb-1 text-sm">선택 답변</span>
           <span className="font-semibold">{studentAnswer || '미답변'}</span>
-          {stat && (
+          {(correctAnswer ?? stat?.correctAnswer) && (
             <span className="text-gray-500 text-sm ml-2">
-              (정답: {stat.correctAnswer})
+              (정답: {correctAnswer ?? stat?.correctAnswer})
             </span>
           )}
         </div>

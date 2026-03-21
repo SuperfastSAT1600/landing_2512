@@ -11,6 +11,7 @@ interface TestResult {
   total_time_seconds: number;
   answeredCount: number;
   totalQuestions: number;
+  correctCount: number;
 }
 
 interface ViewResultsTabProps {
@@ -107,7 +108,8 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
                 <th className="text-left py-3 px-4 font-semibold">이메일</th>
                 <th className="text-left py-3 px-4 font-semibold">응시 날짜</th>
                 <th className="text-left py-3 px-4 font-semibold">소요 시간</th>
-                <th className="text-left py-3 px-4 font-semibold">문제 수</th>
+                <th className="text-left py-3 px-4 font-semibold">푼 문제 수</th>
+                <th className="text-left py-3 px-4 font-semibold">맞춘 문제</th>
                 <th className="text-left py-3 px-4 font-semibold">상세 보기</th>
                 <th className="text-left py-3 px-4 font-semibold">보고서 링크</th>
                 <th className="text-left py-3 px-4 font-semibold">인사이트 편집</th>
@@ -121,6 +123,7 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
                   <td className="py-3 px-4">{formatDate(result.submitted_at)}</td>
                   <td className="py-3 px-4">{formatTime(result.total_time_seconds)}</td>
                   <td className="py-3 px-4">{result.answeredCount}/{result.totalQuestions}</td>
+                  <td className="py-3 px-4">{result.correctCount}/{result.totalQuestions}</td>
                   <td className="py-3 px-4">
                     <Link
                       href={`/admin/diagnosis/${result.id}`}
