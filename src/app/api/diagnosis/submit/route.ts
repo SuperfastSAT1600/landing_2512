@@ -38,33 +38,51 @@ export async function POST(request: NextRequest) {
     if (tokenId) {
       const { data: tokenData, error: tokenError } = await supabaseAdmin
         .from('diagnostic_access_tokens')
-        .select('id, time_limit_minutes')
+        .select('id, time_limit_minutes, is_active')
         .eq('id', tokenId)
-        .eq('is_active', true)
         .single();
 
       if (tokenError || !tokenData) {
-        console.warn('Token validation failed, saving result without token link');
+        console.warn('Token not found, saving result without token link');
       } else {
         timeLimitMinutes = tokenData.time_limit_minutes ?? 30;
       }
     }
 
-    // Idempotency: reject duplicate submissions within 60 seconds
-    const sixtySecondsAgo = new Date(Date.now() - 60_000).toISOString();
-    const { data: recent } = await supabaseAdmin
-      .from('diagnostic_test_results')
-      .select('id')
-      .eq('test_id', testId)
-      .eq('student_email', studentEmail ?? '')
-      .gte('created_at', sixtySecondsAgo)
-      .limit(1);
+    // Idempotency: if this token already has a result, return it without inserting
+    if (tokenId) {
+      const { data: existingByToken } = await supabaseAdmin
+        .from('diagnostic_test_results')
+        .select('id')
+        .eq('token_id', tokenId)
+        .limit(1)
+        .single();
 
-    if (recent && recent.length > 0) {
-      return NextResponse.json(
-        { success: true, resultId: recent[0].id },
-        { status: 200 }
-      );
+      if (existingByToken) {
+        return NextResponse.json(
+          { success: true, resultId: existingByToken.id },
+          { status: 200 }
+        );
+      }
+    }
+
+    // Fallback idempotency for token-less submissions: reject duplicates within 10 minutes
+    if (!tokenId && studentEmail) {
+      const tenMinutesAgo = new Date(Date.now() - 600_000).toISOString();
+      const { data: recent } = await supabaseAdmin
+        .from('diagnostic_test_results')
+        .select('id')
+        .eq('test_id', testId)
+        .eq('student_email', studentEmail)
+        .gte('created_at', tenMinutesAgo)
+        .limit(1);
+
+      if (recent && recent.length > 0) {
+        return NextResponse.json(
+          { success: true, resultId: recent[0].id },
+          { status: 200 }
+        );
+      }
     }
 
     // Insert test result
