@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase';
+import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
 
 /**
  * GET /api/admin/diagnosis/results
@@ -63,16 +64,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const results = (data || []).map((item) => ({
-      id: item.id,
-      student_email: item.student_email,
-      student_name: item.student_name,
-      submitted_at: item.submitted_at,
-      total_time_seconds: item.total_time_seconds,
-      test_id: item.test_id,
-      answeredCount: Object.keys((item.answers as Record<string, string>) ?? {}).length,
-      totalQuestions: Object.keys((item.question_times as Record<string, number>) ?? {}).length,
-    }));
+    const questions = diagnosticTest1.questions;
+    const results = (data || []).map((item) => {
+      const answersMap = (item.answers as Record<string, string>) ?? {};
+      const correctCount = questions.reduce((count, q) => {
+        const sa = answersMap[q.id];
+        if (!sa) return count;
+        const ca = q.type === 'multiple-choice'
+          ? (q.options?.find(o => o.type === 'correct')?.id ?? '')
+          : (q.answers?.[0] ?? '');
+        const isCorrect = q.type === 'multiple-choice'
+          ? sa === ca
+          : sa.trim().toLowerCase() === ca.trim().toLowerCase();
+        return isCorrect ? count + 1 : count;
+      }, 0);
+
+      return {
+        id: item.id,
+        student_email: item.student_email,
+        student_name: item.student_name,
+        submitted_at: item.submitted_at,
+        total_time_seconds: item.total_time_seconds,
+        test_id: item.test_id,
+        answeredCount: Object.keys(answersMap).length,
+        totalQuestions: Object.keys((item.question_times as Record<string, number>) ?? {}).length,
+        correctCount,
+      };
+    });
 
     return NextResponse.json(
       {
