@@ -125,6 +125,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Mark token as used (non-fatal if fails — result is already saved)
+    if (tokenId) {
+      const { error: tokenUpdateError } = await supabaseAdmin
+        .from('diagnostic_access_tokens')
+        .update({ used_at: new Date().toISOString() })
+        .eq('id', tokenId)
+        .is('used_at', null);
+
+      if (tokenUpdateError) {
+        console.warn('Failed to mark token as used:', tokenUpdateError);
+      }
+    }
+
     const response: SubmitTestResponse = {
       success: true,
       resultId,

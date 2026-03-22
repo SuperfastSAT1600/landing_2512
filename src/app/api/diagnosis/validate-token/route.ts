@@ -31,6 +31,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check if already used
+    if (tokenData.used_at) {
+      return NextResponse.json({ error: '이미 사용된 코드입니다' }, { status: 401 });
+    }
+
     // Resolve test version: use token's assigned version, or fall back to current
     let testVersionId: string | null = tokenData.test_version_id ?? null;
     if (!testVersionId) {
