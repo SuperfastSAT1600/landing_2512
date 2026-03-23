@@ -92,6 +92,7 @@ export interface SubmitTestRequest {
 export interface SubmitTestResponse {
   success: boolean;
   resultId: string;
+  isDuplicate?: boolean;
 }
 
 /**

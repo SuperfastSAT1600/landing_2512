@@ -82,6 +82,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This code is already in use' }, { status: 409 });
     }
 
+    // 학생이 이미 완료한 결과가 있으면 경고 (토큰은 발급하되 warning 반환)
+    const { data: existingResult } = await supabaseAdmin
+      .from('diagnostic_test_results')
+      .select('id, submitted_at')
+      .eq('student_name', studentName)
+      .eq('test_id', 'diagnostic-test-1')
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // Use provided expiresAt or default to 24 hours from now
     const expiresAt = expiresAtInput ? new Date(expiresAtInput) : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -118,6 +128,9 @@ export async function POST(request: NextRequest) {
       code,
       studentName,
       expiresAt: expiresAt.toISOString(),
+      warning: existingResult
+        ? `${studentName} 학생은 이미 진단테스트를 완료했습니다 (제출일: ${new Date(existingResult.submitted_at).toLocaleString('ko-KR')}). 새 코드 발급 시 중복 데이터가 생성될 수 있습니다.`
+        : null,
     }, { status: 201 });
   } catch (error) {
     console.error('Error generating code:', error);
