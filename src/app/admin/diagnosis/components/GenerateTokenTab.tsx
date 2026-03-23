@@ -46,6 +46,7 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
   const [selectedVersionId, setSelectedVersionId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [warning, setWarning] = useState<string | null>(null);
 
   const [codes, setCodes] = useState<CodeRecord[]>([]);
   const [listLoading, setListLoading] = useState(false);
@@ -94,6 +95,7 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setWarning(null);
     setLoading(true);
 
     if (!studentName.trim()) {
@@ -123,6 +125,8 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
         throw new Error(errorData.error || '코드 생성 실패');
       }
 
+      const data = await response.json();
+      setWarning(data.warning ?? null);
       setStudentName('');
       setCode(generate6DigitCode());
       setExpiresAt(getDefaultExpiresAt());
@@ -234,6 +238,20 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
+
+          {warning && (
+            <div className="p-4 rounded-lg border border-yellow-500/40 bg-yellow-500/10 text-yellow-300 text-sm">
+              <div className="font-semibold mb-1">주의: 중복 결과 가능성</div>
+              <p>{warning}</p>
+              <button
+                type="button"
+                onClick={() => setWarning(null)}
+                className="mt-2 text-xs text-yellow-400 underline"
+              >
+                확인 (닫기)
+              </button>
+            </div>
+          )}
 
           <button
             type="submit"
