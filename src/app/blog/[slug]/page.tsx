@@ -76,7 +76,7 @@ export default async function Post({ params }: Props) {
     const relatedPosts = await getRelatedPosts(slug, postData.category, 3);
 
     return (
-        <div className="bg-[#151719] min-h-screen text-gray-200 font-sans selection:bg-blue-500/30">
+        <div className="bg-[#151719] min-h-screen text-gray-200 font-sans selection:bg-blue-500/60">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{

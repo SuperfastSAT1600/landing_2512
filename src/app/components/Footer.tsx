@@ -14,19 +14,14 @@ export default function Footer() {
                             <p>Email : cs@argonautai.co.kr</p>
                             <p>Company Address : 201-A45, 46, Mapo-daero 4na-gil, Mapo-gu, Seoul, Republic of Korea</p>
                             <p>Business registration number : 564-85-03129</p>
-                            <p>Online Business Registration Number : 2026-서울마포-0000호</p>
+                            <p>Online Business Registration Number : 2026-서울마포-0539호</p>
                             <p>Contact : 02-6956-0061</p>
+                            <p>
+                                <Link href="https://free-streetcar-e47.notion.site/Privacy-Policy-21b8706b608280948463e5f5609cf80a" target="_blank" rel="noopener noreferrer">Privacy Policy</Link>
+                                {' | '}
+                                <Link href="https://free-streetcar-e47.notion.site/Terms-of-Use-21b8706b608280aba839e07716e1f3f3?pvs=73" target="_blank" rel="noopener noreferrer">Terms of Service</Link>
+                            </p>
                         </div>
-                    </div>
-
-
-
-                    <div className={styles.column}>
-                        <h4 className={styles.heading}>Legal</h4>
-                        <ul className={styles.links}>
-                            <li><Link href="#">Privacy Policy</Link></li>
-                            <li><Link href="#">Terms of Service</Link></li>
-                        </ul>
                     </div>
                 </div>
 

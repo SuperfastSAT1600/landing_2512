@@ -66,6 +66,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Secondary guard: 같은 학생이 다른 토큰으로 재제출하는 것 방지 (30일 이내)
+    if (studentName && testId) {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: existingByStudent } = await supabaseAdmin
+        .from('diagnostic_test_results')
+        .select('id')
+        .eq('student_name', studentName)
+        .eq('test_id', testId)
+        .gte('submitted_at', thirtyDaysAgo)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingByStudent) {
+        return NextResponse.json(
+          { success: true, resultId: existingByStudent.id, isDuplicate: true },
+          { status: 200 }
+        );
+      }
+    }
+
     // Fallback idempotency for token-less submissions: reject duplicates within 10 minutes
     if (!tokenId && studentEmail) {
       const tenMinutesAgo = new Date(Date.now() - 600_000).toISOString();
@@ -123,6 +143,19 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to create test result' },
         { status: 500 }
       );
+    }
+
+    // Mark token as used (non-fatal if fails — result is already saved)
+    if (tokenId) {
+      const { error: tokenUpdateError } = await supabaseAdmin
+        .from('diagnostic_access_tokens')
+        .update({ used_at: new Date().toISOString() })
+        .eq('id', tokenId)
+        .is('used_at', null);
+
+      if (tokenUpdateError) {
+        console.warn('Failed to mark token as used:', tokenUpdateError);
+      }
     }
 
     const response: SubmitTestResponse = {

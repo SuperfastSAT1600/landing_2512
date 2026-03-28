@@ -101,6 +101,26 @@ a {
 .ProseMirror [data-align="center"] { margin-left: auto; margin-right: auto; }
 .ProseMirror [data-align="right"] { margin-left: auto; margin-right: 0; }
 
+/* ─── Editor Table Selection Visibility ──────────────────────────────────────
+   어두운 배경에서 표 셀 선택 영역이 잘 보이도록 처리합니다.
+   1) 텍스트 드래그 ::selection — 브라우저 기본 선택 하이라이트
+   2) .selectedCell         — Tiptap cell-level selection (CellSelection)
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* 텍스트 드래그 선택: 에디터 내부 전체 */
+.ProseMirror ::selection {
+  background-color: rgba(59, 130, 246, 0.55);
+}
+
+/* Tiptap 셀 선택 (행/열 드래그 또는 Ctrl+클릭) */
+.ProseMirror td.selectedCell,
+.ProseMirror th.selectedCell {
+  background-color: rgba(59, 130, 246, 0.25);
+  outline: 2px solid rgba(59, 130, 246, 0.7);
+  outline-offset: -1px;
+  position: relative;
+}
+
 /* ═══════════════════════════════════════════════════════
    Diagnostic Test — Toss Design System (ported from sms)
    ═══════════════════════════════════════════════════════ */

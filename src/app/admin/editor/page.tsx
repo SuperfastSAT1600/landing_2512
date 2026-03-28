@@ -649,7 +649,7 @@ function BlogEditor() {
     const editorHtml = editor?.getHTML() ?? '';
 
     return (
-        <div className="min-h-screen bg-[#151719] text-[#E0E0E0] font-sans selection:bg-blue-500/30">
+        <div className="min-h-screen bg-[#151719] text-[#E0E0E0] font-sans selection:bg-blue-500/60">
             {/* Loading overlay — keeps EditorContent mounted in the DOM */}
             {loading && (
                 <div className="fixed inset-0 z-[300] bg-[#151719] flex items-center justify-center text-gray-400">

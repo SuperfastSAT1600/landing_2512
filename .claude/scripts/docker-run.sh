@@ -49,27 +49,42 @@ if ! docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
 fi
 
 # ── Find host credentials ────────────────────────────────
-# In WSL, $HOME is /home/<user> but credentials live in the Windows home.
-# Detect WSL and use the Windows user profile path instead.
+# Claude Code v2+ uses OAuth (stored in system keychain on Mac,
+# .credentials.json on Linux/WSL). We mount ~/.claude into the
+# container; Claude Code inside will re-auth if needed.
 HOST_CLAUDE_DIR="$HOME/.claude"
-if [ -d "/mnt/c" ] && [ -f "/mnt/c/Users/$USER/.claude/.credentials.json" ]; then
-    HOST_CLAUDE_DIR="/mnt/c/Users/$USER/.claude"
-elif [ -d "/mnt/c" ] && [ -n "$WSLENV" ] || grep -qi microsoft /proc/version 2>/dev/null; then
-    WIN_HOME=$(wslpath "$(cmd.exe /C 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')" 2>/dev/null || true)
-    if [ -n "$WIN_HOME" ] && [ -f "$WIN_HOME/.claude/.credentials.json" ]; then
-        HOST_CLAUDE_DIR="$WIN_HOME/.claude"
+if [ -d "/mnt/c" ]; then
+    # WSL: check Windows user profile
+    if [ -f "/mnt/c/Users/$USER/.claude/.credentials.json" ]; then
+        HOST_CLAUDE_DIR="/mnt/c/Users/$USER/.claude"
+    elif [ -n "$WSLENV" ] || grep -qi microsoft /proc/version 2>/dev/null; then
+        WIN_HOME=$(wslpath "$(cmd.exe /C 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')" 2>/dev/null || true)
+        if [ -n "$WIN_HOME" ] && [ -d "$WIN_HOME/.claude" ]; then
+            HOST_CLAUDE_DIR="$WIN_HOME/.claude"
+        fi
     fi
 fi
 
 echo -e "  Credentials: ${GREEN}$HOST_CLAUDE_DIR${NC}"
 
-if [ ! -f "$HOST_CLAUDE_DIR/.credentials.json" ]; then
+# Check if Claude is logged in (works for both legacy .credentials.json
+# and modern OAuth which stores tokens in config.json / system keychain)
+if [ ! -d "$HOST_CLAUDE_DIR" ]; then
     echo ""
-    echo -e "${RED}Not logged in.${NC} Run this first (outside Docker):"
+    echo -e "${RED}No ~/.claude directory found.${NC} Run this first (outside Docker):"
     echo ""
     echo "  claude login"
     echo ""
     exit 1
+fi
+
+# Verify login by checking if claude can auth (non-blocking warning only)
+if ! command -v claude &>/dev/null; then
+    echo -e "  Auth: ${YELLOW}claude CLI not found on host — will auth inside container${NC}"
+elif ! claude auth status &>/dev/null 2>&1; then
+    echo -e "  Auth: ${YELLOW}not authenticated — run 'claude login' if issues arise${NC}"
+else
+    echo -e "  Auth: ${GREEN}logged in${NC}"
 fi
 
 # ── Common docker args ────────────────────────────────────
