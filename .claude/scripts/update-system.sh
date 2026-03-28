@@ -166,7 +166,29 @@ echo -e "${YELLOW}→ Syncing system files from $SOURCE_DIR${NC}"
 
 # Managed directories: remove target dir entirely, then copy fresh from source.
 # This guarantees the target exactly mirrors source — no stale files survive.
+# Exception: project-local files (exist in target but NOT in source) are preserved.
 MANAGED_DIRS="agents skills rules commands workflows templates scripts checklists"
+
+# Backup project-local additions before wiping managed dirs
+TEMP_PROJECT_LOCAL=$(mktemp -d)
+
+for managed in $MANAGED_DIRS; do
+    SRC_DIR="$SOURCE_DIR/$managed"
+    TARGET_DIR="$CLAUDE_DIR/$managed"
+
+    if [ -d "$TARGET_DIR" ] && [ -d "$SRC_DIR" ]; then
+        # Find top-level items in target that don't exist in source → project-local
+        while IFS= read -r -d '' item; do
+            rel=$(basename "$item")
+            if [ ! -e "$SRC_DIR/$rel" ]; then
+                dest="$TEMP_PROJECT_LOCAL/$managed"
+                mkdir -p "$dest"
+                cp -r "$item" "$dest/"
+                echo -e "  ${YELLOW}→ Preserving project-local: $managed/$rel${NC}"
+            fi
+        done < <(find "$TARGET_DIR" -maxdepth 1 -mindepth 1 -print0)
+    fi
+done
 
 for managed in $MANAGED_DIRS; do
     SRC_DIR="$SOURCE_DIR/$managed"
@@ -183,6 +205,24 @@ for managed in $MANAGED_DIRS; do
         echo -e "  ${RED}✗ Removed obsolete $managed/ (no longer in source)${NC}"
     fi
 done
+
+# Restore project-local files that were backed up above
+PROJECT_LOCAL_COUNT=0
+for managed in $MANAGED_DIRS; do
+    LOCAL_DIR="$TEMP_PROJECT_LOCAL/$managed"
+    if [ -d "$LOCAL_DIR" ] && [ "$(ls -A "$LOCAL_DIR" 2>/dev/null)" ]; then
+        cp -r "$LOCAL_DIR/"* "$CLAUDE_DIR/$managed/"
+        for item in "$LOCAL_DIR"/*; do
+            echo -e "  ${GREEN}✓ Restored project-local: $managed/$(basename "$item")${NC}"
+            PROJECT_LOCAL_COUNT=$((PROJECT_LOCAL_COUNT + 1))
+        done
+    fi
+done
+rm -rf "$TEMP_PROJECT_LOCAL"
+
+if [ "$PROJECT_LOCAL_COUNT" -gt 0 ]; then
+    echo -e "${GREEN}✓ $PROJECT_LOCAL_COUNT project-local file(s) preserved${NC}"
+fi
 
 # Copy any remaining non-managed directories from source (except user/)
 for dir in "$SOURCE_DIR"/*; do
