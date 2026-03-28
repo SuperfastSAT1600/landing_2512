@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase';
+import { sendMetaCAPIEvent } from '@/lib/meta-capi';
 
 /**
  * GET /api/admin/diagnosis/tokens
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { studentName, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes } = await request.json();
+    const { studentName, studentPhone, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes } = await request.json();
 
     if (!studentName || !code) {
       return NextResponse.json({ error: 'Student name and code are required' }, { status: 400 });
@@ -112,6 +113,7 @@ export async function POST(request: NextRequest) {
         token: code,
         student_email: null,
         student_name: studentName,
+        phone_number: studentPhone?.trim() || null,
         test_id: 'diagnostic-test-1',
         test_version_id: resolvedVersionId,
         expires_at: expiresAt.toISOString(),
@@ -122,6 +124,18 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error('Error creating code:', insertError);
       return NextResponse.json({ error: 'Failed to create code' }, { status: 500 });
+    }
+
+    // Send CAPI event if phone number provided
+    if (studentPhone?.trim()) {
+      sendMetaCAPIEvent({
+        eventName: 'DiagnosticCodeIssued',
+        userData: {
+          ph: studentPhone.trim(),
+          fn: studentName.split(' ')[0],
+        },
+        customData: { content_name: 'diagnostic_code_issued' },
+      }).catch(err => console.error('[tokens] CAPI error:', err));
     }
 
     return NextResponse.json({

@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 
 interface GenerateTokenTabProps {
   adminKey: string;
+  prefillName?: string;
+  prefillPhone?: string;
+  onPrefillClear?: () => void;
 }
 
 interface CodeRecord {
@@ -38,8 +41,9 @@ const STATUS_LABELS: Record<string, { text: string; color: string }> = {
   expired: { text: '만료', color: 'bg-red-500/20 text-red-400' },
 };
 
-export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
-  const [studentName, setStudentName] = useState('');
+export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefillClear }: GenerateTokenTabProps) {
+  const [studentName, setStudentName] = useState(prefillName ?? '');
+  const [studentPhone, setStudentPhone] = useState(prefillPhone ?? '');
   const [code, setCode] = useState(generate6DigitCode());
   const [expiresAt, setExpiresAt] = useState(getDefaultExpiresAt());
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(30);
@@ -92,6 +96,12 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
     fetchCodes();
   }, []);
 
+  // Apply prefill when it changes
+  useEffect(() => {
+    if (prefillName) setStudentName(prefillName);
+    if (prefillPhone) setStudentPhone(prefillPhone);
+  }, [prefillName, prefillPhone]);
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -113,6 +123,7 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
         },
         body: JSON.stringify({
           studentName: studentName.trim(),
+          studentPhone: studentPhone.trim() || undefined,
           code: code.trim(),
           expiresAt: new Date(expiresAt).toISOString(),
           testVersionId: selectedVersionId || undefined,
@@ -128,8 +139,10 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
       const data = await response.json();
       setWarning(data.warning ?? null);
       setStudentName('');
+      setStudentPhone('');
       setCode(generate6DigitCode());
       setExpiresAt(getDefaultExpiresAt());
+      onPrefillClear?.();
       fetchCodes();
     } catch (err) {
       const message = err instanceof Error ? err.message : '요청 처리 중 오류가 발생했습니다.';
@@ -169,6 +182,19 @@ export function GenerateTokenTab({ adminKey }: GenerateTokenTabProps) {
               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loading}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">전화번호 <span className="text-gray-400 font-normal">(선택)</span></label>
+            <input
+              type="tel"
+              value={studentPhone}
+              onChange={(e) => setStudentPhone(e.target.value)}
+              placeholder="예: +1 234 567 8900 / 010-1234-5678"
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
+            />
+            <p className="text-xs text-gray-400 mt-1">픽셀 최적화용. 입력 시 Meta CAPI 이벤트 전송.</p>
           </div>
 
           {/* Version selector */}
