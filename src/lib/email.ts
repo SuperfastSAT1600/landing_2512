@@ -1,6 +1,12 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY not set — skipping email send');
+    return null;
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export interface DiagnosticApplicationEmailData {
   name: string;
@@ -11,6 +17,9 @@ export interface DiagnosticApplicationEmailData {
 }
 
 export async function sendApplicationNotification(data: DiagnosticApplicationEmailData) {
+  const resend = getResend();
+  if (!resend) return;
+
   const { name, phone, preferredDate, preferredTime, createdAt } = data;
 
   await resend.emails.send({

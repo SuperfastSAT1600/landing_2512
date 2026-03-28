@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     const phoneClean = phone.replace(/\D/g, '');
-    if (phoneClean.length < 10 || phoneClean.length > 11) {
+    if (phoneClean.length < 7) {
       return NextResponse.json({ error: '올바른 전화번호를 입력해주세요.' }, { status: 400 });
     }
 

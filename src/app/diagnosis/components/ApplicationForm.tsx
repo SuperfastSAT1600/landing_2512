@@ -70,12 +70,24 @@ export function ApplicationForm() {
 
   if (done) {
     return (
-      <div className="text-center py-10">
-        <div className="text-4xl mb-4">✅</div>
-        <h3 className="text-xl font-bold text-white mb-3">신청이 완료되었습니다.</h3>
-        <p className="text-gray-400 text-sm leading-relaxed">
-          빠른 시간 내에 연락드리겠습니다.
-        </p>
+      <div className="py-6">
+        <div className="flex flex-col items-center mb-5">
+          <div className="w-14 h-14 bg-[#071be9]/20 rounded-full flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-[#6085FF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-white">신청해 주셔서 감사합니다!</h3>
+        </div>
+        <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+          <p className="text-gray-300 text-sm leading-relaxed">
+            현재 심도 있는 1:1 진단 상담이 순차적으로 진행되고 있어, 하루에 소화 가능한 진단 인원에 제한을 두고 있습니다.
+            <br /><br />
+            보다 정밀한 상담을 위해 연락이 조금 늦어질 수 있는 점 너그러운 양해 부탁드립니다.
+            <br /><br />
+            최대한 빠르게 안내 도와드리겠습니다.
+          </p>
+        </div>
       </div>
     );
   }
