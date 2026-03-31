@@ -1,29 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { TokenListTable, CodeRecord, TestVersion } from './TokenListTable';
 
 interface GenerateTokenTabProps {
   adminKey: string;
   prefillName?: string;
   prefillPhone?: string;
   onPrefillClear?: () => void;
-}
-
-interface CodeRecord {
-  id: string;
-  token: string;
-  student_name: string;
-  expires_at: string;
-  is_active: boolean;
-  created_at: string;
-  status: 'pending' | 'completed' | 'expired';
-  test_version_id?: string | null;
-}
-
-interface TestVersion {
-  id: string;
-  version_number: number;
-  is_current: boolean;
 }
 
 function generate6DigitCode(): string {
@@ -34,12 +18,6 @@ function getDefaultExpiresAt(): string {
   const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
   return d.toISOString().slice(0, 16);
 }
-
-const STATUS_LABELS: Record<string, { text: string; color: string }> = {
-  pending: { text: '대기중', color: 'bg-yellow-500/20 text-yellow-400' },
-  completed: { text: '완료', color: 'bg-green-500/20 text-green-400' },
-  expired: { text: '만료', color: 'bg-red-500/20 text-red-400' },
-};
 
 export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefillClear }: GenerateTokenTabProps) {
   const [studentName, setStudentName] = useState(prefillName ?? '');
@@ -65,7 +43,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
         const data = await res.json();
         const vList: TestVersion[] = data.versions ?? [];
         setVersions(vList);
-        // Default to current version
         const current = vList.find((v) => v.is_current);
         if (current) setSelectedVersionId(current.id);
       }
@@ -96,7 +73,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
     fetchCodes();
   }, []);
 
-  // Apply prefill when it changes
   useEffect(() => {
     if (prefillName) setStudentName(prefillName);
     if (prefillPhone) setStudentPhone(prefillPhone);
@@ -152,20 +128,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('ko-KR');
-  };
-
-  const getVersionLabel = (versionId: string | null | undefined) => {
-    if (!versionId) return '-';
-    const v = versions.find((v) => v.id === versionId);
-    return v ? `v${v.version_number}` : '-';
-  };
-
   return (
     <div className="space-y-10">
       {/* Code Generation Form */}
@@ -197,7 +159,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
             <p className="text-xs text-gray-400 mt-1">픽셀 최적화용. 입력 시 Meta CAPI 이벤트 전송.</p>
           </div>
 
-          {/* Version selector */}
           {versions.length > 0 && (
             <div>
               <label className="block text-sm font-semibold mb-2">진단테스트 버전</label>
@@ -307,49 +268,12 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
         )}
 
         {codes.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-600">
-                  <th className="text-left py-3 px-4 font-semibold">학생명</th>
-                  <th className="text-left py-3 px-4 font-semibold">버전</th>
-                  <th className="text-left py-3 px-4 font-semibold">코드</th>
-                  <th className="text-left py-3 px-4 font-semibold">만료일시</th>
-                  <th className="text-left py-3 px-4 font-semibold">상태</th>
-                  <th className="text-left py-3 px-4 font-semibold">생성일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {codes.map((c) => {
-                  const statusInfo = STATUS_LABELS[c.status];
-                  return (
-                    <tr key={c.id} className="border-b border-gray-700 hover:bg-gray-700/50">
-                      <td className="py-3 px-4">{c.student_name}</td>
-                      <td className="py-3 px-4 text-gray-400 font-mono text-xs">
-                        {getVersionLabel(c.test_version_id)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => copyToClipboard(c.token)}
-                          className="font-mono text-base tracking-widest hover:text-blue-400 transition-colors"
-                          title="클릭하여 복사"
-                        >
-                          {c.token}
-                        </button>
-                      </td>
-                      <td className="py-3 px-4 text-gray-300">{formatDate(c.expires_at)}</td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusInfo.color}`}>
-                          {statusInfo.text}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-gray-400">{formatDate(c.created_at)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <TokenListTable
+            codes={codes}
+            versions={versions}
+            adminKey={adminKey}
+            onRefresh={fetchCodes}
+          />
         )}
       </div>
     </div>
