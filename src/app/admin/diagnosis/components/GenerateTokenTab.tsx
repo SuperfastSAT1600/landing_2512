@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { TokenListTable, CodeRecord, TestVersion } from './TokenListTable';
+import { TimezoneSelect } from '@/components/admin/TimezoneSelect';
+import { localToUTC, utcToLocal } from '@/lib/timezone-utils';
 
 interface GenerateTokenTabProps {
   adminKey: string;
@@ -14,16 +16,21 @@ function generate6DigitCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-function getDefaultExpiresAt(): string {
-  const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  return d.toISOString().slice(0, 16);
+function getPreferredTimezone(): string {
+  try { return sessionStorage.getItem('admin_preferred_timezone') ?? 'Asia/Seoul'; } catch { return 'Asia/Seoul'; }
+}
+
+function getDefaultExpiresAt(timezone: string): string {
+  const utc = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  return utcToLocal(utc, timezone);
 }
 
 export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefillClear }: GenerateTokenTabProps) {
   const [studentName, setStudentName] = useState(prefillName ?? '');
   const [studentPhone, setStudentPhone] = useState(prefillPhone ?? '');
   const [code, setCode] = useState(generate6DigitCode());
-  const [expiresAt, setExpiresAt] = useState(getDefaultExpiresAt());
+  const [selectedTimezone, setSelectedTimezone] = useState<string>(getPreferredTimezone);
+  const [expiresAt, setExpiresAt] = useState(() => getDefaultExpiresAt(getPreferredTimezone()));
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(30);
   const [selectedVersionId, setSelectedVersionId] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -101,7 +108,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
           studentName: studentName.trim(),
           studentPhone: studentPhone.trim() || undefined,
           code: code.trim(),
-          expiresAt: new Date(expiresAt).toISOString(),
+          expiresAt: localToUTC(expiresAt, selectedTimezone),
           testVersionId: selectedVersionId || undefined,
           timeLimitMinutes,
         }),
@@ -117,7 +124,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
       setStudentName('');
       setStudentPhone('');
       setCode(generate6DigitCode());
-      setExpiresAt(getDefaultExpiresAt());
+      setExpiresAt(getDefaultExpiresAt(selectedTimezone));
       onPrefillClear?.();
       fetchCodes();
     } catch (err) {
@@ -191,27 +198,28 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
             <p className="text-xs text-gray-400 mt-1">기본값 30분. 5~180분 사이로 설정하세요.</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2">6자리 접속 코드</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength={6}
-                  className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setCode(generate6DigitCode())}
-                  className="px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm font-semibold transition-colors"
-                >
-                  새로 생성
-                </button>
-              </div>
+          <div>
+            <label className="block text-sm font-semibold mb-2">6자리 접속 코드</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                maxLength={6}
+                className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setCode(generate6DigitCode())}
+                className="px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm font-semibold transition-colors"
+              >
+                새로 생성
+              </button>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold mb-2">만료 일시</label>
               <input
@@ -221,6 +229,18 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={loading}
               />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-2">학생 시간대</label>
+              <TimezoneSelect
+                value={selectedTimezone}
+                onChange={(tz) => {
+                  setSelectedTimezone(tz);
+                  try { sessionStorage.setItem('admin_preferred_timezone', tz); } catch { /* ignore */ }
+                }}
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-400 mt-1">학생이 위치한 국가 시간대를 선택하세요.</p>
             </div>
           </div>
 

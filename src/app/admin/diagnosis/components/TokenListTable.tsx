@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { TimezoneSelect } from '@/components/admin/TimezoneSelect';
+import { localToUTC, utcToLocal, getTimezoneAbbr } from '@/lib/timezone-utils';
 
 export interface CodeRecord {
   id: string;
@@ -32,16 +34,18 @@ const STATUS_LABELS: Record<string, { text: string; color: string }> = {
   expired: { text: '만료', color: 'bg-red-500/20 text-red-400' },
 };
 
-function toDatetimeLocal(isoString: string): string {
-  const d = new Date(isoString);
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
+function getPreferredTimezone(): string {
+  try {
+    return sessionStorage.getItem('admin_preferred_timezone') ?? 'Asia/Seoul';
+  } catch {
+    return 'Asia/Seoul';
+  }
 }
 
 export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenListTableProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingExpiry, setEditingExpiry] = useState('');
+  const [editingTimezone, setEditingTimezone] = useState('Asia/Seoul');
   const [actionError, setActionError] = useState('');
 
   const formatDate = (s: string) => new Date(s).toLocaleString('ko-KR');
@@ -73,14 +77,30 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
   };
 
   const startEditing = (id: string, expiresAt: string) => {
+    const tz = getPreferredTimezone();
     setEditingId(id);
-    setEditingExpiry(toDatetimeLocal(expiresAt));
+    setEditingTimezone(tz);
+    setEditingExpiry(utcToLocal(expiresAt, tz));
     setActionError('');
   };
 
   const cancelEditing = () => {
     setEditingId(null);
     setEditingExpiry('');
+  };
+
+  const handleTimezoneChange = (newTz: string) => {
+    // Re-express the same UTC moment in the new timezone
+    if (editingId && editingExpiry) {
+      try {
+        const utcIso = localToUTC(editingExpiry, editingTimezone);
+        setEditingExpiry(utcToLocal(utcIso, newTz));
+      } catch {
+        // keep current value if conversion fails
+      }
+    }
+    setEditingTimezone(newTz);
+    try { sessionStorage.setItem('admin_preferred_timezone', newTz); } catch { /* ignore */ }
   };
 
   const handleUpdateExpiry = async (id: string) => {
@@ -90,7 +110,7 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
       const res = await fetch(`/api/admin/diagnosis/tokens/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ expiresAt: new Date(editingExpiry).toISOString() }),
+        body: JSON.stringify({ expiresAt: localToUTC(editingExpiry, editingTimezone) }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -140,7 +160,7 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
                   </td>
                   <td className="py-3 px-4 text-gray-300">
                     {isEditing ? (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-wrap">
                         <input
                           type="datetime-local"
                           value={editingExpiry}
@@ -151,6 +171,11 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
                           }}
                           autoFocus
                           className="px-2 py-1 bg-gray-600 border border-blue-500 rounded text-white text-xs focus:outline-none"
+                        />
+                        <TimezoneSelect
+                          value={editingTimezone}
+                          onChange={handleTimezoneChange}
+                          compact
                         />
                         <button
                           onClick={() => handleUpdateExpiry(c.id)}
@@ -171,7 +196,8 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
                         className="hover:text-blue-400 transition-colors text-left"
                         title="클릭하여 만료일시 수정"
                       >
-                        {formatDate(c.expires_at)}
+                        {formatDate(c.expires_at)}{' '}
+                        <span className="text-gray-500 text-xs">{getTimezoneAbbr('Asia/Seoul')}</span>
                       </button>
                     )}
                   </td>
