@@ -296,3 +296,232 @@ test.describe('토큰 관리 — 만료일시 수정', () => {
     await expect(dateInput).not.toBeVisible();
   });
 });
+
+// ──────────────────────────────────────────────────────────────
+// Fixture for timezone tests
+// ──────────────────────────────────────────────────────────────
+
+const TZ_TOKEN = {
+  id: 'tk-tz-1',
+  token: '111222',
+  student_name: '시간대학생',
+  student_email: null,
+  // 2027-07-15T00:00 UTC = 09:00 KST = 2027-07-14T17:00 PDT (UTC-7)
+  expires_at: '2027-07-15T00:00:00.000Z',
+  is_active: true,
+  created_at: '2026-03-29T10:00:00.000Z',
+  status: 'pending' as const,
+  test_version_id: null,
+};
+
+// ──────────────────────────────────────────────────────────────
+// Suite: TimezoneSelect
+// ──────────────────────────────────────────────────────────────
+
+test.describe('토큰 관리 — TimezoneSelect', () => {
+  test.beforeEach(async ({ page }) => {
+    await setAdminAuth(page);
+    await mockSupportApis(page);
+    // sessionStorage 격리: addInitScript는 per-test로 처리
+    // (addInitScript를 여기에 두면 page.reload()에서도 실행되어 TZ-005 실패)
+  });
+
+  // REQ-TZ-001
+  test('GenerateTokenTab 폼에 학생 시간대 select가 표시됨', async ({ page }) => {
+    // 테스트 시작 전 sessionStorage 초기화 (reload 없이 첫 로드에만)
+    await page.addInitScript(() => sessionStorage.removeItem('admin_preferred_timezone'));
+
+    await page.route(/\/api\/admin\/diagnosis\/tokens(\?.*)?$/, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ codes: [] }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/admin/diagnosis');
+    await page.waitForTimeout(1500);
+
+    // 학생 시간대 레이블 확인
+    await expect(page.getByText('학생 시간대')).toBeVisible();
+
+    // full-mode select: optgroup[label="한국"] 을 포함하는 select
+    const tzSelect = page.locator('select').filter({ has: page.locator('optgroup[label="한국"]') }).first();
+    await expect(tzSelect).toBeVisible();
+    await expect(tzSelect).toHaveValue('Asia/Seoul');
+
+    // 국가별 timezone option 존재 확인 (optgroup은 hidden이므로 option으로 검증)
+    await expect(tzSelect.locator('option[value="Asia/Seoul"]')).toHaveCount(1);
+    await expect(tzSelect.locator('option[value="America/New_York"]')).toHaveCount(1);
+    await expect(tzSelect.locator('option[value="America/Vancouver"]')).toHaveCount(1);
+  });
+
+  // REQ-TZ-002
+  test('TokenListTable 인라인 수정 시 compact TimezoneSelect 표시됨', async ({ page }) => {
+    await page.addInitScript(() => sessionStorage.removeItem('admin_preferred_timezone'));
+
+    await page.route(/\/api\/admin\/diagnosis\/tokens(\?.*)?$/, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ codes: [TZ_TOKEN] }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/admin/diagnosis');
+    await page.waitForTimeout(1500);
+
+    const row = page.locator('tr', { has: page.getByText('시간대학생') });
+    const expiryCell = row.locator('td').nth(3);
+    await expiryCell.locator('button').first().click();
+
+    // datetime-local input 표시
+    const dateInput = expiryCell.locator('input[type="datetime-local"]');
+    await expect(dateInput).toBeVisible();
+
+    // compact select (title="시간대 선택") 표시
+    const compactSelect = expiryCell.locator('select[title="시간대 선택"]');
+    await expect(compactSelect).toBeVisible();
+    await expect(compactSelect).toHaveValue('Asia/Seoul');
+
+    // 미국 timezone option 존재 확인 (optgroup은 hidden이므로 option으로 검증)
+    await expect(compactSelect.locator('option[value="America/New_York"]')).toHaveCount(1);
+    await expect(compactSelect.locator('option[value="America/Los_Angeles"]')).toHaveCount(1);
+  });
+
+  // REQ-TZ-003
+  test('인라인 저장 시 LA 시간대 기준 UTC 변환값이 PATCH body에 전송됨', async ({ page }) => {
+    await page.addInitScript(() => sessionStorage.removeItem('admin_preferred_timezone'));
+    let patchBody: { expiresAt?: string } = {};
+
+    await page.route(/\/api\/admin\/diagnosis\/tokens\/[^/?]+/, (route) => {
+      if (route.request().method() === 'PATCH') {
+        patchBody = route.request().postDataJSON() as { expiresAt?: string };
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.route(/\/api\/admin\/diagnosis\/tokens(\?.*)?$/, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ codes: [TZ_TOKEN] }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/admin/diagnosis');
+    await page.waitForTimeout(1500);
+
+    const row = page.locator('tr', { has: page.getByText('시간대학생') });
+    const expiryCell = row.locator('td').nth(3);
+    await expiryCell.locator('button').first().click();
+
+    const dateInput = expiryCell.locator('input[type="datetime-local"]');
+    await expect(dateInput).toBeVisible();
+
+    // 시간대를 America/Los_Angeles 로 변경
+    const compactSelect = expiryCell.locator('select[title="시간대 선택"]');
+    await compactSelect.selectOption('America/Los_Angeles');
+
+    // 2027-07-15T09:00 LA 로컬 입력
+    // localToUTC('2027-07-15T09:00', 'America/Los_Angeles') = '2027-07-15T16:00:00.000Z' (PDT=UTC-7)
+    await dateInput.fill('2027-07-15T09:00');
+
+    await expiryCell.getByRole('button', { name: '저장' }).click();
+    await page.waitForTimeout(800);
+
+    expect(patchBody.expiresAt).toBe('2027-07-15T16:00:00.000Z');
+    await expect(dateInput).not.toBeVisible();
+  });
+
+  // REQ-TZ-004
+  test('시간대 변경 시 입력값이 같은 UTC 순간으로 재표현됨', async ({ page }) => {
+    await page.addInitScript(() => sessionStorage.removeItem('admin_preferred_timezone'));
+    await page.route(/\/api\/admin\/diagnosis\/tokens(\?.*)?$/, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ codes: [TZ_TOKEN] }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/admin/diagnosis');
+    await page.waitForTimeout(1500);
+
+    const row = page.locator('tr', { has: page.getByText('시간대학생') });
+    const expiryCell = row.locator('td').nth(3);
+    await expiryCell.locator('button').first().click();
+
+    const dateInput = expiryCell.locator('input[type="datetime-local"]');
+    await expect(dateInput).toBeVisible();
+
+    // TZ_TOKEN.expires_at = '2027-07-15T00:00:00.000Z'
+    // utcToLocal(..., 'Asia/Seoul') = '2027-07-15T09:00'
+    await expect(dateInput).toHaveValue('2027-07-15T09:00');
+
+    // LA로 변경 → handleTimezoneChange: 같은 UTC를 PDT로 재표현
+    // utcToLocal('2027-07-15T00:00:00.000Z', 'America/Los_Angeles') = '2027-07-14T17:00'
+    const compactSelect = expiryCell.locator('select[title="시간대 선택"]');
+    await compactSelect.selectOption('America/Los_Angeles');
+
+    await page.waitForTimeout(300);
+    await expect(dateInput).toHaveValue('2027-07-14T17:00');
+  });
+
+  // REQ-TZ-005
+  test('GenerateTokenTab 시간대 선택이 sessionStorage에 유지됨', async ({ page }) => {
+    await page.route(/\/api\/admin\/diagnosis\/tokens(\?.*)?$/, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ codes: [] }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/admin/diagnosis');
+    await page.waitForTimeout(1500);
+
+    const tzSelect = page.locator('select').filter({ has: page.locator('optgroup[label="한국"]') }).first();
+    await expect(tzSelect).toBeVisible();
+
+    // America/New_York 선택
+    await tzSelect.selectOption('America/New_York');
+
+    // sessionStorage에 저장됐는지 확인
+    const stored = await page.evaluate(() => sessionStorage.getItem('admin_preferred_timezone'));
+    expect(stored).toBe('America/New_York');
+
+    // 페이지 리로드 후에도 유지
+    await page.reload();
+    await page.waitForTimeout(1500);
+
+    const tzSelectAfterReload = page.locator('select').filter({ has: page.locator('optgroup[label="한국"]') }).first();
+    await expect(tzSelectAfterReload).toHaveValue('America/New_York');
+  });
+});
