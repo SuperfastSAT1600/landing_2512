@@ -13,10 +13,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Fetch all codes ordered by creation date
+    // Fetch all active codes ordered by creation date (soft-deleted excluded)
     const { data: codes, error: codesError } = await supabaseAdmin
       .from('diagnostic_access_tokens')
-      .select('id, token, student_email, student_name, expires_at, is_active, created_at')
+      .select('id, token, student_email, student_name, expires_at, is_active, created_at, test_version_id')
+      .eq('is_active', true)
       .order('created_at', { ascending: false });
 
     if (codesError) {
