@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { TokenListTable, CodeRecord, TestVersion } from './TokenListTable';
+import { TimezoneSelect } from '@/components/admin/TimezoneSelect';
+import { localToUTC, utcToLocal } from '@/lib/timezone-utils';
 
 interface GenerateTokenTabProps {
   adminKey: string;
@@ -9,43 +12,25 @@ interface GenerateTokenTabProps {
   onPrefillClear?: () => void;
 }
 
-interface CodeRecord {
-  id: string;
-  token: string;
-  student_name: string;
-  expires_at: string;
-  is_active: boolean;
-  created_at: string;
-  status: 'pending' | 'completed' | 'expired';
-  test_version_id?: string | null;
-}
-
-interface TestVersion {
-  id: string;
-  version_number: number;
-  is_current: boolean;
-}
-
 function generate6DigitCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-function getDefaultExpiresAt(): string {
-  const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  return d.toISOString().slice(0, 16);
+function getPreferredTimezone(): string {
+  try { return sessionStorage.getItem('admin_preferred_timezone') ?? 'Asia/Seoul'; } catch { return 'Asia/Seoul'; }
 }
 
-const STATUS_LABELS: Record<string, { text: string; color: string }> = {
-  pending: { text: '대기중', color: 'bg-yellow-500/20 text-yellow-400' },
-  completed: { text: '완료', color: 'bg-green-500/20 text-green-400' },
-  expired: { text: '만료', color: 'bg-red-500/20 text-red-400' },
-};
+function getDefaultExpiresAt(timezone: string): string {
+  const utc = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  return utcToLocal(utc, timezone);
+}
 
 export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefillClear }: GenerateTokenTabProps) {
   const [studentName, setStudentName] = useState(prefillName ?? '');
   const [studentPhone, setStudentPhone] = useState(prefillPhone ?? '');
   const [code, setCode] = useState(generate6DigitCode());
-  const [expiresAt, setExpiresAt] = useState(getDefaultExpiresAt());
+  const [selectedTimezone, setSelectedTimezone] = useState<string>(getPreferredTimezone);
+  const [expiresAt, setExpiresAt] = useState(() => getDefaultExpiresAt(getPreferredTimezone()));
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(30);
   const [selectedVersionId, setSelectedVersionId] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -65,7 +50,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
         const data = await res.json();
         const vList: TestVersion[] = data.versions ?? [];
         setVersions(vList);
-        // Default to current version
         const current = vList.find((v) => v.is_current);
         if (current) setSelectedVersionId(current.id);
       }
@@ -96,7 +80,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
     fetchCodes();
   }, []);
 
-  // Apply prefill when it changes
   useEffect(() => {
     if (prefillName) setStudentName(prefillName);
     if (prefillPhone) setStudentPhone(prefillPhone);
@@ -125,7 +108,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
           studentName: studentName.trim(),
           studentPhone: studentPhone.trim() || undefined,
           code: code.trim(),
-          expiresAt: new Date(expiresAt).toISOString(),
+          expiresAt: localToUTC(expiresAt, selectedTimezone),
           testVersionId: selectedVersionId || undefined,
           timeLimitMinutes,
         }),
@@ -141,7 +124,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
       setStudentName('');
       setStudentPhone('');
       setCode(generate6DigitCode());
-      setExpiresAt(getDefaultExpiresAt());
+      setExpiresAt(getDefaultExpiresAt(selectedTimezone));
       onPrefillClear?.();
       fetchCodes();
     } catch (err) {
@@ -150,20 +133,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
     } finally {
       setLoading(false);
     }
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('ko-KR');
-  };
-
-  const getVersionLabel = (versionId: string | null | undefined) => {
-    if (!versionId) return '-';
-    const v = versions.find((v) => v.id === versionId);
-    return v ? `v${v.version_number}` : '-';
   };
 
   return (
@@ -197,7 +166,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
             <p className="text-xs text-gray-400 mt-1">픽셀 최적화용. 입력 시 Meta CAPI 이벤트 전송.</p>
           </div>
 
-          {/* Version selector */}
           {versions.length > 0 && (
             <div>
               <label className="block text-sm font-semibold mb-2">진단테스트 버전</label>
@@ -230,27 +198,28 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
             <p className="text-xs text-gray-400 mt-1">기본값 30분. 5~180분 사이로 설정하세요.</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2">6자리 접속 코드</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength={6}
-                  className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setCode(generate6DigitCode())}
-                  className="px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm font-semibold transition-colors"
-                >
-                  새로 생성
-                </button>
-              </div>
+          <div>
+            <label className="block text-sm font-semibold mb-2">6자리 접속 코드</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                maxLength={6}
+                className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setCode(generate6DigitCode())}
+                className="px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm font-semibold transition-colors"
+              >
+                새로 생성
+              </button>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold mb-2">만료 일시</label>
               <input
@@ -260,6 +229,18 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={loading}
               />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-2">학생 시간대</label>
+              <TimezoneSelect
+                value={selectedTimezone}
+                onChange={(tz) => {
+                  setSelectedTimezone(tz);
+                  try { sessionStorage.setItem('admin_preferred_timezone', tz); } catch { /* ignore */ }
+                }}
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-400 mt-1">학생이 위치한 국가 시간대를 선택하세요.</p>
             </div>
           </div>
 
@@ -307,49 +288,12 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
         )}
 
         {codes.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-600">
-                  <th className="text-left py-3 px-4 font-semibold">학생명</th>
-                  <th className="text-left py-3 px-4 font-semibold">버전</th>
-                  <th className="text-left py-3 px-4 font-semibold">코드</th>
-                  <th className="text-left py-3 px-4 font-semibold">만료일시</th>
-                  <th className="text-left py-3 px-4 font-semibold">상태</th>
-                  <th className="text-left py-3 px-4 font-semibold">생성일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {codes.map((c) => {
-                  const statusInfo = STATUS_LABELS[c.status];
-                  return (
-                    <tr key={c.id} className="border-b border-gray-700 hover:bg-gray-700/50">
-                      <td className="py-3 px-4">{c.student_name}</td>
-                      <td className="py-3 px-4 text-gray-400 font-mono text-xs">
-                        {getVersionLabel(c.test_version_id)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => copyToClipboard(c.token)}
-                          className="font-mono text-base tracking-widest hover:text-blue-400 transition-colors"
-                          title="클릭하여 복사"
-                        >
-                          {c.token}
-                        </button>
-                      </td>
-                      <td className="py-3 px-4 text-gray-300">{formatDate(c.expires_at)}</td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusInfo.color}`}>
-                          {statusInfo.text}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-gray-400">{formatDate(c.created_at)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <TokenListTable
+            codes={codes}
+            versions={versions}
+            adminKey={adminKey}
+            onRefresh={fetchCodes}
+          />
         )}
       </div>
     </div>
