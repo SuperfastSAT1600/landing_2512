@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendApplicationNotification } from '@/lib/email';
 import { sendMetaCAPIEvent } from '@/lib/meta-capi';
+import { notifyDiagnosticApplication } from '@/lib/slack';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,6 +42,14 @@ export async function POST(request: NextRequest) {
       preferredTime,
       createdAt: data.created_at,
     }).catch(err => console.error('[apply] Email error:', err));
+
+    // Send Slack notification (non-blocking)
+    notifyDiagnosticApplication({
+      name: name.trim(),
+      phone: phone.trim(),
+      preferredDate,
+      preferredTime,
+    }).catch(err => console.error('[apply] Slack error:', err));
 
     // Send Meta CAPI event (non-blocking)
     sendMetaCAPIEvent({
