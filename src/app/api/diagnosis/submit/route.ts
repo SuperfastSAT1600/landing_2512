@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { SubmitTestRequest, SubmitTestResponse } from '@/types/diagnosis';
+import { notifyTestSubmission } from '@/lib/slack';
 
 /**
  * POST /api/diagnosis/submit
@@ -157,6 +158,14 @@ export async function POST(request: NextRequest) {
         console.warn('Failed to mark token as used:', tokenUpdateError);
       }
     }
+
+    // Slack 알림 (fire-and-forget — 실패해도 제출 응답에 영향 없음)
+    notifyTestSubmission({
+      studentName,
+      studentEmail,
+      submittedAt: submittedAt ?? new Date().toISOString(),
+      resultId,
+    }).catch((err) => console.error('[slack] submission notify failed:', err));
 
     const response: SubmitTestResponse = {
       success: true,

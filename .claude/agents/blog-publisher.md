@@ -85,9 +85,13 @@ skills:
 - Meta Description (155자 이내)
 - URL Slug (영문 소문자+하이픈)
 - Excerpt (2~3문장, 100~150자, Meta Description과 다른 표현)
+  → publish 스크립트에서 custom_excerpt 필드로 전송 (Ghost API v5 규격)
 - 저자 바이오 (배병윤 / SuperfastSAT 대표 / LinkedIn URL)
 - 최종 업데이트 일자
 ```
+
+> **카카오톡 CTA 버튼**: 모든 Ghost 포스팅 HTML 끝에 카카오톡 오픈채팅 버튼이 자동 삽입됩니다.
+> publish 스크립트의 `publishToGhost()` 함수가 `html + CTA_HTML`로 처리합니다.
 
 **고스트 QA 체크리스트 통과 확인 후 다음 단계 진행**
 - [ ] Experience 문장 포함
@@ -183,27 +187,46 @@ id: ...
 
 저장된 파일을 기반으로 발행 스크립트를 실행합니다.
 
-**둘 다 발행 (기본)**
+STEP 0에서 확인한 **발행 상태**에 따라 플래그를 선택합니다.
+- `draft` (기본값) → `--draft` 플래그 사용: Ghost 초안 저장 + Landing `is_published=false`
+- `publish` → `--publish` 플래그 사용: Ghost 즉시 발행 + Landing `is_published=true`
+
+**둘 다 발행 (기본 — draft)**
 ```bash
-node publish-all.js
+node publish-all.js --draft
 ```
 
-**고스트만**
+**둘 다 즉시 발행**
 ```bash
-node publish-ghost.js
+node publish-all.js --publish
 ```
 
-**랜딩만**
+**고스트만 (draft)**
 ```bash
-node publish-landing.js
+node publish-ghost.js --draft
+```
+
+**고스트만 (즉시 발행)**
+```bash
+node publish-ghost.js --publish
+```
+
+**랜딩만 (draft)**
+```bash
+node publish-landing.js --draft
+```
+
+**랜딩만 (즉시 발행)**
+```bash
+node publish-landing.js --publish
 ```
 
 > `publish-all.js`는 Ghost와 Landing을 `Promise.allSettled`로 동시에 발행합니다.
 > 한 쪽이 실패해도 다른 쪽 결과를 확인할 수 있습니다.
 
 **발행 결과 확인**
-- ✅ Ghost 성공: URL 출력
-- ✅ 랜딩 성공: Supabase post id 출력
+- ✅ Ghost 성공: URL 출력 (draft면 Ghost 어드민에서 검토 후 수동 발행)
+- ✅ 랜딩 성공: Supabase post id 출력 (draft면 랜딩 페이지에 미노출)
 - ❌ 실패 시: 오류 메시지 확인 후 재시도
 
 ---
@@ -229,6 +252,9 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 |------|-----------|
 | 블로그 작성 필요 | `superfastsat-blog` 스킬 |
 | 작성된 원고 발행 | 이 에이전트 |
-| Ghost만 발행 | `node publish-ghost.js` |
-| Landing만 발행 | `node publish-landing.js` |
-| 둘 다 발행 | `node publish-all.js` |
+| Ghost만 저장 (draft) | `node publish-ghost.js --draft` |
+| Ghost만 즉시 발행 | `node publish-ghost.js --publish` |
+| Landing만 저장 (draft) | `node publish-landing.js --draft` |
+| Landing만 즉시 발행 | `node publish-landing.js --publish` |
+| 둘 다 저장 (draft) | `node publish-all.js --draft` |
+| 둘 다 즉시 발행 | `node publish-all.js --publish` |
