@@ -52,6 +52,7 @@ export const getSortedPostsData = unstable_cache(
         const { data, error } = await supabase
             .from('posts')
             .select(LIST_COLUMNS)
+            .eq('is_published', true)
             .order('date', { ascending: false });
 
         if (error || !data) return [];
@@ -66,6 +67,7 @@ export const getLatestPosts = unstable_cache(
         const { data, error } = await supabase
             .from('posts')
             .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags')
+            .eq('is_published', true)
             .order('date', { ascending: false })
             .limit(limit);
 
@@ -83,6 +85,7 @@ export function getPostsByCategory(category: string) {
             const { data, error } = await supabase
                 .from('posts')
                 .select(LIST_COLUMNS)
+                .eq('is_published', true)
                 .ilike('category', `%${category}%`)
                 .order('date', { ascending: false });
 
@@ -97,7 +100,8 @@ export function getPostsByCategory(category: string) {
 export async function getAllPostIds() {
     const { data, error } = await supabase
         .from('posts')
-        .select('id');
+        .select('id')
+        .eq('is_published', true);
 
     if (error || !data) return [];
     return data.map((row) => ({ params: { slug: row.id as string } }));
@@ -136,6 +140,7 @@ export async function getRelatedPosts(currentId: string, category: string, limit
     const { data, error } = await supabase
         .from('posts')
         .select('id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags')
+        .eq('is_published', true)
         .eq('category', category)
         .neq('id', currentId)
         .order('date', { ascending: false })
