@@ -524,7 +524,6 @@ test.describe('토큰 관리 — TimezoneSelect', () => {
     const tzSelectAfterReload = page.locator('select').filter({ has: page.locator('optgroup[label="한국"]') }).first();
     await expect(tzSelectAfterReload).toHaveValue('America/New_York');
   });
-
   // REQ-TZ-006
   test('코드 생성 POST 요청에 timezone 변환된 UTC 값이 전송됨', async ({ page }) => {
     await page.addInitScript(() => sessionStorage.removeItem('admin_preferred_timezone'));
