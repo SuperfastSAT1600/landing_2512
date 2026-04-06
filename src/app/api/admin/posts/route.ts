@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
         const { data, error } = await supabaseAdmin
             .from('posts')
-            .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags, cta_featured')
+            .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags, cta_featured, is_published')
             .order('date', { ascending: false });
 
         if (error) {
@@ -90,6 +90,7 @@ export async function GET(request: NextRequest) {
             author: row.author,
             tags: row.tags,
             ctaFeatured: row.cta_featured,
+            isPublished: row.is_published !== false,
         }));
 
         return NextResponse.json({ success: true, posts });
@@ -196,6 +197,42 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Save Error:", error);
         return NextResponse.json({ success: false, error: "Failed to save post" }, { status: 500 });
+    }
+}
+
+export async function PATCH(request: NextRequest) {
+    if (!isAuthenticated(request)) {
+        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id || !/^[a-z0-9-]+$/.test(id)) {
+            return NextResponse.json({ success: false, error: "Invalid post ID" }, { status: 400 });
+        }
+
+        const body = await request.json();
+        if (typeof body.is_published !== 'boolean') {
+            return NextResponse.json({ success: false, error: "is_published must be boolean" }, { status: 400 });
+        }
+
+        const { error } = await supabaseAdmin
+            .from('posts')
+            .update({ is_published: body.is_published })
+            .eq('id', id);
+
+        if (error) {
+            return NextResponse.json({ success: false, error: "Failed to update post status" }, { status: 500 });
+        }
+
+        revalidatePath('/blog');
+        revalidatePath('/');
+        revalidatePath(`/blog/${id}`);
+
+        return NextResponse.json({ success: true });
+    } catch {
+        return NextResponse.json({ success: false, error: "Failed to update post status" }, { status: 500 });
     }
 }
 
