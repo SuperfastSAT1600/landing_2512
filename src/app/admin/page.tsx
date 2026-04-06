@@ -9,7 +9,8 @@ interface Post {
     title: string;
     date: string;
     category: string;
-    status?: string;
+    isPublished: boolean;
+    toggling?: boolean;
 }
 
 export default function AdminPage() {
@@ -28,12 +29,35 @@ export default function AdminPage() {
             });
             const data = await res.json();
             if (data.success) {
-                setPosts(data.posts);
+                setPosts(data.posts.map((p: Post) => ({ ...p, isPublished: p.isPublished !== false })));
             }
         } catch (error) {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleToggleStatus = async (id: string, currentIsPublished: boolean) => {
+        // 낙관적 업데이트
+        setPosts(prev => prev.map(p => p.id === id ? { ...p, isPublished: !currentIsPublished, toggling: true } : p));
+        try {
+            const res = await fetch(`/api/admin/posts?id=${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'x-admin-key': localStorage.getItem('admin_key') || '',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ is_published: !currentIsPublished }),
+            });
+            if (!res.ok) {
+                // 실패 시 원복
+                setPosts(prev => prev.map(p => p.id === id ? { ...p, isPublished: currentIsPublished, toggling: false } : p));
+            } else {
+                setPosts(prev => prev.map(p => p.id === id ? { ...p, toggling: false } : p));
+            }
+        } catch {
+            setPosts(prev => prev.map(p => p.id === id ? { ...p, isPublished: currentIsPublished, toggling: false } : p));
         }
     };
 
@@ -113,9 +137,14 @@ export default function AdminPage() {
                                     </Link>
                                 </div>
                                 <div className="col-span-2">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${post.status === 'draft' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-green-500/10 text-green-500'}`}>
-                                        {post.status || 'Published'}
-                                    </span>
+                                    <button
+                                        onClick={() => handleToggleStatus(post.id, post.isPublished)}
+                                        disabled={post.toggling}
+                                        title={post.isPublished ? '클릭하면 Draft로 변경' : '클릭하면 Published로 변경'}
+                                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide transition-opacity cursor-pointer ${post.toggling ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-70'} ${post.isPublished ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}
+                                    >
+                                        {post.isPublished ? 'Published' : 'Draft'}
+                                    </button>
                                 </div>
                                 <div className="col-span-2 text-sm text-gray-400 truncate">
                                     {post.category}
