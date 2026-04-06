@@ -524,4 +524,145 @@ test.describe('토큰 관리 — TimezoneSelect', () => {
     const tzSelectAfterReload = page.locator('select').filter({ has: page.locator('optgroup[label="한국"]') }).first();
     await expect(tzSelectAfterReload).toHaveValue('America/New_York');
   });
+  // REQ-TZ-006
+  test('코드 생성 POST 요청에 timezone 변환된 UTC 값이 전송됨', async ({ page }) => {
+    await page.addInitScript(() => sessionStorage.removeItem('admin_preferred_timezone'));
+    let postBody: { expiresAt?: string; studentName?: string } = {};
+
+    await page.route(/\/api\/admin\/diagnosis\/tokens(\?.*)?$/, (route) => {
+      if (route.request().method() === 'POST') {
+        postBody = route.request().postDataJSON() as typeof postBody;
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ token: '999888', warning: null }),
+        });
+      } else if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ codes: [] }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/admin/diagnosis');
+    await page.waitForTimeout(1500);
+
+    // 학생명 입력
+    await page.fill('input[placeholder="예: 홍길동"]', '타임존테스트');
+
+    // 시간대를 America/Los_Angeles 로 변경
+    const tzSelect = page.locator('select').filter({ has: page.locator('optgroup[label="한국"]') }).first();
+    await tzSelect.selectOption('America/Los_Angeles');
+
+    // 만료 일시 입력: 2027-07-15T09:00 (LA 로컬)
+    // localToUTC('2027-07-15T09:00', 'America/Los_Angeles') = '2027-07-15T16:00:00.000Z' (PDT=UTC-7)
+    const expiryInput = page.locator('input[type="datetime-local"]').first();
+    await expiryInput.fill('2027-07-15T09:00');
+
+    // 폼 제출
+    await page.getByRole('button', { name: '코드 생성' }).click();
+    await page.waitForTimeout(800);
+
+    // POST body의 expiresAt이 UTC로 변환됐는지 확인
+    expect(postBody.expiresAt).toBe('2027-07-15T16:00:00.000Z');
+    expect(postBody.studentName).toBe('타임존테스트');
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+// Suite: 에러 처리
+// ──────────────────────────────────────────────────────────────
+
+test.describe('토큰 관리 — 에러 처리', () => {
+  test.beforeEach(async ({ page }) => {
+    await setAdminAuth(page);
+    await mockSupportApis(page);
+  });
+
+  test('삭제 API 실패 시 에러 메시지 표시됨', async ({ page }) => {
+    await page.route(/\/api\/admin\/diagnosis\/tokens\/[^/?]+/, (route) => {
+      if (route.request().method() === 'DELETE') {
+        route.fulfill({
+          status: 409,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: '시험 결과가 있는 코드는 삭제할 수 없습니다.' }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.route(/\/api\/admin\/diagnosis\/tokens(\?.*)?$/, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ codes: [PENDING_TOKEN] }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/admin/diagnosis');
+    await page.waitForTimeout(1500);
+
+    page.once('dialog', (dialog) => dialog.accept());
+
+    const pendingRow = page.locator('tr', { has: page.getByText('테스트학생') });
+    await pendingRow.getByRole('button', { name: '삭제' }).click();
+
+    await page.waitForTimeout(800);
+
+    // 에러 메시지가 표 위에 표시됨
+    await expect(page.getByText('시험 결과가 있는 코드는 삭제할 수 없습니다.')).toBeVisible();
+  });
+
+  test('만료일시 수정 API 실패 시 에러 메시지 표시됨', async ({ page }) => {
+    await page.route(/\/api\/admin\/diagnosis\/tokens\/[^/?]+/, (route) => {
+      if (route.request().method() === 'PATCH') {
+        route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: '유효하지 않은 날짜 형식입니다.' }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.route(/\/api\/admin\/diagnosis\/tokens(\?.*)?$/, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ codes: [PENDING_TOKEN] }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/admin/diagnosis');
+    await page.waitForTimeout(1500);
+
+    const pendingRow = page.locator('tr', { has: page.getByText('테스트학생') });
+    const expiryCell = pendingRow.locator('td').nth(3);
+    await expiryCell.locator('button').first().click();
+
+    const dateInput = expiryCell.locator('input[type="datetime-local"]');
+    await expect(dateInput).toBeVisible();
+
+    await dateInput.fill('2027-06-30T12:00');
+    await expiryCell.getByRole('button', { name: '저장' }).click();
+
+    await page.waitForTimeout(800);
+
+    // 에러 메시지 표시, 편집 모드 유지
+    await expect(page.getByText('유효하지 않은 날짜 형식입니다.')).toBeVisible();
+  });
 });
