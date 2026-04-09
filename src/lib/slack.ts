@@ -38,7 +38,7 @@ export interface SubmissionNotificationData {
 
 export async function notifyTestSubmission(data: SubmissionNotificationData): Promise<void> {
   const { studentName, studentEmail, submittedAt, resultId } = data;
-  const reportUrl = `https://superfastsat.com/reports/${resultId}`;
+  const reportUrl = `https://tutoring.superfastsat.com/reports/${resultId}`;
   const submittedKST = new Date(submittedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
 
   const blocks = [
@@ -109,7 +109,7 @@ export async function notifyDiagnosticApplication(data: ApplicationNotificationD
         {
           type: 'button',
           text: { type: 'plain_text', text: '신청 목록 확인 →', emoji: true },
-          url: 'https://superfastsat.com/admin/diagnosis',
+          url: 'https://tutoring.superfastsat.com/admin/diagnosis',
           style: 'primary',
         },
       ],
@@ -163,7 +163,7 @@ export async function notifyExpiredTokens(tokens: ExpiredTokenData[]): Promise<v
         {
           type: 'button',
           text: { type: 'plain_text', text: '어드민에서 확인 →', emoji: true },
-          url: 'https://superfastsat.com/admin/diagnosis',
+          url: 'https://tutoring.superfastsat.com/admin/diagnosis',
         },
       ],
     },

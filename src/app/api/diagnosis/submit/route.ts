@@ -159,13 +159,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Slack 알림 (fire-and-forget — 실패해도 제출 응답에 영향 없음)
-    notifyTestSubmission({
-      studentName,
-      studentEmail,
-      submittedAt: submittedAt ?? new Date().toISOString(),
-      resultId,
-    }).catch((err) => console.error('[slack] submission notify failed:', err));
+    // Slack 알림 — await로 실행 (Vercel 서버리스는 return 후 비동기 작업을 죽임)
+    try {
+      await notifyTestSubmission({
+        studentName,
+        studentEmail,
+        submittedAt: submittedAt ?? new Date().toISOString(),
+        resultId,
+      });
+    } catch (err) {
+      console.error('[slack] submission notify failed:', err);
+      // Slack 실패는 제출 응답에 영향 없음
+    }
 
     const response: SubmitTestResponse = {
       success: true,
