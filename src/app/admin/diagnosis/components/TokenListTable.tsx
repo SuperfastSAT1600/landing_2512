@@ -42,7 +42,17 @@ function getPreferredTimezone(): string {
   }
 }
 
+const FILTER_TABS = [
+  { key: 'all', label: '전체' },
+  { key: 'pending', label: '대기중' },
+  { key: 'expired', label: '만료' },
+  { key: 'completed', label: '완료' },
+] as const;
+
+type StatusFilter = 'all' | 'pending' | 'expired' | 'completed';
+
 export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenListTableProps) {
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingExpiry, setEditingExpiry] = useState('');
   const [editingTimezone, setEditingTimezone] = useState('Asia/Seoul');
@@ -123,9 +133,33 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
     }
   };
 
+  const counts: Record<StatusFilter, number> = {
+    all: codes.length,
+    pending: codes.filter(c => c.status === 'pending').length,
+    expired: codes.filter(c => c.status === 'expired').length,
+    completed: codes.filter(c => c.status === 'completed').length,
+  };
+
+  const filteredCodes = statusFilter === 'all' ? codes : codes.filter(c => c.status === statusFilter);
+
   return (
     <div>
       {actionError && <p className="mb-3 text-sm text-red-400">{actionError}</p>}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {FILTER_TABS.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setStatusFilter(tab.key)}
+            className={
+              statusFilter === tab.key
+                ? 'px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white'
+                : 'px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition-colors'
+            }
+          >
+            {tab.label} ({counts[tab.key]})
+          </button>
+        ))}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -140,7 +174,14 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
             </tr>
           </thead>
           <tbody>
-            {codes.map((c) => {
+            {filteredCodes.length === 0 && (
+              <tr>
+                <td colSpan={7} className="py-8 text-center text-gray-500 text-sm">
+                  해당 상태의 토큰이 없습니다.
+                </td>
+              </tr>
+            )}
+            {filteredCodes.map((c) => {
               const statusInfo = STATUS_LABELS[c.status];
               const isEditing = editingId === c.id;
               return (
