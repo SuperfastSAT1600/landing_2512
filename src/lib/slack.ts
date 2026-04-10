@@ -23,7 +23,8 @@ async function postToSlack(blocks: object[], text: string): Promise<void> {
   });
 
   if (!res.ok) {
-    console.error('[slack] Failed to send message:', res.status, await res.text());
+    const body = await res.text();
+    throw new Error(`Slack webhook failed: ${res.status} ${body}`);
   }
 }
 

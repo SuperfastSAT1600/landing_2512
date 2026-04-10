@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from('diagnostic_test_results')
       .select(
-        'id, student_email, student_name, submitted_at, total_time_seconds, test_id, answers, question_times',
+        'id, student_email, student_name, submitted_at, total_time_seconds, test_id, answers, question_times, slack_sent_at, slack_error',
         { count: 'exact' }
       )
       .order('submitted_at', { ascending: false })
@@ -89,6 +89,8 @@ export async function GET(request: NextRequest) {
         answeredCount: Object.keys(answersMap).length,
         totalQuestions: Object.keys((item.question_times as Record<string, number>) ?? {}).length,
         correctCount,
+        slack_sent_at: item.slack_sent_at ?? null,
+        slack_error: item.slack_error ?? null,
       };
     });
 

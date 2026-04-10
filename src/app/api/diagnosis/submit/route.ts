@@ -160,6 +160,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Slack 알림 — await로 실행 (Vercel 서버리스는 return 후 비동기 작업을 죽임)
+    // 성공/실패 여부를 DB에 기록해 Vercel 로그 없이도 추적 가능하게 함
     try {
       await notifyTestSubmission({
         studentName,
@@ -167,8 +168,17 @@ export async function POST(request: NextRequest) {
         submittedAt: submittedAt ?? new Date().toISOString(),
         resultId,
       });
+      await supabaseAdmin
+        .from('diagnostic_test_results')
+        .update({ slack_sent_at: new Date().toISOString(), slack_error: null })
+        .eq('id', resultId);
     } catch (err) {
-      console.error('[slack] submission notify failed:', err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error('[slack] submission notify failed:', errMsg);
+      await supabaseAdmin
+        .from('diagnostic_test_results')
+        .update({ slack_sent_at: null, slack_error: errMsg })
+        .eq('id', resultId);
       // Slack 실패는 제출 응답에 영향 없음
     }
 
