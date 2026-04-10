@@ -8,9 +8,9 @@ import { notifyTestSubmission } from '@/lib/slack';
  */
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { resultId: string } }
+  { params }: { params: Promise<{ resultId: string }> }
 ) {
-  const { resultId } = params;
+  const { resultId } = await params;
 
   const { data: result, error } = await supabaseAdmin
     .from('diagnostic_test_results')
