@@ -180,7 +180,13 @@ export default function AdminDiagnosisDetailPage() {
         {/* Questions */}
         <div className="space-y-6">
           <h2 className="text-xl font-bold">문제별 답변</h2>
-          {Object.keys(answers).map((questionId) => (
+          {Object.keys(answers)
+            .sort((a, b) => {
+              const aNum = statsMap?.[a]?.questionNumber ?? 9999;
+              const bNum = statsMap?.[b]?.questionNumber ?? 9999;
+              return aNum - bNum;
+            })
+            .map((questionId) => (
             <QuestionStatCard
               key={questionId}
               questionId={questionId}
