@@ -100,21 +100,21 @@ export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
     <div className="relative">
       {/* Preview text with fade */}
       <div className="relative mb-0">
-        <p className="text-gray-300 text-base leading-relaxed line-clamp-3">
+        <p className="text-gray-600 text-base leading-relaxed line-clamp-3">
           {preview}
         </p>
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#151719] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#fafaf9] to-transparent" />
       </div>
 
       {/* Gate panel */}
-      <div className="mt-6 rounded-2xl border border-white/10 bg-[#1a1d20] overflow-hidden">
+      <div className="mt-6 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10 bg-white/[0.02]">
-          <div className="w-9 h-9 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0">
-            <Lock size={16} className="text-blue-400" />
+        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100 bg-gray-50">
+          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <Lock size={16} className="text-blue-600" />
           </div>
           <div>
-            <p className="text-white font-bold text-sm">SuperfastSAT 팔로워 전용 콘텐츠</p>
+            <p className="text-gray-900 font-bold text-sm">SuperfastSAT 팔로워 전용 콘텐츠</p>
             <p className="text-gray-500 text-xs mt-0.5">인스타그램 팔로워에게만 공개되는 글입니다.</p>
           </div>
         </div>
@@ -125,12 +125,12 @@ export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
             <div key={i} className="flex items-start gap-3">
               <div className="mt-0.5 flex-shrink-0">
                 {step.done
-                  ? <CheckCircle size={16} className="text-green-400" />
-                  : <Circle size={16} className="text-gray-600" />
+                  ? <CheckCircle size={16} className="text-green-500" />
+                  : <Circle size={16} className="text-gray-400" />
                 }
               </div>
-              <span className="text-sm text-gray-400">
-                <span className="text-gray-600 mr-1.5">STEP {i + 1}</span>
+              <span className="text-sm text-gray-700">
+                <span className="text-gray-400 mr-1.5">STEP {i + 1}</span>
                 {step.label}
               </span>
             </div>
@@ -151,7 +151,7 @@ export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
         </div>
 
         {/* Divider */}
-        <div className="mx-6 border-t border-white/10" />
+        <div className="mx-6 border-t border-gray-100" />
 
         {/* Code input */}
         <div className="px-6 py-5">
@@ -168,8 +168,8 @@ export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
                 value={d}
                 onChange={e => handleDigitChange(i, e.target.value)}
                 onKeyDown={e => handleKeyDown(i, e)}
-                className={`w-11 h-13 text-center text-xl font-bold rounded-lg border bg-[#0f1013] text-white outline-none transition-colors
-                  ${error ? 'border-red-500/60' : d ? 'border-blue-500' : 'border-white/10'}
+                className={`w-11 h-13 text-center text-xl font-bold rounded-lg border bg-gray-50 text-gray-900 outline-none transition-colors
+                  ${error ? 'border-red-400' : d ? 'border-blue-500' : 'border-gray-300'}
                   focus:border-blue-500`}
                 style={{ height: '3.25rem' }}
                 disabled={loading}
@@ -179,7 +179,7 @@ export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
           </div>
 
           {error && (
-            <p className="text-red-400 text-xs text-center mb-3">{error}</p>
+            <p className="text-red-500 text-xs text-center mb-3">{error}</p>
           )}
 
           <button
