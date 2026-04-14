@@ -21,10 +21,11 @@ export interface PostData {
     metaTitle?: string;
     metaRobots?: string;
     updatedAt?: string;
+    isGated?: boolean;
     [key: string]: any;
 }
 
-const LIST_COLUMNS = 'id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags, cta_featured, meta_title, meta_robots, updated_at';
+const LIST_COLUMNS = 'id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags, cta_featured, meta_title, meta_robots, updated_at, access_code';
 
 function mapRow(row: Record<string, unknown>): PostData {
     return {
@@ -44,6 +45,7 @@ function mapRow(row: Record<string, unknown>): PostData {
         metaTitle: row.meta_title as string | undefined,
         metaRobots: row.meta_robots as string | undefined,
         updatedAt: row.updated_at as string | undefined,
+        isGated: !!(row.access_code),
     };
 }
 
@@ -115,6 +117,14 @@ export async function getPostData(id: string): Promise<PostData> {
         .single();
 
     if (error || !data) throw new Error(`Post not found: ${id}`);
+
+    // Gated posts: return metadata only, no content (content served via verify-code API)
+    if (data.access_code) {
+        return {
+            ...mapRow(data),
+            isGated: true,
+        };
+    }
 
     const rawContent = (data.content as string) || '';
     const isHtml = rawContent.trim().startsWith('<');
