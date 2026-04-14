@@ -24,6 +24,7 @@ const PostSchema = z.object({
     ctaFeatured: z.boolean().optional().or(z.null().transform(() => undefined)),
     metaTitle: optionalStr,
     metaRobots: optionalStr,
+    accessCode: z.string().regex(/^\d{6}$/).optional().or(z.literal('').transform(() => undefined)).or(z.null().transform(() => undefined)),
 });
 
 export async function GET(request: NextRequest) {
@@ -64,6 +65,7 @@ export async function GET(request: NextRequest) {
                     content: data.content,
                     metaTitle: data.meta_title,
                     metaRobots: data.meta_robots,
+                    accessCode: data.access_code || '',
                     updatedAt: data.updated_at,
                 }
             });
@@ -129,6 +131,7 @@ export async function POST(request: NextRequest) {
             ctaFeatured,
             metaTitle,
             metaRobots,
+            accessCode,
         } = validation.data;
 
         // Determine final slug: Provided > Original > Generated from Title
@@ -180,6 +183,7 @@ export async function POST(request: NextRequest) {
                 cta_featured: ctaFeatured === true,
                 meta_title: metaTitle || null,
                 meta_robots: metaRobots || null,
+                access_code: accessCode || null,
                 updated_at: new Date().toISOString(),
             });
 

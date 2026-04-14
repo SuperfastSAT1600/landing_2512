@@ -2,7 +2,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getPostData, getAllPostIds, getRelatedPosts } from '../../../lib/posts';
 import Footer from '../../components/Footer';
-import { Calendar, Tag, ArrowLeft } from 'lucide-react';
+import { PostContent } from './PostContent';
+import { Calendar, ArrowLeft } from 'lucide-react';
 
 export const revalidate = 60;
 
@@ -187,23 +188,8 @@ export default async function Post({ params }: Props) {
                         {postData.title}
                     </h1>
 
-                    {/* Content */}
-                    <div className="prose prose-invert prose-base sm:prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-a:text-blue-400 prose-img:rounded-xl prose-table:border-collapse [&_td]:border [&_th]:border [&_td]:border-white/10 [&_th]:border-white/10 [&_td]:p-2 [&_th]:p-2">
-                        <div dangerouslySetInnerHTML={{ __html: postData.contentHtml || '' }} />
-                    </div>
-
-                    {/* Footer / Tags */}
-                    {postData.tags && postData.tags.length > 0 && (
-                        <div className="mt-16 pt-8 border-t border-white/10">
-                            <div className="flex flex-wrap gap-2">
-                                {postData.tags.map(tag => (
-                                    <span key={tag} className="bg-white/5 text-gray-400 px-3 py-1 rounded-full text-sm border border-white/5 flex items-center gap-1">
-                                        <Tag size={12} /> {tag}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    {/* Content (or GateWall if gated) */}
+                    <PostContent postData={postData} />
                 </article>
 
                 {/* Related Posts */}

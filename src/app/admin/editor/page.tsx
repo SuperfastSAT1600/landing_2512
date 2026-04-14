@@ -121,6 +121,7 @@ function BlogEditor() {
     const [focusKeyword, setFocusKeyword] = useState('');
     const [metaTitle, setMetaTitle] = useState('');
     const [metaRobots, setMetaRobots] = useState('');
+    const [accessCode, setAccessCode] = useState('');
     const [settingsTab, setSettingsTab] = useState<'general' | 'seo'>('general');
     const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
     const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
@@ -254,6 +255,7 @@ function BlogEditor() {
                 setCtaFeatured(p.ctaFeatured === true);
                 setMetaTitle(p.metaTitle || '');
                 setMetaRobots(p.metaRobots || '');
+                setAccessCode(p.accessCode || '');
 
                 const content = p.content || '';
                 pendingContentRef.current = content;
@@ -295,6 +297,7 @@ function BlogEditor() {
                     ctaFeatured,
                     metaTitle,
                     metaRobots,
+                    accessCode: accessCode || null,
                 }),
             });
             const data = await res.json();
@@ -1440,6 +1443,26 @@ function BlogEditor() {
                                     placeholder="SuperfastSAT"
                                     className="w-full bg-[#1e2023] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
                                 />
+                            </div>
+
+                            {/* Access Code */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                                    접근 코드 (비워두면 공개)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={accessCode}
+                                    onChange={e => setAccessCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    placeholder="예: 123456"
+                                    maxLength={6}
+                                    className="w-full bg-[#1e2023] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none font-mono tracking-widest"
+                                />
+                                {accessCode && (
+                                    <p className="text-[11px] text-yellow-400/80">
+                                        🔒 이 포스팅은 코드 입력 후에만 열람 가능합니다.
+                                    </p>
+                                )}
                             </div>
 
                             {/* CTA Featured Toggle */}
