@@ -1,30 +1,30 @@
 /**
- * Slack Incoming Webhook utility
- * Requires SLACK_WEBHOOK_URL environment variable
+ * Slack notification utility
+ * - Diagnosis notifications (submission, expiry) → Bot Token API → #02_진단테스트_현황
+ * - Application notifications → Incoming Webhook (SLACK_APPLICATION_WEBHOOK_URL)
  */
 
-function getWebhookUrl(): string | null {
-  const url = process.env.SLACK_WEBHOOK_URL;
-  if (!url) {
-    console.warn('[slack] SLACK_WEBHOOK_URL not set — skipping Slack notification');
-    return null;
+async function postToDiagnosisChannel(blocks: object[], text: string): Promise<void> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  const channelId = process.env.SLACK_DIAGNOSIS_CHANNEL_ID;
+
+  if (!token || !channelId) {
+    console.warn('[slack] SLACK_BOT_TOKEN or SLACK_DIAGNOSIS_CHANNEL_ID not set — skipping notification');
+    return;
   }
-  return url;
-}
 
-async function postToSlack(blocks: object[], text: string): Promise<void> {
-  const webhookUrl = getWebhookUrl();
-  if (!webhookUrl) return;
-
-  const res = await fetch(webhookUrl, {
+  const res = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, blocks }),
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ channel: channelId, text, blocks }),
   });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Slack webhook failed: ${res.status} ${body}`);
+  const data = await res.json() as { ok: boolean; error?: string };
+  if (!data.ok) {
+    throw new Error(`Slack API error: ${data.error}`);
   }
 }
 
@@ -69,7 +69,7 @@ export async function notifyTestSubmission(data: SubmissionNotificationData): Pr
     },
   ];
 
-  await postToSlack(blocks, `✅ [진단테스트 제출] ${studentName}`);
+  await postToDiagnosisChannel(blocks, `✅ [진단테스트 제출] ${studentName}`);
 }
 
 // ─── 진단테스트 신청 알림 ──────────────────────────────────────────
@@ -170,5 +170,5 @@ export async function notifyExpiredTokens(tokens: ExpiredTokenData[]): Promise<v
     },
   ];
 
-  await postToSlack(blocks, `⚠️ 미응시 만료 토큰 ${tokens.length}건`);
+  await postToDiagnosisChannel(blocks, `⚠️ 미응시 만료 토큰 ${tokens.length}건`);
 }
