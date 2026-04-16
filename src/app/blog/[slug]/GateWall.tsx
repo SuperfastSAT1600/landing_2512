@@ -92,7 +92,7 @@ export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
 
   const steps = [
     { label: '@superfastsat.official 팔로우', done: false },
-    { label: '최신 게시물에 댓글 "코드 주세요" 달기', done: false },
+    { label: '보고 싶은 자료를 주는 포스팅에 댓글 달기', done: false },
     { label: 'DM으로 받은 6자리 코드 입력', done: false },
   ];
 
