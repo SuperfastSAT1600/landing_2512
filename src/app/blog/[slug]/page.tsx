@@ -176,6 +176,7 @@ export default async function Post({ params }: Props) {
                                 src={postData.featuredImage}
                                 alt={postData.featuredImageAlt || postData.title}
                                 fill
+                                unoptimized
                                 className="object-cover"
                                 sizes="(max-width: 768px) 100vw, 800px"
                                 priority
@@ -211,6 +212,7 @@ export default async function Post({ params }: Props) {
                                                     src={post.featuredImage}
                                                     alt={post.title}
                                                     fill
+                                                    unoptimized
                                                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                                                     sizes="(max-width: 768px) 100vw, 33vw"
                                                 />
