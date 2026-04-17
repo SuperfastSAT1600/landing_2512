@@ -22,11 +22,11 @@ function generate6DigitCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-function formatExpiryKo(utcIso: string): string {
+function formatExpiryKo(utcIso: string, timezone: string): string {
   return new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
+    timeZone: timezone,
     year: 'numeric', month: 'long', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
   }).format(new Date(utcIso));
 }
 
@@ -351,7 +351,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
 
       {/* Copy Message Panel */}
       {successResult && (() => {
-        const expiryKo = formatExpiryKo(successResult.expiresAt);
+        const expiryKo = formatExpiryKo(successResult.expiresAt, selectedTimezone);
         const expiryEn = formatExpiryEn(successResult.expiresAt, selectedTimezone);
         const koMessage = buildKoTemplate(successResult.code, expiryKo);
         const enMessage = buildEnTemplate(successResult.code, expiryEn);
