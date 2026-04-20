@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { TokenListTable, CodeRecord, TestVersion } from './TokenListTable';
 import { TimezoneSelect } from '@/components/admin/TimezoneSelect';
-import { localToUTC, utcToLocal } from '@/lib/timezone-utils';
+import { localToUTC, utcToLocal, TIMEZONE_OPTIONS } from '@/lib/timezone-utils';
 
 interface GenerateTokenTabProps {
   adminKey: string;
@@ -16,6 +16,7 @@ interface SuccessResult {
   code: string;
   studentName: string;
   expiresAt: string;
+  timezone: string;
 }
 
 function generate6DigitCode(): string {
@@ -38,7 +39,15 @@ function formatExpiryEn(utcIso: string, timezone: string): string {
   }).format(new Date(utcIso));
 }
 
-function buildKoTemplate(code: string, expiryKo: string): string {
+function getTimezoneKoLabel(iana: string): string {
+  return TIMEZONE_OPTIONS.find((t) => t.iana === iana)?.label ?? iana;
+}
+
+function getTimezoneCountry(iana: string): string {
+  return TIMEZONE_OPTIONS.find((t) => t.iana === iana)?.country ?? iana;
+}
+
+function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string): string {
   return `진단테스트 안내 드리도록 하겠습니다.
 
 [진단테스트 안내]
@@ -48,12 +57,13 @@ function buildKoTemplate(code: string, expiryKo: string): string {
 [응시 방법]
 1. 응시 페이지 링크 접속하여 코드 6자리입력
 2. ${expiryKo}까지 진행 가능
+   (${timezoneLabel} 기준)
 3. 응시 시간은 총 30분, 25문항입니다. (RW+Math 포함)
 4. 각 문항별로 '내가 얼마나 정답을 확신하는지' Confidence Level도 함께 체크하며 최종 제출해주세요!
 5. Math 시험의 경우 계산이 필요하기 때문에 Desmos를 사용해도 되며 아직 어렵다면 노트와 필기구를 준비해주세요!`;
 }
 
-function buildEnTemplate(code: string, expiryEn: string): string {
+function buildEnTemplate(code: string, expiryEn: string, timezoneCountry: string): string {
   return `Here is your SAT Diagnostic Test information.
 
 [Diagnostic Test Info]
@@ -63,6 +73,7 @@ function buildEnTemplate(code: string, expiryEn: string): string {
 [How to Take the Test]
 1. Go to the test page and enter your 6-digit code
 2. You have until ${expiryEn} to complete the test
+   (${timezoneCountry} time)
 3. Total time: 30 minutes, 25 questions (RW + Math)
 4. For each question, please also check your Confidence Level — how sure you are about your answer — before submitting!
 5. For Math questions, you may use Desmos if needed. If you're not comfortable with it yet, have a notebook and pencil ready!`;
@@ -198,7 +209,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
 
       const data = await response.json();
       setWarning(data.warning ?? null);
-      setSuccessResult({ code: data.code, studentName: data.studentName, expiresAt: data.expiresAt });
+      setSuccessResult({ code: data.code, studentName: data.studentName, expiresAt: data.expiresAt, timezone: selectedTimezone });
       setActiveTab('ko');
       setStudentName('');
       setStudentPhone('');
@@ -351,10 +362,10 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
 
       {/* Copy Message Panel */}
       {successResult && (() => {
-        const expiryKo = formatExpiryKo(successResult.expiresAt, selectedTimezone);
-        const expiryEn = formatExpiryEn(successResult.expiresAt, selectedTimezone);
-        const koMessage = buildKoTemplate(successResult.code, expiryKo);
-        const enMessage = buildEnTemplate(successResult.code, expiryEn);
+        const expiryKo = formatExpiryKo(successResult.expiresAt, successResult.timezone);
+        const expiryEn = formatExpiryEn(successResult.expiresAt, successResult.timezone);
+        const koMessage = buildKoTemplate(successResult.code, expiryKo, getTimezoneKoLabel(successResult.timezone));
+        const enMessage = buildEnTemplate(successResult.code, expiryEn, getTimezoneCountry(successResult.timezone));
         const message = activeTab === 'ko' ? koMessage : enMessage;
         return (
           <div className="p-5 rounded-xl border border-green-500/40 bg-green-900/20">
