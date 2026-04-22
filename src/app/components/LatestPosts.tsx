@@ -27,6 +27,7 @@ export default async function LatestPosts() {
                                         src={post.featuredImage}
                                         alt={post.title}
                                         fill
+                                        unoptimized
                                         className={styles.thumbnailImage}
                                         sizes="120px"
                                     />

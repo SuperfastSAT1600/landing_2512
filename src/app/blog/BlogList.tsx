@@ -31,6 +31,7 @@ export default function BlogList({ posts }: BlogListProps) {
                                         src={post.featuredImage}
                                         alt={post.title}
                                         fill
+                                        unoptimized
                                         className="object-cover transform group-hover:scale-105 transition-transform duration-500"
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                     />
@@ -42,6 +43,11 @@ export default function BlogList({ posts }: BlogListProps) {
                                 <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10">
                                     {post.category}
                                 </div>
+                                {post.isGated && (
+                                    <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-md text-yellow-400 text-xs font-bold px-2.5 py-1 rounded-full border border-yellow-500/30 flex items-center gap-1">
+                                        🔒 팔로워 전용
+                                    </div>
+                                )}
                             </div>
 
                             {/* Content */}

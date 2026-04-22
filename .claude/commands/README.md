@@ -62,6 +62,14 @@ The primary development workflow:
 
 ---
 
+## Blog Writing (SuperfastSAT)
+
+| Command | Purpose | Duration |
+|---------|---------|----------|
+| `/analyze-blog-style` | style_samples.jsonl 분석 → 배코치 문체 DNA 자동 업데이트 | 2-5min |
+
+---
+
 ## System
 
 | Command | Purpose | Duration |

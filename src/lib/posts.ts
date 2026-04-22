@@ -21,10 +21,11 @@ export interface PostData {
     metaTitle?: string;
     metaRobots?: string;
     updatedAt?: string;
+    isGated?: boolean;
     [key: string]: any;
 }
 
-const LIST_COLUMNS = 'id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags, cta_featured, meta_title, meta_robots, updated_at';
+const LIST_COLUMNS = 'id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags, cta_featured, meta_title, meta_robots, updated_at, access_code';
 
 function mapRow(row: Record<string, unknown>): PostData {
     return {
@@ -34,9 +35,9 @@ function mapRow(row: Record<string, unknown>): PostData {
         category: row.category as string,
         excerpt: row.excerpt as string | undefined,
         description: row.description as string | undefined,
-        featuredImage: row.featured_image as string | undefined,
+        featuredImage: (row.featured_image || row.feature_image) as string | undefined,
         featuredImageAlt: row.featured_image_alt as string | undefined,
-        featureImage: row.feature_image as string | undefined,
+        featureImage: (row.feature_image || row.featured_image) as string | undefined,
         focusKeyword: row.focus_keyword as string | undefined,
         author: row.author as string | undefined,
         tags: row.tags as string[] | undefined,
@@ -44,6 +45,7 @@ function mapRow(row: Record<string, unknown>): PostData {
         metaTitle: row.meta_title as string | undefined,
         metaRobots: row.meta_robots as string | undefined,
         updatedAt: row.updated_at as string | undefined,
+        isGated: !!(row.access_code),
     };
 }
 
@@ -52,6 +54,7 @@ export const getSortedPostsData = unstable_cache(
         const { data, error } = await supabase
             .from('posts')
             .select(LIST_COLUMNS)
+            .eq('is_published', true)
             .order('date', { ascending: false });
 
         if (error || !data) return [];
@@ -66,6 +69,7 @@ export const getLatestPosts = unstable_cache(
         const { data, error } = await supabase
             .from('posts')
             .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags')
+            .eq('is_published', true)
             .order('date', { ascending: false })
             .limit(limit);
 
@@ -83,6 +87,7 @@ export function getPostsByCategory(category: string) {
             const { data, error } = await supabase
                 .from('posts')
                 .select(LIST_COLUMNS)
+                .eq('is_published', true)
                 .ilike('category', `%${category}%`)
                 .order('date', { ascending: false });
 
@@ -97,7 +102,8 @@ export function getPostsByCategory(category: string) {
 export async function getAllPostIds() {
     const { data, error } = await supabase
         .from('posts')
-        .select('id');
+        .select('id')
+        .eq('is_published', true);
 
     if (error || !data) return [];
     return data.map((row) => ({ params: { slug: row.id as string } }));
@@ -111,6 +117,14 @@ export async function getPostData(id: string): Promise<PostData> {
         .single();
 
     if (error || !data) throw new Error(`Post not found: ${id}`);
+
+    // Gated posts: return metadata only, no content (content served via verify-code API)
+    if (data.access_code) {
+        return {
+            ...mapRow(data),
+            isGated: true,
+        };
+    }
 
     const rawContent = (data.content as string) || '';
     const isHtml = rawContent.trim().startsWith('<');
@@ -136,6 +150,7 @@ export async function getRelatedPosts(currentId: string, category: string, limit
     const { data, error } = await supabase
         .from('posts')
         .select('id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags')
+        .eq('is_published', true)
         .eq('category', category)
         .neq('id', currentId)
         .order('date', { ascending: false })

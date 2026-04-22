@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { setPixelAdvancedMatching } from '@/lib/pixel-matching';
 import { DiagnosticTestView } from './components/DiagnosticTestView';
+import { ApplicationForm } from './components/ApplicationForm';
 import type { DiagnosticTestData } from './data/diagnostic-test-1';
 
 const CODE_LENGTH = 6;
 
+type DiagnosisTab = 'code' | 'apply';
 type Phase = 'code-entry' | 'student-confirm' | 'email-input' | 'test-loading' | 'test-active';
 
 function formatKoreanDate(isoString: string | null): string {
@@ -24,6 +27,7 @@ function isValidEmail(email: string): boolean {
 }
 
 export default function DiagnosisPage() {
+  const [activeTab, setActiveTab] = useState<DiagnosisTab>('code');
   const [phase, setPhase] = useState<Phase>('code-entry');
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [error, setError] = useState('');
@@ -136,7 +140,15 @@ export default function DiagnosisPage() {
       setEmailError('Please enter a valid email address.');
       return;
     }
-    await loadAndStartTest(emailInput.trim());
+    const trimmedEmail = emailInput.trim();
+    setPixelAdvancedMatching({ em: trimmedEmail }).catch(() => {});
+    window.fbq?.('track', 'Lead', { content_name: 'diagnosis_email', currency: 'KRW', value: 0 });
+    fetch('/api/diagnosis/track-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: trimmedEmail }),
+    }).catch(() => {});
+    await loadAndStartTest(trimmedEmail);
   };
 
   // Student confirmation phase
@@ -245,50 +257,86 @@ export default function DiagnosisPage() {
 
   // Code entry phase (default)
   return (
-    <div className="min-h-screen bg-[#000000] text-gray-100 flex flex-col items-center justify-center p-4 font-sans">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
+    <div className="min-h-screen bg-[#000000] text-gray-100 font-sans">
+      <header className="pt-28 pb-10 sm:pt-32 sm:pb-16 px-6 text-center">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
           SAT 진단 테스트
         </h1>
         <p className="text-xl text-gray-400">진단테스트로 현재 실력을 확인해보세요.</p>
-      </div>
+      </header>
 
-      <div className="w-full max-w-md bg-[#09090b] rounded-2xl border border-white/5 p-6 md:p-8 shadow-2xl">
-        <h2 className="text-2xl font-bold text-center mb-2">접속 코드를 입력하세요</h2>
-        <p className="text-gray-500 text-sm text-center mb-8">
-          문자로 받은 6자리 코드를 입력해주세요
-        </p>
-
-        <div className="flex justify-center gap-2 md:gap-3 mb-4">
-          {Array.from({ length: CODE_LENGTH }).map((_, idx) => (
-            <input
-              key={idx}
-              ref={(el) => setRef(el, idx)}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={code[idx]}
-              onChange={(e) => handleChange(idx, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(idx, e)}
-              onPaste={idx === 0 ? handlePaste : undefined}
-              autoFocus={idx === 0}
-              className="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold bg-[#000000] border border-white/10 rounded-xl text-white outline-none transition-all focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20"
-              aria-label={`Code digit ${idx + 1}`}
-            />
-          ))}
+      <div className="flex flex-col items-center px-4 pb-16">
+      <div className="w-full max-w-md bg-[#09090b] rounded-2xl border border-white/5 shadow-2xl overflow-hidden">
+        {/* Tab Navigation */}
+        <div className="flex border-b border-white/5">
+          <button
+            onClick={() => setActiveTab('code')}
+            className={`flex-1 py-4 text-sm font-semibold transition-colors ${
+              activeTab === 'code'
+                ? 'text-white border-b-2 border-[#071be9] bg-white/5'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            코드 있어요
+          </button>
+          <button
+            onClick={() => setActiveTab('apply')}
+            className={`flex-1 py-4 text-sm font-semibold transition-colors ${
+              activeTab === 'apply'
+                ? 'text-white border-b-2 border-[#071be9] bg-white/5'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            신청할게요
+          </button>
         </div>
 
-        {error && (
-          <p className="text-red-400 text-sm text-center mb-4">{error}</p>
-        )}
+        <div className="p-6 md:p-8">
+          {/* Code Entry Tab */}
+          {activeTab === 'code' && (
+            <>
+              <h2 className="text-2xl font-bold text-center mb-2">접속 코드를 입력하세요</h2>
+              <p className="text-gray-500 text-sm text-center mb-8">
+                원장님께 받은 6자리 코드를 입력해주세요
+              </p>
 
-        <button
-          onClick={handleSubmit}
-          disabled={!isFilled || loading}
-          className="w-full py-4 bg-[#071be9] hover:bg-[#1a31f0] rounded-xl font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed text-lg shadow-lg shadow-[#071be9]/20 mt-4"
-        >
-          {loading ? '확인 중...' : '확인'}
-        </button>
+              <div className="flex justify-center gap-2 md:gap-3 mb-4">
+                {Array.from({ length: CODE_LENGTH }).map((_, idx) => (
+                  <input
+                    key={idx}
+                    ref={(el) => setRef(el, idx)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={code[idx]}
+                    onChange={(e) => handleChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(idx, e)}
+                    onPaste={idx === 0 ? handlePaste : undefined}
+                    autoFocus={idx === 0}
+                    className="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold bg-[#000000] border border-white/10 rounded-xl text-white outline-none transition-all focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20"
+                    aria-label={`Code digit ${idx + 1}`}
+                  />
+                ))}
+              </div>
+
+              {error && (
+                <p className="text-red-400 text-sm text-center mb-4">{error}</p>
+              )}
+
+              <button
+                onClick={handleSubmit}
+                disabled={!isFilled || loading}
+                className="w-full py-4 bg-[#071be9] hover:bg-[#1a31f0] rounded-xl font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed text-lg shadow-lg shadow-[#071be9]/20 mt-4"
+              >
+                {loading ? '확인 중...' : '확인'}
+              </button>
+            </>
+          )}
+
+          {/* Application Tab */}
+          {activeTab === 'apply' && <ApplicationForm />}
+        </div>
+      </div>
       </div>
     </div>
   );

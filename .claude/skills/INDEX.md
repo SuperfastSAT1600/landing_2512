@@ -2,7 +2,7 @@
 
 Lightweight directory of all available skills. Load full skill files only when needed for specific tasks.
 
-**Total Skills**: 34 (32 domain patterns + 1 meta-skill + 11 GEO skills — see GEO section below)
+**Total Skills**: 35 (32 domain patterns + 1 meta-skill + 1 thinking/strategy + 11 GEO skills — see GEO section below)
 
 **Documentation-Based Skills** (2026-01-23):
 Nine skills are now sourced from authoritative references (OpenAPI Spec, OWASP, GraphQL Spec, PostgreSQL docs, GitHub docs, RFC standards, Anthropic/OpenAI guides, LangChain, academic research). See individual skill files for sources.
@@ -84,6 +84,19 @@ Generative Engine Optimization (GEO) skills for improving visibility in AI-power
 | **geo-report-pdf/** | Professional PDF report generation with visualizations | Client-ready PDF reports | - |
 | **geo-schema/** | JSON-LD schema detection, validation, generation | Schema markup work | templates/ |
 | **geo-technical/** | Technical SEO: SSR dependency, Core Web Vitals, security for AI crawlers | Technical GEO audits | - |
+
+## Content Creation
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **blog-writing-patterns** | SAT prep blog structure, tone, SEO patterns, engagement techniques | Writing blog posts | - |
+| **superfastsat-blog/** | 네이버/고스트/랜딩 페이지용 SAT 블로그 포스팅 (배코치 문체, QA 체크, E-E-A-T) | 블로그 포스팅 작성 시 | - |
+
+## Thinking & Strategy
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **brainstorming/** | N-dimensional brainstorming, premise deconstruction, paradigm shifts | `/brainstorming` command, strategic ideation | - |
 
 ## Meta Skills
 

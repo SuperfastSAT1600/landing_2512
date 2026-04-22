@@ -39,10 +39,12 @@ export default function FloatingCTA() {
     if (!isVisible) return null;
 
     const handleConsult = () => {
+        window.fbq?.('track', 'Lead', { content_name: 'phone_consultation', currency: 'KRW', value: 0 });
         window.open(CONSULT_URL, '_blank', 'noopener,noreferrer');
     };
 
     const handleKakao = () => {
+        window.fbq?.('track', 'Lead', { content_name: 'kakao_consultation', currency: 'KRW', value: 0 });
         pushMessage({ text: '*** 님이 카카오톡 상담을 시작하셨습니다', type: 'green' });
         window.open(KAKAO_URL, '_blank', 'noopener,noreferrer');
     };

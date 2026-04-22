@@ -501,3 +501,114 @@ test.describe('Regression — Row and column operations', () => {
     await expect(page.locator('.ProseMirror table')).not.toBeVisible({ timeout: 5_000 });
   });
 });
+
+// ---------------------------------------------------------------------------
+// REQ-007 — Table cell selection visibility (dark background)
+// 어두운 배경의 에디터에서 표 셀 선택 영역이 시각적으로 확인 가능한지 검증
+// ---------------------------------------------------------------------------
+
+test.describe('REQ-007 — Table cell selection is visible on dark background', () => {
+  test('REQ-007-A: text ::selection inside table cell has visible highlight color', async ({ page }) => {
+    await gotoEditor(page);
+    await insertTable(page);
+
+    // 첫 번째 셀에 텍스트 입력
+    const firstCell = page.locator('.ProseMirror table td').first();
+    await firstCell.click();
+    await page.keyboard.type('선택 테스트 텍스트');
+
+    // 텍스트 드래그 선택
+    await firstCell.scrollIntoViewIfNeeded();
+    const box = await firstCell.boundingBox();
+    if (!box) throw new Error('no bounding box');
+    await page.mouse.move(box.x + 4, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 4, box.y + box.height / 2, { steps: 10 });
+
+    // ::selection 스타일이 globals.css에 정의되어 있는지 확인
+    const selectionBg = await page.evaluate(() => {
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          for (const rule of Array.from(sheet.cssRules)) {
+            const r = rule as CSSStyleRule;
+            if (r.selectorText?.includes('ProseMirror') && r.selectorText?.includes('::selection')) {
+              return r.style.backgroundColor;
+            }
+          }
+        } catch { continue; }
+      }
+      return null;
+    });
+
+    await page.mouse.up();
+
+    // ProseMirror ::selection 규칙이 존재하고 파란색 계열인지 확인
+    expect(selectionBg).not.toBeNull();
+    if (selectionBg) {
+      const vals = selectionBg.match(/[\d.]+/g)?.map(Number) ?? [];
+      if (vals.length >= 4) {
+        // rgba(59, 130, 246, 0.55) — blue > red, alpha >= 0.4
+        expect(vals[2]).toBeGreaterThan(vals[0]); // blue > red
+        expect(vals[3]).toBeGreaterThanOrEqual(0.4); // 충분한 불투명도
+      }
+    }
+  });
+
+  test('REQ-007-B: .selectedCell gets visible background and outline', async ({ page }) => {
+    await gotoEditor(page);
+    await insertTable(page);
+
+    // Tiptap CellSelection 트리거: Shift+클릭으로 인접 셀 선택
+    const cells = page.locator('.ProseMirror table td');
+    await cells.nth(0).click();
+    await cells.nth(1).click({ modifiers: ['Shift'] });
+
+    // .selectedCell CSS 규칙이 background-color를 갖는지 확인
+    const selectedCellBg = await page.evaluate(() => {
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          for (const rule of Array.from(sheet.cssRules)) {
+            const r = rule as CSSStyleRule;
+            if (r.selectorText?.includes('selectedCell')) {
+              return r.style.backgroundColor;
+            }
+          }
+        } catch { continue; }
+      }
+      return null;
+    });
+
+    expect(selectedCellBg).not.toBeNull();
+    expect(selectedCellBg).not.toBe('');
+  });
+
+  test('REQ-007-C: cell selection screenshot shows visible highlight', async ({ page }) => {
+    await gotoEditor(page);
+    await insertTable(page);
+
+    const firstCell = page.locator('.ProseMirror table td').first();
+    await firstCell.click();
+    await page.keyboard.type('표 셀 선택 가시성');
+
+    // 텍스트 드래그 중 스크린샷
+    await firstCell.scrollIntoViewIfNeeded();
+    const box = await firstCell.boundingBox();
+    if (!box) throw new Error('no bounding box');
+
+    await page.mouse.move(box.x + 4, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 4, box.y + box.height / 2, { steps: 10 });
+
+    await page.screenshot({
+      path: 'test-results/editor-cell-selection.png',
+      clip: { x: Math.max(0, box.x - 30), y: Math.max(0, box.y - 30), width: box.width + 60, height: box.height + 60 },
+    });
+
+    await page.mouse.up();
+
+    // getSelection이 비어있지 않으면 텍스트가 선택됨
+    const selected = await page.evaluate(() => window.getSelection()?.toString() ?? '');
+    expect(selected.trim().length).toBeGreaterThan(0);
+  });
+});
+

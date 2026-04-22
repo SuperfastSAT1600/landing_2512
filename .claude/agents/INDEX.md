@@ -22,6 +22,8 @@ Consolidated directory of 16 specialized agents. Main agent handles standard dev
 | **geo-platform-analysis** | sonnet | Platform optimization for ChatGPT, Perplexity, Google AI Overviews, Gemini, Bing Copilot | Platform-specific GEO optimization |
 | **geo-schema** | sonnet | JSON-LD schema detection, validation, rich result eligibility, template generation | Schema markup audits, structured data implementation |
 | **geo-technical** | sonnet | Technical SEO: SSR/JS dependency, crawlability, security, Core Web Vitals for AI crawlers | Technical GEO audits, server-side rendering analysis |
+| **blog-content-creator** | sonnet | SAT 블로그 콘텐츠 생성 (스타일 분석, SAT 자료 참조) | 블로그 포스팅 초안 작성 |
+| **blog-publisher** | sonnet | 네이버 원고 → 고스트/랜딩 변환 후 동시 발행 (publish-all.js) | "발행해줘", "올려줘", "고스트/랜딩에 올려" |
 
 ## Model Tier Guidelines
 
