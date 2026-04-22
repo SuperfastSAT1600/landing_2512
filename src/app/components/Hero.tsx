@@ -37,7 +37,15 @@ export default function Hero({ ctaText, ctaLink }: HeroProps) {
                         가장 빠르게<br />
                     </h1>
                     <div className={styles.ctaGroup}>
-                        <Link href={resolvedLink} className={styles.primaryBtn}>
+                        <Link
+                            href={resolvedLink}
+                            className={styles.primaryBtn}
+                            onClick={() => window.fbq?.('track', 'Lead', {
+                                content_name: 'hero_cta',
+                                currency: 'KRW',
+                                value: 0,
+                            })}
+                        >
                             {ctaText || "25년 11월 SAT목표 점수 달성 인터뷰"}
                             <ArrowRight size={20} />
                         </Link>

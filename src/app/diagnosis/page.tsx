@@ -139,7 +139,14 @@ export default function DiagnosisPage() {
       setEmailError('Please enter a valid email address.');
       return;
     }
-    await loadAndStartTest(emailInput.trim());
+    const trimmedEmail = emailInput.trim();
+    window.fbq?.('track', 'Lead', { content_name: 'diagnosis_email', currency: 'KRW', value: 0 });
+    fetch('/api/diagnosis/track-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: trimmedEmail }),
+    }).catch(() => {});
+    await loadAndStartTest(trimmedEmail);
   };
 
   // Student confirmation phase

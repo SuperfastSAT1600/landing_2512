@@ -53,14 +53,15 @@ export async function POST(request: NextRequest) {
 
     // Send Meta CAPI event (non-blocking)
     sendMetaCAPIEvent({
-      eventName: 'DiagnosticApplicationSubmitted',
+      eventName: 'Lead',
       userData: {
         ph: phone.trim(),
         fn: name.trim().split(' ')[0],
       },
       customData: {
-        content_name: 'diagnostic_test_application',
-        status: 'pending',
+        content_name: 'diagnosis_application',
+        currency: 'KRW',
+        value: 0,
       },
     }).catch(err => console.error('[apply] CAPI error:', err));
 

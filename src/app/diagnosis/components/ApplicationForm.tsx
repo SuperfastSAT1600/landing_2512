@@ -60,6 +60,7 @@ export function ApplicationForm() {
         setSubmitError(d.error ?? '오류가 발생했습니다. 다시 시도해주세요.');
         return;
       }
+      window.fbq?.('track', 'Lead', { content_name: 'diagnosis_application', currency: 'KRW', value: 0 });
       setDone(true);
     } catch {
       setSubmitError('연결 오류가 발생했습니다. 다시 시도해주세요.');
