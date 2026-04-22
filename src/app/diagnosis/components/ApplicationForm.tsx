@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { setPixelAdvancedMatching } from '@/lib/pixel-matching';
 
 type Step = 1 | 2 | 3;
 
@@ -36,7 +37,10 @@ export function ApplicationForm() {
     if (!name.trim()) { setNameError('이름을 입력해주세요.'); valid = false; } else setNameError('');
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 7) { setPhoneError('전화번호를 입력해주세요. (예: +1 234 567 8900 / 010-1234-5678)'); valid = false; } else setPhoneError('');
-    if (valid) setStep(2);
+    if (valid) {
+      setPixelAdvancedMatching({ fn: name.trim().split(' ')[0], ph: phone.trim() }).catch(() => {});
+      setStep(2);
+    }
   };
 
   const handleStep2Next = () => {

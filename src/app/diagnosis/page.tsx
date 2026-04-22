@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { setPixelAdvancedMatching } from '@/lib/pixel-matching';
 import { DiagnosticTestView } from './components/DiagnosticTestView';
 import { ApplicationForm } from './components/ApplicationForm';
 import type { DiagnosticTestData } from './data/diagnostic-test-1';
@@ -140,6 +141,7 @@ export default function DiagnosisPage() {
       return;
     }
     const trimmedEmail = emailInput.trim();
+    setPixelAdvancedMatching({ em: trimmedEmail }).catch(() => {});
     window.fbq?.('track', 'Lead', { content_name: 'diagnosis_email', currency: 'KRW', value: 0 });
     fetch('/api/diagnosis/track-email', {
       method: 'POST',
