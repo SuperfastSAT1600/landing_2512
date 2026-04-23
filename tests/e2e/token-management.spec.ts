@@ -622,6 +622,7 @@ test.describe('토큰 관리 — 에러 처리', () => {
     await expect(page.getByText('시험 결과가 있는 코드는 삭제할 수 없습니다.')).toBeVisible();
   });
 
+  // REQ-MSG-001
   test('만료일시 수정 API 실패 시 에러 메시지 표시됨', async ({ page }) => {
     await page.route(/\/api\/admin\/diagnosis\/tokens\/[^/?]+/, (route) => {
       if (route.request().method() === 'PATCH') {
@@ -664,5 +665,106 @@ test.describe('토큰 관리 — 에러 처리', () => {
 
     // 에러 메시지 표시, 편집 모드 유지
     await expect(page.getByText('유효하지 않은 날짜 형식입니다.')).toBeVisible();
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+// Suite: 메시지 템플릿 시간대 검증
+// KO/EN 메시지 모두 선택된 학생 시간대를 반영해야 함
+// ──────────────────────────────────────────────────────────────
+
+test.describe('토큰 관리 — 메시지 템플릿 시간대', () => {
+  // 2027-07-15T16:00:00.000Z = PDT(UTC-7) 기준 09:00
+  const MOCK_EXPIRES_AT_UTC = '2027-07-15T16:00:00.000Z';
+
+  async function mockAndGenerate(page: Page, timezone: string) {
+    await setAdminAuth(page);
+    await page.addInitScript(() => sessionStorage.removeItem('admin_preferred_timezone'));
+    await mockSupportApis(page);
+
+    await page.route(/\/api\/admin\/diagnosis\/tokens(\?.*)?$/, (route) => {
+      if (route.request().method() === 'POST') {
+        route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ code: '123456', studentName: '시간대학생', expiresAt: MOCK_EXPIRES_AT_UTC, warning: null }),
+        });
+      } else if (route.request().method() === 'GET') {
+        route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ codes: [] }) });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/admin/diagnosis');
+    await page.waitForTimeout(1500);
+
+    await page.fill('input[placeholder="예: 홍길동"]', '시간대학생');
+
+    const tzSelect = page.locator('select').filter({ has: page.locator('optgroup[label="한국"]') }).first();
+    await tzSelect.selectOption(timezone);
+
+    await page.getByRole('button', { name: '코드 생성' }).click();
+    await page.waitForTimeout(1000);
+  }
+
+  // REQ-TZ-MSG-001
+  test('KO 메시지: 미국 태평양(LA) 시간대 선택 시 한국어 메시지에 PT 기준 시간 표시', async ({ page }) => {
+    await mockAndGenerate(page, 'America/Los_Angeles');
+
+    // 한국어 탭이 기본 활성화
+    const textarea = page.locator('textarea');
+    await expect(textarea).toBeVisible();
+    const koText = await textarea.inputValue();
+
+    // 태평양 시간 레이블이 한국어 메시지에 포함되어야 함
+    expect(koText).toContain('태평양 시간 (PT)');
+    // 한국 표준시가 아니어야 함
+    expect(koText).not.toContain('한국 표준시');
+    // ko-KR 로케일은 GMT 오프셋 표기 사용 (PDT 대신 GMT-7)
+    // UTC 16:00 = PDT(UTC-7) 기준 오전 09:00 임을 확인
+    expect(koText).toContain('09:00');
+    expect(koText).toContain('GMT-7');
+  });
+
+  // REQ-TZ-MSG-002
+  test('EN 메시지: 미국 태평양(LA) 시간대 선택 시 영어 메시지에 미국 시간 표시', async ({ page }) => {
+    await mockAndGenerate(page, 'America/Los_Angeles');
+
+    // EN 탭으로 전환
+    await page.getByRole('button', { name: 'English' }).click();
+
+    const textarea = page.locator('textarea');
+    const enText = await textarea.inputValue();
+
+    expect(enText).toContain('미국');
+    expect(enText).toMatch(/PDT|PST/);
+  });
+
+  // REQ-TZ-MSG-003
+  test('KO 메시지: 한국(Seoul) 시간대 선택 시 한국 표준시 표시', async ({ page }) => {
+    await mockAndGenerate(page, 'Asia/Seoul');
+
+    const textarea = page.locator('textarea');
+    const koText = await textarea.inputValue();
+
+    expect(koText).toContain('한국 표준시');
+    // ko-KR 로케일은 KST 대신 GMT+9 표기
+    // UTC 16:00 = KST(UTC+9) 기준 다음날 01:00
+    expect(koText).toContain('GMT+9');
+  });
+
+  // REQ-TZ-MSG-004
+  test('KO 메시지: 미국 동부(NY) 시간대 선택 시 동부 시간 레이블 표시', async ({ page }) => {
+    await mockAndGenerate(page, 'America/New_York');
+
+    const textarea = page.locator('textarea');
+    const koText = await textarea.inputValue();
+
+    expect(koText).toContain('동부 시간 (ET)');
+    expect(koText).not.toContain('한국 표준시');
+    // ko-KR 로케일은 EDT 대신 GMT-4 표기 (2027-07-15 EDT = UTC-4)
+    // UTC 16:00 = EDT(UTC-4) 기준 오후 12:00
+    expect(koText).toContain('GMT-4');
   });
 });
