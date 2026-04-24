@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getSortedPostsData, getPostsByCategory } from '../../lib/posts';
+import { getSortedPostsData, getPostsByCategory, getPostsByTag } from '../../lib/posts';
 import Footer from '../components/Footer';
 import BlogList from './BlogList';
 
@@ -23,16 +23,25 @@ const categoryMeta: Record<string, { title: string; description: string }> = {
 export async function generateMetadata({
     searchParams,
 }: {
-    searchParams: Promise<{ category?: string }>;
+    searchParams: Promise<{ category?: string; tag?: string }>;
 }): Promise<Metadata> {
-    const { category } = await searchParams;
+    const { category, tag } = await searchParams;
     const meta = category && categoryMeta[category]
         ? categoryMeta[category]
+        : tag
+        ? {
+            title: `#${tag} | SuperfastSAT Blog`,
+            description: `${tag} 태그가 달린 SAT 학습 자료를 확인하세요.`,
+        }
         : {
             title: '입시 자료 & 학습 칼럼 | SuperfastSAT Blog',
             description: 'SAT 고득점 비법, 최신 유학 정보, Digital SAT 문법·독해 전략을 SuperfastSAT 블로그에서 확인하세요.',
         };
-    const canonicalUrl = category ? `${BASE_URL}/blog?category=${encodeURIComponent(category)}` : `${BASE_URL}/blog`;
+    const canonicalUrl = category
+        ? `${BASE_URL}/blog?category=${encodeURIComponent(category)}`
+        : tag
+        ? `${BASE_URL}/blog?tag=${encodeURIComponent(tag)}`
+        : `${BASE_URL}/blog`;
 
     return {
         title: meta.title,
@@ -58,11 +67,13 @@ export const revalidate = 60;
 export default async function Blog({
     searchParams,
 }: {
-    searchParams: Promise<{ category?: string }>;
+    searchParams: Promise<{ category?: string; tag?: string }>;
 }) {
-    const { category } = await searchParams;
+    const { category, tag } = await searchParams;
     const filteredPosts = category
         ? await getPostsByCategory(category)
+        : tag
+        ? await getPostsByTag(tag)
         : await getSortedPostsData();
 
     // Header Content Logic
@@ -81,10 +92,14 @@ export default async function Blog({
         }
     };
 
-    const currentHeader = category && headerContent[category] ? headerContent[category] : {
-        title: '입시 자료 & 학습 칼럼',
-        desc: 'SuperfastSAT이 제공하는 SAT 고득점 비법과 최신 유학 정보를 확인하세요.'
-    };
+    const currentHeader = category && headerContent[category]
+        ? headerContent[category]
+        : tag
+        ? { title: `#${tag}`, desc: `${tag} 태그가 달린 글 모음입니다.` }
+        : {
+            title: '입시 자료 & 학습 칼럼',
+            desc: 'SuperfastSAT이 제공하는 SAT 고득점 비법과 최신 유학 정보를 확인하세요.'
+        };
 
     return (
         <div className="flex flex-col min-h-screen bg-[#151719] text-gray-100 font-sans">
