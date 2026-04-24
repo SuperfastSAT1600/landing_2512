@@ -81,6 +81,24 @@ export const getLatestPosts = unstable_cache(
 );
 
 // unstable_cache는 dynamic arg를 지원하지 않으므로 category를 key에 포함하는 factory 사용
+export function getPostsByTag(tag: string) {
+    return unstable_cache(
+        async (): Promise<PostData[]> => {
+            const { data, error } = await supabase
+                .from('posts')
+                .select(LIST_COLUMNS)
+                .eq('is_published', true)
+                .contains('tags', [tag])
+                .order('date', { ascending: false });
+
+            if (error || !data) return [];
+            return data.map(mapRow);
+        },
+        [`posts-by-tag-${tag}`],
+        { revalidate: 60, tags: ['posts'] }
+    )();
+}
+
 export function getPostsByCategory(category: string) {
     return unstable_cache(
         async (): Promise<PostData[]> => {

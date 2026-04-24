@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Tag } from 'lucide-react';
 import { GateWall } from './GateWall';
 import type { PostData } from '@/lib/posts';
@@ -39,9 +40,13 @@ export function PostContent({ postData }: PostContentProps) {
         <div className="mt-16 pt-8 border-t border-gray-200">
           <div className="flex flex-wrap gap-2">
             {postData.tags.map(tag => (
-              <span key={tag} className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm border border-gray-200 flex items-center gap-1">
+              <Link
+                key={tag}
+                href={`/blog?tag=${encodeURIComponent(tag)}`}
+                className="bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 px-3 py-1 rounded-full text-sm border border-gray-200 flex items-center gap-1 transition-colors"
+              >
                 <Tag size={12} /> {tag}
-              </span>
+              </Link>
             ))}
           </div>
         </div>

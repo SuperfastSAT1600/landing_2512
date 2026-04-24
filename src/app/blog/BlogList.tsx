@@ -19,10 +19,9 @@ export default function BlogList({ posts }: BlogListProps) {
             {posts.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {posts.map((post) => (
-                        <Link
-                            href={`/blog/${post.id}`}
+                        <div
                             key={post.id}
-                            className="group bg-[#1e2023] rounded-2xl overflow-hidden border border-white/5 hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10 flex flex-col"
+                            className="group relative bg-[#1e2023] rounded-2xl overflow-hidden border border-white/5 hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10 flex flex-col"
                         >
                             {/* Featured Image */}
                             <div className="relative aspect-[16/9] overflow-hidden bg-gray-800">
@@ -52,16 +51,31 @@ export default function BlogList({ posts }: BlogListProps) {
 
                             {/* Content */}
                             <div className="p-6 flex-1 flex flex-col">
-                                <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 font-medium">
+                                <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 font-medium relative z-10">
                                     <Tag size={12} />
-                                    <span>{post.tags?.[0] || 'Article'}</span>
+                                    {post.tags?.[0] ? (
+                                        <Link
+                                            href={`/blog?tag=${encodeURIComponent(post.tags[0])}`}
+                                            className="hover:text-blue-400 transition-colors"
+                                        >
+                                            {post.tags[0]}
+                                        </Link>
+                                    ) : (
+                                        <span>Article</span>
+                                    )}
                                     <span className="mx-1">•</span>
                                     <Clock size={12} />
                                     <span>{post.date}</span>
                                 </div>
 
                                 <h2 className="text-xl font-bold text-gray-100 mb-3 group-hover:text-blue-400 transition-colors leading-tight">
-                                    {post.title}
+                                    {/* stretched link — covers entire card */}
+                                    <Link
+                                        href={`/blog/${post.id}`}
+                                        className="after:absolute after:inset-0"
+                                    >
+                                        {post.title}
+                                    </Link>
                                 </h2>
 
                                 <p className="text-gray-400 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">
@@ -72,7 +86,7 @@ export default function BlogList({ posts }: BlogListProps) {
                                     글 읽기 <span className="ml-1">→</span>
                                 </div>
                             </div>
-                        </Link>
+                        </div>
                     ))}
                 </div>
             ) : (
