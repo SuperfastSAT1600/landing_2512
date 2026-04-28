@@ -57,7 +57,8 @@ export function DiagnosticTestView({
   const layoutRef = useRef<HTMLDivElement>(null);
 
   const { savedWords, toggleWord, isWordSaved } = useVocabTracker();
-  const { questions, title, timeLimit } = testData;
+  const { questions: rawQuestions, title, timeLimit } = testData;
+  const questions = Array.isArray(rawQuestions) ? rawQuestions : [];
   const currentQuestion = questions[currentQuestionIndex];
   const hasPassage = !!currentQuestion?.passage;
 
@@ -392,7 +393,7 @@ export function DiagnosticTestView({
         {/* Question panel */}
         <div className={`test-question-panel ${hasPassage ? 'has-passage' : ''}`}>
           <div className="mx-auto" style={{ maxWidth: 640, padding: '24px 20px 120px' }}>
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               <motion.div
                 key={currentQuestion?.id}
                 initial={{ opacity: 0 }}

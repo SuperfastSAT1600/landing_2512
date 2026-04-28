@@ -87,18 +87,21 @@ export function MathRenderer({ children, className = '', displayMode = false }: 
   const [renderError, setRenderError] = React.useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const renderMath = async () => {
-      if (!containerRef.current) return;
+      if (!containerRef.current || cancelled) return;
       try {
         setRenderError(false);
         await loadMathJax();
+        if (cancelled || !containerRef.current) return;
         await waitForMathJax();
-
+        if (cancelled || !containerRef.current) return;
         const openDelim = displayMode ? '\\[' : '\\(';
         const closeDelim = displayMode ? '\\]' : '\\)';
         containerRef.current.innerHTML = `${openDelim}${children}${closeDelim}`;
         await window.MathJax.typesetPromise([containerRef.current]);
       } catch {
+        if (cancelled) return;
         setRenderError(true);
         if (containerRef.current) {
           const openDelim = displayMode ? '\\[' : '\\(';
@@ -108,6 +111,7 @@ export function MathRenderer({ children, className = '', displayMode = false }: 
       }
     };
     renderMath();
+    return () => { cancelled = true; };
   }, [children, displayMode]);
 
   return (
