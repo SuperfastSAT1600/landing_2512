@@ -1,12 +1,10 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { Clock } from 'lucide-react';
 import styles from './LatestPosts.module.css';
 import { ScrollReveal } from './ScrollReveal';
-import { getLatestPosts } from '../../lib/posts';
+import { getSortedPostsData } from '../../lib/posts';
+import BlogList from '../blog/BlogList';
 
 export default async function LatestPosts() {
-    const latestPosts = await getLatestPosts(6);
+    const allPosts = await getSortedPostsData();
 
     return (
         <section className={styles.section}>
@@ -17,46 +15,7 @@ export default async function LatestPosts() {
                     </div>
                 </ScrollReveal>
 
-                <div className={styles.list}>
-                    {latestPosts.map((post) => (
-                        <Link key={post.id} href={`/blog/${post.id}`} className={styles.item}>
-                            {/* Thumbnail */}
-                            <div className={styles.thumbnail}>
-                                {post.featuredImage ? (
-                                    <Image
-                                        src={post.featuredImage}
-                                        alt={post.title}
-                                        fill
-                                        unoptimized
-                                        className={styles.thumbnailImage}
-                                        sizes="120px"
-                                    />
-                                ) : (
-                                    <div className={styles.thumbnailFallback}>
-                                        <span>Aa</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Content */}
-                            <div className={styles.content}>
-                                <div className={styles.meta}>
-                                    <span className={styles.categoryBadge}>{post.category || 'SAT Tips'}</span>
-                                </div>
-                                <h3 className={styles.postTitle}>{post.title}</h3>
-                                <p className={styles.excerpt}>
-                                    {post.excerpt || post.description || '자세한 내용을 확인해보세요...'}
-                                </p>
-                                <div className={styles.footer}>
-                                    <span className={styles.date}>
-                                        <Clock size={12} />
-                                        {post.date}
-                                    </span>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
+                <BlogList posts={allPosts} />
             </div>
         </section>
     );
