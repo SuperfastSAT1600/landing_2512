@@ -46,7 +46,7 @@ function ArticleCard({ post }: { post: PostData }) {
     return (
         <Link
             href={`/blog/${post.id}`}
-            className="group block bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-gray-200 hover:shadow-md transition-all"
+            className="group block bg-[#09090b] border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all"
         >
             {thumb ? (
                 <div className="relative aspect-video w-full overflow-hidden">
@@ -60,16 +60,16 @@ function ArticleCard({ post }: { post: PostData }) {
                     />
                 </div>
             ) : (
-                <div className="aspect-video w-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                    <span className="text-gray-300 text-sm">No Image</span>
+                <div className="aspect-video w-full bg-gradient-to-br from-[#071be9]/20 to-[#6085FF]/10 flex items-center justify-center">
+                    <span className="text-white/20 text-sm">No Image</span>
                 </div>
             )}
             <div className="p-4">
-                <p className="text-xs text-[#071be9] font-semibold uppercase tracking-wide mb-1">{post.category}</p>
-                <h3 className="text-gray-900 font-bold text-sm leading-snug line-clamp-2 group-hover:text-[#071be9] transition-colors">
+                <p className="text-xs text-[#6085FF] font-semibold uppercase tracking-wide mb-1">{post.category}</p>
+                <h3 className="text-white font-bold text-sm leading-snug line-clamp-2 group-hover:text-[#6085FF] transition-colors">
                     {post.title}
                 </h3>
-                <p className="text-gray-400 text-xs mt-1">{post.date}</p>
+                <p className="text-gray-500 text-xs mt-1">{post.date}</p>
             </div>
         </Link>
     );
@@ -77,14 +77,14 @@ function ArticleCard({ post }: { post: PostData }) {
 
 function ReviewCard({ review }: { review: ReviewData }) {
     return (
-        <article className="bg-white border border-gray-100 rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
+        <article className="bg-[#09090b] border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
                 <StarRating rating={review.rating} />
-                <span className="text-xs text-gray-400">{review.date}</span>
+                <span className="text-xs text-gray-500">{review.date}</span>
             </div>
-            {review.title && <h4 className="text-gray-900 font-semibold text-sm">{review.title}</h4>}
-            <p className="text-gray-500 text-sm leading-relaxed line-clamp-5">{review.content}</p>
-            <p className="text-xs text-gray-400 mt-auto">{review.author} · {review.grade}</p>
+            {review.title && <h4 className="text-white font-semibold text-sm">{review.title}</h4>}
+            <p className="text-gray-400 text-sm leading-relaxed line-clamp-5">{review.content}</p>
+            <p className="text-xs text-gray-600 mt-auto">{review.author} · {review.grade}</p>
         </article>
     );
 }
@@ -93,9 +93,10 @@ const PROSE = 'prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:te
 
 export default function CoachPageClient({ coach, introHtml, curriculumHtml, articles, reviews }: CoachPageClientProps) {
     const [activeTab, setActiveTab] = useState<Tab>('intro');
+    const isDark = activeTab === 'articles' || activeTab === 'reviews';
 
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-900">
+        <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
 
             {/* ── 상단 네비게이션 (랜딩 헤더와 동일 스타일) ── */}
             <header className="fixed top-0 w-full z-50 bg-[#050816] border-b border-white/10">
@@ -194,20 +195,20 @@ export default function CoachPageClient({ coach, introHtml, curriculumHtml, arti
                                 {articles.map(post => <ArticleCard key={post.id} post={post} />)}
                             </div>
                         ) : (
-                            <p className="text-gray-400">작성된 아티클이 없습니다.</p>
+                            <p className="text-gray-500">작성된 아티클이 없습니다.</p>
                         )}
                     </section>
                 )}
 
                 {activeTab === 'reviews' && (
                     <section>
-                        <p className="text-sm text-gray-400 mb-6">{reviews.length}개의 후기</p>
+                        <p className="text-sm text-gray-500 mb-6">{reviews.length}개의 후기</p>
                         {reviews.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {reviews.map(r => <ReviewCard key={r.id} review={r} />)}
                             </div>
                         ) : (
-                            <p className="text-gray-400">아직 등록된 후기가 없습니다.</p>
+                            <p className="text-gray-500">아직 등록된 후기가 없습니다.</p>
                         )}
                     </section>
                 )}
