@@ -16,7 +16,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tutoring.superfast
 
 export async function generateMetadata({ params }: Props) {
     const { slug } = await params;
-    const coach = getCoachBySlug(slug);
+    const coach = await getCoachBySlug(slug);
     if (!coach) return { title: '코치 | SuperfastSAT' };
 
     return {
@@ -58,7 +58,7 @@ async function fetchArticlesByCoach(coachName: string): Promise<PostData[]> {
 
 export default async function CoachPage({ params }: Props) {
     const { slug } = await params;
-    const coach = getCoachBySlug(slug);
+    const coach = await getCoachBySlug(slug);
 
     if (!coach || !coach.isActive) {
         notFound();
