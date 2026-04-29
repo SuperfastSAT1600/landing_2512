@@ -146,13 +146,19 @@ export default function CoachPageClient({ coach, introHtml, curriculumHtml, arti
                         )}
                     </div>
 
-                    {/* 이름 + bio */}
-                    <div>
-                        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">{coach.name}</h1>
-                        {coach.bio && (
-                            <p className="text-gray-500 mt-2 text-sm leading-relaxed max-w-sm">{coach.bio}</p>
-                        )}
-                    </div>
+                    {/* 이름 */}
+                    <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">{coach.name}</h1>
+
+                    {/* 구분선 1: 이름 ↔ 소개 */}
+                    <hr className="w-full border-gray-200" />
+
+                    {/* bio */}
+                    {coach.bio && (
+                        <p className="text-gray-500 text-sm leading-relaxed max-w-sm">{coach.bio}</p>
+                    )}
+
+                    {/* 구분선 2: 소개 ↔ 콘텐츠 */}
+                    <hr className="w-full border-gray-200" />
                 </div>
             </section>
 
