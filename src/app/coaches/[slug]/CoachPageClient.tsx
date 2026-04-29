@@ -97,27 +97,28 @@ export default function CoachPageClient({ coach, introHtml, curriculumHtml, arti
     return (
         <div className="min-h-screen bg-gray-50 text-gray-900">
 
-            {/* ── 상단 네비게이션 ── */}
-            <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100 shadow-sm">
-                <div className="max-w-5xl mx-auto px-6 h-14 flex items-center gap-8">
+            {/* ── 상단 네비게이션 (랜딩 헤더와 동일 스타일) ── */}
+            <header className="fixed top-0 w-full z-50 bg-[#050816] border-b border-white/10">
+                <div className="max-w-[1400px] mx-auto px-[5%] h-14 flex items-center gap-12">
                     {/* 로고 */}
                     <Link href="/" className="flex-shrink-0">
-                        <Image src="/logo_header.png" alt="SuperfastSAT" height={20} width={120} className="h-5 w-auto object-contain" unoptimized />
+                        <Image src="/logo_header.png" alt="SuperfastSAT" height={24} width={130} className="h-6 w-auto object-contain" unoptimized />
                     </Link>
 
                     {/* 탭 메뉴 */}
-                    <nav className="flex items-center gap-1 overflow-x-auto scrollbar-none flex-1">
+                    <nav className="flex items-center gap-8 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
                         {TABS.map(({ key, label }) => (
                             <button
                                 key={key}
                                 onClick={() => setActiveTab(key)}
-                                className={`relative px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors rounded-full ${
-                                    activeTab === key
-                                        ? 'bg-[#071be9] text-white'
-                                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                                className={`relative py-[10px] text-[0.95rem] font-medium whitespace-nowrap transition-colors ${
+                                    activeTab === key ? 'text-white' : 'text-gray-400 hover:text-white'
                                 }`}
                             >
                                 {label}
+                                {activeTab === key && (
+                                    <span className="absolute bottom-1 left-0 w-full h-0.5 bg-white rounded-sm" />
+                                )}
                             </button>
                         ))}
                     </nav>
