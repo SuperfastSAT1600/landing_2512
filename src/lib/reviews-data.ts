@@ -20,6 +20,7 @@ export interface ReviewData {
     contact: string;
     status: ReviewStatus;
     isFeatured: boolean;
+    coachSlug?: string; // 코치별 리뷰 연결용
 }
 
 // Read reviews

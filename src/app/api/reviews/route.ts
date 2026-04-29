@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
             contact: body.contact || '',
             status: 'pending',
             isFeatured: false,
+            ...(body.coachSlug ? { coachSlug: String(body.coachSlug) } : {}),
         };
 
         addReview(newReview);

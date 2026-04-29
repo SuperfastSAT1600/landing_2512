@@ -106,6 +106,7 @@ function BlogEditor() {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [category, setCategory] = useState('SAT RW');
     const [author, setAuthor] = useState('SuperfastSAT');
+    const [coaches, setCoaches] = useState<Array<{ slug: string; name: string }>>([]);
 
     // SEO & Meta Data
     const [slug, setSlug] = useState('');
@@ -228,6 +229,12 @@ function BlogEditor() {
             return;
         }
         if (editId) loadPost(editId);
+        fetch('/api/admin/coaches', { headers: { 'x-admin-key': key } })
+            .then(r => r.json())
+            .then((data: { success: boolean; coaches?: Array<{ slug: string; name: string }> }) => {
+                if (data.success && data.coaches) setCoaches(data.coaches);
+            })
+            .catch(() => {/* non-critical */});
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editId, router]);
 
@@ -1436,13 +1443,16 @@ function BlogEditor() {
                             {/* Author */}
                             <div className="space-y-3">
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Author</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={author}
                                     onChange={(e) => setAuthor(e.target.value)}
-                                    placeholder="SuperfastSAT"
                                     className="w-full bg-[#1e2023] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
-                                />
+                                >
+                                    <option value="SuperfastSAT">SuperfastSAT</option>
+                                    {coaches.map(c => (
+                                        <option key={c.slug} value={c.name}>{c.name}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             {/* Access Code */}

@@ -10,6 +10,7 @@ const NAV_ITEMS = [
     { href: '/admin', label: 'Posts', icon: '📄' },
     { href: '/admin/diagnosis', label: 'Diagnosis', icon: '🩺' },
     { href: '/admin/reviews', label: 'Reviews', icon: '⭐' },
+    { href: '/admin/coaches', label: 'Coaches', icon: '👨‍🏫' },
     { href: '/admin/home', label: 'Homepage', icon: '🏠' },
 ];
 

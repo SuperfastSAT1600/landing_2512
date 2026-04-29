@@ -1,35 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ChevronRight, Check, Star, Gift, BookOpen } from 'lucide-react';
 
+function ReviewWriteForm() {
+    const searchParams = useSearchParams();
+    const coachSlug = searchParams.get('coach') ?? '';
 
-export default function ReviewWritePage() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [coachLabel, setCoachLabel] = useState('');
 
-    // Form Data
     const [marketingConsent, setMarketingConsent] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         category: '목표 점수 달성',
         author: '',
-        authorType: 'Student', // Student | Parent
+        authorType: 'Student',
         grade: '11학년',
         rating: 5,
         content: '',
-        rewardType: 'Reward', // Reward | Extra Class
-        contact: ''
+        rewardType: 'Reward',
+        contact: '',
     });
+
+    useEffect(() => {
+        if (!coachSlug) return;
+        // Derive display label from slug (capitalize first letter)
+        const label = coachSlug.charAt(0).toUpperCase() + coachSlug.slice(1);
+        setCoachLabel(label);
+    }, [coachSlug]);
 
     const handleNext = () => {
         if (step === 1 && !marketingConsent) {
-            alert("마케팅 활용 동의에 체크해주세요.");
+            alert('마케팅 활용 동의에 체크해주세요.');
             return;
         }
         if (step === 2) {
             if (!formData.author || !formData.content) {
-                alert("필수 항목을 모두 입력해주세요.");
+                alert('필수 항목을 모두 입력해주세요.');
                 return;
             }
         }
@@ -42,51 +52,59 @@ export default function ReviewWritePage() {
 
     const handleSubmit = async () => {
         if (!formData.contact) {
-            alert("연락처를 입력해주세요.");
+            alert('연락처를 입력해주세요.');
             return;
         }
         setLoading(true);
         try {
+            const payload = {
+                ...formData,
+                marketingConsent,
+                ...(coachSlug ? { coachSlug } : {}),
+            };
             const res = await fetch('/api/reviews', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, marketingConsent })
+                body: JSON.stringify(payload),
             });
             if (res.ok) {
-                setStep(4); // Success
+                setStep(4);
             } else {
-                alert("제출에 실패했습니다. 다시 시도해주세요.");
+                alert('제출에 실패했습니다. 다시 시도해주세요.');
             }
-        } catch (e) {
-            alert("오류가 발생했습니다.");
+        } catch {
+            alert('오류가 발생했습니다.');
         } finally {
             setLoading(false);
         }
     };
 
+    const pageTitle = coachLabel ? `${coachLabel} 코치 수업 후기` : 'Student Success Story';
+
     return (
         <div className="min-h-screen bg-[#151719] text-gray-100 flex flex-col items-center justify-center p-4 font-sans">
-            {/* Branding Header */}
-            <div className="mb-8 text-center animate-fade-in-down">
+            <div className="mb-8 text-center">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                     SuperfastSAT
                 </h1>
-                <p className="text-gray-500 text-sm tracking-widest mt-1 uppercase">Student Success Story</p>
+                <p className="text-gray-500 text-sm tracking-widest mt-1 uppercase">{pageTitle}</p>
             </div>
 
             <div className="w-full max-w-lg bg-[#1e2023] rounded-2xl border border-white/5 p-6 md:p-8 shadow-2xl">
-
-                {/* Progress Bar */}
                 <div className="flex gap-2 mb-8">
                     {[1, 2, 3].map(i => (
                         <div key={i} className={`h-1 flex-1 rounded-full ${step >= i ? 'bg-blue-500' : 'bg-white/10'}`} />
                     ))}
                 </div>
 
-                {/* Step 1: Consent */}
                 {step === 1 && (
-                    <div className="space-y-6 animate-fade-in">
+                    <div className="space-y-6">
                         <h2 className="text-2xl font-bold">후기 작성 안내</h2>
+                        {coachLabel && (
+                            <p className="text-blue-400 text-sm font-semibold">
+                                담당 코치: {coachLabel}
+                            </p>
+                        )}
                         <p className="text-gray-400 leading-relaxed text-sm md:text-base">
                             소중한 수강 후기를 남겨주시면<br />
                             더 나은 서비스를 만드는 데 큰 힘이 됩니다.<br />
@@ -107,18 +125,19 @@ export default function ReviewWritePage() {
                             </label>
                         </div>
 
-                        <button onClick={handleNext} className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all text-lg shadow-lg shadow-blue-900/20">
+                        <button
+                            onClick={handleNext}
+                            className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all text-lg shadow-lg shadow-blue-900/20"
+                        >
                             동의하고 시작하기
                         </button>
                     </div>
                 )}
 
-                {/* Step 2: Content */}
                 {step === 2 && (
-                    <div className="space-y-5 animate-fade-in">
+                    <div className="space-y-5">
                         <h2 className="text-2xl font-bold">후기 정보 입력</h2>
 
-                        {/* Category & Title */}
                         <div className="space-y-4">
                             <div>
                                 <label className="text-xs font-bold text-gray-500 mb-1 block">카테고리</label>
@@ -145,7 +164,6 @@ export default function ReviewWritePage() {
                             </div>
                         </div>
 
-                        {/* Type & Grade */}
                         <div className="grid grid-cols-2 gap-4 mt-4">
                             <div>
                                 <label className="text-xs font-bold text-gray-500 mb-1 block">수강생/학부모</label>
@@ -174,7 +192,6 @@ export default function ReviewWritePage() {
                             </div>
                         </div>
 
-                        {/* Name & Rating */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-bold text-gray-500 mb-1 block">이름 (또는 ID)</label>
@@ -211,15 +228,17 @@ export default function ReviewWritePage() {
                             />
                         </div>
 
-                        <button onClick={handleNext} className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all text-lg shadow-lg shadow-blue-900/20">
+                        <button
+                            onClick={handleNext}
+                            className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all text-lg shadow-lg shadow-blue-900/20"
+                        >
                             다음 단계로
                         </button>
                     </div>
                 )}
 
-                {/* Step 3: Reward */}
                 {step === 3 && (
-                    <div className="space-y-6 animate-fade-in">
+                    <div className="space-y-6">
                         <h2 className="text-2xl font-bold">리워드 선택</h2>
                         <p className="text-gray-400 text-sm">감사의 마음을 담아 작은 선물을 드립니다.</p>
 
@@ -264,9 +283,8 @@ export default function ReviewWritePage() {
                     </div>
                 )}
 
-                {/* Step 4: Success */}
                 {step === 4 && (
-                    <div className="text-center py-10 animate-fade-in">
+                    <div className="text-center py-10">
                         <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Check size={40} strokeWidth={3} />
                         </div>
@@ -280,8 +298,19 @@ export default function ReviewWritePage() {
                         </a>
                     </div>
                 )}
-
             </div>
         </div>
+    );
+}
+
+export default function ReviewWritePage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#151719] flex items-center justify-center">
+                <div className="text-gray-400">로딩 중...</div>
+            </div>
+        }>
+            <ReviewWriteForm />
+        </Suspense>
     );
 }
