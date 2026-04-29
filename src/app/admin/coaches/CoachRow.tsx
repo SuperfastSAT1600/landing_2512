@@ -14,6 +14,7 @@ interface EditState {
     name: string;
     photo: string;
     bio: string;
+    introPostSlug: string;
     curriculumPostSlug: string;
 }
 
@@ -29,10 +30,12 @@ function getAdminKey(): string {
 export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
     const [editing, setEditing] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [copiedLink, setCopiedLink] = useState(false);
     const [editState, setEditState] = useState<EditState>({
         name: coach.name,
         photo: coach.photo,
         bio: coach.bio,
+        introPostSlug: coach.introPostSlug,
         curriculumPostSlug: coach.curriculumPostSlug,
     });
     const [posts, setPosts] = useState<PostOption[]>([]);
@@ -82,6 +85,14 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
         });
     };
 
+    const handleCopyCoachLink = () => {
+        const url = window.location.origin + '/coaches/' + coach.slug;
+        navigator.clipboard.writeText(url).then(() => {
+            setCopiedLink(true);
+            setTimeout(() => setCopiedLink(false), 2000);
+        });
+    };
+
     const handleSave = async () => {
         await onUpdate(coach.slug, editState);
         setEditing(false);
@@ -92,6 +103,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             name: coach.name,
             photo: coach.photo,
             bio: coach.bio,
+            introPostSlug: coach.introPostSlug,
             curriculumPostSlug: coach.curriculumPostSlug,
         });
         setEditing(false);
@@ -113,6 +125,12 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         title="Edit"
                     >
                         {editing ? <X size={14} /> : <Edit2 size={14} />}
+                    </button>
+                    <button
+                        onClick={handleCopyCoachLink}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copiedLink ? 'bg-green-600 text-white' : 'bg-white/10 hover:bg-white/20 text-gray-200'}`}
+                    >
+                        {copiedLink ? <><Check size={12} /> 복사됨</> : <><Copy size={12} /> 코치 링크</>}
                     </button>
                     <button
                         onClick={handleCopyLink}
@@ -187,6 +205,25 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none resize-none"
                     />
 
+                    {/* 코치 소개 포스팅 선택 */}
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">코치 소개 포스팅</label>
+                        {posts.length > 0 ? (
+                            <select
+                                value={editState.introPostSlug}
+                                onChange={e => setEditState(s => ({ ...s, introPostSlug: e.target.value }))}
+                                className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                            >
+                                <option value="">선택 안 함</option>
+                                {posts.map(p => (
+                                    <option key={p.id} value={p.id}>{p.title}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <p className="text-xs text-gray-500 px-1">이 코치 이름으로 작성된 포스팅이 없습니다.</p>
+                        )}
+                    </div>
+
                     {/* 커리큘럼 포스팅 선택 */}
                     <div className="space-y-1.5">
                         <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">커리큘럼 포스팅</label>
@@ -202,9 +239,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                                 ))}
                             </select>
                         ) : (
-                            <p className="text-xs text-gray-500 px-1">
-                                이 코치 이름으로 작성된 포스팅이 없습니다.
-                            </p>
+                            <p className="text-xs text-gray-500 px-1">이 코치 이름으로 작성된 포스팅이 없습니다.</p>
                         )}
                     </div>
 

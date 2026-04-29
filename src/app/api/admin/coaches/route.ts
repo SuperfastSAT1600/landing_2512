@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
             name: body.name,
             photo: body.photo ?? '',
             bio: body.bio ?? '',
+            introPostSlug: body.introPostSlug ?? '',
             curriculumPostSlug: body.curriculumPostSlug ?? '',
             isActive: body.isActive ?? true,
         };
@@ -53,7 +54,14 @@ export async function PATCH(request: NextRequest) {
         if (!slug) {
             return NextResponse.json({ success: false, error: 'slug is required' }, { status: 400 });
         }
-        const ok = await updateCoach(slug, updates);
+        const safeUpdates: Partial<CoachData> = {};
+        if (updates.name !== undefined) safeUpdates.name = updates.name;
+        if (updates.photo !== undefined) safeUpdates.photo = updates.photo;
+        if (updates.bio !== undefined) safeUpdates.bio = updates.bio;
+        if (updates.introPostSlug !== undefined) safeUpdates.introPostSlug = updates.introPostSlug;
+        if (updates.curriculumPostSlug !== undefined) safeUpdates.curriculumPostSlug = updates.curriculumPostSlug;
+        if (updates.isActive !== undefined) safeUpdates.isActive = updates.isActive;
+        const ok = await updateCoach(slug, safeUpdates);
         if (!ok) {
             return NextResponse.json({ success: false, error: 'Coach not found or DB error' }, { status: 404 });
         }

@@ -35,6 +35,7 @@ export default function FloatingCTA() {
     if (pathname?.startsWith('/admin')) return null;
     if (pathname?.startsWith('/reports')) return null;
     if (pathname?.startsWith('/reviews/write')) return null;
+    if (pathname?.startsWith('/coaches')) return null;
     if (pathname === '/diagnosis') return null;
     if (!isVisible) return null;
 

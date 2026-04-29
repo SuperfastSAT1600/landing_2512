@@ -18,6 +18,7 @@ interface CoachProfile {
 
 interface CoachPageClientProps {
     coach: CoachProfile;
+    introHtml: string | null;
     curriculumHtml: string | null;
     articles: PostData[];
     reviews: ReviewData[];
@@ -101,6 +102,7 @@ function ReviewCard({ review }: { review: ReviewData }) {
 
 export default function CoachPageClient({
     coach,
+    introHtml,
     curriculumHtml,
     articles,
     reviews,
@@ -140,12 +142,6 @@ export default function CoachPageClient({
                         <p className="text-gray-400 mt-2 text-sm max-w-md leading-relaxed">{coach.bio}</p>
                     )}
                 </div>
-                <Link
-                    href={`/reviews/write?coach=${coach.slug}`}
-                    className="mt-2 px-5 py-2.5 bg-[#071be9] hover:bg-[#1a31f0] rounded-lg text-sm font-semibold transition-colors"
-                >
-                    후기 작성하기
-                </Link>
             </header>
 
             {/* Tabs */}
@@ -173,8 +169,12 @@ export default function CoachPageClient({
             <main className="max-w-3xl mx-auto px-4 py-10">
                 {activeTab === 'intro' && (
                     <section>
-                        <h2 className="text-xl font-bold mb-4">코치 소개</h2>
-                        {coach.bio ? (
+                        {introHtml ? (
+                            <div
+                                className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300 prose-a:text-[#6085FF] prose-strong:text-white prose-li:text-gray-300"
+                                dangerouslySetInnerHTML={{ __html: introHtml }}
+                            />
+                        ) : coach.bio ? (
                             <p className="text-gray-300 leading-relaxed whitespace-pre-line">{coach.bio}</p>
                         ) : (
                             <p className="text-gray-600">소개 내용이 준비 중입니다.</p>
@@ -228,15 +228,7 @@ export default function CoachPageClient({
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-16">
-                                <p className="text-gray-600 mb-4">아직 등록된 후기가 없습니다.</p>
-                                <Link
-                                    href={`/reviews/write?coach=${coach.slug}`}
-                                    className="px-5 py-2.5 bg-[#071be9] hover:bg-[#1a31f0] rounded-lg text-sm font-semibold transition-colors"
-                                >
-                                    첫 후기를 작성해보세요
-                                </Link>
-                            </div>
+                            <p className="text-gray-600 py-16 text-center">아직 등록된 후기가 없습니다.</p>
                         )}
                     </section>
                 )}

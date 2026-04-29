@@ -64,22 +64,20 @@ export default async function CoachPage({ params }: Props) {
         notFound();
     }
 
-    // Fetch curriculum post HTML (null if no slug configured or post missing)
-    let curriculumHtml: string | null = null;
-    if (coach.curriculumPostSlug) {
-        try {
-            const postData = await getPostData(coach.curriculumPostSlug);
-            curriculumHtml = postData.contentHtml ?? null;
-        } catch {
-            // Post not found — silently skip
-        }
-    }
-
-    // Fetch articles and reviews in parallel
-    const [articles, allReviews] = await Promise.all([
+    // Fetch intro + curriculum post HTML in parallel with articles/reviews
+    const [introResult, curriculumResult, articles, allReviews] = await Promise.all([
+        coach.introPostSlug
+            ? getPostData(coach.introPostSlug).catch(() => null)
+            : Promise.resolve(null),
+        coach.curriculumPostSlug
+            ? getPostData(coach.curriculumPostSlug).catch(() => null)
+            : Promise.resolve(null),
         fetchArticlesByCoach(coach.name),
         Promise.resolve(getPublishedReviews()),
     ]);
+
+    const introHtml = introResult?.contentHtml ?? null;
+    const curriculumHtml = curriculumResult?.contentHtml ?? null;
 
     const coachReviews = allReviews.filter(r => r.coachSlug === slug);
 
@@ -91,6 +89,7 @@ export default async function CoachPage({ params }: Props) {
                 photo: coach.photo,
                 bio: coach.bio,
             }}
+            introHtml={introHtml}
             curriculumHtml={curriculumHtml}
             articles={articles}
             reviews={coachReviews}

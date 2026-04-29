@@ -5,6 +5,7 @@ export interface CoachData {
     name: string;
     photo: string;
     bio: string;
+    introPostSlug: string;
     curriculumPostSlug: string;
     isActive: boolean;
 }
@@ -14,6 +15,7 @@ type CoachRow = {
     name: string;
     photo: string;
     bio: string;
+    intro_post_slug: string;
     curriculum_post_slug: string;
     is_active: boolean;
 };
@@ -24,6 +26,7 @@ function rowToCoach(row: CoachRow): CoachData {
         name: row.name,
         photo: row.photo,
         bio: row.bio,
+        introPostSlug: row.intro_post_slug ?? '',
         curriculumPostSlug: row.curriculum_post_slug,
         isActive: row.is_active,
     };
@@ -64,6 +67,7 @@ export async function addCoach(coach: CoachData): Promise<boolean> {
         name: coach.name,
         photo: coach.photo,
         bio: coach.bio,
+        intro_post_slug: coach.introPostSlug,
         curriculum_post_slug: coach.curriculumPostSlug,
         is_active: coach.isActive,
     });
@@ -75,6 +79,7 @@ export async function updateCoach(slug: string, updates: Partial<CoachData>): Pr
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.photo !== undefined) dbUpdates.photo = updates.photo;
     if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
+    if (updates.introPostSlug !== undefined) dbUpdates.intro_post_slug = updates.introPostSlug;
     if (updates.curriculumPostSlug !== undefined) dbUpdates.curriculum_post_slug = updates.curriculumPostSlug;
     if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
 
