@@ -71,10 +71,13 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        const { data, error } = await supabaseAdmin
+        const authorFilter = searchParams.get('author');
+        let query = supabaseAdmin
             .from('posts')
             .select('id, title, date, category, excerpt, description, featured_image, feature_image, author, tags, cta_featured, is_published')
             .order('date', { ascending: false });
+        if (authorFilter) query = query.eq('author', authorFilter);
+        const { data, error } = await query;
 
         if (error) {
             return NextResponse.json({ success: false, error: "Failed to fetch posts" }, { status: 500 });

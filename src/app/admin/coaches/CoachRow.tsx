@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Trash2, Copy, Check, Edit2, X, Save } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Trash2, Copy, Check, Edit2, X, Save, Upload } from 'lucide-react';
 import { CoachData } from '@/lib/coaches-data';
 
 interface CoachRowProps {
@@ -17,6 +17,15 @@ interface EditState {
     curriculumPostSlug: string;
 }
 
+interface PostOption {
+    id: string;
+    title: string;
+}
+
+function getAdminKey(): string {
+    return localStorage.getItem('admin_key') || '';
+}
+
 export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
     const [editing, setEditing] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -26,6 +35,44 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
         bio: coach.bio,
         curriculumPostSlug: coach.curriculumPostSlug,
     });
+    const [posts, setPosts] = useState<PostOption[]>([]);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!editing) return;
+        fetch(`/api/admin/posts?author=${encodeURIComponent(coach.name)}`, {
+            headers: { 'x-admin-key': getAdminKey() },
+        })
+            .then(r => r.json())
+            .then((data: { success: boolean; posts?: PostOption[] }) => {
+                if (data.success && data.posts) setPosts(data.posts);
+            })
+            .catch(() => {});
+    }, [editing, coach.name]);
+
+    const handlePhotoUpload = async (file: File) => {
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch('/api/admin/upload', {
+                method: 'POST',
+                headers: { 'x-admin-key': getAdminKey() },
+                body: formData,
+            });
+            const data: { success: boolean; url?: string } = await res.json();
+            if (data.success && data.url) {
+                setEditState(s => ({ ...s, photo: data.url! }));
+            } else {
+                alert('업로드에 실패했습니다.');
+            }
+        } catch {
+            alert('업로드 중 오류가 발생했습니다.');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleCopyLink = () => {
         const url = window.location.origin + '/reviews/write?coach=' + coach.slug;
@@ -70,7 +117,6 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                     <button
                         onClick={handleCopyLink}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copied ? 'bg-green-600 text-white' : 'bg-white/10 hover:bg-white/20 text-gray-200'}`}
-                        title="리뷰 링크 복사"
                     >
                         {copied ? <><Check size={12} /> 복사됨</> : <><Copy size={12} /> 리뷰 링크</>}
                     </button>
@@ -83,7 +129,6 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                     <button
                         onClick={() => onDelete(coach.slug)}
                         className="p-1.5 text-red-400 hover:bg-red-500/10 rounded transition-colors"
-                        title="Delete"
                     >
                         <Trash2 size={14} />
                     </button>
@@ -91,32 +136,78 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             </div>
 
             {editing && (
-                <div className="space-y-2 border-t border-white/5 pt-3">
+                <div className="space-y-3 border-t border-white/5 pt-3">
+                    {/* 이름 */}
                     <input
                         value={editState.name}
                         onChange={e => setEditState(s => ({ ...s, name: e.target.value }))}
                         placeholder="이름"
                         className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
                     />
-                    <input
-                        value={editState.photo}
-                        onChange={e => setEditState(s => ({ ...s, photo: e.target.value }))}
-                        placeholder="Photo URL"
-                        className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
-                    />
+
+                    {/* 프로필 사진 */}
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">프로필 사진</label>
+                        <div className="flex items-center gap-2">
+                            {editState.photo && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={editState.photo} alt="preview" className="w-10 h-10 rounded-full object-cover border border-white/10" />
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploading}
+                                className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded-lg text-xs font-bold text-gray-300 transition-colors"
+                            >
+                                <Upload size={12} />
+                                {uploading ? '업로드 중...' : '파일 선택'}
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handlePhotoUpload(file);
+                                }}
+                            />
+                            {editState.photo && (
+                                <span className="text-[11px] text-gray-500 truncate max-w-[160px]">{editState.photo.split('/').pop()}</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 소개글 */}
                     <textarea
                         value={editState.bio}
                         onChange={e => setEditState(s => ({ ...s, bio: e.target.value }))}
-                        placeholder="Bio"
+                        placeholder="소개글"
                         rows={3}
                         className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none resize-none"
                     />
-                    <input
-                        value={editState.curriculumPostSlug}
-                        onChange={e => setEditState(s => ({ ...s, curriculumPostSlug: e.target.value }))}
-                        placeholder="Curriculum Post Slug"
-                        className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
-                    />
+
+                    {/* 커리큘럼 포스팅 선택 */}
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">커리큘럼 포스팅</label>
+                        {posts.length > 0 ? (
+                            <select
+                                value={editState.curriculumPostSlug}
+                                onChange={e => setEditState(s => ({ ...s, curriculumPostSlug: e.target.value }))}
+                                className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                            >
+                                <option value="">선택 안 함</option>
+                                {posts.map(p => (
+                                    <option key={p.id} value={p.id}>{p.title}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <p className="text-xs text-gray-500 px-1">
+                                이 코치 이름으로 작성된 포스팅이 없습니다.
+                            </p>
+                        )}
+                    </div>
+
                     <div className="flex gap-2 pt-1">
                         <button
                             onClick={handleSave}
