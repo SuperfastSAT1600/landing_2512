@@ -3,6 +3,7 @@ import { getCoachBySlug } from '@/lib/coaches-data';
 import { getPostData } from '@/lib/posts';
 import { getPublishedReviews } from '@/lib/reviews-data';
 import { supabaseAdmin } from '@/lib/supabase';
+import { parseInstagramShortcode } from '@/lib/instagram-url';
 import CoachPageClient from './CoachPageClient';
 import type { PostData } from '@/lib/posts';
 
@@ -81,6 +82,10 @@ export default async function CoachPage({ params }: Props) {
 
     const coachReviews = allReviews.filter(r => r.coachSlug === slug);
 
+    const reelShortcodes = (coach.reelUrls ?? [])
+        .map(parseInstagramShortcode)
+        .filter((s): s is string => s !== null);
+
     return (
         <CoachPageClient
             coach={{
@@ -93,6 +98,7 @@ export default async function CoachPage({ params }: Props) {
             curriculumHtml={curriculumHtml}
             articles={articles}
             reviews={coachReviews}
+            reelShortcodes={reelShortcodes}
         />
     );
 }

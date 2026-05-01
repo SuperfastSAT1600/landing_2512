@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCoaches, addCoach, updateCoach, deleteCoach, CoachData } from '@/lib/coaches-data';
 import { isAuthenticated } from '@/lib/server-auth';
+import { isValidInstagramUrl } from '@/lib/instagram-url';
 
 export async function GET(request: NextRequest) {
     if (!isAuthenticated(request)) {
@@ -32,6 +33,9 @@ export async function POST(request: NextRequest) {
             introPostSlug: body.introPostSlug ?? '',
             curriculumPostSlug: body.curriculumPostSlug ?? '',
             isActive: body.isActive ?? true,
+            reelUrls: Array.isArray(body.reelUrls)
+                ? body.reelUrls.filter((u: string) => isValidInstagramUrl(u))
+                : [],
         };
 
         const ok = await addCoach(newCoach);
@@ -61,6 +65,19 @@ export async function PATCH(request: NextRequest) {
         if (updates.introPostSlug !== undefined) safeUpdates.introPostSlug = updates.introPostSlug;
         if (updates.curriculumPostSlug !== undefined) safeUpdates.curriculumPostSlug = updates.curriculumPostSlug;
         if (updates.isActive !== undefined) safeUpdates.isActive = updates.isActive;
+        if (updates.reelUrls !== undefined) {
+            if (!Array.isArray(updates.reelUrls)) {
+                return NextResponse.json({ success: false, error: 'reelUrls must be an array' }, { status: 400 });
+            }
+            const invalid = updates.reelUrls.filter((u: string) => u && !isValidInstagramUrl(u));
+            if (invalid.length > 0) {
+                return NextResponse.json(
+                    { success: false, error: `Invalid Instagram URLs: ${invalid.join(', ')}` },
+                    { status: 400 }
+                );
+            }
+            safeUpdates.reelUrls = updates.reelUrls;
+        }
         const ok = await updateCoach(slug, safeUpdates);
         if (!ok) {
             return NextResponse.json({ success: false, error: 'Coach not found or DB error' }, { status: 404 });

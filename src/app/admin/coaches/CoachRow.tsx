@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Trash2, Copy, Check, Edit2, X, Save, Upload } from 'lucide-react';
 import { CoachData } from '@/lib/coaches-data';
+import { ReelUrlsEditor } from './ReelUrlsEditor';
+import { isValidInstagramUrl } from '@/lib/instagram-url';
 
 interface CoachRowProps {
     coach: CoachData;
@@ -16,6 +18,7 @@ interface EditState {
     bio: string;
     introPostSlug: string;
     curriculumPostSlug: string;
+    reelUrls: string[];
 }
 
 interface PostOption {
@@ -37,6 +40,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
         bio: coach.bio,
         introPostSlug: coach.introPostSlug,
         curriculumPostSlug: coach.curriculumPostSlug,
+        reelUrls: coach.reelUrls ?? [],
     });
     const [posts, setPosts] = useState<PostOption[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -105,9 +109,12 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             bio: coach.bio,
             introPostSlug: coach.introPostSlug,
             curriculumPostSlug: coach.curriculumPostSlug,
+            reelUrls: coach.reelUrls ?? [],
         });
         setEditing(false);
     };
+
+    const hasInvalidUrls = editState.reelUrls.some(u => u !== '' && !isValidInstagramUrl(u));
 
     return (
         <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5 space-y-3">
@@ -224,6 +231,12 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         )}
                     </div>
 
+                    {/* 영상 (릴스) URL */}
+                    <ReelUrlsEditor
+                        urls={editState.reelUrls}
+                        onChange={urls => setEditState(s => ({ ...s, reelUrls: urls }))}
+                    />
+
                     {/* 커리큘럼 포스팅 선택 */}
                     <div className="space-y-1.5">
                         <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">커리큘럼 포스팅</label>
@@ -246,7 +259,8 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                     <div className="flex gap-2 pt-1">
                         <button
                             onClick={handleSave}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-bold text-white transition-colors"
+                            disabled={hasInvalidUrls}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-sm font-bold text-white transition-colors"
                         >
                             <Save size={13} /> 저장
                         </button>

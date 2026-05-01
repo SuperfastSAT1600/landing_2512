@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { Star } from 'lucide-react';
 import type { PostData } from '@/lib/posts';
 import type { ReviewData } from '@/lib/reviews-data';
+import { ReelsScrollView } from './ReelsScrollView';
 
-type Tab = 'intro' | 'curriculum' | 'articles' | 'reviews';
+type Tab = 'intro' | 'curriculum' | 'articles' | 'reels' | 'reviews';
 
 interface CoachProfile {
     slug: string;
@@ -22,14 +23,8 @@ interface CoachPageClientProps {
     curriculumHtml: string | null;
     articles: PostData[];
     reviews: ReviewData[];
+    reelShortcodes: string[];
 }
-
-const TABS: { key: Tab; label: string }[] = [
-    { key: 'intro', label: '코치 소개' },
-    { key: 'curriculum', label: '커리큘럼' },
-    { key: 'articles', label: '아티클' },
-    { key: 'reviews', label: '수업 후기' },
-];
 
 function StarRating({ rating }: { rating: number }) {
     return (
@@ -91,24 +86,32 @@ function ReviewCard({ review }: { review: ReviewData }) {
 
 const PROSE = 'prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-[#071be9] prose-strong:text-gray-900 prose-li:text-gray-600';
 
-export default function CoachPageClient({ coach, introHtml, curriculumHtml, articles, reviews }: CoachPageClientProps) {
+export default function CoachPageClient({ coach, introHtml, curriculumHtml, articles, reviews, reelShortcodes }: CoachPageClientProps) {
     const [activeTab, setActiveTab] = useState<Tab>('intro');
-    const isDark = activeTab === 'articles' || activeTab === 'reviews';
+    const isDark = activeTab === 'articles' || activeTab === 'reviews' || activeTab === 'reels';
+
+    const tabs: { key: Tab; label: string }[] = [
+        { key: 'intro', label: '코치 소개' },
+        { key: 'curriculum', label: '커리큘럼' },
+        { key: 'articles', label: '아티클' },
+        ...(reelShortcodes.length > 0 ? [{ key: 'reels' as const, label: '영상' }] : []),
+        { key: 'reviews', label: '수업 후기' },
+    ];
 
     return (
         <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
 
             {/* ── 상단 네비게이션 (랜딩 헤더와 동일 스타일) ── */}
             <header className="fixed top-0 w-full z-50 bg-[#050816] border-b border-white/10">
-                <div className="max-w-[1400px] mx-auto px-[5%] h-14 flex items-center gap-12">
+                <div className="max-w-[1400px] mx-auto px-[5%] h-14 flex items-center gap-4 md:gap-12">
                     {/* 로고 */}
                     <Link href="/" className="flex-shrink-0">
-                        <Image src="/logo_header.png" alt="SuperfastSAT" height={24} width={130} className="h-6 w-auto object-contain" unoptimized />
+                        <Image src="/logo_header.png" alt="SuperfastSAT" height={24} width={130} className="h-5 md:h-6 w-auto object-contain" unoptimized />
                     </Link>
 
                     {/* 탭 메뉴 */}
-                    <nav className="flex items-center gap-8 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
-                        {TABS.map(({ key, label }) => (
+                    <nav className="flex flex-1 min-w-0 items-center gap-3 md:gap-8 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+                        {tabs.map(({ key, label }) => (
                             <button
                                 key={key}
                                 onClick={() => setActiveTab(key)}
@@ -126,7 +129,16 @@ export default function CoachPageClient({ coach, introHtml, curriculumHtml, arti
                 </div>
             </header>
 
-            {/* ── 프로필 히어로 ── */}
+            {/* ── 릴스 탭: 풀스크린 스크롤-스냅 (히어로/main 불필요) ── */}
+            {activeTab === 'reels' && (
+                <div className="pt-14">
+                    <ReelsScrollView shortcodes={reelShortcodes} />
+                </div>
+            )}
+
+            {/* ── 프로필 히어로 + 탭 콘텐츠 (릴스 탭 제외) ── */}
+            {activeTab !== 'reels' && (
+            <>
             <section className="pt-28 pb-12 px-4 bg-white">
                 <div className="max-w-xl mx-auto flex flex-col items-center text-center gap-5">
                     {/* 프로필 사진 */}
@@ -214,6 +226,8 @@ export default function CoachPageClient({ coach, introHtml, curriculumHtml, arti
                 )}
 
             </main>
+            </>
+            )}
         </div>
     );
 }
