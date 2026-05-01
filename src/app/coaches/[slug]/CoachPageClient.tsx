@@ -20,7 +20,9 @@ interface CoachProfile {
 interface CoachPageClientProps {
     coach: CoachProfile;
     introHtml: string | null;
+    introThumbnail: string | null;
     curriculumHtml: string | null;
+    curriculumThumbnail: string | null;
     articles: PostData[];
     reviews: ReviewData[];
     reelShortcodes: string[];
@@ -86,7 +88,7 @@ function ReviewCard({ review }: { review: ReviewData }) {
 
 const PROSE = 'prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-[#071be9] prose-strong:text-gray-900 prose-li:text-gray-600';
 
-export default function CoachPageClient({ coach, introHtml, curriculumHtml, articles, reviews, reelShortcodes }: CoachPageClientProps) {
+export default function CoachPageClient({ coach, introHtml, introThumbnail, curriculumHtml, curriculumThumbnail, articles, reviews, reelShortcodes }: CoachPageClientProps) {
     const [activeTab, setActiveTab] = useState<Tab>('intro');
     const isDark = activeTab === 'articles' || activeTab === 'reviews' || activeTab === 'reels';
 
@@ -182,6 +184,11 @@ export default function CoachPageClient({ coach, introHtml, curriculumHtml, arti
 
                 {activeTab === 'intro' && (
                     <section>
+                        {introThumbnail && (
+                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-8">
+                                <Image src={introThumbnail} alt="코치 소개" fill unoptimized className="object-cover" sizes="(max-width: 768px) 100vw, 768px" />
+                            </div>
+                        )}
                         {introHtml ? (
                             <div className={PROSE} dangerouslySetInnerHTML={{ __html: introHtml }} />
                         ) : coach.bio ? (
@@ -194,6 +201,11 @@ export default function CoachPageClient({ coach, introHtml, curriculumHtml, arti
 
                 {activeTab === 'curriculum' && (
                     <section>
+                        {curriculumThumbnail && (
+                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-8">
+                                <Image src={curriculumThumbnail} alt="커리큘럼" fill unoptimized className="object-cover" sizes="(max-width: 768px) 100vw, 768px" />
+                            </div>
+                        )}
                         {curriculumHtml ? (
                             <div className={PROSE} dangerouslySetInnerHTML={{ __html: curriculumHtml }} />
                         ) : (

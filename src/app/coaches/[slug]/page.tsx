@@ -78,7 +78,9 @@ export default async function CoachPage({ params }: Props) {
     ]);
 
     const introHtml = introResult?.contentHtml ?? null;
+    const introThumbnail = introResult?.featuredImage ?? null;
     const curriculumHtml = curriculumResult?.contentHtml ?? null;
+    const curriculumThumbnail = curriculumResult?.featuredImage ?? null;
 
     const coachReviews = allReviews.filter(r => r.coachSlug === slug);
 
@@ -95,7 +97,9 @@ export default async function CoachPage({ params }: Props) {
                 bio: coach.bio,
             }}
             introHtml={introHtml}
+            introThumbnail={introThumbnail}
             curriculumHtml={curriculumHtml}
+            curriculumThumbnail={curriculumThumbnail}
             articles={articles}
             reviews={coachReviews}
             reelShortcodes={reelShortcodes}
