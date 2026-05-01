@@ -139,6 +139,7 @@ export default function CoachPageClient({ coach, introHtml, curriculumHtml, arti
             {/* ── 프로필 히어로 + 탭 콘텐츠 (릴스 탭 제외) ── */}
             {activeTab !== 'reels' && (
             <>
+            {activeTab === 'intro' && (
             <section className="pt-28 pb-12 px-4 bg-white">
                 <div className="max-w-xl mx-auto flex flex-col items-center text-center gap-5">
                     {/* 프로필 사진 */}
@@ -174,9 +175,10 @@ export default function CoachPageClient({ coach, introHtml, curriculumHtml, arti
                     <hr className="w-full border-gray-200" />
                 </div>
             </section>
+            )}
 
             {/* ── 탭 콘텐츠 ── */}
-            <main className="max-w-3xl mx-auto px-4 py-10">
+            <main className={`max-w-3xl mx-auto px-4 ${activeTab === 'intro' ? 'py-10' : 'pt-28 pb-10'}`}>
 
                 {activeTab === 'intro' && (
                     <section>
