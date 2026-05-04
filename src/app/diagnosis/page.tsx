@@ -148,7 +148,13 @@ export default function DiagnosisPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: trimmedEmail }),
     }).catch(() => {});
-    await loadAndStartTest(trimmedEmail);
+    try {
+      await loadAndStartTest(trimmedEmail);
+    } catch (err) {
+      console.error('[diagnosis] loadAndStartTest uncaught:', err);
+      setEmailError('테스트를 불러오는 데 실패했습니다. 다시 시도해 주세요.');
+      setPhase('email-input');
+    }
   };
 
   // Student confirmation phase

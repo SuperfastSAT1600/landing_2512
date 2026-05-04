@@ -9,9 +9,10 @@ interface GateWallProps {
   slug: string;
   preview: string; // plain text preview (first ~200 chars)
   onUnlock: (contentHtml: string) => void;
+  isVip?: boolean;
 }
 
-export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
+export function GateWall({ slug, preview, onUnlock, isVip = false }: GateWallProps) {
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -107,55 +108,79 @@ export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
       </div>
 
       {/* Gate panel */}
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+      <div className={`mt-6 rounded-2xl overflow-hidden shadow-sm ${isVip ? 'border border-amber-500/30 bg-white' : 'border border-gray-200 bg-white'}`}>
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100 bg-gray-50">
-          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <Lock size={16} className="text-blue-600" />
-          </div>
-          <div>
-            <p className="text-gray-900 font-bold text-sm">SuperfastSAT 팔로워 전용 콘텐츠</p>
-            <p className="text-gray-500 text-xs mt-0.5">인스타그램 팔로워에게만 공개되는 글입니다.</p>
-          </div>
-        </div>
-
-        {/* Steps */}
-        <div className="px-6 py-5 space-y-3">
-          {steps.map((step, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="mt-0.5 flex-shrink-0">
-                {step.done
-                  ? <CheckCircle size={16} className="text-green-500" />
-                  : <Circle size={16} className="text-gray-400" />
-                }
-              </div>
-              <span className="text-sm text-gray-700">
-                <span className="text-gray-400 mr-1.5">STEP {i + 1}</span>
-                {step.label}
-              </span>
+        {isVip ? (
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-amber-500/20 bg-amber-50/60">
+            <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 text-lg">
+              ✨
             </div>
-          ))}
-        </div>
+            <div>
+              <p className="text-amber-800 font-bold text-sm">VIP 전용 콘텐츠</p>
+              <p className="text-amber-600/80 text-xs mt-0.5">코드를 입력하면 열람할 수 있습니다.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100 bg-gray-50">
+            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <Lock size={16} className="text-blue-600" />
+            </div>
+            <div>
+              <p className="text-gray-900 font-bold text-sm">SuperfastSAT 회원 전용 콘텐츠</p>
+              <p className="text-gray-500 text-xs mt-0.5">코드를 입력하면 열람할 수 있습니다.</p>
+            </div>
+          </div>
+        )}
 
-        {/* Instagram button */}
-        <div className="px-6 pb-5">
-          <a
-            href={INSTAGRAM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-bold transition-all"
-          >
-            <Instagram size={16} />
-            인스타그램 바로가기
-          </a>
-        </div>
+        {/* VIP message / Follower steps */}
+        {isVip ? (
+          <div className="px-6 py-5 border-b border-amber-500/10 bg-amber-50/30">
+            <p className="text-sm text-amber-700/90 leading-relaxed">
+              이 포스팅은 VIP를 위한 포스팅입니다.<br />
+              매니저님이나 학습코치에게 받은 6자리 코드를 입력하세요.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="px-6 py-5 space-y-3">
+              {steps.map((step, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="mt-0.5 flex-shrink-0">
+                    {step.done
+                      ? <CheckCircle size={16} className="text-green-500" />
+                      : <Circle size={16} className="text-gray-400" />
+                    }
+                  </div>
+                  <span className="text-sm text-gray-700">
+                    <span className="text-gray-400 mr-1.5">STEP {i + 1}</span>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="px-6 pb-5">
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-bold transition-all"
+              >
+                <Instagram size={16} />
+                인스타그램 바로가기
+              </a>
+            </div>
+          </>
+        )}
 
         {/* Divider */}
-        <div className="mx-6 border-t border-gray-100" />
+        <div className={`mx-6 border-t ${isVip ? 'border-amber-500/20' : 'border-gray-100'}`} />
 
         {/* Code input */}
         <div className="px-6 py-5">
-          <p className="text-xs text-gray-500 mb-4 text-center">DM으로 받은 6자리 코드를 입력하세요</p>
+          <p className="text-xs text-gray-500 mb-4 text-center">
+            {isVip ? '코치에게 받은 6자리 코드를 입력하세요' : 'DM으로 받은 6자리 코드를 입력하세요'}
+          </p>
 
           <div className="flex gap-2 justify-center mb-4" onPaste={handlePaste}>
             {digits.map((d, i) => (
@@ -169,8 +194,8 @@ export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
                 onChange={e => handleDigitChange(i, e.target.value)}
                 onKeyDown={e => handleKeyDown(i, e)}
                 className={`w-11 h-13 text-center text-xl font-bold rounded-lg border bg-gray-50 text-gray-900 outline-none transition-colors
-                  ${error ? 'border-red-400' : d ? 'border-blue-500' : 'border-gray-300'}
-                  focus:border-blue-500`}
+                  ${error ? 'border-red-400' : d ? (isVip ? 'border-amber-500' : 'border-blue-500') : 'border-gray-300'}
+                  ${isVip ? 'focus:border-amber-500' : 'focus:border-blue-500'}`}
                 style={{ height: '3.25rem' }}
                 disabled={loading}
                 autoComplete="off"
@@ -185,7 +210,8 @@ export function GateWall({ slug, preview, onUnlock }: GateWallProps) {
           <button
             onClick={handleSubmit}
             disabled={digits.join('').length < 6 || loading}
-            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors"
+            className={`w-full py-2.5 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors
+              ${isVip ? 'bg-amber-500 hover:bg-amber-400' : 'bg-blue-600 hover:bg-blue-500'}`}
           >
             {loading ? '확인 중...' : '잠금 해제'}
           </button>
