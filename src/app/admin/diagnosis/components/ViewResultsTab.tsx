@@ -138,6 +138,7 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !loading) fetchResults(); }}
           placeholder="학생명 또는 이메일로 검색"
           className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
