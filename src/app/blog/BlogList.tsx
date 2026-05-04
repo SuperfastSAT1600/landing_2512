@@ -42,23 +42,27 @@ export default function BlogList({ posts }: BlogListProps) {
                                 <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10">
                                     {post.category}
                                 </div>
-                                {post.isGated && (
+                                {post.isVip && post.isGated ? (
+                                    <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-md text-amber-400 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-500/30 flex items-center gap-1">
+                                        ✨ VIP 전용
+                                    </div>
+                                ) : post.isGated ? (
                                     <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-md text-yellow-400 text-xs font-bold px-2.5 py-1 rounded-full border border-yellow-500/30 flex items-center gap-1">
                                         🔒 팔로워 전용
                                     </div>
-                                )}
+                                ) : null}
                             </div>
 
                             {/* Content */}
                             <div className="p-6 flex-1 flex flex-col">
                                 <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 font-medium relative z-10">
                                     <Tag size={12} />
-                                    {post.tags?.[0] ? (
+                                    {post.tags?.filter(t => t !== 'vip')[0] ? (
                                         <Link
-                                            href={`/blog?tag=${encodeURIComponent(post.tags[0])}`}
+                                            href={`/blog?tag=${encodeURIComponent(post.tags!.filter(t => t !== 'vip')[0])}`}
                                             className="hover:text-blue-400 transition-colors"
                                         >
-                                            {post.tags[0]}
+                                            {post.tags!.filter(t => t !== 'vip')[0]}
                                         </Link>
                                     ) : (
                                         <span>Article</span>
@@ -77,6 +81,12 @@ export default function BlogList({ posts }: BlogListProps) {
                                         {post.title}
                                     </Link>
                                 </h2>
+
+                                {post.isVip && post.isGated && (
+                                    <p className="text-xs text-amber-400/80 mb-2 flex items-center gap-1">
+                                        <span>👤</span> 코치가 특별히 선정한 VIP 전용 콘텐츠
+                                    </p>
+                                )}
 
                                 <p className="text-gray-400 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">
                                     {post.excerpt || post.description || '자세한 내용을 확인해보세요...'}

@@ -26,6 +26,7 @@ export function PostContent({ postData }: PostContentProps) {
         slug={postData.id}
         preview={preview}
         onUnlock={setUnlockedHtml}
+        isVip={postData.isVip}
       />
     );
   }
@@ -36,10 +37,10 @@ export function PostContent({ postData }: PostContentProps) {
         <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
       </div>
 
-      {postData.tags && postData.tags.length > 0 && (
+      {postData.tags && postData.tags.filter(t => t !== 'vip').length > 0 && (
         <div className="mt-16 pt-8 border-t border-gray-200">
           <div className="flex flex-wrap gap-2">
-            {postData.tags.map(tag => (
+            {postData.tags.filter(t => t !== 'vip').map(tag => (
               <Link
                 key={tag}
                 href={`/blog?tag=${encodeURIComponent(tag)}`}

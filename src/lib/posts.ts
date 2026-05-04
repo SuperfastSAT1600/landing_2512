@@ -22,6 +22,7 @@ export interface PostData {
     metaRobots?: string;
     updatedAt?: string;
     isGated?: boolean;
+    isVip?: boolean;
     [key: string]: any;
 }
 
@@ -46,6 +47,7 @@ function mapRow(row: Record<string, unknown>): PostData {
         metaRobots: row.meta_robots as string | undefined,
         updatedAt: row.updated_at as string | undefined,
         isGated: !!(row.access_code),
+        isVip: !!(row.access_code) && !!(row.tags as string[])?.includes('vip'),
     };
 }
 
