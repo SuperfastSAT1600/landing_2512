@@ -23,6 +23,10 @@ interface DiagnosticTestViewProps {
   studentName?: string;
   testVersionId?: string;
   timeLimitMinutes?: number;
+  previousScoreStatus?: 'scored' | 'never_taken' | 'dont_remember';
+  previousTestDate?: string;
+  previousRwScore?: number;
+  previousMathScore?: number;
 }
 
 export function DiagnosticTestView({
@@ -32,6 +36,10 @@ export function DiagnosticTestView({
   studentName = '',
   testVersionId,
   timeLimitMinutes,
+  previousScoreStatus,
+  previousTestDate,
+  previousRwScore,
+  previousMathScore,
 }: DiagnosticTestViewProps) {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -178,6 +186,10 @@ export function DiagnosticTestView({
         flaggedQuestions: Array.from(flagged),
         questionTimes,
         savedWords,
+        previousScoreStatus,
+        previousTestDate,
+        previousRwScore,
+        previousMathScore,
       };
 
       const response = await fetch('/api/diagnosis/submit', {

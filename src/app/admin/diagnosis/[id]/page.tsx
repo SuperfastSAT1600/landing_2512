@@ -151,6 +151,34 @@ export default function AdminDiagnosisDetailPage() {
               <span className="text-gray-400">이메일: </span>
               <span className="font-semibold break-all">{result.studentEmail}</span>
             </div>
+            {result.previousScoreStatus === 'scored' && result.previousRwScore && result.previousMathScore && (
+              <div>
+                <span className="text-gray-400">이전 SAT: </span>
+                <span className="font-semibold">
+                  RW {result.previousRwScore} / Math {result.previousMathScore}
+                  {result.previousTestDate && (
+                    <span className="text-gray-400 font-normal ml-1">
+                      ({result.previousTestDate.slice(0, 7)})
+                    </span>
+                  )}
+                  <span className="text-gray-400 font-normal ml-2">
+                    = {result.previousRwScore + result.previousMathScore}점
+                  </span>
+                </span>
+              </div>
+            )}
+            {result.previousScoreStatus === 'never_taken' && (
+              <div>
+                <span className="text-gray-400">이전 SAT: </span>
+                <span className="font-semibold">시험 경험 없음</span>
+              </div>
+            )}
+            {result.previousScoreStatus === 'dont_remember' && (
+              <div>
+                <span className="text-gray-400">이전 SAT: </span>
+                <span className="font-semibold">점수 미기억</span>
+              </div>
+            )}
           </div>
         </div>
 

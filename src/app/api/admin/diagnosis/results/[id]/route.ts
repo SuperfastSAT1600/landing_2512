@@ -61,6 +61,10 @@ export async function GET(
       questionTimes: data.question_times,
       savedWords: data.saved_words,
       testVersionId: data.test_version_id ?? undefined,
+      previousScoreStatus: data.previous_score_status ?? undefined,
+      previousTestDate: data.previous_test_date ?? undefined,
+      previousRwScore: data.previous_rw_score ?? undefined,
+      previousMathScore: data.previous_math_score ?? undefined,
     };
 
     return NextResponse.json(

@@ -45,6 +45,10 @@ export interface ReportData {
   };
   editedInsights: Record<string, string> | null;
   coupon: { discountPercent: number; expiresAt: string } | null;
+  previousScoreStatus?: 'scored' | 'never_taken' | 'dont_remember';
+  previousTestDate?: string;
+  previousRwScore?: number;
+  previousMathScore?: number;
 }
 
 /**
@@ -183,5 +187,9 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
     },
     editedInsights: result.edited_insights ?? null,
     coupon: result.coupon ?? null,
+    previousScoreStatus: result.previous_score_status ?? undefined,
+    previousTestDate: result.previous_test_date ?? undefined,
+    previousRwScore: result.previous_rw_score ?? undefined,
+    previousMathScore: result.previous_math_score ?? undefined,
   };
 }
