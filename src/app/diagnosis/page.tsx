@@ -9,7 +9,8 @@ import type { DiagnosticTestData } from './data/diagnostic-test-1';
 const CODE_LENGTH = 6;
 
 type DiagnosisTab = 'code' | 'apply';
-type Phase = 'code-entry' | 'student-confirm' | 'email-input' | 'test-loading' | 'test-active';
+type Phase = 'code-entry' | 'student-confirm' | 'email-input' | 'previous-score-input' | 'test-loading' | 'test-active';
+type PreviousScoreStatus = 'scored' | 'never_taken' | 'dont_remember';
 
 function formatKoreanDate(isoString: string | null): string {
   if (!isoString) return '';
@@ -24,6 +25,27 @@ function formatKoreanDate(isoString: string | null): string {
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidScore(val: string): boolean {
+  const n = parseInt(val, 10);
+  return !isNaN(n) && n >= 200 && n <= 800;
+}
+
+const MONTHS = [
+  { value: '01', label: 'January' }, { value: '02', label: 'February' },
+  { value: '03', label: 'March' },   { value: '04', label: 'April' },
+  { value: '05', label: 'May' },     { value: '06', label: 'June' },
+  { value: '07', label: 'July' },    { value: '08', label: 'August' },
+  { value: '09', label: 'September' }, { value: '10', label: 'October' },
+  { value: '11', label: 'November' }, { value: '12', label: 'December' },
+];
+
+function getYearOptions(): number[] {
+  const current = new Date().getFullYear();
+  const years: number[] = [];
+  for (let y = current; y >= 2016; y--) years.push(y);
+  return years;
 }
 
 export default function DiagnosisPage() {
@@ -43,6 +65,13 @@ export default function DiagnosisPage() {
   const [studentName, setStudentName] = useState('');
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState<number>(30);
+
+  const [previousScoreStatus, setPreviousScoreStatus] = useState<PreviousScoreStatus | null>(null);
+  const [previousTestYear, setPreviousTestYear] = useState('');
+  const [previousTestMonth, setPreviousTestMonth] = useState('');
+  const [previousRwScore, setPreviousRwScore] = useState('');
+  const [previousMathScore, setPreviousMathScore] = useState('');
+  const [scoreErrors, setScoreErrors] = useState({ date: '', rw: '', math: '' });
 
   const setRef = useCallback((el: HTMLInputElement | null, idx: number) => {
     inputRefs.current[idx] = el;
@@ -112,9 +141,7 @@ export default function DiagnosisPage() {
     }
   };
 
-  const loadAndStartTest = async (email: string) => {
-    setStudentEmail(email);
-    setPhase('test-loading');
+  const loadTestContentInBackground = useCallback(async () => {
     try {
       const url = testVersionId
         ? `/api/diagnosis/test-content?versionId=${testVersionId}`
@@ -123,14 +150,14 @@ export default function DiagnosisPage() {
       if (!res.ok) throw new Error('Failed to load test');
       const data = await res.json();
       setTestData(data);
-      setPhase('test-active');
+      setPhase(prev => prev === 'test-loading' ? 'test-active' : prev);
     } catch {
       setEmailError('Failed to load test. Please try again.');
       setPhase('email-input');
     }
-  };
+  }, [testVersionId]);
 
-  const handleEmailSubmit = async () => {
+  const handleEmailSubmit = () => {
     setEmailError('');
     if (!emailInput.trim()) {
       setEmailError('Please enter your email address.');
@@ -141,6 +168,7 @@ export default function DiagnosisPage() {
       return;
     }
     const trimmedEmail = emailInput.trim();
+    setStudentEmail(trimmedEmail);
     setPixelAdvancedMatching({ em: trimmedEmail }).catch(() => {});
     window.fbq?.('track', 'Lead', { content_name: 'diagnosis_email', currency: 'KRW', value: 0 });
     fetch('/api/diagnosis/track-email', {
@@ -148,13 +176,29 @@ export default function DiagnosisPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: trimmedEmail }),
     }).catch(() => {});
-    try {
-      await loadAndStartTest(trimmedEmail);
-    } catch (err) {
-      console.error('[diagnosis] loadAndStartTest uncaught:', err);
-      setEmailError('테스트를 불러오는 데 실패했습니다. 다시 시도해 주세요.');
-      setPhase('email-input');
+    loadTestContentInBackground();
+    setPhase('previous-score-input');
+  };
+
+  const handlePreviousScoreDone = useCallback((status: PreviousScoreStatus) => {
+    setPreviousScoreStatus(status);
+    setPhase(testData ? 'test-active' : 'test-loading');
+  }, [testData]);
+
+  const handleScoreSubmit = () => {
+    const errors = { date: '', rw: '', math: '' };
+    if (!previousTestYear || !previousTestMonth) {
+      errors.date = 'Please select the month and year of your most recent test.';
     }
+    if (!isValidScore(previousRwScore)) {
+      errors.rw = 'Enter a score between 200–800, in multiples of 10.';
+    }
+    if (!isValidScore(previousMathScore)) {
+      errors.math = 'Enter a score between 200–800, in multiples of 10.';
+    }
+    setScoreErrors(errors);
+    if (errors.date || errors.rw || errors.math) return;
+    handlePreviousScoreDone('scored');
   };
 
   // Student confirmation phase
@@ -233,6 +277,106 @@ export default function DiagnosisPage() {
     );
   }
 
+  // Previous score input phase
+  if (phase === 'previous-score-input') {
+    const scoreIsValid =
+      !!previousTestYear && !!previousTestMonth &&
+      isValidScore(previousRwScore) &&
+      isValidScore(previousMathScore);
+    return (
+      <div className="min-h-screen bg-[#000000] text-gray-100 flex flex-col items-center justify-center p-4 font-sans">
+        <div className="w-full max-w-md bg-[#09090b] rounded-2xl border border-white/5 p-6 md:p-8 shadow-2xl">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold mb-2">What was your most recent SAT score?</h2>
+            <p className="text-gray-500 text-sm">This helps us better understand your starting point</p>
+          </div>
+
+          <div className="space-y-5 mb-6">
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Test Date</label>
+              <div className="flex gap-2">
+                <select
+                  value={previousTestMonth}
+                  onChange={e => { setPreviousTestMonth(e.target.value); setScoreErrors(prev => ({ ...prev, date: '' })); }}
+                  className="flex-1 px-4 py-3 bg-[#000000] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20 appearance-none"
+                >
+                  <option value="">Month</option>
+                  {MONTHS.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+                <select
+                  value={previousTestYear}
+                  onChange={e => { setPreviousTestYear(e.target.value); setScoreErrors(prev => ({ ...prev, date: '' })); }}
+                  className="w-28 px-4 py-3 bg-[#000000] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20 appearance-none"
+                >
+                  <option value="">Year</option>
+                  {getYearOptions().map(y => (
+                    <option key={y} value={String(y)}>{y}</option>
+                  ))}
+                </select>
+              </div>
+              {scoreErrors.date && <p className="text-red-400 text-xs mt-1">{scoreErrors.date}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Reading &amp; Writing Score</label>
+              <input
+                type="number"
+                value={previousRwScore}
+                min={200}
+                max={800}
+                step={10}
+                placeholder="e.g. 680"
+                onChange={e => { setPreviousRwScore(e.target.value); setScoreErrors(prev => ({ ...prev, rw: '' })); }}
+                className="w-full px-4 py-3 bg-[#000000] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20"
+              />
+              {scoreErrors.rw && <p className="text-red-400 text-xs mt-1">{scoreErrors.rw}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Math Score</label>
+              <input
+                type="number"
+                value={previousMathScore}
+                min={200}
+                max={800}
+                step={10}
+                placeholder="e.g. 720"
+                onChange={e => { setPreviousMathScore(e.target.value); setScoreErrors(prev => ({ ...prev, math: '' })); }}
+                className="w-full px-4 py-3 bg-[#000000] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20"
+              />
+              {scoreErrors.math && <p className="text-red-400 text-xs mt-1">{scoreErrors.math}</p>}
+            </div>
+          </div>
+
+          <button
+            onClick={handleScoreSubmit}
+            disabled={!scoreIsValid}
+            className="w-full py-4 bg-[#071be9] hover:bg-[#1a31f0] rounded-xl font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed text-lg shadow-lg shadow-[#071be9]/20 mb-4"
+          >
+            Continue →
+          </button>
+
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => handlePreviousScoreDone('never_taken')}
+              className="w-full py-3 text-gray-400 hover:text-gray-200 text-sm border border-white/5 rounded-xl hover:border-white/10 transition-all"
+            >
+              I&apos;ve never taken the SAT
+            </button>
+            <button
+              onClick={() => handlePreviousScoreDone('dont_remember')}
+              className="w-full py-3 text-gray-400 hover:text-gray-200 text-sm border border-white/5 rounded-xl hover:border-white/10 transition-all"
+            >
+              I don&apos;t remember my score
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Test loading phase
   if (phase === 'test-loading') {
     return (
@@ -256,6 +400,10 @@ export default function DiagnosisPage() {
           studentName={studentName}
           testVersionId={testVersionId ?? undefined}
           timeLimitMinutes={timeLimitMinutes}
+          previousScoreStatus={previousScoreStatus ?? undefined}
+          previousTestDate={previousTestYear && previousTestMonth ? `${previousTestYear}-${previousTestMonth}-01` : undefined}
+          previousRwScore={previousRwScore ? parseInt(previousRwScore, 10) : undefined}
+          previousMathScore={previousMathScore ? parseInt(previousMathScore, 10) : undefined}
         />
       </div>
     );

@@ -49,6 +49,10 @@ export interface TestResult {
   flaggedQuestions: string[];          // Array of question IDs flagged for review
   questionTimes: Record<string, number>; // { questionId: timeSpentSeconds }
   savedWords?: SavedWord[];            // Words student marked as unknown
+  previousScoreStatus?: 'scored' | 'never_taken' | 'dont_remember';
+  previousTestDate?: string;           // ISO date string (YYYY-MM-DD)
+  previousRwScore?: number;            // 200–800
+  previousMathScore?: number;          // 200–800
 }
 
 /**
@@ -84,6 +88,10 @@ export interface SubmitTestRequest {
   flaggedQuestions: string[];
   questionTimes: Record<string, number>;
   savedWords?: SavedWord[];           // Words student marked as unknown
+  previousScoreStatus?: 'scored' | 'never_taken' | 'dont_remember';
+  previousTestDate?: string;
+  previousRwScore?: number;
+  previousMathScore?: number;
 }
 
 /**

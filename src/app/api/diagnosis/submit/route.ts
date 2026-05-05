@@ -24,6 +24,10 @@ export async function POST(request: NextRequest) {
       flaggedQuestions,
       questionTimes,
       savedWords,
+      previousScoreStatus,
+      previousTestDate,
+      previousRwScore,
+      previousMathScore,
     } = body;
 
     // Validate required fields (studentEmail is optional — student may skip)
@@ -125,6 +129,10 @@ export async function POST(request: NextRequest) {
           flagged_questions: flaggedQuestions || [],
           question_times: questionTimes || {},
           saved_words: savedWords || [],
+          previous_score_status: previousScoreStatus ?? null,
+          previous_test_date: previousTestDate ?? null,
+          previous_rw_score: previousRwScore ?? null,
+          previous_math_score: previousMathScore ?? null,
         },
       ])
       .select('id');

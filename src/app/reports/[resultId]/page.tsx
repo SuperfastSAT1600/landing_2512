@@ -88,6 +88,10 @@ export default async function ReportPage({ params }: PageProps) {
         submittedAt={data.submittedAt}
         totalTimeSeconds={data.totalTimeSeconds}
         sections={data.sections}
+        previousScoreStatus={data.previousScoreStatus}
+        previousTestDate={data.previousTestDate}
+        previousRwScore={data.previousRwScore}
+        previousMathScore={data.previousMathScore}
       />
 
       {/* Chapter navigation — sticky at the very top */}

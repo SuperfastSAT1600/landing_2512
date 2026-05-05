@@ -12,6 +12,10 @@ interface Props {
   submittedAt: string;
   totalTimeSeconds: number;
   sections: Section[];
+  previousScoreStatus?: 'scored' | 'never_taken' | 'dont_remember';
+  previousTestDate?: string;
+  previousRwScore?: number;
+  previousMathScore?: number;
 }
 
 function formatTime(seconds: number) {
@@ -24,7 +28,7 @@ function scrollToReport() {
   document.getElementById('section-01')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sections }: Props) {
+export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sections, previousScoreStatus, previousTestDate, previousRwScore, previousMathScore }: Props) {
   const totalCorrect = sections.reduce((a, s) => a + s.correctCount, 0);
   const totalQuestions = sections.reduce((a, s) => a + s.totalQuestions, 0);
   const overallPct = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
@@ -71,9 +75,25 @@ export function ReportCover({ studentName, submittedAt, totalTimeSeconds, sectio
         </h1>
 
         {/* Subheadline */}
-        <p className="text-slate-400 text-base mb-10">
+        <p className="text-slate-400 text-base mb-4">
           Completed {dateStr} · {formatTime(totalTimeSeconds)}
         </p>
+
+        {/* Previous SAT score (shown only when student entered scores) */}
+        {previousScoreStatus === 'scored' && previousRwScore && previousMathScore && (
+          <div className="inline-flex items-center gap-3 mb-8 px-4 py-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <span className="text-slate-400 text-sm">Previous SAT</span>
+            <span className="text-white text-sm font-semibold">
+              R&amp;W {previousRwScore} / Math {previousMathScore}
+              {previousTestDate && (
+                <span className="text-slate-400 font-normal ml-1">
+                  ({new Date(previousTestDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})
+                </span>
+              )}
+            </span>
+            <span className="text-slate-500 text-xs">= {previousRwScore + previousMathScore} total</span>
+          </div>
+        )}
 
         {/* Score row */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-6">
