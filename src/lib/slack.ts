@@ -125,6 +125,13 @@ export async function notifyDiagnosticApplication(data: ApplicationNotificationD
 
   if (!res.ok) {
     console.error('[slack] Failed to send application notification:', res.status, await res.text());
+    return;
+  }
+
+  const slackResponse = await res.json() as { ok?: boolean; error?: string };
+  if (!slackResponse.ok) {
+    console.error('[slack] Slack API error:', slackResponse.error);
+    return;
   }
 }
 
