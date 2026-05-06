@@ -43,7 +43,7 @@ export async function sendApplicationNotification(data: DiagnosticApplicationEma
             <td style="padding: 10px 12px; border: 1px solid #e5e7eb;">${preferredDate}</td>
           </tr>
           <tr>
-            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600;">희망 시간</td>
+            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600;">희망 시간 (KST)</td>
             <td style="padding: 10px 12px; border: 1px solid #e5e7eb;">${preferredTime}</td>
           </tr>
           <tr>

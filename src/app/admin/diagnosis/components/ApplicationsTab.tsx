@@ -113,7 +113,7 @@ export function ApplicationsTab({ adminKey, onIssueCode }: ApplicationsTabProps)
                     <td className="py-3 px-3 font-mono text-gray-300">{app.phone}</td>
                     <td className="py-3 px-3 text-gray-300">
                       <div>{app.preferred_date}</div>
-                      <div className="text-xs text-gray-500">{app.preferred_time}</div>
+                      <div className="text-xs text-gray-500">{app.preferred_time} (KST)</div>
                     </td>
                     <td className="py-3 px-3 text-gray-400 text-xs">{formatDate(app.created_at)}</td>
                     <td className="py-3 px-3">

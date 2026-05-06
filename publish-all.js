@@ -18,7 +18,7 @@ const CTA_HTML = `
 <div style="text-align:center;">
   <a
     id="kakao-openchat-btn"
-    href="https://open.kakao.com/o/s858Ajch"
+    href="https://superfastsat.com/api/kakao-redirect?source=ghost"
     target="_blank"
     rel="noopener noreferrer"
     style="
@@ -31,7 +31,7 @@ const CTA_HTML = `
       text-decoration:none;
     "
   >
-    카카오톡으로 즉시 상담받기🖐️
+    카카오톡으로 수업 상담 신청하기🖐️
   </a>
 </div>
 `
@@ -121,30 +121,30 @@ function loadHtml(path) {
   return marked.parse(lines.slice(startLine, endLine).join('\n').trim());
 }
 
-const ghostHtml = loadHtml('content/posts/2026-03-25-sat-tutoring-comparison-ghost.md');
-const landingContent = loadHtml('content/posts/2026-03-25-sat-tutoring-comparison-landing.md');
+const ghostHtml = loadHtml('content/posts/2026-05-01-sat-may-vocab-491-ghost.md');
+const landingContent = loadHtml('content/posts/2026-05-01-sat-may-vocab-491-landing.md');
 
 publishAll({
   ghost: {
-    slug: "sat-tutoring-hagwon-online-self-study-comparison",
-    title: "SAT 과외 vs 학원 vs 인강 vs 독학: 방식별 원리와 선택 기준",
+    slug: "sat-may-2026-vocab-491",
+    title: "5월 SAT 직전 확인 단어 491개 — 4중 근거로 선정한 리스트",
     html: ghostHtml,
-    excerpt: "SAT 준비 방식을 고를 때 가장 많이 하는 실수는 비용과 편의로 결정하는 것입니다. 과외·학원·인강·독학은 각각 다른 전제 조건을 요구하며, 충족되지 않으면 효과가 없습니다. 점수대와 자기조절 능력을 기준으로 맞는 방식을 고르는 법을 정리합니다.",
-    metaTitle: "SAT 과외 vs 학원 vs 인강 vs 독학 완전 비교 | 방식별 원리와 선택 기준",
-    metaDescription: "SAT 준비 방식 선택에서 가장 중요한 것은 비용이 아닙니다. 점수대·자기조절 능력·남은 시간—이 세 기준으로 과외·학원·인강·독학 중 맞는 방식을 고르는 법을 정리합니다.",
-    tags: ["SAT", "SAT 학습 전략", "SAT 과외", "SAT 학원", "SAT 인강"],
+    excerpt: "College Board 최신 98개 문제와 1,527개 전체 분석으로 검증된 491개 단어입니다. 5중 필터를 통과한 이 목록에서 89개 보기 출현 단어부터 점검하십시오.",
+    metaTitle: "5월 SAT 직전 확인 단어 491개 — 4중 근거로 선정한 리스트",
+    metaDescription: "College Board 최신 98개 문제 + 1,527개 전체 분석으로 검증된 491개 단어. 5월 SAT 직전, 이 단어들 뜻 정확히 아는지 확인하세요.",
+    tags: ["SAT", "SAT단어", "SAT어휘", "5월SAT"],
   },
   landing: {
-    id: "sat-tutoring-hagwon-online-self-study",
-    title: "SAT 과외 vs 학원 vs 인강 vs 독학: 방식보다 먼저 봐야 하는 것",
+    id: "sat-may-2026-vocab-491",
+    title: "5월 SAT 직전 확인 단어 491개",
     content: landingContent,
-    excerpt: "SAT 준비 방식을 고르기 전에 먼저 확인해야 할 것이 있습니다. 점수대, 혼자 앉아 있는 힘, 남은 시간—이 세 가지가 과외·학원·인강·독학 중 맞는 방식을 결정합니다.",
-    description: "SAT 준비 방식 선택에서 가장 중요한 것은 비용이 아닙니다. 점수대·자기조절 능력·남은 시간—이 세 기준으로 맞는 방식을 고르는 법을 정리합니다.",
+    excerpt: "College Board가 2026년 4월 공개한 98개 최신 RW 문제에 등장하면서 5중 근거를 통과한 단어 491개입니다. 89개 보기 출현 단어부터 점검하십시오.",
+    description: "College Board 최신 98개 문제 + 1,527개 전체 분석으로 검증된 491개 단어. 5월 SAT 직전, 이 단어들 뜻 정확히 아는지 확인하세요.",
     featured_image: null,
-    category: "학습 전략",
-    tags: ["SAT 과외", "SAT 학원", "SAT 인강", "SAT 독학", "SAT 준비 방법"],
+    category: "SAT RW",
+    tags: ["SAT단어", "5월SAT", "SAT어휘"],
     author: "배병윤",
-    date: "2026-03-25",
-    focus_keyword: "SAT 과외 학원 인강 독학 비교",
+    date: "2026-05-01",
+    focus_keyword: "SAT 단어",
   },
 })

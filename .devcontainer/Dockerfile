@@ -2,6 +2,7 @@ FROM node:20-slim
 
 # ── System deps + tmux + zsh + Playwright browser deps ───
 RUN apt-get update && apt-get install -y \
+    locales \
     git \
     curl \
     jq \
@@ -37,7 +38,12 @@ RUN apt-get update && apt-get install -y \
     libatspi2.0-0 \
     libxshmfence1 \
     && rm -rf /var/lib/apt/lists/*
+RUN sed -i '/ko_KR.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen && \
+    update-locale LANG=ko_KR.UTF-8
 
+ENV LANG=ko_KR.UTF-8
+ENV LC_ALL=ko_KR.UTF-8
 # ── GitHub CLI ────────────────────────────────────────────
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
       | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \

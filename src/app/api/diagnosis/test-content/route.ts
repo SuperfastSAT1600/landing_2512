@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         .eq('id', versionId)
         .single();
 
-      if (!error && data) {
+      if (!error && data && Array.isArray(data.questions) && data.questions.length > 0) {
         return NextResponse.json({
           id: data.id,
           versionNumber: data.version_number,

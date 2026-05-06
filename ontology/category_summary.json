@@ -1,0 +1,62 @@
+{
+  "total": 1511,
+  "generated_at": "2026-04-17T23:55:42.208Z",
+  "category_distribution": {
+    "NAME": 585,
+    "RECONCILE": 55,
+    "BUILD": 178,
+    "RETRIEVE": 33,
+    "VALIDATE": 203,
+    "INFER": 108,
+    "APPLY": 349
+  },
+  "skill_category_matrix": {
+    "Craft and Structure Words in Context": {
+      "NAME": 226
+    },
+    "Craft and Structure Cross-Text Connections": {
+      "RECONCILE": 49
+    },
+    "Craft and Structure Text Structure and Purpose": {
+      "NAME": 132
+    },
+    "Expression of Ideas Rhetorical Synthesis": {
+      "BUILD": 178
+    },
+    "Expression of Ideas Transitions": {
+      "NAME": 161
+    },
+    "Information and Ideas Central Ideas and Details": {
+      "RETRIEVE": 30,
+      "NAME": 64
+    },
+    "Information and Ideas Command of Evidence": {
+      "VALIDATE": 193
+    },
+    "Information and Ideas Inferences": {
+      "INFER": 93
+    },
+    "Standard English Conventions Boundaries": {
+      "APPLY": 169
+    },
+    "Standard English Conventions Form, Structure, and Sense": {
+      "APPLY": 180
+    },
+    "": {
+      "INFER": 15,
+      "RETRIEVE": 3,
+      "NAME": 2,
+      "VALIDATE": 10,
+      "RECONCILE": 6
+    }
+  },
+  "categories": {
+    "NAME": "Select the correct label for a role/relationship/purpose defined by the text",
+    "RETRIEVE": "Locate explicitly stated information in the text",
+    "INFER": "Derive the conclusion that most logically follows from given premises",
+    "VALIDATE": "Select evidence that most directly supports or undermines a given claim",
+    "RECONCILE": "Identify how two texts' positions logically relate",
+    "BUILD": "Select from notes the sentence that achieves a stated rhetorical goal",
+    "APPLY": "Apply a grammar/punctuation rule to produce the correct form"
+  }
+}

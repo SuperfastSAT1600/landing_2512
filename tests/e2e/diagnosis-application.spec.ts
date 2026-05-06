@@ -63,15 +63,14 @@ test.describe('Diagnosis Application Feature', () => {
       await page.locator('input[type="tel"]').fill('010-123');
       await page.locator('button:has-text("다음")').click();
 
-      await expect(page.locator('text=010-XXXX-XXXX 형식으로 입력해주세요.')).toBeVisible();
+      await expect(page.locator('text=전화번호를 입력해주세요.')).toBeVisible();
     });
 
-    test('REQ-APP-006: phone formats automatically as digits are typed', async ({ page }) => {
+    test('REQ-APP-006: phone input accepts free-form text including international formats', async ({ page }) => {
       const phoneInput = page.locator('input[type="tel"]');
-      await phoneInput.fill('01012345678');
+      await phoneInput.fill('+1 234 567 8900');
 
-      // formatPhone should produce 010-1234-5678
-      await expect(phoneInput).toHaveValue('010-1234-5678');
+      await expect(phoneInput).toHaveValue('+1 234 567 8900');
     });
 
     test('REQ-APP-007: valid name and phone advance to Step 2', async ({ page }) => {
@@ -218,7 +217,7 @@ test.describe('Diagnosis Application Feature', () => {
       await page.locator('button:has-text("신청하기")').click();
 
       // Success screen
-      await expect(page.locator('text=신청이 완료되었습니다.')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('text=신청해 주셔서 감사합니다!')).toBeVisible({ timeout: 5000 });
     });
 
     test('REQ-APP-015: API error shows submit error message', async ({ page }) => {

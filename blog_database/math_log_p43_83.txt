@@ -1,0 +1,87 @@
+Math QB 파싱: p43~p83 / 83페이지 전체
+출력: math_qb_p43_83.jsonl
+
+기존 완료: 0개 문제, 0개 페이지
+
+p43: ✅ 3934dd0a [Medium] LaTeX=False Fig=False
+p44: ✅ dc67c130 [Easy] LaTeX=True Fig=False
+p45: ✅ 5f07b257 [Easy] LaTeX=True Fig=True
+p46: ✅ fc2ec559 [Easy] LaTeX=True Fig=False
+p47: ✅ faeae876 [Medium] LaTeX=True Fig=False
+p48: ✅ cec36caf [Easy] LaTeX=True Fig=False
+  [p49] JSON error: Invalid \escape: line 6 column 60 (char 177) | raw: {
+  "question_id": "3e28a622",
+  "domain": "Advanced Math",
+  "skill": "Nonlinear functions",
+  "difficulty": "Easy",
+  "question_text": "The function $g$ is defined by $g(x) = \sqrt{x} + 300$. What i
+p49: no question
+p50: ✅ 555939d2 [Easy] LaTeX=False Fig=False
+p51: ✅ 608cf8e2 [Hard] LaTeX=False Fig=True
+p52: skip (non-question page, 102자)
+p53: ✅ 632cf8f9 [Easy] LaTeX=True Fig=True
+p54: skip (non-question page, 5자)
+p55: ✅ b5bc47d5 [Hard] LaTeX=True Fig=False
+p56: ✅ 699af7b3 [Hard] LaTeX=True Fig=False
+  [p57] JSON error: Invalid \escape: line 9 column 468 (char 898) | raw: {
+  "question_id": "40f0ee70",
+  "domain": "Problem-Solving and Data Analysis",
+  "skill": "One-variable data: Distributions and measures of center and spread",
+  "difficulty": "Easy",
+  "question_tex
+p57: no question
+p58: ✅ 58ba7239 [Hard] LaTeX=True Fig=False
+p59: ✅ 9ce8cbbe [Hard] LaTeX=True Fig=False
+p60: ✅ c74df824 [Hard] LaTeX=True Fig=False
+p61: ✅ 38525983 [Medium] LaTeX=True Fig=True
+p62: skip (non-question page, 7자)
+p63: ✅ 73362607 [Easy] LaTeX=False Fig=False
+p64: ✅ 7b1a3200 [Easy] LaTeX=False Fig=True
+p65: ✅ e9129a5c [Medium] LaTeX=False Fig=True
+p66: skip (non-question page, 7자)
+p67: ✅ c78bb2b8 [Hard] LaTeX=False Fig=False
+p68: ✅ ecf8d15f [Easy] LaTeX=False Fig=True
+p69: ✅ 9342ca50 [Easy] LaTeX=True Fig=True
+  [p70] JSON error: Invalid \escape: line 6 column 108 (char 235) | raw: {
+  "question_id": "96467fea",
+  "domain": "Geometry and Trigonometry",
+  "skill": "Area and volume",
+  "difficulty": "Medium",
+  "question_text": "Circle $N$ has a radius of $7$ millimeters $(\text{m
+p70: no question
+p71: ✅ 6b4707aa [Hard] LaTeX=True Fig=False
+  [p72] JSON error: Invalid \escape: line 14 column 625 (char 1107) | raw: {
+  "question_id": "c447367f",
+  "domain": "Geometry and Trigonometry",
+  "skill": "Circles",
+  "difficulty": "Hard",
+  "question_text": "A circle in the $xy$-plane has its center at $(19, 18)$ and ha
+p72: no question
+p73: ✅ 5011b039 [Medium] LaTeX=True Fig=False
+p74: ✅ 94f7c9e2 [Hard] LaTeX=True Fig=True
+p75: ✅ 62ec6574 [Hard] LaTeX=True Fig=False
+p76: ✅ c41eb616 [Hard] LaTeX=True Fig=False
+p77: ✅ 7268586c [Easy] LaTeX=True Fig=True
+p78: ✅ 9823f279 [Medium] LaTeX=True Fig=True
+p79: ✅ 1318dfea [Hard] LaTeX=True Fig=True
+p80: ✅ c4e5e23c [Medium] LaTeX=True Fig=False
+  [p81] JSON error: Invalid \escape: line 6 column 158 (char 298) | raw: {
+  "question_id": "585a9138",
+  "domain": "Geometry and Trigonometry",
+  "skill": "Lines, angles, and triangles",
+  "difficulty": "Medium",
+  "question_text": "Triangles $ABC$ and $DEF$ are congruent
+p81: no question
+p82: ✅ 603c18ad [Hard] LaTeX=True Fig=False
+  [p83] JSON error: Invalid \escape: line 14 column 106 (char 479) | raw: {
+  "question_id": "9d2e7037",
+  "domain": "Geometry and Trigonometry",
+  "skill": "Area and volume",
+  "difficulty": "Easy",
+  "question_text": "A rectangle has a length of 56 inches and a width of 2
+p83: no question
+
+=== 완료 ===
+신규 저장: 31개 | 스킵: 0개 | 에러: 0개
+출력 파일: math_qb_p43_83.jsonl
+전체 저장 수: 31개

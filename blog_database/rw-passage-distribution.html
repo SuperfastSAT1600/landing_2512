@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>RW 지문 종류 분포</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; display: flex; justify-content: center; padding: 48px 16px; }
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.1); padding: 32px 36px; max-width: 600px; width: 100%; }
+  h2 { margin: 0 0 4px; font-size: 20px; color: #111; }
+  .sub { color: #6b7280; font-size: 13px; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { text-align: left; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; padding: 0 8px 10px; border-bottom: 1px solid #e5e7eb; }
+  thead th:not(:first-child) { text-align: right; }
+  tbody tr:hover { background: #f3f4f6; }
+  td { padding: 10px 8px; font-size: 14px; color: #111; border-bottom: 1px solid #f0f0f0; }
+  td:not(:first-child) { text-align: right; }
+  .bar-cell { width: 140px; }
+  .bar-bg { background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden; }
+  .bar-fill { background: #2563eb; height: 8px; border-radius: 4px; }
+  tfoot td { padding: 12px 8px 0; font-weight: 700; font-size: 14px; border-top: 2px solid #d1d5db; border-bottom: none; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 99px; margin-left: 6px; vertical-align: middle; }
+  .tag-sci { background: #dbeafe; color: #1d4ed8; }
+  .copy-btn { margin-top: 20px; width: 100%; padding: 10px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; transition: background .15s; }
+  .copy-btn:hover { background: #374151; }
+  .copied { background: #16a34a !important; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>RW 지문 종류 분포</h2>
+  <p class="sub">College Board Question Bank 전체 · 1,609문제 · SQLite 집계</p>
+
+  <table id="dist-table">
+    <thead>
+      <tr>
+        <th>지문 종류</th>
+        <th>문제 수</th>
+        <th>비율</th>
+        <th class="bar-cell"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Life Science (생명과학)<span class="tag tag-sci">과학</span></td>
+        <td>346</td><td>21.5%</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:100%"></div></div></td>
+      </tr>
+      <tr>
+        <td>Literature (문학)</td>
+        <td>293</td><td>18.2%</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:84.7%"></div></div></td>
+      </tr>
+      <tr>
+        <td>History (역사)</td>
+        <td>265</td><td>16.5%</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:76.6%"></div></div></td>
+      </tr>
+      <tr>
+        <td>Social Science (사회과학)</td>
+        <td>233</td><td>14.5%</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:67.3%"></div></div></td>
+      </tr>
+      <tr>
+        <td>Art &amp; Music (예술/음악)</td>
+        <td>200</td><td>12.4%</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:57.8%"></div></div></td>
+      </tr>
+      <tr>
+        <td>Physical Science (물리/화학)<span class="tag tag-sci">과학</span></td>
+        <td>100</td><td>6.2%</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:28.9%"></div></div></td>
+      </tr>
+      <tr>
+        <td>Earth &amp; Environment (지구/환경)<span class="tag tag-sci">과학</span></td>
+        <td>97</td><td>6.0%</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:28.0%"></div></div></td>
+      </tr>
+      <tr>
+        <td>Technology &amp; Engineering (기술/공학)<span class="tag tag-sci">과학</span></td>
+        <td>71</td><td>4.4%</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:20.5%"></div></div></td>
+      </tr>
+      <tr>
+        <td>Unknown</td>
+        <td>4</td><td>0.2%</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:1.2%"></div></div></td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>합계</td>
+        <td>1,609</td>
+        <td>100%</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <button class="copy-btn" onclick="copyTable()">표 복사 (텍스트)</button>
+</div>
+
+<script>
+function copyTable() {
+  const rows = [
+    ['지문 종류', '문제 수', '비율'],
+    ['Life Science (생명과학)', '346', '21.5%'],
+    ['Literature (문학)', '293', '18.2%'],
+    ['History (역사)', '265', '16.5%'],
+    ['Social Science (사회과학)', '233', '14.5%'],
+    ['Art & Music (예술/음악)', '200', '12.4%'],
+    ['Physical Science (물리/화학)', '100', '6.2%'],
+    ['Earth & Environment (지구/환경)', '97', '6.0%'],
+    ['Technology & Engineering (기술/공학)', '71', '4.4%'],
+    ['Unknown', '4', '0.2%'],
+    ['합계', '1,609', '100%'],
+  ];
+  const text = rows.map(r => r.join('\t')).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '복사됨!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '표 복사 (텍스트)'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>

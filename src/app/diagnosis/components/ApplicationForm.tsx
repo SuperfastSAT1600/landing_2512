@@ -165,7 +165,7 @@ export function ApplicationForm() {
             {dateError && <p className="text-red-400 text-xs mt-1">{dateError}</p>}
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">희망 시간</label>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">희망 시간 (KST)</label>
             <select
               value={preferredTime}
               onChange={(e) => { setPreferredTime(e.target.value); setTimeError(''); }}
@@ -213,7 +213,7 @@ export function ApplicationForm() {
               <span className="text-white font-semibold">{preferredDate}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">희망 시간</span>
+              <span className="text-gray-400">희망 시간 (KST)</span>
               <span className="text-white font-semibold">{preferredTime}</span>
             </div>
           </div>

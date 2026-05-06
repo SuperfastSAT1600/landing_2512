@@ -101,7 +101,7 @@ export async function notifyDiagnosticApplication(data: ApplicationNotificationD
         { type: 'mrkdwn', text: `*이름*\n${name}` },
         { type: 'mrkdwn', text: `*연락처*\n${phone}` },
         { type: 'mrkdwn', text: `*희망 날짜*\n${preferredDate}` },
-        { type: 'mrkdwn', text: `*희망 시간*\n${preferredTime}` },
+        { type: 'mrkdwn', text: `*희망 시간 (KST)*\n${preferredTime}` },
       ],
     },
     {
