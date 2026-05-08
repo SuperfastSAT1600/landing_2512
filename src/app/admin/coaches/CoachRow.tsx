@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Trash2, Copy, Check, Edit2, X, Save, Upload } from 'lucide-react';
 import { CoachData } from '@/lib/coaches-data';
 import { ReelUrlsEditor } from './ReelUrlsEditor';
+import { CoachBioEditor } from './CoachBioEditor';
 import { isValidInstagramUrl } from '@/lib/instagram-url';
 
 interface CoachRowProps {
@@ -204,13 +205,13 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                     </div>
 
                     {/* 소개글 */}
-                    <textarea
-                        value={editState.bio}
-                        onChange={e => setEditState(s => ({ ...s, bio: e.target.value }))}
-                        placeholder="소개글"
-                        rows={3}
-                        className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none resize-none"
-                    />
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">소개글</label>
+                        <CoachBioEditor
+                            value={editState.bio}
+                            onChange={html => setEditState(s => ({ ...s, bio: html }))}
+                        />
+                    </div>
 
                     {/* 코치 소개 포스팅 선택 */}
                     <div className="space-y-1.5">
