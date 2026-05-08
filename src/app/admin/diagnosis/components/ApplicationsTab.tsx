@@ -26,8 +26,8 @@ const STATUS_LABELS: Record<Application['status'], { text: string; color: string
 };
 
 const NEXT_STATUSES: Record<Application['status'], Application['status'][]> = {
-  pending:     ['contacted', 'cancelled'],
-  contacted:   ['code_issued', 'cancelled'],
+  pending:     ['cancelled'],
+  contacted:   ['cancelled'],
   code_issued: ['cancelled'],
   cancelled:   ['pending'],
 };

@@ -170,7 +170,10 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
 
                     {/* bio */}
                     {coach.bio && (
-                        <p className="text-gray-500 text-sm leading-relaxed max-w-sm">{coach.bio}</p>
+                        <div
+                            className="text-gray-500 text-sm leading-relaxed prose prose-sm prose-gray max-w-none"
+                            dangerouslySetInnerHTML={{ __html: coach.bio }}
+                        />
                     )}
 
                     {/* 구분선 2: 소개 ↔ 콘텐츠 */}
@@ -192,7 +195,7 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
                         {introHtml ? (
                             <div className={PROSE} dangerouslySetInnerHTML={{ __html: introHtml }} />
                         ) : coach.bio ? (
-                            <p className="text-gray-600 leading-relaxed whitespace-pre-line">{coach.bio}</p>
+                            <div className={PROSE} dangerouslySetInnerHTML={{ __html: coach.bio }} />
                         ) : (
                             <p className="text-gray-400">소개 내용이 준비 중입니다.</p>
                         )}
