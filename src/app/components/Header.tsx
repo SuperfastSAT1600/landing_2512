@@ -8,10 +8,9 @@ import styles from './Header.module.css';
 import LiveStatus from './LiveStatus';
 
 const NAV_ITEMS = [
-    { href: '/blog?category=SAT%20RW', label: 'SAT RW팁' },
-    { href: '/blog?category=SAT%20Math', label: 'SAT Math팁' },
-    { href: '/blog?category=입시뉴스', label: '입시뉴스' },
-    { href: '/reviews', label: '수업 후기' },
+    { href: '/blog', label: 'SAT 학습팁' },
+    { href: '/coaches', label: '학습코치' },
+    { href: '/reviews', label: '수업후기' },
     { href: '/diagnosis', label: '진단테스트' },
     { href: 'https://www.superfastsat.com', label: 'SAT인강', external: true },
 ] as const;
@@ -64,7 +63,7 @@ export default function Header() {
 
     if (pathname?.startsWith('/admin')) return null;
     if (pathname?.startsWith('/reports')) return null;
-    if (pathname?.startsWith('/coaches')) return null;
+    if (pathname?.startsWith('/coaches/')) return null;
 
     return (
         <header className={`${styles.header} ${scrolled ? styles.glass : ''}`}>

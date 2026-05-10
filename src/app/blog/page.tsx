@@ -18,6 +18,10 @@ const categoryMeta: Record<string, { title: string; description: string }> = {
         title: '미국 대학 입시 뉴스 | SuperfastSAT Blog',
         description: '최신 입시 트렌드, 대학별 전형 분석 및 합격 데이터를 신속하게 전달합니다.',
     },
+    '학습코치': {
+        title: '학습코치 칼럼 | SuperfastSAT Blog',
+        description: 'SuperfastSAT 코치진이 직접 작성한 학습 노하우와 전략을 확인하세요.',
+    },
 };
 
 export async function generateMetadata({
@@ -89,6 +93,10 @@ export default async function Blog({
         '입시뉴스': {
             title: '미국 대학 입시 뉴스',
             desc: '최신 입시 트렌드, 대학별 전형 분석 및 합격 데이터를 신속하게 전달합니다.'
+        },
+        '학습코치': {
+            title: '학습코치 칼럼',
+            desc: 'SuperfastSAT 코치진이 직접 작성한 학습 노하우와 전략을 확인하세요.'
         }
     };
 
@@ -115,7 +123,7 @@ export default async function Blog({
                 </header>
 
                 {/* Post List with View Toggle */}
-                <BlogList posts={filteredPosts} />
+                <BlogList posts={filteredPosts} currentCategory={category ?? ''} />
             </div>
             <Footer />
         </div>

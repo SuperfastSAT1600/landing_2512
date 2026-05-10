@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
             reelUrls: Array.isArray(body.reelUrls)
                 ? body.reelUrls.filter((u: string) => isValidInstagramUrl(u))
                 : [],
+            subjects: Array.isArray(body.subjects) ? body.subjects : [],
         };
 
         const ok = await addCoach(newCoach);
@@ -77,6 +78,20 @@ export async function PATCH(request: NextRequest) {
                 );
             }
             safeUpdates.reelUrls = updates.reelUrls;
+        }
+        if (updates.subjects !== undefined) {
+            if (!Array.isArray(updates.subjects)) {
+                return NextResponse.json({ success: false, error: 'subjects must be an array' }, { status: 400 });
+            }
+            const validSubjects = ['SAT', 'AP'];
+            const invalid = (updates.subjects as string[]).filter((s: string) => !validSubjects.includes(s));
+            if (invalid.length > 0) {
+                return NextResponse.json(
+                    { success: false, error: `Invalid subjects: ${invalid.join(', ')}` },
+                    { status: 400 }
+                );
+            }
+            safeUpdates.subjects = updates.subjects;
         }
         const ok = await updateCoach(slug, safeUpdates);
         if (!ok) {

@@ -1437,6 +1437,7 @@ function BlogEditor() {
                                     <option value="SAT RW">SAT RW</option>
                                     <option value="SAT Math">SAT Math</option>
                                     <option value="입시뉴스">입시뉴스</option>
+                                    <option value="학습코치">학습코치</option>
                                 </select>
                             </div>
 

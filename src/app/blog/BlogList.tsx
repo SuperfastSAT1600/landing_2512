@@ -5,12 +5,36 @@ import type { PostData } from '../../lib/posts';
 
 interface BlogListProps {
     posts: PostData[];
+    currentCategory?: string;
 }
 
-export default function BlogList({ posts }: BlogListProps) {
+const CATEGORY_TABS = [
+    { label: '전체', value: '' },
+    { label: 'SAT RW팁', value: 'SAT RW' },
+    { label: 'SAT Math팁', value: 'SAT Math' },
+    { label: '입시뉴스', value: '입시뉴스' },
+] as const;
+
+export default function BlogList({ posts, currentCategory = '' }: BlogListProps) {
     return (
         <div className="max-w-7xl mx-auto px-6 pb-36 sm:pb-24">
-            <div className="flex items-center mb-8">
+            <div className="flex items-center gap-3 flex-wrap mb-8 border-b border-white/5 pb-6">
+                {CATEGORY_TABS.map((tab) => (
+                    <Link
+                        key={tab.value}
+                        href={tab.value ? `/blog?category=${encodeURIComponent(tab.value)}` : '/blog'}
+                        className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                            currentCategory === tab.value
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                    >
+                        {tab.label}
+                    </Link>
+                ))}
+            </div>
+
+            <div className="flex items-center mb-4">
                 <p className="text-sm text-gray-500">
                     {posts.length > 0 ? `총 ${posts.length}개의 글` : ''}
                 </p>

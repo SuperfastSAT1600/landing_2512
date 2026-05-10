@@ -20,6 +20,7 @@ interface EditState {
     introPostSlug: string;
     curriculumPostSlug: string;
     reelUrls: string[];
+    subjects: string[];
 }
 
 interface PostOption {
@@ -42,6 +43,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
         introPostSlug: coach.introPostSlug,
         curriculumPostSlug: coach.curriculumPostSlug,
         reelUrls: coach.reelUrls ?? [],
+        subjects: coach.subjects ?? [],
     });
     const [posts, setPosts] = useState<PostOption[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -111,6 +113,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             introPostSlug: coach.introPostSlug,
             curriculumPostSlug: coach.curriculumPostSlug,
             reelUrls: coach.reelUrls ?? [],
+            subjects: coach.subjects ?? [],
         });
         setEditing(false);
     };
@@ -170,6 +173,37 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         placeholder="이름"
                         className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
                     />
+
+                    {/* 담당 과목 */}
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">담당 과목</label>
+                        <div className="flex gap-3">
+                            {(['SAT', 'AP'] as const).map((subject) => {
+                                const checked = editState.subjects.includes(subject);
+                                return (
+                                    <button
+                                        key={subject}
+                                        type="button"
+                                        onClick={() => {
+                                            setEditState(s => ({
+                                                ...s,
+                                                subjects: checked
+                                                    ? s.subjects.filter(v => v !== subject)
+                                                    : [...s.subjects, subject],
+                                            }));
+                                        }}
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                                            checked
+                                                ? 'bg-blue-600/20 border-blue-500/50 text-blue-400'
+                                                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                                        }`}
+                                    >
+                                        {subject}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
 
                     {/* 프로필 사진 */}
                     <div className="space-y-1.5">
