@@ -21,6 +21,7 @@ import TiptapLink from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Table } from '@tiptap/extension-table';
+import { ColumnResizing } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
@@ -148,7 +149,8 @@ function BlogEditor() {
                 defaultAlignment: 'left',
             }),
             Placeholder.configure({ placeholder: 'Tell your story...' }),
-            Table.configure({ resizable: false }),
+            Table.configure({ resizable: true }),
+            ColumnResizing,
             TableRow,
             TableHeader,
             TableCell,

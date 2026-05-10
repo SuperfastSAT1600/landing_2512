@@ -4,6 +4,7 @@ import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
 import { CellSelection } from '@tiptap/pm/tables';
+import { useState, useEffect } from 'react';
 import {
     Rows3, RowsIcon, Trash2,
     Columns3, ChevronLeft, ChevronRight,
@@ -21,7 +22,24 @@ const btnDanger =
 const divider = <div className="w-px h-5 bg-white/10 mx-0.5" />;
 
 export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
+    const [colWidth, setColWidth] = useState('');
+
+    useEffect(() => {
+        if (!editor) return;
+        const cell = editor.getAttributes('tableCell');
+        const headerCell = editor.getAttributes('tableHeader');
+        const attrs = cell.colwidth ? cell : headerCell.colwidth ? headerCell : {};
+        setColWidth(attrs.colwidth?.[0]?.toString() ?? '');
+    }, [editor?.state.selection, editor]);
+
     if (!editor) return null;
+
+    const applyWidth = () => {
+        const px = parseInt(colWidth, 10);
+        if (!isNaN(px) && px > 0) {
+            editor.chain().focus().setCellAttribute('colwidth', [px]).run();
+        }
+    };
 
     return (
         <BubbleMenu
@@ -42,6 +60,20 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
             }}
         >
             <div className="flex items-center gap-0.5 px-1.5 py-1 bg-[#1e2023] border border-white/10 rounded-lg shadow-xl">
+                {/* Column width input */}
+                <div className="flex items-center gap-1 pr-1.5 border-r border-white/10">
+                    <span className="text-[10px] text-gray-500">W</span>
+                    <input
+                        type="number"
+                        value={colWidth}
+                        onChange={(e) => setColWidth(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && applyWidth()}
+                        onBlur={applyWidth}
+                        placeholder="px"
+                        className="w-14 bg-transparent text-xs text-gray-300 border border-white/10
+                                   rounded px-1 py-0.5 focus:outline-none focus:border-blue-500/50"
+                    />
+                </div>
                 {/* Row controls */}
                 <button
                     onMouseDown={(e) => {
