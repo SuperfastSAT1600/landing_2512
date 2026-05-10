@@ -46,7 +46,7 @@ export const getHomeConfig = unstable_cache(
         return data.config as HomeConfig;
     },
     ['home-config'],
-    { revalidate: 300, tags: ['home-config'] }
+    { tags: ['home-config'] }
 );
 
 export async function saveHomeConfig(config: HomeConfig): Promise<void> {

@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Star } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import styles from './Hero.module.css';
 import HeroBackground from './HeroBackground';
 
@@ -20,7 +20,21 @@ function normalizeCtaLink(link?: string): string {
 
 export default function Hero({ ctaText, ctaLink }: HeroProps) {
     const titleRef = useRef<HTMLHeadingElement>(null);
-    const resolvedLink = normalizeCtaLink(ctaLink);
+    const [dynamicCta, setDynamicCta] = useState({
+        text: ctaText,
+        link: ctaLink,
+    });
+
+    useEffect(() => {
+        fetch('/api/hero-config')
+            .then(r => r.json())
+            .then(data => {
+                setDynamicCta({ text: data.ctaText, link: data.ctaLink });
+            })
+            .catch(() => {});
+    }, []);
+
+    const resolvedLink = normalizeCtaLink(dynamicCta.link);
 
     return (
         <section className={styles.hero}>
@@ -46,7 +60,7 @@ export default function Hero({ ctaText, ctaLink }: HeroProps) {
                                 value: 0,
                             })}
                         >
-                            {ctaText || "25년 11월 SAT목표 점수 달성 인터뷰"}
+                            {dynamicCta.text || "25년 11월 SAT목표 점수 달성 인터뷰"}
                             <ArrowRight size={20} />
                         </Link>
                     </div>
