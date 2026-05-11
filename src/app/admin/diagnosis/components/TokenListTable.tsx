@@ -56,6 +56,8 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingExpiry, setEditingExpiry] = useState('');
   const [editingTimezone, setEditingTimezone] = useState('Asia/Seoul');
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
   const [actionError, setActionError] = useState('');
 
   const formatDate = (s: string) => new Date(s).toLocaleString('ko-KR');
@@ -87,10 +89,18 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
   };
 
   const startEditing = (id: string, expiresAt: string) => {
+    setEditingNameId(null);
     const tz = getPreferredTimezone();
     setEditingId(id);
     setEditingTimezone(tz);
     setEditingExpiry(utcToLocal(expiresAt, tz));
+    setActionError('');
+  };
+
+  const startEditingName = (id: string, name: string) => {
+    setEditingId(null);
+    setEditingNameId(id);
+    setEditingName(name);
     setActionError('');
   };
 
@@ -127,6 +137,26 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
         throw new Error(data.error || '수정 실패');
       }
       setEditingId(null);
+      onRefresh();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : '수정 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleUpdateName = async (id: string) => {
+    if (!editingName.trim()) return;
+    setActionError('');
+    try {
+      const res = await fetch(`/api/admin/diagnosis/tokens/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ studentName: editingName.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '수정 실패');
+      }
+      setEditingNameId(null);
       onRefresh();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : '수정 중 오류가 발생했습니다.');
@@ -184,9 +214,46 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
             {filteredCodes.map((c) => {
               const statusInfo = STATUS_LABELS[c.status];
               const isEditing = editingId === c.id;
+              const isEditingName = editingNameId === c.id;
               return (
                 <tr key={c.id} className="border-b border-gray-700 hover:bg-gray-700/50">
-                  <td className="py-3 px-4">{c.student_name}</td>
+                  <td className="py-3 px-4">
+                    {isEditingName ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleUpdateName(c.id);
+                            if (e.key === 'Escape') setEditingNameId(null);
+                          }}
+                          autoFocus
+                          className="px-2 py-1 bg-gray-600 border border-blue-500 rounded text-white text-xs focus:outline-none w-32"
+                        />
+                        <button
+                          onClick={() => handleUpdateName(c.id)}
+                          className="px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs font-semibold transition-colors"
+                        >
+                          저장
+                        </button>
+                        <button
+                          onClick={() => setEditingNameId(null)}
+                          className="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs transition-colors"
+                        >
+                          취소
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => startEditingName(c.id, c.student_name)}
+                        className="hover:text-blue-400 transition-colors text-left"
+                        title="클릭하여 학생명 수정"
+                      >
+                        {c.student_name}
+                      </button>
+                    )}
+                  </td>
                   <td className="py-3 px-4 text-gray-400 font-mono text-xs">
                     {getVersionLabel(c.test_version_id)}
                   </td>
