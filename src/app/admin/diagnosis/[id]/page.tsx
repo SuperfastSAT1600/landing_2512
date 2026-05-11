@@ -17,6 +17,9 @@ export default function AdminDiagnosisDetailPage() {
   const [statsMap, setStatsMap] = useState<Record<string, QuestionStat> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [editingNameValue, setEditingNameValue] = useState('');
+  const [nameEditError, setNameEditError] = useState('');
 
   const resultId = params.id as string;
 
@@ -69,6 +72,33 @@ export default function AdminDiagnosisDetailPage() {
       for (const s of data.stats as QuestionStat[]) map[s.questionId] = s;
       setStatsMap(map);
     } catch { /* stats are supplementary — fail silently */ }
+  };
+
+  const handleUpdateName = async () => {
+    const trimmed = editingNameValue.trim();
+    if (!trimmed) {
+      setNameEditError('학생명은 비워둘 수 없습니다.');
+      return;
+    }
+    setNameEditError('');
+    try {
+      const res = await fetch(`/api/admin/diagnosis/results/${resultId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': adminKey,
+        },
+        body: JSON.stringify({ studentName: trimmed }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '수정 실패');
+      }
+      setEditingName(false);
+      await fetchResult();
+    } catch (err) {
+      setNameEditError(err instanceof Error ? err.message : '수정 중 오류가 발생했습니다.');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -145,7 +175,50 @@ export default function AdminDiagnosisDetailPage() {
           <div className="space-y-2">
             <div>
               <span className="text-gray-400">이름: </span>
-              <span className="font-semibold">{result.studentName}</span>
+              {editingName ? (
+                <span className="inline-flex flex-col gap-1">
+                  <span className="inline-flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={editingNameValue}
+                      onChange={(e) => setEditingNameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleUpdateName();
+                        if (e.key === 'Escape') { setEditingName(false); setNameEditError(''); }
+                      }}
+                      autoFocus
+                      className="px-2 py-1 bg-gray-600 border border-blue-500 rounded text-white text-sm focus:outline-none w-48"
+                    />
+                    <button
+                      onClick={handleUpdateName}
+                      className="px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs font-semibold transition-colors"
+                    >
+                      저장
+                    </button>
+                    <button
+                      onClick={() => { setEditingName(false); setNameEditError(''); }}
+                      className="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs transition-colors"
+                    >
+                      취소
+                    </button>
+                  </span>
+                  {nameEditError && (
+                    <span className="text-red-400 text-xs">{nameEditError}</span>
+                  )}
+                </span>
+              ) : (
+                <button
+                  onClick={() => {
+                    setEditingNameValue(result.studentName);
+                    setEditingName(true);
+                    setNameEditError('');
+                  }}
+                  className="font-semibold hover:text-blue-400 transition-colors"
+                  title="클릭하여 학생명 수정"
+                >
+                  {result.studentName}
+                </button>
+              )}
             </div>
             <div>
               <span className="text-gray-400">이메일: </span>

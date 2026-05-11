@@ -118,6 +118,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'Failed to update token' }, { status: 500 });
     }
 
+    if (studentName !== undefined && updates.student_name) {
+      const { error: resultCascadeError } = await supabaseAdmin
+        .from('diagnostic_test_results')
+        .update({ student_name: updates.student_name as string })
+        .eq('token_id', id);
+
+      if (resultCascadeError) {
+        console.error('Non-fatal: failed to cascade student_name to result:', resultCascadeError);
+      }
+    }
+
     return NextResponse.json({ success: true, ...updates }, { status: 200 });
   } catch (error) {
     console.error('Error updating token:', error);
