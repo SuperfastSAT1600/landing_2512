@@ -39,28 +39,11 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function ArticleCard({ post }: { post: PostData }) {
-    const thumb = post.featuredImage ?? post.featureImage;
     return (
         <Link
             href={`/blog/${post.id}`}
             className="group relative bg-[#1e2023] border border-white/5 rounded-2xl overflow-hidden hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10 flex flex-col"
         >
-            {thumb ? (
-                <div className="relative aspect-video w-full overflow-hidden">
-                    <Image
-                        src={thumb}
-                        alt={post.title}
-                        fill
-                        unoptimized
-                        className="object-cover transform group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                    />
-                </div>
-            ) : (
-                <div className="aspect-video w-full bg-gradient-to-br from-[#071be9]/20 to-[#6085FF]/10 flex items-center justify-center">
-                    <span className="text-white/20 text-sm">No Image</span>
-                </div>
-            )}
             <div className="p-4 flex-1 flex flex-col">
                 <p className="text-xs text-[#6085FF] font-semibold uppercase tracking-wide mb-1">{post.category}</p>
                 <h3 className="text-white font-bold text-sm leading-snug line-clamp-2 group-hover:text-blue-400 transition-colors mb-2">
