@@ -15,19 +15,29 @@ interface Props {
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tutoring.superfastsat.com';
 
+function bioToPlainText(html: string): string {
+    const text = html.replace(/<[^>]*>/g, ' ').replace(/&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim();
+    const firstSentence = text.split(/(?<=[.!?])\s/)[0] ?? text;
+    return firstSentence.slice(0, 150).trim();
+}
+
 export async function generateMetadata({ params }: Props) {
     const { slug } = await params;
     const coach = await getCoachBySlug(slug);
     if (!coach) return { title: '코치 | SuperfastSAT' };
 
+    const plainBio = coach.bio ? bioToPlainText(coach.bio) : `${coach.name} 코치의 프로필과 커리큘럼을 확인해보세요.`;
+    const ogImage = coach.photo || `${BASE_URL}/og-default.png`;
+
     return {
         title: `${coach.name} 코치 | SuperfastSAT`,
-        description: coach.bio || `${coach.name} 코치의 프로필과 커리큘럼을 확인해보세요.`,
+        description: plainBio,
         openGraph: {
             title: `${coach.name} 코치 | SuperfastSAT`,
-            description: coach.bio ?? undefined,
+            description: plainBio,
             url: `${BASE_URL}/coaches/${slug}`,
             siteName: 'SuperfastSAT',
+            images: [{ url: ogImage, width: 400, height: 400, alt: `${coach.name} 코치` }],
         },
     };
 }
