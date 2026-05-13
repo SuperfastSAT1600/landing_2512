@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import type { PostData } from '@/lib/posts';
 import type { ReviewData } from '@/lib/reviews-data';
 import { ReelsScrollView } from './ReelsScrollView';
@@ -28,15 +28,6 @@ interface CoachPageClientProps {
     reelShortcodes: string[];
 }
 
-function StarRating({ rating }: { rating: number }) {
-    return (
-        <div className="flex gap-0.5">
-            {[1, 2, 3, 4, 5].map(s => (
-                <Star key={s} size={13} className={s <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-            ))}
-        </div>
-    );
-}
 
 function ArticleCard({ post }: { post: PostData }) {
     const thumb = post.featuredImage ?? post.featureImage;
@@ -86,14 +77,19 @@ function ArticleCard({ post }: { post: PostData }) {
 
 function ReviewCard({ review }: { review: ReviewData }) {
     return (
-        <article className="bg-[#09090b] border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-                <StarRating rating={review.rating} />
-                <span className="text-xs text-gray-500">{review.date}</span>
+        <article className="break-inside-avoid mb-4 bg-[#1e293b]/60 backdrop-blur-sm border border-white/8 rounded-2xl p-6 hover:-translate-y-1 hover:border-blue-500/40 transition-all duration-300">
+            {review.title && (
+                <h4 className="text-white font-bold text-base leading-snug mb-3">{review.title}</h4>
+            )}
+            <p className="text-gray-200 text-sm leading-relaxed mb-5">"{review.content}"</p>
+            <div className="h-px bg-white/10 mb-4" />
+            <div>
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white font-semibold text-sm">{review.author}</span>
+                    <span className="text-xs text-gray-400 bg-white/10 px-1.5 py-0.5 rounded">수강생</span>
+                </div>
+                <p className="text-xs text-white/60">{review.grade}<span className="mx-1.5 text-white/20">•</span>{review.date}</p>
             </div>
-            {review.title && <h4 className="text-white font-semibold text-sm">{review.title}</h4>}
-            <p className="text-gray-400 text-sm leading-relaxed line-clamp-5">{review.content}</p>
-            <p className="text-xs text-gray-600 mt-auto">{review.author} · {review.grade}</p>
         </article>
     );
 }
@@ -157,18 +153,18 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
             <section className="pt-28 pb-12 px-4 bg-white">
                 <div className="max-w-xl mx-auto flex flex-col items-center text-center gap-5">
                     {/* 프로필 사진 */}
-                    <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-gray-100 shadow-lg bg-gray-50 flex-shrink-0">
+                    <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 shadow-md">
                         {coach.photo ? (
                             <Image
                                 src={coach.photo}
                                 alt={coach.name}
-                                width={144}
-                                height={144}
-                                className="object-cover w-full h-full"
+                                fill
                                 unoptimized
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, 576px"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-gray-300">
+                            <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-gray-300">
                                 {coach.name.charAt(0).toUpperCase()}
                             </div>
                         )}
@@ -195,7 +191,7 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
             )}
 
             {/* ── 탭 콘텐츠 ── */}
-            <main className={`max-w-3xl mx-auto px-4 ${activeTab === 'intro' ? 'py-10' : 'pt-28 pb-10'}`}>
+            <main className={`mx-auto px-4 ${activeTab === 'reviews' ? 'max-w-4xl' : 'max-w-3xl'} ${activeTab === 'intro' ? 'py-10' : 'pt-28 pb-10'}`}>
 
                 {activeTab === 'intro' && (
                     <section>
@@ -240,7 +236,7 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
                     <section>
                         <p className="text-sm text-gray-500 mb-6">{reviews.length}개의 후기</p>
                         {reviews.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="columns-1 sm:columns-2 gap-4">
                                 {reviews.map(r => <ReviewCard key={r.id} review={r} />)}
                             </div>
                         ) : (
