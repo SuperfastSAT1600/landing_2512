@@ -1077,5 +1077,39 @@
         "contact": "",
         "status": "published",
         "coachSlug": "kimyj"
+    },
+    {
+        "id": "lucy_kim-r-001",
+        "title": "왜 이 답이 맞는지 설명하는 연습이 전부를 바꿨어요",
+        "content": "SAT RW에서 답은 맞히는데 왜 맞는지 설명을 못 했는데, 선생님이 \"이 선택지가 왜 맞고 나머지가 왜 틀린지 말해봐\"를 매번 물어보셨어요. 처음엔 버벅거렸는데 반복하면서 근거를 찾는 게 습관이 됐어요. 그게 에세이 쓸 때도 연결돼서, 주장을 세우고 근거를 붙이는 구조가 자연스러워졌어요.",
+        "author": "briar_f9***",
+        "authorType": "Student",
+        "grade": "11학년",
+        "category": "수업 후기",
+        "rating": 5,
+        "isFeatured": true,
+        "date": "2026.03.20",
+        "marketingConsent": true,
+        "rewardType": "Legacy",
+        "contact": "",
+        "status": "published",
+        "coachSlug": "lucy_kim"
+    },
+    {
+        "id": "lucy_kim-r-002",
+        "title": "역사를 주제로 묶으니까 외울 게 사라졌어요",
+        "content": "AP World History가 외울 게 너무 많아서 막막했는데, 코치님이 사건들을 연도가 아니라 주제 흐름으로 묶어서 설명해주셨어요. 제국의 흥망, 경제 네트워크, 종교 확산 같은 패턴으로 보니까 처음 보는 사건도 어느 흐름인지 연결이 됐어요. 외운 게 아니라 이해한 내용이라 FRQ에서도 비교하고 분석하는 게 훨씬 수월했어요.",
+        "author": "mound_e3***",
+        "authorType": "Student",
+        "grade": "12학년",
+        "category": "수업 후기",
+        "rating": 5,
+        "isFeatured": false,
+        "date": "2025.11.18",
+        "marketingConsent": true,
+        "rewardType": "Legacy",
+        "contact": "",
+        "status": "published",
+        "coachSlug": "lucy_kim"
     }
 ]
