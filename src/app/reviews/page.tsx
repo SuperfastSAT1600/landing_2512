@@ -1,33 +1,31 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { reviews } from '../../lib/reviews';
+import { getPublishedReviews, ReviewData } from '@/lib/reviews-data';
+import { reviews as hardcodedReviews } from '@/lib/reviews';
+import ReviewsPageClient from './ReviewsPageClient';
 import styles from './reviews.module.css';
-import { Star, Quote, ArrowUpRight } from 'lucide-react';
-import { ScrollReveal } from '../components/ScrollReveal';
+
+function toReviewData(r: typeof hardcodedReviews[0]): ReviewData {
+    return {
+        id: r.id,
+        title: r.title,
+        content: r.content,
+        author: r.author,
+        authorType: r.authorType,
+        grade: r.grade,
+        category: r.category,
+        rating: r.rating,
+        isFeatured: r.isFeatured,
+        date: r.date,
+        marketingConsent: false,
+        rewardType: '',
+        contact: '',
+        status: 'published',
+    };
+}
 
 export default function ReviewsPage() {
-    const [highlightedId, setHighlightedId] = useState<string | null>(null);
-
-    useEffect(() => {
-        const handleHash = () => {
-            const hash = window.location.hash;
-            if (hash) {
-                const id = hash.replace('#review-', '');
-                setHighlightedId(id);
-                // Optional: Scroll into view manually if needed, but ID usually handles it.
-                // Reset highlight after 3 seconds
-                setTimeout(() => setHighlightedId(null), 3000);
-            }
-        };
-
-        // Run on mount
-        handleHash();
-
-        // Listen for hash changes
-        window.addEventListener('hashchange', handleHash);
-        return () => window.removeEventListener('hashchange', handleHash);
-    }, []);
+    const jsonReviews = getPublishedReviews();
+    const staticReviews = hardcodedReviews.map(toReviewData);
+    const allReviews = [...staticReviews, ...jsonReviews];
 
     return (
         <main className={styles.container}>
@@ -38,48 +36,7 @@ export default function ReviewsPage() {
                     모든 학생들의 이야기를 확인해보세요.
                 </p>
             </div>
-
-            <div className={styles.grid}>
-                {reviews.map((review) => {
-                    const isHighlighted = review.id === highlightedId;
-                    return (
-                        <ScrollReveal key={review.id}>
-                            <div
-                                id={`review-${review.id}`}
-                                className={`${styles.card} ${isHighlighted ? styles.highlighted : ''}`}
-                                style={{ scrollMarginTop: '150px' }}
-                            >
-                                <div className={styles.cardHeader}>
-                                    <div className={styles.headerTop}>
-                                        <span className={styles.categoryBadge}>{review.category}</span>
-                                        <ArrowUpRight className={styles.actionIcon} size={24} />
-                                    </div>
-                                </div>
-
-                                <h3 className={styles.reviewTitle}>{review.title}</h3>
-                                {/* Full text displayed directly - Pinterest style */}
-                                <p className={styles.fullContent}>"{review.content}"</p>
-
-                                <div className={styles.divider} />
-
-                                <div className={styles.authorArea}>
-                                    <div className={styles.info}>
-                                        <div className={styles.nameRow}>
-                                            <span className={styles.name}>{review.author}</span>
-                                            <span className={styles.authorType}>
-                                                {review.authorType === 'Student' ? '수강생' : '학부모'}
-                                            </span>
-                                        </div>
-                                        <p className={styles.metaInfo}>
-                                            {review.grade} <span className={styles.dateDivider}>•</span> {review.date}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </ScrollReveal>
-                    );
-                })}
-            </div>
+            <ReviewsPageClient reviews={allReviews} />
         </main>
     );
 }
