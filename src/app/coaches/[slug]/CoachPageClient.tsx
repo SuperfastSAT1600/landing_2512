@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Clock, ArrowUpRight } from 'lucide-react';
+import { Clock, ArrowUpRight, ChevronLeft } from 'lucide-react';
 import type { PostData } from '@/lib/posts';
 import type { ReviewData } from '@/lib/reviews-data';
 import { ReelsScrollView } from './ReelsScrollView';
@@ -131,6 +131,14 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
 
                     {/* 탭 메뉴 */}
                     <nav className="flex flex-1 min-w-0 items-center gap-3 md:gap-8 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+                        <Link
+                            href="/coaches"
+                            className="flex items-center gap-1 py-[10px] text-[0.95rem] font-medium whitespace-nowrap text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                        >
+                            <ChevronLeft size={15} />
+                            전체 코치
+                        </Link>
+                        <span className="text-white/20 flex-shrink-0">|</span>
                         {tabs.map(({ key, label }) => (
                             <button
                                 key={key}
