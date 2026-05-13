@@ -189,7 +189,7 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
                     </div>
 
                     {/* 이름 */}
-                    <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">{coach.name}</h1>
+                    <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">{coach.name} 코치</h1>
 
                     {/* 구분선 1: 이름 ↔ 소개 */}
                     <hr className="w-full border-gray-200" />
