@@ -243,7 +243,22 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
 
                 {activeTab === 'reviews' && (
                     <section>
-                        <p className="text-sm text-gray-500 mb-6">{reviews.length}개의 후기</p>
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4"
+                                style={{
+                                    background: 'linear-gradient(to right, #6085FF, #071be9, #6085FF)',
+                                    backgroundSize: '200% auto',
+                                    WebkitBackgroundClip: 'text',
+                                    backgroundClip: 'text',
+                                    color: 'transparent',
+                                }}>
+                                수강생들의 생생한 후기.
+                            </h2>
+                            <p className="text-lg text-gray-400 leading-relaxed">
+                                {coach.name} 코치님과 목표를 달성한<br />
+                                모든 학생들의 이야기를 확인해보세요.
+                            </p>
+                        </div>
                         {reviews.length > 0 ? (
                             <div className="columns-1 sm:columns-2 gap-4">
                                 {reviews.map(r => <ReviewCard key={r.id} review={r} />)}
