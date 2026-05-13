@@ -1,10 +1,11 @@
 import styles from './LatestPosts.module.css';
 import { ScrollReveal } from './ScrollReveal';
 import { getSortedPostsData } from '../../lib/posts';
+import { excludeHiddenCategories } from '../../lib/posts-filter';
 import BlogList from '../blog/BlogList';
 
 export default async function LatestPosts() {
-    const allPosts = await getSortedPostsData();
+    const allPosts = excludeHiddenCategories(await getSortedPostsData());
 
     return (
         <section className={styles.section}>
