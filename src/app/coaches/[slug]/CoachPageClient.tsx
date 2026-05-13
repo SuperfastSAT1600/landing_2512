@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star } from 'lucide-react';
+import { Star, Clock } from 'lucide-react';
 import type { PostData } from '@/lib/posts';
 import type { ReviewData } from '@/lib/reviews-data';
 import { ReelsScrollView } from './ReelsScrollView';
@@ -39,22 +39,48 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function ArticleCard({ post }: { post: PostData }) {
+    const thumb = post.featuredImage ?? post.featureImage;
     return (
-        <Link
-            href={`/blog/${post.id}`}
-            className="group relative bg-[#1e2023] border border-white/5 rounded-2xl overflow-hidden hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10 flex flex-col"
-        >
-            <div className="p-4 flex-1 flex flex-col">
-                <p className="text-xs text-[#6085FF] font-semibold uppercase tracking-wide mb-1">{post.category}</p>
-                <h3 className="text-white font-bold text-sm leading-snug line-clamp-2 group-hover:text-blue-400 transition-colors mb-2">
-                    {post.title}
+        <div className="group relative bg-[#1e2023] rounded-2xl overflow-hidden border border-white/5 hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10 flex flex-col">
+            <div className="relative aspect-[16/9] overflow-hidden bg-gray-800">
+                {thumb ? (
+                    <Image
+                        src={thumb}
+                        alt={post.title}
+                        fill
+                        unoptimized
+                        className="object-cover transform group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-600">
+                        <span className="text-4xl font-serif italic opacity-20">Aa</span>
+                    </div>
+                )}
+                <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10">
+                    {post.category}
+                </div>
+            </div>
+            <div className="p-5 flex-1 flex flex-col">
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+                    <Clock size={11} />
+                    <span>{post.date}</span>
+                </div>
+                <h3 className="text-white font-bold text-sm leading-snug line-clamp-2 mb-3 flex-1">
+                    <Link href={`/blog/${post.id}`} className="after:absolute after:inset-0 group-hover:text-blue-400 transition-colors">
+                        {post.title}
+                    </Link>
                 </h3>
-                <p className="text-gray-500 text-xs mb-4 flex-1">{post.date}</p>
+                {(post.excerpt || post.description) && (
+                    <p className="text-gray-400 text-xs leading-relaxed line-clamp-2 mb-4">
+                        {post.excerpt || post.description}
+                    </p>
+                )}
                 <div className="flex items-center text-blue-400 text-sm font-bold group-hover:translate-x-1 transition-transform">
                     글 읽기 <span className="ml-1">→</span>
                 </div>
             </div>
-        </Link>
+        </div>
     );
 }
 
@@ -173,11 +199,6 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
 
                 {activeTab === 'intro' && (
                     <section>
-                        {introThumbnail && (
-                            <div className="group relative w-full aspect-[16/9] rounded-2xl overflow-hidden mb-8 bg-gray-800 border border-white/10 hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
-                                <Image src={introThumbnail} alt="코치 소개" fill unoptimized className="object-cover transform group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 100vw, 768px" />
-                            </div>
-                        )}
                         {introHtml ? (
                             <div className={PROSE} dangerouslySetInnerHTML={{ __html: introHtml }} />
                         ) : coach.bio ? (
@@ -190,11 +211,6 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
 
                 {activeTab === 'curriculum' && (
                     <section>
-                        {curriculumThumbnail && (
-                            <div className="group relative w-full aspect-[16/9] rounded-2xl overflow-hidden mb-8 bg-gray-800 border border-white/10 hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
-                                <Image src={curriculumThumbnail} alt="커리큘럼" fill unoptimized className="object-cover transform group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 100vw, 768px" />
-                            </div>
-                        )}
                         {curriculumHtml ? (
                             <div className={PROSE} dangerouslySetInnerHTML={{ __html: curriculumHtml }} />
                         ) : (
