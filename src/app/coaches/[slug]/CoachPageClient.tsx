@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Clock } from 'lucide-react';
+import { Clock, ArrowUpRight } from 'lucide-react';
 import type { PostData } from '@/lib/posts';
 import type { ReviewData } from '@/lib/reviews-data';
 import { ReelsScrollView } from './ReelsScrollView';
@@ -79,7 +79,13 @@ function ArticleCard({ post }: { post: PostData }) {
 function ReviewCard({ review }: { review: ReviewData }) {
     return (
         <ScrollReveal>
-            <article className="break-inside-avoid mb-4 bg-[#1e293b]/40 backdrop-blur-sm border border-white/8 rounded-2xl p-10 hover:-translate-y-2.5 hover:scale-[1.02] hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] hover:bg-[rgba(40,48,70,0.7)] hover:border-[#6085FF]/50 hover:z-10 transition-all duration-300">
+            <article className="group break-inside-avoid mb-4 bg-[#1e293b]/40 backdrop-blur-sm border border-white/8 rounded-2xl p-10 hover:-translate-y-2.5 hover:scale-[1.02] hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] hover:bg-[rgba(40,48,70,0.7)] hover:border-[#6085FF]/50 hover:z-10 transition-all duration-300">
+                <div className="flex justify-between items-start mb-6">
+                    <span className="text-xs font-bold text-[#071be9] bg-white px-3 py-1 rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.2)]">
+                        {review.category}
+                    </span>
+                    <ArrowUpRight size={24} className="text-white/20 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
+                </div>
                 {review.title && (
                     <h4 className="text-white font-bold text-[1.35rem] leading-snug mb-3">{review.title}</h4>
                 )}
