@@ -8,6 +8,7 @@ import type { PostData } from '@/lib/posts';
 import type { ReviewData } from '@/lib/reviews-data';
 import { ReelsScrollView } from './ReelsScrollView';
 import { ScrollReveal } from '@/app/components/ScrollReveal';
+import Footer from '@/app/components/Footer';
 
 type Tab = 'intro' | 'curriculum' | 'articles' | 'reels' | 'reviews';
 
@@ -270,6 +271,7 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
                 )}
 
             </main>
+            <Footer />
             </>
             )}
         </div>
