@@ -95,7 +95,7 @@ function ReviewCard({ review }: { review: ReviewData }) {
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <span className="text-white font-semibold text-sm">{review.author}</span>
-                        <span className="text-xs text-gray-400 bg-white/10 px-1.5 py-0.5 rounded">수강생</span>
+                        <span className="text-xs text-gray-400 bg-white/10 px-1.5 py-0.5 rounded">{review.authorType === 'Student' ? '수강생' : '학부모'}</span>
                     </div>
                     <p className="text-xs text-white/60">{review.grade}<span className="mx-1.5 text-white/20">•</span>{review.date}</p>
                 </div>

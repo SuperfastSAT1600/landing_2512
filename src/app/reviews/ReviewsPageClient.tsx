@@ -10,17 +10,23 @@ export default function ReviewsPageClient({ reviews }: { reviews: ReviewData[] }
     const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
     useEffect(() => {
+        let timerId: ReturnType<typeof setTimeout> | null = null;
+
         const handleHash = () => {
             const hash = window.location.hash;
             if (hash) {
                 const id = hash.replace('#review-', '');
                 setHighlightedId(id);
-                setTimeout(() => setHighlightedId(null), 3000);
+                if (timerId) clearTimeout(timerId);
+                timerId = setTimeout(() => setHighlightedId(null), 3000);
             }
         };
         handleHash();
         window.addEventListener('hashchange', handleHash);
-        return () => window.removeEventListener('hashchange', handleHash);
+        return () => {
+            window.removeEventListener('hashchange', handleHash);
+            if (timerId) clearTimeout(timerId);
+        };
     }, []);
 
     return (
@@ -32,7 +38,6 @@ export default function ReviewsPageClient({ reviews }: { reviews: ReviewData[] }
                         <div
                             id={`review-${review.id}`}
                             className={`${styles.card} ${isHighlighted ? styles.highlighted : ''}`}
-                            style={{ scrollMarginTop: '150px' }}
                         >
                             <div className={styles.cardHeader}>
                                 <div className={styles.headerTop}>

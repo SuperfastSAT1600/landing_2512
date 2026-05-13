@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { cache } from 'react';
 
 const reviewsPath = path.join(process.cwd(), 'src/data/reviews.json');
 
@@ -23,18 +24,18 @@ export interface ReviewData {
     coachSlug?: string; // 코치별 리뷰 연결용
 }
 
-// Read reviews
-export function getReviews(): ReviewData[] {
+// Read reviews — memoized per request so multiple callers (published, featured, coach page) share one disk read
+export const getReviews = cache((): ReviewData[] => {
     if (!fs.existsSync(reviewsPath)) {
         return [];
     }
     const data = fs.readFileSync(reviewsPath, 'utf8');
     try {
         return JSON.parse(data);
-    } catch (e) {
+    } catch {
         return [];
     }
-}
+});
 
 // Get Published Reviews (for public site)
 export function getPublishedReviews(): ReviewData[] {

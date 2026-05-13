@@ -22,9 +22,10 @@ function toReviewData(r: typeof hardcodedReviews[0]): ReviewData {
     };
 }
 
+const staticReviews: ReviewData[] = hardcodedReviews.map(toReviewData);
+
 export default function ReviewsPage() {
     const jsonReviews = getPublishedReviews();
-    const staticReviews = hardcodedReviews.map(toReviewData);
     const allReviews = [...staticReviews, ...jsonReviews];
 
     return (
