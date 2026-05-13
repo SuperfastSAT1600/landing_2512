@@ -211,6 +211,11 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
 
                 {activeTab === 'curriculum' && (
                     <section>
+                        {curriculumThumbnail && (
+                            <div className="group relative w-full aspect-[16/9] rounded-2xl overflow-hidden mb-8 bg-gray-800 border border-white/10 hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
+                                <Image src={curriculumThumbnail} alt="커리큘럼" fill unoptimized className="object-cover transform group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 100vw, 768px" />
+                            </div>
+                        )}
                         {curriculumHtml ? (
                             <div className={PROSE} dangerouslySetInnerHTML={{ __html: curriculumHtml }} />
                         ) : (
