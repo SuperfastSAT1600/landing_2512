@@ -81,9 +81,9 @@ function ReviewCard({ review }: { review: ReviewData }) {
         <ScrollReveal>
             <article className="break-inside-avoid mb-4 bg-[#1e293b]/40 backdrop-blur-sm border border-white/8 rounded-2xl p-10 hover:-translate-y-2.5 hover:scale-[1.02] hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] hover:border-blue-500/40 transition-all duration-300">
                 {review.title && (
-                    <h4 className="text-white font-bold text-base leading-snug mb-3">{review.title}</h4>
+                    <h4 className="text-white font-bold text-[1.35rem] leading-snug mb-3">{review.title}</h4>
                 )}
-                <p className="text-gray-200 text-sm leading-relaxed mb-5">"{review.content}"</p>
+                <p className="text-gray-200 text-base leading-[1.7] mb-5">"{review.content}"</p>
                 <div className="h-px bg-white/10 mb-4" />
                 <div>
                     <div className="flex items-center gap-2 mb-1">
