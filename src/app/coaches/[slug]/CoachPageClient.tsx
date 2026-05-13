@@ -7,6 +7,7 @@ import { Clock } from 'lucide-react';
 import type { PostData } from '@/lib/posts';
 import type { ReviewData } from '@/lib/reviews-data';
 import { ReelsScrollView } from './ReelsScrollView';
+import { ScrollReveal } from '@/app/components/ScrollReveal';
 
 type Tab = 'intro' | 'curriculum' | 'articles' | 'reels' | 'reviews';
 
@@ -77,20 +78,22 @@ function ArticleCard({ post }: { post: PostData }) {
 
 function ReviewCard({ review }: { review: ReviewData }) {
     return (
-        <article className="break-inside-avoid mb-4 bg-[#1e293b]/60 backdrop-blur-sm border border-white/8 rounded-2xl p-6 hover:-translate-y-1 hover:border-blue-500/40 transition-all duration-300">
-            {review.title && (
-                <h4 className="text-white font-bold text-base leading-snug mb-3">{review.title}</h4>
-            )}
-            <p className="text-gray-200 text-sm leading-relaxed mb-5">"{review.content}"</p>
-            <div className="h-px bg-white/10 mb-4" />
-            <div>
-                <div className="flex items-center gap-2 mb-1">
-                    <span className="text-white font-semibold text-sm">{review.author}</span>
-                    <span className="text-xs text-gray-400 bg-white/10 px-1.5 py-0.5 rounded">수강생</span>
+        <ScrollReveal>
+            <article className="break-inside-avoid mb-4 bg-[#1e293b]/40 backdrop-blur-sm border border-white/8 rounded-2xl p-10 hover:-translate-y-2.5 hover:scale-[1.02] hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] hover:border-blue-500/40 transition-all duration-300">
+                {review.title && (
+                    <h4 className="text-white font-bold text-base leading-snug mb-3">{review.title}</h4>
+                )}
+                <p className="text-gray-200 text-sm leading-relaxed mb-5">"{review.content}"</p>
+                <div className="h-px bg-white/10 mb-4" />
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-white font-semibold text-sm">{review.author}</span>
+                        <span className="text-xs text-gray-400 bg-white/10 px-1.5 py-0.5 rounded">수강생</span>
+                    </div>
+                    <p className="text-xs text-white/60">{review.grade}<span className="mx-1.5 text-white/20">•</span>{review.date}</p>
                 </div>
-                <p className="text-xs text-white/60">{review.grade}<span className="mx-1.5 text-white/20">•</span>{review.date}</p>
-            </div>
-        </article>
+            </article>
+        </ScrollReveal>
     );
 }
 
