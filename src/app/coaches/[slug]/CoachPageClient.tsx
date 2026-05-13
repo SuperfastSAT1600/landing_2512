@@ -79,7 +79,7 @@ function ArticleCard({ post }: { post: PostData }) {
 function ReviewCard({ review }: { review: ReviewData }) {
     return (
         <ScrollReveal>
-            <article className="break-inside-avoid mb-4 bg-[#1e293b]/40 backdrop-blur-sm border border-white/8 rounded-2xl p-10 hover:-translate-y-2.5 hover:scale-[1.02] hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] hover:border-blue-500/40 transition-all duration-300">
+            <article className="break-inside-avoid mb-4 bg-[#1e293b]/40 backdrop-blur-sm border border-white/8 rounded-2xl p-10 hover:-translate-y-2.5 hover:scale-[1.02] hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] hover:bg-[rgba(40,48,70,0.7)] hover:border-[#6085FF]/50 hover:z-10 transition-all duration-300">
                 {review.title && (
                     <h4 className="text-white font-bold text-[1.35rem] leading-snug mb-3">{review.title}</h4>
                 )}
