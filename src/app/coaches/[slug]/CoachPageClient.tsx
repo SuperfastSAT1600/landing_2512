@@ -121,16 +121,47 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
     return (
         <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
 
-            {/* ── 상단 네비게이션 (랜딩 헤더와 동일 스타일) ── */}
+            {/* ── 상단 네비게이션 ── */}
             <header className="fixed top-0 w-full z-50 bg-[#050816] border-b border-white/10">
-                <div className="max-w-[1400px] mx-auto px-[5%] h-14 flex items-center gap-4 md:gap-12">
-                    {/* 로고 */}
-                    <Link href="/" className="flex-shrink-0">
-                        <Image src="/logo_header.png" alt="SuperfastSAT" height={24} width={130} className="h-5 md:h-6 w-auto object-contain" unoptimized />
-                    </Link>
 
-                    {/* 탭 메뉴 */}
-                    <nav className="flex flex-1 min-w-0 items-center gap-3 md:gap-8 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+                {/* 모바일: 1행 - 로고 + 뒤로가기 */}
+                <div className="md:hidden flex items-center justify-between px-[5%] h-10 border-b border-white/5">
+                    <Link href="/" className="flex-shrink-0">
+                        <Image src="/logo_header.png" alt="SuperfastSAT" height={24} width={130} className="h-5 w-auto object-contain" unoptimized />
+                    </Link>
+                    <Link href="/coaches" className="flex items-center gap-1 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                        <ChevronLeft size={14} />
+                        전체 코치
+                    </Link>
+                </div>
+
+                {/* 모바일: 2행 - 탭 */}
+                <div className="md:hidden relative px-[5%]">
+                    <nav className="flex items-center gap-6 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+                        {tabs.map(({ key, label }) => (
+                            <button
+                                key={key}
+                                onClick={() => setActiveTab(key)}
+                                className={`relative h-11 flex items-center text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+                                    activeTab === key ? 'text-white' : 'text-gray-400'
+                                }`}
+                            >
+                                {label}
+                                {activeTab === key && (
+                                    <span className="absolute bottom-1.5 left-0 w-full h-0.5 bg-white rounded-sm" />
+                                )}
+                            </button>
+                        ))}
+                    </nav>
+                    <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-[#050816] to-transparent" />
+                </div>
+
+                {/* 데스크탑: 1행 (기존 유지) */}
+                <div className="hidden md:flex max-w-[1400px] mx-auto px-[5%] h-14 items-center gap-12">
+                    <Link href="/" className="flex-shrink-0">
+                        <Image src="/logo_header.png" alt="SuperfastSAT" height={24} width={130} className="h-6 w-auto object-contain" unoptimized />
+                    </Link>
+                    <nav className="flex flex-1 min-w-0 items-center gap-8 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
                         <Link
                             href="/coaches"
                             className="flex items-center gap-1 py-[10px] text-[0.95rem] font-medium whitespace-nowrap text-gray-400 hover:text-white transition-colors flex-shrink-0"
@@ -159,7 +190,7 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
 
             {/* ── 릴스 탭: 풀스크린 스크롤-스냅 (히어로/main 불필요) ── */}
             {activeTab === 'reels' && (
-                <div className="pt-14">
+                <div className="pt-20 md:pt-14">
                     <ReelsScrollView shortcodes={reelShortcodes} />
                 </div>
             )}
