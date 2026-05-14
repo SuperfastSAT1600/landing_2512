@@ -112,7 +112,7 @@ export default function CoachPageClient({ coach, introHtml, introThumbnail, curr
 
     const tabs: { key: Tab; label: string }[] = [
         { key: 'intro', label: '코치 소개' },
-        // { key: 'curriculum', label: '커리큘럼' }, // 추후 다른 메뉴로 교체 예정
+        ...(curriculumHtml ? [{ key: 'curriculum' as const, label: '커리큘럼' }] : []),
         { key: 'articles', label: '아티클' },
         ...(reelShortcodes.length > 0 ? [{ key: 'reels' as const, label: '영상' }] : []),
         { key: 'reviews', label: '수업 후기' },
