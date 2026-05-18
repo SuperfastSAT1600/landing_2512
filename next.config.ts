@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    '/coaches/[slug]': ['./src/data/**/*'],
+  },
   async redirects() {
     return [
       { source: '/admin/naver', destination: '/admin/traffic', permanent: false },
