@@ -144,7 +144,7 @@ export default function NaverStatsPage() {
         <p className="font-semibold text-white">네이버 블로그 링크 설정 방법</p>
         <p>모든 포스팅 하단 링크를 아래 URL 하나로 통일하세요. 포스팅별 구분은 자동으로 됩니다.</p>
         <code className="block bg-black/30 rounded px-3 py-2 text-blue-300 text-xs mt-2 break-all">
-          https://superfastsat.com/api/naver-redirect
+          https://tutoring.superfastsat.com/api/naver-redirect
         </code>
       </section>
     </div>
