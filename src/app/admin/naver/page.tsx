@@ -142,9 +142,12 @@ export default function NaverStatsPage() {
       {/* 사용 안내 */}
       <section className="bg-[#1e2023] rounded-xl border border-white/5 p-6 text-sm text-gray-400 space-y-2">
         <p className="font-semibold text-white">네이버 블로그 링크 설정 방법</p>
-        <p>모든 포스팅 하단 링크를 아래 URL 하나로 통일하세요. 포스팅별 구분은 자동으로 됩니다.</p>
+        <p>포스팅마다 <code className="text-yellow-400 bg-black/30 px-1 rounded">?post=</code> 뒤에 포스팅 주제를 짧게 적어주세요.</p>
         <code className="block bg-black/30 rounded px-3 py-2 text-blue-300 text-xs mt-2 break-all">
-          https://tutoring.superfastsat.com/api/naver-redirect
+          https://tutoring.superfastsat.com/api/naver-redirect?post=경계선분석
+        </code>
+        <code className="block bg-black/30 rounded px-3 py-2 text-blue-300 text-xs break-all">
+          https://tutoring.superfastsat.com/api/naver-redirect?post=독해패턴
         </code>
       </section>
     </div>
