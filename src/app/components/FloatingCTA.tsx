@@ -6,7 +6,7 @@ import Link from 'next/link';
 import styles from './FloatingCTA.module.css';
 import { useLiveStatus } from '../context/LiveStatusContext';
 
-const CONSULT_URL = "https://forms.gle/BsGf1bixgpr1TLNH6";
+const CONSULT_URL = "https://forms.gle/Bm8jtojwf5iGVU9V7";
 const KAKAO_URL = "https://kakao-redirect-chi.vercel.app/?src=writerB_260221_튜터링_랜딩_페이지";
 
 interface DiscountButton {
