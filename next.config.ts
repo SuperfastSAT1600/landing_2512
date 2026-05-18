@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: '/admin/naver', destination: '/admin/traffic', permanent: false },
+    ]
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',
