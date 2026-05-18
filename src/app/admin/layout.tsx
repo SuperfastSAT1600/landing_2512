@@ -12,6 +12,7 @@ const NAV_ITEMS = [
     { href: '/admin/reviews', label: 'Reviews', icon: '⭐' },
     { href: '/admin/coaches', label: 'Coaches', icon: '👨‍🏫' },
     { href: '/admin/home', label: 'Homepage', icon: '🏠' },
+    { href: '/admin/naver', label: 'Naver 유입', icon: '📊' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
