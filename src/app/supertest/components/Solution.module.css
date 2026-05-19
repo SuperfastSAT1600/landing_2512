@@ -1,0 +1,543 @@
+@keyframes participantPulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes blinkDot {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
+
+@keyframes cardFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes summaryFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.section {
+    padding: 100px 5%;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 64px;
+}
+
+.sectionLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: linear-gradient(to right, #6085FF, #071be9, #6085FF);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 16px;
+}
+
+.title {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    line-height: 1.2;
+    word-break: keep-all;
+}
+
+.cards {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Card base */
+.card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 20px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+
+.card.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.card[data-delay='100'] {
+    transition-delay: 100ms;
+}
+
+.card[data-delay='200'] {
+    transition-delay: 200ms;
+}
+
+.card[data-delay='300'] {
+    transition-delay: 300ms;
+}
+
+/* Visual area */
+.visual {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.visual1 {
+    background: linear-gradient(
+        135deg,
+        rgba(7, 27, 233, 0.12) 0%,
+        rgba(7, 27, 233, 0.04) 100%
+    );
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 16px;
+}
+
+.visual2 {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 166, 166, 0.08) 0%,
+        rgba(7, 27, 233, 0.05) 100%
+    );
+    padding: 0;
+    align-items: stretch;
+}
+
+.visual3 {
+    background: linear-gradient(
+        135deg,
+        rgba(96, 133, 255, 0.1) 0%,
+        rgba(7, 27, 233, 0.04) 100%
+    );
+    padding: 16px 12px;
+    align-items: flex-start;
+}
+
+.visual4 {
+    background: linear-gradient(
+        135deg,
+        rgba(234, 179, 8, 0.08) 0%,
+        rgba(234, 179, 8, 0.02) 100%
+    );
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 24px;
+    align-items: stretch;
+}
+
+/* Text area */
+.text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+}
+
+.solutionNumber {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #071be9;
+    margin-bottom: 4px;
+}
+
+.cardTitle {
+    font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+    word-break: keep-all;
+}
+
+.cardDesc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    word-break: keep-all;
+}
+
+/* --- Card 1: Live Video Grid --- */
+.liveBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.liveBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 9999px;
+}
+
+.liveDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    flex-shrink: 0;
+    animation: blinkDot 1.5s ease-in-out infinite;
+}
+
+.liveTimer {
+    font-size: 1rem;
+    font-weight: 800;
+    font-family: 'Courier New', Courier, monospace;
+    color: var(--text-primary);
+    letter-spacing: 0.06em;
+    opacity: 0.8;
+}
+
+/* 2×2 video grid */
+.videoGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.videoTile {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 10px 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.videoTileMe {
+    border-color: rgba(34, 197, 94, 0.4);
+    box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.12);
+}
+
+.videoFooter {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+}
+
+.videoActiveDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    flex-shrink: 0;
+    animation: blinkDot 2s ease-in-out infinite;
+}
+
+.videoCity {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.videoMeTag {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 1px 6px;
+    border-radius: 9999px;
+}
+
+/* --- Card 2: Skill Tree --- */
+.skillList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.skillNode {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid;
+}
+
+.skill_weak {
+    background: rgba(248, 113, 113, 0.15);
+    border-color: rgba(248, 113, 113, 0.3);
+}
+
+.skill_medium {
+    background: rgba(234, 179, 8, 0.15);
+    border-color: rgba(234, 179, 8, 0.3);
+}
+
+.skill_strong {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.skillHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.skillDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.skill_weak .skillDot {
+    background: #f87171;
+}
+
+.skill_medium .skillDot {
+    background: #eab308;
+}
+
+.skill_strong .skillDot {
+    background: #22c55e;
+}
+
+.skillName {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.skillScore {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.skillBarBg {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.skillBarFill {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(to right, #6085FF, #071be9, #6085FF);
+    background-size: 200% auto;
+}
+
+/* --- Card 3: Calendar --- */
+.calendarWrap {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.calMonth {
+    flex: 1;
+    min-width: 0;
+}
+
+.calHeader {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.65);
+    letter-spacing: 0.06em;
+    text-align: center;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.calGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.calWeekday {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.3);
+    text-align: center;
+    padding: 2px 0 4px;
+    letter-spacing: 0.03em;
+}
+
+.calCell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    position: relative;
+    gap: 1px;
+}
+
+.calTestDay {
+    background: rgba(96, 133, 255, 0.12);
+    border: 1px solid rgba(96, 133, 255, 0.3);
+}
+
+.calDayNum {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1;
+}
+
+.calTestDay .calDayNum {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 700;
+}
+
+
+.calCheck {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+/* --- Card 4: Vocab --- */
+.vocabList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.vocabItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid;
+}
+
+.vocabUnknown {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.vocabKnown {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.vocabWord {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-style: italic;
+}
+
+.vocabIcon {
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.vocabKnown .vocabIcon {
+    color: #22c55e;
+}
+
+.vocabSummary {
+    margin-top: 4px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(96, 133, 255, 0.1);
+    border: 1px solid rgba(96, 133, 255, 0.25);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #6085ff;
+    text-align: center;
+    animation: summaryFadeIn 0.5s ease both;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .section {
+        padding: 64px 1.25rem;
+    }
+
+    .card {
+        padding: 32px 24px;
+    }
+
+    .header {
+        margin-bottom: 40px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .participantPill,
+    .liveDot {
+        animation: none;
+    }
+
+    .skillBarFill {
+        transition: none;
+    }
+
+    .timelineNode {
+        opacity: 1;
+        transition: none;
+    }
+}
