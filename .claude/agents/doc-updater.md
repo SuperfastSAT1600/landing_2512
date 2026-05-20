@@ -99,8 +99,6 @@ Synchronize documentation with code changes. Keep docs current and accurate.
 
 ## Resources
 
-- PR Description Template: `.claude/templates/pr-description.md.template`
-- API Documentation Template: `.claude/templates/api-documentation.md`
 - Documentation Patterns: `.claude/skills/documentation-patterns/`
 
 ## Recommended MCPs

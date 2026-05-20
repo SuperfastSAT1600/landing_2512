@@ -50,12 +50,26 @@ Skills now use directories for bundled resources:
 | **prompt-engineering/** | LLM prompt engineering best practices (sourced from Anthropic, OpenAI guides) | AI integration | - |
 | **rag-patterns/** | Retrieval-Augmented Generation implementation (sourced from LangChain, academic research) | RAG system design | - |
 
+## Content & Publishing
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **naver-blog/** | Naver blog platform optimization: Markdown structure, line-break rhythm, hashtag strategy, reader profiles, quick summaries | Writing Naver blog posts | - |
+| **ghost-blog/** | Ghost CMS SEO/GEO optimization: meta tags, FAQ schema, TL;DR boxes, quote capsules, internal linking | Writing Ghost blog posts with SEO focus | - |
+| **landing-blog/** | Landing page blog integration: JSON-LD schemas, Supabase field mapping, CTA sections, 8,000+ character depth | Writing landing page blog posts with database integration | - |
+
 ## DevOps & Infrastructure
 
 | Skill | Coverage | Load When | Resources |
 |-------|----------|-----------|-----------|
 | **docker-patterns/** | Dockerfile, multi-stage builds, compose | Containerization | references/ |
 | **github-actions/** | CI/CD workflows with GitHub Actions (sourced from official GitHub docs) | CI/CD setup | - |
+
+## Video / Motion
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **remotion/** | Programmatic video creation with React (Remotion). Core mechanics + motion design (charts, typography, springs, social-media) + educational extras (KaTeX math, code highlighting, pedagogical structure for K-12/SAT/undergrad). | Building/editing Remotion videos, especially educational content | rules/ (44 topics) |
 
 ## Project Utilities
 
@@ -84,13 +98,6 @@ Generative Engine Optimization (GEO) skills for improving visibility in AI-power
 | **geo-report-pdf/** | Professional PDF report generation with visualizations | Client-ready PDF reports | - |
 | **geo-schema/** | JSON-LD schema detection, validation, generation | Schema markup work | templates/ |
 | **geo-technical/** | Technical SEO: SSR dependency, Core Web Vitals, security for AI crawlers | Technical GEO audits | - |
-
-## Content Creation
-
-| Skill | Coverage | Load When | Resources |
-|-------|----------|-----------|-----------|
-| **blog-writing-patterns** | SAT prep blog structure, tone, SEO patterns, engagement techniques | Writing blog posts | - |
-| **superfastsat-blog/** | 네이버/고스트/랜딩 페이지용 SAT 블로그 포스팅 (배코치 문체, QA 체크, E-E-A-T) | 블로그 포스팅 작성 시 | - |
 
 ## Thinking & Strategy
 
@@ -155,6 +162,9 @@ Instead of loading all 23 skill directories (~45k tokens), reference this index 
 | **CI/CD Setup** | github-actions, docker-patterns | github-actions/SKILL.md, docker-patterns/SKILL.md |
 | **AI/LLM Integration** | prompt-engineering, rag-patterns | prompt-engineering/SKILL.md, rag-patterns/SKILL.md |
 | **GEO / AI SEO Audit** | geo, geo-audit, + specific sub-skills | geo/SKILL.md, geo-audit/SKILL.md |
+| **Blog Content (Naver)** | naver-blog | naver-blog/SKILL.md |
+| **Blog Content (Ghost/SEO)** | ghost-blog | ghost-blog/SKILL.md |
+| **Landing Page Blog** | landing-blog | landing-blog/SKILL.md |
 | **Creating New Skill** | skill-creator | skill-creator/SKILL.md |
 
 ## Benefits

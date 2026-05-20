@@ -55,3 +55,32 @@ export async function saveHomeConfig(config: HomeConfig): Promise<void> {
         .upsert({ id: 'home', config });
     revalidateTag('home-config', 'default');
 }
+
+// ── SuperTest config ────────────────────────────────────────────────────────
+
+export interface SupertestConfig {
+    remainingSpots: number;
+}
+
+const DEFAULT_SUPERTEST_CONFIG: SupertestConfig = { remainingSpots: 30 };
+
+export const getSupertestConfig = unstable_cache(
+    async (): Promise<SupertestConfig> => {
+        const { data, error } = await supabase
+            .from('site_config')
+            .select('config')
+            .eq('id', 'supertest')
+            .single();
+        if (error || !data) return DEFAULT_SUPERTEST_CONFIG;
+        return data.config as SupertestConfig;
+    },
+    ['supertest-config'],
+    { tags: ['supertest-config'] }
+);
+
+export async function saveSupertestConfig(config: SupertestConfig): Promise<void> {
+    await supabaseAdmin
+        .from('site_config')
+        .upsert({ id: 'supertest', config });
+    revalidateTag('supertest-config', 'default');
+}

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3)",
+      "Bash(read f *)",
+      "Bash([ ! -f \"/c/vibecoding/landing_2512/sat/raw/pdf/skill_sets/$f\" ])",
+      "Bash(cp /c/vibecoding/landing_2512/raw/pdf/skill_sets/__TRACKED_VAR__ /c/vibecoding/landing_2512/sat/raw/pdf/skill_sets/)",
+      "Bash(cp /c/vibecoding/landing_2512/sat/schema/questions/master_sat_ontology_v3.jsonl /c/vibecoding/landing_2512/sat/schema/questions/master_sat_ontology_v3.backup)",
+      "Bash(mv /c/vibecoding/landing_2512/sat/schema/questions/master_sat_ontology_v3_enriched.jsonl /c/vibecoding/landing_2512/sat/schema/questions/master_sat_ontology_v3.jsonl)",
+      "Bash(cp /c/vibecoding/landing_2512/sat/wiki/index.md /c/vibecoding/landing_2512/sat/wiki/index.md.old)",
+      "Bash(cp /c/vibecoding/landing_2512/sat/wiki/log.md /c/vibecoding/landing_2512/sat/wiki/log.md.old)",
+      "Bash(cp /c/vibecoding/landing_2512/sat/wiki/analysis/wic_patterns.md /c/vibecoding/landing_2512/sat/wiki/analysis/wic_patterns.md.old)",
+      "Bash(awk '{print $9, \"\\(\" $5 \"\\)\"}')",
+      "Bash(cp -r /c/vibecoding/landing_2512/wiki/* /c/vibecoding/landing_2512/sat/wiki/)",
+      "Bash(rm -rf /c/vibecoding/landing_2512/wiki)",
+      "Read(//c/c/vibecoding/landing_2512/**)",
+      "Bash(grep -E '\\\\.md$')",
+      "Bash(grep -E '\\\\.old$')",
+      "Bash(powershell -Command \"Write-Host 'Current directory:'; Get-Location; Write-Host ''; Write-Host 'Files:'; Get-ChildItem 2026-05-18-inference-sequencing-naver.html\")"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "slack"
+  ]
+}

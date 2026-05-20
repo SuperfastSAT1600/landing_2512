@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inference 유형은 왜 어려울까? — 편집</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', sans-serif;
+            background: #f0f0f0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── 상단 툴바 ── */
+        #toolbar {
+            background: #071be9;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            gap: 12px;
+        }
+
+        #toolbar .info {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+
+        #toolbar .buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        #toolbar button {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #btn-save {
+            background: #4caf50;
+            color: white;
+        }
+
+        #btn-save:hover { background: #43a047; }
+
+        #btn-reset {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        #btn-reset:hover { background: rgba(255,255,255,0.3); }
+
+        #save-status {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* ── 두 패널 ── */
+        #panels {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-label {
+            padding: 8px 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+
+        #original-panel .panel-label {
+            background: #e8e8e8;
+            color: #666;
+        }
+
+        #edit-panel .panel-label {
+            background: #e8f0fe;
+            color: #071be9;
+        }
+
+        .panel-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 20px;
+        }
+
+        #divider {
+            width: 3px;
+            background: #ccc;
+            flex-shrink: 0;
+        }
+
+        /* ── 블로그 본문 스타일 ── */
+        .blog-content {
+            max-width: 640px;
+            margin: 0 auto;
+            background: white;
+            padding: 44px 40px;
+            border-radius: 6px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+            line-height: 1.8;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .blog-content h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #000;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .blog-content .subtitle {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 36px;
+        }
+
+        .blog-content h2 {
+            font-size: 19px;
+            font-weight: 700;
+            color: #000;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #071be9;
+            padding-bottom: 8px;
+        }
+
+        .blog-content p {
+            margin-bottom: 12px;
+            word-break: keep-all;
+        }
+
+        .blog-content .emphasis {
+            font-weight: 600;
+            color: #071be9;
+            margin: 18px 0;
+            font-size: 16px;
+        }
+
+        .blog-content .reader-profile {
+            background: #f0f8ff;
+            border-left: 4px solid #00a6a6;
+            padding: 18px 20px;
+            margin: 22px 0;
+            border-radius: 4px;
+        }
+
+        .blog-content .reader-profile-title {
+            font-weight: 600;
+            color: #00796b;
+            margin-bottom: 10px;
+        }
+
+        .blog-content .reader-profile ul {
+            margin-left: 18px;
+        }
+
+        .blog-content .reader-profile li {
+            margin-bottom: 6px;
+            line-height: 1.6;
+        }
+
+        .blog-content .quick-summary {
+            background: #fff9e6;
+            border-left: 4px solid #ffc107;
+            padding: 18px 20px;
+            margin: 22px 0;
+            border-radius: 4px;
+        }
+
+        .blog-content .quick-summary-title {
+            font-weight: 600;
+            color: #f57c00;
+            margin-bottom: 10px;
+        }
+
+        .blog-content .quick-summary p {
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .blog-content .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #999;
+            padding: 14px;
+            margin: 18px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .blog-content hr {
+            border: none;
+            height: 1px;
+            background: #e0e0e0;
+            margin: 36px 0;
+        }
+
+        .blog-content .closing {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        /* ── 수정 패널 편집 표시 ── */
+        #edit-content {
+            outline: none;
+        }
+
+        #edit-content h1:hover, #edit-content h2:hover,
+        #edit-content p:hover, #edit-content li:hover,
+        #edit-content .quick-summary-title:hover,
+        #edit-content .reader-profile-title:hover,
+        #edit-content .code-block:hover,
+        #edit-content .subtitle:hover {
+            outline: 2px dashed #071be9;
+            border-radius: 2px;
+            cursor: text;
+        }
+
+        #edit-content h1:focus, #edit-content h2:focus,
+        #edit-content p:focus, #edit-content li:focus,
+        #edit-content .quick-summary-title:focus,
+        #edit-content .reader-profile-title:focus,
+        #edit-content .code-block:focus,
+        #edit-content .subtitle:focus {
+            outline: 2px solid #071be9;
+            background: rgba(7,27,233,0.04);
+            border-radius: 2px;
+        }
+
+        @media (max-width: 900px) {
+            #panels { flex-direction: column; }
+            #divider { width: 100%; height: 3px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="toolbar">
+    <div class="info">원본(왼쪽)과 수정본(오른쪽)을 비교하면서 편집하세요</div>
+    <div class="buttons">
+        <span id="save-status"></span>
+        <button id="btn-reset" onclick="resetEdited()">↺ 원본으로 초기화</button>
+        <button id="btn-save" onclick="saveFile()">💾 수정본 저장</button>
+    </div>
+</div>
+
+<div id="panels">
+    <!-- 원본 (읽기 전용) -->
+    <div class="panel" id="original-panel">
+        <div class="panel-label">원본 (읽기 전용)</div>
+        <div class="panel-scroll">
+            <div class="blog-content" id="original-content">
+
+                <h1>Inference 유형은 왜 어려울까?</h1>
+                <div class="subtitle">SuperfastSAT · 2026년 5월 18일</div>
+
+                <div class="reader-profile">
+                    <div class="reader-profile-title">이런 분들에게 도움을 드리고자 썼습니다.</div>
+                    <ul>
+                        <li>Inference 유형 문제를 풀 때 "왜 이게 정답인지" 알 수 없는 학생</li>
+                        <li>Inference 문제가 매번 다르게 느껴져서 패턴을 찾으려는 학생</li>
+                        <li>지문 구조를 분석해서 Inference 포인트를 예측하고 싶은 학생</li>
+                        <li>SAT Reading and Writing의 고득점을 위해 체계적으로 접근하려는 학생</li>
+                    </ul>
+                </div>
+
+                <div class="quick-summary">
+                    <div class="quick-summary-title">바쁘시면 이것만 보세요!</div>
+                    <p>Inference 유형 126개 지문을 분석한 결과, 시퀀스(구조)가 매우 다양합니다.</p>
+                    <p>일관된 패턴을 찾기 어렵지만, 가장 많이 나타나는 시퀀스 3가지를 통해 Inference 지문의 실제 구조를 이해할 수 있습니다.</p>
+                    <p>이 포스팅에서는 실제 데이터 분석 결과를 공개합니다.</p>
+                </div>
+
+                <hr>
+
+                <h2>1. 라벨(Label)과 시퀀스(Sequence) 이해하기</h2>
+                <p>Inference 지문을 분석하기 위해 먼저 두 가지 개념을 알아야 합니다.</p>
+                <p><strong>라벨(Label)</strong>은 지문의 각 문장이 담당하는 역할입니다. INTRODUCE(주제 소개), EVIDENCE(증거), PIVOT(입장 전환), IMPLICATION(함의) 등이 있습니다.</p>
+                <p><strong>시퀀스(Sequence)</strong>는 이 라벨들이 순서대로 배열된 것입니다. 예를 들어 [INTRODUCE, EVIDENCE, IMPLICATION]은 "주제를 소개하고 → 증거를 제시한 후 → 그 함의를 말하는" 지문의 구조를 뜻합니다.</p>
+                <p class="emphasis">College Board의 Inference 지문들은 어떤 시퀀스를 따를까요? 실제 분석 결과를 보겠습니다.</p>
+
+                <hr>
+
+                <h2>2. 가장 많이 나타나는 시퀀스 1: [INTRODUCE, EVIDENCE, IMPLICATION]</h2>
+                <p>Inference 지문 126개를 분석한 결과, 가장 많이 나타나는 첫 번째 시퀀스는 [INTRODUCE, EVIDENCE, IMPLICATION]입니다.</p>
+                <p>이 시퀀스는 "주제를 소개하고 → 그 주제에 대한 증거나 사례를 제시한 후 → 그것이 의미하는 바를 설명"합니다.</p>
+                <p><strong>Life Science 예시:</strong></p>
+                <div class="code-block">[INTRODUCE]
+최근 연구에 따르면 monarch butterflies는
+매년 북미 전역을 이동합니다.
+
+[EVIDENCE]
+연구자들은 monarchs가 이동 경로 내비게이션을
+위해 genetic memory와 environmental cues의 조합에 의존한다는
+것을 발견했습니다.
+
+[IMPLICATION]
+따라서 butterflies의 이동 능력은 선천적 본능과
+환경 신호의 상호작용으로 이루어졌다는 것을 시사합니다.</div>
+                <p>이 구조에서는 EVIDENCE 섹션에서 제시된 발견이 바로 추론 포인트입니다. 학생은 "주제가 주어졌을 때, 어떤 증거가 제시되면 어떤 함의를 도출할 수 있을까"를 이해해야 합니다.</p>
+
+                <hr>
+
+                <h2>3. 가장 많이 나타나는 시퀀스 2: [INTRODUCE, FINDING, PIVOT, IMPLICATION]</h2>
+                <p>두 번째 많은 시퀀스는 [INTRODUCE, FINDING, PIVOT, IMPLICATION]입니다.</p>
+                <p>이 시퀀스는 시퀀스 1과 다르게, PIVOT(입장 전환)이 포함됩니다. "주제를 소개하고 → 첫 번째 발견을 제시한 후 → 그런데(그러나) 다른 관점이 있고 → 그것의 함의"라는 구조입니다.</p>
+                <p><strong>History 예시:</strong></p>
+                <div class="code-block">[INTRODUCE]
+역사가들은 오랫동안 중세 사회가
+경제적으로 정체되어 있다고 믿었습니다.
+
+[FINDING]
+이것은 역사가의 해석에 영향을 미쳤고,
+중세를 "어두운 시대"로 묘사하게 했습니다.
+
+[PIVOT]
+그러나 최근 고고학적 증거들이
+이 통념에 도전하고 있습니다.
+
+[IMPLICATION]
+따라서 우리는 중세 경제를 다시 평가해야 합니다.</div>
+                <p>이 구조의 핵심은 PIVOT 이후입니다. 학생이 "첫 번째 믿음"에 빠져서는 안 되고, PIVOT("그러나", "하지만")을 신호로 "일반적 예상과 다른 증거"를 찾아야 합니다.</p>
+
+                <hr>
+
+                <h2>4. 가장 많이 나타나는 시퀀스 3: [INTRODUCE, PIVOT, IMPLICATION]</h2>
+                <p>세 번째 시퀀스는 [INTRODUCE, PIVOT, IMPLICATION]입니다.</p>
+                <p>이것은 시퀀스 2보다 더 간결합니다. "주제를 소개하고 → 바로 입장 전환이 일어나고 → 그것의 함의"를 말합니다. 학생은 최소한의 정보로 최대한의 추론을 해야 합니다.</p>
+                <p><strong>Social Science 예시:</strong></p>
+                <div class="code-block">[INTRODUCE]
+일반적으로 사람들은 나이가 많을수록
+직무 능력이 떨어진다고 가정합니다.
+
+[PIVOT]
+그러나 최근 데이터는 경험 많은 직원이
+복잡한 업무에서 젊은 직원을 능가한다는 것을 보여줍니다.
+
+[IMPLICATION]
+따라서 나이 기반 채용 편견은
+조직에 실제 손실을 초래할 수 있습니다.</div>
+                <p>이 구조에서는 일반적 예상(INTRODUCE)과 실제(PIVOT 이후)의 괴리를 빠르게 감지해야 합니다. 문장 수가 적을수록 학생이 해야 할 추론의 도약이 크다는 의미입니다.</p>
+
+                <hr>
+
+                <div class="closing">
+                    <p>Inference 지문을 분석한 결과, 가장 놀라운 사실은 <strong>일관된 패턴이 거의 없다</strong>는 것입니다.</p>
+                    <p>상위 시퀀스 3가지도 각각 2회씩 나타날 뿐, 전체 126개 지문 중 비중이 극히 낮습니다. 나머지 대부분은 각기 다른 독특한 시퀀스를 따릅니다.</p>
+                    <p class="emphasis">이것이 Inference 유형이 어려운 이유입니다. "패턴을 찾으면 된다"는 통념은 거짓이고, 학생은 각 지문의 고유한 논리 흐름을 감지하는 능력을 길러야 합니다.</p>
+                    <p>지문을 읽을 때마다 "이 지문은 어떤 구조를 따르는가?"를 물으면서, 라벨들의 시퀀스 변화에 민감해지는 훈련이 정답입니다.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="divider"></div>
+
+    <!-- 수정본 (편집 가능) -->
+    <div class="panel" id="edit-panel">
+        <div class="panel-label">수정본 — 클릭하면 바로 수정됩니다</div>
+        <div class="panel-scroll">
+            <div class="blog-content" id="edit-content" contenteditable="true" spellcheck="false">
+                <!-- JS로 원본 내용 복사해서 채움 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const STORAGE_KEY = 'edited_2026-05-18-inference-sequencing';
+
+    // 페이지 로드: localStorage 복구 or 원본 복사
+    window.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            document.getElementById('edit-content').innerHTML = saved;
+            showStatus('이전 수정본 복구됨');
+        } else {
+            const original = document.getElementById('original-content').innerHTML;
+            document.getElementById('edit-content').innerHTML = original;
+        }
+    });
+
+    // 편집 시 localStorage 자동 저장
+    document.getElementById('edit-content').addEventListener('input', () => {
+        localStorage.setItem(STORAGE_KEY, document.getElementById('edit-content').innerHTML);
+        showStatus('자동 저장됨');
+    });
+
+    // 상태 메시지
+    let statusTimer;
+    function showStatus(msg) {
+        const el = document.getElementById('save-status');
+        el.textContent = msg;
+        clearTimeout(statusTimer);
+        statusTimer = setTimeout(() => { el.textContent = ''; }, 2500);
+    }
+
+    // 원본으로 초기화
+    function resetEdited() {
+        if (!confirm('수정 내용을 모두 지우고 원본으로 돌아가시겠습니까?')) return;
+        const original = document.getElementById('original-content').innerHTML;
+        document.getElementById('edit-content').innerHTML = original;
+        localStorage.removeItem(STORAGE_KEY);
+        showStatus('원본으로 초기화됨');
+    }
+
+    // 수정본 저장 (File System Access API → 폴백: 다운로드)
+    async function saveFile() {
+        const editedBody = document.getElementById('edit-content').innerHTML;
+        const filename = '2026-05-18-inference-sequencing-naver-edited.html';
+        const html = buildStandaloneHTML(editedBody);
+
+        if ('showSaveFilePicker' in window) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{ description: 'HTML 파일', accept: { 'text/html': ['.html'] } }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(html);
+                await writable.close();
+                showStatus('저장 완료!');
+                return;
+            } catch (e) {
+                if (e.name === 'AbortError') return;
+            }
+        }
+
+        // 폴백: 다운로드
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showStatus('다운로드 시작됨');
+    }
+
+    // 수정본을 독립 실행 가능한 HTML로 빌드
+    function buildStandaloneHTML(bodyContent) {
+        return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inference 유형은 왜 어려울까? (수정본)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', sans-serif; line-height: 1.8; color: #333; background: #f5f5f5; padding: 40px 20px; }
+        .blog-content { max-width: 720px; margin: 0 auto; background: white; padding: 50px 45px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 16px; }
+        h1 { font-size: 26px; font-weight: 700; color: #000; text-align: center; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: #999; font-size: 13px; margin-bottom: 36px; }
+        h2 { font-size: 19px; font-weight: 700; color: #000; margin-top: 32px; margin-bottom: 16px; border-bottom: 2px solid #071be9; padding-bottom: 8px; }
+        p { margin-bottom: 12px; word-break: keep-all; }
+        .emphasis { font-weight: 600; color: #071be9; margin: 18px 0; }
+        .reader-profile { background: #f0f8ff; border-left: 4px solid #00a6a6; padding: 18px 20px; margin: 22px 0; border-radius: 4px; }
+        .reader-profile-title { font-weight: 600; color: #00796b; margin-bottom: 10px; }
+        .reader-profile ul { margin-left: 18px; }
+        .reader-profile li { margin-bottom: 6px; line-height: 1.6; }
+        .quick-summary { background: #fff9e6; border-left: 4px solid #ffc107; padding: 18px 20px; margin: 22px 0; border-radius: 4px; }
+        .quick-summary-title { font-weight: 600; color: #f57c00; margin-bottom: 10px; }
+        .quick-summary p { font-size: 15px; margin-bottom: 8px; }
+        .code-block { background: #f5f5f5; border-left: 4px solid #999; padding: 14px; margin: 18px 0; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+        hr { border: none; height: 1px; background: #e0e0e0; margin: 36px 0; }
+        .closing { margin-top: 28px; padding-top: 18px; border-top: 2px solid #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div class="blog-content">${bodyContent}</div>
+</body>
+</html>`;
+    }
+</script>
+</body>
+</html>

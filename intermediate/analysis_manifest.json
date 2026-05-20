@@ -1,0 +1,44 @@
+{
+  "version": "2.0",
+  "last_updated": "2026-04-30",
+  "project": "SAT RW + Math 문제 분석",
+
+  "files": {
+    "baseline_rw_reclassified.jsonl":       { "count": 1511, "desc": "RW 전체 원본 (RS 178 포함)", "complete": true },
+    "baseline_cp_analysis.jsonl":           { "count": 1439, "desc": "비RS CP 라벨링", "complete": true, "issues": "skill 빈 것 32개" },
+    "qb_rw_98_cp_analysis.jsonl":           { "count": 88,   "desc": "QB RW 98 신규 CP", "complete": true },
+    "cross_text_new_5_cp_analysis.jsonl":   { "count": 5,    "desc": "Cross-Text 신규", "complete": true },
+    "missing_cp_analysis.jsonl":            { "count": 117,  "desc": "누락분 CP", "complete": true },
+    "math_qb_parsed.jsonl":                 { "count": 75,   "desc": "QB Math LaTeX 파싱", "complete": true, "latex_pct": 82 },
+    "../master_sat_ontology_v3.jsonl":      { "count": 1836, "desc": "단일 진실 소스 온톨로지", "complete": true }
+  },
+
+  "totals": {
+    "rw_cp_labeled": 1527,
+    "math_parsed": 75,
+    "ontology_total": 1836,
+    "cross_text_total": 56
+  },
+
+  "invariants": [
+    "sequence_full 사용 (sequence_simple 아님) — 접미사 360종이 핵심 변수",
+    "RS(Rhetorical Synthesis) 항상 제외",
+    "Cross-Text 총 56개 (49 baseline + 5 PDF + 2 qb_rw_98)",
+    "온톨로지에 추가 전 기존 ID 중복 확인 필수",
+    "Math LaTeX: JSON 이스케이프 버그 → re.sub(r'\\\\(?![\"\\\\/bfnrtu])', r'\\\\\\\\', raw)"
+  ],
+
+  "models": {
+    "rw_cp_labeling": "gpt-4o-mini (텍스트 전용)",
+    "pdf_vision_rw": "gpt-4o (이미지 파싱)",
+    "math_latex": "gpt-4o (LaTeX 수식 추출)"
+  },
+
+  "pending_todos": [
+    "skill 빈 것 32개 수동 확인 또는 PDF 재파싱",
+    "sequence_full 분포 분석 + 오답 패턴 상관관계",
+    "Cross-Text Text1/Text2 시퀀스 분리"
+  ],
+
+  "quick_start": "python3 project_status.py"
+}

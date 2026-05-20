@@ -1,0 +1,97 @@
+---
+title: Wiki 변경 이력
+type: log
+domain: mixed
+updated: 2026-05-18
+---
+
+# Wiki 변경 이력
+
+## 2026-05-18
+
+- [WIKI] `wiki/analysis/rw_skills_analysis.md` 생성 — 8개 스킬 종합 분석
+  - Information and Ideas (476개, 28%): Command of Evidence, Central Ideas, Inferences
+  - Craft and Structure (447개, 26%): Words in Context, Text Structure
+  - Standard English Conventions (395개, 23%): Form/Structure, Boundaries
+  - Expression of Ideas (361개, 21%): Rhetorical Synthesis, Transitions
+  - 난이도별/주제별 분포, 12주 학습 경로 제시
+
+- [WIKI] `wiki/analysis/rw_sequencing_analysis.md` 생성 — 시퀀싱 패턴 분석
+  - 1,511개 passage의 standard_sequence 분석
+  - 상위 10개 패턴 (INTRODUCE → BACKGROUND → ...)
+  - 난이도별 복잡도: Easy(직선적) vs Hard(복합)
+  - 시퀀싱과 스킬의 관계, 실전 예시 제시
+
+- [WIKI] `wiki/analysis/rw_concept_tags.md` 생성 — 개념 태그 분석
+  - 상위 15개 개념 태그 (Vocabulary, Context Clues, Synthesis 등)
+  - 어휘(52%) / 문법(23%) / 통합사고(15%) / 데이터(10%) 분류
+  - 난이도/주제별 개념 태그 경향, 마스터링 체크리스트
+
+- [WIKI] `wiki/index.md` 업데이트 — 새 페이지 링크 추가
+  - Reading and Writing 구조 재정리
+  - 전체 구조, 패턴 분석, 기술별 심화 섹션 신설
+
+## 2026-05-17
+
+- [SCHEMA] master_sat_ontology_v3.jsonl enrichment 완료
+  - 크기: 4.3M → 5.8M (concept_structure, structural_pattern, standard_sequence 추가)
+  - 시퀀싱 정보: 1,511개 문항에 추가됨
+  - Backup: master_sat_ontology_v3.backup 생성
+  - baseline_passage_structure_v3.jsonl과 병합 완료
+
+- [INGEST] landing_2512/raw 폴더 sat/raw로 이동 완료
+  - 소스: /c/vibecoding/landing_2512/raw/ (46개 파일)
+  - 목적지: sat/raw/ (병합)
+  - 결과: sat/raw에 62개 파일 (extracted 15개 + PDF 32개 + wiki 12개 + 기타)
+  - landing_2512/raw 삭제 완료
+
+- [INGEST] PDF 파일 전체 이관 완료
+  - 소스: /c/vibecoding/landing_2512/blog_database/
+  - 총 32개 PDF (공식 2 + 스킬별 30)
+  - 위치: raw/pdf/official/ 및 raw/pdf/skill_sets/
+  - 공식: 260414 QB RW_98.pdf, 260414 QB Math_75.pdf
+  - 스킬: boundaries, central ideas, command of evidence, cross-text, Form Structure, inference, rhetorical synthesis, Text Structure, transitions, Words in Context (난이도별)
+
+- [INGEST] `baseline_passage_structure_v3.jsonl` 이관 완료
+  - 소스: /c/vibecoding/landing_2512/blog_database/baseline_passage_structure_v3.jsonl
+  - 1,511개 passage (RW 시퀀싱)
+  - 위치: raw/baseline_passage_structure_v3.jsonl
+  - 내용: concept_structure, structural_pattern, standard_sequence (INTRODUCE, ELABORATION, EVIDENCE 등)
+
+- [INGEST] `function_label_mapping_v2.json` 이관 완료
+  - 소스: /c/vibecoding/landing_2512/blog_database/function_label_mapping_v2.json
+  - 4,957개 라벨 (RW 1,715개 문제)
+  - 위치: raw/function_label_mapping_v2.json
+  - 내용: 지문 문장/구절별 함수 라벨링 (CLAIM, EVIDENCE, ACTION 등)
+
+- [INGEST] `/c/vibecoding/landing_2512/wiki/` 전체 이관 완료
+  - 구조: 12개 파일 (index/log + analysis 7개 + vocab 2개)
+  - 위치: `raw/wiki/` 에 보관
+  - 내용: SAT RW 분석, CP 시퀀싱, 어휘 프레임워크, 참조 자료
+
+- [INGEST] `raw/extracted/master_sat_ontology_v3.jsonl` 이관 완료
+  - 소스: /c/vibecoding/landing_2512/master_sat_ontology_v3.jsonl
+  - 1,836개 문제 (RW 1,715 + Math 121)
+  - schema/questions/ 에도 복사 완료
+  - raw/README.md 생성 (ingest 기록 추적)
+
+- [WIKI] `wiki/analysis/wic_patterns.md` 생성 — WIC 종합 패턴 분석
+  - 241개 WIC 문항 전수 분석 (master_sat_ontology_v3.jsonl 기반)
+  - 난이도별 분포: Easy 130개, Medium 57개, Hard 54개
+  - 주제별 분포: Literature 26%, Life Science 19%, History 15% 등 8가지 영역
+  - 난이도별 주제 크로스탭 분석
+  - 학습 전략 및 주제별 학습 포인트 제시
+  - Knowledge Graph 활용도 분석 (prerequisite, concept_tags 등)
+
+- [WIKI] `wiki/analysis/wic_by_topic.md` 생성 — 주제별 심화 분석
+  - Literature (62개) — 감정·톤·의도 중심
+  - Life Science (46개) — 과학 용어 정확성
+  - History (36개) — 역사적 맥락
+  - Art & Music (35개) — 예술 비평
+  - Social Science (31개) — 추상 개념 (Hard 42%)
+  - Physical Science, Technology, Earth & Environment
+  - 각 주제별 난이도별 학습 전략 제시
+
+- [WIKI] `wiki/index.md` 생성 — 위키 진입점 및 색인
+  - 전체 구조 안내
+  - WIC 기술 관련 페이지 링크 추가
