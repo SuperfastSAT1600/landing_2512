@@ -1,0 +1,2957 @@
+{
+  "meta": {
+    "generated": "2026-04-30",
+    "total_rw_questions": 1527,
+    "seq_full_types": 380,
+    "seq_simple_types": 203,
+    "arc_collapsed_types": 96,
+    "hard_core_seqs": 21,
+    "wrong_total": 3528,
+    "wrong_matched": 3103,
+    "wrong_match_pct": 88.0
+  },
+  "labels": {
+    "I": {
+      "en": "Information",
+      "ko": "정보"
+    },
+    "C": {
+      "en": "Claim",
+      "ko": "주장"
+    },
+    "CL": {
+      "en": "Conclusion",
+      "ko": "결론"
+    },
+    "I_bg": {
+      "en": "Background Info",
+      "ko": "배경 정보"
+    },
+    "I_sup": {
+      "en": "Supporting Info",
+      "ko": "보완 정보"
+    },
+    "I_ex": {
+      "en": "Example Info",
+      "ko": "예시 정보"
+    },
+    "I_au": {
+      "en": "Author Info",
+      "ko": "저자 정보"
+    },
+    "I_ot": {
+      "en": "Other's Info",
+      "ko": "타인 정보"
+    },
+    "C_au": {
+      "en": "Author's Claim",
+      "ko": "저자 주장"
+    },
+    "C_ot": {
+      "en": "Other's Claim",
+      "ko": "타인 주장"
+    },
+    "C_ct": {
+      "en": "Counter Claim",
+      "ko": "반대 주장"
+    },
+    "C_rb": {
+      "en": "Rebuttal Claim",
+      "ko": "재반박 주장"
+    },
+    "CL_au": {
+      "en": "Author's Conclusion",
+      "ko": "저자 결론"
+    },
+    "CL_ot": {
+      "en": "Other's Conclusion",
+      "ko": "타인 결론"
+    }
+  },
+  "arc_roles": {
+    "I": {
+      "en": "Information",
+      "ko": "정보"
+    },
+    "C": {
+      "en": "Claim",
+      "ko": "주장"
+    },
+    "CL": {
+      "en": "Conclusion",
+      "ko": "결론"
+    },
+    "CT": {
+      "en": "Counter-Thesis",
+      "ko": "반대 주장"
+    },
+    "RB": {
+      "en": "Rebuttal",
+      "ko": "재반박"
+    }
+  },
+  "passage_types": {
+    "ARG": {
+      "en": "Argumentative",
+      "ko": "논증형"
+    },
+    "EXP": {
+      "en": "Expository",
+      "ko": "설명형"
+    },
+    "LIT": {
+      "en": "Literary",
+      "ko": "문학형"
+    }
+  },
+  "structure_patterns": {
+    "PURE_INFO": {
+      "en": "Pure Information",
+      "ko": "순수 정보형",
+      "count": 472,
+      "top_arcs": [
+        {
+          "arc": "EXP_I",
+          "count": 440
+        },
+        {
+          "arc": "LIT_I",
+          "count": 29
+        },
+        {
+          "arc": "ARG_I",
+          "count": 2
+        },
+        {
+          "arc": "CROSS_EXP_I_bg_x_EXP_I",
+          "count": 1
+        }
+      ],
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 234,
+          "pct": 27.3
+        },
+        {
+          "category": "Distortion",
+          "count": 154,
+          "pct": 18.0
+        },
+        {
+          "category": "Contradiction",
+          "count": 152,
+          "pct": 17.8
+        }
+      ]
+    },
+    "INFO_TO_CONCL": {
+      "en": "Info → Conclusion",
+      "ko": "정보→결론형",
+      "count": 401,
+      "top_arcs": [
+        {
+          "arc": "EXP_I-CL",
+          "count": 326
+        },
+        {
+          "arc": "LIT_I-CL",
+          "count": 63
+        },
+        {
+          "arc": "ARG_I-CL",
+          "count": 9
+        },
+        {
+          "arc": "CROSS_EXP_I_bg_x_ARG_I-I-I-I-I-CL",
+          "count": 1
+        },
+        {
+          "arc": "CROSS_EXP_I_bg_x_ARG_I_sup-I_sup-I_bg-CL",
+          "count": 1
+        }
+      ],
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 284,
+          "pct": 33.7
+        },
+        {
+          "category": "Contradiction",
+          "count": 167,
+          "pct": 19.8
+        },
+        {
+          "category": "Partial Match",
+          "count": 106,
+          "pct": 12.6
+        }
+      ]
+    },
+    "CLAIM_EVIDENCE": {
+      "en": "Claim + Evidence",
+      "ko": "주장+근거형",
+      "count": 492,
+      "top_arcs": [
+        {
+          "arc": "EXP_I-C",
+          "count": 96
+        },
+        {
+          "arc": "ARG_I-C",
+          "count": 70
+        },
+        {
+          "arc": "ARG_C-CL",
+          "count": 62
+        },
+        {
+          "arc": "LIT_I-C",
+          "count": 51
+        },
+        {
+          "arc": "ARG_C-I-CL",
+          "count": 34
+        }
+      ],
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 232,
+          "pct": 22.3
+        },
+        {
+          "category": "Partial Match",
+          "count": 225,
+          "pct": 21.6
+        },
+        {
+          "category": "Contradiction",
+          "count": 190,
+          "pct": 18.3
+        }
+      ]
+    },
+    "CLASSICAL_ARG": {
+      "en": "Classical Argument",
+      "ko": "고전 논증형",
+      "count": 61,
+      "top_arcs": [
+        {
+          "arc": "ARG_C-CL",
+          "count": 21
+        },
+        {
+          "arc": "LIT_I-C-CL",
+          "count": 5
+        },
+        {
+          "arc": "ARG_I-C-CL",
+          "count": 4
+        },
+        {
+          "arc": "ARG_C-I-C-CL",
+          "count": 3
+        },
+        {
+          "arc": "LIT_C-CL",
+          "count": 3
+        }
+      ],
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 63,
+          "pct": 46.7
+        },
+        {
+          "category": "Contradiction",
+          "count": 22,
+          "pct": 16.3
+        },
+        {
+          "category": "Overgeneralization",
+          "count": 16,
+          "pct": 11.9
+        }
+      ]
+    },
+    "COUNTER_REBUTTAL": {
+      "en": "Counter + Rebuttal",
+      "ko": "반박+재반박형",
+      "count": 33,
+      "top_arcs": [
+        {
+          "arc": "ARG_C-CL",
+          "count": 6
+        },
+        {
+          "arc": "ARG_C",
+          "count": 6
+        },
+        {
+          "arc": "ARG_I-C",
+          "count": 2
+        },
+        {
+          "arc": "ARG_I-C-CL",
+          "count": 2
+        },
+        {
+          "arc": "ARG_C-I-C",
+          "count": 2
+        }
+      ],
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 30,
+          "pct": 43.5
+        },
+        {
+          "category": "Contradiction",
+          "count": 14,
+          "pct": 20.3
+        },
+        {
+          "category": "Distortion",
+          "count": 12,
+          "pct": 17.4
+        }
+      ]
+    },
+    "DUAL_CLAIM": {
+      "en": "Dual Claim",
+      "ko": "이중 주장형",
+      "count": 68,
+      "top_arcs": [
+        {
+          "arc": "ARG_C",
+          "count": 29
+        },
+        {
+          "arc": "ARG_C-I-C",
+          "count": 13
+        },
+        {
+          "arc": "ARG_C-I",
+          "count": 3
+        },
+        {
+          "arc": "ARG_C-I-C-I",
+          "count": 2
+        },
+        {
+          "arc": "LIT_I-C-I-C",
+          "count": 2
+        }
+      ],
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 54,
+          "pct": 33.5
+        },
+        {
+          "category": "Contradiction",
+          "count": 26,
+          "pct": 16.1
+        },
+        {
+          "category": "Distortion",
+          "count": 23,
+          "pct": 14.3
+        }
+      ]
+    }
+  },
+  "wrong_categories": {
+    "Partial Match": {
+      "ko": "부분 일치"
+    },
+    "Out Of Scope": {
+      "ko": "범위 초과"
+    },
+    "Contradiction": {
+      "ko": "모순"
+    },
+    "Distortion": {
+      "ko": "왜곡"
+    },
+    "Misattribution": {
+      "ko": "귀인 오류"
+    },
+    "Pre-Pivot Reading": {
+      "ko": "전환 전 독해"
+    },
+    "Overgeneralization": {
+      "ko": "과잉 일반화"
+    },
+    "Degree Error": {
+      "ko": "정도 오류"
+    }
+  },
+  "abstraction_hierarchy": {
+    "level_0_structure_pattern": {
+      "types": 6,
+      "desc": "글의 논리 골격 (e.g. CLASSICAL_ARG)"
+    },
+    "level_1_arc_collapsed": {
+      "types": 96,
+      "desc": "역할 압축 + 연속 중복 제거 (I/C/CT/RB/CL)"
+    },
+    "level_2_seq_simple": {
+      "types": 203,
+      "desc": "접미사 제거 (I/C/CL)"
+    },
+    "level_3_seq_full": {
+      "types": 380,
+      "desc": "완전한 레이블 시퀀스 (접미사 포함)"
+    }
+  },
+  "top_sequences_50": [
+    {
+      "seq_full": "EXP_I_bg-I",
+      "seq_simple": "EXP_I-I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 배경→정보",
+      "count": 206,
+      "difficulty": {
+        "Hard": 62,
+        "Medium": 55,
+        "Easy": 89
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 105,
+          "pct": 27.5
+        },
+        {
+          "category": "Contradiction",
+          "count": 73,
+          "pct": 19.1
+        },
+        {
+          "category": "Distortion",
+          "count": 67,
+          "pct": 17.5
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-CL",
+      "seq_simple": "EXP_I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→정보→결론",
+      "count": 143,
+      "difficulty": {
+        "Hard": 43,
+        "Medium": 44,
+        "Easy": 56
+      },
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 67,
+          "pct": 24.8
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 66,
+          "pct": 24.4
+        },
+        {
+          "category": "Distortion",
+          "count": 38,
+          "pct": 14.1
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I",
+      "seq_simple": "EXP_I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 정보",
+      "count": 85,
+      "difficulty": {
+        "Hard": 29,
+        "Medium": 23,
+        "Easy": 33
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 39,
+          "pct": 30.5
+        },
+        {
+          "category": "Misattribution",
+          "count": 29,
+          "pct": 22.7
+        },
+        {
+          "category": "Distortion",
+          "count": 23,
+          "pct": 18.0
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-I-CL",
+      "seq_simple": "EXP_I-I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→정보→정보→결론",
+      "count": 58,
+      "difficulty": {
+        "Easy": 22,
+        "Hard": 20,
+        "Medium": 16
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 48,
+          "pct": 35.8
+        },
+        {
+          "category": "Contradiction",
+          "count": 23,
+          "pct": 17.2
+        },
+        {
+          "category": "Distortion",
+          "count": 17,
+          "pct": 12.7
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-CL_au",
+      "seq_simple": "ARG_C-CL",
+      "arc": "ARG_C-CL",
+      "name_ko": "논증형: 저자주장→저자결론",
+      "count": 53,
+      "difficulty": {
+        "Hard": 15,
+        "Medium": 18,
+        "Easy": 20
+      },
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 28,
+          "pct": 26.2
+        },
+        {
+          "category": "Distortion",
+          "count": 22,
+          "pct": 20.6
+        },
+        {
+          "category": "Misattribution",
+          "count": 16,
+          "pct": 15.0
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I-I",
+      "seq_simple": "EXP_I-I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 정보→정보",
+      "count": 46,
+      "difficulty": {
+        "Hard": 16,
+        "Medium": 14,
+        "Easy": 16
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 27,
+          "pct": 30.3
+        },
+        {
+          "category": "Misattribution",
+          "count": 20,
+          "pct": 22.5
+        },
+        {
+          "category": "Distortion",
+          "count": 16,
+          "pct": 18.0
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_I_bg-C_au",
+      "seq_simple": "LIT_I-C",
+      "arc": "LIT_I-C",
+      "name_ko": "문학형: 배경→저자주장",
+      "count": 34,
+      "difficulty": {
+        "Medium": 16,
+        "Easy": 10,
+        "Hard": 8
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 49,
+          "pct": 59.0
+        },
+        {
+          "category": "Distortion",
+          "count": 14,
+          "pct": 16.9
+        },
+        {
+          "category": "Misattribution",
+          "count": 10,
+          "pct": 12.0
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_I_bg-C_au",
+      "seq_simple": "ARG_I-C",
+      "arc": "ARG_I-C",
+      "name_ko": "논증형: 배경→저자주장",
+      "count": 31,
+      "difficulty": {
+        "Hard": 11,
+        "Medium": 9,
+        "Easy": 11
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 25,
+          "pct": 33.3
+        },
+        {
+          "category": "Misattribution",
+          "count": 15,
+          "pct": 20.0
+        },
+        {
+          "category": "Distortion",
+          "count": 8,
+          "pct": 10.7
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-I",
+      "seq_simple": "EXP_I-I-I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 배경→정보→정보",
+      "count": 30,
+      "difficulty": {
+        "Easy": 19,
+        "Hard": 4,
+        "Medium": 7
+      },
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 21,
+          "pct": 28.0
+        },
+        {
+          "category": "Partial Match",
+          "count": 16,
+          "pct": 21.3
+        },
+        {
+          "category": "Distortion",
+          "count": 10,
+          "pct": 13.3
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_I_bg-I-CL",
+      "seq_simple": "LIT_I-I-CL",
+      "arc": "LIT_I-CL",
+      "name_ko": "문학형: 배경→정보→결론",
+      "count": 22,
+      "difficulty": {
+        "Hard": 7,
+        "Easy": 7,
+        "Medium": 8
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 13,
+          "pct": 27.1
+        },
+        {
+          "category": "Distortion",
+          "count": 11,
+          "pct": 22.9
+        },
+        {
+          "category": "Contradiction",
+          "count": 8,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I_sup",
+      "seq_simple": "EXP_I-I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 배경→보완",
+      "count": 21,
+      "difficulty": {
+        "Hard": 5,
+        "Medium": 9,
+        "Easy": 7
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 13,
+          "pct": 27.1
+        },
+        {
+          "category": "Contradiction",
+          "count": 12,
+          "pct": 25.0
+        },
+        {
+          "category": "Distortion",
+          "count": 7,
+          "pct": 14.6
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-I-I-CL",
+      "seq_simple": "EXP_I-I-I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→정보→정보→정보→결론",
+      "count": 21,
+      "difficulty": {
+        "Easy": 5,
+        "Hard": 9,
+        "Medium": 7
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 17,
+          "pct": 35.4
+        },
+        {
+          "category": "Partial Match",
+          "count": 10,
+          "pct": 20.8
+        },
+        {
+          "category": "Contradiction",
+          "count": 7,
+          "pct": 14.6
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au",
+      "seq_simple": "ARG_C",
+      "arc": "ARG_C",
+      "name_ko": "논증형: 저자주장",
+      "count": 18,
+      "difficulty": {
+        "Medium": 4,
+        "Hard": 7,
+        "Easy": 7
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 6,
+          "pct": 28.6
+        },
+        {
+          "category": "Misattribution",
+          "count": 6,
+          "pct": 28.6
+        },
+        {
+          "category": "Distortion",
+          "count": 3,
+          "pct": 14.3
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg",
+      "seq_simple": "EXP_I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 배경",
+      "count": 18,
+      "difficulty": {
+        "Easy": 8,
+        "Hard": 5,
+        "Medium": 5
+      },
+      "top_wrong": [
+        {
+          "category": "Misattribution",
+          "count": 14,
+          "pct": 58.3
+        },
+        {
+          "category": "Partial Match",
+          "count": 5,
+          "pct": 20.8
+        },
+        {
+          "category": "Distortion",
+          "count": 3,
+          "pct": 12.5
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_I_bg-C_au-CL_au",
+      "seq_simple": "ARG_I-C-CL",
+      "arc": "ARG_I-C-CL",
+      "name_ko": "논증형: 배경→저자주장→저자결론",
+      "count": 16,
+      "difficulty": {
+        "Easy": 2,
+        "Hard": 6,
+        "Medium": 8
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 12,
+          "pct": 31.6
+        },
+        {
+          "category": "Contradiction",
+          "count": 8,
+          "pct": 21.1
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 5,
+          "pct": 13.2
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-C_au",
+      "seq_simple": "EXP_I-I-C",
+      "arc": "EXP_I-C",
+      "name_ko": "설명형: 배경→정보→저자주장",
+      "count": 16,
+      "difficulty": {
+        "Easy": 6,
+        "Hard": 5,
+        "Medium": 5
+      },
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 14,
+          "pct": 42.4
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 8,
+          "pct": 24.2
+        },
+        {
+          "category": "Partial Match",
+          "count": 8,
+          "pct": 24.2
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-C_au",
+      "seq_simple": "ARG_C-C",
+      "arc": "ARG_C",
+      "name_ko": "논증형: 저자주장→저자주장",
+      "count": 15,
+      "difficulty": {
+        "Hard": 5,
+        "Medium": 4,
+        "Easy": 6
+      },
+      "top_wrong": [
+        {
+          "category": "Distortion",
+          "count": 10,
+          "pct": 33.3
+        },
+        {
+          "category": "Contradiction",
+          "count": 6,
+          "pct": 20.0
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 5,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-C_ot",
+      "seq_simple": "EXP_I-C",
+      "arc": "EXP_I-C",
+      "name_ko": "설명형: 배경→타인주장",
+      "count": 12,
+      "difficulty": {
+        "Hard": 4,
+        "Easy": 5,
+        "Medium": 3
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 8,
+          "pct": 57.1
+        },
+        {
+          "category": "Distortion",
+          "count": 2,
+          "pct": 14.3
+        },
+        {
+          "category": "Contradiction",
+          "count": 2,
+          "pct": 14.3
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-C",
+      "seq_simple": "EXP_I-C",
+      "arc": "EXP_I-C",
+      "name_ko": "설명형: 배경→주장",
+      "count": 12,
+      "difficulty": {
+        "Easy": 4,
+        "Hard": 6,
+        "Medium": 2
+      },
+      "top_wrong": [
+        {
+          "category": "Distortion",
+          "count": 3,
+          "pct": 20.0
+        },
+        {
+          "category": "Misattribution",
+          "count": 3,
+          "pct": 20.0
+        },
+        {
+          "category": "Contradiction",
+          "count": 2,
+          "pct": 13.3
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I_sup-CL",
+      "seq_simple": "EXP_I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→보완→결론",
+      "count": 11,
+      "difficulty": {
+        "Medium": 2,
+        "Easy": 2,
+        "Hard": 7
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 10,
+          "pct": 47.6
+        },
+        {
+          "category": "Contradiction",
+          "count": 8,
+          "pct": 38.1
+        },
+        {
+          "category": "Distortion",
+          "count": 2,
+          "pct": 9.5
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I-I_sup",
+      "seq_simple": "EXP_I-I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 정보→보완",
+      "count": 10,
+      "difficulty": {
+        "Hard": 2,
+        "Medium": 3,
+        "Easy": 5
+      },
+      "top_wrong": [
+        {
+          "category": "Distortion",
+          "count": 7,
+          "pct": 33.3
+        },
+        {
+          "category": "Partial Match",
+          "count": 6,
+          "pct": 28.6
+        },
+        {
+          "category": "Contradiction",
+          "count": 5,
+          "pct": 23.8
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-I-I-I-CL",
+      "seq_simple": "EXP_I-I-I-I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→정보→정보→정보→정보→결론",
+      "count": 10,
+      "difficulty": {
+        "Easy": 4,
+        "Hard": 3,
+        "Medium": 3
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 13,
+          "pct": 61.9
+        },
+        {
+          "category": "Overgeneralization",
+          "count": 3,
+          "pct": 14.3
+        },
+        {
+          "category": "Partial Match",
+          "count": 3,
+          "pct": 14.3
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-C",
+      "seq_simple": "EXP_I-I-C",
+      "arc": "EXP_I-C",
+      "name_ko": "설명형: 배경→정보→주장",
+      "count": 10,
+      "difficulty": {
+        "Easy": 3,
+        "Hard": 4,
+        "Medium": 3
+      },
+      "top_wrong": [
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 8,
+          "pct": 44.4
+        },
+        {
+          "category": "Partial Match",
+          "count": 4,
+          "pct": 22.2
+        },
+        {
+          "category": "Contradiction",
+          "count": 3,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I-I-CL",
+      "seq_simple": "EXP_I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 정보→정보→결론",
+      "count": 10,
+      "difficulty": {
+        "Easy": 3,
+        "Hard": 5,
+        "Medium": 2
+      },
+      "top_wrong": [
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 6,
+          "pct": 33.3
+        },
+        {
+          "category": "Partial Match",
+          "count": 3,
+          "pct": 16.7
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 3,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-CL",
+      "seq_simple": "EXP_I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→결론",
+      "count": 10,
+      "difficulty": {
+        "Easy": 3,
+        "Hard": 3,
+        "Medium": 4
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 8,
+          "pct": 38.1
+        },
+        {
+          "category": "Misattribution",
+          "count": 6,
+          "pct": 28.6
+        },
+        {
+          "category": "Distortion",
+          "count": 3,
+          "pct": 14.3
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_I_bg-C_ot",
+      "seq_simple": "ARG_I-C",
+      "arc": "ARG_I-C",
+      "name_ko": "논증형: 배경→타인주장",
+      "count": 10,
+      "difficulty": {
+        "Easy": 1,
+        "Hard": 4,
+        "Medium": 5
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 11,
+          "pct": 55.0
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 5,
+          "pct": 25.0
+        },
+        {
+          "category": "Misattribution",
+          "count": 2,
+          "pct": 10.0
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-I_sup",
+      "seq_simple": "ARG_C-I",
+      "arc": "ARG_C-I",
+      "name_ko": "논증형: 저자주장→보완",
+      "count": 9,
+      "difficulty": {
+        "Hard": 1,
+        "Medium": 3,
+        "Easy": 5
+      },
+      "top_wrong": [
+        {
+          "category": "Distortion",
+          "count": 10,
+          "pct": 43.5
+        },
+        {
+          "category": "Misattribution",
+          "count": 6,
+          "pct": 26.1
+        },
+        {
+          "category": "Contradiction",
+          "count": 4,
+          "pct": 17.4
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_I_bg-I",
+      "seq_simple": "LIT_I-I",
+      "arc": "LIT_I",
+      "name_ko": "문학형: 배경→정보",
+      "count": 9,
+      "difficulty": {
+        "Medium": 3,
+        "Easy": 5,
+        "Hard": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 5,
+          "pct": 41.7
+        },
+        {
+          "category": "Distortion",
+          "count": 3,
+          "pct": 25.0
+        },
+        {
+          "category": "Misattribution",
+          "count": 3,
+          "pct": 25.0
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-C_au",
+      "seq_simple": "EXP_I-C",
+      "arc": "EXP_I-C",
+      "name_ko": "설명형: 배경→저자주장",
+      "count": 9,
+      "difficulty": {
+        "Easy": 5,
+        "Hard": 3,
+        "Medium": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 4,
+          "pct": 28.6
+        },
+        {
+          "category": "Partial Match",
+          "count": 3,
+          "pct": 21.4
+        },
+        {
+          "category": "Misattribution",
+          "count": 3,
+          "pct": 21.4
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-I",
+      "seq_simple": "ARG_C-I",
+      "arc": "ARG_C-I",
+      "name_ko": "논증형: 저자주장→정보",
+      "count": 9,
+      "difficulty": {
+        "Easy": 2,
+        "Hard": 4,
+        "Medium": 3
+      },
+      "top_wrong": [
+        {
+          "category": "Misattribution",
+          "count": 10,
+          "pct": 55.6
+        },
+        {
+          "category": "Distortion",
+          "count": 3,
+          "pct": 16.7
+        },
+        {
+          "category": "Partial Match",
+          "count": 3,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_I_bg-I-I-CL",
+      "seq_simple": "LIT_I-I-I-CL",
+      "arc": "LIT_I-CL",
+      "name_ko": "문학형: 배경→정보→정보→결론",
+      "count": 8,
+      "difficulty": {
+        "Medium": 1,
+        "Easy": 6,
+        "Hard": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 3,
+          "pct": 37.5
+        },
+        {
+          "category": "Distortion",
+          "count": 2,
+          "pct": 25.0
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 2,
+          "pct": 25.0
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-I-I-I-I-CL",
+      "seq_simple": "EXP_I-I-I-I-I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→정보→정보→정보→정보→정보→결론",
+      "count": 8,
+      "difficulty": {
+        "Easy": 2,
+        "Hard": 3,
+        "Medium": 3
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 11,
+          "pct": 64.7
+        },
+        {
+          "category": "Misattribution",
+          "count": 3,
+          "pct": 17.6
+        },
+        {
+          "category": "Distortion",
+          "count": 1,
+          "pct": 5.9
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-C_au-CL_au",
+      "seq_simple": "ARG_C-C-CL",
+      "arc": "ARG_C-CL",
+      "name_ko": "논증형: 저자주장→저자주장→저자결론",
+      "count": 8,
+      "difficulty": {
+        "Hard": 4,
+        "Medium": 3,
+        "Easy": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 9,
+          "pct": 60.0
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 3,
+          "pct": 20.0
+        },
+        {
+          "category": "Partial Match",
+          "count": 2,
+          "pct": 13.3
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_ot-C_au",
+      "seq_simple": "ARG_C-C",
+      "arc": "ARG_C",
+      "name_ko": "논증형: 타인주장→저자주장",
+      "count": 7,
+      "difficulty": {
+        "Hard": 6,
+        "Easy": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 5,
+          "pct": 27.8
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 3,
+          "pct": 16.7
+        },
+        {
+          "category": "Contradiction",
+          "count": 3,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_I_bg-I-I-I-I-CL",
+      "seq_simple": "LIT_I-I-I-I-I-CL",
+      "arc": "LIT_I-CL",
+      "name_ko": "문학형: 배경→정보→정보→정보→정보→결론",
+      "count": 7,
+      "difficulty": {
+        "Medium": 5,
+        "Easy": 1,
+        "Hard": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 6,
+          "pct": 40.0
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 5,
+          "pct": 33.3
+        },
+        {
+          "category": "Distortion",
+          "count": 3,
+          "pct": 20.0
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_I_bg-C_ot-CL_au",
+      "seq_simple": "ARG_I-C-CL",
+      "arc": "ARG_I-C-CL",
+      "name_ko": "논증형: 배경→타인주장→저자결론",
+      "count": 7,
+      "difficulty": {
+        "Easy": 1,
+        "Hard": 3,
+        "Medium": 3
+      },
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 6,
+          "pct": 33.3
+        },
+        {
+          "category": "Overgeneralization",
+          "count": 3,
+          "pct": 16.7
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 2,
+          "pct": 11.1
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-C_ot",
+      "seq_simple": "EXP_I-I-C",
+      "arc": "EXP_I-C",
+      "name_ko": "설명형: 배경→정보→타인주장",
+      "count": 7,
+      "difficulty": {
+        "Easy": 1,
+        "Hard": 3,
+        "Medium": 3
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 9,
+          "pct": 42.9
+        },
+        {
+          "category": "Contradiction",
+          "count": 4,
+          "pct": 19.0
+        },
+        {
+          "category": "Partial Match",
+          "count": 4,
+          "pct": 19.0
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-I-CL_au",
+      "seq_simple": "ARG_C-I-CL",
+      "arc": "ARG_C-I-CL",
+      "name_ko": "논증형: 저자주장→정보→저자결론",
+      "count": 7,
+      "difficulty": {
+        "Easy": 1,
+        "Hard": 5,
+        "Medium": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 10,
+          "pct": 55.6
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 4,
+          "pct": 22.2
+        },
+        {
+          "category": "Contradiction",
+          "count": 2,
+          "pct": 11.1
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_I_bg-I-C_au",
+      "seq_simple": "ARG_I-I-C",
+      "arc": "ARG_I-C",
+      "name_ko": "논증형: 배경→정보→저자주장",
+      "count": 7,
+      "difficulty": {
+        "Hard": 4,
+        "Medium": 3
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 7,
+          "pct": 58.3
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 2,
+          "pct": 16.7
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 2,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_ot-CL_au",
+      "seq_simple": "ARG_C-CL",
+      "arc": "ARG_C-CL",
+      "name_ko": "논증형: 타인주장→저자결론",
+      "count": 7,
+      "difficulty": {
+        "Medium": 3,
+        "Easy": 2,
+        "Hard": 2
+      },
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 4,
+          "pct": 44.4
+        },
+        {
+          "category": "Partial Match",
+          "count": 2,
+          "pct": 22.2
+        },
+        {
+          "category": "Misattribution",
+          "count": 1,
+          "pct": 11.1
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I-CL",
+      "seq_simple": "EXP_I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 정보→결론",
+      "count": 6,
+      "difficulty": {
+        "Hard": 3,
+        "Medium": 2,
+        "Easy": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 3,
+          "pct": 25.0
+        },
+        {
+          "category": "Partial Match",
+          "count": 3,
+          "pct": 25.0
+        },
+        {
+          "category": "Distortion",
+          "count": 2,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-I-I-CL_au",
+      "seq_simple": "ARG_C-I-I-CL",
+      "arc": "ARG_C-I-CL",
+      "name_ko": "논증형: 저자주장→정보→정보→저자결론",
+      "count": 6,
+      "difficulty": {
+        "Easy": 1,
+        "Hard": 4,
+        "Medium": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 4,
+          "pct": 36.4
+        },
+        {
+          "category": "Overgeneralization",
+          "count": 3,
+          "pct": 27.3
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 2,
+          "pct": 18.2
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_I_bg-I-C_ot",
+      "seq_simple": "ARG_I-I-C",
+      "arc": "ARG_I-C",
+      "name_ko": "논증형: 배경→정보→타인주장",
+      "count": 6,
+      "difficulty": {
+        "Easy": 2,
+        "Hard": 4
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 8,
+          "pct": 53.3
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 5,
+          "pct": 33.3
+        },
+        {
+          "category": "Degree Error",
+          "count": 1,
+          "pct": 6.7
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I_ex",
+      "seq_simple": "EXP_I-I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 배경→예시",
+      "count": 6,
+      "difficulty": {
+        "Easy": 4,
+        "Hard": 1,
+        "Medium": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 5,
+          "pct": 62.5
+        },
+        {
+          "category": "Misattribution",
+          "count": 1,
+          "pct": 12.5
+        },
+        {
+          "category": "Distortion",
+          "count": 1,
+          "pct": 12.5
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I-I-I-CL",
+      "seq_simple": "EXP_I-I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 정보→정보→정보→결론",
+      "count": 6,
+      "difficulty": {
+        "Hard": 4,
+        "Medium": 1,
+        "Easy": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 5,
+          "pct": 33.3
+        },
+        {
+          "category": "Partial Match",
+          "count": 4,
+          "pct": 26.7
+        },
+        {
+          "category": "Contradiction",
+          "count": 2,
+          "pct": 13.3
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_I_bg-I-C_au",
+      "seq_simple": "LIT_I-I-C",
+      "arc": "LIT_I-C",
+      "name_ko": "문학형: 배경→정보→저자주장",
+      "count": 6,
+      "difficulty": {
+        "Medium": 3,
+        "Easy": 3
+      },
+      "top_wrong": [
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 3,
+          "pct": 60.0
+        },
+        {
+          "category": "Distortion",
+          "count": 1,
+          "pct": 20.0
+        },
+        {
+          "category": "Partial Match",
+          "count": 1,
+          "pct": 20.0
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I-C_au",
+      "seq_simple": "EXP_I-C",
+      "arc": "EXP_I-C",
+      "name_ko": "설명형: 정보→저자주장",
+      "count": 5,
+      "difficulty": {
+        "Hard": 1,
+        "Easy": 2,
+        "Medium": 2
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 4,
+          "pct": 44.4
+        },
+        {
+          "category": "Contradiction",
+          "count": 2,
+          "pct": 22.2
+        },
+        {
+          "category": "Partial Match",
+          "count": 2,
+          "pct": 22.2
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-I_sup-CL",
+      "seq_simple": "EXP_I-I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→정보→보완→결론",
+      "count": 5,
+      "difficulty": {
+        "Easy": 1,
+        "Medium": 4
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 7,
+          "pct": 58.3
+        },
+        {
+          "category": "Overgeneralization",
+          "count": 2,
+          "pct": 16.7
+        },
+        {
+          "category": "Partial Match",
+          "count": 1,
+          "pct": 8.3
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_I",
+      "seq_simple": "LIT_I",
+      "arc": "LIT_I",
+      "name_ko": "문학형: 정보",
+      "count": 5,
+      "difficulty": {
+        "Easy": 2,
+        "Medium": 2,
+        "Hard": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 2,
+          "pct": 33.3
+        },
+        {
+          "category": "Distortion",
+          "count": 2,
+          "pct": 33.3
+        },
+        {
+          "category": "Misattribution",
+          "count": 2,
+          "pct": 33.3
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_C_au-CL_au",
+      "seq_simple": "LIT_C-CL",
+      "arc": "LIT_C-CL",
+      "name_ko": "문학형: 저자주장→저자결론",
+      "count": 5,
+      "difficulty": {
+        "Hard": 3,
+        "Easy": 1,
+        "Medium": 1
+      },
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 1,
+          "pct": 33.3
+        },
+        {
+          "category": "Partial Match",
+          "count": 1,
+          "pct": 33.3
+        },
+        {
+          "category": "Degree Error",
+          "count": 1,
+          "pct": 33.3
+        }
+      ]
+    }
+  ],
+  "arc_collapsed_all": [
+    {
+      "arc": "EXP_I",
+      "count": 440
+    },
+    {
+      "arc": "EXP_I-CL",
+      "count": 326
+    },
+    {
+      "arc": "EXP_I-C",
+      "count": 97
+    },
+    {
+      "arc": "ARG_C-CL",
+      "count": 89
+    },
+    {
+      "arc": "ARG_I-C",
+      "count": 73
+    },
+    {
+      "arc": "LIT_I-CL",
+      "count": 63
+    },
+    {
+      "arc": "ARG_C",
+      "count": 55
+    },
+    {
+      "arc": "LIT_I-C",
+      "count": 52
+    },
+    {
+      "arc": "ARG_C-I-CL",
+      "count": 37
+    },
+    {
+      "arc": "ARG_I-C-CL",
+      "count": 35
+    },
+    {
+      "arc": "ARG_C-I",
+      "count": 30
+    },
+    {
+      "arc": "LIT_I",
+      "count": 29
+    },
+    {
+      "arc": "LIT_I-C-CL",
+      "count": 23
+    },
+    {
+      "arc": "EXP_I-C-CL",
+      "count": 20
+    },
+    {
+      "arc": "ARG_C-I-C",
+      "count": 15
+    },
+    {
+      "arc": "ARG_I-CL",
+      "count": 9
+    },
+    {
+      "arc": "LIT_C-CL",
+      "count": 9
+    },
+    {
+      "arc": "EXP_I-C-I",
+      "count": 8
+    },
+    {
+      "arc": "EXP_I-C-I-CL",
+      "count": 8
+    },
+    {
+      "arc": "ARG_I-C-I-CL",
+      "count": 6
+    },
+    {
+      "arc": "LIT_I-C-I-CL",
+      "count": 5
+    },
+    {
+      "arc": "LIT_C-I",
+      "count": 5
+    },
+    {
+      "arc": "EXP_C-I",
+      "count": 4
+    },
+    {
+      "arc": "LIT_I-C-I",
+      "count": 4
+    },
+    {
+      "arc": "LIT_C",
+      "count": 3
+    },
+    {
+      "arc": "ARG_I-C-I-C-CL",
+      "count": 3
+    },
+    {
+      "arc": "ARG_I-C-I",
+      "count": 3
+    },
+    {
+      "arc": "ARG_C-I-C-CL",
+      "count": 3
+    },
+    {
+      "arc": "LIT_C-I-C-I-CL",
+      "count": 2
+    },
+    {
+      "arc": "ARG_C-I-C-I",
+      "count": 2
+    },
+    {
+      "arc": "ARG_I",
+      "count": 2
+    },
+    {
+      "arc": "LIT_C-I-CL",
+      "count": 2
+    },
+    {
+      "arc": "LIT_I-C-I-C",
+      "count": 2
+    },
+    {
+      "arc": "CROSS_ARG_I_bg-C_au-CL_au_x_ARG_C_au-C_au-I_bg-I-CL",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_C_au-I-C_au_x_EXP_C_au-I-I-C_au",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg-I_x_ARG_I_sup-C_ot-CL_au",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg-I-I-I-I_ex_x_EXP_I-C_au-I",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg-I-I-I_x_ARG_CL-I-I-I-C_au",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg-I_x_ARG_I-I-C-I-I-CL",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg-I-C_au-I_sup_x_ARG_C_au-C_au-CL",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_C_au-C_au-C_au_x_ARG_C_au-CL_au",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_C_ot-C_au_x_EXP_I-C_ot-C_ot",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg-I-C_au_x_EXP_I-C_au-C_ct_au",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_C_au-C_au-C_au_x_EXP_I-I-C_au",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg-I-I-I-C_x_EXP_I-I-C",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_C_au-C_au_x_ARG_I-I-C_au-CL_au",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_C_au-I-C_au_x_ARG_C_ct_ot-I_sup-CL_au",
+      "count": 1
+    },
+    {
+      "arc": "LIT_C-I-C-CL",
+      "count": 1
+    },
+    {
+      "arc": "ARG_I-C-I-C-I-CL",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_C_au-C_au_x_EXP_C_au-I_bg-I",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_C_au-C_au_x_EXP_C_au-I_ex",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg-C_au-C_au_x_ARG_C_ot-I_sup-CL",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg_x_ARG_I-I-I-I-I-CL",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg_x_ARG_C_au-I-C_au-CL_au",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_bg_x_EXP_C_au-C_au-I_sup-C_ot-C_ct",
+      "count": 1
+    },
+    {
+      "arc": "CROSS_EXP_I_x_EXP_I-I-I-C_au",
+      "count": 1
+    }
+  ],
+  "hard_core_sequences": [
+    {
+      "seq_full": "EXP_I_bg-I",
+      "seq_simple": "EXP_I-I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 배경→정보",
+      "name_en": "Expository: Bg→Info",
+      "count": 206,
+      "hard_count": 62,
+      "hard_pct": 30.1,
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 105,
+          "pct": 27.5
+        },
+        {
+          "category": "Contradiction",
+          "count": 73,
+          "pct": 19.1
+        },
+        {
+          "category": "Distortion",
+          "count": 67,
+          "pct": 17.5
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-CL",
+      "seq_simple": "EXP_I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→정보→결론",
+      "name_en": "Expository: Bg→Info→Concl",
+      "count": 143,
+      "hard_count": 43,
+      "hard_pct": 30.1,
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 67,
+          "pct": 24.8
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 66,
+          "pct": 24.4
+        },
+        {
+          "category": "Distortion",
+          "count": 38,
+          "pct": 14.1
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I",
+      "seq_simple": "EXP_I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 정보",
+      "name_en": "Expository: Info",
+      "count": 85,
+      "hard_count": 29,
+      "hard_pct": 34.1,
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 39,
+          "pct": 30.5
+        },
+        {
+          "category": "Misattribution",
+          "count": 29,
+          "pct": 22.7
+        },
+        {
+          "category": "Distortion",
+          "count": 23,
+          "pct": 18.0
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-I-CL",
+      "seq_simple": "EXP_I-I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→정보→정보→결론",
+      "name_en": "Expository: Bg→Info→Info→Concl",
+      "count": 58,
+      "hard_count": 20,
+      "hard_pct": 34.5,
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 48,
+          "pct": 35.8
+        },
+        {
+          "category": "Contradiction",
+          "count": 23,
+          "pct": 17.2
+        },
+        {
+          "category": "Distortion",
+          "count": 17,
+          "pct": 12.7
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I-I",
+      "seq_simple": "EXP_I-I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 정보→정보",
+      "name_en": "Expository: Info→Info",
+      "count": 46,
+      "hard_count": 16,
+      "hard_pct": 34.8,
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 27,
+          "pct": 30.3
+        },
+        {
+          "category": "Misattribution",
+          "count": 20,
+          "pct": 22.5
+        },
+        {
+          "category": "Distortion",
+          "count": 16,
+          "pct": 18.0
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-CL_au",
+      "seq_simple": "ARG_C-CL",
+      "arc": "ARG_C-CL",
+      "name_ko": "논증형: 저자주장→저자결론",
+      "name_en": "Argument: AuClaim→AuConcl",
+      "count": 53,
+      "hard_count": 15,
+      "hard_pct": 28.3,
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 28,
+          "pct": 26.2
+        },
+        {
+          "category": "Distortion",
+          "count": 22,
+          "pct": 20.6
+        },
+        {
+          "category": "Misattribution",
+          "count": 16,
+          "pct": 15.0
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_I_bg-C_au",
+      "seq_simple": "ARG_I-C",
+      "arc": "ARG_I-C",
+      "name_ko": "논증형: 배경→저자주장",
+      "name_en": "Argument: Bg→AuClaim",
+      "count": 31,
+      "hard_count": 11,
+      "hard_pct": 35.5,
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 25,
+          "pct": 33.3
+        },
+        {
+          "category": "Misattribution",
+          "count": 15,
+          "pct": 20.0
+        },
+        {
+          "category": "Distortion",
+          "count": 8,
+          "pct": 10.7
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-I-I-CL",
+      "seq_simple": "EXP_I-I-I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→정보→정보→정보→결론",
+      "name_en": "Expository: Bg→Info→Info→Info→Concl",
+      "count": 21,
+      "hard_count": 9,
+      "hard_pct": 42.9,
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 17,
+          "pct": 35.4
+        },
+        {
+          "category": "Partial Match",
+          "count": 10,
+          "pct": 20.8
+        },
+        {
+          "category": "Contradiction",
+          "count": 7,
+          "pct": 14.6
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_I_bg-C_au",
+      "seq_simple": "LIT_I-C",
+      "arc": "LIT_I-C",
+      "name_ko": "문학형: 배경→저자주장",
+      "name_en": "Literary: Bg→AuClaim",
+      "count": 34,
+      "hard_count": 8,
+      "hard_pct": 23.5,
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 49,
+          "pct": 59.0
+        },
+        {
+          "category": "Distortion",
+          "count": 14,
+          "pct": 16.9
+        },
+        {
+          "category": "Misattribution",
+          "count": 10,
+          "pct": 12.0
+        }
+      ]
+    },
+    {
+      "seq_full": "LIT_I_bg-I-CL",
+      "seq_simple": "LIT_I-I-CL",
+      "arc": "LIT_I-CL",
+      "name_ko": "문학형: 배경→정보→결론",
+      "name_en": "Literary: Bg→Info→Concl",
+      "count": 22,
+      "hard_count": 7,
+      "hard_pct": 31.8,
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 13,
+          "pct": 27.1
+        },
+        {
+          "category": "Distortion",
+          "count": 11,
+          "pct": 22.9
+        },
+        {
+          "category": "Contradiction",
+          "count": 8,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au",
+      "seq_simple": "ARG_C",
+      "arc": "ARG_C",
+      "name_ko": "논증형: 저자주장",
+      "name_en": "Argument: AuClaim",
+      "count": 18,
+      "hard_count": 7,
+      "hard_pct": 38.9,
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 6,
+          "pct": 28.6
+        },
+        {
+          "category": "Misattribution",
+          "count": 6,
+          "pct": 28.6
+        },
+        {
+          "category": "Distortion",
+          "count": 3,
+          "pct": 14.3
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I_sup-CL",
+      "seq_simple": "EXP_I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 배경→보완→결론",
+      "name_en": "Expository: Bg→Sup→Concl",
+      "count": 11,
+      "hard_count": 7,
+      "hard_pct": 63.6,
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 10,
+          "pct": 47.6
+        },
+        {
+          "category": "Contradiction",
+          "count": 8,
+          "pct": 38.1
+        },
+        {
+          "category": "Distortion",
+          "count": 2,
+          "pct": 9.5
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_ot-C_au",
+      "seq_simple": "ARG_C-C",
+      "arc": "ARG_C",
+      "name_ko": "논증형: 타인주장→저자주장",
+      "name_en": "Argument: OtClaim→AuClaim",
+      "count": 7,
+      "hard_count": 6,
+      "hard_pct": 85.7,
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 5,
+          "pct": 27.8
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 3,
+          "pct": 16.7
+        },
+        {
+          "category": "Contradiction",
+          "count": 3,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_I_bg-C_au-CL_au",
+      "seq_simple": "ARG_I-C-CL",
+      "arc": "ARG_I-C-CL",
+      "name_ko": "논증형: 배경→저자주장→저자결론",
+      "name_en": "Argument: Bg→AuClaim→AuConcl",
+      "count": 16,
+      "hard_count": 6,
+      "hard_pct": 37.5,
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 12,
+          "pct": 31.6
+        },
+        {
+          "category": "Contradiction",
+          "count": 8,
+          "pct": 21.1
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 5,
+          "pct": 13.2
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-C",
+      "seq_simple": "EXP_I-C",
+      "arc": "EXP_I-C",
+      "name_ko": "설명형: 배경→주장",
+      "name_en": "Expository: Bg→Claim",
+      "count": 12,
+      "hard_count": 6,
+      "hard_pct": 50.0,
+      "top_wrong": [
+        {
+          "category": "Distortion",
+          "count": 3,
+          "pct": 20.0
+        },
+        {
+          "category": "Misattribution",
+          "count": 3,
+          "pct": 20.0
+        },
+        {
+          "category": "Contradiction",
+          "count": 2,
+          "pct": 13.3
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-C_au",
+      "seq_simple": "ARG_C-C",
+      "arc": "ARG_C",
+      "name_ko": "논증형: 저자주장→저자주장",
+      "name_en": "Argument: AuClaim→AuClaim",
+      "count": 15,
+      "hard_count": 5,
+      "hard_pct": 33.3,
+      "top_wrong": [
+        {
+          "category": "Distortion",
+          "count": 10,
+          "pct": 33.3
+        },
+        {
+          "category": "Contradiction",
+          "count": 6,
+          "pct": 20.0
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 5,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I_sup",
+      "seq_simple": "EXP_I-I",
+      "arc": "EXP_I",
+      "name_ko": "설명형: 배경→보완",
+      "name_en": "Expository: Bg→Sup",
+      "count": 21,
+      "hard_count": 5,
+      "hard_pct": 23.8,
+      "top_wrong": [
+        {
+          "category": "Partial Match",
+          "count": 13,
+          "pct": 27.1
+        },
+        {
+          "category": "Contradiction",
+          "count": 12,
+          "pct": 25.0
+        },
+        {
+          "category": "Distortion",
+          "count": 7,
+          "pct": 14.6
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I-I-CL",
+      "seq_simple": "EXP_I-I-CL",
+      "arc": "EXP_I-CL",
+      "name_ko": "설명형: 정보→정보→결론",
+      "name_en": "Expository: Info→Info→Concl",
+      "count": 10,
+      "hard_count": 5,
+      "hard_pct": 50.0,
+      "top_wrong": [
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 6,
+          "pct": 33.3
+        },
+        {
+          "category": "Partial Match",
+          "count": 3,
+          "pct": 16.7
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 3,
+          "pct": 16.7
+        }
+      ]
+    },
+    {
+      "seq_full": "ARG_C_au-I-CL_au",
+      "seq_simple": "ARG_C-I-CL",
+      "arc": "ARG_C-I-CL",
+      "name_ko": "논증형: 저자주장→정보→저자결론",
+      "name_en": "Argument: AuClaim→Info→AuConcl",
+      "count": 7,
+      "hard_count": 5,
+      "hard_pct": 71.4,
+      "top_wrong": [
+        {
+          "category": "Out Of Scope",
+          "count": 10,
+          "pct": 55.6
+        },
+        {
+          "category": "Pre-Pivot Reading",
+          "count": 4,
+          "pct": 22.2
+        },
+        {
+          "category": "Contradiction",
+          "count": 2,
+          "pct": 11.1
+        }
+      ]
+    },
+    {
+      "seq_full": "EXP_I_bg-I-C_au",
+      "seq_simple": "EXP_I-I-C",
+      "arc": "EXP_I-C",
+      "name_ko": "설명형: 배경→정보→저자주장",
+      "name_en": "Expository: Bg→Info→AuClaim",
+      "count": 16,
+      "hard_count": 5,
+      "hard_pct": 31.2,
+      "top_wrong": [
+        {
+          "category": "Contradiction",
+          "count": 14,
+          "pct": 42.4
+        },
+        {
+          "category": "Out Of Scope",
+          "count": 8,
+          "pct": 24.2
+        },
+        {
+          "category": "Partial Match",
+          "count": 8,
+          "pct": 24.2
+        }
+      ]
+    }
+  ],
+  "wrong_by_structure_pattern": {
+    "PURE_INFO": [
+      {
+        "category": "Partial Match",
+        "count": 234,
+        "pct": 27.3
+      },
+      {
+        "category": "Distortion",
+        "count": 154,
+        "pct": 18.0
+      },
+      {
+        "category": "Contradiction",
+        "count": 152,
+        "pct": 17.8
+      }
+    ],
+    "INFO_TO_CONCL": [
+      {
+        "category": "Out Of Scope",
+        "count": 284,
+        "pct": 33.7
+      },
+      {
+        "category": "Contradiction",
+        "count": 167,
+        "pct": 19.8
+      },
+      {
+        "category": "Partial Match",
+        "count": 106,
+        "pct": 12.6
+      }
+    ],
+    "CLAIM_EVIDENCE": [
+      {
+        "category": "Out Of Scope",
+        "count": 232,
+        "pct": 22.3
+      },
+      {
+        "category": "Partial Match",
+        "count": 225,
+        "pct": 21.6
+      },
+      {
+        "category": "Contradiction",
+        "count": 190,
+        "pct": 18.3
+      }
+    ],
+    "CLASSICAL_ARG": [
+      {
+        "category": "Out Of Scope",
+        "count": 63,
+        "pct": 46.7
+      },
+      {
+        "category": "Contradiction",
+        "count": 22,
+        "pct": 16.3
+      },
+      {
+        "category": "Overgeneralization",
+        "count": 16,
+        "pct": 11.9
+      }
+    ],
+    "COUNTER_REBUTTAL": [
+      {
+        "category": "Out Of Scope",
+        "count": 30,
+        "pct": 43.5
+      },
+      {
+        "category": "Contradiction",
+        "count": 14,
+        "pct": 20.3
+      },
+      {
+        "category": "Distortion",
+        "count": 12,
+        "pct": 17.4
+      }
+    ],
+    "DUAL_CLAIM": [
+      {
+        "category": "Out Of Scope",
+        "count": 54,
+        "pct": 33.5
+      },
+      {
+        "category": "Contradiction",
+        "count": 26,
+        "pct": 16.1
+      },
+      {
+        "category": "Distortion",
+        "count": 23,
+        "pct": 14.3
+      }
+    ]
+  },
+  "wrong_by_difficulty": {
+    "Easy": [
+      {
+        "category": "Out Of Scope",
+        "count": 200,
+        "pct": 20.9
+      },
+      {
+        "category": "Contradiction",
+        "count": 200,
+        "pct": 20.9
+      },
+      {
+        "category": "Partial Match",
+        "count": 180,
+        "pct": 18.8
+      }
+    ],
+    "Hard": [
+      {
+        "category": "Out Of Scope",
+        "count": 241,
+        "pct": 23.4
+      },
+      {
+        "category": "Partial Match",
+        "count": 218,
+        "pct": 21.1
+      },
+      {
+        "category": "Contradiction",
+        "count": 177,
+        "pct": 17.2
+      }
+    ],
+    "Medium": [
+      {
+        "category": "Out Of Scope",
+        "count": 304,
+        "pct": 27.3
+      },
+      {
+        "category": "Partial Match",
+        "count": 201,
+        "pct": 18.1
+      },
+      {
+        "category": "Contradiction",
+        "count": 194,
+        "pct": 17.4
+      }
+    ]
+  },
+  "wrong_by_skill": {
+    "Information and Ideas Command of Evidence": [
+      {
+        "category": "Partial Match",
+        "count": 201,
+        "pct": 35.4
+      },
+      {
+        "category": "Contradiction",
+        "count": 142,
+        "pct": 25.0
+      },
+      {
+        "category": "Out Of Scope",
+        "count": 112,
+        "pct": 19.7
+      }
+    ],
+    "Standard English Conventions Boundaries": [
+      {
+        "category": "Partial Match",
+        "count": 212,
+        "pct": 49.5
+      },
+      {
+        "category": "Distortion",
+        "count": 115,
+        "pct": 26.9
+      },
+      {
+        "category": "Misattribution",
+        "count": 37,
+        "pct": 8.6
+      }
+    ],
+    "Standard English Conventions Form, Structure, and Sense": [
+      {
+        "category": "Misattribution",
+        "count": 229,
+        "pct": 56.1
+      },
+      {
+        "category": "Partial Match",
+        "count": 83,
+        "pct": 20.3
+      },
+      {
+        "category": "Contradiction",
+        "count": 47,
+        "pct": 11.5
+      }
+    ],
+    "Expression of Ideas Transitions": [
+      {
+        "category": "Pre-Pivot Reading",
+        "count": 146,
+        "pct": 38.5
+      },
+      {
+        "category": "Contradiction",
+        "count": 124,
+        "pct": 32.7
+      },
+      {
+        "category": "Distortion",
+        "count": 52,
+        "pct": 13.7
+      }
+    ],
+    "Craft and Structure Text Structure and Purpose": [
+      {
+        "category": "Out Of Scope",
+        "count": 160,
+        "pct": 55.2
+      },
+      {
+        "category": "Partial Match",
+        "count": 33,
+        "pct": 11.4
+      },
+      {
+        "category": "Distortion",
+        "count": 25,
+        "pct": 8.6
+      }
+    ],
+    "Information and Ideas Central Ideas and Details": [
+      {
+        "category": "Out Of Scope",
+        "count": 161,
+        "pct": 57.5
+      },
+      {
+        "category": "Contradiction",
+        "count": 46,
+        "pct": 16.4
+      },
+      {
+        "category": "Distortion",
+        "count": 22,
+        "pct": 7.9
+      }
+    ],
+    "Craft and Structure Words in Context": [
+      {
+        "category": "Distortion",
+        "count": 119,
+        "pct": 43.6
+      },
+      {
+        "category": "Contradiction",
+        "count": 93,
+        "pct": 34.1
+      },
+      {
+        "category": "Out Of Scope",
+        "count": 45,
+        "pct": 16.5
+      }
+    ],
+    "Information and Ideas Inferences": [
+      {
+        "category": "Out Of Scope",
+        "count": 176,
+        "pct": 64.7
+      },
+      {
+        "category": "Contradiction",
+        "count": 38,
+        "pct": 14.0
+      },
+      {
+        "category": "Overgeneralization",
+        "count": 26,
+        "pct": 9.6
+      }
+    ],
+    "Craft and Structure Cross-Text Connections": [
+      {
+        "category": "Out Of Scope",
+        "count": 73,
+        "pct": 50.0
+      },
+      {
+        "category": "Distortion",
+        "count": 27,
+        "pct": 18.5
+      },
+      {
+        "category": "Contradiction",
+        "count": 19,
+        "pct": 13.0
+      }
+    ],
+    "Transitions": [
+      {
+        "category": "Contradiction",
+        "count": 14,
+        "pct": 66.7
+      },
+      {
+        "category": "Pre-Pivot Reading",
+        "count": 4,
+        "pct": 19.0
+      },
+      {
+        "category": "Distortion",
+        "count": 2,
+        "pct": 9.5
+      }
+    ]
+  }
+}

@@ -17,7 +17,7 @@ Error log where mistakes are recorded to prevent recurrence. When the main agent
 ### `agent-errors/`
 Per-agent error logs. Each specialist agent logs domain-specific errors to its own file:
 - `agent-errors/auth-specialist.md` - Auth-related errors
-- `agent-errors/api-designer.md` - API design errors
+- `agent-errors/backend-specialist.md` - API/database errors
 - etc.
 
 This enables pattern detection per agent domain and prevents recurring domain-specific mistakes.

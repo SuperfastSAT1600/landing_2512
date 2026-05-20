@@ -1,0 +1,218 @@
+{
+  "main": {
+    "id": "3a786029e585ef38",
+    "type": "split",
+    "children": [
+      {
+        "id": "cfb3d002d91d0c8b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "8f95f599e6512b68",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "그래프 뷰"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "bb080826d8e7feb9",
+    "type": "split",
+    "children": [
+      {
+        "id": "a0f1a54fd34e34ef",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f09ac7304f43be59",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "파일 탐색기"
+            }
+          },
+          {
+            "id": "4c62ec1745be65b7",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "검색"
+            }
+          },
+          {
+            "id": "667556e2b7ae0ef0",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "북마크"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "2f18dfd95e981c64",
+    "type": "split",
+    "children": [
+      {
+        "id": "a1bbfcf1ce07fd2b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "eeb5aedf6c65ca43",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "백링크"
+            }
+          },
+          {
+            "id": "9ae7e595c0eee4cb",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "나가는 링크"
+            }
+          },
+          {
+            "id": "19b3d497ae5a20cf",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "태그"
+            }
+          },
+          {
+            "id": "8a938ba4d17c95f7",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "모든 속성"
+            }
+          },
+          {
+            "id": "83625f54eb7022c7",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "개요"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:빠른 전환기 열기": false,
+      "graph:그래프 뷰 열기": false,
+      "canvas:새 캔버스 만들기": false,
+      "daily-notes:오늘의 일일 노트 열기": false,
+      "templates:템플릿 삽입": false,
+      "command-palette:명령어 팔레트 열기": false,
+      "bases:새 베이스 생성하기": false
+    }
+  },
+  "active": "8f95f599e6512b68",
+  "lastOpenFiles": [
+    "content/posts/2026-05-18-inference-sequencing-naver.md.tmp.35248.206cd5506971",
+    "content/posts/2026-05-18-inference-sequencing-landing.md",
+    "content/posts/2026-05-18-inference-sequencing-landing.md.tmp.35248.844eafcc5cb0",
+    "content/posts/2026-05-18-inference-sequencing-ghost.md",
+    "content/posts/2026-05-18-inference-sequencing-ghost.md.tmp.35248.4a0ca490460c",
+    "content/posts/2026-05-18-inference-sequencing-naver.md",
+    "content/posts/2026-05-18-inference-sequencing-naver.md.tmp.35248.b67da7f01346",
+    "wiki/blog/patterns.jsonl",
+    "wiki/blog/patterns.jsonl.tmp.35248.5cf74e4a0645",
+    "wiki/blog/2026-05-18-inference/learnings.md",
+    "wiki/blog/2026-05-18-inference/learnings.md.tmp.35248.a344dc1bb2ef",
+    "wiki/blog/2026-05-18-inference/blueprint.md",
+    "wiki/blog/2026-05-18-inference/blueprint.md.tmp.35248.b65daafd09b5",
+    "wiki/blog/2026-05-18-inference",
+    "wiki/blog/schema/blueprint.schema.json",
+    "wiki/blog/schema/blueprint.schema.json.tmp.35248.ad26c5c280ac",
+    "wiki/vocab/level_framework.md",
+    "wiki/vocab/group_framework.md",
+    "wiki/analysis/ANALYSIS_CONTEXT.md",
+    "wiki/analysis/assessment_framework.md",
+    "wiki/analysis/cp_sequence_analysis_agent.md",
+    "wiki/analysis/sat_rw_reference.md",
+    "wiki/analysis/vocab_extraction_methodology.md",
+    "wiki/analysis/automated_insight_report.md",
+    "wiki/analysis/skills_insight.md",
+    "wiki/analysis/rw_concept_tags.md",
+    "wiki/analysis/rw_sequencing_analysis.md",
+    "wiki/analysis/rw_skills_analysis.md",
+    "raw/wiki/index.md",
+    "raw/wiki/vocab/group_framework.md",
+    "wiki/analysis/wic_by_topic.md",
+    "raw/wiki/log.md",
+    "raw/wiki/vocab/level_framework.md",
+    "raw/wiki/analysis/wic_patterns.md",
+    "raw/wiki/analysis/vocab_extraction_methodology.md",
+    "raw/wiki/analysis/skills_insight.md"
+  ]
+}

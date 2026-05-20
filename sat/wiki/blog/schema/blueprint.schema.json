@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SuperfastSAT Blog Blueprint Schema",
+  "description": "포스팅의 구조를 정의하는 메타데이터 스키마. 플랫폼 중립적인 핵심 콘텐츠 표준.",
+  "type": "object",
+  "required": ["title", "date", "slug", "skill", "domain", "type"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "포스팅 제목 (H1)"
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "부제 (저자/날짜 정보)"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "발행일 (YYYY-MM-DD)"
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL 슬러그 (예: inference-sequencing)"
+    },
+    "skill": {
+      "type": "string",
+      "description": "SAT 스킬명 (고유명사, 번역 금지: Inference, Words in Context 등)"
+    },
+    "domain": {
+      "type": "string",
+      "enum": ["Reading and Writing", "Math"],
+      "description": "SAT 도메인"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["현상형", "전략형", "개념형", "비교형", "오류수정형"],
+      "description": "포스팅 유형 (superfastsat-blog STEP 0)"
+    },
+    "reader_profile": {
+      "type": "array",
+      "description": "이런 분들에게 도움이 되는 포스팅",
+      "items": {
+        "type": "string"
+      }
+    },
+    "quick_summary": {
+      "type": "array",
+      "description": "바쁘시면 이것만 보세요 (핵심 요약 2-3줄)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sections": {
+      "type": "array",
+      "description": "본문 섹션 (H2 단위)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "h2": {
+            "type": "string",
+            "description": "섹션 제목"
+          },
+          "paragraphs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "code_blocks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "language": {
+                  "type": "string",
+                  "default": "sequence"
+                },
+                "content": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "closing": {
+      "type": "object",
+      "description": "마무리 섹션",
+      "properties": {
+        "paragraphs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "description": "해시태그 (5-10개)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "references": {
+      "type": "array",
+      "description": "레퍼런스 (출처 링크)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

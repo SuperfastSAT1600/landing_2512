@@ -1,12 +1,10 @@
 # Orchestration (Index)
 
-**Main agent is CODER + ORCHESTRATOR.** Orchestration governs **Phase 2** of the unified workflow — see `task-protocol.md` for the full 6-phase protocol.
+Main agent is coder + orchestrator. Orchestration = Phase 2 of `task-protocol.md`.
 
 | Topic | File |
 |-------|------|
-| When to use subagents vs teams vs main agent | `orchestration/routing.md` |
-| Parallel patterns, fixed 6-role team, dashboard | `orchestration/parallel.md` |
-| Agent capabilities | `.claude/agents/*.md` (auto-loaded) |
-| Skill selection by task type | `.claude/skills/INDEX.md` |
-| Full workflow (spec → implement → verify → ship) | `task-protocol.md` |
-| Git branches, commits, PRs, safety | `workflow/git-workflow.md` |
+| Routing decision tree | `orchestration/routing.md` |
+| Parallel patterns, Agent Teams | `orchestration/parallel.md` |
+| Full workflow | `task-protocol.md` |
+| Git | `workflow/git-workflow.md` |
