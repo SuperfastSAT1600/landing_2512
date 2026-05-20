@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TEST_SCHEDULE } from '../data/plans';
 import styles from './Solution.module.css';
 
@@ -259,133 +259,28 @@ function SkillCard() {
     );
 }
 
-/* Card 3 — Calendar */
-const CHECK_PATH_LEN = 28; // approximate SVG path length for the checkmark
+/* Card 3 — Scrolling Timeline */
+const WEEKDAYS_KR = ['일', '월', '화', '수', '목', '금', '토'];
 
-function CheckMark({ drawn }: { drawn: boolean }) {
-    return (
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-            <polyline
-                points="2,7 5.5,11 12,3"
-                stroke="#22c55e"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeDasharray={CHECK_PATH_LEN}
-                strokeDashoffset={drawn ? 0 : CHECK_PATH_LEN}
-                style={{
-                    transition: drawn ? 'stroke-dashoffset 0.45s ease' : 'none',
-                }}
-            />
-        </svg>
-    );
+function fmtDate(dateStr: string): string {
+    const d = new Date(`${dateStr}T00:00:00`);
+    return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS_KR[d.getDay()]})`;
 }
 
-function calendarCells(year: number, month: number): (number | null)[] {
-    const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const cells: (number | null)[] = Array(firstDay).fill(null);
-    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-    while (cells.length % 7 !== 0) cells.push(null);
-    return cells;
-}
+interface TimelineEntry { date: string; label: string; isPast: boolean; }
 
-const PAST_TEST_DATES = new Set(['2026-05-02', '2026-05-16']);
+const TIMELINE_ENTRIES: TimelineEntry[] = [
+    { date: '2026-05-02', label: fmtDate('2026-05-02'), isPast: true },
+    { date: '2026-05-16', label: fmtDate('2026-05-16'), isPast: true },
+    ...TEST_SCHEDULE.slice(0, 6).map(t => ({ date: t.date, label: fmtDate(t.date), isPast: false })),
+];
 
 function TimelineCard() {
     const ref = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
-    const [currentMonthIdx, setCurrentMonthIdx] = useState(0);
-    const [calKey, setCalKey] = useState(0);
-    const [drawnCount, setDrawnCount] = useState(0);
+    useIntersection(ref);
 
-    const { months, testDates } = useMemo(() => {
-        const today = new Date('2026-05-19');
-        const upcoming = TEST_SCHEDULE
-            .filter(t => new Date(t.date) >= today)
-            .slice(0, 6);
-
-        const monthSet = new Set<string>();
-        [...PAST_TEST_DATES, ...upcoming.map(t => t.date)].forEach(dateStr => {
-            const d = new Date(dateStr);
-            monthSet.add(`${d.getFullYear()}-${d.getMonth()}`);
-        });
-
-        const monthList = Array.from(monthSet)
-            .slice(0, 2)
-            .map(key => {
-                const [y, m] = key.split('-').map(Number);
-                return { year: y, month: m };
-            });
-
-        if (monthList.length === 1) {
-            const { year, month } = monthList[0];
-            const next = month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 };
-            monthList.push(next);
-        }
-
-        const testDateSet = new Set(upcoming.map(t => t.date));
-        return { months: monthList, testDates: testDateSet };
-    }, []);
-
-    // Upcoming (animated) checks per month — past dates are pre-drawn, not included here
-    const checksByMonth = useMemo(() => {
-        return months.map(({ year, month }) => {
-            const checks: string[] = [];
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            for (let d = 1; d <= daysInMonth; d++) {
-                const mm = String(month + 1).padStart(2, '0');
-                const dd = String(d).padStart(2, '0');
-                const key = `${year}-${mm}-${dd}`;
-                if (testDates.has(key)) checks.push(key);
-            }
-            return checks;
-        });
-    }, [months, testDates]);
-
-    useIntersection(ref, 0.15, () => setIsVisible(true));
-
-    useEffect(() => {
-        if (!isVisible) return;
-
-        let cancelled = false;
-        const timeouts: ReturnType<typeof setTimeout>[] = [];
-
-        function runMonth(idx: number, isFirst = false) {
-            if (cancelled) return;
-            setCurrentMonthIdx(idx);
-            setCalKey(k => k + 1);
-            setDrawnCount(0);
-
-            const checks = checksByMonth[idx];
-            // 첫 번째 실행 시 카드 fade-in(~900ms)이 끝난 후 체크 시작
-            const baseDelay = isFirst ? 950 : 400;
-            checks.forEach((_, i) => {
-                const t = setTimeout(() => {
-                    if (!cancelled) setDrawnCount(i + 1);
-                }, baseDelay + i * 600);
-                timeouts.push(t);
-            });
-
-            // wait for all checks + 1.5s pause, then slide to next month
-            const nextDelay = baseDelay + checks.length * 600 + 1500;
-            const nextT = setTimeout(() => runMonth((idx + 1) % months.length), nextDelay);
-            timeouts.push(nextT);
-        }
-
-        runMonth(0, true);
-        return () => {
-            cancelled = true;
-            timeouts.forEach(clearTimeout);
-        };
-    }, [isVisible, checksByMonth, months.length]);
-
-    const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    const { year, month } = months[currentMonthIdx];
-    const cells = calendarCells(year, month);
-    const currentChecks = checksByMonth[currentMonthIdx];
+    // 두 번 반복해 CSS 루프가 끊김 없이 이어지도록
+    const doubled = [...TIMELINE_ENTRIES, ...TIMELINE_ENTRIES];
 
     return (
         <article
@@ -395,42 +290,26 @@ function TimelineCard() {
             aria-label="2주마다 열리는 정기 실전 일정"
         >
             <div className={`${styles.visual} ${styles.visual3}`} aria-hidden="true">
-                <div className={styles.calendarWrap}>
-                    <div key={calKey} className={styles.calMonth}>
-                        <div className={styles.calHeader}>
-                            {MONTH_NAMES[month]} {year}
-                        </div>
-                        <div className={styles.calGrid}>
-                            {WEEKDAYS.map(w => (
-                                <div key={w} className={styles.calWeekday}>{w}</div>
-                            ))}
-                            {cells.map((day, idx) => {
-                                if (day === null) {
-                                    return <div key={`empty-${idx}`} className={styles.calCell} />;
-                                }
-                                const mm = String(month + 1).padStart(2, '0');
-                                const dd = String(day).padStart(2, '0');
-                                const dateKey = `${year}-${mm}-${dd}`;
-                                const isPast = PAST_TEST_DATES.has(dateKey);
-                                const isUpcoming = testDates.has(dateKey);
-                                const isTestDay = isPast || isUpcoming;
-                                const checkIndex = currentChecks.indexOf(dateKey);
-                                const isDrawn = isPast || (checkIndex !== -1 && drawnCount > checkIndex);
-                                return (
-                                    <div
-                                        key={dateKey}
-                                        className={`${styles.calCell} ${isTestDay ? styles.calTestDay : ''} ${isPast ? styles.calPastDay : ''}`}
-                                    >
-                                        <span className={styles.calDayNum}>{day}</span>
-                                        {isTestDay && (
-                                            <span className={styles.calCheck}>
-                                                <CheckMark drawn={isDrawn} />
-                                            </span>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                <div className={styles.timelineTrack}>
+                    <div
+                        className={styles.timelineScroll}
+                        style={{ '--item-count': TIMELINE_ENTRIES.length } as React.CSSProperties}
+                    >
+                        {doubled.map((item, idx) => (
+                            <div key={idx} className={styles.timelineItem}>
+                                <div className={`${styles.timelineDateRow} ${item.isPast ? styles.timelinePast : styles.timelineUpcoming}`}>
+                                    <span className={`${styles.timelineIcon} ${item.isPast ? styles.timelineIconPast : styles.timelineIconUpcoming}`}>
+                                        {item.isPast ? '✓' : '●'}
+                                    </span>
+                                    <span className={styles.timelineDate}>{item.label}</span>
+                                </div>
+                                <div className={styles.timelineGap}>
+                                    <div className={styles.timelineGapLine} />
+                                    <span className={styles.timelineGapText}>2주 후</span>
+                                    <div className={styles.timelineGapLine} />
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
