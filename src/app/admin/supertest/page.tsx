@@ -54,13 +54,16 @@ export default function AdminSupertest() {
         }
     };
 
-    // D-day 계산 미리보기
+    // D-day 계산: 시험 날짜 - 오늘 날짜 (캘린더 기준)
     const dday = (() => {
         if (!nextTestDate) return null;
-        const target = new Date(`${nextTestDate}T09:00:00+09:00`);
-        const diff = target.getTime() - Date.now();
-        if (diff <= 0) return '시험일이 지났거나 오늘입니다';
-        const days = Math.floor(diff / 86400000);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const test = new Date(nextTestDate);
+        test.setHours(0, 0, 0, 0);
+        const days = Math.round((test.getTime() - today.getTime()) / 86400000);
+        if (days < 0) return '시험일이 지났습니다';
+        if (days === 0) return 'D-Day';
         return `D-${days}`;
     })();
 

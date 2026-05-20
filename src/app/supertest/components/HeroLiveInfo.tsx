@@ -18,12 +18,9 @@ function pad(n: number) {
 }
 
 function formatDateLabel(dateStr: string): string {
-    const d = new Date(`${dateStr}T09:00:00+09:00`);
-    const month = d.getMonth() + 1;
-    const day = d.getDate();
+    const d = new Date(`${dateStr}T00:00:00`);
     const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-    const weekday = weekdays[d.getDay()];
-    return `${d.getFullYear()}년 ${month}월 ${day}일 (${weekday})`;
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${weekdays[d.getDay()]})`;
 }
 
 export default function HeroLiveInfo() {
