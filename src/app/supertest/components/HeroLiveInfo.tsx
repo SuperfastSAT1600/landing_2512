@@ -89,14 +89,15 @@ export default function HeroLiveInfo() {
             )}
 
             {spots !== null && (
-                <div className={styles.spots}>
-                    <span
-                        className={`${styles.spotsDot} ${spots > 10 ? styles.plenty : ''}`}
-                        aria-hidden="true"
-                    />
+                <a
+                    href="#pricing"
+                    className={styles.spots}
+                    aria-label={`이번 시험 남은 자리 ${spots}석 — 구매하기로 이동`}
+                >
+                    <span aria-hidden="true">📣</span>
                     이번 시험 남은 자리
                     <span className={styles.spotsCount}>{spots}석</span>
-                </div>
+                </a>
             )}
         </div>
     );
