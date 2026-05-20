@@ -33,6 +33,7 @@
 .hero {
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
@@ -87,6 +88,12 @@
     flex-direction: column;
     align-items: center;
     gap: 0;
+}
+
+.liveInfoWrap {
+    position: relative;
+    z-index: 3;
+    margin-top: 32px;
 }
 
 
