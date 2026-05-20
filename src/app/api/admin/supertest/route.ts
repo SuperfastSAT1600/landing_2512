@@ -16,11 +16,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const body = await request.json();
+
     const remainingSpots = Number(body.remainingSpots);
     if (!Number.isInteger(remainingSpots) || remainingSpots < 0) {
         return NextResponse.json({ error: 'Invalid remainingSpots' }, { status: 400 });
     }
-    await saveSupertestConfig({ remainingSpots });
+
+    const nextTestDate = String(body.nextTestDate ?? '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextTestDate)) {
+        return NextResponse.json({ error: 'Invalid nextTestDate (YYYY-MM-DD)' }, { status: 400 });
+    }
+
+    await saveSupertestConfig({ remainingSpots, nextTestDate });
     revalidatePath('/supertest');
     return NextResponse.json({ success: true });
 }

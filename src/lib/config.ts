@@ -60,9 +60,13 @@ export async function saveHomeConfig(config: HomeConfig): Promise<void> {
 
 export interface SupertestConfig {
     remainingSpots: number;
+    nextTestDate: string; // YYYY-MM-DD (KST 09:00 기준)
 }
 
-const DEFAULT_SUPERTEST_CONFIG: SupertestConfig = { remainingSpots: 30 };
+const DEFAULT_SUPERTEST_CONFIG: SupertestConfig = {
+    remainingSpots: 30,
+    nextTestDate: '2026-05-30',
+};
 
 export const getSupertestConfig = unstable_cache(
     async (): Promise<SupertestConfig> => {

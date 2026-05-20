@@ -2,17 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import styles from './HeroLiveInfo.module.css';
-import { TEST_SCHEDULE } from '../data/plans';
-
-function getNextTestTarget(): Date | null {
-    const now = new Date();
-    for (const item of TEST_SCHEDULE) {
-        // 시험 시작: 해당 날짜 09:00 KST (UTC+9)
-        const target = new Date(`${item.date}T09:00:00+09:00`);
-        if (target > now) return target;
-    }
-    return null;
-}
 
 function calcDiff(target: Date): { days: number; hours: number; minutes: number; seconds: number } {
     const diff = Math.max(0, target.getTime() - Date.now());
@@ -28,30 +17,41 @@ function pad(n: number) {
     return String(n).padStart(2, '0');
 }
 
+function formatDateLabel(dateStr: string): string {
+    const d = new Date(`${dateStr}T09:00:00+09:00`);
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+    const weekday = weekdays[d.getDay()];
+    return `${d.getFullYear()}년 ${month}월 ${day}일 (${weekday})`;
+}
+
 export default function HeroLiveInfo() {
-    const target = getNextTestTarget();
-    const [diff, setDiff] = useState(target ? calcDiff(target) : null);
+    const [nextTestDate, setNextTestDate] = useState<string | null>(null);
     const [spots, setSpots] = useState<number | null>(null);
+    const [diff, setDiff] = useState<ReturnType<typeof calcDiff> | null>(null);
 
-    // 카운트다운
-    useEffect(() => {
-        if (!target) return;
-        const id = setInterval(() => setDiff(calcDiff(target)), 1000);
-        return () => clearInterval(id);
-    }, [target]);
-
-    // 남은 자리 fetch
     useEffect(() => {
         fetch('/api/supertest/spots')
             .then(r => r.json())
-            .then(d => setSpots(d.remainingSpots ?? null))
+            .then(d => {
+                setSpots(d.remainingSpots ?? null);
+                if (d.nextTestDate) setNextTestDate(d.nextTestDate);
+            })
             .catch(() => {});
     }, []);
 
-    const nextItem = TEST_SCHEDULE.find(item => new Date(`${item.date}T09:00:00+09:00`) > new Date());
-    const nextLabel = nextItem
-        ? nextItem.label.split(' — ')[1] // e.g. "2026년 5월 30일 (토)"
-        : null;
+    useEffect(() => {
+        if (!nextTestDate) return;
+        const target = new Date(`${nextTestDate}T09:00:00+09:00`);
+        if (target <= new Date()) return;
+
+        setDiff(calcDiff(target));
+        const id = setInterval(() => setDiff(calcDiff(target)), 1000);
+        return () => clearInterval(id);
+    }, [nextTestDate]);
+
+    const dateLabel = nextTestDate ? formatDateLabel(nextTestDate) : null;
 
     return (
         <div className={styles.wrap}>
@@ -59,7 +59,7 @@ export default function HeroLiveInfo() {
                 <div className={styles.countdownWrap}>
                     <p className={styles.countdownLabel}>
                         <span className={styles.liveDot} aria-hidden="true" />
-                        {nextLabel ? `${nextLabel} SuperTest까지` : '다음 SuperTest까지'}
+                        {dateLabel ? `${dateLabel} SuperTest까지` : '다음 SuperTest까지'}
                     </p>
                     <div className={styles.countdown} aria-label="다음 시험까지 남은 시간">
                         {diff.days > 0 && (
