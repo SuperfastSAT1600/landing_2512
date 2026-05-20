@@ -267,8 +267,8 @@ function CheckMark({ drawn }: { drawn: boolean }) {
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <polyline
                 points="2,7 5.5,11 12,3"
-                stroke="#071be9"
-                strokeWidth="2.2"
+                stroke="#22c55e"
+                strokeWidth="2.4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeDasharray={CHECK_PATH_LEN}
@@ -296,6 +296,7 @@ function TimelineCard() {
     const ref = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [currentMonthIdx, setCurrentMonthIdx] = useState(0);
+    const [calKey, setCalKey] = useState(0);
     const [drawnCount, setDrawnCount] = useState(0);
 
     const { months, testDates } = useMemo(() => {
@@ -350,26 +351,29 @@ function TimelineCard() {
         let cancelled = false;
         const timeouts: ReturnType<typeof setTimeout>[] = [];
 
-        function runMonth(idx: number) {
+        function runMonth(idx: number, isFirst = false) {
             if (cancelled) return;
             setCurrentMonthIdx(idx);
+            setCalKey(k => k + 1);
             setDrawnCount(0);
 
             const checks = checksByMonth[idx];
+            // 첫 번째 실행 시 카드 fade-in(~900ms)이 끝난 후 체크 시작
+            const baseDelay = isFirst ? 950 : 400;
             checks.forEach((_, i) => {
                 const t = setTimeout(() => {
                     if (!cancelled) setDrawnCount(i + 1);
-                }, 400 + i * 600);
+                }, baseDelay + i * 600);
                 timeouts.push(t);
             });
 
             // wait for all checks + 1.5s pause, then slide to next month
-            const nextDelay = 400 + checks.length * 600 + 1500;
+            const nextDelay = baseDelay + checks.length * 600 + 1500;
             const nextT = setTimeout(() => runMonth((idx + 1) % months.length), nextDelay);
             timeouts.push(nextT);
         }
 
-        runMonth(0);
+        runMonth(0, true);
         return () => {
             cancelled = true;
             timeouts.forEach(clearTimeout);
@@ -392,7 +396,7 @@ function TimelineCard() {
         >
             <div className={`${styles.visual} ${styles.visual3}`} aria-hidden="true">
                 <div className={styles.calendarWrap}>
-                    <div key={`${year}-${month}`} className={styles.calMonth}>
+                    <div key={calKey} className={styles.calMonth}>
                         <div className={styles.calHeader}>
                             {MONTH_NAMES[month]} {year}
                         </div>
