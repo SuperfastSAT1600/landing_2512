@@ -378,15 +378,26 @@
 /* --- Card 3: Calendar --- */
 .calendarWrap {
     display: flex;
-    gap: 16px;
     width: 100%;
     justify-content: center;
     align-items: flex-start;
 }
 
+@keyframes calSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 .calMonth {
-    flex: 1;
+    width: 100%;
     min-width: 0;
+    animation: calSlideIn 0.45s ease forwards;
 }
 
 .calHeader {
@@ -517,6 +528,16 @@
 
     .header {
         margin-bottom: 40px;
+    }
+
+    /* 16:9 비율이 모바일에서 너무 낮아 하단 타일(Hanoi·LA) footer가 overflow: hidden에 잘림 */
+    .visual1 {
+        aspect-ratio: auto;
+    }
+
+    /* 16:9 비율이 모바일에서 너무 낮아 달력 하단이 overflow: hidden에 잘림 */
+    .visual3 {
+        aspect-ratio: auto;
     }
 }
 
