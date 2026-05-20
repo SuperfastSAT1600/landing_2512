@@ -18,12 +18,9 @@ function pad(n: number) {
 }
 
 function formatDateLabel(dateStr: string): string {
-    const d = new Date(`${dateStr}T09:00:00+09:00`);
-    const month = d.getMonth() + 1;
-    const day = d.getDate();
+    const d = new Date(`${dateStr}T00:00:00`);
     const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-    const weekday = weekdays[d.getDay()];
-    return `${d.getFullYear()}년 ${month}월 ${day}일 (${weekday})`;
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${weekdays[d.getDay()]})`;
 }
 
 export default function HeroLiveInfo() {
@@ -92,14 +89,15 @@ export default function HeroLiveInfo() {
             )}
 
             {spots !== null && (
-                <div className={styles.spots}>
-                    <span
-                        className={`${styles.spotsDot} ${spots > 10 ? styles.plenty : ''}`}
-                        aria-hidden="true"
-                    />
+                <a
+                    href="#pricing"
+                    className={styles.spots}
+                    aria-label={`이번 시험 남은 자리 ${spots}석 — 구매하기로 이동`}
+                >
+                    <span aria-hidden="true">📣</span>
                     이번 시험 남은 자리
                     <span className={styles.spotsCount}>{spots}석</span>
-                </div>
+                </a>
             )}
         </div>
     );

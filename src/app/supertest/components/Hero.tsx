@@ -64,7 +64,9 @@ export default function Hero() {
                     <br />
                     정밀 분석 리포트로 약점도 확인하세요.
                 </p>
+            </div>
 
+            <div className={styles.liveInfoWrap}>
                 <HeroLiveInfo />
             </div>
         </section>

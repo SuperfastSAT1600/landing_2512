@@ -151,8 +151,8 @@
         rgba(96, 133, 255, 0.1) 0%,
         rgba(7, 27, 233, 0.04) 100%
     );
-    padding: 16px 12px;
-    align-items: flex-start;
+    padding: 0;
+    align-items: stretch;
 }
 
 .visual4 {
@@ -375,89 +375,88 @@
     background-size: 200% auto;
 }
 
-/* --- Card 3: Calendar --- */
-.calendarWrap {
-    display: flex;
+/* --- Card 3: Timeline Scroll --- */
+@keyframes timelineScrollUp {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-50%); }
+}
+
+.timelineTrack {
     width: 100%;
-    justify-content: center;
-    align-items: flex-start;
+    height: 100%;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%);
 }
 
-@keyframes calSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.calMonth {
-    width: 100%;
-    min-width: 0;
-    animation: calSlideIn 0.45s ease forwards;
-}
-
-.calHeader {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.65);
-    letter-spacing: 0.06em;
-    text-align: center;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-}
-
-.calGrid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-}
-
-.calWeekday {
-    font-size: 0.6rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.3);
-    text-align: center;
-    padding: 2px 0 4px;
-    letter-spacing: 0.03em;
-}
-
-.calCell {
-    aspect-ratio: 1;
+.timelineScroll {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    position: relative;
-    gap: 1px;
+    width: 100%;
+    animation: timelineScrollUp calc(var(--item-count, 8) * 2.4s) linear infinite;
 }
 
-.calTestDay {
-    background: rgba(96, 133, 255, 0.12);
-    border: 1px solid rgba(96, 133, 255, 0.3);
+.timelineItem {
+    display: flex;
+    flex-direction: column;
 }
 
-.calDayNum {
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.5);
-    line-height: 1;
-}
-
-.calTestDay .calDayNum {
-    color: rgba(255, 255, 255, 0.85);
-    font-weight: 700;
-}
-
-
-.calCheck {
+.timelineDateRow {
     display: flex;
     align-items: center;
-    justify-content: center;
-    line-height: 0;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 4px 12px;
+    border: 1px solid;
+}
+
+.timelinePast {
+    background: rgba(34, 197, 94, 0.07);
+    border-color: rgba(34, 197, 94, 0.25);
+}
+
+.timelineUpcoming {
+    background: rgba(96, 133, 255, 0.08);
+    border-color: rgba(96, 133, 255, 0.25);
+}
+
+.timelineIcon {
+    font-size: 0.8rem;
+    font-weight: 800;
+    width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.timelineIconPast  { color: #22c55e; }
+.timelineIconUpcoming { color: #6085ff; font-size: 0.55rem; }
+
+.timelineDate {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+.timelineGap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 26px;
+}
+
+.timelineGapLine {
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.timelineGapText {
+    font-size: 0.62rem;
+    color: rgba(255, 255, 255, 0.2);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
 /* --- Card 4: Vocab --- */
@@ -535,9 +534,9 @@
         aspect-ratio: auto;
     }
 
-    /* 16:9 비율이 모바일에서 너무 낮아 달력 하단이 overflow: hidden에 잘림 */
     .visual3 {
         aspect-ratio: auto;
+        min-height: 220px;
     }
 }
 
@@ -557,8 +556,7 @@
         transition: none;
     }
 
-    .timelineNode {
-        opacity: 1;
-        transition: none;
+    .timelineScroll {
+        animation: none;
     }
 }
