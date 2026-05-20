@@ -295,9 +295,9 @@ const PAST_TEST_DATES = new Set(['2026-05-02', '2026-05-16']);
 function TimelineCard() {
     const ref = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
+    const [currentMonthIdx, setCurrentMonthIdx] = useState(0);
     const [drawnCount, setDrawnCount] = useState(0);
 
-    // Derive the two calendar months that contain upcoming test dates
     const { months, testDates } = useMemo(() => {
         const today = new Date('2026-05-19');
         const upcoming = TEST_SCHEDULE
@@ -305,7 +305,6 @@ function TimelineCard() {
             .slice(0, 6);
 
         const monthSet = new Set<string>();
-        // include past dates to ensure May is shown
         [...PAST_TEST_DATES, ...upcoming.map(t => t.date)].forEach(dateStr => {
             const d = new Date(dateStr);
             monthSet.add(`${d.getFullYear()}-${d.getMonth()}`);
@@ -328,10 +327,10 @@ function TimelineCard() {
         return { months: monthList, testDates: testDateSet };
     }, []);
 
-    // Ordered list of (year, month, day) for test dates within shown months
-    const orderedChecks = useMemo(() => {
-        const checks: string[] = [];
-        months.forEach(({ year, month }) => {
+    // Upcoming (animated) checks per month — past dates are pre-drawn, not included here
+    const checksByMonth = useMemo(() => {
+        return months.map(({ year, month }) => {
+            const checks: string[] = [];
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             for (let d = 1; d <= daysInMonth; d++) {
                 const mm = String(month + 1).padStart(2, '0');
@@ -339,11 +338,9 @@ function TimelineCard() {
                 const key = `${year}-${mm}-${dd}`;
                 if (testDates.has(key)) checks.push(key);
             }
+            return checks;
         });
-        return checks;
     }, [months, testDates]);
-
-    const LOOP_DELAY = 4000;
 
     useIntersection(ref, 0.15, () => setIsVisible(true));
 
@@ -353,28 +350,38 @@ function TimelineCard() {
         let cancelled = false;
         const timeouts: ReturnType<typeof setTimeout>[] = [];
 
-        function run() {
+        function runMonth(idx: number) {
             if (cancelled) return;
+            setCurrentMonthIdx(idx);
             setDrawnCount(0);
-            orderedChecks.forEach((_, i) => {
+
+            const checks = checksByMonth[idx];
+            checks.forEach((_, i) => {
                 const t = setTimeout(() => {
                     if (!cancelled) setDrawnCount(i + 1);
                 }, 400 + i * 600);
                 timeouts.push(t);
             });
-            const loopT = setTimeout(run, LOOP_DELAY + orderedChecks.length * 600 + 400);
-            timeouts.push(loopT);
+
+            // wait for all checks + 1.5s pause, then slide to next month
+            const nextDelay = 400 + checks.length * 600 + 1500;
+            const nextT = setTimeout(() => runMonth((idx + 1) % months.length), nextDelay);
+            timeouts.push(nextT);
         }
 
-        run();
+        runMonth(0);
         return () => {
             cancelled = true;
             timeouts.forEach(clearTimeout);
         };
-    }, [isVisible, orderedChecks]);
+    }, [isVisible, checksByMonth, months.length]);
 
     const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
     const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const { year, month } = months[currentMonthIdx];
+    const cells = calendarCells(year, month);
+    const currentChecks = checksByMonth[currentMonthIdx];
 
     return (
         <article
@@ -385,47 +392,42 @@ function TimelineCard() {
         >
             <div className={`${styles.visual} ${styles.visual3}`} aria-hidden="true">
                 <div className={styles.calendarWrap}>
-                    {months.map(({ year, month }) => {
-                        const cells = calendarCells(year, month);
-                        return (
-                            <div key={`${year}-${month}`} className={styles.calMonth}>
-                                <div className={styles.calHeader}>
-                                    {MONTH_NAMES[month]} {year}
-                                </div>
-                                <div className={styles.calGrid}>
-                                    {WEEKDAYS.map(w => (
-                                        <div key={w} className={styles.calWeekday}>{w}</div>
-                                    ))}
-                                    {cells.map((day, idx) => {
-                                        if (day === null) {
-                                            return <div key={`empty-${idx}`} className={styles.calCell} />;
-                                        }
-                                        const mm = String(month + 1).padStart(2, '0');
-                                        const dd = String(day).padStart(2, '0');
-                                        const key = `${year}-${mm}-${dd}`;
-                                        const isPast = PAST_TEST_DATES.has(key);
-                                        const isUpcoming = testDates.has(key);
-                                        const isTestDay = isPast || isUpcoming;
-                                        const checkIndex = orderedChecks.indexOf(key);
-                                        const isDrawn = isPast || (checkIndex !== -1 && drawnCount > checkIndex);
-                                        return (
-                                            <div
-                                                key={key}
-                                                className={`${styles.calCell} ${isTestDay ? styles.calTestDay : ''} ${isPast ? styles.calPastDay : ''}`}
-                                            >
-                                                <span className={styles.calDayNum}>{day}</span>
-                                                {isTestDay && (
-                                                    <span className={styles.calCheck}>
-                                                        <CheckMark drawn={isDrawn} />
-                                                    </span>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        );
-                    })}
+                    <div key={`${year}-${month}`} className={styles.calMonth}>
+                        <div className={styles.calHeader}>
+                            {MONTH_NAMES[month]} {year}
+                        </div>
+                        <div className={styles.calGrid}>
+                            {WEEKDAYS.map(w => (
+                                <div key={w} className={styles.calWeekday}>{w}</div>
+                            ))}
+                            {cells.map((day, idx) => {
+                                if (day === null) {
+                                    return <div key={`empty-${idx}`} className={styles.calCell} />;
+                                }
+                                const mm = String(month + 1).padStart(2, '0');
+                                const dd = String(day).padStart(2, '0');
+                                const dateKey = `${year}-${mm}-${dd}`;
+                                const isPast = PAST_TEST_DATES.has(dateKey);
+                                const isUpcoming = testDates.has(dateKey);
+                                const isTestDay = isPast || isUpcoming;
+                                const checkIndex = currentChecks.indexOf(dateKey);
+                                const isDrawn = isPast || (checkIndex !== -1 && drawnCount > checkIndex);
+                                return (
+                                    <div
+                                        key={dateKey}
+                                        className={`${styles.calCell} ${isTestDay ? styles.calTestDay : ''} ${isPast ? styles.calPastDay : ''}`}
+                                    >
+                                        <span className={styles.calDayNum}>{day}</span>
+                                        {isTestDay && (
+                                            <span className={styles.calCheck}>
+                                                <CheckMark drawn={isDrawn} />
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             </div>
             <div className={styles.text}>
