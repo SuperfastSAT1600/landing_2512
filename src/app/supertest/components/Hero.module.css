@@ -41,6 +41,26 @@
     overflow: hidden;
 }
 
+.bgImage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    will-change: transform;
+    transform-origin: center center;
+}
+
+.bgOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(10, 10, 18, 0.78) 0%,
+        rgba(10, 10, 18, 0.68) 50%,
+        rgba(10, 10, 18, 0.82) 100%
+    );
+    z-index: 1;
+}
+
 .glow {
     position: absolute;
     top: 50%;
@@ -49,18 +69,18 @@
     height: 600px;
     background: radial-gradient(
         ellipse at center,
-        rgba(7, 27, 233, 0.12) 0%,
-        rgba(96, 133, 255, 0.06) 40%,
+        rgba(7, 27, 233, 0.18) 0%,
+        rgba(96, 133, 255, 0.08) 40%,
         transparent 70%
     );
     pointer-events: none;
-    z-index: 0;
+    z-index: 2;
     animation: pulse-glow 4s ease-in-out infinite alternate;
 }
 
 .inner {
     position: relative;
-    z-index: 1;
+    z-index: 3;
     max-width: 820px;
     margin: 0 auto;
     display: flex;
