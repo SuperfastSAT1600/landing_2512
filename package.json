@@ -27,6 +27,10 @@
     "analyze": "echo \"Add bundle analyzer command here\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@floating-ui/dom": "^1.7.5",
     "@google/generative-ai": "^0.24.1",
     "@iconify/react": "^6.0.2",
@@ -44,8 +48,10 @@
     "@tiptap/react": "^3.20.0",
     "@tiptap/starter-kit": "^3.20.0",
     "@tryghost/admin-api": "^1.14.7",
+    "bcryptjs": "^3.0.3",
     "canvas": "^3.2.3",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.3.1",
     "framer-motion": "^12.23.25",
     "gray-matter": "^4.0.3",

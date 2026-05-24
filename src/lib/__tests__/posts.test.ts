@@ -1,4 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('next/cache', () => ({
+    unstable_cache: (fn: (...args: unknown[]) => unknown) => fn,
+}));
+
 import { getSortedPostsData } from '../posts';
 
 // Mock Supabase client
@@ -6,23 +11,25 @@ vi.mock('../supabase', () => ({
     supabase: {
         from: () => ({
             select: () => ({
-                order: () => Promise.resolve({
-                    data: [
-                        {
-                            id: 'test-post',
-                            title: 'Test Post',
-                            date: '2024-01-01',
-                            category: 'SAT RW',
-                            excerpt: 'A test post',
-                            description: null,
-                            featured_image: null,
-                            feature_image: null,
-                            author: 'Test',
-                            tags: [],
-                            cta_featured: false,
-                        }
-                    ],
-                    error: null,
+                eq: () => ({
+                    order: () => Promise.resolve({
+                        data: [
+                            {
+                                id: 'test-post',
+                                title: 'Test Post',
+                                date: '2024-01-01',
+                                category: 'SAT RW',
+                                excerpt: 'A test post',
+                                description: null,
+                                featured_image: null,
+                                feature_image: null,
+                                author: 'Test',
+                                tags: [],
+                                cta_featured: false,
+                            }
+                        ],
+                        error: null,
+                    }),
                 }),
             }),
         }),

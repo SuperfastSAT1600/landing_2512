@@ -1,5 +1,6 @@
 import { unstable_cache, revalidateTag } from 'next/cache';
-import { supabase, supabaseAdmin } from './supabase';
+import { supabase } from './supabase';
+import { supabaseAdmin } from './supabase-admin';
 
 export interface StoredFeatureItem {
     postSlug: string;

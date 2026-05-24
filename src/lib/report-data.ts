@@ -4,7 +4,7 @@
  * Eliminates the self-fetch anti-pattern that caused "Application error" on tutoring.superfastsat.com.
  */
 
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SECTION_BENCHMARKS, DOMAIN_BENCHMARKS } from '@/lib/report-benchmarks';
 import { difficultyToLevel } from '@/lib/vocab-levels';
 import diagnosticTest1, { type TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { buildQuestionStats } from '@/lib/diagnosis-analysis';
 import type { TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';
 

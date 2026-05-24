@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { isAuthenticated } from '@/lib/server-auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 const optionalStr = z.string().optional().or(z.literal('').transform(() => undefined)).or(z.null().transform(() => undefined));
 

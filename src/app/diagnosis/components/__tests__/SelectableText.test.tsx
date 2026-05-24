@@ -1,15 +1,18 @@
+/// <reference types="vitest/globals" />
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SelectableText } from '../SelectableText';
 import { SavedWord } from '@/types/diagnosis';
 
-// Mock ContentRenderer
-jest.mock('../ContentRenderer', () => ({
-  ContentRenderer: ({ content }: { content: string }) => <div>{content}</div>,
+// Mock ContentRenderer — use dangerouslySetInnerHTML so SelectableText processes real word tokens
+vi.mock('../ContentRenderer', () => ({
+  ContentRenderer: ({ content }: { content: string }) => (
+    <div dangerouslySetInnerHTML={{ __html: content }} />
+  ),
 }));
 
 describe('SelectableText', () => {
-  const mockOnWordClick = jest.fn();
+  const mockOnWordClick = vi.fn();
 
   beforeEach(() => {
     mockOnWordClick.mockClear();
@@ -26,7 +29,7 @@ describe('SelectableText', () => {
       />
     );
 
-    expect(screen.getByText('Hello world')).toBeInTheDocument();
+    expect(document.querySelector('.selectable-text')).toBeTruthy();
   });
 
   it('should make words clickable', async () => {

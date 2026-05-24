@@ -13,6 +13,10 @@ const mockTestData: DiagnosticTestData = {
     {
       id: 'q1',
       type: 'multiple-choice',
+      section: 'Reading and Writing' as const,
+      domain: 'Craft and Structure' as const,
+      skill: 'Words in Context',
+      difficulty: 'Medium' as const,
       passage: '<p>The quick brown fox jumps over the lazy dog</p>',
       question: 'What does the fox do?',
       options: [
@@ -23,6 +27,10 @@ const mockTestData: DiagnosticTestData = {
     {
       id: 'q2',
       type: 'multiple-choice',
+      section: 'Reading and Writing' as const,
+      domain: 'Information and Ideas' as const,
+      skill: 'Central Ideas and Details',
+      difficulty: 'Easy' as const,
       passage: '<p>Another passage here</p>',
       question: 'Second question?',
       options: [
@@ -96,8 +104,8 @@ function renderStartedTest() {
     <DiagnosticTestView testData={mockTestData} />
   );
 
-  // Click "Start Test" to get to the test-taking UI
-  const startButton = screen.getByText('Start Test');
+  // Click "Begin Test" to get to the test-taking UI
+  const startButton = screen.getByText('Begin Test');
   fireEvent.click(startButton);
 
   return result;

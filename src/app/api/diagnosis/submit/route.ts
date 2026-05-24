@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SubmitTestRequest, SubmitTestResponse } from '@/types/diagnosis';
 import { notifyTestSubmission } from '@/lib/slack';
 

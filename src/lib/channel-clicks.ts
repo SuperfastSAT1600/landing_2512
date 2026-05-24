@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { ChannelKey } from '@/lib/channels'
 import type { NextRequest } from 'next/server'
 
