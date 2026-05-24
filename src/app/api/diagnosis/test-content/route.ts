@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
 
 /**

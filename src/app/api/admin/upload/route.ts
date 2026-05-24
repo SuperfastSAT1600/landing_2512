@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 const ALLOWED_MIME_TYPES = new Set([
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',

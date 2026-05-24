@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/server-auth'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { ChannelKey } from '@/lib/channels'
 
 export async function GET(request: NextRequest) {

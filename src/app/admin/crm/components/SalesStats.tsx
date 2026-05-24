@@ -1,0 +1,256 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { TrendingUp, Users, Phone, CreditCard, RefreshCw } from 'lucide-react';
+import type { CrmStatsData, StatsBySource } from '@/app/api/crm/stats/route';
+
+// ─── Period helpers ────────────────────────────────────────────────────────────
+
+type Preset = 'this_month' | 'last_month' | 'this_quarter' | 'last_6m' | 'custom';
+
+function getPresetRange(preset: Preset): { from: string; to: string } {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+  if (preset === 'this_month') {
+    return { from: fmt(new Date(y, m, 1)), to: fmt(new Date(y, m + 1, 0)) };
+  }
+  if (preset === 'last_month') {
+    return { from: fmt(new Date(y, m - 1, 1)), to: fmt(new Date(y, m, 0)) };
+  }
+  if (preset === 'this_quarter') {
+    const qStart = Math.floor(m / 3) * 3;
+    return { from: fmt(new Date(y, qStart, 1)), to: fmt(new Date(y, qStart + 3, 0)) };
+  }
+  if (preset === 'last_6m') {
+    return { from: fmt(new Date(y, m - 5, 1)), to: fmt(new Date(y, m + 1, 0)) };
+  }
+  return getPresetRange('this_month');
+}
+
+const PRESETS: { key: Preset; label: string }[] = [
+  { key: 'this_month', label: '이번 달' },
+  { key: 'last_month', label: '지난 달' },
+  { key: 'this_quarter', label: '이번 분기' },
+  { key: 'last_6m', label: '최근 6개월' },
+  { key: 'custom', label: '직접 입력' },
+];
+
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
+function OverviewCard({ icon: Icon, label, value, sub, color }: {
+  icon: React.ElementType; label: string; value: string | number; sub?: string; color: string;
+}) {
+  return (
+    <div className="flex-1 min-w-[140px] bg-white border border-gray-200 rounded-xl p-4">
+      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-lg mb-3 ${color}`}>
+        <Icon size={15} />
+      </div>
+      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+function RateBar({ value, max = 100, color = 'bg-blue-500' }: { value: number; max?: number; color?: string }) {
+  return (
+    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div
+        className={`h-full rounded-full ${color}`}
+        style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
+      />
+    </div>
+  );
+}
+
+function SourceTable({ rows }: { rows: StatsBySource[] }) {
+  const maxLeads = Math.max(...rows.map((r) => r.leads), 1);
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-100">
+            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 min-w-[140px]">유입 채널</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">리드</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">컨택 성공</th>
+            <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[100px]">컨택률</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">결제</th>
+            <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[100px]">전환율</th>
+            <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">매출</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.source} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              <td className="py-2.5 pr-4">
+                <div>
+                  <p className="text-xs font-medium text-gray-800">{r.source}</p>
+                  <RateBar value={r.leads} max={maxLeads} color="bg-gray-300" />
+                </div>
+              </td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.leads}</td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.contacted}</td>
+              <td className="py-2.5 px-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-blue-600 w-9 text-right">{r.contact_rate}%</span>
+                  <RateBar value={r.contact_rate} color="bg-blue-400" />
+                </div>
+              </td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.paid}</td>
+              <td className="py-2.5 px-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-emerald-600 w-9 text-right">{r.conversion_rate}%</span>
+                  <RateBar value={r.conversion_rate} color="bg-emerald-400" />
+                </div>
+              </td>
+              <td className="text-right py-2.5 pl-2 text-xs text-gray-600">
+                {r.revenue > 0 ? `${(r.revenue / 10000).toFixed(0)}만` : '-'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+
+interface SalesStatsProps {
+  adminKey: string;
+}
+
+export function SalesStats({ adminKey }: SalesStatsProps) {
+  const [preset, setPreset] = useState<Preset>('this_month');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<CrmStatsData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const { from, to } = preset === 'custom'
+    ? { from: customFrom, to: customTo }
+    : getPresetRange(preset);
+
+  const fetchStats = useCallback(async () => {
+    if (!from || !to || from > to) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/crm/stats?from=${from}&to=${to}`, {
+        headers: { 'x-admin-key': adminKey },
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error?.message ?? '조회 실패'); return; }
+      setData(json.data as CrmStatsData);
+    } catch {
+      setError('네트워크 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [from, to, adminKey]);
+
+  useEffect(() => {
+    if (preset !== 'custom') fetchStats();
+  }, [preset, fetchStats]);
+
+  const d = data;
+  const fmt만 = (n: number) => n >= 10000 ? `${Math.round(n / 10000).toLocaleString()}만원` : `${n.toLocaleString()}원`;
+
+  return (
+    <div className="space-y-6">
+      {/* Period picker */}
+      <div className="flex flex-wrap items-center gap-2">
+        {PRESETS.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setPreset(key)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+              preset === key
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'border-gray-200 text-gray-600 hover:border-gray-400'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+
+        {preset === 'custom' && (
+          <div className="flex items-center gap-2">
+            <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)}
+              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none" />
+            <span className="text-xs text-gray-400">~</span>
+            <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)}
+              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none" />
+            <button onClick={fetchStats} disabled={!customFrom || !customTo}
+              className="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg disabled:opacity-40">
+              조회
+            </button>
+          </div>
+        )}
+
+        {loading && <RefreshCw size={14} className="animate-spin text-gray-400 ml-1" />}
+        {from && to && !loading && (
+          <span className="text-xs text-gray-400 ml-1">{from} ~ {to}</span>
+        )}
+      </div>
+
+      {error && (
+        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>
+      )}
+
+      {d && (
+        <>
+          {/* Overview cards */}
+          <div className="flex flex-wrap gap-3">
+            <OverviewCard icon={Users} label="신규 리드" value={d.overview.total_leads} sub="문의 기준" color="bg-gray-100 text-gray-600" />
+            <OverviewCard icon={Phone} label="컨택 성공률" value={`${d.overview.contact_rate}%`}
+              sub={`${d.overview.contacted}명 / ${d.overview.total_leads}명`} color="bg-blue-50 text-blue-600" />
+            <OverviewCard icon={CreditCard} label="결제 전환율" value={`${d.overview.conversion_rate}%`}
+              sub={`${d.overview.paid}명 / ${d.overview.total_leads}명`} color="bg-emerald-50 text-emerald-600" />
+            <OverviewCard icon={TrendingUp} label="총 매출" value={fmt만(d.overview.total_revenue)}
+              sub="기간 내 모든 결제" color="bg-purple-50 text-purple-600" />
+          </div>
+
+          {/* Monthly trend chart */}
+          {d.monthly.length > 1 && (
+            <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <h3 className="text-sm font-bold text-gray-900 mb-4">월별 추이</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={d.monthly} barGap={2}>
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ fontSize: 12 }} />
+                  <Legend formatter={(v: string) => ({ leads: '리드', contacted: '컨택 성공', paid: '결제' }[v] ?? v)} />
+                  <Bar dataKey="leads" fill="#e5e7eb" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="contacted" fill="#60a5fa" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="paid" fill="#34d399" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Source breakdown */}
+          <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <h3 className="text-sm font-bold text-gray-900 mb-4">유입 채널별 성과</h3>
+            {d.by_source.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
+            ) : (
+              <SourceTable rows={d.by_source} />
+            )}
+          </div>
+        </>
+      )}
+
+      {!d && !loading && !error && (
+        <div className="py-16 text-center text-sm text-gray-400">기간을 선택하면 통계가 표시됩니다.</div>
+      )}
+    </div>
+  );
+}

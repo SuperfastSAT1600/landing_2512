@@ -302,7 +302,7 @@ test.describe('REQ-001/002 — Cell merge and split', () => {
       const fiberKey = Object.keys(pmEl).find(k => k.startsWith('__reactFiber'));
       if (!fiberKey) return;
 
-      let fiber = (pmEl as Record<string, unknown>)[fiberKey] as Record<string, unknown> | null;
+      let fiber = (pmEl as unknown as Record<string, unknown>)[fiberKey] as Record<string, unknown> | null;
       let editor: Record<string, unknown> | null = null;
 
       for (let i = 0; i < 60 && fiber; i++) {
@@ -335,8 +335,7 @@ test.describe('REQ-001/002 — Cell merge and split', () => {
       if (cellPositions.length < 2) return;
 
       // Import CellSelection from the prosemirror-tables bundle via Tiptap
-      const { CellSelection } = (editor as Record<string, unknown>)
-        .schema ? {} : {};
+      const { CellSelection } = {} as { CellSelection?: unknown };
 
       // Alternative: use Tiptap command to select cells
       const commands = (editor as Record<string, unknown>).commands as Record<string, () => void> | undefined;
@@ -354,7 +353,7 @@ test.describe('REQ-001/002 — Cell merge and split', () => {
       const $to = doc.resolve(cellPositions[1] + 1);
 
       // Try creating a TextSelection across the two cells (ProseMirror allows this)
-      const { Selection } = (window as Record<string, unknown>);
+      const { Selection } = (window as unknown as Record<string, unknown>);
       void Selection;
     });
 

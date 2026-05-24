@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { getCoachBySlug } from '@/lib/coaches-data';
 import { getPostData } from '@/lib/posts';
 import { getPublishedReviews } from '@/lib/reviews-data';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { parseInstagramShortcode } from '@/lib/instagram-url';
 import CoachPageClient from './CoachPageClient';
 import type { PostData } from '@/lib/posts';
