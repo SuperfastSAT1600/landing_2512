@@ -37,7 +37,7 @@ export interface CrmStatsData {
 function isContacted(student: { funnel_stage: string; lead_status: string; consultation_timeline: unknown }): boolean {
   // 컨택 성공 = 2단계 이상 진입 (active) 또는 상담 기록 존재 (inactive)
   if (student.lead_status === 'active' || student.lead_status === 'reactivating') {
-    return student.funnel_stage !== '1';
+    return student.funnel_stage !== '0' && student.funnel_stage !== '1';
   }
   // inactive(churned): 퍼널 이력이 없으므로 consultation_timeline 존재 여부로 판단
   const tl = student.consultation_timeline as unknown[];

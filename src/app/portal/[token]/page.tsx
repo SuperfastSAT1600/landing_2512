@@ -15,6 +15,9 @@ interface PortalMeta {
   lockedUntil: string | null;
 }
 
+const BG = '#09090b';
+const ACCENT = '#6085FF';
+
 export default function PortalPage() {
   const { token } = useParams<{ token: string }>();
   const [state, setState] = useState<PortalState>('loading');
@@ -35,19 +38,19 @@ export default function PortalPage() {
 
   if (state === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f5f0eb 0%, #eee8e0 100%)' }}>
-        <div className="w-5 h-5 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
+        <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: ACCENT, borderTopColor: 'transparent' }} />
       </div>
     );
   }
 
   if (state === 'not-found') {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #f5f0eb 0%, #eee8e0 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: BG }}>
         <div className="text-center">
-          <div className="w-16 h-16 bg-stone-200 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🔍</div>
-          <h1 className="text-lg font-semibold text-stone-700 mb-2">페이지를 찾을 수 없습니다</h1>
-          <p className="text-sm text-stone-500">링크가 올바른지 확인해 주세요.</p>
+          <p className="text-4xl mb-4">🔍</p>
+          <h1 className="text-lg font-semibold text-white mb-2">페이지를 찾을 수 없습니다</h1>
+          <p className="text-sm text-slate-500">링크가 올바른지 확인해 주세요.</p>
         </div>
       </div>
     );
@@ -56,15 +59,15 @@ export default function PortalPage() {
   if (state === 'locked') {
     const lockedUntil = meta?.lockedUntil ? new Date(meta.lockedUntil) : null;
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #f5f0eb 0%, #eee8e0 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: BG }}>
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 bg-stone-200 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🔒</div>
-          <h1 className="text-lg font-semibold text-stone-700 mb-2">일시적으로 잠겨 있습니다</h1>
-          <p className="text-sm text-stone-500 leading-relaxed">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.3)' }}>
+            <span className="text-2xl">🔒</span>
+          </div>
+          <h1 className="text-lg font-semibold text-white mb-2">일시적으로 잠겨 있습니다</h1>
+          <p className="text-sm text-slate-400 leading-relaxed">
             비밀번호 오류 횟수 초과로 30분간 잠겼습니다.
-            {lockedUntil && (
-              <><br />{lockedUntil.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 이후 다시 시도해 주세요.</>
-            )}
+            {lockedUntil && <><br />{lockedUntil.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 이후 다시 시도해 주세요.</>}
           </p>
         </div>
       </div>
@@ -74,31 +77,37 @@ export default function PortalPage() {
   const isAuth = state === 'authenticated';
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f5f0eb 0%, #eee8e0 100%)' }}>
+    <div className="min-h-screen" style={{ background: BG }}>
 
-      {/* Personal header — only shown when authenticated */}
-      {isAuth && meta && (
-        <div className="px-4 pt-10 pb-6 text-center">
-          <div className="w-14 h-14 rounded-full bg-stone-300 flex items-center justify-center mx-auto mb-3 text-stone-600 text-xl font-bold shadow-sm">
-            {meta.studentName.charAt(0)}
-          </div>
-          <p className="text-xs text-stone-400 tracking-widest uppercase mb-1">My Space</p>
-          <h1 className="text-xl font-bold text-stone-800">{meta.studentName} 학생</h1>
-          <p className="text-sm text-stone-500 mt-0.5">SuperfastSAT 학습 기록</p>
-        </div>
-      )}
+      {/* Ambient glow */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at 20% 0%, rgba(96,133,255,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(7,27,233,0.05) 0%, transparent 60%)',
+        }}
+      />
 
-      {/* Auth screens — centered card */}
+      {/* Auth screens */}
       {!isAuth && (
-        <div className="min-h-screen flex flex-col items-center justify-center px-4">
+        <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12">
+          {/* Header label */}
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-px w-8" style={{ background: ACCENT }} />
+            <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: ACCENT }}>
+              SuperfastSAT Portal
+            </p>
+            <div className="h-px w-8" style={{ background: ACCENT }} />
+          </div>
+
           {meta?.studentName && (
             <div className="text-center mb-8">
-              <div className="w-14 h-14 rounded-full bg-stone-300 flex items-center justify-center mx-auto mb-3 text-stone-600 text-xl font-bold">
-                {meta.studentName.charAt(0)}
-              </div>
-              <p className="text-sm font-medium text-stone-700">{meta.studentName} 학생의 공간</p>
+              <h1 className="text-3xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
+                {meta.studentName}
+              </h1>
+              <p className="text-sm text-slate-500">학부모 전용 상담 포털</p>
             </div>
           )}
+
           <div className="w-full max-w-sm">
             {state === 'setup' && (
               <PasscodeSetup token={token} onSuccess={() => setState('authenticated')} />
@@ -114,11 +123,35 @@ export default function PortalPage() {
         </div>
       )}
 
-      {/* Content */}
+      {/* Authenticated content */}
       {isAuth && (
-        <main className="max-w-lg mx-auto px-4 pb-12">
-          <PortalContent token={token} />
-        </main>
+        <div className="relative">
+          {/* Cover header */}
+          <div className="px-[6%] pt-10 pb-8 max-w-2xl mx-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-px w-10" style={{ background: ACCENT }} />
+              <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: ACCENT }}>
+                SuperfastSAT Portal
+              </p>
+            </div>
+            {meta?.studentName && (
+              <>
+                <h1
+                  className="text-white mb-1"
+                  style={{ fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: 800, letterSpacing: '-0.02em' }}
+                >
+                  {meta.studentName}
+                </h1>
+                <p className="text-slate-400 text-sm">학부모 전용 상담 기록 및 진단 결과</p>
+              </>
+            )}
+          </div>
+
+          {/* Content */}
+          <main className="max-w-2xl mx-auto px-[6%] pb-16">
+            <PortalContent token={token} />
+          </main>
+        </div>
       )}
     </div>
   );

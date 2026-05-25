@@ -1,74 +1,11 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
+import { PinInput } from './PinInput';
 
 interface Props {
   token: string;
   onSuccess: () => void;
-}
-
-function PinInput({
-  value,
-  onChange,
-  autoFocus,
-  label,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  autoFocus?: boolean;
-  label: string;
-}) {
-  const refs = useRef<(HTMLInputElement | null)[]>([]);
-
-  function handleChange(index: number, ch: string) {
-    const digit = ch.replace(/\D/g, '').slice(-1);
-    const arr = value.split('');
-    arr[index] = digit;
-    onChange(arr.join('').slice(0, 6));
-    if (digit && index < 5) refs.current[index + 1]?.focus();
-  }
-
-  function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Backspace') {
-      if (value[index]) {
-        const arr = value.split(''); arr[index] = ''; onChange(arr.join(''));
-      } else if (index > 0) {
-        refs.current[index - 1]?.focus();
-        const arr = value.split(''); arr[index - 1] = ''; onChange(arr.join(''));
-      }
-    } else if (e.key === 'ArrowLeft' && index > 0) refs.current[index - 1]?.focus();
-    else if (e.key === 'ArrowRight' && index < 5) refs.current[index + 1]?.focus();
-  }
-
-  function handlePaste(e: React.ClipboardEvent) {
-    e.preventDefault();
-    const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    onChange(digits);
-    refs.current[Math.min(digits.length, 5)]?.focus();
-  }
-
-  return (
-    <div>
-      <p className="text-xs text-stone-400 text-center mb-2">{label}</p>
-      <div className="flex gap-2 justify-center" onPaste={handlePaste}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <input
-            key={i}
-            ref={el => { refs.current[i] = el; }}
-            type="password"
-            inputMode="numeric"
-            maxLength={1}
-            value={value[i] ?? ''}
-            autoFocus={autoFocus && i === 0}
-            onChange={e => handleChange(i, e.target.value)}
-            onKeyDown={e => handleKeyDown(i, e)}
-            onFocus={e => e.target.select()}
-            className="w-10 h-12 border-2 border-stone-200 rounded-lg text-center text-lg font-bold focus:border-amber-400 focus:outline-none transition-colors bg-white/80"
-          />
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export default function PasscodeSetup({ token, onSuccess }: Props) {
@@ -98,21 +35,37 @@ export default function PasscodeSetup({ token, onSuccess }: Props) {
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-stone-200/60 p-6 shadow-sm">
-      <h2 className="text-base font-bold text-stone-800 mb-1 text-center">비밀번호 설정</h2>
-      <p className="text-xs text-stone-400 mb-6 text-center">
+    <div
+      className="rounded-2xl p-6"
+      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+    >
+      <p className="text-xs font-bold uppercase tracking-[0.2em] mb-1" style={{ color: '#6085FF' }}>
+        Set Passcode
+      </p>
+      <h2 className="text-xl font-bold text-white mb-1">비밀번호 설정</h2>
+      <p className="text-sm text-slate-400 mb-7">
         이 공간에 접근하기 위한 6자리 숫자 비밀번호를 설정해 주세요.
       </p>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <PinInput value={passcode} onChange={v => { setPasscode(v); setError(''); }} autoFocus label="비밀번호 (6자리)" />
-        <PinInput value={confirm} onChange={v => { setConfirm(v); setError(''); }} label="비밀번호 확인" />
-        {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <p className="text-xs text-slate-400 text-center mb-3">비밀번호 (6자리)</p>
+          <PinInput value={passcode} onChange={v => { setPasscode(v); setError(''); }} autoFocus theme="dark" />
+        </div>
+        <div>
+          <p className="text-xs text-slate-400 text-center mb-3">비밀번호 확인</p>
+          <PinInput value={confirm} onChange={v => { setConfirm(v); setError(''); }} theme="dark" />
+        </div>
+
+        {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+
         <button
           type="submit"
           disabled={!ready || loading}
-          className="w-full bg-stone-800 hover:bg-stone-700 disabled:opacity-40 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
+          className="w-full py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
+          style={{ background: ready && !loading ? '#6085FF' : '#374151', color: 'white' }}
         >
-          {loading ? '설정 중...' : ready ? '비밀번호 설정하기' : `${passcode.length < 6 ? `${passcode.length}/6` : `확인 ${confirm.length}/6`} 입력 중`}
+          {loading ? '설정 중...' : ready ? '비밀번호 설정하기' : `${passcode.length < 6 ? `비밀번호 ${passcode.length}/6` : `확인 ${confirm.length}/6`} 입력 중`}
         </button>
       </form>
     </div>

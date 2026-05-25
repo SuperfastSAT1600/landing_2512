@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     .insert([
       {
         ...crmPayload,
-        funnel_stage: '1',
+        funnel_stage: '0',
         consultation_timeline: [],
       },
     ])

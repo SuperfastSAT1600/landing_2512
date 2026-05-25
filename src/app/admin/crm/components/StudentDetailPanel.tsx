@@ -12,11 +12,12 @@ import { ChurnModal } from './ChurnModal';
 
 // ─── 퍼널 가이드 ──────────────────────────────────────────────────────────────
 
-const SALES_STAGES_ONLY: FunnelStage[] = ['1', '2', '3a', '3b', '4', '5a', '5b', '6', '7'];
+const SALES_STAGES_ONLY: FunnelStage[] = ['0', '1', '2', '3a', '3b', '4', '5a', '5b', '6', '7'];
 
 interface FunnelGuideItem { doing: string; next: string; nextStage?: FunnelStage }
 
 const FUNNEL_GUIDE: Record<string, FunnelGuideItem> = {
+  '0':  { doing: '외부 채널(META 광고 등)에서 자동 유입된 리드입니다.', next: '첫 메시지를 발송하면 1단계로 이동하세요.', nextStage: '1' },
   '1':  { doing: '학생·학부모에게 첫 메시지를 발송한 단계입니다.', next: '세일즈 콜 일정을 잡아 확정하세요.', nextStage: '2' },
   '2':  { doing: '세일즈 콜 일정이 확정된 상태입니다.', next: '콜 전 진단테스트가 필요하면 3a로, 바로 콜을 진행하면 4로 이동하세요.' },
   '3a': { doing: '세일즈 콜 전 진단테스트를 기다리고 있습니다.', next: '학생이 테스트를 제출하면 3b로 이동하세요.', nextStage: '3b' },

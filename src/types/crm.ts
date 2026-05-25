@@ -51,6 +51,7 @@ export type B2BPartner =
 
 // 세일즈 퍼널 단계 (칸반 A)
 export type FunnelStage =
+  | '0'   // 리드 인입 (외부 채널 자동 유입, 미접촉)
   | '1'   // 첫 메시지 발송
   | '2'   // 세일즈 콜 예약 확정 후 대기
   | '3a'  // 세일즈 콜 전 진단테스트 대기
@@ -268,6 +269,7 @@ export interface ParentStudentView {
 // ─── Funnel Stage Labels ──────────────────────────────────────────────────────
 
 export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
+  '0': '리드 인입',
   '1': '첫 메시지 발송',
   '2': '세일즈 콜 예약 확정',
   '3a': '진단테스트 대기 (콜 전)',

@@ -22,7 +22,7 @@ import { Student, FunnelStage, FUNNEL_STAGE_LABELS, ChurnType } from '@/types/cr
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
 
-const SALES_STAGES: FunnelStage[] = ['1', '2', '3a', '3b', '4', '5a', '5b', '6', '7'];
+const SALES_STAGES: FunnelStage[] = ['0', '1', '2', '3a', '3b', '4', '5a', '5b', '6', '7'];
 
 interface SalesKanbanProps {
   students: Student[];
