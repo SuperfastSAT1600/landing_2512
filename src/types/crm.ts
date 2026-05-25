@@ -148,6 +148,7 @@ export interface Student {
 
   last_contacted_at: string | null;
   reactivation_log: ReactivationEntry[];
+  portal_token: string | null;
 
   created_at: string;
   updated_at: string;

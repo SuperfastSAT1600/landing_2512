@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronRight, Sparkles, Check, Clock, AlertTriangle, RefreshCw, UserX, Pencil } from 'lucide-react';
+import { X, ChevronRight, Sparkles, Check, Clock, AlertTriangle, RefreshCw, UserX, Pencil, Link, Copy } from 'lucide-react';
 import type { Student, ConsultationEntry, AiCareResult, FunnelStage, LeadStatus, ChurnType } from '@/types/crm';
 import {
   FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS, CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP,
@@ -87,6 +87,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate }: Stu
   const [showReactivateForm, setShowReactivateForm] = useState(false);
   const [reactivateStrategy, setReactivateStrategy] = useState('');
   const [reactivating, setReactivating] = useState(false);
+  const [portalCopied, setPortalCopied] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -292,6 +294,25 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate }: Stu
     }
   }
 
+  async function handleCopyPortalLink() {
+    setPortalLoading(true);
+    try {
+      const res = await fetch(`/api/crm/students/${student.id}/portal-token`, {
+        method: 'POST', headers,
+      });
+      if (!res.ok) throw new Error('failed');
+      const { portal_token } = await res.json();
+      const url = `${window.location.origin}/portal/${portal_token}`;
+      await navigator.clipboard.writeText(url);
+      setPortalCopied(true);
+      setTimeout(() => setPortalCopied(false), 2500);
+    } catch {
+      alert('포털 링크 생성에 실패했습니다.');
+    } finally {
+      setPortalLoading(false);
+    }
+  }
+
   const guide = FUNNEL_GUIDE[localStudent.funnel_stage];
 
   const scoreDisplay = () => {
@@ -471,6 +492,24 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate }: Stu
                   현재: {localStudent.lead_status === 'active' ? '활성' : localStudent.lead_status === 'inactive' ? '비활성 (숨김)' : '재활성화 시도 중'}
                 </p>
               </div>
+            </section>
+
+            {/* ── 학부모 포털 ── */}
+            <section>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">학부모 포털</h3>
+              <button
+                onClick={handleCopyPortalLink}
+                disabled={portalLoading}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
+              >
+                {portalCopied ? <Check size={13} className="text-green-500" /> : portalLoading ? (
+                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                ) : <Copy size={13} />}
+                {portalCopied ? '링크 복사됨!' : '상담 포털 링크 복사'}
+              </button>
+              <p className="mt-1.5 text-[11px] text-gray-400">
+                학부모가 상담 이력과 진단테스트 결과를 확인할 수 있는 링크입니다.
+              </p>
             </section>
 
             {/* ── 상담 메모 ── */}
