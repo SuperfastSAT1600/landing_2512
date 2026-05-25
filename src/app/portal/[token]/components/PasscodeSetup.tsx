@@ -1,10 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface Props {
   token: string;
   onSuccess: () => void;
+}
+
+function PinInput({
+  value,
+  onChange,
+  autoFocus,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  autoFocus?: boolean;
+  label: string;
+}) {
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+
+  function handleChange(index: number, ch: string) {
+    const digit = ch.replace(/\D/g, '').slice(-1);
+    const arr = value.split('');
+    arr[index] = digit;
+    onChange(arr.join('').slice(0, 6));
+    if (digit && index < 5) refs.current[index + 1]?.focus();
+  }
+
+  function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Backspace') {
+      if (value[index]) {
+        const arr = value.split(''); arr[index] = ''; onChange(arr.join(''));
+      } else if (index > 0) {
+        refs.current[index - 1]?.focus();
+        const arr = value.split(''); arr[index - 1] = ''; onChange(arr.join(''));
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) refs.current[index - 1]?.focus();
+    else if (e.key === 'ArrowRight' && index < 5) refs.current[index + 1]?.focus();
+  }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    e.preventDefault();
+    const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    onChange(digits);
+    refs.current[Math.min(digits.length, 5)]?.focus();
+  }
+
+  return (
+    <div>
+      <p className="text-xs text-stone-400 text-center mb-2">{label}</p>
+      <div className="flex gap-2 justify-center" onPaste={handlePaste}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <input
+            key={i}
+            ref={el => { refs.current[i] = el; }}
+            type="password"
+            inputMode="numeric"
+            maxLength={1}
+            value={value[i] ?? ''}
+            autoFocus={autoFocus && i === 0}
+            onChange={e => handleChange(i, e.target.value)}
+            onKeyDown={e => handleKeyDown(i, e)}
+            onFocus={e => e.target.select()}
+            className="w-10 h-12 border-2 border-stone-200 rounded-lg text-center text-lg font-bold focus:border-amber-400 focus:outline-none transition-colors bg-white/80"
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function PasscodeSetup({ token, onSuccess }: Props) {
@@ -13,11 +77,12 @@ export default function PasscodeSetup({ token, onSuccess }: Props) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const ready = passcode.length === 6 && confirm.length === 6;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (passcode.length !== 6) { setError('6자리 숫자를 입력해 주세요'); return; }
-    if (passcode !== confirm) { setError('비밀번호가 일치하지 않습니다'); return; }
+    if (passcode !== confirm) { setError('비밀번호가 일치하지 않습니다'); setConfirm(''); return; }
 
     setLoading(true);
     const res = await fetch(`/api/portal/${token}/auth`, {
@@ -27,56 +92,27 @@ export default function PasscodeSetup({ token, onSuccess }: Props) {
     });
     setLoading(false);
 
-    if (res.ok) {
-      onSuccess();
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error ?? '오류가 발생했습니다');
-    }
+    if (res.ok) { onSuccess(); return; }
+    const data = await res.json().catch(() => ({}));
+    setError(data.error ?? '오류가 발생했습니다');
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-      <h2 className="text-lg font-bold text-gray-900 mb-1">비밀번호 설정</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        상담 포털 접근을 위한 6자리 숫자 비밀번호를 설정해 주세요.
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-stone-200/60 p-6 shadow-sm">
+      <h2 className="text-base font-bold text-stone-800 mb-1 text-center">비밀번호 설정</h2>
+      <p className="text-xs text-stone-400 mb-6 text-center">
+        이 공간에 접근하기 위한 6자리 숫자 비밀번호를 설정해 주세요.
       </p>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">비밀번호 (6자리)</label>
-          <input
-            type="password"
-            inputMode="numeric"
-            pattern="\d{6}"
-            maxLength={6}
-            value={passcode}
-            onChange={e => setPasscode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-center text-xl tracking-[0.5em] focus:outline-none focus:border-blue-500"
-            placeholder="••••••"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">비밀번호 확인</label>
-          <input
-            type="password"
-            inputMode="numeric"
-            pattern="\d{6}"
-            maxLength={6}
-            value={confirm}
-            onChange={e => setConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-center text-xl tracking-[0.5em] focus:outline-none focus:border-blue-500"
-            placeholder="••••••"
-            required
-          />
-        </div>
-        {error && <p className="text-sm text-red-500">{error}</p>}
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <PinInput value={passcode} onChange={v => { setPasscode(v); setError(''); }} autoFocus label="비밀번호 (6자리)" />
+        <PinInput value={confirm} onChange={v => { setConfirm(v); setError(''); }} label="비밀번호 확인" />
+        {error && <p className="text-sm text-red-500 text-center">{error}</p>}
         <button
           type="submit"
-          disabled={loading || passcode.length < 6 || confirm.length < 6}
-          className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-lg transition-colors"
+          disabled={!ready || loading}
+          className="w-full bg-stone-800 hover:bg-stone-700 disabled:opacity-40 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
         >
-          {loading ? '설정 중...' : '비밀번호 설정하기'}
+          {loading ? '설정 중...' : ready ? '비밀번호 설정하기' : `${passcode.length < 6 ? `${passcode.length}/6` : `확인 ${confirm.length}/6`} 입력 중`}
         </button>
       </form>
     </div>

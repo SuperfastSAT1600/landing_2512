@@ -90,6 +90,35 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate }: Stu
   const [portalCopied, setPortalCopied] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
+  // Diagnostic link
+  interface DiagCandidate { id: string; student_name: string; student_email: string; submitted_at: string; test_id: string; total_time_seconds: number }
+  const [diagLinked, setDiagLinked] = useState<DiagCandidate | null>(null);
+  const [diagCandidates, setDiagCandidates] = useState<DiagCandidate[]>([]);
+  const [showDiagPicker, setShowDiagPicker] = useState(false);
+  const [diagLoading, setDiagLoading] = useState(false);
+
+  async function fetchDiagLink() {
+    setDiagLoading(true);
+    const res = await fetch(`/api/crm/students/${student.id}/diagnostic-link`, { headers });
+    if (res.ok) {
+      const { linked, candidates } = await res.json();
+      setDiagLinked(linked);
+      setDiagCandidates(candidates);
+    }
+    setDiagLoading(false);
+  }
+
+  async function handleDiagLink(resultId: string | null) {
+    setDiagLoading(true);
+    await fetch(`/api/crm/students/${student.id}/diagnostic-link`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ resultId }),
+    });
+    await fetchDiagLink();
+    setShowDiagPicker(false);
+    onUpdate(student.id, { diagnostic_result_id: resultId });
+  }
+
   useEffect(() => {
     let cancelled = false;
     async function fetchFresh() {
@@ -509,6 +538,93 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate }: Stu
               </button>
               <p className="mt-1.5 text-[11px] text-gray-400">
                 학부모가 상담 이력과 진단테스트 결과를 확인할 수 있는 링크입니다.
+              </p>
+            </section>
+
+            {/* ── 진단테스트 연결 ── */}
+            <section>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">진단테스트 연결</h3>
+
+              {diagLinked ? (
+                <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 mb-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-medium text-green-700">{diagLinked.student_name}</p>
+                      <p className="text-[11px] text-green-600">{diagLinked.student_email}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {new Date(diagLinked.submitted_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => { fetchDiagLink(); setShowDiagPicker(true); }}
+                      className="text-[11px] text-gray-400 hover:text-blue-500 transition-colors shrink-0"
+                    >
+                      변경
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { fetchDiagLink(); setShowDiagPicker(true); }}
+                  disabled={diagLoading}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-xs text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors w-full"
+                >
+                  {diagLoading ? (
+                    <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="text-base leading-none">+</span>
+                  )}
+                  진단테스트 결과 연결하기
+                </button>
+              )}
+
+              {showDiagPicker && (
+                <div className="mt-2 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                    <p className="text-xs font-medium text-gray-600">결과 선택</p>
+                    <button onClick={() => setShowDiagPicker(false)} className="text-[11px] text-gray-400 hover:text-gray-600">닫기</button>
+                  </div>
+                  {diagLoading && (
+                    <div className="py-4 flex justify-center">
+                      <div className="w-4 h-4 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                  {!diagLoading && diagCandidates.length === 0 && (
+                    <p className="text-xs text-gray-400 text-center py-4">연결 가능한 결과가 없습니다.</p>
+                  )}
+                  {!diagLoading && diagCandidates.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => handleDiagLink(c.id)}
+                      className={`w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-0 ${diagLinked?.id === c.id ? 'bg-green-50' : ''}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-medium text-gray-800">{c.student_name}</p>
+                          <p className="text-[11px] text-gray-500">{c.student_email}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[11px] text-gray-500">
+                            {new Date(c.submitted_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                          </p>
+                          {diagLinked?.id === c.id && <p className="text-[10px] text-green-600 font-medium">현재 연결됨</p>}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                  {diagLinked && !diagLoading && (
+                    <button
+                      onClick={() => handleDiagLink(null)}
+                      className="w-full text-left px-3 py-2 text-[11px] text-red-400 hover:bg-red-50 transition-colors border-t border-gray-100"
+                    >
+                      연결 해제
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <p className="mt-1.5 text-[11px] text-gray-400">
+                연결된 결과가 학부모 포털에 표시됩니다.
               </p>
             </section>
 

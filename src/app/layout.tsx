@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Script from 'next/script';
 import "./globals.css";
-import Header from './components/Header';
-import FloatingCTA from './components/FloatingCTA';
+import SiteShell from './components/SiteShell';
 import { LiveStatusProvider } from './context/LiveStatusContext';
 
 export const metadata: Metadata = {
@@ -83,7 +82,7 @@ export default function RootLayout({
           });
         `}</Script>
           <LiveStatusProvider>
-          <Header />
+          <SiteShell>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
@@ -117,7 +116,7 @@ export default function RootLayout({
             }}
           />
           {children}
-          <FloatingCTA />
+          </SiteShell>
           </LiveStatusProvider>
       </body>
     </html>
