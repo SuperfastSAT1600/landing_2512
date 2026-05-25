@@ -90,13 +90,10 @@ export default function PortalPage() {
       {/* Auth screens */}
       {!isAuth && (
         <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12">
-          {/* Header label */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-px w-8" style={{ background: ACCENT }} />
-            <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: ACCENT }}>
-              SuperfastSAT Portal
-            </p>
-            <div className="h-px w-8" style={{ background: ACCENT }} />
+          {/* Logo */}
+          <div className="mb-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo_header.png" alt="SuperfastSAT" className="h-8 w-auto mx-auto" style={{ filter: 'brightness(0) invert(1)' }} />
           </div>
 
           {meta?.studentName && (
