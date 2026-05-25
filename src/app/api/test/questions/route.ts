@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const revalidate = 3600;
+
 const CURRICULUM_ID = 'ccec8c4b-e43d-4b8e-bb77-fc9487486ba8';
 
 const MODULE_ORDER: Record<string, { section: string; order: number }> = {
@@ -19,18 +21,19 @@ export async function GET() {
 
   const sms = createClient(smsUrl, smsKey);
 
-  const { data: units, error } = await sms
-    .from('units')
-    .select('id, title, type, section, difficulty, passage, question, options, correct_answer, scope_lesson_id')
-    .eq('scope_curriculum_id', CURRICULUM_ID)
-    .order('id');
+  const [{ data: units, error }, { data: lessons }] = await Promise.all([
+    sms
+      .from('units')
+      .select('id, title, type, section, difficulty, passage, question, options, correct_answer, scope_lesson_id')
+      .eq('scope_curriculum_id', CURRICULUM_ID)
+      .order('id'),
+    sms
+      .from('lessons')
+      .select('id, title, order_index')
+      .in('id', Object.keys(MODULE_ORDER)),
+  ]);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  const { data: lessons } = await sms
-    .from('lessons')
-    .select('id, title, order_index')
-    .in('id', Object.keys(MODULE_ORDER));
 
   const lessonMap: Record<string, string> = {};
   (lessons ?? []).forEach((l) => { lessonMap[l.id] = l.title; });

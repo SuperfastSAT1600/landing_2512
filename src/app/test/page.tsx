@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Option {
   label: string;
@@ -37,16 +37,21 @@ export default function TestPage() {
   const [modules, setModules] = useState<Module[]>([]);
   const [curriculumId, setCurriculumId] = useState('');
   const [loading, setLoading] = useState(false);
+  const prefetchRef = useRef<Promise<{ modules: Module[]; curriculum_id: string }> | null>(null);
   const [activeModule, setActiveModule] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [submitting, setSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  // 페이지 로드 시 백그라운드에서 미리 fetch
+  useEffect(() => {
+    prefetchRef.current = fetch('/api/test/questions').then((r) => r.json());
+  }, []);
+
   async function startTest() {
     if (!studentName.trim()) return;
     setLoading(true);
-    const res = await fetch('/api/test/questions');
-    const data = await res.json();
+    const data = await (prefetchRef.current ?? fetch('/api/test/questions').then((r) => r.json()));
     setModules(data.modules);
     setCurriculumId(data.curriculum_id);
     setLoading(false);
