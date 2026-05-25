@@ -33,11 +33,11 @@ export async function GET(
     linked = data;
   }
 
-  // 후보 목록: student_id가 없거나 이미 이 학생에 연결된 것들, 최신 30개
+  // 후보 목록: 한 번도 연결된 적 없는 결과만 (student_id IS NULL)
   const { data: candidates } = await supabaseAdmin
     .from('diagnostic_test_results')
     .select('id, student_name, student_email, submitted_at, test_id, total_time_seconds')
-    .or(`student_id.is.null,student_id.eq.${id}`)
+    .is('student_id', null)
     .order('submitted_at', { ascending: false })
     .limit(30);
 
@@ -54,22 +54,8 @@ export async function POST(
   const body = await request.json().catch(() => null);
   const resultId: string | null = body?.resultId ?? null;
 
-  // resultId=null → 연결 해제
+  // resultId=null → 연결 해제 (student_id는 유지 — 한 번 연결된 결과는 후보에서 영구 제외)
   if (resultId === null) {
-    // 기존 연결 해제
-    const { data: student } = await supabaseAdmin
-      .from('students')
-      .select('diagnostic_result_id')
-      .eq('id', id)
-      .single();
-
-    if (student?.diagnostic_result_id) {
-      await supabaseAdmin
-        .from('diagnostic_test_results')
-        .update({ student_id: null })
-        .eq('id', student.diagnostic_result_id);
-    }
-
     await supabaseAdmin
       .from('students')
       .update({ diagnostic_result_id: null })
@@ -87,20 +73,7 @@ export async function POST(
 
   if (!result) return NextResponse.json({ error: 'Result not found' }, { status: 404 });
 
-  // 기존 연결 해제 (이전 결과의 student_id 정리)
-  const { data: currentStudent } = await supabaseAdmin
-    .from('students')
-    .select('diagnostic_result_id')
-    .eq('id', id)
-    .single();
-
-  if (currentStudent?.diagnostic_result_id && currentStudent.diagnostic_result_id !== resultId) {
-    await supabaseAdmin
-      .from('diagnostic_test_results')
-      .update({ student_id: null })
-      .eq('id', currentStudent.diagnostic_result_id);
-  }
-
+  // 이전 결과의 student_id는 유지 (한 번 연결된 결과는 후보에서 영구 제외)
   // 양방향 연결
   await Promise.all([
     supabaseAdmin.from('students').update({ diagnostic_result_id: resultId }).eq('id', id),
