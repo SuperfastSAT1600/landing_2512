@@ -126,7 +126,7 @@ async function issueSession(portalToken: string): Promise<NextResponse> {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: SESSION_HOURS * 3600,
-    path: `/portal/${portalToken}`,
+    path: '/',
   });
   return NextResponse.json({ success: true });
 }
