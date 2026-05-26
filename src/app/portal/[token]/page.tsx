@@ -101,7 +101,7 @@ export default function PortalPage() {
               <h1 className="text-3xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
                 {meta.studentName}
               </h1>
-              <p className="text-sm text-slate-500">학부모 전용 상담 포털</p>
+              <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 리포트</p>
             </div>
           )}
 
@@ -139,7 +139,7 @@ export default function PortalPage() {
                 >
                   {meta.studentName}
                 </h1>
-                <p className="text-slate-400 text-sm">학부모 전용 상담 기록 및 진단 결과</p>
+                <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 리포트</p>
               </>
             )}
           </div>
