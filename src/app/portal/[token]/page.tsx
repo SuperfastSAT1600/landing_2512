@@ -156,37 +156,7 @@ export default function PortalPage() {
 
       {/* Authenticated content */}
       {isAuth && (
-        <div>
-          {/* Dark header */}
-          <div style={{ background: BG }}>
-            <div className="relative px-[6%] pt-10 pb-8 max-w-2xl mx-auto">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-px w-10" style={{ background: ACCENT }} />
-                <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: ACCENT }}>
-                  SuperfastSAT Portal
-                </p>
-              </div>
-              {meta?.studentName && (
-                <>
-                  <h1
-                    className="text-white mb-1"
-                    style={{ fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: 800, letterSpacing: '-0.02em' }}
-                  >
-                    {meta.studentName} 학생
-                  </h1>
-                  <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 관리 리포트</p>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Light content */}
-          <div style={{ background: '#F4F5F9', minHeight: '60vh' }}>
-            <main className="max-w-2xl mx-auto px-[6%] py-8 pb-16">
-              <PortalContent token={token} />
-            </main>
-          </div>
-        </div>
+        <PortalContent token={token} />
       )}
     </div>
   );
