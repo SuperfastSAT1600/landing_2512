@@ -26,6 +26,7 @@ export async function GET(
       id, name, grade, school_type, desired_subjects,
       target_score, target_test_date,
       previous_rw_score, previous_math_score,
+      preferred_language,
       consultation_timeline,
       diagnostic_result_id
     `)
@@ -75,6 +76,7 @@ export async function GET(
       target_test_date: student.target_test_date,
       previous_rw_score: student.previous_rw_score,
       previous_math_score: student.previous_math_score,
+      preferred_language: student.preferred_language ?? null,
     },
     publishedMemos,
     diagnosticResult,

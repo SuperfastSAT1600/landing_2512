@@ -25,6 +25,7 @@ export type DesiredSubjects =
   | 'AP US Government and Politics'
   | 'AP Comparative Government and Politics';
 export type PreviousScoreStatus = 'scored' | 'never_taken' | 'dont_remember';
+export type PreferredLanguage = 'korean' | 'english' | 'any';
 export type ChurnType = 'potential' | 'closed';
 export type AssignmentStatus = 'pending' | 'accepted' | 'rejected' | 'considering' | 'closed';
 export type ContactType = 'phone' | 'kakao' | 'email';
@@ -150,6 +151,7 @@ export interface Student {
   last_contacted_at: string | null;
   reactivation_log: ReactivationEntry[];
   portal_token: string | null;
+  preferred_language: PreferredLanguage | null;
 
   created_at: string;
   updated_at: string;

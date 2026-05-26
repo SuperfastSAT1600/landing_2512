@@ -29,6 +29,7 @@ interface StudentInfo {
   target_test_date: string | null;
   previous_rw_score: number | null;
   previous_math_score: number | null;
+  preferred_language: 'korean' | 'english' | 'any' | null;
 }
 
 interface PortalData {
