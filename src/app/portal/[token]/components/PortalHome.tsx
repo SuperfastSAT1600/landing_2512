@@ -111,43 +111,52 @@ export default function PortalHome({ data, onNavigate, onSettings }: Props) {
 
   return (
     <div>
+      {/* ── Sticky top bar ── */}
+      <div
+        className="sticky top-0 z-20 bg-white"
+        style={{ borderBottom: '1px solid #E2E8F0' }}
+      >
+        <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center justify-between">
+          {/* Logo */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo_header.png" alt="SuperfastSAT" className="h-4 w-auto" />
+
+          {/* Settings */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors px-2 py-1"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
+              </svg>
+              설정
+            </button>
+            {menuOpen && (
+              <div
+                className="absolute right-0 top-9 rounded-xl py-1 min-w-[140px] z-30 bg-white"
+                style={{ border: '1px solid #E2E8F0', boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
+              >
+                <button
+                  onClick={() => { setMenuOpen(false); onSettings(); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                >
+                  비밀번호 변경
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* ── Dark cover section ── */}
-      <div style={{ background: BG }}>
-        {/* Subtle glow */}
+      <div className="relative overflow-hidden" style={{ background: BG }}>
         <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(circle at 15% 40%, rgba(96,133,255,0.08) 0%, transparent 55%)' }}
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(circle at 15% 50%, rgba(96,133,255,0.08) 0%, transparent 55%)' }}
         />
 
-        <div className="relative max-w-2xl mx-auto px-[6%] pt-10 pb-10">
-          {/* Settings button */}
-          <div className="flex justify-end mb-6" ref={menuRef}>
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen(o => !o)}
-                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors px-2 py-1"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
-                </svg>
-                설정
-              </button>
-              {menuOpen && (
-                <div
-                  className="absolute right-0 top-8 rounded-xl py-1 min-w-[140px] z-10"
-                  style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
-                >
-                  <button
-                    onClick={() => { setMenuOpen(false); onSettings(); }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                  >
-                    비밀번호 변경
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
+        <div className="relative max-w-2xl mx-auto px-[6%] py-10">
           {/* Label */}
           <div className="flex items-center gap-3 mb-6">
             <div className="h-px w-10" style={{ background: ACCENT }} />
@@ -166,44 +175,45 @@ export default function PortalHome({ data, onNavigate, onSettings }: Props) {
           <p className="text-slate-400 text-sm mb-8">{student.grade}</p>
 
           {/* Score cards */}
-          <div className="flex flex-wrap gap-3">
-            {student.target_score != null && (
-              <div
-                className="flex flex-col items-center justify-center rounded-2xl px-7 py-5"
-                style={{ background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)' }}
-              >
-                <span className="text-4xl font-bold leading-none" style={{ color: ACCENT }}>
-                  {student.target_score}
-                </span>
-                <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">목표 점수</span>
-                {daysLeft != null && (
-                  <span className="text-xs mt-1 font-semibold" style={{ color: daysLeft > 0 ? ACCENT : '#f87171' }}>
-                    {daysLeft > 0 ? `D-${daysLeft}` : daysLeft === 0 ? 'D-Day' : `D+${Math.abs(daysLeft)}`}
+          {(student.target_score != null || prevTotal != null) && (
+            <div className="flex flex-wrap gap-3">
+              {student.target_score != null && (
+                <div
+                  className="flex flex-col items-center justify-center rounded-2xl px-7 py-5"
+                  style={{ background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)' }}
+                >
+                  <span className="text-4xl font-bold leading-none" style={{ color: ACCENT }}>
+                    {student.target_score}
                   </span>
-                )}
-              </div>
-            )}
+                  <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">목표 점수</span>
+                  {daysLeft != null && (
+                    <span className="text-xs mt-1 font-semibold" style={{ color: daysLeft > 0 ? ACCENT : '#f87171' }}>
+                      {daysLeft > 0 ? `D-${daysLeft}` : daysLeft === 0 ? 'D-Day' : `D+${Math.abs(daysLeft)}`}
+                    </span>
+                  )}
+                </div>
+              )}
 
-            {prevTotal != null && (
-              <div
-                className="flex flex-col items-center justify-center rounded-2xl px-7 py-5"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <span className="text-4xl font-bold leading-none text-white">{prevTotal}</span>
-                <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">직전 점수</span>
-                <span className="text-slate-500 text-xs mt-0.5">
-                  RW {student.previous_rw_score} / Math {student.previous_math_score}
-                </span>
-              </div>
-            )}
-          </div>
+              {prevTotal != null && (
+                <div
+                  className="flex flex-col items-center justify-center rounded-2xl px-7 py-5"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                >
+                  <span className="text-4xl font-bold leading-none text-white">{prevTotal}</span>
+                  <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">직전 점수</span>
+                  <span className="text-slate-500 text-xs mt-0.5">
+                    RW {student.previous_rw_score} / Math {student.previous_math_score}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Light cards section ── */}
       <div style={{ background: '#F4F5F9' }}>
         <div className="max-w-2xl mx-auto px-[6%] py-8 pb-16">
-          {/* Section label */}
           <div className="flex items-center gap-3 mb-4">
             <div className="h-px w-6" style={{ background: ACCENT }} />
             <p className="text-xs font-bold uppercase tracking-[0.15em]" style={{ color: ACCENT }}>리포트</p>
