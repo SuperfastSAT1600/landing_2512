@@ -37,6 +37,7 @@ interface FormState {
   target_test_date_2: string;
   desired_subjects: DesiredSubjects;
   previous_score_status: PreviousScoreStatus;
+  preferred_language: string;
 }
 
 const INITIAL_FORM: FormState = {
@@ -60,6 +61,7 @@ const INITIAL_FORM: FormState = {
   target_test_date_2: '',
   desired_subjects: 'Both',
   previous_score_status: 'scored',
+  preferred_language: '',
 };
 
 export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreateModalProps) {
@@ -121,6 +123,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
         target_test_date_2: form.target_test_date_2 || null,
         desired_subjects: form.desired_subjects,
         previous_score_status: form.previous_score_status,
+        preferred_language: form.preferred_language || null,
       };
 
       const res = await fetch('/api/crm/students', {
@@ -305,6 +308,16 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
               + 2차 목표 시험일 추가
             </button>
           )}
+
+          {/* 수업 희망 언어 */}
+          <Field label="수업 희망 언어">
+            <select value={form.preferred_language} onChange={set('preferred_language')} className={selectCls}>
+              <option value="">(미설정)</option>
+              <option value="korean">한국어</option>
+              <option value="english">English</option>
+              <option value="any">상관없음</option>
+            </select>
+          </Field>
 
           {/* 희망 과목 */}
           <Field label="희망 과목" required>
