@@ -3,11 +3,19 @@ import type { CreateStudentInput } from '@/types/crm';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface SheetsSyncPayload {
-  source_tab: 'META리드_인스턴트폼' | 'META리드_인스턴트폼_목표시험' | 'AP수업 문의' | 'SuperTest 수요조사';
+  source_tab:
+    | 'META리드_인스턴트폼'
+    | 'META리드_인스턴트폼_목표시험'
+    | 'AP수업 문의'
+    | 'SuperTest 수요조사'
+    | 'tutoring_landing'
+    | 'instagram'
+    | 'landing';
   created_time: string;
-  ad_name: string;
-  platform: 'ig' | 'fb';
   phone: string;
+  ad_name?: string;
+  platform?: 'ig' | 'fb';
+  student_name?: string;   // 랜딩페이지 탭: 실제 학생 이름 포함
   grade?: string;
   target_score_text?: string;
   target_test_date_text?: string;
@@ -42,6 +50,9 @@ const TAB_PREFIX_MAP: Record<string, string> = {
   'META리드_인스턴트폼_목표시험': 'META목표시험',
   'AP수업 문의': 'AP문의',
   'SuperTest 수요조사': 'SuperTest',
+  'tutoring_landing': '튜터링랜딩',
+  'instagram': '인스타그램',
+  'landing': '랜딩',
 };
 
 export function generateLeadName(sourceTab: string, createdTime: string): string {
@@ -139,10 +150,26 @@ export function mapTestDateText(text: string | undefined): string | null {
 
 // ─── REQ-008: 탭별 필드 매핑 → CRM payload ──────────────────────────────────
 
+type TabMeta = {
+  inquiryChannel: import('@/types/crm').InquiryChannel;
+  trafficSource: import('@/types/crm').TrafficSource;
+};
+
+const TAB_META: Record<SheetsSyncPayload['source_tab'], TabMeta> = {
+  'META리드_인스턴트폼':          { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 광고' },
+  'META리드_인스턴트폼_목표시험': { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 광고' },
+  'AP수업 문의':                   { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 광고' },
+  'SuperTest 수요조사':            { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 광고' },
+  'tutoring_landing':              { inquiryChannel: '구글 상담시트',   trafficSource: '튜터링 랜딩페이지' },
+  'instagram':                     { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 오가닉' },
+  'landing':                       { inquiryChannel: '구글 상담시트',   trafficSource: '(구)랜딩페이지' },
+};
+
 export function buildCrmPayload(p: SheetsSyncPayload): CreateStudentInput {
   const normalizedPhone = normalizePhone(p.phone);
-  const name = generateLeadName(p.source_tab, p.created_time);
+  const name = p.student_name?.trim() || generateLeadName(p.source_tab, p.created_time);
   const inquiryDate = p.created_time.slice(0, 10);
+  const { inquiryChannel, trafficSource } = TAB_META[p.source_tab];
 
   let campaignTags: string[] = [];
   let targetTestDate: string | null = null;
@@ -151,20 +178,32 @@ export function buildCrmPayload(p: SheetsSyncPayload): CreateStudentInput {
 
   switch (p.source_tab) {
     case 'META리드_인스턴트폼':
-      campaignTags = ['META 리드', p.ad_name].filter(Boolean);
+      campaignTags = ['META 리드', p.ad_name ?? ''].filter(Boolean);
       break;
 
     case 'META리드_인스턴트폼_목표시험':
-      campaignTags = ['META 리드', '목표시험 조사', p.ad_name].filter(Boolean);
+      campaignTags = ['META 리드', '목표시험 조사', p.ad_name ?? ''].filter(Boolean);
       targetTestDate = mapTestDateText(p.target_test_date_text);
       break;
 
     case 'AP수업 문의':
-      campaignTags = ['AP 문의', p.ap_subject ?? '', p.ad_name].filter(Boolean);
+      campaignTags = ['AP 문의', p.ap_subject ?? '', p.ad_name ?? ''].filter(Boolean);
       break;
 
     case 'SuperTest 수요조사':
-      campaignTags = ['SuperTest 수요조사', p.supertest_date ?? '', p.ad_name].filter(Boolean);
+      campaignTags = ['SuperTest 수요조사', p.supertest_date ?? '', p.ad_name ?? ''].filter(Boolean);
+      break;
+
+    case 'tutoring_landing':
+      campaignTags = ['튜터링 랜딩'].filter(Boolean);
+      break;
+
+    case 'instagram':
+      campaignTags = ['인스타그램 오가닉'].filter(Boolean);
+      break;
+
+    case 'landing':
+      campaignTags = ['랜딩페이지'].filter(Boolean);
       break;
   }
 
@@ -175,8 +214,8 @@ export function buildCrmPayload(p: SheetsSyncPayload): CreateStudentInput {
     parent_phone: normalizedPhone,
     contact_type: 'phone',
     inquiry_date: inquiryDate,
-    inquiry_channel: '인스타그램 링크',
-    traffic_source: '인스타그램 광고',
+    inquiry_channel: inquiryChannel,
+    traffic_source: trafficSource,
     content_author: null,
     lead_type: 'B2C',
     b2b_partner: null,

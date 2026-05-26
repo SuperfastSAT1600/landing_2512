@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  if (!body.phone || !body.source_tab || !body.created_time || !body.platform) {
+  if (!body.phone || !body.source_tab || !body.created_time) {
     return NextResponse.json(
-      { error: 'Missing required fields: phone, source_tab, created_time, platform' },
+      { error: 'Missing required fields: phone, source_tab, created_time' },
       { status: 400 }
     );
   }
