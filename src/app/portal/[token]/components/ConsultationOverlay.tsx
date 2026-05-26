@@ -11,6 +11,7 @@ interface PublishedMemo {
 
 interface Props {
   memos: PublishedMemo[];
+  studentName: string;
   onBack: () => void;
 }
 
@@ -49,20 +50,24 @@ function MemoItem({ memo }: { memo: PublishedMemo }) {
   );
 }
 
-export default function ConsultationOverlay({ memos, onBack }: Props) {
+export default function ConsultationOverlay({ memos, studentName, onBack }: Props) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#F4F5F9' }}>
 
-      {/* Sticky top bar */}
-      <div className="sticky top-0 z-10 bg-white" style={{ borderBottom: '1px solid #E2E8F0' }}>
-        <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center">
+      {/* Sticky top bar — dark */}
+      <div className="sticky top-0 z-10" style={{ background: '#09090b', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center justify-between">
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            className="flex items-center gap-1 text-sm font-medium text-slate-400 hover:text-white transition-colors"
           >
             <ChevronLeft size={16} />
             상담 리포트
           </button>
+          <div className="text-right">
+            <p className="text-xs font-semibold text-white leading-tight">{studentName} 학생</p>
+            <p className="text-[10px] font-medium" style={{ color: ACCENT }}>상담 관리 리포트</p>
+          </div>
         </div>
       </div>
 

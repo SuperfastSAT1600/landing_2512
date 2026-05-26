@@ -82,7 +82,7 @@ export default function PortalContent({ token }: { token: string }) {
       )}
 
       {view === 'consultation' && (
-        <ConsultationOverlay memos={data.publishedMemos} onBack={() => setView('home')} />
+        <ConsultationOverlay memos={data.publishedMemos} studentName={data.student.name} onBack={() => setView('home')} />
       )}
 
       {showChangePasscode && (
