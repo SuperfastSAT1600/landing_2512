@@ -62,18 +62,15 @@ function PreviewCard({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="w-full text-left rounded-2xl p-5 transition-colors disabled:opacity-50"
-      style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
+      className="w-full text-left rounded-2xl p-5 transition-colors disabled:opacity-40 bg-white hover:bg-slate-50"
+      style={{ border: '1px solid #E2E8F0' }}
     >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-white mb-0.5">{title}</p>
+          <p className="text-sm font-semibold text-slate-800 mb-0.5">{title}</p>
           <p className="text-xs text-slate-400 truncate">{preview}</p>
         </div>
-        {!disabled && <ChevronRight size={16} className="flex-shrink-0 text-slate-500" />}
+        {!disabled && <ChevronRight size={16} className="flex-shrink-0 text-slate-400" />}
       </div>
     </button>
   );
@@ -112,7 +109,7 @@ export default function PortalHome({ data, onNavigate, onSettings }: Props) {
         <div className="relative">
           <button
             onClick={() => setMenuOpen(o => !o)}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors px-2 py-1"
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors px-2 py-1"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
@@ -121,12 +118,12 @@ export default function PortalHome({ data, onNavigate, onSettings }: Props) {
           </button>
           {menuOpen && (
             <div
-              className="absolute right-0 top-8 rounded-xl py-1 min-w-[140px] z-10"
-              style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+              className="absolute right-0 top-8 rounded-xl py-1 min-w-[140px] z-10 bg-white"
+              style={{ border: '1px solid #E2E8F0', boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
             >
               <button
                 onClick={() => { setMenuOpen(false); onSettings(); }}
-                className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
               >
                 비밀번호 변경
               </button>
