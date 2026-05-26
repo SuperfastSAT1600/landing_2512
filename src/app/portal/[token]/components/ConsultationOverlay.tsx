@@ -15,7 +15,6 @@ interface Props {
 }
 
 const ACCENT = '#6085FF';
-const BG = '#09090b';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -25,28 +24,25 @@ function MemoItem({ memo }: { memo: PublishedMemo }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-    >
+    <div className="rounded-2xl overflow-hidden bg-white" style={{ border: '1px solid #E2E8F0' }}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors hover:bg-white/5"
+        className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors hover:bg-slate-50"
       >
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: ACCENT }} />
-          <span className="text-sm font-medium text-slate-200">{formatDate(memo.created_at)}</span>
+          <span className="text-sm font-medium text-slate-700">{formatDate(memo.created_at)}</span>
         </div>
         {open
-          ? <ChevronUp size={14} className="text-slate-500 flex-shrink-0" />
-          : <ChevronDown size={14} className="text-slate-500 flex-shrink-0" />
+          ? <ChevronUp size={14} className="text-slate-400 flex-shrink-0" />
+          : <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />
         }
       </button>
 
       {open && (
         <div className="px-5 pb-5 pt-1">
-          <div className="h-px mb-4" style={{ background: 'rgba(255,255,255,0.06)' }} />
-          <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{memo.content}</p>
+          <div className="h-px mb-4" style={{ background: '#E2E8F0' }} />
+          <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{memo.content}</p>
         </div>
       )}
     </div>
@@ -55,24 +51,14 @@ function MemoItem({ memo }: { memo: PublishedMemo }) {
 
 export default function ConsultationOverlay({ memos, onBack }: Props) {
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: BG }}>
-      {/* Ambient glow */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at 20% 0%, rgba(96,133,255,0.06) 0%, transparent 60%)',
-        }}
-      />
+    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#F4F5F9' }}>
 
       {/* Sticky top bar */}
-      <div
-        className="sticky top-0 z-10"
-        style={{ background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-      >
+      <div className="sticky top-0 z-10 bg-white" style={{ borderBottom: '1px solid #E2E8F0' }}>
         <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center">
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+            className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
             <ChevronLeft size={16} />
             상담 리포트
@@ -81,27 +67,24 @@ export default function ConsultationOverlay({ memos, onBack }: Props) {
       </div>
 
       {/* Content */}
-      <div className="relative max-w-2xl mx-auto px-[6%] pt-8 pb-16">
+      <div className="max-w-2xl mx-auto px-[6%] pt-8 pb-16">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-px w-6" style={{ background: ACCENT }} />
             <p className="text-xs font-bold uppercase tracking-[0.15em]" style={{ color: ACCENT }}>상담 기록</p>
           </div>
-          <h2 className="text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+          <h2 className="text-2xl font-bold text-slate-900" style={{ letterSpacing: '-0.02em' }}>
             누적 상담 기록
           </h2>
           {memos.length > 0 && (
-            <p className="text-slate-500 text-sm mt-1">총 {memos.length}회</p>
+            <p className="text-slate-400 text-sm mt-1">총 {memos.length}회</p>
           )}
         </div>
 
         {memos.length === 0 ? (
-          <div
-            className="rounded-2xl px-5 py-10 text-center"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            <p className="text-slate-500 text-sm">아직 공유된 상담 내용이 없습니다.</p>
+          <div className="rounded-2xl px-5 py-10 text-center bg-white" style={{ border: '1px solid #E2E8F0' }}>
+            <p className="text-slate-400 text-sm">아직 공유된 상담 내용이 없습니다.</p>
           </div>
         ) : (
           <div className="space-y-3">
