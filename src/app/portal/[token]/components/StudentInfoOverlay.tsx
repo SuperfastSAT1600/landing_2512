@@ -63,7 +63,7 @@ export default function StudentInfoOverlay({ student, onBack }: Props) {
 
       {/* Fixed top bar */}
       <div className="fixed top-0 left-0 right-0 z-10 bg-white" style={{ borderBottom: '1px solid #E2E8F0' }}>
-        <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-12 flex items-center">
           <button
             onClick={onBack}
             className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"

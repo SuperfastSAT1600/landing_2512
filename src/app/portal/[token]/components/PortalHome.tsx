@@ -116,7 +116,7 @@ export default function PortalHome({ data, onNavigate, onSettings }: Props) {
         className="fixed top-0 left-0 right-0 z-20 bg-white"
         style={{ borderBottom: '1px solid #E2E8F0' }}
       >
-        <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-12 flex items-center justify-between">
           {/* Logo */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo_header.png" alt="SuperfastSAT" className="h-4 w-auto" />
