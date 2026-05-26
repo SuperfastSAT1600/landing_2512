@@ -61,8 +61,8 @@ export default function StudentInfoOverlay({ student, onBack }: Props) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#F4F5F9' }}>
 
-      {/* Sticky top bar */}
-      <div className="sticky top-0 z-10 bg-white" style={{ borderBottom: '1px solid #E2E8F0' }}>
+      {/* Fixed top bar */}
+      <div className="fixed top-0 left-0 right-0 z-10 bg-white" style={{ borderBottom: '1px solid #E2E8F0' }}>
         <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center">
           <button
             onClick={onBack}
@@ -74,8 +74,8 @@ export default function StudentInfoOverlay({ student, onBack }: Props) {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-2xl mx-auto px-[6%] pt-8 pb-16">
+      {/* Content (pt-12 clears fixed bar) */}
+      <div className="max-w-2xl mx-auto px-[6%] pt-20 pb-16">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">

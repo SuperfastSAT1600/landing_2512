@@ -111,9 +111,9 @@ export default function PortalHome({ data, onNavigate, onSettings }: Props) {
 
   return (
     <div>
-      {/* ── Sticky top bar ── */}
+      {/* ── Fixed top bar ── */}
       <div
-        className="sticky top-0 z-20 bg-white"
+        className="fixed top-0 left-0 right-0 z-20 bg-white"
         style={{ borderBottom: '1px solid #E2E8F0' }}
       >
         <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center justify-between">
@@ -149,8 +149,8 @@ export default function PortalHome({ data, onNavigate, onSettings }: Props) {
         </div>
       </div>
 
-      {/* ── Dark cover section ── */}
-      <div className="relative overflow-hidden" style={{ background: BG }}>
+      {/* ── Dark cover section (pt-12 clears fixed bar) ── */}
+      <div className="relative overflow-hidden pt-12" style={{ background: BG }}>
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(circle at 15% 50%, rgba(96,133,255,0.08) 0%, transparent 55%)' }}
