@@ -56,16 +56,14 @@ export default function ConsultationOverlay({ memos, studentName, onBack }: Prop
 
       {/* Sticky top bar */}
       <div className="sticky top-0 z-10 bg-white" style={{ borderBottom: '1px solid #E2E8F0' }}>
-        <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-[6%] h-12 flex items-center">
           <button
             onClick={onBack}
             className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
             <ChevronLeft size={16} />
-            상담 리포트
+            상담 관리 리포트
           </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo_header.png" alt="SuperfastSAT" className="h-4 w-auto" />
         </div>
       </div>
 

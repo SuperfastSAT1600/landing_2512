@@ -104,7 +104,7 @@ export default function DiagnosticOverlay({ resultId, onBack }: Props) {
               className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors flex-shrink-0"
             >
               <ChevronLeft size={15} />
-              상담 리포트
+              상담 관리 리포트
             </button>
             <span className="text-slate-300 text-sm flex-shrink-0">|</span>
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
