@@ -115,9 +115,9 @@ export default function PortalPage() {
             {meta?.studentName && (
               <div className="text-center mb-8">
                 <p className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
-                  {meta.studentName}
+                  {meta.studentName} 학생
                 </p>
-                <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 리포트</p>
+                <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 관리 리포트</p>
               </div>
             )}
 
@@ -162,9 +162,9 @@ export default function PortalPage() {
                   className="text-white mb-1"
                   style={{ fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: 800, letterSpacing: '-0.02em' }}
                 >
-                  {meta.studentName}
+                  {meta.studentName} 학생
                 </h1>
-                <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 리포트</p>
+                <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 관리 리포트</p>
               </>
             )}
           </div>
