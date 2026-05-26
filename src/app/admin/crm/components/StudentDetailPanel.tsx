@@ -39,6 +39,7 @@ interface EditForm {
   target_score: string; target_test_date: string; target_test_date_2: string;
   inquiry_date: string; inquiry_channel: string; traffic_source: string;
   content_author: string; lead_type: string; b2b_partner: string;
+  preferred_language: string;
 }
 
 function studentToEditForm(s: Student): EditForm {
@@ -54,6 +55,7 @@ function studentToEditForm(s: Student): EditForm {
     inquiry_date: s.inquiry_date ?? '', inquiry_channel: s.inquiry_channel ?? '',
     traffic_source: s.traffic_source ?? '', content_author: s.content_author ?? '',
     lead_type: s.lead_type ?? 'B2C', b2b_partner: s.b2b_partner ?? '',
+    preferred_language: s.preferred_language ?? '',
   };
 }
 
@@ -179,6 +181,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
         lead_type: editForm.lead_type as Student['lead_type'],
         b2b_partner: editForm.lead_type === 'B2B' && editForm.b2b_partner
           ? editForm.b2b_partner as Student['b2b_partner'] : null,
+        preferred_language: (editForm.preferred_language as Student['preferred_language']) || null,
       };
       const res = await fetch(`/api/crm/students/${student.id}`, {
         method: 'PATCH', headers, body: JSON.stringify(updates),
@@ -774,6 +777,9 @@ function StudentInfoView({ student, scoreDisplay }: { student: Student; scoreDis
             ? student.target_test_date_2 ? `${student.target_test_date} / ${student.target_test_date_2}` : student.target_test_date
             : '미정'}
         />
+        {student.preferred_language && (
+          <InfoRow label="수업 희망 언어" value={{ korean: '한국어', english: 'English', any: '상관없음' }[student.preferred_language] ?? student.preferred_language} />
+        )}
       </div>
     </div>
   );
@@ -877,6 +883,14 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
       </div>
       <EditField label="2차 목표 시험일">
         <input type="date" value={form.target_test_date_2} onChange={set('target_test_date_2')} className={inputCls} />
+      </EditField>
+      <EditField label="수업 희망 언어">
+        <select value={form.preferred_language} onChange={set('preferred_language')} className={selectCls}>
+          <option value="">(미설정)</option>
+          <option value="korean">한국어</option>
+          <option value="english">English</option>
+          <option value="any">상관없음</option>
+        </select>
       </EditField>
       <div className="pt-2 border-t border-gray-100">
         <p className="text-[11px] text-gray-400 font-medium mb-2">인입 정보</p>
