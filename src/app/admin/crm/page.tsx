@@ -282,6 +282,10 @@ export default function CrmPage() {
           adminKey={adminKey}
           onClose={() => setSelectedStudent(null)}
           onUpdate={handleStudentUpdate}
+          onDelete={(id) => {
+            setStudents(prev => prev.filter(s => s.id !== id));
+            setSelectedStudent(null);
+          }}
         />
       )}
 

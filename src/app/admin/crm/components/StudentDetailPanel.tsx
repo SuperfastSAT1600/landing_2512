@@ -64,11 +64,12 @@ interface StudentDetailPanelProps {
   adminKey: string;
   onClose: () => void;
   onUpdate: (id: string, updates: Partial<Student>) => void;
+  onDelete?: (id: string) => void;
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function StudentDetailPanel({ student, adminKey, onClose, onUpdate }: StudentDetailPanelProps) {
+export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
   const [memoText, setMemoText] = useState('');
   const [savingMemo, setSavingMemo] = useState(false);
   const [memoError, setMemoError] = useState('');
@@ -90,6 +91,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate }: Stu
   const [reactivating, setReactivating] = useState(false);
   const [portalCopied, setPortalCopied] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Diagnostic link
   interface DiagCandidate { id: string; student_name: string; student_email: string; submitted_at: string; test_id: string; total_time_seconds: number }
@@ -343,6 +345,21 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate }: Stu
     }
   }
 
+  async function handleDelete() {
+    if (!window.confirm(`"${localStudent.name}" 리드를 완전히 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/crm/students/${student.id}`, { method: 'DELETE', headers });
+      if (!res.ok) throw new Error('failed');
+      onDelete?.(student.id);
+      onClose();
+    } catch {
+      alert('삭제에 실패했습니다.');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const guide = FUNNEL_GUIDE[localStudent.funnel_stage];
 
   const scoreDisplay = () => {
@@ -521,6 +538,17 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate }: Stu
                 <p className="text-[11px] text-gray-400">
                   현재: {localStudent.lead_status === 'active' ? '활성' : localStudent.lead_status === 'inactive' ? '비활성 (숨김)' : '재활성화 시도 중'}
                 </p>
+
+                {localStudent.funnel_stage === '0' && (
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-xs text-red-500 hover:bg-red-50 hover:border-red-400 disabled:opacity-50 transition-colors"
+                  >
+                    <UserX size={13} />
+                    {deleting ? '삭제 중...' : '잘못된 리드 삭제'}
+                  </button>
+                )}
               </div>
             </section>
 
