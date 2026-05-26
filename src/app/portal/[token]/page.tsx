@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import PasscodeSetup from './components/PasscodeSetup';
 import PasscodeEntry from './components/PasscodeEntry';
 import PortalContent from './components/PortalContent';
+import HeroBackground from '@/app/components/HeroBackground';
 
 type PortalState = 'loading' | 'not-found' | 'setup' | 'locked' | 'login' | 'authenticated';
 
@@ -38,7 +39,7 @@ export default function PortalPage() {
 
   if (state === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#010204' }}>
         <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: ACCENT, borderTopColor: 'transparent' }} />
       </div>
     );
@@ -77,45 +78,62 @@ export default function PortalPage() {
   const isAuth = state === 'authenticated';
 
   return (
-    <div className="min-h-screen" style={{ background: BG }}>
+    <div className="min-h-screen" style={{ background: isAuth ? BG : '#010204' }}>
 
-      {/* Ambient glow */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at 20% 0%, rgba(96,133,255,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(7,27,233,0.05) 0%, transparent 60%)',
-        }}
-      />
-
-      {/* Auth screens */}
+      {/* Auth screens — Hero background + headline */}
       {!isAuth && (
-        <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12">
-          {/* Logo */}
-          <div className="mb-10">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo_header.png" alt="SuperfastSAT" className="h-8 w-auto mx-auto" style={{ filter: 'brightness(0) invert(1)' }} />
+        <div className="relative min-h-screen overflow-hidden">
+          {/* HeroBackground canvas */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ opacity: 0.8, transform: 'rotate(180deg)' }}
+          >
+            <HeroBackground />
           </div>
 
-          {meta?.studentName && (
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
-                {meta.studentName}
+          {/* Content overlay */}
+          <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16">
+            {/* Headline */}
+            <div className="text-center mb-10">
+              <h1
+                className="text-white"
+                style={{
+                  fontSize: 'clamp(2.5rem, 8vw, 5rem)',
+                  fontWeight: 800,
+                  lineHeight: 1.1,
+                  wordBreak: 'keep-all',
+                }}
+              >
+                목표 점수에<br />가장 빠르게
               </h1>
-              <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 리포트</p>
             </div>
-          )}
 
-          <div className="w-full max-w-sm">
-            {state === 'setup' && (
-              <PasscodeSetup token={token} onSuccess={() => setState('authenticated')} />
+            {/* Divider */}
+            <div className="w-16 h-px mb-8" style={{ background: 'rgba(255,255,255,0.15)' }} />
+
+            {/* Student name + label */}
+            {meta?.studentName && (
+              <div className="text-center mb-8">
+                <p className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
+                  {meta.studentName}
+                </p>
+                <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 리포트</p>
+              </div>
             )}
-            {state === 'login' && (
-              <PasscodeEntry
-                token={token}
-                onSuccess={() => setState('authenticated')}
-                onLocked={() => { setMeta(prev => prev ? { ...prev, isLocked: true } : prev); setState('locked'); }}
-              />
-            )}
+
+            {/* Passcode form */}
+            <div className="w-full max-w-sm">
+              {state === 'setup' && (
+                <PasscodeSetup token={token} onSuccess={() => setState('authenticated')} />
+              )}
+              {state === 'login' && (
+                <PasscodeEntry
+                  token={token}
+                  onSuccess={() => setState('authenticated')}
+                  onLocked={() => { setMeta(prev => prev ? { ...prev, isLocked: true } : prev); setState('locked'); }}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -123,8 +141,15 @@ export default function PortalPage() {
       {/* Authenticated content */}
       {isAuth && (
         <div className="relative">
+          {/* Ambient glow */}
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse at 20% 0%, rgba(96,133,255,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(7,27,233,0.05) 0%, transparent 60%)',
+            }}
+          />
           {/* Cover header */}
-          <div className="px-[6%] pt-10 pb-8 max-w-2xl mx-auto">
+          <div className="relative px-[6%] pt-10 pb-8 max-w-2xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-px w-10" style={{ background: ACCENT }} />
               <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: ACCENT }}>
@@ -145,7 +170,7 @@ export default function PortalPage() {
           </div>
 
           {/* Content */}
-          <main className="max-w-2xl mx-auto px-[6%] pb-16">
+          <main className="relative max-w-2xl mx-auto px-[6%] pb-16">
             <PortalContent token={token} />
           </main>
         </div>
