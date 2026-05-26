@@ -35,7 +35,9 @@ export default function FulltestResultsPage() {
       headers: { 'x-admin-key': localStorage.getItem('admin_key') || '' },
     })
       .then((r) => r.json())
-      .then((d) => { setResults(d.results ?? []); setLoading(false); });
+      .then((d) => setResults(d.results ?? []))
+      .catch((e) => console.error('fulltest fetch error:', e))
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
