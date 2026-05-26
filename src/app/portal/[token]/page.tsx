@@ -91,8 +91,24 @@ export default function PortalPage() {
             <HeroBackground />
           </div>
 
-          {/* Content overlay */}
-          <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16">
+          {/* Fixed top bar — logo */}
+          <div
+            className="fixed top-0 left-0 right-0 z-50"
+            style={{
+              background: 'rgba(1,2,4,0.65)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderBottom: '1px solid rgba(255,255,255,0.07)',
+            }}
+          >
+            <div className="max-w-2xl mx-auto px-6 h-12 flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo_header.png" alt="SuperfastSAT" className="h-5 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
+            </div>
+          </div>
+
+          {/* Content overlay — pt-12 clears the fixed bar */}
+          <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-12 py-16">
             {/* Headline */}
             <div className="text-center mb-10">
               <h1

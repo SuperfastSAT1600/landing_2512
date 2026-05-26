@@ -39,11 +39,11 @@ export default function PasscodeSetup({ token, onSuccess }: Props) {
       className="rounded-2xl p-6"
       style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
     >
-      <p className="text-xs font-bold uppercase tracking-[0.2em] mb-1" style={{ color: '#6085FF' }}>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] mb-1 text-center" style={{ color: '#6085FF' }}>
         Set Passcode
       </p>
-      <h2 className="text-xl font-bold text-white mb-1">비밀번호 설정</h2>
-      <p className="text-sm text-slate-400 mb-7">
+      <h2 className="text-xl font-bold text-white mb-1 text-center">비밀번호 설정</h2>
+      <p className="text-sm text-slate-400 mb-7 text-center">
         이 공간에 접근하기 위한 6자리 숫자 비밀번호를 설정해 주세요.
       </p>
 
