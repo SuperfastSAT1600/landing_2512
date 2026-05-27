@@ -21,12 +21,14 @@ import { Plus, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Student, FunnelStage, FUNNEL_STAGE_LABELS, ChurnType } from '@/types/crm';
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
+import { PaymentModal } from './PaymentModal';
 
 const SALES_STAGES: FunnelStage[] = ['0', '1', '2', '3a', '3b', '4', '5a', '5b', '6', '7'];
 
 interface SalesKanbanProps {
   students: Student[];
   followUpCount: number;
+  adminKey: string;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
   onStudentClick: (student: Student) => void;
   onAddStudent?: () => void;
@@ -37,10 +39,11 @@ interface KanbanRowProps {
   students: Student[];
   onStudentClick: (student: Student) => void;
   onChurn: (student: Student) => void;
+  onPayment: (student: Student) => void;
   onAdd?: () => void;
 }
 
-function KanbanRow({ stage, students, onStudentClick, onChurn, onAdd }: KanbanRowProps) {
+function KanbanRow({ stage, students, onStudentClick, onChurn, onPayment, onAdd }: KanbanRowProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
 
   return (
@@ -66,6 +69,7 @@ function KanbanRow({ stage, students, onStudentClick, onChurn, onAdd }: KanbanRo
                   student={student}
                   onClick={() => onStudentClick(student)}
                   onChurn={() => onChurn(student)}
+                  onPayment={() => onPayment(student)}
                 />
               </div>
             ))}
@@ -90,9 +94,10 @@ function KanbanRow({ stage, students, onStudentClick, onChurn, onAdd }: KanbanRo
   );
 }
 
-export function SalesKanban({ students, followUpCount, onStudentUpdate, onStudentClick, onAddStudent }: SalesKanbanProps) {
+export function SalesKanban({ students, followUpCount, adminKey, onStudentUpdate, onStudentClick, onAddStudent }: SalesKanbanProps) {
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
+  const [paymentTarget, setPaymentTarget] = useState<Student | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -154,6 +159,7 @@ export function SalesKanban({ students, followUpCount, onStudentUpdate, onStuden
               students={getStudentsForStage(stage)}
               onStudentClick={onStudentClick}
               onChurn={setChurnTarget}
+              onPayment={setPaymentTarget}
               onAdd={stage === '1' ? onAddStudent : undefined}
             />
           ))}
@@ -166,6 +172,7 @@ export function SalesKanban({ students, followUpCount, onStudentUpdate, onStuden
                 student={activeStudent}
                 onClick={() => {}}
                 onChurn={() => {}}
+                onPayment={undefined}
                 overlay
               />
             </div>
@@ -209,6 +216,18 @@ export function SalesKanban({ students, followUpCount, onStudentUpdate, onStuden
             setChurnTarget(null);
           }}
           onClose={() => setChurnTarget(null)}
+        />
+      )}
+
+      {paymentTarget && (
+        <PaymentModal
+          student={paymentTarget}
+          adminKey={adminKey}
+          onConfirm={(updatedStudent) => {
+            onStudentUpdate(paymentTarget.id, { lead_status: updatedStudent.lead_status });
+            setPaymentTarget(null);
+          }}
+          onClose={() => setPaymentTarget(null)}
         />
       )}
     </>

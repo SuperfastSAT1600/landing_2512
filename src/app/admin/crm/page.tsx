@@ -55,7 +55,12 @@ export default function CrmPage() {
   const fetchStudents = useCallback(async () => {
     try {
       setLoadError(null);
-      const res = await fetch('/api/crm/students', { headers: { 'x-admin-key': getAdminKey() } });
+      // 첫 요청이 Turbopack 콜드스타트로 실패할 수 있어 1회 재시도
+      let res = await fetch('/api/crm/students', { headers: { 'x-admin-key': getAdminKey() } });
+      if (!res.ok) {
+        await new Promise(r => setTimeout(r, 800));
+        res = await fetch('/api/crm/students', { headers: { 'x-admin-key': getAdminKey() } });
+      }
       if (!res.ok) throw new Error('학생 데이터를 불러오지 못했습니다.');
       const data = await res.json();
       setStudents(data.data ?? []);
@@ -209,7 +214,7 @@ export default function CrmPage() {
         <div className="flex gap-1 mb-4">
           {([
             { key: 'kanban',   label: '세일즈 리드풀' },
-            { key: 'enrolled', label: '결제 리드풀' },
+            { key: 'enrolled', label: '수업 중' },
             { key: 'pool',     label: '전체 리드풀' },
             { key: 'stats',    label: '통계' },
           ] as const).map(({ key, label }) => (
@@ -247,6 +252,7 @@ export default function CrmPage() {
             <SalesKanban
               students={filteredStudents}
               followUpCount={followUpCount}
+              adminKey={adminKey}
               onStudentUpdate={handleStudentUpdate}
               onStudentClick={handleStudentClick}
               onAddStudent={() => setShowCreateModal(true)}

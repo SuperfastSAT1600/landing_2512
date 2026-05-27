@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronRight, Sparkles, Check, Clock, AlertTriangle, RefreshCw, UserX, Pencil, Link, Copy } from 'lucide-react';
-import type { Student, ConsultationEntry, AiCareResult, FunnelStage, LeadStatus, ChurnType } from '@/types/crm';
+import { X, ChevronRight, ChevronDown, Sparkles, Check, Clock, AlertTriangle, RefreshCw, UserX, Pencil, Link, Copy } from 'lucide-react';
+import type { Student, ConsultationEntry, FunnelStage, LeadStatus, ChurnType } from '@/types/crm';
 import {
   FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS, CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP,
   GRADE_OPTIONS, INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS,
@@ -27,7 +27,7 @@ const FUNNEL_GUIDE: Record<string, FunnelGuideItem> = {
   '5b': { doing: '콜 후 진단테스트 제출이 완료됐습니다.', next: '리포트 세일즈 콜 일정을 잡으세요.', nextStage: '6' },
   '6':  { doing: '진단 리포트 콜 일정이 확정된 상태입니다.', next: '리포트 콜을 진행하세요.', nextStage: '7' },
   '7':  { doing: '리포트 세일즈 콜이 완료됐습니다.', next: '결제를 완료하면 결제 완료 탭으로 이동하세요.' },
-  'churned': { doing: '이탈 처리된 학생입니다.', next: '재활성화가 필요하면 아래 상태 관리에서 버튼을 눌러주세요.' },
+  'churned': { doing: '이탈 처리된 학생입니다.', next: '재활성화가 필요하면 재활성화 시작 버튼을 눌러주세요.' },
 };
 
 // ─── 편집 폼 ──────────────────────────────────────────────────────────────────
@@ -75,9 +75,10 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   const [memoText, setMemoText] = useState('');
   const [savingMemo, setSavingMemo] = useState(false);
   const [memoError, setMemoError] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<AiCareResult | null>(null);
-  const [aiEntryId, setAiEntryId] = useState<string | null>(null);
+  const [aiLoadingFor, setAiLoadingFor] = useState<string | null>(null);
+  const [pendingEdits, setPendingEdits] = useState<Record<string, {
+    purified: string; coachHistory: string; deletedItems: string[];
+  }>>({});
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');
   const [timeline, setTimeline] = useState<ConsultationEntry[]>(student.consultation_timeline ?? []);
@@ -87,6 +88,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   const [editForm, setEditForm] = useState<EditForm>(studentToEditForm(student));
   const [savingEdit, setSavingEdit] = useState(false);
   const [funnelChanging, setFunnelChanging] = useState(false);
+  const [showFunnelMenu, setShowFunnelMenu] = useState(false);
   const [showChurnModal, setShowChurnModal] = useState(false);
   const [showReactivateForm, setShowReactivateForm] = useState(false);
   const [reactivateStrategy, setReactivateStrategy] = useState('');
@@ -95,12 +97,13 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   const [portalLoading, setPortalLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Diagnostic link
   interface DiagCandidate { id: string; student_name: string; student_email: string; submitted_at: string; test_id: string; total_time_seconds: number }
   const [diagLinked, setDiagLinked] = useState<DiagCandidate | null>(null);
   const [diagCandidates, setDiagCandidates] = useState<DiagCandidate[]>([]);
   const [showDiagPicker, setShowDiagPicker] = useState(false);
   const [diagLoading, setDiagLoading] = useState(false);
+
+  const headers = { 'Content-Type': 'application/json', 'x-admin-key': adminKey };
 
   async function fetchDiagLink() {
     setDiagLoading(true);
@@ -133,9 +136,21 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
         });
         const json = await res.json();
         if (!cancelled && res.ok && json.data) {
+          const freshTimeline: ConsultationEntry[] = json.data.consultation_timeline ?? [];
           setLocalStudent(json.data);
-          setTimeline(json.data.consultation_timeline ?? []);
+          setTimeline(freshTimeline);
           setEditForm(studentToEditForm(json.data));
+          const initialEdits: Record<string, { purified: string; coachHistory: string; deletedItems: string[] }> = {};
+          freshTimeline.forEach(e => {
+            if (e.ai_purified && !e.published) {
+              initialEdits[e.id] = {
+                purified: e.ai_purified,
+                coachHistory: e.ai_coach_history ?? '',
+                deletedItems: e.ai_deleted_items ?? [],
+              };
+            }
+          });
+          setPendingEdits(initialEdits);
         }
       } finally {
         if (!cancelled) setLoadingFresh(false);
@@ -144,8 +159,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     fetchFresh();
     return () => { cancelled = true; };
   }, [student.id, adminKey]);
-
-  const headers = { 'Content-Type': 'application/json', 'x-admin-key': adminKey };
 
   function handleBackdropClick() {
     if (isEditing) {
@@ -215,9 +228,11 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
       });
       const json = await res.json();
       if (res.ok && json.data) {
-        setTimeline(prev => [json.data, ...prev]);
+        const newEntry: ConsultationEntry = json.data;
+        setTimeline(prev => [newEntry, ...prev]);
         setMemoText('');
         onUpdate(student.id, { last_contacted_at: new Date().toISOString() });
+        triggerAiCare(newEntry);
       } else {
         setMemoError(json.error?.message ?? '메모 저장에 실패했습니다.');
       }
@@ -228,41 +243,52 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     }
   }
 
-  async function handleAiCare(entry: ConsultationEntry) {
-    setAiLoading(true);
-    setAiResult(null);
-    setAiEntryId(entry.id);
+  async function triggerAiCare(entry: ConsultationEntry) {
+    setAiLoadingFor(entry.id);
     try {
       const res = await fetch('/api/crm/ai-care', {
         method: 'POST', headers, body: JSON.stringify({ raw_memo: entry.raw_memo }),
       });
       const json = await res.json();
-      if (res.ok && json.data) setAiResult(json.data);
+      if (res.ok && json.data) {
+        setPendingEdits(prev => ({
+          ...prev,
+          [entry.id]: {
+            purified: json.data.purified,
+            coachHistory: json.data.coach_history,
+            deletedItems: json.data.deleted_items,
+          },
+        }));
+      }
     } finally {
-      setAiLoading(false);
+      setAiLoadingFor(null);
     }
   }
 
-  async function handlePublish() {
-    if (!aiResult || !aiEntryId) return;
+  async function handlePublish(entryId: string) {
+    const edit = pendingEdits[entryId];
+    if (!edit) return;
     setPublishing(true);
     setPublishError('');
     try {
       const res = await fetch(`/api/crm/students/${student.id}/publish-memo`, {
         method: 'POST', headers,
         body: JSON.stringify({
-          entry_id: aiEntryId, ai_purified: aiResult.purified,
-          ai_deleted_items: aiResult.deleted_items, ai_coach_history: aiResult.coach_history,
+          entry_id: entryId, ai_purified: edit.purified,
+          ai_deleted_items: edit.deletedItems, ai_coach_history: edit.coachHistory,
         }),
       });
       if (res.ok) {
         setTimeline(prev => prev.map(e =>
-          e.id === aiEntryId
-            ? { ...e, ai_purified: aiResult!.purified, ai_coach_history: aiResult!.coach_history, published: true }
+          e.id === entryId
+            ? { ...e, ai_purified: edit.purified, ai_coach_history: edit.coachHistory, ai_deleted_items: edit.deletedItems, published: true }
             : e
         ));
-        setAiResult(null);
-        setAiEntryId(null);
+        setPendingEdits(prev => {
+          const next = { ...prev };
+          delete next[entryId];
+          return next;
+        });
       } else {
         const json = await res.json();
         setPublishError(json.error?.message ?? '게시에 실패했습니다.');
@@ -378,27 +404,184 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     <>
       <div className="fixed inset-0 z-50 flex justify-end">
         <div className="absolute inset-0 bg-black/50" onClick={handleBackdropClick} />
-        <div className="relative w-full max-w-xl bg-gray-50 border-l border-gray-200 flex flex-col h-full overflow-hidden">
+        <div className="relative w-full max-w-[440px] bg-gray-50 border-l border-gray-200 flex flex-col h-full overflow-hidden shadow-xl">
 
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">{localStudent.name}</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {localStudent.grade} · {SCHOOL_TYPE_LABELS[localStudent.school_type]} · {localStudent.desired_subjects}
-              </p>
+          {/* ── Header ── */}
+          <div className="px-5 pt-5 pb-4 border-b border-gray-100 bg-white shrink-0">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <h2 className="text-[18px] font-bold text-gray-900 leading-tight">{localStudent.name}</h2>
+                <p className="text-[13px] text-gray-500 mt-0.5">
+                  {localStudent.grade} · {SCHOOL_TYPE_LABELS[localStudent.school_type]} · {localStudent.desired_subjects}
+                </p>
+              </div>
+              <button onClick={handleBackdropClick} className="mt-0.5 p-1.5 hover:bg-gray-100 rounded-lg transition-colors shrink-0">
+                <X size={16} className="text-gray-400" />
+              </button>
             </div>
-            <button onClick={handleBackdropClick} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <X size={18} className="text-gray-400" />
-            </button>
+
+            {/* Status badges row */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Funnel stage pill (clickable dropdown) */}
+              <div className="relative">
+                {showFunnelMenu && (
+                  <div className="fixed inset-0 z-20" onClick={() => setShowFunnelMenu(false)} />
+                )}
+                <button
+                  onClick={() => {
+                    if (!funnelChanging && localStudent.lead_status !== 'inactive') {
+                      setShowFunnelMenu(!showFunnelMenu);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                    localStudent.lead_status === 'inactive'
+                      ? 'bg-gray-100 text-gray-500 cursor-default'
+                      : 'bg-blue-100 hover:bg-blue-200 text-blue-700 cursor-pointer'
+                  }`}
+                >
+                  {funnelChanging ? (
+                    <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      {localStudent.funnel_stage === 'churned' ? '이탈' : localStudent.funnel_stage}. {FUNNEL_STAGE_LABELS[localStudent.funnel_stage]}
+                      {localStudent.lead_status !== 'inactive' && <ChevronDown size={11} />}
+                    </>
+                  )}
+                </button>
+
+                {showFunnelMenu && !funnelChanging && (
+                  <div className="absolute top-full left-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl z-30 py-1.5 min-w-[230px] overflow-hidden">
+                    {SALES_STAGES_ONLY.map(stage => (
+                      <button
+                        key={stage}
+                        onClick={() => { handleFunnelChange(stage); setShowFunnelMenu(false); }}
+                        className={`w-full text-left px-4 py-2 text-[13px] hover:bg-blue-50 transition-colors flex items-center gap-2 ${
+                          stage === localStudent.funnel_stage ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-gray-700'
+                        }`}
+                      >
+                        <span className="w-4 shrink-0">
+                          {stage === localStudent.funnel_stage && <Check size={12} className="text-blue-500" />}
+                        </span>
+                        {stage}. {FUNNEL_STAGE_LABELS[stage]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Lead status action buttons */}
+              {localStudent.lead_status === 'active' && (
+                <button
+                  onClick={() => setShowChurnModal(true)}
+                  className="px-3 py-1.5 text-xs text-gray-500 hover:text-red-500 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-full transition-colors"
+                >
+                  이탈 처리
+                </button>
+              )}
+
+              {localStudent.lead_status === 'inactive' && !showReactivateForm && (
+                <button
+                  onClick={() => setShowReactivateForm(true)}
+                  className="px-3 py-1.5 text-xs text-amber-600 hover:bg-amber-50 border border-amber-200 rounded-full transition-colors"
+                >
+                  재활성화 시작
+                </button>
+              )}
+
+              {localStudent.lead_status === 'reactivating' && (
+                <>
+                  <span className="px-3 py-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full">재활성화 중</span>
+                  <button
+                    onClick={() => handleLeadStatusChange('active', { funnel_stage: '1' })}
+                    className="px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-full transition-colors"
+                  >
+                    활성화
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('재활성화 시도를 중단하고 이탈 확정하시겠습니까?')) {
+                        handleLeadStatusChange('inactive');
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs text-gray-500 hover:text-red-500 hover:bg-red-50 border border-gray-200 rounded-full transition-colors"
+                  >
+                    이탈 확정
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Reactivation form (inline expansion) */}
+            {localStudent.lead_status === 'inactive' && showReactivateForm && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
+                <p className="text-xs font-medium text-amber-700">재활성화 전략 메모</p>
+                <textarea
+                  value={reactivateStrategy}
+                  onChange={e => setReactivateStrategy(e.target.value)}
+                  placeholder="어떤 전략으로 재접근할 것인지 기록하세요..."
+                  rows={3}
+                  className="w-full bg-white border border-amber-200 rounded-lg px-2.5 py-2 text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-amber-400"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleStartReactivation}
+                    disabled={reactivating || !reactivateStrategy.trim()}
+                    className="flex-1 text-xs font-bold text-white bg-amber-500 hover:bg-amber-400 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    {reactivating ? '시작 중...' : '재활성화 시작'}
+                  </button>
+                  <button
+                    onClick={() => { setShowReactivateForm(false); setReactivateStrategy(''); }}
+                    className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 transition-colors"
+                  >
+                    취소
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* ── Scrollable content ── */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-5">
 
-            {/* ── 기본 정보 (편집 가능) ── */}
+            {/* ── 인입 정보 (read-only) ── */}
             <section>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">학생 정보</h3>
+              <p className="text-xs font-medium text-gray-500 mb-2" style={{ letterSpacing: '0.3px' }}>인입 정보</p>
+              <div className="bg-gray-100 rounded-xl px-4 py-3 space-y-1.5">
+                <InquiryRow label="문의일" value={localStudent.inquiry_date ?? '—'} />
+                <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
+                <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
+                {localStudent.content_author && (
+                  <InquiryRow label="작성자" value={localStudent.content_author} />
+                )}
+                <InquiryRow label="구분" value={localStudent.lead_type ?? '—'} />
+                {localStudent.b2b_partner && (
+                  <InquiryRow label="파트너" value={localStudent.b2b_partner} />
+                )}
+                <InquiryRow
+                  label={localStudent.contact_type ? CONTACT_TYPE_LABELS[localStudent.contact_type] : '연락처'}
+                  value={localStudent.parent_phone || '—'}
+                />
+                {localStudent.parent_timezone && (
+                  <InquiryRow label="시간대" value={TIMEZONE_LABEL_MAP[localStudent.parent_timezone] ?? localStudent.parent_timezone} />
+                )}
+                {localStudent.campaign_tags && localStudent.campaign_tags.length > 0 && (
+                  <div className="flex items-start gap-2 pt-0.5">
+                    <span className="text-[13px] text-gray-400 w-[28%] shrink-0">태그</span>
+                    <div className="flex flex-wrap gap-1">
+                      {localStudent.campaign_tags.map(tag => (
+                        <span key={tag} className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[11px] font-medium">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* ── 학생 정보 (편집 가능) ── */}
+            <section>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-gray-500" style={{ letterSpacing: '0.3px' }}>학생 정보</p>
                 {!isEditing ? (
                   <button
                     onClick={() => setIsEditing(true)}
@@ -412,206 +595,91 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                     <button
                       onClick={handleSaveEdit}
                       disabled={savingEdit}
-                      className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-md transition-colors"
+                      className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-lg transition-colors"
                     >
                       {savingEdit ? '저장 중...' : '저장'}
                     </button>
                   </div>
                 )}
               </div>
-              {isEditing
-                ? <StudentInfoEdit form={editForm} onChange={setEditForm} />
-                : <StudentInfoView student={localStudent} scoreDisplay={scoreDisplay()} />
-              }
-            </section>
 
-            {/* ── 퍼널 단계 ── */}
-            <section>
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">퍼널 단계</h3>
-              <select
-                value={localStudent.funnel_stage}
-                onChange={e => handleFunnelChange(e.target.value as FunnelStage)}
-                disabled={funnelChanging}
-                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-blue-500 disabled:opacity-50"
-              >
-                {SALES_STAGES_ONLY.map(stage => (
-                  <option key={stage} value={stage}>{stage}. {FUNNEL_STAGE_LABELS[stage]}</option>
-                ))}
-                {localStudent.funnel_stage === 'churned' && (
-                  <option value="churned">{FUNNEL_STAGE_LABELS['churned']}</option>
-                )}
-              </select>
-              {funnelChanging && (
-                <p className="mt-1 text-[11px] text-gray-400">변경 저장 중...</p>
-              )}
-              {guide && !funnelChanging && (
-                <div className="mt-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2.5 space-y-1.5">
-                  <p className="text-[11px] text-blue-600">{guide.doing}</p>
-                  <div className="flex items-start gap-1.5">
-                    <ChevronRight size={12} className="text-blue-400 mt-0.5 shrink-0" />
-                    <p className="text-[11px] text-blue-700 font-medium">{guide.next}</p>
+              {isEditing ? (
+                <StudentInfoEdit form={editForm} onChange={setEditForm} />
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <StudentInfoCell label="학년" value={`${localStudent.grade} · ${SCHOOL_TYPE_LABELS[localStudent.school_type]}`} />
+                    <StudentInfoCell label="희망 과목" value={localStudent.desired_subjects} />
+                    <StudentInfoCell label="직전 점수" value={scoreDisplay()} />
+                    <StudentInfoCell label="목표 점수" value={localStudent.target_score ? `${localStudent.target_score}점` : '미정'} />
+                    <StudentInfoCell
+                      label="목표 시험일"
+                      value={localStudent.target_test_date
+                        ? localStudent.target_test_date_2
+                          ? `${localStudent.target_test_date} / ${localStudent.target_test_date_2}`
+                          : localStudent.target_test_date
+                        : '미정'}
+                    />
+                    {localStudent.preferred_language && (
+                      <StudentInfoCell
+                        label="수업 언어"
+                        value={{ korean: '한국어', english: 'English', any: '상관없음' }[localStudent.preferred_language] ?? localStudent.preferred_language}
+                      />
+                    )}
                   </div>
-                  {guide.nextStage && (
-                    <button
-                      onClick={() => handleFunnelChange(guide.nextStage!)}
-                      className="mt-1 text-[11px] font-bold text-blue-600 hover:text-blue-500 underline underline-offset-2 transition-colors"
-                    >
-                      {FUNNEL_STAGE_LABELS[guide.nextStage]}(으)로 이동 →
-                    </button>
+                  {localStudent.funnel_stage === '0' && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <button
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 text-xs text-red-400 hover:bg-red-50 hover:border-red-300 disabled:opacity-50 transition-colors"
+                      >
+                        <UserX size={12} />
+                        {deleting ? '삭제 중...' : '잘못된 리드 삭제'}
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
             </section>
 
-            {/* ── 학생 상태 관리 ── */}
+            {/* ── 빠른 액션 ── */}
             <section>
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">학생 상태</h3>
-              <div className="flex flex-col gap-2">
-                {localStudent.lead_status === 'active' && (
-                  <button
-                    onClick={() => setShowChurnModal(true)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-500 hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <UserX size={13} />
-                    이탈 처리 (칸반에서 숨김)
-                  </button>
-                )}
-
-                {localStudent.lead_status === 'inactive' && !showReactivateForm && (
-                  <button
-                    onClick={() => setShowReactivateForm(true)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-200 text-xs text-amber-600 hover:bg-amber-50 transition-colors"
-                  >
-                    <RefreshCw size={13} />
-                    재활성화 시도 시작
-                  </button>
-                )}
-
-                {localStudent.lead_status === 'inactive' && showReactivateForm && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
-                    <p className="text-xs font-medium text-amber-700">재활성화 전략 메모</p>
-                    <textarea
-                      value={reactivateStrategy}
-                      onChange={e => setReactivateStrategy(e.target.value)}
-                      placeholder="어떤 전략으로 재접근할 것인지 기록하세요..."
-                      rows={3}
-                      className="w-full bg-white border border-amber-200 rounded-lg px-2.5 py-2 text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-amber-400"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleStartReactivation}
-                        disabled={reactivating || !reactivateStrategy.trim()}
-                        className="flex-1 text-xs font-bold text-white bg-amber-500 hover:bg-amber-400 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        {reactivating ? '시작 중...' : '재활성화 시작'}
-                      </button>
-                      <button
-                        onClick={() => { setShowReactivateForm(false); setReactivateStrategy(''); }}
-                        className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 transition-colors"
-                      >
-                        취소
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {localStudent.lead_status === 'reactivating' && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleLeadStatusChange('active', { funnel_stage: '1' })}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-blue-200 text-xs text-blue-600 hover:bg-blue-50 transition-colors"
-                    >
-                      <Check size={13} />
-                      활성화 (1단계로 복귀)
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm('재활성화 시도를 중단하고 이탈 확정하시겠습니까?')) {
-                          handleLeadStatusChange('inactive');
-                        }
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-500 hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                    >
-                      <UserX size={13} />
-                      이탈 확정
-                    </button>
-                  </div>
-                )}
-
-                <p className="text-[11px] text-gray-400">
-                  현재: {localStudent.lead_status === 'active' ? '활성' : localStudent.lead_status === 'inactive' ? '비활성 (숨김)' : '재활성화 시도 중'}
-                </p>
-
-                {localStudent.funnel_stage === '0' && (
-                  <button
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-xs text-red-500 hover:bg-red-50 hover:border-red-400 disabled:opacity-50 transition-colors"
-                  >
-                    <UserX size={13} />
-                    {deleting ? '삭제 중...' : '잘못된 리드 삭제'}
-                  </button>
-                )}
-              </div>
-            </section>
-
-            {/* ── 학부모 포털 ── */}
-            <section>
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">학부모 포털</h3>
-              <button
-                onClick={handleCopyPortalLink}
-                disabled={portalLoading}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
-              >
-                {portalCopied ? <Check size={13} className="text-green-500" /> : portalLoading ? (
-                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
-                ) : <Copy size={13} />}
-                {portalCopied ? '링크 복사됨!' : '상담 포털 링크 복사'}
-              </button>
-              <p className="mt-1.5 text-[11px] text-gray-400">
-                학부모가 상담 이력과 진단테스트 결과를 확인할 수 있는 링크입니다.
-              </p>
-            </section>
-
-            {/* ── 진단테스트 연결 ── */}
-            <section>
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">진단테스트 연결</h3>
-
-              {diagLinked ? (
-                <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 mb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-xs font-medium text-green-700">{diagLinked.student_name}</p>
-                      <p className="text-[11px] text-green-600">{diagLinked.student_email}</p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        {new Date(diagLinked.submitted_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => { fetchDiagLink(); setShowDiagPicker(true); }}
-                      className="text-[11px] text-gray-400 hover:text-blue-500 transition-colors shrink-0"
-                    >
-                      변경
-                    </button>
-                  </div>
-                </div>
-              ) : (
+              <p className="text-xs font-medium text-gray-500 mb-2" style={{ letterSpacing: '0.3px' }}>빠른 액션</p>
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
-                  onClick={() => { fetchDiagLink(); setShowDiagPicker(true); }}
-                  disabled={diagLoading}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-xs text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors w-full"
+                  onClick={handleCopyPortalLink}
+                  disabled={portalLoading}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 border border-gray-200 rounded-lg text-[13px] text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
+                >
+                  {portalCopied ? (
+                    <><Check size={13} className="text-green-500" /><span className="text-green-600">링크 복사됨!</span></>
+                  ) : portalLoading ? (
+                    <><div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />학부모 포털</>
+                  ) : (
+                    <><Copy size={13} />학부모 포털 링크</>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => { if (!showDiagPicker) fetchDiagLink(); setShowDiagPicker(!showDiagPicker); }}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 border rounded-lg text-[13px] transition-colors ${
+                    diagLinked
+                      ? 'border-green-200 text-green-600 bg-green-50 hover:bg-green-100'
+                      : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50'
+                  }`}
                 >
                   {diagLoading ? (
                     <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <span className="text-base leading-none">+</span>
+                    <Link size={13} />
                   )}
-                  진단테스트 결과 연결하기
+                  {diagLinked ? '진단 결과 연결됨' : '진단테스트 연결'}
                 </button>
-              )}
+              </div>
 
               {showDiagPicker && (
-                <div className="mt-2 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div className="mt-2 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                   <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
                     <p className="text-xs font-medium text-gray-600">결과 선택</p>
                     <button onClick={() => setShowDiagPicker(false)} className="text-[11px] text-gray-400 hover:text-gray-600">닫기</button>
@@ -654,63 +722,94 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                   )}
                 </div>
               )}
-
-              <p className="mt-1.5 text-[11px] text-gray-400">
-                연결된 결과가 학부모 포털에 표시됩니다.
-              </p>
             </section>
+
+            {/* ── 다음 단계 배너 ── */}
+            {guide && !funnelChanging && localStudent.lead_status === 'active' && (
+              <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
+                <div className="flex items-start gap-2.5">
+                  <ChevronRight size={14} className="text-blue-500 mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    {guide.nextStage && (
+                      <p className="text-[13px] font-semibold text-blue-700 mb-0.5">
+                        다음 단계: {FUNNEL_STAGE_LABELS[guide.nextStage]}
+                      </p>
+                    )}
+                    <p className="text-[12px] text-blue-600 leading-relaxed">{guide.doing}</p>
+                    <p className="text-[12px] text-blue-500/80 mt-0.5 leading-relaxed">{guide.next}</p>
+                    {guide.nextStage && (
+                      <button
+                        onClick={() => handleFunnelChange(guide.nextStage!)}
+                        className="mt-2 text-[12px] font-bold text-blue-600 hover:text-blue-500 underline underline-offset-2 transition-colors"
+                      >
+                        {FUNNEL_STAGE_LABELS[guide.nextStage]}(으)로 이동 →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ── 상담 메모 ── */}
             <section>
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">상담 메모 추가</h3>
+              <p className="text-xs font-medium text-gray-500 mb-2" style={{ letterSpacing: '0.3px' }}>상담 메모</p>
               <textarea
                 value={memoText}
                 onChange={e => { setMemoText(e.target.value); setMemoError(''); }}
-                placeholder="상담 내용을 자유롭게 입력하세요..."
-                rows={4}
-                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-blue-500"
+                placeholder="상담 내용을 입력하세요..."
+                rows={3}
+                className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 resize-y focus:outline-none focus:border-blue-400 min-h-[64px]"
               />
               {memoError && <p className="mt-1 text-xs text-red-500">{memoError}</p>}
-              <button
-                onClick={handleAddMemo}
-                disabled={!memoText.trim() || savingMemo}
-                className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded-lg text-sm font-semibold text-white transition-colors"
-              >
-                {savingMemo ? '저장 중...' : '메모 저장'}
-              </button>
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={handleAddMemo}
+                  disabled={!memoText.trim() || savingMemo}
+                  className="px-4 py-1.5 bg-gray-900 hover:bg-gray-700 disabled:opacity-40 rounded-lg text-[13px] font-semibold text-white transition-colors"
+                >
+                  {savingMemo ? '저장 중...' : '메모 저장'}
+                </button>
+              </div>
             </section>
 
             {/* ── 상담 타임라인 ── */}
             <section>
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+              <p className="text-xs font-medium text-gray-500 mb-2" style={{ letterSpacing: '0.3px' }}>
                 상담 타임라인
                 {!loadingFresh && timeline.length > 0 && (
-                  <span className="text-gray-400 font-normal normal-case ml-1">({timeline.length}건)</span>
+                  <span className="text-gray-400 font-normal ml-1">({timeline.length}건)</span>
                 )}
-              </h3>
+              </p>
               {loadingFresh && (
                 <div className="space-y-2">
-                  {[1, 2].map(i => <div key={i} className="h-16 rounded-xl bg-gray-100 animate-pulse" />)}
+                  {[1, 2].map(i => <div key={i} className="h-16 rounded-xl bg-gray-200 animate-pulse" />)}
                 </div>
               )}
               {!loadingFresh && timeline.length === 0 && (
                 <p className="text-sm text-gray-400">상담 메모가 없습니다.</p>
               )}
-              {publishError && (
-                <p className="mb-2 text-xs text-red-500">{publishError}</p>
-              )}
+              {publishError && <p className="mb-2 text-xs text-red-500">{publishError}</p>}
               <div className="space-y-3">
                 {timeline.map(entry => (
                   <TimelineEntry
                     key={entry.id}
                     entry={entry}
-                    isAiTarget={aiEntryId === entry.id}
-                    aiLoading={aiLoading && aiEntryId === entry.id}
-                    aiResult={aiEntryId === entry.id ? aiResult : null}
+                    aiLoading={aiLoadingFor === entry.id}
+                    pendingEdit={pendingEdits[entry.id] ?? null}
                     publishing={publishing}
-                    onAiCare={() => handleAiCare(entry)}
-                    onPublish={handlePublish}
-                    onCancelAi={() => { setAiResult(null); setAiEntryId(null); setPublishError(''); }}
+                    onAiCare={() => triggerAiCare(entry)}
+                    onPublish={() => handlePublish(entry.id)}
+                    onCancelEdit={() => setPendingEdits(prev => {
+                      const next = { ...prev };
+                      delete next[entry.id];
+                      return next;
+                    })}
+                    onChangePurified={v => setPendingEdits(prev =>
+                      prev[entry.id] ? { ...prev, [entry.id]: { ...prev[entry.id], purified: v } } : prev
+                    )}
+                    onChangeCoachHistory={v => setPendingEdits(prev =>
+                      prev[entry.id] ? { ...prev, [entry.id]: { ...prev[entry.id], coachHistory: v } } : prev
+                    )}
                   />
                 ))}
               </div>
@@ -737,50 +836,24 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   );
 }
 
-// ─── StudentInfoView ──────────────────────────────────────────────────────────
+// ─── InquiryRow ───────────────────────────────────────────────────────────────
 
-function StudentInfoView({ student, scoreDisplay }: { student: Student; scoreDisplay: string }) {
+function InquiryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gray-500">
-        <InlineField label="문의" value={student.inquiry_date ?? '—'} />
-        <Sep /><InlineField label="채널" value={student.inquiry_channel ?? '(미상)'} />
-        <Sep /><InlineField label="소스" value={student.traffic_source ?? '(미상)'} />
-        {student.content_author && (<><Sep /><InlineField label="작성자" value={student.content_author} /></>)}
-        <Sep /><InlineField label="구분" value={student.lead_type ?? '—'} />
-        {student.b2b_partner && (<><Sep /><InlineField label="파트너" value={student.b2b_partner} /></>)}
-      </div>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gray-500">
-        <InlineField
-          label={student.contact_type ? CONTACT_TYPE_LABELS[student.contact_type] : '연락처'}
-          value={student.parent_phone || '—'}
-        />
-        {student.parent_timezone && (
-          <><Sep /><InlineField label="시간대" value={TIMEZONE_LABEL_MAP[student.parent_timezone] ?? student.parent_timezone} /></>
-        )}
-        {student.campaign_tags && student.campaign_tags.length > 0 && (
-          <><Sep /><span className="flex gap-1">
-            {student.campaign_tags.map(tag => (
-              <span key={tag} className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-medium">{tag}</span>
-            ))}
-          </span></>
-        )}
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <InfoRow label="학년" value={`${student.grade} · ${SCHOOL_TYPE_LABELS[student.school_type]}`} />
-        <InfoRow label="희망 과목" value={student.desired_subjects} />
-        <InfoRow label="직전 점수" value={scoreDisplay} />
-        <InfoRow label="목표 점수" value={student.target_score ? `${student.target_score}점` : '미정'} />
-        <InfoRow
-          label="목표 시험일"
-          value={student.target_test_date
-            ? student.target_test_date_2 ? `${student.target_test_date} / ${student.target_test_date_2}` : student.target_test_date
-            : '미정'}
-        />
-        {student.preferred_language && (
-          <InfoRow label="수업 희망 언어" value={{ korean: '한국어', english: 'English', any: '상관없음' }[student.preferred_language] ?? student.preferred_language} />
-        )}
-      </div>
+    <div className="flex items-baseline gap-2">
+      <span className="text-[13px] text-gray-400 w-[28%] shrink-0">{label}</span>
+      <span className="text-[13px] text-gray-700 font-medium">{value}</span>
+    </div>
+  );
+}
+
+// ─── StudentInfoCell ──────────────────────────────────────────────────────────
+
+function StudentInfoCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[11px] text-gray-400 mb-0.5">{label}</p>
+      <p className="text-[14px] text-gray-900 font-bold leading-snug">{value}</p>
     </div>
   );
 }
@@ -893,7 +966,7 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
         </select>
       </EditField>
       <div className="pt-2 border-t border-gray-100">
-        <p className="text-[11px] text-gray-400 font-medium mb-2">인입 정보</p>
+        <p className="text-[11px] text-gray-400 font-medium mb-2">인입 정보 수정</p>
         <div className="grid grid-cols-2 gap-2">
           <EditField label="문의 날짜">
             <input type="date" value={form.inquiry_date} onChange={set('inquiry_date')} className={inputCls} />
@@ -938,26 +1011,6 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-function Sep() { return <span className="text-gray-200">|</span>; }
-
-function InlineField({ label, value }: { label: string; value: string }) {
-  return (
-    <span>
-      <span className="text-gray-400">{label}</span>
-      <span className="ml-1 text-gray-700 font-medium">{value}</span>
-    </span>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-gray-100 rounded-lg px-3 py-2">
-      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-      <p className="text-sm text-gray-900 font-medium">{value}</p>
-    </div>
-  );
-}
-
 function EditField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
@@ -974,84 +1027,89 @@ const selectCls = 'w-full bg-gray-50 border border-gray-200 focus:border-blue-50
 
 interface TimelineEntryProps {
   entry: ConsultationEntry;
-  isAiTarget: boolean;
   aiLoading: boolean;
-  aiResult: AiCareResult | null;
+  pendingEdit: { purified: string; coachHistory: string; deletedItems: string[] } | null;
   publishing: boolean;
   onAiCare: () => void;
   onPublish: () => void;
-  onCancelAi: () => void;
+  onCancelEdit: () => void;
+  onChangePurified: (v: string) => void;
+  onChangeCoachHistory: (v: string) => void;
 }
 
-function TimelineEntry({ entry, isAiTarget, aiLoading, aiResult, publishing, onAiCare, onPublish, onCancelAi }: TimelineEntryProps) {
+function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onCancelEdit, onChangePurified, onChangeCoachHistory }: TimelineEntryProps) {
   const date = new Date(entry.created_at).toLocaleString('ko-KR', {
-    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 
   return (
-    <div className="bg-gray-100 rounded-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="px-4 py-3">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Clock size={12} className="text-gray-500" />
-            <span className="text-xs text-gray-500">{date}</span>
-          </div>
+          <span className="text-[12px] text-gray-400">{date}</span>
           {entry.published && (
-            <span className="flex items-center gap-1 text-xs text-green-400">
+            <span className="flex items-center gap-1 text-[11px] text-green-500">
               <Check size={11} /> 학부모 노출
             </span>
           )}
         </div>
-        <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{entry.raw_memo}</p>
-        {!entry.published && !isAiTarget && (
-          <button onClick={onAiCare} className="mt-3 flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors">
-            <Sparkles size={13} />AI 케어 메시지로 변환
+        <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>
+          {entry.raw_memo}
+        </p>
+        {!entry.published && !aiLoading && !pendingEdit && (
+          <button onClick={onAiCare} className="mt-3 flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-500 transition-colors">
+            <Sparkles size={12} />AI 변환 재실행
           </button>
         )}
-        {isAiTarget && aiLoading && (
+        {aiLoading && (
           <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
             <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
-            AI가 메모를 분석 중입니다...
+            AI가 학부모용·코치용 버전을 생성 중입니다...
           </div>
         )}
       </div>
 
-      {isAiTarget && aiResult && !aiLoading && (
-        <div className="border-t border-gray-200 px-4 py-3 space-y-3 bg-gray-50">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">AI 변환 결과 검토</p>
+      {pendingEdit && !aiLoading && (
+        <div className="border-t border-gray-100 px-4 py-3 space-y-3 bg-gray-50">
+          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">AI 변환 결과 — 수정 후 최종 승인</p>
           <div>
-            <p className="text-xs text-gray-500 mb-1">학부모 노출 (순화본)</p>
-            <p className="text-sm text-gray-900 bg-gray-100 rounded-lg px-3 py-2 leading-relaxed whitespace-pre-wrap">
-              {aiResult.purified || '(없음)'}
-            </p>
+            <p className="text-[11px] text-gray-400 mb-1">학부모 노출 (순화본)</p>
+            <textarea
+              value={pendingEdit.purified}
+              onChange={e => onChangePurified(e.target.value)}
+              rows={4}
+              className="w-full text-[13px] text-gray-900 bg-white border border-gray-200 focus:border-blue-400 rounded-lg px-3 py-2 leading-relaxed resize-none outline-none transition-colors"
+            />
           </div>
-          {aiResult.deleted_items.length > 0 && (
+          {pendingEdit.deletedItems.length > 0 && (
             <div>
-              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                <AlertTriangle size={11} className="text-yellow-400" /> 삭제된 항목
+              <p className="text-[11px] text-gray-400 mb-1 flex items-center gap-1">
+                <AlertTriangle size={11} className="text-yellow-500" /> 삭제된 항목 (참고용)
               </p>
-              <ul className="text-xs text-yellow-300 space-y-0.5 pl-2">
-                {aiResult.deleted_items.map((item, i) => <li key={i}>• {item}</li>)}
+              <ul className="text-xs text-yellow-600 space-y-0.5 pl-2">
+                {pendingEdit.deletedItems.map((item, i) => <li key={i}>• {item}</li>)}
               </ul>
             </div>
           )}
-          {aiResult.coach_history && (
-            <div>
-              <p className="text-xs text-gray-500 mb-1">코치 전달 교육 이력</p>
-              <p className="text-sm text-blue-200 bg-blue-900/20 rounded-lg px-3 py-2 leading-relaxed whitespace-pre-wrap">
-                {aiResult.coach_history}
-              </p>
-            </div>
-          )}
+          <div>
+            <p className="text-[11px] text-gray-400 mb-1">코치 교육 이력</p>
+            <textarea
+              value={pendingEdit.coachHistory}
+              onChange={e => onChangeCoachHistory(e.target.value)}
+              rows={3}
+              placeholder="(없음)"
+              className="w-full text-[13px] text-blue-900 bg-blue-50 border border-blue-200 focus:border-blue-400 rounded-lg px-3 py-2 leading-relaxed resize-none outline-none transition-colors"
+            />
+          </div>
           <div className="flex gap-2 pt-1">
             <button
               onClick={onPublish}
               disabled={publishing}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 rounded-lg text-xs font-bold text-white transition-colors"
             >
-              <Check size={13} />{publishing ? '게시 중...' : '승인 및 학부모 노출'}
+              <Check size={12} />{publishing ? '게시 중...' : '최종 승인 및 발행'}
             </button>
-            <button onClick={onCancelAi} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-400 transition-colors">
+            <button onClick={onCancelEdit} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-500 transition-colors">
               취소
             </button>
           </div>
@@ -1059,11 +1117,13 @@ function TimelineEntry({ entry, isAiTarget, aiLoading, aiResult, publishing, onA
       )}
 
       {entry.published && entry.ai_purified && (
-        <div className="border-t border-gray-200 px-4 py-3 bg-green-50">
-          <p className="text-xs text-green-600 mb-1">학부모에게 노출 중</p>
-          <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap line-clamp-3">{entry.ai_purified}</p>
+        <div className="border-t border-gray-100 px-4 py-3 bg-green-50">
+          <p className="text-[11px] text-green-600 mb-1">학부모에게 노출 중</p>
+          <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-wrap line-clamp-3" style={{ lineHeight: '1.6' }}>
+            {entry.ai_purified}
+          </p>
           {entry.ai_coach_history && (
-            <p className="mt-2 flex items-center gap-1 text-xs text-blue-400">
+            <p className="mt-2 flex items-center gap-1 text-[11px] text-blue-400">
               <ChevronRight size={11} />코치 교육 이력 포함됨
             </p>
           )}

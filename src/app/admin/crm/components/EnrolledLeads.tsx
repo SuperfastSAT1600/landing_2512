@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2, AlertCircle, RefreshCw, GraduationCap, UserX } from 'lucide-react';
-import { Student } from '@/types/crm';
+import { Student, ChurnType } from '@/types/crm';
+import { ChurnModal } from './ChurnModal';
 
 interface EnrolledLeadsProps {
   adminKey: string;
@@ -45,6 +46,7 @@ function EnrolledCard({ student, onStudentClick, onGraduate }: {
       <button
         onClick={(e) => { e.stopPropagation(); onGraduate(student); }}
         className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors shrink-0"
+        title="수업 종료 후 이탈 처리"
       >
         <UserX size={12} />
         수업 종료
@@ -57,13 +59,13 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [graduatingId, setGraduatingId] = useState<string | null>(null);
+  const [churnTarget, setChurnTarget] = useState<Student | null>(null);
 
   const fetchEnrolled = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/crm/students?paid=true', {
+      const res = await fetch('/api/crm/students?lead_status=enrolled', {
         headers: { 'x-admin-key': adminKey },
       });
       if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
@@ -79,17 +81,6 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   useEffect(() => {
     if (adminKey) fetchEnrolled();
   }, [adminKey, fetchEnrolled]);
-
-  async function handleGraduate(student: Student) {
-    if (!confirm(`${student.name} 학생의 수업을 종료하고 리드풀로 이동하시겠습니까?`)) return;
-    setGraduatingId(student.id);
-    try {
-      await onStudentUpdate(student.id, { lead_status: 'inactive' });
-      setStudents(prev => prev.filter(s => s.id !== student.id));
-    } finally {
-      setGraduatingId(null);
-    }
-  }
 
   if (loading) {
     return (
@@ -136,20 +127,36 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
 
       {students.length === 0 ? (
         <div className="py-16 text-center text-sm text-gray-400">
-          결제 완료된 학생이 없습니다.
+          수업 중인 학생이 없습니다.
         </div>
       ) : (
         <div className="space-y-2">
           {students.map(s => (
-            <div key={s.id} className={graduatingId === s.id ? 'opacity-50 pointer-events-none' : ''}>
-              <EnrolledCard
-                student={s}
-                onStudentClick={onStudentClick}
-                onGraduate={handleGraduate}
-              />
-            </div>
+            <EnrolledCard
+              key={s.id}
+              student={s}
+              onStudentClick={onStudentClick}
+              onGraduate={setChurnTarget}
+            />
           ))}
         </div>
+      )}
+
+      {churnTarget && (
+        <ChurnModal
+          student={churnTarget}
+          onConfirm={(churnTag: string, churnType: ChurnType) => {
+            onStudentUpdate(churnTarget.id, {
+              funnel_stage: 'churned',
+              lead_status: 'inactive',
+              churn_tag: churnTag,
+              churn_type: churnType,
+            });
+            setStudents(prev => prev.filter(s => s.id !== churnTarget.id));
+            setChurnTarget(null);
+          }}
+          onClose={() => setChurnTarget(null)}
+        />
       )}
     </div>
   );

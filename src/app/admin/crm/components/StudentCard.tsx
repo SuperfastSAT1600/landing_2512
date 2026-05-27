@@ -2,13 +2,14 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { X, GripVertical, Phone, MessageSquare } from 'lucide-react';
+import { X, GripVertical, Phone, MessageSquare, CreditCard } from 'lucide-react';
 import { Student, SCHOOL_TYPE_LABELS } from '@/types/crm';
 
 interface StudentCardProps {
   student: Student;
   onChurn: () => void;
   onClick: () => void;
+  onPayment?: () => void;
   overlay?: boolean;
 }
 
@@ -26,7 +27,7 @@ function getDDayLabel(targetTestDate: string | null): string | null {
   return `D-${diff}`;
 }
 
-export function StudentCard({ student, onChurn, onClick, overlay = false }: StudentCardProps) {
+export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false }: StudentCardProps) {
   const {
     attributes,
     listeners,
@@ -173,8 +174,18 @@ export function StudentCard({ student, onChurn, onClick, overlay = false }: Stud
       )}
 
       {/* Last contacted footer */}
-      <div className="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-end">
+      <div className="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between">
         <span className={`text-[10px] ${contactTag.color}`}>{contactTag.label}</span>
+        {onPayment && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPayment(); }}
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
+            title="결제 완료 처리"
+          >
+            <CreditCard size={10} />
+            결제 완료
+          </button>
+        )}
       </div>
     </div>
   );

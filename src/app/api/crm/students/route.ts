@@ -16,39 +16,17 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const stage = searchParams.get('stage');
   const pool = searchParams.get('pool') === 'true';
-  const paid = searchParams.get('paid') === 'true';
-
-  // 결제 이력이 있는 학생 목록 (결제 리드풀)
-  if (paid) {
-    const { data: paidIds, error: pErr } = await supabaseAdmin
-      .from('payments')
-      .select('student_id')
-      .not('student_id', 'is', null);
-
-    if (pErr) {
-      return NextResponse.json({ error: 'Failed to fetch payments' }, { status: 500 });
-    }
-
-    const ids = [...new Set((paidIds ?? []).map(p => p.student_id as string))];
-
-    if (ids.length === 0) return NextResponse.json({ data: [] });
-
-    const { data, error } = await supabaseAdmin
-      .from('students')
-      .select('*')
-      .in('id', ids)
-      .order('created_at', { ascending: false });
-
-    if (error) return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
-    return NextResponse.json({ data });
-  }
+  const leadStatus = searchParams.get('lead_status');
 
   let query = supabaseAdmin
     .from('students')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (pool) {
+  if (leadStatus) {
+    // 특정 lead_status 직접 필터 (예: enrolled, active, inactive)
+    query = query.eq('lead_status', leadStatus);
+  } else if (pool) {
     // 리드 풀: 이탈 + 재활성화 시도 중
     query = query.in('lead_status', ['inactive', 'reactivating']);
   } else {
