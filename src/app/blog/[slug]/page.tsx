@@ -5,7 +5,7 @@ import Footer from '../../components/Footer';
 import { PostContent } from './PostContent';
 import { Calendar, ArrowLeft } from 'lucide-react';
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 interface Props {
     params: Promise<{ slug: string }>;

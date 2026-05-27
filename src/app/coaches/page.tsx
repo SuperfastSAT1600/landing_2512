@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getActiveCoaches, getCoachesBySubject } from '@/lib/coaches-data';
 import Footer from '../components/Footer';
 
-export const revalidate = 60;
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
     title: '학습코치 | SuperfastSAT',

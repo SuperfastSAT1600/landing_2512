@@ -63,7 +63,7 @@ export const getSortedPostsData = unstable_cache(
         return data.map(mapRow);
     },
     ['posts-list'],
-    { revalidate: 60, tags: ['posts'] }
+    { revalidate: 3600, tags: ['posts'] }
 );
 
 export const getLatestPosts = unstable_cache(
@@ -79,7 +79,7 @@ export const getLatestPosts = unstable_cache(
         return data.map(mapRow);
     },
     ['latest-posts'],
-    { revalidate: 60, tags: ['posts'] }
+    { revalidate: 3600, tags: ['posts'] }
 );
 
 // unstable_cache는 dynamic arg를 지원하지 않으므로 category를 key에 포함하는 factory 사용
@@ -97,7 +97,7 @@ export function getPostsByTag(tag: string) {
             return data.map(mapRow);
         },
         [`posts-by-tag-${tag}`],
-        { revalidate: 60, tags: ['posts'] }
+        { revalidate: 3600, tags: ['posts'] }
     )();
 }
 
@@ -115,7 +115,7 @@ export function getPostsByCategory(category: string) {
             return data.map(mapRow);
         },
         [`posts-by-category-${category}`],
-        { revalidate: 60, tags: ['posts'] }
+        { revalidate: 3600, tags: ['posts'] }
     )();
 }
 

@@ -8,7 +8,7 @@ import Footer from './components/Footer';
 import { getHomeConfig } from '@/lib/config';
 import { getPublishedReviews } from '@/lib/reviews-data';
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://superfastsat.com';
 
