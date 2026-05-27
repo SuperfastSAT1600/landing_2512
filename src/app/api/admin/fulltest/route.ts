@@ -4,21 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 
 const CURRICULUM_ID = 'ccec8c4b-e43d-4b8e-bb77-fc9487486ba8';
 
-export async function GET(req: NextRequest) {
-  const adminKey = req.headers.get('x-admin-key');
-  if (adminKey !== process.env.ADMIN_SECRET_KEY) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // 1. fulltest_submissions
+async function getFulltestResults() {
   const { data: submissions, error } = await supabaseAdmin
     .from('fulltest_submissions')
     .select('*')
     .order('submitted_at', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw new Error(error.message);
 
-  // 2. correct answers from SMS Supabase
   const sms = createClient(
     process.env.SMS_SUPABASE_URL!,
     process.env.SMS_SUPABASE_SERVICE_KEY!,
@@ -33,12 +26,10 @@ export async function GET(req: NextRequest) {
     correctMap[u.id] = { correct_answer: u.correct_answer, type: u.type, section: u.section };
   });
 
-  // 3. score each submission
-  const results = (submissions ?? []).map((sub) => {
+  const submissions_result = (submissions ?? []).map((sub) => {
     const answers: Record<string, string> = sub.answers ?? {};
     let correct = 0;
     let total = 0;
-    const detail: { unitId: string; submitted: string; correctAnswer: string | string[]; isCorrect: boolean; section: string }[] = [];
 
     Object.entries(answers).forEach(([unitId, submitted]) => {
       const meta = correctMap[unitId];
@@ -49,27 +40,64 @@ export async function GET(req: NextRequest) {
         ? correctAnswer.map((a) => a.toLowerCase()).includes(submitted.toLowerCase())
         : submitted.toUpperCase() === String(correctAnswer).toUpperCase();
       if (isCorrect) correct++;
-      detail.push({ unitId, submitted, correctAnswer, isCorrect, section: meta.section });
     });
-
-    const rwDetail = detail.filter((d) => d.section === 'reading_and_writing');
-    const mathDetail = detail.filter((d) => d.section === 'math');
 
     return {
       id: sub.id,
+      instagram_id: sub.instagram_id ?? null,
       studentName: sub.student_name,
       submittedAt: sub.submitted_at,
       totalAnswered: total,
       totalUnits: units?.length ?? 0,
       correct,
       score: total > 0 ? Math.round((correct / total) * 100) : 0,
-      rwCorrect: rwDetail.filter((d) => d.isCorrect).length,
-      rwTotal: rwDetail.length,
-      mathCorrect: mathDetail.filter((d) => d.isCorrect).length,
-      mathTotal: mathDetail.length,
-      detail,
     };
   });
 
-  return NextResponse.json({ results });
+  return { type: 'fulltest' as const, submissions: submissions_result };
+}
+
+async function getPracticeResults(testId: string) {
+  const { data: submissions, error } = await supabaseAdmin
+    .from('practice_submissions')
+    .select('*')
+    .eq('test_id', testId)
+    .order('submitted_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const submissions_result = (submissions ?? []).map((sub) => ({
+    id: sub.id,
+    instagram_id: sub.instagram_id,
+    studentName: sub.student_name ?? null,
+    submittedAt: sub.submitted_at,
+    totalAnswered: sub.total_count,
+    correct: sub.correct_count,
+    score: sub.total_count > 0 ? Math.round((sub.correct_count / sub.total_count) * 100) : 0,
+  }));
+
+  return { type: 'practice' as const, testId, submissions: submissions_result };
+}
+
+export async function GET(req: NextRequest) {
+  const adminKey = req.headers.get('x-admin-key');
+  if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const type = searchParams.get('type') ?? 'fulltest';
+  const testId = searchParams.get('testId') ?? 'june-2026-subskill-300';
+
+  try {
+    if (type === 'practice') {
+      const result = await getPracticeResults(testId);
+      return NextResponse.json(result);
+    }
+    const result = await getFulltestResults();
+    return NextResponse.json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

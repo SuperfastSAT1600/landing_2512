@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/coaches/[slug]': ['./src/data/**/*'],
+    '/practice/june-2026': ['./master_sat_ontology_v3.jsonl'],
+    '/api/practice/june-2026': ['./master_sat_ontology_v3.jsonl'],
   },
   async redirects() {
     return [

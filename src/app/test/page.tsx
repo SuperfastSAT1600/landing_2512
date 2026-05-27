@@ -34,6 +34,7 @@ type Phase = 'name' | 'test' | 'submitted';
 export default function TestPage() {
   const [phase, setPhase] = useState<Phase>('name');
   const [studentName, setStudentName] = useState('');
+  const [instagramId, setInstagramId] = useState('');
   const [modules, setModules] = useState<Module[]>([]);
   const [curriculumId, setCurriculumId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,7 +64,7 @@ export default function TestPage() {
     await fetch('/api/test/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ studentName, curriculumId, answers }),
+      body: JSON.stringify({ studentName, instagramId: instagramId.trim() || undefined, curriculumId, answers }),
     });
     setSubmitting(false);
     setConfirmOpen(false);
@@ -85,6 +86,13 @@ export default function TestPage() {
             placeholder="이름 입력"
             value={studentName}
             onChange={(e) => setStudentName(e.target.value)}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid #3f3f46', background: '#18181b', color: '#fff', fontSize: 15, marginBottom: 12, boxSizing: 'border-box' }}
+          />
+          <input
+            type="text"
+            placeholder="@instagram_id (선택)"
+            value={instagramId}
+            onChange={(e) => setInstagramId(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && startTest()}
             style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid #3f3f46', background: '#18181b', color: '#fff', fontSize: 15, marginBottom: 16, boxSizing: 'border-box' }}
           />
