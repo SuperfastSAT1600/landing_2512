@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import PasscodeChange from './PasscodeChange';
-import PortalHome from './PortalHome';
 import StudentInfoOverlay from './StudentInfoOverlay';
 import DiagnosticOverlay from './DiagnosticOverlay';
 import ConsultationOverlay from './ConsultationOverlay';
@@ -30,6 +29,7 @@ interface StudentInfo {
   previous_rw_score: number | null;
   previous_math_score: number | null;
   preferred_language: 'korean' | 'english' | 'any' | null;
+  created_at: string | null;
 }
 
 interface PortalData {
@@ -38,13 +38,21 @@ interface PortalData {
   diagnosticResult: DiagnosticResult | null;
 }
 
-type View = 'home' | 'student' | 'diagnostic' | 'consultation';
+type View = 'consultation' | 'student' | 'diagnostic';
+
+const NAV_ITEMS: { view: View; label: string }[] = [
+  { view: 'consultation', label: '상담 기록' },
+  { view: 'student', label: '학생 기본 정보' },
+  { view: 'diagnostic', label: '진단 테스트' },
+];
 
 export default function PortalContent({ token }: { token: string }) {
   const [data, setData] = useState<PortalData | null>(null);
   const [error, setError] = useState('');
-  const [view, setView] = useState<View>('home');
+  const [view, setView] = useState<View>('consultation');
   const [showChangePasscode, setShowChangePasscode] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`/api/portal/${token}/data`)
@@ -52,6 +60,17 @@ export default function PortalContent({ token }: { token: string }) {
       .then(setData)
       .catch(() => setError('데이터를 불러오는 중 오류가 발생했습니다.'));
   }, [token]);
+
+  // Close settings dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setSettingsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   if (error) return <p className="text-sm text-red-400 text-center py-8">{error}</p>;
 
@@ -65,24 +84,91 @@ export default function PortalContent({ token }: { token: string }) {
     );
   }
 
+  const hasDiagnostic = !!data.diagnosticResult;
+
   return (
     <>
-      <PortalHome
-        data={data}
-        onNavigate={v => setView(v)}
-        onSettings={() => setShowChangePasscode(true)}
+      {/* Fixed portal nav — always on top of all overlays */}
+      <div
+        className="fixed top-0 left-0 right-0 z-[60] bg-white"
+        style={{ borderBottom: '1px solid #E2E8F0' }}
+      >
+        <div className="max-w-5xl mx-auto px-4 sm:px-[6%]">
+          <div className="flex items-center justify-between h-12">
+            {/* Logo + Nav pills */}
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo_black.png" alt="SuperfastSAT" className="h-4 w-auto flex-shrink-0" />
+              <div className="flex items-center gap-1">
+              {NAV_ITEMS.map(item => {
+                const isActive = view === item.view;
+                const isDisabled = item.view === 'diagnostic' && !hasDiagnostic;
+                return (
+                  <button
+                    key={item.view}
+                    onClick={() => { if (!isDisabled) setView(item.view); }}
+                    disabled={isDisabled}
+                    className="flex-shrink-0 rounded-full transition-colors disabled:opacity-40"
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: 12,
+                      fontWeight: isActive ? 600 : 500,
+                      background: isActive ? '#09090b' : '#F1F5F9',
+                      color: isActive ? '#ffffff' : '#475569',
+                      border: 'none',
+                      cursor: isDisabled ? 'default' : 'pointer',
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+              </div>
+            </div>
+
+            {/* Settings */}
+            <div className="relative flex-shrink-0" ref={settingsRef}>
+              <button
+                onClick={() => setSettingsOpen(o => !o)}
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors px-2 py-1"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
+                </svg>
+                설정
+              </button>
+              {settingsOpen && (
+                <div
+                  className="absolute right-0 top-9 rounded-xl py-1 min-w-[140px] z-10 bg-white"
+                  style={{ border: '1px solid #E2E8F0', boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
+                >
+                  <button
+                    onClick={() => { setSettingsOpen(false); setShowChangePasscode(true); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                  >
+                    비밀번호 변경
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Overlays — each has pt-12 to clear the fixed nav */}
+      <ConsultationOverlay
+        memos={data.publishedMemos}
+        studentName={data.student.name}
+        studentCreatedAt={data.student.created_at}
+        blogLinkCount={data.publishedMemos.filter(m => m.content.includes('http')).length}
       />
 
       {view === 'student' && (
-        <StudentInfoOverlay student={data.student} onBack={() => setView('home')} />
+        <StudentInfoOverlay student={data.student} />
       )}
 
       {view === 'diagnostic' && data.diagnosticResult && (
-        <DiagnosticOverlay resultId={data.diagnosticResult.id} onBack={() => setView('home')} />
-      )}
-
-      {view === 'consultation' && (
-        <ConsultationOverlay memos={data.publishedMemos} studentName={data.student.name} onBack={() => setView('home')} />
+        <DiagnosticOverlay resultId={data.diagnosticResult.id} />
       )}
 
       {showChangePasscode && (

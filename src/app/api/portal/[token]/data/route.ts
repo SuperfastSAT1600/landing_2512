@@ -28,7 +28,8 @@ export async function GET(
       previous_rw_score, previous_math_score,
       preferred_language,
       consultation_timeline,
-      diagnostic_result_id
+      diagnostic_result_id,
+      created_at
     `)
     .eq('portal_token', token)
     .single();
@@ -77,6 +78,7 @@ export async function GET(
       previous_rw_score: student.previous_rw_score,
       previous_math_score: student.previous_math_score,
       preferred_language: student.preferred_language ?? null,
+      created_at: student.created_at ?? null,
     },
     publishedMemos,
     diagnosticResult,

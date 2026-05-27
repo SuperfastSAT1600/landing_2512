@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft } from 'lucide-react';
 import type { ReportData } from '@/lib/report-data';
 import { generateAllInsights, type ReportInsights } from '@/lib/report-insights';
 import { mergeInsights, getEditedFieldKeys } from '@/lib/merge-insights';
@@ -16,7 +15,6 @@ import { InsightBlock, GenericInsightBlock } from '@/app/reports/[resultId]/comp
 
 interface Props {
   resultId: string;
-  onBack: () => void;
 }
 
 const EMPTY_INSIGHTS: ReportInsights = {
@@ -43,17 +41,18 @@ function scrollToSection(id: string, containerRef: React.RefObject<HTMLDivElemen
   const el = document.getElementById(id);
   const container = containerRef.current;
   if (!el || !container) return;
-  const top = el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 56;
+  const top = el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 52;
   container.scrollTo({ top, behavior: 'smooth' });
 }
 
-export default function DiagnosticOverlay({ resultId, onBack }: Props) {
+export default function DiagnosticOverlay({ resultId }: Props) {
   const [data, setData] = useState<ReportData | null>(null);
   const [insights, setInsights] = useState<ReportInsights>(EMPTY_INSIGHTS);
   const [editedKeys, setEditedKeys] = useState(new Set<string>());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeChapter, setActiveChapter] = useState<string>(CHAPTERS[0].id);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,7 +71,20 @@ export default function DiagnosticOverlay({ resultId, onBack }: Props) {
       .catch(() => { setError('리포트를 불러올 수 없습니다.'); setLoading(false); });
   }, [resultId]);
 
-  // IntersectionObserver for active chapter tracking within overlay container
+  // Scroll progress
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    function update() {
+      if (!container) return;
+      const total = container.scrollHeight - container.clientHeight;
+      setScrollProgress(total > 0 ? Math.min(container.scrollTop / total, 1) : 0);
+    }
+    container.addEventListener('scroll', update, { passive: true });
+    return () => container.removeEventListener('scroll', update);
+  }, []);
+
+  // IntersectionObserver for active chapter tracking
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !data) return;
@@ -83,56 +95,83 @@ export default function DiagnosticOverlay({ resultId, onBack }: Props) {
         const visible = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
         if (visible.length > 0) setActiveChapter(visible[0].target.id);
       },
-      { root: container, rootMargin: '-56px 0px -60% 0px', threshold: 0 },
+      { root: container, rootMargin: '-52px 0px -60% 0px', threshold: 0 },
     );
     els.forEach(el => observer.observe(el));
     return () => observer.disconnect();
   }, [data]);
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#F4F5F9', fontFamily: 'var(--font-sans)' }}>
+    <div ref={containerRef} className="fixed inset-0 z-50 overflow-y-auto pt-12 pb-16 sm:pb-0" style={{ background: '#F4F5F9', fontFamily: 'var(--font-sans)' }}>
 
-      {/* Sticky nav */}
-      <div
-        className="sticky top-0 z-10"
+      {/* Progress bar — top of viewport */}
+      <div className="fixed top-0 left-0 right-0 z-50" style={{ height: 2, background: '#E2E8F0' }}>
+        <div style={{ height: '100%', width: `${scrollProgress * 100}%`, background: '#6085FF', transition: 'width 0.1s linear' }} />
+      </div>
+
+      {/* Desktop sticky chapter nav — sticks below portal nav (top-12) */}
+      <nav
+        className="hidden sm:block sticky top-0 z-40"
         style={{ background: 'white', borderBottom: '1px solid #E2E8F0' }}
       >
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center gap-2 h-12">
-            <button
-              onClick={onBack}
-              className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors flex-shrink-0"
-            >
-              <ChevronLeft size={15} />
-              상담 관리 리포트
-            </button>
-            <span className="text-slate-300 text-sm flex-shrink-0">|</span>
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-              {CHAPTERS.map(ch => {
-                const isActive = activeChapter === ch.id;
-                return (
-                  <button
-                    key={ch.id}
-                    onClick={() => scrollToSection(ch.id, containerRef)}
-                    className="flex-shrink-0 rounded-full transition-colors"
-                    style={{
-                      padding: '4px 12px',
-                      fontSize: 12,
-                      fontWeight: isActive ? 600 : 500,
-                      background: isActive ? '#09090b' : '#F1F5F9',
-                      color: isActive ? '#ffffff' : '#475569',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {ch.label}
-                  </button>
-                );
-              })}
-            </div>
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="flex items-center gap-2 py-2">
+            {CHAPTERS.map(ch => {
+              const isActive = activeChapter === ch.id;
+              return (
+                <button
+                  key={ch.id}
+                  onClick={() => scrollToSection(ch.id, containerRef)}
+                  className="flex-shrink-0 rounded-full transition-colors"
+                  style={{
+                    padding: '4px 14px',
+                    fontSize: 12,
+                    fontWeight: isActive ? 600 : 500,
+                    background: isActive ? '#09090b' : '#F1F5F9',
+                    color: isActive ? '#ffffff' : '#475569',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {ch.label}
+                </button>
+              );
+            })}
           </div>
         </div>
-      </div>
+      </nav>
+
+      {/* Mobile fixed bottom chapter nav */}
+      <nav
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-40"
+        style={{ background: 'white', borderTop: '1px solid #E2E8F0', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex">
+          {CHAPTERS.map(ch => {
+            const isActive = activeChapter === ch.id;
+            return (
+              <button
+                key={ch.id}
+                onClick={() => scrollToSection(ch.id, containerRef)}
+                className="flex-1 flex flex-col items-center justify-center transition-colors"
+                style={{
+                  paddingTop: 18,
+                  paddingBottom: 18,
+                  fontSize: 13,
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? '#09090b' : '#94A3B8',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderTop: isActive ? '2px solid #071be9' : '2px solid transparent',
+                }}
+              >
+                {ch.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {/* Loading / error */}
       {loading && (
@@ -160,8 +199,8 @@ export default function DiagnosticOverlay({ resultId, onBack }: Props) {
             previousMathScore={data.previousMathScore}
           />
 
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-            <div className="space-y-0">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:pt-14">
+            <div className="space-y-10 sm:space-y-14">
 
               {/* 01 전체 성적 */}
               <section id="diag-section-01">
@@ -245,7 +284,7 @@ export default function DiagnosticOverlay({ resultId, onBack }: Props) {
                           <li key={i} className="flex gap-3 text-sm text-slate-600 leading-relaxed">
                             <span
                               className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white mt-0.5"
-                              style={{ background: '#09090b' }}
+                              style={{ background: '#071be9' }}
                             >
                               {i + 1}
                             </span>
