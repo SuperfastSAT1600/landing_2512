@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         target_test_date: target_test_date ?? null,
         target_test_date_2: target_test_date_2 ?? null,
         desired_subjects,
-        funnel_stage: '1',
+        funnel_stage: '0',
         consultation_timeline: [],
       },
     ])
