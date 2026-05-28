@@ -11,14 +11,15 @@ interface EnrolledLeadsProps {
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
 }
 
-function EnrolledCard({ student, onStudentClick, onGraduate }: {
+function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate }: {
   student: Student;
+  firstPaidAt: string | null;
   onStudentClick: (s: Student) => void;
   onGraduate: (s: Student) => void;
 }) {
-  const enrolledDays = Math.floor(
-    (Date.now() - new Date(student.updated_at).getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const enrolledDays = firstPaidAt
+    ? Math.floor((Date.now() - new Date(firstPaidAt).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
 
   return (
     <div
@@ -37,7 +38,9 @@ function EnrolledCard({ student, onStudentClick, onGraduate }: {
         </div>
         <div className="flex items-center gap-3 mt-1">
           <span className="text-xs text-gray-400">{student.parent_phone}</span>
-          <span className="text-xs text-gray-400">수강 {enrolledDays}일차</span>
+          {enrolledDays !== null && (
+            <span className="text-xs text-gray-400">수강 {enrolledDays}일차</span>
+          )}
           {student.traffic_source && (
             <span className="text-xs text-gray-400">{student.traffic_source}</span>
           )}
@@ -57,6 +60,7 @@ function EnrolledCard({ student, onStudentClick, onGraduate }: {
 
 export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: EnrolledLeadsProps) {
   const [students, setStudents] = useState<Student[]>([]);
+  const [firstPaidMap, setFirstPaidMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
@@ -65,12 +69,24 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/crm/students?lead_status=enrolled', {
-        headers: { 'x-admin-key': adminKey },
-      });
-      if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
-      const data = await res.json();
-      setStudents(data.data ?? []);
+      const [studentsRes, paymentsRes] = await Promise.all([
+        fetch('/api/crm/students?lead_status=enrolled', { headers: { 'x-admin-key': adminKey } }),
+        fetch('/api/crm/payments', { headers: { 'x-admin-key': adminKey } }),
+      ]);
+      if (!studentsRes.ok) throw new Error('데이터를 불러오지 못했습니다.');
+      const studentsData = await studentsRes.json();
+      setStudents(studentsData.data ?? []);
+
+      if (paymentsRes.ok) {
+        const paymentsData = await paymentsRes.json();
+        const map: Record<string, string> = {};
+        for (const p of (paymentsData.data ?? [])) {
+          const name = p.student_name;
+          if (!name) continue;
+          if (!map[name] || p.paid_at < map[name]) map[name] = p.paid_at;
+        }
+        setFirstPaidMap(map);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
     } finally {
@@ -135,6 +151,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
             <EnrolledCard
               key={s.id}
               student={s}
+              firstPaidAt={firstPaidMap[s.name] ?? null}
               onStudentClick={onStudentClick}
               onGraduate={setChurnTarget}
             />
