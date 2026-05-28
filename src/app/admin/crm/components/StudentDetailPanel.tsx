@@ -96,6 +96,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   const [portalCopied, setPortalCopied] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showInquiry, setShowInquiry] = useState(false);
 
   interface DiagCandidate { id: string; student_name: string; student_email: string; submitted_at: string; test_id: string; total_time_seconds: number }
   const [diagLinked, setDiagLinked] = useState<DiagCandidate | null>(null);
@@ -544,40 +545,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           {/* ── Scrollable content ── */}
           <div className="flex-1 overflow-y-auto p-5 space-y-5">
 
-            {/* ── 인입 정보 (read-only) ── */}
-            <section>
-              <p className="text-xs font-medium text-gray-500 mb-2" style={{ letterSpacing: '0.3px' }}>인입 정보</p>
-              <div className="bg-gray-100 rounded-xl px-4 py-3 space-y-1.5">
-                <InquiryRow label="문의일" value={localStudent.inquiry_date ?? '—'} />
-                <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
-                <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
-                {localStudent.content_author && (
-                  <InquiryRow label="작성자" value={localStudent.content_author} />
-                )}
-                <InquiryRow label="구분" value={localStudent.lead_type ?? '—'} />
-                {localStudent.b2b_partner && (
-                  <InquiryRow label="파트너" value={localStudent.b2b_partner} />
-                )}
-                <InquiryRow
-                  label={localStudent.contact_type ? CONTACT_TYPE_LABELS[localStudent.contact_type] : '연락처'}
-                  value={localStudent.parent_phone || '—'}
-                />
-                {localStudent.parent_timezone && (
-                  <InquiryRow label="시간대" value={TIMEZONE_LABEL_MAP[localStudent.parent_timezone] ?? localStudent.parent_timezone} />
-                )}
-                {localStudent.campaign_tags && localStudent.campaign_tags.length > 0 && (
-                  <div className="flex items-start gap-2 pt-0.5">
-                    <span className="text-[13px] text-gray-400 w-[28%] shrink-0">태그</span>
-                    <div className="flex flex-wrap gap-1">
-                      {localStudent.campaign_tags.map(tag => (
-                        <span key={tag} className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[11px] font-medium">{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-
             {/* ── 학생 정보 (편집 가능) ── */}
             <section>
               <div className="flex items-center justify-between mb-2">
@@ -608,8 +575,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               ) : (
                 <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
                   <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                    <StudentInfoCell label="학년" value={`${localStudent.grade} · ${SCHOOL_TYPE_LABELS[localStudent.school_type]}`} />
-                    <StudentInfoCell label="희망 과목" value={localStudent.desired_subjects} />
                     <StudentInfoCell label="직전 점수" value={scoreDisplay()} />
                     <StudentInfoCell label="목표 점수" value={localStudent.target_score ? `${localStudent.target_score}점` : '미정'} />
                     <StudentInfoCell
@@ -627,6 +592,85 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                       />
                     )}
                   </div>
+
+                  {/* 진단테스트 연결 + 포털 링크 */}
+                  <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={handleCopyPortalLink}
+                      disabled={portalLoading}
+                      className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-[12px] text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
+                    >
+                      {portalCopied ? (
+                        <><Check size={12} className="text-green-500" /><span className="text-green-600">링크 복사됨!</span></>
+                      ) : portalLoading ? (
+                        <><div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />학부모 포털</>
+                      ) : (
+                        <><Copy size={12} />학부모 포털</>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => { if (!showDiagPicker) fetchDiagLink(); setShowDiagPicker(!showDiagPicker); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12px] transition-colors ${
+                        diagLinked
+                          ? 'border-green-200 text-green-600 bg-green-50 hover:bg-green-100'
+                          : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50'
+                      }`}
+                    >
+                      {diagLoading ? (
+                        <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Link size={12} />
+                      )}
+                      {diagLinked ? '진단 결과 연결됨' : '진단테스트 연결'}
+                    </button>
+                  </div>
+
+                  {showDiagPicker && (
+                    <div className="mt-2 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                        <p className="text-xs font-medium text-gray-600">결과 선택</p>
+                        <button onClick={() => setShowDiagPicker(false)} className="text-[11px] text-gray-400 hover:text-gray-600">닫기</button>
+                      </div>
+                      {diagLoading && (
+                        <div className="py-4 flex justify-center">
+                          <div className="w-4 h-4 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      )}
+                      {!diagLoading && diagCandidates.length === 0 && (
+                        <p className="text-xs text-gray-400 text-center py-4">연결 가능한 결과가 없습니다.</p>
+                      )}
+                      {!diagLoading && diagCandidates.map(c => (
+                        <button
+                          key={c.id}
+                          onClick={() => handleDiagLink(c.id)}
+                          className={`w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-0 ${diagLinked?.id === c.id ? 'bg-green-50' : ''}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-medium text-gray-800">{c.student_name}</p>
+                              <p className="text-[11px] text-gray-500">{c.student_email}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[11px] text-gray-500">
+                                {new Date(c.submitted_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                              </p>
+                              {diagLinked?.id === c.id && <p className="text-[10px] text-green-600 font-medium">현재 연결됨</p>}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                      {diagLinked && !diagLoading && (
+                        <button
+                          onClick={() => handleDiagLink(null)}
+                          className="w-full text-left px-3 py-2 text-[11px] text-red-400 hover:bg-red-50 transition-colors border-t border-gray-100"
+                        >
+                          연결 해제
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {localStudent.funnel_stage === '0' && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
                       <button
@@ -638,87 +682,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                         {deleting ? '삭제 중...' : '잘못된 리드 삭제'}
                       </button>
                     </div>
-                  )}
-                </div>
-              )}
-            </section>
-
-            {/* ── 빠른 액션 ── */}
-            <section>
-              <p className="text-xs font-medium text-gray-500 mb-2" style={{ letterSpacing: '0.3px' }}>빠른 액션</p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={handleCopyPortalLink}
-                  disabled={portalLoading}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 border border-gray-200 rounded-lg text-[13px] text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
-                >
-                  {portalCopied ? (
-                    <><Check size={13} className="text-green-500" /><span className="text-green-600">링크 복사됨!</span></>
-                  ) : portalLoading ? (
-                    <><div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />학부모 포털</>
-                  ) : (
-                    <><Copy size={13} />학부모 포털 링크</>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => { if (!showDiagPicker) fetchDiagLink(); setShowDiagPicker(!showDiagPicker); }}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 border rounded-lg text-[13px] transition-colors ${
-                    diagLinked
-                      ? 'border-green-200 text-green-600 bg-green-50 hover:bg-green-100'
-                      : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50'
-                  }`}
-                >
-                  {diagLoading ? (
-                    <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Link size={13} />
-                  )}
-                  {diagLinked ? '진단 결과 연결됨' : '진단테스트 연결'}
-                </button>
-              </div>
-
-              {showDiagPicker && (
-                <div className="mt-2 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-                    <p className="text-xs font-medium text-gray-600">결과 선택</p>
-                    <button onClick={() => setShowDiagPicker(false)} className="text-[11px] text-gray-400 hover:text-gray-600">닫기</button>
-                  </div>
-                  {diagLoading && (
-                    <div className="py-4 flex justify-center">
-                      <div className="w-4 h-4 border border-blue-400 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
-                  {!diagLoading && diagCandidates.length === 0 && (
-                    <p className="text-xs text-gray-400 text-center py-4">연결 가능한 결과가 없습니다.</p>
-                  )}
-                  {!diagLoading && diagCandidates.map(c => (
-                    <button
-                      key={c.id}
-                      onClick={() => handleDiagLink(c.id)}
-                      className={`w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-0 ${diagLinked?.id === c.id ? 'bg-green-50' : ''}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-gray-800">{c.student_name}</p>
-                          <p className="text-[11px] text-gray-500">{c.student_email}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[11px] text-gray-500">
-                            {new Date(c.submitted_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                          </p>
-                          {diagLinked?.id === c.id && <p className="text-[10px] text-green-600 font-medium">현재 연결됨</p>}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                  {diagLinked && !diagLoading && (
-                    <button
-                      onClick={() => handleDiagLink(null)}
-                      className="w-full text-left px-3 py-2 text-[11px] text-red-400 hover:bg-red-50 transition-colors border-t border-gray-100"
-                    >
-                      연결 해제
-                    </button>
                   )}
                 </div>
               )}
@@ -813,6 +776,48 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                   />
                 ))}
               </div>
+            </section>
+
+            {/* ── 인입 정보 (접힘) ── */}
+            <section>
+              <button
+                onClick={() => setShowInquiry(v => !v)}
+                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showInquiry ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                인입 정보
+              </button>
+              {showInquiry && (
+                <div className="mt-2 bg-gray-100 rounded-xl px-4 py-3 space-y-1.5">
+                  <InquiryRow label="문의일" value={localStudent.inquiry_date ?? '—'} />
+                  <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
+                  <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
+                  {localStudent.content_author && (
+                    <InquiryRow label="작성자" value={localStudent.content_author} />
+                  )}
+                  <InquiryRow label="구분" value={localStudent.lead_type ?? '—'} />
+                  {localStudent.b2b_partner && (
+                    <InquiryRow label="파트너" value={localStudent.b2b_partner} />
+                  )}
+                  <InquiryRow
+                    label={localStudent.contact_type ? CONTACT_TYPE_LABELS[localStudent.contact_type] : '연락처'}
+                    value={localStudent.parent_phone || '—'}
+                  />
+                  {localStudent.parent_timezone && (
+                    <InquiryRow label="시간대" value={TIMEZONE_LABEL_MAP[localStudent.parent_timezone] ?? localStudent.parent_timezone} />
+                  )}
+                  {localStudent.campaign_tags && localStudent.campaign_tags.length > 0 && (
+                    <div className="flex items-start gap-2 pt-0.5">
+                      <span className="text-[13px] text-gray-400 w-[28%] shrink-0">태그</span>
+                      <div className="flex flex-wrap gap-1">
+                        {localStudent.campaign_tags.map(tag => (
+                          <span key={tag} className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[11px] font-medium">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
           </div>
         </div>
