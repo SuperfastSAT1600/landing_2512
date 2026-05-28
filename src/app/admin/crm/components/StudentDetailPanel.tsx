@@ -393,15 +393,32 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           {/* ── Header ── */}
           <div className="px-5 pt-5 pb-4 border-b border-gray-100 bg-white shrink-0">
             <div className="flex items-start justify-between gap-3 mb-3">
-              <div>
+              <div className="flex-1 min-w-0">
                 <h2 className="text-[18px] font-bold text-gray-900 leading-tight">{localStudent.name}</h2>
                 <p className="text-[13px] text-gray-500 mt-0.5">
                   {localStudent.grade} · {SCHOOL_TYPE_LABELS[localStudent.school_type]} · {localStudent.desired_subjects}
                 </p>
               </div>
-              <button onClick={handleBackdropClick} className="mt-0.5 p-1.5 hover:bg-gray-100 rounded-lg transition-colors shrink-0">
-                <X size={16} className="text-gray-400" />
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                <button
+                  onClick={handleCopyPortalLink}
+                  disabled={portalLoading}
+                  className="flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-[12px] text-gray-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
+                  title="학부모 포털 링크 복사"
+                >
+                  {portalCopied ? (
+                    <Check size={12} className="text-green-500" />
+                  ) : portalLoading ? (
+                    <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Copy size={12} />
+                  )}
+                  {portalCopied ? '복사됨' : '포털'}
+                </button>
+                <button onClick={handleBackdropClick} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+                  <X size={16} className="text-gray-400" />
+                </button>
+              </div>
             </div>
 
             {/* Status badges row */}
@@ -576,22 +593,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                     )}
                   </div>
 
-                  {/* 진단테스트 연결 + 포털 링크 */}
+                  {/* 진단테스트 연결 */}
                   <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={handleCopyPortalLink}
-                      disabled={portalLoading}
-                      className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-[12px] text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
-                    >
-                      {portalCopied ? (
-                        <><Check size={12} className="text-green-500" /><span className="text-green-600">링크 복사됨!</span></>
-                      ) : portalLoading ? (
-                        <><div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />학부모 포털</>
-                      ) : (
-                        <><Copy size={12} />학부모 포털</>
-                      )}
-                    </button>
-
                     <button
                       onClick={() => { if (!showDiagPicker) fetchDiagLink(); setShowDiagPicker(!showDiagPicker); }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12px] transition-colors ${
