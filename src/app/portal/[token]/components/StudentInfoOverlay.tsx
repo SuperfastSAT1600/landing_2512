@@ -72,7 +72,7 @@ export default function StudentInfoOverlay({ student }: { student: StudentInfo }
     <div className="fixed inset-0 z-50 overflow-y-auto pt-12" style={{ background: '#F4F5F9' }}>
 
       {/* Dark cover */}
-      <div className="relative overflow-hidden" style={{ background: BG, minHeight: 540 }}>
+      <div className="relative overflow-hidden" style={{ background: BG }}>
         <div className="absolute inset-0 opacity-5 pointer-events-none" style={{
           backgroundImage: 'radial-gradient(circle at 20% 50%, #6085FF 0%, transparent 50%), radial-gradient(circle at 80% 20%, #071be9 0%, transparent 40%)',
         }} />
@@ -91,20 +91,10 @@ export default function StudentInfoOverlay({ student }: { student: StudentInfo }
             </p>
           )}
 
-          {/* 3 cards */}
-          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
-            {/* 희망 과목 */}
-            <div className="flex flex-col justify-center rounded-2xl px-6 py-5"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <span className="text-2xl font-bold text-white leading-tight">{student.desired_subjects || '—'}</span>
-              <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">희망 과목</span>
-              {student.preferred_language && (
-                <span className="text-slate-500 text-xs mt-0.5">{LANGUAGE_LABEL[student.preferred_language]}</span>
-              )}
-            </div>
-
+          {/* 2 cards — horizontal on all screen sizes */}
+          <div className="flex flex-row gap-3">
             {/* 직전 점수 */}
-            <div className="flex flex-col items-center justify-center rounded-2xl px-6 py-5"
+            <div className="flex-1 flex flex-col items-center justify-center rounded-2xl px-4 py-5"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <span className="text-4xl font-bold leading-none text-white">{prevTotal ?? '—'}</span>
               <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">직전 점수</span>
@@ -114,7 +104,7 @@ export default function StudentInfoOverlay({ student }: { student: StudentInfo }
             </div>
 
             {/* 목표 점수 */}
-            <div className="flex flex-col items-center justify-center rounded-2xl px-8 py-5"
+            <div className="flex-1 flex flex-col items-center justify-center rounded-2xl px-4 py-5"
               style={{ background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)' }}>
               <span className="text-5xl font-bold leading-none" style={{ color: ACCENT }}>{student.target_score ?? '—'}</span>
               <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">목표 점수</span>

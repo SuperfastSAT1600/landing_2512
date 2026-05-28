@@ -57,7 +57,7 @@ export default function ConsultationOverlay({ memos, studentName, studentCreated
     <div className="fixed inset-0 z-50 overflow-y-auto pt-12" style={{ background: '#F4F5F9' }}>
 
       {/* Dark cover */}
-      <div className="relative overflow-hidden" style={{ background: BG, minHeight: 540 }}>
+      <div className="relative overflow-hidden" style={{ background: BG }}>
         <div
           className="absolute inset-0 opacity-5 pointer-events-none"
           style={{
@@ -80,16 +80,17 @@ export default function ConsultationOverlay({ memos, studentName, studentCreated
               {new Date(studentCreatedAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 시작
             </p>
           )}
-          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
+          {/* 2 cards — horizontal on all screen sizes */}
+          <div className="flex flex-row gap-3">
             <div
-              className="flex flex-col items-center justify-center rounded-2xl px-8 py-5"
+              className="flex-1 flex flex-col items-center justify-center rounded-2xl px-4 py-5"
               style={{ background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)' }}
             >
               <span className="text-5xl font-bold leading-none" style={{ color: ACCENT }}>{memos.length}</span>
               <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">총 상담 횟수</span>
             </div>
             <div
-              className="flex flex-col items-center justify-center rounded-2xl px-8 py-5"
+              className="flex-1 flex flex-col items-center justify-center rounded-2xl px-4 py-5"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
             >
               <span className="text-5xl font-bold leading-none text-white">{blogLinkCount}</span>
