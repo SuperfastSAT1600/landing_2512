@@ -39,6 +39,7 @@ interface TestDef {
   label: string;
   description: string;
   apiType: 'fulltest' | 'practice';
+  publicUrl?: string;
 }
 
 const TESTS: TestDef[] = [
@@ -47,12 +48,14 @@ const TESTS: TestDef[] = [
     label: 'Full-Length Test #1',
     description: '2026 June SuperfastSAT',
     apiType: 'fulltest',
+    publicUrl: '/test',
   },
   {
     id: 'june-2026-subskill-300',
     label: '6월 대비 연습 300문제',
     description: 'sub-skill 선별 RW',
     apiType: 'practice',
+    publicUrl: '/practice/june-2026',
   },
 ];
 
@@ -72,8 +75,17 @@ export default function TestContentsPage() {
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [submissionCounts, setSubmissionCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const adminKey = typeof window !== 'undefined' ? localStorage.getItem('admin_key') ?? '' : '';
+
+  function copyLink(test: TestDef) {
+    if (!test.publicUrl) return;
+    const url = `${window.location.origin}${test.publicUrl}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(test.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
 
   const fetchSubmissions = useCallback(async (testDef: TestDef) => {
     setLoading(true);
@@ -175,6 +187,44 @@ export default function TestContentsPage() {
                 <div style={{ fontSize: 11, color: '#52525b', marginTop: 4 }}>
                   {typeof count === 'number' ? `${count}명 제출` : '로딩 중...'}
                 </div>
+                {test.publicUrl && (
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
+                    <a
+                      href={test.publicUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        flex: 1,
+                        padding: '5px 0',
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 5,
+                        color: '#a1a1aa',
+                        fontSize: 11,
+                        textAlign: 'center' as const,
+                        textDecoration: 'none',
+                        display: 'block',
+                      }}
+                    >
+                      열기
+                    </a>
+                    <button
+                      onClick={() => copyLink(test)}
+                      style={{
+                        flex: 1,
+                        padding: '5px 0',
+                        background: copiedId === test.id ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)',
+                        border: copiedId === test.id ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 5,
+                        color: copiedId === test.id ? '#22c55e' : '#a1a1aa',
+                        fontSize: 11,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {copiedId === test.id ? '복사됨!' : '링크 복사'}
+                    </button>
+                  </div>
+                )}
               </button>
             );
           })}
