@@ -14,21 +14,6 @@ import { ChurnModal } from './ChurnModal';
 
 const SALES_STAGES_ONLY: FunnelStage[] = ['0', '1', '2', '3a', '3b', '4', '5a', '5b', '6', '7'];
 
-interface FunnelGuideItem { doing: string; next: string; nextStage?: FunnelStage }
-
-const FUNNEL_GUIDE: Record<string, FunnelGuideItem> = {
-  '0':  { doing: '외부 채널(META 광고 등)에서 자동 유입된 리드입니다.', next: '첫 메시지를 발송하면 1단계로 이동하세요.', nextStage: '1' },
-  '1':  { doing: '학생·학부모에게 첫 메시지를 발송한 단계입니다.', next: '세일즈 콜 일정을 잡아 확정하세요.', nextStage: '2' },
-  '2':  { doing: '세일즈 콜 일정이 확정된 상태입니다.', next: '콜 전 진단테스트가 필요하면 3a로, 바로 콜을 진행하면 4로 이동하세요.' },
-  '3a': { doing: '세일즈 콜 전 진단테스트를 기다리고 있습니다.', next: '학생이 테스트를 제출하면 3b로 이동하세요.', nextStage: '3b' },
-  '3b': { doing: '진단테스트 제출이 완료됐습니다.', next: '세일즈 콜을 진행하세요.', nextStage: '4' },
-  '4':  { doing: '첫 세일즈 콜을 완료했습니다.', next: '콜 후 진단테스트가 필요하면 5a로, 리포트 콜 일정을 바로 잡으면 6으로 이동하세요.' },
-  '5a': { doing: '세일즈 콜 후 진단테스트를 기다리고 있습니다.', next: '학생이 테스트를 제출하면 5b로 이동하세요.', nextStage: '5b' },
-  '5b': { doing: '콜 후 진단테스트 제출이 완료됐습니다.', next: '리포트 세일즈 콜 일정을 잡으세요.', nextStage: '6' },
-  '6':  { doing: '진단 리포트 콜 일정이 확정된 상태입니다.', next: '리포트 콜을 진행하세요.', nextStage: '7' },
-  '7':  { doing: '리포트 세일즈 콜이 완료됐습니다.', next: '결제를 완료하면 결제 완료 탭으로 이동하세요.' },
-  'churned': { doing: '이탈 처리된 학생입니다.', next: '재활성화가 필요하면 재활성화 시작 버튼을 눌러주세요.' },
-};
 
 // ─── 편집 폼 ──────────────────────────────────────────────────────────────────
 
@@ -390,8 +375,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     }
   }
 
-  const guide = FUNNEL_GUIDE[localStudent.funnel_stage];
-
   const scoreDisplay = () => {
     if (localStudent.previous_score_status === 'never_taken') return '미응시';
     if (localStudent.previous_score_status === 'dont_remember') return '기억 안남';
@@ -687,33 +670,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               )}
             </section>
 
-            {/* ── 다음 단계 배너 ── */}
-            {guide && !funnelChanging && localStudent.lead_status === 'active' && (
-              <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
-                <div className="flex items-start gap-2.5">
-                  <ChevronRight size={14} className="text-blue-500 mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    {guide.nextStage && (
-                      <p className="text-[13px] font-semibold text-blue-700 mb-0.5">
-                        다음 단계: {FUNNEL_STAGE_LABELS[guide.nextStage]}
-                      </p>
-                    )}
-                    <p className="text-[12px] text-blue-600 leading-relaxed">{guide.doing}</p>
-                    <p className="text-[12px] text-blue-500/80 mt-0.5 leading-relaxed">{guide.next}</p>
-                    {guide.nextStage && (
-                      <button
-                        onClick={() => handleFunnelChange(guide.nextStage!)}
-                        className="mt-2 text-[12px] font-bold text-blue-600 hover:text-blue-500 underline underline-offset-2 transition-colors"
-                      >
-                        {FUNNEL_STAGE_LABELS[guide.nextStage]}(으)로 이동 →
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── 상담 메모 ── */}
+{/* ── 상담 메모 ── */}
             <section>
               <p className="text-xs font-medium text-gray-500 mb-2" style={{ letterSpacing: '0.3px' }}>상담 메모</p>
               <textarea
