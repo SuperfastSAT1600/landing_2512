@@ -1,0 +1,340 @@
+{
+  "_comment": "최초상담 중복 정리 매핑. key=삭제된 이름, value=유지된 이름. 상담DB 임포트 시 이 매핑으로 라우팅.",
+  "mappings": [
+    {
+      "keep": "민지",
+      "deleted": [
+        "잠재고객_260404_02",
+        "잠재고객_260405_03"
+      ],
+      "phone": "01052166927"
+    },
+    {
+      "keep": "잠재고객_260512_01",
+      "deleted": [
+        "잠재고객_260517_06"
+      ],
+      "phone": "8618977300003"
+    },
+    {
+      "keep": "Ty Suzie Kim",
+      "deleted": [
+        "Wallace Kim (Ty Suzie Kim 동일리드)"
+      ],
+      "phone": "1-770-352-4585"
+    },
+    {
+      "keep": "이희령01",
+      "deleted": [
+        "이희령"
+      ],
+      "phone": "01089576437"
+    },
+    {
+      "keep": "권은서/eunseo kwon",
+      "deleted": [],
+      "phone": "01080978622",
+      "note": "동일 이름 중복 2건"
+    },
+    {
+      "keep": "최지혜",
+      "deleted": [],
+      "phone": "01080734231",
+      "note": "동일 이름 중복 3건"
+    },
+    {
+      "keep": "오시영",
+      "deleted": [],
+      "phone": "01054801453",
+      "note": "동일 이름 중복 6건 (최초상담 2 + 상담DB 4)"
+    },
+    {
+      "keep": "Chloe im01",
+      "deleted": [
+        "임서영"
+      ],
+      "phone": "01053941696"
+    },
+    {
+      "keep": "이은성01",
+      "deleted": [
+        "이은성02"
+      ],
+      "phone": "01047881241"
+    },
+    {
+      "keep": "잠재고객_260218_02",
+      "deleted": [
+        "잠재고객_260405_02"
+      ],
+      "phone": "01045722496"
+    },
+    {
+      "keep": "오승빈",
+      "deleted": [
+        "황유림"
+      ],
+      "phone": "01035791835",
+      "note": "2026-05-28 상담메모 추가: 황유림으로 문의를 새로 함"
+    },
+    {
+      "keep": "웡지아",
+      "deleted": [
+        "Jia wong"
+      ],
+      "phone": "01034078445"
+    },
+    {
+      "keep": "김동욱",
+      "deleted": [],
+      "phone": "01030068277",
+      "note": "동일 이름 중복 2건"
+    },
+    {
+      "keep": "박시후",
+      "deleted": [
+        "Sofyan"
+      ],
+      "phone": "01027600699",
+      "note": "2026-05-28 상담메모 추가: Sofyan으로 문의가 새로 들어옴."
+    },
+    {
+      "keep": "이현경",
+      "deleted": [
+        "양예준"
+      ],
+      "phone": "01020375185"
+    },
+    {
+      "keep": "박기선",
+      "deleted": [
+        "H.Y",
+        "박기선 (H.Y 동일리드)"
+      ],
+      "phone": "010-5475-8381",
+      "note": "H.Y와 동일리드, 박기선으로 통일"
+    },
+    {
+      "keep": "Hyun Jung Kim",
+      "deleted": [],
+      "phone": "1-714-742-0600",
+      "note": "동일 이름 중복 3건"
+    },
+    {
+      "keep": "박시연01",
+      "deleted": [
+        "박시연"
+      ],
+      "phone": "",
+      "note": "상담DB의 박시연 → 박시연01 연결"
+    },
+    {
+      "keep": "오하린01",
+      "deleted": [
+        "오하린"
+      ],
+      "phone": "",
+      "note": "상담DB의 오하린 → 오하린01 연결"
+    },
+    {
+      "keep": "김동현01",
+      "deleted": [
+        "김동현"
+      ],
+      "phone": "",
+      "note": "상담DB의 김동현 → 김동현01 연결"
+    },
+    {
+      "keep": "김세현01",
+      "deleted": [
+        "김세현"
+      ],
+      "phone": "",
+      "note": "상담DB의 김세현 → 김세현01 연결"
+    },
+    {
+      "keep": "Daniel Lee01",
+      "deleted": [
+        "Daniel Lee"
+      ],
+      "phone": "",
+      "note": "상담DB의 Daniel Lee → Daniel Lee01 연결"
+    },
+    {
+      "keep": "James01",
+      "deleted": [
+        "James"
+      ],
+      "phone": "",
+      "note": "상담DB의 James → James01 연결"
+    },
+    {
+      "keep": "이현지02",
+      "deleted": [
+        "Hyunji Lee"
+      ],
+      "phone": "",
+      "note": "상담DB의 Hyunji Lee → 이현지02 연결"
+    },
+    {
+      "keep": "Nathan02",
+      "deleted": [
+        "Nathan"
+      ],
+      "phone": "",
+      "note": "상담DB의 Nathan → Nathan02 연결"
+    },
+    {
+      "keep": null,
+      "deleted": [
+        "Aron"
+      ],
+      "phone": "",
+      "note": "상담DB의 Aron 데이터 무시 — 연결할 학생 없음"
+    },
+    {
+      "keep": "이다연01",
+      "deleted": [
+        "이다연"
+      ],
+      "phone": "",
+      "note": "상담DB의 이다연 → 이다연01 연결"
+    },
+    {
+      "keep": "이서윤01",
+      "deleted": [
+        "이서윤"
+      ],
+      "phone": "",
+      "note": "상담DB의 이서윤 → 이서윤01 연결"
+    },
+    {
+      "keep": "이주원01",
+      "deleted": [
+        "이주원"
+      ],
+      "phone": "",
+      "note": "상담DB의 이주원 → 이주원01 연결"
+    },
+    {
+      "keep": "김리원",
+      "deleted": [
+        "김리원/예원"
+      ],
+      "phone": "",
+      "note": "상담DB의 김리원/예원 → 김리원 연결"
+    },
+    {
+      "keep": "장수진01",
+      "deleted": [
+        "장수진"
+      ],
+      "phone": "",
+      "note": "상담DB의 장수진 → 장수진01 연결"
+    },
+    {
+      "keep": "박서정/Seojeong Park",
+      "deleted": [
+        "Seojeong Park"
+      ],
+      "phone": "",
+      "note": "상담DB의 Seojeong Park → 박서정/Seojeong Park 연결"
+    },
+    {
+      "keep": "정지민/Caleb Jung",
+      "deleted": [
+        "정지민"
+      ],
+      "phone": "",
+      "note": "상담DB의 정지민 → 정지민/Caleb Jung 연결"
+    },
+    {
+      "keep": "문서진/Isabella Moon",
+      "deleted": [
+        "문서진"
+      ],
+      "phone": "",
+      "note": "상담DB의 문서진 → 문서진/Isabella Moon 연결, 중복 레코드 4개 삭제"
+    },
+    {
+      "keep": "Jiho Shin",
+      "deleted": [
+        "신지호"
+      ],
+      "phone": "",
+      "note": "상담DB의 신지호 → Jiho Shin 연결"
+    },
+    {
+      "keep": "Joanne Lee",
+      "deleted": [
+        "마이야"
+      ],
+      "phone": "",
+      "note": "상담DB의 마이야 → Joanne Lee 연결"
+    },
+    {
+      "keep": "이채원01",
+      "deleted": [
+        "이채원"
+      ],
+      "phone": "",
+      "note": "상담DB의 이채원 → 이채원01 연결"
+    },
+    {
+      "keep": "이채하01",
+      "deleted": [
+        "이채하"
+      ],
+      "phone": "",
+      "note": "상담DB의 이채하 → 이채하01 연결"
+    },
+    {
+      "keep": "김소현01",
+      "deleted": [
+        "김소현"
+      ],
+      "phone": "",
+      "note": "상담DB의 김소현 → 김소현01 연결"
+    },
+    {
+      "keep": "조재현01",
+      "deleted": [
+        "조재현"
+      ],
+      "phone": "",
+      "note": "상담DB의 조재현 → 조재현01 연결"
+    },
+    {
+      "keep": "김민재01",
+      "deleted": [
+        "김민재"
+      ],
+      "phone": "",
+      "note": "상담DB의 김민재 → 김민재01 연결"
+    },
+    {
+      "keep": "윤서02",
+      "deleted": [
+        "윤서"
+      ],
+      "phone": "",
+      "note": "상담DB의 윤서 → 윤서02 연결"
+    },
+    {
+      "keep": "양민호",
+      "deleted": [
+        "민호"
+      ],
+      "phone": "",
+      "note": "상담DB의 민호 → 양민호 연결"
+    },
+    {
+      "keep": "김윤서01",
+      "deleted": [
+        "김윤서"
+      ],
+      "phone": "",
+      "note": "상담DB의 김윤서 → 김윤서01 연결 (초기에 김윤서02로 잘못 연결됐다가 수정)"
+    }
+  ]
+}
