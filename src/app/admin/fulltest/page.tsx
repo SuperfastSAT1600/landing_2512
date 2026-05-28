@@ -302,12 +302,22 @@ export default function TestContentsPage() {
                       key={row.id}
                       style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
                     >
-                      <td style={{ padding: '12px 12px', color: '#e4e4e7', fontWeight: 500 }}>
-                        {row.instagram_id ? (
-                          <span style={{ color: '#6085FF' }}>
-                            {row.instagram_id.startsWith('@') ? row.instagram_id : `@${row.instagram_id}`}
-                          </span>
-                        ) : (
+                      <td style={{ padding: '12px 12px', fontWeight: 500 }}>
+                        {row.instagram_id ? (() => {
+                          const handle = row.instagram_id.startsWith('@') ? row.instagram_id.slice(1) : row.instagram_id;
+                          return (
+                            <a
+                              href={`https://instagram.com/${handle}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: '#6085FF', textDecoration: 'none' }}
+                              onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                              onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                            >
+                              @{handle}
+                            </a>
+                          );
+                        })() : (
                           <span style={{ color: '#52525b' }}>—</span>
                         )}
                       </td>
