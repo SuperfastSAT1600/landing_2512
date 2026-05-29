@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
   const leadStatus = searchParams.get('lead_status');
   const search = searchParams.get('search')?.trim();
   const statsOnly = searchParams.get('stats_only') === 'true';
+  const retryStrategyId = searchParams.get('retry_strategy_id');
 
   // 리드풀 카운트만 반환 (초기 로드용)
   if (statsOnly && pool) {
@@ -39,7 +40,9 @@ export async function GET(request: NextRequest) {
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (leadStatus) {
+  if (retryStrategyId) {
+    query = query.eq('retry_strategy_id', retryStrategyId);
+  } else if (leadStatus) {
     query = query.eq('lead_status', leadStatus);
   } else if (pool) {
     query = query.in('lead_status', ['inactive', 'reactivating']);

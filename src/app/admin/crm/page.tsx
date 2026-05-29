@@ -11,6 +11,7 @@ import { KanbanFilter, KanbanFilters, DEFAULT_FILTERS } from './components/Kanba
 import { LeadPool } from './components/LeadPool';
 import { SalesStats } from './components/SalesStats';
 import { EnrolledLeads } from './components/EnrolledLeads';
+import { RetryKanban } from './components/RetryKanban';
 
 function getAdminKey(): string {
   if (typeof window === 'undefined') return '';
@@ -46,7 +47,7 @@ export default function CrmPage() {
   const [adminKey, setAdminKey] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
-  const [activeTab, setActiveTab] = useState<'kanban' | 'enrolled' | 'pool' | 'stats'>('kanban');
+  const [activeTab, setActiveTab] = useState<'kanban' | 'enrolled' | 'retry' | 'pool' | 'stats'>('kanban');
 
   useEffect(() => {
     setAdminKey(getAdminKey());
@@ -213,8 +214,9 @@ export default function CrmPage() {
         {/* Tab navigation */}
         <div className="flex gap-1 mb-4">
           {([
-            { key: 'kanban',   label: '세일즈 리드풀' },
+            { key: 'kanban',   label: '최초 세일즈' },
             { key: 'enrolled', label: '수업 중' },
+            { key: 'retry',    label: '재시도 세일즈' },
             { key: 'pool',     label: '전체 리드풀' },
             { key: 'stats',    label: '통계' },
           ] as const).map(({ key, label }) => (
@@ -258,6 +260,14 @@ export default function CrmPage() {
               onStudentClick={handleStudentClick}
             />
           </>
+        )}
+
+        {activeTab === 'retry' && (
+          <RetryKanban
+            adminKey={adminKey}
+            onStudentClick={handleStudentClick}
+            onStudentUpdate={handleStudentUpdate}
+          />
         )}
 
         {activeTab === 'enrolled' && (

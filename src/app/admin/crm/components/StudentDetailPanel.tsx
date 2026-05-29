@@ -1003,6 +1003,10 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                     onChangePurified={v => setPendingEdits(prev =>
                       prev[entry.id] ? { ...prev, [entry.id]: { ...prev[entry.id], purified: v } } : prev
                     )}
+                    onStartEdit={() => setPendingEdits(prev => ({
+                      ...prev,
+                      [entry.id]: { purified: entry.ai_purified ?? '', coachHistory: entry.ai_coach_history ?? '', deletedItems: entry.ai_deleted_items ?? [] },
+                    }))}
                   />
                 ))}
               </div>
@@ -1227,9 +1231,10 @@ interface TimelineEntryProps {
   onAiCare: () => void;
   onPublish: () => void;
   onChangePurified: (v: string) => void;
+  onStartEdit: () => void;
 }
 
-function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified }: TimelineEntryProps) {
+function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified, onStartEdit }: TimelineEntryProps) {
   const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
     year: 'numeric', month: 'long', day: 'numeric',
   });
@@ -1303,9 +1308,17 @@ function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, on
           )}
 
           {!aiLoading && !pendingEdit && entry.published && entry.ai_purified && (
-            <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
-              {entry.ai_purified}
-            </p>
+            <>
+              <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
+                {entry.ai_purified}
+              </p>
+              <button
+                onClick={onStartEdit}
+                className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <Pencil size={11} />수정
+              </button>
+            </>
           )}
         </div>
       )}

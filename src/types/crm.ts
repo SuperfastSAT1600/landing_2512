@@ -157,8 +157,21 @@ export interface Student {
   portal_token: string | null;
   preferred_language: PreferredLanguage | null;
 
+  // 재시도 세일즈
+  retry_strategy_id: string | null;
+  retry_stage: RetryStage | null;
+
   created_at: string;
   updated_at: string;
+}
+
+export type RetryStage = '연락 시도' | '상담 중' | '제안 완료' | '결제 완료';
+export const RETRY_STAGES: RetryStage[] = ['연락 시도', '상담 중', '제안 완료', '결제 완료'];
+
+export interface RetryStrategy {
+  id: string;
+  name: string;
+  created_at: string;
 }
 
 export type CreateStudentInput = Pick<
