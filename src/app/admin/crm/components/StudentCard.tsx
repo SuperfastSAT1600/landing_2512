@@ -5,6 +5,11 @@ import { CSS } from '@dnd-kit/utilities';
 import { X, GripVertical, CreditCard } from 'lucide-react';
 import { Student } from '@/types/crm';
 
+function daysElapsed(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+
 interface StudentCardProps {
   student: Student;
   onChurn: () => void;
@@ -64,19 +69,26 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
       {/* Name */}
       <p className="text-sm font-semibold text-gray-900 leading-tight pr-10">{student.name}</p>
 
-      {/* Payment button */}
-      {onPayment && (
-        <div className="mt-1.5 flex justify-end">
+      {/* Days elapsed + payment icon */}
+      <div className="mt-1.5 flex items-center justify-between">
+        {(() => {
+          const days = daysElapsed(student.inquiry_date ?? student.created_at);
+          return days !== null ? (
+            <span className={`text-[10px] font-medium ${days >= 14 ? 'text-red-400' : days >= 7 ? 'text-amber-500' : 'text-gray-400'}`}>
+              D+{days}
+            </span>
+          ) : <span />;
+        })()}
+        {onPayment && (
           <button
             onClick={(e) => { e.stopPropagation(); onPayment(); }}
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
+            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-0.5 text-blue-400 hover:text-blue-600 transition-all"
             title="결제 완료 처리"
           >
-            <CreditCard size={10} />
-            결제 완료
+            <CreditCard size={12} />
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
