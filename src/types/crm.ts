@@ -389,7 +389,7 @@ export type Grade = typeof GRADE_OPTIONS[number];
 export const GRADE_OPTIONS_BY_SCHOOL_TYPE: Record<string, string[]> = {
   '한국 학제': ['초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3', '재수', '성인'],
   'AP': ['7th', '8th', '9th', '10th', '11th', '12th', '졸업', '기타'],
-  'IB': ['Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'DP Year 1', 'DP Year 2', '졸업', '기타'],
+  'IB': ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', '졸업', '기타'],
 };
 
 export type ChurnTag = typeof CHURN_TAG_OPTIONS[number];
