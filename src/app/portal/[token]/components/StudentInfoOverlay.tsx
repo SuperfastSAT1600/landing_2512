@@ -170,21 +170,36 @@ export default function StudentInfoOverlay({ student }: { student: StudentInfo }
             </InfoRow>
           </div>
 
-          {/* Upcoming SAT dates */}
-          <div className="rounded-2xl px-5 bg-white" style={{ border: '1px solid #E2E8F0' }}>
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 pt-4 pb-3">SAT 시험 일정</p>
-            <div className="space-y-0">
-              {upcomingSat.slice(0, 10).map(({ date, days }) => (
-                <div key={date} className="flex items-center justify-between py-2.5 border-b last:border-b-0" style={{ borderColor: '#F1F5F9' }}>
-                  <span className="text-sm text-slate-700">{formatKo(date)}</span>
-                  <span className="text-xs font-semibold tabular-nums"
-                    style={{ color: days <= 30 ? '#ef4444' : days <= 90 ? ACCENT : '#94a3b8' }}>
-                    {dDayLabel(days)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Upcoming SAT dates — grouped by year */}
+          {(() => {
+            const grouped = upcomingSat.slice(0, 12).reduce<Record<string, { date: string; days: number }[]>>((acc, item) => {
+              const year = item.date.slice(0, 4);
+              (acc[year] ??= []).push(item);
+              return acc;
+            }, {});
+            return (
+              <div className="rounded-2xl px-5 bg-white" style={{ border: '1px solid #E2E8F0' }}>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400 pt-4 pb-3">SAT 시험 일정</p>
+                {Object.entries(grouped).map(([year, dates], gi) => (
+                  <div key={year} className={gi > 0 ? 'mt-4' : ''}>
+                    <p className="text-[11px] font-bold text-slate-400 mb-1">{year}년</p>
+                    {dates.map(({ date, days }) => (
+                      <div key={date} className="flex items-center justify-between py-2.5 border-b last:border-b-0" style={{ borderColor: '#F1F5F9' }}>
+                        <span className="text-sm text-slate-700">
+                          {new Date(date + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
+                        </span>
+                        <span className="text-xs font-semibold tabular-nums"
+                          style={{ color: days <= 30 ? '#ef4444' : days <= 90 ? ACCENT : '#94a3b8' }}>
+                          {dDayLabel(days)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                <div className="pb-1" />
+              </div>
+            );
+          })()}
 
         </div>
       </div>
