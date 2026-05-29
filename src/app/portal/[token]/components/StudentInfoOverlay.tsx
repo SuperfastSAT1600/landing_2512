@@ -176,7 +176,7 @@ export default function StudentInfoOverlay({ student }: { student: StudentInfo }
             <div className="space-y-0">
               {upcomingSat.slice(0, 10).map(({ date, days }) => (
                 <div key={date} className="flex items-center justify-between py-2.5 border-b last:border-b-0" style={{ borderColor: '#F1F5F9' }}>
-                  <span className="text-sm text-slate-700">{formatMonthDay(date)}</span>
+                  <span className="text-sm text-slate-700">{formatKo(date)}</span>
                   <span className="text-xs font-semibold tabular-nums"
                     style={{ color: days <= 30 ? '#ef4444' : days <= 90 ? ACCENT : '#94a3b8' }}>
                     {dDayLabel(days)}
