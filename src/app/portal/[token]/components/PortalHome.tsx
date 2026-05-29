@@ -225,12 +225,13 @@ export default function PortalHome({ data, onNavigate, onSettings }: Props) {
               preview={studentPreview}
               onClick={() => onNavigate('student')}
             />
-            <PreviewCard
-              title="진단 테스트"
-              preview={diagPreview}
-              disabled={!diagnosticResult}
-              onClick={() => onNavigate('diagnostic')}
-            />
+            {diagnosticResult && (
+              <PreviewCard
+                title="진단 테스트"
+                preview={diagPreview}
+                onClick={() => onNavigate('diagnostic')}
+              />
+            )}
             <PreviewCard
               title="상담 기록"
               preview={consultPreview}
