@@ -768,6 +768,12 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                           </select>
                         </EditField>
                       )}
+                      <EditField label="광고명 (자동)">
+                        <input readOnly value={localStudent.ad_name ?? ''} placeholder="자동 입력" className={`${inputCls} bg-gray-50 text-gray-400 cursor-default`} />
+                      </EditField>
+                      <EditField label="광고세트 (자동)">
+                        <input readOnly value={localStudent.adset_name ?? ''} placeholder="자동 입력" className={`${inputCls} bg-gray-50 text-gray-400 cursor-default`} />
+                      </EditField>
                     </div>
                   </div>
                 ) : (
@@ -789,12 +795,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                     {localStudent.parent_timezone && (
                       <InquiryRow label="시간대" value={TIMEZONE_LABEL_MAP[localStudent.parent_timezone] ?? localStudent.parent_timezone} />
                     )}
-                    {localStudent.ad_name && (
-                      <InquiryRow label="광고명" value={localStudent.ad_name} />
-                    )}
-                    {localStudent.adset_name && (
-                      <InquiryRow label="광고세트" value={localStudent.adset_name} />
-                    )}
+                    <InquiryRow label="광고명" value={localStudent.ad_name ?? '—'} />
+                    <InquiryRow label="광고세트" value={localStudent.adset_name ?? '—'} />
                     {localStudent.campaign_tags && localStudent.campaign_tags.length > 0 && (
                       <div className="flex items-start gap-2 pt-0.5">
                         <span className="text-[13px] text-gray-400 w-[28%] shrink-0">태그</span>
