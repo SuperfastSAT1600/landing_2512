@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { z } from 'zod';
 import type { AiCareResult } from '@/types/crm';
 
@@ -40,7 +40,7 @@ const SYSTEM_PROMPT = `당신은 SAT 교육 CRM 시스템의 상담 메모 변�
 
 /**
  * POST /api/crm/ai-care
- * Transforms a raw consultation memo using Claude AI.
+ * Transforms a raw consultation memo using OpenAI.
  * Returns purified text for parents, deleted item list, and coach history.
  * Body: { raw_memo: string }
  * Requires admin authentication.
@@ -62,39 +62,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'raw_memo is required' }, { status: 400 });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    console.error('[ai-care] ANTHROPIC_API_KEY is not set');
+    console.error('[ai-care] OPENAI_API_KEY is not set');
     return NextResponse.json({ error: 'AI service not configured' }, { status: 503 });
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = new OpenAI({ apiKey });
 
   let rawContent: string;
   try {
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
       messages: [
-        {
-          role: 'user',
-          content: `다음 상담 메모를 변환해주세요:\n\n${raw_memo.trim()}`,
-        },
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `다음 상담 메모를 변환해주세요:\n\n${raw_memo.trim()}` },
       ],
     });
 
-    const block = message.content[0];
-    if (!block || block.type !== 'text') {
-      throw new Error('Unexpected response format from Claude');
-    }
-    rawContent = block.text;
+    rawContent = response.choices[0]?.message?.content ?? '';
+    if (!rawContent) throw new Error('Empty response from OpenAI');
   } catch (err) {
-    console.error('[ai-care] Claude API error:', err);
+    console.error('[ai-care] OpenAI API error:', err);
     return NextResponse.json({ error: 'AI processing failed' }, { status: 502 });
   }
 
-  // Extract JSON from response (handle potential markdown code blocks)
   let parsed: unknown;
   try {
     const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
