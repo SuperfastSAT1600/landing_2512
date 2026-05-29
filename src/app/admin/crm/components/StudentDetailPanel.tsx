@@ -5,7 +5,7 @@ import { X, ChevronRight, ChevronDown, ChevronUp, Sparkles, Check, Clock, AlertT
 import type { Student, ConsultationEntry, FunnelStage, LeadStatus, ChurnType } from '@/types/crm';
 import {
   FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS, CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP,
-  GRADE_OPTIONS, INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS,
+  GRADE_OPTIONS_BY_SCHOOL_TYPE, INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS,
   B2B_PARTNER_OPTIONS, TIMEZONE_OPTIONS,
 } from '@/types/crm';
 import { ChurnModal } from './ChurnModal';
@@ -1112,17 +1112,23 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
         <input value={form.portal_name} onChange={set('portal_name')} className={inputCls} placeholder="비워두면 내부 이름 그대로 표시" />
       </EditField>
       <div className="grid grid-cols-2 gap-2">
-        <EditField label="학년">
-          <select value={form.grade} onChange={set('grade')} className={selectCls}>
-            <option value="">선택</option>
-            {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
-        </EditField>
         <EditField label="학제">
-          <select value={form.school_type} onChange={set('school_type')} className={selectCls}>
+          <select
+            value={form.school_type}
+            onChange={e => onChange({ ...form, school_type: e.target.value, grade: '' })}
+            className={selectCls}
+          >
             <option value="한국 학제">한국 학제</option>
             <option value="AP">AP</option>
             <option value="IB">IB</option>
+          </select>
+        </EditField>
+        <EditField label="학년">
+          <select value={form.grade} onChange={set('grade')} className={selectCls}>
+            <option value="">선택</option>
+            {(GRADE_OPTIONS_BY_SCHOOL_TYPE[form.school_type] ?? GRADE_OPTIONS_BY_SCHOOL_TYPE['AP']).map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
           </select>
         </EditField>
       </div>
