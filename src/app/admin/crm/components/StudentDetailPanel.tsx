@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronRight, ChevronDown, Sparkles, Check, Clock, AlertTriangle, RefreshCw, Pencil, Link, Copy } from 'lucide-react';
+import { X, ChevronRight, ChevronDown, Sparkles, Check, Clock, AlertTriangle, RefreshCw, Pencil, Link, Copy, Trash2 } from 'lucide-react';
 import type { Student, ConsultationEntry, FunnelStage, LeadStatus, ChurnType } from '@/types/crm';
 import {
   FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS, CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP,
@@ -415,6 +415,30 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
       setPublishError('네트워크 오류가 발생했습니다.');
     } finally {
       setPublishing(false);
+    }
+  }
+
+  async function handleUnpublish(entryId: string) {
+    const res = await fetch(`/api/crm/students/${student.id}/publish-memo`, {
+      method: 'PATCH', headers,
+      body: JSON.stringify({ entry_id: entryId, action: 'unpublish' }),
+    });
+    if (res.ok) {
+      setTimeline(prev => prev.map(e => e.id === entryId ? { ...e, published: false } : e));
+    }
+  }
+
+  async function handleDeleteAi(entryId: string) {
+    if (!confirm('AI 변환 내용을 삭제하시겠습니까?')) return;
+    const res = await fetch(`/api/crm/students/${student.id}/publish-memo`, {
+      method: 'PATCH', headers,
+      body: JSON.stringify({ entry_id: entryId, action: 'delete_ai' }),
+    });
+    if (res.ok) {
+      setTimeline(prev => prev.map(e =>
+        e.id === entryId ? { ...e, published: false, ai_purified: undefined, ai_deleted_items: undefined, ai_coach_history: undefined } : e
+      ));
+      setPendingEdits(prev => { const next = { ...prev }; delete next[entryId]; return next; });
     }
   }
 
@@ -1007,6 +1031,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                       ...prev,
                       [entry.id]: { purified: entry.ai_purified ?? '', coachHistory: entry.ai_coach_history ?? '', deletedItems: entry.ai_deleted_items ?? [] },
                     }))}
+                    onUnpublish={() => handleUnpublish(entry.id)}
+                    onDeleteAi={() => handleDeleteAi(entry.id)}
                   />
                 ))}
               </div>
@@ -1232,14 +1258,18 @@ interface TimelineEntryProps {
   onPublish: () => void;
   onChangePurified: (v: string) => void;
   onStartEdit: () => void;
+  onUnpublish: () => void;
+  onDeleteAi: () => void;
 }
 
-function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified, onStartEdit }: TimelineEntryProps) {
+function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified, onStartEdit, onUnpublish, onDeleteAi }: TimelineEntryProps) {
+  const [aiExpanded, setAiExpanded] = useState(false);
   const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
     year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  const showAiSection = entry.published || pendingEdit || aiLoading;
+  const hasAi = !!entry.ai_purified;
+  const showAiSection = entry.published || !!pendingEdit || aiLoading || (hasAi && !entry.published && aiExpanded);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -1256,12 +1286,22 @@ function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, on
         <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
           {entry.raw_memo}
         </p>
-        {!entry.published && !aiLoading && !pendingEdit && (
+        {/* AI 변환 버튼: AI 내용 없을 때만 */}
+        {!hasAi && !entry.published && !aiLoading && !pendingEdit && (
           <button
             onClick={onAiCare}
             className="mt-2.5 flex items-center gap-1.5 text-xs text-purple-500 hover:text-purple-600 transition-colors"
           >
             <Sparkles size={11} />AI 변환
+          </button>
+        )}
+        {/* AI 내용 있지만 미노출 상태 — 접기/펼치기 칩 */}
+        {hasAi && !entry.published && !pendingEdit && !aiLoading && (
+          <button
+            onClick={() => setAiExpanded(v => !v)}
+            className="mt-2.5 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <Sparkles size={11} />AI 변환됨 (미노출) {aiExpanded ? '▲' : '▾'}
           </button>
         )}
       </div>
@@ -1307,17 +1347,40 @@ function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, on
             </>
           )}
 
+          {/* 노출 중 */}
           {!aiLoading && !pendingEdit && entry.published && entry.ai_purified && (
             <>
               <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
                 {entry.ai_purified}
               </p>
-              <button
-                onClick={onStartEdit}
-                className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <Pencil size={11} />수정
-              </button>
+              <div className="flex items-center gap-3 mt-2">
+                <button onClick={onStartEdit} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                  <Pencil size={11} />수정
+                </button>
+                <button onClick={onUnpublish} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                  <X size={11} />닫기
+                </button>
+                <button onClick={onDeleteAi} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors">
+                  <Trash2 size={11} />삭제
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* 미노출 (닫힌 상태에서 펼쳤을 때) */}
+          {!aiLoading && !pendingEdit && !entry.published && entry.ai_purified && aiExpanded && (
+            <>
+              <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
+                {entry.ai_purified}
+              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <button onClick={onStartEdit} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                  <Pencil size={11} />수정 후 노출
+                </button>
+                <button onClick={onDeleteAi} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors">
+                  <Trash2 size={11} />삭제
+                </button>
+              </div>
             </>
           )}
         </div>

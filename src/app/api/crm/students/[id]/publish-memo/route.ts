@@ -85,3 +85,96 @@ export async function POST(
 
   return NextResponse.json({ data: updatedEntry });
 }
+
+interface PatchMemoBody {
+  entry_id: string;
+  action: 'unpublish' | 'delete_ai';
+}
+
+/**
+ * PATCH /api/crm/students/[id]/publish-memo
+ * Modifies the publish state of a memo entry without changing AI content (unpublish),
+ * or clears AI-generated fields and unpublishes (delete_ai).
+ * Body: { entry_id, action: 'unpublish' | 'delete_ai' }
+ * Requires admin authentication.
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params: _pid }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await _pid;
+  if (!isAuthenticated(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let body: PatchMemoBody;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { entry_id, action } = body;
+
+  if (!entry_id || !action) {
+    return NextResponse.json({ error: 'entry_id and action are required' }, { status: 400 });
+  }
+
+  if (action !== 'unpublish' && action !== 'delete_ai') {
+    return NextResponse.json({ error: 'action must be "unpublish" or "delete_ai"' }, { status: 400 });
+  }
+
+  // Fetch existing timeline
+  const { data: student, error: fetchError } = await supabaseAdmin
+    .from('students')
+    .select('consultation_timeline')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !student) {
+    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+  }
+
+  const timeline: ConsultationEntry[] = Array.isArray(student.consultation_timeline)
+    ? student.consultation_timeline
+    : [];
+
+  const entryIndex = timeline.findIndex((e) => e.id === entry_id);
+  if (entryIndex === -1) {
+    return NextResponse.json({ error: 'Memo entry not found' }, { status: 404 });
+  }
+
+  const base = timeline[entryIndex];
+
+  const updatedEntry: ConsultationEntry =
+    action === 'delete_ai'
+      ? {
+          ...base,
+          published: false,
+          ai_purified: '',
+          ai_deleted_items: [],
+          ai_coach_history: '',
+        }
+      : {
+          ...base,
+          published: false,
+        };
+
+  const updatedTimeline = [
+    ...timeline.slice(0, entryIndex),
+    updatedEntry,
+    ...timeline.slice(entryIndex + 1),
+  ];
+
+  const { error } = await supabaseAdmin
+    .from('students')
+    .update({ consultation_timeline: updatedTimeline })
+    .eq('id', id);
+
+  if (error) {
+    console.error('[crm/publish-memo PATCH]', error);
+    return NextResponse.json({ error: 'Failed to update memo' }, { status: 500 });
+  }
+
+  return NextResponse.json({ data: updatedEntry });
+}
