@@ -253,6 +253,7 @@ export default function CrmPage() {
               students={filteredStudents}
               followUpCount={followUpCount}
               adminKey={adminKey}
+              searchQuery={searchQuery}
               onStudentUpdate={handleStudentUpdate}
               onStudentClick={handleStudentClick}
               onAddStudent={() => setShowCreateModal(true)}

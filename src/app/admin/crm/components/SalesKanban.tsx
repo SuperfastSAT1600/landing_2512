@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -29,6 +29,7 @@ interface SalesKanbanProps {
   students: Student[];
   followUpCount: number;
   adminKey: string;
+  searchQuery?: string;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
   onStudentClick: (student: Student) => void;
   onAddStudent?: () => void;
@@ -41,19 +42,20 @@ interface KanbanRowProps {
   onChurn: (student: Student) => void;
   onPayment: (student: Student) => void;
   onAdd?: () => void;
+  isSearchMatch?: boolean;
 }
 
-function KanbanColumn({ stage, students, onStudentClick, onChurn, onPayment, onAdd }: KanbanRowProps) {
+function KanbanColumn({ stage, students, onStudentClick, onChurn, onPayment, onAdd, isSearchMatch }: KanbanRowProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
 
   return (
     <div className="flex flex-col w-44 shrink-0">
       {/* Column header */}
-      <div className="px-2 py-2 border-b border-gray-200">
-        <p className="text-[11px] font-bold text-gray-600 leading-tight truncate">
+      <div className={`px-2 py-2 border-b ${isSearchMatch ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}`}>
+        <p className={`text-[11px] font-bold leading-tight truncate ${isSearchMatch ? 'text-blue-600' : 'text-gray-600'}`}>
           {stage}. {FUNNEL_STAGE_LABELS[stage]}
         </p>
-        <span className="text-[10px] text-gray-400">{students.length}명</span>
+        <span className={`text-[10px] ${isSearchMatch ? 'text-blue-400' : 'text-gray-400'}`}>{students.length}명</span>
       </div>
 
       {/* Cards */}
@@ -91,10 +93,31 @@ function KanbanColumn({ stage, students, onStudentClick, onChurn, onPayment, onA
   );
 }
 
-export function SalesKanban({ students, followUpCount, adminKey, onStudentUpdate, onStudentClick, onAddStudent }: SalesKanbanProps) {
+export function SalesKanban({ students, followUpCount, adminKey, searchQuery, onStudentUpdate, onStudentClick, onAddStudent }: SalesKanbanProps) {
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<Student | null>(null);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const columnRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!searchQuery?.trim()) return;
+
+    const targetStage = SALES_STAGES.find(stage =>
+      students.some(s => s.funnel_stage === stage && s.lead_status === 'active')
+    );
+    if (!targetStage) return;
+
+    const columnEl = columnRefs.current[targetStage];
+    const containerEl = scrollContainerRef.current;
+    if (!columnEl || !containerEl) return;
+
+    const containerRect = containerEl.getBoundingClientRect();
+    const columnRect = columnEl.getBoundingClientRect();
+    const scrollLeft = columnRect.left - containerRect.left + containerEl.scrollLeft;
+    containerEl.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+  }, [searchQuery, students]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -148,10 +171,14 @@ export function SalesKanban({ students, followUpCount, adminKey, onStudentUpdate
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="w-full overflow-x-auto pb-2">
-          <div className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden w-max min-w-full">
+        <div ref={scrollContainerRef} className="w-full overflow-x-auto pt-2" style={{ transform: 'rotateX(180deg)' }}>
+          <div className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden w-max min-w-full" style={{ transform: 'rotateX(180deg)' }}>
             {SALES_STAGES.map((stage, i) => (
-              <div key={stage} className={`flex ${i < SALES_STAGES.length - 1 ? 'border-r border-gray-200' : ''}`}>
+              <div
+                key={stage}
+                ref={el => { columnRefs.current[stage] = el; }}
+                className={`flex ${i < SALES_STAGES.length - 1 ? 'border-r border-gray-200' : ''}`}
+              >
                 <KanbanColumn
                   stage={stage}
                   students={getStudentsForStage(stage)}
@@ -159,6 +186,7 @@ export function SalesKanban({ students, followUpCount, adminKey, onStudentUpdate
                   onChurn={setChurnTarget}
                   onPayment={setPaymentTarget}
                   onAdd={stage === '1' ? onAddStudent : undefined}
+                  isSearchMatch={!!searchQuery?.trim() && getStudentsForStage(stage).length > 0}
                 />
               </div>
             ))}
