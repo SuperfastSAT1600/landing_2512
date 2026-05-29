@@ -76,10 +76,6 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof FormState, string>> = {};
-    if (!form.name.trim()) newErrors.name = '이름을 입력해주세요';
-    if (!form.grade.trim()) newErrors.grade = '학년을 입력해주세요';
-    if (!form.inquiry_date) newErrors.inquiry_date = '문의 날짜를 선택해주세요';
-    if (!form.parent_phone.trim()) newErrors.parent_phone = '연락처를 입력해주세요';
 
     const rwScore = form.previous_rw_score ? parseInt(form.previous_rw_score) : null;
     const mathScore = form.previous_math_score ? parseInt(form.previous_math_score) : null;
@@ -158,12 +154,12 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
           {/* 이름 */}
-          <Field label="이름" required error={errors.name}>
+          <Field label="이름" error={errors.name}>
             <input value={form.name} onChange={set('name')} placeholder="홍길동" className={inputCls(!!errors.name)} />
           </Field>
 
           {/* 문의 날짜 */}
-          <Field label="문의 날짜" required error={errors.inquiry_date}>
+          <Field label="문의 날짜" error={errors.inquiry_date}>
             <input type="date" value={form.inquiry_date} onChange={set('inquiry_date')} className={inputCls(!!errors.inquiry_date)} />
           </Field>
 
@@ -193,7 +189,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
                   {CONTENT_AUTHOR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </Field>
-              <Field label="구분" required>
+              <Field label="구분">
                 <select value={form.lead_type} onChange={set('lead_type')} className={selectCls}>
                   <option value="B2C">B2C</option>
                   <option value="B2B">B2B</option>
@@ -222,13 +218,13 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
 
           {/* 학년 + 재학유형 */}
           <div className="grid grid-cols-2 gap-3">
-            <Field label="학년" required error={errors.grade}>
+            <Field label="학년" error={errors.grade}>
               <select value={form.grade} onChange={set('grade')} className={`${selectCls} ${errors.grade ? 'border-red-500/50' : ''}`}>
                 <option value="">선택</option>
                 {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
             </Field>
-            <Field label="학제" required>
+            <Field label="학제">
               <select value={form.school_type} onChange={set('school_type')} className={selectCls}>
                 <option value="한국 학제">한국 학제</option>
                 <option value="AP">AP</option>
@@ -238,7 +234,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
           </div>
 
           {/* 거주 국가/시간대 */}
-          <Field label="거주 국가 / 시간대" required>
+          <Field label="거주 국가 / 시간대">
             <select value={form.parent_timezone} onChange={set('parent_timezone')} className={selectCls}>
               {TIMEZONE_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -248,14 +244,14 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
 
           {/* 연락 수단 + 연락처 */}
           <div className="grid grid-cols-2 gap-3">
-            <Field label="연락 수단" required>
+            <Field label="연락 수단">
               <select value={form.contact_type} onChange={set('contact_type')} className={selectCls}>
                 <option value="phone">핸드폰</option>
                 <option value="kakao">카카오톡</option>
                 <option value="email">이메일</option>
               </select>
             </Field>
-            <Field label="연락처" required error={errors.parent_phone}>
+            <Field label="연락처" error={errors.parent_phone}>
               <input
                 value={form.parent_phone}
                 onChange={set('parent_phone')}
@@ -266,7 +262,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
           </div>
 
           {/* 직전 점수 */}
-          <Field label="직전 점수 상태" required>
+          <Field label="직전 점수 상태">
             <select value={form.previous_score_status} onChange={set('previous_score_status')} className={selectCls}>
               <option value="scored">응시함</option>
               <option value="never_taken">미응시</option>
@@ -319,7 +315,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
           </Field>
 
           {/* 희망 과목 */}
-          <Field label="희망 과목" required>
+          <Field label="희망 과목">
             <select value={form.desired_subjects} onChange={set('desired_subjects')} className={selectCls}>
               <optgroup label="SAT">
                 <option value="RW">RW</option>
@@ -360,11 +356,11 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
   );
 }
 
-function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
       <label className="text-xs font-medium text-gray-400">
-        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+        {label}
       </label>
       {children}
       {error && <p className="text-xs text-red-400">{error}</p>}
