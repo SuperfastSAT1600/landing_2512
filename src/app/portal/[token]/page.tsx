@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import PasscodeSetup from './components/PasscodeSetup';
 import PasscodeEntry from './components/PasscodeEntry';
 import PortalContent from './components/PortalContent';
-import HeroBackground from '@/app/components/HeroBackground';
 
 type PortalState = 'loading' | 'not-found' | 'setup' | 'locked' | 'login' | 'authenticated';
 
@@ -80,17 +79,9 @@ export default function PortalPage() {
   return (
     <div className="min-h-screen" style={{ background: isAuth ? BG : '#010204' }}>
 
-      {/* Auth screens — Hero background + headline */}
+      {/* Auth screens — headline */}
       {!isAuth && (
         <div className="relative min-h-screen overflow-hidden">
-          {/* HeroBackground canvas */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ opacity: 0.8, transform: 'rotate(180deg)' }}
-          >
-            <HeroBackground />
-          </div>
-
           {/* Fixed top bar — logo */}
           <div
             className="fixed top-0 left-0 right-0 z-50"
