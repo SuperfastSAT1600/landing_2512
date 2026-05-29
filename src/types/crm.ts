@@ -125,6 +125,8 @@ export interface Student {
   lead_type: LeadType | null;
   b2b_partner: B2BPartner | null;
   campaign_tags: string[];
+  ad_name: string | null;
+  adset_name: string | null;
 
   previous_score_status: PreviousScoreStatus;
   previous_test_date: string | null;     // YYYY-MM, scored일 때만 유효
@@ -172,6 +174,8 @@ export type CreateStudentInput = Pick<
   | 'lead_type'
   | 'b2b_partner'
   | 'campaign_tags'
+  | 'ad_name'
+  | 'adset_name'
   | 'previous_rw_score'
   | 'previous_math_score'
   | 'previous_score_status'

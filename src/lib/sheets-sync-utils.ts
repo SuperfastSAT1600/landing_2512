@@ -14,6 +14,7 @@ export interface SheetsSyncPayload {
   created_time: string;
   phone: string;
   ad_name?: string;
+  adset_name?: string;
   platform?: 'ig' | 'fb';
   student_name?: string;   // 랜딩페이지 탭: 실제 학생 이름 포함
   grade?: string;
@@ -178,20 +179,20 @@ export function buildCrmPayload(p: SheetsSyncPayload): CreateStudentInput {
 
   switch (p.source_tab) {
     case 'META리드_인스턴트폼':
-      campaignTags = ['META 리드', p.ad_name ?? ''].filter(Boolean);
+      campaignTags = ['META 리드'];
       break;
 
     case 'META리드_인스턴트폼_목표시험':
-      campaignTags = ['META 리드', '목표시험 조사', p.ad_name ?? ''].filter(Boolean);
+      campaignTags = ['META 리드', '목표시험 조사'];
       targetTestDate = mapTestDateText(p.target_test_date_text);
       break;
 
     case 'AP수업 문의':
-      campaignTags = ['AP 문의', p.ap_subject ?? '', p.ad_name ?? ''].filter(Boolean);
+      campaignTags = ['AP 문의', p.ap_subject ?? ''].filter(Boolean);
       break;
 
     case 'SuperTest 수요조사':
-      campaignTags = ['SuperTest 수요조사', p.supertest_date ?? '', p.ad_name ?? ''].filter(Boolean);
+      campaignTags = ['SuperTest 수요조사', p.supertest_date ?? ''].filter(Boolean);
       break;
 
     case 'tutoring_landing':
@@ -220,6 +221,8 @@ export function buildCrmPayload(p: SheetsSyncPayload): CreateStudentInput {
     lead_type: 'B2C',
     b2b_partner: null,
     campaign_tags: campaignTags,
+    ad_name: p.ad_name ?? null,
+    adset_name: p.adset_name ?? null,
     previous_rw_score: null,
     previous_math_score: null,
     previous_score_status: 'never_taken',
