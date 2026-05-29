@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, AlertCircle, RefreshCw, GraduationCap, UserX } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, GraduationCap, UserX, Search, X } from 'lucide-react';
 import { Student, ChurnType } from '@/types/crm';
 import { ChurnModal } from './ChurnModal';
 
@@ -64,6 +64,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchEnrolled = useCallback(async () => {
     setLoading(true);
@@ -125,12 +126,34 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
     );
   }
 
+  const filteredStudents = searchQuery.trim()
+    ? students.filter(s => s.name.includes(searchQuery.trim()))
+    : students;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
           <GraduationCap size={16} className="text-emerald-600" />
           <span className="text-sm font-bold text-emerald-700">수강 중 {students.length}명</span>
+        </div>
+        <div className="relative flex-1 min-w-[180px]">
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="이름 검색..."
+            className="w-full pl-8 pr-7 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-400 bg-white"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
         <button
           onClick={fetchEnrolled}
@@ -145,9 +168,13 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
         <div className="py-16 text-center text-sm text-gray-400">
           수업 중인 학생이 없습니다.
         </div>
+      ) : filteredStudents.length === 0 ? (
+        <div className="py-16 text-center text-sm text-gray-400">
+          &quot;{searchQuery}&quot; 검색 결과가 없습니다.
+        </div>
       ) : (
         <div className="space-y-2">
-          {students.map(s => (
+          {filteredStudents.map(s => (
             <EnrolledCard
               key={s.id}
               student={s}

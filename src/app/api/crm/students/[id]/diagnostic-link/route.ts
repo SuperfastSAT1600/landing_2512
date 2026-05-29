@@ -33,15 +33,20 @@ export async function GET(
     linked = data;
   }
 
-  // 후보 목록: 한 번도 연결된 적 없는 결과만 (student_id IS NULL)
-  const { data: candidates } = await supabaseAdmin
-    .from('diagnostic_test_results')
-    .select('id, student_name, student_email, submitted_at, test_id, total_time_seconds')
-    .is('student_id', null)
-    .order('submitted_at', { ascending: false })
-    .limit(30);
+  // 검색어가 있을 때만 후보 목록 반환 (전체 대상, 이름/이메일 ilike)
+  const search = request.nextUrl.searchParams.get('search')?.trim() ?? '';
+  let candidates: typeof linked[] = [];
+  if (search.length >= 2) {
+    const { data } = await supabaseAdmin
+      .from('diagnostic_test_results')
+      .select('id, student_name, student_email, submitted_at, test_id, total_time_seconds')
+      .or(`student_name.ilike.%${search}%,student_email.ilike.%${search}%`)
+      .order('submitted_at', { ascending: false })
+      .limit(10);
+    candidates = data ?? [];
+  }
 
-  return NextResponse.json({ linked, candidates: candidates ?? [] });
+  return NextResponse.json({ linked, candidates });
 }
 
 export async function POST(

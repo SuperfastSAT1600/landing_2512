@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronRight, ChevronDown, Sparkles, Check, Clock, AlertTriangle, RefreshCw, UserX, Pencil, Link, Copy } from 'lucide-react';
+import { X, ChevronRight, ChevronDown, Sparkles, Check, Clock, AlertTriangle, RefreshCw, Pencil, Link, Copy } from 'lucide-react';
 import type { Student, ConsultationEntry, FunnelStage, LeadStatus, ChurnType } from '@/types/crm';
 import {
   FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS, CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP,
@@ -9,6 +9,7 @@ import {
   B2B_PARTNER_OPTIONS, TIMEZONE_OPTIONS,
 } from '@/types/crm';
 import { ChurnModal } from './ChurnModal';
+import { PaymentModal } from './PaymentModal';
 
 // ─── 퍼널 가이드 ──────────────────────────────────────────────────────────────
 
@@ -148,6 +149,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   const [funnelChanging, setFunnelChanging] = useState(false);
   const [showFunnelMenu, setShowFunnelMenu] = useState(false);
   const [showChurnModal, setShowChurnModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showReactivateForm, setShowReactivateForm] = useState(false);
   const [reactivateStrategy, setReactivateStrategy] = useState('');
   const [reactivating, setReactivating] = useState(false);
@@ -161,15 +163,26 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   const [diagCandidates, setDiagCandidates] = useState<DiagCandidate[]>([]);
   const [showDiagPicker, setShowDiagPicker] = useState(false);
   const [diagLoading, setDiagLoading] = useState(false);
+  const [diagSearchQuery, setDiagSearchQuery] = useState('');
 
   const headers = { 'Content-Type': 'application/json', 'x-admin-key': adminKey };
 
-  async function fetchDiagLink() {
-    setDiagLoading(true);
+  async function fetchDiagLinked() {
     const res = await fetch(`/api/crm/students/${student.id}/diagnostic-link`, { headers });
     if (res.ok) {
-      const { linked, candidates } = await res.json();
+      const { linked } = await res.json();
       setDiagLinked(linked);
+    }
+  }
+
+  async function searchDiagCandidates(q: string) {
+    setDiagLoading(true);
+    const res = await fetch(
+      `/api/crm/students/${student.id}/diagnostic-link?search=${encodeURIComponent(q)}`,
+      { headers }
+    );
+    if (res.ok) {
+      const { candidates } = await res.json();
       setDiagCandidates(candidates);
     }
     setDiagLoading(false);
@@ -181,9 +194,12 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
       method: 'POST', headers,
       body: JSON.stringify({ resultId }),
     });
-    await fetchDiagLink();
+    await fetchDiagLinked();
+    setDiagCandidates([]);
+    setDiagSearchQuery('');
     setShowDiagPicker(false);
     onUpdate(student.id, { diagnostic_result_id: resultId });
+    setDiagLoading(false);
   }
 
   useEffect(() => {
@@ -218,6 +234,17 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     fetchFresh();
     return () => { cancelled = true; };
   }, [student.id, adminKey]);
+
+  // 패널 열릴 때 연결된 진단 결과만 가져옴
+  useEffect(() => { fetchDiagLinked(); }, [student.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 검색어 debounce — 2자 이상일 때만 검색
+  useEffect(() => {
+    if (!showDiagPicker) return;
+    if (diagSearchQuery.length < 2) { setDiagCandidates([]); return; }
+    const timer = setTimeout(() => searchDiagCandidates(diagSearchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [diagSearchQuery, showDiagPicker]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleBackdropClick() {
     if (isEditing) {
@@ -497,7 +524,18 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
 
             {/* Status badges row */}
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Funnel stage pill (clickable dropdown) */}
+              {/* 1. 리드 삭제 — stage 0에서만, 퍼널 배치 전 가장 먼저 */}
+              {localStudent.lead_status === 'active' && localStudent.funnel_stage === '0' && (
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="px-3 py-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-300 hover:border-red-400 rounded-full transition-colors disabled:opacity-50"
+                >
+                  {deleting ? '삭제 중...' : '리드 삭제'}
+                </button>
+              )}
+
+              {/* 2. Funnel stage pill (clickable dropdown) */}
               <div className="relative">
                 {showFunnelMenu && (
                   <div className="fixed inset-0 z-20" onClick={() => setShowFunnelMenu(false)} />
@@ -544,7 +582,17 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                 )}
               </div>
 
-              {/* Lead status action buttons */}
+              {/* 3. 결제 완료 */}
+              {localStudent.lead_status === 'active' && (
+                <button
+                  onClick={() => setShowPaymentModal(true)}
+                  className="px-3 py-1.5 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-300 hover:border-blue-400 rounded-full transition-colors"
+                >
+                  결제 완료
+                </button>
+              )}
+
+              {/* 4. 이탈 처리 */}
               {localStudent.lead_status === 'active' && (
                 <button
                   onClick={() => setShowChurnModal(true)}
@@ -676,18 +724,17 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                   {/* 진단테스트 연결 */}
                   <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
                     <button
-                      onClick={() => { if (!showDiagPicker) fetchDiagLink(); setShowDiagPicker(!showDiagPicker); }}
+                      onClick={() => {
+                        setShowDiagPicker(!showDiagPicker);
+                        if (showDiagPicker) { setDiagSearchQuery(''); setDiagCandidates([]); }
+                      }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12px] transition-colors ${
                         diagLinked
                           ? 'border-green-200 text-green-600 bg-green-50 hover:bg-green-100'
                           : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50'
                       }`}
                     >
-                      {diagLoading ? (
-                        <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Link size={12} />
-                      )}
+                      <Link size={12} />
                       {diagLinked ? '진단 결과 연결됨' : '진단테스트 연결'}
                     </button>
                   </div>
@@ -695,16 +742,31 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                   {showDiagPicker && (
                     <div className="mt-2 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-                        <p className="text-xs font-medium text-gray-600">결과 선택</p>
-                        <button onClick={() => setShowDiagPicker(false)} className="text-[11px] text-gray-400 hover:text-gray-600">닫기</button>
+                        <p className="text-xs font-medium text-gray-600">진단테스트 검색</p>
+                        <button onClick={() => { setShowDiagPicker(false); setDiagSearchQuery(''); setDiagCandidates([]); }} className="text-[11px] text-gray-400 hover:text-gray-600">닫기</button>
                       </div>
+                      {/* 검색 input */}
+                      <div className="px-3 py-2 border-b border-gray-100">
+                        <input
+                          autoFocus
+                          type="text"
+                          value={diagSearchQuery}
+                          onChange={e => setDiagSearchQuery(e.target.value)}
+                          placeholder="이름 또는 이메일 검색…"
+                          className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                        />
+                      </div>
+                      {/* 상태별 표시 */}
                       {diagLoading && (
                         <div className="py-4 flex justify-center">
                           <div className="w-4 h-4 border border-blue-400 border-t-transparent rounded-full animate-spin" />
                         </div>
                       )}
-                      {!diagLoading && diagCandidates.length === 0 && (
-                        <p className="text-xs text-gray-400 text-center py-4">연결 가능한 결과가 없습니다.</p>
+                      {!diagLoading && diagSearchQuery.length < 2 && (
+                        <p className="text-xs text-gray-400 text-center py-4">이름 또는 이메일로 검색하세요</p>
+                      )}
+                      {!diagLoading && diagSearchQuery.length >= 2 && diagCandidates.length === 0 && (
+                        <p className="text-xs text-gray-400 text-center py-4">결과 없음</p>
                       )}
                       {!diagLoading && diagCandidates.map(c => (
                         <button
@@ -737,18 +799,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                     </div>
                   )}
 
-                  {localStudent.funnel_stage === '0' && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <button
-                        onClick={handleDelete}
-                        disabled={deleting}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 text-xs text-red-400 hover:bg-red-50 hover:border-red-300 disabled:opacity-50 transition-colors"
-                      >
-                        <UserX size={12} />
-                        {deleting ? '삭제 중...' : '잘못된 리드 삭제'}
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
             </section>
@@ -875,6 +925,19 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             setShowChurnModal(false);
           }}
           onClose={() => setShowChurnModal(false)}
+        />
+      )}
+
+      {showPaymentModal && (
+        <PaymentModal
+          student={localStudent}
+          adminKey={adminKey}
+          onConfirm={(updatedStudent) => {
+            onUpdate(student.id, { lead_status: updatedStudent.lead_status });
+            setLocalStudent(prev => ({ ...prev, lead_status: updatedStudent.lead_status }));
+            setShowPaymentModal(false);
+          }}
+          onClose={() => setShowPaymentModal(false)}
         />
       )}
     </>
