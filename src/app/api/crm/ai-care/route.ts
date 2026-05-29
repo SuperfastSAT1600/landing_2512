@@ -33,13 +33,8 @@ const SYSTEM_PROMPT = `작성 조건:
   "coach_history": ""
 }`;
 
-/**
- * POST /api/crm/ai-care
- * Transforms a raw consultation memo using OpenAI.
- * Returns purified text for parents, deleted item list, and coach history.
- * Body: { raw_memo: string }
- * Requires admin authentication.
- */
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -70,6 +65,7 @@ export async function POST(request: NextRequest) {
     const response = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       max_tokens: 1024,
+      response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: `[상담 메모]\n${raw_memo.trim()}` },
