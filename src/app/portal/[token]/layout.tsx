@@ -32,6 +32,7 @@ export async function generateMetadata(
       title: `${displayName} 학생 | SuperfastSAT 상담 리포트`,
       description,
       siteName: 'SuperfastSAT',
+      images: [{ url: '/og-image.png', alt: 'SuperfastSAT' }],
     },
     robots: { index: false, follow: false },
   };
