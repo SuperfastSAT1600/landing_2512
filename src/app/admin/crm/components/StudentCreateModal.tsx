@@ -77,6 +77,8 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof FormState, string>> = {};
 
+    if (!form.name.trim()) newErrors.name = '이름을 입력해주세요';
+
     const rwScore = form.previous_rw_score ? parseInt(form.previous_rw_score) : null;
     const mathScore = form.previous_math_score ? parseInt(form.previous_math_score) : null;
     const targetScore = form.target_score ? parseInt(form.target_score) : null;
@@ -133,7 +135,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
         onCreate(data.data as Student);
         onClose();
       } else {
-        alert(data.error?.message ?? '학생 추가에 실패했습니다.');
+        alert(typeof data.error === 'string' ? data.error : (data.error?.message ?? '학생 추가에 실패했습니다.'));
       }
     } catch {
       alert('오류가 발생했습니다.');
