@@ -126,9 +126,10 @@ export interface Student {
   b2b_partner: B2BPartner | null;
   campaign_tags: string[];
 
+  previous_score_status: PreviousScoreStatus;
+  previous_test_date: string | null;     // YYYY-MM, scored일 때만 유효
   previous_rw_score: number | null;
   previous_math_score: number | null;
-  previous_score_status: PreviousScoreStatus;
   target_score: number | null;
   target_test_date: string | null;      // YYYY-MM-DD, null=미정
   target_test_date_2: string | null;    // YYYY-MM-DD (선택)

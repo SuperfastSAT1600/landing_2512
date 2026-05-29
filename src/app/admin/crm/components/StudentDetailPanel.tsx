@@ -59,12 +59,40 @@ function formatSatDate(value: string | null | undefined): string {
   return found ? found.label : value;
 }
 
+// 과거 SAT 응시 월 (YYYY-MM 형식, 최신순)
+const SAT_PAST_MONTHS: { value: string; label: string }[] = [
+  { value: '2026-05', label: '2026년 5월' },
+  { value: '2026-03', label: '2026년 3월' },
+  { value: '2025-12', label: '2025년 12월' },
+  { value: '2025-11', label: '2025년 11월' },
+  { value: '2025-10', label: '2025년 10월' },
+  { value: '2025-08', label: '2025년 8월' },
+  { value: '2025-06', label: '2025년 6월' },
+  { value: '2025-05', label: '2025년 5월' },
+  { value: '2025-03', label: '2025년 3월' },
+  { value: '2024-12', label: '2024년 12월' },
+  { value: '2024-11', label: '2024년 11월' },
+  { value: '2024-10', label: '2024년 10월' },
+  { value: '2024-08', label: '2024년 8월' },
+  { value: '2024-06', label: '2024년 6월' },
+  { value: '2024-05', label: '2024년 5월' },
+  { value: '2024-03', label: '2024년 3월' },
+  { value: '2023-12', label: '2023년 12월' },
+  { value: '2023-11', label: '2023년 11월' },
+  { value: '2023-10', label: '2023년 10월' },
+  { value: '2023-08', label: '2023년 8월' },
+  { value: '2023-06', label: '2023년 6월' },
+  { value: '2023-05', label: '2023년 5월' },
+  { value: '2023-03', label: '2023년 3월' },
+];
+
 // ─── 편집 폼 ──────────────────────────────────────────────────────────────────
 
 interface EditForm {
   name: string; grade: string; school_type: string; contact_type: string;
   parent_phone: string; parent_timezone: string; desired_subjects: string;
-  previous_score_status: string; previous_rw_score: string; previous_math_score: string;
+  previous_score_status: string; previous_test_date: string;
+  previous_rw_score: string; previous_math_score: string;
   target_score: string; target_test_date: string; target_test_date_2: string;
   inquiry_date: string; inquiry_channel: string; traffic_source: string;
   content_author: string; lead_type: string; b2b_partner: string;
@@ -77,6 +105,7 @@ function studentToEditForm(s: Student): EditForm {
     contact_type: s.contact_type ?? 'phone', parent_phone: s.parent_phone,
     parent_timezone: s.parent_timezone ?? 'Asia/Seoul', desired_subjects: s.desired_subjects,
     previous_score_status: s.previous_score_status,
+    previous_test_date: s.previous_test_date ?? '',
     previous_rw_score: s.previous_rw_score?.toString() ?? '',
     previous_math_score: s.previous_math_score?.toString() ?? '',
     target_score: s.target_score?.toString() ?? '',
@@ -212,6 +241,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
         parent_timezone: editForm.parent_timezone || null,
         desired_subjects: editForm.desired_subjects as Student['desired_subjects'],
         previous_score_status: editForm.previous_score_status as Student['previous_score_status'],
+        previous_test_date: editForm.previous_score_status === 'scored' ? (editForm.previous_test_date || null) : null,
         previous_rw_score: editForm.previous_rw_score ? parseInt(editForm.previous_rw_score) : null,
         previous_math_score: editForm.previous_math_score ? parseInt(editForm.previous_math_score) : null,
         target_score: editForm.target_score ? parseInt(editForm.target_score) : null,
@@ -619,7 +649,13 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               ) : (
                 <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
                   <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                    <StudentInfoCell label="직전 점수" value={scoreDisplay()} />
+                    <StudentInfoCell
+                      label="직전 점수"
+                      value={scoreDisplay()}
+                      sub={localStudent.previous_score_status === 'scored' && localStudent.previous_test_date
+                        ? (SAT_PAST_MONTHS.find(m => m.value === localStudent.previous_test_date)?.label ?? localStudent.previous_test_date)
+                        : undefined}
+                    />
                     <StudentInfoCell label="목표 점수" value={localStudent.target_score ? `${localStudent.target_score}점` : '미정'} />
                     <StudentInfoCell
                       label="목표 시험일"
@@ -858,11 +894,12 @@ function InquiryRow({ label, value }: { label: string; value: string }) {
 
 // ─── StudentInfoCell ──────────────────────────────────────────────────────────
 
-function StudentInfoCell({ label, value }: { label: string; value: string }) {
+function StudentInfoCell({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div>
       <p className="text-[11px] text-gray-400 mb-0.5">{label}</p>
       <p className="text-[14px] text-gray-900 font-bold leading-snug">{value}</p>
+      {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -946,14 +983,22 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
         </select>
       </EditField>
       {form.previous_score_status === 'scored' && (
-        <div className="grid grid-cols-2 gap-2">
-          <EditField label="직전 RW">
-            <input type="number" value={form.previous_rw_score} onChange={set('previous_rw_score')} className={inputCls} placeholder="200-800" min={200} max={800} />
+        <>
+          <EditField label="응시 월">
+            <select value={form.previous_test_date} onChange={set('previous_test_date')} className={selectCls}>
+              <option value="">(미상)</option>
+              {SAT_PAST_MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+            </select>
           </EditField>
-          <EditField label="직전 Math">
-            <input type="number" value={form.previous_math_score} onChange={set('previous_math_score')} className={inputCls} placeholder="200-800" min={200} max={800} />
-          </EditField>
-        </div>
+          <div className="grid grid-cols-2 gap-2">
+            <EditField label="직전 RW">
+              <input type="number" value={form.previous_rw_score} onChange={set('previous_rw_score')} className={inputCls} placeholder="200-800" min={200} max={800} />
+            </EditField>
+            <EditField label="직전 Math">
+              <input type="number" value={form.previous_math_score} onChange={set('previous_math_score')} className={inputCls} placeholder="200-800" min={200} max={800} />
+            </EditField>
+          </div>
+        </>
       )}
       <div className="grid grid-cols-2 gap-2">
         <EditField label="목표 점수">
