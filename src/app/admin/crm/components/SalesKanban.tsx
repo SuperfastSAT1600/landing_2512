@@ -14,7 +14,7 @@ import {
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  horizontalListSortingStrategy,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { Plus, RefreshCw, AlertTriangle } from 'lucide-react';
@@ -43,52 +43,49 @@ interface KanbanRowProps {
   onAdd?: () => void;
 }
 
-function KanbanRow({ stage, students, onStudentClick, onChurn, onPayment, onAdd }: KanbanRowProps) {
+function KanbanColumn({ stage, students, onStudentClick, onChurn, onPayment, onAdd }: KanbanRowProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
 
   return (
-    <div className="grid grid-cols-[11rem_1fr] border-b border-gray-200 last:border-b-0">
-      {/* Stage label */}
-      <div className="flex flex-col justify-center px-3 py-3 border-r border-gray-200">
-        <p className="text-xs font-bold text-gray-600 leading-tight">
-          {FUNNEL_STAGE_LABELS[stage]}
+    <div className="flex flex-col w-44 shrink-0">
+      {/* Column header */}
+      <div className="px-2 py-2 border-b border-gray-200">
+        <p className="text-[11px] font-bold text-gray-600 leading-tight truncate">
+          {stage}. {FUNNEL_STAGE_LABELS[stage]}
         </p>
-        <span className="mt-1 text-[11px] text-gray-400">{students.length}명</span>
+        <span className="text-[10px] text-gray-400">{students.length}명</span>
       </div>
 
-      {/* Cards row */}
+      {/* Cards */}
       <div
         ref={setNodeRef}
-        className={`overflow-x-auto min-h-[88px] transition-colors ${isOver ? 'bg-blue-500/10' : ''}`}
+        className={`flex-1 p-2 space-y-1.5 min-h-[120px] transition-colors ${isOver ? 'bg-blue-500/10' : ''}`}
       >
-        <div className="flex items-center gap-2 px-3 py-3 w-max min-h-[88px]">
-          <SortableContext items={students.map(s => s.id)} strategy={horizontalListSortingStrategy}>
-            {students.map((student) => (
-              <div key={student.id} className="w-[200px]">
-                <StudentCard
-                  student={student}
-                  onClick={() => onStudentClick(student)}
-                  onChurn={() => onChurn(student)}
-                  onPayment={() => onPayment(student)}
-                />
-              </div>
-            ))}
-          </SortableContext>
+        <SortableContext items={students.map(s => s.id)} strategy={verticalListSortingStrategy}>
+          {students.map((student) => (
+            <StudentCard
+              key={student.id}
+              student={student}
+              onClick={() => onStudentClick(student)}
+              onChurn={() => onChurn(student)}
+              onPayment={() => onPayment(student)}
+            />
+          ))}
+        </SortableContext>
 
-          {onAdd && (
-            <button
-              onClick={onAdd}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-dashed border-gray-200 text-xs text-gray-400 hover:text-blue-400 hover:border-blue-500/40 hover:bg-blue-500/5 transition-colors whitespace-nowrap"
-            >
-              <Plus size={12} />
-              새 학생 추가
-            </button>
-          )}
+        {onAdd && (
+          <button
+            onClick={onAdd}
+            className="w-full flex items-center justify-center gap-1 py-1.5 rounded-md border border-dashed border-gray-200 text-[11px] text-gray-400 hover:text-blue-400 hover:border-blue-400/40 hover:bg-blue-500/5 transition-colors"
+          >
+            <Plus size={11} />
+            추가
+          </button>
+        )}
 
-          {students.length === 0 && !onAdd && (
-            <p className="text-xs text-gray-300">비어 있음</p>
-          )}
-        </div>
+        {students.length === 0 && !onAdd && (
+          <p className="text-[10px] text-gray-300 text-center pt-2">비어 있음</p>
+        )}
       </div>
     </div>
   );
@@ -151,18 +148,21 @@ export function SalesKanban({ students, followUpCount, adminKey, onStudentUpdate
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="rounded-lg border border-gray-200 overflow-hidden">
-          {SALES_STAGES.map((stage) => (
-            <KanbanRow
-              key={stage}
-              stage={stage}
-              students={getStudentsForStage(stage)}
-              onStudentClick={onStudentClick}
-              onChurn={setChurnTarget}
-              onPayment={setPaymentTarget}
-              onAdd={stage === '1' ? onAddStudent : undefined}
-            />
-          ))}
+        <div className="overflow-x-auto pb-2">
+          <div className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden w-max min-w-full">
+            {SALES_STAGES.map((stage, i) => (
+              <div key={stage} className={`flex ${i < SALES_STAGES.length - 1 ? 'border-r border-gray-200' : ''}`}>
+                <KanbanColumn
+                  stage={stage}
+                  students={getStudentsForStage(stage)}
+                  onStudentClick={onStudentClick}
+                  onChurn={setChurnTarget}
+                  onPayment={setPaymentTarget}
+                  onAdd={stage === '1' ? onAddStudent : undefined}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <DragOverlay>
