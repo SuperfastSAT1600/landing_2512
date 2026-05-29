@@ -26,6 +26,8 @@ interface StudentInfo {
   desired_subjects: string;
   target_score: number | null;
   target_test_date: string | null;
+  target_score_2: number | null;
+  target_test_date_2: string | null;
   previous_rw_score: number | null;
   previous_math_score: number | null;
   preferred_language: 'korean' | 'english' | 'any' | null;

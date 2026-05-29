@@ -24,7 +24,7 @@ export async function GET(
     .from('students')
     .select(`
       id, name, portal_name, grade, school_type, desired_subjects,
-      target_score, target_test_date,
+      target_score, target_test_date, target_score_2, target_test_date_2,
       previous_rw_score, previous_math_score,
       preferred_language,
       consultation_timeline,
@@ -75,6 +75,8 @@ export async function GET(
       desired_subjects: student.desired_subjects,
       target_score: student.target_score,
       target_test_date: student.target_test_date,
+      target_score_2: student.target_score_2,
+      target_test_date_2: student.target_test_date_2,
       previous_rw_score: student.previous_rw_score,
       previous_math_score: student.previous_math_score,
       preferred_language: student.preferred_language ?? null,

@@ -20,6 +20,8 @@ interface StudentInfo {
   desired_subjects: string;
   target_score: number | null;
   target_test_date: string | null;
+  target_score_2: number | null;
+  target_test_date_2: string | null;
   previous_rw_score: number | null;
   previous_math_score: number | null;
   preferred_language: 'korean' | 'english' | 'any' | null;
@@ -153,12 +155,7 @@ export default function StudentInfoOverlay({ student }: { student: StudentInfo }
                 ? <>{prevTotal}점 <span className="text-slate-400 text-xs ml-1">(R&W {student.previous_rw_score} / Math {student.previous_math_score})</span></>
                 : <span className="text-slate-400">—</span>}
             </InfoRow>
-            <InfoRow label="목표 점수">
-              {student.target_score != null
-                ? <span style={{ color: ACCENT }} className="font-bold">{student.target_score}점</span>
-                : <span className="text-slate-400">—</span>}
-            </InfoRow>
-            <InfoRow label="목표 시험일">
+            <InfoRow label="1차 목표 시험일">
               {student.target_test_date
                 ? <>{formatKo(student.target_test_date)}{targetDays != null && (
                     <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full"
@@ -168,6 +165,29 @@ export default function StudentInfoOverlay({ student }: { student: StudentInfo }
                   )}</>
                 : <span className="text-slate-400">미정</span>}
             </InfoRow>
+            <InfoRow label="1차 목표 점수">
+              {student.target_score != null
+                ? <span style={{ color: ACCENT }} className="font-bold">{student.target_score}점</span>
+                : <span className="text-slate-400">—</span>}
+            </InfoRow>
+            {(student.target_test_date_2 || student.target_score_2) && (<>
+              <InfoRow label="2차 목표 시험일">
+                {student.target_test_date_2
+                  ? (() => {
+                      const days2 = daysLeft(student.target_test_date_2);
+                      return <>{formatKo(student.target_test_date_2)}<span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full"
+                        style={days2 >= 0 ? { background: 'rgba(96,133,255,0.12)', color: ACCENT } : { background: 'rgba(239,68,68,0.10)', color: '#ef4444' }}>
+                        {dDayLabel(days2)}
+                      </span></>;
+                    })()
+                  : <span className="text-slate-400">미정</span>}
+              </InfoRow>
+              <InfoRow label="2차 목표 점수">
+                {student.target_score_2 != null
+                  ? <span style={{ color: ACCENT }} className="font-bold">{student.target_score_2}점</span>
+                  : <span className="text-slate-400">—</span>}
+              </InfoRow>
+            </>)}
           </div>
 
           {/* Upcoming SAT dates — grouped by year */}
