@@ -32,7 +32,6 @@ interface SalesKanbanProps {
   searchQuery?: string;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
   onStudentClick: (student: Student) => void;
-  onAddStudent?: () => void;
 }
 
 interface KanbanRowProps {
@@ -93,7 +92,7 @@ function KanbanColumn({ stage, students, onStudentClick, onChurn, onPayment, onA
   );
 }
 
-export function SalesKanban({ students, followUpCount, adminKey, searchQuery, onStudentUpdate, onStudentClick, onAddStudent }: SalesKanbanProps) {
+export function SalesKanban({ students, followUpCount, adminKey, searchQuery, onStudentUpdate, onStudentClick }: SalesKanbanProps) {
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<Student | null>(null);
@@ -185,7 +184,7 @@ export function SalesKanban({ students, followUpCount, adminKey, searchQuery, on
                   onStudentClick={onStudentClick}
                   onChurn={setChurnTarget}
                   onPayment={setPaymentTarget}
-                  onAdd={stage === '1' ? onAddStudent : undefined}
+                  onAdd={undefined}
                   isSearchMatch={!!searchQuery?.trim() && getStudentsForStage(stage).length > 0}
                 />
               </div>

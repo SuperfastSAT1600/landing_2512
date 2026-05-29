@@ -256,7 +256,6 @@ export default function CrmPage() {
               searchQuery={searchQuery}
               onStudentUpdate={handleStudentUpdate}
               onStudentClick={handleStudentClick}
-              onAddStudent={() => setShowCreateModal(true)}
             />
           </>
         )}
