@@ -14,6 +14,50 @@ import { ChurnModal } from './ChurnModal';
 
 const SALES_STAGES_ONLY: FunnelStage[] = ['0', '1', '2', '3a', '3b', '4', '5a', '5b', '6', '7'];
 
+// ─── SAT 시험 일정 ─────────────────────────────────────────────────────────────
+
+const SAT_TEST_DATES: { group: string; dates: { value: string; label: string }[] }[] = [
+  {
+    group: '2025–26 시즌',
+    dates: [
+      { value: '2026-06-06', label: '2026년 6월 6일 (토)' },
+    ],
+  },
+  {
+    group: '2026–27 시즌',
+    dates: [
+      { value: '2026-08-22', label: '2026년 8월 22일 (토)' },
+      { value: '2026-09-12', label: '2026년 9월 12일 (토)' },
+      { value: '2026-10-03', label: '2026년 10월 3일 (토)' },
+      { value: '2026-11-07', label: '2026년 11월 7일 (토)' },
+      { value: '2026-12-05', label: '2026년 12월 5일 (토)' },
+      { value: '2027-03-06', label: '2027년 3월 6일 (토)' },
+      { value: '2027-05-01', label: '2027년 5월 1일 (토)' },
+      { value: '2027-06-05', label: '2027년 6월 5일 (토)' },
+    ],
+  },
+  {
+    group: '2027–28 시즌',
+    dates: [
+      { value: '2027-08-28', label: '2027년 8월 28일 (토)' },
+      { value: '2027-09-18', label: '2027년 9월 18일 (토)' },
+      { value: '2027-10-02', label: '2027년 10월 2일 (토)' },
+      { value: '2027-11-06', label: '2027년 11월 6일 (토)' },
+      { value: '2027-12-04', label: '2027년 12월 4일 (토)' },
+      { value: '2028-03-04', label: '2028년 3월 4일 (토)' },
+      { value: '2028-05-06', label: '2028년 5월 6일 (토)' },
+      { value: '2028-06-03', label: '2028년 6월 3일 (토)' },
+    ],
+  },
+];
+
+const SAT_DATE_ALL = SAT_TEST_DATES.flatMap(g => g.dates);
+
+function formatSatDate(value: string | null | undefined): string {
+  if (!value) return '미정';
+  const found = SAT_DATE_ALL.find(d => d.value === value);
+  return found ? found.label : value;
+}
 
 // ─── 편집 폼 ──────────────────────────────────────────────────────────────────
 
@@ -581,8 +625,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                       label="목표 시험일"
                       value={localStudent.target_test_date
                         ? localStudent.target_test_date_2
-                          ? `${localStudent.target_test_date} / ${localStudent.target_test_date_2}`
-                          : localStudent.target_test_date
+                          ? `${formatSatDate(localStudent.target_test_date)} / ${formatSatDate(localStudent.target_test_date_2)}`
+                          : formatSatDate(localStudent.target_test_date)
                         : '미정'}
                     />
                     {localStudent.preferred_language && (
@@ -916,11 +960,25 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
           <input type="number" value={form.target_score} onChange={set('target_score')} className={inputCls} placeholder="800-1600" min={800} max={1600} />
         </EditField>
         <EditField label="목표 시험일">
-          <input type="date" value={form.target_test_date} onChange={set('target_test_date')} className={inputCls} />
+          <select value={form.target_test_date} onChange={set('target_test_date')} className={selectCls}>
+            <option value="">(미정)</option>
+            {SAT_TEST_DATES.map(g => (
+              <optgroup key={g.group} label={g.group}>
+                {g.dates.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+              </optgroup>
+            ))}
+          </select>
         </EditField>
       </div>
       <EditField label="2차 목표 시험일">
-        <input type="date" value={form.target_test_date_2} onChange={set('target_test_date_2')} className={inputCls} />
+        <select value={form.target_test_date_2} onChange={set('target_test_date_2')} className={selectCls}>
+          <option value="">(없음)</option>
+          {SAT_TEST_DATES.map(g => (
+            <optgroup key={g.group} label={g.group}>
+              {g.dates.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+            </optgroup>
+          ))}
+        </select>
       </EditField>
       <EditField label="수업 희망 언어">
         <select value={form.preferred_language} onChange={set('preferred_language')} className={selectCls}>
