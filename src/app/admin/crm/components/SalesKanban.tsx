@@ -148,7 +148,7 @@ export function SalesKanban({ students, followUpCount, adminKey, onStudentUpdate
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="overflow-x-auto pb-2">
+        <div className="w-full overflow-x-auto pb-2">
           <div className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden w-max min-w-full">
             {SALES_STAGES.map((stage, i) => (
               <div key={stage} className={`flex ${i < SALES_STAGES.length - 1 ? 'border-r border-gray-200' : ''}`}>
