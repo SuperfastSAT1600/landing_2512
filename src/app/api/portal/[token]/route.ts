@@ -13,7 +13,7 @@ export async function GET(
 
   const { data, error } = await supabaseAdmin
     .from('students')
-    .select('id, name, passcode_hash, passcode_locked_until')
+    .select('id, name, portal_name, passcode_hash, passcode_locked_until')
     .eq('portal_token', token)
     .single();
 
@@ -28,7 +28,7 @@ export async function GET(
   return NextResponse.json({
     exists: true,
     hasPasscode: data.passcode_hash != null,
-    studentName: data.name,
+    studentName: data.portal_name || data.name,
     isLocked,
     lockedUntil: isLocked ? data.passcode_locked_until : null,
   });
