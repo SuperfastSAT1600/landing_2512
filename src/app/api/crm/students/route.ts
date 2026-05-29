@@ -106,8 +106,8 @@ export async function POST(request: NextRequest) {
     desired_subjects,
   } = body;
 
-  if (!name || !grade || !school_type || !parent_phone || !desired_subjects) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+  if (!name) {
+    return NextResponse.json({ error: '이름은 필수입니다.' }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin
@@ -115,9 +115,9 @@ export async function POST(request: NextRequest) {
     .insert([
       {
         name,
-        grade,
-        school_type,
-        parent_phone,
+        grade: grade || '기타',
+        school_type: school_type || '한국 학제',
+        parent_phone: parent_phone || '',
         contact_type: contact_type ?? null,
         inquiry_date: inquiry_date ?? null,
         inquiry_channel: inquiry_channel ?? null,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
         target_score: target_score ?? null,
         target_test_date: target_test_date ?? null,
         target_test_date_2: target_test_date_2 ?? null,
-        desired_subjects,
+        desired_subjects: desired_subjects || 'Both',
         funnel_stage: '0',
         consultation_timeline: [],
       },
