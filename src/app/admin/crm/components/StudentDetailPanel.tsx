@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronRight, ChevronDown, Sparkles, Check, Clock, AlertTriangle, RefreshCw, Pencil, Link, Copy, Trash2 } from 'lucide-react';
+import { X, ChevronRight, ChevronDown, ChevronUp, Sparkles, Check, Clock, AlertTriangle, RefreshCw, Pencil, Link, Copy, Trash2 } from 'lucide-react';
 import type { Student, ConsultationEntry, FunnelStage, LeadStatus, ChurnType } from '@/types/crm';
 import {
   FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS, CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP,
@@ -1309,9 +1309,16 @@ function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, on
       {/* AI 변환 섹션 */}
       {showAiSection && (
         <div className="border-t border-gray-100 px-4 py-3 bg-gray-50">
-          <p className="text-[11px] font-medium text-purple-500 mb-2 flex items-center gap-1">
-            <Sparkles size={11} />학부모 포털 노출 버전
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-medium text-purple-500 flex items-center gap-1">
+              <Sparkles size={11} />학부모 포털 노출 버전
+            </p>
+            {!aiLoading && !pendingEdit && entry.ai_purified && (
+              <button onClick={onDeleteAi} className="flex items-center gap-1 text-xs text-red-300 hover:text-red-500 transition-colors">
+                <Trash2 size={11} />삭제
+              </button>
+            )}
+          </div>
 
           {aiLoading && (
             <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
@@ -1358,10 +1365,7 @@ function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, on
                   <Pencil size={11} />수정
                 </button>
                 <button onClick={onUnpublish} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
-                  <X size={11} />닫기
-                </button>
-                <button onClick={onDeleteAi} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors">
-                  <Trash2 size={11} />삭제
+                  <ChevronUp size={11} />닫기
                 </button>
               </div>
             </>
@@ -1376,9 +1380,6 @@ function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, on
               <div className="flex items-center gap-3 mt-2">
                 <button onClick={onStartEdit} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
                   <Pencil size={11} />수정 후 노출
-                </button>
-                <button onClick={onDeleteAi} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors">
-                  <Trash2 size={11} />삭제
                 </button>
               </div>
             </>
