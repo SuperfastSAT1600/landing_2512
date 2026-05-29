@@ -6,8 +6,8 @@ import type { AiCareResult } from '@/types/crm';
 
 const AiCareResultSchema = z.object({
   purified: z.string(),
-  deleted_items: z.array(z.string()),
-  coach_history: z.string(),
+  deleted_items: z.array(z.string()).optional().default([]),
+  coach_history: z.string().optional().default(''),
 });
 
 const SYSTEM_PROMPT = `작성 조건:
