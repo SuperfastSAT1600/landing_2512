@@ -24,10 +24,18 @@ export async function POST(
     return NextResponse.json({ error: '상품과 금액은 필수입니다.' }, { status: 400 });
   }
 
+  // student_name 조회 (payments 테이블 기록용)
+  const { data: studentRow } = await supabaseAdmin
+    .from('students')
+    .select('name')
+    .eq('id', id)
+    .single();
+
   const { data: payment, error: payErr } = await supabaseAdmin
     .from('payments')
     .insert({
       student_id: id,
+      student_name: studentRow?.name ?? '',
       product,
       hours: hours ?? null,
       amount,
@@ -38,7 +46,7 @@ export async function POST(
 
   if (payErr) {
     console.error('[payment POST]', payErr);
-    return NextResponse.json({ error: '결제 기록 저장 실패' }, { status: 500 });
+    return NextResponse.json({ error: payErr.message ?? '결제 기록 저장 실패' }, { status: 500 });
   }
 
   const { data: student, error: stuErr } = await supabaseAdmin
