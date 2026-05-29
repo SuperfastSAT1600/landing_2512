@@ -5,7 +5,7 @@
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
-export type SchoolType = 'domestic_us' | 'korean_special' | 'international' | 'other';
+export type SchoolType = '한국 학제' | 'AP' | 'IB';
 export type DesiredSubjects =
   // SAT
   | 'RW' | 'Math' | 'Both'
@@ -133,6 +133,7 @@ export interface Student {
   previous_rw_score: number | null;
   previous_math_score: number | null;
   target_score: number | null;
+  target_score_2: number | null;
   target_test_date: string | null;      // YYYY-MM-DD, null=미정
   target_test_date_2: string | null;    // YYYY-MM-DD (선택)
   desired_subjects: DesiredSubjects;
@@ -180,6 +181,7 @@ export type CreateStudentInput = Pick<
   | 'previous_math_score'
   | 'previous_score_status'
   | 'target_score'
+  | 'target_score_2'
   | 'target_test_date'
   | 'target_test_date_2'
   | 'desired_subjects'
@@ -326,10 +328,9 @@ export const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
 };
 
 export const SCHOOL_TYPE_LABELS: Record<SchoolType, string> = {
-  domestic_us: '미국 현지',
-  korean_special: '한국 특례',
-  international: '국제학교',
-  other: '기타',
+  '한국 학제': '한국 학제',
+  'AP': 'AP',
+  'IB': 'IB',
 };
 
 export const TIMEZONE_OPTIONS = [

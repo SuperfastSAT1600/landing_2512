@@ -124,7 +124,7 @@ describe('buildCrmPayload', () => {
     expect(result.target_score).toBe(1570);
     expect(result.traffic_source).toBe('인스타그램 광고');
     expect(result.inquiry_channel).toBe('인스타그램 링크');
-    expect(result.school_type).toBe('other');
+    expect(result.school_type).toBe('한국 학제');
     expect(result.desired_subjects).toBe('Both');
     expect(result.lead_type).toBe('B2C');
     expect(result.campaign_tags).toContain('META 리드');

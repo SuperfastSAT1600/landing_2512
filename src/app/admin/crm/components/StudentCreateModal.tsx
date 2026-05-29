@@ -43,7 +43,7 @@ interface FormState {
 const INITIAL_FORM: FormState = {
   name: '',
   grade: '',
-  school_type: 'domestic_us',
+  school_type: '한국 학제',
   inquiry_date: '',
   inquiry_channel: '',
   traffic_source: '',
@@ -228,12 +228,11 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
                 {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
             </Field>
-            <Field label="재학 유형" required>
+            <Field label="학제" required>
               <select value={form.school_type} onChange={set('school_type')} className={selectCls}>
-                <option value="domestic_us">미국 현지</option>
-                <option value="korean_special">한국 특례</option>
-                <option value="international">국제학교</option>
-                <option value="other">기타</option>
+                <option value="한국 학제">한국 학제</option>
+                <option value="AP">AP</option>
+                <option value="IB">IB</option>
               </select>
             </Field>
           </div>

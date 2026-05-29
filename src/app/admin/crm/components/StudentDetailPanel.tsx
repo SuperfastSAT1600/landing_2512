@@ -94,7 +94,8 @@ interface EditForm {
   parent_phone: string; parent_timezone: string; desired_subjects: string;
   previous_score_status: string; previous_test_date: string;
   previous_rw_score: string; previous_math_score: string;
-  target_score: string; target_test_date: string; target_test_date_2: string;
+  target_score: string; target_score_2: string;
+  target_test_date: string; target_test_date_2: string;
   inquiry_date: string; inquiry_channel: string; traffic_source: string;
   content_author: string; lead_type: string; b2b_partner: string;
   preferred_language: string;
@@ -110,6 +111,7 @@ function studentToEditForm(s: Student): EditForm {
     previous_rw_score: s.previous_rw_score?.toString() ?? '',
     previous_math_score: s.previous_math_score?.toString() ?? '',
     target_score: s.target_score?.toString() ?? '',
+    target_score_2: s.target_score_2?.toString() ?? '',
     target_test_date: s.target_test_date ?? '', target_test_date_2: s.target_test_date_2 ?? '',
     inquiry_date: s.inquiry_date ?? '', inquiry_channel: s.inquiry_channel ?? '',
     traffic_source: s.traffic_source ?? '', content_author: s.content_author ?? '',
@@ -144,6 +146,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   const [localStudent, setLocalStudent] = useState<Student>(student);
   const [loadingFresh, setLoadingFresh] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingInquiry, setIsEditingInquiry] = useState(false);
+  const [savingInquiry, setSavingInquiry] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>(studentToEditForm(student));
   const [savingEdit, setSavingEdit] = useState(false);
   const [funnelChanging, setFunnelChanging] = useState(false);
@@ -272,15 +276,9 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
         previous_rw_score: editForm.previous_rw_score ? parseInt(editForm.previous_rw_score) : null,
         previous_math_score: editForm.previous_math_score ? parseInt(editForm.previous_math_score) : null,
         target_score: editForm.target_score ? parseInt(editForm.target_score) : null,
+        target_score_2: editForm.target_score_2 ? parseInt(editForm.target_score_2) : null,
         target_test_date: editForm.target_test_date || null,
         target_test_date_2: editForm.target_test_date_2 || null,
-        inquiry_date: editForm.inquiry_date || null,
-        inquiry_channel: (editForm.inquiry_channel as Student['inquiry_channel']) || null,
-        traffic_source: (editForm.traffic_source as Student['traffic_source']) || null,
-        content_author: (editForm.content_author as Student['content_author']) || null,
-        lead_type: editForm.lead_type as Student['lead_type'],
-        b2b_partner: editForm.lead_type === 'B2B' && editForm.b2b_partner
-          ? editForm.b2b_partner as Student['b2b_partner'] : null,
         preferred_language: (editForm.preferred_language as Student['preferred_language']) || null,
       };
       const res = await fetch(`/api/crm/students/${student.id}`, {
@@ -303,6 +301,39 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   function handleCancelEdit() {
     setEditForm(studentToEditForm(localStudent));
     setIsEditing(false);
+  }
+
+  async function handleSaveInquiry() {
+    setSavingInquiry(true);
+    try {
+      const updates: Partial<Student> = {
+        inquiry_date: editForm.inquiry_date || null,
+        inquiry_channel: (editForm.inquiry_channel as Student['inquiry_channel']) || null,
+        traffic_source: (editForm.traffic_source as Student['traffic_source']) || null,
+        content_author: (editForm.content_author as Student['content_author']) || null,
+        lead_type: editForm.lead_type as Student['lead_type'],
+        b2b_partner: editForm.lead_type === 'B2B' && editForm.b2b_partner
+          ? editForm.b2b_partner as Student['b2b_partner'] : null,
+      };
+      const res = await fetch(`/api/crm/students/${student.id}`, {
+        method: 'PATCH', headers, body: JSON.stringify(updates),
+      });
+      if (res.ok) {
+        setLocalStudent(prev => ({ ...prev, ...updates }));
+        onUpdate(student.id, updates);
+        setIsEditingInquiry(false);
+      } else {
+        const json = await res.json();
+        alert(json.error?.message ?? '저장에 실패했습니다.');
+      }
+    } finally {
+      setSavingInquiry(false);
+    }
+  }
+
+  function handleCancelInquiry() {
+    setEditForm(studentToEditForm(localStudent));
+    setIsEditingInquiry(false);
   }
 
   async function handleAddMemo() {
@@ -667,6 +698,118 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           {/* ── Scrollable content ── */}
           <div className="flex-1 overflow-y-auto p-5 space-y-5">
 
+            {/* ── 인입 정보 (접힘, 편집 가능) ── */}
+            <section>
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  onClick={() => { setShowInquiry(v => !v); if (isEditingInquiry) setIsEditingInquiry(false); }}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showInquiry ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                  인입 정보
+                </button>
+                {isEditingInquiry ? (
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleCancelInquiry} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">취소</button>
+                    <button
+                      onClick={handleSaveInquiry}
+                      disabled={savingInquiry}
+                      className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-lg transition-colors"
+                    >
+                      {savingInquiry ? '저장 중...' : '저장'}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setShowInquiry(true); setIsEditingInquiry(true); }}
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 transition-colors"
+                  >
+                    <Pencil size={11} />편집
+                  </button>
+                )}
+              </div>
+              {showInquiry && (
+                isEditingInquiry ? (
+                  <div className="space-y-3 bg-white rounded-xl border border-blue-200 p-4">
+                    <p className="text-[11px] text-blue-500 font-medium">편집 모드 — 저장 버튼을 눌러야 반영됩니다</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <EditField label="문의 날짜">
+                        <input type="date" value={editForm.inquiry_date} onChange={e => setEditForm(f => ({ ...f, inquiry_date: e.target.value }))} className={inputCls} />
+                      </EditField>
+                      <EditField label="인입 채널">
+                        <select value={editForm.inquiry_channel} onChange={e => setEditForm(f => ({ ...f, inquiry_channel: e.target.value }))} className={selectCls}>
+                          <option value="">(미상)</option>
+                          {INQUIRY_CHANNEL_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </EditField>
+                      <EditField label="유입 소스">
+                        <select value={editForm.traffic_source} onChange={e => setEditForm(f => ({ ...f, traffic_source: e.target.value }))} className={selectCls}>
+                          <option value="">(미상)</option>
+                          {TRAFFIC_SOURCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </EditField>
+                      <EditField label="콘텐츠 작성자">
+                        <select value={editForm.content_author} onChange={e => setEditForm(f => ({ ...f, content_author: e.target.value }))} className={selectCls}>
+                          <option value="">(미상)</option>
+                          {CONTENT_AUTHOR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </EditField>
+                      <EditField label="구분">
+                        <select value={editForm.lead_type} onChange={e => setEditForm(f => ({ ...f, lead_type: e.target.value }))} className={selectCls}>
+                          <option value="B2C">B2C</option>
+                          <option value="B2B">B2B</option>
+                        </select>
+                      </EditField>
+                      {editForm.lead_type === 'B2B' && (
+                        <EditField label="B2B 파트너사">
+                          <select value={editForm.b2b_partner} onChange={e => setEditForm(f => ({ ...f, b2b_partner: e.target.value }))} className={selectCls}>
+                            <option value="">선택</option>
+                            {B2B_PARTNER_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </EditField>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 rounded-xl px-4 py-3 space-y-1.5">
+                    <InquiryRow label="문의일" value={localStudent.inquiry_date ?? '—'} />
+                    <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
+                    <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
+                    {localStudent.content_author && (
+                      <InquiryRow label="작성자" value={localStudent.content_author} />
+                    )}
+                    <InquiryRow label="구분" value={localStudent.lead_type ?? '—'} />
+                    {localStudent.b2b_partner && (
+                      <InquiryRow label="파트너" value={localStudent.b2b_partner} />
+                    )}
+                    <InquiryRow
+                      label={localStudent.contact_type ? CONTACT_TYPE_LABELS[localStudent.contact_type] : '연락처'}
+                      value={localStudent.parent_phone || '—'}
+                    />
+                    {localStudent.parent_timezone && (
+                      <InquiryRow label="시간대" value={TIMEZONE_LABEL_MAP[localStudent.parent_timezone] ?? localStudent.parent_timezone} />
+                    )}
+                    {localStudent.ad_name && (
+                      <InquiryRow label="광고명" value={localStudent.ad_name} />
+                    )}
+                    {localStudent.adset_name && (
+                      <InquiryRow label="광고세트" value={localStudent.adset_name} />
+                    )}
+                    {localStudent.campaign_tags && localStudent.campaign_tags.length > 0 && (
+                      <div className="flex items-start gap-2 pt-0.5">
+                        <span className="text-[13px] text-gray-400 w-[28%] shrink-0">태그</span>
+                        <div className="flex flex-wrap gap-1">
+                          {localStudent.campaign_tags.map(tag => (
+                            <span key={tag} className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[11px] font-medium">{tag}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </section>
+
             {/* ── 학생 정보 (편집 가능) ── */}
             <section>
               <div className="flex items-center justify-between mb-2">
@@ -704,15 +847,18 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                         ? (SAT_PAST_MONTHS.find(m => m.value === localStudent.previous_test_date)?.label ?? localStudent.previous_test_date)
                         : undefined}
                     />
-                    <StudentInfoCell label="목표 점수" value={localStudent.target_score ? `${localStudent.target_score}점` : '미정'} />
                     <StudentInfoCell
-                      label="목표 시험일"
-                      value={localStudent.target_test_date
-                        ? localStudent.target_test_date_2
-                          ? `${formatSatDate(localStudent.target_test_date)} / ${formatSatDate(localStudent.target_test_date_2)}`
-                          : formatSatDate(localStudent.target_test_date)
-                        : '미정'}
+                      label="1차 목표"
+                      value={localStudent.target_test_date ? formatSatDate(localStudent.target_test_date) : '미정'}
+                      sub={localStudent.target_score ? `${localStudent.target_score}점` : undefined}
                     />
+                    {(localStudent.target_test_date_2 || localStudent.target_score_2) && (
+                      <StudentInfoCell
+                        label="2차 목표"
+                        value={localStudent.target_test_date_2 ? formatSatDate(localStudent.target_test_date_2) : '미정'}
+                        sub={localStudent.target_score_2 ? `${localStudent.target_score_2}점` : undefined}
+                      />
+                    )}
                     {localStudent.preferred_language && (
                       <StudentInfoCell
                         label="수업 언어"
@@ -852,69 +998,14 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                     publishing={publishing}
                     onAiCare={() => triggerAiCare(entry)}
                     onPublish={() => handlePublish(entry.id)}
-                    onCancelEdit={() => setPendingEdits(prev => {
-                      const next = { ...prev };
-                      delete next[entry.id];
-                      return next;
-                    })}
                     onChangePurified={v => setPendingEdits(prev =>
                       prev[entry.id] ? { ...prev, [entry.id]: { ...prev[entry.id], purified: v } } : prev
-                    )}
-                    onChangeCoachHistory={v => setPendingEdits(prev =>
-                      prev[entry.id] ? { ...prev, [entry.id]: { ...prev[entry.id], coachHistory: v } } : prev
                     )}
                   />
                 ))}
               </div>
             </section>
 
-            {/* ── 인입 정보 (접힘) ── */}
-            <section>
-              <button
-                onClick={() => setShowInquiry(v => !v)}
-                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showInquiry ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                인입 정보
-              </button>
-              {showInquiry && (
-                <div className="mt-2 bg-gray-100 rounded-xl px-4 py-3 space-y-1.5">
-                  <InquiryRow label="문의일" value={localStudent.inquiry_date ?? '—'} />
-                  <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
-                  <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
-                  {localStudent.content_author && (
-                    <InquiryRow label="작성자" value={localStudent.content_author} />
-                  )}
-                  <InquiryRow label="구분" value={localStudent.lead_type ?? '—'} />
-                  {localStudent.b2b_partner && (
-                    <InquiryRow label="파트너" value={localStudent.b2b_partner} />
-                  )}
-                  <InquiryRow
-                    label={localStudent.contact_type ? CONTACT_TYPE_LABELS[localStudent.contact_type] : '연락처'}
-                    value={localStudent.parent_phone || '—'}
-                  />
-                  {localStudent.parent_timezone && (
-                    <InquiryRow label="시간대" value={TIMEZONE_LABEL_MAP[localStudent.parent_timezone] ?? localStudent.parent_timezone} />
-                  )}
-                  {localStudent.ad_name && (
-                    <InquiryRow label="광고명" value={localStudent.ad_name} />
-                  )}
-                  {localStudent.adset_name && (
-                    <InquiryRow label="광고세트" value={localStudent.adset_name} />
-                  )}
-                  {localStudent.campaign_tags && localStudent.campaign_tags.length > 0 && (
-                    <div className="flex items-start gap-2 pt-0.5">
-                      <span className="text-[13px] text-gray-400 w-[28%] shrink-0">태그</span>
-                      <div className="flex flex-wrap gap-1">
-                        {localStudent.campaign_tags.map(tag => (
-                          <span key={tag} className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[11px] font-medium">{tag}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </section>
           </div>
         </div>
       </div>
@@ -992,12 +1083,11 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
             {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
           </select>
         </EditField>
-        <EditField label="재학 유형">
+        <EditField label="학제">
           <select value={form.school_type} onChange={set('school_type')} className={selectCls}>
-            <option value="domestic_us">미국 현지</option>
-            <option value="korean_special">한국 특례</option>
-            <option value="international">국제학교</option>
-            <option value="other">기타</option>
+            <option value="한국 학제">한국 학제</option>
+            <option value="AP">AP</option>
+            <option value="IB">IB</option>
           </select>
         </EditField>
       </div>
@@ -1070,10 +1160,7 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
         </>
       )}
       <div className="grid grid-cols-2 gap-2">
-        <EditField label="목표 점수">
-          <input type="number" value={form.target_score} onChange={set('target_score')} className={inputCls} placeholder="800-1600" min={800} max={1600} />
-        </EditField>
-        <EditField label="목표 시험일">
+        <EditField label="1차 목표 시험일">
           <select value={form.target_test_date} onChange={set('target_test_date')} className={selectCls}>
             <option value="">(미정)</option>
             {SAT_TEST_DATES.map(g => (
@@ -1083,17 +1170,25 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
             ))}
           </select>
         </EditField>
+        <EditField label="이때 목표 점수">
+          <input type="number" value={form.target_score} onChange={set('target_score')} className={inputCls} placeholder="800-1600" min={800} max={1600} />
+        </EditField>
       </div>
-      <EditField label="2차 목표 시험일">
-        <select value={form.target_test_date_2} onChange={set('target_test_date_2')} className={selectCls}>
-          <option value="">(없음)</option>
-          {SAT_TEST_DATES.map(g => (
-            <optgroup key={g.group} label={g.group}>
-              {g.dates.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-            </optgroup>
-          ))}
-        </select>
-      </EditField>
+      <div className="grid grid-cols-2 gap-2">
+        <EditField label="2차 목표 시험일">
+          <select value={form.target_test_date_2} onChange={set('target_test_date_2')} className={selectCls}>
+            <option value="">(없음)</option>
+            {SAT_TEST_DATES.map(g => (
+              <optgroup key={g.group} label={g.group}>
+                {g.dates.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+              </optgroup>
+            ))}
+          </select>
+        </EditField>
+        <EditField label="이때 목표 점수">
+          <input type="number" value={form.target_score_2} onChange={set('target_score_2')} className={inputCls} placeholder="800-1600" min={800} max={1600} />
+        </EditField>
+      </div>
       <EditField label="수업 희망 언어">
         <select value={form.preferred_language} onChange={set('preferred_language')} className={selectCls}>
           <option value="">(미설정)</option>
@@ -1102,46 +1197,6 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
           <option value="any">상관없음</option>
         </select>
       </EditField>
-      <div className="pt-2 border-t border-gray-100">
-        <p className="text-[11px] text-gray-400 font-medium mb-2">인입 정보 수정</p>
-        <div className="grid grid-cols-2 gap-2">
-          <EditField label="문의 날짜">
-            <input type="date" value={form.inquiry_date} onChange={set('inquiry_date')} className={inputCls} />
-          </EditField>
-          <EditField label="인입 채널">
-            <select value={form.inquiry_channel} onChange={set('inquiry_channel')} className={selectCls}>
-              <option value="">(미상)</option>
-              {INQUIRY_CHANNEL_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </EditField>
-          <EditField label="유입 소스">
-            <select value={form.traffic_source} onChange={set('traffic_source')} className={selectCls}>
-              <option value="">(미상)</option>
-              {TRAFFIC_SOURCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </EditField>
-          <EditField label="콘텐츠 작성자">
-            <select value={form.content_author} onChange={set('content_author')} className={selectCls}>
-              <option value="">(미상)</option>
-              {CONTENT_AUTHOR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </EditField>
-          <EditField label="구분">
-            <select value={form.lead_type} onChange={set('lead_type')} className={selectCls}>
-              <option value="B2C">B2C</option>
-              <option value="B2B">B2B</option>
-            </select>
-          </EditField>
-          {form.lead_type === 'B2B' && (
-            <EditField label="B2B 파트너사">
-              <select value={form.b2b_partner} onChange={set('b2b_partner')} className={selectCls}>
-                <option value="">선택</option>
-                {B2B_PARTNER_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
-              </select>
-            </EditField>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
@@ -1169,99 +1224,85 @@ interface TimelineEntryProps {
   publishing: boolean;
   onAiCare: () => void;
   onPublish: () => void;
-  onCancelEdit: () => void;
   onChangePurified: (v: string) => void;
-  onChangeCoachHistory: (v: string) => void;
 }
 
-function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onCancelEdit, onChangePurified, onChangeCoachHistory }: TimelineEntryProps) {
-  const date = new Date(entry.created_at).toLocaleString('ko-KR', {
-    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified }: TimelineEntryProps) {
+  const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric',
   });
+
+  const showAiSection = entry.published || pendingEdit || aiLoading;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-4 py-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[12px] text-gray-400">{date}</span>
+      {/* 담당자 메모 */}
+      <div className="px-4 pt-3 pb-3">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] text-gray-400">{date}</span>
           {entry.published && (
-            <span className="flex items-center gap-1 text-[11px] text-green-500">
-              <Check size={11} /> 학부모 노출
+            <span className="flex items-center gap-1 text-[11px] text-emerald-500 font-medium">
+              <Check size={11} /> 학부모 포털 노출 중
             </span>
           )}
         </div>
-        <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>
+        <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
           {entry.raw_memo}
         </p>
         {!entry.published && !aiLoading && !pendingEdit && (
-          <button onClick={onAiCare} className="mt-3 flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-500 transition-colors">
-            <Sparkles size={12} />AI 변환 재실행
+          <button
+            onClick={onAiCare}
+            className="mt-2.5 flex items-center gap-1.5 text-xs text-purple-500 hover:text-purple-600 transition-colors"
+          >
+            <Sparkles size={11} />AI 변환
           </button>
-        )}
-        {aiLoading && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
-            <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
-            AI가 학부모용·코치용 버전을 생성 중입니다...
-          </div>
         )}
       </div>
 
-      {pendingEdit && !aiLoading && (
-        <div className="border-t border-gray-100 px-4 py-3 space-y-3 bg-gray-50">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">AI 변환 결과 — 수정 후 최종 승인</p>
-          <div>
-            <p className="text-[11px] text-gray-400 mb-1">학부모 노출 (순화본)</p>
-            <textarea
-              value={pendingEdit.purified}
-              onChange={e => onChangePurified(e.target.value)}
-              rows={4}
-              className="w-full text-[13px] text-gray-900 bg-white border border-gray-200 focus:border-blue-400 rounded-lg px-3 py-2 leading-relaxed resize-none outline-none transition-colors"
-            />
-          </div>
-          {pendingEdit.deletedItems.length > 0 && (
-            <div>
-              <p className="text-[11px] text-gray-400 mb-1 flex items-center gap-1">
-                <AlertTriangle size={11} className="text-yellow-500" /> 삭제된 항목 (참고용)
-              </p>
-              <ul className="text-xs text-yellow-600 space-y-0.5 pl-2">
-                {pendingEdit.deletedItems.map((item, i) => <li key={i}>• {item}</li>)}
-              </ul>
+      {/* AI 변환 섹션 */}
+      {showAiSection && (
+        <div className="border-t border-gray-100 px-4 py-3 bg-gray-50">
+          <p className="text-[11px] font-medium text-purple-500 mb-2 flex items-center gap-1">
+            <Sparkles size={11} />학부모 포털 노출 버전
+          </p>
+
+          {aiLoading && (
+            <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
+              <div className="w-3 h-3 border border-purple-400 border-t-transparent rounded-full animate-spin" />
+              AI 변환 중...
             </div>
           )}
-          <div>
-            <p className="text-[11px] text-gray-400 mb-1">코치 교육 이력</p>
-            <textarea
-              value={pendingEdit.coachHistory}
-              onChange={e => onChangeCoachHistory(e.target.value)}
-              rows={3}
-              placeholder="(없음)"
-              className="w-full text-[13px] text-blue-900 bg-blue-50 border border-blue-200 focus:border-blue-400 rounded-lg px-3 py-2 leading-relaxed resize-none outline-none transition-colors"
-            />
-          </div>
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={onPublish}
-              disabled={publishing}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 rounded-lg text-xs font-bold text-white transition-colors"
-            >
-              <Check size={12} />{publishing ? '게시 중...' : '최종 승인 및 발행'}
-            </button>
-            <button onClick={onCancelEdit} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-500 transition-colors">
-              취소
-            </button>
-          </div>
-        </div>
-      )}
 
-      {entry.published && entry.ai_purified && (
-        <div className="border-t border-gray-100 px-4 py-3 bg-green-50">
-          <p className="text-[11px] text-green-600 mb-1">학부모에게 노출 중</p>
-          <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-wrap line-clamp-3" style={{ lineHeight: '1.6' }}>
-            {entry.ai_purified}
-          </p>
-          {entry.ai_coach_history && (
-            <p className="mt-2 flex items-center gap-1 text-[11px] text-blue-400">
-              <ChevronRight size={11} />코치 교육 이력 포함됨
+          {!aiLoading && pendingEdit && (
+            <>
+              <textarea
+                value={pendingEdit.purified}
+                onChange={e => onChangePurified(e.target.value)}
+                rows={4}
+                className="w-full text-[13px] text-gray-800 bg-white border border-gray-200 focus:border-purple-300 rounded-lg px-3 py-2 leading-relaxed resize-none outline-none transition-colors"
+              />
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={onPublish}
+                  disabled={publishing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 rounded-lg text-xs font-bold text-white transition-colors"
+                >
+                  <Check size={12} />{publishing ? '적용 중...' : '적용'}
+                </button>
+                <button
+                  onClick={onAiCare}
+                  disabled={publishing}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg transition-colors"
+                >
+                  <Sparkles size={11} />재변환
+                </button>
+              </div>
+            </>
+          )}
+
+          {!aiLoading && !pendingEdit && entry.published && entry.ai_purified && (
+            <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
+              {entry.ai_purified}
             </p>
           )}
         </div>

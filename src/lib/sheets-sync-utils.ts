@@ -211,7 +211,7 @@ export function buildCrmPayload(p: SheetsSyncPayload): CreateStudentInput {
   return {
     name,
     grade,
-    school_type: 'other',
+    school_type: '한국 학제',
     parent_phone: normalizedPhone,
     contact_type: 'phone',
     inquiry_date: inquiryDate,
@@ -227,6 +227,7 @@ export function buildCrmPayload(p: SheetsSyncPayload): CreateStudentInput {
     previous_math_score: null,
     previous_score_status: 'never_taken',
     target_score: targetScore,
+    target_score_2: null,
     target_test_date: targetTestDate,
     target_test_date_2: null,
     desired_subjects: 'Both',

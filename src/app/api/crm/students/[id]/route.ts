@@ -68,7 +68,10 @@ export async function PATCH(
 
   if (error) {
     console.error('[crm/students PATCH]', error);
-    return NextResponse.json({ error: 'Failed to update student' }, { status: 500 });
+    return NextResponse.json(
+      { error: { message: error.message, code: error.code, details: error.details } },
+      { status: 500 }
+    );
   }
 
   if (!data) {
