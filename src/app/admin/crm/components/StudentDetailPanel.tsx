@@ -90,7 +90,7 @@ const SAT_PAST_MONTHS: { value: string; label: string }[] = [
 // ─── 편집 폼 ──────────────────────────────────────────────────────────────────
 
 interface EditForm {
-  name: string; grade: string; school_type: string; contact_type: string;
+  name: string; portal_name: string; grade: string; school_type: string; contact_type: string;
   parent_phone: string; parent_timezone: string; desired_subjects: string;
   previous_score_status: string; previous_test_date: string;
   previous_rw_score: string; previous_math_score: string;
@@ -103,7 +103,7 @@ interface EditForm {
 
 function studentToEditForm(s: Student): EditForm {
   return {
-    name: s.name, grade: s.grade, school_type: s.school_type,
+    name: s.name, portal_name: s.portal_name ?? '', grade: s.grade, school_type: s.school_type,
     contact_type: s.contact_type ?? 'phone', parent_phone: s.parent_phone,
     parent_timezone: s.parent_timezone ?? 'Asia/Seoul', desired_subjects: s.desired_subjects,
     previous_score_status: s.previous_score_status,
@@ -265,7 +265,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     setSavingEdit(true);
     try {
       const updates: Partial<Student> = {
-        name: editForm.name.trim(), grade: editForm.grade,
+        name: editForm.name.trim(), portal_name: editForm.portal_name.trim() || null, grade: editForm.grade,
         school_type: editForm.school_type as Student['school_type'],
         contact_type: editForm.contact_type as Student['contact_type'],
         parent_phone: editForm.parent_phone.trim(),
@@ -1105,8 +1105,11 @@ function StudentInfoEdit({ form, onChange }: { form: EditForm; onChange: (f: Edi
   return (
     <div className="space-y-3 bg-white rounded-xl border border-blue-200 p-4">
       <p className="text-[11px] text-blue-500 font-medium">편집 모드 — 저장 버튼을 눌러야 반영됩니다</p>
-      <EditField label="이름">
+      <EditField label="이름 (내부)">
         <input value={form.name} onChange={set('name')} className={inputCls} placeholder="홍길동" />
+      </EditField>
+      <EditField label="학부모 포털 표시 이름">
+        <input value={form.portal_name} onChange={set('portal_name')} className={inputCls} placeholder="비워두면 내부 이름 그대로 표시" />
       </EditField>
       <div className="grid grid-cols-2 gap-2">
         <EditField label="학년">

@@ -155,6 +155,7 @@ export interface Student {
   last_contacted_at: string | null;
   reactivation_log: ReactivationEntry[];
   portal_token: string | null;
+  portal_name: string | null;
   preferred_language: PreferredLanguage | null;
 
   // 재시도 세일즈

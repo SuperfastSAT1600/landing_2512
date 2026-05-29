@@ -23,7 +23,7 @@ export async function GET(
   const { data: student, error } = await supabaseAdmin
     .from('students')
     .select(`
-      id, name, grade, school_type, desired_subjects,
+      id, name, portal_name, grade, school_type, desired_subjects,
       target_score, target_test_date,
       previous_rw_score, previous_math_score,
       preferred_language,
@@ -69,7 +69,7 @@ export async function GET(
 
   return NextResponse.json({
     student: {
-      name: student.name,
+      name: student.portal_name || student.name,
       grade: student.grade,
       school_type: student.school_type,
       desired_subjects: student.desired_subjects,
