@@ -219,17 +219,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           setLocalStudent(json.data);
           setTimeline(freshTimeline);
           setEditForm(studentToEditForm(json.data));
-          const initialEdits: Record<string, { purified: string; coachHistory: string; deletedItems: string[] }> = {};
-          freshTimeline.forEach(e => {
-            if (e.ai_purified && !e.published) {
-              initialEdits[e.id] = {
-                purified: e.ai_purified,
-                coachHistory: e.ai_coach_history ?? '',
-                deletedItems: e.ai_deleted_items ?? [],
-              };
-            }
-          });
-          setPendingEdits(initialEdits);
+          setPendingEdits({});
         }
       } finally {
         if (!cancelled) setLoadingFresh(false);
@@ -1031,7 +1021,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                       ...prev,
                       [entry.id]: { purified: entry.ai_purified ?? '', coachHistory: entry.ai_coach_history ?? '', deletedItems: entry.ai_deleted_items ?? [] },
                     }))}
-                    onUnpublish={() => handleUnpublish(entry.id)}
                     onDeleteAi={() => handleDeleteAi(entry.id)}
                   />
                 ))}
@@ -1267,18 +1256,20 @@ interface TimelineEntryProps {
   onPublish: () => void;
   onChangePurified: (v: string) => void;
   onStartEdit: () => void;
-  onUnpublish: () => void;
   onDeleteAi: () => void;
 }
 
-function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified, onStartEdit, onUnpublish, onDeleteAi }: TimelineEntryProps) {
+function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified, onStartEdit, onDeleteAi }: TimelineEntryProps) {
   const [aiExpanded, setAiExpanded] = useState(false);
+  const [publishedExpanded, setPublishedExpanded] = useState(false);
   const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
     year: 'numeric', month: 'long', day: 'numeric',
   });
 
   const hasAi = !!entry.ai_purified;
-  const showAiSection = entry.published || !!pendingEdit || aiLoading || (hasAi && !entry.published && aiExpanded);
+  const showAiSection =
+    (entry.published && (publishedExpanded || !!pendingEdit || aiLoading)) ||
+    (!entry.published && (!!pendingEdit || aiLoading || (hasAi && aiExpanded)));
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -1286,11 +1277,25 @@ function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, on
       <div className="px-4 pt-3 pb-3">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[11px] text-gray-400">{date}</span>
-          {entry.published && (
-            <span className="flex items-center gap-1 text-[11px] text-emerald-500 font-medium">
-              <Check size={11} /> 학부모 포털 노출 중
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {/* AI 내용 있지만 미노출 상태 — 오른쪽 보라색 칩 */}
+            {hasAi && !entry.published && !pendingEdit && !aiLoading && (
+              <button
+                onClick={() => setAiExpanded(v => !v)}
+                className="flex items-center gap-1 text-[11px] font-medium text-purple-500 hover:text-purple-700 transition-colors"
+              >
+                <Sparkles size={11} />AI 변환됨 ({aiExpanded ? '닫기' : '열기'}) {aiExpanded ? '▲' : '▾'}
+              </button>
+            )}
+            {entry.published && (
+              <button
+                onClick={() => setPublishedExpanded(v => !v)}
+                className="flex items-center gap-1 text-[11px] text-emerald-500 font-medium hover:text-emerald-700 transition-colors"
+              >
+                <Check size={11} /> 학부모 포털 노출 중 {publishedExpanded ? '▲' : '▾'}
+              </button>
+            )}
+          </div>
         </div>
         <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
           {entry.raw_memo}
@@ -1302,15 +1307,6 @@ function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, on
             className="mt-2.5 flex items-center gap-1.5 text-xs text-purple-500 hover:text-purple-600 transition-colors"
           >
             <Sparkles size={11} />AI 변환
-          </button>
-        )}
-        {/* AI 내용 있지만 미노출 상태 — 접기/펼치기 칩 */}
-        {hasAi && !entry.published && !pendingEdit && !aiLoading && (
-          <button
-            onClick={() => setAiExpanded(v => !v)}
-            className="mt-2.5 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <Sparkles size={11} />AI 변환됨 (미노출) {aiExpanded ? '▲' : '▾'}
           </button>
         )}
       </div>
@@ -1373,7 +1369,7 @@ function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, on
                 <button onClick={onStartEdit} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
                   <Pencil size={11} />수정
                 </button>
-                <button onClick={onUnpublish} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                <button onClick={() => setPublishedExpanded(false)} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
                   <ChevronUp size={11} />닫기
                 </button>
               </div>

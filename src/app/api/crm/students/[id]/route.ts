@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
 
 /**
  * GET /api/crm/students/[id]
@@ -76,6 +77,13 @@ export async function PATCH(
 
   if (!data) {
     return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+  }
+
+  // 상담 기록 변경 시 임베딩 백그라운드 갱신
+  if ('consultation_timeline' in updateFields || 'churn_tag' in updateFields || 'churn_type' in updateFields) {
+    generateEmbedding(buildEmbeddingText(data)).then((embedding) =>
+      supabaseAdmin.from('students').update({ embedding: JSON.stringify(embedding) }).eq('id', id)
+    ).catch((err) => console.error('[embedding background update]', err));
   }
 
   return NextResponse.json({ data });
