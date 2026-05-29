@@ -17,6 +17,22 @@ export async function GET(request: NextRequest) {
   const stage = searchParams.get('stage');
   const pool = searchParams.get('pool') === 'true';
   const leadStatus = searchParams.get('lead_status');
+  const search = searchParams.get('search')?.trim();
+  const statsOnly = searchParams.get('stats_only') === 'true';
+
+  // 리드풀 카운트만 반환 (초기 로드용)
+  if (statsOnly && pool) {
+    const [inactiveRes, reactivatingRes] = await Promise.all([
+      supabaseAdmin.from('students').select('id', { count: 'exact', head: true }).eq('lead_status', 'inactive'),
+      supabaseAdmin.from('students').select('id', { count: 'exact', head: true }).eq('lead_status', 'reactivating'),
+    ]);
+    return NextResponse.json({
+      data: {
+        inactive: inactiveRes.count ?? 0,
+        reactivating: reactivatingRes.count ?? 0,
+      },
+    });
+  }
 
   let query = supabaseAdmin
     .from('students')
@@ -24,18 +40,19 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false });
 
   if (leadStatus) {
-    // 특정 lead_status 직접 필터 (예: enrolled, active, inactive)
     query = query.eq('lead_status', leadStatus);
   } else if (pool) {
-    // 리드 풀: 이탈 + 재활성화 시도 중
     query = query.in('lead_status', ['inactive', 'reactivating']);
   } else {
-    // 칸반: 세일즈 진행 중인 활성 학생만
     query = query.eq('lead_status', 'active');
   }
 
   if (stage) {
     query = query.eq('funnel_stage', stage);
+  }
+
+  if (search) {
+    query = query.ilike('name', `%${search}%`);
   }
 
   const { data, error } = await query;

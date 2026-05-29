@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Search, Sparkles, X, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Search, Sparkles, X, Loader2, AlertCircle } from 'lucide-react';
 import { Student, ChurnType, TrafficSource, ReactivationEntry } from '@/types/crm';
 import { ReactivationModal } from './ReactivationModal';
 import { BulkContactModal } from './BulkContactModal';
@@ -178,16 +178,36 @@ type PoolTab = 'inactive' | 'reactivating';
 
 export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch }: LeadPoolProps) {
   const [students, setStudents] = useState<Student[]>([]);
-  const [poolLoading, setPoolLoading] = useState(true);
+  const [poolLoading, setPoolLoading] = useState(false);
   const [poolError, setPoolError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [nameSearch, setNameSearch] = useState('');
+  const [statsInactive, setStatsInactive] = useState<number | null>(null);
+  const [statsReactivating, setStatsReactivating] = useState<number | null>(null);
+  const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchPoolStudents = useCallback(async () => {
+  // 초기 로드: 카운트만 가져옴
+  useEffect(() => {
+    if (!adminKey) return;
+    fetch('/api/crm/students?pool=true&stats_only=true', {
+      headers: { 'x-admin-key': adminKey },
+    })
+      .then(r => r.json())
+      .then(json => {
+        setStatsInactive(json.data?.inactive ?? 0);
+        setStatsReactivating(json.data?.reactivating ?? 0);
+      })
+      .catch(() => {});
+  }, [adminKey]);
+
+  const fetchPoolStudents = useCallback(async (search: string) => {
     setPoolLoading(true);
     setPoolError(null);
     try {
-      const res = await fetch('/api/crm/students?pool=true', {
-        headers: { 'x-admin-key': adminKey },
-      });
+      const res = await fetch(
+        `/api/crm/students?pool=true&search=${encodeURIComponent(search)}`,
+        { headers: { 'x-admin-key': adminKey } }
+      );
       if (!res.ok) throw new Error('리드풀 데이터를 불러오지 못했습니다.');
       const data = await res.json();
       setStudents(data.data ?? []);
@@ -198,9 +218,22 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
     }
   }, [adminKey]);
 
+  // 이름 검색 디바운스
   useEffect(() => {
-    if (adminKey) fetchPoolStudents();
-  }, [adminKey, fetchPoolStudents]);
+    if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+    if (!nameSearch.trim()) {
+      setStudents([]);
+      setHasSearched(false);
+      return;
+    }
+    nameDebounceRef.current = setTimeout(() => {
+      setHasSearched(true);
+      fetchPoolStudents(nameSearch.trim());
+    }, 300);
+    return () => {
+      if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+    };
+  }, [nameSearch, fetchPoolStudents]);
 
   const [poolTab, setPoolTab] = useState<PoolTab>('inactive');
   const [filters, setFilters] = useState<LeadPoolFilters>(DEFAULT_FILTERS);
@@ -219,8 +252,8 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
 
   // ─── Summary stats ─────────────────────────────────────────────────────────
 
-  const totalInactive = students.filter((s) => s.lead_status === 'inactive').length;
-  const totalReactivating = students.filter((s) => s.lead_status === 'reactivating').length;
+  const totalInactive = statsInactive ?? 0;
+  const totalReactivating = statsReactivating ?? 0;
 
   const successRate = useMemo(() => {
     const allEntries = students.flatMap((s) => s.reactivation_log ?? []);
@@ -348,33 +381,6 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
-  if (poolLoading) {
-    return (
-      <div className="flex items-center justify-center py-20 text-gray-400">
-        <Loader2 size={20} className="animate-spin mr-2" />
-        <span className="text-sm">리드풀 로딩 중...</span>
-      </div>
-    );
-  }
-
-  if (poolError) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <div className="flex items-center gap-2 text-red-500">
-          <AlertCircle size={18} />
-          <p className="text-sm font-medium">{poolError}</p>
-        </div>
-        <button
-          onClick={fetchPoolStudents}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
-        >
-          <RefreshCw size={12} />
-          다시 시도
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       {/* Bulk success banner */}
@@ -400,6 +406,26 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
           value={successRate !== null ? `${successRate}%` : '-'}
           sub={successRate !== null ? '결과 확인 기준' : '기록 없음'}
         />
+      </div>
+
+      {/* Name search */}
+      <div className="relative">
+        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          value={nameSearch}
+          onChange={e => setNameSearch(e.target.value)}
+          placeholder="이름으로 검색..."
+          className="w-full pl-8 pr-7 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 bg-white"
+        />
+        {nameSearch && (
+          <button
+            onClick={() => setNameSearch('')}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X size={13} />
+          </button>
+        )}
       </div>
 
       {/* Sub-tabs */}
@@ -579,7 +605,21 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
       )}
 
       {/* Student list */}
-      {currentList.length === 0 ? (
+      {poolLoading ? (
+        <div className="flex items-center justify-center py-12 text-gray-400">
+          <Loader2 size={18} className="animate-spin mr-2" />
+          <span className="text-sm">검색 중...</span>
+        </div>
+      ) : poolError ? (
+        <div className="flex items-center gap-2 py-8 justify-center text-red-500">
+          <AlertCircle size={16} />
+          <p className="text-sm">{poolError}</p>
+        </div>
+      ) : !hasSearched ? (
+        <div className="py-16 text-center text-sm text-gray-400">
+          이름을 입력하면 리드풀 학생을 검색합니다.
+        </div>
+      ) : currentList.length === 0 ? (
         <div className="py-12 text-center text-sm text-gray-400">
           {aiResults
             ? 'AI 검색 결과가 없습니다. 다른 표현으로 다시 시도해보세요.'
@@ -645,7 +685,7 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
             setSelectedIds(new Set());
             setShowBulkContactModal(false);
             setBulkSuccessMessage(`${count}명의 상담 기록이 저장되었습니다.`);
-            fetchPoolStudents();
+            if (nameSearch.trim()) fetchPoolStudents(nameSearch.trim());
           }}
         />
       )}
@@ -662,7 +702,7 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
             setSelectedIds(new Set());
             setShowReactivationModal(false);
             setBulkSuccessMessage(`${count}명 재활성화 시도 시작 — 칸반 '재활성화 시도 중' 섹션으로 이동됩니다.`);
-            fetchPoolStudents();
+            if (nameSearch.trim()) fetchPoolStudents(nameSearch.trim());
             onRefetch();
           }}
         />

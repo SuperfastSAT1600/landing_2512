@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Loader2, AlertCircle, RefreshCw, GraduationCap, UserX, Search, X } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Loader2, AlertCircle, GraduationCap, UserX, Search, X } from 'lucide-react';
 import { Student, ChurnType } from '@/types/crm';
 import { ChurnModal } from './ChurnModal';
 
@@ -61,17 +61,21 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate }: {
 export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: EnrolledLeadsProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [firstPaidMap, setFirstPaidMap] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchEnrolled = useCallback(async () => {
+  const fetchEnrolled = useCallback(async (query: string) => {
     setLoading(true);
     setError(null);
     try {
       const [studentsRes, paymentsRes] = await Promise.all([
-        fetch('/api/crm/students?lead_status=enrolled', { headers: { 'x-admin-key': adminKey } }),
+        fetch(`/api/crm/students?lead_status=enrolled&search=${encodeURIComponent(query)}`, {
+          headers: { 'x-admin-key': adminKey },
+        }),
         fetch('/api/crm/payments', { headers: { 'x-admin-key': adminKey } }),
       ]);
       if (!studentsRes.ok) throw new Error('데이터를 불러오지 못했습니다.');
@@ -96,46 +100,27 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   }, [adminKey]);
 
   useEffect(() => {
-    if (adminKey) fetchEnrolled();
-  }, [adminKey, fetchEnrolled]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20 text-gray-400">
-        <Loader2 size={20} className="animate-spin mr-2" />
-        <span className="text-sm">로딩 중...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <div className="flex items-center gap-2 text-red-500">
-          <AlertCircle size={18} />
-          <p className="text-sm font-medium">{error}</p>
-        </div>
-        <button
-          onClick={fetchEnrolled}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
-        >
-          <RefreshCw size={12} />
-          다시 시도
-        </button>
-      </div>
-    );
-  }
-
-  const filteredStudents = searchQuery.trim()
-    ? students.filter(s => s.name.includes(searchQuery.trim()))
-    : students;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!searchQuery.trim()) {
+      setStudents([]);
+      setHasSearched(false);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      setHasSearched(true);
+      fetchEnrolled(searchQuery.trim());
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery, fetchEnrolled]);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
+        <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl shrink-0">
           <GraduationCap size={16} className="text-emerald-600" />
-          <span className="text-sm font-bold text-emerald-700">수강 중 {students.length}명</span>
+          <span className="text-sm font-bold text-emerald-700">수강 중</span>
         </div>
         <div className="relative flex-1 min-w-[180px]">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -145,6 +130,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="이름 검색..."
             className="w-full pl-8 pr-7 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-400 bg-white"
+            autoFocus
           />
           {searchQuery && (
             <button
@@ -155,26 +141,30 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
             </button>
           )}
         </div>
-        <button
-          onClick={fetchEnrolled}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg transition-colors"
-        >
-          <RefreshCw size={12} />
-          새로고침
-        </button>
       </div>
 
-      {students.length === 0 ? (
-        <div className="py-16 text-center text-sm text-gray-400">
-          수업 중인 학생이 없습니다.
+      {loading ? (
+        <div className="flex items-center justify-center py-12 text-gray-400">
+          <Loader2 size={18} className="animate-spin mr-2" />
+          <span className="text-sm">검색 중...</span>
         </div>
-      ) : filteredStudents.length === 0 ? (
+      ) : error ? (
+        <div className="flex items-center gap-2 py-8 justify-center text-red-500">
+          <AlertCircle size={16} />
+          <p className="text-sm">{error}</p>
+        </div>
+      ) : !hasSearched ? (
+        <div className="py-16 text-center text-sm text-gray-400">
+          이름을 입력하면 수업 중인 학생을 검색합니다.
+        </div>
+      ) : students.length === 0 ? (
         <div className="py-16 text-center text-sm text-gray-400">
           &quot;{searchQuery}&quot; 검색 결과가 없습니다.
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredStudents.map(s => (
+          <p className="text-xs text-gray-400">{students.length}명 검색됨</p>
+          {students.map(s => (
             <EnrolledCard
               key={s.id}
               student={s}
