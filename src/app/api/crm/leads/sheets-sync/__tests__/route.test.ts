@@ -87,15 +87,19 @@ describe('POST /api/crm/leads/sheets-sync', () => {
   // REQ-003: 신규 생성
 
   it('신규 번호 → 201 + action: created', async () => {
-    // 조회 → 없음
+    // 1차 조회 → 중복 없음 (parent_phone eq 체크)
     mockSelect.mockReturnValueOnce({
       eq: vi.fn().mockReturnValueOnce({ data: [], error: null }),
+    });
+    // 2차 조회 → META 리드 순번 카운트 (count: 5 → 신규는 META리드_6)
+    mockSelect.mockReturnValueOnce({
+      contains: vi.fn().mockResolvedValueOnce({ count: 5, error: null }),
     });
     // insert → 성공
     mockInsert.mockReturnValueOnce({
       select: vi.fn().mockReturnValueOnce({
         single: vi.fn().mockResolvedValueOnce({
-          data: { id: 'abc-123', name: 'META리드_20260214' },
+          data: { id: 'abc-123', name: 'META리드_6' },
           error: null,
         }),
       }),
