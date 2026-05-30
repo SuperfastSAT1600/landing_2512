@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, Trash2, Search, X } from 'lucide-react';
+import { Plus, Trash2, Search, X, ArrowUpRight } from 'lucide-react';
 import { Student, RetryStage, RETRY_STAGES, RetryStrategy } from '@/types/crm';
 import { StudentCard } from './StudentCard';
 
@@ -21,6 +21,8 @@ interface RetryKanbanProps {
   adminKey: string;
   onStudentClick: (student: Student) => void;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
+  onStrategyChange?: (ctx: { id: string; name: string } | null) => void;
+  onNavigateToPool?: () => void;
 }
 
 interface RetryColumnProps {
@@ -58,7 +60,7 @@ function RetryColumn({ stage, students, onStudentClick, onRemove }: RetryColumnP
   );
 }
 
-export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate }: RetryKanbanProps) {
+export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrategyChange, onNavigateToPool }: RetryKanbanProps) {
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
@@ -95,6 +97,12 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate }: Retry
     if (selectedId) fetchStudents(selectedId);
     else setStudents([]);
   }, [selectedId, fetchStudents]);
+
+  useEffect(() => {
+    if (!onStrategyChange) return;
+    const strategy = strategies.find(s => s.id === selectedId);
+    onStrategyChange(strategy ? { id: strategy.id, name: strategy.name } : null);
+  }, [selectedId, strategies, onStrategyChange]);
 
   const handleCreateStrategy = async () => {
     if (!newStrategyName.trim()) return;
@@ -283,6 +291,15 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate }: Retry
                 <Plus size={12} />
                 리드 추가
               </button>
+              {onNavigateToPool && (
+                <button
+                  onClick={onNavigateToPool}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-colors"
+                >
+                  <ArrowUpRight size={12} />
+                  전체 리드풀에서 선택
+                </button>
+              )}
 
               {showAddLead && (
                 <div className="relative flex-1 max-w-xs">

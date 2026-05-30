@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Search, Sparkles, X, Loader2, AlertCircle } from 'lucide-react';
-import { Student, ChurnType, TrafficSource, ReactivationEntry } from '@/types/crm';
+import { Search, Sparkles, X, Loader2, AlertCircle, ChevronDown, ArrowRight } from 'lucide-react';
+import { Student, ChurnType, TrafficSource, ReactivationEntry, RetryStrategy } from '@/types/crm';
 import { ReactivationModal } from './ReactivationModal';
 import { BulkContactModal } from './BulkContactModal';
 import type { AiPoolSearchMatch } from '@/app/api/crm/ai-pool-search/route';
@@ -172,11 +172,14 @@ interface LeadPoolProps {
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
   onStudentClick: (student: Student) => void;
   onRefetch: () => void;
+  retryContext?: { id: string; name: string } | null;
+  onRetryContextClear?: () => void;
+  onRetryAssignSuccess?: () => void;
 }
 
 type PoolTab = 'inactive' | 'reactivating';
 
-export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch }: LeadPoolProps) {
+export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch, retryContext, onRetryContextClear, onRetryAssignSuccess }: LeadPoolProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [poolLoading, setPoolLoading] = useState(false);
   const [poolError, setPoolError] = useState<string | null>(null);
@@ -241,6 +244,12 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
   const [showReactivationModal, setShowReactivationModal] = useState(false);
   const [showBulkContactModal, setShowBulkContactModal] = useState(false);
   const [bulkSuccessMessage, setBulkSuccessMessage] = useState<string | null>(null);
+
+  // ─── Retry strategy assignment ──────────────────────────────────────────────
+  const [showStrategyPicker, setShowStrategyPicker] = useState(false);
+  const [pickerStrategies, setPickerStrategies] = useState<RetryStrategy[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [assigning, setAssigning] = useState(false);
 
   // ─── AI Search state ────────────────────────────────────────────────────────
   const [aiSearchOpen, setAiSearchOpen] = useState(false);
@@ -372,6 +381,42 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
     setAiSearchOpen(false);
   }
 
+  async function openStrategyPicker() {
+    setShowStrategyPicker(true);
+    if (pickerStrategies.length > 0) return;
+    setPickerLoading(true);
+    try {
+      const res = await fetch('/api/crm/retry-strategies', { headers: { 'x-admin-key': adminKey } });
+      const json = await res.json();
+      setPickerStrategies(json.data ?? []);
+    } finally {
+      setPickerLoading(false);
+    }
+  }
+
+  async function handleAssignToStrategy(strategyId: string, strategyName: string) {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setAssigning(true);
+    try {
+      const res = await fetch(`/api/crm/retry-strategies/${strategyId}/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ student_ids: ids }),
+      });
+      if (res.ok) {
+        setSelectedIds(new Set());
+        setShowStrategyPicker(false);
+        setBulkSuccessMessage(`${ids.length}명이 "${strategyName}" 전략에 배정되었습니다.`);
+        onRetryAssignSuccess?.();
+      } else {
+        alert('배정에 실패했습니다.');
+      }
+    } finally {
+      setAssigning(false);
+    }
+  }
+
   // ─── Grade options ─────────────────────────────────────────────────────────
 
   const gradeOptions = useMemo(
@@ -393,6 +438,25 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
             className="text-xs text-emerald-500 hover:text-emerald-700"
           >
             닫기
+          </button>
+        </div>
+      )}
+
+      {/* Retry strategy context banner */}
+      {retryContext && (
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-200">
+          <div className="flex items-center gap-2">
+            <ArrowRight size={14} className="text-blue-500" />
+            <p className="text-sm text-blue-700">
+              <span className="font-semibold">{retryContext.name}</span> 전략으로 배정 중 — 리드를 선택하세요
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onRetryContextClear}
+            className="text-xs text-blue-400 hover:text-blue-600 transition-colors"
+          >
+            해제
           </button>
         </div>
       )}
@@ -651,6 +715,36 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
         </div>
       )}
 
+      {/* Strategy picker dropdown (위치: bulk action bar 바로 위) */}
+      {showStrategyPicker && !retryContext && (
+        <div className="fixed bottom-20 right-6 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-2 min-w-[200px]">
+          <div className="flex items-center justify-between px-2 py-1.5 mb-1">
+            <p className="text-xs font-bold text-gray-700">전략 선택</p>
+            <button onClick={() => setShowStrategyPicker(false)} className="text-gray-400 hover:text-gray-600">
+              <X size={12} />
+            </button>
+          </div>
+          {pickerLoading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 size={14} className="animate-spin text-gray-400" />
+            </div>
+          ) : pickerStrategies.length === 0 ? (
+            <p className="text-xs text-gray-400 px-2 py-2">전략이 없습니다.<br />재시도 세일즈 탭에서 먼저 만드세요.</p>
+          ) : (
+            pickerStrategies.map(s => (
+              <button
+                key={s.id}
+                onClick={() => handleAssignToStrategy(s.id, s.name)}
+                disabled={assigning}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {s.name}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className="sticky bottom-4 flex items-center justify-between bg-gray-900 text-white rounded-xl px-4 py-3 shadow-lg">
@@ -670,6 +764,27 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch 
             >
               재활성화 시작
             </button>
+            {/* 재시도 세일즈 배정 */}
+            {retryContext ? (
+              <button
+                type="button"
+                onClick={() => handleAssignToStrategy(retryContext.id, retryContext.name)}
+                disabled={assigning}
+                className="flex items-center gap-1.5 text-sm font-bold bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white px-4 py-1.5 rounded-lg transition-colors"
+              >
+                <ArrowRight size={13} />
+                {assigning ? '배정 중...' : `"${retryContext.name}" 배정`}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => showStrategyPicker ? setShowStrategyPicker(false) : openStrategyPicker()}
+                className="flex items-center gap-1.5 text-sm font-bold bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-1.5 rounded-lg transition-colors"
+              >
+                재시도 배정
+                <ChevronDown size={13} />
+              </button>
+            )}
           </div>
         </div>
       )}

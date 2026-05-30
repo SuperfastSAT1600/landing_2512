@@ -48,6 +48,7 @@ export default function CrmPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
   const [activeTab, setActiveTab] = useState<'kanban' | 'enrolled' | 'retry' | 'pool' | 'stats'>('kanban');
+  const [retryContext, setRetryContext] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     setAdminKey(getAdminKey());
@@ -267,6 +268,8 @@ export default function CrmPage() {
             adminKey={adminKey}
             onStudentClick={handleStudentClick}
             onStudentUpdate={handleStudentUpdate}
+            onStrategyChange={setRetryContext}
+            onNavigateToPool={() => setActiveTab('pool')}
           />
         )}
 
@@ -288,6 +291,9 @@ export default function CrmPage() {
             onStudentUpdate={handleStudentUpdate}
             onStudentClick={handleStudentClick}
             onRefetch={fetchStudents}
+            retryContext={retryContext}
+            onRetryContextClear={() => setRetryContext(null)}
+            onRetryAssignSuccess={() => { setRetryContext(null); setActiveTab('retry'); }}
           />
         )}
       </div>
