@@ -1262,9 +1262,10 @@ interface TimelineEntryProps {
 function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified, onStartEdit, onDeleteAi }: TimelineEntryProps) {
   const [aiExpanded, setAiExpanded] = useState(false);
   const [publishedExpanded, setPublishedExpanded] = useState(false);
-  const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  });
+  const dateObj = entry.created_at ? new Date(entry.created_at) : null;
+  const date = dateObj && !isNaN(dateObj.getTime())
+    ? dateObj.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '날짜 미상';
 
   const hasAi = !!entry.ai_purified;
   const showAiSection =
