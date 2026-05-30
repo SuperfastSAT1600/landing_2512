@@ -1,0 +1,205 @@
+'use client';
+
+import { useState } from 'react';
+import type { Student, ChurnType } from '@/types/crm';
+import { ChurnModal } from '../ChurnModal';
+import { PaymentModal } from '../PaymentModal';
+import { usePanelData } from './hooks/usePanelData';
+import { useEditForm } from './hooks/useEditForm';
+import { useMemoSection } from './hooks/useMemoSection';
+import { useTimeline } from './hooks/useTimeline';
+import { useFunnel } from './hooks/useFunnel';
+import { useDiagnostic } from './hooks/useDiagnostic';
+import { usePortalActions } from './hooks/usePortalActions';
+import { PanelHeader } from './sections/PanelHeader';
+import { InquirySection } from './sections/InquirySection';
+import { StudentInfoSection } from './sections/StudentInfoSection';
+import { MemoSection } from './sections/MemoSection';
+import { TimelineSection } from './sections/TimelineSection';
+import type { StudentDetailPanelProps } from './types';
+
+export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
+  const [showInquiry, setShowInquiry] = useState(false);
+
+  const { localStudent, setLocalStudent, timeline, setTimeline, editForm, setEditForm, loadingFresh } =
+    usePanelData(student.id, adminKey, student);
+
+  const editFormHook = useEditForm({
+    studentId: student.id, adminKey,
+    localStudent, setLocalStudent,
+    editForm, setEditForm,
+    onUpdate,
+  });
+
+  const memoHook = useMemoSection({
+    studentId: student.id, adminKey,
+    setTimeline,
+    onUpdate: (id, updates) => onUpdate(id, updates as Partial<Student>),
+  });
+
+  const timelineHook = useTimeline({
+    studentId: student.id, adminKey,
+    setTimeline,
+    setPendingEdits: memoHook.setPendingEdits,
+  });
+
+  const funnelHook = useFunnel({
+    studentId: student.id, adminKey,
+    setLocalStudent,
+    onUpdate,
+  });
+
+  const diagHook = useDiagnostic({
+    studentId: student.id, adminKey,
+    onUpdate: (id, updates) => onUpdate(id, updates as Partial<Student>),
+  });
+
+  const portalHook = usePortalActions({
+    studentId: student.id,
+    studentName: localStudent.name,
+    adminKey, onDelete, onClose,
+  });
+
+  function scoreDisplay(): string {
+    if (localStudent.previous_score_status === 'never_taken') return '미응시';
+    if (localStudent.previous_score_status === 'dont_remember') return '기억 안남';
+    const parts = [];
+    if (localStudent.previous_rw_score !== null) parts.push(`RW ${localStudent.previous_rw_score}`);
+    if (localStudent.previous_math_score !== null) parts.push(`Math ${localStudent.previous_math_score}`);
+    return parts.length > 0 ? parts.join(' / ') : '—';
+  }
+
+  function handleBackdropClick() {
+    if (editFormHook.isEditing) {
+      if (window.confirm('편집 중인 내용이 저장되지 않습니다. 닫으시겠습니까?')) {
+        editFormHook.handleCancelEdit();
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="absolute inset-0 bg-black/50" onClick={handleBackdropClick} />
+        <div className="relative w-full max-w-[440px] bg-gray-50 border-l border-gray-200 flex flex-col h-full overflow-hidden shadow-xl">
+
+          <PanelHeader
+            localStudent={localStudent}
+            portalCopied={portalHook.portalCopied}
+            portalLoading={portalHook.portalLoading}
+            deleting={portalHook.deleting}
+            funnelChanging={funnelHook.funnelChanging}
+            showFunnelMenu={funnelHook.showFunnelMenu}
+            showReactivateForm={funnelHook.showReactivateForm}
+            reactivateStrategy={funnelHook.reactivateStrategy}
+            reactivating={funnelHook.reactivating}
+            onClose={handleBackdropClick}
+            onCopyPortalLink={portalHook.handleCopyPortalLink}
+            onDelete={portalHook.handleDelete}
+            onToggleFunnelMenu={() => {
+              if (!funnelHook.funnelChanging && localStudent.lead_status !== 'inactive') {
+                funnelHook.setShowFunnelMenu(!funnelHook.showFunnelMenu);
+              }
+            }}
+            onFunnelChange={(stage) => { funnelHook.handleFunnelChange(stage); funnelHook.setShowFunnelMenu(false); }}
+            onShowPayment={() => funnelHook.setShowPaymentModal(true)}
+            onShowChurn={() => funnelHook.setShowChurnModal(true)}
+            onShowReactivate={() => funnelHook.setShowReactivateForm(true)}
+            onHideReactivate={() => { funnelHook.setShowReactivateForm(false); funnelHook.setReactivateStrategy(''); }}
+            onReactivateStrategyChange={funnelHook.setReactivateStrategy}
+            onStartReactivation={funnelHook.handleStartReactivation}
+            onLeadStatusChange={(status) => {
+              if (status === 'active') {
+                funnelHook.handleLeadStatusChange('active', { funnel_stage: '1' });
+              } else {
+                funnelHook.handleLeadStatusChange('inactive');
+              }
+            }}
+          />
+
+          <div className="flex-1 overflow-y-auto p-5 space-y-5">
+            <InquirySection
+              localStudent={localStudent}
+              editForm={editForm}
+              setEditForm={setEditForm}
+              showInquiry={showInquiry}
+              setShowInquiry={setShowInquiry}
+              isEditingInquiry={editFormHook.isEditingInquiry}
+              setIsEditingInquiry={editFormHook.setIsEditingInquiry}
+              savingInquiry={editFormHook.savingInquiry}
+              onSaveInquiry={editFormHook.handleSaveInquiry}
+              onCancelInquiry={editFormHook.handleCancelInquiry}
+            />
+
+            <StudentInfoSection
+              localStudent={localStudent}
+              isEditing={editFormHook.isEditing}
+              setIsEditing={editFormHook.setIsEditing}
+              savingEdit={editFormHook.savingEdit}
+              editForm={editForm}
+              setEditForm={setEditForm}
+              onSaveEdit={editFormHook.handleSaveEdit}
+              onCancelEdit={editFormHook.handleCancelEdit}
+              scoreDisplay={scoreDisplay()}
+              diagLinked={diagHook.diagLinked}
+              diagCandidates={diagHook.diagCandidates}
+              showDiagPicker={diagHook.showDiagPicker}
+              setShowDiagPicker={diagHook.setShowDiagPicker}
+              diagLoading={diagHook.diagLoading}
+              diagSearchQuery={diagHook.diagSearchQuery}
+              setDiagSearchQuery={diagHook.setDiagSearchQuery}
+              onDiagLink={diagHook.handleDiagLink}
+            />
+
+            <MemoSection
+              memoText={memoHook.memoText}
+              setMemoText={memoHook.setMemoText}
+              savingMemo={memoHook.savingMemo}
+              memoError={memoHook.memoError}
+              setMemoError={memoHook.setMemoError}
+              onAddMemo={memoHook.handleAddMemo}
+            />
+
+            <TimelineSection
+              timeline={timeline}
+              loadingFresh={loadingFresh}
+              publishError={timelineHook.publishError}
+              publishing={timelineHook.publishing}
+              aiLoadingFor={memoHook.aiLoadingFor}
+              pendingEdits={memoHook.pendingEdits}
+              setPendingEdits={memoHook.setPendingEdits}
+              onAiCare={memoHook.triggerAiCare}
+              onPublish={timelineHook.handlePublish}
+              onUnpublish={timelineHook.handleUnpublish}
+              onDeleteAi={timelineHook.handleDeleteAi}
+            />
+          </div>
+        </div>
+      </div>
+
+      {funnelHook.showChurnModal && (
+        <ChurnModal
+          student={localStudent}
+          onConfirm={(churnTag: string, churnType: ChurnType) => funnelHook.handleChurnConfirm(churnTag, churnType)}
+          onClose={() => funnelHook.setShowChurnModal(false)}
+        />
+      )}
+
+      {funnelHook.showPaymentModal && (
+        <PaymentModal
+          student={localStudent}
+          adminKey={adminKey}
+          onConfirm={(updatedStudent) => {
+            onUpdate(student.id, { lead_status: updatedStudent.lead_status });
+            setLocalStudent(prev => ({ ...prev, lead_status: updatedStudent.lead_status }));
+            funnelHook.setShowPaymentModal(false);
+          }}
+          onClose={() => funnelHook.setShowPaymentModal(false)}
+        />
+      )}
+    </>
+  );
+}
