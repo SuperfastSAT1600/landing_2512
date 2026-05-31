@@ -37,7 +37,9 @@ export default function FloatingCTA() {
     if (pathname?.startsWith('/reviews/write')) return null;
     if (pathname?.startsWith('/coaches')) return null;
     if (pathname?.startsWith('/portal')) return null;
-    if (pathname === '/diagnosis') return null;
+    if (pathname?.startsWith('/diagnosis')) return null;
+    if (pathname?.startsWith('/test')) return null;
+    if (pathname?.startsWith('/practice')) return null;
     if (!isVisible) return null;
 
     const handleConsult = () => {

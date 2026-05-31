@@ -108,7 +108,7 @@ export default function TestPage() {
 
   if (phase === 'name') {
     return (
-      <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: 'calc(100vh - 56px)', marginTop: 56, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '48px 40px', width: 380, textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
           <h1 style={{ color: '#1e293b', fontSize: 22, fontWeight: 700, marginBottom: 8 }}>SuperfastSAT Full Test</h1>
           <p style={{ color: '#64748b', fontSize: 14, marginBottom: 32 }}>2026 June Full-Length Test #1</p>
@@ -141,7 +141,7 @@ export default function TestPage() {
 
   if (phase === 'submitted') {
     return (
-      <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: 'calc(100vh - 56px)', marginTop: 56, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: '#1e293b' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>✓</div>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>제출 완료</h2>
@@ -152,7 +152,7 @@ export default function TestPage() {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
+    <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ height: 56, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0 }}>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>

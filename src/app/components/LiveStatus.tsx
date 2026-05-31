@@ -40,6 +40,7 @@ export default function LiveStatus() {
     const [relativeTime, setRelativeTime] = useState(RELATIVE_TIMES[0]);
     const { injectedMessage } = useLiveStatus();
     const isDiagnosis = pathname?.startsWith('/diagnosis');
+    const isTestPage = pathname?.startsWith('/test') || pathname?.startsWith('/practice');
     // REQ-007: respect prefers-reduced-motion — skip interval + animation on low-power preference
     const prefersReduced = useReducedMotion();
 
@@ -55,8 +56,7 @@ export default function LiveStatus() {
     const current = injectedMessage ?? MESSAGES[index];
     const displayKey = injectedMessage ? `injected-${injectedMessage.text}` : `cycle-${index}`;
 
-    // Hide LiveStatus on diagnosis page
-    if (isDiagnosis) return null;
+    if (isDiagnosis || isTestPage) return null;
 
     return (
         <div className={styles.container}>
