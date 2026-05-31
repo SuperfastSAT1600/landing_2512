@@ -66,7 +66,17 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    fetch('/api/crm/students?lead_status=enrolled&stats_only=true', {
+      headers: { 'x-admin-key': adminKey },
+    })
+      .then(r => r.json())
+      .then(j => setTotalCount(j.data?.count ?? null))
+      .catch(() => {});
+  }, [adminKey]);
 
   const fetchEnrolled = useCallback(async (query: string) => {
     setLoading(true);
@@ -120,7 +130,12 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl shrink-0">
           <GraduationCap size={16} className="text-emerald-600" />
-          <span className="text-sm font-bold text-emerald-700">수강 중</span>
+          <span className="text-sm font-bold text-emerald-700">수업 중</span>
+          {totalCount !== null && (
+            <span className="text-xs font-semibold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-full">
+              {totalCount}명
+            </span>
+          )}
         </div>
         <div className="relative flex-1 min-w-[180px]">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />

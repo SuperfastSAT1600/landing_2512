@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   const statsOnly = searchParams.get('stats_only') === 'true';
   const retryStrategyId = searchParams.get('retry_strategy_id');
 
-  // 리드풀 카운트만 반환 (초기 로드용)
+  // 카운트만 반환 (초기 로드용)
   if (statsOnly && pool) {
     const [inactiveRes, reactivatingRes] = await Promise.all([
       supabaseAdmin.from('students').select('id', { count: 'exact', head: true }).eq('lead_status', 'inactive'),
@@ -33,6 +33,14 @@ export async function GET(request: NextRequest) {
         reactivating: reactivatingRes.count ?? 0,
       },
     });
+  }
+
+  if (statsOnly && leadStatus) {
+    const { count } = await supabaseAdmin
+      .from('students')
+      .select('id', { count: 'exact', head: true })
+      .eq('lead_status', leadStatus);
+    return NextResponse.json({ data: { count: count ?? 0 } });
   }
 
   let query = supabaseAdmin
