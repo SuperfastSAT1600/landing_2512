@@ -16,6 +16,7 @@ import { InquirySection } from './sections/InquirySection';
 import { StudentInfoSection } from './sections/StudentInfoSection';
 import { MemoSection } from './sections/MemoSection';
 import { TimelineSection } from './sections/TimelineSection';
+import { StrategyHistorySection } from './sections/StrategyHistorySection';
 import type { StudentDetailPanelProps } from './types';
 
 export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
@@ -154,6 +155,12 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               diagSearchQuery={diagHook.diagSearchQuery}
               setDiagSearchQuery={diagHook.setDiagSearchQuery}
               onDiagLink={diagHook.handleDiagLink}
+            />
+
+            <StrategyHistorySection
+              student={localStudent}
+              adminKey={adminKey}
+              onUpdate={onUpdate}
             />
 
             <MemoSection

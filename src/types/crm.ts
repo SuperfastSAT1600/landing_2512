@@ -159,6 +159,8 @@ export interface Student {
   preferred_language: PreferredLanguage | null;
 
   // 세일즈 전략
+  strategy_history: StrategyHistoryEntry[];
+  initial_contact_strategy_id: string | null;
   initial_strategy_id: string | null;
   retry_strategy_id: string | null;
   retry_stage: RetryStage | null;
@@ -171,11 +173,23 @@ export interface Student {
 export type RetryStage = '연락 시도' | '상담 중' | '제안 완료' | '결제 완료';
 export const RETRY_STAGES: RetryStage[] = ['연락 시도', '상담 중', '제안 완료', '결제 완료'];
 
+export type StrategyHistoryType = 'initial_contact' | 'initial_sales' | 'retry';
+
+export interface StrategyHistoryEntry {
+  id: string;
+  type: StrategyHistoryType;
+  strategy_id: string;
+  strategy_name: string;
+  memo: string;
+  applied_at: string;
+  manager_id?: string;
+}
+
 export interface RetryStrategy {
   id: string;
   name: string;
   description: string | null;
-  type: 'initial' | 'retry';
+  type: 'initial_contact' | 'initial_sales' | 'retry';
   created_at: string;
 }
 
