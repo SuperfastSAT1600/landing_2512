@@ -15,6 +15,7 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
+  arrayMove,
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { Plus, RefreshCw, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
@@ -124,8 +125,17 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
   );
 
   const getStudentsForStage = useCallback(
-    (stage: FunnelStage) =>
-      students.filter(s => s.funnel_stage === stage && s.lead_status === 'active' && !s.retry_strategy_id),
+    (stage: FunnelStage) => {
+      const list = students.filter(
+        s => s.funnel_stage === stage && s.lead_status === 'active' && !s.retry_strategy_id
+      );
+      return [...list].sort((a, b) => {
+        const ao = a.sort_order ?? Infinity;
+        const bo = b.sort_order ?? Infinity;
+        if (ao !== bo) return ao - bo;
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+    },
     [students]
   );
 
@@ -148,9 +158,26 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
       ? (over.id as FunnelStage)
       : students.find(s => s.id === over.id && s.lead_status === 'active')?.funnel_stage;
 
-    if (!targetStage || targetStage === student.funnel_stage) return;
+    if (!targetStage) return;
 
-    onStudentUpdate(student.id, { funnel_stage: targetStage });
+    // 컬럼 간 이동
+    if (targetStage !== student.funnel_stage) {
+      onStudentUpdate(student.id, { funnel_stage: targetStage });
+      return;
+    }
+
+    // 같은 컬럼 내 순서 변경
+    const columnStudents = getStudentsForStage(student.funnel_stage);
+    const oldIndex = columnStudents.findIndex(s => s.id === active.id);
+    const newIndex = columnStudents.findIndex(s => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+
+    const reordered = arrayMove(columnStudents, oldIndex, newIndex);
+    reordered.forEach((s, i) => {
+      if (s.sort_order !== i) {
+        onStudentUpdate(s.id, { sort_order: i });
+      }
+    });
   };
 
   return (

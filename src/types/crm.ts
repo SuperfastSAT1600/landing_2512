@@ -166,6 +166,7 @@ export interface Student {
   retry_stage: RetryStage | null;
   retry_assigned_at: string | null;
 
+  sort_order: number | null;
   created_at: string;
   updated_at: string;
 }
