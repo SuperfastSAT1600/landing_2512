@@ -162,6 +162,7 @@ export interface Student {
   initial_strategy_id: string | null;
   retry_strategy_id: string | null;
   retry_stage: RetryStage | null;
+  retry_assigned_at: string | null;
 
   created_at: string;
   updated_at: string;
@@ -173,6 +174,7 @@ export const RETRY_STAGES: RetryStage[] = ['연락 시도', '상담 중', '제�
 export interface RetryStrategy {
   id: string;
   name: string;
+  description: string | null;
   type: 'initial' | 'retry';
   created_at: string;
 }

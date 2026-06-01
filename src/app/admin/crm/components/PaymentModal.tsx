@@ -54,6 +54,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   const [productId, setProductId] = useState<string>('');
   const [hours, setHours] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
+  const [taxType, setTaxType] = useState<'면세' | '과세'>('면세');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,6 +88,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
           product: productLabel,
           hours: selectedProduct!.requiresHours ? Number(hours) : null,
           amount: Number(amount),
+          tax_type: taxType,
         }),
       });
       if (!res.ok) {
@@ -200,6 +202,37 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
             {amount && Number(amount) > 0 && (
               <p className="text-[11px] text-gray-400">
                 {Number(amount).toLocaleString('ko-KR')}원
+              </p>
+            )}
+          </div>
+
+          {/* 세금 유형 */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-gray-500">세금 유형</label>
+            <div className="flex gap-2">
+              {(['면세', '과세'] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTaxType(t)}
+                  className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                    taxType === t
+                      ? 'bg-blue-50 border-blue-400 text-blue-700'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            {amount && Number(amount) > 0 && (
+              <p className="text-[11px] text-gray-400">
+                수익:{' '}
+                <span className="font-medium text-gray-700">
+                  {taxType === '면세'
+                    ? Number(amount).toLocaleString('ko-KR')
+                    : Math.round(Number(amount) * 0.9).toLocaleString('ko-KR')}원
+                </span>
+                {taxType === '과세' && <span className="ml-1 text-gray-400">(부가세 10% 제외)</span>}
               </p>
             )}
           </div>

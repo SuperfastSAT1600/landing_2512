@@ -11,14 +11,14 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { product: string; hours?: number | null; amount: number; paid_at?: string };
+  let body: { product: string; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세' };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { product, hours, amount, paid_at } = body;
+  const { product, hours, amount, paid_at, tax_type } = body;
 
   if (!product || !amount || amount <= 0) {
     return NextResponse.json({ error: '상품과 금액은 필수입니다.' }, { status: 400 });
@@ -39,6 +39,7 @@ export async function POST(
       product,
       hours: hours ?? null,
       amount,
+      tax_type: tax_type ?? '면세',
       paid_at: paid_at ?? new Date().toISOString().slice(0, 10),
     })
     .select()
