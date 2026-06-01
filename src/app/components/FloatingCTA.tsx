@@ -7,7 +7,7 @@ import styles from './FloatingCTA.module.css';
 import { useLiveStatus } from '../context/LiveStatusContext';
 
 const CONSULT_URL = "https://forms.gle/Bm8jtojwf5iGVU9V7";
-const KAKAO_URL = "https://kakao-redirect-chi.vercel.app/?src=writerB_260221_튜터링_랜딩_페이지";
+const KAKAO_API = "/api/kakao-redirect?source=landing";
 
 interface DiscountButton {
     label: string;
@@ -50,7 +50,7 @@ export default function FloatingCTA() {
     const handleKakao = () => {
         window.fbq?.('track', 'Lead', { content_name: 'kakao_consultation', currency: 'KRW', value: 0 });
         pushMessage({ text: '*** 님이 카카오톡 상담을 시작하셨습니다', type: 'green' });
-        window.open(KAKAO_URL, '_blank', 'noopener,noreferrer');
+        window.open(KAKAO_API, '_blank', 'noopener,noreferrer');
     };
 
     return (

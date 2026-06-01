@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const KAKAO_URL = 'https://open.kakao.com/o/s858Ajch'
+const KAKAO_URL = 'https://open.kakao.com/o/sxHGVZ4h'
 const LEAD_CHANNEL_ID = 'C07FK85V9PD' // m1_26년4월_1억3천_2리드
 
 export async function GET(request: NextRequest) {
