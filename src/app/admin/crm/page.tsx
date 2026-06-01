@@ -217,10 +217,10 @@ export default function CrmPage() {
         {/* Tab navigation */}
         <div className="flex gap-1 mb-4">
           {([
-            { key: 'kanban',     label: '최초 세일즈' },
-            { key: 'enrolled',   label: '수업 중' },
-            { key: 'retry',      label: '재시도 세일즈' },
             { key: 'strategies', label: '전략' },
+            { key: 'kanban',     label: '최초 세일즈' },
+            { key: 'retry',      label: '재시도 세일즈' },
+            { key: 'enrolled',   label: '수업 중' },
             { key: 'pool',       label: '전체 리드풀' },
             { key: 'stats',      label: '통계' },
           ] as const).map(({ key, label }) => (
