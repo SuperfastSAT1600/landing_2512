@@ -17,6 +17,7 @@ import { StudentInfoSection } from './sections/StudentInfoSection';
 import { MemoSection } from './sections/MemoSection';
 import { TimelineSection } from './sections/TimelineSection';
 import { StrategyHistorySection } from './sections/StrategyHistorySection';
+import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import type { StudentDetailPanelProps } from './types';
 
 export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
@@ -178,6 +179,15 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               onPublish={timelineHook.handlePublish}
               onUnpublish={timelineHook.handleUnpublish}
               onDeleteAi={timelineHook.handleDeleteAi}
+            />
+
+            <PaymentHistorySection
+              student={localStudent}
+              adminKey={adminKey}
+              onStudentUpdate={(updates) => {
+                setLocalStudent(prev => ({ ...prev, ...updates }));
+                onUpdate(student.id, updates);
+              }}
             />
           </div>
         </div>

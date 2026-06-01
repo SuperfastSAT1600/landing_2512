@@ -221,6 +221,21 @@ export type CreateStudentInput = Pick<
   | 'parent_timezone'
 >;
 
+// ─── Payment ─────────────────────────────────────────────────────────────────
+
+export interface Payment {
+  id: string;
+  student_id: string | null;
+  student_name: string;
+  product: string;
+  hours: number | null;
+  amount: number;
+  tax_type: '면세' | '과세';
+  paid_at: string;         // YYYY-MM-DD
+  notes: string | null;
+  created_at: string;
+}
+
 // ─── Assignment ──────────────────────────────────────────────────────────────
 
 export interface CoachAssignment {
