@@ -124,11 +124,12 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
   );
 
   const getStudentsForStage = useCallback(
-    (stage: FunnelStage) => students.filter(s => s.funnel_stage === stage && s.lead_status === 'active'),
+    (stage: FunnelStage) =>
+      students.filter(s => s.funnel_stage === stage && s.lead_status === 'active' && !s.retry_strategy_id),
     [students]
   );
 
-  const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating');
+  const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id);
 
   const handleDragStart = (event: DragStartEvent) => {
     const student = students.find(s => s.id === event.active.id);
