@@ -134,7 +134,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               savingInquiry={editFormHook.savingInquiry}
               onSaveInquiry={editFormHook.handleSaveInquiry}
               onCancelInquiry={editFormHook.handleCancelInquiry}
-              onStrategyChange={(id) => onUpdate(student.id, { initial_strategy_id: id })}
             />
 
             <StudentInfoSection

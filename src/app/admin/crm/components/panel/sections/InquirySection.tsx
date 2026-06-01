@@ -1,8 +1,7 @@
 'use client';
 
 import { ChevronRight, ChevronDown, Pencil } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import type { Student, RetryStrategy } from '@/types/crm';
+import type { Student } from '@/types/crm';
 import { CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP } from '@/types/crm';
 import {
   INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
@@ -31,26 +30,12 @@ interface Props {
   savingInquiry: boolean;
   onSaveInquiry: () => void;
   onCancelInquiry: () => void;
-  onStrategyChange: (id: string | null) => void;
 }
 
 export function InquirySection({
   localStudent, adminKey, editForm, setEditForm, showInquiry, setShowInquiry,
   isEditingInquiry, setIsEditingInquiry, savingInquiry, onSaveInquiry, onCancelInquiry,
-  onStrategyChange,
 }: Props) {
-  const [initialStrategies, setInitialStrategies] = useState<RetryStrategy[]>([]);
-
-  useEffect(() => {
-    fetch('/api/crm/retry-strategies?type=initial', {
-      headers: { 'x-admin-key': adminKey },
-    })
-      .then(r => r.json())
-      .then(j => setInitialStrategies(j.data ?? []))
-      .catch(() => {});
-  }, [adminKey]);
-
-  const currentStrategy = initialStrategies.find(s => s.id === localStudent.initial_strategy_id);
 
   return (
     <section>
@@ -165,22 +150,6 @@ export function InquirySection({
         )
       )}
 
-      {/* 최초 세일즈 전략 — 편집 모드와 무관하게 항상 표시 */}
-      {showInquiry && (
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-[13px] text-gray-400 w-[28%] shrink-0">최초 전략</span>
-          <select
-            value={localStudent.initial_strategy_id ?? ''}
-            onChange={e => onStrategyChange(e.target.value || null)}
-            className="flex-1 text-[13px] border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white text-gray-700"
-          >
-            <option value="">전략 없음</option>
-            {initialStrategies.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
     </section>
   );
 }
