@@ -156,14 +156,14 @@ export default function CrmPage() {
   }, [students, searchQuery, filters]);
 
   // Calculated from ALL active students (not filtered) so the banner is always accurate
-  const followUpCount = useMemo(() => {
+  const followUpStudents = useMemo(() => {
     const fiveDaysAgo = Date.now() - 5 * 86400000;
     return students.filter(
       s =>
         s.lead_status === 'active' &&
         s.last_contacted_at !== null &&
         new Date(s.last_contacted_at).getTime() < fiveDaysAgo
-    ).length;
+    );
   }, [students]);
 
   if (loading) {
@@ -254,7 +254,7 @@ export default function CrmPage() {
 
             <SalesKanban
               students={filteredStudents}
-              followUpCount={followUpCount}
+              followUpStudents={followUpStudents}
               adminKey={adminKey}
               searchQuery={searchQuery}
               onStudentUpdate={handleStudentUpdate}
