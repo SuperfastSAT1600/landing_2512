@@ -2,44 +2,25 @@
 
 import { useState } from 'react';
 import { X, CreditCard } from 'lucide-react';
-import { Student } from '@/types/crm';
+import { Student, ProductCategory, ProductSubcategory } from '@/types/crm';
 
 interface Product {
   id: string;
   label: string;
   requiresHours: boolean;
+  category: ProductCategory;
+  subcategory: ProductSubcategory;
 }
 
-interface Category {
-  id: string;
-  label: string;
-  products: Product[];
-}
-
-const PRODUCT_TREE: Category[] = [
-  {
-    id: 'sat_regular',
-    label: 'SAT 정규수업',
-    products: [
-      { id: 'sat_managed_1on1', label: '관리형 1:1 수업', requiresHours: true },
-      { id: 'sat_managed_content', label: '관리형 콘텐츠', requiresHours: false },
-      { id: 'sat_unmanaged_package', label: '비관리형 시간 패키지', requiresHours: true },
-    ],
-  },
-  {
-    id: 'sat_summer',
-    label: 'SAT 여름방학 특강',
-    products: [
-      { id: 'sat_summer_intensive', label: 'SAT 여름방학 특강', requiresHours: false },
-    ],
-  },
-  {
-    id: 'ap_regular',
-    label: 'AP 정규수업',
-    products: [
-      { id: 'ap_managed_1on1', label: '관리형 1:1 수업', requiresHours: true },
-    ],
-  },
+const PRODUCTS: Product[] = [
+  { id: 'sat_1on1_managed',   label: 'SAT 정규 1:1 수업 (관리형)',        requiresHours: true,  category: 'SAT 정규 1:1 수업',    subcategory: '관리형 수업' },
+  { id: 'sat_1on1_onepoint',  label: 'SAT 정규 1:1 수업 (원포인트)',       requiresHours: true,  category: 'SAT 정규 1:1 수업',    subcategory: '원포인트' },
+  { id: 'sat_trial',          label: 'SAT 체험 1:1 수업',                 requiresHours: false, category: 'SAT 체험 1:1 수업',    subcategory: '체험수업' },
+  { id: 'sat_group',          label: 'SAT 정규 그룹 수업 (여름방학 특강)', requiresHours: false, category: 'SAT 정규 그룹 수업',   subcategory: '여름방학 특강' },
+  { id: 'ap_1on1',            label: 'AP 정규 1:1 수업',                  requiresHours: true,  category: 'AP 정규 1:1 수업',     subcategory: '관리형 수업' },
+  { id: 'content_vocab',      label: '관리형 콘텐츠 — 단어학습',           requiresHours: false, category: '관리형 콘텐츠',         subcategory: '단어학습' },
+  { id: 'content_supertest',  label: '관리형 콘텐츠 — SuperTest',         requiresHours: false, category: '관리형 콘텐츠',         subcategory: 'SuperTest' },
+  { id: 'content_lecture',    label: '관리형 콘텐츠 — 인강',               requiresHours: false, category: '관리형 콘텐츠',         subcategory: '인강' },
 ];
 
 interface PaymentModalProps {
@@ -50,7 +31,6 @@ interface PaymentModalProps {
 }
 
 export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentModalProps) {
-  const [categoryId, setCategoryId] = useState<string>('');
   const [productId, setProductId] = useState<string>('');
   const [hours, setHours] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
@@ -58,26 +38,15 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedCategory = PRODUCT_TREE.find(c => c.id === categoryId);
-  const selectedProduct = selectedCategory?.products.find(p => p.id === productId);
-
-  const productLabel = selectedCategory && selectedProduct
-    ? `${selectedCategory.label} - ${selectedProduct.label}`
-    : '';
+  const selectedProduct = PRODUCTS.find(p => p.id === productId);
 
   const isValid =
     !!selectedProduct &&
     (!selectedProduct.requiresHours || (hours !== '' && Number(hours) > 0)) &&
     amount !== '' && Number(amount) > 0;
 
-  function handleCategoryChange(id: string) {
-    setCategoryId(id);
-    setProductId('');
-    setHours('');
-  }
-
   async function handleConfirm() {
-    if (!isValid) return;
+    if (!isValid || !selectedProduct) return;
     setLoading(true);
     setError(null);
     try {
@@ -85,8 +54,10 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: JSON.stringify({
-          product: productLabel,
-          hours: selectedProduct!.requiresHours ? Number(hours) : null,
+          product: selectedProduct.label,
+          product_category: selectedProduct.category,
+          product_subcategory: selectedProduct.subcategory,
+          hours: selectedProduct.requiresHours ? Number(hours) : null,
           amount: Number(amount),
           tax_type: taxType,
         }),
@@ -124,48 +95,26 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
             <span className="font-semibold text-gray-800">{student.name}</span> 학생의 결제 정보를 입력해주세요.
           </p>
 
-          {/* 카테고리 */}
+          {/* 상품 선택 */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-gray-500">과목 / 상품군</label>
-            <div className="grid grid-cols-3 gap-2">
-              {PRODUCT_TREE.map(cat => (
+            <div className="space-y-1.5">
+              {PRODUCTS.map(p => (
                 <button
-                  key={cat.id}
-                  onClick={() => handleCategoryChange(cat.id)}
-                  className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors text-left ${
-                    categoryId === cat.id
+                  key={p.id}
+                  onClick={() => { setProductId(p.id); setHours(''); }}
+                  className={`w-full px-3 py-2 rounded-lg border text-xs font-medium transition-colors text-left flex items-center justify-between ${
+                    productId === p.id
                       ? 'bg-blue-50 border-blue-400 text-blue-700'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
                 >
-                  {cat.label}
+                  <span>{p.label}</span>
+                  {p.requiresHours && <span className="text-[10px] text-gray-400 font-normal">시간 입력</span>}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* 상품 선택 */}
-          {selectedCategory && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-500">상품</label>
-              <div className="space-y-1.5">
-                {selectedCategory.products.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => { setProductId(p.id); setHours(''); }}
-                    className={`w-full px-3 py-2 rounded-lg border text-xs font-medium transition-colors text-left ${
-                      productId === p.id
-                        ? 'bg-blue-50 border-blue-400 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    {p.label}
-                    {p.requiresHours && <span className="ml-1 text-gray-400">(시간 입력)</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* 시간 수 입력 */}
           {selectedProduct?.requiresHours && (

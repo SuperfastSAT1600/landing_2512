@@ -223,11 +223,29 @@ export type CreateStudentInput = Pick<
 
 // ─── Payment ─────────────────────────────────────────────────────────────────
 
+export type ProductCategory =
+  | 'SAT 정규 1:1 수업'
+  | 'SAT 정규 그룹 수업'
+  | 'AP 정규 1:1 수업'
+  | '관리형 콘텐츠'
+  | 'SAT 체험 1:1 수업';
+
+export type ProductSubcategory =
+  | '관리형 수업'
+  | '원포인트'
+  | '여름방학 특강'
+  | '단어학습'
+  | 'SuperTest'
+  | '인강'
+  | '체험수업';
+
 export interface Payment {
   id: string;
   student_id: string | null;
   student_name: string;
   product: string;
+  product_category: ProductCategory | null;
+  product_subcategory: ProductSubcategory | null;
   hours: number | null;
   amount: number;
   payment_type: string | null;
