@@ -8,10 +8,11 @@ interface Props {
   adminKey: string;
 }
 
-type StrategyType = 'initial' | 'retry';
+type StrategyType = 'initial_contact' | 'initial_sales' | 'retry';
 
 const TYPE_LABELS: Record<StrategyType, string> = {
-  initial: '최초 세일즈 전략',
+  initial_contact: '최초 컨텍 전략',
+  initial_sales: '최초 세일즈 전략',
   retry: '재시도 세일즈 전략',
 };
 
@@ -135,7 +136,8 @@ export function StrategiesTab({ adminKey }: Props) {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const initialStrategies = strategies.filter(s => s.type === 'initial');
+  const initialContactStrategies = strategies.filter(s => s.type === 'initial_contact');
+  const initialSalesStrategies = strategies.filter(s => s.type === 'initial_sales');
   const retryStrategies = strategies.filter(s => s.type === 'retry');
 
   function handleCreated(s: RetryStrategy) {
@@ -156,8 +158,15 @@ export function StrategiesTab({ adminKey }: Props) {
         전략을 만들고 학생 패널의 인입 정보에서 배정할 수 있습니다.
       </p>
       <StrategySection
-        type="initial"
-        strategies={initialStrategies}
+        type="initial_contact"
+        strategies={initialContactStrategies}
+        adminKey={adminKey}
+        onCreated={handleCreated}
+        onDeleted={handleDeleted}
+      />
+      <StrategySection
+        type="initial_sales"
+        strategies={initialSalesStrategies}
         adminKey={adminKey}
         onCreated={handleCreated}
         onDeleted={handleDeleted}
