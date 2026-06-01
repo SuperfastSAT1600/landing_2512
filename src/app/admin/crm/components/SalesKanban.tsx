@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, RefreshCw, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Student, FunnelStage, FUNNEL_STAGE_LABELS, ChurnType } from '@/types/crm';
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
@@ -27,7 +27,7 @@ const SALES_STAGES: FunnelStage[] = ['0', '1', '2', '3a', '3b', '4', '5a', '5b',
 
 interface SalesKanbanProps {
   students: Student[];
-  followUpCount: number;
+  followUpStudents: Student[];
   adminKey: string;
   searchQuery?: string;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
@@ -92,10 +92,11 @@ function KanbanColumn({ stage, students, onStudentClick, onChurn, onPayment, onA
   );
 }
 
-export function SalesKanban({ students, followUpCount, adminKey, searchQuery, onStudentUpdate, onStudentClick }: SalesKanbanProps) {
+export function SalesKanban({ students, followUpStudents, adminKey, searchQuery, onStudentUpdate, onStudentClick }: SalesKanbanProps) {
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<Student | null>(null);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const columnRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -153,12 +154,41 @@ export function SalesKanban({ students, followUpCount, adminKey, searchQuery, on
 
   return (
     <>
-      {followUpCount > 0 && (
-        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-lg bg-amber-50 border border-amber-200">
-          <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-          <p className="text-sm font-medium text-amber-700">
-            팔로업 필요: {followUpCount}명 — 5일 이상 미연락
-          </p>
+      {followUpStudents.length > 0 && (
+        <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 overflow-hidden">
+          <button
+            onClick={() => setFollowUpOpen(o => !o)}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-amber-100/60 transition-colors"
+          >
+            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+            <p className="flex-1 text-sm font-medium text-amber-700">
+              팔로업 필요: {followUpStudents.length}명 — 5일 이상 미연락
+            </p>
+            {followUpOpen
+              ? <ChevronUp size={14} className="text-amber-500 shrink-0" />
+              : <ChevronDown size={14} className="text-amber-500 shrink-0" />}
+          </button>
+          {followUpOpen && (
+            <div className="border-t border-amber-200 divide-y divide-amber-100">
+              {followUpStudents.map(s => {
+                const days = s.last_contacted_at
+                  ? Math.floor((Date.now() - new Date(s.last_contacted_at).getTime()) / 86400000)
+                  : null;
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => onStudentClick(s)}
+                    className="w-full flex items-center justify-between px-5 py-2 text-left hover:bg-amber-100/60 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-amber-800">{s.name}</span>
+                    <span className="text-xs text-amber-500">
+                      {days !== null ? `${days}일 전 연락` : '연락 기록 없음'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
       <DndContext
