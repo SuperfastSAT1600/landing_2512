@@ -129,18 +129,6 @@ export function InquirySection({
                 <input readOnly value={localStudent.adset_name ?? ''} placeholder="자동 입력" className={`${inputCls} bg-gray-50 text-gray-400 cursor-default`} />
               </EditField>
             </div>
-            <EditField label="최초 세일즈 전략">
-              <select
-                value={localStudent.initial_strategy_id ?? ''}
-                onChange={e => onStrategyChange(e.target.value || null)}
-                className={selectCls}
-              >
-                <option value="">전략 없음</option>
-                {initialStrategies.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </EditField>
           </div>
         ) : (
           <div className="bg-gray-100 rounded-xl px-4 py-3 space-y-1.5">
@@ -163,7 +151,6 @@ export function InquirySection({
             )}
             <InquiryRow label="광고명" value={localStudent.ad_name ?? '—'} />
             <InquiryRow label="광고세트" value={localStudent.adset_name ?? '—'} />
-            <InquiryRow label="최초 전략" value={currentStrategy?.name ?? '—'} />
             {localStudent.campaign_tags && localStudent.campaign_tags.length > 0 && (
               <div className="flex items-start gap-2 pt-0.5">
                 <span className="text-[13px] text-gray-400 w-[28%] shrink-0">태그</span>
@@ -176,6 +163,23 @@ export function InquirySection({
             )}
           </div>
         )
+      )}
+
+      {/* 최초 세일즈 전략 — 편집 모드와 무관하게 항상 표시 */}
+      {showInquiry && (
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-[13px] text-gray-400 w-[28%] shrink-0">최초 전략</span>
+          <select
+            value={localStudent.initial_strategy_id ?? ''}
+            onChange={e => onStrategyChange(e.target.value || null)}
+            className="flex-1 text-[13px] border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white text-gray-700"
+          >
+            <option value="">전략 없음</option>
+            {initialStrategies.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
       )}
     </section>
   );
