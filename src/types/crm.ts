@@ -230,6 +230,7 @@ export interface Payment {
   product: string;
   hours: number | null;
   amount: number;
+  payment_type: string | null;
   tax_type: '면세' | '과세';
   paid_at: string;         // YYYY-MM-DD
   notes: string | null;

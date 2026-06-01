@@ -91,24 +91,29 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
             </div>
 
             {sorted.map(p => {
-              const isFirst = p.id === firstPaymentId;
+              const isRefund = p.payment_type === '환불';
+              const isFirst = !isRefund && p.id === firstPaymentId;
               return (
                 <div key={p.id} className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                        isFirst
+                        isRefund
+                          ? 'bg-red-100 text-red-600'
+                          : isFirst
                           ? 'bg-blue-100 text-blue-700'
                           : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {isFirst ? '최초결제' : '재결제'}
+                        {isRefund ? '환불' : isFirst ? '최초결제' : '재결제'}
                       </span>
                       <span className="text-[11px] text-gray-400">{formatDate(p.paid_at)}</span>
                     </div>
                     <p className="text-[13px] text-gray-700 font-medium truncate">{p.product}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[13px] font-semibold text-gray-900">{formatAmount(p.amount)}</span>
-                      <span className="text-[11px] text-gray-400">{p.tax_type}</span>
+                      <span className={`text-[13px] font-semibold ${isRefund ? 'text-red-500' : 'text-gray-900'}`}>
+                        {isRefund ? `-${formatAmount(-p.amount)}` : formatAmount(p.amount)}
+                      </span>
+                      {!isRefund && <span className="text-[11px] text-gray-400">{p.tax_type}</span>}
                       {p.hours && (
                         <span className="text-[11px] text-gray-400">{p.hours}시간</span>
                       )}

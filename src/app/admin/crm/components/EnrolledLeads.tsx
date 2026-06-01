@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Loader2, AlertCircle, GraduationCap, UserX, Search, X } from 'lucide-react';
+import { Loader2, AlertCircle, GraduationCap, UserX, RotateCcw, Search, X } from 'lucide-react';
 import { Student, ChurnType } from '@/types/crm';
 import { ChurnModal } from './ChurnModal';
+import { RefundModal } from './RefundModal';
 
 interface EnrolledLeadsProps {
   adminKey: string;
@@ -11,11 +12,12 @@ interface EnrolledLeadsProps {
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
 }
 
-function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate }: {
+function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefund }: {
   student: Student;
   firstPaidAt: string | null;
   onStudentClick: (s: Student) => void;
   onGraduate: (s: Student) => void;
+  onRefund: (s: Student) => void;
 }) {
   const enrolledDays = firstPaidAt
     ? Math.floor((Date.now() - new Date(firstPaidAt).getTime()) / (1000 * 60 * 60 * 24))
@@ -46,14 +48,24 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate }: {
           )}
         </div>
       </div>
-      <button
-        onClick={(e) => { e.stopPropagation(); onGraduate(student); }}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors shrink-0"
-        title="수업 종료 후 이탈 처리"
-      >
-        <UserX size={12} />
-        수업 종료
-      </button>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          onClick={(e) => { e.stopPropagation(); onRefund(student); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition-colors"
+          title="환불 처리"
+        >
+          <RotateCcw size={12} />
+          환불
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onGraduate(student); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
+          title="수업 종료 후 이탈 처리"
+        >
+          <UserX size={12} />
+          수업 종료
+        </button>
+      </div>
     </div>
   );
 }
@@ -64,6 +76,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
+  const [refundTarget, setRefundTarget] = useState<Student | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [totalCount, setTotalCount] = useState<number | null>(null);
@@ -186,6 +199,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
               firstPaidAt={firstPaidMap[s.name] ?? null}
               onStudentClick={onStudentClick}
               onGraduate={setChurnTarget}
+              onRefund={setRefundTarget}
             />
           ))}
         </div>
@@ -205,6 +219,30 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
             setChurnTarget(null);
           }}
           onClose={() => setChurnTarget(null)}
+        />
+      )}
+
+      {refundTarget && (
+        <RefundModal
+          student={refundTarget}
+          onConfirm={async (refundAmount, refundReason, churnType) => {
+            const res = await fetch(`/api/crm/students/${refundTarget.id}/refund`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+              body: JSON.stringify({ refund_amount: refundAmount, refund_reason: refundReason, churn_type: churnType }),
+            });
+            if (!res.ok) throw new Error('환불 처리 실패');
+            onStudentUpdate(refundTarget.id, {
+              funnel_stage: 'churned',
+              lead_status: 'inactive',
+              churn_tag: `환불: ${refundReason}`,
+              churn_type: churnType,
+            });
+            setStudents(prev => prev.filter(s => s.id !== refundTarget.id));
+            if (totalCount !== null) setTotalCount(prev => prev !== null ? prev - 1 : prev);
+            setRefundTarget(null);
+          }}
+          onClose={() => setRefundTarget(null)}
         />
       )}
     </div>
