@@ -14,7 +14,8 @@ function getPresetRange(preset: Preset): { from: string; to: string } {
   const y = now.getFullYear();
   const m = now.getMonth();
 
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   if (preset === 'this_month') {
     return { from: fmt(new Date(y, m, 1)), to: fmt(new Date(y, m + 1, 0)) };
