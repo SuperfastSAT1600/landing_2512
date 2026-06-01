@@ -162,6 +162,7 @@ export default function CrmPage() {
     return students.filter(
       s =>
         s.lead_status === 'active' &&
+        !s.retry_strategy_id &&
         s.last_contacted_at !== null &&
         new Date(s.last_contacted_at).getTime() < fiveDaysAgo
     );
