@@ -12,6 +12,7 @@ import { LeadPool } from './components/LeadPool';
 import { SalesStats } from './components/SalesStats';
 import { EnrolledLeads } from './components/EnrolledLeads';
 import { RetryKanban } from './components/RetryKanban';
+import { StrategiesTab } from './components/StrategiesTab';
 
 function getAdminKey(): string {
   if (typeof window === 'undefined') return '';
@@ -47,7 +48,7 @@ export default function CrmPage() {
   const [adminKey, setAdminKey] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
-  const [activeTab, setActiveTab] = useState<'kanban' | 'enrolled' | 'retry' | 'pool' | 'stats'>('kanban');
+  const [activeTab, setActiveTab] = useState<'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('kanban');
   const [retryContext, setRetryContext] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
@@ -215,11 +216,12 @@ export default function CrmPage() {
         {/* Tab navigation */}
         <div className="flex gap-1 mb-4">
           {([
-            { key: 'kanban',   label: '최초 세일즈' },
-            { key: 'enrolled', label: '수업 중' },
-            { key: 'retry',    label: '재시도 세일즈' },
-            { key: 'pool',     label: '전체 리드풀' },
-            { key: 'stats',    label: '통계' },
+            { key: 'kanban',     label: '최초 세일즈' },
+            { key: 'enrolled',   label: '수업 중' },
+            { key: 'retry',      label: '재시도 세일즈' },
+            { key: 'strategies', label: '전략' },
+            { key: 'pool',       label: '전체 리드풀' },
+            { key: 'stats',      label: '통계' },
           ] as const).map(({ key, label }) => (
             <button
               key={key}
@@ -279,6 +281,10 @@ export default function CrmPage() {
             onStudentClick={handleStudentClick}
             onStudentUpdate={handleStudentUpdate}
           />
+        )}
+
+        {activeTab === 'strategies' && (
+          <StrategiesTab adminKey={adminKey} />
         )}
 
         {activeTab === 'stats' && (

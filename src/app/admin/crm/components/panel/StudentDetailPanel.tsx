@@ -123,6 +123,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           <div className="flex-1 overflow-y-auto p-5 space-y-5">
             <InquirySection
               localStudent={localStudent}
+              adminKey={adminKey}
               editForm={editForm}
               setEditForm={setEditForm}
               showInquiry={showInquiry}
@@ -132,6 +133,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               savingInquiry={editFormHook.savingInquiry}
               onSaveInquiry={editFormHook.handleSaveInquiry}
               onCancelInquiry={editFormHook.handleCancelInquiry}
+              onStrategyChange={(id) => onUpdate(student.id, { initial_strategy_id: id })}
             />
 
             <StudentInfoSection

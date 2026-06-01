@@ -158,7 +158,8 @@ export interface Student {
   portal_name: string | null;
   preferred_language: PreferredLanguage | null;
 
-  // 재시도 세일즈
+  // 세일즈 전략
+  initial_strategy_id: string | null;
   retry_strategy_id: string | null;
   retry_stage: RetryStage | null;
 
@@ -172,6 +173,7 @@ export const RETRY_STAGES: RetryStage[] = ['연락 시도', '상담 중', '제�
 export interface RetryStrategy {
   id: string;
   name: string;
+  type: 'initial' | 'retry';
   created_at: string;
 }
 

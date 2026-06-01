@@ -7,10 +7,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await supabaseAdmin
+  const type = new URL(request.url).searchParams.get('type');
+
+  let query = supabaseAdmin
     .from('retry_strategies')
     .select('*')
     .order('created_at', { ascending: true });
+
+  if (type === 'initial' || type === 'retry') {
+    query = query.eq('type', type);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('[retry-strategies GET]', error);
@@ -25,7 +33,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { name: string };
+  let body: { name: string; type?: 'initial' | 'retry' };
   try {
     body = await request.json();
   } catch {
@@ -36,9 +44,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '전략 이름을 입력해주세요.' }, { status: 400 });
   }
 
+  const strategyType = body.type === 'initial' ? 'initial' : 'retry';
+
   const { data, error } = await supabaseAdmin
     .from('retry_strategies')
-    .insert({ name: body.name.trim() })
+    .insert({ name: body.name.trim(), type: strategyType })
     .select()
     .single();
 
