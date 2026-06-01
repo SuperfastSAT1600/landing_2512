@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 
 /* ── Types ─────────────────────────────────────────── */
 interface Choice { A: string; B: string; C: string; D: string }
@@ -542,9 +543,9 @@ export default function QuadraticPracticePage() {
             <>
               <div className="test-passage-panel">
                 <div style={{ padding: '24px 28px 24px 24px' }}>
-                  <pre style={{ fontSize: 14, lineHeight: 1.9, color: '#374151', fontFamily: 'inherit', whiteSpace: 'pre-wrap', margin: 0 }}>
-                    {currentQuestion.passage}
-                  </pre>
+                  <div style={{ fontSize: 14, lineHeight: 1.9, color: '#374151' }}>
+                    <ContentRenderer content={currentQuestion.passage} />
+                  </div>
                 </div>
               </div>
               <div className="test-resizer" />
@@ -563,9 +564,9 @@ export default function QuadraticPracticePage() {
                 </span>
               </div>
 
-              <p style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}>
-                {currentQuestion.question}
-              </p>
+              <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}>
+                <ContentRenderer content={currentQuestion.question} />
+              </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {LETTERS.map(letter => {
@@ -585,7 +586,7 @@ export default function QuadraticPracticePage() {
                       onClick={() => !isRevealed && handleAnswer(currentQuestion.id, letter)}
                       style={{ background: bg, borderColor, color, cursor: isRevealed ? 'default' : 'pointer', textAlign: 'left' }}>
                       <span className="bluebook-option-label">{letter}</span>
-                      <span className="bluebook-option-text">{text}</span>
+                      <span className="bluebook-option-text"><ContentRenderer content={text} /></span>
                     </button>
                   );
                 })}
@@ -596,9 +597,9 @@ export default function QuadraticPracticePage() {
                 <>
                   <div style={{ marginTop: 20, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10 }}>
                     <p style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>Solution</p>
-                    <pre style={{ fontSize: 13, color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
-                      {currentQuestion.rationale}
-                    </pre>
+                    <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.8 }}>
+                      <ContentRenderer content={currentQuestion.rationale} />
+                    </div>
                   </div>
                   {(() => {
                     const qStat = stats?.questionStats[currentQuestion.id];
