@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, Users, Phone, CreditCard, RefreshCw } from 'lucide-react';
-import type { CrmStatsData, StatsBySource } from '@/app/api/crm/stats/route';
+import type { CrmStatsData, StatsBySource, StatsWeekly } from '@/app/api/crm/stats/route';
 
 // ─── Period helpers ────────────────────────────────────────────────────────────
 
@@ -124,6 +124,48 @@ function SourceTable({ rows }: { rows: StatsBySource[] }) {
   );
 }
 
+function WeeklyTable({ rows }: { rows: StatsWeekly[] }) {
+  const fmt만 = (n: number) => n > 0 ? `${(n / 10000).toFixed(0)}만` : '-';
+  const rate = (a: number, b: number) => b > 0 ? `${(Math.round(a / b * 10000) / 100).toFixed(2)}%` : '-';
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-100">
+            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 min-w-[160px]">주차</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">리드</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">컨택 성공</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">컨택률</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">결제</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">전환율</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">매출</th>
+            <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">수익</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.week} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              <td className="py-2.5 pr-4 text-xs font-medium text-gray-800">{r.week}</td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.leads || '-'}</td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.contacted || '-'}</td>
+              <td className="text-right py-2.5 px-2 text-xs font-semibold text-blue-600">
+                {rate(r.contacted, r.leads)}
+              </td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.paid || '-'}</td>
+              <td className="text-right py-2.5 px-2 text-xs font-semibold text-emerald-600">
+                {rate(r.paid, r.leads)}
+              </td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-600">{fmt만(r.revenue)}</td>
+              <td className="text-right py-2.5 pl-2 text-xs font-medium text-emerald-700">{fmt만(r.net_revenue)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 interface SalesStatsProps {
@@ -137,6 +179,7 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<CrmStatsData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [trendView, setTrendView] = useState<'monthly' | 'weekly'>('monthly');
 
   const { from, to } = preset === 'custom'
     ? { from: customFrom, to: customTo }
@@ -224,23 +267,51 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
               sub="부가세 제외 실수익" color="bg-emerald-50 text-emerald-600" />
           </div>
 
-          {/* Monthly trend chart */}
-          {d.monthly.length > 1 && (
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <h3 className="text-sm font-bold text-gray-900 mb-4">월별 추이</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={d.monthly} barGap={2}>
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip contentStyle={{ fontSize: 12 }} />
-                  <Legend formatter={(v: string) => ({ leads: '리드', contacted: '컨택 성공', paid: '결제' }[v] ?? v)} />
-                  <Bar dataKey="leads" fill="#e5e7eb" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="contacted" fill="#60a5fa" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="paid" fill="#34d399" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          {/* Monthly / Weekly trend */}
+          <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gray-900">
+                {trendView === 'monthly' ? '월별 추이' : '주차별 추이'}
+              </h3>
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                {(['monthly', 'weekly'] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setTrendView(v)}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                      trendView === v ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {v === 'monthly' ? '월별' : '주차별'}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
+
+            {trendView === 'monthly' ? (
+              d.monthly.length > 0 ? (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={d.monthly} barGap={2}>
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ fontSize: 12 }} />
+                    <Legend formatter={(v: string) => ({ leads: '리드', contacted: '컨택 성공', paid: '결제' }[v] ?? v)} />
+                    <Bar dataKey="leads" fill="#e5e7eb" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="contacted" fill="#60a5fa" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="paid" fill="#34d399" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
+              )
+            ) : (
+              d.weekly.length > 0 ? (
+                <WeeklyTable rows={d.weekly} />
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-6">주차 데이터가 없습니다.</p>
+              )
+            )}
+          </div>
 
           {/* Source breakdown */}
           <div className="bg-white border border-gray-200 rounded-xl p-5">

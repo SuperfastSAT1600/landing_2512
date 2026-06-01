@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { getWeekLabel } from '@/lib/week-definitions';
 
 export interface StatsBySource {
   source: string;
@@ -22,6 +23,15 @@ export interface StatsMonthly {
   net_revenue: number;
 }
 
+export interface StatsWeekly {
+  week: string;    // "25년 05월 03주차"
+  leads: number;
+  contacted: number;
+  paid: number;
+  revenue: number;
+  net_revenue: number;
+}
+
 export interface CrmStatsData {
   period: { from: string; to: string };
   overview: {
@@ -35,6 +45,7 @@ export interface CrmStatsData {
   };
   by_source: StatsBySource[];
   monthly: StatsMonthly[];
+  weekly: StatsWeekly[];
 }
 
 function isContacted(student: { funnel_stage: string }): boolean {
@@ -186,6 +197,34 @@ export async function GET(request: NextRequest) {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([month, d]) => ({ month, ...d }));
 
+  // ── Weekly ────────────────────────────────────────────────────────────────
+  const weekMap = new Map<string, { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number; start: string }>();
+
+  for (const s of leadList) {
+    const dateStr = s.inquiry_date ?? s.created_at;
+    const wk = getWeekLabel(dateStr);
+    if (!wk) continue;
+    if (!weekMap.has(wk)) weekMap.set(wk, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0, start: dateStr.slice(0, 10) });
+    const entry = weekMap.get(wk)!;
+    entry.leads++;
+    const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
+    if (!isRetry && isContacted(s)) entry.contacted++;
+    if (isPaid(s)) entry.paid++;
+  }
+
+  for (const p of paymentList) {
+    const wk = getWeekLabel(p.paid_at);
+    if (!wk) continue;
+    if (!weekMap.has(wk)) weekMap.set(wk, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0, start: p.paid_at.slice(0, 10) });
+    const entry = weekMap.get(wk)!;
+    entry.revenue += p.amount;
+    entry.net_revenue += netAmount(p);
+  }
+
+  const weekly: StatsWeekly[] = Array.from(weekMap.entries())
+    .sort(([, a], [, b]) => a.start.localeCompare(b.start))
+    .map(([week, d]) => ({ week, leads: d.leads, contacted: d.contacted, paid: d.paid, revenue: d.revenue, net_revenue: d.net_revenue }));
+
   const data: CrmStatsData = {
     period: { from, to },
     overview: {
@@ -199,6 +238,7 @@ export async function GET(request: NextRequest) {
     },
     by_source,
     monthly,
+    weekly,
   };
 
   return NextResponse.json({ data });
