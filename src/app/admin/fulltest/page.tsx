@@ -42,6 +42,19 @@ interface TestDef {
   publicUrl?: string;
 }
 
+type RightView = 'submissions' | 'codes';
+
+interface CodeRow {
+  id: string;
+  code: string;
+  test_id: string;
+  label: string;
+  max_uses: number;
+  is_active: boolean;
+  created_at: string;
+  usedCount: number;
+}
+
 const TESTS: TestDef[] = [
   {
     id: 'fulltest',
@@ -83,6 +96,11 @@ export default function TestContentsPage() {
   const [submissionCounts, setSubmissionCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [rightView, setRightView] = useState<RightView>('submissions');
+  const [codes, setCodes] = useState<CodeRow[]>([]);
+  const [codesLoading, setCodesLoading] = useState(false);
+  const [newCodeForm, setNewCodeForm] = useState({ code: '', label: '', maxUses: 50 });
+  const [creatingCode, setCreatingCode] = useState(false);
 
   const adminKey = typeof window !== 'undefined' ? localStorage.getItem('admin_key') ?? '' : '';
 
@@ -140,10 +158,27 @@ export default function TestContentsPage() {
     }
   }, [adminKey]);
 
+  const fetchCodes = useCallback(async (testId: string) => {
+    setCodesLoading(true);
+    try {
+      const res = await fetch(`/api/admin/test-codes?testId=${testId}`, {
+        headers: { 'x-admin-key': adminKey },
+      });
+      const data = await res.json();
+      setCodes(data.codes ?? []);
+    } catch {
+      setCodes([]);
+    } finally {
+      setCodesLoading(false);
+    }
+  }, [adminKey]);
+
   useEffect(() => {
     const testDef = TESTS.find((t) => t.id === selectedTestId) ?? TESTS[0];
     fetchSubmissions(testDef);
-  }, [selectedTestId, fetchSubmissions]);
+    fetchCodes(selectedTestId);
+    setRightView('submissions');
+  }, [selectedTestId, fetchSubmissions, fetchCodes]);
 
   const selectedTest = TESTS.find((t) => t.id === selectedTestId) ?? TESTS[0];
 
@@ -241,14 +276,40 @@ export default function TestContentsPage() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {/* Panel header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{selectedTest.label}</div>
-              <div style={{ fontSize: 12, color: '#71717a', marginTop: 2 }}>
-                {selectedTest.description} &middot; {loading ? '로딩 중...' : `${submissions.length}명 제출`}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{selectedTest.label}</div>
+                <div style={{ fontSize: 12, color: '#71717a', marginTop: 2 }}>
+                  {selectedTest.description} &middot; {loading ? '로딩 중...' : `${submissions.length}명 제출`}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 4, marginLeft: 8 }}>
+                {(['submissions', 'codes'] as RightView[]).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setRightView(v)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: 5,
+                      border: rightView === v ? '1px solid rgba(96,133,255,0.4)' : '1px solid #27272a',
+                      background: rightView === v ? 'rgba(7,27,233,0.15)' : 'transparent',
+                      color: rightView === v ? '#6085FF' : '#71717a',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {v === 'submissions' ? '제출 현황' : '코드 관리'}
+                  </button>
+                ))}
               </div>
             </div>
             <button
-              onClick={() => fetchSubmissions(selectedTest)}
+              onClick={() => {
+                fetchSubmissions(selectedTest);
+                fetchCodes(selectedTestId);
+              }}
               style={{
                 padding: '7px 14px',
                 background: '#141416',
@@ -263,93 +324,191 @@ export default function TestContentsPage() {
             </button>
           </div>
 
-          {loading ? (
-            <div style={{ textAlign: 'center', color: '#52525b', paddingTop: 60, fontSize: 14 }}>
-              로딩 중...
-            </div>
-          ) : submissions.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              color: '#52525b',
-              paddingTop: 60,
-              fontSize: 14,
-              border: '1px dashed #27272a',
-              borderRadius: 10,
-              padding: '60px 24px',
-            }}>
-              아직 제출된 결과가 없습니다
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #27272a' }}>
-                    {['Instagram ID', '이름', '날짜', '풀린 문제', '정답 수', '정답률'].map((h) => (
-                      <th
-                        key={h}
-                        style={{
-                          padding: '8px 12px',
-                          textAlign: 'left',
-                          color: '#52525b',
-                          fontWeight: 600,
-                          fontSize: 11,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          whiteSpace: 'nowrap',
+          {rightView === 'codes' && (
+            <div>
+              {/* Create code form */}
+              <div style={{ background: '#141416', border: '1px solid #27272a', borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#a1a1aa', marginBottom: 12 }}>새 코드 만들기</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <input
+                    placeholder="코드 (예: SAT2026)"
+                    value={newCodeForm.code}
+                    onChange={(e) => setNewCodeForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+                    style={{ flex: 2, minWidth: 120, padding: '8px 12px', background: '#09090b', border: '1px solid #27272a', borderRadius: 6, color: '#e4e4e7', fontSize: 13, letterSpacing: '0.05em' }}
+                  />
+                  <input
+                    placeholder="라벨 (예: 6월 이벤트)"
+                    value={newCodeForm.label}
+                    onChange={(e) => setNewCodeForm(p => ({ ...p, label: e.target.value }))}
+                    style={{ flex: 3, minWidth: 140, padding: '8px 12px', background: '#09090b', border: '1px solid #27272a', borderRadius: 6, color: '#e4e4e7', fontSize: 13 }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="최대 인원"
+                    value={newCodeForm.maxUses}
+                    min={1}
+                    onChange={(e) => setNewCodeForm(p => ({ ...p, maxUses: parseInt(e.target.value) || 50 }))}
+                    style={{ width: 90, padding: '8px 12px', background: '#09090b', border: '1px solid #27272a', borderRadius: 6, color: '#e4e4e7', fontSize: 13 }}
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!newCodeForm.code.trim()) return;
+                      setCreatingCode(true);
+                      try {
+                        const res = await fetch('/api/admin/test-codes', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+                          body: JSON.stringify({ code: newCodeForm.code, testId: selectedTestId, label: newCodeForm.label, maxUses: newCodeForm.maxUses }),
+                        });
+                        if (res.ok) {
+                          setNewCodeForm({ code: '', label: '', maxUses: 50 });
+                          fetchCodes(selectedTestId);
+                        } else {
+                          const err = await res.json();
+                          alert(err.error ?? 'Failed to create code');
+                        }
+                      } finally {
+                        setCreatingCode(false);
+                      }
+                    }}
+                    disabled={!newCodeForm.code.trim() || creatingCode}
+                    style={{ padding: '8px 16px', background: '#6085FF', border: 'none', borderRadius: 6, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: !newCodeForm.code.trim() || creatingCode ? 0.5 : 1 }}
+                  >
+                    {creatingCode ? '생성 중...' : '생성'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Codes list */}
+              {codesLoading ? (
+                <div style={{ textAlign: 'center', color: '#52525b', paddingTop: 40 }}>로딩 중...</div>
+              ) : codes.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#52525b', paddingTop: 40, fontSize: 14 }}>코드가 없습니다</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {codes.map((c) => (
+                    <div key={c.id} style={{ background: '#141416', border: '1px solid #27272a', borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, color: c.is_active ? '#e4e4e7' : '#52525b', letterSpacing: '0.08em' }}>{c.code}</span>
+                          <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: c.is_active ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: c.is_active ? '#22c55e' : '#ef4444', border: `1px solid ${c.is_active ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+                            {c.is_active ? 'active' : 'inactive'}
+                          </span>
+                        </div>
+                        {c.label && <div style={{ fontSize: 12, color: '#71717a', marginTop: 3 }}>{c.label}</div>}
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: c.usedCount >= c.max_uses ? '#ef4444' : '#e4e4e7' }}>{c.usedCount}</div>
+                        <div style={{ fontSize: 11, color: '#52525b' }}>/ {c.max_uses}명</div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          await fetch(`/api/admin/test-codes/${c.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+                            body: JSON.stringify({ isActive: !c.is_active }),
+                          });
+                          fetchCodes(selectedTestId);
                         }}
+                        style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #27272a', borderRadius: 6, color: '#a1a1aa', fontSize: 11, cursor: 'pointer' }}
                       >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {submissions.map((row) => (
-                    <tr
-                      key={row.id}
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    >
-                      <td style={{ padding: '12px 12px', fontWeight: 500 }}>
-                        {row.instagram_id ? (() => {
-                          const handle = row.instagram_id.startsWith('@') ? row.instagram_id.slice(1) : row.instagram_id;
-                          return (
-                            <a
-                              href={`https://instagram.com/${handle}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ color: '#6085FF', textDecoration: 'none' }}
-                              onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-                              onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
-                            >
-                              @{handle}
-                            </a>
-                          );
-                        })() : (
-                          <span style={{ color: '#52525b' }}>—</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '12px 12px', color: '#a1a1aa' }}>
-                        {row.studentName ?? <span style={{ color: '#52525b' }}>—</span>}
-                      </td>
-                      <td style={{ padding: '12px 12px', color: '#71717a', whiteSpace: 'nowrap' }}>
-                        {formatDate(row.submittedAt)}
-                      </td>
-                      <td style={{ padding: '12px 12px', color: '#e4e4e7', fontWeight: 500 }}>
-                        {row.totalPossible != null
-                          ? `${row.totalAnswered}/${row.totalPossible}`
-                          : row.totalAnswered}
-                      </td>
-                      <td style={{ padding: '12px 12px', color: '#e4e4e7', fontWeight: 600 }}>
-                        {row.correct}
-                      </td>
-                      <td style={{ padding: '12px 12px' }}>
-                        <ScoreBadge score={row.score} />
-                      </td>
-                    </tr>
+                        {c.is_active ? '비활성화' : '활성화'}
+                      </button>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              )}
             </div>
+          )}
+
+          {rightView === 'submissions' && (
+            loading ? (
+              <div style={{ textAlign: 'center', color: '#52525b', paddingTop: 60, fontSize: 14 }}>
+                로딩 중...
+              </div>
+            ) : submissions.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                color: '#52525b',
+                fontSize: 14,
+                border: '1px dashed #27272a',
+                borderRadius: 10,
+                padding: '60px 24px',
+              }}>
+                아직 제출된 결과가 없습니다
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #27272a' }}>
+                      {['Instagram ID', '이름', '날짜', '풀린 문제', '정답 수', '정답률'].map((h) => (
+                        <th
+                          key={h}
+                          style={{
+                            padding: '8px 12px',
+                            textAlign: 'left',
+                            color: '#52525b',
+                            fontWeight: 600,
+                            fontSize: 11,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {submissions.map((row) => (
+                      <tr
+                        key={row.id}
+                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                      >
+                        <td style={{ padding: '12px 12px', fontWeight: 500 }}>
+                          {row.instagram_id ? (() => {
+                            const handle = row.instagram_id.startsWith('@') ? row.instagram_id.slice(1) : row.instagram_id;
+                            return (
+                              <a
+                                href={`https://instagram.com/${handle}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#6085FF', textDecoration: 'none' }}
+                                onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                                onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                              >
+                                @{handle}
+                              </a>
+                            );
+                          })() : (
+                            <span style={{ color: '#52525b' }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 12px', color: '#a1a1aa' }}>
+                          {row.studentName ?? <span style={{ color: '#52525b' }}>—</span>}
+                        </td>
+                        <td style={{ padding: '12px 12px', color: '#71717a', whiteSpace: 'nowrap' }}>
+                          {formatDate(row.submittedAt)}
+                        </td>
+                        <td style={{ padding: '12px 12px', color: '#e4e4e7', fontWeight: 500 }}>
+                          {row.totalPossible != null
+                            ? `${row.totalAnswered}/${row.totalPossible}`
+                            : row.totalAnswered}
+                        </td>
+                        <td style={{ padding: '12px 12px', color: '#e4e4e7', fontWeight: 600 }}>
+                          {row.correct}
+                        </td>
+                        <td style={{ padding: '12px 12px' }}>
+                          <ScoreBadge score={row.score} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           )}
         </div>
       </div>

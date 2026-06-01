@@ -52,10 +52,15 @@ const SKILL_ORDER = [
 
 const LETTERS = ['A', 'B', 'C', 'D'] as const;
 
+const TEST_ID = 'june-2026-subskill-300';
+
 export default function JunePracticePage() {
   const [phase, setPhase] = useState<Phase>('loading');
   const [instagramId, setInstagramId] = useState('');
   const [studentName, setStudentName] = useState('');
+  const [accessCode, setAccessCode] = useState('');
+  const [gateError, setGateError] = useState('');
+  const [validating, setValidating] = useState(false);
   const [data, setData] = useState<PracticeSet | null>(null);
   const [activeSkill, setActiveSkill] = useState<string>('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -89,12 +94,38 @@ export default function JunePracticePage() {
     setRevealed((prev) => ({ ...prev, [qId]: true }));
   }, []);
 
-  function handleGateSubmit(e: React.FormEvent) {
+  async function handleGateSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const cleaned = instagramId.trim();
-    if (!cleaned) return;
-    setInstagramId(cleaned);
-    setPhase('test');
+    const cleanCode = accessCode.trim();
+    const cleanIg = instagramId.trim();
+    if (!cleanCode || !cleanIg) return;
+
+    setValidating(true);
+    setGateError('');
+    try {
+      const res = await fetch('/api/test-codes/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: cleanCode, instagramId: cleanIg, testId: TEST_ID }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        const msgs: Record<string, string> = {
+          invalid_code: 'Invalid access code.',
+          code_inactive: 'This code is no longer active.',
+          code_expired: 'This code has expired.',
+          capacity_exceeded: 'This code has reached its limit. Please get a new code.',
+        };
+        setGateError(msgs[data.error] ?? 'Something went wrong. Please try again.');
+        return;
+      }
+      setInstagramId(cleanIg.startsWith('@') ? cleanIg : `@${cleanIg}`);
+      setPhase('test');
+    } catch {
+      setGateError('Network error. Please try again.');
+    } finally {
+      setValidating(false);
+    }
   }
 
   async function handleResultSubmit() {
@@ -159,6 +190,14 @@ export default function JunePracticePage() {
           <form onSubmit={handleGateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input
               type="text"
+              placeholder="Access code"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              required
+              style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            />
+            <input
+              type="text"
               placeholder="@instagram_id"
               value={instagramId}
               onChange={(e) => setInstagramId(e.target.value)}
@@ -172,12 +211,17 @@ export default function JunePracticePage() {
               onChange={(e) => setStudentName(e.target.value)}
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }}
             />
+            {gateError && (
+              <div style={{ color: '#ef4444', fontSize: 13, textAlign: 'left', padding: '4px 2px' }}>
+                {gateError}
+              </div>
+            )}
             <button
               type="submit"
-              disabled={!instagramId.trim()}
-              style={{ width: '100%', padding: '13px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: instagramId.trim() ? 'pointer' : 'not-allowed', opacity: instagramId.trim() ? 1 : 0.4, marginTop: 4 }}
+              disabled={!accessCode.trim() || !instagramId.trim() || validating}
+              style={{ width: '100%', padding: '13px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: !accessCode.trim() || !instagramId.trim() || validating ? 'not-allowed' : 'pointer', opacity: !accessCode.trim() || !instagramId.trim() || validating ? 0.4 : 1, marginTop: 4 }}
             >
-              Start Practice
+              {validating ? 'Checking...' : 'Start Practice'}
             </button>
           </form>
         </div>

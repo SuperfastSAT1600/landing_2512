@@ -31,10 +31,14 @@ interface Module {
 type Answers = Record<string, string>;
 type Phase = 'name' | 'test' | 'submitted';
 
+const TEST_ID = 'fulltest';
+
 export default function TestPage() {
   const [phase, setPhase] = useState<Phase>('name');
   const [studentName, setStudentName] = useState('');
   const [instagramId, setInstagramId] = useState('');
+  const [accessCode, setAccessCode] = useState('');
+  const [gateError, setGateError] = useState('');
   const [modules, setModules] = useState<Module[]>([]);
   const [curriculumId, setCurriculumId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,11 +56,41 @@ export default function TestPage() {
   async function startTest() {
     const name = studentName.trim();
     const ig = instagramId.trim();
-    if (!name || !ig) return;
+    const code = accessCode.trim();
+    if (!name || !ig || !code) return;
+
+    setGateError('');
     setLoading(true);
-    const data = await (prefetchRef.current ?? fetch('/api/test/questions').then((r) => r.json()));
-    setModules(data.modules);
-    setCurriculumId(data.curriculum_id);
+
+    // Validate code first
+    try {
+      const res = await fetch('/api/test-codes/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, instagramId: ig, testId: TEST_ID }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        const msgs: Record<string, string> = {
+          invalid_code: 'Invalid access code.',
+          code_inactive: 'This code is no longer active.',
+          code_expired: 'This code has expired.',
+          capacity_exceeded: 'This code has reached its limit. Please get a new code.',
+        };
+        setGateError(msgs[data.error] ?? 'Something went wrong.');
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setGateError('Network error. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    // Proceed to load questions
+    const qData = await (prefetchRef.current ?? fetch('/api/test/questions').then((r) => r.json()));
+    setModules(qData.modules);
+    setCurriculumId(qData.curriculum_id);
     setLoading(false);
     setPhase('test');
   }
@@ -114,6 +148,14 @@ export default function TestPage() {
           <p style={{ color: '#64748b', fontSize: 14, marginBottom: 32 }}>2026 June Full-Length Test #1</p>
           <input
             type="text"
+            placeholder="Access code"
+            value={accessCode}
+            onChange={(e) => setAccessCode(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && startTest()}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, marginBottom: 12, boxSizing: 'border-box', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+          />
+          <input
+            type="text"
             placeholder="이름 입력"
             value={studentName}
             onChange={(e) => setStudentName(e.target.value)}
@@ -125,12 +167,17 @@ export default function TestPage() {
             value={instagramId}
             onChange={(e) => setInstagramId(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && startTest()}
-            style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, marginBottom: 16, boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, marginBottom: 12, boxSizing: 'border-box' }}
           />
+          {gateError && (
+            <div style={{ color: '#ef4444', fontSize: 13, textAlign: 'left', marginBottom: 8 }}>
+              {gateError}
+            </div>
+          )}
           <button
             onClick={startTest}
-            disabled={!studentName.trim() || !instagramId.trim() || loading}
-            style={{ width: '100%', padding: '12px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: !studentName.trim() || !instagramId.trim() || loading ? 0.4 : 1 }}
+            disabled={!studentName.trim() || !instagramId.trim() || !accessCode.trim() || loading}
+            style={{ width: '100%', padding: '12px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: !studentName.trim() || !instagramId.trim() || !accessCode.trim() || loading ? 0.4 : 1 }}
           >
             {loading ? '문제 불러오는 중...' : '시험 시작'}
           </button>
