@@ -414,6 +414,19 @@ export default function TestContentsPage() {
                       >
                         {c.is_active ? '비활성화' : '활성화'}
                       </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`코드 "${c.code}"를 삭제하시겠습니까?\n등록된 ${c.usedCount}명의 기록도 함께 삭제됩니다.`)) return;
+                          await fetch(`/api/admin/test-codes/${c.id}`, {
+                            method: 'DELETE',
+                            headers: { 'x-admin-key': adminKey },
+                          });
+                          fetchCodes(selectedTestId);
+                        }}
+                        style={{ padding: '6px 12px', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, color: '#ef4444', fontSize: 11, cursor: 'pointer' }}
+                      >
+                        삭제
+                      </button>
                     </div>
                   ))}
                 </div>
