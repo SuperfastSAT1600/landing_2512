@@ -14,7 +14,7 @@ const NAV_ITEMS = [
     { href: '/admin/home', label: 'Homepage', icon: '🏠' },
     { href: '/admin/supertest', label: 'SuperTest', icon: '🎯' },
     { href: '/admin/traffic', label: '채널 유입 통계', icon: '📊' },
-    { href: '/admin/crm', label: 'CRM', icon: '🎯' },
+    { href: '/admin/crm', label: 'CRM', icon: '👥' },
     { href: '/admin/fulltest', label: 'Test Contents', icon: '📋' },
 ];
 
