@@ -11,14 +11,14 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { product: string; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세' };
+  let body: { product: string; product_category?: string | null; product_subcategory?: string | null; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세' };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { product, hours, amount, paid_at, tax_type } = body;
+  const { product, product_category, product_subcategory, hours, amount, paid_at, tax_type } = body;
 
   if (!product || !amount || amount <= 0) {
     return NextResponse.json({ error: '상품과 금액은 필수입니다.' }, { status: 400 });
@@ -37,6 +37,8 @@ export async function POST(
       student_id: id,
       student_name: studentRow?.name ?? '',
       product,
+      product_category: product_category ?? null,
+      product_subcategory: product_subcategory ?? null,
       hours: hours ?? null,
       amount,
       tax_type: tax_type ?? '면세',
