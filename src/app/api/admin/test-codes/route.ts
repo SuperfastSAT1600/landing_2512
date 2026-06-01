@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 function isAuthorized(req: NextRequest) {
-  return req.headers.get('x-admin-key') === process.env.ADMIN_KEY;
+  return req.headers.get('x-admin-key') === process.env.ADMIN_SECRET_KEY;
 }
 
 export async function GET(req: NextRequest) {
