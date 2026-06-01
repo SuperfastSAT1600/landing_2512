@@ -57,6 +57,13 @@ const TESTS: TestDef[] = [
     apiType: 'practice',
     publicUrl: '/practice/june-2026',
   },
+  {
+    id: 'quadratic-equations-30',
+    label: '이차방정식 핵심 30문제',
+    description: '근의 공식 · 짝수계수 · 판별식 · 근과 계수의 관계',
+    apiType: 'practice',
+    publicUrl: '/practice/quadratic',
+  },
 ];
 
 function formatDate(iso: string) {
