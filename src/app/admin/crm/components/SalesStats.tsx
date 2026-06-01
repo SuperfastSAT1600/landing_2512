@@ -82,7 +82,8 @@ function SourceTable({ rows }: { rows: StatsBySource[] }) {
             <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[100px]">컨택률</th>
             <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">결제</th>
             <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[100px]">전환율</th>
-            <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">매출</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">매출</th>
+            <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">수익</th>
           </tr>
         </thead>
         <tbody>
@@ -109,8 +110,11 @@ function SourceTable({ rows }: { rows: StatsBySource[] }) {
                   <RateBar value={r.conversion_rate} color="bg-emerald-400" />
                 </div>
               </td>
-              <td className="text-right py-2.5 pl-2 text-xs text-gray-600">
+              <td className="text-right py-2.5 px-2 text-xs text-gray-600">
                 {r.revenue > 0 ? `${(r.revenue / 10000).toFixed(0)}만` : '-'}
+              </td>
+              <td className="text-right py-2.5 pl-2 text-xs font-medium text-emerald-700">
+                {r.net_revenue > 0 ? `${(r.net_revenue / 10000).toFixed(0)}만` : '-'}
               </td>
             </tr>
           ))}
@@ -216,6 +220,8 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
               sub={`${d.overview.paid}명 / ${d.overview.total_leads}명`} color="bg-emerald-50 text-emerald-600" />
             <OverviewCard icon={TrendingUp} label="총 매출" value={fmt만(d.overview.total_revenue)}
               sub="기간 내 모든 결제" color="bg-purple-50 text-purple-600" />
+            <OverviewCard icon={TrendingUp} label="순 수익" value={fmt만(d.overview.total_net_revenue)}
+              sub="부가세 제외 실수익" color="bg-emerald-50 text-emerald-600" />
           </div>
 
           {/* Monthly trend chart */}

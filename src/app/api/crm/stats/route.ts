@@ -10,6 +10,7 @@ export interface StatsBySource {
   paid: number;
   conversion_rate: number;
   revenue: number;
+  net_revenue: number;
 }
 
 export interface StatsMonthly {
@@ -18,6 +19,7 @@ export interface StatsMonthly {
   contacted: number;
   paid: number;
   revenue: number;
+  net_revenue: number;
 }
 
 export interface CrmStatsData {
@@ -26,9 +28,10 @@ export interface CrmStatsData {
     total_leads: number;
     contacted: number;
     contact_rate: number;
-    paid: number;       // 최초결제 기준 학생 수
+    paid: number;
     conversion_rate: number;
     total_revenue: number;
+    total_net_revenue: number;
   };
   by_source: StatsBySource[];
   monthly: StatsMonthly[];
@@ -82,7 +85,7 @@ export async function GET(request: NextRequest) {
   // 기간 내 payments 조회 (최초결제만 전환율 계산에 포함)
   const { data: payments, error: pErr } = await supabaseAdmin
     .from('payments')
-    .select('student_id, student_name, amount, payment_type, paid_at')
+    .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
     .gte('paid_at', `${from}T00:00:00`)
     .lte('paid_at', `${to}T23:59:59`);
 
@@ -92,9 +95,15 @@ export async function GET(request: NextRequest) {
   const paidStudentIds = new Set<string>();
   const paidStudentNames = new Set<string>();
   let totalRevenue = 0;
+  let totalNetRevenue = 0;
+
+  function netAmount(p: { amount: number; tax_type?: string | null }): number {
+    return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
+  }
 
   for (const p of paymentList) {
     totalRevenue += p.amount;
+    totalNetRevenue += netAmount(p);
     if (p.payment_type === '최초결제') {
       if (p.student_id) paidStudentIds.add(p.student_id);
       if (p.student_name) paidStudentNames.add(p.student_name);
@@ -114,11 +123,11 @@ export async function GET(request: NextRequest) {
   const paidCount = leadList.filter((s) => isPaid(s)).length;
 
   // ── By Source ─────────────────────────────────────────────────────────────
-  const sourceMap = new Map<string, { leads: number; contacted: number; paid: number; revenue: number }>();
+  const sourceMap = new Map<string, { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number }>();
 
   for (const s of leadList) {
     const src = s.traffic_source ?? '미입력';
-    if (!sourceMap.has(src)) sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0 });
+    if (!sourceMap.has(src)) sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
     const entry = sourceMap.get(src)!;
     entry.leads++;
     if (isContacted(s)) entry.contacted++;
@@ -130,7 +139,10 @@ export async function GET(request: NextRequest) {
   for (const p of paymentList) {
     const src = p.student_id ? (studentSourceMap.get(p.student_id) ?? '미입력') : '미입력';
     const entry = sourceMap.get(src);
-    if (entry) entry.revenue += p.amount;
+    if (entry) {
+      entry.revenue += p.amount;
+      entry.net_revenue += netAmount(p);
+    }
   }
 
   const by_source: StatsBySource[] = Array.from(sourceMap.entries())
@@ -142,15 +154,16 @@ export async function GET(request: NextRequest) {
       paid: d.paid,
       conversion_rate: d.leads > 0 ? Math.round((d.paid / d.leads) * 1000) / 10 : 0,
       revenue: d.revenue,
+      net_revenue: d.net_revenue,
     }))
     .sort((a, b) => b.leads - a.leads);
 
   // ── Monthly ───────────────────────────────────────────────────────────────
-  const monthMap = new Map<string, { leads: number; contacted: number; paid: number; revenue: number }>();
+  const monthMap = new Map<string, { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number }>();
 
   for (const s of leadList) {
     const mo = toMonthKey(s.inquiry_date ?? s.created_at);
-    if (!monthMap.has(mo)) monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0 });
+    if (!monthMap.has(mo)) monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
     const entry = monthMap.get(mo)!;
     entry.leads++;
     if (isContacted(s)) entry.contacted++;
@@ -159,8 +172,10 @@ export async function GET(request: NextRequest) {
 
   for (const p of paymentList) {
     const mo = toMonthKey(p.paid_at);
-    if (!monthMap.has(mo)) monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0 });
-    monthMap.get(mo)!.revenue += p.amount;
+    if (!monthMap.has(mo)) monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+    const entry = monthMap.get(mo)!;
+    entry.revenue += p.amount;
+    entry.net_revenue += netAmount(p);
   }
 
   const monthly: StatsMonthly[] = Array.from(monthMap.entries())
@@ -176,6 +191,7 @@ export async function GET(request: NextRequest) {
       paid: paidCount,
       conversion_rate: total > 0 ? Math.round((paidCount / total) * 1000) / 10 : 0,
       total_revenue: totalRevenue,
+      total_net_revenue: totalNetRevenue,
     },
     by_source,
     monthly,
