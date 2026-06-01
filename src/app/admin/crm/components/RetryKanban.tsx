@@ -156,7 +156,7 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     const res = await fetch(`/api/crm/students/${student.id}`, {
       method: 'PATCH',
       headers,
-      body: JSON.stringify({ retry_strategy_id: null, retry_stage: null }),
+      body: JSON.stringify({ retry_strategy_id: null, retry_stage: null, retry_assigned_at: null }),
     });
     if (res.ok) {
       setStudents(prev => prev.filter(s => s.id !== student.id));
