@@ -1,7 +1,8 @@
 'use client';
 
 import { ChevronRight, ChevronDown, Pencil } from 'lucide-react';
-import type { Student } from '@/types/crm';
+import { useState, useEffect } from 'react';
+import type { Student, RetryStrategy } from '@/types/crm';
 import { CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP } from '@/types/crm';
 import {
   INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
@@ -20,6 +21,7 @@ function InquiryRow({ label, value }: { label: string; value: string }) {
 
 interface Props {
   localStudent: Student;
+  adminKey: string;
   editForm: EditForm;
   setEditForm: (f: EditForm) => void;
   showInquiry: boolean;
@@ -29,12 +31,27 @@ interface Props {
   savingInquiry: boolean;
   onSaveInquiry: () => void;
   onCancelInquiry: () => void;
+  onStrategyChange: (id: string | null) => void;
 }
 
 export function InquirySection({
-  localStudent, editForm, setEditForm, showInquiry, setShowInquiry,
+  localStudent, adminKey, editForm, setEditForm, showInquiry, setShowInquiry,
   isEditingInquiry, setIsEditingInquiry, savingInquiry, onSaveInquiry, onCancelInquiry,
+  onStrategyChange,
 }: Props) {
+  const [initialStrategies, setInitialStrategies] = useState<RetryStrategy[]>([]);
+
+  useEffect(() => {
+    fetch('/api/crm/retry-strategies?type=initial', {
+      headers: { 'x-admin-key': adminKey },
+    })
+      .then(r => r.json())
+      .then(j => setInitialStrategies(j.data ?? []))
+      .catch(() => {});
+  }, [adminKey]);
+
+  const currentStrategy = initialStrategies.find(s => s.id === localStudent.initial_strategy_id);
+
   return (
     <section>
       <div className="flex items-center justify-between mb-2">
@@ -112,6 +129,18 @@ export function InquirySection({
                 <input readOnly value={localStudent.adset_name ?? ''} placeholder="자동 입력" className={`${inputCls} bg-gray-50 text-gray-400 cursor-default`} />
               </EditField>
             </div>
+            <EditField label="최초 세일즈 전략">
+              <select
+                value={localStudent.initial_strategy_id ?? ''}
+                onChange={e => onStrategyChange(e.target.value || null)}
+                className={selectCls}
+              >
+                <option value="">전략 없음</option>
+                {initialStrategies.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </EditField>
           </div>
         ) : (
           <div className="bg-gray-100 rounded-xl px-4 py-3 space-y-1.5">
@@ -134,6 +163,7 @@ export function InquirySection({
             )}
             <InquiryRow label="광고명" value={localStudent.ad_name ?? '—'} />
             <InquiryRow label="광고세트" value={localStudent.adset_name ?? '—'} />
+            <InquiryRow label="최초 전략" value={currentStrategy?.name ?? '—'} />
             {localStudent.campaign_tags && localStudent.campaign_tags.length > 0 && (
               <div className="flex items-start gap-2 pt-0.5">
                 <span className="text-[13px] text-gray-400 w-[28%] shrink-0">태그</span>

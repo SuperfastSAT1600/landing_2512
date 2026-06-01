@@ -76,7 +76,7 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
   const headers = { 'x-admin-key': adminKey, 'Content-Type': 'application/json' };
 
   const fetchStrategies = useCallback(async () => {
-    const res = await fetch('/api/crm/retry-strategies', { headers: { 'x-admin-key': adminKey } });
+    const res = await fetch('/api/crm/retry-strategies?type=retry', { headers: { 'x-admin-key': adminKey } });
     const json = await res.json();
     setStrategies(json.data ?? []);
   }, [adminKey]);
