@@ -69,6 +69,11 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
       {/* Name */}
       <p className="text-sm font-semibold text-gray-900 leading-tight pr-10">{student.name}</p>
 
+      {/* Phone */}
+      {student.parent_phone && (
+        <p className="text-[11px] text-gray-400 mt-0.5">{student.parent_phone}</p>
+      )}
+
       {/* Days elapsed + payment icon */}
       <div className="mt-1.5 flex items-center justify-between">
         {(() => {
