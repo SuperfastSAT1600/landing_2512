@@ -122,10 +122,10 @@ export default function JunePracticePage() {
 
       if (!res.ok) throw new Error('Submit failed');
       setSubmitted(true);
-      setToast('제출 완료! 결과가 저장되었습니다.');
+      setToast('Submitted! Results have been saved.');
       setTimeout(() => setToast(''), 3000);
     } catch {
-      setToast('제출 중 오류가 발생했습니다.');
+      setToast('An error occurred while submitting.');
       setTimeout(() => setToast(''), 3000);
     } finally {
       setSubmitting(false);
@@ -137,7 +137,7 @@ export default function JunePracticePage() {
       <div style={{ minHeight: 'calc(100vh - 56px)', marginTop: 56, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: '#64748b' }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>⟳</div>
-          <p style={{ fontSize: 14 }}>300문제 불러오는 중...</p>
+          <p style={{ fontSize: 14 }}>Loading 300 questions...</p>
         </div>
       </div>
     );
@@ -151,10 +151,10 @@ export default function JunePracticePage() {
             SuperfastSAT
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>
-            6월 대비 연습 300
+            June SAT Practice 300
           </h1>
           <p style={{ fontSize: 14, color: '#64748b', marginBottom: 36 }}>
-            Instagram ID를 입력하면 시작할 수 있어요
+            Enter your Instagram ID to begin
           </p>
           <form onSubmit={handleGateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input
@@ -167,7 +167,7 @@ export default function JunePracticePage() {
             />
             <input
               type="text"
-              placeholder="이름 (선택)"
+              placeholder="Name (optional)"
               value={studentName}
               onChange={(e) => setStudentName(e.target.value)}
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }}
@@ -177,7 +177,7 @@ export default function JunePracticePage() {
               disabled={!instagramId.trim()}
               style={{ width: '100%', padding: '13px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: instagramId.trim() ? 'pointer' : 'not-allowed', opacity: instagramId.trim() ? 1 : 0.4, marginTop: 4 }}
             >
-              연습 시작하기
+              Start Practice
             </button>
           </form>
         </div>
@@ -216,15 +216,15 @@ export default function JunePracticePage() {
       <div style={{ height: 56, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
         <div>
           <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.05em', textTransform: 'uppercase' }}>SuperfastSAT</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>6월 SAT 대비 연습 300</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>June SAT Practice 300</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>
-              {answeredCount > 0 ? `${correctCount}/${answeredCount}` : `${data.total}문제`}
+              {answeredCount > 0 ? `${correctCount}/${answeredCount}` : `${data.total} questions`}
             </div>
             <div style={{ fontSize: 11, color: '#94a3b8' }}>
-              {answeredCount > 0 ? `${Math.round((correctCount / answeredCount) * 100)}% 정답` : 'RW 전체'}
+              {answeredCount > 0 ? `${Math.round((correctCount / answeredCount) * 100)}% correct` : 'All RW'}
             </div>
           </div>
           <button
@@ -232,7 +232,7 @@ export default function JunePracticePage() {
             disabled={!canSubmit || submitting}
             style={{ padding: '7px 14px', background: canSubmit ? '#3b82f6' : '#334155', color: canSubmit ? '#fff' : '#64748b', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: canSubmit ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
           >
-            {submitting ? '제출 중...' : submitted ? '제출 완료' : '결과 제출'}
+            {submitting ? 'Submitting...' : submitted ? 'Submitted' : 'Submit Results'}
           </button>
         </div>
       </div>
