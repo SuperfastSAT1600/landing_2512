@@ -68,7 +68,7 @@ export function PanelHeader({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {localStudent.lead_status === 'active' && localStudent.funnel_stage === '0' && (
+        {localStudent.lead_status === 'active' && (
           <button
             onClick={onDelete}
             disabled={deleting}
