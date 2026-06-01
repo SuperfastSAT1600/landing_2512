@@ -37,14 +37,14 @@ export interface CrmStatsData {
   monthly: StatsMonthly[];
 }
 
-function isContacted(student: { funnel_stage: string; lead_status: string; consultation_timeline: unknown }): boolean {
-  // 컨택 성공 = 2단계 이상 진입 (active) 또는 상담 기록 존재 (inactive)
-  if (student.lead_status === 'active' || student.lead_status === 'reactivating') {
-    return student.funnel_stage !== '0' && student.funnel_stage !== '1';
-  }
-  // inactive(churned): 퍼널 이력이 없으므로 consultation_timeline 존재 여부로 판단
-  const tl = student.consultation_timeline as unknown[];
-  return Array.isArray(tl) && tl.length > 0;
+function isContacted(student: { funnel_stage: string }): boolean {
+  // 컨택 성공 = 최초 세일즈 퍼널에서 2단계 이상 진입
+  return student.funnel_stage !== '0' && student.funnel_stage !== '1';
+}
+
+function contactRate(contacted: number, leads: number): number {
+  if (leads === 0) return 0;
+  return Math.round((contacted / leads) * 10000) / 100;
 }
 
 function toMonthKey(dateStr: string): string {
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
   // 기간 내 신규 리드 조회 (inquiry_date 기준, fallback: created_at)
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')
-    .select('id, name, funnel_stage, lead_status, traffic_source, inquiry_date, created_at, consultation_timeline')
+    .select('id, name, funnel_stage, lead_status, traffic_source, inquiry_date, created_at, retry_strategy_id')
     .or(`inquiry_date.gte.${from},and(inquiry_date.is.null,created_at.gte.${from})`)
     .or(`inquiry_date.lte.${to},and(inquiry_date.is.null,created_at.lte.${to})`);
 
@@ -119,7 +119,9 @@ export async function GET(request: NextRequest) {
 
   // ── Overview ──────────────────────────────────────────────────────────────
   const total = leadList.length;
-  const contactedCount = leadList.filter((s) => isContacted(s)).length;
+  // 컨택 성공률: 최초 세일즈 리드(retry_strategy_id 없음)만 대상
+  const initialLeads = leadList.filter((s) => !(s as { retry_strategy_id?: string | null }).retry_strategy_id);
+  const contactedCount = initialLeads.filter((s) => isContacted(s)).length;
   const paidCount = leadList.filter((s) => isPaid(s)).length;
 
   // ── By Source ─────────────────────────────────────────────────────────────
@@ -130,7 +132,8 @@ export async function GET(request: NextRequest) {
     if (!sourceMap.has(src)) sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
     const entry = sourceMap.get(src)!;
     entry.leads++;
-    if (isContacted(s)) entry.contacted++;
+    const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
+    if (!isRetry && isContacted(s)) entry.contacted++;
     if (isPaid(s)) entry.paid++;
   }
 
@@ -150,9 +153,9 @@ export async function GET(request: NextRequest) {
       source,
       leads: d.leads,
       contacted: d.contacted,
-      contact_rate: d.leads > 0 ? Math.round((d.contacted / d.leads) * 1000) / 10 : 0,
+      contact_rate: contactRate(d.contacted, d.leads),
       paid: d.paid,
-      conversion_rate: d.leads > 0 ? Math.round((d.paid / d.leads) * 1000) / 10 : 0,
+      conversion_rate: d.leads > 0 ? Math.round((d.paid / d.leads) * 10000) / 100 : 0,
       revenue: d.revenue,
       net_revenue: d.net_revenue,
     }))
@@ -166,7 +169,8 @@ export async function GET(request: NextRequest) {
     if (!monthMap.has(mo)) monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
     const entry = monthMap.get(mo)!;
     entry.leads++;
-    if (isContacted(s)) entry.contacted++;
+    const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
+    if (!isRetry && isContacted(s)) entry.contacted++;
     if (isPaid(s)) entry.paid++;
   }
 
@@ -187,9 +191,9 @@ export async function GET(request: NextRequest) {
     overview: {
       total_leads: total,
       contacted: contactedCount,
-      contact_rate: total > 0 ? Math.round((contactedCount / total) * 1000) / 10 : 0,
+      contact_rate: contactRate(contactedCount, initialLeads.length),
       paid: paidCount,
-      conversion_rate: total > 0 ? Math.round((paidCount / total) * 1000) / 10 : 0,
+      conversion_rate: total > 0 ? Math.round((paidCount / total) * 10000) / 100 : 0,
       total_revenue: totalRevenue,
       total_net_revenue: totalNetRevenue,
     },
