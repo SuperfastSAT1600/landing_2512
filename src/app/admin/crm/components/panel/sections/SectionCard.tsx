@@ -35,7 +35,7 @@ export function SectionCard({
             </span>
           )}
         </button>
-        {actions && (
+        {open && actions && (
           <div className="flex items-center gap-2 ml-2 shrink-0" onClick={e => e.stopPropagation()}>
             {actions}
           </div>
