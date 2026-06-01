@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     .select('*')
     .order('created_at', { ascending: true });
 
-  if (type === 'initial' || type === 'retry') {
+  const validTypes = ['initial_contact', 'initial_sales', 'retry'];
+  if (type && validTypes.includes(type)) {
     query = query.eq('type', type);
   }
 
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { name: string; type?: 'initial' | 'retry' };
+  let body: { name: string; type?: 'initial_contact' | 'initial_sales' | 'retry'; description?: string };
   try {
     body = await request.json();
   } catch {
@@ -44,11 +45,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '전략 이름을 입력해주세요.' }, { status: 400 });
   }
 
-  const strategyType = body.type === 'initial' ? 'initial' : 'retry';
+  const validTypes = ['initial_contact', 'initial_sales', 'retry'];
+  const strategyType = validTypes.includes(body.type ?? '') ? body.type : 'retry';
 
   const { data, error } = await supabaseAdmin
     .from('retry_strategies')
-    .insert({ name: body.name.trim(), type: strategyType })
+    .insert({ name: body.name.trim(), type: strategyType, description: body.description?.trim() || null })
     .select()
     .single();
 

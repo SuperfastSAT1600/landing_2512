@@ -26,6 +26,7 @@ function StrategySection({
   onDeleted: (id: string) => void;
 }) {
   const [newName, setNewName] = useState('');
+  const [newDesc, setNewDesc] = useState('');
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState(false);
 
@@ -35,12 +36,13 @@ function StrategySection({
     const res = await fetch('/api/crm/retry-strategies', {
       method: 'POST',
       headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName.trim(), type }),
+      body: JSON.stringify({ name: newName.trim(), type, description: newDesc.trim() || undefined }),
     });
     if (res.ok) {
       const json = await res.json();
       onCreated(json.data);
       setNewName('');
+      setNewDesc('');
       setCreating(false);
     } else {
       alert('전략 생성에 실패했습니다.');
@@ -77,26 +79,35 @@ function StrategySection({
       </div>
 
       {creating && (
-        <div className="flex gap-2 mb-3">
+        <div className="flex flex-col gap-2 mb-3">
           <input
             autoFocus
             type="text"
             value={newName}
             onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setCreating(false); }}
+            onKeyDown={e => { if (e.key === 'Escape') setCreating(false); }}
             placeholder="전략 이름 입력..."
-            className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
-          <button
-            onClick={handleCreate}
-            disabled={adding || !newName.trim()}
-            className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            추가
-          </button>
-          <button onClick={() => setCreating(false)} className="text-xs text-gray-400 hover:text-gray-600 px-2">
-            취소
-          </button>
+          <textarea
+            rows={3}
+            value={newDesc}
+            onChange={e => setNewDesc(e.target.value)}
+            placeholder="전략 내용 입력 (선택)..."
+            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleCreate}
+              disabled={adding || !newName.trim()}
+              className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              추가
+            </button>
+            <button onClick={() => setCreating(false)} className="text-xs text-gray-400 hover:text-gray-600 px-2">
+              취소
+            </button>
+          </div>
         </div>
       )}
 
