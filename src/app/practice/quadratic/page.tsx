@@ -19,10 +19,10 @@ type Phase = 'gate' | 'test';
 
 /* ── Skill config ───────────────────────────────────── */
 const SKILLS = [
-  { key: 'general',      label: '근의 공식 (일반)' },
-  { key: 'even',         label: '근의 공식 (짝수계수)' },
-  { key: 'discriminant', label: '판별식' },
-  { key: 'vieta',        label: '근과 계수의 관계' },
+  { key: 'general',      label: 'Quadratic Formula' },
+  { key: 'even',         label: 'Even-Coefficient Form' },
+  { key: 'discriminant', label: 'Discriminant' },
+  { key: 'vieta',        label: "Vieta's Formulas" },
 ] as const;
 type SkillKey = typeof SKILLS[number]['key'];
 
@@ -320,7 +320,7 @@ export default function QuadraticPracticePage() {
   const handleSubmit = async () => {
     if (submitting || submitted) return;
     const answeredCount = Object.keys(answers).length;
-    if (answeredCount < 1) { showToast('최소 1문제 이상 풀어야 제출할 수 있어요.'); return; }
+    if (answeredCount < 1) { showToast('Solve at least 1 question before submitting.'); return; }
 
     setSubmitting(true);
     const correctCount = Object.entries(answers).filter(([qId, ans]) => {
@@ -335,9 +335,9 @@ export default function QuadraticPracticePage() {
         body: JSON.stringify({ instagramId, studentName: studentName || null, answers, correctCount, totalCount: answeredCount }),
       });
       setSubmitted(true);
-      showToast(`제출 완료! ${answeredCount}문제 중 ${correctCount}개 정답 (${Math.round(correctCount / answeredCount * 100)}%)`);
+      showToast(`Submitted! ${correctCount}/${answeredCount} correct (${Math.round(correctCount / answeredCount * 100)}%)`);
     } catch {
-      showToast('제출에 실패했어요. 다시 시도해주세요.');
+      showToast('Submission failed. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -349,19 +349,19 @@ export default function QuadraticPracticePage() {
       <div style={{ minHeight: 'calc(100vh - 56px)', marginTop: 56, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, padding: '48px 40px', width: '100%', maxWidth: 400, textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
           <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>SuperfastSAT</div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>이차방정식 핵심 30문제</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>Quadratic Equations — 30 Problems</h1>
           <p style={{ fontSize: 13, color: '#64748b', marginBottom: 8, lineHeight: 1.6 }}>
-            근의 공식 · 짝수계수 공식 · 판별식 · 근과 계수의 관계
+            Quadratic Formula · Even-Coefficient Form · Discriminant · Vieta&apos;s Formulas
           </p>
-          <p style={{ fontSize: 14, color: '#64748b', marginBottom: 36 }}>Instagram ID를 입력하면 시작할 수 있어요</p>
+          <p style={{ fontSize: 14, color: '#64748b', marginBottom: 36 }}>Enter your Instagram ID to begin</p>
           <form onSubmit={handleGateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input type="text" placeholder="@instagram_id" value={instagramId} onChange={e => setInstagramId(e.target.value)} required
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }} />
-            <input type="text" placeholder="이름 (선택)" value={studentName} onChange={e => setStudentName(e.target.value)}
+            <input type="text" placeholder="Name (optional)" value={studentName} onChange={e => setStudentName(e.target.value)}
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }} />
             <button type="submit" disabled={!instagramId.trim()}
               style={{ width: '100%', padding: '13px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: instagramId.trim() ? 'pointer' : 'not-allowed', opacity: instagramId.trim() ? 1 : 0.4, marginTop: 4 }}>
-              연습 시작하기
+              Start Practice
             </button>
           </form>
         </div>
@@ -393,12 +393,12 @@ export default function QuadraticPracticePage() {
 
       {/* Test header */}
       <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
-        <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>이차방정식 핵심 30문제</span>
+        <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>Quadratic Equations — 30 Problems</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / 30 &nbsp;({correctCount}개 정답)</span>
+          <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / 30 &nbsp;({correctCount} correct)</span>
           <button onClick={handleSubmit} disabled={submitting || submitted || answeredCount < 1}
             style={{ padding: '6px 14px', background: submitted ? '#22c55e' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: submitted || submitting || answeredCount < 1 ? 'default' : 'pointer', opacity: answeredCount < 1 ? 0.4 : 1 }}>
-            {submitted ? '제출 완료 ✓' : submitting ? '제출 중...' : '결과 제출'}
+            {submitted ? 'Submitted ✓' : submitting ? 'Submitting...' : 'Submit Results'}
           </button>
         </div>
       </div>
@@ -479,7 +479,7 @@ export default function QuadraticPracticePage() {
               {/* Rationale */}
               {isRevealed && (
                 <div style={{ marginTop: 20, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10 }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>풀이</p>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>Solution</p>
                   <pre style={{ fontSize: 13, color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
                     {currentQuestion.rationale}
                   </pre>
@@ -494,12 +494,12 @@ export default function QuadraticPracticePage() {
       <div className="bluebook-footer" style={{ flexShrink: 0 }}>
         <button onClick={() => !isFirst && setCurrentIndex(i => i - 1)} disabled={isFirst}
           style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.4 : 1, color: '#374151' }}>
-          이전
+          Back
         </button>
         <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {groupQuestions.length}</span>
         <button className="bluebook-next-btn btn-press" onClick={() => !isLast && setCurrentIndex(i => i + 1)} disabled={isLast}
           style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}>
-          다음
+          Next
         </button>
       </div>
     </div>
