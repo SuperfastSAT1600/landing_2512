@@ -22,7 +22,7 @@ export async function POST(
   if (body.student_id) {
     const { data, error } = await supabaseAdmin
       .from('students')
-      .update({ retry_strategy_id: id, retry_stage: '연락 시도' })
+      .update({ retry_strategy_id: id, retry_stage: '연락 시도', retry_assigned_at: new Date().toISOString() })
       .eq('id', body.student_id)
       .select()
       .single();
@@ -38,7 +38,7 @@ export async function POST(
   if (Array.isArray(body.student_ids) && body.student_ids.length > 0) {
     const { data, error } = await supabaseAdmin
       .from('students')
-      .update({ retry_strategy_id: id, retry_stage: '연락 시도' })
+      .update({ retry_strategy_id: id, retry_stage: '연락 시도', retry_assigned_at: new Date().toISOString() })
       .in('id', body.student_ids)
       .select('id');
 
