@@ -33,7 +33,20 @@ interface PracticeSet {
   groups: Group[];
 }
 
-type Phase = 'loading' | 'gate' | 'test';
+interface LeaderboardEntry {
+  rank: number;
+  maskedId: string;
+  correctCount: number;
+  totalCount: number;
+  score: number;
+}
+
+interface Stats {
+  leaderboard: LeaderboardEntry[];
+  questionStats: Record<string, { correct: number; total: number }>;
+}
+
+type Phase = 'loading' | 'gate' | 'leaderboard' | 'test';
 
 const DIFFICULTY_COLOR: Record<string, string> = {
   Hard: '#ef4444',
@@ -51,7 +64,6 @@ const SKILL_ORDER = [
 ];
 
 const LETTERS = ['A', 'B', 'C', 'D'] as const;
-
 const TEST_ID = 'june-2026-subskill-300';
 
 export default function JunePracticePage() {
@@ -62,6 +74,7 @@ export default function JunePracticePage() {
   const [gateError, setGateError] = useState('');
   const [validating, setValidating] = useState(false);
   const [data, setData] = useState<PracticeSet | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [activeSkill, setActiveSkill] = useState<string>('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -84,7 +97,6 @@ export default function JunePracticePage() {
       .catch(() => setPhase('gate'));
   }, []);
 
-  // Reset question index when skill changes
   useEffect(() => {
     setCurrentIndex(0);
   }, [activeSkill]);
@@ -108,19 +120,26 @@ export default function JunePracticePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: cleanCode, instagramId: cleanIg, testId: TEST_ID }),
       });
-      const data = await res.json();
-      if (!data.valid) {
+      const result = await res.json();
+      if (!result.valid) {
         const msgs: Record<string, string> = {
           invalid_code: 'Invalid access code.',
           code_inactive: 'This code is no longer active.',
           code_expired: 'This code has expired.',
           capacity_exceeded: 'This code has reached its limit. Please get a new code.',
         };
-        setGateError(msgs[data.error] ?? 'Something went wrong. Please try again.');
+        setGateError(msgs[result.error] ?? 'Something went wrong. Please try again.');
         return;
       }
       setInstagramId(cleanIg.startsWith('@') ? cleanIg : `@${cleanIg}`);
-      setPhase('test');
+
+      // Fetch leaderboard + question stats
+      const statsRes = await fetch(`/api/practice/stats?testId=${TEST_ID}`);
+      if (statsRes.ok) {
+        setStats(await statsRes.json());
+      }
+
+      setPhase('leaderboard');
     } catch {
       setGateError('Network error. Please try again.');
     } finally {
@@ -139,6 +158,12 @@ export default function JunePracticePage() {
       }).length;
       const total = Object.keys(answers).length;
 
+      const questionResults: Record<string, boolean> = {};
+      Object.entries(answers).forEach(([qId, ans]) => {
+        const q = allQuestions.find((q) => q.id === qId);
+        if (q) questionResults[qId] = q.correct_answer === ans;
+      });
+
       const res = await fetch('/api/practice/june-2026/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,6 +173,7 @@ export default function JunePracticePage() {
           answers,
           correctCount: correct,
           totalCount: total,
+          questionResults,
         }),
       });
 
@@ -229,6 +255,58 @@ export default function JunePracticePage() {
     );
   }
 
+  if (phase === 'leaderboard') {
+    const lb = stats?.leaderboard ?? [];
+    return (
+      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff' }}>
+        <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
+          <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>SuperfastSAT</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1e293b', margin: 0 }}>Leaderboard</h2>
+          <p style={{ fontSize: 13, color: '#64748b', marginTop: 4, marginBottom: 0 }}>
+            June SAT Practice 300 &middot; {lb.length} students
+          </p>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {lb.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#94a3b8', paddingTop: 80, fontSize: 14 }}>
+              No results yet. Be the first!
+            </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, background: '#fff' }}>
+                  {['#', 'ID', 'Score', 'Answered'].map((h, i) => (
+                    <th key={h} style={{ padding: '12px 16px', textAlign: i >= 2 ? 'right' : 'left', color: '#94a3b8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {lb.map((entry) => (
+                  <tr key={entry.rank} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '12px 16px', color: entry.rank <= 3 ? '#f59e0b' : '#94a3b8', fontWeight: entry.rank <= 3 ? 700 : 400, width: 40 }}>{entry.rank}</td>
+                    <td style={{ padding: '12px 16px', color: '#1e293b', fontWeight: 500, fontFamily: 'monospace' }}>{entry.maskedId}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: entry.score >= 80 ? '#22c55e' : entry.score >= 60 ? '#f59e0b' : '#ef4444' }}>{entry.score}%</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b' }}>{entry.correctCount}/{entry.totalCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+          <button
+            onClick={() => setPhase('test')}
+            style={{ width: '100%', padding: '13px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Start Practice
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!data) return null;
 
   const currentGroup = data.groups.find((g) => g.skill === activeSkill);
@@ -246,6 +324,11 @@ export default function JunePracticePage() {
     return q?.correct_answer === ans;
   }).length;
   const canSubmit = answeredCount >= 10 && !submitted;
+
+  // Per-question stat for current question
+  const qStat = currentQuestion ? stats?.questionStats[currentQuestion.id] : undefined;
+  const qStatTotal = qStat?.total ?? 0;
+  const qStatPct = qStatTotal > 0 ? Math.round((qStat!.correct / qStatTotal) * 100) : null;
 
   return (
     <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
@@ -344,7 +427,6 @@ export default function JunePracticePage() {
                     const isSelected = userAnswer === letter;
                     const isCorrectChoice = letter === currentQuestion.correct_answer;
 
-                    // Inline style overrides for revealed state
                     let revealedStyle: React.CSSProperties = {};
                     if (isRevealed) {
                       if (isCorrectChoice) {
@@ -378,12 +460,23 @@ export default function JunePracticePage() {
                   })}
                 </div>
 
-                {/* Rationale (shown after reveal) */}
-                {isRevealed && currentQuestion.rationale && (
-                  <div style={{ marginTop: 20, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10 }}>
-                    <span style={{ color: '#3b82f6', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>해설 </span>
-                    <span style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}>{currentQuestion.rationale}</span>
-                  </div>
+                {/* Revealed: rationale + question stats */}
+                {isRevealed && (
+                  <>
+                    {currentQuestion.rationale && (
+                      <div style={{ marginTop: 20, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10 }}>
+                        <span style={{ color: '#3b82f6', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solution </span>
+                        <span style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}>{currentQuestion.rationale}</span>
+                      </div>
+                    )}
+                    {qStatPct !== null && (
+                      <div style={{ marginTop: 10, display: 'flex', gap: 16, alignItems: 'center', fontSize: 12 }}>
+                        <span style={{ color: '#22c55e', fontWeight: 700 }}>{qStatPct}% correct</span>
+                        <span style={{ color: '#ef4444', fontWeight: 700 }}>{100 - qStatPct}% incorrect</span>
+                        <span style={{ color: '#94a3b8' }}>({qStatTotal} students)</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

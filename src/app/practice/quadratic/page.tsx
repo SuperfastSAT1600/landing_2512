@@ -15,7 +15,20 @@ interface Question {
   rationale: string;
 }
 
-type Phase = 'gate' | 'test';
+type Phase = 'gate' | 'leaderboard' | 'test';
+
+interface LeaderboardEntry {
+  rank: number;
+  maskedId: string;
+  correctCount: number;
+  totalCount: number;
+  score: number;
+}
+
+interface Stats {
+  leaderboard: LeaderboardEntry[];
+  questionStats: Record<string, { correct: number; total: number }>;
+}
 
 /* ── Skill config ───────────────────────────────────── */
 const SKILLS = [
@@ -294,6 +307,7 @@ export default function QuadraticPracticePage() {
   const [accessCode, setAccessCode] = useState('');
   const [gateError, setGateError] = useState('');
   const [validating, setValidating] = useState(false);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [activeSkill, setActiveSkill] = useState<SkillKey>('general');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -330,7 +344,11 @@ export default function QuadraticPracticePage() {
         return;
       }
       setInstagramId(cleanIg.startsWith('@') ? cleanIg : `@${cleanIg}`);
-      setPhase('test');
+
+      const statsRes = await fetch(`/api/practice/stats?testId=${TEST_ID}`);
+      if (statsRes.ok) setStats(await statsRes.json());
+
+      setPhase('leaderboard');
     } catch {
       setGateError('Network error. Please try again.');
     } finally {
@@ -363,7 +381,19 @@ export default function QuadraticPracticePage() {
       await fetch('/api/practice/quadratic/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instagramId, studentName: studentName || null, answers, correctCount, totalCount: answeredCount }),
+        body: JSON.stringify({
+          instagramId,
+          studentName: studentName || null,
+          answers,
+          correctCount,
+          totalCount: answeredCount,
+          questionResults: Object.fromEntries(
+            Object.entries(answers).map(([qId, ans]) => {
+              const q = QUESTIONS.find(q => q.id === qId);
+              return [qId, q?.correct_answer === ans];
+            })
+          ),
+        }),
       });
       setSubmitted(true);
       showToast(`Submitted! ${correctCount}/${answeredCount} correct (${Math.round(correctCount / answeredCount * 100)}%)`);
@@ -402,6 +432,57 @@ export default function QuadraticPracticePage() {
               {validating ? 'Checking...' : 'Start Practice'}
             </button>
           </form>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Leaderboard phase ──────────────────────────── */
+  if (phase === 'leaderboard') {
+    const lb = stats?.leaderboard ?? [];
+    return (
+      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff' }}>
+        <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
+          <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>SuperfastSAT</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1e293b', margin: 0 }}>Leaderboard</h2>
+          <p style={{ fontSize: 13, color: '#64748b', marginTop: 4, marginBottom: 0 }}>
+            Quadratic Equations — 30 Problems &middot; {lb.length} students
+          </p>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {lb.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#94a3b8', paddingTop: 80, fontSize: 14 }}>
+              No results yet. Be the first!
+            </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  {['#', 'ID', 'Score', 'Answered'].map((h, i) => (
+                    <th key={h} style={{ padding: '12px 16px', textAlign: i >= 2 ? 'right' : 'left', color: '#94a3b8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {lb.map((entry) => (
+                  <tr key={entry.rank} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '12px 16px', color: entry.rank <= 3 ? '#f59e0b' : '#94a3b8', fontWeight: entry.rank <= 3 ? 700 : 400, width: 40 }}>{entry.rank}</td>
+                    <td style={{ padding: '12px 16px', color: '#1e293b', fontWeight: 500, fontFamily: 'monospace' }}>{entry.maskedId}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: entry.score >= 80 ? '#22c55e' : entry.score >= 60 ? '#f59e0b' : '#ef4444' }}>{entry.score}%</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b' }}>{entry.correctCount}/{entry.totalCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+          <button
+            onClick={() => setPhase('test')}
+            style={{ width: '100%', padding: '13px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Start Practice
+          </button>
         </div>
       </div>
     );
@@ -514,14 +595,28 @@ export default function QuadraticPracticePage() {
                 })}
               </div>
 
-              {/* Rationale */}
+              {/* Rationale + question stats */}
               {isRevealed && (
-                <div style={{ marginTop: 20, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10 }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>Solution</p>
-                  <pre style={{ fontSize: 13, color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
-                    {currentQuestion.rationale}
-                  </pre>
-                </div>
+                <>
+                  <div style={{ marginTop: 20, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>Solution</p>
+                    <pre style={{ fontSize: 13, color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
+                      {currentQuestion.rationale}
+                    </pre>
+                  </div>
+                  {(() => {
+                    const qStat = stats?.questionStats[currentQuestion.id];
+                    if (!qStat || qStat.total === 0) return null;
+                    const pct = Math.round((qStat.correct / qStat.total) * 100);
+                    return (
+                      <div style={{ marginTop: 10, display: 'flex', gap: 16, alignItems: 'center', fontSize: 12 }}>
+                        <span style={{ color: '#22c55e', fontWeight: 700 }}>{pct}% correct</span>
+                        <span style={{ color: '#ef4444', fontWeight: 700 }}>{100 - pct}% incorrect</span>
+                        <span style={{ color: '#94a3b8' }}>({qStat.total} students)</span>
+                      </div>
+                    );
+                  })()}
+                </>
               )}
             </div>
           </div>

@@ -3,12 +3,13 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { instagramId, studentName, answers, correctCount, totalCount } = body as {
+  const { instagramId, studentName, answers, correctCount, totalCount, questionResults } = body as {
     instagramId: string;
     studentName?: string;
     answers: Record<string, string>;
     correctCount: number;
     totalCount: number;
+    questionResults?: Record<string, boolean>;
   };
 
   if (!instagramId) {
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
       answers,
       correct_count: correctCount,
       total_count: totalCount,
+      question_results: questionResults ?? {},
     })
     .select('id')
     .single();
