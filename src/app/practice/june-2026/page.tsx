@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 
 interface Choice {
   A: string;
@@ -387,7 +388,7 @@ export default function JunePracticePage() {
             <div className="test-passage-panel">
               <div style={{ padding: '24px 28px 24px 24px' }}>
                 <div style={{ fontSize: 14, lineHeight: 1.8, color: '#374151' }}>
-                  {currentQuestion.passage}
+                  <ContentRenderer content={currentQuestion.passage} />
                 </div>
               </div>
             </div>
@@ -411,7 +412,7 @@ export default function JunePracticePage() {
 
                 {/* Question text */}
                 <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}>
-                  {currentQuestion.question}
+                  <ContentRenderer content={currentQuestion.question} />
                 </div>
 
                 {/* Answer choices */}
@@ -448,7 +449,7 @@ export default function JunePracticePage() {
                         <span className="bluebook-option-label" style={{ color: labelColor, borderColor: labelColor }}>
                           {letter}
                         </span>
-                        <span className="bluebook-option-text">{text}</span>
+                        <span className="bluebook-option-text"><ContentRenderer content={text} /></span>
                       </button>
                     );
                   })}
@@ -460,7 +461,7 @@ export default function JunePracticePage() {
                     {currentQuestion.rationale && (
                       <div style={{ marginTop: 20, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10 }}>
                         <span style={{ color: '#3b82f6', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solution </span>
-                        <span style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}>{currentQuestion.rationale}</span>
+                        <span style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}><ContentRenderer content={currentQuestion.rationale} /></span>
                       </div>
                     )}
                     {qStatPct !== null && (
