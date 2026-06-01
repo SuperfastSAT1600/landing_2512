@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
+import { SectionCard } from './SectionCard';
 import type { Student, RetryStrategy, StrategyHistoryEntry, StrategyHistoryType } from '@/types/crm';
 
 const HISTORY_TYPES: { type: StrategyHistoryType; label: string }[] = [
@@ -69,18 +70,18 @@ function AddForm({ type, strategies, onSave, onCancel }: AddFormProps) {
 }
 
 export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
-  const [open, setOpen] = useState(false);
+  const [sectionOpen, setSectionOpen] = useState(true);
   const [openType, setOpenType] = useState<StrategyHistoryType | null>(null);
   const [addingFor, setAddingFor] = useState<StrategyHistoryType | null>(null);
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!sectionOpen) return;
     fetch('/api/crm/retry-strategies', { headers: { 'x-admin-key': adminKey } })
       .then(r => r.json())
       .then(j => setStrategies(j.data ?? []));
-  }, [open, adminKey]);
+  }, [sectionOpen, adminKey]);
 
   const history: StrategyHistoryEntry[] = student.strategy_history ?? [];
 
@@ -117,23 +118,15 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
   const totalCount = history.length;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          {open ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
-          <span className="text-sm font-bold text-gray-800">전략 히스토리</span>
-          {totalCount > 0 && (
-            <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{totalCount}</span>
-          )}
-        </div>
-      </button>
-
-      {open && (
-        <div className="border-t border-gray-100 divide-y divide-gray-100">
-          {HISTORY_TYPES.map(({ type, label }) => {
+    <SectionCard
+      title="전략 히스토리"
+      count={totalCount}
+      defaultOpen={true}
+      bodyClassName=""
+      onOpenChange={setSectionOpen}
+    >
+      <div className="divide-y divide-gray-100">
+        {HISTORY_TYPES.map(({ type, label }) => {
             const entries = history.filter(e => e.type === type);
             const isOpen = openType === type;
             return (
@@ -195,9 +188,8 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
                 )}
               </div>
             );
-          })}
-        </div>
-      )}
-    </div>
+        })}
+      </div>
+    </SectionCard>
   );
 }

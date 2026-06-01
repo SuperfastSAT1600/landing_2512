@@ -6,6 +6,7 @@ import { SAT_PAST_MONTHS, formatSatDate } from '../constants';
 import { StudentInfoEdit } from './StudentInfoEdit';
 import type { EditForm } from '../types';
 import type { DiagCandidate } from '../hooks/useDiagnostic';
+import { SectionCard } from './SectionCard';
 
 function StudentInfoCell({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -43,35 +44,32 @@ export function StudentInfoSection({
   diagLinked, diagCandidates, showDiagPicker, setShowDiagPicker,
   diagLoading, diagSearchQuery, setDiagSearchQuery, onDiagLink,
 }: Props) {
-  return (
-    <section>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-medium text-gray-500" style={{ letterSpacing: '0.3px' }}>학생 정보</p>
-        {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 transition-colors"
-          >
-            <Pencil size={11} />편집
-          </button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <button onClick={onCancelEdit} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">취소</button>
-            <button
-              onClick={onSaveEdit}
-              disabled={savingEdit}
-              className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-lg transition-colors"
-            >
-              {savingEdit ? '저장 중...' : '저장'}
-            </button>
-          </div>
-        )}
-      </div>
+  const actions = !isEditing ? (
+    <button
+      onClick={() => setIsEditing(true)}
+      className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 transition-colors"
+    >
+      <Pencil size={11} />편집
+    </button>
+  ) : (
+    <>
+      <button onClick={onCancelEdit} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">취소</button>
+      <button
+        onClick={onSaveEdit}
+        disabled={savingEdit}
+        className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-lg transition-colors"
+      >
+        {savingEdit ? '저장 중...' : '저장'}
+      </button>
+    </>
+  );
 
+  return (
+    <SectionCard title="학생 정보" defaultOpen={true} actions={actions}>
       {isEditing ? (
         <StudentInfoEdit form={editForm} onChange={setEditForm} />
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+        <div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             <StudentInfoCell
               label="직전 점수"
@@ -176,6 +174,6 @@ export function StudentInfoSection({
           )}
         </div>
       )}
-    </section>
+    </SectionCard>
   );
 }

@@ -20,8 +20,6 @@ import { StrategyHistorySection } from './sections/StrategyHistorySection';
 import type { StudentDetailPanelProps } from './types';
 
 export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
-  const [showInquiry, setShowInquiry] = useState(false);
-
   const { localStudent, setLocalStudent, timeline, setTimeline, editForm, setEditForm, loadingFresh } =
     usePanelData(student.id, adminKey, student);
 
@@ -124,11 +122,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           <div className="flex-1 overflow-y-auto p-5 space-y-5">
             <InquirySection
               localStudent={localStudent}
-              adminKey={adminKey}
               editForm={editForm}
               setEditForm={setEditForm}
-              showInquiry={showInquiry}
-              setShowInquiry={setShowInquiry}
               isEditingInquiry={editFormHook.isEditingInquiry}
               setIsEditingInquiry={editFormHook.setIsEditingInquiry}
               savingInquiry={editFormHook.savingInquiry}

@@ -2,6 +2,7 @@
 
 import type { ConsultationEntry } from '@/types/crm';
 import { TimelineEntry } from './TimelineEntry';
+import { SectionCard } from './SectionCard';
 
 interface PendingEdit { purified: string; coachHistory: string; deletedItems: string[] }
 
@@ -24,13 +25,11 @@ export function TimelineSection({
   pendingEdits, setPendingEdits, onAiCare, onPublish, onDeleteAi,
 }: Props) {
   return (
-    <section>
-      <p className="text-xs font-medium text-gray-500 mb-2" style={{ letterSpacing: '0.3px' }}>
-        상담 타임라인
-        {!loadingFresh && timeline.length > 0 && (
-          <span className="text-gray-400 font-normal ml-1">({timeline.length}건)</span>
-        )}
-      </p>
+    <SectionCard
+      title="상담 타임라인"
+      count={!loadingFresh ? timeline.length : undefined}
+      defaultOpen={true}
+    >
       {loadingFresh && (
         <div className="space-y-2">
           {[1, 2].map(i => <div key={i} className="h-16 rounded-xl bg-gray-200 animate-pulse" />)}
@@ -68,6 +67,6 @@ export function TimelineSection({
           />
         ))}
       </div>
-    </section>
+    </SectionCard>
   );
 }
