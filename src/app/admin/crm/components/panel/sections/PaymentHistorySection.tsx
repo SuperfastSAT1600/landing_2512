@@ -28,7 +28,7 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/crm/payments?student_id=${student.id}`, {
+    const res = await fetch(`/api/crm/payments?student_id=${student.id}&student_name=${encodeURIComponent(student.name)}`, {
       headers: { 'x-admin-key': adminKey },
     });
     const json = await res.json();

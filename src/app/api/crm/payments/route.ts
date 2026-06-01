@@ -10,9 +10,15 @@ export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 });
   }
-  const studentId = new URL(request.url).searchParams.get('student_id');
+  const { searchParams } = new URL(request.url);
+  const studentId = searchParams.get('student_id');
+  const studentName = searchParams.get('student_name');
   let query = supabaseAdmin.from('payments').select('*').order('paid_at', { ascending: false });
-  if (studentId) query = query.eq('student_id', studentId);
+  if (studentId && studentName) {
+    query = query.or(`student_id.eq.${studentId},and(student_id.is.null,student_name.eq.${studentName})`);
+  } else if (studentId) {
+    query = query.eq('student_id', studentId);
+  }
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: { code: 'FETCH_FAILED', message: error.message } }, { status: 500 });
