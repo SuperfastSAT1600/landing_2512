@@ -495,6 +495,9 @@ export default function QuadraticPracticePage() {
   const userAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === groupQuestions.length - 1;
+  const allSectionDone = groupQuestions.every(q => !!revealed[q.id]);
+  const currentSkillIndex = SKILLS.findIndex(s => s.key === activeSkill);
+  const nextSkill = SKILLS[currentSkillIndex + 1] ?? null;
   const answeredCount = Object.keys(answers).length;
   const correctCount = Object.entries(answers).filter(([qId, ans]) => {
     const q = QUESTIONS.find(q => q.id === qId);
@@ -630,10 +633,18 @@ export default function QuadraticPracticePage() {
           Back
         </button>
         <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {groupQuestions.length}</span>
-        <button className="bluebook-next-btn btn-press" onClick={() => !isLast && setCurrentIndex(i => i + 1)} disabled={isLast}
-          style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}>
-          Next
-        </button>
+        {isLast && allSectionDone && nextSkill ? (
+          <button className="bluebook-next-btn btn-press"
+            onClick={() => { setActiveSkill(nextSkill.key); setCurrentIndex(0); }}
+            style={{ background: '#071be9', minWidth: 140 }}>
+            {nextSkill.label} →
+          </button>
+        ) : (
+          <button className="bluebook-next-btn btn-press" onClick={() => !isLast && setCurrentIndex(i => i + 1)} disabled={isLast}
+            style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}>
+            Next
+          </button>
+        )}
       </div>
     </div>
   );
