@@ -174,8 +174,8 @@ export interface Student {
   updated_at: string;
 }
 
-export type RetryStage = '연락 시도' | '상담 중' | '제안 완료' | '결제 완료';
-export const RETRY_STAGES: RetryStage[] = ['연락 시도', '상담 중', '제안 완료', '결제 완료'];
+export type RetryStage = '연락 시도' | '상담 중' | '제안 완료';
+export const RETRY_STAGES: RetryStage[] = ['연락 시도', '상담 중', '제안 완료'];
 
 export type StrategyHistoryType = 'initial_contact' | 'initial_sales' | 'retry';
 
