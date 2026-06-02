@@ -387,7 +387,7 @@ export default function JunePracticePage() {
           <>
             <div className="test-passage-panel">
               <div style={{ padding: '24px 28px 24px 24px' }}>
-                <div style={{ fontSize: 14, lineHeight: 1.8, color: '#374151' }}>
+                <div className="test-passage-content">
                   <ContentRenderer content={currentQuestion.passage} />
                 </div>
               </div>
