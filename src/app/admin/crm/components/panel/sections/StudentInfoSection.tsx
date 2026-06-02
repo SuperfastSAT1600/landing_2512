@@ -93,7 +93,7 @@ export function StudentInfoSection({
             {localStudent.preferred_language && (
               <StudentInfoCell
                 label="수업 언어"
-                value={{ korean: '한국어', english: 'English', any: '상관없음' }[localStudent.preferred_language] ?? localStudent.preferred_language}
+                value={{ korean: '한국어', english: 'English', any: '한/영 혼용' }[localStudent.preferred_language] ?? localStudent.preferred_language}
               />
             )}
           </div>

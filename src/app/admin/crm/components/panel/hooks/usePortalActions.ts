@@ -43,12 +43,15 @@ export function usePortalActions({ studentId, studentName, adminKey, onDelete, o
 
   async function handlePreviewPortal() {
     setPortalLoading(true);
+    // Open window synchronously to avoid popup blockers (window.open after await is blocked)
+    const newWindow = window.open('', '_blank');
     try {
       const token = await fetchPortalToken();
       if (!token) throw new Error('failed');
       const url = `${window.location.origin}/portal/${token}?preview=admin`;
-      window.open(url, '_blank');
+      if (newWindow) newWindow.location.href = url;
     } catch {
+      if (newWindow) newWindow.close();
       alert('포털 미리보기에 실패했습니다.');
     } finally {
       setPortalLoading(false);
