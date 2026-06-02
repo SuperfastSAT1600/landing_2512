@@ -62,6 +62,7 @@ export type FunnelStage =
   | '5b'  // 세일즈 콜 후 진단테스트 제출 완료
   | '6'   // 진단 Report 세일즈 콜 예약 확정 후 대기
   | '7'   // 진단 Report 세일즈 콜 완료
+  | '8'   // 수업 중 (결제 완료 후 자동 전환)
   | 'churned';
 
 // 코치 매칭 보드 단계 (칸반 B, 결제 완료 이후)
@@ -167,6 +168,7 @@ export interface Student {
   retry_assigned_at: string | null;
 
   funnel_stage_updated_at: string | null;
+  stage_history: Array<{ stage: string; label: string; entered_at: string }>;
   sort_order: number | null;
   created_at: string;
   updated_at: string;
@@ -356,6 +358,7 @@ export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
   '5b': '진단테스트 완료 (콜 후)',
   '6': 'Report 콜 예약 확정',
   '7': 'Report 콜 완료',
+  '8': '수업 중',
   'churned': '이탈',
 };
 
