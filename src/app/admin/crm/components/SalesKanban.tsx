@@ -162,7 +162,7 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
 
     // 컬럼 간 이동
     if (targetStage !== student.funnel_stage) {
-      onStudentUpdate(student.id, { funnel_stage: targetStage });
+      onStudentUpdate(student.id, { funnel_stage: targetStage, funnel_stage_updated_at: new Date().toISOString() });
       return;
     }
 
