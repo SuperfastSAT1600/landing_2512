@@ -16,7 +16,7 @@ interface Question {
   rationale: string;
 }
 
-type Phase = 'gate' | 'leaderboard' | 'test';
+type Phase = 'gate' | 'leaderboard' | 'test' | 'result';
 
 interface LeaderboardEntry {
   rank: number;
@@ -402,7 +402,9 @@ export default function QuadraticPracticePage() {
         }),
       });
       setSubmitted(true);
-      showToast(`Submitted! ${correctCount}/${answeredCount} correct (${Math.round(correctCount / answeredCount * 100)}%)`);
+      const updatedStats = await fetch(`/api/practice/stats?testId=${TEST_ID}`).then(r => r.json()).catch(() => null);
+      if (updatedStats) setStats(updatedStats);
+      setPhase('result');
     } catch {
       showToast('Submission failed. Please try again.');
     } finally {
@@ -482,6 +484,67 @@ export default function QuadraticPracticePage() {
             style={{ width: '100%', padding: '14px 0', background: '#071be9', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: 'pointer', letterSpacing: '-0.01em' }}
           >
             Start →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Result phase ───────────────────────────────── */
+  if (phase === 'result') {
+    const lb = stats?.leaderboard ?? [];
+    const myMasked = '@' + instagramId.replace(/^@/, '')[0] + '***';
+    const myEntry = lb.find(e => e.maskedId === myMasked);
+    const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#a1a1aa' : i === 2 ? '#71717a' : '#3f3f46';
+    const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#a1a1aa' : '#52525b';
+    return (
+      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#09090b', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ width: '100%', maxWidth: 400, padding: '28px 24px 16px', textAlign: 'center', flexShrink: 0 }}>
+          <div style={{ fontSize: 10, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.03em' }}>Your Result</h2>
+          {myEntry && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
+              <span style={{ fontSize: 13, color: '#a1a1aa' }}>Rank</span>
+              <span style={{ fontSize: 26, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.03em' }}>#{myEntry.rank}</span>
+              <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
+              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{myEntry.score}%</span>
+              <span style={{ fontSize: 12, color: '#52525b' }}>{myEntry.correctCount}/{myEntry.totalCount}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: '100%', maxWidth: 400, padding: '4px 24px 8px', flexShrink: 0 }}>
+          <div style={{ fontSize: 10, color: '#27272a', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' }}>
+            — {lb.length} students —
+          </div>
+        </div>
+
+        {/* List */}
+        <div style={{ width: '100%', maxWidth: 400, flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+          {lb.map((entry, i) => {
+            const isMe = entry.maskedId === myMasked;
+            return (
+              <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '11px 8px', borderRadius: isMe ? 8 : 0, marginBottom: isMe ? 2 : 0, borderBottom: isMe ? 'none' : '1px solid rgba(255,255,255,0.05)', gap: 12, background: isMe ? 'rgba(96,133,255,0.1)' : 'transparent', border: isMe ? '1px solid rgba(96,133,255,0.25)' : undefined }}>
+                <span style={{ width: 22, fontSize: 11, fontWeight: 700, color: isMe ? '#6085FF' : rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
+                <span style={{ flex: 1, fontSize: 13, color: isMe ? '#c7d2fe' : i < 3 ? '#e4e4e7' : '#52525b', fontFamily: 'monospace', fontWeight: isMe ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {entry.maskedId}{isMe && <span style={{ fontSize: 10, color: '#6085FF', marginLeft: 6 }}>← you</span>}
+                </span>
+                <span style={{ fontSize: 11, color: '#3f3f46', flexShrink: 0, marginRight: 8 }}>{entry.correctCount}/{entry.totalCount}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: isMe ? '#6085FF' : scoreColor(i), flexShrink: 0, minWidth: 36, textAlign: 'right' }}>{entry.score}%</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* CTA */}
+        <div style={{ width: '100%', maxWidth: 400, padding: '16px 24px 28px', flexShrink: 0 }}>
+          <button
+            onClick={() => setPhase('test')}
+            style={{ width: '100%', padding: '13px 0', background: 'transparent', color: '#52525b', border: '1px solid #27272a', borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+          >
+            Back to Practice
           </button>
         </div>
       </div>
