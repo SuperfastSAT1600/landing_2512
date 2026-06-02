@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
+import { FUNNEL_STAGE_LABELS } from '@/types/crm';
 
 /**
  * GET /api/crm/students/[id]
@@ -58,6 +59,26 @@ export async function PATCH(
 
   if (Object.keys(updateFields).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+  }
+
+  // funnel_stage 변경 시 stage_history에 이동 이력 자동 기록
+  if ('funnel_stage' in updateFields && typeof updateFields.funnel_stage === 'string') {
+    const { data: current } = await supabaseAdmin
+      .from('students')
+      .select('stage_history')
+      .eq('id', id)
+      .single();
+
+    const newStage = updateFields.funnel_stage as string;
+    const history: Array<{ stage: string; label: string; entered_at: string }> =
+      Array.isArray(current?.stage_history) ? current.stage_history : [];
+
+    history.push({
+      stage: newStage,
+      label: FUNNEL_STAGE_LABELS[newStage as keyof typeof FUNNEL_STAGE_LABELS] ?? newStage,
+      entered_at: new Date().toISOString(),
+    });
+    updateFields.stage_history = history;
   }
 
   const { data, error } = await supabaseAdmin
