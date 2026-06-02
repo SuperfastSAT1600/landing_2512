@@ -312,7 +312,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey }: StudentCreat
               <option value="">(미설정)</option>
               <option value="korean">한국어</option>
               <option value="english">English</option>
-              <option value="any">상관없음</option>
+              <option value="any">한/영 혼용</option>
             </select>
           </Field>
 

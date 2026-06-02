@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 
@@ -117,6 +118,22 @@ export async function POST(
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+}
+
+/**
+ * GET /api/portal/[token]/auth
+ * Admin preview: issues a session cookie without passcode verification.
+ * Requires valid x-admin-key header.
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  const { token } = await params;
+  if (!isAuthenticated(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  return issueSession(token);
 }
 
 async function issueSession(portalToken: string): Promise<NextResponse> {

@@ -11,7 +11,7 @@ const SAT_DATES = [
 ];
 
 const LANGUAGE_LABEL: Record<string, string> = {
-  korean: '한국어', english: 'English', any: '상관없음',
+  korean: '한국어', english: 'English', any: '한/영 혼용',
 };
 
 interface StudentInfo {

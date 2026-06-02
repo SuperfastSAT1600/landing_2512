@@ -35,6 +35,10 @@ export default function PortalPage() {
           headers: { 'x-admin-key': adminKey },
         });
         if (verifyRes.ok) {
+          // Issue session cookie so PortalContent can fetch data
+          await fetch(`/api/portal/${token}/auth`, {
+            headers: { 'x-admin-key': adminKey },
+          });
           const portalRes = await fetch(`/api/portal/${token}`);
           if (portalRes.ok) {
             const data: PortalMeta & { exists: boolean } = await portalRes.json();
