@@ -141,7 +141,7 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
           student={student}
           adminKey={adminKey}
           onConfirm={(updatedStudent) => {
-            onStudentUpdate({ lead_status: updatedStudent.lead_status });
+            onStudentUpdate({ lead_status: updatedStudent.lead_status, funnel_stage: updatedStudent.funnel_stage });
             setShowModal(false);
             fetchPayments();
           }}
