@@ -18,13 +18,6 @@ const NAV_ITEMS = [
     { href: '/admin/fulltest', label: 'Test Contents', icon: '📋' },
 ];
 
-const PRODUCT_NAV_ITEMS = [
-    { href: '/admin/products/sat-1on1', label: 'SAT 정규 1:1 수업', icon: '📚' },
-    { href: '/admin/products/sat-trial', label: 'SAT 체험 1:1 수업', icon: '🔍' },
-    { href: '/admin/products/sat-group', label: 'SAT 정규 그룹 수업', icon: '🏫' },
-    { href: '/admin/products/ap-1on1', label: 'AP 정규 1:1 수업', icon: '🎓' },
-    { href: '/admin/products/managed', label: '관리형 콘텐츠', icon: '📂' },
-];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, loading, login, logout } = useAdminAuth();
@@ -112,25 +105,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <span className="opacity-70">{icon}</span> {label}
                         </Link>
                     ))}
-
-                    <div className="border-t border-white/5 pt-3 mt-3">
-                        <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-widest text-gray-600">
-                            과목 / 상품군
-                        </p>
-                        {PRODUCT_NAV_ITEMS.map(({ href, label, icon }) => (
-                            <Link
-                                key={href}
-                                href={href}
-                                className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors font-medium ${
-                                    pathname === href
-                                        ? 'text-white bg-[#1e2023]'
-                                        : 'text-gray-500 hover:text-white hover:bg-white/5'
-                                }`}
-                            >
-                                <span className="opacity-70">{icon}</span> {label}
-                            </Link>
-                        ))}
-                    </div>
 
                     <div className="border-t border-white/5 pt-2 mt-2">
                         <Link
