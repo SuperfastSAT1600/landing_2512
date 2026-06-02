@@ -75,19 +75,29 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
       )}
 
       {/* Days elapsed + payment icon */}
-      <div className="mt-1.5 flex items-center justify-between">
-        {(() => {
-          const days = daysElapsed(student.inquiry_date ?? student.created_at);
-          return days !== null ? (
-            <span className={`text-[10px] font-medium ${days >= 14 ? 'text-red-400' : days >= 7 ? 'text-amber-500' : 'text-gray-400'}`}>
-              D+{days}
-            </span>
-          ) : <span />;
-        })()}
+      <div className="mt-1.5 flex items-center justify-between gap-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {(() => {
+            const days = daysElapsed(student.inquiry_date ?? student.created_at);
+            return days !== null ? (
+              <span className={`text-[10px] font-medium shrink-0 ${days >= 14 ? 'text-red-400' : days >= 7 ? 'text-amber-500' : 'text-gray-400'}`}>
+                D+{days}
+              </span>
+            ) : null;
+          })()}
+          {(() => {
+            const stageDays = daysElapsed(student.funnel_stage_updated_at ?? student.created_at);
+            return stageDays !== null ? (
+              <span className={`text-[10px] font-medium shrink-0 ${stageDays >= 7 ? 'text-red-400' : stageDays >= 3 ? 'text-amber-500' : 'text-gray-300'}`}>
+                S+{stageDays}
+              </span>
+            ) : null;
+          })()}
+        </div>
         {onPayment && (
           <button
             onClick={(e) => { e.stopPropagation(); onPayment(); }}
-            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-0.5 text-blue-400 hover:text-blue-600 transition-all"
+            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-0.5 text-blue-400 hover:text-blue-600 transition-all shrink-0"
             title="결제 완료 처리"
           >
             <CreditCard size={12} />
