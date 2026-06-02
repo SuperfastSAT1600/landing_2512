@@ -309,7 +309,7 @@ const TEST_ID = 'quadratic-equations-30';
 export default function QuadraticPracticePage() {
   const [phase, setPhase] = useState<Phase>('gate');
   const [instagramId, setInstagramId] = useState('');
-  const [studentName, setStudentName] = useState('');
+
   const [accessCode, setAccessCode] = useState('');
   const [gateError, setGateError] = useState('');
   const [validating, setValidating] = useState(false);
@@ -389,7 +389,7 @@ export default function QuadraticPracticePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           instagramId,
-          studentName: studentName || null,
+          studentName: null,
           answers,
           correctCount,
           totalCount: answeredCount,
@@ -425,8 +425,6 @@ export default function QuadraticPracticePage() {
             <input type="text" placeholder="Access code" value={accessCode} onChange={e => setAccessCode(e.target.value)} required
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }} />
             <input type="text" placeholder="@instagram_id" value={instagramId} onChange={e => setInstagramId(e.target.value)} required
-              style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }} />
-            <input type="text" placeholder="Name (optional)" value={studentName} onChange={e => setStudentName(e.target.value)}
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }} />
             {gateError && (
               <div style={{ color: '#ef4444', fontSize: 13, textAlign: 'left', padding: '4px 2px' }}>

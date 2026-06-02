@@ -70,7 +70,7 @@ const TEST_ID = 'june-2026-subskill-300';
 export default function JunePracticePage() {
   const [phase, setPhase] = useState<Phase>('loading');
   const [instagramId, setInstagramId] = useState('');
-  const [studentName, setStudentName] = useState('');
+
   const [accessCode, setAccessCode] = useState('');
   const [gateError, setGateError] = useState('');
   const [validating, setValidating] = useState(false);
@@ -170,7 +170,7 @@ export default function JunePracticePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           instagramId: instagramId.startsWith('@') ? instagramId : `@${instagramId}`,
-          studentName: studentName.trim() || undefined,
+          studentName: undefined,
           answers,
           correctCount: correct,
           totalCount: total,
@@ -229,13 +229,6 @@ export default function JunePracticePage() {
               value={instagramId}
               onChange={(e) => setInstagramId(e.target.value)}
               required
-              style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }}
-            />
-            <input
-              type="text"
-              placeholder="Name (optional)"
-              value={studentName}
-              onChange={(e) => setStudentName(e.target.value)}
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }}
             />
             {gateError && (
