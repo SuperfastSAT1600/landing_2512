@@ -98,6 +98,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             reactivating={funnelHook.reactivating}
             onClose={handleBackdropClick}
             onCopyPortalLink={portalHook.handleCopyPortalLink}
+            onPreviewPortal={portalHook.handlePreviewPortal}
             onDelete={portalHook.handleDelete}
             onToggleFunnelMenu={() => {
               if (!funnelHook.funnelChanging && localStudent.lead_status !== 'inactive') {

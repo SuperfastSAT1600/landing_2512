@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import PasscodeSetup from './components/PasscodeSetup';
 import PasscodeEntry from './components/PasscodeEntry';
 import PortalContent from './components/PortalContent';
@@ -20,11 +20,32 @@ const ACCENT = '#6085FF';
 
 export default function PortalPage() {
   const { token } = useParams<{ token: string }>();
+  const searchParams = useSearchParams();
   const [state, setState] = useState<PortalState>('loading');
   const [meta, setMeta] = useState<PortalMeta | null>(null);
 
   const checkPortal = useCallback(async () => {
     setState('loading');
+
+    // Admin preview mode: skip passcode if valid admin key in localStorage
+    if (searchParams.get('preview') === 'admin') {
+      const adminKey = localStorage.getItem('admin_key') || localStorage.getItem('adminKey');
+      if (adminKey) {
+        const verifyRes = await fetch('/api/admin/verify', {
+          headers: { 'x-admin-key': adminKey },
+        });
+        if (verifyRes.ok) {
+          const portalRes = await fetch(`/api/portal/${token}`);
+          if (portalRes.ok) {
+            const data: PortalMeta & { exists: boolean } = await portalRes.json();
+            setMeta(data);
+          }
+          setState('authenticated');
+          return;
+        }
+      }
+    }
+
     const res = await fetch(`/api/portal/${token}`);
     if (!res.ok) { setState('not-found'); return; }
     const data: PortalMeta & { exists: boolean } = await res.json();
@@ -32,7 +53,7 @@ export default function PortalPage() {
     if (data.isLocked) setState('locked');
     else if (!data.hasPasscode) setState('setup');
     else setState('login');
-  }, [token]);
+  }, [token, searchParams]);
 
   useEffect(() => { checkPortal(); }, [checkPortal]);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { X, ChevronDown, Check, Copy } from 'lucide-react';
+import { X, ChevronDown, Check, Copy, Eye } from 'lucide-react';
 import type { Student, FunnelStage } from '@/types/crm';
 import { FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS } from '@/types/crm';
 import { SALES_STAGES_ONLY } from '../constants';
@@ -17,6 +17,7 @@ interface Props {
   reactivating: boolean;
   onClose: () => void;
   onCopyPortalLink: () => void;
+  onPreviewPortal: () => void;
   onDelete: () => void;
   onToggleFunnelMenu: () => void;
   onFunnelChange: (stage: FunnelStage) => void;
@@ -32,7 +33,7 @@ interface Props {
 export function PanelHeader({
   localStudent, portalCopied, portalLoading, deleting, funnelChanging,
   showFunnelMenu, showReactivateForm, reactivateStrategy, reactivating,
-  onClose, onCopyPortalLink, onDelete, onToggleFunnelMenu, onFunnelChange,
+  onClose, onCopyPortalLink, onPreviewPortal, onDelete, onToggleFunnelMenu, onFunnelChange,
   onShowPayment, onShowChurn, onShowReactivate, onHideReactivate,
   onReactivateStrategyChange, onStartReactivation, onLeadStatusChange,
 }: Props) {
@@ -47,6 +48,19 @@ export function PanelHeader({
         </div>
         <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
           <button
+            onClick={onPreviewPortal}
+            disabled={portalLoading}
+            className="flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-[12px] text-gray-500 hover:border-violet-300 hover:text-violet-600 hover:bg-violet-50 disabled:opacity-50 transition-colors"
+            title="학부모 포털 미리보기"
+          >
+            {portalLoading ? (
+              <div className="w-3 h-3 border border-violet-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Eye size={12} />
+            )}
+            미리보기
+          </button>
+          <button
             onClick={onCopyPortalLink}
             disabled={portalLoading}
             className="flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-[12px] text-gray-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
@@ -54,8 +68,6 @@ export function PanelHeader({
           >
             {portalCopied ? (
               <Check size={12} className="text-green-500" />
-            ) : portalLoading ? (
-              <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
             ) : (
               <Copy size={12} />
             )}

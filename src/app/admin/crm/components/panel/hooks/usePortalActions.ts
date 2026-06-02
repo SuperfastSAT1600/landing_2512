@@ -16,20 +16,40 @@ export function usePortalActions({ studentId, studentName, adminKey, onDelete, o
   const [deleting, setDeleting] = useState(false);
   const headers = { 'Content-Type': 'application/json', 'x-admin-key': adminKey };
 
+  async function fetchPortalToken(): Promise<string | null> {
+    const res = await fetch(`/api/crm/students/${studentId}/portal-token`, {
+      method: 'POST', headers,
+    });
+    if (!res.ok) return null;
+    const { portal_token } = await res.json();
+    return portal_token;
+  }
+
   async function handleCopyPortalLink() {
     setPortalLoading(true);
     try {
-      const res = await fetch(`/api/crm/students/${studentId}/portal-token`, {
-        method: 'POST', headers,
-      });
-      if (!res.ok) throw new Error('failed');
-      const { portal_token } = await res.json();
-      const url = `${window.location.origin}/portal/${portal_token}`;
+      const token = await fetchPortalToken();
+      if (!token) throw new Error('failed');
+      const url = `${window.location.origin}/portal/${token}`;
       await navigator.clipboard.writeText(url);
       setPortalCopied(true);
       setTimeout(() => setPortalCopied(false), 2500);
     } catch {
       alert('포털 링크 생성에 실패했습니다.');
+    } finally {
+      setPortalLoading(false);
+    }
+  }
+
+  async function handlePreviewPortal() {
+    setPortalLoading(true);
+    try {
+      const token = await fetchPortalToken();
+      if (!token) throw new Error('failed');
+      const url = `${window.location.origin}/portal/${token}?preview=admin`;
+      window.open(url, '_blank');
+    } catch {
+      alert('포털 미리보기에 실패했습니다.');
     } finally {
       setPortalLoading(false);
     }
@@ -50,5 +70,5 @@ export function usePortalActions({ studentId, studentName, adminKey, onDelete, o
     }
   }
 
-  return { portalCopied, portalLoading, deleting, handleCopyPortalLink, handleDelete };
+  return { portalCopied, portalLoading, deleting, handleCopyPortalLink, handlePreviewPortal, handleDelete };
 }
