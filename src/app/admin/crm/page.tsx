@@ -50,6 +50,7 @@ export default function CrmPage() {
   const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
   const [activeTab, setActiveTab] = useState<'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('kanban');
   const [retryContext, setRetryContext] = useState<{ id: string; name: string } | null>(null);
+  const [retryEnrolledId, setRetryEnrolledId] = useState<string | null>(null);
 
   useEffect(() => {
     setAdminKey(getAdminKey());
@@ -112,6 +113,7 @@ export default function CrmPage() {
     const prevSelected = selectedStudent?.id === id ? { ...selectedStudent } : null;
 
     // Optimistic update
+    if (updates.lead_status === "enrolled") setRetryEnrolledId(id);
     setStudents(prev => prev.map(s => (s.id === id ? { ...s, ...updates } : s)));
     setSelectedStudent(prev => (prev?.id === id ? { ...prev, ...updates } : prev));
 
@@ -221,7 +223,7 @@ export default function CrmPage() {
             { key: 'kanban',     label: '최초 세일즈' },
             { key: 'retry',      label: '재시도 세일즈' },
             { key: 'enrolled',   label: '수업 중' },
-            { key: 'pool',       label: '전체 리드풀' },
+            { key: 'pool',       label: '이탈 리드풀' },
             { key: 'stats',      label: '통계' },
           ] as const).map(({ key, label }) => (
             <button
@@ -273,6 +275,8 @@ export default function CrmPage() {
             onStudentUpdate={handleStudentUpdate}
             onStrategyChange={setRetryContext}
             onNavigateToPool={() => setActiveTab('pool')}
+            enrolledStudentId={retryEnrolledId}
+            onEnrolledHandled={() => setRetryEnrolledId(null)}
           />
         )}
 

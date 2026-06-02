@@ -23,6 +23,8 @@ interface RetryKanbanProps {
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
   onStrategyChange?: (ctx: { id: string; name: string } | null) => void;
   onNavigateToPool?: () => void;
+  enrolledStudentId?: string | null;
+  onEnrolledHandled?: () => void;
 }
 
 interface RetryColumnProps {
@@ -71,11 +73,17 @@ function RetryColumn({ stage, students, onStudentClick, onRemove }: RetryColumnP
   );
 }
 
-export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrategyChange, onNavigateToPool }: RetryKanbanProps) {
+export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrategyChange, onNavigateToPool, enrolledStudentId, onEnrolledHandled }: RetryKanbanProps) {
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
+
+  useEffect(() => {
+    if (!enrolledStudentId) return;
+    setStudents(prev => prev.filter(s => s.id !== enrolledStudentId));
+    onEnrolledHandled?.();
+  }, [enrolledStudentId, onEnrolledHandled]);
   const [newStrategyName, setNewStrategyName] = useState('');
   const [creatingStrategy, setCreatingStrategy] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
