@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { X, CreditCard } from 'lucide-react';
+import { X, CreditCard, ChevronLeft } from 'lucide-react';
 import { Student, ProductCategory, ProductSubcategory } from '@/types/crm';
+
+type ClassType = '1:1' | '그룹' | '콘텐츠';
+type Subject = 'SAT' | 'AP';
 
 interface Product {
   id: string;
@@ -12,16 +15,30 @@ interface Product {
   subcategory: ProductSubcategory;
 }
 
-const PRODUCTS: Product[] = [
-  { id: 'sat_1on1_managed',   label: 'SAT 정규 1:1 수업 (관리형)',        requiresHours: true,  category: 'SAT 정규 1:1 수업',    subcategory: '관리형 수업' },
-  { id: 'sat_1on1_onepoint',  label: 'SAT 정규 1:1 수업 (원포인트)',       requiresHours: true,  category: 'SAT 정규 1:1 수업',    subcategory: '원포인트' },
-  { id: 'sat_trial',          label: 'SAT 체험 1:1 수업',                 requiresHours: false, category: 'SAT 체험 1:1 수업',    subcategory: '체험수업' },
-  { id: 'sat_group',          label: 'SAT 정규 그룹 수업 (여름방학 특강)', requiresHours: false, category: 'SAT 정규 그룹 수업',   subcategory: '여름방학 특강' },
-  { id: 'ap_1on1',            label: 'AP 정규 1:1 수업',                  requiresHours: true,  category: 'AP 정규 1:1 수업',     subcategory: '관리형 수업' },
-  { id: 'content_vocab',      label: '관리형 콘텐츠 — 단어학습',           requiresHours: false, category: '관리형 콘텐츠',         subcategory: '단어학습' },
-  { id: 'content_supertest',  label: '관리형 콘텐츠 — SuperTest',         requiresHours: false, category: '관리형 콘텐츠',         subcategory: 'SuperTest' },
-  { id: 'content_lecture',    label: '관리형 콘텐츠 — 인강',               requiresHours: false, category: '관리형 콘텐츠',         subcategory: '인강' },
-];
+const PRODUCT_TREE: Record<ClassType, Partial<Record<Subject | '_', Product[]>>> = {
+  '1:1': {
+    SAT: [
+      { id: 'sat_1on1_managed',  label: 'SAT 정규 1:1 수업 (관리형)',  requiresHours: true,  category: 'SAT 정규 1:1 수업', subcategory: '관리형 수업' },
+      { id: 'sat_1on1_onepoint', label: 'SAT 정규 1:1 수업 (원포인트)', requiresHours: true,  category: 'SAT 정규 1:1 수업', subcategory: '원포인트' },
+      { id: 'sat_trial',         label: 'SAT 체험 1:1 수업',            requiresHours: false, category: 'SAT 체험 1:1 수업', subcategory: '체험수업' },
+    ],
+    AP: [
+      { id: 'ap_1on1', label: 'AP 정규 1:1 수업', requiresHours: true, category: 'AP 정규 1:1 수업', subcategory: '관리형 수업' },
+    ],
+  },
+  '그룹': {
+    SAT: [
+      { id: 'sat_group', label: 'SAT 정규 그룹 수업 (여름방학 특강)', requiresHours: false, category: 'SAT 정규 그룹 수업', subcategory: '여름방학 특강' },
+    ],
+  },
+  '콘텐츠': {
+    _: [
+      { id: 'content_vocab',     label: '단어학습',   requiresHours: false, category: '관리형 콘텐츠', subcategory: '단어학습' },
+      { id: 'content_supertest', label: 'SuperTest', requiresHours: false, category: '관리형 콘텐츠', subcategory: 'SuperTest' },
+      { id: 'content_lecture',   label: '인강',       requiresHours: false, category: '관리형 콘텐츠', subcategory: '인강' },
+    ],
+  },
+};
 
 interface PaymentModalProps {
   student: Student;
@@ -31,6 +48,9 @@ interface PaymentModalProps {
 }
 
 export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentModalProps) {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [classType, setClassType] = useState<ClassType | null>(null);
+  const [subject, setSubject] = useState<Subject | null>(null);
   const [productId, setProductId] = useState<string>('');
   const [hours, setHours] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
@@ -38,12 +58,50 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedProduct = PRODUCTS.find(p => p.id === productId);
+  function getProducts(): Product[] {
+    if (!classType) return [];
+    if (classType === '콘텐츠') return PRODUCT_TREE['콘텐츠']._ ?? [];
+    if (!subject) return [];
+    return (PRODUCT_TREE[classType] as Record<Subject, Product[]>)[subject] ?? [];
+  }
+
+  const products = getProducts();
+  const selectedProduct = products.find(p => p.id === productId);
 
   const isValid =
     !!selectedProduct &&
     (!selectedProduct.requiresHours || (hours !== '' && Number(hours) > 0)) &&
     amount !== '' && Number(amount) > 0;
+
+  function handleClassType(ct: ClassType) {
+    setClassType(ct);
+    setSubject(null);
+    setProductId('');
+    setHours('');
+    if (ct === '콘텐츠') setStep(3);
+    else setStep(2);
+  }
+
+  function handleSubject(s: Subject) {
+    setSubject(s);
+    setProductId('');
+    setHours('');
+    setStep(3);
+  }
+
+  function handleBack() {
+    if (step === 3 && classType !== '콘텐츠') {
+      setStep(2);
+      setProductId('');
+      setHours('');
+    } else {
+      setStep(1);
+      setClassType(null);
+      setSubject(null);
+      setProductId('');
+      setHours('');
+    }
+  }
 
   async function handleConfirm() {
     if (!isValid || !selectedProduct) return;
@@ -75,138 +133,223 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
     }
   }
 
+  const stepLabel = step === 1 ? '수업 유형' : step === 2 ? '과목' : '상품 선택';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
+            {step > 1 && (
+              <button onClick={handleBack} className="mr-1 text-gray-400 hover:text-gray-600">
+                <ChevronLeft size={16} />
+              </button>
+            )}
             <CreditCard size={16} className="text-blue-500" />
             <h2 className="text-sm font-bold text-gray-900">결제 완료 처리</h2>
+            <span className="text-xs text-gray-400 font-normal">· {stepLabel}</span>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X size={16} />
           </button>
         </div>
 
+        {/* Step indicator */}
+        <div className="flex px-5 pt-3 gap-1">
+          {[1, 2, 3].map(s => (
+            <div
+              key={s}
+              className={`h-1 flex-1 rounded-full transition-colors ${
+                s <= step ? 'bg-blue-500' : 'bg-gray-100'
+              }`}
+            />
+          ))}
+        </div>
+
         {/* Body */}
         <div className="px-5 py-4 space-y-4">
           <p className="text-xs text-gray-500">
-            <span className="font-semibold text-gray-800">{student.name}</span> 학생의 결제 정보를 입력해주세요.
+            <span className="font-semibold text-gray-800">{student.name}</span> 학생
           </p>
 
-          {/* 상품 선택 */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-500">과목 / 상품군</label>
-            <div className="space-y-1.5">
-              {PRODUCTS.map(p => (
+          {/* Step 1: 수업 유형 */}
+          {step === 1 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-500">수업 유형을 선택하세요</p>
+              {(['1:1', '그룹', '콘텐츠'] as ClassType[]).map(ct => (
                 <button
-                  key={p.id}
-                  onClick={() => { setProductId(p.id); setHours(''); }}
-                  className={`w-full px-3 py-2 rounded-lg border text-xs font-medium transition-colors text-left flex items-center justify-between ${
-                    productId === p.id
-                      ? 'bg-blue-50 border-blue-400 text-blue-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                  }`}
+                  key={ct}
+                  onClick={() => handleClassType(ct)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors text-left flex items-center justify-between"
                 >
-                  <span>{p.label}</span>
-                  {p.requiresHours && <span className="text-[10px] text-gray-400 font-normal">시간 입력</span>}
+                  <span>
+                    {ct === '1:1' && '1:1 수업'}
+                    {ct === '그룹' && '그룹 수업'}
+                    {ct === '콘텐츠' && '콘텐츠'}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {ct === '1:1' && 'SAT · AP'}
+                    {ct === '그룹' && 'SAT'}
+                    {ct === '콘텐츠' && '단어학습 · SuperTest · 인강'}
+                  </span>
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* 시간 수 입력 */}
-          {selectedProduct?.requiresHours && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-500">수업 시간 수</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  value={hours}
-                  onChange={e => setHours(e.target.value)}
-                  placeholder="예: 20"
-                  className="w-28 px-3 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-blue-400"
-                />
-                <span className="text-xs text-gray-400">시간</span>
-              </div>
             </div>
           )}
 
-          {/* 결제 금액 */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-500">결제 금액</label>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">₩</span>
-              <input
-                type="number"
-                min={1}
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
-                placeholder="예: 2990000"
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-blue-400"
-              />
+          {/* Step 2: 과목 */}
+          {step === 2 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-500">과목을 선택하세요</p>
+              {(['SAT', 'AP'] as Subject[]).map(s => {
+                const available = classType ? Object.keys(PRODUCT_TREE[classType]).includes(s) : false;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => available && handleSubject(s)}
+                    disabled={!available}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm font-medium transition-colors text-left ${
+                      available
+                        ? 'border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700'
+                        : 'border-gray-100 text-gray-300 cursor-not-allowed'
+                    }`}
+                  >
+                    {s}
+                    {!available && <span className="ml-2 text-[11px]">(준비 중)</span>}
+                  </button>
+                );
+              })}
             </div>
-            {amount && Number(amount) > 0 && (
-              <p className="text-[11px] text-gray-400">
-                {Number(amount).toLocaleString('ko-KR')}원
-              </p>
-            )}
-          </div>
+          )}
 
-          {/* 세금 유형 */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-500">세금 유형</label>
-            <div className="flex gap-2">
-              {(['면세', '과세'] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setTaxType(t)}
-                  className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-colors ${
-                    taxType === t
-                      ? 'bg-blue-50 border-blue-400 text-blue-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-            {amount && Number(amount) > 0 && (
-              <p className="text-[11px] text-gray-400">
-                수익:{' '}
-                <span className="font-medium text-gray-700">
-                  {taxType === '면세'
-                    ? Number(amount).toLocaleString('ko-KR')
-                    : Math.round(Number(amount) * 0.9).toLocaleString('ko-KR')}원
-                </span>
-                {taxType === '과세' && <span className="ml-1 text-gray-400">(부가세 10% 제외)</span>}
-              </p>
-            )}
-          </div>
+          {/* Step 3: 상품 선택 + 결제 정보 */}
+          {step === 3 && (
+            <>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500">상품을 선택하세요</p>
+                {products.map(p => {
+                  const isSelected = productId === p.id;
+                  return (
+                    <div key={p.id}>
+                      <button
+                        onClick={() => {
+                          setProductId(isSelected ? '' : p.id);
+                          setHours('');
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-xl border text-xs font-medium transition-colors text-left flex items-center gap-3 ${
+                          isSelected
+                            ? 'bg-blue-50 border-blue-400 text-blue-700'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                        }`}>
+                          {isSelected && (
+                            <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                              <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </span>
+                        <span className="flex-1">{p.label}</span>
+                        {p.requiresHours && !isSelected && (
+                          <span className="text-[10px] text-gray-400">시간 입력</span>
+                        )}
+                      </button>
+                      {/* 시간 입력 — 선택 즉시 노출 */}
+                      {isSelected && p.requiresHours && (
+                        <div className="mt-1.5 ml-7 flex items-center gap-2">
+                          <input
+                            type="number"
+                            min={1}
+                            value={hours}
+                            onChange={e => setHours(e.target.value)}
+                            placeholder="시간 수"
+                            autoFocus
+                            className="w-24 px-3 py-1.5 rounded-lg border border-blue-200 text-xs focus:outline-none focus:border-blue-400 bg-blue-50"
+                          />
+                          <span className="text-xs text-gray-400">시간</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
-          {error && (
-            <p className="text-xs text-red-500">{error}</p>
+              {/* 결제 금액 */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-500">결제 금액</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">₩</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={amount}
+                    onChange={e => setAmount(e.target.value)}
+                    placeholder="예: 2990000"
+                    className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-blue-400"
+                  />
+                </div>
+                {amount && Number(amount) > 0 && (
+                  <p className="text-[11px] text-gray-400">{Number(amount).toLocaleString('ko-KR')}원</p>
+                )}
+              </div>
+
+              {/* 세금 유형 */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-500">세금 유형</label>
+                <div className="flex gap-2">
+                  {(['면세', '과세'] as const).map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setTaxType(t)}
+                      className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                        taxType === t
+                          ? 'bg-blue-50 border-blue-400 text-blue-700'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                {amount && Number(amount) > 0 && (
+                  <p className="text-[11px] text-gray-400">
+                    수익:{' '}
+                    <span className="font-medium text-gray-700">
+                      {taxType === '면세'
+                        ? Number(amount).toLocaleString('ko-KR')
+                        : Math.round(Number(amount) * 0.9).toLocaleString('ko-KR')}원
+                    </span>
+                    {taxType === '과세' && <span className="ml-1 text-gray-400">(부가세 10% 제외)</span>}
+                  </p>
+                )}
+              </div>
+
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-2 px-5 py-4 border-t border-gray-100">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            취소
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!isValid || loading}
-            className="flex-1 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? '처리 중...' : '결제 완료'}
-          </button>
-        </div>
+        {step === 3 && (
+          <div className="flex gap-2 px-5 py-4 border-t border-gray-100">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={!isValid || loading}
+              className="flex-1 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? '처리 중...' : '결제 완료'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
