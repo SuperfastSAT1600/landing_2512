@@ -161,6 +161,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               onSaveEdit={editFormHook.handleSaveEdit}
               onCancelEdit={editFormHook.handleCancelEdit}
               scoreDisplay={scoreDisplay()}
+              adminKey={adminKey}
               diagLinked={diagHook.diagLinked}
               diagCandidates={diagHook.diagCandidates}
               showDiagPicker={diagHook.showDiagPicker}

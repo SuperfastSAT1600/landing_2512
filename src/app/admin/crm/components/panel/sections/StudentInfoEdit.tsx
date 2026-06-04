@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import {
   GRADE_OPTIONS_BY_SCHOOL_TYPE, TIMEZONE_OPTIONS,
 } from '@/types/crm';
@@ -22,17 +22,75 @@ function EditField({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-interface Props { form: EditForm; onChange: (f: EditForm) => void }
+interface Props {
+  form: EditForm;
+  onChange: (f: EditForm) => void;
+  adminKey?: string;
+  studentId?: string;
+}
 
-export function StudentInfoEdit({ form, onChange }: Props) {
+export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) {
+  const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
+  const nameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const set = (key: keyof EditForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ ...form, [key]: e.target.value });
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    onChange({ ...form, name: value });
+
+    if (nameTimer.current) clearTimeout(nameTimer.current);
+    if (!adminKey || value.trim().length < 2) {
+      setNameSuggestions([]);
+      return;
+    }
+
+    nameTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/crm/students?name_search=${encodeURIComponent(value.trim())}`,
+          { headers: { 'x-admin-key': adminKey } }
+        );
+        const json = await res.json();
+        const others = (json.data ?? [])
+          .filter((s: { id: string }) => s.id !== studentId)
+          .map((s: { name: string }) => s.name);
+        setNameSuggestions(others);
+      } catch {
+        // ignore
+      }
+    }, 300);
+  };
 
   return (
     <div className="space-y-3 bg-white rounded-xl border border-blue-200 p-4">
       <p className="text-[11px] text-blue-500 font-medium">편집 모드 — 저장 버튼을 눌러야 반영됩니다</p>
       <EditField label="이름 (내부)">
-        <input value={form.name} onChange={set('name')} className={inputCls} placeholder="홍길동" />
+        <input
+          value={form.name}
+          onChange={handleNameChange}
+          className={inputCls}
+          placeholder="홍길동"
+          autoComplete="off"
+        />
+        {nameSuggestions.length > 0 && (
+          <div className="mt-1 bg-amber-50 border border-amber-300 rounded-lg overflow-hidden">
+            <p className="text-[11px] text-amber-700 px-2.5 py-1 font-medium border-b border-amber-200">
+              동명이인 주의 — 이미 등록된 유사 이름
+            </p>
+            {nameSuggestions.map((name, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => { onChange({ ...form, name }); setNameSuggestions([]); }}
+                className="w-full text-left px-2.5 py-1.5 text-xs text-gray-700 hover:bg-amber-100 transition-colors border-b border-amber-100 last:border-0"
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
       </EditField>
       <EditField label="학부모 포털 표시 이름">
         <input value={form.portal_name} onChange={set('portal_name')} className={inputCls} placeholder="비워두면 내부 이름 그대로 표시" />
