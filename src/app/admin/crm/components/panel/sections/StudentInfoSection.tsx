@@ -28,6 +28,7 @@ interface Props {
   onSaveEdit: () => void;
   onCancelEdit: () => void;
   scoreDisplay: string;
+  adminKey?: string;
   diagLinked: DiagCandidate | null;
   diagCandidates: DiagCandidate[];
   showDiagPicker: boolean;
@@ -40,7 +41,7 @@ interface Props {
 
 export function StudentInfoSection({
   localStudent, isEditing, setIsEditing, savingEdit, editForm, setEditForm,
-  onSaveEdit, onCancelEdit, scoreDisplay,
+  onSaveEdit, onCancelEdit, scoreDisplay, adminKey,
   diagLinked, diagCandidates, showDiagPicker, setShowDiagPicker,
   diagLoading, diagSearchQuery, setDiagSearchQuery, onDiagLink,
 }: Props) {
@@ -67,7 +68,7 @@ export function StudentInfoSection({
   return (
     <SectionCard title="학생 정보" defaultOpen={false} actions={actions}>
       {isEditing ? (
-        <StudentInfoEdit form={editForm} onChange={setEditForm} />
+        <StudentInfoEdit form={editForm} onChange={setEditForm} adminKey={adminKey} studentId={localStudent.id} />
       ) : (
         <div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
