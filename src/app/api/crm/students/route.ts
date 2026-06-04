@@ -18,8 +18,21 @@ export async function GET(request: NextRequest) {
   const pool = searchParams.get('pool') === 'true';
   const leadStatus = searchParams.get('lead_status');
   const search = searchParams.get('search')?.trim();
+  const nameSearch = searchParams.get('name_search')?.trim();
   const statsOnly = searchParams.get('stats_only') === 'true';
   const retryStrategyId = searchParams.get('retry_strategy_id');
+
+  // 동명이인 감지용 — 모든 상태에서 이름만 검색
+  if (nameSearch) {
+    const { data, error } = await supabaseAdmin
+      .from('students')
+      .select('name')
+      .ilike('name', `%${nameSearch}%`)
+      .order('name', { ascending: true })
+      .limit(10);
+    if (error) return NextResponse.json({ error: 'Failed to search' }, { status: 500 });
+    return NextResponse.json({ data: data ?? [] });
+  }
 
   // 카운트만 반환 (초기 로드용)
   if (statsOnly && pool) {
@@ -115,6 +128,7 @@ export async function POST(request: NextRequest) {
     target_test_date,
     target_test_date_2,
     desired_subjects,
+    entered_by,
   } = body;
 
   if (!name) {
@@ -147,6 +161,7 @@ export async function POST(request: NextRequest) {
         desired_subjects: desired_subjects || 'Both',
         funnel_stage: '0',
         consultation_timeline: [],
+        entered_by: entered_by ?? null,
       },
     ])
     .select()
