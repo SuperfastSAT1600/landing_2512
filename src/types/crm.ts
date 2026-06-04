@@ -170,6 +170,7 @@ export interface Student {
   funnel_stage_updated_at: string | null;
   stage_history: Array<{ stage: string; label: string; entered_at: string }>;
   sort_order: number | null;
+  entered_by?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -222,6 +223,7 @@ export type CreateStudentInput = Pick<
   | 'target_test_date_2'
   | 'desired_subjects'
   | 'parent_timezone'
+  | 'entered_by'
 >;
 
 // ─── Payment ─────────────────────────────────────────────────────────────────

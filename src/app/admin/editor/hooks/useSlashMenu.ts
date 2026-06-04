@@ -7,7 +7,7 @@ import type React from 'react';
 export type SlashActionKey =
     | 'h1' | 'h2' | 'h3'
     | 'bulletList' | 'orderedList' | 'blockquote'
-    | 'codeBlock' | 'divider' | 'table' | 'image' | 'youtube';
+    | 'codeBlock' | 'divider' | 'table' | 'image' | 'youtube' | 'instagram';
 
 export interface SlashOption {
     key: SlashActionKey;
@@ -19,6 +19,7 @@ export function useSlashMenu(
     editor: Editor | null,
     inlineFileInputRef: React.RefObject<HTMLInputElement | null>,
     insertYoutube: () => void,
+    insertReel: () => void,
 ) {
     const [showSlashMenu, setShowSlashMenu] = useState(false);
     const [slashMenuIndex, setSlashMenuIndex] = useState(0);
@@ -50,6 +51,7 @@ export function useSlashMenu(
         { key: 'table', label: 'Table', action: () => runSlashCommand(() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()) },
         { key: 'image', label: 'Image', action: () => { setShowSlashMenu(false); inlineFileInputRef.current?.click(); } },
         { key: 'youtube', label: 'YouTube', action: () => { setShowSlashMenu(false); insertYoutube(); } },
+        { key: 'instagram', label: 'Instagram Reel', action: () => { setShowSlashMenu(false); insertReel(); } },
     ];
 
     function handleEditorKeyDown(e: React.KeyboardEvent) {

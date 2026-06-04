@@ -19,6 +19,11 @@ function getAdminKey(): string {
   return localStorage.getItem('admin_key') || '';
 }
 
+function getAdminUserName(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('admin_user_name') || '';
+}
+
 function RealtimeIndicator({ status }: { status: RealtimeStatus }) {
   const colors: Record<RealtimeStatus, string> = {
     connected: 'bg-emerald-400',
@@ -46,6 +51,7 @@ export default function CrmPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [adminKey, setAdminKey] = useState('');
+  const [adminUserName, setAdminUserName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
   const [activeTab, setActiveTab] = useState<'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('kanban');
@@ -54,6 +60,7 @@ export default function CrmPage() {
 
   useEffect(() => {
     setAdminKey(getAdminKey());
+    setAdminUserName(getAdminUserName());
   }, []);
 
   const fetchStudents = useCallback(async () => {
@@ -325,6 +332,7 @@ export default function CrmPage() {
       {showCreateModal && (
         <StudentCreateModal
           adminKey={adminKey}
+          userName={adminUserName}
           onClose={() => setShowCreateModal(false)}
           onCreate={(student) => {
             setStudents(prev => [student, ...prev]);

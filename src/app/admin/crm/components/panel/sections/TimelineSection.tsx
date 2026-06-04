@@ -28,7 +28,7 @@ export function TimelineSection({
     <SectionCard
       title="상담 타임라인"
       count={!loadingFresh ? timeline.length : undefined}
-      defaultOpen={true}
+      defaultOpen={false}
     >
       {loadingFresh && (
         <div className="space-y-2">
