@@ -2,11 +2,24 @@
 
 import { Pencil, Link } from 'lucide-react';
 import type { Student } from '@/types/crm';
+import { SCHOOL_TYPE_LABELS, TIMEZONE_OPTIONS } from '@/types/crm';
 import { SAT_PAST_MONTHS, formatSatDate } from '../constants';
 import { StudentInfoEdit } from './StudentInfoEdit';
 import type { EditForm } from '../types';
 import type { DiagCandidate } from '../hooks/useDiagnostic';
 import { SectionCard } from './SectionCard';
+
+const CONTACT_TYPE_LABELS: Record<string, string> = {
+  phone: '핸드폰',
+  kakao: '카카오톡',
+  email: '이메일',
+};
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  korean: '한국어',
+  english: 'English',
+  any: '한/영 혼용',
+};
 
 function StudentInfoCell({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -73,6 +86,35 @@ export function StudentInfoSection({
         <div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             <StudentInfoCell
+              label="학년"
+              value={localStudent.grade || '—'}
+              sub={SCHOOL_TYPE_LABELS[localStudent.school_type]}
+            />
+            <StudentInfoCell
+              label="희망 과목"
+              value={localStudent.desired_subjects || '—'}
+            />
+            <StudentInfoCell
+              label="연락 수단"
+              value={CONTACT_TYPE_LABELS[localStudent.contact_type ?? ''] ?? '—'}
+            />
+            <StudentInfoCell
+              label="연락처"
+              value={localStudent.parent_phone || '—'}
+            />
+            {localStudent.parent_timezone && (
+              <StudentInfoCell
+                label="거주 시간대"
+                value={TIMEZONE_OPTIONS.find(o => o.value === localStudent.parent_timezone)?.label ?? localStudent.parent_timezone}
+              />
+            )}
+            {localStudent.preferred_language && (
+              <StudentInfoCell
+                label="수업 언어"
+                value={LANGUAGE_LABELS[localStudent.preferred_language] ?? localStudent.preferred_language}
+              />
+            )}
+            <StudentInfoCell
               label="직전 점수"
               value={scoreDisplay}
               sub={localStudent.previous_score_status === 'scored' && localStudent.previous_test_date
@@ -91,11 +133,8 @@ export function StudentInfoSection({
                 sub={localStudent.target_score_2 ? `${localStudent.target_score_2}점` : undefined}
               />
             )}
-            {localStudent.preferred_language && (
-              <StudentInfoCell
-                label="수업 언어"
-                value={{ korean: '한국어', english: 'English', any: '한/영 혼용' }[localStudent.preferred_language] ?? localStudent.preferred_language}
-              />
+            {localStudent.entered_by && (
+              <StudentInfoCell label="입력자" value={localStudent.entered_by} />
             )}
           </div>
 
