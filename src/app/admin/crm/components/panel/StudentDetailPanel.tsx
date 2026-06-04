@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Student, ChurnType } from '@/types/crm';
 import { ChurnModal } from '../ChurnModal';
 import { PaymentModal } from '../PaymentModal';
@@ -23,6 +23,23 @@ import type { StudentDetailPanelProps } from './types';
 export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
   const { localStudent, setLocalStudent, timeline, setTimeline, editForm, setEditForm, loadingFresh } =
     usePanelData(student.id, adminKey, student);
+
+  const [duplicateNames, setDuplicateNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!localStudent.name || localStudent.name.trim().length < 2) return;
+    fetch(`/api/crm/students?name_search=${encodeURIComponent(localStudent.name.trim())}`, {
+      headers: { 'x-admin-key': adminKey },
+    })
+      .then(r => r.json())
+      .then(json => {
+        const others = (json.data ?? [])
+          .filter((s: { id: string; name: string }) => s.id !== localStudent.id)
+          .map((s: { name: string }) => s.name);
+        setDuplicateNames(others);
+      })
+      .catch(() => {});
+  }, [localStudent.id, localStudent.name, adminKey]);
 
   const editFormHook = useEditForm({
     studentId: student.id, adminKey,
@@ -88,6 +105,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
 
           <PanelHeader
             localStudent={localStudent}
+            duplicateNames={duplicateNames}
             portalCopied={portalHook.portalCopied}
             portalLoading={portalHook.portalLoading}
             deleting={portalHook.deleting}
