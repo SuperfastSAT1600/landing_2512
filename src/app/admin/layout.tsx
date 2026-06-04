@@ -20,7 +20,7 @@ const NAV_ITEMS = [
 
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-    const { isAuthenticated, loading, login, logout } = useAdminAuth();
+    const { isAuthenticated, loading, login, logout, userName } = useAdminAuth();
     const [password, setPassword] = useState('');
     const pathname = usePathname();
 
@@ -34,7 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             });
             const data = await res.json();
             if (data.success) {
-                login(data.apiKey || password);
+                login(data.apiKey || password, data.userName);
             } else {
                 alert('비밀번호가 틀렸습니다.');
             }
@@ -57,8 +57,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="min-h-screen bg-[#151719] flex items-center justify-center p-4 font-sans text-gray-200">
                 <div className="w-full max-w-sm">
                     <div className="text-center mb-10">
-                        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Ghost Admin</h1>
-                        <p className="text-gray-500">Sign in to manage your blog</p>
+                        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Tutoring Landing Admin</h1>
+                        <p className="text-gray-500">Access code를 입력하세요</p>
                     </div>
                     <form onSubmit={handleLogin} className="space-y-4">
                         <input
@@ -117,7 +117,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
                 </nav>
 
-                <div className="p-4 border-t border-white/5">
+                <div className="p-4 border-t border-white/5 space-y-2">
+                    {userName && (
+                        <p className="text-xs text-gray-400 px-2 truncate">{userName}님</p>
+                    )}
                     <button
                         onClick={logout}
                         className="flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-red-400 transition-colors w-full px-2"

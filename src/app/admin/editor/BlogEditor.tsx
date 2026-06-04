@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { parseInstagramShortcode } from '@/lib/instagram-url';
 import { useEditorSetup } from './hooks/useEditorSetup';
 import { usePostForm } from './hooks/usePostForm';
 import { useImageUpload } from './hooks/useImageUpload';
@@ -24,13 +25,23 @@ export default function BlogEditor() {
     const form = usePostForm();
     const { editor, loadContent } = useEditorSetup();
     const upload = useImageUpload(form.setFeaturedImage, form.setFeatureImage);
-    const slash = useSlashMenu(editor, upload.inlineFileInputRef, () => {
+    const insertYoutube = useCallback(() => {
         const url = window.prompt('YouTube URL:', 'https://www.youtube.com/watch?v=');
         if (!url) return;
         const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
         if (!match) { alert('올바른 YouTube URL이 아닙니다.'); return; }
         editor?.chain().focus().setYoutubeVideo({ src: url }).run();
-    });
+    }, [editor]);
+
+    const insertReel = useCallback(() => {
+        const url = window.prompt('Instagram Reel URL:', 'https://www.instagram.com/reel/');
+        if (!url) return;
+        const shortcode = parseInstagramShortcode(url);
+        if (!shortcode) { alert('올바른 Instagram Reel URL이 아닙니다.\n예: https://www.instagram.com/reel/ABC123/'); return; }
+        editor?.chain().focus().setInstagramReel(shortcode).run();
+    }, [editor]);
+
+    const slash = useSlashMenu(editor, upload.inlineFileInputRef, insertYoutube, insertReel);
 
     useEffect(() => {
         const key = localStorage.getItem('admin_key');
@@ -104,13 +115,8 @@ export default function BlogEditor() {
                 <FormattingToolbar
                     editor={editor} showSettings={showSettings}
                     onInsertLink={insertLink}
-                    onInsertYoutube={() => {
-                        const url = window.prompt('YouTube URL:', 'https://www.youtube.com/watch?v=');
-                        if (!url) return;
-                        const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-                        if (!match) { alert('올바른 YouTube URL이 아닙니다.'); return; }
-                        editor?.chain().focus().setYoutubeVideo({ src: url }).run();
-                    }}
+                    onInsertYoutube={insertYoutube}
+                    onInsertReel={insertReel}
                     onInsertInlineImage={() => upload.inlineFileInputRef.current?.click()}
                     onAlign={handleAlign}
                 />

@@ -14,6 +14,7 @@ import { CellSelection, cellAround } from '@tiptap/pm/tables';
 import Youtube from '@tiptap/extension-youtube';
 import { Markdown } from 'tiptap-markdown';
 import { CustomImage } from '../components/ImageNodeView';
+import { InstagramReelExtension } from '../extensions/InstagramReelExtension';
 
 export function useEditorSetup() {
     const pendingContentRef = useRef<string | null>(null);
@@ -36,6 +37,7 @@ export function useEditorSetup() {
             TableHeader,
             TableCell,
             Youtube.configure({ width: 680, height: 480 }),
+            InstagramReelExtension,
             Markdown.configure({ html: true, transformPastedText: true }),
         ],
         editorProps: {

@@ -121,7 +121,7 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
     <SectionCard
       title="전략 히스토리"
       count={totalCount}
-      defaultOpen={true}
+      defaultOpen={false}
       bodyClassName=""
       onOpenChange={setSectionOpen}
     >

@@ -65,7 +65,7 @@ export function StudentInfoSection({
   );
 
   return (
-    <SectionCard title="학생 정보" defaultOpen={true} actions={actions}>
+    <SectionCard title="학생 정보" defaultOpen={false} actions={actions}>
       {isEditing ? (
         <StudentInfoEdit form={editForm} onChange={setEditForm} />
       ) : (

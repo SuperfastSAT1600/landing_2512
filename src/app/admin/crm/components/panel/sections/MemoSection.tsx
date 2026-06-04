@@ -13,7 +13,7 @@ interface Props {
 
 export function MemoSection({ memoText, setMemoText, savingMemo, memoError, setMemoError, onAddMemo }: Props) {
   return (
-    <SectionCard title="상담 메모" defaultOpen={true}>
+    <SectionCard title="상담 메모" defaultOpen={false}>
       <textarea
         value={memoText}
         onChange={e => { setMemoText(e.target.value); setMemoError(''); }}

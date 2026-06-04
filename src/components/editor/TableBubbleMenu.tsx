@@ -165,7 +165,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                     title={
                         editor.can().mergeCells()
                             ? '셀 병합'
-                            : '셀 병합 (여러 셀을 드래그로 선택 후 클릭)'
+                            : '셀 병합 (Shift+클릭으로 여러 셀 선택 후 클릭)'
                     }
                     className={`${btnBase} disabled:opacity-30 disabled:cursor-not-allowed`}
                 >
