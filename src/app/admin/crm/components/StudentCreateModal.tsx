@@ -71,7 +71,6 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [showSecondDate, setShowSecondDate] = useState(false);
   const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const nameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const set = (key: keyof FormState) => (
@@ -85,7 +84,6 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
     if (nameTimer.current) clearTimeout(nameTimer.current);
     if (value.trim().length < 2) {
       setNameSuggestions([]);
-      setShowSuggestions(false);
       return;
     }
 
@@ -98,7 +96,6 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
         const json = await res.json();
         const names: string[] = (json.data ?? []).map((s: { name: string }) => s.name);
         setNameSuggestions(names);
-        setShowSuggestions(names.length > 0);
       } catch {
         // ignore
       }
@@ -189,37 +186,30 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
           {/* 이름 */}
           <Field label="이름" error={errors.name}>
-            <div className="relative">
-              <input
-                value={form.name}
-                onChange={handleNameChange}
-                onFocus={() => nameSuggestions.length > 0 && setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                placeholder="홍길동"
-                className={inputCls(!!errors.name)}
-                autoComplete="off"
-              />
-              {showSuggestions && (
-                <div className="absolute z-20 w-full mt-1 bg-white border border-amber-300 rounded-lg shadow-lg overflow-hidden">
-                  <p className="text-xs text-amber-700 bg-amber-50 px-3 py-1.5 font-medium border-b border-amber-200">
-                    동명이인 주의 — 이미 등록된 유사 이름
-                  </p>
-                  {nameSuggestions.map((name, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onMouseDown={() => {
-                        setForm(prev => ({ ...prev, name }));
-                        setShowSuggestions(false);
-                      }}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-amber-50 transition-colors"
-                    >
-                      {name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <input
+              value={form.name}
+              onChange={handleNameChange}
+              placeholder="홍길동"
+              className={inputCls(!!errors.name)}
+              autoComplete="off"
+            />
+            {nameSuggestions.length > 0 && (
+              <div className="mt-1 bg-amber-50 border border-amber-300 rounded-lg overflow-hidden">
+                <p className="text-xs text-amber-700 px-3 py-1.5 font-medium border-b border-amber-200">
+                  동명이인 주의 — 이미 등록된 유사 이름
+                </p>
+                {nameSuggestions.map((name, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setForm(prev => ({ ...prev, name }))}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-amber-100 transition-colors border-b border-amber-100 last:border-0"
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            )}
           </Field>
 
           {/* 문의 날짜 */}

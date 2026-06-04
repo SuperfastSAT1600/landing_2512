@@ -7,6 +7,7 @@ import { SALES_STAGES_ONLY } from '../constants';
 
 interface Props {
   localStudent: Student;
+  duplicateNames?: string[];
   portalCopied: boolean;
   portalLoading: boolean;
   deleting: boolean;
@@ -31,7 +32,7 @@ interface Props {
 }
 
 export function PanelHeader({
-  localStudent, portalCopied, portalLoading, deleting, funnelChanging,
+  localStudent, duplicateNames = [], portalCopied, portalLoading, deleting, funnelChanging,
   showFunnelMenu, showReactivateForm, reactivateStrategy, reactivating,
   onClose, onCopyPortalLink, onPreviewPortal, onDelete, onToggleFunnelMenu, onFunnelChange,
   onShowPayment, onShowChurn, onShowReactivate, onHideReactivate,
@@ -45,6 +46,11 @@ export function PanelHeader({
           <p className="text-[13px] text-gray-500 mt-0.5">
             {localStudent.grade} · {SCHOOL_TYPE_LABELS[localStudent.school_type]} · {localStudent.desired_subjects}
           </p>
+          {duplicateNames.length > 0 && (
+            <p className="text-[11px] text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 mt-1.5 leading-snug">
+              동명이인 주의 — {duplicateNames.join(', ')}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
           <button
