@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { getSortedPostsData, getPostsByCategory, getPostsByTag } from '../../lib/posts';
-import { excludeHiddenCategories, HIDDEN_BLOG_CATEGORIES } from '../../lib/posts-filter';
+import { excludeHiddenCategories } from '../../lib/posts-filter';
 import Footer from '../components/Footer';
 import BlogList from './BlogList';
 
@@ -71,12 +71,10 @@ export default async function Blog({
     searchParams: Promise<{ category?: string; tag?: string }>;
 }) {
     const { category, tag } = await searchParams;
-    const filteredPosts = HIDDEN_BLOG_CATEGORIES.includes(category as typeof HIDDEN_BLOG_CATEGORIES[number])
-        ? []
-        : category
+    const filteredPosts = category
         ? await getPostsByCategory(category)
         : tag
-        ? await getPostsByTag(tag)
+        ? excludeHiddenCategories(await getPostsByTag(tag))
         : excludeHiddenCategories(await getSortedPostsData());
 
     // Header Content Logic
