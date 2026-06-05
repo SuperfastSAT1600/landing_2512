@@ -5,9 +5,9 @@ import styles from './Pricing.module.css';
 import { PLANS, UPCOMING_TESTS, DISCOUNT_PERCENT, getDiscountedPrice, formatKRW } from '../data/plans';
 
 const RECOMMENDED_FOR: Record<string, string> = {
-    live: '완벽하게 준비하고 싶은 학생이라면',
-    flex: '시간 맞추기 어려운 학생이라면',
-    review: '해설만 필요한 학생이라면',
+    live: '완벽하게 준비하고 싶다면',
+    flex: '스케줄이 많은 학생이라면',
+    review: '혼자 공부가 편하다면',
 };
 
 function PlanFeatureCard({ plan, delay }: { plan: (typeof PLANS)[number]; delay: number }) {
