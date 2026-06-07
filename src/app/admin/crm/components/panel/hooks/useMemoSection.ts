@@ -8,11 +8,12 @@ interface PendingEdit { purified: string; coachHistory: string; deletedItems: st
 interface Params {
   studentId: string;
   adminKey: string;
+  userName?: string;
   setTimeline: (updater: (prev: ConsultationEntry[]) => ConsultationEntry[]) => void;
   onUpdate: (id: string, updates: Record<string, unknown>) => void;
 }
 
-export function useMemoSection({ studentId, adminKey, setTimeline, onUpdate }: Params) {
+export function useMemoSection({ studentId, adminKey, userName, setTimeline, onUpdate }: Params) {
   const [memoText, setMemoText] = useState('');
   const [savingMemo, setSavingMemo] = useState(false);
   const [memoError, setMemoError] = useState('');
@@ -48,7 +49,7 @@ export function useMemoSection({ studentId, adminKey, setTimeline, onUpdate }: P
     setMemoError('');
     try {
       const res = await fetch(`/api/crm/students/${studentId}/memo`, {
-        method: 'POST', headers, body: JSON.stringify({ raw_memo: memoText.trim() }),
+        method: 'POST', headers, body: JSON.stringify({ raw_memo: memoText.trim(), author: userName || undefined }),
       });
       const json = await res.json();
       if (res.ok && json.data) {

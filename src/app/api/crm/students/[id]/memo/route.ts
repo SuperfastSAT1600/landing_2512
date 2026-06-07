@@ -19,14 +19,14 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { raw_memo: string };
+  let body: { raw_memo: string; author?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { raw_memo } = body;
+  const { raw_memo, author } = body;
   if (!raw_memo || typeof raw_memo !== 'string' || raw_memo.trim().length === 0) {
     return NextResponse.json({ error: 'raw_memo is required' }, { status: 400 });
   }
@@ -50,6 +50,7 @@ export async function POST(
     id: randomUUID(),
     created_at: new Date().toISOString(),
     raw_memo: raw_memo.trim(),
+    ...(author ? { author } : {}),
     published: false,
   };
 
