@@ -58,6 +58,32 @@ async function fetchSimilarCases(current: StrategyStudent, lastUserText: string)
   }
 }
 
+/**
+ * GET /api/crm/sales-strategy?studentId=...
+ * 저장된 대화 기록을 반환해 패널 재진입 시 이어서 진행하게 한다.
+ * 컬럼 미생성(마이그레이션 전) 등 조회 실패 시 빈 배열로 graceful degradation.
+ */
+export async function GET(request: NextRequest) {
+  if (!isAuthenticated(request)) {
+    return errorJson('UNAUTHORIZED', '인증이 필요합니다.', 401);
+  }
+  const studentId = new URL(request.url).searchParams.get('studentId');
+  if (!studentId) {
+    return errorJson('INVALID_INPUT', 'studentId가 필요합니다.', 400);
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('students')
+    .select('strategy_ai_messages')
+    .eq('id', studentId)
+    .single();
+  if (error) {
+    console.error('[sales-strategy GET] (degrading to empty):', error);
+    return NextResponse.json({ data: [] });
+  }
+  return NextResponse.json({ data: data?.strategy_ai_messages ?? [] });
+}
+
 export async function POST(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return errorJson('UNAUTHORIZED', '인증이 필요합니다.', 401);
@@ -101,6 +127,7 @@ export async function POST(request: NextRequest) {
 
   const client = new Anthropic({ apiKey });
   let aborted = false;
+  let assistantText = '';
   let claudeStream: ReturnType<Anthropic['messages']['stream']> | null = null;
 
   const stream = new ReadableStream<Uint8Array>({
@@ -129,6 +156,7 @@ export async function POST(request: NextRequest) {
         for await (const event of claudeStream) {
           if (aborted) break;
           if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+            assistantText += event.delta.text;
             enqueue(event.delta.text);
           }
         }
@@ -138,6 +166,17 @@ export async function POST(request: NextRequest) {
           enqueue('\n\n[오류] AI 응답 생성에 실패했습니다.');
         }
       } finally {
+        // 대화 보존 — 다음에 패널을 열면 이어서 진행. 실패해도(컬럼 미생성 등) 사용자 흐름은 막지 않는다.
+        if (assistantText.trim()) {
+          try {
+            await supabaseAdmin
+              .from('students')
+              .update({ strategy_ai_messages: [...messages, { role: 'assistant', content: assistantText }] })
+              .eq('id', studentId);
+          } catch (err) {
+            console.error('[sales-strategy] failed to persist conversation:', err);
+          }
+        }
         try {
           controller.close();
         } catch {

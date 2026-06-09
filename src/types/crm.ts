@@ -167,12 +167,20 @@ export interface Student {
   retry_stage: RetryStage | null;
   retry_assigned_at: string | null;
 
+  // 세일즈 전략 AI 대화 기록 — 패널 재진입 시 이어서 진행
+  strategy_ai_messages: StrategyChatMessage[];
+
   funnel_stage_updated_at: string | null;
   stage_history: Array<{ stage: string; label: string; entered_at: string }>;
   sort_order: number | null;
   entered_by?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface StrategyChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 export type RetryStage = '연락 시도' | '상담 중' | '제안 완료';

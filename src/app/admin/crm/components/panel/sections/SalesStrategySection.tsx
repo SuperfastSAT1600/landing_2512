@@ -26,6 +26,18 @@ export function SalesStrategySection({ student, adminKey }: Props) {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [messages]);
 
+  // 저장된 대화 불러오기 — 학생이 바뀌면(패널 재진입 포함) 이어서 진행
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/crm/sales-strategy?studentId=${student.id}`, {
+      headers: { 'x-admin-key': adminKey },
+    })
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((j) => { if (!cancelled) setMessages(j.data ?? []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [student.id, adminKey]);
+
   async function send() {
     const text = input.trim();
     if (!text || streaming) return;
