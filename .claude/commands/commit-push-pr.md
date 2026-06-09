@@ -63,7 +63,7 @@ You are about to commit changes, push to remote, and create a pull request. Foll
 
      {PR_TITLE in Korean}
 
-     👤 작성자: {author}
+     👤 작성자: AI Assistant
 
      ━━━━━━━━━━━━━━━━━━━━
 

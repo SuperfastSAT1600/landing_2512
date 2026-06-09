@@ -64,7 +64,7 @@ a single sweep that captures the full working-tree state.
 
      {COMMIT_TITLE in Korean}
 
-     👤 작성자: {author}
+     👤 작성자: AI Assistant
 
      ━━━━━━━━━━━━━━━━━━━━
 
