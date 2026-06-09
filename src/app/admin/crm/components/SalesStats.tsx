@@ -310,8 +310,8 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
   }, [preset, fetchStats]);
 
   const d = data;
-  const fmt만 = (n: number) =>
-    n >= 10000 ? `${Math.round(n / 10000).toLocaleString()}만원` : `${n.toLocaleString()}원`;
+  // 매출 카드는 반올림 없이 정확한 원 단위로 표기
+  const fmt원 = (n: number) => `${n.toLocaleString()}원`;
 
   return (
     <div className="space-y-6">
@@ -398,21 +398,21 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
             <OverviewCard
               icon={TrendingUp}
               label="총 매출"
-              value={fmt만(d.overview.gross_revenue)}
+              value={fmt원(d.overview.gross_revenue)}
               sub="환불 전 총 결제"
               color="bg-purple-50 text-purple-600"
             />
             <OverviewCard
               icon={TrendingUp}
               label="환불"
-              value={d.overview.total_refund < 0 ? `-${fmt만(-d.overview.total_refund)}` : '-'}
+              value={d.overview.total_refund < 0 ? `-${fmt원(-d.overview.total_refund)}` : '-'}
               sub="기간 내 환불 합계"
               color="bg-red-50 text-red-500"
             />
             <OverviewCard
               icon={TrendingUp}
               label="순 수익"
-              value={fmt만(d.overview.total_net_revenue)}
+              value={fmt원(d.overview.total_net_revenue)}
               sub="환불·부가세 제외 실수익"
               color="bg-emerald-50 text-emerald-600"
             />
