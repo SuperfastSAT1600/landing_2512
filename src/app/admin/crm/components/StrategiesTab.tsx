@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { RetryStrategy } from '@/types/crm';
+import { StrategyAgentChat } from './StrategyAgentChat';
 
 interface Props {
   adminKey: string;
@@ -17,7 +18,11 @@ const TYPE_LABELS: Record<StrategyType, string> = {
 };
 
 function StrategySection({
-  type, strategies, adminKey, onCreated, onDeleted,
+  type,
+  strategies,
+  adminKey,
+  onCreated,
+  onDeleted,
 }: {
   type: StrategyType;
   strategies: RetryStrategy[];
@@ -36,7 +41,11 @@ function StrategySection({
     const res = await fetch('/api/crm/retry-strategies', {
       method: 'POST',
       headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName.trim(), type, description: newDesc.trim() || undefined }),
+      body: JSON.stringify({
+        name: newName.trim(),
+        type,
+        description: newDesc.trim() || undefined,
+      }),
     });
     if (res.ok) {
       const json = await res.json();
@@ -51,9 +60,10 @@ function StrategySection({
   }
 
   async function handleDelete(id: string, name: string) {
-    const warn = type === 'retry'
-      ? `"${name}" 전략을 삭제하면 포함된 학생들은 리드풀로 돌아갑니다. 계속할까요?`
-      : `"${name}" 전략을 삭제할까요? 학생들의 전략 정보가 초기화됩니다.`;
+    const warn =
+      type === 'retry'
+        ? `"${name}" 전략을 삭제하면 포함된 학생들은 리드풀로 돌아갑니다. 계속할까요?`
+        : `"${name}" 전략을 삭제할까요? 학생들의 전략 정보가 초기화됩니다.`;
     if (!confirm(warn)) return;
     const res = await fetch(`/api/crm/retry-strategies/${id}`, {
       method: 'DELETE',
@@ -71,7 +81,7 @@ function StrategySection({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-gray-800">{TYPE_LABELS[type]}</h3>
         <button
-          onClick={() => setCreating(v => !v)}
+          onClick={() => setCreating((v) => !v)}
           className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
         >
           <Plus size={13} />새 전략
@@ -84,15 +94,17 @@ function StrategySection({
             autoFocus
             type="text"
             value={newName}
-            onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Escape') setCreating(false); }}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setCreating(false);
+            }}
             placeholder="전략 이름 입력..."
             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
           <textarea
             rows={3}
             value={newDesc}
-            onChange={e => setNewDesc(e.target.value)}
+            onChange={(e) => setNewDesc(e.target.value)}
             placeholder="전략 내용 입력 (선택)..."
             className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
@@ -104,7 +116,10 @@ function StrategySection({
             >
               추가
             </button>
-            <button onClick={() => setCreating(false)} className="text-xs text-gray-400 hover:text-gray-600 px-2">
+            <button
+              onClick={() => setCreating(false)}
+              className="text-xs text-gray-400 hover:text-gray-600 px-2"
+            >
               취소
             </button>
           </div>
@@ -115,8 +130,11 @@ function StrategySection({
         <p className="text-xs text-gray-400 py-2">등록된 전략이 없습니다.</p>
       ) : (
         <ul className="space-y-2">
-          {strategies.map(s => (
-            <li key={s.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+          {strategies.map((s) => (
+            <li
+              key={s.id}
+              className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
+            >
               <span className="text-sm text-gray-700 font-medium">{s.name}</span>
               <button
                 onClick={() => handleDelete(s.id, s.name)}
@@ -137,26 +155,31 @@ export function StrategiesTab({ adminKey }: Props) {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
-    const res = await fetch('/api/crm/retry-strategies', {
-      headers: { 'x-admin-key': adminKey },
-    });
-    const json = await res.json();
-    setStrategies(json.data ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/crm/retry-strategies', {
+        headers: { 'x-admin-key': adminKey },
+      });
+      const json = await res.json();
+      setStrategies(json.data ?? []);
+    } finally {
+      setLoading(false);
+    }
   }, [adminKey]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
-  const initialContactStrategies = strategies.filter(s => s.type === 'initial_contact');
-  const initialSalesStrategies = strategies.filter(s => s.type === 'initial_sales');
-  const retryStrategies = strategies.filter(s => s.type === 'retry');
+  const initialContactStrategies = strategies.filter((s) => s.type === 'initial_contact');
+  const initialSalesStrategies = strategies.filter((s) => s.type === 'initial_sales');
+  const retryStrategies = strategies.filter((s) => s.type === 'retry');
 
   function handleCreated(s: RetryStrategy) {
-    setStrategies(prev => [...prev, s]);
+    setStrategies((prev) => [...prev, s]);
   }
 
   function handleDeleted(id: string) {
-    setStrategies(prev => prev.filter(s => s.id !== id));
+    setStrategies((prev) => prev.filter((s) => s.id !== id));
   }
 
   if (loading) {
@@ -164,31 +187,35 @@ export function StrategiesTab({ adminKey }: Props) {
   }
 
   return (
-    <div className="max-w-xl space-y-4">
-      <p className="text-xs text-gray-400">
-        전략을 만들고 학생 패널의 인입 정보에서 배정할 수 있습니다.
-      </p>
-      <StrategySection
-        type="initial_contact"
-        strategies={initialContactStrategies}
-        adminKey={adminKey}
-        onCreated={handleCreated}
-        onDeleted={handleDeleted}
-      />
-      <StrategySection
-        type="initial_sales"
-        strategies={initialSalesStrategies}
-        adminKey={adminKey}
-        onCreated={handleCreated}
-        onDeleted={handleDeleted}
-      />
-      <StrategySection
-        type="retry"
-        strategies={retryStrategies}
-        adminKey={adminKey}
-        onCreated={handleCreated}
-        onDeleted={handleDeleted}
-      />
+    <div className="max-w-3xl space-y-5">
+      <StrategyAgentChat adminKey={adminKey} />
+
+      <div className="space-y-4">
+        <p className="text-xs text-gray-400">
+          전략을 만들고 학생 패널의 인입 정보에서 배정할 수 있습니다.
+        </p>
+        <StrategySection
+          type="initial_contact"
+          strategies={initialContactStrategies}
+          adminKey={adminKey}
+          onCreated={handleCreated}
+          onDeleted={handleDeleted}
+        />
+        <StrategySection
+          type="initial_sales"
+          strategies={initialSalesStrategies}
+          adminKey={adminKey}
+          onCreated={handleCreated}
+          onDeleted={handleDeleted}
+        />
+        <StrategySection
+          type="retry"
+          strategies={retryStrategies}
+          adminKey={adminKey}
+          onCreated={handleCreated}
+          onDeleted={handleDeleted}
+        />
+      </div>
     </div>
   );
 }
