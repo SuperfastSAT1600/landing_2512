@@ -2,16 +2,28 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Search, Sparkles, X, Loader2, AlertCircle, ChevronDown, ArrowRight } from 'lucide-react';
-import { Student, ChurnType, TrafficSource, ReactivationEntry, RetryStrategy } from '@/types/crm';
+import {
+  Student,
+  ChurnType,
+  TrafficSource,
+  ReactivationEntry,
+  RetryStrategy,
+  FUNNEL_STAGE_LABELS,
+} from '@/types/crm';
+import { FUNNEL_FLOW_ORDER, getChurnStage } from '@/lib/funnel-stats';
 import { ReactivationModal } from './ReactivationModal';
 import { BulkContactModal } from './BulkContactModal';
 import type { AiPoolSearchMatch } from '@/app/api/crm/ai-pool-search/route';
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
 
+// 이탈 단계 필터에서 '미상'(stage_history 없음)을 가리키는 sentinel
+const CHURN_STAGE_NONE = '__none__';
+
 interface LeadPoolFilters {
   churnTag: string;
   churnType: ChurnType | '';
+  churnStage: string; // 이탈 직전 단계 코드, 또는 CHURN_STAGE_NONE
   grade: string;
   trafficSource: TrafficSource | '';
   daysSinceChurn: '30' | '60' | '90' | '180' | '';
@@ -21,6 +33,7 @@ interface LeadPoolFilters {
 const DEFAULT_FILTERS: LeadPoolFilters = {
   churnTag: '',
   churnType: '',
+  churnStage: '',
   grade: '',
   trafficSource: '',
   daysSinceChurn: '',
@@ -74,9 +87,8 @@ function StudentPoolCard({ student, selected, onToggle, onClick }: StudentPoolCa
   const daysAgo = churnedDaysAgo(student);
   const snippet = lastConsultationSnippet(student);
   const log = student.reactivation_log ?? [];
-  const lastEntry = log.length > 0
-    ? [...log].sort((a, b) => (a.attempted_at < b.attempted_at ? 1 : -1))[0]
-    : null;
+  const lastEntry =
+    log.length > 0 ? [...log].sort((a, b) => (a.attempted_at < b.attempted_at ? 1 : -1))[0] : null;
   const isReactivating = student.lead_status === 'reactivating';
 
   return (
@@ -89,10 +101,7 @@ function StudentPoolCard({ student, selected, onToggle, onClick }: StudentPoolCa
       }`}
     >
       {/* Checkbox — click stops propagation so card click doesn't also toggle */}
-      <div
-        onClick={onToggle}
-        className="mt-1 flex-shrink-0"
-      >
+      <div onClick={onToggle} className="mt-1 flex-shrink-0">
         <input
           type="checkbox"
           checked={selected}
@@ -131,20 +140,28 @@ function StudentPoolCard({ student, selected, onToggle, onClick }: StudentPoolCa
                 {student.churn_tag}
               </span>
             )}
+            {(() => {
+              const cs = getChurnStage(student);
+              return cs ? (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">
+                  ✘ {FUNNEL_STAGE_LABELS[cs]} 이탈
+                </span>
+              ) : null;
+            })()}
           </div>
           <span className="text-[11px] text-gray-400 shrink-0">{daysAgo}일 경과</span>
         </div>
 
-        {snippet && (
-          <p className="text-xs text-gray-500 mt-1 line-clamp-1">{snippet}...</p>
-        )}
+        {snippet && <p className="text-xs text-gray-500 mt-1 line-clamp-1">{snippet}...</p>}
 
         {lastEntry && (
           <div className="flex items-center gap-2 mt-1.5">
             <span className="text-[10px] text-gray-400">
               마지막 시도: {new Date(lastEntry.attempted_at).toLocaleDateString('ko-KR')}
             </span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${OUTCOME_COLORS[lastEntry.outcome]}`}>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${OUTCOME_COLORS[lastEntry.outcome]}`}
+            >
               {OUTCOME_LABELS[lastEntry.outcome]}
             </span>
           </div>
@@ -158,7 +175,15 @@ function StudentPoolCard({ student, selected, onToggle, onClick }: StudentPoolCa
 
 // ─── SummaryCard ───────────────────────────────────────────────────────────────
 
-function SummaryCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function SummaryCard({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+}) {
   return (
     <div className="flex-1 min-w-[120px] bg-white border border-gray-200 rounded-xl p-4">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
@@ -184,7 +209,15 @@ type PoolTab = 'inactive' | 'reactivating';
 
 const POOL_PAGE_SIZE = 50;
 
-export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch, retryContext, onRetryContextClear, onRetryAssignSuccess }: LeadPoolProps) {
+export function LeadPool({
+  adminKey,
+  onStudentUpdate,
+  onStudentClick,
+  onRefetch,
+  retryContext,
+  onRetryContextClear,
+  onRetryAssignSuccess,
+}: LeadPoolProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [poolLoading, setPoolLoading] = useState(false);
   const [poolError, setPoolError] = useState<string | null>(null);
@@ -201,41 +234,47 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
     fetch('/api/crm/students?pool=true&stats_only=true', {
       headers: { 'x-admin-key': adminKey },
     })
-      .then(r => r.json())
-      .then(json => {
+      .then((r) => r.json())
+      .then((json) => {
         setStatsInactive(json.data?.inactive ?? 0);
         setStatsReactivating(json.data?.reactivating ?? 0);
       })
       .catch(() => {});
   }, [adminKey]);
 
-  const fetchPoolStudents = useCallback(async (search: string) => {
-    setPoolLoading(true);
-    setPoolError(null);
-    try {
-      const res = await fetch(
-        `/api/crm/students?pool=true&search=${encodeURIComponent(search)}`,
-        { headers: { 'x-admin-key': adminKey } }
-      );
-      if (!res.ok) throw new Error('리드풀 데이터를 불러오지 못했습니다.');
-      const data = await res.json();
-      setStudents(data.data ?? []);
-    } catch (err) {
-      setPoolError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
-    } finally {
-      setPoolLoading(false);
-    }
-  }, [adminKey]);
+  const fetchPoolStudents = useCallback(
+    async (search: string) => {
+      setPoolLoading(true);
+      setPoolError(null);
+      try {
+        const res = await fetch(
+          `/api/crm/students?pool=true&search=${encodeURIComponent(search)}`,
+          { headers: { 'x-admin-key': adminKey } }
+        );
+        if (!res.ok) throw new Error('리드풀 데이터를 불러오지 못했습니다.');
+        const data = await res.json();
+        setStudents(data.data ?? []);
+      } catch (err) {
+        setPoolError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
+      } finally {
+        setPoolLoading(false);
+      }
+    },
+    [adminKey]
+  );
 
   // 진입 시 전체 풀 로드 + 이름 검색 디바운스 (빈 검색 = 전체 목록)
   useEffect(() => {
     if (!adminKey) return;
     if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
     const q = nameSearch.trim();
-    nameDebounceRef.current = setTimeout(() => {
-      setHasSearched(true);
-      fetchPoolStudents(q); // 빈 문자열이면 전체 풀(inactive+reactivating) 반환
-    }, q ? 300 : 0);
+    nameDebounceRef.current = setTimeout(
+      () => {
+        setHasSearched(true);
+        fetchPoolStudents(q); // 빈 문자열이면 전체 풀(inactive+reactivating) 반환
+      },
+      q ? 300 : 0
+    );
     return () => {
       if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
     };
@@ -294,6 +333,11 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
       // churn_tag는 "{태그}: {사유}"로 저장되므로 카테고리 prefix로 매칭 (bare 태그도 매칭됨)
       if (filters.churnTag && !(s.churn_tag ?? '').startsWith(filters.churnTag)) return false;
       if (filters.churnType && s.churn_type !== filters.churnType) return false;
+      if (filters.churnStage) {
+        const cs = getChurnStage(s);
+        if (filters.churnStage === CHURN_STAGE_NONE ? cs !== null : cs !== filters.churnStage)
+          return false;
+      }
       if (filters.grade && s.grade !== filters.grade) return false;
       if (filters.trafficSource && s.traffic_source !== filters.trafficSource) return false;
 
@@ -305,9 +349,7 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
       if (filters.keyword) {
         const kw = filters.keyword.toLowerCase();
         const hit = (s.consultation_timeline ?? []).some(
-          (e) =>
-            e.ai_purified?.toLowerCase().includes(kw) ||
-            e.raw_memo?.toLowerCase().includes(kw)
+          (e) => e.ai_purified?.toLowerCase().includes(kw) || e.raw_memo?.toLowerCase().includes(kw)
         );
         if (!hit) return false;
       }
@@ -315,6 +357,23 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
       return true;
     });
   }, [inactiveStudents, filters]);
+
+  // 이탈 단계별 건수 (전체 이탈 학생 기준, 퍼널 순서 + 미상)
+  const churnStageGroups = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of inactiveStudents) {
+      const key = getChurnStage(s) ?? CHURN_STAGE_NONE;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const ordered: { key: string; label: string; count: number }[] = [];
+    for (const stage of FUNNEL_FLOW_ORDER) {
+      const c = counts.get(stage);
+      if (c) ordered.push({ key: stage, label: FUNNEL_STAGE_LABELS[stage], count: c });
+    }
+    const none = counts.get(CHURN_STAGE_NONE);
+    if (none) ordered.push({ key: CHURN_STAGE_NONE, label: '미상', count: none });
+    return ordered;
+  }, [inactiveStudents]);
 
   // AI 결과가 있을 때 해당 학생 맵 (id → reason)
   const aiResultMap = useMemo<Map<string, string>>(() => {
@@ -400,7 +459,9 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
     if (pickerStrategies.length > 0) return;
     setPickerLoading(true);
     try {
-      const res = await fetch('/api/crm/retry-strategies', { headers: { 'x-admin-key': adminKey } });
+      const res = await fetch('/api/crm/retry-strategies', {
+        headers: { 'x-admin-key': adminKey },
+      });
       const json = await res.json();
       setPickerStrategies(json.data ?? []);
     } finally {
@@ -462,7 +523,8 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
           <div className="flex items-center gap-2">
             <ArrowRight size={14} className="text-blue-500" />
             <p className="text-sm text-blue-700">
-              <span className="font-semibold">{retryContext.name}</span> 전략으로 배정 중 — 리드를 선택하세요
+              <span className="font-semibold">{retryContext.name}</span> 전략으로 배정 중 — 리드를
+              선택하세요
             </p>
           </div>
           <button
@@ -488,11 +550,14 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
 
       {/* Name search */}
       <div className="relative">
-        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <Search
+          size={14}
+          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+        />
         <input
           type="text"
           value={nameSearch}
-          onChange={e => setNameSearch(e.target.value)}
+          onChange={(e) => setNameSearch(e.target.value)}
           placeholder="이름으로 검색..."
           className="w-full pl-8 pr-7 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 bg-white"
         />
@@ -508,13 +573,18 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
 
       {/* Sub-tabs */}
       <div className="flex gap-1 border-b border-gray-200">
-        {([
-          { key: 'inactive', label: `이탈 학생 (${totalInactive})` },
-          { key: 'reactivating', label: `재활성화 시도 중 (${totalReactivating})` },
-        ] as { key: PoolTab; label: string }[]).map(({ key, label }) => (
+        {(
+          [
+            { key: 'inactive', label: `이탈 학생 (${totalInactive})` },
+            { key: 'reactivating', label: `재활성화 시도 중 (${totalReactivating})` },
+          ] as { key: PoolTab; label: string }[]
+        ).map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => { setPoolTab(key); setSelectedIds(new Set()); }}
+            onClick={() => {
+              setPoolTab(key);
+              setSelectedIds(new Set());
+            }}
             className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
               poolTab === key
                 ? 'border-gray-900 text-gray-900'
@@ -562,7 +632,11 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
                 disabled={aiSearching || !aiQuery.trim()}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors"
               >
-                {aiSearching ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
+                {aiSearching ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Search size={12} />
+                )}
                 {aiSearching ? '분석 중...' : '검색'}
               </button>
             </>
@@ -596,10 +670,36 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
       </div>
 
       {/* Inactive tab: filter bar (AI 검색 중에는 숨김) */}
+      {poolTab === 'inactive' && !aiResults && churnStageGroups.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
+          <span className="font-medium text-gray-500">이탈 단계</span>
+          {churnStageGroups.map((g) => (
+            <button
+              key={g.key}
+              type="button"
+              onClick={() =>
+                setFilters((f) => ({ ...f, churnStage: f.churnStage === g.key ? '' : g.key }))
+              }
+              className={`px-1.5 py-0.5 rounded transition-colors ${
+                filters.churnStage === g.key
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-500 hover:bg-gray-100'
+              }`}
+            >
+              {g.label}{' '}
+              <b className={filters.churnStage === g.key ? '' : 'text-gray-800'}>{g.count}</b>
+            </button>
+          ))}
+        </div>
+      )}
+
       {poolTab === 'inactive' && !aiResults && (
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search
+              size={13}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
             <input
               type="text"
               placeholder="상담 내용 키워드 검색..."
@@ -611,7 +711,9 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
 
           <select
             value={filters.churnType}
-            onChange={(e) => setFilters((f) => ({ ...f, churnType: e.target.value as ChurnType | '' }))}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, churnType: e.target.value as ChurnType | '' }))
+            }
             className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
           >
             <option value="">이탈 유형 전체</option>
@@ -633,20 +735,38 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
           </select>
 
           <select
+            value={filters.churnStage}
+            onChange={(e) => setFilters((f) => ({ ...f, churnStage: e.target.value }))}
+            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+          >
+            <option value="">이탈 단계 전체</option>
+            {churnStageGroups.map((g) => (
+              <option key={g.key} value={g.key}>
+                {g.label} ({g.count})
+              </option>
+            ))}
+          </select>
+
+          <select
             value={filters.grade}
             onChange={(e) => setFilters((f) => ({ ...f, grade: e.target.value }))}
             className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
           >
             <option value="">학년 전체</option>
             {gradeOptions.map((g) => (
-              <option key={g} value={g}>{g}</option>
+              <option key={g} value={g}>
+                {g}
+              </option>
             ))}
           </select>
 
           <select
             value={filters.daysSinceChurn}
             onChange={(e) =>
-              setFilters((f) => ({ ...f, daysSinceChurn: e.target.value as LeadPoolFilters['daysSinceChurn'] }))
+              setFilters((f) => ({
+                ...f,
+                daysSinceChurn: e.target.value as LeadPoolFilters['daysSinceChurn'],
+              }))
             }
             className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
           >
@@ -702,8 +822,8 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
           {aiResults
             ? 'AI 검색 결과가 없습니다. 다른 표현으로 다시 시도해보세요.'
             : poolTab === 'inactive'
-            ? '조건에 맞는 이탈 학생이 없습니다.'
-            : '재활성화 시도 중인 학생이 없습니다.'}
+              ? '조건에 맞는 이탈 학생이 없습니다.'
+              : '재활성화 시도 중인 학생이 없습니다.'}
         </div>
       ) : (
         <>
@@ -715,7 +835,10 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
                   <StudentPoolCard
                     student={s}
                     selected={selectedIds.has(s.id)}
-                    onToggle={(e) => { e.stopPropagation(); toggleStudent(s.id); }}
+                    onToggle={(e) => {
+                      e.stopPropagation();
+                      toggleStudent(s.id);
+                    }}
                     onClick={() => onStudentClick(s)}
                   />
                   {aiReason && (
@@ -758,7 +881,10 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
         <div className="fixed bottom-20 right-6 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-2 min-w-[200px]">
           <div className="flex items-center justify-between px-2 py-1.5 mb-1">
             <p className="text-xs font-bold text-gray-700">전략 선택</p>
-            <button onClick={() => setShowStrategyPicker(false)} className="text-gray-400 hover:text-gray-600">
+            <button
+              onClick={() => setShowStrategyPicker(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
               <X size={12} />
             </button>
           </div>
@@ -767,9 +893,13 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
               <Loader2 size={14} className="animate-spin text-gray-400" />
             </div>
           ) : pickerStrategies.length === 0 ? (
-            <p className="text-xs text-gray-400 px-2 py-2">전략이 없습니다.<br />재시도 세일즈 탭에서 먼저 만드세요.</p>
+            <p className="text-xs text-gray-400 px-2 py-2">
+              전략이 없습니다.
+              <br />
+              재시도 세일즈 탭에서 먼저 만드세요.
+            </p>
           ) : (
-            pickerStrategies.map(s => (
+            pickerStrategies.map((s) => (
               <button
                 key={s.id}
                 onClick={() => handleAssignToStrategy(s.id, s.name)}
@@ -816,7 +946,9 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
             ) : (
               <button
                 type="button"
-                onClick={() => showStrategyPicker ? setShowStrategyPicker(false) : openStrategyPicker()}
+                onClick={() =>
+                  showStrategyPicker ? setShowStrategyPicker(false) : openStrategyPicker()
+                }
                 className="flex items-center gap-1.5 text-sm font-bold bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-1.5 rounded-lg transition-colors"
               >
                 재시도 배정
@@ -854,7 +986,9 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
             const count = selectedIds.size;
             setSelectedIds(new Set());
             setShowReactivationModal(false);
-            setBulkSuccessMessage(`${count}명 재활성화 시도 시작 — 칸반 '재활성화 시도 중' 섹션으로 이동됩니다.`);
+            setBulkSuccessMessage(
+              `${count}명 재활성화 시도 시작 — 칸반 '재활성화 시도 중' 섹션으로 이동됩니다.`
+            );
             if (nameSearch.trim()) fetchPoolStudents(nameSearch.trim());
             onRefetch();
           }}
