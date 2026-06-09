@@ -50,7 +50,7 @@ Use this command when you want to commit and push directly to the `develop` bran
 
      {COMMIT_TITLE in Korean}
 
-     👤 작성자: {author}
+     👤 작성자: AI Assistant
 
      ━━━━━━━━━━━━━━━━━━━━
 
