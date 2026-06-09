@@ -76,6 +76,15 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
         <p className="text-[11px] text-gray-400 mt-0.5">{student.parent_phone}</p>
       )}
 
+      {/* 인입 채널 · 유입 소스 (하나로 합쳐 표시) */}
+      {(student.inquiry_channel || student.traffic_source) && (
+        <div className="mt-1">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-sky-700 bg-sky-50 border border-sky-100">
+            {[student.inquiry_channel, student.traffic_source].filter(Boolean).join(' · ')}
+          </span>
+        </div>
+      )}
+
       {/* Stage-stall badge — SLA 초과 시 다음 단계로 진행 촉구 */}
       {stalledDays !== null && (
         <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-rose-700 bg-rose-100 border border-rose-200">
