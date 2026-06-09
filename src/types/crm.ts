@@ -124,8 +124,6 @@ created_at: string;                       // ISO timestamp
   published: boolean;                       // true면 학부모 타임라인에 노출
   manager_id?: string;
 }
-  manager_id?: string;
-}
 
 // ─── 주간 스케줄 ─────────────────────────────────────────────────────────────
 
