@@ -5,6 +5,7 @@ import { UserPlus, Search, AlertCircle } from 'lucide-react';
 import { Student, isStageStalled } from '@/types/crm';
 import { useCrmRealtime, RealtimeStatus } from '@/hooks/useCrmRealtime';
 import { SalesKanban } from './components/SalesKanban';
+import { KanbanStatsStrip } from './components/KanbanStatsStrip';
 import { StudentCreateModal } from './components/StudentCreateModal';
 import { StudentDetailPanel } from './components/StudentDetailPanel';
 import { KanbanFilter, KanbanFilters, DEFAULT_FILTERS } from './components/KanbanFilter';
@@ -271,6 +272,8 @@ export default function CrmPage() {
               </div>
               <KanbanFilter filters={filters} onChange={setFilters} />
             </div>
+
+            <KanbanStatsStrip adminKey={adminKey} />
 
             <SalesKanban
               students={filteredStudents}
