@@ -102,6 +102,14 @@ export function getChurnStage(s: {
   return i >= 0 ? (h[i].stage as FunnelStage) : null;
 }
 
+/** 표시·필터에 쓰는 최종 이탈 단계: 수동 지정값 우선, 없으면 stage_history 자동 도출. */
+export function effectiveChurnStage(s: {
+  churn_stage_manual?: string | null;
+  stage_history?: { stage: string }[] | null;
+}): FunnelStage | null {
+  return (s.churn_stage_manual as FunnelStage | null) ?? getChurnStage(s);
+}
+
 export function computeStageFlow(students: StageFlowInput[]): StageFlowRow[] {
   const reached = new Array(FUNNEL_FLOW_ORDER.length).fill(0);
   // 단계별 체류 기간(일) 표본

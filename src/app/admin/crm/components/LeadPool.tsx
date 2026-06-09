@@ -8,9 +8,10 @@ import {
   TrafficSource,
   ReactivationEntry,
   RetryStrategy,
+  FunnelStage,
   FUNNEL_STAGE_LABELS,
 } from '@/types/crm';
-import { FUNNEL_FLOW_ORDER, getChurnStage } from '@/lib/funnel-stats';
+import { FUNNEL_FLOW_ORDER, effectiveChurnStage } from '@/lib/funnel-stats';
 import { ReactivationModal } from './ReactivationModal';
 import { BulkContactModal } from './BulkContactModal';
 import type { AiPoolSearchMatch } from '@/app/api/crm/ai-pool-search/route';
@@ -81,9 +82,17 @@ interface StudentPoolCardProps {
   selected: boolean;
   onToggle: (e: React.MouseEvent) => void;
   onClick: () => void;
+  onSetChurnStage: (id: string, stage: FunnelStage) => void;
 }
 
-function StudentPoolCard({ student, selected, onToggle, onClick }: StudentPoolCardProps) {
+function StudentPoolCard({
+  student,
+  selected,
+  onToggle,
+  onClick,
+  onSetChurnStage,
+}: StudentPoolCardProps) {
+  const churnStage = effectiveChurnStage(student);
   const daysAgo = churnedDaysAgo(student);
   const snippet = lastConsultationSnippet(student);
   const log = student.reactivation_log ?? [];
@@ -140,14 +149,29 @@ function StudentPoolCard({ student, selected, onToggle, onClick }: StudentPoolCa
                 {student.churn_tag}
               </span>
             )}
-            {(() => {
-              const cs = getChurnStage(student);
-              return cs ? (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">
-                  ✘ {FUNNEL_STAGE_LABELS[cs]} 이탈
-                </span>
-              ) : null;
-            })()}
+            {churnStage ? (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">
+                ✘ {FUNNEL_STAGE_LABELS[churnStage]} 이탈
+              </span>
+            ) : (
+              <select
+                value=""
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  if (e.target.value) onSetChurnStage(student.id, e.target.value as FunnelStage);
+                }}
+                className="text-[10px] border border-gray-200 rounded px-1 py-0.5 text-gray-500 bg-white focus:outline-none"
+                title="이탈 단계 수동 지정"
+              >
+                <option value="">단계 지정</option>
+                {FUNNEL_FLOW_ORDER.map((st) => (
+                  <option key={st} value={st}>
+                    {FUNNEL_STAGE_LABELS[st]}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <span className="text-[11px] text-gray-400 shrink-0">{daysAgo}일 경과</span>
         </div>
@@ -334,7 +358,7 @@ export function LeadPool({
       if (filters.churnTag && !(s.churn_tag ?? '').startsWith(filters.churnTag)) return false;
       if (filters.churnType && s.churn_type !== filters.churnType) return false;
       if (filters.churnStage) {
-        const cs = getChurnStage(s);
+        const cs = effectiveChurnStage(s);
         if (filters.churnStage === CHURN_STAGE_NONE ? cs !== null : cs !== filters.churnStage)
           return false;
       }
@@ -362,7 +386,7 @@ export function LeadPool({
   const churnStageGroups = useMemo(() => {
     const counts = new Map<string, number>();
     for (const s of inactiveStudents) {
-      const key = getChurnStage(s) ?? CHURN_STAGE_NONE;
+      const key = effectiveChurnStage(s) ?? CHURN_STAGE_NONE;
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
     const ordered: { key: string; label: string; count: number }[] = [];
@@ -374,6 +398,17 @@ export function LeadPool({
     if (none) ordered.push({ key: CHURN_STAGE_NONE, label: '미상', count: none });
     return ordered;
   }, [inactiveStudents]);
+
+  // 이탈 단계 수동 지정 — 로컬 목록 즉시 반영 + 서버 저장(PATCH)
+  const handleSetChurnStage = useCallback(
+    (id: string, stage: FunnelStage) => {
+      setStudents((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, churn_stage_manual: stage } : s))
+      );
+      onStudentUpdate(id, { churn_stage_manual: stage });
+    },
+    [onStudentUpdate]
+  );
 
   // AI 결과가 있을 때 해당 학생 맵 (id → reason)
   const aiResultMap = useMemo<Map<string, string>>(() => {
@@ -840,6 +875,7 @@ export function LeadPool({
                       toggleStudent(s.id);
                     }}
                     onClick={() => onStudentClick(s)}
+                    onSetChurnStage={handleSetChurnStage}
                   />
                   {aiReason && (
                     <div className="flex items-start gap-1.5 mt-1 px-2">
