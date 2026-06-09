@@ -27,6 +27,7 @@ import {
   ChurnType,
   daysInStage,
   isStageStalled,
+  effectiveLeadTier,
 } from '@/types/crm';
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
@@ -171,6 +172,7 @@ function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayme
               key={student.id}
               student={student}
               stalledDays={isStageStalled(student, nowMs) ? daysInStage(student, nowMs) : null}
+              leadTier={effectiveLeadTier(student, nowMs)}
               onClick={() => onStudentClick(student)}
               onChurn={() => onChurn(student)}
               onPayment={() => onPayment(student)}
