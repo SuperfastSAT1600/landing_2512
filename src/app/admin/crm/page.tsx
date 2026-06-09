@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { UserPlus, Search, AlertCircle } from 'lucide-react';
-import { Student } from '@/types/crm';
+import { Student, isStageStalled } from '@/types/crm';
 import { useCrmRealtime, RealtimeStatus } from '@/hooks/useCrmRealtime';
 import { SalesKanban } from './components/SalesKanban';
 import { StudentCreateModal } from './components/StudentCreateModal';
@@ -177,6 +177,14 @@ export default function CrmPage() {
     );
   }, [students]);
 
+  // 단계 정체 리드 — 현재 단계 SLA를 초과해 다음 단계로 못 넘어간 활성 리드 (전체 기준)
+  const stalledStudents = useMemo(() => {
+    const now = Date.now();
+    return students.filter(
+      s => s.lead_status === 'active' && !s.retry_strategy_id && isStageStalled(s, now)
+    );
+  }, [students]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center text-gray-500">
@@ -267,6 +275,7 @@ export default function CrmPage() {
             <SalesKanban
               students={filteredStudents}
               followUpStudents={followUpStudents}
+              stalledStudents={stalledStudents}
               adminKey={adminKey}
               searchQuery={searchQuery}
               onStudentUpdate={handleStudentUpdate}
