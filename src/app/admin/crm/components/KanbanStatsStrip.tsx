@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 interface Overview {
   contact_rate: number;
   conversion_rate: number;
-  total_revenue: number;
+  gross_revenue: number; // 환불 전 총 결제
+  total_refund: number; // 환불 합(음수)
 }
 
 /**
@@ -34,7 +35,9 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
   useEffect(() => {
     if (!adminKey) return;
     let cancelled = false;
-    fetch(`/api/crm/stats?from=${range.from}&to=${range.to}`, { headers: { 'x-admin-key': adminKey } })
+    fetch(`/api/crm/stats?from=${range.from}&to=${range.to}`, {
+      headers: { 'x-admin-key': adminKey },
+    })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (!cancelled && j?.data?.overview) setData(j.data.overview as Overview);
@@ -47,7 +50,9 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
 
   if (!data) return null;
 
-  const revenueMan = Math.round(data.total_revenue / 10000).toLocaleString();
+  const revenueMan = Math.round(data.gross_revenue / 10000).toLocaleString();
+  const hasRefund = data.total_refund < 0;
+  const refundMan = Math.round(-data.total_refund / 10000).toLocaleString();
   // 목표 미달 시 빨간 글씨로 경고
   const contactColor = data.contact_rate < 70 ? 'text-red-500' : 'text-gray-800';
   const conversionColor = data.conversion_rate < 50 ? 'text-red-500' : 'text-gray-800';
@@ -65,6 +70,14 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
       <span>
         {range.monthLabel} 매출 <b className="text-gray-800 font-semibold">{revenueMan}만원</b>
       </span>
+      {hasRefund && (
+        <>
+          <span className="text-gray-200">·</span>
+          <span>
+            환불 <b className="text-red-500 font-semibold">-{refundMan}만원</b>
+          </span>
+        </>
+      )}
     </div>
   );
 }
