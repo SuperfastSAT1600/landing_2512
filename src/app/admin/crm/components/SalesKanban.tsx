@@ -19,7 +19,15 @@ import {
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { Plus, RefreshCw, AlertTriangle } from 'lucide-react';
-import { Student, FunnelStage, FUNNEL_STAGE_LABELS, ChurnType } from '@/types/crm';
+import {
+  Student,
+  FunnelStage,
+  FUNNEL_STAGE_LABELS,
+  FUNNEL_NEXT_ACTION,
+  ChurnType,
+  daysInStage,
+  isStageStalled,
+} from '@/types/crm';
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
 import { PaymentModal } from './PaymentModal';
@@ -47,6 +55,7 @@ function churnedAt(s: Student): string | null {
 interface SalesKanbanProps {
   students: Student[];
   followUpStudents: Student[];
+  stalledStudents: Student[];
   adminKey: string;
   searchQuery?: string;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
@@ -58,6 +67,7 @@ type ReadOnlyTone = 'enrolled' | 'churned';
 interface KanbanRowProps {
   stage: FunnelStage;
   students: Student[];
+  nowMs: number;
   onStudentClick: (student: Student) => void;
   onChurn: (student: Student) => void;
   onPayment: (student: Student) => void;
@@ -68,15 +78,18 @@ interface KanbanRowProps {
   paidAmounts?: Record<string, number>;
 }
 
-// 오늘 날짜 기준 팔로업 완료 체크 저장 키 (자정 지나면 새 키 → 목록 자동 리셋)
-function followUpDoneKey(): string {
-  return `crm-followup-done-${new Date().toISOString().slice(0, 10)}`;
+// 액션 완료 체크를 "그날 단위"로 보존하는 키 (자정 지나면 새 키 → 목록 자동 리셋)
+const FOLLOWUP_DONE_PREFIX = 'crm-followup-done';
+const STALL_DONE_PREFIX = 'crm-stall-done';
+
+function dailyKey(prefix: string): string {
+  return `${prefix}-${new Date().toISOString().slice(0, 10)}`;
 }
 
-function loadFollowUpDone(): Set<string> {
+function loadDailyDone(prefix: string): Set<string> {
   if (typeof window === 'undefined') return new Set();
   try {
-    const raw = localStorage.getItem(followUpDoneKey());
+    const raw = localStorage.getItem(dailyKey(prefix));
     return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
   } catch {
     return new Set();
@@ -93,7 +106,7 @@ function formatChurnDate(iso: string | null): string | null {
   return Number.isNaN(d.getTime()) ? null : `${d.getMonth() + 1}/${d.getDate()} 이탈`;
 }
 
-function KanbanColumn({ stage, students, onStudentClick, onChurn, onPayment, onAdd, isSearchMatch, readOnly, readOnlyTone = 'enrolled', paidAmounts }: KanbanRowProps) {
+function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayment, onAdd, isSearchMatch, readOnly, readOnlyTone = 'enrolled', paidAmounts }: KanbanRowProps) {
   // 표시 전용 컬럼(8·9단계)은 드롭 타깃이 아니다.
   const { setNodeRef, isOver } = useDroppable({ id: stage, disabled: readOnly });
   const isChurned = readOnlyTone === 'churned';
@@ -157,6 +170,7 @@ function KanbanColumn({ stage, students, onStudentClick, onChurn, onPayment, onA
             <StudentCard
               key={student.id}
               student={student}
+              stalledDays={isStageStalled(student, nowMs) ? daysInStage(student, nowMs) : null}
               onClick={() => onStudentClick(student)}
               onChurn={() => onChurn(student)}
               onPayment={() => onPayment(student)}
@@ -182,13 +196,14 @@ function KanbanColumn({ stage, students, onStudentClick, onChurn, onPayment, onA
   );
 }
 
-export function SalesKanban({ students, followUpStudents, adminKey, searchQuery, onStudentUpdate, onStudentClick }: SalesKanbanProps) {
+export function SalesKanban({ students, followUpStudents, stalledStudents, adminKey, searchQuery, onStudentUpdate, onStudentClick }: SalesKanbanProps) {
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<Student | null>(null);
-  // 오늘 체크해서 지운 팔로업 액션 id — 날짜별로 localStorage에 보존 (자정 지나면 자동 초기화)
-  const [doneActions, setDoneActions] = useState<Set<string>>(loadFollowUpDone);
-  // 미연락 일수 계산 기준 시각 — 마운트 시 1회 캡처 (render 중 Date.now 직접 호출 회피)
+  // 오늘 체크해서 지운 팔로업/정체 액션 id — 날짜별로 localStorage에 보존 (자정 지나면 자동 초기화)
+  const [doneActions, setDoneActions] = useState<Set<string>>(() => loadDailyDone(FOLLOWUP_DONE_PREFIX));
+  const [stallDone, setStallDone] = useState<Set<string>>(() => loadDailyDone(STALL_DONE_PREFIX));
+  // 경과 일수 계산 기준 시각 — 마운트 시 1회 캡처 (render 중 Date.now 직접 호출 회피)
   const [nowMs] = useState(() => Date.now());
   const [enrolledStudents, setEnrolledStudents] = useState<Student[]>([]);
   // 이번 달 이탈 리드 — 표시 전용 9단계 컬럼용
@@ -290,7 +305,17 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
     setDoneActions(prev => {
       const next = new Set(prev).add(id);
       try {
-        localStorage.setItem(followUpDoneKey(), JSON.stringify([...next]));
+        localStorage.setItem(dailyKey(FOLLOWUP_DONE_PREFIX), JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const markStallDone = useCallback((id: string) => {
+    setStallDone(prev => {
+      const next = new Set(prev).add(id);
+      try {
+        localStorage.setItem(dailyKey(STALL_DONE_PREFIX), JSON.stringify([...next]));
       } catch {}
       return next;
     });
@@ -306,6 +331,12 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
     }))
     .sort((a, b) => (b.days ?? Infinity) - (a.days ?? Infinity))
     .filter(a => !doneActions.has(a.student.id));
+
+  // 단계 정체: 가장 오래 정체된 순으로 나래비, 체크 완료한 건은 제외
+  const stallActions = [...stalledStudents]
+    .map(s => ({ student: s, days: daysInStage(s, nowMs) ?? 0 }))
+    .sort((a, b) => b.days - a.days)
+    .filter(a => !stallDone.has(a.student.id));
 
   const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id);
 
@@ -354,6 +385,53 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
 
   return (
     <>
+      {stallActions.length > 0 && (
+        <div className="mb-4 rounded-lg bg-rose-50 border border-rose-200 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-rose-200">
+            <AlertTriangle size={14} className="text-rose-500 shrink-0" />
+            <p className="flex-1 text-sm font-bold text-rose-700">
+              단계 정체: {stallActions.length}건 — 즉시 다음 단계로 진행
+            </p>
+          </div>
+          <ol className="divide-y divide-rose-100">
+            {stallActions.map(({ student: s, days }, idx) => (
+              <li
+                key={s.id}
+                className="flex items-center gap-3 px-4 py-2 hover:bg-rose-100/60 transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={() => markStallDone(s.id)}
+                  className="w-4 h-4 shrink-0 rounded border-rose-300 accent-rose-600 cursor-pointer"
+                  aria-label={`${s.name} 단계 진행 완료`}
+                  title="다음 단계로 옮겼으면 체크 (목록에서 사라집니다)"
+                />
+                <span className="w-5 shrink-0 text-center text-xs font-bold text-rose-400">
+                  {idx + 1}
+                </span>
+                <button
+                  onClick={() => onStudentClick(s)}
+                  className="flex-1 flex items-center justify-between gap-2 text-left min-w-0"
+                >
+                  <span className="text-sm font-medium text-rose-800 shrink-0">{s.name}</span>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="text-[11px] text-rose-400 truncate">
+                      {s.funnel_stage}. {FUNNEL_STAGE_LABELS[s.funnel_stage]}
+                    </span>
+                    <span className="text-xs font-bold text-rose-600 shrink-0">{days}일 정체</span>
+                    {FUNNEL_NEXT_ACTION[s.funnel_stage] && (
+                      <span className="text-[11px] font-medium text-rose-500 shrink-0">
+                        → {FUNNEL_NEXT_ACTION[s.funnel_stage]}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
       {followUpActions.length > 0 && (
         <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-amber-200">
@@ -413,6 +491,7 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
                 <KanbanColumn
                   stage={stage}
                   students={getStudentsForStage(stage)}
+                  nowMs={nowMs}
                   onStudentClick={onStudentClick}
                   onChurn={setChurnTarget}
                   onPayment={setPaymentTarget}

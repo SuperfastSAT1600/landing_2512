@@ -16,10 +16,12 @@ interface StudentCardProps {
   onClick: () => void;
   onPayment?: () => void;
   overlay?: boolean;
+  /** 현재 단계 SLA를 초과해 정체된 일수. null이면 정체 아님(뱃지 미표시). */
+  stalledDays?: number | null;
 }
 
 
-export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false }: StudentCardProps) {
+export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null }: StudentCardProps) {
   const {
     attributes,
     listeners,
@@ -40,8 +42,8 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
       ref={setNodeRef}
       style={style}
       className={`
-        group relative bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 cursor-pointer
-        hover:border-gray-300 transition-all
+        group relative border rounded-lg px-3 py-2 cursor-pointer transition-all
+        ${stalledDays !== null ? 'bg-rose-50 border-rose-300 hover:border-rose-400' : 'bg-gray-50 border-gray-200 hover:border-gray-300'}
         ${isDragging ? 'opacity-50 ring-2 ring-blue-500' : ''}
         ${overlay ? 'shadow-2xl ring-2 ring-blue-500 rotate-1' : ''}
       `}
@@ -74,6 +76,14 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
         <p className="text-[11px] text-gray-400 mt-0.5">{student.parent_phone}</p>
       )}
 
+      {/* Stage-stall badge — SLA 초과 시 다음 단계로 진행 촉구 */}
+      {stalledDays !== null && (
+        <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-rose-700 bg-rose-100 border border-rose-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+          {stalledDays}일 정체
+        </span>
+      )}
+
       {/* Days elapsed + payment icon */}
       <div className="mt-1.5 flex items-center justify-between gap-1">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -82,14 +92,6 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
             return days !== null ? (
               <span className={`text-[10px] font-medium shrink-0 ${days >= 14 ? 'text-red-400' : days >= 7 ? 'text-amber-500' : 'text-gray-400'}`}>
                 D+{days}
-              </span>
-            ) : null;
-          })()}
-          {(() => {
-            const stageDays = daysElapsed(student.funnel_stage_updated_at ?? student.created_at);
-            return stageDays !== null ? (
-              <span className={`text-[10px] font-medium shrink-0 ${stageDays >= 7 ? 'text-red-400' : stageDays >= 3 ? 'text-amber-500' : 'text-gray-300'}`}>
-                S+{stageDays}
               </span>
             ) : null;
           })()}

@@ -364,6 +364,59 @@ export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
   'churned': '이탈',
 };
 
+// ─── 단계 정체 알림 (SLA) ─────────────────────────────────────────────────────
+// 각 단계 목표 체류일 — 이 일수를 "초과"하면 정체로 간주하고 알림. 8(수업중)·churned 제외.
+// 운영 기준이 바뀌면 이 표만 수정하면 배너/카드 뱃지에 즉시 반영된다.
+export const FUNNEL_STAGE_SLA_DAYS: Partial<Record<FunnelStage, number>> = {
+  '0': 1,   // 리드 인입 → 당일 첫 연락
+  '1': 2,   // 첫 메시지 발송 → 콜 예약
+  '2': 3,   // 세일즈 콜 예약 확정 → 콜 진행
+  '3a': 3,  // 진단테스트 대기 (콜 전)
+  '3b': 2,  // 진단테스트 완료 (콜 전) → 콜 진행
+  '4': 2,   // 세일즈 콜 완료 → 진단 안내
+  '5a': 3,  // 진단테스트 대기 (콜 후)
+  '5b': 2,  // 진단테스트 완료 (콜 후) → Report 콜 예약
+  '6': 3,   // Report 콜 예약 확정 → 콜 진행
+  '7': 2,   // Report 콜 완료 → 결제 클로징
+};
+
+// 단계별 "지금 해야 할 다음 행동" — 정체 알림에 그대로 표시해 실무자가 바로 움직이게 한다.
+export const FUNNEL_NEXT_ACTION: Partial<Record<FunnelStage, string>> = {
+  '0': '첫 메시지 발송',
+  '1': '콜 예약 잡기',
+  '2': '세일즈 콜 진행',
+  '3a': '진단테스트 제출 독려',
+  '3b': '세일즈 콜 진행',
+  '4': '진단테스트 안내',
+  '5a': '진단테스트 제출 독려',
+  '5b': 'Report 콜 예약',
+  '6': 'Report 콜 진행',
+  '7': '결제 클로징',
+};
+
+/** 현재 단계 진입 후 경과 일수. funnel_stage_updated_at 우선, 없으면 created_at 폴백. */
+export function daysInStage(
+  s: Pick<Student, 'funnel_stage_updated_at' | 'created_at'>,
+  nowMs: number
+): number | null {
+  const ref = s.funnel_stage_updated_at ?? s.created_at;
+  if (!ref) return null;
+  const t = new Date(ref).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.floor((nowMs - t) / 86400000);
+}
+
+/** 현재 단계가 목표 체류일(SLA)을 초과해 정체 상태인지. 8·churned 등 SLA 미정 단계는 항상 false. */
+export function isStageStalled(
+  s: Pick<Student, 'funnel_stage' | 'funnel_stage_updated_at' | 'created_at'>,
+  nowMs: number
+): boolean {
+  const sla = FUNNEL_STAGE_SLA_DAYS[s.funnel_stage];
+  if (sla === undefined) return false;
+  const days = daysInStage(s, nowMs);
+  return days !== null && days > sla;
+}
+
 export const MATCHING_STAGE_LABELS: Record<MatchingStage, string> = {
   schedule_pending: '스케줄 입력 대기',
   schedule_done: '스케줄 입력 완료',
