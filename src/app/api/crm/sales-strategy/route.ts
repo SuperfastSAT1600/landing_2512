@@ -14,7 +14,7 @@ import {
 const STUDENT_FIELDS =
   'id, name, grade, school_type, desired_subjects, previous_rw_score, previous_math_score, target_score, churn_type, churn_tag, inquiry_channel, traffic_source, lead_status, funnel_stage, consultation_timeline, reactivation_log';
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = 'claude-opus-4-8';
 const SIMILAR_CASES = 6;
 
 export const maxDuration = 60;
