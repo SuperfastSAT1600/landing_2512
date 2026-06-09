@@ -18,7 +18,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, RefreshCw, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Student, FunnelStage, FUNNEL_STAGE_LABELS, ChurnType } from '@/types/crm';
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
@@ -66,6 +66,21 @@ interface KanbanRowProps {
   readOnly?: boolean;
   readOnlyTone?: ReadOnlyTone;
   paidAmounts?: Record<string, number>;
+}
+
+// 오늘 날짜 기준 팔로업 완료 체크 저장 키 (자정 지나면 새 키 → 목록 자동 리셋)
+function followUpDoneKey(): string {
+  return `crm-followup-done-${new Date().toISOString().slice(0, 10)}`;
+}
+
+function loadFollowUpDone(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(followUpDoneKey());
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
 }
 
 function formatMan(amount: number): string {
@@ -171,7 +186,10 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<Student | null>(null);
-  const [followUpOpen, setFollowUpOpen] = useState(false);
+  // 오늘 체크해서 지운 팔로업 액션 id — 날짜별로 localStorage에 보존 (자정 지나면 자동 초기화)
+  const [doneActions, setDoneActions] = useState<Set<string>>(loadFollowUpDone);
+  // 미연락 일수 계산 기준 시각 — 마운트 시 1회 캡처 (render 중 Date.now 직접 호출 회피)
+  const [nowMs] = useState(() => Date.now());
   const [enrolledStudents, setEnrolledStudents] = useState<Student[]>([]);
   // 이번 달 이탈 리드 — 표시 전용 9단계 컬럼용
   const [churnedStudents, setChurnedStudents] = useState<Student[]>([]);
@@ -268,6 +286,27 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
     [students, enrolledStudents, churnedStudents]
   );
 
+  const markActionDone = useCallback((id: string) => {
+    setDoneActions(prev => {
+      const next = new Set(prev).add(id);
+      try {
+        localStorage.setItem(followUpDoneKey(), JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  // 우선순위 순(가장 오래 미연락 = 최우선)으로 나래비, 체크 완료한 건은 제외
+  const followUpActions = [...followUpStudents]
+    .map(s => ({
+      student: s,
+      days: s.last_contacted_at
+        ? Math.floor((nowMs - new Date(s.last_contacted_at).getTime()) / 86400000)
+        : null,
+    }))
+    .sort((a, b) => (b.days ?? Infinity) - (a.days ?? Infinity))
+    .filter(a => !doneActions.has(a.student.id));
+
   const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -315,41 +354,43 @@ export function SalesKanban({ students, followUpStudents, adminKey, searchQuery,
 
   return (
     <>
-      {followUpStudents.length > 0 && (
+      {followUpActions.length > 0 && (
         <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 overflow-hidden">
-          <button
-            onClick={() => setFollowUpOpen(o => !o)}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-amber-100/60 transition-colors"
-          >
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-amber-200">
             <AlertTriangle size={14} className="text-amber-500 shrink-0" />
             <p className="flex-1 text-sm font-medium text-amber-700">
-              팔로업 필요: {followUpStudents.length}명 — 5일 이상 미연락
+              오늘 팔로업 액션: {followUpActions.length}건 — 우선순위 순 (5일 이상 미연락)
             </p>
-            {followUpOpen
-              ? <ChevronUp size={14} className="text-amber-500 shrink-0" />
-              : <ChevronDown size={14} className="text-amber-500 shrink-0" />}
-          </button>
-          {followUpOpen && (
-            <div className="border-t border-amber-200 divide-y divide-amber-100">
-              {followUpStudents.map(s => {
-                const days = s.last_contacted_at
-                  ? Math.floor((Date.now() - new Date(s.last_contacted_at).getTime()) / 86400000)
-                  : null;
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => onStudentClick(s)}
-                    className="w-full flex items-center justify-between px-5 py-2 text-left hover:bg-amber-100/60 transition-colors"
-                  >
-                    <span className="text-sm font-medium text-amber-800">{s.name}</span>
-                    <span className="text-xs text-amber-500">
-                      {days !== null ? `${days}일 전 연락` : '연락 기록 없음'}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          </div>
+          <ol className="divide-y divide-amber-100">
+            {followUpActions.map(({ student: s, days }, idx) => (
+              <li
+                key={s.id}
+                className="flex items-center gap-3 px-4 py-2 hover:bg-amber-100/60 transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={() => markActionDone(s.id)}
+                  className="w-4 h-4 shrink-0 rounded border-amber-300 accent-amber-600 cursor-pointer"
+                  aria-label={`${s.name} 팔로업 완료`}
+                  title="완료로 체크하면 목록에서 사라집니다"
+                />
+                <span className="w-5 shrink-0 text-center text-xs font-bold text-amber-400">
+                  {idx + 1}
+                </span>
+                <button
+                  onClick={() => onStudentClick(s)}
+                  className="flex-1 flex items-center justify-between text-left"
+                >
+                  <span className="text-sm font-medium text-amber-800">{s.name}</span>
+                  <span className="text-xs text-amber-500">
+                    {days !== null ? `${days}일 전 연락` : '연락 기록 없음'}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
         </div>
       )}
       <DndContext
