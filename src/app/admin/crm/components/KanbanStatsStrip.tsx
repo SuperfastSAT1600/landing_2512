@@ -50,9 +50,9 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
 
   if (!data) return null;
 
-  const revenueMan = Math.round(data.gross_revenue / 10000).toLocaleString();
+  const revenueWon = data.gross_revenue.toLocaleString();
   const hasRefund = data.total_refund < 0;
-  const refundMan = Math.round(-data.total_refund / 10000).toLocaleString();
+  const refundWon = (-data.total_refund).toLocaleString();
   // 목표 미달 시 빨간 글씨로 경고
   const contactColor = data.contact_rate < 70 ? 'text-red-500' : 'text-gray-800';
   const conversionColor = data.conversion_rate < 50 ? 'text-red-500' : 'text-gray-800';
@@ -68,13 +68,13 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
       </span>
       <span className="text-gray-200">·</span>
       <span>
-        {range.monthLabel} 매출 <b className="text-gray-800 font-semibold">{revenueMan}만원</b>
+        {range.monthLabel} 매출 <b className="text-gray-800 font-semibold">{revenueWon}원</b>
       </span>
       {hasRefund && (
         <>
           <span className="text-gray-200">·</span>
           <span>
-            환불 <b className="text-red-500 font-semibold">-{refundMan}만원</b>
+            환불 <b className="text-red-500 font-semibold">-{refundWon}원</b>
           </span>
         </>
       )}
