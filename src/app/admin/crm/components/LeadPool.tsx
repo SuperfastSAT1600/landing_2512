@@ -124,7 +124,10 @@ function StudentPoolCard({ student, selected, onToggle, onClick }: StudentPoolCa
               </span>
             )}
             {student.churn_tag && (
-              <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+              <span
+                title={student.churn_tag}
+                className="inline-block align-bottom text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded max-w-[220px] truncate"
+              >
                 {student.churn_tag}
               </span>
             )}
@@ -179,12 +182,15 @@ interface LeadPoolProps {
 
 type PoolTab = 'inactive' | 'reactivating';
 
+const POOL_PAGE_SIZE = 50;
+
 export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch, retryContext, onRetryContextClear, onRetryAssignSuccess }: LeadPoolProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [poolLoading, setPoolLoading] = useState(false);
   const [poolError, setPoolError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [nameSearch, setNameSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [statsInactive, setStatsInactive] = useState<number | null>(null);
   const [statsReactivating, setStatsReactivating] = useState<number | null>(null);
   const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -221,22 +227,19 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
     }
   }, [adminKey]);
 
-  // 이름 검색 디바운스
+  // 진입 시 전체 풀 로드 + 이름 검색 디바운스 (빈 검색 = 전체 목록)
   useEffect(() => {
+    if (!adminKey) return;
     if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
-    if (!nameSearch.trim()) {
-      setStudents([]);
-      setHasSearched(false);
-      return;
-    }
+    const q = nameSearch.trim();
     nameDebounceRef.current = setTimeout(() => {
       setHasSearched(true);
-      fetchPoolStudents(nameSearch.trim());
-    }, 300);
+      fetchPoolStudents(q); // 빈 문자열이면 전체 풀(inactive+reactivating) 반환
+    }, q ? 300 : 0);
     return () => {
       if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
     };
-  }, [nameSearch, fetchPoolStudents]);
+  }, [nameSearch, fetchPoolStudents, adminKey]);
 
   const [poolTab, setPoolTab] = useState<PoolTab>('inactive');
   const [filters, setFilters] = useState<LeadPoolFilters>(DEFAULT_FILTERS);
@@ -288,7 +291,8 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
 
   const filtered = useMemo(() => {
     return inactiveStudents.filter((s) => {
-      if (filters.churnTag && s.churn_tag !== filters.churnTag) return false;
+      // churn_tag는 "{태그}: {사유}"로 저장되므로 카테고리 prefix로 매칭 (bare 태그도 매칭됨)
+      if (filters.churnTag && !(s.churn_tag ?? '').startsWith(filters.churnTag)) return false;
       if (filters.churnType && s.churn_type !== filters.churnType) return false;
       if (filters.grade && s.grade !== filters.grade) return false;
       if (filters.trafficSource && s.traffic_source !== filters.trafficSource) return false;
@@ -331,6 +335,16 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
 
   // AI 검색 결과가 있으면 탭/필터 무시하고 AI 결과 목록 사용
   const currentList = aiFilteredList ?? (poolTab === 'inactive' ? filtered : reactivatingStudents);
+
+  // ─── Pagination (client-side) ──────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(currentList.length / POOL_PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedList = currentList.slice((safePage - 1) * POOL_PAGE_SIZE, safePage * POOL_PAGE_SIZE);
+
+  // 필터/검색/탭/AI 결과가 바뀌면 1페이지로
+  useEffect(() => {
+    setPage(1);
+  }, [filters, nameSearch, poolTab, aiResults]);
 
   function toggleStudent(id: string) {
     setSelectedIds((prev) => {
@@ -692,27 +706,51 @@ export function LeadPool({ adminKey, onStudentUpdate, onStudentClick, onRefetch,
             : '재활성화 시도 중인 학생이 없습니다.'}
         </div>
       ) : (
-        <div className="space-y-2">
-          {currentList.map((s) => {
-            const aiReason = aiResultMap.get(s.id);
-            return (
-              <div key={s.id}>
-                <StudentPoolCard
-                  student={s}
-                  selected={selectedIds.has(s.id)}
-                  onToggle={(e) => { e.stopPropagation(); toggleStudent(s.id); }}
-                  onClick={() => onStudentClick(s)}
-                />
-                {aiReason && (
-                  <div className="flex items-start gap-1.5 mt-1 px-2">
-                    <Sparkles size={11} className="text-purple-400 mt-0.5 shrink-0" />
-                    <p className="text-[11px] text-purple-600 leading-relaxed">{aiReason}</p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <>
+          <div className="space-y-2">
+            {pagedList.map((s) => {
+              const aiReason = aiResultMap.get(s.id);
+              return (
+                <div key={s.id}>
+                  <StudentPoolCard
+                    student={s}
+                    selected={selectedIds.has(s.id)}
+                    onToggle={(e) => { e.stopPropagation(); toggleStudent(s.id); }}
+                    onClick={() => onStudentClick(s)}
+                  />
+                  {aiReason && (
+                    <div className="flex items-start gap-1.5 mt-1 px-2">
+                      <Sparkles size={11} className="text-purple-400 mt-0.5 shrink-0" />
+                      <p className="text-[11px] text-purple-600 leading-relaxed">{aiReason}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {currentList.length > POOL_PAGE_SIZE && (
+            <div className="flex items-center justify-center gap-3 mt-4 pb-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:hover:border-gray-200"
+              >
+                이전
+              </button>
+              <span className="text-xs text-gray-500">
+                {safePage} / {totalPages} 페이지 · 총 {currentList.length}명
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:hover:border-gray-200"
+              >
+                다음
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Strategy picker dropdown (위치: bulk action bar 바로 위) */}

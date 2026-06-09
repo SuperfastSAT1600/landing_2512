@@ -56,30 +56,43 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: { count: count ?? 0 } });
   }
 
-  let query = supabaseAdmin
-    .from('students')
-    .select('*')
-    .order('created_at', { ascending: false });
+  // 필터를 적용한 새 쿼리를 만든다 (배치 조회 시 매번 새로 빌드)
+  const buildQuery = (forCount = false) => {
+    let q = forCount
+      ? supabaseAdmin.from('students').select('id', { count: 'exact', head: true })
+      : supabaseAdmin.from('students').select('*').order('created_at', { ascending: false });
+    if (retryStrategyId) {
+      q = q.eq('retry_strategy_id', retryStrategyId);
+    } else if (leadStatus) {
+      q = q.eq('lead_status', leadStatus);
+    } else if (pool) {
+      q = q.in('lead_status', ['inactive', 'reactivating']);
+    } else {
+      q = q.eq('lead_status', 'active');
+    }
+    if (stage) q = q.eq('funnel_stage', stage);
+    if (search) q = q.ilike('name', `%${search}%`);
+    return q;
+  };
 
-  if (retryStrategyId) {
-    query = query.eq('retry_strategy_id', retryStrategyId);
-  } else if (leadStatus) {
-    query = query.eq('lead_status', leadStatus);
-  } else if (pool) {
-    query = query.in('lead_status', ['inactive', 'reactivating']);
-  } else {
-    query = query.eq('lead_status', 'active');
+  // 리드풀(이탈/재활성화)은 전체를 반환한다. Supabase는 요청당 max-rows=1000 하드 캡이
+  // 있어 .range()로도 못 넘기므로, count로 배치 수를 구한 뒤 1,000개씩 병렬 조회한다.
+  if (pool) {
+    const BATCH = 1000;
+    const { count } = await buildQuery(true);
+    const batches = Math.max(1, Math.ceil((count ?? 0) / BATCH));
+    const results = await Promise.all(
+      Array.from({ length: batches }, (_, i) => buildQuery().range(i * BATCH, (i + 1) * BATCH - 1))
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      console.error('[crm/students GET pool batch]', failed.error);
+      return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
+    }
+    return NextResponse.json({ data: results.flatMap((r) => r.data ?? []) });
   }
 
-  if (stage) {
-    query = query.eq('funnel_stage', stage);
-  }
-
-  if (search) {
-    query = query.ilike('name', `%${search}%`);
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await buildQuery();
 
   if (error) {
     console.error('[crm/students GET]', error);
