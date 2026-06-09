@@ -3,7 +3,18 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { X, GripVertical, CreditCard } from 'lucide-react';
-import { Student } from '@/types/crm';
+import { Student, LeadTier, LEAD_TIER_APPROACH } from '@/types/crm';
+
+const TIER_BADGE: Record<LeadTier, string> = {
+  A: 'text-rose-700 bg-rose-100 border-rose-200',
+  B: 'text-amber-700 bg-amber-100 border-amber-200',
+  C: 'text-slate-600 bg-slate-100 border-slate-200',
+};
+const TIER_DOT: Record<LeadTier, string> = {
+  A: 'bg-rose-500',
+  B: 'bg-amber-500',
+  C: 'bg-slate-400',
+};
 
 function daysElapsed(dateStr: string | null): number | null {
   if (!dateStr) return null;
@@ -16,10 +27,14 @@ interface StudentCardProps {
   onClick: () => void;
   onPayment?: () => void;
   overlay?: boolean;
+  /** 현재 단계 SLA를 초과해 정체된 일수. null이면 정체 아님(뱃지 미표시). */
+  stalledDays?: number | null;
+  /** 리드 등급(수동 확정 또는 자동 분류된 effective 값). */
+  leadTier?: LeadTier | null;
 }
 
 
-export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false }: StudentCardProps) {
+export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null, leadTier = null }: StudentCardProps) {
   const {
     attributes,
     listeners,
@@ -40,8 +55,8 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
       ref={setNodeRef}
       style={style}
       className={`
-        group relative bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 cursor-pointer
-        hover:border-gray-300 transition-all
+        group relative border rounded-lg px-3 py-2 cursor-pointer transition-all
+        ${stalledDays !== null ? 'bg-rose-50 border-rose-300 hover:border-rose-400' : 'bg-gray-50 border-gray-200 hover:border-gray-300'}
         ${isDragging ? 'opacity-50 ring-2 ring-blue-500' : ''}
         ${overlay ? 'shadow-2xl ring-2 ring-blue-500 rotate-1' : ''}
       `}
@@ -74,6 +89,31 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
         <p className="text-[11px] text-gray-400 mt-0.5">{student.parent_phone}</p>
       )}
 
+      {/* 리드 등급 + 추천 세일즈 방식 */}
+      {leadTier && (
+        <span className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border ${TIER_BADGE[leadTier]}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${TIER_DOT[leadTier]}`} />
+          {leadTier} · {LEAD_TIER_APPROACH[leadTier]}
+        </span>
+      )}
+
+      {/* 인입 채널 · 유입 소스 (하나로 합쳐 표시) */}
+      {(student.inquiry_channel || student.traffic_source) && (
+        <div className="mt-1">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-sky-700 bg-sky-50 border border-sky-100">
+            {[student.inquiry_channel, student.traffic_source].filter(Boolean).join(' · ')}
+          </span>
+        </div>
+      )}
+
+      {/* Stage-stall badge — SLA 초과 시 다음 단계로 진행 촉구 */}
+      {stalledDays !== null && (
+        <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-rose-700 bg-rose-100 border border-rose-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+          {stalledDays}일 정체
+        </span>
+      )}
+
       {/* Days elapsed + payment icon */}
       <div className="mt-1.5 flex items-center justify-between gap-1">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -82,14 +122,6 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
             return days !== null ? (
               <span className={`text-[10px] font-medium shrink-0 ${days >= 14 ? 'text-red-400' : days >= 7 ? 'text-amber-500' : 'text-gray-400'}`}>
                 D+{days}
-              </span>
-            ) : null;
-          })()}
-          {(() => {
-            const stageDays = daysElapsed(student.funnel_stage_updated_at ?? student.created_at);
-            return stageDays !== null ? (
-              <span className={`text-[10px] font-medium shrink-0 ${stageDays >= 7 ? 'text-red-400' : stageDays >= 3 ? 'text-amber-500' : 'text-gray-300'}`}>
-                S+{stageDays}
               </span>
             ) : null;
           })()}

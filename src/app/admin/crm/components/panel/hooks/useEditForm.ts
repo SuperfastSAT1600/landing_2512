@@ -74,6 +74,7 @@ export function useEditForm({ studentId, adminKey, localStudent, setLocalStudent
         lead_type: editForm.lead_type as Student['lead_type'],
         b2b_partner: editForm.lead_type === 'B2B' && editForm.b2b_partner
           ? editForm.b2b_partner as Student['b2b_partner'] : null,
+        lead_tier: (editForm.lead_tier as Student['lead_tier']) || null,
       };
       const res = await fetch(`/api/crm/students/${studentId}`, {
         method: 'PATCH', headers, body: JSON.stringify(updates),

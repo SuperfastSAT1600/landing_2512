@@ -8,7 +8,9 @@
 export type SchoolType = '한국 학제' | 'AP' | 'IB';
 export type DesiredSubjects =
   // SAT
-  | 'RW' | 'Math' | 'Both'
+  | 'RW'
+  | 'Math'
+  | 'Both'
   // SSAT
   | 'SSAT Math'
   // AP
@@ -27,6 +29,7 @@ export type DesiredSubjects =
 export type PreviousScoreStatus = 'scored' | 'never_taken' | 'dont_remember';
 export type PreferredLanguage = 'korean' | 'english' | 'any';
 export type ChurnType = 'potential' | 'closed';
+export type LeadTier = 'A' | 'B' | 'C';
 export type AssignmentStatus = 'pending' | 'accepted' | 'rejected' | 'considering' | 'closed';
 export type ContactType = 'phone' | 'kakao' | 'email';
 export type LeadStatus = 'active' | 'inactive' | 'reactivating' | 'enrolled';
@@ -34,44 +37,66 @@ export type LeadStatus = 'active' | 'inactive' | 'reactivating' | 'enrolled';
 // ─── 인입 분류 (6개 필드) ─────────────────────────────────────────────────────
 
 export type InquiryChannel =
-  | '카톡' | '네이버 상담시트' | '구글 상담시트' | '전화'
-  | '상담 예약' | '진단테스트 신청' | '인스타그램 링크';
+  | '카톡'
+  | '네이버 상담시트'
+  | '구글 상담시트'
+  | '전화'
+  | '상담 예약'
+  | '진단테스트 신청'
+  | '인스타그램 링크';
 
 export type TrafficSource =
-  | '네이버 블로그' | '네이버 카페' | '(구)랜딩페이지' | '튜터링 랜딩페이지'
-  | '공식 블로그' | '인스타그램 오가닉' | '인스타그램 광고' | '브런치'
-  | '책' | '소개/추천' | '레딧' | 'B2B 파트너';
+  | '네이버 블로그'
+  | '네이버 카페'
+  | '(구)랜딩페이지'
+  | '튜터링 랜딩페이지'
+  | '공식 블로그'
+  | '인스타그램 오가닉'
+  | '인스타그램 광고'
+  | '브런치'
+  | '책'
+  | '소개/추천'
+  | '레딧'
+  | 'B2B 파트너';
 
 export type ContentAuthor = '배병윤' | '이민재' | '김우영' | '장현아';
 
 export type LeadType = 'B2C' | 'B2B';
 
 export type B2BPartner =
-  | '해연' | '커넥티드에듀' | '부산프레스티지' | '인사이트 컨설팅'
-  | '신화 유학원' | '미소남' | 'InArt' | '박정 어학원' | '솔로몬에듀' | 'Admission AG';
+  | '해연'
+  | '커넥티드에듀'
+  | '부산프레스티지'
+  | '인사이트 컨설팅'
+  | '신화 유학원'
+  | '미소남'
+  | 'InArt'
+  | '박정 어학원'
+  | '솔로몬에듀'
+  | 'Admission AG';
 
 // 세일즈 퍼널 단계 (칸반 A)
 export type FunnelStage =
-  | '0'   // 리드 인입 (외부 채널 자동 유입, 미접촉)
-  | '1'   // 첫 메시지 발송
-  | '2'   // 세일즈 콜 예약 확정 후 대기
-  | '3a'  // 세일즈 콜 전 진단테스트 대기
-  | '3b'  // 세일즈 콜 전 진단테스트 제출 완료
-  | '4'   // 세일즈 콜 완료
-  | '5a'  // 세일즈 콜 후 진단테스트 대기
-  | '5b'  // 세일즈 콜 후 진단테스트 제출 완료
-  | '6'   // 진단 Report 세일즈 콜 예약 확정 후 대기
-  | '7'   // 진단 Report 세일즈 콜 완료
-  | '8'   // 수업 중 (결제 완료 후 자동 전환)
+  | '0' // 리드 인입 (외부 채널 자동 유입, 미접촉)
+  | '1' // 첫 메시지 발송
+  | '2' // 세일즈 콜 예약 확정 후 대기
+  | '3a' // 세일즈 콜 전 진단테스트 대기
+  | '3b' // 세일즈 콜 전 진단테스트 제출 완료
+  | '4' // 세일즈 콜 완료
+  | '5a' // 세일즈 콜 후 진단테스트 대기
+  | '5b' // 세일즈 콜 후 진단테스트 제출 완료
+  | '6' // 진단 Report 세일즈 콜 예약 확정 후 대기
+  | '7' // 진단 Report 세일즈 콜 완료
+  | '8' // 수업 중 (결제 완료 후 자동 전환)
   | 'churned';
 
 // 코치 매칭 보드 단계 (칸반 B, 결제 완료 이후)
 export type MatchingStage =
-  | 'schedule_pending'    // 스케줄 입력 대기
-  | 'schedule_done'       // 스케줄 입력 완료
-  | 'offer_sent'          // 코치 제안 발송
-  | 'awaiting_response'   // 코치 응답 대기
-  | 'matched';            // 매칭 확정
+  | 'schedule_pending' // 스케줄 입력 대기
+  | 'schedule_done' // 스케줄 입력 완료
+  | 'offer_sent' // 코치 제안 발송
+  | 'awaiting_response' // 코치 응답 대기
+  | 'matched'; // 매칭 확정
 
 // 학부모 마이페이지 노출 상태 (4단계)
 export type ParentStatus = 'new' | 'schedule' | 'matching' | 'done';
@@ -80,8 +105,8 @@ export type ParentStatus = 'new' | 'schedule' | 'matching' | 'done';
 
 export interface ReactivationEntry {
   id: string;
-  attempted_at: string;   // ISO timestamp
-  strategy: string;       // 전략 메모 (필수)
+  attempted_at: string; // ISO timestamp
+  strategy: string; // 전략 메모 (필수)
   outcome: 'pending' | 'no_response' | 'reactivated' | 'rejected';
   notes?: string;
 }
@@ -90,7 +115,7 @@ export interface ReactivationEntry {
 
 export interface ConsultationEntry {
   id: string;
-  created_at: string;                       // ISO timestamp
+created_at: string;                       // ISO timestamp
   raw_memo: string;                         // 매니저 원본 메모
   author?: string;                          // 작성자 이름 (로그인한 CRM 사용자)
   ai_purified?: string;                     // AI 가공본 (학부모 노출)
@@ -99,14 +124,16 @@ export interface ConsultationEntry {
   published: boolean;                       // true면 학부모 타임라인에 노출
   manager_id?: string;
 }
+  manager_id?: string;
+}
 
 // ─── 주간 스케줄 ─────────────────────────────────────────────────────────────
 
 export interface WeeklySlot {
   day_of_week: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=일, 1=월 ... 6=토
-  hour: number;                              // 0-23 (로컬 타임존 기준)
+  hour: number; // 0-23 (로컬 타임존 기준)
   minute: 0 | 30;
-  timezone: string;                          // IANA timezone (e.g. 'America/New_York')
+  timezone: string; // IANA timezone (e.g. 'America/New_York')
 }
 
 // ─── Student ────────────────────────────────────────────────────────────────
@@ -116,9 +143,9 @@ export interface Student {
   name: string;
   grade: string;
   school_type: SchoolType;
-  parent_phone: string;                 // 연락처 값 (핸드폰번호 / 카카오ID / 이메일)
-  contact_type: ContactType | null;     // 연락처 유형
-  inquiry_date: string | null;          // 문의 들어온 날 (YYYY-MM-DD)
+  parent_phone: string; // 연락처 값 (핸드폰번호 / 카카오ID / 이메일)
+  contact_type: ContactType | null; // 연락처 유형
+  inquiry_date: string | null; // 문의 들어온 날 (YYYY-MM-DD)
 
   // 인입 분류 (6개 필드)
   inquiry_channel: InquiryChannel | null;
@@ -131,18 +158,18 @@ export interface Student {
   adset_name: string | null;
 
   previous_score_status: PreviousScoreStatus;
-  previous_test_date: string | null;     // YYYY-MM, scored일 때만 유효
+  previous_test_date: string | null; // YYYY-MM, scored일 때만 유효
   previous_rw_score: number | null;
   previous_math_score: number | null;
   target_score: number | null;
   target_score_2: number | null;
-  target_test_date: string | null;      // YYYY-MM-DD, null=미정
-  target_test_date_2: string | null;    // YYYY-MM-DD (선택)
+  target_test_date: string | null; // YYYY-MM-DD, null=미정
+  target_test_date_2: string | null; // YYYY-MM-DD (선택)
   desired_subjects: DesiredSubjects;
 
   // 학부모 입력
   parent_timezone: string | null;
-  ot_datetime: string | null;           // ISO timestamp (UTC)
+  ot_datetime: string | null; // ISO timestamp (UTC)
   weekly_schedule: WeeklySlot[] | null;
 
   // 운영 필드
@@ -168,12 +195,25 @@ export interface Student {
   retry_stage: RetryStage | null;
   retry_assigned_at: string | null;
 
+  // 리드 등급 (수동 확정). null이면 자동 분류(autoLeadTier) 사용
+  lead_tier: LeadTier | null;
+
+  // 세일즈 전략 AI 대화 기록 — 패널 재진입 시 이어서 진행
+  strategy_ai_messages: StrategyChatMessage[];
+
   funnel_stage_updated_at: string | null;
   stage_history: Array<{ stage: string; label: string; entered_at: string }>;
+  // 수동 지정 이탈 단계 (null이면 stage_history 기반 자동 도출)
+  churn_stage_manual: FunnelStage | null;
   sort_order: number | null;
   entered_by?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface StrategyChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 export type RetryStage = '연락 시도' | '상담 중' | '제안 완료';
@@ -256,7 +296,7 @@ export interface Payment {
   amount: number;
   payment_type: string | null;
   tax_type: '면세' | '과세';
-  paid_at: string;         // YYYY-MM-DD
+  paid_at: string; // YYYY-MM-DD
   notes: string | null;
   created_at: string;
 }
@@ -270,7 +310,7 @@ export interface CoachAssignment {
   status: AssignmentStatus;
   is_confirmed: boolean;
   offer_token: string;
-  response_deadline: string;     // ISO timestamp
+  response_deadline: string; // ISO timestamp
   coach_timezone: string | null;
   reject_reason: string | null;
   closed_reason: string | null;
@@ -290,7 +330,7 @@ export interface CoachOfferPayload {
   assignment_id: string;
   status: AssignmentStatus;
   response_deadline: string;
-  reviewing_count: number;       // 현재 검토 중인 코치 수
+  reviewing_count: number; // 현재 검토 중인 코치 수
 
   // 학생 정보 (PRD 노출 범위)
   student: {
@@ -303,7 +343,7 @@ export interface CoachOfferPayload {
     previous_score_status: PreviousScoreStatus;
     target_score: number | null;
     target_test_date: string;
-    coach_history: string | null;  // AI 분리 교육 이력
+    coach_history: string | null; // AI 분리 교육 이력
     diagnostic_summary: DiagnosticSummary | null;
   };
 
@@ -328,9 +368,9 @@ export interface AiCareRequest {
 }
 
 export interface AiCareResult {
-  purified: string;           // 학부모에게 보여줄 순화본
-  deleted_items: string[];    // 삭제된 항목 목록 (매니저 확인용)
-  coach_history: string;      // 코치에게 전달할 교육 이력
+  purified: string; // 학부모에게 보여줄 순화본
+  deleted_items: string[]; // 삭제된 항목 목록 (매니저 확인용)
+  coach_history: string; // 코치에게 전달할 교육 이력
 }
 
 // ─── Parent Mypage ────────────────────────────────────────────────────────────
@@ -362,8 +402,120 @@ export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
   '6': 'Report 콜 예약 확정',
   '7': 'Report 콜 완료',
   '8': '수업 중',
-  'churned': '이탈',
+  churned: '이탈',
 };
+
+// ─── 단계 정체 알림 (SLA) ─────────────────────────────────────────────────────
+// 각 단계 목표 체류일 — 이 일수를 "초과"하면 정체로 간주하고 알림. 8(수업중)·churned 제외.
+// 운영 기준이 바뀌면 이 표만 수정하면 배너/카드 뱃지에 즉시 반영된다.
+export const FUNNEL_STAGE_SLA_DAYS: Partial<Record<FunnelStage, number>> = {
+  '0': 1, // 리드 인입 → 당일 첫 연락
+  '1': 2, // 첫 메시지 발송 → 콜 예약
+  '2': 3, // 세일즈 콜 예약 확정 → 콜 진행
+  '3a': 3, // 진단테스트 대기 (콜 전)
+  '3b': 2, // 진단테스트 완료 (콜 전) → 콜 진행
+  '4': 2, // 세일즈 콜 완료 → 진단 안내
+  '5a': 3, // 진단테스트 대기 (콜 후)
+  '5b': 2, // 진단테스트 완료 (콜 후) → Report 콜 예약
+  '6': 3, // Report 콜 예약 확정 → 콜 진행
+  '7': 2, // Report 콜 완료 → 결제 클로징
+};
+
+// 단계별 "지금 해야 할 다음 행동" — 정체 알림에 그대로 표시해 실무자가 바로 움직이게 한다.
+export const FUNNEL_NEXT_ACTION: Partial<Record<FunnelStage, string>> = {
+  '0': '첫 메시지 발송',
+  '1': '콜 예약 잡기',
+  '2': '세일즈 콜 진행',
+  '3a': '진단테스트 제출 독려',
+  '3b': '세일즈 콜 진행',
+  '4': '진단테스트 안내',
+  '5a': '진단테스트 제출 독려',
+  '5b': 'Report 콜 예약',
+  '6': 'Report 콜 진행',
+  '7': '결제 클로징',
+};
+
+/** 현재 단계 진입 후 경과 일수. funnel_stage_updated_at 우선, 없으면 created_at 폴백. */
+export function daysInStage(
+  s: Pick<Student, 'funnel_stage_updated_at' | 'created_at'>,
+  nowMs: number
+): number | null {
+  const ref = s.funnel_stage_updated_at ?? s.created_at;
+  if (!ref) return null;
+  const t = new Date(ref).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.floor((nowMs - t) / 86400000);
+}
+
+/** 현재 단계가 목표 체류일(SLA)을 초과해 정체 상태인지. 8·churned 등 SLA 미정 단계는 항상 false. */
+export function isStageStalled(
+  s: Pick<Student, 'funnel_stage' | 'funnel_stage_updated_at' | 'created_at'>,
+  nowMs: number
+): boolean {
+  const sla = FUNNEL_STAGE_SLA_DAYS[s.funnel_stage];
+  if (sla === undefined) return false;
+  const days = daysInStage(s, nowMs);
+  return days !== null && days > sla;
+}
+
+// ─── 리드 A/B/C 등급 (Hot/Warm/Cold) ──────────────────────────────────────────
+export const LEAD_TIER_OPTIONS: LeadTier[] = ['A', 'B', 'C'];
+export const LEAD_TIER_LABELS: Record<LeadTier, string> = {
+  A: 'A (Hot)',
+  B: 'B (Warm)',
+  C: 'C (Cold)',
+};
+// 등급별 추천 세일즈 방식 (카드 배지 등 짧은 표기)
+export const LEAD_TIER_APPROACH: Record<LeadTier, string> = {
+  A: '전화풀',
+  B: '비동기',
+  C: '자동화',
+};
+
+// 자동 분류 임계값 (운영 기준이 바뀌면 여기만 수정)
+const TIER_IMMINENT_DAYS = 60; // 시험일 임박 = 60일 이내
+const TIER_COLD_NO_CONTACT_DAYS = 14; // 14일 초과 미연락 = 저관여
+
+/**
+ * 데이터 기반 자동 등급 분류 (제안값).
+ * - A(Hot): 소개/추천 유입, 또는 목표점수가 있고 시험일이 임박(0~60일).
+ * - C(Cold): 14일 초과 미연락(저관여/응답 느림).
+ * - B(Warm): 그 외 기본 (신규 미연락 리드 포함 — 아직 Cold는 아님).
+ * 우선순위: A → C → B.
+ */
+export function autoLeadTier(
+  s: Pick<Student, 'traffic_source' | 'target_score' | 'target_test_date' | 'last_contacted_at'>,
+  nowMs: number
+): LeadTier {
+  // A: 소개/추천 유입
+  if (s.traffic_source === '소개/추천') return 'A';
+  // A: 목표점수 있음 + 시험일 임박
+  if (s.target_score != null && s.target_test_date) {
+    const testMs = new Date(s.target_test_date).getTime();
+    if (!Number.isNaN(testMs)) {
+      const daysUntil = (testMs - nowMs) / 86400000;
+      if (daysUntil >= 0 && daysUntil <= TIER_IMMINENT_DAYS) return 'A';
+    }
+  }
+  // C: 오래 미연락 (저관여)
+  if (s.last_contacted_at) {
+    const lastMs = new Date(s.last_contacted_at).getTime();
+    if (!Number.isNaN(lastMs) && (nowMs - lastMs) / 86400000 > TIER_COLD_NO_CONTACT_DAYS)
+      return 'C';
+  }
+  return 'B';
+}
+
+/** 표시·필터에 쓰는 최종 등급: 수동 확정값 우선, 없으면 자동 분류. */
+export function effectiveLeadTier(
+  s: Pick<
+    Student,
+    'lead_tier' | 'traffic_source' | 'target_score' | 'target_test_date' | 'last_contacted_at'
+  >,
+  nowMs: number
+): LeadTier {
+  return s.lead_tier ?? autoLeadTier(s, nowMs);
+}
 
 export const MATCHING_STAGE_LABELS: Record<MatchingStage, string> = {
   schedule_pending: '스케줄 입력 대기',
@@ -374,23 +526,43 @@ export const MATCHING_STAGE_LABELS: Record<MatchingStage, string> = {
 };
 
 export const INQUIRY_CHANNEL_OPTIONS: InquiryChannel[] = [
-  '카톡', '네이버 상담시트', '구글 상담시트', '전화',
-  '상담 예약', '진단테스트 신청', '인스타그램 링크',
+  '카톡',
+  '네이버 상담시트',
+  '구글 상담시트',
+  '전화',
+  '상담 예약',
+  '진단테스트 신청',
+  '인스타그램 링크',
 ];
 
 export const TRAFFIC_SOURCE_OPTIONS: TrafficSource[] = [
-  '네이버 블로그', '네이버 카페', '(구)랜딩페이지', '튜터링 랜딩페이지',
-  '공식 블로그', '인스타그램 오가닉', '인스타그램 광고', '브런치',
-  '책', '소개/추천', '레딧', 'B2B 파트너',
+  '네이버 블로그',
+  '네이버 카페',
+  '(구)랜딩페이지',
+  '튜터링 랜딩페이지',
+  '공식 블로그',
+  '인스타그램 오가닉',
+  '인스타그램 광고',
+  '브런치',
+  '책',
+  '소개/추천',
+  '레딧',
+  'B2B 파트너',
 ];
 
-export const CONTENT_AUTHOR_OPTIONS: ContentAuthor[] = [
-  '배병윤', '이민재', '김우영', '장현아',
-];
+export const CONTENT_AUTHOR_OPTIONS: ContentAuthor[] = ['배병윤', '이민재', '김우영', '장현아'];
 
 export const B2B_PARTNER_OPTIONS: B2BPartner[] = [
-  '해연', '커넥티드에듀', '부산프레스티지', '인사이트 컨설팅',
-  '신화 유학원', '미소남', 'InArt', '박정 어학원', '솔로몬에듀', 'Admission AG',
+  '해연',
+  '커넥티드에듀',
+  '부산프레스티지',
+  '인사이트 컨설팅',
+  '신화 유학원',
+  '미소남',
+  'InArt',
+  '박정 어학원',
+  '솔로몬에듀',
+  'Admission AG',
 ];
 
 export const CAMPAIGN_TAG_PRESETS = ['기존DB 재활성화', '여름특강'] as const;
@@ -403,8 +575,8 @@ export const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
 
 export const SCHOOL_TYPE_LABELS: Record<SchoolType, string> = {
   '한국 학제': '한국 학제',
-  'AP': 'AP',
-  'IB': 'IB',
+  AP: 'AP',
+  IB: 'IB',
 };
 
 export const TIMEZONE_OPTIONS = [
@@ -422,7 +594,7 @@ export const TIMEZONE_OPTIONS = [
 ] as const;
 
 export const TIMEZONE_LABEL_MAP: Record<string, string> = Object.fromEntries(
-  TIMEZONE_OPTIONS.map(o => [o.value, o.label])
+  TIMEZONE_OPTIONS.map((o) => [o.value, o.label])
 );
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
@@ -432,27 +604,19 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   enrolled: '수강 중',
 };
 
-export const CHURN_TAG_OPTIONS = [
-  '회신 없음',
-  '노쇼',
-  '미응시',
-  '미결제',
-  '기타',
-] as const;
+export const CHURN_TAG_OPTIONS = ['회신 없음', '노쇼', '미응시', '미결제', '기타'] as const;
 
-export const GRADE_OPTIONS = [
-  '7th', '8th', '9th', '10th', '11th', '12th', '졸업', '기타',
-] as const;
+export const GRADE_OPTIONS = ['7th', '8th', '9th', '10th', '11th', '12th', '졸업', '기타'] as const;
 
-export type Grade = typeof GRADE_OPTIONS[number];
+export type Grade = (typeof GRADE_OPTIONS)[number];
 
 export const GRADE_OPTIONS_BY_SCHOOL_TYPE: Record<string, string[]> = {
   '한국 학제': ['초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3', '재수', '성인'],
-  'AP': ['7th', '8th', '9th', '10th', '11th', '12th', '졸업', '기타'],
-  'IB': ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', '졸업', '기타'],
+  AP: ['7th', '8th', '9th', '10th', '11th', '12th', '졸업', '기타'],
+  IB: ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', '졸업', '기타'],
 };
 
-export type ChurnTag = typeof CHURN_TAG_OPTIONS[number];
+export type ChurnTag = (typeof CHURN_TAG_OPTIONS)[number];
 
 // lead_status → ParentStatus 매핑
 export function getParentStatus(leadStatus: LeadStatus): ParentStatus {

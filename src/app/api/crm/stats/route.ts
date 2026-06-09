@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { getWeekLabel } from '@/lib/week-definitions';
+import { computeStageFlow, hasReachedStage, type StageFlowRow } from '@/lib/funnel-stats';
 
 export interface StatsBySource {
   source: string;
@@ -15,7 +16,7 @@ export interface StatsBySource {
 }
 
 export interface StatsMonthly {
-  month: string;   // "2026-01"
+  month: string; // "2026-01"
   leads: number;
   contacted: number;
   paid: number;
@@ -24,7 +25,7 @@ export interface StatsMonthly {
 }
 
 export interface StatsWeekly {
-  week: string;    // "25년 05월 03주차"
+  week: string; // "25년 05월 03주차"
   leads: number;
   contacted: number;
   paid: number;
@@ -37,20 +38,29 @@ export interface CrmStatsData {
   overview: {
     total_leads: number;
     contacted: number;
+    contacted_base: number; // 컨택 성공률 분모 (재시도 제외 초기 리드 수)
     contact_rate: number;
     paid: number;
     conversion_rate: number;
-    total_revenue: number;
-    total_net_revenue: number;
+    total_revenue: number; // 순매출(결제 − 환불)
+    total_net_revenue: number; // 부가세 제외 실수익
+    gross_revenue: number; // 환불 전 총 결제(양수 합)
+    total_refund: number; // 환불 합(음수)
   };
   by_source: StatsBySource[];
   monthly: StatsMonthly[];
   weekly: StatsWeekly[];
+  stage_flow: StageFlowRow[];
 }
 
-function isContacted(student: { funnel_stage: string }): boolean {
-  // 컨택 성공 = 최초 세일즈 퍼널에서 2단계 이상 진입
-  return student.funnel_stage !== '0' && student.funnel_stage !== '1';
+function isContacted(student: {
+  funnel_stage: string;
+  stage_history?: { stage: string; label: string; entered_at: string }[] | null;
+}): boolean {
+  // 컨택 성공 = 이력상(또는 현재) 세일즈 콜 예약(2단계) 이상에 도달한 적이 있음.
+  // 현재 단계가 아니라 도달 이력 기준 → 첫 메시지만 보내고 이탈한 리드는 제외,
+  // 2단계 이상 갔다가 이탈한 리드는 포함.
+  return hasReachedStage(student, '2');
 }
 
 function contactRate(contacted: number, leads: number): number {
@@ -85,12 +95,17 @@ export async function GET(request: NextRequest) {
   // 기간 내 신규 리드 조회 (inquiry_date 기준, fallback: created_at)
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')
-    .select('id, name, funnel_stage, lead_status, traffic_source, inquiry_date, created_at, retry_strategy_id')
+    .select(
+      'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, retry_strategy_id'
+    )
     .or(`inquiry_date.gte.${from},and(inquiry_date.is.null,created_at.gte.${from})`)
     .or(`inquiry_date.lte.${to},and(inquiry_date.is.null,created_at.lte.${to})`);
 
   if (sErr) {
-    return NextResponse.json({ error: { code: 'FETCH_FAILED', message: sErr.message } }, { status: 500 });
+    return NextResponse.json(
+      { error: { code: 'FETCH_FAILED', message: sErr.message } },
+      { status: 500 }
+    );
   }
 
   // 기간 내 payments 조회 (최초결제만 전환율 계산에 포함)
@@ -107,6 +122,8 @@ export async function GET(request: NextRequest) {
   const paidStudentNames = new Set<string>();
   let totalRevenue = 0;
   let totalNetRevenue = 0;
+  let grossRevenue = 0;
+  let totalRefund = 0;
 
   function netAmount(p: { amount: number; tax_type?: string | null }): number {
     return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
@@ -115,6 +132,8 @@ export async function GET(request: NextRequest) {
   for (const p of paymentList) {
     totalRevenue += p.amount;
     totalNetRevenue += netAmount(p);
+    if (p.amount >= 0) grossRevenue += p.amount;
+    else totalRefund += p.amount;
     if (p.payment_type === '최초결제') {
       if (p.student_id) paidStudentIds.add(p.student_id);
       if (p.student_name) paidStudentNames.add(p.student_name);
@@ -131,16 +150,22 @@ export async function GET(request: NextRequest) {
   // ── Overview ──────────────────────────────────────────────────────────────
   const total = leadList.length;
   // 컨택 성공률: 최초 세일즈 리드(retry_strategy_id 없음)만 대상
-  const initialLeads = leadList.filter((s) => !(s as { retry_strategy_id?: string | null }).retry_strategy_id);
+  const initialLeads = leadList.filter(
+    (s) => !(s as { retry_strategy_id?: string | null }).retry_strategy_id
+  );
   const contactedCount = initialLeads.filter((s) => isContacted(s)).length;
   const paidCount = leadList.filter((s) => isPaid(s)).length;
 
   // ── By Source ─────────────────────────────────────────────────────────────
-  const sourceMap = new Map<string, { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number }>();
+  const sourceMap = new Map<
+    string,
+    { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number }
+  >();
 
   for (const s of leadList) {
     const src = s.traffic_source ?? '미입력';
-    if (!sourceMap.has(src)) sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+    if (!sourceMap.has(src))
+      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
     const entry = sourceMap.get(src)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
@@ -173,11 +198,15 @@ export async function GET(request: NextRequest) {
     .sort((a, b) => b.leads - a.leads);
 
   // ── Monthly ───────────────────────────────────────────────────────────────
-  const monthMap = new Map<string, { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number }>();
+  const monthMap = new Map<
+    string,
+    { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number }
+  >();
 
   for (const s of leadList) {
     const mo = toMonthKey(s.inquiry_date ?? s.created_at);
-    if (!monthMap.has(mo)) monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+    if (!monthMap.has(mo))
+      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
     const entry = monthMap.get(mo)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
@@ -187,7 +216,8 @@ export async function GET(request: NextRequest) {
 
   for (const p of paymentList) {
     const mo = toMonthKey(p.paid_at);
-    if (!monthMap.has(mo)) monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+    if (!monthMap.has(mo))
+      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
     const entry = monthMap.get(mo)!;
     entry.revenue += p.amount;
     entry.net_revenue += netAmount(p);
@@ -198,13 +228,31 @@ export async function GET(request: NextRequest) {
     .map(([month, d]) => ({ month, ...d }));
 
   // ── Weekly ────────────────────────────────────────────────────────────────
-  const weekMap = new Map<string, { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number; start: string }>();
+  const weekMap = new Map<
+    string,
+    {
+      leads: number;
+      contacted: number;
+      paid: number;
+      revenue: number;
+      net_revenue: number;
+      start: string;
+    }
+  >();
 
   for (const s of leadList) {
     const dateStr = s.inquiry_date ?? s.created_at;
     const wk = getWeekLabel(dateStr);
     if (!wk) continue;
-    if (!weekMap.has(wk)) weekMap.set(wk, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0, start: dateStr.slice(0, 10) });
+    if (!weekMap.has(wk))
+      weekMap.set(wk, {
+        leads: 0,
+        contacted: 0,
+        paid: 0,
+        revenue: 0,
+        net_revenue: 0,
+        start: dateStr.slice(0, 10),
+      });
     const entry = weekMap.get(wk)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
@@ -215,7 +263,15 @@ export async function GET(request: NextRequest) {
   for (const p of paymentList) {
     const wk = getWeekLabel(p.paid_at);
     if (!wk) continue;
-    if (!weekMap.has(wk)) weekMap.set(wk, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0, start: p.paid_at.slice(0, 10) });
+    if (!weekMap.has(wk))
+      weekMap.set(wk, {
+        leads: 0,
+        contacted: 0,
+        paid: 0,
+        revenue: 0,
+        net_revenue: 0,
+        start: p.paid_at.slice(0, 10),
+      });
     const entry = weekMap.get(wk)!;
     entry.revenue += p.amount;
     entry.net_revenue += netAmount(p);
@@ -223,22 +279,46 @@ export async function GET(request: NextRequest) {
 
   const weekly: StatsWeekly[] = Array.from(weekMap.entries())
     .sort(([, a], [, b]) => a.start.localeCompare(b.start))
-    .map(([week, d]) => ({ week, leads: d.leads, contacted: d.contacted, paid: d.paid, revenue: d.revenue, net_revenue: d.net_revenue }));
+    .map(([week, d]) => ({
+      week,
+      leads: d.leads,
+      contacted: d.contacted,
+      paid: d.paid,
+      revenue: d.revenue,
+      net_revenue: d.net_revenue,
+    }));
+
+  // ── Stage Flow (단계별 체류 기간 + 이동률) ──────────────────────────────────
+  const stage_flow = computeStageFlow(
+    leadList.map((s) => ({
+      funnel_stage: s.funnel_stage,
+      funnel_stage_updated_at:
+        (s as { funnel_stage_updated_at?: string | null }).funnel_stage_updated_at ?? null,
+      created_at: s.created_at,
+      stage_history:
+        (s as { stage_history?: { stage: string; label: string; entered_at: string }[] | null })
+          .stage_history ?? [],
+    }))
+  );
 
   const data: CrmStatsData = {
     period: { from, to },
     overview: {
       total_leads: total,
       contacted: contactedCount,
+      contacted_base: initialLeads.length,
       contact_rate: contactRate(contactedCount, initialLeads.length),
       paid: paidCount,
       conversion_rate: total > 0 ? Math.round((paidCount / total) * 10000) / 100 : 0,
       total_revenue: totalRevenue,
       total_net_revenue: totalNetRevenue,
+      gross_revenue: grossRevenue,
+      total_refund: totalRefund,
     },
     by_source,
     monthly,
     weekly,
+    stage_flow,
   };
 
   return NextResponse.json({ data });
