@@ -48,15 +48,18 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
   if (!data) return null;
 
   const revenueMan = Math.round(data.total_revenue / 10000).toLocaleString();
+  // 목표 미달 시 빨간 글씨로 경고
+  const contactColor = data.contact_rate < 70 ? 'text-red-500' : 'text-gray-800';
+  const conversionColor = data.conversion_rate < 50 ? 'text-red-500' : 'text-gray-800';
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
       <span>
-        컨택 성공율 <b className="text-gray-800 font-semibold">{data.contact_rate}%</b>
+        컨택 성공율 <b className={`${contactColor} font-semibold`}>{data.contact_rate}%</b>
       </span>
       <span className="text-gray-200">·</span>
       <span>
-        결제전환율 <b className="text-gray-800 font-semibold">{data.conversion_rate}%</b>
+        결제전환율 <b className={`${conversionColor} font-semibold`}>{data.conversion_rate}%</b>
       </span>
       <span className="text-gray-200">·</span>
       <span>
