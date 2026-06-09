@@ -12,19 +12,18 @@ interface ChurnModalProps {
 
 export function ChurnModal({ student, onConfirm, onClose }: ChurnModalProps) {
   const [churnTag, setChurnTag] = useState<string>(CHURN_TAG_OPTIONS[0]);
-  const [customTag, setCustomTag] = useState('');
+  const [reason, setReason] = useState('');
   const [churnType, setChurnType] = useState<ChurnType>('potential');
   const [error, setError] = useState('');
 
-  const isCustom = churnTag === '기타';
-  const finalTag = isCustom ? customTag.trim() : churnTag;
-
   function handleConfirm() {
-    if (isCustom && !customTag.trim()) {
+    const trimmed = reason.trim();
+    if (!trimmed) {
       setError('이탈 사유를 입력해주세요.');
       return;
     }
-    onConfirm(finalTag, churnType);
+    // 환불 플로우와 동일하게 "{태그}: {사유}"로 합쳐 저장 (LeadPool 필터는 prefix 매칭)
+    onConfirm(`${churnTag}: ${trimmed}`, churnType);
   }
 
   return (
@@ -61,18 +60,19 @@ export function ChurnModal({ student, onConfirm, onClose }: ChurnModalProps) {
             </select>
           </div>
 
-          {isCustom && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-400">직접 입력</label>
-              <input
-                value={customTag}
-                onChange={e => { setCustomTag(e.target.value); setError(''); }}
-                placeholder="이탈 사유를 입력해주세요"
-                className="w-full bg-white border border-gray-200 focus:border-blue-500 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
-              />
-              {error && <p className="text-xs text-red-500">{error}</p>}
-            </div>
-          )}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-gray-400">
+              사유 <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={reason}
+              onChange={e => { setReason(e.target.value); setError(''); }}
+              placeholder="이탈 사유를 구체적으로 입력해주세요 (예: 콜 당일 무응답, 타 학원 등록 결정)"
+              rows={2}
+              className="w-full bg-white border border-gray-200 focus:border-blue-500 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all resize-none"
+            />
+            {error && <p className="text-xs text-red-500">{error}</p>}
+          </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-gray-400">이탈 분류</label>

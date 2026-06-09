@@ -17,6 +17,7 @@ import { StudentInfoSection } from './sections/StudentInfoSection';
 import { MemoSection } from './sections/MemoSection';
 import { TimelineSection } from './sections/TimelineSection';
 import { StrategyHistorySection } from './sections/StrategyHistorySection';
+import { SalesStrategySection } from './sections/SalesStrategySection';
 import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import type { StudentDetailPanelProps } from './types';
 
@@ -176,6 +177,11 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               student={localStudent}
               adminKey={adminKey}
               onUpdate={onUpdate}
+            />
+
+            <SalesStrategySection
+              student={localStudent}
+              adminKey={adminKey}
             />
 
             <MemoSection

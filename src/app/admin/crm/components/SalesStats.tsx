@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, Users, Phone, CreditCard, RefreshCw } from 'lucide-react';
 import type { CrmStatsData, StatsBySource, StatsWeekly } from '@/app/api/crm/stats/route';
+import type { StageFlowRow } from '@/lib/funnel-stats';
 
 // ─── Period helpers ────────────────────────────────────────────────────────────
 
@@ -167,6 +168,59 @@ function WeeklyTable({ rows }: { rows: StatsWeekly[] }) {
   );
 }
 
+function StageFlowTable({ rows }: { rows: StageFlowRow[] }) {
+  const fmtDays = (n: number | null) => (n === null ? '-' : `${n.toFixed(1)}일`);
+  // 8(수업 중)은 종착 단계라 "다음 단계 이동" 의미가 없어 이동률 비표시
+  const lastStage = rows[rows.length - 1]?.stage;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-100">
+            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 min-w-[160px]">단계</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">도달</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">다음 단계 이동</th>
+            <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[110px]">이동률</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">평균 체류</th>
+            <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">중앙값 체류</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.stage} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              <td className="py-2.5 pr-4 text-xs font-medium text-gray-800">
+                <span className="text-gray-400">{r.stage}.</span> {r.label}
+              </td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.reached || '-'}</td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-700">
+                {r.stage === lastStage ? '-' : r.advanced}
+              </td>
+              <td className="py-2.5 px-2">
+                {r.stage === lastStage || r.reached === 0 ? (
+                  <span className="text-xs text-gray-300">-</span>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-indigo-600 w-11 text-right">{r.advance_rate}%</span>
+                    <RateBar value={r.advance_rate} color="bg-indigo-400" />
+                  </div>
+                )}
+              </td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{fmtDays(r.avg_days)}</td>
+              <td className="text-right py-2.5 pl-2 text-xs text-gray-600">
+                {fmtDays(r.median_days)}
+                {r.sample_size > 0 && (
+                  <span className="text-[10px] text-gray-400 ml-1">(n={r.sample_size})</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 interface SalesStatsProps {
@@ -259,7 +313,7 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
           <div className="flex flex-wrap gap-3">
             <OverviewCard icon={Users} label="신규 리드" value={d.overview.total_leads} sub="문의 기준" color="bg-gray-100 text-gray-600" />
             <OverviewCard icon={Phone} label="컨택 성공률" value={`${d.overview.contact_rate}%`}
-              sub={`${d.overview.contacted}명 / ${d.overview.total_leads}명`} color="bg-blue-50 text-blue-600" />
+              sub={`${d.overview.contacted}명 / ${d.overview.contacted_base}명 · 2단계+ 도달`} color="bg-blue-50 text-blue-600" />
             <OverviewCard icon={CreditCard} label="결제 전환율" value={`${d.overview.conversion_rate}%`}
               sub={`${d.overview.paid}명 / ${d.overview.total_leads}명`} color="bg-emerald-50 text-emerald-600" />
             <OverviewCard icon={TrendingUp} label="총 매출" value={fmt만(d.overview.total_revenue)}
@@ -321,6 +375,21 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
               <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
             ) : (
               <SourceTable rows={d.by_source} />
+            )}
+          </div>
+
+          {/* Funnel stage flow */}
+          <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-bold text-gray-900">퍼널 단계별 이동</h3>
+            </div>
+            <p className="text-[11px] text-gray-400 mb-4">
+              도달·이동률은 현재 단계 기준, 체류 기간은 기록된 단계 이동 이력 기준입니다.
+            </p>
+            {!d.stage_flow || d.stage_flow.every((r) => r.reached === 0) ? (
+              <p className="text-sm text-gray-400 text-center py-6">단계 이동 데이터가 없습니다.</p>
+            ) : (
+              <StageFlowTable rows={d.stage_flow} />
             )}
           </div>
         </>
