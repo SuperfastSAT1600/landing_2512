@@ -113,11 +113,11 @@ export function StrategyAgentChat({ adminKey }: Props) {
     <div className="border border-indigo-200 rounded-xl overflow-hidden bg-white">
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-indigo-100 bg-indigo-50/60">
         <div className="flex items-center gap-2">
-          <Sparkles size={15} className="text-indigo-500 shrink-0" />
+          <Sparkles size={17} className="text-indigo-500 shrink-0" />
           <div>
-            <h3 className="text-sm font-bold text-gray-800">전략 설계 AI</h3>
-            <p className="text-[11px] text-gray-500 flex items-center gap-1">
-              <Globe size={10} className="text-indigo-400" />
+            <h3 className="text-base font-bold text-gray-800">전략 설계 AI</h3>
+            <p className="text-[13px] text-gray-500 flex items-center gap-1">
+              <Globe size={11} className="text-indigo-400" />
               세계적 세일즈 기법 · 웹 검색 · 우리 상담 기록을 바탕으로 새 전략 설계
             </p>
           </div>
@@ -126,10 +126,10 @@ export function StrategyAgentChat({ adminKey }: Props) {
           <button
             onClick={resetChat}
             disabled={streaming}
-            className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600 disabled:opacity-40 shrink-0"
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 disabled:opacity-40 shrink-0"
             title="새 대화 시작"
           >
-            <RotateCcw size={12} />새 대화
+            <RotateCcw size={13} />새 대화
           </button>
         )}
       </div>
@@ -137,8 +137,8 @@ export function StrategyAgentChat({ adminKey }: Props) {
       <div className="px-4 py-3">
         {messages.length === 0 ? (
           <div className="flex items-start gap-2 rounded-lg bg-indigo-50/60 border border-indigo-100 px-3 py-2.5">
-            <Sparkles size={14} className="text-indigo-500 mt-0.5 shrink-0" />
-            <div className="text-[12px] leading-relaxed text-indigo-900/80">
+            <Sparkles size={16} className="text-indigo-500 mt-0.5 shrink-0" />
+            <div className="text-sm leading-relaxed text-indigo-900/80">
               <p className="mb-1">
                 결제 전환율을 높일 새로운 세일즈 전략을 함께 설계합니다. 전 세계 비즈니스·세일즈
                 대가들의 프레임워크와 인터넷 최신 사례, 그리고 우리 실제 상담·전환·이탈 기록을 함께
@@ -158,13 +158,13 @@ export function StrategyAgentChat({ adminKey }: Props) {
                 className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}
               >
                 <div
-                  className={`max-w-[88%] rounded-lg px-3 py-2 text-[12px] leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[88%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                     m.role === 'user' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   {m.content || (
                     <span className="inline-flex items-center gap-1 text-gray-400">
-                      <Loader2 size={12} className="animate-spin" /> 분석·검색 중…
+                      <Loader2 size={13} className="animate-spin" /> 분석·검색 중…
                     </span>
                   )}
                 </div>
@@ -173,7 +173,7 @@ export function StrategyAgentChat({ adminKey }: Props) {
           </div>
         )}
 
-        {error && <p className="mt-2 text-[11px] text-red-500">{error}</p>}
+        {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
 
         <div className="flex items-end gap-2 mt-3">
           <textarea
@@ -182,7 +182,7 @@ export function StrategyAgentChat({ adminKey }: Props) {
             onKeyDown={handleKeyDown}
             rows={2}
             placeholder="설계하고 싶은 전략이나 풀고 싶은 문제를 입력하세요…"
-            className="flex-1 resize-none text-[12px] border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="flex-1 resize-none text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           />
           <button
             onClick={send}

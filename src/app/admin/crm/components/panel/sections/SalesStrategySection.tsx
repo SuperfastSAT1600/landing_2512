@@ -98,8 +98,8 @@ export function SalesStrategySection({ student, adminKey }: Props) {
       <div className="flex flex-col gap-3">
         {messages.length === 0 ? (
           <div className="flex items-start gap-2 rounded-lg bg-indigo-50/60 border border-indigo-100 px-3 py-2.5">
-            <Sparkles size={14} className="text-indigo-500 mt-0.5 shrink-0" />
-            <p className="text-[12px] leading-relaxed text-indigo-900/80">
+            <Sparkles size={16} className="text-indigo-500 mt-0.5 shrink-0" />
+            <p className="text-sm leading-relaxed text-indigo-900/80">
               현재 학생 상황을 입력하면, 이전 상담·결제 전환·이탈 기록과 유사한 과거 사례를 바탕으로
               결제를 이끌어낼 세일즈 전략을 함께 논의합니다.
             </p>
@@ -109,7 +109,7 @@ export function SalesStrategySection({ student, adminKey }: Props) {
             {messages.map((m, i) => (
               <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                 <div
-                  className={`max-w-[88%] rounded-lg px-3 py-2 text-[12px] leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[88%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                     m.role === 'user'
                       ? 'bg-gray-900 text-white'
                       : 'bg-gray-100 text-gray-800'
@@ -117,7 +117,7 @@ export function SalesStrategySection({ student, adminKey }: Props) {
                 >
                   {m.content || (
                     <span className="inline-flex items-center gap-1 text-gray-400">
-                      <Loader2 size={12} className="animate-spin" /> 분석 중…
+                      <Loader2 size={13} className="animate-spin" /> 분석 중…
                     </span>
                   )}
                 </div>
@@ -126,7 +126,7 @@ export function SalesStrategySection({ student, adminKey }: Props) {
           </div>
         )}
 
-        {error && <p className="text-[11px] text-red-500">{error}</p>}
+        {error && <p className="text-xs text-red-500">{error}</p>}
 
         <div className="flex items-end gap-2">
           <textarea
@@ -135,7 +135,7 @@ export function SalesStrategySection({ student, adminKey }: Props) {
             onKeyDown={handleKeyDown}
             rows={2}
             placeholder="예: 학부모가 가격에 부담을 느끼고 경쟁 학원과 비교 중입니다. 어떻게 설득할까요?"
-            className="flex-1 resize-none text-[12px] border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="flex-1 resize-none text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           />
           <button
             onClick={send}
