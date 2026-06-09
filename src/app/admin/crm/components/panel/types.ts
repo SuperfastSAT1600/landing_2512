@@ -9,7 +9,7 @@ export interface EditForm {
   target_test_date: string; target_test_date_2: string;
   inquiry_date: string; inquiry_channel: string; traffic_source: string;
   content_author: string; lead_type: string; b2b_partner: string;
-  preferred_language: string;
+  preferred_language: string; lead_tier: string;
 }
 
 export function studentToEditForm(s: Student): EditForm {
@@ -28,6 +28,7 @@ export function studentToEditForm(s: Student): EditForm {
     traffic_source: s.traffic_source ?? '', content_author: s.content_author ?? '',
     lead_type: s.lead_type ?? 'B2C', b2b_partner: s.b2b_partner ?? '',
     preferred_language: s.preferred_language ?? '',
+    lead_tier: s.lead_tier ?? '',
   };
 }
 
