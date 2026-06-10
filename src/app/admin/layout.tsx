@@ -8,14 +8,15 @@ import { useAdminAuth } from '@/lib/useAdminAuth';
 
 const NAV_ITEMS = [
     { href: '/admin', label: 'Posts', icon: '📄' },
+    { href: '/admin/fulltest', label: 'Test Contents', icon: '📋' },
     { href: '/admin/diagnosis', label: 'Diagnosis', icon: '🩺' },
     { href: '/admin/reviews', label: 'Reviews', icon: '⭐' },
     { href: '/admin/coaches', label: 'Coaches', icon: '👨‍🏫' },
     { href: '/admin/home', label: 'Homepage', icon: '🏠' },
     { href: '/admin/supertest', label: 'SuperTest', icon: '🎯' },
     { href: '/admin/traffic', label: '채널 유입 통계', icon: '📊' },
+    { href: '/admin/marketing', label: '마케팅', icon: '📣' },
     { href: '/admin/crm', label: 'CRM', icon: '👥' },
-    { href: '/admin/fulltest', label: 'Test Contents', icon: '📋' },
 ];
 
 
