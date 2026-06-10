@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import Anthropic from '@anthropic-ai/sdk';
 import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
+import { anthropicErrorMessage } from '@/lib/anthropic-error';
 import {
   SALES_STRATEGY_SYSTEM_PROMPT,
   buildContextBlock,
@@ -163,7 +164,7 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         if (!aborted) {
           console.error('[sales-strategy] Claude stream error:', err);
-          enqueue('\n\n[오류] AI 응답 생성에 실패했습니다.');
+          enqueue('\n\n' + anthropicErrorMessage(err));
         }
       } finally {
         // 대화 보존 — 다음에 패널을 열면 이어서 진행. 실패해도(컬럼 미생성 등) 사용자 흐름은 막지 않는다.
