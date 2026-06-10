@@ -4,6 +4,24 @@ import { isAuthenticated } from '@/lib/server-auth';
 import type { ConsultationEntry } from '@/types/crm';
 import { randomUUID } from 'crypto';
 
+const SLACK_TOKEN = process.env.SLACK_BOT_TOKEN;
+const SLACK_CHANNEL = 'C0B8Q5WNDD3';
+
+async function postSlackMemo(studentName: string, author: string, memo: string) {
+  if (!SLACK_TOKEN) return;
+  const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' });
+  const text = `📋 *상담 메모 등록* — ${now} KST\n*학생:* ${studentName}  |  *상담인:* ${author}\n\n${memo}`;
+  try {
+    await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${SLACK_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel: SLACK_CHANNEL, text }),
+    });
+  } catch {
+    // 슬랙 전송 실패는 메모 저장에 영향 없음
+  }
+}
+
 /**
  * POST /api/crm/students/[id]/memo
  * Appends a new raw consultation memo to the student's consultation_timeline JSONB array.
@@ -19,14 +37,14 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { raw_memo: string };
+  let body: { raw_memo: string; author?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { raw_memo } = body;
+  const { raw_memo, author } = body;
   if (!raw_memo || typeof raw_memo !== 'string' || raw_memo.trim().length === 0) {
     return NextResponse.json({ error: 'raw_memo is required' }, { status: 400 });
   }
@@ -50,6 +68,7 @@ export async function POST(
     id: randomUUID(),
     created_at: new Date().toISOString(),
     raw_memo: raw_memo.trim(),
+    ...(author ? { author } : {}),
     published: false,
   };
 
@@ -69,6 +88,10 @@ export async function POST(
     console.error('[crm/memo POST]', error);
     return NextResponse.json({ error: 'Failed to append memo' }, { status: 500 });
   }
+
+  // 슬랙 즉시 발송 (비동기, 메모 저장과 무관하게 처리)
+  const studentName = (await supabaseAdmin.from('students').select('name').eq('id', id).single()).data?.name ?? id;
+  postSlackMemo(studentName, author || '미기재', raw_memo.trim());
 
   return NextResponse.json({ data: newEntry }, { status: 201 });
 }

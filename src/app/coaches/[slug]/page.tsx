@@ -48,6 +48,7 @@ async function fetchArticlesByCoach(coachName: string): Promise<PostData[]> {
         .select('id, title, date, category, excerpt, description, featured_image, feature_image, featured_image_alt, author, tags')
         .eq('is_published', true)
         .eq('author', coachName)
+        .neq('category', '학습코치')
         .order('date', { ascending: false });
 
     if (error || !data) return [];

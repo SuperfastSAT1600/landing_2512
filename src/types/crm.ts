@@ -117,6 +117,7 @@ export interface ConsultationEntry {
   id: string;
   created_at: string; // ISO timestamp
   raw_memo: string; // 매니저 원본 메모
+  author?: string; // 작성자 이름 (로그인한 CRM 사용자)
   ai_purified?: string; // AI 가공본 (학부모 노출)
   ai_deleted_items?: string[]; // AI가 삭제한 항목 목록 (매니저 확인용)
   ai_coach_history?: string; // AI가 분리한 교육 이력 (코치 노출)

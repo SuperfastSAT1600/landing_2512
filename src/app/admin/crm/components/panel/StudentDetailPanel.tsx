@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Student, ChurnType } from '@/types/crm';
+import { useAdminAuth } from '@/lib/useAdminAuth';
 import { ChurnModal } from '../ChurnModal';
 import { PaymentModal } from '../PaymentModal';
 import { usePanelData } from './hooks/usePanelData';
@@ -22,6 +23,7 @@ import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import type { StudentDetailPanelProps } from './types';
 
 export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
+  const { userName } = useAdminAuth();
   const { localStudent, setLocalStudent, timeline, setTimeline, editForm, setEditForm, loadingFresh } =
     usePanelData(student.id, adminKey, student);
 
@@ -50,7 +52,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   });
 
   const memoHook = useMemoSection({
-    studentId: student.id, adminKey,
+    studentId: student.id, adminKey, userName,
     setTimeline,
     onUpdate: (id, updates) => onUpdate(id, updates as Partial<Student>),
   });

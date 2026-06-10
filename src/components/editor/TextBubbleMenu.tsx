@@ -3,7 +3,7 @@
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
-import { Bold, Italic, Strikethrough, Code, Link, ChevronLeft, ChevronRight, Rows3, RowsIcon, Columns3 } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Code, Link } from 'lucide-react';
 
 interface TextBubbleMenuProps {
     editor: Editor | null;
@@ -16,15 +16,8 @@ const btn = (active: boolean) =>
             : 'text-gray-400 hover:bg-white/10 hover:text-white'
     }`;
 
-const tableBtn =
-    'w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:bg-white/10 hover:text-white transition-colors';
-const tableBtnDanger =
-    'w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:bg-red-500/20 hover:text-red-400 transition-colors';
-
 export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
     if (!editor) return null;
-
-    const inTable = editor.isActive('tableCell') || editor.isActive('tableHeader');
 
     return (
         <BubbleMenu
@@ -100,83 +93,6 @@ export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
                 >
                     <Link size={13} />
                 </button>
-
-                {/* 표 안에서만: compact 행/열 컨트롤 */}
-                {inTable && (
-                    <>
-                        <div className="w-px h-4 bg-white/10 mx-0.5" />
-                        <button
-                            onMouseDown={(e) => {
-                                e.preventDefault();
-                                editor.chain().focus().addRowBefore().run();
-                            }}
-                            title="위에 행 추가"
-                            className={tableBtn}
-                        >
-                            <span className="relative">
-                                <Rows3 size={12} />
-                                <span className="absolute -top-1.5 -right-1.5 text-[7px] font-bold text-blue-400 leading-none">+</span>
-                            </span>
-                        </button>
-                        <button
-                            onMouseDown={(e) => {
-                                e.preventDefault();
-                                editor.chain().focus().addRowAfter().run();
-                            }}
-                            title="아래에 행 추가"
-                            className={tableBtn}
-                        >
-                            <span className="relative">
-                                <RowsIcon size={12} />
-                                <span className="absolute -bottom-1.5 -right-1.5 text-[7px] font-bold text-blue-400 leading-none">+</span>
-                            </span>
-                        </button>
-                        <button
-                            onMouseDown={(e) => {
-                                e.preventDefault();
-                                editor.chain().focus().addColumnBefore().run();
-                            }}
-                            title="왼쪽에 열 추가"
-                            className={tableBtn}
-                        >
-                            <ChevronLeft size={12} />
-                        </button>
-                        <button
-                            onMouseDown={(e) => {
-                                e.preventDefault();
-                                editor.chain().focus().addColumnAfter().run();
-                            }}
-                            title="오른쪽에 열 추가"
-                            className={tableBtn}
-                        >
-                            <ChevronRight size={12} />
-                        </button>
-                        <div className="w-px h-4 bg-white/10 mx-0.5" />
-                        <button
-                            onMouseDown={(e) => {
-                                e.preventDefault();
-                                editor.chain().focus().deleteRow().run();
-                            }}
-                            title="행 삭제"
-                            className={tableBtnDanger}
-                        >
-                            <span className="relative">
-                                <Rows3 size={12} />
-                                <span className="absolute -top-1.5 -right-1.5 text-[7px] font-bold text-red-400 leading-none">−</span>
-                            </span>
-                        </button>
-                        <button
-                            onMouseDown={(e) => {
-                                e.preventDefault();
-                                editor.chain().focus().deleteColumn().run();
-                            }}
-                            title="열 삭제"
-                            className={tableBtnDanger}
-                        >
-                            <Columns3 size={12} />
-                        </button>
-                    </>
-                )}
             </div>
         </BubbleMenu>
     );
