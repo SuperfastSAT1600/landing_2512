@@ -67,7 +67,17 @@ const json = (route: import('@playwright/test').Route, body: unknown) =>
 
 async function setup(page: Page) {
   await page.addInitScript((key) => localStorage.setItem('admin_key', key), ADMIN_KEY);
-  await page.route('**/api/crm/stats**', (route) => json(route, { data: {} }));
+  await page.route('**/api/crm/stats**', (route) =>
+    json(route, {
+      data: {
+        overview: { contact_rate: 70, conversion_rate: 13.33, gross_revenue: 29828500, total_refund: -3219000 },
+        by_source: [
+          { source: '네이버 블로그', leads: 10, contact_rate: 80, conversion_rate: 20 },
+          { source: '인스타그램 광고', leads: 5, contact_rate: 60, conversion_rate: 0 },
+        ],
+      },
+    })
+  );
   await page.route('**/api/crm/payments**', (route) => json(route, { data: [] }));
   // 목록 — 쿼리에 따라 분기 (enrolled/inactive/churned는 빈 배열)
   await page.route('**/api/crm/students**', (route) => {
@@ -117,6 +127,10 @@ test.describe('CRM — 오늘 할 일 탭', () => {
     const body = (await page.textContent('body')) ?? '';
     expect(body).not.toContain('즉시 다음 단계로 진행'); // 단계 정체 배너 문구
     expect(body).not.toContain('오늘 팔로업 액션'); // 팔로업 배너 문구
+    // 상단 스트립에 소스별 컨택/전환율이 표시된다
+    expect(body).toContain('소스별');
+    expect(body).toContain('네이버 블로그');
+    expect(body).toContain('인스타그램 광고');
     await page.screenshot({ path: 'tests/e2e/__screenshots__/crm-kanban-no-banner.png', fullPage: true });
   });
 
