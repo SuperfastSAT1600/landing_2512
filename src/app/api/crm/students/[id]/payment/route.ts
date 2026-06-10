@@ -11,14 +11,14 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { product: string; product_category?: string | null; product_subcategory?: string | null; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세' };
+  let body: { product: string; product_category?: string | null; product_subcategory?: string | null; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세'; is_vip?: boolean };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { product, product_category, product_subcategory, hours, amount, paid_at, tax_type } = body;
+  const { product, product_category, product_subcategory, hours, amount, paid_at, tax_type, is_vip } = body;
 
   if (!product || !amount || amount <= 0) {
     return NextResponse.json({ error: '상품과 금액은 필수입니다.' }, { status: 400 });
@@ -65,6 +65,7 @@ export async function POST(
       funnel_stage: '8',
       funnel_stage_updated_at: now,
       stage_history: updatedHistory,
+      ...(is_vip !== undefined && { is_vip }),
     })
     .eq('id', id)
     .select()

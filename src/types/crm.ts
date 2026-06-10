@@ -205,6 +205,7 @@ export interface Student {
   churn_stage_manual: FunnelStage | null;
   sort_order: number | null;
   entered_by?: string | null;
+  is_vip: boolean | null;
   created_at: string;
   updated_at: string;
 }

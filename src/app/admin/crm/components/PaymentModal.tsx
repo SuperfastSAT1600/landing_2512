@@ -55,6 +55,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   const [hours, setHours] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [taxType, setTaxType] = useState<'면세' | '과세'>('면세');
+  const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -118,6 +119,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
           hours: selectedProduct.requiresHours ? Number(hours) : null,
           amount: Number(amount),
           tax_type: taxType,
+          is_vip: isVip,
         }),
       });
       if (!res.ok) {
@@ -325,6 +327,32 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
                     {taxType === '과세' && <span className="ml-1 text-gray-400">(부가세 10% 제외)</span>}
                   </p>
                 )}
+              </div>
+
+              {/* VIP 여부 */}
+              <div>
+                <label className="flex items-center gap-2.5 cursor-pointer select-none w-fit">
+                  <div
+                    onClick={() => setIsVip(v => !v)}
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                      isVip ? 'bg-amber-400 border-amber-400' : 'border-gray-300 hover:border-amber-300'
+                    }`}
+                  >
+                    {isVip && (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span className={`text-xs font-semibold ${isVip ? 'text-amber-600' : 'text-gray-500'}`}>
+                    VIP 학생
+                  </span>
+                  {isVip && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold tracking-wide">
+                      VIP
+                    </span>
+                  )}
+                </label>
               </div>
 
               {error && <p className="text-xs text-red-500">{error}</p>}
