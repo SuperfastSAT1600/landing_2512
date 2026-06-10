@@ -18,17 +18,15 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import {
   Student,
   FunnelStage,
   FUNNEL_STAGE_LABELS,
-  FUNNEL_NEXT_ACTION,
   ChurnType,
   daysInStage,
   isStageStalled,
   effectiveLeadTier,
-  isActionDoneToday,
 } from '@/types/crm';
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
@@ -56,8 +54,6 @@ function churnedAt(s: Student): string | null {
 
 interface SalesKanbanProps {
   students: Student[];
-  followUpStudents: Student[];
-  stalledStudents: Student[];
   adminKey: string;
   searchQuery?: string;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
@@ -181,7 +177,7 @@ function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayme
   );
 }
 
-export function SalesKanban({ students, followUpStudents, stalledStudents, adminKey, searchQuery, onStudentUpdate, onStudentClick }: SalesKanbanProps) {
+export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, onStudentClick }: SalesKanbanProps) {
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<Student | null>(null);
@@ -283,29 +279,6 @@ export function SalesKanban({ students, followUpStudents, stalledStudents, admin
     [students, enrolledStudents, churnedStudents]
   );
 
-  // 완료 체크는 DB(daily_action_done_at)에 저장 — 팀 공유 + 새 탭("오늘 할 일")과 상태 일원화
-  const markActionDone = useCallback(
-    (id: string) => onStudentUpdate(id, { daily_action_done_at: new Date().toISOString() }),
-    [onStudentUpdate]
-  );
-
-  // 우선순위 순(가장 오래 미연락 = 최우선)으로 나래비, 오늘 완료 처리한 건은 제외
-  const followUpActions = [...followUpStudents]
-    .filter(s => !isActionDoneToday(s, nowMs))
-    .map(s => ({
-      student: s,
-      days: s.last_contacted_at
-        ? Math.floor((nowMs - new Date(s.last_contacted_at).getTime()) / 86400000)
-        : null,
-    }))
-    .sort((a, b) => (b.days ?? Infinity) - (a.days ?? Infinity));
-
-  // 단계 정체: 가장 오래 정체된 순으로 나래비, 오늘 완료 처리한 건은 제외
-  const stallActions = [...stalledStudents]
-    .filter(s => !isActionDoneToday(s, nowMs))
-    .map(s => ({ student: s, days: daysInStage(s, nowMs) ?? 0 }))
-    .sort((a, b) => b.days - a.days);
-
   const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -353,92 +326,6 @@ export function SalesKanban({ students, followUpStudents, stalledStudents, admin
 
   return (
     <>
-      {stallActions.length > 0 && (
-        <div className="mb-4 rounded-lg bg-rose-50 border border-rose-200 overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-rose-200">
-            <AlertTriangle size={14} className="text-rose-500 shrink-0" />
-            <p className="flex-1 text-sm font-bold text-rose-700">
-              단계 정체: {stallActions.length}건 — 즉시 다음 단계로 진행
-            </p>
-          </div>
-          <ol className="divide-y divide-rose-100">
-            {stallActions.map(({ student: s, days }, idx) => (
-              <li
-                key={s.id}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-rose-100/60 transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={false}
-                  onChange={() => markActionDone(s.id)}
-                  className="w-4 h-4 shrink-0 rounded border-rose-300 accent-rose-600 cursor-pointer"
-                  aria-label={`${s.name} 단계 진행 완료`}
-                  title="다음 단계로 옮겼으면 체크 (목록에서 사라집니다)"
-                />
-                <span className="w-5 shrink-0 text-center text-xs font-bold text-rose-400">
-                  {idx + 1}
-                </span>
-                <button
-                  onClick={() => onStudentClick(s)}
-                  className="flex-1 flex items-center justify-between gap-2 text-left min-w-0"
-                >
-                  <span className="text-sm font-medium text-rose-800 shrink-0">{s.name}</span>
-                  <span className="flex items-center gap-2 min-w-0">
-                    <span className="text-[11px] text-rose-400 truncate">
-                      {s.funnel_stage}. {FUNNEL_STAGE_LABELS[s.funnel_stage]}
-                    </span>
-                    <span className="text-xs font-bold text-rose-600 shrink-0">{days}일 정체</span>
-                    {FUNNEL_NEXT_ACTION[s.funnel_stage] && (
-                      <span className="text-[11px] font-medium text-rose-500 shrink-0">
-                        → {FUNNEL_NEXT_ACTION[s.funnel_stage]}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-      {followUpActions.length > 0 && (
-        <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-amber-200">
-            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-            <p className="flex-1 text-sm font-medium text-amber-700">
-              오늘 팔로업 액션: {followUpActions.length}건 — 우선순위 순 (5일 이상 미연락)
-            </p>
-          </div>
-          <ol className="divide-y divide-amber-100">
-            {followUpActions.map(({ student: s, days }, idx) => (
-              <li
-                key={s.id}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-amber-100/60 transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={false}
-                  onChange={() => markActionDone(s.id)}
-                  className="w-4 h-4 shrink-0 rounded border-amber-300 accent-amber-600 cursor-pointer"
-                  aria-label={`${s.name} 팔로업 완료`}
-                  title="완료로 체크하면 목록에서 사라집니다"
-                />
-                <span className="w-5 shrink-0 text-center text-xs font-bold text-amber-400">
-                  {idx + 1}
-                </span>
-                <button
-                  onClick={() => onStudentClick(s)}
-                  className="flex-1 flex items-center justify-between text-left"
-                >
-                  <span className="text-sm font-medium text-amber-800">{s.name}</span>
-                  <span className="text-xs text-amber-500">
-                    {days !== null ? `${days}일 전 연락` : '연락 기록 없음'}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
       <DndContext
         sensors={sensors}
         collisionDetection={(args) => {

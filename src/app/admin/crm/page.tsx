@@ -299,8 +299,6 @@ export default function CrmPage() {
 
             <SalesKanban
               students={filteredStudents}
-              followUpStudents={followUpStudents}
-              stalledStudents={stalledStudents}
               adminKey={adminKey}
               searchQuery={searchQuery}
               onStudentUpdate={handleStudentUpdate}

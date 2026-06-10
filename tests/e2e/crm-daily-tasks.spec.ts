@@ -62,23 +62,22 @@ const memoToday = {
   ],
 };
 
+const json = (route: import('@playwright/test').Route, body: unknown) =>
+  route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+
 async function setup(page: Page) {
   await page.addInitScript((key) => localStorage.setItem('admin_key', key), ADMIN_KEY);
-  await page.route('**/api/crm/students', (route) => {
-    if (route.request().method() === 'GET') {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ data: [stalled, overdue, doneToday, memoToday] }),
-      });
-    } else {
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {} }) });
-    }
+  await page.route('**/api/crm/stats**', (route) => json(route, { data: {} }));
+  await page.route('**/api/crm/payments**', (route) => json(route, { data: [] }));
+  // 목록 — 쿼리에 따라 분기 (enrolled/inactive/churned는 빈 배열)
+  await page.route('**/api/crm/students**', (route) => {
+    if (route.request().method() !== 'GET') return json(route, { data: {} });
+    const url = route.request().url();
+    if (/lead_status=(enrolled|inactive)|stage=churned/.test(url)) return json(route, { data: [] });
+    return json(route, { data: [stalled, overdue, doneToday, memoToday] });
   });
-  // 완료 체크 PATCH — 성공 응답
-  await page.route('**/api/crm/students/*', (route) => {
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {} }) });
-  });
+  // 완료 체크 PATCH 등 단일 학생 — 성공 응답 (students** 보다 나중 등록 → 우선)
+  await page.route('**/api/crm/students/*', (route) => json(route, { data: {} }));
 }
 
 test.describe('CRM — 오늘 할 일 탭', () => {
@@ -109,6 +108,16 @@ test.describe('CRM — 오늘 할 일 탭', () => {
     expect(body).toContain('오늘 학부모와 통화 완료');
     expect(body).toContain('완료학생');
     await page.screenshot({ path: 'tests/e2e/__screenshots__/crm-daily-tasks.png', fullPage: true });
+  });
+
+  test('최초 세일즈 탭에는 정체/팔로업 배너가 없다', async ({ page }) => {
+    await page.getByRole('button', { name: '최초 세일즈' }).click();
+    await page.waitForTimeout(1200);
+    await expect(page.locator('body')).not.toContainText('Application error');
+    const body = (await page.textContent('body')) ?? '';
+    expect(body).not.toContain('즉시 다음 단계로 진행'); // 단계 정체 배너 문구
+    expect(body).not.toContain('오늘 팔로업 액션'); // 팔로업 배너 문구
+    await page.screenshot({ path: 'tests/e2e/__screenshots__/crm-kanban-no-banner.png', fullPage: true });
   });
 
   test('완료 체크 시 명단에서 사라진다', async ({ page }) => {
