@@ -1,5 +1,6 @@
 'use client';
 
+import { Mic, Square, Loader2 } from 'lucide-react';
 import { SectionCard } from './SectionCard';
 
 interface Props {
@@ -9,11 +10,56 @@ interface Props {
   memoError: string;
   setMemoError: (v: string) => void;
   onAddMemo: () => void;
+  // 통화 녹음
+  recording: boolean;
+  processing: boolean;
+  elapsedSec: number;
+  recordError: string;
+  onToggleRecord: () => void;
 }
 
-export function MemoSection({ memoText, setMemoText, savingMemo, memoError, setMemoError, onAddMemo }: Props) {
+function fmtElapsed(sec: number): string {
+  const m = String(Math.floor(sec / 60)).padStart(2, '0');
+  const s = String(sec % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+export function MemoSection({
+  memoText, setMemoText, savingMemo, memoError, setMemoError, onAddMemo,
+  recording, processing, elapsedSec, recordError, onToggleRecord,
+}: Props) {
   return (
     <SectionCard title="상담 메모" defaultOpen={false}>
+      {/* 통화 녹음 → 자동 요약 (스피커폰 + 이 기기 마이크) */}
+      <div className="mb-2 flex items-center gap-2">
+        <button
+          onClick={onToggleRecord}
+          disabled={processing}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40 ${
+            recording
+              ? 'bg-rose-600 hover:bg-rose-500 text-white'
+              : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {processing ? (
+            <><Loader2 size={13} className="animate-spin" /> 정리 중…</>
+          ) : recording ? (
+            <><Square size={12} /> 정지 {fmtElapsed(elapsedSec)}</>
+          ) : (
+            <><Mic size={13} /> 통화 녹음</>
+          )}
+        </button>
+        {recording && (
+          <span className="flex items-center gap-1 text-[11px] text-rose-500">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" /> 녹음 중
+          </span>
+        )}
+        {!recording && !processing && (
+          <span className="text-[11px] text-gray-400">스피커폰으로 통화하면 자동 요약돼요</span>
+        )}
+      </div>
+      {recordError && <p className="mb-2 text-xs text-red-500">{recordError}</p>}
+
       <textarea
         value={memoText}
         onChange={e => { setMemoText(e.target.value); setMemoError(''); }}

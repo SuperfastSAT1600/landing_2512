@@ -7,6 +7,7 @@ import { PaymentModal } from '../PaymentModal';
 import { usePanelData } from './hooks/usePanelData';
 import { useEditForm } from './hooks/useEditForm';
 import { useMemoSection } from './hooks/useMemoSection';
+import { useCallRecording } from './hooks/useCallRecording';
 import { useTimeline } from './hooks/useTimeline';
 import { useFunnel } from './hooks/useFunnel';
 import { useDiagnostic } from './hooks/useDiagnostic';
@@ -53,6 +54,13 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     studentId: student.id, adminKey,
     setTimeline,
     onUpdate: (id, updates) => onUpdate(id, updates as Partial<Student>),
+  });
+
+  // 통화 녹음 → 전사·요약 결과를 메모 입력란에 채움(상담사 검토 후 "메모 저장")
+  const callHook = useCallRecording({
+    studentId: student.id, adminKey,
+    onSummary: (summary) =>
+      memoHook.setMemoText((prev) => (prev.trim() ? `${prev}\n\n${summary}` : summary)),
   });
 
   const timelineHook = useTimeline({
@@ -191,6 +199,11 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               memoError={memoHook.memoError}
               setMemoError={memoHook.setMemoError}
               onAddMemo={memoHook.handleAddMemo}
+              recording={callHook.recording}
+              processing={callHook.processing}
+              elapsedSec={callHook.elapsedSec}
+              recordError={callHook.recordError}
+              onToggleRecord={callHook.toggle}
             />
 
             <TimelineSection
