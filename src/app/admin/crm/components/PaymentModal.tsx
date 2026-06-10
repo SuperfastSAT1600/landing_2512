@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { X, CreditCard, ChevronLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, CreditCard, ChevronLeft, Crown } from 'lucide-react';
 import { Student, ProductCategory, ProductSubcategory } from '@/types/crm';
+import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
 
 type ClassType = '1:1' | '그룹' | '콘텐츠';
 type Subject = 'SAT' | 'AP';
@@ -55,9 +56,16 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   const [hours, setHours] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [taxType, setTaxType] = useState<'면세' | '과세'>('면세');
+  const [detectedReasons, setDetectedReasons] = useState<VipReason[]>([]);
   const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const reasons = detectVipReasons(student);
+    setDetectedReasons(reasons);
+    setIsVip(reasons.length > 0);
+  }, [student]);
 
   function getProducts(): Product[] {
     if (!classType) return [];
@@ -330,7 +338,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
               </div>
 
               {/* VIP 여부 */}
-              <div>
+              <div className="space-y-2">
                 <label className="flex items-center gap-2.5 cursor-pointer select-none w-fit">
                   <div
                     onClick={() => setIsVip(v => !v)}
@@ -348,11 +356,24 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
                     VIP 학생
                   </span>
                   {isVip && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold tracking-wide">
-                      VIP
+                    <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold tracking-wide">
+                      <Crown size={9} />VIP
                     </span>
                   )}
                 </label>
+                {detectedReasons.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap pl-7">
+                    <span className="text-[10px] text-gray-400">자동 감지</span>
+                    {detectedReasons.map(reason => (
+                      <span
+                        key={reason}
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${VIP_REASON_COLORS[reason]}`}
+                      >
+                        {VIP_REASON_LABELS[reason]}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {error && <p className="text-xs text-red-500">{error}</p>}
