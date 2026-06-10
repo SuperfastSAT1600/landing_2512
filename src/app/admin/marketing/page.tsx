@@ -543,8 +543,11 @@ export default function MarketingPage() {
 
   useEffect(() => {
     fetchWeekly();
+  }, [fetchWeekly]);
+
+  useEffect(() => {
     fetchStats(appliedFrom, appliedTo);
-  }, [appliedFrom, appliedTo, fetchStats, fetchWeekly]);
+  }, [appliedFrom, appliedTo, fetchStats]);
 
   function applyRange() {
     setAppliedFrom(from);
