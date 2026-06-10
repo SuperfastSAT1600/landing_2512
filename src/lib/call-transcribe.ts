@@ -46,6 +46,38 @@ function geminiModel() {
   return new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: GEMINI_MODEL });
 }
 
+// 일시적으로 보고 재시도하는 상태 코드 (rate limit·서버 과부하). Gemini는 부하 시 503을 자주 낸다.
+const TRANSIENT_STATUS = new Set([429, 500, 502, 503, 504]);
+
+/**
+ * 일시적(429/5xx·네트워크) 오류면 지수 백오프로 재시도하고, 영구 오류(4xx 등)는 즉시 throw.
+ * STT/Gemini가 순간 과부하(503)일 때 통화 전사 파이프라인이 한 번에 죽지 않게 한다.
+ */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  opts: { attempts?: number; baseDelayMs?: number; sleep?: (ms: number) => Promise<void> } = {}
+): Promise<T> {
+  const {
+    attempts = 3,
+    baseDelayMs = 500,
+    sleep = (ms: number) => new Promise((r) => setTimeout(r, ms)),
+  } = opts;
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const status = (err as { status?: number } | null)?.status;
+      // status가 없으면(네트워크 오류 등) 일시적으로 간주. 알려진 영구 오류는 즉시 포기.
+      const transient = status === undefined || TRANSIENT_STATUS.has(status);
+      if (!transient || i === attempts - 1) throw err;
+      await sleep(baseDelayMs * 2 ** i);
+    }
+  }
+  throw lastErr;
+}
+
 /** OpenAI로 오디오 1개를 한국어 전사. 브라우저 포맷(webm/mp4)을 그대로 처리. */
 async function transcribeOne(seg: AudioSegment): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -53,19 +85,25 @@ async function transcribeOne(seg: AudioSegment): Promise<string> {
   const openai = new OpenAI({ apiKey });
   const baseMime = seg.mimeType.split(';')[0].trim();
   const file = await toFile(seg.buffer, seg.filename, { type: baseMime });
-  const res = await openai.audio.transcriptions.create({ file, model: STT_MODEL, language: 'ko' });
+  const res = await withRetry(() =>
+    openai.audio.transcriptions.create({ file, model: STT_MODEL, language: 'ko' })
+  );
   return res.text.trim();
 }
 
 /** Gemini로 화자(상담사/고객)를 구분한 전사로 재구성. */
 async function labelSpeakers(rawTranscript: string): Promise<string> {
-  const result = await geminiModel().generateContent(`${LABEL_PROMPT}\n\n[전사]\n${rawTranscript}`);
+  const result = await withRetry(() =>
+    geminiModel().generateContent(`${LABEL_PROMPT}\n\n[전사]\n${rawTranscript}`)
+  );
   return result.response.text().trim();
 }
 
 /** Gemini로 화자 구분 전사를 구조화 상담 메모로 요약. */
 async function summarize(labeledTranscript: string): Promise<string> {
-  const result = await geminiModel().generateContent(`${SUMMARY_PROMPT}\n\n[화자 구분 전사]\n${labeledTranscript}`);
+  const result = await withRetry(() =>
+    geminiModel().generateContent(`${SUMMARY_PROMPT}\n\n[화자 구분 전사]\n${labeledTranscript}`)
+  );
   return result.response.text().trim();
 }
 
