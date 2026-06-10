@@ -52,3 +52,8 @@ node_modules/
 dist/
 build/
 .claude/settings.local.json
+
+# Playwright test artifacts
+/test-results/
+/playwright-report/
+tests/e2e/__screenshots__/

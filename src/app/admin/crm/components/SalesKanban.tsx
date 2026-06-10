@@ -28,6 +28,7 @@ import {
   daysInStage,
   isStageStalled,
   effectiveLeadTier,
+  isActionDoneToday,
 } from '@/types/crm';
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
@@ -77,24 +78,6 @@ interface KanbanRowProps {
   readOnly?: boolean;
   readOnlyTone?: ReadOnlyTone;
   paidAmounts?: Record<string, number>;
-}
-
-// 액션 완료 체크를 "그날 단위"로 보존하는 키 (자정 지나면 새 키 → 목록 자동 리셋)
-const FOLLOWUP_DONE_PREFIX = 'crm-followup-done';
-const STALL_DONE_PREFIX = 'crm-stall-done';
-
-function dailyKey(prefix: string): string {
-  return `${prefix}-${new Date().toISOString().slice(0, 10)}`;
-}
-
-function loadDailyDone(prefix: string): Set<string> {
-  if (typeof window === 'undefined') return new Set();
-  try {
-    const raw = localStorage.getItem(dailyKey(prefix));
-    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
-  } catch {
-    return new Set();
-  }
 }
 
 function formatMan(amount: number): string {
@@ -202,9 +185,6 @@ export function SalesKanban({ students, followUpStudents, stalledStudents, admin
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<Student | null>(null);
-  // 오늘 체크해서 지운 팔로업/정체 액션 id — 날짜별로 localStorage에 보존 (자정 지나면 자동 초기화)
-  const [doneActions, setDoneActions] = useState<Set<string>>(() => loadDailyDone(FOLLOWUP_DONE_PREFIX));
-  const [stallDone, setStallDone] = useState<Set<string>>(() => loadDailyDone(STALL_DONE_PREFIX));
   // 경과 일수 계산 기준 시각 — 마운트 시 1회 캡처 (render 중 Date.now 직접 호출 회피)
   const [nowMs] = useState(() => Date.now());
   const [enrolledStudents, setEnrolledStudents] = useState<Student[]>([]);
@@ -303,42 +283,28 @@ export function SalesKanban({ students, followUpStudents, stalledStudents, admin
     [students, enrolledStudents, churnedStudents]
   );
 
-  const markActionDone = useCallback((id: string) => {
-    setDoneActions(prev => {
-      const next = new Set(prev).add(id);
-      try {
-        localStorage.setItem(dailyKey(FOLLOWUP_DONE_PREFIX), JSON.stringify([...next]));
-      } catch {}
-      return next;
-    });
-  }, []);
+  // 완료 체크는 DB(daily_action_done_at)에 저장 — 팀 공유 + 새 탭("오늘 할 일")과 상태 일원화
+  const markActionDone = useCallback(
+    (id: string) => onStudentUpdate(id, { daily_action_done_at: new Date().toISOString() }),
+    [onStudentUpdate]
+  );
 
-  const markStallDone = useCallback((id: string) => {
-    setStallDone(prev => {
-      const next = new Set(prev).add(id);
-      try {
-        localStorage.setItem(dailyKey(STALL_DONE_PREFIX), JSON.stringify([...next]));
-      } catch {}
-      return next;
-    });
-  }, []);
-
-  // 우선순위 순(가장 오래 미연락 = 최우선)으로 나래비, 체크 완료한 건은 제외
+  // 우선순위 순(가장 오래 미연락 = 최우선)으로 나래비, 오늘 완료 처리한 건은 제외
   const followUpActions = [...followUpStudents]
+    .filter(s => !isActionDoneToday(s, nowMs))
     .map(s => ({
       student: s,
       days: s.last_contacted_at
         ? Math.floor((nowMs - new Date(s.last_contacted_at).getTime()) / 86400000)
         : null,
     }))
-    .sort((a, b) => (b.days ?? Infinity) - (a.days ?? Infinity))
-    .filter(a => !doneActions.has(a.student.id));
+    .sort((a, b) => (b.days ?? Infinity) - (a.days ?? Infinity));
 
-  // 단계 정체: 가장 오래 정체된 순으로 나래비, 체크 완료한 건은 제외
+  // 단계 정체: 가장 오래 정체된 순으로 나래비, 오늘 완료 처리한 건은 제외
   const stallActions = [...stalledStudents]
+    .filter(s => !isActionDoneToday(s, nowMs))
     .map(s => ({ student: s, days: daysInStage(s, nowMs) ?? 0 }))
-    .sort((a, b) => b.days - a.days)
-    .filter(a => !stallDone.has(a.student.id));
+    .sort((a, b) => b.days - a.days);
 
   const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id);
 
@@ -404,7 +370,7 @@ export function SalesKanban({ students, followUpStudents, stalledStudents, admin
                 <input
                   type="checkbox"
                   checked={false}
-                  onChange={() => markStallDone(s.id)}
+                  onChange={() => markActionDone(s.id)}
                   className="w-4 h-4 shrink-0 rounded border-rose-300 accent-rose-600 cursor-pointer"
                   aria-label={`${s.name} 단계 진행 완료`}
                   title="다음 단계로 옮겼으면 체크 (목록에서 사라집니다)"
