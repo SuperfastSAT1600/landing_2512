@@ -5,6 +5,10 @@ import { hasReachedStage } from '@/lib/funnel-stats';
 import { getMarketingGroup, MARKETING_GROUPS } from '@/lib/marketing-groups';
 import type { MarketingGroup } from '@/lib/marketing-groups';
 
+function netAmount(p: { amount: number; tax_type?: string | null }): number {
+  return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
+}
+
 export const WEEKLY_TARGET = 35;
 
 // ── ISO 주차 유틸 ─────────────────────────────────────────────────────────────
@@ -88,6 +92,13 @@ export interface WeeklyStats {
   weekly_target: number;
   this_week: Record<MarketingGroup, number>;
   this_week_total: number;
+  this_week_contacted: number;
+  this_week_contact_rate: number;  // 0~100
+  this_week_paid: number;
+  this_week_conversion_rate: number; // 0~100
+  this_week_revenue: number;
+  this_week_ad_spend: number;
+  this_week_roas: number | null; // null if no ad spend
   pace_prediction: number;
   yoy_week: Record<MarketingGroup, number> | null;
   yoy_week_total: number | null;
@@ -109,11 +120,50 @@ export async function GET(request: NextRequest) {
   const { start: weekStart, end: weekEnd } = getISOWeekBounds(year, week);
   const daysElapsed = getDaysElapsed(weekStart, todayStr);
 
-  // ── 이번 주 리드 ────────────────────────────────────────────────────────────
-  const thisWeekLeads = await fetchLeadsInRange(weekStart, todayStr);
+  // ── 이번 주 리드 + 컨택·결제·매출·광고비 ────────────────────────────────────
+  const [thisWeekLeads, thisWeekPayments, thisWeekSpends] = await Promise.all([
+    fetchLeadsInRange(weekStart, todayStr),
+    supabaseAdmin
+      .from('payments')
+      .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
+      .gte('paid_at', `${weekStart}T00:00:00`)
+      .lte('paid_at', `${todayStr}T23:59:59`)
+      .then(({ data }) => data ?? []),
+    supabaseAdmin
+      .from('marketing_ad_spend')
+      .select('amount, channel_group')
+      .gte('date', weekStart)
+      .lte('date', todayStr)
+      .then(({ data }) => data ?? []),
+  ]);
+
   const thisWeek = countByGroup(thisWeekLeads);
   const thisWeekTotal = thisWeekLeads.length;
   const pacePrediction = Math.floor((thisWeekTotal / daysElapsed) * 7);
+
+  // 컨택 성공 (retry 제외, stage 2 이상 도달)
+  const thisWeekContacted = thisWeekLeads.filter(
+    (s) => !s.retry_strategy_id && hasReachedStage(s, '2')
+  ).length;
+
+  // 결제 집계 (이번 주 paid_at 기준 최초결제)
+  const paidStudentIds = new Set<string>();
+  const paidStudentNames = new Set<string>();
+  let thisWeekRevenue = 0;
+  for (const p of thisWeekPayments) {
+    thisWeekRevenue += netAmount(p);
+    if (p.payment_type === '최초결제') {
+      if (p.student_id) paidStudentIds.add(p.student_id);
+      if (p.student_name) paidStudentNames.add(p.student_name);
+    }
+  }
+  const thisWeekPaid = thisWeekLeads.filter(
+    (s) => paidStudentIds.has(s.id) || paidStudentNames.has(s.name)
+  ).length;
+
+  // 광고비 합계
+  const thisWeekAdSpend = thisWeekSpends.reduce((sum, s) => sum + s.amount, 0);
+  const thisWeekRoas = thisWeekAdSpend > 0 ? Math.round((thisWeekRevenue / thisWeekAdSpend) * 100) / 100 : null;
 
   // ── 작년 동기 ────────────────────────────────────────────────────────────────
   let yoyWeek: Record<MarketingGroup, number> | null = null;
@@ -184,6 +234,17 @@ export async function GET(request: NextRequest) {
     weekly_target: WEEKLY_TARGET,
     this_week: thisWeek,
     this_week_total: thisWeekTotal,
+    this_week_contacted: thisWeekContacted,
+    this_week_contact_rate: thisWeekTotal > 0
+      ? Math.round((thisWeekContacted / thisWeekTotal) * 10000) / 100
+      : 0,
+    this_week_paid: thisWeekPaid,
+    this_week_conversion_rate: thisWeekTotal > 0
+      ? Math.round((thisWeekPaid / thisWeekTotal) * 10000) / 100
+      : 0,
+    this_week_revenue: thisWeekRevenue,
+    this_week_ad_spend: thisWeekAdSpend,
+    this_week_roas: thisWeekRoas,
     pace_prediction: pacePrediction,
     yoy_week: yoyWeek,
     yoy_week_total: yoyTotal,
