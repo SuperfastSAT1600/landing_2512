@@ -40,7 +40,7 @@ describe('업로드 제약', () => {
   it('이미지 등은 불허', () => {
     expect(ALLOWED_AUDIO_MIME.has('image/png')).toBe(false);
   });
-  it('용량 캡은 20MB', () => {
-    expect(MAX_AUDIO_BYTES).toBe(20 * 1024 * 1024);
+  it('세그먼트 용량 캡은 24MB (OpenAI 25MB 한도 아래)', () => {
+    expect(MAX_AUDIO_BYTES).toBe(24 * 1024 * 1024);
   });
 });
