@@ -499,12 +499,18 @@ function SectionLabel({ label }: { label: string }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
+const PRESETS = [
+  { label: '이번 주', fn: () => { const d = new Date(); const mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return { from: toDateStr(mon), to: toDateStr(d) }; } },
+  { label: '이번 달', fn: () => { const d = new Date(); return { from: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`, to: toDateStr(d) }; } },
+  { label: '지난 달', fn: () => { const d = new Date(); d.setDate(1); d.setDate(d.getDate()-1); const y = d.getFullYear(); const m = String(d.getMonth()+1).padStart(2,'0'); return { from: `${y}-${m}-01`, to: toDateStr(d) }; } },
+  { label: '3개월', fn: () => { const to = new Date(); const from = new Date(); from.setMonth(from.getMonth()-3); return { from: toDateStr(from), to: toDateStr(to) }; } },
+];
+
 export default function MarketingPage() {
   const range = defaultRange();
-  const [from, setFrom] = useState(range.from);
-  const [to, setTo] = useState(range.to);
   const [appliedFrom, setAppliedFrom] = useState(range.from);
   const [appliedTo, setAppliedTo] = useState(range.to);
+  const [activePreset, setActivePreset] = useState<string | null>('30일');
 
   const [groups, setGroups] = useState<MarketingGroupStats[]>([]);
   const [daily, setDaily] = useState<MarketingDailyRow[]>([]);
@@ -549,9 +555,10 @@ export default function MarketingPage() {
     fetchStats(appliedFrom, appliedTo);
   }, [appliedFrom, appliedTo, fetchStats]);
 
-  function applyRange() {
+  function applyPreset(label: string, from: string, to: string) {
     setAppliedFrom(from);
     setAppliedTo(to);
+    setActivePreset(label);
   }
 
   const enrichedGroups = useMemo((): MarketingGroupStats[] => {
@@ -573,21 +580,43 @@ export default function MarketingPage() {
   return (
     <div className="min-h-screen bg-[#151719] text-[#E0E0E0] p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white">마케팅</h1>
-          <p className="text-sm text-gray-500 mt-0.5">채널별 리드 인입 · 컨택 성공률 · 결제 전환율 · ROI</p>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-white">마케팅</h1>
+            <p className="text-sm text-gray-500 mt-0.5">채널별 리드 인입 · 컨택 성공률 · 결제 전환율 · ROI</p>
+          </div>
+          {/* 날짜 직접 입력 */}
+          <div className="flex items-center gap-2">
+            <input
+              type="date" value={appliedFrom}
+              onChange={(e) => { setAppliedFrom(e.target.value); setActivePreset(null); }}
+              className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+            />
+            <span className="text-gray-500 text-sm">~</span>
+            <input
+              type="date" value={appliedTo}
+              onChange={(e) => { setAppliedTo(e.target.value); setActivePreset(null); }}
+              className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
-          <span className="text-gray-500 text-sm">~</span>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
-          <button onClick={applyRange}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-            적용
-          </button>
+        {/* 빠른 기간 선택 */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500">빠른 선택:</span>
+          {PRESETS.map(({ label, fn }) => (
+            <button
+              key={label}
+              onClick={() => { const r = fn(); applyPreset(label, r.from, r.to); }}
+              className={`text-xs px-3 py-1.5 rounded-md transition-colors font-medium ${
+                activePreset === label
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-[#1e2023] text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
