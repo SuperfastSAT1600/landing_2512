@@ -14,6 +14,7 @@ import { SalesStats } from './components/SalesStats';
 import { EnrolledLeads } from './components/EnrolledLeads';
 import { RetryKanban } from './components/RetryKanban';
 import { StrategiesTab } from './components/StrategiesTab';
+import { DailyTasks } from './components/DailyTasks';
 
 function getAdminKey(): string {
   if (typeof window === 'undefined') return '';
@@ -56,7 +57,7 @@ export default function CrmPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
   const [tierFilter, setTierFilter] = useState<'' | LeadTier>('');
-  const [activeTab, setActiveTab] = useState<'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('kanban');
+  const [activeTab, setActiveTab] = useState<'today' | 'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('today');
   const [retryContext, setRetryContext] = useState<{ id: string; name: string } | null>(null);
   const [retryEnrolledId, setRetryEnrolledId] = useState<string | null>(null);
 
@@ -237,6 +238,7 @@ export default function CrmPage() {
         {/* Tab navigation */}
         <div className="flex gap-1 mb-4">
           {([
+            { key: 'today',      label: '오늘 할 일' },
             { key: 'strategies', label: '전략' },
             { key: 'kanban',     label: '최초 세일즈' },
             { key: 'retry',      label: '재시도 세일즈' },
@@ -297,14 +299,22 @@ export default function CrmPage() {
 
             <SalesKanban
               students={filteredStudents}
-              followUpStudents={followUpStudents}
-              stalledStudents={stalledStudents}
               adminKey={adminKey}
               searchQuery={searchQuery}
               onStudentUpdate={handleStudentUpdate}
               onStudentClick={handleStudentClick}
             />
           </>
+        )}
+
+        {activeTab === 'today' && (
+          <DailyTasks
+            followUpStudents={followUpStudents}
+            stalledStudents={stalledStudents}
+            students={students}
+            onStudentClick={handleStudentClick}
+            onStudentUpdate={handleStudentUpdate}
+          />
         )}
 
         {activeTab === 'retry' && (

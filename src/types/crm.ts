@@ -202,6 +202,8 @@ export interface Student {
   stage_history: Array<{ stage: string; label: string; entered_at: string }>;
   // 수동 지정 이탈 단계 (null이면 stage_history 기반 자동 도출)
   churn_stage_manual: FunnelStage | null;
+  // "오늘 할 일" 액션 완료 체크 시각. KST 당일이면 완료로 판정(isActionDoneToday)
+  daily_action_done_at: string | null;
   sort_order: number | null;
   entered_by?: string | null;
   created_at: string;
@@ -453,6 +455,41 @@ export function isStageStalled(
   if (sla === undefined) return false;
   const days = daysInStage(s, nowMs);
   return days !== null && days > sla;
+}
+
+// ─── "오늘 할 일" 헬퍼 (KST 당일 기준) ─────────────────────────────────────────
+// 한국 팀 기준이므로 "오늘"은 Asia/Seoul 자정 경계로 판정한다.
+// (UTC 기준으로 자르면 KST 오전 9시에 날짜가 바뀌어 명단이 오전에 리셋되는 버그가 생김)
+
+/** 주어진 epoch ms를 KST 기준 'YYYY-MM-DD' 문자열로 변환. */
+export function kstDateStr(ms: number): string {
+  // KST = UTC+9, DST 없음. ms에 9시간 더한 뒤 UTC 날짜를 읽으면 KST 날짜가 된다.
+  return new Date(ms + 9 * 3600000).toISOString().slice(0, 10);
+}
+
+/** daily_action_done_at이 KST 기준 오늘이면 true (오늘 액션 완료 처리됨). */
+export function isActionDoneToday(
+  s: Pick<Student, 'daily_action_done_at'>,
+  nowMs: number
+): boolean {
+  if (!s.daily_action_done_at) return false;
+  const t = new Date(s.daily_action_done_at).getTime();
+  if (Number.isNaN(t)) return false;
+  return kstDateStr(t) === kstDateStr(nowMs);
+}
+
+/** consultation_timeline 중 KST 기준 오늘 작성된 메모만 최신순으로 반환. */
+export function todaysMemos(
+  s: Pick<Student, 'consultation_timeline'>,
+  nowMs: number
+): ConsultationEntry[] {
+  const today = kstDateStr(nowMs);
+  return (s.consultation_timeline ?? [])
+    .filter((e) => {
+      const t = new Date(e.created_at).getTime();
+      return !Number.isNaN(t) && kstDateStr(t) === today;
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
 // ─── 리드 A/B/C 등급 (Hot/Warm/Cold) ──────────────────────────────────────────
