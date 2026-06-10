@@ -48,6 +48,9 @@ function RealtimeIndicator({ status }: { status: RealtimeStatus }) {
 
 export default function CrmPage() {
   const [students, setStudents] = useState<Student[]>([]);
+  // "오늘 취한 액션" 전용 데이터셋 — lead_status 무관(재활성화·이탈 리드풀 포함).
+  // 기본 students는 active만 담으므로 별도 조회로 사각지대를 메운다.
+  const [todayActions, setTodayActions] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -85,9 +88,23 @@ export default function CrmPage() {
     }
   }, []);
 
+  const fetchTodayActions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/crm/students?today_actions=true', {
+        headers: { 'x-admin-key': getAdminKey() },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setTodayActions(data.data ?? []);
+    } catch {
+      // "오늘 취한 액션"은 보조 위젯 — 실패해도 메인 로드를 막지 않는다.
+    }
+  }, []);
+
   useEffect(() => {
     fetchStudents();
-  }, [fetchStudents]);
+    fetchTodayActions();
+  }, [fetchStudents, fetchTodayActions]);
 
   const handleStudentChange = useCallback(
     (payload: { eventType: string; new: Student | null; old: Partial<Student> | null }) => {
@@ -141,12 +158,15 @@ export default function CrmPage() {
         if (prevSelected) setSelectedStudent(prevSelected);
         const data = await res.json().catch(() => ({}));
         alert(data.error?.message ?? '업데이트에 실패했습니다.');
+      } else if (updates.daily_action_done_at !== undefined) {
+        // 완료 체크/해제는 "오늘 취한 액션" 명단을 바꾸므로 재조회한다.
+        fetchTodayActions();
       }
     } catch {
       setStudents(prevStudents);
       if (prevSelected) setSelectedStudent(prevSelected);
     }
-  }, [students, selectedStudent]);
+  }, [students, selectedStudent, fetchTodayActions]);
 
   const handleStudentClick = useCallback((student: Student) => {
     setSelectedStudent(student);
@@ -311,7 +331,7 @@ export default function CrmPage() {
           <DailyTasks
             followUpStudents={followUpStudents}
             stalledStudents={stalledStudents}
-            students={students}
+            actionedStudents={todayActions}
             onStudentClick={handleStudentClick}
             onStudentUpdate={handleStudentUpdate}
           />

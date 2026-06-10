@@ -15,7 +15,9 @@ import {
 interface DailyTasksProps {
   followUpStudents: Student[];
   stalledStudents: Student[];
-  students: Student[];
+  // "오늘 취한 액션" 대상 — lead_status 무관하게 오늘 메모/완료체크한 학생 전체
+  // (재활성화·이탈 리드풀 포함). 액션 필요 명단(A)과 달리 active로 한정하지 않는다.
+  actionedStudents: Student[];
   onStudentClick: (student: Student) => void;
   onStudentUpdate: (id: string, fields: Partial<Student>) => void;
 }
@@ -33,7 +35,7 @@ const TIER_RANK: Record<string, number> = { A: 0, B: 1, C: 2 };
 export function DailyTasks({
   followUpStudents,
   stalledStudents,
-  students,
+  actionedStudents,
   onStudentClick,
   onStudentUpdate,
 }: DailyTasksProps) {
@@ -65,7 +67,7 @@ export function DailyTasks({
 
   // 섹션 B — 오늘 취한 액션 (오늘 메모 작성 또는 오늘 완료 체크)
   const doneItems = useMemo(() => {
-    return students
+    return actionedStudents
       .map((s) => ({ student: s, memos: todaysMemos(s, nowMs), checked: isActionDoneToday(s, nowMs) }))
       .filter((x) => x.memos.length > 0 || x.checked)
       .sort((a, b) => {
@@ -73,11 +75,19 @@ export function DailyTasks({
         const bt = b.memos[0]?.created_at ?? b.student.daily_action_done_at ?? '';
         return new Date(bt).getTime() - new Date(at).getTime();
       });
-  }, [students, nowMs]);
+  }, [actionedStudents, nowMs]);
 
   const markDone = (id: string) =>
     onStudentUpdate(id, { daily_action_done_at: new Date().toISOString() });
   const undoDone = (id: string) => onStudentUpdate(id, { daily_action_done_at: null });
+
+  // 메모 작성 시각 — KST 기준 HH:MM (서버 타임존과 무관하게 한국 시간 표기)
+  const memoTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -178,14 +188,29 @@ export function DailyTasks({
                   )}
                 </div>
                 {memos.length > 0 ? (
-                  <ul className="mt-1 space-y-1">
+                  <ul className="mt-1.5 space-y-2.5">
                     {memos.map((m) => (
-                      <li
-                        key={m.id}
-                        className="flex items-start gap-1.5 text-xs text-gray-600"
-                      >
-                        <Clock size={11} className="text-gray-300 mt-0.5 shrink-0" />
-                        <span className="line-clamp-2">{m.raw_memo}</span>
+                      <li key={m.id} className="text-xs">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Clock size={11} className="text-gray-300 shrink-0" />
+                          <span className="text-[11px] text-gray-400">
+                            {memoTime(m.created_at)}
+                          </span>
+                          {m.published ? (
+                            <span className="text-[10px] font-medium text-emerald-600">
+                              포털 노출 중
+                            </span>
+                          ) : (
+                            m.ai_purified && (
+                              <span className="text-[10px] font-medium text-purple-500">
+                                AI 변환됨
+                              </span>
+                            )
+                          )}
+                        </div>
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {m.raw_memo}
+                        </p>
                       </li>
                     ))}
                   </ul>
