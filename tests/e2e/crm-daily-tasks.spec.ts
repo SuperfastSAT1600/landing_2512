@@ -131,6 +131,8 @@ test.describe('CRM — 오늘 할 일 탭', () => {
     expect(body).toContain('소스별');
     expect(body).toContain('네이버 블로그');
     expect(body).toContain('인스타그램 광고');
+    // 8(수업 중)·9(이탈) 컬럼은 칸반에서 제거됨
+    expect(body).not.toContain('9. 이탈');
     await page.screenshot({ path: 'tests/e2e/__screenshots__/crm-kanban-no-banner.png', fullPage: true });
   });
 

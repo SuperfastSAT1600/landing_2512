@@ -32,25 +32,9 @@ import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
 import { PaymentModal } from './PaymentModal';
 
+// 최초 세일즈 칸반은 진행 중(0~7) 단계만 표시한다.
+// 수업 중(8)·이탈(9)은 각각 "수업 중" 탭, "이탈 리드풀" 탭에서 보므로 칸반에선 제외.
 const SALES_STAGES: FunnelStage[] = ['0', '1', '2', '3a', '3b', '4', '5a', '5b', '6', '7'];
-// 결제 완료(수업 중) — 표시 전용 컬럼. 드래그 대상이 아니며 enrolled 리드를 별도 조회해 보여준다.
-const ENROLLED_STAGE: FunnelStage = '8';
-// 이번 달 이탈 — 표시 전용 컬럼. churned 리드를 별도 조회해 현재 달력 월 이탈 건만 보여준다.
-const CHURNED_STAGE: FunnelStage = 'churned';
-const ALL_COLUMNS: FunnelStage[] = [...SALES_STAGES, ENROLLED_STAGE, CHURNED_STAGE];
-// 표시 전용 컬럼 헤더 표기 (stage 키와 무관한 별도 라벨)
-const COLUMN_TITLES: Partial<Record<FunnelStage, string>> = {
-  [CHURNED_STAGE]: '9. 이탈 (이번 달)',
-};
-
-/** 이탈 시점: stage_history의 마지막 churned 엔트리 entered_at (없으면 funnel_stage_updated_at). */
-function churnedAt(s: Student): string | null {
-  const history = s.stage_history ?? [];
-  for (let i = history.length - 1; i >= 0; i--) {
-    if (history[i].stage === 'churned') return history[i].entered_at;
-  }
-  return s.funnel_stage_updated_at;
-}
 
 interface SalesKanbanProps {
   students: Student[];
@@ -59,8 +43,6 @@ interface SalesKanbanProps {
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
   onStudentClick: (student: Student) => void;
 }
-
-type ReadOnlyTone = 'enrolled' | 'churned';
 
 interface KanbanRowProps {
   stage: FunnelStage;
@@ -71,70 +53,19 @@ interface KanbanRowProps {
   onPayment: (student: Student) => void;
   onAdd?: () => void;
   isSearchMatch?: boolean;
-  readOnly?: boolean;
-  readOnlyTone?: ReadOnlyTone;
-  paidAmounts?: Record<string, number>;
 }
 
-function formatMan(amount: number): string {
-  return `${Math.round(amount / 10000).toLocaleString()}만원`;
-}
+function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayment, onAdd, isSearchMatch }: KanbanRowProps) {
+  const { setNodeRef, isOver } = useDroppable({ id: stage });
 
-function formatChurnDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? null : `${d.getMonth() + 1}/${d.getDate()} 이탈`;
-}
-
-function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayment, onAdd, isSearchMatch, readOnly, readOnlyTone = 'enrolled', paidAmounts }: KanbanRowProps) {
-  // 표시 전용 컬럼(8·9단계)은 드롭 타깃이 아니다.
-  const { setNodeRef, isOver } = useDroppable({ id: stage, disabled: readOnly });
-  const isChurned = readOnlyTone === 'churned';
-
-  const readOnlyHeaderColor = isChurned ? 'text-rose-600' : 'text-emerald-600';
   const header = (
     <div className={`px-2 py-2 border-b ${isSearchMatch ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}`}>
-      <p className={`text-[11px] font-bold leading-tight truncate ${isSearchMatch ? 'text-blue-600' : readOnly ? readOnlyHeaderColor : 'text-gray-600'}`}>
-        {COLUMN_TITLES[stage] ?? `${stage}. ${FUNNEL_STAGE_LABELS[stage]}`}
+      <p className={`text-[11px] font-bold leading-tight truncate ${isSearchMatch ? 'text-blue-600' : 'text-gray-600'}`}>
+        {stage}. {FUNNEL_STAGE_LABELS[stage]}
       </p>
       <span className={`text-[10px] ${isSearchMatch ? 'text-blue-400' : 'text-gray-400'}`}>{students.length}명</span>
     </div>
   );
-
-  // 표시 전용: 드래그/인라인 액션 없는 단순 클릭 카드
-  if (readOnly) {
-    return (
-      <div className={`flex flex-col w-44 shrink-0 ${isChurned ? 'bg-rose-50/30' : 'bg-emerald-50/30'}`}>
-        {header}
-        <div className="flex-1 p-2 space-y-1.5 min-h-[120px]">
-          {students.map((student) => {
-            const amount = paidAmounts?.[student.id] ?? (student.name ? paidAmounts?.[student.name] : undefined);
-            const churnLabel = isChurned ? formatChurnDate(churnedAt(student)) : null;
-            return (
-              <button
-                key={student.id}
-                onClick={() => onStudentClick(student)}
-                className={`w-full text-left bg-white border rounded-lg px-3 py-2 transition-colors ${isChurned ? 'border-rose-100 hover:border-rose-300' : 'border-emerald-100 hover:border-emerald-300'}`}
-              >
-                <p className="text-xs font-medium text-gray-800 truncate">{student.name}</p>
-                <div className="flex items-center justify-between mt-0.5">
-                  {student.grade && <span className="text-[10px] text-gray-400">{student.grade}</span>}
-                  {isChurned
-                    ? churnLabel && <span className="text-[10px] font-semibold text-rose-500">{churnLabel}</span>
-                    : typeof amount === 'number' && amount > 0 && (
-                        <span className="text-[10px] font-semibold text-emerald-600">{formatMan(amount)}</span>
-                      )}
-                </div>
-              </button>
-            );
-          })}
-          {students.length === 0 && (
-            <p className="text-[10px] text-gray-300 text-center pt-2">비어 있음</p>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col w-44 shrink-0">
@@ -183,49 +114,6 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
   const [paymentTarget, setPaymentTarget] = useState<Student | null>(null);
   // 경과 일수 계산 기준 시각 — 마운트 시 1회 캡처 (render 중 Date.now 직접 호출 회피)
   const [nowMs] = useState(() => Date.now());
-  const [enrolledStudents, setEnrolledStudents] = useState<Student[]>([]);
-  // 이번 달 이탈 리드 — 표시 전용 9단계 컬럼용
-  const [churnedStudents, setChurnedStudents] = useState<Student[]>([]);
-  // 학생별 총 결제액 (id 우선, 없으면 이름) — 환불(음수) 포함 순액
-  const [paidAmounts, setPaidAmounts] = useState<Record<string, number>>({});
-
-  // 결제 완료(수업 중) 리드 + 결제액 — 표시 전용 8단계 컬럼용 별도 조회
-  useEffect(() => {
-    if (!adminKey) return;
-    const headers = { 'x-admin-key': adminKey };
-    Promise.all([
-      fetch('/api/crm/students?lead_status=enrolled', { headers }).then(r => (r.ok ? r.json() : { data: [] })),
-      fetch('/api/crm/payments', { headers }).then(r => (r.ok ? r.json() : { data: [] })),
-    ])
-      .then(([studentsJson, paymentsJson]) => {
-        setEnrolledStudents((studentsJson.data ?? []).filter((s: Student) => s.funnel_stage === '8'));
-        const map: Record<string, number> = {};
-        for (const p of (paymentsJson.data ?? []) as { student_id?: string | null; student_name?: string | null; amount?: number }[]) {
-          const key = p.student_id || p.student_name;
-          if (!key || typeof p.amount !== 'number') continue;
-          map[key] = (map[key] ?? 0) + p.amount;
-        }
-        setPaidAmounts(map);
-      })
-      .catch(() => {});
-  }, [adminKey]);
-
-  // 이번 달 이탈 리드 — 표시 전용 9단계 컬럼용 별도 조회 (현재 달력 월 이탈 건만)
-  useEffect(() => {
-    if (!adminKey) return;
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    fetch('/api/crm/students?lead_status=inactive&stage=churned', { headers: { 'x-admin-key': adminKey } })
-      .then(r => (r.ok ? r.json() : { data: [] }))
-      .then(({ data }) => {
-        const thisMonth = ((data ?? []) as Student[]).filter((s) => {
-          const at = churnedAt(s);
-          return !!at && new Date(at).getTime() >= monthStart;
-        });
-        setChurnedStudents(thisMonth);
-      })
-      .catch(() => {});
-  }, [adminKey]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const columnRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -254,18 +142,6 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
 
   const getStudentsForStage = useCallback(
     (stage: FunnelStage) => {
-      // 8단계는 표시 전용 — 결제 완료(enrolled) 리드를 별도 목록에서 가져온다
-      if (stage === ENROLLED_STAGE) {
-        return [...enrolledStudents].sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      }
-      // 9단계는 표시 전용 — 이번 달 이탈 리드를 이탈일 최신순으로 가져온다
-      if (stage === CHURNED_STAGE) {
-        return [...churnedStudents].sort(
-          (a, b) => new Date(churnedAt(b) ?? 0).getTime() - new Date(churnedAt(a) ?? 0).getTime()
-        );
-      }
       const list = students.filter(
         s => s.funnel_stage === stage && s.lead_status === 'active' && !s.retry_strategy_id
       );
@@ -276,7 +152,7 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
     },
-    [students, enrolledStudents, churnedStudents]
+    [students]
   );
 
   const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id);
@@ -293,16 +169,12 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
 
     const student = students.find(s => s.id === active.id);
     if (!student) return;
-    // 결제 완료(enrolled) 리드는 8단계 표시 전용 — 드래그로 빼낼 수 없다
-    if (student.lead_status === 'enrolled') return;
 
     const targetStage = SALES_STAGES.includes(over.id as FunnelStage)
       ? (over.id as FunnelStage)
       : students.find(s => s.id === over.id && s.lead_status === 'active')?.funnel_stage;
 
     if (!targetStage) return;
-    // 8단계(수업 중)로는 드롭 불가 — 결제로만 진입 (active 리드가 8단계로 가면 데이터 불일치)
-    if (targetStage === ENROLLED_STAGE) return;
 
     // 컬럼 간 이동
     if (targetStage !== student.funnel_stage) {
@@ -337,11 +209,11 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
       >
         <div ref={scrollContainerRef} className="w-full overflow-x-auto pt-2" style={{ transform: 'rotateX(180deg)' }}>
           <div className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden w-max min-w-full" style={{ transform: 'rotateX(180deg)' }}>
-            {ALL_COLUMNS.map((stage, i) => (
+            {SALES_STAGES.map((stage, i) => (
               <div
                 key={stage}
                 ref={el => { columnRefs.current[stage] = el; }}
-                className={`flex ${i < ALL_COLUMNS.length - 1 ? 'border-r border-gray-200' : ''}`}
+                className={`flex ${i < SALES_STAGES.length - 1 ? 'border-r border-gray-200' : ''}`}
               >
                 <KanbanColumn
                   stage={stage}
@@ -351,10 +223,7 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
                   onChurn={setChurnTarget}
                   onPayment={setPaymentTarget}
                   onAdd={undefined}
-                  isSearchMatch={!!searchQuery?.trim() && stage !== ENROLLED_STAGE && stage !== CHURNED_STAGE && getStudentsForStage(stage).length > 0}
-                  readOnly={stage === ENROLLED_STAGE || stage === CHURNED_STAGE}
-                  readOnlyTone={stage === CHURNED_STAGE ? 'churned' : 'enrolled'}
-                  paidAmounts={stage === ENROLLED_STAGE ? paidAmounts : undefined}
+                  isSearchMatch={!!searchQuery?.trim() && getStudentsForStage(stage).length > 0}
                 />
               </div>
             ))}
