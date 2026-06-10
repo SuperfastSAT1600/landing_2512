@@ -37,12 +37,21 @@ function getSignal(actual: number, expected: number): '🟢' | '🟡' | '🔴' |
 
 // ── Layer 1: Hero Widget ──────────────────────────────────────────────────────
 
-function HeroWidget({ weekly }: { weekly: WeeklyStats }) {
-  const { this_week_total, weekly_target, pace_prediction, yoy_week_total,
-          yoy_week_label, week_label, days_elapsed, week_start } = weekly;
+function HeroWidget({
+  weekly,
+  onAddSpend,
+}: {
+  weekly: WeeklyStats;
+  onAddSpend: (group: 'META' | '구글 SEO') => void;
+}) {
+  const {
+    this_week_total, weekly_target, pace_prediction, yoy_week_total,
+    yoy_week_label, week_label, days_elapsed, week_start,
+    this_week_contact_rate, this_week_conversion_rate,
+    this_week_revenue, this_week_roas, this_week_ad_spend,
+  } = weekly;
 
   const progress = Math.min((this_week_total / weekly_target) * 100, 100);
-  const dayOfWeek = DAY_LABELS[new Date(week_start + 'T12:00:00').getUTCDay()];
   const todayLabel = days_elapsed === 7 ? '일요일 기준' : `${DAY_LABELS[new Date().getUTCDay()]}요일 기준`;
 
   const progressColor =
@@ -65,9 +74,9 @@ function HeroWidget({ weekly }: { weekly: WeeklyStats }) {
     '🔴 목표 미달 예상';
 
   return (
-    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-6">
+    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-6 space-y-5">
       {/* Title row */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${statusDot} animate-pulse`} />
           <span className="text-white font-semibold">이번 주 리드 인입</span>
@@ -76,62 +85,78 @@ function HeroWidget({ weekly }: { weekly: WeeklyStats }) {
         <span className="text-xs text-gray-500">{paceStatus}</span>
       </div>
 
-      {/* Progress */}
-      <div className="flex items-end gap-3 mb-3">
-        <span className="text-4xl font-bold text-white">{this_week_total}</span>
-        <span className="text-lg text-gray-500 mb-1">/ {weekly_target}개 목표</span>
+      {/* Progress bar */}
+      <div>
+        <div className="flex items-end gap-3 mb-2">
+          <span className="text-4xl font-bold text-white">{this_week_total}</span>
+          <span className="text-lg text-gray-500 mb-1">/ {weekly_target}개 목표</span>
+          <span className="text-sm text-gray-500 mb-1 ml-auto">
+            {this_week_total >= weekly_target
+              ? <span className="text-emerald-400">달성!</span>
+              : <span>{weekly_target - this_week_total}개 남음</span>}
+          </span>
+        </div>
+        <div className="w-full bg-white/5 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full transition-all duration-500 ${progressColor}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className="flex justify-between mt-1.5 text-xs text-gray-600">
+          <span>주말 예상 {pace_prediction}개 ({days_elapsed}일 경과)</span>
+          <span>
+            {yoy_week_total != null
+              ? `작년 동기 ${yoy_week_total}개 (${yoyDiff != null ? `${yoyDiff >= 0 ? '+' : ''}${yoyDiff}%` : '—'})`
+              : '작년 데이터 없음'}
+          </span>
+        </div>
       </div>
 
-      <div className="w-full bg-white/5 rounded-full h-2 mb-4">
-        <div
-          className={`h-2 rounded-full transition-all duration-500 ${progressColor}`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4">
-        {/* Pace */}
-        <div>
-          <p className="text-xs text-gray-500 mb-1">주말까지 예상</p>
-          <p className={`text-lg font-bold ${pace_prediction >= weekly_target ? 'text-emerald-400' : 'text-amber-400'}`}>
-            {pace_prediction}개
-          </p>
-          <p className="text-xs text-gray-600">{days_elapsed}일 경과 기준</p>
-        </div>
-
-        {/* Gap to target */}
-        <div>
-          <p className="text-xs text-gray-500 mb-1">목표까지</p>
-          {this_week_total >= weekly_target ? (
-            <p className="text-lg font-bold text-emerald-400">달성!</p>
-          ) : (
-            <p className="text-lg font-bold text-white">{weekly_target - this_week_total}개 필요</p>
-          )}
-          <p className="text-xs text-gray-600">{fmtRate(progress)} 달성</p>
-        </div>
-
-        {/* YoY */}
-        <div>
-          <p className="text-xs text-gray-500 mb-1">작년 동기 비교</p>
-          {yoy_week_total != null ? (
+      {/* 5대 핵심 지표 */}
+      <div className="grid grid-cols-5 gap-3 pt-1 border-t border-white/5">
+        <KpiCell label="인입" value={`${this_week_total}명`} />
+        <KpiCell label="컨택 성공률" value={fmtRate(this_week_contact_rate)} />
+        <KpiCell label="결제 전환율" value={fmtRate(this_week_conversion_rate)} />
+        <KpiCell label="결제금액" value={`${fmt(this_week_revenue)}원`} />
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-gray-500">ROAS</span>
+          {this_week_roas != null ? (
             <>
-              <p className={`text-lg font-bold ${
-                yoyDiff == null ? 'text-gray-400' :
-                yoyDiff >= 0 ? 'text-emerald-400' : 'text-red-400'
-              }`}>
-                {yoyDiff != null ? `${yoyDiff >= 0 ? '+' : ''}${yoyDiff}%` : '—'}
-              </p>
-              <p className="text-xs text-gray-600">{yoy_week_label}: {yoy_week_total}개</p>
+              <span className={`text-lg font-bold ${this_week_roas >= 1 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {this_week_roas.toFixed(2)}x
+              </span>
+              <span className="text-xs text-gray-600">{fmt(this_week_ad_spend)}원 지출</span>
             </>
           ) : (
             <>
-              <p className="text-lg font-bold text-gray-600">—</p>
-              <p className="text-xs text-gray-600">작년 데이터 없음</p>
+              <span className="text-lg font-bold text-gray-600">—</span>
+              <div className="flex gap-1 mt-0.5">
+                <button
+                  onClick={() => onAddSpend('META')}
+                  className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded px-1.5 py-0.5 transition-colors"
+                >
+                  META
+                </button>
+                <button
+                  onClick={() => onAddSpend('구글 SEO')}
+                  className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded px-1.5 py-0.5 transition-colors"
+                >
+                  구글
+                </button>
+              </div>
             </>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function KpiCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs text-gray-500">{label}</span>
+      <span className="text-lg font-bold text-white">{value}</span>
     </div>
   );
 }
@@ -571,7 +596,7 @@ export default function MarketingPage() {
           <div className="h-2 w-full bg-white/5 rounded" />
         </div>
       ) : weekly ? (
-        <HeroWidget weekly={weekly} />
+        <HeroWidget weekly={weekly} onAddSpend={(g) => setAdSpendModal(g)} />
       ) : null}
 
       {/* ── Layer 2: 채널별 현황 ── */}
