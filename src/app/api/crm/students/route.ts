@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
   const nameSearch = searchParams.get('name_search')?.trim();
   const statsOnly = searchParams.get('stats_only') === 'true';
   const retryStrategyId = searchParams.get('retry_strategy_id');
+  const isVip = searchParams.get('is_vip') === 'true' ? true : null;
 
   // 동명이인 감지용 — 모든 상태에서 이름만 검색
   if (nameSearch) {
@@ -112,6 +113,7 @@ export async function GET(request: NextRequest) {
     }
     if (stage) q = q.eq('funnel_stage', stage);
     if (search) q = q.ilike('name', `%${search}%`);
+    if (isVip) q = q.eq('is_vip', true);
     return q;
   };
 

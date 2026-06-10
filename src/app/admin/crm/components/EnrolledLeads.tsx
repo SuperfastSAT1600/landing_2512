@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Loader2, AlertCircle, GraduationCap, UserX, RotateCcw, Search, X } from 'lucide-react';
+import { Loader2, AlertCircle, GraduationCap, UserX, RotateCcw, Search, X, Crown } from 'lucide-react';
 import { Student, ChurnType } from '@/types/crm';
 import { ChurnModal } from './ChurnModal';
 import { RefundModal } from './RefundModal';
@@ -32,6 +32,11 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefu
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-sm text-gray-900">{student.name}</span>
           <span className="text-xs text-gray-500">{student.grade}</span>
+          {student.is_vip && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold tracking-wide">
+              <Crown size={9} />VIP
+            </span>
+          )}
           {student.desired_subjects && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">
               {student.desired_subjects}
@@ -70,10 +75,15 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefu
   );
 }
 
+type TabType = 'all' | 'vip';
+
 export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: EnrolledLeadsProps) {
+  const [tab, setTab] = useState<TabType>('all');
   const [students, setStudents] = useState<Student[]>([]);
+  const [vipStudents, setVipStudents] = useState<Student[]>([]);
   const [firstPaidMap, setFirstPaidMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [vipLoading, setVipLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [refundTarget, setRefundTarget] = useState<Student | null>(null);
@@ -90,6 +100,32 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
       .then(j => setTotalCount(j.data?.count ?? null))
       .catch(() => {});
   }, [adminKey]);
+
+  // VIP 탭 진입 시 VIP 학생 전체 로드
+  useEffect(() => {
+    if (tab !== 'vip') return;
+    setVipLoading(true);
+    Promise.all([
+      fetch('/api/crm/students?lead_status=enrolled&is_vip=true', { headers: { 'x-admin-key': adminKey } }),
+      fetch('/api/crm/payments', { headers: { 'x-admin-key': adminKey } }),
+    ])
+      .then(async ([studentsRes, paymentsRes]) => {
+        const studentsData = await studentsRes.json();
+        setVipStudents(studentsData.data ?? []);
+        if (paymentsRes.ok) {
+          const paymentsData = await paymentsRes.json();
+          const map: Record<string, string> = {};
+          for (const p of (paymentsData.data ?? [])) {
+            const name = p.student_name;
+            if (!name) continue;
+            if (!map[name] || p.paid_at < map[name]) map[name] = p.paid_at;
+          }
+          setFirstPaidMap(prev => ({ ...prev, ...map }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setVipLoading(false));
+  }, [tab, adminKey]);
 
   const fetchEnrolled = useCallback(async (query: string) => {
     setLoading(true);
@@ -123,6 +159,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   }, [adminKey]);
 
   useEffect(() => {
+    if (tab !== 'all') return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!searchQuery.trim()) {
       setStudents([]);
@@ -136,10 +173,11 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [searchQuery, fetchEnrolled]);
+  }, [searchQuery, fetchEnrolled, tab]);
 
   return (
     <div className="space-y-4">
+      {/* 헤더 + 탭 */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl shrink-0">
           <GraduationCap size={16} className="text-emerald-600" />
@@ -150,59 +188,111 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
             </span>
           )}
         </div>
-        <div className="relative flex-1 min-w-[180px]">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="이름 검색..."
-            className="w-full pl-8 pr-7 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-400 bg-white"
-            autoFocus
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <X size={13} />
-            </button>
-          )}
+        {/* 탭 */}
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 shrink-0">
+          <button
+            onClick={() => setTab('all')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              tab === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            전체
+          </button>
+          <button
+            onClick={() => setTab('vip')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              tab === 'vip' ? 'bg-amber-400 text-white shadow-sm' : 'text-gray-500 hover:text-amber-600'
+            }`}
+          >
+            <Crown size={11} />
+            VIP
+          </button>
         </div>
+        {/* 전체 탭 검색창 */}
+        {tab === 'all' && (
+          <div className="relative flex-1 min-w-[180px]">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="이름 검색..."
+              className="w-full pl-8 pr-7 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-400 bg-white"
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-12 text-gray-400">
-          <Loader2 size={18} className="animate-spin mr-2" />
-          <span className="text-sm">검색 중...</span>
-        </div>
-      ) : error ? (
-        <div className="flex items-center gap-2 py-8 justify-center text-red-500">
-          <AlertCircle size={16} />
-          <p className="text-sm">{error}</p>
-        </div>
-      ) : !hasSearched ? (
-        <div className="py-16 text-center text-sm text-gray-400">
-          이름을 입력하면 수업 중인 학생을 검색합니다.
-        </div>
-      ) : students.length === 0 ? (
-        <div className="py-16 text-center text-sm text-gray-400">
-          &quot;{searchQuery}&quot; 검색 결과가 없습니다.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <p className="text-xs text-gray-400">{students.length}명 검색됨</p>
-          {students.map(s => (
-            <EnrolledCard
-              key={s.id}
-              student={s}
-              firstPaidAt={firstPaidMap[s.name] ?? null}
-              onStudentClick={onStudentClick}
-              onGraduate={setChurnTarget}
-              onRefund={setRefundTarget}
-            />
-          ))}
-        </div>
+      {/* VIP 탭 */}
+      {tab === 'vip' && (
+        vipLoading ? (
+          <div className="flex items-center justify-center py-12 text-gray-400">
+            <Loader2 size={18} className="animate-spin mr-2" />
+            <span className="text-sm">불러오는 중...</span>
+          </div>
+        ) : vipStudents.length === 0 ? (
+          <div className="py-16 text-center text-sm text-gray-400">VIP 학생이 없습니다.</div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-gray-400">{vipStudents.length}명</p>
+            {vipStudents.map(s => (
+              <EnrolledCard
+                key={s.id}
+                student={s}
+                firstPaidAt={firstPaidMap[s.name] ?? null}
+                onStudentClick={onStudentClick}
+                onGraduate={setChurnTarget}
+                onRefund={setRefundTarget}
+              />
+            ))}
+          </div>
+        )
+      )}
+
+      {/* 전체 탭 */}
+      {tab === 'all' && (
+        loading ? (
+          <div className="flex items-center justify-center py-12 text-gray-400">
+            <Loader2 size={18} className="animate-spin mr-2" />
+            <span className="text-sm">검색 중...</span>
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-2 py-8 justify-center text-red-500">
+            <AlertCircle size={16} />
+            <p className="text-sm">{error}</p>
+          </div>
+        ) : !hasSearched ? (
+          <div className="py-16 text-center text-sm text-gray-400">
+            이름을 입력하면 수업 중인 학생을 검색합니다.
+          </div>
+        ) : students.length === 0 ? (
+          <div className="py-16 text-center text-sm text-gray-400">
+            &quot;{searchQuery}&quot; 검색 결과가 없습니다.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-gray-400">{students.length}명 검색됨</p>
+            {students.map(s => (
+              <EnrolledCard
+                key={s.id}
+                student={s}
+                firstPaidAt={firstPaidMap[s.name] ?? null}
+                onStudentClick={onStudentClick}
+                onGraduate={setChurnTarget}
+                onRefund={setRefundTarget}
+              />
+            ))}
+          </div>
+        )
       )}
 
       {churnTarget && (

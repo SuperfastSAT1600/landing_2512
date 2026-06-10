@@ -207,6 +207,7 @@ export interface Student {
   daily_action_done_at: string | null;
   sort_order: number | null;
   entered_by?: string | null;
+  is_vip: boolean | null;
   created_at: string;
   updated_at: string;
 }
