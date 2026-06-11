@@ -12,13 +12,12 @@ interface EnrolledLeadsProps {
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
 }
 
-function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefund, onVipToggle }: {
+function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefund }: {
   student: Student;
   firstPaidAt: string | null;
   onStudentClick: (s: Student) => void;
   onGraduate: (s: Student) => void;
   onRefund: (s: Student) => void;
-  onVipToggle: (s: Student) => void;
 }) {
   const enrolledDays = firstPaidAt
     ? Math.floor((Date.now() - new Date(firstPaidAt).getTime()) / (1000 * 60 * 60 * 24))
@@ -33,17 +32,11 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefu
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-sm text-gray-900">{student.name}</span>
           <span className="text-xs text-gray-500">{student.grade}</span>
-          <button
-            onClick={(e) => { e.stopPropagation(); onVipToggle(student); }}
-            title={student.is_vip ? 'VIP 해제' : 'VIP 설정'}
-            className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded font-bold tracking-wide transition-colors ${
-              student.is_vip
-                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                : 'text-gray-300 hover:text-amber-400'
-            }`}
-          >
-            <Crown size={9} />{student.is_vip ? 'VIP' : ''}
-          </button>
+          {student.is_vip && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded font-bold tracking-wide bg-amber-100 text-amber-700">
+              <Crown size={9} />VIP
+            </span>
+          )}
           {student.desired_subjects && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">
               {student.desired_subjects}
@@ -98,24 +91,6 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [hasSearched, setHasSearched] = useState(false);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  async function handleVipToggle(student: Student) {
-    const newVip = !student.is_vip;
-    const res = await fetch(`/api/crm/students/${student.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-      body: JSON.stringify({ is_vip: newVip }),
-    });
-    if (!res.ok) return;
-    const updated = { ...student, is_vip: newVip };
-    setStudents(prev => prev.map(s => s.id === student.id ? updated : s));
-    if (newVip) {
-      setVipStudents(prev => prev.some(s => s.id === student.id) ? prev : [...prev, updated]);
-    } else {
-      setVipStudents(prev => prev.filter(s => s.id !== student.id));
-    }
-    onStudentUpdate(student.id, { is_vip: newVip });
-  }
 
   useEffect(() => {
     fetch('/api/crm/students?lead_status=enrolled&stats_only=true', {
@@ -277,7 +252,6 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
                 onStudentClick={onStudentClick}
                 onGraduate={setChurnTarget}
                 onRefund={setRefundTarget}
-                onVipToggle={handleVipToggle}
               />
             ))}
           </div>
@@ -315,7 +289,6 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
                 onStudentClick={onStudentClick}
                 onGraduate={setChurnTarget}
                 onRefund={setRefundTarget}
-                onVipToggle={handleVipToggle}
               />
             ))}
           </div>

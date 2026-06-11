@@ -28,6 +28,25 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     usePanelData(student.id, adminKey, student);
 
   const [duplicateNames, setDuplicateNames] = useState<string[]>([]);
+  const [vipToggling, setVipToggling] = useState(false);
+
+  async function handleVipToggle() {
+    const newVip = !localStudent.is_vip;
+    setVipToggling(true);
+    try {
+      const res = await fetch(`/api/crm/students/${student.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ is_vip: newVip }),
+      });
+      if (res.ok) {
+        setLocalStudent(prev => ({ ...prev, is_vip: newVip }));
+        onUpdate(student.id, { is_vip: newVip });
+      }
+    } finally {
+      setVipToggling(false);
+    }
+  }
 
   useEffect(() => {
     if (!localStudent.name || localStudent.name.trim().length < 2) return;
@@ -174,6 +193,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               diagSearchQuery={diagHook.diagSearchQuery}
               setDiagSearchQuery={diagHook.setDiagSearchQuery}
               onDiagLink={diagHook.handleDiagLink}
+              onVipToggle={handleVipToggle}
+              vipToggling={vipToggling}
             />
 
             <StrategyHistorySection
