@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Link } from 'lucide-react';
+import { Pencil, Link, Crown } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { SCHOOL_TYPE_LABELS, TIMEZONE_OPTIONS } from '@/types/crm';
 import { SAT_PAST_MONTHS, formatSatDate } from '../constants';
@@ -50,6 +50,8 @@ interface Props {
   diagSearchQuery: string;
   setDiagSearchQuery: (v: string) => void;
   onDiagLink: (resultId: string | null) => void;
+  onVipToggle: () => void;
+  vipToggling?: boolean;
 }
 
 export function StudentInfoSection({
@@ -57,6 +59,7 @@ export function StudentInfoSection({
   onSaveEdit, onCancelEdit, scoreDisplay, adminKey,
   diagLinked, diagCandidates, showDiagPicker, setShowDiagPicker,
   diagLoading, diagSearchQuery, setDiagSearchQuery, onDiagLink,
+  onVipToggle, vipToggling,
 }: Props) {
   const actions = !isEditing ? (
     <button
@@ -139,6 +142,18 @@ export function StudentInfoSection({
           </div>
 
           <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
+            <button
+              onClick={onVipToggle}
+              disabled={vipToggling}
+              className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12px] font-medium transition-colors disabled:opacity-50 ${
+                localStudent.is_vip
+                  ? 'border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100'
+                  : 'border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50'
+              }`}
+            >
+              <Crown size={12} />
+              {localStudent.is_vip ? 'VIP 학생' : 'VIP 설정'}
+            </button>
             <button
               onClick={() => {
                 setShowDiagPicker(!showDiagPicker);

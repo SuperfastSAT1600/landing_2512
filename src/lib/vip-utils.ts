@@ -30,17 +30,11 @@ export function detectVipReasons(student: Pick<
     reasons.push('b2b');
   }
 
-  // 2. 시작 점수 1480+
+  // 2. 시작 점수 1480+ — 학생 정보에 입력된 점수만 사용
   const rw = student.previous_rw_score ?? 0;
   const math = student.previous_math_score ?? 0;
   if (rw + math >= 1480) {
     reasons.push('score');
-  } else {
-    // 메모에서 Superscore/최고점수 1480+ 패턴 감지
-    const matches = [...memo.matchAll(/(?:[Ss]uperscore|최고점수|최고\s*점수)?\s*(\d{4})\s*점/g)];
-    if (matches.some(m => parseInt(m[1]) >= 1480)) {
-      reasons.push('score');
-    }
   }
 
   // 3. 지인/파트너 소개 — 코치 추천 문구 제외
