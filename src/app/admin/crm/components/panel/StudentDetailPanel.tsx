@@ -59,6 +59,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
 
   const timelineHook = useTimeline({
     studentId: student.id, adminKey,
+    timeline,
     setTimeline,
     setPendingEdits: memoHook.setPendingEdits,
   });
@@ -200,6 +201,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               loadingFresh={loadingFresh}
               publishError={timelineHook.publishError}
               publishing={timelineHook.publishing}
+              memoSaving={timelineHook.memoSaving}
               aiLoadingFor={memoHook.aiLoadingFor}
               pendingEdits={memoHook.pendingEdits}
               setPendingEdits={memoHook.setPendingEdits}
@@ -207,6 +209,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               onPublish={timelineHook.handlePublish}
               onUnpublish={timelineHook.handleUnpublish}
               onDeleteAi={timelineHook.handleDeleteAi}
+              onEditMemo={timelineHook.handleEditMemo}
             />
 
             <PaymentHistorySection

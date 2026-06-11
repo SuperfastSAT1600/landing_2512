@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Check, ChevronUp, Pencil, Trash2 } from 'lucide-react';
+import { Sparkles, Check, ChevronUp, Pencil, Trash2, X } from 'lucide-react';
 import type { ConsultationEntry } from '@/types/crm';
 
 interface PendingEdit { purified: string; coachHistory: string; deletedItems: string[] }
@@ -11,16 +11,20 @@ interface Props {
   aiLoading: boolean;
   pendingEdit: PendingEdit | null;
   publishing: boolean;
+  memoSaving: boolean;
   onAiCare: () => void;
   onPublish: () => void;
   onChangePurified: (v: string) => void;
   onStartEdit: () => void;
   onDeleteAi: () => void;
+  onEditMemo: (newMemo: string) => Promise<boolean>;
 }
 
-export function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified, onStartEdit, onDeleteAi }: Props) {
+export function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, memoSaving, onAiCare, onPublish, onChangePurified, onStartEdit, onDeleteAi, onEditMemo }: Props) {
   const [aiExpanded, setAiExpanded] = useState(false);
   const [publishedExpanded, setPublishedExpanded] = useState(false);
+  const [editingMemo, setEditingMemo] = useState(false);
+  const [memoValue, setMemoValue] = useState(entry.raw_memo);
   const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
     year: 'numeric', month: 'long', day: 'numeric',
   });
@@ -54,10 +58,48 @@ export function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiC
             )}
           </div>
         </div>
-        <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
-          {entry.raw_memo}
-        </p>
-        {!hasAi && !entry.published && !aiLoading && !pendingEdit && (
+        {editingMemo ? (
+          <div className="mt-1">
+            <textarea
+              value={memoValue}
+              onChange={e => setMemoValue(e.target.value)}
+              rows={6}
+              className="w-full text-[13px] text-gray-800 bg-white border border-gray-300 focus:border-blue-400 rounded-lg px-3 py-2 leading-relaxed resize-y outline-none transition-colors"
+            />
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={async () => {
+                  const ok = await onEditMemo(memoValue);
+                  if (ok) setEditingMemo(false);
+                }}
+                disabled={memoSaving}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-xs font-bold text-white transition-colors"
+              >
+                <Check size={12} />{memoSaving ? '저장 중...' : '저장'}
+              </button>
+              <button
+                onClick={() => { setMemoValue(entry.raw_memo); setEditingMemo(false); }}
+                disabled={memoSaving}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg transition-colors"
+              >
+                <X size={11} />취소
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="group relative">
+            <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
+              {entry.raw_memo}
+            </p>
+            <button
+              onClick={() => { setMemoValue(entry.raw_memo); setEditingMemo(true); }}
+              className="mt-1.5 flex items-center gap-1 text-[11px] text-gray-300 hover:text-gray-500 transition-colors"
+            >
+              <Pencil size={10} />원본 수정
+            </button>
+          </div>
+        )}
+        {!editingMemo && !hasAi && !entry.published && !aiLoading && !pendingEdit && (
           <button
             onClick={onAiCare}
             className="mt-2.5 flex items-center gap-1.5 text-xs text-purple-500 hover:text-purple-600 transition-colors"
