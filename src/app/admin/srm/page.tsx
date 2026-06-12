@@ -6,6 +6,7 @@ import { ScheduleList } from './components/ScheduleList';
 import { AlertSection } from './components/AlertSection';
 import { StudentPanel } from './components/StudentPanel';
 import { OpsTaskList } from './components/OpsTaskList';
+import { StudentSearch } from './components/StudentSearch';
 import { MatchQueue } from './components/MatchQueue';
 import { StudentRoster } from './components/StudentRoster';
 import type { ScheduleResponse } from '@/app/api/admin/srm/schedule/route';
@@ -113,7 +114,10 @@ export default function SrmPage() {
       )}
 
       {mainTab === 'ops' && (
-        <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
+        <>
+          <StudentSearch onSelect={handleRosterStudentClick} />
+          <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
+        </>
       )}
 
       {mainTab === 'link' && (
