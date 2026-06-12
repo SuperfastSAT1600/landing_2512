@@ -145,10 +145,14 @@ export function StudentInfoSection({
             <button
               onClick={onVipToggle}
               disabled={vipToggling}
-              className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-[12px] font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg text-[12px] font-medium transition-colors disabled:opacity-50 ${
+                localStudent.is_vip
+                  ? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                  : 'border-gray-200 bg-white text-gray-400 hover:bg-gray-50'
+              }`}
             >
-              <Crown size={12} className={localStudent.is_vip ? 'text-amber-500' : 'text-gray-400'} />
-              VIP 학생
+              <Crown size={12} className={localStudent.is_vip ? 'text-amber-500' : 'text-gray-300'} />
+              <span className={localStudent.is_vip ? 'text-amber-700' : 'text-gray-400'}>VIP 학생</span>
               <span className={`relative inline-flex h-4 w-7 shrink-0 rounded-full transition-colors duration-200 ${localStudent.is_vip ? 'bg-amber-400' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-3 w-3 rounded-full bg-white shadow-sm mt-0.5 transition-transform duration-200 ${localStudent.is_vip ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
               </span>
