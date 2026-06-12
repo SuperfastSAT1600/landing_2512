@@ -9,6 +9,7 @@ interface Post {
     title: string;
     date: string;
     category: string;
+    author?: string;
     isPublished: boolean;
     toggling?: boolean;
 }
@@ -81,7 +82,8 @@ export default function AdminPage() {
 
     const filteredPosts = posts.filter(post =>
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.category.toLowerCase().includes(searchTerm.toLowerCase())
+        post.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (post.author ?? '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
@@ -130,7 +132,7 @@ export default function AdminPage() {
                                             {post.title}
                                         </h3>
                                         <p className="text-xs text-gray-500 flex items-center gap-2">
-                                            <span className="truncate">By Admin</span>
+                                            <span className="truncate">By {post.author || 'SuperfastSAT'}</span>
                                             <span>•</span>
                                             <span>{post.date}</span>
                                         </p>

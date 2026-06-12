@@ -8,7 +8,7 @@ const optionalStr = z.string().optional().or(z.literal('').transform(() => undef
 
 const PostSchema = z.object({
     title: z.string().min(1, "Title is required"),
-    slug: z.string().regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens").optional().or(z.literal('')).or(z.null().transform(() => undefined)),
+    slug: z.string().regex(/^[a-z0-9가-힣-]+$/, "Slug must be lowercase alphanumeric, Korean, or hyphens").optional().or(z.literal('')).or(z.null().transform(() => undefined)),
     date: optionalStr,
     category: z.string().default("SAT RW"),
     excerpt: optionalStr,
@@ -143,11 +143,13 @@ export async function POST(request: NextRequest) {
         if (!finalSlug) {
             finalSlug = title
                 .toLowerCase()
-                .replace(/ /g, '-')
-                .replace(/[^\w-]+/g, '');
+                .replace(/\s+/g, '-')
+                .replace(/[^\w가-힣-]/g, '')
+                .replace(/-+/g, '-')
+                .replace(/^-+|-+$/g, '');
         }
 
-        if (!/^[a-z0-9-]+$/.test(finalSlug)) {
+        if (!finalSlug || !/^[a-z0-9가-힣-]+$/.test(finalSlug)) {
             return NextResponse.json({ success: false, error: "Invalid slug format generated" }, { status: 400 });
         }
 
@@ -215,7 +217,7 @@ export async function PATCH(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
 
-        if (!id || !/^[a-z0-9-]+$/.test(id)) {
+        if (!id || !/^[a-z0-9가-힣-]+$/.test(id)) {
             return NextResponse.json({ success: false, error: "Invalid post ID" }, { status: 400 });
         }
 
@@ -255,7 +257,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ success: false, error: "No ID provided" }, { status: 400 });
         }
 
-        if (!/^[a-z0-9-]+$/.test(id)) {
+        if (!/^[a-z0-9가-힣-]+$/.test(id)) {
             return NextResponse.json({ success: false, error: "Invalid post ID" }, { status: 400 });
         }
 
