@@ -13,8 +13,8 @@ async function getFulltestResults() {
   if (error) throw new Error(error.message);
 
   const sms = createClient(
-    process.env.SMS_SUPABASE_URL!,
-    process.env.SMS_SUPABASE_SERVICE_KEY!,
+    process.env.SUPERFASTSAT_V2_SUPABASE_URL!,
+    process.env.SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY!,
   );
   const { data: units } = await sms
     .from('units')

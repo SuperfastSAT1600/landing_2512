@@ -13,8 +13,8 @@ const MODULE_ORDER: Record<string, { section: string; order: number }> = {
 };
 
 export async function GET() {
-  const smsUrl = process.env.SMS_SUPABASE_URL;
-  const smsKey = process.env.SMS_SUPABASE_SERVICE_KEY;
+  const smsUrl = process.env.SUPERFASTSAT_V2_SUPABASE_URL;
+  const smsKey = process.env.SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY;
   if (!smsUrl || !smsKey) {
     return NextResponse.json({ error: 'SMS Supabase not configured' }, { status: 500 });
   }
