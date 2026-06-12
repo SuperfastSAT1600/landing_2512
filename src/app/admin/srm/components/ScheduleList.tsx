@@ -16,13 +16,13 @@ function toTimeStr(iso: string, tz: string): string {
 function buildCopyMessage(ev: ScheduleEvent): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
 
-  const localParts = ev.students.map((name, i) => {
+  const localParts = ev.students.map((_name, i) => {
     const tz = ev.studentTimezones?.[i];
     if (!tz || tz === 'Asia/Seoul') return null;
     try {
       const localTime = toTimeStr(ev.startsAt, tz);
       if (localTime === kstTime) return null;
-      return `${name} ${localTime}(현지 시간)`;
+      return `${tzToRegion(tz)} 기준 ${localTime}`;
     } catch {
       return null;
     }
@@ -46,6 +46,8 @@ const TZ_REGION: Record<string, string> = {
   'Europe/Helsinki': '유럽 동부', 'Europe/Athens': '유럽 동부',
   'Asia/Tokyo': '일본', 'Asia/Shanghai': '중국', 'Asia/Hong_Kong': '홍콩',
   'Asia/Singapore': '싱가포르', 'Asia/Bangkok': '태국',
+  'Asia/Ho_Chi_Minh': '베트남', 'Asia/Saigon': '베트남',
+  'Asia/Jakarta': '인도네시아', 'Asia/Kuala_Lumpur': '말레이시아',
   'Australia/Sydney': '호주 동부', 'Australia/Melbourne': '호주 동부',
   'Australia/Perth': '호주 서부',
   'Pacific/Auckland': '뉴질랜드',
