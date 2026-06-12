@@ -26,12 +26,16 @@ function getAdminName() {
 }
 
 interface Props {
-  studentId: string;
+  // sfv2ProfileId: v2 유저 기준으로 열 때 (스케줄, 알림 등)
+  // crmStudentId: CRM 학생 기준으로 열 때 (명단 탭)
+  // 둘 중 하나는 반드시 있어야 함
+  studentId?: string;       // sfv2 profile ID (기존 호환)
+  crmStudentId?: string;    // CRM student ID
   studentName: string;
   onClose: () => void;
 }
 
-export function StudentPanel({ studentId, studentName, onClose }: Props) {
+export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('comm');
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [comms, setComms] = useState<CommEntry[]>([]);
@@ -39,19 +43,33 @@ export function StudentPanel({ studentId, studentName, onClose }: Props) {
   const [loadingComms, setLoadingComms] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // comm 로그 키: sfv2ProfileId 있으면 그걸 쓰고, 없으면 crmStudentId
+  const commKey = studentId ?? crmStudentId ?? '';
+
   const fetchDetail = useCallback(async () => {
     setLoadingDetail(true);
-    const res = await fetch(`/api/admin/srm/student/${studentId}`);
-    setDetail(await res.json());
+    if (studentId) {
+      // sfv2 profile ID 기준: 기존 API 그대로
+      const res = await fetch(`/api/admin/srm/student/${studentId}`);
+      setDetail(await res.json());
+    } else if (crmStudentId) {
+      // CRM student ID 기준: CRM 데이터만 표시
+      const res = await fetch(`/api/admin/srm/student/crm/${crmStudentId}`);
+      if (res.ok) {
+        setDetail(await res.json());
+      } else {
+        setDetail({ profile: null, crmStudent: null });
+      }
+    }
     setLoadingDetail(false);
-  }, [studentId]);
+  }, [studentId, crmStudentId]);
 
   const fetchComms = useCallback(async () => {
     setLoadingComms(true);
-    const res = await fetch(`/api/admin/srm/communications?studentId=${studentId}`);
+    const res = await fetch(`/api/admin/srm/communications?studentId=${commKey}`);
     setComms(await res.json());
     setLoadingComms(false);
-  }, [studentId]);
+  }, [commKey]);
 
   useEffect(() => {
     fetchDetail();
@@ -64,7 +82,7 @@ export function StudentPanel({ studentId, studentName, onClose }: Props) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        studentId,
+        studentId: commKey,
         studentName,
         author: getAdminName(),
         ...data,
@@ -78,13 +96,12 @@ export function StudentPanel({ studentId, studentName, onClose }: Props) {
 
   const timeline: ConsultationEntry[] = detail?.crmStudent?.consultation_timeline ?? [];
   const isLinked = !!detail?.crmStudent;
+  const resolvedCrmStudentId = crmStudentId ?? detail?.crmStudent?.id;
 
   return (
     <>
-      {/* 배경 오버레이 */}
       <div className="fixed inset-0 bg-black/40 z-30" onClick={onClose} />
 
-      {/* 패널 */}
       <div className="fixed right-0 top-0 h-full w-[420px] bg-[#1a1c1f] border-l border-white/10 z-40 flex flex-col shadow-2xl">
         {/* 헤더 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
@@ -94,7 +111,9 @@ export function StudentPanel({ studentId, studentName, onClose }: Props) {
               <div className="h-3 w-24 bg-white/10 rounded animate-pulse mt-1" />
             ) : (
               <p className="text-xs text-gray-500 mt-0.5">
-                {detail?.profile?.grade ?? ''}{isLinked ? ` · CRM 연결됨` : ''}
+                {detail?.profile?.grade ?? ''}
+                {studentId && isLinked ? ' · CRM 연결됨' : ''}
+                {!studentId && crmStudentId ? ' · CRM' : ''}
               </p>
             )}
           </div>
@@ -131,15 +150,18 @@ export function StudentPanel({ studentId, studentName, onClose }: Props) {
 
           {tab === 'lifecycle' && (
             <LifecycleTab
-              profileId={studentId}
-              studentId={detail?.crmStudent?.id}
+              profileId={studentId ?? ''}
+              studentId={resolvedCrmStudentId}
             />
           )}
 
           {tab === 'crm' && (
             <div className="space-y-4">
-              {!loadingDetail && !isLinked && (
+              {!loadingDetail && !isLinked && studentId && (
                 <CrmLinkSection sfv2ProfileId={studentId} onLinked={handleLinked} />
+              )}
+              {!loadingDetail && !isLinked && !studentId && (
+                <p className="text-xs text-gray-500">v2 계정과 연결하려면 연결 탭을 이용하세요.</p>
               )}
 
               {loadingDetail && (
