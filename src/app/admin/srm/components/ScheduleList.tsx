@@ -34,16 +34,37 @@ function buildCopyMessage(ev: ScheduleEvent): string {
   return msg;
 }
 
+const TZ_REGION: Record<string, string> = {
+  'America/Los_Angeles': '미국 서부', 'America/Vancouver': '미국 서부',
+  'America/Denver': '미국 산악', 'America/Phoenix': '미국 산악', 'America/Boise': '미국 산악',
+  'America/Chicago': '미국 중부', 'America/Winnipeg': '미국 중부',
+  'America/New_York': '미국 동부', 'America/Toronto': '미국 동부', 'America/Detroit': '미국 동부',
+  'Pacific/Honolulu': '하와이',
+  'America/Anchorage': '알래스카',
+  'Europe/London': '영국', 'Europe/Dublin': '영국',
+  'Europe/Paris': '유럽 중부', 'Europe/Berlin': '유럽 중부', 'Europe/Amsterdam': '유럽 중부',
+  'Europe/Helsinki': '유럽 동부', 'Europe/Athens': '유럽 동부',
+  'Asia/Tokyo': '일본', 'Asia/Shanghai': '중국', 'Asia/Hong_Kong': '홍콩',
+  'Asia/Singapore': '싱가포르', 'Asia/Bangkok': '태국',
+  'Australia/Sydney': '호주 동부', 'Australia/Melbourne': '호주 동부',
+  'Australia/Perth': '호주 서부',
+  'Pacific/Auckland': '뉴질랜드',
+};
+
+function tzToRegion(tz: string): string {
+  return TZ_REGION[tz] ?? tz.split('/').pop()?.replace(/_/g, ' ') ?? tz;
+}
+
 function buildStudyHallCopyMessage(ev: ScheduleEvent): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
 
-  const localParts = ev.students.map((name, i) => {
+  const localParts = ev.students.map((_name, i) => {
     const tz = ev.studentTimezones?.[i];
     if (!tz || tz === 'Asia/Seoul') return null;
     try {
       const localTime = toTimeStr(ev.startsAt, tz);
       if (localTime === kstTime) return null;
-      return `${name} 기준 ${localTime}`;
+      return `${tzToRegion(tz)} 기준 ${localTime}`;
     } catch {
       return null;
     }
