@@ -132,7 +132,13 @@ export default function AdminPage() {
                                         <h3 className="text-white font-bold text-sm mb-1 group-hover:text-blue-400 transition-colors truncate">
                                             {post.title}
                                         </h3>
-                                        <p className="text-xs text-gray-500">{post.date}</p>
+                                        <p className="text-xs text-gray-500 flex items-center gap-2">
+                                            <span className={/^-|--|-$/.test(post.id) ? 'text-orange-400 font-mono' : 'text-gray-600 font-mono'}>
+                                                {post.id}
+                                            </span>
+                                            <span>·</span>
+                                            <span>{post.date}</span>
+                                        </p>
                                     </Link>
                                 </div>
                                 <div className="col-span-2 text-sm text-gray-400 truncate">
