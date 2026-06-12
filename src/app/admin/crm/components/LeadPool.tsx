@@ -251,6 +251,7 @@ export function LeadPool({
   const [statsInactive, setStatsInactive] = useState<number | null>(null);
   const [statsReactivating, setStatsReactivating] = useState<number | null>(null);
   const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchCounterRef = useRef(0);
 
   // 초기 로드: 카운트만 가져옴
   useEffect(() => {
@@ -268,6 +269,7 @@ export function LeadPool({
 
   const fetchPoolStudents = useCallback(
     async (search: string) => {
+      const requestId = ++fetchCounterRef.current;
       setPoolLoading(true);
       setPoolError(null);
       try {
@@ -277,11 +279,13 @@ export function LeadPool({
         );
         if (!res.ok) throw new Error('리드풀 데이터를 불러오지 못했습니다.');
         const data = await res.json();
+        if (requestId !== fetchCounterRef.current) return;
         setStudents(data.data ?? []);
       } catch (err) {
+        if (requestId !== fetchCounterRef.current) return;
         setPoolError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
       } finally {
-        setPoolLoading(false);
+        if (requestId === fetchCounterRef.current) setPoolLoading(false);
       }
     },
     [adminKey]

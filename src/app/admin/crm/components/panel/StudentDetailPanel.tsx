@@ -8,6 +8,7 @@ import { PaymentModal } from '../PaymentModal';
 import { usePanelData } from './hooks/usePanelData';
 import { useEditForm } from './hooks/useEditForm';
 import { useMemoSection } from './hooks/useMemoSection';
+import { useCallRecording } from './hooks/useCallRecording';
 import { useTimeline } from './hooks/useTimeline';
 import { useFunnel } from './hooks/useFunnel';
 import { useDiagnostic } from './hooks/useDiagnostic';
@@ -28,6 +29,25 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     usePanelData(student.id, adminKey, student);
 
   const [duplicateNames, setDuplicateNames] = useState<string[]>([]);
+  const [vipToggling, setVipToggling] = useState(false);
+
+  async function handleVipToggle() {
+    const newVip = !localStudent.is_vip;
+    setVipToggling(true);
+    try {
+      const res = await fetch(`/api/crm/students/${student.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ is_vip: newVip }),
+      });
+      if (res.ok) {
+        setLocalStudent(prev => ({ ...prev, is_vip: newVip }));
+        onUpdate(student.id, { is_vip: newVip });
+      }
+    } finally {
+      setVipToggling(false);
+    }
+  }
 
   useEffect(() => {
     if (!localStudent.name || localStudent.name.trim().length < 2) return;
@@ -57,8 +77,16 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     onUpdate: (id, updates) => onUpdate(id, updates as Partial<Student>),
   });
 
+  // 통화 녹음 → 전사·요약 결과를 메모 입력란에 채움(상담사 검토 후 "메모 저장")
+  const callHook = useCallRecording({
+    studentId: student.id, adminKey,
+    onSummary: (summary) =>
+      memoHook.setMemoText((prev) => (prev.trim() ? `${prev}\n\n${summary}` : summary)),
+  });
+
   const timelineHook = useTimeline({
     studentId: student.id, adminKey,
+    timeline,
     setTimeline,
     setPendingEdits: memoHook.setPendingEdits,
   });
@@ -173,6 +201,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               diagSearchQuery={diagHook.diagSearchQuery}
               setDiagSearchQuery={diagHook.setDiagSearchQuery}
               onDiagLink={diagHook.handleDiagLink}
+              onVipToggle={handleVipToggle}
+              vipToggling={vipToggling}
             />
 
             <StrategyHistorySection
@@ -193,6 +223,11 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               memoError={memoHook.memoError}
               setMemoError={memoHook.setMemoError}
               onAddMemo={memoHook.handleAddMemo}
+              recording={callHook.recording}
+              processing={callHook.processing}
+              elapsedSec={callHook.elapsedSec}
+              recordError={callHook.recordError}
+              onToggleRecord={callHook.toggle}
             />
 
             <TimelineSection
@@ -200,6 +235,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               loadingFresh={loadingFresh}
               publishError={timelineHook.publishError}
               publishing={timelineHook.publishing}
+              memoSaving={timelineHook.memoSaving}
               aiLoadingFor={memoHook.aiLoadingFor}
               pendingEdits={memoHook.pendingEdits}
               setPendingEdits={memoHook.setPendingEdits}
@@ -207,6 +243,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               onPublish={timelineHook.handlePublish}
               onUnpublish={timelineHook.handleUnpublish}
               onDeleteAi={timelineHook.handleDeleteAi}
+              onEditMemo={timelineHook.handleEditMemo}
             />
 
             <PaymentHistorySection

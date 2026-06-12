@@ -65,8 +65,8 @@ export async function GET(request: NextRequest) {
     .select(
       'id, name, funnel_stage, stage_history, traffic_source, inquiry_date, created_at, retry_strategy_id'
     )
-    .or(`inquiry_date.gte.${from},and(inquiry_date.is.null,created_at.gte.${from})`)
-    .or(`inquiry_date.lte.${to},and(inquiry_date.is.null,created_at.lte.${to})`);
+    .gte('inquiry_date', from)
+    .lte('inquiry_date', to);
 
   if (sErr) {
     return NextResponse.json({ error: { code: 'FETCH_FAILED', message: sErr.message } }, { status: 500 });
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
   const dailyMap = new Map<string, Map<MarketingGroup, number>>();
 
   for (const s of leadList) {
-    const date = (s.inquiry_date ?? s.created_at).slice(0, 10);
+    const date = s.inquiry_date!.slice(0, 10);
     const group = getMarketingGroup(s.traffic_source);
     if (!dailyMap.has(date)) dailyMap.set(date, new Map());
     const dayMap = dailyMap.get(date)!;

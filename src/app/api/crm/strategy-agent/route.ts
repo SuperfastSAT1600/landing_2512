@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import Anthropic from '@anthropic-ai/sdk';
 import { generateEmbedding } from '@/lib/embedding';
+import { anthropicErrorMessage } from '@/lib/anthropic-error';
 import { CHURN_TAG_OPTIONS } from '@/types/crm';
 import type { StrategyStudent, PastCase } from '@/lib/sales-strategy-context';
 import {
@@ -171,9 +172,7 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         if (!aborted) {
           console.error('[strategy-agent] Claude stream error:', err);
-          enqueue(
-            '\n\n[오류] AI 응답 생성에 실패했습니다. (웹 검색이 계정에 활성화되어 있는지 확인해주세요)'
-          );
+          enqueue('\n\n' + anthropicErrorMessage(err));
         }
       } finally {
         try {

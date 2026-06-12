@@ -101,9 +101,8 @@ function inRange(dateStr: string, from: string, to: string): boolean {
   return dateStr >= from && dateStr <= to;
 }
 
-// 학생의 인입일 결정 (inquiry_date 우선, fallback created_at)
-function getInquiryDate(s: Pick<StudentRow, 'inquiry_date' | 'created_at'>): string {
-  return (s.inquiry_date ?? s.created_at).slice(0, 10);
+function getInquiryDate(s: Pick<StudentRow, 'inquiry_date'>): string {
+  return s.inquiry_date!.slice(0, 10);
 }
 
 // ── GET handler ───────────────────────────────────────────────────────────────
@@ -165,12 +164,12 @@ export async function GET(request: NextRequest) {
     histLeads,
     yoyLeads,
   ] = await Promise.all([
-    // 이번 주 리드 (월~오늘)
+    // 이번 주 리드 (월~오늘) — inquiry_date 기준만 사용
     supabaseAdmin
       .from('students')
       .select('id, name, funnel_stage, stage_history, traffic_source, inquiry_date, created_at, retry_strategy_id')
-      .or(`inquiry_date.gte.${weekStart},and(inquiry_date.is.null,created_at.gte.${weekStart})`)
-      .or(`inquiry_date.lte.${todayStr},and(inquiry_date.is.null,created_at.lte.${todayStr})`)
+      .gte('inquiry_date', weekStart)
+      .lte('inquiry_date', todayStr)
       .then(({ data }) => (data ?? []) as StudentRow[]),
 
     // 이번 주 결제
@@ -189,20 +188,20 @@ export async function GET(request: NextRequest) {
       .lte('date', todayStr)
       .then(({ data }) => data ?? []),
 
-    // REQ-001: 12주 전체를 단일 쿼리 — traffic_source와 inquiry_date만 필요
+    // REQ-001: 12주 전체를 단일 쿼리 — inquiry_date 기준만 사용
     supabaseAdmin
       .from('students')
       .select('id, traffic_source, inquiry_date, created_at')
-      .or(`inquiry_date.gte.${histRangeStart},and(inquiry_date.is.null,created_at.gte.${histRangeStart})`)
-      .or(`inquiry_date.lte.${histRangeEnd},and(inquiry_date.is.null,created_at.lte.${histRangeEnd})`)
+      .gte('inquiry_date', histRangeStart)
+      .lte('inquiry_date', histRangeEnd)
       .then(({ data }) => (data ?? []) as Pick<StudentRow, 'id' | 'traffic_source' | 'inquiry_date' | 'created_at'>[]),
 
-    // YoY: 작년 동기 주 (stage_history 불필요 — 리드 수만 집계)
+    // YoY: 작년 동기 주 — inquiry_date 기준만 사용
     supabaseAdmin
       .from('students')
       .select('id, traffic_source, inquiry_date, created_at')
-      .or(`inquiry_date.gte.${yoyStart},and(inquiry_date.is.null,created_at.gte.${yoyStart})`)
-      .or(`inquiry_date.lte.${yoyEnd},and(inquiry_date.is.null,created_at.lte.${yoyEnd})`)
+      .gte('inquiry_date', yoyStart)
+      .lte('inquiry_date', yoyEnd)
       .then(({ data }) => (data ?? []) as Pick<StudentRow, 'id' | 'traffic_source' | 'inquiry_date' | 'created_at'>[]),
   ]);
 

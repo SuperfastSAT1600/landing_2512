@@ -8,13 +8,15 @@ interface PendingEdit { purified: string; coachHistory: string; deletedItems: st
 interface Params {
   studentId: string;
   adminKey: string;
+  timeline: ConsultationEntry[];
   setTimeline: (updater: (prev: ConsultationEntry[]) => ConsultationEntry[]) => void;
   setPendingEdits: (updater: (prev: Record<string, PendingEdit>) => Record<string, PendingEdit>) => void;
 }
 
-export function useTimeline({ studentId, adminKey, setTimeline, setPendingEdits }: Params) {
+export function useTimeline({ studentId, adminKey, timeline, setTimeline, setPendingEdits }: Params) {
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');
+  const [memoSaving, setMemoSaving] = useState<string | null>(null);
   const headers = { 'Content-Type': 'application/json', 'x-admin-key': adminKey };
 
   async function handlePublish(entryId: string, edit: PendingEdit) {
@@ -76,5 +78,27 @@ export function useTimeline({ studentId, adminKey, setTimeline, setPendingEdits 
     }
   }
 
-  return { publishing, publishError, handlePublish, handleUnpublish, handleDeleteAi };
+  async function handleEditMemo(entryId: string, newMemo: string): Promise<boolean> {
+    setMemoSaving(entryId);
+    try {
+      const updatedTimeline = timeline.map(e =>
+        e.id === entryId ? { ...e, raw_memo: newMemo } : e
+      );
+      const res = await fetch(`/api/crm/students/${studentId}`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({ consultation_timeline: updatedTimeline }),
+      });
+      if (res.ok) {
+        setTimeline(prev => prev.map(e => e.id === entryId ? { ...e, raw_memo: newMemo } : e));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      setMemoSaving(null);
+    }
+  }
+
+  return { publishing, publishError, memoSaving, handlePublish, handleUnpublish, handleDeleteAi, handleEditMemo };
 }

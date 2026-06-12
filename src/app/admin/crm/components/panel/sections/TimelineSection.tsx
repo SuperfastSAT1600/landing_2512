@@ -11,6 +11,7 @@ interface Props {
   loadingFresh: boolean;
   publishError: string;
   publishing: boolean;
+  memoSaving: string | null;
   aiLoadingFor: string | null;
   pendingEdits: Record<string, PendingEdit>;
   setPendingEdits: (updater: (prev: Record<string, PendingEdit>) => Record<string, PendingEdit>) => void;
@@ -18,11 +19,12 @@ interface Props {
   onPublish: (entryId: string, edit: PendingEdit) => void;
   onUnpublish: (entryId: string) => void;
   onDeleteAi: (entryId: string) => void;
+  onEditMemo: (entryId: string, newMemo: string) => Promise<boolean>;
 }
 
 export function TimelineSection({
-  timeline, loadingFresh, publishError, publishing, aiLoadingFor,
-  pendingEdits, setPendingEdits, onAiCare, onPublish, onDeleteAi,
+  timeline, loadingFresh, publishError, publishing, memoSaving, aiLoadingFor,
+  pendingEdits, setPendingEdits, onAiCare, onPublish, onDeleteAi, onEditMemo,
 }: Props) {
   return (
     <SectionCard
@@ -47,6 +49,7 @@ export function TimelineSection({
             aiLoading={aiLoadingFor === entry.id}
             pendingEdit={pendingEdits[entry.id] ?? null}
             publishing={publishing}
+            memoSaving={memoSaving === entry.id}
             onAiCare={() => onAiCare(entry)}
             onPublish={() => {
               const edit = pendingEdits[entry.id];
@@ -64,6 +67,7 @@ export function TimelineSection({
               },
             }))}
             onDeleteAi={() => onDeleteAi(entry.id)}
+            onEditMemo={(newMemo) => onEditMemo(entry.id, newMemo)}
           />
         ))}
       </div>
