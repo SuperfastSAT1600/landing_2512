@@ -34,6 +34,27 @@ function buildCopyMessage(ev: ScheduleEvent): string {
   return msg;
 }
 
+function buildStudyHallCopyMessage(ev: ScheduleEvent): string {
+  const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+
+  const localParts = ev.students.map((name, i) => {
+    const tz = ev.studentTimezones?.[i];
+    if (!tz || tz === 'Asia/Seoul') return null;
+    try {
+      const localTime = toTimeStr(ev.startsAt, tz);
+      if (localTime === kstTime) return null;
+      return `${name} 기준 ${localTime}`;
+    } catch {
+      return null;
+    }
+  }).filter(Boolean);
+
+  let timeInfo = `${kstTime}(한국 시간)`;
+  if (localParts.length > 0) timeInfo += `, ${localParts.join(' / ')}`;
+
+  return `오늘 스터디홀 접속 시간 ${timeInfo}이니 늦지 말고 출석하자구요!`;
+}
+
 interface StudentChip { id: string; name: string; }
 
 interface Props {
@@ -50,7 +71,7 @@ export function ScheduleList({ title, events, type, loading, onStudentClick }: P
   const completedIcon = '✓';
 
   const handleCopy = async (ev: ScheduleEvent) => {
-    const msg = buildCopyMessage(ev);
+    const msg = type === 'studyHall' ? buildStudyHallCopyMessage(ev) : buildCopyMessage(ev);
     await navigator.clipboard.writeText(msg);
     setCopiedId(ev.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -107,18 +128,16 @@ export function ScheduleList({ title, events, type, loading, onStudentClick }: P
                   )}
                 </span>
 
-                {type === 'coachRoom' && (
-                  <button
-                    onClick={() => handleCopy(ev)}
-                    title="수업 알림 메시지 복사"
-                    className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-gray-500 hover:text-blue-400"
-                  >
-                    {copiedId === ev.id
-                      ? <Check size={13} className="text-green-400" />
-                      : <Copy size={13} />
-                    }
-                  </button>
-                )}
+                <button
+                  onClick={() => handleCopy(ev)}
+                  title={type === 'studyHall' ? '스터디홀 알림 메시지 복사' : '수업 알림 메시지 복사'}
+                  className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-gray-500 hover:text-blue-400"
+                >
+                  {copiedId === ev.id
+                    ? <Check size={13} className="text-green-400" />
+                    : <Copy size={13} />
+                  }
+                </button>
               </div>
             );
           })}
