@@ -32,6 +32,7 @@ function daysFromNow(n: number) {
 }
 
 export async function GET() {
+  try {
   const now = new Date().toISOString();
   const past4w = weeksAgo(4);
   const future2w = daysFromNow(14);
@@ -169,4 +170,7 @@ export async function GET() {
   }));
 
   return NextResponse.json({ noUpcomingClass, noStudyHall } satisfies AlertsResponse);
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }
