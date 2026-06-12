@@ -90,6 +90,7 @@ export default function SrmPage() {
               events={schedule?.coachRoom ?? []}
               type="coachRoom"
               loading={scheduleLoading}
+              eventDate={selectedDate}
               onStudentClick={setSelectedStudent}
             />
             <div className="w-px bg-white/5 shrink-0" />
@@ -98,6 +99,7 @@ export default function SrmPage() {
               events={schedule?.studyHall ?? []}
               type="studyHall"
               loading={scheduleLoading}
+              eventDate={selectedDate}
               onStudentClick={setSelectedStudent}
             />
           </div>

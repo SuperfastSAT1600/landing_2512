@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
+import { useAdminAuth } from '@/lib/useAdminAuth';
 
 function toTimeStr(iso: string, tz: string): string {
   return new Date(iso).toLocaleTimeString('ko-KR', {
@@ -85,19 +86,43 @@ interface Props {
   events: ScheduleEvent[];
   type: 'coachRoom' | 'studyHall';
   loading?: boolean;
+  eventDate: string;
   onStudentClick: (student: StudentChip) => void;
 }
 
-export function ScheduleList({ title, events, type, loading, onStudentClick }: Props) {
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+export function ScheduleList({ title, events, type, loading, eventDate, onStudentClick }: Props) {
+  const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
+  const { userName } = useAdminAuth();
   const icon = type === 'coachRoom' ? '●' : '○';
   const completedIcon = '✓';
 
   const handleCopy = async (ev: ScheduleEvent) => {
     const msg = type === 'studyHall' ? buildStudyHallCopyMessage(ev) : buildCopyMessage(ev);
     await navigator.clipboard.writeText(msg);
-    setCopiedId(ev.id);
-    setTimeout(() => setCopiedId(null), 2000);
+
+    // Optimistic update — mark as copied regardless of log success
+    setCopiedIds((prev) => new Set(prev).add(ev.id));
+
+    // Log the copy action (fire-and-forget, failure must not block UX)
+    try {
+      const eventTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+      const eventType = type === 'coachRoom' ? 'coach_room' : 'study_hall';
+      await fetch('/api/admin/srm/copy-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: ev.id,
+          eventType,
+          eventDate,
+          eventTime,
+          studentNames: ev.students,
+          messagePreview: msg.slice(0, 200),
+          copiedBy: userName || '관리자',
+        }),
+      });
+    } catch {
+      // Log failure is non-fatal — clipboard copy already succeeded
+    }
   };
 
   return (
@@ -121,18 +146,28 @@ export function ScheduleList({ title, events, type, loading, onStudentClick }: P
         <div className="space-y-1.5">
           {events.map((ev) => {
             const isDone = ev.status === 'completed';
+            const isCopied = copiedIds.has(ev.id);
             const timeStr = `${toTimeStr(ev.startsAt, 'Asia/Seoul')}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
 
             return (
               <div
                 key={ev.id}
                 className={`flex items-start gap-2.5 px-3 py-2 rounded-md text-sm group ${
-                  isDone ? 'bg-white/3 opacity-60' : 'bg-white/5'
+                  isCopied
+                    ? 'bg-emerald-950/30'
+                    : isDone
+                    ? 'bg-white/3 opacity-60'
+                    : 'bg-white/5'
                 }`}
               >
                 <span className={`mt-0.5 text-xs shrink-0 ${isDone ? 'text-emerald-400' : 'text-gray-500'}`}>
                   {isDone ? completedIcon : icon}
                 </span>
+                {isCopied && (
+                  <span className="mt-0.5 text-xs shrink-0 text-emerald-400 font-medium">
+                    ✓ 발송됨
+                  </span>
+                )}
                 <span className="text-gray-400 font-mono text-xs shrink-0 mt-0.5">{timeStr}</span>
                 <span className="leading-tight flex flex-wrap gap-x-1 gap-y-0.5 flex-1">
                   {ev.students.map((name, i) => (
@@ -156,8 +191,8 @@ export function ScheduleList({ title, events, type, loading, onStudentClick }: P
                   title={type === 'studyHall' ? '스터디홀 알림 메시지 복사' : '수업 알림 메시지 복사'}
                   className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-gray-500 hover:text-blue-400"
                 >
-                  {copiedId === ev.id
-                    ? <Check size={13} className="text-green-400" />
+                  {isCopied
+                    ? <Check size={13} className="text-emerald-400" />
                     : <Copy size={13} />
                   }
                 </button>
