@@ -1,10 +1,20 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X } from 'lucide-react';
-import { CommLog, CommEntry } from './CommLog';
+import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { CommLog } from './CommLog';
+import type { CommEntry } from '@/app/api/admin/srm/communications/route';
 import { CrmLinkSection } from './CrmLinkSection';
 import { LifecycleTab } from './LifecycleTab';
+import { STAGE_LABELS } from '@/app/admin/srm/lifecycle-constants';
+import type { LifecycleResponse } from '@/app/api/admin/srm/lifecycle/route';
+
+const TRIGGER_LABELS: Record<string, string> = {
+  no_show: '미접속 알림',
+  late: '지각 알림',
+  no_class: '수업 미잡힘 알림',
+  no_study_hall: '스터디홀 미세팅 알림',
+};
 
 interface ConsultationEntry {
   id: string;
@@ -18,7 +28,7 @@ interface StudentDetail {
   crmStudent: { id: string; name: string; consultation_timeline: ConsultationEntry[]; sfv2_profile_id: string | null } | null;
 }
 
-type Tab = 'comm' | 'lifecycle' | 'crm';
+type Tab = 'comm' | 'crm';
 
 function getAdminName() {
   if (typeof window === 'undefined') return '';
@@ -33,15 +43,18 @@ interface Props {
   crmStudentId?: string;    // CRM student ID
   studentName: string;
   onClose: () => void;
+  triggerType?: string;
 }
 
-export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: Props) {
+export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType }: Props) {
   const [tab, setTab] = useState<Tab>('comm');
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [comms, setComms] = useState<CommEntry[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(true);
   const [loadingComms, setLoadingComms] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [lifecycleData, setLifecycleData] = useState<LifecycleResponse | null>(null);
+  const [lifecycleOpen, setLifecycleOpen] = useState(false);
 
   // comm 로그 키: sfv2ProfileId 있으면 그걸 쓰고, 없으면 crmStudentId
   const commKey = studentId ?? crmStudentId ?? '';
@@ -49,11 +62,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: 
   const fetchDetail = useCallback(async () => {
     setLoadingDetail(true);
     if (studentId) {
-      // sfv2 profile ID 기준: 기존 API 그대로
       const res = await fetch(`/api/admin/srm/student/${studentId}`);
       setDetail(await res.json());
     } else if (crmStudentId) {
-      // CRM student ID 기준: CRM 데이터만 표시
       const res = await fetch(`/api/admin/srm/student/crm/${crmStudentId}`);
       if (res.ok) {
         setDetail(await res.json());
@@ -71,12 +82,21 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: 
     setLoadingComms(false);
   }, [commKey]);
 
+  const fetchLifecycle = useCallback(async () => {
+    const resolvedStudentId = crmStudentId;
+    if (!studentId && !resolvedStudentId) return;
+    const qp = resolvedStudentId ? `studentId=${resolvedStudentId}` : `profileId=${studentId}`;
+    const res = await fetch(`/api/admin/srm/lifecycle?${qp}`);
+    if (res.ok) setLifecycleData(await res.json());
+  }, [studentId, crmStudentId]);
+
   useEffect(() => {
     fetchDetail();
     fetchComms();
-  }, [fetchDetail, fetchComms]);
+    fetchLifecycle();
+  }, [fetchDetail, fetchComms, fetchLifecycle]);
 
-  const handleAdd = async (data: { target: string; channel: string; content: string }) => {
+  const handleAdd = async (data: { target: string; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
     await fetch('/api/admin/srm/communications', {
       method: 'POST',
@@ -85,6 +105,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: 
         studentId: commKey,
         studentName,
         author: getAdminName(),
+        triggerType: triggerType ?? 'manual',
+        autoCount: 0,
         ...data,
       }),
     });
@@ -98,6 +120,14 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: 
   const isLinked = !!detail?.crmStudent;
   const resolvedCrmStudentId = crmStudentId ?? detail?.crmStudent?.id;
 
+  const currentStageLabel = lifecycleData?.current?.stage
+    ? (STAGE_LABELS[lifecycleData.current.stage] ?? null)
+    : null;
+
+  const triggerContext = triggerType && triggerType !== 'manual'
+    ? { type: triggerType, label: TRIGGER_LABELS[triggerType] ?? triggerType }
+    : undefined;
+
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-30" onClick={onClose} />
@@ -105,8 +135,19 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: 
       <div className="fixed right-0 top-0 h-full w-[420px] bg-[#1a1c1f] border-l border-white/10 z-40 flex flex-col shadow-2xl">
         {/* 헤더 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-          <div>
-            <h2 className="text-base font-bold text-white">{studentName}</h2>
+          <div className="flex-1 min-w-0 mr-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base font-bold text-white">{studentName}</h2>
+              {currentStageLabel && (
+                <button
+                  onClick={() => setLifecycleOpen((v) => !v)}
+                  className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 border border-blue-500/25 rounded-full text-[11px] text-blue-300 hover:bg-blue-500/25 transition-colors"
+                >
+                  {currentStageLabel}
+                  {lifecycleOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                </button>
+              )}
+            </div>
             {loadingDetail ? (
               <div className="h-3 w-24 bg-white/10 rounded animate-pulse mt-1" />
             ) : (
@@ -117,14 +158,24 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: 
               </p>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1">
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 shrink-0">
             <X size={18} />
           </button>
         </div>
 
+        {/* 라이프사이클 accordion */}
+        {lifecycleOpen && (
+          <div className="border-b border-white/10 px-5 py-4 bg-[#15171a] max-h-80 overflow-y-auto">
+            <LifecycleTab
+              profileId={studentId ?? ''}
+              studentId={resolvedCrmStudentId}
+            />
+          </div>
+        )}
+
         {/* 탭 */}
         <div className="flex border-b border-white/10">
-          {(['comm', 'lifecycle', 'crm'] as Tab[]).map((t) => (
+          {(['comm', 'crm'] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -132,7 +183,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: 
                 tab === t ? 'text-white border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'
               }`}
             >
-              {t === 'comm' ? '커뮤니케이션' : t === 'lifecycle' ? '라이프사이클' : `CRM${isLinked ? ` (${timeline.length})` : ''}`}
+              {t === 'comm' ? '커뮤니케이션' : `CRM${isLinked ? ` (${timeline.length})` : ''}`}
             </button>
           ))}
         </div>
@@ -145,13 +196,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose }: 
               loading={loadingComms}
               saving={saving}
               onAdd={handleAdd}
-            />
-          )}
-
-          {tab === 'lifecycle' && (
-            <LifecycleTab
-              profileId={studentId ?? ''}
-              studentId={resolvedCrmStudentId}
+              triggerContext={triggerContext}
             />
           )}
 

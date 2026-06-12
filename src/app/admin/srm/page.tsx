@@ -17,6 +17,7 @@ interface SelectedStudent {
   id?: string;          // sfv2 profile ID
   crmStudentId?: string; // CRM student ID (v2 미연결)
   name: string;
+  triggerType?: string;
 }
 type MainTab = 'schedule' | 'ops' | 'link' | 'roster';
 
@@ -108,7 +109,11 @@ export default function SrmPage() {
           <AlertSection
             data={alerts}
             loading={alertsLoading}
-            onStudentClick={setSelectedStudent}
+            onStudentClick={(student) => setSelectedStudent({
+              id: student.id,
+              name: student.name,
+              triggerType: student.triggerType,
+            })}
           />
         </>
       )}
@@ -133,6 +138,7 @@ export default function SrmPage() {
           studentId={selectedStudent.id}
           crmStudentId={selectedStudent.crmStudentId}
           studentName={selectedStudent.name}
+          triggerType={selectedStudent.triggerType}
           onClose={() => setSelectedStudent(null)}
         />
       )}

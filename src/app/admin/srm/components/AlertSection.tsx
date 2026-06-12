@@ -11,7 +11,7 @@ function toKstDate(iso: string): string {
   });
 }
 
-interface StudentChip { id: string; name: string; }
+interface StudentChip { id: string; name: string; triggerType: string; }
 
 interface Props {
   data: AlertsResponse | null;
@@ -25,7 +25,7 @@ export function AlertSection({ data, loading, onStudentClick }: Props) {
       {/* 수업 미잡힌 조합 */}
       <div className="bg-[#1a1c1f] rounded-xl p-5 border border-orange-500/20">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-orange-400 text-base">⚠</span>
+          <span className="text-orange-400 text-base">!</span>
           <h3 className="text-sm font-semibold text-white">수업 미잡힌 조합</h3>
           <span className="text-xs bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full ml-auto">
             {loading ? '…' : (data?.noUpcomingClass?.length ?? 0)}건
@@ -50,11 +50,11 @@ export function AlertSection({ data, loading, onStudentClick }: Props) {
                   {item.students.map((name, i) => (
                     <button
                       key={i}
-                      onClick={() => onStudentClick({ id: item.studentIds?.[i] ?? name, name })}
+                      onClick={() => onStudentClick({ id: item.studentIds?.[i] ?? name, name, triggerType: 'no_class' })}
                       className="hover:text-blue-400 hover:underline transition-colors"
                     >{name}</button>
                   ))}
-                  <span className="text-gray-500 mx-1">↔</span>
+                  <span className="text-gray-500 mx-1">|</span>
                   {item.coaches.join(', ')}
                 </span>
                 <span className="text-xs text-gray-600 shrink-0 ml-3">
@@ -69,7 +69,7 @@ export function AlertSection({ data, loading, onStudentClick }: Props) {
       {/* 스터디홀 미세팅 */}
       <div className="bg-[#1a1c1f] rounded-xl p-5 border border-yellow-500/20">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-yellow-400 text-base">⚠</span>
+          <span className="text-yellow-400 text-base">!</span>
           <h3 className="text-sm font-semibold text-white">스터디홀 미세팅</h3>
           <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full ml-auto">
             {loading ? '…' : (data?.noStudyHall?.length ?? 0)}명
@@ -88,7 +88,7 @@ export function AlertSection({ data, loading, onStudentClick }: Props) {
             {data.noStudyHall.map((item) => (
               <button
                 key={item.studentId}
-                onClick={() => onStudentClick({ id: item.studentId, name: item.studentName })}
+                onClick={() => onStudentClick({ id: item.studentId, name: item.studentName, triggerType: 'no_study_hall' })}
                 className="px-3 py-1 bg-white/5 rounded-full text-sm text-gray-300 hover:bg-white/10 hover:text-blue-400 transition-colors"
               >
                 {item.studentName}
