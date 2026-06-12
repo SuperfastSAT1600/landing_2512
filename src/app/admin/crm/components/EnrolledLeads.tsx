@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, GraduationCap, UserX, RotateCcw, Search, X, Crown } from 'lucide-react';
 import { Student, ChurnType } from '@/types/crm';
 import { ChurnModal } from './ChurnModal';
@@ -79,7 +79,7 @@ type TabType = 'all' | 'vip';
 
 export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: EnrolledLeadsProps) {
   const [tab, setTab] = useState<TabType>('all');
-  const [students, setStudents] = useState<Student[]>([]);
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [vipStudents, setVipStudents] = useState<Student[]>([]);
   const [firstPaidMap, setFirstPaidMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -88,30 +88,19 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [churnTarget, setChurnTarget] = useState<Student | null>(null);
   const [refundTarget, setRefundTarget] = useState<Student | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [hasSearched, setHasSearched] = useState(false);
-  const [totalCount, setTotalCount] = useState<number | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 전체 목록 진입 시 즉시 로드 (검색은 클라이언트 필터링)
   useEffect(() => {
-    fetch('/api/crm/students?lead_status=enrolled&stats_only=true', {
-      headers: { 'x-admin-key': adminKey },
-    })
-      .then(r => r.json())
-      .then(j => setTotalCount(j.data?.count ?? null))
-      .catch(() => {});
-  }, [adminKey]);
-
-  // VIP 탭 진입 시 VIP 학생 전체 로드
-  useEffect(() => {
-    if (tab !== 'vip') return;
-    setVipLoading(true);
+    setLoading(true);
+    setError(null);
     Promise.all([
-      fetch('/api/crm/students?lead_status=enrolled&is_vip=true', { headers: { 'x-admin-key': adminKey } }),
+      fetch('/api/crm/students?lead_status=enrolled', { headers: { 'x-admin-key': adminKey } }),
       fetch('/api/crm/payments', { headers: { 'x-admin-key': adminKey } }),
     ])
       .then(async ([studentsRes, paymentsRes]) => {
+        if (!studentsRes.ok) throw new Error('데이터를 불러오지 못했습니다.');
         const studentsData = await studentsRes.json();
-        setVipStudents(studentsData.data ?? []);
+        setAllStudents(studentsData.data ?? []);
         if (paymentsRes.ok) {
           const paymentsData = await paymentsRes.json();
           const map: Record<string, string> = {};
@@ -120,60 +109,31 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
             if (!name) continue;
             if (!map[name] || p.paid_at < map[name]) map[name] = p.paid_at;
           }
-          setFirstPaidMap(prev => ({ ...prev, ...map }));
+          setFirstPaidMap(map);
         }
+      })
+      .catch(err => setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.'))
+      .finally(() => setLoading(false));
+  }, [adminKey]);
+
+  // VIP 탭 진입 시 VIP 학생 전체 로드
+  useEffect(() => {
+    if (tab !== 'vip') return;
+    setVipLoading(true);
+    fetch('/api/crm/students?lead_status=enrolled&is_vip=true', { headers: { 'x-admin-key': adminKey } })
+      .then(async (r) => {
+        const data = await r.json();
+        setVipStudents(data.data ?? []);
       })
       .catch(() => {})
       .finally(() => setVipLoading(false));
   }, [tab, adminKey]);
 
-  const fetchEnrolled = useCallback(async (query: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [studentsRes, paymentsRes] = await Promise.all([
-        fetch(`/api/crm/students?lead_status=enrolled&search=${encodeURIComponent(query)}`, {
-          headers: { 'x-admin-key': adminKey },
-        }),
-        fetch('/api/crm/payments', { headers: { 'x-admin-key': adminKey } }),
-      ]);
-      if (!studentsRes.ok) throw new Error('데이터를 불러오지 못했습니다.');
-      const studentsData = await studentsRes.json();
-      setStudents(studentsData.data ?? []);
+  const students = searchQuery.trim()
+    ? allStudents.filter(s => s.name.includes(searchQuery.trim()))
+    : allStudents;
 
-      if (paymentsRes.ok) {
-        const paymentsData = await paymentsRes.json();
-        const map: Record<string, string> = {};
-        for (const p of (paymentsData.data ?? [])) {
-          const name = p.student_name;
-          if (!name) continue;
-          if (!map[name] || p.paid_at < map[name]) map[name] = p.paid_at;
-        }
-        setFirstPaidMap(map);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [adminKey]);
-
-  useEffect(() => {
-    if (tab !== 'all') return;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!searchQuery.trim()) {
-      setStudents([]);
-      setHasSearched(false);
-      return;
-    }
-    debounceRef.current = setTimeout(() => {
-      setHasSearched(true);
-      fetchEnrolled(searchQuery.trim());
-    }, 300);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [searchQuery, fetchEnrolled, tab]);
+  const totalCount = allStudents.length || null;
 
   return (
     <div className="space-y-4">
@@ -263,24 +223,20 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
         loading ? (
           <div className="flex items-center justify-center py-12 text-gray-400">
             <Loader2 size={18} className="animate-spin mr-2" />
-            <span className="text-sm">검색 중...</span>
+            <span className="text-sm">불러오는 중...</span>
           </div>
         ) : error ? (
           <div className="flex items-center gap-2 py-8 justify-center text-red-500">
             <AlertCircle size={16} />
             <p className="text-sm">{error}</p>
           </div>
-        ) : !hasSearched ? (
-          <div className="py-16 text-center text-sm text-gray-400">
-            이름을 입력하면 수업 중인 학생을 검색합니다.
-          </div>
         ) : students.length === 0 ? (
           <div className="py-16 text-center text-sm text-gray-400">
-            &quot;{searchQuery}&quot; 검색 결과가 없습니다.
+            {searchQuery ? `"${searchQuery}" 검색 결과가 없습니다.` : '수업 중인 학생이 없습니다.'}
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-xs text-gray-400">{students.length}명 검색됨</p>
+            <p className="text-xs text-gray-400">{students.length}명{searchQuery ? ' 검색됨' : ''}</p>
             {students.map(s => (
               <EnrolledCard
                 key={s.id}
@@ -305,7 +261,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
               churn_tag: churnTag,
               churn_type: churnType,
             });
-            setStudents(prev => prev.filter(s => s.id !== churnTarget.id));
+            setAllStudents(prev => prev.filter((s: Student) => s.id !== churnTarget.id));
             setChurnTarget(null);
           }}
           onClose={() => setChurnTarget(null)}
@@ -328,8 +284,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
               churn_tag: `환불: ${refundReason}`,
               churn_type: churnType,
             });
-            setStudents(prev => prev.filter(s => s.id !== refundTarget.id));
-            if (totalCount !== null) setTotalCount(prev => prev !== null ? prev - 1 : prev);
+            setAllStudents(prev => prev.filter((s: Student) => s.id !== refundTarget.id));
             setRefundTarget(null);
           }}
           onClose={() => setRefundTarget(null)}
