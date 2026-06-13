@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
   let query = supabaseAdmin
     .from('students')
     .select('id, name, grade, sfv2_profile_id')
-    .eq('funnel_stage', '8')
     .order('name');
 
   if (q) query = query.ilike('name', `%${q}%`);
