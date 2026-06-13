@@ -41,9 +41,10 @@ interface AddFormProps {
   onSave: (data: { target: string; channel: string; content: string; reason?: string; resolution?: string }) => Promise<void>;
   saving: boolean;
   triggerContext?: TriggerContext;
+  noBorder?: boolean;
 }
 
-function AddForm({ onSave, saving, triggerContext }: AddFormProps) {
+export function AddForm({ onSave, saving, triggerContext, noBorder }: AddFormProps) {
   const [target, setTarget] = useState<string>('student');
   const [channel, setChannel] = useState<string>('kakao');
   const [content, setContent] = useState('');
@@ -66,7 +67,7 @@ function AddForm({ onSave, saving, triggerContext }: AddFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-white/10 pt-4 mt-4 space-y-3">
+    <form onSubmit={handleSubmit} className={`space-y-3${noBorder ? '' : ' border-t border-white/10 pt-4 mt-4'}`}>
       {triggerContext && (
         <div className="flex items-center gap-2 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-md">
           <span className="text-orange-400 text-xs">!</span>
