@@ -5,6 +5,7 @@ export interface RosterStudent {
   id: string;           // CRM student id
   name: string;
   sfv2ProfileId: string | null;
+  grade: string | null;
 }
 
 // GET /api/admin/srm/roster
@@ -12,7 +13,7 @@ export interface RosterStudent {
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('students')
-    .select('id, name, sfv2_profile_id')
+    .select('id, name, grade, sfv2_profile_id')
     .eq('lead_status', 'enrolled')
     .order('name');
 
@@ -21,6 +22,7 @@ export async function GET() {
   const result: RosterStudent[] = (data ?? []).map((s) => ({
     id: s.id,
     name: s.name,
+    grade: (s as unknown as { grade: string | null }).grade ?? null,
     sfv2ProfileId: s.sfv2_profile_id ?? null,
   }));
 

@@ -9,7 +9,11 @@ export async function GET(
 
   const { data: crmStudent, error } = await supabaseAdmin
     .from('students')
-    .select('id, name, grade, consultation_timeline, funnel_stage, sfv2_profile_id')
+    .select(
+      'id, name, grade, consultation_timeline, funnel_stage, sfv2_profile_id, ' +
+      'previous_rw_score, previous_math_score, target_score, target_test_date, ' +
+      'school_type, desired_subjects, ot_datetime, parent_timezone'
+    )
     .eq('id', crmStudentId)
     .single();
 
@@ -17,8 +21,17 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
+  const { data: diagnostic } = await supabaseAdmin
+    .from('diagnostic_test_results')
+    .select('submitted_at, previous_rw_score, previous_math_score')
+    .ilike('student_name', `%${(crmStudent as unknown as { name: string }).name}%`)
+    .order('submitted_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   return NextResponse.json({
     profile: null,
     crmStudent,
+    diagnostic: diagnostic ?? null,
   });
 }

@@ -63,6 +63,7 @@ export function StudentSearch({ onSelect }: Props) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-200 hover:bg-white/10 transition-colors text-left"
               >
                 <span className="font-medium">{s.name}</span>
+                <span className="text-[11px] text-gray-500">{s.grade ?? ''}</span>
                 {!s.sfv2ProfileId && (
                   <span className="text-[11px] text-gray-600 ml-auto">v2 미연결</span>
                 )}

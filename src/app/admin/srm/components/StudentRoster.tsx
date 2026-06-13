@@ -7,6 +7,7 @@ interface RosterStudent {
   id: string;
   name: string;
   sfv2ProfileId: string | null;
+  grade: string | null;
 }
 
 interface SelectedStudent {
@@ -72,7 +73,10 @@ export function StudentRoster({ onStudentClick }: Props) {
                 }
                 className="flex-1 flex items-center justify-between px-3 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-left"
               >
-                <span className="text-sm text-gray-200">{s.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-200">{s.name}</span>
+                  {s.grade && <span className="text-[11px] text-gray-500">{s.grade}</span>}
+                </div>
                 <span
                   className={`text-[11px] px-2 py-0.5 rounded-full ${
                     s.sfv2ProfileId

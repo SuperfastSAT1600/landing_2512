@@ -56,14 +56,46 @@ interface ConsultationEntry {
   author?: string;
 }
 
+interface CrmStudentDetail {
+  id: string;
+  name: string;
+  grade: string | null;
+  consultation_timeline: ConsultationEntry[];
+  sfv2_profile_id: string | null;
+  previous_rw_score: number | null;
+  previous_math_score: number | null;
+  target_score: number | null;
+  target_test_date: string | null;
+  school_type: string | null;
+  desired_subjects: string | null;
+  ot_datetime: string | null;
+  parent_timezone: string | null;
+}
+
+interface DiagnosticResult {
+  submitted_at: string;
+  previous_rw_score: number | null;
+  previous_math_score: number | null;
+}
+
 interface StudentDetail {
   profile: { id: string; full_name: string; email: string | null; phone: string | null; grade: string | null } | null;
-  crmStudent: { id: string; name: string; consultation_timeline: ConsultationEntry[]; sfv2_profile_id: string | null } | null;
+  crmStudent: CrmStudentDetail | null;
+  diagnostic?: DiagnosticResult | null;
 }
 
 type UnifiedEntry =
   | { source: 'crm'; id: string; created_at: string; raw_memo: string; author?: string | null }
   | { source: 'srm'; id: string; created_at: string; channel: string; target: string; content: string; author?: string | null; trigger_type?: string | null; resolution?: string | null; reason?: string | null };
+
+function InfoRow({ label, value, small }: { label: string; value: string; small?: boolean }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="text-xs text-gray-500 w-14 shrink-0">{label}</span>
+      <span className={`${small ? 'text-xs' : 'text-sm'} text-gray-300 break-all`}>{value}</span>
+    </div>
+  );
+}
 
 function getAdminName() {
   if (typeof window === 'undefined') return '';
@@ -234,14 +266,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 </button>
               )}
             </div>
-            {loadingDetail ? (
+            {loadingDetail && (
               <div className="h-3 w-24 bg-white/10 rounded animate-pulse mt-1" />
-            ) : (
-              <p className="text-xs text-gray-500 mt-0.5">
-                {detail?.profile?.grade ?? ''}
-                {studentId && isLinked ? ' · CRM 연결됨' : ''}
-                {!studentId && crmStudentId ? ' · CRM' : ''}
-              </p>
             )}
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 shrink-0">
@@ -268,39 +294,109 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">학생 정보</p>
               {loadingDetail ? (
                 <div className="space-y-1.5">
-                  {[1, 2, 3].map((i) => (
+                  {[1, 2, 3, 4, 5].map((i) => (
                     <div key={i} className="h-3 bg-white/10 rounded animate-pulse" />
                   ))}
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-xs text-gray-500 w-14 shrink-0">이름</span>
-                    <span className="text-sm text-gray-200 font-medium">
-                      {detail?.profile?.full_name ?? studentName}
-                    </span>
-                  </div>
-                  {detail?.profile?.grade && (
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xs text-gray-500 w-14 shrink-0">학년</span>
-                      <span className="text-sm text-gray-300">{detail.profile.grade}</span>
-                    </div>
+                  {/* 기본 프로필 */}
+                  {(detail?.profile?.grade ?? detail?.crmStudent?.grade) && (
+                    <InfoRow label="학년" value={detail?.profile?.grade ?? detail?.crmStudent?.grade ?? ''} />
                   )}
                   {detail?.profile?.email && (
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xs text-gray-500 w-14 shrink-0">이메일</span>
-                      <span className="text-xs text-gray-400 break-all">{detail.profile.email}</span>
-                    </div>
+                    <InfoRow label="이메일" value={detail.profile.email} small />
                   )}
                   {detail?.profile?.phone && (
+                    <InfoRow label="전화" value={detail.profile.phone} />
+                  )}
+                  {detail?.crmStudent?.school_type && (
+                    <InfoRow label="학교유형" value={detail.crmStudent.school_type} />
+                  )}
+                  {detail?.crmStudent?.desired_subjects && (
+                    <InfoRow label="과목" value={detail.crmStudent.desired_subjects} />
+                  )}
+                  {detail?.crmStudent?.parent_timezone && (
+                    <InfoRow label="타임존" value={detail.crmStudent.parent_timezone} />
+                  )}
+
+                  {/* 점수 */}
+                  {(detail?.crmStudent?.previous_rw_score || detail?.crmStudent?.previous_math_score) && (
+                    <div className="pt-1.5 border-t border-white/10 mt-1.5">
+                      <p className="text-[11px] text-gray-500 mb-1">현재 점수</p>
+                      <div className="flex gap-3">
+                        {detail.crmStudent.previous_rw_score != null && (
+                          <div className="text-center">
+                            <p className="text-[11px] text-gray-600">RW</p>
+                            <p className="text-sm font-semibold text-gray-200">{detail.crmStudent.previous_rw_score}</p>
+                          </div>
+                        )}
+                        {detail.crmStudent.previous_math_score != null && (
+                          <div className="text-center">
+                            <p className="text-[11px] text-gray-600">Math</p>
+                            <p className="text-sm font-semibold text-gray-200">{detail.crmStudent.previous_math_score}</p>
+                          </div>
+                        )}
+                        {detail.crmStudent.previous_rw_score != null && detail.crmStudent.previous_math_score != null && (
+                          <div className="text-center">
+                            <p className="text-[11px] text-gray-600">합계</p>
+                            <p className="text-sm font-semibold text-blue-300">
+                              {detail.crmStudent.previous_rw_score + detail.crmStudent.previous_math_score}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {detail?.crmStudent?.target_score && (
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xs text-gray-500 w-14 shrink-0">전화</span>
-                      <span className="text-xs text-gray-400">{detail.profile.phone}</span>
+                      <span className="text-xs text-gray-500 w-14 shrink-0">목표</span>
+                      <span className="text-sm font-semibold text-emerald-300">{detail.crmStudent.target_score}</span>
+                      {detail.crmStudent.target_test_date && (
+                        <span className="text-[11px] text-gray-600">
+                          ({new Date(detail.crmStudent.target_test_date).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })})
+                        </span>
+                      )}
                     </div>
                   )}
 
-                  {/* CRM 연결 상태 배지 */}
-                  <div className="flex items-center gap-2 pt-1">
+                  {/* 진단 결과 */}
+                  {detail?.diagnostic && (
+                    <div className="pt-1.5 border-t border-white/10 mt-1.5">
+                      <p className="text-[11px] text-gray-500 mb-1">
+                        진단 리포트 · {new Date(detail.diagnostic.submitted_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
+                      </p>
+                      <div className="flex gap-3">
+                        {detail.diagnostic.previous_rw_score != null && (
+                          <div className="text-center">
+                            <p className="text-[11px] text-gray-600">RW</p>
+                            <p className="text-sm font-semibold text-gray-200">{detail.diagnostic.previous_rw_score}</p>
+                          </div>
+                        )}
+                        {detail.diagnostic.previous_math_score != null && (
+                          <div className="text-center">
+                            <p className="text-[11px] text-gray-600">Math</p>
+                            <p className="text-sm font-semibold text-gray-200">{detail.diagnostic.previous_math_score}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* OT 일시 */}
+                  {detail?.crmStudent?.ot_datetime && (
+                    <div className="flex items-baseline gap-2 pt-1.5 border-t border-white/10 mt-1.5">
+                      <span className="text-xs text-gray-500 w-14 shrink-0">OT</span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(detail.crmStudent.ot_datetime).toLocaleDateString('ko-KR', {
+                          month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* CRM 연결 상태 */}
+                  <div className="flex items-center gap-2 pt-1.5 border-t border-white/10 mt-1.5">
                     {isLinked ? (
                       <span className="text-[11px] px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/25 rounded-full text-emerald-400">
                         CRM 연결됨
