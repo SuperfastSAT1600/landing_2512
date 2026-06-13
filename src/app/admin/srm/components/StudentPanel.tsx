@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles } from 'lucide-react';
 import { CommLog } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
 import { CrmLinkSection } from './CrmLinkSection';
@@ -44,9 +44,11 @@ interface Props {
   studentName: string;
   onClose: () => void;
   triggerType?: string;
+  eventId?: string;
+  coachId?: string;
 }
 
-export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType }: Props) {
+export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, coachId }: Props) {
   const [tab, setTab] = useState<Tab>('comm');
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [comms, setComms] = useState<CommEntry[]>([]);
@@ -55,6 +57,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [saving, setSaving] = useState(false);
   const [lifecycleData, setLifecycleData] = useState<LifecycleResponse | null>(null);
   const [lifecycleOpen, setLifecycleOpen] = useState(false);
+  const [briefing, setBriefing] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
 
   // comm 로그 키: sfv2ProfileId 있으면 그걸 쓰고, 없으면 crmStudentId
   const commKey = studentId ?? crmStudentId ?? '';
@@ -107,6 +110,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
         author: getAdminName(),
         triggerType: triggerType ?? 'manual',
         autoCount: 0,
+        eventId: eventId ?? null,
+        coachId: coachId ?? null,
         ...data,
       }),
     });

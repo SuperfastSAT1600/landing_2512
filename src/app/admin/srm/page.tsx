@@ -5,11 +5,12 @@ import { DayTabs, getKstDateStr } from './components/DayTabs';
 import { ScheduleList } from './components/ScheduleList';
 import { AlertSection } from './components/AlertSection';
 import { StudentPanel } from './components/StudentPanel';
+import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
 import { StudentSearch } from './components/StudentSearch';
 import { MatchQueue } from './components/MatchQueue';
 import { StudentRoster } from './components/StudentRoster';
-import type { ScheduleResponse } from '@/app/api/admin/srm/schedule/route';
+import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
 
 // sfv2 profile ID 기준 또는 CRM student ID 기준으로 패널 열기
@@ -18,8 +19,48 @@ interface SelectedStudent {
   crmStudentId?: string; // CRM student ID (v2 미연결)
   name: string;
   triggerType?: string;
+  eventId?: string;
+  coachId?: string;
 }
+
+interface SelectedCoach {
+  id: string;
+  name: string;
+  relatedStudents: { name: string; events: string[] }[];
+}
+
 type MainTab = 'schedule' | 'ops' | 'link' | 'roster';
+
+function collectRelatedStudents(
+  coachId: string,
+  today: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] } | undefined,
+  tomorrow: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] } | undefined,
+): { name: string; events: string[] }[] {
+  const studentMap = new Map<string, string[]>();
+
+  const processEvents = (events: ScheduleEvent[], dayLabel: string) => {
+    for (const ev of events) {
+      const coachIdx = ev.coachIds?.indexOf(coachId) ?? -1;
+      if (coachIdx === -1) continue;
+      for (const studentName of ev.students) {
+        const existing = studentMap.get(studentName) ?? [];
+        existing.push(dayLabel);
+        studentMap.set(studentName, existing);
+      }
+    }
+  };
+
+  if (today) {
+    processEvents(today.coachRoom, '오늘');
+    processEvents(today.studyHall, '오늘');
+  }
+  if (tomorrow) {
+    processEvents(tomorrow.coachRoom, '내일');
+    processEvents(tomorrow.studyHall, '내일');
+  }
+
+  return Array.from(studentMap.entries()).map(([name, events]) => ({ name, events }));
+}
 
 export default function SrmPage() {
   const [mainTab, setMainTab] = useState<MainTab>('schedule');
@@ -29,6 +70,7 @@ export default function SrmPage() {
   const [scheduleLoading, setScheduleLoading] = useState(true);
   const [alertsLoading, setAlertsLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<SelectedStudent | null>(null);
+  const [selectedCoach, setSelectedCoach] = useState<SelectedCoach | null>(null);
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
@@ -55,6 +97,24 @@ export default function SrmPage() {
 
   const handleRosterStudentClick = (student: SelectedStudent) => {
     setSelectedStudent(student);
+  };
+
+  const handleCoachClick = (coach: { id: string; name: string }) => {
+    const relatedStudents = collectRelatedStudents(
+      coach.id,
+      schedule?.today,
+      schedule?.tomorrow,
+    );
+    setSelectedCoach({ ...coach, relatedStudents });
+  };
+
+  const handleScheduleStudentClick = (student: { id: string; name: string; eventId?: string; coachId?: string }) => {
+    setSelectedStudent({
+      id: student.id,
+      name: student.name,
+      eventId: student.eventId,
+      coachId: student.coachId,
+    });
   };
 
   return (
@@ -89,20 +149,24 @@ export default function SrmPage() {
           <div className="flex gap-8">
             <ScheduleList
               title="수업 (코치룸)"
-              events={schedule?.coachRoom ?? []}
+              todayEvents={schedule?.today.coachRoom ?? []}
+              tomorrowEvents={schedule?.tomorrow.coachRoom ?? []}
               type="coachRoom"
               loading={scheduleLoading}
               eventDate={selectedDate}
-              onStudentClick={setSelectedStudent}
+              onStudentClick={handleScheduleStudentClick}
+              onCoachClick={handleCoachClick}
             />
             <div className="w-px bg-white/5 shrink-0" />
             <ScheduleList
               title="스터디홀"
-              events={schedule?.studyHall ?? []}
+              todayEvents={schedule?.today.studyHall ?? []}
+              tomorrowEvents={schedule?.tomorrow.studyHall ?? []}
               type="studyHall"
               loading={scheduleLoading}
               eventDate={selectedDate}
-              onStudentClick={setSelectedStudent}
+              onStudentClick={handleScheduleStudentClick}
+              onCoachClick={handleCoachClick}
             />
           </div>
 
@@ -139,7 +203,18 @@ export default function SrmPage() {
           crmStudentId={selectedStudent.crmStudentId}
           studentName={selectedStudent.name}
           triggerType={selectedStudent.triggerType}
+          eventId={selectedStudent.eventId}
+          coachId={selectedStudent.coachId}
           onClose={() => setSelectedStudent(null)}
+        />
+      )}
+
+      {selectedCoach && !selectedStudent && (
+        <CoachPanel
+          coachId={selectedCoach.id}
+          coachName={selectedCoach.name}
+          relatedStudents={selectedCoach.relatedStudents}
+          onClose={() => setSelectedCoach(null)}
         />
       )}
     </div>

@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export interface CommEntry {
   id: string;
-  student_id: string;
+  student_id: string | null;
   student_name: string | null;
   target: 'student' | 'parent' | 'coach';
   channel: 'kakao' | 'call' | 'sms' | 'email' | 'other';
@@ -15,10 +15,13 @@ export interface CommEntry {
   resolution: string | null;
   lifecycle_stage: string | null;
   created_at: string;
+  event_id: string | null;
+  coach_id: string | null;
 }
 
 export async function GET(req: NextRequest) {
   const studentId = req.nextUrl.searchParams.get('studentId');
+  const coachId = req.nextUrl.searchParams.get('coachId');
   const date = req.nextUrl.searchParams.get('date');
 
   // Date-based query: all comms for a KST date (for OpsTaskList activity log)
@@ -26,7 +29,6 @@ export async function GET(req: NextRequest) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return NextResponse.json({ error: 'invalid date format' }, { status: 400 });
     }
-    // KST = UTC+9: YYYY-MM-DD KST → UTC range
     const kstStart = new Date(`${date}T00:00:00+09:00`).toISOString();
     const kstEnd = new Date(`${date}T23:59:59.999+09:00`).toISOString();
 
@@ -41,7 +43,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json((data ?? []) as CommEntry[]);
   }
 
-  if (!studentId) return NextResponse.json({ error: 'studentId or date required' }, { status: 400 });
+  // Coach-based query
+  if (coachId) {
+    const { data, error } = await supabaseAdmin
+      .from('srm_communications')
+      .select('*')
+      .eq('coach_id', coachId)
+      .is('student_id', null)
+      .order('created_at', { ascending: false });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json((data ?? []) as CommEntry[]);
+  }
+
+  if (!studentId) return NextResponse.json({ error: 'studentId, coachId, or date required' }, { status: 400 });
 
   const { data, error } = await supabaseAdmin
     .from('srm_communications')
@@ -67,16 +82,22 @@ export async function POST(req: NextRequest) {
     reason,
     resolution,
     lifecycleStage,
+    eventId,
+    coachId,
   } = body;
 
-  if (!studentId || !target || !channel || !content) {
+  if (!target || !channel || !content) {
     return NextResponse.json({ error: 'missing required fields' }, { status: 400 });
+  }
+
+  if (!studentId && !coachId) {
+    return NextResponse.json({ error: 'studentId or coachId required' }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin
     .from('srm_communications')
     .insert({
-      student_id: studentId,
+      student_id: studentId ?? null,
       student_name: studentName ?? null,
       target,
       channel,
@@ -87,6 +108,8 @@ export async function POST(req: NextRequest) {
       reason: reason ?? null,
       resolution: resolution ?? null,
       lifecycle_stage: lifecycleStage ?? null,
+      event_id: eventId ?? null,
+      coach_id: coachId ?? null,
     })
     .select()
     .single();
