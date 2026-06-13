@@ -121,6 +121,16 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
   const handleLinked = () => fetchDetail();
 
+  const handleGenerateBrief = async () => {
+    if (!resolvedCrmStudentId) return;
+    setBriefing('loading');
+    const res = await fetch(`/api/admin/srm/student/crm/${resolvedCrmStudentId}/coach-brief`, {
+      method: 'POST',
+      headers: { 'x-admin-key': localStorage.getItem('admin_key') ?? '' },
+    });
+    setBriefing(res.ok ? 'done' : 'error');
+  };
+
   const timeline: ConsultationEntry[] = detail?.crmStudent?.consultation_timeline ?? [];
   const isLinked = !!detail?.crmStudent;
   const resolvedCrmStudentId = crmStudentId ?? detail?.crmStudent?.id;
@@ -212,6 +222,44 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               )}
               {!loadingDetail && !isLinked && !studentId && (
                 <p className="text-xs text-gray-500">v2 계정과 연결하려면 연결 탭을 이용하세요.</p>
+              )}
+
+              {/* 코치 포털 액션 */}
+              {resolvedCrmStudentId && (
+                <div className="flex items-center gap-2 p-3 bg-white/5 rounded-lg border border-white/10">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-300">코치 포털</p>
+                    <p className="text-[11px] text-gray-600 mt-0.5 truncate">
+                      /coach-prep/{resolvedCrmStudentId.slice(0, 8)}…
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleGenerateBrief}
+                    disabled={briefing === 'loading'}
+                    title="AI로 내부 정보를 제거한 코치용 브리핑 생성"
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors shrink-0 ${
+                      briefing === 'loading'
+                        ? 'bg-white/5 text-gray-500 cursor-not-allowed'
+                        : briefing === 'done'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        : briefing === 'error'
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        : 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30'
+                    }`}
+                  >
+                    <Sparkles size={11} className={briefing === 'loading' ? 'animate-pulse' : ''} />
+                    {briefing === 'loading' ? '생성 중…' : briefing === 'done' ? '완료' : briefing === 'error' ? '실패' : 'AI 브리핑'}
+                  </button>
+                  <a
+                    href={`/coach-prep/${resolvedCrmStudentId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="코치 포털 열기"
+                    className="p-1.5 text-gray-500 hover:text-blue-400 transition-colors shrink-0"
+                  >
+                    <ExternalLink size={13} />
+                  </a>
+                </div>
               )}
 
               {loadingDetail && (
