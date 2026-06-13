@@ -7,8 +7,9 @@ import FloatingCTA from './FloatingCTA';
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isPortal = pathname?.startsWith('/portal/');
+  const isCoachPrep = pathname?.startsWith('/coach-prep/');
 
-  if (isPortal) return <>{children}</>;
+  if (isPortal || isCoachPrep) return <>{children}</>;
 
   return (
     <>
