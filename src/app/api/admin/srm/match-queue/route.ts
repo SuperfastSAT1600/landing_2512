@@ -12,6 +12,7 @@ export interface AutoMatch {
 export interface UnlinkedStudent {
   crmStudentId: string;
   crmName: string;
+  grade: string | null;
   phone: string | null;
   email: string | null;
   sfv2ProfileId: string | null;
@@ -24,8 +25,8 @@ export async function GET() {
   try {
   const { data: unlinked, error: crmError } = await supabaseAdmin
     .from('students')
-    .select('id, name, parent_phone, sfv2_profile_id')
-    .eq('funnel_stage', '8')
+    .select('id, name, grade, parent_phone, sfv2_profile_id')
+    .eq('lead_status', 'enrolled')
     .order('name');
 
   if (crmError) return NextResponse.json({ error: crmError.message }, { status: 500 });
@@ -64,6 +65,7 @@ export async function GET() {
     return {
       crmStudentId: student.id,
       crmName: student.name,
+      grade: (student as unknown as { grade: string | null }).grade ?? null,
       phone: student.parent_phone ?? null,
       email: null,
       sfv2ProfileId: student.sfv2_profile_id ?? null,

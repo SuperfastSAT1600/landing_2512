@@ -8,7 +8,6 @@ import { StudentPanel } from './components/StudentPanel';
 import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
 import { StudentSearch } from './components/StudentSearch';
-import { MatchQueue } from './components/MatchQueue';
 import { StudentRoster } from './components/StudentRoster';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
@@ -29,7 +28,7 @@ interface SelectedCoach {
   relatedStudents: { name: string; events: string[] }[];
 }
 
-type MainTab = 'schedule' | 'ops' | 'link' | 'roster';
+type MainTab = 'schedule' | 'ops' | 'roster';
 
 function collectRelatedStudents(
   coachId: string,
@@ -125,7 +124,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6 border-b border-white/10">
-        {(['schedule', 'ops', 'link', 'roster'] as MainTab[]).map((t) => (
+        {(['schedule', 'ops', 'roster'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -135,12 +134,12 @@ export default function SrmPage() {
                 : 'text-gray-500 border-transparent hover:text-gray-300'
             }`}
           >
-            {t === 'schedule' ? '스케줄' : t === 'ops' ? '운영' : t === 'link' ? '연결' : '명단'}
+            {t === 'schedule' ? '스케줄' : t === 'ops' ? '운영' : '명단'}
           </button>
         ))}
       </div>
 
-      {mainTab !== 'link' && mainTab !== 'roster' && (
+      {mainTab !== 'roster' && (
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
       )}
 
@@ -187,10 +186,6 @@ export default function SrmPage() {
           <StudentSearch onSelect={handleRosterStudentClick} />
           <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
         </>
-      )}
-
-      {mainTab === 'link' && (
-        <MatchQueue onLinked={() => {}} />
       )}
 
       {mainTab === 'roster' && (
