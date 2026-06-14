@@ -67,7 +67,7 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
               className="w-full flex items-center justify-between px-3 py-1.5 bg-white/5 hover:bg-white/10 disabled:opacity-40 rounded text-xs transition-colors"
             >
               <span className="text-gray-200">{r.full_name}</span>
-              <span className="text-gray-500">{r.phone ?? r.email ?? ''}</span>
+              <span className="text-gray-500">{r.email ?? r.phone ?? ''}</span>
             </button>
           ))}
         </div>
