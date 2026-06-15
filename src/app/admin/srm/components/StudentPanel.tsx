@@ -799,7 +799,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     return (
                       <SrmCommCard
                         key={`srm-${entry.id}`}
-                        entry={entry as CommEntry}
+                        entry={entry as unknown as CommEntry}
                         onUpdated={handleCommUpdated}
                       />
                     );

@@ -25,6 +25,20 @@ export async function GET(req: NextRequest) {
   const coachId = req.nextUrl.searchParams.get('coachId');
   const date = req.nextUrl.searchParams.get('date');
   const eventId = req.nextUrl.searchParams.get('eventId');
+  const eventIds = req.nextUrl.searchParams.get('eventIds');
+
+  // Bulk event-based query (스케줄 전체 이벤트 ID로 한 번에 조회)
+  if (eventIds) {
+    const ids = eventIds.split(',').filter(Boolean);
+    if (!ids.length) return NextResponse.json([]);
+    const { data, error } = await supabaseAdmin
+      .from('srm_communications')
+      .select('event_id')
+      .in('event_id', ids)
+      .not('event_id', 'is', null);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json((data ?? []) as { event_id: string }[]);
+  }
 
   // Event-based query
   if (eventId) {

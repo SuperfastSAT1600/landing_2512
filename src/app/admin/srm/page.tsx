@@ -84,19 +84,33 @@ export default function SrmPage() {
     if (mainTab !== 'schedule') return;
     setScheduleLoading(true);
     setSchedule(null);
-    Promise.all([
-      fetch(`/api/admin/srm/schedule?date=${selectedDate}`).then((r) => r.json()),
-      fetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
-      fetch(`/api/admin/srm/communications?date=${selectedDate}`).then((r) => r.json()).catch(() => []),
-    ]).then(([scheduleData, logData, commsData]) => {
-      setSchedule(scheduleData);
-      const ids = new Set<string>((logData.data ?? []).map((e: { event_id: string }) => e.event_id));
-      // 메모가 기록된 이벤트도 하이라이트
-      (Array.isArray(commsData) ? commsData : [])
-        .filter((e: { event_id: string | null }) => e.event_id)
-        .forEach((e: { event_id: string }) => ids.add(e.event_id));
-      setLoggedEventIds(ids);
-    }).finally(() => setScheduleLoading(false));
+    fetch(`/api/admin/srm/schedule?date=${selectedDate}`)
+      .then((r) => r.json())
+      .then(async (scheduleData: ScheduleResponse) => {
+        setSchedule(scheduleData);
+
+        // 해당 날짜 스케줄의 모든 이벤트 ID 수집 (오늘 + 내일)
+        const allEventIds = [
+          ...(scheduleData?.today?.coachRoom ?? []),
+          ...(scheduleData?.today?.studyHall ?? []),
+          ...(scheduleData?.tomorrow?.coachRoom ?? []),
+          ...(scheduleData?.tomorrow?.studyHall ?? []),
+        ].map((e: ScheduleEvent) => e.id);
+
+        if (!allEventIds.length) { setLoggedEventIds(new Set()); return; }
+
+        const [logData, commsData] = await Promise.all([
+          fetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
+          fetch(`/api/admin/srm/communications?eventIds=${allEventIds.join(',')}`).then((r) => r.json()).catch(() => []),
+        ]);
+
+        const ids = new Set<string>((logData.data ?? []).map((e: { event_id: string }) => e.event_id));
+        (Array.isArray(commsData) ? commsData : [])
+          .filter((e: { event_id: string | null }) => e.event_id)
+          .forEach((e: { event_id: string }) => ids.add(e.event_id));
+        setLoggedEventIds(ids);
+      })
+      .finally(() => setScheduleLoading(false));
   }, [selectedDate, mainTab]);
 
   useEffect(() => {
