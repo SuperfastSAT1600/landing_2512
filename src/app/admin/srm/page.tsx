@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { DayTabs, getKstDateStr } from './components/DayTabs';
-import { ScheduleList } from './components/ScheduleList';
+import { UnifiedTimeline } from './components/UnifiedTimeline';
 import { AlertSection } from './components/AlertSection';
 import { StudentPanel } from './components/StudentPanel';
 import { CoachPanel } from './components/CoachPanel';
@@ -145,29 +145,16 @@ export default function SrmPage() {
 
       {mainTab === 'schedule' && (
         <>
-          <div className="flex gap-8">
-            <ScheduleList
-              title="수업 (코치룸)"
-              todayEvents={schedule?.today.coachRoom ?? []}
-              tomorrowEvents={schedule?.tomorrow.coachRoom ?? []}
-              type="coachRoom"
-              loading={scheduleLoading}
-              eventDate={selectedDate}
-              onStudentClick={handleScheduleStudentClick}
-              onCoachClick={handleCoachClick}
-            />
-            <div className="w-px bg-white/5 shrink-0" />
-            <ScheduleList
-              title="스터디홀"
-              todayEvents={schedule?.today.studyHall ?? []}
-              tomorrowEvents={schedule?.tomorrow.studyHall ?? []}
-              type="studyHall"
-              loading={scheduleLoading}
-              eventDate={selectedDate}
-              onStudentClick={handleScheduleStudentClick}
-              onCoachClick={handleCoachClick}
-            />
-          </div>
+          <UnifiedTimeline
+            todayCoachRoom={schedule?.today.coachRoom ?? []}
+            todayStudyHall={schedule?.today.studyHall ?? []}
+            tomorrowCoachRoom={schedule?.tomorrow.coachRoom ?? []}
+            tomorrowStudyHall={schedule?.tomorrow.studyHall ?? []}
+            loading={scheduleLoading}
+            eventDate={selectedDate}
+            onStudentClick={handleScheduleStudentClick}
+            onCoachClick={handleCoachClick}
+          />
 
           <AlertSection
             data={alerts}
