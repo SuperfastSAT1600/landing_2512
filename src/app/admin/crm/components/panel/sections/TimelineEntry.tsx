@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import { Sparkles, Check, ChevronUp, Pencil, Trash2 } from 'lucide-react';
 import type { ConsultationEntry } from '@/types/crm';
+import { AttachmentThumb } from './AttachmentThumb';
 
 interface PendingEdit { purified: string; coachHistory: string; deletedItems: string[] }
 
 interface Props {
+  studentId: string;
+  adminKey: string;
   entry: ConsultationEntry;
   aiLoading: boolean;
   pendingEdit: PendingEdit | null;
@@ -18,7 +21,7 @@ interface Props {
   onDeleteAi: () => void;
 }
 
-export function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified, onStartEdit, onDeleteAi }: Props) {
+export function TimelineEntry({ studentId, adminKey, entry, aiLoading, pendingEdit, publishing, onAiCare, onPublish, onChangePurified, onStartEdit, onDeleteAi }: Props) {
   const [aiExpanded, setAiExpanded] = useState(false);
   const [publishedExpanded, setPublishedExpanded] = useState(false);
   const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
@@ -54,10 +57,19 @@ export function TimelineEntry({ entry, aiLoading, pendingEdit, publishing, onAiC
             )}
           </div>
         </div>
-        <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
-          {entry.raw_memo}
-        </p>
-        {!hasAi && !entry.published && !aiLoading && !pendingEdit && (
+        {entry.raw_memo && (
+          <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
+            {entry.raw_memo}
+          </p>
+        )}
+        {entry.attachments && entry.attachments.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {entry.attachments.map(att => (
+              <AttachmentThumb key={att.path} studentId={studentId} adminKey={adminKey} attachment={att} />
+            ))}
+          </div>
+        )}
+        {!hasAi && !entry.published && !aiLoading && !pendingEdit && entry.raw_memo && (
           <button
             onClick={onAiCare}
             className="mt-2.5 flex items-center gap-1.5 text-xs text-purple-500 hover:text-purple-600 transition-colors"

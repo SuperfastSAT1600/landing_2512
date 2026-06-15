@@ -7,6 +7,8 @@ import { SectionCard } from './SectionCard';
 interface PendingEdit { purified: string; coachHistory: string; deletedItems: string[] }
 
 interface Props {
+  studentId: string;
+  adminKey: string;
   timeline: ConsultationEntry[];
   loadingFresh: boolean;
   publishError: string;
@@ -21,7 +23,7 @@ interface Props {
 }
 
 export function TimelineSection({
-  timeline, loadingFresh, publishError, publishing, aiLoadingFor,
+  studentId, adminKey, timeline, loadingFresh, publishError, publishing, aiLoadingFor,
   pendingEdits, setPendingEdits, onAiCare, onPublish, onDeleteAi,
 }: Props) {
   return (
@@ -43,6 +45,8 @@ export function TimelineSection({
         {timeline.map(entry => (
           <TimelineEntry
             key={entry.id}
+            studentId={studentId}
+            adminKey={adminKey}
             entry={entry}
             aiLoading={aiLoadingFor === entry.id}
             pendingEdit={pendingEdits[entry.id] ?? null}
