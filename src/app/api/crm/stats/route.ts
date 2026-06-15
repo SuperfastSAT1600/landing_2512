@@ -191,7 +191,8 @@ export async function GET(request: NextRequest) {
       contacted: d.contacted,
       contact_rate: contactRate(d.contacted, d.leads),
       paid: d.paid,
-      conversion_rate: d.leads > 0 ? Math.round((d.paid / d.leads) * 10000) / 100 : 0,
+      // 결제 전환율 = 컨택 성공 인원 중 결제 인원
+      conversion_rate: d.contacted > 0 ? Math.round((d.paid / d.contacted) * 10000) / 100 : 0,
       revenue: d.revenue,
       net_revenue: d.net_revenue,
     }))
@@ -309,7 +310,9 @@ export async function GET(request: NextRequest) {
       contacted_base: initialLeads.length,
       contact_rate: contactRate(contactedCount, initialLeads.length),
       paid: paidCount,
-      conversion_rate: total > 0 ? Math.round((paidCount / total) * 10000) / 100 : 0,
+      // 결제 전환율 = 컨택 성공 인원 중 결제 인원 (신규 리드 전체 아님)
+      conversion_rate:
+        contactedCount > 0 ? Math.round((paidCount / contactedCount) * 10000) / 100 : 0,
       total_revenue: totalRevenue,
       total_net_revenue: totalNetRevenue,
       gross_revenue: grossRevenue,

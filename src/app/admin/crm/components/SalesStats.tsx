@@ -5,6 +5,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } fro
 import { TrendingUp, Users, Phone, CreditCard, RefreshCw } from 'lucide-react';
 import type { CrmStatsData, StatsBySource, StatsWeekly } from '@/app/api/crm/stats/route';
 import type { StageFlowRow } from '@/lib/funnel-stats';
+import type { StatsDetailMetric } from '@/lib/crm-stats-detail';
+import { StatsDetailModal } from './StatsDetailModal';
 
 // ─── Period helpers ────────────────────────────────────────────────────────────
 
@@ -50,20 +52,40 @@ function OverviewCard({
   value,
   sub,
   color,
+  title,
+  onClick,
 }: {
   icon: React.ElementType;
   label: string;
   value: string | number;
   sub?: string;
   color: string;
+  title?: string; // 마우스 오버 시 노출할 정확한 값(예: 원 단위 전체 금액)
+  onClick?: () => void; // 있으면 클릭 가능 카드(세부 내역 열기)
 }) {
+  const clickable = !!onClick;
   return (
-    <div className="flex-1 min-w-[140px] bg-white border border-gray-200 rounded-xl p-4">
+    <div
+      onClick={onClick}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick!(); } } : undefined}
+      className={`flex-1 min-w-[140px] bg-white border border-gray-200 rounded-xl p-4 transition-all ${
+        clickable
+          ? 'cursor-pointer hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400/40'
+          : ''
+      }`}
+    >
       <div className={`inline-flex items-center justify-center w-8 h-8 rounded-lg mb-3 ${color}`}>
         <Icon size={15} />
       </div>
       <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p
+        title={title}
+        className="text-2xl font-bold text-gray-900 whitespace-nowrap tabular-nums tracking-tight"
+      >
+        {value}
+      </p>
       {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
     </div>
   );
@@ -280,6 +302,7 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
   const [data, setData] = useState<CrmStatsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [trendView, setTrendView] = useState<'monthly' | 'weekly'>('monthly');
+  const [detail, setDetail] = useState<{ metric: StatsDetailMetric; label: string } | null>(null);
 
   const { from, to } =
     preset === 'custom' ? { from: customFrom, to: customTo } : getPresetRange(preset);
@@ -310,7 +333,8 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
   }, [preset, fetchStats]);
 
   const d = data;
-  // 매출 카드는 반올림 없이 정확한 원 단위로 표기
+  // 카드 값: 한눈에 비교되도록 만원 단위로 축약. 정확한 원 단위 값은 title 툴팁으로 노출.
+  const fmt만원 = (n: number) => `${Math.round(n / 10000).toLocaleString()}만원`;
   const fmt원 = (n: number) => `${n.toLocaleString()}원`;
 
   return (
@@ -380,6 +404,7 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
               value={d.overview.total_leads}
               sub="문의 기준"
               color="bg-gray-100 text-gray-600"
+              onClick={() => setDetail({ metric: 'leads', label: '신규 리드' })}
             />
             <OverviewCard
               icon={Phone}
@@ -387,34 +412,51 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
               value={`${d.overview.contact_rate}%`}
               sub={`${d.overview.contacted}명 / ${d.overview.contacted_base}명 · 2단계+ 도달`}
               color="bg-blue-50 text-blue-600"
+              onClick={() => setDetail({ metric: 'contacted', label: '컨택 성공' })}
             />
             <OverviewCard
               icon={CreditCard}
               label="결제 전환율"
               value={`${d.overview.conversion_rate}%`}
-              sub={`${d.overview.paid}명 / ${d.overview.total_leads}명`}
+              sub={`${d.overview.paid}명 / ${d.overview.contacted}명 · 컨택 성공`}
               color="bg-emerald-50 text-emerald-600"
+              onClick={() => setDetail({ metric: 'paid', label: '결제 전환(결제 인원)' })}
             />
             <OverviewCard
               icon={TrendingUp}
               label="총 매출"
-              value={fmt원(d.overview.gross_revenue)}
+              value={fmt만원(d.overview.gross_revenue)}
+              title={fmt원(d.overview.gross_revenue)}
               sub="환불 전 총 결제"
               color="bg-purple-50 text-purple-600"
+              onClick={() => setDetail({ metric: 'revenue', label: '총 매출' })}
             />
             <OverviewCard
               icon={TrendingUp}
               label="환불"
-              value={d.overview.total_refund < 0 ? `-${fmt원(-d.overview.total_refund)}` : '-'}
+              value={d.overview.total_refund < 0 ? `-${fmt만원(-d.overview.total_refund)}` : '-'}
+              title={d.overview.total_refund < 0 ? `-${fmt원(-d.overview.total_refund)}` : undefined}
               sub="기간 내 환불 합계"
               color="bg-red-50 text-red-500"
+              onClick={() => setDetail({ metric: 'refund', label: '환불' })}
+            />
+            <OverviewCard
+              icon={TrendingUp}
+              label="순매출"
+              value={fmt만원(d.overview.total_revenue)}
+              title={fmt원(d.overview.total_revenue)}
+              sub="총매출 − 환불"
+              color="bg-purple-50 text-purple-600"
+              onClick={() => setDetail({ metric: 'net_revenue', label: '순매출' })}
             />
             <OverviewCard
               icon={TrendingUp}
               label="순 수익"
-              value={fmt원(d.overview.total_net_revenue)}
+              value={fmt만원(d.overview.total_net_revenue)}
+              title={fmt원(d.overview.total_net_revenue)}
               sub="환불·부가세 제외 실수익"
               color="bg-emerald-50 text-emerald-600"
+              onClick={() => setDetail({ metric: 'net_profit', label: '순 수익' })}
             />
           </div>
 
@@ -499,6 +541,17 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
         <div className="py-16 text-center text-sm text-gray-400">
           기간을 선택하면 통계가 표시됩니다.
         </div>
+      )}
+
+      {detail && (
+        <StatsDetailModal
+          adminKey={adminKey}
+          metric={detail.metric}
+          label={detail.label}
+          from={from}
+          to={to}
+          onClose={() => setDetail(null)}
+        />
       )}
     </div>
   );
