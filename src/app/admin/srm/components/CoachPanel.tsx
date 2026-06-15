@@ -38,7 +38,7 @@ export function CoachPanel({ coachId, coachName, relatedStudents, onClose }: Pro
     fetchComms();
   }, [fetchComms]);
 
-  const handleAdd = async (data: { target: string; channel: string; content: string; reason?: string; resolution?: string }) => {
+  const handleAdd = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
     await fetch('/api/admin/srm/communications', {
       method: 'POST',
