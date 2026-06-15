@@ -153,6 +153,7 @@ interface Props {
   vipStudentIds?: Set<string>;
   studentLanguages?: Map<string, 'ko' | 'en'>;
   pausedStudentIds?: Set<string>;
+  loggedEventIds?: Set<string>;
   onStudentClick: (student: StudentClickArg) => void;
   onCoachClick: (coach: CoachClickArg) => void;
   onEventClick: (ev: TaggedEvent & { startsAtKst: string }) => void;
@@ -168,6 +169,7 @@ export function UnifiedTimeline({
   vipStudentIds,
   studentLanguages,
   pausedStudentIds,
+  loggedEventIds,
   onStudentClick,
   onCoachClick,
   onEventClick,
@@ -219,8 +221,9 @@ export function UnifiedTimeline({
 
     const copiedKo = copiedIds.has(`${ev.id}-ko`);
     const copiedEn = copiedIds.has(`${ev.id}-en`);
+    const alreadyLogged = !!(loggedEventIds?.has(ev.id));
 
-    const anyCopied = copiedKo || copiedEn;
+    const anyCopied = copiedKo || copiedEn || alreadyLogged;
 
     return (
       <div

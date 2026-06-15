@@ -77,16 +77,21 @@ export default function SrmPage() {
   const [vipStudentIds, setVipStudentIds] = useState<Set<string>>(new Set());
   const [studentLanguages, setStudentLanguages] = useState<Map<string, 'ko' | 'en'>>(new Map());
   const [pausedStudentIds, setPausedStudentIds] = useState<Set<string>>(new Set());
+  const [loggedEventIds, setLoggedEventIds] = useState<Set<string>>(new Set());
   const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
     setScheduleLoading(true);
     setSchedule(null);
-    fetch(`/api/admin/srm/schedule?date=${selectedDate}`)
-      .then((r) => r.json())
-      .then(setSchedule)
-      .finally(() => setScheduleLoading(false));
+    Promise.all([
+      fetch(`/api/admin/srm/schedule?date=${selectedDate}`).then((r) => r.json()),
+      fetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
+    ]).then(([scheduleData, logData]) => {
+      setSchedule(scheduleData);
+      const ids = new Set<string>((logData.data ?? []).map((e: { event_id: string }) => e.event_id));
+      setLoggedEventIds(ids);
+    }).finally(() => setScheduleLoading(false));
   }, [selectedDate, mainTab]);
 
   useEffect(() => {
@@ -188,6 +193,7 @@ export default function SrmPage() {
             vipStudentIds={vipStudentIds}
             studentLanguages={studentLanguages}
             pausedStudentIds={pausedStudentIds}
+            loggedEventIds={loggedEventIds}
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
             onEventClick={setSelectedEvent}
