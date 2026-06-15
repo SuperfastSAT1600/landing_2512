@@ -19,6 +19,8 @@ interface SelectedStudent {
   name: string;
   triggerType?: string;
   eventId?: string;
+  eventTime?: string;
+  eventType?: 'coachRoom' | 'studyHall';
   coachId?: string;
 }
 
@@ -128,11 +130,13 @@ export default function SrmPage() {
     setSelectedCoach({ ...coach, relatedStudents });
   };
 
-  const handleScheduleStudentClick = (student: { id: string; name: string; eventId?: string; coachId?: string }) => {
+  const handleScheduleStudentClick = (student: { id: string; name: string; eventId?: string; eventTime?: string; eventType?: 'coachRoom' | 'studyHall'; coachId?: string }) => {
     setSelectedStudent({
       id: student.id,
       name: student.name,
       eventId: student.eventId,
+      eventTime: student.eventTime,
+      eventType: student.eventType,
       coachId: student.coachId,
     });
   };
@@ -209,6 +213,8 @@ export default function SrmPage() {
           studentName={selectedStudent.name}
           triggerType={selectedStudent.triggerType}
           eventId={selectedStudent.eventId}
+          eventTime={selectedStudent.eventTime}
+          eventType={selectedStudent.eventType}
           coachId={selectedStudent.coachId}
           onClose={() => setSelectedStudent(null)}
           onLanguageChange={handleLanguageChange}

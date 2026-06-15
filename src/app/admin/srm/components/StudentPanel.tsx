@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles } from 'lucide-react';
 import { AddForm } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
+import type { EventContext } from './CommLog';
 import { CrmLinkSection } from './CrmLinkSection';
 import { LifecycleTab } from './LifecycleTab';
 import { STAGE_LABELS } from '@/app/admin/srm/lifecycle-constants';
@@ -15,6 +16,20 @@ const TRIGGER_LABELS: Record<string, string> = {
   late: '지각 알림',
   no_class: '수업 미잡힘 알림',
   no_study_hall: '스터디홀 미세팅 알림',
+};
+
+const PARTY_LABELS: Record<string, string> = {
+  student: '학생',
+  parent: '학부모',
+  coach: '코치',
+  us: '우리',
+};
+
+const PARTY_COLORS: Record<string, string> = {
+  student: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  parent: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  coach: 'bg-green-500/20 text-green-300 border-green-500/30',
+  us: 'bg-red-500/20 text-red-300 border-red-500/30',
 };
 
 const CHANNEL_LABELS: Record<string, string> = {
@@ -87,7 +102,7 @@ interface StudentDetail {
 
 type UnifiedEntry =
   | { source: 'crm'; id: string; created_at: string; raw_memo: string; author?: string | null }
-  | { source: 'srm'; id: string; created_at: string; channel: string; target: string; content: string; author?: string | null; trigger_type?: string | null; resolution?: string | null; reason?: string | null };
+  | { source: 'srm'; id: string; created_at: string; channel: string; target: string; parties?: string[]; content: string; author?: string | null; trigger_type?: string | null; resolution?: string | null; reason?: string | null };
 
 function InfoRow({ label, value, small }: { label: string; value: string; small?: boolean }) {
   return (
@@ -130,11 +145,13 @@ interface Props {
   onClose: () => void;
   triggerType?: string;
   eventId?: string;
+  eventTime?: string;
+  eventType?: 'coachRoom' | 'studyHall';
   coachId?: string;
   onLanguageChange?: (sfv2ProfileId: string, lang: 'ko' | 'en') => void;
 }
 
-export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, coachId, onLanguageChange }: Props) {
+export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, eventTime, eventType, coachId, onLanguageChange }: Props) {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [comms, setComms] = useState<CommEntry[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(true);
@@ -231,7 +248,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setLangSaving(false);
   };
 
-  const handleAdd = async (data: { target: string; channel: string; content: string; reason?: string; resolution?: string }) => {
+  const handleAdd = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
     await fetch('/api/admin/srm/communications', {
       method: 'POST',
@@ -273,6 +290,10 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
   const triggerContext = triggerType && triggerType !== 'manual'
     ? { type: triggerType, label: TRIGGER_LABELS[triggerType] ?? triggerType }
+    : undefined;
+
+  const eventContext: EventContext | undefined = eventId && eventTime && eventType
+    ? { eventId, time: eventTime, type: eventType }
     : undefined;
 
   // 통합 타임라인 정렬
@@ -636,9 +657,11 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                           <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${CHANNEL_COLORS[entry.channel] ?? 'bg-gray-500/20 text-gray-300'}`}>
                             {CHANNEL_LABELS[entry.channel] ?? entry.channel}
                           </span>
-                          <span className="text-[11px] text-gray-500">
-                            {{student: '학생', parent: '학부모', coach: '코치'}[entry.target] ?? entry.target}
-                          </span>
+                          {(entry.parties && entry.parties.length > 0 ? entry.parties : [entry.target]).map((p) => (
+                            <span key={p} className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${PARTY_COLORS[p] ?? 'bg-gray-500/20 text-gray-300 border-gray-500/30'}`}>
+                              {PARTY_LABELS[p] ?? p}
+                            </span>
+                          ))}
                           {entry.trigger_type && entry.trigger_type !== 'manual' && (
                             <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">
                               {TRIGGER_BADGE_LABELS[entry.trigger_type] ?? entry.trigger_type}
@@ -669,7 +692,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
             {/* 하단 고정 입력폼 */}
             <div className="border-t border-white/10 px-4 py-3 shrink-0">
-              <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} noBorder />
+              <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} eventContext={eventContext} noBorder />
             </div>
           </div>
         </div>

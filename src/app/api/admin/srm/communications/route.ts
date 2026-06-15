@@ -6,6 +6,7 @@ export interface CommEntry {
   student_id: string | null;
   student_name: string | null;
   target: 'student' | 'parent' | 'coach';
+  parties: string[];
   channel: 'kakao' | 'call' | 'sms' | 'email' | 'other';
   content: string;
   author: string | null;
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
     studentId,
     studentName,
     target,
+    parties,
     channel,
     content,
     author,
@@ -86,7 +88,7 @@ export async function POST(req: NextRequest) {
     coachId,
   } = body;
 
-  if (!target || !channel || !content) {
+  if (!channel || !content) {
     return NextResponse.json({ error: 'missing required fields' }, { status: 400 });
   }
 
@@ -99,7 +101,8 @@ export async function POST(req: NextRequest) {
     .insert({
       student_id: studentId ?? null,
       student_name: studentName ?? null,
-      target,
+      target: target ?? (Array.isArray(parties) && parties[0]) ?? 'student',
+      parties: Array.isArray(parties) ? parties : [],
       channel,
       content,
       author: author ?? null,

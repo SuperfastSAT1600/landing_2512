@@ -102,6 +102,14 @@ function buildStudyHallCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): st
   return `${dayWord} Study Hall starts at ${timeInfo}. ${verb}`;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// 내일 이벤트는 오늘 같은 시각에 연락해야 하므로 -24h를 sort key로 사용
+function contactTime(ev: TaggedEvent): number {
+  const ms = new Date(ev.startsAt).getTime();
+  return ev.day === 'tomorrow' ? ms - DAY_MS : ms;
+}
+
 function mergeAndSort(
   todayCoach: ScheduleEvent[],
   todaySH: ScheduleEvent[],
@@ -116,16 +124,15 @@ function mergeAndSort(
     ...tag(todaySH, 'studyHall', 'today'),
     ...tag(tomorrowCoach, 'coachRoom', 'tomorrow'),
     ...tag(tomorrowSH, 'studyHall', 'tomorrow'),
-  ].sort((a, b) => {
-    if (a.day !== b.day) return a.day === 'today' ? -1 : 1;
-    return new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime();
-  });
+  ].sort((a, b) => contactTime(a) - contactTime(b));
 }
 
 interface StudentClickArg {
   id: string;
   name: string;
   eventId?: string;
+  eventTime?: string;
+  eventType?: 'coachRoom' | 'studyHall';
   coachId?: string;
 }
 
@@ -163,8 +170,6 @@ export function UnifiedTimeline({
   const { userName } = useAdminAuth();
 
   const events = mergeAndSort(todayCoachRoom, todayStudyHall, tomorrowCoachRoom, tomorrowStudyHall);
-  const todayEvents = events.filter((e) => e.day === 'today');
-  const tomorrowEvents = events.filter((e) => e.day === 'tomorrow');
   const totalCount = events.length;
 
   const handleCopy = async (ev: TaggedEvent, lang: 'ko' | 'en') => {
@@ -229,6 +234,10 @@ export function UnifiedTimeline({
           {isCoach ? '수업' : '스터디홀'}
         </span>
 
+        {ev.day === 'tomorrow' && (
+          <span className="mt-0.5 shrink-0 text-[10px] font-medium text-amber-400/80 bg-amber-400/10 px-1.5 py-0.5 rounded">내일</span>
+        )}
+
         {anyCopied && (
           <span className="mt-0.5 text-xs shrink-0 text-emerald-400 font-medium">발송됨</span>
         )}
@@ -247,6 +256,8 @@ export function UnifiedTimeline({
                   id: studentId ?? name,
                   name,
                   eventId: ev.id,
+                  eventTime: toTimeStr(ev.startsAt, 'Asia/Seoul'),
+                  eventType: ev.eventType,
                   coachId: ev.coachIds?.[0] ?? undefined,
                 })}
                 className={`inline-flex items-center gap-0.5 hover:text-blue-400 hover:underline transition-colors ${
