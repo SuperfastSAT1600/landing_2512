@@ -7,6 +7,8 @@ interface Overview {
   conversion_rate: number;
   gross_revenue: number; // 환불 전 총 결제
   total_refund: number; // 환불 합(음수)
+  total_revenue: number; // 순매출(총매출 − 환불)
+  total_net_revenue: number; // 순 수익(환불·부가세 제외 실수익)
 }
 
 interface SourceStat {
@@ -20,8 +22,8 @@ interface SourceStat {
  * 최초 세일즈(칸반) 탭 상단의 작은 지표 스트립.
  * 정식 정의는 /api/crm/stats 와 동일(이번 달 코호트 기준):
  * - 컨택 성공율: 초기 리드 중 세일즈 콜 예약(2단계) 이상 도달 비율
- * - 결제전환율: 이번 달 리드 중 최초결제 비율
- * - 매출: 이번 달 결제 금액 합계
+ * - 결제전환율: 컨택 성공 인원 중 최초결제 비율
+ * - 매출: 이번 달 결제 금액 합계 (만원 단위 표기, 정확한 값은 hover)
  */
 export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
   // 이번 달 범위·라벨은 마운트 시 1회 캡처 (render 중 Date 직접 호출 회피)
@@ -60,9 +62,9 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
 
   if (!data) return null;
 
-  const revenueWon = data.gross_revenue.toLocaleString();
+  const fmt만원 = (n: number) => `${Math.round(n / 10000).toLocaleString()}만원`;
+  const fmt원 = (n: number) => `${n.toLocaleString()}원`;
   const hasRefund = data.total_refund < 0;
-  const refundWon = (-data.total_refund).toLocaleString();
   // 목표 미달 시 빨간 글씨로 경고
   const contactColor = data.contact_rate < 70 ? 'text-red-500' : 'text-gray-800';
   const conversionColor = data.conversion_rate < 50 ? 'text-red-500' : 'text-gray-800';
@@ -82,16 +84,36 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
         </span>
         <span className="text-gray-200">·</span>
         <span>
-          {range.monthLabel} 매출 <b className="text-gray-800 font-semibold">{revenueWon}원</b>
+          {range.monthLabel} 매출{' '}
+          <b className="text-gray-800 font-semibold" title={fmt원(data.gross_revenue)}>
+            {fmt만원(data.gross_revenue)}
+          </b>
         </span>
         {hasRefund && (
           <>
             <span className="text-gray-200">·</span>
             <span>
-              환불 <b className="text-red-500 font-semibold">-{refundWon}원</b>
+              환불{' '}
+              <b className="text-red-500 font-semibold" title={`-${fmt원(-data.total_refund)}`}>
+                -{fmt만원(-data.total_refund)}
+              </b>
             </span>
           </>
         )}
+        <span className="text-gray-200">·</span>
+        <span>
+          순매출{' '}
+          <b className="text-gray-800 font-semibold" title={fmt원(data.total_revenue)}>
+            {fmt만원(data.total_revenue)}
+          </b>
+        </span>
+        <span className="text-gray-200">·</span>
+        <span>
+          순 수익{' '}
+          <b className="text-emerald-600 font-semibold" title={fmt원(data.total_net_revenue)}>
+            {fmt만원(data.total_net_revenue)}
+          </b>
+        </span>
       </div>
 
       {sourceRows.length > 0 && (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { enrollStudentOnPayment } from '@/lib/enroll-on-payment';
 
 /**
  * GET  /api/crm/payments?student_id=xxx
@@ -74,5 +75,12 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: { code: 'INSERT_FAILED', message: error.message } }, { status: 500 });
+
+  // 결제 → "수업 중" 전환. 학생이 연결돼 있고 양수 결제(환불 아님)일 때만.
+  // 입력 경로와 무관하게 단계 전환을 보장한다(근본 원인 수정).
+  if (body.student_id && body.amount > 0 && body.payment_type !== '환불') {
+    await enrollStudentOnPayment(body.student_id);
+  }
+
   return NextResponse.json({ data }, { status: 201 });
 }
