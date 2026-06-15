@@ -13,7 +13,7 @@ export async function GET(
     supabaseAdmin.from('students').select(
       'id, name, grade, consultation_timeline, funnel_stage, sfv2_profile_id, ' +
       'previous_rw_score, previous_math_score, target_score, target_test_date, ' +
-      'school_type, desired_subjects, ot_datetime, parent_timezone'
+      'school_type, desired_subjects, ot_datetime, parent_timezone, comm_language'
     ).eq('sfv2_profile_id', profileId).maybeSingle(),
   ]);
 
@@ -35,4 +35,25 @@ export async function GET(
     crmStudent: crmStudent ?? null,
     diagnostic,
   });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ profileId: string }> }
+) {
+  const { profileId } = await params;
+  const body = await req.json();
+  const { comm_language } = body as { comm_language?: string };
+
+  if (!['ko', 'en'].includes(comm_language ?? '')) {
+    return NextResponse.json({ error: 'Invalid comm_language' }, { status: 400 });
+  }
+
+  const { error } = await supabaseAdmin
+    .from('students')
+    .update({ comm_language } as Record<string, unknown>)
+    .eq('sfv2_profile_id', profileId);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }

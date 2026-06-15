@@ -70,6 +70,7 @@ interface CrmStudentDetail {
   desired_subjects: string | null;
   ot_datetime: string | null;
   parent_timezone: string | null;
+  comm_language?: string | null;
 }
 
 interface DiagnosticResult {
@@ -130,9 +131,10 @@ interface Props {
   triggerType?: string;
   eventId?: string;
   coachId?: string;
+  onLanguageChange?: (sfv2ProfileId: string, lang: 'ko' | 'en') => void;
 }
 
-export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, coachId }: Props) {
+export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, coachId, onLanguageChange }: Props) {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [comms, setComms] = useState<CommEntry[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(true);
@@ -143,6 +145,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [briefing, setBriefing] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [v2Summary, setV2Summary] = useState<V2Summary | null>(null);
   const [loadingV2, setLoadingV2] = useState(false);
+  const [commLang, setCommLang] = useState<'ko' | 'en'>('ko');
+  const [langSaving, setLangSaving] = useState(false);
 
   const commKey = studentId ?? crmStudentId ?? '';
 
@@ -195,6 +199,37 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     fetchLifecycle();
     fetchV2Summary();
   }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary]);
+
+  useEffect(() => {
+    const lang = (detail?.crmStudent as unknown as { comm_language?: string | null } | null)?.comm_language;
+    setCommLang(lang === 'en' ? 'en' : 'ko');
+  }, [detail]);
+
+  const handleLangToggle = async (lang: 'ko' | 'en') => {
+    if (langSaving || lang === commLang) return;
+    setCommLang(lang);
+    setLangSaving(true);
+    const resolvedId = crmStudentId ?? detail?.crmStudent?.id;
+    try {
+      if (studentId) {
+        await fetch(`/api/admin/srm/student/${studentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comm_language: lang }),
+        });
+        onLanguageChange?.(studentId, lang);
+      } else if (resolvedId) {
+        await fetch(`/api/admin/srm/student/crm/${resolvedId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comm_language: lang }),
+        });
+      }
+    } catch {
+      setCommLang(lang === 'en' ? 'ko' : 'en');
+    }
+    setLangSaving(false);
+  };
 
   const handleAdd = async (data: { target: string; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
@@ -394,6 +429,29 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                       </span>
                     </div>
                   )}
+
+                  {/* 소통 언어 */}
+                  <div className="flex items-center gap-2 pt-1.5 border-t border-white/10 mt-1.5">
+                    <span className="text-xs text-gray-500 w-14 shrink-0">소통언어</span>
+                    <div className="flex rounded-md overflow-hidden border border-white/10">
+                      {(['ko', 'en'] as const).map((lang) => (
+                        <button
+                          key={lang}
+                          onClick={() => handleLangToggle(lang)}
+                          disabled={langSaving}
+                          className={`px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+                            commLang === lang
+                              ? lang === 'en'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white/15 text-white'
+                              : 'text-gray-500 hover:text-gray-300'
+                          }`}
+                        >
+                          {lang.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   {/* CRM 연결 상태 */}
                   <div className="flex items-center gap-2 pt-1.5 border-t border-white/10 mt-1.5">

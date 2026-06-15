@@ -65,6 +65,20 @@ function buildCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
   return msg;
 }
 
+function buildCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
+  const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const localParts = buildLocalParts(ev, kstTime);
+  const dayWord = isTomorrow ? 'tomorrow' : 'today';
+  const suffix = isTomorrow ? " Don't forget!" : '';
+  let msg = `<Alert> You have a class ${dayWord} at ${kstTime} (Korea Standard Time)!${suffix}`;
+  if (localParts.length > 0) {
+    const enParts = localParts.map((p) => p.replace('기준 ', ' '));
+    msg += ` (${enParts.join(', ')})`;
+  }
+  msg += ' Please join on time and study hard!';
+  return msg;
+}
+
 function buildStudyHallCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
   const localParts = buildLocalParts(ev, kstTime);
@@ -73,6 +87,19 @@ function buildStudyHallCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): stri
   const dayWord = isTomorrow ? '내일' : '오늘';
   const verb = isTomorrow ? '잊지 말고' : '늦지 말고';
   return `${dayWord} 스터디홀 접속 시간 ${timeInfo}이니 ${verb} 출석하자구요!`;
+}
+
+function buildStudyHallCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
+  const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const localParts = buildLocalParts(ev, kstTime);
+  let timeInfo = `${kstTime} (KST)`;
+  if (localParts.length > 0) {
+    const enParts = localParts.map((p) => p.replace('기준 ', ' '));
+    timeInfo += ` / ${enParts.join(' / ')}`;
+  }
+  const dayWord = isTomorrow ? "Tomorrow's" : "Today's";
+  const verb = isTomorrow ? "Don't forget to join!" : "Don't be late!";
+  return `${dayWord} Study Hall starts at ${timeInfo}. ${verb}`;
 }
 
 function mergeAndSort(
@@ -115,6 +142,7 @@ interface Props {
   loading?: boolean;
   eventDate: string;
   vipStudentIds?: Set<string>;
+  studentLanguages?: Map<string, 'ko' | 'en'>;
   onStudentClick: (student: StudentClickArg) => void;
   onCoachClick: (coach: CoachClickArg) => void;
 }
@@ -127,6 +155,7 @@ export function UnifiedTimeline({
   loading,
   eventDate,
   vipStudentIds,
+  studentLanguages,
   onStudentClick,
   onCoachClick,
 }: Props) {
@@ -138,14 +167,17 @@ export function UnifiedTimeline({
   const tomorrowEvents = events.filter((e) => e.day === 'tomorrow');
   const totalCount = events.length;
 
-  const handleCopy = async (ev: TaggedEvent) => {
+  const handleCopy = async (ev: TaggedEvent, lang: 'ko' | 'en') => {
     const isTomorrow = ev.day === 'tomorrow';
-    const msg = ev.eventType === 'studyHall'
-      ? buildStudyHallCopyMessage(ev, isTomorrow)
-      : buildCopyMessage(ev, isTomorrow);
+    let msg: string;
+    if (ev.eventType === 'studyHall') {
+      msg = lang === 'en' ? buildStudyHallCopyMessageEn(ev, isTomorrow) : buildStudyHallCopyMessage(ev, isTomorrow);
+    } else {
+      msg = lang === 'en' ? buildCopyMessageEn(ev, isTomorrow) : buildCopyMessage(ev, isTomorrow);
+    }
     await navigator.clipboard.writeText(msg);
 
-    setCopiedIds((prev) => new Set(prev).add(ev.id));
+    setCopiedIds((prev) => new Set(prev).add(`${ev.id}-${lang}`));
 
     try {
       const eventTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
@@ -170,15 +202,28 @@ export function UnifiedTimeline({
 
   const renderRow = (ev: TaggedEvent) => {
     const isDone = ev.status === 'completed';
-    const isCopied = copiedIds.has(ev.id);
     const timeStr = `${toTimeStr(ev.startsAt, 'Asia/Seoul')}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
     const isCoach = ev.eventType === 'coachRoom';
+
+    // Determine which languages are needed for this event's students
+    const eventLangs = new Set<'ko' | 'en'>();
+    ev.students.forEach((_name, i) => {
+      const sid = ev.studentIds?.[i];
+      const lang = sid ? (studentLanguages?.get(sid) ?? 'ko') : 'ko';
+      eventLangs.add(lang);
+    });
+    const needsKo = eventLangs.has('ko');
+    const needsEn = eventLangs.has('en');
+    const copiedKo = copiedIds.has(`${ev.id}-ko`);
+    const copiedEn = copiedIds.has(`${ev.id}-en`);
+
+    const anyCopied = copiedKo || copiedEn;
 
     return (
       <div
         key={ev.id}
         className={`flex items-start gap-2.5 px-3 py-2 rounded-md text-sm group ${
-          isCopied
+          anyCopied
             ? 'bg-emerald-950/30'
             : isDone
             ? 'bg-white/3 opacity-60'
@@ -193,7 +238,7 @@ export function UnifiedTimeline({
           {isCoach ? '수업' : '스터디홀'}
         </span>
 
-        {isCopied && (
+        {anyCopied && (
           <span className="mt-0.5 text-xs shrink-0 text-emerald-400 font-medium">발송됨</span>
         )}
 
@@ -203,6 +248,7 @@ export function UnifiedTimeline({
           {ev.students.map((name, i) => {
             const studentId = ev.studentIds?.[i];
             const isVip = !!(studentId && vipStudentIds?.has(studentId));
+            const lang = studentId ? (studentLanguages?.get(studentId) ?? 'ko') : 'ko';
             return (
               <button
                 key={`${ev.id}-s-${i}`}
@@ -218,6 +264,9 @@ export function UnifiedTimeline({
               >
                 {isVip && <Crown size={11} className="text-yellow-400 shrink-0" />}
                 {name}
+                {lang === 'en' && (
+                  <span className="text-[10px] font-bold text-blue-400 bg-blue-500/15 px-1 rounded leading-tight">EN</span>
+                )}
               </button>
             );
           })}
@@ -237,16 +286,29 @@ export function UnifiedTimeline({
           )}
         </span>
 
-        <button
-          onClick={() => handleCopy(ev)}
-          title={isCoach ? '수업 알림 메시지 복사' : '스터디홀 알림 메시지 복사'}
-          className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-gray-500 hover:text-blue-400"
-        >
-          {isCopied
-            ? <Check size={13} className="text-emerald-400" />
-            : <Copy size={13} />
-          }
-        </button>
+        {/* Copy buttons: KO always if needed, EN always if needed */}
+        <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+          {needsKo && (
+            <button
+              onClick={() => handleCopy(ev, 'ko')}
+              title="한국어 메시지 복사"
+              className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-300"
+            >
+              {copiedKo ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              <span className="text-[10px]">KO</span>
+            </button>
+          )}
+          {needsEn && (
+            <button
+              onClick={() => handleCopy(ev, 'en')}
+              title="English message copy"
+              className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-400"
+            >
+              {copiedEn ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              <span className="text-[10px]">EN</span>
+            </button>
+          )}
+        </span>
       </div>
     );
   };

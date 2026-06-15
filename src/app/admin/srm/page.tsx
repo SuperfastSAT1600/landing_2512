@@ -71,6 +71,7 @@ export default function SrmPage() {
   const [selectedStudent, setSelectedStudent] = useState<SelectedStudent | null>(null);
   const [selectedCoach, setSelectedCoach] = useState<SelectedCoach | null>(null);
   const [vipStudentIds, setVipStudentIds] = useState<Set<string>>(new Set());
+  const [studentLanguages, setStudentLanguages] = useState<Map<string, 'ko' | 'en'>>(new Map());
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
@@ -93,15 +94,22 @@ export default function SrmPage() {
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
-    fetch('/api/admin/srm/vip-students')
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data?.sfv2ProfileIds)) {
-          setVipStudentIds(new Set(data.sfv2ProfileIds));
-        }
-      })
-      .catch(() => {});
+    Promise.all([
+      fetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
+      fetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
+    ]).then(([vipData, langData]) => {
+      if (Array.isArray(vipData?.sfv2ProfileIds)) {
+        setVipStudentIds(new Set(vipData.sfv2ProfileIds));
+      }
+      if (langData?.languages && typeof langData.languages === 'object') {
+        setStudentLanguages(new Map(Object.entries(langData.languages) as [string, 'ko' | 'en'][]));
+      }
+    });
   }, [mainTab]);
+
+  const handleLanguageChange = (sfv2ProfileId: string, lang: 'ko' | 'en') => {
+    setStudentLanguages((prev) => new Map(prev).set(sfv2ProfileId, lang));
+  };
 
   const handleStudentClick = (id: string, name: string) => {
     setSelectedStudent({ id, name });
@@ -166,6 +174,7 @@ export default function SrmPage() {
             loading={scheduleLoading}
             eventDate={selectedDate}
             vipStudentIds={vipStudentIds}
+            studentLanguages={studentLanguages}
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
           />
@@ -202,6 +211,7 @@ export default function SrmPage() {
           eventId={selectedStudent.eventId}
           coachId={selectedStudent.coachId}
           onClose={() => setSelectedStudent(null)}
+          onLanguageChange={handleLanguageChange}
         />
       )}
 
