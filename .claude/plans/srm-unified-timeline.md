@@ -8,11 +8,11 @@
 
 ## Requirements
 
-### REQ-001: 통합 타임라인 컴포넌트
+### REQ-001: 통합 타임라인 컴포넌트 — 연락 시각 기준 정렬
 - **Priority**: Must
-- **Description**: `UnifiedTimeline` 컴포넌트가 today/tomorrow × coachRoom/studyHall 4개 배열을 받아 `starts_at` 오름차순으로 병합·렌더링한다
-- **Acceptance Criteria**: 오늘/내일 각 섹션 내에서 이벤트가 시간순으로 나열된다
-- **Verification**: (BROWSER) 오늘 일정에 수업 14:00, 스터디홀 13:30이 있을 때 스터디홀이 먼저 표시된다
+- **Description**: 내일 이벤트의 sort key = `starts_at - 24h` ("오늘 같은 시각에 연락"). 오늘/내일 섹션 구분 없이 하나의 flat 피드로 렌더링. 내일 이벤트 행에는 "내일" 뱃지 표시.
+- **Acceptance Criteria**: 오늘 14:00 수업 + 내일 13:00 수업 → 13:00(내일) → 14:00(오늘) 순서로 표시
+- **Verification**: (BROWSER) 내일 9시 스터디홀이 오늘 14시 수업보다 위에 나타난다
 
 ### REQ-002: 이벤트 타입 뱃지
 - **Priority**: Must

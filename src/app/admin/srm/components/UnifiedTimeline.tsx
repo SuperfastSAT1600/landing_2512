@@ -310,18 +310,6 @@ export function UnifiedTimeline({
     );
   };
 
-  const renderSection = (label: string, sectionEvents: TaggedEvent[]) => {
-    if (sectionEvents.length === 0) return null;
-    return (
-      <div>
-        <p className="text-xs text-gray-500 mb-1.5">{label}</p>
-        <div className="space-y-1.5">
-          {sectionEvents.map(renderRow)}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
@@ -340,9 +328,8 @@ export function UnifiedTimeline({
       ) : totalCount === 0 ? (
         <p className="text-xs text-gray-600 py-4">스케줄 없음</p>
       ) : (
-        <div className="space-y-4">
-          {renderSection('오늘', todayEvents)}
-          {renderSection('내일', tomorrowEvents)}
+        <div className="space-y-1.5">
+          {events.map(renderRow)}
         </div>
       )}
     </div>
