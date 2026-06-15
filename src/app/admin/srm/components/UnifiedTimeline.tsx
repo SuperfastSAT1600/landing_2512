@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Crown } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 
@@ -114,6 +114,7 @@ interface Props {
   tomorrowStudyHall: ScheduleEvent[];
   loading?: boolean;
   eventDate: string;
+  vipStudentIds?: Set<string>;
   onStudentClick: (student: StudentClickArg) => void;
   onCoachClick: (coach: CoachClickArg) => void;
 }
@@ -125,6 +126,7 @@ export function UnifiedTimeline({
   tomorrowStudyHall,
   loading,
   eventDate,
+  vipStudentIds,
   onStudentClick,
   onCoachClick,
 }: Props) {
@@ -198,22 +200,27 @@ export function UnifiedTimeline({
         <span className="text-gray-400 font-mono text-xs shrink-0 mt-0.5">{timeStr}</span>
 
         <span className="leading-tight flex flex-wrap gap-x-1 gap-y-0.5 flex-1">
-          {ev.students.map((name, i) => (
-            <button
-              key={`${ev.id}-s-${i}`}
-              onClick={() => onStudentClick({
-                id: ev.studentIds?.[i] ?? name,
-                name,
-                eventId: ev.id,
-                coachId: ev.coachIds?.[0] ?? undefined,
-              })}
-              className={`hover:text-blue-400 hover:underline transition-colors ${
-                isDone ? 'text-gray-500' : 'text-gray-200'
-              }`}
-            >
-              {name}
-            </button>
-          ))}
+          {ev.students.map((name, i) => {
+            const studentId = ev.studentIds?.[i];
+            const isVip = !!(studentId && vipStudentIds?.has(studentId));
+            return (
+              <button
+                key={`${ev.id}-s-${i}`}
+                onClick={() => onStudentClick({
+                  id: studentId ?? name,
+                  name,
+                  eventId: ev.id,
+                  coachId: ev.coachIds?.[0] ?? undefined,
+                })}
+                className={`inline-flex items-center gap-0.5 hover:text-blue-400 hover:underline transition-colors ${
+                  isDone ? 'text-gray-500' : 'text-gray-200'
+                }`}
+              >
+                {isVip && <Crown size={11} className="text-yellow-400 shrink-0" />}
+                {name}
+              </button>
+            );
+          })}
           {isCoach && ev.coaches.length > 0 && (
             <span className="text-gray-500 flex items-center gap-1">
               <span>&#8596;</span>

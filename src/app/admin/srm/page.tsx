@@ -70,6 +70,7 @@ export default function SrmPage() {
   const [alertsLoading, setAlertsLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<SelectedStudent | null>(null);
   const [selectedCoach, setSelectedCoach] = useState<SelectedCoach | null>(null);
+  const [vipStudentIds, setVipStudentIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
@@ -88,6 +89,18 @@ export default function SrmPage() {
       .then((r) => r.json())
       .then(setAlerts)
       .finally(() => setAlertsLoading(false));
+  }, [mainTab]);
+
+  useEffect(() => {
+    if (mainTab !== 'schedule') return;
+    fetch('/api/admin/srm/vip-students')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data?.sfv2ProfileIds)) {
+          setVipStudentIds(new Set(data.sfv2ProfileIds));
+        }
+      })
+      .catch(() => {});
   }, [mainTab]);
 
   const handleStudentClick = (id: string, name: string) => {
@@ -152,6 +165,7 @@ export default function SrmPage() {
             tomorrowStudyHall={schedule?.tomorrow.studyHall ?? []}
             loading={scheduleLoading}
             eventDate={selectedDate}
+            vipStudentIds={vipStudentIds}
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
           />
