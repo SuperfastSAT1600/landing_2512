@@ -6,6 +6,7 @@ import { AddForm } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
 import type { EventContext } from './CommLog';
 import { CrmLinkSection } from './CrmLinkSection';
+import { SrmCommCard } from './SrmCommCard';
 import { LifecycleTab } from './LifecycleTab';
 import { STAGE_LABELS } from '@/app/admin/srm/lifecycle-constants';
 import type { LifecycleResponse } from '@/app/api/admin/srm/lifecycle/route';
@@ -331,6 +332,10 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     });
     await fetchComms();
     setSaving(false);
+  };
+
+  const handleCommUpdated = (updated: CommEntry) => {
+    setComms((prev) => prev.map((c) => c.id === updated.id ? updated : c));
   };
 
   const handleLinked = () => fetchDetail();
@@ -792,38 +797,11 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
                     // source === 'srm'
                     return (
-                      <div key={`srm-${entry.id}`} className="bg-white/5 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${CHANNEL_COLORS[entry.channel] ?? 'bg-gray-500/20 text-gray-300'}`}>
-                            {CHANNEL_LABELS[entry.channel] ?? entry.channel}
-                          </span>
-                          {(entry.parties && entry.parties.length > 0 ? entry.parties : [entry.target]).map((p) => (
-                            <span key={p} className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${PARTY_COLORS[p] ?? 'bg-gray-500/20 text-gray-300 border-gray-500/30'}`}>
-                              {PARTY_LABELS[p] ?? p}
-                            </span>
-                          ))}
-                          {entry.trigger_type && entry.trigger_type !== 'manual' && (
-                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">
-                              {TRIGGER_BADGE_LABELS[entry.trigger_type] ?? entry.trigger_type}
-                            </span>
-                          )}
-                          {entry.resolution && (
-                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-gray-400 ml-auto">
-                              {RESOLUTION_LABELS[entry.resolution] ?? entry.resolution}
-                            </span>
-                          )}
-                          <span className={`text-[11px] text-gray-600 ${entry.resolution ? '' : 'ml-auto'}`}>
-                            {new Date(entry.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
-                            {entry.author ? ` · ${entry.author}` : ''}
-                          </span>
-                        </div>
-                        {entry.reason && (
-                          <p className="text-[11px] text-gray-500 mb-1">사유: {entry.reason}</p>
-                        )}
-                        <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
-                          {entry.content}
-                        </p>
-                      </div>
+                      <SrmCommCard
+                        key={`srm-${entry.id}`}
+                        entry={entry as CommEntry}
+                        onUpdated={handleCommUpdated}
+                      />
                     );
                   })}
                 </div>

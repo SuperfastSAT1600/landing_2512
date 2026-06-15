@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { AddForm } from './CommLog';
+import { SrmCommCard } from './SrmCommCard';
 import type { CommEntry, EventContext } from './CommLog';
 import type { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
@@ -20,34 +21,6 @@ interface Props {
   onClose: () => void;
 }
 
-const PARTY_LABELS: Record<string, string> = {
-  student: '학생',
-  parent: '학부모',
-  coach: '코치',
-  us: '우리',
-};
-
-const PARTY_COLORS: Record<string, string> = {
-  student: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  parent: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  coach: 'bg-green-500/20 text-green-300 border-green-500/30',
-  us: 'bg-red-500/20 text-red-300 border-red-500/30',
-};
-
-const CHANNEL_LABELS: Record<string, string> = {
-  kakao: '카카오', call: '전화', sms: 'SMS', email: '이메일', other: '기타',
-};
-const CHANNEL_COLORS: Record<string, string> = {
-  kakao: 'bg-yellow-500/20 text-yellow-300',
-  call: 'bg-blue-500/20 text-blue-300',
-  sms: 'bg-green-500/20 text-green-300',
-  email: 'bg-purple-500/20 text-purple-300',
-  other: 'bg-gray-500/20 text-gray-300',
-};
-const RESOLUTION_LABELS: Record<string, string> = {
-  scheduled: '일정잡음', will_contact: '다음연락', no_intent: '의향없음',
-  unreachable: '연락불가', resolved: '해결됨', other: '기타',
-};
 
 function getAdminName() {
   if (typeof window === 'undefined') return '';
@@ -58,6 +31,10 @@ export function EventLogPanel({ event, onClose }: Props) {
   const [comms, setComms] = useState<CommEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const handleUpdated = (updated: CommEntry) => {
+    setComms((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+  };
   const { userName } = useAdminAuth();
 
   const fetchComms = useCallback(async () => {
@@ -146,34 +123,9 @@ export function EventLogPanel({ event, onClose }: Props) {
           ) : comms.length === 0 ? (
             <p className="text-xs text-gray-600 py-2">이 이벤트에 대한 기록이 없습니다.</p>
           ) : (
-            comms.map((e) => {
-              const effectiveParties: string[] = (e.parties && e.parties.length > 0) ? e.parties : (e.target ? [e.target] : []);
-              return (
-                <div key={e.id} className="bg-white/5 rounded-lg p-3">
-                  <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${CHANNEL_COLORS[e.channel] ?? ''}`}>
-                      {CHANNEL_LABELS[e.channel] ?? e.channel}
-                    </span>
-                    {effectiveParties.map((p) => (
-                      <span key={p} className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${PARTY_COLORS[p] ?? 'bg-gray-500/20 text-gray-300 border-gray-500/30'}`}>
-                        {PARTY_LABELS[p] ?? p}
-                      </span>
-                    ))}
-                    {e.resolution && (
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-gray-400 ml-auto">
-                        {RESOLUTION_LABELS[e.resolution] ?? e.resolution}
-                      </span>
-                    )}
-                    <span className={`text-[11px] text-gray-600 ${e.resolution ? '' : 'ml-auto'}`}>
-                      {new Date(e.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
-                      {e.author ? ` · ${e.author}` : ''}
-                    </span>
-                  </div>
-                  {e.reason && <p className="text-[11px] text-gray-500 mb-1">사유: {e.reason}</p>}
-                  <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{e.content}</p>
-                </div>
-              );
-            })
+            comms.map((e) => (
+              <SrmCommCard key={e.id} entry={e} onUpdated={handleUpdated} />
+            ))
           )}
         </div>
 
