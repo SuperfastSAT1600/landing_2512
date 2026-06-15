@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { enrollStudentOnPayment } from '@/lib/enroll-on-payment';
 
 export async function POST(
   request: NextRequest,
@@ -24,10 +25,10 @@ export async function POST(
     return NextResponse.json({ error: '상품과 금액은 필수입니다.' }, { status: 400 });
   }
 
-  // student_name, stage_history 조회 (payments 테이블 기록 + 이력 추가)
+  // student_name 조회 (payments 테이블 기록용)
   const { data: studentRow } = await supabaseAdmin
     .from('students')
-    .select('name, stage_history')
+    .select('name')
     .eq('id', id)
     .single();
 
@@ -52,26 +53,9 @@ export async function POST(
     return NextResponse.json({ error: payErr.message ?? '결제 기록 저장 실패' }, { status: 500 });
   }
 
-  const now = new Date().toISOString();
-  const updatedHistory = [
-    ...(Array.isArray(studentRow?.stage_history) ? studentRow.stage_history : []),
-    { stage: '8', label: '수업 중', entered_at: now },
-  ];
-
-  const { data: student, error: stuErr } = await supabaseAdmin
-    .from('students')
-    .update({
-      lead_status: 'enrolled',
-      funnel_stage: '8',
-      funnel_stage_updated_at: now,
-      stage_history: updatedHistory,
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (stuErr) {
-    console.error('[payment POST] student update', stuErr);
+  // 결제 → "수업 중" 전환 (모든 결제 경로 공유 헬퍼)
+  const student = await enrollStudentOnPayment(id);
+  if (!student) {
     return NextResponse.json({ error: '학생 상태 업데이트 실패' }, { status: 500 });
   }
 
