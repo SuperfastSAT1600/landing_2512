@@ -73,7 +73,8 @@ export type B2BPartner =
   | 'InArt'
   | '박정 어학원'
   | '솔로몬에듀'
-  | 'Admission AG';
+  | 'Admission AG'
+  | '공부하는 아이들';
 
 // 세일즈 퍼널 단계 (칸반 A)
 export type FunnelStage =
@@ -599,6 +600,7 @@ export const B2B_PARTNER_OPTIONS: B2BPartner[] = [
   '박정 어학원',
   '솔로몬에듀',
   'Admission AG',
+  '공부하는 아이들',
 ];
 
 export const CAMPAIGN_TAG_PRESETS = ['기존DB 재활성화', '여름특강'] as const;
