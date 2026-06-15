@@ -104,8 +104,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'missing required fields' }, { status: 400 });
   }
 
-  if (!studentId && !coachId) {
-    return NextResponse.json({ error: 'studentId or coachId required' }, { status: 400 });
+  if (!studentId && !coachId && !eventId) {
+    return NextResponse.json({ error: 'studentId, coachId, or eventId required' }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin

@@ -76,7 +76,7 @@ export function EventLogPanel({ event, onClose }: Props) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        studentId: null,
+        studentId: event.studentIds?.[0] ?? null,
         studentName: event.students.join(', '),
         coachId: event.coachIds?.[0] ?? null,
         author: userName || getAdminName() || '관리자',
