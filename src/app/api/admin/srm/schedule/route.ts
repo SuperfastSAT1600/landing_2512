@@ -25,9 +25,10 @@ function kstDateToUtcRange(dateStr: string): { from: string; to: string } {
 }
 
 function addDays(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00+09:00`);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
 }
 
 async function fetchEventsForDate(dateStr: string): Promise<{ coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] }> {
