@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Crown } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 
@@ -54,7 +54,6 @@ function buildLocalParts(ev: ScheduleEvent, kstTime: string): string[] {
 function buildCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
   const localParts = buildLocalParts(ev, kstTime);
-
   const dayWord = isTomorrow ? '내일' : '오늘';
   const suffix = isTomorrow ? '잊지 마세요! ' : '';
   let msg = `<알림> ${dayWord} 수업 ${kstTime}(한국 시간 기준)에 있습니다${isTomorrow ? ',' : '!'} ${suffix}`;
@@ -63,16 +62,41 @@ function buildCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
   return msg;
 }
 
+function buildCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
+  const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const localParts = buildLocalParts(ev, kstTime);
+  const dayWord = isTomorrow ? 'tomorrow' : 'today';
+  const suffix = isTomorrow ? " Don't forget!" : '';
+  let msg = `<Alert> You have a class ${dayWord} at ${kstTime} (Korea Standard Time)!${suffix}`;
+  if (localParts.length > 0) {
+    const enParts = localParts.map((p) => p.replace('기준 ', ' '));
+    msg += ` (${enParts.join(', ')})`;
+  }
+  msg += ' Please join on time and study hard!';
+  return msg;
+}
+
 function buildStudyHallCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
   const localParts = buildLocalParts(ev, kstTime);
-
   let timeInfo = `${kstTime}(한국 시간)`;
   if (localParts.length > 0) timeInfo += `, ${localParts.join(' / ')}`;
-
   const dayWord = isTomorrow ? '내일' : '오늘';
   const verb = isTomorrow ? '잊지 말고' : '늦지 말고';
   return `${dayWord} 스터디홀 접속 시간 ${timeInfo}이니 ${verb} 출석하자구요!`;
+}
+
+function buildStudyHallCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
+  const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const localParts = buildLocalParts(ev, kstTime);
+  let timeInfo = `${kstTime} (KST)`;
+  if (localParts.length > 0) {
+    const enParts = localParts.map((p) => p.replace('기준 ', ' '));
+    timeInfo += ` / ${enParts.join(' / ')}`;
+  }
+  const dayWord = isTomorrow ? "Tomorrow's" : "Today's";
+  const verb = isTomorrow ? "Don't forget to join!" : "Don't be late!";
+  return `${dayWord} Study Hall starts at ${timeInfo}. ${verb}`;
 }
 
 interface StudentClickArg {
@@ -94,6 +118,8 @@ interface Props {
   type: 'coachRoom' | 'studyHall';
   loading?: boolean;
   eventDate: string;
+  vipStudentIds?: Set<string>;
+  studentLanguages?: Map<string, 'ko' | 'en'>;
   onStudentClick: (student: StudentClickArg) => void;
   onCoachClick: (coach: CoachClickArg) => void;
 }
@@ -105,6 +131,8 @@ export function ScheduleList({
   type,
   loading,
   eventDate,
+  vipStudentIds,
+  studentLanguages,
   onStudentClick,
   onCoachClick,
 }: Props) {
@@ -115,13 +143,15 @@ export function ScheduleList({
 
   const totalCount = todayEvents.length + tomorrowEvents.length;
 
-  const handleCopy = async (ev: ScheduleEvent, isTomorrow: boolean) => {
-    const msg = type === 'studyHall'
-      ? buildStudyHallCopyMessage(ev, isTomorrow)
-      : buildCopyMessage(ev, isTomorrow);
+  const handleCopy = async (ev: ScheduleEvent, isTomorrow: boolean, lang: 'ko' | 'en') => {
+    let msg: string;
+    if (type === 'studyHall') {
+      msg = lang === 'en' ? buildStudyHallCopyMessageEn(ev, isTomorrow) : buildStudyHallCopyMessage(ev, isTomorrow);
+    } else {
+      msg = lang === 'en' ? buildCopyMessageEn(ev, isTomorrow) : buildCopyMessage(ev, isTomorrow);
+    }
     await navigator.clipboard.writeText(msg);
-
-    setCopiedIds((prev) => new Set(prev).add(ev.id));
+    setCopiedIds((prev) => new Set(prev).add(`${ev.id}-${lang}`));
 
     try {
       const eventTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
@@ -140,52 +170,65 @@ export function ScheduleList({
         }),
       });
     } catch {
-      // Log failure is non-fatal
+      // non-fatal
     }
   };
 
   const renderEventRow = (ev: ScheduleEvent, isTomorrow: boolean) => {
     const isDone = ev.status === 'completed';
-    const isCopied = copiedIds.has(ev.id);
     const timeStr = `${toTimeStr(ev.startsAt, 'Asia/Seoul')}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
+
+    const eventLangs = new Set<'ko' | 'en'>();
+    ev.students.forEach((_name, i) => {
+      const sid = ev.studentIds?.[i];
+      eventLangs.add(sid ? (studentLanguages?.get(sid) ?? 'ko') : 'ko');
+    });
+    const needsKo = eventLangs.has('ko');
+    const needsEn = eventLangs.has('en');
+    const copiedKo = copiedIds.has(`${ev.id}-ko`);
+    const copiedEn = copiedIds.has(`${ev.id}-en`);
+    const anyCopied = copiedKo || copiedEn;
 
     return (
       <div
         key={ev.id}
         className={`flex items-start gap-2.5 px-3 py-2 rounded-md text-sm group ${
-          isCopied
-            ? 'bg-emerald-950/30'
-            : isDone
-            ? 'bg-white/3 opacity-60'
-            : 'bg-white/5'
+          anyCopied ? 'bg-emerald-950/30' : isDone ? 'bg-white/3 opacity-60' : 'bg-white/5'
         }`}
       >
         <span className={`mt-0.5 text-xs shrink-0 ${isDone ? 'text-emerald-400' : 'text-gray-500'}`}>
           {isDone ? completedIcon : icon}
         </span>
-        {isCopied && (
-          <span className="mt-0.5 text-xs shrink-0 text-emerald-400 font-medium">
-            발송됨
-          </span>
+        {anyCopied && (
+          <span className="mt-0.5 text-xs shrink-0 text-emerald-400 font-medium">발송됨</span>
         )}
         <span className="text-gray-400 font-mono text-xs shrink-0 mt-0.5">{timeStr}</span>
         <span className="leading-tight flex flex-wrap gap-x-1 gap-y-0.5 flex-1">
-          {ev.students.map((name, i) => (
-            <button
-              key={`${ev.id}-s-${i}`}
-              onClick={() => onStudentClick({
-                id: ev.studentIds?.[i] ?? name,
-                name,
-                eventId: ev.id,
-                coachId: ev.coachIds?.[0] ?? undefined,
-              })}
-              className={`hover:text-blue-400 hover:underline transition-colors ${
-                isDone ? 'text-gray-500' : 'text-gray-200'
-              }`}
-            >
-              {name}
-            </button>
-          ))}
+          {ev.students.map((name, i) => {
+            const studentId = ev.studentIds?.[i];
+            const isVip = !!(studentId && vipStudentIds?.has(studentId));
+            const lang = studentId ? (studentLanguages?.get(studentId) ?? 'ko') : 'ko';
+            return (
+              <button
+                key={`${ev.id}-s-${i}`}
+                onClick={() => onStudentClick({
+                  id: studentId ?? name,
+                  name,
+                  eventId: ev.id,
+                  coachId: ev.coachIds?.[0] ?? undefined,
+                })}
+                className={`inline-flex items-center gap-0.5 hover:text-blue-400 hover:underline transition-colors ${
+                  isDone ? 'text-gray-500' : 'text-gray-200'
+                }`}
+              >
+                {isVip && <Crown size={11} className="text-yellow-400 shrink-0" />}
+                {name}
+                {lang === 'en' && (
+                  <span className="text-[10px] font-bold text-blue-400 bg-blue-500/15 px-1 rounded leading-tight">EN</span>
+                )}
+              </button>
+            );
+          })}
           {type === 'coachRoom' && ev.coaches.length > 0 && (
             <span className="text-gray-500 flex items-center gap-1">
               <span>&#8596;</span>
@@ -202,16 +245,28 @@ export function ScheduleList({
           )}
         </span>
 
-        <button
-          onClick={() => handleCopy(ev, isTomorrow)}
-          title={type === 'studyHall' ? '스터디홀 알림 메시지 복사' : '수업 알림 메시지 복사'}
-          className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-gray-500 hover:text-blue-400"
-        >
-          {isCopied
-            ? <Check size={13} className="text-emerald-400" />
-            : <Copy size={13} />
-          }
-        </button>
+        <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+          {needsKo && (
+            <button
+              onClick={() => handleCopy(ev, isTomorrow, 'ko')}
+              title="한국어 메시지 복사"
+              className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-300"
+            >
+              {copiedKo ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              <span className="text-[10px]">KO</span>
+            </button>
+          )}
+          {needsEn && (
+            <button
+              onClick={() => handleCopy(ev, isTomorrow, 'en')}
+              title="English message copy"
+              className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-400"
+            >
+              {copiedEn ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              <span className="text-[10px]">EN</span>
+            </button>
+          )}
+        </span>
       </div>
     );
   };
