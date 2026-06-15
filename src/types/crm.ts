@@ -114,6 +114,14 @@ export interface ReactivationEntry {
 
 // ─── 상담 타임라인 ──────────────────────────────────────────────────────────
 
+/** 상담 메모 첨부 (카톡 캡처 등). 비공개 버킷 저장 경로만 보관, 조회 시 서명 URL 사용. */
+export interface Attachment {
+  path: string; // crm-attachments 버킷 내 저장 경로 (공개 URL 아님)
+  name: string; // 원본 파일명
+  mime: string; // MIME 타입
+  size: number; // 바이트
+}
+
 export interface ConsultationEntry {
   id: string;
   created_at: string; // ISO timestamp
@@ -122,6 +130,7 @@ export interface ConsultationEntry {
   ai_purified?: string; // AI 가공본 (학부모 노출)
   ai_deleted_items?: string[]; // AI가 삭제한 항목 목록 (매니저 확인용)
   ai_coach_history?: string; // AI가 분리한 교육 이력 (코치 노출)
+  attachments?: Attachment[]; // 첨부 파일 (운영자 내부 전용, 학부모 비노출)
   published: boolean; // true면 학부모 타임라인에 노출
   manager_id?: string;
 }

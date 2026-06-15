@@ -8,6 +8,7 @@ import { PaymentModal } from '../PaymentModal';
 import { usePanelData } from './hooks/usePanelData';
 import { useEditForm } from './hooks/useEditForm';
 import { useMemoSection } from './hooks/useMemoSection';
+import { useMemoAttachments } from './hooks/useMemoAttachments';
 import { useCallRecording } from './hooks/useCallRecording';
 import { useTimeline } from './hooks/useTimeline';
 import { useFunnel } from './hooks/useFunnel';
@@ -71,10 +72,14 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     onUpdate,
   });
 
+  const attachmentsHook = useMemoAttachments({ studentId: student.id, adminKey });
+
   const memoHook = useMemoSection({
     studentId: student.id, adminKey, userName,
     setTimeline,
     onUpdate: (id, updates) => onUpdate(id, updates as Partial<Student>),
+    getAttachments: attachmentsHook.toAttachments,
+    clearAttachments: attachmentsHook.clear,
   });
 
   // 통화 녹음 → 전사·요약 결과를 메모 입력란에 채움(상담사 검토 후 "메모 저장")
@@ -228,9 +233,15 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               elapsedSec={callHook.elapsedSec}
               recordError={callHook.recordError}
               onToggleRecord={callHook.toggle}
+              staged={attachmentsHook.staged}
+              onAddFiles={attachmentsHook.addFiles}
+              onRemoveAttachment={attachmentsHook.remove}
+              attachmentsUploading={attachmentsHook.uploading}
             />
 
             <TimelineSection
+              studentId={student.id}
+              adminKey={adminKey}
               timeline={timeline}
               loadingFresh={loadingFresh}
               publishError={timelineHook.publishError}

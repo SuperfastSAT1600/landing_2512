@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import type { ConsultationEntry } from '@/types/crm';
+import { parseAttachments } from '@/lib/crm-attachment';
 import { randomUUID } from 'crypto';
 
 const SLACK_TOKEN = process.env.SLACK_BOT_TOKEN;
@@ -37,16 +38,22 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { raw_memo: string; author?: string };
+  let body: { raw_memo?: string; author?: string; attachments?: unknown };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { raw_memo, author } = body;
-  if (!raw_memo || typeof raw_memo !== 'string' || raw_memo.trim().length === 0) {
-    return NextResponse.json({ error: 'raw_memo is required' }, { status: 400 });
+  const raw_memo = typeof body.raw_memo === 'string' ? body.raw_memo : '';
+  const author = body.author;
+  const attachments = parseAttachments(body.attachments);
+  if (attachments === null) {
+    return NextResponse.json({ error: 'invalid attachments' }, { status: 400 });
+  }
+  // 텍스트나 첨부 중 하나는 있어야 한다(캡처만 공유하는 경우 허용).
+  if (raw_memo.trim().length === 0 && attachments.length === 0) {
+    return NextResponse.json({ error: 'raw_memo or attachments is required' }, { status: 400 });
   }
 
   // Fetch existing timeline
@@ -70,19 +77,18 @@ export async function POST(
     raw_memo: raw_memo.trim(),
     ...(author ? { author } : {}),
     published: false,
+    ...(attachments.length > 0 ? { attachments } : {}),
   };
 
   const updatedTimeline = [...existing, newEntry];
 
-  const { data, error } = await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from('students')
     .update({
       consultation_timeline: updatedTimeline,
       last_contacted_at: new Date().toISOString(),
     })
-    .eq('id', id)
-    .select('consultation_timeline')
-    .single();
+    .eq('id', id);
 
   if (error) {
     console.error('[crm/memo POST]', error);
