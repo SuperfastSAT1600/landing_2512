@@ -178,13 +178,6 @@ export function ScheduleList({
     const isDone = ev.status === 'completed';
     const timeStr = `${toTimeStr(ev.startsAt, 'Asia/Seoul')}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
 
-    const eventLangs = new Set<'ko' | 'en'>();
-    ev.students.forEach((_name, i) => {
-      const sid = ev.studentIds?.[i];
-      eventLangs.add(sid ? (studentLanguages?.get(sid) ?? 'ko') : 'ko');
-    });
-    const needsKo = eventLangs.has('ko');
-    const needsEn = eventLangs.has('en');
     const copiedKo = copiedIds.has(`${ev.id}-ko`);
     const copiedEn = copiedIds.has(`${ev.id}-en`);
     const anyCopied = copiedKo || copiedEn;
@@ -246,26 +239,22 @@ export function ScheduleList({
         </span>
 
         <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-          {needsKo && (
-            <button
-              onClick={() => handleCopy(ev, isTomorrow, 'ko')}
-              title="한국어 메시지 복사"
-              className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-300"
-            >
-              {copiedKo ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-              <span className="text-[10px]">KO</span>
-            </button>
-          )}
-          {needsEn && (
-            <button
-              onClick={() => handleCopy(ev, isTomorrow, 'en')}
-              title="English message copy"
-              className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-400"
-            >
-              {copiedEn ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-              <span className="text-[10px]">EN</span>
-            </button>
-          )}
+          <button
+            onClick={() => handleCopy(ev, isTomorrow, 'ko')}
+            title="한국어 메시지 복사"
+            className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-300"
+          >
+            {copiedKo ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            <span className="text-[10px]">KO</span>
+          </button>
+          <button
+            onClick={() => handleCopy(ev, isTomorrow, 'en')}
+            title="English message copy"
+            className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-400"
+          >
+            {copiedEn ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            <span className="text-[10px]">EN</span>
+          </button>
         </span>
       </div>
     );

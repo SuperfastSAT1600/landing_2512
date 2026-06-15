@@ -205,15 +205,6 @@ export function UnifiedTimeline({
     const timeStr = `${toTimeStr(ev.startsAt, 'Asia/Seoul')}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
     const isCoach = ev.eventType === 'coachRoom';
 
-    // Determine which languages are needed for this event's students
-    const eventLangs = new Set<'ko' | 'en'>();
-    ev.students.forEach((_name, i) => {
-      const sid = ev.studentIds?.[i];
-      const lang = sid ? (studentLanguages?.get(sid) ?? 'ko') : 'ko';
-      eventLangs.add(lang);
-    });
-    const needsKo = eventLangs.has('ko');
-    const needsEn = eventLangs.has('en');
     const copiedKo = copiedIds.has(`${ev.id}-ko`);
     const copiedEn = copiedIds.has(`${ev.id}-en`);
 
@@ -286,28 +277,23 @@ export function UnifiedTimeline({
           )}
         </span>
 
-        {/* Copy buttons: KO always if needed, EN always if needed */}
         <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-          {needsKo && (
-            <button
-              onClick={() => handleCopy(ev, 'ko')}
-              title="한국어 메시지 복사"
-              className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-300"
-            >
-              {copiedKo ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-              <span className="text-[10px]">KO</span>
-            </button>
-          )}
-          {needsEn && (
-            <button
-              onClick={() => handleCopy(ev, 'en')}
-              title="English message copy"
-              className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-400"
-            >
-              {copiedEn ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-              <span className="text-[10px]">EN</span>
-            </button>
-          )}
+          <button
+            onClick={() => handleCopy(ev, 'ko')}
+            title="한국어 메시지 복사"
+            className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-300"
+          >
+            {copiedKo ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            <span className="text-[10px]">KO</span>
+          </button>
+          <button
+            onClick={() => handleCopy(ev, 'en')}
+            title="English message copy"
+            className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-400"
+          >
+            {copiedEn ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            <span className="text-[10px]">EN</span>
+          </button>
         </span>
       </div>
     );
