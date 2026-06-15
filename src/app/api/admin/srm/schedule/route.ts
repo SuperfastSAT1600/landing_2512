@@ -8,13 +8,14 @@ export interface ScheduleEvent {
   status: string;
   students: string[];
   studentIds: string[];
-  studentTimezones: (string | null)[]; // 학생별 parent_timezone (IANA)
+  studentTimezones: (string | null)[];
   coaches: string[];
+  coachIds: string[];
 }
 
 export interface ScheduleResponse {
-  coachRoom: ScheduleEvent[];
-  studyHall: ScheduleEvent[];
+  today: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] };
+  tomorrow: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] };
 }
 
 function kstDateToUtcRange(dateStr: string): { from: string; to: string } {
@@ -23,13 +24,15 @@ function kstDateToUtcRange(dateStr: string): { from: string; to: string } {
   return { from, to };
 }
 
-export async function GET(req: NextRequest) {
-  const date = req.nextUrl.searchParams.get('date');
-  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return NextResponse.json({ error: 'date param required (YYYY-MM-DD)' }, { status: 400 });
-  }
+function addDays(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
 
-  const { from, to } = kstDateToUtcRange(date);
+async function fetchEventsForDate(dateStr: string): Promise<{ coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] }> {
+  const { from, to } = kstDateToUtcRange(dateStr);
 
   const { data: events, error } = await supabaseSFv2
     .from('scheduled_events')
@@ -40,8 +43,8 @@ export async function GET(req: NextRequest) {
     .neq('status', 'cancelled')
     .order('starts_at', { ascending: true });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!events?.length) return NextResponse.json({ coachRoom: [], studyHall: [] });
+  if (error) throw new Error(error.message);
+  if (!events?.length) return { coachRoom: [], studyHall: [] };
 
   const eventIds = events.map((e) => e.id);
 
@@ -60,9 +63,18 @@ export async function GET(req: NextRequest) {
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
   const timezoneMap = new Map((profiles ?? []).map((p) => [p.id, p.timezone ?? null]));
 
-  const evMap = new Map<string, { students: string[]; studentIds: string[]; studentTimezones: (string | null)[]; coaches: string[] }>();
+  const evMap = new Map<string, {
+    students: string[];
+    studentIds: string[];
+    studentTimezones: (string | null)[];
+    coaches: string[];
+    coachIds: string[];
+  }>();
+
   for (const p of participants ?? []) {
-    if (!evMap.has(p.event_id)) evMap.set(p.event_id, { students: [], studentIds: [], studentTimezones: [], coaches: [] });
+    if (!evMap.has(p.event_id)) {
+      evMap.set(p.event_id, { students: [], studentIds: [], studentTimezones: [], coaches: [], coachIds: [] });
+    }
     const profile = profileMap.get(p.user_id);
     if (!profile) continue;
     const entry = evMap.get(p.event_id)!;
@@ -72,6 +84,7 @@ export async function GET(req: NextRequest) {
       entry.studentTimezones.push(timezoneMap.get(profile.id) ?? null);
     } else if (profile.role === 'teacher') {
       entry.coaches.push(profile.full_name);
+      entry.coachIds.push(profile.id);
     }
   }
 
@@ -79,7 +92,7 @@ export async function GET(req: NextRequest) {
   const studyHall: ScheduleEvent[] = [];
 
   for (const ev of events) {
-    const users = evMap.get(ev.id) ?? { students: [], studentIds: [], studentTimezones: [], coaches: [] };
+    const users = evMap.get(ev.id) ?? { students: [], studentIds: [], studentTimezones: [], coaches: [], coachIds: [] };
     const item: ScheduleEvent = {
       id: ev.id,
       startsAt: ev.starts_at,
@@ -89,10 +102,31 @@ export async function GET(req: NextRequest) {
       studentIds: users.studentIds,
       studentTimezones: users.studentTimezones,
       coaches: users.coaches,
+      coachIds: users.coachIds,
     };
     if (ev.category === 'coach_room') coachRoom.push(item);
     else studyHall.push(item);
   }
 
-  return NextResponse.json({ coachRoom, studyHall } satisfies ScheduleResponse);
+  return { coachRoom, studyHall };
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const date = req.nextUrl.searchParams.get('date');
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json({ error: 'date param required (YYYY-MM-DD)' }, { status: 400 });
+    }
+
+    const tomorrowDate = addDays(date, 1);
+
+    const [today, tomorrow] = await Promise.all([
+      fetchEventsForDate(date),
+      fetchEventsForDate(tomorrowDate),
+    ]);
+
+    return NextResponse.json({ today, tomorrow } satisfies ScheduleResponse);
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }

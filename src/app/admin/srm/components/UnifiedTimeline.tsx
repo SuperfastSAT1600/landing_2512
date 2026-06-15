@@ -5,6 +5,11 @@ import { Copy, Check, Crown } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 
+type EventType = 'coachRoom' | 'studyHall';
+type EventDay = 'today' | 'tomorrow';
+
+type TaggedEvent = ScheduleEvent & { eventType: EventType; day: EventDay };
+
 function toTimeStr(iso: string, tz: string): string {
   return new Date(iso).toLocaleTimeString('ko-KR', {
     timeZone: tz,
@@ -19,8 +24,7 @@ const TZ_REGION: Record<string, string> = {
   'America/Denver': '미국 산악', 'America/Phoenix': '미국 산악', 'America/Boise': '미국 산악',
   'America/Chicago': '미국 중부', 'America/Winnipeg': '미국 중부',
   'America/New_York': '미국 동부', 'America/Toronto': '미국 동부', 'America/Detroit': '미국 동부',
-  'Pacific/Honolulu': '하와이',
-  'America/Anchorage': '알래스카',
+  'Pacific/Honolulu': '하와이', 'America/Anchorage': '알래스카',
   'Europe/London': '영국', 'Europe/Dublin': '영국',
   'Europe/Paris': '유럽 중부', 'Europe/Berlin': '유럽 중부', 'Europe/Amsterdam': '유럽 중부',
   'Europe/Helsinki': '유럽 동부', 'Europe/Athens': '유럽 동부',
@@ -29,8 +33,7 @@ const TZ_REGION: Record<string, string> = {
   'Asia/Ho_Chi_Minh': '베트남', 'Asia/Saigon': '베트남',
   'Asia/Jakarta': '인도네시아', 'Asia/Kuala_Lumpur': '말레이시아',
   'Australia/Sydney': '호주 동부', 'Australia/Melbourne': '호주 동부',
-  'Australia/Perth': '호주 서부',
-  'Pacific/Auckland': '뉴질랜드',
+  'Australia/Perth': '호주 서부', 'Pacific/Auckland': '뉴질랜드',
 };
 
 function tzToRegion(tz: string): string {
@@ -99,10 +102,37 @@ function buildStudyHallCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): st
   return `${dayWord} Study Hall starts at ${timeInfo}. ${verb}`;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// 내일 이벤트는 오늘 같은 시각에 연락해야 하므로 -24h를 sort key로 사용
+function contactTime(ev: TaggedEvent): number {
+  const ms = new Date(ev.startsAt).getTime();
+  return ev.day === 'tomorrow' ? ms - DAY_MS : ms;
+}
+
+function mergeAndSort(
+  todayCoach: ScheduleEvent[],
+  todaySH: ScheduleEvent[],
+  tomorrowCoach: ScheduleEvent[],
+  tomorrowSH: ScheduleEvent[],
+): TaggedEvent[] {
+  const tag = (evs: ScheduleEvent[], eventType: EventType, day: EventDay): TaggedEvent[] =>
+    evs.map((e) => ({ ...e, eventType, day }));
+
+  return [
+    ...tag(todayCoach, 'coachRoom', 'today'),
+    ...tag(todaySH, 'studyHall', 'today'),
+    ...tag(tomorrowCoach, 'coachRoom', 'tomorrow'),
+    ...tag(tomorrowSH, 'studyHall', 'tomorrow'),
+  ].sort((a, b) => contactTime(a) - contactTime(b));
+}
+
 interface StudentClickArg {
   id: string;
   name: string;
   eventId?: string;
+  eventTime?: string;
+  eventType?: 'coachRoom' | 'studyHall';
   coachId?: string;
 }
 
@@ -111,51 +141,56 @@ interface CoachClickArg {
   name: string;
 }
 
+export type { TaggedEvent };
+
 interface Props {
-  title: string;
-  todayEvents: ScheduleEvent[];
-  tomorrowEvents: ScheduleEvent[];
-  type: 'coachRoom' | 'studyHall';
+  todayCoachRoom: ScheduleEvent[];
+  todayStudyHall: ScheduleEvent[];
+  tomorrowCoachRoom: ScheduleEvent[];
+  tomorrowStudyHall: ScheduleEvent[];
   loading?: boolean;
   eventDate: string;
   vipStudentIds?: Set<string>;
   studentLanguages?: Map<string, 'ko' | 'en'>;
   onStudentClick: (student: StudentClickArg) => void;
   onCoachClick: (coach: CoachClickArg) => void;
+  onEventClick: (ev: TaggedEvent & { startsAtKst: string }) => void;
 }
 
-export function ScheduleList({
-  title,
-  todayEvents,
-  tomorrowEvents,
-  type,
+export function UnifiedTimeline({
+  todayCoachRoom,
+  todayStudyHall,
+  tomorrowCoachRoom,
+  tomorrowStudyHall,
   loading,
   eventDate,
   vipStudentIds,
   studentLanguages,
   onStudentClick,
   onCoachClick,
+  onEventClick,
 }: Props) {
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
-  const icon = type === 'coachRoom' ? '●' : '○';
-  const completedIcon = '✓';
 
-  const totalCount = todayEvents.length + tomorrowEvents.length;
+  const events = mergeAndSort(todayCoachRoom, todayStudyHall, tomorrowCoachRoom, tomorrowStudyHall);
+  const totalCount = events.length;
 
-  const handleCopy = async (ev: ScheduleEvent, isTomorrow: boolean, lang: 'ko' | 'en') => {
+  const handleCopy = async (ev: TaggedEvent, lang: 'ko' | 'en') => {
+    const isTomorrow = ev.day === 'tomorrow';
     let msg: string;
-    if (type === 'studyHall') {
+    if (ev.eventType === 'studyHall') {
       msg = lang === 'en' ? buildStudyHallCopyMessageEn(ev, isTomorrow) : buildStudyHallCopyMessage(ev, isTomorrow);
     } else {
       msg = lang === 'en' ? buildCopyMessageEn(ev, isTomorrow) : buildCopyMessage(ev, isTomorrow);
     }
     await navigator.clipboard.writeText(msg);
+
     setCopiedIds((prev) => new Set(prev).add(`${ev.id}-${lang}`));
 
     try {
       const eventTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
-      const eventType = type === 'coachRoom' ? 'coach_room' : 'study_hall';
+      const eventType = ev.eventType === 'coachRoom' ? 'coach_room' : 'study_hall';
       await fetch('/api/admin/srm/copy-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -174,28 +209,47 @@ export function ScheduleList({
     }
   };
 
-  const renderEventRow = (ev: ScheduleEvent, isTomorrow: boolean) => {
+  const renderRow = (ev: TaggedEvent) => {
     const isDone = ev.status === 'completed';
-    const timeStr = `${toTimeStr(ev.startsAt, 'Asia/Seoul')}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
+    const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+    const timeStr = `${kstTime}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
+    const isCoach = ev.eventType === 'coachRoom';
 
     const copiedKo = copiedIds.has(`${ev.id}-ko`);
     const copiedEn = copiedIds.has(`${ev.id}-en`);
+
     const anyCopied = copiedKo || copiedEn;
 
     return (
       <div
         key={ev.id}
-        className={`flex items-start gap-2.5 px-3 py-2 rounded-md text-sm group ${
-          anyCopied ? 'bg-emerald-950/30' : isDone ? 'bg-white/3 opacity-60' : 'bg-white/5'
+        onClick={() => onEventClick({ ...ev, startsAtKst: kstTime })}
+        className={`flex items-start gap-2.5 px-3 py-2 rounded-md text-sm group cursor-pointer ${
+          anyCopied
+            ? 'bg-emerald-950/30 hover:bg-emerald-950/50'
+            : isDone
+            ? 'bg-white/3 opacity-60 hover:opacity-80'
+            : 'bg-white/5 hover:bg-white/10'
         }`}
       >
-        <span className={`mt-0.5 text-xs shrink-0 ${isDone ? 'text-emerald-400' : 'text-gray-500'}`}>
-          {isDone ? completedIcon : icon}
+        <span className={`mt-0.5 shrink-0 text-xs font-medium px-1.5 py-0.5 rounded ${
+          isCoach
+            ? 'bg-blue-500/20 text-blue-400'
+            : 'bg-white/10 text-gray-400'
+        }`}>
+          {isCoach ? '수업' : '스터디홀'}
         </span>
+
+        {ev.day === 'tomorrow' && (
+          <span className="mt-0.5 shrink-0 text-[10px] font-medium text-amber-400/80 bg-amber-400/10 px-1.5 py-0.5 rounded">내일</span>
+        )}
+
         {anyCopied && (
           <span className="mt-0.5 text-xs shrink-0 text-emerald-400 font-medium">발송됨</span>
         )}
+
         <span className="text-gray-400 font-mono text-xs shrink-0 mt-0.5">{timeStr}</span>
+
         <span className="leading-tight flex flex-wrap gap-x-1 gap-y-0.5 flex-1">
           {ev.students.map((name, i) => {
             const studentId = ev.studentIds?.[i];
@@ -204,12 +258,17 @@ export function ScheduleList({
             return (
               <button
                 key={`${ev.id}-s-${i}`}
-                onClick={() => onStudentClick({
-                  id: studentId ?? name,
-                  name,
-                  eventId: ev.id,
-                  coachId: ev.coachIds?.[0] ?? undefined,
-                })}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStudentClick({
+                    id: studentId ?? name,
+                    name,
+                    eventId: ev.id,
+                    eventTime: toTimeStr(ev.startsAt, 'Asia/Seoul'),
+                    eventType: ev.eventType,
+                    coachId: ev.coachIds?.[0] ?? undefined,
+                  });
+                }}
                 className={`inline-flex items-center gap-0.5 hover:text-blue-400 hover:underline transition-colors ${
                   isDone ? 'text-gray-500' : 'text-gray-200'
                 }`}
@@ -222,13 +281,13 @@ export function ScheduleList({
               </button>
             );
           })}
-          {type === 'coachRoom' && ev.coaches.length > 0 && (
+          {isCoach && ev.coaches.length > 0 && (
             <span className="text-gray-500 flex items-center gap-1">
               <span>&#8596;</span>
               {ev.coaches.map((coachName, i) => (
                 <button
                   key={`${ev.id}-c-${i}`}
-                  onClick={() => onCoachClick({ id: ev.coachIds?.[i] ?? coachName, name: coachName })}
+                  onClick={(e) => { e.stopPropagation(); onCoachClick({ id: ev.coachIds?.[i] ?? coachName, name: coachName }); }}
                   className="hover:text-blue-400 hover:underline transition-colors text-gray-400"
                 >
                   {coachName}
@@ -240,7 +299,7 @@ export function ScheduleList({
 
         <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
           <button
-            onClick={() => handleCopy(ev, isTomorrow, 'ko')}
+            onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
             title="한국어 메시지 복사"
             className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-300"
           >
@@ -248,7 +307,7 @@ export function ScheduleList({
             <span className="text-[10px]">KO</span>
           </button>
           <button
-            onClick={() => handleCopy(ev, isTomorrow, 'en')}
+            onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'en'); }}
             title="English message copy"
             className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-400"
           >
@@ -261,9 +320,9 @@ export function ScheduleList({
   };
 
   return (
-    <div className="flex-1 min-w-0">
+    <div>
       <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-sm font-semibold text-white">{title}</h3>
+        <h3 className="text-sm font-semibold text-white">스케줄</h3>
         <span className="text-xs bg-white/10 text-gray-400 px-2 py-0.5 rounded-full">
           {loading ? '...' : totalCount}
         </span>
@@ -271,30 +330,15 @@ export function ScheduleList({
 
       {loading ? (
         <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-10 bg-white/5 rounded animate-pulse" />
           ))}
         </div>
       ) : totalCount === 0 ? (
         <p className="text-xs text-gray-600 py-4">스케줄 없음</p>
       ) : (
-        <div className="space-y-3">
-          {todayEvents.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-500 mb-1.5">오늘</p>
-              <div className="space-y-1.5">
-                {todayEvents.map((ev) => renderEventRow(ev, false))}
-              </div>
-            </div>
-          )}
-          {tomorrowEvents.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-500 mb-1.5">내일</p>
-              <div className="space-y-1.5">
-                {tomorrowEvents.map((ev) => renderEventRow(ev, true))}
-              </div>
-            </div>
-          )}
+        <div className="space-y-1.5">
+          {events.map(renderRow)}
         </div>
       )}
     </div>

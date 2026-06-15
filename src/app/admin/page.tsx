@@ -9,6 +9,7 @@ interface Post {
     title: string;
     date: string;
     category: string;
+    author?: string;
     isPublished: boolean;
     toggling?: boolean;
 }
@@ -81,7 +82,8 @@ export default function AdminPage() {
 
     const filteredPosts = posts.filter(post =>
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.category.toLowerCase().includes(searchTerm.toLowerCase())
+        post.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (post.author ?? '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
@@ -112,7 +114,8 @@ export default function AdminPage() {
 
             <div className="bg-[#1e2023] rounded-xl border border-white/5 overflow-hidden">
                 <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-white/5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    <div className="col-span-6">Title</div>
+                    <div className="col-span-4">Title</div>
+                    <div className="col-span-2">Author</div>
                     <div className="col-span-2">Status</div>
                     <div className="col-span-2">Category</div>
                     <div className="col-span-2 text-right">Actions</div>
@@ -124,17 +127,22 @@ export default function AdminPage() {
                     ) : (
                         filteredPosts.map(post => (
                             <div key={post.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-white/5 transition-colors group">
-                                <div className="col-span-6 pr-4">
+                                <div className="col-span-4 pr-4">
                                     <Link href={`/admin/editor?id=${post.id}`} className="block">
                                         <h3 className="text-white font-bold text-sm mb-1 group-hover:text-blue-400 transition-colors truncate">
                                             {post.title}
                                         </h3>
                                         <p className="text-xs text-gray-500 flex items-center gap-2">
-                                            <span className="truncate">By Admin</span>
-                                            <span>•</span>
+                                            <span className={/^-|--|-$/.test(post.id) ? 'text-orange-400 font-mono' : 'text-gray-600 font-mono'}>
+                                                {post.id}
+                                            </span>
+                                            <span>·</span>
                                             <span>{post.date}</span>
                                         </p>
                                     </Link>
+                                </div>
+                                <div className="col-span-2 text-sm text-gray-400 truncate">
+                                    {post.author || 'SuperfastSAT'}
                                 </div>
                                 <div className="col-span-2">
                                     <button

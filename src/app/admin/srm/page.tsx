@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { DayTabs, getKstDateStr } from './components/DayTabs';
-import { ScheduleList } from './components/ScheduleList';
+import { UnifiedTimeline } from './components/UnifiedTimeline';
 import { AlertSection } from './components/AlertSection';
 import { StudentPanel } from './components/StudentPanel';
+import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
-import { MatchQueue } from './components/MatchQueue';
+import { StudentSearch } from './components/StudentSearch';
 import { StudentRoster } from './components/StudentRoster';
-import type { ScheduleResponse } from '@/app/api/admin/srm/schedule/route';
+import { EventLogPanel } from './components/EventLogPanel';
+import type { TaggedEvent } from './components/UnifiedTimeline';
+import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
 
 // sfv2 profile ID 기준 또는 CRM student ID 기준으로 패널 열기
@@ -16,8 +19,51 @@ interface SelectedStudent {
   id?: string;          // sfv2 profile ID
   crmStudentId?: string; // CRM student ID (v2 미연결)
   name: string;
+  triggerType?: string;
+  eventId?: string;
+  eventTime?: string;
+  eventType?: 'coachRoom' | 'studyHall';
+  coachId?: string;
 }
-type MainTab = 'schedule' | 'ops' | 'link' | 'roster';
+
+interface SelectedCoach {
+  id: string;
+  name: string;
+  relatedStudents: { name: string; events: string[] }[];
+}
+
+type MainTab = 'schedule' | 'ops' | 'roster';
+
+function collectRelatedStudents(
+  coachId: string,
+  today: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] } | undefined,
+  tomorrow: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] } | undefined,
+): { name: string; events: string[] }[] {
+  const studentMap = new Map<string, string[]>();
+
+  const processEvents = (events: ScheduleEvent[], dayLabel: string) => {
+    for (const ev of events) {
+      const coachIdx = ev.coachIds?.indexOf(coachId) ?? -1;
+      if (coachIdx === -1) continue;
+      for (const studentName of ev.students) {
+        const existing = studentMap.get(studentName) ?? [];
+        existing.push(dayLabel);
+        studentMap.set(studentName, existing);
+      }
+    }
+  };
+
+  if (today) {
+    processEvents(today.coachRoom, '오늘');
+    processEvents(today.studyHall, '오늘');
+  }
+  if (tomorrow) {
+    processEvents(tomorrow.coachRoom, '내일');
+    processEvents(tomorrow.studyHall, '내일');
+  }
+
+  return Array.from(studentMap.entries()).map(([name, events]) => ({ name, events }));
+}
 
 export default function SrmPage() {
   const [mainTab, setMainTab] = useState<MainTab>('schedule');
@@ -27,6 +73,10 @@ export default function SrmPage() {
   const [scheduleLoading, setScheduleLoading] = useState(true);
   const [alertsLoading, setAlertsLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<SelectedStudent | null>(null);
+  const [selectedCoach, setSelectedCoach] = useState<SelectedCoach | null>(null);
+  const [vipStudentIds, setVipStudentIds] = useState<Set<string>>(new Set());
+  const [studentLanguages, setStudentLanguages] = useState<Map<string, 'ko' | 'en'>>(new Map());
+  const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
@@ -47,12 +97,51 @@ export default function SrmPage() {
       .finally(() => setAlertsLoading(false));
   }, [mainTab]);
 
+  useEffect(() => {
+    if (mainTab !== 'schedule') return;
+    Promise.all([
+      fetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
+      fetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
+    ]).then(([vipData, langData]) => {
+      if (Array.isArray(vipData?.sfv2ProfileIds)) {
+        setVipStudentIds(new Set(vipData.sfv2ProfileIds));
+      }
+      if (langData?.languages && typeof langData.languages === 'object') {
+        setStudentLanguages(new Map(Object.entries(langData.languages) as [string, 'ko' | 'en'][]));
+      }
+    });
+  }, [mainTab]);
+
+  const handleLanguageChange = (sfv2ProfileId: string, lang: 'ko' | 'en') => {
+    setStudentLanguages((prev) => new Map(prev).set(sfv2ProfileId, lang));
+  };
+
   const handleStudentClick = (id: string, name: string) => {
     setSelectedStudent({ id, name });
   };
 
   const handleRosterStudentClick = (student: SelectedStudent) => {
     setSelectedStudent(student);
+  };
+
+  const handleCoachClick = (coach: { id: string; name: string }) => {
+    const relatedStudents = collectRelatedStudents(
+      coach.id,
+      schedule?.today,
+      schedule?.tomorrow,
+    );
+    setSelectedCoach({ ...coach, relatedStudents });
+  };
+
+  const handleScheduleStudentClick = (student: { id: string; name: string; eventId?: string; eventTime?: string; eventType?: 'coachRoom' | 'studyHall'; coachId?: string }) => {
+    setSelectedStudent({
+      id: student.id,
+      name: student.name,
+      eventId: student.eventId,
+      eventTime: student.eventTime,
+      eventType: student.eventType,
+      coachId: student.coachId,
+    });
   };
 
   return (
@@ -63,7 +152,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6 border-b border-white/10">
-        {(['schedule', 'ops', 'link', 'roster'] as MainTab[]).map((t) => (
+        {(['schedule', 'ops', 'roster'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -73,49 +162,48 @@ export default function SrmPage() {
                 : 'text-gray-500 border-transparent hover:text-gray-300'
             }`}
           >
-            {t === 'schedule' ? '스케줄' : t === 'ops' ? '운영' : t === 'link' ? '연결' : '명단'}
+            {t === 'schedule' ? '스케줄' : t === 'ops' ? '운영' : '명단'}
           </button>
         ))}
       </div>
 
-      {mainTab !== 'link' && mainTab !== 'roster' && (
+      {mainTab !== 'roster' && (
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
       )}
 
       {mainTab === 'schedule' && (
         <>
-          <div className="flex gap-8">
-            <ScheduleList
-              title="수업 (코치룸)"
-              events={schedule?.coachRoom ?? []}
-              type="coachRoom"
-              loading={scheduleLoading}
-              onStudentClick={setSelectedStudent}
-            />
-            <div className="w-px bg-white/5 shrink-0" />
-            <ScheduleList
-              title="스터디홀"
-              events={schedule?.studyHall ?? []}
-              type="studyHall"
-              loading={scheduleLoading}
-              onStudentClick={setSelectedStudent}
-            />
-          </div>
+          <UnifiedTimeline
+            todayCoachRoom={schedule?.today.coachRoom ?? []}
+            todayStudyHall={schedule?.today.studyHall ?? []}
+            tomorrowCoachRoom={schedule?.tomorrow.coachRoom ?? []}
+            tomorrowStudyHall={schedule?.tomorrow.studyHall ?? []}
+            loading={scheduleLoading}
+            eventDate={selectedDate}
+            vipStudentIds={vipStudentIds}
+            studentLanguages={studentLanguages}
+            onStudentClick={handleScheduleStudentClick}
+            onCoachClick={handleCoachClick}
+            onEventClick={setSelectedEvent}
+          />
 
           <AlertSection
             data={alerts}
             loading={alertsLoading}
-            onStudentClick={setSelectedStudent}
+            onStudentClick={(student) => setSelectedStudent({
+              id: student.id,
+              name: student.name,
+              triggerType: student.triggerType,
+            })}
           />
         </>
       )}
 
       {mainTab === 'ops' && (
-        <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
-      )}
-
-      {mainTab === 'link' && (
-        <MatchQueue onLinked={() => {}} />
+        <>
+          <StudentSearch onSelect={handleRosterStudentClick} />
+          <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
+        </>
       )}
 
       {mainTab === 'roster' && (
@@ -127,7 +215,29 @@ export default function SrmPage() {
           studentId={selectedStudent.id}
           crmStudentId={selectedStudent.crmStudentId}
           studentName={selectedStudent.name}
+          triggerType={selectedStudent.triggerType}
+          eventId={selectedStudent.eventId}
+          eventTime={selectedStudent.eventTime}
+          eventType={selectedStudent.eventType}
+          coachId={selectedStudent.coachId}
           onClose={() => setSelectedStudent(null)}
+          onLanguageChange={handleLanguageChange}
+        />
+      )}
+
+      {selectedEvent && !selectedStudent && (
+        <EventLogPanel
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+        />
+      )}
+
+      {selectedCoach && !selectedStudent && (
+        <CoachPanel
+          coachId={selectedCoach.id}
+          coachName={selectedCoach.name}
+          relatedStudents={selectedCoach.relatedStudents}
+          onClose={() => setSelectedCoach(null)}
         />
       )}
     </div>
