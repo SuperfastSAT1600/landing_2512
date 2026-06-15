@@ -76,6 +76,7 @@ export default function SrmPage() {
   const [selectedCoach, setSelectedCoach] = useState<SelectedCoach | null>(null);
   const [vipStudentIds, setVipStudentIds] = useState<Set<string>>(new Set());
   const [studentLanguages, setStudentLanguages] = useState<Map<string, 'ko' | 'en'>>(new Map());
+  const [pausedStudentIds, setPausedStudentIds] = useState<Set<string>>(new Set());
   const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
 
   useEffect(() => {
@@ -102,12 +103,16 @@ export default function SrmPage() {
     Promise.all([
       fetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
       fetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
-    ]).then(([vipData, langData]) => {
+      fetch('/api/admin/srm/paused-students').then((r) => r.json()).catch(() => ({})),
+    ]).then(([vipData, langData, pauseData]) => {
       if (Array.isArray(vipData?.sfv2ProfileIds)) {
         setVipStudentIds(new Set(vipData.sfv2ProfileIds));
       }
       if (langData?.languages && typeof langData.languages === 'object') {
         setStudentLanguages(new Map(Object.entries(langData.languages) as [string, 'ko' | 'en'][]));
+      }
+      if (Array.isArray(pauseData?.sfv2ProfileIds)) {
+        setPausedStudentIds(new Set(pauseData.sfv2ProfileIds));
       }
     });
   }, [mainTab]);
@@ -182,6 +187,7 @@ export default function SrmPage() {
             eventDate={selectedDate}
             vipStudentIds={vipStudentIds}
             studentLanguages={studentLanguages}
+            pausedStudentIds={pausedStudentIds}
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
             onEventClick={setSelectedEvent}

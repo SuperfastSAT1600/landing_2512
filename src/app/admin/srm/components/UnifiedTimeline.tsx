@@ -152,6 +152,7 @@ interface Props {
   eventDate: string;
   vipStudentIds?: Set<string>;
   studentLanguages?: Map<string, 'ko' | 'en'>;
+  pausedStudentIds?: Set<string>;
   onStudentClick: (student: StudentClickArg) => void;
   onCoachClick: (coach: CoachClickArg) => void;
   onEventClick: (ev: TaggedEvent & { startsAtKst: string }) => void;
@@ -166,6 +167,7 @@ export function UnifiedTimeline({
   eventDate,
   vipStudentIds,
   studentLanguages,
+  pausedStudentIds,
   onStudentClick,
   onCoachClick,
   onEventClick,
@@ -255,6 +257,7 @@ export function UnifiedTimeline({
             const studentId = ev.studentIds?.[i];
             const isVip = !!(studentId && vipStudentIds?.has(studentId));
             const lang = studentId ? (studentLanguages?.get(studentId) ?? 'ko') : 'ko';
+            const isPaused = !!(studentId && pausedStudentIds?.has(studentId));
             return (
               <button
                 key={`${ev.id}-s-${i}`}
@@ -275,6 +278,9 @@ export function UnifiedTimeline({
               >
                 {isVip && <Crown size={11} className="text-yellow-400 shrink-0" />}
                 {name}
+                {isPaused && (
+                  <span className="text-[10px] font-medium text-orange-400 bg-orange-500/15 px-1 rounded leading-tight">휴원</span>
+                )}
                 {lang === 'en' && (
                   <span className="text-[10px] font-bold text-blue-400 bg-blue-500/15 px-1 rounded leading-tight">EN</span>
                 )}

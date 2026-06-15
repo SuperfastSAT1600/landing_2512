@@ -8,6 +8,8 @@ import { SALES_STAGES_ONLY } from '../constants';
 interface Props {
   localStudent: Student;
   duplicateNames?: string[];
+  isPaused?: boolean;
+  pauseUntil?: string | null;
   portalCopied: boolean;
   portalLoading: boolean;
   deleting: boolean;
@@ -32,7 +34,7 @@ interface Props {
 }
 
 export function PanelHeader({
-  localStudent, duplicateNames = [], portalCopied, portalLoading, deleting, funnelChanging,
+  localStudent, duplicateNames = [], isPaused, pauseUntil, portalCopied, portalLoading, deleting, funnelChanging,
   showFunnelMenu, showReactivateForm, reactivateStrategy, reactivating,
   onClose, onCopyPortalLink, onPreviewPortal, onDelete, onToggleFunnelMenu, onFunnelChange,
   onShowPayment, onShowChurn, onShowReactivate, onHideReactivate,
@@ -46,6 +48,16 @@ export function PanelHeader({
           <p className="text-[13px] text-gray-500 mt-0.5">
             {localStudent.grade} · {SCHOOL_TYPE_LABELS[localStudent.school_type]} · {localStudent.desired_subjects}
           </p>
+          {isPaused && (
+            <p className="text-[11px] font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-md px-2 py-1 mt-1.5 leading-snug inline-flex items-center gap-1">
+              <span>휴원 중</span>
+              {pauseUntil && (
+                <span className="font-normal text-orange-500">
+                  · {new Date(pauseUntil).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} 재개 예정
+                </span>
+              )}
+            </p>
+          )}
           {duplicateNames.length > 0 && (
             <p className="text-[11px] text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 mt-1.5 leading-snug">
               동명이인 주의 — {duplicateNames.join(', ')}

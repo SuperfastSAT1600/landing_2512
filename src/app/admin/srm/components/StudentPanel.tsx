@@ -138,6 +138,14 @@ function sessionStatusColor(status: string): string {
   }
 }
 
+interface PauseRecord {
+  id: string;
+  pause_start: string;
+  pause_until: string | null;
+  reason: string | null;
+  created_by: string | null;
+}
+
 interface Props {
   studentId?: string;
   crmStudentId?: string;
@@ -164,6 +172,11 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [loadingV2, setLoadingV2] = useState(false);
   const [commLang, setCommLang] = useState<'ko' | 'en'>('ko');
   const [langSaving, setLangSaving] = useState(false);
+  const [activePause, setActivePause] = useState<PauseRecord | null | undefined>(undefined); // undefined = 아직 로딩
+  const [pauseFormOpen, setPauseFormOpen] = useState(false);
+  const [pauseUntil, setPauseUntil] = useState('');
+  const [pauseReason, setPauseReason] = useState('');
+  const [pauseSaving, setPauseSaving] = useState(false);
 
   const commKey = studentId ?? crmStudentId ?? '';
 
@@ -210,12 +223,64 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setLoadingV2(false);
   }, [studentId]);
 
+  const fetchPause = useCallback(async () => {
+    const url = studentId
+      ? `/api/admin/srm/student/${studentId}/pause`
+      : crmStudentId
+      ? `/api/admin/srm/student/crm/${crmStudentId}/pause`
+      : null;
+    if (!url) { setActivePause(null); return; }
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json() as { pause: PauseRecord | null };
+        setActivePause(json.pause);
+      } else {
+        setActivePause(null);
+      }
+    } catch {
+      setActivePause(null);
+    }
+  }, [studentId, crmStudentId]);
+
   useEffect(() => {
     fetchDetail();
     fetchComms();
     fetchLifecycle();
     fetchV2Summary();
-  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary]);
+    fetchPause();
+  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary, fetchPause]);
+
+  const handlePauseCreate = async () => {
+    setPauseSaving(true);
+    const url = studentId
+      ? `/api/admin/srm/student/${studentId}/pause`
+      : `/api/admin/srm/student/crm/${crmStudentId}/pause`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pause_until: pauseUntil || null,
+        reason: pauseReason || null,
+        created_by: getAdminName() || '관리자',
+      }),
+    });
+    await fetchPause();
+    setPauseFormOpen(false);
+    setPauseUntil('');
+    setPauseReason('');
+    setPauseSaving(false);
+  };
+
+  const handlePauseEnd = async () => {
+    setPauseSaving(true);
+    const url = studentId
+      ? `/api/admin/srm/student/${studentId}/pause/active`
+      : `/api/admin/srm/student/crm/${crmStudentId}/pause/active`;
+    await fetch(url, { method: 'DELETE' });
+    await fetchPause();
+    setPauseSaving(false);
+  };
 
   useEffect(() => {
     const lang = (detail?.crmStudent as unknown as { comm_language?: string | null } | null)?.comm_language;
@@ -600,6 +665,81 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 </div>
               )}
             </div>
+
+            {/* 휴원 섹션 */}
+            {activePause !== undefined && (
+              <div className="px-4 py-3 border-t border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">휴원</p>
+                  {activePause ? (
+                    <button
+                      onClick={handlePauseEnd}
+                      disabled={pauseSaving}
+                      className="text-[11px] text-red-400 hover:text-red-300 disabled:opacity-40"
+                    >
+                      {pauseSaving ? '처리중...' : '휴원 해제'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setPauseFormOpen((v) => !v)}
+                      className="text-[11px] text-blue-400 hover:text-blue-300"
+                    >
+                      {pauseFormOpen ? '취소' : '휴원 설정'}
+                    </button>
+                  )}
+                </div>
+
+                {activePause ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">휴원 중</span>
+                      {activePause.pause_until && (
+                        <span className="text-[11px] text-gray-400">
+                          ~ {new Date(activePause.pause_until).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} 재개 예정
+                        </span>
+                      )}
+                      {!activePause.pause_until && (
+                        <span className="text-[11px] text-gray-500">재개일 미정</span>
+                      )}
+                    </div>
+                    {activePause.reason && (
+                      <p className="text-[11px] text-gray-500">{activePause.reason}</p>
+                    )}
+                  </div>
+                ) : pauseFormOpen ? (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-[11px] text-gray-500 block mb-0.5">재개 예정일 (선택)</label>
+                      <input
+                        type="date"
+                        value={pauseUntil}
+                        onChange={(e) => setPauseUntil(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-gray-500 block mb-0.5">사유 (선택)</label>
+                      <input
+                        type="text"
+                        value={pauseReason}
+                        onChange={(e) => setPauseReason(e.target.value)}
+                        placeholder="해외 여행, 시험 기간 등"
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                      />
+                    </div>
+                    <button
+                      onClick={handlePauseCreate}
+                      disabled={pauseSaving}
+                      className="w-full text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded px-3 py-1.5 disabled:opacity-40"
+                    >
+                      {pauseSaving ? '저장중...' : '휴원 시작'}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-600">현재 수업 중</p>
+                )}
+              </div>
+            )}
 
             {/* CRM 연결 섹션 (미연결 시) */}
             {!loadingDetail && !isLinked && studentId && (
