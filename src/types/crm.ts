@@ -113,6 +113,14 @@ export interface ReactivationEntry {
 
 // ─── 상담 타임라인 ──────────────────────────────────────────────────────────
 
+/** 상담 메모 첨부 (카톡 캡처 등). 비공개 버킷 저장 경로만 보관, 조회 시 서명 URL 사용. */
+export interface Attachment {
+  path: string; // crm-attachments 버킷 내 저장 경로 (공개 URL 아님)
+  name: string; // 원본 파일명
+  mime: string; // MIME 타입
+  size: number; // 바이트
+}
+
 export interface ConsultationEntry {
   id: string;
   created_at: string; // ISO timestamp
@@ -121,6 +129,7 @@ export interface ConsultationEntry {
   ai_purified?: string; // AI 가공본 (학부모 노출)
   ai_deleted_items?: string[]; // AI가 삭제한 항목 목록 (매니저 확인용)
   ai_coach_history?: string; // AI가 분리한 교육 이력 (코치 노출)
+  attachments?: Attachment[]; // 첨부 파일 (운영자 내부 전용, 학부모 비노출)
   published: boolean; // true면 학부모 타임라인에 노출
   manager_id?: string;
 }
@@ -203,6 +212,8 @@ export interface Student {
   stage_history: Array<{ stage: string; label: string; entered_at: string }>;
   // 수동 지정 이탈 단계 (null이면 stage_history 기반 자동 도출)
   churn_stage_manual: FunnelStage | null;
+  // "오늘 할 일" 액션 완료 체크 시각. KST 당일이면 완료로 판정(isActionDoneToday)
+  daily_action_done_at: string | null;
   sort_order: number | null;
   entered_by?: string | null;
   is_vip: boolean | null;
@@ -455,6 +466,41 @@ export function isStageStalled(
   if (sla === undefined) return false;
   const days = daysInStage(s, nowMs);
   return days !== null && days > sla;
+}
+
+// ─── "오늘 할 일" 헬퍼 (KST 당일 기준) ─────────────────────────────────────────
+// 한국 팀 기준이므로 "오늘"은 Asia/Seoul 자정 경계로 판정한다.
+// (UTC 기준으로 자르면 KST 오전 9시에 날짜가 바뀌어 명단이 오전에 리셋되는 버그가 생김)
+
+/** 주어진 epoch ms를 KST 기준 'YYYY-MM-DD' 문자열로 변환. */
+export function kstDateStr(ms: number): string {
+  // KST = UTC+9, DST 없음. ms에 9시간 더한 뒤 UTC 날짜를 읽으면 KST 날짜가 된다.
+  return new Date(ms + 9 * 3600000).toISOString().slice(0, 10);
+}
+
+/** daily_action_done_at이 KST 기준 오늘이면 true (오늘 액션 완료 처리됨). */
+export function isActionDoneToday(
+  s: Pick<Student, 'daily_action_done_at'>,
+  nowMs: number
+): boolean {
+  if (!s.daily_action_done_at) return false;
+  const t = new Date(s.daily_action_done_at).getTime();
+  if (Number.isNaN(t)) return false;
+  return kstDateStr(t) === kstDateStr(nowMs);
+}
+
+/** consultation_timeline 중 KST 기준 오늘 작성된 메모만 최신순으로 반환. */
+export function todaysMemos(
+  s: Pick<Student, 'consultation_timeline'>,
+  nowMs: number
+): ConsultationEntry[] {
+  const today = kstDateStr(nowMs);
+  return (s.consultation_timeline ?? [])
+    .filter((e) => {
+      const t = new Date(e.created_at).getTime();
+      return !Number.isNaN(t) && kstDateStr(t) === today;
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
 // ─── 리드 A/B/C 등급 (Hot/Warm/Cold) ──────────────────────────────────────────

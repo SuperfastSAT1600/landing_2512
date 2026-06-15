@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import type { CreateStudentInput } from '@/types/crm';
+import { isActionDoneToday, todaysMemos } from '@/types/crm';
 
 /**
  * GET /api/crm/students
@@ -55,6 +56,45 @@ export async function GET(request: NextRequest) {
       .select('id', { count: 'exact', head: true })
       .eq('lead_status', leadStatus);
     return NextResponse.json({ data: { count: count ?? 0 } });
+  }
+
+  // "오늘 할 일" — 오늘 취한 액션: lead_status 무관하게 오늘(KST) 메모 작성 또는
+  // 완료 체크한 학생 전체를 반환한다. 기본 목록은 active만 주므로 재활성화·이탈
+  // 리드풀 학생에게 남긴 상담 메모가 누락된다 — 그 사각지대를 메우는 전용 경로.
+  if (searchParams.get('today_actions') === 'true') {
+    const nowMs = Date.now();
+    const BATCH = 1000;
+    // 1차: 판정에 필요한 최소 컬럼만 전체 배치 조회 → 오늘 액션이 있는 id만 추린다.
+    const { count } = await supabaseAdmin
+      .from('students')
+      .select('id', { count: 'exact', head: true });
+    const batches = Math.max(1, Math.ceil((count ?? 0) / BATCH));
+    const scans = await Promise.all(
+      Array.from({ length: batches }, (_, i) =>
+        supabaseAdmin
+          .from('students')
+          .select('id, consultation_timeline, daily_action_done_at')
+          .order('created_at', { ascending: false })
+          .range(i * BATCH, (i + 1) * BATCH - 1)
+      )
+    );
+    const scanFailed = scans.find((r) => r.error);
+    if (scanFailed?.error) {
+      console.error('[crm/students GET today_actions scan]', scanFailed.error);
+      return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
+    }
+    const ids = scans
+      .flatMap((r) => r.data ?? [])
+      .filter((s) => isActionDoneToday(s, nowMs) || todaysMemos(s, nowMs).length > 0)
+      .map((s) => s.id);
+    if (ids.length === 0) return NextResponse.json({ data: [] });
+    // 2차: 추려진 소수의 학생만 전체 컬럼으로 (패널 클릭 시 전체 정보 필요).
+    const { data, error } = await supabaseAdmin.from('students').select('*').in('id', ids);
+    if (error) {
+      console.error('[crm/students GET today_actions full]', error);
+      return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
+    }
+    return NextResponse.json({ data });
   }
 
   // 필터를 적용한 새 쿼리를 만든다 (배치 조회 시 매번 새로 빌드)

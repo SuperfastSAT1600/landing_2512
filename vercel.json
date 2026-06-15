@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/diagnosis-expiry",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/call-recording-cleanup",
+      "schedule": "0 18 * * *"
     }
   ]
 }
