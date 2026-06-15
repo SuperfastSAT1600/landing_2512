@@ -24,6 +24,18 @@ export async function GET(req: NextRequest) {
   const studentId = req.nextUrl.searchParams.get('studentId');
   const coachId = req.nextUrl.searchParams.get('coachId');
   const date = req.nextUrl.searchParams.get('date');
+  const eventId = req.nextUrl.searchParams.get('eventId');
+
+  // Event-based query
+  if (eventId) {
+    const { data, error } = await supabaseAdmin
+      .from('srm_communications')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: false });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json((data ?? []) as CommEntry[]);
+  }
 
   // Date-based query: all comms for a KST date (for OpsTaskList activity log)
   if (date) {

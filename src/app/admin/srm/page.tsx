@@ -9,6 +9,8 @@ import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
 import { StudentSearch } from './components/StudentSearch';
 import { StudentRoster } from './components/StudentRoster';
+import { EventLogPanel } from './components/EventLogPanel';
+import type { TaggedEvent } from './components/UnifiedTimeline';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
 
@@ -74,6 +76,7 @@ export default function SrmPage() {
   const [selectedCoach, setSelectedCoach] = useState<SelectedCoach | null>(null);
   const [vipStudentIds, setVipStudentIds] = useState<Set<string>>(new Set());
   const [studentLanguages, setStudentLanguages] = useState<Map<string, 'ko' | 'en'>>(new Map());
+  const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
@@ -181,6 +184,7 @@ export default function SrmPage() {
             studentLanguages={studentLanguages}
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
+            onEventClick={setSelectedEvent}
           />
 
           <AlertSection
@@ -218,6 +222,13 @@ export default function SrmPage() {
           coachId={selectedStudent.coachId}
           onClose={() => setSelectedStudent(null)}
           onLanguageChange={handleLanguageChange}
+        />
+      )}
+
+      {selectedEvent && !selectedStudent && (
+        <EventLogPanel
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
         />
       )}
 

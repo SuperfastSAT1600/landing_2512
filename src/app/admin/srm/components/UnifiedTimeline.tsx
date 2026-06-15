@@ -141,6 +141,8 @@ interface CoachClickArg {
   name: string;
 }
 
+export type { TaggedEvent };
+
 interface Props {
   todayCoachRoom: ScheduleEvent[];
   todayStudyHall: ScheduleEvent[];
@@ -152,6 +154,7 @@ interface Props {
   studentLanguages?: Map<string, 'ko' | 'en'>;
   onStudentClick: (student: StudentClickArg) => void;
   onCoachClick: (coach: CoachClickArg) => void;
+  onEventClick: (ev: TaggedEvent & { startsAtKst: string }) => void;
 }
 
 export function UnifiedTimeline({
@@ -165,6 +168,7 @@ export function UnifiedTimeline({
   studentLanguages,
   onStudentClick,
   onCoachClick,
+  onEventClick,
 }: Props) {
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
@@ -207,7 +211,8 @@ export function UnifiedTimeline({
 
   const renderRow = (ev: TaggedEvent) => {
     const isDone = ev.status === 'completed';
-    const timeStr = `${toTimeStr(ev.startsAt, 'Asia/Seoul')}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
+    const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+    const timeStr = `${kstTime}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
     const isCoach = ev.eventType === 'coachRoom';
 
     const copiedKo = copiedIds.has(`${ev.id}-ko`);
@@ -218,12 +223,13 @@ export function UnifiedTimeline({
     return (
       <div
         key={ev.id}
-        className={`flex items-start gap-2.5 px-3 py-2 rounded-md text-sm group ${
+        onClick={() => onEventClick({ ...ev, startsAtKst: kstTime })}
+        className={`flex items-start gap-2.5 px-3 py-2 rounded-md text-sm group cursor-pointer ${
           anyCopied
-            ? 'bg-emerald-950/30'
+            ? 'bg-emerald-950/30 hover:bg-emerald-950/50'
             : isDone
-            ? 'bg-white/3 opacity-60'
-            : 'bg-white/5'
+            ? 'bg-white/3 opacity-60 hover:opacity-80'
+            : 'bg-white/5 hover:bg-white/10'
         }`}
       >
         <span className={`mt-0.5 shrink-0 text-xs font-medium px-1.5 py-0.5 rounded ${
@@ -252,14 +258,17 @@ export function UnifiedTimeline({
             return (
               <button
                 key={`${ev.id}-s-${i}`}
-                onClick={() => onStudentClick({
-                  id: studentId ?? name,
-                  name,
-                  eventId: ev.id,
-                  eventTime: toTimeStr(ev.startsAt, 'Asia/Seoul'),
-                  eventType: ev.eventType,
-                  coachId: ev.coachIds?.[0] ?? undefined,
-                })}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStudentClick({
+                    id: studentId ?? name,
+                    name,
+                    eventId: ev.id,
+                    eventTime: toTimeStr(ev.startsAt, 'Asia/Seoul'),
+                    eventType: ev.eventType,
+                    coachId: ev.coachIds?.[0] ?? undefined,
+                  });
+                }}
                 className={`inline-flex items-center gap-0.5 hover:text-blue-400 hover:underline transition-colors ${
                   isDone ? 'text-gray-500' : 'text-gray-200'
                 }`}
@@ -278,7 +287,7 @@ export function UnifiedTimeline({
               {ev.coaches.map((coachName, i) => (
                 <button
                   key={`${ev.id}-c-${i}`}
-                  onClick={() => onCoachClick({ id: ev.coachIds?.[i] ?? coachName, name: coachName })}
+                  onClick={(e) => { e.stopPropagation(); onCoachClick({ id: ev.coachIds?.[i] ?? coachName, name: coachName }); }}
                   className="hover:text-blue-400 hover:underline transition-colors text-gray-400"
                 >
                   {coachName}
@@ -290,7 +299,7 @@ export function UnifiedTimeline({
 
         <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
           <button
-            onClick={() => handleCopy(ev, 'ko')}
+            onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
             title="한국어 메시지 복사"
             className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-300"
           >
@@ -298,7 +307,7 @@ export function UnifiedTimeline({
             <span className="text-[10px]">KO</span>
           </button>
           <button
-            onClick={() => handleCopy(ev, 'en')}
+            onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'en'); }}
             title="English message copy"
             className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-400"
           >
