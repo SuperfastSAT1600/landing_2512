@@ -87,9 +87,14 @@ export default function SrmPage() {
     Promise.all([
       fetch(`/api/admin/srm/schedule?date=${selectedDate}`).then((r) => r.json()),
       fetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
-    ]).then(([scheduleData, logData]) => {
+      fetch(`/api/admin/srm/communications?date=${selectedDate}`).then((r) => r.json()).catch(() => []),
+    ]).then(([scheduleData, logData, commsData]) => {
       setSchedule(scheduleData);
       const ids = new Set<string>((logData.data ?? []).map((e: { event_id: string }) => e.event_id));
+      // 메모가 기록된 이벤트도 하이라이트
+      (Array.isArray(commsData) ? commsData : [])
+        .filter((e: { event_id: string | null }) => e.event_id)
+        .forEach((e: { event_id: string }) => ids.add(e.event_id));
       setLoggedEventIds(ids);
     }).finally(() => setScheduleLoading(false));
   }, [selectedDate, mainTab]);
