@@ -79,7 +79,6 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
   const [channel, setChannel] = useState<string>('kakao');
   const [content, setContent] = useState('');
   const [reason, setReason] = useState('');
-  const [resolution, setResolution] = useState('');
 
   const toggleParty = (p: string) => {
     setParties((prev) => {
@@ -102,11 +101,9 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
       channel,
       content: content.trim(),
       reason: reason.trim() || undefined,
-      resolution: resolution || undefined,
     });
     setContent('');
     setReason('');
-    setResolution('');
     setParties(new Set(['student']));
   };
 
@@ -179,19 +176,6 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
         rows={3}
         className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500 resize-none"
       />
-      <select
-        value={resolution}
-        onChange={(e) => setResolution(e.target.value)}
-        className="w-full bg-[#1a1c1f] border border-white/10 rounded-md px-3 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500 [color-scheme:dark]"
-      >
-        <option value="" className="bg-[#1a1c1f] text-gray-200">결과 선택 (선택)</option>
-        <option value="scheduled" className="bg-[#1a1c1f] text-gray-200">일정 잡음</option>
-        <option value="will_contact" className="bg-[#1a1c1f] text-gray-200">다음에 연락</option>
-        <option value="no_intent" className="bg-[#1a1c1f] text-gray-200">의향 없음</option>
-        <option value="unreachable" className="bg-[#1a1c1f] text-gray-200">연락 불가</option>
-        <option value="resolved" className="bg-[#1a1c1f] text-gray-200">해결됨</option>
-        <option value="other" className="bg-[#1a1c1f] text-gray-200">기타</option>
-      </select>
       <button
         type="submit"
         disabled={saving || !content.trim()}

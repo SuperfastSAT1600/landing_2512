@@ -41,7 +41,6 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState(entry.content);
   const [reason, setReason] = useState(entry.reason ?? '');
-  const [resolution, setResolution] = useState(entry.resolution ?? '');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -49,7 +48,7 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
     const res = await fetch(`/api/admin/srm/communications/${entry.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, reason, resolution }),
+      body: JSON.stringify({ content, reason }),
     });
     if (res.ok) {
       const updated = await res.json() as CommEntry;
@@ -62,7 +61,6 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
   const handleCancel = () => {
     setContent(entry.content);
     setReason(entry.reason ?? '');
-    setResolution(entry.resolution ?? '');
     setEditing(false);
   };
 
@@ -124,19 +122,6 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
             rows={3}
             className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500/50 resize-none"
           />
-          <select
-            value={resolution}
-            onChange={(e) => setResolution(e.target.value)}
-            className="w-full bg-[#1a1c1f] border border-white/10 rounded px-2 py-1 text-xs text-gray-200 outline-none focus:border-blue-500/50 [color-scheme:dark]"
-          >
-            <option value="" className="bg-[#1a1c1f] text-gray-200">결과 선택 (선택)</option>
-            <option value="scheduled" className="bg-[#1a1c1f] text-gray-200">일정 잡음</option>
-            <option value="will_contact" className="bg-[#1a1c1f] text-gray-200">다음에 연락</option>
-            <option value="no_intent" className="bg-[#1a1c1f] text-gray-200">의향 없음</option>
-            <option value="unreachable" className="bg-[#1a1c1f] text-gray-200">연락 불가</option>
-            <option value="resolved" className="bg-[#1a1c1f] text-gray-200">해결됨</option>
-            <option value="other" className="bg-[#1a1c1f] text-gray-200">기타</option>
-          </select>
           <div className="flex gap-1.5 justify-end">
             <button
               onClick={handleCancel}

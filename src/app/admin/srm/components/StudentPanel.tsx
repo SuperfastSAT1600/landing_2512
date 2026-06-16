@@ -187,6 +187,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [issueTitle, setIssueTitle] = useState('');
   const [issueDesc, setIssueDesc] = useState('');
   const [issueSaving, setIssueSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'issue' | 'comm'>('comm');
 
   const commKey = studentId ?? crmStudentId ?? '';
 
@@ -806,74 +807,44 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
             )}
           </div>
 
-          {/* 오른쪽: 이슈 + 통합 타임라인 + 입력폼 */}
+          {/* 오른쪽: 이슈 / 커뮤니케이션 탭 */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* 이슈 섹션 */}
-            <div className="border-b border-white/10 shrink-0">
-              <div className="flex items-center justify-between px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">이슈</span>
-                  {issues.filter((i) => i.status === 'open').length > 0 && (
-                    <span className="text-[11px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full border border-orange-500/30">
-                      {issues.filter((i) => i.status === 'open').length}
-                    </span>
+            {/* 탭 헤더 */}
+            <div className="flex border-b border-white/10 shrink-0">
+              <button
+                onClick={() => setActiveTab('issue')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                  activeTab === 'issue'
+                    ? 'border-orange-400 text-orange-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                이슈
+                {issues.filter((i) => i.status === 'open').length > 0 && (
+                  <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px] border border-orange-500/30">
+                    {issues.filter((i) => i.status === 'open').length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('comm')}
+                className={`px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                  activeTab === 'comm'
+                    ? 'border-blue-400 text-blue-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                커뮤니케이션
+              </button>
+            </div>
+
+            {/* 이슈 탭 */}
+            {activeTab === 'issue' && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
+                  {issues.length === 0 && !showIssueForm && (
+                    <p className="text-xs text-gray-600">등록된 이슈 없음</p>
                   )}
-                </div>
-                <button
-                  onClick={() => setShowIssueForm((v) => !v)}
-                  className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  <Plus size={11} />
-                  이슈 등록
-                </button>
-              </div>
-
-              {showIssueForm && (
-                <div className="px-4 pb-3 space-y-2">
-                  <select
-                    value={issueType}
-                    onChange={(e) => setIssueType(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
-                  >
-                    <option value="schedule_pending">스케줄 조율 중</option>
-                    <option value="coach_pending">코치 배정 중</option>
-                    <option value="renewal_needed">재결제 필요</option>
-                    <option value="custom">기타</option>
-                  </select>
-                  <input
-                    type="text"
-                    value={issueTitle}
-                    onChange={(e) => setIssueTitle(e.target.value)}
-                    placeholder="이슈 제목"
-                    className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
-                  />
-                  <textarea
-                    value={issueDesc}
-                    onChange={(e) => setIssueDesc(e.target.value)}
-                    placeholder="메모 (선택)"
-                    rows={2}
-                    className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 resize-none"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowIssueForm(false)}
-                      className="flex-1 text-xs bg-white/5 hover:bg-white/10 text-gray-400 rounded px-3 py-1.5"
-                    >
-                      취소
-                    </button>
-                    <button
-                      onClick={handleIssueSubmit}
-                      disabled={issueSaving || !issueTitle}
-                      className="flex-1 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded px-3 py-1.5 disabled:opacity-40"
-                    >
-                      {issueSaving ? '저장중...' : '등록'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {issues.length > 0 && (
-                <div className="px-4 pb-3 space-y-1.5 max-h-48 overflow-y-auto">
                   {issues.map((issue) => (
                     <EventIssueCard
                       key={issue.id}
@@ -888,64 +859,113 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     />
                   ))}
                 </div>
-              )}
-
-              {issues.length === 0 && !showIssueForm && (
-                <p className="px-4 pb-3 text-xs text-gray-600">등록된 이슈 없음</p>
-              )}
-            </div>
-
-            {/* 통합 타임라인 */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              {(loadingDetail || loadingComms) ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 bg-white/5 rounded-lg animate-pulse" />
-                  ))}
-                </div>
-              ) : unified.length === 0 ? (
-                <p className="text-xs text-gray-600 py-2">기록된 내용이 없습니다.</p>
-              ) : (
-                <div className="space-y-2">
-                  {unified.map((entry) => {
-                    if (entry.source === 'crm') {
-                      return (
-                        <div key={`crm-${entry.id}`} className="bg-white/5 rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400">
-                              상담
-                            </span>
-                            <span className="text-[11px] text-gray-600 ml-auto">
-                              {new Date(entry.created_at).toLocaleDateString('ko-KR', {
-                                year: 'numeric', month: 'numeric', day: 'numeric',
-                              })}
-                              {entry.author ? ` · ${entry.author}` : ''}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
-                            {entry.raw_memo}
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    // source === 'srm'
-                    return (
-                      <SrmCommCard
-                        key={`srm-${entry.id}`}
-                        entry={entry as unknown as CommEntry}
-                        onUpdated={handleCommUpdated}
+                <div className="border-t border-white/10 px-4 py-3 shrink-0">
+                  {showIssueForm ? (
+                    <div className="space-y-2">
+                      <select
+                        value={issueType}
+                        onChange={(e) => setIssueType(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
+                      >
+                        <option value="schedule_pending">스케줄 조율 중</option>
+                        <option value="coach_pending">코치 배정 중</option>
+                        <option value="renewal_needed">재결제 필요</option>
+                        <option value="custom">기타</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={issueTitle}
+                        onChange={(e) => setIssueTitle(e.target.value)}
+                        placeholder="이슈 제목"
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
                       />
-                    );
-                  })}
+                      <textarea
+                        value={issueDesc}
+                        onChange={(e) => setIssueDesc(e.target.value)}
+                        placeholder="메모 (선택)"
+                        rows={2}
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 resize-none"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowIssueForm(false)}
+                          className="flex-1 text-xs bg-white/5 hover:bg-white/10 text-gray-400 rounded px-3 py-1.5"
+                        >
+                          취소
+                        </button>
+                        <button
+                          onClick={handleIssueSubmit}
+                          disabled={issueSaving || !issueTitle}
+                          className="flex-1 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded px-3 py-1.5 disabled:opacity-40"
+                        >
+                          {issueSaving ? '저장중...' : '등록'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowIssueForm(true)}
+                      className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      <Plus size={12} />
+                      이슈 등록
+                    </button>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* 하단 고정 입력폼 */}
-            <div className="border-t border-white/10 px-4 py-3 shrink-0">
-              <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} eventContext={eventContext} noBorder />
-            </div>
+            {/* 커뮤니케이션 탭 */}
+            {activeTab === 'comm' && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto px-4 py-3">
+                  {(loadingDetail || loadingComms) ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-16 bg-white/5 rounded-lg animate-pulse" />
+                      ))}
+                    </div>
+                  ) : unified.length === 0 ? (
+                    <p className="text-xs text-gray-600 py-2">기록된 내용이 없습니다.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {unified.map((entry) => {
+                        if (entry.source === 'crm') {
+                          return (
+                            <div key={`crm-${entry.id}`} className="bg-white/5 rounded-lg p-3">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400">
+                                  상담
+                                </span>
+                                <span className="text-[11px] text-gray-600 ml-auto">
+                                  {new Date(entry.created_at).toLocaleDateString('ko-KR', {
+                                    year: 'numeric', month: 'numeric', day: 'numeric',
+                                  })}
+                                  {entry.author ? ` · ${entry.author}` : ''}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                                {entry.raw_memo}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return (
+                          <SrmCommCard
+                            key={`srm-${entry.id}`}
+                            entry={entry as unknown as CommEntry}
+                            onUpdated={handleCommUpdated}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <div className="border-t border-white/10 px-4 py-3 shrink-0">
+                  <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} eventContext={eventContext} noBorder />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

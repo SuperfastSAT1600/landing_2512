@@ -111,6 +111,10 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
 
       {expanded && (
         <div className="px-3 pb-3 space-y-1.5">
+          <div className="flex items-center gap-2 text-[11px] text-gray-600">
+            <span>{new Date(issue.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</span>
+            {issue.created_by && <span>· {issue.created_by}</span>}
+          </div>
           {issue.description && (
             <p className="text-xs text-gray-500 mb-2">{issue.description}</p>
           )}
