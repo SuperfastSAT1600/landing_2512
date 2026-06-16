@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X } from 'lucide-react';
+import { X, Plus, AlertTriangle } from 'lucide-react';
 import { AddForm } from './CommLog';
 import { SrmCommCard } from './SrmCommCard';
+import { EventIssueCard } from './EventIssueCard';
 import type { CommEntry, EventContext } from './CommLog';
 import type { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
+import type { EventIssue } from '@/app/api/admin/srm/issues/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 
 type EventType = 'coachRoom' | 'studyHall';
@@ -13,7 +15,7 @@ type EventType = 'coachRoom' | 'studyHall';
 interface TaggedEvent extends ScheduleEvent {
   eventType: EventType;
   day: 'today' | 'tomorrow';
-  startsAtKst: string; // HH:MM
+  startsAtKst: string;
 }
 
 interface Props {
@@ -21,6 +23,12 @@ interface Props {
   onClose: () => void;
 }
 
+const ISSUE_TYPES = [
+  { value: 'cancellation', label: '취소/재예약' },
+  { value: 'coach_change', label: '코치 교체' },
+  { value: 'no_show', label: '노쇼' },
+  { value: 'custom', label: '기타' },
+] as const;
 
 function getAdminName() {
   if (typeof window === 'undefined') return '';
@@ -29,23 +37,41 @@ function getAdminName() {
 
 export function EventLogPanel({ event, onClose }: Props) {
   const [comms, setComms] = useState<CommEntry[]>([]);
+  const [issues, setIssues] = useState<EventIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueType, setIssueType] = useState<string>('cancellation');
+  const [issueTitle, setIssueTitle] = useState('');
+  const [issueDesc, setIssueDesc] = useState('');
+  const [issueSaving, setIssueSaving] = useState(false);
 
-  const handleUpdated = (updated: CommEntry) => {
-    setComms((prev) => prev.map((c) => c.id === updated.id ? updated : c));
-  };
   const { userName } = useAdminAuth();
 
-  const fetchComms = useCallback(async () => {
+  const handleCommUpdated = (updated: CommEntry) => {
+    setComms((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+  };
+
+  const handleIssueUpdated = (updated: EventIssue) => {
+    setIssues((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+  };
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/admin/srm/communications?eventId=${event.id}`);
-    const data = await res.json();
-    setComms(Array.isArray(data) ? data : []);
+    const [commsRes, issuesRes] = await Promise.all([
+      fetch(`/api/admin/srm/communications?eventId=${event.id}`),
+      fetch(`/api/admin/srm/issues?eventId=${event.id}`),
+    ]);
+    const [commsData, issuesData] = await Promise.all([
+      commsRes.json(),
+      issuesRes.json(),
+    ]);
+    setComms(Array.isArray(commsData) ? commsData : []);
+    setIssues(Array.isArray(issuesData) ? issuesData : []);
     setLoading(false);
   }, [event.id]);
 
-  useEffect(() => { fetchComms(); }, [fetchComms]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleSave = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
@@ -63,12 +89,40 @@ export function EventLogPanel({ event, onClose }: Props) {
         ...data,
       }),
     });
-    await fetchComms();
+    await fetchData();
     setSaving(false);
+  };
+
+  const handleIssueSubmit = async () => {
+    if (!issueTitle.trim()) return;
+    setIssueSaving(true);
+    const res = await fetch('/api/admin/srm/issues', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventId: event.id,
+        issueType,
+        title: issueTitle.trim(),
+        description: issueDesc.trim() || undefined,
+        createdBy: userName || getAdminName() || '관리자',
+        studentName: event.students.join(', ') || undefined,
+        coachName: event.coaches.join(', ') || undefined,
+      }),
+    });
+    if (res.ok) {
+      const newIssue = await res.json() as EventIssue;
+      setIssues((prev) => [newIssue, ...prev]);
+      setIssueTitle('');
+      setIssueDesc('');
+      setIssueType('cancellation');
+      setShowIssueForm(false);
+    }
+    setIssueSaving(false);
   };
 
   const isCoach = event.eventType === 'coachRoom';
   const dayLabel = event.day === 'today' ? '오늘' : '내일';
+  const openIssues = issues.filter((i) => i.status === 'open');
 
   const eventContext: EventContext = {
     eventId: event.id,
@@ -91,6 +145,12 @@ export function EventLogPanel({ event, onClose }: Props) {
             </span>
             <span className="text-white font-semibold">{event.startsAtKst}</span>
             <span className="text-gray-500 text-sm">{dayLabel}</span>
+            {openIssues.length > 0 && (
+              <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400">
+                <AlertTriangle size={10} />
+                미해결 {openIssues.length}건
+              </span>
+            )}
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1">
             <X size={18} />
@@ -114,19 +174,98 @@ export function EventLogPanel({ event, onClose }: Props) {
           </div>
         </div>
 
-        {/* 기존 커뮤니케이션 로그 */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
-          {loading ? (
-            <div className="space-y-2">
-              {[1, 2].map((i) => <div key={i} className="h-14 bg-white/5 rounded-lg animate-pulse" />)}
+        {/* 스크롤 영역 */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+
+          {/* 이슈 섹션 */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">이슈</span>
+              <button
+                onClick={() => setShowIssueForm(!showIssueForm)}
+                className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                <Plus size={11} />
+                이슈 등록
+              </button>
             </div>
-          ) : comms.length === 0 ? (
-            <p className="text-xs text-gray-600 py-2">이 이벤트에 대한 기록이 없습니다.</p>
-          ) : (
-            comms.map((e) => (
-              <SrmCommCard key={e.id} entry={e} onUpdated={handleUpdated} />
-            ))
-          )}
+
+            {showIssueForm && (
+              <div className="mb-3 p-3 bg-white/5 rounded-lg border border-white/10 space-y-2">
+                <select
+                  value={issueType}
+                  onChange={(e) => setIssueType(e.target.value)}
+                  className="w-full bg-[#1a1c1f] border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 outline-none focus:border-blue-500/50 [color-scheme:dark]"
+                >
+                  {ISSUE_TYPES.map((t) => (
+                    <option key={t.value} value={t.value} className="bg-[#1a1c1f] text-gray-200">{t.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={issueTitle}
+                  onChange={(e) => setIssueTitle(e.target.value)}
+                  placeholder="이슈 제목 *"
+                  className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50"
+                />
+                <textarea
+                  value={issueDesc}
+                  onChange={(e) => setIssueDesc(e.target.value)}
+                  placeholder="상세 설명 (선택)"
+                  rows={2}
+                  className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50 resize-none"
+                />
+                <div className="flex gap-1.5 justify-end">
+                  <button
+                    onClick={() => setShowIssueForm(false)}
+                    className="px-2.5 py-1 text-xs text-gray-400 hover:text-gray-200 border border-white/10 rounded"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleIssueSubmit}
+                    disabled={issueSaving || !issueTitle.trim()}
+                    className="px-2.5 py-1 text-xs bg-orange-600 hover:bg-orange-500 disabled:opacity-40 text-white rounded"
+                  >
+                    {issueSaving ? '등록 중...' : '등록'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="h-10 bg-white/5 rounded-lg animate-pulse" />
+            ) : issues.length === 0 ? (
+              <p className="text-xs text-gray-600">등록된 이슈가 없습니다.</p>
+            ) : (
+              <div className="space-y-2">
+                {issues.map((issue) => (
+                  <EventIssueCard key={issue.id} issue={issue} onUpdated={handleIssueUpdated} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 구분선 */}
+          <div className="border-t border-white/5" />
+
+          {/* 커뮤니케이션 로그 */}
+          <div>
+            <div className="mb-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">커뮤니케이션 로그</span>
+            </div>
+            {loading ? (
+              <div className="space-y-2">
+                {[1, 2].map((i) => <div key={i} className="h-14 bg-white/5 rounded-lg animate-pulse" />)}
+              </div>
+            ) : comms.length === 0 ? (
+              <p className="text-xs text-gray-600">이 이벤트에 대한 기록이 없습니다.</p>
+            ) : (
+              comms.map((e) => (
+                <SrmCommCard key={e.id} entry={e} onUpdated={handleCommUpdated} />
+              ))
+            )}
+          </div>
         </div>
 
         {/* 입력폼 */}

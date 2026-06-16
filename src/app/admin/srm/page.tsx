@@ -13,6 +13,8 @@ import { EventLogPanel } from './components/EventLogPanel';
 import type { TaggedEvent } from './components/UnifiedTimeline';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
+import type { EventIssue } from '@/app/api/admin/srm/issues/route';
+import { AlertTriangle } from 'lucide-react';
 
 // sfv2 profile ID 기준 또는 CRM student ID 기준으로 패널 열기
 interface SelectedStudent {
@@ -79,6 +81,7 @@ export default function SrmPage() {
   const [pausedStudentIds, setPausedStudentIds] = useState<Set<string>>(new Set());
   const [loggedEventIds, setLoggedEventIds] = useState<Set<string>>(new Set());
   const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
+  const [openIssues, setOpenIssues] = useState<EventIssue[]>([]);
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
@@ -121,6 +124,14 @@ export default function SrmPage() {
       .then(setAlerts)
       .finally(() => setAlertsLoading(false));
   }, [mainTab]);
+
+  useEffect(() => {
+    if (mainTab !== 'schedule') return;
+    fetch('/api/admin/srm/issues?status=open&limit=100')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setOpenIssues(data); })
+      .catch(() => {});
+  }, [mainTab, selectedEvent]);
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
@@ -198,6 +209,23 @@ export default function SrmPage() {
 
       {mainTab !== 'roster' && (
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
+      )}
+
+      {mainTab === 'schedule' && openIssues.length > 0 && (
+        <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+          <AlertTriangle size={14} className="text-orange-400 shrink-0" />
+          <span className="text-sm text-orange-300 font-medium">미해결 이슈 {openIssues.length}건</span>
+          <div className="flex gap-1.5 flex-wrap ml-1">
+            {openIssues.slice(0, 5).map((issue) => (
+              <span key={issue.id} className="text-[11px] text-orange-400/80 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">
+                {issue.student_name ?? issue.title}
+              </span>
+            ))}
+            {openIssues.length > 5 && (
+              <span className="text-[11px] text-gray-500">+{openIssues.length - 5}건 더</span>
+            )}
+          </div>
+        </div>
       )}
 
       {mainTab === 'schedule' && (
