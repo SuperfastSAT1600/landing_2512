@@ -26,12 +26,13 @@ const PARTY_ACTIVE: Record<string, string> = {
   us: 'bg-red-500 text-white border-red-500',
 };
 
-const CHANNEL_LABELS = { kakao: '카카오', call: '전화', sms: 'SMS', email: '이메일', other: '기타' };
+const CHANNEL_LABELS = { kakao: '카카오', call: '전화', sms: 'SMS', email: '이메일', slack: '슬랙', other: '기타' };
 const CHANNEL_COLORS: Record<string, string> = {
   kakao: 'bg-yellow-500/20 text-yellow-300',
   call: 'bg-blue-500/20 text-blue-300',
   sms: 'bg-green-500/20 text-green-300',
   email: 'bg-purple-500/20 text-purple-300',
+  slack: 'bg-violet-500/20 text-violet-300',
   other: 'bg-gray-500/20 text-gray-300',
 };
 
@@ -160,6 +161,7 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
         <option value="call" className="bg-[#1a1c1f] text-gray-200">전화</option>
         <option value="sms" className="bg-[#1a1c1f] text-gray-200">SMS</option>
         <option value="email" className="bg-[#1a1c1f] text-gray-200">이메일</option>
+        <option value="slack" className="bg-[#1a1c1f] text-gray-200">슬랙</option>
         <option value="other" className="bg-[#1a1c1f] text-gray-200">기타</option>
       </select>
 
