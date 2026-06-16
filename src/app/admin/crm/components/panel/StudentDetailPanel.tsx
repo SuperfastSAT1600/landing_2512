@@ -9,7 +9,7 @@ import { usePanelData } from './hooks/usePanelData';
 import { useEditForm } from './hooks/useEditForm';
 import { useMemoSection } from './hooks/useMemoSection';
 import { useMemoAttachments } from './hooks/useMemoAttachments';
-import { useCallRecording } from './hooks/useCallRecording';
+import { usePhoneCall } from './hooks/usePhoneCall';
 import { useTimeline } from './hooks/useTimeline';
 import { useFunnel } from './hooks/useFunnel';
 import { useDiagnostic } from './hooks/useDiagnostic';
@@ -82,12 +82,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     clearAttachments: attachmentsHook.clear,
   });
 
-  // 통화 녹음 → 전사·요약 결과를 메모 입력란에 채움(상담사 검토 후 "메모 저장")
-  const callHook = useCallRecording({
-    studentId: student.id, adminKey,
-    onSummary: (summary) =>
-      memoHook.setMemoText((prev) => (prev.trim() ? `${prev}\n\n${summary}` : summary)),
-  });
+  // 인터넷 전화 → 통화 종료 후 녹음 전사·요약이 끝나면 메모가 타임라인에 자동 추가됨(realtime)
+  const phoneHook = usePhoneCall({ studentId: student.id, adminKey });
 
   const timelineHook = useTimeline({
     studentId: student.id, adminKey,
@@ -232,11 +228,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               memoError={memoHook.memoError}
               setMemoError={memoHook.setMemoError}
               onAddMemo={memoHook.handleAddMemo}
-              recording={callHook.recording}
-              processing={callHook.processing}
-              elapsedSec={callHook.elapsedSec}
-              recordError={callHook.recordError}
-              onToggleRecord={callHook.toggle}
+              phone={phoneHook}
               staged={attachmentsHook.staged}
               onAddFiles={attachmentsHook.addFiles}
               onRemoveAttachment={attachmentsHook.remove}

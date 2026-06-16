@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
-import type { ConsultationEntry } from '@/types/crm';
 import { parseAttachments } from '@/lib/crm-attachment';
-import { randomUUID } from 'crypto';
+import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultation-timeline';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 const SLACK_TOKEN = process.env.SLACK_BOT_TOKEN;
 const SLACK_CHANNEL = 'C0B8Q5WNDD3';
@@ -56,48 +55,19 @@ export async function POST(
     return NextResponse.json({ error: 'raw_memo or attachments is required' }, { status: 400 });
   }
 
-  // Fetch existing timeline
-  const { data: student, error: fetchError } = await supabaseAdmin
-    .from('students')
-    .select('consultation_timeline')
-    .eq('id', id)
-    .single();
+  try {
+    const newEntry = await appendConsultationEntry(id, { raw_memo, author, attachments });
 
-  if (fetchError || !student) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
-  }
+    // 슬랙 즉시 발송 (비동기, 메모 저장과 무관하게 처리)
+    const studentName = (await supabaseAdmin.from('students').select('name').eq('id', id).single()).data?.name ?? id;
+    postSlackMemo(studentName, author || '미기재', raw_memo.trim());
 
-  const existing: ConsultationEntry[] = Array.isArray(student.consultation_timeline)
-    ? student.consultation_timeline
-    : [];
-
-  const newEntry: ConsultationEntry = {
-    id: randomUUID(),
-    created_at: new Date().toISOString(),
-    raw_memo: raw_memo.trim(),
-    ...(author ? { author } : {}),
-    published: false,
-    ...(attachments.length > 0 ? { attachments } : {}),
-  };
-
-  const updatedTimeline = [...existing, newEntry];
-
-  const { error } = await supabaseAdmin
-    .from('students')
-    .update({
-      consultation_timeline: updatedTimeline,
-      last_contacted_at: new Date().toISOString(),
-    })
-    .eq('id', id);
-
-  if (error) {
-    console.error('[crm/memo POST]', error);
+    return NextResponse.json({ data: newEntry }, { status: 201 });
+  } catch (e) {
+    if (e instanceof StudentNotFoundError) {
+      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    }
+    console.error('[crm/memo POST]', e);
     return NextResponse.json({ error: 'Failed to append memo' }, { status: 500 });
   }
-
-  // 슬랙 즉시 발송 (비동기, 메모 저장과 무관하게 처리)
-  const studentName = (await supabaseAdmin.from('students').select('name').eq('id', id).single()).data?.name ?? id;
-  postSlackMemo(studentName, author || '미기재', raw_memo.trim());
-
-  return NextResponse.json({ data: newEntry }, { status: 201 });
 }
