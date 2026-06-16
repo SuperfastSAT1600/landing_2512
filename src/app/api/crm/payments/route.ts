@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
     plan_subjects?: string;
     paid_at: string;
     notes?: string;
+    created_by?: string | null;
   };
 
   try {
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
       plan_subjects: body.plan_subjects ?? null,
       paid_at: body.paid_at,
       notes: body.notes ?? null,
+      created_by: body.created_by ?? null,
     })
     .select()
     .single();
