@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
-import type { ConsultationEntry } from '@/types/crm';
 import { parseAttachments } from '@/lib/crm-attachment';
-import { randomUUID } from 'crypto';
+import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultation-timeline';
 
 /**
  * POST /api/crm/students/[id]/memo
@@ -37,43 +35,14 @@ export async function POST(
     return NextResponse.json({ error: 'raw_memo or attachments is required' }, { status: 400 });
   }
 
-  // Fetch existing timeline
-  const { data: student, error: fetchError } = await supabaseAdmin
-    .from('students')
-    .select('consultation_timeline')
-    .eq('id', id)
-    .single();
-
-  if (fetchError || !student) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
-  }
-
-  const existing: ConsultationEntry[] = Array.isArray(student.consultation_timeline)
-    ? student.consultation_timeline
-    : [];
-
-  const newEntry: ConsultationEntry = {
-    id: randomUUID(),
-    created_at: new Date().toISOString(),
-    raw_memo: raw_memo.trim(),
-    published: false,
-    ...(attachments.length > 0 ? { attachments } : {}),
-  };
-
-  const updatedTimeline = [...existing, newEntry];
-
-  const { error } = await supabaseAdmin
-    .from('students')
-    .update({
-      consultation_timeline: updatedTimeline,
-      last_contacted_at: new Date().toISOString(),
-    })
-    .eq('id', id);
-
-  if (error) {
-    console.error('[crm/memo POST]', error);
+  try {
+    const newEntry = await appendConsultationEntry(id, { raw_memo, attachments });
+    return NextResponse.json({ data: newEntry }, { status: 201 });
+  } catch (e) {
+    if (e instanceof StudentNotFoundError) {
+      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    }
+    console.error('[crm/memo POST]', e);
     return NextResponse.json({ error: 'Failed to append memo' }, { status: 500 });
   }
-
-  return NextResponse.json({ data: newEntry }, { status: 201 });
 }
