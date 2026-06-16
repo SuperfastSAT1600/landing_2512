@@ -53,8 +53,12 @@ export async function POST(
     return NextResponse.json({ error: payErr.message ?? '결제 기록 저장 실패' }, { status: 500 });
   }
 
-  // 결제 → "수업 중" 전환 (모든 결제 경로 공유 헬퍼)
-  const student = await enrollStudentOnPayment(id);
+  // 결제 → "수업 중" 전환 (모든 결제 경로 공유 헬퍼). is_vip가 오면 함께 반영.
+  const student = await enrollStudentOnPayment(
+    id,
+    undefined,
+    is_vip !== undefined ? { is_vip } : undefined
+  );
   if (!student) {
     return NextResponse.json({ error: '학생 상태 업데이트 실패' }, { status: 500 });
   }
