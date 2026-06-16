@@ -6,6 +6,7 @@ import { AddForm } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
 import type { EventContext } from './CommLog';
 import { CrmLinkSection } from './CrmLinkSection';
+import { SrmCommCard } from './SrmCommCard';
 import { LifecycleTab } from './LifecycleTab';
 import { STAGE_LABELS } from '@/app/admin/srm/lifecycle-constants';
 import type { LifecycleResponse } from '@/app/api/admin/srm/lifecycle/route';
@@ -138,6 +139,14 @@ function sessionStatusColor(status: string): string {
   }
 }
 
+interface PauseRecord {
+  id: string;
+  pause_start: string;
+  pause_until: string | null;
+  reason: string | null;
+  created_by: string | null;
+}
+
 interface Props {
   studentId?: string;
   crmStudentId?: string;
@@ -164,6 +173,11 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [loadingV2, setLoadingV2] = useState(false);
   const [commLang, setCommLang] = useState<'ko' | 'en'>('ko');
   const [langSaving, setLangSaving] = useState(false);
+  const [activePause, setActivePause] = useState<PauseRecord | null | undefined>(undefined); // undefined = 아직 로딩
+  const [pauseFormOpen, setPauseFormOpen] = useState(false);
+  const [pauseUntil, setPauseUntil] = useState('');
+  const [pauseReason, setPauseReason] = useState('');
+  const [pauseSaving, setPauseSaving] = useState(false);
 
   const commKey = studentId ?? crmStudentId ?? '';
 
@@ -210,12 +224,64 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setLoadingV2(false);
   }, [studentId]);
 
+  const fetchPause = useCallback(async () => {
+    const url = studentId
+      ? `/api/admin/srm/student/${studentId}/pause`
+      : crmStudentId
+      ? `/api/admin/srm/student/crm/${crmStudentId}/pause`
+      : null;
+    if (!url) { setActivePause(null); return; }
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json() as { pause: PauseRecord | null };
+        setActivePause(json.pause);
+      } else {
+        setActivePause(null);
+      }
+    } catch {
+      setActivePause(null);
+    }
+  }, [studentId, crmStudentId]);
+
   useEffect(() => {
     fetchDetail();
     fetchComms();
     fetchLifecycle();
     fetchV2Summary();
-  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary]);
+    fetchPause();
+  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary, fetchPause]);
+
+  const handlePauseCreate = async () => {
+    setPauseSaving(true);
+    const url = studentId
+      ? `/api/admin/srm/student/${studentId}/pause`
+      : `/api/admin/srm/student/crm/${crmStudentId}/pause`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pause_until: pauseUntil || null,
+        reason: pauseReason || null,
+        created_by: getAdminName() || '관리자',
+      }),
+    });
+    await fetchPause();
+    setPauseFormOpen(false);
+    setPauseUntil('');
+    setPauseReason('');
+    setPauseSaving(false);
+  };
+
+  const handlePauseEnd = async () => {
+    setPauseSaving(true);
+    const url = studentId
+      ? `/api/admin/srm/student/${studentId}/pause/active`
+      : `/api/admin/srm/student/crm/${crmStudentId}/pause/active`;
+    await fetch(url, { method: 'DELETE' });
+    await fetchPause();
+    setPauseSaving(false);
+  };
 
   useEffect(() => {
     const lang = (detail?.crmStudent as unknown as { comm_language?: string | null } | null)?.comm_language;
@@ -266,6 +332,10 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     });
     await fetchComms();
     setSaving(false);
+  };
+
+  const handleCommUpdated = (updated: CommEntry) => {
+    setComms((prev) => prev.map((c) => c.id === updated.id ? updated : c));
   };
 
   const handleLinked = () => fetchDetail();
@@ -601,6 +671,81 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               )}
             </div>
 
+            {/* 휴원 섹션 */}
+            {activePause !== undefined && (
+              <div className="px-4 py-3 border-t border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">휴원</p>
+                  {activePause ? (
+                    <button
+                      onClick={handlePauseEnd}
+                      disabled={pauseSaving}
+                      className="text-[11px] text-red-400 hover:text-red-300 disabled:opacity-40"
+                    >
+                      {pauseSaving ? '처리중...' : '휴원 해제'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setPauseFormOpen((v) => !v)}
+                      className="text-[11px] text-blue-400 hover:text-blue-300"
+                    >
+                      {pauseFormOpen ? '취소' : '휴원 설정'}
+                    </button>
+                  )}
+                </div>
+
+                {activePause ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">휴원 중</span>
+                      {activePause.pause_until && (
+                        <span className="text-[11px] text-gray-400">
+                          ~ {new Date(activePause.pause_until).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} 재개 예정
+                        </span>
+                      )}
+                      {!activePause.pause_until && (
+                        <span className="text-[11px] text-gray-500">재개일 미정</span>
+                      )}
+                    </div>
+                    {activePause.reason && (
+                      <p className="text-[11px] text-gray-500">{activePause.reason}</p>
+                    )}
+                  </div>
+                ) : pauseFormOpen ? (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-[11px] text-gray-500 block mb-0.5">재개 예정일 (선택)</label>
+                      <input
+                        type="date"
+                        value={pauseUntil}
+                        onChange={(e) => setPauseUntil(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-gray-500 block mb-0.5">사유 (선택)</label>
+                      <input
+                        type="text"
+                        value={pauseReason}
+                        onChange={(e) => setPauseReason(e.target.value)}
+                        placeholder="해외 여행, 시험 기간 등"
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                      />
+                    </div>
+                    <button
+                      onClick={handlePauseCreate}
+                      disabled={pauseSaving}
+                      className="w-full text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded px-3 py-1.5 disabled:opacity-40"
+                    >
+                      {pauseSaving ? '저장중...' : '휴원 시작'}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-600">현재 수업 중</p>
+                )}
+              </div>
+            )}
+
             {/* CRM 연결 섹션 (미연결 시) */}
             {!loadingDetail && !isLinked && studentId && (
               <div className="px-4 py-3 border-t border-white/10">
@@ -652,38 +797,11 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
                     // source === 'srm'
                     return (
-                      <div key={`srm-${entry.id}`} className="bg-white/5 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${CHANNEL_COLORS[entry.channel] ?? 'bg-gray-500/20 text-gray-300'}`}>
-                            {CHANNEL_LABELS[entry.channel] ?? entry.channel}
-                          </span>
-                          {(entry.parties && entry.parties.length > 0 ? entry.parties : [entry.target]).map((p) => (
-                            <span key={p} className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${PARTY_COLORS[p] ?? 'bg-gray-500/20 text-gray-300 border-gray-500/30'}`}>
-                              {PARTY_LABELS[p] ?? p}
-                            </span>
-                          ))}
-                          {entry.trigger_type && entry.trigger_type !== 'manual' && (
-                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">
-                              {TRIGGER_BADGE_LABELS[entry.trigger_type] ?? entry.trigger_type}
-                            </span>
-                          )}
-                          {entry.resolution && (
-                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-gray-400 ml-auto">
-                              {RESOLUTION_LABELS[entry.resolution] ?? entry.resolution}
-                            </span>
-                          )}
-                          <span className={`text-[11px] text-gray-600 ${entry.resolution ? '' : 'ml-auto'}`}>
-                            {new Date(entry.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
-                            {entry.author ? ` · ${entry.author}` : ''}
-                          </span>
-                        </div>
-                        {entry.reason && (
-                          <p className="text-[11px] text-gray-500 mb-1">사유: {entry.reason}</p>
-                        )}
-                        <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
-                          {entry.content}
-                        </p>
-                      </div>
+                      <SrmCommCard
+                        key={`srm-${entry.id}`}
+                        entry={entry as unknown as CommEntry}
+                        onUpdated={handleCommUpdated}
+                      />
                     );
                   })}
                 </div>

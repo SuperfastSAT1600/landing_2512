@@ -154,13 +154,13 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
       <select
         value={channel}
         onChange={(e) => setChannel(e.target.value)}
-        className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500"
+        className="w-full bg-[#1a1c1f] border border-white/10 rounded-md px-3 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500 [color-scheme:dark]"
       >
-        <option value="kakao">카카오</option>
-        <option value="call">전화</option>
-        <option value="sms">SMS</option>
-        <option value="email">이메일</option>
-        <option value="other">기타</option>
+        <option value="kakao" className="bg-[#1a1c1f] text-gray-200">카카오</option>
+        <option value="call" className="bg-[#1a1c1f] text-gray-200">전화</option>
+        <option value="sms" className="bg-[#1a1c1f] text-gray-200">SMS</option>
+        <option value="email" className="bg-[#1a1c1f] text-gray-200">이메일</option>
+        <option value="other" className="bg-[#1a1c1f] text-gray-200">기타</option>
       </select>
 
       <input
@@ -180,15 +180,15 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
       <select
         value={resolution}
         onChange={(e) => setResolution(e.target.value)}
-        className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500"
+        className="w-full bg-[#1a1c1f] border border-white/10 rounded-md px-3 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500 [color-scheme:dark]"
       >
-        <option value="">결과 선택 (선택)</option>
-        <option value="scheduled">일정 잡음</option>
-        <option value="will_contact">다음에 연락</option>
-        <option value="no_intent">의향 없음</option>
-        <option value="unreachable">연락 불가</option>
-        <option value="resolved">해결됨</option>
-        <option value="other">기타</option>
+        <option value="" className="bg-[#1a1c1f] text-gray-200">결과 선택 (선택)</option>
+        <option value="scheduled" className="bg-[#1a1c1f] text-gray-200">일정 잡음</option>
+        <option value="will_contact" className="bg-[#1a1c1f] text-gray-200">다음에 연락</option>
+        <option value="no_intent" className="bg-[#1a1c1f] text-gray-200">의향 없음</option>
+        <option value="unreachable" className="bg-[#1a1c1f] text-gray-200">연락 불가</option>
+        <option value="resolved" className="bg-[#1a1c1f] text-gray-200">해결됨</option>
+        <option value="other" className="bg-[#1a1c1f] text-gray-200">기타</option>
       </select>
       <button
         type="submit"

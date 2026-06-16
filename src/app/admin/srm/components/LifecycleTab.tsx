@@ -181,11 +181,11 @@ export function LifecycleTab({ profileId, studentId }: Props) {
           <select
             value={setStage}
             onChange={(e) => setSetStage(e.target.value as SrmStage | '')}
-            className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500"
+            className="w-full bg-[#1a1c1f] border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500 [color-scheme:dark]"
           >
-            <option value="">단계 직접 설정...</option>
+            <option value="" className="bg-[#1a1c1f] text-gray-200">단계 직접 설정...</option>
             {ALL_STAGES.map((s) => (
-              <option key={s} value={s}>{STAGE_LABELS[s]}</option>
+              <option key={s} value={s} className="bg-[#1a1c1f] text-gray-200">{STAGE_LABELS[s]}</option>
             ))}
           </select>
           {setStage && (
