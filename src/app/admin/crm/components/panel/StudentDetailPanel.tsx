@@ -213,7 +213,11 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             <StrategyHistorySection
               student={localStudent}
               adminKey={adminKey}
-              onUpdate={onUpdate}
+              onUpdate={(id, updates) => {
+                // 패널의 localStudent도 갱신해야 저장 직후 화면에 반영됨 (PaymentHistorySection과 동일 패턴)
+                setLocalStudent(prev => ({ ...prev, ...updates }));
+                onUpdate(id, updates);
+              }}
             />
 
             <SalesStrategySection
