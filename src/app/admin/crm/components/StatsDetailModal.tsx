@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import type { StatsDetailMetric, StatsDetailResult } from '@/lib/crm-stats-detail';
+import { CRM_MEMBER_NAMES } from '@/lib/admin-user';
 
 interface Props {
   adminKey: string;
@@ -50,6 +51,26 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, onClose }:
     })();
     return () => { cancelled = true; };
   }, [metric, from, to, adminKey]);
+
+  // 결제 담당자(created_by) 수동 수정 — 과거 결제 보정용
+  async function updateCreatedBy(paymentId: string, value: string) {
+    const created_by = value || null;
+    // 낙관적 업데이트
+    setResult((prev) =>
+      prev && prev.kind === 'payments'
+        ? { ...prev, items: prev.items.map((it) => (it.id === paymentId ? { ...it, created_by } : it)) }
+        : prev
+    );
+    try {
+      await fetch(`/api/crm/payments/${paymentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ created_by }),
+      });
+    } catch {
+      /* 실패 시 다음 새로고침에 원복됨 */
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -111,7 +132,8 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, onClose }:
                   <th className="text-left py-2 px-3 font-semibold">상품</th>
                   <th className="text-right py-2 px-3 font-semibold">금액</th>
                   <th className="text-right py-2 px-3 font-semibold">실수익</th>
-                  <th className="text-left py-2 pl-3 font-semibold">세금/유형</th>
+                  <th className="text-left py-2 px-3 font-semibold">세금/유형</th>
+                  <th className="text-left py-2 pl-3 font-semibold">담당자</th>
                 </tr>
               </thead>
               <tbody>
@@ -122,7 +144,26 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, onClose }:
                     <td className="py-2 px-3 text-gray-600">{it.product ?? '-'}</td>
                     <td className={`py-2 px-3 text-right tabular-nums whitespace-nowrap ${it.amount < 0 ? 'text-red-500' : 'text-gray-800'}`}>{won(it.amount)}</td>
                     <td className="py-2 px-3 text-right tabular-nums whitespace-nowrap text-gray-500">{won(it.net_amount)}</td>
-                    <td className="py-2 pl-3 text-gray-500 text-xs whitespace-nowrap">{it.tax_type ?? '-'} · {it.payment_type ?? '-'}</td>
+                    <td className="py-2 px-3 text-gray-500 text-xs whitespace-nowrap">{it.tax_type ?? '-'} · {it.payment_type ?? '-'}</td>
+                    <td className="py-2 pl-3 whitespace-nowrap">
+                      {it.id ? (
+                        <select
+                          value={it.created_by ?? ''}
+                          onChange={(e) => updateCreatedBy(it.id as string, e.target.value)}
+                          className={`text-xs border rounded-md px-1.5 py-1 focus:outline-none focus:border-blue-400 ${it.created_by ? 'border-gray-200 text-gray-700' : 'border-dashed border-gray-300 text-gray-400'}`}
+                        >
+                          <option value="">미지정</option>
+                          {CRM_MEMBER_NAMES.map((n) => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                          {it.created_by && !CRM_MEMBER_NAMES.includes(it.created_by as typeof CRM_MEMBER_NAMES[number]) && (
+                            <option value={it.created_by}>{it.created_by}</option>
+                          )}
+                        </select>
+                      ) : (
+                        <span className="text-gray-600">{it.created_by ?? '-'}</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -131,6 +172,7 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, onClose }:
                   <td className="py-2 pr-3" colSpan={3}>합계</td>
                   <td className="py-2 px-3 text-right tabular-nums">{won(result.items.reduce((s, it) => s + it.amount, 0))}</td>
                   <td className="py-2 px-3 text-right tabular-nums">{won(result.items.reduce((s, it) => s + it.net_amount, 0))}</td>
+                  <td className="py-2 px-3" />
                   <td className="py-2 pl-3" />
                 </tr>
               </tfoot>

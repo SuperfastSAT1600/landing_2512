@@ -308,6 +308,7 @@ export interface Payment {
   payment_type: string | null;
   tax_type: '면세' | '과세';
   paid_at: string; // YYYY-MM-DD
+  created_by: string | null; // 결제를 입력한 담당자명
   notes: string | null;
   created_at: string;
 }
