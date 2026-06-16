@@ -9,7 +9,7 @@ interface Props {
   onLinked?: () => void;
 }
 
-const REASON_LABEL = { phone: '전화번호 일치', email: '이메일 일치', both: '전화번호+이메일 일치' };
+const REASON_LABEL = { phone: '전화번호 일치', email: '이메일 일치', both: '전화번호+이메일 일치', name: '이름 일치' };
 
 function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLinked: () => void }) {
   const [q, setQ] = useState('');
