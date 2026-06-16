@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
   const studentId = req.nextUrl.searchParams.get('studentId');
   const sfv2ProfileId = req.nextUrl.searchParams.get('sfv2ProfileId');
   const status = req.nextUrl.searchParams.get('status');
+  const resolvedSince = req.nextUrl.searchParams.get('resolvedSince');
   const limit = parseInt(req.nextUrl.searchParams.get('limit') ?? '50', 10);
 
   let query = supabaseAdmin.from('srm_student_issues').select('*');
@@ -54,6 +55,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (status) query = query.eq('status', status);
+  if (resolvedSince) query = query.gte('resolved_at', resolvedSince);
 
   const { data, error } = await query
     .order('created_at', { ascending: false })

@@ -7,6 +7,7 @@ import { AlertSection } from './components/AlertSection';
 import { StudentPanel } from './components/StudentPanel';
 import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
+import { OpsRadar } from './components/OpsRadar';
 import { StudentSearch } from './components/StudentSearch';
 import { StudentRoster } from './components/StudentRoster';
 import { EventLogPanel } from './components/EventLogPanel';
@@ -260,7 +261,13 @@ export default function SrmPage() {
       )}
 
       {mainTab === 'log' && (
-        <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
+        <>
+          <OpsRadar onStudentClick={handleRosterStudentClick} />
+          <div className="mt-6 pt-5 border-t border-white/8">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-3">업무 기록</p>
+            <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
+          </div>
+        </>
       )}
 
       {mainTab === 'roster' && (
