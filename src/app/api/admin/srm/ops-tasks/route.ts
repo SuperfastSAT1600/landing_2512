@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
   if (studentIds.length > 0) {
     const [{ data: students }, { data: summerRows }] = await Promise.all([
       supabaseAdmin.from('students').select('id, name').in('id', studentIds),
-      supabaseAdmin.from('payments').select('student_id').ilike('product', '%여름방학%').in('student_id', studentIds),
+      supabaseAdmin.from('payments').select('student_id').ilike('product', '%여름방학%').gte('paid_at', '2026-01-01').in('student_id', studentIds),
     ]);
 
     for (const s of students ?? []) nameMap.set(s.id, s.name);

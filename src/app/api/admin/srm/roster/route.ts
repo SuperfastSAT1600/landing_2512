@@ -32,7 +32,8 @@ export async function GET() {
       supabaseAdmin
         .from('payments')
         .select('student_id')
-        .ilike('product', '%여름방학%'),
+        .ilike('product', '%여름방학%')
+        .gte('paid_at', '2026-01-01'),
     ]);
 
     if (studentsError) return NextResponse.json({ error: studentsError.message }, { status: 500 });
