@@ -14,13 +14,14 @@ const PARTY_COLORS: Record<string, string> = {
   us: 'bg-red-500/20 text-red-300 border-red-500/30',
 };
 const CHANNEL_LABELS: Record<string, string> = {
-  kakao: '카카오', call: '전화', sms: 'SMS', email: '이메일', other: '기타',
+  kakao: '카카오', call: '전화', sms: 'SMS', email: '이메일', slack: '슬랙', other: '기타',
 };
 const CHANNEL_COLORS: Record<string, string> = {
   kakao: 'bg-yellow-500/20 text-yellow-300',
   call: 'bg-blue-500/20 text-blue-300',
   sms: 'bg-green-500/20 text-green-300',
   email: 'bg-purple-500/20 text-purple-300',
+  slack: 'bg-violet-500/20 text-violet-300',
   other: 'bg-gray-500/20 text-gray-300',
 };
 const RESOLUTION_LABELS: Record<string, string> = {

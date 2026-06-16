@@ -7,7 +7,7 @@ export interface CommEntry {
   student_name: string | null;
   target: 'student' | 'parent' | 'coach';
   parties: string[];
-  channel: 'kakao' | 'call' | 'sms' | 'email' | 'other';
+  channel: 'kakao' | 'call' | 'sms' | 'email' | 'slack' | 'other';
   content: string;
   author: string | null;
   trigger_type: 'no_show' | 'late' | 'no_class' | 'no_study_hall' | 'manual';
