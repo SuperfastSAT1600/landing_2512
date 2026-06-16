@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, GraduationCap, UserX, RotateCcw, Search, X, Crown } from 'lucide-react';
 import { Student, ChurnType } from '@/types/crm';
-import { getPaymentOwnerName } from '@/lib/admin-user';
+import { getAdminUserName } from '@/lib/admin-user';
 import { ChurnModal } from './ChurnModal';
 import { RefundModal } from './RefundModal';
 
@@ -276,7 +276,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
             const res = await fetch(`/api/crm/students/${refundTarget.id}/refund`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-              body: JSON.stringify({ refund_amount: refundAmount, refund_reason: refundReason, churn_type: churnType, created_by: getPaymentOwnerName() }),
+              body: JSON.stringify({ refund_amount: refundAmount, refund_reason: refundReason, churn_type: churnType, created_by: getAdminUserName() }),
             });
             if (!res.ok) throw new Error('환불 처리 실패');
             onStudentUpdate(refundTarget.id, {
