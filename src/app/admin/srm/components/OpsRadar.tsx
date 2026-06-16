@@ -4,12 +4,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, CheckCircle, BookOpen, ChevronRight, RefreshCw } from 'lucide-react';
 import { EventIssueCard, type BaseIssue } from './EventIssueCard';
 import type { StudentIssue } from '@/app/api/admin/srm/student-issues/route';
+import type { EventIssue } from '@/app/api/admin/srm/issues/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
+
+// 두 이슈 소스를 통합하는 내부 타입
+interface UnifiedIssue extends BaseIssue {
+  student_name: string | null;
+  student_id?: string | null;
+  sfv2_profile_id?: string | null;
+  event_id?: string | null;
+  _source: 'student' | 'event';
+}
 
 const ISSUE_TYPE_COLORS: Record<string, string> = {
   schedule_pending: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   coach_pending: 'bg-green-500/20 text-green-400 border-green-500/30',
   renewal_needed: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  cancellation: 'bg-red-500/20 text-red-400 border-red-500/30',
+  coach_change: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  no_show: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   custom: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
 };
 
@@ -17,6 +30,9 @@ const ISSUE_TYPE_LABELS: Record<string, string> = {
   schedule_pending: '스케줄 조율',
   coach_pending: '코치 배정',
   renewal_needed: '재결제',
+  cancellation: '취소/재예약',
+  coach_change: '코치 교체',
+  no_show: '노쇼',
   custom: '기타',
 };
 
@@ -36,7 +52,7 @@ interface Props {
 }
 
 export function OpsRadar({ onStudentClick }: Props) {
-  const [openIssues, setOpenIssues] = useState<StudentIssue[]>([]);
+  const [openIssues, setOpenIssues] = useState<UnifiedIssue[]>([]);
   const [resolvedCount, setResolvedCount] = useState(0);
   const [noClassCount, setNoClassCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -47,23 +63,42 @@ export function OpsRadar({ onStudentClick }: Props) {
     setFetchError(null);
     const since = weekStartIso();
     try {
-      const [openRes, resolvedRes, alertsRes] = await Promise.all([
+      const [studentOpenRes, eventOpenRes, studentResolvedRes, eventResolvedRes, alertsRes] = await Promise.all([
         fetch('/api/admin/srm/student-issues?status=open&limit=100'),
+        fetch('/api/admin/srm/issues?status=open&limit=100'),
         fetch(`/api/admin/srm/student-issues?status=resolved&resolvedSince=${since}&limit=200`),
+        fetch(`/api/admin/srm/issues?status=resolved&resolvedSince=${since}&limit=200`),
         fetch('/api/admin/srm/alerts'),
       ]);
 
-      const open = openRes.ok ? await openRes.json() : [];
-      const resolved = resolvedRes.ok ? await resolvedRes.json() : [];
+      const studentOpen: StudentIssue[] = studentOpenRes.ok ? await studentOpenRes.json() : [];
+      const eventOpen: EventIssue[] = eventOpenRes.ok ? await eventOpenRes.json() : [];
+      const studentResolved = studentResolvedRes.ok ? await studentResolvedRes.json() : [];
+      const eventResolved = eventResolvedRes.ok ? await eventResolvedRes.json() : [];
       const alerts: AlertsResponse | null = alertsRes.ok ? await alertsRes.json() : null;
 
-      if (!openRes.ok) {
-        const errText = await openRes.clone().text().catch(() => `HTTP ${openRes.status}`);
-        setFetchError(`이슈 로드 실패: ${errText.slice(0, 120)}`);
+      if (!studentOpenRes.ok || !eventOpenRes.ok) {
+        setFetchError(`이슈 로드 실패 (student:${studentOpenRes.status} event:${eventOpenRes.status})`);
       }
 
-      setOpenIssues(Array.isArray(open) ? open : []);
-      setResolvedCount(Array.isArray(resolved) ? resolved.length : 0);
+      const unified: UnifiedIssue[] = [
+        ...(Array.isArray(studentOpen) ? studentOpen : []).map((i) => ({
+          ...i,
+          _source: 'student' as const,
+        })),
+        ...(Array.isArray(eventOpen) ? eventOpen : []).map((i) => ({
+          ...i,
+          student_id: null,
+          sfv2_profile_id: null,
+          _source: 'event' as const,
+        })),
+      ];
+
+      setOpenIssues(unified);
+      setResolvedCount(
+        (Array.isArray(studentResolved) ? studentResolved.length : 0) +
+        (Array.isArray(eventResolved) ? eventResolved.length : 0),
+      );
       setNoClassCount(alerts ? (alerts.noUpcomingClass ?? []).length : 0);
     } catch (e) {
       setFetchError(e instanceof Error ? e.message : '네트워크 오류');
@@ -79,7 +114,7 @@ export function OpsRadar({ onStudentClick }: Props) {
         setResolvedCount((c) => c + 1);
         return prev.filter((i) => i.id !== updated.id);
       }
-      return prev.map((i) => (i.id === updated.id ? (updated as StudentIssue) : i));
+      return prev.map((i) => (i.id === updated.id ? { ...i, ...updated } : i));
     });
   };
 
@@ -175,6 +210,9 @@ export function OpsRadar({ onStudentClick }: Props) {
                 days >= 5 ? 'text-red-400 bg-red-500/15 border-red-500/25' :
                 days >= 2 ? 'text-orange-400 bg-orange-500/15 border-orange-500/25' :
                 'text-gray-500 bg-white/5 border-white/10';
+              const apiBase = issue._source === 'event'
+                ? '/api/admin/srm/issues'
+                : '/api/admin/srm/student-issues';
 
               return (
                 <div key={issue.id} className="rounded-lg border border-white/8 bg-white/[0.02] overflow-hidden">
@@ -196,6 +234,9 @@ export function OpsRadar({ onStudentClick }: Props) {
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${urgencyColor}`}>
                       D+{days}
                     </span>
+                    {issue._source === 'event' && (
+                      <span className="text-[10px] text-gray-600 ml-1">수업이슈</span>
+                    )}
                     <ChevronRight size={11} className="text-gray-600 ml-auto shrink-0" />
                   </button>
 
@@ -204,7 +245,7 @@ export function OpsRadar({ onStudentClick }: Props) {
                     <EventIssueCard
                       issue={issue as BaseIssue}
                       onUpdated={handleIssueUpdated}
-                      apiBase="/api/admin/srm/student-issues"
+                      apiBase={apiBase}
                     />
                   </div>
                 </div>

@@ -46,6 +46,7 @@ const DEFAULT_CHECKLISTS: Record<string, IssueChecklist[]> = {
 export async function GET(req: NextRequest) {
   const eventId = req.nextUrl.searchParams.get('eventId');
   const status = req.nextUrl.searchParams.get('status');
+  const resolvedSince = req.nextUrl.searchParams.get('resolvedSince');
   const limit = parseInt(req.nextUrl.searchParams.get('limit') ?? '50', 10);
 
   let query = supabaseAdmin.from('srm_event_issues').select('*');
@@ -55,6 +56,9 @@ export async function GET(req: NextRequest) {
   }
   if (status) {
     query = query.eq('status', status);
+  }
+  if (resolvedSince) {
+    query = query.gte('resolved_at', resolvedSince);
   }
 
   const { data, error } = await query
