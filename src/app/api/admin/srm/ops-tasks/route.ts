@@ -11,6 +11,7 @@ export interface OpsTask {
   stage_label: string;
   due_date: string;
   is_overdue: boolean;
+  hasSummerProgram: boolean;
 }
 
 function getKstDateStr(date: Date): string {
@@ -36,17 +37,19 @@ export async function GET(req: NextRequest) {
 
   const rows = stages ?? [];
 
-  // CRM student_id → name 조회
+  // CRM student_id → name, 여름방학 특강 여부 조회
   const studentIds = [...new Set(rows.map((r) => r.student_id).filter(Boolean))] as string[];
   const nameMap = new Map<string, string>();
+  const summerStudentIds = new Set<string>();
 
   if (studentIds.length > 0) {
-    const { data: students } = await supabaseAdmin
-      .from('students')
-      .select('id, name')
-      .in('id', studentIds);
+    const [{ data: students }, { data: summerRows }] = await Promise.all([
+      supabaseAdmin.from('students').select('id, name').in('id', studentIds),
+      supabaseAdmin.from('payments').select('student_id').ilike('product', '%여름방학%').in('student_id', studentIds),
+    ]);
 
     for (const s of students ?? []) nameMap.set(s.id, s.name);
+    for (const p of summerRows ?? []) summerStudentIds.add(p.student_id as string);
   }
 
   const tasks: OpsTask[] = rows.map((r) => ({
@@ -58,6 +61,7 @@ export async function GET(req: NextRequest) {
     stage_label: STAGE_LABELS[r.stage as SrmStage] ?? r.stage,
     due_date: r.due_date,
     is_overdue: r.due_date < targetDate,
+    hasSummerProgram: r.student_id ? summerStudentIds.has(r.student_id) : false,
   }));
 
   // overdue 먼저 정렬

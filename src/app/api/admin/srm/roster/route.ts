@@ -9,6 +9,7 @@ export interface RosterStudent {
   grade: string | null;
   sfv2ProfileId: string | null;
   isPaused: boolean;
+  hasSummerProgram: boolean;
   group: RosterGroup;
 }
 
@@ -16,7 +17,7 @@ export async function GET() {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    const [{ data: students, error: studentsError }, { data: pauseRows }] = await Promise.all([
+    const [{ data: students, error: studentsError }, { data: pauseRows }, { data: summerRows }] = await Promise.all([
       supabaseAdmin
         .from('students')
         .select('id, name, grade, sfv2_profile_id')
@@ -28,12 +29,17 @@ export async function GET() {
         .is('ended_at', null)
         .lte('pause_start', today)
         .or(`pause_until.is.null,pause_until.gte.${today}`),
+      supabaseAdmin
+        .from('payments')
+        .select('student_id')
+        .ilike('product', '%여름방학%'),
     ]);
 
     if (studentsError) return NextResponse.json({ error: studentsError.message }, { status: 500 });
 
     const pausedByStudentId = new Set((pauseRows ?? []).map((p) => p.student_id).filter(Boolean) as string[]);
     const pausedByProfileId = new Set((pauseRows ?? []).map((p) => p.sfv2_profile_id).filter(Boolean) as string[]);
+    const summerStudentIds = new Set((summerRows ?? []).map((p) => p.student_id).filter(Boolean) as string[]);
 
     const result: RosterStudent[] = (students ?? []).map((s) => {
       const isPaused =
@@ -45,6 +51,7 @@ export async function GET() {
         grade: (s as unknown as { grade: string | null }).grade ?? null,
         sfv2ProfileId: s.sfv2_profile_id ?? null,
         isPaused,
+        hasSummerProgram: summerStudentIds.has(s.id),
         group: isPaused ? 'paused' : 'active',
       };
     });

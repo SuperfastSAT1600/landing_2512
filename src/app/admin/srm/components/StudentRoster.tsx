@@ -24,6 +24,9 @@ function StudentRow({ s, onClick }: { s: RosterStudent; onClick: () => void }) {
         {s.isPaused && <PauseCircle size={11} className="text-gray-500 shrink-0" />}
         <span className={`text-sm font-medium ${s.isPaused ? 'text-gray-500' : 'text-gray-200'}`}>{s.name}</span>
         {s.grade && <span className="text-[11px] text-gray-600">{s.grade}</span>}
+        {s.hasSummerProgram && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-medium shrink-0">특강</span>
+        )}
       </button>
       <a
         href={`/coach-prep/${s.crmStudentId}`}
