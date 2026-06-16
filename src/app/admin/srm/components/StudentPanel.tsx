@@ -101,6 +101,7 @@ interface StudentDetail {
   profile: { id: string; full_name: string; email: string | null; phone: string | null; grade: string | null } | null;
   crmStudent: CrmStudentDetail | null;
   diagnostic?: DiagnosticResult | null;
+  hasSummerProgram?: boolean;
 }
 
 type UnifiedEntry =
@@ -425,6 +426,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
           <div className="flex-1 min-w-0 mr-3">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base font-bold text-white">{studentName}</h2>
+              {detail?.hasSummerProgram && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-medium shrink-0">여름특강</span>
+              )}
               {currentStageLabel && (
                 <button
                   onClick={() => setLifecycleOpen((v) => !v)}

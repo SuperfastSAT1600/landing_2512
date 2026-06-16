@@ -22,18 +22,29 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const { data: diagnostic } = await supabaseAdmin
-    .from('diagnostic_test_results')
-    .select('submitted_at, previous_rw_score, previous_math_score')
-    .ilike('student_name', `%${(crmStudent as unknown as { name: string }).name}%`)
-    .order('submitted_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: diagnostic }, { data: summerPayment }] = await Promise.all([
+    supabaseAdmin
+      .from('diagnostic_test_results')
+      .select('submitted_at, previous_rw_score, previous_math_score')
+      .ilike('student_name', `%${(crmStudent as unknown as { name: string }).name}%`)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin
+      .from('payments')
+      .select('id')
+      .eq('student_id', crmStudentId)
+      .ilike('product', '%여름방학%')
+      .gte('paid_at', '2026-01-01')
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   return NextResponse.json({
     profile: null,
     crmStudent,
     diagnostic: diagnostic ?? null,
+    hasSummerProgram: !!summerPayment,
   });
 }
 
