@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AlertTriangle, CheckCircle, BookOpen, ChevronRight } from 'lucide-react';
+import { AlertTriangle, CheckCircle, BookOpen, ChevronRight, RefreshCw } from 'lucide-react';
 import { EventIssueCard, type BaseIssue } from './EventIssueCard';
 import type { StudentIssue } from '@/app/api/admin/srm/student-issues/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
@@ -40,18 +40,34 @@ export function OpsRadar({ onStudentClick }: Props) {
   const [resolvedCount, setResolvedCount] = useState(0);
   const [noClassCount, setNoClassCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     const since = weekStartIso();
-    const [open, resolved, alerts] = await Promise.all([
-      fetch('/api/admin/srm/student-issues?status=open&limit=100').then((r) => r.json()).catch(() => []),
-      fetch(`/api/admin/srm/student-issues?status=resolved&resolvedSince=${since}&limit=200`).then((r) => r.json()).catch(() => []),
-      fetch('/api/admin/srm/alerts').then((r) => r.json()).catch(() => null) as Promise<AlertsResponse | null>,
-    ]);
-    setOpenIssues(Array.isArray(open) ? open : []);
-    setResolvedCount(Array.isArray(resolved) ? resolved.length : 0);
-    setNoClassCount(alerts ? (alerts.noUpcomingClass ?? []).length : 0);
+    try {
+      const [openRes, resolvedRes, alertsRes] = await Promise.all([
+        fetch('/api/admin/srm/student-issues?status=open&limit=100'),
+        fetch(`/api/admin/srm/student-issues?status=resolved&resolvedSince=${since}&limit=200`),
+        fetch('/api/admin/srm/alerts'),
+      ]);
+
+      const open = openRes.ok ? await openRes.json() : [];
+      const resolved = resolvedRes.ok ? await resolvedRes.json() : [];
+      const alerts: AlertsResponse | null = alertsRes.ok ? await alertsRes.json() : null;
+
+      if (!openRes.ok) {
+        const errText = await openRes.clone().text().catch(() => `HTTP ${openRes.status}`);
+        setFetchError(`이슈 로드 실패: ${errText.slice(0, 120)}`);
+      }
+
+      setOpenIssues(Array.isArray(open) ? open : []);
+      setResolvedCount(Array.isArray(resolved) ? resolved.length : 0);
+      setNoClassCount(alerts ? (alerts.noUpcomingClass ?? []).length : 0);
+    } catch (e) {
+      setFetchError(e instanceof Error ? e.message : '네트워크 오류');
+    }
     setLoading(false);
   }, []);
 
@@ -74,6 +90,23 @@ export function OpsRadar({ onStudentClick }: Props) {
 
   return (
     <div className="space-y-5">
+      {/* 에러 배너 */}
+      {fetchError && (
+        <div className="flex items-start gap-2 px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
+          <AlertTriangle size={13} className="text-red-400 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-red-300 font-medium">데이터 로드 실패</p>
+            <p className="text-[11px] text-red-400/70 mt-0.5 break-all">{fetchError}</p>
+          </div>
+          <button
+            onClick={load}
+            className="text-[11px] text-red-400 hover:text-red-300 shrink-0 underline"
+          >
+            재시도
+          </button>
+        </div>
+      )}
+
       {/* 신호 카드 3개 */}
       <div className="grid grid-cols-3 gap-3">
         <SignalCard
@@ -101,12 +134,22 @@ export function OpsRadar({ onStudentClick }: Props) {
 
       {/* 이슈 목록 */}
       <div>
-        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">
-          지금 신경 써야 할 이슈
-          {sorted.length > 0 && (
-            <span className="ml-2 font-normal text-gray-600 normal-case">오래된 순</span>
-          )}
-        </p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+            지금 신경 써야 할 이슈
+            {sorted.length > 0 && (
+              <span className="ml-2 font-normal text-gray-600 normal-case">오래된 순</span>
+            )}
+          </p>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="flex items-center gap-1 text-[11px] text-gray-600 hover:text-gray-400 transition-colors disabled:opacity-40"
+          >
+            <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
+            새로고침
+          </button>
+        </div>
 
         {loading && (
           <div className="space-y-2">
