@@ -36,29 +36,16 @@ const TZ_REGION: Record<string, string> = {
   'Australia/Perth': '호주 서부', 'Pacific/Auckland': '뉴질랜드',
 };
 
-const TZ_REGION_EN: Record<string, string> = {
-  'America/Los_Angeles': 'US West', 'America/Vancouver': 'US West',
-  'America/Denver': 'US Mountain', 'America/Phoenix': 'US Mountain', 'America/Boise': 'US Mountain',
-  'America/Chicago': 'US Central', 'America/Winnipeg': 'US Central',
-  'America/New_York': 'US East', 'America/Toronto': 'US East', 'America/Detroit': 'US East',
-  'Pacific/Honolulu': 'Hawaii', 'America/Anchorage': 'Alaska',
-  'Europe/London': 'UK', 'Europe/Dublin': 'UK',
-  'Europe/Paris': 'Central Europe', 'Europe/Berlin': 'Central Europe', 'Europe/Amsterdam': 'Central Europe',
-  'Europe/Helsinki': 'Eastern Europe', 'Europe/Athens': 'Eastern Europe',
-  'Asia/Tokyo': 'Japan', 'Asia/Shanghai': 'China', 'Asia/Hong_Kong': 'Hong Kong',
-  'Asia/Singapore': 'Singapore', 'Asia/Bangkok': 'Thailand',
-  'Asia/Ho_Chi_Minh': 'Vietnam', 'Asia/Saigon': 'Vietnam',
-  'Asia/Jakarta': 'Indonesia', 'Asia/Kuala_Lumpur': 'Malaysia',
-  'Australia/Sydney': 'Australia East', 'Australia/Melbourne': 'Australia East',
-  'Australia/Perth': 'Australia West', 'Pacific/Auckland': 'New Zealand',
-};
-
 function tzToRegion(tz: string): string {
   return TZ_REGION[tz] ?? tz.split('/').pop()?.replace(/_/g, ' ') ?? tz;
 }
 
-function tzToRegionEn(tz: string): string {
-  return TZ_REGION_EN[tz] ?? tz.split('/').pop()?.replace(/_/g, ' ') ?? tz;
+function getTzAbbr(iso: string, tz: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    timeZoneName: 'short',
+  }).formatToParts(new Date(iso));
+  return parts.find((p) => p.type === 'timeZoneName')?.value ?? tz;
 }
 
 function toDateKey(iso: string, tz: string): string {
@@ -100,7 +87,8 @@ function buildLocalPartsEn(ev: ScheduleEvent, kstTime: string): string[] {
       const localDateKey = toDateKey(ev.startsAt, tz);
       if (localTime === kstTime && localDateKey === kstDateKey) return null;
       const datePart = localDateKey !== kstDateKey ? `${toDateEn(ev.startsAt, tz)} ` : '';
-      return `${tzToRegionEn(tz)} ${datePart}${localTime}`;
+      const abbr = getTzAbbr(ev.startsAt, tz);
+      return `${abbr} ${datePart}${localTime}`;
     } catch {
       return null;
     }
