@@ -1,30 +1,55 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+export type RosterGroup = 'paused';
+
 export interface RosterStudent {
-  id: string;           // CRM student id
+  crmStudentId: string;
   name: string;
-  sfv2ProfileId: string | null;
   grade: string | null;
+  sfv2ProfileId: string | null;
+  isPaused: boolean;
+  group: RosterGroup;
 }
 
-// GET /api/admin/srm/roster
-// lead_status='enrolled' (수업 중) 전체 학생 명단 — CRM 수업 중 탭과 동일 기준
 export async function GET() {
-  const { data, error } = await supabaseAdmin
-    .from('students')
-    .select('id, name, grade, sfv2_profile_id')
-    .eq('lead_status', 'enrolled')
-    .order('name');
+  try {
+    const today = new Date().toISOString().slice(0, 10);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // 활성 휴원 레코드 조회
+    const { data: pauseRows, error: pauseError } = await supabaseAdmin
+      .from('student_pauses')
+      .select('student_id, sfv2_profile_id, pause_start, pause_until')
+      .is('ended_at', null)
+      .lte('pause_start', today)
+      .or(`pause_until.is.null,pause_until.gte.${today}`);
 
-  const result: RosterStudent[] = (data ?? []).map((s) => ({
-    id: s.id,
-    name: s.name,
-    grade: (s as unknown as { grade: string | null }).grade ?? null,
-    sfv2ProfileId: s.sfv2_profile_id ?? null,
-  }));
+    if (pauseError) return NextResponse.json({ error: pauseError.message }, { status: 500 });
+    if (!pauseRows?.length) return NextResponse.json([]);
 
-  return NextResponse.json(result);
+    const pausedStudentIds = [...new Set(pauseRows.map((p) => p.student_id).filter(Boolean) as string[])];
+
+    const { data: students, error: studentsError } = await supabaseAdmin
+      .from('students')
+      .select('id, name, grade, sfv2_profile_id')
+      .in('id', pausedStudentIds)
+      .order('name');
+
+    if (studentsError) return NextResponse.json({ error: studentsError.message }, { status: 500 });
+
+    const result: RosterStudent[] = (students ?? []).map((s) => ({
+      crmStudentId: s.id,
+      name: s.name,
+      grade: (s as unknown as { grade: string | null }).grade ?? null,
+      sfv2ProfileId: s.sfv2_profile_id ?? null,
+      isPaused: true,
+      group: 'paused' as const,
+    }));
+
+    return NextResponse.json(result);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('[srm/roster] error:', msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
