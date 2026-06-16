@@ -282,8 +282,13 @@ export function UnifiedTimeline({
             : 'bg-white/5 hover:bg-white/10'
         }`}
       >
-        {/* 좌측: 유형 + 시간 + 학생 */}
-        <div className="w-[38%] min-w-0 flex flex-col gap-1 justify-center">
+        {/* 시간 열 */}
+        <div className="w-14 shrink-0 flex flex-col items-center justify-center">
+          <span className={`font-mono text-sm font-semibold ${isDone ? 'text-gray-600' : 'text-gray-200'}`}>{timeStr}</span>
+        </div>
+
+        {/* 좌측: 유형 + 학생 */}
+        <div className="w-[32%] min-w-0 flex flex-col gap-1 justify-center border-l border-white/5 pl-3">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${
               isCoach ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-gray-400'
@@ -293,7 +298,6 @@ export function UnifiedTimeline({
             {ev.day === 'tomorrow' && (
               <span className="text-[10px] font-medium text-amber-400/80 bg-amber-400/10 px-1.5 py-0.5 rounded shrink-0">내일</span>
             )}
-            <span className="text-gray-500 font-mono text-[11px] shrink-0">{timeStr}</span>
           </div>
           <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
             {ev.students.map((name, i) => {
