@@ -245,6 +245,7 @@ export function OpsRadar({ onStudentClick }: Props) {
                     <EventIssueCard
                       issue={issue as BaseIssue}
                       onUpdated={handleIssueUpdated}
+                      onDeleted={(id) => setOpenIssues((prev) => prev.filter((i) => i.id !== id))}
                       apiBase={apiBase}
                     />
                   </div>

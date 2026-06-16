@@ -879,6 +879,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                           prev.map((i) => (i.id === updated.id ? (updated as StudentIssue) : i)),
                         )
                       }
+                      onDeleted={(id) => setIssues((prev) => prev.filter((i) => i.id !== id))}
                       apiBase="/api/admin/srm/student-issues"
                     />
                   ))}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, ChevronDown, ChevronUp, CheckSquare, Square, AlertTriangle } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, CheckSquare, Square, AlertTriangle, Trash2 } from 'lucide-react';
 import type { IssueChecklist } from '@/app/api/admin/srm/issues/route';
 
 export interface BaseIssue {
@@ -39,12 +39,14 @@ const ISSUE_TYPE_COLORS: Record<string, string> = {
 interface Props {
   issue: BaseIssue;
   onUpdated: (updated: BaseIssue) => void;
+  onDeleted?: (id: string) => void;
   apiBase?: string; // 기본값: /api/admin/srm/issues
 }
 
-export function EventIssueCard({ issue, onUpdated, apiBase = '/api/admin/srm/issues' }: Props) {
+export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/admin/srm/issues' }: Props) {
   const [expanded, setExpanded] = useState(issue.status === 'open');
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const doneCount = issue.checklist.filter((c) => c.done).length;
   const totalCount = issue.checklist.length;
@@ -73,6 +75,14 @@ export function EventIssueCard({ issue, onUpdated, apiBase = '/api/admin/srm/iss
     });
     if (res.ok) onUpdated(await res.json() as BaseIssue);
     setSaving(false);
+  };
+
+  const deleteIssue = async () => {
+    setSaving(true);
+    const res = await fetch(`${apiBase}/${issue.id}`, { method: 'DELETE' });
+    if (res.ok) onDeleted?.(issue.id);
+    setSaving(false);
+    setConfirmDelete(false);
   };
 
   const isResolved = issue.status === 'resolved';
@@ -122,7 +132,37 @@ export function EventIssueCard({ issue, onUpdated, apiBase = '/api/admin/srm/iss
             </button>
           ))}
 
-          <div className="flex justify-end pt-1">
+          <div className="flex items-center justify-between pt-1">
+            {/* 삭제 */}
+            {confirmDelete ? (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-red-400">정말 삭제?</span>
+                <button
+                  onClick={deleteIssue}
+                  disabled={saving}
+                  className="text-[11px] text-red-400 hover:text-red-300 underline"
+                >
+                  삭제
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-[11px] text-gray-500 hover:text-gray-300"
+                >
+                  취소
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                disabled={saving}
+                className="flex items-center gap-1 text-[11px] text-gray-600 hover:text-red-400 transition-colors"
+              >
+                <Trash2 size={11} />
+                삭제
+              </button>
+            )}
+
+            {/* 해결 */}
             <button
               onClick={toggleResolved}
               disabled={saving}

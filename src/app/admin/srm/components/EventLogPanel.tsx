@@ -240,7 +240,12 @@ export function EventLogPanel({ event, onClose }: Props) {
             ) : (
               <div className="space-y-2">
                 {issues.map((issue) => (
-                  <EventIssueCard key={issue.id} issue={issue} onUpdated={handleIssueUpdated} />
+                  <EventIssueCard
+                    key={issue.id}
+                    issue={issue}
+                    onUpdated={handleIssueUpdated}
+                    onDeleted={(id) => setIssues((prev) => prev.filter((i) => i.id !== id))}
+                  />
                 ))}
               </div>
             )}
