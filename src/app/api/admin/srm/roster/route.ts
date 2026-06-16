@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export type RosterGroup = 'paused';
+export type RosterGroup = 'active' | 'paused';
 
 export interface RosterStudent {
   crmStudentId: string;
@@ -16,35 +16,44 @@ export async function GET() {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    // 활성 휴원 레코드 조회
-    const { data: pauseRows, error: pauseError } = await supabaseAdmin
-      .from('student_pauses')
-      .select('student_id, sfv2_profile_id, pause_start, pause_until')
-      .is('ended_at', null)
-      .lte('pause_start', today)
-      .or(`pause_until.is.null,pause_until.gte.${today}`);
-
-    if (pauseError) return NextResponse.json({ error: pauseError.message }, { status: 500 });
-    if (!pauseRows?.length) return NextResponse.json([]);
-
-    const pausedStudentIds = [...new Set(pauseRows.map((p) => p.student_id).filter(Boolean) as string[])];
-
-    const { data: students, error: studentsError } = await supabaseAdmin
-      .from('students')
-      .select('id, name, grade, sfv2_profile_id')
-      .in('id', pausedStudentIds)
-      .order('name');
+    const [{ data: students, error: studentsError }, { data: pauseRows }] = await Promise.all([
+      supabaseAdmin
+        .from('students')
+        .select('id, name, grade, sfv2_profile_id')
+        .eq('lead_status', 'enrolled')
+        .order('name'),
+      supabaseAdmin
+        .from('student_pauses')
+        .select('student_id, sfv2_profile_id')
+        .is('ended_at', null)
+        .lte('pause_start', today)
+        .or(`pause_until.is.null,pause_until.gte.${today}`),
+    ]);
 
     if (studentsError) return NextResponse.json({ error: studentsError.message }, { status: 500 });
 
-    const result: RosterStudent[] = (students ?? []).map((s) => ({
-      crmStudentId: s.id,
-      name: s.name,
-      grade: (s as unknown as { grade: string | null }).grade ?? null,
-      sfv2ProfileId: s.sfv2_profile_id ?? null,
-      isPaused: true,
-      group: 'paused' as const,
-    }));
+    const pausedByStudentId = new Set((pauseRows ?? []).map((p) => p.student_id).filter(Boolean) as string[]);
+    const pausedByProfileId = new Set((pauseRows ?? []).map((p) => p.sfv2_profile_id).filter(Boolean) as string[]);
+
+    const result: RosterStudent[] = (students ?? []).map((s) => {
+      const isPaused =
+        pausedByStudentId.has(s.id) ||
+        (s.sfv2_profile_id ? pausedByProfileId.has(s.sfv2_profile_id) : false);
+      return {
+        crmStudentId: s.id,
+        name: s.name,
+        grade: (s as unknown as { grade: string | null }).grade ?? null,
+        sfv2ProfileId: s.sfv2_profile_id ?? null,
+        isPaused,
+        group: isPaused ? 'paused' : 'active',
+      };
+    });
+
+    // 수업중 먼저, 휴원 나중
+    result.sort((a, b) => {
+      if (a.group !== b.group) return a.group === 'active' ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
 
     return NextResponse.json(result);
   } catch (e) {
