@@ -36,8 +36,29 @@ const TZ_REGION: Record<string, string> = {
   'Australia/Perth': '호주 서부', 'Pacific/Auckland': '뉴질랜드',
 };
 
+const TZ_REGION_EN: Record<string, string> = {
+  'America/Los_Angeles': 'US West', 'America/Vancouver': 'US West',
+  'America/Denver': 'US Mountain', 'America/Phoenix': 'US Mountain', 'America/Boise': 'US Mountain',
+  'America/Chicago': 'US Central', 'America/Winnipeg': 'US Central',
+  'America/New_York': 'US East', 'America/Toronto': 'US East', 'America/Detroit': 'US East',
+  'Pacific/Honolulu': 'Hawaii', 'America/Anchorage': 'Alaska',
+  'Europe/London': 'UK', 'Europe/Dublin': 'UK',
+  'Europe/Paris': 'Central Europe', 'Europe/Berlin': 'Central Europe', 'Europe/Amsterdam': 'Central Europe',
+  'Europe/Helsinki': 'Eastern Europe', 'Europe/Athens': 'Eastern Europe',
+  'Asia/Tokyo': 'Japan', 'Asia/Shanghai': 'China', 'Asia/Hong_Kong': 'Hong Kong',
+  'Asia/Singapore': 'Singapore', 'Asia/Bangkok': 'Thailand',
+  'Asia/Ho_Chi_Minh': 'Vietnam', 'Asia/Saigon': 'Vietnam',
+  'Asia/Jakarta': 'Indonesia', 'Asia/Kuala_Lumpur': 'Malaysia',
+  'Australia/Sydney': 'Australia East', 'Australia/Melbourne': 'Australia East',
+  'Australia/Perth': 'Australia West', 'Pacific/Auckland': 'New Zealand',
+};
+
 function tzToRegion(tz: string): string {
   return TZ_REGION[tz] ?? tz.split('/').pop()?.replace(/_/g, ' ') ?? tz;
+}
+
+function tzToRegionEn(tz: string): string {
+  return TZ_REGION_EN[tz] ?? tz.split('/').pop()?.replace(/_/g, ' ') ?? tz;
 }
 
 function buildLocalParts(ev: ScheduleEvent, kstTime: string): string[] {
@@ -48,6 +69,20 @@ function buildLocalParts(ev: ScheduleEvent, kstTime: string): string[] {
       const localTime = toTimeStr(ev.startsAt, tz);
       if (localTime === kstTime) return null;
       return `${tzToRegion(tz)} 기준 ${localTime}`;
+    } catch {
+      return null;
+    }
+  }).filter((x): x is string => x !== null);
+}
+
+function buildLocalPartsEn(ev: ScheduleEvent, kstTime: string): string[] {
+  return ev.students.map((_name, i) => {
+    const tz = ev.studentTimezones?.[i];
+    if (!tz || tz === 'Asia/Seoul') return null;
+    try {
+      const localTime = toTimeStr(ev.startsAt, tz);
+      if (localTime === kstTime) return null;
+      return `${tzToRegionEn(tz)} ${localTime}`;
     } catch {
       return null;
     }
@@ -67,14 +102,11 @@ function buildCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
 
 function buildCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
-  const localParts = buildLocalParts(ev, kstTime);
+  const localParts = buildLocalPartsEn(ev, kstTime);
   const dayWord = isTomorrow ? 'tomorrow' : 'today';
   const suffix = isTomorrow ? " Don't forget!" : '';
   let msg = `<Alert> You have a class ${dayWord} at ${kstTime} (Korea Standard Time)!${suffix}`;
-  if (localParts.length > 0) {
-    const enParts = localParts.map((p) => p.replace('기준 ', ' '));
-    msg += ` (${enParts.join(', ')})`;
-  }
+  if (localParts.length > 0) msg += ` (${localParts.join(', ')})`;
   msg += ' Please join on time and study hard!';
   return msg;
 }
@@ -91,12 +123,9 @@ function buildStudyHallCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): stri
 
 function buildStudyHallCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
-  const localParts = buildLocalParts(ev, kstTime);
-  let timeInfo = `${kstTime} (KST)`;
-  if (localParts.length > 0) {
-    const enParts = localParts.map((p) => p.replace('기준 ', ' '));
-    timeInfo += ` / ${enParts.join(' / ')}`;
-  }
+  const localParts = buildLocalPartsEn(ev, kstTime);
+  let timeInfo = `${kstTime} (Korea Standard Time)`;
+  if (localParts.length > 0) timeInfo += ` / ${localParts.join(' / ')}`;
   const dayWord = isTomorrow ? "Tomorrow's" : "Today's";
   const verb = isTomorrow ? "Don't forget to join!" : "Don't be late!";
   return `${dayWord} Study Hall starts at ${timeInfo}. ${verb}`;
