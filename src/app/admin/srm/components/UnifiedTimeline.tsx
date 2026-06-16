@@ -61,14 +61,29 @@ function tzToRegionEn(tz: string): string {
   return TZ_REGION_EN[tz] ?? tz.split('/').pop()?.replace(/_/g, ' ') ?? tz;
 }
 
+function toDateKey(iso: string, tz: string): string {
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: tz }); // YYYY-MM-DD
+}
+
+function toDateKo(iso: string, tz: string): string {
+  return new Date(iso).toLocaleDateString('ko-KR', { timeZone: tz, month: 'numeric', day: 'numeric' });
+}
+
+function toDateEn(iso: string, tz: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { timeZone: tz, month: 'long', day: 'numeric' });
+}
+
 function buildLocalParts(ev: ScheduleEvent, kstTime: string): string[] {
+  const kstDateKey = toDateKey(ev.startsAt, 'Asia/Seoul');
   return ev.students.map((_name, i) => {
     const tz = ev.studentTimezones?.[i];
     if (!tz || tz === 'Asia/Seoul') return null;
     try {
       const localTime = toTimeStr(ev.startsAt, tz);
-      if (localTime === kstTime) return null;
-      return `${tzToRegion(tz)} 기준 ${localTime}`;
+      const localDateKey = toDateKey(ev.startsAt, tz);
+      if (localTime === kstTime && localDateKey === kstDateKey) return null;
+      const datePart = localDateKey !== kstDateKey ? `${toDateKo(ev.startsAt, tz)} ` : '';
+      return `${tzToRegion(tz)} 기준 ${datePart}${localTime}`;
     } catch {
       return null;
     }
@@ -76,13 +91,16 @@ function buildLocalParts(ev: ScheduleEvent, kstTime: string): string[] {
 }
 
 function buildLocalPartsEn(ev: ScheduleEvent, kstTime: string): string[] {
+  const kstDateKey = toDateKey(ev.startsAt, 'Asia/Seoul');
   return ev.students.map((_name, i) => {
     const tz = ev.studentTimezones?.[i];
     if (!tz || tz === 'Asia/Seoul') return null;
     try {
       const localTime = toTimeStr(ev.startsAt, tz);
-      if (localTime === kstTime) return null;
-      return `${tzToRegionEn(tz)} ${localTime}`;
+      const localDateKey = toDateKey(ev.startsAt, tz);
+      if (localTime === kstTime && localDateKey === kstDateKey) return null;
+      const datePart = localDateKey !== kstDateKey ? `${toDateEn(ev.startsAt, tz)} ` : '';
+      return `${tzToRegionEn(tz)} ${datePart}${localTime}`;
     } catch {
       return null;
     }
@@ -91,10 +109,11 @@ function buildLocalPartsEn(ev: ScheduleEvent, kstTime: string): string[] {
 
 function buildCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const kstDate = toDateKo(ev.startsAt, 'Asia/Seoul');
   const localParts = buildLocalParts(ev, kstTime);
   const dayWord = isTomorrow ? '내일' : '오늘';
   const suffix = isTomorrow ? '잊지 마세요! ' : '';
-  let msg = `<알림> ${dayWord} 수업 ${kstTime}(한국 시간 기준)에 있습니다${isTomorrow ? ',' : '!'} ${suffix}`;
+  let msg = `<알림> ${dayWord} 수업 ${kstDate} ${kstTime}(한국 시간 기준)에 있습니다${isTomorrow ? ',' : '!'} ${suffix}`;
   if (localParts.length > 0) msg += `(${localParts.join(', ')}) `;
   msg += '출석 잘해서 공부해보자구요!';
   return msg;
@@ -102,10 +121,11 @@ function buildCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
 
 function buildCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const kstDate = toDateEn(ev.startsAt, 'Asia/Seoul');
   const localParts = buildLocalPartsEn(ev, kstTime);
   const dayWord = isTomorrow ? 'tomorrow' : 'today';
   const suffix = isTomorrow ? " Don't forget!" : '';
-  let msg = `<Alert> You have a class ${dayWord} at ${kstTime} (Korea Standard Time)!${suffix}`;
+  let msg = `<Alert> You have a class ${dayWord}, ${kstDate} at ${kstTime} (Korea Standard Time)!${suffix}`;
   if (localParts.length > 0) msg += ` (${localParts.join(', ')})`;
   msg += ' Please join on time and study hard!';
   return msg;
@@ -113,8 +133,9 @@ function buildCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
 
 function buildStudyHallCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const kstDate = toDateKo(ev.startsAt, 'Asia/Seoul');
   const localParts = buildLocalParts(ev, kstTime);
-  let timeInfo = `${kstTime}(한국 시간)`;
+  let timeInfo = `${kstDate} ${kstTime}(한국 시간)`;
   if (localParts.length > 0) timeInfo += `, ${localParts.join(' / ')}`;
   const dayWord = isTomorrow ? '내일' : '오늘';
   const verb = isTomorrow ? '잊지 말고' : '늦지 말고';
@@ -123,12 +144,13 @@ function buildStudyHallCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): stri
 
 function buildStudyHallCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
   const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const kstDate = toDateEn(ev.startsAt, 'Asia/Seoul');
   const localParts = buildLocalPartsEn(ev, kstTime);
-  let timeInfo = `${kstTime} (Korea Standard Time)`;
+  let timeInfo = `${kstDate} at ${kstTime} (Korea Standard Time)`;
   if (localParts.length > 0) timeInfo += ` / ${localParts.join(' / ')}`;
   const dayWord = isTomorrow ? "Tomorrow's" : "Today's";
   const verb = isTomorrow ? "Don't forget to join!" : "Don't be late!";
-  return `${dayWord} Study Hall starts at ${timeInfo}. ${verb}`;
+  return `${dayWord} Study Hall starts on ${timeInfo}. ${verb}`;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
