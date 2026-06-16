@@ -89,6 +89,7 @@ interface CrmStudentDetail {
   ot_datetime: string | null;
   parent_timezone: string | null;
   comm_language?: string | null;
+  portal_token?: string | null;
 }
 
 interface DiagnosticResult {
@@ -592,7 +593,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     </div>
                   </div>
 
-                  {/* CRM 연결 상태 */}
+                  {/* CRM 연결 상태 + 학부모 포털 */}
                   <div className="flex items-center gap-2 pt-1.5 border-t border-white/10 mt-1.5">
                     {isLinked ? (
                       <span className="text-[11px] px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/25 rounded-full text-emerald-400">
@@ -603,6 +604,22 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                         CRM 미연결
                       </span>
                     )}
+                    {isLinked && detail?.crmStudent?.portal_token ? (
+                      <button
+                        onClick={() => {
+                          const url = `${window.location.origin}/portal/${detail.crmStudent!.portal_token}`;
+                          navigator.clipboard.writeText(url);
+                        }}
+                        title="학부모 포털 링크 복사"
+                        className="text-[11px] px-2 py-0.5 bg-blue-500/15 border border-blue-500/25 rounded-full text-blue-400 hover:bg-blue-500/25 transition-colors"
+                      >
+                        학부모 포털
+                      </button>
+                    ) : isLinked ? (
+                      <span className="text-[11px] px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-gray-600">
+                        포털 미발급
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               )}

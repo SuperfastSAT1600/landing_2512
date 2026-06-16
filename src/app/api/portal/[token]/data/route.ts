@@ -29,6 +29,7 @@ export async function GET(
       preferred_language,
       consultation_timeline,
       diagnostic_result_id,
+      sfv2_profile_id,
       created_at
     `)
     .eq('portal_token', token)
@@ -84,5 +85,6 @@ export async function GET(
     },
     publishedMemos,
     diagnosticResult,
+    hasSrmData: !!student.sfv2_profile_id,
   });
 }

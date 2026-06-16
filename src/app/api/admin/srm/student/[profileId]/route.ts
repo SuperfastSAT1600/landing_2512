@@ -13,7 +13,7 @@ export async function GET(
     supabaseAdmin.from('students').select(
       'id, name, grade, consultation_timeline, funnel_stage, sfv2_profile_id, ' +
       'previous_rw_score, previous_math_score, target_score, target_test_date, ' +
-      'school_type, desired_subjects, ot_datetime, parent_timezone, comm_language'
+      'school_type, desired_subjects, ot_datetime, parent_timezone, comm_language, portal_token'
     ).eq('sfv2_profile_id', profileId).maybeSingle(),
   ]);
 

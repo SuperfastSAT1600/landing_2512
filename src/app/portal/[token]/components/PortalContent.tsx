@@ -5,6 +5,7 @@ import PasscodeChange from './PasscodeChange';
 import StudentInfoOverlay from './StudentInfoOverlay';
 import DiagnosticOverlay from './DiagnosticOverlay';
 import ConsultationOverlay from './ConsultationOverlay';
+import LearningReport from './LearningReport';
 
 interface PublishedMemo {
   id: string;
@@ -38,14 +39,19 @@ interface PortalData {
   student: StudentInfo;
   publishedMemos: PublishedMemo[];
   diagnosticResult: DiagnosticResult | null;
+  hasSrmData: boolean;
 }
 
-type View = 'consultation' | 'student' | 'diagnostic';
+type View = 'consultation' | 'student' | 'diagnostic' | 'study_hall';
 
-const NAV_ITEMS: { view: View; label: string }[] = [
+const CRM_NAV_ITEMS: { view: View; label: string }[] = [
   { view: 'consultation', label: '상담 기록' },
   { view: 'student', label: '학생 기본 정보' },
   { view: 'diagnostic', label: '진단 테스트' },
+];
+
+const SRM_NAV_ITEMS: { view: View; label: string }[] = [
+  { view: 'study_hall', label: '학습 리포트' },
 ];
 
 export default function PortalContent({ token }: { token: string }) {
@@ -92,7 +98,9 @@ export default function PortalContent({ token }: { token: string }) {
   }
 
   const hasDiagnostic = !!data.diagnosticResult;
-  const activeItem = NAV_ITEMS.find(item => item.view === view) ?? NAV_ITEMS[0];
+  const { hasSrmData } = data;
+  const allNavItems = [...CRM_NAV_ITEMS, ...(hasSrmData ? SRM_NAV_ITEMS : [])];
+  const activeItem = allNavItems.find(item => item.view === view) ?? CRM_NAV_ITEMS[0];
 
   return (
     <>
@@ -125,7 +133,7 @@ export default function PortalContent({ token }: { token: string }) {
                     className="absolute left-0 top-9 rounded-xl py-1 z-10 bg-white"
                     style={{ border: '1px solid #E2E8F0', boxShadow: '0 8px 24px rgba(0,0,0,0.10)', minWidth: 140 }}
                   >
-                    {NAV_ITEMS.map(item => {
+                    {allNavItems.map(item => {
                       const isDisabled = item.view === 'diagnostic' && !hasDiagnostic;
                       const isActive = view === item.view;
                       return (
@@ -154,7 +162,7 @@ export default function PortalContent({ token }: { token: string }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo_black.png" alt="SuperfastSAT" className="h-4 w-auto flex-shrink-0" />
               <div className="flex items-center gap-1">
-                {NAV_ITEMS.map(item => {
+                {allNavItems.map(item => {
                   const isActive = view === item.view;
                   const isDisabled = item.view === 'diagnostic' && !hasDiagnostic;
                   return (
@@ -223,6 +231,12 @@ export default function PortalContent({ token }: { token: string }) {
 
       {view === 'diagnostic' && data.diagnosticResult && (
         <DiagnosticOverlay resultId={data.diagnosticResult.id} />
+      )}
+
+      {view === 'study_hall' && hasSrmData && (
+        <div className="pt-12 max-w-5xl mx-auto px-4 sm:px-[6%] py-6">
+          <LearningReport token={token} />
+        </div>
       )}
 
       {showChangePasscode && (
