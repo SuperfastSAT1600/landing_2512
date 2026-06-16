@@ -34,7 +34,7 @@ interface SelectedCoach {
   relatedStudents: { name: string; events: string[] }[];
 }
 
-type MainTab = 'schedule' | 'ops' | 'roster';
+type MainTab = 'queue' | 'log' | 'roster';
 
 function collectRelatedStudents(
   coachId: string,
@@ -68,7 +68,7 @@ function collectRelatedStudents(
 }
 
 export default function SrmPage() {
-  const [mainTab, setMainTab] = useState<MainTab>('schedule');
+  const [mainTab, setMainTab] = useState<MainTab>('queue');
   const [selectedDate, setSelectedDate] = useState(() => getKstDateStr(0));
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
   const [alerts, setAlerts] = useState<AlertsResponse | null>(null);
@@ -84,7 +84,7 @@ export default function SrmPage() {
   const [openIssues, setOpenIssues] = useState<EventIssue[]>([]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
     setScheduleLoading(true);
     setSchedule(null);
     fetch(`/api/admin/srm/schedule?date=${selectedDate}`)
@@ -117,7 +117,7 @@ export default function SrmPage() {
   }, [selectedDate, mainTab]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
     setAlertsLoading(true);
     fetch('/api/admin/srm/alerts')
       .then((r) => r.json())
@@ -126,7 +126,7 @@ export default function SrmPage() {
   }, [mainTab]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
     fetch('/api/admin/srm/issues?status=open&limit=100')
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setOpenIssues(data); })
@@ -134,7 +134,7 @@ export default function SrmPage() {
   }, [mainTab, selectedEvent]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
     Promise.all([
       fetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
       fetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
@@ -192,7 +192,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6 border-b border-white/10">
-        {(['schedule', 'ops', 'roster'] as MainTab[]).map((t) => (
+        {(['queue', 'log', 'roster'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -202,7 +202,7 @@ export default function SrmPage() {
                 : 'text-gray-500 border-transparent hover:text-gray-300'
             }`}
           >
-            {t === 'schedule' ? '스케줄' : t === 'ops' ? '운영' : '명단'}
+            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : '명단'}
           </button>
         ))}
       </div>
@@ -211,7 +211,7 @@ export default function SrmPage() {
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
       )}
 
-      {mainTab === 'schedule' && openIssues.length > 0 && (
+      {mainTab === 'queue' && openIssues.length > 0 && (
         <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-lg">
           <AlertTriangle size={14} className="text-orange-400 shrink-0" />
           <span className="text-sm text-orange-300 font-medium">미해결 이슈 {openIssues.length}건</span>
@@ -228,8 +228,9 @@ export default function SrmPage() {
         </div>
       )}
 
-      {mainTab === 'schedule' && (
+      {mainTab === 'queue' && (
         <>
+          <StudentSearch onSelect={handleRosterStudentClick} />
           <UnifiedTimeline
             todayCoachRoom={schedule?.today.coachRoom ?? []}
             todayStudyHall={schedule?.today.studyHall ?? []}
@@ -258,11 +259,8 @@ export default function SrmPage() {
         </>
       )}
 
-      {mainTab === 'ops' && (
-        <>
-          <StudentSearch onSelect={handleRosterStudentClick} />
-          <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
-        </>
+      {mainTab === 'log' && (
+        <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
       )}
 
       {mainTab === 'roster' && (

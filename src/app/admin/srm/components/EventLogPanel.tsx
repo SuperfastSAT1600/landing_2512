@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, Plus, AlertTriangle } from 'lucide-react';
 import { AddForm } from './CommLog';
 import { SrmCommCard } from './SrmCommCard';
-import { EventIssueCard } from './EventIssueCard';
+import { EventIssueCard, type BaseIssue } from './EventIssueCard';
 import type { CommEntry, EventContext } from './CommLog';
 import type { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { EventIssue } from '@/app/api/admin/srm/issues/route';
@@ -52,8 +52,8 @@ export function EventLogPanel({ event, onClose }: Props) {
     setComms((prev) => prev.map((c) => c.id === updated.id ? updated : c));
   };
 
-  const handleIssueUpdated = (updated: EventIssue) => {
-    setIssues((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+  const handleIssueUpdated = (updated: BaseIssue) => {
+    setIssues((prev) => prev.map((i) => i.id === updated.id ? updated as EventIssue : i));
   };
 
   const fetchData = useCallback(async () => {

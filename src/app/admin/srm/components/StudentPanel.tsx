@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles, Plus, AlertTriangle } from 'lucide-react';
 import { AddForm } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
 import type { EventContext } from './CommLog';
 import { CrmLinkSection } from './CrmLinkSection';
 import { SrmCommCard } from './SrmCommCard';
+import { EventIssueCard, type BaseIssue } from './EventIssueCard';
 import { LifecycleTab } from './LifecycleTab';
 import { STAGE_LABELS } from '@/app/admin/srm/lifecycle-constants';
 import type { LifecycleResponse } from '@/app/api/admin/srm/lifecycle/route';
 import type { V2Summary } from '@/app/api/admin/srm/student/[profileId]/v2-summary/route';
+import type { StudentIssue } from '@/app/api/admin/srm/student-issues/route';
 
 const TRIGGER_LABELS: Record<string, string> = {
   no_show: '미접속 알림',
@@ -178,6 +180,12 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [pauseUntil, setPauseUntil] = useState('');
   const [pauseReason, setPauseReason] = useState('');
   const [pauseSaving, setPauseSaving] = useState(false);
+  const [issues, setIssues] = useState<StudentIssue[]>([]);
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueType, setIssueType] = useState('schedule_pending');
+  const [issueTitle, setIssueTitle] = useState('');
+  const [issueDesc, setIssueDesc] = useState('');
+  const [issueSaving, setIssueSaving] = useState(false);
 
   const commKey = studentId ?? crmStudentId ?? '';
 
@@ -224,6 +232,17 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setLoadingV2(false);
   }, [studentId]);
 
+  const fetchIssues = useCallback(async () => {
+    const param = studentId
+      ? `sfv2ProfileId=${studentId}`
+      : crmStudentId
+      ? `studentId=${crmStudentId}`
+      : null;
+    if (!param) return;
+    const res = await fetch(`/api/admin/srm/student-issues?${param}`);
+    if (res.ok) setIssues(await res.json());
+  }, [studentId, crmStudentId]);
+
   const fetchPause = useCallback(async () => {
     const url = studentId
       ? `/api/admin/srm/student/${studentId}/pause`
@@ -250,7 +269,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     fetchLifecycle();
     fetchV2Summary();
     fetchPause();
-  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary, fetchPause]);
+    fetchIssues();
+  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary, fetchPause, fetchIssues]);
 
   const handlePauseCreate = async () => {
     setPauseSaving(true);
@@ -339,6 +359,29 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   };
 
   const handleLinked = () => fetchDetail();
+
+  const handleIssueSubmit = async () => {
+    if (!issueTitle) return;
+    setIssueSaving(true);
+    await fetch('/api/admin/srm/student-issues', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sfv2ProfileId: studentId ?? null,
+        studentId: crmStudentId ?? null,
+        studentName,
+        issueType,
+        title: issueTitle,
+        description: issueDesc || null,
+        createdBy: getAdminName() || '관리자',
+      }),
+    });
+    await fetchIssues();
+    setIssueTitle('');
+    setIssueDesc('');
+    setShowIssueForm(false);
+    setIssueSaving(false);
+  };
 
   const handleGenerateBrief = async () => {
     if (!resolvedCrmStudentId) return;
@@ -759,8 +802,94 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
             )}
           </div>
 
-          {/* 오른쪽: 통합 타임라인 + 입력폼 */}
+          {/* 오른쪽: 이슈 + 통합 타임라인 + 입력폼 */}
           <div className="flex-1 flex flex-col overflow-hidden">
+            {/* 이슈 섹션 */}
+            <div className="border-b border-white/10 shrink-0">
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">이슈</span>
+                  {issues.filter((i) => i.status === 'open').length > 0 && (
+                    <span className="text-[11px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full border border-orange-500/30">
+                      {issues.filter((i) => i.status === 'open').length}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowIssueForm((v) => !v)}
+                  className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  <Plus size={11} />
+                  이슈 등록
+                </button>
+              </div>
+
+              {showIssueForm && (
+                <div className="px-4 pb-3 space-y-2">
+                  <select
+                    value={issueType}
+                    onChange={(e) => setIssueType(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
+                  >
+                    <option value="schedule_pending">스케줄 조율 중</option>
+                    <option value="coach_pending">코치 배정 중</option>
+                    <option value="renewal_needed">재결제 필요</option>
+                    <option value="custom">기타</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={issueTitle}
+                    onChange={(e) => setIssueTitle(e.target.value)}
+                    placeholder="이슈 제목"
+                    className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                  />
+                  <textarea
+                    value={issueDesc}
+                    onChange={(e) => setIssueDesc(e.target.value)}
+                    placeholder="메모 (선택)"
+                    rows={2}
+                    className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 resize-none"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowIssueForm(false)}
+                      className="flex-1 text-xs bg-white/5 hover:bg-white/10 text-gray-400 rounded px-3 py-1.5"
+                    >
+                      취소
+                    </button>
+                    <button
+                      onClick={handleIssueSubmit}
+                      disabled={issueSaving || !issueTitle}
+                      className="flex-1 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded px-3 py-1.5 disabled:opacity-40"
+                    >
+                      {issueSaving ? '저장중...' : '등록'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {issues.length > 0 && (
+                <div className="px-4 pb-3 space-y-1.5 max-h-48 overflow-y-auto">
+                  {issues.map((issue) => (
+                    <EventIssueCard
+                      key={issue.id}
+                      issue={issue as BaseIssue}
+                      onUpdated={(updated) =>
+                        setIssues((prev) =>
+                          prev.map((i) => (i.id === updated.id ? (updated as StudentIssue) : i)),
+                        )
+                      }
+                      apiBase="/api/admin/srm/student-issues"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {issues.length === 0 && !showIssueForm && (
+                <p className="px-4 pb-3 text-xs text-gray-600">등록된 이슈 없음</p>
+              )}
+            </div>
+
             {/* 통합 타임라인 */}
             <div className="flex-1 overflow-y-auto px-4 py-3">
               {(loadingDetail || loadingComms) ? (

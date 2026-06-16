@@ -2,12 +2,27 @@
 
 import { useState } from 'react';
 import { Check, ChevronDown, ChevronUp, CheckSquare, Square, AlertTriangle } from 'lucide-react';
-import type { EventIssue, IssueChecklist } from '@/app/api/admin/srm/issues/route';
+import type { IssueChecklist } from '@/app/api/admin/srm/issues/route';
+
+export interface BaseIssue {
+  id: string;
+  issue_type: string;
+  title: string;
+  description: string | null;
+  checklist: IssueChecklist[];
+  status: 'open' | 'resolved';
+  created_at: string;
+  resolved_at: string | null;
+  created_by: string | null;
+}
 
 const ISSUE_TYPE_LABELS: Record<string, string> = {
   cancellation: '취소/재예약',
   coach_change: '코치 교체',
   no_show: '노쇼',
+  schedule_pending: '스케줄 조율 중',
+  coach_pending: '코치 배정 중',
+  renewal_needed: '재결제 필요',
   custom: '기타',
 };
 
@@ -15,15 +30,19 @@ const ISSUE_TYPE_COLORS: Record<string, string> = {
   cancellation: 'bg-red-500/20 text-red-400 border-red-500/30',
   coach_change: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   no_show: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  schedule_pending: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  coach_pending: 'bg-green-500/20 text-green-400 border-green-500/30',
+  renewal_needed: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   custom: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
 };
 
 interface Props {
-  issue: EventIssue;
-  onUpdated: (updated: EventIssue) => void;
+  issue: BaseIssue;
+  onUpdated: (updated: BaseIssue) => void;
+  apiBase?: string; // 기본값: /api/admin/srm/issues
 }
 
-export function EventIssueCard({ issue, onUpdated }: Props) {
+export function EventIssueCard({ issue, onUpdated, apiBase = '/api/admin/srm/issues' }: Props) {
   const [expanded, setExpanded] = useState(issue.status === 'open');
   const [saving, setSaving] = useState(false);
 
@@ -35,24 +54,24 @@ export function EventIssueCard({ issue, onUpdated }: Props) {
       c.id === itemId ? { ...c, done: !c.done } : c,
     );
     setSaving(true);
-    const res = await fetch(`/api/admin/srm/issues/${issue.id}`, {
+    const res = await fetch(`${apiBase}/${issue.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ checklist: updated }),
     });
-    if (res.ok) onUpdated(await res.json() as EventIssue);
+    if (res.ok) onUpdated(await res.json() as BaseIssue);
     setSaving(false);
   };
 
   const toggleResolved = async () => {
     const newStatus = issue.status === 'open' ? 'resolved' : 'open';
     setSaving(true);
-    const res = await fetch(`/api/admin/srm/issues/${issue.id}`, {
+    const res = await fetch(`${apiBase}/${issue.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
     });
-    if (res.ok) onUpdated(await res.json() as EventIssue);
+    if (res.ok) onUpdated(await res.json() as BaseIssue);
     setSaving(false);
   };
 
