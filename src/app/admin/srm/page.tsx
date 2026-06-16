@@ -243,6 +243,7 @@ export default function SrmPage() {
             studentLanguages={studentLanguages}
             pausedStudentIds={pausedStudentIds}
             loggedEventIds={loggedEventIds}
+            issueEventIds={new Set(openIssues.filter((i) => i.event_id).map((i) => i.event_id!))}
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
             onEventClick={setSelectedEvent}
