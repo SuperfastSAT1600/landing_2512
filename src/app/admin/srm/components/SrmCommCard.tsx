@@ -45,17 +45,20 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
 
   const handleSave = async () => {
     setSaving(true);
-    const res = await fetch(`/api/admin/srm/communications/${entry.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, reason }),
-    });
-    if (res.ok) {
-      const updated = await res.json() as CommEntry;
-      onUpdated(updated);
-      setEditing(false);
+    try {
+      const res = await fetch(`/api/admin/srm/communications/${entry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, reason }),
+      });
+      if (res.ok) {
+        const updated = await res.json() as CommEntry;
+        onUpdated(updated);
+        setEditing(false);
+      }
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleCancel = () => {

@@ -56,25 +56,31 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
       c.id === itemId ? { ...c, done: !c.done } : c,
     );
     setSaving(true);
-    const res = await fetch(`${apiBase}/${issue.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ checklist: updated }),
-    });
-    if (res.ok) onUpdated(await res.json() as BaseIssue);
-    setSaving(false);
+    try {
+      const res = await fetch(`${apiBase}/${issue.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checklist: updated }),
+      });
+      if (res.ok) onUpdated(await res.json() as BaseIssue);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleResolved = async () => {
     const newStatus = issue.status === 'open' ? 'resolved' : 'open';
     setSaving(true);
-    const res = await fetch(`${apiBase}/${issue.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (res.ok) onUpdated(await res.json() as BaseIssue);
-    setSaving(false);
+    try {
+      const res = await fetch(`${apiBase}/${issue.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) onUpdated(await res.json() as BaseIssue);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const deleteIssue = async () => {

@@ -198,25 +198,35 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
   const fetchDetail = useCallback(async () => {
     setLoadingDetail(true);
-    if (studentId) {
-      const res = await fetch(`/api/admin/srm/student/${studentId}`);
-      setDetail(await res.json());
-    } else if (crmStudentId) {
-      const res = await fetch(`/api/admin/srm/student/crm/${crmStudentId}`);
-      if (res.ok) {
-        setDetail(await res.json());
-      } else {
-        setDetail({ profile: null, crmStudent: null });
+    try {
+      if (studentId) {
+        const res = await fetch(`/api/admin/srm/student/${studentId}`);
+        if (res.ok) setDetail(await res.json());
+      } else if (crmStudentId) {
+        const res = await fetch(`/api/admin/srm/student/crm/${crmStudentId}`);
+        if (res.ok) {
+          setDetail(await res.json());
+        } else {
+          setDetail({ profile: null, crmStudent: null });
+        }
       }
+    } catch {
+      setDetail({ profile: null, crmStudent: null });
+    } finally {
+      setLoadingDetail(false);
     }
-    setLoadingDetail(false);
   }, [studentId, crmStudentId]);
 
   const fetchComms = useCallback(async () => {
     setLoadingComms(true);
-    const res = await fetch(`/api/admin/srm/communications?studentId=${commKey}`);
-    setComms(await res.json());
-    setLoadingComms(false);
+    try {
+      const res = await fetch(`/api/admin/srm/communications?studentId=${commKey}`);
+      if (res.ok) setComms(await res.json());
+    } catch {
+      // silent
+    } finally {
+      setLoadingComms(false);
+    }
   }, [commKey]);
 
   const fetchLifecycle = useCallback(async () => {
@@ -284,20 +294,23 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     const url = studentId
       ? `/api/admin/srm/student/${studentId}/pause`
       : `/api/admin/srm/student/crm/${crmStudentId}/pause`;
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pause_until: pauseUntil || null,
-        reason: pauseReason || null,
-        created_by: getAdminName() || '관리자',
-      }),
-    });
-    await fetchPause();
-    setPauseFormOpen(false);
-    setPauseUntil('');
-    setPauseReason('');
-    setPauseSaving(false);
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pause_until: pauseUntil || null,
+          reason: pauseReason || null,
+          created_by: getAdminName() || '관리자',
+        }),
+      });
+      await fetchPause();
+      setPauseFormOpen(false);
+      setPauseUntil('');
+      setPauseReason('');
+    } finally {
+      setPauseSaving(false);
+    }
   };
 
   const handlePauseEnd = async () => {
@@ -305,9 +318,12 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     const url = studentId
       ? `/api/admin/srm/student/${studentId}/pause/active`
       : `/api/admin/srm/student/crm/${crmStudentId}/pause/active`;
-    await fetch(url, { method: 'DELETE' });
-    await fetchPause();
-    setPauseSaving(false);
+    try {
+      await fetch(url, { method: 'DELETE' });
+      await fetchPause();
+    } finally {
+      setPauseSaving(false);
+    }
   };
 
   useEffect(() => {
