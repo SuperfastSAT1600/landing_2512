@@ -225,7 +225,7 @@ export async function fetchDailyLearning(names: string[], date: string): Promise
 
   let query = supabaseAdmin
     .from('students')
-    .select('id, name, sfv2_profile_id')
+    .select('id, name, portal_name, sfv2_profile_id')
     .eq('lead_status', 'enrolled')
     .order('name');
 
@@ -237,20 +237,23 @@ export async function fetchDailyLearning(names: string[], date: string): Promise
   const results: StudentDayResult[] = await Promise.all(
     (students ?? []).map(async (s) => {
       const profileId = s.sfv2_profile_id as string | null;
+      const displayName = (s.portal_name as string | null) || (s.name as string);
       if (!profileId) {
-        return { name: s.name as string, crmStudentId: s.id as string, sfv2ProfileId: null, studyHall: null, testCenter: [], vocab: null };
+        return { name: displayName, crmStudentId: s.id as string, sfv2ProfileId: null, studyHall: null, testCenter: [], vocab: null };
       }
       const [studyHall, testCenter, vocab] = await Promise.all([
         fetchStudyHall(profileId, start, end),
         fetchTestCenter(profileId, start, end),
         fetchVocab(profileId, start, end),
       ]);
-      return { name: s.name as string, crmStudentId: s.id as string, sfv2ProfileId: profileId, studyHall, testCenter, vocab };
+      return { name: displayName, crmStudentId: s.id as string, sfv2ProfileId: profileId, studyHall, testCenter, vocab };
     })
   );
 
+  // results are indexed by internal name for ordering, display name is already resolved
+  const internalNames = (students ?? []).map(s => s.name as string);
   const ordered = names.length
-    ? names.map(n => results.find(r => r.name === n)).filter((r): r is StudentDayResult => Boolean(r))
+    ? names.map(n => results.find((_, i) => internalNames[i] === n)).filter((r): r is StudentDayResult => Boolean(r))
     : results;
 
   return { date, students: ordered };
