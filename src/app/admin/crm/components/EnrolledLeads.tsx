@@ -126,7 +126,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
         const data = await r.json();
         setVipStudents(data.data ?? []);
       })
-      .catch(() => {})
+      .catch((err) => console.error('[EnrolledLeads] VIP fetch failed:', err))
       .finally(() => setVipLoading(false));
   }, [tab, adminKey]);
 

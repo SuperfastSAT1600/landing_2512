@@ -22,8 +22,8 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
       if (!q.trim()) { setResults([]); return; }
       setSearching(true);
       const res = await fetch(`/api/admin/srm/v2-search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      setResults(Array.isArray(data) ? data : []);
+      const json = await res.json();
+      setResults(Array.isArray(json.data) ? json.data : []);
       setSearching(false);
     }, 300);
     return () => clearTimeout(timer);
@@ -82,7 +82,6 @@ export function MatchQueue({ onLinked }: Props) {
     setLoading(true);
     const res = await fetch('/api/admin/srm/match-queue');
     const data = await res.json();
-    console.log('[MatchQueue] status:', res.status, 'data:', data);
     setStudents(Array.isArray(data) ? data : []);
     setLoading(false);
   }, []);

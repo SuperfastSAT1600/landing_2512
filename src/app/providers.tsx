@@ -5,7 +5,6 @@ import { useEffect } from 'react'
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY
-    console.log('[PostHog] key:', key)
     if (!key) return
 
     import('posthog-js').then(({ default: posthog }) => {
@@ -14,7 +13,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         capture_pageview: true,
         capture_pageleave: true,
       })
-      console.log('[PostHog] initialized')
     })
   }, [])
 

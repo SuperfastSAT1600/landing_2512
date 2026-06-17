@@ -32,8 +32,8 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
       setSearching(true);
       try {
         const res = await fetch(`/api/admin/srm/v2-search?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        setResults(Array.isArray(data) ? data : []);
+        const json = await res.json();
+        setResults(Array.isArray(json.data) ? json.data : []);
       } catch {
         setResults([]);
       } finally {

@@ -64,7 +64,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           .map((s: { name: string }) => s.name);
         setDuplicateNames(others);
       })
-      .catch(() => {});
+      .catch((err) => console.error('[StudentDetailPanel] duplicate names fetch failed:', err));
   }, [localStudent.id, localStudent.name, adminKey]);
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
         setIsPaused(!!json.pause);
         setPauseUntilDate(json.pause?.pause_until ?? null);
       })
-      .catch(() => {});
+      .catch((err) => console.error('[StudentDetailPanel] pause fetch failed:', err));
   }, [student.id]);
 
   const editFormHook = useEditForm({

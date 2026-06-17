@@ -20,7 +20,8 @@ export function CrmLinkSection({ sfv2ProfileId, onLinked }: Props) {
       setSearching(true);
       try {
         const res = await fetch(`/api/admin/srm/crm-candidates?q=${encodeURIComponent(q)}`);
-        setCandidates(await res.json());
+        const json = await res.json();
+        setCandidates(json.data ?? []);
       } finally {
         setSearching(false);
       }

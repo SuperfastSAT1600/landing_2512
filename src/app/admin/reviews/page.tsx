@@ -37,14 +37,14 @@ export default function AdminReviewsPage() {
     };
 
     const handleStatus = async (id: string, newStatus: string) => {
-        await updateReview(id, { status: newStatus as any });
+        await updateReview(id, { status: newStatus });
     };
 
     const handleFeature = async (id: string, isFeatured: boolean) => {
         await updateReview(id, { isFeatured });
     };
 
-    const updateReview = async (id: string, updates: any) => {
+    const updateReview = async (id: string, updates: Partial<{ status: string; isFeatured: boolean }>) => {
         try {
             const adminKey = localStorage.getItem('admin_key') || '';
             const res = await fetch('/api/reviews', {

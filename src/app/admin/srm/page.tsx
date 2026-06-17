@@ -89,7 +89,7 @@ export default function SrmPage() {
     setScheduleLoading(true);
     setSchedule(null);
     fetch(`/api/admin/srm/schedule?date=${selectedDate}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
       .then(async (scheduleData: ScheduleResponse) => {
         setSchedule(scheduleData);
 
@@ -131,7 +131,7 @@ export default function SrmPage() {
     fetch('/api/admin/srm/issues?status=open&limit=100')
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setOpenIssues(data); })
-      .catch(() => {});
+      .catch((err) => console.error('[SrmPage] issues fetch failed:', err));
   }, [mainTab, selectedEvent]);
 
   useEffect(() => {
@@ -233,10 +233,10 @@ export default function SrmPage() {
         <>
           <StudentSearch onSelect={handleRosterStudentClick} />
           <UnifiedTimeline
-            todayCoachRoom={schedule?.today.coachRoom ?? []}
-            todayStudyHall={schedule?.today.studyHall ?? []}
-            tomorrowCoachRoom={schedule?.tomorrow.coachRoom ?? []}
-            tomorrowStudyHall={schedule?.tomorrow.studyHall ?? []}
+            todayCoachRoom={schedule?.today?.coachRoom ?? []}
+            todayStudyHall={schedule?.today?.studyHall ?? []}
+            tomorrowCoachRoom={schedule?.tomorrow?.coachRoom ?? []}
+            tomorrowStudyHall={schedule?.tomorrow?.studyHall ?? []}
             loading={scheduleLoading}
             eventDate={selectedDate}
             vipStudentIds={vipStudentIds}

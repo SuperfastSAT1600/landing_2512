@@ -14,7 +14,7 @@ export interface V2Profile {
 export async function GET(req: NextRequest) {
   if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const q = req.nextUrl.searchParams.get('q')?.trim() ?? '';
-  if (!q) return NextResponse.json([]);
+  if (!q) return NextResponse.json({ data: [] });
 
   const { data, error } = await supabaseSFv2
     .from('profiles')
@@ -23,5 +23,5 @@ export async function GET(req: NextRequest) {
     .limit(10);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data ?? []);
+  return NextResponse.json({ data: data ?? [] });
 }
