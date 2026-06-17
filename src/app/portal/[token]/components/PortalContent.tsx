@@ -52,12 +52,14 @@ const CRM_NAV_ITEMS: { view: View; label: string }[] = [
 
 const SRM_NAV_ITEMS: { view: View; label: string }[] = [
   { view: 'study_hall', label: '학습 리포트' },
+  { view: 'consultation', label: '상담 기록' },
+  { view: 'student', label: '학생 기본 정보' },
 ];
 
 export default function PortalContent({ token }: { token: string }) {
   const [data, setData] = useState<PortalData | null>(null);
   const [error, setError] = useState('');
-  const [view, setView] = useState<View>('consultation');
+  const [view, setView] = useState<View | null>(null);
   const [showChangePasscode, setShowChangePasscode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [navDropdownOpen, setNavDropdownOpen] = useState(false);
@@ -67,7 +69,10 @@ export default function PortalContent({ token }: { token: string }) {
   useEffect(() => {
     fetch(`/api/portal/${token}/data`)
       .then(r => { if (!r.ok) throw new Error('unauthorized'); return r.json(); })
-      .then(setData)
+      .then((d: PortalData) => {
+        setData(d);
+        setView(d.hasSrmData ? 'study_hall' : 'consultation');
+      })
       .catch(() => setError('데이터를 불러오는 중 오류가 발생했습니다.'));
   }, [token]);
 
@@ -99,8 +104,9 @@ export default function PortalContent({ token }: { token: string }) {
 
   const hasDiagnostic = !!data.diagnosticResult;
   const { hasSrmData } = data;
-  const allNavItems = [...CRM_NAV_ITEMS, ...(hasSrmData ? SRM_NAV_ITEMS : [])];
-  const activeItem = allNavItems.find(item => item.view === view) ?? CRM_NAV_ITEMS[0];
+  const currentView = view ?? (hasSrmData ? 'study_hall' : 'consultation');
+  const allNavItems = hasSrmData ? SRM_NAV_ITEMS : CRM_NAV_ITEMS;
+  const activeItem = allNavItems.find(item => item.view === currentView) ?? allNavItems[0];
 
   return (
     <>
@@ -135,7 +141,7 @@ export default function PortalContent({ token }: { token: string }) {
                   >
                     {allNavItems.map(item => {
                       const isDisabled = item.view === 'diagnostic' && !hasDiagnostic;
-                      const isActive = view === item.view;
+                      const isActive = currentView === item.view;
                       return (
                         <button
                           key={item.view}
@@ -163,7 +169,7 @@ export default function PortalContent({ token }: { token: string }) {
               <img src="/logo_black.png" alt="SuperfastSAT" className="h-4 w-auto flex-shrink-0" />
               <div className="flex items-center gap-1">
                 {allNavItems.map(item => {
-                  const isActive = view === item.view;
+                  const isActive = currentView === item.view;
                   const isDisabled = item.view === 'diagnostic' && !hasDiagnostic;
                   return (
                     <button
@@ -225,15 +231,18 @@ export default function PortalContent({ token }: { token: string }) {
         blogLinkCount={data.publishedMemos.filter(m => m.content.includes('http')).length}
       />
 
-      {view === 'student' && (
-        <StudentInfoOverlay student={data.student} />
+      {currentView === 'student' && (
+        <StudentInfoOverlay
+          student={data.student}
+          onShowDiagnostic={hasSrmData && hasDiagnostic ? () => setView('diagnostic') : undefined}
+        />
       )}
 
-      {view === 'diagnostic' && data.diagnosticResult && (
+      {currentView === 'diagnostic' && data.diagnosticResult && (
         <DiagnosticOverlay resultId={data.diagnosticResult.id} />
       )}
 
-      {view === 'study_hall' && hasSrmData && (
+      {currentView === 'study_hall' && hasSrmData && (
         <LearningReport
           token={token}
           studentName={data.student.name}

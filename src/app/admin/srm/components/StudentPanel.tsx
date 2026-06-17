@@ -13,6 +13,7 @@ import { STAGE_LABELS } from '@/app/admin/srm/lifecycle-constants';
 import type { LifecycleResponse } from '@/app/api/admin/srm/lifecycle/route';
 import type { V2Summary } from '@/app/api/admin/srm/student/[profileId]/v2-summary/route';
 import type { StudentIssue } from '@/app/api/admin/srm/student-issues/route';
+import { PortalAccessToggle } from '@/app/admin/components/PortalAccessToggle';
 
 const TRIGGER_LABELS: Record<string, string> = {
   no_show: '미접속 알림',
@@ -178,6 +179,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [commLang, setCommLang] = useState<'ko' | 'en'>('ko');
   const [langSaving, setLangSaving] = useState(false);
   const [portalIssuing, setPortalIssuing] = useState(false);
+  const [portalCopied, setPortalCopied] = useState(false);
+  const [localPortalToken, setLocalPortalToken] = useState<string | null>(null);
   const [activePause, setActivePause] = useState<PauseRecord | null | undefined>(undefined); // undefined = 아직 로딩
   const [pauseFormOpen, setPauseFormOpen] = useState(false);
   const [pauseUntil, setPauseUntil] = useState('');
@@ -397,8 +400,10 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setBriefing(res.ok ? 'done' : 'error');
   };
 
+  const portalToken = localPortalToken ?? detail?.crmStudent?.portal_token ?? null;
+
   const handleIssuePortal = async () => {
-    if (!resolvedCrmStudentId || portalIssuing) return;
+    if (!resolvedCrmStudentId || portalIssuing || portalToken) return;
     setPortalIssuing(true);
     try {
       const res = await fetch(`/api/crm/students/${resolvedCrmStudentId}/portal-token`, {
@@ -406,7 +411,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
         headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('admin_key') ?? '' },
       });
       if (!res.ok) throw new Error('failed');
-      await fetchDetail();
+      const { portal_token } = await res.json();
+      setLocalPortalToken(portal_token);
     } catch {
       alert('포털 발급에 실패했습니다.');
     } finally {
@@ -415,17 +421,16 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   };
 
   const handlePreviewPortal = () => {
-    const token = detail?.crmStudent?.portal_token;
-    if (!token) return;
+    if (!portalToken) return;
     const newWindow = window.open('', '_blank');
-    if (newWindow) newWindow.location.href = `${window.location.origin}/portal/${token}?preview=admin`;
+    if (newWindow) newWindow.location.href = `${window.location.origin}/portal/${portalToken}?preview=admin`;
   };
 
-  const handleCopyPortalLink = () => {
-    const token = detail?.crmStudent?.portal_token;
-    if (!token) return;
-    const url = `${window.location.origin}/portal/${token}`;
-    navigator.clipboard.writeText(url);
+  const handleCopyPortalLink = async () => {
+    if (!portalToken) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/portal/${portalToken}`);
+    setPortalCopied(true);
+    setTimeout(() => setPortalCopied(false), 2500);
   };
 
   const timeline: ConsultationEntry[] = detail?.crmStudent?.consultation_timeline ?? [];
@@ -636,32 +641,17 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                         CRM 미연결
                       </span>
                     )}
-                    {isLinked && detail?.crmStudent?.portal_token ? (
-                      <>
-                        <button
-                          onClick={handleCopyPortalLink}
-                          title="학부모 포털 링크 복사"
-                          className="text-[11px] px-2 py-0.5 bg-blue-500/15 border border-blue-500/25 rounded-full text-blue-400 hover:bg-blue-500/25 transition-colors"
-                        >
-                          학부모 포털
-                        </button>
-                        <button
-                          onClick={handlePreviewPortal}
-                          title="학부모 포털 미리보기"
-                          className="text-[11px] px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-gray-400 hover:text-gray-200 transition-colors"
-                        >
-                          미리보기
-                        </button>
-                      </>
-                    ) : isLinked && resolvedCrmStudentId ? (
-                      <button
-                        onClick={handleIssuePortal}
-                        disabled={portalIssuing}
-                        className="text-[11px] px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-gray-400 hover:text-gray-200 hover:border-white/20 transition-colors disabled:opacity-50"
-                      >
-                        {portalIssuing ? '발급 중…' : '포털 발급'}
-                      </button>
-                    ) : null}
+                    {isLinked && resolvedCrmStudentId && (
+                      <PortalAccessToggle
+                        hasPortal={!!portalToken}
+                        issuing={portalIssuing}
+                        copied={portalCopied}
+                        theme="dark"
+                        onToggle={handleIssuePortal}
+                        onCopy={handleCopyPortalLink}
+                        onPreview={handlePreviewPortal}
+                      />
+                    )}
                   </div>
                 </div>
               )}

@@ -1,6 +1,7 @@
 'use client';
 
-import { X, ChevronDown, Check, Copy, Eye } from 'lucide-react';
+import { X, ChevronDown, Check } from 'lucide-react';
+import { PortalAccessToggle } from '@/app/admin/components/PortalAccessToggle';
 import type { Student, FunnelStage } from '@/types/crm';
 import { FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS } from '@/types/crm';
 import { SALES_STAGES_ONLY } from '../constants';
@@ -10,6 +11,7 @@ interface Props {
   duplicateNames?: string[];
   isPaused?: boolean;
   pauseUntil?: string | null;
+  hasPortal: boolean;
   portalCopied: boolean;
   portalLoading: boolean;
   deleting: boolean;
@@ -19,6 +21,7 @@ interface Props {
   reactivateStrategy: string;
   reactivating: boolean;
   onClose: () => void;
+  onIssuePortal: () => void;
   onCopyPortalLink: () => void;
   onPreviewPortal: () => void;
   onDelete: () => void;
@@ -34,9 +37,9 @@ interface Props {
 }
 
 export function PanelHeader({
-  localStudent, duplicateNames = [], isPaused, pauseUntil, portalCopied, portalLoading, deleting, funnelChanging,
+  localStudent, duplicateNames = [], isPaused, pauseUntil, hasPortal, portalCopied, portalLoading, deleting, funnelChanging,
   showFunnelMenu, showReactivateForm, reactivateStrategy, reactivating,
-  onClose, onCopyPortalLink, onPreviewPortal, onDelete, onToggleFunnelMenu, onFunnelChange,
+  onClose, onIssuePortal, onCopyPortalLink, onPreviewPortal, onDelete, onToggleFunnelMenu, onFunnelChange,
   onShowPayment, onShowChurn, onShowReactivate, onHideReactivate,
   onReactivateStrategyChange, onStartReactivation, onLeadStatusChange,
 }: Props) {
@@ -64,33 +67,16 @@ export function PanelHeader({
             </p>
           )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
-          <button
-            onClick={onPreviewPortal}
-            disabled={portalLoading}
-            className="flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-[12px] text-gray-500 hover:border-violet-300 hover:text-violet-600 hover:bg-violet-50 disabled:opacity-50 transition-colors"
-            title="학부모 포털 미리보기"
-          >
-            {portalLoading ? (
-              <div className="w-3 h-3 border border-violet-400 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Eye size={12} />
-            )}
-            미리보기
-          </button>
-          <button
-            onClick={onCopyPortalLink}
-            disabled={portalLoading}
-            className="flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-[12px] text-gray-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
-            title="학부모 포털 링크 복사"
-          >
-            {portalCopied ? (
-              <Check size={12} className="text-green-500" />
-            ) : (
-              <Copy size={12} />
-            )}
-            {portalCopied ? '복사됨' : '포털'}
-          </button>
+        <div className="flex items-center gap-2 shrink-0 mt-0.5">
+          <PortalAccessToggle
+            hasPortal={hasPortal}
+            issuing={portalLoading}
+            copied={portalCopied}
+            theme="light"
+            onToggle={onIssuePortal}
+            onCopy={onCopyPortalLink}
+            onPreview={onPreviewPortal}
+          />
           <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
             <X size={16} className="text-gray-400" />
           </button>
