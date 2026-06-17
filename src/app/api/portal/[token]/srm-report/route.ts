@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import { cookies } from 'next/headers';
 import OpenAI from 'openai';
-import type { LearningReport, DayReport, StudyHallDay, TestCenterDay, DailyReportDay } from '@/types/srm-portal';
+import type { LearningReport, DayReport, StudyHallDay, StudyHallSkill, TestCenterDay, TestCenterLesson, DailyReportDay } from '@/types/srm-portal';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -18,16 +18,82 @@ async function generateStudyHallNarrative(stats: {
   totalProblems: number;
   correctCount: number;
   accuracy: number;
+  skills: StudyHallSkill[];
 }): Promise<string> {
+  const topSkills = stats.skills
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 3)
+    .map(s => `${s.skill} (${s.correct}/${s.total}문항)`)
+    .join(', ');
+
+  const skillLine = topSkills
+    ? `오늘 학습한 주요 스킬: ${topSkills}`
+    : '';
+
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
-    messages: [{
-      role: 'user',
-      content: `스터디홀 학습 결과를 학부모께 전달할 따뜻한 한 문장 요약을 작성해주세요.
-학습 시간: ${stats.durationMinutes}분 / 문제 수: ${stats.totalProblems}개 / 정답: ${stats.correctCount}개 / 정답률: ${stats.accuracy}%
-조건: 한 문장, 정중하고 따뜻한 어조, 숫자를 자연스럽게 포함, 격려 포함.`,
-    }],
-    max_tokens: 120,
+    messages: [
+      {
+        role: 'system',
+        content: 'SAT 학원 강사. 스터디홀 학습 데이터를 받아 3문장 리포트를 작성한다.',
+      },
+      {
+        role: 'user',
+        content: '학습 시간: 45분 / 총 문제: 60개 / 정답: 48개 / 정답률: 80%\n스킬: Words in Context (48/60문항)',
+      },
+      {
+        role: 'assistant',
+        content: 'Words in Context 스킬 60문항을 45분 동안 풀어 정답률 80%(48/60)를 기록했습니다. 틀린 12문항은 문맥 속 어휘 뉘앙스를 구별하는 유형에서 집중 발생했으며, 특히 추상 명사를 대체어로 선택하는 문항의 오답률이 높아 해당 유형을 집중 보완할 필요가 있습니다. 다음 수업에서는 Words in Context 오답 문항을 5개 선별해 오류 원인을 함께 분석하고 유사 문제로 즉시 재연습할 예정입니다.',
+      },
+      {
+        role: 'user',
+        content: `학습 시간: ${stats.durationMinutes}분 / 총 문제: ${stats.totalProblems}개 / 정답: ${stats.correctCount}개 / 정답률: ${stats.accuracy}%\n${skillLine}`,
+      },
+    ],
+    max_tokens: 300,
+    temperature: 0.7,
+  });
+  return res.choices[0]?.message?.content?.trim() ?? '';
+}
+
+async function generateTestCenterNarrative(stats: {
+  curriculumTitle?: string;
+  curriculumDomain?: string;
+  totalScore: number;
+  totalProblems: number;
+  lessons: TestCenterLesson[];
+}): Promise<string> {
+  const accuracy = stats.totalProblems > 0
+    ? Math.round((stats.totalScore / stats.totalProblems) * 100)
+    : 0;
+  const lessonLines = stats.lessons
+    .map(l => `${l.title ?? '모듈'}: ${l.score}/${l.total}`)
+    .join(', ');
+  const currLine = stats.curriculumTitle
+    ? `테스트: ${stats.curriculumTitle}${stats.curriculumDomain ? ` (${stats.curriculumDomain})` : ''}`
+    : '';
+
+  const res = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: 'SAT 학원 강사. 테스트 결과 데이터를 받아 3문장 리포트를 작성한다.',
+      },
+      {
+        role: 'user',
+        content: '테스트: SAT Practice Test 1 (reading_and_writing)\n총 점수: 35/44 (80%)\n모듈별 점수: Module 1: 18/22, Module 2: 17/22',
+      },
+      {
+        role: 'assistant',
+        content: 'SAT Practice Test 1 RW 영역에서 44문항 중 35문항을 맞혀 정답률 80%를 기록했으며, Module 1(18/22)과 Module 2(17/22) 모두 안정적인 성취를 보였습니다. 두 모듈에서 고르게 발생한 오답은 Standard English Conventions의 접속사·문장 부호 선택 유형으로, 규칙을 암기하는 단계에서 실제 문맥에 적용하는 과정의 연습이 더 필요해 보입니다. 다음 수업에서는 해당 유형 오답 5문항을 선별해 오류 원인을 분석하고 유사 문제로 즉시 재연습하겠습니다.',
+      },
+      {
+        role: 'user',
+        content: `${currLine}\n총 점수: ${stats.totalScore}/${stats.totalProblems} (${accuracy}%)\n모듈별 점수: ${lessonLines}`,
+      },
+    ],
+    max_tokens: 350,
     temperature: 0.7,
   });
   return res.choices[0]?.message?.content?.trim() ?? '';
@@ -61,7 +127,6 @@ export async function GET(
   const [
     { data: shSessions },
     { data: shAttempts },
-    { data: tcSessions },
     { data: tcAttempts },
     { data: dailyReports },
   ] = await Promise.all([
@@ -70,19 +135,14 @@ export async function GET(
       .eq('user_id', profileId)
       .not('ended_at', 'is', null)
       .order('started_at', { ascending: false })
-      .limit(30),
+      .limit(60),
     supabaseSFv2.from('study_hall_unit_attempts')
-      .select('study_hall_session_id, is_correct, attempted_at')
+      .select('study_hall_session_id, is_correct, attempted_at, unit_id')
       .eq('student_id', profileId)
       .order('attempted_at', { ascending: false })
       .limit(500),
-    supabaseSFv2.from('test_center_session')
-      .select('id, started_at')
-      .eq('user_id', profileId)
-      .order('started_at', { ascending: false })
-      .limit(20),
     supabaseSFv2.from('test_center_lesson_attempts')
-      .select('test_center_session_id, score, total, status')
+      .select('test_center_session_id, score, total, status, lesson_id, curriculum_id')
       .eq('student_id', profileId)
       .not('score', 'is', null),
     supabaseSFv2.from('daily_reports')
@@ -92,6 +152,47 @@ export async function GET(
       .order('report_date', { ascending: false })
       .limit(30),
   ]);
+
+  // units 메타데이터 조회 (skill, domain 집계용)
+  const unitIds = [...new Set((shAttempts ?? []).map(a => a.unit_id as string).filter(Boolean))];
+  const { data: unitsMeta } = unitIds.length
+    ? await supabaseSFv2.from('units').select('id, skill, domain').in('id', unitIds)
+    : { data: [] };
+  const unitsMap = new Map<string, { skill: string; domain: string }>();
+  for (const u of unitsMeta ?? []) {
+    if (u.id && u.skill) unitsMap.set(u.id, { skill: u.skill as string, domain: u.domain as string });
+  }
+
+  // test_center 룩업: session 날짜 + lesson 제목 + curriculum 제목 (병렬)
+  const tcSessionIds = [...new Set((tcAttempts ?? []).map(a => a.test_center_session_id as string).filter(Boolean))];
+  const tcLessonIds  = [...new Set((tcAttempts ?? []).map(a => a.lesson_id as string).filter(Boolean))];
+  const tcCurriculumIds = [...new Set((tcAttempts ?? []).map(a => a.curriculum_id as string).filter(Boolean))];
+
+  const [
+    { data: tcSessions },
+    { data: tcLessons },
+    { data: tcCurricula },
+  ] = await Promise.all([
+    tcSessionIds.length
+      ? supabaseSFv2.from('test_center_session').select('id, started_at').in('id', tcSessionIds)
+      : { data: [] },
+    tcLessonIds.length
+      ? supabaseSFv2.from('lessons').select('id, title').in('id', tcLessonIds)
+      : { data: [] },
+    tcCurriculumIds.length
+      ? supabaseSFv2.from('curricula').select('id, title, domain').in('id', tcCurriculumIds)
+      : { data: [] },
+  ]);
+
+  // 룩업 맵
+  const lessonTitleMap = new Map<string, string>();
+  for (const l of tcLessons ?? []) {
+    if (l.id && l.title) lessonTitleMap.set(l.id as string, l.title as string);
+  }
+  const curriculumMap = new Map<string, { title: string; domain: string }>();
+  for (const c of tcCurricula ?? []) {
+    if (c.id && c.title) curriculumMap.set(c.id, { title: c.title as string, domain: (c.domain as string) ?? '' });
+  }
 
   // 날짜별 맵 구성
   const dayMap = new Map<string, DayReport>();
@@ -117,17 +218,43 @@ export async function GET(
     if (a.is_correct) e.correct++;
   }
 
-  const shByDate = new Map<string, { totalMinutes: number; totalProblems: number; correctCount: number }>();
+  // 세션별 스킬 집계
+  const shSkillsBySession = new Map<string, Map<string, { skill: string; domain: string; correct: number; total: number }>>();
+  for (const a of shAttempts ?? []) {
+    const sid = a.study_hall_session_id as string;
+    const uid = a.unit_id as string;
+    if (!uid) continue;
+    const meta = unitsMap.get(uid);
+    if (!meta?.skill) continue;
+    if (!shSkillsBySession.has(sid)) shSkillsBySession.set(sid, new Map());
+    const skillMap = shSkillsBySession.get(sid)!;
+    if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0 });
+    const sk = skillMap.get(meta.skill)!;
+    sk.total++;
+    if (a.is_correct) sk.correct++;
+  }
+
+  const shByDate = new Map<string, { totalMinutes: number; totalProblems: number; correctCount: number; skillMap: Map<string, { skill: string; domain: string; correct: number; total: number }> }>();
   for (const [sid, stats] of shBySession) {
     const s = shSessionMap.get(sid);
     if (!s) continue;
     const date = toKSTDate(s.started_at);
     const minutes = Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000);
-    if (!shByDate.has(date)) shByDate.set(date, { totalMinutes: 0, totalProblems: 0, correctCount: 0 });
+    if (!shByDate.has(date)) shByDate.set(date, { totalMinutes: 0, totalProblems: 0, correctCount: 0, skillMap: new Map() });
     const d = shByDate.get(date)!;
     d.totalMinutes += minutes;
     d.totalProblems += stats.total;
     d.correctCount += stats.correct;
+    // 스킬 병합
+    const sessionSkills = shSkillsBySession.get(sid);
+    if (sessionSkills) {
+      for (const [skillKey, sk] of sessionSkills) {
+        if (!d.skillMap.has(skillKey)) d.skillMap.set(skillKey, { skill: sk.skill, domain: sk.domain, correct: 0, total: 0 });
+        const ds = d.skillMap.get(skillKey)!;
+        ds.correct += sk.correct;
+        ds.total += sk.total;
+      }
+    }
   }
 
   // AI 서술 생성 (병렬)
@@ -136,8 +263,9 @@ export async function GET(
       const accuracy = stats.totalProblems > 0
         ? Math.round((stats.correctCount / stats.totalProblems) * 100)
         : 0;
+      const skills = Array.from(stats.skillMap.values());
       const narrative = stats.totalProblems > 0
-        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy })
+        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills })
         : `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
 
       const item: StudyHallDay = {
@@ -147,6 +275,7 @@ export async function GET(
         correctCount: stats.correctCount,
         accuracy,
         aiNarrative: narrative,
+        skills: skills.length > 0 ? skills : undefined,
       };
       getOrCreate(date).items.push(item);
     })
@@ -158,26 +287,60 @@ export async function GET(
     tcSessionDateMap.set(s.id, toKSTDate(s.started_at));
   }
 
-  const tcBySession = new Map<string, { sections: { score: number; total: number }[] }>();
+  const tcBySession = new Map<string, {
+    lessons: TestCenterLesson[];
+    curriculumTitle?: string;
+    curriculumDomain?: string;
+  }>();
+
   for (const a of tcAttempts ?? []) {
     const sid = a.test_center_session_id as string;
     if (!tcSessionDateMap.has(sid)) continue;
-    if (!tcBySession.has(sid)) tcBySession.set(sid, { sections: [] });
-    tcBySession.get(sid)!.sections.push({ score: a.score as number, total: a.total as number });
+    if (!tcBySession.has(sid)) {
+      const currId = a.curriculum_id as string | undefined;
+      const curriculum = currId ? curriculumMap.get(currId) : undefined;
+      tcBySession.set(sid, {
+        lessons: [],
+        curriculumTitle: curriculum?.title,
+        curriculumDomain: curriculum?.domain,
+      });
+    }
+    const lessonId = a.lesson_id as string | undefined;
+    tcBySession.get(sid)!.lessons.push({
+      title: lessonId ? lessonTitleMap.get(lessonId) : undefined,
+      score: a.score as number,
+      total: a.total as number,
+    });
   }
 
-  for (const [sid, data] of tcBySession) {
-    const date = tcSessionDateMap.get(sid)!;
-    const totalScore = data.sections.reduce((s, x) => s + x.score, 0);
-    const totalProblems = data.sections.reduce((s, x) => s + x.total, 0);
-    const item: TestCenterDay = {
-      type: 'test_center',
-      sections: data.sections,
-      totalScore,
-      totalProblems,
-    };
-    getOrCreate(date).items.push(item);
-  }
+  // AI 서술 생성 (병렬)
+  await Promise.all(
+    Array.from(tcBySession.entries()).map(async ([sid, data]) => {
+      const date = tcSessionDateMap.get(sid)!;
+      const totalScore = data.lessons.reduce((s, x) => s + x.score, 0);
+      const totalProblems = data.lessons.reduce((s, x) => s + x.total, 0);
+      const narrative = totalProblems > 0
+        ? await generateTestCenterNarrative({
+            curriculumTitle: data.curriculumTitle,
+            curriculumDomain: data.curriculumDomain,
+            totalScore,
+            totalProblems,
+            lessons: data.lessons,
+          })
+        : undefined;
+
+      const item: TestCenterDay = {
+        type: 'test_center',
+        curriculumTitle: data.curriculumTitle,
+        curriculumDomain: data.curriculumDomain,
+        lessons: data.lessons,
+        totalScore,
+        totalProblems,
+        aiNarrative: narrative,
+      };
+      getOrCreate(date).items.push(item);
+    })
+  );
 
   // ── Daily Reports (레슨 피드백) ─────────────────────────────────────────
   for (const dr of dailyReports ?? []) {
@@ -194,3 +357,4 @@ export async function GET(
   const report: LearningReport = { days };
   return NextResponse.json(report);
 }
+

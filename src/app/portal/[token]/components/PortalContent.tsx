@@ -234,9 +234,11 @@ export default function PortalContent({ token }: { token: string }) {
       )}
 
       {view === 'study_hall' && hasSrmData && (
-        <div className="pt-12 max-w-5xl mx-auto px-4 sm:px-[6%] py-6">
-          <LearningReport token={token} />
-        </div>
+        <LearningReport
+          token={token}
+          studentName={data.student.name}
+          studentCreatedAt={data.student.created_at}
+        />
       )}
 
       {showChangePasscode && (
