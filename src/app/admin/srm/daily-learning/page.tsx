@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, FlaskConical, Library, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import type { DailyLearningResponse, StudentDayResult, StudyHallResult, TestCenterResult, VocabResult } from '@/app/api/admin/srm/daily-learning/route';
 
-const TARGET_NAMES = ['우다겸', '정수린', 'Aiden Huynh', '오승유'];
-const DEFAULT_DATE = '2026-06-16';
 
 // ── Accuracy badge ────────────────────────────────────────────────────────────
 
@@ -212,7 +210,9 @@ function StudentColumn({ student }: { student: StudentDayResult }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function DailyLearningPage() {
-  const [date, setDate] = useState(DEFAULT_DATE);
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [names, setNames] = useState<string[]>([]);
+  const [namesInput, setNamesInput] = useState('');
   const [data, setData] = useState<DailyLearningResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -221,8 +221,8 @@ export default function DailyLearningPage() {
     setLoading(true);
     setError(null);
     try {
-      const names = encodeURIComponent(TARGET_NAMES.join(','));
-      const res = await fetch(`/api/admin/srm/daily-learning?date=${targetDate}&names=${names}`);
+      const namesParam = encodeURIComponent(names.join(','));
+      const res = await fetch(`/api/admin/srm/daily-learning?date=${targetDate}&names=${namesParam}`);
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       setData(await res.json());
     } catch (e) {
@@ -230,9 +230,9 @@ export default function DailyLearningPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [names]);
 
-  useEffect(() => { load(date); }, [date, load]);
+  useEffect(() => { load(date); }, [date, names, load]);
 
   const dateLabel = date
     ? new Date(date + 'T12:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
@@ -267,6 +267,25 @@ export default function DailyLearningPage() {
           />
           <span className="text-sm text-gray-400">{dateLabel}</span>
         </div>
+        {/* Names input */}
+        <div className="flex items-center gap-2 mt-3">
+          <input
+            type="text"
+            value={namesInput}
+            onChange={e => setNamesInput(e.target.value)}
+            placeholder="학생 이름 (쉼표로 구분, 예: 홍길동, Jane Doe)"
+            className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500"
+          />
+          <button
+            onClick={() => {
+              const parsed = namesInput.split(',').map(n => n.trim()).filter(Boolean);
+              setNames(parsed);
+            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium text-white transition-colors"
+          >
+            조회
+          </button>
+        </div>
       </div>
 
       {/* Error state */}
@@ -279,8 +298,8 @@ export default function DailyLearningPage() {
       {/* Loading skeleton */}
       {loading && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {TARGET_NAMES.map(name => (
-            <div key={name} className="space-y-3">
+          {(names.length > 0 ? names : ['', '', '', '']).map((name, idx) => (
+            <div key={name || idx} className="space-y-3">
               <div className="h-6 bg-gray-800 rounded animate-pulse" />
               {[1, 2, 3].map(i => (
                 <div key={i} className="h-28 bg-gray-800/60 rounded-lg animate-pulse" />
@@ -297,7 +316,7 @@ export default function DailyLearningPage() {
             <StudentColumn key={student.name} student={student} />
           ))}
           {/* If a name is missing from results, show placeholder */}
-          {TARGET_NAMES.filter(n => !data.students.find(s => s.name === n)).map(name => (
+          {names.filter(n => !data.students.find(s => s.name === n)).map(name => (
             <div key={name} className="flex flex-col gap-3">
               <div className="text-center pb-2 border-b border-gray-700/50">
                 <p className="text-sm font-semibold text-white">{name}</p>

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-
+import { isAuthenticated } from '@/lib/server-auth';
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ crmStudentId: string }> }
 ) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { crmStudentId } = await params;
 
   const { data: crmStudent, error } = await supabaseAdmin
@@ -52,6 +53,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ crmStudentId: string }> }
 ) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { crmStudentId } = await params;
   const body = await req.json();
   const { comm_language } = body as { comm_language?: string };

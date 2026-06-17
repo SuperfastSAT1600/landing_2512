@@ -40,7 +40,7 @@ export async function POST(
     const hash = await bcrypt.hash(passcode, 12);
     await supabaseAdmin
       .from('partner_portals')
-      .update({ passcode_hash: hash, passcode_attempts: 0 })
+      .update({ passcode_hash: hash, passcode_attempts: 0, passcode_locked_until: null })
       .eq('id', portal.id);
     return issueSession(token);
   }
@@ -53,6 +53,9 @@ export async function POST(
     const adminPasscode = process.env.PARTNER_ADMIN_PASSCODE;
     if (adminPasscode && passcode === adminPasscode) {
       return issueSession(token);
+    }
+    if (!portal.passcode_hash) {
+      return NextResponse.json({ error: '비밀번호가 설정되지 않았습니다' }, { status: 409 });
     }
     if (portal.passcode_locked_until && new Date(portal.passcode_locked_until) > new Date()) {
       return NextResponse.json({ error: '잠금 상태입니다. 잠시 후 다시 시도해 주세요', locked: true }, { status: 429 });

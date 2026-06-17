@@ -92,6 +92,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  if (!DATE_RE.test(from) || !DATE_RE.test(to)) {
+    return NextResponse.json(
+      { error: { code: 'INVALID_DATE', message: '날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)' } },
+      { status: 400 }
+    );
+  }
+
   // 기간 내 신규 리드 조회 (inquiry_date 기준, fallback: created_at)
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')

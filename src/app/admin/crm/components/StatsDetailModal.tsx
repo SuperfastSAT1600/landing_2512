@@ -55,20 +55,23 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, onClose }:
   // 결제 담당자(created_by) 수동 수정 — 과거 결제 보정용
   async function updateCreatedBy(paymentId: string, value: string) {
     const created_by = value || null;
-    // 낙관적 업데이트
-    setResult((prev) =>
-      prev && prev.kind === 'payments'
+    // 이전 값 저장
+    let previous: typeof result = null;
+    setResult((prev) => {
+      previous = prev;
+      return prev && prev.kind === 'payments'
         ? { ...prev, items: prev.items.map((it) => (it.id === paymentId ? { ...it, created_by } : it)) }
-        : prev
-    );
+        : prev;
+    });
     try {
-      await fetch(`/api/crm/payments/${paymentId}`, {
+      const res = await fetch(`/api/crm/payments/${paymentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: JSON.stringify({ created_by }),
       });
+      if (!res.ok) throw new Error('failed');
     } catch {
-      /* 실패 시 다음 새로고침에 원복됨 */
+      setResult(previous);
     }
   }
 

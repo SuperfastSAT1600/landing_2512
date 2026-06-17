@@ -32,11 +32,15 @@ export async function POST(
     .eq('id', id)
     .single();
 
+  if (!studentRow) {
+    return NextResponse.json({ error: '학생을 찾을 수 없습니다.' }, { status: 404 });
+  }
+
   const { data: payment, error: payErr } = await supabaseAdmin
     .from('payments')
     .insert({
       student_id: id,
-      student_name: studentRow?.name ?? '',
+      student_name: studentRow.name,
       product,
       product_category: product_category ?? null,
       product_subcategory: product_subcategory ?? null,

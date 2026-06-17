@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 import { randomBytes } from 'crypto';
 
 // GET — list all partner portals with CRM-linked students
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { data, error } = await supabaseAdmin
     .from('partner_portals')
     .select('id, token, name, passcode_hash, created_at')
@@ -45,6 +47,7 @@ export async function GET() {
 
 // POST — create a new partner portal
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const body = await req.json().catch(() => null);
   if (!body?.name) {
     return NextResponse.json({ error: 'name is required' }, { status: 400 });

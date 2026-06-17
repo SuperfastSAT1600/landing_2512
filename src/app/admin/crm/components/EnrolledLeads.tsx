@@ -263,6 +263,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
               churn_type: churnType,
             });
             setAllStudents(prev => prev.filter((s: Student) => s.id !== churnTarget.id));
+            setVipStudents(prev => prev.filter((s: Student) => s.id !== churnTarget.id));
             setChurnTarget(null);
           }}
           onClose={() => setChurnTarget(null)}
@@ -286,6 +287,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
               churn_type: churnType,
             });
             setAllStudents(prev => prev.filter((s: Student) => s.id !== refundTarget.id));
+            setVipStudents(prev => prev.filter((s: Student) => s.id !== refundTarget.id));
             setRefundTarget(null);
           }}
           onClose={() => setRefundTarget(null)}

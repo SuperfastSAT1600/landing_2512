@@ -3,7 +3,7 @@ import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 
 export function kstDayRange(date: string): { start: string; end: string } {
   const start = new Date(`${date}T00:00:00+09:00`).toISOString();
-  const end   = new Date(`${date}T23:59:59+09:00`).toISOString();
+  const end   = new Date(`${date}T23:59:59.999+09:00`).toISOString();
   return { start, end };
 }
 
