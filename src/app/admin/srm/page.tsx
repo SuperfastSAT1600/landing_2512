@@ -7,12 +7,15 @@ import { AlertSection } from './components/AlertSection';
 import { StudentPanel } from './components/StudentPanel';
 import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
+import { OpsRadar } from './components/OpsRadar';
 import { StudentSearch } from './components/StudentSearch';
 import { StudentRoster } from './components/StudentRoster';
 import { EventLogPanel } from './components/EventLogPanel';
 import type { TaggedEvent } from './components/UnifiedTimeline';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
+import type { EventIssue } from '@/app/api/admin/srm/issues/route';
+import { AlertTriangle } from 'lucide-react';
 
 // sfv2 profile ID 기준 또는 CRM student ID 기준으로 패널 열기
 interface SelectedStudent {
@@ -32,7 +35,7 @@ interface SelectedCoach {
   relatedStudents: { name: string; events: string[] }[];
 }
 
-type MainTab = 'schedule' | 'ops' | 'roster';
+type MainTab = 'queue' | 'log' | 'roster';
 
 function collectRelatedStudents(
   coachId: string,
@@ -66,7 +69,7 @@ function collectRelatedStudents(
 }
 
 export default function SrmPage() {
-  const [mainTab, setMainTab] = useState<MainTab>('schedule');
+  const [mainTab, setMainTab] = useState<MainTab>('queue');
   const [selectedDate, setSelectedDate] = useState(() => getKstDateStr(0));
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
   const [alerts, setAlerts] = useState<AlertsResponse | null>(null);
@@ -76,20 +79,46 @@ export default function SrmPage() {
   const [selectedCoach, setSelectedCoach] = useState<SelectedCoach | null>(null);
   const [vipStudentIds, setVipStudentIds] = useState<Set<string>>(new Set());
   const [studentLanguages, setStudentLanguages] = useState<Map<string, 'ko' | 'en'>>(new Map());
+  const [pausedStudentIds, setPausedStudentIds] = useState<Set<string>>(new Set());
+  const [loggedEventIds, setLoggedEventIds] = useState<Set<string>>(new Set());
   const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
+  const [openIssues, setOpenIssues] = useState<EventIssue[]>([]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
     setScheduleLoading(true);
     setSchedule(null);
     fetch(`/api/admin/srm/schedule?date=${selectedDate}`)
       .then((r) => r.json())
-      .then(setSchedule)
+      .then(async (scheduleData: ScheduleResponse) => {
+        setSchedule(scheduleData);
+
+        // 해당 날짜 스케줄의 모든 이벤트 ID 수집 (오늘 + 내일)
+        const allEventIds = [
+          ...(scheduleData?.today?.coachRoom ?? []),
+          ...(scheduleData?.today?.studyHall ?? []),
+          ...(scheduleData?.tomorrow?.coachRoom ?? []),
+          ...(scheduleData?.tomorrow?.studyHall ?? []),
+        ].map((e: ScheduleEvent) => e.id);
+
+        if (!allEventIds.length) { setLoggedEventIds(new Set()); return; }
+
+        const [logData, commsData] = await Promise.all([
+          fetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
+          fetch(`/api/admin/srm/communications?eventIds=${allEventIds.join(',')}`).then((r) => r.json()).catch(() => []),
+        ]);
+
+        const ids = new Set<string>((logData.data ?? []).map((e: { event_id: string }) => e.event_id));
+        (Array.isArray(commsData) ? commsData : [])
+          .filter((e: { event_id: string | null }) => e.event_id)
+          .forEach((e: { event_id: string }) => ids.add(e.event_id));
+        setLoggedEventIds(ids);
+      })
       .finally(() => setScheduleLoading(false));
   }, [selectedDate, mainTab]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
     setAlertsLoading(true);
     fetch('/api/admin/srm/alerts')
       .then((r) => r.json())
@@ -98,16 +127,28 @@ export default function SrmPage() {
   }, [mainTab]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
+    fetch('/api/admin/srm/issues?status=open&limit=100')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setOpenIssues(data); })
+      .catch(() => {});
+  }, [mainTab, selectedEvent]);
+
+  useEffect(() => {
+    if (mainTab !== 'queue') return;
     Promise.all([
       fetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
       fetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
-    ]).then(([vipData, langData]) => {
+      fetch('/api/admin/srm/paused-students').then((r) => r.json()).catch(() => ({})),
+    ]).then(([vipData, langData, pauseData]) => {
       if (Array.isArray(vipData?.sfv2ProfileIds)) {
         setVipStudentIds(new Set(vipData.sfv2ProfileIds));
       }
       if (langData?.languages && typeof langData.languages === 'object') {
         setStudentLanguages(new Map(Object.entries(langData.languages) as [string, 'ko' | 'en'][]));
+      }
+      if (Array.isArray(pauseData?.sfv2ProfileIds)) {
+        setPausedStudentIds(new Set(pauseData.sfv2ProfileIds));
       }
     });
   }, [mainTab]);
@@ -152,7 +193,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6 border-b border-white/10">
-        {(['schedule', 'ops', 'roster'] as MainTab[]).map((t) => (
+        {(['queue', 'log', 'roster'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -162,7 +203,7 @@ export default function SrmPage() {
                 : 'text-gray-500 border-transparent hover:text-gray-300'
             }`}
           >
-            {t === 'schedule' ? '스케줄' : t === 'ops' ? '운영' : '명단'}
+            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : '명단'}
           </button>
         ))}
       </div>
@@ -171,8 +212,26 @@ export default function SrmPage() {
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
       )}
 
-      {mainTab === 'schedule' && (
+      {mainTab === 'queue' && openIssues.length > 0 && (
+        <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+          <AlertTriangle size={14} className="text-orange-400 shrink-0" />
+          <span className="text-sm text-orange-300 font-medium">미해결 이슈 {openIssues.length}건</span>
+          <div className="flex gap-1.5 flex-wrap ml-1">
+            {openIssues.slice(0, 5).map((issue) => (
+              <span key={issue.id} className="text-[11px] text-orange-400/80 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">
+                {issue.student_name ?? issue.title}
+              </span>
+            ))}
+            {openIssues.length > 5 && (
+              <span className="text-[11px] text-gray-500">+{openIssues.length - 5}건 더</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {mainTab === 'queue' && (
         <>
+          <StudentSearch onSelect={handleRosterStudentClick} />
           <UnifiedTimeline
             todayCoachRoom={schedule?.today.coachRoom ?? []}
             todayStudyHall={schedule?.today.studyHall ?? []}
@@ -182,6 +241,9 @@ export default function SrmPage() {
             eventDate={selectedDate}
             vipStudentIds={vipStudentIds}
             studentLanguages={studentLanguages}
+            pausedStudentIds={pausedStudentIds}
+            loggedEventIds={loggedEventIds}
+            issueEventIds={new Set(openIssues.filter((i) => i.event_id).map((i) => i.event_id!))}
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
             onEventClick={setSelectedEvent}
@@ -199,10 +261,13 @@ export default function SrmPage() {
         </>
       )}
 
-      {mainTab === 'ops' && (
+      {mainTab === 'log' && (
         <>
-          <StudentSearch onSelect={handleRosterStudentClick} />
-          <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
+          <OpsRadar onStudentClick={handleRosterStudentClick} />
+          <div className="mt-6 pt-5 border-t border-white/8">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-3">업무 기록</p>
+            <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
+          </div>
         </>
       )}
 

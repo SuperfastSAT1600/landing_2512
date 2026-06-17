@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export interface NoClassAlert {
   matchingId: string;
@@ -158,7 +159,22 @@ export async function GET() {
     : { data: [] };
 
   const hasSHStudentIds = new Set((futureSHStudents ?? []).map((p) => p.user_id));
-  const noSHStudentIds = activeStudentIds.filter((id) => !hasSHStudentIds.has(id));
+
+  // 활성 휴원 학생 제외
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: pauseRows } = await supabaseAdmin
+    .from('student_pauses')
+    .select('sfv2_profile_id')
+    .is('ended_at', null)
+    .lte('pause_start', today)
+    .or(`pause_until.is.null,pause_until.gte.${today}`)
+    .not('sfv2_profile_id', 'is', null);
+
+  const pausedProfileIds = new Set((pauseRows ?? []).map((p) => p.sfv2_profile_id as string));
+
+  const noSHStudentIds = activeStudentIds.filter(
+    (id) => !hasSHStudentIds.has(id) && !pausedProfileIds.has(id)
+  );
 
   const { data: noSHProfiles } = noSHStudentIds.length
     ? await supabaseSFv2.from('profiles').select('id, full_name').in('id', noSHStudentIds)

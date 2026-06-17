@@ -100,7 +100,12 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-white truncate">{name}</p>
+                    {task.hasSummerProgram && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-medium shrink-0">특강</span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500 mt-0.5">{task.stage_label}</p>
                 </div>
 

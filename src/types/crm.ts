@@ -46,9 +46,11 @@ export type InquiryChannel =
   | '인스타그램 링크';
 
 export type TrafficSource =
-  | '네이버 블로그'
+  | '네이버 검색 후 상담예약'
   | '네이버 카페'
-  | '(구)랜딩페이지'
+  | '구글폼에서 즉시상담'
+  | '(구)랜딩페이지 즉시상담'
+  | '(구)랜딩페이지 상담예약'
   | '튜터링 랜딩페이지'
   | '공식 블로그'
   | '인스타그램 오가닉'
@@ -57,7 +59,9 @@ export type TrafficSource =
   | '책'
   | '소개/추천'
   | '레딧'
-  | 'B2B 파트너';
+  | 'B2B 파트너'
+  | '기존DB'
+  | '대표전화';
 
 export type ContentAuthor = '배병윤' | '이민재' | '김우영' | '장현아';
 
@@ -74,7 +78,8 @@ export type B2BPartner =
   | '박정 어학원'
   | '솔로몬에듀'
   | 'Admission AG'
-  | '공부하는 아이들';
+  | '공부하는 아이들'
+  | '옹글리쉬';
 
 // 세일즈 퍼널 단계 (칸반 A)
 export type FunnelStage =
@@ -583,18 +588,22 @@ export const INQUIRY_CHANNEL_OPTIONS: InquiryChannel[] = [
 ];
 
 export const TRAFFIC_SOURCE_OPTIONS: TrafficSource[] = [
-  '네이버 블로그',
+  '인스타그램 광고',
+  '인스타그램 오가닉',
+  '구글폼에서 즉시상담',
+  '네이버 검색 후 상담예약',
   '네이버 카페',
-  '(구)랜딩페이지',
+  '(구)랜딩페이지 즉시상담',
+  '(구)랜딩페이지 상담예약',
   '튜터링 랜딩페이지',
   '공식 블로그',
-  '인스타그램 오가닉',
-  '인스타그램 광고',
   '브런치',
   '책',
   '소개/추천',
   '레딧',
   'B2B 파트너',
+  '기존DB',
+  '대표전화',
 ];
 
 export const CONTENT_AUTHOR_OPTIONS: ContentAuthor[] = ['배병윤', '이민재', '김우영', '장현아'];
@@ -611,6 +620,7 @@ export const B2B_PARTNER_OPTIONS: B2BPartner[] = [
   '솔로몬에듀',
   'Admission AG',
   '공부하는 아이들',
+  '옹글리쉬',
 ];
 
 export const CAMPAIGN_TAG_PRESETS = ['기존DB 재활성화', '여름특강'] as const;

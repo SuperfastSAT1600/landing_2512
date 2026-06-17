@@ -33,7 +33,7 @@ export function StudentSearch({ onSelect }: Props) {
     onSelect(
       s.sfv2ProfileId
         ? { id: s.sfv2ProfileId, name: s.name }
-        : { crmStudentId: s.id, name: s.name }
+        : { crmStudentId: s.crmStudentId, name: s.name }
     );
     setQuery('');
     setOpen(false);
@@ -57,7 +57,7 @@ export function StudentSearch({ onSelect }: Props) {
       {open && filtered.length > 0 && (
         <ul className="absolute z-20 top-full mt-1 w-full bg-[#1e2124] border border-white/10 rounded-lg shadow-xl overflow-hidden">
           {filtered.map((s) => (
-            <li key={s.id}>
+            <li key={s.crmStudentId}>
               <button
                 onMouseDown={() => handleSelect(s)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-200 hover:bg-white/10 transition-colors text-left"

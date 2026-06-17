@@ -5,7 +5,7 @@
       "schedule": "0 0 * * *"
     },
     {
-      "path": "/api/cron/call-recording-cleanup",
+      "path": "/api/cron/phone-call-cleanup",
       "schedule": "0 18 * * *"
     }
   ]

@@ -7,7 +7,7 @@ export interface CommEntry {
   student_name: string | null;
   target: 'student' | 'parent' | 'coach';
   parties: string[];
-  channel: 'kakao' | 'call' | 'sms' | 'email' | 'other';
+  channel: 'kakao' | 'call' | 'sms' | 'email' | 'slack' | 'other';
   content: string;
   author: string | null;
   trigger_type: 'no_show' | 'late' | 'no_class' | 'no_study_hall' | 'manual';
@@ -25,6 +25,20 @@ export async function GET(req: NextRequest) {
   const coachId = req.nextUrl.searchParams.get('coachId');
   const date = req.nextUrl.searchParams.get('date');
   const eventId = req.nextUrl.searchParams.get('eventId');
+  const eventIds = req.nextUrl.searchParams.get('eventIds');
+
+  // Bulk event-based query (스케줄 전체 이벤트 ID로 한 번에 조회)
+  if (eventIds) {
+    const ids = eventIds.split(',').filter(Boolean);
+    if (!ids.length) return NextResponse.json([]);
+    const { data, error } = await supabaseAdmin
+      .from('srm_communications')
+      .select('event_id')
+      .in('event_id', ids)
+      .not('event_id', 'is', null);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json((data ?? []) as { event_id: string }[]);
+  }
 
   // Event-based query
   if (eventId) {
@@ -104,8 +118,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'missing required fields' }, { status: 400 });
   }
 
-  if (!studentId && !coachId) {
-    return NextResponse.json({ error: 'studentId or coachId required' }, { status: 400 });
+  if (!studentId && !coachId && !eventId) {
+    return NextResponse.json({ error: 'studentId, coachId, or eventId required' }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin
