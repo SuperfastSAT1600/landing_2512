@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { PasscodeSetup, PasscodeEntry } from './components/PasscodeGate';
 import { LearningView } from './components/LearningView';
+import { useAdminAuth } from '@/lib/useAdminAuth';
 
 type State = 'loading' | 'not-found' | 'setup' | 'locked' | 'login' | 'authenticated';
 
@@ -18,6 +19,7 @@ export default function PartnerPortalPage() {
   const { token } = useParams<{ token: string }>();
   const [state, setState] = useState<State>('loading');
   const [meta, setMeta] = useState<PortalMeta | null>(null);
+  const { isAuthenticated: isAdmin, loading: adminLoading } = useAdminAuth();
 
   const checkPortal = useCallback(async () => {
     setState('loading');
@@ -25,12 +27,16 @@ export default function PartnerPortalPage() {
     if (!res.ok) { setState('not-found'); return; }
     const data: PortalMeta & { exists: boolean } = await res.json();
     setMeta(data);
+    if (isAdmin) { setState('authenticated'); return; }
     if (data.isLocked) setState('locked');
     else if (!data.hasPasscode) setState('setup');
     else setState('login');
-  }, [token]);
+  }, [token, isAdmin]);
 
-  useEffect(() => { checkPortal(); }, [checkPortal]);
+  useEffect(() => {
+    if (adminLoading) return; // wait for localStorage check before deciding auth flow
+    checkPortal();
+  }, [checkPortal, adminLoading]);
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (state === 'loading') {
@@ -75,7 +81,16 @@ export default function PartnerPortalPage() {
 
   // ── Authenticated ────────────────────────────────────────────────────────────
   if (state === 'authenticated') {
-    return <LearningView token={token} />;
+    return (
+      <>
+        {isAdmin && (
+          <div className="bg-indigo-600 text-white text-xs text-center py-1.5 font-medium">
+            어드민 미리보기 모드 — 비밀번호 없이 접속됨
+          </div>
+        )}
+        <LearningView token={token} />
+      </>
+    );
   }
 
   // ── Auth screens (setup / login) ─────────────────────────────────────────────
