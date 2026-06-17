@@ -177,6 +177,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [loadingV2, setLoadingV2] = useState(false);
   const [commLang, setCommLang] = useState<'ko' | 'en'>('ko');
   const [langSaving, setLangSaving] = useState(false);
+  const [portalIssuing, setPortalIssuing] = useState(false);
   const [activePause, setActivePause] = useState<PauseRecord | null | undefined>(undefined); // undefined = 아직 로딩
   const [pauseFormOpen, setPauseFormOpen] = useState(false);
   const [pauseUntil, setPauseUntil] = useState('');
@@ -396,6 +397,37 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setBriefing(res.ok ? 'done' : 'error');
   };
 
+  const handleIssuePortal = async () => {
+    if (!resolvedCrmStudentId || portalIssuing) return;
+    setPortalIssuing(true);
+    try {
+      const res = await fetch(`/api/crm/students/${resolvedCrmStudentId}/portal-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('admin_key') ?? '' },
+      });
+      if (!res.ok) throw new Error('failed');
+      await fetchDetail();
+    } catch {
+      alert('포털 발급에 실패했습니다.');
+    } finally {
+      setPortalIssuing(false);
+    }
+  };
+
+  const handlePreviewPortal = () => {
+    const token = detail?.crmStudent?.portal_token;
+    if (!token) return;
+    const newWindow = window.open('', '_blank');
+    if (newWindow) newWindow.location.href = `${window.location.origin}/portal/${token}?preview=admin`;
+  };
+
+  const handleCopyPortalLink = () => {
+    const token = detail?.crmStudent?.portal_token;
+    if (!token) return;
+    const url = `${window.location.origin}/portal/${token}`;
+    navigator.clipboard.writeText(url);
+  };
+
   const timeline: ConsultationEntry[] = detail?.crmStudent?.consultation_timeline ?? [];
   const isLinked = !!detail?.crmStudent;
   const resolvedCrmStudentId = crmStudentId ?? detail?.crmStudent?.id;
@@ -605,20 +637,30 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                       </span>
                     )}
                     {isLinked && detail?.crmStudent?.portal_token ? (
+                      <>
+                        <button
+                          onClick={handleCopyPortalLink}
+                          title="학부모 포털 링크 복사"
+                          className="text-[11px] px-2 py-0.5 bg-blue-500/15 border border-blue-500/25 rounded-full text-blue-400 hover:bg-blue-500/25 transition-colors"
+                        >
+                          학부모 포털
+                        </button>
+                        <button
+                          onClick={handlePreviewPortal}
+                          title="학부모 포털 미리보기"
+                          className="text-[11px] px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-gray-400 hover:text-gray-200 transition-colors"
+                        >
+                          미리보기
+                        </button>
+                      </>
+                    ) : isLinked && resolvedCrmStudentId ? (
                       <button
-                        onClick={() => {
-                          const url = `${window.location.origin}/portal/${detail.crmStudent!.portal_token}`;
-                          navigator.clipboard.writeText(url);
-                        }}
-                        title="학부모 포털 링크 복사"
-                        className="text-[11px] px-2 py-0.5 bg-blue-500/15 border border-blue-500/25 rounded-full text-blue-400 hover:bg-blue-500/25 transition-colors"
+                        onClick={handleIssuePortal}
+                        disabled={portalIssuing}
+                        className="text-[11px] px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-gray-400 hover:text-gray-200 hover:border-white/20 transition-colors disabled:opacity-50"
                       >
-                        학부모 포털
+                        {portalIssuing ? '발급 중…' : '포털 발급'}
                       </button>
-                    ) : isLinked ? (
-                      <span className="text-[11px] px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-gray-600">
-                        포털 미발급
-                      </span>
                     ) : null}
                   </div>
                 </div>
