@@ -253,9 +253,9 @@ export function LearningView({ token }: { token: string }) {
         </div>
 
         {loading && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex gap-4 overflow-x-auto pb-4">
             {[1,2,3,4].map(i => (
-              <div key={i} className="space-y-3">
+              <div key={i} className="flex-none w-64 space-y-3">
                 <div className="h-16 bg-gray-100 rounded-xl animate-pulse" />
                 {[1,2,3].map(j => <div key={j} className="h-28 bg-white rounded-xl animate-pulse border border-gray-100" />)}
               </div>
@@ -264,8 +264,12 @@ export function LearningView({ token }: { token: string }) {
         )}
 
         {!loading && data && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {data.students.map((s, i) => <StudentColumn key={s.name} student={s} index={i} />)}
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {data.students.map((s, i) => (
+              <div key={s.name} className="flex-none w-64">
+                <StudentColumn student={s} index={i} />
+              </div>
+            ))}
           </div>
         )}
       </main>
