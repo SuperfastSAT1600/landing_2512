@@ -149,7 +149,7 @@ export default function PortalPage() {
                 <p className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
                   {meta.studentName} 학생
                 </p>
-                <p className="text-sm font-medium" style={{ color: ACCENT }}>상담 관리 리포트</p>
+                <p className="text-sm font-medium" style={{ color: ACCENT }}>학습 포털 페이지</p>
               </div>
             )}
 

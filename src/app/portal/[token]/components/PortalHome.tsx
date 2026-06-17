@@ -161,7 +161,7 @@ export default function PortalHome({ data, onNavigate, onSettings }: Props) {
           <div className="flex items-center gap-3 mb-6">
             <div className="h-px w-10" style={{ background: ACCENT }} />
             <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: ACCENT }}>
-              상담 관리 리포트
+              학습 포털 페이지
             </p>
           </div>
 

@@ -44,7 +44,7 @@ export default function PasscodeSetup({ token, onSuccess }: Props) {
       </p>
       <h2 className="text-xl font-bold text-white mb-1 text-center">비밀번호 설정</h2>
       <p className="text-sm text-slate-400 mb-7 text-center">
-        이 공간에 접근하기 위한 6자리 숫자 비밀번호를 설정해 주세요.
+        6자리 숫자 비밀번호를 설정해 주세요.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
