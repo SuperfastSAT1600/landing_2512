@@ -264,15 +264,44 @@ export function LearningView({ token, adminKey }: { token: string; adminKey?: st
           </div>
         )}
 
-        {!loading && data && (
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            {data.students.map((s, i) => (
-              <div key={s.name} className="flex-none w-64">
-                <StudentColumn student={s} index={i} />
-              </div>
-            ))}
-          </div>
-        )}
+        {!loading && data && (() => {
+          const active = data.students.filter(s => s.isActive !== false);
+          const inactive = data.students.filter(s => s.isActive === false);
+          return (
+            <>
+              {active.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">수업 중</span>
+                    <span className="text-xs text-gray-400">{active.length}명</span>
+                  </div>
+                  <div className="flex gap-4 overflow-x-auto pb-4">
+                    {active.map((s, i) => (
+                      <div key={s.name} className="flex-none w-64">
+                        <StudentColumn student={s} index={i} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {inactive.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs font-bold text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-full">수업 종료</span>
+                    <span className="text-xs text-gray-400">{inactive.length}명</span>
+                  </div>
+                  <div className="flex gap-4 overflow-x-auto pb-4 opacity-60">
+                    {inactive.map((s, i) => (
+                      <div key={s.name} className="flex-none w-64">
+                        <StudentColumn student={s} index={active.length + i} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </main>
 
       <footer className="mt-12 pb-6 text-center">

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { fetchDailyLearning } from '@/lib/learning-data';
+import { fetchB2BDailyLearning } from '@/lib/learning-data';
 import { cookies } from 'next/headers';
 
 export async function GET(
@@ -19,10 +19,10 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Fetch partner config (student list)
+  // Fetch partner config
   const { data: portal, error } = await supabaseAdmin
     .from('partner_portals')
-    .select('student_names')
+    .select('name')
     .eq('token', token)
     .single();
 
@@ -32,10 +32,9 @@ export async function GET(
 
   const { searchParams } = new URL(req.url);
   const date = searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
-  const names = (portal.student_names as string[]) ?? [];
 
   try {
-    const data = await fetchDailyLearning(names, date);
+    const data = await fetchB2BDailyLearning(portal.name as string, date);
     return NextResponse.json(data);
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'error' }, { status: 500 });

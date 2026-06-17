@@ -36,6 +36,7 @@ export interface StudentDayResult {
   name: string;
   crmStudentId: string;
   sfv2ProfileId: string | null;
+  isActive?: boolean;
   studyHall: StudyHallResult | null;
   testCenter: TestCenterResult[];
   vocab: VocabResult | null;
@@ -257,4 +258,35 @@ export async function fetchDailyLearning(names: string[], date: string): Promise
     : results;
 
   return { date, students: ordered };
+}
+
+export async function fetchB2BDailyLearning(partnerName: string, date: string): Promise<DailyLearningResponse> {
+  const { start, end } = kstDayRange(date);
+
+  const { data: students, error } = await supabaseAdmin
+    .from('students')
+    .select('id, name, portal_name, sfv2_profile_id, lead_status')
+    .eq('b2b_partner', partnerName)
+    .order('name');
+
+  if (error) throw new Error(error.message);
+
+  const results: StudentDayResult[] = await Promise.all(
+    (students ?? []).map(async (s) => {
+      const profileId = s.sfv2_profile_id as string | null;
+      const displayName = (s.portal_name as string | null) || (s.name as string);
+      const isActive = (s.lead_status as string) !== 'inactive';
+      if (!profileId) {
+        return { name: displayName, crmStudentId: s.id as string, sfv2ProfileId: null, isActive, studyHall: null, testCenter: [], vocab: null };
+      }
+      const [studyHall, testCenter, vocab] = await Promise.all([
+        fetchStudyHall(profileId, start, end),
+        fetchTestCenter(profileId, start, end),
+        fetchVocab(profileId, start, end),
+      ]);
+      return { name: displayName, crmStudentId: s.id as string, sfv2ProfileId: profileId, isActive, studyHall, testCenter, vocab };
+    })
+  );
+
+  return { date, students: results };
 }
