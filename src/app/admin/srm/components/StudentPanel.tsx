@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -158,10 +159,10 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setLoadingDetail(true);
     try {
       if (studentId) {
-        const res = await fetch(`/api/admin/srm/student/${studentId}`);
+        const res = await srmFetch(`/api/admin/srm/student/${studentId}`);
         if (res.ok) setDetail(await res.json());
       } else if (crmStudentId) {
-        const res = await fetch(`/api/admin/srm/student/crm/${crmStudentId}`);
+        const res = await srmFetch(`/api/admin/srm/student/crm/${crmStudentId}`);
         if (res.ok) {
           setDetail(await res.json());
         } else {
@@ -178,7 +179,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const fetchComms = useCallback(async () => {
     setLoadingComms(true);
     try {
-      const res = await fetch(`/api/admin/srm/communications?studentId=${commKey}`);
+      const res = await srmFetch(`/api/admin/srm/communications?studentId=${commKey}`);
       if (res.ok) setComms(await res.json());
     } catch {
       // silent
@@ -191,7 +192,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     const resolvedStudentId = crmStudentId;
     if (!studentId && !resolvedStudentId) return;
     const qp = resolvedStudentId ? `studentId=${resolvedStudentId}` : `profileId=${studentId}`;
-    const res = await fetch(`/api/admin/srm/lifecycle?${qp}`);
+    const res = await srmFetch(`/api/admin/srm/lifecycle?${qp}`);
     if (res.ok) setLifecycleData(await res.json());
   }, [studentId, crmStudentId]);
 
@@ -199,7 +200,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     if (!studentId) return;
     setLoadingV2(true);
     try {
-      const res = await fetch(`/api/admin/srm/student/${studentId}/v2-summary`);
+      const res = await srmFetch(`/api/admin/srm/student/${studentId}/v2-summary`);
       if (res.ok) setV2Summary(await res.json());
     } catch {
       // silent fail — v2 데이터 없음으로 처리
@@ -214,7 +215,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
       ? `studentId=${crmStudentId}`
       : null;
     if (!param) return;
-    const res = await fetch(`/api/admin/srm/student-issues?${param}`);
+    const res = await srmFetch(`/api/admin/srm/student-issues?${param}`);
     if (res.ok) setIssues(await res.json());
   }, [studentId, crmStudentId]);
 
@@ -296,14 +297,14 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     const resolvedId = crmStudentId ?? detail?.crmStudent?.id;
     try {
       if (studentId) {
-        await fetch(`/api/admin/srm/student/${studentId}`, {
+        await srmFetch(`/api/admin/srm/student/${studentId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ comm_language: lang }),
         });
         onLanguageChange?.(studentId, lang);
       } else if (resolvedId) {
-        await fetch(`/api/admin/srm/student/crm/${resolvedId}`, {
+        await srmFetch(`/api/admin/srm/student/crm/${resolvedId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ comm_language: lang }),
@@ -317,7 +318,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
   const handleAdd = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
-    await fetch('/api/admin/srm/communications', {
+    await srmFetch('/api/admin/srm/communications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -344,7 +345,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const handleIssueSubmit = async () => {
     if (!issueTitle) return;
     setIssueSaving(true);
-    await fetch('/api/admin/srm/student-issues', {
+    await srmFetch('/api/admin/srm/student-issues', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -367,7 +368,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const handleGenerateBrief = async () => {
     if (!resolvedCrmStudentId) return;
     setBriefing('loading');
-    const res = await fetch(`/api/admin/srm/student/crm/${resolvedCrmStudentId}/coach-brief`, {
+    const res = await srmFetch(`/api/admin/srm/student/crm/${resolvedCrmStudentId}/coach-brief`, {
       method: 'POST',
       headers: { 'x-admin-key': localStorage.getItem('admin_key') ?? '' },
     });

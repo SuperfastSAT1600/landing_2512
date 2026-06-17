@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -20,7 +21,7 @@ export function StudentSearch({ onSelect }: Props) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    fetch('/api/admin/srm/roster')
+    srmFetch('/api/admin/srm/roster')
       .then((r) => r.json())
       .then((data) => setRoster(Array.isArray(data) ? data : []));
   }, []);

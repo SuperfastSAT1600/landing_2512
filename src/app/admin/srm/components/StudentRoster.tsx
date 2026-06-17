@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -31,7 +32,7 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
       if (!q.trim()) { setResults([]); return; }
       setSearching(true);
       try {
-        const res = await fetch(`/api/admin/srm/v2-search?q=${encodeURIComponent(q)}`);
+        const res = await srmFetch(`/api/admin/srm/v2-search?q=${encodeURIComponent(q)}`);
         const json = await res.json();
         setResults(Array.isArray(json.data) ? json.data : []);
       } catch {
@@ -46,7 +47,7 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
   const handleLink = async (profileId: string) => {
     if (linking) return;
     setLinking(true);
-    await fetch('/api/admin/srm/link', {
+    await srmFetch('/api/admin/srm/link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sfv2ProfileId: profileId, crmStudentId }),
@@ -198,8 +199,8 @@ export function StudentRoster({ onStudentClick }: Props) {
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     const [rosterRes, matchRes] = await Promise.all([
-      fetch('/api/admin/srm/roster'),
-      fetch('/api/admin/srm/match-queue'),
+      srmFetch('/api/admin/srm/roster'),
+      srmFetch('/api/admin/srm/match-queue'),
     ]);
     const rosterData: RosterStudent[] = await rosterRes.json().then((d) => Array.isArray(d) ? d : []);
     const matchData: UnlinkedStudent[] = await matchRes.json().then((d) => Array.isArray(d) ? d : []);
@@ -220,7 +221,7 @@ export function StudentRoster({ onStudentClick }: Props) {
   const handleAutoLink = async (s: MergedStudent) => {
     if (!s.autoMatch || linking) return;
     setLinking(s.crmStudentId);
-    await fetch('/api/admin/srm/link', {
+    await srmFetch('/api/admin/srm/link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sfv2ProfileId: s.autoMatch.sfv2ProfileId, crmStudentId: s.crmStudentId }),

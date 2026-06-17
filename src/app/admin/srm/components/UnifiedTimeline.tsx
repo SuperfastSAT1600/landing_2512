@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useState } from 'react';
@@ -236,7 +237,7 @@ export function UnifiedTimeline({
     try {
       const eventTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
       const eventType = ev.eventType === 'coachRoom' ? 'coach_room' : 'study_hall';
-      await fetch('/api/admin/srm/copy-log', {
+      await srmFetch('/api/admin/srm/copy-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

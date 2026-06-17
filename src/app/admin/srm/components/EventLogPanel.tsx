@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -56,8 +57,8 @@ export function EventLogPanel({ event, onClose }: Props) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     const [commsRes, issuesRes] = await Promise.all([
-      fetch(`/api/admin/srm/communications?eventId=${event.id}`),
-      fetch(`/api/admin/srm/issues?eventId=${event.id}`),
+      srmFetch(`/api/admin/srm/communications?eventId=${event.id}`),
+      srmFetch(`/api/admin/srm/issues?eventId=${event.id}`),
     ]);
     const [commsData, issuesData] = await Promise.all([
       commsRes.json(),
@@ -72,7 +73,7 @@ export function EventLogPanel({ event, onClose }: Props) {
 
   const handleSave = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
-    await fetch('/api/admin/srm/communications', {
+    await srmFetch('/api/admin/srm/communications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -93,7 +94,7 @@ export function EventLogPanel({ event, onClose }: Props) {
   const handleIssueSubmit = async () => {
     if (!issueTitle.trim()) return;
     setIssueSaving(true);
-    const res = await fetch('/api/admin/srm/issues', {
+    const res = await srmFetch('/api/admin/srm/issues', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

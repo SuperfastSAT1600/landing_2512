@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -24,7 +25,7 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/admin/srm/ops-tasks?date=${date}`)
+    srmFetch(`/api/admin/srm/ops-tasks?date=${date}`)
       .then((r) => r.json())
       .then((data) => setTasks(Array.isArray(data) ? data : []))
       .finally(() => setLoading(false));
@@ -34,11 +35,11 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
     setActivitiesLoading(true);
 
     Promise.all([
-      fetch(`/api/admin/srm/copy-log?date=${date}`)
+      srmFetch(`/api/admin/srm/copy-log?date=${date}`)
         .then((r) => r.json())
         .then((res) => (Array.isArray(res.data) ? res.data : []) as CopyLogEntry[])
         .catch(() => [] as CopyLogEntry[]),
-      fetch(`/api/admin/srm/communications?date=${date}`)
+      srmFetch(`/api/admin/srm/communications?date=${date}`)
         .then((r) => r.json())
         .then((res) => (Array.isArray(res) ? res : []) as CommEntry[])
         .catch(() => [] as CommEntry[]),

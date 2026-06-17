@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -222,7 +223,7 @@ export default function DailyLearningPage() {
     setError(null);
     try {
       const namesParam = encodeURIComponent(names.join(','));
-      const res = await fetch(`/api/admin/srm/daily-learning?date=${targetDate}&names=${namesParam}`);
+      const res = await srmFetch(`/api/admin/srm/daily-learning?date=${targetDate}&names=${namesParam}`);
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       setData(await res.json());
     } catch (e) {

@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useState } from 'react';
@@ -26,7 +27,7 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/srm/communications/${entry.id}`, {
+      const res = await srmFetch(`/api/admin/srm/communications/${entry.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, reason }),

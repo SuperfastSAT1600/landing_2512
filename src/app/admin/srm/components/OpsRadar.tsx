@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -64,11 +65,11 @@ export function OpsRadar({ onStudentClick }: Props) {
     const since = weekStartIso();
     try {
       const [studentOpenRes, eventOpenRes, studentResolvedRes, eventResolvedRes, alertsRes] = await Promise.all([
-        fetch('/api/admin/srm/student-issues?status=open&limit=100'),
-        fetch('/api/admin/srm/issues?status=open&limit=100'),
-        fetch(`/api/admin/srm/student-issues?status=resolved&resolvedSince=${since}&limit=200`),
-        fetch(`/api/admin/srm/issues?status=resolved&resolvedSince=${since}&limit=200`),
-        fetch('/api/admin/srm/alerts'),
+        srmFetch('/api/admin/srm/student-issues?status=open&limit=100'),
+        srmFetch('/api/admin/srm/issues?status=open&limit=100'),
+        srmFetch(`/api/admin/srm/student-issues?status=resolved&resolvedSince=${since}&limit=200`),
+        srmFetch(`/api/admin/srm/issues?status=resolved&resolvedSince=${since}&limit=200`),
+        srmFetch('/api/admin/srm/alerts'),
       ]);
 
       const studentOpen: StudentIssue[] = studentOpenRes.ok ? await studentOpenRes.json() : [];

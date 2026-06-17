@@ -1,3 +1,4 @@
+import { srmFetch } from '../lib/srm-fetch';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,7 +20,7 @@ export function CrmLinkSection({ sfv2ProfileId, onLinked }: Props) {
       if (q.length < 1) { setCandidates([]); return; }
       setSearching(true);
       try {
-        const res = await fetch(`/api/admin/srm/crm-candidates?q=${encodeURIComponent(q)}`);
+        const res = await srmFetch(`/api/admin/srm/crm-candidates?q=${encodeURIComponent(q)}`);
         const json = await res.json();
         setCandidates(json.data ?? []);
       } finally {
@@ -33,7 +34,7 @@ export function CrmLinkSection({ sfv2ProfileId, onLinked }: Props) {
     if (linking) return;
     setLinking(true);
     try {
-      await fetch('/api/admin/srm/link', {
+      await srmFetch('/api/admin/srm/link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sfv2ProfileId, crmStudentId: candidate.id }),

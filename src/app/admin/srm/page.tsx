@@ -1,3 +1,4 @@
+import { srmFetch } from './lib/srm-fetch';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -88,7 +89,7 @@ export default function SrmPage() {
     if (mainTab !== 'queue') return;
     setScheduleLoading(true);
     setSchedule(null);
-    fetch(`/api/admin/srm/schedule?date=${selectedDate}`)
+    srmFetch(`/api/admin/srm/schedule?date=${selectedDate}`)
       .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
       .then(async (scheduleData: ScheduleResponse) => {
         setSchedule(scheduleData);
@@ -104,8 +105,8 @@ export default function SrmPage() {
         if (!allEventIds.length) { setLoggedEventIds(new Set()); return; }
 
         const [logData, commsData] = await Promise.all([
-          fetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
-          fetch(`/api/admin/srm/communications?eventIds=${allEventIds.join(',')}`).then((r) => r.json()).catch(() => []),
+          srmFetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
+          srmFetch(`/api/admin/srm/communications?eventIds=${allEventIds.join(',')}`).then((r) => r.json()).catch(() => []),
         ]);
 
         const ids = new Set<string>((logData.data ?? []).map((e: { event_id: string }) => e.event_id));
@@ -120,7 +121,7 @@ export default function SrmPage() {
   useEffect(() => {
     if (mainTab !== 'queue') return;
     setAlertsLoading(true);
-    fetch('/api/admin/srm/alerts')
+    srmFetch('/api/admin/srm/alerts')
       .then((r) => r.json())
       .then(setAlerts)
       .finally(() => setAlertsLoading(false));
@@ -128,7 +129,7 @@ export default function SrmPage() {
 
   useEffect(() => {
     if (mainTab !== 'queue') return;
-    fetch('/api/admin/srm/issues?status=open&limit=100')
+    srmFetch('/api/admin/srm/issues?status=open&limit=100')
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setOpenIssues(data); })
       .catch((err) => console.error('[SrmPage] issues fetch failed:', err));
@@ -137,9 +138,9 @@ export default function SrmPage() {
   useEffect(() => {
     if (mainTab !== 'queue') return;
     Promise.all([
-      fetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
-      fetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
-      fetch('/api/admin/srm/paused-students').then((r) => r.json()).catch(() => ({})),
+      srmFetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
+      srmFetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
+      srmFetch('/api/admin/srm/paused-students').then((r) => r.json()).catch(() => ({})),
     ]).then(([vipData, langData, pauseData]) => {
       if (Array.isArray(vipData?.sfv2ProfileIds)) {
         setVipStudentIds(new Set(vipData.sfv2ProfileIds));
