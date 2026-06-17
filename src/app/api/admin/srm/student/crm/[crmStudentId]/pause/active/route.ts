@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export async function DELETE(
-  _req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ crmStudentId: string }> }
 ) {
+  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { crmStudentId } = await params;
   const today = new Date().toISOString().slice(0, 10);
 

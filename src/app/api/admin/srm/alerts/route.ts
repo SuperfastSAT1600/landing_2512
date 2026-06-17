@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export interface NoClassAlert {
   matchingId: string;
@@ -32,7 +33,8 @@ function daysFromNow(n: number) {
   return d.toISOString();
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
   const now = new Date().toISOString();
   const past4w = weeksAgo(4);

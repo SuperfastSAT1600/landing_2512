@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { StudentIssue, } from '../route';
 import type { IssueChecklist } from '../../issues/route';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   const body = await req.json();
   const { checklist, status, description, title } = body;
@@ -32,9 +34,10 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   const { error } = await supabaseAdmin
     .from('srm_student_issues')

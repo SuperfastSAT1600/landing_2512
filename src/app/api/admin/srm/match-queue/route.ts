@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export interface AutoMatch {
   sfv2ProfileId: string;
@@ -29,7 +30,8 @@ export interface UnlinkedStudent {
 
 // GET /api/admin/srm/match-queue
 // 수업중(enrolled) CRM 학생 전체 반환 (연결 여부 무관) + 자동 매칭 후보 포함
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
   const { data: unlinked, error: crmError } = await supabaseAdmin
     .from('students')

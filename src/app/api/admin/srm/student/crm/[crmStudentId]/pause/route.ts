@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 
 async function getActivePauseByCrm(crmStudentId: string) {
   const today = new Date().toISOString().slice(0, 10);
@@ -19,9 +20,10 @@ async function getActivePauseByCrm(crmStudentId: string) {
 }
 
 export async function GET(
-  _req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ crmStudentId: string }> }
 ) {
+  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { crmStudentId } = await params;
   const pause = await getActivePauseByCrm(crmStudentId);
   return NextResponse.json({ pause });
@@ -31,6 +33,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ crmStudentId: string }> }
 ) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { crmStudentId } = await params;
   const body = await req.json() as { pause_until?: string | null; reason?: string; created_by?: string };
 

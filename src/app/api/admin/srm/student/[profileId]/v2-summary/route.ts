@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export interface V2Summary {
   recentSessions: Array<{
@@ -23,9 +24,10 @@ export interface V2Summary {
 }
 
 export async function GET(
-  _req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ profileId: string }> }
 ) {
+  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { profileId } = await params;
 
   const [sessionsResult, studyHallResult, testScoresResult, packageResult] = await Promise.allSettled([

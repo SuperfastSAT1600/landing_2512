@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export interface IssueChecklist {
   id: string;
@@ -44,6 +45,7 @@ const DEFAULT_CHECKLISTS: Record<string, IssueChecklist[]> = {
 };
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const eventId = req.nextUrl.searchParams.get('eventId');
   const status = req.nextUrl.searchParams.get('status');
   const resolvedSince = req.nextUrl.searchParams.get('resolvedSince');
@@ -70,6 +72,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const body = await req.json();
   const { eventId, issueType, title, description, checklist, createdBy, studentName, coachName } = body;
 

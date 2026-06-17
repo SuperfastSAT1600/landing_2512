@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { STAGE_LABELS, type SrmStage } from '@/app/admin/srm/lifecycle-constants';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export interface OpsTask {
   id: string;
@@ -21,6 +22,7 @@ function getKstDateStr(date: Date): string {
 
 // GET /api/admin/srm/ops-tasks?date=YYYY-MM-DD
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const dateParam = req.nextUrl.searchParams.get('date');
   const today = getKstDateStr(new Date());
   const targetDate = dateParam ?? today;

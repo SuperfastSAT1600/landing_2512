@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { sfv2ProfileId, crmStudentId } = await req.json();
   if (!sfv2ProfileId || !crmStudentId) {
     return NextResponse.json({ error: 'sfv2ProfileId and crmStudentId required' }, { status: 400 });

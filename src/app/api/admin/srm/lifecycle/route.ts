@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { NEXT_STAGE, type SrmStage } from '@/app/admin/srm/lifecycle-constants';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export type { SrmStage };
 export { STAGE_LABELS } from '@/app/admin/srm/lifecycle-constants';
@@ -38,6 +39,7 @@ function buildQuery(profileId: string | null, studentId: string | null) {
 
 // GET /api/admin/srm/lifecycle?profileId=... or ?studentId=...
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const profileId = req.nextUrl.searchParams.get('profileId');
   const studentId = req.nextUrl.searchParams.get('studentId');
 
@@ -57,6 +59,7 @@ export async function GET(req: NextRequest) {
 // POST /api/admin/srm/lifecycle
 // body: { profileId?, studentId?, stage, action: 'complete'|'set', dueDate?, note? }
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const body = await req.json();
   const { profileId, studentId, stage, action, dueDate, note } = body as {
     profileId?: string;
