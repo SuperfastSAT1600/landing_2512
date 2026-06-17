@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import type { StatsDetailMetric, StatsDetailResult } from '@/lib/crm-stats-detail';
 import { CRM_MEMBER_NAMES } from '@/lib/admin-user';
+import { FUNNEL_STAGE_LABELS, type FunnelStage } from '@/types/crm';
+
+const stageLabel = (stage: string) =>
+  FUNNEL_STAGE_LABELS[stage as FunnelStage] ?? stage;
 
 interface Props {
   adminKey: string;
@@ -11,6 +15,8 @@ interface Props {
   label: string;
   from: string;
   to: string;
+  source?: string; // 있으면 해당 유입 채널로 필터(채널 드릴다운)
+  onSelectStudent?: (id: string) => void; // 있으면 leads 이름 클릭 시 호출(상세 패널 열기)
   onClose: () => void;
 }
 
@@ -18,7 +24,7 @@ const won = (n: number) => `${n.toLocaleString()}원`;
 const kstDate = (s: string) =>
   new Date(s).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit' });
 
-export function StatsDetailModal({ adminKey, metric, label, from, to, onClose }: Props) {
+export function StatsDetailModal({ adminKey, metric, label, from, to, source, onSelectStudent, onClose }: Props) {
   const [result, setResult] = useState<StatsDetailResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,10 +41,11 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, onClose }:
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(
-          `/api/crm/stats/detail?metric=${metric}&from=${from}&to=${to}`,
-          { headers: { 'x-admin-key': adminKey } }
-        );
+        const qs = new URLSearchParams({ metric, from, to });
+        if (source != null) qs.set('source', source);
+        const res = await fetch(`/api/crm/stats/detail?${qs.toString()}`, {
+          headers: { 'x-admin-key': adminKey },
+        });
         const json = await res.json();
         if (cancelled) return;
         if (res.ok && json.data) setResult(json.data as StatsDetailResult);
@@ -50,7 +57,7 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, onClose }:
       }
     })();
     return () => { cancelled = true; };
-  }, [metric, from, to, adminKey]);
+  }, [metric, from, to, source, adminKey]);
 
   // 결제 담당자(created_by) 수동 수정 — 과거 결제 보정용
   async function updateCreatedBy(paymentId: string, value: string) {
@@ -107,16 +114,30 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, onClose }:
                   <th className="text-left py-2 px-3 font-semibold">유입 채널</th>
                   <th className="text-left py-2 px-3 font-semibold">단계</th>
                   <th className="text-left py-2 px-3 font-semibold">상태</th>
+                  <th className="text-left py-2 px-3 font-semibold">이탈 사유</th>
                   <th className="text-right py-2 pl-3 font-semibold">문의일</th>
                 </tr>
               </thead>
               <tbody>
                 {result.items.map((it) => (
                   <tr key={it.id} className="border-b border-gray-50">
-                    <td className="py-2 pr-3 text-gray-800 font-medium">{it.name}</td>
+                    <td className="py-2 pr-3 font-medium">
+                      {onSelectStudent ? (
+                        <button
+                          type="button"
+                          onClick={() => { onSelectStudent(it.id); onClose(); }}
+                          className="text-blue-700 hover:underline focus:outline-none focus:underline"
+                        >
+                          {it.name}
+                        </button>
+                      ) : (
+                        <span className="text-gray-800">{it.name}</span>
+                      )}
+                    </td>
                     <td className="py-2 px-3 text-gray-600">{it.traffic_source ?? '-'}</td>
-                    <td className="py-2 px-3 text-gray-600">{it.funnel_stage}</td>
+                    <td className="py-2 px-3 text-gray-600">{stageLabel(it.funnel_stage)}</td>
                     <td className="py-2 px-3 text-gray-600">{it.lead_status}</td>
+                    <td className="py-2 px-3 text-gray-600">{it.churn_tag ?? '-'}</td>
                     <td className="py-2 pl-3 text-right text-gray-500 tabular-nums">{it.date ? kstDate(it.date) : '-'}</td>
                   </tr>
                 ))}

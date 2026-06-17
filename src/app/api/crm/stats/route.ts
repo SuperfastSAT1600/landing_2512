@@ -13,6 +13,7 @@ export interface StatsBySource {
   conversion_rate: number;
   revenue: number;
   net_revenue: number;
+  avg_first_response_seconds: number | null; // 문의시각(inquiry_date, 없으면 created_at) → 첫 메시지 발송 평균 시간(초). 데이터 없으면 null
 }
 
 export interface StatsMonthly {
@@ -73,6 +74,24 @@ function toMonthKey(dateStr: string): string {
 }
 
 /**
+ * 첫 응답 시간 계산의 기준 문의시각(ms).
+ * inquiry_date는 naive(KST 벽시계)로 저장되므로 KST(+09:00) instant로 해석한다.
+ * inquiry_date가 없으면 created_at(UTC timestamptz)로 폴백.
+ */
+function inquiryRefMs(inquiry_date: string | null, created_at: string): number | null {
+  if (inquiry_date) {
+    const [d, t = '00:00:00'] = inquiry_date.replace(' ', 'T').split('T');
+    const [Y, Mo, D] = d.split('-').map(Number);
+    const [H = 0, Mi = 0, Se = 0] = t.split(':').map(Number);
+    if (!Y || !Mo || !D) return null;
+    // KST 벽시계 → UTC instant (= UTC 동일 시각 − 9h)
+    return Date.UTC(Y, Mo - 1, D, H, Mi, Se) - 9 * 3600 * 1000;
+  }
+  const t = new Date(created_at).getTime();
+  return Number.isFinite(t) ? t : null;
+}
+
+/**
  * GET /api/crm/stats?from=YYYY-MM-DD&to=YYYY-MM-DD
  * 유입 채널별 컨택 성공률 + 결제 전환율 (코호트 기준)
  */
@@ -96,10 +115,10 @@ export async function GET(request: NextRequest) {
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')
     .select(
-      'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, retry_strategy_id'
+      'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id'
     )
     .or(`inquiry_date.gte.${from},and(inquiry_date.is.null,created_at.gte.${from})`)
-    .or(`inquiry_date.lte.${to},and(inquiry_date.is.null,created_at.lte.${to})`);
+    .or(`inquiry_date.lte.${to}T23:59:59,and(inquiry_date.is.null,created_at.lte.${to}T23:59:59)`);
 
   if (sErr) {
     return NextResponse.json(
@@ -159,18 +178,28 @@ export async function GET(request: NextRequest) {
   // ── By Source ─────────────────────────────────────────────────────────────
   const sourceMap = new Map<
     string,
-    { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number }
+    { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number; respSum: number; respCount: number }
   >();
 
   for (const s of leadList) {
     const src = s.traffic_source ?? '미입력';
     if (!sourceMap.has(src))
-      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0, respSum: 0, respCount: 0 });
     const entry = sourceMap.get(src)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
     if (!isRetry && isContacted(s)) entry.contacted++;
     if (isPaid(s)) entry.paid++;
+    // 첫 응답 시간: 첫 메시지 발송 시각이 있는 리드만, 문의시각(inquiry_date, 없으면 created_at) 대비 경과 초.
+    const sentAt = (s as { first_message_sent_at?: string | null }).first_message_sent_at;
+    if (sentAt) {
+      const refMs = inquiryRefMs(s.inquiry_date, s.created_at);
+      const sentMs = new Date(sentAt).getTime();
+      if (refMs != null && Number.isFinite(sentMs)) {
+        const delta = (sentMs - refMs) / 1000;
+        if (delta >= 0) { entry.respSum += delta; entry.respCount++; }
+      }
+    }
   }
 
   // 채널별 결제 금액 집계 (student 매핑)
@@ -195,6 +224,7 @@ export async function GET(request: NextRequest) {
       conversion_rate: d.contacted > 0 ? Math.round((d.paid / d.contacted) * 10000) / 100 : 0,
       revenue: d.revenue,
       net_revenue: d.net_revenue,
+      avg_first_response_seconds: d.respCount > 0 ? Math.round(d.respSum / d.respCount) : null,
     }))
     .sort((a, b) => b.leads - a.leads);
 

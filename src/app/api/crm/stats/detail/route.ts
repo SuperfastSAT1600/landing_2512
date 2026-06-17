@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const metric = searchParams.get('metric') ?? '';
   const from = searchParams.get('from');
   const to = searchParams.get('to');
+  const source = searchParams.get('source') ?? undefined; // 유입 채널 드릴다운 필터
 
   if (!from || !to) return err('MISSING_PARAMS', 'from, to 파라미터가 필요합니다.', 400);
   if (!isStatsDetailMetric(metric)) return err('BAD_METRIC', `알 수 없는 metric: ${metric}`, 400);
@@ -25,10 +26,10 @@ export async function GET(request: NextRequest) {
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')
     .select(
-      'id, name, funnel_stage, stage_history, lead_status, traffic_source, inquiry_date, created_at, retry_strategy_id'
+      'id, name, funnel_stage, stage_history, lead_status, churn_tag, traffic_source, inquiry_date, created_at, retry_strategy_id'
     )
     .or(`inquiry_date.gte.${from},and(inquiry_date.is.null,created_at.gte.${from})`)
-    .or(`inquiry_date.lte.${to},and(inquiry_date.is.null,created_at.lte.${to})`);
+    .or(`inquiry_date.lte.${to}T23:59:59,and(inquiry_date.is.null,created_at.lte.${to}T23:59:59)`);
 
   if (sErr) return err('FETCH_FAILED', sErr.message, 500);
 
@@ -42,6 +43,6 @@ export async function GET(request: NextRequest) {
 
   if (pErr) return err('FETCH_FAILED', pErr.message, 500);
 
-  const result = buildStatsDetail(metric, students ?? [], payments ?? []);
+  const result = buildStatsDetail(metric, students ?? [], payments ?? [], source);
   return NextResponse.json({ data: result });
 }

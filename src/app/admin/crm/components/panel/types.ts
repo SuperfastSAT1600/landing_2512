@@ -10,6 +10,35 @@ export interface EditForm {
   inquiry_date: string; inquiry_channel: string; traffic_source: string;
   content_author: string; lead_type: string; b2b_partner: string;
   preferred_language: string; lead_tier: string;
+  first_message_sent_at: string; // datetime-local 문자열 (로컬 시각, "YYYY-MM-DDTHH:mm")
+}
+
+/** ISO timestamp → datetime-local input 값("YYYY-MM-DDTHH:mm", 로컬 시각). 없으면 ''. */
+export function toDatetimeLocal(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** datetime-local input 값 → 저장용 ISO timestamp. 비어있으면 null. */
+export function fromDatetimeLocal(local: string): string | null {
+  if (!local) return null;
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+/**
+ * naive timestamp("YYYY-MM-DDTHH:mm:ss" 또는 "YYYY-MM-DD HH:mm:ss") → datetime-local input 값.
+ * 타임존 변환 없이 문자열만 정규화한다(드리프트 방지). 날짜만 있으면 ""으로 시각 보정.
+ */
+export function toDatetimeLocalNaive(s: string | null): string {
+  if (!s) return '';
+  const norm = s.replace(' ', 'T');
+  // "YYYY-MM-DD"만 있으면 자정으로 간주
+  return norm.length <= 10 ? `${norm}T00:00` : norm.slice(0, 16);
 }
 
 export function studentToEditForm(s: Student): EditForm {
@@ -24,11 +53,12 @@ export function studentToEditForm(s: Student): EditForm {
     target_score: s.target_score?.toString() ?? '',
     target_score_2: s.target_score_2?.toString() ?? '',
     target_test_date: s.target_test_date ?? '', target_test_date_2: s.target_test_date_2 ?? '',
-    inquiry_date: s.inquiry_date ?? '', inquiry_channel: s.inquiry_channel ?? '',
+    inquiry_date: toDatetimeLocalNaive(s.inquiry_date), inquiry_channel: s.inquiry_channel ?? '',
     traffic_source: s.traffic_source ?? '', content_author: s.content_author ?? '',
     lead_type: s.lead_type ?? 'B2C', b2b_partner: s.b2b_partner ?? '',
     preferred_language: s.preferred_language ?? '',
     lead_tier: s.lead_tier ?? '',
+    first_message_sent_at: toDatetimeLocal(s.first_message_sent_at),
   };
 }
 

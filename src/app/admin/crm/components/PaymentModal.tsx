@@ -6,7 +6,7 @@ import { Student, ProductCategory, ProductSubcategory } from '@/types/crm';
 import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
 import { getAdminUserName } from '@/lib/admin-user';
 
-type ClassType = '1:1' | '그룹' | '콘텐츠';
+type ClassType = '1:1' | '1:2' | '그룹' | '콘텐츠';
 type Subject = 'SAT' | 'AP';
 
 interface Product {
@@ -26,6 +26,16 @@ const PRODUCT_TREE: Record<ClassType, Partial<Record<Subject | '_', Product[]>>>
     ],
     AP: [
       { id: 'ap_1on1', label: 'AP 정규 1:1 수업', requiresHours: true, category: 'AP 정규 1:1 수업', subcategory: '관리형 수업' },
+    ],
+  },
+  '1:2': {
+    SAT: [
+      { id: 'sat_1on2_managed',  label: 'SAT 정규 1:2 수업 (관리형)',  requiresHours: true,  category: 'SAT 정규 1:2 수업', subcategory: '관리형 수업' },
+      { id: 'sat_1on2_onepoint', label: 'SAT 정규 1:2 수업 (원포인트)', requiresHours: true,  category: 'SAT 정규 1:2 수업', subcategory: '원포인트' },
+      { id: 'sat_trial_1on2',    label: 'SAT 체험 1:2 수업',            requiresHours: false, category: 'SAT 체험 1:2 수업', subcategory: '체험수업' },
+    ],
+    AP: [
+      { id: 'ap_1on2', label: 'AP 정규 1:2 수업', requiresHours: true, category: 'AP 정규 1:2 수업', subcategory: '관리형 수업' },
     ],
   },
   '그룹': {
@@ -189,7 +199,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
           {step === 1 && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-gray-500">수업 유형을 선택하세요</p>
-              {(['1:1', '그룹', '콘텐츠'] as ClassType[]).map(ct => (
+              {(['1:1', '1:2', '그룹', '콘텐츠'] as ClassType[]).map(ct => (
                 <button
                   key={ct}
                   onClick={() => handleClassType(ct)}
@@ -197,11 +207,13 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
                 >
                   <span>
                     {ct === '1:1' && '1:1 수업'}
+                    {ct === '1:2' && '1:2 수업'}
                     {ct === '그룹' && '그룹 수업'}
                     {ct === '콘텐츠' && '콘텐츠'}
                   </span>
                   <span className="text-xs text-gray-400">
                     {ct === '1:1' && 'SAT · AP'}
+                    {ct === '1:2' && 'SAT · AP'}
                     {ct === '그룹' && 'SAT'}
                     {ct === '콘텐츠' && '단어학습 · SuperTest · 인강'}
                   </span>

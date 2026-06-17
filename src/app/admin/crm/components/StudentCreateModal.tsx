@@ -214,7 +214,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
 
           {/* 문의 날짜 */}
           <Field label="문의 날짜" error={errors.inquiry_date}>
-            <input type="date" value={form.inquiry_date} onChange={set('inquiry_date')} className={inputCls(!!errors.inquiry_date)} />
+            <input type="datetime-local" value={form.inquiry_date} onChange={set('inquiry_date')} className={inputCls(!!errors.inquiry_date)} />
           </Field>
 
           {/* 인입 분류 */}

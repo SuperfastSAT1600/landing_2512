@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { StatsDetailModal } from './StatsDetailModal';
 
 interface Overview {
   contact_rate: number;
@@ -25,7 +26,13 @@ interface SourceStat {
  * - 결제전환율: 컨택 성공 인원 중 최초결제 비율
  * - 매출: 이번 달 결제 금액 합계 (만원 단위 표기, 정확한 값은 hover)
  */
-export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
+export function KanbanStatsStrip({
+  adminKey,
+  onSelectStudent,
+}: {
+  adminKey: string;
+  onSelectStudent?: (id: string) => void;
+}) {
   // 이번 달 범위·라벨은 마운트 시 1회 캡처 (render 중 Date 직접 호출 회피)
   const [range] = useState(() => {
     const now = new Date();
@@ -41,6 +48,7 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
   });
   const [data, setData] = useState<Overview | null>(null);
   const [bySource, setBySource] = useState<SourceStat[]>([]);
+  const [detailSource, setDetailSource] = useState<string | null>(null);
 
   useEffect(() => {
     if (!adminKey) return;
@@ -120,9 +128,11 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-gray-400">
           <span className="text-gray-300">소스별</span>
           {sourceRows.map((s) => (
-            <span
+            <button
               key={s.source}
-              className="inline-flex items-center gap-1.5 rounded-md bg-gray-50 border border-gray-100 px-2 py-0.5"
+              type="button"
+              onClick={() => setDetailSource(s.source)}
+              className="inline-flex items-center gap-1.5 rounded-md bg-gray-50 border border-gray-100 px-2 py-0.5 transition-colors hover:bg-blue-50 hover:border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400/40 cursor-pointer"
             >
               <span className="font-medium text-gray-600">{s.source}</span>
               <span className="text-gray-300">({s.leads})</span>
@@ -130,9 +140,22 @@ export function KanbanStatsStrip({ adminKey }: { adminKey: string }) {
               <b className="font-semibold text-blue-600">{s.contact_rate}%</b>
               <span className="text-gray-400">전환</span>
               <b className="font-semibold text-emerald-600">{s.conversion_rate}%</b>
-            </span>
+            </button>
           ))}
         </div>
+      )}
+
+      {detailSource != null && (
+        <StatsDetailModal
+          adminKey={adminKey}
+          metric="leads"
+          label={`${detailSource} 리드`}
+          source={detailSource}
+          onSelectStudent={onSelectStudent}
+          from={range.from}
+          to={range.to}
+          onClose={() => setDetailSource(null)}
+        />
       )}
     </div>
   );

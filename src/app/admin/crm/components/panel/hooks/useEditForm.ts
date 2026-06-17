@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Student } from '@/types/crm';
 import type { EditForm } from '../types';
-import { studentToEditForm } from '../types';
+import { studentToEditForm, fromDatetimeLocal } from '../types';
 
 interface Params {
   studentId: string;
@@ -75,6 +75,7 @@ export function useEditForm({ studentId, adminKey, localStudent, setLocalStudent
         b2b_partner: editForm.lead_type === 'B2B' && editForm.b2b_partner
           ? editForm.b2b_partner as Student['b2b_partner'] : null,
         lead_tier: (editForm.lead_tier as Student['lead_tier']) || null,
+        first_message_sent_at: fromDatetimeLocal(editForm.first_message_sent_at),
       };
       const res = await fetch(`/api/crm/students/${studentId}`, {
         method: 'PATCH', headers, body: JSON.stringify(updates),

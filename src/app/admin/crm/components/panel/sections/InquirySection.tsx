@@ -12,6 +12,25 @@ import type { EditForm } from '../types';
 import { inputCls, selectCls, EditField } from './StudentInfoEdit';
 import { SectionCard } from './SectionCard';
 
+// 첫 메시지(timestamptz)를 로컬 시각 기준 "YYYY. MM. DD. HH:mm"(24시간)으로 — 문의일 표기와 통일.
+function formatDateTime(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}. ${pad(d.getMonth() + 1)}. ${pad(d.getDate())}. ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// naive timestamp 문자열을 "YYYY. MM. DD. HH:mm"으로. 자정(00:00)이면 시각 생략.
+function formatInquiry(s: string | null): string {
+  if (!s) return '—';
+  const [date, timeRaw = ''] = s.replace(' ', 'T').split('T');
+  const [y, mo, d] = date.split('-');
+  if (!y || !mo || !d) return s;
+  const hm = timeRaw.slice(0, 5);
+  return hm && hm !== '00:00' ? `${y}. ${mo}. ${d}. ${hm}` : `${y}. ${mo}. ${d}.`;
+}
+
 function InquiryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline gap-2">
@@ -66,8 +85,11 @@ export function InquirySection({
         <div className="space-y-3">
           <p className="text-[11px] text-blue-500 font-medium">편집 모드 — 저장 버튼을 눌러야 반영됩니다</p>
           <div className="grid grid-cols-2 gap-2">
-            <EditField label="문의 날짜">
-              <input type="date" value={editForm.inquiry_date} onChange={e => setEditForm({ ...editForm, inquiry_date: e.target.value })} className={inputCls} />
+            <EditField label="문의 날짜" className="col-span-2">
+              <input type="datetime-local" value={editForm.inquiry_date} onChange={e => setEditForm({ ...editForm, inquiry_date: e.target.value })} className={inputCls} />
+            </EditField>
+            <EditField label="첫 메시지 발송 시간" className="col-span-2">
+              <input type="datetime-local" value={editForm.first_message_sent_at} onChange={e => setEditForm({ ...editForm, first_message_sent_at: e.target.value })} className={inputCls} />
             </EditField>
             <EditField label="인입 채널">
               <select value={editForm.inquiry_channel} onChange={e => setEditForm({ ...editForm, inquiry_channel: e.target.value })} className={selectCls}>
@@ -117,7 +139,10 @@ export function InquirySection({
         </div>
       ) : (
         <div className="space-y-1.5">
-          <InquiryRow label="문의일" value={localStudent.inquiry_date ?? '—'} />
+          <InquiryRow label="문의일" value={formatInquiry(localStudent.inquiry_date)} />
+          {localStudent.first_message_sent_at && (
+            <InquiryRow label="첫 메시지" value={formatDateTime(localStudent.first_message_sent_at)} />
+          )}
           <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
           <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
           {localStudent.content_author && (

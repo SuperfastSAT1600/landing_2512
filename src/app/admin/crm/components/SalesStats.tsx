@@ -110,7 +110,27 @@ function RateBar({
   );
 }
 
-function SourceTable({ rows }: { rows: StatsBySource[] }) {
+// 초 단위 경과 시간을 사람이 읽기 쉬운 한글 기간으로. null이면 '-'.
+function formatDuration(seconds: number | null): string {
+  if (seconds == null) return '-';
+  if (seconds < 60) return '1분 미만';
+  const mins = Math.round(seconds / 60);
+  if (mins < 60) return `${mins}분`;
+  const hours = Math.floor(mins / 60);
+  const remMin = mins % 60;
+  if (hours < 24) return remMin > 0 ? `${hours}시간 ${remMin}분` : `${hours}시간`;
+  const days = Math.floor(hours / 24);
+  const remHour = hours % 24;
+  return remHour > 0 ? `${days}일 ${remHour}시간` : `${days}일`;
+}
+
+function SourceTable({
+  rows,
+  onSelect,
+}: {
+  rows: StatsBySource[];
+  onSelect: (source: string) => void;
+}) {
   const maxLeads = Math.max(...rows.map((r) => r.leads), 1);
 
   return (
@@ -126,6 +146,7 @@ function SourceTable({ rows }: { rows: StatsBySource[] }) {
             <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[100px]">컨택률</th>
             <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">결제</th>
             <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[100px]">전환율</th>
+            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500 whitespace-nowrap">평균 첫 응답</th>
             <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">매출</th>
             <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">수익</th>
           </tr>
@@ -134,11 +155,20 @@ function SourceTable({ rows }: { rows: StatsBySource[] }) {
           {rows.map((r) => (
             <tr
               key={r.source}
-              className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+              onClick={() => onSelect(r.source)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelect(r.source);
+                }
+              }}
+              className="border-b border-gray-50 hover:bg-blue-50/50 transition-colors cursor-pointer focus:outline-none focus:bg-blue-50"
             >
               <td className="py-2.5 pr-4">
                 <div>
-                  <p className="text-xs font-medium text-gray-800">{r.source}</p>
+                  <p className="text-xs font-medium text-blue-700 hover:underline">{r.source}</p>
                   <RateBar value={r.leads} max={maxLeads} color="bg-gray-300" />
                 </div>
               </td>
@@ -160,6 +190,9 @@ function SourceTable({ rows }: { rows: StatsBySource[] }) {
                   </span>
                   <RateBar value={r.conversion_rate} color="bg-emerald-400" />
                 </div>
+              </td>
+              <td className="text-right py-2.5 px-2 text-xs text-gray-600 whitespace-nowrap tabular-nums">
+                {formatDuration(r.avg_first_response_seconds)}
               </td>
               <td className="text-right py-2.5 px-2 text-xs text-gray-600">
                 {r.revenue > 0 ? `${(r.revenue / 10000).toFixed(0)}만` : '-'}
@@ -292,9 +325,10 @@ function StageFlowTable({ rows }: { rows: StageFlowRow[] }) {
 
 interface SalesStatsProps {
   adminKey: string;
+  onSelectStudent?: (id: string) => void; // 상세 내역에서 학생 이름 클릭 시 상세 패널 열기
 }
 
-export function SalesStats({ adminKey }: SalesStatsProps) {
+export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const [preset, setPreset] = useState<Preset>('this_month');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
@@ -302,7 +336,7 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
   const [data, setData] = useState<CrmStatsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [trendView, setTrendView] = useState<'monthly' | 'weekly'>('monthly');
-  const [detail, setDetail] = useState<{ metric: StatsDetailMetric; label: string } | null>(null);
+  const [detail, setDetail] = useState<{ metric: StatsDetailMetric; label: string; source?: string } | null>(null);
 
   const { from, to } =
     preset === 'custom' ? { from: customFrom, to: customTo } : getPresetRange(preset);
@@ -512,11 +546,17 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
 
           {/* Source breakdown */}
           <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <h3 className="text-sm font-bold text-gray-900 mb-4">유입 채널별 성과</h3>
+            <h3 className="text-sm font-bold text-gray-900 mb-1">유입 채널별 성과</h3>
+            <p className="text-[11px] text-gray-400 mb-4">채널을 클릭하면 해당 리드 명단을 볼 수 있습니다.</p>
             {d.by_source.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
             ) : (
-              <SourceTable rows={d.by_source} />
+              <SourceTable
+                rows={d.by_source}
+                onSelect={(source) =>
+                  setDetail({ metric: 'leads', label: `${source} 리드`, source })
+                }
+              />
             )}
           </div>
 
@@ -548,6 +588,8 @@ export function SalesStats({ adminKey }: SalesStatsProps) {
           adminKey={adminKey}
           metric={detail.metric}
           label={detail.label}
+          source={detail.source}
+          onSelectStudent={onSelectStudent}
           from={from}
           to={to}
           onClose={() => setDetail(null)}
