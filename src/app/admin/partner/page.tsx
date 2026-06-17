@@ -196,7 +196,7 @@ export default function AdminPartnerPage() {
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-medium rounded-lg transition-colors"
                   >
                     <ExternalLink size={12} />
-                    열기
+                    미리보기
                   </a>
                   {portal.hasPasscode && (
                     <button
