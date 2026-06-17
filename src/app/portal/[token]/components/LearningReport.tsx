@@ -231,10 +231,15 @@ export default function LearningReport({ token, studentName, studentCreatedAt }:
       .finally(() => setLoading(false));
   }, [token]);
 
-  const totalDays = data?.days.length ?? 0;
-  const totalMinutes = data?.days.flatMap(d => d.items)
-    .filter((i): i is Extract<DayItem, { type: 'study_hall' }> => i.type === 'study_hall')
-    .reduce((sum, i) => sum + i.durationMinutes, 0) ?? 0;
+  const allItems = data?.days.flatMap(d => d.items) ?? [];
+  const totalProblems = allItems.reduce((sum, i) => {
+    if (i.type === 'study_hall' || i.type === 'test_center') return sum + i.totalProblems;
+    return sum;
+  }, 0);
+  const totalVocab = allItems.reduce((sum, i) => {
+    if (i.type === 'voca') return sum + i.masteredCount;
+    return sum;
+  }, 0);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto pt-12" style={{ background: '#F4F5F9' }}>
@@ -264,16 +269,16 @@ export default function LearningReport({ token, studentName, studentCreatedAt }:
             <div className="flex-1 flex flex-col items-center justify-center rounded-2xl px-4 py-5"
               style={{ background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)' }}>
               <span className="text-5xl font-bold leading-none" style={{ color: ACCENT }}>
-                {loading ? '—' : totalDays}
+                {loading ? '—' : totalProblems}
               </span>
-              <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">학습일</span>
+              <span className="text-slate-300 text-xs mt-1.5 tracking-widest text-center">푼 문제 수</span>
             </div>
             <div className="flex-1 flex flex-col items-center justify-center rounded-2xl px-4 py-5"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <span className="text-5xl font-bold leading-none text-white">
-                {loading ? '—' : totalMinutes}
+                {loading ? '—' : totalVocab}
               </span>
-              <span className="text-slate-300 text-xs mt-1.5 uppercase tracking-widest">총 학습 분</span>
+              <span className="text-slate-300 text-xs mt-1.5 tracking-widest text-center">마스터 단어</span>
             </div>
           </div>
         </div>
