@@ -32,6 +32,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
 
   const [duplicateNames, setDuplicateNames] = useState<string[]>([]);
   const [vipToggling, setVipToggling] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [pauseUntil, setPauseUntilDate] = useState<string | null>(null);
 
   // 진단 테스트 현황(전용 퍼널) 변경 — 낙관적 반영 후 PATCH(onUpdate가 처리)
   function handleDiagFunnelChange(stage: number) {
@@ -71,6 +73,16 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
       })
       .catch(() => {});
   }, [localStudent.id, localStudent.name, adminKey]);
+
+  useEffect(() => {
+    fetch(`/api/admin/srm/student/crm/${student.id}/pause`)
+      .then(r => r.json())
+      .then((json: { pause: { pause_until: string | null } | null }) => {
+        setIsPaused(!!json.pause);
+        setPauseUntilDate(json.pause?.pause_until ?? null);
+      })
+      .catch(() => {});
+  }, [student.id]);
 
   const editFormHook = useEditForm({
     studentId: student.id, adminKey,
@@ -145,6 +157,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           <PanelHeader
             localStudent={localStudent}
             duplicateNames={duplicateNames}
+            isPaused={isPaused}
+            pauseUntil={pauseUntil}
             portalCopied={portalHook.portalCopied}
             portalLoading={portalHook.portalLoading}
             deleting={portalHook.deleting}

@@ -13,6 +13,8 @@ import { EventLogPanel } from './components/EventLogPanel';
 import type { TaggedEvent } from './components/UnifiedTimeline';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
+import type { EventIssue } from '@/app/api/admin/srm/issues/route';
+import { AlertTriangle } from 'lucide-react';
 
 // sfv2 profile ID 기준 또는 CRM student ID 기준으로 패널 열기
 interface SelectedStudent {
@@ -76,7 +78,10 @@ export default function SrmPage() {
   const [selectedCoach, setSelectedCoach] = useState<SelectedCoach | null>(null);
   const [vipStudentIds, setVipStudentIds] = useState<Set<string>>(new Set());
   const [studentLanguages, setStudentLanguages] = useState<Map<string, 'ko' | 'en'>>(new Map());
+  const [pausedStudentIds, setPausedStudentIds] = useState<Set<string>>(new Set());
+  const [loggedEventIds, setLoggedEventIds] = useState<Set<string>>(new Set());
   const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
+  const [openIssues, setOpenIssues] = useState<EventIssue[]>([]);
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
@@ -84,7 +89,30 @@ export default function SrmPage() {
     setSchedule(null);
     fetch(`/api/admin/srm/schedule?date=${selectedDate}`)
       .then((r) => r.json())
-      .then(setSchedule)
+      .then(async (scheduleData: ScheduleResponse) => {
+        setSchedule(scheduleData);
+
+        // 해당 날짜 스케줄의 모든 이벤트 ID 수집 (오늘 + 내일)
+        const allEventIds = [
+          ...(scheduleData?.today?.coachRoom ?? []),
+          ...(scheduleData?.today?.studyHall ?? []),
+          ...(scheduleData?.tomorrow?.coachRoom ?? []),
+          ...(scheduleData?.tomorrow?.studyHall ?? []),
+        ].map((e: ScheduleEvent) => e.id);
+
+        if (!allEventIds.length) { setLoggedEventIds(new Set()); return; }
+
+        const [logData, commsData] = await Promise.all([
+          fetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
+          fetch(`/api/admin/srm/communications?eventIds=${allEventIds.join(',')}`).then((r) => r.json()).catch(() => []),
+        ]);
+
+        const ids = new Set<string>((logData.data ?? []).map((e: { event_id: string }) => e.event_id));
+        (Array.isArray(commsData) ? commsData : [])
+          .filter((e: { event_id: string | null }) => e.event_id)
+          .forEach((e: { event_id: string }) => ids.add(e.event_id));
+        setLoggedEventIds(ids);
+      })
       .finally(() => setScheduleLoading(false));
   }, [selectedDate, mainTab]);
 
@@ -99,15 +127,27 @@ export default function SrmPage() {
 
   useEffect(() => {
     if (mainTab !== 'schedule') return;
+    fetch('/api/admin/srm/issues?status=open&limit=100')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setOpenIssues(data); })
+      .catch(() => {});
+  }, [mainTab, selectedEvent]);
+
+  useEffect(() => {
+    if (mainTab !== 'schedule') return;
     Promise.all([
       fetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
       fetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
-    ]).then(([vipData, langData]) => {
+      fetch('/api/admin/srm/paused-students').then((r) => r.json()).catch(() => ({})),
+    ]).then(([vipData, langData, pauseData]) => {
       if (Array.isArray(vipData?.sfv2ProfileIds)) {
         setVipStudentIds(new Set(vipData.sfv2ProfileIds));
       }
       if (langData?.languages && typeof langData.languages === 'object') {
         setStudentLanguages(new Map(Object.entries(langData.languages) as [string, 'ko' | 'en'][]));
+      }
+      if (Array.isArray(pauseData?.sfv2ProfileIds)) {
+        setPausedStudentIds(new Set(pauseData.sfv2ProfileIds));
       }
     });
   }, [mainTab]);
@@ -171,6 +211,23 @@ export default function SrmPage() {
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
       )}
 
+      {mainTab === 'schedule' && openIssues.length > 0 && (
+        <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+          <AlertTriangle size={14} className="text-orange-400 shrink-0" />
+          <span className="text-sm text-orange-300 font-medium">미해결 이슈 {openIssues.length}건</span>
+          <div className="flex gap-1.5 flex-wrap ml-1">
+            {openIssues.slice(0, 5).map((issue) => (
+              <span key={issue.id} className="text-[11px] text-orange-400/80 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">
+                {issue.student_name ?? issue.title}
+              </span>
+            ))}
+            {openIssues.length > 5 && (
+              <span className="text-[11px] text-gray-500">+{openIssues.length - 5}건 더</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {mainTab === 'schedule' && (
         <>
           <UnifiedTimeline
@@ -182,6 +239,8 @@ export default function SrmPage() {
             eventDate={selectedDate}
             vipStudentIds={vipStudentIds}
             studentLanguages={studentLanguages}
+            pausedStudentIds={pausedStudentIds}
+            loggedEventIds={loggedEventIds}
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
             onEventClick={setSelectedEvent}
