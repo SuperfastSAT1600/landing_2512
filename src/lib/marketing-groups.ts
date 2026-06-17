@@ -11,7 +11,7 @@ export const SOURCE_GROUP_MAP: Record<string, MarketingGroup> = {
   // 구글 SEO
   '(구)랜딩페이지 즉시상담': '구글 SEO',
   '(구)랜딩페이지 상담예약': '구글 SEO',
-  '튜터링 랜딩페이지': '구글 SEO',
+  '(신)랜딩 페이지 상담예약': '구글 SEO',
   '공식 블로그': '구글 SEO',
   '브런치': '구글 SEO',
   '레딧': '구글 SEO',

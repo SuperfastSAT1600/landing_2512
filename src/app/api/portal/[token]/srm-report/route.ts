@@ -1,22 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash } from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import { cookies } from 'next/headers';
 import OpenAI from 'openai';
 import type { LearningReport, DayReport, StudyHallDay, StudyHallSkill, TestCenterDay, TestCenterLesson, DailyReportDay, VocaDay } from '@/types/srm-portal';
 
-/** Box at which a vocab entry is considered fully mastered (Leitner top box). */
 const VOCAB_MASTER_BOX = 5;
-/** Max review terms surfaced per day. */
 const VOCAB_MAX_MISSED = 6;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 function toKSTDate(isoStr: string): string {
   const d = new Date(isoStr);
-  d.setHours(d.getHours() + 9); // UTC → KST
+  d.setHours(d.getHours() + 9);
   return d.toISOString().slice(0, 10);
 }
+
+// ── Cache ─────────────────────────────────────────────────────────────────────
+
+function hashInput(data: unknown): string {
+  return createHash('sha256').update(JSON.stringify(data)).digest('hex').slice(0, 16);
+}
+
+// 프로필 전체 캐시를 DB 1회 쿼리로 로드 → 이후 in-memory 조회
+async function prefetchNarrativeCache(profileId: string): Promise<Map<string, string>> {
+  const { data } = await supabaseAdmin
+    .from('portal_narrative_cache')
+    .select('report_date, item_type, input_hash, narrative')
+    .eq('profile_id', profileId);
+  const map = new Map<string, string>();
+  for (const row of data ?? []) {
+    map.set(`${row.report_date}:${row.item_type}:${row.input_hash}`, row.narrative as string);
+  }
+  return map;
+}
+
+function lookupCache(cache: Map<string, string>, date: string, itemType: string, inputHash: string): string | null {
+  return cache.get(`${date}:${itemType}:${inputHash}`) ?? null;
+}
+
+async function setCachedNarrative(profileId: string, date: string, itemType: string, inputHash: string, narrative: string): Promise<void> {
+  await supabaseAdmin
+    .from('portal_narrative_cache')
+    .upsert({ profile_id: profileId, report_date: date, item_type: itemType, input_hash: inputHash, narrative })
+    .match({ profile_id: profileId, report_date: date, item_type: itemType, input_hash: inputHash });
+}
+
+// ── Narrative generators ──────────────────────────────────────────────────────
 
 async function generateStudyHallNarrative(stats: {
   durationMinutes: number;
@@ -25,38 +56,64 @@ async function generateStudyHallNarrative(stats: {
   accuracy: number;
   skills: StudyHallSkill[];
 }): Promise<string> {
-  const topSkills = stats.skills
+  const skillLines = stats.skills
     .sort((a, b) => b.total - a.total)
-    .slice(0, 3)
-    .map(s => `${s.skill} (${s.correct}/${s.total}문항)`)
-    .join(', ');
+    .slice(0, 4)
+    .map(s => {
+      const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+      return `${s.skill}: ${s.correct}/${s.total}문항 (${acc}%)`;
+    })
+    .join(' | ');
 
-  const skillLine = topSkills
-    ? `오늘 학습한 주요 스킬: ${topSkills}`
-    : '';
+  const weakestSkill = stats.skills.length > 0
+    ? [...stats.skills].sort((a, b) => {
+        const accA = a.total > 0 ? a.correct / a.total : 1;
+        const accB = b.total > 0 ? b.correct / b.total : 1;
+        return accA - accB;
+      })[0]
+    : null;
+
+  const volumeCtx = stats.totalProblems < 15
+    ? '짧은 연습 세션'
+    : stats.totalProblems < 40
+      ? '보통 세션'
+      : '집중 세션';
+
+  const perfCtx = stats.accuracy >= 85
+    ? '우수한 성취'
+    : stats.accuracy >= 70
+      ? '안정적인 수준'
+      : stats.accuracy >= 50
+        ? '보완이 필요한 구간'
+        : '집중 분석이 필요한 상태';
+
+  const userContent = [
+    `학습 시간: ${stats.durationMinutes}분 / ${volumeCtx} / 총 ${stats.totalProblems}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
+    skillLines ? `스킬별 성취: ${skillLines}` : '',
+    weakestSkill && stats.skills.length > 1
+      ? `가장 취약한 스킬: ${weakestSkill.skill} (${weakestSkill.correct}/${weakestSkill.total}문항)`
+      : '',
+  ].filter(Boolean).join('\n');
 
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
-        content: 'SAT 학원 강사. 스터디홀 학습 데이터를 받아 3문장 리포트를 작성한다.',
+        content: `SAT 학원 코치. 스터디홀 학습 데이터를 분석해 학부모에게 보내는 오늘의 리포트를 3문장으로 작성한다.
+
+작성 원칙:
+- 숫자를 나열하는 게 아니라 그 숫자가 의미하는 학습 상태를 해석할 것
+- 정답률 톤: ≥85% → 강점·성취 강조 / 70~84% → 잘한 점과 보완점 균형 / 50~69% → 개선 방향 구체적 제시 / <50% → 어떤 유형이 흔들리는지 명확히 지목
+- 취약 스킬이 있으면 반드시 그 스킬 이름을 문장에 포함
+- 문제 볼륨(짧은 연습 vs 집중 세션)이 드러나도록 서술
+- 매번 다른 문장 구조로 시작할 것 (오늘의 핵심 성과 / 집중 스킬 / 주목할 패턴 중 하나를 lead로)
+- 마지막 문장은 다음 수업에서의 구체적 보완 액션`,
       },
-      {
-        role: 'user',
-        content: '학습 시간: 45분 / 총 문제: 60개 / 정답: 48개 / 정답률: 80%\n스킬: Words in Context (48/60문항)',
-      },
-      {
-        role: 'assistant',
-        content: 'Words in Context 스킬 60문항을 45분 동안 풀어 정답률 80%(48/60)를 기록했습니다. 틀린 12문항은 문맥 속 어휘 뉘앙스를 구별하는 유형에서 집중 발생했으며, 특히 추상 명사를 대체어로 선택하는 문항의 오답률이 높아 해당 유형을 집중 보완할 필요가 있습니다. 다음 수업에서는 Words in Context 오답 문항을 5개 선별해 오류 원인을 함께 분석하고 유사 문제로 즉시 재연습할 예정입니다.',
-      },
-      {
-        role: 'user',
-        content: `학습 시간: ${stats.durationMinutes}분 / 총 문제: ${stats.totalProblems}개 / 정답: ${stats.correctCount}개 / 정답률: ${stats.accuracy}%\n${skillLine}`,
-      },
+      { role: 'user', content: userContent },
     ],
-    max_tokens: 300,
-    temperature: 0.7,
+    max_tokens: 320,
+    temperature: 0.3,
   });
   return res.choices[0]?.message?.content?.trim() ?? '';
 }
@@ -71,35 +128,53 @@ async function generateTestCenterNarrative(stats: {
   const accuracy = stats.totalProblems > 0
     ? Math.round((stats.totalScore / stats.totalProblems) * 100)
     : 0;
+
+  const perfCtx = accuracy >= 85 ? '우수' : accuracy >= 70 ? '양호' : '보완 필요';
+
   const lessonLines = stats.lessons
-    .map(l => `${l.title ?? '모듈'}: ${l.score}/${l.total}`)
-    .join(', ');
-  const currLine = stats.curriculumTitle
-    ? `테스트: ${stats.curriculumTitle}${stats.curriculumDomain ? ` (${stats.curriculumDomain})` : ''}`
-    : '';
+    .map((l, i) => {
+      const pct = l.total > 0 ? Math.round((l.score / l.total) * 100) : 0;
+      return `${l.title ?? `Module ${i + 1}`}: ${l.score}/${l.total} (${pct}%)`;
+    })
+    .join(' | ');
+
+  let trendNote = '';
+  if (stats.lessons.length >= 2) {
+    const accs = stats.lessons.map(l => (l.total > 0 ? l.score / l.total : 0));
+    const first = accs[0];
+    const last = accs[accs.length - 1];
+    if (last - first > 0.08) trendNote = '후반 모듈로 갈수록 성취가 올라가는 상승 흐름';
+    else if (first - last > 0.08) trendNote = '후반 모듈에서 정확도가 떨어지는 흐름';
+    else trendNote = '모듈 간 일관된 성취';
+  }
+
+  const userContent = [
+    stats.curriculumTitle
+      ? `테스트: ${stats.curriculumTitle}${stats.curriculumDomain ? ` (${stats.curriculumDomain === 'reading_and_writing' ? 'RW' : stats.curriculumDomain === 'math' ? 'Math' : stats.curriculumDomain})` : ''}`
+      : '',
+    `총점: ${stats.totalScore}/${stats.totalProblems} (${accuracy}%) [${perfCtx}]`,
+    lessonLines ? `모듈별: ${lessonLines}` : '',
+    trendNote ? `흐름: ${trendNote}` : '',
+  ].filter(Boolean).join('\n');
 
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
-        content: 'SAT 학원 강사. 테스트 결과 데이터를 받아 3문장 리포트를 작성한다.',
+        content: `SAT 학원 코치. 테스트 센터 결과를 분석해 학부모에게 3문장으로 전달한다.
+
+작성 원칙:
+- 전체 정확도만 보지 말고 모듈 간 흐름(상승·유지·하락)을 해석
+- 약한 모듈이 있으면 그 모듈을 구체적으로 지목
+- 정확도 해석: ≥85% 우수 / 70~84% 양호 / <70% 보완 필요
+- 커리큘럼 제목이 있으면 반드시 언급
+- 마지막 문장은 다음 수업에서 어떤 파트를 리뷰할지로 마무리`,
       },
-      {
-        role: 'user',
-        content: '테스트: SAT Practice Test 1 (reading_and_writing)\n총 점수: 35/44 (80%)\n모듈별 점수: Module 1: 18/22, Module 2: 17/22',
-      },
-      {
-        role: 'assistant',
-        content: 'SAT Practice Test 1 RW 영역에서 44문항 중 35문항을 맞혀 정답률 80%를 기록했으며, Module 1(18/22)과 Module 2(17/22) 모두 안정적인 성취를 보였습니다. 두 모듈에서 고르게 발생한 오답은 Standard English Conventions의 접속사·문장 부호 선택 유형으로, 규칙을 암기하는 단계에서 실제 문맥에 적용하는 과정의 연습이 더 필요해 보입니다. 다음 수업에서는 해당 유형 오답 5문항을 선별해 오류 원인을 분석하고 유사 문제로 즉시 재연습하겠습니다.',
-      },
-      {
-        role: 'user',
-        content: `${currLine}\n총 점수: ${stats.totalScore}/${stats.totalProblems} (${accuracy}%)\n모듈별 점수: ${lessonLines}`,
-      },
+      { role: 'user', content: userContent },
     ],
     max_tokens: 350,
-    temperature: 0.7,
+    temperature: 0.3,
   });
   return res.choices[0]?.message?.content?.trim() ?? '';
 }
@@ -112,35 +187,47 @@ async function generateVocaNarrative(stats: {
   masteredCount: number;
   missedTerms: string[];
 }): Promise<string> {
+  const perfCtx = stats.accuracy >= 80
+    ? '잘 익어가는 단계'
+    : stats.accuracy >= 60
+      ? '꾸준히 쌓이는 중'
+      : stats.accuracy >= 40
+        ? '아직 낯선 단어가 많은 초기 단계'
+        : '집중 반복 노출이 필요한 단계';
+
   const missedLine = stats.missedTerms.length
-    ? `복습 필요 단어: ${stats.missedTerms.join(', ')}`
+    ? `복습 필요 단어(${stats.missedTerms.length}개): ${stats.missedTerms.join(', ')}`
     : '복습 필요 단어 없음';
+
+  const userContent = [
+    `단어 볼륨: ${stats.wordCount}개 학습 / 채점 ${stats.gradedCount}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
+    `마스터 단어: ${stats.masteredCount}개`,
+    missedLine,
+  ].join('\n');
 
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
-        content: 'SAT 학원 강사. 학생의 하루 어휘(단어) 학습 데이터를 받아 학부모용 3문장 리포트를 작성한다.',
+        content: `SAT 학원 코치. 하루 어휘 학습 결과를 분석해 학부모에게 3문장으로 전달한다.
+
+작성 원칙:
+- 단어 수(볼륨)와 정답률을 함께 해석: 10개 중 3개와 100개 중 30개는 완전히 다른 상황
+- 정답률 톤: ≥80% → 숙련 강조 / 60~79% → 진전 인정 + 계속 / 40~59% → 반복 필요하지만 정상 과정 / <40% → 새 단어 비중이 높음, 반복 노출이 핵심
+- 마스터 단어가 있으면 반드시 언급 (학부모에게 가장 명확한 성과 신호)
+- 복습 필요 단어가 있으면 단어를 나열하는 대신 어떤 성격의 단어인지 한 문장으로 해석 (추상어 / 유사어 혼동 / 전문 어휘 등)
+- 마지막 문장은 다음 복습 방향으로 마무리`,
       },
-      {
-        role: 'user',
-        content: '학습 단어 수: 24개 / 채점 문항: 30개 / 정답: 25개 / 정답률: 83% / 마스터: 4개\n복습 필요 단어: capricious, ephemeral',
-      },
-      {
-        role: 'assistant',
-        content: '오늘 24개 단어를 30문항으로 학습해 정답률 83%(25/30)를 기록했고, 4개 단어가 완전 암기 단계(마스터)에 도달했습니다. capricious·ephemeral처럼 추상적 의미의 단어에서 오답이 집중되어, 의미가 비슷한 단어를 혼동하는 패턴이 보입니다. 내일은 복습 단어를 예문과 함께 다시 노출해 장기 기억으로 굳히겠습니다.',
-      },
-      {
-        role: 'user',
-        content: `학습 단어 수: ${stats.wordCount}개 / 채점 문항: ${stats.gradedCount}개 / 정답: ${stats.correctCount}개 / 정답률: ${stats.accuracy}% / 마스터: ${stats.masteredCount}개\n${missedLine}`,
-      },
+      { role: 'user', content: userContent },
     ],
     max_tokens: 300,
-    temperature: 0.7,
+    temperature: 0.3,
   });
   return res.choices[0]?.message?.content?.trim() ?? '';
 }
+
+// ── Main handler ──────────────────────────────────────────────────────────────
 
 export async function GET(
   _req: NextRequest,
@@ -166,14 +253,16 @@ export async function GET(
 
   const profileId = student.sfv2_profile_id;
 
-  // 4가지 데이터 병렬 조회
+  // 캐시 + 모든 학습 데이터를 동시에 가져옴 (DB 왕복 최소화)
   const [
+    narrativeCache,
     { data: shSessions },
     { data: shAttempts },
     { data: tcAttempts },
     { data: dailyReports },
     { data: vocabEvents },
   ] = await Promise.all([
+    prefetchNarrativeCache(profileId),
     supabaseSFv2.from('study_hall_session')
       .select('id, started_at, ended_at')
       .eq('user_id', profileId)
@@ -195,7 +284,6 @@ export async function GET(
       .eq('status', 'sent')
       .order('report_date', { ascending: false })
       .limit(30),
-    // vocab graded events (vocab schema). subject_id === sfv2_profile_id (auth user id).
     supabaseSFv2.schema('vocab').from('events')
       .select('entry_id, is_correct, prev_box, new_box, occurred_at')
       .eq('subject_id', profileId)
@@ -204,7 +292,6 @@ export async function GET(
       .limit(1000),
   ]);
 
-  // units 메타데이터 조회 (skill, domain 집계용)
   const unitIds = [...new Set((shAttempts ?? []).map(a => a.unit_id as string).filter(Boolean))];
   const { data: unitsMeta } = unitIds.length
     ? await supabaseSFv2.from('units').select('id, skill, domain').in('id', unitIds)
@@ -214,7 +301,6 @@ export async function GET(
     if (u.id && u.skill) unitsMap.set(u.id, { skill: u.skill as string, domain: u.domain as string });
   }
 
-  // test_center 룩업: session 날짜 + lesson 제목 + curriculum 제목 (병렬)
   const tcSessionIds = [...new Set((tcAttempts ?? []).map(a => a.test_center_session_id as string).filter(Boolean))];
   const tcLessonIds  = [...new Set((tcAttempts ?? []).map(a => a.lesson_id as string).filter(Boolean))];
   const tcCurriculumIds = [...new Set((tcAttempts ?? []).map(a => a.curriculum_id as string).filter(Boolean))];
@@ -235,7 +321,6 @@ export async function GET(
       : { data: [] },
   ]);
 
-  // 룩업 맵
   const lessonTitleMap = new Map<string, string>();
   for (const l of tcLessons ?? []) {
     if (l.id && l.title) lessonTitleMap.set(l.id as string, l.title as string);
@@ -245,21 +330,19 @@ export async function GET(
     if (c.id && c.title) curriculumMap.set(c.id, { title: c.title as string, domain: (c.domain as string) ?? '' });
   }
 
-  // 날짜별 맵 구성
   const dayMap = new Map<string, DayReport>();
-
   function getOrCreate(date: string): DayReport {
     if (!dayMap.has(date)) dayMap.set(date, { date, items: [] });
     return dayMap.get(date)!;
   }
 
-  // ── Study Hall ─────────────────────────────────────────────────────────
+  // ── Study Hall ────────────────────────────────────────────────────────────
+
   const shSessionMap = new Map<string, { started_at: string; ended_at: string }>();
   for (const s of shSessions ?? []) {
     shSessionMap.set(s.id, { started_at: s.started_at, ended_at: s.ended_at });
   }
 
-  // 세션별 집계 → 날짜별 집계
   const shBySession = new Map<string, { total: number; correct: number }>();
   for (const a of shAttempts ?? []) {
     const sid = a.study_hall_session_id as string;
@@ -269,7 +352,6 @@ export async function GET(
     if (a.is_correct) e.correct++;
   }
 
-  // 세션별 스킬 집계
   const shSkillsBySession = new Map<string, Map<string, { skill: string; domain: string; correct: number; total: number }>>();
   for (const a of shAttempts ?? []) {
     const sid = a.study_hall_session_id as string;
@@ -296,7 +378,6 @@ export async function GET(
     d.totalMinutes += minutes;
     d.totalProblems += stats.total;
     d.correctCount += stats.correct;
-    // 스킬 병합
     const sessionSkills = shSkillsBySession.get(sid);
     if (sessionSkills) {
       for (const [skillKey, sk] of sessionSkills) {
@@ -308,16 +389,29 @@ export async function GET(
     }
   }
 
-  // AI 서술 생성 (병렬)
   await Promise.all(
     Array.from(shByDate.entries()).map(async ([date, stats]) => {
       const accuracy = stats.totalProblems > 0
         ? Math.round((stats.correctCount / stats.totalProblems) * 100)
         : 0;
       const skills = Array.from(stats.skillMap.values());
-      const narrative = stats.totalProblems > 0
-        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills })
-        : `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
+
+      const cacheInput = {
+        durationMinutes: stats.totalMinutes,
+        totalProblems: stats.totalProblems,
+        correctCount: stats.correctCount,
+        accuracy,
+        skills: [...skills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })),
+      };
+      const inputHash = hashInput(cacheInput);
+
+      let narrative = lookupCache(narrativeCache, date, 'study_hall', inputHash);
+      if (!narrative) {
+        narrative = stats.totalProblems > 0
+          ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills })
+          : `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
+        await setCachedNarrative(profileId, date, 'study_hall', inputHash, narrative);
+      }
 
       const item: StudyHallDay = {
         type: 'study_hall',
@@ -332,7 +426,8 @@ export async function GET(
     })
   );
 
-  // ── Test Center ─────────────────────────────────────────────────────────
+  // ── Test Center ───────────────────────────────────────────────────────────
+
   const tcSessionDateMap = new Map<string, string>();
   for (const s of tcSessions ?? []) {
     tcSessionDateMap.set(s.id, toKSTDate(s.started_at));
@@ -350,11 +445,7 @@ export async function GET(
     if (!tcBySession.has(sid)) {
       const currId = a.curriculum_id as string | undefined;
       const curriculum = currId ? curriculumMap.get(currId) : undefined;
-      tcBySession.set(sid, {
-        lessons: [],
-        curriculumTitle: curriculum?.title,
-        curriculumDomain: curriculum?.domain,
-      });
+      tcBySession.set(sid, { lessons: [], curriculumTitle: curriculum?.title, curriculumDomain: curriculum?.domain });
     }
     const lessonId = a.lesson_id as string | undefined;
     tcBySession.get(sid)!.lessons.push({
@@ -364,21 +455,35 @@ export async function GET(
     });
   }
 
-  // AI 서술 생성 (병렬)
   await Promise.all(
     Array.from(tcBySession.entries()).map(async ([sid, data]) => {
       const date = tcSessionDateMap.get(sid)!;
       const totalScore = data.lessons.reduce((s, x) => s + x.score, 0);
       const totalProblems = data.lessons.reduce((s, x) => s + x.total, 0);
-      const narrative = totalProblems > 0
-        ? await generateTestCenterNarrative({
+
+      const cacheInput = {
+        curriculumTitle: data.curriculumTitle,
+        curriculumDomain: data.curriculumDomain,
+        totalScore,
+        totalProblems,
+        lessons: data.lessons.map(l => ({ title: l.title, score: l.score, total: l.total })),
+      };
+      const inputHash = hashInput(cacheInput);
+
+      let narrative: string | undefined;
+      if (totalProblems > 0) {
+        narrative = lookupCache(narrativeCache, date, 'test_center', inputHash) ?? undefined;
+        if (!narrative) {
+          narrative = await generateTestCenterNarrative({
             curriculumTitle: data.curriculumTitle,
             curriculumDomain: data.curriculumDomain,
             totalScore,
             totalProblems,
             lessons: data.lessons,
-          })
-        : undefined;
+          });
+          await setCachedNarrative(profileId, date, 'test_center', inputHash, narrative);
+        }
+      }
 
       const item: TestCenterDay = {
         type: 'test_center',
@@ -393,16 +498,17 @@ export async function GET(
     })
   );
 
-  // ── Daily Reports (레슨 피드백) ─────────────────────────────────────────
+  // ── Daily Reports ─────────────────────────────────────────────────────────
+
   for (const dr of dailyReports ?? []) {
-    const item: DailyReportDay = {
+    getOrCreate(dr.report_date as string).items.push({
       type: 'daily_report',
       reportMd: dr.report_md as string,
-    };
-    getOrCreate(dr.report_date as string).items.push(item);
+    } satisfies DailyReportDay);
   }
 
-  // ── Vocab (단어) ──────────────────────────────────────────────────────────
+  // ── Vocab ─────────────────────────────────────────────────────────────────
+
   type VocaAgg = {
     entryIds: Set<string>;
     gradedCount: number;
@@ -428,10 +534,7 @@ export async function GET(
     if (newBox >= VOCAB_MASTER_BOX && prevBox < VOCAB_MASTER_BOX) agg.masteredIds.add(entryId);
   }
 
-  // Resolve missed entry ids → terms (single lookup across all days).
-  const missedEntryIds = [...new Set(
-    Array.from(vocaByDate.values()).flatMap(a => a.missedIds)
-  )];
+  const missedEntryIds = [...new Set(Array.from(vocaByDate.values()).flatMap(a => a.missedIds))];
   const { data: vocabEntries } = missedEntryIds.length
     ? await supabaseSFv2.schema('vocab').from('entries').select('id, term').in('id', missedEntryIds)
     : { data: [] };
@@ -452,11 +555,23 @@ export async function GET(
         .filter((t): t is string => Boolean(t))
         .slice(0, VOCAB_MAX_MISSED);
 
-      const narrative = await generateVocaNarrative({
-        wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms,
-      });
+      const cacheInput = {
+        wordCount,
+        gradedCount: agg.gradedCount,
+        correctCount: agg.correctCount,
+        accuracy,
+        masteredCount,
+        missedTerms: [...missedTerms].sort(),
+      };
+      const inputHash = hashInput(cacheInput);
 
-      const item: VocaDay = {
+      let narrative = lookupCache(narrativeCache, date, 'voca', inputHash);
+      if (!narrative) {
+        narrative = await generateVocaNarrative({ wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms });
+        await setCachedNarrative(profileId, date, 'voca', inputHash, narrative);
+      }
+
+      getOrCreate(date).items.push({
         type: 'voca',
         wordCount,
         gradedCount: agg.gradedCount,
@@ -465,15 +580,10 @@ export async function GET(
         masteredCount,
         missedTerms,
         aiNarrative: narrative,
-      };
-      getOrCreate(date).items.push(item);
+      } satisfies VocaDay);
     })
   );
 
-  // 날짜 내림차순 정렬
   const days = Array.from(dayMap.values()).sort((a, b) => b.date.localeCompare(a.date));
-
-  const report: LearningReport = { days };
-  return NextResponse.json(report);
+  return NextResponse.json({ days } satisfies LearningReport);
 }
-

@@ -10,7 +10,7 @@ import type { TrafficSource } from '@/types/crm';
 const ALL_SOURCES: TrafficSource[] = [
   '네이버 검색 후 상담예약', '구글폼에서 즉시상담', '네이버 카페',
   '(구)랜딩페이지 즉시상담', '(구)랜딩페이지 상담예약',
-  '튜터링 랜딩페이지', '공식 블로그', '브런치', '레딧',
+  '(신)랜딩 페이지 상담예약', '공식 블로그', '브런치', '레딧',
   '인스타그램 오가닉', '인스타그램 광고',
   '소개/추천', '책', '기존DB', '대표전화',
   'B2B 파트너',
@@ -32,7 +32,7 @@ describe('SOURCE_GROUP_MAP', () => {
   it('maps google sources to 구글 SEO', () => {
     const googleSources: TrafficSource[] = [
       '(구)랜딩페이지 즉시상담', '(구)랜딩페이지 상담예약',
-      '튜터링 랜딩페이지', '공식 블로그', '브런치', '레딧',
+      '(신)랜딩 페이지 상담예약', '공식 블로그', '브런치', '레딧',
     ];
     for (const src of googleSources) {
       expect(SOURCE_GROUP_MAP[src]).toBe('구글 SEO');
