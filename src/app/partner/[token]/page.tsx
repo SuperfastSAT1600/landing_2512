@@ -19,7 +19,7 @@ export default function PartnerPortalPage() {
   const { token } = useParams<{ token: string }>();
   const [state, setState] = useState<State>('loading');
   const [meta, setMeta] = useState<PortalMeta | null>(null);
-  const { isAuthenticated: isAdmin, loading: adminLoading } = useAdminAuth();
+  const { isAuthenticated: isAdmin, loading: adminLoading, adminKey } = useAdminAuth();
 
   const checkPortal = useCallback(async () => {
     setState('loading');
@@ -88,7 +88,7 @@ export default function PartnerPortalPage() {
             어드민 미리보기 모드 — 비밀번호 없이 접속됨
           </div>
         )}
-        <LearningView token={token} />
+        <LearningView token={token} adminKey={isAdmin ? adminKey : undefined} />
       </>
     );
   }

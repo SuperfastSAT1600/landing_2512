@@ -178,7 +178,7 @@ function StudentColumn({ student, index }: { student: StudentDayResult; index: n
   );
 }
 
-export function LearningView({ token }: { token: string }) {
+export function LearningView({ token, adminKey }: { token: string; adminKey?: string }) {
   const [date, setDate] = useState(DEFAULT_DATE);
   const [data, setData] = useState<DailyLearningResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -188,7 +188,8 @@ export function LearningView({ token }: { token: string }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/partner/${token}/learning?date=${targetDate}`);
+      const headers: HeadersInit = adminKey ? { 'x-admin-key': adminKey } : {};
+      const res = await fetch(`/api/partner/${token}/learning?date=${targetDate}`, { headers });
       if (!res.ok) throw new Error(`데이터를 불러오지 못했습니다 (${res.status})`);
       setData(await res.json());
     } catch (e) {
@@ -196,7 +197,7 @@ export function LearningView({ token }: { token: string }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, adminKey]);
 
   useEffect(() => { load(date); }, [date, load]);
 

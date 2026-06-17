@@ -9,10 +9,13 @@ export async function GET(
 ) {
   const { token } = await params;
 
-  // Verify session cookie
+  // Verify session cookie OR admin key header
   const cookieStore = await cookies();
   const session = cookieStore.get(`partner_session_${token}`);
-  if (!session || session.value !== 'authenticated') {
+  const adminKeyHeader = req.headers.get('x-admin-key');
+  const isAdminRequest = adminKeyHeader && adminKeyHeader === process.env.ADMIN_SECRET_KEY;
+
+  if (!isAdminRequest && (!session || session.value !== 'authenticated')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
