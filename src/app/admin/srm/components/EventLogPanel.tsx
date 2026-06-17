@@ -9,6 +9,7 @@ import type { CommEntry, EventContext } from './CommLog';
 import type { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { EventIssue } from '@/app/api/admin/srm/issues/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
+import { getAdminName } from '@/lib/admin-user';
 
 type EventType = 'coachRoom' | 'studyHall';
 
@@ -29,11 +30,6 @@ const ISSUE_TYPES = [
   { value: 'no_show', label: '노쇼' },
   { value: 'custom', label: '기타' },
 ] as const;
-
-function getAdminName() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('admin_user_name') ?? '';
-}
 
 export function EventLogPanel({ event, onClose }: Props) {
   const [comms, setComms] = useState<CommEntry[]>([]);

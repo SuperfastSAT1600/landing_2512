@@ -2,6 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles, Plus, AlertTriangle } from 'lucide-react';
+import {
+  PARTY_LABELS,
+  PARTY_COLORS,
+  CHANNEL_LABELS,
+  CHANNEL_COLORS,
+  RESOLUTION_LABELS,
+  TRIGGER_BADGE_LABELS,
+} from '@/app/admin/srm/comm-constants';
+import { getAdminName } from '@/lib/admin-user';
 import { AddForm } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
 import type { EventContext } from './CommLog';
@@ -20,52 +29,6 @@ const TRIGGER_LABELS: Record<string, string> = {
   late: '지각 알림',
   no_class: '수업 미잡힘 알림',
   no_study_hall: '스터디홀 미세팅 알림',
-};
-
-const PARTY_LABELS: Record<string, string> = {
-  student: '학생',
-  parent: '학부모',
-  coach: '코치',
-  us: '우리',
-};
-
-const PARTY_COLORS: Record<string, string> = {
-  student: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  parent: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  coach: 'bg-green-500/20 text-green-300 border-green-500/30',
-  us: 'bg-red-500/20 text-red-300 border-red-500/30',
-};
-
-const CHANNEL_LABELS: Record<string, string> = {
-  kakao: '카카오',
-  call: '전화',
-  sms: 'SMS',
-  email: '이메일',
-  other: '기타',
-};
-
-const CHANNEL_COLORS: Record<string, string> = {
-  kakao: 'bg-yellow-500/20 text-yellow-300',
-  call: 'bg-blue-500/20 text-blue-300',
-  sms: 'bg-green-500/20 text-green-300',
-  email: 'bg-purple-500/20 text-purple-300',
-  other: 'bg-gray-500/20 text-gray-300',
-};
-
-const RESOLUTION_LABELS: Record<string, string> = {
-  scheduled: '일정잡음',
-  will_contact: '다음연락',
-  no_intent: '의향없음',
-  unreachable: '연락불가',
-  resolved: '해결됨',
-  other: '기타',
-};
-
-const TRIGGER_BADGE_LABELS: Record<string, string> = {
-  no_show: '미접속',
-  late: '지각',
-  no_class: '수업미잡힘',
-  no_study_hall: '스터디홀미세팅',
 };
 
 interface ConsultationEntry {
@@ -117,11 +80,6 @@ function InfoRow({ label, value, small }: { label: string; value: string; small?
       <span className={`${small ? 'text-xs' : 'text-sm'} text-gray-300 break-all`}>{value}</span>
     </div>
   );
-}
-
-function getAdminName() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('admin_user_name') ?? '';
 }
 
 function sessionStatusLabel(status: string): string {

@@ -5,21 +5,11 @@ import { AlertTriangle, Clock } from 'lucide-react';
 import type { OpsTask } from '@/app/api/admin/srm/ops-tasks/route';
 import type { CopyLogEntry } from '@/app/api/admin/srm/copy-log/route';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
+import { CHANNEL_LABELS, TRIGGER_BADGE_LABELS } from '@/app/admin/srm/comm-constants';
 
 type ActivityItem =
   | { kind: 'copy'; data: CopyLogEntry }
   | { kind: 'comm'; data: CommEntry };
-
-const CHANNEL_LABELS: Record<string, string> = {
-  kakao: '카카오', call: '전화', sms: 'SMS', email: '이메일', other: '기타',
-};
-
-const TRIGGER_BADGE_LABELS: Record<string, string> = {
-  no_show: '미접속',
-  late: '지각',
-  no_class: '수업미잡힘',
-  no_study_hall: '스터디홀',
-};
 
 interface Props {
   date: string;

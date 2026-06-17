@@ -4,11 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { CommLog } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
-
-function getAdminName() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('admin_user_name') ?? '';
-}
+import { getAdminName } from '@/lib/admin-user';
 
 interface RelatedStudent {
   name: string;

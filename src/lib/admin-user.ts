@@ -7,6 +7,8 @@ export function getAdminUserName(): string {
   return localStorage.getItem('admin_user_name') || '';
 }
 
+export const getAdminName = getAdminUserName;
+
 /**
  * CRM 담당자(세일즈) 명단 — 결제 담당자 수동 지정 드롭다운 등에 사용.
  * 로그인 코드 매핑(api/admin/auth)과 이름이 일치해야 한다.

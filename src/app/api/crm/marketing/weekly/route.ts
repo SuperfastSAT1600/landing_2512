@@ -4,6 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { hasReachedStage } from '@/lib/funnel-stats';
 import { getMarketingGroup, MARKETING_GROUPS } from '@/lib/marketing-groups';
 import type { MarketingGroup } from '@/lib/marketing-groups';
+import { netAmount } from '@/lib/payment-utils';
 
 export const WEEKLY_TARGET = 35;
 
@@ -39,10 +40,6 @@ function getDaysElapsed(weekStart: string, today: string): number {
 
 function getWeekLabel(year: number, week: number): string {
   return `${year}년 ${week}주차`;
-}
-
-function netAmount(p: { amount: number; tax_type?: string | null }): number {
-  return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
 }
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────

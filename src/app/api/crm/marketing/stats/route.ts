@@ -10,6 +10,7 @@ import type {
   MarketingSourceStats,
   MarketingStatsResponse,
 } from '@/types/marketing';
+import { netAmount } from '@/lib/payment-utils';
 
 type StudentRow = {
   id: string;
@@ -33,10 +34,6 @@ type PaymentRow = {
 
 function isContacted(s: StudentRow): boolean {
   return hasReachedStage(s, '2');
-}
-
-function netAmount(p: { amount: number; tax_type?: string | null }): number {
-  return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
 }
 
 function contactRate(contacted: number, leads: number): number {

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { computeStageFlow, hasReachedStage, type StageFlowRow } from '@/lib/funnel-stats';
+import { netAmount } from '@/lib/payment-utils';
 
 export interface StatsBySource {
   source: string;
@@ -144,10 +145,6 @@ export async function GET(request: NextRequest) {
   let totalNetRevenue = 0;
   let grossRevenue = 0;
   let totalRefund = 0;
-
-  function netAmount(p: { amount: number; tax_type?: string | null }): number {
-    return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
-  }
 
   for (const p of paymentList) {
     totalRevenue += p.amount;
