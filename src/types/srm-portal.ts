@@ -38,9 +38,18 @@ export interface DailyReportDay {
 
 export interface VocaDay {
   type: 'voca';
-  totalSessions: number;
+  /** distinct words studied that day */
+  wordCount: number;
+  /** graded answers that day */
+  gradedCount: number;
   correctCount: number;
+  /** accuracy %, 0–100 */
+  accuracy: number;
+  /** words that reached mastery (box 5 / status mastered) that day */
   masteredCount: number;
+  /** terms missed that day, for next-day review (capped) */
+  missedTerms: string[];
+  aiNarrative: string;
 }
 
 export type DayItem = StudyHallDay | TestCenterDay | DailyReportDay | VocaDay;
