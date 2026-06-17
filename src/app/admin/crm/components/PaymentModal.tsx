@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, CreditCard, ChevronLeft, Crown } from 'lucide-react';
 import { Student, ProductCategory, ProductSubcategory } from '@/types/crm';
 import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
+import { getAdminUserName } from '@/lib/admin-user';
 
 type ClassType = '1:1' | '그룹' | '콘텐츠';
 type Subject = 'SAT' | 'AP';
@@ -128,6 +129,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
           amount: Number(amount),
           tax_type: taxType,
           is_vip: isVip,
+          created_by: getAdminUserName(),
         }),
       });
       if (!res.ok) {

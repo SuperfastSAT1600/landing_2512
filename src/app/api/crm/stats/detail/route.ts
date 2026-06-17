@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   // 기간 내 결제/환불 행
   const { data: payments, error: pErr } = await supabaseAdmin
     .from('payments')
-    .select('student_id, student_name, product, amount, payment_type, tax_type, paid_at')
+    .select('id, student_id, student_name, product, amount, payment_type, tax_type, paid_at, created_by')
     .gte('paid_at', `${from}T00:00:00`)
     .lte('paid_at', `${to}T23:59:59`)
     .order('paid_at', { ascending: true });

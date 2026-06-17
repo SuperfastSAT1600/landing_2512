@@ -20,14 +20,14 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { refund_amount: number; refund_reason: string; churn_type: ChurnType };
+  let body: { refund_amount: number; refund_reason: string; churn_type: ChurnType; created_by?: string | null };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { refund_amount, refund_reason, churn_type } = body;
+  const { refund_amount, refund_reason, churn_type, created_by } = body;
   if (!refund_amount || refund_amount <= 0 || !refund_reason?.trim()) {
     return NextResponse.json({ error: '환불 금액과 사유가 필요합니다.' }, { status: 400 });
   }
@@ -56,6 +56,7 @@ export async function POST(
       notes: refund_reason,
       tax_type: '면세',
       paid_at: new Date().toISOString(),
+      created_by: created_by ?? null,
     });
 
   if (paymentErr) {

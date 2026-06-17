@@ -29,6 +29,7 @@ export interface LeadDetailItem {
 
 /** kind=payments 항목: 결제/환불 행 */
 export interface PaymentDetailItem {
+  id: string | null; // payments.id — 담당자 수동 편집(PATCH)용
   student_name: string;
   product: string | null;
   amount: number;
@@ -36,6 +37,7 @@ export interface PaymentDetailItem {
   tax_type: string | null;
   payment_type: string | null;
   paid_at: string;
+  created_by: string | null; // 결제를 입력한 담당자
 }
 
 export type StatsDetailResult =
@@ -55,6 +57,7 @@ type StudentRow = {
 };
 
 type PaymentRow = {
+  id?: string | null;
   student_id: string | null;
   student_name: string;
   product: string | null;
@@ -62,6 +65,7 @@ type PaymentRow = {
   payment_type: string | null;
   tax_type: string | null;
   paid_at: string;
+  created_by?: string | null;
 };
 
 function netAmount(p: { amount: number; tax_type?: string | null }): number {
@@ -81,6 +85,7 @@ function toLeadItem(s: StudentRow): LeadDetailItem {
 
 function toPaymentItem(p: PaymentRow): PaymentDetailItem {
   return {
+    id: p.id ?? null,
     student_name: p.student_name,
     product: p.product,
     amount: p.amount,
@@ -88,6 +93,7 @@ function toPaymentItem(p: PaymentRow): PaymentDetailItem {
     tax_type: p.tax_type,
     payment_type: p.payment_type,
     paid_at: p.paid_at,
+    created_by: p.created_by ?? null,
   };
 }
 
