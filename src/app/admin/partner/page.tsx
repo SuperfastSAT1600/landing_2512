@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Copy, Check, ExternalLink, Plus, RotateCcw } from 'lucide-react';
 
+function getAdminKey(): string {
+  return localStorage.getItem('admin_key') || '';
+}
+
 interface CrmStudent {
   name: string;
   isActive: boolean;
@@ -29,7 +33,9 @@ export default function AdminPartnerPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch('/api/admin/srm/partner-portals');
+    const res = await fetch('/api/admin/srm/partner-portals', {
+      headers: { 'x-admin-key': getAdminKey() },
+    });
     if (res.ok) setPortals(await res.json());
     setLoading(false);
   }
@@ -45,7 +51,10 @@ export default function AdminPartnerPage() {
 
   async function handleResetPasscode(token: string, name: string) {
     if (!window.confirm(`"${name}" 포털의 비밀번호를 초기화할까요?\n파트너가 다음 접속 시 새 비밀번호를 설정하게 됩니다.`)) return;
-    const res = await fetch(`/api/admin/srm/partner-portals/${token}/reset-passcode`, { method: 'POST' });
+    const res = await fetch(`/api/admin/srm/partner-portals/${token}/reset-passcode`, {
+      method: 'POST',
+      headers: { 'x-admin-key': getAdminKey() },
+    });
     if (res.ok) { load(); }
     else alert('초기화에 실패했습니다.');
   }
@@ -56,7 +65,7 @@ export default function AdminPartnerPage() {
     setCreateLoading(true);
     const res = await fetch('/api/admin/srm/partner-portals', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
       body: JSON.stringify({ name: newName.trim() }),
     });
     setCreateLoading(false);
