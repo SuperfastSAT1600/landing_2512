@@ -86,10 +86,8 @@ export default function PartnerPortalPage() {
         <div className="inline-flex items-center gap-2 mb-4">
           <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">SuperfastSAT</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">파트너 포털</h1>
-        {meta?.partnerName && (
-          <p className="text-sm text-gray-500">{meta.partnerName}</p>
-        )}
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">{meta?.partnerName ?? '파트너 포털'}</h1>
+        <p className="text-sm text-gray-500">파트너 포털</p>
       </div>
 
       {/* Auth card */}
