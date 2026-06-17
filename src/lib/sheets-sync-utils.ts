@@ -163,7 +163,7 @@ const TAB_META: Record<SheetsSyncPayload['source_tab'], TabMeta> = {
   'SuperTest 수요조사':            { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 광고' },
   'tutoring_landing':              { inquiryChannel: '구글 상담시트',   trafficSource: '튜터링 랜딩페이지' },
   'instagram':                     { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 오가닉' },
-  'landing':                       { inquiryChannel: '구글 상담시트',   trafficSource: '(구)랜딩페이지' },
+  'landing':                       { inquiryChannel: '구글 상담시트',   trafficSource: '(구)랜딩페이지 상담예약' },
 };
 
 export function buildCrmPayload(p: SheetsSyncPayload): CreateStudentInput {
