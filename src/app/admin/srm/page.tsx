@@ -1,5 +1,5 @@
-import { srmFetch } from './lib/srm-fetch';
 'use client';
+import { srmFetch } from './lib/srm-fetch';
 
 import { useState, useEffect } from 'react';
 import { DayTabs, getKstDateStr } from './components/DayTabs';

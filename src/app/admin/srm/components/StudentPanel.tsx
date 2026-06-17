@@ -1,5 +1,5 @@
-import { srmFetch } from '../lib/srm-fetch';
 'use client';
+import { srmFetch } from '../lib/srm-fetch';
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles, Plus, AlertTriangle } from 'lucide-react';

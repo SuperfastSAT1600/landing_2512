@@ -1,5 +1,5 @@
-import { srmFetch } from '../lib/srm-fetch';
 'use client';
+import { srmFetch } from '../lib/srm-fetch';
 
 import { useCallback, useEffect, useState } from 'react';
 import { Check, ChevronRight } from 'lucide-react';

@@ -1,5 +1,5 @@
-import { srmFetch } from '../lib/srm-fetch';
 'use client';
+import { srmFetch } from '../lib/srm-fetch';
 
 import { useState } from 'react';
 import { Pencil, Check, X } from 'lucide-react';
