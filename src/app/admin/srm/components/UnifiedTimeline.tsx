@@ -142,28 +142,28 @@ function buildStudyHallCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): st
   return `${dayWord} Study Hall starts on ${timeInfo}. ${verb}`;
 }
 
-const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-function formatSectionDate(dateStr: string): string {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  return `${m}/${d}(${DOW[date.getDay()]})`;
+// 내일 이벤트는 오늘 같은 시각에 연락해야 하므로 -24h를 sort key로 사용
+function contactTime(ev: TaggedEvent): number {
+  const ms = new Date(ev.startsAt).getTime();
+  return ev.day === 'tomorrow' ? ms - DAY_MS : ms;
 }
 
-function addDay(dateStr: string, n: number): string {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(y, m - 1, d + n);
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${mm}-${dd}`;
-}
-
-function sortByTime(evs: TaggedEvent[]): TaggedEvent[] {
-  return [...evs].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-}
-
-function tag(evs: ScheduleEvent[], eventType: EventType, day: EventDay): TaggedEvent[] {
-  return evs.map((e) => ({ ...e, eventType, day }));
+function mergeAndSort(
+  todayCoach: ScheduleEvent[],
+  todaySH: ScheduleEvent[],
+  tomorrowCoach: ScheduleEvent[],
+  tomorrowSH: ScheduleEvent[],
+): TaggedEvent[] {
+  const tag = (evs: ScheduleEvent[], eventType: EventType, day: EventDay): TaggedEvent[] =>
+    evs.map((e) => ({ ...e, eventType, day }));
+  return [
+    ...tag(todayCoach, 'coachRoom', 'today'),
+    ...tag(todaySH, 'studyHall', 'today'),
+    ...tag(tomorrowCoach, 'coachRoom', 'tomorrow'),
+    ...tag(tomorrowSH, 'studyHall', 'tomorrow'),
+  ].sort((a, b) => contactTime(a) - contactTime(b));
 }
 
 interface StudentClickArg {
@@ -218,14 +218,8 @@ export function UnifiedTimeline({
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
 
-  const todayEvents = sortByTime([
-    ...tag(todayCoachRoom, 'coachRoom', 'today'),
-    ...tag(todayStudyHall, 'studyHall', 'today'),
-  ]);
-  const tomorrowEvents = sortByTime([
-    ...tag(tomorrowCoachRoom, 'coachRoom', 'tomorrow'),
-    ...tag(tomorrowStudyHall, 'studyHall', 'tomorrow'),
-  ]);
+  const events = mergeAndSort(todayCoachRoom, todayStudyHall, tomorrowCoachRoom, tomorrowStudyHall);
+  const totalCount = events.length;
 
   const handleCopy = async (ev: TaggedEvent, lang: 'ko' | 'en') => {
     const isTomorrow = ev.day === 'tomorrow';
@@ -275,12 +269,15 @@ export function UnifiedTimeline({
       ? buildStudyHallCopyMessage(ev, ev.day === 'tomorrow')
       : buildCopyMessage(ev, ev.day === 'tomorrow');
 
+    const isTomorrow = ev.day === 'tomorrow';
     const rowClass = alreadySent
       ? 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
       : hasIssue
       ? 'border-orange-200 bg-orange-50 hover:bg-orange-100'
       : isDone
       ? 'border-gray-200 bg-gray-50 opacity-80 hover:opacity-100'
+      : isTomorrow
+      ? 'border-blue-200 bg-blue-50/40 hover:bg-blue-50'
       : 'border-gray-200 bg-white hover:bg-gray-50';
 
     return (
@@ -289,9 +286,14 @@ export function UnifiedTimeline({
         onClick={() => onEventClick({ ...ev, startsAtKst: kstTime })}
         className={`flex items-stretch gap-3 px-3 py-3 rounded-lg border text-sm group cursor-pointer transition-colors ${rowClass}`}
       >
-        {/* 시간 */}
-        <div className="w-14 shrink-0 flex flex-col items-center justify-center">
-          <span className={`font-mono text-sm font-semibold ${isDone ? 'text-gray-400' : 'text-gray-700'}`}>{timeStr}</span>
+        {/* 시간 + 오늘/내일 pill */}
+        <div className="w-28 shrink-0 flex flex-col items-center justify-center gap-1">
+          <span className={`font-mono text-sm font-semibold whitespace-nowrap ${isDone ? 'text-gray-400' : 'text-gray-700'}`}>{timeStr}</span>
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+            isTomorrow ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+          }`}>
+            {isTomorrow ? '내일' : '오늘'}
+          </span>
         </div>
 
         {/* 유형 + 학생 */}
@@ -402,46 +404,12 @@ export function UnifiedTimeline({
     );
   };
 
-  const renderSection = (
-    events: TaggedEvent[],
-    label: '오늘' | '내일',
-    dateStr: string,
-  ) => {
-    const isToday = label === '오늘';
-    return (
-      <div>
-        {/* 섹션 헤더 */}
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg mb-2 border ${
-          isToday
-            ? 'bg-gray-50 border-gray-200'
-            : 'bg-blue-50 border-blue-200'
-        }`}>
-          <span className={`text-xs font-bold ${isToday ? 'text-gray-700' : 'text-blue-700'}`}>{label}</span>
-          <span className={`text-xs ${isToday ? 'text-gray-500' : 'text-blue-600'}`}>{formatSectionDate(dateStr)}</span>
-          <span className={`ml-auto text-[11px] font-medium px-2 py-0.5 rounded-full ${
-            isToday ? 'bg-gray-200 text-gray-600' : 'bg-blue-200 text-blue-700'
-          }`}>
-            {events.length}건
-          </span>
-        </div>
-
-        {events.length === 0 ? (
-          <p className="text-xs text-gray-400 px-3 py-3">스케줄 없음</p>
-        ) : (
-          <div className="space-y-2">
-            {events.map(renderRow)}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
         <h3 className="text-sm font-semibold text-gray-900">스케줄</h3>
         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-          {loading ? '...' : todayEvents.length + tomorrowEvents.length}
+          {loading ? '...' : totalCount}
         </span>
       </div>
 
@@ -451,10 +419,11 @@ export function UnifiedTimeline({
             <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
           ))}
         </div>
+      ) : totalCount === 0 ? (
+        <p className="text-xs text-gray-400 py-4">스케줄 없음</p>
       ) : (
-        <div className="space-y-5">
-          {renderSection(todayEvents, '오늘', eventDate)}
-          {renderSection(tomorrowEvents, '내일', addDay(eventDate, 1))}
+        <div className="space-y-2">
+          {events.map(renderRow)}
         </div>
       )}
     </div>
