@@ -17,6 +17,7 @@ import { usePortalActions } from './hooks/usePortalActions';
 import { PanelHeader } from './sections/PanelHeader';
 import { InquirySection } from './sections/InquirySection';
 import { StudentInfoSection } from './sections/StudentInfoSection';
+import { DiagnosticSection } from './sections/DiagnosticSection';
 import { MemoSection } from './sections/MemoSection';
 import { TimelineSection } from './sections/TimelineSection';
 import { StrategyHistorySection } from './sections/StrategyHistorySection';
@@ -33,6 +34,12 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   const [vipToggling, setVipToggling] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [pauseUntil, setPauseUntilDate] = useState<string | null>(null);
+
+  // 진단 테스트 현황(전용 퍼널) 변경 — 낙관적 반영 후 PATCH(onUpdate가 처리)
+  function handleDiagFunnelChange(stage: number) {
+    setLocalStudent(prev => ({ ...prev, diagnostic_funnel_stage: stage }));
+    onUpdate(student.id, { diagnostic_funnel_stage: stage });
+  }
 
   async function handleVipToggle() {
     const newVip = !localStudent.is_vip;
@@ -214,6 +221,13 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               onCancelEdit={editFormHook.handleCancelEdit}
               scoreDisplay={scoreDisplay()}
               adminKey={adminKey}
+              onVipToggle={handleVipToggle}
+              vipToggling={vipToggling}
+            />
+
+            <DiagnosticSection
+              localStudent={localStudent}
+              onDiagFunnelChange={handleDiagFunnelChange}
               diagLinked={diagHook.diagLinked}
               diagCandidates={diagHook.diagCandidates}
               showDiagPicker={diagHook.showDiagPicker}
@@ -222,8 +236,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               diagSearchQuery={diagHook.diagSearchQuery}
               setDiagSearchQuery={diagHook.setDiagSearchQuery}
               onDiagLink={diagHook.handleDiagLink}
-              onVipToggle={handleVipToggle}
-              vipToggling={vipToggling}
             />
 
             <StrategyHistorySection

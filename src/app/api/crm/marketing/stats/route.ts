@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       'id, name, funnel_stage, stage_history, traffic_source, inquiry_date, created_at, retry_strategy_id'
     )
     .gte('inquiry_date', from)
-    .lte('inquiry_date', to);
+    .lte('inquiry_date', `${to}T23:59:59`);
 
   if (sErr) {
     return NextResponse.json({ error: { code: 'FETCH_FAILED', message: sErr.message } }, { status: 500 });

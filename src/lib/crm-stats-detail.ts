@@ -24,6 +24,7 @@ export interface LeadDetailItem {
   traffic_source: string | null;
   funnel_stage: string;
   lead_status: string;
+  churn_tag: string | null; // 이탈 사유 (이탈 리드만 값 존재)
   date: string | null; // inquiry_date ?? created_at
 }
 
@@ -50,6 +51,7 @@ type StudentRow = {
   funnel_stage: string;
   stage_history?: { stage: string; label: string; entered_at: string }[] | null;
   lead_status: string;
+  churn_tag?: string | null;
   traffic_source: string | null;
   inquiry_date: string | null;
   created_at: string;
@@ -79,6 +81,7 @@ function toLeadItem(s: StudentRow): LeadDetailItem {
     traffic_source: s.traffic_source,
     funnel_stage: s.funnel_stage,
     lead_status: s.lead_status,
+    churn_tag: s.churn_tag ?? null,
     date: s.inquiry_date ?? s.created_at ?? null,
   };
 }
@@ -100,12 +103,24 @@ function toPaymentItem(p: PaymentRow): PaymentDetailItem {
 /**
  * 집계 라우트와 동일한 기준으로 metric별 원본 목록을 구성한다(순수 함수, 테스트 대상).
  * students/payments는 이미 기간 필터된 행이라고 가정.
+ * @param source 주어지면 해당 유입 채널(`traffic_source ?? '미입력'`)의 학생/결제만 대상으로 한다.
  */
 export function buildStatsDetail(
   metric: StatsDetailMetric,
   students: StudentRow[],
-  payments: PaymentRow[]
+  payments: PaymentRow[],
+  source?: string
 ): StatsDetailResult {
+  // 채널 드릴다운: by_source 집계와 동일하게 traffic_source(null→'미입력') 기준으로 필터.
+  if (source != null) {
+    students = students.filter((s) => (s.traffic_source ?? '미입력') === source);
+    const ids = new Set(students.map((s) => s.id));
+    const names = new Set(students.map((s) => s.name));
+    payments = payments.filter(
+      (p) => (p.student_id ? ids.has(p.student_id) : false) || names.has(p.student_name)
+    );
+  }
+
   // 결제한 학생 집합 (최초결제 기준) — '결제 전환율' 분자와 동일
   const paidIds = new Set<string>();
   const paidNames = new Set<string>();

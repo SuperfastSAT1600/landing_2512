@@ -13,9 +13,9 @@ import type { EditForm } from '../types';
 const inputCls = 'w-full bg-gray-50 border border-gray-200 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all';
 const selectCls = 'w-full bg-gray-50 border border-gray-200 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 outline-none transition-all';
 
-function EditField({ label, children }: { label: string; children: React.ReactNode }) {
+function EditField({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="space-y-1">
+    <div className={`space-y-1 ${className ?? ''}`}>
       <label className="text-[11px] font-medium text-gray-400">{label}</label>
       {children}
     </div>
@@ -128,7 +128,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
           <input value={form.parent_phone} onChange={set('parent_phone')} className={inputCls} />
         </EditField>
       </div>
-      <EditField label="거주 국가 / 시간대">
+      <EditField label="학생 거주 시간대">
         <select value={form.parent_timezone} onChange={set('parent_timezone')} className={selectCls}>
           {TIMEZONE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
         </select>

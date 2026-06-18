@@ -172,6 +172,21 @@ export default function CrmPage() {
     setSelectedStudent(student);
   }, []);
 
+  // 통계 상세 내역에서 학생 이름 클릭 → id로 학생을 찾거나 fetch해 상세 패널 오픈
+  const handleSelectStudentById = useCallback(async (id: string) => {
+    const existing = students.find(s => s.id === id);
+    if (existing) { setSelectedStudent(existing); return; }
+    try {
+      const res = await fetch(`/api/crm/students/${id}`, {
+        headers: { 'x-admin-key': getAdminKey() },
+      });
+      const json = await res.json();
+      if (res.ok && json.data) setSelectedStudent(json.data as Student);
+    } catch {
+      /* 무시: 패널이 열리지 않을 뿐 */
+    }
+  }, [students]);
+
   const filteredStudents = useMemo(() => {
     return students.filter(s => {
       if (searchQuery) {
@@ -315,7 +330,7 @@ export default function CrmPage() {
               </div>
             </div>
 
-            <KanbanStatsStrip adminKey={adminKey} />
+            <KanbanStatsStrip adminKey={adminKey} onSelectStudent={handleSelectStudentById} />
 
             <SalesKanban
               students={filteredStudents}
@@ -362,7 +377,7 @@ export default function CrmPage() {
         )}
 
         {activeTab === 'stats' && (
-          <SalesStats adminKey={adminKey} />
+          <SalesStats adminKey={adminKey} onSelectStudent={handleSelectStudentById} />
         )}
 
         {activeTab === 'pool' && (

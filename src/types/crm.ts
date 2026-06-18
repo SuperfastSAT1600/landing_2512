@@ -158,7 +158,8 @@ export interface Student {
   school_type: SchoolType;
   parent_phone: string; // 연락처 값 (핸드폰번호 / 카카오ID / 이메일)
   contact_type: ContactType | null; // 연락처 유형
-  inquiry_date: string | null; // 문의 들어온 날 (YYYY-MM-DD)
+  inquiry_date: string | null; // 문의 시각 (naive timestamp "YYYY-MM-DDTHH:mm:ss", 분 단위)
+  first_message_sent_at: string | null; // 첫 메시지(첫 응답) 발송 시각 (ISO timestamp)
 
   // 인입 분류 (6개 필드)
   inquiry_channel: InquiryChannel | null;
@@ -192,6 +193,7 @@ export interface Student {
   churn_tag: string | null;
   churn_type: ChurnType | null;
   diagnostic_result_id: string | null;
+  diagnostic_funnel_stage: number | null; // 진단 테스트 전용 퍼널(1~5), null=미설정
   consultation_timeline: ConsultationEntry[];
 
   last_contacted_at: string | null;
@@ -287,10 +289,13 @@ export type CreateStudentInput = Pick<
 
 export type ProductCategory =
   | 'SAT 정규 1:1 수업'
+  | 'SAT 정규 1:2 수업'
   | 'SAT 정규 그룹 수업'
   | 'AP 정규 1:1 수업'
+  | 'AP 정규 1:2 수업'
   | '관리형 콘텐츠'
-  | 'SAT 체험 1:1 수업';
+  | 'SAT 체험 1:1 수업'
+  | 'SAT 체험 1:2 수업';
 
 export type ProductSubcategory =
   | '관리형 수업'
@@ -421,6 +426,17 @@ export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
   '8': '수업 중',
   churned: '이탈',
 };
+
+// 진단 테스트 전용 퍼널 단계 라벨 (students.diagnostic_funnel_stage)
+export const DIAGNOSTIC_FUNNEL_LABELS: Record<number, string> = {
+  1: '응시하지 않아도 됨',
+  2: '안내 필요',
+  3: '응시 확인 필요',
+  4: 'Report 전달 필요',
+  5: 'Report 전달 완료',
+};
+
+export const DIAGNOSTIC_FUNNEL_STAGES = [1, 2, 3, 4, 5] as const;
 
 // ─── 단계 정체 알림 (SLA) ─────────────────────────────────────────────────────
 // 각 단계 목표 체류일 — 이 일수를 "초과"하면 정체로 간주하고 알림. 8(수업중)·churned 제외.
@@ -649,6 +665,7 @@ export const TIMEZONE_OPTIONS = [
   { label: '싱가포르', value: 'Asia/Singapore' },
   { label: '호주 동부', value: 'Australia/Sydney' },
   { label: '일본 (JST)', value: 'Asia/Tokyo' },
+  { label: '사이판 (ChST)', value: 'Pacific/Saipan' },
 ] as const;
 
 export const TIMEZONE_LABEL_MAP: Record<string, string> = Object.fromEntries(

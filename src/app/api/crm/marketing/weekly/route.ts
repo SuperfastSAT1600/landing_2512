@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
       .from('students')
       .select('id, name, funnel_stage, stage_history, traffic_source, inquiry_date, created_at, retry_strategy_id')
       .gte('inquiry_date', weekStart)
-      .lte('inquiry_date', todayStr)
+      .lte('inquiry_date', `${todayStr}T23:59:59`)
       .then(({ data }) => (data ?? []) as StudentRow[]),
 
     // 이번 주 결제
@@ -190,7 +190,7 @@ export async function GET(request: NextRequest) {
       .from('students')
       .select('id, traffic_source, inquiry_date, created_at')
       .gte('inquiry_date', histRangeStart)
-      .lte('inquiry_date', histRangeEnd)
+      .lte('inquiry_date', `${histRangeEnd}T23:59:59`)
       .then(({ data }) => (data ?? []) as Pick<StudentRow, 'id' | 'traffic_source' | 'inquiry_date' | 'created_at'>[]),
 
     // YoY: 작년 동기 주 — inquiry_date 기준만 사용
@@ -198,7 +198,7 @@ export async function GET(request: NextRequest) {
       .from('students')
       .select('id, traffic_source, inquiry_date, created_at')
       .gte('inquiry_date', yoyStart)
-      .lte('inquiry_date', yoyEnd)
+      .lte('inquiry_date', `${yoyEnd}T23:59:59`)
       .then(({ data }) => (data ?? []) as Pick<StudentRow, 'id' | 'traffic_source' | 'inquiry_date' | 'created_at'>[]),
   ]);
 
