@@ -28,17 +28,17 @@ export function DayTabs({ selected, onChange }: Props) {
   const dates = [0, 1, 2].map(getKstDateStr);
 
   return (
-    <div className="flex gap-1 border-b border-white/10 mb-6">
+    <div className="flex gap-1 mb-6">
       {dates.map((date, i) => {
         const isActive = selected === date;
         return (
           <button
             key={date}
             onClick={() => onChange(date)}
-            className={`px-5 py-2.5 text-sm font-semibold rounded-t transition-colors ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               isActive
-                ? 'bg-blue-600 text-white border-b-2 border-blue-500'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'bg-gray-900 text-gray-900'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
             }`}
           >
             {i === 0 ? '오늘 ' : i === 1 ? '내일 ' : '모레 '}

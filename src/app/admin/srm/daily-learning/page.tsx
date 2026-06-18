@@ -10,10 +10,10 @@ import type { DailyLearningResponse, StudentDayResult, StudyHallResult, TestCent
 
 function AccBadge({ pct }: { pct: number }) {
   const color =
-    pct >= 85 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
-    pct >= 70 ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
-    pct >= 50 ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' :
-                'bg-red-500/20 text-red-300 border-red-500/30';
+    pct >= 85 ? 'bg-emerald-100 text-emerald-700 border-emerald-500/30' :
+    pct >= 70 ? 'bg-blue-100 text-blue-700 border-blue-200' :
+    pct >= 50 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                'bg-red-100 text-red-700 border-red-200';
   return (
     <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${color}`}>
       {pct}%
@@ -29,8 +29,8 @@ function StudyHallCard({ data }: { data: StudyHallResult }) {
   return (
     <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
       <div className="flex items-center gap-2 mb-3">
-        <Library size={14} className="text-purple-400" />
-        <span className="text-xs font-semibold text-purple-300 uppercase tracking-wide">스터디홀</span>
+        <Library size={14} className="text-purple-700" />
+        <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">스터디홀</span>
       </div>
       <div className="grid grid-cols-2 gap-3 mb-3">
         <Stat label="학습 시간" value={`${data.durationMinutes}분`} />
@@ -45,7 +45,7 @@ function StudyHallCard({ data }: { data: StudyHallResult }) {
         <>
           <button
             onClick={() => setExpanded(v => !v)}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-200 transition-colors mb-2"
+            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors mb-2"
           >
             스킬 {sorted.length}개 {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
@@ -55,8 +55,8 @@ function StudyHallCard({ data }: { data: StudyHallResult }) {
                 const acc = sk.total > 0 ? Math.round((sk.correct / sk.total) * 100) : 0;
                 return (
                   <div key={sk.skill} className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-gray-300 truncate flex-1">{sk.skill}</span>
-                    <span className="text-xs text-gray-400 whitespace-nowrap">{sk.correct}/{sk.total}</span>
+                    <span className="text-xs text-gray-600 truncate flex-1">{sk.skill}</span>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">{sk.correct}/{sk.total}</span>
                     <AccBadge pct={acc} />
                   </div>
                 );
@@ -79,16 +79,16 @@ function TestCenterCard({ data }: { data: TestCenterResult }) {
   return (
     <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
       <div className="flex items-center gap-2 mb-3">
-        <FlaskConical size={14} className="text-blue-400" />
-        <span className="text-xs font-semibold text-blue-300 uppercase tracking-wide">테스트센터</span>
+        <FlaskConical size={14} className="text-blue-700" />
+        <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">테스트센터</span>
         {domainLabel && (
-          <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded">
+          <span className="text-xs bg-blue-500/10 text-blue-700 border border-blue-500/20 px-1.5 py-0.5 rounded">
             {domainLabel}
           </span>
         )}
       </div>
       {data.curriculumTitle && (
-        <p className="text-xs text-gray-300 mb-3 font-medium">{data.curriculumTitle}</p>
+        <p className="text-xs text-gray-600 mb-3 font-medium">{data.curriculumTitle}</p>
       )}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <Stat label="총점" value={`${data.totalScore}/${data.totalProblems}`} />
@@ -103,8 +103,8 @@ function TestCenterCard({ data }: { data: TestCenterResult }) {
             const acc = l.total > 0 ? Math.round((l.score / l.total) * 100) : 0;
             return (
               <div key={i} className="flex items-center justify-between gap-2">
-                <span className="text-xs text-gray-400 truncate flex-1">{l.title ?? `Module ${i + 1}`}</span>
-                <span className="text-xs text-gray-400 whitespace-nowrap">{l.score}/{l.total}</span>
+                <span className="text-xs text-gray-500 truncate flex-1">{l.title ?? `Module ${i + 1}`}</span>
+                <span className="text-xs text-gray-500 whitespace-nowrap">{l.score}/{l.total}</span>
                 <AccBadge pct={acc} />
               </div>
             );
@@ -121,7 +121,7 @@ function VocabCard({ data }: { data: VocabResult }) {
   return (
     <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
       <div className="flex items-center gap-2 mb-3">
-        <BookOpen size={14} className="text-amber-400" />
+        <BookOpen size={14} className="text-amber-700" />
         <span className="text-xs font-semibold text-amber-300 uppercase tracking-wide">단어</span>
       </div>
       <div className="grid grid-cols-2 gap-3 mb-3">
@@ -135,7 +135,7 @@ function VocabCard({ data }: { data: VocabResult }) {
       </div>
       {data.masteredCount > 0 && (
         <div className="mb-2">
-          <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">
+          <span className="text-xs bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-2 py-0.5 rounded">
             마스터 {data.masteredCount}개
           </span>
         </div>
@@ -143,7 +143,7 @@ function VocabCard({ data }: { data: VocabResult }) {
       {data.missedTerms.length > 0 && (
         <div>
           <p className="text-[10px] text-gray-500 mb-1">복습 필요</p>
-          <p className="text-xs text-gray-400 leading-relaxed">{data.missedTerms.join(', ')}</p>
+          <p className="text-xs text-gray-500 leading-relaxed">{data.missedTerms.join(', ')}</p>
         </div>
       )}
     </div>
@@ -178,9 +178,9 @@ function StudentColumn({ student }: { student: StudentDayResult }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="text-center pb-2 border-b border-gray-700/50">
-        <p className="text-sm font-semibold text-white">{student.name}</p>
+        <p className="text-sm font-semibold text-gray-900">{student.name}</p>
         {!student.sfv2ProfileId && (
-          <span className="text-[10px] text-red-400">v2 미연결</span>
+          <span className="text-[10px] text-red-700">v2 미연결</span>
         )}
         {!hasAny && student.sfv2ProfileId && (
           <span className="text-[10px] text-gray-500">이날 학습 기록 없음</span>
@@ -245,13 +245,13 @@ export default function DailyLearningPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-white">일별 학습 비교</h1>
-            <p className="text-sm text-gray-400 mt-0.5">단어 · 테스트센터 · 스터디홀</p>
+            <h1 className="text-xl font-bold text-gray-900">일별 학습 비교</h1>
+            <p className="text-sm text-gray-500 mt-0.5">단어 · 테스트센터 · 스터디홀</p>
           </div>
           <button
             onClick={() => load(date)}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 border border-gray-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-600 border border-gray-700 disabled:opacity-50 transition-colors"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             새로고침
@@ -266,7 +266,7 @@ export default function DailyLearningPage() {
             onChange={e => setDate(e.target.value)}
             className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-gray-500"
           />
-          <span className="text-sm text-gray-400">{dateLabel}</span>
+          <span className="text-sm text-gray-500">{dateLabel}</span>
         </div>
         {/* Names input */}
         <div className="flex items-center gap-2 mt-3">
@@ -275,14 +275,14 @@ export default function DailyLearningPage() {
             value={namesInput}
             onChange={e => setNamesInput(e.target.value)}
             placeholder="학생 이름 (쉼표로 구분, 예: 홍길동, Jane Doe)"
-            className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500"
+            className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-gray-500"
           />
           <button
             onClick={() => {
               const parsed = namesInput.split(',').map(n => n.trim()).filter(Boolean);
               setNames(parsed);
             }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium text-white transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium text-gray-900 transition-colors"
           >
             조회
           </button>
@@ -291,7 +291,7 @@ export default function DailyLearningPage() {
 
       {/* Error state */}
       {error && (
-        <div className="mb-4 p-3 bg-red-900/20 border border-red-700/40 rounded-lg text-sm text-red-400">
+        <div className="mb-4 p-3 bg-red-900/20 border border-red-700/40 rounded-lg text-sm text-red-700">
           {error}
         </div>
       )}
@@ -320,7 +320,7 @@ export default function DailyLearningPage() {
           {names.filter(n => !data.students.find(s => s.name === n)).map(name => (
             <div key={name} className="flex flex-col gap-3">
               <div className="text-center pb-2 border-b border-gray-700/50">
-                <p className="text-sm font-semibold text-white">{name}</p>
+                <p className="text-sm font-semibold text-gray-900">{name}</p>
                 <span className="text-[10px] text-gray-600">학생 정보 없음</span>
               </div>
             </div>

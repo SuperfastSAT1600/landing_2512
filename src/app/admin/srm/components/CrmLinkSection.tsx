@@ -46,13 +46,13 @@ export function CrmLinkSection({ sfv2ProfileId, onLinked }: Props) {
   };
 
   return (
-    <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
-      <p className="text-xs font-semibold text-orange-300 mb-3">CRM 미연결 — 상담 히스토리를 보려면 연결하세요</p>
+    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+      <p className="text-xs font-semibold text-orange-700 mb-3">CRM 미연결 — 상담 히스토리를 보려면 연결하세요</p>
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="CRM에서 이름 검색..."
-        className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500 mb-2"
+        className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-blue-500 mb-2"
       />
       {searching && <p className="text-xs text-gray-500">검색 중...</p>}
       {candidates.length > 0 && (
@@ -62,9 +62,9 @@ export function CrmLinkSection({ sfv2ProfileId, onLinked }: Props) {
               key={c.id}
               onClick={() => handleLink(c)}
               disabled={linking || !!c.sfv2_profile_id}
-              className="w-full flex items-center justify-between px-3 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-40 rounded-md text-sm transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-gray-100 disabled:opacity-40 rounded-md text-sm transition-colors"
             >
-              <span className="text-gray-200">{c.name}</span>
+              <span className="text-gray-700">{c.name}</span>
               <span className="text-xs text-gray-500">
                 {c.sfv2_profile_id ? '이미 연결됨' : c.grade ?? ''}
               </span>

@@ -6,10 +6,10 @@ export const PARTY_LABELS: Record<string, string> = {
 };
 
 export const PARTY_COLORS: Record<string, string> = {
-  student: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  parent: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  coach: 'bg-green-500/20 text-green-300 border-green-500/30',
-  us: 'bg-red-500/20 text-red-300 border-red-500/30',
+  student: 'bg-blue-100 text-blue-700 border-blue-200',
+  parent: 'bg-purple-100 text-purple-700 border-purple-200',
+  coach: 'bg-green-100 text-green-700 border-green-200',
+  us: 'bg-red-100 text-red-700 border-red-200',
 };
 
 export const CHANNEL_LABELS: Record<string, string> = {
@@ -22,12 +22,12 @@ export const CHANNEL_LABELS: Record<string, string> = {
 };
 
 export const CHANNEL_COLORS: Record<string, string> = {
-  kakao: 'bg-yellow-500/20 text-yellow-300',
-  call: 'bg-blue-500/20 text-blue-300',
-  sms: 'bg-green-500/20 text-green-300',
-  email: 'bg-purple-500/20 text-purple-300',
-  slack: 'bg-violet-500/20 text-violet-300',
-  other: 'bg-gray-500/20 text-gray-300',
+  kakao: 'bg-yellow-100 text-yellow-700',
+  call: 'bg-blue-100 text-blue-700',
+  sms: 'bg-green-100 text-green-700',
+  email: 'bg-purple-100 text-purple-700',
+  slack: 'bg-violet-100 text-violet-700',
+  other: 'bg-gray-100 text-gray-600',
 };
 
 export const TRIGGER_BADGE_LABELS: Record<string, string> = {

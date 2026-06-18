@@ -78,7 +78,7 @@ function InfoRow({ label, value, small }: { label: string; value: string; small?
   return (
     <div className="flex items-baseline gap-2">
       <span className="text-xs text-gray-500 w-14 shrink-0">{label}</span>
-      <span className={`${small ? 'text-xs' : 'text-sm'} text-gray-300 break-all`}>{value}</span>
+      <span className={`${small ? 'text-xs' : 'text-sm'} text-gray-600 break-all`}>{value}</span>
     </div>
   );
 }
@@ -95,10 +95,10 @@ function sessionStatusLabel(status: string): string {
 
 function sessionStatusColor(status: string): string {
   switch (status) {
-    case 'completed': return 'text-emerald-400';
-    case 'cancelled': return 'text-red-400';
-    case 'proposed': return 'text-gray-400';
-    case 'approved': return 'text-blue-400';
+    case 'completed': return 'text-emerald-700';
+    case 'cancelled': return 'text-red-700';
+    case 'proposed': return 'text-gray-500';
+    case 'approved': return 'text-blue-700';
     default: return 'text-gray-500';
   }
 }
@@ -434,19 +434,19 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     <>
       <div className="fixed inset-0 bg-black/40 z-30" onClick={onClose} />
 
-      <div className="fixed right-0 top-0 h-full w-[900px] bg-[#1a1c1f] border-l border-white/10 z-40 flex flex-col shadow-2xl">
+      <div className="fixed right-0 top-0 h-full w-[900px] bg-white border-l border-gray-200 z-40 flex flex-col shadow-2xl">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0">
           <div className="flex-1 min-w-0 mr-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-bold text-white">{studentName}</h2>
+              <h2 className="text-base font-bold text-gray-900">{studentName}</h2>
               {detail?.hasSummerProgram && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-medium shrink-0">여름특강</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium shrink-0">여름특강</span>
               )}
               {currentStageLabel && (
                 <button
                   onClick={() => setLifecycleOpen((v) => !v)}
-                  className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 border border-blue-500/25 rounded-full text-[11px] text-blue-300 hover:bg-blue-500/25 transition-colors"
+                  className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 border border-blue-200 rounded-full text-[11px] text-blue-700 hover:bg-blue-200 transition-colors"
                 >
                   {currentStageLabel}
                   {lifecycleOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
@@ -454,17 +454,17 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               )}
             </div>
             {loadingDetail && (
-              <div className="h-3 w-24 bg-white/10 rounded animate-pulse mt-1" />
+              <div className="h-3 w-24 bg-gray-200 rounded animate-pulse mt-1" />
             )}
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 shrink-0">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors p-1 shrink-0">
             <X size={18} />
           </button>
         </div>
 
         {/* 라이프사이클 accordion */}
         {lifecycleOpen && (
-          <div className="border-b border-white/10 px-5 py-4 bg-[#15171a] max-h-80 overflow-y-auto shrink-0">
+          <div className="border-b border-gray-200 px-5 py-4 bg-gray-50 max-h-80 overflow-y-auto shrink-0">
             <LifecycleTab
               profileId={studentId ?? ''}
               studentId={resolvedCrmStudentId}
@@ -475,14 +475,14 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
         {/* 2컬럼 본문 */}
         <div className="flex flex-1 overflow-hidden">
           {/* 왼쪽: 학생정보 + v2 학습이력 */}
-          <div className="w-[340px] border-r border-white/10 flex flex-col overflow-y-auto">
+          <div className="w-[340px] border-r border-gray-200 flex flex-col overflow-y-auto">
             {/* 학생 기본정보 */}
-            <div className="px-4 py-3 bg-white/[0.03]">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">학생 정보</p>
+            <div className="px-4 py-3 bg-gray-50">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">학생 정보</p>
               {loadingDetail ? (
                 <div className="space-y-1.5">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="h-3 bg-white/10 rounded animate-pulse" />
+                    <div key={i} className="h-3 bg-gray-200 rounded animate-pulse" />
                   ))}
                 </div>
               ) : (
@@ -509,25 +509,25 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
                   {/* 점수 */}
                   {(detail?.crmStudent?.previous_rw_score || detail?.crmStudent?.previous_math_score) && (
-                    <div className="pt-1.5 border-t border-white/10 mt-1.5">
+                    <div className="pt-1.5 border-t border-gray-100 mt-1.5">
                       <p className="text-[11px] text-gray-500 mb-1">현재 점수</p>
                       <div className="flex gap-3">
                         {detail.crmStudent.previous_rw_score != null && (
                           <div className="text-center">
-                            <p className="text-[11px] text-gray-600">RW</p>
-                            <p className="text-sm font-semibold text-gray-200">{detail.crmStudent.previous_rw_score}</p>
+                            <p className="text-[11px] text-gray-500">RW</p>
+                            <p className="text-sm font-semibold text-gray-800">{detail.crmStudent.previous_rw_score}</p>
                           </div>
                         )}
                         {detail.crmStudent.previous_math_score != null && (
                           <div className="text-center">
-                            <p className="text-[11px] text-gray-600">Math</p>
-                            <p className="text-sm font-semibold text-gray-200">{detail.crmStudent.previous_math_score}</p>
+                            <p className="text-[11px] text-gray-500">Math</p>
+                            <p className="text-sm font-semibold text-gray-800">{detail.crmStudent.previous_math_score}</p>
                           </div>
                         )}
                         {detail.crmStudent.previous_rw_score != null && detail.crmStudent.previous_math_score != null && (
                           <div className="text-center">
-                            <p className="text-[11px] text-gray-600">합계</p>
-                            <p className="text-sm font-semibold text-blue-300">
+                            <p className="text-[11px] text-gray-500">합계</p>
+                            <p className="text-sm font-semibold text-blue-700">
                               {detail.crmStudent.previous_rw_score + detail.crmStudent.previous_math_score}
                             </p>
                           </div>
@@ -538,9 +538,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   {detail?.crmStudent?.target_score && (
                     <div className="flex items-baseline gap-2">
                       <span className="text-xs text-gray-500 w-14 shrink-0">목표</span>
-                      <span className="text-sm font-semibold text-emerald-300">{detail.crmStudent.target_score}</span>
+                      <span className="text-sm font-semibold text-emerald-600">{detail.crmStudent.target_score}</span>
                       {detail.crmStudent.target_test_date && (
-                        <span className="text-[11px] text-gray-600">
+                        <span className="text-[11px] text-gray-500">
                           ({new Date(detail.crmStudent.target_test_date).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })})
                         </span>
                       )}
@@ -549,21 +549,21 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
                   {/* 진단 결과 */}
                   {detail?.diagnostic && (
-                    <div className="pt-1.5 border-t border-white/10 mt-1.5">
+                    <div className="pt-1.5 border-t border-gray-100 mt-1.5">
                       <p className="text-[11px] text-gray-500 mb-1">
                         진단 리포트 · {new Date(detail.diagnostic.submitted_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
                       </p>
                       <div className="flex gap-3">
                         {detail.diagnostic.previous_rw_score != null && (
                           <div className="text-center">
-                            <p className="text-[11px] text-gray-600">RW</p>
-                            <p className="text-sm font-semibold text-gray-200">{detail.diagnostic.previous_rw_score}</p>
+                            <p className="text-[11px] text-gray-500">RW</p>
+                            <p className="text-sm font-semibold text-gray-800">{detail.diagnostic.previous_rw_score}</p>
                           </div>
                         )}
                         {detail.diagnostic.previous_math_score != null && (
                           <div className="text-center">
-                            <p className="text-[11px] text-gray-600">Math</p>
-                            <p className="text-sm font-semibold text-gray-200">{detail.diagnostic.previous_math_score}</p>
+                            <p className="text-[11px] text-gray-500">Math</p>
+                            <p className="text-sm font-semibold text-gray-800">{detail.diagnostic.previous_math_score}</p>
                           </div>
                         )}
                       </div>
@@ -572,9 +572,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
                   {/* OT 일시 */}
                   {detail?.crmStudent?.ot_datetime && (
-                    <div className="flex items-baseline gap-2 pt-1.5 border-t border-white/10 mt-1.5">
+                    <div className="flex items-baseline gap-2 pt-1.5 border-t border-gray-100 mt-1.5">
                       <span className="text-xs text-gray-500 w-14 shrink-0">OT</span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-500">
                         {new Date(detail.crmStudent.ot_datetime).toLocaleDateString('ko-KR', {
                           month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
                         })}
@@ -583,9 +583,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   )}
 
                   {/* 소통 언어 */}
-                  <div className="flex items-center gap-2 pt-1.5 border-t border-white/10 mt-1.5">
+                  <div className="flex items-center gap-2 pt-1.5 border-t border-gray-100 mt-1.5">
                     <span className="text-xs text-gray-500 w-14 shrink-0">소통언어</span>
-                    <div className="flex rounded-md overflow-hidden border border-white/10">
+                    <div className="flex rounded-md overflow-hidden border border-gray-200">
                       {(['ko', 'en'] as const).map((lang) => (
                         <button
                           key={lang}
@@ -594,9 +594,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                           className={`px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
                             commLang === lang
                               ? lang === 'en'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-white/15 text-white'
-                              : 'text-gray-500 hover:text-gray-300'
+                                ? 'bg-blue-500 text-gray-900'
+                                : 'bg-gray-100 text-gray-900'
+                              : 'text-gray-500 hover:text-gray-700'
                           }`}
                         >
                           {lang.toUpperCase()}
@@ -606,13 +606,13 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   </div>
 
                   {/* CRM 연결 상태 + 학부모 포털 */}
-                  <div className="flex items-center gap-2 pt-1.5 border-t border-white/10 mt-1.5">
+                  <div className="flex items-center gap-2 pt-1.5 border-t border-gray-100 mt-1.5">
                     {isLinked ? (
-                      <span className="text-[11px] px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/25 rounded-full text-emerald-400">
+                      <span className="text-[11px] px-2 py-0.5 bg-emerald-100 border border-emerald-200 rounded-full text-emerald-700">
                         CRM 연결됨
                       </span>
                     ) : (
-                      <span className="text-[11px] px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-gray-500">
+                      <span className="text-[11px] px-2 py-0.5 bg-gray-50 border border-gray-200 rounded-full text-gray-500">
                         CRM 미연결
                       </span>
                     )}
@@ -633,7 +633,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
               {/* 코치 포털 + AI 브리핑 */}
               {resolvedCrmStudentId && (
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] text-gray-500 truncate">
                       /coach-prep/{resolvedCrmStudentId.slice(0, 8)}…
@@ -645,12 +645,12 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     title="AI 코치용 브리핑 생성"
                     className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0 ${
                       briefing === 'loading'
-                        ? 'bg-white/5 text-gray-500 cursor-not-allowed'
+                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                         : briefing === 'done'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                         : briefing === 'error'
-                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        : 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30'
+                        ? 'bg-red-100 text-red-700 border border-red-200'
+                        : 'bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200'
                     }`}
                   >
                     <Sparkles size={10} className={briefing === 'loading' ? 'animate-pulse' : ''} />
@@ -661,7 +661,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     target="_blank"
                     rel="noopener noreferrer"
                     title="코치 포털 열기"
-                    className="p-1 text-gray-500 hover:text-blue-400 transition-colors shrink-0"
+                    className="p-1 text-gray-500 hover:text-blue-600 transition-colors shrink-0"
                   >
                     <ExternalLink size={12} />
                   </a>
@@ -670,17 +670,17 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
             </div>
 
             {/* v2 학습이력 */}
-            <div className="px-4 py-3 border-t border-white/10">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">v2 학습 이력</p>
+            <div className="px-4 py-3 border-t border-gray-100">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">v2 학습 이력</p>
 
               {loadingV2 ? (
                 <div className="space-y-2">
                   {[1, 2].map((i) => (
-                    <div key={i} className="h-4 bg-white/10 rounded animate-pulse" />
+                    <div key={i} className="h-4 bg-gray-200 rounded animate-pulse" />
                   ))}
                 </div>
               ) : !v2Summary ? (
-                <p className="text-xs text-gray-600">v2 데이터 없음</p>
+                <p className="text-xs text-gray-500">v2 데이터 없음</p>
               ) : (
                 <div className="space-y-3">
                   {/* 최근 수업 */}
@@ -690,7 +690,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                       <div className="space-y-0.5">
                         {v2Summary.recentSessions.slice(0, 3).map((s) => (
                           <div key={s.id} className="flex items-center justify-between">
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-500">
                               {new Date(s.starts_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
                             </span>
                             <span className={`text-[11px] font-medium ${sessionStatusColor(s.status)}`}>
@@ -705,7 +705,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   {/* 스터디홀 */}
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-gray-500">스터디홀</span>
-                    <span className="text-xs text-gray-300">
+                    <span className="text-xs text-gray-600">
                       최근 30일 {v2Summary.studyHallCount30d}회
                     </span>
                   </div>
@@ -717,10 +717,10 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                       <div className="space-y-0.5">
                         {v2Summary.testScores.slice(0, 2).map((t, idx) => (
                           <div key={idx} className="flex items-center justify-between">
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-500">
                               {new Date(t.submitted_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
                             </span>
-                            <span className="text-xs text-gray-300 font-medium">
+                            <span className="text-xs text-gray-600 font-medium">
                               {t.score} / {t.total}
                             </span>
                           </div>
@@ -731,9 +731,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
                   {/* 잔여 세션 */}
                   {v2Summary.package?.remaining_sessions != null && (
-                    <div className="flex items-center justify-between pt-1 border-t border-white/10">
+                    <div className="flex items-center justify-between pt-1 border-t border-gray-100">
                       <span className="text-[11px] text-gray-500">잔여 세션</span>
-                      <span className="text-xs text-gray-300 font-medium">
+                      <span className="text-xs text-gray-600 font-medium">
                         {v2Summary.package.remaining_sessions}
                         {v2Summary.package.total_sessions != null ? ` / ${v2Summary.package.total_sessions}` : ''}회
                       </span>
@@ -745,21 +745,21 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
             {/* 휴원 섹션 */}
             {activePause !== undefined && (
-              <div className="px-4 py-3 border-t border-white/10">
+              <div className="px-4 py-3 border-t border-gray-100">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">휴원</p>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">휴원</p>
                   {activePause ? (
                     <button
                       onClick={handlePauseEnd}
                       disabled={pauseSaving}
-                      className="text-[11px] text-red-400 hover:text-red-300 disabled:opacity-40"
+                      className="text-[11px] text-red-700 hover:text-red-700 disabled:opacity-40"
                     >
                       {pauseSaving ? '처리중...' : '휴원 해제'}
                     </button>
                   ) : (
                     <button
                       onClick={() => setPauseFormOpen((v) => !v)}
-                      className="text-[11px] text-blue-400 hover:text-blue-300"
+                      className="text-[11px] text-blue-700 hover:text-blue-700"
                     >
                       {pauseFormOpen ? '취소' : '휴원 설정'}
                     </button>
@@ -769,9 +769,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 {activePause ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">휴원 중</span>
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">휴원 중</span>
                       {activePause.pause_until && (
-                        <span className="text-[11px] text-gray-400">
+                        <span className="text-[11px] text-gray-500">
                           ~ {new Date(activePause.pause_until).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} 재개 예정
                         </span>
                       )}
@@ -791,7 +791,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                         type="date"
                         value={pauseUntil}
                         onChange={(e) => setPauseUntil(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
+                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
                       />
                     </div>
                     <div>
@@ -801,31 +801,31 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                         value={pauseReason}
                         onChange={(e) => setPauseReason(e.target.value)}
                         placeholder="해외 여행, 시험 기간 등"
-                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
                       />
                     </div>
                     <button
                       onClick={handlePauseCreate}
                       disabled={pauseSaving}
-                      className="w-full text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded px-3 py-1.5 disabled:opacity-40"
+                      className="w-full text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
                     >
                       {pauseSaving ? '저장중...' : '휴원 시작'}
                     </button>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-600">현재 수업 중</p>
+                  <p className="text-xs text-gray-500">현재 수업 중</p>
                 )}
               </div>
             )}
 
             {/* CRM 연결 섹션 (미연결 시) */}
             {!loadingDetail && !isLinked && studentId && (
-              <div className="px-4 py-3 border-t border-white/10">
+              <div className="px-4 py-3 border-t border-gray-100">
                 <CrmLinkSection sfv2ProfileId={studentId} onLinked={handleLinked} />
               </div>
             )}
             {!loadingDetail && !isLinked && !studentId && (
-              <div className="px-4 py-3 border-t border-white/10">
+              <div className="px-4 py-3 border-t border-gray-100">
                 <p className="text-xs text-gray-500">v2 계정과 연결하려면 연결 탭을 이용하세요.</p>
               </div>
             )}
@@ -834,18 +834,18 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
           {/* 오른쪽: 이슈 / 커뮤니케이션 탭 */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* 탭 헤더 */}
-            <div className="flex border-b border-white/10 shrink-0">
+            <div className="flex border-b border-gray-200 shrink-0">
               <button
                 onClick={() => setActiveTab('issue')}
                 className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
                   activeTab === 'issue'
-                    ? 'border-orange-400 text-orange-300'
-                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                    ? 'border-orange-500 text-orange-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
                 이슈
                 {issues.filter((i) => i.status === 'open').length > 0 && (
-                  <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px] border border-orange-500/30">
+                  <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full text-[10px] border border-orange-200">
                     {issues.filter((i) => i.status === 'open').length}
                   </span>
                 )}
@@ -854,8 +854,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 onClick={() => setActiveTab('comm')}
                 className={`px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
                   activeTab === 'comm'
-                    ? 'border-blue-400 text-blue-300'
-                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                    ? 'border-blue-500 text-blue-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
                 커뮤니케이션
@@ -867,7 +867,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
                   {issues.length === 0 && !showIssueForm && (
-                    <p className="text-xs text-gray-600">등록된 이슈 없음</p>
+                    <p className="text-xs text-gray-500">등록된 이슈 없음</p>
                   )}
                   {issues.map((issue) => (
                     <EventIssueCard
@@ -883,13 +883,13 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     />
                   ))}
                 </div>
-                <div className="border-t border-white/10 px-4 py-3 shrink-0">
+                <div className="border-t border-gray-100 px-4 py-3 shrink-0">
                   {showIssueForm ? (
                     <div className="space-y-2">
                       <select
                         value={issueType}
                         onChange={(e) => setIssueType(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
+                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
                       >
                         <option value="schedule_pending">스케줄 조율 중</option>
                         <option value="coach_pending">코치 배정 중</option>
@@ -901,26 +901,26 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                         value={issueTitle}
                         onChange={(e) => setIssueTitle(e.target.value)}
                         placeholder="이슈 제목"
-                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
                       />
                       <textarea
                         value={issueDesc}
                         onChange={(e) => setIssueDesc(e.target.value)}
                         placeholder="메모 (선택)"
                         rows={2}
-                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 resize-none"
+                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50 resize-none"
                       />
                       <div className="flex gap-2">
                         <button
                           onClick={() => setShowIssueForm(false)}
-                          className="flex-1 text-xs bg-white/5 hover:bg-white/10 text-gray-400 rounded px-3 py-1.5"
+                          className="flex-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded px-3 py-1.5"
                         >
                           취소
                         </button>
                         <button
                           onClick={handleIssueSubmit}
                           disabled={issueSaving || !issueTitle}
-                          className="flex-1 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded px-3 py-1.5 disabled:opacity-40"
+                          className="flex-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
                         >
                           {issueSaving ? '저장중...' : '등록'}
                         </button>
@@ -929,7 +929,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   ) : (
                     <button
                       onClick={() => setShowIssueForm(true)}
-                      className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
                     >
                       <Plus size={12} />
                       이슈 등록
@@ -946,29 +946,29 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   {(loadingDetail || loadingComms) ? (
                     <div className="space-y-2">
                       {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-16 bg-white/5 rounded-lg animate-pulse" />
+                        <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse" />
                       ))}
                     </div>
                   ) : unified.length === 0 ? (
-                    <p className="text-xs text-gray-600 py-2">기록된 내용이 없습니다.</p>
+                    <p className="text-xs text-gray-500 py-2">기록된 내용이 없습니다.</p>
                   ) : (
                     <div className="space-y-2">
                       {unified.map((entry) => {
                         if (entry.source === 'crm') {
                           return (
-                            <div key={`crm-${entry.id}`} className="bg-white/5 rounded-lg p-3">
+                            <div key={`crm-${entry.id}`} className="bg-gray-50 rounded-lg p-3">
                               <div className="flex items-center gap-2 mb-1.5">
-                                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400">
+                                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
                                   상담
                                 </span>
-                                <span className="text-[11px] text-gray-600 ml-auto">
+                                <span className="text-[11px] text-gray-500 ml-auto">
                                   {new Date(entry.created_at).toLocaleDateString('ko-KR', {
                                     year: 'numeric', month: 'numeric', day: 'numeric',
                                   })}
                                   {entry.author ? ` · ${entry.author}` : ''}
                                 </span>
                               </div>
-                              <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                                 {entry.raw_memo}
                               </p>
                             </div>
@@ -985,7 +985,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     </div>
                   )}
                 </div>
-                <div className="border-t border-white/10 px-4 py-3 shrink-0">
+                <div className="border-t border-gray-100 px-4 py-3 shrink-0">
                   <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} eventContext={eventContext} noBorder />
                 </div>
               </div>

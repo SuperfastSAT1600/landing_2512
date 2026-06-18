@@ -190,19 +190,19 @@ export default function SrmPage() {
   return (
     <div className="p-8 max-w-7xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white tracking-tight">SRM</h1>
+        <h1 className="text-lg font-bold text-gray-900 tracking-tight">SRM</h1>
       </div>
 
       {/* 메인 탭 */}
-      <div className="flex gap-1 mb-6 border-b border-white/10">
+      <div className="flex gap-1 mb-6">
         {(['queue', 'log', 'roster', 'daily'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               mainTab === t
-                ? 'text-white border-blue-500'
-                : 'text-gray-500 border-transparent hover:text-gray-300'
+                ? 'bg-gray-900 text-gray-900'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
             }`}
           >
             {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'roster' ? '명단' : '학습 리포트'}
@@ -215,12 +215,12 @@ export default function SrmPage() {
       )}
 
       {mainTab === 'queue' && openIssues.length > 0 && (
-        <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-          <AlertTriangle size={14} className="text-orange-400 shrink-0" />
-          <span className="text-sm text-orange-300 font-medium">미해결 이슈 {openIssues.length}건</span>
+        <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg">
+          <AlertTriangle size={14} className="text-orange-600 shrink-0" />
+          <span className="text-sm text-orange-700 font-medium">미해결 이슈 {openIssues.length}건</span>
           <div className="flex gap-1.5 flex-wrap ml-1">
             {openIssues.slice(0, 5).map((issue) => (
-              <span key={issue.id} className="text-[11px] text-orange-400/80 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">
+              <span key={issue.id} className="text-[11px] text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-200">
                 {issue.student_name ?? issue.title}
               </span>
             ))}
@@ -266,8 +266,8 @@ export default function SrmPage() {
       {mainTab === 'log' && (
         <>
           <OpsRadar onStudentClick={handleRosterStudentClick} />
-          <div className="mt-6 pt-5 border-t border-white/8">
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-3">업무 기록</p>
+          <div className="mt-6 pt-5 border-t border-gray-200">
+            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-3">업무 기록</p>
             <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
           </div>
         </>

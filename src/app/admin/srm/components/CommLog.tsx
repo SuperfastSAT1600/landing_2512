@@ -14,10 +14,10 @@ import {
 export type { CommEntry };
 
 const PARTY_ACTIVE: Record<string, string> = {
-  student: 'bg-blue-500 text-white border-blue-500',
-  parent: 'bg-purple-500 text-white border-purple-500',
-  coach: 'bg-green-500 text-white border-green-500',
-  us: 'bg-red-500 text-white border-red-500',
+  student: 'bg-blue-600 text-white border-blue-600',
+  parent: 'bg-purple-600 text-white border-purple-600',
+  coach: 'bg-green-600 text-white border-green-600',
+  us: 'bg-red-600 text-white border-red-600',
 };
 
 export interface TriggerContext {
@@ -76,30 +76,30 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
   };
 
   return (
-    <form onSubmit={handleSubmit} className={`space-y-3${noBorder ? '' : ' border-t border-white/10 pt-4 mt-4'}`}>
+    <form onSubmit={handleSubmit} className={`space-y-3${noBorder ? '' : ' border-t border-gray-200 pt-4 mt-4'}`}>
       {triggerContext && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-md">
-          <span className="text-orange-400 text-xs">!</span>
-          <span className="text-xs text-orange-300">{triggerContext.label}</span>
+        <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-md">
+          <span className="text-orange-600 text-xs">!</span>
+          <span className="text-xs text-orange-700">{triggerContext.label}</span>
         </div>
       )}
 
       {/* 이벤트 컨텍스트 */}
       {eventContext && (
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 border border-white/10 rounded-md">
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md">
           <span className="text-[11px] text-gray-500">이벤트</span>
           <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${
-            eventContext.type === 'coachRoom' ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-gray-400'
+            eventContext.type === 'coachRoom' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
           }`}>
             {eventContext.type === 'coachRoom' ? '수업' : '스터디홀'}
           </span>
-          <span className="text-[11px] text-gray-400 font-mono">{eventContext.time}</span>
+          <span className="text-[11px] text-gray-600 font-mono">{eventContext.time}</span>
         </div>
       )}
 
       {/* 관련 대상 — 복수 선택 */}
       <div>
-        <p className="text-[11px] text-gray-500 mb-1.5">관련 대상</p>
+        <p className="text-[11px] text-gray-600 mb-1.5">관련 대상</p>
         <div className="flex gap-1.5">
           {ALL_PARTIES.map((p) => (
             <button
@@ -107,7 +107,7 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
               type="button"
               onClick={() => toggleParty(p)}
               className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
-                parties.has(p) ? PARTY_ACTIVE[p] : 'bg-white/5 text-gray-500 border-white/10 hover:border-white/20'
+                parties.has(p) ? PARTY_ACTIVE[p] : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
               }`}
             >
               {PARTY_LABELS[p]}
@@ -120,14 +120,14 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
       <select
         value={channel}
         onChange={(e) => setChannel(e.target.value)}
-        className="w-full bg-[#1a1c1f] border border-white/10 rounded-md px-3 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500 [color-scheme:dark]"
+        className="w-full bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-800 outline-none focus:border-blue-500"
       >
-        <option value="kakao" className="bg-[#1a1c1f] text-gray-200">카카오</option>
-        <option value="call" className="bg-[#1a1c1f] text-gray-200">전화</option>
-        <option value="sms" className="bg-[#1a1c1f] text-gray-200">SMS</option>
-        <option value="email" className="bg-[#1a1c1f] text-gray-200">이메일</option>
-        <option value="slack" className="bg-[#1a1c1f] text-gray-200">슬랙</option>
-        <option value="other" className="bg-[#1a1c1f] text-gray-200">기타</option>
+        <option value="kakao" className="bg-white text-gray-800">카카오</option>
+        <option value="call" className="bg-white text-gray-800">전화</option>
+        <option value="sms" className="bg-white text-gray-800">SMS</option>
+        <option value="email" className="bg-white text-gray-800">이메일</option>
+        <option value="slack" className="bg-white text-gray-800">슬랙</option>
+        <option value="other" className="bg-white text-gray-800">기타</option>
       </select>
 
       <input
@@ -135,14 +135,14 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         placeholder="지각 이유, 스케줄 미잡힌 이유 등 (선택)"
-        className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-sm text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500"
+        className="w-full bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500"
       />
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="커뮤니케이션 내용 입력..."
         rows={3}
-        className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500 resize-none"
+        className="w-full bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500 resize-none"
       />
       <button
         type="submit"
@@ -174,7 +174,7 @@ export function CommLog({ entries, loading, saving, onAdd, triggerContext, event
   if (loading) {
     return (
       <div className="space-y-2">
-        {[1, 2].map((i) => <div key={i} className="h-16 bg-white/5 rounded-lg animate-pulse" />)}
+        {[1, 2].map((i) => <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse" />)}
       </div>
     );
   }
@@ -188,23 +188,23 @@ export function CommLog({ entries, loading, saving, onAdd, triggerContext, event
           {entries.map((e) => {
             const effectiveParties = resolveParties(e);
             return (
-              <div key={e.id} className="bg-white/5 rounded-lg p-3">
+              <div key={e.id} className="bg-gray-50 rounded-lg p-3">
                 <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
                   <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${CHANNEL_COLORS[e.channel]}`}>
                     {CHANNEL_LABELS[e.channel]}
                   </span>
                   {effectiveParties.map((p) => (
-                    <span key={p} className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${PARTY_COLORS[p] ?? 'bg-gray-500/20 text-gray-300 border-gray-500/30'}`}>
+                    <span key={p} className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${PARTY_COLORS[p] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                       {PARTY_LABELS[p] ?? p}
                     </span>
                   ))}
                   {e.trigger_type && e.trigger_type !== 'manual' && (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
                       {TRIGGER_BADGE_LABELS[e.trigger_type] ?? e.trigger_type}
                     </span>
                   )}
                   {e.resolution && (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-gray-400 ml-auto">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 ml-auto">
                       {RESOLUTION_LABELS[e.resolution] ?? e.resolution}
                     </span>
                   )}
@@ -216,7 +216,7 @@ export function CommLog({ entries, loading, saving, onAdd, triggerContext, event
                 {e.reason && (
                   <p className="text-[11px] text-gray-500 mb-1">사유: {e.reason}</p>
                 )}
-                <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{e.content}</p>
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{e.content}</p>
               </div>
             );
           })}

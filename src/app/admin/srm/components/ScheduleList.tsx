@@ -187,16 +187,16 @@ export function ScheduleList({
       <div
         key={ev.id}
         className={`flex items-start gap-2.5 px-3 py-2 rounded-md text-sm group ${
-          anyCopied ? 'bg-emerald-950/30' : isDone ? 'bg-white/3 opacity-60' : 'bg-white/5'
+          anyCopied ? 'bg-emerald-950/30' : isDone ? 'bg-gray-50 opacity-60' : 'bg-gray-50'
         }`}
       >
-        <span className={`mt-0.5 text-xs shrink-0 ${isDone ? 'text-emerald-400' : 'text-gray-500'}`}>
+        <span className={`mt-0.5 text-xs shrink-0 ${isDone ? 'text-emerald-700' : 'text-gray-500'}`}>
           {isDone ? completedIcon : icon}
         </span>
         {anyCopied && (
-          <span className="mt-0.5 text-xs shrink-0 text-emerald-400 font-medium">발송됨</span>
+          <span className="mt-0.5 text-xs shrink-0 text-emerald-700 font-medium">발송됨</span>
         )}
-        <span className="text-gray-400 font-mono text-xs shrink-0 mt-0.5">{timeStr}</span>
+        <span className="text-gray-500 font-mono text-xs shrink-0 mt-0.5">{timeStr}</span>
         <span className="leading-tight flex flex-wrap gap-x-1 gap-y-0.5 flex-1">
           {ev.students.map((name, i) => {
             const studentId = ev.studentIds?.[i];
@@ -211,14 +211,14 @@ export function ScheduleList({
                   eventId: ev.id,
                   coachId: ev.coachIds?.[0] ?? undefined,
                 })}
-                className={`inline-flex items-center gap-0.5 hover:text-blue-400 hover:underline transition-colors ${
-                  isDone ? 'text-gray-500' : 'text-gray-200'
+                className={`inline-flex items-center gap-0.5 hover:text-blue-700 hover:underline transition-colors ${
+                  isDone ? 'text-gray-500' : 'text-gray-700'
                 }`}
               >
-                {isVip && <Crown size={11} className="text-yellow-400 shrink-0" />}
+                {isVip && <Crown size={11} className="text-yellow-700 shrink-0" />}
                 {name}
                 {lang === 'en' && (
-                  <span className="text-[10px] font-bold text-blue-400 bg-blue-500/15 px-1 rounded leading-tight">EN</span>
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1 rounded leading-tight">EN</span>
                 )}
               </button>
             );
@@ -230,7 +230,7 @@ export function ScheduleList({
                 <button
                   key={`${ev.id}-c-${i}`}
                   onClick={() => onCoachClick({ id: ev.coachIds?.[i] ?? coachName, name: coachName })}
-                  className="hover:text-blue-400 hover:underline transition-colors text-gray-400"
+                  className="hover:text-blue-700 hover:underline transition-colors text-gray-500"
                 >
                   {coachName}
                 </button>
@@ -243,17 +243,17 @@ export function ScheduleList({
           <button
             onClick={() => handleCopy(ev, isTomorrow, 'ko')}
             title="한국어 메시지 복사"
-            className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-300"
+            className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-600"
           >
-            {copiedKo ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            {copiedKo ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
             <span className="text-[10px]">KO</span>
           </button>
           <button
             onClick={() => handleCopy(ev, isTomorrow, 'en')}
             title="English message copy"
-            className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-400"
+            className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-700"
           >
-            {copiedEn ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            {copiedEn ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
             <span className="text-[10px]">EN</span>
           </button>
         </span>
@@ -264,8 +264,8 @@ export function ScheduleList({
   return (
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-sm font-semibold text-white">{title}</h3>
-        <span className="text-xs bg-white/10 text-gray-400 px-2 py-0.5 rounded-full">
+        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
           {loading ? '...' : totalCount}
         </span>
       </div>
@@ -273,7 +273,7 @@ export function ScheduleList({
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-10 bg-white/5 rounded animate-pulse" />
+            <div key={i} className="h-10 bg-gray-50 rounded animate-pulse" />
           ))}
         </div>
       ) : totalCount === 0 ? (
