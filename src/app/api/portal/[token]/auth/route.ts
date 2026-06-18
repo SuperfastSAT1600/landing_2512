@@ -28,7 +28,7 @@ export async function POST(
 
   const { data: student, error } = await supabaseAdmin
     .from('students')
-    .select('id, passcode_hash, passcode_attempts, passcode_locked_until')
+    .select('id, passcode_hash, passcode_attempts, passcode_locked_until, b2b_partner')
     .eq('portal_token', token)
     .single();
 
@@ -58,6 +58,12 @@ export async function POST(
     const { passcode } = body as { passcode: string };
     if (!/^\d{6}$/.test(passcode)) {
       return NextResponse.json({ error: '6자리 숫자를 입력해 주세요' }, { status: 400 });
+    }
+    // B2B 파트너별 히든 관리자 패스코드 체크
+    const b2bPasscodes: Record<string, string> = JSON.parse(process.env.PORTAL_B2B_ADMIN_PASSCODES ?? '{}');
+    const partnerAdminCode = student.b2b_partner ? b2bPasscodes[student.b2b_partner as string] : undefined;
+    if (partnerAdminCode && passcode === partnerAdminCode) {
+      return issueSession(token);
     }
     if (student.passcode_locked_until && new Date(student.passcode_locked_until) > new Date()) {
       return NextResponse.json({ error: '잠금 상태입니다. 잠시 후 다시 시도해 주세요', locked: true }, { status: 429 });
