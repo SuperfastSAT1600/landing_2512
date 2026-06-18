@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Link, ChevronDown, Check } from 'lucide-react';
+import { Link, ChevronDown, Check, ExternalLink } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { DIAGNOSTIC_FUNNEL_LABELS, DIAGNOSTIC_FUNNEL_STAGES } from '@/types/crm';
 import type { DiagCandidate } from '../hooks/useDiagnostic';
@@ -87,20 +87,34 @@ export function DiagnosticSection({
 
         {/* 진단테스트 연결 */}
         <div className="space-y-2 pt-1">
-          <button
-            onClick={() => {
-              setShowDiagPicker(!showDiagPicker);
-              if (showDiagPicker) { setDiagSearchQuery(''); }
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12px] transition-colors ${
-              diagLinked
-                ? 'border-green-200 text-green-600 bg-green-50 hover:bg-green-100'
-                : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50'
-            }`}
-          >
-            <Link size={12} />
-            {diagLinked ? '진단 결과 연결됨' : '진단테스트 연결'}
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => {
+                setShowDiagPicker(!showDiagPicker);
+                if (showDiagPicker) { setDiagSearchQuery(''); }
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12px] transition-colors ${
+                diagLinked
+                  ? 'border-green-200 text-green-600 bg-green-50 hover:bg-green-100'
+                  : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <Link size={12} />
+              {diagLinked ? '진단 결과 연결됨' : '진단테스트 연결'}
+            </button>
+
+            {diagLinked && (
+              <a
+                href={`/reports/${diagLinked.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-blue-200 text-blue-600 bg-blue-50 rounded-lg text-[12px] transition-colors hover:bg-blue-100"
+              >
+                <ExternalLink size={12} />
+                진단 테스트 바로가기
+              </a>
+            )}
+          </div>
 
           {showDiagPicker && (
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">

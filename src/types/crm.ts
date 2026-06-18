@@ -189,7 +189,7 @@ export interface Student {
   churn_tag: string | null;
   churn_type: ChurnType | null;
   diagnostic_result_id: string | null;
-  diagnostic_funnel_stage: number | null; // 진단 테스트 전용 퍼널(0~3), null=미설정
+  diagnostic_funnel_stage: number | null; // 진단 테스트 전용 퍼널(1~5), null=미설정
   consultation_timeline: ConsultationEntry[];
 
   last_contacted_at: string | null;
@@ -425,13 +425,14 @@ export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
 
 // 진단 테스트 전용 퍼널 단계 라벨 (students.diagnostic_funnel_stage)
 export const DIAGNOSTIC_FUNNEL_LABELS: Record<number, string> = {
-  0: '진단 테스트 진행하지 않고 결제',
-  1: '안내 완료 후 대기',
-  2: 'Report 세일즈 진행 완료 (Report 링크 전달 안하고 콜로만 진행)',
-  3: 'Report 세일즈 진행 완료 (Report 링크 전달함)',
+  1: '응시하지 않아도 됨',
+  2: '안내 필요',
+  3: '응시 확인 필요',
+  4: 'Report 전달 필요',
+  5: 'Report 전달 완료',
 };
 
-export const DIAGNOSTIC_FUNNEL_STAGES = [0, 1, 2, 3] as const;
+export const DIAGNOSTIC_FUNNEL_STAGES = [1, 2, 3, 4, 5] as const;
 
 // ─── 단계 정체 알림 (SLA) ─────────────────────────────────────────────────────
 // 각 단계 목표 체류일 — 이 일수를 "초과"하면 정체로 간주하고 알림. 8(수업중)·churned 제외.
