@@ -261,6 +261,7 @@ export async function GET(
     { data: tcAttempts },
     { data: dailyReports },
     { data: vocabEvents },
+    { data: vocabExposed },
   ] = await Promise.all([
     prefetchNarrativeCache(profileId),
     supabaseSFv2.from('study_hall_session')
@@ -290,7 +291,17 @@ export async function GET(
       .eq('kind', 'graded')
       .order('occurred_at', { ascending: false })
       .limit(1000),
+    // All-time exposed words (graded + exposure) for the top-line "학습 단어" count.
+    supabaseSFv2.schema('vocab').from('events')
+      .select('entry_id')
+      .eq('subject_id', profileId)
+      .limit(10000),
   ]);
+
+  // distinct words ever shown to the student
+  const vocabExposedCount = new Set(
+    (vocabExposed ?? []).map(r => r.entry_id as string).filter(Boolean)
+  ).size;
 
   const unitIds = [...new Set((shAttempts ?? []).map(a => a.unit_id as string).filter(Boolean))];
   const { data: unitsMeta } = unitIds.length
@@ -585,5 +596,5 @@ export async function GET(
   );
 
   const days = Array.from(dayMap.values()).sort((a, b) => b.date.localeCompare(a.date));
-  return NextResponse.json({ days } satisfies LearningReport);
+  return NextResponse.json({ days, vocabExposedCount } satisfies LearningReport);
 }

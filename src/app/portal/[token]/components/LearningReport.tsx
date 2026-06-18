@@ -30,10 +30,7 @@ export default function LearningReport({ token, studentName, studentCreatedAt }:
     if (i.type === 'study_hall' || i.type === 'test_center') return sum + i.totalProblems;
     return sum;
   }, 0);
-  const totalVocab = allItems.reduce((sum, i) => {
-    if (i.type === 'voca') return sum + i.masteredCount;
-    return sum;
-  }, 0);
+  const exposedVocab = data?.vocabExposedCount ?? 0;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto pt-12" style={{ background: '#F4F5F9' }}>
@@ -70,9 +67,9 @@ export default function LearningReport({ token, studentName, studentCreatedAt }:
             <div className="flex-1 flex flex-col items-center justify-center rounded-2xl px-4 py-5"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <span className="text-5xl font-bold leading-none text-white">
-                {loading ? '—' : totalVocab}
+                {loading ? '—' : exposedVocab}
               </span>
-              <span className="text-slate-300 text-xs mt-1.5 tracking-widest text-center">마스터 단어</span>
+              <span className="text-slate-300 text-xs mt-1.5 tracking-widest text-center">학습 단어</span>
             </div>
           </div>
         </div>
