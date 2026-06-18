@@ -656,6 +656,7 @@ export const TIMEZONE_OPTIONS = [
   { label: '싱가포르', value: 'Asia/Singapore' },
   { label: '호주 동부', value: 'Australia/Sydney' },
   { label: '일본 (JST)', value: 'Asia/Tokyo' },
+  { label: '사이판 (ChST)', value: 'Pacific/Saipan' },
 ] as const;
 
 export const TIMEZONE_LABEL_MAP: Record<string, string> = Object.fromEntries(

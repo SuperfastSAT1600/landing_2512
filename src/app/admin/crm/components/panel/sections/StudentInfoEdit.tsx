@@ -128,7 +128,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
           <input value={form.parent_phone} onChange={set('parent_phone')} className={inputCls} />
         </EditField>
       </div>
-      <EditField label="거주 국가 / 시간대">
+      <EditField label="학생 거주 시간대">
         <select value={form.parent_timezone} onChange={set('parent_timezone')} className={selectCls}>
           {TIMEZONE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
         </select>

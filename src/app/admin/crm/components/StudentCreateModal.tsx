@@ -287,8 +287,8 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
             </Field>
           </div>
 
-          {/* 거주 국가/시간대 */}
-          <Field label="거주 국가 / 시간대">
+          {/* 학생 거주 시간대 */}
+          <Field label="학생 거주 시간대">
             <select value={form.parent_timezone} onChange={set('parent_timezone')} className={selectCls}>
               {TIMEZONE_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
