@@ -2,7 +2,7 @@
 import { srmFetch } from '../lib/srm-fetch';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, Plus, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import { AddForm } from './CommLog';
 import { SrmCommCard } from './SrmCommCard';
 import { EventIssueCard, type BaseIssue } from './EventIssueCard';
@@ -37,7 +37,6 @@ export function EventLogPanel({ event, onClose }: Props) {
   const [issues, setIssues] = useState<EventIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showIssueForm, setShowIssueForm] = useState(false);
   const [issueType, setIssueType] = useState<string>('cancellation');
   const [issueTitle, setIssueTitle] = useState('');
   const [issueDesc, setIssueDesc] = useState('');
@@ -113,7 +112,6 @@ export function EventLogPanel({ event, onClose }: Props) {
       setIssueTitle('');
       setIssueDesc('');
       setIssueType('cancellation');
-      setShowIssueForm(false);
     }
     setIssueSaving(false);
   };
@@ -220,57 +218,37 @@ export function EventLogPanel({ event, onClose }: Props) {
                 ))
               )}
             </div>
-            <div className="border-t border-gray-200 px-5 py-3 shrink-0">
-              {showIssueForm ? (
-                <div className="space-y-2">
-                  <select
-                    value={issueType}
-                    onChange={(e) => setIssueType(e.target.value)}
-                    className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 outline-none focus:border-blue-500"
-                  >
-                    {ISSUE_TYPES.map((t) => (
-                      <option key={t.value} value={t.value} className="bg-white text-gray-800">{t.label}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    value={issueTitle}
-                    onChange={(e) => setIssueTitle(e.target.value)}
-                    placeholder="이슈 제목 *"
-                    className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500"
-                  />
-                  <textarea
-                    value={issueDesc}
-                    onChange={(e) => setIssueDesc(e.target.value)}
-                    placeholder="상세 설명 (선택)"
-                    rows={2}
-                    className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500 resize-none"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowIssueForm(false)}
-                      className="flex-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded px-3 py-1.5"
-                    >
-                      취소
-                    </button>
-                    <button
-                      onClick={handleIssueSubmit}
-                      disabled={issueSaving || !issueTitle.trim()}
-                      className="flex-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
-                    >
-                      {issueSaving ? '저장중...' : '등록'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowIssueForm(true)}
-                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  <Plus size={12} />
-                  이슈 등록
-                </button>
-              )}
+            <div className="border-t border-gray-200 px-5 py-3 shrink-0 space-y-2">
+              <select
+                value={issueType}
+                onChange={(e) => setIssueType(e.target.value)}
+                className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 outline-none focus:border-blue-500"
+              >
+                {ISSUE_TYPES.map((t) => (
+                  <option key={t.value} value={t.value} className="bg-white text-gray-800">{t.label}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                value={issueTitle}
+                onChange={(e) => setIssueTitle(e.target.value)}
+                placeholder="이슈 제목 *"
+                className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500"
+              />
+              <textarea
+                value={issueDesc}
+                onChange={(e) => setIssueDesc(e.target.value)}
+                placeholder="상세 설명 (선택)"
+                rows={2}
+                className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500 resize-none"
+              />
+              <button
+                onClick={handleIssueSubmit}
+                disabled={issueSaving || !issueTitle.trim()}
+                className="w-full text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
+              >
+                {issueSaving ? '저장중...' : '이슈 등록'}
+              </button>
             </div>
           </>
         )}

@@ -2,7 +2,7 @@
 import { srmFetch } from '../lib/srm-fetch';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles, Plus, AlertTriangle } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles, AlertTriangle } from 'lucide-react';
 import {
   PARTY_LABELS,
   PARTY_COLORS,
@@ -146,7 +146,6 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [pauseReason, setPauseReason] = useState('');
   const [pauseSaving, setPauseSaving] = useState(false);
   const [issues, setIssues] = useState<StudentIssue[]>([]);
-  const [showIssueForm, setShowIssueForm] = useState(false);
   const [issueType, setIssueType] = useState('schedule_pending');
   const [issueTitle, setIssueTitle] = useState('');
   const [issueDesc, setIssueDesc] = useState('');
@@ -361,7 +360,6 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     await fetchIssues();
     setIssueTitle('');
     setIssueDesc('');
-    setShowIssueForm(false);
     setIssueSaving(false);
   };
 
@@ -866,8 +864,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
             {activeTab === 'issue' && (
               <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
-                  {issues.length === 0 && !showIssueForm && (
-                    <p className="text-xs text-gray-500">등록된 이슈 없음</p>
+                  {issues.length === 0 && (
+                    <p className="text-xs text-gray-400">등록된 이슈 없음</p>
                   )}
                   {issues.map((issue) => (
                     <EventIssueCard
@@ -883,58 +881,38 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     />
                   ))}
                 </div>
-                <div className="border-t border-gray-100 px-4 py-3 shrink-0">
-                  {showIssueForm ? (
-                    <div className="space-y-2">
-                      <select
-                        value={issueType}
-                        onChange={(e) => setIssueType(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
-                      >
-                        <option value="schedule_pending">스케줄 조율 중</option>
-                        <option value="coach_pending">코치 배정 중</option>
-                        <option value="renewal_needed">재결제 필요</option>
-                        <option value="custom">기타</option>
-                      </select>
-                      <input
-                        type="text"
-                        value={issueTitle}
-                        onChange={(e) => setIssueTitle(e.target.value)}
-                        placeholder="이슈 제목"
-                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
-                      />
-                      <textarea
-                        value={issueDesc}
-                        onChange={(e) => setIssueDesc(e.target.value)}
-                        placeholder="메모 (선택)"
-                        rows={2}
-                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50 resize-none"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setShowIssueForm(false)}
-                          className="flex-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded px-3 py-1.5"
-                        >
-                          취소
-                        </button>
-                        <button
-                          onClick={handleIssueSubmit}
-                          disabled={issueSaving || !issueTitle}
-                          className="flex-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
-                        >
-                          {issueSaving ? '저장중...' : '등록'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowIssueForm(true)}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                      <Plus size={12} />
-                      이슈 등록
-                    </button>
-                  )}
+                <div className="border-t border-gray-100 px-4 py-3 shrink-0 space-y-2">
+                  <select
+                    value={issueType}
+                    onChange={(e) => setIssueType(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
+                  >
+                    <option value="schedule_pending">스케줄 조율 중</option>
+                    <option value="coach_pending">코치 배정 중</option>
+                    <option value="renewal_needed">재결제 필요</option>
+                    <option value="custom">기타</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={issueTitle}
+                    onChange={(e) => setIssueTitle(e.target.value)}
+                    placeholder="이슈 제목"
+                    className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
+                  />
+                  <textarea
+                    value={issueDesc}
+                    onChange={(e) => setIssueDesc(e.target.value)}
+                    placeholder="메모 (선택)"
+                    rows={2}
+                    className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50 resize-none"
+                  />
+                  <button
+                    onClick={handleIssueSubmit}
+                    disabled={issueSaving || !issueTitle}
+                    className="w-full text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
+                  >
+                    {issueSaving ? '저장중...' : '이슈 등록'}
+                  </button>
                 </div>
               </div>
             )}
