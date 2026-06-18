@@ -37,7 +37,7 @@ export function DayTabs({ selected, onChange }: Props) {
             onClick={() => onChange(date)}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               isActive
-                ? 'bg-gray-900 text-gray-900'
+                ? 'bg-gray-900 text-white'
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
             }`}
           >

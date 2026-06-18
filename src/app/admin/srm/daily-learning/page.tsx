@@ -10,7 +10,7 @@ import type { DailyLearningResponse, StudentDayResult, StudyHallResult, TestCent
 
 function AccBadge({ pct }: { pct: number }) {
   const color =
-    pct >= 85 ? 'bg-emerald-100 text-emerald-700 border-emerald-500/30' :
+    pct >= 85 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
     pct >= 70 ? 'bg-blue-100 text-blue-700 border-blue-200' :
     pct >= 50 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
                 'bg-red-100 text-red-700 border-red-200';
@@ -27,7 +27,7 @@ function StudyHallCard({ data }: { data: StudyHallResult }) {
   const [expanded, setExpanded] = useState(false);
   const sorted = [...data.skills].sort((a, b) => b.total - a.total);
   return (
-    <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
+    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <div className="flex items-center gap-2 mb-3">
         <Library size={14} className="text-purple-700" />
         <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">스터디홀</span>
@@ -77,12 +77,12 @@ function TestCenterCard({ data }: { data: TestCenterResult }) {
     data.curriculumDomain === 'math' ? 'Math' :
     data.curriculumDomain ?? '';
   return (
-    <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
+    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <div className="flex items-center gap-2 mb-3">
         <FlaskConical size={14} className="text-blue-700" />
         <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">테스트센터</span>
         {domainLabel && (
-          <span className="text-xs bg-blue-500/10 text-blue-700 border border-blue-500/20 px-1.5 py-0.5 rounded">
+          <span className="text-xs bg-blue-100 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded">
             {domainLabel}
           </span>
         )}
@@ -119,10 +119,10 @@ function TestCenterCard({ data }: { data: TestCenterResult }) {
 
 function VocabCard({ data }: { data: VocabResult }) {
   return (
-    <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
+    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <div className="flex items-center gap-2 mb-3">
         <BookOpen size={14} className="text-amber-700" />
-        <span className="text-xs font-semibold text-amber-300 uppercase tracking-wide">단어</span>
+        <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">단어</span>
       </div>
       <div className="grid grid-cols-2 gap-3 mb-3">
         <Stat label="학습 단어" value={`${data.wordCount}개`} />
@@ -135,7 +135,7 @@ function VocabCard({ data }: { data: VocabResult }) {
       </div>
       {data.masteredCount > 0 && (
         <div className="mb-2">
-          <span className="text-xs bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-2 py-0.5 rounded">
+          <span className="text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
             마스터 {data.masteredCount}개
           </span>
         </div>
@@ -156,7 +156,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="text-[10px] text-gray-500">{label}</span>
-      <span className="text-sm font-semibold text-gray-100">{value}</span>
+      <span className="text-sm font-semibold text-gray-800">{value}</span>
     </div>
   );
 }
@@ -165,8 +165,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/30 text-center">
-      <span className="text-xs text-gray-600">{label} 기록 없음</span>
+    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
+      <span className="text-xs text-gray-400">{label} 기록 없음</span>
     </div>
   );
 }
@@ -177,7 +177,7 @@ function StudentColumn({ student }: { student: StudentDayResult }) {
   const hasAny = student.studyHall || student.testCenter.length > 0 || student.vocab;
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-center pb-2 border-b border-gray-700/50">
+      <div className="text-center pb-2 border-b border-gray-200">
         <p className="text-sm font-semibold text-gray-900">{student.name}</p>
         {!student.sfv2ProfileId && (
           <span className="text-[10px] text-red-700">v2 미연결</span>
@@ -240,7 +240,7 @@ export default function DailyLearningPage() {
     : '';
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-6">
+    <div className="p-6">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -251,7 +251,7 @@ export default function DailyLearningPage() {
           <button
             onClick={() => load(date)}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-600 border border-gray-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 rounded-lg text-sm text-gray-600 border border-gray-200 disabled:opacity-50 transition-colors"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             새로고침
@@ -264,7 +264,7 @@ export default function DailyLearningPage() {
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-gray-500"
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-gray-400"
           />
           <span className="text-sm text-gray-500">{dateLabel}</span>
         </div>
@@ -275,14 +275,14 @@ export default function DailyLearningPage() {
             value={namesInput}
             onChange={e => setNamesInput(e.target.value)}
             placeholder="학생 이름 (쉼표로 구분, 예: 홍길동, Jane Doe)"
-            className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-gray-500"
+            className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400"
           />
           <button
             onClick={() => {
               const parsed = namesInput.split(',').map(n => n.trim()).filter(Boolean);
               setNames(parsed);
             }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium text-gray-900 transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium text-white transition-colors"
           >
             조회
           </button>
@@ -291,7 +291,7 @@ export default function DailyLearningPage() {
 
       {/* Error state */}
       {error && (
-        <div className="mb-4 p-3 bg-red-900/20 border border-red-700/40 rounded-lg text-sm text-red-700">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {error}
         </div>
       )}
@@ -301,9 +301,9 @@ export default function DailyLearningPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {(names.length > 0 ? names : ['', '', '', '']).map((name, idx) => (
             <div key={name || idx} className="space-y-3">
-              <div className="h-6 bg-gray-800 rounded animate-pulse" />
+              <div className="h-6 bg-gray-200 rounded animate-pulse" />
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-28 bg-gray-800/60 rounded-lg animate-pulse" />
+                <div key={i} className="h-28 bg-gray-100 rounded-lg animate-pulse" />
               ))}
             </div>
           ))}
@@ -319,9 +319,9 @@ export default function DailyLearningPage() {
           {/* If a name is missing from results, show placeholder */}
           {names.filter(n => !data.students.find(s => s.name === n)).map(name => (
             <div key={name} className="flex flex-col gap-3">
-              <div className="text-center pb-2 border-b border-gray-700/50">
+              <div className="text-center pb-2 border-b border-gray-200">
                 <p className="text-sm font-semibold text-gray-900">{name}</p>
-                <span className="text-[10px] text-gray-600">학생 정보 없음</span>
+                <span className="text-[10px] text-gray-400">학생 정보 없음</span>
               </div>
             </div>
           ))}
