@@ -59,9 +59,11 @@ export async function POST(
     if (!/^\d{6}$/.test(passcode)) {
       return NextResponse.json({ error: '6자리 숫자를 입력해 주세요' }, { status: 400 });
     }
-    // B2B 파트너별 히든 관리자 패스코드 체크
+    // 관리자 히든 패스코드 체크 (파트너별 우선, 없으면 전역 PARTNER_ADMIN_PASSCODE)
     const b2bPasscodes: Record<string, string> = JSON.parse(process.env.PORTAL_B2B_ADMIN_PASSCODES ?? '{}');
-    const partnerAdminCode = student.b2b_partner ? b2bPasscodes[student.b2b_partner as string] : undefined;
+    const partnerAdminCode = student.b2b_partner
+      ? (b2bPasscodes[student.b2b_partner as string] ?? process.env.PARTNER_ADMIN_PASSCODE)
+      : undefined;
     if (partnerAdminCode && passcode === partnerAdminCode) {
       return issueSession(token);
     }
