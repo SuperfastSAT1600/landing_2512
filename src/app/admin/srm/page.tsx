@@ -12,6 +12,7 @@ import { OpsRadar } from './components/OpsRadar';
 import { StudentSearch } from './components/StudentSearch';
 import { StudentRoster } from './components/StudentRoster';
 import { EventLogPanel } from './components/EventLogPanel';
+import DailyLearningPage from './daily-learning/page';
 import type { TaggedEvent } from './components/UnifiedTimeline';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
@@ -36,7 +37,7 @@ interface SelectedCoach {
   relatedStudents: { name: string; events: string[] }[];
 }
 
-type MainTab = 'queue' | 'log' | 'roster';
+type MainTab = 'queue' | 'log' | 'roster' | 'daily';
 
 function collectRelatedStudents(
   coachId: string,
@@ -194,7 +195,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6 border-b border-white/10">
-        {(['queue', 'log', 'roster'] as MainTab[]).map((t) => (
+        {(['queue', 'log', 'roster', 'daily'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -204,12 +205,12 @@ export default function SrmPage() {
                 : 'text-gray-500 border-transparent hover:text-gray-300'
             }`}
           >
-            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : '명단'}
+            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'roster' ? '명단' : '학습 리포트'}
           </button>
         ))}
       </div>
 
-      {mainTab !== 'roster' && (
+      {mainTab !== 'roster' && mainTab !== 'daily' && (
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
       )}
 
@@ -274,6 +275,10 @@ export default function SrmPage() {
 
       {mainTab === 'roster' && (
         <StudentRoster onStudentClick={handleRosterStudentClick} />
+      )}
+
+      {mainTab === 'daily' && (
+        <DailyLearningPage />
       )}
 
       {selectedStudent && (
