@@ -50,7 +50,7 @@ function getTzAbbr(iso: string, tz: string): string {
 }
 
 function toDateKey(iso: string, tz: string): string {
-  return new Date(iso).toLocaleDateString('en-CA', { timeZone: tz }); // YYYY-MM-DD
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: tz });
 }
 
 function toDateKo(iso: string, tz: string): string {
@@ -142,29 +142,28 @@ function buildStudyHallCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): st
   return `${dayWord} Study Hall starts on ${timeInfo}. ${verb}`;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 
-// 내일 이벤트는 오늘 같은 시각에 연락해야 하므로 -24h를 sort key로 사용
-function contactTime(ev: TaggedEvent): number {
-  const ms = new Date(ev.startsAt).getTime();
-  return ev.day === 'tomorrow' ? ms - DAY_MS : ms;
+function formatSectionDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return `${m}/${d}(${DOW[date.getDay()]})`;
 }
 
-function mergeAndSort(
-  todayCoach: ScheduleEvent[],
-  todaySH: ScheduleEvent[],
-  tomorrowCoach: ScheduleEvent[],
-  tomorrowSH: ScheduleEvent[],
-): TaggedEvent[] {
-  const tag = (evs: ScheduleEvent[], eventType: EventType, day: EventDay): TaggedEvent[] =>
-    evs.map((e) => ({ ...e, eventType, day }));
+function addDay(dateStr: string, n: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d + n);
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${mm}-${dd}`;
+}
 
-  return [
-    ...tag(todayCoach, 'coachRoom', 'today'),
-    ...tag(todaySH, 'studyHall', 'today'),
-    ...tag(tomorrowCoach, 'coachRoom', 'tomorrow'),
-    ...tag(tomorrowSH, 'studyHall', 'tomorrow'),
-  ].sort((a, b) => contactTime(a) - contactTime(b));
+function sortByTime(evs: TaggedEvent[]): TaggedEvent[] {
+  return [...evs].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+}
+
+function tag(evs: ScheduleEvent[], eventType: EventType, day: EventDay): TaggedEvent[] {
+  return evs.map((e) => ({ ...e, eventType, day }));
 }
 
 interface StudentClickArg {
@@ -219,8 +218,14 @@ export function UnifiedTimeline({
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
 
-  const events = mergeAndSort(todayCoachRoom, todayStudyHall, tomorrowCoachRoom, tomorrowStudyHall);
-  const totalCount = events.length;
+  const todayEvents = sortByTime([
+    ...tag(todayCoachRoom, 'coachRoom', 'today'),
+    ...tag(todayStudyHall, 'studyHall', 'today'),
+  ]);
+  const tomorrowEvents = sortByTime([
+    ...tag(tomorrowCoachRoom, 'coachRoom', 'tomorrow'),
+    ...tag(tomorrowStudyHall, 'studyHall', 'tomorrow'),
+  ]);
 
   const handleCopy = async (ev: TaggedEvent, lang: 'ko' | 'en') => {
     const isTomorrow = ev.day === 'tomorrow';
@@ -231,7 +236,6 @@ export function UnifiedTimeline({
       msg = lang === 'en' ? buildCopyMessageEn(ev, isTomorrow) : buildCopyMessage(ev, isTomorrow);
     }
     await navigator.clipboard.writeText(msg);
-
     setCopiedIds((prev) => new Set(prev).add(`${ev.id}-${lang}`));
 
     try {
@@ -271,34 +275,33 @@ export function UnifiedTimeline({
       ? buildStudyHallCopyMessage(ev, ev.day === 'tomorrow')
       : buildCopyMessage(ev, ev.day === 'tomorrow');
 
+    const rowClass = alreadySent
+      ? 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
+      : hasIssue
+      ? 'border-orange-200 bg-orange-50 hover:bg-orange-100'
+      : isDone
+      ? 'border-gray-200 bg-gray-50 opacity-80 hover:opacity-100'
+      : 'border-gray-200 bg-white hover:bg-gray-50';
+
     return (
       <div
         key={ev.id}
         onClick={() => onEventClick({ ...ev, startsAtKst: kstTime })}
-        className={`flex items-stretch gap-3 px-3 py-2.5 rounded-md text-sm group cursor-pointer ${
-          alreadySent
-            ? 'bg-emerald-50 hover:bg-emerald-100'
-            : isDone
-            ? 'bg-gray-50 opacity-80 hover:opacity-100'
-            : 'bg-white hover:bg-gray-50'
-        }`}
+        className={`flex items-stretch gap-3 px-3 py-3 rounded-lg border text-sm group cursor-pointer transition-colors ${rowClass}`}
       >
-        {/* 시간 열 */}
+        {/* 시간 */}
         <div className="w-14 shrink-0 flex flex-col items-center justify-center">
           <span className={`font-mono text-sm font-semibold ${isDone ? 'text-gray-400' : 'text-gray-700'}`}>{timeStr}</span>
         </div>
 
-        {/* 좌측: 유형 + 학생 */}
-        <div className="w-[32%] min-w-0 flex flex-col gap-1 justify-center border-l border-gray-100 pl-3">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        {/* 유형 + 학생 */}
+        <div className="w-[32%] min-w-0 flex flex-col gap-1 justify-center border-l border-gray-200 pl-3">
+          <div className="flex items-center gap-1.5">
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${
               isCoach ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
             }`}>
               {isCoach ? '수업' : '스터디홀'}
             </span>
-            {ev.day === 'tomorrow' && (
-              <span className="text-[10px] font-medium text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded shrink-0">내일</span>
-            )}
           </div>
           <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
             {ev.students.map((name, i) => {
@@ -320,8 +323,8 @@ export function UnifiedTimeline({
                       coachId: ev.coachIds?.[0] ?? undefined,
                     });
                   }}
-                  className={`inline-flex items-center gap-0.5 hover:text-blue-400 hover:underline transition-colors text-sm leading-tight ${
-                    isDone ? 'text-gray-400' : 'text-gray-700'
+                  className={`inline-flex items-center gap-0.5 hover:text-blue-500 hover:underline transition-colors text-sm leading-tight ${
+                    isDone ? 'text-gray-400' : 'text-gray-800'
                   }`}
                 >
                   {isVip && <Crown size={11} className="text-yellow-400 shrink-0" />}
@@ -332,13 +335,13 @@ export function UnifiedTimeline({
               );
             })}
             {isCoach && ev.coaches.length > 0 && (
-              <span className="text-gray-500 flex items-center gap-1 text-xs">
-                <span className="text-gray-400">↔</span>
+              <span className="text-gray-400 flex items-center gap-1 text-xs">
+                <span>↔</span>
                 {ev.coaches.map((coachName, i) => (
                   <button
                     key={`${ev.id}-c-${i}`}
                     onClick={(e) => { e.stopPropagation(); onCoachClick({ id: ev.coachIds?.[i] ?? coachName, name: coachName }); }}
-                    className="hover:text-blue-400 hover:underline transition-colors text-gray-400"
+                    className="hover:text-blue-500 hover:underline transition-colors"
                   >
                     {coachName}
                   </button>
@@ -348,17 +351,17 @@ export function UnifiedTimeline({
           </div>
         </div>
 
-        {/* 중간: 메시지 미리보기 + 복사 버튼 */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 border-l border-gray-100 pl-3">
-          <p className="text-[11px] text-gray-500 truncate leading-relaxed">{msgPreview}</p>
+        {/* 메시지 미리보기 + 복사 버튼 */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 border-l border-gray-200 pl-3">
+          <p className="text-[11px] text-gray-400 truncate leading-relaxed">{msgPreview}</p>
           <div className="flex gap-1.5">
             <button
               onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
               title="한국어 메시지 복사"
               className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
                 copiedKo
-                  ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                  : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
+                  : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
               }`}
             >
               {copiedKo ? <Check size={10} /> : <Copy size={10} />}
@@ -369,8 +372,8 @@ export function UnifiedTimeline({
               title="English message copy"
               className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
                 copiedEn
-                  ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                  : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300'
+                  ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
+                  : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300 bg-white'
               }`}
             >
               {copiedEn ? <Check size={10} /> : <Copy size={10} />}
@@ -379,10 +382,10 @@ export function UnifiedTimeline({
           </div>
         </div>
 
-        {/* 우측: 액션 상태 */}
-        <div className="w-20 shrink-0 flex flex-col items-end justify-center gap-1 border-l border-gray-100 pl-3">
+        {/* 상태 */}
+        <div className="w-16 shrink-0 flex flex-col items-end justify-center gap-1 border-l border-gray-200 pl-3">
           {alreadySent && (
-            <span className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-600">
+            <span className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-700">
               <Check size={10} />발송됨
             </span>
           )}
@@ -399,26 +402,59 @@ export function UnifiedTimeline({
     );
   };
 
+  const renderSection = (
+    events: TaggedEvent[],
+    label: '오늘' | '내일',
+    dateStr: string,
+  ) => {
+    const isToday = label === '오늘';
+    return (
+      <div>
+        {/* 섹션 헤더 */}
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg mb-2 border ${
+          isToday
+            ? 'bg-gray-50 border-gray-200'
+            : 'bg-blue-50 border-blue-200'
+        }`}>
+          <span className={`text-xs font-bold ${isToday ? 'text-gray-700' : 'text-blue-700'}`}>{label}</span>
+          <span className={`text-xs ${isToday ? 'text-gray-500' : 'text-blue-600'}`}>{formatSectionDate(dateStr)}</span>
+          <span className={`ml-auto text-[11px] font-medium px-2 py-0.5 rounded-full ${
+            isToday ? 'bg-gray-200 text-gray-600' : 'bg-blue-200 text-blue-700'
+          }`}>
+            {events.length}건
+          </span>
+        </div>
+
+        {events.length === 0 ? (
+          <p className="text-xs text-gray-400 px-3 py-3">스케줄 없음</p>
+        ) : (
+          <div className="space-y-2">
+            {events.map(renderRow)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-4">
         <h3 className="text-sm font-semibold text-gray-900">스케줄</h3>
         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-          {loading ? '...' : totalCount}
+          {loading ? '...' : todayEvents.length + tomorrowEvents.length}
         </span>
       </div>
 
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
+            <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
           ))}
         </div>
-      ) : totalCount === 0 ? (
-        <p className="text-xs text-gray-400 py-4">스케줄 없음</p>
       ) : (
-        <div className="space-y-1.5">
-          {events.map(renderRow)}
+        <div className="space-y-5">
+          {renderSection(todayEvents, '오늘', eventDate)}
+          {renderSection(tomorrowEvents, '내일', addDay(eventDate, 1))}
         </div>
       )}
     </div>
