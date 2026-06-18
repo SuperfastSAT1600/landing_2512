@@ -1,4 +1,5 @@
 'use client';
+import { srmFetch } from './lib/srm-fetch';
 
 import { useState, useEffect } from 'react';
 import { DayTabs, getKstDateStr } from './components/DayTabs';
@@ -7,9 +8,11 @@ import { AlertSection } from './components/AlertSection';
 import { StudentPanel } from './components/StudentPanel';
 import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
+import { OpsRadar } from './components/OpsRadar';
 import { StudentSearch } from './components/StudentSearch';
 import { StudentRoster } from './components/StudentRoster';
 import { EventLogPanel } from './components/EventLogPanel';
+import DailyLearningPage from './daily-learning/page';
 import type { TaggedEvent } from './components/UnifiedTimeline';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
@@ -34,7 +37,7 @@ interface SelectedCoach {
   relatedStudents: { name: string; events: string[] }[];
 }
 
-type MainTab = 'schedule' | 'ops' | 'roster';
+type MainTab = 'queue' | 'log' | 'roster' | 'daily';
 
 function collectRelatedStudents(
   coachId: string,
@@ -68,7 +71,7 @@ function collectRelatedStudents(
 }
 
 export default function SrmPage() {
-  const [mainTab, setMainTab] = useState<MainTab>('schedule');
+  const [mainTab, setMainTab] = useState<MainTab>('queue');
   const [selectedDate, setSelectedDate] = useState(() => getKstDateStr(0));
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
   const [alerts, setAlerts] = useState<AlertsResponse | null>(null);
@@ -84,11 +87,11 @@ export default function SrmPage() {
   const [openIssues, setOpenIssues] = useState<EventIssue[]>([]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
     setScheduleLoading(true);
     setSchedule(null);
-    fetch(`/api/admin/srm/schedule?date=${selectedDate}`)
-      .then((r) => r.json())
+    srmFetch(`/api/admin/srm/schedule?date=${selectedDate}`)
+      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
       .then(async (scheduleData: ScheduleResponse) => {
         setSchedule(scheduleData);
 
@@ -103,8 +106,8 @@ export default function SrmPage() {
         if (!allEventIds.length) { setLoggedEventIds(new Set()); return; }
 
         const [logData, commsData] = await Promise.all([
-          fetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
-          fetch(`/api/admin/srm/communications?eventIds=${allEventIds.join(',')}`).then((r) => r.json()).catch(() => []),
+          srmFetch(`/api/admin/srm/copy-log?date=${selectedDate}`).then((r) => r.json()).catch(() => ({ data: [] })),
+          srmFetch(`/api/admin/srm/communications?eventIds=${allEventIds.join(',')}`).then((r) => r.json()).catch(() => []),
         ]);
 
         const ids = new Set<string>((logData.data ?? []).map((e: { event_id: string }) => e.event_id));
@@ -117,28 +120,28 @@ export default function SrmPage() {
   }, [selectedDate, mainTab]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
     setAlertsLoading(true);
-    fetch('/api/admin/srm/alerts')
+    srmFetch('/api/admin/srm/alerts')
       .then((r) => r.json())
       .then(setAlerts)
       .finally(() => setAlertsLoading(false));
   }, [mainTab]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
-    fetch('/api/admin/srm/issues?status=open&limit=100')
+    if (mainTab !== 'queue') return;
+    srmFetch('/api/admin/srm/issues?status=open&limit=100')
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setOpenIssues(data); })
-      .catch(() => {});
+      .catch((err) => console.error('[SrmPage] issues fetch failed:', err));
   }, [mainTab, selectedEvent]);
 
   useEffect(() => {
-    if (mainTab !== 'schedule') return;
+    if (mainTab !== 'queue') return;
     Promise.all([
-      fetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
-      fetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
-      fetch('/api/admin/srm/paused-students').then((r) => r.json()).catch(() => ({})),
+      srmFetch('/api/admin/srm/vip-students').then((r) => r.json()).catch(() => ({})),
+      srmFetch('/api/admin/srm/student-languages').then((r) => r.json()).catch(() => ({})),
+      srmFetch('/api/admin/srm/paused-students').then((r) => r.json()).catch(() => ({})),
     ]).then(([vipData, langData, pauseData]) => {
       if (Array.isArray(vipData?.sfv2ProfileIds)) {
         setVipStudentIds(new Set(vipData.sfv2ProfileIds));
@@ -192,7 +195,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6 border-b border-white/10">
-        {(['schedule', 'ops', 'roster'] as MainTab[]).map((t) => (
+        {(['queue', 'log', 'roster', 'daily'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -202,16 +205,16 @@ export default function SrmPage() {
                 : 'text-gray-500 border-transparent hover:text-gray-300'
             }`}
           >
-            {t === 'schedule' ? '스케줄' : t === 'ops' ? '운영' : '명단'}
+            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'roster' ? '명단' : '학습 리포트'}
           </button>
         ))}
       </div>
 
-      {mainTab !== 'roster' && (
+      {mainTab !== 'roster' && mainTab !== 'daily' && (
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
       )}
 
-      {mainTab === 'schedule' && openIssues.length > 0 && (
+      {mainTab === 'queue' && openIssues.length > 0 && (
         <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-lg">
           <AlertTriangle size={14} className="text-orange-400 shrink-0" />
           <span className="text-sm text-orange-300 font-medium">미해결 이슈 {openIssues.length}건</span>
@@ -228,19 +231,21 @@ export default function SrmPage() {
         </div>
       )}
 
-      {mainTab === 'schedule' && (
+      {mainTab === 'queue' && (
         <>
+          <StudentSearch onSelect={handleRosterStudentClick} />
           <UnifiedTimeline
-            todayCoachRoom={schedule?.today.coachRoom ?? []}
-            todayStudyHall={schedule?.today.studyHall ?? []}
-            tomorrowCoachRoom={schedule?.tomorrow.coachRoom ?? []}
-            tomorrowStudyHall={schedule?.tomorrow.studyHall ?? []}
+            todayCoachRoom={schedule?.today?.coachRoom ?? []}
+            todayStudyHall={schedule?.today?.studyHall ?? []}
+            tomorrowCoachRoom={schedule?.tomorrow?.coachRoom ?? []}
+            tomorrowStudyHall={schedule?.tomorrow?.studyHall ?? []}
             loading={scheduleLoading}
             eventDate={selectedDate}
             vipStudentIds={vipStudentIds}
             studentLanguages={studentLanguages}
             pausedStudentIds={pausedStudentIds}
             loggedEventIds={loggedEventIds}
+            issueEventIds={new Set(openIssues.filter((i) => i.event_id).map((i) => i.event_id!))}
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
             onEventClick={setSelectedEvent}
@@ -258,15 +263,22 @@ export default function SrmPage() {
         </>
       )}
 
-      {mainTab === 'ops' && (
+      {mainTab === 'log' && (
         <>
-          <StudentSearch onSelect={handleRosterStudentClick} />
-          <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
+          <OpsRadar onStudentClick={handleRosterStudentClick} />
+          <div className="mt-6 pt-5 border-t border-white/8">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-3">업무 기록</p>
+            <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
+          </div>
         </>
       )}
 
       {mainTab === 'roster' && (
         <StudentRoster onStudentClick={handleRosterStudentClick} />
+      )}
+
+      {mainTab === 'daily' && (
+        <DailyLearningPage />
       )}
 
       {selectedStudent && (

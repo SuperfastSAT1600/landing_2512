@@ -22,8 +22,8 @@ export async function generateMetadata(
 
   const displayName = data.portal_name || data.name;
   const description = data.target_score
-    ? `${displayName} 학생의 상담 관리 리포트 · 목표 점수 ${data.target_score}점`
-    : `${displayName} 학생의 상담 관리 리포트`;
+    ? `${displayName} 학생의 학습 포털 페이지 · 목표 점수 ${data.target_score}점`
+    : `${displayName} 학생의 학습 포털 페이지`;
 
   return {
     title: `${displayName} 학생 | SuperfastSAT 상담 리포트`,

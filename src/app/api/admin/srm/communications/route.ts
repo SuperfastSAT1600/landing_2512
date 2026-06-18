@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export interface CommEntry {
   id: string;
@@ -21,6 +22,7 @@ export interface CommEntry {
 }
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const studentId = req.nextUrl.searchParams.get('studentId');
   const coachId = req.nextUrl.searchParams.get('coachId');
   const date = req.nextUrl.searchParams.get('date');
@@ -96,6 +98,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const body = await req.json();
   const {
     studentId,

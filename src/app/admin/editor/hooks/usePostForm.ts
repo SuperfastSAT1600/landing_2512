@@ -67,7 +67,7 @@ export function usePostForm(): PostFormState {
             .then((data: { success: boolean; coaches?: { slug: string; name: string }[] }) => {
                 if (data.success && data.coaches) setCoaches(data.coaches);
             })
-            .catch(() => {});
+            .catch((err) => console.error('[usePostForm] coaches fetch failed:', err));
     }
 
     async function loadPost(id: string) {

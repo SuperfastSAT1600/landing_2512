@@ -34,7 +34,7 @@ export function SalesStrategySection({ student, adminKey }: Props) {
     })
       .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((j) => { if (!cancelled) setMessages(j.data ?? []); })
-      .catch(() => {});
+      .catch((err) => console.error('[SalesStrategySection] messages fetch failed:', err));
     return () => { cancelled = true; };
   }, [student.id, adminKey]);
 

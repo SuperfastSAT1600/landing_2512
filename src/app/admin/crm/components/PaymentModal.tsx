@@ -142,12 +142,11 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
           created_by: getAdminUserName(),
         }),
       });
+      const responseBody = await res.json();
       if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? '결제 처리 실패');
+        throw new Error(responseBody.error ?? '결제 처리 실패');
       }
-      const { data } = await res.json();
-      onConfirm(data.student);
+      onConfirm(responseBody.data.student);
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {

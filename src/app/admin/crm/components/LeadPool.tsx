@@ -264,7 +264,7 @@ export function LeadPool({
         setStatsInactive(json.data?.inactive ?? 0);
         setStatsReactivating(json.data?.reactivating ?? 0);
       })
-      .catch(() => {});
+      .catch((err) => console.error('[LeadPool] stats fetch failed:', err));
   }, [adminKey]);
 
   const fetchPoolStudents = useCallback(

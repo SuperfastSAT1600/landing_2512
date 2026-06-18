@@ -25,7 +25,7 @@ async function postSlackMemo(studentName: string, author: string, memo: string) 
 /**
  * POST /api/crm/students/[id]/memo
  * Appends a new raw consultation memo to the student's consultation_timeline JSONB array.
- * Body: { raw_memo: string }
+ * Body: { raw_memo: string, author?: string }
  * Requires admin authentication.
  */
 export async function POST(
@@ -58,9 +58,10 @@ export async function POST(
   try {
     const newEntry = await appendConsultationEntry(id, { raw_memo, author, attachments });
 
-    // 슬랙 즉시 발송 (비동기, 메모 저장과 무관하게 처리)
-    const studentName = (await supabaseAdmin.from('students').select('name').eq('id', id).single()).data?.name ?? id;
-    postSlackMemo(studentName, author || '미기재', raw_memo.trim());
+    // 슬랙 알림 (비동기, 메모 저장과 무관하게 처리)
+    supabaseAdmin.from('students').select('name').eq('id', id).single().then(({ data }) => {
+      postSlackMemo(data?.name ?? id, author || '미기재', raw_memo.trim());
+    });
 
     return NextResponse.json({ data: newEntry }, { status: 201 });
   } catch (e) {

@@ -62,7 +62,7 @@ export function KanbanStatsStrip({
         if (j?.data?.overview) setData(j.data.overview as Overview);
         if (Array.isArray(j?.data?.by_source)) setBySource(j.data.by_source as SourceStat[]);
       })
-      .catch(() => {});
+      .catch((err) => console.error('[KanbanStatsStrip] stats fetch failed:', err));
     return () => {
       cancelled = true;
     };

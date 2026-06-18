@@ -14,6 +14,9 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const studentId = searchParams.get('student_id');
   const studentName = searchParams.get('student_name');
+  if (studentName && /[,().]/.test(studentName)) {
+    return NextResponse.json({ error: { code: 'INVALID_PARAM' } }, { status: 400 });
+  }
   let query = supabaseAdmin.from('payments').select('*').order('paid_at', { ascending: false });
   if (studentId && studentName) {
     query = query.or(`student_id.eq.${studentId},and(student_id.is.null,student_name.eq.${studentName})`);

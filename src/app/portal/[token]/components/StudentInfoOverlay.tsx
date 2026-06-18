@@ -62,7 +62,7 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-export default function StudentInfoOverlay({ student }: { student: StudentInfo }) {
+export default function StudentInfoOverlay({ student, onShowDiagnostic }: { student: StudentInfo; onShowDiagnostic?: () => void }) {
   const prevTotal = student.previous_rw_score != null && student.previous_math_score != null
     ? student.previous_rw_score + student.previous_math_score : null;
 
@@ -220,6 +220,24 @@ export default function StudentInfoOverlay({ student }: { student: StudentInfo }
               </div>
             );
           })()}
+
+          {onShowDiagnostic && (
+            <button
+              onClick={onShowDiagnostic}
+              className="w-full rounded-2xl px-5 py-5 bg-white text-left transition-colors hover:bg-slate-50"
+              style={{ border: '1px solid #E2E8F0' }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">진단 테스트</p>
+                  <p className="text-sm font-semibold text-slate-800">진단 결과 리포트 보기</p>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </div>
+            </button>
+          )}
 
         </div>
       </div>

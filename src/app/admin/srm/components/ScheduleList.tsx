@@ -1,4 +1,5 @@
 'use client';
+import { srmFetch } from '../lib/srm-fetch';
 
 import { useState } from 'react';
 import { Copy, Check, Crown } from 'lucide-react';
@@ -156,7 +157,7 @@ export function ScheduleList({
     try {
       const eventTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
       const eventType = type === 'coachRoom' ? 'coach_room' : 'study_hall';
-      await fetch('/api/admin/srm/copy-log', {
+      await srmFetch('/api/admin/srm/copy-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

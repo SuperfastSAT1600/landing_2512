@@ -20,6 +20,12 @@ export async function GET(request: NextRequest) {
   const source = searchParams.get('source') ?? undefined; // 유입 채널 드릴다운 필터
 
   if (!from || !to) return err('MISSING_PARAMS', 'from, to 파라미터가 필요합니다.', 400);
+
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  if (!DATE_RE.test(from) || !DATE_RE.test(to)) {
+    return err('INVALID_DATE', '날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)', 400);
+  }
+
   if (!isStatsDetailMetric(metric)) return err('BAD_METRIC', `알 수 없는 metric: ${metric}`, 400);
 
   // 기간 내 신규 리드 (집계 라우트와 동일한 필터)

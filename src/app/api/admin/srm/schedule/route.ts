@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export interface ScheduleEvent {
   id: string;
@@ -112,6 +113,7 @@ async function fetchEventsForDate(dateStr: string): Promise<{ coachRoom: Schedul
 }
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const date = req.nextUrl.searchParams.get('date');
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {

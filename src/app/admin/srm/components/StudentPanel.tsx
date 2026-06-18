@@ -1,68 +1,35 @@
 'use client';
+import { srmFetch } from '../lib/srm-fetch';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles, Plus, AlertTriangle } from 'lucide-react';
+import {
+  PARTY_LABELS,
+  PARTY_COLORS,
+  CHANNEL_LABELS,
+  CHANNEL_COLORS,
+  RESOLUTION_LABELS,
+  TRIGGER_BADGE_LABELS,
+} from '@/app/admin/srm/comm-constants';
+import { getAdminName } from '@/lib/admin-user';
 import { AddForm } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
 import type { EventContext } from './CommLog';
 import { CrmLinkSection } from './CrmLinkSection';
 import { SrmCommCard } from './SrmCommCard';
+import { EventIssueCard, type BaseIssue } from './EventIssueCard';
 import { LifecycleTab } from './LifecycleTab';
 import { STAGE_LABELS } from '@/app/admin/srm/lifecycle-constants';
 import type { LifecycleResponse } from '@/app/api/admin/srm/lifecycle/route';
 import type { V2Summary } from '@/app/api/admin/srm/student/[profileId]/v2-summary/route';
+import type { StudentIssue } from '@/app/api/admin/srm/student-issues/route';
+import { PortalAccessToggle } from '@/app/admin/components/PortalAccessToggle';
 
 const TRIGGER_LABELS: Record<string, string> = {
   no_show: '미접속 알림',
   late: '지각 알림',
   no_class: '수업 미잡힘 알림',
   no_study_hall: '스터디홀 미세팅 알림',
-};
-
-const PARTY_LABELS: Record<string, string> = {
-  student: '학생',
-  parent: '학부모',
-  coach: '코치',
-  us: '우리',
-};
-
-const PARTY_COLORS: Record<string, string> = {
-  student: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  parent: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  coach: 'bg-green-500/20 text-green-300 border-green-500/30',
-  us: 'bg-red-500/20 text-red-300 border-red-500/30',
-};
-
-const CHANNEL_LABELS: Record<string, string> = {
-  kakao: '카카오',
-  call: '전화',
-  sms: 'SMS',
-  email: '이메일',
-  other: '기타',
-};
-
-const CHANNEL_COLORS: Record<string, string> = {
-  kakao: 'bg-yellow-500/20 text-yellow-300',
-  call: 'bg-blue-500/20 text-blue-300',
-  sms: 'bg-green-500/20 text-green-300',
-  email: 'bg-purple-500/20 text-purple-300',
-  other: 'bg-gray-500/20 text-gray-300',
-};
-
-const RESOLUTION_LABELS: Record<string, string> = {
-  scheduled: '일정잡음',
-  will_contact: '다음연락',
-  no_intent: '의향없음',
-  unreachable: '연락불가',
-  resolved: '해결됨',
-  other: '기타',
-};
-
-const TRIGGER_BADGE_LABELS: Record<string, string> = {
-  no_show: '미접속',
-  late: '지각',
-  no_class: '수업미잡힘',
-  no_study_hall: '스터디홀미세팅',
 };
 
 interface ConsultationEntry {
@@ -87,6 +54,7 @@ interface CrmStudentDetail {
   ot_datetime: string | null;
   parent_timezone: string | null;
   comm_language?: string | null;
+  portal_token?: string | null;
 }
 
 interface DiagnosticResult {
@@ -99,6 +67,7 @@ interface StudentDetail {
   profile: { id: string; full_name: string; email: string | null; phone: string | null; grade: string | null } | null;
   crmStudent: CrmStudentDetail | null;
   diagnostic?: DiagnosticResult | null;
+  hasSummerProgram?: boolean;
 }
 
 type UnifiedEntry =
@@ -112,11 +81,6 @@ function InfoRow({ label, value, small }: { label: string; value: string; small?
       <span className={`${small ? 'text-xs' : 'text-sm'} text-gray-300 break-all`}>{value}</span>
     </div>
   );
-}
-
-function getAdminName() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('admin_user_name') ?? '';
 }
 
 function sessionStatusLabel(status: string): string {
@@ -173,42 +137,62 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [loadingV2, setLoadingV2] = useState(false);
   const [commLang, setCommLang] = useState<'ko' | 'en'>('ko');
   const [langSaving, setLangSaving] = useState(false);
+  const [portalIssuing, setPortalIssuing] = useState(false);
+  const [portalCopied, setPortalCopied] = useState(false);
+  const [localPortalToken, setLocalPortalToken] = useState<string | null>(null);
   const [activePause, setActivePause] = useState<PauseRecord | null | undefined>(undefined); // undefined = 아직 로딩
   const [pauseFormOpen, setPauseFormOpen] = useState(false);
   const [pauseUntil, setPauseUntil] = useState('');
   const [pauseReason, setPauseReason] = useState('');
   const [pauseSaving, setPauseSaving] = useState(false);
+  const [issues, setIssues] = useState<StudentIssue[]>([]);
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueType, setIssueType] = useState('schedule_pending');
+  const [issueTitle, setIssueTitle] = useState('');
+  const [issueDesc, setIssueDesc] = useState('');
+  const [issueSaving, setIssueSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'issue' | 'comm'>('comm');
 
   const commKey = studentId ?? crmStudentId ?? '';
 
   const fetchDetail = useCallback(async () => {
     setLoadingDetail(true);
-    if (studentId) {
-      const res = await fetch(`/api/admin/srm/student/${studentId}`);
-      setDetail(await res.json());
-    } else if (crmStudentId) {
-      const res = await fetch(`/api/admin/srm/student/crm/${crmStudentId}`);
-      if (res.ok) {
-        setDetail(await res.json());
-      } else {
-        setDetail({ profile: null, crmStudent: null });
+    try {
+      if (studentId) {
+        const res = await srmFetch(`/api/admin/srm/student/${studentId}`);
+        if (res.ok) setDetail(await res.json());
+      } else if (crmStudentId) {
+        const res = await srmFetch(`/api/admin/srm/student/crm/${crmStudentId}`);
+        if (res.ok) {
+          setDetail(await res.json());
+        } else {
+          setDetail({ profile: null, crmStudent: null });
+        }
       }
+    } catch {
+      setDetail({ profile: null, crmStudent: null });
+    } finally {
+      setLoadingDetail(false);
     }
-    setLoadingDetail(false);
   }, [studentId, crmStudentId]);
 
   const fetchComms = useCallback(async () => {
     setLoadingComms(true);
-    const res = await fetch(`/api/admin/srm/communications?studentId=${commKey}`);
-    setComms(await res.json());
-    setLoadingComms(false);
+    try {
+      const res = await srmFetch(`/api/admin/srm/communications?studentId=${commKey}`);
+      if (res.ok) setComms(await res.json());
+    } catch {
+      // silent
+    } finally {
+      setLoadingComms(false);
+    }
   }, [commKey]);
 
   const fetchLifecycle = useCallback(async () => {
     const resolvedStudentId = crmStudentId;
     if (!studentId && !resolvedStudentId) return;
     const qp = resolvedStudentId ? `studentId=${resolvedStudentId}` : `profileId=${studentId}`;
-    const res = await fetch(`/api/admin/srm/lifecycle?${qp}`);
+    const res = await srmFetch(`/api/admin/srm/lifecycle?${qp}`);
     if (res.ok) setLifecycleData(await res.json());
   }, [studentId, crmStudentId]);
 
@@ -216,13 +200,24 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     if (!studentId) return;
     setLoadingV2(true);
     try {
-      const res = await fetch(`/api/admin/srm/student/${studentId}/v2-summary`);
+      const res = await srmFetch(`/api/admin/srm/student/${studentId}/v2-summary`);
       if (res.ok) setV2Summary(await res.json());
     } catch {
       // silent fail — v2 데이터 없음으로 처리
     }
     setLoadingV2(false);
   }, [studentId]);
+
+  const fetchIssues = useCallback(async () => {
+    const param = studentId
+      ? `sfv2ProfileId=${studentId}`
+      : crmStudentId
+      ? `studentId=${crmStudentId}`
+      : null;
+    if (!param) return;
+    const res = await srmFetch(`/api/admin/srm/student-issues?${param}`);
+    if (res.ok) setIssues(await res.json());
+  }, [studentId, crmStudentId]);
 
   const fetchPause = useCallback(async () => {
     const url = studentId
@@ -250,27 +245,31 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     fetchLifecycle();
     fetchV2Summary();
     fetchPause();
-  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary, fetchPause]);
+    fetchIssues();
+  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary, fetchPause, fetchIssues]);
 
   const handlePauseCreate = async () => {
     setPauseSaving(true);
     const url = studentId
       ? `/api/admin/srm/student/${studentId}/pause`
       : `/api/admin/srm/student/crm/${crmStudentId}/pause`;
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pause_until: pauseUntil || null,
-        reason: pauseReason || null,
-        created_by: getAdminName() || '관리자',
-      }),
-    });
-    await fetchPause();
-    setPauseFormOpen(false);
-    setPauseUntil('');
-    setPauseReason('');
-    setPauseSaving(false);
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pause_until: pauseUntil || null,
+          reason: pauseReason || null,
+          created_by: getAdminName() || '관리자',
+        }),
+      });
+      await fetchPause();
+      setPauseFormOpen(false);
+      setPauseUntil('');
+      setPauseReason('');
+    } finally {
+      setPauseSaving(false);
+    }
   };
 
   const handlePauseEnd = async () => {
@@ -278,9 +277,12 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     const url = studentId
       ? `/api/admin/srm/student/${studentId}/pause/active`
       : `/api/admin/srm/student/crm/${crmStudentId}/pause/active`;
-    await fetch(url, { method: 'DELETE' });
-    await fetchPause();
-    setPauseSaving(false);
+    try {
+      await fetch(url, { method: 'DELETE' });
+      await fetchPause();
+    } finally {
+      setPauseSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -295,14 +297,14 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     const resolvedId = crmStudentId ?? detail?.crmStudent?.id;
     try {
       if (studentId) {
-        await fetch(`/api/admin/srm/student/${studentId}`, {
+        await srmFetch(`/api/admin/srm/student/${studentId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ comm_language: lang }),
         });
         onLanguageChange?.(studentId, lang);
       } else if (resolvedId) {
-        await fetch(`/api/admin/srm/student/crm/${resolvedId}`, {
+        await srmFetch(`/api/admin/srm/student/crm/${resolvedId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ comm_language: lang }),
@@ -316,7 +318,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
   const handleAdd = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
-    await fetch('/api/admin/srm/communications', {
+    await srmFetch('/api/admin/srm/communications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -340,14 +342,70 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
   const handleLinked = () => fetchDetail();
 
+  const handleIssueSubmit = async () => {
+    if (!issueTitle) return;
+    setIssueSaving(true);
+    await srmFetch('/api/admin/srm/student-issues', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sfv2ProfileId: studentId ?? null,
+        studentId: crmStudentId ?? null,
+        studentName,
+        issueType,
+        title: issueTitle,
+        description: issueDesc || null,
+        createdBy: getAdminName() || '관리자',
+      }),
+    });
+    await fetchIssues();
+    setIssueTitle('');
+    setIssueDesc('');
+    setShowIssueForm(false);
+    setIssueSaving(false);
+  };
+
   const handleGenerateBrief = async () => {
     if (!resolvedCrmStudentId) return;
     setBriefing('loading');
-    const res = await fetch(`/api/admin/srm/student/crm/${resolvedCrmStudentId}/coach-brief`, {
+    const res = await srmFetch(`/api/admin/srm/student/crm/${resolvedCrmStudentId}/coach-brief`, {
       method: 'POST',
       headers: { 'x-admin-key': localStorage.getItem('admin_key') ?? '' },
     });
     setBriefing(res.ok ? 'done' : 'error');
+  };
+
+  const portalToken = localPortalToken ?? detail?.crmStudent?.portal_token ?? null;
+
+  const handleIssuePortal = async () => {
+    if (!resolvedCrmStudentId || portalIssuing || portalToken) return;
+    setPortalIssuing(true);
+    try {
+      const res = await fetch(`/api/crm/students/${resolvedCrmStudentId}/portal-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('admin_key') ?? '' },
+      });
+      if (!res.ok) throw new Error('failed');
+      const { portal_token } = await res.json();
+      setLocalPortalToken(portal_token);
+    } catch {
+      alert('포털 발급에 실패했습니다.');
+    } finally {
+      setPortalIssuing(false);
+    }
+  };
+
+  const handlePreviewPortal = () => {
+    if (!portalToken) return;
+    const newWindow = window.open('', '_blank');
+    if (newWindow) newWindow.location.href = `${window.location.origin}/portal/${portalToken}?preview=admin`;
+  };
+
+  const handleCopyPortalLink = async () => {
+    if (!portalToken) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/portal/${portalToken}`);
+    setPortalCopied(true);
+    setTimeout(() => setPortalCopied(false), 2500);
   };
 
   const timeline: ConsultationEntry[] = detail?.crmStudent?.consultation_timeline ?? [];
@@ -382,6 +440,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
           <div className="flex-1 min-w-0 mr-3">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base font-bold text-white">{studentName}</h2>
+              {detail?.hasSummerProgram && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-medium shrink-0">여름특강</span>
+              )}
               {currentStageLabel && (
                 <button
                   onClick={() => setLifecycleOpen((v) => !v)}
@@ -544,7 +605,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     </div>
                   </div>
 
-                  {/* CRM 연결 상태 */}
+                  {/* CRM 연결 상태 + 학부모 포털 */}
                   <div className="flex items-center gap-2 pt-1.5 border-t border-white/10 mt-1.5">
                     {isLinked ? (
                       <span className="text-[11px] px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/25 rounded-full text-emerald-400">
@@ -554,6 +615,17 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                       <span className="text-[11px] px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-gray-500">
                         CRM 미연결
                       </span>
+                    )}
+                    {isLinked && resolvedCrmStudentId && (
+                      <PortalAccessToggle
+                        hasPortal={!!portalToken}
+                        issuing={portalIssuing}
+                        copied={portalCopied}
+                        theme="dark"
+                        onToggle={handleIssuePortal}
+                        onCopy={handleCopyPortalLink}
+                        onPreview={handlePreviewPortal}
+                      />
                     )}
                   </div>
                 </div>
@@ -759,59 +831,165 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
             )}
           </div>
 
-          {/* 오른쪽: 통합 타임라인 + 입력폼 */}
+          {/* 오른쪽: 이슈 / 커뮤니케이션 탭 */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* 통합 타임라인 */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              {(loadingDetail || loadingComms) ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 bg-white/5 rounded-lg animate-pulse" />
+            {/* 탭 헤더 */}
+            <div className="flex border-b border-white/10 shrink-0">
+              <button
+                onClick={() => setActiveTab('issue')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                  activeTab === 'issue'
+                    ? 'border-orange-400 text-orange-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                이슈
+                {issues.filter((i) => i.status === 'open').length > 0 && (
+                  <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px] border border-orange-500/30">
+                    {issues.filter((i) => i.status === 'open').length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('comm')}
+                className={`px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                  activeTab === 'comm'
+                    ? 'border-blue-400 text-blue-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                커뮤니케이션
+              </button>
+            </div>
+
+            {/* 이슈 탭 */}
+            {activeTab === 'issue' && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
+                  {issues.length === 0 && !showIssueForm && (
+                    <p className="text-xs text-gray-600">등록된 이슈 없음</p>
+                  )}
+                  {issues.map((issue) => (
+                    <EventIssueCard
+                      key={issue.id}
+                      issue={issue as BaseIssue}
+                      onUpdated={(updated) =>
+                        setIssues((prev) =>
+                          prev.map((i) => (i.id === updated.id ? (updated as StudentIssue) : i)),
+                        )
+                      }
+                      onDeleted={(id) => setIssues((prev) => prev.filter((i) => i.id !== id))}
+                      apiBase="/api/admin/srm/student-issues"
+                    />
                   ))}
                 </div>
-              ) : unified.length === 0 ? (
-                <p className="text-xs text-gray-600 py-2">기록된 내용이 없습니다.</p>
-              ) : (
-                <div className="space-y-2">
-                  {unified.map((entry) => {
-                    if (entry.source === 'crm') {
-                      return (
-                        <div key={`crm-${entry.id}`} className="bg-white/5 rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400">
-                              상담
-                            </span>
-                            <span className="text-[11px] text-gray-600 ml-auto">
-                              {new Date(entry.created_at).toLocaleDateString('ko-KR', {
-                                year: 'numeric', month: 'numeric', day: 'numeric',
-                              })}
-                              {entry.author ? ` · ${entry.author}` : ''}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
-                            {entry.raw_memo}
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    // source === 'srm'
-                    return (
-                      <SrmCommCard
-                        key={`srm-${entry.id}`}
-                        entry={entry as unknown as CommEntry}
-                        onUpdated={handleCommUpdated}
+                <div className="border-t border-white/10 px-4 py-3 shrink-0">
+                  {showIssueForm ? (
+                    <div className="space-y-2">
+                      <select
+                        value={issueType}
+                        onChange={(e) => setIssueType(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
+                      >
+                        <option value="schedule_pending">스케줄 조율 중</option>
+                        <option value="coach_pending">코치 배정 중</option>
+                        <option value="renewal_needed">재결제 필요</option>
+                        <option value="custom">기타</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={issueTitle}
+                        onChange={(e) => setIssueTitle(e.target.value)}
+                        placeholder="이슈 제목"
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
                       />
-                    );
-                  })}
+                      <textarea
+                        value={issueDesc}
+                        onChange={(e) => setIssueDesc(e.target.value)}
+                        placeholder="메모 (선택)"
+                        rows={2}
+                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 resize-none"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowIssueForm(false)}
+                          className="flex-1 text-xs bg-white/5 hover:bg-white/10 text-gray-400 rounded px-3 py-1.5"
+                        >
+                          취소
+                        </button>
+                        <button
+                          onClick={handleIssueSubmit}
+                          disabled={issueSaving || !issueTitle}
+                          className="flex-1 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded px-3 py-1.5 disabled:opacity-40"
+                        >
+                          {issueSaving ? '저장중...' : '등록'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowIssueForm(true)}
+                      className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      <Plus size={12} />
+                      이슈 등록
+                    </button>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* 하단 고정 입력폼 */}
-            <div className="border-t border-white/10 px-4 py-3 shrink-0">
-              <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} eventContext={eventContext} noBorder />
-            </div>
+            {/* 커뮤니케이션 탭 */}
+            {activeTab === 'comm' && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto px-4 py-3">
+                  {(loadingDetail || loadingComms) ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-16 bg-white/5 rounded-lg animate-pulse" />
+                      ))}
+                    </div>
+                  ) : unified.length === 0 ? (
+                    <p className="text-xs text-gray-600 py-2">기록된 내용이 없습니다.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {unified.map((entry) => {
+                        if (entry.source === 'crm') {
+                          return (
+                            <div key={`crm-${entry.id}`} className="bg-white/5 rounded-lg p-3">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400">
+                                  상담
+                                </span>
+                                <span className="text-[11px] text-gray-600 ml-auto">
+                                  {new Date(entry.created_at).toLocaleDateString('ko-KR', {
+                                    year: 'numeric', month: 'numeric', day: 'numeric',
+                                  })}
+                                  {entry.author ? ` · ${entry.author}` : ''}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                                {entry.raw_memo}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return (
+                          <SrmCommCard
+                            key={`srm-${entry.id}`}
+                            entry={entry as unknown as CommEntry}
+                            onUpdated={handleCommUpdated}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <div className="border-t border-white/10 px-4 py-3 shrink-0">
+                  <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} eventContext={eventContext} noBorder />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

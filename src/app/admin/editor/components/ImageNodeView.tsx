@@ -1,12 +1,11 @@
 'use client';
 
-import { NodeViewWrapper } from '@tiptap/react';
+import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
+import type { NodeViewProps } from '@tiptap/core';
 import TiptapImage from '@tiptap/extension-image';
-import { ReactNodeViewRenderer } from '@tiptap/react';
 import { AlignLeft, AlignCenter, AlignRight, Trash2 } from 'lucide-react';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ImageNodeViewComponent({ node, updateAttributes, deleteNode, selected }: any) {
+function ImageNodeViewComponent({ node, updateAttributes, deleteNode, selected }: NodeViewProps) {
     const { src, alt, dataAlign } = node.attrs;
     return (
         <NodeViewWrapper className="relative group my-4" data-align={dataAlign}>

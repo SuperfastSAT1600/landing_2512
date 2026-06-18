@@ -1,4 +1,5 @@
 'use client';
+import { srmFetch } from '../lib/srm-fetch';
 
 import { useCallback, useEffect, useState } from 'react';
 import { Check, CheckCircle, Link, Search } from 'lucide-react';
@@ -9,7 +10,7 @@ interface Props {
   onLinked?: () => void;
 }
 
-const REASON_LABEL = { phone: '전화번호 일치', email: '이메일 일치', both: '전화번호+이메일 일치' };
+const REASON_LABEL = { phone: '전화번호 일치', email: '이메일 일치', both: '전화번호+이메일 일치', name: '이름 일치' };
 
 function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLinked: () => void }) {
   const [q, setQ] = useState('');
@@ -21,9 +22,9 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
     const timer = setTimeout(async () => {
       if (!q.trim()) { setResults([]); return; }
       setSearching(true);
-      const res = await fetch(`/api/admin/srm/v2-search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      setResults(Array.isArray(data) ? data : []);
+      const res = await srmFetch(`/api/admin/srm/v2-search?q=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      setResults(Array.isArray(json.data) ? json.data : []);
       setSearching(false);
     }, 300);
     return () => clearTimeout(timer);
@@ -32,7 +33,7 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
   const handleLink = async (profileId: string) => {
     if (linking) return;
     setLinking(true);
-    await fetch('/api/admin/srm/link', {
+    await srmFetch('/api/admin/srm/link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sfv2ProfileId: profileId, crmStudentId }),
@@ -80,9 +81,8 @@ export function MatchQueue({ onLinked }: Props) {
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
-    const res = await fetch('/api/admin/srm/match-queue');
+    const res = await srmFetch('/api/admin/srm/match-queue');
     const data = await res.json();
-    console.log('[MatchQueue] status:', res.status, 'data:', data);
     setStudents(Array.isArray(data) ? data : []);
     setLoading(false);
   }, []);
@@ -92,7 +92,7 @@ export function MatchQueue({ onLinked }: Props) {
   const handleAutoLink = async (s: UnlinkedStudent) => {
     if (!s.autoMatch || linking) return;
     setLinking(s.crmStudentId);
-    await fetch('/api/admin/srm/link', {
+    await srmFetch('/api/admin/srm/link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sfv2ProfileId: s.autoMatch.sfv2ProfileId, crmStudentId: s.crmStudentId }),

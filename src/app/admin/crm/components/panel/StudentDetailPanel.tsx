@@ -71,7 +71,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           .map((s: { name: string }) => s.name);
         setDuplicateNames(others);
       })
-      .catch(() => {});
+      .catch((err) => console.error('[StudentDetailPanel] duplicate names fetch failed:', err));
   }, [localStudent.id, localStudent.name, adminKey]);
 
   useEffect(() => {
@@ -81,7 +81,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
         setIsPaused(!!json.pause);
         setPauseUntilDate(json.pause?.pause_until ?? null);
       })
-      .catch(() => {});
+      .catch((err) => console.error('[StudentDetailPanel] pause fetch failed:', err));
   }, [student.id]);
 
   const editFormHook = useEditForm({
@@ -125,7 +125,11 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   const portalHook = usePortalActions({
     studentId: student.id,
     studentName: localStudent.name,
-    adminKey, onDelete, onClose,
+    adminKey,
+    initialPortalToken: student.portal_token,
+    onPortalIssued: (token) => onUpdate(student.id, { portal_token: token } as Partial<typeof student>),
+    onDelete,
+    onClose,
   });
 
   function scoreDisplay(): string {
@@ -159,6 +163,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             duplicateNames={duplicateNames}
             isPaused={isPaused}
             pauseUntil={pauseUntil}
+            hasPortal={portalHook.hasPortal}
             portalCopied={portalHook.portalCopied}
             portalLoading={portalHook.portalLoading}
             deleting={portalHook.deleting}
@@ -168,6 +173,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             reactivateStrategy={funnelHook.reactivateStrategy}
             reactivating={funnelHook.reactivating}
             onClose={handleBackdropClick}
+            onIssuePortal={portalHook.handleIssuePortal}
             onCopyPortalLink={portalHook.handleCopyPortalLink}
             onPreviewPortal={portalHook.handlePreviewPortal}
             onDelete={portalHook.handleDelete}

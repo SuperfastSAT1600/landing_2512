@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-
+import { isAuthenticated } from '@/lib/server-auth';
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ crmStudentId: string }> }
 ) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { crmStudentId } = await params;
 
   const { data: crmStudent, error } = await supabaseAdmin
@@ -22,18 +23,29 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const { data: diagnostic } = await supabaseAdmin
-    .from('diagnostic_test_results')
-    .select('submitted_at, previous_rw_score, previous_math_score')
-    .ilike('student_name', `%${(crmStudent as unknown as { name: string }).name}%`)
-    .order('submitted_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: diagnostic }, { data: summerPayment }] = await Promise.all([
+    supabaseAdmin
+      .from('diagnostic_test_results')
+      .select('submitted_at, previous_rw_score, previous_math_score')
+      .ilike('student_name', `%${(crmStudent as unknown as { name: string }).name}%`)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin
+      .from('payments')
+      .select('id')
+      .eq('student_id', crmStudentId)
+      .ilike('product', '%여름방학%')
+      .gte('paid_at', '2026-01-01')
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   return NextResponse.json({
     profile: null,
     crmStudent,
     diagnostic: diagnostic ?? null,
+    hasSummerProgram: !!summerPayment,
   });
 }
 
@@ -41,6 +53,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ crmStudentId: string }> }
 ) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { crmStudentId } = await params;
   const body = await req.json();
   const { comm_language } = body as { comm_language?: string };

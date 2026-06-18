@@ -1,4 +1,5 @@
 'use client';
+import { srmFetch } from '../lib/srm-fetch';
 
 import { useCallback, useEffect, useState } from 'react';
 import { Check, ChevronRight } from 'lucide-react';
@@ -39,7 +40,7 @@ export function LifecycleTab({ profileId, studentId }: Props) {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/admin/srm/lifecycle?${qp}`);
+    const res = await srmFetch(`/api/admin/srm/lifecycle?${qp}`);
     setData(await res.json());
     setLoading(false);
   }, [qp]);
@@ -49,7 +50,7 @@ export function LifecycleTab({ profileId, studentId }: Props) {
   const handleComplete = async () => {
     if (!data?.current || acting) return;
     setActing(true);
-    await fetch('/api/admin/srm/lifecycle', {
+    await srmFetch('/api/admin/srm/lifecycle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -70,7 +71,7 @@ export function LifecycleTab({ profileId, studentId }: Props) {
   const handleSet = async () => {
     if (!setStage || acting) return;
     setActing(true);
-    await fetch('/api/admin/srm/lifecycle', {
+    await srmFetch('/api/admin/srm/lifecycle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { computeStageFlow, hasReachedStage, type StageFlowRow } from '@/lib/funnel-stats';
+import { netAmount } from '@/lib/payment-utils';
 
 export interface StatsBySource {
   source: string;
@@ -111,6 +112,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  if (!DATE_RE.test(from) || !DATE_RE.test(to)) {
+    return NextResponse.json(
+      { error: { code: 'INVALID_DATE', message: '날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)' } },
+      { status: 400 }
+    );
+  }
+
   // 기간 내 신규 리드 조회 (inquiry_date 기준, fallback: created_at)
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')
@@ -136,6 +145,18 @@ export async function GET(request: NextRequest) {
 
   const paymentList = pErr ? [] : (payments ?? []);
 
+  // 결제 학생 traffic_source 맵 — 기간 외 인입 학생도 포함하기 위해 전체 조회
+  const payingStudentIds = [...new Set(paymentList.map((p) => p.student_id).filter(Boolean))];
+  const { data: payingStudents } = payingStudentIds.length
+    ? await supabaseAdmin
+        .from('students')
+        .select('id, traffic_source')
+        .in('id', payingStudentIds)
+    : { data: [] };
+  const allStudentSourceMap = new Map<string, string>(
+    (payingStudents ?? []).map((s) => [s.id, s.traffic_source ?? '미입력'])
+  );
+
   // 학생 ID → payment 맵 (최초결제 기준)
   const paidStudentIds = new Set<string>();
   const paidStudentNames = new Set<string>();
@@ -143,10 +164,6 @@ export async function GET(request: NextRequest) {
   let totalNetRevenue = 0;
   let grossRevenue = 0;
   let totalRefund = 0;
-
-  function netAmount(p: { amount: number; tax_type?: string | null }): number {
-    return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
-  }
 
   for (const p of paymentList) {
     totalRevenue += p.amount;
@@ -202,15 +219,16 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 채널별 결제 금액 집계 (student 매핑)
-  const studentSourceMap = new Map(leadList.map((s) => [s.id, s.traffic_source ?? '미입력']));
+  // 채널별 결제 금액 집계 — allStudentSourceMap으로 기간 외 인입 학생도 정확히 귀속
   for (const p of paymentList) {
-    const src = p.student_id ? (studentSourceMap.get(p.student_id) ?? '미입력') : '미입력';
-    const entry = sourceMap.get(src);
-    if (entry) {
-      entry.revenue += p.amount;
-      entry.net_revenue += netAmount(p);
-    }
+    const src = p.student_id
+      ? (allStudentSourceMap.get(p.student_id) ?? '미입력')
+      : '미입력';
+    if (!sourceMap.has(src))
+      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+    const entry = sourceMap.get(src)!;
+    entry.revenue += p.amount;
+    entry.net_revenue += netAmount(p);
   }
 
   const by_source: StatsBySource[] = Array.from(sourceMap.entries())

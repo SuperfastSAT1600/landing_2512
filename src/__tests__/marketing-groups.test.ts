@@ -8,28 +8,31 @@ import {
 import type { TrafficSource } from '@/types/crm';
 
 const ALL_SOURCES: TrafficSource[] = [
-  '네이버 블로그', '네이버 카페',
-  '(구)랜딩페이지', '튜터링 랜딩페이지', '공식 블로그', '브런치', '레딧',
+  '네이버 검색 후 상담예약', '구글폼에서 즉시상담', '네이버 카페',
+  '(구)랜딩페이지 즉시상담', '(구)랜딩페이지 상담예약',
+  '(신)랜딩 페이지 상담예약', '공식 블로그', '브런치', '레딧',
   '인스타그램 오가닉', '인스타그램 광고',
-  '소개/추천', '책',
+  '소개/추천', '책', '기존DB', '대표전화',
   'B2B 파트너',
 ];
 
 describe('SOURCE_GROUP_MAP', () => {
-  it('maps all 12 TrafficSource values', () => {
+  it('maps all TrafficSource values', () => {
     for (const src of ALL_SOURCES) {
       expect(SOURCE_GROUP_MAP[src], `${src} should be mapped`).toBeDefined();
     }
   });
 
-  it('maps 네이버 블로그 and 네이버 카페 to 네이버 SEO', () => {
-    expect(SOURCE_GROUP_MAP['네이버 블로그']).toBe('네이버 SEO');
+  it('maps 네이버 검색 후 상담예약 and 구글폼에서 즉시상담 to 네이버 SEO', () => {
+    expect(SOURCE_GROUP_MAP['네이버 검색 후 상담예약']).toBe('네이버 SEO');
+    expect(SOURCE_GROUP_MAP['구글폼에서 즉시상담']).toBe('네이버 SEO');
     expect(SOURCE_GROUP_MAP['네이버 카페']).toBe('네이버 SEO');
   });
 
   it('maps google sources to 구글 SEO', () => {
     const googleSources: TrafficSource[] = [
-      '(구)랜딩페이지', '튜터링 랜딩페이지', '공식 블로그', '브런치', '레딧',
+      '(구)랜딩페이지 즉시상담', '(구)랜딩페이지 상담예약',
+      '(신)랜딩 페이지 상담예약', '공식 블로그', '브런치', '레딧',
     ];
     for (const src of googleSources) {
       expect(SOURCE_GROUP_MAP[src]).toBe('구글 SEO');
@@ -53,7 +56,7 @@ describe('SOURCE_GROUP_MAP', () => {
 
 describe('getMarketingGroup', () => {
   it('returns correct group for known source', () => {
-    expect(getMarketingGroup('네이버 블로그')).toBe('네이버 SEO');
+    expect(getMarketingGroup('네이버 검색 후 상담예약')).toBe('네이버 SEO');
     expect(getMarketingGroup('인스타그램 광고')).toBe('META');
   });
 

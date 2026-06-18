@@ -58,7 +58,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             .then((data: { success: boolean; posts?: PostOption[] }) => {
                 if (data.success && data.posts) setPosts(data.posts);
             })
-            .catch(() => {});
+            .catch((err) => console.error('[CoachRow] posts fetch failed:', err));
     }, [editing, coach.name]);
 
     const handlePhotoUpload = async (file: File) => {

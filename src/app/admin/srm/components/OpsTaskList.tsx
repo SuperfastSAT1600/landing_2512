@@ -1,25 +1,16 @@
 'use client';
+import { srmFetch } from '../lib/srm-fetch';
 
 import { useEffect, useState } from 'react';
 import { AlertTriangle, Clock } from 'lucide-react';
 import type { OpsTask } from '@/app/api/admin/srm/ops-tasks/route';
 import type { CopyLogEntry } from '@/app/api/admin/srm/copy-log/route';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
+import { CHANNEL_LABELS, TRIGGER_BADGE_LABELS } from '@/app/admin/srm/comm-constants';
 
 type ActivityItem =
   | { kind: 'copy'; data: CopyLogEntry }
   | { kind: 'comm'; data: CommEntry };
-
-const CHANNEL_LABELS: Record<string, string> = {
-  kakao: '카카오', call: '전화', sms: 'SMS', email: '이메일', other: '기타',
-};
-
-const TRIGGER_BADGE_LABELS: Record<string, string> = {
-  no_show: '미접속',
-  late: '지각',
-  no_class: '수업미잡힘',
-  no_study_hall: '스터디홀',
-};
 
 interface Props {
   date: string;
@@ -34,7 +25,7 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/admin/srm/ops-tasks?date=${date}`)
+    srmFetch(`/api/admin/srm/ops-tasks?date=${date}`)
       .then((r) => r.json())
       .then((data) => setTasks(Array.isArray(data) ? data : []))
       .finally(() => setLoading(false));
@@ -44,11 +35,11 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
     setActivitiesLoading(true);
 
     Promise.all([
-      fetch(`/api/admin/srm/copy-log?date=${date}`)
+      srmFetch(`/api/admin/srm/copy-log?date=${date}`)
         .then((r) => r.json())
         .then((res) => (Array.isArray(res.data) ? res.data : []) as CopyLogEntry[])
         .catch(() => [] as CopyLogEntry[]),
-      fetch(`/api/admin/srm/communications?date=${date}`)
+      srmFetch(`/api/admin/srm/communications?date=${date}`)
         .then((r) => r.json())
         .then((res) => (Array.isArray(res) ? res : []) as CommEntry[])
         .catch(() => [] as CommEntry[]),
@@ -100,7 +91,12 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-white truncate">{name}</p>
+                    {task.hasSummerProgram && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-medium shrink-0">특강</span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500 mt-0.5">{task.stage_label}</p>
                 </div>
 

@@ -4,17 +4,26 @@ export type MarketingGroup = typeof MARKETING_GROUPS[number] | '미분류';
 export const PAID_GROUPS: MarketingGroup[] = ['META', '구글 SEO'];
 
 export const SOURCE_GROUP_MAP: Record<string, MarketingGroup> = {
-  '네이버 블로그': '네이버 SEO',
+  // 네이버 SEO
+  '네이버 검색 후 상담예약': '네이버 SEO',
+  '구글폼에서 즉시상담': '네이버 SEO',
   '네이버 카페': '네이버 SEO',
-  '(구)랜딩페이지': '구글 SEO',
-  '튜터링 랜딩페이지': '구글 SEO',
+  // 구글 SEO
+  '(구)랜딩페이지 즉시상담': '구글 SEO',
+  '(구)랜딩페이지 상담예약': '구글 SEO',
+  '(신)랜딩 페이지 상담예약': '구글 SEO',
   '공식 블로그': '구글 SEO',
   '브런치': '구글 SEO',
   '레딧': '구글 SEO',
+  // META
   '인스타그램 오가닉': 'META',
   '인스타그램 광고': 'META',
+  // 소개
   '소개/추천': '소개',
   '책': '소개',
+  '기존DB': '소개',
+  '대표전화': '소개',
+  // B2B
   'B2B 파트너': 'B2B',
 };
 

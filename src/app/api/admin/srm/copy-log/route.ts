@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export interface CopyLogEntry {
   id: string;
@@ -24,6 +25,7 @@ interface PostBody {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body: PostBody = await req.json();
     const { eventId, eventType, eventDate, eventTime, studentNames, messagePreview, copiedBy } = body;
@@ -66,6 +68,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const date = req.nextUrl.searchParams.get('date');
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {

@@ -1,12 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
+import { isAuthenticated } from '@/lib/server-auth';
 
 export interface AutoMatch {
   sfv2ProfileId: string;
   sfv2Name: string;
   matchScore: number;
-  matchReason: 'phone' | 'email' | 'both';
+  matchReason: 'phone' | 'email' | 'both' | 'name';
+}
+
+// "김윤서02" → ["김윤서"], "페퍼/Yerim Jung" → ["페퍼", "Yerim Jung"]
+function extractNameVariants(name: string): string[] {
+  return name
+    .split('/')
+    .map((s) => s.trim().replace(/\d+$/, '').trim())
+    .filter(Boolean);
 }
 
 export interface UnlinkedStudent {
@@ -21,7 +30,8 @@ export interface UnlinkedStudent {
 
 // GET /api/admin/srm/match-queue
 // 수업중(enrolled) CRM 학생 전체 반환 (연결 여부 무관) + 자동 매칭 후보 포함
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
   const { data: unlinked, error: crmError } = await supabaseAdmin
     .from('students')
@@ -33,33 +43,55 @@ export async function GET() {
   if (!unlinked || unlinked.length === 0) return NextResponse.json([]);
 
   const phones = unlinked.map((s) => s.parent_phone).filter(Boolean) as string[];
-  const emails: string[] = []; // students 테이블에 email 컬럼 없음
 
   // sfv2 조회 실패해도 전체 명단은 반환
   let byPhone = new Map<string, { id: string; full_name: string }>();
-  let byEmail = new Map<string, { id: string; full_name: string }>();
+  // full_name → 매칭 프로필 목록 (unique 확인용)
+  let byName = new Map<string, Array<{ id: string; full_name: string }>>();
   try {
-    const [{ data: phoneMatches }, { data: emailMatches }] = await Promise.all([
-      phones.length > 0
-        ? supabaseSFv2.from('profiles').select('id, full_name, phone, email').in('phone', phones)
-        : { data: [] },
-      emails.length > 0
-        ? supabaseSFv2.from('profiles').select('id, full_name, phone, email').in('email', emails)
-        : { data: [] },
-    ]);
+    // 전화번호 매칭
+    const { data: phoneMatches } = phones.length > 0
+      ? await supabaseSFv2.from('profiles').select('id, full_name, phone, email').in('phone', phones)
+      : { data: [] };
     byPhone = new Map((phoneMatches ?? []).map((p) => [p.phone, p]));
-    byEmail = new Map((emailMatches ?? []).map((p) => [p.email, p]));
+
+    // 이름 매칭: phone이 없거나 phone 매칭 실패한 학생들의 정규화된 이름 수집
+    const phoneHitSet = new Set((phoneMatches ?? []).map((p) => p.phone));
+    const needsNameMatch = unlinked.filter(
+      (s) => !s.sfv2_profile_id && !(s.parent_phone && phoneHitSet.has(s.parent_phone))
+    );
+    const allVariants = [...new Set(needsNameMatch.flatMap((s) => extractNameVariants(s.name)))];
+
+    if (allVariants.length > 0) {
+      const { data: nameMatches } = await supabaseSFv2
+        .from('profiles')
+        .select('id, full_name, phone, email')
+        .in('full_name', allVariants);
+      for (const p of nameMatches ?? []) {
+        const list = byName.get(p.full_name) ?? [];
+        list.push(p);
+        byName.set(p.full_name, list);
+      }
+    }
   } catch {
     // sfv2 접근 실패 시 자동 매칭 없이 명단만 반환
   }
 
   const result: UnlinkedStudent[] = unlinked.map((student) => {
     const phoneHit = student.parent_phone ? byPhone.get(student.parent_phone) : null;
-    const emailHit = null; // email 컬럼 없음
 
     let autoMatch: AutoMatch | null = null;
     if (!student.sfv2_profile_id && phoneHit) {
       autoMatch = { sfv2ProfileId: phoneHit.id, sfv2Name: phoneHit.full_name, matchScore: 95, matchReason: 'phone' };
+    } else if (!student.sfv2_profile_id && !phoneHit) {
+      // 이름 기반 매칭: 정규화된 이름 변형 중 v2에서 유일하게 존재하는 것 사용
+      for (const variant of extractNameVariants(student.name)) {
+        const hits = byName.get(variant) ?? [];
+        if (hits.length === 1) {
+          autoMatch = { sfv2ProfileId: hits[0].id, sfv2Name: hits[0].full_name, matchScore: 75, matchReason: 'name' };
+          break;
+        }
+      }
     }
 
     return {

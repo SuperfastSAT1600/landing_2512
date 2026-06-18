@@ -1,14 +1,11 @@
 'use client';
+import { srmFetch } from '../lib/srm-fetch';
 
 import { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { CommLog } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
-
-function getAdminName() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('admin_user_name') ?? '';
-}
+import { getAdminName } from '@/lib/admin-user';
 
 interface RelatedStudent {
   name: string;
@@ -29,7 +26,7 @@ export function CoachPanel({ coachId, coachName, relatedStudents, onClose }: Pro
 
   const fetchComms = useCallback(async () => {
     setLoadingComms(true);
-    const res = await fetch(`/api/admin/srm/communications?coachId=${coachId}`);
+    const res = await srmFetch(`/api/admin/srm/communications?coachId=${coachId}`);
     if (res.ok) setComms(await res.json());
     setLoadingComms(false);
   }, [coachId]);
@@ -40,7 +37,7 @@ export function CoachPanel({ coachId, coachName, relatedStudents, onClose }: Pro
 
   const handleAdd = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
-    await fetch('/api/admin/srm/communications', {
+    await srmFetch('/api/admin/srm/communications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 
 type PauseRow = {
   id: string;
@@ -46,9 +47,10 @@ async function getActivePauseBySfv2(profileId: string): Promise<PauseRow | null>
 }
 
 export async function GET(
-  _req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ profileId: string }> }
 ) {
+  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { profileId } = await params;
   const pause = await getActivePauseBySfv2(profileId);
   return NextResponse.json({ pause });
@@ -58,6 +60,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ profileId: string }> }
 ) {
+  if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { profileId } = await params;
   const body = await req.json() as { pause_until?: string | null; reason?: string; created_by?: string };
 

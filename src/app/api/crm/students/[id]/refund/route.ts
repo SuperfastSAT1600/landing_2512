@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAuthenticated } from '@/lib/server-auth';
 import type { ChurnType } from '@/types/crm';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-function isAuthenticated(req: NextRequest) {
-  return req.headers.get('x-admin-key') === process.env.ADMIN_SECRET_KEY;
-}
 
 export async function POST(
   request: NextRequest,
@@ -77,6 +69,8 @@ export async function POST(
     .single();
 
   if (updateErr) {
+    // 부분 실패 보상: payments에서 방금 추가한 환불 기록 삭제
+    await supabaseAdmin.from('payments').delete().eq('student_id', id).eq('payment_type', '환불').order('paid_at', { ascending: false }).limit(1);
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
   }
 
