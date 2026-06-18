@@ -47,7 +47,6 @@ type View = 'consultation' | 'student' | 'diagnostic' | 'study_hall';
 const CRM_NAV_ITEMS: { view: View; label: string }[] = [
   { view: 'consultation', label: '상담 기록' },
   { view: 'student', label: '학생 기본 정보' },
-  { view: 'diagnostic', label: '진단 테스트' },
 ];
 
 const SRM_NAV_ITEMS: { view: View; label: string }[] = [
@@ -234,7 +233,7 @@ export default function PortalContent({ token }: { token: string }) {
       {currentView === 'student' && (
         <StudentInfoOverlay
           student={data.student}
-          onShowDiagnostic={hasSrmData && hasDiagnostic ? () => setView('diagnostic') : undefined}
+          onShowDiagnostic={hasDiagnostic ? () => setView('diagnostic') : undefined}
         />
       )}
 
