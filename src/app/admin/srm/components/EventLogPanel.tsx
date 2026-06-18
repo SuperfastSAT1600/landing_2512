@@ -131,41 +131,41 @@ export function EventLogPanel({ event, onClose }: Props) {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-30" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full w-[520px] bg-[#1a1c1f] border-l border-white/10 z-40 flex flex-col shadow-2xl">
+      <div className="fixed right-0 top-0 h-full w-[520px] bg-white border-l border-gray-200 z-40 flex flex-col shadow-2xl">
 
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0">
           <div className="flex items-center gap-2.5">
             <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-              isCoach ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-gray-400'
+              isCoach ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
             }`}>
               {isCoach ? '수업' : '스터디홀'}
             </span>
-            <span className="text-white font-semibold">{event.startsAtKst}</span>
+            <span className="text-gray-900 font-semibold">{event.startsAtKst}</span>
             <span className="text-gray-500 text-sm">{dayLabel}</span>
             {openIssues.length > 0 && (
-              <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400">
+              <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
                 <AlertTriangle size={10} />
                 미해결 {openIssues.length}건
               </span>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors p-1">
             <X size={18} />
           </button>
         </div>
 
         {/* 참여자 정보 */}
-        <div className="px-5 py-3 border-b border-white/10 shrink-0">
+        <div className="px-5 py-3 border-b border-gray-200 shrink-0">
           <div className="flex items-center gap-2 flex-wrap">
             {event.students.map((name, i) => (
-              <span key={i} className="text-sm text-gray-200 font-medium">{name}</span>
+              <span key={i} className="text-sm text-gray-800 font-medium">{name}</span>
             ))}
             {isCoach && event.coaches.length > 0 && (
               <>
                 <span className="text-gray-600">↔</span>
                 {event.coaches.map((name, i) => (
-                  <span key={i} className="text-sm text-gray-400">{name}</span>
+                  <span key={i} className="text-sm text-gray-500">{name}</span>
                 ))}
               </>
             )}
@@ -173,18 +173,18 @@ export function EventLogPanel({ event, onClose }: Props) {
         </div>
 
         {/* 탭 헤더 */}
-        <div className="flex border-b border-white/10 shrink-0">
+        <div className="flex border-b border-gray-200 shrink-0">
           <button
             onClick={() => setActiveTab('issue')}
             className={`flex items-center gap-1.5 px-5 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
               activeTab === 'issue'
-                ? 'border-orange-400 text-orange-300'
-                : 'border-transparent text-gray-500 hover:text-gray-300'
+                ? 'border-orange-500 text-orange-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             이슈
             {openIssues.length > 0 && (
-              <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px] border border-orange-500/30">
+              <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full text-[10px] border border-orange-500/30">
                 {openIssues.length}
               </span>
             )}
@@ -193,8 +193,8 @@ export function EventLogPanel({ event, onClose }: Props) {
             onClick={() => setActiveTab('comm')}
             className={`px-5 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
               activeTab === 'comm'
-                ? 'border-blue-400 text-blue-300'
-                : 'border-transparent text-gray-500 hover:text-gray-300'
+                ? 'border-blue-500 text-blue-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             커뮤니케이션
@@ -206,9 +206,9 @@ export function EventLogPanel({ event, onClose }: Props) {
           <>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
               {loading ? (
-                <div className="h-10 bg-white/5 rounded-lg animate-pulse" />
+                <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
               ) : issues.length === 0 && !showIssueForm ? (
-                <p className="text-xs text-gray-600">등록된 이슈가 없습니다.</p>
+                <p className="text-xs text-gray-400">등록된 이슈가 없습니다.</p>
               ) : (
                 issues.map((issue) => (
                   <EventIssueCard
@@ -220,16 +220,16 @@ export function EventLogPanel({ event, onClose }: Props) {
                 ))
               )}
             </div>
-            <div className="border-t border-white/10 px-5 py-3 shrink-0">
+            <div className="border-t border-gray-200 px-5 py-3 shrink-0">
               {showIssueForm ? (
                 <div className="space-y-2">
                   <select
                     value={issueType}
                     onChange={(e) => setIssueType(e.target.value)}
-                    className="w-full bg-[#1a1c1f] border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 outline-none focus:border-blue-500/50 [color-scheme:dark]"
+                    className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 outline-none focus:border-blue-500"
                   >
                     {ISSUE_TYPES.map((t) => (
-                      <option key={t.value} value={t.value} className="bg-[#1a1c1f] text-gray-200">{t.label}</option>
+                      <option key={t.value} value={t.value} className="bg-white text-gray-800">{t.label}</option>
                     ))}
                   </select>
                   <input
@@ -237,26 +237,26 @@ export function EventLogPanel({ event, onClose }: Props) {
                     value={issueTitle}
                     onChange={(e) => setIssueTitle(e.target.value)}
                     placeholder="이슈 제목 *"
-                    className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50"
+                    className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500"
                   />
                   <textarea
                     value={issueDesc}
                     onChange={(e) => setIssueDesc(e.target.value)}
                     placeholder="상세 설명 (선택)"
                     rows={2}
-                    className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50 resize-none"
+                    className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500 resize-none"
                   />
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowIssueForm(false)}
-                      className="flex-1 text-xs bg-white/5 hover:bg-white/10 text-gray-400 rounded px-3 py-1.5"
+                      className="flex-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded px-3 py-1.5"
                     >
                       취소
                     </button>
                     <button
                       onClick={handleIssueSubmit}
                       disabled={issueSaving || !issueTitle.trim()}
-                      className="flex-1 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded px-3 py-1.5 disabled:opacity-40"
+                      className="flex-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
                     >
                       {issueSaving ? '저장중...' : '등록'}
                     </button>
@@ -265,7 +265,7 @@ export function EventLogPanel({ event, onClose }: Props) {
               ) : (
                 <button
                   onClick={() => setShowIssueForm(true)}
-                  className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   <Plus size={12} />
                   이슈 등록
@@ -281,17 +281,17 @@ export function EventLogPanel({ event, onClose }: Props) {
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
               {loading ? (
                 <div className="space-y-2">
-                  {[1, 2].map((i) => <div key={i} className="h-14 bg-white/5 rounded-lg animate-pulse" />)}
+                  {[1, 2].map((i) => <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />)}
                 </div>
               ) : comms.length === 0 ? (
-                <p className="text-xs text-gray-600">이 이벤트에 대한 기록이 없습니다.</p>
+                <p className="text-xs text-gray-400">이 이벤트에 대한 기록이 없습니다.</p>
               ) : (
                 comms.map((e) => (
                   <SrmCommCard key={e.id} entry={e} onUpdated={handleCommUpdated} />
                 ))
               )}
             </div>
-            <div className="border-t border-white/10 px-5 py-4 shrink-0">
+            <div className="border-t border-gray-200 px-5 py-4 shrink-0">
               <AddForm
                 onSave={handleSave}
                 saving={saving}

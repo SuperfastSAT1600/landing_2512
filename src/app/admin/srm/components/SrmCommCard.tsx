@@ -51,24 +51,24 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
   const effectiveParties = (entry.parties && entry.parties.length > 0) ? entry.parties : (entry.target ? [entry.target] : []);
 
   return (
-    <div className="bg-white/5 rounded-lg p-3 group">
+    <div className="bg-gray-50 rounded-lg p-3 group">
       {/* 헤더 행 */}
       <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${CHANNEL_COLORS[entry.channel] ?? 'bg-gray-500/20 text-gray-300'}`}>
+        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${CHANNEL_COLORS[entry.channel] ?? 'bg-gray-100 text-gray-600'}`}>
           {CHANNEL_LABELS[entry.channel] ?? entry.channel}
         </span>
         {effectiveParties.map((p) => (
-          <span key={p} className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${PARTY_COLORS[p] ?? 'bg-gray-500/20 text-gray-300 border-gray-500/30'}`}>
+          <span key={p} className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${PARTY_COLORS[p] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}>
             {PARTY_LABELS[p] ?? p}
           </span>
         ))}
         {entry.trigger_type && entry.trigger_type !== 'manual' && (
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
             {TRIGGER_BADGE_LABELS[entry.trigger_type] ?? entry.trigger_type}
           </span>
         )}
         {!editing && entry.resolution && (
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-gray-400 ml-auto">
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 ml-auto">
             {RESOLUTION_LABELS[entry.resolution] ?? entry.resolution}
           </span>
         )}
@@ -81,7 +81,7 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
         {!editing && (
           <button
             onClick={() => setEditing(true)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-gray-600 hover:text-gray-300"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-gray-400 hover:text-gray-700"
             title="수정"
           >
             <Pencil size={11} />
@@ -97,19 +97,19 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="사유 (선택)"
-              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50"
+              className="w-full bg-white border border-gray-200 rounded px-2 py-1 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500"
             />
           )}
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={3}
-            className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500/50 resize-none"
+            className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-800 outline-none focus:border-blue-500 resize-none"
           />
           <div className="flex gap-1.5 justify-end">
             <button
               onClick={handleCancel}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs text-gray-400 hover:text-gray-200 border border-white/10 rounded"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded"
             >
               <X size={11} /> 취소
             </button>
@@ -125,7 +125,7 @@ export function SrmCommCard({ entry, onUpdated }: Props) {
       ) : (
         <>
           {entry.reason && <p className="text-[11px] text-gray-500 mb-1">사유: {entry.reason}</p>}
-          <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
+          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
         </>
       )}
     </div>

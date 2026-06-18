@@ -59,13 +59,13 @@ export function CoachPanel({ coachId, coachName, relatedStudents, onClose }: Pro
     <>
       <div className="fixed inset-0 bg-black/40 z-30" onClick={onClose} />
 
-      <div className="fixed right-0 top-0 h-full w-[420px] bg-[#1a1c1f] border-l border-white/10 z-40 flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+      <div className="fixed right-0 top-0 h-full w-[420px] bg-white border-l border-gray-200 z-40 flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <div className="flex-1 min-w-0 mr-3">
-            <h2 className="text-base font-bold text-white">{coachName}</h2>
+            <h2 className="text-base font-bold text-gray-900">{coachName}</h2>
             <p className="text-xs text-gray-500 mt-0.5">코치</p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 shrink-0">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors p-1 shrink-0">
             <X size={18} />
           </button>
         </div>
@@ -78,7 +78,7 @@ export function CoachPanel({ coachId, coachName, relatedStudents, onClose }: Pro
                 {relatedStudents.map((s, i) => (
                   <span
                     key={i}
-                    className="px-2 py-0.5 bg-white/8 border border-white/10 rounded-full text-xs text-gray-300"
+                    className="px-2 py-0.5 bg-gray-100 border border-gray-200 rounded-full text-xs text-gray-600"
                   >
                     {s.name}
                   </span>

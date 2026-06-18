@@ -64,7 +64,7 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="v2 이름으로 검색..."
-          className="w-full bg-white/5 border border-white/10 rounded-md pl-7 pr-3 py-1.5 text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500"
+          className="w-full bg-white border border-gray-200 rounded-md pl-7 pr-3 py-1.5 text-xs text-gray-700 placeholder-gray-400 outline-none focus:border-blue-500"
         />
       </div>
       {searching && <p className="text-[11px] text-gray-600 px-1">검색 중...</p>}
@@ -75,9 +75,9 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
               key={r.id}
               onClick={() => handleLink(r.id)}
               disabled={linking}
-              className="w-full flex items-center justify-between px-3 py-1.5 bg-white/5 hover:bg-white/10 disabled:opacity-40 rounded text-xs transition-colors"
+              className="w-full flex items-center justify-between px-3 py-1.5 bg-gray-50 hover:bg-gray-100 disabled:opacity-40 rounded text-xs transition-colors"
             >
-              <span className="text-gray-200">{r.full_name}</span>
+              <span className="text-gray-700">{r.full_name}</span>
               <span className="text-gray-500">{r.phone ?? r.email ?? ''}</span>
             </button>
           ))}
@@ -109,28 +109,28 @@ function StudentRow({
   return (
     <div className={`rounded-lg border transition-colors ${
       hasV2
-        ? 'bg-white/[0.03] border-white/10'
+        ? 'bg-white border-gray-200 hover:border-gray-300'
         : s.autoMatch
-        ? 'bg-yellow-500/5 border-yellow-500/15'
-        : 'bg-white/[0.02] border-white/[0.07]'
+        ? 'bg-yellow-50 border-yellow-200'
+        : 'bg-white border-gray-100'
     }`}>
       <div className="flex items-center gap-1 group px-3 py-2.5">
         {/* 이름 버튼 */}
         <button onClick={onStudentClick} className="flex-1 flex items-center gap-2 text-left min-w-0">
           {s.isPaused && <PauseCircle size={11} className="text-gray-500 shrink-0" />}
-          <span className={`text-sm font-medium truncate ${s.isPaused ? 'text-gray-500' : 'text-gray-200'}`}>
+          <span className={`text-sm font-medium truncate ${s.isPaused ? 'text-gray-400' : 'text-gray-800'}`}>
             {s.name}
           </span>
-          {s.grade && <span className="text-[11px] text-gray-600 shrink-0">{s.grade}</span>}
+          {s.grade && <span className="text-[11px] text-gray-400 shrink-0">{s.grade}</span>}
           {s.hasSummerProgram && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-medium shrink-0">특강</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium shrink-0">특강</span>
           )}
         </button>
 
         {/* 연결 상태 배지 */}
         <div className="flex items-center gap-1.5 shrink-0">
           {/* CRM 배지 — 항상 연결됨 */}
-          <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">
+          <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium border border-emerald-200">
             <CheckCircle2 size={9} />
             CRM
           </span>
@@ -140,7 +140,7 @@ function StudentRow({
             <button
               onClick={onToggleExpand}
               title="재연결"
-              className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 font-medium hover:bg-blue-500/25 transition-colors"
+              className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium hover:bg-blue-200 transition-colors"
             >
               <CheckCircle2 size={9} />
               v2
@@ -149,7 +149,7 @@ function StudentRow({
             <button
               onClick={onAutoLink}
               disabled={linking}
-              className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-medium hover:bg-yellow-500/30 disabled:opacity-40 transition-colors"
+              className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 font-medium hover:bg-yellow-200 disabled:opacity-40 transition-colors"
             >
               <Link size={9} />
               {s.autoMatch.sfv2Name} 연결
@@ -157,7 +157,7 @@ function StudentRow({
           ) : (
             <button
               onClick={onToggleExpand}
-              className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 font-medium hover:bg-red-500/20 transition-colors"
+              className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-medium hover:bg-red-200 transition-colors"
             >
               <XCircle size={9} />
               v2
@@ -172,7 +172,7 @@ function StudentRow({
           rel="noopener noreferrer"
           title="코치 포털"
           onClick={(e) => e.stopPropagation()}
-          className="p-1 text-gray-600 hover:text-blue-400 transition-colors rounded opacity-0 group-hover:opacity-100"
+          className="p-1 text-gray-400 hover:text-blue-600 transition-colors rounded opacity-0 group-hover:opacity-100"
         >
           <ExternalLink size={12} />
         </a>
@@ -180,7 +180,7 @@ function StudentRow({
 
       {/* 인라인 v2 검색 (미연결 수동 / 재연결) */}
       {expanded && (
-        <div className="px-3 pb-3 border-t border-white/5 pt-2">
+        <div className="px-3 pb-3 border-t border-gray-100 pt-2">
           <ManualSearch crmStudentId={s.crmStudentId} onLinked={onLinked} />
         </div>
       )}
@@ -264,14 +264,14 @@ export function StudentRoster({ onStudentClick }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="이름 검색"
-          className="w-full pl-8 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+          className="w-full pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500"
         />
       </div>
 
       {loading ? (
         <div className="space-y-1.5">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-12 bg-white/5 rounded-lg animate-pulse" />
+            <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -280,7 +280,7 @@ export function StudentRoster({ onStudentClick }: Props) {
         <div className="space-y-5">
           {active.length > 0 && (
             <div>
-              <p className="text-[11px] font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+              <p className="text-[11px] font-semibold text-gray-500 mb-2 uppercase tracking-wide">
                 수업 중 ({active.length}명)
               </p>
               <div className="space-y-1">
@@ -304,7 +304,7 @@ export function StudentRoster({ onStudentClick }: Props) {
             <div>
               <button
                 onClick={() => setPausedOpen((v) => !v)}
-                className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2 hover:text-gray-400 transition-colors"
+                className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2 hover:text-gray-600 transition-colors"
               >
                 <PauseCircle size={11} />
                 휴원 ({paused.length}명)
@@ -331,7 +331,7 @@ export function StudentRoster({ onStudentClick }: Props) {
         </div>
       )}
 
-      <p className="text-xs text-gray-600 text-right pt-1">
+      <p className="text-xs text-gray-400 text-right pt-1">
         {!loading && `수업 중 ${active.filter((s) => s.group === 'active').length}명 · 휴원 ${paused.length}명 · v2 연결 ${v2LinkedCount}/${filtered.length}`}
       </p>
     </div>

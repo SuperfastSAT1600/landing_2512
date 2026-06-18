@@ -27,13 +27,13 @@ const ISSUE_TYPE_LABELS: Record<string, string> = {
 };
 
 const ISSUE_TYPE_COLORS: Record<string, string> = {
-  cancellation: 'bg-red-500/20 text-red-400 border-red-500/30',
-  coach_change: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  no_show: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  schedule_pending: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  coach_pending: 'bg-green-500/20 text-green-400 border-green-500/30',
-  renewal_needed: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  custom: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  cancellation: 'bg-red-100 text-red-700 border-red-200',
+  coach_change: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  no_show: 'bg-orange-100 text-orange-700 border-orange-200',
+  schedule_pending: 'bg-blue-100 text-blue-700 border-blue-200',
+  coach_pending: 'bg-green-100 text-green-700 border-green-200',
+  renewal_needed: 'bg-purple-100 text-purple-700 border-purple-200',
+  custom: 'bg-gray-100 text-gray-600 border-gray-200',
 };
 
 interface Props {
@@ -94,21 +94,21 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
   const isResolved = issue.status === 'resolved';
 
   return (
-    <div className={`rounded-lg border ${isResolved ? 'border-white/5 bg-white/3' : 'border-orange-500/20 bg-orange-500/5'}`}>
+    <div className={`rounded-lg border ${isResolved ? 'border-gray-200 bg-gray-50' : 'border-orange-200 bg-orange-50'}`}>
       {/* 헤더 */}
       <div
         className="flex items-center gap-2 px-3 py-2.5 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        {!isResolved && <AlertTriangle size={13} className="text-orange-400 shrink-0" />}
+        {!isResolved && <AlertTriangle size={13} className="text-orange-600 shrink-0" />}
         <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded border ${ISSUE_TYPE_COLORS[issue.issue_type]}`}>
           {ISSUE_TYPE_LABELS[issue.issue_type] ?? issue.issue_type}
         </span>
-        <span className={`text-sm font-medium flex-1 ${isResolved ? 'text-gray-500 line-through' : 'text-gray-200'}`}>
+        <span className={`text-sm font-medium flex-1 ${isResolved ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
           {issue.title}
         </span>
         {totalCount > 0 && (
-          <span className={`text-[11px] font-medium tabular-nums ${doneCount === totalCount ? 'text-green-400' : 'text-gray-500'}`}>
+          <span className={`text-[11px] font-medium tabular-nums ${doneCount === totalCount ? 'text-green-600' : 'text-gray-500'}`}>
             {doneCount}/{totalCount}
           </span>
         )}
@@ -133,10 +133,10 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
               className="flex items-center gap-2 w-full text-left group"
             >
               {item.done
-                ? <CheckSquare size={13} className="text-green-400 shrink-0" />
-                : <Square size={13} className="text-gray-600 group-hover:text-gray-400 shrink-0" />
+                ? <CheckSquare size={13} className="text-green-600 shrink-0" />
+                : <Square size={13} className="text-gray-300 group-hover:text-gray-600 shrink-0" />
               }
-              <span className={`text-xs ${item.done ? 'text-gray-500 line-through' : 'text-gray-300'}`}>
+              <span className={`text-xs ${item.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
                 {item.label}
               </span>
             </button>
@@ -156,7 +156,7 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="text-[11px] text-gray-500 hover:text-gray-300"
+                  className="text-[11px] text-gray-500 hover:text-gray-600"
                 >
                   취소
                 </button>
@@ -165,7 +165,7 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
               <button
                 onClick={() => setConfirmDelete(true)}
                 disabled={saving}
-                className="flex items-center gap-1 text-[11px] text-gray-600 hover:text-red-400 transition-colors"
+                className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-red-600 transition-colors"
               >
                 <Trash2 size={11} />
                 삭제
@@ -178,8 +178,8 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
               disabled={saving}
               className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border transition-colors ${
                 isResolved
-                  ? 'border-white/10 text-gray-500 hover:text-gray-300'
-                  : 'border-green-500/30 text-green-400 hover:bg-green-500/10'
+                  ? 'border-gray-200 text-gray-500 hover:text-gray-700'
+                  : 'border-green-200 text-green-700 hover:bg-green-50'
               }`}
             >
               <Check size={11} />

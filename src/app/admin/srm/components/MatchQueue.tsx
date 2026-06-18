@@ -50,7 +50,7 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="v2 이름으로 검색..."
-          className="w-full bg-white/5 border border-white/10 rounded-md pl-7 pr-3 py-1.5 text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500"
+          className="w-full bg-gray-50 border border-gray-200 rounded-md pl-7 pr-3 py-1.5 text-xs text-gray-700 placeholder-gray-400 outline-none focus:border-blue-500"
         />
       </div>
       {searching && <p className="text-xs text-gray-600 px-1">검색 중...</p>}
@@ -61,9 +61,9 @@ function ManualSearch({ crmStudentId, onLinked }: { crmStudentId: string; onLink
               key={r.id}
               onClick={() => handleLink(r.id)}
               disabled={linking}
-              className="w-full flex items-center justify-between px-3 py-1.5 bg-white/5 hover:bg-white/10 disabled:opacity-40 rounded text-xs transition-colors"
+              className="w-full flex items-center justify-between px-3 py-1.5 bg-gray-50 hover:bg-gray-100 disabled:opacity-40 rounded text-xs transition-colors"
             >
-              <span className="text-gray-200">{r.full_name}</span>
+              <span className="text-gray-700">{r.full_name}</span>
               <span className="text-gray-500">{r.phone ?? r.email ?? ''}</span>
             </button>
           ))}
@@ -119,7 +119,7 @@ export function MatchQueue({ onLinked }: Props) {
   if (loading) {
     return (
       <div className="space-y-2 mt-4">
-        {[1, 2, 3].map((i) => <div key={i} className="h-14 bg-white/5 rounded-lg animate-pulse" />)}
+        {[1, 2, 3].map((i) => <div key={i} className="h-14 bg-gray-50 rounded-lg animate-pulse" />)}
       </div>
     );
   }
@@ -140,15 +140,15 @@ export function MatchQueue({ onLinked }: Props) {
       {/* 자동 매칭 후보 */}
       {withMatch.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-yellow-300 mb-2">자동 매칭 후보 ({withMatch.length}명)</p>
+          <p className="text-xs font-semibold text-yellow-700 mb-2">자동 매칭 후보 ({withMatch.length}명)</p>
           <div className="space-y-2">
             {withMatch.map((s) => (
               <div key={s.crmStudentId} className="flex items-center gap-3 px-4 py-3 bg-yellow-500/5 border border-yellow-500/15 rounded-lg">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-white font-medium">{s.crmName}</span>
+                    <span className="text-sm text-gray-900 font-medium">{s.crmName}</span>
                     <span className="text-gray-600 text-xs">→</span>
-                    <span className="text-sm text-gray-300">{s.autoMatch!.sfv2Name}</span>
+                    <span className="text-sm text-gray-600">{s.autoMatch!.sfv2Name}</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
                     {REASON_LABEL[s.autoMatch!.matchReason]} · {s.autoMatch!.matchScore}점
@@ -157,7 +157,7 @@ export function MatchQueue({ onLinked }: Props) {
                 <button
                   onClick={() => handleAutoLink(s)}
                   disabled={linking === s.crmStudentId}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-xs font-medium rounded-md transition-colors"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-gray-900 text-xs font-medium rounded-md transition-colors"
                 >
                   <Link size={12} />
                   연결
@@ -171,20 +171,20 @@ export function MatchQueue({ onLinked }: Props) {
       {/* 수동 연결 필요 */}
       {withoutMatch.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-gray-400 mb-2">수동 연결 필요 ({withoutMatch.length}명)</p>
+          <p className="text-xs font-semibold text-gray-500 mb-2">수동 연결 필요 ({withoutMatch.length}명)</p>
           <div className="space-y-2">
             {withoutMatch.map((s) => (
-              <div key={s.crmStudentId} className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg">
+              <div key={s.crmStudentId} className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-white font-medium">{s.crmName}</p>
+                    <p className="text-sm text-gray-900 font-medium">{s.crmName}</p>
                     <p className="text-xs text-gray-600 mt-0.5">
                       {[s.phone, s.email].filter(Boolean).join(' · ') || '연락처 없음'}
                     </p>
                   </div>
                   <button
                     onClick={() => toggleExpand(s.crmStudentId)}
-                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    className="text-xs text-blue-700 hover:text-blue-700 transition-colors"
                   >
                     {expanded.has(s.crmStudentId) ? '닫기' : 'v2 검색'}
                   </button>
@@ -207,15 +207,15 @@ export function MatchQueue({ onLinked }: Props) {
           <p className="text-xs font-semibold text-gray-600 mb-2">연결 완료 ({linked.length}명)</p>
           <div className="space-y-1.5">
             {linked.map((s) => (
-              <div key={s.crmStudentId} className="px-4 py-3 bg-white/[0.03] rounded-lg">
+              <div key={s.crmStudentId} className="px-4 py-3 bg-white rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle size={13} className="text-green-500 shrink-0" />
-                    <span className="text-sm text-gray-400">{s.crmName}</span>
+                    <span className="text-sm text-gray-500">{s.crmName}</span>
                   </div>
                   <button
                     onClick={() => toggleExpand(s.crmStudentId)}
-                    className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                    className="text-xs text-gray-600 hover:text-gray-500 transition-colors"
                   >
                     {expanded.has(s.crmStudentId) ? '닫기' : '재연결'}
                   </button>
@@ -233,7 +233,7 @@ export function MatchQueue({ onLinked }: Props) {
       )}
 
       {/* 총계 */}
-      <div className="flex items-center gap-1.5 text-xs text-gray-600 pt-2 border-t border-white/5">
+      <div className="flex items-center gap-1.5 text-xs text-gray-600 pt-2 border-t border-gray-100">
         <Check size={12} className="text-green-500" />
         {linked.length}/{students.length}명 연결 완료
       </div>

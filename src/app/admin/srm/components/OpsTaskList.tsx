@@ -64,11 +64,11 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
       {loading ? (
         <div className="space-y-2 mt-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-14 bg-white/5 rounded-lg animate-pulse" />
+            <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
           ))}
         </div>
       ) : tasks.length === 0 ? (
-        <div className="mt-8 text-center text-sm text-gray-600">
+        <div className="mt-8 text-center text-sm text-gray-400">
           이 날짜에 처리할 작업이 없습니다.
         </div>
       ) : (
@@ -80,21 +80,21 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
               <button
                 key={task.id}
                 onClick={() => onStudentClick(clickId, name)}
-                className="w-full flex items-center gap-4 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg text-left transition-colors"
+                className="w-full flex items-center gap-4 px-4 py-3 bg-white hover:bg-gray-50 rounded-lg text-left transition-colors border border-gray-200"
               >
                 <div className="shrink-0">
                   {task.is_overdue ? (
-                    <AlertTriangle size={16} className="text-red-400" />
+                    <AlertTriangle size={16} className="text-red-600" />
                   ) : (
-                    <Clock size={16} className="text-yellow-400" />
+                    <Clock size={16} className="text-yellow-600" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-white truncate">{name}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
                     {task.hasSummerProgram && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-medium shrink-0">특강</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium shrink-0">특강</span>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">{task.stage_label}</p>
@@ -102,7 +102,7 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
 
                 <div className="shrink-0 text-right">
                   {task.is_overdue ? (
-                    <span className="text-xs font-medium text-red-400 bg-red-400/10 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-medium text-red-600 bg-red-400/10 px-2 py-0.5 rounded-full">
                       D+{Math.ceil((new Date(date).getTime() - new Date(task.due_date).getTime()) / 86400000)}
                     </span>
                   ) : (
@@ -117,16 +117,16 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
 
       {/* Activity log section */}
       <div className="mt-8">
-        <h3 className="text-sm font-semibold text-white mb-3">오늘 활동 내역</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">오늘 활동 내역</h3>
 
         {activitiesLoading ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-10 bg-white/5 rounded animate-pulse" />
+              <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
             ))}
           </div>
         ) : activities.length === 0 ? (
-          <p className="text-xs text-gray-600 py-2">아직 활동 내역 없음</p>
+          <p className="text-xs text-gray-400 py-2">아직 활동 내역 없음</p>
         ) : (
           <div className="space-y-1.5">
             {activities.map((item) => {
@@ -142,12 +142,12 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
                 return (
                   <div
                     key={`copy-${log.id}`}
-                    className="flex items-center gap-3 px-3 py-2 bg-white/5 rounded-md text-xs"
+                    className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-md text-xs border border-gray-100"
                   >
                     <span className="text-gray-500 font-mono shrink-0">{copiedTime}</span>
-                    <span className="text-gray-600 shrink-0 text-[10px] px-1.5 py-0.5 bg-white/5 rounded">복사</span>
+                    <span className="text-gray-600 shrink-0 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">복사</span>
                     <span className="text-gray-400 shrink-0">{typeLabel}</span>
-                    <span className="text-gray-300 flex-1 truncate">
+                    <span className="text-gray-700 flex-1 truncate">
                       {log.student_names.join(', ')}
                     </span>
                     <span className="text-gray-500 shrink-0">{log.copied_by}</span>
@@ -165,15 +165,15 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
               return (
                 <div
                   key={`comm-${comm.id}`}
-                  className="flex items-center gap-3 px-3 py-2 bg-white/5 rounded-md text-xs"
+                  className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-md text-xs border border-gray-100"
                 >
                   <span className="text-gray-500 font-mono shrink-0">{commTime}</span>
                   {comm.trigger_type && comm.trigger_type !== 'manual' && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-orange-500/20 text-orange-300 rounded shrink-0">
+                    <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded shrink-0">
                       {TRIGGER_BADGE_LABELS[comm.trigger_type] ?? comm.trigger_type}
                     </span>
                   )}
-                  <span className="text-gray-300 shrink-0 font-medium">{comm.student_name ?? '—'}</span>
+                  <span className="text-gray-700 shrink-0 font-medium">{comm.student_name ?? '—'}</span>
                   <span className="text-gray-500 shrink-0">{CHANNEL_LABELS[comm.channel] ?? comm.channel}</span>
                   <span className="text-gray-600 flex-1 truncate">{comm.content}</span>
                   <span className="text-gray-500 shrink-0">{comm.author ?? ''}</span>

@@ -277,27 +277,27 @@ export function UnifiedTimeline({
         onClick={() => onEventClick({ ...ev, startsAtKst: kstTime })}
         className={`flex items-stretch gap-3 px-3 py-2.5 rounded-md text-sm group cursor-pointer ${
           alreadySent
-            ? 'bg-emerald-950/30 hover:bg-emerald-950/50'
+            ? 'bg-emerald-50 hover:bg-emerald-100'
             : isDone
-            ? 'bg-white/3 opacity-60 hover:opacity-80'
-            : 'bg-white/5 hover:bg-white/10'
+            ? 'bg-gray-50 opacity-80 hover:opacity-100'
+            : 'bg-white hover:bg-gray-50'
         }`}
       >
         {/* 시간 열 */}
         <div className="w-14 shrink-0 flex flex-col items-center justify-center">
-          <span className={`font-mono text-sm font-semibold ${isDone ? 'text-gray-600' : 'text-gray-200'}`}>{timeStr}</span>
+          <span className={`font-mono text-sm font-semibold ${isDone ? 'text-gray-400' : 'text-gray-700'}`}>{timeStr}</span>
         </div>
 
         {/* 좌측: 유형 + 학생 */}
-        <div className="w-[32%] min-w-0 flex flex-col gap-1 justify-center border-l border-white/5 pl-3">
+        <div className="w-[32%] min-w-0 flex flex-col gap-1 justify-center border-l border-gray-100 pl-3">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${
-              isCoach ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-gray-400'
+              isCoach ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
             }`}>
               {isCoach ? '수업' : '스터디홀'}
             </span>
             {ev.day === 'tomorrow' && (
-              <span className="text-[10px] font-medium text-amber-400/80 bg-amber-400/10 px-1.5 py-0.5 rounded shrink-0">내일</span>
+              <span className="text-[10px] font-medium text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded shrink-0">내일</span>
             )}
           </div>
           <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
@@ -321,19 +321,19 @@ export function UnifiedTimeline({
                     });
                   }}
                   className={`inline-flex items-center gap-0.5 hover:text-blue-400 hover:underline transition-colors text-sm leading-tight ${
-                    isDone ? 'text-gray-500' : 'text-gray-200'
+                    isDone ? 'text-gray-400' : 'text-gray-700'
                   }`}
                 >
                   {isVip && <Crown size={11} className="text-yellow-400 shrink-0" />}
                   {name}
-                  {isPaused && <span className="text-[10px] font-medium text-orange-400 bg-orange-500/15 px-1 rounded">휴원</span>}
-                  {lang === 'en' && <span className="text-[10px] font-bold text-blue-400 bg-blue-500/15 px-1 rounded">EN</span>}
+                  {isPaused && <span className="text-[10px] font-medium text-orange-700 bg-orange-100 px-1 rounded">휴원</span>}
+                  {lang === 'en' && <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1 rounded">EN</span>}
                 </button>
               );
             })}
             {isCoach && ev.coaches.length > 0 && (
               <span className="text-gray-500 flex items-center gap-1 text-xs">
-                <span>↔</span>
+                <span className="text-gray-400">↔</span>
                 {ev.coaches.map((coachName, i) => (
                   <button
                     key={`${ev.id}-c-${i}`}
@@ -349,7 +349,7 @@ export function UnifiedTimeline({
         </div>
 
         {/* 중간: 메시지 미리보기 + 복사 버튼 */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 border-l border-white/5 pl-3">
+        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 border-l border-gray-100 pl-3">
           <p className="text-[11px] text-gray-500 truncate leading-relaxed">{msgPreview}</p>
           <div className="flex gap-1.5">
             <button
@@ -358,7 +358,7 @@ export function UnifiedTimeline({
               className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
                 copiedKo
                   ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                  : 'border-white/10 text-gray-500 hover:text-gray-300 hover:border-white/20'
+                  : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               {copiedKo ? <Check size={10} /> : <Copy size={10} />}
@@ -370,7 +370,7 @@ export function UnifiedTimeline({
               className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
                 copiedEn
                   ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                  : 'border-blue-500/20 text-blue-500 hover:text-blue-400 hover:border-blue-500/40'
+                  : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300'
               }`}
             >
               {copiedEn ? <Check size={10} /> : <Copy size={10} />}
@@ -380,19 +380,19 @@ export function UnifiedTimeline({
         </div>
 
         {/* 우측: 액션 상태 */}
-        <div className="w-20 shrink-0 flex flex-col items-end justify-center gap-1 border-l border-white/5 pl-3">
+        <div className="w-20 shrink-0 flex flex-col items-end justify-center gap-1 border-l border-gray-100 pl-3">
           {alreadySent && (
-            <span className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-400">
+            <span className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-600">
               <Check size={10} />발송됨
             </span>
           )}
           {hasIssue && (
-            <span className="flex items-center gap-0.5 text-[10px] font-medium text-orange-400">
+            <span className="flex items-center gap-0.5 text-[10px] font-medium text-orange-600">
               <AlertTriangle size={10} />이슈
             </span>
           )}
           {!alreadySent && !hasIssue && (
-            <span className="text-[10px] text-white/15">—</span>
+            <span className="text-[10px] text-gray-300">—</span>
           )}
         </div>
       </div>
@@ -402,8 +402,8 @@ export function UnifiedTimeline({
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-sm font-semibold text-white">스케줄</h3>
-        <span className="text-xs bg-white/10 text-gray-400 px-2 py-0.5 rounded-full">
+        <h3 className="text-sm font-semibold text-gray-900">스케줄</h3>
+        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
           {loading ? '...' : totalCount}
         </span>
       </div>
@@ -411,11 +411,11 @@ export function UnifiedTimeline({
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-10 bg-white/5 rounded animate-pulse" />
+            <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
           ))}
         </div>
       ) : totalCount === 0 ? (
-        <p className="text-xs text-gray-600 py-4">스케줄 없음</p>
+        <p className="text-xs text-gray-400 py-4">스케줄 없음</p>
       ) : (
         <div className="space-y-1.5">
           {events.map(renderRow)}

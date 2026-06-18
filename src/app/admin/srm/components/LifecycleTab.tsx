@@ -91,7 +91,7 @@ export function LifecycleTab({ profileId, studentId }: Props) {
   if (loading) {
     return (
       <div className="space-y-2">
-        {[1, 2, 3].map((i) => <div key={i} className="h-10 bg-white/5 rounded animate-pulse" />)}
+        {[1, 2, 3].map((i) => <div key={i} className="h-10 bg-gray-50 rounded animate-pulse" />)}
       </div>
     );
   }
@@ -107,10 +107,10 @@ export function LifecycleTab({ profileId, studentId }: Props) {
     <div className="space-y-5">
       {/* 현재 단계 */}
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-        <p className="text-xs text-blue-300 font-semibold mb-1">현재 단계</p>
+        <p className="text-xs text-blue-700 font-semibold mb-1">현재 단계</p>
         {current ? (
           <>
-            <p className="text-sm text-white font-medium">{STAGE_LABELS[current.stage]}</p>
+            <p className="text-sm text-gray-900 font-medium">{STAGE_LABELS[current.stage]}</p>
             {current.due_date && (
               <p className="text-xs text-gray-500 mt-0.5">목표일: {current.due_date}</p>
             )}
@@ -130,16 +130,16 @@ export function LifecycleTab({ profileId, studentId }: Props) {
             <div
               key={stage}
               className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
-                isCurrent ? 'bg-blue-500/10 text-white' : isDone ? 'text-gray-600' : 'text-gray-500'
+                isCurrent ? 'bg-blue-500/10 text-gray-900' : isDone ? 'text-gray-600' : 'text-gray-500'
               }`}
             >
               <div className="shrink-0 w-4 h-4 flex items-center justify-center">
                 {isDone ? (
                   <Check size={13} className="text-green-500" />
                 ) : isCurrent ? (
-                  <ChevronRight size={13} className="text-blue-400" />
+                  <ChevronRight size={13} className="text-blue-700" />
                 ) : (
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
                 )}
               </div>
               <span>{STAGE_LABELS[stage]}</span>
@@ -149,7 +149,7 @@ export function LifecycleTab({ profileId, studentId }: Props) {
       </div>
 
       {/* 액션 영역 */}
-      <div className="border-t border-white/10 pt-4 space-y-3">
+      <div className="border-t border-gray-200 pt-4 space-y-3">
         {/* 완료 처리 */}
         {current && (
           <div className="space-y-2">
@@ -158,19 +158,19 @@ export function LifecycleTab({ profileId, studentId }: Props) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="완료 메모 (선택)"
-              className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500"
+              className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-blue-500"
             />
             <input
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               placeholder="다음 단계 목표일"
-              className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500"
+              className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500"
             />
             <button
               onClick={handleComplete}
               disabled={acting}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-medium rounded-md transition-colors"
+              className="w-full py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-gray-900 text-sm font-medium rounded-md transition-colors"
             >
               {acting ? '처리 중...' : `"${STAGE_LABELS[current.stage]}" 완료 처리`}
             </button>
@@ -182,18 +182,18 @@ export function LifecycleTab({ profileId, studentId }: Props) {
           <select
             value={setStage}
             onChange={(e) => setSetStage(e.target.value as SrmStage | '')}
-            className="w-full bg-[#1a1c1f] border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500 [color-scheme:dark]"
+            className="w-full bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500 "
           >
-            <option value="" className="bg-[#1a1c1f] text-gray-200">단계 직접 설정...</option>
+            <option value="" className="bg-white text-gray-700">단계 직접 설정...</option>
             {ALL_STAGES.map((s) => (
-              <option key={s} value={s} className="bg-[#1a1c1f] text-gray-200">{STAGE_LABELS[s]}</option>
+              <option key={s} value={s} className="bg-white text-gray-700">{STAGE_LABELS[s]}</option>
             ))}
           </select>
           {setStage && (
             <button
               onClick={handleSet}
               disabled={acting}
-              className="w-full py-2 bg-white/10 hover:bg-white/15 disabled:opacity-40 text-white text-sm font-medium rounded-md transition-colors"
+              className="w-full py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 text-gray-900 text-sm font-medium rounded-md transition-colors"
             >
               {acting ? '설정 중...' : '단계 설정'}
             </button>
