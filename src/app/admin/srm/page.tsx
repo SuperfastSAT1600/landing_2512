@@ -188,7 +188,7 @@ export default function SrmPage() {
   };
 
   return (
-    <div className="p-8 max-w-7xl">
+    <div className="min-h-screen bg-white text-gray-900 p-8 max-w-7xl">
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-900 tracking-tight">SRM</h1>
       </div>
