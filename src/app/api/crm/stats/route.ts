@@ -225,7 +225,7 @@ export async function GET(request: NextRequest) {
       ? (allStudentSourceMap.get(p.student_id) ?? '미입력')
       : '미입력';
     if (!sourceMap.has(src))
-      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0, respSum: 0, respCount: 0 });
     const entry = sourceMap.get(src)!;
     entry.revenue += p.amount;
     entry.net_revenue += netAmount(p);
