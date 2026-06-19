@@ -99,7 +99,7 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
 
       {/* 관련 대상 — 복수 선택 */}
       <div>
-        <p className="text-[11px] text-gray-600 mb-1.5">관련 대상</p>
+        <p className="text-[11px] text-gray-600 mb-1.5">커뮤니케이션 내용</p>
         <div className="flex gap-1.5">
           {ALL_PARTIES.map((p) => (
             <button
