@@ -2,7 +2,7 @@
 import { srmFetch } from '../lib/srm-fetch';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, ChevronDown, ChevronUp, ExternalLink, Sparkles, AlertTriangle } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Copy, Eye, Check } from 'lucide-react';
 import {
   PARTY_LABELS,
   PARTY_COLORS,
@@ -140,6 +140,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [portalIssuing, setPortalIssuing] = useState(false);
   const [portalCopied, setPortalCopied] = useState(false);
   const [localPortalToken, setLocalPortalToken] = useState<string | null>(null);
+  const [coachLinkCopied, setCoachLinkCopied] = useState(false);
   const [activePause, setActivePause] = useState<PauseRecord | null | undefined>(undefined); // undefined = 아직 로딩
   const [pauseFormOpen, setPauseFormOpen] = useState(false);
   const [pauseUntil, setPauseUntil] = useState('');
@@ -369,6 +370,13 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setIssueSaving(false);
   };
 
+  const handleCopyCoachLink = async () => {
+    if (!resolvedCrmStudentId) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/coach-prep/${resolvedCrmStudentId}`);
+    setCoachLinkCopied(true);
+    setTimeout(() => setCoachLinkCopied(false), 2500);
+  };
+
   const handleGenerateBrief = async () => {
     if (!resolvedCrmStudentId) return;
     setBriefing('loading');
@@ -444,6 +452,24 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
           <div className="flex-1 min-w-0 mr-3">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base font-bold text-gray-900">{studentName}</h2>
+              {!loadingDetail && (
+                <>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 border ${
+                    detail?.profile
+                      ? 'bg-blue-50 text-blue-600 border-blue-200'
+                      : 'bg-gray-50 text-gray-400 border-gray-200'
+                  }`}>
+                    {detail?.profile ? 'v2 연결' : 'v2 미연결'}
+                  </span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 border ${
+                    isLinked
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                      : 'bg-gray-50 text-gray-400 border-gray-200'
+                  }`}>
+                    {isLinked ? 'CRM 연결' : 'CRM 미연결'}
+                  </span>
+                </>
+              )}
               {detail?.hasSummerProgram && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium shrink-0">여름특강</span>
               )}
@@ -635,40 +661,56 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 </div>
               )}
 
-              {/* 코치 포털 + AI 브리핑 */}
+              {/* 코치 포털 */}
               {resolvedCrmStudentId && (
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-gray-500 truncate">
-                      /coach-prep/{resolvedCrmStudentId.slice(0, 8)}…
-                    </p>
-                  </div>
+                <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
+                  <span className={`text-[11px] font-medium ${
+                    briefing === 'done' ? 'text-blue-500' : 'text-gray-500'
+                  }`}>코치 포털</span>
+
+                  {/* 생성 토글 = AI 브리핑 */}
                   <button
-                    onClick={handleGenerateBrief}
+                    onClick={briefing !== 'loading' ? handleGenerateBrief : undefined}
                     disabled={briefing === 'loading'}
-                    title="AI 코치용 브리핑 생성"
-                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0 ${
-                      briefing === 'loading'
-                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                        : briefing === 'done'
-                        ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                    aria-label={briefing === 'done' ? '브리핑 생성됨 (클릭하여 재생성)' : '브리핑 생성하기'}
+                    className={`relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0 disabled:opacity-50 ${
+                      briefing === 'done'
+                        ? 'bg-blue-500'
                         : briefing === 'error'
-                        ? 'bg-red-100 text-red-700 border border-red-200'
-                        : 'bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200'
+                        ? 'bg-red-300 hover:bg-red-400 cursor-pointer'
+                        : 'bg-gray-200 hover:bg-gray-300 cursor-pointer'
                     }`}
                   >
-                    <Sparkles size={10} className={briefing === 'loading' ? 'animate-pulse' : ''} />
-                    {briefing === 'loading' ? '생성 중…' : briefing === 'done' ? '완료' : briefing === 'error' ? '실패' : 'AI 브리핑'}
+                    {briefing === 'loading' ? (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      </span>
+                    ) : (
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                        briefing === 'done' ? 'translate-x-4' : 'translate-x-0'
+                      }`} />
+                    )}
                   </button>
+
+                  {/* 미리보기 */}
                   <a
                     href={`/coach-prep/${resolvedCrmStudentId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    title="코치 포털 열기"
-                    className="p-1 text-gray-500 hover:text-blue-600 transition-colors shrink-0"
+                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-gray-500 hover:text-gray-800 transition-colors"
                   >
-                    <ExternalLink size={12} />
+                    <Eye size={11} />
+                    미리보기
                   </a>
+
+                  {/* 포털 링크 복사 */}
+                  <button
+                    onClick={handleCopyCoachLink}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-gray-500 hover:text-gray-800 transition-colors"
+                  >
+                    {coachLinkCopied ? <Check size={11} className="text-green-500" /> : <Copy size={11} />}
+                    포털 링크
+                  </button>
                 </div>
               )}
             </div>
