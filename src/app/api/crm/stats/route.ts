@@ -145,18 +145,6 @@ export async function GET(request: NextRequest) {
 
   const paymentList = pErr ? [] : (payments ?? []);
 
-  // 결제 학생 traffic_source 맵 — 기간 외 인입 학생도 포함하기 위해 전체 조회
-  const payingStudentIds = [...new Set(paymentList.map((p) => p.student_id).filter(Boolean))];
-  const { data: payingStudents } = payingStudentIds.length
-    ? await supabaseAdmin
-        .from('students')
-        .select('id, traffic_source')
-        .in('id', payingStudentIds)
-    : { data: [] };
-  const allStudentSourceMap = new Map<string, string>(
-    (payingStudents ?? []).map((s) => [s.id, s.traffic_source ?? '미입력'])
-  );
-
   // 학생 ID → payment 맵 (최초결제 기준)
   const paidStudentIds = new Set<string>();
   const paidStudentNames = new Set<string>();
@@ -177,6 +165,12 @@ export async function GET(request: NextRequest) {
   }
 
   const leadList = students ?? [];
+
+  // 채널 매출용: 이 기간 인입(문의) 리드 코호트 id → 유입경로
+  const leadIds = new Set(leadList.map((s) => s.id));
+  const leadSourceById = new Map<string, string>(
+    leadList.map((s) => [s.id, s.traffic_source ?? '미입력'])
+  );
 
   // 학생이 결제했는지 판단
   function isPaid(s: { id: string; name: string }): boolean {
@@ -219,14 +213,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 채널별 결제 금액 집계 — allStudentSourceMap으로 기간 외 인입 학생도 정확히 귀속
+  // 채널별 매출 = 이 기간에 인입(문의)한 리드(코호트)가 낸 결제만 — 결제·전환율과 동일 기준.
+  // (전 기간 인입 → 이번 기간 결제는 상단 총매출엔 잡히지만 채널표에는 제외 → 채널 합 ≠ 총매출)
   for (const p of paymentList) {
-    const src = p.student_id
-      ? (allStudentSourceMap.get(p.student_id) ?? '미입력')
-      : '미입력';
-    if (!sourceMap.has(src))
-      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0, respSum: 0, respCount: 0 });
-    const entry = sourceMap.get(src)!;
+    if (!p.student_id || !leadIds.has(p.student_id)) continue;
+    const src = leadSourceById.get(p.student_id) ?? '미입력';
+    const entry = sourceMap.get(src);
+    if (!entry) continue;
     entry.revenue += p.amount;
     entry.net_revenue += netAmount(p);
   }
