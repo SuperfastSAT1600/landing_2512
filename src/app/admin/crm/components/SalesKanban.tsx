@@ -32,9 +32,14 @@ import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
 import { PaymentModal } from './PaymentModal';
 
-// 최초 세일즈 칸반은 진행 중(0~7) 단계만 표시한다.
-// 수업 중(8)·이탈(9)은 각각 "수업 중" 탭, "이탈 리드풀" 탭에서 보므로 칸반에선 제외.
-const SALES_STAGES: FunnelStage[] = ['0', '1', '2', '3a', '3b', '4', '5a', '5b', '6', '7'];
+// 최초 세일즈 칸반: 진행 중(0~7) + 결제완료·가입대기(8).
+// 8번은 결제 완료 후 회원가입/카톡 단톡방 개설을 추적하는 컬럼 — 회원가입 완료 시 칸반에서 제거.
+// 이탈(churned)은 "이탈 리드풀" 탭에서만 본다.
+const SALES_STAGES: FunnelStage[] = ['0', '1', '2', '3a', '3b', '4', '5a', '5b', '6', '7', '8'];
+
+// 8번 컬럼 헤더는 결제완료 의미로 표시한다(FUNNEL_STAGE_LABELS['8']='수업 중'은 수업중 탭 전용).
+const KANBAN_STAGE_LABEL = (stage: FunnelStage) =>
+  stage === '8' ? '결제 완료' : FUNNEL_STAGE_LABELS[stage];
 
 interface SalesKanbanProps {
   students: Student[];
@@ -51,19 +56,22 @@ interface KanbanRowProps {
   onStudentClick: (student: Student) => void;
   onChurn: (student: Student) => void;
   onPayment: (student: Student) => void;
+  onToggleKakao: (student: Student) => void;
+  onSignupComplete: (student: Student) => void;
   onAdd?: () => void;
   isSearchMatch?: boolean;
 }
 
-function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayment, onAdd, isSearchMatch }: KanbanRowProps) {
+function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayment, onToggleKakao, onSignupComplete, onAdd, isSearchMatch }: KanbanRowProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
+  const isEnrollmentStage = stage === '8';
 
   const header = (
-    <div className={`px-2 py-2 border-b ${isSearchMatch ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}`}>
-      <p className={`text-[11px] font-bold leading-tight truncate ${isSearchMatch ? 'text-blue-600' : 'text-gray-600'}`}>
-        {stage}. {FUNNEL_STAGE_LABELS[stage]}
+    <div className={`px-2 py-2 border-b ${isSearchMatch ? 'border-blue-400 bg-blue-50' : isEnrollmentStage ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200'}`}>
+      <p className={`text-[11px] font-bold leading-tight truncate ${isSearchMatch ? 'text-blue-600' : isEnrollmentStage ? 'text-emerald-700' : 'text-gray-600'}`}>
+        {stage}. {KANBAN_STAGE_LABEL(stage)}
       </p>
-      <span className={`text-[10px] ${isSearchMatch ? 'text-blue-400' : 'text-gray-400'}`}>{students.length}명</span>
+      <span className={`text-[10px] ${isSearchMatch ? 'text-blue-400' : isEnrollmentStage ? 'text-emerald-500' : 'text-gray-400'}`}>{students.length}명</span>
     </div>
   );
 
@@ -81,11 +89,14 @@ function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayme
             <StudentCard
               key={student.id}
               student={student}
-              stalledDays={isStageStalled(student, nowMs) ? daysInStage(student, nowMs) : null}
-              leadTier={effectiveLeadTier(student, nowMs)}
+              stalledDays={isEnrollmentStage ? null : (isStageStalled(student, nowMs) ? daysInStage(student, nowMs) : null)}
+              leadTier={isEnrollmentStage ? null : effectiveLeadTier(student, nowMs)}
               onClick={() => onStudentClick(student)}
               onChurn={() => onChurn(student)}
-              onPayment={() => onPayment(student)}
+              onPayment={isEnrollmentStage ? undefined : () => onPayment(student)}
+              enrollmentMode={isEnrollmentStage}
+              onToggleKakao={() => onToggleKakao(student)}
+              onSignupComplete={() => onSignupComplete(student)}
             />
           ))}
         </SortableContext>
@@ -142,8 +153,10 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
 
   const getStudentsForStage = useCallback(
     (stage: FunnelStage) => {
-      const list = students.filter(
-        s => s.funnel_stage === stage && s.lead_status === 'active' && !s.retry_strategy_id
+      const list = students.filter(s =>
+        s.funnel_stage === stage && !s.retry_strategy_id &&
+        // 8번(결제완료)은 회원가입 미완료 학생만 — lead_status 무관(enrolled). 그 외는 active 리드.
+        (stage === '8' ? !s.signup_done_at : s.lead_status === 'active')
       );
       return [...list].sort((a, b) => {
         const ao = a.sort_order ?? Infinity;
@@ -156,6 +169,16 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
   );
 
   const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id);
+
+  // 8번 컬럼: 단톡방 개설 토글 / 회원가입 완료(칸반에서 제거)
+  const handleToggleKakao = useCallback(
+    (student: Student) => onStudentUpdate(student.id, { kakao_chat_created: !student.kakao_chat_created }),
+    [onStudentUpdate]
+  );
+  const handleSignupComplete = useCallback(
+    (student: Student) => onStudentUpdate(student.id, { signup_done_at: new Date().toISOString() }),
+    [onStudentUpdate]
+  );
 
   const handleDragStart = (event: DragStartEvent) => {
     const student = students.find(s => s.id === event.active.id);
@@ -175,6 +198,9 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
       : students.find(s => s.id === over.id && s.lead_status === 'active')?.funnel_stage;
 
     if (!targetStage) return;
+
+    // 8번(결제완료)은 드래그 진입/이탈 금지 — 진입은 결제로만, 퇴장은 '회원가입 완료' 버튼으로만.
+    if (targetStage === '8' || student.funnel_stage === '8') return;
 
     // 컬럼 간 이동
     if (targetStage !== student.funnel_stage) {
@@ -222,6 +248,8 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
                   onStudentClick={onStudentClick}
                   onChurn={setChurnTarget}
                   onPayment={setPaymentTarget}
+                  onToggleKakao={handleToggleKakao}
+                  onSignupComplete={handleSignupComplete}
                   onAdd={undefined}
                   isSearchMatch={!!searchQuery?.trim() && getStudentsForStage(stage).length > 0}
                 />
