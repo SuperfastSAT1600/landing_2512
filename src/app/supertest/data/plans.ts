@@ -1,5 +1,5 @@
 export const DISCOUNT_PERCENT = 30;
-export const LAUNCH_DATE = '2026-06-13';
+export const LAUNCH_DATE = '2026-06-27';
 
 export interface Plan {
     id: 'live' | 'flex' | 'review';
@@ -97,7 +97,7 @@ function generateSchedule(startDate: string, count: number): TestDate[] {
     return dates;
 }
 
-export const TEST_SCHEDULE: TestDate[] = generateSchedule('2026-06-13', 10);
+export const TEST_SCHEDULE: TestDate[] = generateSchedule('2026-06-27', 10);
 
 export interface TestDatePricing {
     date: string;
