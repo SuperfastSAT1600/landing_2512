@@ -59,10 +59,10 @@ export async function POST(
     if (!/^\d{6}$/.test(passcode)) {
       return NextResponse.json({ error: '6자리 숫자를 입력해 주세요' }, { status: 400 });
     }
-    // B2B 파트너별 히든 관리자 패스코드 (PORTAL_B2B_ADMIN_PASSCODES env var로 센터 단위 관리)
-    const b2bPasscodes: Record<string, string> = JSON.parse(process.env.PORTAL_B2B_ADMIN_PASSCODES ?? '{}');
-    const partnerAdminCode = student.b2b_partner ? b2bPasscodes[student.b2b_partner as string] : undefined;
-    if (partnerAdminCode && passcode === partnerAdminCode) {
+    // B2B 센터 관리자 히든 패스코드 (허용 센터 목록 + PARTNER_ADMIN_PASSCODE 사용)
+    const B2B_ADMIN_CENTERS = new Set(['공부하는 아이들']);
+    const adminPasscode = process.env.PARTNER_ADMIN_PASSCODE;
+    if (adminPasscode && student.b2b_partner && B2B_ADMIN_CENTERS.has(student.b2b_partner as string) && passcode === adminPasscode) {
       return issueSession(token);
     }
     if (student.passcode_locked_until && new Date(student.passcode_locked_until) > new Date()) {
