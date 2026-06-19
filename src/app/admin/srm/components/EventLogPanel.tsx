@@ -254,7 +254,7 @@ export function EventLogPanel({ event, onClose }: Props) {
                 value={issueDesc}
                 onChange={(e) => setIssueDesc(e.target.value)}
                 placeholder="상세 설명 (선택)"
-                rows={2}
+                rows={4}
                 className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500 resize-none"
               />
               <button

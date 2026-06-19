@@ -166,10 +166,24 @@ const TAB_META: Record<SheetsSyncPayload['source_tab'], TabMeta> = {
   'landing':                       { inquiryChannel: '구글 상담시트',   trafficSource: '(구)랜딩페이지 상담예약' },
 };
 
+// ISO 문자열(Z, +09:00, -05:00 등 timezone 포함)을 KST 나이브 "YYYY-MM-DDTHH:mm:ss"로 변환
+// timezone 없는 나이브 문자열은 처음 19자 그대로 사용
+export function toKSTNaive(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.endsWith('Z') || trimmed.match(/[+-]\d{2}:\d{2}$/)) {
+    const d = new Date(trimmed);
+    if (!isNaN(d.getTime())) {
+      const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+      return kst.toISOString().slice(0, 19);
+    }
+  }
+  return trimmed.slice(0, 19);
+}
+
 export function buildCrmPayload(p: SheetsSyncPayload): CreateStudentInput {
   const normalizedPhone = normalizePhone(p.phone);
   const name = p.student_name?.trim() || generateLeadName(p.source_tab, p.created_time);
-  const inquiryDate = p.created_time.slice(0, 10);
+  const inquiryDate = toKSTNaive(p.created_time);
   const { inquiryChannel, trafficSource } = TAB_META[p.source_tab];
 
   let campaignTags: string[] = [];

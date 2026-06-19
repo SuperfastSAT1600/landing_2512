@@ -261,6 +261,59 @@ export interface RetryStrategy {
   created_at: string;
 }
 
+// ─── 성장 실험 (전략/실행/회고) ──────────────────────────────────────────────
+
+// 자동 측정 지표는 /api/crm/stats by_source / overview 필드와 1:1 매핑. custom은 수동 입력.
+export type ExperimentMetricKey =
+  | 'contact_rate'
+  | 'conversion_rate'
+  | 'avg_first_response_seconds'
+  | 'custom';
+export type ExperimentStatus = 'planned' | 'running' | 'done';
+export type ExperimentVerdict = 'success' | 'fail' | 'inconclusive';
+
+export const EXPERIMENT_METRIC_LABELS: Record<ExperimentMetricKey, string> = {
+  contact_rate: '컨택 성공률',
+  conversion_rate: '결제 전환율',
+  avg_first_response_seconds: '평균 첫 응답시간',
+  custom: '커스텀 지표',
+};
+
+export const EXPERIMENT_STATUS_LABELS: Record<ExperimentStatus, string> = {
+  planned: '계획',
+  running: '진행중',
+  done: '완료',
+};
+
+export const EXPERIMENT_VERDICT_LABELS: Record<ExperimentVerdict, string> = {
+  success: '성공',
+  fail: '실패',
+  inconclusive: '판단 보류',
+};
+
+export interface GrowthExperiment {
+  id: string;
+  title: string;
+  hypothesis: string | null;
+  execution_plan: string | null;
+  segment_source: string | null; // traffic_source 값, null=전체
+  metric_key: ExperimentMetricKey;
+  custom_metric_label: string | null;
+  baseline_from: string | null;
+  baseline_to: string | null;
+  baseline_value: number | null;
+  test_from: string | null;
+  test_to: string | null;
+  result_value: number | null;
+  target_value: number | null;
+  status: ExperimentStatus;
+  verdict: ExperimentVerdict | null;
+  retrospective: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type CreateStudentInput = Pick<
   Student,
   | 'name'

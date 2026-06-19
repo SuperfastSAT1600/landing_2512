@@ -31,14 +31,14 @@ interface StudentCardProps {
   stalledDays?: number | null;
   /** 리드 등급(수동 확정 또는 자동 분류된 effective 값). */
   leadTier?: LeadTier | null;
-  /** 8번(결제완료) 컬럼 모드 — 단톡방 개설 체크 + 회원가입 완료 버튼 노출, 이탈/결제 버튼 숨김. */
+  /** 8번(결제완료) 컬럼 모드 — 회원가입 확인 체크 + 단톡방 개설 버튼 노출, 이탈/결제 버튼 숨김. */
   enrollmentMode?: boolean;
-  onToggleKakao?: () => void;
-  onSignupComplete?: () => void;
+  onToggleSignup?: () => void;
+  onKakaoCreate?: () => void;
 }
 
 
-export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null, leadTier = null, enrollmentMode = false, onToggleKakao, onSignupComplete }: StudentCardProps) {
+export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null, leadTier = null, enrollmentMode = false, onToggleSignup, onKakaoCreate }: StudentCardProps) {
   const {
     attributes,
     listeners,
@@ -143,27 +143,27 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
         )}
       </div>
 
-      {/* 결제완료(8번) 온보딩: 단톡방 개설 체크 → 회원가입 완료 */}
+      {/* 결제완료(8번) 온보딩: 회원가입 확인 → 단톡방 개설(완료 시 칸반에서 제거) */}
       {enrollmentMode && (
         <div className="mt-2 pt-2 border-t border-gray-200 space-y-1.5" onClick={(e) => e.stopPropagation()}>
           <label className="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
             <input
               type="checkbox"
-              checked={!!student.kakao_chat_created}
-              onChange={(e) => { e.stopPropagation(); onToggleKakao?.(); }}
+              checked={!!student.signup_done_at}
+              onChange={(e) => { e.stopPropagation(); onToggleSignup?.(); }}
               className="w-3.5 h-3.5 rounded border-gray-300 accent-emerald-600 cursor-pointer"
             />
-            <MessageSquare size={11} className="text-emerald-500" />
-            단톡방 개설
+            <UserCheck size={11} className="text-emerald-500" />
+            회원가입 확인
           </label>
           <button
-            onClick={(e) => { e.stopPropagation(); onSignupComplete?.(); }}
-            disabled={!student.kakao_chat_created}
+            onClick={(e) => { e.stopPropagation(); onKakaoCreate?.(); }}
+            disabled={!student.signup_done_at}
             className="w-full flex items-center justify-center gap-1 py-1 rounded-md text-[11px] font-semibold transition-colors bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
-            title={student.kakao_chat_created ? '회원가입 완료 → 칸반에서 제거' : '단톡방 개설 후 가능'}
+            title={student.signup_done_at ? '단톡방 개설 완료 → 칸반에서 제거' : '회원가입 확인 후 가능'}
           >
-            <UserCheck size={11} />
-            회원가입 완료
+            <MessageSquare size={11} />
+            단톡방 개설
           </button>
         </div>
       )}

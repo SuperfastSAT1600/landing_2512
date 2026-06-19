@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { RetryStrategy } from '@/types/crm';
 import { StrategyAgentChat } from './StrategyAgentChat';
+import { ExperimentBoard } from './ExperimentBoard';
 
 interface Props {
   adminKey: string;
@@ -150,7 +151,10 @@ function StrategySection({
   );
 }
 
+type SubTab = 'experiment' | 'library';
+
 export function StrategiesTab({ adminKey }: Props) {
+  const [subTab, setSubTab] = useState<SubTab>('experiment');
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -182,40 +186,65 @@ export function StrategiesTab({ adminKey }: Props) {
     setStrategies((prev) => prev.filter((s) => s.id !== id));
   }
 
-  if (loading) {
-    return <div className="text-sm text-gray-400 py-8 text-center">불러오는 중...</div>;
-  }
-
   return (
     <div className="max-w-3xl space-y-5">
-      <StrategyAgentChat adminKey={adminKey} />
-
-      <div className="space-y-4">
-        <p className="text-xs text-gray-400">
-          전략을 만들고 학생 패널의 인입 정보에서 배정할 수 있습니다.
-        </p>
-        <StrategySection
-          type="initial_contact"
-          strategies={initialContactStrategies}
-          adminKey={adminKey}
-          onCreated={handleCreated}
-          onDeleted={handleDeleted}
-        />
-        <StrategySection
-          type="initial_sales"
-          strategies={initialSalesStrategies}
-          adminKey={adminKey}
-          onCreated={handleCreated}
-          onDeleted={handleDeleted}
-        />
-        <StrategySection
-          type="retry"
-          strategies={retryStrategies}
-          adminKey={adminKey}
-          onCreated={handleCreated}
-          onDeleted={handleDeleted}
-        />
+      {/* 서브탭: 실험 / 전략 라이브러리 */}
+      <div className="flex gap-1 border-b border-gray-200">
+        {([
+          { key: 'experiment', label: '실험' },
+          { key: 'library', label: '전략 라이브러리' },
+        ] as { key: SubTab; label: string }[]).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setSubTab(key)}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              subTab === key
+                ? 'border-gray-900 text-gray-900'
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
+
+      {subTab === 'experiment' && <ExperimentBoard adminKey={adminKey} />}
+
+      {subTab === 'library' && (
+        loading ? (
+          <div className="text-sm text-gray-400 py-8 text-center">불러오는 중...</div>
+        ) : (
+          <>
+            <StrategyAgentChat adminKey={adminKey} />
+            <div className="space-y-4">
+              <p className="text-xs text-gray-400">
+                전략을 만들고 학생 패널의 인입 정보에서 배정할 수 있습니다.
+              </p>
+              <StrategySection
+                type="initial_contact"
+                strategies={initialContactStrategies}
+                adminKey={adminKey}
+                onCreated={handleCreated}
+                onDeleted={handleDeleted}
+              />
+              <StrategySection
+                type="initial_sales"
+                strategies={initialSalesStrategies}
+                adminKey={adminKey}
+                onCreated={handleCreated}
+                onDeleted={handleDeleted}
+              />
+              <StrategySection
+                type="retry"
+                strategies={retryStrategies}
+                adminKey={adminKey}
+                onCreated={handleCreated}
+                onDeleted={handleDeleted}
+              />
+            </div>
+          </>
+        )
+      )}
     </div>
   );
 }
