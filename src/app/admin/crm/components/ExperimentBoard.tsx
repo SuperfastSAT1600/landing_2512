@@ -28,6 +28,28 @@ function higherIsBetter(metric: ExperimentMetricKey): boolean {
   return metric !== 'avg_first_response_seconds';
 }
 
+// 오늘 날짜 YYYY-MM-DD (로컬/KST 기준)
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// 기존 통계 API에서 지표 1건 측정 (측정 버튼·실시간 배너 공용)
+async function fetchStatMetric(
+  exp: GrowthExperiment, adminKey: string, from: string, to: string
+): Promise<number | null> {
+  if (exp.metric_key === 'custom') return null;
+  const res = await fetch(`/api/crm/stats?from=${from}&to=${to}`, { headers: { 'x-admin-key': adminKey } });
+  if (!res.ok) return null;
+  const { data } = await res.json();
+  const field = METRIC_FIELD[exp.metric_key];
+  if (exp.segment_source) {
+    const row = (data.by_source ?? []).find((s: { source: string }) => s.source === exp.segment_source);
+    return row ? (row[field] ?? null) : null;
+  }
+  return data.overview?.[field] ?? null;
+}
+
 function formatValue(metric: ExperimentMetricKey, v: number | null): string {
   if (v == null) return '—';
   if (metric === 'avg_first_response_seconds') {
@@ -67,6 +89,25 @@ function ExperimentCard({
   const [verdict, setVerdict] = useState<ExperimentVerdict | ''>(exp.verdict ?? '');
   const [retro, setRetro] = useState(exp.retrospective ?? '');
   const [saving, setSaving] = useState(false);
+  // 실시간 현황: 진행중 실험을 시작일~오늘 기준으로 자동 측정
+  const [live, setLive] = useState<{ current: number | null; baseline: number | null; days: number } | null>(null);
+
+  useEffect(() => {
+    // 배너는 status==='running' && live 조건으로만 렌더되므로 별도 초기화 불필요.
+    if (exp.status !== 'running' || exp.metric_key === 'custom' || !exp.test_from) return;
+    let cancelled = false;
+    (async () => {
+      const current = await fetchStatMetric(exp, adminKey, exp.test_from!, todayStr());
+      let baseline = exp.baseline_value;
+      if (baseline == null && exp.baseline_from && exp.baseline_to) {
+        baseline = await fetchStatMetric(exp, adminKey, exp.baseline_from, exp.baseline_to);
+      }
+      const startMs = new Date(`${exp.test_from}T00:00:00`).getTime();
+      const days = Math.floor((Date.now() - startMs) / 86400000) + 1;
+      if (!cancelled) setLive({ current, baseline: baseline ?? null, days });
+    })();
+    return () => { cancelled = true; };
+  }, [exp, adminKey]);
 
   const metricLabel = exp.metric_key === 'custom'
     ? (exp.custom_metric_label || '커스텀 지표')
@@ -87,29 +128,15 @@ function ExperimentCard({
     return null;
   }
 
-  // 기존 통계 API에서 지표 자동 측정
-  async function fetchMetric(from: string, to: string): Promise<number | null> {
-    if (exp.metric_key === 'custom') return null;
-    const res = await fetch(`/api/crm/stats?from=${from}&to=${to}`, { headers: { 'x-admin-key': adminKey } });
-    if (!res.ok) return null;
-    const { data } = await res.json();
-    const field = METRIC_FIELD[exp.metric_key];
-    if (exp.segment_source) {
-      const row = (data.by_source ?? []).find((s: { source: string }) => s.source === exp.segment_source);
-      return row ? (row[field] ?? null) : null;
-    }
-    // 전체: overview에는 contact_rate/conversion_rate만 존재
-    return data.overview?.[field] ?? null;
-  }
-
   async function handleMeasure() {
     setMeasuring(true);
     const updates: Partial<GrowthExperiment> = {};
     if (exp.baseline_from && exp.baseline_to) {
-      updates.baseline_value = await fetchMetric(exp.baseline_from, exp.baseline_to);
+      updates.baseline_value = await fetchStatMetric(exp, adminKey, exp.baseline_from, exp.baseline_to);
     }
-    if (exp.test_from && exp.test_to) {
-      updates.result_value = await fetchMetric(exp.test_from, exp.test_to);
+    // 실험 종료일이 있으면 그 기간, 없으면(진행중) 시작일~오늘
+    if (exp.test_from) {
+      updates.result_value = await fetchStatMetric(exp, adminKey, exp.test_from, exp.test_to || todayStr());
     }
     const saved = await patch(updates);
     if (saved) {
@@ -168,6 +195,27 @@ function ExperimentCard({
       </div>
 
       {exp.hypothesis && <p className="text-xs text-gray-600 mt-2 whitespace-pre-wrap">{exp.hypothesis}</p>}
+
+      {/* 실시간 현황 (진행중 실험: 시작일~오늘 자동 측정) */}
+      {exp.status === 'running' && live && (
+        <div className="flex items-center gap-2 mt-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-1.5">
+          <span className="flex items-center gap-1 text-[10px] font-bold text-blue-600">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />실시간
+          </span>
+          <span className="text-[11px] text-gray-500">진행 {live.days}일차</span>
+          <span className="text-sm font-bold text-gray-900">현재 {formatValue(exp.metric_key, live.current)}</span>
+          {(() => {
+            if (live.current == null || live.baseline == null) return null;
+            const d = live.current - live.baseline;
+            const up = higherIsBetter(exp.metric_key) ? d > 0 : d < 0;
+            return (
+              <span className={`text-[11px] font-bold ${up ? 'text-emerald-600' : d === 0 ? 'text-gray-400' : 'text-red-500'}`}>
+                기준선({formatValue(exp.metric_key, live.baseline)}) 대비 {d > 0 ? '▲' : d < 0 ? '▼' : ''}{formatValue(exp.metric_key, Math.abs(d))}
+              </span>
+            );
+          })()}
+        </div>
+      )}
 
       {/* 측정 결과 */}
       <div className="flex items-center gap-3 mt-3 text-sm">
