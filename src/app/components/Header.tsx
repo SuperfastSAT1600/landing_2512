@@ -11,8 +11,8 @@ const NAV_ITEMS = [
     { href: '/blog', label: 'SAT 학습팁' },
     { href: '/coaches', label: '학습코치' },
     { href: '/reviews', label: '수업후기' },
-    { href: '/diagnosis', label: '진단Test' },
     { href: '/supertest', label: 'SuperTest' },
+    { href: '/diagnosis', label: '진단Test' },
     { href: 'https://www.superfastsat.com', label: 'SAT인강', external: true },
 ] as const;
 
