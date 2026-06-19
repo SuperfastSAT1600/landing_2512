@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { buildCrmPayload, normalizePhone } from '@/lib/sheets-sync-utils';
+import { buildCrmPayload, normalizePhone, toKSTNaive } from '@/lib/sheets-sync-utils';
 import type { SheetsSyncPayload } from '@/lib/sheets-sync-utils';
 
 function isSyncAuthenticated(request: NextRequest): boolean {
@@ -110,4 +110,64 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ action: 'created', student_id: data.id }, { status: 201 });
+}
+
+/**
+ * PATCH /api/crm/leads/sheets-sync
+ * 기존 리드의 inquiry_date를 날짜+시각으로 마이그레이션한다.
+ * inquiry_date가 이미 시각 포함(길이 > 10)이면 skip.
+ */
+export async function PATCH(request: NextRequest) {
+  if (!isSyncAuthenticated(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let body: { phone: string; created_time: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  if (!body.phone || !body.created_time) {
+    return NextResponse.json(
+      { error: 'Missing required fields: phone, created_time' },
+      { status: 400 }
+    );
+  }
+
+  const normalizedPhone = normalizePhone(body.phone);
+  const inquiryDatetime = toKSTNaive(body.created_time);
+
+  const { data: existing, error: selectError } = await supabaseAdmin
+    .from('students')
+    .select('id, inquiry_date')
+    .eq('parent_phone', normalizedPhone)
+    .maybeSingle();
+
+  if (selectError) {
+    console.error('[sheets-sync/migrate] select error', selectError);
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+  }
+
+  if (!existing) {
+    return NextResponse.json({ action: 'not_found' });
+  }
+
+  // 이미 시각 포함된 경우 skip
+  if (existing.inquiry_date && existing.inquiry_date.length > 10) {
+    return NextResponse.json({ action: 'skipped', student_id: existing.id });
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from('students')
+    .update({ inquiry_date: inquiryDatetime })
+    .eq('id', existing.id);
+
+  if (updateError) {
+    console.error('[sheets-sync/migrate] update error', updateError);
+    return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+  }
+
+  return NextResponse.json({ action: 'updated', student_id: existing.id });
 }

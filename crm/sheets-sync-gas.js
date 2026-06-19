@@ -267,6 +267,64 @@ function testWebhookConnection() {
 }
 
 /**
+ * 기존 리드의 inquiry_date를 날짜+시각으로 마이그레이션합니다.
+ * Apps Script 에디터에서 1회만 실행하세요.
+ * 이미 시각이 포함된 리드는 자동으로 skip됩니다.
+ */
+function migrateInquiryDates() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var results = { updated: 0, skipped: 0, not_found: 0, error: 0 };
+
+  TAB_CONFIG.forEach(function(config) {
+    var sheet = ss.getSheetByName(config.name);
+    if (!sheet) {
+      Logger.log('[' + config.name + '] 탭 없음, skip');
+      return;
+    }
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return;
+
+    var rows = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+    Logger.log('[' + config.name + '] ' + rows.length + '행 처리 시작');
+
+    rows.forEach(function(row, i) {
+      var phone = String(row[config.colPhone] || '').trim().replace(/^[a-z]:/, '');
+      var createdTime = formatDateTime(row[config.colCreatedTime]);
+      if (!phone) return;
+
+      try {
+        var options = {
+          method: 'patch',
+          contentType: 'application/json',
+          headers: { 'x-sync-key': SYNC_KEY },
+          payload: JSON.stringify({ phone: phone, created_time: createdTime }),
+          muteHttpExceptions: true,
+        };
+        var response = UrlFetchApp.fetch(WEBHOOK_URL, options);
+        var code = response.getResponseCode();
+        var body = JSON.parse(response.getContentText());
+
+        if (code === 200) {
+          results[body.action] = (results[body.action] || 0) + 1;
+        } else {
+          results.error++;
+          Logger.log('오류 [행 ' + (i + 2) + '] ' + code + ': ' + response.getContentText());
+        }
+      } catch (e) {
+        results.error++;
+        Logger.log('예외 [행 ' + (i + 2) + ']: ' + e.message);
+      }
+
+      // 서버 부하 방지: 50건마다 1초 대기
+      if ((i + 1) % 50 === 0) Utilities.sleep(1000);
+    });
+  });
+
+  Logger.log('마이그레이션 완료: ' + JSON.stringify(results));
+}
+
+/**
  * 마지막으로 처리된 행 번호를 초기화합니다.
  * 처음부터 다시 동기화하고 싶을 때 사용하세요.
  */

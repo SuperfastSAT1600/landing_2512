@@ -168,7 +168,7 @@ const TAB_META: Record<SheetsSyncPayload['source_tab'], TabMeta> = {
 
 // ISO 문자열(Z, +09:00, -05:00 등 timezone 포함)을 KST 나이브 "YYYY-MM-DDTHH:mm:ss"로 변환
 // timezone 없는 나이브 문자열은 처음 19자 그대로 사용
-function toKSTNaive(value: string): string {
+export function toKSTNaive(value: string): string {
   const trimmed = value.trim();
   if (trimmed.endsWith('Z') || trimmed.match(/[+-]\d{2}:\d{2}$/)) {
     const d = new Date(trimmed);
