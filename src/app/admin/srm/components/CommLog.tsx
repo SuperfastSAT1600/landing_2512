@@ -97,9 +97,9 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
         </div>
       )}
 
-      {/* 관련 대상 — 복수 선택 */}
+      {/* 대상자 */}
       <div>
-        <p className="text-[11px] text-gray-600 mb-1.5">커뮤니케이션 내용</p>
+        <p className="text-[11px] text-gray-600 mb-1.5">대상자</p>
         <div className="flex gap-1.5">
           {ALL_PARTIES.map((p) => (
             <button
@@ -116,34 +116,46 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
         </div>
       </div>
 
-      {/* 채널 */}
-      <select
-        value={channel}
-        onChange={(e) => setChannel(e.target.value)}
-        className="w-full bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-800 outline-none focus:border-blue-500"
-      >
-        <option value="kakao" className="bg-white text-gray-800">카카오</option>
-        <option value="call" className="bg-white text-gray-800">전화</option>
-        <option value="sms" className="bg-white text-gray-800">SMS</option>
-        <option value="email" className="bg-white text-gray-800">이메일</option>
-        <option value="slack" className="bg-white text-gray-800">슬랙</option>
-        <option value="other" className="bg-white text-gray-800">기타</option>
-      </select>
+      {/* 카테고리 */}
+      <div>
+        <p className="text-[11px] text-gray-600 mb-1.5">카테고리</p>
+        <select
+          value={channel}
+          onChange={(e) => setChannel(e.target.value)}
+          className="w-full bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-800 outline-none focus:border-blue-500"
+        >
+          <option value="kakao" className="bg-white text-gray-800">카카오</option>
+          <option value="call" className="bg-white text-gray-800">전화</option>
+          <option value="sms" className="bg-white text-gray-800">SMS</option>
+          <option value="email" className="bg-white text-gray-800">이메일</option>
+          <option value="slack" className="bg-white text-gray-800">슬랙</option>
+          <option value="other" className="bg-white text-gray-800">기타</option>
+        </select>
+      </div>
 
-      <input
-        type="text"
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        placeholder="지각 이유, 스케줄 미잡힌 이유 등 (선택)"
-        className="w-full bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500"
-      />
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="커뮤니케이션 내용 입력..."
-        rows={3}
-        className="w-full bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500 resize-none"
-      />
+      {/* 커뮤니케이션 제목 */}
+      <div>
+        <p className="text-[11px] text-gray-600 mb-1.5">커뮤니케이션 제목</p>
+        <input
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="제목을 입력하세요"
+          className="w-full bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500"
+        />
+      </div>
+
+      {/* 커뮤니케이션 내용 */}
+      <div>
+        <p className="text-[11px] text-gray-600 mb-1.5">커뮤니케이션 내용</p>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="커뮤니케이션 내용 입력..."
+          rows={3}
+          className="w-full bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500 resize-none"
+        />
+      </div>
       <button
         type="submit"
         disabled={saving || !content.trim()}
