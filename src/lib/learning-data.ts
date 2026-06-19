@@ -36,6 +36,7 @@ export interface StudentDayResult {
   name: string;
   crmStudentId: string;
   sfv2ProfileId: string | null;
+  portalToken: string | null;
   isActive?: boolean;
   studyHall: StudyHallResult | null;
   testCenter: TestCenterResult[];
@@ -328,12 +329,13 @@ export async function fetchDailyLearning(names: string[], date: string): Promise
     const profileId = s.sfv2_profile_id as string | null;
     const displayName = (s.portal_name as string | null) || (s.name as string);
     if (!profileId) {
-      return { name: displayName, crmStudentId: s.id as string, sfv2ProfileId: null, studyHall: null, testCenter: [], vocab: null };
+      return { name: displayName, crmStudentId: s.id as string, sfv2ProfileId: null, portalToken: null, studyHall: null, testCenter: [], vocab: null };
     }
     return {
       name: displayName,
       crmStudentId: s.id as string,
       sfv2ProfileId: profileId,
+      portalToken: null,
       studyHall: studyHallMap.get(profileId) ?? null,
       testCenter: testCenterMap.get(profileId) ?? [],
       vocab: vocabMap.get(profileId) ?? null,
@@ -352,7 +354,7 @@ export async function fetchB2BDailyLearning(partnerName: string, date: string): 
 
   const { data: students, error } = await supabaseAdmin
     .from('students')
-    .select('id, name, portal_name, sfv2_profile_id, lead_status')
+    .select('id, name, portal_name, sfv2_profile_id, portal_token, lead_status')
     .eq('b2b_partner', partnerName)
     .order('name');
 
@@ -368,15 +370,17 @@ export async function fetchB2BDailyLearning(partnerName: string, date: string): 
 
   const results: StudentDayResult[] = (students ?? []).map(s => {
     const profileId = s.sfv2_profile_id as string | null;
+    const portalToken = s.portal_token as string | null;
     const displayName = (s.portal_name as string | null) || (s.name as string);
     const isActive = (s.lead_status as string) !== 'inactive';
     if (!profileId) {
-      return { name: displayName, crmStudentId: s.id as string, sfv2ProfileId: null, isActive, studyHall: null, testCenter: [], vocab: null };
+      return { name: displayName, crmStudentId: s.id as string, sfv2ProfileId: null, portalToken, isActive, studyHall: null, testCenter: [], vocab: null };
     }
     return {
       name: displayName,
       crmStudentId: s.id as string,
       sfv2ProfileId: profileId,
+      portalToken,
       isActive,
       studyHall: studyHallMap.get(profileId) ?? null,
       testCenter: testCenterMap.get(profileId) ?? [],
