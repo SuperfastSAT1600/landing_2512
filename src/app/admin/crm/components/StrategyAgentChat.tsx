@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2, Globe, RotateCcw } from 'lucide-react';
+import { Send, Sparkles, Loader2, Globe, RotateCcw, Activity } from 'lucide-react';
 
 interface Props {
   adminKey: string;
@@ -29,12 +29,23 @@ export function StrategyAgentChat({ adminKey }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(loadChat);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState('분석·검색 중…');
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const proactiveRanRef = useRef(false);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [messages]);
+
+  // 마운트 시 1회: 저장된 대화가 없으면 지표를 자동 점검해 선제 진단으로 연다.
+  // ref 가드로 StrictMode 더블 마운트·탭 재진입 시 중복 호출을 막는다.
+  useEffect(() => {
+    if (proactiveRanRef.current) return;
+    proactiveRanRef.current = true;
+    if (messages.length === 0) runProactive();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 스트리밍이 끝난 시점의 최종 대화를 보존 (스트리밍 중 매 델타 저장은 생략)
   useEffect(() => {
@@ -59,21 +70,23 @@ export function StrategyAgentChat({ adminKey }: Props) {
     }
   }
 
-  async function send() {
-    const text = input.trim();
-    if (!text || streaming) return;
-
-    const next: ChatMessage[] = [...messages, { role: 'user', content: text }];
-    setMessages([...next, { role: 'assistant', content: '' }]);
-    setInput('');
+  // send()와 runProactive() 공유 스트림 로직. base = 화면에 표시할 메시지(assistant placeholder는 여기서 추가).
+  async function streamFrom(
+    requestBody: { messages: ChatMessage[] } | { mode: 'proactive' },
+    base: ChatMessage[],
+    label: string
+  ) {
+    if (streaming) return;
+    setMessages([...base, { role: 'assistant', content: '' }]);
     setError(null);
+    setLoadingLabel(label);
     setStreaming(true);
 
     try {
       const res = await fetch('/api/crm/strategy-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!res.ok || !res.body) {
@@ -102,6 +115,30 @@ export function StrategyAgentChat({ adminKey }: Props) {
     }
   }
 
+  function send() {
+    const text = input.trim();
+    if (!text || streaming) return;
+    const next: ChatMessage[] = [...messages, { role: 'user', content: text }];
+    setInput('');
+    streamFrom({ messages: next }, next, '분석·검색 중…');
+  }
+
+  // 지표를 스캔해 선제 진단을 연다(서버가 seed user turn 합성, 화면엔 assistant만).
+  function runProactive() {
+    streamFrom({ mode: 'proactive' }, [], '지표 점검 중…');
+  }
+
+  function rescan() {
+    if (streaming) return;
+    if (messages.length > 0 && !confirm('현재 대화를 지우고 지표를 다시 점검할까요?')) return;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    runProactive();
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -122,16 +159,26 @@ export function StrategyAgentChat({ adminKey }: Props) {
             </p>
           </div>
         </div>
-        {messages.length > 0 && (
+        <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={resetChat}
+            onClick={rescan}
             disabled={streaming}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 disabled:opacity-40 shrink-0"
-            title="새 대화 시작"
+            className="flex items-center gap-1 text-xs font-medium text-indigo-500 hover:text-indigo-700 disabled:opacity-40"
+            title="지표를 다시 점검해 선제 진단 받기"
           >
-            <RotateCcw size={13} />새 대화
+            <Activity size={13} />다시 점검
           </button>
-        )}
+          {messages.length > 0 && (
+            <button
+              onClick={resetChat}
+              disabled={streaming}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 disabled:opacity-40"
+              title="새 대화 시작"
+            >
+              <RotateCcw size={13} />새 대화
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="px-4 py-3">
@@ -144,10 +191,17 @@ export function StrategyAgentChat({ adminKey }: Props) {
                 대가들의 프레임워크와 인터넷 최신 사례, 그리고 우리 실제 상담·전환·이탈 기록을 함께
                 참고합니다.
               </p>
-              <p className="text-indigo-900/60">
+              <p className="text-indigo-900/60 mb-2">
                 예: &ldquo;가격 부담으로 이탈하는 리드를 줄일 오퍼 구조를 설계해줘&rdquo; ·
                 &ldquo;세일즈 콜 전환율을 높이는 최신 기법을 우리 데이터에 맞게 적용해줘&rdquo;
               </p>
+              <button
+                onClick={runProactive}
+                disabled={streaming}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+              >
+                <Activity size={13} />지금 지표 점검 받기
+              </button>
             </div>
           </div>
         ) : (
@@ -164,7 +218,7 @@ export function StrategyAgentChat({ adminKey }: Props) {
                 >
                   {m.content || (
                     <span className="inline-flex items-center gap-1 text-gray-400">
-                      <Loader2 size={13} className="animate-spin" /> 분석·검색 중…
+                      <Loader2 size={13} className="animate-spin" /> {loadingLabel}
                     </span>
                   )}
                 </div>

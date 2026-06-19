@@ -14,6 +14,7 @@ import { SalesStats } from './components/SalesStats';
 import { EnrolledLeads } from './components/EnrolledLeads';
 import { RetryKanban } from './components/RetryKanban';
 import { StrategiesTab } from './components/StrategiesTab';
+import { CrmInsightBanner } from './components/CrmInsightBanner';
 import { DailyTasks } from './components/DailyTasks';
 
 function getAdminKey(): string {
@@ -61,6 +62,12 @@ export default function CrmPage() {
   const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
   const [tierFilter, setTierFilter] = useState<'' | LeadTier>('');
   const [activeTab, setActiveTab] = useState<'today' | 'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('today');
+  const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'experiment' | 'library' | undefined>(undefined);
+
+  const openStrategyAgent = useCallback(() => {
+    setStrategiesInitialSubTab('library');
+    setActiveTab('strategies');
+  }, []);
   const [retryContext, setRetryContext] = useState<{ id: string; name: string } | null>(null);
   const [retryEnrolledId, setRetryEnrolledId] = useState<string | null>(null);
 
@@ -270,6 +277,9 @@ export default function CrmPage() {
 
       {/* Board area */}
       <div className="p-6">
+        {/* 접속 즉시 선제 인사이트 알림 */}
+        <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />
+
         {/* Tab navigation */}
         <div className="flex gap-1 mb-4">
           {([
@@ -373,7 +383,7 @@ export default function CrmPage() {
         )}
 
         {activeTab === 'strategies' && (
-          <StrategiesTab adminKey={adminKey} />
+          <StrategiesTab adminKey={adminKey} initialSubTab={strategiesInitialSubTab} />
         )}
 
         {activeTab === 'stats' && (

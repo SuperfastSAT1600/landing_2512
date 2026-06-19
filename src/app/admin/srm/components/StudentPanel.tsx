@@ -635,18 +635,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     </div>
                   </div>
 
-                  {/* CRM 연결 상태 + 학부모 포털 */}
-                  <div className="flex items-center gap-2 pt-1.5 border-t border-gray-100 mt-1.5">
-                    {isLinked ? (
-                      <span className="text-[11px] px-2 py-0.5 bg-emerald-100 border border-emerald-200 rounded-full text-emerald-700">
-                        CRM 연결됨
-                      </span>
-                    ) : (
-                      <span className="text-[11px] px-2 py-0.5 bg-gray-50 border border-gray-200 rounded-full text-gray-500">
-                        CRM 미연결
-                      </span>
-                    )}
-                    {isLinked && resolvedCrmStudentId && (
+                  {/* 학습 포털 */}
+                  {isLinked && resolvedCrmStudentId && (
+                    <div className="pt-1.5 border-t border-gray-100 mt-1.5">
                       <PortalAccessToggle
                         hasPortal={!!portalToken}
                         issuing={portalIssuing}
@@ -656,8 +647,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                         onCopy={handleCopyPortalLink}
                         onPreview={handlePreviewPortal}
                       />
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 

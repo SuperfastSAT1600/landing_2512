@@ -8,6 +8,7 @@ import { ExperimentBoard } from './ExperimentBoard';
 
 interface Props {
   adminKey: string;
+  initialSubTab?: 'experiment' | 'library';
 }
 
 type StrategyType = 'initial_contact' | 'initial_sales' | 'retry';
@@ -153,10 +154,15 @@ function StrategySection({
 
 type SubTab = 'experiment' | 'library';
 
-export function StrategiesTab({ adminKey }: Props) {
-  const [subTab, setSubTab] = useState<SubTab>('experiment');
+export function StrategiesTab({ adminKey, initialSubTab }: Props) {
+  const [subTab, setSubTab] = useState<SubTab>(initialSubTab ?? 'experiment');
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 배너에서 '이어서 전략 짜기'로 진입 시 라이브러리(에이전트) 서브탭으로 전환
+  useEffect(() => {
+    if (initialSubTab) setSubTab(initialSubTab);
+  }, [initialSubTab]);
 
   const fetchAll = useCallback(async () => {
     try {
