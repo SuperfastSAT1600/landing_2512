@@ -184,8 +184,24 @@ describe('buildCrmPayload', () => {
     expect(buildCrmPayload(p).traffic_source).toBe('인스타그램 광고');
   });
 
-  it('inquiry_date가 created_time의 날짜 부분', () => {
+  it('inquiry_date가 created_time의 날짜+시분 (나이브 KST)', () => {
     const result = buildCrmPayload(basePayload);
-    expect(result.inquiry_date).toBe('2026-02-14');
+    expect(result.inquiry_date).toBe('2026-02-14T00:56:00');
+  });
+
+  it('UTC Z 접미사 → KST 변환 (9시간 추가)', () => {
+    const utcPayload: SheetsSyncPayload = { ...basePayload, created_time: '2026-02-13T15:56:00.000Z' };
+    const result = buildCrmPayload(utcPayload);
+    expect(result.inquiry_date).toBe('2026-02-14T00:56:00');
+  });
+
+  it('+09:00 오프셋 → KST 그대로', () => {
+    const p: SheetsSyncPayload = { ...basePayload, created_time: '2026-03-07T20:45:53+09:00' };
+    expect(buildCrmPayload(p).inquiry_date).toBe('2026-03-07T20:45:53');
+  });
+
+  it('-05:00 오프셋 → KST 변환 (+14시간)', () => {
+    const p: SheetsSyncPayload = { ...basePayload, created_time: '2026-03-10T16:56:47-05:00' };
+    expect(buildCrmPayload(p).inquiry_date).toBe('2026-03-11T06:56:47');
   });
 });

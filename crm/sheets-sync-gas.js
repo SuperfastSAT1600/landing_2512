@@ -1,4 +1,5 @@
 function onEdit(e) {
+  if (!e || !e.source) return;
   var sheet = e.source.getActiveSheet();
   var range = e.range;
 
