@@ -56,13 +56,13 @@ interface KanbanRowProps {
   onStudentClick: (student: Student) => void;
   onChurn: (student: Student) => void;
   onPayment: (student: Student) => void;
-  onToggleKakao: (student: Student) => void;
-  onSignupComplete: (student: Student) => void;
+  onToggleSignup: (student: Student) => void;
+  onKakaoCreate: (student: Student) => void;
   onAdd?: () => void;
   isSearchMatch?: boolean;
 }
 
-function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayment, onToggleKakao, onSignupComplete, onAdd, isSearchMatch }: KanbanRowProps) {
+function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayment, onToggleSignup, onKakaoCreate, onAdd, isSearchMatch }: KanbanRowProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const isEnrollmentStage = stage === '8';
 
@@ -95,8 +95,8 @@ function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayme
               onChurn={() => onChurn(student)}
               onPayment={isEnrollmentStage ? undefined : () => onPayment(student)}
               enrollmentMode={isEnrollmentStage}
-              onToggleKakao={() => onToggleKakao(student)}
-              onSignupComplete={() => onSignupComplete(student)}
+              onToggleSignup={() => onToggleSignup(student)}
+              onKakaoCreate={() => onKakaoCreate(student)}
             />
           ))}
         </SortableContext>
@@ -155,8 +155,9 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
     (stage: FunnelStage) => {
       const list = students.filter(s =>
         s.funnel_stage === stage && !s.retry_strategy_id &&
-        // 8번(결제완료)은 회원가입 미완료 학생만 — lead_status 무관(enrolled). 그 외는 active 리드.
-        (stage === '8' ? !s.signup_done_at : s.lead_status === 'active')
+        // 8번(결제완료)은 단톡방 개설 전(미완료) 학생만 — lead_status 무관(enrolled). 그 외는 active 리드.
+        // 온보딩 순서: 회원가입 확인(signup_done_at) → 단톡방 개설(kakao_chat_created, 완료 시 제거)
+        (stage === '8' ? !s.kakao_chat_created : s.lead_status === 'active')
       );
       return [...list].sort((a, b) => {
         const ao = a.sort_order ?? Infinity;
@@ -170,13 +171,13 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
 
   const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id);
 
-  // 8번 컬럼: 단톡방 개설 토글 / 회원가입 완료(칸반에서 제거)
-  const handleToggleKakao = useCallback(
-    (student: Student) => onStudentUpdate(student.id, { kakao_chat_created: !student.kakao_chat_created }),
+  // 8번 컬럼 온보딩: 회원가입 확인 토글 → 단톡방 개설(칸반에서 제거)
+  const handleToggleSignup = useCallback(
+    (student: Student) => onStudentUpdate(student.id, { signup_done_at: student.signup_done_at ? null : new Date().toISOString() }),
     [onStudentUpdate]
   );
-  const handleSignupComplete = useCallback(
-    (student: Student) => onStudentUpdate(student.id, { signup_done_at: new Date().toISOString() }),
+  const handleKakaoCreate = useCallback(
+    (student: Student) => onStudentUpdate(student.id, { kakao_chat_created: true }),
     [onStudentUpdate]
   );
 
@@ -248,8 +249,8 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
                   onStudentClick={onStudentClick}
                   onChurn={setChurnTarget}
                   onPayment={setPaymentTarget}
-                  onToggleKakao={handleToggleKakao}
-                  onSignupComplete={handleSignupComplete}
+                  onToggleSignup={handleToggleSignup}
+                  onKakaoCreate={handleKakaoCreate}
                   onAdd={undefined}
                   isSearchMatch={!!searchQuery?.trim() && getStudentsForStage(stage).length > 0}
                 />
