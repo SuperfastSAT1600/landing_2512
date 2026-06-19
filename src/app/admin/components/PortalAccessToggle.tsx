@@ -17,6 +17,15 @@ export function PortalAccessToggle({ hasPortal, issuing, copied, theme, onToggle
 
   return (
     <div className="flex items-center gap-1.5">
+      {/* Label */}
+      <span className={`text-[11px] font-medium ${
+        hasPortal
+          ? dark ? 'text-blue-300' : 'text-blue-600'
+          : dark ? 'text-gray-500' : 'text-gray-400'
+      }`}>
+        학습 포털
+      </span>
+
       {/* Toggle switch */}
       <button
         onClick={!hasPortal ? onToggle : undefined}
