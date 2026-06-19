@@ -21,6 +21,7 @@ export interface EventIssue {
   created_by: string | null;
   student_name: string | null;
   coach_name: string | null;
+  resolution_note: string | null;
 }
 
 const DEFAULT_CHECKLISTS: Record<string, IssueChecklist[]> = {
