@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     }));
   }
 
-  // 스터디홀 미세팅: 최근 4주 수업 있던 학생 중 다음 7일 스터디홀 없는 학생
+  // 스터디홀 미세팅: 최근 4주 수업 있던 "수업 중" 학생 중 다음 7일 스터디홀 없는 학생
   const { data: recentCoachEvents } = await supabaseSFv2
     .from('scheduled_events')
     .select('id')
@@ -162,20 +162,43 @@ export async function GET(request: NextRequest) {
 
   const hasSHStudentIds = new Set((futureSHStudents ?? []).map((p) => p.user_id));
 
-  // 활성 휴원 학생 제외
+  // CRM에서 enrolled(수업 중) + 활성 휴원 레코드를 병렬 조회
   const today = new Date().toISOString().slice(0, 10);
-  const { data: pauseRows } = await supabaseAdmin
-    .from('student_pauses')
-    .select('sfv2_profile_id')
-    .is('ended_at', null)
-    .lte('pause_start', today)
-    .or(`pause_until.is.null,pause_until.gte.${today}`)
-    .not('sfv2_profile_id', 'is', null);
+  const [{ data: enrolledStudents }, { data: pauseRows }] = await Promise.all([
+    supabaseAdmin
+      .from('students')
+      .select('id, sfv2_profile_id')
+      .eq('lead_status', 'enrolled')
+      .not('sfv2_profile_id', 'is', null),
+    supabaseAdmin
+      .from('student_pauses')
+      .select('student_id, sfv2_profile_id')
+      .is('ended_at', null)
+      .lte('pause_start', today)
+      .or(`pause_until.is.null,pause_until.gte.${today}`),
+  ]);
 
-  const pausedProfileIds = new Set((pauseRows ?? []).map((p) => p.sfv2_profile_id as string));
+  const pausedByStudentId = new Set(
+    (pauseRows ?? []).map((p) => p.student_id).filter(Boolean) as string[]
+  );
+  const pausedByProfileId = new Set(
+    (pauseRows ?? []).map((p) => p.sfv2_profile_id).filter(Boolean) as string[]
+  );
 
+  // enrolled이면서 휴원 아닌 학생의 sfv2_profile_id 집합
+  const activeEnrolledProfileIds = new Set(
+    (enrolledStudents ?? [])
+      .filter(
+        (s) =>
+          !pausedByStudentId.has(s.id) &&
+          !(s.sfv2_profile_id && pausedByProfileId.has(s.sfv2_profile_id))
+      )
+      .map((s) => s.sfv2_profile_id as string)
+  );
+
+  // 최근 수업 있음 + 수업 중(enrolled + 비휴원) + 스터디홀 없음
   const noSHStudentIds = activeStudentIds.filter(
-    (id) => !hasSHStudentIds.has(id) && !pausedProfileIds.has(id)
+    (id) => activeEnrolledProfileIds.has(id) && !hasSHStudentIds.has(id)
   );
 
   const { data: noSHProfiles } = noSHStudentIds.length
