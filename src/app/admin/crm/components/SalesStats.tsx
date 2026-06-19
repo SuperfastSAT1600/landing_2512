@@ -547,7 +547,12 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
           {/* Source breakdown */}
           <div className="bg-white border border-gray-200 rounded-xl p-5">
             <h3 className="text-sm font-bold text-gray-900 mb-1">유입 채널별 성과</h3>
-            <p className="text-[11px] text-gray-400 mb-4">채널을 클릭하면 해당 리드 명단을 볼 수 있습니다.</p>
+            <p className="text-[11px] text-gray-400">채널을 클릭하면 해당 리드 명단을 볼 수 있습니다.</p>
+            <p className="text-[11px] text-gray-400 mb-4">
+              모든 지표(매출·수익 포함)는 이 기간에 <b>문의(인입)</b>한 리드 기준입니다.{' '}
+              전 기간 인입 → 이번 기간 결제분은 상단 총매출엔 포함되지만 채널표에선 제외되어,{' '}
+              <span className="text-gray-500">채널 매출 합이 상단 총매출과 다를 수 있습니다.</span>
+            </p>
             {d.by_source.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
             ) : (
