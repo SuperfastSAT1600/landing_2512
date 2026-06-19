@@ -205,7 +205,7 @@ export function EventLogPanel({ event, onClose }: Props) {
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
               {loading ? (
                 <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
-              ) : issues.length === 0 && !showIssueForm ? (
+              ) : issues.length === 0 ? (
                 <p className="text-xs text-gray-400">등록된 이슈가 없습니다.</p>
               ) : (
                 issues.map((issue) => (
