@@ -91,7 +91,7 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
   const [data, setData] = useState<StudentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>('consultation');
+  const [tab, setTab] = useState<Tab>('report');
   const [report, setReport] = useState<LearningReport | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
@@ -140,9 +140,9 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
         {/* 탭 */}
         <div className="flex border-b border-gray-200 px-5 shrink-0">
           {([
+            { key: 'report' as Tab, label: '학습 리포트' },
             { key: 'consultation' as Tab, label: '상담 기록' },
             { key: 'info' as Tab, label: '학생 정보' },
-            { key: 'report' as Tab, label: '학습 리포트' },
           ]).map(({ key, label }) => (
             <button
               key={key}
