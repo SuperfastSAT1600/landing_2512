@@ -1024,7 +1024,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   )}
                 </div>
                 <div className="border-t border-gray-100 px-4 py-3 shrink-0">
-                  <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} eventContext={eventContext} noBorder />
+                  <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} noBorder />
                 </div>
               </div>
             )}
