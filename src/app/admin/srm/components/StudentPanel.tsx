@@ -147,6 +147,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [pauseSaving, setPauseSaving] = useState(false);
   const [issues, setIssues] = useState<StudentIssue[]>([]);
   const [issueType, setIssueType] = useState('schedule_pending');
+  const [customIssueType, setCustomIssueType] = useState('');
   const [issueTitle, setIssueTitle] = useState('');
   const [issueDesc, setIssueDesc] = useState('');
   const [issueSaving, setIssueSaving] = useState(false);
@@ -343,7 +344,11 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
   const handleIssueSubmit = async () => {
     if (!issueTitle) return;
+    if (issueType === 'custom' && !customIssueType.trim()) return;
     setIssueSaving(true);
+    const resolvedIssueType = issueType === 'custom' && customIssueType.trim()
+      ? customIssueType.trim()
+      : issueType;
     await srmFetch('/api/admin/srm/student-issues', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -351,7 +356,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
         sfv2ProfileId: studentId ?? null,
         studentId: crmStudentId ?? null,
         studentName,
-        issueType,
+        issueType: resolvedIssueType,
         title: issueTitle,
         description: issueDesc || null,
         createdBy: getAdminName() || '관리자',
@@ -360,6 +365,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     await fetchIssues();
     setIssueTitle('');
     setIssueDesc('');
+    setCustomIssueType('');
     setIssueSaving(false);
   };
 
@@ -884,7 +890,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 <div className="border-t border-gray-100 px-4 py-3 shrink-0 space-y-2">
                   <select
                     value={issueType}
-                    onChange={(e) => setIssueType(e.target.value)}
+                    onChange={(e) => { setIssueType(e.target.value); setCustomIssueType(''); }}
                     className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
                   >
                     <option value="schedule_pending">스케줄 조율 중</option>
@@ -892,6 +898,15 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     <option value="renewal_needed">재결제 필요</option>
                     <option value="custom">기타</option>
                   </select>
+                  {issueType === 'custom' && (
+                    <input
+                      type="text"
+                      value={customIssueType}
+                      onChange={(e) => setCustomIssueType(e.target.value)}
+                      placeholder="유형 직접 입력 (예: 퇴원, 환불 요청)"
+                      className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
+                    />
+                  )}
                   <input
                     type="text"
                     value={issueTitle}
@@ -908,7 +923,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   />
                   <button
                     onClick={handleIssueSubmit}
-                    disabled={issueSaving || !issueTitle}
+                    disabled={issueSaving || !issueTitle || (issueType === 'custom' && !customIssueType.trim())}
                     className="w-full text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
                   >
                     {issueSaving ? '저장중...' : '이슈 등록'}
