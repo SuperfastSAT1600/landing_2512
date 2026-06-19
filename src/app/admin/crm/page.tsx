@@ -274,7 +274,7 @@ export default function CrmPage() {
         <div className="flex gap-1 mb-4">
           {([
             { key: 'today',      label: '오늘 할 일' },
-            { key: 'strategies', label: '전략' },
+            { key: 'strategies', label: '전략/실행/회고' },
             { key: 'kanban',     label: '최초 세일즈' },
             { key: 'retry',      label: '재시도 세일즈' },
             { key: 'enrolled',   label: '수업 중' },
