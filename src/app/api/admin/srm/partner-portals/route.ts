@@ -18,15 +18,16 @@ export async function GET(req: NextRequest) {
   const { data: crmStudents } = portalNames.length
     ? await supabaseAdmin
         .from('students')
-        .select('name, portal_name, b2b_partner, lead_status')
+        .select('id, name, portal_name, b2b_partner, lead_status')
         .in('b2b_partner', portalNames)
     : { data: [] };
 
-  const studentsByPartner = new Map<string, Array<{ name: string; isActive: boolean }>>();
+  const studentsByPartner = new Map<string, Array<{ id: string; name: string; isActive: boolean }>>();
   for (const s of crmStudents ?? []) {
     const partner = s.b2b_partner as string;
     if (!studentsByPartner.has(partner)) studentsByPartner.set(partner, []);
     studentsByPartner.get(partner)!.push({
+      id: s.id as string,
       name: (s.portal_name as string | null) || (s.name as string),
       isActive: (s.lead_status as string) !== 'inactive',
     });

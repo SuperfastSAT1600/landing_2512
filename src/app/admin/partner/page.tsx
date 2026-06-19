@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Copy, Check, ExternalLink, Plus, RotateCcw } from 'lucide-react';
+import { StudentPanel } from '@/app/admin/srm/components/StudentPanel';
 
 function getAdminKey(): string {
   return localStorage.getItem('admin_key') || '';
 }
 
 interface CrmStudent {
+  id: string;
   name: string;
   isActive: boolean;
 }
@@ -22,10 +24,16 @@ interface PartnerPortal {
   url: string;
 }
 
+interface SelectedStudent {
+  crmStudentId: string;
+  name: string;
+}
+
 export default function AdminPartnerPage() {
   const [portals, setPortals] = useState<PartnerPortal[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<SelectedStudent | null>(null);
 
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -169,9 +177,13 @@ export default function AdminPartnerPage() {
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className="text-[10px] font-bold text-emerald-500 w-12 shrink-0">수업 중</span>
                             {active.map(s => (
-                              <span key={s.name} className="text-xs bg-gray-700/60 text-gray-300 border border-gray-600/50 px-2 py-0.5 rounded-full">
+                              <button
+                                key={s.id}
+                                onClick={() => setSelectedStudent({ crmStudentId: s.id, name: s.name })}
+                                className="text-xs bg-gray-700/60 text-gray-300 border border-gray-600/50 px-2 py-0.5 rounded-full hover:bg-indigo-600/30 hover:border-indigo-500/50 hover:text-indigo-300 transition-colors"
+                              >
                                 {s.name}
-                              </span>
+                              </button>
                             ))}
                           </div>
                         )}
@@ -179,9 +191,13 @@ export default function AdminPartnerPage() {
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className="text-[10px] font-bold text-gray-500 w-12 shrink-0">종료</span>
                             {inactive.map(s => (
-                              <span key={s.name} className="text-xs bg-gray-800/60 text-gray-500 border border-gray-700/50 px-2 py-0.5 rounded-full">
+                              <button
+                                key={s.id}
+                                onClick={() => setSelectedStudent({ crmStudentId: s.id, name: s.name })}
+                                className="text-xs bg-gray-800/60 text-gray-500 border border-gray-700/50 px-2 py-0.5 rounded-full hover:bg-gray-700/60 hover:text-gray-300 transition-colors"
+                              >
                                 {s.name}
-                              </span>
+                              </button>
                             ))}
                           </div>
                         )}
@@ -229,6 +245,16 @@ export default function AdminPartnerPage() {
             );
           })}
         </div>
+      )}
+
+      {/* SRM Student Panel */}
+      {selectedStudent && (
+        <StudentPanel
+          studentId={undefined}
+          crmStudentId={selectedStudent.crmStudentId}
+          studentName={selectedStudent.name}
+          onClose={() => setSelectedStudent(null)}
+        />
       )}
     </div>
   );
