@@ -48,6 +48,8 @@ export interface CrmStatsData {
     total_net_revenue: number; // 부가세 제외 실수익
     gross_revenue: number; // 환불 전 총 결제(양수 합)
     total_refund: number; // 환불 합(음수)
+    first_payment_revenue: number; // 최초결제 합(양수)
+    repayment_revenue: number; // 재결제 합(양수)
   };
   by_source: StatsBySource[];
   monthly: StatsMonthly[];
@@ -152,12 +154,18 @@ export async function GET(request: NextRequest) {
   let totalNetRevenue = 0;
   let grossRevenue = 0;
   let totalRefund = 0;
+  let firstPaymentRevenue = 0;
+  let repaymentRevenue = 0;
 
   for (const p of paymentList) {
     totalRevenue += p.amount;
     totalNetRevenue += netAmount(p);
     if (p.amount >= 0) grossRevenue += p.amount;
     else totalRefund += p.amount;
+    if (p.amount >= 0) {
+      if (p.payment_type === '최초결제') firstPaymentRevenue += p.amount;
+      else if (p.payment_type === '재결제') repaymentRevenue += p.amount;
+    }
     if (p.payment_type === '최초결제') {
       if (p.student_id) paidStudentIds.add(p.student_id);
       if (p.student_name) paidStudentNames.add(p.student_name);
@@ -358,6 +366,8 @@ export async function GET(request: NextRequest) {
       total_net_revenue: totalNetRevenue,
       gross_revenue: grossRevenue,
       total_refund: totalRefund,
+      first_payment_revenue: firstPaymentRevenue,
+      repayment_revenue: repaymentRevenue,
     },
     by_source,
     monthly,

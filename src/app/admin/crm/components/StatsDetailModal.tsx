@@ -82,6 +82,55 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, on
     }
   }
 
+  // 결제 유형(최초/재결제) 수동 수정 — 통계가 쓰는 저장값(payment_type) 갱신
+  async function updatePaymentType(paymentId: string, payment_type: string) {
+    let previous: typeof result = null;
+    setResult((prev) => {
+      previous = prev;
+      return prev && prev.kind === 'payments'
+        ? { ...prev, items: prev.items.map((it) => (it.id === paymentId ? { ...it, payment_type } : it)) }
+        : prev;
+    });
+    try {
+      const res = await fetch(`/api/crm/payments/${paymentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ payment_type }),
+      });
+      if (!res.ok) throw new Error('failed');
+    } catch {
+      setResult(previous);
+    }
+  }
+
+  // 세금 유형(면세/과세) 수동 수정 — 실수익(net_amount = 과세면 ×0.9) 함께 재계산
+  async function updateTaxType(paymentId: string, tax_type: string) {
+    let previous: typeof result = null;
+    setResult((prev) => {
+      previous = prev;
+      return prev && prev.kind === 'payments'
+        ? {
+            ...prev,
+            items: prev.items.map((it) =>
+              it.id === paymentId
+                ? { ...it, tax_type, net_amount: tax_type === '과세' ? Math.round(it.amount * 0.9) : it.amount }
+                : it
+            ),
+          }
+        : prev;
+    });
+    try {
+      const res = await fetch(`/api/crm/payments/${paymentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ tax_type }),
+      });
+      if (!res.ok) throw new Error('failed');
+    } catch {
+      setResult(previous);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
@@ -168,7 +217,30 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, on
                     <td className="py-2 px-3 text-gray-600">{it.product ?? '-'}</td>
                     <td className={`py-2 px-3 text-right tabular-nums whitespace-nowrap ${it.amount < 0 ? 'text-red-500' : 'text-gray-800'}`}>{won(it.amount)}</td>
                     <td className="py-2 px-3 text-right tabular-nums whitespace-nowrap text-gray-500">{won(it.net_amount)}</td>
-                    <td className="py-2 px-3 text-gray-500 text-xs whitespace-nowrap">{it.tax_type ?? '-'} · {it.payment_type ?? '-'}</td>
+                    <td className="py-2 px-3 text-gray-500 text-xs whitespace-nowrap">
+                      {it.id && it.payment_type !== '환불' ? (
+                        <select
+                          value={it.tax_type ?? '면세'}
+                          onChange={(e) => updateTaxType(it.id as string, e.target.value)}
+                          className="text-xs border border-gray-200 rounded-md px-1 py-0.5 focus:outline-none focus:border-blue-400 text-gray-700 cursor-pointer"
+                        >
+                          <option value="면세">면세</option>
+                          <option value="과세">과세</option>
+                        </select>
+                      ) : (it.tax_type ?? '-')}
+                      {' · '}
+                      {it.id && it.payment_type !== '환불' ? (
+                        <select
+                          value={it.payment_type ?? '최초결제'}
+                          onChange={(e) => updatePaymentType(it.id as string, e.target.value)}
+                          className="text-xs border border-gray-200 rounded-md px-1 py-0.5 focus:outline-none focus:border-blue-400 text-gray-700 cursor-pointer"
+                        >
+                          <option value="최초결제">최초결제</option>
+                          <option value="재결제">재결제</option>
+                          {it.payment_type === '원포인트' && <option value="원포인트">원포인트</option>}
+                        </select>
+                      ) : (it.payment_type ?? '-')}
+                    </td>
                     <td className="py-2 pl-3 whitespace-nowrap">
                       {it.id ? (
                         <select
