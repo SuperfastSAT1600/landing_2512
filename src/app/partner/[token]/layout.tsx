@@ -20,6 +20,7 @@ export async function generateMetadata(
     openGraph: {
       title,
       siteName: 'SuperfastSAT 파트너 센터',
+      images: [{ url: '/og-image.png', alt: 'SuperfastSAT' }],
     },
     robots: { index: false, follow: false },
   };
