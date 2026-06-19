@@ -216,6 +216,10 @@ export interface Student {
   // 세일즈 전략 AI 대화 기록 — 패널 재진입 시 이어서 진행
   strategy_ai_messages: StrategyChatMessage[];
 
+  // 결제완료 → 회원가입/카톡 단톡방 온보딩 추적 (최초 세일즈 칸반 8번 컬럼)
+  kakao_chat_created: boolean | null; // 카톡 단톡방 개설 완료 여부
+  signup_done_at: string | null; // 회원가입 완료 처리 시각. null=미완료(8번에 표시)
+
   funnel_stage_updated_at: string | null;
   stage_history: Array<{ stage: string; label: string; entered_at: string }>;
   // 수동 지정 이탈 단계 (null이면 stage_history 기반 자동 도출)

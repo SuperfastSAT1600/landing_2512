@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { X, GripVertical, CreditCard } from 'lucide-react';
+import { X, GripVertical, CreditCard, MessageSquare, UserCheck } from 'lucide-react';
 import { Student, LeadTier, LEAD_TIER_APPROACH } from '@/types/crm';
 
 const TIER_BADGE: Record<LeadTier, string> = {
@@ -31,10 +31,14 @@ interface StudentCardProps {
   stalledDays?: number | null;
   /** 리드 등급(수동 확정 또는 자동 분류된 effective 값). */
   leadTier?: LeadTier | null;
+  /** 8번(결제완료) 컬럼 모드 — 단톡방 개설 체크 + 회원가입 완료 버튼 노출, 이탈/결제 버튼 숨김. */
+  enrollmentMode?: boolean;
+  onToggleKakao?: () => void;
+  onSignupComplete?: () => void;
 }
 
 
-export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null, leadTier = null }: StudentCardProps) {
+export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null, leadTier = null, enrollmentMode = false, onToggleKakao, onSignupComplete }: StudentCardProps) {
   const {
     attributes,
     listeners,
@@ -72,14 +76,16 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
         <GripVertical size={14} />
       </div>
 
-      {/* Churn button */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onChurn(); }}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-60 hover:!opacity-100 p-0.5 text-gray-400 hover:text-red-400 transition-all"
-        title="이탈 처리"
-      >
-        <X size={12} />
-      </button>
+      {/* Churn button (결제완료 단계에선 숨김) */}
+      {!enrollmentMode && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onChurn(); }}
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-60 hover:!opacity-100 p-0.5 text-gray-400 hover:text-red-400 transition-all"
+          title="이탈 처리"
+        >
+          <X size={12} />
+        </button>
+      )}
 
       {/* Name */}
       <p className="text-sm font-semibold text-gray-900 leading-tight pr-10">{student.name}</p>
@@ -136,6 +142,31 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
           </button>
         )}
       </div>
+
+      {/* 결제완료(8번) 온보딩: 단톡방 개설 체크 → 회원가입 완료 */}
+      {enrollmentMode && (
+        <div className="mt-2 pt-2 border-t border-gray-200 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+          <label className="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!student.kakao_chat_created}
+              onChange={(e) => { e.stopPropagation(); onToggleKakao?.(); }}
+              className="w-3.5 h-3.5 rounded border-gray-300 accent-emerald-600 cursor-pointer"
+            />
+            <MessageSquare size={11} className="text-emerald-500" />
+            단톡방 개설
+          </label>
+          <button
+            onClick={(e) => { e.stopPropagation(); onSignupComplete?.(); }}
+            disabled={!student.kakao_chat_created}
+            className="w-full flex items-center justify-center gap-1 py-1 rounded-md text-[11px] font-semibold transition-colors bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
+            title={student.kakao_chat_created ? '회원가입 완료 → 칸반에서 제거' : '단톡방 개설 후 가능'}
+          >
+            <UserCheck size={11} />
+            회원가입 완료
+          </button>
+        </div>
+      )}
     </div>
   );
 }

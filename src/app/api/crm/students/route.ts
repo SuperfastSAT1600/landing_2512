@@ -109,7 +109,9 @@ export async function GET(request: NextRequest) {
     } else if (pool) {
       q = q.in('lead_status', ['inactive', 'reactivating']);
     } else {
-      q = q.eq('lead_status', 'active');
+      // active 리드 + 결제완료(stage 8) 학생(최초 세일즈 칸반 8번 컬럼용).
+      // 회원가입 완료(signup_done_at) 필터는 클라이언트에서 — 신규 컬럼 미적용 환경에서도 깨지지 않게.
+      q = q.or('lead_status.eq.active,funnel_stage.eq.8');
     }
     if (stage) q = q.eq('funnel_stage', stage);
     if (search) q = q.ilike('name', `%${search}%`);
