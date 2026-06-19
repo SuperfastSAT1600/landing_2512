@@ -921,39 +921,46 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   ))}
                 </div>
                 <div className="border-t border-gray-100 px-4 py-3 shrink-0 space-y-2">
-                  <select
-                    value={issueType}
-                    onChange={(e) => { setIssueType(e.target.value); setCustomIssueType(''); }}
-                    className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
-                  >
-                    <option value="schedule_pending">스케줄 조율 중</option>
-                    <option value="coach_pending">코치 배정 중</option>
-                    <option value="renewal_needed">재결제 필요</option>
-                    <option value="custom">기타</option>
-                  </select>
+                  {/* 이슈 내용 — 커뮤니케이션 내용 레이블과 동일한 높이 */}
+                  <div>
+                    <p className="text-[11px] text-gray-600 mb-1.5">이슈 내용</p>
+                    <textarea
+                      value={issueDesc}
+                      onChange={(e) => setIssueDesc(e.target.value)}
+                      placeholder="이슈 내용을 입력하세요"
+                      rows={3}
+                      className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50 resize-none"
+                    />
+                  </div>
+                  {/* 유형 + 제목 한 줄 */}
+                  <div className="flex gap-2">
+                    <select
+                      value={issueType}
+                      onChange={(e) => { setIssueType(e.target.value); setCustomIssueType(''); }}
+                      className="w-32 shrink-0 bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
+                    >
+                      <option value="schedule_pending">스케줄 조율 중</option>
+                      <option value="coach_pending">코치 배정 중</option>
+                      <option value="renewal_needed">재결제 필요</option>
+                      <option value="custom">기타</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={issueType === 'custom' ? customIssueType : issueTitle}
+                      onChange={(e) => issueType === 'custom' ? setCustomIssueType(e.target.value) : setIssueTitle(e.target.value)}
+                      placeholder={issueType === 'custom' ? '유형 직접 입력' : '이슈 제목'}
+                      className="flex-1 bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
+                    />
+                  </div>
                   {issueType === 'custom' && (
                     <input
                       type="text"
-                      value={customIssueType}
-                      onChange={(e) => setCustomIssueType(e.target.value)}
-                      placeholder="유형 직접 입력 (예: 퇴원, 환불 요청)"
+                      value={issueTitle}
+                      onChange={(e) => setIssueTitle(e.target.value)}
+                      placeholder="이슈 제목"
                       className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
                     />
                   )}
-                  <input
-                    type="text"
-                    value={issueTitle}
-                    onChange={(e) => setIssueTitle(e.target.value)}
-                    placeholder="이슈 제목"
-                    className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
-                  />
-                  <textarea
-                    value={issueDesc}
-                    onChange={(e) => setIssueDesc(e.target.value)}
-                    placeholder="메모 (선택)"
-                    rows={2}
-                    className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50 resize-none"
-                  />
                   <button
                     onClick={handleIssueSubmit}
                     disabled={issueSaving || !issueTitle || (issueType === 'custom' && !customIssueType.trim())}
