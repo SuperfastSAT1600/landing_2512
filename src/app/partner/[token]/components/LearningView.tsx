@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, FlaskConical, Library, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import type { DailyLearningResponse, StudentDayResult, StudyHallResult, TestCenterResult, VocabResult } from '@/lib/learning-data';
+import { StudentDetailPanel } from './StudentDetailPanel';
 
 const DEFAULT_DATE = '2026-06-16';
 
@@ -151,7 +152,7 @@ function EmptyCard({ label, borderColor, bgColor }: { label: string; borderColor
 
 const AVATAR_COLORS = ['bg-indigo-500', 'bg-purple-500', 'bg-blue-500', 'bg-rose-500'];
 
-function StudentColumn({ student, index }: { student: StudentDayResult; index: number }) {
+function StudentColumn({ student, index, onSelect }: { student: StudentDayResult; index: number; onSelect?: () => void }) {
   const hasAny = student.studyHall || student.testCenter.length > 0 || student.vocab;
   return (
     <div className="flex flex-col gap-3">
@@ -159,7 +160,13 @@ function StudentColumn({ student, index }: { student: StudentDayResult; index: n
         <div className={`w-10 h-10 rounded-full ${AVATAR_COLORS[index % AVATAR_COLORS.length]} flex items-center justify-center mx-auto mb-2`}>
           <span className="text-white font-bold text-sm">{student.name.charAt(0)}</span>
         </div>
-        <p className="text-sm font-bold text-gray-800">{student.name}</p>
+        {onSelect && student.portalToken ? (
+          <button onClick={onSelect} className="text-sm font-bold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors">
+            {student.name}
+          </button>
+        ) : (
+          <p className="text-sm font-bold text-gray-800">{student.name}</p>
+        )}
         {!hasAny && <p className="text-[10px] text-gray-400 mt-0.5">이날 학습 기록 없음</p>}
       </div>
 
@@ -178,11 +185,17 @@ function StudentColumn({ student, index }: { student: StudentDayResult; index: n
   );
 }
 
+interface SelectedStudent {
+  studentToken: string;
+  studentName: string;
+}
+
 export function LearningView({ token, adminKey }: { token: string; adminKey?: string }) {
   const [date, setDate] = useState(DEFAULT_DATE);
   const [data, setData] = useState<DailyLearningResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<SelectedStudent | null>(null);
 
   const load = useCallback(async (targetDate: string) => {
     setLoading(true);
@@ -278,7 +291,11 @@ export function LearningView({ token, adminKey }: { token: string; adminKey?: st
                   <div className="flex gap-4 overflow-x-auto pb-4">
                     {active.map((s, i) => (
                       <div key={s.name} className="flex-none w-64">
-                        <StudentColumn student={s} index={i} />
+                        <StudentColumn
+                          student={s}
+                          index={i}
+                          onSelect={s.portalToken ? () => setSelectedStudent({ studentToken: s.portalToken!, studentName: s.name }) : undefined}
+                        />
                       </div>
                     ))}
                   </div>
@@ -293,7 +310,11 @@ export function LearningView({ token, adminKey }: { token: string; adminKey?: st
                   <div className="flex gap-4 overflow-x-auto pb-4 opacity-60">
                     {inactive.map((s, i) => (
                       <div key={s.name} className="flex-none w-64">
-                        <StudentColumn student={s} index={active.length + i} />
+                        <StudentColumn
+                          student={s}
+                          index={active.length + i}
+                          onSelect={s.portalToken ? () => setSelectedStudent({ studentToken: s.portalToken!, studentName: s.name }) : undefined}
+                        />
                       </div>
                     ))}
                   </div>
@@ -307,6 +328,16 @@ export function LearningView({ token, adminKey }: { token: string; adminKey?: st
       <footer className="mt-12 pb-6 text-center">
         <p className="text-xs text-gray-300">SuperfastSAT · 학습 현황 리포트</p>
       </footer>
+
+      {selectedStudent && (
+        <StudentDetailPanel
+          partnerToken={token}
+          studentToken={selectedStudent.studentToken}
+          studentName={selectedStudent.studentName}
+          adminKey={adminKey}
+          onClose={() => setSelectedStudent(null)}
+        />
+      )}
     </div>
   );
 }
