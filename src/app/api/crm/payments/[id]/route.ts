@@ -35,7 +35,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { created_by?: string | null };
+  let body: { created_by?: string | null; payment_type?: string; tax_type?: string };
   try {
     body = await request.json();
   } catch {
@@ -44,6 +44,19 @@ export async function PATCH(
 
   const updates: Record<string, string | null> = {};
   if ('created_by' in body) updates.created_by = body.created_by?.trim() || null;
+  if ('payment_type' in body) {
+    // 환불은 변경 불가(금액 부호와 연동). 최초/재결제/원포인트만 허용.
+    if (!['최초결제', '재결제', '원포인트'].includes(body.payment_type ?? '')) {
+      return NextResponse.json({ error: '허용되지 않는 결제 유형입니다.' }, { status: 400 });
+    }
+    updates.payment_type = body.payment_type!;
+  }
+  if ('tax_type' in body) {
+    if (!['면세', '과세'].includes(body.tax_type ?? '')) {
+      return NextResponse.json({ error: '허용되지 않는 세금 유형입니다.' }, { status: 400 });
+    }
+    updates.tax_type = body.tax_type!;
+  }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: '수정할 항목이 없습니다.' }, { status: 400 });
   }

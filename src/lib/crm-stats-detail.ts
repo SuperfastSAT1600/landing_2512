@@ -7,10 +7,13 @@ export type StatsDetailMetric =
   | 'revenue'
   | 'refund'
   | 'net_revenue'
-  | 'net_profit';
+  | 'net_profit'
+  | 'first_payment'
+  | 'repayment';
 
 export const STATS_DETAIL_METRICS: StatsDetailMetric[] = [
   'leads', 'contacted', 'paid', 'revenue', 'refund', 'net_revenue', 'net_profit',
+  'first_payment', 'repayment',
 ];
 
 export function isStatsDetailMetric(v: string): v is StatsDetailMetric {
@@ -154,6 +157,14 @@ export function buildStatsDetail(
     }
     case 'refund': {
       const items = payments.filter((p) => p.amount < 0).map(toPaymentItem);
+      return { metric, kind: 'payments', count: items.length, items };
+    }
+    case 'first_payment': {
+      const items = payments.filter((p) => p.amount >= 0 && p.payment_type === '최초결제').map(toPaymentItem);
+      return { metric, kind: 'payments', count: items.length, items };
+    }
+    case 'repayment': {
+      const items = payments.filter((p) => p.amount >= 0 && p.payment_type === '재결제').map(toPaymentItem);
       return { metric, kind: 'payments', count: items.length, items };
     }
     case 'net_revenue':

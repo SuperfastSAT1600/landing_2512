@@ -12,14 +12,16 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { product: string; product_category?: string | null; product_subcategory?: string | null; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세'; is_vip?: boolean; created_by?: string | null };
+  let body: { product: string; product_category?: string | null; product_subcategory?: string | null; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세'; payment_type?: string; is_vip?: boolean; created_by?: string | null };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { product, product_category, product_subcategory, hours, amount, paid_at, tax_type, is_vip, created_by } = body;
+  const { product, product_category, product_subcategory, hours, amount, paid_at, tax_type, payment_type, is_vip, created_by } = body;
+  // 모달에서 보낸 결제 유형. 미지정 시 '최초결제'(DB 기본값과 동일).
+  const resolvedPaymentType = payment_type === '재결제' ? '재결제' : '최초결제';
 
   if (!product || !amount || amount <= 0) {
     return NextResponse.json({ error: '상품과 금액은 필수입니다.' }, { status: 400 });
@@ -47,6 +49,7 @@ export async function POST(
       hours: hours ?? null,
       amount,
       tax_type: tax_type ?? '면세',
+      payment_type: resolvedPaymentType,
       paid_at: paid_at ?? new Date().toISOString().slice(0, 10),
       created_by: created_by ?? null,
     })

@@ -59,8 +59,11 @@ interface PaymentModalProps {
   onClose: () => void;
 }
 
+type PaymentType = '최초결제' | '재결제';
+
 export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentModalProps) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  const [paymentType, setPaymentType] = useState<PaymentType | null>(null);
   const [classType, setClassType] = useState<ClassType | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
   const [productId, setProductId] = useState<string>('');
@@ -110,6 +113,10 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   }
 
   function handleBack() {
+    if (step === 1) {
+      setStep(0);
+      return;
+    }
     if (step === 3 && classType !== '콘텐츠') {
       setStep(2);
       setProductId('');
@@ -138,6 +145,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
           hours: selectedProduct.requiresHours ? Number(hours) : null,
           amount: Number(amount),
           tax_type: taxType,
+          payment_type: paymentType ?? '최초결제',
           is_vip: isVip,
           created_by: getAdminUserName(),
         }),
@@ -154,7 +162,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
     }
   }
 
-  const stepLabel = step === 1 ? '수업 유형' : step === 2 ? '과목' : '상품 선택';
+  const stepLabel = step === 0 ? '결제 유형' : step === 1 ? '수업 유형' : step === 2 ? '과목' : '상품 선택';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -162,7 +170,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            {step > 1 && (
+            {step > 0 && (
               <button onClick={handleBack} className="mr-1 text-gray-400 hover:text-gray-600">
                 <ChevronLeft size={16} />
               </button>
@@ -178,7 +186,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
 
         {/* Step indicator */}
         <div className="flex px-5 pt-3 gap-1">
-          {[1, 2, 3].map(s => (
+          {[0, 1, 2, 3].map(s => (
             <div
               key={s}
               className={`h-1 flex-1 rounded-full transition-colors ${
@@ -190,9 +198,33 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
 
         {/* Body */}
         <div className="px-5 py-4 space-y-4">
-          <p className="text-xs text-gray-500">
-            <span className="font-semibold text-gray-800">{student.name}</span> 학생
+          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+            <span><span className="font-semibold text-gray-800">{student.name}</span> 학생</span>
+            {paymentType && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                {paymentType}
+              </span>
+            )}
           </p>
+
+          {/* Step 0: 결제 유형 (최초/재결제) */}
+          {step === 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-500">결제 유형을 선택하세요</p>
+              {(['최초결제', '재결제'] as PaymentType[]).map(pt => (
+                <button
+                  key={pt}
+                  onClick={() => { setPaymentType(pt); setStep(1); }}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors text-left flex items-center justify-between"
+                >
+                  <span>{pt}</span>
+                  <span className="text-xs text-gray-400">
+                    {pt === '최초결제' ? '이 학생의 첫 결제' : '기존 학생의 추가 결제'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Step 1: 수업 유형 */}
           {step === 1 && (

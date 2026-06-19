@@ -492,6 +492,36 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               color="bg-emerald-50 text-emerald-600"
               onClick={() => setDetail({ metric: 'net_profit', label: '순 수익' })}
             />
+            {/* 결제 유형별 매출 (최초/재결제) */}
+            <div className="flex-1 min-w-[140px] bg-white border border-gray-200 rounded-xl p-4">
+              <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg mb-3 bg-indigo-50 text-indigo-600">
+                <CreditCard size={15} />
+              </div>
+              <p className="text-xs text-gray-500 mb-1.5">결제 유형별</p>
+              <div className="space-y-0.5">
+                <button
+                  type="button"
+                  onClick={() => setDetail({ metric: 'first_payment', label: '최초결제' })}
+                  className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
+                >
+                  <span className="text-[11px] text-gray-400">최초결제</span>
+                  <span title={fmt원(d.overview.first_payment_revenue)} className="text-base font-bold text-gray-900 tabular-nums whitespace-nowrap">
+                    {fmt만원(d.overview.first_payment_revenue)}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDetail({ metric: 'repayment', label: '재결제' })}
+                  className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
+                >
+                  <span className="text-[11px] text-gray-400">재결제</span>
+                  <span title={fmt원(d.overview.repayment_revenue)} className="text-base font-bold text-gray-700 tabular-nums whitespace-nowrap">
+                    {fmt만원(d.overview.repayment_revenue)}
+                  </span>
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1.5">클릭하면 세부 내역 · 환불 전</p>
+            </div>
           </div>
 
           {/* Monthly / Weekly trend */}
