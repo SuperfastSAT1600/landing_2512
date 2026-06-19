@@ -128,7 +128,7 @@ export function buildHealthSnapshot(input: HealthInput): HealthSnapshot {
   trend.sort(bySev);
   const signals = [...primary, ...trend];
   // weakest = 퍼널/채널/정체 우선, 없으면 추세로 폴백
-  const weakest = (primary.length > 0 ? primary : trend).slice(0, 3);
+  const weakest = (primary.length > 0 ? primary : trend).slice(0, 5);
 
   // 프롬프트 주입용 텍스트 — 이번 달 인입 코호트 퍼널을 척추로
   const lines: string[] = [
