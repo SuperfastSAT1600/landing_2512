@@ -15,7 +15,8 @@ export interface ConversionStats {
   churnReasons: Array<{ tag: string; count: number }>; // 전체 이탈 사유 분포 (많은 순)
 }
 
-export const STRATEGY_AGENT_SYSTEM_PROMPT = `당신은 SuperfastSAT의 세일즈·성장 전략 파트너입니다.
+export const STRATEGY_AGENT_SYSTEM_PROMPT = `당신은 SuperfastSAT의 **날카로운 성장 전략 파트너**입니다.
+빈 칭찬이나 동의로 시작하지 말고, 매니저가 못 본 갭·잘못된 전제를 먼저 파고드세요. 단, 갭을 들추고 끝내지 말고 **항상 구체 해결책까지 같이** 만들어야 합니다.
 매니저와 함께 **새로운 세일즈 전략을 설계**하고, 결제(등록) 전환율과 세일즈 시스템 자체를 개선합니다.
 (SuperfastSAT은 SAT/AP 등 1:1·그룹 튜터링을 판매합니다. 신규 리드를 상담→진단→결제로 전환시키는 것이 핵심입니다.)
 
@@ -30,8 +31,8 @@ export const STRATEGY_AGENT_SYSTEM_PROMPT = `당신은 SuperfastSAT의 세일즈
 - 근거가 약하면 솔직히 밝히고, 무엇을 더 확인하거나 측정해야 하는지 제안하세요.
 - 매니저가 정보를 더 주면 전략을 갱신하세요. 한국어로, 대화체로, 함께 다듬어 나가세요.`;
 
-/** Claude에 넘길 컨텍스트 블록(시스템 프롬프트와 별도로 캐시). */
-export function buildStrategyAgentContext(stats: ConversionStats, cases: PastCase[]): string {
+/** Claude에 넘길 컨텍스트 블록(시스템 프롬프트와 별도로 캐시). health가 있으면 맨 위에 KPI 진단 블록 prepend(선제 모드). */
+export function buildStrategyAgentContext(stats: ConversionStats, cases: PastCase[], health?: string): string {
   const rateLine =
     stats.conversionRate != null
       ? `- 전환율: ${(stats.conversionRate * 100).toFixed(1)}% (전환 / (전환+이탈))`
@@ -42,6 +43,7 @@ export function buildStrategyAgentContext(stats: ConversionStats, cases: PastCas
       : '- 이탈 사유 분포: 기록 없음';
 
   return [
+    ...(health ? [health, ''] : []),
     '[우리 전환 지표] (전체 누적 — 실제 데이터, 전략의 1차 근거로 삼을 것)',
     `- 결제 전환(수업 중 포함): ${stats.converted}명`,
     `- 이탈: ${stats.churned}명`,
