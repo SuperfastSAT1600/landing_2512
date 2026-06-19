@@ -11,13 +11,14 @@ export async function PATCH(
   if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   const body = await req.json();
-  const { checklist, status, description, title } = body;
+  const { checklist, status, description, title, resolution_note } = body;
 
   const updates: Record<string, unknown> = {};
   if (checklist !== undefined) updates.checklist = checklist as IssueChecklist[];
   if (status !== undefined) updates.status = status;
   if (description !== undefined) updates.description = description;
   if (title !== undefined) updates.title = title;
+  if (resolution_note !== undefined) updates.resolution_note = resolution_note;
 
   if (status === 'resolved') updates.resolved_at = new Date().toISOString();
   else if (status === 'open') updates.resolved_at = null;

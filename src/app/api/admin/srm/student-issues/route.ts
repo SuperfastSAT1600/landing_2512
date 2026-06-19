@@ -16,6 +16,7 @@ export interface StudentIssue {
   created_at: string;
   resolved_at: string | null;
   created_by: string | null;
+  resolution_note: string | null;
 }
 
 const DEFAULT_CHECKLISTS: Record<string, IssueChecklist[]> = {

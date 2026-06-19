@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Check, ChevronDown, ChevronUp, CheckSquare, Square, AlertTriangle, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Check, ChevronDown, ChevronUp, CheckSquare, Square, AlertTriangle, Trash2, Save } from 'lucide-react';
 import type { IssueChecklist } from '@/app/api/admin/srm/issues/route';
 
 export interface BaseIssue {
@@ -14,6 +14,7 @@ export interface BaseIssue {
   created_at: string;
   resolved_at: string | null;
   created_by: string | null;
+  resolution_note: string | null;
 }
 
 const ISSUE_TYPE_LABELS: Record<string, string> = {
@@ -47,20 +48,22 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
   const [expanded, setExpanded] = useState(issue.status === 'open');
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [noteValue, setNoteValue] = useState(issue.resolution_note ?? '');
+  const [noteDirty, setNoteDirty] = useState(false);
+  const [noteHighlight, setNoteHighlight] = useState(false);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
 
   const doneCount = issue.checklist.filter((c) => c.done).length;
   const totalCount = issue.checklist.length;
+  const isResolved = issue.status === 'resolved';
 
-  const toggleItem = async (itemId: string) => {
-    const updated = issue.checklist.map((c) =>
-      c.id === itemId ? { ...c, done: !c.done } : c,
-    );
+  const patch = async (body: Record<string, unknown>) => {
     setSaving(true);
     try {
       const res = await fetch(`${apiBase}/${issue.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ checklist: updated }),
+        body: JSON.stringify(body),
       });
       if (res.ok) onUpdated(await res.json() as BaseIssue);
     } finally {
@@ -68,19 +71,30 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
     }
   };
 
+  const toggleItem = (itemId: string) => {
+    const updated = issue.checklist.map((c) =>
+      c.id === itemId ? { ...c, done: !c.done } : c,
+    );
+    patch({ checklist: updated });
+  };
+
   const toggleResolved = async () => {
     const newStatus = issue.status === 'open' ? 'resolved' : 'open';
-    setSaving(true);
-    try {
-      const res = await fetch(`${apiBase}/${issue.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) onUpdated(await res.json() as BaseIssue);
-    } finally {
-      setSaving(false);
+    // 해결됨으로 전환 시 해결책 비어있으면 입력란 강조
+    if (newStatus === 'resolved' && !noteValue.trim()) {
+      setExpanded(true);
+      setNoteHighlight(true);
+      setTimeout(() => {
+        noteRef.current?.focus();
+        setNoteHighlight(false);
+      }, 150);
     }
+    await patch({ status: newStatus });
+  };
+
+  const saveNote = async () => {
+    await patch({ resolution_note: noteValue.trim() || null });
+    setNoteDirty(false);
   };
 
   const deleteIssue = async () => {
@@ -90,8 +104,6 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
     setSaving(false);
     setConfirmDelete(false);
   };
-
-  const isResolved = issue.status === 'resolved';
 
   return (
     <div className={`rounded-lg border ${isResolved ? 'border-gray-200 bg-gray-50' : 'border-orange-200 bg-orange-50'}`}>
@@ -125,6 +137,7 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
             <p className="text-xs text-gray-500 mb-2">{issue.description}</p>
           )}
 
+          {/* 체크리스트 */}
           {issue.checklist.map((item: IssueChecklist) => (
             <button
               key={item.id}
@@ -141,6 +154,45 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
               </span>
             </button>
           ))}
+
+          {/* 해결책 입력 */}
+          <div className="pt-2 space-y-1">
+            <label className="text-[11px] font-medium text-gray-500">해결책</label>
+            {isResolved && !noteDirty ? (
+              <div
+                onClick={() => { if (!isResolved) return; setNoteDirty(true); noteRef.current?.focus(); }}
+                className="text-xs text-gray-600 bg-white border border-gray-200 rounded px-2 py-1.5 min-h-[40px] whitespace-pre-wrap cursor-default"
+              >
+                {noteValue || <span className="text-gray-300 italic">기록 없음</span>}
+              </div>
+            ) : (
+              <div className="relative">
+                <textarea
+                  ref={noteRef}
+                  value={noteValue}
+                  onChange={(e) => { setNoteValue(e.target.value); setNoteDirty(true); }}
+                  disabled={saving}
+                  placeholder="어떻게 해결했는지 입력..."
+                  rows={3}
+                  className={`w-full text-xs rounded border px-2 py-1.5 resize-none focus:outline-none focus:ring-1 transition-all ${
+                    noteHighlight
+                      ? 'border-orange-400 ring-1 ring-orange-300 bg-orange-50'
+                      : 'border-gray-200 focus:ring-blue-300 bg-white'
+                  }`}
+                />
+              </div>
+            )}
+            {noteDirty && (
+              <button
+                onClick={saveNote}
+                disabled={saving}
+                className="flex items-center gap-1 px-2 py-0.5 text-[11px] text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors"
+              >
+                <Save size={10} />
+                저장
+              </button>
+            )}
+          </div>
 
           <div className="flex items-center justify-between pt-1">
             {/* 삭제 */}
