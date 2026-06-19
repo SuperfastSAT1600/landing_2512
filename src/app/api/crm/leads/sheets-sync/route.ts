@@ -143,6 +143,8 @@ export async function PATCH(request: NextRequest) {
     .from('students')
     .select('id, inquiry_date')
     .eq('parent_phone', normalizedPhone)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   if (selectError) {
