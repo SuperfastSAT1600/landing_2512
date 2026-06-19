@@ -38,11 +38,13 @@ export default function PartnerPortalPage() {
     checkPortal();
   }, [checkPortal, adminLoading]);
 
+  const canvas = '#f6f5f4';
+
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (state === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div style={{ minHeight: '100vh', background: canvas, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 20, height: 20, border: '2px solid #0075de', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       </div>
     );
   }
@@ -50,11 +52,11 @@ export default function PartnerPortalPage() {
   // ── Not found ────────────────────────────────────────────────────────────────
   if (state === 'not-found') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-4xl mb-4">🔍</p>
-          <h1 className="text-lg font-semibold text-gray-800 mb-2">페이지를 찾을 수 없습니다</h1>
-          <p className="text-sm text-gray-400">링크가 올바른지 확인해 주세요.</p>
+      <div style={{ minHeight: '100vh', background: canvas, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: 36, marginBottom: 16 }}>🔍</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#000', marginBottom: 8, letterSpacing: '-0.125px' }}>페이지를 찾을 수 없습니다</h1>
+          <p style={{ fontSize: 14, color: '#a39e98' }}>링크가 올바른지 확인해 주세요.</p>
         </div>
       </div>
     );
@@ -64,13 +66,13 @@ export default function PartnerPortalPage() {
   if (state === 'locked') {
     const lockedUntil = meta?.lockedUntil ? new Date(meta.lockedUntil) : null;
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="text-center max-w-sm">
-          <div className="w-14 h-14 rounded-full bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">🔒</span>
+      <div style={{ minHeight: '100vh', background: canvas, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+        <div style={{ textAlign: 'center', maxWidth: 360 }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#fff', border: '1px solid #e6e6e6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <span style={{ fontSize: 24 }}>🔒</span>
           </div>
-          <h1 className="text-lg font-semibold text-gray-800 mb-2">일시적으로 잠겨 있습니다</h1>
-          <p className="text-sm text-gray-500 leading-relaxed">
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#000', marginBottom: 8, letterSpacing: '-0.125px' }}>일시적으로 잠겨 있습니다</h1>
+          <p style={{ fontSize: 15, color: '#615d59', lineHeight: 1.5 }}>
             비밀번호 오류 횟수 초과로 30분간 잠겼습니다.
             {lockedUntil && <><br />{lockedUntil.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 이후 다시 시도해 주세요.</>}
           </p>
@@ -84,7 +86,7 @@ export default function PartnerPortalPage() {
     return (
       <>
         {isAdmin && (
-          <div className="bg-indigo-600 text-white text-xs text-center py-1.5 font-medium">
+          <div style={{ background: '#0075de', color: '#fff', fontSize: 12, textAlign: 'center', padding: '6px 0', fontWeight: 500 }}>
             어드민 미리보기 모드 — 비밀번호 없이 접속됨
           </div>
         )}
@@ -95,29 +97,39 @@ export default function PartnerPortalPage() {
 
   // ── Auth screens (setup / login) ─────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-16">
-      {/* Logo + title */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 mb-4">
-          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">SuperfastSAT</span>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">{meta?.partnerName ?? '파트너 포털'}</h1>
-        <p className="text-sm text-gray-500">파트너 포털</p>
+    <div style={{ minHeight: '100vh', background: canvas, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 16px' }}>
+      {/* Badge + heading */}
+      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <span style={{ display: 'inline-block', fontSize: 12, fontWeight: 600, color: '#0075de', background: '#fff', border: '1px solid #e6e6e6', borderRadius: 9999, padding: '4px 12px', letterSpacing: '0.05em', marginBottom: 20 }}>
+          SuperfastSAT
+        </span>
+        <h1 style={{ fontSize: 32, fontWeight: 700, color: '#000', letterSpacing: '-0.625px', lineHeight: 1.2, marginBottom: 6 }}>
+          {meta?.partnerName ?? '파트너 센터'}
+        </h1>
+        <p style={{ fontSize: 15, color: '#615d59', margin: 0 }}>파트너 센터</p>
       </div>
 
       {/* Auth card */}
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div style={{
+        width: '100%',
+        maxWidth: 360,
+        background: '#fff',
+        borderRadius: 16,
+        padding: 24,
+        border: '1px solid #e6e6e6',
+        boxShadow: '0 0.175px 1.041px rgba(0,0,0,0.01), 0 0.8px 2.925px rgba(0,0,0,0.02), 0 2.025px 7.847px rgba(0,0,0,0.027), 0 4px 18px rgba(0,0,0,0.04)',
+      }}>
         {state === 'setup' && (
           <>
-            <h2 className="text-base font-bold text-gray-900 text-center mb-1">비밀번호 설정</h2>
-            <p className="text-xs text-gray-500 text-center mb-6">처음 방문하셨습니다. 6자리 비밀번호를 설정해 주세요.</p>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#000', textAlign: 'center', marginBottom: 6, letterSpacing: '-0.125px' }}>비밀번호 설정</h2>
+            <p style={{ fontSize: 14, color: '#615d59', textAlign: 'center', marginBottom: 24, lineHeight: 1.43 }}>처음 방문하셨습니다. 6자리 비밀번호를 설정해 주세요.</p>
             <PasscodeSetup token={token} onSuccess={() => setState('authenticated')} />
           </>
         )}
         {state === 'login' && (
           <>
-            <h2 className="text-base font-bold text-gray-900 text-center mb-1">비밀번호 입력</h2>
-            <p className="text-xs text-gray-500 text-center mb-6">6자리 비밀번호를 입력해 주세요.</p>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#000', textAlign: 'center', marginBottom: 6, letterSpacing: '-0.125px' }}>비밀번호 입력</h2>
+            <p style={{ fontSize: 14, color: '#615d59', textAlign: 'center', marginBottom: 24, lineHeight: 1.43 }}>6자리 비밀번호를 입력해 주세요.</p>
             <PasscodeEntry
               token={token}
               onSuccess={() => setState('authenticated')}
@@ -126,6 +138,8 @@ export default function PartnerPortalPage() {
           </>
         )}
       </div>
+
+      <p style={{ marginTop: 24, fontSize: 12, color: '#a39e98' }}>SuperfastSAT 파트너 센터</p>
     </div>
   );
 }

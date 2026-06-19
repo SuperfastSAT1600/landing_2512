@@ -51,7 +51,7 @@ export function PinInput({ value, onChange, disabled, autoFocus }: Props) {
   }
 
   return (
-    <div className="flex gap-2.5 justify-center" onPaste={handlePaste}>
+    <div className="flex gap-2 justify-center" onPaste={handlePaste}>
       {Array.from({ length: 6 }).map((_, i) => {
         const filled = !!value[i];
         const isRevealed = revealed === i && filled;
@@ -72,15 +72,23 @@ export function PinInput({ value, onChange, disabled, autoFocus }: Props) {
               aria-label={`digit ${i + 1}`}
             />
             <div
-              className={`flex items-center justify-center rounded-xl border-2 text-lg font-bold transition-all select-none
-                ${filled ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 bg-white'}
-              `}
-              style={{ width: 44, height: 52 }}
+              style={{
+                width: 44,
+                height: 52,
+                borderRadius: 4,
+                border: `1.5px solid ${filled ? '#0075de' : '#e6e6e6'}`,
+                background: filled ? '#f0f7ff' : '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'border-color 0.15s, background 0.15s',
+                userSelect: 'none',
+              }}
             >
               {isRevealed ? (
-                <span className="text-indigo-700">{value[i]}</span>
+                <span style={{ color: '#0075de', fontWeight: 700, fontSize: 18 }}>{value[i]}</span>
               ) : filled ? (
-                <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#0075de' }} />
               ) : null}
             </div>
           </div>

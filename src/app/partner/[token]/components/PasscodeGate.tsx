@@ -3,6 +3,26 @@
 import { useState } from 'react';
 import { PinInput } from './PinInput';
 
+const btnPrimary: React.CSSProperties = {
+  width: '100%',
+  padding: '11px 24px',
+  borderRadius: 9999,
+  background: '#0075de',
+  color: '#ffffff',
+  fontSize: 16,
+  fontWeight: 500,
+  border: 'none',
+  cursor: 'pointer',
+  transition: 'background 0.15s',
+  lineHeight: 1.5,
+};
+
+const btnDisabled: React.CSSProperties = {
+  ...btnPrimary,
+  background: '#a8cfee',
+  cursor: 'not-allowed',
+};
+
 // ── Setup (first time) ────────────────────────────────────────────────────────
 
 export function PasscodeSetup({ token, onSuccess }: { token: string; onSuccess: () => void }) {
@@ -30,21 +50,23 @@ export function PasscodeSetup({ token, onSuccess }: { token: string; onSuccess: 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <p className="text-xs text-gray-500 text-center mb-3 font-medium">비밀번호 (6자리)</p>
+        <p style={{ fontSize: 12, fontWeight: 600, color: '#615d59', textAlign: 'center', marginBottom: 12, letterSpacing: '0.025em' }}>
+          비밀번호 (6자리)
+        </p>
         <PinInput value={passcode} onChange={v => { setPasscode(v); setError(''); }} autoFocus />
       </div>
       <div>
-        <p className="text-xs text-gray-500 text-center mb-3 font-medium">비밀번호 확인</p>
+        <p style={{ fontSize: 12, fontWeight: 600, color: '#615d59', textAlign: 'center', marginBottom: 12, letterSpacing: '0.025em' }}>
+          비밀번호 확인
+        </p>
         <PinInput value={confirm} onChange={v => { setConfirm(v); setError(''); }} />
       </div>
-      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-      <button
-        type="submit"
-        disabled={!ready || loading}
-        className="w-full py-3 rounded-xl font-bold text-sm transition-all bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-40 disabled:cursor-not-allowed"
-      >
+      {error && (
+        <p style={{ fontSize: 13, color: '#dc2626', textAlign: 'center', margin: 0 }}>{error}</p>
+      )}
+      <button type="submit" disabled={!ready || loading} style={!ready || loading ? btnDisabled : btnPrimary}>
         {loading ? '설정 중...' : '비밀번호 설정하기'}
       </button>
     </form>
@@ -77,14 +99,12 @@ export function PasscodeEntry({ token, onSuccess, onLocked }: { token: string; o
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <PinInput value={passcode} onChange={v => { setPasscode(v); setError(''); }} autoFocus disabled={loading} />
-      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-      <button
-        type="submit"
-        disabled={passcode.length < 6 || loading}
-        className="w-full py-3 rounded-xl font-bold text-sm transition-all bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-40 disabled:cursor-not-allowed"
-      >
+      {error && (
+        <p style={{ fontSize: 13, color: '#dc2626', textAlign: 'center', margin: 0 }}>{error}</p>
+      )}
+      <button type="submit" disabled={passcode.length < 6 || loading} style={passcode.length < 6 || loading ? btnDisabled : btnPrimary}>
         {loading ? '확인 중...' : '입력하기'}
       </button>
     </form>
