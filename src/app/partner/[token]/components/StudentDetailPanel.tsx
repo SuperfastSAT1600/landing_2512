@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronDown, ChevronUp, User, BookOpen, FlaskConical, Library } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, User, BookOpen, FlaskConical, Library, BarChart2 } from 'lucide-react';
+import { DayCard } from '@/app/portal/[token]/components/LearningReportCards';
+import type { LearningReport } from '@/types/srm-portal';
 
 interface StudentInfo {
   name: string;
@@ -83,13 +85,16 @@ function MemoItem({ memo }: { memo: PublishedMemo }) {
   );
 }
 
-type Tab = 'consultation' | 'info';
+type Tab = 'consultation' | 'info' | 'report';
 
 export function StudentDetailPanel({ partnerToken, studentToken, studentName, adminKey, onClose }: Props) {
   const [data, setData] = useState<StudentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('consultation');
+  const [report, setReport] = useState<LearningReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   useEffect(() => {
     const headers: HeadersInit = adminKey ? { 'x-admin-key': adminKey } : {};
@@ -99,6 +104,18 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
       .catch(() => setError('데이터를 불러오지 못했습니다'))
       .finally(() => setLoading(false));
   }, [partnerToken, studentToken, adminKey]);
+
+  useEffect(() => {
+    if (tab !== 'report' || report || reportLoading) return;
+    setReportLoading(true);
+    setReportError(null);
+    const headers: HeadersInit = adminKey ? { 'x-admin-key': adminKey } : {};
+    fetch(`/api/partner/${partnerToken}/student/${studentToken}/srm-report`, { headers })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(setReport)
+      .catch(status => setReportError(status === 404 ? 'V2 학습 데이터가 없습니다' : '리포트를 불러오지 못했습니다'))
+      .finally(() => setReportLoading(false));
+  }, [tab, report, reportLoading, partnerToken, studentToken, adminKey]);
 
   const s = data?.student;
 
@@ -125,6 +142,7 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
           {([
             { key: 'consultation' as Tab, label: '상담 기록' },
             { key: 'info' as Tab, label: '학생 정보' },
+            { key: 'report' as Tab, label: '학습 리포트' },
           ]).map(({ key, label }) => (
             <button
               key={key}
@@ -227,6 +245,46 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
                 <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
                   <Library size={13} className="text-emerald-500" />
                   <span className="text-xs text-emerald-700">학습 데이터 연동됨</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === 'report' && (
+            <div>
+              {reportLoading && (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs text-gray-400">학습 데이터 분석 중...</p>
+                </div>
+              )}
+              {reportError && (
+                <div className="flex flex-col items-center justify-center py-12 gap-2">
+                  <BarChart2 size={24} className="text-gray-300" />
+                  <p className="text-sm text-gray-400">{reportError}</p>
+                </div>
+              )}
+              {!reportLoading && !reportError && report && (
+                <div>
+                  <div className="flex gap-4 mb-5">
+                    <div className="flex-1 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
+                      <p className="text-2xl font-bold text-indigo-600">
+                        {report.days.flatMap(d => d.items).reduce((s, i) => i.type === 'study_hall' || i.type === 'test_center' ? s + i.totalProblems : s, 0)}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wide">푼 문제 수</p>
+                    </div>
+                    <div className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
+                      <p className="text-2xl font-bold text-gray-700">{report.vocabExposedCount}</p>
+                      <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wide">학습 단어</p>
+                    </div>
+                  </div>
+                  {report.days.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-8">학습 기록이 없습니다</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {report.days.map(day => <DayCard key={day.date} day={day} />)}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
