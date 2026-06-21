@@ -750,6 +750,19 @@ export const GRADE_OPTIONS_BY_SCHOOL_TYPE: Record<string, string[]> = {
 
 export type ChurnTag = (typeof CHURN_TAG_OPTIONS)[number];
 
+// 선제 진단 인사이트 브리핑 API 계약 — insight-brief 라우트와 CrmInsightBanner가 공유.
+export type InsightBriefMode = 'diagnosis' | 'weekly';
+
+export interface InsightBriefArea {
+  title: string;
+  severity: 'critical' | 'warn';
+  why: string;
+  suggestion: string;
+  question?: string;
+  lens?: string; // 심화(deep) 전용 — 적용한 구루 렌즈명 (예: 'Hormozi')
+  evidence?: string; // 심화(deep) 전용 — 메모/웹 근거 한 줄
+}
+
 // lead_status → ParentStatus 매핑
 export function getParentStatus(leadStatus: LeadStatus): ParentStatus {
   if (leadStatus === 'enrolled') return 'done';

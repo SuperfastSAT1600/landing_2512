@@ -2,21 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { isAuthenticated } from '@/lib/server-auth';
 import { buildBriefHealth } from '@/lib/strategy-brief';
-import type { Signal } from '@/lib/strategy-health';
+import { fallbackAreas, parseAreas } from '@/lib/insight-parse';
+import type { InsightBriefMode as BriefMode } from '@/types/crm';
 
 export const maxDuration = 30;
 
 const MODEL = 'claude-haiku-4-5';
-
-type BriefMode = 'diagnosis' | 'weekly';
-
-interface BriefArea {
-  title: string;
-  severity: 'critical' | 'warn';
-  why: string;
-  suggestion: string;
-  question?: string;
-}
 
 const BRIEF_SYSTEM = `당신은 SuperfastSAT의 날카로운 성장 전략 파트너다. **이번 달 인입한 리드 코호트**가 퍼널(인입→컨택→상담→진단→결제)에서 어디서 막히고 빠지는지(드롭오프)를 중심으로, 지금 가장 시급한 약점/정체를 짚고 각각에 "이렇게 해보자" 한 줄짜리 구체 첫 수를 제시한다. 내가 못 본 숨은 병목을 찾는 게 목적이다.
 규칙: 빈 칭찬 금지. 추상론 금지. 아래 [KPI 건강 진단]의 수치(드롭오프·채널)에 근거할 것. 한국어, 간결하게.
@@ -29,62 +20,6 @@ const WEEKLY_SYSTEM = `너는 SuperfastSAT 대표 이민재의 날카로운 성�
 규칙: "이렇게 해보자" 같은 지시형 해결책은 쓰지 마라(그건 다음 단계 전략 회의용이다). 빈 칭찬·추상론 금지. 수치 없는 문장 금지. 한국어, 간결하게.
 출력은 오직 JSON 하나. 형식: {"areas":[{"title": "논의점 제목", "severity": "critical"|"warn", "why": "왜 지금 중요한가 — 수치 근거 한 문장", "question": "회의에서 던질 날카로운 질문 한 문장"}]}
 areas는 정확히 5개(신호가 적으면 절대 수준이 낮은 단계·채널을 사각지대로 끌어와 5개를 채운다). JSON 외 다른 텍스트·코드펜스 금지.`;
-
-function fallbackAreas(weakest: Signal[], mode: BriefMode): BriefArea[] {
-  return weakest.slice(0, 5).map((s) =>
-    mode === 'weekly'
-      ? {
-          title: s.area,
-          severity: s.severity,
-          why: s.note,
-          suggestion: '',
-          question: `${s.area} — 이건 이번 주에 누가, 무엇부터 손대야 하지?`,
-        }
-      : {
-          title: s.area,
-          severity: s.severity,
-          why: s.note,
-          suggestion: '전략 AI에서 이어서 점검·해결책을 설계하세요.',
-        },
-  );
-}
-
-function parseAreas(text: string, weakest: Signal[], mode: BriefMode): BriefArea[] {
-  try {
-    const cleaned = text.replace(/```json\s*|\s*```/g, '').trim();
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start === -1 || end === -1) throw new Error('no json');
-    const parsed = JSON.parse(cleaned.slice(start, end + 1));
-    const areas = Array.isArray(parsed.areas) ? parsed.areas : [];
-    const valid = areas
-      .filter((a: unknown): a is BriefArea => {
-        const o = a as Record<string, unknown>;
-        if (!o || typeof o.title !== 'string' || typeof o.why !== 'string') return false;
-        return mode === 'weekly' ? typeof o.question === 'string' : typeof o.suggestion === 'string';
-      })
-      .map((a: BriefArea) =>
-        mode === 'weekly'
-          ? {
-              title: a.title,
-              severity: (a.severity === 'critical' ? 'critical' : 'warn') as 'critical' | 'warn',
-              why: a.why,
-              suggestion: '',
-              question: a.question,
-            }
-          : {
-              title: a.title,
-              severity: (a.severity === 'critical' ? 'critical' : 'warn') as 'critical' | 'warn',
-              why: a.why,
-              suggestion: a.suggestion,
-            },
-      )
-      .slice(0, 5);
-    return valid.length > 0 ? valid : fallbackAreas(weakest, mode);
-  } catch {
-    return fallbackAreas(weakest, mode);
-  }
-}
 
 export async function POST(request: NextRequest) {
   if (!isAuthenticated(request)) {

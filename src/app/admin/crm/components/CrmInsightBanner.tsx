@@ -1,18 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, Activity, Loader2, X, ArrowRight } from 'lucide-react';
-import { kstDateStr } from '@/types/crm';
-
-type Mode = 'diagnosis' | 'weekly';
-
-interface BriefArea {
-  title: string;
-  severity: 'critical' | 'warn';
-  why: string;
-  suggestion: string;
-  question?: string;
-}
+import { Sparkles, Activity, Loader2, X, ArrowRight, Microscope } from 'lucide-react';
+import { kstDateStr, type InsightBriefArea as BriefArea, type InsightBriefMode as Mode } from '@/types/crm';
 
 interface Props {
   adminKey: string;
@@ -21,12 +11,13 @@ interface Props {
 
 const today = () => kstDateStr(Date.now());
 const briefKey = (m: Mode) => `crm-insight-brief:${m}:${today()}`;
+const deepKey = (m: Mode) => `crm-insight-deep:${m}:${today()}`;
 const dismissKey = (m: Mode) => `crm-insight-dismissed:${m}:${today()}`;
 
-function readBrief(m: Mode): BriefArea[] | null {
+function readCache(key: string): BriefArea[] | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(briefKey(m));
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed.areas) ? parsed.areas : null;
@@ -34,9 +25,9 @@ function readBrief(m: Mode): BriefArea[] | null {
     return null;
   }
 }
-function writeBrief(m: Mode, areas: BriefArea[]) {
+function writeCache(key: string, areas: BriefArea[]) {
   try {
-    localStorage.setItem(briefKey(m), JSON.stringify({ areas }));
+    localStorage.setItem(key, JSON.stringify({ areas }));
   } catch {
     /* ignore */
   }
@@ -67,9 +58,12 @@ const MODE_LOADING: Record<Mode, string> = {
 export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
   const [mode, setMode] = useState<Mode>('diagnosis');
   const [areas, setAreas] = useState<BriefArea[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // 첫 결과(빠른/심화) 도착 전
+  const [deepPending, setDeepPending] = useState(false); // 심화 분석 진행 중
+  const [isDeep, setIsDeep] = useState(false); // 현재 표시 중인 게 심화본인지
   const [dismissed, setDismissed] = useState(false);
   const fetchedRef = useRef<Set<Mode>>(new Set());
+  const deepAppliedRef = useRef(false); // 심화본이 적용되면 빠른 응답이 덮어쓰지 못하게
 
   useEffect(() => {
     if (!adminKey) return;
@@ -79,43 +73,74 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
       return;
     }
     setDismissed(false);
-    const cached = readBrief(mode);
-    if (cached) {
-      setAreas(cached);
+    // 심화 캐시가 있으면 바로 심화본 표시 (오늘 이미 생성됨)
+    const deepCached = readCache(deepKey(mode));
+    if (deepCached) {
+      setAreas(deepCached);
+      setIsDeep(true);
       return;
     }
+    const fastCached = readCache(briefKey(mode));
+    if (fastCached) {
+      setAreas(fastCached);
+      setIsDeep(false);
+    }
     if (fetchedRef.current.has(mode)) return;
-    void load(mode);
+    void load(mode, { force: false, haveFast: !!fastCached });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminKey, mode]);
 
-  async function load(m: Mode) {
-    fetchedRef.current.add(m);
-    setLoading(true);
+  async function fetchAreas(m: Mode, deep: boolean, force: boolean): Promise<BriefArea[] | null> {
     try {
-      const res = await fetch('/api/crm/insight-brief', {
+      const url = deep ? `/api/crm/insight-brief/deep${force ? '?force=1' : ''}` : '/api/crm/insight-brief';
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: JSON.stringify({ mode: m }),
       });
-      if (!res.ok) {
-        setAreas([]);
-        return;
-      }
+      if (!res.ok) return null;
       const json = await res.json();
-      const a: BriefArea[] = Array.isArray(json.areas) ? json.areas : [];
-      writeBrief(m, a);
-      setAreas(a);
+      return Array.isArray(json.areas) ? json.areas : [];
     } catch {
-      setAreas([]);
-    } finally {
-      setLoading(false);
+      return null;
     }
+  }
+
+  async function load(m: Mode, opts: { force: boolean; haveFast: boolean }) {
+    fetchedRef.current.add(m);
+    deepAppliedRef.current = false;
+    setIsDeep(false);
+    setDeepPending(true);
+    if (!opts.haveFast) setLoading(true);
+
+    // Stage 1: 빠른 정량 인사이트 (즉시 표시) — 캐시로 이미 떠 있으면 갱신만
+    const fastP = fetchAreas(m, false, false).then((a) => {
+      if (a) {
+        writeCache(briefKey(m), a);
+        if (!deepAppliedRef.current) setAreas(a);
+      }
+      setLoading(false);
+    });
+
+    // Stage 2: 메모+구루+웹 심화 인사이트 (준비되면 교체)
+    const deepP = fetchAreas(m, true, opts.force).then((a) => {
+      if (a && a.length > 0) {
+        deepAppliedRef.current = true;
+        writeCache(deepKey(m), a);
+        setAreas(a);
+        setIsDeep(true);
+      }
+      setDeepPending(false);
+      setLoading(false);
+    });
+
+    await Promise.allSettled([fastP, deepP]);
   }
 
   function rescan() {
     try {
       localStorage.removeItem(briefKey(mode));
+      localStorage.removeItem(deepKey(mode));
       localStorage.removeItem(dismissKey(mode));
     } catch {
       /* ignore */
@@ -123,7 +148,7 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
     fetchedRef.current.delete(mode);
     setDismissed(false);
     setAreas(null);
-    void load(mode);
+    void load(mode, { force: true, haveFast: false });
   }
 
   function dismiss() {
@@ -145,6 +170,15 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
         <div className="flex items-center gap-2 min-w-0">
           <Sparkles size={16} className="text-indigo-500 shrink-0" />
           <p className="text-sm font-bold text-indigo-900 truncate">{MODE_TITLE[mode]}</p>
+          {deepPending ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700 shrink-0">
+              <Loader2 size={10} className="animate-spin" /> 심화 분석 중…
+            </span>
+          ) : isDeep ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700 shrink-0">
+              <Microscope size={10} /> 심화
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -187,9 +221,17 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
               <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${SEV_DOT[a.severity] ?? 'bg-amber-500'}`} />
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold text-gray-900">
+                  {a.lens && (
+                    <span className="mr-1.5 inline-block rounded bg-violet-600/10 px-1.5 py-0.5 text-[10px] font-bold align-middle text-violet-700">
+                      {a.lens}
+                    </span>
+                  )}
                   {a.title}
                   <span className="ml-1.5 font-normal text-gray-500">— {a.why}</span>
                 </p>
+                {a.evidence && (
+                  <p className="text-[11px] text-violet-500 mt-0.5">근거: {a.evidence}</p>
+                )}
                 {mode === 'weekly' ? (
                   a.question && (
                     <p className="text-[13px] text-indigo-700 mt-0.5">
