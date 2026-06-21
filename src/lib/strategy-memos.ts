@@ -54,16 +54,19 @@ export function pickCohort(activeRows: CohortRow[], churnedRows: CohortRow[], no
   return merged;
 }
 
-/** 정체(active+SLA초과) + 이번 달 이탈 리드를 합쳐 메모 있는 코호트로 추린다. */
+/**
+ * 정체(active+SLA초과) + 이번 달 이탈 리드를 합쳐 메모 있는 코호트로 추린다.
+ * 정량([KPI 건강 진단])과 같은 모수를 보도록 둘 다 "이번 달 인입(inquiry_date)" 리드로 한정.
+ */
 async function fetchCohort(nowMs: number): Promise<CohortRow[]> {
   const monthStart = `${kstDateStr(nowMs).slice(0, 7)}-01`;
   const [activeRes, churnedRes] = await Promise.all([
-    supabaseAdmin.from('students').select(COLS).eq('lead_status', 'active'),
+    supabaseAdmin.from('students').select(COLS).eq('lead_status', 'active').gte('inquiry_date', monthStart),
     supabaseAdmin
       .from('students')
       .select(COLS)
       .or('funnel_stage.eq.churned,lead_status.eq.inactive')
-      .gte('funnel_stage_updated_at', monthStart),
+      .gte('inquiry_date', monthStart),
   ]);
   return pickCohort((activeRes.data ?? []) as CohortRow[], (churnedRes.data ?? []) as CohortRow[], nowMs);
 }
@@ -128,7 +131,7 @@ export async function buildMemoSignals(nowMs: number = Date.now()): Promise<Memo
     if (!text || text.includes('뚜렷한 반복 패턴 없음')) {
       return { memoBlock: '', leadCount: rows.length };
     }
-    const memoBlock = `[상담 메모 신호 · 정체/이탈 리드 ${rows.length}명 분석]\n${text}`;
+    const memoBlock = `[상담 메모 신호 · 이번 달 인입 리드 중 정체/이탈 ${rows.length}명 분석]\n${text}`;
     return { memoBlock, leadCount: rows.length };
   } catch (err) {
     console.error('[strategy-memos] extraction failed (degrading):', err);
