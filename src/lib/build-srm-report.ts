@@ -9,8 +9,43 @@ import type {
 
 const VOCAB_MASTER_BOX = 5;
 const VOCAB_MAX_MISSED = 6;
+const TC_TREND_THRESHOLD = 0.12;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const SKILL_KO: Record<string, string> = {
+  'Words in Context': '문맥 속 어휘',
+  'Command of Evidence': '근거 활용',
+  'Central Ideas and Details': '중심 내용',
+  'Inferences': '추론',
+  'Transitions': '연결어',
+  'Rhetorical Synthesis': '통합 서술',
+  'Cross-Text Connections': '텍스트 연계',
+  'Form, Structure, and Sense': '형태·구조·의미',
+  'Boundaries': '문장 경계',
+  'Linear Equations in One Variable': '일차 방정식',
+  'Linear Equations in Two Variables': '이차 일차 방정식',
+  'Systems of Two Linear Equations in Two Variables': '연립 방정식',
+  'Linear Functions': '일차 함수',
+  'Linear Inequalities': '부등식',
+  'Nonlinear Functions': '비선형 함수',
+  'Nonlinear Equations': '비선형 방정식',
+  'Quadratic Functions': '이차 함수',
+  'Ratios, Rates, and Proportional Relationships': '비율·비례',
+  'Percentages': '백분율',
+  'Problem-Solving and Data Analysis': '데이터 분석',
+  'Two-variable Data': '이변수 데이터',
+  'Probability and Conditional Probability': '확률',
+  'Inference from Sample Statistics': '통계 추론',
+  'Geometry and Trigonometry': '기하·삼각',
+  'Right Triangles and Trigonometry': '직각삼각형·삼각함수',
+  'Circles': '원',
+  'Area and Volume': '넓이·부피',
+};
+
+function toKoreanSkill(skill: string): string {
+  return SKILL_KO[skill] ?? skill;
+}
 
 function toKSTDate(isoStr: string): string {
   const d = new Date(isoStr);
@@ -49,28 +84,64 @@ async function generateStudyHallNarrative(stats: {
   durationMinutes: number; totalProblems: number; correctCount: number;
   accuracy: number; skills: StudyHallSkill[];
 }): Promise<string> {
-  const skillLines = stats.skills.sort((a, b) => b.total - a.total).slice(0, 4)
-    .map(s => { const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0; return `${s.skill}: ${s.correct}/${s.total}문항 (${acc}%)`; })
+  const skillLines = [...stats.skills].sort((a, b) => b.total - a.total).slice(0, 4)
+    .map(s => {
+      const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+      return `${toKoreanSkill(s.skill)}: ${s.correct}/${s.total}문항 (${acc}%)`;
+    })
     .join(' | ');
-  const weakestSkill = stats.skills.length > 0
-    ? [...stats.skills].sort((a, b) => (a.total > 0 ? a.correct / a.total : 1) - (b.total > 0 ? b.correct / b.total : 1))[0]
+
+  // 동점일 때 total이 많은 쪽을 취약으로 선택 (stable)
+  const weakestSkill = stats.skills.length > 1
+    ? [...stats.skills].sort((a, b) => {
+        const ra = a.total > 0 ? a.correct / a.total : 1;
+        const rb = b.total > 0 ? b.correct / b.total : 1;
+        return ra !== rb ? ra - rb : b.total - a.total;
+      })[0]
     : null;
+
   const volumeCtx = stats.totalProblems < 15 ? '짧은 연습 세션' : stats.totalProblems < 40 ? '보통 세션' : '집중 세션';
-  const perfCtx = stats.accuracy >= 85 ? '우수한 성취' : stats.accuracy >= 70 ? '안정적인 수준' : stats.accuracy >= 50 ? '보완이 필요한 구간' : '집중 분석이 필요한 상태';
+  const perfCtx = stats.accuracy >= 85 ? '우수한 성취' : stats.accuracy >= 70 ? '안정적인 수준' : stats.accuracy >= 50 ? '보완이 필요한 구간' : '기초 강화가 필요한 단계';
+  const isShortSession = stats.totalProblems < 15 || stats.skills.length === 0;
+
   const userContent = [
     `학습 시간: ${stats.durationMinutes}분 / ${volumeCtx} / 총 ${stats.totalProblems}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
     skillLines ? `스킬별 성취: ${skillLines}` : '',
-    weakestSkill && stats.skills.length > 1 ? `가장 취약한 스킬: ${weakestSkill.skill} (${weakestSkill.correct}/${weakestSkill.total}문항)` : '',
+    weakestSkill ? `가장 취약한 스킬: ${toKoreanSkill(weakestSkill.skill)} (${weakestSkill.correct}/${weakestSkill.total}문항)` : '',
   ].filter(Boolean).join('\n');
+
+  const sentenceGuide = isShortSession
+    ? '짧은 연습 세션이거나 스킬 데이터가 없으므로 2문장으로 작성한다.'
+    : '3문장으로 작성한다.';
+
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
-      { role: 'system', content: `SAT 학원 코치. 스터디홀 학습 데이터를 분석해 학부모에게 보내는 오늘의 리포트를 3문장으로 작성한다.\n작성 원칙:\n- 숫자를 나열하는 게 아니라 그 숫자가 의미하는 학습 상태를 해석할 것\n- 정답률 톤: ≥85% → 강점·성취 강조 / 70~84% → 잘한 점과 보완점 균형 / 50~69% → 개선 방향 구체적 제시 / <50% → 어떤 유형이 흔들리는지 명확히 지목\n- 취약 스킬이 있으면 반드시 그 스킬 이름을 문장에 포함\n- 문제 볼륨(짧은 연습 vs 집중 세션)이 드러나도록 서술\n- 매번 다른 문장 구조로 시작할 것\n- 마지막 문장은 다음 수업에서의 구체적 보완 액션` },
+      {
+        role: 'system',
+        content: [
+          `SAT 학원 코치. 스터디홀 학습 데이터를 분석해 학부모에게 보내는 오늘의 리포트를 작성한다. ${sentenceGuide}`,
+          '작성 원칙:',
+          '- 숫자를 나열하는 게 아니라 그 숫자가 의미하는 학습 상태를 해석할 것',
+          '- 정답률 톤: ≥85% → 강점·성취 강조 / 70~84% → 잘한 점과 보완점 균형 / 50~69% → 개선 방향 구체적 제시 / <50% → 흔들리는 유형을 지목하되 격려 톤 유지',
+          '- 취약 스킬이 있으면 반드시 그 스킬 이름을 문장에 포함',
+          '- 문제 볼륨(짧은 연습 vs 집중 세션)이 드러나도록 서술',
+          '- 매번 다른 문장 구조로 시작할 것',
+          '- 마지막 문장은 다음 수업에서의 구체적 보완 액션',
+        ].join('\n'),
+      },
       { role: 'user', content: userContent },
     ],
     max_tokens: 320, temperature: 0.3,
   });
   return res.choices[0]?.message?.content?.trim() ?? '';
+}
+
+function inferDomainFromLessons(lessons: TestCenterLesson[]): string | undefined {
+  const titles = lessons.map(l => l.title?.toLowerCase() ?? '').join(' ');
+  if (/math/.test(titles)) return 'Math';
+  if (/reading|writing|rw/.test(titles)) return 'RW';
+  return undefined;
 }
 
 async function generateTestCenterNarrative(stats: {
@@ -79,25 +150,52 @@ async function generateTestCenterNarrative(stats: {
 }): Promise<string> {
   const accuracy = stats.totalProblems > 0 ? Math.round((stats.totalScore / stats.totalProblems) * 100) : 0;
   const perfCtx = accuracy >= 85 ? '우수' : accuracy >= 70 ? '양호' : '보완 필요';
-  const lessonLines = stats.lessons.map((l, i) => { const pct = l.total > 0 ? Math.round((l.score / l.total) * 100) : 0; return `${l.title ?? `Module ${i + 1}`}: ${l.score}/${l.total} (${pct}%)`; }).join(' | ');
+
+  const domainLabel = stats.curriculumDomain
+    ? (stats.curriculumDomain === 'reading_and_writing' ? 'RW' : stats.curriculumDomain === 'math' ? 'Math' : stats.curriculumDomain)
+    : inferDomainFromLessons(stats.lessons);
+
+  const lessonLines = stats.lessons.map((l, i) => {
+    const pct = l.total > 0 ? Math.round((l.score / l.total) * 100) : 0;
+    return `${l.title ?? `Module ${i + 1}`}: ${l.score}/${l.total} (${pct}%)`;
+  }).join(' | ');
+
   let trendNote = '';
   if (stats.lessons.length >= 2) {
     const accs = stats.lessons.map(l => (l.total > 0 ? l.score / l.total : 0));
     const first = accs[0]; const last = accs[accs.length - 1];
-    if (last - first > 0.08) trendNote = '후반 모듈로 갈수록 성취가 올라가는 상승 흐름';
-    else if (first - last > 0.08) trendNote = '후반 모듈에서 정확도가 떨어지는 흐름';
+    if (last - first > TC_TREND_THRESHOLD) trendNote = '후반 모듈로 갈수록 성취가 올라가는 상승 흐름';
+    else if (first - last > TC_TREND_THRESHOLD) trendNote = '후반 모듈에서 정확도가 떨어지는 흐름';
     else trendNote = '모듈 간 일관된 성취';
   }
+
+  const isInfoPoor = !stats.curriculumTitle && stats.lessons.length <= 1;
+  const sentenceGuide = isInfoPoor
+    ? '커리큘럼 정보가 부족하므로 2문장으로 작성한다.'
+    : '3문장으로 작성한다.';
+
   const userContent = [
-    stats.curriculumTitle ? `테스트: ${stats.curriculumTitle}${stats.curriculumDomain ? ` (${stats.curriculumDomain === 'reading_and_writing' ? 'RW' : stats.curriculumDomain === 'math' ? 'Math' : stats.curriculumDomain})` : ''}` : '',
+    stats.curriculumTitle ? `테스트: ${stats.curriculumTitle}${domainLabel ? ` (${domainLabel})` : ''}` : '',
     `총점: ${stats.totalScore}/${stats.totalProblems} (${accuracy}%) [${perfCtx}]`,
     lessonLines ? `모듈별: ${lessonLines}` : '',
     trendNote ? `흐름: ${trendNote}` : '',
+    `전체 평균 정답률: ${accuracy}% (이보다 10%p 이상 낮은 모듈을 약한 모듈로 간주)`,
   ].filter(Boolean).join('\n');
+
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
-      { role: 'system', content: `SAT 학원 코치. 테스트 센터 결과를 분석해 학부모에게 3문장으로 전달한다.\n작성 원칙:\n- 전체 정확도만 보지 말고 모듈 간 흐름(상승·유지·하락)을 해석\n- 약한 모듈이 있으면 그 모듈을 구체적으로 지목\n- 커리큘럼 제목이 있으면 반드시 언급\n- 마지막 문장은 다음 수업에서 어떤 파트를 리뷰할지로 마무리` },
+      {
+        role: 'system',
+        content: [
+          `SAT 학원 코치. 테스트 센터 결과를 분석해 학부모에게 전달한다. ${sentenceGuide}`,
+          '작성 원칙:',
+          '- 전체 정확도만 보지 말고 모듈 간 흐름(상승·유지·하락)을 해석',
+          '- 전체 평균 정답률보다 10%p 이상 낮은 모듈이 있으면 그 모듈을 구체적으로 지목',
+          '- 커리큘럼 제목이 있으면 반드시 언급',
+          '- 마지막 문장은 다음 수업에서 어떤 파트를 리뷰할지로 마무리',
+        ].join('\n'),
+      },
       { role: 'user', content: userContent },
     ],
     max_tokens: 350, temperature: 0.3,
