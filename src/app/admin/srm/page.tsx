@@ -2,6 +2,7 @@
 import { srmFetch } from './lib/srm-fetch';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { DayTabs, getKstDateStr } from './components/DayTabs';
 import { UnifiedTimeline } from './components/UnifiedTimeline';
 import { AlertSection } from './components/AlertSection';
@@ -71,8 +72,15 @@ function collectRelatedStudents(
 }
 
 export default function SrmPage() {
+  const searchParams = useSearchParams();
+  const urlDate = searchParams.get('date');
+  const urlEventId = searchParams.get('eventId');
+
   const [mainTab, setMainTab] = useState<MainTab>('queue');
-  const [selectedDate, setSelectedDate] = useState(() => getKstDateStr(0));
+  const [selectedDate, setSelectedDate] = useState(() => {
+    if (urlDate && /^\d{4}-\d{2}-\d{2}$/.test(urlDate)) return urlDate;
+    return getKstDateStr(0);
+  });
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
   const [alerts, setAlerts] = useState<AlertsResponse | null>(null);
   const [scheduleLoading, setScheduleLoading] = useState(true);
@@ -154,6 +162,22 @@ export default function SrmPage() {
       }
     });
   }, [mainTab]);
+
+  useEffect(() => {
+    if (!urlEventId || !schedule) return;
+    const allEvents = [
+      ...(schedule.today.coachRoom.map((e) => ({ ...e, eventType: 'coachRoom' as const, day: 'today' as const }))),
+      ...(schedule.today.studyHall.map((e) => ({ ...e, eventType: 'studyHall' as const, day: 'today' as const }))),
+      ...(schedule.tomorrow.coachRoom.map((e) => ({ ...e, eventType: 'coachRoom' as const, day: 'tomorrow' as const }))),
+      ...(schedule.tomorrow.studyHall.map((e) => ({ ...e, eventType: 'studyHall' as const, day: 'tomorrow' as const }))),
+    ];
+    const target = allEvents.find((e) => e.id === urlEventId);
+    if (!target) return;
+    const startsAtKst = new Date(target.startsAt).toLocaleTimeString('ko-KR', {
+      timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    setSelectedEvent({ ...target, startsAtKst });
+  }, [schedule, urlEventId]);
 
   const handleLanguageChange = (sfv2ProfileId: string, lang: 'ko' | 'en') => {
     setStudentLanguages((prev) => new Map(prev).set(sfv2ProfileId, lang));
@@ -250,6 +274,7 @@ export default function SrmPage() {
             onStudentClick={handleScheduleStudentClick}
             onCoachClick={handleCoachClick}
             onEventClick={setSelectedEvent}
+            highlightEventId={urlEventId ?? undefined}
           />
 
           <AlertSection

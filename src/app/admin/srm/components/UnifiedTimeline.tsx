@@ -1,7 +1,7 @@
 'use client';
 import { srmFetch } from '../lib/srm-fetch';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Copy, Check, Crown, AlertTriangle } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
@@ -197,6 +197,7 @@ interface Props {
   onStudentClick: (student: StudentClickArg) => void;
   onCoachClick: (coach: CoachClickArg) => void;
   onEventClick: (ev: TaggedEvent & { startsAtKst: string }) => void;
+  highlightEventId?: string;
 }
 
 export function UnifiedTimeline({
@@ -214,11 +215,18 @@ export function UnifiedTimeline({
   onStudentClick,
   onCoachClick,
   onEventClick,
+  highlightEventId,
 }: Props) {
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
 
   const events = mergeAndSort(todayCoachRoom, todayStudyHall, tomorrowCoachRoom, tomorrowStudyHall);
+
+  useEffect(() => {
+    if (!highlightEventId) return;
+    const el = document.querySelector(`[data-event-id="${highlightEventId}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlightEventId, events.length]);
   const totalCount = events.length;
 
   const handleCopy = async (ev: TaggedEvent, lang: 'ko' | 'en') => {
@@ -264,13 +272,16 @@ export function UnifiedTimeline({
     const alreadyLogged = !!(loggedEventIds?.has(ev.id));
     const hasIssue = !!(issueEventIds?.has(ev.id));
     const alreadySent = copiedKo || copiedEn || alreadyLogged;
+    const isHighlighted = ev.id === highlightEventId;
 
     const msgPreview = ev.eventType === 'studyHall'
       ? buildStudyHallCopyMessage(ev, ev.day === 'tomorrow')
       : buildCopyMessage(ev, ev.day === 'tomorrow');
 
     const isTomorrow = ev.day === 'tomorrow';
-    const rowClass = alreadySent
+    const rowClass = isHighlighted
+      ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-400 hover:bg-blue-100'
+      : alreadySent
       ? 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
       : hasIssue
       ? 'border-orange-200 bg-orange-50 hover:bg-orange-100'
@@ -283,6 +294,7 @@ export function UnifiedTimeline({
     return (
       <div
         key={ev.id}
+        data-event-id={ev.id}
         onClick={() => onEventClick({ ...ev, startsAtKst: kstTime })}
         className={`flex items-stretch gap-3 px-3 py-3 rounded-lg border text-sm group cursor-pointer transition-colors ${rowClass}`}
       >

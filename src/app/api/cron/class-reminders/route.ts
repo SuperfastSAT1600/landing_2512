@@ -72,6 +72,7 @@ async function fetchEventsInWindow(from: string, to: string): Promise<ClassRemin
       id: ev.id,
       type: ev.category as 'coach_room' | 'study_hall',
       startsAt: ev.starts_at,
+      kstDate: new Date(ev.starts_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
       students: [],
       coaches: [],
     }));
@@ -102,6 +103,7 @@ async function fetchEventsInWindow(from: string, to: string): Promise<ClassRemin
       id: ev.id,
       type: ev.category as 'coach_room' | 'study_hall',
       startsAt: ev.starts_at,
+      kstDate: new Date(ev.starts_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
       students: parts.students,
       coaches: parts.coaches,
     };

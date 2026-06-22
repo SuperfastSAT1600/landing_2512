@@ -165,9 +165,12 @@ export interface ClassReminderEvent {
   id: string;
   type: 'coach_room' | 'study_hall';
   startsAt: string;
+  kstDate: string;
   students: string[];
   coaches: string[];
 }
+
+const SRM_BASE_URL = 'https://tutoring.superfastsat.com/admin/srm';
 
 export async function notifyClassReminder(
   windowLabel: '45분 전' | '15분 전',
@@ -188,6 +191,7 @@ export async function notifyClassReminder(
     });
     const studentText = ev.students.length > 0 ? ev.students.join(', ') : '(학생 없음)';
     const coachText = ev.coaches.length > 0 ? ev.coaches.join(', ') : '(코치 없음)';
+    const deepLink = `${SRM_BASE_URL}?date=${ev.kstDate}&eventId=${ev.id}`;
 
     return [
       { type: 'divider' },
@@ -199,6 +203,12 @@ export async function notifyClassReminder(
           { type: 'mrkdwn', text: `*학생*\n${studentText}` },
           { type: 'mrkdwn', text: `*코치*\n${coachText}` },
         ],
+        accessory: {
+          type: 'button',
+          text: { type: 'plain_text', text: '확인 →', emoji: true },
+          url: deepLink,
+          style: 'primary',
+        },
       },
     ];
   });
@@ -209,18 +219,6 @@ export async function notifyClassReminder(
       text: { type: 'plain_text', text: header, emoji: true },
     },
     ...eventBlocks,
-    { type: 'divider' },
-    {
-      type: 'actions',
-      elements: [
-        {
-          type: 'button',
-          text: { type: 'plain_text', text: 'SRM 확인 →', emoji: true },
-          url: 'https://tutoring.superfastsat.com/admin/srm',
-          style: 'primary',
-        },
-      ],
-    },
   ];
 
   await postToSrmOpsChannel(blocks, header);
