@@ -60,7 +60,10 @@ export function useMemoSection({ studentId, adminKey, userName, setTimeline, onU
       const json = await res.json();
       if (res.ok && json.data) {
         const newEntry: ConsultationEntry = json.data;
-        setTimeline(prev => [newEntry, ...prev]);
+        // 재진입 시(DB append 순서)와 동일하게 created_at 오름차순으로 정렬해 표시
+        setTimeline(prev => [...prev, newEntry].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        ));
         setMemoText('');
         clearAttachments?.();
         onUpdate(studentId, { last_contacted_at: new Date().toISOString() });
