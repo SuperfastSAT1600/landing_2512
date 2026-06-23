@@ -166,10 +166,13 @@ export async function PATCH(
 
   const updatePayload: Record<string, unknown> = { reactivation_log: updatedLog };
 
-  // 재활성화 성공 시 → 다시 활성 1단계로 복귀
+  // 재활성화 성공 시 → 다시 활성 1단계로 복귀 + 재시도 전략 배정 해제(최초세일즈 칸반 복귀)
   if (outcome === 'reactivated') {
     updatePayload.lead_status = 'active';
     updatePayload.funnel_stage = '1';
+    updatePayload.retry_strategy_id = null;
+    updatePayload.retry_stage = null;
+    updatePayload.retry_assigned_at = null;
   }
 
   const { data: savedData, error: saveError } = await supabaseAdmin
