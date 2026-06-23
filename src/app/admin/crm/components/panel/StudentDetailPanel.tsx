@@ -191,7 +191,13 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             onStartReactivation={funnelHook.handleStartReactivation}
             onLeadStatusChange={(status) => {
               if (status === 'active') {
-                funnelHook.handleLeadStatusChange('active', { funnel_stage: '1' });
+                // 재시도 세일즈에서 활성화 시 최초세일즈 칸반으로 이동하도록 retry 필드 초기화
+                funnelHook.handleLeadStatusChange('active', {
+                  funnel_stage: '1',
+                  retry_strategy_id: null,
+                  retry_stage: null,
+                  retry_assigned_at: null,
+                });
               } else {
                 funnelHook.handleLeadStatusChange('inactive');
               }
