@@ -152,8 +152,8 @@ export function StrategyAgentChat({ adminKey }: Props) {
         <div className="flex items-center gap-2">
           <Sparkles size={17} className="text-indigo-500 shrink-0" />
           <div>
-            <h3 className="text-base font-bold text-gray-800">전략 설계 AI</h3>
-            <p className="text-[13px] text-gray-500 flex items-center gap-1">
+            <h3 className="text-lg font-bold text-gray-800">전략 설계 AI</h3>
+            <p className="text-sm text-gray-500 flex items-center gap-1">
               <Globe size={11} className="text-indigo-400" />
               세계적 세일즈 기법 · 웹 검색 · 우리 상담 기록을 바탕으로 새 전략 설계
             </p>
@@ -185,7 +185,7 @@ export function StrategyAgentChat({ adminKey }: Props) {
         {messages.length === 0 ? (
           <div className="flex items-start gap-2 rounded-lg bg-indigo-50/60 border border-indigo-100 px-3 py-2.5">
             <Sparkles size={16} className="text-indigo-500 mt-0.5 shrink-0" />
-            <div className="text-sm leading-relaxed text-indigo-900/80">
+            <div className="text-base leading-relaxed text-indigo-900/80">
               <p className="mb-1">
                 결제 전환율을 높일 새로운 세일즈 전략을 함께 설계합니다. 전 세계 비즈니스·세일즈
                 대가들의 프레임워크와 인터넷 최신 사례, 그리고 우리 실제 상담·전환·이탈 기록을 함께
@@ -212,7 +212,7 @@ export function StrategyAgentChat({ adminKey }: Props) {
                 className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}
               >
                 <div
-                  className={`max-w-[88%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[88%] rounded-lg px-3.5 py-2.5 text-base leading-relaxed whitespace-pre-wrap ${
                     m.role === 'user' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800'
                   }`}
                 >
@@ -236,7 +236,7 @@ export function StrategyAgentChat({ adminKey }: Props) {
             onKeyDown={handleKeyDown}
             rows={2}
             placeholder="설계하고 싶은 전략이나 풀고 싶은 문제를 입력하세요…"
-            className="flex-1 resize-none text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="flex-1 resize-none text-base border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           />
           <button
             onClick={send}
