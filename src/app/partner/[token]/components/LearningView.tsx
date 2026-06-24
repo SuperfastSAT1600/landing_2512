@@ -14,7 +14,6 @@ import { StudentDetailPanel } from './StudentDetailPanel';
 
 const DEFAULT_DATE = '2026-06-16';
 
-const AVATAR_HEX = ['#6366f1', '#a855f7', '#3b82f6', '#f43f5e'];
 
 // ── Notion data-table-cell tokens ────────────────────────────────────────────
 
@@ -277,34 +276,23 @@ interface SelectedStudent { studentToken: string; studentName: string; }
 
 function StudentHeaderRow({
   students,
-  startIndex,
   onSelect,
 }: {
   students: StudentDayResult[];
-  startIndex: number;
   onSelect: (s: SelectedStudent) => void;
 }) {
   return (
     <tr>
       <th style={{ ...TH, width: 136 }} />
-      {students.map((s, i) => {
+      {students.map((s) => {
         const hasAny = s.studyHall || s.testCenter.length > 0 || s.vocab;
         return (
           <th key={s.name} scope="col" style={{ ...TH, textAlign: 'center', minWidth: 180 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: AVATAR_HEX[(startIndex + i) % AVATAR_HEX.length],
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: 12 }}>
-                  {s.name.charAt(0)}
-                </span>
-              </div>
               {s.portalToken ? (
                 <button
                   onClick={() => onSelect({ studentToken: s.portalToken!, studentName: s.name })}
-                  style={{ fontSize: 13, fontWeight: 700, color: '#0075de', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  style={{ fontSize: 13, fontWeight: 700, color: '#0075de', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 3 }}
                 >
                   {s.name}
                 </button>
@@ -339,7 +327,7 @@ function DailyPivotTable({
     <div style={{ overflowX: 'auto', opacity: faded ? 0.55 : 1 }}>
       <table style={{ borderCollapse: 'collapse', minWidth: students.length * 180 + 136 }}>
         <thead>
-          <StudentHeaderRow students={students} startIndex={startIndex} onSelect={onSelect} />
+          <StudentHeaderRow students={students} onSelect={onSelect} />
         </thead>
         <tbody>
           <tr>
@@ -386,7 +374,7 @@ function CumulativePivotTable({
     <div style={{ overflowX: 'auto', opacity: faded ? 0.55 : 1 }}>
       <table style={{ borderCollapse: 'collapse', minWidth: students.length * 180 + 136 }}>
         <thead>
-          <StudentHeaderRow students={students} startIndex={startIndex} onSelect={onSelect} />
+          <StudentHeaderRow students={students} onSelect={onSelect} />
         </thead>
         <tbody>
           <tr>
