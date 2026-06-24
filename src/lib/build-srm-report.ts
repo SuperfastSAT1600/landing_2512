@@ -7,9 +7,17 @@ import type {
   TestCenterDay, TestCenterLesson, DailyReportDay, VocaDay,
 } from '@/types/srm-portal';
 
+type SkillCrossRef = {
+  skill: string;
+  shAccuracy: number;
+  tcAccuracy: number | null;
+  gap: number | null;
+};
+
 const VOCAB_MASTER_BOX = 5;
 const VOCAB_MAX_MISSED = 6;
 const TC_TREND_THRESHOLD = 0.12;
+const COACH_FEEDBACK_MAX_CHARS = 500;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -80,10 +88,49 @@ async function setCachedNarrative(profileId: string, date: string, itemType: str
     .match({ profile_id: profileId, report_date: date, item_type: itemType, input_hash: inputHash });
 }
 
-async function generateStudyHallNarrative(stats: {
-  durationMinutes: number; totalProblems: number; correctCount: number;
-  accuracy: number; skills: StudyHallSkill[];
-}): Promise<string> {
+async function humanizeNarrative(text: string): Promise<string> {
+  const res = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: [
+          '당신은 한국어 윤문 전문가입니다.',
+          '입력된 학부모 리포트 문장에서 AI 특유의 표현을 사람이 쓴 코치 언어로 교체합니다.',
+          '수치·고유명사·스킬명·날짜는 절대 변경하지 않습니다.',
+          '문장 수를 줄이거나 의미를 바꾸지 않습니다. 격식체(합쇼체)를 유지합니다.',
+          '',
+          '교정 규칙 (S1 우선, S2 선택):',
+          '- "~인 것입니다/~한 것입니다" → 평서형으로 ("~합니다", "~입니다")',
+          '- "~할 수 있습니다" 남발 → 단언으로 ("~합니다")',
+          '- "~로 보입니다/~인 듯합니다" → 단언 가능하면 단언',
+          '- "이를 통해/이로 인해" → "~로", "~해서" 등으로 교체',
+          '- "~에 대해(서)" 불필요한 경우 → 목적격 직결',
+          '- "~을 가지고 있습니다" → 형용사·동사로 ("~이 강합니다", "~을 보이고 있습니다")',
+          '- "결론적으로/따라서/이를 통해/정리하면" 문두 → 삭제 또는 본문에 녹임',
+          '- "주목할 만합니다/시사하는 바가 큽니다" → 구체 서술로',
+          '- "본질적으로/핵심적으로" → 삭제',
+          '- "~이라는 점에서" 반복 → "~서", "~기 때문에"',
+          '- 동일 종결어미 "~다/~습니다"가 3문장 연속이면 1문장 변형 ("~었습니다", "~ㄹ 것입니다", "~하고 있습니다")',
+          '- "또한/따라서/아울러/게다가" 문두 접속사 → 삭제 후 자연스럽게 이음',
+          '',
+          '변경 최소화 원칙: 교정이 필요 없는 표현은 그대로 둡니다.',
+          '출력: 윤문된 텍스트만 반환합니다. 설명·주석 없이.',
+        ].join('\n'),
+      },
+      { role: 'user', content: text },
+    ],
+    max_tokens: 400, temperature: 0.2,
+  });
+  const result = res.choices[0]?.message?.content?.trim() ?? text;
+  return result.length > 0 ? result : text;
+}
+
+async function generateStudyHallNarrative(
+  stats: { durationMinutes: number; totalProblems: number; correctCount: number; accuracy: number; skills: StudyHallSkill[] },
+  tcCrossRef?: SkillCrossRef[],
+  coachFeedback?: string,
+): Promise<string> {
   const skillLines = [...stats.skills].sort((a, b) => b.total - a.total).slice(0, 4)
     .map(s => {
       const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
@@ -102,17 +149,36 @@ async function generateStudyHallNarrative(stats: {
 
   const volumeCtx = stats.totalProblems < 15 ? '짧은 연습 세션' : stats.totalProblems < 40 ? '보통 세션' : '집중 세션';
   const perfCtx = stats.accuracy >= 85 ? '우수한 성취' : stats.accuracy >= 70 ? '안정적인 수준' : stats.accuracy >= 50 ? '보완이 필요한 구간' : '기초 강화가 필요한 단계';
+
+  const hasCrossRef = (tcCrossRef?.length ?? 0) > 0;
   const isShortSession = stats.totalProblems < 15 || stats.skills.length === 0;
 
+  const crossRefBlock = hasCrossRef ? [
+    '[테스트센터 교차 — 최근 결과]',
+    '동일 영역 검증 정답률:',
+    ...tcCrossRef!.map(ref => {
+      const gapLabel = ref.tcAccuracy === null
+        ? '테스트센터 기록 없음'
+        : ref.gap !== null && ref.gap > 10 ? '압박 하 적용 훈련 필요'
+        : '±10%p 이내 → 안정적';
+      const tcStr = ref.tcAccuracy !== null ? `테스트센터 ${ref.tcAccuracy}%` : '테스트센터 기록 없음';
+      const gapStr = ref.gap !== null ? ` / 격차 ${ref.gap > 0 ? '+' : ''}${ref.gap}%p → ${gapLabel}` : ` → ${gapLabel}`;
+      return `- ${ref.skill}: 스터디홀 ${ref.shAccuracy}% / ${tcStr}${gapStr}`;
+    }),
+  ].join('\n') : '';
+
   const userContent = [
+    '[오늘 스터디홀]',
     `학습 시간: ${stats.durationMinutes}분 / ${volumeCtx} / 총 ${stats.totalProblems}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
     skillLines ? `스킬별 성취: ${skillLines}` : '',
     weakestSkill ? `가장 취약한 스킬: ${toKoreanSkill(weakestSkill.skill)} (${weakestSkill.correct}/${weakestSkill.total}문항)` : '',
+    hasCrossRef ? `\n${crossRefBlock}` : '',
+    coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
   ].filter(Boolean).join('\n');
 
-  const sentenceGuide = isShortSession
-    ? '짧은 연습 세션이거나 스킬 데이터가 없으므로 2문장으로 작성한다.'
-    : '3문장으로 작성한다.';
+  const sentenceGuide = isShortSession && !hasCrossRef && !coachFeedback
+    ? '2문장으로 작성합니다.'
+    : '3문장으로 작성합니다.';
 
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -120,21 +186,30 @@ async function generateStudyHallNarrative(stats: {
       {
         role: 'system',
         content: [
-          `SAT 학원 코치. 스터디홀 학습 데이터를 분석해 학부모에게 보내는 오늘의 리포트를 작성한다. ${sentenceGuide}`,
-          '작성 원칙:',
-          '- 숫자를 나열하는 게 아니라 그 숫자가 의미하는 학습 상태를 해석할 것',
-          '- 정답률 톤: ≥85% → 강점·성취 강조 / 70~84% → 잘한 점과 보완점 균형 / 50~69% → 개선 방향 구체적 제시 / <50% → 흔들리는 유형을 지목하되 격려 톤 유지',
-          '- 취약 스킬이 있으면 반드시 그 스킬 이름을 문장에 포함',
-          '- 문제 볼륨(짧은 연습 vs 집중 세션)이 드러나도록 서술',
-          '- 매번 다른 문장 구조로 시작할 것',
-          '- 마지막 문장은 다음 수업에서의 구체적 보완 액션',
+          '당신은 SuperfastSAT 코치입니다.',
+          '학생의 스터디홀 학습 데이터를 분석해 학부모에게 전달하는 리포트를 작성합니다.',
+          '',
+          'SuperfastSAT의 코칭 철학:',
+          '- SAT는 예측 가능한 패턴을 가진 시스템입니다. 코치는 정답률이 아니라 오류 유형으로 학습 상태를 진단합니다.',
+          '- 스터디홀은 연습 환경입니다. 테스트센터 결과와 비교했을 때 격차가 크면 연습은 됐지만 압박 하 적용이 안 된 것입니다.',
+          '- 코치가 제시한 방향이 있으면 리포트의 마지막은 그 계획을 학부모 언어로 전달합니다.',
+          '',
+          '작성 규칙:',
+          '- 숫자를 나열하지 않습니다. 그 숫자가 의미하는 학습 상태를 해석합니다.',
+          '- 정답률 톤: 85% 이상 → 강점 강조 / 70~84% → 잘한 점과 보완점 균형 / 50~69% → 개선 방향 제시 / 50% 미만 → 흔들리는 부분을 지목하되 격려 톤 유지',
+          '- 취약 스킬이 있으면 반드시 그 스킬 이름을 문장에 포함합니다.',
+          '- [테스트센터 교차] 항목이 있으면 연습-검증 격차를 반드시 해석합니다.',
+          '- [코치 피드백] 항목이 있으면 마지막 문장은 반드시 그 피드백에 근거한 다음 수업 방향입니다.',
+          '- [코치 피드백]이 없으면 마지막 문장은 오늘 데이터에서 도출한 방향입니다.',
+          `- ${sentenceGuide}`,
         ].join('\n'),
       },
       { role: 'user', content: userContent },
     ],
-    max_tokens: 320, temperature: 0.3,
+    max_tokens: 350, temperature: 0.3,
   });
-  return res.choices[0]?.message?.content?.trim() ?? '';
+  const raw = res.choices[0]?.message?.content?.trim() ?? '';
+  return raw ? await humanizeNarrative(raw) : '';
 }
 
 function inferDomainFromLessons(lessons: TestCenterLesson[]): string | undefined {
@@ -144,10 +219,11 @@ function inferDomainFromLessons(lessons: TestCenterLesson[]): string | undefined
   return undefined;
 }
 
-async function generateTestCenterNarrative(stats: {
-  curriculumTitle?: string; curriculumDomain?: string;
-  totalScore: number; totalProblems: number; lessons: TestCenterLesson[];
-}): Promise<string> {
+async function generateTestCenterNarrative(
+  stats: { curriculumTitle?: string; curriculumDomain?: string; totalScore: number; totalProblems: number; lessons: TestCenterLesson[] },
+  shCrossRef?: SkillCrossRef[],
+  coachFeedback?: string,
+): Promise<string> {
   const accuracy = stats.totalProblems > 0 ? Math.round((stats.totalScore / stats.totalProblems) * 100) : 0;
   const perfCtx = accuracy >= 85 ? '우수' : accuracy >= 70 ? '양호' : '보완 필요';
 
@@ -169,18 +245,37 @@ async function generateTestCenterNarrative(stats: {
     else trendNote = '모듈 간 일관된 성취';
   }
 
-  const isInfoPoor = !stats.curriculumTitle && stats.lessons.length <= 1;
-  const sentenceGuide = isInfoPoor
-    ? '커리큘럼 정보가 부족하므로 2문장으로 작성한다.'
-    : '3문장으로 작성한다.';
+  const hasCrossRef = (shCrossRef?.length ?? 0) > 0;
+  const isInfoPoor = !stats.curriculumTitle && stats.lessons.length <= 1 && !hasCrossRef;
+
+  const crossRefBlock = hasCrossRef ? [
+    '[스터디홀 교차 — 최근 결과]',
+    '오늘 테스트 영역의 연습 기록:',
+    ...shCrossRef!.map(ref => {
+      const gapLabel = ref.shAccuracy === 0
+        ? '스터디홀 기록 없음 → 연습 없이 검증에 노출'
+        : ref.gap !== null && ref.gap > 10 ? '압박 하 적용 훈련 필요'
+        : '안정적';
+      const gapStr = ref.gap !== null && ref.shAccuracy > 0 ? ` / 격차 ${ref.gap > 0 ? '+' : ''}${ref.gap}%p → ${gapLabel}` : ` → ${gapLabel}`;
+      const tcStr = ref.tcAccuracy !== null ? `테스트센터 ${ref.tcAccuracy}%` : '테스트센터 기록 없음';
+      return `- ${ref.skill}: 스터디홀 ${ref.shAccuracy}% / ${tcStr}${gapStr}`;
+    }),
+  ].join('\n') : '';
 
   const userContent = [
+    '[오늘 테스트센터]',
     stats.curriculumTitle ? `테스트: ${stats.curriculumTitle}${domainLabel ? ` (${domainLabel})` : ''}` : '',
     `총점: ${stats.totalScore}/${stats.totalProblems} (${accuracy}%) [${perfCtx}]`,
     lessonLines ? `모듈별: ${lessonLines}` : '',
     trendNote ? `흐름: ${trendNote}` : '',
-    `전체 평균 정답률: ${accuracy}% (이보다 10%p 이상 낮은 모듈을 약한 모듈로 간주)`,
+    `전체 평균 ${accuracy}% 기준 — 10%p 이상 낮은 모듈을 약한 모듈로 판정`,
+    hasCrossRef ? `\n${crossRefBlock}` : '',
+    coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
   ].filter(Boolean).join('\n');
+
+  const sentenceGuide = isInfoPoor
+    ? '2문장으로 작성합니다.'
+    : '3문장으로 작성합니다.';
 
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -188,40 +283,80 @@ async function generateTestCenterNarrative(stats: {
       {
         role: 'system',
         content: [
-          `SAT 학원 코치. 테스트 센터 결과를 분석해 학부모에게 전달한다. ${sentenceGuide}`,
-          '작성 원칙:',
-          '- 전체 정확도만 보지 말고 모듈 간 흐름(상승·유지·하락)을 해석',
-          '- 전체 평균 정답률보다 10%p 이상 낮은 모듈이 있으면 그 모듈을 구체적으로 지목',
-          '- 커리큘럼 제목이 있으면 반드시 언급',
-          '- 마지막 문장은 다음 수업에서 어떤 파트를 리뷰할지로 마무리',
+          '당신은 SuperfastSAT 코치입니다.',
+          '학생의 테스트센터 결과를 분석해 학부모에게 전달하는 리포트를 작성합니다.',
+          '',
+          'SuperfastSAT의 코칭 철학:',
+          '- 테스트센터는 검증 환경입니다. 스터디홀 연습과 비교했을 때 격차가 크면 연습은 됐지만 실전 적용이 안 된 것입니다.',
+          '- 전체 정답률보다 모듈 간 흐름이 중요합니다. 어디서 무너지는지가 다음 수업의 방향을 결정합니다.',
+          '- 코치가 우려했던 부분이 오늘 결과에서 확인됐는지, 아니면 개선됐는지를 학부모에게 전달합니다.',
+          '',
+          '작성 규칙:',
+          '- 전체 정답률이 아니라 모듈 흐름과 무너지는 지점을 중심으로 해석합니다.',
+          '- 평균 정답률보다 10%p 이상 낮은 모듈이 있으면 그 모듈을 구체적으로 지목합니다.',
+          '- 커리큘럼 제목이 있으면 반드시 언급합니다.',
+          '- [스터디홀 교차] 항목이 있으면 연습-검증 격차를 반드시 해석합니다.',
+          '- [코치 피드백] 항목이 있으면 마지막 문장은 반드시 그 피드백에 근거한 다음 수업 방향입니다.',
+          '- [코치 피드백]이 없으면 마지막 문장은 오늘 결과에서 도출한 방향입니다.',
+          `- ${sentenceGuide}`,
         ].join('\n'),
       },
       { role: 'user', content: userContent },
     ],
-    max_tokens: 350, temperature: 0.3,
+    max_tokens: 380, temperature: 0.3,
   });
-  return res.choices[0]?.message?.content?.trim() ?? '';
+  const raw = res.choices[0]?.message?.content?.trim() ?? '';
+  return raw ? await humanizeNarrative(raw) : '';
 }
 
-async function generateVocaNarrative(stats: {
-  wordCount: number; gradedCount: number; correctCount: number;
-  accuracy: number; masteredCount: number; missedTerms: string[];
-}): Promise<string> {
+async function generateVocaNarrative(
+  stats: { wordCount: number; gradedCount: number; correctCount: number; accuracy: number; masteredCount: number; missedTerms: string[] },
+  coachFeedback?: string,
+): Promise<string> {
   const perfCtx = stats.accuracy >= 80 ? '잘 익어가는 단계' : stats.accuracy >= 60 ? '꾸준히 쌓이는 중' : stats.accuracy >= 40 ? '아직 낯선 단어가 많은 초기 단계' : '집중 반복 노출이 필요한 단계';
-  const missedLine = stats.missedTerms.length ? `복습 필요 단어(${stats.missedTerms.length}개): ${stats.missedTerms.join(', ')}` : '복습 필요 단어 없음';
+  const missedLine = stats.missedTerms.length ? `복습 필요: ${stats.missedTerms.join(', ')}` : '복습 필요: 없음';
+
   const userContent = [
-    `단어 볼륨: ${stats.wordCount}개 학습 / 채점 ${stats.gradedCount}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
-    `마스터 단어: ${stats.masteredCount}개`, missedLine,
-  ].join('\n');
+    '[오늘 단어 학습]',
+    `학습 단어: ${stats.wordCount}개 / 채점 ${stats.gradedCount}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
+    `마스터: ${stats.masteredCount}개`,
+    missedLine,
+    coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
+  ].filter(Boolean).join('\n');
+
+  const sentenceGuide = coachFeedback
+    ? '3문장으로 작성합니다.'
+    : stats.wordCount < 20 ? '2문장으로 작성합니다.' : '3문장으로 작성합니다.';
+
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
-      { role: 'system', content: `SAT 학원 코치. 하루 어휘 학습 결과를 분석해 학부모에게 3문장으로 전달한다.\n작성 원칙:\n- 단어 수(볼륨)와 정답률을 함께 해석\n- 마스터 단어가 있으면 반드시 언급\n- 마지막 문장은 다음 복습 방향으로 마무리` },
+      {
+        role: 'system',
+        content: [
+          '당신은 SuperfastSAT 코치입니다.',
+          '학생의 단어 학습 결과를 분석해 학부모에게 전달하는 리포트를 작성합니다.',
+          '',
+          'SuperfastSAT의 단어 코칭 철학:',
+          '- 단어 학습의 문제는 암기량 부족일 수도 있고, 잘못 알고 있는 방식일 수도 있습니다.',
+          '  코치 피드백이 있으면 그 판단을 따릅니다. 없으면 정답률과 볼륨으로 단계를 판단합니다.',
+          '- 정답률이 낮아도 처음 접하는 단어가 많은 학생은 암기 단계에 있는 것입니다.',
+          '- 마스터 단어가 있으면 반드시 언급합니다.',
+          '',
+          '작성 규칙:',
+          '- 단어 볼륨(노출 수)과 정답률을 함께 해석합니다.',
+          '- 마스터 단어가 있으면 반드시 언급합니다.',
+          '- [코치 피드백] 항목이 있으면 마지막 문장은 그 피드백에 근거한 다음 학습 방향입니다.',
+          '- [코치 피드백]이 없으면 마지막 문장은 복습 방향으로 마무리합니다.',
+          `- ${sentenceGuide}`,
+        ].join('\n'),
+      },
       { role: 'user', content: userContent },
     ],
-    max_tokens: 300, temperature: 0.3,
+    max_tokens: 320, temperature: 0.3,
   });
-  return res.choices[0]?.message?.content?.trim() ?? '';
+  const raw = res.choices[0]?.message?.content?.trim() ?? '';
+  return raw ? await humanizeNarrative(raw) : '';
 }
 
 export async function buildSrmReport(profileId: string): Promise<LearningReport> {
@@ -315,20 +450,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     }
   }
 
-  await Promise.all(Array.from(shByDate.entries()).map(async ([date, stats]) => {
-    const accuracy = stats.totalProblems > 0 ? Math.round((stats.correctCount / stats.totalProblems) * 100) : 0;
-    const skills = Array.from(stats.skillMap.values());
-    const cacheInput = { durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills: [...skills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })) };
-    const inputHash = hashInput(cacheInput);
-    let narrative = lookupCache(narrativeCache, date, 'study_hall', inputHash);
-    if (!narrative) {
-      narrative = stats.totalProblems > 0 ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }) : `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
-      await setCachedNarrative(profileId, date, 'study_hall', inputHash, narrative);
-    }
-    getOrCreate(date).items.push({ type: 'study_hall', durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, aiNarrative: narrative, skills: skills.length > 0 ? skills : undefined } satisfies StudyHallDay);
-  }));
-
-  // Test Center
+  // Test Center — build session map before cross-ref computation
   const tcSessionDateMap = new Map<string, string>();
   for (const s of tcSessions ?? []) tcSessionDateMap.set(s.id, toKSTDate(s.started_at));
 
@@ -345,17 +467,108 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     tcBySession.get(sid)!.lessons.push({ title: lessonId ? lessonTitleMap.get(lessonId) : undefined, score: a.score as number, total: a.total as number });
   }
 
+  // Cross-reference: domain-level accuracy aggregates
+  const RW_DOMAINS = new Set(['reading_and_writing', 'information_and_ideas', 'craft_and_structure', 'standard_english_conventions', 'expression_of_ideas']);
+  const MATH_DOMAINS = new Set(['math', 'algebra', 'advanced_math', 'problem_solving_and_data_analysis', 'geometry_and_trigonometry']);
+  const normalizeDomain = (d?: string | null) =>
+    !d ? null : RW_DOMAINS.has(d) ? 'RW' : MATH_DOMAINS.has(d) ? 'Math' : null;
+
+  const tcDomainStats = new Map<string, { correct: number; total: number }>();
+  for (const [, data] of tcBySession) {
+    const domain = normalizeDomain(data.curriculumDomain);
+    if (!domain) continue;
+    if (!tcDomainStats.has(domain)) tcDomainStats.set(domain, { correct: 0, total: 0 });
+    const s = tcDomainStats.get(domain)!;
+    for (const l of data.lessons) { s.correct += l.score; s.total += l.total; }
+  }
+
+  const shDomainStats = new Map<string, { correct: number; total: number }>();
+  for (const [, stats] of shByDate) {
+    for (const [, sk] of stats.skillMap) {
+      const domain = normalizeDomain(sk.domain);
+      if (!domain) continue;
+      if (!shDomainStats.has(domain)) shDomainStats.set(domain, { correct: 0, total: 0 });
+      const s = shDomainStats.get(domain)!;
+      s.correct += sk.correct; s.total += sk.total;
+    }
+  }
+
+  // Coach feedback: most recent daily report
+  const coachFeedback = (dailyReports ?? []).length > 0
+    ? ((dailyReports![0].report_md as string | null) ?? '').slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined
+    : undefined;
+
+  await Promise.all(Array.from(shByDate.entries()).map(async ([date, stats]) => {
+    const accuracy = stats.totalProblems > 0 ? Math.round((stats.correctCount / stats.totalProblems) * 100) : 0;
+    const skills = Array.from(stats.skillMap.values());
+
+    // Compute TC cross-ref for this SH session
+    const shDomainsToday = new Map<string, { correct: number; total: number }>();
+    for (const [, sk] of stats.skillMap) {
+      const domain = normalizeDomain(sk.domain);
+      if (!domain) continue;
+      if (!shDomainsToday.has(domain)) shDomainsToday.set(domain, { correct: 0, total: 0 });
+      const s = shDomainsToday.get(domain)!;
+      s.correct += sk.correct; s.total += sk.total;
+    }
+    const tcCrossRef: SkillCrossRef[] = Array.from(shDomainsToday.entries()).map(([domain, sh]) => {
+      const shAcc = sh.total > 0 ? Math.round(sh.correct / sh.total * 100) : 0;
+      const tcStat = tcDomainStats.get(domain);
+      const tcAcc = tcStat && tcStat.total > 0 ? Math.round(tcStat.correct / tcStat.total * 100) : null;
+      return { skill: domain, shAccuracy: shAcc, tcAccuracy: tcAcc, gap: tcAcc !== null ? shAcc - tcAcc : null };
+    });
+
+    const cacheInput = {
+      durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy,
+      skills: [...skills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })),
+      tcCrossRef, coachFeedback,
+    };
+    const inputHash = hashInput(cacheInput);
+    let narrative = lookupCache(narrativeCache, date, 'study_hall', inputHash);
+    if (!narrative) {
+      narrative = stats.totalProblems > 0
+        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }, tcCrossRef.length ? tcCrossRef : undefined, coachFeedback)
+        : `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
+      await setCachedNarrative(profileId, date, 'study_hall', inputHash, narrative);
+    }
+    getOrCreate(date).items.push({ type: 'study_hall', durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, aiNarrative: narrative, skills: skills.length > 0 ? skills : undefined } satisfies StudyHallDay);
+  }));
+
   await Promise.all(Array.from(tcBySession.entries()).map(async ([sid, data]) => {
     const date = tcSessionDateMap.get(sid)!;
     const totalScore = data.lessons.reduce((s, x) => s + x.score, 0);
     const totalProblems = data.lessons.reduce((s, x) => s + x.total, 0);
-    const cacheInput = { curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, totalScore, totalProblems, lessons: data.lessons.map(l => ({ title: l.title, score: l.score, total: l.total })) };
+
+    // Compute SH cross-ref for this TC session (infer domain from lessons if curriculum domain is null)
+    const inferredDomain = data.curriculumDomain
+      ? normalizeDomain(data.curriculumDomain)
+      : (() => {
+          const d = inferDomainFromLessons(data.lessons);
+          return d === 'RW' ? 'RW' : d === 'Math' ? 'Math' : null;
+        })();
+    const tcDomain = inferredDomain;
+    const shCrossRef: SkillCrossRef[] = [];
+    if (tcDomain) {
+      const shStat = shDomainStats.get(tcDomain);
+      const shAcc = shStat && shStat.total > 0 ? Math.round(shStat.correct / shStat.total * 100) : 0;
+      const tcAcc = totalProblems > 0 ? Math.round(totalScore / totalProblems * 100) : null;
+      shCrossRef.push({ skill: tcDomain, shAccuracy: shAcc, tcAccuracy: tcAcc, gap: shAcc > 0 && tcAcc !== null ? shAcc - tcAcc : null });
+    }
+
+    const cacheInput = {
+      curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain,
+      totalScore, totalProblems, lessons: data.lessons.map(l => ({ title: l.title, score: l.score, total: l.total })),
+      shCrossRef, coachFeedback,
+    };
     const inputHash = hashInput(cacheInput);
     let narrative: string | undefined;
     if (totalProblems > 0) {
       narrative = lookupCache(narrativeCache, date, 'test_center', inputHash) ?? undefined;
       if (!narrative) {
-        narrative = await generateTestCenterNarrative({ curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, totalScore, totalProblems, lessons: data.lessons });
+        narrative = await generateTestCenterNarrative(
+          { curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, totalScore, totalProblems, lessons: data.lessons },
+          shCrossRef.length ? shCrossRef : undefined, coachFeedback,
+        );
         await setCachedNarrative(profileId, date, 'test_center', inputHash, narrative);
       }
     }
@@ -394,11 +607,11 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     const accuracy = agg.gradedCount > 0 ? Math.round((agg.correctCount / agg.gradedCount) * 100) : 0;
     const masteredCount = agg.masteredIds.size;
     const missedTerms = [...new Set(agg.missedIds)].map(id => termMap.get(id)).filter((t): t is string => Boolean(t)).slice(0, VOCAB_MAX_MISSED);
-    const cacheInput = { wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms: [...missedTerms].sort() };
+    const cacheInput = { wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms: [...missedTerms].sort(), coachFeedback };
     const inputHash = hashInput(cacheInput);
     let narrative = lookupCache(narrativeCache, date, 'voca', inputHash);
     if (!narrative) {
-      narrative = await generateVocaNarrative({ wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms });
+      narrative = await generateVocaNarrative({ wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms }, coachFeedback);
       await setCachedNarrative(profileId, date, 'voca', inputHash, narrative);
     }
     getOrCreate(date).items.push({ type: 'voca', wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms, aiNarrative: narrative } satisfies VocaDay);
