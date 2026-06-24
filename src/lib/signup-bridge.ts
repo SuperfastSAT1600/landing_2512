@@ -13,8 +13,13 @@ import type { NextRequest } from 'next/server';
 /** Subset of the platform's RegisterStudentInput the CRM can backfill. */
 export interface SignupPrefill {
   studentName: string | null; // → platform firstName (single full name)
-  parentPhone: string | null;
-  parentTimezone: string | null;
+  /** Contact medium for parentPhone: 'phone' | 'kakao' | 'email'. The platform
+   *  only prefills the phone field when this is 'phone'. */
+  contactType: string | null;
+  parentPhone: string | null; // raw contact value (phone / kakao id / email)
+  parentTimezone: string | null; // CRM "학생 거주 시간대" — the student's timezone
+  /** 'scored' | 'never_taken' | 'dont_remember' — drives the "not sure" toggles. */
+  previousScoreStatus: string | null;
   lastScoreRw: number | null;
   lastScoreMath: number | null;
   lastTestDate: string | null; // YYYY-MM
@@ -24,8 +29,10 @@ export interface SignupPrefill {
 /** The columns this module reads off a `students` row. */
 export type StudentPrefillSource = {
   name?: string | null;
+  contact_type?: string | null;
   parent_phone?: string | null;
   parent_timezone?: string | null;
+  previous_score_status?: string | null;
   previous_rw_score?: number | null;
   previous_math_score?: number | null;
   previous_test_date?: string | null;
@@ -35,8 +42,10 @@ export type StudentPrefillSource = {
 export function mapStudentToPrefill(s: StudentPrefillSource): SignupPrefill {
   return {
     studentName: s.name ?? null,
+    contactType: s.contact_type ?? null,
     parentPhone: s.parent_phone ?? null,
     parentTimezone: s.parent_timezone ?? null,
+    previousScoreStatus: s.previous_score_status ?? null,
     lastScoreRw: s.previous_rw_score ?? null,
     lastScoreMath: s.previous_math_score ?? null,
     lastTestDate: s.previous_test_date ?? null,
