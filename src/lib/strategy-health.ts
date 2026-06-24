@@ -59,6 +59,36 @@ function relDelta(cur: number, prev: number): number | null {
   return ((cur - prev) / prev) * 100;
 }
 
+/**
+ * 실신호가 5개 미만일 때 채울 '관찰' 후보 — 임계는 안 넘었지만 상대적으로 약한 채널·단계.
+ * 배너가 LLM 유무와 무관하게 일관되게 5개를 보여주도록(폴백 시 3개로 쪼그라들지 않게) 한다. 순수.
+ */
+function watchFillers(current: CrmStatsData, existing: Signal[], need: number): Signal[] {
+  if (need <= 0) return [];
+  const flagged = new Set(existing.map((s) => s.area));
+  const taken = (...areas: string[]) => areas.some((a) => flagged.has(a));
+  const out: Signal[] = [];
+
+  // 채널: 전환율 낮은 순 (leads >= min, 컨택/전환 신호로 아직 안 잡힌 채널)
+  const chans = [...current.by_source]
+    .filter((c) => c.leads >= TH.chMinLeads && !taken(`${c.source} 채널 컨택`, `${c.source} 채널 전환`, `${c.source} 채널 관찰`))
+    .sort((a, b) => a.conversion_rate - b.conversion_rate);
+  for (const c of chans) {
+    if (out.length >= need) break;
+    out.push({ category: 'channel', area: `${c.source} 채널 관찰`, severity: 'warn', note: `컨택률 ${pct(c.contact_rate)} · 전환율 ${pct(c.conversion_rate)} (리드 ${c.leads})` });
+  }
+
+  // 단계: 진행률 낮은 순 (reached >= min, 다음 액션 있는 단계, 아직 안 잡힌 단계)
+  const stages = [...current.stage_flow]
+    .filter((f) => f.reached >= TH.stageMinReached && FUNNEL_NEXT_ACTION[f.stage as FunnelStage] && !taken(`${f.label} 단계 이탈`, `${f.label} 단계 관찰`))
+    .sort((a, b) => a.advance_rate - b.advance_rate);
+  for (const f of stages) {
+    if (out.length >= need) break;
+    out.push({ category: 'funnel', area: `${f.label} 단계 관찰`, severity: 'warn', note: `진행률 ${pct(f.advance_rate)} · ${f.reached}명 중 ${Math.max(0, f.reached - f.advanced)}명 멈춤` });
+  }
+  return out.slice(0, need);
+}
+
 export function buildHealthSnapshot(input: HealthInput): HealthSnapshot {
   const { current, previous, stalled, periodDays } = input;
   const o = current.overview;
@@ -127,8 +157,10 @@ export function buildHealthSnapshot(input: HealthInput): HealthSnapshot {
   primary.sort(bySev);
   trend.sort(bySev);
   const signals = [...primary, ...trend];
-  // weakest = 퍼널/채널/정체 우선, 없으면 추세로 폴백
-  const weakest = (primary.length > 0 ? primary : trend).slice(0, 5);
+  // weakest = 폴백/LLM 시드용 상위 5개. 실신호(퍼널·채널·정체 + 추세)를 모두 모으고,
+  // 5개 미만이면 결정론적 '관찰' 후보로 채워 배너가 항상 5개를 보여주게 한다.
+  const ranked = [...primary, ...trend];
+  const weakest = [...ranked, ...watchFillers(current, ranked, 5 - ranked.length)].slice(0, 5);
 
   // 프롬프트 주입용 텍스트 — 이번 달 인입 코호트 퍼널을 척추로
   const lines: string[] = [
