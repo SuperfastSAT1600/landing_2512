@@ -2,7 +2,7 @@
 
 import type { Editor } from '@tiptap/react';
 import {
-    Image as ImageIcon, Link2, Minus,
+    Image as ImageIcon, Link2,
     AlignLeft, AlignCenter, AlignRight, AlignJustify,
 } from 'lucide-react';
 import React from 'react';
