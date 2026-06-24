@@ -180,7 +180,7 @@ export function EventLogPanel({ event, onClose }: Props) {
         <div className="flex border-b border-gray-200 shrink-0">
           <button
             onClick={() => setActiveTab('issue')}
-            className={`flex items-center gap-1.5 px-5 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
               activeTab === 'issue'
                 ? 'border-orange-500 text-orange-700'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -188,14 +188,14 @@ export function EventLogPanel({ event, onClose }: Props) {
           >
             이슈
             {openIssues.length > 0 && (
-              <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full text-[10px] border border-orange-500/30">
+              <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full text-[10px] border border-orange-200">
                 {openIssues.length}
               </span>
             )}
           </button>
           <button
             onClick={() => setActiveTab('comm')}
-            className={`px-5 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
               activeTab === 'comm'
                 ? 'border-blue-500 text-blue-700'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -224,39 +224,48 @@ export function EventLogPanel({ event, onClose }: Props) {
                 ))
               )}
             </div>
-            <div className="border-t border-gray-200 px-5 py-3 shrink-0 space-y-2">
-              <select
-                value={issueType}
-                onChange={(e) => { setIssueType(e.target.value); setCustomIssueType(''); }}
-                className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 outline-none focus:border-blue-500"
-              >
-                {ISSUE_TYPES.map((t) => (
-                  <option key={t.value} value={t.value} className="bg-white text-gray-800">{t.label}</option>
-                ))}
-              </select>
-              {issueType === 'custom' && (
+            <div className="border-t border-gray-100 px-5 py-3 shrink-0 space-y-2">
+              <div>
+                <p className="text-[11px] text-gray-600 mb-1.5">카테고리</p>
+                <select
+                  value={issueType}
+                  onChange={(e) => { setIssueType(e.target.value); setCustomIssueType(''); }}
+                  className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
+                >
+                  {ISSUE_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+                {issueType === 'custom' && (
+                  <input
+                    type="text"
+                    value={customIssueType}
+                    onChange={(e) => setCustomIssueType(e.target.value)}
+                    placeholder="유형 직접 입력 (예: 퇴원, 환불 요청)"
+                    className="w-full mt-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
+                  />
+                )}
+              </div>
+              <div>
+                <p className="text-[11px] text-gray-600 mb-1.5">이슈 제목</p>
                 <input
                   type="text"
-                  value={customIssueType}
-                  onChange={(e) => setCustomIssueType(e.target.value)}
-                  placeholder="유형 직접 입력 (예: 퇴원, 환불 요청)"
-                  className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500"
+                  value={issueTitle}
+                  onChange={(e) => setIssueTitle(e.target.value)}
+                  placeholder="제목을 입력하세요"
+                  className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
                 />
-              )}
-              <input
-                type="text"
-                value={issueTitle}
-                onChange={(e) => setIssueTitle(e.target.value)}
-                placeholder="이슈 제목 *"
-                className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500"
-              />
-              <textarea
-                value={issueDesc}
-                onChange={(e) => setIssueDesc(e.target.value)}
-                placeholder="상세 설명 (선택)"
-                rows={4}
-                className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500 resize-none"
-              />
+              </div>
+              <div>
+                <p className="text-[11px] text-gray-600 mb-1.5">이슈 내용</p>
+                <textarea
+                  value={issueDesc}
+                  onChange={(e) => setIssueDesc(e.target.value)}
+                  placeholder="이슈 내용을 입력하세요"
+                  rows={3}
+                  className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50 resize-none"
+                />
+              </div>
               <button
                 onClick={handleIssueSubmit}
                 disabled={issueSaving || !issueTitle.trim() || (issueType === 'custom' && !customIssueType.trim())}

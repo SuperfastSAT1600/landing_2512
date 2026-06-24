@@ -98,15 +98,14 @@ export default function PartnerPortalPage() {
   // ── Auth screens (setup / login) ─────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: canvas, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 16px' }}>
-      {/* Badge + heading */}
+      {/* Logo + heading */}
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <span style={{ display: 'inline-block', fontSize: 12, fontWeight: 600, color: '#0075de', background: '#fff', border: '1px solid #e6e6e6', borderRadius: 9999, padding: '4px 12px', letterSpacing: '0.05em', marginBottom: 20 }}>
-          SuperfastSAT
-        </span>
-        <h1 style={{ fontSize: 32, fontWeight: 700, color: '#000', letterSpacing: '-0.625px', lineHeight: 1.2, marginBottom: 6 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo_black.png" alt="SuperfastSAT" style={{ height: 32, width: 'auto', marginBottom: 24 }} />
+        <h1 style={{ fontSize: 40, fontWeight: 700, color: '#000', letterSpacing: '-1px', lineHeight: 1.1, marginBottom: 8 }}>
           {meta?.partnerName ?? '파트너 센터'}
         </h1>
-        <p style={{ fontSize: 15, color: '#615d59', margin: 0 }}>파트너 센터</p>
+        <p style={{ fontSize: 15, color: '#615d59', margin: 0, lineHeight: 1.33 }}>파트너 센터</p>
       </div>
 
       {/* Auth card */}

@@ -55,9 +55,9 @@ function formatDate(iso: string) {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline gap-3 py-2 border-b border-gray-100 last:border-0">
-      <span className="text-xs text-gray-400 w-24 shrink-0">{label}</span>
-      <span className="text-sm text-gray-800">{value}</span>
+    <div className="flex items-baseline gap-3 py-2 border-b border-[#e6e6e6] last:border-0">
+      <span className="text-xs text-[#a39e98] w-24 shrink-0">{label}</span>
+      <span className="text-sm text-[#31302e]">{value}</span>
     </div>
   );
 }
@@ -65,20 +65,20 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 function MemoItem({ memo }: { memo: PublishedMemo }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+    <div className="rounded-xl border border-[#e6e6e6] overflow-hidden bg-white">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#f6f5f4] transition-colors"
       >
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
-          <span className="text-sm text-gray-700">{formatDate(memo.created_at)}</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-[#0075de] shrink-0" />
+          <span className="text-sm text-[#31302e]">{formatDate(memo.created_at)}</span>
         </div>
-        {open ? <ChevronUp size={13} className="text-gray-400" /> : <ChevronDown size={13} className="text-gray-400" />}
+        {open ? <ChevronUp size={13} className="text-[#a39e98]" /> : <ChevronDown size={13} className="text-[#a39e98]" />}
       </button>
       {open && (
-        <div className="px-4 pb-4 pt-1 border-t border-gray-100">
-          <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{memo.content}</p>
+        <div className="px-4 pb-4 pt-1 border-t border-[#e6e6e6]">
+          <p className="text-sm text-[#615d59] leading-relaxed whitespace-pre-wrap">{memo.content}</p>
         </div>
       )}
     </div>
@@ -127,18 +127,18 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
       {/* 패널 */}
       <div className="w-full max-w-lg bg-white h-full flex flex-col shadow-2xl overflow-hidden">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-gray-50 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e6e6e6] bg-[#f6f5f4] shrink-0">
           <div>
-            <p className="text-xs text-gray-400 mb-0.5">학생 상세</p>
-            <h2 className="text-base font-bold text-gray-900">{s?.name ?? studentName}</h2>
+            <p className="text-xs text-[#a39e98] mb-0.5">학생 상세</p>
+            <h2 className="text-base font-bold text-[#000]">{s?.name ?? studentName}</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-            <X size={16} className="text-gray-500" />
+          <button onClick={onClose} className="p-2 hover:bg-[#e6e6e6] rounded-lg transition-colors">
+            <X size={16} className="text-[#615d59]" />
           </button>
         </div>
 
         {/* 탭 */}
-        <div className="flex border-b border-gray-200 px-5 shrink-0">
+        <div className="flex border-b border-[#e6e6e6] px-5 shrink-0">
           {([
             { key: 'report' as Tab, label: '학습 리포트' },
             { key: 'consultation' as Tab, label: '상담 기록' },
@@ -149,8 +149,8 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
               onClick={() => setTab(key)}
               className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors ${
                 tab === key
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-[#0075de] text-[#0075de]'
+                  : 'border-transparent text-[#615d59] hover:text-[#31302e]'
               }`}
             >
               {label}
@@ -162,7 +162,7 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
         <div className="flex-1 overflow-y-auto p-5">
           {loading && (
             <div className="flex items-center justify-center py-16">
-              <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[#0075de] border-t-transparent rounded-full animate-spin" />
             </div>
           )}
           {error && <p className="text-sm text-red-500 text-center py-8">{error}</p>}
@@ -182,10 +182,10 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
           {data && tab === 'info' && s && (
             <div className="space-y-5">
               {/* 기본 정보 */}
-              <div className="bg-gray-50 rounded-xl p-4">
+              <div className="bg-[#f6f5f4] rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <User size={13} className="text-gray-400" />
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">기본 정보</span>
+                  <User size={13} className="text-[#a39e98]" />
+                  <span className="text-xs font-semibold text-[#615d59] uppercase tracking-wide">기본 정보</span>
                 </div>
                 {s.grade && <InfoRow label="학년" value={s.grade} />}
                 {s.school_type && <InfoRow label="학교 유형" value={s.school_type} />}
@@ -200,10 +200,10 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
               </div>
 
               {/* 점수 */}
-              <div className="bg-gray-50 rounded-xl p-4">
+              <div className="bg-[#f6f5f4] rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <FlaskConical size={13} className="text-blue-400" />
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">점수 현황</span>
+                  <span className="text-xs font-semibold text-[#615d59] uppercase tracking-wide">점수 현황</span>
                 </div>
                 {(s.previous_rw_score || s.previous_math_score) && (
                   <InfoRow
@@ -227,10 +227,10 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
 
               {/* 진단 테스트 */}
               {data.diagnosticResult && (
-                <div className="bg-gray-50 rounded-xl p-4">
+                <div className="bg-[#f6f5f4] rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <BookOpen size={13} className="text-amber-400" />
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">진단 테스트</span>
+                    <span className="text-xs font-semibold text-[#615d59] uppercase tracking-wide">진단 테스트</span>
                   </div>
                   <InfoRow label="응시일" value={formatDate(data.diagnosticResult.submitted_at)} />
                   <InfoRow label="문항 수" value={`${data.diagnosticResult.question_count}문항`} />
@@ -242,9 +242,9 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
               )}
 
               {data.hasSrmData && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                  <Library size={13} className="text-emerald-500" />
-                  <span className="text-xs text-emerald-700">학습 데이터 연동됨</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#e6e6e6] rounded-lg">
+                  <Library size={13} className="text-[#a39e98]" />
+                  <span className="text-xs text-[#615d59]">학습 데이터 연동됨</span>
                 </div>
               )}
             </div>
@@ -254,28 +254,28 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
             <div>
               {reportLoading && (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs text-gray-400">학습 데이터 분석 중...</p>
+                  <div className="w-5 h-5 border-2 border-[#0075de] border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs text-[#a39e98]">학습 데이터 분석 중...</p>
                 </div>
               )}
               {reportError && (
                 <div className="flex flex-col items-center justify-center py-12 gap-2">
-                  <BarChart2 size={24} className="text-gray-300" />
-                  <p className="text-sm text-gray-400">{reportError}</p>
+                  <BarChart2 size={24} className="text-[#e6e6e6]" />
+                  <p className="text-sm text-[#a39e98]">{reportError}</p>
                 </div>
               )}
               {!reportLoading && !reportError && report && (
                 <div>
                   <div className="flex gap-4 mb-5">
-                    <div className="flex-1 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
-                      <p className="text-2xl font-bold text-indigo-600">
+                    <div className="flex-1 bg-white border border-[#e6e6e6] rounded-xl p-4 text-center">
+                      <p className="text-2xl font-bold text-[#000]">
                         {report.days.flatMap(d => d.items).reduce((s, i) => i.type === 'study_hall' || i.type === 'test_center' ? s + i.totalProblems : s, 0)}
                       </p>
-                      <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wide">푼 문제 수</p>
+                      <p className="text-[10px] text-[#a39e98] mt-1 uppercase tracking-wide">푼 문제 수</p>
                     </div>
-                    <div className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
-                      <p className="text-2xl font-bold text-gray-700">{report.vocabExposedCount}</p>
-                      <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wide">학습 단어</p>
+                    <div className="flex-1 bg-white border border-[#e6e6e6] rounded-xl p-4 text-center">
+                      <p className="text-2xl font-bold text-[#000]">{report.vocabExposedCount}</p>
+                      <p className="text-[10px] text-[#a39e98] mt-1 uppercase tracking-wide">학습 단어</p>
                     </div>
                   </div>
                   {report.days.length === 0 ? (

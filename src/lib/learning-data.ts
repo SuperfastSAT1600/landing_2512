@@ -48,6 +48,10 @@ export interface DailyLearningResponse {
   students: StudentDayResult[];
 }
 
+export interface CumulativeResponse {
+  students: StudentDayResult[];
+}
+
 // ── Per-student helpers (public API, kept for direct use) ─────────────────────
 
 export async function fetchStudyHall(profileId: string, start: string, end: string): Promise<StudyHallResult | null> {
@@ -67,7 +71,7 @@ export async function fetchVocab(profileId: string, start: string, end: string):
 
 // ── Batch helpers (N students → fixed number of queries) ─────────────────────
 
-async function fetchStudyHallBatch(profileIds: string[], start: string, end: string): Promise<Map<string, StudyHallResult | null>> {
+async function fetchStudyHallBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, StudyHallResult | null>> {
   if (!profileIds.length) return new Map();
 
   const { data: sessions } = await supabaseSFv2
@@ -76,7 +80,8 @@ async function fetchStudyHallBatch(profileIds: string[], start: string, end: str
     .in('user_id', profileIds)
     .gte('started_at', start)
     .lte('started_at', end)
-    .not('ended_at', 'is', null);
+    .not('ended_at', 'is', null)
+    .limit(rowLimit);
 
   if (!sessions?.length) return new Map(profileIds.map(id => [id, null]));
 
@@ -85,7 +90,8 @@ async function fetchStudyHallBatch(profileIds: string[], start: string, end: str
   const { data: attempts } = await supabaseSFv2
     .from('study_hall_unit_attempts')
     .select('study_hall_session_id, student_id, is_correct, unit_id')
-    .in('study_hall_session_id', sessionIds);
+    .in('study_hall_session_id', sessionIds)
+    .limit(rowLimit * 50);
 
   const unitIds = [...new Set((attempts ?? []).map((a: { unit_id: string }) => a.unit_id).filter(Boolean))];
   const { data: unitsMeta } = unitIds.length
@@ -153,7 +159,7 @@ async function fetchStudyHallBatch(profileIds: string[], start: string, end: str
   return result;
 }
 
-async function fetchTestCenterBatch(profileIds: string[], start: string, end: string): Promise<Map<string, TestCenterResult[]>> {
+async function fetchTestCenterBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, TestCenterResult[]>> {
   if (!profileIds.length) return new Map();
 
   const { data: sessions } = await supabaseSFv2
@@ -161,7 +167,8 @@ async function fetchTestCenterBatch(profileIds: string[], start: string, end: st
     .select('id, user_id, started_at')
     .in('user_id', profileIds)
     .gte('started_at', start)
-    .lte('started_at', end);
+    .lte('started_at', end)
+    .limit(rowLimit);
 
   if (!sessions?.length) return new Map(profileIds.map(id => [id, []]));
 
@@ -171,7 +178,8 @@ async function fetchTestCenterBatch(profileIds: string[], start: string, end: st
     .from('test_center_lesson_attempts')
     .select('test_center_session_id, student_id, score, total, lesson_id, curriculum_id')
     .in('test_center_session_id', sessionIds)
-    .not('score', 'is', null);
+    .not('score', 'is', null)
+    .limit(rowLimit * 20);
 
   if (!attempts?.length) return new Map(profileIds.map(id => [id, []]));
 
@@ -221,7 +229,7 @@ async function fetchTestCenterBatch(profileIds: string[], start: string, end: st
   return result;
 }
 
-async function fetchVocabBatch(profileIds: string[], start: string, end: string): Promise<Map<string, VocabResult | null>> {
+async function fetchVocabBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, VocabResult | null>> {
   const VOCAB_MASTER_BOX = 5;
   const VOCAB_MAX_MISSED = 6;
 
@@ -234,7 +242,8 @@ async function fetchVocabBatch(profileIds: string[], start: string, end: string)
     .in('subject_id', profileIds)
     .eq('kind', 'graded')
     .gte('occurred_at', start)
-    .lte('occurred_at', end);
+    .lte('occurred_at', end)
+    .limit(rowLimit);
 
   if (!events?.length) return new Map(profileIds.map(id => [id, null]));
 
@@ -389,4 +398,49 @@ export async function fetchB2BDailyLearning(partnerName: string, date: string): 
   });
 
   return { date, students: results };
+}
+
+export async function fetchB2BCumulativeLearning(partnerName: string): Promise<CumulativeResponse> {
+  const start = '2020-01-01T00:00:00.000Z';
+  const end = new Date(Date.now() + 86400000).toISOString();
+
+  const { data: students, error } = await supabaseAdmin
+    .from('students')
+    .select('id, name, portal_name, sfv2_profile_id, portal_token, lead_status')
+    .eq('b2b_partner', partnerName)
+    .order('name');
+
+  if (error) throw new Error(error.message);
+
+  const profileIds = (students ?? []).map(s => s.sfv2_profile_id as string).filter(Boolean);
+
+  const CUMULATIVE_LIMIT = 50000;
+
+  const [studyHallMap, testCenterMap, vocabMap] = await Promise.all([
+    fetchStudyHallBatch(profileIds, start, end, CUMULATIVE_LIMIT),
+    fetchTestCenterBatch(profileIds, start, end, CUMULATIVE_LIMIT),
+    fetchVocabBatch(profileIds, start, end, CUMULATIVE_LIMIT),
+  ]);
+
+  const results: StudentDayResult[] = (students ?? []).map(s => {
+    const profileId = s.sfv2_profile_id as string | null;
+    const portalToken = s.portal_token as string | null;
+    const displayName = (s.portal_name as string | null) || (s.name as string);
+    const isActive = (s.lead_status as string) !== 'inactive';
+    if (!profileId) {
+      return { name: displayName, crmStudentId: s.id as string, sfv2ProfileId: null, portalToken, isActive, studyHall: null, testCenter: [], vocab: null };
+    }
+    return {
+      name: displayName,
+      crmStudentId: s.id as string,
+      sfv2ProfileId: profileId,
+      portalToken,
+      isActive,
+      studyHall: studyHallMap.get(profileId) ?? null,
+      testCenter: testCenterMap.get(profileId) ?? [],
+      vocab: vocabMap.get(profileId) ?? null,
+    };
+  });
+
+  return { students: results };
 }

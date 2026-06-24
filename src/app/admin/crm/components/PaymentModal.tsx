@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, CreditCard, ChevronLeft, Crown } from 'lucide-react';
-import { Student, ProductCategory, ProductSubcategory } from '@/types/crm';
+import { Student, ProductCategory, ProductSubcategory, B2B_PARTNER_OPTIONS } from '@/types/crm';
 import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
 import { getAdminUserName } from '@/lib/admin-user';
 
@@ -61,8 +61,14 @@ interface PaymentModalProps {
 
 type PaymentType = '최초결제' | '재결제';
 
+// B2B 학생이고 b2b_partner가 미설정인 경우 파트너 선택이 필요한지
+function needsPartnerSelection(student: Student) {
+  return student.lead_type === 'B2B' && !student.b2b_partner;
+}
+
 export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentModalProps) {
-  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  const [step, setStep] = useState<-1 | 0 | 1 | 2 | 3>(needsPartnerSelection(student) ? -1 : 0);
+  const [selectedPartner, setSelectedPartner] = useState<string | null>(student.b2b_partner ?? null);
   const [paymentType, setPaymentType] = useState<PaymentType | null>(null);
   const [classType, setClassType] = useState<ClassType | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
@@ -113,6 +119,10 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   }
 
   function handleBack() {
+    if (step === 0) {
+      if (needsPartnerSelection(student)) setStep(-1);
+      return;
+    }
     if (step === 1) {
       setStep(0);
       return;
@@ -148,6 +158,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
           payment_type: paymentType ?? '최초결제',
           is_vip: isVip,
           created_by: getAdminUserName(),
+          b2b_partner: selectedPartner ?? undefined,
         }),
       });
       const responseBody = await res.json();
@@ -162,7 +173,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
     }
   }
 
-  const stepLabel = step === 0 ? '결제 유형' : step === 1 ? '수업 유형' : step === 2 ? '과목' : '상품 선택';
+  const stepLabel = step === -1 ? '파트너 선택' : step === 0 ? '결제 유형' : step === 1 ? '수업 유형' : step === 2 ? '과목' : '상품 선택';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -186,7 +197,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
 
         {/* Step indicator */}
         <div className="flex px-5 pt-3 gap-1">
-          {[0, 1, 2, 3].map(s => (
+          {(needsPartnerSelection(student) ? [-1, 0, 1, 2, 3] : [0, 1, 2, 3]).map(s => (
             <div
               key={s}
               className={`h-1 flex-1 rounded-full transition-colors ${
@@ -198,14 +209,37 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
 
         {/* Body */}
         <div className="px-5 py-4 space-y-4">
-          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+          <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
             <span><span className="font-semibold text-gray-800">{student.name}</span> 학생</span>
+            {selectedPartner && step >= 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                {selectedPartner}
+              </span>
+            )}
             {paymentType && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
                 {paymentType}
               </span>
             )}
           </p>
+
+          {/* Step -1: 파트너 선택 (B2B 학생이고 파트너 미설정 시) */}
+          {step === -1 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-500">연결할 파트너를 선택하세요</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {B2B_PARTNER_OPTIONS.map(p => (
+                  <button
+                    key={p}
+                    onClick={() => { setSelectedPartner(p); setStep(0); }}
+                    className="px-3 py-2.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors text-left"
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Step 0: 결제 유형 (최초/재결제) */}
           {step === 0 && (
