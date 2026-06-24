@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, CreditCard, ChevronLeft, Crown } from 'lucide-react';
+import { X, CreditCard, ChevronLeft, Crown, CheckCircle2, Copy, Check } from 'lucide-react';
 import { Student, ProductCategory, ProductSubcategory } from '@/types/crm';
 import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
 import { getAdminUserName } from '@/lib/admin-user';
@@ -62,7 +62,7 @@ interface PaymentModalProps {
 type PaymentType = '최초결제' | '재결제';
 
 export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentModalProps) {
-  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
   const [paymentType, setPaymentType] = useState<PaymentType | null>(null);
   const [classType, setClassType] = useState<ClassType | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
@@ -74,6 +74,10 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Step 4 — post-payment tutoring signup link.
+  const [signupUrl, setSignupUrl] = useState<string | null>(null);
+  const [completedStudent, setCompletedStudent] = useState<Student | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const reasons = detectVipReasons(student);
@@ -154,7 +158,30 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
       if (!res.ok) {
         throw new Error(responseBody.error ?? '결제 처리 실패');
       }
-      onConfirm(responseBody.data.student);
+      const updated: Student = responseBody.data.student;
+      setCompletedStudent(updated);
+
+      // Already onboarded (repeat payment) → close as before. First-time
+      // students get the custom tutoring signup link revealed on step 4.
+      if (student.signup_done_at) {
+        onConfirm(updated);
+        return;
+      }
+
+      try {
+        const linkRes = await fetch(`/api/crm/students/${student.id}/signup-token`, {
+          method: 'POST',
+          headers: { 'x-admin-key': adminKey },
+        });
+        const linkBody = await linkRes.json();
+        if (!linkRes.ok) throw new Error(linkBody.error ?? '가입 링크 생성 실패');
+        setSignupUrl(linkBody.signup_url);
+        setStep(4);
+      } catch (err) {
+        // Payment is already recorded — don't trap the user. Surface the error
+        // and let them close; the link can be re-issued from the student panel.
+        setError(err instanceof Error ? err.message : '가입 링크 생성에 실패했습니다.');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
@@ -162,7 +189,29 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
     }
   }
 
-  const stepLabel = step === 0 ? '결제 유형' : step === 1 ? '수업 유형' : step === 2 ? '과목' : '상품 선택';
+  /** Close from the link step — refresh the payment history (payment is done). */
+  function finish() {
+    if (completedStudent) onConfirm(completedStudent);
+    else onClose();
+  }
+
+  async function handleCopy() {
+    if (!signupUrl) return;
+    try {
+      await navigator.clipboard.writeText(signupUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable — the link stays selectable in the input.
+    }
+  }
+
+  const stepLabel =
+    step === 0 ? '결제 유형'
+    : step === 1 ? '수업 유형'
+    : step === 2 ? '과목'
+    : step === 3 ? '상품 선택'
+    : '회원가입 링크';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -170,7 +219,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            {step > 0 && (
+            {step > 0 && step < 4 && (
               <button onClick={handleBack} className="mr-1 text-gray-400 hover:text-gray-600">
                 <ChevronLeft size={16} />
               </button>
@@ -179,7 +228,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
             <h2 className="text-sm font-bold text-gray-900">결제 완료 처리</h2>
             <span className="text-xs text-gray-400 font-normal">· {stepLabel}</span>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={step === 4 ? finish : onClose} className="text-gray-400 hover:text-gray-600">
             <X size={16} />
           </button>
         </div>
@@ -424,6 +473,35 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
               {error && <p className="text-xs text-red-500">{error}</p>}
             </>
           )}
+
+          {/* Step 4: 결제 완료 → 튜터링 학생 회원가입 링크 */}
+          {step === 4 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle2 size={16} />
+                <p className="text-sm font-semibold">결제가 등록되었습니다</p>
+              </div>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                아래 링크를 <span className="font-medium text-gray-700">{student.name}</span> 학생에게 전달하세요.
+                이 링크로 가입하면 자동으로 튜터링 학생 계정이 되고, CRM 정보가 미리 채워집니다.
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={signupUrl ?? ''}
+                  onFocus={e => e.currentTarget.select()}
+                  className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-gray-50 text-gray-700"
+                />
+                <button
+                  onClick={handleCopy}
+                  className="shrink-0 px-3 py-2 rounded-lg border border-blue-200 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors flex items-center gap-1"
+                >
+                  {copied ? <Check size={13} /> : <Copy size={13} />}
+                  {copied ? '복사됨' : '복사'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -441,6 +519,18 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
               className="flex-1 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? '처리 중...' : '결제 완료'}
+            </button>
+          </div>
+        )}
+
+        {/* Footer — step 4 (link reveal) */}
+        {step === 4 && (
+          <div className="flex gap-2 px-5 py-4 border-t border-gray-100">
+            <button
+              onClick={finish}
+              className="flex-1 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              완료
             </button>
           </div>
         )}
