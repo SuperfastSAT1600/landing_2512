@@ -6,8 +6,10 @@ describe('mapStudentToPrefill', () => {
   it('maps CRM student columns to the platform prefill shape', () => {
     const prefill = mapStudentToPrefill({
       name: '홍길동',
+      contact_type: 'phone',
       parent_phone: '+82 10-1234-5678',
       parent_timezone: 'Asia/Seoul',
+      previous_score_status: 'scored',
       previous_rw_score: 600,
       previous_math_score: 700,
       previous_test_date: '2025-12',
@@ -15,8 +17,10 @@ describe('mapStudentToPrefill', () => {
     });
     expect(prefill).toEqual({
       studentName: '홍길동',
+      contactType: 'phone',
       parentPhone: '+82 10-1234-5678',
       parentTimezone: 'Asia/Seoul',
+      previousScoreStatus: 'scored',
       lastScoreRw: 600,
       lastScoreMath: 700,
       lastTestDate: '2025-12',

@@ -20,7 +20,7 @@ export async function GET(
   const { data: student, error } = await supabaseAdmin
     .from('students')
     .select(
-      'id, name, parent_phone, parent_timezone, previous_rw_score, previous_math_score, previous_test_date, target_test_date, signup_done_at'
+      'id, name, contact_type, parent_phone, parent_timezone, previous_score_status, previous_rw_score, previous_math_score, previous_test_date, target_test_date, signup_done_at'
     )
     .eq('signup_token', token)
     .maybeSingle();
