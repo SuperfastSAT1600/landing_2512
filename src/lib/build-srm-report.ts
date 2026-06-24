@@ -4,7 +4,7 @@ import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import OpenAI from 'openai';
 import type {
   LearningReport, DayReport, StudyHallDay, StudyHallSkill,
-  TestCenterDay, TestCenterLesson, DailyReportDay, VocaDay,
+  TestCenterDay, TestCenterLesson, DailyReportDay, VocaDay, LessonFeedbackDay,
 } from '@/types/srm-portal';
 
 type SkillCrossRef = {
@@ -578,6 +578,46 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
   // Daily Reports
   for (const dr of dailyReports ?? []) {
     getOrCreate(dr.report_date as string).items.push({ type: 'daily_report', reportMd: dr.report_md as string } satisfies DailyReportDay);
+  }
+
+  // Lesson Feedback — scheduled_events.feedback (coach_room, completed)
+  const { data: participantRows } = await supabaseSFv2
+    .from('scheduled_event_participants')
+    .select('event_id')
+    .eq('user_id', profileId);
+
+  if (participantRows?.length) {
+    const participantEventIds = participantRows.map(r => r.event_id as string);
+    const { data: feedbackEvents } = await supabaseSFv2
+      .from('scheduled_events')
+      .select('id, starts_at, assigned_teacher_id, feedback')
+      .in('id', participantEventIds)
+      .eq('category', 'coach_room')
+      .not('feedback', 'is', null)
+      .neq('feedback', '')
+      .order('starts_at', { ascending: false })
+      .limit(60);
+
+    if (feedbackEvents?.length) {
+      const teacherIds = [...new Set(feedbackEvents.map(e => e.assigned_teacher_id as string | null).filter(Boolean))] as string[];
+      const { data: teacherProfiles } = teacherIds.length
+        ? await supabaseSFv2.from('profiles').select('id, full_name').in('id', teacherIds)
+        : { data: [] };
+      const teacherMap = new Map<string, string>();
+      for (const p of teacherProfiles ?? []) { if (p.id && p.full_name) teacherMap.set(p.id as string, p.full_name as string); }
+
+      for (const ev of feedbackEvents) {
+        const date = toKSTDate(ev.starts_at as string);
+        const coachName = ev.assigned_teacher_id ? teacherMap.get(ev.assigned_teacher_id as string) : undefined;
+        getOrCreate(date).items.push({
+          type: 'lesson_feedback',
+          eventId: ev.id as string,
+          startsAt: ev.starts_at as string,
+          coachName,
+          feedback: ev.feedback as string,
+        } satisfies LessonFeedbackDay);
+      }
+    }
   }
 
   // Vocab

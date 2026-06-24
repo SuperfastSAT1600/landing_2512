@@ -7,17 +7,19 @@ import type { LearningReport as LearningReportType, DayItem, StudyHallSkill, Tes
 export const ACCENT = '#6085FF';
 
 const ITEM_LABELS: Record<DayItem['type'], string> = {
-  study_hall: 'Study Hall',
-  test_center: '테스트 센터',
-  daily_report: '레슨 피드백',
-  voca: '단어',
+  study_hall:      'Study Hall',
+  test_center:     '테스트 센터',
+  daily_report:    '일간 리포트',
+  voca:            '단어',
+  lesson_feedback: '레슨 피드백',
 };
 
 const ITEM_COLORS: Record<DayItem['type'], { bg: string; text: string; dot: string }> = {
-  study_hall:   { bg: '#EFF6FF', text: '#1D4ED8', dot: '#3B82F6' },
-  test_center:  { bg: '#F0FDF4', text: '#15803D', dot: '#22C55E' },
-  daily_report: { bg: '#FFF7ED', text: '#C2410C', dot: '#F97316' },
-  voca:         { bg: '#FAF5FF', text: '#7E22CE', dot: '#A855F7' },
+  study_hall:      { bg: '#EFF6FF', text: '#1D4ED8', dot: '#3B82F6' },
+  test_center:     { bg: '#F0FDF4', text: '#15803D', dot: '#22C55E' },
+  daily_report:    { bg: '#F8FAFC', text: '#475569', dot: '#94A3B8' },
+  voca:            { bg: '#FAF5FF', text: '#7E22CE', dot: '#A855F7' },
+  lesson_feedback: { bg: '#FFF7ED', text: '#C2410C', dot: '#F97316' },
 };
 
 function formatDate(dateStr: string): string {
@@ -196,6 +198,37 @@ function VocaCard({ item }: { item: Extract<DayItem, { type: 'voca' }> }) {
   );
 }
 
+function LessonFeedbackCard({ item }: { item: Extract<DayItem, { type: 'lesson_feedback' }> }) {
+  const [expanded, setExpanded] = useState(false);
+  const lines = item.feedback.split('\n').map(l => l.trim()).filter(Boolean);
+  const previewLines = lines.slice(0, 4);
+  const timeStr = new Date(item.startsAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-xs text-slate-400">
+        <span>{timeStr}</span>
+        {item.coachName && (
+          <>
+            <span>·</span>
+            <span>{item.coachName} 코치</span>
+          </>
+        )}
+      </div>
+      <div className="space-y-1">
+        {(expanded ? lines : previewLines).map((line, i) => (
+          <p key={i} className="text-sm text-slate-700 leading-relaxed">{line}</p>
+        ))}
+      </div>
+      {lines.length > 4 && (
+        <button onClick={() => setExpanded(e => !e)}
+          className="text-xs text-orange-500 hover:text-orange-700 transition-colors">
+          {expanded ? '접기' : '더 보기'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function DayCard({ day }: { day: LearningReportType['days'][number] }) {
   const [open, setOpen] = useState(true);
   return (
@@ -238,6 +271,7 @@ export function DayCard({ day }: { day: LearningReportType['days'][number] }) {
                 {item.type === 'test_center' && <TestCenterCard item={item} />}
                 {item.type === 'daily_report' && <DailyReportCard item={item} />}
                 {item.type === 'voca' && <VocaCard item={item} />}
+                {item.type === 'lesson_feedback' && <LessonFeedbackCard item={item} />}
               </div>
             );
           })}
