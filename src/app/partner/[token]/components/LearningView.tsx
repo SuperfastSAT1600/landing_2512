@@ -281,33 +281,40 @@ function StudentHeaderRow({
   students: StudentDayResult[];
   onSelect: (s: SelectedStudent) => void;
 }) {
+  const nameRowStyle: React.CSSProperties = { ...TH, textAlign: 'center', minWidth: 180, paddingBottom: 6, borderBottom: 'none' };
+  const badgeRowStyle: React.CSSProperties = { ...TH, textAlign: 'center', minWidth: 180, paddingTop: 0, paddingBottom: 10 };
   return (
-    <tr>
-      <th style={{ ...TH, width: 136 }} />
-      {students.map((s) => {
-        const hasAny = s.studyHall || s.testCenter.length > 0 || s.vocab;
-        return (
-          <th key={s.name} scope="col" style={{ ...TH, textAlign: 'center', minWidth: 180 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              {s.portalToken ? (
-                <button
-                  onClick={() => onSelect({ studentToken: s.portalToken!, studentName: s.name })}
-                  style={{ fontSize: 13, fontWeight: 700, color: '#000', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 3 }}
-                >
-                  {s.name}
-                  <span style={{ fontSize: 12, color: '#a39e98', fontWeight: 400 }}>›</span>
-                </button>
-              ) : (
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#000' }}>{s.name}</span>
-              )}
-              {!hasAny && (
-                <span style={{ fontSize: 11, color: '#a39e98' }}>기록 없음</span>
-              )}
-            </div>
+    <>
+      <tr>
+        <th style={{ ...TH, width: 136, paddingBottom: 6, borderBottom: 'none' }} />
+        {students.map((s) => (
+          <th key={s.name} scope="col" style={nameRowStyle}>
+            {s.portalToken ? (
+              <button
+                onClick={() => onSelect({ studentToken: s.portalToken!, studentName: s.name })}
+                style={{ fontSize: 13, fontWeight: 700, color: '#000', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}
+              >
+                {s.name}
+                <span style={{ fontSize: 12, color: '#a39e98', fontWeight: 400 }}>›</span>
+              </button>
+            ) : (
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#000' }}>{s.name}</span>
+            )}
           </th>
-        );
-      })}
-    </tr>
+        ))}
+      </tr>
+      <tr>
+        <th style={{ ...TH, width: 136, paddingTop: 0, paddingBottom: 10, borderTop: 'none' }} />
+        {students.map((s) => {
+          const hasAny = s.studyHall || s.testCenter.length > 0 || s.vocab;
+          return (
+            <th key={s.name} style={badgeRowStyle}>
+              {!hasAny && <span style={{ fontSize: 11, color: '#a39e98' }}>기록 없음</span>}
+            </th>
+          );
+        })}
+      </tr>
+    </>
   );
 }
 
