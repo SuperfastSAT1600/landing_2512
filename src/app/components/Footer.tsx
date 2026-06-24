@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Twitter, Instagram, Linkedin, Mail } from 'lucide-react';
 import styles from './Footer.module.css';
 
 export default function Footer() {

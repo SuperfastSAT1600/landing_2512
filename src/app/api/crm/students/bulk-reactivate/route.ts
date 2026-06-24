@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
   });
 
   const results = await Promise.all(updatePromises);
-  const failedCount = results.filter((r) => r.error !== null).length;
 
   const failedIds = results
     .map((r, i) => (r.error ? (students ?? [])[i]?.id : null))

@@ -7,7 +7,7 @@ type Step = 1 | 2 | 3;
 
 const TIME_OPTIONS: string[] = [];
 for (let h = 9; h <= 22; h++) {
-  const period = h < 12 ? '오전' : h === 12 ? '오후' : '오후';
+  const period = h < 12 ? '오전' : '오후';
   const display = h <= 12 ? h : h - 12;
   TIME_OPTIONS.push(`${period} ${display}:00`);
   if (h < 22) TIME_OPTIONS.push(`${period} ${display}:30`);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ScheduleCalendar } from './components/ScheduleCalendar';
-import type { CoachOfferPayload, AssignmentStatus } from '@/types/crm';
+import type { CoachOfferPayload } from '@/types/crm';
 import { SCHOOL_TYPE_LABELS } from '@/types/crm';
 
 const TIMEZONES = [

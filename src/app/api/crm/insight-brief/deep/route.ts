@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { buildBriefHealth } from '@/lib/strategy-brief';
+import { buildBriefHealth, buildCorrelationSignals } from '@/lib/strategy-brief';
 import { buildMemoSignals } from '@/lib/strategy-memos';
 import { fallbackAreas, parseAreas } from '@/lib/insight-parse';
 import { DEEP_DIAGNOSIS_SYSTEM, DEEP_WEEKLY_SYSTEM } from '@/lib/insight-deep';
@@ -16,7 +16,7 @@ import { kstDateStr, type InsightBriefArea as BriefArea, type InsightBriefMode a
 
 export const maxDuration = 60;
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = 'claude-opus-4-8'; // 교차신호 중 '진짜 놀라운 것 선별·반례 추론'에 숙고형 추론. 일 1회 캐시라 지연/비용 1회만.
 const WEB_SEARCH_MAX_USES = 3;
 
 async function readCache(dateKst: string, mode: BriefMode): Promise<BriefArea[] | null> {
@@ -66,9 +66,10 @@ export async function POST(request: NextRequest) {
   }
 
   const origin = new URL(request.url).origin;
-  const [snap, memo] = await Promise.all([
+  const [snap, memo, correlationBlock] = await Promise.all([
     buildBriefHealth(origin, process.env.ADMIN_SECRET_KEY ?? ''),
     buildMemoSignals(),
+    buildCorrelationSignals(),
   ]);
 
   // 통계 조회 실패 또는 약점 신호 없음 → 배너 숨김(빈 areas)
@@ -87,8 +88,8 @@ export async function POST(request: NextRequest) {
       ? `위 [KPI 건강 진단]과 [상담 메모 신호]를 교차해, 이번 주 방향 맞추기 회의에서 내가 꺼낼 논의 안건 5개를 JSON으로만 답하라. 가장 시급한 영역(${snap.weakest.map((s) => s.area).join(', ')})을 반드시 포함하고, 각 항목에 구루 렌즈와 날카로운 질문을 붙여라.`
       : `위 [KPI 건강 진단]과 [상담 메모 신호]를 교차해, 지금 가장 시급한 5개 영역을 JSON으로만 답하라. 가장 시급한 영역(${snap.weakest.map((s) => s.area).join(', ')})을 반드시 포함하고, 각 항목에 구루 렌즈와 구체 첫 수를 붙여라.`;
 
-  // 내부 데이터 블록: KPI 진단 + (있으면) 상담 메모 신호
-  const dataBlock = memo.memoBlock ? `${snap.summaryText}\n\n${memo.memoBlock}` : snap.summaryText;
+  // 내부 데이터 블록: KPI 진단 + (있으면) 교차 신호 후보 + 상담 메모 신호
+  const dataBlock = [snap.summaryText, correlationBlock, memo.memoBlock].filter(Boolean).join('\n\n');
 
   try {
     const client = new Anthropic({ apiKey });

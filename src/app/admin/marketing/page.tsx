@@ -6,7 +6,6 @@ import {
 } from 'recharts';
 import { ChevronDown, ChevronUp, TrendingUp, Users, CreditCard, DollarSign } from 'lucide-react';
 import { MARKETING_GROUPS, PAID_GROUPS, GROUP_COLORS, GROUP_ICONS } from '@/lib/marketing-groups';
-import type { MarketingGroup } from '@/lib/marketing-groups';
 import type { MarketingGroupStats, MarketingDailyRow, AdSpend } from '@/types/marketing';
 import type { WeeklyStats } from '@/app/api/crm/marketing/weekly/route';
 

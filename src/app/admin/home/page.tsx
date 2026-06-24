@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 import type { StoredFeatureItem, HomeConfig } from '@/lib/config';
 
 export default function AdminHomeConfig() {

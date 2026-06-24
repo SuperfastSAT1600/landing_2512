@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Star, Quote, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import styles from './Testimonials.module.css';
 import { ScrollReveal } from './ScrollReveal';
 import { ReviewData } from '../../lib/reviews-data';

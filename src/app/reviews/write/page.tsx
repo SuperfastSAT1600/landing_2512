@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, Check, Star, Gift, BookOpen } from 'lucide-react';
+import { Check, Star, Gift, BookOpen } from 'lucide-react';
 
 function ReviewWriteForm() {
     const searchParams = useSearchParams();

@@ -3,14 +3,6 @@ import { srmFetch } from '../lib/srm-fetch';
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, ChevronDown, ChevronUp, Copy, Eye, Check } from 'lucide-react';
-import {
-  PARTY_LABELS,
-  PARTY_COLORS,
-  CHANNEL_LABELS,
-  CHANNEL_COLORS,
-  RESOLUTION_LABELS,
-  TRIGGER_BADGE_LABELS,
-} from '@/app/admin/srm/comm-constants';
 import { getAdminName } from '@/lib/admin-user';
 import { AddForm } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
