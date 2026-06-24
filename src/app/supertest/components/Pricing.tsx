@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import styles from './Pricing.module.css';
-import { PLANS, UPCOMING_TESTS, DISCOUNT_PERCENT, getDiscountedPrice, formatKRW } from '../data/plans';
+import { PLANS, UPCOMING_TESTS, getDiscountedPrice, formatKRW } from '../data/plans';
 
 const RECOMMENDED_FOR: Record<string, string> = {
     live: '완벽하게 준비하고 싶다면',

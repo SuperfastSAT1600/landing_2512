@@ -3,7 +3,6 @@
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
-import { CellSelection } from '@tiptap/pm/tables';
 import { useState, useEffect } from 'react';
 import {
     Rows3, RowsIcon, Trash2,

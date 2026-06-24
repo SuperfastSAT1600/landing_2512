@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
         const reviews = getReviews();
         return NextResponse.json({ success: true, reviews });
     } catch (error) {
+        console.error('[reviews GET]', error);
         return NextResponse.json({ success: false, error: 'Failed to fetch reviews' }, { status: 500 });
     }
 }
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
         addReview(newReview);
         return NextResponse.json({ success: true, review: newReview });
     } catch (error) {
+        console.error('[reviews POST]', error);
         return NextResponse.json({ success: false, error: 'Failed to submit review' }, { status: 500 });
     }
 }
@@ -59,6 +61,7 @@ export async function DELETE(request: NextRequest) {
         const deleted = deleteReview(id);
         return NextResponse.json({ success: deleted });
     } catch (error) {
+        console.error('[reviews DELETE]', error);
         return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
     }
 }
@@ -82,6 +85,7 @@ export async function PATCH(request: NextRequest) {
         const updated = updateReview(id, safeUpdates);
         return NextResponse.json({ success: updated });
     } catch (error) {
+        console.error('[reviews PATCH]', error);
         return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
     }
 }
