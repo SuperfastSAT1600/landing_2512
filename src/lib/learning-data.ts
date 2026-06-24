@@ -235,17 +235,28 @@ async function fetchVocabBatch(profileIds: string[], start: string, end: string,
 
   if (!profileIds.length) return new Map();
 
-  const { data: events } = await supabaseSFv2
-    .schema('vocab')
-    .from('events')
-    .select('subject_id, entry_id, is_correct, prev_box, new_box, occurred_at')
-    .in('subject_id', profileIds)
-    .eq('kind', 'graded')
-    .gte('occurred_at', start)
-    .lte('occurred_at', end)
-    .limit(rowLimit);
+  // Supabase caps at 1000 rows per query regardless of .limit(); paginate to get all rows.
+  const PAGE_SIZE = 1000;
+  const allEvents: { subject_id: string; entry_id: string | null; is_correct: boolean | null; prev_box: number | null; new_box: number | null; occurred_at: string }[] = [];
+  let offset = 0;
+  while (allEvents.length < rowLimit) {
+    const { data: page } = await supabaseSFv2
+      .schema('vocab')
+      .from('events')
+      .select('subject_id, entry_id, is_correct, prev_box, new_box, occurred_at')
+      .in('subject_id', profileIds)
+      .eq('kind', 'graded')
+      .gte('occurred_at', start)
+      .lte('occurred_at', end)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allEvents.push(...page);
+    if (page.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+  const events = allEvents;
 
-  if (!events?.length) return new Map(profileIds.map(id => [id, null]));
+  if (!events.length) return new Map(profileIds.map(id => [id, null]));
 
   // Group events by user
   const eventsByUser = new Map<string, typeof events>();
