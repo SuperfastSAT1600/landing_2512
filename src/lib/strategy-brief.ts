@@ -3,8 +3,9 @@
  * 기간 윈도우·정체 집계·health 스냅샷 로직의 단일 소스.
  */
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, type FunnelStage } from '@/types/crm';
+import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, effectiveLeadTier, type FunnelStage, type TrafficSource, type LeadTier } from '@/types/crm';
 import { buildHealthSnapshot, type StalledCount, type HealthSnapshot } from '@/lib/strategy-health';
+import { buildCorrelationBlock, type CorrelationStudent } from '@/lib/strategy-correlations';
 import type { CrmStatsData } from '@/app/api/crm/stats/route';
 
 /**
@@ -82,4 +83,59 @@ export async function buildBriefHealth(origin: string, adminKey: string): Promis
     periodDays: r.periodDays,
     periodLabel: `이번 달(1일~오늘, ${r.periodDays}일차) vs 지난 달 같은 기간`,
   });
+}
+
+const CORR_COLS =
+  'id, name, lead_status, funnel_stage, stage_history, lead_tier, traffic_source, target_score, target_test_date, last_contacted_at, inquiry_date, first_message_sent_at, consultation_timeline';
+
+type CorrStudentRow = Pick<
+  CorrelationStudent,
+  'id' | 'lead_status' | 'funnel_stage' | 'stage_history' | 'inquiry_date' | 'first_message_sent_at'
+> & {
+  name: string | null;
+  lead_tier: LeadTier | null;
+  traffic_source: TrafficSource | null;
+  target_score: number | null;
+  target_test_date: string | null;
+  last_contacted_at: string | null;
+  consultation_timeline: unknown[] | null;
+};
+
+/**
+ * 교차 상관/이상치 신호 블록을 만든다(I/O). 표본 확보를 위해 KPI(이번 달)보다 넓은 최근 90일 인입 코호트.
+ * '코드 산출 상관 후보'로 명시 — 모수 정렬 주장이 아니라 표본 충분한 패턴 발견용. 실패 시 빈 문자열 degrade.
+ * 어휘 약점(진단) 상관은 진단 테이블 조인이 붙기 전까지 자동 비활성(vocab_weakness_level=null → 게이트 드롭).
+ */
+export async function buildCorrelationSignals(nowMs: number = Date.now()): Promise<string> {
+  try {
+    const windowStart = kstDateStr(nowMs - 90 * 86_400_000);
+    const [studentsRes, paymentsRes] = await Promise.all([
+      supabaseAdmin.from('students').select(CORR_COLS).gte('inquiry_date', windowStart),
+      supabaseAdmin.from('payments').select('student_id, student_name'),
+    ]);
+    const studentRows = (studentsRes.data ?? []) as CorrStudentRow[];
+    if (studentRows.length === 0) return '';
+    const paidIds = new Set<string>();
+    const paidNames = new Set<string>();
+    for (const p of paymentsRes.data ?? []) {
+      if (p.student_id) paidIds.add(p.student_id);
+      if (p.student_name) paidNames.add(p.student_name);
+    }
+    const projected: CorrelationStudent[] = studentRows.map((s) => ({
+      id: s.id,
+      isPaid: paidIds.has(s.id) || (s.name ? paidNames.has(s.name) : false),
+      lead_status: s.lead_status,
+      funnel_stage: s.funnel_stage,
+      stage_history: s.stage_history,
+      tier: effectiveLeadTier(s, nowMs),
+      consultation_timeline_len: Array.isArray(s.consultation_timeline) ? s.consultation_timeline.length : 0,
+      inquiry_date: s.inquiry_date,
+      first_message_sent_at: s.first_message_sent_at,
+      vocab_weakness_level: null,
+    }));
+    return buildCorrelationBlock(projected);
+  } catch (err) {
+    console.error('[strategy-brief] correlation signals failed (degrading):', err);
+    return '';
+  }
 }
