@@ -24,6 +24,9 @@ const ISSUE_TYPE_LABELS: Record<string, string> = {
   schedule_pending: '스케줄 조율 중',
   coach_pending: '코치 배정 중',
   renewal_needed: '재결제 필요',
+  schedule: '스케줄 변경',
+  payment_no_response: '지급 무응답',
+  request_no_response: '요청 무응답',
   custom: '기타',
 };
 
@@ -34,6 +37,9 @@ const ISSUE_TYPE_COLORS: Record<string, string> = {
   schedule_pending: 'bg-blue-100 text-blue-700 border-blue-200',
   coach_pending: 'bg-green-100 text-green-700 border-green-200',
   renewal_needed: 'bg-purple-100 text-purple-700 border-purple-200',
+  schedule: 'bg-teal-100 text-teal-700 border-teal-200',
+  payment_no_response: 'bg-rose-100 text-rose-700 border-rose-200',
+  request_no_response: 'bg-amber-100 text-amber-700 border-amber-200',
   custom: 'bg-gray-100 text-gray-600 border-gray-200',
 };
 
