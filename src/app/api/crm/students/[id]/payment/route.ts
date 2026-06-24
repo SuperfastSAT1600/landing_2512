@@ -12,14 +12,14 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { product: string; product_category?: string | null; product_subcategory?: string | null; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세'; payment_type?: string; is_vip?: boolean; created_by?: string | null };
+  let body: { product: string; product_category?: string | null; product_subcategory?: string | null; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세'; payment_type?: string; is_vip?: boolean; created_by?: string | null; b2b_partner?: string | null };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { product, product_category, product_subcategory, hours, amount, paid_at, tax_type, payment_type, is_vip, created_by } = body;
+  const { product, product_category, product_subcategory, hours, amount, paid_at, tax_type, payment_type, is_vip, created_by, b2b_partner } = body;
   // 모달에서 보낸 결제 유형. 미지정 시 '최초결제'(DB 기본값과 동일).
   const resolvedPaymentType = payment_type === '재결제' ? '재결제' : '최초결제';
 
@@ -61,12 +61,11 @@ export async function POST(
     return NextResponse.json({ error: payErr.message ?? '결제 기록 저장 실패' }, { status: 500 });
   }
 
-  // 결제 → "수업 중" 전환 (모든 결제 경로 공유 헬퍼). is_vip가 오면 함께 반영.
-  const student = await enrollStudentOnPayment(
-    id,
-    undefined,
-    is_vip !== undefined ? { is_vip } : undefined
-  );
+  // 결제 → "수업 중" 전환 (모든 결제 경로 공유 헬퍼). is_vip, b2b_partner가 오면 함께 반영.
+  const extra: Record<string, unknown> = {};
+  if (is_vip !== undefined) extra.is_vip = is_vip;
+  if (b2b_partner) extra.b2b_partner = b2b_partner;
+  const student = await enrollStudentOnPayment(id, undefined, Object.keys(extra).length ? extra : undefined);
   if (!student) {
     return NextResponse.json({ error: '학생 상태 업데이트 실패' }, { status: 500 });
   }
