@@ -292,9 +292,10 @@ function StudentHeaderRow({
               {s.portalToken ? (
                 <button
                   onClick={() => onSelect({ studentToken: s.portalToken!, studentName: s.name })}
-                  style={{ fontSize: 13, fontWeight: 700, color: '#0075de', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 3 }}
+                  style={{ fontSize: 13, fontWeight: 700, color: '#000', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 3 }}
                 >
                   {s.name}
+                  <span style={{ fontSize: 12, color: '#a39e98', fontWeight: 400 }}>›</span>
                 </button>
               ) : (
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#000' }}>{s.name}</span>
