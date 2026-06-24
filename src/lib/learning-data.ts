@@ -74,26 +74,42 @@ export async function fetchVocab(profileId: string, start: string, end: string):
 async function fetchStudyHallBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, StudyHallResult | null>> {
   if (!profileIds.length) return new Map();
 
-  const { data: sessions } = await supabaseSFv2
-    .from('study_hall_session')
-    .select('id, user_id, started_at, ended_at')
-    .in('user_id', profileIds)
-    .gte('started_at', start)
-    .lte('started_at', end)
-    .not('ended_at', 'is', null)
-    .limit(rowLimit);
+  const PAGE_SIZE = 1000;
 
-  if (!sessions?.length) return new Map(profileIds.map(id => [id, null]));
+  const allSessions: { id: string; user_id: string; started_at: string; ended_at: string }[] = [];
+  for (let offset = 0; allSessions.length < rowLimit; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('study_hall_session')
+      .select('id, user_id, started_at, ended_at')
+      .in('user_id', profileIds)
+      .gte('started_at', start)
+      .lte('started_at', end)
+      .not('ended_at', 'is', null)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allSessions.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+  const sessions = allSessions;
+
+  if (!sessions.length) return new Map(profileIds.map(id => [id, null]));
 
   const sessionIds = sessions.map((s: { id: string }) => s.id);
 
-  const { data: attempts } = await supabaseSFv2
-    .from('study_hall_unit_attempts')
-    .select('study_hall_session_id, student_id, is_correct, unit_id')
-    .in('study_hall_session_id', sessionIds)
-    .limit(rowLimit * 50);
+  const allAttempts: { study_hall_session_id: string; student_id: string; is_correct: boolean; unit_id: string | null }[] = [];
+  for (let offset = 0; allAttempts.length < rowLimit * 50; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('study_hall_unit_attempts')
+      .select('study_hall_session_id, student_id, is_correct, unit_id')
+      .in('study_hall_session_id', sessionIds)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allAttempts.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+  const attempts = allAttempts;
 
-  const unitIds = [...new Set((attempts ?? []).map((a: { unit_id: string }) => a.unit_id).filter(Boolean))];
+  const unitIds = [...new Set((attempts ?? []).map(a => a.unit_id).filter((id): id is string => Boolean(id)))];
   const { data: unitsMeta } = unitIds.length
     ? await supabaseSFv2.from('units').select('id, skill, domain').in('id', unitIds)
     : { data: [] };
@@ -162,29 +178,45 @@ async function fetchStudyHallBatch(profileIds: string[], start: string, end: str
 async function fetchTestCenterBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, TestCenterResult[]>> {
   if (!profileIds.length) return new Map();
 
-  const { data: sessions } = await supabaseSFv2
-    .from('test_center_session')
-    .select('id, user_id, started_at')
-    .in('user_id', profileIds)
-    .gte('started_at', start)
-    .lte('started_at', end)
-    .limit(rowLimit);
+  const PAGE_SIZE = 1000;
 
-  if (!sessions?.length) return new Map(profileIds.map(id => [id, []]));
+  const allSessions: { id: string; user_id: string; started_at: string }[] = [];
+  for (let offset = 0; allSessions.length < rowLimit; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('test_center_session')
+      .select('id, user_id, started_at')
+      .in('user_id', profileIds)
+      .gte('started_at', start)
+      .lte('started_at', end)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allSessions.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+  const sessions = allSessions;
+
+  if (!sessions.length) return new Map(profileIds.map(id => [id, []]));
 
   const sessionIds = sessions.map((s: { id: string }) => s.id);
 
-  const { data: attempts } = await supabaseSFv2
-    .from('test_center_lesson_attempts')
-    .select('test_center_session_id, student_id, score, total, lesson_id, curriculum_id')
-    .in('test_center_session_id', sessionIds)
-    .not('score', 'is', null)
-    .limit(rowLimit * 20);
+  const allAttempts: { test_center_session_id: string; student_id: string; score: number; total: number; lesson_id: string | null; curriculum_id: string | null }[] = [];
+  for (let offset = 0; allAttempts.length < rowLimit * 20; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('test_center_lesson_attempts')
+      .select('test_center_session_id, student_id, score, total, lesson_id, curriculum_id')
+      .in('test_center_session_id', sessionIds)
+      .not('score', 'is', null)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allAttempts.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+  const attempts = allAttempts;
 
   if (!attempts?.length) return new Map(profileIds.map(id => [id, []]));
 
-  const lessonIds = [...new Set(attempts.map((a: { lesson_id: string }) => a.lesson_id).filter(Boolean))];
-  const curriculumIds = [...new Set(attempts.map((a: { curriculum_id: string }) => a.curriculum_id).filter(Boolean))];
+  const lessonIds = [...new Set(attempts.map(a => a.lesson_id).filter((id): id is string => Boolean(id)))];
+  const curriculumIds = [...new Set(attempts.map(a => a.curriculum_id).filter((id): id is string => Boolean(id)))];
 
   const [{ data: lessons }, { data: curricula }] = await Promise.all([
     lessonIds.length ? supabaseSFv2.from('lessons').select('id, title').in('id', lessonIds) : { data: [] },
