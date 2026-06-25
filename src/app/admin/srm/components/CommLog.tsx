@@ -29,7 +29,7 @@ export interface TriggerContext {
 export interface EventContext {
   eventId: string;
   time: string;
-  type: 'coachRoom' | 'studyHall';
+  type: 'coachRoom' | 'studyHall' | 'vocab';
 }
 
 interface AddFormProps {

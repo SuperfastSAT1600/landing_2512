@@ -28,7 +28,7 @@ interface SelectedStudent {
   triggerType?: string;
   eventId?: string;
   eventTime?: string;
-  eventType?: 'coachRoom' | 'studyHall';
+  eventType?: 'coachRoom' | 'studyHall' | 'vocab';
   coachId?: string;
 }
 
@@ -107,8 +107,10 @@ export default function SrmPage() {
         const allEventIds = [
           ...(scheduleData?.today?.coachRoom ?? []),
           ...(scheduleData?.today?.studyHall ?? []),
+          ...(scheduleData?.today?.vocab ?? []),
           ...(scheduleData?.tomorrow?.coachRoom ?? []),
           ...(scheduleData?.tomorrow?.studyHall ?? []),
+          ...(scheduleData?.tomorrow?.vocab ?? []),
         ].map((e: ScheduleEvent) => e.id);
 
         if (!allEventIds.length) { setLoggedEventIds(new Set()); return; }
@@ -168,8 +170,10 @@ export default function SrmPage() {
     const allEvents = [
       ...(schedule.today.coachRoom.map((e) => ({ ...e, eventType: 'coachRoom' as const, day: 'today' as const }))),
       ...(schedule.today.studyHall.map((e) => ({ ...e, eventType: 'studyHall' as const, day: 'today' as const }))),
+      ...(schedule.today.vocab.map((e) => ({ ...e, eventType: 'vocab' as const, day: 'today' as const }))),
       ...(schedule.tomorrow.coachRoom.map((e) => ({ ...e, eventType: 'coachRoom' as const, day: 'tomorrow' as const }))),
       ...(schedule.tomorrow.studyHall.map((e) => ({ ...e, eventType: 'studyHall' as const, day: 'tomorrow' as const }))),
+      ...(schedule.tomorrow.vocab.map((e) => ({ ...e, eventType: 'vocab' as const, day: 'tomorrow' as const }))),
     ];
     const target = allEvents.find((e) => e.id === urlEventId);
     if (!target) return;
@@ -200,7 +204,7 @@ export default function SrmPage() {
     setSelectedCoach({ ...coach, relatedStudents });
   };
 
-  const handleScheduleStudentClick = (student: { id: string; name: string; eventId?: string; eventTime?: string; eventType?: 'coachRoom' | 'studyHall'; coachId?: string }) => {
+  const handleScheduleStudentClick = (student: { id: string; name: string; eventId?: string; eventTime?: string; eventType?: 'coachRoom' | 'studyHall' | 'vocab'; coachId?: string }) => {
     setSelectedStudent({
       id: student.id,
       name: student.name,
@@ -262,8 +266,10 @@ export default function SrmPage() {
           <UnifiedTimeline
             todayCoachRoom={schedule?.today?.coachRoom ?? []}
             todayStudyHall={schedule?.today?.studyHall ?? []}
+            todayVocab={schedule?.today?.vocab ?? []}
             tomorrowCoachRoom={schedule?.tomorrow?.coachRoom ?? []}
             tomorrowStudyHall={schedule?.tomorrow?.studyHall ?? []}
+            tomorrowVocab={schedule?.tomorrow?.vocab ?? []}
             loading={scheduleLoading}
             eventDate={selectedDate}
             vipStudentIds={vipStudentIds}

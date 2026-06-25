@@ -6,7 +6,7 @@ import { Copy, Check, Crown, AlertTriangle } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 
-type EventType = 'coachRoom' | 'studyHall';
+type EventType = 'coachRoom' | 'studyHall' | 'vocab';
 type EventDay = 'today' | 'tomorrow';
 
 type TaggedEvent = ScheduleEvent & { eventType: EventType; day: EventDay };
@@ -153,16 +153,20 @@ function contactTime(ev: TaggedEvent): number {
 function mergeAndSort(
   todayCoach: ScheduleEvent[],
   todaySH: ScheduleEvent[],
+  todayVocab: ScheduleEvent[],
   tomorrowCoach: ScheduleEvent[],
   tomorrowSH: ScheduleEvent[],
+  tomorrowVocab: ScheduleEvent[],
 ): TaggedEvent[] {
   const tag = (evs: ScheduleEvent[], eventType: EventType, day: EventDay): TaggedEvent[] =>
     evs.map((e) => ({ ...e, eventType, day }));
   return [
     ...tag(todayCoach, 'coachRoom', 'today'),
     ...tag(todaySH, 'studyHall', 'today'),
+    ...tag(todayVocab, 'vocab', 'today'),
     ...tag(tomorrowCoach, 'coachRoom', 'tomorrow'),
     ...tag(tomorrowSH, 'studyHall', 'tomorrow'),
+    ...tag(tomorrowVocab, 'vocab', 'tomorrow'),
   ].sort((a, b) => contactTime(a) - contactTime(b));
 }
 
@@ -171,7 +175,7 @@ interface StudentClickArg {
   name: string;
   eventId?: string;
   eventTime?: string;
-  eventType?: 'coachRoom' | 'studyHall';
+  eventType?: EventType;
   coachId?: string;
 }
 
@@ -185,8 +189,10 @@ export type { TaggedEvent };
 interface Props {
   todayCoachRoom: ScheduleEvent[];
   todayStudyHall: ScheduleEvent[];
+  todayVocab: ScheduleEvent[];
   tomorrowCoachRoom: ScheduleEvent[];
   tomorrowStudyHall: ScheduleEvent[];
+  tomorrowVocab: ScheduleEvent[];
   loading?: boolean;
   eventDate: string;
   vipStudentIds?: Set<string>;
@@ -203,8 +209,10 @@ interface Props {
 export function UnifiedTimeline({
   todayCoachRoom,
   todayStudyHall,
+  todayVocab,
   tomorrowCoachRoom,
   tomorrowStudyHall,
+  tomorrowVocab,
   loading,
   eventDate,
   vipStudentIds,
@@ -220,7 +228,7 @@ export function UnifiedTimeline({
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
 
-  const events = mergeAndSort(todayCoachRoom, todayStudyHall, tomorrowCoachRoom, tomorrowStudyHall);
+  const events = mergeAndSort(todayCoachRoom, todayStudyHall, todayVocab, tomorrowCoachRoom, tomorrowStudyHall, tomorrowVocab);
 
   useEffect(() => {
     if (!highlightEventId) return;
@@ -266,6 +274,7 @@ export function UnifiedTimeline({
     const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
     const timeStr = `${kstTime}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
     const isCoach = ev.eventType === 'coachRoom';
+    const isVocab = ev.eventType === 'vocab';
 
     const copiedKo = copiedIds.has(`${ev.id}-ko`);
     const copiedEn = copiedIds.has(`${ev.id}-en`);
@@ -274,7 +283,9 @@ export function UnifiedTimeline({
     const alreadySent = copiedKo || copiedEn || alreadyLogged;
     const isHighlighted = ev.id === highlightEventId;
 
-    const msgPreview = ev.eventType === 'studyHall'
+    const msgPreview = isVocab
+      ? null
+      : ev.eventType === 'studyHall'
       ? buildStudyHallCopyMessage(ev, ev.day === 'tomorrow')
       : buildCopyMessage(ev, ev.day === 'tomorrow');
 
@@ -312,9 +323,11 @@ export function UnifiedTimeline({
         <div className="w-[32%] min-w-0 flex flex-col gap-1 justify-center border-l border-gray-200 pl-3">
           <div className="flex items-center gap-1.5">
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${
-              isCoach ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+              isCoach ? 'bg-blue-100 text-blue-700'
+              : isVocab ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-gray-100 text-gray-600'
             }`}>
-              {isCoach ? '수업' : '스터디홀'}
+              {isCoach ? '수업' : isVocab ? '단어학습' : '스터디홀'}
             </span>
           </div>
           <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
@@ -367,33 +380,39 @@ export function UnifiedTimeline({
 
         {/* 메시지 미리보기 + 복사 버튼 */}
         <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 border-l border-gray-200 pl-3">
-          <p className="text-[11px] text-gray-400 truncate leading-relaxed">{msgPreview}</p>
-          <div className="flex gap-1.5">
-            <button
-              onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
-              title="한국어 메시지 복사"
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
-                copiedKo
-                  ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
-                  : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
-              }`}
-            >
-              {copiedKo ? <Check size={10} /> : <Copy size={10} />}
-              KO
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'en'); }}
-              title="English message copy"
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
-                copiedEn
-                  ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
-                  : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300 bg-white'
-              }`}
-            >
-              {copiedEn ? <Check size={10} /> : <Copy size={10} />}
-              EN
-            </button>
-          </div>
+          {isVocab ? (
+            <p className="text-[11px] text-gray-400">단어학습 세션</p>
+          ) : (
+            <>
+              <p className="text-[11px] text-gray-400 truncate leading-relaxed">{msgPreview}</p>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
+                  title="한국어 메시지 복사"
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+                    copiedKo
+                      ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
+                      : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
+                  }`}
+                >
+                  {copiedKo ? <Check size={10} /> : <Copy size={10} />}
+                  KO
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'en'); }}
+                  title="English message copy"
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+                    copiedEn
+                      ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
+                      : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300 bg-white'
+                  }`}
+                >
+                  {copiedEn ? <Check size={10} /> : <Copy size={10} />}
+                  EN
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* 상태 */}

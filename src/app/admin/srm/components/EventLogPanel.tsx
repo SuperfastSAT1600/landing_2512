@@ -12,7 +12,7 @@ import type { EventIssue } from '@/app/api/admin/srm/issues/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 import { getAdminName } from '@/lib/admin-user';
 
-type EventType = 'coachRoom' | 'studyHall';
+type EventType = 'coachRoom' | 'studyHall' | 'vocab';
 
 interface TaggedEvent extends ScheduleEvent {
   eventType: EventType;

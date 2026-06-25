@@ -111,7 +111,7 @@ interface Props {
   triggerType?: string;
   eventId?: string;
   eventTime?: string;
-  eventType?: 'coachRoom' | 'studyHall';
+  eventType?: 'coachRoom' | 'studyHall' | 'vocab';
   coachId?: string;
   onLanguageChange?: (sfv2ProfileId: string, lang: 'ko' | 'en') => void;
 }
