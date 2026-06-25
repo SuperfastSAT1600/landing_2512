@@ -6,7 +6,7 @@ import { Copy, Check, Crown, AlertTriangle } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 
-type EventType = 'coachRoom' | 'studyHall';
+type EventType = 'coachRoom' | 'studyHall' | 'vocab';
 type EventDay = 'today' | 'tomorrow';
 
 type TaggedEvent = ScheduleEvent & { eventType: EventType; day: EventDay };
@@ -142,6 +142,28 @@ function buildStudyHallCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): st
   return `${dayWord} Study Hall starts on ${timeInfo}. ${verb}`;
 }
 
+function buildVocabCopyMessage(ev: ScheduleEvent, isTomorrow: boolean): string {
+  const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const kstDate = toDateKo(ev.startsAt, 'Asia/Seoul');
+  const localParts = buildLocalParts(ev, kstTime);
+  let timeInfo = `${kstDate} ${kstTime}(한국 시간)`;
+  if (localParts.length > 0) timeInfo += `, ${localParts.join(' / ')}`;
+  const dayWord = isTomorrow ? '내일' : '오늘';
+  const verb = isTomorrow ? '잊지 말고' : '늦지 말고';
+  return `${dayWord} 단어학습 접속 시간 ${timeInfo}이니 ${verb} 출석해서 단어 외우는데 집중해보자구요!`;
+}
+
+function buildVocabCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string {
+  const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+  const kstDate = toDateEn(ev.startsAt, 'Asia/Seoul');
+  const localParts = buildLocalPartsEn(ev, kstTime);
+  let timeInfo = `${kstDate} at ${kstTime} (Korea Standard Time)`;
+  if (localParts.length > 0) timeInfo += ` / ${localParts.join(' / ')}`;
+  const dayWord = isTomorrow ? "Tomorrow's" : "Today's";
+  const verb = isTomorrow ? "Don't forget!" : "Don't be late!";
+  return `${dayWord} Vocab session is on ${timeInfo}. ${verb} Join and focus on memorizing the words!`;
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // 내일 이벤트는 오늘 같은 시각에 연락해야 하므로 -24h를 sort key로 사용
@@ -153,16 +175,20 @@ function contactTime(ev: TaggedEvent): number {
 function mergeAndSort(
   todayCoach: ScheduleEvent[],
   todaySH: ScheduleEvent[],
+  todayVocab: ScheduleEvent[],
   tomorrowCoach: ScheduleEvent[],
   tomorrowSH: ScheduleEvent[],
+  tomorrowVocab: ScheduleEvent[],
 ): TaggedEvent[] {
   const tag = (evs: ScheduleEvent[], eventType: EventType, day: EventDay): TaggedEvent[] =>
     evs.map((e) => ({ ...e, eventType, day }));
   return [
     ...tag(todayCoach, 'coachRoom', 'today'),
     ...tag(todaySH, 'studyHall', 'today'),
+    ...tag(todayVocab, 'vocab', 'today'),
     ...tag(tomorrowCoach, 'coachRoom', 'tomorrow'),
     ...tag(tomorrowSH, 'studyHall', 'tomorrow'),
+    ...tag(tomorrowVocab, 'vocab', 'tomorrow'),
   ].sort((a, b) => contactTime(a) - contactTime(b));
 }
 
@@ -171,7 +197,7 @@ interface StudentClickArg {
   name: string;
   eventId?: string;
   eventTime?: string;
-  eventType?: 'coachRoom' | 'studyHall';
+  eventType?: EventType;
   coachId?: string;
 }
 
@@ -185,8 +211,10 @@ export type { TaggedEvent };
 interface Props {
   todayCoachRoom: ScheduleEvent[];
   todayStudyHall: ScheduleEvent[];
+  todayVocab: ScheduleEvent[];
   tomorrowCoachRoom: ScheduleEvent[];
   tomorrowStudyHall: ScheduleEvent[];
+  tomorrowVocab: ScheduleEvent[];
   loading?: boolean;
   eventDate: string;
   vipStudentIds?: Set<string>;
@@ -203,8 +231,10 @@ interface Props {
 export function UnifiedTimeline({
   todayCoachRoom,
   todayStudyHall,
+  todayVocab,
   tomorrowCoachRoom,
   tomorrowStudyHall,
+  tomorrowVocab,
   loading,
   eventDate,
   vipStudentIds,
@@ -220,7 +250,7 @@ export function UnifiedTimeline({
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
 
-  const events = mergeAndSort(todayCoachRoom, todayStudyHall, tomorrowCoachRoom, tomorrowStudyHall);
+  const events = mergeAndSort(todayCoachRoom, todayStudyHall, todayVocab, tomorrowCoachRoom, tomorrowStudyHall, tomorrowVocab);
 
   useEffect(() => {
     if (!highlightEventId) return;
@@ -234,6 +264,8 @@ export function UnifiedTimeline({
     let msg: string;
     if (ev.eventType === 'studyHall') {
       msg = lang === 'en' ? buildStudyHallCopyMessageEn(ev, isTomorrow) : buildStudyHallCopyMessage(ev, isTomorrow);
+    } else if (ev.eventType === 'vocab') {
+      msg = lang === 'en' ? buildVocabCopyMessageEn(ev, isTomorrow) : buildVocabCopyMessage(ev, isTomorrow);
     } else {
       msg = lang === 'en' ? buildCopyMessageEn(ev, isTomorrow) : buildCopyMessage(ev, isTomorrow);
     }
@@ -242,7 +274,7 @@ export function UnifiedTimeline({
 
     try {
       const eventTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
-      const eventType = ev.eventType === 'coachRoom' ? 'coach_room' : 'study_hall';
+      const eventType = ev.eventType === 'coachRoom' ? 'coach_room' : ev.eventType === 'vocab' ? 'vocab' : 'study_hall';
       await srmFetch('/api/admin/srm/copy-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -266,6 +298,7 @@ export function UnifiedTimeline({
     const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
     const timeStr = `${kstTime}~${toTimeStr(ev.endsAt, 'Asia/Seoul')}`;
     const isCoach = ev.eventType === 'coachRoom';
+    const isVocab = ev.eventType === 'vocab';
 
     const copiedKo = copiedIds.has(`${ev.id}-ko`);
     const copiedEn = copiedIds.has(`${ev.id}-en`);
@@ -274,7 +307,9 @@ export function UnifiedTimeline({
     const alreadySent = copiedKo || copiedEn || alreadyLogged;
     const isHighlighted = ev.id === highlightEventId;
 
-    const msgPreview = ev.eventType === 'studyHall'
+    const msgPreview = isVocab
+      ? buildVocabCopyMessage(ev, ev.day === 'tomorrow')
+      : ev.eventType === 'studyHall'
       ? buildStudyHallCopyMessage(ev, ev.day === 'tomorrow')
       : buildCopyMessage(ev, ev.day === 'tomorrow');
 
@@ -312,9 +347,11 @@ export function UnifiedTimeline({
         <div className="w-[32%] min-w-0 flex flex-col gap-1 justify-center border-l border-gray-200 pl-3">
           <div className="flex items-center gap-1.5">
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${
-              isCoach ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+              isCoach ? 'bg-blue-100 text-blue-700'
+              : isVocab ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-gray-100 text-gray-600'
             }`}>
-              {isCoach ? '수업' : '스터디홀'}
+              {isCoach ? '수업' : isVocab ? '단어학습' : '스터디홀'}
             </span>
           </div>
           <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { BookOpen, FlaskConical, Library, RefreshCw } from 'lucide-react';
+import { BookOpen, FlaskConical, Library, RefreshCw, User } from 'lucide-react';
 import type {
   DailyLearningResponse,
   CumulativeResponse,
@@ -14,7 +14,6 @@ import { StudentDetailPanel } from './StudentDetailPanel';
 
 const DEFAULT_DATE = '2026-06-16';
 
-const AVATAR_HEX = ['#6366f1', '#a855f7', '#3b82f6', '#f43f5e'];
 
 // ── Notion data-table-cell tokens ────────────────────────────────────────────
 
@@ -253,7 +252,7 @@ function StudyHallCumulativeCell({ data }: { data: StudyHallResult }) {
 function EmptyCell() {
   return (
     <td style={{ ...TD, textAlign: 'center', verticalAlign: 'middle' }}>
-      <span style={{ fontSize: 14, color: '#e6e6e6' }}>—</span>
+      <span style={{ fontSize: 11, color: '#c8c4bf' }}>기록 없음</span>
     </td>
   );
 }
@@ -262,8 +261,8 @@ function EmptyCell() {
 
 function RowLabel({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <th scope="row" style={{ ...TH, whiteSpace: 'nowrap', width: 136 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <th scope="row" style={{ ...TH, whiteSpace: 'nowrap', width: 136, textAlign: 'center' }}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
         {icon}
         <span style={EYEBROW}>{label}</span>
       </div>
@@ -277,47 +276,34 @@ interface SelectedStudent { studentToken: string; studentName: string; }
 
 function StudentHeaderRow({
   students,
-  startIndex,
   onSelect,
 }: {
   students: StudentDayResult[];
-  startIndex: number;
   onSelect: (s: SelectedStudent) => void;
 }) {
   return (
     <tr>
-      <th style={{ ...TH, width: 136 }} />
-      {students.map((s, i) => {
-        const hasAny = s.studyHall || s.testCenter.length > 0 || s.vocab;
-        return (
-          <th key={s.name} scope="col" style={{ ...TH, textAlign: 'center', minWidth: 180 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: AVATAR_HEX[(startIndex + i) % AVATAR_HEX.length],
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: 12 }}>
-                  {s.name.charAt(0)}
-                </span>
-              </div>
-              {s.portalToken ? (
-                <button
-                  onClick={() => onSelect({ studentToken: s.portalToken!, studentName: s.name })}
-                  style={{ fontSize: 13, fontWeight: 700, color: '#0075de', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                >
-                  {s.name}
-                </button>
-              ) : (
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#000' }}>{s.name}</span>
-              )}
-              {!hasAny && (
-                <span style={{ fontSize: 11, color: '#a39e98' }}>기록 없음</span>
-              )}
-            </div>
-          </th>
-        );
-      })}
+      <th style={{ ...TH, width: 136, textAlign: 'center' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <User size={12} color="#615d59" />
+          <span style={EYEBROW}>이름</span>
+        </div>
+      </th>
+      {students.map((s) => (
+        <th key={s.name} scope="col" style={{ ...TH, textAlign: 'center', minWidth: 180 }}>
+          {s.portalToken ? (
+            <button
+              onClick={() => onSelect({ studentToken: s.portalToken!, studentName: s.name })}
+              style={{ fontSize: 13, fontWeight: 700, color: '#000', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}
+            >
+              {s.name}
+              <span style={{ fontSize: 12, color: '#a39e98', fontWeight: 400 }}>›</span>
+            </button>
+          ) : (
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#000' }}>{s.name}</span>
+          )}
+        </th>
+      ))}
     </tr>
   );
 }
@@ -339,7 +325,7 @@ function DailyPivotTable({
     <div style={{ overflowX: 'auto', opacity: faded ? 0.55 : 1 }}>
       <table style={{ borderCollapse: 'collapse', minWidth: students.length * 180 + 136 }}>
         <thead>
-          <StudentHeaderRow students={students} startIndex={startIndex} onSelect={onSelect} />
+          <StudentHeaderRow students={students} onSelect={onSelect} />
         </thead>
         <tbody>
           <tr>
@@ -386,7 +372,7 @@ function CumulativePivotTable({
     <div style={{ overflowX: 'auto', opacity: faded ? 0.55 : 1 }}>
       <table style={{ borderCollapse: 'collapse', minWidth: students.length * 180 + 136 }}>
         <thead>
-          <StudentHeaderRow students={students} startIndex={startIndex} onSelect={onSelect} />
+          <StudentHeaderRow students={students} onSelect={onSelect} />
         </thead>
         <tbody>
           <tr>

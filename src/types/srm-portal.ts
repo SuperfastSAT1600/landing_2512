@@ -36,6 +36,14 @@ export interface DailyReportDay {
   reportMd: string;
 }
 
+export interface LessonFeedbackDay {
+  type: 'lesson_feedback';
+  eventId: string;
+  startsAt: string;
+  coachName?: string;
+  feedback: string;
+}
+
 export interface VocaDay {
   type: 'voca';
   /** distinct words studied that day */
@@ -52,7 +60,7 @@ export interface VocaDay {
   aiNarrative: string;
 }
 
-export type DayItem = StudyHallDay | TestCenterDay | DailyReportDay | VocaDay;
+export type DayItem = StudyHallDay | TestCenterDay | DailyReportDay | VocaDay | LessonFeedbackDay;
 
 export interface DayReport {
   date: string;

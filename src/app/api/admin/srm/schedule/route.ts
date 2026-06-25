@@ -15,8 +15,8 @@ export interface ScheduleEvent {
 }
 
 export interface ScheduleResponse {
-  today: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] };
-  tomorrow: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] };
+  today: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[]; vocab: ScheduleEvent[] };
+  tomorrow: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[]; vocab: ScheduleEvent[] };
 }
 
 function kstDateToUtcRange(dateStr: string): { from: string; to: string } {
@@ -32,20 +32,20 @@ function addDays(dateStr: string, days: number): string {
   return dt.toISOString().slice(0, 10);
 }
 
-async function fetchEventsForDate(dateStr: string): Promise<{ coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] }> {
+async function fetchEventsForDate(dateStr: string): Promise<{ coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[]; vocab: ScheduleEvent[] }> {
   const { from, to } = kstDateToUtcRange(dateStr);
 
   const { data: events, error } = await supabaseSFv2
     .from('scheduled_events')
     .select('id, category, starts_at, ends_at, status')
-    .in('category', ['coach_room', 'study_hall'])
+    .in('category', ['coach_room', 'study_hall', 'vocab'])
     .gte('starts_at', from)
     .lte('starts_at', to)
     .neq('status', 'cancelled')
     .order('starts_at', { ascending: true });
 
   if (error) throw new Error(error.message);
-  if (!events?.length) return { coachRoom: [], studyHall: [] };
+  if (!events?.length) return { coachRoom: [], studyHall: [], vocab: [] };
 
   const eventIds = events.map((e) => e.id);
 
@@ -91,6 +91,7 @@ async function fetchEventsForDate(dateStr: string): Promise<{ coachRoom: Schedul
 
   const coachRoom: ScheduleEvent[] = [];
   const studyHall: ScheduleEvent[] = [];
+  const vocab: ScheduleEvent[] = [];
 
   for (const ev of events) {
     const users = evMap.get(ev.id) ?? { students: [], studentIds: [], studentTimezones: [], coaches: [], coachIds: [] };
@@ -106,10 +107,11 @@ async function fetchEventsForDate(dateStr: string): Promise<{ coachRoom: Schedul
       coachIds: users.coachIds,
     };
     if (ev.category === 'coach_room') coachRoom.push(item);
-    else studyHall.push(item);
+    else if (ev.category === 'study_hall') studyHall.push(item);
+    else if (ev.category === 'vocab') vocab.push(item);
   }
 
-  return { coachRoom, studyHall };
+  return { coachRoom, studyHall, vocab };
 }
 
 export async function GET(req: NextRequest) {
