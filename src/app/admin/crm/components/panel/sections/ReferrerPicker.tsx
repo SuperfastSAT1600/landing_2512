@@ -5,6 +5,13 @@ import { Search, X } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { inputCls } from './StudentInfoEdit';
 
+/** naive/ISO 날짜 문자열 → "YYYY.MM.DD". 없으면 ''. */
+function fmtDate(s: string | null): string {
+  if (!s) return '';
+  const [y, m, d] = s.replace(' ', 'T').split('T')[0].split('-');
+  return y && m && d ? `${y}.${m}.${d}` : '';
+}
+
 interface Props {
   adminKey: string;
   /** 현재 소개자 이름(자유 텍스트 겸 검색어). editForm.referral_student_name */
@@ -81,10 +88,15 @@ export function ReferrerPicker({ adminKey, name, selfId, onChange }: Props) {
               key={s.id}
               type="button"
               onMouseDown={e => { e.preventDefault(); onChange(s.name, s.id); setOpen(false); }}
-              className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 flex items-center justify-between"
+              className="w-full text-left px-3 py-2 hover:bg-gray-50 flex flex-col gap-0.5"
             >
-              <span className="font-medium text-gray-700">{s.name}</span>
-              <span className="text-gray-400">{s.parent_phone}</span>
+              <span className="text-xs font-medium text-gray-700">
+                {s.name}
+                {s.grade && <span className="ml-1 text-[11px] text-gray-400">{s.grade}</span>}
+              </span>
+              <span className="text-[11px] text-gray-400">
+                {[fmtDate(s.inquiry_date) && `인입 ${fmtDate(s.inquiry_date)}`, s.parent_phone].filter(Boolean).join(' · ')}
+              </span>
             </button>
           ))}
         </div>

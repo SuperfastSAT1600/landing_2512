@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   if (nameSearch) {
     const { data, error } = await supabaseAdmin
       .from('students')
-      .select('id, name, parent_phone, grade')
+      .select('id, name, parent_phone, grade, inquiry_date')
       .ilike('name', `%${nameSearch}%`)
       .order('name', { ascending: true })
       .limit(10);
