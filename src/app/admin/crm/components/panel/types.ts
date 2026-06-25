@@ -11,6 +11,7 @@ export interface EditForm {
   content_author: string; lead_type: string; b2b_partner: string;
   preferred_language: string; lead_tier: string;
   first_message_sent_at: string; // datetime-local 문자열 (로컬 시각, "YYYY-MM-DDTHH:mm")
+  referral_student_id: string; referral_student_name: string; // 소개/추천 소개자
 }
 
 /** ISO timestamp → datetime-local input 값("YYYY-MM-DDTHH:mm", 로컬 시각). 없으면 ''. */
@@ -59,6 +60,8 @@ export function studentToEditForm(s: Student): EditForm {
     preferred_language: s.preferred_language ?? '',
     lead_tier: s.lead_tier ?? '',
     first_message_sent_at: toDatetimeLocal(s.first_message_sent_at),
+    referral_student_id: s.referral_student_id ?? '',
+    referral_student_name: s.referral_student_name ?? '',
   };
 }
 

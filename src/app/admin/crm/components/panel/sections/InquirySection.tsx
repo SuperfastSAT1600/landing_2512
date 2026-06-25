@@ -11,6 +11,7 @@ import {
 import type { EditForm } from '../types';
 import { inputCls, selectCls, EditField } from './StudentInfoEdit';
 import { SectionCard } from './SectionCard';
+import { ReferrerPicker } from './ReferrerPicker';
 
 // 첫 메시지(timestamptz)를 로컬 시각 기준 "YYYY. MM. DD. HH:mm"(24시간)으로 — 문의일 표기와 통일.
 function formatDateTime(iso: string | null): string {
@@ -42,6 +43,7 @@ function InquiryRow({ label, value }: { label: string; value: string }) {
 
 interface Props {
   localStudent: Student;
+  adminKey: string;
   editForm: EditForm;
   setEditForm: (f: EditForm) => void;
   isEditingInquiry: boolean;
@@ -52,7 +54,7 @@ interface Props {
 }
 
 export function InquirySection({
-  localStudent, editForm, setEditForm,
+  localStudent, adminKey, editForm, setEditForm,
   isEditingInquiry, setIsEditingInquiry, savingInquiry, onSaveInquiry, onCancelInquiry,
 }: Props) {
   // 자동 등급 제안값 / 표시용 effective 등급 — 마운트 시 1회 캡처(render 중 Date 직접 호출 회피)
@@ -103,6 +105,17 @@ export function InquirySection({
                 {TRAFFIC_SOURCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
               </select>
             </EditField>
+            {editForm.traffic_source === '소개/추천' && (
+              <EditField label="소개자" className="col-span-2">
+                <ReferrerPicker
+                  adminKey={adminKey}
+                  name={editForm.referral_student_name}
+                  linkedId={editForm.referral_student_id}
+                  selfId={localStudent.id}
+                  onChange={(name, id) => setEditForm({ ...editForm, referral_student_name: name, referral_student_id: id ?? '' })}
+                />
+              </EditField>
+            )}
             <EditField label="콘텐츠 작성자">
               <select value={editForm.content_author} onChange={e => setEditForm({ ...editForm, content_author: e.target.value })} className={selectCls}>
                 <option value="">(미상)</option>
@@ -145,6 +158,9 @@ export function InquirySection({
           )}
           <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
           <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
+          {localStudent.traffic_source === '소개/추천' && localStudent.referral_student_name && (
+            <InquiryRow label="소개자" value={localStudent.referral_student_name} />
+          )}
           {localStudent.content_author && (
             <InquiryRow label="작성자" value={localStudent.content_author} />
           )}

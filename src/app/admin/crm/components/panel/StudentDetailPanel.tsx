@@ -207,6 +207,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           <div className="flex-1 overflow-y-auto p-5 space-y-5">
             <InquirySection
               localStudent={localStudent}
+              adminKey={adminKey}
               editForm={editForm}
               setEditForm={setEditForm}
               isEditingInquiry={editFormHook.isEditingInquiry}

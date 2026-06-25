@@ -170,6 +170,8 @@ export interface Student {
   campaign_tags: string[];
   ad_name: string | null;
   adset_name: string | null;
+  referral_student_id: string | null; // 소개/추천 유입 시 소개한 학생 id (외부 소개자면 null)
+  referral_student_name: string | null; // 소개자 표시용 이름 (선택 학생명 또는 직접 입력)
 
   previous_score_status: PreviousScoreStatus;
   previous_test_date: string | null; // YYYY-MM, scored일 때만 유효
