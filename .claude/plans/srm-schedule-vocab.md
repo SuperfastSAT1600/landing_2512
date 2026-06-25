@@ -31,7 +31,15 @@ SRM 타임라인에 vocab 스케줄을 함께 표시해야 함.
 - `UnifiedTimeline`에 `todayVocab`, `tomorrowVocab` props 전달
 - `allEventIds` 수집에 vocab 이벤트 포함
 
+## REQ-4: vocab 복사 메시지 추가 (BROWSER)
+`UnifiedTimeline.tsx`
+- `buildVocabCopyMessage` 함수 추가 (스터디홀 패턴 동일, 끝부분만 다름)
+  - KO: `${dayWord} 단어학습 접속 시간 ${timeInfo}이니 ${verb} 출석해서 단어 외우는데 집중해보자구요!`
+  - EN: `${dayWord} Vocab session is on ${timeInfo}. ${verb} Join and focus on memorizing the words!`
+  - verb(KO): 오늘='늦지 말고', 내일='잊지 말고'
+  - verb(EN): 오늘="Don't be late!", 내일="Don't forget!"
+- vocab 이벤트에 KO/EN 복사 버튼 표시 (코치룸·스터디홀과 동일)
+- `handleCopy`에 vocab 분기 추가
+
 ## 스킵
-- ScheduleList 컴포넌트: 현재 미사용(UnifiedTimeline으로 대체) → 변경 없음
-- copy-log: vocab은 복사 기능 없으므로 변경 없음
 - test_center: 현재 1건뿐이므로 이번 작업에서 제외
