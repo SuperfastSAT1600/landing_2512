@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { BookOpen, FlaskConical, Library, RefreshCw } from 'lucide-react';
+import { BookOpen, FlaskConical, Library, RefreshCw, User } from 'lucide-react';
 import type {
   DailyLearningResponse,
   CumulativeResponse,
@@ -261,8 +261,8 @@ function EmptyCell() {
 
 function RowLabel({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <th scope="row" style={{ ...TH, whiteSpace: 'nowrap', width: 136 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <th scope="row" style={{ ...TH, whiteSpace: 'nowrap', width: 136, textAlign: 'center' }}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
         {icon}
         <span style={EYEBROW}>{label}</span>
       </div>
@@ -284,7 +284,10 @@ function StudentHeaderRow({
   return (
     <tr>
       <th style={{ ...TH, width: 136, textAlign: 'center' }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#615d59' }}>이름</span>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <User size={12} color="#615d59" />
+          <span style={EYEBROW}>이름</span>
+        </div>
       </th>
       {students.map((s) => (
         <th key={s.name} scope="col" style={{ ...TH, textAlign: 'center', minWidth: 180 }}>
