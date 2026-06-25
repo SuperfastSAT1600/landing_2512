@@ -110,6 +110,7 @@ export function InquirySection({
                 <ReferrerPicker
                   adminKey={adminKey}
                   name={editForm.referral_student_name}
+                  linkedId={editForm.referral_student_id}
                   selfId={localStudent.id}
                   onChange={(name, id) => setEditForm({ ...editForm, referral_student_name: name, referral_student_id: id ?? '' })}
                 />
