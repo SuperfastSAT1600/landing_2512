@@ -28,7 +28,8 @@ export function ReferrerPicker({ adminKey, name, selfId, onChange }: Props) {
     if (q.trim().length < 1) { setResults([]); return; }
     setSearching(true);
     try {
-      const res = await fetch(`/api/crm/students?search=${encodeURIComponent(q.trim())}`, {
+      // name_search: lead_status 무관 전체 학생 이름 검색(수업중·이탈 학생도 소개자가 될 수 있음).
+      const res = await fetch(`/api/crm/students?name_search=${encodeURIComponent(q.trim())}`, {
         headers: { 'x-admin-key': adminKey },
       });
       const json = await res.json();

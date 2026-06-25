@@ -24,11 +24,11 @@ export async function GET(request: NextRequest) {
   const retryStrategyId = searchParams.get('retry_strategy_id');
   const isVip = searchParams.get('is_vip') === 'true' ? true : null;
 
-  // 동명이인 감지용 — 모든 상태에서 이름만 검색
+  // 동명이인 감지 + 소개자 검색용 — lead_status 무관 모든 상태에서 이름 검색
   if (nameSearch) {
     const { data, error } = await supabaseAdmin
       .from('students')
-      .select('id, name')
+      .select('id, name, parent_phone, grade')
       .ilike('name', `%${nameSearch}%`)
       .order('name', { ascending: true })
       .limit(10);
