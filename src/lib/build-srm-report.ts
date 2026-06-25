@@ -14,6 +14,12 @@ type SkillCrossRef = {
   gap: number | null;
 };
 
+type EdenInsight = {
+  strengths: string[];
+  weaknesses: string[];
+  intentions: string[];
+};
+
 const VOCAB_MASTER_BOX = 5;
 const VOCAB_MAX_MISSED = 6;
 const TC_TREND_THRESHOLD = 0.12;
@@ -88,6 +94,58 @@ async function setCachedNarrative(profileId: string, date: string, itemType: str
     .match({ profile_id: profileId, report_date: date, item_type: itemType, input_hash: inputHash });
 }
 
+async function extractEdenInsights(
+  conversations: { skill: string; isCorrect: boolean; messages: { role: string; content: string }[] }[]
+): Promise<EdenInsight | undefined> {
+  const meaningful = conversations.filter(c =>
+    c.messages.filter(m => m.role === 'user' && m.content?.trim().length > 3).length >= 2
+  );
+  if (meaningful.length === 0) return undefined;
+
+  const convoText = meaningful.map(c => {
+    const lines = c.messages
+      .filter(m => m.content?.trim())
+      .map(m => `${m.role === 'user' ? '학생' : 'Eden'}: ${m.content.trim()}`)
+      .join('\n');
+    return `[${c.skill} — ${c.isCorrect ? '정답' : '오답'}]\n${lines}`;
+  }).join('\n\n');
+
+  const res = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: [
+          'SAT 학습 코칭 대화를 분석해 JSON을 반환합니다.',
+          '반환 형식: {"strengths": [...], "weaknesses": [...], "intentions": [...]}',
+          '각 배열은 한국어 짧은 문장 1~3개. 없으면 빈 배열.',
+          'strengths: 학생이 보여준 논리적 강점, 빠른 파악, 좋은 전략',
+          'weaknesses: 반복된 개념 오류, 헷갈린 부분, 틀린 패턴',
+          'intentions: 학생이 이해하려 했던 것 (질문·추론 내용 기반)',
+          '설명 없이 JSON만 반환합니다.',
+        ].join('\n'),
+      },
+      { role: 'user', content: convoText },
+    ],
+    max_tokens: 300,
+    temperature: 0.2,
+    response_format: { type: 'json_object' },
+  });
+
+  try {
+    const parsed = JSON.parse(res.choices[0]?.message?.content ?? '{}') as Partial<EdenInsight>;
+    const insight: EdenInsight = {
+      strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+      weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses : [],
+      intentions: Array.isArray(parsed.intentions) ? parsed.intentions : [],
+    };
+    const hasContent = insight.strengths.length + insight.weaknesses.length + insight.intentions.length > 0;
+    return hasContent ? insight : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function humanizeNarrative(text: string): Promise<string> {
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -130,6 +188,7 @@ async function generateStudyHallNarrative(
   stats: { durationMinutes: number; totalProblems: number; correctCount: number; accuracy: number; skills: StudyHallSkill[] },
   tcCrossRef?: SkillCrossRef[],
   coachFeedback?: string,
+  edenInsight?: EdenInsight,
 ): Promise<string> {
   const skillLines = [...stats.skills].sort((a, b) => b.total - a.total).slice(0, 4)
     .map(s => {
@@ -167,16 +226,24 @@ async function generateStudyHallNarrative(
     }),
   ].join('\n') : '';
 
+  const edenBlock = edenInsight ? [
+    '[Eden 대화 인사이트]',
+    edenInsight.strengths.length > 0 ? `강점: ${edenInsight.strengths.join(' / ')}` : '',
+    edenInsight.weaknesses.length > 0 ? `약점: ${edenInsight.weaknesses.join(' / ')}` : '',
+    edenInsight.intentions.length > 0 ? `학습 의도: ${edenInsight.intentions.join(' / ')}` : '',
+  ].filter(Boolean).join('\n') : '';
+
   const userContent = [
     '[오늘 스터디홀]',
     `학습 시간: ${stats.durationMinutes}분 / ${volumeCtx} / 총 ${stats.totalProblems}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
     skillLines ? `스킬별 성취: ${skillLines}` : '',
     weakestSkill ? `가장 취약한 스킬: ${toKoreanSkill(weakestSkill.skill)} (${weakestSkill.correct}/${weakestSkill.total}문항)` : '',
     hasCrossRef ? `\n${crossRefBlock}` : '',
+    edenBlock ? `\n${edenBlock}` : '',
     coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
   ].filter(Boolean).join('\n');
 
-  const sentenceGuide = isShortSession && !hasCrossRef && !coachFeedback
+  const sentenceGuide = isShortSession && !hasCrossRef && !coachFeedback && !edenInsight
     ? '2문장으로 작성합니다.'
     : '3문장으로 작성합니다.';
 
@@ -199,6 +266,7 @@ async function generateStudyHallNarrative(
           '- 정답률 톤: 85% 이상 → 강점 강조 / 70~84% → 잘한 점과 보완점 균형 / 50~69% → 개선 방향 제시 / 50% 미만 → 흔들리는 부분을 지목하되 격려 톤 유지',
           '- 취약 스킬이 있으면 반드시 그 스킬 이름을 문장에 포함합니다.',
           '- [테스트센터 교차] 항목이 있으면 연습-검증 격차를 반드시 해석합니다.',
+          '- [Eden 대화 인사이트] 항목이 있으면 강점과 약점을 첫 번째 또는 두 번째 문장에 자연스럽게 녹입니다. 인사이트를 그대로 나열하지 않고 코치 언어로 해석합니다.',
           '- [코치 피드백] 항목이 있으면 마지막 문장은 반드시 그 피드백에 근거한 다음 수업 방향입니다.',
           '- [코치 피드백]이 없으면 마지막 문장은 오늘 데이터에서 도출한 방향입니다.',
           `- ${sentenceGuide}`,
@@ -371,7 +439,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
   ] = await Promise.all([
     prefetchNarrativeCache(profileId),
     supabaseSFv2.from('study_hall_session').select('id, started_at, ended_at').eq('user_id', profileId).not('ended_at', 'is', null).order('started_at', { ascending: false }).limit(60),
-    supabaseSFv2.from('study_hall_unit_attempts').select('study_hall_session_id, is_correct, attempted_at, unit_id').eq('student_id', profileId).order('attempted_at', { ascending: false }).limit(500),
+    supabaseSFv2.from('study_hall_unit_attempts').select('study_hall_session_id, is_correct, attempted_at, unit_id, chat_messages, time_spent_seconds, confidence_level').eq('student_id', profileId).order('attempted_at', { ascending: false }).limit(500),
     supabaseSFv2.from('test_center_lesson_attempts').select('test_center_session_id, score, total, status, lesson_id, curriculum_id').eq('student_id', profileId).not('score', 'is', null),
     supabaseSFv2.from('daily_reports').select('report_date, report_md, status').eq('student_id', profileId).eq('status', 'sent').order('report_date', { ascending: false }).limit(30),
     supabaseSFv2.schema('vocab').from('events').select('entry_id, is_correct, prev_box, new_box, occurred_at').eq('subject_id', profileId).eq('kind', 'graded').order('occurred_at', { ascending: false }).limit(1000),
@@ -432,13 +500,27 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     if (a.is_correct) sk.correct++;
   }
 
-  const shByDate = new Map<string, { totalMinutes: number; totalProblems: number; correctCount: number; skillMap: Map<string, { skill: string; domain: string; correct: number; total: number }> }>();
+  // Eden 대화 데이터 수집 (스킬별 그룹)
+  type EdenConvo = { skill: string; isCorrect: boolean; messages: { role: string; content: string }[] };
+  const edenBySession = new Map<string, EdenConvo[]>();
+  for (const a of shAttempts ?? []) {
+    const sid = a.study_hall_session_id as string;
+    const uid = a.unit_id as string;
+    const msgs = a.chat_messages as { role: string; content: string }[] | null;
+    if (!msgs || msgs.length === 0) continue;
+    const meta = unitsMap.get(uid);
+    if (!meta?.skill) continue;
+    if (!edenBySession.has(sid)) edenBySession.set(sid, []);
+    edenBySession.get(sid)!.push({ skill: toKoreanSkill(meta.skill), isCorrect: !!a.is_correct, messages: msgs });
+  }
+
+  const shByDate = new Map<string, { totalMinutes: number; totalProblems: number; correctCount: number; skillMap: Map<string, { skill: string; domain: string; correct: number; total: number }>; edenConvos: EdenConvo[] }>();
   for (const [sid, stats] of shBySession) {
     const s = shSessionMap.get(sid);
     if (!s) continue;
     const date = toKSTDate(s.started_at);
     const minutes = Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000);
-    if (!shByDate.has(date)) shByDate.set(date, { totalMinutes: 0, totalProblems: 0, correctCount: 0, skillMap: new Map() });
+    if (!shByDate.has(date)) shByDate.set(date, { totalMinutes: 0, totalProblems: 0, correctCount: 0, skillMap: new Map(), edenConvos: [] });
     const d = shByDate.get(date)!;
     d.totalMinutes += minutes; d.totalProblems += stats.total; d.correctCount += stats.correct;
     const sessionSkills = shSkillsBySession.get(sid);
@@ -448,6 +530,8 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
         const ds = d.skillMap.get(skillKey)!; ds.correct += sk.correct; ds.total += sk.total;
       }
     }
+    const sessionEden = edenBySession.get(sid);
+    if (sessionEden) d.edenConvos.push(...sessionEden);
   }
 
   // Test Center — build session map before cross-ref computation
@@ -518,16 +602,31 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       return { skill: domain, shAccuracy: shAcc, tcAccuracy: tcAcc, gap: tcAcc !== null ? shAcc - tcAcc : null };
     });
 
+    // Eden 인사이트 추출 (캐시 키 먼저 계산 후 캐시 미스 시에만 LLM 호출)
+    const edenCacheKey = stats.edenConvos.length > 0
+      ? hashInput(stats.edenConvos.map(c => ({ skill: c.skill, isCorrect: c.isCorrect, msgs: c.messages.map(m => m.content).join('|') })))
+      : null;
+    let edenInsight: EdenInsight | undefined;
+    if (edenCacheKey) {
+      const cachedEden = lookupCache(narrativeCache, date, 'eden_insight', edenCacheKey);
+      if (cachedEden) {
+        try { edenInsight = JSON.parse(cachedEden) as EdenInsight; } catch { /* ignore */ }
+      } else {
+        edenInsight = await extractEdenInsights(stats.edenConvos);
+        if (edenInsight) await setCachedNarrative(profileId, date, 'eden_insight', edenCacheKey, JSON.stringify(edenInsight));
+      }
+    }
+
     const cacheInput = {
       durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy,
       skills: [...skills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })),
-      tcCrossRef, coachFeedback,
+      tcCrossRef, coachFeedback, edenInsight,
     };
     const inputHash = hashInput(cacheInput);
     let narrative = lookupCache(narrativeCache, date, 'study_hall', inputHash);
     if (!narrative) {
       narrative = stats.totalProblems > 0
-        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }, tcCrossRef.length ? tcCrossRef : undefined, coachFeedback)
+        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }, tcCrossRef.length ? tcCrossRef : undefined, coachFeedback, edenInsight)
         : `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
       await setCachedNarrative(profileId, date, 'study_hall', inputHash, narrative);
     }
