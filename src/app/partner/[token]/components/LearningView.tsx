@@ -283,7 +283,9 @@ function StudentHeaderRow({
 }) {
   return (
     <tr>
-      <th style={{ ...TH, width: 136 }} />
+      <th style={{ ...TH, width: 136, textAlign: 'center' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: '#615d59' }}>이름</span>
+      </th>
       {students.map((s) => (
         <th key={s.name} scope="col" style={{ ...TH, textAlign: 'center', minWidth: 180 }}>
           {s.portalToken ? (
