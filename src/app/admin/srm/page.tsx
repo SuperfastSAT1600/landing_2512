@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DayTabs, getKstDateStr } from './components/DayTabs';
 import { UnifiedTimeline } from './components/UnifiedTimeline';
-import { AlertSection } from './components/AlertSection';
+import { AlertFeedRows } from './components/AlertFeedRows';
 import { StudentPanel } from './components/StudentPanel';
 import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
@@ -263,6 +263,16 @@ export default function SrmPage() {
       {mainTab === 'queue' && (
         <>
           <StudentSearch onSelect={handleRosterStudentClick} />
+          <AlertFeedRows
+            data={alerts}
+            loading={alertsLoading}
+            onStudentClick={(student) => setSelectedStudent({
+              id: student.id,
+              name: student.name,
+              triggerType: student.triggerType,
+            })}
+            onCoachClick={handleCoachClick}
+          />
           <UnifiedTimeline
             todayCoachRoom={schedule?.today?.coachRoom ?? []}
             todayStudyHall={schedule?.today?.studyHall ?? []}
@@ -281,16 +291,6 @@ export default function SrmPage() {
             onCoachClick={handleCoachClick}
             onEventClick={setSelectedEvent}
             highlightEventId={urlEventId ?? undefined}
-          />
-
-          <AlertSection
-            data={alerts}
-            loading={alertsLoading}
-            onStudentClick={(student) => setSelectedStudent({
-              id: student.id,
-              name: student.name,
-              triggerType: student.triggerType,
-            })}
           />
         </>
       )}
