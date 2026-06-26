@@ -73,7 +73,7 @@ export function AlertFeedRows({ data, loading, onStudentClick, onCoachClick }: P
         studentId: item.studentIds?.[i] ?? name,
         studentName: name,
         coaches: item.coaches,
-        coachIds: item.coachIds ?? [],
+        coachIds: [],
       }))
     ),
     ...(data?.noStudyHall ?? []).map((item) => ({
