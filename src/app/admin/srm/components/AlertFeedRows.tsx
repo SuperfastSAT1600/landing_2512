@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, CheckCircle2, Circle } from 'lucide-react';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
 
 // ── 메시지 템플릿 ────────────────────────────────────────────────────
@@ -58,10 +58,19 @@ const TYPE_CONFIG: Record<AlertRowType, { label: string; border: string; bg: str
 
 export function AlertFeedRows({ data, loading, onStudentClick, onCoachClick }: Props) {
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
 
   const handleCopy = async (key: string, text: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedIds((prev) => new Set(prev).add(key));
+  };
+
+  const handleCheck = (key: string) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
   };
 
   // 세 알림을 하나의 flat 리스트로 합침
@@ -124,8 +133,11 @@ export function AlertFeedRows({ data, loading, onStudentClick, onCoachClick }: P
             const copiedStudent = copiedIds.has(`${row.key}-s-ko`) || copiedIds.has(`${row.key}-s-en`);
             const copiedCoach   = copiedIds.has(`${row.key}-coach`);
             const anySent = copiedStudent || copiedCoach;
+            const isChecked = checkedIds.has(row.key);
 
-            const rowClass = anySent
+            const rowClass = isChecked
+              ? 'border-emerald-300 bg-emerald-100 hover:bg-emerald-100'
+              : anySent
               ? 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
               : `${cfg.border} ${cfg.bg}`;
 
@@ -199,13 +211,30 @@ export function AlertFeedRows({ data, loading, onStudentClick, onCoachClick }: P
                         onClick={() => handleCopy(`${row.key}-coach`, msgNoClassCoach(row.studentName, coachName))}
                       />
                     )}
+                    {/* 대응 완료 체크 */}
+                    <button
+                      onClick={() => handleCheck(row.key)}
+                      title={isChecked ? '대응 완료 취소' : '대응 완료로 표시'}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+                        isChecked
+                          ? 'border-emerald-400 text-emerald-700 bg-emerald-200 hover:bg-emerald-300'
+                          : 'border-gray-200 text-gray-400 hover:text-emerald-600 hover:border-emerald-300 bg-white'
+                      }`}
+                    >
+                      {isChecked ? <CheckCircle2 size={10} /> : <Circle size={10} />}
+                      {isChecked ? '완료' : '확인'}
+                    </button>
                   </div>
                 </div>
 
                 {/* 상태 */}
                 <div className="w-16 shrink-0 flex flex-col items-end justify-center border-l border-gray-200 pl-3">
-                  {anySent ? (
+                  {isChecked ? (
                     <span className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-700">
+                      <CheckCircle2 size={10} />대응완료
+                    </span>
+                  ) : anySent ? (
+                    <span className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-600">
                       <Check size={10} />발송됨
                     </span>
                   ) : (
