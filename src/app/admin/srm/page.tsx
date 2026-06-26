@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DayTabs, getKstDateStr } from './components/DayTabs';
 import { UnifiedTimeline } from './components/UnifiedTimeline';
-import { AlertSection } from './components/AlertSection';
+import { AlertFeedRows } from './components/AlertFeedRows';
 import { StudentPanel } from './components/StudentPanel';
 import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
@@ -14,6 +14,7 @@ import { StudentSearch } from './components/StudentSearch';
 import { StudentRoster } from './components/StudentRoster';
 import { EventLogPanel } from './components/EventLogPanel';
 import DailyLearningPage from './daily-learning/page';
+import { DailyStatsPanel } from './components/DailyStatsPanel';
 import type { TaggedEvent } from './components/UnifiedTimeline';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
@@ -38,7 +39,7 @@ interface SelectedCoach {
   relatedStudents: { name: string; events: string[] }[];
 }
 
-type MainTab = 'queue' | 'log' | 'roster' | 'daily';
+type MainTab = 'queue' | 'log' | 'stats' | 'roster' | 'daily';
 
 function collectRelatedStudents(
   coachId: string,
@@ -77,6 +78,7 @@ export default function SrmPage() {
   const urlEventId = searchParams.get('eventId');
 
   const [mainTab, setMainTab] = useState<MainTab>('queue');
+  const [queueTab, setQueueTab] = useState<'schedule' | 'noClass' | 'noStudyHall' | 'noVocab'>('schedule');
   const [selectedDate, setSelectedDate] = useState(() => {
     if (urlDate && /^\d{4}-\d{2}-\d{2}$/.test(urlDate)) return urlDate;
     return getKstDateStr(0);
@@ -224,7 +226,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6">
-        {(['queue', 'log', 'roster', 'daily'] as MainTab[]).map((t) => (
+        {(['queue', 'log', 'stats', 'roster', 'daily'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -234,13 +236,17 @@ export default function SrmPage() {
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
             }`}
           >
-            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'roster' ? '명단' : '학습 리포트'}
+            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'stats' ? '통계' : t === 'roster' ? '명단' : '학습 리포트'}
           </button>
         ))}
       </div>
 
       {mainTab !== 'roster' && mainTab !== 'daily' && (
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
+      )}
+
+      {mainTab === 'stats' && (
+        <DailyStatsPanel date={selectedDate} />
       )}
 
       {mainTab === 'queue' && openIssues.length > 0 && (
@@ -260,40 +266,99 @@ export default function SrmPage() {
         </div>
       )}
 
-      {mainTab === 'queue' && (
-        <>
-          <StudentSearch onSelect={handleRosterStudentClick} />
-          <UnifiedTimeline
-            todayCoachRoom={schedule?.today?.coachRoom ?? []}
-            todayStudyHall={schedule?.today?.studyHall ?? []}
-            todayVocab={schedule?.today?.vocab ?? []}
-            tomorrowCoachRoom={schedule?.tomorrow?.coachRoom ?? []}
-            tomorrowStudyHall={schedule?.tomorrow?.studyHall ?? []}
-            tomorrowVocab={schedule?.tomorrow?.vocab ?? []}
-            loading={scheduleLoading}
-            eventDate={selectedDate}
-            vipStudentIds={vipStudentIds}
-            studentLanguages={studentLanguages}
-            pausedStudentIds={pausedStudentIds}
-            loggedEventIds={loggedEventIds}
-            issueEventIds={new Set(openIssues.filter((i) => i.event_id).map((i) => i.event_id!))}
-            onStudentClick={handleScheduleStudentClick}
-            onCoachClick={handleCoachClick}
-            onEventClick={setSelectedEvent}
-            highlightEventId={urlEventId ?? undefined}
-          />
+      {mainTab === 'queue' && (() => {
+        const noClassCount = alerts?.noUpcomingClass?.reduce((s, i) => s + i.students.length, 0) ?? 0;
+        const noSHCount = alerts?.noStudyHall?.length ?? 0;
+        const noVocabCount = alerts?.noVocab?.length ?? 0;
+        const alertOnStudentClick = (student: { id: string; name: string; triggerType: string }) =>
+          setSelectedStudent({ id: student.id, name: student.name, triggerType: student.triggerType });
 
-          <AlertSection
-            data={alerts}
-            loading={alertsLoading}
-            onStudentClick={(student) => setSelectedStudent({
-              id: student.id,
-              name: student.name,
-              triggerType: student.triggerType,
-            })}
-          />
-        </>
-      )}
+        const QUEUE_TABS = [
+          { key: 'schedule'    as const, label: '스케줄',       count: null        },
+          { key: 'noClass'     as const, label: '수업 미정',    count: noClassCount },
+          { key: 'noStudyHall' as const, label: '스터디홀 미정', count: noSHCount   },
+          { key: 'noVocab'     as const, label: '보카 미정',    count: noVocabCount },
+        ];
+
+        return (
+          <>
+            <StudentSearch onSelect={handleRosterStudentClick} />
+
+            {/* 큐 서브 탭 */}
+            <div className="flex gap-1 mb-5 border-b border-gray-100 pb-2">
+              {QUEUE_TABS.map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  onClick={() => setQueueTab(key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                    queueTab === key
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  }`}
+                >
+                  {label}
+                  {count !== null && count > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                      queueTab === key ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'
+                    }`}>
+                      {alertsLoading ? '…' : count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {queueTab === 'schedule' && (
+              <UnifiedTimeline
+                todayCoachRoom={schedule?.today?.coachRoom ?? []}
+                todayStudyHall={schedule?.today?.studyHall ?? []}
+                todayVocab={schedule?.today?.vocab ?? []}
+                tomorrowCoachRoom={schedule?.tomorrow?.coachRoom ?? []}
+                tomorrowStudyHall={schedule?.tomorrow?.studyHall ?? []}
+                tomorrowVocab={schedule?.tomorrow?.vocab ?? []}
+                loading={scheduleLoading}
+                eventDate={selectedDate}
+                vipStudentIds={vipStudentIds}
+                studentLanguages={studentLanguages}
+                pausedStudentIds={pausedStudentIds}
+                loggedEventIds={loggedEventIds}
+                issueEventIds={new Set(openIssues.filter((i) => i.event_id).map((i) => i.event_id!))}
+                onStudentClick={handleScheduleStudentClick}
+                onCoachClick={handleCoachClick}
+                onEventClick={setSelectedEvent}
+                highlightEventId={urlEventId ?? undefined}
+              />
+            )}
+
+            {queueTab === 'noClass' && (
+              <AlertFeedRows
+                data={alerts ? { noUpcomingClass: alerts.noUpcomingClass, noStudyHall: [], noVocab: [] } : null}
+                loading={alertsLoading}
+                onStudentClick={alertOnStudentClick}
+                onCoachClick={handleCoachClick}
+              />
+            )}
+
+            {queueTab === 'noStudyHall' && (
+              <AlertFeedRows
+                data={alerts ? { noUpcomingClass: [], noStudyHall: alerts.noStudyHall, noVocab: [] } : null}
+                loading={alertsLoading}
+                onStudentClick={alertOnStudentClick}
+                onCoachClick={handleCoachClick}
+              />
+            )}
+
+            {queueTab === 'noVocab' && (
+              <AlertFeedRows
+                data={alerts ? { noUpcomingClass: [], noStudyHall: [], noVocab: alerts.noVocab } : null}
+                loading={alertsLoading}
+                onStudentClick={alertOnStudentClick}
+                onCoachClick={handleCoachClick}
+              />
+            )}
+          </>
+        );
+      })()}
 
       {mainTab === 'log' && (
         <>
