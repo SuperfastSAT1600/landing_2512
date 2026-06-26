@@ -20,6 +20,11 @@ type EdenInsight = {
   intentions: string[];
 };
 
+type VocabContext = {
+  missedTerms: string[];
+  masteredTerms: string[];
+};
+
 const VOCAB_MASTER_BOX = 5;
 const VOCAB_MAX_MISSED = 6;
 const TC_TREND_THRESHOLD = 0.12;
@@ -198,6 +203,7 @@ async function generateStudyHallNarrative(
   tcCrossRef?: SkillCrossRef[],
   coachFeedback?: string,
   edenInsight?: EdenInsight,
+  vocabContext?: VocabContext,
 ): Promise<string> {
   const skillLines = [...stats.skills].sort((a, b) => b.total - a.total).slice(0, 4)
     .map(s => {
@@ -242,6 +248,13 @@ async function generateStudyHallNarrative(
     edenInsight.intentions.length > 0 ? `학습 의도: ${edenInsight.intentions.join(' / ')}` : '',
   ].filter(Boolean).join('\n') : '';
 
+  const hasWordsInContext = stats.skills.some(s => s.skill === 'Words in Context');
+  const vocabBlock = vocabContext && hasWordsInContext && (vocabContext.missedTerms.length + vocabContext.masteredTerms.length) > 0 ? [
+    '[최근 단어 학습 — 최근 7일]',
+    vocabContext.missedTerms.length > 0 ? `틀린 단어: ${vocabContext.missedTerms.join(' / ')}` : '',
+    vocabContext.masteredTerms.length > 0 ? `마스터한 단어: ${vocabContext.masteredTerms.join(' / ')}` : '',
+  ].filter(Boolean).join('\n') : '';
+
   const userContent = [
     '[오늘 스터디홀]',
     `학습 시간: ${stats.durationMinutes}분 / ${volumeCtx} / 총 ${stats.totalProblems}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
@@ -249,11 +262,13 @@ async function generateStudyHallNarrative(
     weakestSkill ? `가장 취약한 스킬: ${toKoreanSkill(weakestSkill.skill)} (${weakestSkill.correct}/${weakestSkill.total}문항)` : '',
     hasCrossRef ? `\n${crossRefBlock}` : '',
     edenBlock ? `\n${edenBlock}` : '',
+    vocabBlock ? `\n${vocabBlock}` : '',
     coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
   ].filter(Boolean).join('\n');
 
   const hasEden = !!edenInsight && (edenInsight.strengths.length + edenInsight.weaknesses.length) > 0;
-  const isCompact = isShortSession && !hasCrossRef && !coachFeedback && !hasEden;
+  const hasVocab = !!vocabBlock;
+  const isCompact = isShortSession && !hasCrossRef && !coachFeedback && !hasEden && !hasVocab;
 
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -279,9 +294,11 @@ async function generateStudyHallNarrative(
           '',
           'SuperfastSAT 코칭 철학:',
           '- SAT는 예측 가능한 패턴을 가진 시스템입니다. 코치는 정답률이 아니라 오류 유형으로 학습 상태를 진단합니다.',
+          '- 학습 사이클: 레슨(학습) → 스터디홀(연습) → 테스트센터(검증). 리포트는 이 사이클이 지금 어디에 있는지 보여줍니다.',
           '- 스터디홀은 연습 환경입니다. 패턴을 시간 압박 없이 체화하는 것이 목적이고, 테스트센터가 그 내재화를 검증합니다.',
           '- "틀렸다"는 사실보다 "어떻게 틀렸는가"가 다음 수업 방향을 결정합니다.',
           '- 스터디홀 정답률이 높아도 테스트센터에서 무너진다면, 연습은 됐지만 압박 하 적용이 안 된 것입니다.',
+          '- 단어 학습에서 반복적으로 틀린 단어는 문맥 속 어휘(Words in Context) 성취에 영향을 미칩니다.',
           '- 코치 피드백이 있으면 리포트의 마지막은 그 계획을 학부모 언어로 전달합니다.',
           '- 리포트는 숫자 요약이 아니라 "학습 사이클이 지금 어디 있는가"를 보여주는 진단 도구입니다.',
           '',
@@ -299,6 +316,8 @@ async function generateStudyHallNarrative(
           '- 어느 오류 유형이 반복되는지 읽어냅니다. 데이터에서 드러나지 않으면 유추하지 않습니다.',
           '- [Eden 대화 인사이트]가 있으면: 강점 장면 1개 + 약점 개념 1개를 구체적으로 씁니다.',
           '  학부모가 아이 공부하는 모습을 그릴 수 있게. "[Eden~]에서는" 직접 언급 금지.',
+          '- [최근 단어 학습]이 있고 문맥 속 어휘 스킬이 있으면: 최근 틀린 단어와 성취를 연결해 씁니다.',
+          '  단어 이름을 직접 나열하지 말고 "최근 연습한 어휘에서 혼동이 남아있다"처럼 패턴으로 씁니다.',
           '- [테스트센터 교차]가 있으면 연습-검증 격차를 해석합니다. (격차 >10%p → 압박 하 적용 훈련 필요)',
           '',
           '[계획] 다음 수업 방향 (1문장)',
@@ -329,6 +348,7 @@ async function generateTestCenterNarrative(
   stats: { curriculumTitle?: string; curriculumDomain?: string; totalScore: number; totalProblems: number; lessons: TestCenterLesson[] },
   shCrossRef?: SkillCrossRef[],
   coachFeedback?: string,
+  vocabContext?: VocabContext,
 ): Promise<string> {
   const accuracy = stats.totalProblems > 0 ? Math.round((stats.totalScore / stats.totalProblems) * 100) : 0;
   const perfCtx = accuracy >= 85 ? '우수' : accuracy >= 70 ? '양호' : '보완 필요';
@@ -368,6 +388,13 @@ async function generateTestCenterNarrative(
     }),
   ].join('\n') : '';
 
+  const isRW = domainLabel === 'RW' || domainLabel === 'reading_and_writing';
+  const vocabBlock = vocabContext && isRW && (vocabContext.missedTerms.length + vocabContext.masteredTerms.length) > 0 ? [
+    '[최근 단어 학습 — 최근 7일]',
+    vocabContext.missedTerms.length > 0 ? `틀린 단어: ${vocabContext.missedTerms.join(' / ')}` : '',
+    vocabContext.masteredTerms.length > 0 ? `마스터한 단어: ${vocabContext.masteredTerms.join(' / ')}` : '',
+  ].filter(Boolean).join('\n') : '';
+
   const userContent = [
     '[오늘 테스트센터]',
     stats.curriculumTitle ? `테스트: ${stats.curriculumTitle}${domainLabel ? ` (${domainLabel})` : ''}` : '',
@@ -376,6 +403,7 @@ async function generateTestCenterNarrative(
     trendNote ? `흐름: ${trendNote}` : '',
     `전체 평균 ${accuracy}% 기준 — 10%p 이상 낮은 모듈을 약한 모듈로 판정`,
     hasCrossRef ? `\n${crossRefBlock}` : '',
+    vocabBlock ? `\n${vocabBlock}` : '',
     coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
   ].filter(Boolean).join('\n');
 
@@ -392,9 +420,11 @@ async function generateTestCenterNarrative(
           '당신은 SuperfastSAT 코치입니다.',
           '학생의 테스트센터 결과를 분석해 학부모에게 전달하는 리포트를 작성합니다.',
           '',
-          'SuperfastSAT의 코칭 철학:',
+          'SuperfastSAT 코칭 철학:',
+          '- 학습 사이클: 레슨(학습) → 스터디홀(연습) → 테스트센터(검증). 테스트센터는 이 사이클의 검증 단계입니다.',
           '- 테스트센터는 검증 환경입니다. 스터디홀 연습과 비교했을 때 격차가 크면 연습은 됐지만 실전 적용이 안 된 것입니다.',
           '- 전체 정답률보다 모듈 간 흐름이 중요합니다. 어디서 무너지는지가 다음 수업의 방향을 결정합니다.',
+          '- 단어 학습에서 반복적으로 틀린 단어는 RW 테스트의 어휘 관련 문항에 영향을 미칩니다.',
           '- 코치가 우려했던 부분이 오늘 결과에서 확인됐는지, 아니면 개선됐는지를 학부모에게 전달합니다.',
           '',
           '작성 규칙:',
@@ -402,6 +432,8 @@ async function generateTestCenterNarrative(
           '- 평균 정답률보다 10%p 이상 낮은 모듈이 있으면 그 모듈을 구체적으로 지목합니다.',
           '- 커리큘럼 제목이 있으면 반드시 언급합니다.',
           '- [스터디홀 교차] 항목이 있으면 연습-검증 격차를 반드시 해석합니다.',
+          '- [최근 단어 학습]이 있으면 최근 틀린 어휘 패턴을 RW 결과 해석에 연결합니다.',
+          '  단어 이름을 나열하지 말고 "최근 연습한 어휘에서 혼동이 남아있는 패턴"처럼 씁니다.',
           '- [코치 피드백] 항목이 있으면 마지막 문장은 반드시 그 피드백에 근거한 다음 수업 방향입니다.',
           '- [코치 피드백]이 없으면 마지막 문장은 오늘 결과에서 도출한 방향입니다.',
           `- ${sentenceGuide}`,
@@ -615,10 +647,51 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     }
   }
 
-  // Coach feedback: most recent daily report
-  const coachFeedback = (dailyReports ?? []).length > 0
-    ? ((dailyReports![0].report_md as string | null) ?? '').slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined
-    : undefined;
+  // Lesson Feedback 조회 (coachFeedback 우선순위 결정에 필요해 SH/TC 내러티브 전에 실행)
+  let lessonFeedbackEvents: { id: string; starts_at: string; assigned_teacher_id: string | null; feedback: string }[] = [];
+  const { data: participantRowsEarly } = await supabaseSFv2
+    .from('scheduled_event_participants').select('event_id').eq('user_id', profileId);
+  if (participantRowsEarly?.length) {
+    const earlyEventIds = participantRowsEarly.map(r => r.event_id as string);
+    const { data: fbEvents } = await supabaseSFv2
+      .from('scheduled_events')
+      .select('id, starts_at, assigned_teacher_id, feedback')
+      .in('id', earlyEventIds)
+      .eq('category', 'coach_room')
+      .not('feedback', 'is', null)
+      .neq('feedback', '')
+      .order('starts_at', { ascending: false })
+      .limit(60);
+    lessonFeedbackEvents = (fbEvents ?? []) as typeof lessonFeedbackEvents;
+  }
+
+  // Coach feedback: 1순위 scheduled_events.feedback (코치 직접 입력), 2순위 daily_reports.report_md
+  const coachFeedback: string | undefined =
+    lessonFeedbackEvents.length > 0
+      ? (lessonFeedbackEvents[0].feedback ?? '').slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined
+      : (dailyReports ?? []).length > 0
+        ? ((dailyReports![0].report_md as string | null) ?? '').slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined
+        : undefined;
+
+  // Vocab context: 날짜별 최근 7일 누적 (missedTerms, masteredTerms)
+  const vocabDatesSorted = [...vocaByDate.entries()].sort(([a], [b]) => a.localeCompare(b));
+  function getVocabContextForDate(targetDate: string): VocabContext | undefined {
+    const cutoff = new Date(targetDate);
+    cutoff.setDate(cutoff.getDate() - 7);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const missedSet = new Set<string>();
+    const masteredSet = new Set<string>();
+    for (const [d, agg] of vocabDatesSorted) {
+      if (d < cutoffStr || d > targetDate) continue;
+      for (const id of agg.missedIds) { const t = termMap.get(id); if (t) missedSet.add(t); }
+      for (const id of agg.masteredIds) { const t = termMap.get(id); if (t) masteredSet.add(t); }
+    }
+    if (missedSet.size === 0 && masteredSet.size === 0) return undefined;
+    return {
+      missedTerms: [...missedSet].slice(0, VOCAB_MAX_MISSED),
+      masteredTerms: [...masteredSet].slice(0, 3),
+    };
+  }
 
   await Promise.all(Array.from(shByDate.entries()).map(async ([date, stats]) => {
     const accuracy = stats.totalProblems > 0 ? Math.round((stats.correctCount / stats.totalProblems) * 100) : 0;
@@ -655,16 +728,17 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       }
     }
 
+    const vocabContext = getVocabContextForDate(date);
     const cacheInput = {
       durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy,
       skills: [...skills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })),
-      tcCrossRef, coachFeedback, edenInsight,
+      tcCrossRef, coachFeedback, edenInsight, vocabContext,
     };
     const inputHash = hashInput(cacheInput);
     let narrative = lookupCache(narrativeCache, date, 'study_hall', inputHash);
     if (!narrative) {
       narrative = stats.totalProblems > 0
-        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }, tcCrossRef.length ? tcCrossRef : undefined, coachFeedback, edenInsight)
+        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }, tcCrossRef.length ? tcCrossRef : undefined, coachFeedback, edenInsight, vocabContext)
         : `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
       await setCachedNarrative(profileId, date, 'study_hall', inputHash, narrative);
     }
@@ -692,10 +766,11 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       shCrossRef.push({ skill: tcDomain, shAccuracy: shAcc, tcAccuracy: tcAcc, gap: shAcc > 0 && tcAcc !== null ? shAcc - tcAcc : null });
     }
 
+    const vocabContextTc = getVocabContextForDate(date);
     const cacheInput = {
       curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain,
       totalScore, totalProblems, lessons: data.lessons.map(l => ({ title: l.title, score: l.score, total: l.total })),
-      shCrossRef, coachFeedback,
+      shCrossRef, coachFeedback, vocabContext: vocabContextTc,
     };
     const inputHash = hashInput(cacheInput);
     let narrative: string | undefined;
@@ -704,7 +779,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       if (!narrative) {
         narrative = await generateTestCenterNarrative(
           { curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, totalScore, totalProblems, lessons: data.lessons },
-          shCrossRef.length ? shCrossRef : undefined, coachFeedback,
+          shCrossRef.length ? shCrossRef : undefined, coachFeedback, vocabContextTc,
         );
         await setCachedNarrative(profileId, date, 'test_center', inputHash, narrative);
       }
@@ -717,43 +792,25 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     getOrCreate(dr.report_date as string).items.push({ type: 'daily_report', reportMd: dr.report_md as string } satisfies DailyReportDay);
   }
 
-  // Lesson Feedback — scheduled_events.feedback (coach_room, completed)
-  const { data: participantRows } = await supabaseSFv2
-    .from('scheduled_event_participants')
-    .select('event_id')
-    .eq('user_id', profileId);
+  // Lesson Feedback — lessonFeedbackEvents는 위에서 coachFeedback 계산 시 이미 조회됨
+  if (lessonFeedbackEvents.length) {
+    const teacherIds = [...new Set(lessonFeedbackEvents.map(e => e.assigned_teacher_id).filter(Boolean))] as string[];
+    const { data: teacherProfiles } = teacherIds.length
+      ? await supabaseSFv2.from('profiles').select('id, full_name').in('id', teacherIds)
+      : { data: [] };
+    const teacherMap = new Map<string, string>();
+    for (const p of teacherProfiles ?? []) { if (p.id && p.full_name) teacherMap.set(p.id as string, p.full_name as string); }
 
-  if (participantRows?.length) {
-    const participantEventIds = participantRows.map(r => r.event_id as string);
-    const { data: feedbackEvents } = await supabaseSFv2
-      .from('scheduled_events')
-      .select('id, starts_at, assigned_teacher_id, feedback')
-      .in('id', participantEventIds)
-      .eq('category', 'coach_room')
-      .not('feedback', 'is', null)
-      .neq('feedback', '')
-      .order('starts_at', { ascending: false })
-      .limit(60);
-
-    if (feedbackEvents?.length) {
-      const teacherIds = [...new Set(feedbackEvents.map(e => e.assigned_teacher_id as string | null).filter(Boolean))] as string[];
-      const { data: teacherProfiles } = teacherIds.length
-        ? await supabaseSFv2.from('profiles').select('id, full_name').in('id', teacherIds)
-        : { data: [] };
-      const teacherMap = new Map<string, string>();
-      for (const p of teacherProfiles ?? []) { if (p.id && p.full_name) teacherMap.set(p.id as string, p.full_name as string); }
-
-      for (const ev of feedbackEvents) {
-        const date = toKSTDate(ev.starts_at as string);
-        const coachName = ev.assigned_teacher_id ? teacherMap.get(ev.assigned_teacher_id as string) : undefined;
-        getOrCreate(date).items.push({
-          type: 'lesson_feedback',
-          eventId: ev.id as string,
-          startsAt: ev.starts_at as string,
-          coachName,
-          feedback: ev.feedback as string,
-        } satisfies LessonFeedbackDay);
-      }
+    for (const ev of lessonFeedbackEvents) {
+      const date = toKSTDate(ev.starts_at);
+      const coachName = ev.assigned_teacher_id ? teacherMap.get(ev.assigned_teacher_id) : undefined;
+      getOrCreate(date).items.push({
+        type: 'lesson_feedback',
+        eventId: ev.id,
+        startsAt: ev.starts_at,
+        coachName,
+        feedback: ev.feedback,
+      } satisfies LessonFeedbackDay);
     }
   }
 
