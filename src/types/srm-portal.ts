@@ -29,6 +29,7 @@ export interface TestCenterDay {
   totalScore: number;
   totalProblems: number;
   aiNarrative?: string;
+  skills?: StudyHallSkill[];
 }
 
 export interface DailyReportDay {
