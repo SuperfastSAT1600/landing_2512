@@ -22,6 +22,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   late: '지각 알림',
   no_class: '수업 미잡힘 알림',
   no_study_hall: '스터디홀 미세팅 알림',
+  no_vocab: '단어학습 미세팅 알림',
 };
 
 interface ConsultationEntry {

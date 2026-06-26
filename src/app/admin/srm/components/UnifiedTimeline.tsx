@@ -385,7 +385,7 @@ export function UnifiedTimeline({
                 </button>
               );
             })}
-            {isCoach && ev.coaches.length > 0 && (
+            {ev.coaches.length > 0 && (
               <span className="text-gray-400 flex items-center gap-1 text-xs">
                 <span>↔</span>
                 {ev.coaches.map((coachName, i) => (
