@@ -33,33 +33,41 @@ const COACH_FEEDBACK_MAX_CHARS = 500;
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const SKILL_KO: Record<string, string> = {
+  // Reading & Writing
   'Words in Context': '문맥 속 어휘',
-  'Command of Evidence': '근거 활용',
   'Central Ideas and Details': '중심 내용',
   'Inferences': '추론',
+  'Command of Evidence (Textual)': '근거 활용 (텍스트)',
+  'Command of Evidence (Quantitative)': '근거 활용 (수치)',
   'Transitions': '연결어',
   'Rhetorical Synthesis': '통합 서술',
   'Cross-Text Connections': '텍스트 연계',
   'Form, Structure, and Sense': '형태·구조·의미',
   'Boundaries': '문장 경계',
-  'Linear Equations in One Variable': '일차 방정식',
-  'Linear Equations in Two Variables': '이차 일차 방정식',
-  'Systems of Two Linear Equations in Two Variables': '연립 방정식',
-  'Linear Functions': '일차 함수',
-  'Linear Inequalities': '부등식',
-  'Nonlinear Functions': '비선형 함수',
-  'Nonlinear Equations': '비선형 방정식',
-  'Quadratic Functions': '이차 함수',
-  'Ratios, Rates, and Proportional Relationships': '비율·비례',
+  'Text Structure and Purpose': '텍스트 구조·목적',
+  // Math — Algebra
+  'Linear equations in one variable': '일차 방정식',
+  'Linear equations in two variables': '이원 일차 방정식',
+  'Systems of two linear equations in two variables': '연립 방정식',
+  'Linear functions': '일차 함수',
+  'Linear inequalities in one or two variables': '일차 부등식',
+  // Math — Advanced Math
+  'Nonlinear functions': '비선형 함수',
+  'Nonlinear equations in one variable and systems of equations in two variables': '비선형 방정식',
+  'Equivalent expressions': '동치 표현',
+  // Math — Problem Solving & Data Analysis
+  'Ratios, rates, proportional relationships, and units': '비율·비례·단위',
   'Percentages': '백분율',
-  'Problem-Solving and Data Analysis': '데이터 분석',
-  'Two-variable Data': '이변수 데이터',
-  'Probability and Conditional Probability': '확률',
-  'Inference from Sample Statistics': '통계 추론',
-  'Geometry and Trigonometry': '기하·삼각',
-  'Right Triangles and Trigonometry': '직각삼각형·삼각함수',
+  'One-variable data: Distributions and measures of center and spread': '일변수 데이터',
+  'Two-variable data: Models and scatterplots': '이변수 데이터',
+  'Probability and conditional probability': '확률',
+  'Inference from sample statistics and margin of error': '통계 추론',
+  'Evaluating statistical claims: Observational studies and experiments': '통계적 주장 평가',
+  // Math — Geometry & Trigonometry
+  'Lines, angles, and triangles': '선·각·삼각형',
+  'Right triangles and trigonometry': '직각삼각형·삼각함수',
   'Circles': '원',
-  'Area and Volume': '넓이·부피',
+  'Area and volume': '넓이·부피',
 };
 
 function toKoreanSkill(skill: string): string {
@@ -345,7 +353,7 @@ function inferDomainFromLessons(lessons: TestCenterLesson[]): string | undefined
 }
 
 async function generateTestCenterNarrative(
-  stats: { curriculumTitle?: string; curriculumDomain?: string; totalScore: number; totalProblems: number; lessons: TestCenterLesson[] },
+  stats: { curriculumTitle?: string; curriculumDomain?: string; totalScore: number; totalProblems: number; lessons: TestCenterLesson[]; skills?: { skill: string; correct: number; total: number }[] },
   shCrossRef?: SkillCrossRef[],
   coachFeedback?: string,
   vocabContext?: VocabContext,
@@ -372,7 +380,8 @@ async function generateTestCenterNarrative(
   }
 
   const hasCrossRef = (shCrossRef?.length ?? 0) > 0;
-  const isInfoPoor = !stats.curriculumTitle && stats.lessons.length <= 1 && !hasCrossRef;
+  const hasSkills = (stats.skills?.length ?? 0) > 0;
+  const isInfoPoor = !stats.curriculumTitle && stats.lessons.length <= 1 && !hasCrossRef && !hasSkills;
 
   const crossRefBlock = hasCrossRef ? [
     '[스터디홀 교차 — 최근 결과]',
@@ -388,6 +397,20 @@ async function generateTestCenterNarrative(
     }),
   ].join('\n') : '';
 
+  const skillLines = hasSkills ? (() => {
+    const sorted = [...stats.skills!].sort((a, b) => b.total - a.total).slice(0, 4);
+    const lines = sorted.map(s => {
+      const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+      return `${toKoreanSkill(s.skill)}: ${s.correct}/${s.total}문항 (${acc}%)`;
+    }).join(' | ');
+    const weakest = [...stats.skills!].sort((a, b) => {
+      const ra = a.total > 0 ? a.correct / a.total : 1;
+      const rb = b.total > 0 ? b.correct / b.total : 1;
+      return ra !== rb ? ra - rb : b.total - a.total;
+    })[0];
+    return { lines, weakest };
+  })() : null;
+
   const isRW = domainLabel === 'RW' || domainLabel === 'reading_and_writing';
   const vocabBlock = vocabContext && isRW && (vocabContext.missedTerms.length + vocabContext.masteredTerms.length) > 0 ? [
     '[최근 단어 학습 — 최근 7일]',
@@ -402,6 +425,8 @@ async function generateTestCenterNarrative(
     lessonLines ? `모듈별: ${lessonLines}` : '',
     trendNote ? `흐름: ${trendNote}` : '',
     `전체 평균 ${accuracy}% 기준 — 10%p 이상 낮은 모듈을 약한 모듈로 판정`,
+    skillLines ? `스킬별 성취: ${skillLines.lines}` : '',
+    skillLines ? `가장 취약한 스킬: ${toKoreanSkill(skillLines.weakest.skill)} (${skillLines.weakest.correct}/${skillLines.weakest.total}문항)` : '',
     hasCrossRef ? `\n${crossRefBlock}` : '',
     vocabBlock ? `\n${vocabBlock}` : '',
     coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
@@ -431,6 +456,7 @@ async function generateTestCenterNarrative(
           '- 전체 정답률이 아니라 모듈 흐름과 무너지는 지점을 중심으로 해석합니다.',
           '- 평균 정답률보다 10%p 이상 낮은 모듈이 있으면 그 모듈을 구체적으로 지목합니다.',
           '- 커리큘럼 제목이 있으면 반드시 언급합니다.',
+          '- [스킬별 성취]가 있으면 취약한 스킬 이름을 반드시 한국어로 언급합니다. "N문항 중 M문항" 형식 사용.',
           '- [스터디홀 교차] 항목이 있으면 연습-검증 격차를 반드시 해석합니다.',
           '- [최근 단어 학습]이 있으면 최근 틀린 어휘 패턴을 RW 결과 해석에 연결합니다.',
           '  단어 이름을 나열하지 말고 "최근 연습한 어휘에서 혼동이 남아있는 패턴"처럼 씁니다.',
@@ -441,7 +467,7 @@ async function generateTestCenterNarrative(
       },
       { role: 'user', content: userContent },
     ],
-    max_tokens: 380, temperature: 0.3,
+    max_tokens: 420, temperature: 0.3,
   });
   const raw = res.choices[0]?.message?.content?.trim() ?? '';
   return raw ? await humanizeNarrative(raw) : '';
@@ -503,6 +529,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     { data: shSessions },
     { data: shAttempts },
     { data: tcAttempts },
+    { data: tcUnitAttempts },
     { data: dailyReports },
     { data: vocabEvents },
     { data: vocabExposed },
@@ -510,7 +537,8 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     prefetchNarrativeCache(profileId),
     supabaseSFv2.from('study_hall_session').select('id, started_at, ended_at').eq('user_id', profileId).not('ended_at', 'is', null).order('started_at', { ascending: false }).limit(60),
     supabaseSFv2.from('study_hall_unit_attempts').select('study_hall_session_id, is_correct, attempted_at, unit_id, chat_messages, time_spent_seconds, confidence_level').eq('student_id', profileId).order('attempted_at', { ascending: false }).limit(500),
-    supabaseSFv2.from('test_center_lesson_attempts').select('test_center_session_id, score, total, status, lesson_id, curriculum_id').eq('student_id', profileId).not('score', 'is', null),
+    supabaseSFv2.from('test_center_lesson_attempts').select('id, test_center_session_id, score, total, status, lesson_id, curriculum_id').eq('student_id', profileId).not('score', 'is', null),
+    supabaseSFv2.from('test_center_unit_attempts').select('test_lesson_attempt_id, unit_id, is_correct').eq('student_id', profileId).order('attempted_at', { ascending: false }).limit(2000),
     supabaseSFv2.from('daily_reports').select('report_date, report_md, status').eq('student_id', profileId).eq('status', 'sent').order('report_date', { ascending: false }).limit(30),
     supabaseSFv2.schema('vocab').from('events').select('entry_id, is_correct, prev_box, new_box, occurred_at').eq('subject_id', profileId).eq('kind', 'graded').order('occurred_at', { ascending: false }).limit(1000),
     supabaseSFv2.schema('vocab').from('events').select('entry_id').eq('subject_id', profileId).limit(10000),
@@ -518,8 +546,10 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
 
   const vocabExposedCount = new Set((vocabExposed ?? []).map(r => r.entry_id as string).filter(Boolean)).size;
 
-  const unitIds = [...new Set((shAttempts ?? []).map(a => a.unit_id as string).filter(Boolean))];
-  const { data: unitsMeta } = unitIds.length ? await supabaseSFv2.from('units').select('id, skill, domain').in('id', unitIds) : { data: [] };
+  const shUnitIds = [...new Set((shAttempts ?? []).map(a => a.unit_id as string).filter(Boolean))];
+  const tcUnitIds = [...new Set((tcUnitAttempts ?? []).map(a => a.unit_id as string).filter(Boolean))];
+  const allUnitIds = [...new Set([...shUnitIds, ...tcUnitIds])];
+  const { data: unitsMeta } = allUnitIds.length ? await supabaseSFv2.from('units').select('id, skill, domain').in('id', allUnitIds) : { data: [] };
   const unitsMap = new Map<string, { skill: string; domain: string }>();
   for (const u of unitsMeta ?? []) { if (u.id && u.skill) unitsMap.set(u.id, { skill: u.skill as string, domain: u.domain as string }); }
 
@@ -608,17 +638,47 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
   const tcSessionDateMap = new Map<string, string>();
   for (const s of tcSessions ?? []) tcSessionDateMap.set(s.id, toKSTDate(s.started_at));
 
-  const tcBySession = new Map<string, { lessons: TestCenterLesson[]; curriculumTitle?: string; curriculumDomain?: string }>();
+  // lesson attempt id → session id 매핑 (unit attempts 집계에 필요)
+  const tcLessonAttemptToSession = new Map<string, string>();
+  for (const a of tcAttempts ?? []) {
+    const lessonAttemptId = a.id as string;
+    const sid = a.test_center_session_id as string;
+    if (lessonAttemptId && sid) tcLessonAttemptToSession.set(lessonAttemptId, sid);
+  }
+
+  // TC 세션별 스킬 집계
+  const tcSkillsBySession = new Map<string, Map<string, { skill: string; domain: string; correct: number; total: number }>>();
+  for (const a of tcUnitAttempts ?? []) {
+    const lessonAttemptId = a.test_lesson_attempt_id as string;
+    const uid = a.unit_id as string;
+    if (!lessonAttemptId || !uid) continue;
+    const sid = tcLessonAttemptToSession.get(lessonAttemptId);
+    if (!sid || !tcSessionDateMap.has(sid)) continue;
+    const meta = unitsMap.get(uid);
+    if (!meta?.skill) continue;
+    if (!tcSkillsBySession.has(sid)) tcSkillsBySession.set(sid, new Map());
+    const skillMap = tcSkillsBySession.get(sid)!;
+    if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0 });
+    const sk = skillMap.get(meta.skill)!; sk.total++;
+    if (a.is_correct) sk.correct++;
+  }
+
+  const tcBySession = new Map<string, { lessons: TestCenterLesson[]; curriculumTitle?: string; curriculumDomain?: string; skills: { skill: string; domain: string; correct: number; total: number }[] }>();
   for (const a of tcAttempts ?? []) {
     const sid = a.test_center_session_id as string;
     if (!tcSessionDateMap.has(sid)) continue;
     if (!tcBySession.has(sid)) {
       const currId = a.curriculum_id as string | undefined;
       const curriculum = currId ? curriculumMap.get(currId) : undefined;
-      tcBySession.set(sid, { lessons: [], curriculumTitle: curriculum?.title, curriculumDomain: curriculum?.domain });
+      tcBySession.set(sid, { lessons: [], curriculumTitle: curriculum?.title, curriculumDomain: curriculum?.domain, skills: [] });
     }
     const lessonId = a.lesson_id as string | undefined;
     tcBySession.get(sid)!.lessons.push({ title: lessonId ? lessonTitleMap.get(lessonId) : undefined, score: a.score as number, total: a.total as number });
+  }
+  // 집계된 스킬 데이터를 tcBySession에 주입
+  for (const [sid, skillMap] of tcSkillsBySession) {
+    const session = tcBySession.get(sid);
+    if (session) session.skills = Array.from(skillMap.values());
   }
 
   // Cross-reference: domain-level accuracy aggregates
@@ -673,9 +733,31 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
         ? ((dailyReports![0].report_md as string | null) ?? '').slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined
         : undefined;
 
+  // Vocab 집계 (getVocabContextForDate에서 참조하므로 함수 정의 전에 선언)
+  type VocaAgg = { entryIds: Set<string>; gradedCount: number; correctCount: number; masteredIds: Set<string>; missedIds: string[] };
+  const vocaByDate = new Map<string, VocaAgg>();
+  for (const e of vocabEvents ?? []) {
+    const entryId = e.entry_id as string | null;
+    if (!entryId) continue;
+    const date = toKSTDate(e.occurred_at as string);
+    if (!vocaByDate.has(date)) vocaByDate.set(date, { entryIds: new Set(), gradedCount: 0, correctCount: 0, masteredIds: new Set(), missedIds: [] });
+    const agg = vocaByDate.get(date)!;
+    agg.entryIds.add(entryId); agg.gradedCount++;
+    if (e.is_correct === true) agg.correctCount++;
+    if (e.is_correct === false) agg.missedIds.push(entryId);
+    const prevBox = (e.prev_box as number | null) ?? 0;
+    const newBox = (e.new_box as number | null) ?? 0;
+    if (newBox >= VOCAB_MASTER_BOX && prevBox < VOCAB_MASTER_BOX) agg.masteredIds.add(entryId);
+  }
+
+  const missedEntryIds = [...new Set(Array.from(vocaByDate.values()).flatMap(a => a.missedIds))];
+  const { data: vocabEntries } = missedEntryIds.length ? await supabaseSFv2.schema('vocab').from('entries').select('id, term').in('id', missedEntryIds) : { data: [] };
+  const termMap = new Map<string, string>();
+  for (const en of vocabEntries ?? []) { if (en.id && en.term) termMap.set(en.id as string, en.term as string); }
+
   // Vocab context: 날짜별 최근 7일 누적 (missedTerms, masteredTerms)
-  const vocabDatesSorted = [...vocaByDate.entries()].sort(([a], [b]) => a.localeCompare(b));
   function getVocabContextForDate(targetDate: string): VocabContext | undefined {
+    const vocabDatesSorted = [...vocaByDate.entries()].sort(([a], [b]) => a.localeCompare(b));
     const cutoff = new Date(targetDate);
     cutoff.setDate(cutoff.getDate() - 7);
     const cutoffStr = cutoff.toISOString().slice(0, 10);
@@ -767,9 +849,11 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     }
 
     const vocabContextTc = getVocabContextForDate(date);
+    const tcSkills = data.skills.length > 0 ? data.skills : undefined;
     const cacheInput = {
       curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain,
       totalScore, totalProblems, lessons: data.lessons.map(l => ({ title: l.title, score: l.score, total: l.total })),
+      skills: tcSkills ? [...tcSkills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })) : undefined,
       shCrossRef, coachFeedback, vocabContext: vocabContextTc,
     };
     const inputHash = hashInput(cacheInput);
@@ -778,13 +862,13 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       narrative = lookupCache(narrativeCache, date, 'test_center', inputHash) ?? undefined;
       if (!narrative) {
         narrative = await generateTestCenterNarrative(
-          { curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, totalScore, totalProblems, lessons: data.lessons },
+          { curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, totalScore, totalProblems, lessons: data.lessons, skills: tcSkills },
           shCrossRef.length ? shCrossRef : undefined, coachFeedback, vocabContextTc,
         );
         await setCachedNarrative(profileId, date, 'test_center', inputHash, narrative);
       }
     }
-    getOrCreate(date).items.push({ type: 'test_center', curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, lessons: data.lessons, totalScore, totalProblems, aiNarrative: narrative } satisfies TestCenterDay);
+    getOrCreate(date).items.push({ type: 'test_center', curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, lessons: data.lessons, totalScore, totalProblems, aiNarrative: narrative, skills: tcSkills } satisfies TestCenterDay);
   }));
 
   // Daily Reports
@@ -813,28 +897,6 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       } satisfies LessonFeedbackDay);
     }
   }
-
-  // Vocab
-  type VocaAgg = { entryIds: Set<string>; gradedCount: number; correctCount: number; masteredIds: Set<string>; missedIds: string[] };
-  const vocaByDate = new Map<string, VocaAgg>();
-  for (const e of vocabEvents ?? []) {
-    const entryId = e.entry_id as string | null;
-    if (!entryId) continue;
-    const date = toKSTDate(e.occurred_at as string);
-    if (!vocaByDate.has(date)) vocaByDate.set(date, { entryIds: new Set(), gradedCount: 0, correctCount: 0, masteredIds: new Set(), missedIds: [] });
-    const agg = vocaByDate.get(date)!;
-    agg.entryIds.add(entryId); agg.gradedCount++;
-    if (e.is_correct === true) agg.correctCount++;
-    if (e.is_correct === false) agg.missedIds.push(entryId);
-    const prevBox = (e.prev_box as number | null) ?? 0;
-    const newBox = (e.new_box as number | null) ?? 0;
-    if (newBox >= VOCAB_MASTER_BOX && prevBox < VOCAB_MASTER_BOX) agg.masteredIds.add(entryId);
-  }
-
-  const missedEntryIds = [...new Set(Array.from(vocaByDate.values()).flatMap(a => a.missedIds))];
-  const { data: vocabEntries } = missedEntryIds.length ? await supabaseSFv2.schema('vocab').from('entries').select('id, term').in('id', missedEntryIds) : { data: [] };
-  const termMap = new Map<string, string>();
-  for (const en of vocabEntries ?? []) { if (en.id && en.term) termMap.set(en.id as string, en.term as string); }
 
   await Promise.all(Array.from(vocaByDate.entries()).map(async ([date, agg]) => {
     const wordCount = agg.entryIds.size;
