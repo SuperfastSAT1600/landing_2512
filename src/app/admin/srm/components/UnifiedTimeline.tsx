@@ -334,6 +334,12 @@ export function UnifiedTimeline({
     const isHighlighted = ev.id === highlightEventId;
     const isTomorrow = ev.day === 'tomorrow';
 
+    const msgPreview = isVocab
+      ? buildVocabCopyMessage(ev, isTomorrow)
+      : ev.eventType === 'studyHall'
+      ? buildStudyHallCopyMessage(ev, isTomorrow)
+      : buildCopyMessage(ev, isTomorrow);
+
     const rowClass = isHighlighted
       ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-400 hover:bg-blue-100'
       : isComplete
@@ -351,7 +357,7 @@ export function UnifiedTimeline({
         key={ev.id}
         data-event-id={ev.id}
         onClick={() => onEventClick({ ...ev, startsAtKst: kstTime })}
-        className={`flex items-center gap-0 rounded-lg border text-sm cursor-pointer transition-colors ${rowClass}`}
+        className={`flex items-stretch gap-0 rounded-lg border text-sm cursor-pointer transition-colors ${rowClass}`}
       >
         {/* 시간 */}
         <div className="w-[90px] shrink-0 px-3 py-3">
@@ -379,7 +385,7 @@ export function UnifiedTimeline({
         </div>
 
         {/* 학생 + 코치 */}
-        <div className="flex-1 min-w-0 px-3 py-3 border-l border-gray-100 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+        <div className="w-[180px] shrink-0 px-3 py-3 border-l border-gray-100 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
           {ev.students.map((name, i) => {
             const studentId = ev.studentIds?.[i];
             const isVip = !!(studentId && vipStudentIds?.has(studentId));
@@ -426,32 +432,35 @@ export function UnifiedTimeline({
           )}
         </div>
 
-        {/* 메시지 (KO / EN) */}
-        <div className="shrink-0 px-2 py-3 border-l border-gray-100 flex gap-1 items-center">
-          <button
-            onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
-            title="한국어 메시지 복사"
-            className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
-              copiedKo
-                ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
-                : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
-            }`}
-          >
-            {copiedKo ? <Check size={10} /> : <Copy size={10} />}
-            KO
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'en'); }}
-            title="English message copy"
-            className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
-              copiedEn
-                ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
-                : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300 bg-white'
-            }`}
-          >
-            {copiedEn ? <Check size={10} /> : <Copy size={10} />}
-            EN
-          </button>
+        {/* 메시지 미리보기 + KO / EN */}
+        <div className="flex-1 min-w-0 px-3 py-2.5 border-l border-gray-100 flex flex-col gap-1.5 justify-center">
+          <p className="text-[11px] text-gray-400 truncate leading-relaxed">{msgPreview}</p>
+          <div className="flex gap-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
+              title="한국어 메시지 복사"
+              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+                copiedKo
+                  ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
+                  : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
+              }`}
+            >
+              {copiedKo ? <Check size={10} /> : <Copy size={10} />}
+              KO
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'en'); }}
+              title="English message copy"
+              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+                copiedEn
+                  ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
+                  : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300 bg-white'
+              }`}
+            >
+              {copiedEn ? <Check size={10} /> : <Copy size={10} />}
+              EN
+            </button>
+          </div>
         </div>
 
         {/* 업무 완료 */}
@@ -504,8 +513,8 @@ export function UnifiedTimeline({
             <div className="w-[90px] shrink-0 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">시간</div>
             <div className="w-[46px] shrink-0 px-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100 flex justify-center">구분</div>
             <div className="w-[62px] shrink-0 px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100 flex justify-center">유형</div>
-            <div className="flex-1 min-w-0 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100">학생 · 코치</div>
-            <div className="shrink-0 px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100">메시지</div>
+            <div className="w-[180px] shrink-0 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100">학생 · 코치</div>
+            <div className="flex-1 min-w-0 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100">메시지</div>
             <div className="w-[72px] shrink-0 px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100 flex justify-center">완료</div>
           </div>
           <div className="space-y-1.5">
