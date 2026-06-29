@@ -147,7 +147,7 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
                   >
                     <span className="text-gray-500 font-mono shrink-0">{copiedTime}</span>
                     {isAction ? (
-                      <span className="text-emerald-700 shrink-0 text-[10px] px-1.5 py-0.5 bg-emerald-100 rounded">케어기록</span>
+                      <span className="text-emerald-700 shrink-0 text-[10px] px-1.5 py-0.5 bg-emerald-100 rounded">chk</span>
                     ) : (
                       <span className="text-gray-600 shrink-0 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">복사</span>
                     )}
