@@ -349,8 +349,8 @@ export function UnifiedTimeline({
       : isDone
       ? 'border-gray-200 bg-gray-50 opacity-80 hover:opacity-100'
       : isTomorrow
-      ? 'border-blue-200 bg-blue-50/40 hover:bg-blue-50'
-      : 'border-gray-200 bg-white hover:bg-gray-50';
+      ? 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100'
+      : 'border-red-200 bg-red-50 hover:bg-red-100';
 
     return (
       <div
@@ -365,20 +365,18 @@ export function UnifiedTimeline({
         </div>
 
         {/* 오늘/내일 */}
-        <div className="w-[46px] shrink-0 px-1 py-3 border-l border-gray-100 flex justify-center">
-          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${
-            isTomorrow ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
-          }`}>
+        <div className="w-[46px] shrink-0 px-1 py-3 border-l border-gray-100 flex justify-center items-center">
+          <span className="text-[10px] font-semibold text-gray-700 whitespace-nowrap">
             {isTomorrow ? '내일' : '오늘'}
           </span>
         </div>
 
         {/* 유형 */}
-        <div className="w-[62px] shrink-0 px-2 py-3 border-l border-gray-100 flex justify-center">
-          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap ${
-            isCoach ? 'bg-blue-100 text-blue-700'
-            : isVocab ? 'bg-emerald-100 text-emerald-700'
-            : 'bg-gray-100 text-gray-600'
+        <div className="w-[62px] shrink-0 px-2 py-3 border-l border-gray-100 flex justify-center items-center">
+          <span className={`text-[11px] font-semibold whitespace-nowrap ${
+            isCoach ? 'text-blue-600'
+            : isVocab ? 'text-emerald-600'
+            : 'text-purple-600'
           }`}>
             {isCoach ? '수업' : isVocab ? '단어학습' : '스터디홀'}
           </span>
