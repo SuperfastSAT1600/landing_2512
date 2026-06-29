@@ -332,15 +332,25 @@ async function generateTestCenterNarrative(
     ? (stats.curriculumDomain === 'reading_and_writing' ? 'RW' : stats.curriculumDomain === 'math' ? 'Math' : stats.curriculumDomain)
     : inferDomainFromLessons(stats.lessons);
 
-  const lessonLines = stats.lessons.map((l, i) => {
+  // 모듈별 라벨 + 스킬 블록 생성 — 스킬은 해당 모듈 소속임을 LLM에 명시
+  const lessonBlocks = stats.lessons.map((l, i) => {
     const pct = l.total > 0 ? Math.round((l.score / l.total) * 100) : 0;
-    // Infer RW/Math from standard SAT question counts (27=RW, 22=Math)
     const domainHint = l.total === 27 ? 'RW' : l.total === 22 ? 'Math' : null;
     const titleLabel = l.title
       ? (domainHint ? `${domainHint} ${l.title}` : l.title)
       : (domainHint ? `${domainHint} Module ${i + 1}` : `Module ${i + 1}`);
-    return `${titleLabel}: ${l.score}/${l.total} (${pct}%)`;
-  }).join(' | ');
+    const header = `${titleLabel}: ${l.score}/${l.total} (${pct}%)`;
+    if (!l.skills || l.skills.length === 0) return header;
+    const skillDetail = [...l.skills]
+      .sort((a, b) => (a.total > 0 ? a.correct / a.total : 1) - (b.total > 0 ? b.correct / b.total : 1))
+      .slice(0, 4)
+      .map(s => {
+        const sacc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+        return `    - ${s.skill}: ${s.correct}/${s.total} (${sacc}%)`;
+      }).join('\n');
+    return `${header}\n${skillDetail}`;
+  });
+  const lessonLines = lessonBlocks.join(' | ');
 
   let trendNote = '';
   if (stats.lessons.length >= 2) {
@@ -383,22 +393,37 @@ async function generateTestCenterNarrative(
     return { lines, weakest };
   })() : null;
 
-  const isRW = domainLabel === 'RW' || domainLabel === 'reading_and_writing';
+  const hasRWLessons = stats.lessons.some(l => l.total === 27);
+  const hasMathLessons = stats.lessons.some(l => l.total === 22);
+  const isFullLength = hasRWLessons && hasMathLessons;
+  const isRW = !isFullLength && (domainLabel === 'RW' || domainLabel === 'reading_and_writing');
   const vocabBlock = vocabContext && isRW && (vocabContext.missedTerms.length + vocabContext.masteredTerms.length) > 0 ? [
     '[최근 단어 학습 — 최근 7일]',
     vocabContext.missedTerms.length > 0 ? `틀린 단어: ${vocabContext.missedTerms.join(' / ')}` : '',
     vocabContext.masteredTerms.length > 0 ? `마스터한 단어: ${vocabContext.masteredTerms.join(' / ')}` : '',
   ].filter(Boolean).join('\n') : '';
 
+  // 약한 모듈 미리 계산 — LLM에게 추론 맡기지 않음
+  const weakModuleLines = stats.lessons
+    .filter(l => {
+      const acc = l.total > 0 ? Math.round((l.score / l.total) * 100) : 0;
+      return accuracy - acc >= 10;
+    })
+    .map(l => {
+      const acc = l.total > 0 ? Math.round((l.score / l.total) * 100) : 0;
+      const dh = l.total === 27 ? 'RW' : l.total === 22 ? 'Math' : null;
+      const label = l.title ? (dh ? `${dh} ${l.title}` : l.title) : 'Module';
+      return `${label}: ${acc}% (평균 ${accuracy}%보다 ${accuracy - acc}%p 낮음)`;
+    });
+
   const userContent = [
     '[오늘 테스트센터]',
     stats.curriculumTitle ? `테스트: ${stats.curriculumTitle}${domainLabel ? ` (${domainLabel})` : ''}` : '',
     `총점: ${stats.totalScore}/${stats.totalProblems} (${accuracy}%) [${perfCtx}]`,
-    lessonLines ? `모듈별: ${lessonLines}` : '',
+    lessonBlocks.length > 0 ? `[모듈별 결과]\n${lessonBlocks.join('\n')}` : '',
     trendNote ? `흐름: ${trendNote}` : '',
-    `전체 평균 ${accuracy}% 기준 — 10%p 이상 낮은 모듈을 약한 모듈로 판정`,
-    skillLines ? `스킬별 성취: ${skillLines.lines}` : '',
-    skillLines ? `가장 취약한 스킬: ${skillLines.weakest.skill} (${skillLines.weakest.total}문항 중 ${skillLines.weakest.correct}문항 정답)` : '',
+    weakModuleLines.length > 0 ? `약한 모듈 (평균보다 10%p 이상 낮음): ${weakModuleLines.join(' | ')}` : '약한 모듈: 없음',
+    skillLines ? `가장 취약한 스킬 (세션 전체): ${skillLines.weakest.skill} (${skillLines.weakest.total}문항 중 ${skillLines.weakest.correct}문항 정답)` : '',
     hasCrossRef ? `\n${crossRefBlock}` : '',
     vocabBlock ? `\n${vocabBlock}` : '',
     coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
@@ -430,15 +455,21 @@ async function generateTestCenterNarrative(
           '- RW 스킬: Words in Context / Text Structure and Purpose / Cross-Text Connections / Central Ideas and Details / Command of Evidence / Inferences / Rhetorical Synthesis / Transitions / Boundaries / Form, Structure, and Sense',
           '- Math 스킬: Linear equations / Systems of equations / Linear functions / Linear inequalities / Nonlinear functions / Nonlinear equations / Equivalent expressions / Percentages / Ratios and rates / Two-variable data / One-variable data / Inference from sample statistics / Area and volume / Lines and angles / Circles / Right triangles',
           '',
-          isRW
+          isFullLength
+            ? '이 테스트는 RW와 Math 모두 포함된 풀렝스 테스트입니다. 두 영역을 모두 분석합니다. 단어·어휘 관련 언급은 [최근 단어 학습] 항목이 없으면 생략합니다.'
+            : isRW
             ? '제약: 입력에 [최근 단어 학습] 항목이 없으면 어휘·단어를 절대 언급하지 않습니다.'
             : '제약: 이 테스트는 Math입니다. Writing·RW·단어·어휘를 절대 언급하지 않습니다.',
           '',
           '작성 규칙:',
           '- 전체 정답률이 아니라 모듈 흐름과 무너지는 지점을 중심으로 해석합니다.',
-          '- 평균 정답률보다 10%p 이상 낮은 모듈을 구체적으로 지목합니다. 낮은 모듈이 없으면 지목하지 않습니다.',
+          '- 모듈을 언급할 때는 입력에 나온 전체 이름(예: "RW Module 2", "Math Module 1")을 그대로 씁니다. "Module 2"처럼 도메인을 생략하지 않습니다.',
+          '- [약한 모듈] 항목에 나온 모듈을 그대로 지목합니다. 항목에 없는 모듈을 약하다고 하지 않습니다.',
+          '- 첫 문장은 "오늘 [테스트/커리큘럼명]에서" 또는 "[RW/Math] 결과를 보면" 처럼 결과를 직접 서술하며 시작합니다.',
           '- 커리큘럼 제목이 있으면 반드시 언급합니다.',
-          '- [스킬별 성취]가 있으면 취약한 스킬 이름을 반드시 언급합니다. "N문항 중 M문항" 형식 사용.',
+          '- [모듈별 결과] 안에 스킬 데이터가 있으면, 스킬은 해당 모듈에 속한 것입니다. 다른 모듈의 스킬과 혼동하지 않습니다.',
+          '- 취약한 스킬을 언급할 때는 어느 모듈(RW/Math Module 1/2)의 스킬인지 맥락을 함께 씁니다.',
+          '- "N문항 중 M문항" 형식을 사용합니다.',
           '- [스터디홀 교차] 항목이 있으면 연습-검증 격차를 반드시 해석합니다.',
           '- [최근 단어 학습]이 있으면 최근 틀린 어휘 패턴을 RW 결과 해석에 연결합니다.',
           '  단어 이름을 나열하지 말고 "최근 연습한 어휘에서 혼동이 남아있는 패턴"처럼 씁니다.',
@@ -447,7 +478,8 @@ async function generateTestCenterNarrative(
           '  방향 B (테스트센터→수업): 오늘 테스트에서 드러난 약점이 다음 수업에서 보완될 것이라는 방향으로 씁니다.',
           '- [코치 피드백]이 없으면 마지막 문장은 오늘 결과에서 도출한 방향입니다.',
           '- "~예정입니다" 대신 "~집중합니다", "~다룹니다", "~이어갑니다" 등 현재형으로 씁니다.',
-          '- 금지: 데이터에 없는 행동 묘사, "~것이 중요합니다", "~로 보입니다", "~시사합니다".',
+          '- 금지: 데이터에 없는 행동 묘사, "~것이 중요합니다", "~로 보입니다", "~시사합니다", "분석한 바에 따르면", "분석 결과".',
+          '- 입력의 [흐름] 값과 다른 트렌드 주장을 하지 않습니다. [흐름]이 "모듈 간 일관된 성취"이면 트렌드를 언급하지 않습니다.',
           `- ${sentenceGuide}`,
         ].join('\n'),
       },
@@ -640,8 +672,8 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     if (lessonAttemptId && sid) tcLessonAttemptToSession.set(lessonAttemptId, sid);
   }
 
-  // TC 세션별 스킬 집계
-  const tcSkillsBySession = new Map<string, Map<string, { skill: string; domain: string; correct: number; total: number }>>();
+  // TC 레슨(모듈)별 스킬 집계 — 세션 단위 아닌 레슨 단위로 추적
+  const tcSkillsByLessonAttempt = new Map<string, Map<string, { skill: string; domain: string; correct: number; total: number }>>();
   for (const a of tcUnitAttempts ?? []) {
     const lessonAttemptId = a.test_lesson_attempt_id as string;
     const uid = a.unit_id as string;
@@ -650,8 +682,8 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     if (!sid || !tcSessionDateMap.has(sid)) continue;
     const meta = unitsMap.get(uid);
     if (!meta?.skill) continue;
-    if (!tcSkillsBySession.has(sid)) tcSkillsBySession.set(sid, new Map());
-    const skillMap = tcSkillsBySession.get(sid)!;
+    if (!tcSkillsByLessonAttempt.has(lessonAttemptId)) tcSkillsByLessonAttempt.set(lessonAttemptId, new Map());
+    const skillMap = tcSkillsByLessonAttempt.get(lessonAttemptId)!;
     if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0 });
     const sk = skillMap.get(meta.skill)!; sk.total++;
     if (a.is_correct) sk.correct++;
@@ -666,13 +698,39 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       const curriculum = currId ? curriculumMap.get(currId) : undefined;
       tcBySession.set(sid, { lessons: [], curriculumTitle: curriculum?.title, curriculumDomain: curriculum?.domain, skills: [] });
     }
+    const lessonAttemptId = a.id as string;
     const lessonId = a.lesson_id as string | undefined;
-    tcBySession.get(sid)!.lessons.push({ title: lessonId ? lessonTitleMap.get(lessonId) : undefined, score: a.score as number, total: a.total as number });
+    const lessonSkills = lessonAttemptId
+      ? Array.from(tcSkillsByLessonAttempt.get(lessonAttemptId)?.values() ?? [])
+      : [];
+    tcBySession.get(sid)!.lessons.push({
+      title: lessonId ? lessonTitleMap.get(lessonId) : undefined,
+      score: a.score as number,
+      total: a.total as number,
+      skills: lessonSkills.length > 0 ? lessonSkills : undefined,
+    });
   }
-  // 집계된 스킬 데이터를 tcBySession에 주입
-  for (const [sid, skillMap] of tcSkillsBySession) {
-    const session = tcBySession.get(sid);
-    if (session) session.skills = Array.from(skillMap.values());
+  // 세션 레벨 skills = 레슨 스킬 합산 (API 응답 및 cross-ref용)
+  for (const [, data] of tcBySession) {
+    const sessionSkillMap = new Map<string, { skill: string; domain: string; correct: number; total: number }>();
+    for (const lesson of data.lessons) {
+      for (const sk of lesson.skills ?? []) {
+        if (!sessionSkillMap.has(sk.skill)) sessionSkillMap.set(sk.skill, { skill: sk.skill, domain: (sk as { skill: string; domain?: string; correct: number; total: number }).domain ?? '', correct: 0, total: 0 });
+        const s = sessionSkillMap.get(sk.skill)!; s.correct += sk.correct; s.total += sk.total;
+      }
+    }
+    data.skills = Array.from(sessionSkillMap.values());
+  }
+  // 레슨 정렬: RW(27문) 먼저, 같은 도메인 내 모듈 번호 순 — LLM이 쉽게 읽도록
+  for (const [, data] of tcBySession) {
+    data.lessons.sort((a, b) => {
+      const domainOrder = (l: TestCenterLesson) => l.total === 27 ? 0 : l.total === 22 ? 1 : 2;
+      const moduleNum = (l: TestCenterLesson) => {
+        const m = (l.title ?? '').match(/(\d+)/);
+        return m ? parseInt(m[1], 10) : 99;
+      };
+      return domainOrder(a) - domainOrder(b) || moduleNum(a) - moduleNum(b);
+    });
   }
 
   // Cross-reference: domain-level accuracy aggregates

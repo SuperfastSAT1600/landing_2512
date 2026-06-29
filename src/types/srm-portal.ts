@@ -19,6 +19,7 @@ export interface TestCenterLesson {
   title?: string;
   score: number;
   total: number;
+  skills?: { skill: string; correct: number; total: number }[];
 }
 
 export interface TestCenterDay {
