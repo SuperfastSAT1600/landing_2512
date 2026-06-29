@@ -2,7 +2,7 @@
 import { srmFetch } from '../lib/srm-fetch';
 
 import { useState, useEffect } from 'react';
-import { Copy, Check, Crown, AlertTriangle } from 'lucide-react';
+import { Copy, Check, Crown, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 
@@ -248,6 +248,7 @@ export function UnifiedTimeline({
   highlightEventId,
 }: Props) {
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
+  const [actionedIds, setActionedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
 
   const events = mergeAndSort(todayCoachRoom, todayStudyHall, todayVocab, tomorrowCoachRoom, tomorrowStudyHall, tomorrowVocab);
@@ -293,6 +294,29 @@ export function UnifiedTimeline({
     }
   };
 
+  const handleAction = async (ev: TaggedEvent) => {
+    setActionedIds((prev) => new Set(prev).add(ev.id));
+    try {
+      const eventTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+      const eventType = ev.eventType === 'coachRoom' ? 'coach_room' : ev.eventType === 'vocab' ? 'vocab' : 'study_hall';
+      await srmFetch('/api/admin/srm/copy-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: ev.id,
+          eventType: 'action',
+          eventDate,
+          eventTime,
+          studentNames: ev.students,
+          messagePreview: `[CHK] ${eventType}`,
+          copiedBy: userName || '관리자',
+        }),
+      });
+    } catch {
+      // non-fatal
+    }
+  };
+
   const renderRow = (ev: TaggedEvent) => {
     const isDone = ev.status === 'completed';
     const kstTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
@@ -304,19 +328,15 @@ export function UnifiedTimeline({
     const copiedEn = copiedIds.has(`${ev.id}-en`);
     const alreadyLogged = !!(loggedEventIds?.has(ev.id));
     const hasIssue = !!(issueEventIds?.has(ev.id));
+    const isActioned = actionedIds.has(ev.id);
     const alreadySent = copiedKo || copiedEn || alreadyLogged;
+    const isComplete = alreadySent || isActioned;
     const isHighlighted = ev.id === highlightEventId;
-
-    const msgPreview = isVocab
-      ? buildVocabCopyMessage(ev, ev.day === 'tomorrow')
-      : ev.eventType === 'studyHall'
-      ? buildStudyHallCopyMessage(ev, ev.day === 'tomorrow')
-      : buildCopyMessage(ev, ev.day === 'tomorrow');
-
     const isTomorrow = ev.day === 'tomorrow';
+
     const rowClass = isHighlighted
       ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-400 hover:bg-blue-100'
-      : alreadySent
+      : isComplete
       ? 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
       : hasIssue
       ? 'border-orange-200 bg-orange-50 hover:bg-orange-100'
@@ -331,122 +351,129 @@ export function UnifiedTimeline({
         key={ev.id}
         data-event-id={ev.id}
         onClick={() => onEventClick({ ...ev, startsAtKst: kstTime })}
-        className={`flex items-stretch gap-3 px-3 py-3 rounded-lg border text-sm group cursor-pointer transition-colors ${rowClass}`}
+        className={`flex items-center gap-0 rounded-lg border text-sm cursor-pointer transition-colors ${rowClass}`}
       >
-        {/* 시간 + 오늘/내일 pill */}
-        <div className="w-28 shrink-0 flex flex-col items-center justify-center gap-1">
-          <span className={`font-mono text-sm font-semibold whitespace-nowrap ${isDone ? 'text-gray-400' : 'text-gray-700'}`}>{timeStr}</span>
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+        {/* 시간 */}
+        <div className="w-[90px] shrink-0 px-3 py-3">
+          <span className={`font-mono text-xs font-semibold whitespace-nowrap ${isDone ? 'text-gray-400' : 'text-gray-700'}`}>{timeStr}</span>
+        </div>
+
+        {/* 오늘/내일 */}
+        <div className="w-[46px] shrink-0 px-1 py-3 border-l border-gray-100 flex justify-center">
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${
             isTomorrow ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
           }`}>
             {isTomorrow ? '내일' : '오늘'}
           </span>
         </div>
 
-        {/* 유형 + 학생 */}
-        <div className="w-[32%] min-w-0 flex flex-col gap-1 justify-center border-l border-gray-200 pl-3">
-          <div className="flex items-center gap-1.5">
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${
-              isCoach ? 'bg-blue-100 text-blue-700'
-              : isVocab ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-gray-100 text-gray-600'
-            }`}>
-              {isCoach ? '수업' : isVocab ? '단어학습' : '스터디홀'}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
-            {ev.students.map((name, i) => {
-              const studentId = ev.studentIds?.[i];
-              const isVip = !!(studentId && vipStudentIds?.has(studentId));
-              const lang = studentId ? (studentLanguages?.get(studentId) ?? 'ko') : 'ko';
-              const isPaused = !!(studentId && pausedStudentIds?.has(studentId));
-              return (
+        {/* 유형 */}
+        <div className="w-[62px] shrink-0 px-2 py-3 border-l border-gray-100 flex justify-center">
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap ${
+            isCoach ? 'bg-blue-100 text-blue-700'
+            : isVocab ? 'bg-emerald-100 text-emerald-700'
+            : 'bg-gray-100 text-gray-600'
+          }`}>
+            {isCoach ? '수업' : isVocab ? '단어학습' : '스터디홀'}
+          </span>
+        </div>
+
+        {/* 학생 + 코치 */}
+        <div className="flex-1 min-w-0 px-3 py-3 border-l border-gray-100 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+          {ev.students.map((name, i) => {
+            const studentId = ev.studentIds?.[i];
+            const isVip = !!(studentId && vipStudentIds?.has(studentId));
+            const lang = studentId ? (studentLanguages?.get(studentId) ?? 'ko') : 'ko';
+            const isPaused = !!(studentId && pausedStudentIds?.has(studentId));
+            return (
+              <button
+                key={`${ev.id}-s-${i}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStudentClick({
+                    id: studentId ?? name,
+                    name,
+                    eventId: ev.id,
+                    eventTime: toTimeStr(ev.startsAt, 'Asia/Seoul'),
+                    eventType: ev.eventType,
+                    coachId: ev.coachIds?.[0] ?? undefined,
+                  });
+                }}
+                className={`inline-flex items-center gap-0.5 hover:text-blue-500 hover:underline transition-colors text-xs leading-tight ${
+                  isDone ? 'text-gray-400' : 'text-gray-800'
+                }`}
+              >
+                {isVip && <Crown size={10} className="text-yellow-400 shrink-0" />}
+                {name}
+                {isPaused && <span className="text-[10px] font-medium text-orange-700 bg-orange-100 px-1 rounded">휴원</span>}
+                {lang === 'en' && <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1 rounded">EN</span>}
+              </button>
+            );
+          })}
+          {ev.coaches.length > 0 && (
+            <span className="text-gray-300 flex items-center gap-1 text-xs">
+              <span>↔</span>
+              {ev.coaches.map((coachName, i) => (
                 <button
-                  key={`${ev.id}-s-${i}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStudentClick({
-                      id: studentId ?? name,
-                      name,
-                      eventId: ev.id,
-                      eventTime: toTimeStr(ev.startsAt, 'Asia/Seoul'),
-                      eventType: ev.eventType,
-                      coachId: ev.coachIds?.[0] ?? undefined,
-                    });
-                  }}
-                  className={`inline-flex items-center gap-0.5 hover:text-blue-500 hover:underline transition-colors text-sm leading-tight ${
-                    isDone ? 'text-gray-400' : 'text-gray-800'
-                  }`}
+                  key={`${ev.id}-c-${i}`}
+                  onClick={(e) => { e.stopPropagation(); onCoachClick({ id: ev.coachIds?.[i] ?? coachName, name: coachName }); }}
+                  className="text-gray-400 hover:text-blue-500 hover:underline transition-colors"
                 >
-                  {isVip && <Crown size={11} className="text-yellow-400 shrink-0" />}
-                  {name}
-                  {isPaused && <span className="text-[10px] font-medium text-orange-700 bg-orange-100 px-1 rounded">휴원</span>}
-                  {lang === 'en' && <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1 rounded">EN</span>}
+                  {coachName}
                 </button>
-              );
-            })}
-            {ev.coaches.length > 0 && (
-              <span className="text-gray-400 flex items-center gap-1 text-xs">
-                <span>↔</span>
-                {ev.coaches.map((coachName, i) => (
-                  <button
-                    key={`${ev.id}-c-${i}`}
-                    onClick={(e) => { e.stopPropagation(); onCoachClick({ id: ev.coachIds?.[i] ?? coachName, name: coachName }); }}
-                    className="hover:text-blue-500 hover:underline transition-colors"
-                  >
-                    {coachName}
-                  </button>
-                ))}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 메시지 미리보기 + 복사 버튼 */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 border-l border-gray-200 pl-3">
-          <p className="text-[11px] text-gray-400 truncate leading-relaxed">{msgPreview}</p>
-          <div className="flex gap-1.5">
-            <button
-              onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
-              title="한국어 메시지 복사"
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
-                copiedKo
-                  ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
-                  : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
-              }`}
-            >
-              {copiedKo ? <Check size={10} /> : <Copy size={10} />}
-              KO
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'en'); }}
-              title="English message copy"
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
-                copiedEn
-                  ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
-                  : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300 bg-white'
-              }`}
-            >
-              {copiedEn ? <Check size={10} /> : <Copy size={10} />}
-              EN
-            </button>
-          </div>
-        </div>
-
-        {/* 상태 */}
-        <div className="w-16 shrink-0 flex flex-col items-end justify-center gap-1 border-l border-gray-200 pl-3">
-          {alreadySent && (
-            <span className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-700">
-              <Check size={10} />발송됨
+              ))}
             </span>
           )}
-          {hasIssue && (
+        </div>
+
+        {/* 메시지 (KO / EN) */}
+        <div className="shrink-0 px-2 py-3 border-l border-gray-100 flex gap-1 items-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
+            title="한국어 메시지 복사"
+            className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+              copiedKo
+                ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
+                : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
+            }`}
+          >
+            {copiedKo ? <Check size={10} /> : <Copy size={10} />}
+            KO
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'en'); }}
+            title="English message copy"
+            className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+              copiedEn
+                ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
+                : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300 bg-white'
+            }`}
+          >
+            {copiedEn ? <Check size={10} /> : <Copy size={10} />}
+            EN
+          </button>
+        </div>
+
+        {/* 업무 완료 */}
+        <div className="w-[72px] shrink-0 px-2 py-3 border-l border-gray-100 flex items-center justify-center">
+          {isComplete ? (
+            <span className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-700">
+              <Check size={10} />
+              {alreadySent ? '발송됨' : 'chk'}
+            </span>
+          ) : hasIssue ? (
             <span className="flex items-center gap-0.5 text-[10px] font-medium text-orange-600">
               <AlertTriangle size={10} />이슈
             </span>
-          )}
-          {!alreadySent && !hasIssue && (
-            <span className="text-[10px] text-gray-300">—</span>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleAction(ev); }}
+              title="대응/관리 완료 체크"
+              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border border-gray-200 bg-gray-100 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition-colors"
+            >
+              <ClipboardCheck size={10} />
+              chk
+            </button>
           )}
         </div>
       </div>
@@ -471,8 +498,19 @@ export function UnifiedTimeline({
       ) : totalCount === 0 ? (
         <p className="text-xs text-gray-400 py-4">스케줄 없음</p>
       ) : (
-        <div className="space-y-2">
-          {events.map(renderRow)}
+        <div>
+          {/* 헤더 */}
+          <div className="flex items-center gap-0 mb-1 px-0">
+            <div className="w-[90px] shrink-0 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">시간</div>
+            <div className="w-[46px] shrink-0 px-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100 flex justify-center">구분</div>
+            <div className="w-[62px] shrink-0 px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100 flex justify-center">유형</div>
+            <div className="flex-1 min-w-0 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100">학생 · 코치</div>
+            <div className="shrink-0 px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100">메시지</div>
+            <div className="w-[72px] shrink-0 px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100 flex justify-center">완료</div>
+          </div>
+          <div className="space-y-1.5">
+            {events.map(renderRow)}
+          </div>
         </div>
       )}
     </div>
