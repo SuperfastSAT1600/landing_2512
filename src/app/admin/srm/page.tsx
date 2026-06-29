@@ -13,7 +13,9 @@ import { OpsRadar } from './components/OpsRadar';
 import { StudentSearch } from './components/StudentSearch';
 import { StudentRoster } from './components/StudentRoster';
 import { EventLogPanel } from './components/EventLogPanel';
+import { AlertLogPanel } from './components/AlertLogPanel';
 import DailyLearningPage from './daily-learning/page';
+import type { FlatAlert } from './components/AlertFeedRows';
 import { DailyStatsPanel } from './components/DailyStatsPanel';
 import type { TaggedEvent } from './components/UnifiedTimeline';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
@@ -94,6 +96,7 @@ export default function SrmPage() {
   const [pausedStudentIds, setPausedStudentIds] = useState<Set<string>>(new Set());
   const [loggedEventIds, setLoggedEventIds] = useState<Set<string>>(new Set());
   const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
+  const [selectedAlertLog, setSelectedAlertLog] = useState<FlatAlert | null>(null);
   const [openIssues, setOpenIssues] = useState<EventIssue[]>([]);
 
   useEffect(() => {
@@ -336,6 +339,7 @@ export default function SrmPage() {
                 loading={alertsLoading}
                 onStudentClick={alertOnStudentClick}
                 onCoachClick={handleCoachClick}
+                onLogClick={setSelectedAlertLog}
               />
             )}
 
@@ -397,6 +401,13 @@ export default function SrmPage() {
         <EventLogPanel
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
+        />
+      )}
+
+      {selectedAlertLog && !selectedStudent && !selectedEvent && (
+        <AlertLogPanel
+          alert={selectedAlertLog}
+          onClose={() => setSelectedAlertLog(null)}
         />
       )}
 

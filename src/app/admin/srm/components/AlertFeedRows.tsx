@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check, CheckCircle2, Circle } from 'lucide-react';
+import { Copy, Check, CheckCircle2, Circle, FileText } from 'lucide-react';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
 
 // ── 메시지 템플릿 ────────────────────────────────────────────────────
@@ -13,7 +13,7 @@ function msgNoClassStudentEn(student: string, coach: string) {
   return `Hi ${student}! You don't have a class scheduled this week yet. Let's get a time set up with ${coach} ASAP 😊`;
 }
 function msgNoClassCoach(student: string, coach: string) {
-  return `안녕하세요, ${coach} 선생님! ${student}님과 이번 주 수업 일정이 아직 비어 있어요. 일정 조율 부탁드립니다 🙏`;
+  return `${coach}님 ${student} 학생과 수업 일정 조율되면 홈페이지에 업데이트 부탁드릴게요!`;
 }
 function msgNoStudyHall(student: string) {
   return `안녕하세요, ${student}님! 이번 주 스터디홀 접속 일정이 아직 없어요. 꼭 세팅해서 공부 루틴 이어가봐요! 💪`;
@@ -32,7 +32,7 @@ function msgNoVocabEn(student: string) {
 
 type AlertRowType = 'noClass' | 'noStudyHall' | 'noVocab';
 
-interface FlatAlert {
+export interface FlatAlert {
   key: string;
   type: AlertRowType;
   studentId: string;
@@ -46,6 +46,7 @@ interface Props {
   loading?: boolean;
   onStudentClick: (s: { id: string; name: string; triggerType: string }) => void;
   onCoachClick: (c: { id: string; name: string }) => void;
+  onLogClick?: (alert: FlatAlert) => void;
 }
 
 const TYPE_CONFIG: Record<AlertRowType, { label: string; border: string; bg: string; badge: string; trigger: string }> = {
@@ -56,7 +57,7 @@ const TYPE_CONFIG: Record<AlertRowType, { label: string; border: string; bg: str
 
 // ── 컴포넌트 ─────────────────────────────────────────────────────────
 
-export function AlertFeedRows({ data, loading, onStudentClick, onCoachClick }: Props) {
+export function AlertFeedRows({ data, loading, onStudentClick, onCoachClick, onLogClick }: Props) {
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
 
@@ -224,6 +225,17 @@ export function AlertFeedRows({ data, loading, onStudentClick, onCoachClick }: P
                       {isChecked ? <CheckCircle2 size={10} /> : <Circle size={10} />}
                       {isChecked ? '완료' : '확인'}
                     </button>
+                    {/* 이슈/커뮤니케이션 기록 */}
+                    {onLogClick && (
+                      <button
+                        onClick={() => onLogClick(row)}
+                        title="이슈/커뮤니케이션 기록"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-300 bg-white transition-colors"
+                      >
+                        <FileText size={10} />
+                        기록
+                      </button>
+                    )}
                   </div>
                 </div>
 

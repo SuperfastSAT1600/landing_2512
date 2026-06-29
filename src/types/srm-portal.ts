@@ -69,6 +69,7 @@ export interface DayReport {
 }
 
 export interface LearningReport {
+  reportVersion: number;
   days: DayReport[];
   /** distinct vocab words the student has been exposed to (all-time, graded + exposure) */
   vocabExposedCount: number;

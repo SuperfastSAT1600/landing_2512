@@ -8,6 +8,7 @@ export interface NoClassAlert {
   students: string[];
   studentIds: string[];
   coaches: string[];
+  coachIds: string[];
   lastClassDate: string;
 }
 
@@ -149,6 +150,7 @@ export async function GET(request: NextRequest) {
       const studentsByMatching = new Map<string, string[]>();
       const studentIdsByMatching = new Map<string, string[]>();
       const teachersByMatching = new Map<string, string[]>();
+      const teacherIdsByMatching = new Map<string, string[]>();
 
       for (const s of mStudents ?? []) {
         if (!studentsByMatching.has(s.matching_id)) {
@@ -159,8 +161,12 @@ export async function GET(request: NextRequest) {
         studentIdsByMatching.get(s.matching_id)!.push(s.student_id);
       }
       for (const t of mTeachers ?? []) {
-        if (!teachersByMatching.has(t.matching_id)) teachersByMatching.set(t.matching_id, []);
+        if (!teachersByMatching.has(t.matching_id)) {
+          teachersByMatching.set(t.matching_id, []);
+          teacherIdsByMatching.set(t.matching_id, []);
+        }
         teachersByMatching.get(t.matching_id)!.push(nameMap.get(t.teacher_id) ?? '?');
+        teacherIdsByMatching.get(t.matching_id)!.push(t.teacher_id);
       }
 
       noUpcomingClass = atRiskMatchingIds
@@ -173,6 +179,7 @@ export async function GET(request: NextRequest) {
           students: studentsByMatching.get(id) ?? [],
           studentIds: studentIdsByMatching.get(id) ?? [],
           coaches: teachersByMatching.get(id) ?? [],
+          coachIds: teacherIdsByMatching.get(id) ?? [],
           lastClassDate: recentByMatching.get(id) ?? '',
         }));
     }

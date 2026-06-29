@@ -5,7 +5,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 export interface CopyLogEntry {
   id: string;
   event_id: string;
-  event_type: 'coach_room' | 'study_hall';
+  event_type: 'coach_room' | 'study_hall' | 'action';
   event_date: string;
   event_time: string;
   student_names: string[];
@@ -16,7 +16,7 @@ export interface CopyLogEntry {
 
 interface PostBody {
   eventId: string;
-  eventType: 'coach_room' | 'study_hall';
+  eventType: 'coach_room' | 'study_hall' | 'action';
   eventDate: string;
   eventTime: string;
   studentNames: string[];

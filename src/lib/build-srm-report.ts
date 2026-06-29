@@ -32,48 +32,6 @@ const COACH_FEEDBACK_MAX_CHARS = 500;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const SKILL_KO: Record<string, string> = {
-  // Reading & Writing
-  'Words in Context': '문맥 속 어휘',
-  'Central Ideas and Details': '중심 내용',
-  'Inferences': '추론',
-  'Command of Evidence (Textual)': '근거 활용 (텍스트)',
-  'Command of Evidence (Quantitative)': '근거 활용 (수치)',
-  'Transitions': '연결어',
-  'Rhetorical Synthesis': '통합 서술',
-  'Cross-Text Connections': '텍스트 연계',
-  'Form, Structure, and Sense': '형태·구조·의미',
-  'Boundaries': '문장 경계',
-  'Text Structure and Purpose': '텍스트 구조·목적',
-  // Math — Algebra
-  'Linear equations in one variable': '일차 방정식',
-  'Linear equations in two variables': '이원 일차 방정식',
-  'Systems of two linear equations in two variables': '연립 방정식',
-  'Linear functions': '일차 함수',
-  'Linear inequalities in one or two variables': '일차 부등식',
-  // Math — Advanced Math
-  'Nonlinear functions': '비선형 함수',
-  'Nonlinear equations in one variable and systems of equations in two variables': '비선형 방정식',
-  'Equivalent expressions': '동치 표현',
-  // Math — Problem Solving & Data Analysis
-  'Ratios, rates, proportional relationships, and units': '비율·비례·단위',
-  'Percentages': '백분율',
-  'One-variable data: Distributions and measures of center and spread': '일변수 데이터',
-  'Two-variable data: Models and scatterplots': '이변수 데이터',
-  'Probability and conditional probability': '확률',
-  'Inference from sample statistics and margin of error': '통계 추론',
-  'Evaluating statistical claims: Observational studies and experiments': '통계적 주장 평가',
-  // Math — Geometry & Trigonometry
-  'Lines, angles, and triangles': '선·각·삼각형',
-  'Right triangles and trigonometry': '직각삼각형·삼각함수',
-  'Circles': '원',
-  'Area and volume': '넓이·부피',
-};
-
-function toKoreanSkill(skill: string): string {
-  return SKILL_KO[skill] ?? skill;
-}
-
 function toKSTDate(isoStr: string): string {
   const d = new Date(isoStr);
   d.setHours(d.getHours() + 9);
@@ -216,7 +174,7 @@ async function generateStudyHallNarrative(
   const skillLines = [...stats.skills].sort((a, b) => b.total - a.total).slice(0, 4)
     .map(s => {
       const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-      return `${toKoreanSkill(s.skill)}: ${s.correct}/${s.total}문항 (${acc}%)`;
+      return `${s.skill}: ${s.total}문항 중 ${s.correct}문항 정답 (${acc}%)`;
     })
     .join(' | ');
 
@@ -256,8 +214,9 @@ async function generateStudyHallNarrative(
     edenInsight.intentions.length > 0 ? `학습 의도: ${edenInsight.intentions.join(' / ')}` : '',
   ].filter(Boolean).join('\n') : '';
 
+  const isMathSession = stats.skills.length > 0 && stats.skills.every(s => s.domain === 'Math');
   const hasWordsInContext = stats.skills.some(s => s.skill === 'Words in Context');
-  const vocabBlock = vocabContext && hasWordsInContext && (vocabContext.missedTerms.length + vocabContext.masteredTerms.length) > 0 ? [
+  const vocabBlock = vocabContext && !isMathSession && hasWordsInContext && (vocabContext.missedTerms.length + vocabContext.masteredTerms.length) > 0 ? [
     '[최근 단어 학습 — 최근 7일]',
     vocabContext.missedTerms.length > 0 ? `틀린 단어: ${vocabContext.missedTerms.join(' / ')}` : '',
     vocabContext.masteredTerms.length > 0 ? `마스터한 단어: ${vocabContext.masteredTerms.join(' / ')}` : '',
@@ -267,7 +226,7 @@ async function generateStudyHallNarrative(
     '[오늘 스터디홀]',
     `학습 시간: ${stats.durationMinutes}분 / ${volumeCtx} / 총 ${stats.totalProblems}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
     skillLines ? `스킬별 성취: ${skillLines}` : '',
-    weakestSkill ? `가장 취약한 스킬: ${toKoreanSkill(weakestSkill.skill)} (${weakestSkill.correct}/${weakestSkill.total}문항)` : '',
+    weakestSkill ? `가장 취약한 스킬: ${weakestSkill.skill} (${weakestSkill.total}문항 중 ${weakestSkill.correct}문항 정답)` : '',
     hasCrossRef ? `\n${crossRefBlock}` : '',
     edenBlock ? `\n${edenBlock}` : '',
     vocabBlock ? `\n${vocabBlock}` : '',
@@ -306,31 +265,39 @@ async function generateStudyHallNarrative(
           '- 스터디홀은 연습 환경입니다. 패턴을 시간 압박 없이 체화하는 것이 목적이고, 테스트센터가 그 내재화를 검증합니다.',
           '- "틀렸다"는 사실보다 "어떻게 틀렸는가"가 다음 수업 방향을 결정합니다.',
           '- 스터디홀 정답률이 높아도 테스트센터에서 무너진다면, 연습은 됐지만 압박 하 적용이 안 된 것입니다.',
-          '- 단어 학습에서 반복적으로 틀린 단어는 문맥 속 어휘(Words in Context) 성취에 영향을 미칩니다.',
           '- 코치 피드백이 있으면 리포트의 마지막은 그 계획을 학부모 언어로 전달합니다.',
           '- 리포트는 숫자 요약이 아니라 "학습 사이클이 지금 어디 있는가"를 보여주는 진단 도구입니다.',
           '',
-          '구조: 단락 3개, 각 단락 사이 빈 줄 하나.',
+          isMathSession
+            ? '제약: 이 세션은 Math 스킬 전용입니다. 단어·어휘·Words in Context 관련 내용은 절대 언급하지 않습니다.'
+            : '제약: 입력에 [최근 단어 학습] 항목이 없으면 어휘·단어·Words in Context를 절대 언급하지 않습니다.',
           '',
-          '[현상] 오늘 학습량과 결과 (1~2문장)',
+          '3개 단락으로 작성합니다. 단락 사이 빈 줄 하나. 단락 제목·레이블은 쓰지 않습니다.',
+          '',
+          '첫째 단락 — 오늘 학습량과 결과 (1~2문장):',
           '- [오늘 스터디홀] 수치 데이터만 씁니다. Eden 인사이트·해석을 넣지 않습니다.',
           '- 학습 시간과 전체 정답률은 반드시 포함합니다.',
           '- 스킬별 성취는 "N문항 중 M문항" 형식으로 씁니다. 퍼센트만 단독으로 쓰지 않습니다.',
           '  예: "문장 경계에서 10문항 중 5문항을 맞혔습니다" (O) / "문장 경계 50%" (X)',
           '- "학생은"으로 시작하지 않습니다.',
           '',
-          '[해석] 결과와 학습 장면의 의미 (1~2문장)',
+          '둘째 단락 — 결과의 의미와 오류 유형 (1~2문장):',
           '- 취약 스킬 이름을 반드시 포함합니다.',
           '- 어느 오류 유형이 반복되는지 읽어냅니다. 데이터에서 드러나지 않으면 유추하지 않습니다.',
-          '- [Eden 대화 인사이트]가 있으면: 강점 장면 1개 + 약점 개념 1개를 구체적으로 씁니다.',
-          '  학부모가 아이 공부하는 모습을 그릴 수 있게. "[Eden~]에서는" 직접 언급 금지.',
+          '- [Eden 대화 인사이트]가 있으면: 인사이트에 나온 구체적인 단어·문법 항목·장면을 그대로 인용합니다.',
+          '  예: "\'emitting\'과 \'dedicating\'의 동사 역할에 대해 질문하는 장면이 있었습니다" (O)',
+          '  예: "어휘 혼동이 남아있습니다" (X — 너무 추상적)',
+          '  학부모가 아이가 공부하는 구체적인 장면을 머릿속에 그릴 수 있어야 합니다.',
+          '  "[Eden~]에서는" 직접 언급 금지.',
           '- [최근 단어 학습]이 있고 문맥 속 어휘 스킬이 있으면: 최근 틀린 단어와 성취를 연결해 씁니다.',
           '  단어 이름을 직접 나열하지 말고 "최근 연습한 어휘에서 혼동이 남아있다"처럼 패턴으로 씁니다.',
           '- [테스트센터 교차]가 있으면 연습-검증 격차를 해석합니다. (격차 >10%p → 압박 하 적용 훈련 필요)',
           '',
-          '[계획] 다음 수업 방향 (1문장)',
-          '- [코치 피드백]이 있으면 그 내용에 근거합니다.',
-          '- 없으면 해석에서 도출한 오류 유형·격차에 근거한 방향으로 씁니다.',
+          '셋째 단락 — 다음 수업 방향 (1문장):',
+          '- [코치 피드백]이 있으면 두 방향 중 오늘 데이터와 교차하는 것을 선택합니다:',
+          '  방향 A (수업→스터디홀): 수업에서 다룬 내용이 오늘 스터디홀에 나타났다면 그 연결을 전달합니다.',
+          '  방향 B (스터디홀→수업): 오늘 스터디홀에서 드러난 약점이 다음 수업에서 보완될 것이라는 방향으로 씁니다.',
+          '- [코치 피드백]이 없으면 둘째 단락에서 도출한 오류 유형·격차에 근거한 방향으로 씁니다.',
           '- "~예정입니다" 대신 "~집중합니다", "~다룹니다", "~이어갑니다" 등 현재형.',
           '',
           '정답률 톤: 85%+ → 강점 강조 / 70~84% → 잘한 점과 보완점 균형 / 50~69% → 개선 방향 제시 / 50%미만 → 흔들리는 부분을 지목하되 격려.',
@@ -367,7 +334,12 @@ async function generateTestCenterNarrative(
 
   const lessonLines = stats.lessons.map((l, i) => {
     const pct = l.total > 0 ? Math.round((l.score / l.total) * 100) : 0;
-    return `${l.title ?? `Module ${i + 1}`}: ${l.score}/${l.total} (${pct}%)`;
+    // Infer RW/Math from standard SAT question counts (27=RW, 22=Math)
+    const domainHint = l.total === 27 ? 'RW' : l.total === 22 ? 'Math' : null;
+    const titleLabel = l.title
+      ? (domainHint ? `${domainHint} ${l.title}` : l.title)
+      : (domainHint ? `${domainHint} Module ${i + 1}` : `Module ${i + 1}`);
+    return `${titleLabel}: ${l.score}/${l.total} (${pct}%)`;
   }).join(' | ');
 
   let trendNote = '';
@@ -401,7 +373,7 @@ async function generateTestCenterNarrative(
     const sorted = [...stats.skills!].sort((a, b) => b.total - a.total).slice(0, 4);
     const lines = sorted.map(s => {
       const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-      return `${toKoreanSkill(s.skill)}: ${s.correct}/${s.total}문항 (${acc}%)`;
+      return `${s.skill}: ${s.total}문항 중 ${s.correct}문항 정답 (${acc}%)`;
     }).join(' | ');
     const weakest = [...stats.skills!].sort((a, b) => {
       const ra = a.total > 0 ? a.correct / a.total : 1;
@@ -426,7 +398,7 @@ async function generateTestCenterNarrative(
     trendNote ? `흐름: ${trendNote}` : '',
     `전체 평균 ${accuracy}% 기준 — 10%p 이상 낮은 모듈을 약한 모듈로 판정`,
     skillLines ? `스킬별 성취: ${skillLines.lines}` : '',
-    skillLines ? `가장 취약한 스킬: ${toKoreanSkill(skillLines.weakest.skill)} (${skillLines.weakest.correct}/${skillLines.weakest.total}문항)` : '',
+    skillLines ? `가장 취약한 스킬: ${skillLines.weakest.skill} (${skillLines.weakest.total}문항 중 ${skillLines.weakest.correct}문항 정답)` : '',
     hasCrossRef ? `\n${crossRefBlock}` : '',
     vocabBlock ? `\n${vocabBlock}` : '',
     coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
@@ -449,19 +421,33 @@ async function generateTestCenterNarrative(
           '- 학습 사이클: 레슨(학습) → 스터디홀(연습) → 테스트센터(검증). 테스트센터는 이 사이클의 검증 단계입니다.',
           '- 테스트센터는 검증 환경입니다. 스터디홀 연습과 비교했을 때 격차가 크면 연습은 됐지만 실전 적용이 안 된 것입니다.',
           '- 전체 정답률보다 모듈 간 흐름이 중요합니다. 어디서 무너지는지가 다음 수업의 방향을 결정합니다.',
-          '- 단어 학습에서 반복적으로 틀린 단어는 RW 테스트의 어휘 관련 문항에 영향을 미칩니다.',
           '- 코치가 우려했던 부분이 오늘 결과에서 확인됐는지, 아니면 개선됐는지를 학부모에게 전달합니다.',
+          '',
+          'SAT 시험 구조:',
+          '- RW: 모듈1(27문) + 모듈2(27문, 적응형) — 모듈1 결과가 모듈2 난이도를 결정합니다.',
+          '- Math: 모듈1(22문) + 모듈2(22문, 적응형) — 동일.',
+          '- 모듈2가 어려운 버전이면 모듈1을 잘 푼 것입니다. 모듈2 정답률이 낮더라도 어려운 버전인지 쉬운 버전인지 맥락이 중요합니다.',
+          '- RW 스킬: Words in Context / Text Structure and Purpose / Cross-Text Connections / Central Ideas and Details / Command of Evidence / Inferences / Rhetorical Synthesis / Transitions / Boundaries / Form, Structure, and Sense',
+          '- Math 스킬: Linear equations / Systems of equations / Linear functions / Linear inequalities / Nonlinear functions / Nonlinear equations / Equivalent expressions / Percentages / Ratios and rates / Two-variable data / One-variable data / Inference from sample statistics / Area and volume / Lines and angles / Circles / Right triangles',
+          '',
+          isRW
+            ? '제약: 입력에 [최근 단어 학습] 항목이 없으면 어휘·단어를 절대 언급하지 않습니다.'
+            : '제약: 이 테스트는 Math입니다. Writing·RW·단어·어휘를 절대 언급하지 않습니다.',
           '',
           '작성 규칙:',
           '- 전체 정답률이 아니라 모듈 흐름과 무너지는 지점을 중심으로 해석합니다.',
-          '- 평균 정답률보다 10%p 이상 낮은 모듈이 있으면 그 모듈을 구체적으로 지목합니다.',
+          '- 평균 정답률보다 10%p 이상 낮은 모듈을 구체적으로 지목합니다. 낮은 모듈이 없으면 지목하지 않습니다.',
           '- 커리큘럼 제목이 있으면 반드시 언급합니다.',
-          '- [스킬별 성취]가 있으면 취약한 스킬 이름을 반드시 한국어로 언급합니다. "N문항 중 M문항" 형식 사용.',
+          '- [스킬별 성취]가 있으면 취약한 스킬 이름을 반드시 언급합니다. "N문항 중 M문항" 형식 사용.',
           '- [스터디홀 교차] 항목이 있으면 연습-검증 격차를 반드시 해석합니다.',
           '- [최근 단어 학습]이 있으면 최근 틀린 어휘 패턴을 RW 결과 해석에 연결합니다.',
           '  단어 이름을 나열하지 말고 "최근 연습한 어휘에서 혼동이 남아있는 패턴"처럼 씁니다.',
-          '- [코치 피드백] 항목이 있으면 마지막 문장은 반드시 그 피드백에 근거한 다음 수업 방향입니다.',
+          '- [코치 피드백] 항목이 있으면 마지막 문장은 두 방향 중 오늘 결과와 교차하는 것을 선택합니다:',
+          '  방향 A (수업→테스트센터): 수업에서 다룬 내용이 오늘 테스트 결과에서 확인됐다면 그 연결을 전달합니다.',
+          '  방향 B (테스트센터→수업): 오늘 테스트에서 드러난 약점이 다음 수업에서 보완될 것이라는 방향으로 씁니다.',
           '- [코치 피드백]이 없으면 마지막 문장은 오늘 결과에서 도출한 방향입니다.',
+          '- "~예정입니다" 대신 "~집중합니다", "~다룹니다", "~이어갑니다" 등 현재형으로 씁니다.',
+          '- 금지: 데이터에 없는 행동 묘사, "~것이 중요합니다", "~로 보입니다", "~시사합니다".',
           `- ${sentenceGuide}`,
         ].join('\n'),
       },
@@ -549,9 +535,17 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
   const shUnitIds = [...new Set((shAttempts ?? []).map(a => a.unit_id as string).filter(Boolean))];
   const tcUnitIds = [...new Set((tcUnitAttempts ?? []).map(a => a.unit_id as string).filter(Boolean))];
   const allUnitIds = [...new Set([...shUnitIds, ...tcUnitIds])];
-  const { data: unitsMeta } = allUnitIds.length ? await supabaseSFv2.from('units').select('id, skill, domain').in('id', allUnitIds) : { data: [] };
+  // Batch in chunks of 80 to stay under Supabase URL length limits (~3 KB per request)
+  const UNIT_BATCH = 80;
+  const unitBatchResults = await Promise.all(
+    Array.from({ length: Math.ceil(allUnitIds.length / UNIT_BATCH) }, (_, i) =>
+      supabaseSFv2.from('units').select('id, skill, domain').in('id', allUnitIds.slice(i * UNIT_BATCH, (i + 1) * UNIT_BATCH))
+    )
+  );
   const unitsMap = new Map<string, { skill: string; domain: string }>();
-  for (const u of unitsMeta ?? []) { if (u.id && u.skill) unitsMap.set(u.id, { skill: u.skill as string, domain: u.domain as string }); }
+  for (const { data } of unitBatchResults) {
+    for (const u of data ?? []) { if (u.id && u.skill) unitsMap.set(u.id, { skill: u.skill as string, domain: u.domain as string }); }
+  }
 
   const tcSessionIds = [...new Set((tcAttempts ?? []).map(a => a.test_center_session_id as string).filter(Boolean))];
   const tcLessonIds = [...new Set((tcAttempts ?? []).map(a => a.lesson_id as string).filter(Boolean))];
@@ -611,7 +605,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     const meta = unitsMap.get(uid);
     if (!meta?.skill) continue;
     if (!edenBySession.has(sid)) edenBySession.set(sid, []);
-    edenBySession.get(sid)!.push({ skill: toKoreanSkill(meta.skill), isCorrect: !!a.is_correct, messages: msgs });
+    edenBySession.get(sid)!.push({ skill: meta.skill, isCorrect: !!a.is_correct, messages: msgs });
   }
 
   const shByDate = new Map<string, { totalMinutes: number; totalProblems: number; correctCount: number; skillMap: Map<string, { skill: string; domain: string; correct: number; total: number }>; edenConvos: EdenConvo[] }>();
@@ -725,13 +719,14 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     lessonFeedbackEvents = (fbEvents ?? []) as typeof lessonFeedbackEvents;
   }
 
-  // Coach feedback: 1순위 scheduled_events.feedback (코치 직접 입력), 2순위 daily_reports.report_md
-  const coachFeedback: string | undefined =
-    lessonFeedbackEvents.length > 0
-      ? (lessonFeedbackEvents[0].feedback ?? '').slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined
-      : (dailyReports ?? []).length > 0
-        ? ((dailyReports![0].report_md as string | null) ?? '').slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined
-        : undefined;
+  // 날짜별 수업 피드백 조회 — targetDate 이전의 가장 최근 수업 피드백 반환
+  // (수업은 SH/TC와 같은 날이 아니어도 되므로, 해당 날짜 이전 최근 것을 사용)
+  function getCoachFeedbackForDate(targetDate: string): string | undefined {
+    const lessonFb = lessonFeedbackEvents.find(e => toKSTDate(e.starts_at) <= targetDate);
+    if (lessonFb?.feedback) return lessonFb.feedback.slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined;
+    const dr = (dailyReports ?? []).find(r => (r.report_date as string) <= targetDate);
+    return ((dr?.report_md as string | null) ?? '').slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined;
+  }
 
   // Vocab 집계 (getVocabContextForDate에서 참조하므로 함수 정의 전에 선언)
   type VocaAgg = { entryIds: Set<string>; gradedCount: number; correctCount: number; masteredIds: Set<string>; missedIds: string[] };
@@ -811,6 +806,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     }
 
     const vocabContext = getVocabContextForDate(date);
+    const coachFeedback = getCoachFeedbackForDate(date);
     const cacheInput = {
       durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy,
       skills: [...skills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })),
@@ -849,12 +845,13 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     }
 
     const vocabContextTc = getVocabContextForDate(date);
+    const coachFeedbackTc = getCoachFeedbackForDate(date);
     const tcSkills = data.skills.length > 0 ? data.skills : undefined;
     const cacheInput = {
       curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain,
       totalScore, totalProblems, lessons: data.lessons.map(l => ({ title: l.title, score: l.score, total: l.total })),
       skills: tcSkills ? [...tcSkills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })) : undefined,
-      shCrossRef, coachFeedback, vocabContext: vocabContextTc,
+      shCrossRef, coachFeedback: coachFeedbackTc, vocabContext: vocabContextTc,
     };
     const inputHash = hashInput(cacheInput);
     let narrative: string | undefined;
@@ -863,7 +860,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       if (!narrative) {
         narrative = await generateTestCenterNarrative(
           { curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, totalScore, totalProblems, lessons: data.lessons, skills: tcSkills },
-          shCrossRef.length ? shCrossRef : undefined, coachFeedback, vocabContextTc,
+          shCrossRef.length ? shCrossRef : undefined, coachFeedbackTc, vocabContextTc,
         );
         await setCachedNarrative(profileId, date, 'test_center', inputHash, narrative);
       }
@@ -903,16 +900,17 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     const accuracy = agg.gradedCount > 0 ? Math.round((agg.correctCount / agg.gradedCount) * 100) : 0;
     const masteredCount = agg.masteredIds.size;
     const missedTerms = [...new Set(agg.missedIds)].map(id => termMap.get(id)).filter((t): t is string => Boolean(t)).slice(0, VOCAB_MAX_MISSED);
-    const cacheInput = { wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms: [...missedTerms].sort(), coachFeedback };
+    const coachFeedbackVoca = getCoachFeedbackForDate(date);
+    const cacheInput = { wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms: [...missedTerms].sort(), coachFeedback: coachFeedbackVoca };
     const inputHash = hashInput(cacheInput);
     let narrative = lookupCache(narrativeCache, date, 'voca', inputHash);
     if (!narrative) {
-      narrative = await generateVocaNarrative({ wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms }, coachFeedback);
+      narrative = await generateVocaNarrative({ wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms }, coachFeedbackVoca);
       await setCachedNarrative(profileId, date, 'voca', inputHash, narrative);
     }
     getOrCreate(date).items.push({ type: 'voca', wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms, aiNarrative: narrative } satisfies VocaDay);
   }));
 
   const days = Array.from(dayMap.values()).sort((a, b) => b.date.localeCompare(a.date));
-  return { days, vocabExposedCount };
+  return { reportVersion: 4, days, vocabExposedCount };
 }

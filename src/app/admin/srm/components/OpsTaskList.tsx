@@ -138,15 +138,20 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
                   minute: '2-digit',
                   hour12: false,
                 });
-                const typeLabel = log.event_type === 'coach_room' ? '수업' : '스터디홀';
+                const isAction = log.event_type === 'action';
+                const typeLabel = log.event_type === 'coach_room' ? '수업' : log.event_type === 'study_hall' ? '스터디홀' : '';
                 return (
                   <div
                     key={`copy-${log.id}`}
                     className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-md text-xs border border-gray-100"
                   >
                     <span className="text-gray-500 font-mono shrink-0">{copiedTime}</span>
-                    <span className="text-gray-600 shrink-0 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">복사</span>
-                    <span className="text-gray-400 shrink-0">{typeLabel}</span>
+                    {isAction ? (
+                      <span className="text-emerald-700 shrink-0 text-[10px] px-1.5 py-0.5 bg-emerald-100 rounded">케어기록</span>
+                    ) : (
+                      <span className="text-gray-600 shrink-0 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">복사</span>
+                    )}
+                    {typeLabel && <span className="text-gray-400 shrink-0">{typeLabel}</span>}
                     <span className="text-gray-700 flex-1 truncate">
                       {log.student_names.join(', ')}
                     </span>
