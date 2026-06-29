@@ -8,7 +8,7 @@ export interface BaseIssue {
   issue_type: string;
   title: string;
   description: string | null;
-  checklist: IssueChecklist[];
+  checklist: { id: string; label: string; done: boolean }[];
   status: 'open' | 'resolved';
   created_at: string;
   resolved_at: string | null;
@@ -16,31 +16,6 @@ export interface BaseIssue {
   resolution_note: string | null;
 }
 
-const ISSUE_TYPE_LABELS: Record<string, string> = {
-  cancellation: '취소/재예약',
-  coach_change: '코치 교체',
-  no_show: '노쇼',
-  schedule_pending: '스케줄 조율 중',
-  coach_pending: '코치 배정 중',
-  renewal_needed: '재결제 필요',
-  schedule: '스케줄 변경',
-  payment_no_response: '지급 무응답',
-  request_no_response: '요청 무응답',
-  custom: '기타',
-};
-
-const ISSUE_TYPE_COLORS: Record<string, string> = {
-  cancellation: 'bg-red-100 text-red-700 border-red-200',
-  coach_change: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  no_show: 'bg-orange-100 text-orange-700 border-orange-200',
-  schedule_pending: 'bg-blue-100 text-blue-700 border-blue-200',
-  coach_pending: 'bg-green-100 text-green-700 border-green-200',
-  renewal_needed: 'bg-purple-100 text-purple-700 border-purple-200',
-  schedule: 'bg-teal-100 text-teal-700 border-teal-200',
-  payment_no_response: 'bg-rose-100 text-rose-700 border-rose-200',
-  request_no_response: 'bg-amber-100 text-amber-700 border-amber-200',
-  custom: 'bg-gray-100 text-gray-600 border-gray-200',
-};
 
 interface Props {
   issue: BaseIssue;
@@ -74,14 +49,7 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
     }
   };
 
-  const toggleItem = (itemId: string) => {
-    const updated = issue.checklist.map((c) =>
-      c.id === itemId ? { ...c, done: !c.done } : c,
-    );
-    patch({ checklist: updated });
-  };
-
-  const toggleResolved = async () => {
+const toggleResolved = async () => {
     const newStatus = issue.status === 'open' ? 'resolved' : 'open';
     // 해결됨으로 전환 시 해결책 비어있으면 입력란 강조
     if (newStatus === 'resolved' && !noteValue.trim()) {
