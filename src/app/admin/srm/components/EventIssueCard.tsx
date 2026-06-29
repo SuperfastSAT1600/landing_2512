@@ -1,8 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Check, ChevronDown, ChevronUp, CheckSquare, Square, AlertTriangle, Trash2, Save } from 'lucide-react';
-import type { IssueChecklist } from '@/app/api/admin/srm/issues/route';
+import { Check, ChevronDown, ChevronUp, AlertTriangle, Trash2, Save } from 'lucide-react';
 
 export interface BaseIssue {
   id: string;
@@ -59,8 +58,6 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
   const [noteHighlight, setNoteHighlight] = useState(false);
   const noteRef = useRef<HTMLTextAreaElement>(null);
 
-  const doneCount = issue.checklist.filter((c) => c.done).length;
-  const totalCount = issue.checklist.length;
   const isResolved = issue.status === 'resolved';
 
   const patch = async (body: Record<string, unknown>) => {
@@ -119,17 +116,9 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
         onClick={() => setExpanded(!expanded)}
       >
         {!isResolved && <AlertTriangle size={13} className="text-orange-600 shrink-0" />}
-        <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded border ${ISSUE_TYPE_COLORS[issue.issue_type]}`}>
-          {ISSUE_TYPE_LABELS[issue.issue_type] ?? issue.issue_type}
-        </span>
         <span className={`text-sm font-medium flex-1 ${isResolved ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
           {issue.title}
         </span>
-        {totalCount > 0 && (
-          <span className={`text-[11px] font-medium tabular-nums ${doneCount === totalCount ? 'text-green-600' : 'text-gray-500'}`}>
-            {doneCount}/{totalCount}
-          </span>
-        )}
         {expanded ? <ChevronUp size={13} className="text-gray-600" /> : <ChevronDown size={13} className="text-gray-600" />}
       </div>
 
@@ -142,24 +131,6 @@ export function EventIssueCard({ issue, onUpdated, onDeleted, apiBase = '/api/ad
           {issue.description && (
             <p className="text-xs text-gray-500 mb-2">{issue.description}</p>
           )}
-
-          {/* 체크리스트 */}
-          {issue.checklist.map((item: IssueChecklist) => (
-            <button
-              key={item.id}
-              onClick={() => !saving && toggleItem(item.id)}
-              disabled={saving}
-              className="flex items-center gap-2 w-full text-left group"
-            >
-              {item.done
-                ? <CheckSquare size={13} className="text-green-600 shrink-0" />
-                : <Square size={13} className="text-gray-300 group-hover:text-gray-600 shrink-0" />
-              }
-              <span className={`text-xs ${item.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
-                {item.label}
-              </span>
-            </button>
-          ))}
 
           {/* 해결책 입력 */}
           <div className="pt-2 space-y-1">

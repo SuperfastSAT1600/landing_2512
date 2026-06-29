@@ -25,20 +25,12 @@ interface Props {
   onClose: () => void;
 }
 
-const ISSUE_TYPES = [
-  { value: 'cancellation', label: '취소/재예약' },
-  { value: 'coach_change', label: '코치 교체' },
-  { value: 'no_show', label: '노쇼' },
-  { value: 'custom', label: '기타' },
-] as const;
 
 export function EventLogPanel({ event, onClose }: Props) {
   const [comms, setComms] = useState<CommEntry[]>([]);
   const [issues, setIssues] = useState<EventIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [issueType, setIssueType] = useState<string>('cancellation');
-  const [customIssueType, setCustomIssueType] = useState('');
   const [issueTitle, setIssueTitle] = useState('');
   const [issueDesc, setIssueDesc] = useState('');
   const [issueSaving, setIssueSaving] = useState(false);
@@ -93,17 +85,13 @@ export function EventLogPanel({ event, onClose }: Props) {
 
   const handleIssueSubmit = async () => {
     if (!issueTitle.trim()) return;
-    if (issueType === 'custom' && !customIssueType.trim()) return;
     setIssueSaving(true);
-    const resolvedIssueType = issueType === 'custom' && customIssueType.trim()
-      ? customIssueType.trim()
-      : issueType;
     const res = await srmFetch('/api/admin/srm/issues', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         eventId: event.id,
-        issueType: resolvedIssueType,
+        issueType: 'custom',
         title: issueTitle.trim(),
         description: issueDesc.trim() || undefined,
         createdBy: userName || getAdminName() || '관리자',
@@ -116,8 +104,6 @@ export function EventLogPanel({ event, onClose }: Props) {
       setIssues((prev) => [newIssue, ...prev]);
       setIssueTitle('');
       setIssueDesc('');
-      setCustomIssueType('');
-      setIssueType('cancellation');
     }
     setIssueSaving(false);
   };
@@ -226,27 +212,6 @@ export function EventLogPanel({ event, onClose }: Props) {
             </div>
             <div className="border-t border-gray-100 px-5 py-3 shrink-0 space-y-2">
               <div>
-                <p className="text-[11px] text-gray-600 mb-1.5">카테고리</p>
-                <select
-                  value={issueType}
-                  onChange={(e) => { setIssueType(e.target.value); setCustomIssueType(''); }}
-                  className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
-                >
-                  {ISSUE_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-                {issueType === 'custom' && (
-                  <input
-                    type="text"
-                    value={customIssueType}
-                    onChange={(e) => setCustomIssueType(e.target.value)}
-                    placeholder="유형 직접 입력 (예: 퇴원, 환불 요청)"
-                    className="w-full mt-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
-                  />
-                )}
-              </div>
-              <div>
                 <p className="text-[11px] text-gray-600 mb-1.5">이슈 제목</p>
                 <input
                   type="text"
@@ -268,7 +233,7 @@ export function EventLogPanel({ event, onClose }: Props) {
               </div>
               <button
                 onClick={handleIssueSubmit}
-                disabled={issueSaving || !issueTitle.trim() || (issueType === 'custom' && !customIssueType.trim())}
+                disabled={issueSaving || !issueTitle.trim()}
                 className="w-full text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
               >
                 {issueSaving ? '저장중...' : '이슈 등록'}
