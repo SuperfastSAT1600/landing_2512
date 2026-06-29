@@ -268,32 +268,36 @@ export function ScheduleList({
           )}
         </span>
 
-        <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-          <button
-            onClick={() => handleCopy(ev, isTomorrow, 'ko')}
-            title="한국어 메시지 복사"
-            className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-600"
-          >
-            {copiedKo ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
-            <span className="text-[10px]">KO</span>
-          </button>
-          <button
-            onClick={() => handleCopy(ev, isTomorrow, 'en')}
-            title="English message copy"
-            className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-700"
-          >
-            {copiedEn ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
-            <span className="text-[10px]">EN</span>
-          </button>
+        <span className="shrink-0 flex items-center gap-1">
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+            <button
+              onClick={() => handleCopy(ev, isTomorrow, 'ko')}
+              title="한국어 메시지 복사"
+              className="flex items-center gap-0.5 p-0.5 text-gray-500 hover:text-gray-600"
+            >
+              {copiedKo ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
+              <span className="text-[10px]">KO</span>
+            </button>
+            <button
+              onClick={() => handleCopy(ev, isTomorrow, 'en')}
+              title="English message copy"
+              className="flex items-center gap-0.5 p-0.5 text-blue-500 hover:text-blue-700"
+            >
+              {copiedEn ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
+              <span className="text-[10px]">EN</span>
+            </button>
+          </span>
           <button
             onClick={() => handleAction(ev)}
             title="대응/관리 완료 체크"
-            className={`flex items-center gap-0.5 p-0.5 transition-colors ${
-              isActioned ? 'text-emerald-700' : 'text-gray-400 hover:text-emerald-600'
+            className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors border ${
+              isActioned
+                ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
+                : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300'
             }`}
           >
-            <ClipboardCheck size={13} />
-            <span className="text-[10px]">chk</span>
+            <ClipboardCheck size={11} />
+            <span>chk</span>
           </button>
         </span>
       </div>
