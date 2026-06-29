@@ -2,7 +2,7 @@
 import { srmFetch } from '../lib/srm-fetch';
 
 import { useState } from 'react';
-import { Copy, Check, Crown } from 'lucide-react';
+import { Copy, Check, Crown, ClipboardCheck } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 
@@ -138,11 +138,35 @@ export function ScheduleList({
   onCoachClick,
 }: Props) {
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
+  const [actionedIds, setActionedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
   const icon = type === 'coachRoom' ? '●' : '○';
   const completedIcon = '✓';
 
   const totalCount = todayEvents.length + tomorrowEvents.length;
+
+  const handleAction = async (ev: ScheduleEvent) => {
+    setActionedIds((prev) => new Set(prev).add(ev.id));
+    try {
+      const eventTime = toTimeStr(ev.startsAt, 'Asia/Seoul');
+      const eventType = type === 'coachRoom' ? 'coach_room' : 'study_hall';
+      await srmFetch('/api/admin/srm/copy-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: ev.id,
+          eventType: 'action',
+          eventDate,
+          eventTime,
+          studentNames: ev.students,
+          messagePreview: `[CHK] ${eventType}`,
+          copiedBy: userName || '관리자',
+        }),
+      });
+    } catch {
+      // non-fatal
+    }
+  };
 
   const handleCopy = async (ev: ScheduleEvent, isTomorrow: boolean, lang: 'ko' | 'en') => {
     let msg: string;
@@ -182,12 +206,14 @@ export function ScheduleList({
     const copiedKo = copiedIds.has(`${ev.id}-ko`);
     const copiedEn = copiedIds.has(`${ev.id}-en`);
     const anyCopied = copiedKo || copiedEn;
+    const isActioned = actionedIds.has(ev.id);
+    const anyCared = anyCopied || isActioned;
 
     return (
       <div
         key={ev.id}
         className={`flex items-start gap-2.5 px-3 py-2 rounded-md text-sm group ${
-          anyCopied ? 'bg-emerald-950/30' : isDone ? 'bg-gray-50 opacity-60' : 'bg-gray-50'
+          anyCared ? 'bg-emerald-950/30' : isDone ? 'bg-gray-50 opacity-60' : 'bg-gray-50'
         }`}
       >
         <span className={`mt-0.5 text-xs shrink-0 ${isDone ? 'text-emerald-700' : 'text-gray-500'}`}>
@@ -195,6 +221,9 @@ export function ScheduleList({
         </span>
         {anyCopied && (
           <span className="mt-0.5 text-xs shrink-0 text-emerald-700 font-medium">발송됨</span>
+        )}
+        {isActioned && !anyCopied && (
+          <span className="mt-0.5 text-xs shrink-0 text-emerald-700 font-medium">chk</span>
         )}
         <span className="text-gray-500 font-mono text-xs shrink-0 mt-0.5">{timeStr}</span>
         <span className="leading-tight flex flex-wrap gap-x-1 gap-y-0.5 flex-1">
@@ -255,6 +284,16 @@ export function ScheduleList({
           >
             {copiedEn ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
             <span className="text-[10px]">EN</span>
+          </button>
+          <button
+            onClick={() => handleAction(ev)}
+            title="대응/관리 완료 체크"
+            className={`flex items-center gap-0.5 p-0.5 transition-colors ${
+              isActioned ? 'text-emerald-700' : 'text-gray-400 hover:text-emerald-600'
+            }`}
+          >
+            <ClipboardCheck size={13} />
+            <span className="text-[10px]">chk</span>
           </button>
         </span>
       </div>
