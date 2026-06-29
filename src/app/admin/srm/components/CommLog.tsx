@@ -44,7 +44,7 @@ const ALL_PARTIES = ['student', 'parent', 'coach', 'us'] as const;
 
 export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder }: AddFormProps) {
   const [parties, setParties] = useState<Set<string>>(new Set(['student']));
-  const [channel, setChannel] = useState<string>('kakao');
+  const [channel] = useState<string>('kakao');
   const [content, setContent] = useState('');
   const [reason, setReason] = useState('');
 
@@ -84,19 +84,6 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
         </div>
       )}
 
-      {/* 이벤트 컨텍스트 */}
-      {eventContext && (
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md">
-          <span className="text-[11px] text-gray-500">이벤트</span>
-          <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${
-            eventContext.type === 'coachRoom' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-          }`}>
-            {eventContext.type === 'coachRoom' ? '수업' : '스터디홀'}
-          </span>
-          <span className="text-[11px] text-gray-600 font-mono">{eventContext.time}</span>
-        </div>
-      )}
-
       {/* 대상자 */}
       <div>
         <p className="text-[11px] text-gray-600 mb-1.5">대상자</p>
@@ -114,23 +101,6 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
             </button>
           ))}
         </div>
-      </div>
-
-      {/* 카테고리 */}
-      <div>
-        <p className="text-[11px] text-gray-600 mb-1.5">카테고리</p>
-        <select
-          value={channel}
-          onChange={(e) => setChannel(e.target.value)}
-          className="w-full bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-800 outline-none focus:border-blue-500"
-        >
-          <option value="kakao" className="bg-white text-gray-800">카카오</option>
-          <option value="call" className="bg-white text-gray-800">전화</option>
-          <option value="sms" className="bg-white text-gray-800">SMS</option>
-          <option value="email" className="bg-white text-gray-800">이메일</option>
-          <option value="slack" className="bg-white text-gray-800">슬랙</option>
-          <option value="other" className="bg-white text-gray-800">기타</option>
-        </select>
       </div>
 
       {/* 커뮤니케이션 제목 */}
