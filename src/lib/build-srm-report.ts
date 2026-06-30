@@ -14,6 +14,40 @@ type SkillCrossRef = {
   gap: number | null;
 };
 
+type SkillKnowledge = { definition: string; errorTypes: string };
+
+type QuadrantCounts = { fluency: number; effortful: number; impulsive: number; stuck: number };
+
+function medianOf(arr: number[]): number {
+  if (arr.length === 0) return 60;
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 === 0 ? (s[m - 1] + s[m]) / 2 : s[m];
+}
+
+function classifyAttempt(isCorrect: boolean, seconds: number, medianSecs: number): keyof QuadrantCounts {
+  const isSlow = seconds > medianSecs * 1.5;
+  if (isCorrect) return isSlow ? 'effortful' : 'fluency';
+  return isSlow ? 'stuck' : 'impulsive';
+}
+
+function dominantQuadrant(q: QuadrantCounts): keyof QuadrantCounts {
+  return (Object.keys(q) as (keyof QuadrantCounts)[]).reduce((a, b) => q[a] >= q[b] ? a : b);
+}
+
+function parseSkillKnowledge(template: string): SkillKnowledge {
+  // Math skills: #### Skill Definition / #### Common Error Types
+  const defMatch = template.match(/#### Skill Definition\n([\s\S]*?)(?=####|---)/);
+  const errMatch = template.match(/#### Common Error Types[^\n]*\n([\s\S]*?)(?=####|###|---)/);
+  // RW skills: ## Your Expertise 1 (definition) / ## Key Principles (error types)
+  const rwDefMatch = template.match(/## Your Expertise 1[^\n]*\n([\s\S]*?)(?=## Your Expertise 2|## Key|## Instructions)/);
+  const rwKeyMatch = template.match(/## Key Principles[^\n]*\n([\s\S]*?)(?=## Instructions|## Output)/);
+  return {
+    definition: (defMatch?.[1] ?? rwDefMatch?.[1] ?? '').trim().slice(0, 400),
+    errorTypes: (errMatch?.[1] ?? rwKeyMatch?.[1] ?? '').trim().slice(0, 600),
+  };
+}
+
 type EdenInsight = {
   strengths: string[];
   weaknesses: string[];
@@ -141,6 +175,7 @@ async function humanizeNarrative(text: string): Promise<string> {
           '교정 규칙 (S1 우선, S2 선택):',
           '- "~인 것입니다/~한 것입니다" → 평서형으로 ("~합니다", "~입니다")',
           '- "~할 수 있습니다" 남발 → 단언으로 ("~합니다")',
+          '- "~예정입니다/~할 예정입니다" → 현재형으로 ("~합니다", "~이어갑니다", "~집중합니다")',
           '- "~로 보입니다/~인 듯합니다" → 단언 가능하면 단언',
           '- "이를 통해/이로 인해" → "~로", "~해서" 등으로 교체',
           '- "~에 대해(서)" 불필요한 경우 → 목적격 직결',
@@ -151,6 +186,13 @@ async function humanizeNarrative(text: string): Promise<string> {
           '- "~이라는 점에서" 반복 → "~서", "~기 때문에"',
           '- 동일 종결어미 "~다/~습니다"가 3문장 연속이면 1문장 변형 ("~었습니다", "~ㄹ 것입니다", "~하고 있습니다")',
           '- "또한/따라서/아울러/게다가" 문두 접속사 → 삭제 후 자연스럽게 이음',
+          '',
+          'SAT 시험 형식 설명 제거 규칙 (학부모 리포트에 부적절한 표현):',
+          '- "질문이 ~형식으로 제시됩니다/됩니다" → 삭제하거나 학습 행동 중심으로 재서술',
+          '- "선택지 중에서 ~고르는" 형식 설명 → "~판단하는 과정에서" 등 학생 행동 중심으로',
+          '- SAT 시험 구조·출제 형식을 직접 설명하는 문장 → 학생의 학습 상태 서술로 교체',
+          '  예: "질문이 특정 단어의 의미를 묻는 형식으로 제시되며, 여러 선택지 중 하나를 고르는 과정에서 어려움을 겪고 있습니다"',
+          '  → "문맥 속에서 단어의 의미를 정확히 잡아내는 데 어려움이 있습니다"',
           '',
           '변경 최소화 원칙: 교정이 필요 없는 표현은 그대로 둡니다.',
           '출력: 윤문된 텍스트만 반환합니다. 설명·주석 없이.',
@@ -165,16 +207,19 @@ async function humanizeNarrative(text: string): Promise<string> {
 }
 
 async function generateStudyHallNarrative(
-  stats: { durationMinutes: number; totalProblems: number; correctCount: number; accuracy: number; skills: StudyHallSkill[] },
+  stats: { durationMinutes: number; totalProblems: number; correctCount: number; accuracy: number; skills: (StudyHallSkill & { totalSeconds?: number; quadrants?: QuadrantCounts })[] },
   tcCrossRef?: SkillCrossRef[],
   coachFeedback?: string,
   edenInsight?: EdenInsight,
   vocabContext?: VocabContext,
+  skillKnowledgeMap?: Map<string, SkillKnowledge>,
 ): Promise<string> {
   const skillLines = [...stats.skills].sort((a, b) => b.total - a.total).slice(0, 4)
     .map(s => {
       const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-      return `${s.skill}: ${s.total}문항 중 ${s.correct}문항 정답 (${acc}%)`;
+      const avgSec = s.total > 0 && s.totalSeconds ? Math.round(s.totalSeconds / s.total) : null;
+      const timeHint = avgSec && avgSec > 120 ? ` (평균 ${avgSec}초/문항)` : '';
+      return `${s.skill}: ${s.total}문항 중 ${s.correct}문항 정답 (${acc}%)${timeHint}`;
     })
     .join(' | ');
 
@@ -187,11 +232,47 @@ async function generateStudyHallNarrative(
       })[0]
     : null;
 
-  const volumeCtx = stats.totalProblems < 15 ? '짧은 연습 세션' : stats.totalProblems < 40 ? '보통 세션' : '집중 세션';
   const perfCtx = stats.accuracy >= 85 ? '우수한 성취' : stats.accuracy >= 70 ? '안정적인 수준' : stats.accuracy >= 50 ? '보완이 필요한 구간' : '기초 강화가 필요한 단계';
 
   const hasCrossRef = (tcCrossRef?.length ?? 0) > 0;
   const isShortSession = stats.totalProblems < 15 || stats.skills.length === 0;
+
+  // 행동 패턴 블록 — quadrant 집계 결과를 LLM에 전달
+  const QUADRANT_LABEL: Record<keyof QuadrantCounts, string> = {
+    fluency: '빠른 정답(체화)',
+    effortful: '느린 정답(노력형)',
+    impulsive: '빠른 오답(충동적)',
+    stuck: '느린 오답(깊은 혼란)',
+  };
+  const behaviorBlock = stats.skills.length > 0 ? (() => {
+    const lines = [...stats.skills]
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 4)
+      .filter(s => s.quadrants && (s.quadrants.fluency + s.quadrants.effortful + s.quadrants.impulsive + s.quadrants.stuck) > 0)
+      .map(s => {
+        const q = s.quadrants!;
+        const total = q.fluency + q.effortful + q.impulsive + q.stuck;
+        const dom = dominantQuadrant(q);
+        const parts = (Object.keys(q) as (keyof QuadrantCounts)[])
+          .filter(k => q[k] > 0)
+          .sort((a, b) => q[b] - q[a])
+          .map(k => `${QUADRANT_LABEL[k]} ${q[k]}건`)
+          .join(' / ');
+        return `${s.skill}: [지배적 패턴: ${QUADRANT_LABEL[dom]}] ${parts} (총 ${total}건 분류)`;
+      });
+    return lines.length > 0 ? `[행동 패턴 분석 — quadrant]\n${lines.join('\n')}` : '';
+  })() : '';
+
+  // 약한 스킬에 대한 skill_prompts 지식 블록 (Eden 인사이트 없을 때 해석 근거로 활용)
+  const skillKnowledgeBlock = (() => {
+    if (!weakestSkill || !skillKnowledgeMap) return '';
+    const kn = skillKnowledgeMap.get(weakestSkill.skill);
+    if (!kn || (!kn.definition && !kn.errorTypes)) return '';
+    const lines = ['[스킬 지식 — 취약 스킬 참고]', `스킬: ${weakestSkill.skill}`];
+    if (kn.definition) lines.push(`정의: ${kn.definition}`);
+    if (kn.errorTypes) lines.push(`주요 오류 유형:\n${kn.errorTypes}`);
+    return lines.join('\n');
+  })();
 
   const crossRefBlock = hasCrossRef ? [
     '[테스트센터 교차 — 최근 결과]',
@@ -223,19 +304,28 @@ async function generateStudyHallNarrative(
   ].filter(Boolean).join('\n') : '';
 
   const userContent = [
-    '[오늘 스터디홀]',
-    `학습 시간: ${stats.durationMinutes}분 / ${volumeCtx} / 총 ${stats.totalProblems}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}% [${perfCtx}]`,
-    skillLines ? `스킬별 성취: ${skillLines}` : '',
-    weakestSkill ? `가장 취약한 스킬: ${weakestSkill.skill} (${weakestSkill.total}문항 중 ${weakestSkill.correct}문항 정답)` : '',
+    // 섹션 1: 전체 수치 — 첫째 단락에서만 참조
+    '[전체 수치 — 첫째 단락에서만 사용]',
+    `${stats.durationMinutes}분 / ${stats.totalProblems}문항 / 정답 ${stats.correctCount}개 / 정답률 ${stats.accuracy}%`,
+    '',
+    // 섹션 2: 스킬 분석 — 둘째 단락에서만 참조
+    '[스킬별 성취 — 둘째 단락에서만 사용]',
+    skillLines || '(스킬 데이터 없음)',
+    weakestSkill ? `★ 가장 취약: ${weakestSkill.skill} (${weakestSkill.total}문항 중 ${weakestSkill.correct}문항 정답)` : '',
     hasCrossRef ? `\n${crossRefBlock}` : '',
     edenBlock ? `\n${edenBlock}` : '',
     vocabBlock ? `\n${vocabBlock}` : '',
-    coachFeedback ? `\n[코치 피드백 — 최근]\n"${coachFeedback}"` : '',
+    behaviorBlock ? `\n${behaviorBlock}` : '',
+    skillKnowledgeBlock ? `\n${skillKnowledgeBlock}` : '',
+    '',
+    // 섹션 3: 코치 피드백 — 셋째 단락에서만 참조
+    coachFeedback ? `[코치 피드백 — 셋째 단락에서만 사용]\n"${coachFeedback}"` : '',
   ].filter(Boolean).join('\n');
 
   const hasEden = !!edenInsight && (edenInsight.strengths.length + edenInsight.weaknesses.length) > 0;
   const hasVocab = !!vocabBlock;
-  const isCompact = isShortSession && !hasCrossRef && !coachFeedback && !hasEden && !hasVocab;
+  // 5문항 미만은 무조건 compact — 코치 피드백·크로스레프 여부와 무관
+  const isCompact = stats.totalProblems < 5 || (isShortSession && !hasCrossRef && !coachFeedback && !hasEden && !hasVocab);
 
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -253,8 +343,9 @@ async function generateStudyHallNarrative(
           '',
           '작성 규칙:',
           '- "학생은"으로 시작하지 않습니다.',
-          '- 첫 문장: 오늘 학습량과 결과. 둘째 문장: 다음 방향.',
-          '- 금지: 숫자 나열, "~것이 중요합니다", "~로 보입니다", "~시사합니다".',
+          '- 첫 문장: "[N]분 동안 스터디홀에서 [X]문항을 풀어 [Y]문항을 맞혔습니다." 형태로 사실만 씁니다. "짧은", "간단한", "빠른" 같은 해석 형용사 금지.',
+          '- 둘째 문장: 다음 방향.',
+          '- 금지: 숫자 나열, "~것이 중요합니다", "~로 보입니다", "~시사합니다", "~예정입니다".',
         ].join('\n') : [
           '당신은 SuperfastSAT 코치입니다.',
           '학생의 스터디홀 학습 데이터를 분석해 학부모에게 전달하는 리포트를 작성합니다.',
@@ -274,24 +365,36 @@ async function generateStudyHallNarrative(
           '',
           '3개 단락으로 작성합니다. 단락 사이 빈 줄 하나. 단락 제목·레이블은 쓰지 않습니다.',
           '',
-          '첫째 단락 — 오늘 학습량과 결과 (1~2문장):',
-          '- [오늘 스터디홀] 수치 데이터만 씁니다. Eden 인사이트·해석을 넣지 않습니다.',
-          '- 학습 시간과 전체 정답률은 반드시 포함합니다.',
-          '- 스킬별 성취는 "N문항 중 M문항" 형식으로 씁니다. 퍼센트만 단독으로 쓰지 않습니다.',
-          '  예: "문장 경계에서 10문항 중 5문항을 맞혔습니다" (O) / "문장 경계 50%" (X)',
-          '- "학생은"으로 시작하지 않습니다.',
+          '첫째 단락 — 오늘 학습량과 결과 (1문장):',
+          '- "[N]분 동안 [X]문항을 풀어 [Y]문항을 맞혔습니다" 형태로 시작합니다. 전체 정답률을 포함합니다.',
+          '- 이 단락에는 스킬 이름을 나열하지 않습니다. 스킬 분석은 둘째 단락에서 합니다.',
+          '- "짧은", "집중적인", "간단한" 같은 해석 형용사 금지. "학생은"으로 시작 금지.',
           '',
-          '둘째 단락 — 결과의 의미와 오류 유형 (1~2문장):',
-          '- 취약 스킬 이름을 반드시 포함합니다.',
-          '- 어느 오류 유형이 반복되는지 읽어냅니다. 데이터에서 드러나지 않으면 유추하지 않습니다.',
-          '- [Eden 대화 인사이트]가 있으면: 인사이트에 나온 구체적인 단어·문법 항목·장면을 그대로 인용합니다.',
-          '  예: "\'emitting\'과 \'dedicating\'의 동사 역할에 대해 질문하는 장면이 있었습니다" (O)',
-          '  예: "어휘 혼동이 남아있습니다" (X — 너무 추상적)',
-          '  학부모가 아이가 공부하는 구체적인 장면을 머릿속에 그릴 수 있어야 합니다.',
-          '  "[Eden~]에서는" 직접 언급 금지.',
-          '- [최근 단어 학습]이 있고 문맥 속 어휘 스킬이 있으면: 최근 틀린 단어와 성취를 연결해 씁니다.',
-          '  단어 이름을 직접 나열하지 말고 "최근 연습한 어휘에서 혼동이 남아있다"처럼 패턴으로 씁니다.',
+          '둘째 단락 — 오늘 학습의 의미 (2~3문장):',
+          '진짜 선생님처럼 씁니다. 잘한 부분을 먼저 인정하고, 자연스럽게 보완이 필요한 부분으로 넘어갑니다.',
+          '예: "Equivalent expressions는 안정적으로 풀었습니다. Words in Context에서는 아직 [오류 유형]이 나타나고 있습니다."',
+          '',
+          '- 강점 스킬(정답률 높은 쪽)을 1문장으로 인정합니다. 퍼센트만 나열하지 말고 "안정적으로 풀었습니다" 같은 평가를 담습니다.',
+          '- 취약 스킬로 자연스럽게 전환합니다. "다만", "반면" 같은 전환어로 이어갑니다.',
+          '- 오류 유형 해석 우선순위:',
+          '  1순위 — [Eden 대화 인사이트]가 있으면: 인사이트에 나온 구체적인 장면·단어·개념을 그대로 인용합니다.',
+          '     예: "\'emitting\'과 \'dedicating\'의 동사 역할에 대해 질문하는 장면이 있었습니다" (O)',
+          '     "[Eden~]에서는" 직접 언급 금지. 학부모가 아이가 공부하는 장면을 그릴 수 있어야 합니다.',
+          '  2순위 — [Eden 인사이트 없음 + 스킬 지식 있음]: [스킬 지식]의 오류 유형을 참고해 추론합니다.',
+          '     단, [스킬 지식] 원문을 그대로 인용하지 않습니다. 학부모가 이해할 수 있는 코치 언어로 풀어 씁니다.',
+          '     예: "이 스킬에서는 정답이 될 수 있어 보이는 선택지가 여러 개지만, 문맥에 맞는 단 하나를 고르는 과정에서 혼동이 생깁니다" (O)',
+          '     예: "질문이 \'텍스트에서 사용된 대로\'와 같은 형식으로 제시됩니다" (X — SAT 문제 형식 설명은 학부모 리포트에 부적절)',
+          '  3순위 — 위 둘 다 없으면: 정답률 수치와 문항 수만으로 서술합니다. 유추하지 않습니다.',
+          '- 스킬별 성취는 "N문항 중 M문항" 형식으로 씁니다. 퍼센트만 단독으로 쓰지 않습니다.',
+          '- [행동 패턴 분석]이 있으면 지배적 패턴을 해석에 반영합니다:',
+          '  · 빠른 정답(체화) 지배 → "빠르고 정확하게 처리했습니다" (체화 완료)',
+          '  · 느린 정답(노력형) 지배 → "시간이 걸리지만 맞추고 있습니다. 아직 자동화 전 단계입니다"',
+          '  · 빠른 오답(충동적) 지배 → "빠르게 답하지만 오류가 납니다. 패턴을 성급하게 적용하고 있습니다"',
+          '  · 느린 오답(깊은 혼란) 지배 → "시간을 써도 틀리는 패턴이 반복됩니다. 방식 자체를 점검해야 합니다"',
+          '  강점 스킬: 빠른 정답이 지배적이면 "~는 완전히 체화됐습니다"처럼 구체적으로 인정합니다.',
+          '  취약 스킬: 지배적 패턴 한 가지만 골라 해석합니다. 여러 패턴을 나열하지 않습니다.',
           '- [테스트센터 교차]가 있으면 연습-검증 격차를 해석합니다. (격차 >10%p → 압박 하 적용 훈련 필요)',
+          '- [최근 단어 학습]이 있고 Words in Context 스킬이 있으면: 단어 이름 나열 대신 패턴으로 씁니다.',
           '',
           '셋째 단락 — 다음 수업 방향 (1문장):',
           '- [코치 피드백]이 있으면 두 방향 중 오늘 데이터와 교차하는 것을 선택합니다:',
@@ -300,7 +403,7 @@ async function generateStudyHallNarrative(
           '- [코치 피드백]이 없으면 둘째 단락에서 도출한 오류 유형·격차에 근거한 방향으로 씁니다.',
           '- "~예정입니다" 대신 "~집중합니다", "~다룹니다", "~이어갑니다" 등 현재형.',
           '',
-          '정답률 톤: 85%+ → 강점 강조 / 70~84% → 잘한 점과 보완점 균형 / 50~69% → 개선 방향 제시 / 50%미만 → 흔들리는 부분을 지목하되 격려.',
+          '전체 톤: 85%+ → 강점을 먼저 충분히 인정하되 개선점도 명확히 / 70~84% → 잘한 점과 보완점 균형 / 50~69% → 구체적 개선 방향 제시 / 50%미만 → 흔들리는 부분을 지목하되 격려.',
           '금지: 데이터에 없는 행동 묘사, "~것이 중요합니다", "~로 보입니다", "~시사합니다", 퍼센트 단독 나열.',
         ].join('\n'),
       },
@@ -352,8 +455,13 @@ async function generateTestCenterNarrative(
   });
   const lessonLines = lessonBlocks.join(' | ');
 
+  const hasRWLessons = stats.lessons.some(l => l.total === 27);
+  const hasMathLessons = stats.lessons.some(l => l.total === 22);
+  const isFullLength = hasRWLessons && hasMathLessons;
+
+  // 풀렝스 테스트는 RW1→RW2→Math1→Math2 순 정렬 후 첫/끝 비교가 무의미 — 트렌드 생략
   let trendNote = '';
-  if (stats.lessons.length >= 2) {
+  if (!isFullLength && stats.lessons.length >= 2) {
     const accs = stats.lessons.map(l => (l.total > 0 ? l.score / l.total : 0));
     const first = accs[0]; const last = accs[accs.length - 1];
     if (last - first > TC_TREND_THRESHOLD) trendNote = '후반 모듈로 갈수록 성취가 올라가는 상승 흐름';
@@ -393,9 +501,6 @@ async function generateTestCenterNarrative(
     return { lines, weakest };
   })() : null;
 
-  const hasRWLessons = stats.lessons.some(l => l.total === 27);
-  const hasMathLessons = stats.lessons.some(l => l.total === 22);
-  const isFullLength = hasRWLessons && hasMathLessons;
   const isRW = !isFullLength && (domainLabel === 'RW' || domainLabel === 'reading_and_writing');
   const vocabBlock = vocabContext && isRW && (vocabContext.missedTerms.length + vocabContext.masteredTerms.length) > 0 ? [
     '[최근 단어 학습 — 최근 7일]',
@@ -579,6 +684,21 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     for (const u of data ?? []) { if (u.id && u.skill) unitsMap.set(u.id, { skill: u.skill as string, domain: u.domain as string }); }
   }
 
+  // skill_prompts 배치 패치 — 약한 스킬 해석 시 Definition + Common Error Types 활용
+  const allSkillNames = [...new Set(Array.from(unitsMap.values()).map(u => u.skill))];
+  const skillKnowledgeMap = new Map<string, SkillKnowledge>();
+  if (allSkillNames.length > 0) {
+    const { data: skillPromptRows } = await supabaseSFv2
+      .from('skill_prompts')
+      .select('skill, prompt_template')
+      .in('skill', allSkillNames);
+    for (const row of skillPromptRows ?? []) {
+      if (row.skill && row.prompt_template) {
+        skillKnowledgeMap.set(row.skill as string, parseSkillKnowledge(row.prompt_template as string));
+      }
+    }
+  }
+
   const tcSessionIds = [...new Set((tcAttempts ?? []).map(a => a.test_center_session_id as string).filter(Boolean))];
   const tcLessonIds = [...new Set((tcAttempts ?? []).map(a => a.lesson_id as string).filter(Boolean))];
   const tcCurriculumIds = [...new Set((tcAttempts ?? []).map(a => a.curriculum_id as string).filter(Boolean))];
@@ -612,7 +732,20 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     if (a.is_correct) e.correct++;
   }
 
-  const shSkillsBySession = new Map<string, Map<string, { skill: string; domain: string; correct: number; total: number }>>();
+  // 세션별 median 소요 시간 계산 (quadrant 분류 기준선)
+  const shSessionTimesMap = new Map<string, number[]>();
+  for (const a of shAttempts ?? []) {
+    const secs = (a.time_spent_seconds as number | null);
+    if (!secs || secs <= 0) continue;
+    const sid = a.study_hall_session_id as string;
+    if (!shSessionTimesMap.has(sid)) shSessionTimesMap.set(sid, []);
+    shSessionTimesMap.get(sid)!.push(secs);
+  }
+  const shSessionMedianMap = new Map<string, number>();
+  for (const [sid, times] of shSessionTimesMap) shSessionMedianMap.set(sid, medianOf(times));
+
+  type SkillEntry = { skill: string; domain: string; correct: number; total: number; totalSeconds: number; quadrants: QuadrantCounts };
+  const shSkillsBySession = new Map<string, Map<string, SkillEntry>>();
   for (const a of shAttempts ?? []) {
     const sid = a.study_hall_session_id as string;
     const uid = a.unit_id as string;
@@ -621,9 +754,15 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     if (!meta?.skill) continue;
     if (!shSkillsBySession.has(sid)) shSkillsBySession.set(sid, new Map());
     const skillMap = shSkillsBySession.get(sid)!;
-    if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0 });
+    if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0, totalSeconds: 0, quadrants: { fluency: 0, effortful: 0, impulsive: 0, stuck: 0 } });
     const sk = skillMap.get(meta.skill)!; sk.total++;
     if (a.is_correct) sk.correct++;
+    const secs = (a.time_spent_seconds as number | null) ?? 0;
+    sk.totalSeconds += secs;
+    if (secs > 0) {
+      const medianSecs = shSessionMedianMap.get(sid) ?? 60;
+      sk.quadrants[classifyAttempt(!!a.is_correct, secs, medianSecs)]++;
+    }
   }
 
   // Eden 대화 데이터 수집 (스킬별 그룹)
@@ -640,7 +779,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     edenBySession.get(sid)!.push({ skill: meta.skill, isCorrect: !!a.is_correct, messages: msgs });
   }
 
-  const shByDate = new Map<string, { totalMinutes: number; totalProblems: number; correctCount: number; skillMap: Map<string, { skill: string; domain: string; correct: number; total: number }>; edenConvos: EdenConvo[] }>();
+  const shByDate = new Map<string, { totalMinutes: number; totalProblems: number; correctCount: number; skillMap: Map<string, SkillEntry>; edenConvos: EdenConvo[] }>();
   for (const [sid, stats] of shBySession) {
     const s = shSessionMap.get(sid);
     if (!s) continue;
@@ -652,8 +791,10 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     const sessionSkills = shSkillsBySession.get(sid);
     if (sessionSkills) {
       for (const [skillKey, sk] of sessionSkills) {
-        if (!d.skillMap.has(skillKey)) d.skillMap.set(skillKey, { skill: sk.skill, domain: sk.domain, correct: 0, total: 0 });
-        const ds = d.skillMap.get(skillKey)!; ds.correct += sk.correct; ds.total += sk.total;
+        if (!d.skillMap.has(skillKey)) d.skillMap.set(skillKey, { skill: sk.skill, domain: sk.domain, correct: 0, total: 0, totalSeconds: 0, quadrants: { fluency: 0, effortful: 0, impulsive: 0, stuck: 0 } });
+        const ds = d.skillMap.get(skillKey)!; ds.correct += sk.correct; ds.total += sk.total; ds.totalSeconds += sk.totalSeconds;
+        ds.quadrants.fluency += sk.quadrants.fluency; ds.quadrants.effortful += sk.quadrants.effortful;
+        ds.quadrants.impulsive += sk.quadrants.impulsive; ds.quadrants.stuck += sk.quadrants.stuck;
       }
     }
     const sessionEden = edenBySession.get(sid);
@@ -867,14 +1008,14 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     const coachFeedback = getCoachFeedbackForDate(date);
     const cacheInput = {
       durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy,
-      skills: [...skills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })),
+      skills: [...skills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total, totalSeconds: s.totalSeconds, quadrants: s.quadrants })),
       tcCrossRef, coachFeedback, edenInsight, vocabContext,
     };
     const inputHash = hashInput(cacheInput);
     let narrative = lookupCache(narrativeCache, date, 'study_hall', inputHash);
     if (!narrative) {
       narrative = stats.totalProblems > 0
-        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }, tcCrossRef.length ? tcCrossRef : undefined, coachFeedback, edenInsight, vocabContext)
+        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }, tcCrossRef.length ? tcCrossRef : undefined, coachFeedback, edenInsight, vocabContext, skillKnowledgeMap)
         : `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
       await setCachedNarrative(profileId, date, 'study_hall', inputHash, narrative);
     }

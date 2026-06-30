@@ -118,6 +118,42 @@ SAT 오답에는 반복되는 설계 방식이 있다.
 
 ---
 
+## SAT 시험 구조와 모듈 해석
+
+### 시험 구조
+
+| 섹션 | 모듈 | 문항 수 | 스킬 도메인 |
+|------|------|--------|------------|
+| Reading & Writing | 모듈 1 | 27 | Information and Ideas, Craft and Structure, Expression of Ideas, Standard English Conventions |
+| Reading & Writing | 모듈 2 (적응형) | 27 | 동일 |
+| Math | 모듈 1 | 22 | Algebra, Advanced Math, Problem Solving and Data Analysis, Geometry and Trigonometry |
+| Math | 모듈 2 (적응형) | 22 | 동일 |
+
+### 적응형 모듈의 의미
+
+모듈 1 성과가 모듈 2 난이도를 결정한다.
+모듈 2가 어려운 버전으로 배정됐다면 모듈 1을 잘 푼 것이고,
+쉬운 버전이라면 모듈 1에서 막힌 것이다.
+
+리포트에서 모듈 2 성취를 해석할 때는 이 맥락이 중요하다.
+모듈 2 정답률이 낮아도, 어려운 버전에서 낮은 것과 쉬운 버전에서 낮은 것은 의미가 다르다.
+
+### RW 스킬 분류
+
+- **Information and Ideas**: Central Ideas and Details, Command of Evidence (Textual), Command of Evidence (Quantitative), Inferences
+- **Craft and Structure**: Words in Context, Text Structure and Purpose, Cross-Text Connections
+- **Expression of Ideas**: Rhetorical Synthesis, Transitions
+- **Standard English Conventions**: Boundaries, Form / Structure / Sense
+
+### Math 스킬 분류
+
+- **Algebra**: Linear equations in one variable, Linear equations in two variables, Systems of two linear equations in two variables, Linear functions, Linear inequalities in one or two variables
+- **Advanced Math**: Nonlinear functions, Nonlinear equations in one variable and systems of equations in two variables, Equivalent expressions
+- **Problem Solving and Data Analysis**: Percentages, Ratios / rates / proportional relationships / units, Two-variable data: Models and scatterplots, One-variable data: Distributions and measures of center and spread, Inference from sample statistics and margin of error
+- **Geometry and Trigonometry**: Area and volume, Lines / angles / triangles, Circles, Right triangles and trigonometry
+
+---
+
 ## 리포트가 이 철학을 구현하는 방식
 
 학습 리포트는 숫자 요약이 아니다.
