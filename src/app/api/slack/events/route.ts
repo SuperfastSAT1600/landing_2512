@@ -89,7 +89,7 @@ async function getTodayTopics(): Promise<Topic[]> {
 // ─── 블로그 작성 ──────────────────────────────────────────────────────────────
 
 async function writeBlog(topic: Topic): Promise<string> {
-  const client = new Anthropic();
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
