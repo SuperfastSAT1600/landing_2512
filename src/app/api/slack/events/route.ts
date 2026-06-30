@@ -88,8 +88,8 @@ async function getTodayTopics(): Promise<Topic[]> {
 
 // ─── 블로그 작성 ──────────────────────────────────────────────────────────────
 
-async function writeBlog(topic: Topic): Promise<string> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+async function writeBlog(topic: Topic, anthropicKey: string): Promise<string> {
+  const client = new Anthropic({ apiKey: anthropicKey });
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
@@ -121,9 +121,8 @@ async function writeBlog(topic: Topic): Promise<string> {
 
 // ─── Ghost 발행 ───────────────────────────────────────────────────────────────
 
-async function publishToGhost(title: string, markdown: string): Promise<string> {
-  const ghostUrl = process.env.GHOST_URL!;
-  const [ghostId, ghostSecret] = (process.env.GHOST_ADMIN_KEY || '').split(':');
+async function publishToGhost(title: string, markdown: string, ghostUrl: string, ghostAdminKey: string): Promise<string> {
+  const [ghostId, ghostSecret] = ghostAdminKey.split(':');
 
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', kid: ghostId, typ: 'JWT' })).toString('base64url');
   const now = Math.floor(Date.now() / 1000);
@@ -155,7 +154,9 @@ async function publishToGhost(title: string, markdown: string): Promise<string> 
 
 // ─── 메인 처리 ────────────────────────────────────────────────────────────────
 
-async function handleBlogRequest(n: number, channel: string, threadTs?: string) {
+type EnvSnapshot = { anthropicKey: string; ghostUrl: string; ghostAdminKey: string; slackBotToken: string };
+
+async function handleBlogRequest(n: number, channel: string, threadTs?: string, env?: EnvSnapshot) {
   const topics = await getTodayTopics();
   const topic = topics.find(t => t.n === n);
 
@@ -170,8 +171,12 @@ async function handleBlogRequest(n: number, channel: string, threadTs?: string) 
     threadTs
   );
 
-  const content = await writeBlog(topic);
-  const url = await publishToGhost(topic.title, content);
+  const anthropicKey = env?.anthropicKey ?? process.env.ANTHROPIC_API_KEY ?? '';
+  const ghostUrl = env?.ghostUrl ?? process.env.GHOST_URL ?? '';
+  const ghostAdminKey = env?.ghostAdminKey ?? process.env.GHOST_ADMIN_KEY ?? '';
+
+  const content = await writeBlog(topic, anthropicKey);
+  const url = await publishToGhost(topic.title, content, ghostUrl, ghostAdminKey);
 
   await postSlack(
     channel,
@@ -223,8 +228,19 @@ export async function POST(request: NextRequest) {
 
   const n = parseInt(match[1]);
 
+  // after() 클로저 안에서 env 접근이 불안정할 수 있어 미리 캡처
+  const anthropicKey = process.env.ANTHROPIC_API_KEY ?? '';
+  const ghostUrl = process.env.GHOST_URL ?? '';
+  const ghostAdminKey = process.env.GHOST_ADMIN_KEY ?? '';
+  const slackBotToken = process.env.SLACK_BOT_TOKEN ?? '';
+
+  if (!anthropicKey) {
+    await postSlack(channel, 'ANTHROPIC_API_KEY가 설정되지 않았습니다.', threadTs);
+    return NextResponse.json({ ok: true });
+  }
+
   // Slack 3초 응답 제한 때문에 after()로 비동기 처리, 스레드로 응답
-  after(() => handleBlogRequest(n, channel, threadTs).catch(async (err) => {
+  after(() => handleBlogRequest(n, channel, threadTs, { anthropicKey, ghostUrl, ghostAdminKey, slackBotToken }).catch(async (err) => {
     console.error('[slack/events] 블로그 작성 오류:', err);
     await postSlack(channel, `블로그 작성 중 오류가 발생했습니다: ${err instanceof Error ? err.message : String(err)}`, threadTs);
   }));
