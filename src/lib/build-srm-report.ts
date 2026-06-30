@@ -1185,5 +1185,5 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
   }));
 
   const days = Array.from(dayMap.values()).sort((a, b) => b.date.localeCompare(a.date));
-  return { reportVersion: 4, days, vocabExposedCount };
+  return { reportVersion: 4.3, days, vocabExposedCount };
 }
