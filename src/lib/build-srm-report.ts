@@ -207,7 +207,7 @@ async function humanizeNarrative(text: string): Promise<string> {
 }
 
 async function generateStudyHallNarrative(
-  stats: { durationMinutes: number; totalProblems: number; correctCount: number; accuracy: number; skills: (StudyHallSkill & { totalSeconds?: number; quadrants?: QuadrantCounts })[] },
+  stats: { durationMinutes: number; totalProblems: number; correctCount: number; accuracy: number; skills: (StudyHallSkill & { totalSeconds?: number; quadrants?: QuadrantCounts; confidence?: { confidentCorrect: number; confidentWrong: number; uncertainCorrect: number } })[] },
   tcCrossRef?: SkillCrossRef[],
   coachFeedback?: string,
   edenInsight?: EdenInsight,
@@ -258,7 +258,18 @@ async function generateStudyHallNarrative(
           .sort((a, b) => q[b] - q[a])
           .map(k => `${QUADRANT_LABEL[k]} ${q[k]}건`)
           .join(' / ');
-        return `${s.skill}: [지배적 패턴: ${QUADRANT_LABEL[dom]}] ${parts} (총 ${total}건 분류)`;
+        const confLines: string[] = [];
+        const c = s.confidence;
+        if (c) {
+          if (c.confidentWrong > 0) {
+            confLines.push(`확신 오류(틀렸는데 confidence≥75%) ${c.confidentWrong}건 — 잘못된 방향을 확신하며 적용`);
+          }
+          if (c.uncertainCorrect > 0 && s.correct > 0 && c.uncertainCorrect / s.correct >= 0.5) {
+            confLines.push(`불확실 정답(맞췄지만 confidence<50%) ${c.uncertainCorrect}건 — 아직 확신 없이 맞추는 단계`);
+          }
+        }
+        const confNote = confLines.length > 0 ? '\n  ' + confLines.join('\n  ') : '';
+        return `${s.skill}: [지배적 패턴: ${QUADRANT_LABEL[dom]}] ${parts} (총 ${total}건 분류)${confNote}`;
       });
     return lines.length > 0 ? `[행동 패턴 분석 — quadrant]\n${lines.join('\n')}` : '';
   })() : '';
@@ -393,6 +404,8 @@ async function generateStudyHallNarrative(
           '  · 느린 오답(깊은 혼란) 지배 → "시간을 써도 틀리는 패턴이 반복됩니다. 방식 자체를 점검해야 합니다"',
           '  강점 스킬: 빠른 정답이 지배적이면 "~는 완전히 체화됐습니다"처럼 구체적으로 인정합니다.',
           '  취약 스킬: 지배적 패턴 한 가지만 골라 해석합니다. 여러 패턴을 나열하지 않습니다.',
+          '- [행동 패턴 분석] 내 "확신 오류"가 있으면: "확신을 갖고 틀린 패턴이 N건 나왔습니다. 방향 자체가 어긋나 있어 다음 수업에서 어디서 판단이 틀리는지를 짚어야 합니다"처럼 씁니다.',
+          '- "불확실 정답"이 많으면: "맞추긴 했지만 아직 확신 없이 고르는 단계입니다"처럼 씁니다. 이 스킬을 "완전히 체화됐습니다"라고 쓰지 않습니다.',
           '- [테스트센터 교차]가 있으면 연습-검증 격차를 해석합니다. (격차 >10%p → 압박 하 적용 훈련 필요)',
           '- [최근 단어 학습]이 있고 Words in Context 스킬이 있으면: 단어 이름 나열 대신 패턴으로 씁니다.',
           '',
@@ -415,15 +428,24 @@ async function generateStudyHallNarrative(
   return raw ? await humanizeNarrative(raw) : '';
 }
 
-function inferDomainFromLessons(lessons: TestCenterLesson[]): string | undefined {
+function inferDomainFromLessons(lessons: { title?: string; total: number }[]): string | undefined {
   const titles = lessons.map(l => l.title?.toLowerCase() ?? '').join(' ');
   if (/math/.test(titles)) return 'Math';
   if (/reading|writing|rw/.test(titles)) return 'RW';
   return undefined;
 }
 
+type TCSkillBehavior = {
+  skill: string; domain: string; correct: number; total: number;
+  totalSeconds: number; confidentWrong: number; stuckCount: number; impulsiveCount: number;
+};
+
 async function generateTestCenterNarrative(
-  stats: { curriculumTitle?: string; curriculumDomain?: string; totalScore: number; totalProblems: number; lessons: TestCenterLesson[]; skills?: { skill: string; correct: number; total: number }[] },
+  stats: {
+    curriculumTitle?: string; curriculumDomain?: string; totalScore: number; totalProblems: number;
+    lessons: Array<{ title?: string; score: number; total: number; skills?: Array<{ skill: string; domain?: string; correct: number; total: number; totalSeconds?: number; confidentWrong?: number; stuckCount?: number; impulsiveCount?: number }> }>;
+    skills?: { skill: string; correct: number; total: number }[];
+  },
   shCrossRef?: SkillCrossRef[],
   coachFeedback?: string,
   vocabContext?: VocabContext,
@@ -449,7 +471,15 @@ async function generateTestCenterNarrative(
       .slice(0, 4)
       .map(s => {
         const sacc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-        return `    - ${s.skill}: ${s.correct}/${s.total} (${sacc}%)`;
+        const avgSec = s.totalSeconds && s.total > 0 ? Math.round(s.totalSeconds / s.total) : null;
+        const timeHint = avgSec ? ` 평균 ${avgSec}초/문항` : '';
+        const behaviorHints: string[] = [];
+        if ((s.confidentWrong ?? 0) > 0) behaviorHints.push(`확신 오류 ${s.confidentWrong}건`);
+        const wrongCount = s.total - s.correct;
+        if ((s.stuckCount ?? 0) > 0 && wrongCount > 0 && (s.stuckCount ?? 0) >= Math.ceil(wrongCount * 0.4)) behaviorHints.push(`막힌 패턴 ${s.stuckCount}건`);
+        else if ((s.impulsiveCount ?? 0) > 0 && wrongCount > 0 && (s.impulsiveCount ?? 0) >= Math.ceil(wrongCount * 0.4)) behaviorHints.push(`성급한 오답 ${s.impulsiveCount}건`);
+        const behaviorHint = behaviorHints.length > 0 ? ` [${behaviorHints.join(' / ')}]` : '';
+        return `    - ${s.skill}: ${s.correct}/${s.total} (${sacc}%)${timeHint}${behaviorHint}`;
       }).join('\n');
     return `${header}\n${skillDetail}`;
   });
@@ -575,6 +605,11 @@ async function generateTestCenterNarrative(
           '- [모듈별 결과] 안에 스킬 데이터가 있으면, 스킬은 해당 모듈에 속한 것입니다. 다른 모듈의 스킬과 혼동하지 않습니다.',
           '- 취약한 스킬을 언급할 때는 어느 모듈(RW/Math Module 1/2)의 스킬인지 맥락을 함께 씁니다.',
           '- "N문항 중 M문항" 형식을 사용합니다.',
+          '- [모듈별 결과]의 스킬에 행동 데이터가 있으면 해석에 반영합니다:',
+          '  · "확신 오류 N건" → 틀렸는데 확신을 갖고 선택한 패턴. 가장 위험합니다. "확신을 갖고 틀린 패턴이 N건 나왔습니다. 다음 수업에서 어디서 판단이 틀리는지 짚어야 합니다"처럼 씁니다.',
+          '  · "막힌 패턴 N건" → 시간을 써도 틀린 문항. 개념 자체에 공백이 있습니다.',
+          '  · "성급한 오답 N건" → 빠르게 답했지만 틀린 문항. 압박 상황에서 충동적으로 선택한 패턴.',
+          '  행동 데이터가 없는 스킬은 정답률만으로 서술합니다.',
           '- [스터디홀 교차] 항목이 있으면 연습-검증 격차를 반드시 해석합니다.',
           '- [최근 단어 학습]이 있으면 최근 틀린 어휘 패턴을 RW 결과 해석에 연결합니다.',
           '  단어 이름을 나열하지 말고 "최근 연습한 어휘에서 혼동이 남아있는 패턴"처럼 씁니다.',
@@ -661,7 +696,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     supabaseSFv2.from('study_hall_session').select('id, started_at, ended_at').eq('user_id', profileId).not('ended_at', 'is', null).order('started_at', { ascending: false }).limit(60),
     supabaseSFv2.from('study_hall_unit_attempts').select('study_hall_session_id, is_correct, attempted_at, unit_id, chat_messages, time_spent_seconds, confidence_level').eq('student_id', profileId).order('attempted_at', { ascending: false }).limit(500),
     supabaseSFv2.from('test_center_lesson_attempts').select('id, test_center_session_id, score, total, status, lesson_id, curriculum_id').eq('student_id', profileId).not('score', 'is', null),
-    supabaseSFv2.from('test_center_unit_attempts').select('test_lesson_attempt_id, unit_id, is_correct').eq('student_id', profileId).order('attempted_at', { ascending: false }).limit(2000),
+    supabaseSFv2.from('test_center_unit_attempts').select('test_lesson_attempt_id, unit_id, is_correct, time_spent_seconds, confidence_level').eq('student_id', profileId).order('attempted_at', { ascending: false }).limit(2000),
     supabaseSFv2.from('daily_reports').select('report_date, report_md, status').eq('student_id', profileId).eq('status', 'sent').order('report_date', { ascending: false }).limit(30),
     supabaseSFv2.schema('vocab').from('events').select('entry_id, is_correct, prev_box, new_box, occurred_at').eq('subject_id', profileId).eq('kind', 'graded').order('occurred_at', { ascending: false }).limit(1000),
     supabaseSFv2.schema('vocab').from('events').select('entry_id').eq('subject_id', profileId).limit(10000),
@@ -744,7 +779,8 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
   const shSessionMedianMap = new Map<string, number>();
   for (const [sid, times] of shSessionTimesMap) shSessionMedianMap.set(sid, medianOf(times));
 
-  type SkillEntry = { skill: string; domain: string; correct: number; total: number; totalSeconds: number; quadrants: QuadrantCounts };
+  type ConfidenceBreakdown = { confidentCorrect: number; confidentWrong: number; uncertainCorrect: number };
+  type SkillEntry = { skill: string; domain: string; correct: number; total: number; totalSeconds: number; quadrants: QuadrantCounts; confidence: ConfidenceBreakdown };
   const shSkillsBySession = new Map<string, Map<string, SkillEntry>>();
   for (const a of shAttempts ?? []) {
     const sid = a.study_hall_session_id as string;
@@ -754,7 +790,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     if (!meta?.skill) continue;
     if (!shSkillsBySession.has(sid)) shSkillsBySession.set(sid, new Map());
     const skillMap = shSkillsBySession.get(sid)!;
-    if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0, totalSeconds: 0, quadrants: { fluency: 0, effortful: 0, impulsive: 0, stuck: 0 } });
+    if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0, totalSeconds: 0, quadrants: { fluency: 0, effortful: 0, impulsive: 0, stuck: 0 }, confidence: { confidentCorrect: 0, confidentWrong: 0, uncertainCorrect: 0 } });
     const sk = skillMap.get(meta.skill)!; sk.total++;
     if (a.is_correct) sk.correct++;
     const secs = (a.time_spent_seconds as number | null) ?? 0;
@@ -762,6 +798,13 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     if (secs > 0) {
       const medianSecs = shSessionMedianMap.get(sid) ?? 60;
       sk.quadrants[classifyAttempt(!!a.is_correct, secs, medianSecs)]++;
+    }
+    const conf = (a.confidence_level as number | null) ?? -1;
+    if (conf >= 75) {
+      if (a.is_correct) sk.confidence.confidentCorrect++;
+      else sk.confidence.confidentWrong++;
+    } else if (conf >= 0 && conf < 50) {
+      if (a.is_correct) sk.confidence.uncertainCorrect++;
     }
   }
 
@@ -791,10 +834,13 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     const sessionSkills = shSkillsBySession.get(sid);
     if (sessionSkills) {
       for (const [skillKey, sk] of sessionSkills) {
-        if (!d.skillMap.has(skillKey)) d.skillMap.set(skillKey, { skill: sk.skill, domain: sk.domain, correct: 0, total: 0, totalSeconds: 0, quadrants: { fluency: 0, effortful: 0, impulsive: 0, stuck: 0 } });
+        if (!d.skillMap.has(skillKey)) d.skillMap.set(skillKey, { skill: sk.skill, domain: sk.domain, correct: 0, total: 0, totalSeconds: 0, quadrants: { fluency: 0, effortful: 0, impulsive: 0, stuck: 0 }, confidence: { confidentCorrect: 0, confidentWrong: 0, uncertainCorrect: 0 } });
         const ds = d.skillMap.get(skillKey)!; ds.correct += sk.correct; ds.total += sk.total; ds.totalSeconds += sk.totalSeconds;
         ds.quadrants.fluency += sk.quadrants.fluency; ds.quadrants.effortful += sk.quadrants.effortful;
         ds.quadrants.impulsive += sk.quadrants.impulsive; ds.quadrants.stuck += sk.quadrants.stuck;
+        ds.confidence.confidentCorrect += sk.confidence.confidentCorrect;
+        ds.confidence.confidentWrong += sk.confidence.confidentWrong;
+        ds.confidence.uncertainCorrect += sk.confidence.uncertainCorrect;
       }
     }
     const sessionEden = edenBySession.get(sid);
@@ -813,8 +859,21 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     if (lessonAttemptId && sid) tcLessonAttemptToSession.set(lessonAttemptId, sid);
   }
 
-  // TC 레슨(모듈)별 스킬 집계 — 세션 단위 아닌 레슨 단위로 추적
-  const tcSkillsByLessonAttempt = new Map<string, Map<string, { skill: string; domain: string; correct: number; total: number }>>();
+  // TC 세션별 median 소요 시간 계산 (행동 패턴 분류 기준선)
+  const tcSessionTimesForMedian = new Map<string, number[]>();
+  for (const a of tcUnitAttempts ?? []) {
+    const secs = (a.time_spent_seconds as number | null);
+    if (!secs || secs <= 0) continue;
+    const sid = tcLessonAttemptToSession.get(a.test_lesson_attempt_id as string);
+    if (!sid) continue;
+    if (!tcSessionTimesForMedian.has(sid)) tcSessionTimesForMedian.set(sid, []);
+    tcSessionTimesForMedian.get(sid)!.push(secs);
+  }
+  const tcSessionMedianMap = new Map<string, number>();
+  for (const [sid, times] of tcSessionTimesForMedian) tcSessionMedianMap.set(sid, medianOf(times));
+
+  // TC 레슨(모듈)별 스킬 집계 — 시간·행동 패턴 포함
+  const tcSkillsByLessonAttempt = new Map<string, Map<string, TCSkillBehavior>>();
   for (const a of tcUnitAttempts ?? []) {
     const lessonAttemptId = a.test_lesson_attempt_id as string;
     const uid = a.unit_id as string;
@@ -825,12 +884,22 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     if (!meta?.skill) continue;
     if (!tcSkillsByLessonAttempt.has(lessonAttemptId)) tcSkillsByLessonAttempt.set(lessonAttemptId, new Map());
     const skillMap = tcSkillsByLessonAttempt.get(lessonAttemptId)!;
-    if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0 });
+    if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0, totalSeconds: 0, confidentWrong: 0, stuckCount: 0, impulsiveCount: 0 });
     const sk = skillMap.get(meta.skill)!; sk.total++;
     if (a.is_correct) sk.correct++;
+    const secs = (a.time_spent_seconds as number | null) ?? 0;
+    sk.totalSeconds += secs;
+    if (secs > 0) {
+      const medianSecs = tcSessionMedianMap.get(sid) ?? 60;
+      const q = classifyAttempt(!!a.is_correct, secs, medianSecs);
+      if (q === 'stuck') sk.stuckCount++;
+      if (q === 'impulsive') sk.impulsiveCount++;
+    }
+    const conf = (a.confidence_level as number | null) ?? -1;
+    if (conf >= 75 && !a.is_correct) sk.confidentWrong++;
   }
 
-  const tcBySession = new Map<string, { lessons: TestCenterLesson[]; curriculumTitle?: string; curriculumDomain?: string; skills: { skill: string; domain: string; correct: number; total: number }[] }>();
+  const tcBySession = new Map<string, { lessons: Array<{ title?: string; score: number; total: number; skills?: TCSkillBehavior[] }>; curriculumTitle?: string; curriculumDomain?: string; skills: { skill: string; domain: string; correct: number; total: number }[] }>();
   for (const a of tcAttempts ?? []) {
     const sid = a.test_center_session_id as string;
     if (!tcSessionDateMap.has(sid)) continue;
@@ -851,12 +920,12 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       skills: lessonSkills.length > 0 ? lessonSkills : undefined,
     });
   }
-  // 세션 레벨 skills = 레슨 스킬 합산 (API 응답 및 cross-ref용)
+  // 세션 레벨 skills = 레슨 스킬 합산 (cross-ref용, correct/total만 집계)
   for (const [, data] of tcBySession) {
     const sessionSkillMap = new Map<string, { skill: string; domain: string; correct: number; total: number }>();
     for (const lesson of data.lessons) {
       for (const sk of lesson.skills ?? []) {
-        if (!sessionSkillMap.has(sk.skill)) sessionSkillMap.set(sk.skill, { skill: sk.skill, domain: (sk as { skill: string; domain?: string; correct: number; total: number }).domain ?? '', correct: 0, total: 0 });
+        if (!sessionSkillMap.has(sk.skill)) sessionSkillMap.set(sk.skill, { skill: sk.skill, domain: sk.domain, correct: 0, total: 0 });
         const s = sessionSkillMap.get(sk.skill)!; s.correct += sk.correct; s.total += sk.total;
       }
     }
@@ -865,8 +934,8 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
   // 레슨 정렬: RW(27문) 먼저, 같은 도메인 내 모듈 번호 순 — LLM이 쉽게 읽도록
   for (const [, data] of tcBySession) {
     data.lessons.sort((a, b) => {
-      const domainOrder = (l: TestCenterLesson) => l.total === 27 ? 0 : l.total === 22 ? 1 : 2;
-      const moduleNum = (l: TestCenterLesson) => {
+      const domainOrder = (l: { total: number }) => l.total === 27 ? 0 : l.total === 22 ? 1 : 2;
+      const moduleNum = (l: { title?: string }) => {
         const m = (l.title ?? '').match(/(\d+)/);
         return m ? parseInt(m[1], 10) : 99;
       };
@@ -1048,7 +1117,11 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     const tcSkills = data.skills.length > 0 ? data.skills : undefined;
     const cacheInput = {
       curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain,
-      totalScore, totalProblems, lessons: data.lessons.map(l => ({ title: l.title, score: l.score, total: l.total })),
+      totalScore, totalProblems,
+      lessons: data.lessons.map(l => ({
+        title: l.title, score: l.score, total: l.total,
+        skills: l.skills?.map(s => ({ skill: s.skill, correct: s.correct, total: s.total, totalSeconds: s.totalSeconds, confidentWrong: s.confidentWrong, stuckCount: s.stuckCount, impulsiveCount: s.impulsiveCount })),
+      })),
       skills: tcSkills ? [...tcSkills].sort((a, b) => a.skill.localeCompare(b.skill)).map(s => ({ skill: s.skill, correct: s.correct, total: s.total })) : undefined,
       shCrossRef, coachFeedback: coachFeedbackTc, vocabContext: vocabContextTc,
     };
@@ -1064,7 +1137,8 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
         await setCachedNarrative(profileId, date, 'test_center', inputHash, narrative);
       }
     }
-    getOrCreate(date).items.push({ type: 'test_center', curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, lessons: data.lessons, totalScore, totalProblems, aiNarrative: narrative, skills: tcSkills } satisfies TestCenterDay);
+    // data.lessons skills have TCSkillBehavior (superset of TestCenterLesson.skills) — structurally compatible
+    getOrCreate(date).items.push({ type: 'test_center', curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, lessons: data.lessons as TestCenterLesson[], totalScore, totalProblems, aiNarrative: narrative, skills: tcSkills } satisfies TestCenterDay);
   }));
 
   // Daily Reports
