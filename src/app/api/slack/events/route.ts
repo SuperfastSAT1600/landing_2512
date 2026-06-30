@@ -202,11 +202,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const match = event.text?.match(/(\d+)번\s*써줘/);
-  if (!match) return NextResponse.json({ ok: true });
+  const channel = event.channel!;
+  const text = event.text ?? '';
+
+  console.log('[slack/events] app_mention 수신:', { text, channel });
+
+  const match = text.match(/(\d+)번\s*써줘/);
+  if (!match) {
+    // 패턴 미매칭 시 확인용 메시지 (디버깅)
+    await postSlack(channel, `[수신 확인] 멘션을 받았습니다. "N번 써줘" 형식으로 입력해주세요.\n받은 메시지: ${text}`);
+    return NextResponse.json({ ok: true });
+  }
 
   const n = parseInt(match[1]);
-  const channel = event.channel!;
+
+  // 즉시 수신 확인 메시지 발송 (after() 이전)
+  await postSlack(channel, `${n}번 요청을 받았습니다. 주제를 확인 중입니다...`);
 
   // Slack 3초 응답 제한 때문에 after()로 비동기 처리
   after(() => handleBlogRequest(n, channel).catch(async (err) => {
