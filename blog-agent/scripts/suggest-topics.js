@@ -357,6 +357,22 @@ async function main() {
     console.error('Slack 발송 실패:', err.message);
     process.exit(1);
   }
+
+  // 당일 주제를 저장해 슬랙 폴링 에이전트가 참조할 수 있도록 함
+  const todayTopicsPath = join(DATA_DIR, 'today-topics.json');
+  writeFileSync(
+    todayTopicsPath,
+    JSON.stringify(
+      {
+        date: new Date().toISOString().slice(0, 10),
+        topics: final.map((t, i) => ({ n: i + 1, ...t, triggered: false })),
+      },
+      null,
+      2
+    ),
+    'utf-8'
+  );
+  console.log(`today-topics.json 저장 완료 (${final.length}개)`);
 }
 
 main();
