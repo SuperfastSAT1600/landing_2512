@@ -33,14 +33,17 @@ async function verifySlackRequest(req: NextRequest, body: string): Promise<boole
   }
 }
 
-async function postSlack(channel: string, text: string) {
+async function postSlack(channel: string, text: string, threadTs?: string) {
+  const body: Record<string, string> = { channel, text };
+  if (threadTs) body.thread_ts = threadTs;
+
   const res = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ channel, text }),
+    body: JSON.stringify(body),
   });
   const data = await res.json() as { ok: boolean; error?: string };
   if (!data.ok) console.error('[slack/events] chat.postMessage 실패:', data.error);
@@ -152,18 +155,19 @@ async function publishToGhost(title: string, markdown: string): Promise<string> 
 
 // ─── 메인 처리 ────────────────────────────────────────────────────────────────
 
-async function handleBlogRequest(n: number, channel: string) {
+async function handleBlogRequest(n: number, channel: string, threadTs?: string) {
   const topics = await getTodayTopics();
   const topic = topics.find(t => t.n === n);
 
   if (!topic) {
-    await postSlack(channel, `오늘의 ${n}번 주제를 찾을 수 없습니다. 주제 추천 메시지를 확인해주세요.`);
+    await postSlack(channel, `오늘의 ${n}번 주제를 찾을 수 없습니다. 주제 추천 메시지를 확인해주세요.`, threadTs);
     return;
   }
 
   await postSlack(
     channel,
-    `${n}번 주제로 블로그 작성을 시작합니다.\n\n제목: ${topic.title}\n포인트: ${topic.point}\n\n작성이 완료되면 알려드리겠습니다.`
+    `${n}번 주제로 블로그 작성을 시작합니다.\n\n제목: ${topic.title}\n포인트: ${topic.point}\n\n작성이 완료되면 알려드리겠습니다.`,
+    threadTs
   );
 
   const content = await writeBlog(topic);
@@ -171,7 +175,8 @@ async function handleBlogRequest(n: number, channel: string) {
 
   await postSlack(
     channel,
-    `블로그 초안이 완성됐습니다.\n\n제목: ${topic.title}\nGhost 초안 링크: ${url}`
+    `블로그 초안이 완성됐습니다.\n\n제목: ${topic.title}\nGhost 초안 링크: ${url}`,
+    threadTs
   );
 }
 
@@ -195,7 +200,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ challenge: payload.challenge });
   }
 
-  const event = payload.event;
+  const event = payload.event as {
+    type: string;
+    text?: string;
+    channel?: string;
+    ts?: string;
+    thread_ts?: string;
+    bot_id?: string;
+  } | undefined;
 
   // 봇 자신의 메시지 무시
   if (!event || event.type !== 'app_mention' || event.bot_id) {
@@ -204,25 +216,17 @@ export async function POST(request: NextRequest) {
 
   const channel = event.channel!;
   const text = event.text ?? '';
-
-  console.log('[slack/events] app_mention 수신:', { text, channel });
+  const threadTs = event.thread_ts ?? event.ts;
 
   const match = text.match(/(\d+)번\s*써줘/);
-  if (!match) {
-    // 패턴 미매칭 시 확인용 메시지 (디버깅)
-    await postSlack(channel, `[수신 확인] 멘션을 받았습니다. "N번 써줘" 형식으로 입력해주세요.\n받은 메시지: ${text}`);
-    return NextResponse.json({ ok: true });
-  }
+  if (!match) return NextResponse.json({ ok: true });
 
   const n = parseInt(match[1]);
 
-  // 즉시 수신 확인 메시지 발송 (after() 이전)
-  await postSlack(channel, `${n}번 요청을 받았습니다. 주제를 확인 중입니다...`);
-
-  // Slack 3초 응답 제한 때문에 after()로 비동기 처리
-  after(() => handleBlogRequest(n, channel).catch(async (err) => {
+  // Slack 3초 응답 제한 때문에 after()로 비동기 처리, 스레드로 응답
+  after(() => handleBlogRequest(n, channel, threadTs).catch(async (err) => {
     console.error('[slack/events] 블로그 작성 오류:', err);
-    await postSlack(channel, `블로그 작성 중 오류가 발생했습니다: ${err instanceof Error ? err.message : String(err)}`);
+    await postSlack(channel, `블로그 작성 중 오류가 발생했습니다: ${err instanceof Error ? err.message : String(err)}`, threadTs);
   }));
 
   return NextResponse.json({ ok: true });

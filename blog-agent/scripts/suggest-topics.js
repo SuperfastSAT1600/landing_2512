@@ -297,7 +297,7 @@ function buildMessage(topics) {
     if (i < topics.length - 1) msg += '\n';
   });
 
-  msg += '\n\n→ 번호 선택 후 "N번 써줘" 라고 하면 바로 시작합니다. 마음에 드는 주제가 없으면 "다시 추천해줘" 라고 하세요.';
+  msg += '\n\n→ 이 메시지 스레드에서 @landingpage N번 써줘 를 입력하면 바로 시작합니다.';
   return msg;
 }
 
