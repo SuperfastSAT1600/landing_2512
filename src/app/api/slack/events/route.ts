@@ -394,10 +394,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  if (searchParams.get('diag') === '1') {
-    return NextResponse.json({ ghost_url: GHOST_BASE_URL.slice(0, 30) });
-  }
+export async function GET() {
   return NextResponse.json({ status: 'ok' });
 }
