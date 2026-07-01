@@ -1,10 +1,12 @@
 import type { Topic } from './blog-writer';
 
 export async function saveLandingDraft(
-  title: string, html: string, slug: string, topic: Topic
+  title: string, html: string, slug: string, topic: Topic,
+  description = '', focusKeyword = ''
 ): Promise<string> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const excerpt = description || topic.rationale || title;
 
   const res = await fetch(`${supabaseUrl}/rest/v1/posts`, {
     method: 'POST',
@@ -18,14 +20,14 @@ export async function saveLandingDraft(
       id: slug,
       title,
       content: html,
-      excerpt: (topic.rationale || title).slice(0, 120),
-      description: (topic.rationale || title).slice(0, 120),
+      excerpt: excerpt.slice(0, 300),
+      description: excerpt.slice(0, 155),
       featured_image: null,
       category: 'SAT',
       tags: ['SAT', 'blog-agent'],
       author: 'SuperfastSAT',
       date: new Date().toISOString().split('T')[0],
-      focus_keyword: title.split(' ').slice(0, 3).join(' '),
+      focus_keyword: focusKeyword || title.split(' ').slice(0, 3).join(' '),
       cta_featured: false,
       is_published: false,
     }),

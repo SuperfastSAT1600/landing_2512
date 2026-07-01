@@ -25,14 +25,14 @@ function makeGhostJwt(): string {
 }
 
 export async function saveGhostDraft(
-  title: string, html: string, slug: string
+  title: string, html: string, slug: string, customExcerpt = ''
 ): Promise<{ id: string; url: string }> {
   const jwt = makeGhostJwt();
   const res = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/?source=html`, {
     method: 'POST',
     headers: { Authorization: `Ghost ${jwt}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      posts: [{ title, html: html + CTA_HTML, slug, status: 'draft', tags: [{ name: 'SAT' }, { name: 'blog-agent' }] }],
+      posts: [{ title, html: html + CTA_HTML, slug, status: 'draft', custom_excerpt: customExcerpt.slice(0, 300) || undefined, tags: [{ name: 'SAT' }, { name: 'blog-agent' }] }],
     }),
   });
   const data = await res.json() as { posts?: { id: string; url: string }[] };
