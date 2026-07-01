@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2, Globe, RotateCcw, Activity } from 'lucide-react';
+import { Send, Sparkles, Loader2, Globe, RotateCcw, Activity, CalendarRange } from 'lucide-react';
+import type { InsightPeriod } from '@/types/crm';
 
 interface Props {
   adminKey: string;
+  period?: InsightPeriod; // 배너에서 넘어온 분석 기간 — proactive 진단을 이 기간으로 스코프
 }
 
 interface ChatMessage {
@@ -25,7 +27,7 @@ function loadChat(): ChatMessage[] {
   }
 }
 
-export function StrategyAgentChat({ adminKey }: Props) {
+export function StrategyAgentChat({ adminKey, period }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(loadChat);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -86,7 +88,7 @@ export function StrategyAgentChat({ adminKey }: Props) {
       const res = await fetch('/api/crm/strategy-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(period ? { ...requestBody, from: period.from, to: period.to } : requestBody),
       });
 
       if (!res.ok || !res.body) {
@@ -157,6 +159,11 @@ export function StrategyAgentChat({ adminKey }: Props) {
               <Globe size={11} className="text-indigo-400" />
               세계적 세일즈 기법 · 웹 검색 · 우리 상담 기록을 바탕으로 새 전략 설계
             </p>
+            {period && (
+              <p className="mt-0.5 text-xs text-indigo-500 flex items-center gap-1">
+                <CalendarRange size={11} /> 분석 기간 {period.from} ~ {period.to}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
