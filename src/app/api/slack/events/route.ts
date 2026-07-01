@@ -9,34 +9,27 @@ export const maxDuration = 300;
 
 const BLOG_CHANNEL = 'C0A28EJQA7P';
 
-// ─── Slack ───────────────────────────────────────────────────────────────────
+// ─── Slack 유틸 ───────────────────────────────────────────────────────────────
 
 async function verifySlackRequest(req: NextRequest, body: string): Promise<boolean> {
   const secret = process.env.SLACK_SIGNING_SECRET;
-  if (!secret) return true; // 미설정 시 검증 생략 (개발용)
-
+  if (!secret) return true;
   const timestamp = req.headers.get('x-slack-request-timestamp');
   const signature = req.headers.get('x-slack-signature');
   if (!timestamp || !signature) return false;
-
   if (Math.abs(Date.now() / 1000 - parseInt(timestamp)) > 300) return false;
-
   const expected = 'v0=' + crypto
     .createHmac('sha256', secret)
     .update(`v0:${timestamp}:${body}`)
     .digest('hex');
-
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
-async function postSlack(channel: string, text: string, threadTs?: string) {
+async function postSlack(channel: string, text: string, threadTs?: string): Promise<void> {
   const body: Record<string, string> = { channel, text };
   if (threadTs) body.thread_ts = threadTs;
-
   const res = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
     headers: {
@@ -46,12 +39,12 @@ async function postSlack(channel: string, text: string, threadTs?: string) {
     body: JSON.stringify(body),
   });
   const data = await res.json() as { ok: boolean; error?: string };
-  if (!data.ok) console.error('[slack/events] chat.postMessage 실패:', data.error);
+  if (!data.ok) console.error('[slack/events] postMessage 실패:', data.error);
 }
 
 // ─── 주제 파싱 ────────────────────────────────────────────────────────────────
 
-type Topic = { n: number; title: string; rationale: string; point: string };
+type Topic = { n?: number; title: string; rationale: string; point: string };
 
 async function getTodayTopics(): Promise<Topic[]> {
   const res = await fetch(
@@ -59,11 +52,9 @@ async function getTodayTopics(): Promise<Topic[]> {
     { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
   );
   const data = await res.json() as { messages?: { text: string; bot_id?: string }[] };
-
   const todayKST = new Date().toLocaleDateString('ko-KR', {
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
   });
-
   const topicMsg = data.messages?.find(
     m => m.bot_id && m.text?.includes('[오늘의 블로그 주제 제안') && m.text?.includes(todayKST)
   );
@@ -71,7 +62,6 @@ async function getTodayTopics(): Promise<Topic[]> {
 
   const topics: Topic[] = [];
   let current: Topic | null = null;
-
   for (const line of topicMsg.text.split('\n')) {
     const match = line.match(/^(\d+)\.\s+(.+)/);
     if (match) {
@@ -88,9 +78,8 @@ async function getTodayTopics(): Promise<Topic[]> {
 
 // ─── 블로그 작성 ──────────────────────────────────────────────────────────────
 
-async function writeBlog(topic: Topic, anthropicKey: string): Promise<string> {
-  const client = new Anthropic({ apiKey: anthropicKey });
-
+async function writeBlog(topic: Topic): Promise<string> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 6000,
@@ -112,12 +101,13 @@ async function writeBlog(topic: Topic, anthropicKey: string): Promise<string> {
 - AI 티 없이 사람이 쓴 것처럼`,
     messages: [{
       role: 'user',
-      content: `제목: ${topic.title}\n근거: ${topic.rationale}\n핵심 포인트: ${topic.point}\n\n위 주제로 블로그 포스팅을 작성해주세요.`,
+      content: `제목: ${topic.title}\n근거: ${topic.rationale || '없음'}\n핵심 포인트: ${topic.point || '없음'}\n\n위 주제로 블로그 포스팅을 작성해주세요.`,
     }],
   });
-
   return response.content[0].type === 'text' ? response.content[0].text : '';
 }
+
+// ─── Ghost ────────────────────────────────────────────────────────────────────
 
 const CTA_HTML = `<div style="text-align:center;margin-top:32px;">
   <a href="https://superfastsat.com/api/kakao-redirect?source=ghost" target="_blank" rel="noopener noreferrer"
@@ -127,78 +117,58 @@ const CTA_HTML = `<div style="text-align:center;margin-top:32px;">
 </div>`;
 
 function titleToSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s가-힣]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .slice(0, 80) + '-' + Date.now().toString(36);
+  return title.toLowerCase().replace(/[^\w\s가-힣]/g, '').trim()
+    .replace(/\s+/g, '-').slice(0, 60) + '-' + Date.now().toString(36);
 }
 
-// ─── Ghost 발행 ───────────────────────────────────────────────────────────────
-
-async function publishToGhost(title: string, markdown: string, ghostUrl: string, ghostAdminKey: string): Promise<{ url: string; html: string; slug: string }> {
+function makeGhostJwt(ghostAdminKey: string): string {
   const [ghostId, ghostSecret] = ghostAdminKey.split(':');
-
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', kid: ghostId, typ: 'JWT' })).toString('base64url');
   const now = Math.floor(Date.now() / 1000);
   const payload = Buffer.from(JSON.stringify({ iat: now, exp: now + 300, aud: '/admin/' })).toString('base64url');
-  const sig = crypto
-    .createHmac('sha256', Buffer.from(ghostSecret, 'hex'))
-    .update(`${header}.${payload}`)
-    .digest('base64url');
-  const jwt = `${header}.${payload}.${sig}`;
+  const sig = crypto.createHmac('sha256', Buffer.from(ghostSecret, 'hex')).update(`${header}.${payload}`).digest('base64url');
+  return `${header}.${payload}.${sig}`;
+}
 
-  const html = typeof markdown === 'string' && markdown.startsWith('<') ? markdown : await marked(markdown);
-  const slug = titleToSlug(title);
-
-  const res = await fetch(`${ghostUrl}/ghost/api/admin/posts/?source=html`, {
+async function saveGhostDraft(title: string, html: string, slug: string): Promise<{ id: string; url: string }> {
+  const jwt = makeGhostJwt(process.env.GHOST_ADMIN_KEY!);
+  const res = await fetch(`${process.env.GHOST_URL}/ghost/api/admin/posts/?source=html`, {
     method: 'POST',
     headers: { Authorization: `Ghost ${jwt}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      posts: [{
-        title,
-        html: html + CTA_HTML,
-        slug,
-        status: 'draft',
-        tags: [{ name: 'SAT' }, { name: 'blog-agent' }],
-      }],
+      posts: [{ title, html: html + CTA_HTML, slug, status: 'draft', tags: [{ name: 'SAT' }, { name: 'blog-agent' }] }],
     }),
   });
-
-  const data = await res.json() as { posts?: { url: string }[] };
-  return { url: data.posts?.[0]?.url ?? `${ghostUrl}/ghost/#/editor`, html, slug };
+  const data = await res.json() as { posts?: { id: string; url: string }[] };
+  if (!data.posts?.[0]) throw new Error(`Ghost draft 실패: ${JSON.stringify(data)}`);
+  return { id: data.posts[0].id, url: data.posts[0].url };
 }
 
-// ─── 랜딩 페이지 발행 ────────────────────────────────────────────────────────
+async function publishGhostPost(ghostId: string): Promise<string> {
+  const jwt = makeGhostJwt(process.env.GHOST_ADMIN_KEY!);
 
-async function publishToLanding(
-  title: string,
-  html: string,
-  slug: string,
-  topic: Topic
-): Promise<string> {
+  // updated_at 필드 먼저 조회 (Ghost PUT에 필수)
+  const getRes = await fetch(`${process.env.GHOST_URL}/ghost/api/admin/posts/${ghostId}/`, {
+    headers: { Authorization: `Ghost ${jwt}` },
+  });
+  const getData = await getRes.json() as { posts?: { updated_at: string; url: string }[] };
+  const updatedAt = getData.posts?.[0]?.updated_at;
+
+  const putRes = await fetch(`${process.env.GHOST_URL}/ghost/api/admin/posts/${ghostId}/`, {
+    method: 'PUT',
+    headers: { Authorization: `Ghost ${jwt}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ posts: [{ status: 'published', updated_at: updatedAt }] }),
+  });
+  const putData = await putRes.json() as { posts?: { url: string }[] };
+  return putData.posts?.[0]?.url ?? `${process.env.GHOST_URL}/ghost/#/editor/post/${ghostId}`;
+}
+
+// ─── 랜딩 페이지 ──────────────────────────────────────────────────────────────
+
+async function saveLandingDraft(title: string, html: string, slug: string, topic: Topic): Promise<string> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-  const excerpt = topic.rationale.slice(0, 120);
   const today = new Date().toISOString().split('T')[0];
-
-  const body = JSON.stringify({
-    id: slug,
-    title,
-    content: html,
-    excerpt,
-    description: excerpt,
-    featured_image: null,
-    category: 'SAT',
-    tags: ['SAT', 'blog-agent'],
-    author: 'SuperfastSAT',
-    date: today,
-    focus_keyword: topic.title.split(' ').slice(0, 3).join(' '),
-    cta_featured: false,
-    is_published: false,
-  });
 
   const res = await fetch(`${supabaseUrl}/rest/v1/posts`, {
     method: 'POST',
@@ -208,59 +178,133 @@ async function publishToLanding(
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
     },
-    body,
+    body: JSON.stringify({
+      id: slug,
+      title,
+      content: html,
+      excerpt: (topic.rationale || title).slice(0, 120),
+      description: (topic.rationale || title).slice(0, 120),
+      featured_image: null,
+      category: 'SAT',
+      tags: ['SAT', 'blog-agent'],
+      author: 'SuperfastSAT',
+      date: today,
+      focus_keyword: title.split(' ').slice(0, 3).join(' '),
+      cta_featured: false,
+      is_published: false,
+    }),
   });
 
-  if (res.status === 201) {
-    const data = await res.json() as { id: string }[];
-    return `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://superfastsat.com'}/blog/${data[0]?.id}`;
+  if (res.status !== 201) {
+    const err = await res.text();
+    throw new Error(`랜딩 draft 실패: ${res.status} ${err}`);
   }
-  const err = await res.text();
-  throw new Error(`랜딩 발행 실패: ${res.status} ${err}`);
+  const data = await res.json() as { id: string }[];
+  return data[0]?.id ?? slug;
 }
 
-// ─── 메인 처리 ────────────────────────────────────────────────────────────────
+async function publishLandingPost(landingId: string): Promise<string> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-type EnvSnapshot = { anthropicKey: string; ghostUrl: string; ghostAdminKey: string; slackBotToken: string };
+  const res = await fetch(`${supabaseUrl}/rest/v1/posts?id=eq.${encodeURIComponent(landingId)}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify({ is_published: true }),
+  });
 
-async function handleBlogRequest(n: number, channel: string, threadTs?: string, env?: EnvSnapshot) {
-  const topics = await getTodayTopics();
-  const topic = topics.find(t => t.n === n);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`랜딩 발행 실패: ${res.status} ${err}`);
+  }
+  return `https://superfastsat.com/blog/${landingId}`;
+}
 
-  if (!topic) {
-    await postSlack(channel, `오늘의 ${n}번 주제를 찾을 수 없습니다. 주제 추천 메시지를 확인해주세요.`, threadTs);
+// ─── 스레드 메타데이터 파싱 ───────────────────────────────────────────────────
+
+type DraftMeta = { ghostId: string; landingId: string; title: string };
+
+async function getDraftFromThread(channel: string, threadTs: string): Promise<DraftMeta | null> {
+  const res = await fetch(
+    `https://slack.com/api/conversations.replies?channel=${channel}&ts=${threadTs}&limit=20`,
+    { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
+  );
+  const data = await res.json() as { messages?: { text: string; bot_id?: string }[] };
+  for (const msg of data.messages ?? []) {
+    if (!msg.bot_id) continue;
+    const match = msg.text?.match(/\[blog-agent: ghost_id=([^|]+)\|landing_id=([^|]+)\|title=([^\]]+)\]/);
+    if (match) return { ghostId: match[1], landingId: match[2], title: decodeURIComponent(match[3]) };
+  }
+  return null;
+}
+
+// ─── 메인 핸들러 ──────────────────────────────────────────────────────────────
+
+async function handleBlogWrite(topic: Topic, channel: string, threadTs: string) {
+  await postSlack(channel, `블로그 작성을 시작합니다.\n\n제목: ${topic.title}\n\n작성이 완료되면 요약본을 보여드리겠습니다.`, threadTs);
+
+  const markdown = await writeBlog(topic);
+  const html = await marked(markdown);
+  const slug = titleToSlug(topic.title);
+
+  const [ghostResult, landingResult] = await Promise.allSettled([
+    saveGhostDraft(topic.title, html, slug),
+    saveLandingDraft(topic.title, html, slug, topic),
+  ]);
+
+  if (ghostResult.status === 'rejected') {
+    await postSlack(channel, `Ghost 저장 실패: ${ghostResult.reason?.message}`, threadTs);
+    return;
+  }
+  if (landingResult.status === 'rejected') {
+    await postSlack(channel, `랜딩 저장 실패: ${landingResult.reason?.message}`, threadTs);
     return;
   }
 
+  const { id: ghostId } = ghostResult.value;
+  const landingId = landingResult.value;
+
+  // 요약본 추출 (첫 200자)
+  const excerpt = markdown.replace(/#{1,3} .+\n/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
+
+  // 메타데이터 포함 요약본 게시
+  const meta = `[blog-agent: ghost_id=${ghostId}|landing_id=${landingId}|title=${encodeURIComponent(topic.title)}]`;
   await postSlack(
     channel,
-    `${n}번 주제로 블로그 작성을 시작합니다.\n\n제목: ${topic.title}\n포인트: ${topic.point}\n\n작성이 완료되면 알려드리겠습니다.`,
+    `${meta}\n\n*블로그 초안 완성 — 확인해주세요*\n\n*제목:* ${topic.title}\n\n*요약:*\n${excerpt}...\n\n> 발행하려면 이 스레드에서 *@landingpage 발행할게요* 라고 입력해주세요.`,
     threadTs
   );
+}
 
-  const anthropicKey = env?.anthropicKey ?? process.env.ANTHROPIC_API_KEY ?? '';
-  const ghostUrl = env?.ghostUrl ?? process.env.GHOST_URL ?? '';
-  const ghostAdminKey = env?.ghostAdminKey ?? process.env.GHOST_ADMIN_KEY ?? '';
+async function handlePublish(channel: string, threadTs: string) {
+  const meta = await getDraftFromThread(channel, threadTs);
+  if (!meta) {
+    await postSlack(channel, '이 스레드에서 작성된 블로그 초안을 찾을 수 없습니다.', threadTs);
+    return;
+  }
 
-  const content = await writeBlog(topic, anthropicKey);
-  const slug = titleToSlug(topic.title);
-  const html = await marked(content);
+  await postSlack(channel, `발행을 시작합니다. 잠시만 기다려주세요...`, threadTs);
 
   const [ghostResult, landingResult] = await Promise.allSettled([
-    publishToGhost(topic.title, content, ghostUrl, ghostAdminKey),
-    publishToLanding(topic.title, html, slug, topic),
+    publishGhostPost(meta.ghostId),
+    publishLandingPost(meta.landingId),
   ]);
 
-  const ghostUrl2 = ghostResult.status === 'fulfilled'
-    ? ghostResult.value.url
-    : `(Ghost 실패: ${ghostResult.reason?.message ?? ghostResult.reason})`;
+  const ghostUrl = ghostResult.status === 'fulfilled'
+    ? ghostResult.value
+    : `(Ghost 발행 실패: ${ghostResult.reason?.message})`;
   const landingUrl = landingResult.status === 'fulfilled'
     ? landingResult.value
-    : `(랜딩 실패: ${landingResult.reason?.message ?? landingResult.reason})`;
+    : `(랜딩 발행 실패: ${landingResult.reason?.message})`;
 
   await postSlack(
     channel,
-    `블로그 초안이 완성됐습니다.\n\n제목: ${topic.title}\nGhost 초안: ${ghostUrl2}\n랜딩 초안: ${landingUrl}`,
+    `발행 완료!\n\n*제목:* ${meta.title}\nGhost: ${ghostUrl}\n랜딩: ${landingUrl}`,
     threadTs
   );
 }
@@ -269,7 +313,6 @@ async function handleBlogRequest(n: number, channel: string, threadTs?: string, 
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
-
   if (!(await verifySlackRequest(request, body))) {
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
   }
@@ -277,53 +320,75 @@ export async function POST(request: NextRequest) {
   const payload = JSON.parse(body) as {
     type: string;
     challenge?: string;
-    event?: { type: string; text?: string; channel?: string; bot_id?: string };
+    event?: {
+      type: string;
+      text?: string;
+      channel?: string;
+      ts?: string;
+      thread_ts?: string;
+      bot_id?: string;
+    };
   };
 
-  // Slack URL 검증 챌린지 (앱 등록 시 1회)
   if (payload.type === 'url_verification') {
     return NextResponse.json({ challenge: payload.challenge });
   }
 
-  const event = payload.event as {
-    type: string;
-    text?: string;
-    channel?: string;
-    ts?: string;
-    thread_ts?: string;
-    bot_id?: string;
-  } | undefined;
-
-  // 봇 자신의 메시지 무시
+  const event = payload.event;
   if (!event || event.type !== 'app_mention' || event.bot_id) {
     return NextResponse.json({ ok: true });
   }
 
-  const channel = event.channel!;
   const text = event.text ?? '';
-  const threadTs = event.thread_ts ?? event.ts;
+  const channel = event.channel!;
+  const threadTs = event.thread_ts ?? event.ts!;
 
-  const match = text.match(/(\d+)번\s*써줘/);
-  if (!match) return NextResponse.json({ ok: true });
+  // ── 패턴 감지 ─────────────────────────────────────────────────────────────
 
-  const n = parseInt(match[1]);
-
-  // after() 클로저 안에서 env 접근이 불안정할 수 있어 미리 캡처
-  const anthropicKey = process.env.ANTHROPIC_API_KEY ?? '';
-  const ghostUrl = process.env.GHOST_URL ?? '';
-  const ghostAdminKey = process.env.GHOST_ADMIN_KEY ?? '';
-  const slackBotToken = process.env.SLACK_BOT_TOKEN ?? '';
-
-  if (!anthropicKey) {
-    await postSlack(channel, 'ANTHROPIC_API_KEY가 설정되지 않았습니다.', threadTs);
+  // 1. 발행 컨펌
+  if (/발행할게요|발행해줘|publish/.test(text)) {
+    after(() => handlePublish(channel, threadTs).catch(async err => {
+      await postSlack(channel, `발행 중 오류: ${err.message}`, threadTs);
+    }));
     return NextResponse.json({ ok: true });
   }
 
-  // Slack 3초 응답 제한 때문에 after()로 비동기 처리, 스레드로 응답
-  after(() => handleBlogRequest(n, channel, threadTs, { anthropicKey, ghostUrl, ghostAdminKey, slackBotToken }).catch(async (err) => {
-    console.error('[slack/events] 블로그 작성 오류:', err);
-    await postSlack(channel, `블로그 작성 중 오류가 발생했습니다: ${err instanceof Error ? err.message : String(err)}`, threadTs);
-  }));
+  // 2. N번 써줘
+  const nMatch = text.match(/(\d+)번\s*써줘/);
+  if (nMatch) {
+    const n = parseInt(nMatch[1]);
+    const anthropicKey = process.env.ANTHROPIC_API_KEY ?? '';
+    if (!anthropicKey) {
+      await postSlack(channel, 'ANTHROPIC_API_KEY가 설정되지 않았습니다.', threadTs);
+      return NextResponse.json({ ok: true });
+    }
+    after(() => (async () => {
+      const topics = await getTodayTopics();
+      const topic = topics.find(t => t.n === n);
+      if (!topic) {
+        await postSlack(channel, `오늘의 ${n}번 주제를 찾을 수 없습니다.`, threadTs);
+        return;
+      }
+      await handleBlogWrite(topic, channel, threadTs);
+    })().catch(async err => {
+      await postSlack(channel, `오류: ${err.message}`, threadTs);
+    }));
+    return NextResponse.json({ ok: true });
+  }
+
+  // 3. 직접 주제 입력: @landingpage '주제명' 써줘
+  const directMatch = text.match(/['"'""](.+?)['"'""].*써줘/);
+  if (directMatch) {
+    const title = directMatch[1].trim();
+    after(() => handleBlogWrite(
+      { title, rationale: '', point: '' },
+      channel,
+      threadTs
+    ).catch(async err => {
+      await postSlack(channel, `오류: ${err.message}`, threadTs);
+    }));
+    return NextResponse.json({ ok: true });
+  }
 
   return NextResponse.json({ ok: true });
 }
