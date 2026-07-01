@@ -5,6 +5,9 @@ import { getWeekLabel } from '@/lib/week-definitions';
 import { computeStageFlow, hasReachedStage, type StageFlowRow } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
 
+// 리드 조회 행 상한 — Supabase 기본 1000행 무음 절단을 넘기 위한 명시 상한(넉넉한 헤드룸).
+const MAX_LEAD_ROWS = 5000;
+
 export interface StatsBySource {
   source: string;
   leads: number;
@@ -122,20 +125,28 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // 기간 내 신규 리드 조회 (inquiry_date 기준, fallback: created_at)
+  // 기간 내 신규 리드 = inquiry_date(실제 인입 시각)가 [from, to]에 든 리드만.
+  // created_at(레코드 생성 시각) 폴백은 쓰지 않는다 — 레거시 대량 임포트(inquiry_date NULL)가
+  // 생성 시각 기준으로 특정 기간 신규 리드로 둔갑해 과대집계되는 문제(예: 595건)를 막는다.
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')
     .select(
       'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id'
     )
-    .or(`inquiry_date.gte.${from},and(inquiry_date.is.null,created_at.gte.${from})`)
-    .or(`inquiry_date.lte.${to}T23:59:59,and(inquiry_date.is.null,created_at.lte.${to}T23:59:59)`);
+    .gte('inquiry_date', from)
+    .lte('inquiry_date', `${to}T23:59:59`)
+    .limit(MAX_LEAD_ROWS);
 
   if (sErr) {
     return NextResponse.json(
       { error: { code: 'FETCH_FAILED', message: sErr.message } },
       { status: 500 }
     );
+  }
+
+  // 무음 절단 방어: 반환 행수가 상한에 닿으면 집계가 잘렸을 수 있으니 경고(정상 기간 조회는 도달 불가).
+  if ((students?.length ?? 0) >= MAX_LEAD_ROWS) {
+    console.warn(`[stats] lead rows hit MAX_LEAD_ROWS(${MAX_LEAD_ROWS}) for ${from}~${to} — 집계가 절단됐을 수 있음`);
   }
 
   // 기간 내 payments 조회 (최초결제만 전환율 계산에 포함)
