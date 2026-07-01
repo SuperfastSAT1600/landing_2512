@@ -8,6 +8,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const BLOG_CHANNEL = 'C0A28EJQA7P';
+const GHOST_BASE_URL = process.env.GHOST_URL ?? 'https://superfastsat.ghost.io';
 
 // ─── Slack 유틸 ───────────────────────────────────────────────────────────────
 
@@ -132,7 +133,7 @@ function makeGhostJwt(ghostAdminKey: string): string {
 
 async function saveGhostDraft(title: string, html: string, slug: string): Promise<{ id: string; url: string }> {
   const jwt = makeGhostJwt(process.env.GHOST_ADMIN_KEY!);
-  const res = await fetch(`${process.env.GHOST_URL}/ghost/api/admin/posts/?source=html`, {
+  const res = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/?source=html`, {
     method: 'POST',
     headers: { Authorization: `Ghost ${jwt}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -148,19 +149,19 @@ async function publishGhostPost(ghostId: string): Promise<string> {
   const jwt = makeGhostJwt(process.env.GHOST_ADMIN_KEY!);
 
   // updated_at 필드 먼저 조회 (Ghost PUT에 필수)
-  const getRes = await fetch(`${process.env.GHOST_URL}/ghost/api/admin/posts/${ghostId}/`, {
+  const getRes = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/${ghostId}/`, {
     headers: { Authorization: `Ghost ${jwt}` },
   });
   const getData = await getRes.json() as { posts?: { updated_at: string; url: string }[] };
   const updatedAt = getData.posts?.[0]?.updated_at;
 
-  const putRes = await fetch(`${process.env.GHOST_URL}/ghost/api/admin/posts/${ghostId}/`, {
+  const putRes = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/${ghostId}/`, {
     method: 'PUT',
     headers: { Authorization: `Ghost ${jwt}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ posts: [{ status: 'published', updated_at: updatedAt }] }),
   });
   const putData = await putRes.json() as { posts?: { url: string }[] };
-  return putData.posts?.[0]?.url ?? `${process.env.GHOST_URL}/ghost/#/editor/post/${ghostId}`;
+  return putData.posts?.[0]?.url ?? `${GHOST_BASE_URL}/ghost/#/editor/post/${ghostId}`;
 }
 
 // ─── 랜딩 페이지 ──────────────────────────────────────────────────────────────
@@ -394,17 +395,5 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  const check = (key: string) => !!process.env[key];
-  return NextResponse.json({
-    status: 'ok',
-    env: {
-      GHOST_URL: check('GHOST_URL'),
-      GHOST_ADMIN_KEY: check('GHOST_ADMIN_KEY'),
-      SUPABASE_URL: check('NEXT_PUBLIC_SUPABASE_URL'),
-      SUPABASE_SERVICE_KEY: check('SUPABASE_SERVICE_ROLE_KEY'),
-      ANTHROPIC_API_KEY: check('ANTHROPIC_API_KEY'),
-      SLACK_BOT_TOKEN: check('SLACK_BOT_TOKEN'),
-      SLACK_SIGNING_SECRET: check('SLACK_SIGNING_SECRET'),
-    },
-  });
+  return NextResponse.json({ status: 'ok' });
 }
