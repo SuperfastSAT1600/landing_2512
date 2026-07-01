@@ -81,10 +81,13 @@ function StudyHallCard({ item }: { item: Extract<DayItem, { type: 'study_hall' }
 function LessonRow({ lesson, index }: { lesson: TestCenterLesson; index: number }) {
   const pct = lesson.total > 0 ? Math.round((lesson.score / lesson.total) * 100) : 0;
   const color = pct >= 85 ? '#15803D' : pct >= 70 ? '#B45309' : '#B91C1C';
+  const domainPrefix = lesson.total === 27 ? 'RW' : lesson.total === 22 ? 'Math' : null;
+  const titleText = lesson.title ?? `Module ${index + 1}`;
+  const displayTitle = domainPrefix ? `${domainPrefix} ${titleText}` : titleText;
   return (
     <div className="flex items-center justify-between gap-3 py-1.5 border-b border-slate-100 last:border-0">
       <span className="text-xs text-slate-600 flex-1 truncate">
-        {lesson.title ?? `Module ${index + 1}`}
+        {displayTitle}
       </span>
       <span className="text-xs font-semibold tabular-nums flex-shrink-0" style={{ color }}>
         {lesson.score}/{lesson.total}
