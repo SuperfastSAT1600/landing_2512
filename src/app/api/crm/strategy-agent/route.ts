@@ -12,7 +12,7 @@ import {
   type ConversionStats,
 } from '@/lib/strategy-agent-context';
 import { STRATEGY_GURU_PROMPT } from '@/lib/strategy-guru';
-import { buildBriefHealth } from '@/lib/strategy-brief';
+import { buildBriefHealth, parsePeriod } from '@/lib/strategy-brief';
 
 // 선제 진단 모드에서 합성하는 사용자 지시(클라이언트가 보내지 않음)
 const PROACTIVE_SEED = `방금 **이번 달 인입한 리드 코호트**의 퍼널 추이를 점검했다. 위 [KPI 건강 진단]을 1차 근거로, 이 리드들이 인입→컨택→상담→진단→결제로 가는 길에서 **어디서 가장 많이 막히고 빠지는지(드롭오프)**를 중심으로, 지금 가장 시급한 5개 영역을 골라 보고하라.
@@ -114,13 +114,14 @@ export async function POST(request: NextRequest) {
     return errorJson('UNAUTHORIZED', '인증이 필요합니다.', 401);
   }
 
-  let body: { messages?: ChatMessage[]; mode?: 'chat' | 'proactive' };
+  let body: { messages?: ChatMessage[]; mode?: 'chat' | 'proactive'; from?: string; to?: string };
   try {
     body = await request.json();
   } catch {
     return errorJson('INVALID_JSON', '잘못된 요청 형식입니다.', 400);
   }
 
+  const period = parsePeriod(body);
   const mode = body.mode === 'proactive' ? 'proactive' : 'chat';
   let messages: ChatMessage[];
   let caseQuery: string;
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
   if (mode === 'proactive') {
     // 지표를 스캔해 약점/정체 영역을 찾고, 선제 진단을 합성된 user turn으로 시작한다.
     const origin = new URL(request.url).origin;
-    const snap = await buildBriefHealth(origin, process.env.ADMIN_SECRET_KEY ?? '');
+    const snap = await buildBriefHealth(origin, process.env.ADMIN_SECRET_KEY ?? '', period);
     if (snap) {
       health = snap.summaryText;
       caseQuery = snap.weakest.map((s) => s.area).join(', ') || '전환율 컨택률 개선';

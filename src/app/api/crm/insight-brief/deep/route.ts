@@ -7,12 +7,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { buildBriefHealth, buildCorrelationSignals } from '@/lib/strategy-brief';
+import { buildBriefHealth, buildCorrelationSignals, parsePeriod } from '@/lib/strategy-brief';
 import { buildMemoSignals } from '@/lib/strategy-memos';
 import { fallbackAreas, parseAreas } from '@/lib/insight-parse';
 import { DEEP_DIAGNOSIS_SYSTEM, DEEP_WEEKLY_SYSTEM } from '@/lib/insight-deep';
 import { STRATEGY_GURU_PROMPT } from '@/lib/strategy-guru';
-import { kstDateStr, type InsightBriefArea as BriefArea, type InsightBriefMode as BriefMode } from '@/types/crm';
+import { kstDateStr, type InsightBriefArea as BriefArea, type InsightBriefMode as BriefMode, type InsightPeriod } from '@/types/crm';
 
 export const maxDuration = 60;
 
@@ -50,25 +50,28 @@ export async function POST(request: NextRequest) {
   }
 
   let mode: BriefMode = 'diagnosis';
+  let period: InsightPeriod | undefined;
   try {
     const body = await request.json();
     if (body?.mode === 'weekly') mode = 'weekly';
+    period = parsePeriod(body);
   } catch {
-    /* 본문 없음 → diagnosis 기본 */
+    /* 본문 없음 → diagnosis 기본, 이번 달 기간 */
   }
   const force = new URL(request.url).searchParams.get('force') === '1';
   const dateKst = kstDateStr(Date.now());
 
-  // 서버 일 1회 캐시 (force면 우회)
-  if (!force) {
+  // 서버 일 1회 캐시는 기본(이번 달) 뷰에만 적용. 커스텀 기간은 (date_kst,mode) 키와 충돌하므로 캐시 우회.
+  const useCache = !force && !period;
+  if (useCache) {
     const cached = await readCache(dateKst, mode);
     if (cached) return NextResponse.json({ generatedAt: new Date().toISOString(), areas: cached, cached: true });
   }
 
   const origin = new URL(request.url).origin;
   const [snap, memo, correlationBlock] = await Promise.all([
-    buildBriefHealth(origin, process.env.ADMIN_SECRET_KEY ?? ''),
-    buildMemoSignals(),
+    buildBriefHealth(origin, process.env.ADMIN_SECRET_KEY ?? '', period),
+    buildMemoSignals(Date.now(), period),
     buildCorrelationSignals(),
   ]);
 
@@ -109,7 +112,7 @@ export async function POST(request: NextRequest) {
       .map((b) => (b as { text: string }).text)
       .join('');
     const areas = parseAreas(text, snap.weakest, mode);
-    await writeCache(dateKst, mode, areas);
+    if (useCache) await writeCache(dateKst, mode, areas);
     return NextResponse.json({ generatedAt: new Date().toISOString(), areas });
   } catch (err) {
     console.error('[insight-brief/deep]', err);

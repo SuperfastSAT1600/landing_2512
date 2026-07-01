@@ -755,6 +755,12 @@ export type ChurnTag = (typeof CHURN_TAG_OPTIONS)[number];
 // 선제 진단 인사이트 브리핑 API 계약 — insight-brief 라우트와 CrmInsightBanner가 공유.
 export type InsightBriefMode = 'diagnosis' | 'weekly';
 
+// 인사이트/전략 대화 분석 기간(YYYY-MM-DD). 없으면 "이번 달(1일~오늘)" 기본.
+export interface InsightPeriod {
+  from: string;
+  to: string;
+}
+
 export interface InsightBriefArea {
   title: string;
   severity: 'critical' | 'warn';

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { isAuthenticated } from '@/lib/server-auth';
-import { buildBriefHealth } from '@/lib/strategy-brief';
+import { buildBriefHealth, parsePeriod } from '@/lib/strategy-brief';
 import { fallbackAreas, parseAreas } from '@/lib/insight-parse';
-import type { InsightBriefMode as BriefMode } from '@/types/crm';
+import type { InsightBriefMode as BriefMode, InsightPeriod } from '@/types/crm';
 
 export const maxDuration = 30;
 
@@ -27,15 +27,17 @@ export async function POST(request: NextRequest) {
   }
 
   let mode: BriefMode = 'diagnosis';
+  let period: InsightPeriod | undefined;
   try {
     const body = await request.json();
     if (body?.mode === 'weekly') mode = 'weekly';
+    period = parsePeriod(body);
   } catch {
-    /* 본문 없음 → diagnosis 기본 */
+    /* 본문 없음 → diagnosis 기본, 이번 달 기간 */
   }
 
   const origin = new URL(request.url).origin;
-  const snap = await buildBriefHealth(origin, process.env.ADMIN_SECRET_KEY ?? '');
+  const snap = await buildBriefHealth(origin, process.env.ADMIN_SECRET_KEY ?? '', period);
 
   // 통계 조회 실패 또는 약점 신호 없음 → 배너 숨김
   if (!snap || snap.weakest.length === 0) {

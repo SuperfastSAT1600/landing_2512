@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import type { RetryStrategy } from '@/types/crm';
+import type { RetryStrategy, InsightPeriod } from '@/types/crm';
 import { StrategyAgentChat } from './StrategyAgentChat';
 import { ExperimentBoard } from './ExperimentBoard';
 
 interface Props {
   adminKey: string;
   initialSubTab?: 'experiment' | 'library';
+  strategyPeriod?: InsightPeriod;
 }
 
 type StrategyType = 'initial_contact' | 'initial_sales' | 'retry';
@@ -154,7 +155,7 @@ function StrategySection({
 
 type SubTab = 'experiment' | 'library';
 
-export function StrategiesTab({ adminKey, initialSubTab }: Props) {
+export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod }: Props) {
   const [subTab, setSubTab] = useState<SubTab>(initialSubTab ?? 'experiment');
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -221,7 +222,7 @@ export function StrategiesTab({ adminKey, initialSubTab }: Props) {
           <div className="text-sm text-gray-400 py-8 text-center">불러오는 중...</div>
         ) : (
           <>
-            <StrategyAgentChat adminKey={adminKey} />
+            <StrategyAgentChat adminKey={adminKey} period={strategyPeriod} />
             <div className="space-y-4">
               <p className="text-xs text-gray-400">
                 전략을 만들고 학생 패널의 인입 정보에서 배정할 수 있습니다.
