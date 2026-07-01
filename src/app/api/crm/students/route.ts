@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import type { CreateStudentInput } from '@/types/crm';
 import { isActionDoneToday, todaysMemos } from '@/types/crm';
+import { toKSTNaive } from '@/lib/sheets-sync-utils';
 
 /**
  * GET /api/crm/students
@@ -201,7 +202,8 @@ export async function POST(request: NextRequest) {
         school_type: school_type || '한국 학제',
         parent_phone: parent_phone || '',
         contact_type: contact_type ?? null,
-        inquiry_date: inquiry_date ?? null,
+        // 미입력 시 등록 시각(KST)을 인입일로 — 신규 리드가 inquiry_date 없이 생성돼 기간 집계에서 누락되는 것 방지.
+        inquiry_date: inquiry_date ?? toKSTNaive(new Date().toISOString()),
         inquiry_channel: inquiry_channel ?? null,
         traffic_source: traffic_source ?? null,
         content_author: content_author ?? null,
