@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const BLOG_CHANNEL = 'C0A28EJQA7P';
-const GHOST_BASE_URL = process.env.GHOST_URL ?? 'https://superfastsat.ghost.io';
+const GHOST_BASE_URL = process.env.GHOST_URL || 'https://superfastsat.ghost.io';
 
 // ─── Slack 유틸 ───────────────────────────────────────────────────────────────
 
@@ -394,6 +394,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  if (searchParams.get('diag') === '1') {
+    return NextResponse.json({ ghost_url: GHOST_BASE_URL.slice(0, 30) });
+  }
   return NextResponse.json({ status: 'ok' });
 }
