@@ -119,9 +119,25 @@ async function writeBlog(topic: Topic, anthropicKey: string): Promise<string> {
   return response.content[0].type === 'text' ? response.content[0].text : '';
 }
 
+const CTA_HTML = `<div style="text-align:center;margin-top:32px;">
+  <a href="https://superfastsat.com/api/kakao-redirect?source=ghost" target="_blank" rel="noopener noreferrer"
+    style="display:inline-block;padding:14px 22px;border-radius:10px;background:#071be9;color:#ffffff;font-weight:600;text-decoration:none;">
+    카카오톡으로 수업 상담 신청하기🖐️
+  </a>
+</div>`;
+
+function titleToSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s가-힣]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 80) + '-' + Date.now().toString(36);
+}
+
 // ─── Ghost 발행 ───────────────────────────────────────────────────────────────
 
-async function publishToGhost(title: string, markdown: string, ghostUrl: string, ghostAdminKey: string): Promise<string> {
+async function publishToGhost(title: string, markdown: string, ghostUrl: string, ghostAdminKey: string): Promise<{ url: string; html: string; slug: string }> {
   const [ghostId, ghostSecret] = ghostAdminKey.split(':');
 
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', kid: ghostId, typ: 'JWT' })).toString('base64url');
@@ -133,7 +149,8 @@ async function publishToGhost(title: string, markdown: string, ghostUrl: string,
     .digest('base64url');
   const jwt = `${header}.${payload}.${sig}`;
 
-  const html = await marked(markdown);
+  const html = typeof markdown === 'string' && markdown.startsWith('<') ? markdown : await marked(markdown);
+  const slug = titleToSlug(title);
 
   const res = await fetch(`${ghostUrl}/ghost/api/admin/posts/?source=html`, {
     method: 'POST',
@@ -141,7 +158,8 @@ async function publishToGhost(title: string, markdown: string, ghostUrl: string,
     body: JSON.stringify({
       posts: [{
         title,
-        html,
+        html: html + CTA_HTML,
+        slug,
         status: 'draft',
         tags: [{ name: 'SAT' }, { name: 'blog-agent' }],
       }],
@@ -149,7 +167,56 @@ async function publishToGhost(title: string, markdown: string, ghostUrl: string,
   });
 
   const data = await res.json() as { posts?: { url: string }[] };
-  return data.posts?.[0]?.url ?? `${ghostUrl}/ghost/#/editor`;
+  return { url: data.posts?.[0]?.url ?? `${ghostUrl}/ghost/#/editor`, html, slug };
+}
+
+// ─── 랜딩 페이지 발행 ────────────────────────────────────────────────────────
+
+async function publishToLanding(
+  title: string,
+  html: string,
+  slug: string,
+  topic: Topic
+): Promise<string> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  const excerpt = topic.rationale.slice(0, 120);
+  const today = new Date().toISOString().split('T')[0];
+
+  const body = JSON.stringify({
+    id: slug,
+    title,
+    content: html,
+    excerpt,
+    description: excerpt,
+    featured_image: null,
+    category: 'SAT',
+    tags: ['SAT', 'blog-agent'],
+    author: 'SuperfastSAT',
+    date: today,
+    focus_keyword: topic.title.split(' ').slice(0, 3).join(' '),
+    cta_featured: false,
+    is_published: false,
+  });
+
+  const res = await fetch(`${supabaseUrl}/rest/v1/posts`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body,
+  });
+
+  if (res.status === 201) {
+    const data = await res.json() as { id: string }[];
+    return `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://superfastsat.com'}/blog/${data[0]?.id}`;
+  }
+  const err = await res.text();
+  throw new Error(`랜딩 발행 실패: ${res.status} ${err}`);
 }
 
 // ─── 메인 처리 ────────────────────────────────────────────────────────────────
@@ -176,11 +243,20 @@ async function handleBlogRequest(n: number, channel: string, threadTs?: string, 
   const ghostAdminKey = env?.ghostAdminKey ?? process.env.GHOST_ADMIN_KEY ?? '';
 
   const content = await writeBlog(topic, anthropicKey);
-  const url = await publishToGhost(topic.title, content, ghostUrl, ghostAdminKey);
+  const slug = titleToSlug(topic.title);
+  const html = await marked(content);
+
+  const [ghostResult, landingResult] = await Promise.allSettled([
+    publishToGhost(topic.title, content, ghostUrl, ghostAdminKey),
+    publishToLanding(topic.title, html, slug, topic),
+  ]);
+
+  const ghostUrl2 = ghostResult.status === 'fulfilled' ? ghostResult.value.url : '(Ghost 발행 실패)';
+  const landingUrl = landingResult.status === 'fulfilled' ? landingResult.value : '(랜딩 발행 실패)';
 
   await postSlack(
     channel,
-    `블로그 초안이 완성됐습니다.\n\n제목: ${topic.title}\nGhost 초안 링크: ${url}`,
+    `블로그 초안이 완성됐습니다.\n\n제목: ${topic.title}\nGhost 초안: ${ghostUrl2}\n랜딩 초안: ${landingUrl}`,
     threadTs
   );
 }
