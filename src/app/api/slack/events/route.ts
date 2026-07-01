@@ -394,5 +394,17 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ status: 'ok' });
+  const check = (key: string) => !!process.env[key];
+  return NextResponse.json({
+    status: 'ok',
+    env: {
+      GHOST_URL: check('GHOST_URL'),
+      GHOST_ADMIN_KEY: check('GHOST_ADMIN_KEY'),
+      SUPABASE_URL: check('NEXT_PUBLIC_SUPABASE_URL'),
+      SUPABASE_SERVICE_KEY: check('SUPABASE_SERVICE_ROLE_KEY'),
+      ANTHROPIC_API_KEY: check('ANTHROPIC_API_KEY'),
+      SLACK_BOT_TOKEN: check('SLACK_BOT_TOKEN'),
+      SLACK_SIGNING_SECRET: check('SLACK_SIGNING_SECRET'),
+    },
+  });
 }
