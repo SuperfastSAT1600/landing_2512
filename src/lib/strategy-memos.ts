@@ -14,6 +14,7 @@ import {
   kstDateStr,
   type ConsultationEntry,
   type FunnelStage,
+  type InsightPeriod,
 } from '@/types/crm';
 
 const MODEL = 'claude-haiku-4-5';
@@ -77,19 +78,27 @@ export function pickCohort(activeRows: CohortRow[], churnedRows: CohortRow[], no
 }
 
 /**
- * 정체(active+SLA초과) + 이번 달 이탈 리드를 합쳐 메모 있는 코호트로 추린다.
- * 정량([KPI 건강 진단])과 같은 모수를 보도록 둘 다 "이번 달 인입(inquiry_date)" 리드로 한정.
+ * 정체(active+SLA초과) + 이탈 리드를 합쳐 메모 있는 코호트로 추린다.
+ * 정량([KPI 건강 진단])과 같은 모수를 보도록 인입일(inquiry_date)을 분석 기간으로 한정.
+ * period 없으면 이번 달(1일~오늘), 있으면 [from, to] 구간.
  */
-async function fetchCohort(nowMs: number): Promise<CohortRow[]> {
-  const monthStart = `${kstDateStr(nowMs).slice(0, 7)}-01`;
-  const [activeRes, churnedRes] = await Promise.all([
-    supabaseAdmin.from('students').select(COLS).eq('lead_status', 'active').gte('inquiry_date', monthStart),
-    supabaseAdmin
-      .from('students')
-      .select(COLS)
-      .or('funnel_stage.eq.churned,lead_status.eq.inactive')
-      .gte('inquiry_date', monthStart),
-  ]);
+async function fetchCohort(nowMs: number, period?: InsightPeriod): Promise<CohortRow[]> {
+  const from = period?.from ?? `${kstDateStr(nowMs).slice(0, 7)}-01`;
+  const to = period?.to ?? kstDateStr(nowMs);
+  const toBound = `${to}T23:59:59`; // 종료일 하루 전체 포함 (stats 라우트와 동일 규약)
+  const active = supabaseAdmin
+    .from('students')
+    .select(COLS)
+    .eq('lead_status', 'active')
+    .gte('inquiry_date', from)
+    .lte('inquiry_date', toBound);
+  const churned = supabaseAdmin
+    .from('students')
+    .select(COLS)
+    .or('funnel_stage.eq.churned,lead_status.eq.inactive')
+    .gte('inquiry_date', from)
+    .lte('inquiry_date', toBound);
+  const [activeRes, churnedRes] = await Promise.all([active, churned]);
   return pickCohort((activeRes.data ?? []) as CohortRow[], (churnedRes.data ?? []) as CohortRow[], nowMs);
 }
 
@@ -182,13 +191,13 @@ export interface MemoSignals {
  * 정체·이탈 리드 메모에서 반복 정성 신호를 추출한다(하이브리드: LLM 발견 + 코드 카운트).
  * API 키 없음 / 코호트 없음 / 실패 시 빈 블록으로 degrade (정량만으로도 배너는 동작).
  */
-export async function buildMemoSignals(nowMs: number = Date.now()): Promise<MemoSignals> {
+export async function buildMemoSignals(nowMs: number = Date.now(), period?: InsightPeriod): Promise<MemoSignals> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { memoBlock: '', leadCount: 0 };
 
   let rows: CohortRow[];
   try {
-    rows = await fetchCohort(nowMs);
+    rows = await fetchCohort(nowMs, period);
   } catch (err) {
     console.error('[strategy-memos] cohort fetch failed (degrading):', err);
     return { memoBlock: '', leadCount: 0 };
@@ -214,7 +223,8 @@ export async function buildMemoSignals(nowMs: number = Date.now()): Promise<Memo
     const themes = parseThemes(text);
     const body = buildSignalLines(themes, leadTexts(rows));
     if (!body) return { memoBlock: '', leadCount: rows.length };
-    const memoBlock = `[상담 메모 신호 · 이번 달 인입 리드 중 정체/이탈 ${rows.length}명 분석]\n${body}`;
+    const cohortLabel = period?.from ? `${period.from}~${period.to} 인입` : '이번 달 인입';
+    const memoBlock = `[상담 메모 신호 · ${cohortLabel} 리드 중 정체/이탈 ${rows.length}명 분석]\n${body}`;
     return { memoBlock, leadCount: rows.length };
   } catch (err) {
     console.error('[strategy-memos] extraction failed (degrading):', err);

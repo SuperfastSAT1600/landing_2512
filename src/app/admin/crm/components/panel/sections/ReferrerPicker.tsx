@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X, Check } from 'lucide-react';
-import type { Student } from '@/types/crm';
 import { inputCls } from './StudentInfoEdit';
+
+/** name_search API가 실제 반환하는 필드만 — 전체 Student 아님(route.ts의 select와 일치). */
+interface ReferrerResult {
+  id: string;
+  name: string;
+  grade: string;
+  inquiry_date: string | null;
+  parent_phone: string;
+}
 
 /** naive/ISO 날짜 문자열 → "YYYY.MM.DD". 없으면 ''. */
 function fmtDate(s: string | null): string {
@@ -29,32 +37,35 @@ interface Props {
  * 검색에 없는 외부 소개자는 입력 텍스트 그대로 저장(id=null). RetryKanban 검색 패턴 재사용.
  */
 export function ReferrerPicker({ adminKey, name, linkedId, selfId, onChange }: Props) {
-  const [results, setResults] = useState<Student[]>([]);
+  const [results, setResults] = useState<ReferrerResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const search = useCallback(async (q: string) => {
-    if (q.trim().length < 1) { setResults([]); return; }
-    setSearching(true);
-    try {
-      // name_search: lead_status 무관 전체 학생 이름 검색(수업중·이탈 학생도 소개자가 될 수 있음).
-      const res = await fetch(`/api/crm/students?name_search=${encodeURIComponent(q.trim())}`, {
-        headers: { 'x-admin-key': adminKey },
-      });
-      const json = await res.json();
-      setResults((json.data ?? []).filter((s: Student) => s.id !== selfId).slice(0, 8));
-    } catch {
-      setResults([]);
-    } finally {
-      setSearching(false);
-    }
-  }, [adminKey, selfId]);
-
+  // 디바운스 검색. cleanup의 cancelled 가드로 늦게 도착한 stale 응답이 최신 결과를 덮어쓰지 않게 한다.
   useEffect(() => {
     if (!open) return;
-    const t = setTimeout(() => search(name), 300);
-    return () => clearTimeout(t);
-  }, [name, open, search]);
+    const q = name.trim();
+    if (!q) { setResults([]); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        // name_search: lead_status 무관 전체 학생 이름 검색(수업중·이탈 학생도 소개자가 될 수 있음).
+        const res = await fetch(`/api/crm/students?name_search=${encodeURIComponent(q)}`, {
+          headers: { 'x-admin-key': adminKey },
+        });
+        const json = await res.json();
+        if (!cancelled) {
+          setResults((json.data ?? []).filter((s: ReferrerResult) => s.id !== selfId).slice(0, 8));
+        }
+      } catch {
+        if (!cancelled) setResults([]);
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [name, open, adminKey, selfId]);
 
   return (
     <div className="relative">
