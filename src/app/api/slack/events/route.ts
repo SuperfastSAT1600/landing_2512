@@ -251,8 +251,12 @@ async function handleBlogRequest(n: number, channel: string, threadTs?: string, 
     publishToLanding(topic.title, html, slug, topic),
   ]);
 
-  const ghostUrl2 = ghostResult.status === 'fulfilled' ? ghostResult.value.url : '(Ghost 발행 실패)';
-  const landingUrl = landingResult.status === 'fulfilled' ? landingResult.value : '(랜딩 발행 실패)';
+  const ghostUrl2 = ghostResult.status === 'fulfilled'
+    ? ghostResult.value.url
+    : `(Ghost 실패: ${ghostResult.reason?.message ?? ghostResult.reason})`;
+  const landingUrl = landingResult.status === 'fulfilled'
+    ? landingResult.value
+    : `(랜딩 실패: ${landingResult.reason?.message ?? landingResult.reason})`;
 
   await postSlack(
     channel,
