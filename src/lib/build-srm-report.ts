@@ -207,12 +207,18 @@ async function humanizeNarrative(text: string): Promise<string> {
   const result = res.choices[0]?.message?.content?.trim() ?? text;
   let humanized = result.length > 0 ? result : text;
 
-  // 내부 행동 용어 → 학부모 친화 표현으로 강제 변환 (명사구 직접 치환)
+  // 내부 행동 용어 → 학부모 친화 표현으로 강제 변환 (조사별 처리 후 기본 치환)
   humanized = humanized
+    .replace(/확신 오류(가|를|를?)/g, '자신 있게 선택했지만 틀린 문제$1')
+    .replace(/확신 오류이/g, '자신 있게 선택했지만 틀린 문제가')
     .replace(/확신 오류/g, '자신 있게 선택했지만 틀린 문제')
+    .replace(/성급한 오답이/g, '빠르게 선택했지만 틀린 문제가')
+    .replace(/성급한 오답(을|은|의|도)/g, '빠르게 선택했지만 틀린 문제$1')
     .replace(/성급한 오답/g, '빠르게 선택했지만 틀린 문제')
+    .replace(/막힌 패턴이/g, '시간이 걸렸는데도 틀린 문제가')
+    .replace(/막힌 패턴(을|은|의|도)/g, '시간이 걸렸는데도 틀린 문제$1')
     .replace(/막힌 패턴/g, '시간이 걸렸는데도 틀린 문제')
-    // "오류가 발생" 계열 → "실수가 있었" 또는 "틀린 문제가 있었"
+    // "오류가 발생" 계열 → "실수가 있었"
     .replace(/오류가 (발생했습니다|발생하였습니다|났습니다)/g, '실수가 있었습니다')
     .replace(/오류가 발생/g, '실수가 발생')
     .replace(/이러한 오류는/g, '이 부분은');
