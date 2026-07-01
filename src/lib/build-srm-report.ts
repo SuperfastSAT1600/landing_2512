@@ -205,12 +205,25 @@ async function humanizeNarrative(text: string): Promise<string> {
     max_tokens: 400, temperature: 0.2,
   });
   const result = res.choices[0]?.message?.content?.trim() ?? text;
-  const humanized = result.length > 0 ? result : text;
+  let humanized = result.length > 0 ? result : text;
+
+  // 내부 행동 용어 → 학부모 친화 표현으로 강제 변환
+  humanized = humanized
+    .replace(/확신 오류가? (\d+)건/g, '자신 있게 골랐지만 $1건을 틀린')
+    .replace(/성급한 오답이? (\d+)건/g, '빠르게 넘겼지만 $1건을 틀린')
+    .replace(/막힌 패턴이? (\d+)건/g, '시간이 걸렸는데도 $1건을 틀린')
+    .replace(/확신 오류가? 각각 (\d+)건/g, '자신 있게 골랐지만 각각 $1건을 틀린')
+    .replace(/성급한 오답이? 각각 (\d+)건/g, '빠르게 넘겼지만 각각 $1건을 틀린')
+    .replace(/막힌 패턴이? 각각 (\d+)건/g, '시간이 걸렸는데도 각각 $1건을 틀린')
+    // "오류가 발생" 계열 → "실수가 있었" 또는 "틀린 문제가 있었"
+    .replace(/오류가 (발생했습니다|발생하였습니다|났습니다)/g, '실수가 있었습니다')
+    .replace(/오류가 발생/g, '실수가 발생')
+    .replace(/이러한 오류는/g, '이 부분은');
+
   // "다음 수업에서는" 포함 문장 끝 현재형 → 의지형(-겠습니다)으로 강제 변환
   return humanized.replace(
     /(다음 수업[^\n。.]*?)(합니다|집중합니다|다룹니다|이어갑니다|진행합니다|강화합니다|높입니다|키워나갑니다|넓혀갑니다)(\.|\s*$)/gm,
     (_, pre, verb, end) => {
-      const stem = verb.replace(/합니다|집중합니다|다룹니다|이어갑니다|진행합니다|강화합니다|높입니다|키워나갑니다|넓혀갑니다/, '');
       const gecht: Record<string, string> = {
         '합니다': '하겠습니다', '집중합니다': '집중하겠습니다', '다룹니다': '다루겠습니다',
         '이어갑니다': '이어가겠습니다', '진행합니다': '진행하겠습니다', '강화합니다': '강화하겠습니다',
