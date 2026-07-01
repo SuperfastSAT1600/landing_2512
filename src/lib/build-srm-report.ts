@@ -216,12 +216,15 @@ async function humanizeNarrative(text: string): Promise<string> {
     .replace(/확신 오류(가|를|를?)/g, '자신 있게 선택했지만 틀린 문제$1')
     .replace(/확신 오류이/g, '자신 있게 선택했지만 틀린 문제가')
     .replace(/확신 오류/g, '자신 있게 선택했지만 틀린 문제')
-    .replace(/성급한 오답이/g, '빠르게 선택했지만 틀린 문제가')
-    .replace(/성급한 오답(을|은|의|도)/g, '빠르게 선택했지만 틀린 문제$1')
-    .replace(/성급한 오답/g, '빠르게 선택했지만 틀린 문제')
+    .replace(/성급한 오답이/g, '빠르게 정답을 골랐지만 틀린 문제가')
+    .replace(/성급한 오답(을|은|의|도)/g, '빠르게 정답을 골랐지만 틀린 문제$1')
+    .replace(/성급한 오답/g, '빠르게 정답을 골랐지만 틀린 문제')
     .replace(/막힌 패턴이/g, '시간이 걸렸는데도 틀린 문제가')
     .replace(/막힌 패턴(을|은|의|도)/g, '시간이 걸렸는데도 틀린 문제$1')
     .replace(/막힌 패턴/g, '시간이 걸렸는데도 틀린 문제')
+    // LLM이 "빠르게 선택했지만" 형태로 직접 생성하는 경우도 정형화
+    .replace(/빠르게 선택했지만 틀린/g, '빠르게 정답을 골랐지만 틀린')
+    .replace(/빠르게 넘겼지만 틀린/g, '빠르게 정답을 골랐지만 틀린')
     // "오류가 발생" 계열 → "실수가 있었"
     .replace(/오류가 (발생했습니다|발생하였습니다|났습니다)/g, '실수가 있었습니다')
     .replace(/오류가 발생/g, '실수가 발생')
@@ -458,7 +461,7 @@ async function generateStudyHallNarrative(
           '금지: 데이터에 없는 행동 묘사, "~것이 중요합니다", "~로 보입니다", "~시사합니다", 퍼센트 단독 나열, "SH"·"TC" 등 약자 사용 (스터디홀·테스트센터 전체 명칭 사용), "학생은"으로 시작하는 모든 문장.',
           '- "오늘"이란 단어를 출력에 쓰지 않습니다. 학부모가 리포트를 보는 시점은 당일이 아닐 수 있으므로, "이번 세션에서", "이번 스터디홀에서" 등으로 바꿉니다.',
           '- "오류가 납니다", "오류가 발생했습니다", "오류를 보였습니다" 같은 추상적 표현은 쓰지 않습니다. 대신 "틀렸습니다", "실수가 있었습니다", 또는 구체적인 상황으로 씁니다.',
-          '- "확신 오류", "막힌 패턴", "성급한 오답", "불확실 정답" 같은 내부 용어를 출력에 그대로 쓰지 않습니다. 반드시 풀어서 씁니다.',
+          '- "확신 오류", "막힌 패턴", "성급한 오답", "불확실 정답" 같은 내부 용어를 출력에 그대로 쓰지 않습니다. 반드시 풀어서 씁니다. 예: "성급한 오답" → "빠르게 정답을 골랐지만 틀린 문제".',
         ].join('\n'),
       },
       { role: 'user', content: userContent },
@@ -510,7 +513,7 @@ async function generateTestCenterNarrative(
     const titleLabel = l.title
       ? (domainHint ? `${domainHint} ${l.title}` : l.title)
       : (domainHint ? `${domainHint} Module ${i + 1}` : `Module ${i + 1}`);
-    const header = `${titleLabel}: ${l.score}/${l.total} (${pct}%)`;
+    const header = `${titleLabel}: ${l.total}문항 중 ${l.score}문항 정답 (${pct}%)`;
     if (!l.skills || l.skills.length === 0) return header;
     const skillDetail = [...l.skills]
       .sort((a, b) => (a.total > 0 ? a.correct / a.total : 1) - (b.total > 0 ? b.correct / b.total : 1))
@@ -525,7 +528,7 @@ async function generateTestCenterNarrative(
         if ((s.stuckCount ?? 0) > 0 && wrongCount > 0 && (s.stuckCount ?? 0) >= Math.ceil(wrongCount * 0.4)) behaviorHints.push(`막힌 패턴 ${s.stuckCount}건`);
         else if ((s.impulsiveCount ?? 0) > 0 && wrongCount > 0 && (s.impulsiveCount ?? 0) >= Math.ceil(wrongCount * 0.4)) behaviorHints.push(`성급한 오답 ${s.impulsiveCount}건`);
         const behaviorHint = behaviorHints.length > 0 ? ` [${behaviorHints.join(' / ')}]` : '';
-        return `    - ${s.skill}: ${s.correct}/${s.total} (${sacc}%)${timeHint}${behaviorHint}`;
+        return `    - ${s.skill}: ${s.total}문항 중 ${s.correct}문항 정답 (${sacc}%)${timeHint}${behaviorHint}`;
       }).join('\n');
     return `${header}\n${skillDetail}`;
   });
@@ -650,11 +653,11 @@ async function generateTestCenterNarrative(
           '- 커리큘럼 제목이 있으면 반드시 언급합니다.',
           '- [모듈별 결과] 안에 스킬 데이터가 있으면, 스킬은 해당 모듈에 속한 것입니다. 다른 모듈의 스킬과 혼동하지 않습니다.',
           '- 취약한 스킬을 언급할 때는 어느 모듈(RW/Math Module 1/2)의 스킬인지 맥락을 함께 씁니다.',
-          '- "N문항 중 M문항" 형식을 사용합니다.',
+          '- 문항 수는 반드시 "전체 N문항 중 M문항 정답" 순서로 씁니다. M문항을 앞에 쓰지 않습니다. 입력의 "N문항 중 M문항 정답" 형식을 그대로 따릅니다.',
           '- [모듈별 결과]의 스킬에 행동 데이터가 있으면 해석에 반영합니다:',
           '  · "확신 오류 N건" → 자신 있게 선택했지만 틀린 문제. "확신 오류"라는 용어를 출력에 그대로 쓰지 않습니다. 대신 "자신 있게 골랐지만 N건을 틀렸습니다. 어디서 판단이 틀렸는지 다음 수업에서 짚어보겠습니다"처럼 풀어 씁니다. 가장 위험한 패턴입니다.',
           '  · "막힌 패턴 N건" → 시간이 오래 걸렸는데도 틀린 문제. 개념 자체에 공백이 있습니다. "막힌 패턴" 대신 "시간이 걸렸는데도 N건을 틀렸습니다"처럼 풀어 씁니다.',
-          '  · "성급한 오답 N건" → 짧은 시간에 넘겼지만 틀린 문제. 압박 상황에서 충동적으로 선택한 패턴. "성급한 오답" 대신 "빠르게 넘겼지만 N건을 틀렸습니다"처럼 풀어 씁니다.',
+          '  · "성급한 오답 N건" → 짧은 시간에 빠르게 정답을 골랐지만 틀린 문제. 압박 상황에서 충동적으로 선택한 패턴. "성급한 오답" 대신 "빠르게 정답을 골랐지만 N건을 틀렸습니다"처럼 풀어 씁니다.',
           '  행동 데이터가 없는 스킬은 정답률만으로 서술합니다.',
           '- [스터디홀 교차] 항목이 있으면 연습-검증 격차를 반드시 해석합니다.',
           '- [최근 단어 학습]이 있으면 최근 틀린 어휘 패턴을 RW 결과 해석에 연결합니다.',
