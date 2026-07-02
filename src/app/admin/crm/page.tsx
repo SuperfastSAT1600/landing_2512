@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { UserPlus, Search, AlertCircle } from 'lucide-react';
-import { Student, LeadTier, LEAD_TIER_OPTIONS, isStageStalled, effectiveLeadTier } from '@/types/crm';
+import { Student, LeadTier, LEAD_TIER_OPTIONS, isStageStalled, effectiveLeadTier, type InsightPeriod } from '@/types/crm';
 import { useCrmRealtime, RealtimeStatus } from '@/hooks/useCrmRealtime';
 import { SalesKanban } from './components/SalesKanban';
 import { KanbanStatsStrip } from './components/KanbanStatsStrip';
@@ -63,8 +63,10 @@ export default function CrmPage() {
   const [tierFilter, setTierFilter] = useState<'' | LeadTier>('');
   const [activeTab, setActiveTab] = useState<'today' | 'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('today');
   const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'experiment' | 'library' | undefined>(undefined);
+  const [strategyPeriod, setStrategyPeriod] = useState<InsightPeriod | undefined>(undefined);
 
-  const openStrategyAgent = useCallback(() => {
+  const openStrategyAgent = useCallback((period: InsightPeriod) => {
+    setStrategyPeriod(period);
     setStrategiesInitialSubTab('library');
     setActiveTab('strategies');
   }, []);
@@ -383,7 +385,7 @@ export default function CrmPage() {
         )}
 
         {activeTab === 'strategies' && (
-          <StrategiesTab adminKey={adminKey} initialSubTab={strategiesInitialSubTab} />
+          <StrategiesTab adminKey={adminKey} initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} />
         )}
 
         {activeTab === 'stats' && (

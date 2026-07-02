@@ -3,16 +3,26 @@
  * 기간 윈도우·정체 집계·health 스냅샷 로직의 단일 소스.
  */
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, effectiveLeadTier, type FunnelStage, type TrafficSource, type LeadTier } from '@/types/crm';
+import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, effectiveLeadTier, type FunnelStage, type TrafficSource, type LeadTier, type InsightPeriod } from '@/types/crm';
 import { buildHealthSnapshot, type StalledCount, type HealthSnapshot } from '@/lib/strategy-health';
 import { buildCorrelationBlock, type CorrelationStudent } from '@/lib/strategy-correlations';
 import type { CrmStatsData } from '@/app/api/crm/stats/route';
+import { parseISO, addDays, differenceInCalendarDays, format } from 'date-fns';
+
+interface PeriodRange {
+  curFrom: string;
+  curTo: string;
+  prevFrom: string;
+  prevTo: string;
+  periodDays: number;
+  periodLabel: string;
+}
 
 /**
  * 해당월(이번 달) 기준 기간 + 추세 비교용 직전 달 동기간(같은 일자까지).
  * 예: 오늘이 6/19면 current = 6/1~6/19, previous = 5/1~5/19.
  */
-function monthRanges(todayStr: string) {
+function monthRanges(todayStr: string): PeriodRange {
   const [y, m, d] = todayStr.split('-').map(Number);
   const pad = (n: number) => String(n).padStart(2, '0');
   const pY = m === 1 ? y - 1 : y;
@@ -24,7 +34,46 @@ function monthRanges(todayStr: string) {
     prevFrom: `${pY}-${pad(pM)}-01`,
     prevTo: `${pY}-${pad(pM)}-${pad(Math.min(d, prevLastDay))}`,
     periodDays: d,
+    periodLabel: `이번 달(1일~오늘, ${d}일차) vs 지난 달 같은 기간`,
   };
+}
+
+/**
+ * 사용자가 고른 임의 기간 → current 구간 + 직전 '동일 길이' 구간 비교.
+ * 예: 6/1~6/30(30일) 선택 시 previous = 5/2~5/31(직전 30일).
+ * period 미지정이면 monthRanges(오늘) 기본으로 폴백.
+ */
+export function resolvePeriod(period?: InsightPeriod): PeriodRange {
+  if (!period?.from || !period?.to) return monthRanges(kstDateStr(Date.now()));
+  const fromD = parseISO(period.from);
+  const toD = parseISO(period.to);
+  const len = differenceInCalendarDays(toD, fromD) + 1; // 양끝 포함 일수
+  const prevTo = addDays(fromD, -1);
+  const prevFrom = addDays(prevTo, -(len - 1));
+  const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
+  return {
+    curFrom: period.from,
+    curTo: period.to,
+    prevFrom: fmt(prevFrom),
+    prevTo: fmt(prevTo),
+    periodDays: len,
+    periodLabel: `${period.from}~${period.to} (${len}일) vs 직전 ${len}일(${fmt(prevFrom)}~${fmt(prevTo)})`,
+  };
+}
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * 요청 본문에서 분석 기간(from/to)을 파싱·검증. 형식 불량·from>to·미지정이면 undefined
+ * (→ buildBriefHealth/buildMemoSignals가 이번 달 기본으로 폴백).
+ */
+export function parsePeriod(body: unknown): InsightPeriod | undefined {
+  if (!body || typeof body !== 'object') return undefined;
+  const { from, to } = body as { from?: unknown; to?: unknown };
+  if (typeof from !== 'string' || typeof to !== 'string') return undefined;
+  if (!DATE_RE.test(from) || !DATE_RE.test(to)) return undefined;
+  if (from > to) return undefined;
+  return { from, to };
 }
 
 /** 같은 서버의 stats 엔드포인트를 내부 호출해 기간별 지표를 가져온다. */
@@ -66,10 +115,16 @@ export async function fetchStalledCounts(): Promise<StalledCount[]> {
   }));
 }
 
-/** 해당월(이번 달, 1일~오늘) 지표 + 직전 달 동기간 비교 + 정체 리드로 KPI 건강 스냅샷 구성. stats 실패 시 null. */
-export async function buildBriefHealth(origin: string, adminKey: string): Promise<HealthSnapshot | null> {
-  const today = kstDateStr(Date.now());
-  const r = monthRanges(today);
+/**
+ * 선택 기간(없으면 이번 달, 1일~오늘) 지표 + 직전 동일 길이 구간 비교 + 정체 리드로
+ * KPI 건강 스냅샷 구성. stats 실패 시 null.
+ */
+export async function buildBriefHealth(
+  origin: string,
+  adminKey: string,
+  period?: InsightPeriod
+): Promise<HealthSnapshot | null> {
+  const r = resolvePeriod(period);
   const [current, previous, stalled] = await Promise.all([
     fetchStatsPeriod(origin, adminKey, r.curFrom, r.curTo),
     fetchStatsPeriod(origin, adminKey, r.prevFrom, r.prevTo),
@@ -81,7 +136,7 @@ export async function buildBriefHealth(origin: string, adminKey: string): Promis
     previous,
     stalled,
     periodDays: r.periodDays,
-    periodLabel: `이번 달(1일~오늘, ${r.periodDays}일차) vs 지난 달 같은 기간`,
+    periodLabel: r.periodLabel,
   });
 }
 
