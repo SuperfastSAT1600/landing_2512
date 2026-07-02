@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { SKELETON_SYSTEM, GHOST_PROSE_SYSTEM, LANDING_PROSE_SYSTEM } from './blog-prompts';
 
 export type Topic = { n?: number; title: string; rationale: string; point: string };
-export type BlogDraft = { ghostMarkdown: string; landingMarkdown: string; slug: string; title: string };
+export type BlogDraft = { ghostMarkdown: string; landingMarkdown: string; slug: string; title: string; focusKeyword: string };
 
 // ─── API Calls ────────────────────────────────────────────────────────────────
 
@@ -74,5 +74,6 @@ export async function writeBlog(topic: Topic): Promise<BlogDraft> {
   const landingMarkdown = await generateLandingProse(topic, skeleton, client);
 
   const slug = extractSlugFromMarkdown(ghostMarkdown, topic.title);
-  return { ghostMarkdown, landingMarkdown, slug, title: topic.title };
+  const focusKeyword = (skeleton.focus_keyword as string | undefined) || topic.title;
+  return { ghostMarkdown, landingMarkdown, slug, title: topic.title, focusKeyword };
 }

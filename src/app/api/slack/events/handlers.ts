@@ -1,8 +1,9 @@
 import { marked } from 'marked';
 import type { Topic, BlogDraft } from './blog-writer';
 import { writeBlog } from './blog-writer';
-import { saveGhostDraft, publishGhostPost } from './ghost-client';
+import { saveGhostDraft, publishGhostPost, uploadImageToGhost } from './ghost-client';
 import { saveLandingDraft, publishLandingPost } from './landing-client';
+import { generateThumbnailUrl } from './thumbnail-generator';
 import { postSlack, getDraftFromThread, BLOG_CHANNEL } from './slack-utils';
 import { generateTopics, buildTopicMessage } from './topic-suggester';
 
@@ -21,17 +22,24 @@ function stripFrontmatter(markdown: string): string {
   return markdown.replace(/^---\n[\s\S]+?\n---\n?/, '').trim();
 }
 
-async function saveDrafts(draft: BlogDraft, topic: Topic): Promise<{ ghostId: string; landingId: string }> {
+async function generateAndUploadThumbnail(focusKeyword: string, slug: string): Promise<string> {
+  const dalleUrl = await generateThumbnailUrl(focusKeyword);
+  return uploadImageToGhost(dalleUrl, `thumbnail-${slug}.png`);
+}
+
+async function saveDrafts(
+  draft: BlogDraft, topic: Topic, thumbnailUrl: string
+): Promise<{ ghostId: string; landingId: string }> {
   const ghostHtml = await marked(stripFrontmatter(draft.ghostMarkdown));
   const landingHtml = await marked(stripFrontmatter(draft.landingMarkdown));
 
   const meta = extractFrontmatter(draft.ghostMarkdown);
-  const focusKeyword = meta.focus_keyword || draft.title.split(' ').slice(0, 3).join(' ');
+  const focusKeyword = meta.focus_keyword || draft.focusKeyword;
   const description = meta.description || topic.rationale || draft.title;
 
   const [ghostResult, landingResult] = await Promise.allSettled([
-    saveGhostDraft(draft.title, ghostHtml, draft.slug, meta.description || ''),
-    saveLandingDraft(draft.title, landingHtml, draft.slug, topic, description, focusKeyword),
+    saveGhostDraft(draft.title, ghostHtml, draft.slug, meta.description || '', thumbnailUrl),
+    saveLandingDraft(draft.title, landingHtml, draft.slug, topic, description, focusKeyword, thumbnailUrl),
   ]);
 
   if (ghostResult.status === 'rejected') throw new Error(`Ghost 저장 실패: ${ghostResult.reason?.message}`);
@@ -49,7 +57,16 @@ export async function handleBlogWrite(
   );
 
   const draft = await writeBlog(topic);
-  const { ghostId, landingId } = await saveDrafts(draft, topic);
+
+  // 썸네일 생성 (실패해도 초안 저장은 계속)
+  let thumbnailUrl = '';
+  try {
+    thumbnailUrl = await generateAndUploadThumbnail(draft.focusKeyword, draft.slug);
+  } catch (err) {
+    console.error('[thumbnail] 생성 실패, 이미지 없이 저장합니다:', err);
+  }
+
+  const { ghostId, landingId } = await saveDrafts(draft, topic, thumbnailUrl);
 
   const excerpt = stripFrontmatter(draft.ghostMarkdown)
     .replace(/#{1,3} .+\n/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);

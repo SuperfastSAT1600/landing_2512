@@ -2,7 +2,7 @@ import type { Topic } from './blog-writer';
 
 export async function saveLandingDraft(
   title: string, html: string, slug: string, topic: Topic,
-  description = '', focusKeyword = ''
+  description = '', focusKeyword = '', featuredImage = ''
 ): Promise<string> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -22,7 +22,7 @@ export async function saveLandingDraft(
       content: html,
       excerpt: excerpt.slice(0, 300),
       description: excerpt.slice(0, 155),
-      featured_image: null,
+      featured_image: featuredImage || null,
       category: 'SAT',
       tags: ['SAT', 'blog-agent'],
       author: 'SuperfastSAT',
