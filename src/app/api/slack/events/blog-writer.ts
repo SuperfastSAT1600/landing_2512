@@ -43,7 +43,7 @@ async function generateGhostProse(
 }
 
 async function generateLandingProse(
-  ghostMarkdown: string, skeleton: Record<string, unknown>, client: Anthropic
+  topic: Topic, skeleton: Record<string, unknown>, client: Anthropic
 ): Promise<string> {
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
@@ -51,7 +51,7 @@ async function generateLandingProse(
     system: LANDING_PROSE_SYSTEM,
     messages: [{
       role: 'user',
-      content: `아래 Ghost 초안을 랜딩 페이지 버전으로 변환해주세요.\n\n골격 메타:\n${JSON.stringify({ type: skeleton.type, focus_keyword: skeleton.focus_keyword, faq: skeleton.faq }, null, 2)}\n\n--- Ghost 초안 ---\n${ghostMarkdown}`,
+      content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 랜딩 페이지 블로그를 마크다운으로 작성해주세요.`,
     }],
   });
   return response.content[0].type === 'text' ? response.content[0].text : '';
@@ -71,7 +71,7 @@ export async function writeBlog(topic: Topic): Promise<BlogDraft> {
 
   const skeleton = await generateSkeleton(topic, client);
   const ghostMarkdown = await generateGhostProse(topic, skeleton, client);
-  const landingMarkdown = await generateLandingProse(ghostMarkdown, skeleton, client);
+  const landingMarkdown = await generateLandingProse(topic, skeleton, client);
 
   const slug = extractSlugFromMarkdown(ghostMarkdown, topic.title);
   return { ghostMarkdown, landingMarkdown, slug, title: topic.title };
