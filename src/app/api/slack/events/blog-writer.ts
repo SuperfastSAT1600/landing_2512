@@ -19,8 +19,12 @@ async function generateSkeleton(
     }],
   });
   const text = response.content[0].type === 'text' ? response.content[0].text : '{}';
-  const jsonMatch = text.match(/\{[\s\S]+\}/);
-  try { return JSON.parse(jsonMatch?.[0] ?? '{}'); } catch { return {}; }
+  // Strip markdown code fences, then extract outermost JSON object
+  const stripped = text.replace(/```(?:json)?\s*/g, '').replace(/```/g, '');
+  const start = stripped.indexOf('{');
+  const end = stripped.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) return {};
+  try { return JSON.parse(stripped.slice(start, end + 1)); } catch { return {}; }
 }
 
 async function generateGhostProse(
