@@ -3,7 +3,7 @@
 import { Pencil, Crown } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { SCHOOL_TYPE_LABELS, TIMEZONE_OPTIONS } from '@/types/crm';
-import { SAT_PAST_MONTHS, formatSatDate } from '../constants';
+import { formatPastMonth, formatSatDate } from '../constants';
 import { StudentInfoEdit } from './StudentInfoEdit';
 import type { EditForm } from '../types';
 import { SectionCard } from './SectionCard';
@@ -110,7 +110,7 @@ export function StudentInfoSection({
               label="직전 점수"
               value={scoreDisplay}
               sub={localStudent.previous_score_status === 'scored' && localStudent.previous_test_date
-                ? (SAT_PAST_MONTHS.find(m => m.value === localStudent.previous_test_date)?.label ?? localStudent.previous_test_date)
+                ? formatPastMonth(localStudent.previous_test_date)
                 : undefined}
             />
             <StudentInfoCell

@@ -7,7 +7,7 @@ import {
 import {
   INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
 } from '@/types/crm';
-import { SAT_TEST_DATES, SAT_PAST_MONTHS } from '../constants';
+import { pastSatMonths, targetSatDateGroups } from '../constants';
 import type { EditForm } from '../types';
 
 const inputCls = 'w-full bg-gray-50 border border-gray-200 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all';
@@ -171,7 +171,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
           <EditField label="응시 월">
             <select value={form.previous_test_date} onChange={set('previous_test_date')} className={selectCls}>
               <option value="">(미상)</option>
-              {SAT_PAST_MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              {pastSatMonths().map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
             </select>
           </EditField>
           <div className="grid grid-cols-2 gap-2">
@@ -188,7 +188,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
         <EditField label="1차 목표 시험일">
           <select value={form.target_test_date} onChange={set('target_test_date')} className={selectCls}>
             <option value="">(미정)</option>
-            {SAT_TEST_DATES.map(g => (
+            {targetSatDateGroups(form.target_test_date).map(g => (
               <optgroup key={g.group} label={g.group}>
                 {g.dates.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
               </optgroup>
@@ -203,7 +203,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
         <EditField label="2차 목표 시험일">
           <select value={form.target_test_date_2} onChange={set('target_test_date_2')} className={selectCls}>
             <option value="">(없음)</option>
-            {SAT_TEST_DATES.map(g => (
+            {targetSatDateGroups(form.target_test_date_2).map(g => (
               <optgroup key={g.group} label={g.group}>
                 {g.dates.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
               </optgroup>
