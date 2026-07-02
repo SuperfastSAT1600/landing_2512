@@ -3,7 +3,8 @@ import type { Topic, BlogDraft } from './blog-writer';
 import { writeBlog } from './blog-writer';
 import { saveGhostDraft, publishGhostPost } from './ghost-client';
 import { saveLandingDraft, publishLandingPost } from './landing-client';
-import { postSlack, getDraftFromThread } from './slack-utils';
+import { postSlack, getDraftFromThread, BLOG_CHANNEL } from './slack-utils';
+import { generateTopics, buildTopicMessage } from './topic-suggester';
 
 function extractFrontmatter(markdown: string): Record<string, string> {
   const match = markdown.match(/^---\n([\s\S]+?)\n---/);
@@ -59,6 +60,24 @@ export async function handleBlogWrite(
     `${meta}\n\n*블로그 초안 완성 — 확인해주세요*\n\n*제목:* ${draft.title}\n\n*요약:*\n${excerpt}...\n\n> 발행하려면 이 스레드에서 *@landingpage 발행할게요* 라고 입력해주세요.`,
     threadTs
   );
+}
+
+export async function handleTopicSuggest(
+  n: number, channel: string, threadTs: string
+): Promise<void> {
+  await postSlack(channel, `주제 ${n}개를 생성 중입니다...`, threadTs);
+  const topics = await generateTopics(n);
+  if (!topics.length) {
+    await postSlack(channel, '현재 적합한 주제를 찾을 수 없습니다. 직접 주제를 입력해주세요.', threadTs);
+    return;
+  }
+  const message = buildTopicMessage(topics);
+  // BLOG_CHANNEL에 발행 — getTodayTopics()가 파싱할 수 있도록
+  await postSlack(BLOG_CHANNEL, message);
+  // 요청 스레드에도 동일 내용 회신
+  if (channel !== BLOG_CHANNEL || threadTs) {
+    await postSlack(channel, message, threadTs);
+  }
 }
 
 export async function handlePublish(channel: string, threadTs: string): Promise<void> {

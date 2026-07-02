@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { after } from 'next/server';
 import { verifySlackRequest, postSlack, getTodayTopics, BLOG_CHANNEL } from './slack-utils';
-import { handleBlogWrite, handlePublish } from './handlers';
+import { handleBlogWrite, handlePublish, handleTopicSuggest } from './handlers';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -41,6 +41,16 @@ export async function POST(request: NextRequest) {
   const text = event.text ?? '';
   const channel = event.channel ?? BLOG_CHANNEL;
   const threadTs = event.thread_ts ?? event.ts!;
+
+  // 0. 주제 N개 뽑아줘
+  const topicCountMatch = text.match(/주제\s*(\d+)개\s*뽑아줘/);
+  if (topicCountMatch) {
+    const n = Math.min(parseInt(topicCountMatch[1]), 10);
+    after(() => handleTopicSuggest(n, channel, threadTs).catch(async err => {
+      await postSlack(channel, `주제 생성 오류: ${err.message}`, threadTs);
+    }));
+    return NextResponse.json({ ok: true });
+  }
 
   // 1. 발행 컨펌
   if (/발행할게요|발행해줘|publish/.test(text)) {
