@@ -153,10 +153,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: "Invalid slug format generated" }, { status: 400 });
         }
 
-        // Handle rename: delete old record if ID changed
-        if (originalId && originalId !== finalSlug) {
-            await supabaseAdmin.from('posts').delete().eq('id', originalId);
-        }
+        // Slug rename: old post is NOT deleted — admin can manually remove it from the posts list.
+        // Previously this auto-deleted the old post, which silently wiped coach intro posts.
 
         // If setting as CTA featured, clear it from all other posts first
         if (ctaFeatured === true) {
@@ -259,6 +257,21 @@ export async function DELETE(request: NextRequest) {
 
         if (!/^[a-z0-9가-힣-]+$/.test(id)) {
             return NextResponse.json({ success: false, error: "Invalid post ID" }, { status: 400 });
+        }
+
+        // Backup before hard delete
+        const { data: existing } = await supabaseAdmin
+            .from('posts')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (existing) {
+            await supabaseAdmin.from('posts_deleted').insert({
+                ...existing,
+                deleted_at: new Date().toISOString(),
+                deleted_reason: 'explicit',
+            });
         }
 
         const { error } = await supabaseAdmin

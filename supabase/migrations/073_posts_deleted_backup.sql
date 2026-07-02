@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS posts_deleted (
+  id TEXT NOT NULL,
+  title TEXT,
+  content TEXT,
+  date TEXT,
+  category TEXT,
+  excerpt TEXT,
+  description TEXT,
+  featured_image TEXT,
+  featured_image_alt TEXT,
+  feature_image TEXT,
+  focus_keyword TEXT,
+  author TEXT,
+  tags TEXT[],
+  cta_featured BOOLEAN,
+  meta_title TEXT,
+  meta_robots TEXT,
+  is_published BOOLEAN,
+  access_code TEXT,
+  deleted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_reason TEXT
+);
