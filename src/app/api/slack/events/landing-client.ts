@@ -60,5 +60,5 @@ export async function publishLandingPost(landingId: string): Promise<string> {
     const err = await res.text();
     throw new Error(`랜딩 발행 실패: ${res.status} ${err}`);
   }
-  return `https://superfastsat.com/blog/${landingId}`;
+  return `https://tutoring.superfastsat.com/blog/${landingId}`;
 }
