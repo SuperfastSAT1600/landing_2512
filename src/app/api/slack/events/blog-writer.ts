@@ -61,7 +61,7 @@ async function generateLandingProse(
 
 export function extractSlugFromMarkdown(markdown: string, title: string): string {
   const slugMatch = markdown.match(/^slug:\s*(.+)$/m);
-  if (slugMatch) return slugMatch[1].trim();
+  if (slugMatch) return slugMatch[1].trim().replace(/^["']|["']$/g, '');
   return title.toLowerCase().replace(/[^\w\s가-힣]/g, '').trim()
     .replace(/\s+/g, '-').slice(0, 60) + '-' + Date.now().toString(36);
 }
