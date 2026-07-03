@@ -21,6 +21,13 @@ interface EditState {
     curriculumPostSlug: string;
     reelUrls: string[];
     subjects: string[];
+    v2UserId: string | null;
+}
+
+interface V2Teacher {
+    id: string;
+    full_name: string;
+    email: string | null;
 }
 
 interface PostOption {
@@ -44,8 +51,10 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
         curriculumPostSlug: coach.curriculumPostSlug,
         reelUrls: coach.reelUrls ?? [],
         subjects: coach.subjects ?? [],
+        v2UserId: coach.v2UserId ?? null,
     });
     const [posts, setPosts] = useState<PostOption[]>([]);
+    const [v2Teachers, setV2Teachers] = useState<V2Teacher[]>([]);
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,6 +68,15 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                 if (data.success && data.posts) setPosts(data.posts);
             })
             .catch((err) => console.error('[CoachRow] posts fetch failed:', err));
+
+        fetch('/api/admin/coaches/v2-teachers', {
+            headers: { 'x-admin-key': getAdminKey() },
+        })
+            .then(r => r.json())
+            .then((data: { data?: V2Teacher[] }) => {
+                if (data.data) setV2Teachers(data.data);
+            })
+            .catch((err) => console.error('[CoachRow] v2 teachers fetch failed:', err));
     }, [editing, coach.name]);
 
     const handlePhotoUpload = async (file: File) => {
@@ -114,6 +132,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             curriculumPostSlug: coach.curriculumPostSlug,
             reelUrls: coach.reelUrls ?? [],
             subjects: coach.subjects ?? [],
+            v2UserId: coach.v2UserId ?? null,
         });
         setEditing(false);
     };
@@ -128,6 +147,15 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                 <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide ${coach.isActive ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'}`}>
                     {coach.isActive ? 'Active' : 'Inactive'}
                 </span>
+                {coach.v2UserId ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-purple-500/10 text-purple-400">
+                        V2 연결됨
+                    </span>
+                ) : (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-yellow-500/10 text-yellow-500">
+                        V2 미연결
+                    </span>
+                )}
 
                 <div className="ml-auto flex items-center gap-2">
                     <button
@@ -288,6 +316,26 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                             </select>
                         ) : (
                             <p className="text-xs text-gray-500 px-1">이 코치 이름으로 작성된 포스팅이 없습니다.</p>
+                        )}
+                    </div>
+
+                    {/* v2 계정 연결 */}
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">V2 계정 연결</label>
+                        <select
+                            value={editState.v2UserId ?? ''}
+                            onChange={e => setEditState(s => ({ ...s, v2UserId: e.target.value || null }))}
+                            className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                        >
+                            <option value="">연결 안 함</option>
+                            {v2Teachers.map(t => (
+                                <option key={t.id} value={t.id}>
+                                    {t.full_name}{t.email ? ` (${t.email})` : ''}
+                                </option>
+                            ))}
+                        </select>
+                        {v2Teachers.length === 0 && (
+                            <p className="text-xs text-gray-500 px-1">v2 teacher 계정을 불러오는 중...</p>
                         )}
                     </div>
 

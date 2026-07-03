@@ -10,6 +10,7 @@ export interface CoachData {
     isActive: boolean;
     reelUrls: string[];
     subjects: string[];
+    v2UserId: string | null;
 }
 
 type CoachRow = {
@@ -22,6 +23,7 @@ type CoachRow = {
     is_active: boolean;
     reel_urls: string[] | null;
     subjects: string[] | null;
+    v2_user_id: string | null;
 };
 
 function rowToCoach(row: CoachRow): CoachData {
@@ -35,6 +37,7 @@ function rowToCoach(row: CoachRow): CoachData {
         isActive: row.is_active,
         reelUrls: row.reel_urls ?? [],
         subjects: row.subjects ?? [],
+        v2UserId: row.v2_user_id ?? null,
     };
 }
 
@@ -78,6 +81,7 @@ export async function addCoach(coach: CoachData): Promise<boolean> {
         is_active: coach.isActive,
         reel_urls: coach.reelUrls ?? [],
         subjects: coach.subjects ?? [],
+        v2_user_id: coach.v2UserId ?? null,
     });
     return !error;
 }
@@ -92,6 +96,7 @@ export async function updateCoach(slug: string, updates: Partial<CoachData>): Pr
     if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
     if (updates.reelUrls !== undefined) dbUpdates.reel_urls = updates.reelUrls;
     if (updates.subjects !== undefined) dbUpdates.subjects = updates.subjects;
+    if (updates.v2UserId !== undefined) dbUpdates.v2_user_id = updates.v2UserId;
 
     const { error } = await supabaseAdmin.from('coaches').update(dbUpdates).eq('slug', slug);
     return !error;
