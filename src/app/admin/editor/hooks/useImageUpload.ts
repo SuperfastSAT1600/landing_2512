@@ -2,6 +2,17 @@
 
 import { useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
+import { createClient } from '@supabase/supabase-js';
+
+const ALLOWED_MIME_TYPES = new Set([
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+]);
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
 
 export function useImageUpload(
     setFeaturedImage: (url: string) => void,
@@ -15,17 +26,40 @@ export function useImageUpload(
     const [altTextInput, setAltTextInput] = useState('');
 
     async function uploadFile(file: File): Promise<string | null> {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch('/api/admin/upload', {
+        if (!ALLOWED_MIME_TYPES.has(file.type)) {
+            alert('지원하지 않는 파일 형식입니다. (JPG, PNG, GIF, WebP, SVG만 가능)');
+            return null;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+            alert('파일 크기가 너무 큽니다. (최대 50MB)');
+            return null;
+        }
+
+        const urlRes = await fetch('/api/admin/upload-url', {
             method: 'POST',
-            headers: { 'x-admin-key': localStorage.getItem('admin_key') || '' },
-            body: formData,
+            headers: {
+                'x-admin-key': localStorage.getItem('admin_key') || '',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ filename: file.name, contentType: file.type }),
         });
-        const data = await res.json();
-        if (data.success) return data.url;
-        alert('업로드 실패: ' + data.error);
-        return null;
+        const urlData = await urlRes.json();
+        if (!urlData.success) {
+            alert('업로드 URL 발급 실패: ' + urlData.error);
+            return null;
+        }
+
+        const { error: uploadError } = await supabase.storage
+            .from('uploads')
+            .uploadToSignedUrl(urlData.path, urlData.token, file, { contentType: file.type });
+
+        if (uploadError) {
+            alert('업로드 실패: ' + uploadError.message);
+            return null;
+        }
+
+        const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(urlData.path);
+        return publicUrl;
     }
 
     async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
