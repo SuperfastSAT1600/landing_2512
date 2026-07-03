@@ -23,7 +23,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfast
 export async function generateMetadata({ params }: Props) {
     const { slug } = await params;
     try {
-        const postData = await getPostData(slug);
+        const postData = await getPostData(decodeURIComponent(slug));
         const description = postData.description || postData.excerpt;
         const effectiveTitle = postData.metaTitle || `${postData.title} | SuperfastSAT Blog`;
         const ogImage = postData.featuredImage
@@ -73,8 +73,9 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function Post({ params }: Props) {
     const { slug } = await params;
-    const postData = await getPostData(slug);
-    const relatedPosts = await getRelatedPosts(slug, postData.category, 3);
+    const decodedSlug = decodeURIComponent(slug);
+    const postData = await getPostData(decodedSlug);
+    const relatedPosts = await getRelatedPosts(decodedSlug, postData.category, 3);
 
     return (
         <div className="bg-[#fafaf9] min-h-screen text-gray-800 font-sans selection:bg-blue-200">
