@@ -2,10 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Trash2, Copy, Check, Edit2, X, Save, Upload } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 import { CoachData } from '@/lib/coaches-data';
 import { ReelUrlsEditor } from './ReelUrlsEditor';
 import { CoachBioEditor } from './CoachBioEditor';
 import { isValidInstagramUrl } from '@/lib/instagram-url';
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
 
 interface CoachRowProps {
     coach: CoachData;
@@ -82,19 +88,31 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
     const handlePhotoUpload = async (file: File) => {
         setUploading(true);
         try {
-            const formData = new FormData();
-            formData.append('file', file);
-            const res = await fetch('/api/admin/upload', {
+            const urlRes = await fetch('/api/admin/upload-url', {
                 method: 'POST',
-                headers: { 'x-admin-key': getAdminKey() },
-                body: formData,
+                headers: {
+                    'x-admin-key': getAdminKey(),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename: file.name, contentType: file.type }),
             });
-            const data: { success: boolean; url?: string } = await res.json();
-            if (data.success && data.url) {
-                setEditState(s => ({ ...s, photo: data.url! }));
-            } else {
-                alert('업로드에 실패했습니다.');
+            const urlData: { success: boolean; path?: string; token?: string; error?: string } = await urlRes.json();
+            if (!urlData.success || !urlData.path || !urlData.token) {
+                alert('업로드 URL 발급 실패: ' + (urlData.error ?? '알 수 없는 오류'));
+                return;
             }
+
+            const { error: uploadError } = await supabase.storage
+                .from('uploads')
+                .uploadToSignedUrl(urlData.path, urlData.token, file, { contentType: file.type });
+
+            if (uploadError) {
+                alert('업로드 실패: ' + uploadError.message);
+                return;
+            }
+
+            const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(urlData.path);
+            setEditState(s => ({ ...s, photo: publicUrl }));
         } catch {
             alert('업로드 중 오류가 발생했습니다.');
         } finally {
