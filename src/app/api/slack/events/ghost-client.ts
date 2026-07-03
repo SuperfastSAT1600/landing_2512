@@ -24,22 +24,6 @@ function makeGhostJwt(): string {
   return `${header}.${payload}.${sig}`;
 }
 
-export async function uploadImageToGhost(imageUrl: string, filename: string): Promise<string> {
-  const jwt = makeGhostJwt();
-  const imgRes = await fetch(imageUrl);
-  const buffer = Buffer.from(await imgRes.arrayBuffer());
-  const formData = new FormData();
-  formData.append('file', new Blob([buffer], { type: 'image/png' }), filename);
-  formData.append('purpose', 'image');
-  const res = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/images/upload/`, {
-    method: 'POST',
-    headers: { Authorization: `Ghost ${jwt}` },
-    body: formData,
-  });
-  const data = await res.json() as { images?: { url: string }[] };
-  if (!data.images?.[0]) throw new Error(`Ghost 이미지 업로드 실패: ${JSON.stringify(data)}`);
-  return data.images[0].url;
-}
 
 export async function saveGhostDraft(
   title: string, html: string, slug: string, customExcerpt = ''

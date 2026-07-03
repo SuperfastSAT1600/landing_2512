@@ -1,9 +1,9 @@
 import { marked } from 'marked';
 import type { Topic, BlogDraft } from './blog-writer';
 import { writeBlog } from './blog-writer';
-import { saveGhostDraft, publishGhostPost, uploadImageToGhost } from './ghost-client';
+import { saveGhostDraft, publishGhostPost } from './ghost-client';
 import { saveLandingDraft, publishLandingPost } from './landing-client';
-import { generateThumbnailUrl } from './thumbnail-generator';
+import { generateAndUploadThumbnail } from './thumbnail-generator';
 import { postSlack, getDraftFromThread, BLOG_CHANNEL } from './slack-utils';
 import { generateTopics, buildTopicMessage } from './topic-suggester';
 
@@ -26,11 +26,6 @@ function stripFrontmatter(markdown: string): string {
   if (codeFenced !== markdown) return codeFenced.trim();
   // 표준 프론트매터: ---\n...\n--- (\r\n도 허용)
   return markdown.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, '').trim();
-}
-
-async function generateAndUploadThumbnail(focusKeyword: string, slug: string): Promise<string> {
-  const dalleUrl = await generateThumbnailUrl(focusKeyword);
-  return uploadImageToGhost(dalleUrl, `thumbnail-${slug}.png`);
 }
 
 async function saveDrafts(
@@ -69,7 +64,8 @@ export async function handleBlogWrite(
   try {
     thumbnailUrl = await generateAndUploadThumbnail(draft.focusKeyword, draft.slug);
   } catch (err) {
-    console.error('[thumbnail] 생성 실패, 이미지 없이 저장합니다:', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    await postSlack(channel, `⚠️ 썸네일 생성 실패 (이미지 없이 저장): ${msg}`, threadTs);
   }
 
   const { ghostId, landingId } = await saveDrafts(draft, topic, thumbnailUrl);

@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 
-export async function generateThumbnailUrl(focusKeyword: string): Promise<string> {
+async function generateDalleUrl(focusKeyword: string): Promise<string> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const prompt = `Minimalist monochrome illustration for a blog thumbnail.
@@ -24,4 +24,40 @@ Aesthetic reference: Notion, Slack, Airbnb product illustration style.`;
   const url = res.data?.[0]?.url;
   if (!url) throw new Error('DALL-E 3 이미지 URL을 받지 못했습니다.');
   return url;
+}
+
+async function uploadToSupabase(imageUrl: string, slug: string): Promise<string> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  const imgRes = await fetch(imageUrl);
+  const buffer = await imgRes.arrayBuffer();
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const path = `${year}/${month}/thumbnail-${slug}-${Date.now()}.png`;
+
+  const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/uploads/${path}`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+      'Content-Type': 'image/png',
+      'x-upsert': 'false',
+    },
+    body: buffer,
+  });
+
+  if (!uploadRes.ok) {
+    const err = await uploadRes.text();
+    throw new Error(`Supabase Storage 업로드 실패: ${uploadRes.status} ${err}`);
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/uploads/${path}`;
+}
+
+export async function generateAndUploadThumbnail(focusKeyword: string, slug: string): Promise<string> {
+  const dalleUrl = await generateDalleUrl(focusKeyword);
+  return uploadToSupabase(dalleUrl, slug);
 }
