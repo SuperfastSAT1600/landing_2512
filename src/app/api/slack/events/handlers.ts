@@ -38,7 +38,7 @@ async function saveDrafts(
   const description = meta.description || topic.rationale || draft.title;
 
   const [ghostResult, landingResult] = await Promise.allSettled([
-    saveGhostDraft(draft.title, ghostHtml, draft.slug, meta.description || '', thumbnailUrl),
+    saveGhostDraft(draft.title, ghostHtml, draft.slug, meta.description || ''),
     saveLandingDraft(draft.title, landingHtml, draft.slug, topic, description, focusKeyword, thumbnailUrl),
   ]);
 
