@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isBridgeAuthenticated, mapStudentToPrefill } from '@/lib/signup-bridge';
+import { logLeadEvent, LEAD_EVENT_DEDUP_MINUTES } from '@/lib/lead-events';
 
 /**
  * GET /api/crm/signup/[token]
@@ -35,6 +36,11 @@ export async function GET(
   if (student.signup_done_at) {
     return NextResponse.json({ status: 'consumed' }, { status: 409 });
   }
+
+  // 플랫폼 가입 페이지가 로드될 때 서버측으로 호출되므로 이 요청 자체가 "링크 클릭" 신호
+  await logLeadEvent(student.id, 'signup_link_clicked', {
+    dedupMinutes: LEAD_EVENT_DEDUP_MINUTES,
+  });
 
   return NextResponse.json({
     status: 'valid',
