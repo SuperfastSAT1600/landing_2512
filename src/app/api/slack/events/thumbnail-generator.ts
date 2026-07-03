@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 
-async function generateDalleUrl(focusKeyword: string): Promise<string> {
+async function generateImageB64(focusKeyword: string): Promise<string> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const prompt = `Minimalist monochrome illustration for a blog thumbnail.
@@ -14,24 +14,23 @@ Style rules (strictly follow):
 Aesthetic reference: Notion, Slack, Airbnb product illustration style.`;
 
   const res = await client.images.generate({
-    model: 'dall-e-3',
+    model: 'gpt-image-1',
     prompt,
-    size: '1792x1024',
-    quality: 'standard',
+    size: '1536x1024',
     n: 1,
   });
 
-  const url = res.data?.[0]?.url;
-  if (!url) throw new Error('DALL-E 3 이미지 URL을 받지 못했습니다.');
-  return url;
+  // gpt-image-1은 b64_json 반환
+  const b64 = res.data?.[0]?.b64_json;
+  if (!b64) throw new Error('gpt-image-1 이미지 데이터를 받지 못했습니다.');
+  return b64;
 }
 
-async function uploadToSupabase(imageUrl: string, slug: string): Promise<string> {
+async function uploadToSupabase(b64: string, slug: string): Promise<string> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-  const imgRes = await fetch(imageUrl);
-  const buffer = await imgRes.arrayBuffer();
+  const buffer = Buffer.from(b64, 'base64');
 
   const now = new Date();
   const year = now.getFullYear();
@@ -58,6 +57,6 @@ async function uploadToSupabase(imageUrl: string, slug: string): Promise<string>
 }
 
 export async function generateAndUploadThumbnail(focusKeyword: string, slug: string): Promise<string> {
-  const dalleUrl = await generateDalleUrl(focusKeyword);
-  return uploadToSupabase(dalleUrl, slug);
+  const b64 = await generateImageB64(focusKeyword);
+  return uploadToSupabase(b64, slug);
 }
