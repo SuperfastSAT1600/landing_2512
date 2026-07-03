@@ -8,18 +8,24 @@ import { postSlack, getDraftFromThread, BLOG_CHANNEL } from './slack-utils';
 import { generateTopics, buildTopicMessage } from './topic-suggester';
 
 function extractFrontmatter(markdown: string): Record<string, string> {
-  const match = markdown.match(/^---\n([\s\S]+?)\n---/);
+  const match = markdown.match(/^```(?:yaml)?\s*\r?\n(---\r?\n[\s\S]+?\r?\n---)/m)
+    ?? markdown.match(/^---\r?\n([\s\S]+?)\r?\n---/m);
   if (!match) return {};
+  const block = match[1].replace(/^---\r?\n/, '');
   const result: Record<string, string> = {};
-  for (const line of match[1].split('\n')) {
-    const kv = line.match(/^(\w+):\s*(.+)/);
+  for (const line of block.split(/\r?\n/)) {
+    const kv = line.match(/^([\w_]+):\s*(.+)/);
     if (kv) result[kv[1]] = kv[2].replace(/^["']|["']$/g, '').trim();
   }
   return result;
 }
 
 function stripFrontmatter(markdown: string): string {
-  return markdown.replace(/^---\n[\s\S]+?\n---\n?/, '').trim();
+  // 코드블록으로 감싼 경우: ```yaml\n---\n...\n---\n```
+  const codeFenced = markdown.replace(/^```(?:yaml)?\s*\r?\n---\r?\n[\s\S]+?\r?\n---\s*\r?\n```\s*\r?\n?/m, '');
+  if (codeFenced !== markdown) return codeFenced.trim();
+  // 표준 프론트매터: ---\n...\n--- (\r\n도 허용)
+  return markdown.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, '').trim();
 }
 
 async function generateAndUploadThumbnail(focusKeyword: string, slug: string): Promise<string> {
