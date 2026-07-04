@@ -11,6 +11,7 @@ Style rules (strictly follow):
 - Consistent-weight black outline, flat design with soft gray shading for subtle depth.
 - Symbolic, simplified forms — no complex detail.
 - No text, no labels, no letters anywhere in the image.
+- Scale: the illustrated subject must occupy approximately 70% of the canvas area. Leave wide white margins on all sides so the illustration feels smaller and more centered.
 Aesthetic reference: Notion, Slack, Airbnb product illustration style.`;
 
   const res = await client.images.generate({
