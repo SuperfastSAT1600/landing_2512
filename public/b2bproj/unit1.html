@@ -52,16 +52,72 @@ body {
   letter-spacing: 0.4em; color: var(--white);
   text-transform: uppercase;
 }
-.nav-links {
-  display: flex; gap: 32px;
+/* ── Top nav dropdown (2-level) ─────────────────────────── */
+.nav-dropdown { position: relative; }
+.nav-trigger {
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--mute); cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  user-select: none; transition: color 0.15s;
 }
-.nav-links a {
-  font-size: 9px; letter-spacing: 0.22em;
-  color: var(--mute); text-transform: uppercase;
-  text-decoration: none;
-  transition: color 0.15s;
+.nav-trigger:hover { color: var(--white); }
+.nav-trigger-arrow { font-size: 7px; transition: transform 0.2s; }
+.nav-dropdown.open .nav-trigger-arrow { transform: rotate(180deg); }
+.nav-menu {
+  display: none;
+  position: absolute; top: calc(100% + 14px); right: 0;
+  background: rgba(8,8,8,0.98);
+  border: 0.5px solid var(--line);
+  backdrop-filter: blur(16px);
+  min-width: 260px; z-index: 200;
+  max-height: 80vh; overflow-y: auto;
 }
-.nav-links a:hover { color: var(--white); }
+.nav-dropdown.open .nav-menu { display: block; }
+
+/* Level 1 — Unit header */
+.nav-unit-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--line);
+  transition: background 0.12s;
+  user-select: none;
+}
+.nav-unit-hd:hover { background: rgba(255,255,255,0.03); }
+.nav-unit-hd-left {}
+.nav-unit-label {
+  font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--white); font-weight: 700;
+}
+.nav-unit-sub {
+  font-size: 9px; letter-spacing: 0.05em; text-transform: none;
+  color: var(--mute); margin-top: 3px; font-weight: 400;
+}
+.nav-unit-arrow {
+  font-size: 7px; color: var(--mute);
+  transition: transform 0.2s; flex-shrink: 0; margin-left: 12px;
+}
+.nav-unit.open .nav-unit-arrow { transform: rotate(90deg); }
+
+/* Level 2 — Section items */
+.nav-sections { display: none; }
+.nav-unit.open .nav-sections { display: block; }
+.nav-sec-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px 9px 24px;
+  font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--mute); cursor: pointer;
+  border-bottom: 0.5px solid rgba(42,42,47,0.6);
+  transition: color 0.12s, background 0.12s;
+  white-space: nowrap;
+}
+.nav-sections .nav-sec-item:last-child { border-bottom: none; }
+.nav-sec-item:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+.nav-sec-item.active { color: var(--white); }
+.nav-sec-num {
+  font-size: 7px; color: var(--line);
+  min-width: 14px; flex-shrink: 0;
+}
 
 /* ── Section wrapper ────────────────────────────────────── */
 .section {
@@ -100,7 +156,7 @@ body {
   text-transform: uppercase; line-height: 0.94;
   color: var(--white);
 }
-.d-xxl { font-size: clamp(52px, 8vw, 96px); }
+.d-xxl { font-size: clamp(40px, 6.2vw, 86px); }
 .d-xl  { font-size: clamp(36px, 5.5vw, 64px); }
 .d-lg  { font-size: clamp(28px, 4vw, 48px); }
 .d-md  { font-size: clamp(22px, 3vw, 34px); }
@@ -115,14 +171,40 @@ body {
   position: relative;
   overflow: hidden;
 }
-.hero-glow {
+
+/* Video background */
+#hero-vbg {
+  position: absolute; inset: 0;
+  z-index: 0; overflow: hidden;
+}
+#hero-vbg iframe {
   position: absolute;
-  width: 70vw; height: 70vw;
-  max-width: 800px; max-height: 800px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, #181818 0%, transparent 68%);
-  top: -20%; right: -10%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: max(100%, calc(100vh * 16 / 9));
+  height: max(100%, calc(100vw * 9 / 16));
   pointer-events: none;
+  opacity: 0.45;
+}
+#hero-vbg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.25) 0%,
+    rgba(0,0,0,0.80) 100%
+  );
+  z-index: 1;
+}
+
+/* Hero content above video */
+.hero-content {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column;
+}
+
+.hero-glow {
+  display: none; /* video 배경으로 대체 */
 }
 .hero-unit-tag {
   font-size: 9px; letter-spacing: 0.4em;
@@ -223,6 +305,98 @@ body {
 }
 .quote-ko { font-size: 13px; color: var(--mute); line-height: 1.6; }
 .quote-note { font-size: 13px; color: var(--mute); line-height: 1.7; padding-top: 36px; }
+
+/* ── Note: saved examples (small, reference) ────────────── */
+.note-examples { display: flex; flex-direction: column; gap: 0; margin-top: 12px; }
+.note-ex-item {
+  position: relative;
+  font-size: 11px; color: var(--muted);
+  padding: 5px 20px 5px 0;
+  border-top: 0.5px solid var(--line);
+  line-height: 1.5; cursor: pointer;
+  transition: color 0.15s;
+}
+.note-ex-item:hover { color: var(--white); }
+.note-ex-del {
+  position: absolute; top: 50%; right: 0;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--mute); font-size: 9px;
+  cursor: pointer; padding: 2px;
+  opacity: 0; transition: opacity 0.15s;
+}
+.note-ex-item:hover .note-ex-del { opacity: 1; }
+.note-add-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 12px;
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--muted); cursor: pointer;
+  transition: color 0.15s; user-select: none;
+}
+.note-add-btn:hover { color: var(--white); }
+
+/* ── Compose overlay (fullscreen, screen-share mode) ─────── */
+#ex-compose {
+  position: fixed; inset: 0;
+  background: #000;
+  display: none; flex-direction: column;
+  z-index: 998;
+  padding: 40px clamp(24px, 5vw, 80px) 36px;
+  box-sizing: border-box;
+}
+#ex-compose.open { display: flex; }
+#ex-compose-header {
+  flex-shrink: 0;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+#ex-compose-context {
+  display: flex; align-items: baseline; gap: 14px; flex: 1; min-width: 0;
+}
+#ex-compose-tag {
+  font-size: 9px; letter-spacing: 0.36em; text-transform: uppercase;
+  color: var(--mute); flex-shrink: 0;
+}
+#ex-compose-origin {
+  font-size: 13px; color: #444; font-style: italic;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#ex-compose-close {
+  flex-shrink: 0; margin-left: 24px;
+  background: none; border: 0.5px solid var(--line);
+  color: var(--mute); font-family: Arial;
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; cursor: pointer;
+  transition: all 0.15s;
+}
+#ex-compose-close:hover { border-color: var(--muted); color: var(--white); }
+#ex-compose-list {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  gap: 12px; padding-bottom: 20px;
+}
+.compose-ex {
+  font-size: clamp(22px, 3.2vw, 44px);
+  font-weight: 700; line-height: 1.2;
+  color: #2a2a2a;
+  transition: color 0.4s;
+}
+.compose-ex.fresh { color: #666; }
+#ex-compose-bottom { flex-shrink: 0; border-top: 0.5px solid var(--line); padding-top: 20px; }
+#ex-compose-hint {
+  font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--line); margin-bottom: 10px;
+}
+#ex-compose-input {
+  width: 100%; box-sizing: border-box;
+  font-size: clamp(36px, 5.5vw, 72px);
+  font-weight: 700; color: var(--white);
+  background: none; border: none; outline: none;
+  font-family: Arial; caret-color: white;
+  padding: 0;
+}
+#ex-compose-input::placeholder { color: #222; }
 
 /* ── S6: Two Column ─────────────────────────────────────── */
 .compare-grid {
@@ -497,12 +671,12 @@ body { padding-top: 0; }
 <!-- ── Top Nav ────────────────────────────────────────────── -->
 <nav id="topnav">
   <span class="brand">Learners</span>
-  <div class="nav-links">
-    <a href="#watch-son">손흥민</a>
-    <a href="#watch-lee">이강인</a>
-    <a href="#drill">드릴</a>
-    <a href="#phrases">표현 정리</a>
-    <a href="#homework">숙제</a>
+  <div class="nav-dropdown" id="nav-dropdown">
+    <div class="nav-trigger" onclick="toggleNavMenu(event)">
+      <span id="nav-trigger-label">목차</span>
+      <span class="nav-trigger-arrow">▾</span>
+    </div>
+    <div class="nav-menu" id="nav-menu"></div>
   </div>
 </nav>
 
@@ -524,13 +698,23 @@ body { padding-top: 0; }
      HERO
 ══════════════════════════════════════════════════════════ -->
 <section id="hero" style="scroll-margin-top:92px;">
-  <div class="hero-glow"></div>
-  <span class="hero-unit-tag">Unit 1 &nbsp;·&nbsp; English Interview Class &nbsp;·&nbsp; Textbook</span>
-  <h1 class="display d-xxl hero-h1">
-    SELF-<br>INTRODUCTION<br>&amp; JOINING<br>THE TEAM
-  </h1>
-  <p class="hero-sub">실제 선수 인터뷰 영상으로 배우는 살아있는 영어.<br>손흥민 · 이강인이 쓴 표현을 그대로 가져갑니다.</p>
-  <div class="scroll-hint">Scroll to begin</div>
+  <!-- 배경 영상: 손흥민 LAFC 기자회견 (22분~, muted 자동재생) -->
+  <div id="hero-vbg">
+    <iframe
+      src="https://www.youtube.com/embed/54uYp3aI-Ys?autoplay=1&mute=1&loop=1&controls=0&rel=0&showinfo=0&playlist=54uYp3aI-Ys&start=1320"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>
+  </div>
+
+  <div class="hero-content">
+    <span class="hero-unit-tag">Unit 1 &nbsp;·&nbsp; English Interview Class &nbsp;·&nbsp; Textbook</span>
+    <h1 class="display d-xxl hero-h1">
+      SELF-INTRODUCTION<br>&amp; JOINING THE TEAM
+    </h1>
+    <p class="hero-sub">실제 선수 인터뷰 영상으로 배우는 살아있는 영어.<br>손흥민 · 이강인이 쓴 표현을 그대로 가져갑니다.</p>
+    <div class="scroll-hint">Scroll to begin</div>
+  </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -581,7 +765,11 @@ body { padding-top: 0; }
         <div class="quote-en">"I'm incredibly proud to be joining LAFC."</div>
         <div class="quote-ko">LAFC에 합류하게 되어 정말 자랑스럽습니다.</div>
       </div>
-      <div class="quote-note">incredibly proud —<br>강한 감정 + 품위를<br>동시에 표현</div>
+      <div class="quote-note" data-key="son-0">
+        <div>incredibly proud —<br>강한 감정 + 품위를<br>동시에 표현</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
     </div>
     <div class="quote-item reveal">
       <div>
@@ -589,7 +777,11 @@ body { padding-top: 0; }
         <div class="quote-en">"I have come to L.A. to lift trophies and give everything for this club."</div>
         <div class="quote-ko">트로피를 위해, 이 클럽을 위해 모든 것을 바치러 왔습니다.</div>
       </div>
-      <div class="quote-note">give everything for ~ —<br>헌신을 표현하는<br>핵심 구문</div>
+      <div class="quote-note" data-key="son-1">
+        <div>give everything for ~ —<br>헌신을 표현하는<br>핵심 구문</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
     </div>
     <div class="quote-item reveal">
       <div>
@@ -597,7 +789,11 @@ body { padding-top: 0; }
         <div class="quote-en">"I cannot wait to get started."</div>
         <div class="quote-ko">빨리 시작하고 싶어 못 견디겠습니다.</div>
       </div>
-      <div class="quote-note">I cannot wait to + 동사 —<br>4단어로 강한 기대감 전달</div>
+      <div class="quote-note" data-key="son-2">
+        <div>I cannot wait to + 동사 —<br>4단어로 강한 기대감 전달</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
     </div>
   </div>
 </div>
@@ -650,7 +846,11 @@ body { padding-top: 0; }
         <div class="quote-en">"It's incredible to be able to join Paris Saint-Germain."</div>
         <div class="quote-ko">PSG에 합류할 수 있게 되어 정말 믿기 어려울 정도로 기쁩니다.</div>
       </div>
-      <div class="quote-note">It's incredible to ~ —<br>손흥민의 'proud'와 다른 선택.<br>같은 상황, 다른 단어</div>
+      <div class="quote-note" data-key="lee-0">
+        <div>It's incredible to ~ —<br>손흥민의 'proud'와 다른 선택.<br>같은 상황, 다른 단어</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
     </div>
     <div class="quote-item reveal">
       <div>
@@ -658,7 +858,11 @@ body { padding-top: 0; }
         <div class="quote-en">"It's one of the biggest clubs in the world, with some of the greatest players."</div>
         <div class="quote-ko">세계에서 가장 큰 클럽 중 하나, 최고의 선수들이 있습니다.</div>
       </div>
-      <div class="quote-note">one of the biggest ~ —<br>팀을 칭찬하는 공식 표현</div>
+      <div class="quote-note" data-key="lee-1">
+        <div>one of the biggest ~ —<br>팀을 칭찬하는 공식 표현</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
     </div>
     <div class="quote-item reveal">
       <div>
@@ -666,7 +870,11 @@ body { padding-top: 0; }
         <div class="quote-en">"I can't wait to start this new adventure."</div>
         <div class="quote-ko">이 새로운 모험을 빨리 시작하고 싶습니다.</div>
       </div>
-      <div class="quote-note">I can't wait to ~ —<br>손흥민과 동일 구조.<br>두 선수 모두 사용한 필수 표현</div>
+      <div class="quote-note" data-key="lee-2">
+        <div>I can't wait to ~ —<br>손흥민과 동일 구조.<br>두 선수 모두 사용한 필수 표현</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
     </div>
   </div>
 </div>
@@ -881,6 +1089,22 @@ body { padding-top: 0; }
   <span class="footer-note">Unit 1 &nbsp;·&nbsp; Self-Introduction & Joining the Team</span>
 </footer>
 
+<!-- ── Compose Overlay ───────────────────────────────────── -->
+<div id="ex-compose">
+  <div id="ex-compose-header">
+    <div id="ex-compose-context">
+      <span id="ex-compose-tag"></span>
+      <span id="ex-compose-origin"></span>
+    </div>
+    <button id="ex-compose-close" onclick="closeCompose()">✕ 닫기 (Esc)</button>
+  </div>
+  <div id="ex-compose-list"></div>
+  <div id="ex-compose-bottom">
+    <div id="ex-compose-hint">Enter — 추가 &nbsp;·&nbsp; Esc — 닫기</div>
+    <input id="ex-compose-input" type="text" placeholder="예문을 입력하세요…" onkeydown="handleComposeKey(event)" oninput="handleComposeInput(this)">
+  </div>
+</div>
+
 <!-- ── YouTube Modal ─────────────────────────────────────── -->
 <div id="yt-modal" onclick="closeOnBg(event)">
   <div id="yt-wrap">
@@ -893,14 +1117,13 @@ body { padding-top: 0; }
 
 <script>
 // ── YouTube ──────────────────────────────────────────────
-const YT_IDS = {
-  son: '54uYp3aI-Ys',  // LAFC 공식 — Son Heung-Min Introductory Press Conference
-  lee: 'xOIcq4kHtHQ',  // PSG 공식 — Kang-In Lee first interview 2023
+const YT_URLS = {
+  son: 'https://www.youtube.com/embed/54uYp3aI-Ys?autoplay=1&start=1320&end=1680&rel=0',
+  lee: 'https://www.youtube.com/embed/sBTfsCVtRwI?autoplay=1&rel=0',
 };
 
 function openVideo(key) {
-  document.getElementById('yt-frame').src =
-    `https://www.youtube.com/embed/${YT_IDS[key]}?autoplay=1&rel=0`;
+  document.getElementById('yt-frame').src = YT_URLS[key];
   document.getElementById('yt-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -916,7 +1139,7 @@ function closeOnBg(e) {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeVideo();
+  if (e.key === 'Escape') { closeVideo(); closeCompose(); }
 });
 
 // ── Instructor Bar ───────────────────────────────────────
@@ -936,7 +1159,78 @@ const SECTIONS = [
 let ibarVisible = true;
 let ibarCur = 0;
 
-// Build dots
+// ── Top nav (2-level) ────────────────────────────────────
+const UNITS = [
+  {
+    id: 'unit1',
+    label: 'Unit 1',
+    subtitle: 'Self-Introduction & Joining the Team',
+    current: true,
+    sections: SECTIONS,
+  },
+  // 앞으로 유닛이 추가될 때 여기에 추가:
+  // { id: 'unit2', label: 'Unit 2', subtitle: '...', url: 'unit2.html' },
+];
+
+const navMenuEl  = document.getElementById('nav-menu');
+const navDropdownEl = document.getElementById('nav-dropdown');
+
+(function buildNavMenu() {
+  UNITS.forEach((unit) => {
+    const unitEl = document.createElement('div');
+    unitEl.className = 'nav-unit' + (unit.current ? ' open' : '');
+    unitEl.id = 'nav-unit-' + unit.id;
+
+    const hd = document.createElement('div');
+    hd.className = 'nav-unit-hd';
+    hd.innerHTML = `
+      <div class="nav-unit-hd-left">
+        <div class="nav-unit-label">${unit.label}</div>
+        <div class="nav-unit-sub">${unit.subtitle}</div>
+      </div>
+      <span class="nav-unit-arrow">▸</span>`;
+
+    if (unit.current && unit.sections) {
+      hd.onclick = (e) => { e.stopPropagation(); unitEl.classList.toggle('open'); };
+    } else if (unit.url) {
+      hd.onclick = () => { window.location.href = unit.url; };
+    }
+    unitEl.appendChild(hd);
+
+    if (unit.sections) {
+      const secsEl = document.createElement('div');
+      secsEl.className = 'nav-sections';
+      unit.sections.forEach((sec, i) => {
+        const item = document.createElement('div');
+        item.className = 'nav-sec-item' + (i === 0 ? ' active' : '');
+        item.dataset.secIdx = i;
+        item.innerHTML = `<span class="nav-sec-num">${String(i).padStart(2,'0')}</span>${sec.name}`;
+        item.onclick = () => { ibarGoTo(i); closeNavMenu(); };
+        secsEl.appendChild(item);
+      });
+      unitEl.appendChild(secsEl);
+    }
+
+    navMenuEl.appendChild(unitEl);
+  });
+})();
+
+function toggleNavMenu(e) {
+  e.stopPropagation();
+  navDropdownEl.classList.toggle('open');
+}
+function closeNavMenu() {
+  navDropdownEl.classList.remove('open');
+}
+document.addEventListener('click', () => closeNavMenu());
+
+function updateNavMenuActive(idx) {
+  navMenuEl.querySelectorAll('.nav-sec-item').forEach((el, i) =>
+    el.classList.toggle('active', i === idx)
+  );
+}
+
+// ── Build dots
 const ibarDotsEl = document.getElementById('ibar-dots');
 SECTIONS.forEach((sec, i) => {
   const d = document.createElement('div');
@@ -961,6 +1255,7 @@ function ibarGoTo(idx) {
   ibarDotsEl.querySelectorAll('.ibar-dot').forEach((d, i) =>
     d.classList.toggle('active', i === ibarCur)
   );
+  updateNavMenuActive(ibarCur);
 }
 
 function ibarGo(dir) { ibarGoTo(ibarCur + dir); }
@@ -1006,6 +1301,112 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.12 });
 
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+<script>
+// ── Instructor example management ────────────────────────
+function _exKey(noteEl) { return 'ex__' + noteEl.dataset.key; }
+function _getEx(k) { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch { return []; } }
+function _setEx(k, arr) { localStorage.setItem(k, JSON.stringify(arr)); }
+
+function _getContext(noteEl) {
+  const item = noteEl.closest('.quote-item');
+  const tag = item ? (item.querySelector('.quote-tag') || {}).textContent || '' : '';
+  const en  = item ? (item.querySelector('.quote-en')  || {}).textContent || '' : '';
+  return { tag, en };
+}
+
+function _renderNoteExamples(noteEl) {
+  const key = _exKey(noteEl);
+  const arr = _getEx(key);
+  noteEl.querySelector('.note-examples').innerHTML = arr.map((t, i) =>
+    `<div class="note-ex-item" onclick="reopenCompose(${JSON.stringify(noteEl.dataset.key)})">${t.replace(/</g,'&lt;')}<button class="note-ex-del" onclick="delEx(event,'${noteEl.dataset.key}',${i})">✕</button></div>`
+  ).join('');
+}
+
+function delEx(e, dataKey, idx) {
+  e.stopPropagation();
+  const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
+  const key = _exKey(noteEl);
+  const arr = _getEx(key);
+  arr.splice(idx, 1);
+  _setEx(key, arr);
+  _renderNoteExamples(noteEl);
+}
+
+// ── Compose overlay ───────────────────────────────────────
+let _activeKey = null;
+
+function addExample(btn) {
+  const noteEl = btn.closest('.quote-note');
+  _openCompose(noteEl);
+}
+
+function reopenCompose(dataKey) {
+  const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
+  if (noteEl) _openCompose(noteEl);
+}
+
+function _openCompose(noteEl) {
+  const ctx = _getContext(noteEl);
+  _activeKey = _exKey(noteEl);
+
+  document.getElementById('ex-compose-tag').textContent = ctx.tag || '강사 예문';
+  document.getElementById('ex-compose-origin').textContent = ctx.en;
+  _renderComposeList();
+
+  const inp = document.getElementById('ex-compose-input');
+  inp.value = '';
+  document.getElementById('ex-compose').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  inp.focus();
+}
+
+function closeCompose() {
+  document.getElementById('ex-compose').classList.remove('open');
+  document.body.style.overflow = '';
+  // sync note area
+  if (_activeKey) {
+    const dataKey = _activeKey.replace('ex__', '');
+    const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
+    if (noteEl) _renderNoteExamples(noteEl);
+  }
+}
+
+function _renderComposeList() {
+  const arr = _getEx(_activeKey);
+  const list = document.getElementById('ex-compose-list');
+  list.innerHTML = arr.map((t, i) =>
+    `<div class="compose-ex${i === arr.length - 1 ? ' fresh' : ''}">${t.replace(/</g,'&lt;')}</div>`
+  ).join('');
+  list.scrollTop = list.scrollHeight;
+}
+
+function handleComposeKey(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (!val) return;
+    const arr = _getEx(_activeKey);
+    // unmark previous fresh
+    arr.push(val);
+    _setEx(_activeKey, arr);
+    _renderComposeList();
+    e.target.value = '';
+  } else if (e.key === 'Escape') {
+    closeCompose();
+  }
+}
+
+function handleComposeInput(inp) {
+  // resize input font if text gets very long
+  const len = inp.value.length;
+  inp.style.fontSize = len > 40 ? 'clamp(24px, 3.5vw, 48px)' : '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.quote-note[data-key]').forEach(_renderNoteExamples);
+});
 </script>
 </body>
 </html>
