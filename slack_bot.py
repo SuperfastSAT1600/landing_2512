@@ -356,14 +356,14 @@ def handle_message(event, say):
                 say(f"⚠️ 블로그 작성 API 호출 실패.", thread_ts=thread_ts)
             return
 
-        # 직접 주제 입력: "주제명" 써줘
-        direct_match = re.search(r'["“‘’”](.+?)["“‘’”].*써줘', text)
+        # 직접 주제 입력: “주제명” 써줘 / 해줘 / 작성해줘
+        direct_match = re.search(r’[‘’“”\’\””](.+?)[‘’“”\’\””].*(?:써줘|해줘|작성해줘|포스팅해줘)’, text)
         if direct_match:
             topic_title = direct_match.group(1).strip()
-            say(f"⏳ '{topic_title}' 주제로 블로그 작성을 시작합니다 (3~5분 소요)...", thread_ts=thread_ts)
-            ok = call_blog_api(f'"{topic_title}" 써줘', channel, thread_ts)
+            say(f”⏳ ‘{topic_title}’ 주제로 블로그 작성을 시작합니다 (3~5분 소요)...”, thread_ts=thread_ts)
+            ok = call_blog_api(f’”{topic_title}” 써줘’, channel, thread_ts)
             if not ok:
-                say(f"⚠️ 블로그 작성 API 호출 실패.", thread_ts=thread_ts)
+                say(f”⚠️ 블로그 작성 API 호출 실패.”, thread_ts=thread_ts)
             return
 
         # 발행

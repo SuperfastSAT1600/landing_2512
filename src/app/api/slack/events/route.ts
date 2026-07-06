@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // 3. 직접 주제 입력: @landingpage '주제명' 써줘
-  const directMatch = text.match(/['"'""](.+?)['"'""].*써줘/);
+  // 3. 직접 주제 입력: @landingpage '주제명' 써줘 / 해줘 / 작성해줘
+  const directMatch = text.match(/[‘’“”'""](.+?)[‘’“”'""].*(?:써줘|해줘|작성해줘|포스팅해줘)/);
   if (directMatch) {
     const title = directMatch[1].trim();
     after(() => handleBlogWrite(
