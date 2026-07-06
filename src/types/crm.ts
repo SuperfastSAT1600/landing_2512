@@ -221,6 +221,7 @@ export interface Student {
   // 결제완료 → 회원가입/카톡 단톡방 온보딩 추적 (최초 세일즈 칸반 8번 컬럼)
   kakao_chat_created: boolean | null; // 카톡 단톡방 개설 완료 여부
   signup_done_at: string | null; // 회원가입 완료 처리 시각. null=미완료(8번에 표시)
+  signup_token: string | null; // 플랫폼 회원가입 링크 토큰 (students select * 로 이미 로드됨)
 
   funnel_stage_updated_at: string | null;
   stage_history: Array<{ stage: string; label: string; entered_at: string }>;
