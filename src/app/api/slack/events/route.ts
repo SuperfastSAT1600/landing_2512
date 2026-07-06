@@ -42,11 +42,19 @@ export async function POST(request: NextRequest) {
   const channel = event.channel ?? BLOG_CHANNEL;
   const threadTs = event.thread_ts ?? event.ts!;
 
-  // 0. 주제 N개 뽑아줘
-  const topicCountMatch = text.match(/주제\s*(\d+)개\s*뽑아줘/);
+  // 0. 주제 N개 뽑아줘 / 추천해줘 / 알려줘
+  const topicCountMatch = text.match(/주제\s*(\d+)개\s*(?:뽑아줘|추천해줘|알려줘|추천)/);
   if (topicCountMatch) {
     const n = Math.min(parseInt(topicCountMatch[1]), 10);
     after(() => handleTopicSuggest(n, channel, threadTs).catch(async err => {
+      await postSlack(channel, `주제 생성 오류: ${err.message}`, threadTs);
+    }));
+    return NextResponse.json({ ok: true });
+  }
+
+  // 0b. 주제 추천해줘 / 주제 뽑아줘 (개수 미지정 → 5개 기본)
+  if (/주제\s*(?:추천해줘|뽑아줘|알려줘|추천)/.test(text) && !topicCountMatch) {
+    after(() => handleTopicSuggest(5, channel, threadTs).catch(async err => {
       await postSlack(channel, `주제 생성 오류: ${err.message}`, threadTs);
     }));
     return NextResponse.json({ ok: true });
