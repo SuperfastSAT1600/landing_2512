@@ -26,6 +26,11 @@ export async function POST(
     return NextResponse.json({ error: 'Signup link not configured' }, { status: 500 });
   }
 
+  // regenerate: true → 기존 토큰을 새로 발급하고 signup_done_at을 리셋(링크 재사용 가능하게).
+  // 소비 판정이 signup_done_at 기준이라, 리셋 없이는 새 링크도 '이미 사용됨'으로 뜬다.
+  const body = await request.json().catch(() => ({}));
+  const regenerate = (body as { regenerate?: boolean })?.regenerate === true;
+
   const { data: student, error: fetchError } = await supabaseAdmin
     .from('students')
     .select('id, signup_token')
@@ -36,7 +41,7 @@ export async function POST(
     return NextResponse.json({ error: 'Student not found' }, { status: 404 });
   }
 
-  if (student.signup_token) {
+  if (student.signup_token && !regenerate) {
     return NextResponse.json({
       signup_token: student.signup_token,
       signup_url: buildSignupUrl(base, student.signup_token),
@@ -47,7 +52,12 @@ export async function POST(
 
   const { error: updateError } = await supabaseAdmin
     .from('students')
-    .update({ signup_token: token, signup_token_created_at: new Date().toISOString() })
+    .update({
+      signup_token: token,
+      signup_token_created_at: new Date().toISOString(),
+      // 재생성 시에만 사용완료 상태를 해제 (신규 발급은 건드리지 않음)
+      ...(regenerate ? { signup_done_at: null } : {}),
+    })
     .eq('id', id);
 
   if (updateError) {
