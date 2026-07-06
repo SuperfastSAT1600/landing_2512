@@ -14,6 +14,7 @@ import { useTimeline } from './hooks/useTimeline';
 import { useFunnel } from './hooks/useFunnel';
 import { useDiagnostic } from './hooks/useDiagnostic';
 import { usePortalActions } from './hooks/usePortalActions';
+import { useSignupActions } from './hooks/useSignupActions';
 import { PanelHeader } from './sections/PanelHeader';
 import { InquirySection } from './sections/InquirySection';
 import { StudentInfoSection } from './sections/StudentInfoSection';
@@ -132,6 +133,14 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     onClose,
   });
 
+  const signupHook = useSignupActions({
+    studentId: student.id,
+    adminKey,
+    initialSignupToken: localStudent.signup_token,
+    signupDoneAt: localStudent.signup_done_at,
+    onUpdate: (id, updates) => onUpdate(id, updates as Partial<Student>),
+  });
+
   function scoreDisplay(): string {
     if (localStudent.previous_score_status === 'never_taken') return '미응시';
     if (localStudent.previous_score_status === 'dont_remember') return '기억 안남';
@@ -166,6 +175,10 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             hasPortal={portalHook.hasPortal}
             portalCopied={portalHook.portalCopied}
             portalLoading={portalHook.portalLoading}
+            hasSignup={signupHook.hasSignup}
+            signupConsumed={signupHook.isConsumed}
+            signupCopied={signupHook.signupCopied}
+            signupLoading={signupHook.signupLoading}
             deleting={portalHook.deleting}
             funnelChanging={funnelHook.funnelChanging}
             showFunnelMenu={funnelHook.showFunnelMenu}
@@ -176,6 +189,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             onIssuePortal={portalHook.handleIssuePortal}
             onCopyPortalLink={portalHook.handleCopyPortalLink}
             onPreviewPortal={portalHook.handlePreviewPortal}
+            onCopySignupLink={signupHook.handleCopySignupLink}
+            onRegenerateSignup={signupHook.handleRegenerate}
             onDelete={portalHook.handleDelete}
             onToggleFunnelMenu={() => {
               if (!funnelHook.funnelChanging && localStudent.lead_status !== 'inactive') {

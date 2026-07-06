@@ -57,6 +57,27 @@ describe('POST /api/crm/students/[id]/signup-token', () => {
     expect(mockUpdate).toHaveBeenCalledTimes(1);
   });
 
+  it('regenerate:true issues a NEW token and resets signup_done_at → 201', async () => {
+    selectReturns({ data: { id: 's1', signup_token: 'existing' }, error: null });
+    mockUpdate.mockReturnValueOnce({ eq: vi.fn().mockResolvedValueOnce({ error: null }) });
+    const regenReq = new NextRequest('http://localhost/api/crm/students/s1/signup-token', {
+      method: 'POST',
+      headers: { 'x-admin-key': 'admin-key', 'content-type': 'application/json' },
+      body: JSON.stringify({ regenerate: true }),
+    });
+    const { POST } = await import('../route');
+    const res = await POST(regenReq, { params });
+    const body = await res.json();
+    expect(res.status).toBe(201);
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    const payload = mockUpdate.mock.calls[0][0];
+    expect(payload.signup_done_at).toBeNull(); // 사용완료 리셋
+    expect(payload.signup_token).toMatch(/^[0-9a-f]{32}$/);
+    expect(payload.signup_token).not.toBe('existing'); // 새 토큰
+    expect(body.signup_token).toBe(payload.signup_token);
+    expect(body.signup_url).toContain(body.signup_token);
+  });
+
   it('404 when the student is missing', async () => {
     selectReturns({ data: null, error: { message: 'not found' } });
     const { POST } = await import('../route');
