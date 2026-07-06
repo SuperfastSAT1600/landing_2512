@@ -76,29 +76,31 @@ export function PanelHeader({
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0 mt-0.5">
-          <PortalAccessToggle
-            hasPortal={hasPortal}
-            issuing={portalLoading}
-            copied={portalCopied}
-            theme="light"
-            onToggle={onIssuePortal}
-            onCopy={onCopyPortalLink}
-            onPreview={onPreviewPortal}
-          />
-          <SignupLinkToggle
-            hasSignup={hasSignup}
-            isConsumed={signupConsumed}
-            loading={signupLoading}
-            copied={signupCopied}
-            theme="light"
-            onCopy={onCopySignupLink}
-            onRegenerate={onRegenerateSignup}
-          />
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={16} className="text-gray-400" />
-          </button>
-        </div>
+        <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors shrink-0 -mr-1.5 mt-0.5">
+          <X size={16} className="text-gray-400" />
+        </button>
+      </div>
+
+      {/* 링크 컨트롤: 좁은 패널(440px)에서 이름을 밀지 않도록 별도 행에 두고 wrap 허용 */}
+      <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap mb-3">
+        <PortalAccessToggle
+          hasPortal={hasPortal}
+          issuing={portalLoading}
+          copied={portalCopied}
+          theme="light"
+          onToggle={onIssuePortal}
+          onCopy={onCopyPortalLink}
+          onPreview={onPreviewPortal}
+        />
+        <SignupLinkToggle
+          hasSignup={hasSignup}
+          isConsumed={signupConsumed}
+          loading={signupLoading}
+          copied={signupCopied}
+          theme="light"
+          onCopy={onCopySignupLink}
+          onRegenerate={onRegenerateSignup}
+        />
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
