@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UNIT 01 : SELF-INTRODUCTION & JOINING THE TEAM · 러너스 LRS</title>
-<meta property="og:title" content="UNIT 01 : SELF-INTRODUCTION & JOINING THE TEAM" />
+<title>UNIT 02 : POST-MATCH FLASH INTERVIEW · 러너스 LRS</title>
+<meta property="og:title" content="UNIT 02 : POST-MATCH FLASH INTERVIEW" />
 <meta property="og:description" content="강원 U-18 영어 인터뷰 수업 · 러너스 LRS" />
 <meta property="og:image" content="/b2bproj/lrs-logo.png" />
 <meta property="og:type" content="website" />
@@ -176,7 +176,6 @@ body {
   overflow: hidden;
 }
 
-/* Video background */
 #hero-vbg {
   position: absolute; inset: 0;
   z-index: 0; overflow: hidden;
@@ -201,15 +200,12 @@ body {
   z-index: 1;
 }
 
-/* Hero content above video */
 .hero-content {
   position: relative; z-index: 2;
   display: flex; flex-direction: column;
 }
 
-.hero-glow {
-  display: none; /* video 배경으로 대체 */
-}
+.hero-glow { display: none; }
 .hero-unit-tag {
   font-size: 9px; letter-spacing: 0.4em;
   color: var(--mute); text-transform: uppercase;
@@ -318,7 +314,7 @@ body {
 .quote-ko { font-size: 13px; color: var(--mute); line-height: 1.6; }
 .quote-note { font-size: 13px; color: var(--mute); line-height: 1.7; padding-top: 36px; }
 
-/* ── Note: saved examples (small, reference) ────────────── */
+/* ── Note: saved examples ────────────────────────────────── */
 .note-examples { display: flex; flex-direction: column; gap: 0; margin-top: 12px; }
 .note-ex-item {
   position: relative;
@@ -347,7 +343,7 @@ body {
 }
 .note-add-btn:hover { color: var(--white); }
 
-/* ── Compose overlay (fullscreen, screen-share mode) ─────── */
+/* ── Compose overlay ─────────────────────────────────────── */
 #ex-compose {
   position: fixed; inset: 0;
   background: #000;
@@ -662,7 +658,6 @@ body {
 }
 .ibar-toggle:hover { color: var(--white); }
 
-/* body padding for both navs */
 body { padding-top: 0; }
 
 /* ── Scroll reveal ──────────────────────────────────────── */
@@ -688,6 +683,7 @@ body { padding-top: 0; }
 
 /* ── Homework submit ────────────────────────────────────── */
 .hw-submit-wrap { margin-top: 0; }
+
 .hw-submit-header {
   display: flex; align-items: center;
   justify-content: space-between;
@@ -699,6 +695,7 @@ body { padding-top: 0; }
   text-decoration: none; transition: color 0.15s;
 }
 .hw-board-link:hover { color: var(--white); }
+
 .hw-fields { display: flex; flex-direction: column; gap: 0; }
 .hw-field-group {
   padding: 20px 0;
@@ -715,23 +712,32 @@ body { padding-top: 0; }
   color: var(--line); font-size: 9px;
 }
 .hw-input {
-  background: var(--night-s); border: 0.5px solid var(--line);
+  background: var(--night-s);
+  border: 0.5px solid var(--line);
   border-radius: 3px; padding: 12px 16px;
   color: var(--white); font-family: Arial; font-size: 14px;
   width: 100%; transition: border-color 0.15s;
 }
 .hw-input:focus { outline: none; border-color: var(--muted); }
 .hw-textarea {
-  background: var(--night-s); border: 0.5px solid var(--line);
+  background: var(--night-s);
+  border: 0.5px solid var(--line);
   border-radius: 3px; padding: 12px 16px;
   color: var(--white); font-family: Arial; font-size: 14px;
   width: 100%; resize: vertical; line-height: 1.7;
   transition: border-color 0.15s;
 }
 .hw-textarea:focus { outline: none; border-color: var(--muted); }
+
 .hw-field-kakao { background: rgba(254,229,0,0.03); border-color: rgba(254,229,0,0.15) !important; }
-.hw-kakao-note { font-size: 13px; color: var(--mute); line-height: 1.6; }
-.hw-actions { display: flex; align-items: center; gap: 20px; margin-top: 28px; }
+.hw-kakao-note {
+  font-size: 13px; color: var(--mute); line-height: 1.6;
+}
+
+.hw-actions {
+  display: flex; align-items: center; gap: 20px;
+  margin-top: 28px;
+}
 .hw-btn-submit {
   background: var(--white); color: #000;
   border: none; border-radius: 2px;
@@ -742,8 +748,14 @@ body { padding-top: 0; }
 }
 .hw-btn-submit:hover { background: var(--muted); }
 .hw-btn-submit:disabled { background: var(--line); color: var(--mute); cursor: default; }
-.hw-error { font-size: 11px; color: #ff6b6b; letter-spacing: 0.06em; }
-.hw-done-msg { display: flex; align-items: center; gap: 16px; padding: 24px 0; }
+.hw-error {
+  font-size: 11px; color: #ff6b6b; letter-spacing: 0.06em;
+}
+
+.hw-done-msg {
+  display: flex; align-items: center; gap: 16px;
+  padding: 24px 0;
+}
 .hw-done-check {
   width: 36px; height: 36px; border-radius: 50%;
   border: 0.5px solid var(--muted);
@@ -752,9 +764,11 @@ body { padding-top: 0; }
 }
 .hw-done-text {
   font-size: 13px; font-weight: 700;
-  letter-spacing: 0.2em; text-transform: uppercase; color: var(--white);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--white);
 }
 .hw-done-sub { font-size: 12px; color: var(--mute); }
+
 .hw-btn-peers {
   background: none; border: 0.5px solid var(--line);
   color: var(--mute); font-family: Arial;
@@ -763,8 +777,12 @@ body { padding-top: 0; }
   transition: all 0.15s; margin-bottom: 24px;
 }
 .hw-btn-peers:hover { border-color: var(--white); color: var(--white); }
+
 .hw-peers-list { display: flex; flex-direction: column; gap: 0; }
-.hw-peer-card { padding: 20px 0; border-top: 0.5px solid var(--line); }
+.hw-peer-card {
+  padding: 20px 0;
+  border-top: 0.5px solid var(--line);
+}
 .hw-peer-card:last-child { border-bottom: 0.5px solid var(--line); }
 .hw-peer-name {
   font-size: 11px; font-weight: 700;
@@ -772,7 +790,11 @@ body { padding-top: 0; }
   color: var(--white); margin-bottom: 10px;
 }
 .hw-peer-field { display: grid; grid-template-columns: 100px 1fr; gap: 8px; margin-bottom: 6px; }
-.hw-peer-field-label { font-size: 8px; letter-spacing: 0.2em; color: var(--mute); text-transform: uppercase; padding-top: 2px; }
+.hw-peer-field-label {
+  font-size: 8px; letter-spacing: 0.2em;
+  color: var(--mute); text-transform: uppercase;
+  padding-top: 2px;
+}
 .hw-peer-field-val { font-size: 13px; color: var(--muted); line-height: 1.6; }
 .hw-peer-time { font-size: 10px; color: var(--line); margin-top: 10px; }
 .hw-peers-empty { font-size: 13px; color: var(--mute); padding: 20px 0; }
@@ -797,7 +819,7 @@ body { padding-top: 0; }
 <div id="instructor-bar">
   <div class="ibar-left">
     <span class="ibar-label">강사 모드</span>
-    <span class="ibar-section-name" id="ibar-name">Unit 1 — 오프닝</span>
+    <span class="ibar-section-name" id="ibar-name">Unit 2 — 오프닝</span>
   </div>
   <div class="ibar-right">
     <div class="ibar-progress" id="ibar-dots"></div>
@@ -811,99 +833,100 @@ body { padding-top: 0; }
      HERO
 ══════════════════════════════════════════════════════════ -->
 <section id="hero" style="scroll-margin-top:92px;">
-  <!-- 배경 영상: 손흥민 LAFC 기자회견 (22분~, muted 자동재생) -->
+  <!-- 배경 영상: 손흥민 LAFC 기자회견 (ambient background) -->
   <div id="hero-vbg">
     <iframe
-      src="https://www.youtube.com/embed/54uYp3aI-Ys?autoplay=1&mute=1&loop=1&controls=0&rel=0&showinfo=0&playlist=54uYp3aI-Ys&start=1320"
+      src="https://www.youtube.com/embed/54uYp3aI-Ys?autoplay=1&mute=1&loop=1&controls=0&rel=0&showinfo=0&playlist=54uYp3aI-Ys&start=1380"
       frameborder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
     </iframe>
   </div>
 
   <div class="hero-content">
-    <span class="hero-unit-tag">Unit 1 &nbsp;·&nbsp; English Interview Class &nbsp;·&nbsp; Textbook</span>
+    <span class="hero-unit-tag">Unit 2 &nbsp;·&nbsp; English Interview Class &nbsp;·&nbsp; Textbook</span>
     <h1 class="display d-xxl hero-h1">
-      SELF-INTRODUCTION<br>&amp; JOINING THE TEAM
+      POST-MATCH<br>FLASH INTERVIEW
     </h1>
-    <p class="hero-sub">실제 선수 인터뷰 영상으로 배우는 살아있는 영어.<br>손흥민 · 이강인이 쓴 표현을 그대로 가져갑니다.</p>
+    <p class="hero-sub">경기 직후 마이크 앞에서 — 승리와 패배 두 상황을<br>모두 영어로 자연스럽게 말합니다.</p>
     <div class="scroll-hint">Scroll to begin</div>
   </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════════════
-     S2 — 손흥민 시청 전
+     S2 — 승리 인터뷰 시청 전
 ══════════════════════════════════════════════════════════ -->
-<div class="section" id="watch-son" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Watch &nbsp;·&nbsp; Reference Video &nbsp;·&nbsp; Session 01</span>
+<div class="section" id="watch-win" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Watch &nbsp;·&nbsp; Reference Video &nbsp;·&nbsp; Victory Interview</span>
   <div class="split-section reveal">
     <div class="video-block">
-      <div class="video-thumb" onclick="openVideo('son')" role="button" aria-label="손흥민 영상 재생" style="background-image:url('https://img.youtube.com/vi/54uYp3aI-Ys/maxresdefault.jpg')">
+      <!-- ※ 영상 ID 미정 — 손흥민 경기 후 믹스드존 인터뷰로 업데이트 필요 -->
+      <div class="video-thumb" onclick="openVideo('win')" role="button" aria-label="승리 인터뷰 영상 재생">
         <div class="play-circle">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <polygon points="5,2 19,11 5,20" fill="#fff"/>
           </svg>
         </div>
       </div>
-      <span class="video-caption">Son Heung-Min &nbsp;·&nbsp; LAFC Introductory Press Conference &nbsp;·&nbsp; 2025</span>
+      <span class="video-caption">Son Heung-Min &nbsp;·&nbsp; Post-Match Mixed Zone &nbsp;·&nbsp; Victory</span>
     </div>
     <div class="q-block">
       <h2 class="display d-lg" style="margin-bottom:24px;">BEFORE<br>YOU WATCH</h2>
       <div class="hl"></div>
       <div class="q-item">
         <div class="q-label">Q 01</div>
-        <div class="q-text">손흥민이 합류 소감을 어떻게 표현했나요?</div>
+        <div class="q-text">승리 후 손흥민이 팀을 어떻게 언급했나요?</div>
       </div>
       <div class="q-item">
         <div class="q-label">Q 02</div>
-        <div class="q-text">팀에 대해 어떤 말을 했나요?</div>
+        <div class="q-text">경기 중 가장 중요한 순간을 어떻게 표현했나요?</div>
       </div>
       <div class="q-item">
         <div class="q-label">Q 03</div>
-        <div class="q-text">목표·의지를 어떻게 표현했나요?</div>
+        <div class="q-text">공을 돌리는 표현(credit)이 나왔나요?</div>
       </div>
     </div>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     S3 — 손흥민 표현 분석
+     S3 — 승리 표현 분석
 ══════════════════════════════════════════════════════════ -->
-<div class="section" id="son-analysis" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Son Heung-Min &nbsp;·&nbsp; LAFC 2025 &nbsp;·&nbsp; Expression Analysis</span>
-  <h2 class="display d-xl reveal" style="margin-bottom:40px;">WHAT HE SAID</h2>
+<div class="section" id="win-analysis" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Victory Interview &nbsp;·&nbsp; Expression Analysis</span>
+  <h2 class="display d-xl reveal" style="margin-bottom:40px;">WHAT HE SAID<br><span style="color:var(--mute); font-size:clamp(16px,2.4vw,28px);">— AFTER THE WIN</span></h2>
   <div class="quote-items">
     <div class="quote-item reveal">
       <div>
-        <div class="quote-tag">Joining</div>
-        <div class="quote-en">"I'm incredibly proud to be joining LAFC."</div>
-        <div class="quote-ko">LAFC에 합류하게 되어 정말 자랑스럽습니다.</div>
+        <div class="quote-tag">Victory</div>
+        <div class="quote-en">"We worked really hard for this."</div>
+        <div class="quote-ko">이것을 위해 정말 열심히 했습니다.</div>
       </div>
-      <div class="quote-note" data-key="son-0">
-        <div>incredibly proud —<br>강한 감정 + 품위를<br>동시에 표현</div>
+      <div class="quote-note" data-key="win-0">
+        <div>We로 시작 — 개인 성과를<br>팀 노력으로 돌리는<br>가장 기본 표현</div>
         <div class="note-examples"></div>
         <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
       </div>
     </div>
     <div class="quote-item reveal">
       <div>
-        <div class="quote-tag">Commitment</div>
-        <div class="quote-en">"I have come to L.A. to lift trophies and give everything for this club."</div>
-        <div class="quote-ko">트로피를 위해, 이 클럽을 위해 모든 것을 바치러 왔습니다.</div>
+        <div class="quote-tag">Credit</div>
+        <div class="quote-en">"Credit to the whole team."</div>
+        <div class="quote-ko">팀 전체의 공입니다.</div>
       </div>
-      <div class="quote-note" data-key="son-1">
-        <div>give everything for ~ —<br>헌신을 표현하는<br>핵심 구문</div>
+      <div class="quote-note" data-key="win-1">
+        <div>'credit to ~' —<br>공을 돌리는 공식 표현.<br>주어 없이 바로 시작</div>
         <div class="note-examples"></div>
         <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
       </div>
     </div>
     <div class="quote-item reveal">
       <div>
-        <div class="quote-tag">Excitement</div>
-        <div class="quote-en">"I cannot wait to get started."</div>
-        <div class="quote-ko">빨리 시작하고 싶어 못 견디겠습니다.</div>
+        <div class="quote-tag">Spirit</div>
+        <div class="quote-en">"We kept fighting till the end."</div>
+        <div class="quote-ko">우리는 끝까지 싸웠습니다.</div>
       </div>
-      <div class="quote-note" data-key="son-2">
-        <div>I cannot wait to + 동사 —<br>4단어로 강한 기대감 전달</div>
+      <div class="quote-note" data-key="win-2">
+        <div>kept + -ing —<br>과거의 지속적 노력을<br>강조하는 구문</div>
         <div class="note-examples"></div>
         <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
       </div>
@@ -912,79 +935,80 @@ body { padding-top: 0; }
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     S4 — 황희찬 시청 전
+     S4 — 패배 인터뷰 시청 전
 ══════════════════════════════════════════════════════════ -->
-<div class="section" id="watch-lee" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Watch &nbsp;·&nbsp; Reference Video &nbsp;·&nbsp; Session 02</span>
+<div class="section" id="watch-lose" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Watch &nbsp;·&nbsp; Reference Video &nbsp;·&nbsp; Defeat Interview</span>
   <div class="split-section reveal">
     <div class="video-block">
-      <div class="video-thumb" onclick="openVideo('lee')" role="button" aria-label="황희찬 영상 재생" style="background-image:url('https://img.youtube.com/vi/ieyfcKObThQ/maxresdefault.jpg')">
+      <!-- ※ 영상 ID 미정 — 국제 경기 패배 후 주장 인터뷰로 업데이트 필요 -->
+      <div class="video-thumb" onclick="openVideo('lose')" role="button" aria-label="패배 인터뷰 영상 재생">
         <div class="play-circle">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <polygon points="5,2 19,11 5,20" fill="#fff"/>
           </svg>
         </div>
       </div>
-      <span class="video-caption">Hwang Hee-Chan &nbsp;·&nbsp; Wolverhampton Wanderers Official &nbsp;·&nbsp; 2022</span>
+      <span class="video-caption">Captain Interview &nbsp;·&nbsp; Post-Match Mixed Zone &nbsp;·&nbsp; Defeat</span>
     </div>
     <div class="q-block">
       <h2 class="display d-lg" style="margin-bottom:24px;">BEFORE<br>YOU WATCH</h2>
       <div class="hl"></div>
       <div class="q-item">
         <div class="q-label">Q 01</div>
-        <div class="q-text">황희찬이 월드컵 경험을 어떻게 표현했나요?</div>
+        <div class="q-text">패배 후 감정을 어떻게 표현했나요?</div>
       </div>
       <div class="q-item">
         <div class="q-label">Q 02</div>
-        <div class="q-text">Wolves 복귀 소감을 어떤 단어로 표현했나요?</div>
+        <div class="q-text">팀의 회복력에 대해 어떻게 말했나요?</div>
       </div>
       <div class="q-item">
         <div class="q-label">Q 03</div>
-        <div class="q-text">손흥민과 황희찬의 표현 방식이 어떻게 달랐나요?</div>
+        <div class="q-text">승리 인터뷰와 어조가 어떻게 달랐나요?</div>
       </div>
     </div>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     S5 — 황희찬 표현 분석
+     S5 — 패배 표현 분석
 ══════════════════════════════════════════════════════════ -->
-<div class="section" id="lee-analysis" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Hwang Hee-Chan &nbsp;·&nbsp; Wolves 2022 &nbsp;·&nbsp; Expression Analysis</span>
-  <h2 class="display d-xl reveal" style="margin-bottom:40px;">WHAT HE SAID</h2>
+<div class="section" id="lose-analysis" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Defeat Interview &nbsp;·&nbsp; Expression Analysis</span>
+  <h2 class="display d-xl reveal" style="margin-bottom:40px;">WHAT HE SAID<br><span style="color:var(--mute); font-size:clamp(16px,2.4vw,28px);">— AFTER THE LOSS</span></h2>
   <div class="quote-items">
     <div class="quote-item reveal">
       <div>
-        <div class="quote-tag">Achievement</div>
-        <div class="quote-en">"It was a dream come true."</div>
-        <div class="quote-ko">꿈이 이루어진 것이었습니다.</div>
+        <div class="quote-tag">Defeat</div>
+        <div class="quote-en">"I'm gutted, but we'll bounce back."</div>
+        <div class="quote-ko">너무 속상하지만, 우리는 반등할 것입니다.</div>
       </div>
-      <div class="quote-note" data-key="hwang-0">
-        <div>a dream come true —<br>꿈의 성취를 표현하는<br>4단어 핵심 구문</div>
+      <div class="quote-note" data-key="lose-0">
+        <div>gutted = 완전히 낙담한.<br>bounce back = 회복하다.<br>but로 패배→희망 전환</div>
         <div class="note-examples"></div>
         <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
       </div>
     </div>
     <div class="quote-item reveal">
       <div>
-        <div class="quote-tag">Emotion</div>
-        <div class="quote-en">"It was just amazing."</div>
-        <div class="quote-ko">정말 그냥 놀라웠습니다.</div>
+        <div class="quote-tag">Honest</div>
+        <div class="quote-en">"We have to be honest with ourselves."</div>
+        <div class="quote-ko">우리 스스로에게 솔직해야 합니다.</div>
       </div>
-      <div class="quote-note" data-key="hwang-1">
-        <div>just + 형용사 —<br>감정을 가장 단순하게<br>강조하는 공식</div>
+      <div class="quote-note" data-key="lose-1">
+        <div>패배를 인정하는<br>성숙한 표현 —<br>비판 없이 책임 수용</div>
         <div class="note-examples"></div>
         <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
       </div>
     </div>
     <div class="quote-item reveal">
       <div>
-        <div class="quote-tag">Return</div>
-        <div class="quote-en">"I'm so happy to be back."</div>
-        <div class="quote-ko">다시 돌아오게 되어 정말 행복합니다.</div>
+        <div class="quote-tag">Future</div>
+        <div class="quote-en">"We'll work hard and come back stronger."</div>
+        <div class="quote-ko">열심히 하고 더 강하게 돌아올 것입니다.</div>
       </div>
-      <div class="quote-note" data-key="hwang-2">
-        <div>so happy to + 동사 —<br>기쁨 + 행동을<br>한 문장에 담기</div>
+      <div class="quote-note" data-key="lose-2">
+        <div>come back stronger —<br>패배 후 가장 자주 쓰는<br>공식 마무리 표현</div>
         <div class="note-examples"></div>
         <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
       </div>
@@ -997,27 +1021,27 @@ body { padding-top: 0; }
 ══════════════════════════════════════════════════════════ -->
 <div class="section" id="compare" style="scroll-margin-top:92px;">
   <h2 class="display d-lg reveal" style="margin-bottom:0;">
-    TWO PLAYERS.<br>TWO MOMENTS.<br>DIFFERENT WORDS.
+    WIN OR LOSE.<br>YOUR WORDS<br>STILL MATTER.
   </h2>
   <div class="compare-grid reveal">
     <div class="compare-col">
-      <div class="compare-col-label">손흥민 (SON) &nbsp;·&nbsp; LAFC 2025 &nbsp;·&nbsp; 새 팀 합류</div>
-      <div class="compare-row"><p>I'm incredibly proud to be joining ~.</p></div>
-      <div class="compare-row"><p>I have come here to lift trophies.</p></div>
-      <div class="compare-row"><p>I cannot wait to get started.</p></div>
-      <div class="compare-row"><p>I will give everything for this club.</p></div>
+      <div class="compare-col-label">승리 상황 (WIN)</div>
+      <div class="compare-row"><p>We deserved this.</p></div>
+      <div class="compare-row"><p>Credit to the whole team.</p></div>
+      <div class="compare-row"><p>The manager set us up perfectly.</p></div>
+      <div class="compare-row"><p>We kept fighting till the end.</p></div>
     </div>
     <div class="compare-vl"></div>
     <div class="compare-col">
-      <div class="compare-col-label">황희찬 (HWANG) &nbsp;·&nbsp; Wolves 2022 &nbsp;·&nbsp; 월드컵 후 복귀</div>
-      <div class="compare-row"><p>It was a dream come true.</p></div>
-      <div class="compare-row"><p>It was just amazing.</p></div>
-      <div class="compare-row"><p>I'm so happy to be back.</p></div>
-      <div class="compare-row"><p>I just want to keep improving.</p></div>
+      <div class="compare-col-label">패배 상황 (LOSE)</div>
+      <div class="compare-row"><p>We have to be honest with ourselves.</p></div>
+      <div class="compare-row"><p>I'm gutted, but we'll bounce back.</p></div>
+      <div class="compare-row"><p>We just didn't perform today.</p></div>
+      <div class="compare-row"><p>We'll work hard and come back stronger.</p></div>
     </div>
   </div>
   <div class="compare-common reveal">
-    COMMON &nbsp;·&nbsp; Both: 강한 감정을 단순한 단어로 직접 표현
+    COMMON &nbsp;·&nbsp; 항상 <strong style="color:var(--white);">"we"</strong> 로 시작 — 개인보다 팀을 먼저 언급
   </div>
 </div>
 
@@ -1026,36 +1050,36 @@ body { padding-top: 0; }
 ══════════════════════════════════════════════════════════ -->
 <div class="section-light" id="drill" style="scroll-margin-top:92px;">
   <div class="inner">
-    <span class="eyebrow eyebrow-dark">Unit 1 &nbsp;·&nbsp; Drill</span>
+    <span class="eyebrow eyebrow-dark">Unit 2 &nbsp;·&nbsp; Drill</span>
     <h2 class="display d-xl d-dark reveal" style="margin-bottom:32px;">FILL IN<br>THE BLANKS</h2>
     <div class="hl-l reveal"></div>
     <div class="drill-grid reveal">
       <div>
         <div class="drill-item">
           <div class="drill-num">01</div>
-          <div class="drill-tpl">I'm incredibly _______ to be joining _______.</div>
-          <div class="drill-hint">① proud / excited / honored &nbsp;&nbsp; ② 팀 이름</div>
-          <div class="drill-ex">예시: I'm incredibly proud to be joining the team.</div>
+          <div class="drill-tpl">We _______ really hard for this.</div>
+          <div class="drill-hint">worked / fought / prepared</div>
+          <div class="drill-ex">예시: We worked really hard for this.</div>
         </div>
         <div class="drill-item">
           <div class="drill-num">03</div>
-          <div class="drill-tpl">I can't wait to _______ with _______.</div>
-          <div class="drill-hint">① get started / train / play &nbsp;&nbsp; ② the team / my new teammates</div>
-          <div class="drill-ex">예시: I can't wait to get started with the team.</div>
+          <div class="drill-tpl">I'm _______, but we'll _______.</div>
+          <div class="drill-hint">gutted / disappointed / frustrated &nbsp;·&nbsp; bounce back / come back stronger</div>
+          <div class="drill-ex">예시: I'm gutted, but we'll bounce back.</div>
         </div>
       </div>
       <div>
         <div class="drill-item">
           <div class="drill-num">02</div>
-          <div class="drill-tpl">I have come here to _______ and give everything for _______.</div>
-          <div class="drill-hint">① win / improve / prove myself &nbsp;&nbsp; ② this team / this club</div>
-          <div class="drill-ex">예시: I have come here to improve and give everything for this team.</div>
+          <div class="drill-tpl">Credit to the _______.</div>
+          <div class="drill-hint">whole team / manager / coaching staff</div>
+          <div class="drill-ex">예시: Credit to the whole team.</div>
         </div>
         <div class="drill-item">
           <div class="drill-num">04</div>
-          <div class="drill-tpl">It's _______ to be part of _______.</div>
-          <div class="drill-hint">① incredible / amazing / an honor &nbsp;&nbsp; ② this club / this team</div>
-          <div class="drill-ex">예시: It's incredible to be part of this club.</div>
+          <div class="drill-tpl">The manager _______ us up _______.</div>
+          <div class="drill-hint">set / perfectly / brilliantly</div>
+          <div class="drill-ex">예시: The manager set us up perfectly.</div>
         </div>
       </div>
     </div>
@@ -1066,52 +1090,37 @@ body { padding-top: 0; }
      S8 — Master List
 ══════════════════════════════════════════════════════════ -->
 <div class="section" id="phrases" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Unit 1 &nbsp;·&nbsp; Master List &nbsp;·&nbsp; 8 Key Phrases</span>
-  <h2 class="display d-lg reveal" style="margin-bottom:0;">8 PHRASES.<br>MEMORIZE ALL.</h2>
+  <span class="eyebrow">Unit 2 &nbsp;·&nbsp; Master List &nbsp;·&nbsp; 5 Key Phrases</span>
+  <h2 class="display d-lg reveal" style="margin-bottom:0;">5 PHRASES.<br>MEMORIZE ALL.</h2>
   <div class="master-grid reveal">
     <div class="master-col">
       <div class="master-item">
-        <div class="master-src">01 &nbsp;·&nbsp; SON</div>
-        <div class="master-en">I'm incredibly proud to be joining ~.</div>
-        <div class="master-ko">~에 합류하게 되어 정말 자랑스럽습니다.</div>
+        <div class="master-src">01 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">We worked really hard for this.</div>
+        <div class="master-ko">이것을 위해 정말 열심히 했습니다.</div>
       </div>
       <div class="master-item">
-        <div class="master-src">02 &nbsp;·&nbsp; SON</div>
-        <div class="master-en">I cannot wait to get started.</div>
-        <div class="master-ko">빨리 시작하고 싶어 못 견디겠습니다.</div>
+        <div class="master-src">02 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">Credit to the whole team.</div>
+        <div class="master-ko">팀 전체의 공입니다.</div>
       </div>
       <div class="master-item">
-        <div class="master-src">03 &nbsp;·&nbsp; SON</div>
-        <div class="master-en">I have come here to give everything.</div>
-        <div class="master-ko">모든 것을 바치기 위해 왔습니다.</div>
-      </div>
-      <div class="master-item">
-        <div class="master-src">04 &nbsp;·&nbsp; BASE</div>
-        <div class="master-en">It's a new chapter for me.</div>
-        <div class="master-ko">저에게는 새로운 챕터입니다.</div>
+        <div class="master-src">03 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">It was a tough game but we kept going.</div>
+        <div class="master-ko">힘든 경기였지만 우리는 계속 나아갔습니다.</div>
       </div>
     </div>
     <div class="master-vl"></div>
     <div class="master-col">
       <div class="master-item">
-        <div class="master-src">05 &nbsp;·&nbsp; HWANG</div>
-        <div class="master-en">It was a dream come true.</div>
-        <div class="master-ko">꿈이 이루어진 것이었습니다.</div>
+        <div class="master-src">04 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">I'm gutted, but we'll bounce back.</div>
+        <div class="master-ko">너무 속상하지만, 우리는 반등할 것입니다.</div>
       </div>
       <div class="master-item">
-        <div class="master-src">06 &nbsp;·&nbsp; HWANG</div>
-        <div class="master-en">It was just amazing.</div>
-        <div class="master-ko">정말 그냥 놀라웠습니다.</div>
-      </div>
-      <div class="master-item">
-        <div class="master-src">07 &nbsp;·&nbsp; HWANG</div>
-        <div class="master-en">I'm so happy to be back.</div>
-        <div class="master-ko">다시 돌아오게 되어 정말 행복합니다.</div>
-      </div>
-      <div class="master-item">
-        <div class="master-src">08 &nbsp;·&nbsp; BASE</div>
-        <div class="master-en">I'm looking forward to working with the team.</div>
-        <div class="master-ko">팀과 함께 일하는 것이 기대됩니다.</div>
+        <div class="master-src">05 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">The manager set us up perfectly.</div>
+        <div class="master-ko">감독이 완벽하게 준비시켜줬습니다.</div>
       </div>
     </div>
   </div>
@@ -1121,50 +1130,46 @@ body { padding-top: 0; }
      S9 — Card Pair (롤플레이)
 ══════════════════════════════════════════════════════════ -->
 <div class="section" id="roleplay" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Role-Play &nbsp;·&nbsp; You Are The Player</span>
-  <h2 class="display d-lg reveal" style="margin-bottom:24px;">STEP UP TO<br>THE MIC.</h2>
+  <span class="eyebrow">Role-Play &nbsp;·&nbsp; Mixed Zone — You Are The Player</span>
+  <h2 class="display d-lg reveal" style="margin-bottom:24px;">STEP OUT OF<br>THE TUNNEL.</h2>
   <div class="hl reveal"></div>
   <div class="card-grid reveal">
     <div class="card-box">
-      <div class="card-header"><span class="eyebrow" style="margin:0; font-size:9px;">My Profile Card</span></div>
+      <div class="card-header"><span class="eyebrow" style="margin:0; font-size:9px;">My Post-Match Card</span></div>
       <div class="card-row">
-        <span class="card-label">Name</span>
-        <span class="card-blank">My name is ___________.</span>
-      </div>
-      <div class="card-row">
-        <span class="card-label">Position</span>
-        <span class="card-blank">I play as a ___________.</span>
-      </div>
-      <div class="card-row">
-        <span class="card-label">From</span>
-        <span class="card-blank">I'm from ___________.</span>
+        <span class="card-label">Result</span>
+        <span class="card-blank">We won / We lost ___ to ___.</span>
       </div>
       <div class="card-row">
         <span class="card-label">Feeling</span>
-        <span class="card-blank">I'm _______ to be joining _______.</span>
+        <span class="card-blank">I'm _______ because ___________.</span>
       </div>
       <div class="card-row">
-        <span class="card-label">Goal</span>
-        <span class="card-blank">I have come here to ___________.</span>
+        <span class="card-label">Highlight</span>
+        <span class="card-blank">The key moment was ___________.</span>
       </div>
       <div class="card-row">
-        <span class="card-label">Excited</span>
-        <span class="card-blank">I can't wait to ___________.</span>
+        <span class="card-label">Credit</span>
+        <span class="card-blank">I have to give credit to ___________.</span>
+      </div>
+      <div class="card-row">
+        <span class="card-label">Next</span>
+        <span class="card-blank">We'll ___________ for the next game.</span>
       </div>
     </div>
     <div class="card-box">
       <div class="card-header"><span class="eyebrow" style="margin:0; font-size:9px;">Reporter's Questions</span></div>
       <div class="card-q">
         <div class="card-q-num">Q 01</div>
-        <div class="card-q-text">What position do you play, and where are you from?</div>
+        <div class="card-q-text">How do you feel after today's result?</div>
       </div>
       <div class="card-q">
         <div class="card-q-num">Q 02</div>
-        <div class="card-q-text">How do you feel about joining the team today?</div>
+        <div class="card-q-text">Can you describe a key moment in the game?</div>
       </div>
       <div class="card-q">
         <div class="card-q-num">Q 03</div>
-        <div class="card-q-text">What are you looking forward to most?</div>
+        <div class="card-q-text">What do you take away from this match?</div>
       </div>
     </div>
   </div>
@@ -1175,23 +1180,23 @@ body { padding-top: 0; }
 ══════════════════════════════════════════════════════════ -->
 <div class="section" id="homework" style="scroll-margin-top:92px;">
   <span class="eyebrow">Homework &nbsp;·&nbsp; 3 Steps</span>
-  <h2 class="display d-xl reveal" style="margin-bottom:0;">RECORD YOUR<br>INTERVIEW.</h2>
+  <h2 class="display d-xl reveal" style="margin-bottom:0;">RECORD YOUR<br>MIXED ZONE.</h2>
   <div class="hl reveal"></div>
   <div class="mission-steps reveal">
     <div class="step">
       <div class="step-title">Rewatch</div>
       <div class="step-hl"></div>
-      <div class="step-body">손흥민 또는 이강인 영상을 한 번 더 봅니다.<br>이번엔 영어 자막을 켜고 — 오늘 배운 표현이 나올 때 일시 정지.</div>
+      <div class="step-body">배운 승리/패배 인터뷰 영상을 한 번 더 봅니다.<br>'we'가 나올 때마다 체크 — 몇 번 나왔나요?</div>
     </div>
     <div class="step">
       <div class="step-title">Prepare</div>
       <div class="step-hl"></div>
-      <div class="step-body">빈칸 4개를 자신의 이름·포지션·목표로 완성합니다.<br>종이에 써도 좋고, 메모앱도 OK.</div>
+      <div class="step-body">가상 경기 결과 (승리 또는 패배)를 정하고,<br>빈칸 4개를 채웁니다.</div>
     </div>
     <div class="step">
       <div class="step-title">Record</div>
       <div class="step-hl"></div>
-      <div class="step-body">핸드폰으로 1분 자기소개 인터뷰 영상을 찍습니다.<br>카메라 보고, 천천히, 자신있게.<br><span class="kakao-badge">카카오톡 제출</span></div>
+      <div class="step-body">경기 직후 믹스드존 상황처럼<br>30초~1분 인터뷰 영상을 찍습니다.<br><span class="kakao-badge">카카오톡 제출</span></div>
     </div>
   </div>
 
@@ -1199,10 +1204,11 @@ body { padding-top: 0; }
   <div class="hw-submit-wrap reveal" id="hw-submit-area">
     <div class="hl" style="margin-top:56px;"></div>
     <div class="hw-submit-header">
-      <span class="eyebrow" style="margin:0;">숙제 제출 &nbsp;·&nbsp; Unit 1</span>
-      <a href="homework.html#unit1" class="hw-board-link">전체 제출 현황 →</a>
+      <span class="eyebrow" style="margin:0;">숙제 제출 &nbsp;·&nbsp; Unit 2</span>
+      <a href="homework.html" class="hw-board-link">전체 제출 현황 →</a>
     </div>
 
+    <!-- 제출 전 폼 -->
     <div id="hw-form">
       <div class="hw-fields">
         <div class="hw-field-group">
@@ -1210,12 +1216,12 @@ body { padding-top: 0; }
           <input class="hw-input" id="hw-name" type="text" placeholder="예: 김민준" maxlength="20">
         </div>
         <div class="hw-field-group">
-          <label class="hw-label">REWATCH &nbsp;<span class="hw-label-sub">오늘 배운 표현이 나왔을 때 어떤 문장이었나요?</span></label>
-          <input class="hw-input" id="hw-rewatch" type="text" placeholder="예: 'I cannot wait to get started' 가 22분쯤에 나왔습니다." maxlength="200">
+          <label class="hw-label">REWATCH &nbsp;<span class="hw-label-sub">'we'가 몇 번 나왔나요?</span></label>
+          <input class="hw-input" id="hw-rewatch" type="text" placeholder="예: 총 7번 나왔습니다. 특히 '…' 부분에서…" maxlength="200">
         </div>
         <div class="hw-field-group">
           <label class="hw-label">PREPARE &nbsp;<span class="hw-label-sub">빈칸 4개 완성 결과</span></label>
-          <textarea class="hw-textarea" id="hw-prepare" placeholder="01 I'm incredibly proud to be joining the national team. / 02 I have come here to improve and give everything for this team. / 03 I can't wait to get started with the team. / 04 It's incredible to be part of this club." rows="4" maxlength="600"></textarea>
+          <textarea class="hw-textarea" id="hw-prepare" placeholder="01 We worked / 02 Credit to the coaching staff / 03 I'm gutted, but we'll bounce back / 04 The manager set us up perfectly" rows="4" maxlength="600"></textarea>
         </div>
         <div class="hw-field-group hw-field-kakao">
           <label class="hw-label">RECORD &nbsp;<span class="kakao-badge">카카오톡 제출</span></label>
@@ -1228,6 +1234,7 @@ body { padding-top: 0; }
       </div>
     </div>
 
+    <!-- 제출 완료 상태 -->
     <div id="hw-done" style="display:none;">
       <div class="hw-done-msg">
         <div class="hw-done-check">✓</div>
@@ -1243,7 +1250,7 @@ body { padding-top: 0; }
 <!-- ── Footer ─────────────────────────────────────────────── -->
 <footer id="footer">
   <span class="footer-brand">러너스 LRS &nbsp;·&nbsp; 강원 U-18 영어 인터뷰 수업</span>
-  <span class="footer-note">Unit 1 &nbsp;·&nbsp; Self-Introduction & Joining the Team</span>
+  <span class="footer-note">Unit 2 &nbsp;·&nbsp; Post-Match Flash Interview</span>
 </footer>
 
 <!-- ── Compose Overlay ───────────────────────────────────── -->
@@ -1274,9 +1281,10 @@ body { padding-top: 0; }
 
 <script>
 // ── YouTube ──────────────────────────────────────────────
+// ※ 아래 video ID는 미정 — 영상 확정 후 업데이트 필요
 const YT_URLS = {
-  son: 'https://www.youtube.com/embed/54uYp3aI-Ys?autoplay=1&start=1320&end=1680&rel=0',
-  lee: 'https://www.youtube.com/embed/ieyfcKObThQ?autoplay=1&rel=0',
+  win:  'https://www.youtube.com/embed/54uYp3aI-Ys?autoplay=1&start=1320&end=1680&rel=0',
+  lose: 'https://www.youtube.com/embed/sBTfsCVtRwI?autoplay=1&rel=0',
 };
 
 function openVideo(key) {
@@ -1301,16 +1309,16 @@ document.addEventListener('keydown', e => {
 
 // ── Instructor Bar ───────────────────────────────────────
 const SECTIONS = [
-  { id: 'hero',      name: 'Unit 1 — 오프닝' },
-  { id: 'watch-son', name: '① 손흥민 — 시청 전 준비' },
-  { id: 'son-analysis', name: '② 손흥민 — 표현 분석' },
-  { id: 'watch-lee', name: '③ 황희찬 — 시청 전 준비' },
-  { id: 'lee-analysis', name: '④ 황희찬 — 표현 분석' },
-  { id: 'compare',   name: '⑤ 두 선수 비교' },
-  { id: 'drill',     name: '⑥ 빈칸 드릴' },
-  { id: 'phrases',   name: '⑦ 핵심 표현 정리' },
-  { id: 'roleplay',  name: '⑧ 롤플레이' },
-  { id: 'homework',  name: '⑨ 숙제 안내' },
+  { id: 'hero',          name: 'Unit 2 — 오프닝' },
+  { id: 'watch-win',     name: '① 승리 인터뷰 — 시청 전 준비' },
+  { id: 'win-analysis',  name: '② 승리 표현 분석' },
+  { id: 'watch-lose',    name: '③ 패배 인터뷰 — 시청 전 준비' },
+  { id: 'lose-analysis', name: '④ 패배 표현 분석' },
+  { id: 'compare',       name: '⑤ WIN vs LOSE 비교' },
+  { id: 'drill',         name: '⑥ 빈칸 드릴' },
+  { id: 'phrases',       name: '⑦ 핵심 표현 정리' },
+  { id: 'roleplay',      name: '⑧ 롤플레이' },
+  { id: 'homework',      name: '⑨ 숙제 안내' },
 ];
 
 let ibarVisible = true;
@@ -1322,18 +1330,19 @@ const UNITS = [
     id: 'unit1',
     label: 'Unit 1',
     subtitle: 'Self-Introduction & Joining the Team',
-    current: true,
-    sections: SECTIONS,
+    url: 'unit1.html',
   },
   {
     id: 'unit2',
     label: 'Unit 2',
     subtitle: 'Post-Match Flash Interview',
-    url: 'unit2.html',
+    current: true,
+    sections: SECTIONS,
   },
+  // { id: 'unit3', label: 'Unit 3', subtitle: '목표·동기·야망 인터뷰', url: 'unit3.html' },
 ];
 
-const navMenuEl  = document.getElementById('nav-menu');
+const navMenuEl     = document.getElementById('nav-menu');
 const navDropdownEl = document.getElementById('nav-dropdown');
 
 (function buildNavMenu() {
@@ -1406,7 +1415,7 @@ function ibarGoTo(idx) {
   const sec = SECTIONS[ibarCur];
   const el = document.getElementById(sec.id);
   if (el) {
-    const offset = 48 + 44; // topnav + ibar
+    const offset = 48 + 44;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: 'smooth' });
   }
@@ -1495,7 +1504,6 @@ function delEx(e, dataKey, idx) {
   _renderNoteExamples(noteEl);
 }
 
-// ── Compose overlay ───────────────────────────────────────
 let _activeKey = null;
 
 function addExample(btn) {
@@ -1526,7 +1534,6 @@ function _openCompose(noteEl) {
 function closeCompose() {
   document.getElementById('ex-compose').classList.remove('open');
   document.body.style.overflow = '';
-  // sync note area
   if (_activeKey) {
     const dataKey = _activeKey.replace('ex__', '');
     const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
@@ -1549,7 +1556,6 @@ function handleComposeKey(e) {
     const val = e.target.value.trim();
     if (!val) return;
     const arr = _getEx(_activeKey);
-    // unmark previous fresh
     arr.push(val);
     _setEx(_activeKey, arr);
     _renderComposeList();
@@ -1560,7 +1566,6 @@ function handleComposeKey(e) {
 }
 
 function handleComposeInput(inp) {
-  // resize input font if text gets very long
   const len = inp.value.length;
   inp.style.fontSize = len > 40 ? 'clamp(24px, 3.5vw, 48px)' : '';
 }
@@ -1570,43 +1575,55 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<!-- ── Supabase CDN ──────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+// ── Supabase setup ───────────────────────────────────────
 const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
 const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
-const HW_UNIT = 'unit1';
-const HW_LS_KEY = 'b2b_hw_submitted_unit1';
+const HW_UNIT = 'unit2';
+const HW_LS_KEY = 'b2b_hw_submitted_unit2';
 
 const sb = window.supabase.createClient(SB_URL, SB_ANON);
 
+// ── 제출 완료 여부 초기화 ────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem(HW_LS_KEY);
   if (saved) {
-    try { showDoneState(JSON.parse(saved).name); } catch {}
+    try {
+      const { name } = JSON.parse(saved);
+      showDoneState(name);
+    } catch {}
   }
 });
 
+// ── 제출 ────────────────────────────────────────────────
 async function submitHomework() {
   const name    = document.getElementById('hw-name').value.trim();
   const rewatch = document.getElementById('hw-rewatch').value.trim();
   const prepare = document.getElementById('hw-prepare').value.trim();
   const errEl   = document.getElementById('hw-error');
+
   errEl.textContent = '';
 
   if (!name) { errEl.textContent = '이름을 입력해주세요.'; return; }
   if (!rewatch && !prepare) { errEl.textContent = 'REWATCH 또는 PREPARE 중 하나 이상 작성해주세요.'; return; }
 
   const btn = document.querySelector('.hw-btn-submit');
-  btn.disabled = true; btn.textContent = '제출 중…';
+  btn.disabled = true;
+  btn.textContent = '제출 중…';
 
   const { error } = await sb.from('b2b_homework_submissions').insert({
-    unit: HW_UNIT, student_name: name,
-    rewatch_answer: rewatch || null, prepare_answer: prepare || null,
+    unit: HW_UNIT,
+    student_name: name,
+    rewatch_answer: rewatch || null,
+    prepare_answer: prepare || null,
   });
 
   if (error) {
     errEl.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-    btn.disabled = false; btn.textContent = '제출하기';
+    btn.disabled = false;
+    btn.textContent = '제출하기';
     return;
   }
 
@@ -1621,22 +1638,32 @@ function showDoneState(name) {
   document.getElementById('hw-done-name').textContent = name + ' 님의 답변이 저장되었습니다.';
 }
 
+// ── 팀원 답변 보기 ───────────────────────────────────────
 let peersOpen = false;
 
 async function togglePeers() {
   const peerEl = document.getElementById('hw-peers');
   const btn = document.querySelector('.hw-btn-peers');
+
   if (peersOpen) {
-    peerEl.style.display = 'none'; btn.textContent = '팀원 답변 보기'; peersOpen = false; return;
+    peerEl.style.display = 'none';
+    btn.textContent = '팀원 답변 보기';
+    peersOpen = false;
+    return;
   }
+
   btn.textContent = '불러오는 중…';
+
   const { data, error } = await sb
     .from('b2b_homework_submissions')
     .select('student_name, rewatch_answer, prepare_answer, submitted_at')
     .eq('unit', HW_UNIT)
     .order('submitted_at', { ascending: false });
 
-  if (error || !data) { btn.textContent = '팀원 답변 보기'; return; }
+  if (error || !data) {
+    btn.textContent = '팀원 답변 보기';
+    return;
+  }
 
   peerEl.innerHTML = data.length === 0
     ? '<div class="hw-peers-empty">아직 제출한 팀원이 없습니다.</div>'
@@ -1648,15 +1675,17 @@ async function togglePeers() {
           <div class="hw-peer-time">${fmtDate(r.submitted_at)}</div>
         </div>`).join('') + '</div>';
 
-  peerEl.style.display = 'block'; btn.textContent = '팀원 답변 닫기'; peersOpen = true;
+  peerEl.style.display = 'block';
+  btn.textContent = '팀원 답변 닫기';
+  peersOpen = true;
 }
 
-function esc(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s) { return String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fmtDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
-  return d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'}) + ' ' +
-         d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) + ' ' +
+         d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 }
 </script>
 </body>
