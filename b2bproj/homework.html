@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>숙제 현황판 · 러너스 LRS</title>
+<title>숙제 결과 확인 · 러너스 LRS</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,7 +14,6 @@
   --mute:    #5a5a5f;
   --muted:   #8a8a8f;
   --line:    #2a2a2f;
-  --bg-l:    #f4f7fa;
   --max:     1080px;
   --pad:     clamp(24px, 5vw, 80px);
 }
@@ -41,11 +40,12 @@ body {
   padding: 0 var(--pad); height: 48px;
 }
 .brand { font-size: 11px; font-weight: 700; letter-spacing: 0.4em; text-transform: uppercase; }
-.nav-back {
+.nav-links { display: flex; gap: 20px; align-items: center; }
+.nav-link {
   font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--mute); text-decoration: none; transition: color 0.15s;
 }
-.nav-back:hover { color: var(--white); }
+.nav-link:hover { color: var(--white); }
 
 /* ── Main ───────────────────────────────────────────────── */
 .main {
@@ -68,9 +68,9 @@ body {
 }
 .hl { height: 0.5px; background: var(--line); margin-bottom: 40px; }
 
-/* ── Unit selector ──────────────────────────────────────── */
+/* ── Unit tabs ──────────────────────────────────────────── */
 .unit-tabs {
-  display: flex; gap: 0; margin-bottom: 48px;
+  display: flex; gap: 0; margin-bottom: 40px;
   border-bottom: 0.5px solid var(--line);
   overflow-x: auto;
 }
@@ -86,23 +86,84 @@ body {
 .unit-tab:hover { color: var(--white); }
 .unit-tab.active { color: var(--white); border-bottom-color: var(--white); }
 
-/* ── Stats row ──────────────────────────────────────────── */
-.stats-row {
-  display: flex; gap: 32px;
-  margin-bottom: 40px;
+/* ── Scoreboard (선수 기록표) ───────────────────────────── */
+.scoreboard {
+  border: 0.5px solid var(--line);
+  background: var(--night-s);
+  margin-bottom: 48px;
 }
-.stat-box {
-  display: flex; flex-direction: column; gap: 4px;
+.sb-inner { padding: 28px 32px 24px; }
+
+.sb-unit-row {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 28px;
 }
-.stat-num {
-  font-size: clamp(28px, 4vw, 44px);
-  font-weight: 700; letter-spacing: 0.04em;
-  color: var(--white); line-height: 1;
-}
-.stat-label {
-  font-size: 9px; letter-spacing: 0.24em;
+.sb-unit-tag {
+  font-size: 9px; letter-spacing: 0.36em;
   text-transform: uppercase; color: var(--mute);
 }
+.sb-unit-sub {
+  font-size: 11px; color: var(--muted); letter-spacing: 0.06em;
+}
+
+.sb-stats {
+  display: flex; align-items: stretch; gap: 0;
+  margin-bottom: 24px;
+}
+.sb-stat {
+  display: flex; flex-direction: column; gap: 8px;
+  padding-right: 32px;
+}
+.sb-stat + .sb-stat {
+  border-left: 0.5px solid var(--line);
+  padding-left: 32px;
+}
+.sb-stat-num {
+  font-size: clamp(40px, 5.5vw, 64px);
+  font-weight: 700; letter-spacing: 0.02em;
+  color: var(--white); line-height: 1;
+}
+.sb-stat-num-sm { font-size: clamp(22px, 3vw, 36px); }
+.sb-stat-label {
+  font-size: 8px; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--mute);
+}
+
+.sb-hl { height: 0.5px; background: var(--line); margin-bottom: 20px; }
+
+.sb-roster-label {
+  font-size: 8px; letter-spacing: 0.32em;
+  text-transform: uppercase; color: var(--mute);
+  margin-bottom: 12px;
+}
+.sb-roster { display: flex; flex-wrap: wrap; gap: 8px; min-height: 28px; }
+.sb-chip {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--white);
+  border: 0.5px solid var(--line);
+  padding: 5px 12px;
+  background: var(--night);
+}
+.sb-empty { font-size: 12px; color: var(--mute); padding: 4px 0; }
+
+/* ── Controls row ───────────────────────────────────────── */
+.controls-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.section-eyebrow {
+  font-size: 9px; letter-spacing: 0.32em;
+  text-transform: uppercase; color: var(--mute);
+}
+.refresh-btn {
+  background: none; border: 0.5px solid var(--line);
+  color: var(--mute); font-family: Arial;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 6px 16px; border-radius: 20px; cursor: pointer;
+  transition: all 0.15s;
+}
+.refresh-btn:hover { border-color: var(--white); color: var(--white); }
 
 /* ── Submission cards ───────────────────────────────────── */
 .cards { display: flex; flex-direction: column; gap: 0; }
@@ -117,67 +178,66 @@ body {
   .card { grid-template-columns: 1fr; gap: 16px; }
 }
 .card:last-child { border-bottom: 0.5px solid var(--line); }
-.card-meta {}
 .card-name {
   font-size: 13px; font-weight: 700;
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--white); margin-bottom: 6px;
 }
-.card-time { font-size: 10px; color: var(--line); }
-.card-body { display: flex; flex-direction: column; gap: 12px; }
+.card-time { font-size: 10px; color: var(--mute); }
+.card-body { display: flex; flex-direction: column; gap: 16px; }
 .card-field { display: grid; grid-template-columns: 80px 1fr; gap: 12px; align-items: start; }
 .card-field-label {
   font-size: 8px; letter-spacing: 0.22em;
   text-transform: uppercase; color: var(--mute);
-  padding-top: 2px;
+  padding-top: 3px;
 }
 .card-field-val {
   font-size: 14px; color: var(--muted); line-height: 1.65;
-  white-space: pre-wrap;
 }
-.card-kakao {
-  font-size: 10px; color: var(--mute); letter-spacing: 0.08em;
-}
+.card-kakao { font-size: 10px; color: var(--mute); letter-spacing: 0.08em; }
 
-/* ── Empty / Loading states ─────────────────────────────── */
+/* ── Structured prepare display ─────────────────────────── */
+.card-prepare { display: flex; flex-direction: column; gap: 6px; }
+.card-prepare-result {
+  font-size: 9px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--white);
+  margin-bottom: 4px;
+}
+.card-prepare-row { display: grid; grid-template-columns: 28px 1fr; gap: 8px; }
+.card-prepare-num {
+  font-size: 9px; color: var(--mute);
+  letter-spacing: 0.16em; padding-top: 2px;
+}
+.card-prepare-val { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+/* ── Empty / Loading ────────────────────────────────────── */
 .state-msg {
   padding: 60px 0;
   font-size: 13px; color: var(--mute);
   letter-spacing: 0.06em;
 }
 .spinner {
-  display: inline-block;
-  width: 14px; height: 14px;
-  border: 1.5px solid var(--line);
-  border-top-color: var(--muted);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  display: inline-block; width: 14px; height: 14px;
+  border: 1.5px solid var(--line); border-top-color: var(--muted);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
   margin-right: 10px; vertical-align: middle;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── Refresh btn ────────────────────────────────────────── */
-.refresh-btn {
-  background: none; border: 0.5px solid var(--line);
-  color: var(--mute); font-family: Arial;
-  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-  padding: 6px 16px; border-radius: 20px; cursor: pointer;
-  transition: all 0.15s; margin-left: auto; display: block;
-  margin-bottom: 20px;
-}
-.refresh-btn:hover { border-color: var(--white); color: var(--white); }
 </style>
 </head>
 <body>
 
 <nav id="topnav">
   <span class="brand">러너스 LRS</span>
-  <a href="unit2.html" class="nav-back">← 수업으로</a>
+  <div class="nav-links">
+    <a href="unit1.html" class="nav-link">← Unit 1</a>
+    <a href="unit2.html" class="nav-link">Unit 2 →</a>
+  </div>
 </nav>
 
 <div class="main">
-  <span class="page-eyebrow">숙제 현황판 &nbsp;·&nbsp; 강원 U-18 영어 인터뷰 수업</span>
-  <h1 class="page-title">Homework<br>Board</h1>
+  <span class="page-eyebrow">숙제 결과 확인 &nbsp;·&nbsp; 강원 U-18 영어 인터뷰 수업</span>
+  <h1 class="page-title">HOMEWORK<br>RECORDS</h1>
   <div class="hl"></div>
 
   <!-- Unit 탭 -->
@@ -190,19 +250,36 @@ body {
     <div class="unit-tab" data-unit="unit6" onclick="selectUnit('unit6', this)">Unit 6</div>
   </div>
 
-  <!-- 통계 -->
-  <div class="stats-row">
-    <div class="stat-box">
-      <div class="stat-num" id="stat-count">—</div>
-      <div class="stat-label">제출 완료</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-num" id="stat-latest">—</div>
-      <div class="stat-label">최근 제출</div>
+  <!-- 선수 기록표 (Scoreboard) -->
+  <div class="scoreboard" id="scoreboard">
+    <div class="sb-inner">
+      <div class="sb-unit-row">
+        <span class="sb-unit-tag" id="sb-unit-tag">UNIT 1</span>
+        <span class="sb-unit-sub" id="sb-unit-sub">Self-Introduction &amp; Joining the Team</span>
+      </div>
+      <div class="sb-stats">
+        <div class="sb-stat">
+          <div class="sb-stat-num" id="stat-count">—</div>
+          <div class="sb-stat-label">제출 완료</div>
+        </div>
+        <div class="sb-stat">
+          <div class="sb-stat-num sb-stat-num-sm" id="stat-latest">—</div>
+          <div class="sb-stat-label">최근 제출</div>
+        </div>
+      </div>
+      <div class="sb-hl"></div>
+      <div class="sb-roster-label">SUBMITTED ROSTER</div>
+      <div class="sb-roster" id="sb-roster">
+        <span class="sb-empty">불러오는 중…</span>
+      </div>
     </div>
   </div>
 
-  <button class="refresh-btn" onclick="loadSubmissions()">새로고침</button>
+  <!-- 상세 결과 헤더 + 새로고침 -->
+  <div class="controls-row">
+    <span class="section-eyebrow" id="detail-label">개별 결과</span>
+    <button class="refresh-btn" onclick="loadSubmissions()">↻ 새로고침</button>
+  </div>
 
   <!-- 카드 목록 -->
   <div id="cards-area">
@@ -216,18 +293,23 @@ const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
 const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
 const sb = window.supabase.createClient(SB_URL, SB_ANON);
 
+const UNIT_INFO = {
+  unit1: { label: 'UNIT 1', sub: 'Self-Introduction &amp; Joining the Team' },
+  unit2: { label: 'UNIT 2', sub: 'Post-Match Flash Interview' },
+  unit3: { label: 'UNIT 3', sub: '—' },
+  unit4: { label: 'UNIT 4', sub: '—' },
+  unit5: { label: 'UNIT 5', sub: '—' },
+  unit6: { label: 'UNIT 6', sub: '—' },
+};
+
 let currentUnit = 'unit1';
 
-// URL hash로 unit 복원
 if (location.hash) {
   const h = location.hash.replace('#', '');
-  if (['unit1','unit2','unit3','unit4','unit5','unit6'].includes(h)) {
-    currentUnit = h;
-  }
+  if (UNIT_INFO[h]) currentUnit = h;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 탭 초기 active 세팅
   document.querySelectorAll('.unit-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.unit === currentUnit);
   });
@@ -247,6 +329,11 @@ async function loadSubmissions() {
   area.innerHTML = '<div class="state-msg"><span class="spinner"></span>불러오는 중…</div>';
   document.getElementById('stat-count').textContent = '—';
   document.getElementById('stat-latest').textContent = '—';
+  document.getElementById('sb-roster').innerHTML = '<span class="sb-empty">불러오는 중…</span>';
+
+  const info = UNIT_INFO[currentUnit] || { label: currentUnit.toUpperCase(), sub: '—' };
+  document.getElementById('sb-unit-tag').textContent = info.label;
+  document.getElementById('sb-unit-sub').innerHTML = info.sub;
 
   const { data, error } = await sb
     .from('b2b_homework_submissions')
@@ -256,17 +343,27 @@ async function loadSubmissions() {
 
   if (error) {
     area.innerHTML = `<div class="state-msg">오류: ${esc(error.message)}</div>`;
+    document.getElementById('sb-roster').innerHTML = '<span class="sb-empty">—</span>';
     return;
   }
 
-  // Stats
+  // ── Scoreboard stats
   document.getElementById('stat-count').textContent = data.length;
-  if (data.length > 0) {
-    document.getElementById('stat-latest').textContent = fmtRelative(data[0].submitted_at);
+  document.getElementById('stat-latest').textContent = data.length > 0
+    ? fmtRelative(data[0].submitted_at) : '없음';
+  document.getElementById('detail-label').textContent = `개별 결과 · ${data.length}건`;
+
+  // ── Roster chips
+  const rosterEl = document.getElementById('sb-roster');
+  if (data.length === 0) {
+    rosterEl.innerHTML = '<span class="sb-empty">아직 제출한 학생이 없습니다.</span>';
   } else {
-    document.getElementById('stat-latest').textContent = '없음';
+    rosterEl.innerHTML = data.map(r =>
+      `<span class="sb-chip">${esc(r.student_name)}</span>`
+    ).join('');
   }
 
+  // ── Cards
   if (data.length === 0) {
     area.innerHTML = '<div class="state-msg">아직 제출된 숙제가 없습니다.</div>';
     return;
@@ -287,7 +384,7 @@ async function loadSubmissions() {
         ${r.prepare_answer ? `
           <div class="card-field">
             <span class="card-field-label">Prepare</span>
-            <span class="card-field-val">${esc(r.prepare_answer)}</span>
+            <div>${renderPrepare(r.prepare_answer)}</div>
           </div>` : ''}
         <div class="card-field">
           <span class="card-field-label">Record</span>
@@ -297,7 +394,29 @@ async function loadSubmissions() {
     </div>`).join('') + '</div>';
 }
 
-function esc(s) { return String(s || '').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function renderPrepare(val) {
+  if (!val) return '';
+  try {
+    const p = JSON.parse(val);
+    if (typeof p !== 'object' || Array.isArray(p)) return `<span class="card-field-val">${esc(val)}</span>`;
+    let html = '<div class="card-prepare">';
+    if (p.result) {
+      html += `<div class="card-prepare-result">${p.result === 'win' ? '승리 (WIN)' : '패배 (LOSE)'}</div>`;
+    }
+    ['01','02','03','04'].forEach(k => {
+      if (p[k]) html += `<div class="card-prepare-row">
+        <span class="card-prepare-num">${k}</span>
+        <span class="card-prepare-val">${esc(p[k])}</span>
+      </div>`;
+    });
+    html += '</div>';
+    return html;
+  } catch {
+    return `<span class="card-field-val">${esc(val)}</span>`;
+  }
+}
+
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function fmtDate(iso) {
   if (!iso) return '';
