@@ -15,6 +15,7 @@ import { StudentRoster } from './components/StudentRoster';
 import { EventLogPanel } from './components/EventLogPanel';
 import { AlertLogPanel } from './components/AlertLogPanel';
 import DailyLearningPage from './daily-learning/page';
+import { YesterdayCheck } from './components/YesterdayCheck';
 import type { FlatAlert } from './components/AlertFeedRows';
 import { DailyStatsPanel } from './components/DailyStatsPanel';
 import type { TaggedEvent } from './components/UnifiedTimeline';
@@ -80,7 +81,8 @@ export default function SrmPage() {
   const urlEventId = searchParams.get('eventId');
 
   const [mainTab, setMainTab] = useState<MainTab>('queue');
-  const [queueTab, setQueueTab] = useState<'schedule' | 'noClass' | 'noStudyHall' | 'noVocab'>('schedule');
+  const [queueTab, setQueueTab] = useState<'schedule' | 'noClass' | 'noStudyHall' | 'noVocab' | 'yesterday'>('schedule');
+  const [yesterdayIssueCount, setYesterdayIssueCount] = useState(0);
   const [selectedDate, setSelectedDate] = useState(() => {
     if (urlDate && /^\d{4}-\d{2}-\d{2}$/.test(urlDate)) return urlDate;
     return getKstDateStr(0);
@@ -142,6 +144,22 @@ export default function SrmPage() {
       .then(setAlerts)
       .finally(() => setAlertsLoading(false));
   }, [mainTab]);
+
+  // 어제 날짜 계산 (KST)
+  const yesterdayDate = (() => {
+    const d = new Date();
+    d.setTime(d.getTime() + 9 * 60 * 60 * 1000);
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  useEffect(() => {
+    if (mainTab !== 'queue') return;
+    srmFetch(`/api/admin/srm/yesterday-check?date=${yesterdayDate}`)
+      .then((r) => r.json())
+      .then((data) => setYesterdayIssueCount(data?.issueCount ?? 0))
+      .catch(() => setYesterdayIssueCount(0));
+  }, [mainTab, yesterdayDate]);
 
   useEffect(() => {
     if (mainTab !== 'queue') return;
@@ -277,10 +295,11 @@ export default function SrmPage() {
           setSelectedStudent({ id: student.id, name: student.name, triggerType: student.triggerType });
 
         const QUEUE_TABS = [
-          { key: 'schedule'    as const, label: '스케줄',       count: null        },
-          { key: 'noClass'     as const, label: '수업 미정',    count: noClassCount },
-          { key: 'noStudyHall' as const, label: '스터디홀 미정', count: noSHCount   },
-          { key: 'noVocab'     as const, label: '보카 미정',    count: noVocabCount },
+          { key: 'schedule'    as const, label: '스케줄',       count: null                 },
+          { key: 'noClass'     as const, label: '수업 미정',    count: noClassCount          },
+          { key: 'noStudyHall' as const, label: '스터디홀 미정', count: noSHCount            },
+          { key: 'noVocab'     as const, label: '보카 미정',    count: noVocabCount          },
+          { key: 'yesterday'   as const, label: '어제 점검',    count: yesterdayIssueCount   },
         ];
 
         return (
@@ -358,6 +377,13 @@ export default function SrmPage() {
                 loading={alertsLoading}
                 onStudentClick={alertOnStudentClick}
                 onCoachClick={handleCoachClick}
+              />
+            )}
+
+            {queueTab === 'yesterday' && (
+              <YesterdayCheck
+                date={yesterdayDate}
+                onStudentClick={handleStudentClick}
               />
             )}
           </>
