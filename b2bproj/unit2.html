@@ -77,6 +77,13 @@ body {
   max-height: 80vh; overflow-y: auto;
 }
 .nav-dropdown.open .nav-menu { display: block; }
+.nav-right { display: flex; align-items: center; gap: 24px; }
+.nav-hw-link {
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--mute); text-decoration: none; transition: color 0.15s;
+  white-space: nowrap;
+}
+.nav-hw-link:hover { color: var(--white); }
 
 /* Level 1 — Unit header */
 .nav-unit-hd {
@@ -818,12 +825,15 @@ body { padding-top: 0; }
 <!-- ── Top Nav ────────────────────────────────────────────── -->
 <nav id="topnav">
   <span class="brand">러너스 LRS</span>
-  <div class="nav-dropdown" id="nav-dropdown">
-    <div class="nav-trigger" onclick="toggleNavMenu(event)">
-      <span id="nav-trigger-label">목차</span>
-      <span class="nav-trigger-arrow">▾</span>
+  <div class="nav-right">
+    <a href="homework.html#unit2" class="nav-hw-link">숙제 결과 확인</a>
+    <div class="nav-dropdown" id="nav-dropdown">
+      <div class="nav-trigger" onclick="toggleNavMenu(event)">
+        <span id="nav-trigger-label">목차</span>
+        <span class="nav-trigger-arrow">▾</span>
+      </div>
+      <div class="nav-menu" id="nav-menu"></div>
     </div>
-    <div class="nav-menu" id="nav-menu"></div>
   </div>
 </nav>
 
