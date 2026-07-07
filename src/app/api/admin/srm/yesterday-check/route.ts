@@ -48,14 +48,14 @@ export async function GET(req: NextRequest) {
   try {
     const { from, to } = kstDateToUtcRange(date);
 
-    // 1. 해당 날짜의 scheduled_events (coach_room, study_hall, vocab)
+    // 1. 해당 날짜의 scheduled_events — approved/completed만 포함 (proposed/rejected/cancelled 제외)
     const { data: events, error: evErr } = await supabaseSFv2
       .from('scheduled_events')
       .select('id, category, starts_at, ends_at, status, feedback')
       .in('category', ['coach_room', 'study_hall', 'vocab'])
       .gte('starts_at', from)
       .lte('starts_at', to)
-      .neq('status', 'cancelled')
+      .in('status', ['approved', 'completed'])
       .order('starts_at', { ascending: true });
 
     if (evErr) throw new Error(evErr.message);
@@ -103,34 +103,99 @@ export async function GET(req: NextRequest) {
     // vocab 이벤트
     const vocabEvents = events.filter((e) => e.category === 'vocab');
 
-    // 4. coach_room_session (scheduled_event_id 기준)
+    // 4. coach_room_session: scheduled_event_id 매칭 + 시간대 폴백
+    // scheduled_event_id가 항상 세팅되지 않으므로, 날짜 범위 내 모든 세션을 가져와서 매칭
     const coachSessionMap = new Map<string, Set<string>>(); // event_id → Set<userId>
     if (coachRoomEventIds.length) {
+      const allStudentIds = [...new Set(
+        coachRoomEventIds.flatMap((eid) => evParticipants.get(eid)?.students.map((s) => s.id) ?? [])
+      )];
+
       const { data: crSessions } = await supabaseSFv2
         .from('coach_room_session')
-        .select('scheduled_event_id, user_id')
-        .in('scheduled_event_id', coachRoomEventIds);
+        .select('id, scheduled_event_id, user_id, started_at')
+        .in('user_id', allStudentIds.length ? allStudentIds : ['__none__'])
+        .gte('started_at', from)
+        .lte('started_at', to)
+        .not('ended_at', 'is', null);
+
+      // event_id → 이벤트 시작시각 맵
+      const eventStartMap = new Map<string, string>(
+        events.filter((e) => e.category === 'coach_room').map((e) => [e.id as string, e.starts_at as string])
+      );
 
       for (const s of crSessions ?? []) {
-        const eid = s.scheduled_event_id as string;
-        if (!coachSessionMap.has(eid)) coachSessionMap.set(eid, new Set());
-        coachSessionMap.get(eid)!.add(s.user_id as string);
+        const userId = s.user_id as string;
+        const sessionStart = new Date(s.started_at as string).getTime();
+
+        // 1차: scheduled_event_id 직접 매칭
+        const linkedEid = s.scheduled_event_id as string | null;
+        if (linkedEid && coachSessionMap.has(linkedEid) !== undefined && eventStartMap.has(linkedEid)) {
+          if (!coachSessionMap.has(linkedEid)) coachSessionMap.set(linkedEid, new Set());
+          coachSessionMap.get(linkedEid)!.add(userId);
+          continue;
+        }
+
+        // 2차: 시간대 기준 매칭 — 이벤트 시작 시각 ±45분 이내
+        for (const [eid, startsAt] of eventStartMap) {
+          const eventStart = new Date(startsAt).getTime();
+          const diff = Math.abs(sessionStart - eventStart);
+          if (diff <= 45 * 60 * 1000) {
+            // 해당 이벤트 참가자인지 확인
+            const isParticipant = evParticipants.get(eid)?.students.some((st) => st.id === userId);
+            if (isParticipant) {
+              if (!coachSessionMap.has(eid)) coachSessionMap.set(eid, new Set());
+              coachSessionMap.get(eid)!.add(userId);
+              break;
+            }
+          }
+        }
       }
     }
 
-    // 5. study_hall_session (scheduled_event_id 기준)
+    // 5. study_hall_session: scheduled_event_id 매칭 + 시간대 폴백
     const shSessionMap = new Map<string, { sessionId: string; userId: string }[]>(); // event_id → sessions
     if (studyHallEventIds.length) {
+      const shStudentIds = [...new Set(
+        studyHallEventIds.flatMap((eid) => evParticipants.get(eid)?.students.map((s) => s.id) ?? [])
+      )];
+
       const { data: shSessions } = await supabaseSFv2
         .from('study_hall_session')
-        .select('id, scheduled_event_id, user_id')
-        .in('scheduled_event_id', studyHallEventIds)
+        .select('id, scheduled_event_id, user_id, started_at')
+        .in('user_id', shStudentIds.length ? shStudentIds : ['__none__'])
+        .gte('started_at', from)
+        .lte('started_at', to)
         .not('ended_at', 'is', null);
 
+      const shEventStartMap = new Map<string, string>(
+        studyHallEvents.map((e) => [e.id as string, e.starts_at as string])
+      );
+
       for (const s of shSessions ?? []) {
-        const eid = s.scheduled_event_id as string;
-        if (!shSessionMap.has(eid)) shSessionMap.set(eid, []);
-        shSessionMap.get(eid)!.push({ sessionId: s.id as string, userId: s.user_id as string });
+        const userId = s.user_id as string;
+        const sessionStart = new Date(s.started_at as string).getTime();
+
+        // 1차: scheduled_event_id 직접 매칭
+        const linkedEid = s.scheduled_event_id as string | null;
+        if (linkedEid && shEventStartMap.has(linkedEid)) {
+          if (!shSessionMap.has(linkedEid)) shSessionMap.set(linkedEid, []);
+          shSessionMap.get(linkedEid)!.push({ sessionId: s.id as string, userId });
+          continue;
+        }
+
+        // 2차: 시간대 기준 매칭 — 이벤트 시작 시각 ±45분 이내
+        for (const [eid, startsAt] of shEventStartMap) {
+          const eventStart = new Date(startsAt).getTime();
+          if (Math.abs(sessionStart - eventStart) <= 45 * 60 * 1000) {
+            const isParticipant = evParticipants.get(eid)?.students.some((st) => st.id === userId);
+            if (isParticipant) {
+              if (!shSessionMap.has(eid)) shSessionMap.set(eid, []);
+              shSessionMap.get(eid)!.push({ sessionId: s.id as string, userId });
+              break;
+            }
+          }
+        }
       }
     }
 
