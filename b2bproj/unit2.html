@@ -798,6 +798,18 @@ body { padding-top: 0; }
 .hw-peer-field-val { font-size: 13px; color: var(--muted); line-height: 1.6; }
 .hw-peer-time { font-size: 10px; color: var(--line); margin-top: 10px; }
 .hw-peers-empty { font-size: 13px; color: var(--mute); padding: 20px 0; }
+.hw-blanks { display: flex; flex-direction: column; gap: 14px; padding-top: 4px; }
+.hw-blank-item { display: flex; flex-direction: column; gap: 6px; }
+.hw-blank-tpl { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.hw-blank-num { color: var(--mute); font-size: 9px; letter-spacing: 0.2em; font-weight: 700; margin-right: 8px; }
+.hw-result-choice { display: flex; gap: 24px; padding-top: 4px; }
+.hw-result-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.hw-result-option input[type="radio"] { accent-color: var(--white); width: 14px; height: 14px; }
+.hw-result-option span { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
+.hw-peer-prepare-row { display: grid; grid-template-columns: 28px 1fr; gap: 8px; margin-bottom: 4px; }
+.hw-peer-prepare-num { font-size: 8px; color: var(--mute); letter-spacing: 0.16em; padding-top: 2px; }
+.hw-peer-prepare-val { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.hw-peer-prepare-result { font-size: 9px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
 
 </style>
 </head>
@@ -1201,7 +1213,7 @@ body { padding-top: 0; }
     <div class="hl" style="margin-top:56px;"></div>
     <div class="hw-submit-header">
       <span class="eyebrow" style="margin:0;">숙제 제출 &nbsp;·&nbsp; Unit 2</span>
-      <a href="homework.html" class="hw-board-link">전체 제출 현황 →</a>
+      <a href="homework.html#unit2" class="hw-board-link">숙제 결과 확인 →</a>
     </div>
 
     <!-- 제출 전 폼 -->
@@ -1216,8 +1228,38 @@ body { padding-top: 0; }
           <input class="hw-input" id="hw-rewatch" type="text" placeholder="예: 총 7번 나왔습니다. 특히 '…' 부분에서…" maxlength="200">
         </div>
         <div class="hw-field-group">
-          <label class="hw-label">PREPARE &nbsp;<span class="hw-label-sub">빈칸 4개 완성 결과</span></label>
-          <textarea class="hw-textarea" id="hw-prepare" placeholder="01 We worked / 02 Credit to the coaching staff / 03 I'm gutted, but we'll bounce back / 04 The manager set us up perfectly" rows="4" maxlength="600"></textarea>
+          <label class="hw-label">오늘 경기 결과 &nbsp;<span class="hw-label-sub">가상 경기를 선택하세요</span></label>
+          <div class="hw-result-choice">
+            <label class="hw-result-option">
+              <input type="radio" name="hw-result" value="win" checked>
+              <span>승리 (WIN)</span>
+            </label>
+            <label class="hw-result-option">
+              <input type="radio" name="hw-result" value="lose">
+              <span>패배 (LOSE)</span>
+            </label>
+          </div>
+        </div>
+        <div class="hw-field-group">
+          <label class="hw-label">PREPARE &nbsp;<span class="hw-label-sub">빈칸을 채워 문장을 완성하세요</span></label>
+          <div class="hw-blanks">
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">01</span>We ___ really hard for this.</div>
+              <input class="hw-input" id="hw-p01" type="text" placeholder="예: worked / fought / prepared" maxlength="80">
+            </div>
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">02</span>Credit to the ___.</div>
+              <input class="hw-input" id="hw-p02" type="text" placeholder="예: whole team / manager / coaching staff" maxlength="80">
+            </div>
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">03</span>I'm ___, but we'll ___.</div>
+              <input class="hw-input" id="hw-p03" type="text" placeholder="예: gutted / bounce back" maxlength="80">
+            </div>
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">04</span>The manager ___ us up ___.</div>
+              <input class="hw-input" id="hw-p04" type="text" placeholder="예: set / perfectly" maxlength="80">
+            </div>
+          </div>
         </div>
         <div class="hw-field-group hw-field-kakao">
           <label class="hw-label">RECORD &nbsp;<span class="kakao-badge">카카오톡 제출</span></label>
@@ -1225,7 +1267,7 @@ body { padding-top: 0; }
         </div>
       </div>
       <div class="hw-actions">
-        <button class="hw-btn-submit" onclick="submitHomework()">제출하기</button>
+        <button class="hw-btn-submit" onclick="submitHomework()">저장하기</button>
         <span class="hw-error" id="hw-error"></span>
       </div>
     </div>
@@ -1596,29 +1638,36 @@ document.addEventListener('DOMContentLoaded', () => {
 async function submitHomework() {
   const name    = document.getElementById('hw-name').value.trim();
   const rewatch = document.getElementById('hw-rewatch').value.trim();
-  const prepare = document.getElementById('hw-prepare').value.trim();
-  const errEl   = document.getElementById('hw-error');
+  const result  = document.querySelector('input[name="hw-result"]:checked')?.value || 'win';
+  const p01 = document.getElementById('hw-p01').value.trim();
+  const p02 = document.getElementById('hw-p02').value.trim();
+  const p03 = document.getElementById('hw-p03').value.trim();
+  const p04 = document.getElementById('hw-p04').value.trim();
+  const prepare = JSON.stringify({ result, "01": p01, "02": p02, "03": p03, "04": p04 });
+  const errEl = document.getElementById('hw-error');
 
   errEl.textContent = '';
 
   if (!name) { errEl.textContent = '이름을 입력해주세요.'; return; }
-  if (!rewatch && !prepare) { errEl.textContent = 'REWATCH 또는 PREPARE 중 하나 이상 작성해주세요.'; return; }
+  if (!rewatch && !p01 && !p02 && !p03 && !p04) {
+    errEl.textContent = 'REWATCH 또는 PREPARE 중 하나 이상 작성해주세요.'; return;
+  }
 
   const btn = document.querySelector('.hw-btn-submit');
   btn.disabled = true;
-  btn.textContent = '제출 중…';
+  btn.textContent = '저장 중…';
 
   const { error } = await sb.from('b2b_homework_submissions').insert({
     unit: HW_UNIT,
     student_name: name,
     rewatch_answer: rewatch || null,
-    prepare_answer: prepare || null,
+    prepare_answer: prepare,
   });
 
   if (error) {
     errEl.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
     btn.disabled = false;
-    btn.textContent = '제출하기';
+    btn.textContent = '저장하기';
     return;
   }
 
@@ -1666,13 +1715,27 @@ async function togglePeers() {
         <div class="hw-peer-card">
           <div class="hw-peer-name">${esc(r.student_name)}</div>
           ${r.rewatch_answer ? `<div class="hw-peer-field"><span class="hw-peer-field-label">Rewatch</span><span class="hw-peer-field-val">${esc(r.rewatch_answer)}</span></div>` : ''}
-          ${r.prepare_answer ? `<div class="hw-peer-field"><span class="hw-peer-field-label">Prepare</span><span class="hw-peer-field-val">${esc(r.prepare_answer)}</span></div>` : ''}
+          ${r.prepare_answer ? `<div class="hw-peer-field"><span class="hw-peer-field-label">Prepare</span><div>${renderPrepareForPeer(r.prepare_answer)}</div></div>` : ''}
           <div class="hw-peer-time">${fmtDate(r.submitted_at)}</div>
         </div>`).join('') + '</div>';
 
   peerEl.style.display = 'block';
   btn.textContent = '팀원 답변 닫기';
   peersOpen = true;
+}
+
+function renderPrepareForPeer(val) {
+  if (!val) return '';
+  try {
+    const p = JSON.parse(val);
+    if (typeof p !== 'object' || Array.isArray(p)) return `<span class="hw-peer-field-val">${esc(val)}</span>`;
+    let html = '';
+    if (p.result) html += `<div class="hw-peer-prepare-result">${p.result === 'win' ? '승리 (WIN)' : '패배 (LOSE)'}</div>`;
+    ['01','02','03','04'].forEach(k => {
+      if (p[k]) html += `<div class="hw-peer-prepare-row"><span class="hw-peer-prepare-num">${k}</span><span class="hw-peer-prepare-val">${esc(p[k])}</span></div>`;
+    });
+    return html || `<span class="hw-peer-field-val">${esc(val)}</span>`;
+  } catch { return `<span class="hw-peer-field-val">${esc(val)}</span>`; }
 }
 
 function esc(s) { return String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
