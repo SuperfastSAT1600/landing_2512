@@ -676,6 +676,107 @@ body { padding-top: 0; }
   transform: translateY(0);
 }
 
+/* ── Kakao badge ────────────────────────────────────────── */
+.kakao-badge {
+  display: inline-block;
+  background: #FEE500; color: #191919;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 2px;
+  vertical-align: middle;
+}
+
+/* ── Homework submit ────────────────────────────────────── */
+.hw-submit-wrap { margin-top: 0; }
+.hw-submit-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin: 24px 0 32px;
+}
+.hw-board-link {
+  font-size: 10px; letter-spacing: 0.22em;
+  color: var(--mute); text-transform: uppercase;
+  text-decoration: none; transition: color 0.15s;
+}
+.hw-board-link:hover { color: var(--white); }
+.hw-fields { display: flex; flex-direction: column; gap: 0; }
+.hw-field-group {
+  padding: 20px 0;
+  border-top: 0.5px solid var(--line);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.hw-field-group:last-child { border-bottom: 0.5px solid var(--line); }
+.hw-label {
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--mute); text-transform: uppercase;
+}
+.hw-label-sub {
+  letter-spacing: 0.06em; text-transform: none;
+  color: var(--line); font-size: 9px;
+}
+.hw-input {
+  background: var(--night-s); border: 0.5px solid var(--line);
+  border-radius: 3px; padding: 12px 16px;
+  color: var(--white); font-family: Arial; font-size: 14px;
+  width: 100%; transition: border-color 0.15s;
+}
+.hw-input:focus { outline: none; border-color: var(--muted); }
+.hw-textarea {
+  background: var(--night-s); border: 0.5px solid var(--line);
+  border-radius: 3px; padding: 12px 16px;
+  color: var(--white); font-family: Arial; font-size: 14px;
+  width: 100%; resize: vertical; line-height: 1.7;
+  transition: border-color 0.15s;
+}
+.hw-textarea:focus { outline: none; border-color: var(--muted); }
+.hw-field-kakao { background: rgba(254,229,0,0.03); border-color: rgba(254,229,0,0.15) !important; }
+.hw-kakao-note { font-size: 13px; color: var(--mute); line-height: 1.6; }
+.hw-actions { display: flex; align-items: center; gap: 20px; margin-top: 28px; }
+.hw-btn-submit {
+  background: var(--white); color: #000;
+  border: none; border-radius: 2px;
+  font-family: Arial; font-size: 10px;
+  font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
+  padding: 12px 32px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.hw-btn-submit:hover { background: var(--muted); }
+.hw-btn-submit:disabled { background: var(--line); color: var(--mute); cursor: default; }
+.hw-error { font-size: 11px; color: #ff6b6b; letter-spacing: 0.06em; }
+.hw-done-msg { display: flex; align-items: center; gap: 16px; padding: 24px 0; }
+.hw-done-check {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 0.5px solid var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--white); flex-shrink: 0;
+}
+.hw-done-text {
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--white);
+}
+.hw-done-sub { font-size: 12px; color: var(--mute); }
+.hw-btn-peers {
+  background: none; border: 0.5px solid var(--line);
+  color: var(--mute); font-family: Arial;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 8px 20px; border-radius: 20px; cursor: pointer;
+  transition: all 0.15s; margin-bottom: 24px;
+}
+.hw-btn-peers:hover { border-color: var(--white); color: var(--white); }
+.hw-peers-list { display: flex; flex-direction: column; gap: 0; }
+.hw-peer-card { padding: 20px 0; border-top: 0.5px solid var(--line); }
+.hw-peer-card:last-child { border-bottom: 0.5px solid var(--line); }
+.hw-peer-name {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--white); margin-bottom: 10px;
+}
+.hw-peer-field { display: grid; grid-template-columns: 100px 1fr; gap: 8px; margin-bottom: 6px; }
+.hw-peer-field-label { font-size: 8px; letter-spacing: 0.2em; color: var(--mute); text-transform: uppercase; padding-top: 2px; }
+.hw-peer-field-val { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.hw-peer-time { font-size: 10px; color: var(--line); margin-top: 10px; }
+.hw-peers-empty { font-size: 13px; color: var(--mute); padding: 20px 0; }
+
 </style>
 </head>
 <body>
@@ -1090,7 +1191,51 @@ body { padding-top: 0; }
     <div class="step">
       <div class="step-title">Record</div>
       <div class="step-hl"></div>
-      <div class="step-body">핸드폰으로 1분 자기소개 인터뷰 영상을 찍습니다.<br>카메라 보고, 천천히, 자신있게.</div>
+      <div class="step-body">핸드폰으로 1분 자기소개 인터뷰 영상을 찍습니다.<br>카메라 보고, 천천히, 자신있게.<br><span class="kakao-badge">카카오톡 제출</span></div>
+    </div>
+  </div>
+
+  <!-- ── 숙제 제출 폼 ──────────────────────────────────── -->
+  <div class="hw-submit-wrap reveal" id="hw-submit-area">
+    <div class="hl" style="margin-top:56px;"></div>
+    <div class="hw-submit-header">
+      <span class="eyebrow" style="margin:0;">숙제 제출 &nbsp;·&nbsp; Unit 1</span>
+      <a href="homework.html#unit1" class="hw-board-link">전체 제출 현황 →</a>
+    </div>
+
+    <div id="hw-form">
+      <div class="hw-fields">
+        <div class="hw-field-group">
+          <label class="hw-label">이름</label>
+          <input class="hw-input" id="hw-name" type="text" placeholder="예: 김민준" maxlength="20">
+        </div>
+        <div class="hw-field-group">
+          <label class="hw-label">REWATCH &nbsp;<span class="hw-label-sub">오늘 배운 표현이 나왔을 때 어떤 문장이었나요?</span></label>
+          <input class="hw-input" id="hw-rewatch" type="text" placeholder="예: 'I cannot wait to get started' 가 22분쯤에 나왔습니다." maxlength="200">
+        </div>
+        <div class="hw-field-group">
+          <label class="hw-label">PREPARE &nbsp;<span class="hw-label-sub">빈칸 4개 완성 결과</span></label>
+          <textarea class="hw-textarea" id="hw-prepare" placeholder="01 I'm incredibly proud to be joining the national team. / 02 I have come here to improve and give everything for this team. / 03 I can't wait to get started with the team. / 04 It's incredible to be part of this club." rows="4" maxlength="600"></textarea>
+        </div>
+        <div class="hw-field-group hw-field-kakao">
+          <label class="hw-label">RECORD &nbsp;<span class="kakao-badge">카카오톡 제출</span></label>
+          <div class="hw-kakao-note">영상 파일은 용량이 크므로 코치 카카오톡으로 직접 전송해주세요.</div>
+        </div>
+      </div>
+      <div class="hw-actions">
+        <button class="hw-btn-submit" onclick="submitHomework()">제출하기</button>
+        <span class="hw-error" id="hw-error"></span>
+      </div>
+    </div>
+
+    <div id="hw-done" style="display:none;">
+      <div class="hw-done-msg">
+        <div class="hw-done-check">✓</div>
+        <div class="hw-done-text">제출 완료</div>
+        <div class="hw-done-sub" id="hw-done-name"></div>
+      </div>
+      <button class="hw-btn-peers" onclick="togglePeers()">팀원 답변 보기</button>
+      <div id="hw-peers" style="display:none;"></div>
     </div>
   </div>
 </div>
@@ -1180,8 +1325,12 @@ const UNITS = [
     current: true,
     sections: SECTIONS,
   },
-  // 앞으로 유닛이 추가될 때 여기에 추가:
-  // { id: 'unit2', label: 'Unit 2', subtitle: '...', url: 'unit2.html' },
+  {
+    id: 'unit2',
+    label: 'Unit 2',
+    subtitle: 'Post-Match Flash Interview',
+    url: 'unit2.html',
+  },
 ];
 
 const navMenuEl  = document.getElementById('nav-menu');
@@ -1419,6 +1568,96 @@ function handleComposeInput(inp) {
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.quote-note[data-key]').forEach(_renderNoteExamples);
 });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
+const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
+const HW_UNIT = 'unit1';
+const HW_LS_KEY = 'b2b_hw_submitted_unit1';
+
+const sb = window.supabase.createClient(SB_URL, SB_ANON);
+
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem(HW_LS_KEY);
+  if (saved) {
+    try { showDoneState(JSON.parse(saved).name); } catch {}
+  }
+});
+
+async function submitHomework() {
+  const name    = document.getElementById('hw-name').value.trim();
+  const rewatch = document.getElementById('hw-rewatch').value.trim();
+  const prepare = document.getElementById('hw-prepare').value.trim();
+  const errEl   = document.getElementById('hw-error');
+  errEl.textContent = '';
+
+  if (!name) { errEl.textContent = '이름을 입력해주세요.'; return; }
+  if (!rewatch && !prepare) { errEl.textContent = 'REWATCH 또는 PREPARE 중 하나 이상 작성해주세요.'; return; }
+
+  const btn = document.querySelector('.hw-btn-submit');
+  btn.disabled = true; btn.textContent = '제출 중…';
+
+  const { error } = await sb.from('b2b_homework_submissions').insert({
+    unit: HW_UNIT, student_name: name,
+    rewatch_answer: rewatch || null, prepare_answer: prepare || null,
+  });
+
+  if (error) {
+    errEl.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    btn.disabled = false; btn.textContent = '제출하기';
+    return;
+  }
+
+  localStorage.setItem(HW_LS_KEY, JSON.stringify({ name }));
+  showDoneState(name);
+}
+
+function showDoneState(name) {
+  document.getElementById('hw-form').style.display = 'none';
+  const done = document.getElementById('hw-done');
+  done.style.display = 'block';
+  document.getElementById('hw-done-name').textContent = name + ' 님의 답변이 저장되었습니다.';
+}
+
+let peersOpen = false;
+
+async function togglePeers() {
+  const peerEl = document.getElementById('hw-peers');
+  const btn = document.querySelector('.hw-btn-peers');
+  if (peersOpen) {
+    peerEl.style.display = 'none'; btn.textContent = '팀원 답변 보기'; peersOpen = false; return;
+  }
+  btn.textContent = '불러오는 중…';
+  const { data, error } = await sb
+    .from('b2b_homework_submissions')
+    .select('student_name, rewatch_answer, prepare_answer, submitted_at')
+    .eq('unit', HW_UNIT)
+    .order('submitted_at', { ascending: false });
+
+  if (error || !data) { btn.textContent = '팀원 답변 보기'; return; }
+
+  peerEl.innerHTML = data.length === 0
+    ? '<div class="hw-peers-empty">아직 제출한 팀원이 없습니다.</div>'
+    : '<div class="hw-peers-list">' + data.map(r => `
+        <div class="hw-peer-card">
+          <div class="hw-peer-name">${esc(r.student_name)}</div>
+          ${r.rewatch_answer ? `<div class="hw-peer-field"><span class="hw-peer-field-label">Rewatch</span><span class="hw-peer-field-val">${esc(r.rewatch_answer)}</span></div>` : ''}
+          ${r.prepare_answer ? `<div class="hw-peer-field"><span class="hw-peer-field-label">Prepare</span><span class="hw-peer-field-val">${esc(r.prepare_answer)}</span></div>` : ''}
+          <div class="hw-peer-time">${fmtDate(r.submitted_at)}</div>
+        </div>`).join('') + '</div>';
+
+  peerEl.style.display = 'block'; btn.textContent = '팀원 답변 닫기'; peersOpen = true;
+}
+
+function esc(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'}) + ' ' +
+         d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+}
 </script>
 </body>
 </html>
