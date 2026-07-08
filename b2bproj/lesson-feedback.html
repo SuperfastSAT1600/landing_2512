@@ -320,16 +320,6 @@ textarea.tall { min-height: 200px; }
       <textarea id="inp-hw" placeholder="이번 수업의 숙제 안내를 입력하세요."></textarea>
     </div>
 
-    <div class="form-group">
-      <label class="form-label" for="inp-pin">비밀번호 설정 <span style="color:var(--line);font-size:8px;">(6자리 숫자 · 구단/학부모 공유용)</span></label>
-      <div class="pin-wrap">
-        <input type="number" id="inp-pin" placeholder="000000" maxlength="6"
-               oninput="if(this.value.length>6)this.value=this.value.slice(0,6)"
-               style="max-width:200px;" />
-      </div>
-      <p class="pin-hint">이 번호를 구단에 전달하면, 구단과 학부모가 피드백을 열람할 수 있습니다.</p>
-    </div>
-
     <button class="btn-primary" onclick="submitFeedback()" id="submit-btn">저장하기</button>
     <div class="msg" id="write-msg"></div>
   </div>
@@ -432,16 +422,14 @@ async function submitFeedback() {
   const date    = document.getElementById('inp-date').value.trim();
   const content = document.getElementById('inp-content').value.trim();
   const hw      = document.getElementById('inp-hw').value.trim();
-  const pin     = document.getElementById('inp-pin').value.trim();
   const msgEl   = document.getElementById('write-msg');
 
   msgEl.className = 'msg';
   msgEl.textContent = '';
 
-  if (!unit)               { showMsg(msgEl, 'error', '유닛을 선택해주세요.'); return; }
-  if (!date)               { showMsg(msgEl, 'error', '수업 날짜를 입력해주세요.'); return; }
-  if (!content)            { showMsg(msgEl, 'error', '수업 내용을 입력해주세요.'); return; }
-  if (!/^\d{6}$/.test(pin)) { showMsg(msgEl, 'error', '비밀번호는 6자리 숫자여야 합니다.'); return; }
+  if (!unit)    { showMsg(msgEl, 'error', '유닛을 선택해주세요.'); return; }
+  if (!date)    { showMsg(msgEl, 'error', '수업 날짜를 입력해주세요.'); return; }
+  if (!content) { showMsg(msgEl, 'error', '수업 내용을 입력해주세요.'); return; }
 
   const studentNotes = collectStudentNotes();
   const btn = document.getElementById('submit-btn');
@@ -454,7 +442,7 @@ async function submitFeedback() {
     lesson_content: content,
     student_notes:  studentNotes.length ? studentNotes : null,
     homework:       hw || null,
-    pin
+    club_id:        'gangwon'
   });
 
   btn.disabled = false;
@@ -463,11 +451,10 @@ async function submitFeedback() {
   if (error) {
     showMsg(msgEl, 'error', '저장 실패: ' + error.message);
   } else {
-    showMsg(msgEl, 'success', '피드백이 저장되었습니다. 비밀번호 ' + pin + ' 을 구단에 전달해주세요.');
+    showMsg(msgEl, 'success', '피드백이 저장되었습니다.');
     document.getElementById('sel-unit').value = '';
     document.getElementById('inp-content').value = '';
     document.getElementById('inp-hw').value = '';
-    document.getElementById('inp-pin').value = '';
     document.getElementById('student-rows').innerHTML = '';
     studentCount = 0;
     addStudentRow();

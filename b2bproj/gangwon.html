@@ -11,9 +11,9 @@
   --accent: #6085FF;
   --bg: #09090b;
   --border: rgba(255,255,255,0.1);
-  --border-card: rgba(255,255,255,0.08);
   --mute: #94a3b8;
   --error: #f87171;
+  --success: #4ade80;
 }
 
 html { scroll-behavior: smooth; }
@@ -28,14 +28,19 @@ body {
 /* ── Nav ─────────────────────────────────────────────────── */
 #topnav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  background: rgba(9,9,11,0.85);
+  background: rgba(9,9,11,0.9);
   backdrop-filter: blur(12px);
   border-bottom: 0.5px solid var(--border);
   height: 48px;
-  display: flex; align-items: center;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 0 clamp(20px, 5vw, 60px);
 }
 .brand { font-size: 11px; font-weight: 700; letter-spacing: 0.4em; text-transform: uppercase; color: #fff; }
+.nav-btn {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--mute); background: none; border: none; cursor: pointer; transition: color 0.15s;
+}
+.nav-btn:hover { color: #fff; }
 
 /* ── Hero ────────────────────────────────────────────────── */
 .hero {
@@ -47,19 +52,14 @@ body {
   background: radial-gradient(circle at 15% 50%, rgba(96,133,255,0.08) 0%, transparent 55%);
 }
 .hero-inner { max-width: 720px; margin: 0 auto; position: relative; }
-
 .accent-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
 .accent-bar .line { height: 1px; width: 40px; background: var(--accent); }
 .accent-bar .label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); }
-
 .hero-title { font-size: clamp(36px, 7vw, 64px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 16px; }
 .hero-sub { font-size: 14px; color: var(--mute); line-height: 1.7; max-width: 480px; }
 
-/* ── Main content ─────────────────────────────────────────── */
-.content {
-  max-width: 720px; margin: 0 auto;
-  padding: 0 clamp(20px, 5vw, 60px) 100px;
-}
+/* ── Content ─────────────────────────────────────────────── */
+.content { max-width: 720px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 60px) 100px; }
 .section-label {
   font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
   color: var(--accent); margin-bottom: 20px;
@@ -67,17 +67,18 @@ body {
 }
 .section-label::before { content: ''; display: block; height: 1px; width: 24px; background: var(--accent); }
 
-/* ── PIN card ─────────────────────────────────────────────── */
-.pin-card {
+/* ── Card base ───────────────────────────────────────────── */
+.card {
   background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border-card);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 36px 32px;
+  padding: 32px;
+  margin-bottom: 16px;
 }
-.pin-card-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-.pin-card-desc { font-size: 13px; color: var(--mute); margin-bottom: 32px; line-height: 1.5; }
+.card-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--mute); margin-bottom: 28px; line-height: 1.5; }
 
-/* ── PIN boxes ────────────────────────────────────────────── */
+/* ── PIN inputs ──────────────────────────────────────────── */
 .pin-boxes { display: flex; gap: 10px; margin-bottom: 20px; }
 .pin-boxes input {
   width: 44px; height: 52px;
@@ -90,25 +91,30 @@ body {
   transition: border-color 0.15s, background 0.15s;
   -webkit-appearance: none;
 }
-.pin-boxes input:focus {
-  border-color: var(--accent);
-  background: rgba(96,133,255,0.1);
-}
-.pin-boxes input.filled {
-  border-color: var(--accent);
-  background: rgba(96,133,255,0.1);
-}
+.pin-boxes input:focus { border-color: var(--accent); background: rgba(96,133,255,0.1); }
+.pin-boxes input.filled { border-color: var(--accent); background: rgba(96,133,255,0.1); }
 
-.error-msg { font-size: 13px; color: var(--error); min-height: 20px; margin-bottom: 16px; }
-
-.btn-submit {
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn-primary {
   width: 100%; padding: 14px; border: none; border-radius: 14px;
   font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  cursor: pointer; transition: background 0.15s, opacity 0.15s;
+  cursor: pointer; transition: opacity 0.15s;
   background: var(--accent); color: #fff;
 }
-.btn-submit:disabled { opacity: 0.35; cursor: default; }
+.btn-primary:disabled { opacity: 0.35; cursor: default; }
+.btn-ghost {
+  background: none; border: none; font-size: 12px; color: var(--mute);
+  letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; transition: color 0.15s; margin-top: 16px;
+}
+.btn-ghost:hover { color: #fff; }
 
+/* ── Messages ────────────────────────────────────────────── */
+.msg { font-size: 13px; min-height: 20px; margin-bottom: 16px; }
+.msg.error { color: var(--error); }
+.msg.success { color: var(--success); }
+
+/* ── Spinner ─────────────────────────────────────────────── */
 .spinner {
   display: inline-block; width: 18px; height: 18px;
   border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff;
@@ -116,45 +122,43 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Feedback result ──────────────────────────────────────── */
-#fb-result { display: none; margin-top: 40px; }
-
-.fb-header { margin-bottom: 28px; }
-.fb-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
-.fb-title { font-size: clamp(22px, 4vw, 36px); font-weight: 800; letter-spacing: -0.01em; margin-bottom: 6px; }
-.fb-meta { font-size: 13px; color: var(--mute); }
-
-.fb-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border-card);
-  border-radius: 20px; overflow: hidden;
+/* ── Feedback list ───────────────────────────────────────── */
+.fb-item {
+  border: 1px solid var(--border); border-radius: 16px;
+  margin-bottom: 12px; overflow: hidden;
 }
-.fb-section {
-  padding: 24px 28px; border-bottom: 1px solid var(--border);
-  display: flex; flex-direction: column; gap: 10px;
+.fb-item-header {
+  padding: 20px 24px; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background 0.15s;
 }
+.fb-item-header:hover { background: rgba(255,255,255,0.03); }
+.fb-item-meta { font-size: 12px; color: var(--mute); margin-bottom: 4px; }
+.fb-item-title { font-size: 15px; font-weight: 700; }
+.fb-chevron { color: var(--mute); transition: transform 0.2s; flex-shrink: 0; }
+.fb-item.open .fb-chevron { transform: rotate(90deg); }
+.fb-item-body { display: none; border-top: 1px solid var(--border); }
+.fb-item.open .fb-item-body { display: block; }
+
+.fb-section { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
 .fb-section:last-child { border-bottom: none; }
 .fb-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--mute); }
 .fb-section-text { font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.85); white-space: pre-wrap; word-break: break-word; }
 .fb-section-text a { color: var(--accent); text-decoration: underline; word-break: break-all; }
-
-.fb-student-item { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.fb-student-item { margin-bottom: 12px; }
 .fb-student-item:last-child { margin-bottom: 0; }
-.fb-student-name { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
+.fb-student-name { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
 .fb-student-note { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; }
 
-.btn-reset {
-  margin-top: 20px; background: none; border: none;
-  font-size: 12px; color: var(--mute); letter-spacing: 0.1em; text-transform: uppercase;
-  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: color 0.15s;
-}
-.btn-reset:hover { color: #fff; }
+/* ── Change PIN modal ────────────────────────────────────── */
+#change-pin-panel { display: none; margin-top: 40px; }
 </style>
 </head>
 <body>
 
 <nav id="topnav">
   <span class="brand">강원 FC × Runners LRS</span>
+  <button class="nav-btn" id="nav-change-pin" style="display:none;" onclick="toggleChangePinPanel()">PIN 변경</button>
 </nav>
 
 <section class="hero">
@@ -170,50 +174,55 @@ body {
 </section>
 
 <div class="content">
-  <div class="section-label">수업 피드백</div>
 
-  <div class="pin-card">
-    <div class="pin-card-title">레슨 피드백 확인</div>
-    <div class="pin-card-desc">수업 후 강사에게 받은 6자리 번호를 입력하세요.</div>
-
-    <div class="pin-boxes" id="pin-boxes">
-      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
-      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
-      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
-      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
-      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
-      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+  <!-- ── 로그인 카드 ───────────────────────────────────────── -->
+  <div id="login-section">
+    <div class="section-label">수업 피드백</div>
+    <div class="card">
+      <div class="card-title">비밀번호 입력</div>
+      <div class="card-desc">구단 비밀번호 6자리를 입력하세요.</div>
+      <div class="pin-boxes" id="login-pin-boxes">
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+      </div>
+      <div class="msg" id="login-msg"></div>
+      <button class="btn-primary" id="login-btn" disabled onclick="doLogin()">확인하기</button>
     </div>
-    <div class="error-msg" id="error-msg"></div>
-    <button class="btn-submit" id="submit-btn" disabled onclick="submitPin()">확인하기</button>
   </div>
 
-  <!-- 피드백 결과 -->
-  <div id="fb-result">
-    <div class="fb-header">
-      <div class="fb-eyebrow" id="fb-eyebrow">레슨 피드백</div>
-      <div class="fb-title" id="fb-title">—</div>
-      <div class="fb-meta" id="fb-meta">—</div>
-    </div>
-    <div class="fb-card">
-      <div class="fb-section" id="fb-sec-content">
-        <div class="fb-section-label">이번 수업 내용</div>
-        <div class="fb-section-text" id="fb-content-text"></div>
-      </div>
-      <div class="fb-section" id="fb-sec-students" style="display:none;">
-        <div class="fb-section-label">학생별 메모</div>
-        <div id="fb-student-list"></div>
-      </div>
-      <div class="fb-section" id="fb-sec-hw" style="display:none;">
-        <div class="fb-section-label">숙제</div>
-        <div class="fb-section-text" id="fb-hw-text"></div>
-      </div>
-    </div>
-    <button class="btn-reset" onclick="resetPin()">
+  <!-- ── 피드백 목록 ──────────────────────────────────────── -->
+  <div id="feedback-section" style="display:none;">
+    <div class="section-label">레슨 피드백</div>
+    <div id="feedback-list"></div>
+    <button class="btn-ghost" onclick="doLogout()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      다른 번호로 확인
+      로그아웃
     </button>
   </div>
+
+  <!-- ── PIN 변경 패널 ────────────────────────────────────── -->
+  <div id="change-pin-panel">
+    <div class="section-label">PIN 변경</div>
+    <div class="card">
+      <div class="card-title">새 비밀번호 설정</div>
+      <div class="card-desc">새로운 6자리 비밀번호를 입력하세요.</div>
+      <div class="pin-boxes" id="new-pin-boxes">
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+      </div>
+      <div class="msg" id="change-msg"></div>
+      <button class="btn-primary" id="change-btn" disabled onclick="doChangePin()">변경하기</button>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -222,124 +231,198 @@ const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
 const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
 const sb = supabase.createClient(SB_URL, SB_ANON);
 
+const CLUB_ID = 'gangwon';
 const UNIT_LABELS = {
   unit1: 'Unit 1 — Self-Introduction & Joining the Team',
   unit2: 'Unit 2 — Win / Lose Interview'
 };
 
-function getInputs() { return Array.from(document.querySelectorAll('#pin-boxes input')); }
+/* ── PIN box helper ──────────────────────────────────────── */
+function initPinBoxes(containerId, submitBtnId, onComplete) {
+  const inputs = Array.from(document.querySelectorAll(`#${containerId} input`));
+  const btn = document.getElementById(submitBtnId);
 
-function getPinValue() { return getInputs().map(el => el.value).join(''); }
+  function getVal() { return inputs.map(el => el.value).join(''); }
 
-function initPinBoxes() {
-  getInputs().forEach((input, i, all) => {
+  inputs.forEach((input, i) => {
     input.addEventListener('input', () => {
       const digit = input.value.replace(/\D/g, '').slice(-1);
       input.value = digit;
       input.classList.toggle('filled', !!digit);
-      if (digit && i < 5) all[i + 1].focus();
-      document.getElementById('submit-btn').disabled = getPinValue().length < 6;
-      document.getElementById('error-msg').textContent = '';
+      if (digit && i < inputs.length - 1) inputs[i + 1].focus();
+      btn.disabled = getVal().length < 6;
     });
-
     input.addEventListener('keydown', e => {
       if (e.key === 'Backspace' && !input.value && i > 0) {
         e.preventDefault();
-        all[i - 1].value = '';
-        all[i - 1].classList.remove('filled');
-        all[i - 1].focus();
-        document.getElementById('submit-btn').disabled = true;
-      } else if (e.key === 'Enter' && getPinValue().length === 6) {
-        submitPin();
+        inputs[i - 1].value = '';
+        inputs[i - 1].classList.remove('filled');
+        inputs[i - 1].focus();
+        btn.disabled = true;
+      } else if (e.key === 'Enter' && getVal().length === 6) {
+        onComplete();
       }
     });
-
     input.addEventListener('paste', e => {
       e.preventDefault();
       const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-      getInputs().forEach((el, j) => {
-        el.value = digits[j] || '';
-        el.classList.toggle('filled', !!digits[j]);
-      });
-      document.getElementById('submit-btn').disabled = digits.length < 6;
-      if (digits.length > 0) all[Math.min(digits.length, 5)].focus();
+      inputs.forEach((el, j) => { el.value = digits[j] || ''; el.classList.toggle('filled', !!digits[j]); });
+      btn.disabled = digits.length < 6;
+      if (digits.length > 0) inputs[Math.min(digits.length, 5)].focus();
     });
-
     input.addEventListener('focus', () => input.select());
   });
+
+  return { getVal, reset: () => { inputs.forEach(el => { el.value = ''; el.classList.remove('filled'); }); btn.disabled = true; inputs[0].focus(); } };
 }
 
-async function submitPin() {
-  const pin = getPinValue();
+/* ── Login ───────────────────────────────────────────────── */
+const loginBox = initPinBoxes('login-pin-boxes', 'login-btn', doLogin);
+
+async function doLogin() {
+  const pin = loginBox.getVal();
   if (pin.length !== 6) return;
-  const btn = document.getElementById('submit-btn');
+  const btn = document.getElementById('login-btn');
+  const msgEl = document.getElementById('login-msg');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
 
   const { data, error } = await sb
-    .from('b2b_lesson_feedback').select('*')
-    .eq('pin', pin).order('created_at', { ascending: false }).limit(1);
+    .from('b2b_club_pins').select('pin').eq('club_id', CLUB_ID).single();
 
-  btn.innerHTML = '확인하기'; btn.disabled = false;
+  btn.innerHTML = '확인하기';
 
-  if (error || !data || !data.length) {
-    document.getElementById('error-msg').textContent = '일치하는 피드백이 없습니다. 번호를 확인해주세요.';
-    getInputs().forEach(el => { el.value = ''; el.classList.remove('filled'); });
-    getInputs()[0].focus();
+  if (error || !data) {
+    msgEl.className = 'msg error';
+    msgEl.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    btn.disabled = false;
     return;
   }
-  renderFeedback(data[0]);
+
+  if (data.pin !== pin) {
+    msgEl.className = 'msg error';
+    msgEl.textContent = '비밀번호가 일치하지 않습니다.';
+    loginBox.reset();
+    btn.disabled = true;
+    return;
+  }
+
+  showFeedbackSection();
 }
 
-function renderFeedback(fb) {
+/* ── Feedback section ────────────────────────────────────── */
+async function showFeedbackSection() {
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('feedback-section').style.display = 'block';
+  document.getElementById('nav-change-pin').style.display = 'block';
+
+  const list = document.getElementById('feedback-list');
+  list.innerHTML = '<div style="color:var(--mute);font-size:13px;padding:8px 0;">불러오는 중...</div>';
+
+  const { data, error } = await sb
+    .from('b2b_lesson_feedback').select('*')
+    .eq('club_id', CLUB_ID)
+    .order('lesson_date', { ascending: false });
+
+  if (error || !data || !data.length) {
+    list.innerHTML = '<div style="color:var(--mute);font-size:13px;padding:8px 0;">아직 등록된 피드백이 없습니다.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  data.forEach(fb => list.appendChild(buildFeedbackItem(fb)));
+}
+
+function buildFeedbackItem(fb) {
   const unitLabel = UNIT_LABELS[fb.unit] || fb.unit || '—';
   const dateStr = fb.lesson_date
     ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '—';
 
-  document.getElementById('fb-eyebrow').textContent = '레슨 피드백';
-  document.getElementById('fb-title').textContent = unitLabel;
-  document.getElementById('fb-meta').textContent = dateStr;
-  document.getElementById('fb-content-text').innerHTML = linkify(fb.lesson_content || '—');
+  const item = document.createElement('div');
+  item.className = 'fb-item';
 
-  const studentList = document.getElementById('fb-student-list');
-  const studentSec  = document.getElementById('fb-sec-students');
-  studentList.innerHTML = '';
-  const notes = fb.student_notes;
-  if (notes && Array.isArray(notes) && notes.length) {
-    notes.forEach(s => {
-      const item = document.createElement('div');
-      item.className = 'fb-student-item';
-      item.innerHTML = `<div class="fb-student-name">${escHtml(s.name||'—')}</div><div class="fb-student-note">${escHtml(s.note||'—')}</div>`;
-      studentList.appendChild(item);
-    });
-    studentSec.style.display = 'flex';
-  } else { studentSec.style.display = 'none'; }
+  const sections = [];
+  if (fb.lesson_content) {
+    sections.push(`<div class="fb-section"><div class="fb-section-label">수업 내용</div><div class="fb-section-text">${linkify(fb.lesson_content)}</div></div>`);
+  }
+  if (fb.student_notes && Array.isArray(fb.student_notes) && fb.student_notes.length) {
+    const notes = fb.student_notes.map(s =>
+      `<div class="fb-student-item"><div class="fb-student-name">${escHtml(s.name||'—')}</div><div class="fb-student-note">${escHtml(s.note||'—')}</div></div>`
+    ).join('');
+    sections.push(`<div class="fb-section"><div class="fb-section-label">학생별 메모</div>${notes}</div>`);
+  }
+  if (fb.homework) {
+    sections.push(`<div class="fb-section"><div class="fb-section-label">숙제</div><div class="fb-section-text">${linkify(fb.homework)}</div></div>`);
+  }
 
-  const hwSec = document.getElementById('fb-sec-hw');
-  const hwText = document.getElementById('fb-hw-text');
-  if (fb.homework) { hwText.innerHTML = linkify(fb.homework); hwSec.style.display = 'flex'; }
-  else { hwSec.style.display = 'none'; }
-
-  document.getElementById('fb-result').style.display = 'block';
-  document.getElementById('fb-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  item.innerHTML = `
+    <div class="fb-item-header" onclick="toggleItem(this)">
+      <div>
+        <div class="fb-item-meta">${dateStr}</div>
+        <div class="fb-item-title">${escHtml(unitLabel)}</div>
+      </div>
+      <svg class="fb-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="fb-item-body">${sections.join('')}</div>
+  `;
+  return item;
 }
 
-function resetPin() {
-  getInputs().forEach(el => { el.value = ''; el.classList.remove('filled'); });
-  document.getElementById('submit-btn').disabled = true;
-  document.getElementById('fb-result').style.display = 'none';
-  document.getElementById('error-msg').textContent = '';
-  getInputs()[0].focus();
+function toggleItem(header) {
+  header.parentElement.classList.toggle('open');
 }
 
+/* ── Change PIN ──────────────────────────────────────────── */
+const newPinBox = initPinBoxes('new-pin-boxes', 'change-btn', doChangePin);
+
+function toggleChangePinPanel() {
+  const panel = document.getElementById('change-pin-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  newPinBox.reset();
+  document.getElementById('change-msg').textContent = '';
+  if (panel.style.display === 'block') panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function doChangePin() {
+  const newPin = newPinBox.getVal();
+  if (newPin.length !== 6) return;
+  const btn = document.getElementById('change-btn');
+  const msgEl = document.getElementById('change-msg');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+
+  const { error } = await sb
+    .from('b2b_club_pins')
+    .update({ pin: newPin, updated_at: new Date().toISOString() })
+    .eq('club_id', CLUB_ID);
+
+  btn.innerHTML = '변경하기';
+
+  if (error) {
+    msgEl.className = 'msg error'; msgEl.textContent = '변경 실패: ' + error.message;
+    btn.disabled = false;
+  } else {
+    msgEl.className = 'msg success'; msgEl.textContent = '비밀번호가 변경되었습니다.';
+    newPinBox.reset();
+  }
+}
+
+/* ── Logout ──────────────────────────────────────────────── */
+function doLogout() {
+  document.getElementById('feedback-section').style.display = 'none';
+  document.getElementById('change-pin-panel').style.display = 'none';
+  document.getElementById('nav-change-pin').style.display = 'none';
+  document.getElementById('login-section').style.display = 'block';
+  loginBox.reset();
+  document.getElementById('login-msg').textContent = '';
+}
+
+/* ── Helpers ─────────────────────────────────────────────── */
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function linkify(str) {
-  return escHtml(str).replace(/(https?:\/\/[^\s&]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  return escHtml(str).replace(/(https?:\/\/[^\s&]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
-
-initPinBoxes();
 </script>
 </body>
 </html>
