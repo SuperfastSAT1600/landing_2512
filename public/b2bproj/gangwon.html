@@ -122,33 +122,39 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Feedback list ───────────────────────────────────────── */
+/* ── Feedback list (light) ───────────────────────────────── */
+#feedback-section { background: #f4f5f9; border-radius: 20px; padding: 28px; margin-bottom: 16px; }
+#feedback-section .section-label { color: var(--accent); }
+
 .fb-item {
-  border: 1px solid var(--border); border-radius: 16px;
-  margin-bottom: 12px; overflow: hidden;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+  margin-bottom: 10px; overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .fb-item-header {
-  padding: 20px 24px; cursor: pointer;
+  padding: 18px 22px; cursor: pointer;
   display: flex; align-items: center; justify-content: space-between;
   transition: background 0.15s;
 }
-.fb-item-header:hover { background: rgba(255,255,255,0.03); }
-.fb-item-meta { font-size: 12px; color: var(--mute); margin-bottom: 4px; }
-.fb-item-title { font-size: 15px; font-weight: 700; }
-.fb-chevron { color: var(--mute); transition: transform 0.2s; flex-shrink: 0; }
+.fb-item-header:hover { background: #f8fafc; }
+.fb-item-meta { font-size: 11px; color: #64748b; margin-bottom: 3px; }
+.fb-item-title { font-size: 15px; font-weight: 700; color: #111; }
+.fb-chevron { color: #94a3b8; transition: transform 0.2s; flex-shrink: 0; }
 .fb-item.open .fb-chevron { transform: rotate(90deg); }
-.fb-item-body { display: none; border-top: 1px solid var(--border); }
+.fb-item-body { display: none; border-top: 1px solid #f1f5f9; }
 .fb-item.open .fb-item-body { display: block; }
 
-.fb-section { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.fb-section { padding: 18px 22px; border-bottom: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px; }
 .fb-section:last-child { border-bottom: none; }
-.fb-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--mute); }
-.fb-section-text { font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.85); white-space: pre-wrap; word-break: break-word; }
+.fb-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: #94a3b8; }
+.fb-section-text { font-size: 14px; line-height: 1.75; color: #334155; white-space: pre-wrap; word-break: break-word; }
 .fb-section-text a { color: var(--accent); text-decoration: underline; word-break: break-all; }
 .fb-student-item { margin-bottom: 12px; }
 .fb-student-item:last-child { margin-bottom: 0; }
-.fb-student-name { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
-.fb-student-note { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; }
+.fb-student-name { font-size: 12px; font-weight: 700; margin-bottom: 3px; color: #111; }
+.fb-student-note { font-size: 13px; color: #475569; line-height: 1.6; }
+.btn-ghost { color: #64748b; }
+.btn-ghost:hover { color: #111; }
 
 /* ── Change PIN modal ────────────────────────────────────── */
 #change-pin-panel { display: none; margin-top: 40px; }
@@ -168,7 +174,7 @@ body {
       <div class="line"></div>
       <span class="label">영어 인터뷰 수업 포털</span>
     </div>
-    <h1 class="hero-title">강원 FC<br>U-18</h1>
+    <h1 class="hero-title">강원 FC U-18</h1>
     <p class="hero-sub">러너스 LRS와 함께하는 강원 FC U-18 영어 인터뷰 수업 포털입니다.</p>
   </div>
 </section>
@@ -421,7 +427,11 @@ function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function linkify(str) {
-  return escHtml(str).replace(/(https?:\/\/[^\s&]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  return str.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+    i % 2 === 1
+      ? `<a href="${part}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:underline;word-break:break-all;">${escHtml(part)}</a>`
+      : escHtml(part)
+  ).join('');
 }
 </script>
 </body>
