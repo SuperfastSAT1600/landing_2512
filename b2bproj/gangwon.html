@@ -79,20 +79,25 @@ body {
 
 /* ── PIN boxes ────────────────────────────────────────────── */
 .pin-boxes { display: flex; gap: 10px; margin-bottom: 20px; }
-.pin-box-wrap { position: relative; }
-.pin-box-wrap input {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; z-index: 1;
-}
-.pin-box {
-  pointer-events: none;
-  width: 44px; height: 52px; border-radius: 12px;
+.pin-boxes input {
+  width: 44px; height: 52px;
+  border-radius: 12px;
   border: 2px solid rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.04);
-  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 22px; font-weight: 700; text-align: center;
+  outline: none; caret-color: transparent;
   transition: border-color 0.15s, background 0.15s;
+  -webkit-appearance: none;
 }
-.pin-box.filled { border-color: var(--accent); background: rgba(96,133,255,0.1); }
-.pin-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.pin-boxes input:focus {
+  border-color: var(--accent);
+  background: rgba(96,133,255,0.1);
+}
+.pin-boxes input.filled {
+  border-color: var(--accent);
+  background: rgba(96,133,255,0.1);
+}
 
 .error-msg { font-size: 13px; color: var(--error); min-height: 20px; margin-bottom: 16px; }
 
@@ -171,7 +176,14 @@ body {
     <div class="pin-card-title">레슨 피드백 확인</div>
     <div class="pin-card-desc">수업 후 강사에게 받은 6자리 번호를 입력하세요.</div>
 
-    <div class="pin-boxes" id="pin-boxes"></div>
+    <div class="pin-boxes" id="pin-boxes">
+      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+      <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+    </div>
     <div class="error-msg" id="error-msg"></div>
     <button class="btn-submit" id="submit-btn" disabled onclick="submitPin()">확인하기</button>
   </div>
@@ -215,72 +227,50 @@ const UNIT_LABELS = {
   unit2: 'Unit 2 — Win / Lose Interview'
 };
 
-let pin = '';
+function getInputs() { return Array.from(document.querySelectorAll('#pin-boxes input')); }
 
-function buildPinBoxes() {
-  const container = document.getElementById('pin-boxes');
-  for (let i = 0; i < 6; i++) {
-    const wrap = document.createElement('div');
-    wrap.className = 'pin-box-wrap';
+function getPinValue() { return getInputs().map(el => el.value).join(''); }
 
-    const input = document.createElement('input');
-    input.type = 'text'; input.inputMode = 'numeric'; input.maxLength = 1;
-    input.setAttribute('aria-label', `digit ${i + 1}`);
-    if (i === 0) input.autofocus = true;
-    input.addEventListener('input', e => onDigitInput(i, e.target.value));
-    input.addEventListener('keydown', e => onKeyDown(i, e));
-    input.addEventListener('paste', onPaste);
-    input.addEventListener('focus', e => e.target.select());
+function initPinBoxes() {
+  getInputs().forEach((input, i, all) => {
+    input.addEventListener('input', () => {
+      const digit = input.value.replace(/\D/g, '').slice(-1);
+      input.value = digit;
+      input.classList.toggle('filled', !!digit);
+      if (digit && i < 5) all[i + 1].focus();
+      document.getElementById('submit-btn').disabled = getPinValue().length < 6;
+      document.getElementById('error-msg').textContent = '';
+    });
 
-    const box = document.createElement('div');
-    box.className = 'pin-box'; box.id = `box-${i}`;
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !input.value && i > 0) {
+        e.preventDefault();
+        all[i - 1].value = '';
+        all[i - 1].classList.remove('filled');
+        all[i - 1].focus();
+        document.getElementById('submit-btn').disabled = true;
+      } else if (e.key === 'Enter' && getPinValue().length === 6) {
+        submitPin();
+      }
+    });
 
-    wrap.appendChild(input); wrap.appendChild(box);
-    container.appendChild(wrap);
-  }
-}
+    input.addEventListener('paste', e => {
+      e.preventDefault();
+      const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+      getInputs().forEach((el, j) => {
+        el.value = digits[j] || '';
+        el.classList.toggle('filled', !!digits[j]);
+      });
+      document.getElementById('submit-btn').disabled = digits.length < 6;
+      if (digits.length > 0) all[Math.min(digits.length, 5)].focus();
+    });
 
-function getInputs() { return Array.from(document.querySelectorAll('.pin-box-wrap input')); }
-
-function onDigitInput(i, val) {
-  const digit = val.replace(/\D/g, '').slice(-1);
-  if (!digit) return;
-  const arr = pin.split(''); arr[i] = digit; pin = arr.join('').slice(0, 6);
-  updateBoxes();
-  if (i < 5) getInputs()[i + 1].focus();
-}
-
-function onKeyDown(i, e) {
-  const inputs = getInputs();
-  if (e.key === 'Backspace') {
-    e.preventDefault();
-    if (pin[i]) { const arr = pin.split(''); arr[i] = ''; pin = arr.join(''); }
-    else if (i > 0) { inputs[i - 1].focus(); const arr = pin.split(''); arr[i - 1] = ''; pin = arr.join(''); }
-    updateBoxes();
-  } else if (e.key === 'ArrowLeft' && i > 0) inputs[i - 1].focus();
-  else if (e.key === 'ArrowRight' && i < 5) inputs[i + 1].focus();
-  else if (e.key === 'Enter' && pin.length === 6) submitPin();
-}
-
-function onPaste(e) {
-  e.preventDefault();
-  const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-  pin = digits; updateBoxes();
-  getInputs()[Math.min(digits.length, 5)].focus();
-}
-
-function updateBoxes() {
-  for (let i = 0; i < 6; i++) {
-    const box = document.getElementById(`box-${i}`);
-    const filled = !!pin[i];
-    box.className = 'pin-box' + (filled ? ' filled' : '');
-    box.innerHTML = filled ? '<div class="pin-dot"></div>' : '';
-  }
-  document.getElementById('submit-btn').disabled = pin.length < 6;
-  document.getElementById('error-msg').textContent = '';
+    input.addEventListener('focus', () => input.select());
+  });
 }
 
 async function submitPin() {
+  const pin = getPinValue();
   if (pin.length !== 6) return;
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
@@ -293,7 +283,8 @@ async function submitPin() {
 
   if (error || !data || !data.length) {
     document.getElementById('error-msg').textContent = '일치하는 피드백이 없습니다. 번호를 확인해주세요.';
-    pin = ''; updateBoxes(); getInputs()[0].focus();
+    getInputs().forEach(el => { el.value = ''; el.classList.remove('filled'); });
+    getInputs()[0].focus();
     return;
   }
   renderFeedback(data[0]);
@@ -334,7 +325,8 @@ function renderFeedback(fb) {
 }
 
 function resetPin() {
-  pin = ''; updateBoxes();
+  getInputs().forEach(el => { el.value = ''; el.classList.remove('filled'); });
+  document.getElementById('submit-btn').disabled = true;
   document.getElementById('fb-result').style.display = 'none';
   document.getElementById('error-msg').textContent = '';
   getInputs()[0].focus();
@@ -347,7 +339,7 @@ function linkify(str) {
   return escHtml(str).replace(/(https?:\/\/[^\s&]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
-buildPinBoxes();
+initPinBoxes();
 </script>
 </body>
 </html>
