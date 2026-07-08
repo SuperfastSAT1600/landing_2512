@@ -209,20 +209,33 @@ body {
   margin-bottom: 8px;
 }
 .fb-item-header {
-  padding: 20px 24px; cursor: pointer;
-  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 24px; cursor: pointer;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
   transition: background 0.1s;
 }
-.fb-item-header:hover { background: rgba(255,255,255,0.02); }
-.fb-item-date {
-  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--on-mute); margin-bottom: 6px;
-}
-.fb-item-unit {
-  font-size: 17px; font-weight: 700; letter-spacing: 0.01em;
-  color: var(--light); line-height: 1.2;
-}
-.fb-chevron { color: var(--hairline); transition: transform 0.2s; flex-shrink: 0; }
+.fb-item-header:hover { background: rgba(255,255,255,0.025); }
+.fb-meta { flex: 1; min-width: 0; }
+
+/* date + time row */
+.fb-top-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
+.fb-date { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--on-mute); }
+.fb-time-range { font-size: 11px; letter-spacing: 0.06em; color: var(--mute); }
+.fb-duration { font-size: 10px; color: var(--hairline); letter-spacing: 0.06em; }
+
+/* unit title */
+.fb-unit-name { font-size: 16px; font-weight: 700; color: var(--light); letter-spacing: 0.01em; margin-bottom: 14px; }
+
+/* attendance bar */
+.fb-attend-row { display: flex; flex-direction: column; gap: 6px; }
+.fb-bar-wrap { display: flex; align-items: center; gap: 10px; }
+.fb-bar-track { flex: 1; height: 2px; background: var(--hairline); max-width: 160px; }
+.fb-bar-fill { height: 100%; background: #4ade80; }
+.fb-attend-stat { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--on-mute); white-space: nowrap; }
+.fb-absent-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.fb-absent-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #f87171; margin-right: 2px; font-weight: 700; }
+.fb-absent-name { font-size: 11px; color: #f87171; }
+
+.fb-chevron { color: var(--hairline); transition: transform 0.2s; flex-shrink: 0; margin-top: 3px; }
 .fb-item.open .fb-chevron { transform: rotate(90deg); color: var(--light); }
 .fb-item-body { display: none; border-top: 1px solid var(--hairline); }
 .fb-item.open .fb-item-body { display: block; }
@@ -244,16 +257,18 @@ body {
 }
 .fb-section-text a { color: var(--light); text-decoration: underline; text-underline-offset: 3px; word-break: break-all; }
 
-/* ── Attendance chips ────────────────────────────────────── */
+/* ── Attendance chips (body — clickable) ─────────────────── */
 .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 12px; border-radius: 2px;
   font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: uppercase; cursor: pointer;
+  transition: opacity 0.15s;
 }
-.chip-attend { border: 1px solid rgba(21,128,61,0.5); color: #4ade80; background: rgba(21,128,61,0.1); }
-.chip-absent { border: 1px solid rgba(185,28,28,0.5); color: #f87171; background: rgba(185,28,28,0.1); }
+.chip:hover { opacity: 0.7; }
+.chip-attend { border: 1px solid rgba(74,222,128,0.4); color: #4ade80; background: rgba(74,222,128,0.08); }
+.chip-absent { border: 1px solid rgba(248,113,113,0.4); color: #f87171; background: rgba(248,113,113,0.08); }
 
 /* ── Student memos ───────────────────────────────────────── */
 .student-item { margin-bottom: 14px; }
@@ -261,8 +276,65 @@ body {
 .student-name {
   font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--light); margin-bottom: 4px;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: var(--hairline);
 }
+.student-name:hover { text-decoration-color: var(--light); }
 .student-note { font-size: 13px; color: var(--on-mute); line-height: 1.6; }
+
+/* ── Student history modal ───────────────────────────────── */
+#student-modal {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.88);
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+#student-modal.open { display: flex; }
+.modal-card {
+  background: var(--night-soft);
+  border: 1px solid var(--hairline);
+  width: 100%; max-width: 520px;
+  max-height: 82vh; overflow-y: auto;
+}
+.modal-hd {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--hairline);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  position: sticky; top: 0; background: var(--night-soft); z-index: 1;
+}
+.modal-student-name {
+  font-size: 22px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--light); margin-bottom: 4px;
+}
+.modal-attend-rate { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); }
+.modal-rate-num { color: #4ade80; font-weight: 700; }
+.modal-close {
+  background: none; border: 1px solid var(--hairline); color: var(--mute);
+  border-radius: 2px; font-size: 16px; line-height: 1;
+  cursor: pointer; padding: 4px 10px; transition: all 0.15s; flex-shrink: 0;
+}
+.modal-close:hover { border-color: var(--light); color: var(--light); }
+.modal-session {
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--hairline);
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.modal-session:last-child { border-bottom: none; }
+.modal-status {
+  width: 42px; flex-shrink: 0;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; padding-top: 2px;
+}
+.modal-status.attend { color: #4ade80; }
+.modal-status.absent { color: #f87171; }
+.modal-session-info { flex: 1; }
+.modal-session-date {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--on-mute); margin-bottom: 2px;
+}
+.modal-session-unit { font-size: 11px; color: var(--mute); margin-bottom: 6px; letter-spacing: 0.04em; }
+.modal-session-note { font-size: 13px; color: var(--on-mute); line-height: 1.65; }
 
 /* ── Change PIN section ──────────────────────────────────── */
 #change-pin-section {
@@ -375,6 +447,20 @@ body {
   </div>
 </div>
 
+<!-- ── Student history modal ──────────────────────────────── -->
+<div id="student-modal" onclick="if(event.target===this)closeStudentModal()">
+  <div class="modal-card">
+    <div class="modal-hd">
+      <div>
+        <div class="modal-student-name" id="modal-name"></div>
+        <div class="modal-attend-rate" id="modal-rate"></div>
+      </div>
+      <button class="modal-close" onclick="closeStudentModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
@@ -483,6 +569,8 @@ async function doLogin() {
   loadFeedback();
 }
 
+let allFeedback = [];
+
 /* ── Load feedback ───────────────────────────────────────── */
 async function loadFeedback() {
   const list = document.getElementById('feedback-list');
@@ -497,27 +585,57 @@ async function loadFeedback() {
     list.innerHTML = '<div style="color:var(--mute);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 0;">등록된 피드백이 없습니다.</div>';
     return;
   }
+  allFeedback = data;
   list.innerHTML = '';
   data.forEach(fb => list.appendChild(buildItem(fb)));
 }
 
+function calcDuration(s, e) {
+  if (!s || !e) return null;
+  const [sh, sm] = s.split(':').map(Number);
+  const [eh, em] = e.split(':').map(Number);
+  const diff = (eh * 60 + em) - (sh * 60 + sm);
+  return diff > 0 ? `${diff}분` : null;
+}
+
 function buildItem(fb) {
-  const unitLabel = UNIT_LABELS[fb.unit] || fb.unit || '—';
-  const dateStr   = fb.lesson_date
-    ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+  const unitLabel  = UNIT_LABELS[fb.unit] || fb.unit || '—';
+  const dateStr    = fb.lesson_date
+    ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
     : '—';
+  const attendees  = Array.isArray(fb.attendees) ? fb.attendees : [];
+  const absentees  = Array.isArray(fb.absentees) ? fb.absentees : [];
+  const total      = attendees.length + absentees.length;
+  const pct        = total > 0 ? Math.round(attendees.length / total * 100) : null;
+  const dur        = calcDuration(fb.start_time, fb.end_time);
 
-  const item = document.createElement('div');
-  item.className = 'fb-item';
+  /* ── Score card header ── */
+  let timeHtml = '';
+  if (fb.start_time) {
+    timeHtml = `<span class="fb-time-range">${fb.start_time.slice(0,5)} – ${(fb.end_time||'').slice(0,5)}</span>`;
+    if (dur) timeHtml += `<span class="fb-duration">(${dur})</span>`;
+  }
 
+  let attendHtml = '';
+  if (total > 0) {
+    const barW = pct ?? 0;
+    attendHtml = `
+      <div class="fb-attend-row">
+        <div class="fb-bar-wrap">
+          <div class="fb-bar-track"><div class="fb-bar-fill" style="width:${barW}%"></div></div>
+          <span class="fb-attend-stat">출석 ${attendees.length}/${total}명 · ${pct}%</span>
+        </div>
+        ${absentees.length ? `<div class="fb-absent-row"><span class="fb-absent-label">결석</span>${absentees.map(n=>`<span class="fb-absent-name">${escHtml(n)}</span>`).join('<span style="color:var(--hairline);margin:0 1px">·</span>')}</div>` : ''}
+      </div>`;
+  }
+
+  /* ── Collapsible body sections ── */
   const sections = [];
 
-  const attendees = fb.attendees || [];
-  const absentees = fb.absentees || [];
   if (attendees.length || absentees.length) {
     let html = '';
-    if (attendees.length) html += `<div class="fb-section-label" style="margin-bottom:8px;">출석</div><div class="chip-group">${attendees.map(n => `<span class="chip chip-attend">✓ ${escHtml(n)}</span>`).join('')}</div>`;
-    if (absentees.length) html += `${attendees.length ? '<div style="margin-top:12px;"></div>' : ''}<div class="fb-section-label" style="margin-bottom:8px;">결석</div><div class="chip-group">${absentees.map(n => `<span class="chip chip-absent">✗ ${escHtml(n)}</span>`).join('')}</div>`;
+    if (attendees.length) html += `<div class="fb-section-label" style="margin-bottom:8px;">출석</div><div class="chip-group">${attendees.map(n => `<span class="chip chip-attend" onclick="openStudentModal('${escHtml(n)}')">✓ ${escHtml(n)}</span>`).join('')}</div>`;
+    if (absentees.length) html += `${attendees.length ? '<div style="margin-top:12px;"></div>' : ''}<div class="fb-section-label" style="margin-bottom:8px;">결석</div><div class="chip-group">${absentees.map(n => `<span class="chip chip-absent" onclick="openStudentModal('${escHtml(n)}')">✗ ${escHtml(n)}</span>`).join('')}</div>`;
     sections.push(`<div class="fb-section">${html}</div>`);
   }
 
@@ -527,7 +645,7 @@ function buildItem(fb) {
 
   if (fb.student_notes && fb.student_notes.length) {
     const notes = fb.student_notes.map(s =>
-      `<div class="student-item"><div class="student-name">${escHtml(s.name || '—')}</div><div class="student-note">${escHtml(s.note || '—')}</div></div>`
+      `<div class="student-item"><div class="student-name" onclick="openStudentModal('${escHtml(s.name||'')}')">${escHtml(s.name || '—')}</div><div class="student-note">${escHtml(s.note || '—')}</div></div>`
     ).join('');
     sections.push(`<div class="fb-section"><div class="fb-section-label">학생별 메모</div>${notes}</div>`);
   }
@@ -536,17 +654,69 @@ function buildItem(fb) {
     sections.push(`<div class="fb-section"><div class="fb-section-label">숙제</div><div class="fb-section-text">${linkify(fb.homework)}</div></div>`);
   }
 
+  const item = document.createElement('div');
+  item.className = 'fb-item';
   item.innerHTML = `
     <div class="fb-item-header" onclick="this.parentElement.classList.toggle('open')">
-      <div>
-        <div class="fb-item-date">${dateStr}</div>
-        <div class="fb-item-unit">${escHtml(unitLabel)}</div>
+      <div class="fb-meta">
+        <div class="fb-top-row">
+          <span class="fb-date">${dateStr}</span>
+          ${timeHtml}
+        </div>
+        <div class="fb-unit-name">${escHtml(unitLabel)}</div>
+        ${attendHtml}
       </div>
       <svg class="fb-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <div class="fb-item-body">${sections.join('')}</div>
   `;
   return item;
+}
+
+/* ── Student modal ───────────────────────────────────────── */
+function openStudentModal(name) {
+  if (!name) return;
+  const sessions = allFeedback.filter(fb => {
+    const att = Array.isArray(fb.attendees) ? fb.attendees : [];
+    const abs = Array.isArray(fb.absentees) ? fb.absentees : [];
+    return att.includes(name) || abs.includes(name);
+  });
+  if (!sessions.length) return;
+
+  const totalSessions = sessions.length;
+  const attendedCount = sessions.filter(fb => (fb.attendees||[]).includes(name)).length;
+  const rate = Math.round(attendedCount / totalSessions * 100);
+
+  document.getElementById('modal-name').textContent = name;
+  document.getElementById('modal-rate').innerHTML =
+    `출석 <span class="modal-rate-num">${rate}%</span> &nbsp;·&nbsp; ${attendedCount}/${totalSessions}회`;
+
+  const body = sessions.map(fb => {
+    const dateStr = fb.lesson_date
+      ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
+      : '—';
+    const isAttend = (fb.attendees||[]).includes(name);
+    const note     = (fb.student_notes||[]).find(s => s.name === name);
+    const unitLabel = UNIT_LABELS[fb.unit] || fb.unit || '—';
+    return `
+      <div class="modal-session">
+        <div class="modal-status ${isAttend ? 'attend' : 'absent'}">${isAttend ? '출석' : '결석'}</div>
+        <div class="modal-session-info">
+          <div class="modal-session-date">${dateStr}</div>
+          <div class="modal-session-unit">${escHtml(unitLabel)}</div>
+          ${note && note.note ? `<div class="modal-session-note">${escHtml(note.note)}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('student-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeStudentModal() {
+  document.getElementById('student-modal').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 /* ── Change PIN ──────────────────────────────────────────── */
