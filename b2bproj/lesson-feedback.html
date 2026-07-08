@@ -275,9 +275,13 @@ textarea.tall { min-height: 200px; }
 
 <div class="main">
 
-  <span class="page-eyebrow">레슨 피드백 &nbsp;·&nbsp; 강원 U-18 영어 인터뷰 수업</span>
+  <span class="page-eyebrow">레슨 피드백 &nbsp;·&nbsp; 강원 U-18 영어 인터뷰 수업 &nbsp;·&nbsp; 강사 전용</span>
   <h1 class="page-title">Lesson Feedback</h1>
-  <p class="page-desc">수업 후 강사가 피드백을 작성하면, 구단과 학부모가 6자리 비밀번호로 확인할 수 있습니다.</p>
+  <p class="page-desc">피드백 작성 후 저장하고, 아래 구단 열람 링크와 비밀번호를 구단에 전달하세요.</p>
+  <div style="display:inline-flex;align-items:center;gap:10px;background:#f4f4f6;border-radius:10px;padding:12px 18px;margin-bottom:32px;flex-wrap:wrap;">
+    <span style="font-size:9px;letter-spacing:0.24em;text-transform:uppercase;color:#888;white-space:nowrap;">구단 열람 링크</span>
+    <a href="https://tutoring.superfastsat.com/b2bproj/lesson-feedback-view.html" target="_blank" style="font-size:13px;color:#111;font-weight:600;text-decoration:underline;word-break:break-all;">https://tutoring.superfastsat.com/b2bproj/lesson-feedback-view.html</a>
+  </div>
   <div class="hl"></div>
 
   <!-- ── Section 1: Instructor Write ────────────────────── -->
@@ -330,54 +334,6 @@ textarea.tall { min-height: 200px; }
     <div class="msg" id="write-msg"></div>
   </div>
 
-  <!-- ── Divider ─────────────────────────────────────────── -->
-  <div class="page-divider">
-    <span class="page-divider-label">피드백 열람</span>
-  </div>
-
-  <!-- ── Section 2: Club / Parent View ──────────────────── -->
-  <div class="section-block" id="view-section">
-    <span class="section-eyebrow">구단 · 학부모</span>
-    <h2 class="section-title">피드백 확인</h2>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:28px;">강사에게 받은 6자리 비밀번호를 입력하세요.</p>
-
-    <div class="pin-viewer">
-      <div class="pin-viewer-row">
-        <input type="number" id="view-pin" placeholder="000000" maxlength="6"
-               oninput="if(this.value.length>6)this.value=this.value.slice(0,6)"
-               onkeydown="if(event.key==='Enter')viewFeedback()" />
-        <button class="btn-primary" onclick="viewFeedback()">확인하기</button>
-      </div>
-      <div class="msg" id="view-msg"></div>
-    </div>
-
-    <!-- Feedback display card -->
-    <div class="fb-card" id="fb-card">
-      <div class="fb-card-header">
-        <div class="fb-card-eyebrow" id="fb-eyebrow">레슨 피드백</div>
-        <div class="fb-card-title" id="fb-title">—</div>
-        <div class="fb-card-meta" id="fb-meta">—</div>
-      </div>
-      <div class="fb-card-body">
-
-        <div class="fb-section" id="fb-sec-content">
-          <div class="fb-section-label">이번 수업 내용</div>
-          <div class="fb-section-text" id="fb-content-text"></div>
-        </div>
-
-        <div class="fb-section" id="fb-sec-students" style="display:none;">
-          <div class="fb-section-label">학생별 메모</div>
-          <div class="fb-student-list" id="fb-student-list"></div>
-        </div>
-
-        <div class="fb-section" id="fb-sec-hw" style="display:none;">
-          <div class="fb-section-label">숙제</div>
-          <div class="fb-section-text" id="fb-hw-text"></div>
-        </div>
-
-      </div>
-    </div>
-  </div>
 
 </div>
 
@@ -519,84 +475,6 @@ async function submitFeedback() {
   }
 }
 
-/* ── View feedback by PIN ────────────────────────────────── */
-async function viewFeedback() {
-  const pin   = document.getElementById('view-pin').value.trim();
-  const msgEl = document.getElementById('view-msg');
-
-  msgEl.className = 'msg';
-  msgEl.textContent = '';
-  document.getElementById('fb-card').classList.remove('visible');
-
-  if (!/^\d{6}$/.test(pin)) {
-    showMsg(msgEl, 'error', '6자리 숫자 비밀번호를 입력해주세요.');
-    return;
-  }
-
-  const { data, error } = await sb
-    .from('b2b_lesson_feedback')
-    .select('*')
-    .eq('pin', pin)
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (error || !data || !data.length) {
-    showMsg(msgEl, 'error', '일치하는 피드백을 찾을 수 없습니다. 비밀번호를 확인해주세요.');
-    return;
-  }
-
-  renderFeedback(data[0]);
-}
-
-function renderFeedback(fb) {
-  const unitLabel = UNIT_LABELS[fb.unit] || fb.unit || '—';
-  const dateStr   = fb.lesson_date
-    ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
-    : '—';
-
-  document.getElementById('fb-eyebrow').textContent = '레슨 피드백';
-  document.getElementById('fb-title').textContent   = unitLabel;
-  document.getElementById('fb-meta').textContent    = dateStr;
-
-  // Lesson content
-  const contentEl = document.getElementById('fb-content-text');
-  contentEl.textContent = fb.lesson_content || '—';
-  document.getElementById('fb-sec-content').style.display = 'flex';
-
-  // Student notes
-  const studentList = document.getElementById('fb-student-list');
-  const studentSec  = document.getElementById('fb-sec-students');
-  studentList.innerHTML = '';
-
-  const notes = fb.student_notes;
-  if (notes && Array.isArray(notes) && notes.length) {
-    notes.forEach(s => {
-      const item = document.createElement('div');
-      item.className = 'fb-student-item';
-      item.innerHTML = `
-        <div class="fb-student-name">${escHtml(s.name || '—')}</div>
-        <div class="fb-student-note">${escHtml(s.note || '—')}</div>
-      `;
-      studentList.appendChild(item);
-    });
-    studentSec.style.display = 'flex';
-  } else {
-    studentSec.style.display = 'none';
-  }
-
-  // Homework
-  const hwSec  = document.getElementById('fb-sec-hw');
-  const hwText = document.getElementById('fb-hw-text');
-  if (fb.homework) {
-    hwText.textContent = fb.homework;
-    hwSec.style.display = 'flex';
-  } else {
-    hwSec.style.display = 'none';
-  }
-
-  document.getElementById('fb-card').classList.add('visible');
-  document.getElementById('fb-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
 
 /* ── Helpers ─────────────────────────────────────────────── */
 function showMsg(el, type, text) {

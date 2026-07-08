@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>레슨 피드백 확인 · 러너스 LRS</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent: #6085FF;
+  --bg: #09090b;
+  --bg-card: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.1);
+  --text: #ffffff;
+  --mute: #94a3b8;
+  --error: #f87171;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Top nav ─────────────────────────────────────────────── */
+#topnav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(9,9,11,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+  height: 48px;
+  display: flex; align-items: center;
+  padding: 0 clamp(20px, 5vw, 60px);
+}
+.brand {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.4em; text-transform: uppercase;
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* ── Page layout ──────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 80px clamp(20px, 5vw, 60px) 60px;
+}
+
+/* ── PIN entry screen ─────────────────────────────────────── */
+#pin-screen {
+  width: 100%; max-width: 400px;
+  text-align: center;
+}
+
+.accent-bar {
+  display: flex; align-items: center; gap: 12px;
+  justify-content: center; margin-bottom: 24px;
+}
+.accent-bar .line { height: 1px; width: 40px; background: var(--accent); }
+.accent-bar .label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--accent);
+}
+
+.pin-title {
+  font-size: clamp(28px, 6vw, 42px);
+  font-weight: 800; letter-spacing: -0.02em;
+  line-height: 1.1; margin-bottom: 10px;
+}
+.pin-subtitle {
+  font-size: 13px; color: var(--mute);
+  margin-bottom: 40px; line-height: 1.6;
+}
+
+/* ── PIN boxes ────────────────────────────────────────────── */
+.pin-boxes {
+  display: flex; gap: 10px; justify-content: center;
+  margin-bottom: 32px;
+}
+.pin-box-wrap { position: relative; }
+.pin-box-wrap input {
+  position: absolute; inset: 0;
+  opacity: 0; cursor: pointer;
+  font-size: 0;
+}
+.pin-box {
+  width: 44px; height: 52px;
+  border-radius: 12px; border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+.pin-box.filled {
+  border-color: var(--accent);
+  background: rgba(96,133,255,0.1);
+}
+.pin-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent);
+}
+
+.error-msg {
+  font-size: 13px; color: var(--error);
+  min-height: 20px; margin-bottom: 16px;
+}
+
+.btn-submit {
+  width: 100%; padding: 14px;
+  border: none; border-radius: 14px;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  cursor: pointer; transition: background 0.15s, opacity 0.15s;
+  background: var(--accent); color: #fff;
+}
+.btn-submit:disabled { opacity: 0.35; cursor: default; }
+
+/* ── Loading spinner ──────────────────────────────────────── */
+.spinner {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Feedback card ────────────────────────────────────────── */
+#feedback-screen { display: none; width: 100%; max-width: 600px; }
+
+.fb-header {
+  margin-bottom: 40px;
+}
+.fb-eyebrow {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 10px;
+}
+.fb-title {
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 800; letter-spacing: -0.02em;
+  line-height: 1.1; margin-bottom: 8px;
+}
+.fb-meta { font-size: 13px; color: var(--mute); }
+
+.fb-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.fb-section {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.fb-section:last-child { border-bottom: none; }
+
+.fb-section-label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--mute);
+}
+.fb-section-text {
+  font-size: 14px; line-height: 1.75;
+  color: rgba(255,255,255,0.85);
+  white-space: pre-wrap; word-break: break-word;
+}
+.fb-section-text a {
+  color: var(--accent);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.fb-student-item { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.fb-student-item:last-child { margin-bottom: 0; }
+.fb-student-name { font-size: 12px; font-weight: 700; color: var(--text); letter-spacing: 0.05em; }
+.fb-student-note { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; }
+
+.btn-back {
+  margin-top: 28px; background: none; border: none;
+  font-size: 12px; color: var(--mute);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: color 0.15s;
+}
+.btn-back:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<nav id="topnav">
+  <a href="lesson-feedback.html" class="brand">Runners LRS</a>
+</nav>
+
+<div class="page">
+
+  <!-- ── PIN Entry ──────────────────────────────────────────── -->
+  <div id="pin-screen">
+    <div class="accent-bar">
+      <div class="line"></div>
+      <span class="label">강원 FC · 레슨 피드백</span>
+      <div class="line"></div>
+    </div>
+    <h1 class="pin-title">비밀번호 입력</h1>
+    <p class="pin-subtitle">강사에게 받은 6자리 비밀번호를 입력하면<br>수업 피드백을 확인할 수 있습니다.</p>
+
+    <div class="pin-boxes" id="pin-boxes"></div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <button class="btn-submit" id="submit-btn" disabled onclick="submitPin()">
+      확인하기
+    </button>
+  </div>
+
+  <!-- ── Feedback display ───────────────────────────────────── -->
+  <div id="feedback-screen">
+    <div class="fb-header">
+      <div class="fb-eyebrow" id="fb-eyebrow">레슨 피드백</div>
+      <div class="fb-title" id="fb-title">—</div>
+      <div class="fb-meta" id="fb-meta">—</div>
+    </div>
+
+    <div class="fb-card">
+      <div class="fb-section" id="fb-sec-content">
+        <div class="fb-section-label">이번 수업 내용</div>
+        <div class="fb-section-text" id="fb-content-text"></div>
+      </div>
+      <div class="fb-section" id="fb-sec-students" style="display:none;">
+        <div class="fb-section-label">학생별 메모</div>
+        <div id="fb-student-list"></div>
+      </div>
+      <div class="fb-section" id="fb-sec-hw" style="display:none;">
+        <div class="fb-section-label">숙제</div>
+        <div class="fb-section-text" id="fb-hw-text"></div>
+      </div>
+    </div>
+
+    <button class="btn-back" onclick="goBack()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      다른 비밀번호로 확인
+    </button>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
+const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+const UNIT_LABELS = {
+  unit1: 'Unit 1 — Self-Introduction & Joining the Team',
+  unit2: 'Unit 2 — Win / Lose Interview'
+};
+
+/* ── PIN input state ─────────────────────────────────────── */
+let pin = '';
+
+function buildPinBoxes() {
+  const container = document.getElementById('pin-boxes');
+  for (let i = 0; i < 6; i++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'pin-box-wrap';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.inputMode = 'numeric';
+    input.maxLength = 1;
+    input.setAttribute('aria-label', `digit ${i + 1}`);
+    if (i === 0) input.autofocus = true;
+
+    input.addEventListener('input', e => onDigitInput(i, e.target.value));
+    input.addEventListener('keydown', e => onKeyDown(i, e));
+    input.addEventListener('paste', onPaste);
+    input.addEventListener('focus', e => e.target.select());
+
+    const box = document.createElement('div');
+    box.className = 'pin-box';
+    box.id = `box-${i}`;
+
+    wrap.appendChild(input);
+    wrap.appendChild(box);
+    container.appendChild(wrap);
+  }
+}
+
+function getInputs() {
+  return Array.from(document.querySelectorAll('.pin-box-wrap input'));
+}
+
+function onDigitInput(i, val) {
+  const digit = val.replace(/\D/g, '').slice(-1);
+  const inputs = getInputs();
+  if (!digit) return;
+  const arr = pin.split('');
+  arr[i] = digit;
+  pin = arr.join('').slice(0, 6);
+  updateBoxes();
+  if (i < 5) inputs[i + 1].focus();
+}
+
+function onKeyDown(i, e) {
+  const inputs = getInputs();
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    if (pin[i]) {
+      const arr = pin.split(''); arr[i] = ''; pin = arr.join('');
+    } else if (i > 0) {
+      inputs[i - 1].focus();
+      const arr = pin.split(''); arr[i - 1] = ''; pin = arr.join('');
+    }
+    updateBoxes();
+  } else if (e.key === 'ArrowLeft' && i > 0) inputs[i - 1].focus();
+  else if (e.key === 'ArrowRight' && i < 5) inputs[i + 1].focus();
+  else if (e.key === 'Enter' && pin.length === 6) submitPin();
+}
+
+function onPaste(e) {
+  e.preventDefault();
+  const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+  pin = digits;
+  updateBoxes();
+  const inputs = getInputs();
+  inputs[Math.min(digits.length, 5)].focus();
+}
+
+function updateBoxes() {
+  for (let i = 0; i < 6; i++) {
+    const box = document.getElementById(`box-${i}`);
+    const filled = !!pin[i];
+    box.className = 'pin-box' + (filled ? ' filled' : '');
+    box.innerHTML = filled ? '<div class="pin-dot"></div>' : '';
+  }
+  document.getElementById('submit-btn').disabled = pin.length < 6;
+  document.getElementById('error-msg').textContent = '';
+}
+
+/* ── Submit ──────────────────────────────────────────────── */
+async function submitPin() {
+  if (pin.length !== 6) return;
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+
+  const { data, error } = await sb
+    .from('b2b_lesson_feedback')
+    .select('*')
+    .eq('pin', pin)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  btn.innerHTML = '확인하기';
+  btn.disabled = false;
+
+  if (error || !data || !data.length) {
+    document.getElementById('error-msg').textContent = '일치하는 피드백이 없습니다. 비밀번호를 확인해주세요.';
+    pin = '';
+    updateBoxes();
+    getInputs()[0].focus();
+    return;
+  }
+
+  renderFeedback(data[0]);
+}
+
+/* ── Render ──────────────────────────────────────────────── */
+function renderFeedback(fb) {
+  const unitLabel = UNIT_LABELS[fb.unit] || fb.unit || '—';
+  const dateStr = fb.lesson_date
+    ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '—';
+
+  document.getElementById('fb-eyebrow').textContent = '레슨 피드백';
+  document.getElementById('fb-title').textContent = unitLabel;
+  document.getElementById('fb-meta').textContent = dateStr;
+
+  document.getElementById('fb-content-text').innerHTML = linkify(fb.lesson_content || '—');
+
+  const studentList = document.getElementById('fb-student-list');
+  const studentSec  = document.getElementById('fb-sec-students');
+  studentList.innerHTML = '';
+  const notes = fb.student_notes;
+  if (notes && Array.isArray(notes) && notes.length) {
+    notes.forEach(s => {
+      const item = document.createElement('div');
+      item.className = 'fb-student-item';
+      item.innerHTML = `
+        <div class="fb-student-name">${escHtml(s.name || '—')}</div>
+        <div class="fb-student-note">${escHtml(s.note || '—')}</div>
+      `;
+      studentList.appendChild(item);
+    });
+    studentSec.style.display = 'flex';
+  } else {
+    studentSec.style.display = 'none';
+  }
+
+  const hwSec  = document.getElementById('fb-sec-hw');
+  const hwText = document.getElementById('fb-hw-text');
+  if (fb.homework) {
+    hwText.innerHTML = linkify(fb.homework);
+    hwSec.style.display = 'flex';
+  } else {
+    hwSec.style.display = 'none';
+  }
+
+  document.getElementById('pin-screen').style.display = 'none';
+  const fbScreen = document.getElementById('feedback-screen');
+  fbScreen.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack() {
+  pin = '';
+  updateBoxes();
+  document.getElementById('feedback-screen').style.display = 'none';
+  document.getElementById('pin-screen').style.display = 'block';
+  document.getElementById('error-msg').textContent = '';
+  getInputs()[0].focus();
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function linkify(str) {
+  return escHtml(str).replace(
+    /(https?:\/\/[^\s&]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+}
+
+buildPinBoxes();
+</script>
+</body>
+</html>
