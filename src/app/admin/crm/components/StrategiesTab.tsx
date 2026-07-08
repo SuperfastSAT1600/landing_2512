@@ -8,8 +8,9 @@ import { ExperimentBoard } from './ExperimentBoard';
 
 interface Props {
   adminKey: string;
-  initialSubTab?: 'experiment' | 'library';
+  initialSubTab?: SubTab;
   strategyPeriod?: InsightPeriod;
+  strategySeed?: { key: number; text: string; period: InsightPeriod }; // 배너에서 고른 안건 시드
 }
 
 type StrategyType = 'initial_contact' | 'initial_sales' | 'retry';
@@ -153,14 +154,14 @@ function StrategySection({
   );
 }
 
-type SubTab = 'experiment' | 'library';
+type SubTab = 'experiment' | 'library' | 'strategy_ai';
 
-export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod }: Props) {
+export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strategySeed }: Props) {
   const [subTab, setSubTab] = useState<SubTab>(initialSubTab ?? 'experiment');
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 배너에서 '이어서 전략 짜기'로 진입 시 라이브러리(에이전트) 서브탭으로 전환
+  // 배너에서 '이어서 전략 짜기'로 진입 시 전략 에이전트 서브탭으로 전환
   useEffect(() => {
     if (initialSubTab) setSubTab(initialSubTab);
   }, [initialSubTab]);
@@ -195,11 +196,12 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod }: Props
 
   return (
     <div className="max-w-3xl space-y-5">
-      {/* 서브탭: 실험 / 전략 라이브러리 */}
+      {/* 서브탭: 실험 / 전략 라이브러리 / 전략 에이전트 */}
       <div className="flex gap-1 border-b border-gray-200">
         {([
           { key: 'experiment', label: '실험' },
           { key: 'library', label: '전략 라이브러리' },
+          { key: 'strategy_ai', label: '전략 에이전트' },
         ] as { key: SubTab; label: string }[]).map(({ key, label }) => (
           <button
             key={key}
@@ -217,12 +219,13 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod }: Props
 
       {subTab === 'experiment' && <ExperimentBoard adminKey={adminKey} />}
 
+      {subTab === 'strategy_ai' && <StrategyAgentChat adminKey={adminKey} period={strategyPeriod} seed={strategySeed} />}
+
       {subTab === 'library' && (
         loading ? (
           <div className="text-sm text-gray-400 py-8 text-center">불러오는 중...</div>
         ) : (
           <>
-            <StrategyAgentChat adminKey={adminKey} period={strategyPeriod} />
             <div className="space-y-4">
               <p className="text-xs text-gray-400">
                 전략을 만들고 학생 패널의 인입 정보에서 배정할 수 있습니다.

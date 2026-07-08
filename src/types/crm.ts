@@ -29,7 +29,6 @@ export type DesiredSubjects =
 export type PreviousScoreStatus = 'scored' | 'never_taken' | 'dont_remember';
 export type PreferredLanguage = 'korean' | 'english' | 'any';
 export type ChurnType = 'potential' | 'closed';
-export type LeadTier = 'A' | 'B' | 'C';
 export type AssignmentStatus = 'pending' | 'accepted' | 'rejected' | 'considering' | 'closed';
 export type ContactType = 'phone' | 'kakao' | 'email';
 export type LeadStatus = 'active' | 'inactive' | 'reactivating' | 'enrolled';
@@ -211,9 +210,6 @@ export interface Student {
   retry_strategy_id: string | null;
   retry_stage: RetryStage | null;
   retry_assigned_at: string | null;
-
-  // 리드 등급 (수동 확정). null이면 자동 분류(autoLeadTier) 사용
-  lead_tier: LeadTier | null;
 
   // 세일즈 전략 AI 대화 기록 — 패널 재진입 시 이어서 진행
   strategy_ai_messages: StrategyChatMessage[];
@@ -586,64 +582,6 @@ export function todaysMemos(
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
-// ─── 리드 A/B/C 등급 (Hot/Warm/Cold) ──────────────────────────────────────────
-export const LEAD_TIER_OPTIONS: LeadTier[] = ['A', 'B', 'C'];
-export const LEAD_TIER_LABELS: Record<LeadTier, string> = {
-  A: 'A (Hot)',
-  B: 'B (Warm)',
-  C: 'C (Cold)',
-};
-// 등급별 추천 세일즈 방식 (카드 배지 등 짧은 표기)
-export const LEAD_TIER_APPROACH: Record<LeadTier, string> = {
-  A: '전화풀',
-  B: '비동기',
-  C: '자동화',
-};
-
-// 자동 분류 임계값 (운영 기준이 바뀌면 여기만 수정)
-const TIER_IMMINENT_DAYS = 60; // 시험일 임박 = 60일 이내
-const TIER_COLD_NO_CONTACT_DAYS = 14; // 14일 초과 미연락 = 저관여
-
-/**
- * 데이터 기반 자동 등급 분류 (제안값).
- * - A(Hot): 소개/추천 유입, 또는 목표점수가 있고 시험일이 임박(0~60일).
- * - C(Cold): 14일 초과 미연락(저관여/응답 느림).
- * - B(Warm): 그 외 기본 (신규 미연락 리드 포함 — 아직 Cold는 아님).
- * 우선순위: A → C → B.
- */
-export function autoLeadTier(
-  s: Pick<Student, 'traffic_source' | 'target_score' | 'target_test_date' | 'last_contacted_at'>,
-  nowMs: number
-): LeadTier {
-  // A: 소개/추천 유입
-  if (s.traffic_source === '소개/추천') return 'A';
-  // A: 목표점수 있음 + 시험일 임박
-  if (s.target_score != null && s.target_test_date) {
-    const testMs = new Date(s.target_test_date).getTime();
-    if (!Number.isNaN(testMs)) {
-      const daysUntil = (testMs - nowMs) / 86400000;
-      if (daysUntil >= 0 && daysUntil <= TIER_IMMINENT_DAYS) return 'A';
-    }
-  }
-  // C: 오래 미연락 (저관여)
-  if (s.last_contacted_at) {
-    const lastMs = new Date(s.last_contacted_at).getTime();
-    if (!Number.isNaN(lastMs) && (nowMs - lastMs) / 86400000 > TIER_COLD_NO_CONTACT_DAYS)
-      return 'C';
-  }
-  return 'B';
-}
-
-/** 표시·필터에 쓰는 최종 등급: 수동 확정값 우선, 없으면 자동 분류. */
-export function effectiveLeadTier(
-  s: Pick<
-    Student,
-    'lead_tier' | 'traffic_source' | 'target_score' | 'target_test_date' | 'last_contacted_at'
-  >,
-  nowMs: number
-): LeadTier {
-  return s.lead_tier ?? autoLeadTier(s, nowMs);
-}
 
 export const MATCHING_STAGE_LABELS: Record<MatchingStage, string> = {
   schedule_pending: '스케줄 입력 대기',
@@ -756,7 +694,7 @@ export type ChurnTag = (typeof CHURN_TAG_OPTIONS)[number];
 // 선제 진단 인사이트 브리핑 API 계약 — insight-brief 라우트와 CrmInsightBanner가 공유.
 export type InsightBriefMode = 'diagnosis' | 'weekly';
 
-// 인사이트/전략 대화 분석 기간(YYYY-MM-DD). 없으면 "이번 달(1일~오늘)" 기본.
+// 인사이트/전략 대화 분석 기간(YYYY-MM-DD). 없으면 "오늘로부터 직전 한 달(최근 30일)" 기본.
 export interface InsightPeriod {
   from: string;
   to: string;
@@ -768,7 +706,6 @@ export interface InsightBriefArea {
   why: string;
   suggestion: string;
   question?: string;
-  lens?: string; // 심화(deep) 전용 — 적용한 구루 렌즈명 (예: 'Hormozi')
   evidence?: string; // 심화(deep) 전용 — 메모/웹 근거 한 줄
 }
 

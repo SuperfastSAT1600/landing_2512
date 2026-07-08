@@ -162,9 +162,9 @@ export function buildHealthSnapshot(input: HealthInput): HealthSnapshot {
   const ranked = [...primary, ...trend];
   const weakest = [...ranked, ...watchFillers(current, ranked, 5 - ranked.length)].slice(0, 5);
 
-  // 프롬프트 주입용 텍스트 — 이번 달 인입 코호트 퍼널을 척추로
+  // 프롬프트 주입용 텍스트 — 분석 기간 인입 코호트 퍼널을 척추로
   const lines: string[] = [
-    `[KPI 건강 진단 · 분석 대상=이번 달 인입 리드 코호트] (${input.periodLabel ?? `최근 ${periodDays}일`})`,
+    `[KPI 건강 진단 · 분석 대상=분석 기간 인입 리드 코호트] (${input.periodLabel ?? `최근 ${periodDays}일`})`,
     `- 인입 ${o.total_leads}명 → 컨택 성공 ${o.contacted}명(${pct(o.contact_rate)}) → 결제 ${o.paid}명(전환율 ${pct(o.conversion_rate)}) · 총매출 ${man(o.gross_revenue)}`,
   ];
   if (primary.length > 0) {

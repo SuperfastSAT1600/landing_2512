@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2, Globe, RotateCcw, Activity, CalendarRange } from 'lucide-react';
+import { Send, Sparkles, Loader2, Globe, RotateCcw, Activity } from 'lucide-react';
 import type { InsightPeriod } from '@/types/crm';
+import { PeriodPicker, defaultPeriod } from './PeriodPicker';
 
 interface Props {
   adminKey: string;
-  period?: InsightPeriod; // 배너에서 넘어온 분석 기간 — proactive 진단을 이 기간으로 스코프
+  period?: InsightPeriod; // 배너에서 넘어온 초기 분석 기간 — 없으면 기본(최근 30일)
+  // 배너 '이어서 전략 짜기'에서 고른 안건 시드. key가 바뀌면 그 안건으로 새 스레드 시작.
+  seed?: { key: number; text: string; period: InsightPeriod };
 }
 
 interface ChatMessage {
@@ -27,27 +30,47 @@ function loadChat(): ChatMessage[] {
   }
 }
 
-export function StrategyAgentChat({ adminKey, period }: Props) {
+export function StrategyAgentChat({ adminKey, period: initialPeriod, seed }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(loadChat);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [loadingLabel, setLoadingLabel] = useState('분석·검색 중…');
   const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState<InsightPeriod>(initialPeriod ?? defaultPeriod());
   const listRef = useRef<HTMLDivElement>(null);
   const proactiveRanRef = useRef(false);
+  const seedKeyRef = useRef<number | undefined>(undefined); // 이미 처리한 시드 key
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [messages]);
 
+  // 배너에서 새 기간으로 다시 진입하면 내부 기간 동기화
+  useEffect(() => {
+    if (initialPeriod) setPeriod(initialPeriod);
+  }, [initialPeriod?.from, initialPeriod?.to]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // 마운트 시 1회: 저장된 대화가 없으면 지표를 자동 점검해 선제 진단으로 연다.
+  // 단, 배너에서 시드(안건)를 들고 진입했으면 자동 점검 대신 시드 스레드로 시작(아래 효과가 처리).
   // ref 가드로 StrictMode 더블 마운트·탭 재진입 시 중복 호출을 막는다.
   useEffect(() => {
     if (proactiveRanRef.current) return;
+    if (seed) { proactiveRanRef.current = true; return; }
     proactiveRanRef.current = true;
     if (messages.length === 0) runProactive();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 배너 '이어서 전략 짜기'에서 고른 안건 시드 → 그 안건을 첫 사용자 메시지로 새 스레드 시작.
+  useEffect(() => {
+    if (!seed || seedKeyRef.current === seed.key || streaming) return;
+    seedKeyRef.current = seed.key;
+    proactiveRanRef.current = true;
+    setPeriod(seed.period);
+    const first: ChatMessage[] = [{ role: 'user', content: seed.text }];
+    streamFrom({ messages: first }, first, '분석·검색 중…', seed.period);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed?.key]);
 
   // 스트리밍이 끝난 시점의 최종 대화를 보존 (스트리밍 중 매 델타 저장은 생략)
   useEffect(() => {
@@ -76,7 +99,8 @@ export function StrategyAgentChat({ adminKey, period }: Props) {
   async function streamFrom(
     requestBody: { messages: ChatMessage[] } | { mode: 'proactive' },
     base: ChatMessage[],
-    label: string
+    label: string,
+    usePeriod: InsightPeriod = period
   ) {
     if (streaming) return;
     setMessages([...base, { role: 'assistant', content: '' }]);
@@ -88,7 +112,7 @@ export function StrategyAgentChat({ adminKey, period }: Props) {
       const res = await fetch('/api/crm/strategy-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify(period ? { ...requestBody, from: period.from, to: period.to } : requestBody),
+        body: JSON.stringify({ ...requestBody, from: usePeriod.from, to: usePeriod.to }),
       });
 
       if (!res.ok || !res.body) {
@@ -126,8 +150,21 @@ export function StrategyAgentChat({ adminKey, period }: Props) {
   }
 
   // 지표를 스캔해 선제 진단을 연다(서버가 seed user turn 합성, 화면엔 assistant만).
-  function runProactive() {
-    streamFrom({ mode: 'proactive' }, [], '지표 점검 중…');
+  function runProactive(usePeriod: InsightPeriod = period) {
+    streamFrom({ mode: 'proactive' }, [], '지표 점검 중…', usePeriod);
+  }
+
+  // 기간 변경 → 그 기간 기준으로 선제 진단을 새로 연다(대화 있으면 확인 후 초기화).
+  function applyPeriod(p: InsightPeriod) {
+    if (streaming) return;
+    if (messages.length > 0 && !confirm('분석 기간을 바꾸면 현재 대화를 지우고 새 기간으로 다시 점검합니다. 계속할까요?')) return;
+    setPeriod(p);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    runProactive(p); // setPeriod 반영 지연 회피 위해 명시 전달
   }
 
   function rescan() {
@@ -150,20 +187,16 @@ export function StrategyAgentChat({ adminKey, period }: Props) {
 
   return (
     <div className="border border-indigo-200 rounded-xl overflow-hidden bg-white">
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-indigo-100 bg-indigo-50/60">
+      <div className="px-4 py-3 border-b border-indigo-100 bg-indigo-50/60 space-y-2">
+        <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Sparkles size={17} className="text-indigo-500 shrink-0" />
           <div>
-            <h3 className="text-lg font-bold text-gray-800">전략 설계 AI</h3>
+            <h3 className="text-lg font-bold text-gray-800">전략 에이전트</h3>
             <p className="text-sm text-gray-500 flex items-center gap-1">
               <Globe size={11} className="text-indigo-400" />
               세계적 세일즈 기법 · 웹 검색 · 우리 상담 기록을 바탕으로 새 전략 설계
             </p>
-            {period && (
-              <p className="mt-0.5 text-xs text-indigo-500 flex items-center gap-1">
-                <CalendarRange size={11} /> 분석 기간 {period.from} ~ {period.to}
-              </p>
-            )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -186,6 +219,8 @@ export function StrategyAgentChat({ adminKey, period }: Props) {
             </button>
           )}
         </div>
+        </div>
+        <PeriodPicker period={period} onApply={applyPeriod} disabled={streaming} />
       </div>
 
       <div className="px-4 py-3">
@@ -203,7 +238,7 @@ export function StrategyAgentChat({ adminKey, period }: Props) {
                 &ldquo;세일즈 콜 전환율을 높이는 최신 기법을 우리 데이터에 맞게 적용해줘&rdquo;
               </p>
               <button
-                onClick={runProactive}
+                onClick={() => runProactive()}
                 disabled={streaming}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
               >
