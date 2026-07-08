@@ -273,10 +273,6 @@ body {
           <div class="sb-stat-num" id="stat-count">—</div>
           <div class="sb-stat-label">제출 완료</div>
         </div>
-        <div class="sb-stat">
-          <div class="sb-stat-num sb-stat-num-sm" id="stat-latest">—</div>
-          <div class="sb-stat-label">최근 제출</div>
-        </div>
       </div>
       <div class="sb-hl"></div>
       <div class="sb-roster-label">SUBMITTED ROSTER</div>
@@ -339,7 +335,6 @@ async function loadSubmissions() {
   const area = document.getElementById('cards-area');
   area.innerHTML = '<div class="state-msg"><span class="spinner"></span>불러오는 중…</div>';
   document.getElementById('stat-count').textContent = '—';
-  document.getElementById('stat-latest').textContent = '—';
   document.getElementById('sb-roster').innerHTML = '<span class="sb-empty">불러오는 중…</span>';
 
   const info = UNIT_INFO[currentUnit] || { label: currentUnit.toUpperCase(), sub: '—' };
@@ -360,8 +355,6 @@ async function loadSubmissions() {
 
   // ── Scoreboard stats
   document.getElementById('stat-count').textContent = data.length;
-  document.getElementById('stat-latest').textContent = data.length > 0
-    ? fmtRelative(data[0].submitted_at) : '없음';
   document.getElementById('detail-label').textContent = `개별 결과 · ${data.length}건`;
 
   // ── Roster chips
