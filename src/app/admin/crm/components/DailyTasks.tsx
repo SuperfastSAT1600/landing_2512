@@ -7,7 +7,6 @@ import {
   FUNNEL_STAGE_LABELS,
   FUNNEL_NEXT_ACTION,
   daysInStage,
-  effectiveLeadTier,
   isActionDoneToday,
   todaysMemos,
 } from '@/types/crm';
@@ -29,8 +28,6 @@ interface ActionItem {
   kind: ActionKind;
   days: number;
 }
-
-const TIER_RANK: Record<string, number> = { A: 0, B: 1, C: 2 };
 
 export function DailyTasks({
   followUpStudents,
@@ -57,12 +54,7 @@ export function DailyTasks({
     }
     return [...map.values()]
       .filter((it) => !isActionDoneToday(it.student, nowMs))
-      .sort((a, b) => {
-        const ta = TIER_RANK[effectiveLeadTier(a.student, nowMs)] ?? 1;
-        const tb = TIER_RANK[effectiveLeadTier(b.student, nowMs)] ?? 1;
-        if (ta !== tb) return ta - tb;
-        return b.days - a.days;
-      });
+      .sort((a, b) => b.days - a.days);
   }, [stalledStudents, followUpStudents, nowMs]);
 
   // 섹션 B — 오늘 취한 액션 (오늘 메모 작성 또는 오늘 완료 체크)

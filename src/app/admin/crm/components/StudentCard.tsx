@@ -3,18 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { X, GripVertical, CreditCard, MessageSquare, UserCheck } from 'lucide-react';
-import { Student, LeadTier, LEAD_TIER_APPROACH } from '@/types/crm';
-
-const TIER_BADGE: Record<LeadTier, string> = {
-  A: 'text-rose-700 bg-rose-100 border-rose-200',
-  B: 'text-amber-700 bg-amber-100 border-amber-200',
-  C: 'text-slate-600 bg-slate-100 border-slate-200',
-};
-const TIER_DOT: Record<LeadTier, string> = {
-  A: 'bg-rose-500',
-  B: 'bg-amber-500',
-  C: 'bg-slate-400',
-};
+import { Student } from '@/types/crm';
 
 function daysElapsed(dateStr: string | null): number | null {
   if (!dateStr) return null;
@@ -29,8 +18,6 @@ interface StudentCardProps {
   overlay?: boolean;
   /** 현재 단계 SLA를 초과해 정체된 일수. null이면 정체 아님(뱃지 미표시). */
   stalledDays?: number | null;
-  /** 리드 등급(수동 확정 또는 자동 분류된 effective 값). */
-  leadTier?: LeadTier | null;
   /** 8번(결제완료) 컬럼 모드 — 회원가입 확인 체크 + 단톡방 개설 버튼 노출, 이탈/결제 버튼 숨김. */
   enrollmentMode?: boolean;
   onToggleSignup?: () => void;
@@ -38,7 +25,7 @@ interface StudentCardProps {
 }
 
 
-export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null, leadTier = null, enrollmentMode = false, onToggleSignup, onKakaoCreate }: StudentCardProps) {
+export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null, enrollmentMode = false, onToggleSignup, onKakaoCreate }: StudentCardProps) {
   const {
     attributes,
     listeners,
@@ -93,14 +80,6 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
       {/* Phone */}
       {student.parent_phone && (
         <p className="text-[11px] text-gray-400 mt-0.5">{student.parent_phone}</p>
-      )}
-
-      {/* 리드 등급 + 추천 세일즈 방식 */}
-      {leadTier && (
-        <span className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border ${TIER_BADGE[leadTier]}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${TIER_DOT[leadTier]}`} />
-          {leadTier} · {LEAD_TIER_APPROACH[leadTier]}
-        </span>
       )}
 
       {/* 인입 채널 · 유입 소스 (하나로 합쳐 표시) */}

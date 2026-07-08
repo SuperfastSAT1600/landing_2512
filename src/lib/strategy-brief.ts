@@ -3,11 +3,11 @@
  * 기간 윈도우·정체 집계·health 스냅샷 로직의 단일 소스.
  */
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, effectiveLeadTier, type FunnelStage, type TrafficSource, type LeadTier, type InsightPeriod } from '@/types/crm';
+import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, type FunnelStage, type InsightPeriod } from '@/types/crm';
 import { buildHealthSnapshot, type StalledCount, type HealthSnapshot } from '@/lib/strategy-health';
 import { buildCorrelationBlock, type CorrelationStudent } from '@/lib/strategy-correlations';
 import type { CrmStatsData } from '@/app/api/crm/stats/route';
-import { parseISO, addDays, differenceInCalendarDays, format } from 'date-fns';
+import { parseISO, addDays, subDays, differenceInCalendarDays, format } from 'date-fns';
 
 interface PeriodRange {
   curFrom: string;
@@ -18,46 +18,31 @@ interface PeriodRange {
   periodLabel: string;
 }
 
-/**
- * 해당월(이번 달) 기준 기간 + 추세 비교용 직전 달 동기간(같은 일자까지).
- * 예: 오늘이 6/19면 current = 6/1~6/19, previous = 5/1~5/19.
- */
-function monthRanges(todayStr: string): PeriodRange {
-  const [y, m, d] = todayStr.split('-').map(Number);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const pY = m === 1 ? y - 1 : y;
-  const pM = m === 1 ? 12 : m - 1;
-  const prevLastDay = new Date(pY, pM, 0).getDate(); // pM은 1-indexed → 해당 월 말일
-  return {
-    curFrom: `${y}-${pad(m)}-01`,
-    curTo: todayStr,
-    prevFrom: `${pY}-${pad(pM)}-01`,
-    prevTo: `${pY}-${pad(pM)}-${pad(Math.min(d, prevLastDay))}`,
-    periodDays: d,
-    periodLabel: `이번 달(1일~오늘, ${d}일차) vs 지난 달 같은 기간`,
-  };
+/** 기본 분석 기간 = 오늘로부터 직전 한 달(최근 30일: 오늘−29일 ~ 오늘). PeriodPicker.defaultPeriod와 동일. */
+function defaultRange(todayStr: string): InsightPeriod {
+  return { from: format(subDays(parseISO(todayStr), 29), 'yyyy-MM-dd'), to: todayStr };
 }
 
 /**
- * 사용자가 고른 임의 기간 → current 구간 + 직전 '동일 길이' 구간 비교.
+ * 임의 기간(또는 기본 = 최근 30일) → current 구간 + 직전 '동일 길이' 구간 비교.
  * 예: 6/1~6/30(30일) 선택 시 previous = 5/2~5/31(직전 30일).
- * period 미지정이면 monthRanges(오늘) 기본으로 폴백.
+ * period 미지정이면 오늘로부터 직전 한 달(최근 30일)로 폴백.
  */
 export function resolvePeriod(period?: InsightPeriod): PeriodRange {
-  if (!period?.from || !period?.to) return monthRanges(kstDateStr(Date.now()));
-  const fromD = parseISO(period.from);
-  const toD = parseISO(period.to);
+  const eff = period?.from && period?.to ? period : defaultRange(kstDateStr(Date.now()));
+  const fromD = parseISO(eff.from);
+  const toD = parseISO(eff.to);
   const len = differenceInCalendarDays(toD, fromD) + 1; // 양끝 포함 일수
   const prevTo = addDays(fromD, -1);
   const prevFrom = addDays(prevTo, -(len - 1));
   const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
   return {
-    curFrom: period.from,
-    curTo: period.to,
+    curFrom: eff.from,
+    curTo: eff.to,
     prevFrom: fmt(prevFrom),
     prevTo: fmt(prevTo),
     periodDays: len,
-    periodLabel: `${period.from}~${period.to} (${len}일) vs 직전 ${len}일(${fmt(prevFrom)}~${fmt(prevTo)})`,
+    periodLabel: `${eff.from}~${eff.to} (${len}일) vs 직전 ${len}일(${fmt(prevFrom)}~${fmt(prevTo)})`,
   };
 }
 
@@ -65,7 +50,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * 요청 본문에서 분석 기간(from/to)을 파싱·검증. 형식 불량·from>to·미지정이면 undefined
- * (→ buildBriefHealth/buildMemoSignals가 이번 달 기본으로 폴백).
+ * (→ buildBriefHealth/buildMemoSignals가 최근 30일 기본으로 폴백).
  */
 export function parsePeriod(body: unknown): InsightPeriod | undefined {
   if (!body || typeof body !== 'object') return undefined;
@@ -141,18 +126,13 @@ export async function buildBriefHealth(
 }
 
 const CORR_COLS =
-  'id, name, lead_status, funnel_stage, stage_history, lead_tier, traffic_source, target_score, target_test_date, last_contacted_at, inquiry_date, first_message_sent_at, consultation_timeline';
+  'id, name, lead_status, funnel_stage, stage_history, inquiry_date, first_message_sent_at, consultation_timeline';
 
 type CorrStudentRow = Pick<
   CorrelationStudent,
   'id' | 'lead_status' | 'funnel_stage' | 'stage_history' | 'inquiry_date' | 'first_message_sent_at'
 > & {
   name: string | null;
-  lead_tier: LeadTier | null;
-  traffic_source: TrafficSource | null;
-  target_score: number | null;
-  target_test_date: string | null;
-  last_contacted_at: string | null;
   consultation_timeline: unknown[] | null;
 };
 
@@ -182,7 +162,6 @@ export async function buildCorrelationSignals(nowMs: number = Date.now()): Promi
       lead_status: s.lead_status,
       funnel_stage: s.funnel_stage,
       stage_history: s.stage_history,
-      tier: effectiveLeadTier(s, nowMs),
       consultation_timeline_len: Array.isArray(s.consultation_timeline) ? s.consultation_timeline.length : 0,
       inquiry_date: s.inquiry_date,
       first_message_sent_at: s.first_message_sent_at,
