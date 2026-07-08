@@ -3,377 +3,215 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>강원 FC × Runners LRS</title>
+<title>Growth Report · 강원 FC U-18 × Runners LRS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --night:       #000000;
-  --night-soft:  #0a0a0a;
-  --light:       #ffffff;
-  --hairline:    #3a3a3f;
-  --mute:        #5a5a5f;
-  --on-mute:     #f0f0fa;
-  --attend:      #15803d;
-  --absent:      #b91c1c;
+  --night:      #000000;
+  --night-soft: #0a0a0a;
+  --light:      #ffffff;
+  --hairline:   #3a3a3f;
+  --mute:       #5a5a5f;
+  --on-mute:    #f0f0fa;
+  --green:      #4ade80;
+  --red:        #f87171;
+  --blue:       #60a5fa;
 }
-
 html { scroll-behavior: smooth; }
-body {
-  background: var(--night);
-  color: var(--light);
-  font-family: 'Inter', 'Arial Narrow', Arial, sans-serif;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
+body { background: var(--night); color: var(--light); font-family: 'Inter', 'Arial Narrow', Arial, sans-serif; min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-/* ── Fixed nav overlay ───────────────────────────────────── */
-#topnav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  background: var(--night);
-  border-bottom: 1px solid var(--hairline);
-  height: 56px;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 clamp(20px, 5vw, 48px);
-}
-.brand {
-  font-size: 11px; font-weight: 700;
-  letter-spacing: 0.35em; text-transform: uppercase;
-  color: var(--light);
-}
-.nav-btn {
-  font-size: 11px; font-weight: 700;
-  letter-spacing: 0.15em; text-transform: uppercase;
-  color: var(--light); background: none;
-  border: 1px solid var(--hairline);
-  border-radius: 32px;
-  padding: 8px 18px;
-  cursor: pointer; transition: border-color 0.15s;
-  display: none;
-}
+/* ── Nav ─────────────────────────────────────────────── */
+#topnav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--night); border-bottom: 1px solid var(--hairline); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 48px); }
+.brand { font-size: 11px; font-weight: 700; letter-spacing: 0.35em; text-transform: uppercase; }
+.nav-btn { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; background: none; border: 1px solid var(--hairline); border-radius: 32px; padding: 7px 16px; color: var(--light); cursor: pointer; display: none; transition: border-color 0.15s; }
 .nav-btn:hover { border-color: var(--light); }
 .nav-btn.visible { display: block; }
 
-/* ── Hero ────────────────────────────────────────────────── */
-.hero {
-  min-height: 100vh;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: calc(56px + 48px) clamp(20px, 5vw, 48px) 80px;
-  text-align: center;
-  position: relative;
-}
-.hero::before {
-  content: '';
-  position: absolute; inset: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 40% at 50% 30%, rgba(255,255,255,0.03) 0%, transparent 70%);
-}
-.eyebrow {
-  display: flex; align-items: center; justify-content: center;
-  gap: 16px; margin-bottom: 24px;
-}
-.eyebrow .rule { height: 1px; width: 40px; background: var(--hairline); }
-.eyebrow-text {
-  font-size: 11px; font-weight: 400;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--mute);
-}
-.hero-title {
-  font-size: clamp(36px, 7vw, 64px);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  line-height: 0.95;
-  text-transform: uppercase;
-  color: var(--light);
-  margin-bottom: 16px;
-}
-.hero-sub {
-  font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--mute); margin-bottom: 48px;
-}
+/* ── Hero (login) ────────────────────────────────────── */
+.hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(56px + 48px) clamp(20px, 5vw, 48px) 80px; text-align: center; position: relative; }
+.hero::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 40% at 50% 30%, rgba(255,255,255,0.025) 0%, transparent 70%); }
+.eyebrow-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px; }
+.eyebrow-rule { height: 1px; width: 40px; background: var(--hairline); }
+.eyebrow-text { font-size: 10px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); }
+.hero-title { font-size: clamp(36px, 7vw, 64px); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; line-height: 0.95; margin-bottom: 10px; }
+.hero-sub { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); margin-bottom: 52px; }
 
-/* ── Auth card (on dark canvas) ──────────────────────────── */
-.auth-card {
-  width: 100%; max-width: 380px;
-  border: 1px solid var(--hairline);
-  background: var(--night-soft);
-  padding: 36px 32px;
-  text-align: left;
-  position: relative;
-}
-.card-label {
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--mute); margin-bottom: 8px;
-}
-.card-title {
-  font-size: 18px; font-weight: 700;
-  letter-spacing: 0.03em;
-  color: var(--light); margin-bottom: 6px;
-}
-.card-desc {
-  font-size: 12px; letter-spacing: 0.03em;
-  color: var(--mute); margin-bottom: 28px;
-  line-height: 1.6;
-}
-
-/* ── PIN boxes ───────────────────────────────────────────── */
+/* ── Auth card ───────────────────────────────────────── */
+.auth-card { width: 100%; max-width: 380px; border: 1px solid var(--hairline); background: var(--night-soft); padding: 36px 32px; text-align: left; }
+.card-label { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); margin-bottom: 8px; }
+.card-title { font-size: 18px; font-weight: 700; color: var(--light); margin-bottom: 6px; }
+.card-desc { font-size: 12px; color: var(--mute); margin-bottom: 28px; line-height: 1.6; }
 .pin-boxes { display: flex; gap: 8px; margin-bottom: 20px; }
-.pin-boxes input {
-  width: 48px; height: 56px;
-  background: transparent;
-  border: 1px solid var(--hairline);
-  color: var(--light);
-  font-size: 22px; font-weight: 700; text-align: center;
-  border-radius: 4px;
-  outline: none;
-  caret-color: transparent;
-  transition: border-color 0.15s;
-  -webkit-appearance: none;
-  font-family: inherit;
-}
+.pin-boxes input { width: 48px; height: 56px; background: transparent; border: 1px solid var(--hairline); color: var(--light); font-size: 22px; font-weight: 700; text-align: center; border-radius: 4px; outline: none; caret-color: transparent; transition: border-color 0.15s; font-family: inherit; -webkit-appearance: none; }
 .pin-boxes input:focus { border-color: rgba(255,255,255,0.5); }
 .pin-boxes input.filled { border-color: var(--light); }
-
-/* ── Ghost pill button ───────────────────────────────────── */
-.btn-ghost-pill {
-  width: 100%; padding: 16px 24px;
-  background: transparent;
-  border: 1px solid var(--light);
-  border-radius: 32px;
-  color: var(--light);
-  font-size: 11px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.15s;
-  font-family: inherit;
-}
-.btn-ghost-pill:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
-.btn-ghost-pill:disabled { opacity: 0.3; cursor: default; }
-
-.btn-text-ghost {
-  background: none; border: none;
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--mute); cursor: pointer;
-  font-family: inherit;
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 0; margin-top: 20px;
-  transition: color 0.15s;
-}
-.btn-text-ghost:hover { color: var(--light); }
-
-/* ── Status messages ─────────────────────────────────────── */
+.btn-pill { width: 100%; padding: 16px 24px; background: transparent; border: 1px solid var(--light); border-radius: 32px; color: var(--light); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: background 0.15s; font-family: inherit; }
+.btn-pill:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+.btn-pill:disabled { opacity: 0.3; cursor: default; }
 .msg { font-size: 11px; letter-spacing: 0.04em; min-height: 16px; margin-bottom: 14px; }
-.msg.error { color: #f87171; }
-.msg.success { color: #4ade80; }
-
-/* ── Spinner ─────────────────────────────────────────────── */
-.spinner {
-  display: inline-block; width: 14px; height: 14px;
-  border: 1.5px solid rgba(255,255,255,0.2); border-top-color: #fff;
-  border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
-}
+.msg.error { color: var(--red); }
+.msg.success { color: var(--green); }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 1.5px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Feedback section ────────────────────────────────────── */
-#feedback-section {
-  min-height: 100vh;
-  padding: calc(56px + 40px) clamp(20px, 5vw, 48px) 80px;
-  max-width: 760px; margin: 0 auto;
-}
-.fb-page-header {
-  margin-bottom: 40px;
-  border-bottom: 1px solid var(--hairline);
-  padding-bottom: 28px;
-}
-.fb-page-eyebrow {
-  font-size: 10px; font-weight: 400;
-  letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--mute); margin-bottom: 10px;
-}
-.fb-page-title {
-  font-size: clamp(28px, 5vw, 44px);
-  font-weight: 800; letter-spacing: 0.04em;
-  text-transform: uppercase; line-height: 0.95;
-  color: var(--light);
-}
+/* ── Report shell ────────────────────────────────────── */
+#report { display: none; min-height: 100vh; padding: calc(56px + 32px) clamp(20px, 5vw, 48px) 80px; max-width: 860px; margin: 0 auto; }
 
-/* ── Feedback items ──────────────────────────────────────── */
-.fb-item {
-  border: 1px solid var(--hairline);
-  background: var(--night-soft);
-  margin-bottom: 8px;
-}
-.fb-item-header {
-  padding: 22px 24px; cursor: pointer;
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-  transition: background 0.1s;
-}
+/* Report header */
+.rpt-header { margin-bottom: 32px; border-bottom: 1px solid var(--hairline); padding-bottom: 24px; }
+.rpt-eyebrow { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); margin-bottom: 8px; }
+.rpt-title { font-size: clamp(28px, 5vw, 44px); font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; line-height: 0.95; }
+
+/* Stats bar */
+.stats-bar { display: flex; gap: 0; margin-bottom: 32px; border: 1px solid var(--hairline); }
+.stat-cell { flex: 1; padding: 16px 20px; border-right: 1px solid var(--hairline); }
+.stat-cell:last-child { border-right: none; }
+.stat-num { font-size: 24px; font-weight: 800; color: var(--light); line-height: 1; margin-bottom: 4px; }
+.stat-label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); }
+
+/* Tab nav */
+.tab-nav { display: flex; border-bottom: 1px solid var(--hairline); margin-bottom: 32px; }
+.tab-btn { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mute); background: none; border: none; border-bottom: 1px solid transparent; padding: 12px 20px; margin-bottom: -1px; cursor: pointer; transition: color 0.15s, border-color 0.15s; font-family: inherit; }
+.tab-btn:hover { color: var(--on-mute); }
+.tab-btn.active { color: var(--light); border-bottom-color: var(--light); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Student grid (tab 1) ────────────────────────────── */
+.student-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 580px) { .student-grid { grid-template-columns: repeat(2, 1fr); } }
+.student-card { border: 1px solid var(--hairline); background: var(--night-soft); padding: 20px; cursor: pointer; transition: border-color 0.15s; }
+.student-card:hover { border-color: rgba(255,255,255,0.3); }
+.sc-name { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--light); margin-bottom: 14px; }
+.sc-bar-track { height: 2px; background: var(--hairline); margin-bottom: 6px; }
+.sc-bar-fill { height: 100%; background: var(--green); }
+.sc-attend-stat { font-size: 10px; letter-spacing: 0.08em; color: var(--on-mute); font-weight: 700; margin-bottom: 12px; }
+.sc-hw-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.hw-dot { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 3px 7px; border-radius: 2px; }
+.hw-dot.done { background: rgba(96,165,250,0.15); color: var(--blue); border: 1px solid rgba(96,165,250,0.35); }
+.hw-dot.miss { background: transparent; color: var(--mute); border: 1px solid var(--hairline); }
+
+/* ── Lesson accordion (tab 2) ────────────────────────── */
+.fb-item { border: 1px solid var(--hairline); background: var(--night-soft); margin-bottom: 8px; }
+.fb-item-header { padding: 22px 24px; cursor: pointer; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; transition: background 0.1s; }
 .fb-item-header:hover { background: rgba(255,255,255,0.025); }
 .fb-meta { flex: 1; min-width: 0; }
-
-/* date + time row */
 .fb-top-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
 .fb-date { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--on-mute); }
-.fb-time-range { font-size: 11px; letter-spacing: 0.06em; color: var(--mute); }
-.fb-duration { font-size: 10px; color: var(--hairline); letter-spacing: 0.06em; }
-
-/* unit title */
-.fb-unit-name { font-size: 16px; font-weight: 700; color: var(--light); letter-spacing: 0.01em; margin-bottom: 14px; }
-
-/* attendance bar */
+.fb-time-range { font-size: 11px; color: var(--mute); letter-spacing: 0.06em; }
+.fb-duration { font-size: 10px; color: var(--hairline); }
+.fb-unit-name { font-size: 16px; font-weight: 700; color: var(--light); margin-bottom: 14px; }
 .fb-attend-row { display: flex; flex-direction: column; gap: 6px; }
 .fb-bar-wrap { display: flex; align-items: center; gap: 10px; }
 .fb-bar-track { flex: 1; height: 2px; background: var(--hairline); max-width: 160px; }
-.fb-bar-fill { height: 100%; background: #4ade80; }
+.fb-bar-fill { height: 100%; background: var(--green); }
 .fb-attend-stat { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--on-mute); white-space: nowrap; }
 .fb-absent-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-.fb-absent-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #f87171; margin-right: 2px; font-weight: 700; }
-.fb-absent-name { font-size: 11px; color: #f87171; }
-
+.fb-absent-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red); font-weight: 700; margin-right: 2px; }
+.fb-absent-name { font-size: 11px; color: var(--red); }
 .fb-chevron { color: var(--hairline); transition: transform 0.2s; flex-shrink: 0; margin-top: 3px; }
 .fb-item.open .fb-chevron { transform: rotate(90deg); color: var(--light); }
 .fb-item-body { display: none; border-top: 1px solid var(--hairline); }
 .fb-item.open .fb-item-body { display: block; }
-
-.fb-section {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--hairline);
-}
+.fb-section { padding: 18px 24px; border-bottom: 1px solid var(--hairline); }
 .fb-section:last-child { border-bottom: none; }
-.fb-section-label {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--mute); margin-bottom: 10px;
-}
-.fb-section-text {
-  font-size: 14px; line-height: 1.75;
-  color: var(--on-mute);
-  white-space: pre-wrap; word-break: break-word;
-}
+.fb-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); margin-bottom: 10px; }
+.fb-section-text { font-size: 14px; line-height: 1.75; color: var(--on-mute); white-space: pre-wrap; word-break: break-word; }
 .fb-section-text a { color: var(--light); text-decoration: underline; text-underline-offset: 3px; word-break: break-all; }
-
-/* ── Attendance chips (body — clickable) ─────────────────── */
 .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 12px; border-radius: 2px;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
-  text-transform: uppercase; cursor: pointer;
-  transition: opacity 0.15s;
-}
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s; }
 .chip:hover { opacity: 0.7; }
-.chip-attend { border: 1px solid rgba(74,222,128,0.4); color: #4ade80; background: rgba(74,222,128,0.08); }
-.chip-absent { border: 1px solid rgba(248,113,113,0.4); color: #f87171; background: rgba(248,113,113,0.08); }
-
-/* ── Student memos ───────────────────────────────────────── */
+.chip-attend { border: 1px solid rgba(74,222,128,0.4); color: var(--green); background: rgba(74,222,128,0.08); }
+.chip-absent { border: 1px solid rgba(248,113,113,0.4); color: var(--red); background: rgba(248,113,113,0.08); }
 .student-item { margin-bottom: 14px; }
 .student-item:last-child { margin-bottom: 0; }
-.student-name {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--light); margin-bottom: 4px;
-  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
-  text-decoration-color: var(--hairline);
-}
-.student-name:hover { text-decoration-color: var(--light); }
+.student-memo-name { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--light); margin-bottom: 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--hairline); }
+.student-memo-name:hover { text-decoration-color: var(--light); }
 .student-note { font-size: 13px; color: var(--on-mute); line-height: 1.6; }
 
-/* ── Student history modal ───────────────────────────────── */
-#student-modal {
-  display: none; position: fixed; inset: 0; z-index: 300;
-  background: rgba(0,0,0,0.88);
-  align-items: center; justify-content: center;
-  padding: 20px;
-}
-#student-modal.open { display: flex; }
-.modal-card {
-  background: var(--night-soft);
-  border: 1px solid var(--hairline);
-  width: 100%; max-width: 520px;
-  max-height: 82vh; overflow-y: auto;
-}
-.modal-hd {
-  padding: 24px 28px;
-  border-bottom: 1px solid var(--hairline);
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-  position: sticky; top: 0; background: var(--night-soft); z-index: 1;
-}
-.modal-student-name {
-  font-size: 22px; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 0.04em;
-  color: var(--light); margin-bottom: 4px;
-}
-.modal-attend-rate { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); }
-.modal-rate-num { color: #4ade80; font-weight: 700; }
-.modal-close {
-  background: none; border: 1px solid var(--hairline); color: var(--mute);
-  border-radius: 2px; font-size: 16px; line-height: 1;
-  cursor: pointer; padding: 4px 10px; transition: all 0.15s; flex-shrink: 0;
-}
-.modal-close:hover { border-color: var(--light); color: var(--light); }
-.modal-session {
-  padding: 18px 28px;
-  border-bottom: 1px solid var(--hairline);
-  display: flex; gap: 14px; align-items: flex-start;
-}
-.modal-session:last-child { border-bottom: none; }
-.modal-status {
-  width: 42px; flex-shrink: 0;
-  font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
-  text-transform: uppercase; padding-top: 2px;
-}
-.modal-status.attend { color: #4ade80; }
-.modal-status.absent { color: #f87171; }
-.modal-session-info { flex: 1; }
-.modal-session-date {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--on-mute); margin-bottom: 2px;
-}
-.modal-session-unit { font-size: 11px; color: var(--mute); margin-bottom: 6px; letter-spacing: 0.04em; }
-.modal-session-note { font-size: 13px; color: var(--on-mute); line-height: 1.65; }
+/* ── Homework tab (tab 3) ────────────────────────────── */
+.hw-unit-tabs { display: flex; gap: 6px; margin-bottom: 24px; flex-wrap: wrap; }
+.hw-unit-btn { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; background: none; border: 1px solid var(--hairline); color: var(--mute); padding: 8px 16px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+.hw-unit-btn:hover { border-color: var(--on-mute); color: var(--on-mute); }
+.hw-unit-btn.active { background: var(--light); color: var(--night); border-color: var(--light); }
 
-/* ── Change PIN section ──────────────────────────────────── */
-#change-pin-section {
-  display: none;
-  max-width: 760px; margin: 0 auto;
-  padding: 0 clamp(20px, 5vw, 48px) 40px;
-}
-.change-pin-label {
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--mute); margin-bottom: 24px;
-  display: flex; align-items: center; gap: 14px;
-}
-.change-pin-label::after { content: ''; flex: 1; height: 1px; background: var(--hairline); }
-.change-card {
-  border: 1px solid var(--hairline);
-  background: var(--night-soft);
-  padding: 32px;
-  max-width: 380px;
-}
+.hw-roster { display: flex; flex-direction: column; gap: 8px; }
+.hw-student-row { border: 1px solid var(--hairline); background: var(--night-soft); }
+.hw-student-hd { padding: 16px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: background 0.1s; }
+.hw-student-hd:hover { background: rgba(255,255,255,0.02); }
+.hw-status-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 2px; flex-shrink: 0; }
+.hw-status-badge.done { background: rgba(96,165,250,0.15); color: var(--blue); border: 1px solid rgba(96,165,250,0.35); }
+.hw-status-badge.miss { background: transparent; color: var(--mute); border: 1px solid var(--hairline); }
+.hw-student-name-col { font-size: 14px; font-weight: 700; color: var(--light); letter-spacing: 0.02em; flex: 1; }
+.hw-submit-date { font-size: 10px; color: var(--mute); letter-spacing: 0.06em; }
+.hw-chevron { color: var(--hairline); transition: transform 0.2s; flex-shrink: 0; }
+.hw-student-row.open .hw-chevron { transform: rotate(90deg); color: var(--light); }
+.hw-student-body { display: none; border-top: 1px solid var(--hairline); padding: 18px 20px; }
+.hw-student-row.open .hw-student-body { display: block; }
+.hw-answer-block { margin-bottom: 16px; }
+.hw-answer-block:last-child { margin-bottom: 0; }
+.hw-answer-label { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); margin-bottom: 6px; }
+.hw-answer-text { font-size: 13px; color: var(--on-mute); line-height: 1.65; }
+
+/* ── Ghost logout ────────────────────────────────────── */
+.btn-logout { background: none; border: none; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; margin-top: 32px; transition: color 0.15s; }
+.btn-logout:hover { color: var(--light); }
+
+/* ── Change PIN ──────────────────────────────────────── */
+#change-pin-section { display: none; max-width: 860px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px) 40px; }
+.section-rule-label { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
+.section-rule-label::after { content: ''; flex: 1; height: 1px; background: var(--hairline); }
+.change-card { border: 1px solid var(--hairline); background: var(--night-soft); padding: 32px; max-width: 380px; }
+
+/* ── Student modal ───────────────────────────────────── */
+#student-modal { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; padding: 20px; }
+#student-modal.open { display: flex; }
+.modal-card { background: var(--night-soft); border: 1px solid var(--hairline); width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto; }
+.modal-hd { padding: 24px 28px; border-bottom: 1px solid var(--hairline); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; position: sticky; top: 0; background: var(--night-soft); z-index: 1; }
+.modal-student-name { font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--light); margin-bottom: 4px; }
+.modal-rates { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 2px; }
+.modal-rate { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); }
+.modal-rate-num { font-weight: 700; }
+.modal-rate-num.green { color: var(--green); }
+.modal-rate-num.blue { color: var(--blue); }
+.modal-close { background: none; border: 1px solid var(--hairline); color: var(--mute); border-radius: 2px; font-size: 16px; line-height: 1; cursor: pointer; padding: 4px 10px; transition: all 0.15s; flex-shrink: 0; }
+.modal-close:hover { border-color: var(--light); color: var(--light); }
+.modal-section-head { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); padding: 16px 28px 10px; border-bottom: 1px solid var(--hairline); background: rgba(255,255,255,0.02); }
+.modal-session { padding: 16px 28px; border-bottom: 1px solid var(--hairline); display: flex; gap: 14px; align-items: flex-start; }
+.modal-session:last-child { border-bottom: none; }
+.modal-status { width: 40px; flex-shrink: 0; font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding-top: 2px; }
+.modal-status.attend { color: var(--green); }
+.modal-status.absent { color: var(--red); }
+.modal-session-info { flex: 1; }
+.modal-session-date { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--on-mute); margin-bottom: 2px; }
+.modal-session-unit { font-size: 11px; color: var(--mute); margin-bottom: 6px; }
+.modal-session-note { font-size: 13px; color: var(--on-mute); line-height: 1.65; }
+.modal-hw-row { padding: 16px 28px; border-bottom: 1px solid var(--hairline); }
+.modal-hw-row:last-child { border-bottom: none; }
+.modal-hw-unit { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.modal-hw-unit .miss-tag { color: var(--mute); }
+.modal-hw-answer-label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); margin-bottom: 4px; margin-top: 10px; }
+.modal-hw-answer { font-size: 13px; color: var(--on-mute); line-height: 1.6; }
 </style>
 </head>
 <body>
 
-<!-- ── Fixed nav ─────────────────────────────────────────── -->
 <nav id="topnav">
   <span class="brand">Runners LRS</span>
   <button class="nav-btn" id="btn-change-pin" onclick="toggleChangePin()">PIN 변경</button>
 </nav>
 
-<!-- ── Hero (login / setup) ──────────────────────────────── -->
+<!-- ── Hero / Login ───────────────────────────────────── -->
 <div class="hero" id="hero-section">
-  <div class="eyebrow">
-    <div class="rule"></div>
-    <span class="eyebrow-text">영어 인터뷰 수업 포털</span>
-    <div class="rule"></div>
+  <div class="eyebrow-row">
+    <div class="eyebrow-rule"></div>
+    <span class="eyebrow-text">강원 FC U-18 · 영어 인터뷰 수업</span>
+    <div class="eyebrow-rule"></div>
   </div>
-  <h1 class="hero-title">Gangwon FC U-18</h1>
-  <p class="hero-sub">Runners LRS × Gangwon FC</p>
+  <h1 class="hero-title">Growth<br>Report</h1>
+  <p class="hero-sub">Runners LRS × Gangwon FC U-18</p>
 
   <!-- 최초 PIN 설정 -->
   <div id="setup-section" style="display:none; width:100%; max-width:380px;">
@@ -390,14 +228,14 @@ body {
         <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
       </div>
       <div class="msg" id="setup-msg"></div>
-      <button class="btn-ghost-pill" id="setup-btn" disabled onclick="doSetPin()">설정하기</button>
+      <button class="btn-pill" id="setup-btn" disabled onclick="doSetPin()">설정하기</button>
     </div>
   </div>
 
   <!-- 로그인 -->
   <div id="login-section" style="display:none; width:100%; max-width:380px;">
     <div class="auth-card">
-      <div class="card-label">레슨 피드백</div>
+      <div class="card-label">Growth Report</div>
       <div class="card-title">비밀번호 입력</div>
       <div class="card-desc">구단 전용 6자리 비밀번호를 입력하세요.</div>
       <div class="pin-boxes" id="login-boxes">
@@ -409,27 +247,58 @@ body {
         <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
       </div>
       <div class="msg" id="login-msg"></div>
-      <button class="btn-ghost-pill" id="login-btn" disabled onclick="doLogin()">확인하기</button>
+      <button class="btn-pill" id="login-btn" disabled onclick="doLogin()">확인하기</button>
     </div>
   </div>
 </div>
 
-<!-- ── Feedback list ──────────────────────────────────────── -->
-<div id="feedback-section" style="display:none;">
-  <div class="fb-page-header">
-    <div class="fb-page-eyebrow">Runners LRS × Gangwon FC U-18</div>
-    <div class="fb-page-title">레슨 피드백</div>
+<!-- ── Report ─────────────────────────────────────────── -->
+<div id="report">
+
+  <div class="rpt-header">
+    <div class="rpt-eyebrow">Runners LRS × Gangwon FC U-18</div>
+    <div class="rpt-title">Growth Report</div>
   </div>
-  <div id="feedback-list"></div>
-  <button class="btn-text-ghost" onclick="doLogout()">
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-cell"><div class="stat-num" id="stat-lessons">—</div><div class="stat-label">총 수업</div></div>
+    <div class="stat-cell"><div class="stat-num" id="stat-avg-attend">—</div><div class="stat-label">평균 출석률</div></div>
+    <div class="stat-cell"><div class="stat-num" id="stat-hw-count">—</div><div class="stat-label">숙제 제출 건수</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('students', this)">학생별</button>
+    <button class="tab-btn" onclick="switchTab('lessons', this)">수업 기록</button>
+    <button class="tab-btn" onclick="switchTab('homework', this)">숙제 현황</button>
+  </div>
+
+  <!-- Tab 1: 학생별 -->
+  <div id="tab-students" class="tab-panel active">
+    <div class="student-grid" id="student-grid"></div>
+  </div>
+
+  <!-- Tab 2: 수업 기록 -->
+  <div id="tab-lessons" class="tab-panel">
+    <div id="feedback-list"></div>
+  </div>
+
+  <!-- Tab 3: 숙제 현황 -->
+  <div id="tab-homework" class="tab-panel">
+    <div class="hw-unit-tabs" id="hw-unit-tabs"></div>
+    <div id="hw-table-area"></div>
+  </div>
+
+  <button class="btn-logout" onclick="doLogout()">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     로그아웃
   </button>
 </div>
 
-<!-- ── Change PIN ─────────────────────────────────────────── -->
+<!-- Change PIN -->
 <div id="change-pin-section">
-  <div class="change-pin-label">PIN 변경</div>
+  <div class="section-rule-label">PIN 변경</div>
   <div class="change-card">
     <div class="card-label">새 비밀번호</div>
     <div class="card-title">비밀번호 변경</div>
@@ -443,17 +312,17 @@ body {
       <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
     </div>
     <div class="msg" id="change-msg"></div>
-    <button class="btn-ghost-pill" id="change-btn" disabled onclick="doChangePin()">변경하기</button>
+    <button class="btn-pill" id="change-btn" disabled onclick="doChangePin()">변경하기</button>
   </div>
 </div>
 
-<!-- ── Student history modal ──────────────────────────────── -->
+<!-- Student modal -->
 <div id="student-modal" onclick="if(event.target===this)closeStudentModal()">
   <div class="modal-card">
     <div class="modal-hd">
       <div>
         <div class="modal-student-name" id="modal-name"></div>
-        <div class="modal-attend-rate" id="modal-rate"></div>
+        <div class="modal-rates" id="modal-rates"></div>
       </div>
       <button class="modal-close" onclick="closeStudentModal()">✕</button>
     </div>
@@ -467,149 +336,175 @@ const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
 const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
 const sb = supabase.createClient(SB_URL, SB_ANON);
 const CLUB_ID = 'gangwon';
-
+const ROSTER  = ['황은총','김어진','이용재','이정현','강준혁','조원우'];
 const UNIT_LABELS = {
   unit1: 'Unit 1 — Self-Introduction & Joining the Team',
-  unit2: 'Unit 2 — Win / Lose Interview'
+  unit2: 'Unit 2 — Win / Lose Interview',
+  unit3: 'Unit 3', unit4: 'Unit 4', unit5: 'Unit 5', unit6: 'Unit 6'
 };
+const HW_UNITS = ['unit1','unit2'];
 
-/* ── PIN box helper ──────────────────────────────────────── */
+let allFeedback = [];
+let allHomework = [];
+let currentHwUnit = 'unit1';
+
+/* ── PIN box ─────────────────────────────────────────── */
 function initPin(boxId, btnId, onSubmit) {
   const inputs = Array.from(document.querySelectorAll(`#${boxId} input`));
   const btn    = document.getElementById(btnId);
   const getVal = () => inputs.map(el => el.value).join('');
   const reset  = () => { inputs.forEach(el => { el.value = ''; el.classList.remove('filled'); }); btn.disabled = true; };
-
   inputs.forEach((input, i) => {
     input.addEventListener('input', () => {
-      const d = input.value.replace(/\D/g, '').slice(-1);
-      input.value = d;
-      input.classList.toggle('filled', !!d);
-      if (d && i < inputs.length - 1) inputs[i + 1].focus();
+      const d = input.value.replace(/\D/g,'').slice(-1);
+      input.value = d; input.classList.toggle('filled', !!d);
+      if (d && i < inputs.length - 1) inputs[i+1].focus();
       btn.disabled = getVal().length < 6;
     });
     input.addEventListener('keydown', e => {
-      if (e.key === 'Backspace' && !input.value && i > 0) {
-        e.preventDefault();
-        inputs[i - 1].value = ''; inputs[i - 1].classList.remove('filled'); inputs[i - 1].focus(); btn.disabled = true;
-      } else if (e.key === 'Enter' && getVal().length === 6) onSubmit();
+      if (e.key === 'Backspace' && !input.value && i > 0) { e.preventDefault(); inputs[i-1].value=''; inputs[i-1].classList.remove('filled'); inputs[i-1].focus(); btn.disabled=true; }
+      else if (e.key === 'Enter' && getVal().length === 6) onSubmit();
     });
     input.addEventListener('paste', e => {
       e.preventDefault();
-      const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-      inputs.forEach((el, j) => { el.value = digits[j] || ''; el.classList.toggle('filled', !!digits[j]); });
+      const digits = e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);
+      inputs.forEach((el,j) => { el.value=digits[j]||''; el.classList.toggle('filled',!!digits[j]); });
       btn.disabled = digits.length < 6;
-      inputs[Math.min(digits.length, 5)].focus();
+      inputs[Math.min(digits.length,5)].focus();
     });
     input.addEventListener('focus', () => input.select());
   });
-
   return { getVal, reset };
 }
 
-const setupPin = initPin('setup-boxes', 'setup-btn', doSetPin);
-const loginPin = initPin('login-boxes', 'login-btn', doLogin);
-const newPin   = initPin('new-pin-boxes', 'change-btn', doChangePin);
+const setupPin = initPin('setup-boxes','setup-btn', doSetPin);
+const loginPin = initPin('login-boxes','login-btn', doLogin);
+const newPin   = initPin('new-pin-boxes','change-btn', doChangePin);
 
-/* ── Init: PIN 존재 여부 확인 ────────────────────────────── */
+/* ── Init ────────────────────────────────────────────── */
 async function checkSetup() {
   const { data } = await sb.from('b2b_club_pins').select('pin').eq('club_id', CLUB_ID).maybeSingle();
-  if (data) {
-    document.getElementById('login-section').style.display = 'block';
-  } else {
-    document.getElementById('setup-section').style.display = 'block';
-  }
+  if (data) document.getElementById('login-section').style.display = 'block';
+  else       document.getElementById('setup-section').style.display = 'block';
 }
 checkSetup();
 
-/* ── Set PIN (최초) ──────────────────────────────────────── */
+/* ── Set PIN ─────────────────────────────────────────── */
 async function doSetPin() {
-  const pin   = setupPin.getVal();
-  const btn   = document.getElementById('setup-btn');
-  const msgEl = document.getElementById('setup-msg');
+  const pin = setupPin.getVal();
+  const btn = document.getElementById('setup-btn');
+  const msg = document.getElementById('setup-msg');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-
   const { error } = await sb.from('b2b_club_pins').insert({ club_id: CLUB_ID, pin });
-
   btn.innerHTML = '설정하기';
-  if (error) {
-    msgEl.className = 'msg error'; msgEl.textContent = '오류: ' + error.message;
-    btn.disabled = false; return;
-  }
-
-  document.getElementById('hero-section').style.display = 'none';
-  document.getElementById('feedback-section').style.display = 'block';
-  document.getElementById('btn-change-pin').classList.add('visible');
-  loadFeedback();
+  if (error) { msg.className='msg error'; msg.textContent='오류: '+error.message; btn.disabled=false; return; }
+  enterReport();
 }
 
-/* ── Login ───────────────────────────────────────────────── */
+/* ── Login ───────────────────────────────────────────── */
 async function doLogin() {
-  const pin   = loginPin.getVal();
-  const btn   = document.getElementById('login-btn');
-  const msgEl = document.getElementById('login-msg');
+  const pin = loginPin.getVal();
+  const btn = document.getElementById('login-btn');
+  const msg = document.getElementById('login-msg');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-
   const { data, error } = await sb.from('b2b_club_pins').select('pin').eq('club_id', CLUB_ID).single();
-
   btn.innerHTML = '확인하기';
-
-  if (error || !data) {
-    msgEl.className = 'msg error'; msgEl.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-    btn.disabled = false; return;
-  }
-  if (data.pin !== pin) {
-    msgEl.className = 'msg error'; msgEl.textContent = '비밀번호가 일치하지 않습니다.';
-    loginPin.reset(); return;
-  }
-
-  document.getElementById('hero-section').style.display = 'none';
-  document.getElementById('feedback-section').style.display = 'block';
-  document.getElementById('btn-change-pin').classList.add('visible');
-  loadFeedback();
+  if (error || !data) { msg.className='msg error'; msg.textContent='오류가 발생했습니다.'; btn.disabled=false; return; }
+  if (data.pin !== pin) { msg.className='msg error'; msg.textContent='비밀번호가 일치하지 않습니다.'; loginPin.reset(); return; }
+  enterReport();
 }
 
-let allFeedback = [];
+/* ── Enter report ────────────────────────────────────── */
+async function enterReport() {
+  document.getElementById('hero-section').style.display = 'none';
+  document.getElementById('report').style.display = 'block';
+  document.getElementById('btn-change-pin').classList.add('visible');
+  await Promise.all([loadFeedback(), loadHomework()]);
+  renderStats();
+  renderStudentGrid();
+  buildHwUnitTabs();
+  renderHwTable();
+}
 
-/* ── Load feedback ───────────────────────────────────────── */
+/* ── Load data ───────────────────────────────────────── */
 async function loadFeedback() {
+  const { data } = await sb.from('b2b_lesson_feedback').select('*')
+    .eq('club_id', CLUB_ID).order('lesson_date', { ascending: false });
+  allFeedback = data || [];
+  renderLessons();
+}
+
+async function loadHomework() {
+  const { data } = await sb.from('b2b_homework_submissions').select('*')
+    .in('student_name', ROSTER).order('submitted_at', { ascending: false });
+  allHomework = data || [];
+}
+
+/* ── Stats ───────────────────────────────────────────── */
+function renderStats() {
+  document.getElementById('stat-lessons').textContent = allFeedback.length + '회';
+  const rates = allFeedback.map(fb => {
+    const a = (fb.attendees||[]).length, b = (fb.absentees||[]).length;
+    return (a+b) > 0 ? a/(a+b) : null;
+  }).filter(r => r !== null);
+  const avg = rates.length ? Math.round(rates.reduce((s,r)=>s+r,0)/rates.length*100) : '—';
+  document.getElementById('stat-avg-attend').textContent = rates.length ? avg+'%' : '—';
+  document.getElementById('stat-hw-count').textContent = allHomework.length + '건';
+}
+
+/* ── Student grid ────────────────────────────────────── */
+function renderStudentGrid() {
+  const grid = document.getElementById('student-grid');
+  grid.innerHTML = '';
+  ROSTER.forEach(name => {
+    const sessions = allFeedback.filter(fb =>
+      (fb.attendees||[]).includes(name) || (fb.absentees||[]).includes(name));
+    const attended  = sessions.filter(fb => (fb.attendees||[]).includes(name)).length;
+    const rate      = sessions.length ? Math.round(attended/sessions.length*100) : null;
+    const hwByUnit  = {};
+    HW_UNITS.forEach(u => { hwByUnit[u] = allHomework.find(h => h.student_name===name && h.unit===u) || null; });
+
+    const rateStr = rate !== null ? `출석 ${rate}% · ${attended}/${sessions.length}회` : '수업 기록 없음';
+    const barW    = rate ?? 0;
+    const dots    = HW_UNITS.map(u =>
+      `<span class="hw-dot ${hwByUnit[u]?'done':'miss'}">${u.replace('unit','U')}</span>`).join('');
+
+    const card = document.createElement('div');
+    card.className = 'student-card';
+    card.onclick = () => openStudentModal(name);
+    card.innerHTML = `
+      <div class="sc-name">${escHtml(name)}</div>
+      <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${barW}%"></div></div>
+      <div class="sc-attend-stat">${rateStr}</div>
+      <div class="sc-hw-row">${dots}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ── Lesson accordion ────────────────────────────────── */
+function renderLessons() {
   const list = document.getElementById('feedback-list');
-  list.innerHTML = '<div style="color:var(--mute);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 0;">불러오는 중...</div>';
-
-  const { data, error } = await sb
-    .from('b2b_lesson_feedback').select('*')
-    .eq('club_id', CLUB_ID)
-    .order('lesson_date', { ascending: false });
-
-  if (error || !data || !data.length) {
-    list.innerHTML = '<div style="color:var(--mute);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 0;">등록된 피드백이 없습니다.</div>';
-    return;
-  }
-  allFeedback = data;
+  if (!allFeedback.length) { list.innerHTML = '<div style="color:var(--mute);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 0;">등록된 수업 기록이 없습니다.</div>'; return; }
   list.innerHTML = '';
-  data.forEach(fb => list.appendChild(buildItem(fb)));
+  allFeedback.forEach(fb => list.appendChild(buildLessonItem(fb)));
 }
 
 function calcDuration(s, e) {
   if (!s || !e) return null;
-  const [sh, sm] = s.split(':').map(Number);
-  const [eh, em] = e.split(':').map(Number);
-  const diff = (eh * 60 + em) - (sh * 60 + sm);
-  return diff > 0 ? `${diff}분` : null;
+  const [sh,sm] = s.split(':').map(Number), [eh,em] = e.split(':').map(Number);
+  const diff = (eh*60+em)-(sh*60+sm);
+  return diff > 0 ? diff+'분' : null;
 }
 
-function buildItem(fb) {
-  const unitLabel  = UNIT_LABELS[fb.unit] || fb.unit || '—';
-  const dateStr    = fb.lesson_date
-    ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
-    : '—';
-  const attendees  = Array.isArray(fb.attendees) ? fb.attendees : [];
-  const absentees  = Array.isArray(fb.absentees) ? fb.absentees : [];
-  const total      = attendees.length + absentees.length;
-  const pct        = total > 0 ? Math.round(attendees.length / total * 100) : null;
-  const dur        = calcDuration(fb.start_time, fb.end_time);
+function buildLessonItem(fb) {
+  const unitLabel = UNIT_LABELS[fb.unit] || fb.unit || '—';
+  const dateStr   = fb.lesson_date ? new Date(fb.lesson_date+'T00:00:00').toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}) : '—';
+  const attendees = Array.isArray(fb.attendees) ? fb.attendees : [];
+  const absentees = Array.isArray(fb.absentees) ? fb.absentees : [];
+  const total = attendees.length + absentees.length;
+  const pct   = total > 0 ? Math.round(attendees.length/total*100) : null;
+  const dur   = calcDuration(fb.start_time, fb.end_time);
 
-  /* ── Score card header ── */
   let timeHtml = '';
   if (fb.start_time) {
     timeHtml = `<span class="fb-time-range">${fb.start_time.slice(0,5)} – ${(fb.end_time||'').slice(0,5)}</span>`;
@@ -618,151 +513,206 @@ function buildItem(fb) {
 
   let attendHtml = '';
   if (total > 0) {
-    const barW = pct ?? 0;
-    attendHtml = `
-      <div class="fb-attend-row">
-        <div class="fb-bar-wrap">
-          <div class="fb-bar-track"><div class="fb-bar-fill" style="width:${barW}%"></div></div>
-          <span class="fb-attend-stat">출석 ${attendees.length}/${total}명 · ${pct}%</span>
-        </div>
-        ${absentees.length ? `<div class="fb-absent-row"><span class="fb-absent-label">결석</span>${absentees.map(n=>`<span class="fb-absent-name">${escHtml(n)}</span>`).join('<span style="color:var(--hairline);margin:0 1px">·</span>')}</div>` : ''}
-      </div>`;
+    attendHtml = `<div class="fb-attend-row">
+      <div class="fb-bar-wrap">
+        <div class="fb-bar-track"><div class="fb-bar-fill" style="width:${pct??0}%"></div></div>
+        <span class="fb-attend-stat">출석 ${attendees.length}/${total}명 · ${pct}%</span>
+      </div>
+      ${absentees.length ? `<div class="fb-absent-row"><span class="fb-absent-label">결석</span>${absentees.map(n=>`<span class="fb-absent-name">${escHtml(n)}</span>`).join('<span style="color:var(--hairline);margin:0 2px">·</span>')}</div>` : ''}
+    </div>`;
   }
 
-  /* ── Collapsible body sections ── */
   const sections = [];
-
   if (attendees.length || absentees.length) {
-    let html = '';
-    if (attendees.length) html += `<div class="fb-section-label" style="margin-bottom:8px;">출석</div><div class="chip-group">${attendees.map(n => `<span class="chip chip-attend" onclick="openStudentModal('${escHtml(n)}')">✓ ${escHtml(n)}</span>`).join('')}</div>`;
-    if (absentees.length) html += `${attendees.length ? '<div style="margin-top:12px;"></div>' : ''}<div class="fb-section-label" style="margin-bottom:8px;">결석</div><div class="chip-group">${absentees.map(n => `<span class="chip chip-absent" onclick="openStudentModal('${escHtml(n)}')">✗ ${escHtml(n)}</span>`).join('')}</div>`;
-    sections.push(`<div class="fb-section">${html}</div>`);
+    let h = '';
+    if (attendees.length) h += `<div class="fb-section-label" style="margin-bottom:8px;">출석</div><div class="chip-group">${attendees.map(n=>`<span class="chip chip-attend" onclick="openStudentModal('${escHtml(n)}')">✓ ${escHtml(n)}</span>`).join('')}</div>`;
+    if (absentees.length) h += `${attendees.length?'<div style="margin-top:12px;"></div>':''}<div class="fb-section-label" style="margin-bottom:8px;">결석</div><div class="chip-group">${absentees.map(n=>`<span class="chip chip-absent" onclick="openStudentModal('${escHtml(n)}')">✗ ${escHtml(n)}</span>`).join('')}</div>`;
+    sections.push(`<div class="fb-section">${h}</div>`);
   }
-
-  if (fb.lesson_content) {
-    sections.push(`<div class="fb-section"><div class="fb-section-label">수업 내용</div><div class="fb-section-text">${linkify(fb.lesson_content)}</div></div>`);
-  }
-
-  if (fb.student_notes && fb.student_notes.length) {
-    const notes = fb.student_notes.map(s =>
-      `<div class="student-item"><div class="student-name" onclick="openStudentModal('${escHtml(s.name||'')}')">${escHtml(s.name || '—')}</div><div class="student-note">${escHtml(s.note || '—')}</div></div>`
-    ).join('');
+  if (fb.lesson_content) sections.push(`<div class="fb-section"><div class="fb-section-label">수업 내용</div><div class="fb-section-text">${linkify(fb.lesson_content)}</div></div>`);
+  if (fb.student_notes?.length) {
+    const notes = fb.student_notes.map(s=>`<div class="student-item"><div class="student-memo-name" onclick="openStudentModal('${escHtml(s.name||'')}')">${escHtml(s.name||'—')}</div><div class="student-note">${escHtml(s.note||'—')}</div></div>`).join('');
     sections.push(`<div class="fb-section"><div class="fb-section-label">학생별 메모</div>${notes}</div>`);
   }
-
-  if (fb.homework) {
-    sections.push(`<div class="fb-section"><div class="fb-section-label">숙제</div><div class="fb-section-text">${linkify(fb.homework)}</div></div>`);
-  }
+  if (fb.homework) sections.push(`<div class="fb-section"><div class="fb-section-label">숙제</div><div class="fb-section-text">${linkify(fb.homework)}</div></div>`);
 
   const item = document.createElement('div');
   item.className = 'fb-item';
   item.innerHTML = `
     <div class="fb-item-header" onclick="this.parentElement.classList.toggle('open')">
       <div class="fb-meta">
-        <div class="fb-top-row">
-          <span class="fb-date">${dateStr}</span>
-          ${timeHtml}
-        </div>
+        <div class="fb-top-row"><span class="fb-date">${dateStr}</span>${timeHtml}</div>
         <div class="fb-unit-name">${escHtml(unitLabel)}</div>
         ${attendHtml}
       </div>
       <svg class="fb-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
-    <div class="fb-item-body">${sections.join('')}</div>
-  `;
+    <div class="fb-item-body">${sections.join('')}</div>`;
   return item;
 }
 
-/* ── Student modal ───────────────────────────────────────── */
+/* ── Homework tab ────────────────────────────────────── */
+function buildHwUnitTabs() {
+  const tabs = document.getElementById('hw-unit-tabs');
+  tabs.innerHTML = '';
+  HW_UNITS.forEach((u, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'hw-unit-btn' + (i===0?' active':'');
+    btn.textContent = u.replace('unit','Unit ').toUpperCase();
+    btn.onclick = () => { currentHwUnit=u; document.querySelectorAll('.hw-unit-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderHwTable(); };
+    tabs.appendChild(btn);
+  });
+}
+
+function renderHwTable() {
+  const area = document.getElementById('hw-table-area');
+  const unitHw = allHomework.filter(h => h.unit === currentHwUnit);
+  const byStudent = {};
+  unitHw.forEach(h => { if (!byStudent[h.student_name]) byStudent[h.student_name] = h; });
+
+  area.innerHTML = '';
+  const roster = document.createElement('div');
+  roster.className = 'hw-roster';
+
+  ROSTER.forEach(name => {
+    const sub = byStudent[name] || null;
+    const dateStr = sub ? new Date(sub.submitted_at).toLocaleDateString('ko-KR',{month:'long',day:'numeric'}) : '';
+
+    const row = document.createElement('div');
+    row.className = 'hw-student-row';
+
+    let bodyHtml = '';
+    if (sub) {
+      const rewatch = sub.rewatch_answer;
+      let prepParsed = null;
+      try { prepParsed = JSON.parse(sub.prepare_answer); } catch {}
+
+      if (rewatch) bodyHtml += `<div class="hw-answer-block"><div class="hw-answer-label">Rewatch</div><div class="hw-answer-text">${escHtml(rewatch)}</div></div>`;
+      if (prepParsed) {
+        const prepEntries = Object.entries(prepParsed).filter(([k]) => k !== 'result');
+        if (prepParsed.result) bodyHtml += `<div class="hw-answer-block"><div class="hw-answer-label">결과</div><div class="hw-answer-text">${escHtml(prepParsed.result)}</div></div>`;
+        if (prepEntries.length) bodyHtml += `<div class="hw-answer-block"><div class="hw-answer-label">Prepare</div>${prepEntries.map(([,v])=>v?`<div class="hw-answer-text" style="margin-bottom:4px;">· ${escHtml(v)}</div>`:'').join('')}</div>`;
+      }
+    } else {
+      bodyHtml = `<div style="color:var(--mute);font-size:13px;">아직 제출하지 않았습니다.</div>`;
+    }
+
+    row.innerHTML = `
+      <div class="hw-student-hd" onclick="this.parentElement.classList.toggle('open')">
+        <span class="hw-status-badge ${sub?'done':'miss'}">${sub?'제출':'미제출'}</span>
+        <span class="hw-student-name-col">${escHtml(name)}</span>
+        <span class="hw-submit-date">${dateStr}</span>
+        <svg class="hw-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="hw-student-body">${bodyHtml}</div>`;
+    roster.appendChild(row);
+  });
+  area.appendChild(roster);
+}
+
+/* ── Tab switch ──────────────────────────────────────── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ── Student modal ───────────────────────────────────── */
 function openStudentModal(name) {
   if (!name) return;
-  const sessions = allFeedback.filter(fb => {
-    const att = Array.isArray(fb.attendees) ? fb.attendees : [];
-    const abs = Array.isArray(fb.absentees) ? fb.absentees : [];
-    return att.includes(name) || abs.includes(name);
-  });
-  if (!sessions.length) return;
-
-  const totalSessions = sessions.length;
-  const attendedCount = sessions.filter(fb => (fb.attendees||[]).includes(name)).length;
-  const rate = Math.round(attendedCount / totalSessions * 100);
+  const sessions = allFeedback.filter(fb => (fb.attendees||[]).includes(name)||(fb.absentees||[]).includes(name));
+  const attended  = sessions.filter(fb=>(fb.attendees||[]).includes(name)).length;
+  const attendRate = sessions.length ? Math.round(attended/sessions.length*100) : null;
+  const studentHw = allHomework.filter(h=>h.student_name===name);
+  const hwRate    = HW_UNITS.length ? Math.round(studentHw.length/HW_UNITS.length*100) : null;
 
   document.getElementById('modal-name').textContent = name;
-  document.getElementById('modal-rate').innerHTML =
-    `출석 <span class="modal-rate-num">${rate}%</span> &nbsp;·&nbsp; ${attendedCount}/${totalSessions}회`;
+  document.getElementById('modal-rates').innerHTML = [
+    attendRate !== null ? `출석 <span class="modal-rate-num green">${attendRate}%</span> · ${attended}/${sessions.length}회` : '',
+    hwRate !== null ? `숙제 <span class="modal-rate-num blue">${hwRate}%</span> · ${studentHw.length}/${HW_UNITS.length}개 제출` : ''
+  ].filter(Boolean).map(s=>`<span class="modal-rate">${s}</span>`).join('');
 
-  const body = sessions.map(fb => {
-    const dateStr = fb.lesson_date
-      ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
-      : '—';
-    const isAttend = (fb.attendees||[]).includes(name);
-    const note     = (fb.student_notes||[]).find(s => s.name === name);
-    const unitLabel = UNIT_LABELS[fb.unit] || fb.unit || '—';
-    return `
-      <div class="modal-session">
-        <div class="modal-status ${isAttend ? 'attend' : 'absent'}">${isAttend ? '출석' : '결석'}</div>
+  let bodyHtml = '';
+
+  // 수업 출결 + 메모
+  if (sessions.length) {
+    bodyHtml += `<div class="modal-section-head">수업 출결 & 강사 메모</div>`;
+    bodyHtml += sessions.map(fb => {
+      const dateStr = fb.lesson_date ? new Date(fb.lesson_date+'T00:00:00').toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}) : '—';
+      const isAttend = (fb.attendees||[]).includes(name);
+      const note     = (fb.student_notes||[]).find(s=>s.name===name);
+      return `<div class="modal-session">
+        <div class="modal-status ${isAttend?'attend':'absent'}">${isAttend?'출석':'결석'}</div>
         <div class="modal-session-info">
           <div class="modal-session-date">${dateStr}</div>
-          <div class="modal-session-unit">${escHtml(unitLabel)}</div>
-          ${note && note.note ? `<div class="modal-session-note">${escHtml(note.note)}</div>` : ''}
+          <div class="modal-session-unit">${escHtml(UNIT_LABELS[fb.unit]||fb.unit||'')}</div>
+          ${note?.note?`<div class="modal-session-note">${escHtml(note.note)}</div>`:''}
         </div>
       </div>`;
+    }).join('');
+  }
+
+  // 숙제
+  bodyHtml += `<div class="modal-section-head">숙제 제출 현황</div>`;
+  bodyHtml += HW_UNITS.map(u => {
+    const hw = studentHw.find(h=>h.unit===u);
+    const label = u.replace('unit','Unit ').toUpperCase();
+    if (!hw) return `<div class="modal-hw-row"><div class="modal-hw-unit"><span class="miss-tag">✗</span> ${label} — 미제출</div></div>`;
+
+    let rewatch='', prep='';
+    if (hw.rewatch_answer) rewatch = `<div class="hw-answer-label">Rewatch</div><div class="modal-hw-answer">${escHtml(hw.rewatch_answer)}</div>`;
+    try {
+      const p = JSON.parse(hw.prepare_answer);
+      const parts = [];
+      if (p.result) parts.push(`결과: ${p.result}`);
+      Object.entries(p).filter(([k])=>k!=='result').forEach(([,v])=>{ if(v) parts.push(v); });
+      if (parts.length) prep = `<div class="hw-answer-label" style="margin-top:10px;">Prepare</div>${parts.map(t=>`<div class="modal-hw-answer" style="margin-bottom:3px;">· ${escHtml(t)}</div>`).join('')}`;
+    } catch {}
+
+    const dateStr = new Date(hw.submitted_at).toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+    return `<div class="modal-hw-row">
+      <div class="modal-hw-unit">✓ ${label} <span style="color:var(--mute);font-weight:400;font-size:10px;">${dateStr} 제출</span></div>
+      ${rewatch}${prep}
+    </div>`;
   }).join('');
 
-  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
   document.getElementById('student-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
+function closeStudentModal() { document.getElementById('student-modal').classList.remove('open'); document.body.style.overflow=''; }
 
-function closeStudentModal() {
-  document.getElementById('student-modal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-/* ── Change PIN ──────────────────────────────────────────── */
+/* ── Change PIN ──────────────────────────────────────── */
 function toggleChangePin() {
   const sec = document.getElementById('change-pin-section');
-  sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
-  if (sec.style.display === 'block') { newPin.reset(); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-  document.getElementById('change-msg').textContent = '';
+  sec.style.display = sec.style.display==='none'?'block':'none';
+  if (sec.style.display==='block') { newPin.reset(); sec.scrollIntoView({behavior:'smooth',block:'start'}); }
+  document.getElementById('change-msg').textContent='';
 }
-
 async function doChangePin() {
-  const pin   = newPin.getVal();
-  const btn   = document.getElementById('change-btn');
-  const msgEl = document.getElementById('change-msg');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-
-  const { error } = await sb.from('b2b_club_pins')
-    .update({ pin, updated_at: new Date().toISOString() }).eq('club_id', CLUB_ID);
-
-  btn.innerHTML = '변경하기';
-  if (error) { msgEl.className = 'msg error'; msgEl.textContent = '변경 실패: ' + error.message; btn.disabled = false; }
-  else { msgEl.className = 'msg success'; msgEl.textContent = '비밀번호가 변경되었습니다.'; newPin.reset(); }
+  const pin=newPin.getVal(), btn=document.getElementById('change-btn'), msg=document.getElementById('change-msg');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  const {error}=await sb.from('b2b_club_pins').update({pin,updated_at:new Date().toISOString()}).eq('club_id',CLUB_ID);
+  btn.innerHTML='변경하기';
+  if(error){msg.className='msg error';msg.textContent='변경 실패: '+error.message;btn.disabled=false;}
+  else{msg.className='msg success';msg.textContent='비밀번호가 변경되었습니다.';newPin.reset();}
 }
 
-/* ── Logout ──────────────────────────────────────────────── */
+/* ── Logout ──────────────────────────────────────────── */
 function doLogout() {
-  document.getElementById('feedback-section').style.display = 'none';
-  document.getElementById('change-pin-section').style.display = 'none';
+  document.getElementById('report').style.display='none';
+  document.getElementById('change-pin-section').style.display='none';
   document.getElementById('btn-change-pin').classList.remove('visible');
-  document.getElementById('hero-section').style.display = 'flex';
-  document.getElementById('login-msg').textContent = '';
-  loginPin.reset();
-  setupPin.reset();
+  document.getElementById('hero-section').style.display='flex';
+  document.getElementById('login-msg').textContent='';
+  loginPin.reset(); setupPin.reset();
+  allFeedback=[]; allHomework=[];
 }
 
-/* ── Helpers ─────────────────────────────────────────────── */
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function linkify(str) {
-  return str.split(/(https?:\/\/[^\s]+)/g).map((p, i) =>
-    i % 2 === 1
-      ? `<a href="${p}" target="_blank" rel="noopener noreferrer">${escHtml(p)}</a>`
-      : escHtml(p)
-  ).join('');
-}
+/* ── Helpers ─────────────────────────────────────────── */
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function linkify(str){return str.split(/(https?:\/\/[^\s]+)/g).map((p,i)=>i%2===1?`<a href="${p}" target="_blank" rel="noopener noreferrer">${escHtml(p)}</a>`:escHtml(p)).join('');}
 </script>
 </body>
 </html>
