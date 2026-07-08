@@ -11,7 +11,9 @@
   --accent: #6085FF;
   --bg: #09090b;
   --border: rgba(255,255,255,0.1);
+  --border-card: rgba(255,255,255,0.08);
   --mute: #94a3b8;
+  --error: #f87171;
 }
 
 html { scroll-behavior: smooth; }
@@ -33,16 +35,12 @@ body {
   display: flex; align-items: center;
   padding: 0 clamp(20px, 5vw, 60px);
 }
-.brand {
-  font-size: 11px; font-weight: 700;
-  letter-spacing: 0.4em; text-transform: uppercase;
-  color: #fff;
-}
+.brand { font-size: 11px; font-weight: 700; letter-spacing: 0.4em; text-transform: uppercase; color: #fff; }
 
 /* ── Hero ────────────────────────────────────────────────── */
 .hero {
   position: relative; overflow: hidden;
-  padding: 120px clamp(20px, 5vw, 60px) 80px;
+  padding: 120px clamp(20px, 5vw, 60px) 64px;
 }
 .hero-glow {
   position: absolute; inset: 0; pointer-events: none;
@@ -50,71 +48,101 @@ body {
 }
 .hero-inner { max-width: 720px; margin: 0 auto; position: relative; }
 
-.accent-bar {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 28px;
-}
+.accent-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
 .accent-bar .line { height: 1px; width: 40px; background: var(--accent); }
-.accent-bar .label {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 0.28em; text-transform: uppercase;
-  color: var(--accent);
-}
+.accent-bar .label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); }
 
-.hero-title {
-  font-size: clamp(36px, 7vw, 64px);
-  font-weight: 800; letter-spacing: -0.02em;
-  line-height: 1.05; margin-bottom: 16px;
-}
-.hero-sub {
-  font-size: 14px; color: var(--mute); line-height: 1.7;
-  max-width: 480px;
-}
+.hero-title { font-size: clamp(36px, 7vw, 64px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 16px; }
+.hero-sub { font-size: 14px; color: var(--mute); line-height: 1.7; max-width: 480px; }
 
-/* ── Cards ───────────────────────────────────────────────── */
-.cards {
+/* ── Main content ─────────────────────────────────────────── */
+.content {
   max-width: 720px; margin: 0 auto;
   padding: 0 clamp(20px, 5vw, 60px) 100px;
 }
-.cards-label {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 0.28em; text-transform: uppercase;
+.section-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
   color: var(--accent); margin-bottom: 20px;
   display: flex; align-items: center; gap: 10px;
 }
-.cards-label::before { content: ''; display: block; height: 1px; width: 24px; background: var(--accent); }
+.section-label::before { content: ''; display: block; height: 1px; width: 24px; background: var(--accent); }
 
-.card {
-  display: flex; align-items: center; justify-content: space-between;
+/* ── PIN card ─────────────────────────────────────────────── */
+.pin-card {
   background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card);
   border-radius: 20px;
-  padding: 28px 32px;
-  text-decoration: none;
-  color: #fff;
-  transition: background 0.15s, border-color 0.15s;
-  gap: 20px;
+  padding: 36px 32px;
 }
-.card:hover {
-  background: rgba(96,133,255,0.08);
-  border-color: rgba(96,133,255,0.4);
-}
+.pin-card-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.pin-card-desc { font-size: 13px; color: var(--mute); margin-bottom: 32px; line-height: 1.5; }
 
-.card-left { display: flex; flex-direction: column; gap: 6px; }
-.card-eyebrow {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 0.28em; text-transform: uppercase;
-  color: var(--accent);
+/* ── PIN boxes ────────────────────────────────────────────── */
+.pin-boxes { display: flex; gap: 10px; margin-bottom: 20px; }
+.pin-box-wrap { position: relative; }
+.pin-box-wrap input {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0;
 }
-.card-title { font-size: 18px; font-weight: 700; }
-.card-desc { font-size: 13px; color: var(--mute); line-height: 1.5; }
-
-.card-arrow {
-  flex-shrink: 0; width: 36px; height: 36px;
-  border-radius: 50%; border: 1px solid var(--border);
+.pin-box {
+  width: 44px; height: 52px; border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04);
   display: flex; align-items: center; justify-content: center;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
-.card:hover .card-arrow { border-color: rgba(96,133,255,0.5); }
+.pin-box.filled { border-color: var(--accent); background: rgba(96,133,255,0.1); }
+.pin-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+
+.error-msg { font-size: 13px; color: var(--error); min-height: 20px; margin-bottom: 16px; }
+
+.btn-submit {
+  width: 100%; padding: 14px; border: none; border-radius: 14px;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  cursor: pointer; transition: background 0.15s, opacity 0.15s;
+  background: var(--accent); color: #fff;
+}
+.btn-submit:disabled { opacity: 0.35; cursor: default; }
+
+.spinner {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Feedback result ──────────────────────────────────────── */
+#fb-result { display: none; margin-top: 40px; }
+
+.fb-header { margin-bottom: 28px; }
+.fb-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.fb-title { font-size: clamp(22px, 4vw, 36px); font-weight: 800; letter-spacing: -0.01em; margin-bottom: 6px; }
+.fb-meta { font-size: 13px; color: var(--mute); }
+
+.fb-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-card);
+  border-radius: 20px; overflow: hidden;
+}
+.fb-section {
+  padding: 24px 28px; border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.fb-section:last-child { border-bottom: none; }
+.fb-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--mute); }
+.fb-section-text { font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.85); white-space: pre-wrap; word-break: break-word; }
+.fb-section-text a { color: var(--accent); text-decoration: underline; word-break: break-all; }
+
+.fb-student-item { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.fb-student-item:last-child { margin-bottom: 0; }
+.fb-student-name { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
+.fb-student-note { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; }
+
+.btn-reset {
+  margin-top: 20px; background: none; border: none;
+  font-size: 12px; color: var(--mute); letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: color 0.15s;
+}
+.btn-reset:hover { color: #fff; }
 </style>
 </head>
 <body>
@@ -135,22 +163,190 @@ body {
   </div>
 </section>
 
-<div class="cards">
-  <div class="cards-label">메뉴</div>
+<div class="content">
+  <div class="section-label">수업 피드백</div>
 
-  <a href="lesson-feedback-view.html" class="card">
-    <div class="card-left">
-      <span class="card-eyebrow">수업 피드백</span>
-      <span class="card-title">레슨 피드백 확인</span>
-      <span class="card-desc">강사에게 받은 6자리 비밀번호로 수업 피드백을 확인하세요.</span>
+  <div class="pin-card">
+    <div class="pin-card-title">레슨 피드백 확인</div>
+    <div class="pin-card-desc">수업 후 강사에게 받은 6자리 번호를 입력하세요.</div>
+
+    <div class="pin-boxes" id="pin-boxes"></div>
+    <div class="error-msg" id="error-msg"></div>
+    <button class="btn-submit" id="submit-btn" disabled onclick="submitPin()">확인하기</button>
+  </div>
+
+  <!-- 피드백 결과 -->
+  <div id="fb-result">
+    <div class="fb-header">
+      <div class="fb-eyebrow" id="fb-eyebrow">레슨 피드백</div>
+      <div class="fb-title" id="fb-title">—</div>
+      <div class="fb-meta" id="fb-meta">—</div>
     </div>
-    <div class="card-arrow">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="9 18 15 12 9 6"/>
-      </svg>
+    <div class="fb-card">
+      <div class="fb-section" id="fb-sec-content">
+        <div class="fb-section-label">이번 수업 내용</div>
+        <div class="fb-section-text" id="fb-content-text"></div>
+      </div>
+      <div class="fb-section" id="fb-sec-students" style="display:none;">
+        <div class="fb-section-label">학생별 메모</div>
+        <div id="fb-student-list"></div>
+      </div>
+      <div class="fb-section" id="fb-sec-hw" style="display:none;">
+        <div class="fb-section-label">숙제</div>
+        <div class="fb-section-text" id="fb-hw-text"></div>
+      </div>
     </div>
-  </a>
+    <button class="btn-reset" onclick="resetPin()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      다른 번호로 확인
+    </button>
+  </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
+const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+const UNIT_LABELS = {
+  unit1: 'Unit 1 — Self-Introduction & Joining the Team',
+  unit2: 'Unit 2 — Win / Lose Interview'
+};
+
+let pin = '';
+
+function buildPinBoxes() {
+  const container = document.getElementById('pin-boxes');
+  for (let i = 0; i < 6; i++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'pin-box-wrap';
+
+    const input = document.createElement('input');
+    input.type = 'text'; input.inputMode = 'numeric'; input.maxLength = 1;
+    input.setAttribute('aria-label', `digit ${i + 1}`);
+    if (i === 0) input.autofocus = true;
+    input.addEventListener('input', e => onDigitInput(i, e.target.value));
+    input.addEventListener('keydown', e => onKeyDown(i, e));
+    input.addEventListener('paste', onPaste);
+    input.addEventListener('focus', e => e.target.select());
+
+    const box = document.createElement('div');
+    box.className = 'pin-box'; box.id = `box-${i}`;
+
+    wrap.appendChild(input); wrap.appendChild(box);
+    container.appendChild(wrap);
+  }
+}
+
+function getInputs() { return Array.from(document.querySelectorAll('.pin-box-wrap input')); }
+
+function onDigitInput(i, val) {
+  const digit = val.replace(/\D/g, '').slice(-1);
+  if (!digit) return;
+  const arr = pin.split(''); arr[i] = digit; pin = arr.join('').slice(0, 6);
+  updateBoxes();
+  if (i < 5) getInputs()[i + 1].focus();
+}
+
+function onKeyDown(i, e) {
+  const inputs = getInputs();
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    if (pin[i]) { const arr = pin.split(''); arr[i] = ''; pin = arr.join(''); }
+    else if (i > 0) { inputs[i - 1].focus(); const arr = pin.split(''); arr[i - 1] = ''; pin = arr.join(''); }
+    updateBoxes();
+  } else if (e.key === 'ArrowLeft' && i > 0) inputs[i - 1].focus();
+  else if (e.key === 'ArrowRight' && i < 5) inputs[i + 1].focus();
+  else if (e.key === 'Enter' && pin.length === 6) submitPin();
+}
+
+function onPaste(e) {
+  e.preventDefault();
+  const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+  pin = digits; updateBoxes();
+  getInputs()[Math.min(digits.length, 5)].focus();
+}
+
+function updateBoxes() {
+  for (let i = 0; i < 6; i++) {
+    const box = document.getElementById(`box-${i}`);
+    const filled = !!pin[i];
+    box.className = 'pin-box' + (filled ? ' filled' : '');
+    box.innerHTML = filled ? '<div class="pin-dot"></div>' : '';
+  }
+  document.getElementById('submit-btn').disabled = pin.length < 6;
+  document.getElementById('error-msg').textContent = '';
+}
+
+async function submitPin() {
+  if (pin.length !== 6) return;
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+
+  const { data, error } = await sb
+    .from('b2b_lesson_feedback').select('*')
+    .eq('pin', pin).order('created_at', { ascending: false }).limit(1);
+
+  btn.innerHTML = '확인하기'; btn.disabled = false;
+
+  if (error || !data || !data.length) {
+    document.getElementById('error-msg').textContent = '일치하는 피드백이 없습니다. 번호를 확인해주세요.';
+    pin = ''; updateBoxes(); getInputs()[0].focus();
+    return;
+  }
+  renderFeedback(data[0]);
+}
+
+function renderFeedback(fb) {
+  const unitLabel = UNIT_LABELS[fb.unit] || fb.unit || '—';
+  const dateStr = fb.lesson_date
+    ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '—';
+
+  document.getElementById('fb-eyebrow').textContent = '레슨 피드백';
+  document.getElementById('fb-title').textContent = unitLabel;
+  document.getElementById('fb-meta').textContent = dateStr;
+  document.getElementById('fb-content-text').innerHTML = linkify(fb.lesson_content || '—');
+
+  const studentList = document.getElementById('fb-student-list');
+  const studentSec  = document.getElementById('fb-sec-students');
+  studentList.innerHTML = '';
+  const notes = fb.student_notes;
+  if (notes && Array.isArray(notes) && notes.length) {
+    notes.forEach(s => {
+      const item = document.createElement('div');
+      item.className = 'fb-student-item';
+      item.innerHTML = `<div class="fb-student-name">${escHtml(s.name||'—')}</div><div class="fb-student-note">${escHtml(s.note||'—')}</div>`;
+      studentList.appendChild(item);
+    });
+    studentSec.style.display = 'flex';
+  } else { studentSec.style.display = 'none'; }
+
+  const hwSec = document.getElementById('fb-sec-hw');
+  const hwText = document.getElementById('fb-hw-text');
+  if (fb.homework) { hwText.innerHTML = linkify(fb.homework); hwSec.style.display = 'flex'; }
+  else { hwSec.style.display = 'none'; }
+
+  document.getElementById('fb-result').style.display = 'block';
+  document.getElementById('fb-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetPin() {
+  pin = ''; updateBoxes();
+  document.getElementById('fb-result').style.display = 'none';
+  document.getElementById('error-msg').textContent = '';
+  getInputs()[0].focus();
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function linkify(str) {
+  return escHtml(str).replace(/(https?:\/\/[^\s&]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
+buildPinBoxes();
+</script>
 </body>
 </html>
