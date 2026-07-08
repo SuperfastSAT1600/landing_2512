@@ -234,8 +234,27 @@ body {
 <div class="content">
   <div class="content-inner">
 
+    <!-- 최초 PIN 설정 -->
+    <div id="setup-section" style="display:none;">
+      <div class="section-head"><div class="line"></div><span class="label">비밀번호 설정</span></div>
+      <div class="card">
+        <div class="pin-label">비밀번호 설정</div>
+        <div class="pin-desc">구단 전용 6자리 비밀번호를 처음 설정합니다.</div>
+        <div class="pin-boxes" id="setup-boxes">
+          <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+          <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+          <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+          <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+          <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+          <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        </div>
+        <div class="msg" id="setup-msg"></div>
+        <button class="btn-primary" id="setup-btn" disabled onclick="doSetPin()">설정하기</button>
+      </div>
+    </div>
+
     <!-- 로그인 -->
-    <div id="login-section">
+    <div id="login-section" style="display:none;">
       <div class="section-head"><div class="line"></div><span class="label">레슨 피드백</span></div>
       <div class="card">
         <div class="pin-label">비밀번호 입력</div>
@@ -331,8 +350,42 @@ function initPin(boxId, btnId, onSubmit) {
   return { getVal, reset };
 }
 
+const setupPin = initPin('setup-boxes', 'setup-btn', doSetPin);
 const loginPin = initPin('login-boxes', 'login-btn', doLogin);
 const newPin   = initPin('new-pin-boxes', 'change-btn', doChangePin);
+
+/* ── Init: PIN 존재 여부 확인 ────────────────────────────── */
+async function checkSetup() {
+  const { data } = await sb.from('b2b_club_pins').select('pin').eq('club_id', CLUB_ID).maybeSingle();
+  if (data) {
+    document.getElementById('login-section').style.display = 'block';
+  } else {
+    document.getElementById('setup-section').style.display = 'block';
+  }
+}
+checkSetup();
+
+/* ── Set PIN (최초) ──────────────────────────────────────── */
+async function doSetPin() {
+  const pin   = setupPin.getVal();
+  const btn   = document.getElementById('setup-btn');
+  const msgEl = document.getElementById('setup-msg');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+
+  const { error } = await sb.from('b2b_club_pins')
+    .insert({ club_id: CLUB_ID, pin });
+
+  btn.innerHTML = '설정하기';
+  if (error) {
+    msgEl.className = 'msg error'; msgEl.textContent = '오류: ' + error.message;
+    btn.disabled = false; return;
+  }
+
+  document.getElementById('setup-section').style.display = 'none';
+  document.getElementById('feedback-section').style.display = 'block';
+  document.getElementById('btn-change-pin').classList.add('visible');
+  loadFeedback();
+}
 
 /* ── Login ───────────────────────────────────────────────── */
 async function doLogin() {
@@ -460,6 +513,7 @@ function doLogout() {
   document.getElementById('login-section').style.display = 'block';
   document.getElementById('login-msg').textContent = '';
   loginPin.reset();
+  setupPin.reset();
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
