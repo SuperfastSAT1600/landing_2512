@@ -73,10 +73,29 @@ select { cursor: pointer; }
 textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
 textarea.tall { min-height: 200px; }
 
+/* ── Roster checkboxes ── */
+.roster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 500px) { .roster-grid { grid-template-columns: repeat(2, 1fr); } }
+.roster-item {
+  display: flex; align-items: center; gap: 10px;
+  border: 0.5px solid var(--line); padding: 10px 14px;
+  cursor: pointer; user-select: none; transition: background 0.12s;
+}
+.roster-item:hover { background: var(--bg-s); }
+.roster-item input[type="checkbox"] {
+  width: 16px; height: 16px; flex-shrink: 0;
+  accent-color: var(--text);
+  margin: 0; padding: 0; border: none;
+  appearance: auto; -webkit-appearance: auto;
+}
+.roster-item.present { background: #f0faf4; border-color: #b2dfc8; }
+.roster-item.present .roster-name { color: var(--text); }
+.roster-name { font-size: 14px; color: var(--muted); transition: color 0.12s; }
+
 .student-rows { display: flex; flex-direction: column; gap: 12px; }
 .student-row { border: 0.5px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 10px; background: var(--bg-s); }
 .student-row-header { display: flex; align-items: center; gap: 12px; }
-.student-row-header input { flex: 1; }
+.student-row-header select { flex: 1; }
 .remove-btn { background: none; border: 0.5px solid var(--line); color: var(--mute); cursor: pointer; font-family: Arial; font-size: 11px; padding: 8px 14px; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
 .remove-btn:hover { border-color: #cc2222; color: #cc2222; }
 .add-student-btn { background: none; border: 0.5px dashed var(--line); color: var(--mute); cursor: pointer; font-family: Arial; font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; padding: 12px 20px; width: 100%; transition: all 0.15s; margin-top: 4px; }
@@ -198,14 +217,15 @@ textarea.tall { min-height: 200px; }
       <textarea id="inp-content" class="tall" placeholder="유닛을 먼저 선택하면 자동으로 내용이 채워집니다."></textarea>
     </div>
 
-    <div class="form-row" style="margin-bottom:28px;">
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label" for="inp-attendees">출석 학생 <span style="color:var(--line);font-size:8px;">(한 줄에 한 명)</span></label>
-        <textarea id="inp-attendees" placeholder="홍길동&#10;김철수&#10;박민준" style="min-height:90px;"></textarea>
-      </div>
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label" for="inp-absentees">결석 학생 <span style="color:var(--line);font-size:8px;">(한 줄에 한 명)</span></label>
-        <textarea id="inp-absentees" placeholder="이영희" style="min-height:90px;"></textarea>
+    <div class="form-group">
+      <label class="form-label">출석 체크 <span style="color:var(--line);font-size:8px;">(체크 = 출석 / 미체크 = 결석)</span></label>
+      <div class="roster-grid" id="roster-checks">
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="황은총" checked onchange="updateRosterStyle(this)"><span class="roster-name">황은총</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="김어진" checked onchange="updateRosterStyle(this)"><span class="roster-name">김어진</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="이용재" checked onchange="updateRosterStyle(this)"><span class="roster-name">이용재</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="이정현" checked onchange="updateRosterStyle(this)"><span class="roster-name">이정현</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="강준혁" checked onchange="updateRosterStyle(this)"><span class="roster-name">강준혁</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="조원우" checked onchange="updateRosterStyle(this)"><span class="roster-name">조원우</span></label>
       </div>
     </div>
 
@@ -289,14 +309,24 @@ function onUnitChange() {
   document.getElementById('inp-content').value = unit ? (UNIT_TEMPLATES[unit] || '') : '';
 }
 
+const ROSTER = ['황은총','김어진','이용재','이정현','강준혁','조원우'];
+
+function updateRosterStyle(cb) {
+  cb.closest('.roster-item').classList.toggle('present', cb.checked);
+}
+
 function addWriteRow() {
   writeRowCount++;
   const id = `wr-${writeRowCount}`;
+  const opts = ROSTER.map(n => `<option value="${n}">${n}</option>`).join('');
   const div = document.createElement('div');
   div.className = 'student-row'; div.id = id;
   div.innerHTML = `
     <div class="student-row-header">
-      <input type="text" placeholder="학생 이름" class="sr-name" />
+      <select class="sr-name">
+        <option value="">학생 선택</option>
+        ${opts}
+      </select>
       <button class="remove-btn" onclick="document.getElementById('${id}').remove()">삭제</button>
     </div>
     <textarea placeholder="메모" class="sr-note" style="min-height:80px;"></textarea>`;
@@ -327,8 +357,9 @@ async function submitFeedback() {
   if (!date)    return showMsg(msgEl, 'error', '수업 날짜를 입력해주세요.');
   if (!content) return showMsg(msgEl, 'error', '수업 내용을 입력해주세요.');
 
-  const attendees = parseNames(document.getElementById('inp-attendees'));
-  const absentees = parseNames(document.getElementById('inp-absentees'));
+  const cbs = Array.from(document.querySelectorAll('#roster-checks .roster-cb'));
+  const attendees = cbs.filter(c => c.checked).map(c => c.value);
+  const absentees = cbs.filter(c => !c.checked).map(c => c.value);
   const notes     = collectNotes('student-rows');
 
   const btn = document.getElementById('submit-btn');
@@ -355,8 +386,10 @@ async function submitFeedback() {
   document.getElementById('sel-unit').value = '';
   document.getElementById('inp-content').value = '';
   document.getElementById('inp-hw').value = '';
-  document.getElementById('inp-attendees').value = '';
-  document.getElementById('inp-absentees').value = '';
+  document.querySelectorAll('#roster-checks .roster-cb').forEach(cb => {
+    cb.checked = true;
+    updateRosterStyle(cb);
+  });
   document.getElementById('inp-start-time').value = '';
   document.getElementById('inp-end-time').value = '';
   document.getElementById('student-rows').innerHTML = '';
