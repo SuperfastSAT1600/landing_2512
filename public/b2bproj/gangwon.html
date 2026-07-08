@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강원 FC × 러너스 LRS</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent: #6085FF;
+  --bg: #09090b;
+  --border: rgba(255,255,255,0.1);
+  --mute: #94a3b8;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: #fff;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Nav ─────────────────────────────────────────────────── */
+#topnav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(9,9,11,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--border);
+  height: 48px;
+  display: flex; align-items: center;
+  padding: 0 clamp(20px, 5vw, 60px);
+}
+.brand {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.4em; text-transform: uppercase;
+  color: #fff;
+}
+
+/* ── Hero ────────────────────────────────────────────────── */
+.hero {
+  position: relative; overflow: hidden;
+  padding: 120px clamp(20px, 5vw, 60px) 80px;
+}
+.hero-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 15% 50%, rgba(96,133,255,0.08) 0%, transparent 55%);
+}
+.hero-inner { max-width: 720px; margin: 0 auto; position: relative; }
+
+.accent-bar {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 28px;
+}
+.accent-bar .line { height: 1px; width: 40px; background: var(--accent); }
+.accent-bar .label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hero-title {
+  font-size: clamp(36px, 7vw, 64px);
+  font-weight: 800; letter-spacing: -0.02em;
+  line-height: 1.05; margin-bottom: 16px;
+}
+.hero-sub {
+  font-size: 14px; color: var(--mute); line-height: 1.7;
+  max-width: 480px;
+}
+
+/* ── Cards ───────────────────────────────────────────────── */
+.cards {
+  max-width: 720px; margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 60px) 100px;
+}
+.cards-label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.cards-label::before { content: ''; display: block; height: 1px; width: 24px; background: var(--accent); }
+
+.card {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 32px;
+  text-decoration: none;
+  color: #fff;
+  transition: background 0.15s, border-color 0.15s;
+  gap: 20px;
+}
+.card:hover {
+  background: rgba(96,133,255,0.08);
+  border-color: rgba(96,133,255,0.4);
+}
+
+.card-left { display: flex; flex-direction: column; gap: 6px; }
+.card-eyebrow {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--accent);
+}
+.card-title { font-size: 18px; font-weight: 700; }
+.card-desc { font-size: 13px; color: var(--mute); line-height: 1.5; }
+
+.card-arrow {
+  flex-shrink: 0; width: 36px; height: 36px;
+  border-radius: 50%; border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s;
+}
+.card:hover .card-arrow { border-color: rgba(96,133,255,0.5); }
+</style>
+</head>
+<body>
+
+<nav id="topnav">
+  <span class="brand">강원 FC × Runners LRS</span>
+</nav>
+
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="accent-bar">
+      <div class="line"></div>
+      <span class="label">영어 인터뷰 수업 포털</span>
+    </div>
+    <h1 class="hero-title">강원 FC<br>U-18</h1>
+    <p class="hero-sub">러너스 LRS와 함께하는 강원 FC U-18 영어 인터뷰 수업 포털입니다.</p>
+  </div>
+</section>
+
+<div class="cards">
+  <div class="cards-label">메뉴</div>
+
+  <a href="lesson-feedback-view.html" class="card">
+    <div class="card-left">
+      <span class="card-eyebrow">수업 피드백</span>
+      <span class="card-title">레슨 피드백 확인</span>
+      <span class="card-desc">강사에게 받은 6자리 비밀번호로 수업 피드백을 확인하세요.</span>
+    </div>
+    <div class="card-arrow">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </div>
+  </a>
+</div>
+
+</body>
+</html>
