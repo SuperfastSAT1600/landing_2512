@@ -185,13 +185,22 @@ body {
   padding: calc(56px + 40px) clamp(20px, 5vw, 48px) 80px;
   max-width: 760px; margin: 0 auto;
 }
-.fb-section-title {
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--mute); margin-bottom: 24px;
-  display: flex; align-items: center; gap: 14px;
+.fb-page-header {
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 28px;
 }
-.fb-section-title::after { content: ''; flex: 1; height: 1px; background: var(--hairline); }
+.fb-page-eyebrow {
+  font-size: 10px; font-weight: 400;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--mute); margin-bottom: 10px;
+}
+.fb-page-title {
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 800; letter-spacing: 0.04em;
+  text-transform: uppercase; line-height: 0.95;
+  color: var(--light);
+}
 
 /* ── Feedback items ──────────────────────────────────────── */
 .fb-item {
@@ -206,12 +215,12 @@ body {
 }
 .fb-item-header:hover { background: rgba(255,255,255,0.02); }
 .fb-item-date {
-  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--mute); margin-bottom: 4px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--on-mute); margin-bottom: 6px;
 }
 .fb-item-unit {
-  font-size: 14px; font-weight: 700; letter-spacing: 0.02em;
-  color: var(--light);
+  font-size: 17px; font-weight: 700; letter-spacing: 0.01em;
+  color: var(--light); line-height: 1.2;
 }
 .fb-chevron { color: var(--hairline); transition: transform 0.2s; flex-shrink: 0; }
 .fb-item.open .fb-chevron { transform: rotate(90deg); color: var(--light); }
@@ -335,7 +344,10 @@ body {
 
 <!-- ── Feedback list ──────────────────────────────────────── -->
 <div id="feedback-section" style="display:none;">
-  <div class="fb-section-title">레슨 피드백</div>
+  <div class="fb-page-header">
+    <div class="fb-page-eyebrow">Runners LRS × Gangwon FC U-18</div>
+    <div class="fb-page-title">레슨 피드백</div>
+  </div>
   <div id="feedback-list"></div>
   <button class="btn-text-ghost" onclick="doLogout()">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
