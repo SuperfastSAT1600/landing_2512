@@ -304,7 +304,9 @@ function addWriteRow() {
 }
 
 function collectNotes(containerId) {
-  return Array.from(document.querySelectorAll(`#${containerId} .student-row`))
+  const container = document.getElementById(containerId);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('.student-row'))
     .map(r => ({ name: r.querySelector('.sr-name').value.trim(), note: r.querySelector('.sr-note').value.trim() }))
     .filter(n => n.name || n.note);
 }
