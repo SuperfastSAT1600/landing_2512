@@ -193,6 +193,14 @@ function renderCard(fb) {
       </div>`;
   }
 
+  if (fb.recording_url) {
+    sectionsHtml += `
+      <div class="fb-section">
+        <span class="fb-section-label">수업 녹화</span>
+        <div class="fb-section-text"><a href="${esc(fb.recording_url)}" target="_blank" rel="noopener">▶ 녹화 영상 보기</a></div>
+      </div>`;
+  }
+
   return `
     <div class="fb-card">
       <div class="fb-card-header">

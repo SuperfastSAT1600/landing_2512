@@ -213,6 +213,11 @@ textarea.tall { min-height: 200px; }
     </div>
 
     <div class="form-group">
+      <label class="form-label" for="inp-recording">수업 녹화 파일 링크 <span style="color:var(--line);font-size:8px;">(선택)</span></label>
+      <input type="url" id="inp-recording" placeholder="https://…" />
+    </div>
+
+    <div class="form-group">
       <label class="form-label" for="inp-content">이번 수업 내용 <span style="color:var(--line);font-size:8px;">(유닛 선택 시 자동 입력 · 수정 가능)</span></label>
       <textarea id="inp-content" class="tall" placeholder="유닛을 먼저 선택하면 자동으로 내용이 채워집니다."></textarea>
     </div>
@@ -365,8 +370,9 @@ async function submitFeedback() {
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = '저장 중...';
 
-  const startTime = document.getElementById('inp-start-time').value || null;
-  const endTime   = document.getElementById('inp-end-time').value   || null;
+  const startTime    = document.getElementById('inp-start-time').value || null;
+  const endTime      = document.getElementById('inp-end-time').value   || null;
+  const recordingUrl = document.getElementById('inp-recording').value.trim() || null;
 
   const { error } = await sb.from('b2b_lesson_feedback').insert({
     unit, lesson_date: date, lesson_content: content,
@@ -376,6 +382,7 @@ async function submitFeedback() {
     absentees: absentees.length ? absentees : null,
     start_time: startTime,
     end_time:   endTime,
+    recording_url: recordingUrl,
     club_id:    'gangwon',
   });
 
@@ -392,6 +399,7 @@ async function submitFeedback() {
   });
   document.getElementById('inp-start-time').value = '';
   document.getElementById('inp-end-time').value = '';
+  document.getElementById('inp-recording').value = '';
   document.getElementById('student-rows').innerHTML = '';
   writeRowCount = 0;
   addWriteRow();

@@ -740,6 +740,7 @@ function buildLessonItem(fb) {
     sections.push(`<div class="fb-section"><div class="fb-section-label">학생별 메모</div>${notes}</div>`);
   }
   if (fb.homework) sections.push(`<div class="fb-section"><div class="fb-section-label">숙제</div><div class="fb-section-text">${linkify(fb.homework)}</div></div>`);
+  if (fb.recording_url) sections.push(`<div class="fb-section"><div class="fb-section-label">수업 녹화</div><div class="fb-section-text"><a href="${escHtml(fb.recording_url)}" target="_blank" rel="noopener">▶ 녹화 영상 보기</a></div></div>`);
 
   const item = document.createElement('div');
   item.className = 'fb-item';
@@ -890,6 +891,9 @@ function showLessonDetail(dateStr) {
   const hwHtml = fb.homework
     ? `<div class="dp-section"><div class="fb-section-label">숙제</div><div class="fb-section-text">${linkify(fb.homework)}</div></div>` : '';
 
+  const recordingHtml = fb.recording_url
+    ? `<div class="dp-section"><div class="fb-section-label">수업 녹화</div><div class="fb-section-text"><a href="${escHtml(fb.recording_url)}" target="_blank" rel="noopener">▶ 녹화 영상 보기</a></div></div>` : '';
+
   panel.innerHTML = `
     <div class="dp-hd">
       <div>
@@ -898,7 +902,7 @@ function showLessonDetail(dateStr) {
       </div>
       <button class="modal-close" onclick="document.getElementById('lesson-detail-panel').style.display='none'">✕</button>
     </div>
-    ${attendHtml}${contentHtml}${notesHtml}${hwHtml}`;
+    ${attendHtml}${contentHtml}${notesHtml}${hwHtml}${recordingHtml}`;
   panel.style.display = 'block';
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
