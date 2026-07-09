@@ -323,8 +323,18 @@ body.report-mode .student-note { color: #000000; }
     <div class="auth-card">
       <div class="card-label">첫 방문</div>
       <div class="card-title">비밀번호 설정</div>
-      <div class="card-desc">구단 전용 6자리 비밀번호를 처음 설정합니다.</div>
-      <div class="pin-boxes" id="setup-boxes">
+      <div class="card-desc">6자리 숫자를 두 번 입력해 비밀번호를 설정합니다.</div>
+      <div class="card-label" style="margin-bottom:8px;">비밀번호</div>
+      <div class="pin-boxes" id="setup-boxes" style="margin-bottom:20px;">
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+        <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
+      </div>
+      <div class="card-label" style="margin-bottom:8px;">비밀번호 확인</div>
+      <div class="pin-boxes" id="setup-confirm-boxes">
         <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
         <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
         <input type="tel" maxlength="1" inputmode="numeric" autocomplete="off" />
@@ -504,27 +514,32 @@ const SCHEDULE = [
 ];
 
 /* ── PIN box ─────────────────────────────────────────── */
-function initPin(boxId, btnId, onSubmit) {
+function initPin(boxId, btnId, onSubmit, onChange) {
   const inputs = Array.from(document.querySelectorAll(`#${boxId} input`));
-  const btn    = document.getElementById(btnId);
+  const btn    = btnId ? document.getElementById(btnId) : null;
   const getVal = () => inputs.map(el => el.value).join('');
-  const reset  = () => { inputs.forEach(el => { el.value = ''; el.classList.remove('filled'); }); btn.disabled = true; };
+  const reset  = () => { inputs.forEach(el => { el.value = ''; el.classList.remove('filled'); }); if (btn) btn.disabled = true; };
   inputs.forEach((input, i) => {
     input.addEventListener('input', () => {
       const d = input.value.replace(/\D/g,'').slice(-1);
       input.value = d; input.classList.toggle('filled', !!d);
       if (d && i < inputs.length - 1) inputs[i+1].focus();
-      btn.disabled = getVal().length < 6;
+      if (btn) btn.disabled = getVal().length < 6;
+      if (onChange) onChange();
     });
     input.addEventListener('keydown', e => {
-      if (e.key === 'Backspace' && !input.value && i > 0) { e.preventDefault(); inputs[i-1].value=''; inputs[i-1].classList.remove('filled'); inputs[i-1].focus(); btn.disabled=true; }
-      else if (e.key === 'Enter' && getVal().length === 6) onSubmit();
+      if (e.key === 'Backspace' && !input.value && i > 0) {
+        e.preventDefault(); inputs[i-1].value=''; inputs[i-1].classList.remove('filled'); inputs[i-1].focus();
+        if (btn) btn.disabled = true;
+        if (onChange) onChange();
+      } else if (e.key === 'Enter' && getVal().length === 6) onSubmit();
     });
     input.addEventListener('paste', e => {
       e.preventDefault();
       const digits = e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);
       inputs.forEach((el,j) => { el.value=digits[j]||''; el.classList.toggle('filled',!!digits[j]); });
-      btn.disabled = digits.length < 6;
+      if (btn) btn.disabled = digits.length < 6;
+      if (onChange) onChange();
       inputs[Math.min(digits.length,5)].focus();
     });
     input.addEventListener('focus', () => input.select());
@@ -532,9 +547,15 @@ function initPin(boxId, btnId, onSubmit) {
   return { getVal, reset };
 }
 
-const setupPin = initPin('setup-boxes','setup-btn', doSetPin);
-const loginPin = initPin('login-boxes','login-btn', doLogin);
-const newPin   = initPin('new-pin-boxes','change-btn', doChangePin);
+function checkSetupReady() {
+  document.getElementById('setup-btn').disabled =
+    setupPin.getVal().length < 6 || setupConfirm.getVal().length < 6;
+}
+
+const setupPin    = initPin('setup-boxes',         null,         doSetPin,    checkSetupReady);
+const setupConfirm = initPin('setup-confirm-boxes', null,         doSetPin,    checkSetupReady);
+const loginPin    = initPin('login-boxes',          'login-btn',  doLogin);
+const newPin      = initPin('new-pin-boxes',        'change-btn', doChangePin);
 
 /* ── Init ────────────────────────────────────────────── */
 async function checkSetup() {
@@ -546,11 +567,19 @@ checkSetup();
 
 /* ── Set PIN ─────────────────────────────────────────── */
 async function doSetPin() {
-  const pin = setupPin.getVal();
-  const btn = document.getElementById('setup-btn');
-  const msg = document.getElementById('setup-msg');
+  const pin1 = setupPin.getVal();
+  const pin2 = setupConfirm.getVal();
+  const btn  = document.getElementById('setup-btn');
+  const msg  = document.getElementById('setup-msg');
+  if (pin1 !== pin2) {
+    msg.className = 'msg error';
+    msg.textContent = '두 번호가 일치하지 않습니다. 다시 입력해주세요.';
+    setupConfirm.reset();
+    document.querySelector('#setup-confirm-boxes input').focus();
+    return;
+  }
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-  const { error } = await sb.from('b2b_club_pins').insert({ club_id: CLUB_ID, pin });
+  const { error } = await sb.from('b2b_club_pins').insert({ club_id: CLUB_ID, pin: pin1 });
   btn.innerHTML = '설정하기';
   if (error) { msg.className='msg error'; msg.textContent='오류: '+error.message; btn.disabled=false; return; }
   enterReport();
@@ -991,7 +1020,7 @@ function doLogout() {
   document.body.classList.remove('report-mode');
   document.getElementById('hero-section').style.display='flex';
   document.getElementById('login-msg').textContent='';
-  loginPin.reset(); setupPin.reset();
+  loginPin.reset(); setupPin.reset(); setupConfirm.reset();
   allFeedback=[]; allHomework=[];
 }
 
