@@ -5,7 +5,7 @@ export const PAID_GROUPS: MarketingGroup[] = ['META', '구글 SEO'];
 
 export const SOURCE_GROUP_MAP: Record<string, MarketingGroup> = {
   // 네이버 SEO
-  '네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastsSAT': '네이버 SEO',
+  '네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastSAT': '네이버 SEO',
   '네이버 블로그 게시물': '네이버 SEO',
   '네이버 카페': '네이버 SEO',
   // 구글 SEO (랜딩 + 블로그 검색 유입)
