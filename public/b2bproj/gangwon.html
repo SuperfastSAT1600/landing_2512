@@ -59,6 +59,32 @@ body { background: var(--night); color: var(--light); font-family: 'Inter', 'Ari
 /* ── Report shell ────────────────────────────────────── */
 #report { display: none; min-height: 100vh; padding: calc(56px + 32px) clamp(20px, 5vw, 48px) 80px; max-width: 860px; margin: 0 auto; }
 
+/* ── Light theme (report) ────────────────────────────── */
+body.report-mode { background: #f2f2f7; }
+#report {
+  --night:      #f2f2f7;
+  --night-soft: #ffffff;
+  --light:      #1c1c1e;
+  --hairline:   #c7c7cc;
+  --mute:       #8e8e93;
+  --on-mute:    #1c1c1e;
+  --green:      #1a9e4d;
+  --red:        #c0392b;
+  --blue:       #1558c0;
+}
+#report .tab-btn { color: #8e8e93; }
+#report .tab-btn:hover { color: #1c1c1e; }
+#report .tab-btn.active { background: #1c1c1e; color: #ffffff; border-bottom-color: #1c1c1e; padding: 11px 20px; }
+#report .cal-cell.other-month { background: rgba(0,0,0,0.03); }
+#report .cal-cell.lesson-recorded { border-color: rgba(28,28,30,0.22); }
+#report .cal-cell.lesson-recorded:hover { border-color: rgba(28,28,30,0.55); background: rgba(0,0,0,0.04); }
+#report .cal-cell.lesson-recorded .cal-dot { background: #1a9e4d; }
+#report .chip-attend { border-color: rgba(26,158,77,0.4); background: rgba(26,158,77,0.07); }
+#report .chip-absent { border-color: rgba(192,57,43,0.35); background: rgba(192,57,43,0.06); }
+#report .hw-dot.done { background: rgba(21,88,192,0.1); border-color: rgba(21,88,192,0.3); }
+#report .hw-status-badge.done { background: rgba(21,88,192,0.1); border-color: rgba(21,88,192,0.3); }
+#report select option { background: #ffffff; color: #1c1c1e; }
+
 /* Report header */
 .rpt-header { margin-bottom: 32px; border-bottom: 1px solid var(--hairline); padding-bottom: 24px; }
 .rpt-eyebrow { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); margin-bottom: 8px; }
@@ -506,6 +532,7 @@ async function doLogin() {
 async function enterReport() {
   document.getElementById('hero-section').style.display = 'none';
   document.getElementById('report').style.display = 'block';
+  document.body.classList.add('report-mode');
   document.getElementById('btn-change-pin').classList.add('visible');
   await Promise.all([loadFeedback(), loadHomework()]);
   renderStats();
@@ -920,6 +947,7 @@ function doLogout() {
   document.getElementById('report').style.display='none';
   document.getElementById('change-pin-section').style.display='none';
   document.getElementById('btn-change-pin').classList.remove('visible');
+  document.body.classList.remove('report-mode');
   document.getElementById('hero-section').style.display='flex';
   document.getElementById('login-msg').textContent='';
   loginPin.reset(); setupPin.reset();
