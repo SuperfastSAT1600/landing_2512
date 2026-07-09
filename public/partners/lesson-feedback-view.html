@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>레슨 피드백 확인 · 러너스 LRS</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:    #ffffff;
+  --bg-s:  #f7f7f8;
+  --text:  #111111;
+  --mute:  #888888;
+  --muted: #555555;
+  --line:  #dddde2;
+  --max:   1080px;
+  --pad:   clamp(24px, 5vw, 80px);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: Arial, sans-serif; font-size: 16px;
+  line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100vh;
+}
+
+#topnav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--pad); height: 48px;
+}
+.brand { font-size: 11px; font-weight: 700; letter-spacing: 0.4em; text-transform: uppercase; color: var(--text); }
+.nav-link { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mute); text-decoration: none; transition: color 0.15s; }
+.nav-link:hover { color: var(--text); }
+
+.main { max-width: var(--max); margin: 0 auto; padding: 64px var(--pad) 120px; }
+
+.page-eyebrow { font-size: 9px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--mute); display: block; margin-bottom: 20px; }
+.page-title { font-size: clamp(32px, 5vw, 56px); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; line-height: 0.94; margin-bottom: 40px; }
+.hl { height: 0.5px; background: var(--line); margin-bottom: 40px; }
+
+/* ── Unit tabs ── */
+.unit-tabs { display: flex; margin-bottom: 40px; border-bottom: 0.5px solid var(--line); overflow-x: auto; }
+.unit-tab { padding: 10px 20px; font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--mute); cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -0.5px; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
+.unit-tab:hover { color: var(--text); }
+.unit-tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+/* ── Feedback cards ── */
+.cards { display: flex; flex-direction: column; gap: 0; }
+.fb-card {
+  padding: 32px 0;
+  border-top: 0.5px solid var(--line);
+}
+.fb-card:last-child { border-bottom: 0.5px solid var(--line); }
+.fb-card-header { margin-bottom: 24px; }
+.fb-card-date { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--mute); margin-bottom: 4px; }
+.fb-card-unit { font-size: 16px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.fb-sections { display: flex; flex-direction: column; gap: 20px; }
+.fb-section { display: grid; grid-template-columns: 100px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 600px) { .fb-section { grid-template-columns: 1fr; gap: 6px; } }
+.fb-section-label { font-size: 8px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--mute); padding-top: 3px; }
+.fb-section-text { font-size: 14px; color: var(--muted); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.fb-section-text a { color: var(--text); }
+
+.fb-student-list { display: flex; flex-direction: column; gap: 12px; }
+.fb-student-item { border-left: 2px solid var(--line); padding-left: 14px; }
+.fb-student-name { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text); margin-bottom: 4px; }
+.fb-student-note { font-size: 13px; color: var(--muted); line-height: 1.6; white-space: pre-wrap; }
+
+/* ── States ── */
+.state-msg { padding: 60px 0; font-size: 13px; color: var(--mute); }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--line); border-top-color: var(--muted); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 10px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<nav id="topnav">
+  <span class="brand">러너스 LRS</span>
+  <a href="unit1.html" class="nav-link">← 홈</a>
+</nav>
+
+<div class="main">
+  <span class="page-eyebrow">레슨 피드백 &nbsp;·&nbsp; 강원 U-18 영어 인터뷰 수업</span>
+  <h1 class="page-title">Lesson<br>Feedback</h1>
+  <div class="hl"></div>
+
+  <div class="unit-tabs">
+    <div class="unit-tab active" data-unit="unit1" onclick="selectUnit('unit1', this)">Unit 1</div>
+    <div class="unit-tab" data-unit="unit2" onclick="selectUnit('unit2', this)">Unit 2</div>
+  </div>
+
+  <div id="cards-area">
+    <div class="state-msg"><span class="spinner"></span>불러오는 중…</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
+const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+const UNIT_LABELS = {
+  unit1: 'Unit 1',
+  unit2: 'Unit 2'
+};
+
+let currentUnit = 'unit1';
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (location.hash) {
+    const h = location.hash.replace('#', '');
+    if (UNIT_LABELS[h]) { currentUnit = h; document.querySelectorAll('.unit-tab').forEach(t => t.classList.toggle('active', t.dataset.unit === h)); }
+  }
+  load();
+});
+
+function selectUnit(unit, el) {
+  currentUnit = unit;
+  document.querySelectorAll('.unit-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  location.hash = unit;
+  load();
+}
+
+async function load() {
+  const area = document.getElementById('cards-area');
+  area.innerHTML = '<div class="state-msg"><span class="spinner"></span>불러오는 중…</div>';
+
+  const { data, error } = await sb
+    .from('b2b_lesson_feedback')
+    .select('*')
+    .eq('unit', currentUnit)
+    .order('lesson_date', { ascending: false });
+
+  if (error) { area.innerHTML = `<div class="state-msg">오류: ${esc(error.message)}</div>`; return; }
+  if (!data.length) { area.innerHTML = '<div class="state-msg">아직 작성된 피드백이 없습니다.</div>'; return; }
+
+  area.innerHTML = '<div class="cards">' + data.map(fb => renderCard(fb)).join('') + '</div>';
+}
+
+function renderCard(fb) {
+  const dateStr = fb.lesson_date
+    ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '—';
+
+  let sectionsHtml = '';
+
+  if (fb.lesson_content) {
+    sectionsHtml += `
+      <div class="fb-section">
+        <span class="fb-section-label">수업 내용</span>
+        <div class="fb-section-text">${linkify(fb.lesson_content)}</div>
+      </div>`;
+  }
+
+  const notes = fb.student_notes;
+  if (notes && Array.isArray(notes) && notes.length) {
+    const items = notes.map(s => `
+      <div class="fb-student-item">
+        <div class="fb-student-name">${esc(s.name || '—')}</div>
+        <div class="fb-student-note">${esc(s.note || '')}</div>
+      </div>`).join('');
+    sectionsHtml += `
+      <div class="fb-section">
+        <span class="fb-section-label">학생별 메모</span>
+        <div class="fb-student-list">${items}</div>
+      </div>`;
+  }
+
+  if (fb.homework) {
+    sectionsHtml += `
+      <div class="fb-section">
+        <span class="fb-section-label">숙제</span>
+        <div class="fb-section-text">${linkify(fb.homework)}</div>
+      </div>`;
+  }
+
+  return `
+    <div class="fb-card">
+      <div class="fb-card-header">
+        <div class="fb-card-date">${dateStr}</div>
+        <div class="fb-card-unit">${esc(UNIT_LABELS[fb.unit] || fb.unit)}</div>
+      </div>
+      <div class="fb-sections">${sectionsHtml}</div>
+    </div>`;
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function linkify(s) { return esc(s).replace(/(https?:\/\/[^\s&]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); }
+</script>
+</body>
+</html>
