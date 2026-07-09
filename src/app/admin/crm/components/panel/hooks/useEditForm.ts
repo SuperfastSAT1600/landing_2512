@@ -76,9 +76,9 @@ export function useEditForm({ studentId, adminKey, localStudent, setLocalStudent
           ? editForm.b2b_partner as Student['b2b_partner'] : null,
         lead_tier: (editForm.lead_tier as Student['lead_tier']) || null,
         first_message_sent_at: fromDatetimeLocal(editForm.first_message_sent_at),
-        // 소개자: 유입 소스가 '소개/추천'일 때만 저장, 아니면 정리(null)
-        referral_student_id: editForm.traffic_source === '소개/추천' ? (editForm.referral_student_id || null) : null,
-        referral_student_name: editForm.traffic_source === '소개/추천' ? (editForm.referral_student_name.trim() || null) : null,
+        // 소개자: 유입 소스가 '소개'일 때만 저장, 아니면 정리(null)
+        referral_student_id: editForm.traffic_source === '소개' ? (editForm.referral_student_id || null) : null,
+        referral_student_name: editForm.traffic_source === '소개' ? (editForm.referral_student_name.trim() || null) : null,
       };
       const res = await fetch(`/api/crm/students/${studentId}`, {
         method: 'PATCH', headers, body: JSON.stringify(updates),

@@ -46,22 +46,26 @@ export type InquiryChannel =
   | '인스타그램 링크';
 
 export type TrafficSource =
-  | '네이버 검색 후 상담예약'
-  | '네이버 카페'
-  | '구글폼에서 즉시상담'
-  | '(구)랜딩페이지 즉시상담'
-  | '(구)랜딩페이지 상담예약'
-  | '(신)랜딩 페이지 상담예약'
-  | '공식 블로그'
-  | '인스타그램 오가닉'
-  | '인스타그램 광고'
-  | '브런치'
-  | '책'
-  | '소개/추천'
-  | '레딧'
+  | '소개'
   | 'B2B 파트너'
-  | '기존DB'
-  | '대표전화';
+  | '인스타그램 광고'
+  | '랜딩 상담 폼 카톡 - SuperfastSAT!'
+  | '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT'
+  | '(구) 랜딩 구글폼 상담 예약'
+  | '랜딩 상담 예약 폼 카톡 - SuperfastSAT!'
+  | '(신) 랜딩 즉시 카톡 상담 - [T] SuperfastSAT'
+  | '(신) 랜딩 구글폼 상담 예약'
+  | '네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastsSAT'
+  | '네이버 블로그 게시물'
+  | '네이버 카페'
+  | '브런치 카톡 - [BR]SuperfastSAT'
+  | '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)'
+  | '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT'
+  | '대표전화'
+  | '인스타그램 오가닉'
+  | '책'
+  | '레딧'
+  | '기존DB';
 
 export type ContentAuthor = '배병윤' | '이민재' | '김우영' | '장현아';
 
@@ -605,7 +609,7 @@ const TIER_COLD_NO_CONTACT_DAYS = 14; // 14일 초과 미연락 = 저관여
 
 /**
  * 데이터 기반 자동 등급 분류 (제안값).
- * - A(Hot): 소개/추천 유입, 또는 목표점수가 있고 시험일이 임박(0~60일).
+ * - A(Hot): 소개 유입, 또는 목표점수가 있고 시험일이 임박(0~60일).
  * - C(Cold): 14일 초과 미연락(저관여/응답 느림).
  * - B(Warm): 그 외 기본 (신규 미연락 리드 포함 — 아직 Cold는 아님).
  * 우선순위: A → C → B.
@@ -614,8 +618,8 @@ export function autoLeadTier(
   s: Pick<Student, 'traffic_source' | 'target_score' | 'target_test_date' | 'last_contacted_at'>,
   nowMs: number
 ): LeadTier {
-  // A: 소개/추천 유입
-  if (s.traffic_source === '소개/추천') return 'A';
+  // A: 소개 유입
+  if (s.traffic_source === '소개') return 'A';
   // A: 목표점수 있음 + 시험일 임박
   if (s.target_score != null && s.target_test_date) {
     const testMs = new Date(s.target_test_date).getTime();
@@ -663,22 +667,26 @@ export const INQUIRY_CHANNEL_OPTIONS: InquiryChannel[] = [
 ];
 
 export const TRAFFIC_SOURCE_OPTIONS: TrafficSource[] = [
-  '인스타그램 광고',
-  '인스타그램 오가닉',
-  '구글폼에서 즉시상담',
-  '네이버 검색 후 상담예약',
-  '네이버 카페',
-  '(구)랜딩페이지 즉시상담',
-  '(구)랜딩페이지 상담예약',
-  '(신)랜딩 페이지 상담예약',
-  '공식 블로그',
-  '브런치',
-  '책',
-  '소개/추천',
-  '레딧',
+  '소개',
   'B2B 파트너',
-  '기존DB',
+  '인스타그램 광고',
+  '랜딩 상담 폼 카톡 - SuperfastSAT!',
+  '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
+  '(구) 랜딩 구글폼 상담 예약',
+  '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',
+  '(신) 랜딩 즉시 카톡 상담 - [T] SuperfastSAT',
+  '(신) 랜딩 구글폼 상담 예약',
+  '네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastsSAT',
+  '네이버 블로그 게시물',
+  '네이버 카페',
+  '브런치 카톡 - [BR]SuperfastSAT',
+  '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)',
+  '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT',
   '대표전화',
+  '인스타그램 오가닉',
+  '책',
+  '레딧',
+  '기존DB',
 ];
 
 export const CONTENT_AUTHOR_OPTIONS: ContentAuthor[] = ['배병윤', '이민재', '김우영', '장현아'];
