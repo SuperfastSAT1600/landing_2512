@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   GRADE_OPTIONS_BY_SCHOOL_TYPE, TIMEZONE_OPTIONS,
 } from '@/types/crm';
 import {
   INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
 } from '@/types/crm';
-import { SAT_TEST_DATES, SAT_PAST_MONTHS } from '../constants';
+import { getSatTestDates, getSatPastMonths, formatSatDate } from '../constants';
 import type { EditForm } from '../types';
 
 const inputCls = 'w-full bg-gray-50 border border-gray-200 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all';
@@ -32,6 +32,18 @@ interface Props {
 export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) {
   const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
   const nameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 현재 날짜 기준 과거 응시 월 / 미래 목표 시험일 (실시간)
+  const satPastMonths = useMemo(() => getSatPastMonths(), []);
+  const satTestDates = useMemo(() => getSatTestDates(), []);
+  const satTestValues = useMemo(
+    () => new Set(satTestDates.flatMap(g => g.dates.map(d => d.value))),
+    [satTestDates],
+  );
+  // 이미 지나 목록에서 빠졌지만 저장돼 있는 목표일은 옵션으로 유지(값 손실 방지)
+  const staleTargetOption = (value: string) =>
+    value && !satTestValues.has(value)
+      ? <option value={value}>{formatSatDate(value)} (지난 시험)</option>
+      : null;
 
   const set = (key: keyof EditForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ ...form, [key]: e.target.value });
@@ -171,7 +183,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
           <EditField label="응시 월">
             <select value={form.previous_test_date} onChange={set('previous_test_date')} className={selectCls}>
               <option value="">(미상)</option>
-              {SAT_PAST_MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              {satPastMonths.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
             </select>
           </EditField>
           <div className="grid grid-cols-2 gap-2">
@@ -188,7 +200,8 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
         <EditField label="1차 목표 시험일">
           <select value={form.target_test_date} onChange={set('target_test_date')} className={selectCls}>
             <option value="">(미정)</option>
-            {SAT_TEST_DATES.map(g => (
+            {staleTargetOption(form.target_test_date)}
+            {satTestDates.map(g => (
               <optgroup key={g.group} label={g.group}>
                 {g.dates.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
               </optgroup>
@@ -203,7 +216,8 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
         <EditField label="2차 목표 시험일">
           <select value={form.target_test_date_2} onChange={set('target_test_date_2')} className={selectCls}>
             <option value="">(없음)</option>
-            {SAT_TEST_DATES.map(g => (
+            {staleTargetOption(form.target_test_date_2)}
+            {satTestDates.map(g => (
               <optgroup key={g.group} label={g.group}>
                 {g.dates.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
               </optgroup>
