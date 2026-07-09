@@ -7,6 +7,6 @@
     {
       "path": "/api/cron/phone-call-cleanup",
       "schedule": "0 18 * * *"
-    },
+    }
   ]
 }
