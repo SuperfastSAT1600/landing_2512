@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { UserPlus, Search, AlertCircle } from 'lucide-react';
 import { Student, isStageStalled, type InsightPeriod } from '@/types/crm';
 import { useCrmRealtime, RealtimeStatus } from '@/hooks/useCrmRealtime';
@@ -61,12 +61,16 @@ export default function CrmPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
   const [activeTab, setActiveTab] = useState<'today' | 'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('today');
-  const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'experiment' | 'library' | undefined>(undefined);
+  const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'experiment' | 'library' | 'strategy_ai' | undefined>(undefined);
   const [strategyPeriod, setStrategyPeriod] = useState<InsightPeriod | undefined>(undefined);
+  // 배너에서 고른 안건을 전략 에이전트로 이어 넘기는 시드(nonce 키로 매 선택 재발화).
+  const [strategySeed, setStrategySeed] = useState<{ key: number; text: string; period: InsightPeriod } | undefined>(undefined);
+  const seedNonce = useRef(0);
 
-  const openStrategyAgent = useCallback((period: InsightPeriod) => {
+  const openStrategyAgent = useCallback((period: InsightPeriod, seed?: string) => {
     setStrategyPeriod(period);
-    setStrategiesInitialSubTab('library');
+    if (seed) setStrategySeed({ key: ++seedNonce.current, text: seed, period });
+    setStrategiesInitialSubTab('strategy_ai');
     setActiveTab('strategies');
   }, []);
   const [retryContext, setRetryContext] = useState<{ id: string; name: string } | null>(null);
@@ -277,9 +281,6 @@ export default function CrmPage() {
 
       {/* Board area */}
       <div className="p-6">
-        {/* 접속 즉시 선제 인사이트 알림 */}
-        <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />
-
         {/* Tab navigation */}
         <div className="flex gap-1 mb-4">
           {([
@@ -365,7 +366,11 @@ export default function CrmPage() {
         )}
 
         {activeTab === 'strategies' && (
-          <StrategiesTab adminKey={adminKey} initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} />
+          <>
+            {/* 선제 인사이트 브리핑 — 전략/실행/회고 진입 시 상단에 표시 */}
+            <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />
+            <StrategiesTab adminKey={adminKey} initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} />
+          </>
         )}
 
         {activeTab === 'stats' && (

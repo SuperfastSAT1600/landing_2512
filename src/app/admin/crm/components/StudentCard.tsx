@@ -82,7 +82,6 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
         <p className="text-[11px] text-gray-400 mt-0.5">{student.parent_phone}</p>
       )}
 
-
       {/* 인입 채널 · 유입 소스 (하나로 합쳐 표시) */}
       {(student.inquiry_channel || student.traffic_source) && (
         <div className="mt-1">

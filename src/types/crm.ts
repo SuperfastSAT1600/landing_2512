@@ -221,6 +221,7 @@ export interface Student {
   // 결제완료 → 회원가입/카톡 단톡방 온보딩 추적 (최초 세일즈 칸반 8번 컬럼)
   kakao_chat_created: boolean | null; // 카톡 단톡방 개설 완료 여부
   signup_done_at: string | null; // 회원가입 완료 처리 시각. null=미완료(8번에 표시)
+  signup_token: string | null; // 플랫폼 회원가입 링크 토큰 (students select * 로 이미 로드됨)
 
   funnel_stage_updated_at: string | null;
   stage_history: Array<{ stage: string; label: string; entered_at: string }>;
@@ -701,7 +702,7 @@ export type ChurnTag = (typeof CHURN_TAG_OPTIONS)[number];
 // 선제 진단 인사이트 브리핑 API 계약 — insight-brief 라우트와 CrmInsightBanner가 공유.
 export type InsightBriefMode = 'diagnosis' | 'weekly';
 
-// 인사이트/전략 대화 분석 기간(YYYY-MM-DD). 없으면 "이번 달(1일~오늘)" 기본.
+// 인사이트/전략 대화 분석 기간(YYYY-MM-DD). 없으면 "오늘로부터 직전 한 달(최근 30일)" 기본.
 export interface InsightPeriod {
   from: string;
   to: string;
@@ -713,7 +714,6 @@ export interface InsightBriefArea {
   why: string;
   suggestion: string;
   question?: string;
-  lens?: string; // 심화(deep) 전용 — 적용한 구루 렌즈명 (예: 'Hormozi')
   evidence?: string; // 심화(deep) 전용 — 메모/웹 근거 한 줄
 }
 

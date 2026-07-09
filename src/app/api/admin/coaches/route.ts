@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
                 ? body.reelUrls.filter((u: string) => isValidInstagramUrl(u))
                 : [],
             subjects: Array.isArray(body.subjects) ? body.subjects : [],
+            isHeadCoach: body.isHeadCoach ?? false,
             v2UserId: body.v2UserId ?? null,
         };
 
@@ -94,6 +95,7 @@ export async function PATCH(request: NextRequest) {
             }
             safeUpdates.subjects = updates.subjects;
         }
+        if (updates.isHeadCoach !== undefined) safeUpdates.isHeadCoach = updates.isHeadCoach;
         if ('v2UserId' in updates) safeUpdates.v2UserId = updates.v2UserId ?? null;
         const ok = await updateCoach(slug, safeUpdates);
         if (!ok) {

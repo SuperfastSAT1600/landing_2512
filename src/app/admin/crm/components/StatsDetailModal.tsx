@@ -15,7 +15,7 @@ interface Props {
   label: string;
   from: string;
   to: string;
-  source?: string; // 있으면 해당 유입 채널로 필터(채널 드릴다운)
+  source?: string; // 있으면 해당 유입 소스로 필터(소스 드릴다운)
   onSelectStudent?: (id: string) => void; // 있으면 leads 이름 클릭 시 호출(상세 패널 열기)
   onClose: () => void;
 }
@@ -163,7 +163,7 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, on
               <thead>
                 <tr className="border-b border-gray-100 text-xs text-gray-500">
                   <th className="text-left py-2 pr-3 font-semibold">이름</th>
-                  <th className="text-left py-2 px-3 font-semibold">유입 채널</th>
+                  <th className="text-left py-2 px-3 font-semibold">유입 소스</th>
                   <th className="text-left py-2 px-3 font-semibold">단계</th>
                   <th className="text-left py-2 px-3 font-semibold">상태</th>
                   <th className="text-left py-2 px-3 font-semibold">이탈 사유</th>

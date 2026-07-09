@@ -1,7 +1,8 @@
 /**
  * 인사이트 브리핑 areas 파싱/폴백 — fast(insight-brief)와 deep(insight-brief/deep) 라우트 공유.
- * deep 전용 필드(lens/evidence)는 있으면 싣고 없으면 생략 → fast 출력은 기존과 동일.
+ * deep 전용 필드(evidence)는 있으면 싣고 없으면 생략. 개수는 에이전트가 판단 → 과도한 응답만 방어적으로 상한(10).
  */
+const MAX_AREAS = 10; // 에이전트가 개수를 정하되, UI 보호용 완만한 안전 상한
 import type { Signal } from '@/lib/strategy-health';
 import type { InsightBriefArea as BriefArea, InsightBriefMode as BriefMode } from '@/types/crm';
 
@@ -44,20 +45,18 @@ export function parseAreas(text: string, weakest: Signal[], mode: BriefMode): Br
         return mode === 'weekly' ? typeof o.question === 'string' : typeof o.suggestion === 'string';
       })
       .map((o): BriefArea => {
-        const lens = str(o.lens);
         const evidence = str(o.evidence);
         const base = {
           title: o.title as string,
           severity: sev(o.severity),
           why: o.why as string,
-          ...(lens ? { lens } : {}),
           ...(evidence ? { evidence } : {}),
         };
         return mode === 'weekly'
           ? { ...base, suggestion: '', question: o.question as string }
           : { ...base, suggestion: o.suggestion as string };
       })
-      .slice(0, 5);
+      .slice(0, MAX_AREAS);
     return valid.length > 0 ? valid : fallbackAreas(weakest, mode);
   } catch {
     return fallbackAreas(weakest, mode);

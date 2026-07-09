@@ -100,6 +100,13 @@ export default async function CoachesPage({ searchParams }: Props) {
                                                 ))}
                                             </div>
                                         )}
+                                        {coach.isHeadCoach && (
+                                            <div className="absolute top-3 right-3">
+                                                <span className="px-2 py-0.5 bg-black/70 backdrop-blur-md text-yellow-400 text-[10px] font-bold rounded-full border border-yellow-400/40 tracking-wide">
+                                                    ★ 대표코치
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="p-5 flex-1 flex flex-col">

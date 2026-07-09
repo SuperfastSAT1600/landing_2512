@@ -7,7 +7,7 @@ import { parseInstagramShortcode } from '@/lib/instagram-url';
 import CoachPageClient from './CoachPageClient';
 import type { PostData } from '@/lib/posts';
 
-export const revalidate = 86400;
+export const revalidate = 3600;
 
 interface Props {
     params: Promise<{ slug: string }>;

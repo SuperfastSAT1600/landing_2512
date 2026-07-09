@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>레슨 피드백 · 강사 전용 · 러너스 LRS</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:    #ffffff;
+  --bg-s:  #f7f7f8;
+  --text:  #111111;
+  --mute:  #888888;
+  --muted: #555555;
+  --line:  #dddde2;
+  --max:   1080px;
+  --pad:   clamp(24px, 5vw, 80px);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: Arial, sans-serif; font-size: 16px;
+  line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100vh;
+}
+
+/* ── Login ── */
+#login-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: var(--pad);
+}
+.login-wrap { max-width: 440px; width: 100%; }
+
+/* ── Nav ── */
+#topnav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--pad); height: 48px;
+}
+.brand { font-size: 11px; font-weight: 700; letter-spacing: 0.4em; text-transform: uppercase; color: var(--text); }
+.nav-link { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mute); text-decoration: none; transition: color 0.15s; }
+.nav-link:hover { color: var(--text); }
+
+/* ── Layout ── */
+.main { max-width: var(--max); margin: 0 auto; padding: 64px var(--pad) 120px; }
+.page-eyebrow { font-size: 9px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--mute); display: block; margin-bottom: 20px; }
+.page-title { font-size: clamp(32px, 5vw, 56px); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; line-height: 0.94; margin-bottom: 40px; }
+.hl { height: 0.5px; background: var(--line); margin-bottom: 40px; }
+
+/* ── Tabs ── */
+.tab-row { display: flex; border-bottom: 0.5px solid var(--line); margin-bottom: 40px; }
+.tab { padding: 10px 20px; font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--mute); cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -0.5px; transition: color 0.15s, border-color 0.15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+/* ── Forms ── */
+.form-group { margin-bottom: 28px; }
+.form-label { display: block; font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--mute); margin-bottom: 10px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+input[type="text"], input[type="date"], input[type="password"], textarea, select {
+  width: 100%; background: var(--bg); border: 0.5px solid var(--line);
+  color: var(--text); font-family: Arial, sans-serif; font-size: 14px;
+  padding: 12px 14px; outline: none; transition: border-color 0.15s;
+  appearance: none; -webkit-appearance: none;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--muted); }
+select { cursor: pointer; }
+textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+textarea.tall { min-height: 200px; }
+
+/* ── Roster checkboxes ── */
+.roster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 500px) { .roster-grid { grid-template-columns: repeat(2, 1fr); } }
+.roster-item {
+  display: flex; align-items: center; gap: 10px;
+  border: 0.5px solid var(--line); padding: 10px 14px;
+  cursor: pointer; user-select: none; transition: background 0.12s;
+}
+.roster-item:hover { background: var(--bg-s); }
+.roster-item input[type="checkbox"] {
+  width: 16px; height: 16px; flex-shrink: 0;
+  accent-color: var(--text);
+  margin: 0; padding: 0; border: none;
+  appearance: auto; -webkit-appearance: auto;
+}
+.roster-item.present { background: #f0faf4; border-color: #b2dfc8; }
+.roster-item.present .roster-name { color: var(--text); }
+.roster-name { font-size: 14px; color: var(--muted); transition: color 0.12s; }
+
+.student-rows { display: flex; flex-direction: column; gap: 12px; }
+.student-row { border: 0.5px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 10px; background: var(--bg-s); }
+.student-row-header { display: flex; align-items: center; gap: 12px; }
+.student-row-header select { flex: 1; }
+.remove-btn { background: none; border: 0.5px solid var(--line); color: var(--mute); cursor: pointer; font-family: Arial; font-size: 11px; padding: 8px 14px; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+.remove-btn:hover { border-color: #cc2222; color: #cc2222; }
+.add-student-btn { background: none; border: 0.5px dashed var(--line); color: var(--mute); cursor: pointer; font-family: Arial; font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; padding: 12px 20px; width: 100%; transition: all 0.15s; margin-top: 4px; }
+.add-student-btn:hover { border-color: var(--muted); color: var(--text); }
+
+.btn-primary { display: inline-block; background: var(--text); color: var(--bg); font-family: Arial; font-size: 10px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; padding: 14px 32px; border: none; cursor: pointer; transition: opacity 0.15s; }
+.btn-primary:hover { opacity: 0.8; }
+.btn-primary:disabled { opacity: 0.35; cursor: default; }
+.btn-ghost { display: inline-block; background: none; color: var(--muted); border: 0.5px solid var(--line); font-family: Arial; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; padding: 14px 24px; cursor: pointer; transition: all 0.15s; margin-left: 12px; }
+.btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+.msg { font-size: 12px; letter-spacing: 0.06em; padding: 12px 0; display: none; }
+.msg.success { color: #2a7a4e; display: block; }
+.msg.error   { color: #cc2222; display: block; }
+
+/* ── History ── */
+.unit-filter { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
+.uf-btn { background: none; border: 0.5px solid var(--line); color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.15s; }
+.uf-btn:hover { border-color: var(--muted); color: var(--text); }
+.uf-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+.fb-cards { display: flex; flex-direction: column; gap: 0; }
+.fb-card { border-top: 0.5px solid var(--line); padding: 32px 0; }
+.fb-card:last-child { border-bottom: 0.5px solid var(--line); }
+
+.fb-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
+.fb-card-date { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--mute); margin-bottom: 4px; }
+.fb-card-unit { font-size: 16px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.fb-edit-btn { background: none; border: 0.5px solid var(--line); color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+.fb-edit-btn:hover { border-color: var(--text); color: var(--text); }
+
+.fb-sections { display: flex; flex-direction: column; gap: 20px; }
+.fb-section { display: grid; grid-template-columns: 100px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 600px) { .fb-section { grid-template-columns: 1fr; gap: 6px; } }
+.fb-section-label { font-size: 8px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--mute); padding-top: 3px; }
+.fb-section-text { font-size: 14px; color: var(--muted); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.fb-student-list { display: flex; flex-direction: column; gap: 10px; }
+.fb-student-item { border-left: 2px solid var(--line); padding-left: 14px; }
+.fb-student-name { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text); margin-bottom: 4px; }
+.fb-student-note { font-size: 13px; color: var(--muted); line-height: 1.6; white-space: pre-wrap; }
+
+.card-edit-form { padding-top: 32px; margin-top: 32px; border-top: 0.5px solid var(--line); display: none; }
+.card-edit-form.open { display: block; }
+
+/* ── States ── */
+.state-msg { padding: 60px 0; font-size: 13px; color: var(--mute); }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--line); border-top-color: var(--muted); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 10px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ── Login Screen ─────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <span class="page-eyebrow">레슨 피드백 &nbsp;·&nbsp; 강원 U-18 영어 인터뷰 수업</span>
+    <h1 class="page-title">강사<br>전용</h1>
+    <div class="hl"></div>
+    <div class="form-group" style="max-width:260px">
+      <label class="form-label" for="login-pw">비밀번호</label>
+      <input type="password" id="login-pw" maxlength="6"
+             style="letter-spacing:0.4em;font-size:22px;font-weight:700;text-align:center;"
+             onkeydown="if(event.key==='Enter')doLogin()" autocomplete="off" />
+    </div>
+    <button class="btn-primary" onclick="doLogin()">입장하기</button>
+    <div class="msg" id="login-msg"></div>
+  </div>
+</div>
+
+<!-- ── App (강사 인증 후 표시) ──────────────────────────── -->
+<div id="app" style="display:none">
+
+<nav id="topnav">
+  <span class="brand">러너스 LRS</span>
+  <a href="unit1.html" class="nav-link">← 홈</a>
+</nav>
+
+<div class="main">
+  <span class="page-eyebrow">레슨 피드백 &nbsp;·&nbsp; 강원 U-18 영어 인터뷰 수업 &nbsp;·&nbsp; 강사 전용</span>
+  <h1 class="page-title">Lesson<br>Feedback</h1>
+  <div class="hl"></div>
+
+  <div class="tab-row">
+    <div class="tab active" onclick="switchTab('write', this)">작성하기</div>
+    <div class="tab" onclick="switchTab('history', this)">이전 피드백</div>
+  </div>
+
+  <!-- ── 작성하기 Panel ─────────────────────────── -->
+  <div id="panel-write">
+
+    <div class="form-row" style="margin-bottom:28px;">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="sel-unit">유닛</label>
+        <select id="sel-unit" onchange="onUnitChange()">
+          <option value="">유닛 선택</option>
+          <option value="unit1">Unit 1 — Self-Introduction &amp; Joining the Team</option>
+          <option value="unit2">Unit 2 — Win / Lose Interview</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="inp-date">수업 날짜</label>
+        <input type="date" id="inp-date" />
+      </div>
+    </div>
+
+    <div class="form-row" style="margin-bottom:28px;">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="inp-start-time">수업 시작 시간</label>
+        <input type="time" id="inp-start-time" />
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="inp-end-time">수업 종료 시간</label>
+        <input type="time" id="inp-end-time" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="inp-content">이번 수업 내용 <span style="color:var(--line);font-size:8px;">(유닛 선택 시 자동 입력 · 수정 가능)</span></label>
+      <textarea id="inp-content" class="tall" placeholder="유닛을 먼저 선택하면 자동으로 내용이 채워집니다."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">출석 체크 <span style="color:var(--line);font-size:8px;">(체크 = 출석 / 미체크 = 결석)</span></label>
+      <div class="roster-grid" id="roster-checks">
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="황은총" checked onchange="updateRosterStyle(this)"><span class="roster-name">황은총</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="김어진" checked onchange="updateRosterStyle(this)"><span class="roster-name">김어진</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="이용재" checked onchange="updateRosterStyle(this)"><span class="roster-name">이용재</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="이정현" checked onchange="updateRosterStyle(this)"><span class="roster-name">이정현</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="강준혁" checked onchange="updateRosterStyle(this)"><span class="roster-name">강준혁</span></label>
+        <label class="roster-item present"><input type="checkbox" class="roster-cb" value="조원우" checked onchange="updateRosterStyle(this)"><span class="roster-name">조원우</span></label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">학생별 메모 <span style="color:var(--line);font-size:8px;">(구단에게 전달할 내용)</span></label>
+      <div class="student-rows" id="student-rows"></div>
+      <button class="add-student-btn" onclick="addWriteRow()">+ 학생 추가</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="inp-hw">숙제</label>
+      <textarea id="inp-hw" placeholder="이번 수업의 숙제 안내를 입력하세요."></textarea>
+    </div>
+
+    <button class="btn-primary" id="submit-btn" onclick="submitFeedback()">저장하기</button>
+    <div class="msg" id="write-msg"></div>
+  </div>
+
+  <!-- ── 이전 피드백 Panel ─────────────────────── -->
+  <div id="panel-history" style="display:none">
+    <div class="unit-filter">
+      <button class="uf-btn active" onclick="filterUnit('all', this)">전체</button>
+      <button class="uf-btn" onclick="filterUnit('unit1', this)">Unit 1</button>
+      <button class="uf-btn" onclick="filterUnit('unit2', this)">Unit 2</button>
+    </div>
+    <div id="history-area">
+      <div class="state-msg">이전 피드백 탭을 열면 자동으로 불러옵니다.</div>
+    </div>
+  </div>
+
+</div><!-- .main -->
+</div><!-- #app -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
+const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+const PASS = '270706';
+const UNIT_LABELS = { unit1: 'Unit 1', unit2: 'Unit 2' };
+const UNIT_TEMPLATES = {
+  unit1: `Unit 1: Self-Introduction & Joining the Team\n\n오늘 수업에서는 영어 인터뷰에서 자기소개 및 팀 합류 인사를 자연스럽게 할 수 있도록 연습했습니다.\n\n주요 학습 내용:\n- REWATCH: Son Heung-min의 팀 합류 인터뷰 영상을 함께 분석했습니다.\n- PREPARE: 빈칸 채우기를 통해 핵심 표현을 익혔습니다.\n  01. I'm incredibly ___ to be joining ___\n  02. I have come here to ___ and give everything for ___\n  03. I can't wait to ___ with ___\n  04. It's ___ to be part of ___`,
+  unit2: `Unit 2: Win / Lose Interview\n\n오늘 수업에서는 경기 결과에 따라 다른 톤과 표현으로 인터뷰하는 방법을 연습했습니다.\n\n주요 학습 내용:\n- WIN 인터뷰: Son Heung-min (Tottenham 4-0 Southampton 2021) 승리 후 인터뷰 분석\n- LOSE 인터뷰: Bukayo Saka (Arsenal 0-1 Newcastle 2022) 패배 후 인터뷰 분석\n- COMPARE: 승패 상황의 언어적 차이 비교 학습`
+};
+
+/* ── Auth ── */
+document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('fb_auth') === '1') unlock();
+  document.getElementById('inp-date').value = today();
+  addWriteRow();
+});
+
+function doLogin() {
+  const pw = document.getElementById('login-pw').value;
+  if (pw === PASS) { sessionStorage.setItem('fb_auth', '1'); unlock(); }
+  else showMsg(document.getElementById('login-msg'), 'error', '비밀번호가 맞지 않습니다.');
+}
+
+function unlock() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+/* ── Tabs ── */
+let historyLoaded = false;
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-write').style.display   = tab === 'write'   ? 'block' : 'none';
+  document.getElementById('panel-history').style.display = tab === 'history' ? 'block' : 'none';
+  if (tab === 'history' && !historyLoaded) loadHistory();
+}
+
+/* ── Write ── */
+let writeRowCount = 0;
+function today() { return new Date().toISOString().slice(0, 10); }
+
+function onUnitChange() {
+  const unit = document.getElementById('sel-unit').value;
+  document.getElementById('inp-content').value = unit ? (UNIT_TEMPLATES[unit] || '') : '';
+}
+
+const ROSTER = ['황은총','김어진','이용재','이정현','강준혁','조원우'];
+
+function updateRosterStyle(cb) {
+  cb.closest('.roster-item').classList.toggle('present', cb.checked);
+}
+
+function addWriteRow() {
+  writeRowCount++;
+  const id = `wr-${writeRowCount}`;
+  const opts = ROSTER.map(n => `<option value="${n}">${n}</option>`).join('');
+  const div = document.createElement('div');
+  div.className = 'student-row'; div.id = id;
+  div.innerHTML = `
+    <div class="student-row-header">
+      <select class="sr-name">
+        <option value="">학생 선택</option>
+        ${opts}
+      </select>
+      <button class="remove-btn" onclick="document.getElementById('${id}').remove()">삭제</button>
+    </div>
+    <textarea placeholder="메모" class="sr-note" style="min-height:80px;"></textarea>`;
+  document.getElementById('student-rows').appendChild(div);
+}
+
+function collectNotes(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('.student-row'))
+    .map(r => ({ name: r.querySelector('.sr-name').value.trim(), note: r.querySelector('.sr-note').value.trim() }))
+    .filter(n => n.name || n.note);
+}
+
+function parseNames(el) {
+  return el.value.split('\n').map(n => n.trim()).filter(Boolean);
+}
+
+async function submitFeedback() {
+  const unit    = document.getElementById('sel-unit').value.trim();
+  const date    = document.getElementById('inp-date').value.trim();
+  const content = document.getElementById('inp-content').value.trim();
+  const hw      = document.getElementById('inp-hw').value.trim();
+  const msgEl   = document.getElementById('write-msg');
+  msgEl.className = 'msg';
+
+  if (!unit)    return showMsg(msgEl, 'error', '유닛을 선택해주세요.');
+  if (!date)    return showMsg(msgEl, 'error', '수업 날짜를 입력해주세요.');
+  if (!content) return showMsg(msgEl, 'error', '수업 내용을 입력해주세요.');
+
+  const cbs = Array.from(document.querySelectorAll('#roster-checks .roster-cb'));
+  const attendees = cbs.filter(c => c.checked).map(c => c.value);
+  const absentees = cbs.filter(c => !c.checked).map(c => c.value);
+  const notes     = collectNotes('student-rows');
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  const startTime = document.getElementById('inp-start-time').value || null;
+  const endTime   = document.getElementById('inp-end-time').value   || null;
+
+  const { error } = await sb.from('b2b_lesson_feedback').insert({
+    unit, lesson_date: date, lesson_content: content,
+    student_notes: notes.length ? notes : null,
+    homework: hw || null,
+    attendees: attendees.length ? attendees : null,
+    absentees: absentees.length ? absentees : null,
+    start_time: startTime,
+    end_time:   endTime,
+    club_id:    'gangwon',
+  });
+
+  btn.disabled = false; btn.textContent = '저장하기';
+  if (error) return showMsg(msgEl, 'error', '저장 실패: ' + error.message);
+
+  showMsg(msgEl, 'success', '저장됐습니다.');
+  document.getElementById('sel-unit').value = '';
+  document.getElementById('inp-content').value = '';
+  document.getElementById('inp-hw').value = '';
+  document.querySelectorAll('#roster-checks .roster-cb').forEach(cb => {
+    cb.checked = true;
+    updateRosterStyle(cb);
+  });
+  document.getElementById('inp-start-time').value = '';
+  document.getElementById('inp-end-time').value = '';
+  document.getElementById('student-rows').innerHTML = '';
+  writeRowCount = 0;
+  addWriteRow();
+  document.getElementById('inp-date').value = today();
+  historyLoaded = false; // force reload next time history tab is opened
+}
+
+/* ── History ── */
+let allFeedbacks = [];
+let currentFilter = 'all';
+let openEditId = null;
+let editRowCount = 0;
+
+async function loadHistory() {
+  const area = document.getElementById('history-area');
+  area.innerHTML = '<div class="state-msg"><span class="spinner"></span>불러오는 중…</div>';
+
+  const { data, error } = await sb
+    .from('b2b_lesson_feedback').select('*')
+    .order('lesson_date', { ascending: false });
+
+  if (error) { area.innerHTML = `<div class="state-msg">오류: ${esc(error.message)}</div>`; return; }
+  allFeedbacks = data || [];
+  historyLoaded = true;
+  renderHistory();
+}
+
+function filterUnit(unit, el) {
+  currentFilter = unit;
+  document.querySelectorAll('.uf-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  openEditId = null;
+  renderHistory();
+}
+
+function renderHistory() {
+  const area = document.getElementById('history-area');
+  const list = currentFilter === 'all' ? allFeedbacks : allFeedbacks.filter(f => f.unit === currentFilter);
+  if (!list.length) { area.innerHTML = '<div class="state-msg">피드백이 없습니다.</div>'; return; }
+  area.innerHTML = '<div class="fb-cards">' + list.map(renderCard).join('') + '</div>';
+}
+
+function renderCard(fb) {
+  const dateStr = fb.lesson_date
+    ? new Date(fb.lesson_date + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '—';
+
+  let sectionsHtml = '';
+  if (fb.lesson_content) {
+    sectionsHtml += `<div class="fb-section"><span class="fb-section-label">수업 내용</span><div class="fb-section-text">${esc(fb.lesson_content)}</div></div>`;
+  }
+  if (fb.attendees?.length || fb.absentees?.length) {
+    const a = fb.attendees?.length ? esc(fb.attendees.join(', ')) : '없음';
+    const b = fb.absentees?.length ? esc(fb.absentees.join(', ')) : '없음';
+    sectionsHtml += `<div class="fb-section"><span class="fb-section-label">출결</span><div class="fb-section-text">출석: ${a}<br>결석: ${b}</div></div>`;
+  }
+  if (fb.student_notes?.length) {
+    const items = fb.student_notes.map(s => `
+      <div class="fb-student-item">
+        <div class="fb-student-name">${esc(s.name||'—')}</div>
+        <div class="fb-student-note">${esc(s.note||'')}</div>
+      </div>`).join('');
+    sectionsHtml += `<div class="fb-section"><span class="fb-section-label">학생별 메모</span><div class="fb-student-list">${items}</div></div>`;
+  }
+  if (fb.homework) {
+    sectionsHtml += `<div class="fb-section"><span class="fb-section-label">숙제</span><div class="fb-section-text">${esc(fb.homework)}</div></div>`;
+  }
+
+  const fid = fb.id;
+  const fkey = fid.replace(/-/g, '_');
+
+  return `
+    <div class="fb-card" id="card-${fid}">
+      <div id="view-${fid}">
+        <div class="fb-card-header">
+          <div>
+            <div class="fb-card-date">${dateStr}</div>
+            <div class="fb-card-unit">${esc(UNIT_LABELS[fb.unit] || fb.unit || '—')}</div>
+          </div>
+          <button class="fb-edit-btn" onclick="openEdit('${fid}')">수정</button>
+        </div>
+        <div class="fb-sections">${sectionsHtml || '<span style="font-size:13px;color:var(--mute)">내용 없음</span>'}</div>
+      </div>
+      <div class="card-edit-form" id="ef-${fid}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+          <span style="font-size:9px;letter-spacing:0.28em;text-transform:uppercase;color:var(--mute);">수정 중</span>
+          <button class="fb-edit-btn" onclick="closeEdit('${fid}')">취소</button>
+        </div>
+        <div class="form-row" style="margin-bottom:28px;">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">유닛</label>
+            <select id="${fkey}_unit">
+              <option value="unit1" ${fb.unit==='unit1'?'selected':''}>Unit 1 — Self-Introduction &amp; Joining the Team</option>
+              <option value="unit2" ${fb.unit==='unit2'?'selected':''}>Unit 2 — Win / Lose Interview</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">수업 날짜</label>
+            <input type="date" id="${fkey}_date" value="${esc(fb.lesson_date||'')}" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">수업 내용</label>
+          <textarea id="${fkey}_content" class="tall">${esc(fb.lesson_content||'')}</textarea>
+        </div>
+        <div class="form-row" style="margin-bottom:28px;">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">출석 학생 <span style="color:var(--line);font-size:8px;">(한 줄에 한 명)</span></label>
+            <textarea id="${fkey}_att" style="min-height:90px;">${esc((fb.attendees||[]).join('\n'))}</textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">결석 학생 <span style="color:var(--line);font-size:8px;">(한 줄에 한 명)</span></label>
+            <textarea id="${fkey}_abs" style="min-height:90px;">${esc((fb.absentees||[]).join('\n'))}</textarea>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">학생별 메모</label>
+          <div class="student-rows" id="${fkey}_notes"></div>
+          <button class="add-student-btn" onclick="addEditRow('${fkey}_notes')">+ 학생 추가</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">숙제</label>
+          <textarea id="${fkey}_hw">${esc(fb.homework||'')}</textarea>
+        </div>
+        <button class="btn-primary" id="${fkey}_save" onclick="saveEdit('${fid}','${fkey}')">수정 저장하기</button>
+        <button class="btn-ghost" onclick="closeEdit('${fid}')">취소</button>
+        <div class="msg" id="${fkey}_msg"></div>
+      </div>
+    </div>`;
+}
+
+function addEditRow(containerId, name = '', note = '') {
+  editRowCount++;
+  const id = `er-${editRowCount}`;
+  const div = document.createElement('div');
+  div.className = 'student-row'; div.id = id;
+  div.innerHTML = `
+    <div class="student-row-header">
+      <input type="text" placeholder="학생 이름" class="sr-name" value="${escAttr(name)}" />
+      <button class="remove-btn" onclick="document.getElementById('${id}').remove()">삭제</button>
+    </div>
+    <textarea placeholder="메모" class="sr-note" style="min-height:80px;">${escHtml(note)}</textarea>`;
+  document.getElementById(containerId).appendChild(div);
+}
+
+function openEdit(fid) {
+  if (openEditId && openEditId !== fid) closeEdit(openEditId);
+  openEditId = fid;
+  const fkey = fid.replace(/-/g, '_');
+  document.getElementById(`ef-${fid}`).classList.add('open');
+  document.getElementById(`view-${fid}`).style.opacity = '0.35';
+
+  const notesContainer = document.getElementById(`${fkey}_notes`);
+  if (notesContainer && !notesContainer.children.length) {
+    const fb = allFeedbacks.find(f => f.id === fid);
+    if (fb?.student_notes?.length) {
+      fb.student_notes.forEach(n => addEditRow(`${fkey}_notes`, n.name, n.note));
+    } else {
+      addEditRow(`${fkey}_notes`);
+    }
+  }
+  document.getElementById(`ef-${fid}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeEdit(fid) {
+  document.getElementById(`ef-${fid}`)?.classList.remove('open');
+  const viewEl = document.getElementById(`view-${fid}`);
+  if (viewEl) viewEl.style.opacity = '1';
+  if (openEditId === fid) openEditId = null;
+}
+
+async function saveEdit(fid, fkey) {
+  const unit    = document.getElementById(`${fkey}_unit`).value;
+  const date    = document.getElementById(`${fkey}_date`).value.trim();
+  const content = document.getElementById(`${fkey}_content`).value.trim();
+  const hw      = document.getElementById(`${fkey}_hw`).value.trim();
+  const msgEl   = document.getElementById(`${fkey}_msg`);
+  msgEl.className = 'msg';
+
+  if (!date)    return showMsg(msgEl, 'error', '날짜를 입력해주세요.');
+  if (!content) return showMsg(msgEl, 'error', '수업 내용을 입력해주세요.');
+
+  const attendees = parseNames(document.getElementById(`${fkey}_att`));
+  const absentees = parseNames(document.getElementById(`${fkey}_abs`));
+  const notes     = collectNotes(`${fkey}_notes`);
+
+  const btn = document.getElementById(`${fkey}_save`);
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  const { error } = await sb.from('b2b_lesson_feedback').update({
+    unit, lesson_date: date, lesson_content: content,
+    student_notes: notes.length ? notes : null,
+    homework: hw || null,
+    attendees: attendees.length ? attendees : null,
+    absentees: absentees.length ? absentees : null,
+  }).eq('id', fid);
+
+  btn.disabled = false; btn.textContent = '수정 저장하기';
+  if (error) return showMsg(msgEl, 'error', '수정 실패: ' + error.message);
+  showMsg(msgEl, 'success', '수정됐습니다.');
+
+  const idx = allFeedbacks.findIndex(f => f.id === fid);
+  if (idx !== -1) {
+    allFeedbacks[idx] = { ...allFeedbacks[idx], unit, lesson_date: date, lesson_content: content,
+      student_notes: notes.length ? notes : null, homework: hw || null,
+      attendees: attendees.length ? attendees : null, absentees: absentees.length ? absentees : null };
+  }
+}
+
+/* ── Helpers ── */
+function showMsg(el, type, text) { el.className = 'msg ' + type; el.textContent = text; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escHtml(s) { return esc(s); }
+function escAttr(s) { return String(s||'').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

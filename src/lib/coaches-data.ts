@@ -8,6 +8,7 @@ export interface CoachData {
     introPostSlug: string;
     curriculumPostSlug: string;
     isActive: boolean;
+    isHeadCoach: boolean;
     reelUrls: string[];
     subjects: string[];
     v2UserId: string | null;
@@ -21,6 +22,7 @@ type CoachRow = {
     intro_post_slug: string;
     curriculum_post_slug: string;
     is_active: boolean;
+    is_head_coach: boolean;
     reel_urls: string[] | null;
     subjects: string[] | null;
     v2_user_id: string | null;
@@ -35,6 +37,7 @@ function rowToCoach(row: CoachRow): CoachData {
         introPostSlug: row.intro_post_slug ?? '',
         curriculumPostSlug: row.curriculum_post_slug,
         isActive: row.is_active,
+        isHeadCoach: row.is_head_coach ?? false,
         reelUrls: row.reel_urls ?? [],
         subjects: row.subjects ?? [],
         v2UserId: row.v2_user_id ?? null,
@@ -79,6 +82,7 @@ export async function addCoach(coach: CoachData): Promise<boolean> {
         intro_post_slug: coach.introPostSlug,
         curriculum_post_slug: coach.curriculumPostSlug,
         is_active: coach.isActive,
+        is_head_coach: coach.isHeadCoach ?? false,
         reel_urls: coach.reelUrls ?? [],
         subjects: coach.subjects ?? [],
         v2_user_id: coach.v2UserId ?? null,
@@ -94,6 +98,7 @@ export async function updateCoach(slug: string, updates: Partial<CoachData>): Pr
     if (updates.introPostSlug !== undefined) dbUpdates.intro_post_slug = updates.introPostSlug;
     if (updates.curriculumPostSlug !== undefined) dbUpdates.curriculum_post_slug = updates.curriculumPostSlug;
     if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+    if (updates.isHeadCoach !== undefined) dbUpdates.is_head_coach = updates.isHeadCoach;
     if (updates.reelUrls !== undefined) dbUpdates.reel_urls = updates.reelUrls;
     if (updates.subjects !== undefined) dbUpdates.subjects = updates.subjects;
     if (updates.v2UserId !== undefined) dbUpdates.v2_user_id = updates.v2UserId;

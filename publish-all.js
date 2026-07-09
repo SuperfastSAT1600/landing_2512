@@ -77,7 +77,9 @@ async function publishToLanding({ id, title, content, excerpt, description, feat
 }
 
 // ─── 통합 실행 ────────────────────────────────────
-async function publishAll({ ghost, landing }) {
+const { saveToArchive } = require('./scripts/archive')
+
+async function publishAll({ ghost, landing, archiveMeta }) {
   const ghostStatus = isDraft ? 'draft' : 'published'
   const isPublished = !isDraft
   console.log(`🚀 포스팅 시작 [${isDraft ? 'DRAFT' : 'PUBLISH'}]`)
@@ -89,6 +91,12 @@ async function publishAll({ ghost, landing }) {
   ])
   if (ghostResult.status === 'rejected') console.error('Ghost 오류:', ghostResult.reason.message)
   if (landingResult.status === 'rejected') console.error('랜딩 오류:', landingResult.reason.message)
+
+  // --publish 시에만 아카이브 저장
+  if (!isDraft && archiveMeta) {
+    saveToArchive(archiveMeta)
+  }
+
   console.log('\n🎉 완료!')
 }
 
@@ -146,5 +154,14 @@ publishAll({
     author: "배병윤",
     date: "2026-05-01",
     focus_keyword: "SAT 단어",
+  },
+  archiveMeta: {
+    ghostFilePath: 'content/posts/2026-05-01-sat-may-vocab-491-ghost.md',
+    slug: 'sat-may-2026-vocab-491',
+    title: '5월 SAT 직전 확인 단어 491개 — 4중 근거로 선정한 리스트',
+    date: '2026-05-01',
+    tags: ["SAT", "SAT단어", "SAT어휘", "5월SAT"],
+    category: 'SAT RW',
+    excerpt: 'College Board 최신 98개 문제와 1,527개 전체 분석으로 검증된 491개 단어입니다.',
   },
 })

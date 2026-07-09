@@ -2,6 +2,7 @@
 
 import { X, ChevronDown, Check } from 'lucide-react';
 import { PortalAccessToggle } from '@/app/admin/components/PortalAccessToggle';
+import { SignupLinkToggle } from '@/app/admin/components/SignupLinkToggle';
 import type { Student, FunnelStage } from '@/types/crm';
 import { FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS } from '@/types/crm';
 import { SALES_STAGES_ONLY } from '../constants';
@@ -14,6 +15,10 @@ interface Props {
   hasPortal: boolean;
   portalCopied: boolean;
   portalLoading: boolean;
+  hasSignup: boolean;
+  signupConsumed: boolean;
+  signupCopied: boolean;
+  signupLoading: boolean;
   deleting: boolean;
   funnelChanging: boolean;
   showFunnelMenu: boolean;
@@ -24,6 +29,8 @@ interface Props {
   onIssuePortal: () => void;
   onCopyPortalLink: () => void;
   onPreviewPortal: () => void;
+  onCopySignupLink: () => void;
+  onRegenerateSignup: () => void;
   onDelete: () => void;
   onToggleFunnelMenu: () => void;
   onFunnelChange: (stage: FunnelStage) => void;
@@ -37,9 +44,11 @@ interface Props {
 }
 
 export function PanelHeader({
-  localStudent, duplicateNames = [], isPaused, pauseUntil, hasPortal, portalCopied, portalLoading, deleting, funnelChanging,
+  localStudent, duplicateNames = [], isPaused, pauseUntil, hasPortal, portalCopied, portalLoading,
+  hasSignup, signupConsumed, signupCopied, signupLoading, deleting, funnelChanging,
   showFunnelMenu, showReactivateForm, reactivateStrategy, reactivating,
-  onClose, onIssuePortal, onCopyPortalLink, onPreviewPortal, onDelete, onToggleFunnelMenu, onFunnelChange,
+  onClose, onIssuePortal, onCopyPortalLink, onPreviewPortal, onCopySignupLink, onRegenerateSignup,
+  onDelete, onToggleFunnelMenu, onFunnelChange,
   onShowPayment, onShowChurn, onShowReactivate, onHideReactivate,
   onReactivateStrategyChange, onStartReactivation, onLeadStatusChange,
 }: Props) {
@@ -67,20 +76,31 @@ export function PanelHeader({
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0 mt-0.5">
-          <PortalAccessToggle
-            hasPortal={hasPortal}
-            issuing={portalLoading}
-            copied={portalCopied}
-            theme="light"
-            onToggle={onIssuePortal}
-            onCopy={onCopyPortalLink}
-            onPreview={onPreviewPortal}
-          />
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={16} className="text-gray-400" />
-          </button>
-        </div>
+        <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors shrink-0 -mr-1.5 mt-0.5">
+          <X size={16} className="text-gray-400" />
+        </button>
+      </div>
+
+      {/* 링크 컨트롤: 좁은 패널(440px)에서 이름을 밀지 않도록 별도 행에 두고 wrap 허용 */}
+      <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap mb-3">
+        <PortalAccessToggle
+          hasPortal={hasPortal}
+          issuing={portalLoading}
+          copied={portalCopied}
+          theme="light"
+          onToggle={onIssuePortal}
+          onCopy={onCopyPortalLink}
+          onPreview={onPreviewPortal}
+        />
+        <SignupLinkToggle
+          hasSignup={hasSignup}
+          isConsumed={signupConsumed}
+          loading={signupLoading}
+          copied={signupCopied}
+          theme="light"
+          onCopy={onCopySignupLink}
+          onRegenerate={onRegenerateSignup}
+        />
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
