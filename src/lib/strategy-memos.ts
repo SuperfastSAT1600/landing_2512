@@ -80,10 +80,10 @@ export function pickCohort(activeRows: CohortRow[], churnedRows: CohortRow[], no
 /**
  * 정체(active+SLA초과) + 이탈 리드를 합쳐 메모 있는 코호트로 추린다.
  * 정량([KPI 건강 진단])과 같은 모수를 보도록 인입일(inquiry_date)을 분석 기간으로 한정.
- * period 없으면 이번 달(1일~오늘), 있으면 [from, to] 구간.
+ * period 없으면 오늘로부터 직전 한 달(최근 30일: 오늘−29일~오늘), 있으면 [from, to] 구간.
  */
 async function fetchCohort(nowMs: number, period?: InsightPeriod): Promise<CohortRow[]> {
-  const from = period?.from ?? `${kstDateStr(nowMs).slice(0, 7)}-01`;
+  const from = period?.from ?? kstDateStr(nowMs - 29 * 86_400_000);
   const to = period?.to ?? kstDateStr(nowMs);
   const toBound = `${to}T23:59:59`; // 종료일 하루 전체 포함 (stats 라우트와 동일 규약)
   const active = supabaseAdmin
@@ -223,7 +223,7 @@ export async function buildMemoSignals(nowMs: number = Date.now(), period?: Insi
     const themes = parseThemes(text);
     const body = buildSignalLines(themes, leadTexts(rows));
     if (!body) return { memoBlock: '', leadCount: rows.length };
-    const cohortLabel = period?.from ? `${period.from}~${period.to} 인입` : '이번 달 인입';
+    const cohortLabel = period?.from ? `${period.from}~${period.to} 인입` : '최근 한 달(30일) 인입';
     const memoBlock = `[상담 메모 신호 · ${cohortLabel} 리드 중 정체/이탈 ${rows.length}명 분석]\n${body}`;
     return { memoBlock, leadCount: rows.length };
   } catch (err) {

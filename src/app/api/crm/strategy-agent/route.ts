@@ -181,14 +181,18 @@ export async function POST(request: NextRequest) {
 
       claudeStream = client.messages.stream({
         model: MODEL,
-        max_tokens: 3072,
+        // 사고 토큰이 max_tokens에 포함되므로 넉넉히(스트리밍이라 타임아웃 무관).
+        max_tokens: 16000,
+        // Opus 4.8 확장 사고: adaptive + high effort로 전략 추론 깊이 확보(budget_tokens는 400).
+        thinking: { type: 'adaptive' },
+        output_config: { effort: 'high' },
         system: [
           { type: 'text', text: STRATEGY_AGENT_SYSTEM_PROMPT },
           { type: 'text', text: STRATEGY_GURU_PROMPT, cache_control: { type: 'ephemeral' } },
           { type: 'text', text: contextBlock, cache_control: { type: 'ephemeral' } },
         ],
-        // 인터넷 최신 사례·벤치마크를 직접 검색해 근거로 활용
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: WEB_SEARCH_MAX_USES }],
+        // 인터넷 최신 사례·벤치마크를 직접 검색해 근거로 활용(동적 필터링 버전).
+        tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: WEB_SEARCH_MAX_USES }],
         messages: messages.map((m) => ({ role: m.role, content: m.content })),
       });
 

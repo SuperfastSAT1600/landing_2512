@@ -74,7 +74,6 @@ export function useEditForm({ studentId, adminKey, localStudent, setLocalStudent
         lead_type: editForm.lead_type as Student['lead_type'],
         b2b_partner: editForm.lead_type === 'B2B' && editForm.b2b_partner
           ? editForm.b2b_partner as Student['b2b_partner'] : null,
-        lead_tier: (editForm.lead_tier as Student['lead_tier']) || null,
         first_message_sent_at: fromDatetimeLocal(editForm.first_message_sent_at),
         // 소개자: 유입 소스가 '소개/추천'일 때만 저장, 아니면 정리(null)
         referral_student_id: editForm.traffic_source === '소개/추천' ? (editForm.referral_student_id || null) : null,

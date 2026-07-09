@@ -29,7 +29,6 @@ function rows(spec: { n: number; row: Partial<CorrelationRow> }[]): CorrelationR
     reachedStage4: true,
     memoCount: 0,
     firstResponseHours: null,
-    tier: null,
     vocabWeak: null,
     backtracked: false,
   };
@@ -109,24 +108,25 @@ describe('computeCorrelations — 게이트', () => {
 
 describe('rankCorrelations — surprise 수축', () => {
   it('고표본·중격차가 저표본·고격차를 이긴다(adequacy 수축으로 역전)', () => {
-    // 티어: A n=6(전환 66.7%) vs C n=6(0%) → 격차 0.667, adequacy 6/14≈0.429 → surprise≈0.286
-    // 첫응답: 48h+ n=80(10%) vs 이내 n=80(45%) → 격차 0.35, adequacy 80/88≈0.909 → surprise≈0.318
-    // 격차는 티어가 더 크지만, 수축 후 첫응답(고표본)이 더 높아야 한다.
+    // 어휘약점: 약점 n=6(이탈 66.7%) vs 없음 n=6(0%) → 격차 0.667 (저표본·고격차)
+    // 첫응답: 48h+ n=80(10%) vs 이내 n=80(45%) → 격차 0.35 (고표본·중격차)
+    // 격차는 어휘약점이 더 크지만, 수축 후 첫응답(고표본)이 더 높아야 한다.
+    // (두 가설의 base가 겹치지 않도록: 어휘 행은 firstResponseHours=null, 응답 행은 vocabWeak=null)
     const data = rows([
-      { n: 4, row: { tier: 'A', isPaid: true } },
-      { n: 2, row: { tier: 'A', isPaid: false } },
-      { n: 6, row: { tier: 'C', isPaid: false } },
+      { n: 4, row: { vocabWeak: true, isChurned: true } },
+      { n: 2, row: { vocabWeak: true, isChurned: false } },
+      { n: 6, row: { vocabWeak: false, isChurned: false } },
       { n: 8, row: { firstResponseHours: 72, isPaid: true } },
       { n: 72, row: { firstResponseHours: 72, isPaid: false } },
       { n: 36, row: { firstResponseHours: 10, isPaid: true } },
       { n: 44, row: { firstResponseHours: 10, isPaid: false } },
     ]);
     const ranked = rankCorrelations(computeCorrelations(data), 3);
-    const tier = ranked.find((c) => c.key === 'tier_x_conversion')!;
+    const vocab = ranked.find((c) => c.key === 'vocab_weak_x_churn')!;
     const resp = ranked.find((c) => c.key === 'first_response_x_conversion')!;
-    expect(tier).toBeDefined();
+    expect(vocab).toBeDefined();
     expect(resp).toBeDefined();
-    expect(resp.surprise).toBeGreaterThan(tier.surprise); // 수축으로 고표본이 역전
+    expect(resp.surprise).toBeGreaterThan(vocab.surprise); // 수축으로 고표본이 역전
     expect(ranked[0].key).toBe('first_response_x_conversion');
   });
 });

@@ -1,5 +1,5 @@
 /**
- * 심화 인사이트 — 정량 KPI + 상담 메모 정성 신호 + 구루 렌즈 + 웹 검색을 합성(Sonnet).
+ * 심화 인사이트 — 우리의 모든 데이터(정량 KPI + 상담 메모) + 세계적 세일즈 기법(내부 렌즈) + 웹 검색을 합성.
  * 무겁고 느려서(웹 검색 포함) 하루 1회 서버 캐시(crm_insight_cache). 배너의 2단계 중 Stage 2.
  * fast(insight-brief)는 그대로 두고, 배너가 이 결과가 오면 교체한다.
  */
@@ -86,10 +86,12 @@ export async function POST(request: NextRequest) {
   }
 
   const systemPrompt = mode === 'weekly' ? DEEP_WEEKLY_SYSTEM : DEEP_DIAGNOSIS_SYSTEM;
+  // 후보 힌트 = 실제 신호(패딩된 '관찰' 필러 제외). 강제 포함이 아니라 참고용 — 개수는 에이전트가 자율 판단.
+  const refAreas = (snap.signals.length ? snap.signals : snap.weakest).map((s) => s.area).join(', ');
   const userContent =
     mode === 'weekly'
-      ? `위 [KPI 건강 진단]과 [상담 메모 신호]를 교차해, 이번 주 방향 맞추기 회의에서 내가 꺼낼 논의 안건 5개를 JSON으로만 답하라. 가장 시급한 영역(${snap.weakest.map((s) => s.area).join(', ')})을 반드시 포함하고, 각 항목에 구루 렌즈와 날카로운 질문을 붙여라.`
-      : `위 [KPI 건강 진단]과 [상담 메모 신호]를 교차해, 지금 가장 시급한 5개 영역을 JSON으로만 답하라. 가장 시급한 영역(${snap.weakest.map((s) => s.area).join(', ')})을 반드시 포함하고, 각 항목에 구루 렌즈와 구체 첫 수를 붙여라.`;
+      ? `위 [KPI 건강 진단]과 [상담 메모 신호]를 세계적 세일즈 기법·웹 검색과 종합해, 이번 주 방향 맞추기 회의에서 내가 꺼낼 논의 안건을 JSON으로만 답하라. 참고 후보 신호: ${refAreas}. 이 중 지금 최우선인 것만 네 자율 판단으로 골라라(2~3개여도 좋고 전부 포함할 필요 없음, 억지로 채우지 마라). 각 항목에 날카로운 질문을 붙이고, 구루 이름은 출력에 노출하지 마라.`
+      : `위 [KPI 건강 진단]과 [상담 메모 신호]를 세계적 세일즈 기법·웹 검색과 종합해, "우리가 지금 해야 할 부분"을 JSON으로만 답하라. 참고 후보 신호: ${refAreas}. 이 중 지금 최우선으로 해결해야 할 것만 네 자율 판단으로 골라라(2~3개여도 좋고 전부 포함할 필요 없음, 5개를 맞추려 억지로 채우지 마라). 각 항목에 구체 첫 수를 붙이고, 구루 이름은 출력에 노출하지 마라.`;
 
   // 내부 데이터 블록: KPI 진단 + (있으면) 교차 신호 후보 + 상담 메모 신호
   const dataBlock = [snap.summaryText, correlationBlock, memo.memoBlock].filter(Boolean).join('\n\n');
@@ -112,7 +114,8 @@ export async function POST(request: NextRequest) {
       .map((b) => (b as { text: string }).text)
       .join('');
     const areas = parseAreas(text, snap.weakest, mode);
-    if (useCache) await writeCache(dateKst, mode, areas);
+    // 기본 뷰(기간 미지정)면 force 여부와 무관하게 일일 캐시 갱신 → '다시 점검' 결과가 새로고침 후에도 유지.
+    if (!period) await writeCache(dateKst, mode, areas);
     return NextResponse.json({ generatedAt: new Date().toISOString(), areas });
   } catch (err) {
     console.error('[insight-brief/deep]', err);
