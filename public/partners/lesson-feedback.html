@@ -126,6 +126,10 @@ textarea.tall { min-height: 200px; }
 .fb-card-unit { font-size: 16px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .fb-edit-btn { background: none; border: 0.5px solid var(--line); color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
 .fb-edit-btn:hover { border-color: var(--text); color: var(--text); }
+.fb-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.fb-del-btn { background: none; border: 0.5px solid var(--line); color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.fb-del-btn:hover { border-color: #d44; color: #d44; }
+.fb-del-btn:disabled { opacity: 0.4; cursor: default; }
 
 .fb-sections { display: flex; flex-direction: column; gap: 20px; }
 .fb-section { display: grid; grid-template-columns: 100px 1fr; gap: 16px; align-items: start; }
@@ -467,6 +471,14 @@ function renderCard(fb) {
   if (fb.homework) {
     sectionsHtml += `<div class="fb-section"><span class="fb-section-label">숙제</span><div class="fb-section-text">${esc(fb.homework)}</div></div>`;
   }
+  if (fb.start_time) {
+    const dur = calcDuration(fb.start_time, fb.end_time);
+    const timeStr = `${fb.start_time.slice(0,5)}${fb.end_time ? ' – ' + fb.end_time.slice(0,5) : ''}${dur ? ' ('+dur+')' : ''}`;
+    sectionsHtml += `<div class="fb-section"><span class="fb-section-label">수업 시간</span><div class="fb-section-text">${esc(timeStr)}</div></div>`;
+  }
+  if (fb.recording_url) {
+    sectionsHtml += `<div class="fb-section"><span class="fb-section-label">수업 녹화</span><div class="fb-section-text"><a href="${esc(fb.recording_url)}" target="_blank" rel="noopener">▶ 녹화 영상 보기</a></div></div>`;
+  }
 
   const fid = fb.id;
   const fkey = fid.replace(/-/g, '_');
@@ -479,7 +491,10 @@ function renderCard(fb) {
             <div class="fb-card-date">${dateStr}</div>
             <div class="fb-card-unit">${esc(UNIT_LABELS[fb.unit] || fb.unit || '—')}</div>
           </div>
-          <button class="fb-edit-btn" onclick="openEdit('${fid}')">수정</button>
+          <div class="fb-card-actions">
+            <button class="fb-edit-btn" onclick="openEdit('${fid}')">수정</button>
+            <button class="fb-del-btn" onclick="deleteCard('${fid}', this)">삭제</button>
+          </div>
         </div>
         <div class="fb-sections">${sectionsHtml || '<span style="font-size:13px;color:var(--mute)">내용 없음</span>'}</div>
       </div>
@@ -499,6 +514,16 @@ function renderCard(fb) {
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">수업 날짜</label>
             <input type="date" id="${fkey}_date" value="${esc(fb.lesson_date||'')}" />
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:28px;">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">수업 시작 시간</label>
+            <input type="time" id="${fkey}_start" value="${escAttr(fb.start_time?.slice(0,5)||'')}" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">수업 종료 시간</label>
+            <input type="time" id="${fkey}_end" value="${escAttr(fb.end_time?.slice(0,5)||'')}" />
           </div>
         </div>
         <div class="form-group">
@@ -523,6 +548,10 @@ function renderCard(fb) {
         <div class="form-group">
           <label class="form-label">숙제</label>
           <textarea id="${fkey}_hw">${esc(fb.homework||'')}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">수업 녹화 파일 링크 <span style="color:var(--line);font-size:8px;">(선택)</span></label>
+          <input type="url" id="${fkey}_rec" placeholder="https://…" value="${escAttr(fb.recording_url||'')}" />
         </div>
         <button class="btn-primary" id="${fkey}_save" onclick="saveEdit('${fid}','${fkey}')">수정 저장하기</button>
         <button class="btn-ghost" onclick="closeEdit('${fid}')">취소</button>
@@ -582,9 +611,12 @@ async function saveEdit(fid, fkey) {
   if (!date)    return showMsg(msgEl, 'error', '날짜를 입력해주세요.');
   if (!content) return showMsg(msgEl, 'error', '수업 내용을 입력해주세요.');
 
-  const attendees = parseNames(document.getElementById(`${fkey}_att`));
-  const absentees = parseNames(document.getElementById(`${fkey}_abs`));
-  const notes     = collectNotes(`${fkey}_notes`);
+  const attendees    = parseNames(document.getElementById(`${fkey}_att`));
+  const absentees    = parseNames(document.getElementById(`${fkey}_abs`));
+  const notes        = collectNotes(`${fkey}_notes`);
+  const startTime    = document.getElementById(`${fkey}_start`).value || null;
+  const endTime      = document.getElementById(`${fkey}_end`).value   || null;
+  const recordingUrl = document.getElementById(`${fkey}_rec`).value.trim() || null;
 
   const btn = document.getElementById(`${fkey}_save`);
   btn.disabled = true; btn.textContent = '저장 중...';
@@ -595,6 +627,9 @@ async function saveEdit(fid, fkey) {
     homework: hw || null,
     attendees: attendees.length ? attendees : null,
     absentees: absentees.length ? absentees : null,
+    start_time: startTime,
+    end_time:   endTime,
+    recording_url: recordingUrl,
   }).eq('id', fid);
 
   btn.disabled = false; btn.textContent = '수정 저장하기';
@@ -605,11 +640,27 @@ async function saveEdit(fid, fkey) {
   if (idx !== -1) {
     allFeedbacks[idx] = { ...allFeedbacks[idx], unit, lesson_date: date, lesson_content: content,
       student_notes: notes.length ? notes : null, homework: hw || null,
-      attendees: attendees.length ? attendees : null, absentees: absentees.length ? absentees : null };
+      attendees: attendees.length ? attendees : null, absentees: absentees.length ? absentees : null,
+      start_time: startTime, end_time: endTime, recording_url: recordingUrl };
   }
 }
 
+async function deleteCard(fid, btn) {
+  if (!confirm('이 피드백을 삭제할까요?')) return;
+  btn.disabled = true; btn.textContent = '삭제 중…';
+  const { error } = await sb.from('b2b_lesson_feedback').delete().eq('id', fid);
+  if (error) { alert('삭제 실패: ' + error.message); btn.disabled = false; btn.textContent = '삭제'; return; }
+  document.getElementById(`card-${fid}`).remove();
+  allFeedbacks = allFeedbacks.filter(f => f.id !== fid);
+}
+
 /* ── Helpers ── */
+function calcDuration(s, e) {
+  if (!s || !e) return null;
+  const [sh,sm] = s.split(':').map(Number), [eh,em] = e.split(':').map(Number);
+  const diff = (eh*60+em)-(sh*60+sm);
+  return diff > 0 ? diff+'분' : null;
+}
 function showMsg(el, type, text) { el.className = 'msg ' + type; el.textContent = text; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escHtml(s) { return esc(s); }
