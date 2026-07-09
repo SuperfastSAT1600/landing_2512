@@ -27,6 +27,7 @@ interface EditState {
     curriculumPostSlug: string;
     reelUrls: string[];
     subjects: string[];
+    isHeadCoach: boolean;
     v2UserId: string | null;
 }
 
@@ -57,6 +58,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
         curriculumPostSlug: coach.curriculumPostSlug,
         reelUrls: coach.reelUrls ?? [],
         subjects: coach.subjects ?? [],
+        isHeadCoach: coach.isHeadCoach ?? false,
         v2UserId: coach.v2UserId ?? null,
     });
     const [posts, setPosts] = useState<PostOption[]>([]);
@@ -150,6 +152,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             curriculumPostSlug: coach.curriculumPostSlug,
             reelUrls: coach.reelUrls ?? [],
             subjects: coach.subjects ?? [],
+            isHeadCoach: coach.isHeadCoach ?? false,
             v2UserId: coach.v2UserId ?? null,
         });
         setEditing(false);
@@ -165,6 +168,11 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                 <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide ${coach.isActive ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'}`}>
                     {coach.isActive ? 'Active' : 'Inactive'}
                 </span>
+                {coach.isHeadCoach && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-yellow-500/10 text-yellow-400">
+                        ⭐ 대표코치
+                    </span>
+                )}
                 {coach.v2UserId ? (
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-purple-500/10 text-purple-400">
                         V2 연결됨
@@ -249,6 +257,22 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                                 );
                             })}
                         </div>
+                    </div>
+
+                    {/* 대표코치 */}
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">대표코치</label>
+                        <button
+                            type="button"
+                            onClick={() => setEditState(s => ({ ...s, isHeadCoach: !s.isHeadCoach }))}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                                editState.isHeadCoach
+                                    ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400'
+                                    : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                            }`}
+                        >
+                            {editState.isHeadCoach ? '⭐ 대표코치' : '대표코치 아님'}
+                        </button>
                     </div>
 
                     {/* 프로필 사진 */}
