@@ -71,14 +71,29 @@ body.report-mode { background: #f2f2f7; }
   --green:      #1a9e4d;
   --red:        #c0392b;
   --blue:       #1558c0;
+  color: #1c1c1e;
 }
+/* tabs */
 #report .tab-btn { color: #8e8e93; }
 #report .tab-btn:hover { color: #1c1c1e; }
 #report .tab-btn.active { background: #1c1c1e; color: #ffffff; border-bottom-color: #1c1c1e; padding: 11px 20px; }
+/* hover/focus states with hardcoded white rgba */
+#report .student-card:hover { border-color: rgba(0,0,0,0.28); }
+#report .fb-item-header:hover { background: rgba(0,0,0,0.03); }
+#report .hw-student-hd:hover { background: rgba(0,0,0,0.03); }
+#report .change-req-btn:hover { background: rgba(0,0,0,0.03); }
+#report .req-select:focus, #report .req-textarea:focus { border-color: rgba(0,0,0,0.38); }
+#report .btn-pill:hover:not(:disabled) { background: rgba(0,0,0,0.06); }
+/* hairline-colored elements too faint on white */
+#report .fb-duration { color: var(--mute); }
+#report .fb-chevron { color: var(--mute); }
+#report .hw-chevron { color: var(--mute); }
+/* calendar */
 #report .cal-cell.other-month { background: rgba(0,0,0,0.03); }
 #report .cal-cell.lesson-recorded { border-color: rgba(28,28,30,0.22); }
 #report .cal-cell.lesson-recorded:hover { border-color: rgba(28,28,30,0.55); background: rgba(0,0,0,0.04); }
 #report .cal-cell.lesson-recorded .cal-dot { background: #1a9e4d; }
+/* chips & badges */
 #report .chip-attend { border-color: rgba(26,158,77,0.4); background: rgba(26,158,77,0.07); }
 #report .chip-absent { border-color: rgba(192,57,43,0.35); background: rgba(192,57,43,0.06); }
 #report .hw-dot.done { background: rgba(21,88,192,0.1); border-color: rgba(21,88,192,0.3); }
