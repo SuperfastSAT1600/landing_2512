@@ -88,13 +88,8 @@ export default async function CoachesPage({ searchParams }: Props) {
                                                 {coach.name[0]}
                                             </div>
                                         )}
-                                        {(coach.isHeadCoach || coach.subjects.length > 0) && (
+                                        {coach.subjects.length > 0 && (
                                             <div className="absolute top-3 left-3 flex gap-1.5">
-                                                {coach.isHeadCoach && (
-                                                    <span className="px-2 py-0.5 bg-yellow-500/80 backdrop-blur-md text-white text-[10px] font-bold rounded-full border border-yellow-400/30 tracking-wide">
-                                                        ⭐ 대표코치
-                                                    </span>
-                                                )}
                                                 {coach.subjects.map((s) => (
                                                     <span
                                                         key={s}
@@ -103,6 +98,13 @@ export default async function CoachesPage({ searchParams }: Props) {
                                                         {s}
                                                     </span>
                                                 ))}
+                                            </div>
+                                        )}
+                                        {coach.isHeadCoach && (
+                                            <div className="absolute top-3 right-3">
+                                                <span className="px-2 py-0.5 bg-black/70 backdrop-blur-md text-yellow-400 text-[10px] font-bold rounded-full border border-yellow-400/40 tracking-wide">
+                                                    ★ 대표코치
+                                                </span>
                                             </div>
                                         )}
                                     </div>
