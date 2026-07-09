@@ -245,7 +245,7 @@ option { background: #111; }
 .change-card { border: 1px solid var(--hairline); background: var(--night-soft); padding: 32px; max-width: 380px; }
 
 /* ── Student modal ───────────────────────────────────── */
-#student-modal { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; padding: 20px; }
+#student-modal { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 20px; }
 #student-modal.open { display: flex; }
 .modal-card { background: var(--night-soft); border: 1px solid var(--hairline); width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto; }
 .modal-hd { padding: 24px 28px; border-bottom: 1px solid var(--hairline); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; position: sticky; top: 0; background: var(--night-soft); z-index: 1; }
@@ -273,6 +273,35 @@ option { background: #111; }
 .modal-hw-unit .miss-tag { color: var(--mute); }
 .modal-hw-answer-label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); margin-bottom: 4px; margin-top: 10px; }
 .modal-hw-answer { font-size: 13px; color: var(--on-mute); line-height: 1.6; }
+
+/* ── Modal light theme (report-mode) ─────────────────── */
+body.report-mode #student-modal { background: rgba(0,0,0,0.3); }
+body.report-mode .modal-card {
+  background: #ffffff;
+  border-color: #c7c7cc;
+  color: #1c1c1e;
+}
+body.report-mode .modal-hd { background: #ffffff; border-color: #c7c7cc; }
+body.report-mode .modal-student-name { color: #1c1c1e; }
+body.report-mode .modal-rate { color: #8e8e93; }
+body.report-mode .modal-rate-num.green { color: #1a9e4d; }
+body.report-mode .modal-rate-num.blue { color: #1558c0; }
+body.report-mode .modal-close { border-color: #c7c7cc; color: #8e8e93; }
+body.report-mode .modal-close:hover { border-color: #1c1c1e; color: #1c1c1e; }
+body.report-mode .modal-section-head { color: #8e8e93; border-color: #c7c7cc; background: rgba(0,0,0,0.025); }
+body.report-mode .modal-session { border-color: #c7c7cc; }
+body.report-mode .modal-status.attend { color: #1a9e4d; }
+body.report-mode .modal-status.absent { color: #c0392b; }
+body.report-mode .modal-session-date { color: #1c1c1e; }
+body.report-mode .modal-session-unit { color: #8e8e93; }
+body.report-mode .modal-session-note { color: #1c1c1e; }
+body.report-mode .modal-hw-row { border-color: #c7c7cc; }
+body.report-mode .modal-hw-unit { color: #1558c0; }
+body.report-mode .modal-hw-unit .miss-tag { color: #8e8e93; }
+body.report-mode .modal-hw-answer-label { color: #8e8e93; }
+body.report-mode .modal-hw-answer { color: #1c1c1e; }
+body.report-mode .student-memo-name { color: #1c1c1e; text-decoration-color: #c7c7cc; }
+body.report-mode .student-note { color: #1c1c1e; }
 </style>
 </head>
 <body>
