@@ -734,13 +734,16 @@ function buildLessonItem(fb) {
     if (absentees.length) h += `${attendees.length?'<div style="margin-top:12px;"></div>':''}<div class="fb-section-label" style="margin-bottom:8px;">결석</div><div class="chip-group">${absentees.map(n=>`<span class="chip chip-absent" onclick="openStudentModal('${escHtml(n)}')">✗ ${escHtml(n)}</span>`).join('')}</div>`;
     sections.push(`<div class="fb-section">${h}</div>`);
   }
+  const recContent = fb.recording_url
+    ? `<a href="${escHtml(fb.recording_url)}" target="_blank" rel="noopener">▶ 녹화 영상 보기</a>`
+    : `<span style="color:var(--mute)">미등록</span>`;
+  sections.push(`<div class="fb-section"><div class="fb-section-label">수업 녹화</div><div class="fb-section-text">${recContent}</div></div>`);
   if (fb.lesson_content) sections.push(`<div class="fb-section"><div class="fb-section-label">수업 내용</div><div class="fb-section-text">${linkify(fb.lesson_content)}</div></div>`);
   if (fb.student_notes?.length) {
     const notes = fb.student_notes.map(s=>`<div class="student-item"><div class="student-memo-name" onclick="openStudentModal('${escHtml(s.name||'')}')">${escHtml(s.name||'—')}</div><div class="student-note">${escHtml(s.note||'—')}</div></div>`).join('');
     sections.push(`<div class="fb-section"><div class="fb-section-label">학생별 메모</div>${notes}</div>`);
   }
   if (fb.homework) sections.push(`<div class="fb-section"><div class="fb-section-label">숙제</div><div class="fb-section-text">${linkify(fb.homework)}</div></div>`);
-  if (fb.recording_url) sections.push(`<div class="fb-section"><div class="fb-section-label">수업 녹화</div><div class="fb-section-text"><a href="${escHtml(fb.recording_url)}" target="_blank" rel="noopener">▶ 녹화 영상 보기</a></div></div>`);
 
   const item = document.createElement('div');
   item.className = 'fb-item';
@@ -882,6 +885,11 @@ function showLessonDetail(dateStr) {
     </div>
   </div>` : '';
 
+  const dpRecContent = fb.recording_url
+    ? `<a href="${escHtml(fb.recording_url)}" target="_blank" rel="noopener">▶ 녹화 영상 보기</a>`
+    : `<span style="color:var(--mute)">미등록</span>`;
+  const recordingHtml = `<div class="dp-section"><div class="fb-section-label">수업 녹화</div><div class="fb-section-text">${dpRecContent}</div></div>`;
+
   const contentHtml = fb.lesson_content
     ? `<div class="dp-section"><div class="fb-section-label">수업 내용</div><div class="fb-section-text">${linkify(fb.lesson_content)}</div></div>` : '';
 
@@ -891,9 +899,6 @@ function showLessonDetail(dateStr) {
   const hwHtml = fb.homework
     ? `<div class="dp-section"><div class="fb-section-label">숙제</div><div class="fb-section-text">${linkify(fb.homework)}</div></div>` : '';
 
-  const recordingHtml = fb.recording_url
-    ? `<div class="dp-section"><div class="fb-section-label">수업 녹화</div><div class="fb-section-text"><a href="${escHtml(fb.recording_url)}" target="_blank" rel="noopener">▶ 녹화 영상 보기</a></div></div>` : '';
-
   panel.innerHTML = `
     <div class="dp-hd">
       <div>
@@ -902,7 +907,7 @@ function showLessonDetail(dateStr) {
       </div>
       <button class="modal-close" onclick="document.getElementById('lesson-detail-panel').style.display='none'">✕</button>
     </div>
-    ${attendHtml}${contentHtml}${notesHtml}${hwHtml}${recordingHtml}`;
+    ${attendHtml}${recordingHtml}${contentHtml}${notesHtml}${hwHtml}`;
   panel.style.display = 'block';
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
