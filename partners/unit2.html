@@ -413,6 +413,45 @@ body {
 }
 #ex-compose-input::placeholder { color: #222; }
 
+/* ── Homework sentences & Expression Lists ──────────────── */
+.note-ex-hw-badge {
+  display: inline; margin-left: 5px;
+  font-size: 7px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #c8a850; border: 0.5px solid #c8a850;
+  padding: 1px 4px; border-radius: 2px; vertical-align: middle;
+}
+.note-ex-item.is-hw { color: #c8a850; }
+.note-ex-item.is-hw:hover { color: #e0c060; }
+.compose-ex-row { display: flex; align-items: center; gap: 10px; }
+.compose-hw-btn {
+  flex-shrink: 0;
+  background: none; border: 0.5px solid #333;
+  color: #555; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 12px; cursor: pointer; transition: all 0.15s;
+}
+.compose-hw-btn:hover { border-color: #c8a850; color: #c8a850; }
+.compose-hw-btn.active { border-color: #c8a850; color: #c8a850; background: rgba(200,168,80,0.08); }
+#expr-list-panel {
+  display: none;
+  padding: 60px clamp(24px, 5vw, 80px);
+  border-top: 0.5px solid var(--line);
+}
+#expr-list-panel.has-items { display: block; }
+.expr-list-eyebrow {
+  font-size: 9px; letter-spacing: 0.36em; text-transform: uppercase;
+  color: var(--mute); margin-bottom: 32px;
+}
+.expr-list-group { margin-bottom: 32px; }
+.expr-list-origin {
+  font-size: 12px; font-style: italic; color: #555; margin-bottom: 10px;
+}
+.expr-list-sentence {
+  font-size: clamp(16px, 2.2vw, 22px);
+  font-weight: 700; color: var(--white); line-height: 1.35;
+  padding: 6px 0 6px 14px;
+  border-left: 2px solid #c8a850; margin-bottom: 8px;
+}
+
 /* ── S6: Two Column ─────────────────────────────────────── */
 .compare-grid {
   display: grid;
@@ -1194,6 +1233,12 @@ body { padding-top: 0; }
   </div>
 </div>
 
+<!-- ── Expression Lists (숙제 전 표현 복습) ──────────────── -->
+<div id="expr-list-panel">
+  <div class="expr-list-eyebrow">Expression Lists &nbsp;·&nbsp; 수업 중 기억할 표현</div>
+  <div id="expr-list-inner"></div>
+</div>
+
 <!-- ══════════════════════════════════════════════════════════
      S10 — Mission (숙제)
 ══════════════════════════════════════════════════════════ -->
@@ -1532,7 +1577,12 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 <script>
 // ── Instructor example management ────────────────────────
 function _exKey(noteEl) { return 'ex__' + noteEl.dataset.key; }
-function _getEx(k) { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch { return []; } }
+function _getEx(k) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(k) || '[]');
+    return raw.map(item => typeof item === 'string' ? { text: item, isHomework: false } : item);
+  } catch { return []; }
+}
 function _setEx(k, arr) { localStorage.setItem(k, JSON.stringify(arr)); }
 
 function _getContext(noteEl) {
@@ -1545,9 +1595,12 @@ function _getContext(noteEl) {
 function _renderNoteExamples(noteEl) {
   const key = _exKey(noteEl);
   const arr = _getEx(key);
-  noteEl.querySelector('.note-examples').innerHTML = arr.map((t, i) =>
-    `<div class="note-ex-item" onclick="reopenCompose(${JSON.stringify(noteEl.dataset.key)})">${t.replace(/</g,'&lt;')}<button class="note-ex-del" onclick="delEx(event,'${noteEl.dataset.key}',${i})">✕</button></div>`
-  ).join('');
+  noteEl.querySelector('.note-examples').innerHTML = arr.map((item, i) => {
+    const t = item.text;
+    const hw = item.isHomework;
+    const badge = hw ? '<span class="note-ex-hw-badge">숙제</span>' : '';
+    return `<div class="note-ex-item${hw ? ' is-hw' : ''}" onclick="reopenCompose(${JSON.stringify(noteEl.dataset.key)})">${t.replace(/</g,'&lt;')}${badge}<button class="note-ex-del" onclick="delEx(event,'${noteEl.dataset.key}',${i})">✕</button></div>`;
+  }).join('');
 }
 
 function delEx(e, dataKey, idx) {
@@ -1558,6 +1611,18 @@ function delEx(e, dataKey, idx) {
   arr.splice(idx, 1);
   _setEx(key, arr);
   _renderNoteExamples(noteEl);
+  _renderExpressionList();
+}
+
+function toggleHomework(dataKey, idx) {
+  const key = 'ex__' + dataKey;
+  const arr = _getEx(key);
+  if (arr[idx]) arr[idx].isHomework = !arr[idx].isHomework;
+  _setEx(key, arr);
+  _renderComposeList();
+  const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
+  if (noteEl) _renderNoteExamples(noteEl);
+  _renderExpressionList();
 }
 
 let _activeKey = null;
@@ -1595,15 +1660,45 @@ function closeCompose() {
     const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
     if (noteEl) _renderNoteExamples(noteEl);
   }
+  _renderExpressionList();
 }
 
 function _renderComposeList() {
   const arr = _getEx(_activeKey);
+  const dataKey = _activeKey.replace('ex__', '');
   const list = document.getElementById('ex-compose-list');
-  list.innerHTML = arr.map((t, i) =>
-    `<div class="compose-ex${i === arr.length - 1 ? ' fresh' : ''}">${t.replace(/</g,'&lt;')}</div>`
-  ).join('');
+  list.innerHTML = arr.map((item, i) => {
+    const t = item.text;
+    const hw = item.isHomework;
+    const fresh = i === arr.length - 1 ? ' fresh' : '';
+    return `<div class="compose-ex-row">
+      <div class="compose-ex${fresh}" style="flex:1">${t.replace(/</g,'&lt;')}</div>
+      <button class="compose-hw-btn${hw ? ' active' : ''}" onclick="toggleHomework('${dataKey}',${i})">${hw ? '✓ 숙제' : '숙제'}</button>
+    </div>`;
+  }).join('');
   list.scrollTop = list.scrollHeight;
+}
+
+function _renderExpressionList() {
+  const panel = document.getElementById('expr-list-panel');
+  if (!panel) return;
+  const inner = document.getElementById('expr-list-inner');
+  const groups = [];
+  document.querySelectorAll('.quote-note[data-key]').forEach(noteEl => {
+    const arr = _getEx(_exKey(noteEl));
+    const hwItems = arr.filter(item => item.isHomework);
+    if (!hwItems.length) return;
+    const ctx = _getContext(noteEl);
+    groups.push({ origin: ctx.en, items: hwItems });
+  });
+  if (!groups.length) { panel.classList.remove('has-items'); return; }
+  panel.classList.add('has-items');
+  inner.innerHTML = groups.map(g =>
+    `<div class="expr-list-group">
+      <div class="expr-list-origin">${g.origin.replace(/</g,'&lt;')}</div>
+      ${g.items.map(item => `<div class="expr-list-sentence">${item.text.replace(/</g,'&lt;')}</div>`).join('')}
+    </div>`
+  ).join('');
 }
 
 function handleComposeKey(e) {
@@ -1612,7 +1707,7 @@ function handleComposeKey(e) {
     const val = e.target.value.trim();
     if (!val) return;
     const arr = _getEx(_activeKey);
-    arr.push(val);
+    arr.push({ text: val, isHomework: false });
     _setEx(_activeKey, arr);
     _renderComposeList();
     e.target.value = '';
@@ -1628,6 +1723,7 @@ function handleComposeInput(inp) {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.quote-note[data-key]').forEach(_renderNoteExamples);
+  _renderExpressionList();
 });
 </script>
 

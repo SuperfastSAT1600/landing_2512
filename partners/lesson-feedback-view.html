@@ -71,6 +71,18 @@ body {
 .fb-student-name { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text); margin-bottom: 4px; }
 .fb-student-note { font-size: 13px; color: var(--muted); line-height: 1.6; white-space: pre-wrap; }
 
+/* ── Delete button ── */
+.fb-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.fb-del-btn {
+  flex-shrink: 0;
+  background: none; border: 0.5px solid var(--line);
+  color: var(--mute); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 12px; cursor: pointer; transition: all 0.15s;
+  margin-top: 2px;
+}
+.fb-del-btn:hover { border-color: #d44; color: #d44; }
+.fb-del-btn:disabled { opacity: 0.4; cursor: default; }
+
 /* ── States ── */
 .state-msg { padding: 60px 0; font-size: 13px; color: var(--mute); }
 .spinner { display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--line); border-top-color: var(--muted); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 10px; vertical-align: middle; }
@@ -184,11 +196,28 @@ function renderCard(fb) {
   return `
     <div class="fb-card">
       <div class="fb-card-header">
-        <div class="fb-card-date">${dateStr}</div>
-        <div class="fb-card-unit">${esc(UNIT_LABELS[fb.unit] || fb.unit)}</div>
+        <div>
+          <div class="fb-card-date">${dateStr}</div>
+          <div class="fb-card-unit">${esc(UNIT_LABELS[fb.unit] || fb.unit)}</div>
+        </div>
+        <button class="fb-del-btn" onclick="deleteFeedback('${fb.id}', this)">삭제</button>
       </div>
       <div class="fb-sections">${sectionsHtml}</div>
     </div>`;
+}
+
+async function deleteFeedback(id, btn) {
+  if (!confirm('이 피드백을 삭제할까요?')) return;
+  btn.disabled = true;
+  btn.textContent = '삭제 중…';
+  const { error } = await sb.from('b2b_lesson_feedback').delete().eq('id', id);
+  if (error) {
+    alert('삭제 실패: ' + error.message);
+    btn.disabled = false;
+    btn.textContent = '삭제';
+    return;
+  }
+  btn.closest('.fb-card').remove();
 }
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
