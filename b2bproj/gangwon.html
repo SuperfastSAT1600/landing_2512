@@ -84,13 +84,6 @@ body { background: var(--night); color: var(--light); font-family: 'Inter', 'Ari
 .schedule-hd { padding: 14px 20px; border-bottom: 1px solid var(--hairline); display: flex; align-items: center; justify-content: space-between; }
 .schedule-hd-title { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); }
 .schedule-time-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--on-mute); }
-.schedule-month-group { padding: 14px 20px; border-bottom: 1px solid var(--hairline); }
-.schedule-month-group:last-of-type { border-bottom: none; }
-.schedule-month-label { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); margin-bottom: 10px; }
-.schedule-dates { display: flex; flex-wrap: wrap; gap: 6px; }
-.schedule-chip { font-size: 11px; font-weight: 700; padding: 5px 12px; border: 1px solid var(--hairline); color: var(--on-mute); letter-spacing: 0.04em; }
-.schedule-chip.today { border-color: var(--green); color: var(--green); background: rgba(74,222,128,0.08); }
-.schedule-chip.soon { border-color: rgba(96,165,250,0.4); color: var(--blue); }
 .change-req-btn { width: 100%; padding: 13px 20px; display: flex; align-items: center; justify-content: space-between; background: none; border: none; border-top: 1px solid var(--hairline); color: var(--mute); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; font-family: inherit; transition: color 0.15s, background 0.15s; }
 .change-req-btn:hover { background: rgba(255,255,255,0.02); color: var(--on-mute); }
 .change-req-panel { border-top: 1px solid var(--hairline); padding: 20px; display: none; }
@@ -186,10 +179,19 @@ option { background: #111; }
 .cal-cell { background: var(--night); min-height: 34px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: var(--mute); gap: 3px; }
 .cal-cell.other-month { background: rgba(0,0,0,0.5); }
 .cal-cell.lesson-past { background: var(--night-soft); color: var(--mute); font-weight: 700; }
+.cal-cell.lesson-recorded { background: var(--night-soft); color: var(--on-mute); font-weight: 700; border: 1px solid rgba(255,255,255,0.18); margin: -1px; z-index: 1; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.cal-cell.lesson-recorded:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.05); }
+.cal-cell.lesson-recorded .cal-dot { background: var(--green); }
 .cal-cell.lesson-upcoming { background: var(--night-soft); color: var(--on-mute); font-weight: 700; border: 1px solid rgba(96,165,250,0.35); margin: -1px; z-index: 1; }
 .cal-cell.lesson-today { background: rgba(74,222,128,0.1); color: var(--green); font-weight: 800; border: 1px solid rgba(74,222,128,0.5); margin: -1px; z-index: 2; }
 .cal-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-.cal-dot.past { background: var(--hairline); }
+/* ── Lesson detail panel ─────────────────────────────── */
+#lesson-detail-panel { border: 1px solid var(--hairline); background: var(--night-soft); margin-bottom: 20px; display: none; }
+.dp-hd { padding: 18px 24px; border-bottom: 1px solid var(--hairline); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.dp-date-row { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); margin-bottom: 5px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.dp-unit { font-size: 16px; font-weight: 700; color: var(--light); }
+.dp-section { padding: 14px 24px; border-bottom: 1px solid var(--hairline); }
+.dp-section:last-child { border-bottom: none; }
 
 /* ── Ghost logout ────────────────────────────────────── */
 .btn-logout { background: none; border: none; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; margin-top: 32px; transition: color 0.15s; }
@@ -314,12 +316,8 @@ option { background: #111; }
   <!-- Tab 1: 수업 일정 -->
   <div id="tab-schedule" class="tab-panel active">
     <div id="calendar-area" class="cal-months"></div>
+    <div id="lesson-detail-panel"></div>
     <div class="schedule-section">
-      <div class="schedule-hd">
-        <span class="schedule-hd-title">남은 수업 일정</span>
-        <span class="schedule-time-badge">20:00 수업</span>
-      </div>
-      <div id="schedule-list"></div>
       <button class="change-req-btn" onclick="toggleChangeReq(this)">
         일정 변경 요청하기
         <svg id="req-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><polyline points="9 18 15 12 9 6"/></svg>
@@ -704,71 +702,96 @@ function renderHwTable() {
 
 /* ── Calendar ────────────────────────────────────────── */
 function renderCalendar() {
-  const calArea = document.getElementById('calendar-area');
-  const today = new Date().toISOString().slice(0,10);
+  const calArea  = document.getElementById('calendar-area');
+  const today    = new Date().toISOString().slice(0,10);
   const lessonSet = new Set(SCHEDULE.map(s => s.date));
-  const DOW = ['일','월','화','수','목','금','토'];
+  const fbByDate  = {};
+  allFeedback.forEach(fb => { if (fb.lesson_date) fbByDate[fb.lesson_date] = fb; });
+  const DOW    = ['일','월','화','수','목','금','토'];
   const MONTHS = [
-    { year:2026, month:7,  label:'2026년 7월' },
-    { year:2026, month:8,  label:'2026년 8월' },
-    { year:2026, month:9,  label:'2026년 9월' },
+    { year:2026, month:7, label:'2026년 7월' },
+    { year:2026, month:8, label:'2026년 8월' },
+    { year:2026, month:9, label:'2026년 9월' },
   ];
   calArea.innerHTML = MONTHS.map(({year, month, label}) => {
-    const firstDow = new Date(year, month-1, 1).getDay();
+    const firstDow  = new Date(year, month-1, 1).getDay();
     const totalDays = new Date(year, month, 0).getDate();
     const dowRow = DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
     let cells = '';
     for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell other-month"></div>';
     for (let d = 1; d <= totalDays; d++) {
-      const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const ds       = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const isLesson = lessonSet.has(ds);
       const isToday  = ds === today;
       const isPast   = ds < today;
-      let cls = 'cal-cell';
+      const hasRec   = !!fbByDate[ds];
+      let cls = 'cal-cell', extra = '';
       if (isLesson) {
-        if (isToday)       cls += ' lesson-today';
-        else if (isPast)   cls += ' lesson-past';
-        else               cls += ' lesson-upcoming';
+        if (isToday)              { cls += ' lesson-today'; }
+        else if (isPast && hasRec){ cls += ' lesson-recorded'; extra = `onclick="showLessonDetail('${ds}')" title="수업 기록 보기"`; }
+        else if (isPast)          { cls += ' lesson-past'; }
+        else                      { cls += ' lesson-upcoming'; }
       }
-      const dot = isLesson ? `<div class="cal-dot${isPast && !isToday ? ' past' : ''}"></div>` : '';
-      cells += `<div class="${cls}">${d}${dot}</div>`;
+      const dot = isLesson ? '<div class="cal-dot"></div>' : '';
+      cells += `<div class="${cls}" ${extra}>${d}${dot}</div>`;
     }
     const rem = (7 - (firstDow + totalDays) % 7) % 7;
     for (let i = 0; i < rem; i++) cells += '<div class="cal-cell other-month"></div>';
-    return `<div>
-      <div class="cal-month-label">${label}</div>
-      <div class="cal-grid">${dowRow}${cells}</div>
-    </div>`;
+    return `<div><div class="cal-month-label">${label}</div><div class="cal-grid">${dowRow}${cells}</div></div>`;
   }).join('');
+}
+
+function showLessonDetail(dateStr) {
+  const fb = allFeedback.find(f => f.lesson_date === dateStr);
+  if (!fb) return;
+  const panel = document.getElementById('lesson-detail-panel');
+
+  const dateLabel = new Date(dateStr+'T00:00:00').toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  const unitLabel = UNIT_LABELS[fb.unit] || fb.unit || '—';
+  const attendees = Array.isArray(fb.attendees) ? fb.attendees : [];
+  const absentees = Array.isArray(fb.absentees) ? fb.absentees : [];
+  const total = attendees.length + absentees.length;
+  const pct   = total > 0 ? Math.round(attendees.length/total*100) : null;
+  const dur   = calcDuration(fb.start_time, fb.end_time);
+  const timeStr = fb.start_time ? `${fb.start_time.slice(0,5)} – ${(fb.end_time||'').slice(0,5)}${dur?` (${dur})`:''}` : '';
+
+  const attendHtml = total > 0 ? `<div class="dp-section">
+    <div class="fb-bar-wrap" style="margin-bottom:10px;">
+      <div class="fb-bar-track"><div class="fb-bar-fill" style="width:${pct??0}%"></div></div>
+      <span class="fb-attend-stat">출석 ${attendees.length}/${total}명 · ${pct}%</span>
+    </div>
+    <div class="chip-group">
+      ${attendees.map(n=>`<span class="chip chip-attend" onclick="openStudentModal('${escHtml(n)}')">✓ ${escHtml(n)}</span>`).join('')}
+      ${absentees.map(n=>`<span class="chip chip-absent" onclick="openStudentModal('${escHtml(n)}')">✗ ${escHtml(n)}</span>`).join('')}
+    </div>
+  </div>` : '';
+
+  const contentHtml = fb.lesson_content
+    ? `<div class="dp-section"><div class="fb-section-label">수업 내용</div><div class="fb-section-text">${linkify(fb.lesson_content)}</div></div>` : '';
+
+  const notesHtml = fb.student_notes?.length
+    ? `<div class="dp-section"><div class="fb-section-label">학생별 메모</div>${fb.student_notes.map(s=>`<div class="student-item"><div class="student-memo-name" onclick="openStudentModal('${escHtml(s.name||'')}')">${escHtml(s.name||'—')}</div><div class="student-note">${escHtml(s.note||'')}</div></div>`).join('')}</div>` : '';
+
+  const hwHtml = fb.homework
+    ? `<div class="dp-section"><div class="fb-section-label">숙제</div><div class="fb-section-text">${linkify(fb.homework)}</div></div>` : '';
+
+  panel.innerHTML = `
+    <div class="dp-hd">
+      <div>
+        <div class="dp-date-row"><span>${dateLabel}</span>${timeStr?`<span class="fb-time-range">${timeStr}</span>`:''}</div>
+        <div class="dp-unit">${escHtml(unitLabel)}</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('lesson-detail-panel').style.display='none'">✕</button>
+    </div>
+    ${attendHtml}${contentHtml}${notesHtml}${hwHtml}`;
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 /* ── Schedule ────────────────────────────────────────── */
 function renderSchedule() {
   const today    = new Date().toISOString().slice(0,10);
-  const todayMs  = new Date().getTime();
   const upcoming = SCHEDULE.filter(s => s.date >= today);
-
-  const listEl = document.getElementById('schedule-list');
-  if (!upcoming.length) { listEl.innerHTML = '<div style="padding:16px 20px;color:var(--mute);font-size:12px;">예정된 수업이 없습니다.</div>'; return; }
-
-  const byMonth = {};
-  upcoming.forEach(s => { if (!byMonth[s.month]) byMonth[s.month] = []; byMonth[s.month].push(s); });
-
-  listEl.innerHTML = Object.entries(byMonth).map(([month, sessions]) => `
-    <div class="schedule-month-group">
-      <div class="schedule-month-label">${month}</div>
-      <div class="schedule-dates">
-        ${sessions.map(s => {
-          const isToday = s.date === today;
-          const msDiff  = new Date(s.date+'T20:00:00').getTime() - todayMs;
-          const isSoon  = !isToday && msDiff > 0 && msDiff < 7*24*60*60*1000;
-          const cls     = isToday ? 'today' : isSoon ? 'soon' : '';
-          return `<span class="schedule-chip ${cls}">${s.label}${isToday ? ' · 오늘' : ''}</span>`;
-        }).join('')}
-      </div>
-    </div>`).join('');
-
-  // populate change-req select
   const sel = document.getElementById('req-session');
   sel.innerHTML = '<option value="">날짜 선택</option>';
   upcoming.forEach(s => sel.innerHTML += `<option value="${s.date}">${s.label} 20:00</option>`);
