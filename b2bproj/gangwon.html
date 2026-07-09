@@ -177,6 +177,20 @@ option { background: #111; }
 .hw-answer-label { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); margin-bottom: 6px; }
 .hw-answer-text { font-size: 13px; color: var(--on-mute); line-height: 1.65; }
 
+/* ── Calendar (tab-schedule) ─────────────────────────── */
+.cal-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 28px; }
+@media (max-width: 700px) { .cal-months { grid-template-columns: 1fr; } }
+.cal-month-label { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); margin-bottom: 10px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
+.cal-dow { background: var(--night); font-size: 8px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); padding: 6px 2px; text-align: center; }
+.cal-cell { background: var(--night); min-height: 34px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: var(--mute); gap: 3px; }
+.cal-cell.other-month { background: rgba(0,0,0,0.5); }
+.cal-cell.lesson-past { background: var(--night-soft); color: var(--mute); font-weight: 700; }
+.cal-cell.lesson-upcoming { background: var(--night-soft); color: var(--on-mute); font-weight: 700; border: 1px solid rgba(96,165,250,0.35); margin: -1px; z-index: 1; }
+.cal-cell.lesson-today { background: rgba(74,222,128,0.1); color: var(--green); font-weight: 800; border: 1px solid rgba(74,222,128,0.5); margin: -1px; z-index: 2; }
+.cal-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.cal-dot.past { background: var(--hairline); }
+
 /* ── Ghost logout ────────────────────────────────────── */
 .btn-logout { background: none; border: none; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; margin-top: 32px; transition: color 0.15s; }
 .btn-logout:hover { color: var(--light); }
@@ -289,47 +303,51 @@ option { background: #111; }
     <div class="stat-cell"><div class="stat-num" id="stat-hw-count">—</div><div class="stat-label">숙제 제출 건수</div></div>
   </div>
 
-  <!-- Schedule -->
-  <div class="schedule-section">
-    <div class="schedule-hd">
-      <span class="schedule-hd-title">남은 수업 일정</span>
-      <span class="schedule-time-badge">20:00 수업</span>
-    </div>
-    <div id="schedule-list"></div>
-    <button class="change-req-btn" onclick="toggleChangeReq(this)">
-      일정 변경 요청하기
-      <svg id="req-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><polyline points="9 18 15 12 9 6"/></svg>
-    </button>
-    <div class="change-req-panel" id="change-req-panel">
-      <label class="req-label">변경할 수업 날짜</label>
-      <select class="req-select" id="req-session">
-        <option value="">날짜 선택</option>
-      </select>
-      <label class="req-label">요청 내용</label>
-      <textarea class="req-textarea" id="req-message" placeholder="예: 7월 22일을 7월 23일(목)로 변경 요청합니다. 해당 날짜에 구단 원정 일정이 있습니다."></textarea>
-      <div class="msg" id="req-msg"></div>
-      <button class="btn-pill" style="max-width:200px;" onclick="submitChangeReq()">요청하기</button>
-    </div>
-  </div>
-
   <!-- Tabs -->
   <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('students', this)">학생별</button>
+    <button class="tab-btn active" onclick="switchTab('schedule', this)">수업 일정</button>
+    <button class="tab-btn" onclick="switchTab('students', this)">학생별</button>
     <button class="tab-btn" onclick="switchTab('lessons', this)">수업 기록</button>
     <button class="tab-btn" onclick="switchTab('homework', this)">숙제 현황</button>
   </div>
 
-  <!-- Tab 1: 학생별 -->
-  <div id="tab-students" class="tab-panel active">
+  <!-- Tab 1: 수업 일정 -->
+  <div id="tab-schedule" class="tab-panel active">
+    <div id="calendar-area" class="cal-months"></div>
+    <div class="schedule-section">
+      <div class="schedule-hd">
+        <span class="schedule-hd-title">남은 수업 일정</span>
+        <span class="schedule-time-badge">20:00 수업</span>
+      </div>
+      <div id="schedule-list"></div>
+      <button class="change-req-btn" onclick="toggleChangeReq(this)">
+        일정 변경 요청하기
+        <svg id="req-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <div class="change-req-panel" id="change-req-panel">
+        <label class="req-label">변경할 수업 날짜</label>
+        <select class="req-select" id="req-session">
+          <option value="">날짜 선택</option>
+        </select>
+        <label class="req-label">요청 내용</label>
+        <textarea class="req-textarea" id="req-message" placeholder="예: 7월 22일을 7월 23일(목)로 변경 요청합니다. 해당 날짜에 구단 원정 일정이 있습니다."></textarea>
+        <div class="msg" id="req-msg"></div>
+        <button class="btn-pill" style="max-width:200px;" onclick="submitChangeReq()">요청하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: 학생별 -->
+  <div id="tab-students" class="tab-panel">
     <div class="student-grid" id="student-grid"></div>
   </div>
 
-  <!-- Tab 2: 수업 기록 -->
+  <!-- Tab 3: 수업 기록 -->
   <div id="tab-lessons" class="tab-panel">
     <div id="feedback-list"></div>
   </div>
 
-  <!-- Tab 3: 숙제 현황 -->
+  <!-- Tab 4: 숙제 현황 -->
   <div id="tab-homework" class="tab-panel">
     <div class="hw-unit-tabs" id="hw-unit-tabs"></div>
     <div id="hw-table-area"></div>
@@ -493,6 +511,7 @@ async function enterReport() {
   document.getElementById('btn-change-pin').classList.add('visible');
   await Promise.all([loadFeedback(), loadHomework()]);
   renderStats();
+  renderCalendar();
   renderSchedule();
   renderStudentGrid();
   buildHwUnitTabs();
@@ -681,6 +700,46 @@ function renderHwTable() {
     roster.appendChild(row);
   });
   area.appendChild(roster);
+}
+
+/* ── Calendar ────────────────────────────────────────── */
+function renderCalendar() {
+  const calArea = document.getElementById('calendar-area');
+  const today = new Date().toISOString().slice(0,10);
+  const lessonSet = new Set(SCHEDULE.map(s => s.date));
+  const DOW = ['일','월','화','수','목','금','토'];
+  const MONTHS = [
+    { year:2026, month:7,  label:'2026년 7월' },
+    { year:2026, month:8,  label:'2026년 8월' },
+    { year:2026, month:9,  label:'2026년 9월' },
+  ];
+  calArea.innerHTML = MONTHS.map(({year, month, label}) => {
+    const firstDow = new Date(year, month-1, 1).getDay();
+    const totalDays = new Date(year, month, 0).getDate();
+    const dowRow = DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
+    let cells = '';
+    for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell other-month"></div>';
+    for (let d = 1; d <= totalDays; d++) {
+      const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isLesson = lessonSet.has(ds);
+      const isToday  = ds === today;
+      const isPast   = ds < today;
+      let cls = 'cal-cell';
+      if (isLesson) {
+        if (isToday)       cls += ' lesson-today';
+        else if (isPast)   cls += ' lesson-past';
+        else               cls += ' lesson-upcoming';
+      }
+      const dot = isLesson ? `<div class="cal-dot${isPast && !isToday ? ' past' : ''}"></div>` : '';
+      cells += `<div class="${cls}">${d}${dot}</div>`;
+    }
+    const rem = (7 - (firstDow + totalDays) % 7) % 7;
+    for (let i = 0; i < rem; i++) cells += '<div class="cal-cell other-month"></div>';
+    return `<div>
+      <div class="cal-month-label">${label}</div>
+      <div class="cal-grid">${dowRow}${cells}</div>
+    </div>`;
+  }).join('');
 }
 
 /* ── Schedule ────────────────────────────────────────── */
