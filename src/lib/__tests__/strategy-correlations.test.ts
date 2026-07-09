@@ -29,7 +29,6 @@ function rows(spec: { n: number; row: Partial<CorrelationRow> }[]): CorrelationR
     reachedStage4: true,
     memoCount: 0,
     firstResponseHours: null,
-    tier: null,
     vocabWeak: null,
     backtracked: false,
   };
@@ -109,24 +108,25 @@ describe('computeCorrelations — 게이트', () => {
 
 describe('rankCorrelations — surprise 수축', () => {
   it('고표본·중격차가 저표본·고격차를 이긴다(adequacy 수축으로 역전)', () => {
-    // 티어: A n=6(전환 66.7%) vs C n=6(0%) → 격차 0.667, adequacy 6/14≈0.429 → surprise≈0.286
+    // 메모: 4회+ n=6(전환 66.7%) vs 3회- n=6(0%) → 격차 0.667, adequacy 6/14≈0.429 → surprise≈0.286
     // 첫응답: 48h+ n=80(10%) vs 이내 n=80(45%) → 격차 0.35, adequacy 80/88≈0.909 → surprise≈0.318
-    // 격차는 티어가 더 크지만, 수축 후 첫응답(고표본)이 더 높아야 한다.
+    // 격차는 메모가 더 크지만, 수축 후 첫응답(고표본)이 더 높아야 한다.
+    // 첫응답 표본은 reachedStage4=false로 두어 메모 상관(base=reachedStage4)과 분리한다.
     const data = rows([
-      { n: 4, row: { tier: 'A', isPaid: true } },
-      { n: 2, row: { tier: 'A', isPaid: false } },
-      { n: 6, row: { tier: 'C', isPaid: false } },
-      { n: 8, row: { firstResponseHours: 72, isPaid: true } },
-      { n: 72, row: { firstResponseHours: 72, isPaid: false } },
-      { n: 36, row: { firstResponseHours: 10, isPaid: true } },
-      { n: 44, row: { firstResponseHours: 10, isPaid: false } },
+      { n: 4, row: { reachedStage4: true, memoCount: 5, isPaid: true } },
+      { n: 2, row: { reachedStage4: true, memoCount: 5, isPaid: false } },
+      { n: 6, row: { reachedStage4: true, memoCount: 1, isPaid: false } },
+      { n: 8, row: { reachedStage4: false, firstResponseHours: 72, isPaid: true } },
+      { n: 72, row: { reachedStage4: false, firstResponseHours: 72, isPaid: false } },
+      { n: 36, row: { reachedStage4: false, firstResponseHours: 10, isPaid: true } },
+      { n: 44, row: { reachedStage4: false, firstResponseHours: 10, isPaid: false } },
     ]);
     const ranked = rankCorrelations(computeCorrelations(data), 3);
-    const tier = ranked.find((c) => c.key === 'tier_x_conversion')!;
+    const memo = ranked.find((c) => c.key === 'memo_touch_x_conversion')!;
     const resp = ranked.find((c) => c.key === 'first_response_x_conversion')!;
-    expect(tier).toBeDefined();
+    expect(memo).toBeDefined();
     expect(resp).toBeDefined();
-    expect(resp.surprise).toBeGreaterThan(tier.surprise); // 수축으로 고표본이 역전
+    expect(resp.surprise).toBeGreaterThan(memo.surprise); // 수축으로 고표본이 역전
     expect(ranked[0].key).toBe('first_response_x_conversion');
   });
 });

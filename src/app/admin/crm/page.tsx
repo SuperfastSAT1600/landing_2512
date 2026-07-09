@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { UserPlus, Search, AlertCircle } from 'lucide-react';
-import { Student, LeadTier, LEAD_TIER_OPTIONS, isStageStalled, effectiveLeadTier, type InsightPeriod } from '@/types/crm';
+import { Student, isStageStalled, type InsightPeriod } from '@/types/crm';
 import { useCrmRealtime, RealtimeStatus } from '@/hooks/useCrmRealtime';
 import { SalesKanban } from './components/SalesKanban';
 import { KanbanStatsStrip } from './components/KanbanStatsStrip';
@@ -60,7 +60,6 @@ export default function CrmPage() {
   const [adminUserName, setAdminUserName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
-  const [tierFilter, setTierFilter] = useState<'' | LeadTier>('');
   const [activeTab, setActiveTab] = useState<'today' | 'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('today');
   const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'experiment' | 'library' | undefined>(undefined);
   const [strategyPeriod, setStrategyPeriod] = useState<InsightPeriod | undefined>(undefined);
@@ -208,10 +207,9 @@ export default function CrmPage() {
       if (filters.trafficSource && s.traffic_source !== filters.trafficSource) return false;
       if (filters.desiredSubjects && s.desired_subjects !== filters.desiredSubjects) return false;
       if (filters.leadType && s.lead_type !== filters.leadType) return false;
-      if (tierFilter && effectiveLeadTier(s, Date.now()) !== tierFilter) return false;
       return true;
     });
-  }, [students, searchQuery, filters, tierFilter]);
+  }, [students, searchQuery, filters]);
 
   // Calculated from ALL active students (not filtered) so the banner is always accurate
   const followUpStudents = useMemo(() => {
@@ -322,24 +320,6 @@ export default function CrmPage() {
                 />
               </div>
               <KanbanFilter filters={filters} onChange={setFilters} />
-
-              {/* 리드 등급 필터 */}
-              <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden text-xs">
-                {([
-                  { key: '', label: '전체' },
-                  ...LEAD_TIER_OPTIONS.map((t) => ({ key: t, label: t })),
-                ] as { key: '' | LeadTier; label: string }[]).map(({ key, label }) => (
-                  <button
-                    key={key || 'all'}
-                    onClick={() => setTierFilter(key)}
-                    className={`px-2.5 py-2 font-medium transition-colors border-l first:border-l-0 border-gray-200 ${
-                      tierFilter === key ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <KanbanStatsStrip adminKey={adminKey} onSelectStudent={handleSelectStudentById} />

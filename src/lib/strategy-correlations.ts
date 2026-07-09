@@ -23,7 +23,6 @@ export interface CorrelationStudent {
   lead_status: string;
   funnel_stage: string;
   stage_history?: { stage: string; entered_at: string }[] | null;
-  tier?: 'A' | 'B' | 'C' | null; // effectiveLeadTier 결과
   consultation_timeline_len?: number;
   inquiry_date?: string | null;
   first_message_sent_at?: string | null;
@@ -37,7 +36,6 @@ export interface CorrelationRow {
   reachedStage4: boolean;
   memoCount: number;
   firstResponseHours: number | null;
-  tier: 'A' | 'B' | 'C' | null;
   vocabWeak: boolean | null; // medium|high = true, none|low = false, 미상 = null
   backtracked: boolean; // stage_history상 더 낮은 단계로 역행한 적이 있는가
 }
@@ -97,7 +95,6 @@ export function projectRow(s: CorrelationStudent): CorrelationRow {
     reachedStage4: maxReachedIndex(s) >= STAGE4_INDEX,
     memoCount: s.consultation_timeline_len ?? 0,
     firstResponseHours: responseHours(s),
-    tier: s.tier ?? null,
     vocabWeak: vocab == null ? null : vocab === 'medium' || vocab === 'high',
     backtracked: hasBacktracked(s),
   };
@@ -169,16 +166,6 @@ export function computeCorrelations(rows: CorrelationRow[]): Correlation[] {
       inB: (r) => (r.firstResponseHours ?? 0) <= 48,
       segA: '첫응답 48h 초과',
       segB: '48h 이내',
-    },
-    {
-      key: 'tier_x_conversion',
-      label: '리드 티어 → 전환',
-      metric: 'conversion',
-      base: (r) => r.tier === 'A' || r.tier === 'C',
-      inA: (r) => r.tier === 'A',
-      inB: (r) => r.tier === 'C',
-      segA: 'A티어',
-      segB: 'C티어',
     },
     {
       key: 'vocab_weak_x_churn',

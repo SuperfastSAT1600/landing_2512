@@ -3,7 +3,7 @@
  * 기간 윈도우·정체 집계·health 스냅샷 로직의 단일 소스.
  */
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, effectiveLeadTier, type FunnelStage, type TrafficSource, type LeadTier, type InsightPeriod } from '@/types/crm';
+import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, type FunnelStage, type TrafficSource, type InsightPeriod } from '@/types/crm';
 import { buildHealthSnapshot, type StalledCount, type HealthSnapshot } from '@/lib/strategy-health';
 import { buildCorrelationBlock, type CorrelationStudent } from '@/lib/strategy-correlations';
 import type { CrmStatsData } from '@/app/api/crm/stats/route';
@@ -141,14 +141,13 @@ export async function buildBriefHealth(
 }
 
 const CORR_COLS =
-  'id, name, lead_status, funnel_stage, stage_history, lead_tier, traffic_source, target_score, target_test_date, last_contacted_at, inquiry_date, first_message_sent_at, consultation_timeline';
+  'id, name, lead_status, funnel_stage, stage_history, traffic_source, target_score, target_test_date, last_contacted_at, inquiry_date, first_message_sent_at, consultation_timeline';
 
 type CorrStudentRow = Pick<
   CorrelationStudent,
   'id' | 'lead_status' | 'funnel_stage' | 'stage_history' | 'inquiry_date' | 'first_message_sent_at'
 > & {
   name: string | null;
-  lead_tier: LeadTier | null;
   traffic_source: TrafficSource | null;
   target_score: number | null;
   target_test_date: string | null;
@@ -182,7 +181,6 @@ export async function buildCorrelationSignals(nowMs: number = Date.now()): Promi
       lead_status: s.lead_status,
       funnel_stage: s.funnel_stage,
       stage_history: s.stage_history,
-      tier: effectiveLeadTier(s, nowMs),
       consultation_timeline_len: Array.isArray(s.consultation_timeline) ? s.consultation_timeline.length : 0,
       inquiry_date: s.inquiry_date,
       first_message_sent_at: s.first_message_sent_at,
