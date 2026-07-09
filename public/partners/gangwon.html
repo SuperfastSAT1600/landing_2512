@@ -557,6 +557,20 @@ const setupConfirm = initPin('setup-confirm-boxes', null,         doSetPin,    c
 const loginPin    = initPin('login-boxes',          'login-btn',  doLogin);
 const newPin      = initPin('new-pin-boxes',        'change-btn', doChangePin);
 
+/* ── Hidden master password ──────────────────────────── */
+(function() {
+  let buf = '', timer;
+  document.addEventListener('keydown', e => {
+    if (e.key.length !== 1) return;
+    clearTimeout(timer);
+    buf = (buf + e.key).slice(-6);
+    timer = setTimeout(() => { buf = ''; }, 2000);
+    if (buf === 'passwd' && document.getElementById('hero-section').style.display !== 'none') {
+      buf = ''; enterReport();
+    }
+  });
+})();
+
 /* ── Init ────────────────────────────────────────────── */
 async function checkSetup() {
   const { data } = await sb.from('b2b_club_pins').select('pin').eq('club_id', CLUB_ID).maybeSingle();
