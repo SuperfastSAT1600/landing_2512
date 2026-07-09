@@ -59,46 +59,47 @@ body { background: var(--night); color: var(--light); font-family: 'Inter', 'Ari
 /* ── Report shell ────────────────────────────────────── */
 #report { display: none; min-height: 100vh; padding: calc(56px + 32px) clamp(20px, 5vw, 48px) 80px; max-width: 860px; margin: 0 auto; }
 
-/* ── Light theme (report) ────────────────────────────── */
-body.report-mode { background: #f2f2f7; }
+/* ── Light theme (report) — SpaceX design tokens ─────── */
+/* canvas-cool:#f0f0fa  canvas-light:#ffffff  hairline-on-light:#e0e0e8  ink:#000  ink-mute:#5a5a5f */
+body.report-mode { background: #f0f0fa; }
 #report {
-  --night:      #f2f2f7;
+  --night:      #f0f0fa;
   --night-soft: #ffffff;
-  --light:      #1c1c1e;
-  --hairline:   #c7c7cc;
-  --mute:       #8e8e93;
-  --on-mute:    #1c1c1e;
+  --light:      #000000;
+  --hairline:   #e0e0e8;
+  --mute:       #5a5a5f;
+  --on-mute:    #000000;
   --green:      #1a9e4d;
   --red:        #c0392b;
   --blue:       #1558c0;
-  color: #1c1c1e;
+  color: #000000;
 }
 /* tabs */
-#report .tab-btn { color: #8e8e93; }
-#report .tab-btn:hover { color: #1c1c1e; }
-#report .tab-btn.active { background: #1c1c1e; color: #ffffff; border-bottom-color: #1c1c1e; padding: 11px 20px; }
-/* hover/focus states with hardcoded white rgba */
-#report .student-card:hover { border-color: rgba(0,0,0,0.28); }
+#report .tab-btn { color: #5a5a5f; }
+#report .tab-btn:hover { color: #000000; }
+#report .tab-btn.active { background: #000000; color: #ffffff; border-bottom-color: #000000; padding: 11px 20px; }
+/* hover/focus — replace hardcoded white rgba */
+#report .student-card:hover { border-color: rgba(0,0,0,0.3); }
 #report .fb-item-header:hover { background: rgba(0,0,0,0.03); }
 #report .hw-student-hd:hover { background: rgba(0,0,0,0.03); }
 #report .change-req-btn:hover { background: rgba(0,0,0,0.03); }
-#report .req-select:focus, #report .req-textarea:focus { border-color: rgba(0,0,0,0.38); }
+#report .req-select:focus, #report .req-textarea:focus { border-color: rgba(0,0,0,0.4); }
 #report .btn-pill:hover:not(:disabled) { background: rgba(0,0,0,0.06); }
-/* hairline-colored elements too faint on white */
-#report .fb-duration { color: var(--mute); }
-#report .fb-chevron { color: var(--mute); }
-#report .hw-chevron { color: var(--mute); }
+/* hairline-colored elements: too faint on light bg */
+#report .fb-duration { color: #5a5a5f; }
+#report .fb-chevron { color: #5a5a5f; }
+#report .hw-chevron { color: #5a5a5f; }
 /* calendar */
 #report .cal-cell.other-month { background: rgba(0,0,0,0.03); }
-#report .cal-cell.lesson-recorded { border-color: rgba(28,28,30,0.22); }
-#report .cal-cell.lesson-recorded:hover { border-color: rgba(28,28,30,0.55); background: rgba(0,0,0,0.04); }
+#report .cal-cell.lesson-recorded { border-color: rgba(0,0,0,0.2); }
+#report .cal-cell.lesson-recorded:hover { border-color: rgba(0,0,0,0.5); background: rgba(0,0,0,0.04); }
 #report .cal-cell.lesson-recorded .cal-dot { background: #1a9e4d; }
 /* chips & badges */
 #report .chip-attend { border-color: rgba(26,158,77,0.4); background: rgba(26,158,77,0.07); }
 #report .chip-absent { border-color: rgba(192,57,43,0.35); background: rgba(192,57,43,0.06); }
 #report .hw-dot.done { background: rgba(21,88,192,0.1); border-color: rgba(21,88,192,0.3); }
 #report .hw-status-badge.done { background: rgba(21,88,192,0.1); border-color: rgba(21,88,192,0.3); }
-#report select option { background: #ffffff; color: #1c1c1e; }
+#report select option { background: #ffffff; color: #000000; }
 
 /* Report header */
 .rpt-header { margin-bottom: 32px; border-bottom: 1px solid var(--hairline); padding-bottom: 24px; }
@@ -274,34 +275,30 @@ option { background: #111; }
 .modal-hw-answer-label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); margin-bottom: 4px; margin-top: 10px; }
 .modal-hw-answer { font-size: 13px; color: var(--on-mute); line-height: 1.6; }
 
-/* ── Modal light theme (report-mode) ─────────────────── */
-body.report-mode #student-modal { background: rgba(0,0,0,0.3); }
-body.report-mode .modal-card {
-  background: #ffffff;
-  border-color: #c7c7cc;
-  color: #1c1c1e;
-}
-body.report-mode .modal-hd { background: #ffffff; border-color: #c7c7cc; }
-body.report-mode .modal-student-name { color: #1c1c1e; }
-body.report-mode .modal-rate { color: #8e8e93; }
+/* ── Modal light theme (report-mode) — SpaceX tokens ─── */
+body.report-mode #student-modal { background: rgba(0,0,0,0.25); }
+body.report-mode .modal-card { background: #ffffff; border-color: #e0e0e8; color: #000000; }
+body.report-mode .modal-hd { background: #ffffff; border-color: #e0e0e8; }
+body.report-mode .modal-student-name { color: #000000; }
+body.report-mode .modal-rate { color: #5a5a5f; }
 body.report-mode .modal-rate-num.green { color: #1a9e4d; }
 body.report-mode .modal-rate-num.blue { color: #1558c0; }
-body.report-mode .modal-close { border-color: #c7c7cc; color: #8e8e93; }
-body.report-mode .modal-close:hover { border-color: #1c1c1e; color: #1c1c1e; }
-body.report-mode .modal-section-head { color: #8e8e93; border-color: #c7c7cc; background: rgba(0,0,0,0.025); }
-body.report-mode .modal-session { border-color: #c7c7cc; }
+body.report-mode .modal-close { border-color: #e0e0e8; color: #5a5a5f; }
+body.report-mode .modal-close:hover { border-color: #000000; color: #000000; }
+body.report-mode .modal-section-head { color: #5a5a5f; border-color: #e0e0e8; background: rgba(0,0,0,0.02); }
+body.report-mode .modal-session { border-color: #e0e0e8; }
 body.report-mode .modal-status.attend { color: #1a9e4d; }
 body.report-mode .modal-status.absent { color: #c0392b; }
-body.report-mode .modal-session-date { color: #1c1c1e; }
-body.report-mode .modal-session-unit { color: #8e8e93; }
-body.report-mode .modal-session-note { color: #1c1c1e; }
-body.report-mode .modal-hw-row { border-color: #c7c7cc; }
+body.report-mode .modal-session-date { color: #000000; }
+body.report-mode .modal-session-unit { color: #5a5a5f; }
+body.report-mode .modal-session-note { color: #000000; }
+body.report-mode .modal-hw-row { border-color: #e0e0e8; }
 body.report-mode .modal-hw-unit { color: #1558c0; }
-body.report-mode .modal-hw-unit .miss-tag { color: #8e8e93; }
-body.report-mode .modal-hw-answer-label { color: #8e8e93; }
-body.report-mode .modal-hw-answer { color: #1c1c1e; }
-body.report-mode .student-memo-name { color: #1c1c1e; text-decoration-color: #c7c7cc; }
-body.report-mode .student-note { color: #1c1c1e; }
+body.report-mode .modal-hw-unit .miss-tag { color: #5a5a5f; }
+body.report-mode .modal-hw-answer-label { color: #5a5a5f; }
+body.report-mode .modal-hw-answer { color: #000000; }
+body.report-mode .student-memo-name { color: #000000; text-decoration-color: #e0e0e8; }
+body.report-mode .student-note { color: #000000; }
 </style>
 </head>
 <body>
