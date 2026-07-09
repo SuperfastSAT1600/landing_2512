@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { Pencil } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP } from '@/types/crm';
 import {
   INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
-  LEAD_TIER_OPTIONS, LEAD_TIER_LABELS, LEAD_TIER_APPROACH, autoLeadTier, effectiveLeadTier,
 } from '@/types/crm';
 import type { EditForm } from '../types';
 import { inputCls, selectCls, EditField } from './StudentInfoEdit';
@@ -57,10 +55,6 @@ export function InquirySection({
   localStudent, adminKey, editForm, setEditForm,
   isEditingInquiry, setIsEditingInquiry, savingInquiry, onSaveInquiry, onCancelInquiry,
 }: Props) {
-  // 자동 등급 제안값 / 표시용 effective 등급 — 마운트 시 1회 캡처(render 중 Date 직접 호출 회피)
-  const [nowMs] = useState(() => Date.now());
-  const autoTier = autoLeadTier(localStudent, nowMs);
-  const shownTier = effectiveLeadTier(localStudent, nowMs);
   const actions = isEditingInquiry ? (
     <>
       <button onClick={onCancelInquiry} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">취소</button>
@@ -136,12 +130,6 @@ export function InquirySection({
                 </select>
               </EditField>
             )}
-            <EditField label="리드 등급">
-              <select value={editForm.lead_tier} onChange={e => setEditForm({ ...editForm, lead_tier: e.target.value })} className={selectCls}>
-                <option value="">{`자동 (${autoTier} · ${LEAD_TIER_APPROACH[autoTier]})`}</option>
-                {LEAD_TIER_OPTIONS.map(v => <option key={v} value={v}>{`${LEAD_TIER_LABELS[v]} · ${LEAD_TIER_APPROACH[v]}`}</option>)}
-              </select>
-            </EditField>
             <EditField label="광고명 (자동)">
               <input readOnly value={localStudent.ad_name ?? ''} placeholder="자동 입력" className={`${inputCls} bg-gray-50 text-gray-400 cursor-default`} />
             </EditField>
@@ -165,10 +153,6 @@ export function InquirySection({
             <InquiryRow label="작성자" value={localStudent.content_author} />
           )}
           <InquiryRow label="구분" value={localStudent.lead_type ?? '—'} />
-          <InquiryRow
-            label="등급"
-            value={`${LEAD_TIER_LABELS[shownTier]} · ${LEAD_TIER_APPROACH[shownTier]}${localStudent.lead_tier ? '' : ' (자동)'}`}
-          />
           {localStudent.b2b_partner && (
             <InquiryRow label="파트너" value={localStudent.b2b_partner} />
           )}
