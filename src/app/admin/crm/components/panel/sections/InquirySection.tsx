@@ -99,7 +99,7 @@ export function InquirySection({
                 {TRAFFIC_SOURCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
               </select>
             </EditField>
-            {editForm.traffic_source === '소개/추천' && (
+            {editForm.traffic_source === '소개' && (
               <EditField label="소개자" className="col-span-2">
                 <ReferrerPicker
                   adminKey={adminKey}
@@ -146,7 +146,7 @@ export function InquirySection({
           )}
           <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
           <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
-          {localStudent.traffic_source === '소개/추천' && localStudent.referral_student_name && (
+          {localStudent.traffic_source === '소개' && localStudent.referral_student_name && (
             <InquiryRow label="소개자" value={localStudent.referral_student_name} />
           )}
           {localStudent.content_author && (

@@ -45,22 +45,26 @@ export type InquiryChannel =
   | '인스타그램 링크';
 
 export type TrafficSource =
-  | '네이버 검색 후 상담예약'
-  | '네이버 카페'
-  | '구글폼에서 즉시상담'
-  | '(구)랜딩페이지 즉시상담'
-  | '(구)랜딩페이지 상담예약'
-  | '(신)랜딩 페이지 상담예약'
-  | '공식 블로그'
-  | '인스타그램 오가닉'
-  | '인스타그램 광고'
-  | '브런치'
-  | '책'
-  | '소개/추천'
-  | '레딧'
+  | '소개'
   | 'B2B 파트너'
-  | '기존DB'
-  | '대표전화';
+  | '인스타그램 광고'
+  | '랜딩 상담 폼 카톡 - SuperfastSAT!'
+  | '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT'
+  | '(구) 랜딩 구글폼 상담 예약'
+  | '랜딩 상담 예약 폼 카톡 - SuperfastSAT!'
+  | '(신) 랜딩 즉시 카톡 상담 - [T] SuperfastSAT'
+  | '(신) 랜딩 구글폼 상담 예약'
+  | '네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastSAT'
+  | '네이버 블로그 게시물'
+  | '네이버 카페'
+  | '브런치 카톡 - [BR]SuperfastSAT'
+  | '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)'
+  | '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT'
+  | '대표전화'
+  | '인스타그램 오가닉'
+  | '책'
+  | '레딧'
+  | '기존DB';
 
 export type ContentAuthor = '배병윤' | '이민재' | '김우영' | '장현아';
 
@@ -602,22 +606,26 @@ export const INQUIRY_CHANNEL_OPTIONS: InquiryChannel[] = [
 ];
 
 export const TRAFFIC_SOURCE_OPTIONS: TrafficSource[] = [
-  '인스타그램 광고',
-  '인스타그램 오가닉',
-  '구글폼에서 즉시상담',
-  '네이버 검색 후 상담예약',
-  '네이버 카페',
-  '(구)랜딩페이지 즉시상담',
-  '(구)랜딩페이지 상담예약',
-  '(신)랜딩 페이지 상담예약',
-  '공식 블로그',
-  '브런치',
-  '책',
-  '소개/추천',
-  '레딧',
+  '소개',
   'B2B 파트너',
-  '기존DB',
+  '인스타그램 광고',
+  '랜딩 상담 폼 카톡 - SuperfastSAT!',
+  '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
+  '(구) 랜딩 구글폼 상담 예약',
+  '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',
+  '(신) 랜딩 즉시 카톡 상담 - [T] SuperfastSAT',
+  '(신) 랜딩 구글폼 상담 예약',
+  '네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastSAT',
+  '네이버 블로그 게시물',
+  '네이버 카페',
+  '브런치 카톡 - [BR]SuperfastSAT',
+  '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)',
+  '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT',
   '대표전화',
+  '인스타그램 오가닉',
+  '책',
+  '레딧',
+  '기존DB',
 ];
 
 export const CONTENT_AUTHOR_OPTIONS: ContentAuthor[] = ['배병윤', '이민재', '김우영', '장현아'];

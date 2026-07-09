@@ -8,12 +8,19 @@ import {
 import type { TrafficSource } from '@/types/crm';
 
 const ALL_SOURCES: TrafficSource[] = [
-  '네이버 검색 후 상담예약', '구글폼에서 즉시상담', '네이버 카페',
-  '(구)랜딩페이지 즉시상담', '(구)랜딩페이지 상담예약',
-  '(신)랜딩 페이지 상담예약', '공식 블로그', '브런치', '레딧',
-  '인스타그램 오가닉', '인스타그램 광고',
-  '소개/추천', '책', '기존DB', '대표전화',
-  'B2B 파트너',
+  '소개', 'B2B 파트너', '인스타그램 광고',
+  '랜딩 상담 폼 카톡 - SuperfastSAT!',
+  '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
+  '(구) 랜딩 구글폼 상담 예약',
+  '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',
+  '(신) 랜딩 즉시 카톡 상담 - [T] SuperfastSAT',
+  '(신) 랜딩 구글폼 상담 예약',
+  '네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastSAT',
+  '네이버 블로그 게시물', '네이버 카페',
+  '브런치 카톡 - [BR]SuperfastSAT',
+  '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)',
+  '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT',
+  '대표전화', '인스타그램 오가닉', '책', '레딧', '기존DB',
 ];
 
 describe('SOURCE_GROUP_MAP', () => {
@@ -23,16 +30,24 @@ describe('SOURCE_GROUP_MAP', () => {
     }
   });
 
-  it('maps 네이버 검색 후 상담예약 and 구글폼에서 즉시상담 to 네이버 SEO', () => {
-    expect(SOURCE_GROUP_MAP['네이버 검색 후 상담예약']).toBe('네이버 SEO');
-    expect(SOURCE_GROUP_MAP['구글폼에서 즉시상담']).toBe('네이버 SEO');
+  it('maps 네이버 블로그/카페 sources to 네이버 SEO', () => {
+    expect(SOURCE_GROUP_MAP['네이버 블로그 게시물']).toBe('네이버 SEO');
+    expect(SOURCE_GROUP_MAP['네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastSAT']).toBe('네이버 SEO');
     expect(SOURCE_GROUP_MAP['네이버 카페']).toBe('네이버 SEO');
   });
 
   it('maps google sources to 구글 SEO', () => {
     const googleSources: TrafficSource[] = [
-      '(구)랜딩페이지 즉시상담', '(구)랜딩페이지 상담예약',
-      '(신)랜딩 페이지 상담예약', '공식 블로그', '브런치', '레딧',
+      '랜딩 상담 폼 카톡 - SuperfastSAT!',
+      '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',
+      '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
+      '(구) 랜딩 구글폼 상담 예약',
+      '(신) 랜딩 즉시 카톡 상담 - [T] SuperfastSAT',
+      '(신) 랜딩 구글폼 상담 예약',
+      '브런치 카톡 - [BR]SuperfastSAT',
+      '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)',
+      '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT',
+      '레딧',
     ];
     for (const src of googleSources) {
       expect(SOURCE_GROUP_MAP[src]).toBe('구글 SEO');
@@ -45,7 +60,7 @@ describe('SOURCE_GROUP_MAP', () => {
   });
 
   it('maps referral sources to 소개', () => {
-    expect(SOURCE_GROUP_MAP['소개/추천']).toBe('소개');
+    expect(SOURCE_GROUP_MAP['소개']).toBe('소개');
     expect(SOURCE_GROUP_MAP['책']).toBe('소개');
   });
 
@@ -56,7 +71,7 @@ describe('SOURCE_GROUP_MAP', () => {
 
 describe('getMarketingGroup', () => {
   it('returns correct group for known source', () => {
-    expect(getMarketingGroup('네이버 검색 후 상담예약')).toBe('네이버 SEO');
+    expect(getMarketingGroup('네이버 블로그 게시물')).toBe('네이버 SEO');
     expect(getMarketingGroup('인스타그램 광고')).toBe('META');
   });
 
