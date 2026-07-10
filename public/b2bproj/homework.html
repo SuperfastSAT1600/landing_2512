@@ -331,7 +331,7 @@ async function loadSubmissions() {
 
   const { data, error } = await sb
     .from('b2b_homework_submissions')
-    .select('student_name, rewatch_answer, prepare_answer, submitted_at')
+    .select('student_name, rewatch_answer, prepare_answer, sentences_answer, submitted_at')
     .eq('unit', currentUnit)
     .order('submitted_at', { ascending: false });
 
@@ -374,17 +374,42 @@ async function loadSubmissions() {
             <span class="card-field-label">Rewatch</span>
             <span class="card-field-val">${esc(r.rewatch_answer)}</span>
           </div>` : ''}
+        ${r.sentences_answer ? `
+          <div class="card-field">
+            <span class="card-field-label">Sentences</span>
+            <div>${renderSentences(r.sentences_answer)}</div>
+          </div>` : ''}
         ${r.prepare_answer ? `
           <div class="card-field">
             <span class="card-field-label">Prepare</span>
             <div>${renderPrepare(r.prepare_answer)}</div>
           </div>` : ''}
-        <div class="card-field">
-          <span class="card-field-label">Record</span>
-          <span class="card-kakao">카카오톡으로 제출</span>
-        </div>
       </div>
     </div>`).join('') + '</div>';
+}
+
+function renderSentences(val) {
+  if (!val) return '';
+  const SENT_LABELS = [
+    'We worked really hard for this.',
+    'Credit to the whole team.',
+    "I'm gutted, but we'll bounce back.",
+  ];
+  try {
+    const s = JSON.parse(val);
+    let html = '<div class="card-prepare">';
+    ['s01','s02','s03'].forEach((k, i) => {
+      const item = s[k];
+      if (!item) return;
+      html += `<div class="card-prepare-result">${SENT_LABELS[i]}</div>`;
+      if (item.ko) html += `<div class="card-prepare-row"><span class="card-prepare-num">뜻</span><span class="card-prepare-val">${esc(item.ko)}</span></div>`;
+      ['v1','v2','v3','v4','v5'].forEach((v, j) => {
+        if (item[v]) html += `<div class="card-prepare-row"><span class="card-prepare-num">${j+1}</span><span class="card-prepare-val">${esc(item[v])}</span></div>`;
+      });
+    });
+    html += '</div>';
+    return html;
+  } catch { return `<span class="card-field-val">${esc(val)}</span>`; }
 }
 
 function renderPrepare(val) {
