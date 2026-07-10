@@ -48,7 +48,6 @@ export type TrafficSource =
   | '소개'
   | 'B2B 파트너'
   | '인스타그램 광고'
-  | '랜딩 상담 폼 카톡 - SuperfastSAT!'
   | '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT'
   | '(구) 랜딩 구글폼 상담 예약'
   | '랜딩 상담 예약 폼 카톡 - SuperfastSAT!'
@@ -609,7 +608,6 @@ export const TRAFFIC_SOURCE_OPTIONS: TrafficSource[] = [
   '소개',
   'B2B 파트너',
   '인스타그램 광고',
-  '랜딩 상담 폼 카톡 - SuperfastSAT!',
   '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
   '(구) 랜딩 구글폼 상담 예약',
   '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',

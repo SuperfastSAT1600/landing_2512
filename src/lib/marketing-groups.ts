@@ -9,7 +9,6 @@ export const SOURCE_GROUP_MAP: Record<string, MarketingGroup> = {
   '네이버 블로그 게시물': '네이버 SEO',
   '네이버 카페': '네이버 SEO',
   // 구글 SEO (랜딩 + 블로그 검색 유입)
-  '랜딩 상담 폼 카톡 - SuperfastSAT!': '구글 SEO',
   '랜딩 상담 예약 폼 카톡 - SuperfastSAT!': '구글 SEO',
   '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT': '구글 SEO',
   '(구) 랜딩 구글폼 상담 예약': '구글 SEO',
