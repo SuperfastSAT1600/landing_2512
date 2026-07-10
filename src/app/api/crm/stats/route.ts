@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
     console.warn(`[stats] lead rows hit MAX_LEAD_ROWS(${MAX_LEAD_ROWS}) for ${from}~${to} — 집계가 절단됐을 수 있음`);
   }
 
-  // 기간 내 payments 조회 (최초결제만 전환율 계산에 포함)
+  // 기간 내 payments 조회 (매출·환불 집계용, 기간=paid_at KST)
   const { data: payments, error: pErr } = await supabaseAdmin
     .from('payments')
     .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
@@ -177,10 +177,24 @@ export async function GET(request: NextRequest) {
       if (p.payment_type === '최초결제') firstPaymentRevenue += p.amount;
       else if (p.payment_type === '재결제') repaymentRevenue += p.amount;
     }
-    if (p.payment_type === '최초결제') {
-      if (p.student_id) paidStudentIds.add(p.student_id);
-      if (p.student_name) paidStudentNames.add(p.student_name);
-    }
+  }
+
+  // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다.
+  // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
+  // ₩1 등 placeholder 결제(amount<=1)는 실결제가 아니므로 제외한다.
+  const MAX_PAY_ROWS = 20000;
+  const { data: firstPayRows, error: fpErr } = await supabaseAdmin
+    .from('payments')
+    .select('student_id, student_name')
+    .eq('payment_type', '최초결제')
+    .gt('amount', 1)
+    .limit(MAX_PAY_ROWS);
+  if (fpErr) console.error('[stats] firstPayRows fetch failed:', fpErr.message);
+  if ((firstPayRows?.length ?? 0) >= MAX_PAY_ROWS)
+    console.warn(`[stats] firstPayRows hit MAX_PAY_ROWS(${MAX_PAY_ROWS}) — paidStudentIds 절단됐을 수 있음`);
+  for (const p of firstPayRows ?? []) {
+    if (p.student_id) paidStudentIds.add(p.student_id);
+    if (p.student_name) paidStudentNames.add(p.student_name);
   }
 
   const leadList = students ?? [];
