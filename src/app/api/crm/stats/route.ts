@@ -153,8 +153,8 @@ export async function GET(request: NextRequest) {
   const { data: payments, error: pErr } = await supabaseAdmin
     .from('payments')
     .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
-    .gte('paid_at', `${from}T00:00:00`)
-    .lte('paid_at', `${to}T23:59:59`);
+    .gte('paid_at', `${from}T00:00:00+09:00`)
+    .lte('paid_at', `${to}T23:59:59.999+09:00`);
 
   const paymentList = pErr ? [] : (payments ?? []);
 

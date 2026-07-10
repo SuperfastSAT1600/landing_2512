@@ -173,8 +173,8 @@ export async function GET(request: NextRequest) {
     supabaseAdmin
       .from('payments')
       .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
-      .gte('paid_at', `${weekStart}T00:00:00`)
-      .lte('paid_at', `${todayStr}T23:59:59`)
+      .gte('paid_at', `${weekStart}T00:00:00+09:00`)
+      .lte('paid_at', `${todayStr}T23:59:59.999+09:00`)
       .then(({ data }) => data ?? []),
 
     // 이번 주 광고비
