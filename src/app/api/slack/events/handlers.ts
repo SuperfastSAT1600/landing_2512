@@ -70,13 +70,16 @@ export async function handleBlogWrite(
 
   const { ghostId, landingId } = await saveDrafts(draft, topic, thumbnailUrl);
 
-  const excerpt = stripFrontmatter(draft.ghostMarkdown)
-    .replace(/#{1,3} .+\n/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
+  const ghostExcerpt = stripFrontmatter(draft.ghostMarkdown)
+    .replace(/#{1,6} .+/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
+  const landingExcerpt = stripFrontmatter(draft.landingMarkdown)
+    .replace(/#{1,6} .+/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
   const meta = `[blog-agent: ghost_id=${ghostId}|landing_id=${landingId}|title=${encodeURIComponent(draft.title)}]`;
+  const thumbLine = thumbnailUrl ? `\n\n*썸네일:* ${thumbnailUrl}` : '';
 
   await postSlack(
     channel,
-    `${meta}\n\n*블로그 초안 완성 — 확인해주세요*\n\n*제목:* ${draft.title}\n\n*요약:*\n${excerpt}...\n\n> 발행하려면 이 스레드에서 *@landingpage 발행할게요* 라고 입력해주세요.`,
+    `${meta}\n\n*[검토 요청] ${draft.title}*\n\n*Ghost 버전:*\n${ghostExcerpt}...\n\n*Landing 버전:*\n${landingExcerpt}...${thumbLine}\n\n> 발행하려면 이 스레드에 *발행할게요* 를 입력해주세요. 수정이 필요하면 수정 내용을 알려주세요.`,
     threadTs
   );
 }

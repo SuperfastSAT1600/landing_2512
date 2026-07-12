@@ -14,7 +14,7 @@ export async function saveLandingDraft(
       apikey: supabaseKey,
       Authorization: `Bearer ${supabaseKey}`,
       'Content-Type': 'application/json',
-      Prefer: 'return=representation',
+      Prefer: 'return=representation,resolution=merge-duplicates',
     },
     body: JSON.stringify({
       id: slug,
@@ -33,7 +33,7 @@ export async function saveLandingDraft(
     }),
   });
 
-  if (res.status !== 201) {
+  if (res.status !== 200 && res.status !== 201) {
     const err = await res.text();
     throw new Error(`랜딩 draft 실패: ${res.status} ${err}`);
   }
