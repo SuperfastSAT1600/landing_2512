@@ -1,0 +1,71 @@
+/*
+ * class-enrollment 원본 globals.css 이식본.
+ * 전역 오염 방지를 위해 body/스크롤바 스타일을 `.enrollment-root` 라우트 래퍼로 스코프.
+ * (host 전역 globals.css는 그대로 두고, enrollment 라우트에서만 이 파일을 추가로 import)
+ */
+
+/* 다크 clay 배경 — enrollment 라우트에만 적용 */
+.enrollment-root {
+  background: #050816;
+  min-height: 100vh;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area support for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .enrollment-root {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Custom scrollbar - dark theme (enrollment 내부로 스코프) */
+.enrollment-root ::-webkit-scrollbar {
+  width: 6px;
+}
+.enrollment-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.enrollment-root ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+.enrollment-root ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Focus ring utility - dark theme */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  --tw-ring-color: rgba(96, 133, 255, 0.4);
+  --tw-ring-offset-color: #050816;
+}
+
+/* Card selection animation - dark clay morphism */
+.card-selectable {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.card-selectable:active {
+  transform: scale(0.98);
+  transition-duration: 0.08s;
+}
+@media (hover: hover) {
+  .card-selectable:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+.card-selectable.selected {
+  border-color: rgba(96, 133, 255, 0.5);
+  box-shadow:
+    20px 20px 40px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(96, 133, 255, 0.3),
+    0 0 20px rgba(96, 133, 255, 0.15);
+}

@@ -112,6 +112,21 @@ export async function deleteCoach(slug: string): Promise<boolean> {
     return !error;
 }
 
+/**
+ * 주어진 slug 목록의 코치를 조회하고, 전달된 slug 순서를 보존해 반환한다.
+ * 존재하지 않거나 조회에 실패한 slug는 결과에서 제외된다.
+ */
+export async function getCoachesBySlugs(slugs: readonly string[]): Promise<CoachData[]> {
+    if (slugs.length === 0) return [];
+    const { data, error } = await supabaseAdmin
+        .from('coaches')
+        .select('*')
+        .in('slug', slugs as string[]);
+    if (error || !data) return [];
+    const bySlug = new Map(data.map((row) => [row.slug as string, rowToCoach(row)]));
+    return slugs.map((slug) => bySlug.get(slug)).filter((c): c is CoachData => c !== undefined);
+}
+
 export async function getCoachesBySubject(subject: string): Promise<CoachData[]> {
     const { data, error } = await supabaseAdmin
         .from('coaches')
