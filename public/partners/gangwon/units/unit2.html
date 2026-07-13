@@ -1,0 +1,2483 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNIT 02 : POST-MATCH FLASH INTERVIEW · 러너스 LRS</title>
+<meta property="og:title" content="UNIT 02 : POST-MATCH FLASH INTERVIEW" />
+<meta property="og:description" content="강원 U-18 영어 인터뷰 수업 · 러너스 LRS" />
+<meta property="og:image" content="/partners/lrs-logo.png" />
+<meta property="og:type" content="website" />
+<style>
+
+/* ── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --night:     #000000;
+  --night-s:   #0a0a0a;
+  --night-2:   #111111;
+  --white:     #ffffff;
+  --mute:      #5a5a5f;
+  --muted:     #8a8a8f;
+  --line:      #2a2a2f;
+  --line-l:    #e0e0e8;
+  --bg-l:      #f4f7fa;
+  --blue-tint: #e8f0ff;
+  --blue-bdr:  #c8d8ff;
+  --max:       1080px;
+  --pad:       clamp(24px, 5vw, 80px);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--night);
+  color: var(--white);
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Sticky nav ─────────────────────────────────────────── */
+#topnav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--line);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--pad);
+  height: 48px;
+}
+.brand {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.4em; color: var(--white);
+  text-transform: uppercase;
+}
+/* ── Top nav dropdown (2-level) ─────────────────────────── */
+.nav-dropdown { position: relative; }
+.nav-trigger {
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--mute); cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  user-select: none; transition: color 0.15s;
+}
+.nav-trigger:hover { color: var(--white); }
+.nav-trigger-arrow { font-size: 7px; transition: transform 0.2s; }
+.nav-dropdown.open .nav-trigger-arrow { transform: rotate(180deg); }
+.nav-menu {
+  display: none;
+  position: absolute; top: calc(100% + 14px); right: 0;
+  background: rgba(8,8,8,0.98);
+  border: 0.5px solid var(--line);
+  backdrop-filter: blur(16px);
+  min-width: 260px; z-index: 200;
+  max-height: 80vh; overflow-y: auto;
+}
+.nav-dropdown.open .nav-menu { display: block; }
+.nav-right { display: flex; align-items: center; gap: 24px; }
+.nav-hw-link {
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--mute); text-decoration: none; transition: color 0.15s;
+  white-space: nowrap;
+}
+.nav-hw-link:hover { color: var(--white); }
+
+/* Level 1 — Unit header */
+.nav-unit-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--line);
+  transition: background 0.12s;
+  user-select: none;
+}
+.nav-unit-hd:hover { background: rgba(255,255,255,0.03); }
+.nav-unit-hd-left {}
+.nav-unit-label {
+  font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--white); font-weight: 700;
+}
+.nav-unit-sub {
+  font-size: 9px; letter-spacing: 0.05em; text-transform: none;
+  color: var(--mute); margin-top: 3px; font-weight: 400;
+}
+.nav-unit-arrow {
+  font-size: 7px; color: var(--mute);
+  transition: transform 0.2s; flex-shrink: 0; margin-left: 12px;
+}
+.nav-unit.open .nav-unit-arrow { transform: rotate(90deg); }
+
+/* Level 2 — Section items */
+.nav-sections { display: none; }
+.nav-unit.open .nav-sections { display: block; }
+.nav-sec-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px 9px 24px;
+  font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--mute); cursor: pointer;
+  border-bottom: 0.5px solid rgba(42,42,47,0.6);
+  transition: color 0.12s, background 0.12s;
+  white-space: nowrap;
+}
+.nav-sections .nav-sec-item:last-child { border-bottom: none; }
+.nav-sec-item:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+.nav-sec-item.active { color: var(--white); }
+.nav-sec-num {
+  font-size: 7px; color: var(--line);
+  min-width: 14px; flex-shrink: 0;
+}
+
+/* ── Section wrapper ────────────────────────────────────── */
+.section {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 80px var(--pad);
+  border-bottom: 0.5px solid var(--line);
+}
+.section:last-child { border-bottom: none; }
+
+.section-light {
+  background: var(--bg-l);
+  max-width: 100%;
+  padding: 80px 0;
+}
+.section-light .inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+
+/* ── Atoms ──────────────────────────────────────────────── */
+.eyebrow {
+  font-size: 10px; letter-spacing: 0.32em;
+  text-transform: uppercase; color: var(--mute);
+  font-weight: 400; display: block;
+  margin-bottom: 16px;
+}
+.eyebrow-dark { color: var(--muted); }
+
+.hl  { height: 0.5px; background: var(--line);   margin: 24px 0; }
+.hl-l{ height: 0.5px; background: var(--line-l); margin: 24px 0; }
+
+.display {
+  font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; line-height: 0.94;
+  color: var(--white);
+}
+.d-xxl { font-size: clamp(40px, 6.2vw, 86px); }
+.d-xl  { font-size: clamp(36px, 5.5vw, 64px); }
+.d-lg  { font-size: clamp(28px, 4vw, 48px); }
+.d-md  { font-size: clamp(22px, 3vw, 34px); }
+.d-dark { color: #111; }
+
+/* ── S1: Hero ───────────────────────────────────────────── */
+#hero {
+  min-height: 88vh;
+  display: flex; flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 var(--pad) 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+#hero-vbg {
+  position: absolute; inset: 0;
+  z-index: 0; overflow: hidden;
+}
+#hero-vbg iframe {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: max(100%, calc(100vh * 16 / 9));
+  height: max(100%, calc(100vw * 9 / 16));
+  pointer-events: none;
+  opacity: 0.45;
+}
+#hero-vbg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.25) 0%,
+    rgba(0,0,0,0.80) 100%
+  );
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column;
+}
+
+.hero-glow { display: none; }
+.hero-unit-tag {
+  font-size: 9px; letter-spacing: 0.4em;
+  color: var(--mute); text-transform: uppercase;
+  margin-bottom: 28px; display: block;
+}
+.hero-h1 { margin-bottom: 0; }
+.hero-sub {
+  margin-top: 24px;
+  font-size: 14px; color: var(--mute);
+  letter-spacing: 0.04em; line-height: 1.6;
+  max-width: 480px;
+}
+.scroll-hint {
+  margin-top: 48px;
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--line); text-transform: uppercase;
+  display: flex; align-items: center; gap: 12px;
+}
+.scroll-hint::after {
+  content: '';
+  display: block; width: 40px; height: 0.5px;
+  background: var(--line);
+}
+
+/* ── S2 / S4: Split — Video + Q ────────────────────────── */
+.split-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+@media (max-width: 720px) {
+  .split-section { grid-template-columns: 1fr; gap: 40px; }
+}
+
+.video-block { display: flex; flex-direction: column; gap: 20px; }
+.video-thumb {
+  aspect-ratio: 16/9;
+  background: var(--night-s) center/cover no-repeat;
+  border: 0.5px solid var(--line);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.video-thumb::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.45);
+  transition: background 0.2s;
+}
+.video-thumb:hover::before { background: rgba(0,0,0,0.3); }
+.video-thumb:hover { border-color: var(--muted); }
+.video-thumb:hover .play-circle { border-color: var(--white); transform: scale(1.06); }
+.play-circle { position: relative; z-index: 1; }
+.play-circle {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 1px solid var(--mute);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.play-circle svg { margin-left: 5px; }
+.video-caption {
+  font-size: 10px; letter-spacing: 0.24em;
+  color: var(--mute); text-transform: uppercase;
+}
+
+.q-block { display: flex; flex-direction: column; }
+.q-block .hl { margin: 0 0 0; }
+.q-item { padding: 20px 0; border-bottom: 0.5px solid var(--line); }
+.q-item:last-child { padding-bottom: 0; border-bottom: none; }
+.q-label {
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--mute); text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.q-text { font-size: 16px; color: var(--white); line-height: 1.5; }
+
+/* ── S3 / S5: Quote List ────────────────────────────────── */
+.quote-items { display: flex; flex-direction: column; }
+.quote-item {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 48px;
+  padding: 32px 0;
+  border-top: 0.5px solid var(--line);
+  align-items: start;
+}
+.quote-item:last-child { border-bottom: 0.5px solid var(--line); }
+@media (max-width: 720px) {
+  .quote-item { grid-template-columns: 1fr; gap: 16px; }
+}
+.quote-tag {
+  font-size: 9px; letter-spacing: 0.3em;
+  color: var(--mute); text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.quote-en {
+  font-size: 20px; font-weight: 700;
+  font-style: italic; color: var(--white);
+  line-height: 1.3; margin-bottom: 10px;
+}
+.quote-ko { font-size: 13px; color: var(--mute); line-height: 1.6; }
+.quote-note { font-size: 13px; color: var(--mute); line-height: 1.7; padding-top: 36px; }
+
+/* ── Note: saved examples ────────────────────────────────── */
+.note-examples { display: flex; flex-direction: column; gap: 0; margin-top: 12px; }
+.note-ex-item {
+  position: relative;
+  font-size: 11px; color: var(--muted);
+  padding: 5px 20px 5px 0;
+  border-top: 0.5px solid var(--line);
+  line-height: 1.5; cursor: pointer;
+  transition: color 0.15s;
+}
+.note-ex-item:hover { color: var(--white); }
+.note-ex-del {
+  position: absolute; top: 50%; right: 0;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--mute); font-size: 9px;
+  cursor: pointer; padding: 2px;
+  opacity: 0; transition: opacity 0.15s;
+}
+.note-ex-item:hover .note-ex-del { opacity: 1; }
+.note-add-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 12px;
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--muted); cursor: pointer;
+  transition: color 0.15s; user-select: none;
+}
+.note-add-btn:hover { color: var(--white); }
+
+/* ── Compose overlay ─────────────────────────────────────── */
+#ex-compose {
+  position: fixed; inset: 0;
+  background: #000;
+  display: none; flex-direction: column;
+  z-index: 998;
+  padding: 40px clamp(24px, 5vw, 80px) 36px;
+  box-sizing: border-box;
+}
+#ex-compose.open { display: flex; }
+#ex-compose-header {
+  flex-shrink: 0;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+#ex-compose-context {
+  display: flex; align-items: baseline; gap: 14px; flex: 1; min-width: 0;
+}
+#ex-compose-tag {
+  font-size: 9px; letter-spacing: 0.36em; text-transform: uppercase;
+  color: var(--mute); flex-shrink: 0;
+}
+#ex-compose-origin {
+  font-size: 13px; color: #444; font-style: italic;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#ex-compose-close {
+  flex-shrink: 0; margin-left: 24px;
+  background: none; border: 0.5px solid var(--line);
+  color: var(--mute); font-family: Arial;
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; cursor: pointer;
+  transition: all 0.15s;
+}
+#ex-compose-close:hover { border-color: var(--muted); color: var(--white); }
+#ex-compose-list {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  gap: 12px; padding-bottom: 20px;
+}
+.compose-ex {
+  font-size: clamp(22px, 3.2vw, 44px);
+  font-weight: 700; line-height: 1.2;
+  color: #2a2a2a;
+  transition: color 0.4s;
+}
+.compose-ex.fresh { color: #666; }
+#ex-compose-bottom { flex-shrink: 0; border-top: 0.5px solid var(--line); padding-top: 20px; }
+#ex-compose-hint {
+  font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--line); margin-bottom: 10px;
+}
+#ex-compose-input {
+  width: 100%; box-sizing: border-box;
+  font-size: clamp(36px, 5.5vw, 72px);
+  font-weight: 700; color: var(--white);
+  background: none; border: none; outline: none;
+  font-family: Arial; caret-color: white;
+  padding: 0;
+}
+#ex-compose-input::placeholder { color: #222; }
+
+/* ── Homework sentences & Expression Lists ──────────────── */
+.note-ex-hw-badge {
+  display: inline; margin-left: 5px;
+  font-size: 7px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #c8a850; border: 0.5px solid #c8a850;
+  padding: 1px 4px; border-radius: 2px; vertical-align: middle;
+}
+.note-ex-item.is-hw { color: #c8a850; }
+.note-ex-item.is-hw:hover { color: #e0c060; }
+.compose-ex-row { display: flex; align-items: center; gap: 10px; }
+.compose-hw-btn {
+  flex-shrink: 0;
+  background: none; border: 0.5px solid #333;
+  color: #555; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 12px; cursor: pointer; transition: all 0.15s;
+}
+.compose-hw-btn:hover { border-color: #c8a850; color: #c8a850; }
+.compose-hw-btn.active { border-color: #c8a850; color: #c8a850; background: rgba(200,168,80,0.08); }
+#expr-list-panel {
+  display: none;
+  padding: 60px clamp(24px, 5vw, 80px);
+  border-top: 0.5px solid var(--line);
+}
+#expr-list-panel.has-items { display: block; }
+.expr-list-eyebrow {
+  font-size: 9px; letter-spacing: 0.36em; text-transform: uppercase;
+  color: var(--mute); margin-bottom: 32px;
+}
+.expr-list-group { margin-bottom: 32px; }
+.expr-list-origin {
+  font-size: 12px; font-style: italic; color: #555; margin-bottom: 10px;
+}
+.expr-list-sentence {
+  font-size: clamp(16px, 2.2vw, 22px);
+  font-weight: 700; color: var(--white); line-height: 1.35;
+  padding: 6px 0 6px 14px;
+  border-left: 2px solid #c8a850; margin-bottom: 8px;
+}
+
+/* ── S6: Two Column ─────────────────────────────────────── */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.5px 1fr;
+  margin-top: 8px;
+}
+@media (max-width: 640px) {
+  .compare-grid { grid-template-columns: 1fr; }
+  .compare-divider { display: none; }
+}
+.compare-vl { background: var(--line); }
+.compare-col { display: flex; flex-direction: column; }
+.compare-col:first-child { padding-right: 40px; }
+.compare-col:last-child  { padding-left: 40px; }
+.compare-col-label {
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--mute); text-transform: uppercase;
+  padding: 16px 0 8px;
+}
+.compare-row { border-top: 0.5px solid var(--line); padding: 16px 0; }
+.compare-row p { font-size: 14px; color: var(--white); font-style: italic; line-height: 1.5; }
+.compare-common {
+  margin-top: 32px; padding-top: 20px;
+  border-top: 0.5px solid var(--line);
+  font-size: 11px; letter-spacing: 0.16em;
+  color: var(--mute); text-transform: uppercase;
+}
+
+/* ── S7: Drill ──────────────────────────────────────────── */
+.drill-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 56px;
+}
+@media (max-width: 640px) { .drill-grid { grid-template-columns: 1fr; } }
+.drill-item {
+  padding: 28px 0;
+  border-top: 0.5px solid var(--line-l);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.drill-num {
+  font-size: 9px; letter-spacing: 0.2em;
+  color: var(--muted);
+}
+.drill-tpl {
+  font-size: 17px; font-weight: 700;
+  color: #111; line-height: 1.45;
+}
+.drill-hint {
+  background: var(--blue-tint);
+  border: 0.5px solid var(--blue-bdr);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 12px; color: #445566; line-height: 1.6;
+}
+.drill-ex {
+  font-size: 12px; color: var(--muted);
+  font-style: italic;
+}
+
+/* ── S8: Master List ────────────────────────────────────── */
+.master-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.5px 1fr;
+  margin-top: 8px;
+}
+@media (max-width: 640px) {
+  .master-grid { grid-template-columns: 1fr; }
+  .master-vl { display: none; }
+}
+.master-vl { background: var(--line); }
+.master-col { display: flex; flex-direction: column; }
+.master-col:first-child { padding-right: 40px; }
+.master-col:last-child  { padding-left: 40px; }
+.master-item {
+  border-top: 0.5px solid var(--line);
+  padding: 20px 0; flex: 1;
+}
+.master-src {
+  font-size: 9px; letter-spacing: 0.24em;
+  color: var(--mute); text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.master-en {
+  font-size: 15px; font-weight: 700;
+  color: var(--white); margin-bottom: 6px; line-height: 1.4;
+}
+.master-ko { font-size: 12px; color: var(--mute); }
+
+/* ── S9: Card Pair ──────────────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px; margin-top: 8px;
+}
+@media (max-width: 640px) { .card-grid { grid-template-columns: 1fr; } }
+.card-box {
+  background: var(--night-s);
+  border: 0.5px solid var(--line);
+  border-radius: 4px; overflow: hidden;
+}
+.card-header {
+  padding: 14px 20px;
+  border-bottom: 0.5px solid var(--line);
+}
+.card-row {
+  display: grid; grid-template-columns: 96px 1fr;
+  padding: 12px 20px;
+  border-bottom: 0.5px solid var(--line);
+  align-items: center; gap: 12px;
+}
+.card-row:last-child { border-bottom: none; }
+.card-label {
+  font-size: 8px; letter-spacing: 0.22em;
+  color: var(--mute); text-transform: uppercase;
+}
+.card-blank { font-size: 13px; color: var(--mute); }
+.card-q { padding: 16px 20px; border-bottom: 0.5px solid var(--line); }
+.card-q:last-child { border-bottom: none; }
+.card-q-num {
+  font-size: 8px; letter-spacing: 0.22em;
+  color: var(--mute); text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.card-q-text { font-size: 16px; font-weight: 700; color: var(--white); line-height: 1.45; }
+
+/* ── S10: Mission ───────────────────────────────────────── */
+.mission-steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px; margin-top: 8px;
+}
+@media (max-width: 720px) {
+  .mission-steps { grid-template-columns: 1fr; gap: 0; }
+  .step { border-top: 0.5px solid var(--line); padding: 28px 0; }
+}
+
+/* ── Vocab Flashcard ─────────────────────────────────────── */
+.vocab-section { margin: 48px 0 0; }
+.vocab-progress-bar {
+  display: flex; gap: 4px; margin-bottom: 20px;
+}
+.vocab-pip {
+  height: 2px; flex: 1; background: var(--line);
+  transition: background 0.3s;
+}
+.vocab-pip.done { background: var(--white); }
+.vocab-card-area {
+  perspective: 1000px;
+  height: 180px; position: relative; margin-bottom: 20px;
+}
+.vocab-card {
+  width: 100%; height: 100%;
+  position: relative; transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
+  cursor: pointer;
+}
+.vocab-card.flipped { transform: rotateY(180deg); }
+.vocab-card-face {
+  position: absolute; width: 100%; height: 100%;
+  backface-visibility: hidden;
+  border: 0.5px solid var(--line); border-radius: 4px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; padding: 24px;
+}
+.vocab-card-back { transform: rotateY(180deg); }
+.vocab-word {
+  font-size: 24px; font-weight: 700;
+  letter-spacing: 0.04em; color: var(--white);
+  text-align: center;
+}
+.vocab-hint {
+  font-size: 10px; letter-spacing: 0.2em;
+  color: var(--mute); text-transform: uppercase;
+}
+.vocab-meaning {
+  font-size: 18px; font-weight: 500;
+  color: var(--white); text-align: center;
+}
+.vocab-meaning-en {
+  font-size: 12px; color: var(--mute); text-align: center;
+  margin-top: 4px;
+}
+.vocab-nav {
+  display: flex; gap: 12px;
+}
+.vocab-btn {
+  flex: 1; padding: 12px; border-radius: 2px;
+  font-family: Arial; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.15s;
+  border: 0.5px solid var(--line); background: none;
+  color: var(--mute);
+}
+.vocab-btn-know {
+  background: var(--white); color: #000;
+  border-color: var(--white);
+}
+.vocab-btn-know:hover { background: var(--muted); }
+.vocab-btn-retry:hover { border-color: var(--muted); color: var(--muted); }
+.vocab-done-state {
+  display: none; text-align: center; padding: 32px 0;
+  border: 0.5px solid var(--line); border-radius: 4px;
+}
+.vocab-done-mark {
+  font-size: 28px; margin-bottom: 8px;
+}
+.vocab-done-text {
+  font-size: 10px; letter-spacing: 0.28em;
+  color: var(--muted); text-transform: uppercase;
+}
+.vocab-reset-btn {
+  background: none; border: none; color: var(--mute);
+  font-family: Arial; font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; cursor: pointer; margin-top: 12px;
+  text-decoration: underline;
+}
+
+/* ── Sentences Writing ───────────────────────────────────── */
+.hw-sentences { display: flex; flex-direction: column; gap: 0; }
+.hw-sent-block {
+  padding: 20px 0; border-top: 0.5px solid var(--line);
+}
+.hw-sent-block:last-child { border-bottom: none; }
+.hw-sent-num {
+  font-size: 8px; letter-spacing: 0.3em; color: var(--mute);
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.hw-sent-src {
+  font-size: 15px; font-weight: 700; color: var(--white);
+  letter-spacing: 0.02em; margin-bottom: 14px; line-height: 1.4;
+}
+.hw-sent-fields { display: flex; flex-direction: column; gap: 8px; }
+.hw-sent-row {
+  display: grid; grid-template-columns: 80px 1fr; gap: 10px;
+  align-items: center;
+}
+.hw-sent-row-label {
+  font-size: 8px; letter-spacing: 0.16em; color: var(--mute);
+  text-transform: uppercase; text-align: right;
+}
+.step-title {
+  font-size: 20px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--white); margin-bottom: 14px;
+}
+.step-hl { height: 0.5px; background: var(--line); margin-bottom: 16px; }
+.step-body { font-size: 14px; color: var(--mute); line-height: 1.85; }
+
+/* ── Footer ─────────────────────────────────────────────── */
+#footer {
+  border-top: 0.5px solid var(--line);
+  padding: 32px var(--pad);
+  display: flex; justify-content: space-between; align-items: center;
+  max-width: 100%;
+}
+.footer-brand {
+  font-size: 10px; letter-spacing: 0.32em;
+  color: var(--mute); text-transform: uppercase;
+}
+.footer-note { font-size: 10px; color: var(--line); letter-spacing: 0.1em; }
+
+/* ── YouTube modal ──────────────────────────────────────── */
+#yt-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.93);
+  display: none; align-items: center; justify-content: center;
+  z-index: 999;
+  backdrop-filter: blur(8px);
+}
+#yt-modal.open { display: flex; }
+#yt-wrap {
+  position: relative;
+  width: min(960px, 92vw);
+  aspect-ratio: 16/9;
+  background: #000;
+  border: 0.5px solid #3a3a3f;
+}
+#yt-frame { width: 100%; height: 100%; border: none; }
+#yt-close {
+  position: absolute; top: -38px; right: 0;
+  background: none; border: none; cursor: pointer;
+  font-size: 10px; letter-spacing: 0.22em;
+  color: var(--white); font-family: Arial;
+  text-transform: uppercase;
+}
+#yt-close:hover { color: var(--mute); }
+
+/* ── Instructor toolbar ─────────────────────────────────── */
+#instructor-bar {
+  position: fixed;
+  top: 48px; left: 0; right: 0;
+  height: 44px;
+  background: rgba(10,10,10,0.97);
+  border-bottom: 0.5px solid #2a2a2f;
+  backdrop-filter: blur(12px);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--pad);
+  z-index: 99;
+  transition: opacity 0.2s;
+}
+#instructor-bar.hidden { opacity: 0; pointer-events: none; }
+
+.ibar-left {
+  display: flex; align-items: center; gap: 14px;
+}
+.ibar-label {
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--mute); text-transform: uppercase;
+}
+.ibar-section-name {
+  font-size: 11px; font-weight: 700;
+  color: var(--white); letter-spacing: 0.04em;
+  min-width: 200px;
+}
+
+.ibar-right {
+  display: flex; align-items: center; gap: 8px;
+}
+.ibar-btn {
+  background: none;
+  border: 0.5px solid #3a3a3f;
+  color: var(--muted);
+  font-family: Arial; font-size: 10px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px;
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.ibar-btn:hover:not(:disabled) { border-color: var(--white); color: var(--white); }
+.ibar-btn:disabled { opacity: 0.25; cursor: default; }
+.ibar-btn.primary {
+  border-color: var(--white); color: var(--white);
+}
+.ibar-btn.primary:hover { background: var(--white); color: #000; }
+
+.ibar-progress {
+  display: flex; align-items: center; gap: 6px;
+}
+.ibar-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: #3a3a3f; cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+.ibar-dot.active { background: var(--white); transform: scale(1.5); }
+.ibar-dot:hover { background: var(--muted); }
+
+.ibar-toggle {
+  font-size: 9px; letter-spacing: 0.2em;
+  color: var(--mute); text-transform: uppercase;
+  background: none; border: none; cursor: pointer;
+  padding: 4px 0; transition: color 0.15s;
+}
+.ibar-toggle:hover { color: var(--white); }
+
+body { padding-top: 0; }
+
+/* ── Scroll reveal ──────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Kakao badge ────────────────────────────────────────── */
+.kakao-badge {
+  display: inline-block;
+  background: #FEE500; color: #191919;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 2px;
+  vertical-align: middle;
+}
+
+/* ── Homework submit ────────────────────────────────────── */
+.hw-submit-wrap { margin-top: 0; }
+
+.hw-submit-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin: 24px 0 32px;
+}
+.hw-board-link {
+  font-size: 10px; letter-spacing: 0.22em;
+  color: var(--mute); text-transform: uppercase;
+  text-decoration: none; transition: color 0.15s;
+}
+.hw-board-link:hover { color: var(--white); }
+
+.hw-fields { display: flex; flex-direction: column; gap: 0; }
+.hw-field-group {
+  padding: 20px 0;
+  border-top: 0.5px solid var(--line);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.hw-field-group:last-child { border-bottom: 0.5px solid var(--line); }
+.hw-label {
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--mute); text-transform: uppercase;
+}
+.hw-label-sub {
+  letter-spacing: 0.06em; text-transform: none;
+  color: var(--line); font-size: 9px;
+}
+.hw-input {
+  background: var(--night-s);
+  border: 0.5px solid var(--line);
+  border-radius: 3px; padding: 12px 16px;
+  color: var(--white); font-family: Arial; font-size: 14px;
+  width: 100%; transition: border-color 0.15s;
+}
+.hw-input:focus { outline: none; border-color: var(--muted); }
+.hw-textarea {
+  background: var(--night-s);
+  border: 0.5px solid var(--line);
+  border-radius: 3px; padding: 12px 16px;
+  color: var(--white); font-family: Arial; font-size: 14px;
+  width: 100%; resize: vertical; line-height: 1.7;
+  transition: border-color 0.15s;
+}
+.hw-textarea:focus { outline: none; border-color: var(--muted); }
+
+.hw-field-kakao { background: rgba(254,229,0,0.03); border-color: rgba(254,229,0,0.15) !important; }
+.hw-kakao-note {
+  font-size: 13px; color: var(--mute); line-height: 1.6;
+}
+
+.hw-actions {
+  display: flex; align-items: center; gap: 20px;
+  margin-top: 28px;
+}
+.hw-btn-submit {
+  background: var(--white); color: #000;
+  border: none; border-radius: 2px;
+  font-family: Arial; font-size: 10px;
+  font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
+  padding: 12px 32px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.hw-btn-submit:hover { background: var(--muted); }
+.hw-btn-submit:disabled { background: var(--line); color: var(--mute); cursor: default; }
+.hw-error {
+  font-size: 11px; color: #ff6b6b; letter-spacing: 0.06em;
+}
+
+.hw-done-msg {
+  display: flex; align-items: center; gap: 16px;
+  padding: 24px 0;
+}
+.hw-done-check {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 0.5px solid var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--white); flex-shrink: 0;
+}
+.hw-done-text {
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--white);
+}
+.hw-done-sub { font-size: 12px; color: var(--mute); }
+
+.hw-btn-peers {
+  background: none; border: 0.5px solid var(--line);
+  color: var(--mute); font-family: Arial;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 8px 20px; border-radius: 20px; cursor: pointer;
+  transition: all 0.15s; margin-bottom: 24px;
+}
+.hw-btn-peers:hover { border-color: var(--white); color: var(--white); }
+
+.hw-peers-list { display: flex; flex-direction: column; gap: 0; }
+.hw-peer-card {
+  padding: 20px 0;
+  border-top: 0.5px solid var(--line);
+}
+.hw-peer-card:last-child { border-bottom: 0.5px solid var(--line); }
+.hw-peer-name {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--white); margin-bottom: 10px;
+}
+.hw-peer-field { display: grid; grid-template-columns: 100px 1fr; gap: 8px; margin-bottom: 6px; }
+.hw-peer-field-label {
+  font-size: 8px; letter-spacing: 0.2em;
+  color: var(--mute); text-transform: uppercase;
+  padding-top: 2px;
+}
+.hw-peer-field-val { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.hw-peer-time { font-size: 10px; color: var(--line); margin-top: 10px; }
+.hw-peers-empty { font-size: 13px; color: var(--mute); padding: 20px 0; }
+.hw-blanks { display: flex; flex-direction: column; gap: 14px; padding-top: 4px; }
+.hw-blank-item { display: flex; flex-direction: column; gap: 6px; }
+.hw-blank-tpl { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.hw-blank-num { color: var(--mute); font-size: 9px; letter-spacing: 0.2em; font-weight: 700; margin-right: 8px; }
+.hw-result-choice { display: flex; gap: 24px; padding-top: 4px; }
+.hw-result-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.hw-result-option input[type="radio"] { accent-color: var(--white); width: 14px; height: 14px; }
+.hw-result-option span { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
+.hw-peer-prepare-row { display: grid; grid-template-columns: 28px 1fr; gap: 8px; margin-bottom: 4px; }
+.hw-peer-prepare-num { font-size: 8px; color: var(--mute); letter-spacing: 0.16em; padding-top: 2px; }
+.hw-peer-prepare-val { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.hw-peer-prepare-result { font-size: 9px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+
+/* ── Login Panel ─────────────────────────────────────────── */
+#hw-login-panel {
+  padding: 48px 0;
+}
+.login-title {
+  font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase;
+  color: var(--mute); margin-bottom: 32px;
+}
+.login-fields { display: flex; flex-direction: column; gap: 0; }
+.login-field {
+  padding: 20px 0; border-top: 0.5px solid var(--line);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.login-field:last-of-type { border-bottom: 0.5px solid var(--line); }
+.login-label {
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--mute); text-transform: uppercase;
+}
+.login-pin-wrap { position: relative; }
+.login-pin-dots {
+  position: absolute; left: 16px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px; letter-spacing: 6px; color: var(--white);
+  pointer-events: none;
+}
+.login-pin-input {
+  background: var(--night-s); border: 0.5px solid var(--line);
+  border-radius: 3px; padding: 12px 16px;
+  color: transparent; caret-color: var(--white);
+  font-family: Arial; font-size: 18px; letter-spacing: 6px;
+  width: 100%; transition: border-color 0.15s;
+}
+.login-pin-input:focus { outline: none; border-color: var(--muted); }
+.login-actions {
+  display: flex; align-items: center; gap: 20px; margin-top: 28px;
+}
+.login-btn {
+  background: var(--white); color: #000; border: none; border-radius: 2px;
+  font-family: Arial; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  padding: 12px 32px; cursor: pointer; transition: background 0.15s;
+}
+.login-btn:hover { background: var(--muted); }
+.login-btn:disabled { background: var(--line); color: var(--mute); cursor: default; }
+.login-error {
+  font-size: 11px; color: #ff6b6b; letter-spacing: 0.06em;
+}
+.login-hint {
+  font-size: 11px; color: var(--mute); margin-top: 16px; line-height: 1.7;
+}
+
+/* ── Session badge ───────────────────────────────────────── */
+#session-badge {
+  display: none;
+  font-size: 9px; letter-spacing: 0.2em; color: var(--mute);
+  text-transform: uppercase; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 16px;
+}
+#session-badge.visible { display: flex; }
+.session-name { color: var(--white); font-weight: 700; }
+.session-logout {
+  background: none; border: none; color: var(--mute);
+  font-family: Arial; font-size: 9px; letter-spacing: 0.14em;
+  text-transform: uppercase; cursor: pointer;
+  text-decoration: underline; padding: 0;
+}
+.session-logout:hover { color: var(--white); }
+
+/* ── Vocab box badge ─────────────────────────────────────── */
+.vocab-box-badge {
+  font-size: 8px; letter-spacing: 0.2em; color: var(--mute);
+  text-transform: uppercase; margin-top: 4px;
+}
+.vocab-mastered-msg {
+  font-size: 12px; color: var(--mute); margin-top: 8px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ── Top Nav ────────────────────────────────────────────── -->
+<nav id="topnav">
+  <span class="brand">러너스 LRS</span>
+  <div class="nav-right">
+    <a href="../../lesson-feedback.html" class="nav-hw-link">레슨 피드백</a>
+    <a href="../../homework.html#unit2" class="nav-hw-link">숙제 결과 확인</a>
+    <div class="nav-dropdown" id="nav-dropdown">
+      <div class="nav-trigger" onclick="toggleNavMenu(event)">
+        <span id="nav-trigger-label">목차</span>
+        <span class="nav-trigger-arrow">▾</span>
+      </div>
+      <div class="nav-menu" id="nav-menu"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Instructor Bar ────────────────────────────────────── -->
+<div id="instructor-bar">
+  <div class="ibar-left">
+    <span class="ibar-label">강사 모드</span>
+    <span class="ibar-section-name" id="ibar-name">Unit 2 — 오프닝</span>
+  </div>
+  <div class="ibar-right">
+    <div class="ibar-progress" id="ibar-dots"></div>
+    <button class="ibar-btn" id="ibar-prev" onclick="ibarGo(-1)" disabled>← 이전</button>
+    <button class="ibar-btn primary" id="ibar-next" onclick="ibarGo(1)">다음 섹션 →</button>
+    <button class="ibar-toggle" onclick="toggleIbar()">숨기기</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════════ -->
+<section id="hero" style="scroll-margin-top:92px;">
+  <!-- 배경 영상: 손흥민 유로파리그 결승 후 인터뷰 (ambient background) -->
+  <div id="hero-vbg">
+    <iframe
+      src="https://www.youtube.com/embed/gb_UqmotFi4?autoplay=1&mute=1&loop=1&controls=0&rel=0&showinfo=0&playlist=gb_UqmotFi4&start=0"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>
+  </div>
+
+  <div class="hero-content">
+    <span class="hero-unit-tag">Unit 2 &nbsp;·&nbsp; English Interview Class &nbsp;·&nbsp; Textbook</span>
+    <h1 class="display d-xxl hero-h1">
+      POST-MATCH<br>FLASH INTERVIEW
+    </h1>
+    <p class="hero-sub">경기 직후 마이크 앞에서 — 승리와 패배 두 상황을<br>모두 영어로 자연스럽게 말합니다.</p>
+    <div class="scroll-hint">Scroll to begin</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     S2 — 승리 인터뷰 시청 전
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="watch-win" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Watch &nbsp;·&nbsp; Reference Video &nbsp;·&nbsp; Victory Interview</span>
+  <div class="split-section reveal">
+    <div class="video-block">
+      <div class="video-thumb" onclick="openVideo('win')" role="button" aria-label="승리 인터뷰 영상 재생" style="background-image:url('https://img.youtube.com/vi/gb_UqmotFi4/maxresdefault.jpg')">
+        <div class="play-circle">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <polygon points="5,2 19,11 5,20" fill="#fff"/>
+          </svg>
+        </div>
+      </div>
+      <span class="video-caption">Son Heung-Min &nbsp;·&nbsp; Tottenham 1-0 Man Utd &nbsp;·&nbsp; UEFA Europa League Final &nbsp;·&nbsp; 2025</span>
+    </div>
+    <div class="q-block">
+      <h2 class="display d-lg" style="margin-bottom:24px;">BEFORE<br>YOU WATCH</h2>
+      <div class="hl"></div>
+      <div class="q-item">
+        <div class="q-label">Q 01</div>
+        <div class="q-text">손흥민이 이 승리를 어떻게 표현했나요? 어떤 단어를 골랐나요?</div>
+      </div>
+      <div class="q-item">
+        <div class="q-label">Q 02</div>
+        <div class="q-text">"팀"을 어떻게 언급했나요? "I"와 "we" 중 어느 쪽을 더 많이 썼나요?</div>
+      </div>
+      <div class="q-item">
+        <div class="q-label">Q 03</div>
+        <div class="q-text">헌신과 노력을 표현하는 문장이 나왔나요? 찾아보세요.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     S3 — 승리 표현 분석
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="win-analysis" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Son Heung-Min &nbsp;·&nbsp; UEFA Europa League Final 2025 &nbsp;·&nbsp; Expression Analysis</span>
+  <h2 class="display d-xl reveal" style="margin-bottom:40px;">WHAT HE SAID<br><span style="color:var(--mute); font-size:clamp(16px,2.4vw,28px);">— AFTER THE WIN</span></h2>
+  <div class="quote-items">
+    <div class="quote-item reveal">
+      <div>
+        <div class="quote-tag">Victory</div>
+        <div class="quote-en">"This is a dream come true."</div>
+        <div class="quote-ko">꿈이 이루어졌습니다.</div>
+      </div>
+      <div class="quote-note" data-key="win-0">
+        <div>4단어로 표현하는<br>최고의 기쁨 —<br>가장 유명한 영어 표현 중 하나</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
+    </div>
+    <div class="quote-item reveal">
+      <div>
+        <div class="quote-tag">Collective</div>
+        <div class="quote-en">"As a collective, I think it is something special."</div>
+        <div class="quote-ko">팀으로서, 정말 특별한 것 같습니다.</div>
+      </div>
+      <div class="quote-note" data-key="win-1">
+        <div>'as a collective' —<br>팀 전체를 하나의 단위로<br>말하는 고급 표현</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
+    </div>
+    <div class="quote-item reveal">
+      <div>
+        <div class="quote-tag">Commitment</div>
+        <div class="quote-en">"I gave everything I could, everything I had."</div>
+        <div class="quote-ko">제가 할 수 있는 모든 것을, 가진 모든 것을 쏟았습니다.</div>
+      </div>
+      <div class="quote-note" data-key="win-2">
+        <div>같은 말을 두 번 반복 —<br>헌신의 깊이를<br>강조하는 수사법</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     S4 — 패배 인터뷰 시청 전
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="watch-lose" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Watch &nbsp;·&nbsp; Reference Video &nbsp;·&nbsp; Defeat Interview</span>
+  <div class="split-section reveal">
+    <div class="video-block">
+      <div class="video-thumb" onclick="openVideo('lose')" role="button" aria-label="패배 인터뷰 영상 재생" style="background-image:url('https://img.youtube.com/vi/gX8SzxCTumE/maxresdefault.jpg')">
+        <div class="play-circle">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <polygon points="5,2 19,11 5,20" fill="#fff"/>
+          </svg>
+        </div>
+      </div>
+      <span class="video-caption">Bukayo Saka &nbsp;·&nbsp; Arsenal 0-1 Newcastle &nbsp;·&nbsp; Premier League &nbsp;·&nbsp; 2022</span>
+    </div>
+    <div class="q-block">
+      <h2 class="display d-lg" style="margin-bottom:24px;">BEFORE<br>YOU WATCH</h2>
+      <div class="hl"></div>
+      <div class="q-item">
+        <div class="q-label">Q 01</div>
+        <div class="q-text">사카는 패배 후 실망감을 어떤 단어로 표현했나요?</div>
+      </div>
+      <div class="q-item">
+        <div class="q-label">Q 02</div>
+        <div class="q-text">"we"를 얼마나 자주 썼나요? 개인 감정과 팀 감정을 어떻게 구분했나요?</div>
+      </div>
+      <div class="q-item">
+        <div class="q-label">Q 03</div>
+        <div class="q-text">시즌이 아직 끝나지 않았다는 희망을 어떻게 남겼나요?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     S5 — 패배 표현 분석
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="lose-analysis" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Bukayo Saka &nbsp;·&nbsp; Arsenal vs Newcastle 2022 &nbsp;·&nbsp; Expression Analysis</span>
+  <h2 class="display d-xl reveal" style="margin-bottom:40px;">WHAT HE SAID<br><span style="color:var(--mute); font-size:clamp(16px,2.4vw,28px);">— AFTER THE LOSS</span></h2>
+  <div class="quote-items">
+    <div class="quote-item reveal">
+      <div>
+        <div class="quote-tag">Disappointment</div>
+        <div class="quote-en">"We are all incredibly disappointed."</div>
+        <div class="quote-ko">우리 모두 정말 크게 실망했습니다.</div>
+      </div>
+      <div class="quote-note" data-key="lose-0">
+        <div>incredibly = 믿을 수 없을 만큼.<br>"we are all" — 팀 전체를 대변.<br>개인이 아닌 집단의 감정으로 표현</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
+    </div>
+    <div class="quote-item reveal">
+      <div>
+        <div class="quote-tag">Gutted</div>
+        <div class="quote-en">"That is why we are all so gutted."</div>
+        <div class="quote-ko">그래서 우리 모두 이렇게 낙담한 것입니다.</div>
+      </div>
+      <div class="quote-note" data-key="lose-1">
+        <div>gutted = 완전히 낙담한 (영국 구어).<br>"that is why" — 이유를 차분히 설명.<br>분노 없이 감정을 인정하는 성숙한 표현</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
+    </div>
+    <div class="quote-item reveal">
+      <div>
+        <div class="quote-tag">Hope</div>
+        <div class="quote-en">"Technically it is not over but we have made it very difficult for ourselves."</div>
+        <div class="quote-ko">기술적으로 끝난 건 아니지만, 우리 스스로를 매우 힘든 상황에 몰아넣었습니다.</div>
+      </div>
+      <div class="quote-note" data-key="lose-2">
+        <div>"technically it is not over" — 희망 유지.<br>"but" 이후 현실 인정 —<br>낙관과 솔직함의 균형</div>
+        <div class="note-examples"></div>
+        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     S6 — Two Column 비교
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="compare" style="scroll-margin-top:92px;">
+  <h2 class="display d-lg reveal" style="margin-bottom:0;">
+    WIN OR LOSE.<br>YOUR WORDS<br>STILL MATTER.
+  </h2>
+  <div class="compare-grid reveal">
+    <div class="compare-col">
+      <div class="compare-col-label">승리 상황 (WIN) — Son Heung-Min</div>
+      <div class="compare-row"><p>This is a dream come true.</p></div>
+      <div class="compare-row"><p>As a collective, I think it is something special.</p></div>
+      <div class="compare-row"><p>I gave everything I could, everything I had.</p></div>
+    </div>
+    <div class="compare-vl"></div>
+    <div class="compare-col">
+      <div class="compare-col-label">패배 상황 (LOSE) — Bukayo Saka</div>
+      <div class="compare-row"><p>We are all incredibly disappointed.</p></div>
+      <div class="compare-row"><p>That is why we are all so gutted.</p></div>
+      <div class="compare-row"><p>Technically it is not over but we have made it very difficult for ourselves.</p></div>
+    </div>
+  </div>
+  <div class="compare-common reveal">
+    COMMON &nbsp;·&nbsp; 항상 <strong style="color:var(--white);">"we"</strong> 로 시작 — 개인보다 팀을 먼저 언급
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     S7 — Drill (Light)
+══════════════════════════════════════════════════════════ -->
+<div class="section-light" id="drill" style="scroll-margin-top:92px;">
+  <div class="inner">
+    <span class="eyebrow eyebrow-dark">Unit 2 &nbsp;·&nbsp; Drill</span>
+    <h2 class="display d-xl d-dark reveal" style="margin-bottom:32px;">FILL IN<br>THE BLANKS</h2>
+    <div class="hl-l reveal"></div>
+    <div class="drill-grid reveal">
+      <div>
+        <div class="drill-item">
+          <div class="drill-num">01</div>
+          <div class="drill-tpl">We _______ really hard for this.</div>
+          <div class="drill-hint">worked / fought / prepared</div>
+          <div class="drill-ex">예시: We worked really hard for this.</div>
+        </div>
+        <div class="drill-item">
+          <div class="drill-num">03</div>
+          <div class="drill-tpl">I'm _______, but we'll _______.</div>
+          <div class="drill-hint">gutted / disappointed / frustrated &nbsp;·&nbsp; bounce back / come back stronger</div>
+          <div class="drill-ex">예시: I'm gutted, but we'll bounce back.</div>
+        </div>
+      </div>
+      <div>
+        <div class="drill-item">
+          <div class="drill-num">02</div>
+          <div class="drill-tpl">Credit to the _______.</div>
+          <div class="drill-hint">whole team / manager / coaching staff</div>
+          <div class="drill-ex">예시: Credit to the whole team.</div>
+        </div>
+        <div class="drill-item">
+          <div class="drill-num">04</div>
+          <div class="drill-tpl">The manager _______ us up _______.</div>
+          <div class="drill-hint">set / perfectly / brilliantly</div>
+          <div class="drill-ex">예시: The manager set us up perfectly.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     S8 — Master List
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="phrases" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Unit 2 &nbsp;·&nbsp; Master List &nbsp;·&nbsp; 5 Key Phrases</span>
+  <h2 class="display d-lg reveal" style="margin-bottom:0;">5 PHRASES.<br>MEMORIZE ALL.</h2>
+  <div class="master-grid reveal">
+    <div class="master-col">
+      <div class="master-item">
+        <div class="master-src">01 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">We worked really hard for this.</div>
+        <div class="master-ko">이것을 위해 정말 열심히 했습니다.</div>
+      </div>
+      <div class="master-item">
+        <div class="master-src">02 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">Credit to the whole team.</div>
+        <div class="master-ko">팀 전체의 공입니다.</div>
+      </div>
+      <div class="master-item">
+        <div class="master-src">03 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">It was a tough game but we kept going.</div>
+        <div class="master-ko">힘든 경기였지만 우리는 계속 나아갔습니다.</div>
+      </div>
+    </div>
+    <div class="master-vl"></div>
+    <div class="master-col">
+      <div class="master-item">
+        <div class="master-src">04 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">I'm gutted, but we'll bounce back.</div>
+        <div class="master-ko">너무 속상하지만, 우리는 반등할 것입니다.</div>
+      </div>
+      <div class="master-item">
+        <div class="master-src">05 &nbsp;·&nbsp; BASE</div>
+        <div class="master-en">The manager set us up perfectly.</div>
+        <div class="master-ko">감독이 완벽하게 준비시켜줬습니다.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     S9 — Card Pair (롤플레이)
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="roleplay" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Role-Play &nbsp;·&nbsp; Mixed Zone — You Are The Player</span>
+  <h2 class="display d-lg reveal" style="margin-bottom:24px;">STEP OUT OF<br>THE TUNNEL.</h2>
+  <div class="hl reveal"></div>
+  <div class="card-grid reveal">
+    <div class="card-box">
+      <div class="card-header"><span class="eyebrow" style="margin:0; font-size:9px;">My Post-Match Card</span></div>
+      <div class="card-row">
+        <span class="card-label">Result</span>
+        <span class="card-blank">We won / We lost ___ to ___.</span>
+      </div>
+      <div class="card-row">
+        <span class="card-label">Feeling</span>
+        <span class="card-blank">I'm _______ because ___________.</span>
+      </div>
+      <div class="card-row">
+        <span class="card-label">Highlight</span>
+        <span class="card-blank">The key moment was ___________.</span>
+      </div>
+      <div class="card-row">
+        <span class="card-label">Credit</span>
+        <span class="card-blank">I have to give credit to ___________.</span>
+      </div>
+      <div class="card-row">
+        <span class="card-label">Next</span>
+        <span class="card-blank">We'll ___________ for the next game.</span>
+      </div>
+    </div>
+    <div class="card-box">
+      <div class="card-header"><span class="eyebrow" style="margin:0; font-size:9px;">Reporter's Questions</span></div>
+      <div class="card-q">
+        <div class="card-q-num">Q 01</div>
+        <div class="card-q-text">How do you feel after today's result?</div>
+      </div>
+      <div class="card-q">
+        <div class="card-q-num">Q 02</div>
+        <div class="card-q-text">Can you describe a key moment in the game?</div>
+      </div>
+      <div class="card-q">
+        <div class="card-q-num">Q 03</div>
+        <div class="card-q-text">What do you take away from this match?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Expression Lists (숙제 전 표현 복습) ──────────────── -->
+<div id="expr-list-panel">
+  <div class="expr-list-eyebrow">Expression Lists &nbsp;·&nbsp; 수업 중 기억할 표현</div>
+  <div id="expr-list-inner"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     S10 — Mission (숙제)
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="homework" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Homework &nbsp;·&nbsp; 2 Steps</span>
+  <h2 class="display d-xl reveal" style="margin-bottom:0;">STUDY.<br>WRITE. SUBMIT.</h2>
+  <div class="hl reveal"></div>
+  <div class="mission-steps reveal">
+    <div class="step">
+      <div class="step-title">Vocab</div>
+      <div class="step-hl"></div>
+      <div class="step-body">오늘 배운 핵심 단어 10개를 플래시카드로 암기합니다.<br>모든 카드를 넘길 때까지 반복합니다.</div>
+    </div>
+    <div class="step">
+      <div class="step-title">Study</div>
+      <div class="step-hl"></div>
+      <div class="step-body">주요 문장 3개의 한글 뜻을 쓰고,<br>각 문장의 변형 5개를 직접 만들어 씁니다.<br>빈칸 채우기 4개도 완성합니다.</div>
+    </div>
+  </div>
+
+  <!-- ── 로그인 패널 ───────────────────────────────────── -->
+  <div class="hw-submit-wrap reveal" id="hw-login-panel" style="display:none;">
+    <div class="hl" style="margin-top:56px;"></div>
+    <div class="hw-submit-header">
+      <span class="eyebrow" style="margin:0;">숙제 시작 &nbsp;·&nbsp; Unit 2</span>
+    </div>
+    <p class="login-title">이름을 선택하고 6자리 비밀번호를 입력하세요.<br>처음 접속이라면 자동으로 등록됩니다.</p>
+    <div class="login-fields">
+      <div class="login-field">
+        <label class="login-label">이름</label>
+        <select class="hw-input" id="login-name">
+          <option value="">이름 선택</option>
+          <option>황은총</option>
+          <option>김어진</option>
+          <option>이용재</option>
+          <option>이정현</option>
+          <option>조원우</option>
+        </select>
+      </div>
+      <div class="login-field">
+        <label class="login-label">비밀번호 &nbsp;<span class="hw-label-sub">숫자 또는 문자 6자리</span></label>
+        <div class="login-pin-wrap">
+          <div class="login-pin-dots" id="pin-dots"></div>
+          <input class="login-pin-input" id="login-pin" type="password"
+            maxlength="6" autocomplete="off" inputmode="numeric"
+            oninput="onPinInput(this)" onkeydown="onPinKeydown(event)">
+        </div>
+      </div>
+    </div>
+    <div class="login-actions">
+      <button class="login-btn" id="login-btn" onclick="doLogin()" disabled>시작하기</button>
+      <span class="login-error" id="login-error"></span>
+    </div>
+    <p class="login-hint">비밀번호를 잊었다면 코치님에게 문의하세요.</p>
+  </div>
+
+  <!-- ── 세션 배지 ──────────────────────────────────────── -->
+  <div id="session-badge">
+    <span>학습 중: <span class="session-name" id="session-name-display"></span></span>
+    <button class="session-logout" onclick="doLogout()">로그아웃</button>
+  </div>
+
+  <!-- ── VOCAB 플래시카드 ──────────────────────────────── -->
+  <div class="vocab-section reveal" id="vocab-study" style="display:none;">
+    <div class="hl" style="margin-top:56px; margin-bottom:32px;"></div>
+    <span class="eyebrow" style="margin-bottom:16px; display:block;">Step 1 &nbsp;·&nbsp; Vocab — 핵심 단어 암기</span>
+    <div class="vocab-progress-bar" id="vocab-prog"></div>
+    <div class="vocab-card-area" id="vocab-card-area">
+      <div class="vocab-card" id="vocab-card" onclick="flipCard()">
+        <div class="vocab-card-face vocab-card-front">
+          <div class="vocab-hint">탭하면 뜻이 보여요</div>
+          <div class="vocab-word" id="vc-word"></div>
+          <div class="vocab-box-badge" id="vc-box-badge"></div>
+        </div>
+        <div class="vocab-card-face vocab-card-back">
+          <div class="vocab-meaning" id="vc-meaning"></div>
+          <div class="vocab-meaning-en" id="vc-en"></div>
+        </div>
+      </div>
+    </div>
+    <div class="vocab-nav" id="vocab-nav">
+      <button class="vocab-btn vocab-btn-retry" onclick="retryCard()">다시 볼게요</button>
+      <button class="vocab-btn vocab-btn-know" onclick="knowCard()">알았어요</button>
+    </div>
+    <div class="vocab-done-state" id="vocab-done">
+      <div class="vocab-done-mark">✓</div>
+      <div class="vocab-done-text">Vocab 완료</div>
+      <button class="vocab-reset-btn" onclick="resetVocab()">처음부터 다시</button>
+    </div>
+  </div>
+
+  <!-- ── 숙제 제출 폼 ──────────────────────────────────── -->
+  <div class="hw-submit-wrap reveal" id="hw-submit-area" style="display:none;">
+    <div class="hl" style="margin-top:56px;"></div>
+    <div class="hw-submit-header">
+      <span class="eyebrow" style="margin:0;">Step 2 &nbsp;·&nbsp; Study — 문장 쓰기 & 제출</span>
+      <a href="../../homework.html#unit2" class="hw-board-link">숙제 결과 확인 →</a>
+    </div>
+
+    <!-- 제출 전 폼 -->
+    <div id="hw-form">
+      <div class="hw-fields">
+        <div class="hw-field-group">
+          <label class="hw-label">SENTENCES &nbsp;<span class="hw-label-sub">한글 뜻을 쓰고, 변형 문장 5개를 만드세요</span></label>
+          <div class="hw-sentences">
+            <!-- Sentence 01 -->
+            <div class="hw-sent-block">
+              <div class="hw-sent-num">문장 01</div>
+              <div class="hw-sent-src">We worked really hard for this.</div>
+              <div class="hw-sent-fields">
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">한글 뜻</span>
+                  <input class="hw-input" id="s01-ko" type="text" placeholder="이 문장의 한글 뜻을 써보세요" maxlength="100">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 1</span>
+                  <input class="hw-input" id="s01-v1" type="text" placeholder="예: We trained really hard for this." maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 2</span>
+                  <input class="hw-input" id="s01-v2" type="text" placeholder="예: We prepared really hard for this." maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 3</span>
+                  <input class="hw-input" id="s01-v3" type="text" placeholder="예: We fought really hard for this." maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 4</span>
+                  <input class="hw-input" id="s01-v4" type="text" maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 5</span>
+                  <input class="hw-input" id="s01-v5" type="text" maxlength="120">
+                </div>
+              </div>
+            </div>
+            <!-- Sentence 02 -->
+            <div class="hw-sent-block">
+              <div class="hw-sent-num">문장 02</div>
+              <div class="hw-sent-src">Credit to the whole team.</div>
+              <div class="hw-sent-fields">
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">한글 뜻</span>
+                  <input class="hw-input" id="s02-ko" type="text" placeholder="이 문장의 한글 뜻을 써보세요" maxlength="100">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 1</span>
+                  <input class="hw-input" id="s02-v1" type="text" placeholder="예: Credit to the manager." maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 2</span>
+                  <input class="hw-input" id="s02-v2" type="text" placeholder="예: Credit to the coaching staff." maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 3</span>
+                  <input class="hw-input" id="s02-v3" type="text" placeholder="예: Credit to every single player." maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 4</span>
+                  <input class="hw-input" id="s02-v4" type="text" maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 5</span>
+                  <input class="hw-input" id="s02-v5" type="text" maxlength="120">
+                </div>
+              </div>
+            </div>
+            <!-- Sentence 03 -->
+            <div class="hw-sent-block">
+              <div class="hw-sent-num">문장 03</div>
+              <div class="hw-sent-src">I'm gutted, but we'll bounce back.</div>
+              <div class="hw-sent-fields">
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">한글 뜻</span>
+                  <input class="hw-input" id="s03-ko" type="text" placeholder="이 문장의 한글 뜻을 써보세요" maxlength="100">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 1</span>
+                  <input class="hw-input" id="s03-v1" type="text" placeholder="예: I'm disappointed, but we'll bounce back." maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 2</span>
+                  <input class="hw-input" id="s03-v2" type="text" placeholder="예: I'm gutted, but we'll come back stronger." maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 3</span>
+                  <input class="hw-input" id="s03-v3" type="text" placeholder="예: I'm frustrated, but we'll bounce back." maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 4</span>
+                  <input class="hw-input" id="s03-v4" type="text" maxlength="120">
+                </div>
+                <div class="hw-sent-row">
+                  <span class="hw-sent-row-label">변형 5</span>
+                  <input class="hw-input" id="s03-v5" type="text" maxlength="120">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hw-field-group">
+          <label class="hw-label">오늘 경기 결과 &nbsp;<span class="hw-label-sub">가상 경기를 선택하세요</span></label>
+          <div class="hw-result-choice">
+            <label class="hw-result-option">
+              <input type="radio" name="hw-result" value="win" checked>
+              <span>승리 (WIN)</span>
+            </label>
+            <label class="hw-result-option">
+              <input type="radio" name="hw-result" value="lose">
+              <span>패배 (LOSE)</span>
+            </label>
+          </div>
+        </div>
+        <div class="hw-field-group">
+          <label class="hw-label">PREPARE &nbsp;<span class="hw-label-sub">빈칸을 채워 문장을 완성하세요</span></label>
+          <div class="hw-blanks">
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">01</span>We ___ really hard for this.</div>
+              <input class="hw-input" id="hw-p01" type="text" placeholder="예: worked / fought / prepared" maxlength="80">
+            </div>
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">02</span>Credit to the ___.</div>
+              <input class="hw-input" id="hw-p02" type="text" placeholder="예: whole team / manager / coaching staff" maxlength="80">
+            </div>
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">03</span>I'm ___, but we'll ___.</div>
+              <input class="hw-input" id="hw-p03" type="text" placeholder="예: gutted / bounce back" maxlength="80">
+            </div>
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">04</span>The manager ___ us up ___.</div>
+              <input class="hw-input" id="hw-p04" type="text" placeholder="예: set / perfectly" maxlength="80">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hw-actions">
+        <button class="hw-btn-submit" onclick="submitHomework()">저장하기</button>
+        <span class="hw-error" id="hw-error"></span>
+      </div>
+    </div>
+
+    <!-- 제출 완료 상태 -->
+    <div id="hw-done" style="display:none;">
+      <div class="hw-done-msg">
+        <div class="hw-done-check">✓</div>
+        <div class="hw-done-text">제출 완료</div>
+        <div class="hw-done-sub" id="hw-done-name"></div>
+      </div>
+      <button class="hw-btn-peers" onclick="togglePeers()">팀원 답변 보기</button>
+      <div id="hw-peers" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────────── -->
+<footer id="footer">
+  <span class="footer-brand">강원 FC U-18 &nbsp;·&nbsp; 러너스 LRS 영어 인터뷰 수업</span>
+  <span class="footer-note">Unit 2 &nbsp;·&nbsp; Post-Match Flash Interview</span>
+</footer>
+
+<!-- ── Compose Overlay ───────────────────────────────────── -->
+<div id="ex-compose">
+  <div id="ex-compose-header">
+    <div id="ex-compose-context">
+      <span id="ex-compose-tag"></span>
+      <span id="ex-compose-origin"></span>
+    </div>
+    <button id="ex-compose-close" onclick="closeCompose()">✕ 닫기 (Esc)</button>
+  </div>
+  <div id="ex-compose-list"></div>
+  <div id="ex-compose-bottom">
+    <div id="ex-compose-hint">Enter — 추가 &nbsp;·&nbsp; Esc — 닫기</div>
+    <input id="ex-compose-input" type="text" placeholder="예문을 입력하세요…" onkeydown="handleComposeKey(event)" oninput="handleComposeInput(this)">
+  </div>
+</div>
+
+<!-- ── YouTube Modal ─────────────────────────────────────── -->
+<div id="yt-modal" onclick="closeOnBg(event)">
+  <div id="yt-wrap">
+    <button id="yt-close" onclick="closeVideo()">✕ &nbsp;CLOSE</button>
+    <iframe id="yt-frame" src="" allowfullscreen
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>
+  </div>
+</div>
+
+<script>
+// ── YouTube ──────────────────────────────────────────────
+const YT_URLS = {
+  win:  'https://www.youtube.com/embed/gb_UqmotFi4?autoplay=1&rel=0',
+  lose: 'https://www.youtube.com/embed/gX8SzxCTumE?autoplay=1&rel=0',
+};
+
+function openVideo(key) {
+  document.getElementById('yt-frame').src = YT_URLS[key];
+  document.getElementById('yt-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeVideo() {
+  document.getElementById('yt-modal').classList.remove('open');
+  document.getElementById('yt-frame').src = '';
+  document.body.style.overflow = '';
+}
+
+function closeOnBg(e) {
+  if (e.target === document.getElementById('yt-modal')) closeVideo();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeVideo(); closeCompose(); }
+});
+
+// ── Instructor Bar ───────────────────────────────────────
+const SECTIONS = [
+  { id: 'hero',          name: 'Unit 2 — 오프닝' },
+  { id: 'watch-win',     name: '① 승리 인터뷰 — 시청 전 준비' },
+  { id: 'win-analysis',  name: '② 승리 표현 분석' },
+  { id: 'watch-lose',    name: '③ 패배 인터뷰 — 시청 전 준비' },
+  { id: 'lose-analysis', name: '④ 패배 표현 분석' },
+  { id: 'compare',       name: '⑤ WIN vs LOSE 비교' },
+  { id: 'drill',         name: '⑥ 빈칸 드릴' },
+  { id: 'phrases',       name: '⑦ 핵심 표현 정리' },
+  { id: 'roleplay',      name: '⑧ 롤플레이' },
+  { id: 'homework',      name: '⑨ 숙제 안내' },
+];
+
+let ibarVisible = true;
+let ibarCur = 0;
+
+// ── Top nav (2-level) ────────────────────────────────────
+const UNITS = [
+  {
+    id: 'unit1',
+    label: 'Unit 1',
+    subtitle: 'Self-Introduction & Joining the Team',
+    url: 'unit1.html',
+  },
+  {
+    id: 'unit2',
+    label: 'Unit 2',
+    subtitle: 'Post-Match Flash Interview',
+    current: true,
+    sections: SECTIONS,
+  },
+  { id: 'unit3', label: 'Unit 3', subtitle: 'Goals, Motivation & Ambition', url: 'unit3.html' },
+  { id: 'unit4', label: 'Unit 4', subtitle: 'Injury, Recovery & Resilience', url: 'unit4.html' },
+];
+
+const navMenuEl     = document.getElementById('nav-menu');
+const navDropdownEl = document.getElementById('nav-dropdown');
+
+(function buildNavMenu() {
+  UNITS.forEach((unit) => {
+    const unitEl = document.createElement('div');
+    unitEl.className = 'nav-unit' + (unit.current ? ' open' : '');
+    unitEl.id = 'nav-unit-' + unit.id;
+
+    const hd = document.createElement('div');
+    hd.className = 'nav-unit-hd';
+    hd.innerHTML = `
+      <div class="nav-unit-hd-left">
+        <div class="nav-unit-label">${unit.label}</div>
+        <div class="nav-unit-sub">${unit.subtitle}</div>
+      </div>
+      <span class="nav-unit-arrow">▸</span>`;
+
+    if (unit.current && unit.sections) {
+      hd.onclick = (e) => { e.stopPropagation(); unitEl.classList.toggle('open'); };
+    } else if (unit.url) {
+      hd.onclick = () => { window.location.href = unit.url; };
+    }
+    unitEl.appendChild(hd);
+
+    if (unit.sections) {
+      const secsEl = document.createElement('div');
+      secsEl.className = 'nav-sections';
+      unit.sections.forEach((sec, i) => {
+        const item = document.createElement('div');
+        item.className = 'nav-sec-item' + (i === 0 ? ' active' : '');
+        item.dataset.secIdx = i;
+        item.innerHTML = `<span class="nav-sec-num">${String(i).padStart(2,'0')}</span>${sec.name}`;
+        item.onclick = () => { ibarGoTo(i); closeNavMenu(); };
+        secsEl.appendChild(item);
+      });
+      unitEl.appendChild(secsEl);
+    }
+
+    navMenuEl.appendChild(unitEl);
+  });
+})();
+
+function toggleNavMenu(e) {
+  e.stopPropagation();
+  navDropdownEl.classList.toggle('open');
+}
+function closeNavMenu() {
+  navDropdownEl.classList.remove('open');
+}
+document.addEventListener('click', () => closeNavMenu());
+
+function updateNavMenuActive(idx) {
+  navMenuEl.querySelectorAll('.nav-sec-item').forEach((el, i) =>
+    el.classList.toggle('active', i === idx)
+  );
+}
+
+// ── Build dots
+const ibarDotsEl = document.getElementById('ibar-dots');
+SECTIONS.forEach((sec, i) => {
+  const d = document.createElement('div');
+  d.className = 'ibar-dot' + (i === 0 ? ' active' : '');
+  d.title = sec.name;
+  d.onclick = () => ibarGoTo(i);
+  ibarDotsEl.appendChild(d);
+});
+
+function ibarGoTo(idx) {
+  ibarCur = Math.max(0, Math.min(SECTIONS.length - 1, idx));
+  const sec = SECTIONS[ibarCur];
+  const el = document.getElementById(sec.id);
+  if (el) {
+    const offset = 48 + 44;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+  document.getElementById('ibar-name').textContent = sec.name;
+  document.getElementById('ibar-prev').disabled = ibarCur === 0;
+  document.getElementById('ibar-next').disabled = ibarCur === SECTIONS.length - 1;
+  ibarDotsEl.querySelectorAll('.ibar-dot').forEach((d, i) =>
+    d.classList.toggle('active', i === ibarCur)
+  );
+  updateNavMenuActive(ibarCur);
+}
+
+function ibarGo(dir) { ibarGoTo(ibarCur + dir); }
+
+function toggleIbar() {
+  ibarVisible = !ibarVisible;
+  const bar = document.getElementById('instructor-bar');
+  bar.classList.toggle('hidden', !ibarVisible);
+  document.querySelector('.ibar-toggle').textContent = ibarVisible ? '숨기기' : '강사 바';
+}
+
+// Update ibar on scroll
+let scrollTimer;
+window.addEventListener('scroll', () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => {
+    const offset = 48 + 44 + 80;
+    let active = 0;
+    SECTIONS.forEach((sec, i) => {
+      const el = document.getElementById(sec.id);
+      if (el && el.getBoundingClientRect().top <= offset) active = i;
+    });
+    if (active !== ibarCur) {
+      ibarCur = active;
+      document.getElementById('ibar-name').textContent = SECTIONS[ibarCur].name;
+      document.getElementById('ibar-prev').disabled = ibarCur === 0;
+      document.getElementById('ibar-next').disabled = ibarCur === SECTIONS.length - 1;
+      ibarDotsEl.querySelectorAll('.ibar-dot').forEach((d, i) =>
+        d.classList.toggle('active', i === ibarCur)
+      );
+    }
+  }, 80);
+});
+
+// ── Scroll reveal ────────────────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+<script>
+// ── Instructor example management ────────────────────────
+function _exKey(noteEl) { return 'ex__' + noteEl.dataset.key; }
+function _getEx(k) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(k) || '[]');
+    return raw.map(item => typeof item === 'string' ? { text: item, isHomework: false } : item);
+  } catch { return []; }
+}
+function _setEx(k, arr) { localStorage.setItem(k, JSON.stringify(arr)); }
+
+function _getContext(noteEl) {
+  const item = noteEl.closest('.quote-item');
+  const tag = item ? (item.querySelector('.quote-tag') || {}).textContent || '' : '';
+  const en  = item ? (item.querySelector('.quote-en')  || {}).textContent || '' : '';
+  return { tag, en };
+}
+
+function _renderNoteExamples(noteEl) {
+  const key = _exKey(noteEl);
+  const arr = _getEx(key);
+  noteEl.querySelector('.note-examples').innerHTML = arr.map((item, i) => {
+    const t = item.text;
+    const hw = item.isHomework;
+    const badge = hw ? '<span class="note-ex-hw-badge">숙제</span>' : '';
+    return `<div class="note-ex-item${hw ? ' is-hw' : ''}" onclick="reopenCompose(${JSON.stringify(noteEl.dataset.key)})">${t.replace(/</g,'&lt;')}${badge}<button class="note-ex-del" onclick="delEx(event,'${noteEl.dataset.key}',${i})">✕</button></div>`;
+  }).join('');
+}
+
+function delEx(e, dataKey, idx) {
+  e.stopPropagation();
+  const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
+  const key = _exKey(noteEl);
+  const arr = _getEx(key);
+  arr.splice(idx, 1);
+  _setEx(key, arr);
+  _renderNoteExamples(noteEl);
+  _renderExpressionList();
+}
+
+function toggleHomework(dataKey, idx) {
+  const key = 'ex__' + dataKey;
+  const arr = _getEx(key);
+  if (arr[idx]) arr[idx].isHomework = !arr[idx].isHomework;
+  _setEx(key, arr);
+  _renderComposeList();
+  const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
+  if (noteEl) _renderNoteExamples(noteEl);
+  _renderExpressionList();
+}
+
+let _activeKey = null;
+
+function addExample(btn) {
+  const noteEl = btn.closest('.quote-note');
+  _openCompose(noteEl);
+}
+
+function reopenCompose(dataKey) {
+  const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
+  if (noteEl) _openCompose(noteEl);
+}
+
+function _openCompose(noteEl) {
+  const ctx = _getContext(noteEl);
+  _activeKey = _exKey(noteEl);
+
+  document.getElementById('ex-compose-tag').textContent = ctx.tag || '강사 예문';
+  document.getElementById('ex-compose-origin').textContent = ctx.en;
+  _renderComposeList();
+
+  const inp = document.getElementById('ex-compose-input');
+  inp.value = '';
+  document.getElementById('ex-compose').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  inp.focus();
+}
+
+function closeCompose() {
+  document.getElementById('ex-compose').classList.remove('open');
+  document.body.style.overflow = '';
+  if (_activeKey) {
+    const dataKey = _activeKey.replace('ex__', '');
+    const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`);
+    if (noteEl) _renderNoteExamples(noteEl);
+  }
+  _renderExpressionList();
+}
+
+function _renderComposeList() {
+  const arr = _getEx(_activeKey);
+  const dataKey = _activeKey.replace('ex__', '');
+  const list = document.getElementById('ex-compose-list');
+  list.innerHTML = arr.map((item, i) => {
+    const t = item.text;
+    const hw = item.isHomework;
+    const fresh = i === arr.length - 1 ? ' fresh' : '';
+    return `<div class="compose-ex-row">
+      <div class="compose-ex${fresh}" style="flex:1">${t.replace(/</g,'&lt;')}</div>
+      <button class="compose-hw-btn${hw ? ' active' : ''}" onclick="toggleHomework('${dataKey}',${i})">${hw ? '✓ 숙제' : '숙제'}</button>
+    </div>`;
+  }).join('');
+  list.scrollTop = list.scrollHeight;
+}
+
+function _renderExpressionList() {
+  const panel = document.getElementById('expr-list-panel');
+  if (!panel) return;
+  const inner = document.getElementById('expr-list-inner');
+  const groups = [];
+  document.querySelectorAll('.quote-note[data-key]').forEach(noteEl => {
+    const arr = _getEx(_exKey(noteEl));
+    const hwItems = arr.filter(item => item.isHomework);
+    if (!hwItems.length) return;
+    const ctx = _getContext(noteEl);
+    groups.push({ origin: ctx.en, items: hwItems });
+  });
+  if (!groups.length) { panel.classList.remove('has-items'); return; }
+  panel.classList.add('has-items');
+  inner.innerHTML = groups.map(g =>
+    `<div class="expr-list-group">
+      <div class="expr-list-origin">${g.origin.replace(/</g,'&lt;')}</div>
+      ${g.items.map(item => `<div class="expr-list-sentence">${item.text.replace(/</g,'&lt;')}</div>`).join('')}
+    </div>`
+  ).join('');
+}
+
+function handleComposeKey(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (!val) return;
+    const arr = _getEx(_activeKey);
+    arr.push({ text: val, isHomework: false });
+    _setEx(_activeKey, arr);
+    _renderComposeList();
+    e.target.value = '';
+  } else if (e.key === 'Escape') {
+    closeCompose();
+  }
+}
+
+function handleComposeInput(inp) {
+  const len = inp.value.length;
+  inp.style.fontSize = len > 40 ? 'clamp(24px, 3.5vw, 48px)' : '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.quote-note[data-key]').forEach(_renderNoteExamples);
+  _renderExpressionList();
+});
+</script>
+
+<!-- ── Supabase CDN ──────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ── Supabase setup ───────────────────────────────────────
+const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
+const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
+const HW_UNIT = 'unit2';
+const HW_LS_KEY = 'b2b_hw_submitted_unit2';
+const SESSION_LS_KEY = 'b2b_session_unit2';
+
+const sb = window.supabase.createClient(SB_URL, SB_ANON);
+
+// ── 세션 상태 ─────────────────────────────────────────────
+let session = null; // { student_id, name }
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem(SESSION_LS_KEY);
+  if (saved) {
+    try {
+      session = JSON.parse(saved);
+      await onSessionReady();
+      return;
+    } catch {}
+  }
+  showLoginPanel();
+});
+
+function showLoginPanel() {
+  document.getElementById('hw-login-panel').style.display = 'block';
+  document.getElementById('vocab-study').style.display = 'none';
+  document.getElementById('hw-submit-area').style.display = 'none';
+  document.getElementById('session-badge').classList.remove('visible');
+}
+
+async function onSessionReady() {
+  document.getElementById('hw-login-panel').style.display = 'none';
+  document.getElementById('vocab-study').style.display = 'block';
+  document.getElementById('hw-submit-area').style.display = 'block';
+  document.getElementById('session-name-display').textContent = session.name;
+  document.getElementById('session-badge').classList.add('visible');
+
+  // 제출 완료 여부 확인
+  const { data: existing } = await sb
+    .from('b2b_homework_submissions')
+    .select('id')
+    .eq('unit', HW_UNIT)
+    .eq('student_id', session.student_id)
+    .maybeSingle();
+  if (existing) {
+    showDoneState(session.name);
+  }
+
+  await initVocab();
+}
+
+function doLogout() {
+  session = null;
+  localStorage.removeItem(SESSION_LS_KEY);
+  showLoginPanel();
+}
+
+// ── 로그인 UI ─────────────────────────────────────────────
+function onPinInput(input) {
+  const val = input.value;
+  document.getElementById('pin-dots').textContent = '●'.repeat(val.length);
+  const name = document.getElementById('login-name').value;
+  document.getElementById('login-btn').disabled = !name || val.length < 6;
+}
+
+function onPinKeydown(e) {
+  if (e.key === 'Enter') doLogin();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-name')?.addEventListener('change', () => {
+    const pin = document.getElementById('login-pin').value;
+    const name = document.getElementById('login-name').value;
+    document.getElementById('login-btn').disabled = !name || pin.length < 6;
+  });
+}, { once: false });
+
+async function hashPin(pin, name) {
+  const msg = pin + '::' + name.toLowerCase();
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function doLogin() {
+  const name = document.getElementById('login-name').value;
+  const pin  = document.getElementById('login-pin').value;
+  const errEl = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+
+  errEl.textContent = '';
+  if (!name) { errEl.textContent = '이름을 선택하세요.'; return; }
+  if (pin.length < 6) { errEl.textContent = '비밀번호 6자리를 입력하세요.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '확인 중…';
+
+  const pinHash = await hashPin(pin, name);
+
+  // 기존 학생 조회
+  const { data: existing, error: fetchErr } = await sb
+    .from('b2b_students')
+    .select('id, pin_hash')
+    .eq('name', name)
+    .maybeSingle();
+
+  if (fetchErr) {
+    errEl.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+    btn.disabled = false; btn.textContent = '시작하기';
+    return;
+  }
+
+  if (!existing) {
+    // 첫 방문 — 등록
+    const { data: created, error: insertErr } = await sb
+      .from('b2b_students')
+      .insert({ name, pin_hash: pinHash })
+      .select('id')
+      .single();
+
+    if (insertErr) {
+      errEl.textContent = '등록 중 오류가 발생했습니다.';
+      btn.disabled = false; btn.textContent = '시작하기';
+      return;
+    }
+
+    session = { student_id: created.id, name };
+  } else {
+    // 재방문 — PIN 검증
+    if (existing.pin_hash !== pinHash) {
+      errEl.textContent = '비밀번호가 맞지 않습니다.';
+      btn.disabled = false; btn.textContent = '시작하기';
+      return;
+    }
+    session = { student_id: existing.id, name };
+  }
+
+  localStorage.setItem(SESSION_LS_KEY, JSON.stringify(session));
+  btn.textContent = '시작하기';
+  await onSessionReady();
+}
+
+// ── VOCAB — Leitner 시스템 ───────────────────────────────
+const VOCAB_LIST = [
+  { word: 'gutted',        meaning: '낙담한, 너무 속상한',            en: 'deeply disappointed' },
+  { word: 'credit',        meaning: '공로 (공을 돌리다)',              en: 'give credit to ~' },
+  { word: 'bounce back',   meaning: '반등하다, 다시 일어서다',        en: 'recover from a setback' },
+  { word: 'collective',    meaning: '팀 전체의, 집단적인',             en: 'as a collective / team effort' },
+  { word: 'incredibly',    meaning: '믿기 어려울 만큼, 정말로',       en: 'incredibly disappointed' },
+  { word: 'dominated',     meaning: '지배했다, 압도했다',              en: 'we dominated the game' },
+  { word: 'clinical',      meaning: '냉철한, 효율적인',                en: 'clinical finish' },
+  { word: 'composed',      meaning: '침착한',                          en: 'stay composed under pressure' },
+  { word: 'mixed zone',    meaning: '믹스드존 (경기 후 인터뷰 구역)', en: 'post-match interview area' },
+  { word: 'set up',        meaning: '준비시키다, 세팅하다',            en: 'the manager set us up perfectly' },
+];
+
+const LEITNER_MASTER = 4;
+let vocabQueue = []; // [{ ...VOCAB_LIST item, key, box }]
+
+async function initVocab() {
+  // Supabase에서 이 학생의 unit2 vocab 이벤트 조회
+  const { data: events } = await sb
+    .from('b2b_vocab_events')
+    .select('word_key, new_box, occurred_at')
+    .eq('student_id', session.student_id)
+    .eq('unit', HW_UNIT)
+    .order('occurred_at', { ascending: false });
+
+  // 단어별 현재 박스 (가장 최근 이벤트)
+  const boxState = {};
+  for (const e of events ?? []) {
+    if (!(e.word_key in boxState)) boxState[e.word_key] = e.new_box;
+  }
+
+  // Leitner 큐: 박스 4 미만, 박스 오름차순
+  vocabQueue = VOCAB_LIST
+    .map((w, i) => ({ ...w, key: `${HW_UNIT}_${i}`, box: boxState[`${HW_UNIT}_${i}`] ?? 0 }))
+    .filter(w => w.box < LEITNER_MASTER)
+    .sort((a, b) => a.box - b.box);
+
+  renderVocabPips(boxState);
+
+  if (!vocabQueue.length) {
+    showVocabDone();
+  } else {
+    renderVocabCard();
+  }
+}
+
+function renderVocabPips(boxState) {
+  const bar = document.getElementById('vocab-prog');
+  bar.innerHTML = VOCAB_LIST.map((_, i) => {
+    const key = `${HW_UNIT}_${i}`;
+    const box = boxState ? (boxState[key] ?? 0) : 0;
+    return `<div class="vocab-pip${box >= LEITNER_MASTER ? ' done' : ''}"></div>`;
+  }).join('');
+}
+
+function renderVocabCard() {
+  if (!vocabQueue.length) { showVocabDone(); return; }
+  const item = vocabQueue[0];
+  document.getElementById('vc-word').textContent = item.word;
+  document.getElementById('vc-meaning').textContent = item.meaning;
+  document.getElementById('vc-en').textContent = item.en;
+  const boxLabels = ['새 단어', 'Lv.1', 'Lv.2', 'Lv.3'];
+  document.getElementById('vc-box-badge').textContent = boxLabels[item.box] || '';
+  document.getElementById('vocab-card').classList.remove('flipped');
+}
+
+function flipCard() {
+  if (!vocabQueue.length) return;
+  document.getElementById('vocab-card').classList.toggle('flipped');
+}
+
+async function knowCard() {
+  if (!vocabQueue.length) return;
+  const item = vocabQueue.shift();
+  const new_box = Math.min(item.box + 1, LEITNER_MASTER);
+  await saveVocabEvent(item.key, true, item.box, new_box);
+  // 마스터 아니면 새 박스로 큐 재삽입 (다음 세션에서 출제)
+  if (new_box < LEITNER_MASTER) {
+    // 현재 세션에서는 제거 (다음에 보여줌)
+  }
+  await refreshVocabAfterGrade();
+}
+
+async function retryCard() {
+  if (!vocabQueue.length) return;
+  const item = vocabQueue.shift();
+  const new_box = 0;
+  await saveVocabEvent(item.key, false, item.box, new_box);
+  // 틀렸으면 박스 0으로 → 현재 세션 끝으로 다시 추가
+  vocabQueue.push({ ...item, box: 0 });
+  renderVocabCard();
+  updatePipsFromQueue();
+}
+
+async function saveVocabEvent(word_key, is_correct, prev_box, new_box) {
+  await sb.from('b2b_vocab_events').insert({
+    student_id: session.student_id,
+    unit: HW_UNIT,
+    word_key,
+    is_correct,
+    prev_box,
+    new_box,
+  });
+}
+
+async function refreshVocabAfterGrade() {
+  // 큐에 아직 단어가 있으면 다음 카드
+  if (vocabQueue.length) {
+    renderVocabCard();
+    // pip 업데이트: DB에서 다시 조회
+    const { data: events } = await sb
+      .from('b2b_vocab_events')
+      .select('word_key, new_box, occurred_at')
+      .eq('student_id', session.student_id)
+      .eq('unit', HW_UNIT)
+      .order('occurred_at', { ascending: false });
+    const boxState = {};
+    for (const e of events ?? []) {
+      if (!(e.word_key in boxState)) boxState[e.word_key] = e.new_box;
+    }
+    renderVocabPips(boxState);
+  } else {
+    showVocabDone();
+  }
+}
+
+function updatePipsFromQueue() {
+  const bar = document.getElementById('vocab-prog');
+  const queueKeys = new Set(vocabQueue.map(w => w.key));
+  bar.innerHTML = VOCAB_LIST.map((_, i) => {
+    const key = `${HW_UNIT}_${i}`;
+    return `<div class="vocab-pip${!queueKeys.has(key) ? ' done' : ''}"></div>`;
+  }).join('');
+}
+
+function showVocabDone() {
+  document.getElementById('vocab-card-area').style.display = 'none';
+  document.getElementById('vocab-nav').style.display = 'none';
+  document.getElementById('vocab-done').style.display = 'block';
+}
+
+async function resetVocab() {
+  document.getElementById('vocab-card-area').style.display = '';
+  document.getElementById('vocab-nav').style.display = '';
+  document.getElementById('vocab-done').style.display = 'none';
+  await initVocab();
+}
+
+// ── 숙제 제출 ────────────────────────────────────────────
+async function submitHomework() {
+  const result = document.querySelector('input[name="hw-result"]:checked')?.value || 'win';
+  const p01 = document.getElementById('hw-p01').value.trim();
+  const p02 = document.getElementById('hw-p02').value.trim();
+  const p03 = document.getElementById('hw-p03').value.trim();
+  const p04 = document.getElementById('hw-p04').value.trim();
+  const prepare = JSON.stringify({ result, "01": p01, "02": p02, "03": p03, "04": p04 });
+
+  const s01 = { ko: document.getElementById('s01-ko').value.trim(), v1: document.getElementById('s01-v1').value.trim(), v2: document.getElementById('s01-v2').value.trim(), v3: document.getElementById('s01-v3').value.trim(), v4: document.getElementById('s01-v4').value.trim(), v5: document.getElementById('s01-v5').value.trim() };
+  const s02 = { ko: document.getElementById('s02-ko').value.trim(), v1: document.getElementById('s02-v1').value.trim(), v2: document.getElementById('s02-v2').value.trim(), v3: document.getElementById('s02-v3').value.trim(), v4: document.getElementById('s02-v4').value.trim(), v5: document.getElementById('s02-v5').value.trim() };
+  const s03 = { ko: document.getElementById('s03-ko').value.trim(), v1: document.getElementById('s03-v1').value.trim(), v2: document.getElementById('s03-v2').value.trim(), v3: document.getElementById('s03-v3').value.trim(), v4: document.getElementById('s03-v4').value.trim(), v5: document.getElementById('s03-v5').value.trim() };
+  const hasSentences = s01.ko || s01.v1 || s02.ko || s02.v1 || s03.ko || s03.v1;
+  const sentences = JSON.stringify({ s01, s02, s03 });
+
+  const errEl = document.getElementById('hw-error');
+  errEl.textContent = '';
+
+  if (!session) { errEl.textContent = '로그인이 필요합니다.'; return; }
+  if (!hasSentences && !p01 && !p02 && !p03 && !p04) {
+    errEl.textContent = 'SENTENCES 또는 PREPARE 중 하나 이상 작성해주세요.'; return;
+  }
+
+  const btn = document.querySelector('.hw-btn-submit');
+  btn.disabled = true;
+  btn.textContent = '저장 중…';
+
+  const { error } = await sb.from('b2b_homework_submissions').insert({
+    unit: HW_UNIT,
+    student_name: session.name,
+    student_id: session.student_id,
+    rewatch_answer: null,
+    prepare_answer: prepare,
+    sentences_answer: hasSentences ? sentences : null,
+  });
+
+  if (error) {
+    errEl.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    btn.disabled = false;
+    btn.textContent = '저장하기';
+    return;
+  }
+
+  showDoneState(session.name);
+}
+
+function showDoneState(name) {
+  document.getElementById('hw-form').style.display = 'none';
+  const done = document.getElementById('hw-done');
+  done.style.display = 'block';
+  document.getElementById('hw-done-name').textContent = name + ' 님의 답변이 저장되었습니다.';
+}
+
+// ── 팀원 답변 보기 ───────────────────────────────────────
+let peersOpen = false;
+
+async function togglePeers() {
+  const peerEl = document.getElementById('hw-peers');
+  const btn = document.querySelector('.hw-btn-peers');
+
+  if (peersOpen) {
+    peerEl.style.display = 'none';
+    btn.textContent = '팀원 답변 보기';
+    peersOpen = false;
+    return;
+  }
+
+  btn.textContent = '불러오는 중…';
+
+  const { data, error } = await sb
+    .from('b2b_homework_submissions')
+    .select('student_name, prepare_answer, sentences_answer, submitted_at')
+    .eq('unit', HW_UNIT)
+    .order('submitted_at', { ascending: false });
+
+  if (error || !data) { btn.textContent = '팀원 답변 보기'; return; }
+
+  peerEl.innerHTML = data.length === 0
+    ? '<div class="hw-peers-empty">아직 제출한 팀원이 없습니다.</div>'
+    : '<div class="hw-peers-list">' + data.map(r => `
+        <div class="hw-peer-card">
+          <div class="hw-peer-name">${esc(r.student_name)}</div>
+          ${r.sentences_answer ? `<div class="hw-peer-field"><span class="hw-peer-field-label">Sentences</span><div>${renderSentencesForPeer(r.sentences_answer)}</div></div>` : ''}
+          ${r.prepare_answer ? `<div class="hw-peer-field"><span class="hw-peer-field-label">Prepare</span><div>${renderPrepareForPeer(r.prepare_answer)}</div></div>` : ''}
+          <div class="hw-peer-time">${fmtDate(r.submitted_at)}</div>
+        </div>`).join('') + '</div>';
+
+  peerEl.style.display = 'block';
+  btn.textContent = '팀원 답변 닫기';
+  peersOpen = true;
+}
+
+function renderSentencesForPeer(val) {
+  if (!val) return '';
+  const SENT_LABELS = ['We worked really hard for this.', 'Credit to the whole team.', "I'm gutted, but we'll bounce back."];
+  try {
+    const s = JSON.parse(val);
+    let html = '';
+    ['s01','s02','s03'].forEach((k, i) => {
+      const item = s[k]; if (!item) return;
+      html += `<div style="margin-bottom:10px;"><div class="hw-peer-prepare-result">${SENT_LABELS[i]}</div>`;
+      if (item.ko) html += `<div class="hw-peer-prepare-row"><span class="hw-peer-prepare-num">뜻</span><span class="hw-peer-prepare-val">${esc(item.ko)}</span></div>`;
+      ['v1','v2','v3','v4','v5'].forEach((v, j) => { if (item[v]) html += `<div class="hw-peer-prepare-row"><span class="hw-peer-prepare-num">${j+1}</span><span class="hw-peer-prepare-val">${esc(item[v])}</span></div>`; });
+      html += `</div>`;
+    });
+    return html;
+  } catch { return `<span class="hw-peer-field-val">${esc(val)}</span>`; }
+}
+
+function renderPrepareForPeer(val) {
+  if (!val) return '';
+  try {
+    const p = JSON.parse(val);
+    if (typeof p !== 'object' || Array.isArray(p)) return `<span class="hw-peer-field-val">${esc(val)}</span>`;
+    let html = '';
+    if (p.result) html += `<div class="hw-peer-prepare-result">${p.result === 'win' ? '승리 (WIN)' : '패배 (LOSE)'}</div>`;
+    ['01','02','03','04'].forEach(k => { if (p[k]) html += `<div class="hw-peer-prepare-row"><span class="hw-peer-prepare-num">${k}</span><span class="hw-peer-prepare-val">${esc(p[k])}</span></div>`; });
+    return html || `<span class="hw-peer-field-val">${esc(val)}</span>`;
+  } catch { return `<span class="hw-peer-field-val">${esc(val)}</span>`; }
+}
+
+function esc(s) { return String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) + ' ' +
+         d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+}
+</script>
+</body>
+</html>
