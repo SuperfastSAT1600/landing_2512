@@ -11,18 +11,18 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'SuperfastSAT',
-  description: '수업권 및 시스템',
+  title: 'SAT 목표 점수에 가장 빠르게 | SuperfastSAT',
+  description: '맞춤형 수업 시스템 수업권 소개',
   openGraph: {
-    title: 'SuperfastSAT',
-    description: '수업권 및 시스템',
-    images: [{ url: '/enrollment/og-image.png', width: 1200, height: 630 }],
+    title: 'SAT 목표 점수에 가장 빠르게 | SuperfastSAT',
+    description: '맞춤형 수업 시스템 수업권 소개',
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SuperfastSAT',
-    description: '수업권 및 시스템',
-    images: ['/enrollment/og-image.png'],
+    title: 'SAT 목표 점수에 가장 빠르게 | SuperfastSAT',
+    description: '맞춤형 수업 시스템 수업권 소개',
+    images: ['/og-image.png'],
   },
 };
 
