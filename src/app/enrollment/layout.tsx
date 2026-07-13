@@ -11,17 +11,17 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'SuperfastSAT — 수업 선택 및 상담 신청',
-  description: '관리형 SAT의 기준, SuperfastSAT 수업권. 정규수업과 여름방학 특강을 확인하세요.',
+  title: 'SuperfastSAT',
+  description: '수업권 및 시스템',
   openGraph: {
-    title: 'SuperfastSAT — 수업 선택 및 상담 신청',
-    description: '관리형 SAT의 기준, SuperfastSAT 수업권. 정규수업과 여름방학 특강을 확인하세요.',
+    title: 'SuperfastSAT',
+    description: '수업권 및 시스템',
     images: [{ url: '/enrollment/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SuperfastSAT — 수업 선택 및 상담 신청',
-    description: '관리형 SAT의 기준, SuperfastSAT 수업권. 정규수업과 여름방학 특강을 확인하세요.',
+    title: 'SuperfastSAT',
+    description: '수업권 및 시스템',
     images: ['/enrollment/og-image.png'],
   },
 };
