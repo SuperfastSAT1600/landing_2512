@@ -17,6 +17,7 @@ const NAV_ITEMS = [
     { href: '/admin/traffic', label: '채널 유입 통계', icon: '📊' },
     { href: '/admin/marketing', label: '마케팅', icon: '📣' },
     { href: '/admin/crm', label: 'CRM', icon: '👥' },
+    { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
     { href: '/admin/srm', label: 'SRM', icon: '📅' },
     { href: '/admin/partner', label: '파트너 센터', icon: '🤝' },
 ];

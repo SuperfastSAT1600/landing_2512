@@ -1,0 +1,292 @@
+{
+  "meta": {
+    "title": "SuperfastSAT - 수업 선택 및 상담 신청",
+    "description": "관리형 SAT의 기준, SuperfastSAT 수업권. 정규수업과 여름방학 특강을 확인하세요."
+  },
+  "hero": {
+    "sat": {
+      "title": "아이에게 맞는 수업을 선택하세요",
+      "description": "단계별로 선택하면 나에게 딱 맞는 수업권을 찾을 수 있습니다."
+    },
+    "ap": {
+      "title": "관리형 AP의 기준",
+      "description": "과목별 전문 코치와 함께하는 1:1수업 프로그램입니다."
+    }
+  },
+  "common": {
+    "hours": "시간",
+    "monthly": "월",
+    "savings": "절약",
+    "recommended": "추천",
+    "managed": "관리형",
+    "unmanaged": "비관리형",
+    "perMonth": "/월",
+    "discountApplied": "-{{rate}}% 할인 적용가",
+    "savingsAmount": "{{amount}} 절약 -{{rate}}%",
+    "savingsVsRegular": "정가 대비 {{amount}} 절약 (-{{rate}}%)"
+  },
+  "programType": {
+    "sectionTitle": "프로그램 선택",
+    "regular": {
+      "name": "정규수업",
+      "subtitle": "체계적 학습 관리",
+      "description": "전담 코치와 매니저가 함께하는 체계적인 SAT 학습 프로그램"
+    },
+    "summer-intensive": {
+      "name": "여름방학 특강",
+      "subtitle": "집중 단기 과정",
+      "description": "여름방학 기간 집중적으로 실력을 끌어올리는 특별 프로그램"
+    }
+  },
+  "managementType": {
+    "sectionTitle": "관리 여부 선택",
+    "tableHeader": {
+      "service": "서비스",
+      "managed": "관리형",
+      "unmanaged": "비관리형"
+    },
+    "managed": {
+      "name": "관리형",
+      "subtitle": "전담 매니저 배정",
+      "description": "전담 매니저가 학습 전반을 관리하고 성적 향상을 이끕니다",
+      "socialProof": "학생 90% 이상 선택",
+      "serviceHighlight": "6개 관리 서비스 포함"
+    },
+    "unmanaged": {
+      "name": "비관리형",
+      "subtitle": "수업 + 그로스 리포트만",
+      "description": "수업과 그로스 리포트만 제공되는 합리적인 옵션",
+      "serviceHighlight": "그로스 리포트만 제공"
+    }
+  },
+  "classFormat": {
+    "sectionTitle": "수업 형태 선택",
+    "one-on-one": {
+      "name": "1:1 수업",
+      "description": "전담 코치와 1:1 맞춤 수업 + 전체 관리 서비스"
+    },
+    "one-on-three": {
+      "name": "1:3 수업",
+      "description": "소규모 그룹 수업 + 커리큘럼별 관리 서비스"
+    },
+    "content": {
+      "name": "콘텐츠",
+      "description": "인강, 단어, 문제풀이 등 월간 구독 콘텐츠"
+    }
+  },
+  "category": {
+    "one-on-one": {
+      "subtitle": "풀 관리",
+      "managementLevel": "풀 관리"
+    },
+    "one-on-three": {
+      "subtitle": "관리 포함",
+      "managementLevel": "관리 포함"
+    },
+    "content": {
+      "subtitle": "부분 관리",
+      "managementLevel": "부분 관리"
+    },
+    "unmanaged": {
+      "name": "비관리",
+      "subtitle": "그로스 리포트만",
+      "description": "수업 후 그로스 리포트만 제공되는 합리적 옵션",
+      "managementLevel": "그로스 리포트만"
+    }
+  },
+  "packageSelection": {
+    "hourPackage": "시간 패키지 선택",
+    "curriculum": "커리큘럼 선택",
+    "content": "콘텐츠 선택 (복수 선택 가능)",
+    "totalMonthlyPrice": "합산 월 가격",
+    "monthlyPrefix": "월",
+    "premium": {
+      "badge": "More than FAST",
+      "name": "대표 코치와의 수업권",
+      "description": "SuperfastSAT 대표 코치진과 진행하는 프리미엄 1:1 수업권입니다.",
+      "viewCoaches": "대표 코치 소개 보기"
+    }
+  },
+  "salesLabels": {
+    "popular": "가장 인기",
+    "bestValue": "최대 할인",
+    "entry": "입문 추천"
+  },
+  "curriculum": {
+    "curriculum-basic": {
+      "name": "기초+유형반",
+      "description": "SAT 기초부터 유형별 전략까지 체계적으로 학습"
+    },
+    "curriculum-type": {
+      "name": "유형반",
+      "description": "문제 유형별 집중 공략 및 전략 학습"
+    },
+    "curriculum-practice": {
+      "name": "실전반",
+      "description": "실전 모의고사 풀이 및 시간 관리 훈련"
+    },
+    "curriculum-final": {
+      "name": "파이널",
+      "description": "시험 직전 최종 점검 및 약점 보완"
+    }
+  },
+  "contentItems": {
+    "content-lecture": {
+      "name": "인강",
+      "description": "전 범위 동영상 강의"
+    },
+    "content-vocab": {
+      "name": "단어",
+      "description": "SAT 필수 어휘 학습"
+    },
+    "content-problems": {
+      "name": "문제",
+      "description": "유형별 기출문제 풀이"
+    },
+    "content-mock": {
+      "name": "모의고사",
+      "description": "실전 모의시험 응시"
+    },
+    "content-qna": {
+      "name": "실시간 Q&A",
+      "description": "실시간 질의응답 지원"
+    }
+  },
+  "services": {
+    "lessonFeedback": "그로스 리포트",
+    "pastExams": "기출문제 제공",
+    "dailyVocab": "데일리 Vocab",
+    "wrongAnswerNote": "Study Hall",
+    "homeworkSchedule": "숙제 일정 관리",
+    "biweeklyMock": "매주 실전 모의고사",
+    "learningFeedback": "학습 결과 피드백",
+    "lectures": "인강",
+    "vocabLearning": "단어 학습"
+  },
+  "serviceCard": {
+    "servicesIncluded": "{{count}}개 서비스 포함",
+    "notIncluded": "미포함"
+  },
+  "summary": {
+    "sectionTitle": "최종 수업권",
+    "selectedClass": "선택한 수업",
+    "monthlyPrice": "월 구독 가격",
+    "totalPrice": "총 가격",
+    "managementTypeLabel": "관리 유형",
+    "classFormatLabel": "수업 형태",
+    "includedServices": "포함 관리 서비스",
+    "summaryHourPackage": "{{category}} {{hours}}시간",
+    "summaryPremiumPackage": "대표 코치와의 수업권 10시간",
+    "summaryCurriculum": "{{category}} - {{name}} {{hours}}시간",
+    "summaryContent": "콘텐츠 - {{names}}"
+  },
+  "coachesModal": {
+    "title": "대표 코치 소개",
+    "subtitle": "SuperfastSAT 대표 코치진을 만나보세요.",
+    "close": "닫기"
+  },
+  "summer": {
+    "title": "여름방학 앵콜반",
+    "startDate": "7월 20일",
+    "classStart": "{{date}} 개강",
+    "earlyBirdDiscount": "얼리버드 {{rate}}% 할인",
+    "earlyBirdDeadline": "~{{deadline}}까지",
+    "philosophy": {
+      "title": "수업 철학",
+      "conceptFirst": {
+        "title": "개념 우선",
+        "description": "문제풀이보다 개념 이해가 먼저입니다. 탄탄한 기초 위에 실전 감각을 쌓습니다."
+      },
+      "repetition": {
+        "title": "반복과 체화",
+        "description": "같은 유형을 다양한 각도로 반복합니다. 패턴이 체화될 때까지 연습합니다."
+      },
+      "application": {
+        "title": "실전 적용",
+        "description": "배운 개념을 실전 문제에 바로 적용합니다. 시험장에서 쓸 수 있는 실력을 만듭니다."
+      }
+    },
+    "weeklyStructure": {
+      "title": "주간 구조",
+      "monWed": {
+        "days": "월 ~ 수",
+        "focus": "개념 수업",
+        "description": "핵심 개념 정리와 유형별 접근법을 학습합니다."
+      },
+      "thuFri": {
+        "days": "목 ~ 금",
+        "focus": "문제풀이",
+        "description": "배운 개념을 실전 문제에 적용하고, 오답을 분석합니다."
+      }
+    },
+    "schedule": {
+      "title": "일일 시간표",
+      "header": "스케줄",
+      "dayGroups": {
+        "concept": "개념 집중 학습",
+        "practice": "문제 풀이 집중 학습"
+      },
+      "days": {
+        "mon": "월",
+        "tue": "화",
+        "wed": "수",
+        "thu": "목",
+        "fri": "금"
+      },
+      "cells": {
+        "vocab": "Vocab",
+        "rwLive": "RW 라이브 강의",
+        "rwModule1Test": "RW Module1\nTEST",
+        "mathModule1Test": "Math Module 1\nTEST",
+        "rwModule2Test": "RW Module 2\nTEST",
+        "mathModule2Test": "Math Module 2\nTEST",
+        "liveConceptReview": "라이브\n개념 및 해설 강의",
+        "break": "휴식",
+        "customLearning": "맞춤형 학습\n(Live Text Tutoring)",
+        "vocabTestReview": "Vocab TEST\n복습 문제 정리"
+      }
+    },
+    "benefits": {
+      "title": "혜택 요약",
+      "schedule": "희망 일정에 맞춰 수업 시간 조율 가능",
+      "curriculum": "주차별 진도에 따른 맞춤 커리큘럼",
+      "earlyBird": "얼리버드 {{rate}}% 할인 (~{{deadline}})"
+    },
+    "timezoneNotice": "한국시간(KST) 기준입니다.",
+    "cta": {
+      "button": "원장님과 직접 상담하고 로드맵 설계하세요",
+      "description": "프로그램 상세 안내와 맞춤 상담을 받으실 수 있습니다"
+    }
+  },
+  "ap": {
+    "packageTitle": "AP 수업권 패키지",
+    "subjectsTitle": "진행 가능 과목",
+    "subjectsNote": "위 과목 외 추가 과목은 상담 시 문의해 주세요",
+    "custom": {
+      "title": "원하는 시간만큼 등록하고 성과내세요.",
+      "description": "충분한 시간을 투자할수록 확실한 성과로 돌아옵니다",
+      "classHours": "수업 시간",
+      "pricePerHour": "시간당 가격",
+      "discountRate": "할인율",
+      "totalAmount": "총 금액"
+    },
+    "valueProps": {
+      "expertCoach": {
+        "title": "과목별 전문 코치",
+        "description": "AP 전문 코치가 직접 수업합니다."
+      },
+      "customCurriculum": {
+        "title": "맞춤 커리큘럼",
+        "description": "학생의 현재 수준과 목표 점수에 맞춰 설계합니다"
+      },
+      "performanceMgmt": {
+        "title": "성과형 관리",
+        "description": "진도 체크와 과제 피드백으로 학습 효율을 높입니다"
+      }
+    },
+    "cta": {
+      "button": "원장님과 직접 상담하고 로드맵 만드세요.",
+      "description": "과목 선택과 맞춤 커리큘럼 상담을 받으실 수 있습니다"
+    }
+  }
+}
