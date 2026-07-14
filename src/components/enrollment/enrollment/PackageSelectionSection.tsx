@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, Users } from 'lucide-react';
+import { Zap, Users, ArrowRight, Check } from 'lucide-react';
 import { RadioCard } from '@/components/enrollment/ui/RadioCard';
 import { CheckboxCard } from '@/components/enrollment/ui/CheckboxCard';
 import { Badge } from '@/components/enrollment/ui/Badge';
@@ -83,7 +83,7 @@ export const PackageSelectionSection = React.forwardRef<HTMLDivElement, PackageS
                         </p>
                         {savings > 0 && pkg.discountRate && (
                           <p className="text-sm sm:text-base font-bold text-rose-400 mt-1">
-                            {t('common.savingsAmount', { amount: formatWon(savings, locale), rate: pkg.discountRate })}
+                            {t('common.savingsAmount', { amount: formatWon(savings, locale, { manThreshold: 1 }), rate: pkg.discountRate })}
                           </p>
                         )}
                       </div>
@@ -125,6 +125,17 @@ export const PackageSelectionSection = React.forwardRef<HTMLDivElement, PackageS
                   <p className="text-xs text-white/50">
                     {t('packageSelection.premium.description')}
                   </p>
+                  <ul className="mt-1.5 space-y-1">
+                    {[
+                      t('packageSelection.premium.highlightExperience'),
+                      t('packageSelection.premium.highlightHours'),
+                    ].map((highlight) => (
+                      <li key={highlight} className="flex items-center gap-1.5 text-xs text-white/70">
+                        <Check className="w-3.5 h-3.5 text-accent-glow shrink-0" strokeWidth={3} />
+                        {highlight}
+                      </li>
+                    ))}
+                  </ul>
                   {leadCoaches.length > 0 && (
                     <button
                       type="button"
@@ -132,10 +143,13 @@ export const PackageSelectionSection = React.forwardRef<HTMLDivElement, PackageS
                         e.stopPropagation();
                         setCoachesOpen(true);
                       }}
-                      className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-accent-glow/15 text-accent-glow border border-accent-glow/30 hover:bg-accent-glow/25 transition-colors"
+                      className="group w-full mt-2.5 flex items-center justify-between px-4 py-3 rounded-btn text-sm font-bold text-white bg-gradient-to-r from-accent to-accent-glow shadow-[0_6px_20px_-4px_rgba(96,133,255,0.55)] hover:brightness-110 hover:-translate-y-0.5 transition-all"
                     >
-                      <Users className="w-3.5 h-3.5" />
-                      {t('packageSelection.premium.viewCoaches')}
+                      <span className="inline-flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        {t('packageSelection.premium.viewCoaches')}
+                      </span>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </button>
                   )}
                 </div>

@@ -89,7 +89,7 @@ export interface ManagementService {
   key: string;
   name: string;
   included: boolean;
-  /** 있으면 서비스 항목이 해당 URL로 이동하는 링크로 렌더된다 (예: 그로스 리포트) */
+  /** 있으면 서비스 항목이 해당 URL로 이동하는 링크로 렌더된다 (예: 학습 리포트) */
   link?: string;
 }
 

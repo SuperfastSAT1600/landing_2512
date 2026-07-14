@@ -54,8 +54,8 @@
     },
     "unmanaged": {
       "name": "Self-Study",
-      "subtitle": "Class + Growth Report Only",
-      "description": "An affordable option with class and growth report only",
+      "subtitle": "Class + Learning Report Only",
+      "description": "An affordable option with class and learning report only",
       "serviceHighlight": "Growth report only"
     }
   },
@@ -89,9 +89,9 @@
     },
     "unmanaged": {
       "name": "Self-Study",
-      "subtitle": "Growth Report Only",
-      "description": "An affordable option with growth report after class only",
-      "managementLevel": "Growth Report Only"
+      "subtitle": "Learning Report Only",
+      "description": "An affordable option with learning report after class only",
+      "managementLevel": "Learning Report Only"
     }
   },
   "packageSelection": {
@@ -104,6 +104,8 @@
       "badge": "More than FAST",
       "name": "Lead Coach Sessions",
       "description": "Premium 1:1 sessions with SuperfastSAT's lead coaches.",
+      "highlightExperience": "10 years of teaching experience on average",
+      "highlightHours": "1,000+ cumulative hours of SuperfastSAT sessions",
       "viewCoaches": "Meet the lead coaches"
     }
   },
@@ -153,7 +155,7 @@
     }
   },
   "services": {
-    "lessonFeedback": "Growth Report",
+    "lessonFeedback": "Learning Report",
     "pastExams": "Past Exam Materials",
     "dailyVocab": "Daily Vocab",
     "wrongAnswerNote": "Study Hall",
