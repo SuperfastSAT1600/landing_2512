@@ -15,8 +15,8 @@
   --night-s:   #0a0a0a;
   --night-2:   #111111;
   --white:     #ffffff;
-  --mute:      #5a5a5f;
-  --muted:     #8a8a8f;
+  --mute:      #cccccc;
+  --muted:     #aaaaaa;
   --line:      #2a2a2f;
   --line-l:    #e0e0e8;
   --bg-l:      #f4f7fa;
@@ -54,7 +54,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
 .nav-sec-num { font-size: 7px; color: var(--line); min-width: 14px; flex-shrink: 0; }
 .section { max-width: var(--max); margin: 0 auto; padding: 80px var(--pad); border-bottom: 0.5px solid var(--line); }
 .section:last-child { border-bottom: none; }
-.section-light { background: var(--bg-l); max-width: 100%; padding: 80px 0; }
+.section-light { background: var(--bg-l); max-width: 100%; padding: 80px 0; --mute: #555555; --muted: #555555; }
 .section-light .inner { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
 .eyebrow { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--mute); font-weight: 400; display: block; margin-bottom: 16px; }
 .eyebrow-dark { color: var(--muted); }
