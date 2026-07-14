@@ -59,7 +59,7 @@ function formatValue(metric: ExperimentMetricKey, v: number | null): string {
     return `${(s / 3600).toFixed(1)}시간`;
   }
   if (metric === 'custom') return String(v);
-  return `${v}%`;
+  return `${Number(v.toFixed(2))}%`;
 }
 
 const STATUS_BADGE: Record<string, string> = {
