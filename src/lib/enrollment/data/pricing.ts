@@ -224,7 +224,7 @@ export const CONTENT_ITEMS: ContentItem[] = [
 ];
 
 /** 학습 리포트 샘플 링크 — 서비스 항목 클릭 시 이동 */
-export const GROWTH_REPORT_URL = 'https://www.superfastsat.io/report/615977';
+export const GROWTH_REPORT_URL = 'https://www.superfastsat.io/report/712234';
 
 const FULL_MANAGEMENT_SERVICES: ManagementService[] = [
   { key: 'lessonFeedback', name: '학습 리포트', included: true, link: GROWTH_REPORT_URL },
