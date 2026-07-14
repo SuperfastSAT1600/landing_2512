@@ -158,10 +158,10 @@ export const MANAGEMENT_TYPES: ManagementTypeOption[] = [
   {
     id: 'unmanaged',
     name: '비관리형',
-    subtitle: '수업 + 그로스 리포트만',
-    description: '수업과 그로스 리포트만 제공되는 합리적인 옵션',
+    subtitle: '수업 + 학습 리포트만',
+    description: '수업과 학습 리포트만 제공되는 합리적인 옵션',
     icon: 'BookOpen',
-    serviceHighlight: '그로스 리포트만 제공',
+    serviceHighlight: '학습 리포트만 제공',
   },
 ];
 
@@ -194,9 +194,9 @@ export const CATEGORIES: Category[] = [
   {
     id: 'unmanaged' as CategoryId,
     name: '비관리',
-    subtitle: '그로스 리포트만',
-    description: '수업 후 그로스 리포트만 제공되는 합리적 옵션',
-    managementLevel: '그로스 리포트만',
+    subtitle: '학습 리포트만',
+    description: '수업 후 학습 리포트만 제공되는 합리적 옵션',
+    managementLevel: '학습 리포트만',
     icon: 'BookOpen',
   },
 ];
@@ -205,7 +205,7 @@ export const HOUR_PACKAGES: Record<HourPackageCategoryId, HourPackage[]> = {
   'one-on-one': [
     { id: '1on1-10h', hours: 10, pricePerHour: 165000, totalPrice: 1650000 },
     { id: '1on1-20h', hours: 20, pricePerHour: 149500, totalPrice: 2990000, discountRate: 9, salesLabel: 'popular' },
-    { id: '1on1-40h', hours: 40, pricePerHour: 135000, totalPrice: 5400000, discountRate: 18, salesLabel: 'bestValue' },
+    { id: '1on1-40h', hours: 40, pricePerHour: 134750, totalPrice: 5390000, discountRate: 18, salesLabel: 'bestValue' },
     { id: '1on1-premium-10h', hours: 10, pricePerHour: 180000, totalPrice: 1800000, premium: true },
   ],
   unmanaged: [
@@ -223,11 +223,11 @@ export const CONTENT_ITEMS: ContentItem[] = [
   { id: 'content-qna', name: '실시간 Q&A', monthlyPrice: 200000, description: '실시간 질의응답 지원' },
 ];
 
-/** 그로스 리포트 샘플 링크 — 서비스 항목 클릭 시 이동 */
+/** 학습 리포트 샘플 링크 — 서비스 항목 클릭 시 이동 */
 export const GROWTH_REPORT_URL = 'https://www.superfastsat.io/report/615977';
 
 const FULL_MANAGEMENT_SERVICES: ManagementService[] = [
-  { key: 'lessonFeedback', name: '그로스 리포트', included: true, link: GROWTH_REPORT_URL },
+  { key: 'lessonFeedback', name: '학습 리포트', included: true, link: GROWTH_REPORT_URL },
   { key: 'pastExams', name: '기출문제 제공', included: true },
   { key: 'dailyVocab', name: '데일리 Vocab', included: true },
   { key: 'wrongAnswerNote', name: 'Study Hall', included: true },
@@ -241,11 +241,11 @@ export const MANAGEMENT_SERVICES: Record<CategoryId, ManagementService[]> = {
     { key: 'learningFeedback', name: '학습 결과 피드백', included: true },
     { key: 'wrongAnswerNote', name: 'Study Hall', included: true },
     { key: 'homeworkSchedule', name: '숙제 일정 관리', included: true },
-    { key: 'lessonFeedback', name: '그로스 리포트', included: false },
+    { key: 'lessonFeedback', name: '학습 리포트', included: false },
     { key: 'biweeklyMock', name: '매주 실전 모의고사', included: false },
   ],
   unmanaged: [
-    { key: 'lessonFeedback', name: '그로스 리포트', included: true, link: GROWTH_REPORT_URL },
+    { key: 'lessonFeedback', name: '학습 리포트', included: true, link: GROWTH_REPORT_URL },
     { key: 'lectures', name: '인강', included: false },
     { key: 'vocabLearning', name: '단어 학습', included: false },
     { key: 'wrongAnswerNote', name: 'Study Hall', included: false },

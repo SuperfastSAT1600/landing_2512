@@ -54,9 +54,9 @@
     },
     "unmanaged": {
       "name": "비관리형",
-      "subtitle": "수업 + 그로스 리포트만",
-      "description": "수업과 그로스 리포트만 제공되는 합리적인 옵션",
-      "serviceHighlight": "그로스 리포트만 제공"
+      "subtitle": "수업 + 학습 리포트만",
+      "description": "수업과 학습 리포트만 제공되는 합리적인 옵션",
+      "serviceHighlight": "학습 리포트만 제공"
     }
   },
   "classFormat": {
@@ -89,9 +89,9 @@
     },
     "unmanaged": {
       "name": "비관리",
-      "subtitle": "그로스 리포트만",
-      "description": "수업 후 그로스 리포트만 제공되는 합리적 옵션",
-      "managementLevel": "그로스 리포트만"
+      "subtitle": "학습 리포트만",
+      "description": "수업 후 학습 리포트만 제공되는 합리적 옵션",
+      "managementLevel": "학습 리포트만"
     }
   },
   "packageSelection": {
@@ -104,6 +104,8 @@
       "badge": "More than FAST",
       "name": "대표 코치와의 수업권",
       "description": "SuperfastSAT 대표 코치진과 진행하는 프리미엄 1:1 수업권입니다.",
+      "highlightExperience": "평균 10년의 경력",
+      "highlightHours": "누적 1,000시간 이상의 SuperfastSAT 수업",
       "viewCoaches": "대표 코치 소개 보기"
     }
   },
@@ -153,7 +155,7 @@
     }
   },
   "services": {
-    "lessonFeedback": "그로스 리포트",
+    "lessonFeedback": "학습 리포트",
     "pastExams": "기출문제 제공",
     "dailyVocab": "데일리 Vocab",
     "wrongAnswerNote": "Study Hall",

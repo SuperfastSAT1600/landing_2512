@@ -71,7 +71,7 @@ export const SummarySection = React.forwardRef<HTMLDivElement, SummarySectionPro
             </p>
             {savingsInfo && (
               <p className="text-sm sm:text-base font-bold text-rose-400 mt-2">
-                {t('common.savingsVsRegular', { amount: formatWon(savingsInfo.savings, locale), rate: savingsInfo.discountRate })}
+                {t('common.savingsVsRegular', { amount: formatWon(savingsInfo.savings, locale, { manThreshold: 1 }), rate: savingsInfo.discountRate })}
               </p>
             )}
           </div>
