@@ -22,7 +22,7 @@ import { DiagnosticSection } from './sections/DiagnosticSection';
 import { MemoSection } from './sections/MemoSection';
 import { TimelineSection } from './sections/TimelineSection';
 import { StrategyHistorySection } from './sections/StrategyHistorySection';
-import { SalesStrategySection } from './sections/SalesStrategySection';
+// import { SalesStrategySection } from './sections/SalesStrategySection'; // 미사용으로 숨김 (2026-07-14)
 import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import type { StudentDetailPanelProps } from './types';
 
@@ -270,10 +270,11 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               }}
             />
 
-            <SalesStrategySection
+            {/* 세일즈 전략 AI — 미사용으로 숨김 (2026-07-14) */}
+            {/* <SalesStrategySection
               student={localStudent}
               adminKey={adminKey}
-            />
+            /> */}
 
             <MemoSection
               memoText={memoHook.memoText}
