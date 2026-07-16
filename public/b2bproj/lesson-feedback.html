@@ -191,8 +191,6 @@ textarea.tall { min-height: 200px; }
         <label class="form-label" for="sel-unit">유닛</label>
         <select id="sel-unit" onchange="onUnitChange()">
           <option value="">유닛 선택</option>
-          <option value="unit1">Unit 1 — Self-Introduction &amp; Joining the Team</option>
-          <option value="unit2">Unit 2 — Win / Lose Interview</option>
         </select>
       </div>
       <div class="form-group" style="margin-bottom:0">
@@ -246,10 +244,8 @@ textarea.tall { min-height: 200px; }
 
   <!-- ── 이전 피드백 Panel ─────────────────────── -->
   <div id="panel-history" style="display:none">
-    <div class="unit-filter">
-      <button class="uf-btn active" onclick="filterUnit('all', this)">전체</button>
-      <button class="uf-btn" onclick="filterUnit('unit1', this)">Unit 1</button>
-      <button class="uf-btn" onclick="filterUnit('unit2', this)">Unit 2</button>
+    <div class="unit-filter" id="unit-filter-row">
+      <!-- gangwon-config.js 기반으로 buildUnitUI()가 동적 생성 -->
     </div>
     <div id="history-area">
       <div class="state-msg">이전 피드백 탭을 열면 자동으로 불러옵니다.</div>
@@ -260,24 +256,40 @@ textarea.tall { min-height: 200px; }
 </div><!-- #app -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="gangwon-config.js"></script>
 <script>
 const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
 const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
 const sb = supabase.createClient(SB_URL, SB_ANON);
 
 const PASS = '270706';
-const UNIT_LABELS = { unit1: 'Unit 1', unit2: 'Unit 2' };
-const UNIT_TEMPLATES = {
-  unit1: `Unit 1: Self-Introduction & Joining the Team\n\n오늘 수업에서는 영어 인터뷰에서 자기소개 및 팀 합류 인사를 자연스럽게 할 수 있도록 연습했습니다.\n\n주요 학습 내용:\n- REWATCH: Son Heung-min의 팀 합류 인터뷰 영상을 함께 분석했습니다.\n- PREPARE: 빈칸 채우기를 통해 핵심 표현을 익혔습니다.\n  01. I'm incredibly ___ to be joining ___\n  02. I have come here to ___ and give everything for ___\n  03. I can't wait to ___ with ___\n  04. It's ___ to be part of ___`,
-  unit2: `Unit 2: Win / Lose Interview\n\n오늘 수업에서는 경기 결과에 따라 다른 톤과 표현으로 인터뷰하는 방법을 연습했습니다.\n\n주요 학습 내용:\n- WIN 인터뷰: Son Heung-min (Tottenham 4-0 Southampton 2021) 승리 후 인터뷰 분석\n- LOSE 인터뷰: Bukayo Saka (Arsenal 0-1 Newcastle 2022) 패배 후 인터뷰 분석\n- COMPARE: 승패 상황의 언어적 차이 비교 학습`
-};
+// UNIT_LABELS, UNIT_TEMPLATES는 gangwon-config.js에서 자동 로드됩니다.
 
 /* ── Auth ── */
 document.addEventListener('DOMContentLoaded', () => {
+  buildUnitUI();
   if (sessionStorage.getItem('fb_auth') === '1') unlock();
   document.getElementById('inp-date').value = today();
   addWriteRow();
 });
+
+/* ── 유닛 UI 동적 생성 (gangwon-config.js의 GANGWON_UNITS 기준) ── */
+function buildUnitUI() {
+  // 작성 폼 유닛 드롭다운
+  const sel = document.getElementById('sel-unit');
+  sel.innerHTML = '<option value="">유닛 선택</option>' +
+    GANGWON_UNITS.map(u =>
+      `<option value="${u.id}">${u.label.replace(/&/g, '&amp;')}</option>`
+    ).join('');
+
+  // 이전 피드백 필터 버튼
+  const filterRow = document.getElementById('unit-filter-row');
+  filterRow.innerHTML =
+    '<button class="uf-btn active" onclick="filterUnit(\'all\', this)">전체</button>' +
+    GANGWON_UNITS.map(u =>
+      `<button class="uf-btn" onclick="filterUnit('${u.id}', this)">${u.short}</button>`
+    ).join('');
+}
 
 function doLogin() {
   const pw = document.getElementById('login-pw').value;
@@ -484,8 +496,7 @@ function renderCard(fb) {
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">유닛</label>
             <select id="${fkey}_unit">
-              <option value="unit1" ${fb.unit==='unit1'?'selected':''}>Unit 1 — Self-Introduction &amp; Joining the Team</option>
-              <option value="unit2" ${fb.unit==='unit2'?'selected':''}>Unit 2 — Win / Lose Interview</option>
+              ${GANGWON_UNITS.map(u => `<option value="${u.id}" ${fb.unit===u.id?'selected':''}>${u.label.replace(/&/g,'&amp;')}</option>`).join('')}
             </select>
           </div>
           <div class="form-group" style="margin-bottom:0">
