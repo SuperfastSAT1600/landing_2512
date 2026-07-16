@@ -20,7 +20,7 @@ function buildSeed(a: BriefArea): string {
     a.question ? `던진 질문: ${a.question}` : '',
     a.suggestion ? `초기 제안: ${a.suggestion}` : '',
   ].filter(Boolean).join('\n');
-  return `방금 선제 진단에서 아래 안건을 골랐어. 이걸 이어서 구체적인 세일즈 전략으로 발전시켜줘.\n\n${lines}\n\n우리 데이터·세계적 세일즈 기법·최신 사례를 활용해 실행 가능한 전략(가설→대상→실행→측정 지표)을 제시해줘.`;
+  return `방금 선제 진단에서 아래 안건을 골랐어. 이걸 이어서 구체적인 세일즈 전략으로 발전시켜줘.\n\n${lines}\n\n이 안건 하나에만 집중해줘 — 다른 퍼널 영역으로 넓히지 말고, 이 전략을 깊게 파고들어줘. 우리 데이터·세계적 세일즈 기법·최신 사례를 활용해 실행 가능한 전략(가설→대상→실행→측정 지표)을 제시해줘.`;
 }
 
 const today = () => kstDateStr(Date.now());
