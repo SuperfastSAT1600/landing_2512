@@ -126,10 +126,6 @@ textarea.tall { min-height: 200px; }
 .fb-card-unit { font-size: 16px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .fb-edit-btn { background: none; border: 0.5px solid var(--line); color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
 .fb-edit-btn:hover { border-color: var(--text); color: var(--text); }
-.fb-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
-.fb-del-btn { background: none; border: 0.5px solid var(--line); color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-.fb-del-btn:hover { border-color: #d44; color: #d44; }
-.fb-del-btn:disabled { opacity: 0.4; cursor: default; }
 
 .fb-sections { display: flex; flex-direction: column; gap: 20px; }
 .fb-section { display: grid; grid-template-columns: 100px 1fr; gap: 16px; align-items: start; }
@@ -195,8 +191,6 @@ textarea.tall { min-height: 200px; }
         <label class="form-label" for="sel-unit">유닛</label>
         <select id="sel-unit" onchange="onUnitChange()">
           <option value="">유닛 선택</option>
-          <option value="unit1">Unit 1 — Self-Introduction &amp; Joining the Team</option>
-          <option value="unit2">Unit 2 — Win / Lose Interview</option>
         </select>
       </div>
       <div class="form-group" style="margin-bottom:0">
@@ -214,11 +208,6 @@ textarea.tall { min-height: 200px; }
         <label class="form-label" for="inp-end-time">수업 종료 시간</label>
         <input type="time" id="inp-end-time" />
       </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label" for="inp-recording">수업 녹화 파일 링크 <span style="color:var(--line);font-size:8px;">(선택)</span></label>
-      <input type="url" id="inp-recording" placeholder="https://…" />
     </div>
 
     <div class="form-group">
@@ -255,10 +244,8 @@ textarea.tall { min-height: 200px; }
 
   <!-- ── 이전 피드백 Panel ─────────────────────── -->
   <div id="panel-history" style="display:none">
-    <div class="unit-filter">
-      <button class="uf-btn active" onclick="filterUnit('all', this)">전체</button>
-      <button class="uf-btn" onclick="filterUnit('unit1', this)">Unit 1</button>
-      <button class="uf-btn" onclick="filterUnit('unit2', this)">Unit 2</button>
+    <div class="unit-filter" id="unit-filter-row">
+      <!-- gangwon-config.js 기반으로 buildUnitUI()가 동적 생성 -->
     </div>
     <div id="history-area">
       <div class="state-msg">이전 피드백 탭을 열면 자동으로 불러옵니다.</div>
@@ -269,24 +256,40 @@ textarea.tall { min-height: 200px; }
 </div><!-- #app -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="gangwon-config.js"></script>
 <script>
 const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
 const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
 const sb = supabase.createClient(SB_URL, SB_ANON);
 
 const PASS = '270706';
-const UNIT_LABELS = { unit1: 'Unit 1', unit2: 'Unit 2' };
-const UNIT_TEMPLATES = {
-  unit1: `Unit 1: Self-Introduction & Joining the Team\n\n오늘 수업에서는 영어 인터뷰에서 자기소개 및 팀 합류 인사를 자연스럽게 할 수 있도록 연습했습니다.\n\n주요 학습 내용:\n- REWATCH: Son Heung-min의 팀 합류 인터뷰 영상을 함께 분석했습니다.\n- PREPARE: 빈칸 채우기를 통해 핵심 표현을 익혔습니다.\n  01. I'm incredibly ___ to be joining ___\n  02. I have come here to ___ and give everything for ___\n  03. I can't wait to ___ with ___\n  04. It's ___ to be part of ___`,
-  unit2: `Unit 2: Win / Lose Interview\n\n오늘 수업에서는 경기 결과에 따라 다른 톤과 표현으로 인터뷰하는 방법을 연습했습니다.\n\n주요 학습 내용:\n- WIN 인터뷰: Son Heung-min (Tottenham 4-0 Southampton 2021) 승리 후 인터뷰 분석\n- LOSE 인터뷰: Bukayo Saka (Arsenal 0-1 Newcastle 2022) 패배 후 인터뷰 분석\n- COMPARE: 승패 상황의 언어적 차이 비교 학습`
-};
+// UNIT_LABELS, UNIT_TEMPLATES는 gangwon-config.js에서 자동 로드됩니다.
 
 /* ── Auth ── */
 document.addEventListener('DOMContentLoaded', () => {
+  buildUnitUI();
   if (sessionStorage.getItem('fb_auth') === '1') unlock();
   document.getElementById('inp-date').value = today();
   addWriteRow();
 });
+
+/* ── 유닛 UI 동적 생성 (gangwon-config.js의 GANGWON_UNITS 기준) ── */
+function buildUnitUI() {
+  // 작성 폼 유닛 드롭다운
+  const sel = document.getElementById('sel-unit');
+  sel.innerHTML = '<option value="">유닛 선택</option>' +
+    GANGWON_UNITS.map(u =>
+      `<option value="${u.id}">${u.label.replace(/&/g, '&amp;')}</option>`
+    ).join('');
+
+  // 이전 피드백 필터 버튼
+  const filterRow = document.getElementById('unit-filter-row');
+  filterRow.innerHTML =
+    '<button class="uf-btn active" onclick="filterUnit(\'all\', this)">전체</button>' +
+    GANGWON_UNITS.map(u =>
+      `<button class="uf-btn" onclick="filterUnit('${u.id}', this)">${u.short}</button>`
+    ).join('');
+}
 
 function doLogin() {
   const pw = document.getElementById('login-pw').value;
@@ -374,9 +377,8 @@ async function submitFeedback() {
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = '저장 중...';
 
-  const startTime    = document.getElementById('inp-start-time').value || null;
-  const endTime      = document.getElementById('inp-end-time').value   || null;
-  const recordingUrl = document.getElementById('inp-recording').value.trim() || null;
+  const startTime = document.getElementById('inp-start-time').value || null;
+  const endTime   = document.getElementById('inp-end-time').value   || null;
 
   const { error } = await sb.from('b2b_lesson_feedback').insert({
     unit, lesson_date: date, lesson_content: content,
@@ -386,7 +388,6 @@ async function submitFeedback() {
     absentees: absentees.length ? absentees : null,
     start_time: startTime,
     end_time:   endTime,
-    recording_url: recordingUrl,
     club_id:    'gangwon',
   });
 
@@ -403,7 +404,6 @@ async function submitFeedback() {
   });
   document.getElementById('inp-start-time').value = '';
   document.getElementById('inp-end-time').value = '';
-  document.getElementById('inp-recording').value = '';
   document.getElementById('student-rows').innerHTML = '';
   writeRowCount = 0;
   addWriteRow();
@@ -471,14 +471,6 @@ function renderCard(fb) {
   if (fb.homework) {
     sectionsHtml += `<div class="fb-section"><span class="fb-section-label">숙제</span><div class="fb-section-text">${esc(fb.homework)}</div></div>`;
   }
-  if (fb.start_time) {
-    const dur = calcDuration(fb.start_time, fb.end_time);
-    const timeStr = `${fb.start_time.slice(0,5)}${fb.end_time ? ' – ' + fb.end_time.slice(0,5) : ''}${dur ? ' ('+dur+')' : ''}`;
-    sectionsHtml += `<div class="fb-section"><span class="fb-section-label">수업 시간</span><div class="fb-section-text">${esc(timeStr)}</div></div>`;
-  }
-  if (fb.recording_url) {
-    sectionsHtml += `<div class="fb-section"><span class="fb-section-label">수업 녹화</span><div class="fb-section-text"><a href="${esc(fb.recording_url)}" target="_blank" rel="noopener">▶ 녹화 영상 보기</a></div></div>`;
-  }
 
   const fid = fb.id;
   const fkey = fid.replace(/-/g, '_');
@@ -491,10 +483,7 @@ function renderCard(fb) {
             <div class="fb-card-date">${dateStr}</div>
             <div class="fb-card-unit">${esc(UNIT_LABELS[fb.unit] || fb.unit || '—')}</div>
           </div>
-          <div class="fb-card-actions">
-            <button class="fb-edit-btn" onclick="openEdit('${fid}')">수정</button>
-            <button class="fb-del-btn" onclick="deleteCard('${fid}', this)">삭제</button>
-          </div>
+          <button class="fb-edit-btn" onclick="openEdit('${fid}')">수정</button>
         </div>
         <div class="fb-sections">${sectionsHtml || '<span style="font-size:13px;color:var(--mute)">내용 없음</span>'}</div>
       </div>
@@ -507,23 +496,12 @@ function renderCard(fb) {
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">유닛</label>
             <select id="${fkey}_unit">
-              <option value="unit1" ${fb.unit==='unit1'?'selected':''}>Unit 1 — Self-Introduction &amp; Joining the Team</option>
-              <option value="unit2" ${fb.unit==='unit2'?'selected':''}>Unit 2 — Win / Lose Interview</option>
+              ${GANGWON_UNITS.map(u => `<option value="${u.id}" ${fb.unit===u.id?'selected':''}>${u.label.replace(/&/g,'&amp;')}</option>`).join('')}
             </select>
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">수업 날짜</label>
             <input type="date" id="${fkey}_date" value="${esc(fb.lesson_date||'')}" />
-          </div>
-        </div>
-        <div class="form-row" style="margin-bottom:28px;">
-          <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">수업 시작 시간</label>
-            <input type="time" id="${fkey}_start" value="${escAttr(fb.start_time?.slice(0,5)||'')}" />
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">수업 종료 시간</label>
-            <input type="time" id="${fkey}_end" value="${escAttr(fb.end_time?.slice(0,5)||'')}" />
           </div>
         </div>
         <div class="form-group">
@@ -548,10 +526,6 @@ function renderCard(fb) {
         <div class="form-group">
           <label class="form-label">숙제</label>
           <textarea id="${fkey}_hw">${esc(fb.homework||'')}</textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">수업 녹화 파일 링크 <span style="color:var(--line);font-size:8px;">(선택)</span></label>
-          <input type="url" id="${fkey}_rec" placeholder="https://…" value="${escAttr(fb.recording_url||'')}" />
         </div>
         <button class="btn-primary" id="${fkey}_save" onclick="saveEdit('${fid}','${fkey}')">수정 저장하기</button>
         <button class="btn-ghost" onclick="closeEdit('${fid}')">취소</button>
@@ -611,12 +585,9 @@ async function saveEdit(fid, fkey) {
   if (!date)    return showMsg(msgEl, 'error', '날짜를 입력해주세요.');
   if (!content) return showMsg(msgEl, 'error', '수업 내용을 입력해주세요.');
 
-  const attendees    = parseNames(document.getElementById(`${fkey}_att`));
-  const absentees    = parseNames(document.getElementById(`${fkey}_abs`));
-  const notes        = collectNotes(`${fkey}_notes`);
-  const startTime    = document.getElementById(`${fkey}_start`).value || null;
-  const endTime      = document.getElementById(`${fkey}_end`).value   || null;
-  const recordingUrl = document.getElementById(`${fkey}_rec`).value.trim() || null;
+  const attendees = parseNames(document.getElementById(`${fkey}_att`));
+  const absentees = parseNames(document.getElementById(`${fkey}_abs`));
+  const notes     = collectNotes(`${fkey}_notes`);
 
   const btn = document.getElementById(`${fkey}_save`);
   btn.disabled = true; btn.textContent = '저장 중...';
@@ -627,9 +598,6 @@ async function saveEdit(fid, fkey) {
     homework: hw || null,
     attendees: attendees.length ? attendees : null,
     absentees: absentees.length ? absentees : null,
-    start_time: startTime,
-    end_time:   endTime,
-    recording_url: recordingUrl,
   }).eq('id', fid);
 
   btn.disabled = false; btn.textContent = '수정 저장하기';
@@ -640,27 +608,11 @@ async function saveEdit(fid, fkey) {
   if (idx !== -1) {
     allFeedbacks[idx] = { ...allFeedbacks[idx], unit, lesson_date: date, lesson_content: content,
       student_notes: notes.length ? notes : null, homework: hw || null,
-      attendees: attendees.length ? attendees : null, absentees: absentees.length ? absentees : null,
-      start_time: startTime, end_time: endTime, recording_url: recordingUrl };
+      attendees: attendees.length ? attendees : null, absentees: absentees.length ? absentees : null };
   }
 }
 
-async function deleteCard(fid, btn) {
-  if (!confirm('이 피드백을 삭제할까요?')) return;
-  btn.disabled = true; btn.textContent = '삭제 중…';
-  const { error } = await sb.from('b2b_lesson_feedback').delete().eq('id', fid);
-  if (error) { alert('삭제 실패: ' + error.message); btn.disabled = false; btn.textContent = '삭제'; return; }
-  document.getElementById(`card-${fid}`).remove();
-  allFeedbacks = allFeedbacks.filter(f => f.id !== fid);
-}
-
 /* ── Helpers ── */
-function calcDuration(s, e) {
-  if (!s || !e) return null;
-  const [sh,sm] = s.split(':').map(Number), [eh,em] = e.split(':').map(Number);
-  const diff = (eh*60+em)-(sh*60+sm);
-  return diff > 0 ? diff+'분' : null;
-}
 function showMsg(el, type, text) { el.className = 'msg ' + type; el.textContent = text; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escHtml(s) { return esc(s); }
