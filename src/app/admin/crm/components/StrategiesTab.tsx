@@ -166,6 +166,12 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
     if (initialSubTab) setSubTab(initialSubTab);
   }, [initialSubTab]);
 
+  // 새 안건 시드가 오면(다른 서브탭에 있어도) 전략 에이전트 서브탭으로 전환.
+  // key가 매 선택마다 증가하므로 같은 안건 재선택·연속 선택에도 확실히 반응한다.
+  useEffect(() => {
+    if (strategySeed) setSubTab('strategy_ai');
+  }, [strategySeed?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchAll = useCallback(async () => {
     try {
       const res = await fetch('/api/crm/retry-strategies', {
