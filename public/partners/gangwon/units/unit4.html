@@ -300,6 +300,19 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
 .session-logout { background: none; border: none; color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; text-decoration: underline; padding: 0; }
 .session-logout:hover { color: var(--white); }
 .vocab-box-badge { font-size: 8px; letter-spacing: 0.2em; color: var(--mute); text-transform: uppercase; margin-top: 4px; }
+
+/* ── 10 Phrases ── */
+.phrase-list { display: flex; flex-direction: column; gap: 0; margin-top: 40px; }
+.phrase-item { border-top: 0.5px solid var(--line); padding: 36px 0; display: grid; grid-template-columns: 48px 1fr; gap: 24px; align-items: start; }
+.phrase-item:last-child { border-bottom: 0.5px solid var(--line); }
+.phrase-num { font-size: 11px; letter-spacing: 0.28em; color: var(--mute); font-weight: 700; padding-top: 4px; }
+.phrase-body {}
+.phrase-en { font-size: clamp(16px, 2.2vw, 22px); color: var(--white); line-height: 1.5; font-weight: 500; margin-bottom: 8px; }
+.phrase-ko { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.phrase-vars { background: rgba(255,255,255,0.03); border-left: 2px solid var(--line); padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+.phrase-var-hd { font-size: 8px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--mute); margin-bottom: 2px; }
+.phrase-var { font-size: 13px; color: var(--muted); line-height: 1.55; padding-left: 4px; }
+.phrase-var strong { color: var(--white); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -419,101 +432,11 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
   </div>
 </div>
 
-<!-- S4 — 회복 인터뷰 시청 전 -->
-<div class="section" id="watch-resilience" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Watch &nbsp;·&nbsp; Reference Video &nbsp;·&nbsp; Resilience Interview</span>
-  <div class="split-section reveal">
-    <div class="video-block">
-      <div class="video-thumb" onclick="openVideo('resilience')" role="button" aria-label="회복 인터뷰 영상 재생" style="background-image:url('https://img.youtube.com/vi/Y5s1k2PQ-w0/maxresdefault.jpg')">
-        <div class="play-circle">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><polygon points="5,2 19,11 5,20" fill="#fff"/></svg>
-        </div>
-      </div>
-      <span class="video-caption">Vinicius Jr. &nbsp;·&nbsp; Real Madrid &nbsp;·&nbsp; Resilience Interview</span>
-    </div>
-    <div class="q-block">
-      <h2 class="display d-lg" style="margin-bottom:24px;">BEFORE<br>YOU WATCH</h2>
-      <div class="hl"></div>
-      <div class="q-item">
-        <div class="q-label">Q 01</div>
-        <div class="q-text">Vinicius는 어려운 순간에 대해 어떻게 이야기했나요?</div>
-      </div>
-      <div class="q-item">
-        <div class="q-label">Q 02</div>
-        <div class="q-text">"faith"나 "setback" 같은 단어를 들었나요?</div>
-      </div>
-      <div class="q-item">
-        <div class="q-label">Q 03</div>
-        <div class="q-text">역경을 어떻게 이겨냈는지 말했나요? 무슨 표현을 썼나요?</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- S5 — Vinicius 표현 분석 -->
-<div class="section" id="resilience-analysis" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Vinicius Jr. &nbsp;·&nbsp; Resilience Interview &nbsp;·&nbsp; Expression Analysis</span>
-  <h2 class="display d-xl reveal" style="margin-bottom:40px;">WHAT HE SAID<br><span style="color:var(--mute); font-size:clamp(16px,2.4vw,28px);">— ON RESILIENCE</span></h2>
-  <div class="quote-items">
-    <div class="quote-item reveal">
-      <div>
-        <div class="quote-tag">Pride</div>
-        <div class="quote-en">"I have never thought about leaving here because if I leave, I'm giving the racists exactly what they want."</div>
-        <div class="quote-ko">여기를 떠난다는 생각을 해본 적 없습니다. 제가 떠나면, 인종차별주의자들이 원하는 것을 정확히 주는 것이기 때문입니다.</div>
-      </div>
-      <div class="quote-note" data-key="inj-3">
-        <div>'never thought about leaving' —<br>한번도 떠날 생각을 하지 않았다는 강한 의지.<br>'giving them exactly what they want' — 굴복한다는 뜻</div>
-        <div class="note-examples"></div>
-        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
-      </div>
-    </div>
-    <div class="quote-item reveal">
-      <div>
-        <div class="quote-tag">Strength</div>
-        <div class="quote-en">"It doesn't matter if I win or lose the games — I'm already a winner for being here."</div>
-        <div class="quote-ko">경기에서 이기든 지든 상관없습니다 — 여기에 있는 것만으로도 저는 이미 승자입니다.</div>
-      </div>
-      <div class="quote-note" data-key="inj-4">
-        <div>'It doesn't matter if' — ~해도<br>상관없다, 중요하지 않다.<br>'already a winner for being here' — 존재 자체가 승리</div>
-        <div class="note-examples"></div>
-        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
-      </div>
-    </div>
-    <div class="quote-item reveal">
-      <div>
-        <div class="quote-tag">Message</div>
-        <div class="quote-en">"Playing football is very important, but the fight against racism is crucial. I want people of color to have a life like everyone else. If it weren't for that, I would have given up already."</div>
-        <div class="quote-ko">축구도 중요하지만, 인종차별과의 싸움은 더 중요합니다. 유색인종도 모두와 같은 삶을 살길 바랍니다. 그것이 아니었다면, 이미 포기했을 것입니다.</div>
-      </div>
-      <div class="quote-note" data-key="inj-5">
-        <div>'the fight against racism is crucial' —<br>인종차별에 맞서는 싸움은 필수적.<br>'If it weren't for that, I would have given up' — 가정법 과거</div>
-        <div class="note-examples"></div>
-        <div class="note-add-btn" onclick="addExample(this)">＋ 예문 추가</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- S6 — Compare -->
-<div class="section" id="compare" style="scroll-margin-top:92px;">
+<!-- S4 — 핵심 문장 도입 브릿지 -->
+<div class="section" id="comeback-bridge" style="scroll-margin-top:92px;">
   <h2 class="display d-lg reveal" style="margin-bottom:0;">YOUR STORY.<br>YOUR COMEBACK.<br>YOUR WORDS.</h2>
-  <div class="compare-grid reveal">
-    <div class="compare-col">
-      <div class="compare-col-label">부상·인내 (INJURY) — Son Heung-Min</div>
-      <div class="compare-row"><p>I played through it for eight to nine months, but couldn't go on anymore.</p></div>
-      <div class="compare-row"><p>I'm one of those people who always hides the pain.</p></div>
-      <div class="compare-row"><p>I was only able to do 60 per cent of what I could normally do.</p></div>
-    </div>
-    <div class="compare-vl"></div>
-    <div class="compare-col">
-      <div class="compare-col-label">신념·회복탄력성 (RESILIENCE) — Vinicius Jr.</div>
-      <div class="compare-row"><p>I have never thought about leaving here.</p></div>
-      <div class="compare-row"><p>I'm already a winner for being here.</p></div>
-      <div class="compare-row"><p>The fight against racism is crucial.</p></div>
-    </div>
-  </div>
-  <div class="compare-common reveal">
-    COMMON &nbsp;·&nbsp; 두 선수 모두 고통 속에서도 <strong style="color:var(--white);">포기를 선택하지 않았음</strong> — Son은 9개월을 참았고, Vinicius는 "떠날 생각이 없다"고 말함
+  <div class="compare-common reveal" style="margin-top:40px;">
+    손흥민은 고통 속에서도 <strong style="color:var(--white);">포기를 선택하지 않았습니다.</strong> &nbsp;·&nbsp; 인터뷰에서 그 감정을 영어로 정확히 표현했습니다. 아래 10개 문장으로 여러분의 이야기를 만들어보세요.
   </div>
 </div>
 
@@ -556,41 +479,142 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
   </div>
 </div>
 
-<!-- S8 — Master List -->
+<!-- S5 — 10 핵심 문장 -->
 <div class="section" id="phrases" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Unit 4 &nbsp;·&nbsp; Master List &nbsp;·&nbsp; 5 Key Phrases</span>
-  <h2 class="display d-lg reveal" style="margin-bottom:0;">5 PHRASES.<br>MEMORIZE ALL.</h2>
-  <div class="master-grid reveal">
-    <div class="master-col">
-      <div class="master-item">
-        <div class="master-src">01 &nbsp;·&nbsp; Son</div>
-        <div class="master-en">I played through it for eight to nine months, but couldn't go on anymore.</div>
-        <div class="master-ko">8~9개월 동안 참고 뛰었지만, 더 이상 계속할 수 없었습니다.</div>
-      </div>
-      <div class="master-item">
-        <div class="master-src">02 &nbsp;·&nbsp; Son</div>
-        <div class="master-en">I'm one of those people who always hides the pain.</div>
-        <div class="master-ko">저는 항상 고통을 숨기는 사람 중 하나입니다.</div>
-      </div>
-      <div class="master-item">
-        <div class="master-src">03 &nbsp;·&nbsp; Vinicius</div>
-        <div class="master-en">I have never thought about leaving here.</div>
-        <div class="master-ko">여기를 떠난다는 생각을 해본 적 없습니다.</div>
+  <span class="eyebrow">Unit 4 &nbsp;·&nbsp; Master List &nbsp;·&nbsp; 10 Key Phrases</span>
+  <h2 class="display d-lg reveal" style="margin-bottom:0;">10 PHRASES.<br>MEMORIZE ALL.</h2>
+  <div class="phrase-list reveal">
+
+    <div class="phrase-item">
+      <div class="phrase-num">01</div>
+      <div class="phrase-body">
+        <div class="phrase-en">I played through it for eight to nine months, but couldn't go on anymore.</div>
+        <div class="phrase-ko">8~9개월 동안 참고 뛰었지만, 더 이상 계속할 수 없었습니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">I played through it for <strong>six</strong> months, but couldn't go on anymore.</div>
+          <div class="phrase-var">I pushed through it for <strong>a whole year</strong>, but eventually had to stop.</div>
+        </div>
       </div>
     </div>
-    <div class="master-vl"></div>
-    <div class="master-col">
-      <div class="master-item">
-        <div class="master-src">04 &nbsp;·&nbsp; Vinicius</div>
-        <div class="master-en">I'm already a winner for being here.</div>
-        <div class="master-ko">여기에 있는 것만으로도 저는 이미 승자입니다.</div>
-      </div>
-      <div class="master-item">
-        <div class="master-src">05 &nbsp;·&nbsp; Vinicius</div>
-        <div class="master-en">The fight against racism is crucial.</div>
-        <div class="master-ko">인종차별과의 싸움은 필수적입니다.</div>
+
+    <div class="phrase-item">
+      <div class="phrase-num">02</div>
+      <div class="phrase-body">
+        <div class="phrase-en">I'm one of those people who always hides the pain.</div>
+        <div class="phrase-ko">저는 항상 고통을 숨기는 사람 중 하나입니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">I'm one of those people who <strong>never shows weakness</strong>.</div>
+          <div class="phrase-var">I'm the type of person who <strong>keeps going no matter how much it hurts</strong>.</div>
+        </div>
       </div>
     </div>
+
+    <div class="phrase-item">
+      <div class="phrase-num">03</div>
+      <div class="phrase-body">
+        <div class="phrase-en">I took the decision and I take all the blame.</div>
+        <div class="phrase-ko">결정을 내렸고, 모든 비난을 감수합니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">I made the choice and I <strong>accept full responsibility</strong>.</div>
+          <div class="phrase-var">It was my decision — and I <strong>stand by it completely</strong>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phrase-item">
+      <div class="phrase-num">04</div>
+      <div class="phrase-body">
+        <div class="phrase-en">I was only able to do 60 per cent of what I could normally do.</div>
+        <div class="phrase-ko">평소의 60%밖에 할 수 없었습니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">I could only perform at <strong>70 per cent</strong> of my usual level.</div>
+          <div class="phrase-var">I was running at <strong>50 per cent</strong> because of the injury.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phrase-item">
+      <div class="phrase-num">05</div>
+      <div class="phrase-body">
+        <div class="phrase-en">The support from the fans and the club helped me a lot.</div>
+        <div class="phrase-ko">팬들과 클럽의 지지가 저에게 큰 힘이 되었습니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">The support from <strong>my teammates</strong> helped me so much during recovery.</div>
+          <div class="phrase-var">The love from <strong>the coaching staff</strong> kept me going every day.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phrase-item">
+      <div class="phrase-num">06</div>
+      <div class="phrase-body">
+        <div class="phrase-en">I had to be patient and trust the process.</div>
+        <div class="phrase-ko">인내심을 갖고 과정을 믿어야 했습니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">I had to <strong>stay calm</strong> and believe in the recovery.</div>
+          <div class="phrase-var">I needed to be patient and <strong>trust my body to heal</strong>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phrase-item">
+      <div class="phrase-num">07</div>
+      <div class="phrase-body">
+        <div class="phrase-en">I came back stronger than I was before.</div>
+        <div class="phrase-ko">이전보다 더 강하게 돌아왔습니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">I returned <strong>more determined than ever</strong>.</div>
+          <div class="phrase-var">I came back with a <strong>stronger mentality</strong> and better fitness.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phrase-item">
+      <div class="phrase-num">08</div>
+      <div class="phrase-body">
+        <div class="phrase-en">It was a tough period, but I never lost faith.</div>
+        <div class="phrase-ko">힘든 시간이었지만, 믿음을 잃지 않았습니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">It was a <strong>difficult time</strong>, but I always believed I would come back.</div>
+          <div class="phrase-var">Those months were hard, but I <strong>never stopped trusting myself</strong>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phrase-item">
+      <div class="phrase-num">09</div>
+      <div class="phrase-body">
+        <div class="phrase-en">I never thought about giving up — I just believed in myself.</div>
+        <div class="phrase-ko">포기는 생각조차 해본 적 없습니다 — 그저 나 자신을 믿었습니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">I never considered <strong>quitting</strong> — I always knew I would return.</div>
+          <div class="phrase-var">Giving up was <strong>never an option</strong> for me — I had to keep believing.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phrase-item">
+      <div class="phrase-num">10</div>
+      <div class="phrase-body">
+        <div class="phrase-en">I'm just happy to be back and play the game I love.</div>
+        <div class="phrase-ko">돌아와서 제가 사랑하는 경기를 다시 할 수 있어 정말 행복합니다.</div>
+        <div class="phrase-vars">
+          <div class="phrase-var-hd">코치 시범 — 이렇게 바꿀 수 있어요</div>
+          <div class="phrase-var">I'm so <strong>grateful</strong> to be back on the pitch doing what I love.</div>
+          <div class="phrase-var">Being able to <strong>play football again</strong> — that's all I ever wanted.</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -829,8 +853,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
 
 <script>
 const YT_URLS = {
-  injury:     'https://www.youtube.com/embed/_uG_q6xCFkE?autoplay=1&rel=0',
-  resilience: 'https://www.youtube.com/embed/Y5s1k2PQ-w0?autoplay=1&rel=0',
+  injury: 'https://www.youtube.com/embed/_uG_q6xCFkE?autoplay=1&rel=0',
 };
 function openVideo(key) { document.getElementById('yt-frame').src = YT_URLS[key]; document.getElementById('yt-modal').classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeVideo() { document.getElementById('yt-modal').classList.remove('open'); document.getElementById('yt-frame').src = ''; document.body.style.overflow = ''; }
@@ -838,16 +861,14 @@ function closeOnBg(e) { if (e.target === document.getElementById('yt-modal')) cl
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeVideo(); closeCompose(); } });
 
 const SECTIONS = [
-  { id: 'hero',                name: 'Unit 4 — 오프닝' },
-  { id: 'watch-injury',        name: '① 부상 인터뷰 — 시청 전 준비' },
-  { id: 'injury-analysis',     name: '② Son 표현 분석' },
-  { id: 'watch-resilience',    name: '③ 회복 인터뷰 — 시청 전 준비' },
-  { id: 'resilience-analysis', name: '④ Vinicius 표현 분석' },
-  { id: 'compare',             name: '⑤ 부상 vs 신념 비교' },
-  { id: 'drill',               name: '⑥ 빈칸 드릴' },
-  { id: 'phrases',             name: '⑦ 핵심 표현 정리' },
-  { id: 'roleplay',            name: '⑧ 롤플레이' },
-  { id: 'homework',            name: '⑨ 숙제 안내' },
+  { id: 'hero',             name: 'Unit 4 — 오프닝' },
+  { id: 'watch-injury',     name: '① 부상 인터뷰 — 시청 전 준비' },
+  { id: 'injury-analysis',  name: '② Son 표현 분석' },
+  { id: 'comeback-bridge',  name: '③ 핵심 문장 도입' },
+  { id: 'drill',            name: '④ 빈칸 드릴' },
+  { id: 'phrases',          name: '⑤ 10 핵심 문장 — 코치 시범' },
+  { id: 'roleplay',         name: '⑥ 롤플레이' },
+  { id: 'homework',         name: '⑦ 숙제 안내' },
 ];
 
 let ibarVisible = true;
