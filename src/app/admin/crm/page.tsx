@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { UserPlus, Search, AlertCircle } from 'lucide-react';
 import { Student, isStageStalled, type InsightPeriod } from '@/types/crm';
 import { useCrmRealtime, RealtimeStatus } from '@/hooks/useCrmRealtime';
@@ -63,14 +63,13 @@ export default function CrmPage() {
   const [activeTab, setActiveTab] = useState<'today' | 'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('today');
   const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'experiment' | 'library' | 'strategy_ai' | undefined>(undefined);
   const [strategyPeriod, setStrategyPeriod] = useState<InsightPeriod | undefined>(undefined);
-  // 배너에서 고른 안건을 전략 에이전트로 이어 넘기는 시드(nonce 키로 매 선택 재발화).
+  // 배너 '이어서 전략 짜기'에서 고른 안건 시드 — key 증가로 매 선택마다 새 스레드 트리거
   const [strategySeed, setStrategySeed] = useState<{ key: number; text: string; period: InsightPeriod } | undefined>(undefined);
-  const seedNonce = useRef(0);
 
   const openStrategyAgent = useCallback((period: InsightPeriod, seed?: string) => {
     setStrategyPeriod(period);
-    if (seed) setStrategySeed({ key: ++seedNonce.current, text: seed, period });
     setStrategiesInitialSubTab('strategy_ai');
+    if (seed) setStrategySeed((prev) => ({ key: (prev?.key ?? 0) + 1, text: seed, period }));
     setActiveTab('strategies');
   }, []);
   const [retryContext, setRetryContext] = useState<{ id: string; name: string } | null>(null);

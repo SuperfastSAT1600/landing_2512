@@ -4,7 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import Anthropic from '@anthropic-ai/sdk';
 import { generateEmbedding } from '@/lib/embedding';
 import { anthropicErrorMessage } from '@/lib/anthropic-error';
-import { CHURN_TAG_OPTIONS } from '@/types/crm';
+import { aggregateChurn, type ChurnRow } from '@/lib/churn-breakdown';
 import type { StrategyStudent, PastCase } from '@/lib/sales-strategy-context';
 import {
   STRATEGY_AGENT_SYSTEM_PROMPT,
@@ -17,7 +17,7 @@ import { buildBriefHealth, parsePeriod } from '@/lib/strategy-brief';
 // 선제 진단 모드에서 합성하는 사용자 지시(클라이언트가 보내지 않음)
 const PROACTIVE_SEED = `방금 **이번 달 인입한 리드 코호트**의 퍼널 추이를 점검했다. 위 [KPI 건강 진단]을 1차 근거로, 이 리드들이 인입→컨택→상담→진단→결제로 가는 길에서 **어디서 가장 많이 막히고 빠지는지(드롭오프)**를 중심으로, 지금 가장 시급한 5개 영역을 골라 보고하라.
 내가 미처 못 본 영역의 문제와 해결점을 찾는 게 목적이다 — 뻔한 지적 말고 비뚤어진 전제·숨은 병목을 파라.
-각 영역마다 4부 구조로: ①왜 중요한가(수치·드롭오프 근거) ②어떤 구루 렌즈로 무엇이 보이나(이름 명시) ③우리의 갭 ④당장 첫 수(가설→대상(퍼널 단계/채널)→실행→지표). 마지막에 내가 답할 날카로운 질문 1개만.
+각 영역마다 4부 구조로: ①왜 중요한가(수치·드롭오프 근거) ②핵심 진단(프레임워크는 내부 참고만, 구루 이름 노출 금지) ③우리의 갭 ④당장 첫 수(가설→대상(퍼널 단계/채널)→실행→지표). 마지막에 내가 답할 날카로운 질문 1개만.
 빈 칭찬 금지. 한국어, 대화체.`;
 
 // 과거 사례 카드 구성용으로 students에서 읽는 컬럼
@@ -25,8 +25,10 @@ const CASE_FIELDS =
   'id, name, grade, school_type, desired_subjects, previous_rw_score, previous_math_score, target_score, churn_type, churn_tag, inquiry_channel, traffic_source, lead_status, funnel_stage, consultation_timeline, reactivation_log';
 
 const MODEL = 'claude-opus-4-8';
-const RELEVANT_CASES = 8;
+const RELEVANT_CASES = 20;
 const WEB_SEARCH_MAX_USES = 5;
+// 전략 에이전트는 특정 학생에 묶이지 않으므로 제외할 현재 학생이 없다 → nil UUID로 "제외 없음".
+const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
 export const maxDuration = 60;
 
@@ -44,39 +46,31 @@ const CHURNED_OR = 'funnel_stage.eq.churned,lead_status.eq.inactive';
 
 /**
  * 우리 전체 전환 지표 — 결제 전환/이탈 누적 카운트, 전환율, 이탈 사유 분포.
- * 사유 분포는 고정된 churn_tag 후보별 head-count라 전체 기록을 정확히 반영(행 조회 없음).
+ * churn_tag는 "{카테고리}: {자유서술}" 자유문이라 완전 일치 집계로는 대부분 놓친다.
+ * 이탈 행의 churn_tag/churn_type를 실제 조회해 접두 카테고리로 파싱·집계한다.
  * 실패 시 빈 지표로 degrade.
  */
 async function fetchConversionStats(): Promise<ConversionStats> {
   try {
-    const base = () => supabaseAdmin.from('students').select('id', { count: 'exact', head: true });
-
-    const [convertedRes, churnedRes, ...tagResults] = await Promise.all([
-      base().or('lead_status.eq.enrolled,funnel_stage.eq.8'),
-      base().or(CHURNED_OR),
-      ...CHURN_TAG_OPTIONS.map((tag) => base().or(CHURNED_OR).eq('churn_tag', tag)),
+    const [convertedRes, churnedRes] = await Promise.all([
+      supabaseAdmin.from('students').select('id', { count: 'exact', head: true }).or('lead_status.eq.enrolled,funnel_stage.eq.8'),
+      supabaseAdmin.from('students').select('churn_tag, churn_type').or(CHURNED_OR),
     ]);
 
     const converted = convertedRes.count ?? 0;
-    const churned = churnedRes.count ?? 0;
+    const churn = aggregateChurn((churnedRes.data ?? []) as ChurnRow[]);
+    const churned = churn.total;
     const denom = converted + churned;
-
-    const churnReasons = CHURN_TAG_OPTIONS.map((tag, i) => ({
-      tag,
-      count: tagResults[i].count ?? 0,
-    }))
-      .filter((r) => r.count > 0)
-      .sort((a, b) => b.count - a.count);
 
     return {
       converted,
       churned,
       conversionRate: denom > 0 ? converted / denom : null,
-      churnReasons,
+      churn,
     };
   } catch (err) {
     console.error('[strategy-agent] stats failed (degrading):', err);
-    return { converted: 0, churned: 0, conversionRate: null, churnReasons: [] };
+    return { converted: 0, churned: 0, conversionRate: null, churn: aggregateChurn([]) };
   }
 }
 
@@ -84,13 +78,30 @@ async function fetchConversionStats(): Promise<ConversionStats> {
 async function fetchRelevantCases(queryText: string): Promise<PastCase[]> {
   try {
     const embedding = await generateEmbedding(queryText);
-    const { data: matches, error } = await supabaseAdmin.rpc('match_students', {
-      query_embedding: JSON.stringify(embedding),
+    const queryEmbedding = JSON.stringify(embedding);
+    // 1순위: 결과가 확정된 학생(enrolled ∪ inactive ∪ reactivating) 검색 → 전환 성공/이탈 사례를 함께 확보.
+    // 폴백: migration 051 미적용 DB에서는 이 함수가 없으므로, 기존 match_students(이탈 풀)로 degrade.
+    // (051 적용 시 자동으로 성공 사례가 포함되도록 전환됨.)
+    let matches: Array<{ id: string; similarity?: number }> | null = null;
+    const primary = await supabaseAdmin.rpc('match_students_for_strategy', {
+      query_embedding: queryEmbedding,
+      exclude_id: NIL_UUID,
       match_count: RELEVANT_CASES,
     });
-    if (error || !matches?.length) return [];
+    if (primary.error) {
+      console.warn('[strategy-agent] match_students_for_strategy 미적용 → match_students 폴백:', primary.error.message);
+      const fallback = await supabaseAdmin.rpc('match_students', {
+        query_embedding: queryEmbedding,
+        match_count: RELEVANT_CASES,
+      });
+      if (fallback.error || !fallback.data?.length) return [];
+      matches = fallback.data as Array<{ id: string; similarity?: number }>;
+    } else {
+      matches = (primary.data ?? []) as Array<{ id: string; similarity?: number }>;
+    }
+    if (!matches.length) return [];
 
-    const rows = matches as Array<{ id: string; similarity?: number }>;
+    const rows = matches;
     const ids = rows.map((m) => m.id);
     const simById = new Map<string, number>(rows.map((m) => [m.id, m.similarity ?? 0]));
 

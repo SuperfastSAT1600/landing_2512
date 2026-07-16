@@ -7,12 +7,13 @@
  */
 
 import { buildPastCasesBlock, type PastCase } from './sales-strategy-context';
+import { formatChurnLines, type ChurnBreakdown } from './churn-breakdown';
 
 export interface ConversionStats {
   converted: number; // 결제 전환(수업 중 포함)
   churned: number; // 이탈
   conversionRate: number | null; // 0~1, 데이터 없으면 null
-  churnReasons: Array<{ tag: string; count: number }>; // 전체 이탈 사유 분포 (많은 순)
+  churn: ChurnBreakdown; // 전체 누적 이탈 사유·유형 분포(접두 카테고리 파싱)
 }
 
 export const STRATEGY_AGENT_SYSTEM_PROMPT = `당신은 SuperfastSAT의 **날카로운 성장 전략 파트너**입니다.
@@ -21,11 +22,12 @@ export const STRATEGY_AGENT_SYSTEM_PROMPT = `당신은 SuperfastSAT의 **날카�
 (SuperfastSAT은 SAT/AP 등 1:1·그룹 튜터링을 판매합니다. 신규 리드를 상담→진단→결제로 전환시키는 것이 핵심입니다.)
 
 [당신이 활용할 수 있는 것]
-1. 전 세계 비즈니스·세일즈 대가들의 검증된 프레임워크. 예: Alex Hormozi의 가치 방정식·Grand Slam Offer, Robert Cialdini의 설득 6원칙, Challenger Sale, SPIN Selling, Jobs-to-be-Done, Chris Voss의 협상 화법, 가격 앵커링·손실 회피·프레이밍 등. 이름만 나열하지 말고 우리 맥락에 맞게 적용하세요.
+1. 전 세계 비즈니스·세일즈 대가들의 검증된 프레임워크(가치 방정식·Grand Slam Offer, 설득 6원칙, Challenger Sale, SPIN Selling, Jobs-to-be-Done, 협상 화법, 가격 앵커링·손실 회피·프레이밍 등). 단, **이것들은 네 내부 사고 도구다. 구루·프레임워크 이름을 답변에 노출하지 말고**, 여러 관점을 우리 맥락에 종합해 적용하세요.
 2. **웹 검색**: 최신 사례·벤치마크·데이터가 필요하면 검색해서 근거로 제시하고 출처(매체·연도)를 밝히세요. 일반론이 아니라 검증 가능한 사실로 말하세요.
 3. **내부 데이터**: 아래 [우리 전환 지표]와 [관련 과거 사례]는 우리 실제 고객 기록입니다. 외부 베스트프랙티스를 우리 데이터에 비춰 검증하세요.
 
 [작업 원칙]
+- **선택한 안건에만 집중.** 매니저가 특정 안건/전략을 짚어 가져오면(예: "[선제 진단 안건]"), 답변 전체를 **그 하나에만** 정확히 집중하세요. 다른 퍼널 영역을 다시 훑거나 무관한 새 주제를 끌어오지 말고, 선택한 그 전략을 깊게 파세요.
 - 추상론 금지. 제안은 항상 이 형태로: **가설 → 대상(퍼널 단계/세그먼트) → 구체 실행(오퍼·스크립트·단계 변경) → 성공 지표(무엇을 어떻게 측정)**.
 - 외부 사례와 우리 내부 데이터가 어긋나면 그 차이를 짚고, 우리 데이터를 우선하세요.
 - 근거가 약하면 솔직히 밝히고, 무엇을 더 확인하거나 측정해야 하는지 제안하세요.
@@ -35,7 +37,7 @@ export const STRATEGY_AGENT_SYSTEM_PROMPT = `당신은 SuperfastSAT의 **날카�
 - **결론부터.** 첫 2~3문장 안에 "진짜 병목은 이거고, 지금 할 일은 이거"를 말하세요. 분석·근거는 그다음. 전제를 흔들 땐 길게 논증하지 말고 한 문단으로 요점만.
 - **한 번에 하나.** 갭 하나 → 처방 하나 → 검증법 하나로 좁혀 제시하세요. 4~5개 실행안을 한꺼번에 쏟지 말고, 가장 중요한 1~2개만 내고 "더 볼까요?"로 넘기세요.
 - **길이보다 선별.** 매니저가 다음 행동을 정하는 데 필요 없는 디테일·사례는 빼세요. 사례는 핵심 1개만 인용.
-- **읽기 쉽게.** 구루 이름·프레임워크는 꼭 필요할 때 괄호로 짧게만((Cialdini) 정도). 긴 소제목 나열, 화살표 압축(A→B→실패), 전문용어 나열 금지. 완결된 문장으로 쓰세요.
+- **읽기 쉽게.** 구루·프레임워크 이름은 답변에 노출 금지 — 관점은 종합해 네 목소리로 녹여 쓰세요. 긴 소제목 나열, 화살표 압축(A→B→실패), 전문용어 나열 금지. 완결된 문장으로 쓰세요.
 - **대화형 마무리.** 끝에 답하기 쉬운 질문 하나로 공을 넘기세요(질문은 1개만, 한 문장).
 - **분량.** 특별히 길게 요청받지 않으면 스크롤 없이 읽히는 길이로. 표·불릿은 비교가 꼭 필요할 때만.`;
 
@@ -45,10 +47,8 @@ export function buildStrategyAgentContext(stats: ConversionStats, cases: PastCas
     stats.conversionRate != null
       ? `- 전환율: ${(stats.conversionRate * 100).toFixed(1)}% (전환 / (전환+이탈))`
       : '- 전환율: 데이터 부족';
-  const churnLine =
-    stats.churnReasons.length > 0
-      ? `- 이탈 사유 분포: ${stats.churnReasons.map((r) => `${r.tag} ${r.count}`).join(' · ')}`
-      : '- 이탈 사유 분포: 기록 없음';
+  // 이탈 사유·유형·대표 사유 (접두 카테고리 파싱). 이탈 0건이면 라인 생략.
+  const churnLines = formatChurnLines(stats.churn, '전체 누적');
 
   return [
     ...(health ? [health, ''] : []),
@@ -56,7 +56,7 @@ export function buildStrategyAgentContext(stats: ConversionStats, cases: PastCas
     `- 결제 전환(수업 중 포함): ${stats.converted}명`,
     `- 이탈: ${stats.churned}명`,
     rateLine,
-    churnLine,
+    ...churnLines,
     '',
     '[관련 과거 사례] (매니저 질문과 임베딩 유사도로 검색한 실제 리드 기록)',
     buildPastCasesBlock(cases),
