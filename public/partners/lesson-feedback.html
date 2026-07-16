@@ -111,6 +111,17 @@ textarea.tall { min-height: 200px; }
 .msg.success { color: #2a7a4e; display: block; }
 .msg.error   { color: #cc2222; display: block; }
 
+/* ── Unit4 Phrase Coverage ── */
+.phrase-check-grid { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
+.phrase-check-item { display: grid; grid-template-columns: 20px 32px 1fr; gap: 10px; align-items: baseline; padding: 10px 0; border-top: 0.5px solid var(--line); cursor: pointer; transition: background 0.1s; }
+.phrase-check-item:last-child { border-bottom: 0.5px solid var(--line); }
+.phrase-check-item input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: #2a7a4e; margin-top: 2px; }
+.phrase-check-num { font-size: 9px; letter-spacing: 0.22em; color: var(--mute); font-weight: 700; }
+.phrase-check-label { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.phrase-check-item.checked .phrase-check-label { color: var(--text); }
+.phrase-check-item.checked .phrase-check-num { color: #2a7a4e; }
+.phrase-coverage-summary { font-size: 11px; color: var(--mute); margin-top: 12px; letter-spacing: 0.06em; }
+
 /* ── History ── */
 .unit-filter { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
 .uf-btn { background: none; border: 0.5px solid var(--line); color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.15s; }
@@ -215,6 +226,12 @@ textarea.tall { min-height: 200px; }
       <textarea id="inp-content" class="tall" placeholder="유닛을 먼저 선택하면 자동으로 내용이 채워집니다."></textarea>
     </div>
 
+    <div class="form-group" id="unit4-phrases-wrap" style="display:none;">
+      <label class="form-label">오늘 다룬 구문 <span style="color:var(--line);font-size:8px;">Unit 4 — 10개 중 수업에서 다룬 것 체크</span></label>
+      <div class="phrase-check-grid" id="unit4-phrase-checks"></div>
+      <div class="phrase-coverage-summary" id="phrase-coverage-summary"></div>
+    </div>
+
     <div class="form-group">
       <label class="form-label">출석 체크 <span style="color:var(--line);font-size:8px;">(체크 = 출석 / 미체크 = 결석)</span></label>
       <div class="roster-grid" id="roster-checks">
@@ -316,9 +333,60 @@ function switchTab(tab, el) {
 let writeRowCount = 0;
 function today() { return new Date().toISOString().slice(0, 10); }
 
+const UNIT4_PHRASES = [
+  { id:'01', label:'I played through it for eight to nine months, but couldn\'t go on anymore.' },
+  { id:'02', label:'I\'m one of those people who always hides the pain.' },
+  { id:'03', label:'I took the decision and I take all the blame.' },
+  { id:'04', label:'I was only able to do 60 per cent of what I could normally do.' },
+  { id:'05', label:'The support from the fans and the club helped me a lot.' },
+  { id:'06', label:'I had to be patient and trust the process.' },
+  { id:'07', label:'I came back stronger than I was before.' },
+  { id:'08', label:'It was a tough period, but I never lost faith.' },
+  { id:'09', label:'I never thought about giving up — I just believed in myself.' },
+  { id:'10', label:'I\'m just happy to be back and play the game I love.' },
+];
+
 function onUnitChange() {
   const unit = document.getElementById('sel-unit').value;
   document.getElementById('inp-content').value = unit ? (UNIT_TEMPLATES[unit] || '') : '';
+  const wrap = document.getElementById('unit4-phrases-wrap');
+  if (wrap) wrap.style.display = unit === 'unit4' ? 'block' : 'none';
+  if (unit === 'unit4') _renderPhraseChecks();
+}
+
+function _renderPhraseChecks() {
+  let covered = new Set();
+  try { covered = new Set(JSON.parse(localStorage.getItem('unit4_coverage') || '[]')); } catch {}
+  const c = document.getElementById('unit4-phrase-checks');
+  if (!c) return;
+  c.innerHTML = UNIT4_PHRASES.map(p => {
+    const on = covered.has(p.id);
+    return `<label class="phrase-check-item${on ? ' checked' : ''}">
+      <input type="checkbox" value="${p.id}" ${on ? 'checked' : ''} onchange="onPhraseCheck(this)">
+      <span class="phrase-check-num">${p.id}</span>
+      <span class="phrase-check-label">${p.label}</span>
+    </label>`;
+  }).join('');
+  _updateCoverageSummary();
+}
+
+function onPhraseCheck(cb) {
+  cb.closest('.phrase-check-item').classList.toggle('checked', cb.checked);
+  _updateCoverageSummary();
+}
+
+function _updateCoverageSummary() {
+  const total = document.querySelectorAll('#unit4-phrase-checks input[type="checkbox"]').length;
+  const done  = document.querySelectorAll('#unit4-phrase-checks input[type="checkbox"]:checked').length;
+  const el = document.getElementById('phrase-coverage-summary');
+  if (el) el.textContent = done > 0 ? `${done}/${total}개 구문 다룸` : '';
+}
+
+function _getCoveredPhrasesText() {
+  const cbs = Array.from(document.querySelectorAll('#unit4-phrase-checks input[type="checkbox"]:checked'));
+  if (!cbs.length) return '';
+  const ids = cbs.map(c => c.value);
+  return `\n\n[오늘 다룬 구문: ${ids.join(', ')} (${ids.length}/10)]`;
 }
 
 const ROSTER = ['황은총','김어진','이용재','이정현','강준혁','조원우'];
@@ -360,7 +428,8 @@ function parseNames(el) {
 async function submitFeedback() {
   const unit    = document.getElementById('sel-unit').value.trim();
   const date    = document.getElementById('inp-date').value.trim();
-  const content = document.getElementById('inp-content').value.trim();
+  let   content = document.getElementById('inp-content').value.trim();
+  if (unit === 'unit4') content += _getCoveredPhrasesText();
   const hw      = document.getElementById('inp-hw').value.trim();
   const msgEl   = document.getElementById('write-msg');
   msgEl.className = 'msg';
