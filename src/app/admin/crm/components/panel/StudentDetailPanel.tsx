@@ -127,7 +127,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     studentId: student.id,
     studentName: localStudent.name,
     adminKey,
-    initialPortalToken: student.portal_token,
+    initialPortalToken: localStudent.portal_token,
     onPortalIssued: (token) => onUpdate(student.id, { portal_token: token } as Partial<typeof student>),
     onDelete,
     onClose,

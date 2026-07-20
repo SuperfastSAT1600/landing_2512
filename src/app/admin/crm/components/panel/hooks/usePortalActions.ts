@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 
 interface Params {
@@ -15,6 +15,13 @@ interface Params {
 
 export function usePortalActions({ studentId, studentName, adminKey, initialPortalToken, onPortalIssued, onDelete, onClose }: Params) {
   const [issuedToken, setIssuedToken] = useState<string | null>(initialPortalToken ?? null);
+
+  // Sync when parent provides a fresh token (e.g. after usePanelData fetches updated data)
+  useEffect(() => {
+    if (initialPortalToken && !issuedToken) {
+      setIssuedToken(initialPortalToken);
+    }
+  }, [initialPortalToken, issuedToken]);
   const [portalCopied, setPortalCopied] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
