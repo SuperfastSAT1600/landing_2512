@@ -112,7 +112,8 @@ export function buildStatsDetail(
   metric: StatsDetailMetric,
   students: StudentRow[],
   payments: PaymentRow[],
-  source?: string
+  source?: string,
+  opts?: { includeRetryInContacted?: boolean }
 ): StatsDetailResult {
   // 채널 드릴다운: by_source 집계와 동일하게 traffic_source(null→'미입력') 기준으로 필터.
   if (source != null) {
@@ -141,8 +142,9 @@ export function buildStatsDetail(
       return { metric, kind: 'leads', count: items.length, items };
     }
     case 'contacted': {
+      // 기본은 B2C 집계와 동일하게 재시도 리드 제외. 세일즈 로직 드릴다운은 포함(opts).
       const items = students
-        .filter((s) => !s.retry_strategy_id)
+        .filter((s) => opts?.includeRetryInContacted || !s.retry_strategy_id)
         .filter((s) => hasReachedStage(s, '2'))
         .map(toLeadItem);
       return { metric, kind: 'leads', count: items.length, items };

@@ -76,7 +76,7 @@ export function TimelineEntry({ studentId, adminKey, entry, aiLoading, pendingEd
                   if (ok) setEditingMemo(false);
                 }}
                 disabled={memoSaving}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-xs font-bold text-white transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-xs font-semibold text-white transition-colors"
               >
                 <Check size={12} />{memoSaving ? '저장 중...' : '저장'}
               </button>
@@ -153,7 +153,7 @@ export function TimelineEntry({ studentId, adminKey, entry, aiLoading, pendingEd
                 <button
                   onClick={onPublish}
                   disabled={publishing}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 rounded-lg text-xs font-bold text-white transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 rounded-lg text-xs font-semibold text-white transition-colors"
                 >
                   <Check size={12} />{publishing ? '적용 중...' : '적용'}
                 </button>

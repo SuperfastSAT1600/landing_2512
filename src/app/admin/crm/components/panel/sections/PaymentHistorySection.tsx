@@ -100,7 +100,7 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
             {/* 합계 */}
             <div className="flex items-center justify-between pb-2 border-b border-gray-100">
               <span className="text-xs text-gray-400">총 결제액</span>
-              <span className="text-sm font-bold text-gray-800">{formatAmount(totalAmount)}</span>
+              <span className="text-sm font-semibold text-gray-800">{formatAmount(totalAmount)}</span>
             </div>
 
             {sorted.map(p => {
@@ -116,14 +116,14 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       {isRefund ? (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">환불</span>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">환불</span>
                       ) : (
                         <select
                           value={type}
                           disabled={savingType === p.id}
                           onChange={(e) => handleTypeChange(p.id, e.target.value)}
                           title="결제 유형 (통계 반영) — 변경하려면 선택"
-                          className={`text-[10px] font-bold pl-1.5 pr-0.5 py-0.5 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-400 ${typeColor} disabled:opacity-50`}
+                          className={`text-[10px] font-semibold pl-1.5 pr-0.5 py-0.5 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-400 ${typeColor} disabled:opacity-50`}
                         >
                           <option value="최초결제">최초결제</option>
                           <option value="재결제">재결제</option>

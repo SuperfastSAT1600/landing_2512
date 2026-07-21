@@ -4,6 +4,7 @@
  */
 import type { CrmStatsData } from '@/app/api/crm/stats/route';
 import { FUNNEL_STAGE_SLA_DAYS, FUNNEL_NEXT_ACTION, type FunnelStage } from '@/types/crm';
+import { formatChurnLines, type ChurnBreakdown } from '@/lib/churn-breakdown';
 
 // ── 임계값 (운영 튜닝은 여기만) ────────────────────────────────────────────────
 const TH = {
@@ -18,10 +19,12 @@ const TH = {
   dwellWarnMult: 2, dwellCritMult: 3, // 체류 vs SLA 배수
   stageMinReached: 5,
   stallWarn: 5, stallCrit: 10, // 정체 리드 수
+  churnMinCohort: 5, // 이탈 사유 신호를 낼 최소 이탈 코호트 수(표본 게이트)
+  churnTopShareWarn: 0.35, churnTopShareCrit: 0.5, // 최다 사유가 이탈의 이 비율 이상이면 신호
 };
 
 export type Severity = 'critical' | 'warn';
-export type SignalCategory = 'funnel' | 'channel' | 'stall' | 'trend';
+export type SignalCategory = 'funnel' | 'channel' | 'stall' | 'trend' | 'churn';
 
 export interface Signal {
   area: string;
@@ -42,6 +45,7 @@ export interface HealthInput {
   stalled: StalledCount[];
   periodDays: number;
   periodLabel?: string; // 진단 텍스트의 기간 설명(없으면 "최근 N일 vs 직전 N일")
+  churn?: ChurnBreakdown; // 분석 기간 인입 코호트 중 이탈 리드의 사유 분포(없으면 이탈 섹션 생략)
 }
 
 export interface HealthSnapshot {
@@ -153,13 +157,31 @@ export function buildHealthSnapshot(input: HealthInput): HealthSnapshot {
     if (ld != null && ld <= TH.relWarn) trend.push({ category: 'trend', area: '신규 리드 수', severity: ld <= TH.relCrit ? 'critical' : 'warn', note: `${p.total_leads}→${o.total_leads}건 (${ld.toFixed(0)}%)` });
   }
 
+  // ── 이탈 사유 (분석 기간 인입 코호트 중 이탈) — 최다 사유가 쏠려 있으면 신호로 ──
+  const churnSignals: Signal[] = [];
+  const cb = input.churn;
+  if (cb && cb.total >= TH.churnMinCohort && cb.taggedTotal > 0 && cb.categories.length > 0) {
+    const top = cb.categories[0];
+    const share = top.count / cb.taggedTotal;
+    if (share >= TH.churnTopShareWarn) {
+      const sample = top.samples[0] ? ` (예: "${top.samples[0]}")` : '';
+      churnSignals.push({
+        category: 'churn',
+        area: `이탈 사유: ${top.category}`,
+        severity: share >= TH.churnTopShareCrit ? 'critical' : 'warn',
+        note: `이탈 ${cb.total}명 중 ${top.category} ${top.count}명(${pct(share * 100)})${sample}`,
+      });
+    }
+  }
+
   const bySev = (a: Signal, b: Signal) => sevRank(a.severity) - sevRank(b.severity);
   primary.sort(bySev);
   trend.sort(bySev);
-  const signals = [...primary, ...trend];
-  // weakest = 폴백/LLM 시드용 상위 5개. 실신호(퍼널·채널·정체 + 추세)를 모두 모으고,
+  // 이탈 사유는 '왜 실제로 떠났나'라 월 대비 추세보다 우선. primary(퍼널·채널·정체) 다음.
+  const signals = [...primary, ...churnSignals, ...trend];
+  // weakest = 폴백/LLM 시드용 상위 5개. 실신호(퍼널·채널·정체 + 이탈 + 추세)를 모두 모으고,
   // 5개 미만이면 결정론적 '관찰' 후보로 채워 배너가 항상 5개를 보여주게 한다.
-  const ranked = [...primary, ...trend];
+  const ranked = [...primary, ...churnSignals, ...trend];
   const weakest = [...ranked, ...watchFillers(current, ranked, 5 - ranked.length)].slice(0, 5);
 
   // 프롬프트 주입용 텍스트 — 분석 기간 인입 코호트 퍼널을 척추로
@@ -177,6 +199,11 @@ export function buildHealthSnapshot(input: HealthInput): HealthSnapshot {
     lines.push(`- 추세(지난달 동기간 대비, 보조): ${trend.map((s) => `${s.area} ${s.note}`).join(' · ')}`);
   } else if (!enoughPrev) {
     lines.push('- (지난달 표본 부족 — 추세 비교는 참고만)');
+  }
+
+  // ── 이탈 사유 섹션 — '어디서 막히나(퍼널)'와 별개로 '왜 실제로 떠났나'를 근거로 준다 ──
+  if (cb) {
+    lines.push('', ...formatChurnLines(cb, '분석 기간 인입 코호트 중'));
   }
 
   return { signals, weakest, summaryText: lines.join('\n') };

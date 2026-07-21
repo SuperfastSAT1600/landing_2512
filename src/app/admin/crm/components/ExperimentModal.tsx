@@ -89,7 +89,7 @@ export function ExperimentModal({ adminKey, experiment, onClose, onSaved }: Prop
       <div className="w-full max-w-lg bg-gray-50 rounded-xl border border-gray-200 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 sticky top-0 bg-gray-50">
-          <h2 className="text-sm font-bold text-gray-900">{e ? '실험 수정' : '새 실험'}</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{e ? '실험 수정' : '새 실험'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X size={16} />
           </button>
@@ -170,7 +170,7 @@ export function ExperimentModal({ adminKey, experiment, onClose, onSaved }: Prop
         {/* Footer */}
         <div className="flex gap-2 px-5 py-4 border-t border-gray-100 sticky bottom-0 bg-gray-50">
           <button onClick={handleSave} disabled={saving || !title.trim()}
-            className="text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-4 py-2 rounded-lg transition-colors">
+            className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-4 py-2 rounded-lg transition-colors">
             {saving ? '저장 중...' : '저장'}
           </button>
           <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 px-2">취소</button>

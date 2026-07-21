@@ -192,7 +192,7 @@ export function StrategyAgentChat({ adminKey, period: initialPeriod, seed }: Pro
         <div className="flex items-center gap-2">
           <Sparkles size={17} className="text-indigo-500 shrink-0" />
           <div>
-            <h3 className="text-lg font-bold text-gray-800">전략 에이전트</h3>
+            <h3 className="text-lg font-semibold text-gray-800">전략 에이전트</h3>
             <p className="text-sm text-gray-500 flex items-center gap-1">
               <Globe size={11} className="text-indigo-400" />
               세계적 세일즈 기법 · 웹 검색 · 우리 상담 기록을 바탕으로 새 전략 설계

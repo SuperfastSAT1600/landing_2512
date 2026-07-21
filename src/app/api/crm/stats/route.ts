@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { getWeekLabel } from '@/lib/week-definitions';
-import { computeStageFlow, hasReachedStage, type StageFlowRow } from '@/lib/funnel-stats';
+import { computeStageFlow, type StageFlowRow } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
-
-// 리드 조회 행 상한 — Supabase 기본 1000행 무음 절단을 넘기 위한 명시 상한(넉넉한 헤드룸).
-const MAX_LEAD_ROWS = 5000;
+import { MAX_LEAD_ROWS, isContacted, contactRate, toMonthKey, inquiryRefMs } from '@/lib/crm-stats-core';
 
 export interface StatsBySource {
   source: string;
@@ -58,43 +56,6 @@ export interface CrmStatsData {
   monthly: StatsMonthly[];
   weekly: StatsWeekly[];
   stage_flow: StageFlowRow[];
-}
-
-function isContacted(student: {
-  funnel_stage: string;
-  stage_history?: { stage: string; label: string; entered_at: string }[] | null;
-}): boolean {
-  // 컨택 성공 = 이력상(또는 현재) 세일즈 콜 예약(2단계) 이상에 도달한 적이 있음.
-  // 현재 단계가 아니라 도달 이력 기준 → 첫 메시지만 보내고 이탈한 리드는 제외,
-  // 2단계 이상 갔다가 이탈한 리드는 포함.
-  return hasReachedStage(student, '2');
-}
-
-function contactRate(contacted: number, leads: number): number {
-  if (leads === 0) return 0;
-  return Math.round((contacted / leads) * 10000) / 100;
-}
-
-function toMonthKey(dateStr: string): string {
-  return dateStr.slice(0, 7); // "2026-05"
-}
-
-/**
- * 첫 응답 시간 계산의 기준 문의시각(ms).
- * inquiry_date는 naive(KST 벽시계)로 저장되므로 KST(+09:00) instant로 해석한다.
- * inquiry_date가 없으면 created_at(UTC timestamptz)로 폴백.
- */
-function inquiryRefMs(inquiry_date: string | null, created_at: string): number | null {
-  if (inquiry_date) {
-    const [d, t = '00:00:00'] = inquiry_date.replace(' ', 'T').split('T');
-    const [Y, Mo, D] = d.split('-').map(Number);
-    const [H = 0, Mi = 0, Se = 0] = t.split(':').map(Number);
-    if (!Y || !Mo || !D) return null;
-    // KST 벽시계 → UTC instant (= UTC 동일 시각 − 9h)
-    return Date.UTC(Y, Mo - 1, D, H, Mi, Se) - 9 * 3600 * 1000;
-  }
-  const t = new Date(created_at).getTime();
-  return Number.isFinite(t) ? t : null;
 }
 
 /**
@@ -149,12 +110,12 @@ export async function GET(request: NextRequest) {
     console.warn(`[stats] lead rows hit MAX_LEAD_ROWS(${MAX_LEAD_ROWS}) for ${from}~${to} — 집계가 절단됐을 수 있음`);
   }
 
-  // 기간 내 payments 조회 (최초결제만 전환율 계산에 포함)
+  // 기간 내 payments 조회 (매출·환불 집계용, 기간=paid_at KST)
   const { data: payments, error: pErr } = await supabaseAdmin
     .from('payments')
     .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
-    .gte('paid_at', `${from}T00:00:00`)
-    .lte('paid_at', `${to}T23:59:59`);
+    .gte('paid_at', `${from}T00:00:00+09:00`)
+    .lte('paid_at', `${to}T23:59:59.999+09:00`);
 
   const paymentList = pErr ? [] : (payments ?? []);
 
@@ -177,10 +138,19 @@ export async function GET(request: NextRequest) {
       if (p.payment_type === '최초결제') firstPaymentRevenue += p.amount;
       else if (p.payment_type === '재결제') repaymentRevenue += p.amount;
     }
-    if (p.payment_type === '최초결제') {
-      if (p.student_id) paidStudentIds.add(p.student_id);
-      if (p.student_name) paidStudentNames.add(p.student_name);
-    }
+  }
+
+  // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다.
+  // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
+  // ₩1 등 placeholder 결제(amount<=1)는 실결제가 아니므로 제외한다.
+  const { data: firstPayRows } = await supabaseAdmin
+    .from('payments')
+    .select('student_id, student_name')
+    .eq('payment_type', '최초결제')
+    .gt('amount', 1);
+  for (const p of firstPayRows ?? []) {
+    if (p.student_id) paidStudentIds.add(p.student_id);
+    if (p.student_name) paidStudentNames.add(p.student_name);
   }
 
   const leadList = students ?? [];

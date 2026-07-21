@@ -32,7 +32,7 @@ export function ChurnModal({ student, onConfirm, onClose }: ChurnModalProps) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <AlertTriangle size={16} className="text-red-400" />
-            <h2 className="text-sm font-bold text-gray-900">이탈 처리</h2>
+            <h2 className="text-sm font-semibold text-gray-900">이탈 처리</h2>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-900 transition-colors">
             <X size={16} />
@@ -104,7 +104,7 @@ export function ChurnModal({ student, onConfirm, onClose }: ChurnModalProps) {
           </button>
           <button
             onClick={handleConfirm}
-            className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors"
           >
             이탈 처리
           </button>

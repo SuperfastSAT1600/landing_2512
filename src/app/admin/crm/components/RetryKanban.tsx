@@ -40,7 +40,7 @@ function RetryColumn({ stage, students, onStudentClick, onRemove }: RetryColumnP
   return (
     <div className="flex flex-col w-44 shrink-0">
       <div className="px-2 py-2 border-b border-gray-200">
-        <p className="text-[11px] font-bold leading-tight truncate text-gray-600">{stage}</p>
+        <p className="text-[11px] font-semibold leading-tight truncate text-gray-600">{stage}</p>
         <span className="text-[10px] text-gray-400">{students.length}명</span>
       </div>
       <div
@@ -234,7 +234,7 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
       {/* Strategy sidebar */}
       <div className="w-48 shrink-0 border-r border-gray-200 pr-4">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-bold text-gray-700">전략 목록</p>
+          <p className="text-xs font-semibold text-gray-700">전략 목록</p>
           <button
             onClick={() => setCreatingStrategy(true)}
             className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
@@ -309,7 +309,7 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
               if (!strategy) return null;
               return (
                 <div className="mb-4 rounded-lg border border-gray-200 p-3 bg-gray-50">
-                  <p className="text-sm font-bold text-gray-800 mb-1">{strategy.name}</p>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">{strategy.name}</p>
                   {editingDesc ? (
                     <div className="flex flex-col gap-1.5">
                       <textarea

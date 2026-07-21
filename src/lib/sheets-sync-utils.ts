@@ -161,9 +161,9 @@ const TAB_META: Record<SheetsSyncPayload['source_tab'], TabMeta> = {
   'META리드_인스턴트폼_목표시험': { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 광고' },
   'AP수업 문의':                   { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 광고' },
   'SuperTest 수요조사':            { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 광고' },
-  'tutoring_landing':              { inquiryChannel: '구글 상담시트',   trafficSource: '(신)랜딩 페이지 상담예약' },
+  'tutoring_landing':              { inquiryChannel: '구글 상담시트',   trafficSource: '(신) 랜딩 구글폼 상담 예약' },
   'instagram':                     { inquiryChannel: '인스타그램 링크', trafficSource: '인스타그램 오가닉' },
-  'landing':                       { inquiryChannel: '구글 상담시트',   trafficSource: '(구)랜딩페이지 상담예약' },
+  'landing':                       { inquiryChannel: '구글 상담시트',   trafficSource: '(구) 랜딩 구글폼 상담 예약' },
 };
 
 // ISO 문자열(Z, +09:00, -05:00 등 timezone 포함)을 KST 나이브 "YYYY-MM-DDTHH:mm:ss"로 변환

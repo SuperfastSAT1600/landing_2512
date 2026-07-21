@@ -59,7 +59,7 @@ function formatValue(metric: ExperimentMetricKey, v: number | null): string {
     return `${(s / 3600).toFixed(1)}시간`;
   }
   if (metric === 'custom') return String(v);
-  return `${v}%`;
+  return `${Number(v.toFixed(2))}%`;
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -171,12 +171,12 @@ function ExperimentCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${STATUS_BADGE[exp.status]}`}>
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${STATUS_BADGE[exp.status]}`}>
               {EXPERIMENT_STATUS_LABELS[exp.status]}
             </span>
-            <span className="text-sm font-bold text-gray-900">{exp.title}</span>
+            <span className="text-sm font-semibold text-gray-900">{exp.title}</span>
             {exp.verdict && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${VERDICT_BADGE[exp.verdict]}`}>
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${VERDICT_BADGE[exp.verdict]}`}>
                 {EXPERIMENT_VERDICT_LABELS[exp.verdict]}
               </span>
             )}
@@ -199,17 +199,17 @@ function ExperimentCard({
       {/* 실시간 현황 (진행중 실험: 시작일~오늘 자동 측정) */}
       {exp.status === 'running' && live && (
         <div className="flex items-center gap-2 mt-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-1.5">
-          <span className="flex items-center gap-1 text-[10px] font-bold text-blue-600">
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-blue-600">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />실시간
           </span>
           <span className="text-[11px] text-gray-500">진행 {live.days}일차</span>
-          <span className="text-sm font-bold text-gray-900">현재 {formatValue(exp.metric_key, live.current)}</span>
+          <span className="text-sm font-semibold text-gray-900">현재 {formatValue(exp.metric_key, live.current)}</span>
           {(() => {
             if (live.current == null || live.baseline == null) return null;
             const d = live.current - live.baseline;
             const up = higherIsBetter(exp.metric_key) ? d > 0 : d < 0;
             return (
-              <span className={`text-[11px] font-bold ${up ? 'text-emerald-600' : d === 0 ? 'text-gray-400' : 'text-red-500'}`}>
+              <span className={`text-[11px] font-semibold ${up ? 'text-emerald-600' : d === 0 ? 'text-gray-400' : 'text-red-500'}`}>
                 기준선({formatValue(exp.metric_key, live.baseline)}) 대비 {d > 0 ? '▲' : d < 0 ? '▼' : ''}{formatValue(exp.metric_key, Math.abs(d))}
               </span>
             );
@@ -227,7 +227,7 @@ function ExperimentCard({
           <span className="font-semibold text-gray-900">{formatValue(exp.metric_key, exp.result_value)}</span>
         </div>
         {delta != null && (
-          <span className={`text-xs font-bold ${improved ? 'text-emerald-600' : 'text-red-500'}`}>
+          <span className={`text-xs font-semibold ${improved ? 'text-emerald-600' : 'text-red-500'}`}>
             {delta > 0 ? '▲' : delta < 0 ? '▼' : ''} {formatValue(exp.metric_key, Math.abs(delta))}
           </span>
         )}
@@ -284,7 +284,7 @@ function ExperimentCard({
               {(['success', 'fail', 'inconclusive'] as ExperimentVerdict[]).map((v) => (
                 <button key={v} onClick={() => setVerdict(verdict === v ? '' : v)}
                   className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${
-                    verdict === v ? `${VERDICT_BADGE[v]} border-transparent font-bold` : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    verdict === v ? `${VERDICT_BADGE[v]} border-transparent font-semibold` : 'border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}>
                   {EXPERIMENT_VERDICT_LABELS[v]}
                 </button>
@@ -298,7 +298,7 @@ function ExperimentCard({
               placeholder="무엇을 배웠는가 / 다음 액션" />
           </div>
           <button onClick={handleComplete} disabled={saving}
-            className="text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg disabled:opacity-50">
+            className="text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg disabled:opacity-50">
             {saving ? '저장 중...' : '완료 저장'}
           </button>
         </div>

@@ -5,12 +5,15 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { RetryStrategy, InsightPeriod } from '@/types/crm';
 import { StrategyAgentChat } from './StrategyAgentChat';
 import { ExperimentBoard } from './ExperimentBoard';
+import { StrategyStats } from './StrategyStats';
+import { FunnelBoard } from './FunnelBoard';
 
 interface Props {
   adminKey: string;
   initialSubTab?: SubTab;
   strategyPeriod?: InsightPeriod;
   strategySeed?: { key: number; text: string; period: InsightPeriod }; // 배너에서 고른 안건 시드
+  onSelectStudent?: (id: string) => void; // 세일즈 로직 드릴다운 → 학생 패널
 }
 
 type StrategyType = 'initial_contact' | 'initial_sales' | 'retry';
@@ -83,7 +86,7 @@ function StrategySection({
   return (
     <div className="border border-gray-200 rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-gray-800">{TYPE_LABELS[type]}</h3>
+        <h3 className="text-sm font-semibold text-gray-800">{TYPE_LABELS[type]}</h3>
         <button
           onClick={() => setCreating((v) => !v)}
           className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
@@ -116,7 +119,7 @@ function StrategySection({
             <button
               onClick={handleCreate}
               disabled={adding || !newName.trim()}
-              className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+              className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
             >
               추가
             </button>
@@ -154,10 +157,10 @@ function StrategySection({
   );
 }
 
-type SubTab = 'experiment' | 'library' | 'strategy_ai';
+type SubTab = 'funnel' | 'experiment' | 'logic' | 'library' | 'strategy_ai';
 
-export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strategySeed }: Props) {
-  const [subTab, setSubTab] = useState<SubTab>(initialSubTab ?? 'experiment');
+export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strategySeed, onSelectStudent }: Props) {
+  const [subTab, setSubTab] = useState<SubTab>(initialSubTab ?? 'funnel');
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -165,6 +168,12 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
   useEffect(() => {
     if (initialSubTab) setSubTab(initialSubTab);
   }, [initialSubTab]);
+
+  // 새 안건 시드가 오면(다른 서브탭에 있어도) 전략 에이전트 서브탭으로 전환.
+  // key가 매 선택마다 증가하므로 같은 안건 재선택·연속 선택에도 확실히 반응한다.
+  useEffect(() => {
+    if (strategySeed) setSubTab('strategy_ai');
+  }, [strategySeed?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchAll = useCallback(async () => {
     try {
@@ -195,11 +204,13 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
   }
 
   return (
-    <div className="max-w-3xl space-y-5">
-      {/* 서브탭: 실험 / 전략 라이브러리 / 전략 에이전트 */}
+    <div className={`${subTab === 'logic' || subTab === 'funnel' ? 'max-w-6xl' : 'max-w-3xl'} space-y-5`}>
+      {/* 서브탭: 실험 / 세일즈 로직 통계 / 전략 라이브러리 / 전략 에이전트 */}
       <div className="flex gap-1 border-b border-gray-200">
         {([
+          { key: 'funnel', label: '채널 퍼널' },
           { key: 'experiment', label: '실험' },
+          { key: 'logic', label: '세일즈 로직 통계' },
           { key: 'library', label: '전략 라이브러리' },
           { key: 'strategy_ai', label: '전략 에이전트' },
         ] as { key: SubTab; label: string }[]).map(({ key, label }) => (
@@ -217,7 +228,11 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
         ))}
       </div>
 
+      {subTab === 'funnel' && <FunnelBoard adminKey={adminKey} />}
+
       {subTab === 'experiment' && <ExperimentBoard adminKey={adminKey} />}
+
+      {subTab === 'logic' && <StrategyStats adminKey={adminKey} onSelectStudent={onSelectStudent} />}
 
       {subTab === 'strategy_ai' && <StrategyAgentChat adminKey={adminKey} period={strategyPeriod} seed={strategySeed} />}
 

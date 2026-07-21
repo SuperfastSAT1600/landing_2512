@@ -1,21 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { UserPlus, Search, AlertCircle } from 'lucide-react';
-import { Student, isStageStalled, type InsightPeriod } from '@/types/crm';
+import { useState, useEffect, useCallback } from 'react';
+import { UserPlus, AlertCircle } from 'lucide-react';
+import { Student } from '@/types/crm';
 import { useCrmRealtime, RealtimeStatus } from '@/hooks/useCrmRealtime';
-import { SalesKanban } from './components/SalesKanban';
-import { KanbanStatsStrip } from './components/KanbanStatsStrip';
 import { StudentCreateModal } from './components/StudentCreateModal';
 import { StudentDetailPanel } from './components/StudentDetailPanel';
-import { KanbanFilter, KanbanFilters, DEFAULT_FILTERS } from './components/KanbanFilter';
-import { LeadPool } from './components/LeadPool';
-import { SalesStats } from './components/SalesStats';
-import { EnrolledLeads } from './components/EnrolledLeads';
-import { RetryKanban } from './components/RetryKanban';
-import { StrategiesTab } from './components/StrategiesTab';
-import { CrmInsightBanner } from './components/CrmInsightBanner';
-import { DailyTasks } from './components/DailyTasks';
+import { B2cWorkspace } from './components/B2cWorkspace';
+import { B2bWorkspace } from './components/B2bWorkspace';
+
+type CrmMode = 'b2c' | 'b2b';
 
 function getAdminKey(): string {
   if (typeof window === 'undefined') return '';
@@ -25,6 +19,11 @@ function getAdminKey(): string {
 function getAdminUserName(): string {
   if (typeof window === 'undefined') return '';
   return localStorage.getItem('admin_user_name') || '';
+}
+
+function getCrmMode(): CrmMode {
+  if (typeof window === 'undefined') return 'b2c';
+  return localStorage.getItem('crm_mode') === 'b2b' ? 'b2b' : 'b2c';
 }
 
 function RealtimeIndicator({ status }: { status: RealtimeStatus }) {
@@ -47,6 +46,24 @@ function RealtimeIndicator({ status }: { status: RealtimeStatus }) {
   );
 }
 
+function CrmModeToggle({ mode, onChange }: { mode: CrmMode; onChange: (m: CrmMode) => void }) {
+  return (
+    <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+      {(['b2c', 'b2b'] as const).map((m) => (
+        <button
+          key={m}
+          onClick={() => onChange(m)}
+          className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+            mode === m ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          {m.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function CrmPage() {
   const [students, setStudents] = useState<Student[]>([]);
   // "오늘 취한 액션" 전용 데이터셋 — lead_status 무관(재활성화·이탈 리드풀 포함).
@@ -58,27 +75,19 @@ export default function CrmPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [adminKey, setAdminKey] = useState('');
   const [adminUserName, setAdminUserName] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState<KanbanFilters>(DEFAULT_FILTERS);
-  const [activeTab, setActiveTab] = useState<'today' | 'kanban' | 'enrolled' | 'retry' | 'strategies' | 'pool' | 'stats'>('today');
-  const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'experiment' | 'library' | 'strategy_ai' | undefined>(undefined);
-  const [strategyPeriod, setStrategyPeriod] = useState<InsightPeriod | undefined>(undefined);
-  // 배너에서 고른 안건을 전략 에이전트로 이어 넘기는 시드(nonce 키로 매 선택 재발화).
-  const [strategySeed, setStrategySeed] = useState<{ key: number; text: string; period: InsightPeriod } | undefined>(undefined);
-  const seedNonce = useRef(0);
-
-  const openStrategyAgent = useCallback((period: InsightPeriod, seed?: string) => {
-    setStrategyPeriod(period);
-    if (seed) setStrategySeed({ key: ++seedNonce.current, text: seed, period });
-    setStrategiesInitialSubTab('strategy_ai');
-    setActiveTab('strategies');
-  }, []);
-  const [retryContext, setRetryContext] = useState<{ id: string; name: string } | null>(null);
+  const [crmMode, setCrmMode] = useState<CrmMode>('b2c');
+  // 수업 시작(enrolled) 전환 시 재시도 보드에서 후처리하도록 신호로 전달
   const [retryEnrolledId, setRetryEnrolledId] = useState<string | null>(null);
 
   useEffect(() => {
     setAdminKey(getAdminKey());
     setAdminUserName(getAdminUserName());
+    setCrmMode(getCrmMode());
+  }, []);
+
+  const changeMode = useCallback((m: CrmMode) => {
+    setCrmMode(m);
+    if (typeof window !== 'undefined') localStorage.setItem('crm_mode', m);
   }, []);
 
   const fetchStudents = useCallback(async () => {
@@ -199,42 +208,6 @@ export default function CrmPage() {
     }
   }, [students]);
 
-  const filteredStudents = useMemo(() => {
-    return students.filter(s => {
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const matchName = s.name.toLowerCase().includes(q);
-        const matchPhone = s.parent_phone.toLowerCase().includes(q);
-        if (!matchName && !matchPhone) return false;
-      }
-      if (filters.grade && s.grade !== filters.grade) return false;
-      if (filters.trafficSource && s.traffic_source !== filters.trafficSource) return false;
-      if (filters.desiredSubjects && s.desired_subjects !== filters.desiredSubjects) return false;
-      if (filters.leadType && s.lead_type !== filters.leadType) return false;
-      return true;
-    });
-  }, [students, searchQuery, filters]);
-
-  // Calculated from ALL active students (not filtered) so the banner is always accurate
-  const followUpStudents = useMemo(() => {
-    const fiveDaysAgo = Date.now() - 5 * 86400000;
-    return students.filter(
-      s =>
-        s.lead_status === 'active' &&
-        !s.retry_strategy_id &&
-        s.last_contacted_at !== null &&
-        new Date(s.last_contacted_at).getTime() < fiveDaysAgo
-    );
-  }, [students]);
-
-  // 단계 정체 리드 — 현재 단계 SLA를 초과해 다음 단계로 못 넘어간 활성 리드 (전체 기준)
-  const stalledStudents = useMemo(() => {
-    const now = Date.now();
-    return students.filter(
-      s => s.lead_status === 'active' && !s.retry_strategy_id && isStageStalled(s, now)
-    );
-  }, [students]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center text-gray-500">
@@ -265,12 +238,15 @@ export default function CrmPage() {
       {/* Page header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">CRM</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-semibold text-gray-900">CRM</h1>
+            <CrmModeToggle mode={crmMode} onChange={changeMode} />
+          </div>
           <div className="flex items-center gap-4">
             <RealtimeIndicator status={status} />
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold text-white transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold text-white transition-colors"
             >
               <UserPlus size={13} />
               새 학생 추가
@@ -279,116 +255,27 @@ export default function CrmPage() {
         </div>
       </div>
 
-      {/* Board area */}
-      <div className="p-6">
-        {/* Tab navigation */}
-        <div className="flex gap-1 mb-4">
-          {([
-            { key: 'today',      label: '오늘 할 일' },
-            { key: 'strategies', label: '전략/실행/회고' },
-            { key: 'kanban',     label: '최초 세일즈' },
-            { key: 'retry',      label: '재시도 세일즈' },
-            { key: 'enrolled',   label: '수업 중' },
-            { key: 'pool',       label: '이탈 리드풀' },
-            { key: 'stats',      label: '통계' },
-          ] as const).map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
-                activeTab === key
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'kanban' && (
-          <>
-            {/* Search / filter bar */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="relative flex-1 max-w-xs">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="이름 또는 전화번호 검색..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-              </div>
-              <KanbanFilter filters={filters} onChange={setFilters} />
-            </div>
-
-            <KanbanStatsStrip adminKey={adminKey} onSelectStudent={handleSelectStudentById} />
-
-            <SalesKanban
-              students={filteredStudents}
-              adminKey={adminKey}
-              searchQuery={searchQuery}
-              onStudentUpdate={handleStudentUpdate}
-              onStudentClick={handleStudentClick}
-            />
-          </>
-        )}
-
-        {activeTab === 'today' && (
-          <DailyTasks
-            followUpStudents={followUpStudents}
-            stalledStudents={stalledStudents}
-            actionedStudents={todayActions}
-            onStudentClick={handleStudentClick}
-            onStudentUpdate={handleStudentUpdate}
-          />
-        )}
-
-        {activeTab === 'retry' && (
-          <RetryKanban
-            adminKey={adminKey}
-            onStudentClick={handleStudentClick}
-            onStudentUpdate={handleStudentUpdate}
-            onStrategyChange={setRetryContext}
-            onNavigateToPool={() => setActiveTab('pool')}
-            enrolledStudentId={retryEnrolledId}
-            onEnrolledHandled={() => setRetryEnrolledId(null)}
-          />
-        )}
-
-        {activeTab === 'enrolled' && (
-          <EnrolledLeads
-            adminKey={adminKey}
-            onStudentClick={handleStudentClick}
-            onStudentUpdate={handleStudentUpdate}
-          />
-        )}
-
-        {activeTab === 'strategies' && (
-          <>
-            {/* 선제 인사이트 브리핑 — 전략/실행/회고 진입 시 상단에 표시 */}
-            <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />
-            <StrategiesTab adminKey={adminKey} initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} />
-          </>
-        )}
-
-        {activeTab === 'stats' && (
-          <SalesStats adminKey={adminKey} onSelectStudent={handleSelectStudentById} />
-        )}
-
-        {activeTab === 'pool' && (
-          <LeadPool
-            adminKey={adminKey}
-            onStudentUpdate={handleStudentUpdate}
-            onStudentClick={handleStudentClick}
-            onRefetch={fetchStudents}
-            retryContext={retryContext}
-            onRetryContextClear={() => setRetryContext(null)}
-            onRetryAssignSuccess={() => { setRetryContext(null); setActiveTab('retry'); }}
-          />
-        )}
-      </div>
+      {/* Board area — mode별 워크스페이스 */}
+      {crmMode === 'b2c' ? (
+        <B2cWorkspace
+          students={students}
+          todayActions={todayActions}
+          adminKey={adminKey}
+          onStudentUpdate={handleStudentUpdate}
+          onStudentClick={handleStudentClick}
+          onSelectStudentById={handleSelectStudentById}
+          fetchStudents={fetchStudents}
+          retryEnrolledId={retryEnrolledId}
+          onEnrolledHandled={() => setRetryEnrolledId(null)}
+        />
+      ) : (
+        <B2bWorkspace
+          adminKey={adminKey}
+          students={students}
+          onStudentClick={handleStudentClick}
+          onSelectStudentById={handleSelectStudentById}
+        />
+      )}
 
       {selectedStudent && (
         <StudentDetailPanel
