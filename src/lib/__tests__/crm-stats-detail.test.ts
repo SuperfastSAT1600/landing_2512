@@ -81,6 +81,20 @@ describe('buildStatsDetail — leads 계열', () => {
     const r = buildStatsDetail('leads', [student({ name: 'A' })], []);
     expect(r.kind === 'leads' && r.items[0].churn_tag).toBeNull();
   });
+
+  it('is_paid — 최초결제 학생만 true (leads 분기)', () => {
+    const r = buildStatsDetail('leads', students, payments);
+    if (r.kind !== 'leads') throw new Error('expected leads');
+    const byName = Object.fromEntries(r.items.map((i) => [i.name, i.is_paid]));
+    expect(byName).toEqual({ A: false, B: true, C: false });
+  });
+
+  it('is_paid — 재결제만 있는 학생은 false', () => {
+    const r = buildStatsDetail('leads', [student({ name: 'A' })], [
+      pay({ student_name: 'A', amount: 500, payment_type: '재결제' }),
+    ]);
+    expect(r.kind === 'leads' && r.items[0].is_paid).toBe(false);
+  });
 });
 
 describe('buildStatsDetail — source 필터 (채널 드릴다운)', () => {
