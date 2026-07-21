@@ -13,15 +13,15 @@ const config: Config = {
                 background: "var(--background)",
                 foreground: "var(--foreground)",
                 // --- class-enrollment (다크 clay 테마) 전용 색상. 신규 키만 추가 → 기존 페이지 무영향 ---
-                page: '#050816',
+                page: '#000000',
                 surface: {
-                    DEFAULT: '#0d1225',
-                    elevated: '#1e283c',
+                    DEFAULT: '#09090b',
+                    elevated: 'rgba(30, 41, 59, 0.55)',
                     hover: '#283046',
                 },
                 clay: {
                     DEFAULT: 'rgba(25, 30, 45, 0.6)',
-                    solid: '#191e2d',
+                    solid: 'rgba(30, 41, 59, 0.4)',
                 },
                 accent: {
                     DEFAULT: '#071be9',
@@ -51,14 +51,12 @@ const config: Config = {
             },
             fontFamily: {
                 sans: ["Pretendard Variable", "Pretendard", "sans-serif"],
-                // enrollment 라우트에서 next/font로 주입하는 Outfit (전역 sans는 Pretendard 유지)
-                display: ['var(--font-outfit)', 'Pretendard Variable', 'system-ui', 'sans-serif'],
             },
             borderRadius: {
                 soft: '2rem',
                 medium: '1.5rem',
                 card: '1.25rem',
-                btn: '0.75rem',
+                btn: '9999px',
             },
             boxShadow: {
                 clay: '20px 20px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.1)',

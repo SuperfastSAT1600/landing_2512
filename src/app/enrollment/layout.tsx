@@ -1,14 +1,6 @@
 import type { Metadata } from 'next';
-import { Outfit } from 'next/font/google';
 import { LanguageProvider } from '@/lib/enrollment/i18n/LanguageContext';
 import './enrollment.css';
-
-// class-enrollment 원본이 사용하던 Outfit 폰트 — enrollment 라우트에만 주입(전역 미영향)
-const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-outfit',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'SAT 목표 점수에 가장 빠르게 | SuperfastSAT',
@@ -32,7 +24,7 @@ export default function EnrollmentLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`enrollment-root font-sans antialiased ${outfit.variable}`}>
+    <div className="enrollment-root font-sans antialiased">
       <LanguageProvider>{children}</LanguageProvider>
     </div>
   );

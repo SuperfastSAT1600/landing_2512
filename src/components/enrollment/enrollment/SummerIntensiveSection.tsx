@@ -3,6 +3,7 @@ import { Calendar, Clock, Sparkles, Globe } from 'lucide-react';
 import { Badge } from '@/components/enrollment/ui/Badge';
 import { SUMMER_INTENSIVE_DATA } from '@/lib/enrollment/data/pricing';
 import { useLanguage } from '@/lib/enrollment/i18n/LanguageContext';
+import { useScrollReveal } from '@/hooks/enrollment/useScrollReveal';
 import { ICON_MAP } from './icons';
 import { ScheduleTable } from './ScheduleTable';
 
@@ -13,6 +14,10 @@ export const SummerIntensiveSection = React.forwardRef<HTMLDivElement>(
   function SummerIntensiveSection(_props, ref) {
     const { t } = useLanguage();
     const data = SUMMER_INTENSIVE_DATA;
+    const philosophyRef = useScrollReveal(0.05);
+    const weeklyRef = useScrollReveal(0.05);
+    const scheduleRef = useScrollReveal(0.1);
+    const benefitsRef = useScrollReveal(0.1);
 
     return (
       <section ref={ref} className="max-w-3xl mx-auto px-4 sm:px-6 pb-10 sm:pb-16 animate-fade-in scroll-mt-20">
@@ -39,13 +44,14 @@ export const SummerIntensiveSection = React.forwardRef<HTMLDivElement>(
             <Sparkles className="w-5 h-5 text-accent-glow" />
             {t('summer.philosophy.title')}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div ref={philosophyRef} className="reveal-children grid grid-cols-1 sm:grid-cols-3 gap-4">
             {PHILOSOPHY_KEYS.map((key, i) => {
               const IconComponent = ICON_MAP[data.philosophy[i].icon];
               return (
                 <div
                   key={key}
-                  className="rounded-card border border-border-strong bg-clay-solid p-5 shadow-clay"
+                  className="reveal-item rounded-card border border-border-strong bg-clay-solid p-5 shadow-clay"
+                  style={{ '--stagger': i } as React.CSSProperties}
                 >
                   <div className="w-10 h-10 rounded-xl bg-accent-glow/15 flex items-center justify-center mb-3">
                     {IconComponent && (
@@ -68,11 +74,12 @@ export const SummerIntensiveSection = React.forwardRef<HTMLDivElement>(
             <Calendar className="w-5 h-5 text-accent-glow" />
             {t('summer.weeklyStructure.title')}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {WEEKLY_KEYS.map((key) => (
+          <div ref={weeklyRef} className="reveal-children grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {WEEKLY_KEYS.map((key, i) => (
               <div
                 key={key}
-                className="rounded-card border border-border-strong bg-clay-solid p-5 shadow-clay"
+                className="reveal-item rounded-card border border-border-strong bg-clay-solid p-5 shadow-clay"
+                style={{ '--stagger': i } as React.CSSProperties}
               >
                 <Badge variant="neutral" className="mb-3">{t(`summer.weeklyStructure.${key}.days`)}</Badge>
                 <h4 className="font-bold text-white text-lg mb-1.5">{t(`summer.weeklyStructure.${key}.focus`)}</h4>
@@ -85,7 +92,7 @@ export const SummerIntensiveSection = React.forwardRef<HTMLDivElement>(
         </div>
 
         {/* Daily Schedule */}
-        <div className="mb-6">
+        <div ref={scheduleRef} className="mb-6 reveal">
           <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5 text-accent-glow" />
             {t('summer.schedule.title')}
@@ -94,19 +101,19 @@ export const SummerIntensiveSection = React.forwardRef<HTMLDivElement>(
         </div>
 
         {/* Benefits Summary */}
-        <div className="mb-6">
+        <div ref={benefitsRef} className="mb-6 reveal">
           <div className="rounded-card border border-border-strong bg-clay-solid p-5 sm:p-6 shadow-clay">
             <h3 className="font-bold text-white mb-4">{t('summer.benefits.title')}</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-sm text-white/70">
-                <span className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-emerald-400 text-xs">✓</span>
+                <span className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-accent text-xs">✓</span>
                 </span>
                 {t('summer.benefits.schedule')}
               </li>
               <li className="flex items-start gap-3 text-sm text-white/70">
-                <span className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-emerald-400 text-xs">✓</span>
+                <span className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-accent text-xs">✓</span>
                 </span>
                 {t('summer.benefits.curriculum')}
               </li>

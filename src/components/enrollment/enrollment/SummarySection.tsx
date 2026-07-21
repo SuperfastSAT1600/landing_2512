@@ -9,6 +9,7 @@ import {
   getSavingsAmount,
 } from '@/lib/enrollment/data/pricing';
 import { useLanguage } from '@/lib/enrollment/i18n/LanguageContext';
+import { useScrollReveal } from '@/hooks/enrollment/useScrollReveal';
 import { ServiceIndicator } from './ServiceIndicator';
 import { SectionHeader } from './SectionHeader';
 import type { Category, CategoryId, ManagementType, ClassFormat, OptionSelection } from '@/types/enrollment';
@@ -31,6 +32,7 @@ export const SummarySection = React.forwardRef<HTMLDivElement, SummarySectionPro
     ref
   ) {
     const { t, locale } = useLanguage();
+    const cardRef = useScrollReveal(0.05);
 
     const savingsInfo = useMemo(() => {
       if (selectedOption.type !== 'hour-package' || !isHourPackageCategory(resolvedCategoryId)) return null;
@@ -51,9 +53,9 @@ export const SummarySection = React.forwardRef<HTMLDivElement, SummarySectionPro
       >
         <SectionHeader number={sectionNumber} title={t('summary.sectionTitle')} />
 
-        <div className="bg-surface-elevated rounded-card border border-border-strong shadow-clay-float overflow-hidden mb-6">
+        <div ref={cardRef} className="reveal bg-surface-elevated rounded-card border border-border-strong shadow-clay-float overflow-hidden mb-6">
           {/* 선택 요약 */}
-          <div className="bg-accent-glow/10 px-4 sm:px-6 py-3 sm:py-4 border-b border-accent-glow/15">
+          <div className="bg-accent/10 px-4 sm:px-6 py-3 sm:py-4 border-b border-accent/15">
             <p className="text-accent-glow/70 text-xs sm:text-sm">{t('summary.selectedClass')}</p>
             <p className="text-white font-bold text-base sm:text-lg">{summary}</p>
           </div>

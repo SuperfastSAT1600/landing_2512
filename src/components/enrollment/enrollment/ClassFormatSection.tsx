@@ -3,6 +3,7 @@ import { RadioCard } from '@/components/enrollment/ui/RadioCard';
 import { Badge } from '@/components/enrollment/ui/Badge';
 import { CLASS_FORMATS, MANAGEMENT_SERVICES } from '@/lib/enrollment/data/pricing';
 import { useLanguage } from '@/lib/enrollment/i18n/LanguageContext';
+import { useScrollReveal } from '@/hooks/enrollment/useScrollReveal';
 import { ICON_MAP } from './icons';
 import { SectionHeader } from './SectionHeader';
 import { ServiceCard } from './ServiceCard';
@@ -20,6 +21,7 @@ interface ClassFormatSectionProps {
 export const ClassFormatSection = React.forwardRef<HTMLDivElement, ClassFormatSectionProps>(
   function ClassFormatSection({ classFormat, onSelect, sectionNumber, resolvedCategoryId, categoryData, serviceCardRef }, ref) {
     const { t } = useLanguage();
+    const gridRef = useScrollReveal(0.05);
     const services = resolvedCategoryId ? MANAGEMENT_SERVICES[resolvedCategoryId] : null;
 
     return (
@@ -28,12 +30,13 @@ export const ClassFormatSection = React.forwardRef<HTMLDivElement, ClassFormatSe
         className="max-w-3xl mx-auto px-4 sm:px-6 pb-10 sm:pb-16 animate-fade-in scroll-mt-20"
       >
         <SectionHeader number={sectionNumber} title={t('classFormat.sectionTitle')} />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {CLASS_FORMATS.map((cf) => {
+        <div ref={gridRef} className="reveal-children grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {CLASS_FORMATS.map((cf, i) => {
             const IconComponent = ICON_MAP[cf.icon];
             const isSelected = classFormat === cf.id;
             return (
               <React.Fragment key={cf.id}>
+                <div className="reveal-item" style={{ '--stagger': i } as React.CSSProperties}>
                 <RadioCard
                   selected={isSelected}
                   onSelect={() => onSelect(cf.id)}
@@ -55,6 +58,7 @@ export const ClassFormatSection = React.forwardRef<HTMLDivElement, ClassFormatSe
                     </p>
                   </div>
                 </RadioCard>
+                </div>
                 {/* Mobile: ServiceCard inline after selected card */}
                 {isSelected && services && categoryData && (
                   <div ref={serviceCardRef} className="sm:hidden animate-fade-in">

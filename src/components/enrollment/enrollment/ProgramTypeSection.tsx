@@ -1,8 +1,10 @@
+import React from 'react';
 import { RadioCard } from '@/components/enrollment/ui/RadioCard';
 import { Card } from '@/components/enrollment/ui/Card';
 import { Badge } from '@/components/enrollment/ui/Badge';
 import { PROGRAM_TYPES } from '@/lib/enrollment/data/pricing';
 import { useLanguage } from '@/lib/enrollment/i18n/LanguageContext';
+import { useScrollReveal } from '@/hooks/enrollment/useScrollReveal';
 import { ICON_MAP } from './icons';
 import { SectionHeader } from './SectionHeader';
 import type { ProgramType } from '@/types/enrollment';
@@ -14,12 +16,13 @@ interface ProgramTypeSectionProps {
 
 export function ProgramTypeSection({ programType, onSelect }: ProgramTypeSectionProps) {
   const { t } = useLanguage();
+  const gridRef = useScrollReveal(0.05);
 
   return (
     <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-10 sm:pb-16">
       <SectionHeader number={1} title={t('programType.sectionTitle')} />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {PROGRAM_TYPES.map((pt) => {
+      <div ref={gridRef} className="reveal-children grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {PROGRAM_TYPES.map((pt, i) => {
           const IconComponent = ICON_MAP[pt.icon];
           const isDisabled = !!pt.disabled;
           const badge = t(`programType.${pt.id}.badge`);
@@ -56,26 +59,26 @@ export function ProgramTypeSection({ programType, onSelect }: ProgramTypeSection
             </div>
           );
 
-          if (isDisabled) {
-            return (
-              <Card
-                key={pt.id}
-                className="min-h-[140px] opacity-40 cursor-not-allowed"
-              >
-                {cardContent}
-              </Card>
-            );
-          }
-
           return (
-            <RadioCard
+            <div
               key={pt.id}
-              selected={programType === pt.id}
-              onSelect={() => onSelect(pt.id)}
-              className="min-h-[140px]"
+              className="reveal-item"
+              style={{ '--stagger': i } as React.CSSProperties}
             >
-              {cardContent}
-            </RadioCard>
+              {isDisabled ? (
+                <Card className="min-h-[140px] h-full opacity-40 cursor-not-allowed">
+                  {cardContent}
+                </Card>
+              ) : (
+                <RadioCard
+                  selected={programType === pt.id}
+                  onSelect={() => onSelect(pt.id)}
+                  className="min-h-[140px] h-full"
+                >
+                  {cardContent}
+                </RadioCard>
+              )}
+            </div>
           );
         })}
       </div>

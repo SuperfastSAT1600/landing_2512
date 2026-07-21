@@ -7,8 +7,8 @@ interface BadgeProps {
 }
 
 const VARIANT_STYLES: Record<BadgeVariant, string> = {
-  primary: 'bg-white text-black',
-  success: 'bg-emerald-500/15 text-emerald-400',
+  primary: 'bg-white text-accent',
+  success: 'bg-accent-glow/15 text-accent-glow',
   warning: 'bg-amber-500/15 text-amber-400',
   neutral: 'bg-white/15 text-white/80',
 };

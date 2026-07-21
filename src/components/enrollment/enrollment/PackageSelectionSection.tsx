@@ -13,6 +13,7 @@ import {
   getSavingsAmount,
 } from '@/lib/enrollment/data/pricing';
 import { useLanguage } from '@/lib/enrollment/i18n/LanguageContext';
+import { useScrollReveal } from '@/hooks/enrollment/useScrollReveal';
 import { SectionHeader } from './SectionHeader';
 import { LeadCoachesModal } from './LeadCoachesModal';
 import type { CategoryId, OptionSelection } from '@/types/enrollment';
@@ -35,6 +36,7 @@ export const PackageSelectionSection = React.forwardRef<HTMLDivElement, PackageS
   ) {
     const { t, locale } = useLanguage();
     const [coachesOpen, setCoachesOpen] = React.useState(false);
+    const gridRef = useScrollReveal(0.05);
 
     const sectionTitle =
       resolvedCategoryId === 'content'
@@ -57,18 +59,19 @@ export const PackageSelectionSection = React.forwardRef<HTMLDivElement, PackageS
         {/* 1:1 / 비관리: 시간 패키지 */}
         {isHourPackageCategory(resolvedCategoryId) && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {standardPackages.map((pkg) => {
+            <div ref={gridRef} className="reveal-children grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {standardPackages.map((pkg, i) => {
                 const savings = getSavingsAmount(pkg, getBasePrice(resolvedCategoryId));
                 const labelInfo = pkg.salesLabel ? SALES_LABELS[pkg.salesLabel] : null;
                 return (
+                  <div key={pkg.id} className="reveal-item" style={{ '--stagger': i } as React.CSSProperties}>
                   <RadioCard
-                    key={pkg.id}
                     selected={
                       selectedOption?.type === 'hour-package' &&
                       selectedOption.packageId === pkg.id
                     }
                     onSelect={() => onOptionSelect({ type: 'hour-package', packageId: pkg.id })}
+                    className="h-full"
                   >
                     <div className="text-center space-y-3">
                       <div className="h-5">
@@ -89,6 +92,7 @@ export const PackageSelectionSection = React.forwardRef<HTMLDivElement, PackageS
                       </div>
                     </div>
                   </RadioCard>
+                  </div>
                 );
               })}
             </div>

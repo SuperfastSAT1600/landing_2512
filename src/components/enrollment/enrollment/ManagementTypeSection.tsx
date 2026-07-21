@@ -4,6 +4,7 @@ import { RadioCard } from '@/components/enrollment/ui/RadioCard';
 import { Badge } from '@/components/enrollment/ui/Badge';
 import { MANAGEMENT_TYPES, MANAGEMENT_SERVICES } from '@/lib/enrollment/data/pricing';
 import { useLanguage } from '@/lib/enrollment/i18n/LanguageContext';
+import { useScrollReveal } from '@/hooks/enrollment/useScrollReveal';
 import { ICON_MAP } from './icons';
 import { SectionHeader } from './SectionHeader';
 import type { ManagementType } from '@/types/enrollment';
@@ -21,8 +22,8 @@ const COMPARISON_DATA = MANAGED_SERVICE_LIST.map((s) => ({
 
 function StatusIcon({ included }: { included: boolean }) {
   return included ? (
-    <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-      <Check className="w-3.5 h-3.5 text-emerald-400" strokeWidth={3} />
+    <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center">
+      <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
     </div>
   ) : (
     <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center">
@@ -40,19 +41,25 @@ interface ManagementTypeSectionProps {
 export const ManagementTypeSection = React.forwardRef<HTMLDivElement, ManagementTypeSectionProps>(
   function ManagementTypeSection({ managementType, onSelect, sectionNumber }, ref) {
     const { t } = useLanguage();
+    const gridRef = useScrollReveal(0.05);
+    const tableRef = useScrollReveal(0.1);
 
     return (
       <section ref={ref} className="max-w-3xl mx-auto px-4 sm:px-6 pb-10 sm:pb-16 animate-fade-in scroll-mt-20">
         <SectionHeader number={sectionNumber} title={t('managementType.sectionTitle')} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {MANAGEMENT_TYPES.map((mt) => {
+        <div ref={gridRef} className="reveal-children grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {MANAGEMENT_TYPES.map((mt, i) => {
             const IconComponent = ICON_MAP[mt.icon];
             return (
-              <RadioCard
+              <div
                 key={mt.id}
+                className="reveal-item"
+                style={{ '--stagger': i } as React.CSSProperties}
+              >
+              <RadioCard
                 selected={managementType === mt.id}
                 onSelect={() => onSelect(mt.id)}
-                className="min-h-[140px]"
+                className="min-h-[140px] h-full"
               >
                 <div className="flex flex-col gap-3 h-full">
                   <div className="flex items-start justify-between">
@@ -78,7 +85,7 @@ export const ManagementTypeSection = React.forwardRef<HTMLDivElement, Management
                   <div
                     className={`mt-auto rounded-lg px-3 py-2 text-center text-xs sm:text-sm font-medium border ${
                       mt.recommended
-                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                        ? 'bg-accent/10 text-accent-glow border-accent/20'
                         : 'bg-white/5 text-white/50 border-white/5'
                     }`}
                   >
@@ -86,16 +93,17 @@ export const ManagementTypeSection = React.forwardRef<HTMLDivElement, Management
                   </div>
                 </div>
               </RadioCard>
+              </div>
             );
           })}
         </div>
 
         {managementType && (
-          <div className="mt-6 animate-fade-in">
+          <div ref={tableRef} className="mt-6 reveal">
             <div className="bg-surface-elevated rounded-card border border-border-strong shadow-clay overflow-hidden">
               <div className="grid grid-cols-[1fr_80px_80px] sm:grid-cols-[1fr_120px_120px] bg-white/5 border-b border-white/5">
                 <div className="px-4 sm:px-5 py-3 text-xs sm:text-sm font-bold text-white/50">{t('managementType.tableHeader.service')}</div>
-                <div className="px-2 py-3 text-xs sm:text-sm font-bold text-center text-emerald-300">{t('managementType.tableHeader.managed')}</div>
+                <div className="px-2 py-3 text-xs sm:text-sm font-bold text-center text-accent-glow">{t('managementType.tableHeader.managed')}</div>
                 <div className="px-2 py-3 text-xs sm:text-sm font-bold text-center text-white/50">{t('managementType.tableHeader.unmanaged')}</div>
               </div>
               {COMPARISON_DATA.map((row, i) => (

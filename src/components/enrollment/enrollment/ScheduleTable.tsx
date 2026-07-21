@@ -52,7 +52,7 @@ export const ScheduleTable = memo(function ScheduleTable({ schedule }: { schedul
               {DAY_KEYS.map((key, i) => (
                 <th
                   key={key}
-                  className={`px-1 py-2 text-[11px] sm:text-xs font-bold text-center text-emerald-400 ${
+                  className={`px-1 py-2 text-[11px] sm:text-xs font-bold text-center text-accent-glow ${
                     i === 2 ? 'border-r border-white/5' : ''
                   }`}
                 >

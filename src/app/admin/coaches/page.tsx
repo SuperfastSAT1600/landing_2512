@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Link as LinkIcon, ClipboardList } from 'lucide-react';
+import Link from 'next/link';
 import { CoachData } from '@/lib/coaches-data';
 import { CoachRow } from './CoachRow';
+import { CreateOnboardingLinkModal } from './CreateOnboardingLinkModal';
 
 interface NewCoachForm {
     name: string;
@@ -18,6 +20,7 @@ export default function AdminCoachesPage() {
     const [coaches, setCoaches] = useState<CoachData[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [showOnboardingModal, setShowOnboardingModal] = useState(false);
     const [newCoach, setNewCoach] = useState<NewCoachForm>({ name: '', slug: '' });
     const [saving, setSaving] = useState(false);
 
@@ -120,13 +123,33 @@ export default function AdminCoachesPage() {
             <main className="p-8 pb-20 max-w-4xl space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold text-white">Coach Management</h1>
-                    <button
-                        onClick={() => setShowAddForm(v => !v)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-bold text-white transition-colors"
-                    >
-                        <UserPlus size={15} /> 코치 추가
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href="/admin/coaches/onboarding"
+                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold text-gray-300 transition-colors"
+                        >
+                            <ClipboardList size={15} /> 온보딩 제출 목록
+                        </Link>
+                        <button
+                            onClick={() => setShowOnboardingModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-bold text-white transition-colors"
+                        >
+                            <LinkIcon size={15} /> 온보딩 링크 생성
+                        </button>
+                        <button
+                            onClick={() => setShowAddForm(v => !v)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-bold text-white transition-colors"
+                        >
+                            <UserPlus size={15} /> 코치 추가
+                        </button>
+                    </div>
                 </div>
+                {showOnboardingModal && (
+                    <CreateOnboardingLinkModal
+                        onClose={() => setShowOnboardingModal(false)}
+                        adminKey={getAdminKey()}
+                    />
+                )}
 
                 {showAddForm && (
                     <div className="p-5 bg-[#1e2023] rounded-xl border border-white/5 space-y-3">

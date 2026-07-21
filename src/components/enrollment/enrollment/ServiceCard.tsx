@@ -16,10 +16,10 @@ export function ServiceCard({ categoryName, managementLevel, services }: Service
 
   return (
     <div className="bg-surface-elevated rounded-card border border-border-strong shadow-clay overflow-hidden">
-      <div className="bg-emerald-500/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-emerald-500/15">
+      <div className="bg-accent/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-accent/15">
         <div>
-          <p className="text-emerald-400/70 text-xs sm:text-sm">{categoryName}</p>
-          <p className="text-emerald-300 font-bold text-base sm:text-lg">
+          <p className="text-accent-glow/70 text-xs sm:text-sm">{categoryName}</p>
+          <p className="text-accent-glow font-bold text-base sm:text-lg">
             {t('serviceCard.servicesIncluded', { count: included.length })}
           </p>
         </div>
