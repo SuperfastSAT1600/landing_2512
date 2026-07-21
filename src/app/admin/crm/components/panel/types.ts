@@ -8,7 +8,7 @@ export interface EditForm {
   target_score: string; target_score_2: string;
   target_test_date: string; target_test_date_2: string;
   inquiry_date: string; inquiry_channel: string; traffic_source: string;
-  content_author: string; lead_type: string; b2b_partner: string;
+  content_author: string; lead_type: string; b2b_partner: string; company_id: string;
   preferred_language: string;
   first_message_sent_at: string; // datetime-local 문자열 (로컬 시각, "YYYY-MM-DDTHH:mm")
   referral_student_id: string; referral_student_name: string; // 소개/추천 소개자
@@ -56,7 +56,7 @@ export function studentToEditForm(s: Student): EditForm {
     target_test_date: s.target_test_date ?? '', target_test_date_2: s.target_test_date_2 ?? '',
     inquiry_date: toDatetimeLocalNaive(s.inquiry_date), inquiry_channel: s.inquiry_channel ?? '',
     traffic_source: s.traffic_source ?? '', content_author: s.content_author ?? '',
-    lead_type: s.lead_type ?? 'B2C', b2b_partner: s.b2b_partner ?? '',
+    lead_type: s.lead_type ?? 'B2C', b2b_partner: s.b2b_partner ?? '', company_id: s.company_id ?? '',
     preferred_language: s.preferred_language ?? '',
     first_message_sent_at: toDatetimeLocal(s.first_message_sent_at),
     referral_student_id: s.referral_student_id ?? '',

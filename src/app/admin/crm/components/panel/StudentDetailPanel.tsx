@@ -24,6 +24,8 @@ import { TimelineSection } from './sections/TimelineSection';
 import { StrategyHistorySection } from './sections/StrategyHistorySection';
 // import { SalesStrategySection } from './sections/SalesStrategySection'; // 미사용으로 숨김 (2026-07-14)
 import { PaymentHistorySection } from './sections/PaymentHistorySection';
+import { ActivityFeedSection } from './sections/ActivityFeedSection';
+import { NextActionSection } from './sections/NextActionSection';
 import type { StudentDetailPanelProps } from './types';
 
 export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
@@ -165,7 +167,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     <>
       <div className="fixed inset-0 z-50 flex justify-end">
         <div className="absolute inset-0 bg-black/50" onClick={handleBackdropClick} />
-        <div className="relative w-full max-w-[440px] bg-gray-50 border-l border-gray-200 flex flex-col h-full overflow-hidden shadow-xl">
+        <div className="relative w-full max-w-[440px] bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden shadow-xl">
 
           <PanelHeader
             localStudent={localStudent}
@@ -219,7 +221,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             }}
           />
 
-          <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          <div className="flex-1 overflow-y-auto">
             <InquirySection
               localStudent={localStudent}
               adminKey={adminKey}
@@ -231,6 +233,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               onSaveInquiry={editFormHook.handleSaveInquiry}
               onCancelInquiry={editFormHook.handleCancelInquiry}
             />
+
+            <NextActionSection student={localStudent} adminKey={adminKey} />
 
             <StudentInfoSection
               localStudent={localStudent}
@@ -316,6 +320,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                 onUpdate(student.id, updates);
               }}
             />
+
+            <ActivityFeedSection student={localStudent} adminKey={adminKey} />
           </div>
         </div>
       </div>

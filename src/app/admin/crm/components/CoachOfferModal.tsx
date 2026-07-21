@@ -93,7 +93,7 @@ export function CoachOfferModal({ student, adminKey, onSent, onClose }: CoachOff
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <div>
-            <h2 className="text-sm font-bold text-gray-900">코치 오퍼 발송</h2>
+            <h2 className="text-sm font-semibold text-gray-900">코치 오퍼 발송</h2>
             <p className="text-xs text-gray-500 mt-0.5">{student.name} 학생</p>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-900 transition-colors">
@@ -135,7 +135,7 @@ export function CoachOfferModal({ student, adminKey, onSent, onClose }: CoachOff
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={coach.photo} alt={coach.name} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-xs font-bold text-gray-400">
+                          <span className="text-xs font-semibold text-gray-400">
                             {coach.name.charAt(0)}
                           </span>
                         )}
@@ -192,7 +192,7 @@ export function CoachOfferModal({ student, adminKey, onSent, onClose }: CoachOff
           <button
             onClick={handleSend}
             disabled={sending || selectedSlugs.size === 0}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg transition-colors"
           >
             <Send size={13} />
             {sending ? '발송 중...' : `오퍼 발송 (${selectedSlugs.size}명)`}

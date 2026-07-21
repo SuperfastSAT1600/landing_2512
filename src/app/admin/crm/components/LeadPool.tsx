@@ -209,9 +209,9 @@ function SummaryCard({
   sub?: string;
 }) {
   return (
-    <div className="flex-1 min-w-[120px] bg-white border border-gray-200 rounded-xl p-4">
+    <div className="flex-1 min-w-[120px] bg-white border border-gray-100 rounded-lg p-4">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-2xl font-semibold text-gray-900">{value}</p>
       {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
     </div>
   );
@@ -598,7 +598,7 @@ export function LeadPool({
           value={nameSearch}
           onChange={(e) => setNameSearch(e.target.value)}
           placeholder="이름으로 검색..."
-          className="w-full pl-8 pr-7 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 bg-white"
+          className="w-full pl-8 pr-7 py-2 text-sm border border-gray-100 rounded-lg focus:outline-none focus:border-gray-400 bg-white"
         />
         {nameSearch && (
           <button
@@ -744,7 +744,7 @@ export function LeadPool({
               placeholder="상담 내용 키워드 검색..."
               value={filters.keyword}
               onChange={(e) => setFilters((f) => ({ ...f, keyword: e.target.value }))}
-              className="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 w-44"
+              className="pl-8 pr-3 py-1.5 text-xs border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 w-44"
             />
           </div>
 
@@ -753,7 +753,7 @@ export function LeadPool({
             onChange={(e) =>
               setFilters((f) => ({ ...f, churnType: e.target.value as ChurnType | '' }))
             }
-            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+            className="text-xs border border-gray-100 rounded-lg px-2.5 py-1.5 focus:outline-none"
           >
             <option value="">이탈 유형 전체</option>
             <option value="potential">잠재 이탈</option>
@@ -763,7 +763,7 @@ export function LeadPool({
           <select
             value={filters.churnTag}
             onChange={(e) => setFilters((f) => ({ ...f, churnTag: e.target.value }))}
-            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+            className="text-xs border border-gray-100 rounded-lg px-2.5 py-1.5 focus:outline-none"
           >
             <option value="">이탈 사유 전체</option>
             <option value="회신 없음">회신 없음</option>
@@ -776,7 +776,7 @@ export function LeadPool({
           <select
             value={filters.churnStage}
             onChange={(e) => setFilters((f) => ({ ...f, churnStage: e.target.value }))}
-            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+            className="text-xs border border-gray-100 rounded-lg px-2.5 py-1.5 focus:outline-none"
           >
             <option value="">이탈 단계 전체</option>
             {churnStageGroups.map((g) => (
@@ -789,7 +789,7 @@ export function LeadPool({
           <select
             value={filters.grade}
             onChange={(e) => setFilters((f) => ({ ...f, grade: e.target.value }))}
-            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+            className="text-xs border border-gray-100 rounded-lg px-2.5 py-1.5 focus:outline-none"
           >
             <option value="">학년 전체</option>
             {gradeOptions.map((g) => (
@@ -807,7 +807,7 @@ export function LeadPool({
                 daysSinceChurn: e.target.value as LeadPoolFilters['daysSinceChurn'],
               }))
             }
-            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+            className="text-xs border border-gray-100 rounded-lg px-2.5 py-1.5 focus:outline-none"
           >
             <option value="">기간 전체</option>
             <option value="30">30일 이내</option>
@@ -918,9 +918,9 @@ export function LeadPool({
 
       {/* Strategy picker dropdown (위치: bulk action bar 바로 위) */}
       {showStrategyPicker && !retryContext && (
-        <div className="fixed bottom-20 right-6 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-2 min-w-[200px]">
+        <div className="fixed bottom-20 right-6 bg-white border border-gray-100 rounded-lg shadow-xl z-50 p-2 min-w-[200px]">
           <div className="flex items-center justify-between px-2 py-1.5 mb-1">
-            <p className="text-xs font-bold text-gray-700">전략 선택</p>
+            <p className="text-xs font-semibold text-gray-700">전략 선택</p>
             <button
               onClick={() => setShowStrategyPicker(false)}
               className="text-gray-400 hover:text-gray-600"
@@ -968,7 +968,7 @@ export function LeadPool({
             <button
               type="button"
               onClick={() => setShowReactivationModal(true)}
-              className="text-sm font-bold bg-white text-gray-900 px-4 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              className="text-sm font-semibold bg-white text-gray-900 px-4 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
             >
               재활성화 시작
             </button>
@@ -978,7 +978,7 @@ export function LeadPool({
                 type="button"
                 onClick={() => handleAssignToStrategy(retryContext.id, retryContext.name)}
                 disabled={assigning}
-                className="flex items-center gap-1.5 text-sm font-bold bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white px-4 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 text-sm font-semibold bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white px-4 py-1.5 rounded-lg transition-colors"
               >
                 <ArrowRight size={13} />
                 {assigning ? '배정 중...' : `"${retryContext.name}" 배정`}
@@ -989,7 +989,7 @@ export function LeadPool({
                 onClick={() =>
                   showStrategyPicker ? setShowStrategyPicker(false) : openStrategyPicker()
                 }
-                className="flex items-center gap-1.5 text-sm font-bold bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 text-sm font-semibold bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-1.5 rounded-lg transition-colors"
               >
                 재시도 배정
                 <ChevronDown size={13} />

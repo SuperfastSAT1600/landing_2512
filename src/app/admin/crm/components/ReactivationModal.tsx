@@ -159,7 +159,7 @@ export function ReactivationModal(props: ReactivationModalProps) {
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-sm font-bold text-gray-900">
+          <h2 className="text-sm font-semibold text-gray-900">
             {mode === 'bulk'
               ? `${props.studentIds.length}명 재활성화 시작`
               : isUpdatingExisting

@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { X, GripVertical, CreditCard, MessageSquare, UserCheck } from 'lucide-react';
 import { Student } from '@/types/crm';
+import { leadHealth, LEAD_HEALTH_DOT } from '@/lib/lead-health';
 
 function daysElapsed(dateStr: string | null): number | null {
   if (!dateStr) return null;
@@ -75,12 +76,22 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
       )}
 
       {/* Name */}
-      <p className="text-sm font-semibold text-gray-900 leading-tight pr-10">{student.name}</p>
+      <p className="text-sm font-semibold text-gray-900 leading-tight pr-10 flex items-center gap-1.5">
+        {(() => {
+          // 건강도 dot — 정체(stall)는 아래 뱃지가 이미 표시하므로 '주의(watch)'만 여기서 보강
+          const h = leadHealth(student);
+          return h && h.level === 'watch' ? (
+            <span title={h.reason} className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${LEAD_HEALTH_DOT.watch}`} />
+          ) : null;
+        })()}
+        <span className="min-w-0 truncate">{student.name}</span>
+      </p>
 
       {/* Phone */}
       {student.parent_phone && (
         <p className="text-[11px] text-gray-400 mt-0.5">{student.parent_phone}</p>
       )}
+
 
       {/* 인입 채널 · 유입 소스 (하나로 합쳐 표시) */}
       {(student.inquiry_channel || student.traffic_source) && (
@@ -93,7 +104,7 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
 
       {/* Stage-stall badge — SLA 초과 시 다음 단계로 진행 촉구 */}
       {stalledDays !== null && (
-        <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-rose-700 bg-rose-100 border border-rose-200">
+        <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-rose-700 bg-rose-100 border border-rose-200">
           <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
           {stalledDays}일 정체
         </span>

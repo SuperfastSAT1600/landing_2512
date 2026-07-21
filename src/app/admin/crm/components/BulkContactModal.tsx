@@ -62,7 +62,7 @@ export function BulkContactModal({
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <MessageSquarePlus size={15} className="text-blue-500" />
-            <h2 className="text-sm font-bold text-gray-900">
+            <h2 className="text-sm font-semibold text-gray-900">
               연락 기록 — {studentCount}명
             </h2>
           </div>

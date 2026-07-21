@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, CreditCard, ChevronLeft, Crown, CheckCircle2, Copy, Check } from 'lucide-react';
 import { Student, ProductCategory, ProductSubcategory, B2B_PARTNER_OPTIONS } from '@/types/crm';
+import { useCompanies } from '@/hooks/useCompanies';
 import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
 import { getAdminUserName } from '@/lib/admin-user';
 
@@ -67,6 +68,9 @@ function needsPartnerSelection(student: Student) {
 }
 
 export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentModalProps) {
+  const { companies } = useCompanies(adminKey);
+  // 동적 업체명(있으면) 우선, 없으면 정적 목록 폴백
+  const partnerOptions = companies.length > 0 ? companies.map(c => c.name) : [...B2B_PARTNER_OPTIONS];
   const [step, setStep] = useState<-1 | 0 | 1 | 2 | 3 | 4>(needsPartnerSelection(student) ? -1 : 0);
   const [selectedPartner, setSelectedPartner] = useState<string | null>(student.b2b_partner ?? null);
   const [paymentType, setPaymentType] = useState<PaymentType | null>(null);
@@ -237,7 +241,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
               </button>
             )}
             <CreditCard size={16} className="text-blue-500" />
-            <h2 className="text-sm font-bold text-gray-900">결제 완료 처리</h2>
+            <h2 className="text-sm font-semibold text-gray-900">결제 완료 처리</h2>
             <span className="text-xs text-gray-400 font-normal">· {stepLabel}</span>
           </div>
           <button onClick={step === 4 ? finish : onClose} className="text-gray-400 hover:text-gray-600">
@@ -262,12 +266,12 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
           <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
             <span><span className="font-semibold text-gray-800">{student.name}</span> 학생</span>
             {selectedPartner && step >= 0 && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
                 {selectedPartner}
               </span>
             )}
             {paymentType && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
                 {paymentType}
               </span>
             )}
@@ -278,7 +282,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
             <div className="space-y-2">
               <p className="text-xs font-medium text-gray-500">연결할 파트너를 선택하세요</p>
               <div className="grid grid-cols-2 gap-1.5">
-                {B2B_PARTNER_OPTIONS.map(p => (
+                {partnerOptions.map(p => (
                   <button
                     key={p}
                     onClick={() => { setSelectedPartner(p); setStep(0); }}
@@ -485,7 +489,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
                     VIP 학생
                   </span>
                   {isVip && (
-                    <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold tracking-wide">
+                    <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-semibold tracking-wide">
                       <Crown size={9} />VIP
                     </span>
                   )}

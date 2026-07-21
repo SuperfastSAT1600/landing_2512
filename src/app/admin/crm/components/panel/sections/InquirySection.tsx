@@ -10,6 +10,7 @@ import type { EditForm } from '../types';
 import { inputCls, selectCls, EditField } from './StudentInfoEdit';
 import { SectionCard } from './SectionCard';
 import { ReferrerPicker } from './ReferrerPicker';
+import { useCompanies } from '@/hooks/useCompanies';
 
 // 첫 메시지(timestamptz)를 로컬 시각 기준 "YYYY. MM. DD. HH:mm"(24시간)으로 — 문의일 표기와 통일.
 function formatDateTime(iso: string | null): string {
@@ -55,13 +56,18 @@ export function InquirySection({
   localStudent, adminKey, editForm, setEditForm,
   isEditingInquiry, setIsEditingInquiry, savingInquiry, onSaveInquiry, onCancelInquiry,
 }: Props) {
+  const { companies } = useCompanies(adminKey); // 활성 업체(동적 목록)
+  const partnerLabel =
+    (localStudent.company_id && companies.find(c => c.id === localStudent.company_id)?.name) ||
+    localStudent.b2b_partner ||
+    '';
   const actions = isEditingInquiry ? (
     <>
       <button onClick={onCancelInquiry} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">취소</button>
       <button
         onClick={onSaveInquiry}
         disabled={savingInquiry}
-        className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-lg transition-colors"
+        className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-lg transition-colors"
       >
         {savingInquiry ? '저장 중...' : '저장'}
       </button>
@@ -99,7 +105,7 @@ export function InquirySection({
                 {TRAFFIC_SOURCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
               </select>
             </EditField>
-            {editForm.traffic_source === '소개/추천' && (
+            {editForm.traffic_source === '소개' && (
               <EditField label="소개자" className="col-span-2">
                 <ReferrerPicker
                   adminKey={adminKey}
@@ -124,10 +130,25 @@ export function InquirySection({
             </EditField>
             {editForm.lead_type === 'B2B' && (
               <EditField label="B2B 파트너사">
-                <select value={editForm.b2b_partner} onChange={e => setEditForm({ ...editForm, b2b_partner: e.target.value })} className={selectCls}>
-                  <option value="">선택</option>
-                  {B2B_PARTNER_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
+                {companies.length > 0 ? (
+                  <select
+                    value={editForm.company_id}
+                    onChange={e => {
+                      const id = e.target.value;
+                      const name = companies.find(c => c.id === id)?.name ?? '';
+                      setEditForm({ ...editForm, company_id: id, b2b_partner: name });
+                    }}
+                    className={selectCls}
+                  >
+                    <option value="">선택</option>
+                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                ) : (
+                  <select value={editForm.b2b_partner} onChange={e => setEditForm({ ...editForm, b2b_partner: e.target.value })} className={selectCls}>
+                    <option value="">선택</option>
+                    {B2B_PARTNER_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                )}
               </EditField>
             )}
             <EditField label="광고명 (자동)">
@@ -146,15 +167,15 @@ export function InquirySection({
           )}
           <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
           <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
-          {localStudent.traffic_source === '소개/추천' && localStudent.referral_student_name && (
+          {localStudent.traffic_source === '소개' && localStudent.referral_student_name && (
             <InquiryRow label="소개자" value={localStudent.referral_student_name} />
           )}
           {localStudent.content_author && (
             <InquiryRow label="작성자" value={localStudent.content_author} />
           )}
           <InquiryRow label="구분" value={localStudent.lead_type ?? '—'} />
-          {localStudent.b2b_partner && (
-            <InquiryRow label="파트너" value={localStudent.b2b_partner} />
+          {partnerLabel && (
+            <InquiryRow label="파트너" value={partnerLabel} />
           )}
           <InquiryRow
             label={localStudent.contact_type ? CONTACT_TYPE_LABELS[localStudent.contact_type] : '연락처'}

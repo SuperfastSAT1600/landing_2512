@@ -3,7 +3,7 @@
 import { Pencil, Crown } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { SCHOOL_TYPE_LABELS, TIMEZONE_OPTIONS } from '@/types/crm';
-import { SAT_PAST_MONTHS, formatSatDate } from '../constants';
+import { formatSatMonth, formatSatDate } from '../constants';
 import { StudentInfoEdit } from './StudentInfoEdit';
 import type { EditForm } from '../types';
 import { SectionCard } from './SectionCard';
@@ -24,7 +24,7 @@ function StudentInfoCell({ label, value, sub }: { label: string; value: string; 
   return (
     <div>
       <p className="text-[11px] text-gray-400 mb-0.5">{label}</p>
-      <p className="text-[14px] text-gray-900 font-bold leading-snug">{value}</p>
+      <p className="text-[14px] text-gray-900 font-semibold leading-snug">{value}</p>
       {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
     </div>
   );
@@ -63,7 +63,7 @@ export function StudentInfoSection({
       <button
         onClick={onSaveEdit}
         disabled={savingEdit}
-        className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-lg transition-colors"
+        className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-lg transition-colors"
       >
         {savingEdit ? '저장 중...' : '저장'}
       </button>
@@ -110,7 +110,7 @@ export function StudentInfoSection({
               label="직전 점수"
               value={scoreDisplay}
               sub={localStudent.previous_score_status === 'scored' && localStudent.previous_test_date
-                ? (SAT_PAST_MONTHS.find(m => m.value === localStudent.previous_test_date)?.label ?? localStudent.previous_test_date)
+                ? formatSatMonth(localStudent.previous_test_date)
                 : undefined}
             />
             <StudentInfoCell

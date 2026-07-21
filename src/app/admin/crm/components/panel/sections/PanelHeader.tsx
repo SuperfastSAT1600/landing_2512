@@ -5,6 +5,7 @@ import { PortalAccessToggle } from '@/app/admin/components/PortalAccessToggle';
 import { SignupLinkToggle } from '@/app/admin/components/SignupLinkToggle';
 import type { Student, FunnelStage } from '@/types/crm';
 import { FUNNEL_STAGE_LABELS, SCHOOL_TYPE_LABELS } from '@/types/crm';
+import { leadHealth, LEAD_HEALTH_DOT, LEAD_HEALTH_TEXT } from '@/lib/lead-health';
 import { SALES_STAGES_ONLY } from '../constants';
 
 interface Props {
@@ -56,7 +57,21 @@ export function PanelHeader({
     <div className="px-5 pt-5 pb-4 border-b border-gray-100 bg-white shrink-0">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-[18px] font-bold text-gray-900 leading-tight">{localStudent.name}</h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-[18px] font-semibold text-gray-900 leading-tight">{localStudent.name}</h2>
+            {(() => {
+              const h = leadHealth(localStudent);
+              return h ? (
+                <span
+                  title={h.reason}
+                  className={`inline-flex items-center gap-1 text-[11px] font-medium ${LEAD_HEALTH_TEXT[h.level]}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${LEAD_HEALTH_DOT[h.level]}`} />
+                  {h.label}
+                </span>
+              ) : null;
+            })()}
+          </div>
           <p className="text-[13px] text-gray-500 mt-0.5">
             {localStudent.grade} · {SCHOOL_TYPE_LABELS[localStudent.school_type]} · {localStudent.desired_subjects}
           </p>
@@ -219,7 +234,7 @@ export function PanelHeader({
             <button
               onClick={onStartReactivation}
               disabled={reactivating || !reactivateStrategy.trim()}
-              className="flex-1 text-xs font-bold text-white bg-amber-500 hover:bg-amber-400 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+              className="flex-1 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-400 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
             >
               {reactivating ? '시작 중...' : '재활성화 시작'}
             </button>

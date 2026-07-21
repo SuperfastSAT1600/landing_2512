@@ -27,14 +27,14 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefu
   return (
     <div
       onClick={() => onStudentClick(student)}
-      className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
+      className="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-sm text-gray-900">{student.name}</span>
           <span className="text-xs text-gray-500">{student.grade}</span>
           {student.is_vip && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded font-bold tracking-wide bg-amber-100 text-amber-700">
+            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded font-semibold tracking-wide bg-amber-100 text-amber-700">
               <Crown size={9} />VIP
             </span>
           )}
@@ -57,7 +57,7 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefu
       <div className="flex items-center gap-1.5 shrink-0">
         <button
           onClick={(e) => { e.stopPropagation(); onRefund(student); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-100 rounded-lg hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition-colors"
           title="환불 처리"
         >
           <RotateCcw size={12} />
@@ -65,7 +65,7 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefu
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onGraduate(student); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-100 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
           title="수업 종료 후 이탈 처리"
         >
           <UserX size={12} />
@@ -142,7 +142,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl shrink-0">
           <GraduationCap size={16} className="text-emerald-600" />
-          <span className="text-sm font-bold text-emerald-700">수업 중</span>
+          <span className="text-sm font-semibold text-emerald-700">수업 중</span>
           {totalCount !== null && (
             <span className="text-xs font-semibold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-full">
               {totalCount}명
@@ -178,7 +178,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="이름 검색..."
-              className="w-full pl-8 pr-7 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-400 bg-white"
+              className="w-full pl-8 pr-7 py-1.5 text-sm border border-gray-100 rounded-lg focus:outline-none focus:border-emerald-400 bg-white"
               autoFocus
             />
             {searchQuery && (

@@ -47,14 +47,14 @@ function AddForm({ type, strategies, onSave, onCancel }: AddFormProps) {
         rows={3}
         value={memo}
         onChange={e => setMemo(e.target.value)}
-        placeholder="이 전략을 적용하는 이유나 계획을 메모하세요..."
+        placeholder="이 전략을 적용하는 이유나 계획을 메모하세요... (선택)"
         className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
       />
       <div className="flex gap-2">
         <button
-          disabled={!strategyId || !memo.trim()}
+          disabled={!strategyId}
           onClick={() => onSave({ type, strategy_id: strategyId, strategy_name: selected!.name, memo: memo.trim() })}
-          className="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded-lg transition-colors"
+          className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded-lg transition-colors"
         >
           저장
         </button>
@@ -163,7 +163,7 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
                             </button>
                           </div>
                         </div>
-                        <p className="text-[11px] text-gray-600 whitespace-pre-wrap leading-relaxed">{e.memo}</p>
+                        {e.memo?.trim() && <p className="text-[11px] text-gray-600 whitespace-pre-wrap leading-relaxed">{e.memo}</p>}
                       </div>
                     ))}
 
