@@ -30,8 +30,8 @@ export function CompaniesTab({ adminKey }: Props) {
       {error && <p className="py-10 text-center text-sm text-red-500">{error}</p>}
 
       {!loading && !error && (
-        <div>
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[560px]">
             <thead>
               <tr className="border-b border-gray-200 text-xs text-gray-400">
                 <th className="text-left py-2.5 px-2 font-medium">업체명</th>

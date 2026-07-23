@@ -209,7 +209,7 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
   return (
     <div className={`${subTab === 'logic' ? 'max-w-6xl' : 'max-w-3xl'} space-y-5`}>
       {/* 서브탭: 실험 / 세일즈 로직 통계 / 전략 라이브러리 / 전략 에이전트 */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-gray-200 overflow-x-auto scrollbar-none">
         {([
           { key: 'experiment', label: '실험' },
           { key: 'logic', label: '세일즈 로직 통계' },
@@ -219,7 +219,7 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
           <button
             key={key}
             onClick={() => setSubTab(key)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap shrink-0 ${
               subTab === key
                 ? 'border-gray-900 text-gray-900'
                 : 'border-transparent text-gray-400 hover:text-gray-600'

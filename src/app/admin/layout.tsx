@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import { useAdminAuth } from '@/lib/useAdminAuth';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 const NAV_ITEMS = [
     { href: '/admin', label: 'Posts', icon: '📄' },
@@ -27,6 +28,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const { isAuthenticated, loading, login, logout, userName } = useAdminAuth();
     const [password, setPassword] = useState('');
     const pathname = usePathname();
+    const [navOpen, setNavOpen] = useState(false);
+    const isMobile = useIsMobile();
+
+    // Close the mobile nav drawer whenever the route changes
+    useEffect(() => {
+        setNavOpen(false);
+    }, [pathname]);
+
+    // Lock body scroll while the drawer is open on mobile only
+    useEffect(() => {
+        if (navOpen && isMobile) {
+            document.body.style.overflow = 'hidden';
+            return () => {
+                document.body.style.overflow = '';
+            };
+        }
+    }, [navOpen, isMobile]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,7 +105,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div className="min-h-screen bg-[#151719] text-[#E0E0E0] font-sans selection:bg-blue-500/30 flex">
-            <aside className="w-64 border-r border-white/5 bg-[#151719] flex flex-col fixed h-full z-20">
+            {/* Mobile backdrop */}
+            {navOpen && (
+                <div
+                    className="md:hidden fixed inset-0 z-30 bg-black/50"
+                    onClick={() => setNavOpen(false)}
+                    aria-hidden="true"
+                />
+            )}
+            <aside
+                className={`w-64 border-r border-white/5 bg-[#151719] flex flex-col fixed inset-y-0 left-0 h-full z-40 transform transition-transform duration-200 md:translate-x-0 md:z-20 ${
+                    navOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
+            >
                 <div className="p-6">
                     <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
@@ -134,9 +164,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
             </aside>
 
-            <main className="flex-1 ml-64 min-w-0">
-                {children}
-            </main>
+            <div className="flex-1 min-w-0 ml-0 md:ml-64">
+                {/* Mobile top bar with hamburger */}
+                <div className="md:hidden sticky top-0 z-30 flex items-center gap-3 h-12 px-4 border-b border-white/5 bg-[#151719]">
+                    <button
+                        onClick={() => setNavOpen(true)}
+                        aria-label="메뉴 열기"
+                        className="text-gray-300 hover:text-white transition-colors"
+                    >
+                        <Menu size={22} />
+                    </button>
+                    <span className="text-sm font-bold text-white tracking-tight">Admin Page</span>
+                </div>
+                <main className="min-w-0">
+                    {children}
+                </main>
+            </div>
         </div>
     );
 }

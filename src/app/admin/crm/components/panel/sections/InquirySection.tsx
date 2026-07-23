@@ -86,7 +86,7 @@ export function InquirySection({
       {isEditingInquiry ? (
         <div className="space-y-3">
           <p className="text-[11px] text-blue-500 font-medium">편집 모드 — 저장 버튼을 눌러야 반영됩니다</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <EditField label="문의 날짜" className="col-span-2">
               <input type="datetime-local" value={editForm.inquiry_date} onChange={e => setEditForm({ ...editForm, inquiry_date: e.target.value })} className={inputCls} />
             </EditField>

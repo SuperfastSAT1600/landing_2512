@@ -75,7 +75,7 @@ function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayme
   );
 
   return (
-    <div className="flex flex-col w-44 shrink-0">
+    <div className="flex flex-col w-40 sm:w-44 shrink-0">
       {header}
 
       {/* Cards */}
