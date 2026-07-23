@@ -6,7 +6,6 @@ import type { RetryStrategy, InsightPeriod } from '@/types/crm';
 import { StrategyAgentChat } from './StrategyAgentChat';
 import { ExperimentBoard } from './ExperimentBoard';
 import { StrategyStats } from './StrategyStats';
-import { FunnelBoard } from './FunnelBoard';
 
 interface Props {
   adminKey: string;
@@ -157,10 +156,14 @@ function StrategySection({
   );
 }
 
-type SubTab = 'funnel' | 'experiment' | 'logic' | 'library' | 'strategy_ai';
+type SubTab = 'experiment' | 'logic' | 'library' | 'strategy_ai';
+
+// 전략 에이전트(StrategyAgentChat) 사용 중단으로 UI 숨김. true로 바꾸면 탭·진입이 복구된다.
+// 짝: CrmInsightBanner.tsx 의 동일 플래그(이어서 전략 짜기 CTA).
+const STRATEGY_AGENT_ENABLED = false;
 
 export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strategySeed, onSelectStudent }: Props) {
-  const [subTab, setSubTab] = useState<SubTab>(initialSubTab ?? 'funnel');
+  const [subTab, setSubTab] = useState<SubTab>(initialSubTab ?? 'experiment');
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -204,15 +207,14 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
   }
 
   return (
-    <div className={`${subTab === 'logic' || subTab === 'funnel' ? 'max-w-6xl' : 'max-w-3xl'} space-y-5`}>
+    <div className={`${subTab === 'logic' ? 'max-w-6xl' : 'max-w-3xl'} space-y-5`}>
       {/* 서브탭: 실험 / 세일즈 로직 통계 / 전략 라이브러리 / 전략 에이전트 */}
       <div className="flex gap-1 border-b border-gray-200">
         {([
-          { key: 'funnel', label: '채널 퍼널' },
           { key: 'experiment', label: '실험' },
           { key: 'logic', label: '세일즈 로직 통계' },
           { key: 'library', label: '전략 라이브러리' },
-          { key: 'strategy_ai', label: '전략 에이전트' },
+          ...(STRATEGY_AGENT_ENABLED ? [{ key: 'strategy_ai', label: '전략 에이전트' }] : []),
         ] as { key: SubTab; label: string }[]).map(({ key, label }) => (
           <button
             key={key}
@@ -227,8 +229,6 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
           </button>
         ))}
       </div>
-
-      {subTab === 'funnel' && <FunnelBoard adminKey={adminKey} />}
 
       {subTab === 'experiment' && <ExperimentBoard adminKey={adminKey} />}
 

@@ -10,6 +10,9 @@ import { WeeklyPlan } from './WeeklyPlan';
 
 type B2cTab = 'leads' | 'strategies' | 'weekly';
 
+// 선제 진단 인사이트 배너(CrmInsightBanner) 사용 중단으로 숨김. true로 바꾸면 복구.
+const INSIGHT_BANNER_ENABLED = false;
+
 interface B2cWorkspaceProps {
   students: Student[];
   todayActions: Student[];
@@ -101,7 +104,7 @@ export function B2cWorkspace({
 
       {activeTab === 'strategies' && (
         <>
-          <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />
+          {INSIGHT_BANNER_ENABLED && <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />}
           <StrategiesTab adminKey={adminKey} initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} onSelectStudent={onSelectStudentById} />
         </>
       )}

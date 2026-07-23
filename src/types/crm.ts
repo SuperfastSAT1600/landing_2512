@@ -341,20 +341,6 @@ export interface WeeklyPlanResponse {
   week: { start: string; end: string; label: string };
 }
 
-// ─── 채널 퍼널 시도 전략 주석 ────────────────────────────────────────────────
-
-export type FunnelStageKey = 'lead' | 'call' | 'diagnostic' | 'report' | 'paid';
-
-export interface FunnelNote {
-  id: string;
-  source: string; // traffic_source 또는 '__all__'
-  stage_key: FunnelStageKey;
-  week_start: string | null; // 시도 주차(YYYY-MM-DD)
-  content: string;
-  created_at: string;
-  updated_at: string;
-}
-
 // ─── 성장 실험 (전략/실행/회고) ──────────────────────────────────────────────
 
 // 자동 측정 지표는 /api/crm/stats by_source / overview 필드와 1:1 매핑. custom은 수동 입력.
