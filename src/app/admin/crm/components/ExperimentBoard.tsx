@@ -266,7 +266,7 @@ function ExperimentCard({
       {/* 결과·회고 입력 패널 (자동 측정값 수동 보정 포함) */}
       {panelOpen && (
         <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="text-[11px] text-gray-400">기준선 값</label>
               <input type="number" value={baseVal} onChange={(e) => setBaseVal(e.target.value)}

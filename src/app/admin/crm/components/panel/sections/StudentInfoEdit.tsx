@@ -107,7 +107,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
       <EditField label="학부모 포털 표시 이름">
         <input value={form.portal_name} onChange={set('portal_name')} className={inputCls} placeholder="비워두면 내부 이름 그대로 표시" />
       </EditField>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <EditField label="학제">
           <select
             value={form.school_type}
@@ -128,7 +128,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
           </select>
         </EditField>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <EditField label="연락 수단">
           <select value={form.contact_type} onChange={set('contact_type')} className={selectCls}>
             <option value="phone">핸드폰</option>
@@ -186,7 +186,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
               {satPastMonths.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
             </select>
           </EditField>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <EditField label="직전 RW">
               <input type="number" value={form.previous_rw_score} onChange={set('previous_rw_score')} className={inputCls} placeholder="200-800" min={200} max={800} />
             </EditField>
@@ -196,7 +196,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
           </div>
         </>
       )}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <EditField label="1차 목표 시험일">
           <select value={form.target_test_date} onChange={set('target_test_date')} className={selectCls}>
             <option value="">(미정)</option>
@@ -212,7 +212,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
           <input type="number" value={form.target_score} onChange={set('target_score')} className={inputCls} placeholder="800-1600" min={800} max={1600} />
         </EditField>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <EditField label="2차 목표 시험일">
           <select value={form.target_test_date_2} onChange={set('target_test_date_2')} className={selectCls}>
             <option value="">(없음)</option>

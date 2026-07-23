@@ -236,13 +236,13 @@ export default function CrmPage() {
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans overflow-x-hidden">
       {/* Page header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="sticky top-12 md:top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold text-gray-900">CRM</h1>
             <CrmModeToggle mode={crmMode} onChange={changeMode} />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <RealtimeIndicator status={status} />
             <button
               onClick={() => setShowCreateModal(true)}

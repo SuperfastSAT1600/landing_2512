@@ -69,9 +69,9 @@ export function B2cWorkspace({
   }, [students]);
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 sm:px-8 sm:py-6">
       {/* 최상위 3메뉴 */}
-      <div className="flex gap-6 mb-6 border-b border-gray-100">
+      <div className="flex gap-4 sm:gap-6 mb-6 border-b border-gray-100 overflow-x-auto scrollbar-none">
         {([
           { key: 'leads',      label: '리드 현황·통계' },
           { key: 'strategies', label: '세일즈 전략' },
@@ -80,7 +80,7 @@ export function B2cWorkspace({
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`px-0.5 py-2.5 -mb-px text-sm font-medium border-b-2 transition-colors ${
+            className={`px-0.5 py-2.5 -mb-px text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === key ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'
             }`}
           >

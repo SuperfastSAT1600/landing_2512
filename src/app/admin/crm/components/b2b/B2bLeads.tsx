@@ -34,8 +34,8 @@ export function B2bLeads({ adminKey, students, onStudentClick }: Props) {
         </select>
       </div>
 
-      <div>
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[560px]">
           <thead>
             <tr className="border-b border-gray-200 text-xs text-gray-400">
               <th className="text-left py-2.5 px-2 font-medium">이름</th>

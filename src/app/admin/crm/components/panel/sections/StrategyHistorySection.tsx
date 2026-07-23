@@ -151,9 +151,9 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
                     )}
                     {entries.map(e => (
                       <div key={e.id} className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-gray-700">{e.strategy_name}</span>
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-gray-700 min-w-0 truncate">{e.strategy_name}</span>
+                          <div className="flex items-center gap-2 shrink-0">
                             <span className="text-[10px] text-gray-400">{e.applied_at.slice(0, 10)}</span>
                             <button
                               onClick={() => handleDelete(e.id)}
