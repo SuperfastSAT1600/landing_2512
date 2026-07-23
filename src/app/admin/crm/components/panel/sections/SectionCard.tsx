@@ -19,7 +19,7 @@ export function SectionCard({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="border-b border-gray-100">
       <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={() => { setOpen(v => { const next = !v; onOpenChange?.(next); return next; }); }}
@@ -43,7 +43,7 @@ export function SectionCard({
       </div>
 
       {open && (
-        <div className={`border-t border-gray-100 ${bodyClassName}`}>
+        <div className={bodyClassName}>
           {children}
         </div>
       )}

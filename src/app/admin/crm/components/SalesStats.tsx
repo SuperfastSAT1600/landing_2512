@@ -4,125 +4,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, Users, Phone, CreditCard, RefreshCw } from 'lucide-react';
 import type { CrmStatsData, StatsBySource, StatsWeekly } from '@/app/api/crm/stats/route';
-import type { StageFlowRow } from '@/lib/funnel-stats';
 import type { StatsDetailMetric } from '@/lib/crm-stats-detail';
 import { StatsDetailModal } from './StatsDetailModal';
-
-// ─── Period helpers ────────────────────────────────────────────────────────────
-
-type Preset = 'this_month' | 'last_month' | 'this_quarter' | 'last_6m' | 'custom';
-
-function getPresetRange(preset: Preset): { from: string; to: string } {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth();
-
-  const fmt = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-  if (preset === 'this_month') {
-    return { from: fmt(new Date(y, m, 1)), to: fmt(new Date(y, m + 1, 0)) };
-  }
-  if (preset === 'last_month') {
-    return { from: fmt(new Date(y, m - 1, 1)), to: fmt(new Date(y, m, 0)) };
-  }
-  if (preset === 'this_quarter') {
-    const qStart = Math.floor(m / 3) * 3;
-    return { from: fmt(new Date(y, qStart, 1)), to: fmt(new Date(y, qStart + 3, 0)) };
-  }
-  if (preset === 'last_6m') {
-    return { from: fmt(new Date(y, m - 5, 1)), to: fmt(new Date(y, m + 1, 0)) };
-  }
-  return getPresetRange('this_month');
-}
-
-const PRESETS: { key: Preset; label: string }[] = [
-  { key: 'this_month', label: '이번 달' },
-  { key: 'last_month', label: '지난 달' },
-  { key: 'this_quarter', label: '이번 분기' },
-  { key: 'last_6m', label: '최근 6개월' },
-  { key: 'custom', label: '직접 입력' },
-];
+import {
+  type Preset,
+  getPresetRange,
+  PRESETS,
+  OverviewCard,
+  RateBar,
+  formatDuration,
+} from './stats-primitives';
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
-
-function OverviewCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  color,
-  title,
-  onClick,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  sub?: string;
-  color: string;
-  title?: string; // 마우스 오버 시 노출할 정확한 값(예: 원 단위 전체 금액)
-  onClick?: () => void; // 있으면 클릭 가능 카드(세부 내역 열기)
-}) {
-  const clickable = !!onClick;
-  return (
-    <div
-      onClick={onClick}
-      role={clickable ? 'button' : undefined}
-      tabIndex={clickable ? 0 : undefined}
-      onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick!(); } } : undefined}
-      className={`flex-1 min-w-[140px] bg-white border border-gray-200 rounded-xl p-4 transition-all ${
-        clickable
-          ? 'cursor-pointer hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400/40'
-          : ''
-      }`}
-    >
-      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-lg mb-3 ${color}`}>
-        <Icon size={15} />
-      </div>
-      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-      <p
-        title={title}
-        className="text-2xl font-bold text-gray-900 whitespace-nowrap tabular-nums tracking-tight"
-      >
-        {value}
-      </p>
-      {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
-    </div>
-  );
-}
-
-function RateBar({
-  value,
-  max = 100,
-  color = 'bg-blue-500',
-}: {
-  value: number;
-  max?: number;
-  color?: string;
-}) {
-  return (
-    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-      <div
-        className={`h-full rounded-full ${color}`}
-        style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
-      />
-    </div>
-  );
-}
-
-// 초 단위 경과 시간을 사람이 읽기 쉬운 한글 기간으로. null이면 '-'.
-function formatDuration(seconds: number | null): string {
-  if (seconds == null) return '-';
-  if (seconds < 60) return '1분 미만';
-  const mins = Math.round(seconds / 60);
-  if (mins < 60) return `${mins}분`;
-  const hours = Math.floor(mins / 60);
-  const remMin = mins % 60;
-  if (hours < 24) return remMin > 0 ? `${hours}시간 ${remMin}분` : `${hours}시간`;
-  const days = Math.floor(hours / 24);
-  const remHour = hours % 24;
-  return remHour > 0 ? `${days}일 ${remHour}시간` : `${days}일`;
-}
 
 function SourceTable({
   rows,
@@ -138,17 +31,17 @@ function SourceTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100">
-            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 min-w-[140px]">
+            <th className="text-left py-2 pr-4 text-xs font-medium text-gray-400 min-w-[140px]">
               유입 소스
             </th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">리드</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">컨택 성공</th>
-            <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[100px]">컨택률</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">결제</th>
-            <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[100px]">전환율</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500 whitespace-nowrap">평균 첫 응답</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">매출</th>
-            <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">수익</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">리드</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">컨택 성공</th>
+            <th className="py-2 px-2 text-xs font-medium text-gray-400 min-w-[100px]">컨택률</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">결제</th>
+            <th className="py-2 px-2 text-xs font-medium text-gray-400 min-w-[100px]">전환율</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400 whitespace-nowrap">평균 첫 응답</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">매출</th>
+            <th className="text-right py-2 pl-2 text-xs font-medium text-gray-400">수익</th>
           </tr>
         </thead>
         <tbody>
@@ -164,7 +57,7 @@ function SourceTable({
                   onSelect(r.source);
                 }
               }}
-              className="border-b border-gray-50 hover:bg-blue-50/50 transition-colors cursor-pointer focus:outline-none focus:bg-blue-50"
+              className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer focus:outline-none focus:bg-gray-50"
             >
               <td className="py-2.5 pr-4">
                 <div>
@@ -176,19 +69,19 @@ function SourceTable({
               <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.contacted}</td>
               <td className="py-2.5 px-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-blue-600 w-9 text-right">
+                  <span className="text-xs font-medium text-gray-700 w-9 text-right">
                     {r.contact_rate}%
                   </span>
-                  <RateBar value={r.contact_rate} color="bg-blue-400" />
+                  <RateBar value={r.contact_rate} color="bg-gray-900" />
                 </div>
               </td>
               <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.paid}</td>
               <td className="py-2.5 px-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-emerald-600 w-9 text-right">
+                  <span className="text-xs font-medium text-gray-700 w-9 text-right">
                     {r.conversion_rate}%
                   </span>
-                  <RateBar value={r.conversion_rate} color="bg-emerald-400" />
+                  <RateBar value={r.conversion_rate} color="bg-gray-900" />
                 </div>
               </td>
               <td className="text-right py-2.5 px-2 text-xs text-gray-600 whitespace-nowrap tabular-nums">
@@ -197,7 +90,7 @@ function SourceTable({
               <td className="text-right py-2.5 px-2 text-xs text-gray-600">
                 {r.revenue > 0 ? `${(r.revenue / 10000).toFixed(0)}만` : '-'}
               </td>
-              <td className="text-right py-2.5 pl-2 text-xs font-medium text-emerald-700">
+              <td className="text-right py-2.5 pl-2 text-xs font-medium text-gray-700">
                 {r.net_revenue > 0 ? `${(r.net_revenue / 10000).toFixed(0)}만` : '-'}
               </td>
             </tr>
@@ -218,16 +111,16 @@ function WeeklyTable({ rows }: { rows: StatsWeekly[] }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100">
-            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 min-w-[160px]">
+            <th className="text-left py-2 pr-4 text-xs font-medium text-gray-400 min-w-[160px]">
               주차
             </th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">리드</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">컨택 성공</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">컨택률</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">결제</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">전환율</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">매출</th>
-            <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">수익</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">리드</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">컨택 성공</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">컨택률</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">결제</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">전환율</th>
+            <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">매출</th>
+            <th className="text-right py-2 pl-2 text-xs font-medium text-gray-400">수익</th>
           </tr>
         </thead>
         <tbody>
@@ -236,82 +129,16 @@ function WeeklyTable({ rows }: { rows: StatsWeekly[] }) {
               <td className="py-2.5 pr-4 text-xs font-medium text-gray-800">{r.week}</td>
               <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.leads || '-'}</td>
               <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.contacted || '-'}</td>
-              <td className="text-right py-2.5 px-2 text-xs font-semibold text-blue-600">
+              <td className="text-right py-2.5 px-2 text-xs font-medium text-gray-700">
                 {rate(r.contacted, r.leads)}
               </td>
               <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.paid || '-'}</td>
-              <td className="text-right py-2.5 px-2 text-xs font-semibold text-emerald-600">
+              <td className="text-right py-2.5 px-2 text-xs font-medium text-gray-700">
                 {rate(r.paid, r.leads)}
               </td>
               <td className="text-right py-2.5 px-2 text-xs text-gray-600">{fmt만(r.revenue)}</td>
-              <td className="text-right py-2.5 pl-2 text-xs font-medium text-emerald-700">
+              <td className="text-right py-2.5 pl-2 text-xs font-medium text-gray-700">
                 {fmt만(r.net_revenue)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function StageFlowTable({ rows }: { rows: StageFlowRow[] }) {
-  const fmtDays = (n: number | null) => (n === null ? '-' : `${n.toFixed(1)}일`);
-  // 8(수업 중)은 종착 단계라 "다음 단계 이동" 의미가 없어 이동률 비표시
-  const lastStage = rows[rows.length - 1]?.stage;
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-100">
-            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 min-w-[160px]">
-              단계
-            </th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">도달</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">
-              다음 단계 이동
-            </th>
-            <th className="py-2 px-2 text-xs font-semibold text-gray-500 min-w-[110px]">이동률</th>
-            <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">평균 체류</th>
-            <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">
-              중앙값 체류
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr
-              key={r.stage}
-              className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-            >
-              <td className="py-2.5 pr-4 text-xs font-medium text-gray-800">
-                <span className="text-gray-400">{r.stage}.</span> {r.label}
-              </td>
-              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.reached || '-'}</td>
-              <td className="text-right py-2.5 px-2 text-xs text-gray-700">
-                {r.stage === lastStage ? '-' : r.advanced}
-              </td>
-              <td className="py-2.5 px-2">
-                {r.stage === lastStage || r.reached === 0 ? (
-                  <span className="text-xs text-gray-300">-</span>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-indigo-600 w-11 text-right">
-                      {r.advance_rate}%
-                    </span>
-                    <RateBar value={r.advance_rate} color="bg-indigo-400" />
-                  </div>
-                )}
-              </td>
-              <td className="text-right py-2.5 px-2 text-xs text-gray-700">
-                {fmtDays(r.avg_days)}
-              </td>
-              <td className="text-right py-2.5 pl-2 text-xs text-gray-600">
-                {fmtDays(r.median_days)}
-                {r.sample_size > 0 && (
-                  <span className="text-[10px] text-gray-400 ml-1">(n={r.sample_size})</span>
-                )}
               </td>
             </tr>
           ))}
@@ -431,7 +258,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
       {d && (
         <>
           {/* Overview cards */}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-x-10 gap-y-4 border-b border-gray-100 pb-6">
             <OverviewCard
               icon={Users}
               label="신규 리드"
@@ -493,11 +320,8 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               onClick={() => setDetail({ metric: 'net_profit', label: '순 수익' })}
             />
             {/* 결제 유형별 매출 (최초/재결제) */}
-            <div className="flex-1 min-w-[140px] bg-white border border-gray-200 rounded-xl p-4">
-              <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg mb-3 bg-indigo-50 text-indigo-600">
-                <CreditCard size={15} />
-              </div>
-              <p className="text-xs text-gray-500 mb-1.5">결제 유형별</p>
+            <div className="flex-1 min-w-[130px] py-1">
+              <p className="text-xs text-gray-400 mb-1.5">결제 유형별</p>
               <div className="space-y-0.5">
                 <button
                   type="button"
@@ -505,7 +329,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                   className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
                 >
                   <span className="text-[11px] text-gray-400">최초결제</span>
-                  <span title={fmt원(d.overview.first_payment_revenue)} className="text-base font-bold text-gray-900 tabular-nums whitespace-nowrap">
+                  <span title={fmt원(d.overview.first_payment_revenue)} className="text-base font-semibold text-gray-900 tabular-nums whitespace-nowrap">
                     {fmt만원(d.overview.first_payment_revenue)}
                   </span>
                 </button>
@@ -515,7 +339,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                   className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
                 >
                   <span className="text-[11px] text-gray-400">재결제</span>
-                  <span title={fmt원(d.overview.repayment_revenue)} className="text-base font-bold text-gray-700 tabular-nums whitespace-nowrap">
+                  <span title={fmt원(d.overview.repayment_revenue)} className="text-base font-semibold text-gray-700 tabular-nums whitespace-nowrap">
                     {fmt만원(d.overview.repayment_revenue)}
                   </span>
                 </button>
@@ -525,9 +349,9 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
           </div>
 
           {/* Monthly / Weekly trend */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <div className="border-b border-gray-100 pb-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-900">
+              <h3 className="text-sm font-semibold text-gray-500">
                 {trendView === 'monthly' ? '월별 추이' : '주차별 추이'}
               </h3>
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
@@ -575,8 +399,8 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
           </div>
 
           {/* Source breakdown */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <h3 className="text-sm font-bold text-gray-900 mb-1">유입 소스별 성과</h3>
+          <div className="pt-2">
+            <h3 className="text-sm font-semibold text-gray-500 mb-1">유입 소스별 성과</h3>
             <p className="text-[11px] text-gray-400">소스를 클릭하면 해당 리드 명단을 볼 수 있습니다.</p>
             <p className="text-[11px] text-gray-400 mb-4">
               모든 지표(매출·수익 포함)는 이 기간에 <b>문의(인입)</b>한 리드 기준입니다.{' '}
@@ -592,21 +416,6 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                   setDetail({ metric: 'leads', label: `${source} 리드`, source })
                 }
               />
-            )}
-          </div>
-
-          {/* Funnel stage flow */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-sm font-bold text-gray-900">퍼널 단계별 이동</h3>
-            </div>
-            <p className="text-[11px] text-gray-400 mb-4">
-              도달·이동률은 현재 단계 기준, 체류 기간은 기록된 단계 이동 이력 기준입니다.
-            </p>
-            {!d.stage_flow || d.stage_flow.every((r) => r.reached === 0) ? (
-              <p className="text-sm text-gray-400 text-center py-6">단계 이동 데이터가 없습니다.</p>
-            ) : (
-              <StageFlowTable rows={d.stage_flow} />
             )}
           </div>
         </>

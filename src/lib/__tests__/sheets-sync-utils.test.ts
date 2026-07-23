@@ -128,7 +128,8 @@ describe('buildCrmPayload', () => {
     expect(result.desired_subjects).toBe('Both');
     expect(result.lead_type).toBe('B2C');
     expect(result.campaign_tags).toContain('META 리드');
-    expect(result.campaign_tags).toContain('23)26여름방학특강_2');
+    // ad_name은 campaign_tags가 아닌 전용 컬럼에 저장됨 (migration 036)
+    expect(result.ad_name).toBe('23)26여름방학특강_2');
   });
 
   it('Tab2: target_test_date 매핑', () => {

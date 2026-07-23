@@ -9,6 +9,8 @@ import {
   INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
   GRADE_OPTIONS,
 } from '@/types/crm';
+import { Field, inputCls, selectCls } from './form-primitives';
+import { useCompanies } from '@/hooks/useCompanies';
 
 interface StudentCreateModalProps {
   onClose: () => void;
@@ -26,7 +28,8 @@ interface FormState {
   traffic_source: TrafficSource | '';
   content_author: ContentAuthor | '';
   lead_type: LeadType;
-  b2b_partner: B2BPartner | '';
+  b2b_partner: B2BPartner | ''; // 표시/전환기 듀얼 라이트용 업체명
+  company_id: string; // companies FK (정본)
   campaign_tags: string;
   contact_type: ContactType;
   parent_phone: string;
@@ -51,6 +54,7 @@ const INITIAL_FORM: FormState = {
   content_author: '',
   lead_type: 'B2C',
   b2b_partner: '',
+  company_id: '',
   campaign_tags: '',
   contact_type: 'phone',
   parent_phone: '',
@@ -67,6 +71,7 @@ const INITIAL_FORM: FormState = {
 
 export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: StudentCreateModalProps) {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const { companies } = useCompanies(adminKey); // 활성 업체(동적 목록)
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [showSecondDate, setShowSecondDate] = useState(false);
@@ -138,6 +143,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
         content_author: form.content_author || null,
         lead_type: form.lead_type,
         b2b_partner: form.lead_type === 'B2B' && form.b2b_partner ? form.b2b_partner : null,
+        company_id: form.lead_type === 'B2B' && form.company_id ? form.company_id : null,
         campaign_tags: tags,
         contact_type: form.contact_type,
         parent_phone: form.parent_phone.trim(),
@@ -177,7 +183,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-lg bg-gray-50 rounded-xl border border-gray-200 shadow-2xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-base font-bold text-gray-900">새 학생 추가</h2>
+          <h2 className="text-base font-semibold text-gray-900">새 학생 추가</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-900 transition-colors">
             <X size={18} />
           </button>
@@ -219,7 +225,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
 
           {/* 인입 분류 */}
           <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-3">
-            <p className="text-xs font-bold text-gray-500">인입 분류</p>
+            <p className="text-xs font-semibold text-gray-500">인입 분류</p>
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="인입 채널">
@@ -253,10 +259,27 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
 
             {form.lead_type === 'B2B' && (
               <Field label="B2B 파트너사">
-                <select value={form.b2b_partner} onChange={set('b2b_partner')} className={selectCls}>
-                  <option value="">선택</option>
-                  {B2B_PARTNER_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
+                {companies.length > 0 ? (
+                  // 동적 업체 목록: 선택 시 company_id(정본) + b2b_partner(이름) 듀얼 라이트
+                  <select
+                    value={form.company_id}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      const name = companies.find(c => c.id === id)?.name ?? '';
+                      setForm(prev => ({ ...prev, company_id: id, b2b_partner: name as B2BPartner | '' }));
+                    }}
+                    className={selectCls}
+                  >
+                    <option value="">선택</option>
+                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                ) : (
+                  // 폴백(업체 목록 로드 실패/마이그레이션 전): 기존 정적 목록, 이름만 저장
+                  <select value={form.b2b_partner} onChange={set('b2b_partner')} className={selectCls}>
+                    <option value="">선택</option>
+                    {B2B_PARTNER_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                )}
               </Field>
             )}
 
@@ -401,7 +424,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
             취소
           </button>
-          <button onClick={handleSubmit} disabled={saving} className="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg transition-colors">
+          <button onClick={handleSubmit} disabled={saving} className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg transition-colors">
             {saving ? '추가 중...' : '학생 추가'}
           </button>
         </div>
@@ -410,20 +433,3 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium text-gray-400">
-        {label}
-      </label>
-      {children}
-      {error && <p className="text-xs text-red-400">{error}</p>}
-    </div>
-  );
-}
-
-const inputCls = (hasError: boolean) =>
-  `w-full bg-white border ${hasError ? 'border-red-500/50' : 'border-gray-200'} focus:border-blue-500 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all`;
-
-const selectCls =
-  'w-full bg-white border border-gray-200 focus:border-blue-500 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none transition-all';

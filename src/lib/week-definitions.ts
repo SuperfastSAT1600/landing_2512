@@ -120,3 +120,23 @@ export function getWeekLabel(dateStr: string): string | null {
   }
   return null;
 }
+
+export type WeekDef = { label: string; start: string; end: string };
+
+/** 날짜(YYYY-MM-DD)가 속한 주차 정의. 범위 밖이면 null. */
+export function getWeekDef(dateStr: string): WeekDef | null {
+  const date = dateStr.slice(0, 10);
+  return WEEK_DEFINITIONS.find((w) => date >= w.start && date <= w.end) ?? null;
+}
+
+/** week_start(정확히 일치)로 주차 정의 조회. */
+export function getWeekDefByStart(weekStart: string): WeekDef | null {
+  return WEEK_DEFINITIONS.find((w) => w.start === weekStart) ?? null;
+}
+
+/** 주어진 week_start에서 offset(±)만큼 이동한 주차. 범위 밖이면 null(클램프 없음). */
+export function weekByOffset(weekStart: string, offset: number): WeekDef | null {
+  const idx = WEEK_DEFINITIONS.findIndex((w) => w.start === weekStart);
+  if (idx < 0) return null;
+  return WEEK_DEFINITIONS[idx + offset] ?? null;
+}

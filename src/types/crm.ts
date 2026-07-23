@@ -48,7 +48,6 @@ export type TrafficSource =
   | '소개'
   | 'B2B 파트너'
   | '인스타그램 광고'
-  | '랜딩 상담 폼 카톡 - SuperfastSAT!'
   | '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT'
   | '(구) 랜딩 구글폼 상담 예약'
   | '랜딩 상담 예약 폼 카톡 - SuperfastSAT!'
@@ -169,7 +168,8 @@ export interface Student {
   traffic_source: TrafficSource | null;
   content_author: ContentAuthor | null;
   lead_type: LeadType | null;
-  b2b_partner: B2BPartner | null;
+  b2b_partner: B2BPartner | null; // @deprecated 전환기 듀얼 라이트용. 정본은 company_id.
+  company_id: string | null; // B2B 업체 FK → companies(id). lead_type='B2B'일 때 사용.
   campaign_tags: string[];
   ad_name: string | null;
   adset_name: string | null;
@@ -264,6 +264,97 @@ export interface RetryStrategy {
   created_at: string;
 }
 
+// ─── B2B 업체 (파트너) ───────────────────────────────────────────────────────
+
+/** B2B 소개/공급 파트너 업체. students.company_id 로 연결, 매출은 payments 조인으로 귀속. */
+export interface Company {
+  id: string;
+  name: string; // 업체명 (UNIQUE)
+  contact_person: string | null; // 담당자
+  contact_phone: string | null;
+  contact_email: string | null;
+  contract_terms: string | null; // 계약조건(수수료율/정산주기 등 자유서술)
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateCompanyInput {
+  name: string;
+  contact_person?: string | null;
+  contact_phone?: string | null;
+  contact_email?: string | null;
+  contract_terms?: string | null;
+  notes?: string | null;
+  is_active?: boolean;
+}
+
+// ─── 주차별 계획 (목표 수치 + 실행 체크리스트) ───────────────────────────────
+
+export type WeeklyPlanSegment = 'b2c' | 'b2b';
+
+/** 목표 설정 가능한 지표 — b2c/b2b stats overview 교집합. */
+export type WeeklyPlanMetricKey = 'leads' | 'contacted' | 'paid' | 'revenue' | 'net_revenue';
+
+export const WEEKLY_PLAN_METRIC_LABELS: Record<WeeklyPlanMetricKey, string> = {
+  leads: '신규 리드',
+  contacted: '컨택',
+  paid: '결제',
+  revenue: '매출',
+  net_revenue: '실수익',
+};
+
+/** 원화(정수) 지표 — 표시 포맷 분기용. 나머지는 건수. */
+export const WEEKLY_PLAN_CURRENCY_METRICS: WeeklyPlanMetricKey[] = ['revenue', 'net_revenue'];
+
+export const WEEKLY_PLAN_METRIC_KEYS: WeeklyPlanMetricKey[] = ['leads', 'contacted', 'paid', 'revenue', 'net_revenue'];
+
+export interface WeeklyPlanTarget {
+  key: WeeklyPlanMetricKey;
+  label: string; // 스냅샷(라벨 변경돼도 과거 주차 보존)
+  target_value: number;
+}
+
+export interface WeeklyPlanAction {
+  id: string; // crypto.randomUUID() (클라이언트 생성)
+  text: string;
+  done: boolean;
+  done_at: string | null;
+  owner?: string | null;
+}
+
+export interface WeeklyPlan {
+  id: string;
+  segment: WeeklyPlanSegment;
+  week_start: string; // YYYY-MM-DD
+  targets: WeeklyPlanTarget[];
+  actions: WeeklyPlanAction[];
+  created_at: string;
+  updated_at: string;
+}
+
+/** GET /api/crm/weekly-plan 응답 */
+export interface WeeklyPlanResponse {
+  plan: WeeklyPlan | null; // 아직 미작성 주차면 null
+  actuals: Partial<Record<WeeklyPlanMetricKey, number>>;
+  week: { start: string; end: string; label: string };
+}
+
+// ─── 채널 퍼널 시도 전략 주석 ────────────────────────────────────────────────
+
+export type FunnelStageKey = 'lead' | 'call' | 'diagnostic' | 'report' | 'paid';
+
+export interface FunnelNote {
+  id: string;
+  source: string; // traffic_source 또는 '__all__'
+  stage_key: FunnelStageKey;
+  week_start: string | null; // 시도 주차(YYYY-MM-DD)
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // ─── 성장 실험 (전략/실행/회고) ──────────────────────────────────────────────
 
 // 자동 측정 지표는 /api/crm/stats by_source / overview 필드와 1:1 매핑. custom은 수동 입력.
@@ -343,7 +434,9 @@ export type CreateStudentInput = Pick<
   | 'desired_subjects'
   | 'parent_timezone'
   | 'entered_by'
->;
+> & {
+  company_id?: string | null; // B2B 업체 FK (선택; 리드 인입 경로에선 미지정)
+};
 
 // ─── Payment ─────────────────────────────────────────────────────────────────
 
@@ -609,7 +702,6 @@ export const TRAFFIC_SOURCE_OPTIONS: TrafficSource[] = [
   '소개',
   'B2B 파트너',
   '인스타그램 광고',
-  '랜딩 상담 폼 카톡 - SuperfastSAT!',
   '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
   '(구) 랜딩 구글폼 상담 예약',
   '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',
@@ -630,6 +722,7 @@ export const TRAFFIC_SOURCE_OPTIONS: TrafficSource[] = [
 
 export const CONTENT_AUTHOR_OPTIONS: ContentAuthor[] = ['배병윤', '이민재', '김우영', '장현아'];
 
+/** @deprecated companies 테이블 시드 소스로만 유지. 런타임 드롭다운은 useCompanies() 사용. */
 export const B2B_PARTNER_OPTIONS: B2BPartner[] = [
   '해연',
   '커넥티드에듀',

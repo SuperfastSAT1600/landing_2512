@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildHealthSnapshot } from '../strategy-health';
+import { aggregateChurn } from '../churn-breakdown';
 
 type HealthInput = Parameters<typeof buildHealthSnapshot>[0];
 type Stats = HealthInput['current'];
@@ -79,5 +80,58 @@ describe('buildHealthSnapshot — weakest 5개 채우기', () => {
     const snap = buildHealthSnapshot(input(current));
     expect(snap.weakest.length).toBeLessThanOrEqual(5);
     expect(snap.weakest.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('buildHealthSnapshot — 이탈 사유 반영', () => {
+  const bareCurrent = stats({ by_source: [], stage_flow: [] });
+
+  it('churn 미지정이면 summaryText에 이탈 섹션이 없고 churn 신호도 없다', () => {
+    const snap = buildHealthSnapshot(input(bareCurrent));
+    expect(snap.summaryText).not.toContain('이탈 사유 분석');
+    expect(snap.signals.every((s) => s.category !== 'churn')).toBe(true);
+  });
+
+  it('churn 지정 시 summaryText에 이탈 사유 섹션·분포·대표 사유가 들어간다', () => {
+    const churn = aggregateChurn([
+      { churn_tag: '미결제: 콜 무응답', churn_type: 'potential' },
+      { churn_tag: '미결제: 보류', churn_type: 'closed' },
+      { churn_tag: '회신 없음: 무응답', churn_type: 'closed' },
+      { churn_tag: '환불: 잔여 환불', churn_type: 'closed' },
+      { churn_tag: '미응시: 미진행', churn_type: 'potential' },
+      { churn_tag: '미결제: 취소', churn_type: 'closed' },
+    ]);
+    const snap = buildHealthSnapshot({ ...input(bareCurrent), churn });
+    expect(snap.summaryText).toContain('이탈 사유 분석');
+    expect(snap.summaryText).toContain('미결제 3');
+    expect(snap.summaryText).toContain('콜 무응답');
+  });
+
+  it('최다 사유가 크게 쏠리면 category=churn 신호를 낸다', () => {
+    // 이탈 6명, 미결제 4/6(66%) → churnTopShareCrit(0.5) 초과 → critical
+    const churn = aggregateChurn([
+      { churn_tag: '미결제: a', churn_type: 'closed' },
+      { churn_tag: '미결제: b', churn_type: 'closed' },
+      { churn_tag: '미결제: c', churn_type: 'closed' },
+      { churn_tag: '미결제: d', churn_type: 'closed' },
+      { churn_tag: '환불: e', churn_type: 'closed' },
+      { churn_tag: '회신 없음: f', churn_type: 'closed' },
+    ]);
+    const snap = buildHealthSnapshot({ ...input(bareCurrent), churn });
+    const sig = snap.signals.find((s) => s.category === 'churn');
+    expect(sig).toBeDefined();
+    expect(sig!.severity).toBe('critical');
+    expect(sig!.area).toContain('미결제');
+  });
+
+  it('이탈 코호트가 표본 게이트(5) 미만이면 churn 신호를 내지 않는다', () => {
+    const churn = aggregateChurn([
+      { churn_tag: '미결제: a', churn_type: 'closed' },
+      { churn_tag: '미결제: b', churn_type: 'closed' },
+    ]);
+    const snap = buildHealthSnapshot({ ...input(bareCurrent), churn });
+    expect(snap.signals.every((s) => s.category !== 'churn')).toBe(true);
+    // 신호는 없어도 summaryText 이탈 섹션은 노출(맥락 제공)
+    expect(snap.summaryText).toContain('이탈 사유 분석');
   });
 });

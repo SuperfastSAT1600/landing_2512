@@ -206,11 +206,11 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
   const hasAreas = !!areas && areas.length > 0;
 
   return (
-    <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-3">
+    <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <Sparkles size={16} className="text-indigo-500 shrink-0" />
-          <p className="text-sm font-bold text-indigo-900 truncate">{MODE_TITLE[mode]}</p>
+          <Sparkles size={16} className="text-blue-500 shrink-0" />
+          <p className="text-sm font-semibold text-blue-900 truncate">{MODE_TITLE[mode]}</p>
           {deepPending ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700 shrink-0">
               <Loader2 size={10} className="animate-spin" /> 심화 분석 중…
@@ -225,26 +225,26 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
           <button
             onClick={rescan}
             disabled={loading}
-            className="flex items-center gap-1 text-[11px] font-medium text-indigo-500 hover:text-indigo-700 disabled:opacity-40"
+            className="flex items-center gap-1 text-[11px] font-medium text-blue-500 hover:text-blue-700 disabled:opacity-40"
             title="지표 다시 점검"
           >
             <Activity size={12} />다시 점검
           </button>
-          <button onClick={dismiss} className="text-indigo-300 hover:text-indigo-500" title="오늘 닫기">
+          <button onClick={dismiss} className="text-blue-300 hover:text-blue-500" title="오늘 닫기">
             <X size={15} />
           </button>
         </div>
       </div>
 
       {AVAILABLE_MODES.length > 1 && (
-        <div className="mt-2 inline-flex rounded-lg bg-white/70 border border-indigo-200 p-0.5">
+        <div className="mt-2 inline-flex rounded-lg bg-white/70 border border-blue-200 p-0.5">
           {AVAILABLE_MODES.map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
               disabled={loading}
               className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors disabled:opacity-50 ${
-                mode === m ? 'bg-indigo-600 text-white' : 'text-indigo-600 hover:bg-indigo-100'
+                mode === m ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-100'
               }`}
             >
               {m === 'diagnosis' ? '선제 진단' : '이번 주 방향 맞추기'}
@@ -259,7 +259,7 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
       </div>
 
       {loading ? (
-        <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-indigo-400">
+        <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-blue-400">
           <Loader2 size={13} className="animate-spin" /> {MODE_LOADING[mode]}
         </p>
       ) : (
@@ -276,12 +276,12 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
                   {a.evidence && <p className="text-[11px] text-violet-500 mt-0.5">근거: {a.evidence}</p>}
                   {mode === 'weekly' ? (
                     a.question && (
-                      <p className="text-[13px] text-indigo-700 mt-0.5">
+                      <p className="text-[13px] text-blue-700 mt-0.5">
                         <span className="font-medium">날카로운 질문:</span> {a.question}
                       </p>
                     )
                   ) : (
-                    <p className="text-[13px] text-indigo-700 mt-0.5">
+                    <p className="text-[13px] text-blue-700 mt-0.5">
                       <span className="font-medium">이렇게 해보자:</span> {a.suggestion}
                     </p>
                   )}
@@ -289,19 +289,19 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
               </div>
             ))
           ) : (
-            <p className="text-xs text-indigo-400">이 기간에는 눈에 띄는 약점·정체 신호가 없습니다.</p>
+            <p className="text-xs text-blue-400">이 기간에는 눈에 띄는 약점·정체 신호가 없습니다.</p>
           )}
 
           {!picking ? (
             <button
               onClick={() => (hasAreas ? setPicking(true) : onOpenStrategy(period))}
-              className="mt-1 inline-flex items-center gap-1 text-xs font-bold bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="mt-1 inline-flex items-center gap-1 text-xs font-semibold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
             >
               이어서 전략 짜기 <ArrowRight size={13} />
             </button>
           ) : (
-            <div className="mt-1 rounded-lg border border-indigo-200 bg-white/80 p-2">
-              <p className="px-1 pb-1 text-[11px] font-semibold text-indigo-700">
+            <div className="mt-1 rounded-lg border border-blue-200 bg-white/80 p-2">
+              <p className="px-1 pb-1 text-[11px] font-semibold text-blue-700">
                 어떤 안건으로 전략을 이어서 짤까요?
               </p>
               <div className="space-y-0.5">
@@ -309,10 +309,10 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
                   <button
                     key={i}
                     onClick={() => { onOpenStrategy(period, buildSeed(a)); setPicking(false); }}
-                    className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs hover:bg-indigo-50 transition-colors"
+                    className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs hover:bg-blue-50 transition-colors"
                   >
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${SEV_DOT[a.severity] ?? 'bg-amber-500'}`} />
-                    <span className="font-medium text-indigo-700">{a.title}</span>
+                    <span className="font-medium text-blue-700">{a.title}</span>
                     <span className="truncate text-gray-400">— {a.why}</span>
                   </button>
                 ))}

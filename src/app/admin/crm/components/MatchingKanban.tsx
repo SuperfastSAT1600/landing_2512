@@ -56,7 +56,7 @@ function MatchingRow({ stage, students, onStudentClick, onChurn, onSendOffer }: 
     <div className="flex items-stretch gap-0 border-b border-gray-200 last:border-b-0">
       {/* Stage label */}
       <div className="w-44 shrink-0 flex flex-col justify-center px-3 py-3 border-r border-gray-200">
-        <p className="text-xs font-bold text-gray-600 leading-tight">
+        <p className="text-xs font-semibold text-gray-600 leading-tight">
           {MATCHING_STAGE_LABELS[stage]}
         </p>
         <span className="mt-1 text-[11px] text-gray-400">{students.length}명</span>

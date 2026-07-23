@@ -84,13 +84,13 @@ export function DailyTasks({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       {/* 섹션 A — 오늘 액션 필요 명단 */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden self-start">
+      <div className="border border-gray-100 rounded-lg overflow-hidden self-start">
         <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100">
           <AlertTriangle size={15} className="text-rose-500 shrink-0" />
-          <h3 className="flex-1 text-sm font-bold text-gray-900">
+          <h3 className="flex-1 text-sm font-semibold text-gray-900">
             오늘 액션 필요 명단
           </h3>
-          <span className="text-xs font-bold text-rose-600">{todoItems.length}명</span>
+          <span className="text-xs font-semibold text-rose-600">{todoItems.length}명</span>
         </div>
         {todoItems.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-10">
@@ -111,7 +111,7 @@ export function DailyTasks({
                   aria-label={`${s.name} 액션 완료`}
                   title="처리 완료로 체크하면 명단에서 사라집니다"
                 />
-                <span className="w-5 shrink-0 text-center text-xs font-bold text-gray-400">
+                <span className="w-5 shrink-0 text-center text-xs font-semibold text-gray-400">
                   {idx + 1}
                 </span>
                 <button
@@ -121,7 +121,7 @@ export function DailyTasks({
                   <span className="flex items-center gap-1.5 shrink-0">
                     <span className="text-sm font-medium text-gray-800">{s.name}</span>
                     <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                      className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${
                         kind === 'stall'
                           ? 'bg-rose-100 text-rose-700'
                           : 'bg-amber-100 text-amber-700'
@@ -148,11 +148,11 @@ export function DailyTasks({
       </div>
 
       {/* 섹션 B — 오늘 취한 액션 */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden self-start">
+      <div className="border border-gray-100 rounded-lg overflow-hidden self-start">
         <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100">
           <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
-          <h3 className="flex-1 text-sm font-bold text-gray-900">오늘 취한 액션</h3>
-          <span className="text-xs font-bold text-emerald-600">{doneItems.length}명</span>
+          <h3 className="flex-1 text-sm font-semibold text-gray-900">오늘 취한 액션</h3>
+          <span className="text-xs font-semibold text-emerald-600">{doneItems.length}명</span>
         </div>
         {doneItems.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-10">

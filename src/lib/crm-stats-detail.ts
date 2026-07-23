@@ -29,6 +29,7 @@ export interface LeadDetailItem {
   lead_status: string;
   churn_tag: string | null; // 이탈 사유 (이탈 리드만 값 존재)
   date: string | null; // inquiry_date ?? created_at
+  is_paid: boolean; // 최초결제 완료 여부 — 상태 뱃지(결제) 판별용
 }
 
 /** kind=payments 항목: 결제/환불 행 */
@@ -77,7 +78,7 @@ function netAmount(p: { amount: number; tax_type?: string | null }): number {
   return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
 }
 
-function toLeadItem(s: StudentRow): LeadDetailItem {
+function toLeadItem(s: StudentRow, paid = false): LeadDetailItem {
   return {
     id: s.id,
     name: s.name,
@@ -86,6 +87,7 @@ function toLeadItem(s: StudentRow): LeadDetailItem {
     lead_status: s.lead_status,
     churn_tag: s.churn_tag ?? null,
     date: s.inquiry_date ?? s.created_at ?? null,
+    is_paid: paid,
   };
 }
 
@@ -112,7 +114,8 @@ export function buildStatsDetail(
   metric: StatsDetailMetric,
   students: StudentRow[],
   payments: PaymentRow[],
-  source?: string
+  source?: string,
+  opts?: { includeRetryInContacted?: boolean }
 ): StatsDetailResult {
   // 채널 드릴다운: by_source 집계와 동일하게 traffic_source(null→'미입력') 기준으로 필터.
   if (source != null) {
@@ -137,18 +140,19 @@ export function buildStatsDetail(
 
   switch (metric) {
     case 'leads': {
-      const items = students.map(toLeadItem);
+      const items = students.map((s) => toLeadItem(s, isPaid(s)));
       return { metric, kind: 'leads', count: items.length, items };
     }
     case 'contacted': {
+      // 기본은 B2C 집계와 동일하게 재시도 리드 제외. 세일즈 로직 드릴다운은 포함(opts).
       const items = students
-        .filter((s) => !s.retry_strategy_id)
+        .filter((s) => opts?.includeRetryInContacted || !s.retry_strategy_id)
         .filter((s) => hasReachedStage(s, '2'))
-        .map(toLeadItem);
+        .map((s) => toLeadItem(s, isPaid(s)));
       return { metric, kind: 'leads', count: items.length, items };
     }
     case 'paid': {
-      const items = students.filter(isPaid).map(toLeadItem);
+      const items = students.filter(isPaid).map((s) => toLeadItem(s, true));
       return { metric, kind: 'leads', count: items.length, items };
     }
     case 'revenue': {

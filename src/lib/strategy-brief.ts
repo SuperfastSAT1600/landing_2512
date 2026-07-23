@@ -5,9 +5,10 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, type FunnelStage, type TrafficSource, type InsightPeriod } from '@/types/crm';
 import { buildHealthSnapshot, type StalledCount, type HealthSnapshot } from '@/lib/strategy-health';
+import { aggregateChurn, type ChurnBreakdown, type ChurnRow } from '@/lib/churn-breakdown';
 import { buildCorrelationBlock, type CorrelationStudent } from '@/lib/strategy-correlations';
 import type { CrmStatsData } from '@/app/api/crm/stats/route';
-import { parseISO, addDays, subDays, differenceInCalendarDays, format } from 'date-fns';
+import { parseISO, addDays, differenceInCalendarDays, format } from 'date-fns';
 
 interface PeriodRange {
   curFrom: string;
@@ -18,31 +19,46 @@ interface PeriodRange {
   periodLabel: string;
 }
 
-/** 기본 분석 기간 = 오늘로부터 직전 한 달(최근 30일: 오늘−29일 ~ 오늘). PeriodPicker.defaultPeriod와 동일. */
-function defaultRange(todayStr: string): InsightPeriod {
-  return { from: format(subDays(parseISO(todayStr), 29), 'yyyy-MM-dd'), to: todayStr };
+/**
+ * 해당월(이번 달) 기준 기간 + 추세 비교용 직전 달 동기간(같은 일자까지).
+ * 예: 오늘이 6/19면 current = 6/1~6/19, previous = 5/1~5/19.
+ */
+function monthRanges(todayStr: string): PeriodRange {
+  const [y, m, d] = todayStr.split('-').map(Number);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const pY = m === 1 ? y - 1 : y;
+  const pM = m === 1 ? 12 : m - 1;
+  const prevLastDay = new Date(pY, pM, 0).getDate(); // pM은 1-indexed → 해당 월 말일
+  return {
+    curFrom: `${y}-${pad(m)}-01`,
+    curTo: todayStr,
+    prevFrom: `${pY}-${pad(pM)}-01`,
+    prevTo: `${pY}-${pad(pM)}-${pad(Math.min(d, prevLastDay))}`,
+    periodDays: d,
+    periodLabel: `이번 달(1일~오늘, ${d}일차) vs 지난 달 같은 기간`,
+  };
 }
 
 /**
- * 임의 기간(또는 기본 = 최근 30일) → current 구간 + 직전 '동일 길이' 구간 비교.
+ * 사용자가 고른 임의 기간 → current 구간 + 직전 '동일 길이' 구간 비교.
  * 예: 6/1~6/30(30일) 선택 시 previous = 5/2~5/31(직전 30일).
- * period 미지정이면 오늘로부터 직전 한 달(최근 30일)로 폴백.
+ * period 미지정이면 monthRanges(오늘) 기본으로 폴백.
  */
 export function resolvePeriod(period?: InsightPeriod): PeriodRange {
-  const eff = period?.from && period?.to ? period : defaultRange(kstDateStr(Date.now()));
-  const fromD = parseISO(eff.from);
-  const toD = parseISO(eff.to);
+  if (!period?.from || !period?.to) return monthRanges(kstDateStr(Date.now()));
+  const fromD = parseISO(period.from);
+  const toD = parseISO(period.to);
   const len = differenceInCalendarDays(toD, fromD) + 1; // 양끝 포함 일수
   const prevTo = addDays(fromD, -1);
   const prevFrom = addDays(prevTo, -(len - 1));
   const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
   return {
-    curFrom: eff.from,
-    curTo: eff.to,
+    curFrom: period.from,
+    curTo: period.to,
     prevFrom: fmt(prevFrom),
     prevTo: fmt(prevTo),
     periodDays: len,
-    periodLabel: `${eff.from}~${eff.to} (${len}일) vs 직전 ${len}일(${fmt(prevFrom)}~${fmt(prevTo)})`,
+    periodLabel: `${period.from}~${period.to} (${len}일) vs 직전 ${len}일(${fmt(prevFrom)}~${fmt(prevTo)})`,
   };
 }
 
@@ -50,7 +66,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * 요청 본문에서 분석 기간(from/to)을 파싱·검증. 형식 불량·from>to·미지정이면 undefined
- * (→ buildBriefHealth/buildMemoSignals가 최근 30일 기본으로 폴백).
+ * (→ buildBriefHealth/buildMemoSignals가 이번 달 기본으로 폴백).
  */
 export function parsePeriod(body: unknown): InsightPeriod | undefined {
   if (!body || typeof body !== 'object') return undefined;
@@ -101,8 +117,28 @@ export async function fetchStalledCounts(): Promise<StalledCount[]> {
 }
 
 /**
- * 선택 기간(없으면 이번 달, 1일~오늘) 지표 + 직전 동일 길이 구간 비교 + 정체 리드로
- * KPI 건강 스냅샷 구성. stats 실패 시 null.
+ * 분석 기간 인입 코호트 중 이탈한 리드(funnel_stage=churned 또는 lead_status=inactive)의
+ * 이탈 사유(churn_tag)·유형(churn_type) 분포. 코호트 정의는 stats 라우트와 동일
+ * (inquiry_date ∈ [from, to]). 실패 시 이탈 0건으로 degrade.
+ */
+export async function fetchChurnCohort(curFrom: string, curTo: string): Promise<ChurnBreakdown> {
+  try {
+    const { data } = await supabaseAdmin
+      .from('students')
+      .select('churn_tag, churn_type')
+      .or('funnel_stage.eq.churned,lead_status.eq.inactive')
+      .gte('inquiry_date', curFrom)
+      .lte('inquiry_date', `${curTo}T23:59:59`);
+    return aggregateChurn((data ?? []) as ChurnRow[]);
+  } catch (err) {
+    console.error('[strategy-brief] churn cohort failed (degrading):', err);
+    return aggregateChurn([]);
+  }
+}
+
+/**
+ * 선택 기간(없으면 이번 달, 1일~오늘) 지표 + 직전 동일 길이 구간 비교 + 정체 리드 +
+ * 이탈 사유 분포로 KPI 건강 스냅샷 구성. stats 실패 시 null.
  */
 export async function buildBriefHealth(
   origin: string,
@@ -110,10 +146,11 @@ export async function buildBriefHealth(
   period?: InsightPeriod
 ): Promise<HealthSnapshot | null> {
   const r = resolvePeriod(period);
-  const [current, previous, stalled] = await Promise.all([
+  const [current, previous, stalled, churn] = await Promise.all([
     fetchStatsPeriod(origin, adminKey, r.curFrom, r.curTo),
     fetchStatsPeriod(origin, adminKey, r.prevFrom, r.prevTo),
     fetchStalledCounts(),
+    fetchChurnCohort(r.curFrom, r.curTo),
   ]);
   if (!current || !previous) return null;
   return buildHealthSnapshot({
@@ -122,6 +159,7 @@ export async function buildBriefHealth(
     stalled,
     periodDays: r.periodDays,
     periodLabel: r.periodLabel,
+    churn,
   });
 }
 

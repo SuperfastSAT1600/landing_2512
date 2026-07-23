@@ -67,7 +67,7 @@ function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayme
 
   const header = (
     <div className={`px-2 py-2 border-b ${isSearchMatch ? 'border-blue-400 bg-blue-50' : isEnrollmentStage ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200'}`}>
-      <p className={`text-[11px] font-bold leading-tight truncate ${isSearchMatch ? 'text-blue-600' : isEnrollmentStage ? 'text-emerald-700' : 'text-gray-600'}`}>
+      <p className={`text-[11px] font-semibold leading-tight truncate ${isSearchMatch ? 'text-blue-600' : isEnrollmentStage ? 'text-emerald-700' : 'text-gray-600'}`}>
         {stage}. {KANBAN_STAGE_LABEL(stage)}
       </p>
       <span className={`text-[10px] ${isSearchMatch ? 'text-blue-400' : isEnrollmentStage ? 'text-emerald-500' : 'text-gray-400'}`}>{students.length}명</span>
@@ -277,7 +277,7 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
         <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-200">
             <RefreshCw size={13} className="text-amber-500" />
-            <p className="text-xs font-bold text-amber-700">재활성화 시도 중</p>
+            <p className="text-xs font-semibold text-amber-700">재활성화 시도 중</p>
             <span className="text-xs text-amber-500">{reactivatingStudents.length}명</span>
           </div>
           <div className="flex flex-wrap gap-2 px-4 py-3">
