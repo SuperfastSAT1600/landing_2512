@@ -40,10 +40,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         if (navOpen && isMobile) {
             document.body.style.overflow = 'hidden';
-            return () => {
-                document.body.style.overflow = '';
-            };
         }
+        return () => {
+            document.body.style.overflow = '';
+        };
     }, [navOpen, isMobile]);
 
     const handleLogin = async (e: React.FormEvent) => {
