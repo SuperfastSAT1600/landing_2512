@@ -7,6 +7,10 @@ import { LiveStatusProvider } from './context/LiveStatusContext';
 export const metadata: Metadata = {
   title: "SAT 목표 점수에 가장 빠르게 | SuperfastSAT",
   description: "SuperfastSAT은 Digital SAT 전문 온라인 학원입니다. 목표 점수 달성까지 최단 경로로 안내합니다.",
+  // iOS Safari가 SSR HTML의 전화번호·날짜 등을 자동 링크로 감싸면서
+  // React 하이드레이션 전에 DOM을 변형 → "attributes didn't match" 미스매치를 유발.
+  // 자동 감지를 꺼서 원천 차단(관리자 화면에도 전화번호가 많아 오탐 방지 겸용).
+  formatDetection: { telephone: false, date: false, address: false, email: false },
   alternates: {
     canonical: "https://superfastsat.com",
   },
