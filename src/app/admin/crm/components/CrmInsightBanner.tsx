@@ -11,6 +11,10 @@ interface Props {
   onOpenStrategy: (period: InsightPeriod, seed?: string) => void;
 }
 
+// 전략 에이전트 사용 중단으로 '이어서 전략 짜기' CTA 숨김. true로 바꾸면 복구.
+// 짝: StrategiesTab.tsx 의 동일 플래그(전략 에이전트 탭).
+const STRATEGY_AGENT_ENABLED = false;
+
 /** 선택한 진단 안건을 전략 에이전트 첫 사용자 메시지(시드)로 조합. */
 function buildSeed(a: BriefArea): string {
   const lines = [
@@ -292,7 +296,7 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
             <p className="text-xs text-blue-400">이 기간에는 눈에 띄는 약점·정체 신호가 없습니다.</p>
           )}
 
-          {!picking ? (
+          {STRATEGY_AGENT_ENABLED && (!picking ? (
             <button
               onClick={() => (hasAreas ? setPicking(true) : onOpenStrategy(period))}
               className="mt-1 inline-flex items-center gap-1 text-xs font-semibold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
@@ -324,7 +328,7 @@ export function CrmInsightBanner({ adminKey, onOpenStrategy }: Props) {
                 취소
               </button>
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>
