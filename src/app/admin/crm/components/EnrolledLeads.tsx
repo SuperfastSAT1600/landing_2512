@@ -61,7 +61,7 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefu
           title="환불 처리"
         >
           <RotateCcw size={12} />
-          환불
+          <span className="hidden sm:inline">환불</span>
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onGraduate(student); }}
@@ -69,7 +69,7 @@ function EnrolledCard({ student, firstPaidAt, onStudentClick, onGraduate, onRefu
           title="수업 종료 후 이탈 처리"
         >
           <UserX size={12} />
-          수업 종료
+          <span className="hidden sm:inline">수업 종료</span>
         </button>
       </div>
     </div>

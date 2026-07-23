@@ -164,7 +164,8 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, en
             <p className="py-12 text-center text-sm text-gray-400">해당 기간에 데이터가 없습니다.</p>
           )}
           {!loading && !error && result && result.count > 0 && result.kind === 'leads' && (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
               <thead>
                 <tr className="border-b border-gray-100 text-xs text-gray-500">
                   <th className="text-left py-2 pr-3 font-semibold">이름</th>
@@ -200,9 +201,11 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, en
                 ))}
               </tbody>
             </table>
+            </div>
           )}
           {!loading && !error && result && result.count > 0 && result.kind === 'payments' && (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
               <thead>
                 <tr className="border-b border-gray-100 text-xs text-gray-500">
                   <th className="text-left py-2 pr-3 font-semibold">날짜</th>
@@ -278,6 +281,7 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, en
                 </tr>
               </tfoot>
             </table>
+            </div>
           )}
         </div>
       </div>

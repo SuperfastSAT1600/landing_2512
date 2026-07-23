@@ -955,9 +955,9 @@ export function LeadPool({
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="sticky bottom-4 flex items-center justify-between bg-gray-900 text-white rounded-xl px-4 py-3 shadow-lg">
+        <div className="sticky bottom-4 flex flex-wrap items-center justify-between gap-2 bg-gray-900 text-white rounded-xl px-4 py-3 shadow-lg">
           <span className="text-sm font-medium">{selectedIds.size}명 선택됨</span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setShowBulkContactModal(true)}

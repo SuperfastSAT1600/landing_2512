@@ -35,7 +35,7 @@ function InquiryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline gap-2">
       <span className="text-[13px] text-gray-400 w-[28%] shrink-0">{label}</span>
-      <span className="text-[13px] text-gray-700 font-medium">{value}</span>
+      <span className="text-[13px] text-gray-700 font-medium min-w-0 break-all">{value}</span>
     </div>
   );
 }
@@ -87,10 +87,10 @@ export function InquirySection({
         <div className="space-y-3">
           <p className="text-[11px] text-blue-500 font-medium">편집 모드 — 저장 버튼을 눌러야 반영됩니다</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <EditField label="문의 날짜" className="col-span-2">
+            <EditField label="문의 날짜" className="sm:col-span-2">
               <input type="datetime-local" value={editForm.inquiry_date} onChange={e => setEditForm({ ...editForm, inquiry_date: e.target.value })} className={inputCls} />
             </EditField>
-            <EditField label="첫 메시지 발송 시간" className="col-span-2">
+            <EditField label="첫 메시지 발송 시간" className="sm:col-span-2">
               <input type="datetime-local" value={editForm.first_message_sent_at} onChange={e => setEditForm({ ...editForm, first_message_sent_at: e.target.value })} className={inputCls} />
             </EditField>
             <EditField label="인입 채널">
@@ -106,7 +106,7 @@ export function InquirySection({
               </select>
             </EditField>
             {editForm.traffic_source === '소개' && (
-              <EditField label="소개자" className="col-span-2">
+              <EditField label="소개자" className="sm:col-span-2">
                 <ReferrerPicker
                   adminKey={adminKey}
                   name={editForm.referral_student_name}
