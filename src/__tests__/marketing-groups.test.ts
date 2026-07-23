@@ -9,13 +9,12 @@ import type { TrafficSource } from '@/types/crm';
 
 const ALL_SOURCES: TrafficSource[] = [
   '소개', 'B2B 파트너', '인스타그램 광고',
-  '랜딩 상담 폼 카톡 - SuperfastSAT!',
   '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
   '(구) 랜딩 구글폼 상담 예약',
   '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',
   '(신) 랜딩 즉시 카톡 상담 - [T] SuperfastSAT',
   '(신) 랜딩 구글폼 상담 예약',
-  '네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastsSAT',
+  '네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastSAT',
   '네이버 블로그 게시물', '네이버 카페',
   '브런치 카톡 - [BR]SuperfastSAT',
   '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)',
@@ -32,13 +31,12 @@ describe('SOURCE_GROUP_MAP', () => {
 
   it('maps 네이버 블로그/카페 sources to 네이버 SEO', () => {
     expect(SOURCE_GROUP_MAP['네이버 블로그 게시물']).toBe('네이버 SEO');
-    expect(SOURCE_GROUP_MAP['네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastsSAT']).toBe('네이버 SEO');
+    expect(SOURCE_GROUP_MAP['네이버 블로그 메인 페이지 히어로 섹션 카톡 - [B]SuperfastSAT']).toBe('네이버 SEO');
     expect(SOURCE_GROUP_MAP['네이버 카페']).toBe('네이버 SEO');
   });
 
   it('maps google sources to 구글 SEO', () => {
     const googleSources: TrafficSource[] = [
-      '랜딩 상담 폼 카톡 - SuperfastSAT!',
       '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',
       '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
       '(구) 랜딩 구글폼 상담 예약',
