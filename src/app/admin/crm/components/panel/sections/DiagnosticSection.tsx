@@ -149,12 +149,12 @@ export function DiagnosticSection({
                   onClick={() => onDiagLink(c.id)}
                   className={`w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-0 ${diagLinked?.id === c.id ? 'bg-green-50' : ''}`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-gray-800">{c.student_name}</p>
-                      <p className="text-[11px] text-gray-500">{c.student_email}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-gray-800 truncate">{c.student_name}</p>
+                      <p className="text-[11px] text-gray-500 truncate">{c.student_email}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <p className="text-[11px] text-gray-500">
                         {new Date(c.submitted_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
                       </p>

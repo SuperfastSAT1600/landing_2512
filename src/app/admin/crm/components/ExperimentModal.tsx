@@ -115,7 +115,7 @@ export function ExperimentModal({ adminKey, experiment, onClose, onSaved }: Prop
               className={`${inputCls} resize-none`} placeholder="구체적으로 무엇을 바꾸는가" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-400">대상 유입경로</label>
               <select value={segmentSource} onChange={(ev) => setSegmentSource(ev.target.value)} className={inputCls}>
@@ -139,7 +139,7 @@ export function ExperimentModal({ adminKey, experiment, onClose, onSaved }: Prop
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-400">기준선 기간 (시작)</label>
               <input type="date" value={baselineFrom} onChange={(ev) => setBaselineFrom(ev.target.value)} className={inputCls} />

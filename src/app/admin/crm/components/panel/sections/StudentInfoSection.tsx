@@ -76,7 +76,7 @@ export function StudentInfoSection({
         <StudentInfoEdit form={editForm} onChange={setEditForm} adminKey={adminKey} studentId={localStudent.id} />
       ) : (
         <div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
             <StudentInfoCell
               label="학년"
               value={localStudent.grade || '—'}

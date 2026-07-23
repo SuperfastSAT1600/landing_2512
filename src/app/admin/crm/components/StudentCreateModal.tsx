@@ -227,7 +227,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
           <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-3">
             <p className="text-xs font-semibold text-gray-500">인입 분류</p>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="인입 채널">
                 <select value={form.inquiry_channel} onChange={set('inquiry_channel')} className={selectCls}>
                   <option value="">(미상)</option>
@@ -242,7 +242,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="콘텐츠 작성자">
                 <select value={form.content_author} onChange={set('content_author')} className={selectCls}>
                   <option value="">(미상)</option>
@@ -294,7 +294,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
           </div>
 
           {/* 학년 + 재학유형 */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="학년" error={errors.grade}>
               <select value={form.grade} onChange={set('grade')} className={`${selectCls} ${errors.grade ? 'border-red-500/50' : ''}`}>
                 <option value="">선택</option>
@@ -320,7 +320,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
           </Field>
 
           {/* 연락 수단 + 연락처 */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="연락 수단">
               <select value={form.contact_type} onChange={set('contact_type')} className={selectCls}>
                 <option value="phone">핸드폰</option>
@@ -348,7 +348,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
           </Field>
 
           {form.previous_score_status === 'scored' && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="직전 RW 점수" error={errors.previous_rw_score}>
                 <input type="number" value={form.previous_rw_score} onChange={set('previous_rw_score')} placeholder="200-800" min={200} max={800} className={inputCls(!!errors.previous_rw_score)} />
               </Field>

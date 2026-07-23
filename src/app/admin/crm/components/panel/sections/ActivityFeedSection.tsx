@@ -79,7 +79,7 @@ export function ActivityFeedSection({ student, adminKey }: Props) {
                 </div>
                 <div className="min-w-0 flex-1 pb-0.5">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[13px] font-medium text-gray-800">{it.title}</span>
+                    <span className="text-[13px] font-medium text-gray-800 min-w-0 truncate">{it.title}</span>
                     <span className="text-[11px] text-gray-400 tabular-nums shrink-0">{fmtWhen(it.at)}</span>
                   </div>
                   {it.detail && <p className="text-[12px] text-gray-600 mt-0.5 whitespace-pre-wrap break-words line-clamp-4">{it.detail}</p>}

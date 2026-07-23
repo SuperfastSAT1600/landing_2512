@@ -71,7 +71,7 @@ export function CompanyEditModal({ adminKey, company, onClose, onSaved }: Props)
           <Field label="담당자">
             <input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} className={inputCls(false)} />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="연락처">
               <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className={inputCls(false)} />
             </Field>

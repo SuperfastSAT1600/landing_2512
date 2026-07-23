@@ -52,7 +52,7 @@ export function LeadsHub({
 
   return (
     <div className="space-y-5">
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 w-fit max-w-full overflow-x-auto scrollbar-none">
         {([
           { key: 'kanban', label: '최초 세일즈' },
           { key: 'retry', label: '재시도' },
@@ -61,7 +61,7 @@ export function LeadsHub({
           { key: 'stats', label: '통계' },
         ] as const).map(({ key, label }) => (
           <button key={key} onClick={() => setSubTab(key)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${subTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors shrink-0 whitespace-nowrap ${subTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
             {label}
           </button>
         ))}
@@ -69,8 +69,8 @@ export function LeadsHub({
 
       {subTab === 'kanban' && (
         <>
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="relative w-full sm:flex-1 sm:max-w-xs">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"

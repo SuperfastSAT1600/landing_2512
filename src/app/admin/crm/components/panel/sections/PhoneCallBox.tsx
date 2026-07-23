@@ -37,9 +37,9 @@ export function PhoneCallBox({ phone }: { phone: PhoneCall }) {
     <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50/60 p-3 space-y-2.5">
       {/* 세일즈 담당자 입장 링크 */}
       <div>
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-[11px] font-semibold text-gray-600">📱 내 입장 링크 (세일즈 담당자)</span>
-          <span className="text-[10px] text-gray-400">열면 녹음 자동 시작</span>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <span className="text-[11px] font-semibold text-gray-600 min-w-0 truncate">📱 내 입장 링크 (세일즈 담당자)</span>
+          <span className="text-[10px] text-gray-400 shrink-0">열면 녹음 자동 시작</span>
         </div>
         <div className="flex items-center gap-1.5">
           <input

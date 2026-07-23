@@ -281,7 +281,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
           {step === -1 && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-gray-500">연결할 파트너를 선택하세요</p>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {partnerOptions.map(p => (
                   <button
                     key={p}
