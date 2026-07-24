@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, Users, Phone, CreditCard, RefreshCw } from 'lucide-react';
-import type { CrmStatsData, StatsBySource, StatsWeekly } from '@/app/api/crm/stats/route';
+import type { CrmStatsData, StatsBySource, StatsWeekly, StatsMonthly } from '@/app/api/crm/stats/route';
 import type { StatsDetailMetric } from '@/lib/crm-stats-detail';
 import { StatsDetailModal } from './StatsDetailModal';
 import {
@@ -156,12 +156,14 @@ interface SalesStatsProps {
 }
 
 export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
-  const [preset, setPreset] = useState<Preset>('all');
+  const [preset, setPreset] = useState<Preset>('this_month');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<CrmStatsData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 월별 트렌드 그래프는 선택 기간과 무관하게 항상 전체 기간을 보여준다(별도 fetch).
+  const [allMonthly, setAllMonthly] = useState<StatsMonthly[]>([]);
   const [trendView, setTrendView] = useState<'monthly' | 'weekly'>('monthly');
   const [detail, setDetail] = useState<{ metric: StatsDetailMetric; label: string; source?: string } | null>(null);
 
@@ -192,6 +194,18 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   useEffect(() => {
     if (preset !== 'custom') fetchStats();
   }, [preset, fetchStats]);
+
+  // 트렌드 그래프용 전체 기간 월별 데이터(1회 로드, 기간 프리셋과 독립)
+  useEffect(() => {
+    const r = getPresetRange('all');
+    (async () => {
+      try {
+        const res = await fetch(`/api/crm/stats?from=${r.from}&to=${r.to}`, { headers: { 'x-admin-key': adminKey } });
+        const json = await res.json();
+        if (res.ok && json.data) setAllMonthly((json.data as CrmStatsData).monthly);
+      } catch { /* 무시: 그래프만 비어 보임 */ }
+    })();
+  }, [adminKey]);
 
   const d = data;
   // 카드 값: 한눈에 비교되도록 만원 단위로 축약. 정확한 원 단위 값은 title 툴팁으로 노출.
@@ -352,7 +366,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
           <div className="border-b border-gray-100 pb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-500">
-                {trendView === 'monthly' ? '월별 추이' : '주차별 추이'}
+                {trendView === 'monthly' ? '월별 추이 (전체 기간)' : '주차별 추이'}
               </h3>
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
                 {(['monthly', 'weekly'] as const).map((v) => (
@@ -372,9 +386,9 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
             </div>
 
             {trendView === 'monthly' ? (
-              d.monthly.length > 0 ? (
+              allMonthly.length > 0 ? (
                 <ResponsiveContainer width="100%" height={260}>
-                  <ComposedChart data={d.monthly} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+                  <ComposedChart data={allMonthly} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
                     <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={52}
