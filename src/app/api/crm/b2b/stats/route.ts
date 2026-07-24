@@ -14,6 +14,15 @@ export interface B2bTrendPoint {
   revenue: number;
 }
 
+export interface B2bCompanyStudent {
+  id: string;
+  name: string;
+  funnel_stage: string;
+  lead_status: string;
+  inquiry_date: string | null;
+  created_at: string;
+}
+
 export interface B2bCompanyStats {
   company_id: string;
   company_name: string;
@@ -26,6 +35,7 @@ export interface B2bCompanyStats {
   revenue: number;
   net_revenue: number;
   trend: B2bTrendPoint[];
+  students: B2bCompanyStudent[]; // 기간 인입 코호트 전체(이탈 포함)
 }
 
 export interface B2bStatsData {
@@ -54,6 +64,7 @@ interface B2bStudent {
   stage_history: StageHistoryEntry[] | null;
   inquiry_date: string | null;
   created_at: string;
+  lead_status: string;
 }
 
 /**
@@ -88,7 +99,7 @@ export async function GET(request: NextRequest) {
   // company_id 있는 B2B 리드 전체(매출 귀속용 id→company 맵 + 기간 코호트 필터)
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')
-    .select('id,name,company_id,funnel_stage,funnel_stage_updated_at,stage_history,inquiry_date,created_at')
+    .select('id,name,company_id,funnel_stage,funnel_stage_updated_at,stage_history,inquiry_date,created_at,lead_status')
     .not('company_id', 'is', null)
     .limit(MAX_LEAD_ROWS);
   if (sErr) {
@@ -169,6 +180,23 @@ export async function GET(request: NextRequest) {
     if (p.payment_type === '최초결제' && p.amount > 1) tp.paid++;
   }
 
+  // 업체별 학생 목록(기간 인입 코호트 전체 — 이탈/비활성 포함). 문의일 내림차순.
+  const studentsByCompany = new Map<string, B2bCompanyStudent[]>();
+  for (const s of cohort) {
+    if (!s.company_id) continue;
+    const list = studentsByCompany.get(s.company_id) ?? [];
+    list.push({
+      id: s.id,
+      name: s.name,
+      funnel_stage: s.funnel_stage,
+      lead_status: s.lead_status,
+      inquiry_date: s.inquiry_date,
+      created_at: s.created_at,
+    });
+    studentsByCompany.set(s.company_id, list);
+  }
+  const dateOf = (s: B2bCompanyStudent) => s.inquiry_date ?? s.created_at ?? '';
+
   const by_company: B2bCompanyStats[] = companyRows.map((c) => {
     const a = acc.get(c.id)!;
     return {
@@ -183,6 +211,7 @@ export async function GET(request: NextRequest) {
       revenue: a.revenue,
       net_revenue: a.net,
       trend: [...a.trend.values()].sort((x, y) => x.month.localeCompare(y.month)),
+      students: (studentsByCompany.get(c.id) ?? []).sort((x, y) => dateOf(y).localeCompare(dateOf(x))),
     };
   }).sort((x, y) => y.leads - x.leads || y.revenue - x.revenue || x.company_name.localeCompare(y.company_name));
 

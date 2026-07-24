@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bStatsData, B2bCompanyStats } from '@/app/api/crm/b2b/stats/route';
-import type { Student } from '@/types/crm';
 import { FUNNEL_STAGE_LABELS, type FunnelStage } from '@/types/crm';
 import {
   type Preset,
@@ -21,11 +20,10 @@ const kstDate = (s: string | null) =>
 
 interface Props {
   adminKey: string;
-  students: Student[];
-  onStudentClick: (student: Student) => void;
+  onSelectStudentById: (id: string) => void;
 }
 
-export function B2bStats({ adminKey, students, onStudentClick }: Props) {
+export function B2bStats({ adminKey, onSelectStudentById }: Props) {
   const [preset, setPreset] = useState<Preset>('all');
   const [range, setRange] = useState(() => getPresetRange('all'));
   const [data, setData] = useState<B2bStatsData | null>(null);
@@ -153,8 +151,7 @@ export function B2bStats({ adminKey, students, onStudentClick }: Props) {
                     <CompanyRow
                       key={r.company_id}
                       row={r}
-                      students={students}
-                      onStudentClick={onStudentClick}
+                      onSelectStudentById={onSelectStudentById}
                       expanded={expanded === r.company_id}
                       onToggle={() => setExpanded((e) => (e === r.company_id ? null : r.company_id))}
                     />
@@ -172,9 +169,9 @@ export function B2bStats({ adminKey, students, onStudentClick }: Props) {
   );
 }
 
-function CompanyRow({ row, students, onStudentClick, expanded, onToggle }: { row: B2bCompanyStats; students: Student[]; onStudentClick: (student: Student) => void; expanded: boolean; onToggle: () => void }) {
+function CompanyRow({ row, onSelectStudentById, expanded, onToggle }: { row: B2bCompanyStats; onSelectStudentById: (id: string) => void; expanded: boolean; onToggle: () => void }) {
   const dim = row.leads === 0 && !row.is_active;
-  const companyStudents = students.filter((s) => s.company_id === row.company_id);
+  const companyStudents = row.students;
   return (
     <>
       <tr className={`border-b border-gray-50 hover:bg-gray-50/50 ${dim ? 'opacity-40' : ''}`}>
@@ -205,7 +202,7 @@ function CompanyRow({ row, students, onStudentClick, expanded, onToggle }: { row
                 {companyStudents.map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => onStudentClick(s)}
+                    onClick={() => onSelectStudentById(s.id)}
                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white border border-gray-100 hover:border-blue-300 hover:bg-blue-50/40 transition-colors text-left"
                   >
                     <span className="font-medium text-blue-600 shrink-0">{s.name}</span>

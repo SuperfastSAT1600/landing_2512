@@ -42,7 +42,7 @@ export function B2bWorkspace({ adminKey, students, onStudentClick, onSelectStude
       </div>
 
       {activeTab === 'overview' && (
-        <B2bHub adminKey={adminKey} students={students} onStudentClick={onStudentClick} />
+        <B2bHub adminKey={adminKey} students={students} onStudentClick={onStudentClick} onSelectStudentById={onSelectStudentById} />
       )}
 
       {activeTab === 'pipeline' && (

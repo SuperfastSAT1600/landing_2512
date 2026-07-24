@@ -12,10 +12,11 @@ interface Props {
   adminKey: string;
   students: Student[];
   onStudentClick: (student: Student) => void;
+  onSelectStudentById: (id: string) => void;
 }
 
 // 메뉴1: 업체·리드 현황·통계 (대시보드 / 업체 목록 / 리드)
-export function B2bHub({ adminKey, students, onStudentClick }: Props) {
+export function B2bHub({ adminKey, students, onStudentClick, onSelectStudentById }: Props) {
   const [sub, setSub] = useState<HubTab>('dashboard');
   return (
     <div className="space-y-5">
@@ -32,7 +33,7 @@ export function B2bHub({ adminKey, students, onStudentClick }: Props) {
         ))}
       </div>
 
-      {sub === 'dashboard' && <B2bStats adminKey={adminKey} students={students} onStudentClick={onStudentClick} />}
+      {sub === 'dashboard' && <B2bStats adminKey={adminKey} onSelectStudentById={onSelectStudentById} />}
       {sub === 'companies' && <CompaniesTab adminKey={adminKey} />}
       {sub === 'leads' && <B2bLeads adminKey={adminKey} students={students} onStudentClick={onStudentClick} />}
     </div>
