@@ -7,7 +7,10 @@ import type { StageFlowRow } from '@/lib/funnel-stats';
 
 // ─── Period helpers ────────────────────────────────────────────────────────────
 
-export type Preset = 'this_month' | 'last_month' | 'this_quarter' | 'last_6m' | 'custom';
+export type Preset = 'this_month' | 'last_month' | 'this_quarter' | 'last_6m' | 'all' | 'custom';
+
+// '전체' 하한 — CRM 최초 기록(회사 설립 2024) 이전으로 잡아 모든 데이터를 포함
+const ALL_TIME_FROM = '2020-01-01';
 
 export function getPresetRange(preset: Preset): { from: string; to: string } {
   const now = new Date();
@@ -30,6 +33,9 @@ export function getPresetRange(preset: Preset): { from: string; to: string } {
   if (preset === 'last_6m') {
     return { from: fmt(new Date(y, m - 5, 1)), to: fmt(new Date(y, m + 1, 0)) };
   }
+  if (preset === 'all') {
+    return { from: ALL_TIME_FROM, to: fmt(new Date(y, m + 1, 0)) };
+  }
   return getPresetRange('this_month');
 }
 
@@ -38,6 +44,7 @@ export const PRESETS: { key: Preset; label: string }[] = [
   { key: 'last_month', label: '지난 달' },
   { key: 'this_quarter', label: '이번 분기' },
   { key: 'last_6m', label: '최근 6개월' },
+  { key: 'all', label: '전체' },
   { key: 'custom', label: '직접 입력' },
 ];
 

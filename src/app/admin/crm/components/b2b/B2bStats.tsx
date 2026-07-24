@@ -26,8 +26,8 @@ interface Props {
 }
 
 export function B2bStats({ adminKey, students, onStudentClick }: Props) {
-  const [preset, setPreset] = useState<Preset>('last_6m');
-  const [range, setRange] = useState(() => getPresetRange('last_6m'));
+  const [preset, setPreset] = useState<Preset>('all');
+  const [range, setRange] = useState(() => getPresetRange('all'));
   const [data, setData] = useState<B2bStatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
