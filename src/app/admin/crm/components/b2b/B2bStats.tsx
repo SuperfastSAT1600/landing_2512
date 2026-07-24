@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bStatsData, B2bCompanyStats } from '@/app/api/crm/b2b/stats/route';
@@ -29,6 +29,26 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
+  // 트렌드 차트 업체 필터(다중 선택). 비어있으면 전체 업체 합산.
+  const [trendCompanies, setTrendCompanies] = useState<Set<string>>(new Set());
+  const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
+  const companyMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!companyMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (companyMenuRef.current && !companyMenuRef.current.contains(e.target as Node)) setCompanyMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [companyMenuOpen]);
+
+  const toggleTrendCompany = (id: string) =>
+    setTrendCompanies((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
 
   const applyPreset = (p: Preset) => {
     setPreset(p);
@@ -55,10 +75,11 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
 
   const o = data?.overview;
   const rows = data?.by_company ?? [];
-  // 업체별 월 트렌드를 전체 월별로 합산 → 매출·리드·결제 시계열
+  // 업체별 월 트렌드를 월별로 합산 → 매출·리드·결제 시계열. 선택 업체가 있으면 그 업체들만.
   const monthlyTrend = useMemo(() => {
+    const src = trendCompanies.size ? rows.filter((r) => trendCompanies.has(r.company_id)) : rows;
     const m = new Map<string, { month: string; revenue: number; leads: number; paid: number }>();
-    for (const c of rows) {
+    for (const c of src) {
       for (const t of c.trend) {
         const e = m.get(t.month) ?? { month: t.month, revenue: 0, leads: 0, paid: 0 };
         e.revenue += t.revenue;
@@ -68,7 +89,7 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
       }
     }
     return [...m.values()].sort((a, b) => a.month.localeCompare(b.month));
-  }, [rows]);
+  }, [rows, trendCompanies]);
 
   return (
     <div className="space-y-5">
@@ -99,9 +120,43 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
             <OverviewCard label="매출" value={`${manwon(o.total_revenue)}원`} title={won(o.total_revenue)} sub={`실수익 ${manwon(o.total_net_revenue)}원`} />
           </div>
 
-          {monthlyTrend.length > 1 && (
+          {rows.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-400 mb-3">매출·리드·결제 트렌드</p>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <p className="text-xs font-semibold text-gray-400">매출·리드·결제 트렌드</p>
+                <div className="relative" ref={companyMenuRef}>
+                  <button
+                    onClick={() => setCompanyMenuOpen((o) => !o)}
+                    className="flex items-center gap-1.5 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-600 hover:bg-gray-50"
+                  >
+                    {trendCompanies.size === 0 ? '전체 업체' : `${trendCompanies.size}개 업체 선택`}
+                    <ChevronDown size={14} className="text-gray-400" />
+                  </button>
+                  {companyMenuOpen && (
+                    <div className="absolute right-0 z-20 mt-1 w-56 max-h-72 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg p-1">
+                      <button
+                        onClick={() => setTrendCompanies(new Set())}
+                        className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-gray-50 ${trendCompanies.size === 0 ? 'font-semibold text-blue-600' : 'text-gray-600'}`}
+                      >
+                        전체 업체
+                      </button>
+                      <div className="my-1 border-t border-gray-100" />
+                      {rows.map((r) => (
+                        <label key={r.company_id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={trendCompanies.has(r.company_id)}
+                            onChange={() => toggleTrendCompany(r.company_id)}
+                            className="w-3.5 h-3.5 rounded border-gray-300 accent-blue-600"
+                          />
+                          <span className="text-xs text-gray-700 truncate">{r.company_name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {monthlyTrend.length > 1 ? (
               <ResponsiveContainer width="100%" height={260}>
                 <ComposedChart data={monthlyTrend} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
                   <defs>
@@ -129,6 +184,9 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
                   <Line yAxisId="right" type="monotone" dataKey="paid" name="결제" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 3" dot={false} />
                 </ComposedChart>
               </ResponsiveContainer>
+              ) : (
+                <p className="text-xs text-gray-400 py-10 text-center">선택한 업체의 트렌드 데이터가 부족합니다.</p>
+              )}
             </div>
           )}
 
