@@ -1,5 +1,5 @@
 /**
- * gangwon-config.js — 강원 U-18 영어 인터뷰 수업 유닛 설정
+ * gangwon-config.js — 강원 영어 인터뷰 수업 유닛 설정
  *
  * 유닛 추가 시 이 파일의 GANGWON_UNITS 배열에만 항목 추가하면
  * gangwon.html 대시보드와 lesson-feedback.html 강사 폼 모두에 자동 반영됩니다.
