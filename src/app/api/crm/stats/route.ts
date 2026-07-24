@@ -4,7 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { computeStageFlow, type StageFlowRow } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
-import { MAX_LEAD_ROWS, isContacted, contactRate, toMonthKey, inquiryRefMs } from '@/lib/crm-stats-core';
+import { MAX_LEAD_ROWS, isContacted, contactRate, toMonthKey, inquiryRefMs, fillMonthlyGaps } from '@/lib/crm-stats-core';
 
 export interface StatsBySource {
   source: string;
@@ -23,8 +23,10 @@ export interface StatsMonthly {
   leads: number;
   contacted: number;
   paid: number;
-  revenue: number;
-  net_revenue: number;
+  gross_revenue: number; // 매출(양수 결제 합)
+  refund: number;        // 환불(음수 합계, 음수값)
+  revenue: number;       // 순매출(매출 − 환불 = sum(amount))
+  net_revenue: number;   // 순수익(부가세 차감 후 = sum(netAmount))
 }
 
 export interface StatsWeekly {
@@ -89,11 +91,13 @@ export async function GET(request: NextRequest) {
   // 기간 내 신규 리드 = inquiry_date(실제 인입 시각)가 [from, to]에 든 리드만.
   // created_at(레코드 생성 시각) 폴백은 쓰지 않는다 — 레거시 대량 임포트(inquiry_date NULL)가
   // 생성 시각 기준으로 특정 기간 신규 리드로 둔갑해 과대집계되는 문제(예: 595건)를 막는다.
+  // B2C 전용: company_id가 null인 개인 학생만 집계. B2B 업체 학생은 /api/crm/b2b/stats에서 별도 집계.
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')
     .select(
       'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id'
     )
+    .is('company_id', null)
     .gte('inquiry_date', from)
     .lte('inquiry_date', `${to}T23:59:59`)
     .limit(MAX_LEAD_ROWS);
@@ -142,12 +146,12 @@ export async function GET(request: NextRequest) {
 
   // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다.
   // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
-  // ₩1 등 placeholder 결제(amount<=1)는 실결제가 아니므로 제외한다.
+  // ₩1 최초결제는 공부하는 아이들 등 센터형 파트너의 일괄 등록 placeholder이며 실제 전환이므로 포함한다(amount>0).
   const { data: firstPayRows } = await supabaseAdmin
     .from('payments')
     .select('student_id, student_name')
     .eq('payment_type', '최초결제')
-    .gt('amount', 1);
+    .gt('amount', 0);
   for (const p of firstPayRows ?? []) {
     if (p.student_id) paidStudentIds.add(p.student_id);
     if (p.student_name) paidStudentNames.add(p.student_name);
@@ -231,13 +235,13 @@ export async function GET(request: NextRequest) {
   // ── Monthly ───────────────────────────────────────────────────────────────
   const monthMap = new Map<
     string,
-    { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number }
+    { leads: number; contacted: number; paid: number; gross_revenue: number; refund: number; revenue: number; net_revenue: number }
   >();
 
   for (const s of leadList) {
     const mo = toMonthKey(s.inquiry_date ?? s.created_at);
     if (!monthMap.has(mo))
-      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, gross_revenue: 0, refund: 0, revenue: 0, net_revenue: 0 });
     const entry = monthMap.get(mo)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
@@ -248,15 +252,18 @@ export async function GET(request: NextRequest) {
   for (const p of paymentList) {
     const mo = toMonthKey(p.paid_at);
     if (!monthMap.has(mo))
-      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, gross_revenue: 0, refund: 0, revenue: 0, net_revenue: 0 });
     const entry = monthMap.get(mo)!;
+    if (p.amount >= 0) entry.gross_revenue += p.amount;
+    else entry.refund += p.amount;
     entry.revenue += p.amount;
     entry.net_revenue += netAmount(p);
   }
 
-  const monthly: StatsMonthly[] = Array.from(monthMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, d]) => ({ month, ...d }));
+  const monthly: StatsMonthly[] = fillMonthlyGaps(
+    Array.from(monthMap.entries()).map(([month, d]) => ({ month, ...d })),
+    (month) => ({ month, leads: 0, contacted: 0, paid: 0, gross_revenue: 0, refund: 0, revenue: 0, net_revenue: 0 }),
+  );
 
   // ── Weekly ────────────────────────────────────────────────────────────────
   const weekMap = new Map<

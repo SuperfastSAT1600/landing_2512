@@ -16,6 +16,23 @@ export function isContacted(student: {
   return hasReachedStage(student, '2');
 }
 
+// 센터형 파트너(예: 공부하는 아이들) 기본 목록 — 소속 학생을 컨택 성공으로 간주한다.
+export const CONTACT_IMPLIED_PARTNERS = new Set(['공부하는 아이들']);
+
+/**
+ * 컨택 성공 판정 + 센터형 파트너 예외.
+ * partnerName이 impliedPartners에 있으면 퍼널 단계와 무관하게 컨택 성공으로 본다
+ * (해당 파트너 학생은 세일즈 퍼널을 거치지 않고 바로 등록되므로). 그 외에는 isContacted 그대로.
+ */
+export function isContactedWithImpliedPartner(
+  student: { funnel_stage: string; stage_history?: { stage: string; label: string; entered_at: string }[] | null },
+  partnerName: string | null | undefined,
+  impliedPartners: Set<string> = CONTACT_IMPLIED_PARTNERS,
+): boolean {
+  if (partnerName && impliedPartners.has(partnerName)) return true;
+  return isContacted(student);
+}
+
 export function contactRate(contacted: number, leads: number): number {
   if (leads === 0) return 0;
   return Math.round((contacted / leads) * 10000) / 100;
@@ -23,6 +40,36 @@ export function contactRate(contacted: number, leads: number): number {
 
 export function toMonthKey(dateStr: string): string {
   return dateStr.slice(0, 7); // "2026-05"
+}
+
+/** "YYYY-MM"에 n개월 더한 월 키 반환. */
+function addMonthKey(month: string, n: number): string {
+  const [y, m] = month.split('-').map(Number);
+  const total = y * 12 + (m - 1) + n;
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12) + 1;
+  return `${ny}-${String(nm).padStart(2, '0')}`;
+}
+
+/**
+ * 월별 시계열의 내부 누락 월을 0값으로 채워 연속 배열로 만든다.
+ * rows는 `month:"YYYY-MM"`를 가진 배열(정렬 여부 무관). 최소~최대 월 사이만 채우고
+ * 리딩/트레일링 빈 달은 만들지 않는다. 빈 배열/단일 원소는 그대로 반환.
+ */
+export function fillMonthlyGaps<T extends { month: string }>(
+  rows: T[],
+  make: (month: string) => T,
+): T[] {
+  if (rows.length < 2) return [...rows].sort((a, b) => a.month.localeCompare(b.month));
+  const byMonth = new Map(rows.map((r) => [r.month, r]));
+  const months = rows.map((r) => r.month).sort((a, b) => a.localeCompare(b));
+  const first = months[0];
+  const last = months[months.length - 1];
+  const out: T[] = [];
+  for (let cur = first; cur <= last; cur = addMonthKey(cur, 1)) {
+    out.push(byMonth.get(cur) ?? make(cur));
+  }
+  return out;
 }
 
 /**

@@ -7,7 +7,10 @@ import type { StageFlowRow } from '@/lib/funnel-stats';
 
 // ─── Period helpers ────────────────────────────────────────────────────────────
 
-export type Preset = 'this_month' | 'last_month' | 'this_quarter' | 'last_6m' | 'custom';
+export type Preset = 'this_month' | 'last_month' | 'this_quarter' | 'last_6m' | 'all' | 'custom';
+
+// '전체' 하한 — CRM 최초 기록(회사 설립 2024) 이전으로 잡아 모든 데이터를 포함
+const ALL_TIME_FROM = '2020-01-01';
 
 export function getPresetRange(preset: Preset): { from: string; to: string } {
   const now = new Date();
@@ -30,6 +33,9 @@ export function getPresetRange(preset: Preset): { from: string; to: string } {
   if (preset === 'last_6m') {
     return { from: fmt(new Date(y, m - 5, 1)), to: fmt(new Date(y, m + 1, 0)) };
   }
+  if (preset === 'all') {
+    return { from: ALL_TIME_FROM, to: fmt(new Date(y, m + 1, 0)) };
+  }
   return getPresetRange('this_month');
 }
 
@@ -38,8 +44,38 @@ export const PRESETS: { key: Preset; label: string }[] = [
   { key: 'last_month', label: '지난 달' },
   { key: 'this_quarter', label: '이번 분기' },
   { key: 'last_6m', label: '최근 6개월' },
+  { key: 'all', label: '전체' },
   { key: 'custom', label: '직접 입력' },
 ];
+
+// ─── Trend-chart period presets ──────────────────────────────────────────────
+// 월별 추이 그래프 전용. 여러 달을 아우르는 범위만 제공(단일 월은 추이로 무의미).
+
+export type TrendPreset = 'all' | 'last_12m' | 'last_6m' | 'this_year' | 'last_year' | 'custom';
+
+export const TREND_PRESETS: { key: TrendPreset; label: string }[] = [
+  { key: 'all', label: '전체' },
+  { key: 'last_12m', label: '최근 1년' },
+  { key: 'last_6m', label: '최근 6개월' },
+  { key: 'this_year', label: '올해' },
+  { key: 'last_year', label: '작년' },
+  { key: 'custom', label: '기간 설정' },
+];
+
+export function getTrendRange(preset: TrendPreset): { from: string; to: string } {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const endOfThisMonth = fmt(new Date(y, m + 1, 0));
+
+  if (preset === 'last_12m') return { from: fmt(new Date(y, m - 11, 1)), to: endOfThisMonth };
+  if (preset === 'last_6m') return getPresetRange('last_6m');
+  if (preset === 'this_year') return { from: `${y}-01-01`, to: endOfThisMonth };
+  if (preset === 'last_year') return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` };
+  return getPresetRange('all');
+}
 
 // ─── Display primitives ──────────────────────────────────────────────────────
 

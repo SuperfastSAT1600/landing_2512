@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bStatsData, B2bCompanyStats } from '@/app/api/crm/b2b/stats/route';
+import { fillMonthlyGaps } from '@/lib/crm-stats-core';
 import {
   type Preset,
   getPresetRange,
@@ -14,18 +15,41 @@ import {
 
 const won = (n: number) => `${n.toLocaleString()}원`;
 const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
+const kstDate = (s: string | null) =>
+  s ? new Date(s).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit' }) : '-';
 
 interface Props {
   adminKey: string;
+  onSelectStudentById: (id: string) => void;
 }
 
-export function B2bStats({ adminKey }: Props) {
-  const [preset, setPreset] = useState<Preset>('last_6m');
-  const [range, setRange] = useState(() => getPresetRange('last_6m'));
+export function B2bStats({ adminKey, onSelectStudentById }: Props) {
+  const [preset, setPreset] = useState<Preset>('all');
+  const [range, setRange] = useState(() => getPresetRange('all'));
   const [data, setData] = useState<B2bStatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
+  // 트렌드 차트 업체 필터(다중 선택). 비어있으면 전체 업체 합산.
+  const [trendCompanies, setTrendCompanies] = useState<Set<string>>(new Set());
+  const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
+  const companyMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!companyMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (companyMenuRef.current && !companyMenuRef.current.contains(e.target as Node)) setCompanyMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [companyMenuOpen]);
+
+  const toggleTrendCompany = (id: string) =>
+    setTrendCompanies((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
 
   const applyPreset = (p: Preset) => {
     setPreset(p);
@@ -52,11 +76,22 @@ export function B2bStats({ adminKey }: Props) {
 
   const o = data?.overview;
   const rows = data?.by_company ?? [];
-  const chartData = rows.filter((r) => r.leads > 0).slice(0, 10).map((r) => ({
-    name: r.company_name.length > 8 ? r.company_name.slice(0, 8) + '…' : r.company_name,
-    리드: r.leads,
-    결제: r.paid,
-  }));
+  // 업체별 월 트렌드를 월별로 합산 → 매출·리드·결제 시계열. 선택 업체가 있으면 그 업체들만.
+  const monthlyTrend = useMemo(() => {
+    const src = trendCompanies.size ? rows.filter((r) => trendCompanies.has(r.company_id)) : rows;
+    const m = new Map<string, { month: string; revenue: number; leads: number; paid: number }>();
+    for (const c of src) {
+      for (const t of c.trend) {
+        const e = m.get(t.month) ?? { month: t.month, revenue: 0, leads: 0, paid: 0 };
+        e.revenue += t.revenue;
+        e.leads += t.leads;
+        e.paid += t.paid;
+        m.set(t.month, e);
+      }
+    }
+    // 데이터 없는 중간 달도 0값으로 채워 x축이 끊기지 않게 한다.
+    return fillMonthlyGaps([...m.values()], (month) => ({ month, revenue: 0, leads: 0, paid: 0 }));
+  }, [rows, trendCompanies]);
 
   return (
     <div className="space-y-5">
@@ -87,19 +122,63 @@ export function B2bStats({ adminKey }: Props) {
             <OverviewCard label="매출" value={`${manwon(o.total_revenue)}원`} title={won(o.total_revenue)} sub={`실수익 ${manwon(o.total_net_revenue)}원`} />
           </div>
 
-          {chartData.length > 1 && (
+          {rows.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-400 mb-3">업체별 리드·결제</p>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={chartData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="리드" fill="#93c5fd" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="결제" fill="#34d399" radius={[3, 3, 0, 0]} />
-                </BarChart>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <p className="text-xs font-semibold text-gray-400">매출·리드·결제 트렌드</p>
+                <div className="relative" ref={companyMenuRef}>
+                  <button
+                    onClick={() => setCompanyMenuOpen((o) => !o)}
+                    className="flex items-center gap-1.5 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-600 hover:bg-gray-50"
+                  >
+                    {trendCompanies.size === 0 ? '전체 업체' : `${trendCompanies.size}개 업체 선택`}
+                    <ChevronDown size={14} className="text-gray-400" />
+                  </button>
+                  {companyMenuOpen && (
+                    <div className="absolute right-0 z-20 mt-1 w-56 max-h-72 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg p-1">
+                      <button
+                        onClick={() => setTrendCompanies(new Set())}
+                        className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-gray-50 ${trendCompanies.size === 0 ? 'font-semibold text-blue-600' : 'text-gray-600'}`}
+                      >
+                        전체 업체
+                      </button>
+                      <div className="my-1 border-t border-gray-100" />
+                      {rows.map((r) => (
+                        <label key={r.company_id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={trendCompanies.has(r.company_id)}
+                            onChange={() => toggleTrendCompany(r.company_id)}
+                            className="w-3.5 h-3.5 rounded border-gray-300 accent-blue-600"
+                          />
+                          <span className="text-xs text-gray-700 truncate">{r.company_name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {monthlyTrend.length > 1 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={monthlyTrend} margin={{ top: 8, right: 4, left: -6, bottom: 0 }} barCategoryGap="30%">
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={48}
+                    tickFormatter={(v: number) => (v >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : `${Math.round(v / 1e4)}만`)} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
+                  <Tooltip
+                    formatter={(value, name) => (name === '매출' ? won(Number(value)) : `${value}명`)}
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
+                  <Bar yAxisId="left" dataKey="revenue" name="매출" fill="#a7f3d0" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Line yAxisId="right" type="monotone" dataKey="leads" name="리드" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 2.5, strokeWidth: 0, fill: '#3b82f6' }} activeDot={{ r: 4 }} />
+                  <Line yAxisId="right" type="monotone" dataKey="paid" name="결제" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 2.5, strokeWidth: 0, fill: '#f59e0b' }} activeDot={{ r: 4 }} />
+                </ComposedChart>
               </ResponsiveContainer>
+              ) : (
+                <p className="text-xs text-gray-400 py-10 text-center">선택한 업체의 트렌드 데이터가 부족합니다.</p>
+              )}
             </div>
           )}
 
@@ -118,7 +197,13 @@ export function B2bStats({ adminKey }: Props) {
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <CompanyRow key={r.company_id} row={r} expanded={expanded === r.company_id} onToggle={() => setExpanded((e) => (e === r.company_id ? null : r.company_id))} />
+                    <CompanyRow
+                      key={r.company_id}
+                      row={r}
+                      onSelectStudentById={onSelectStudentById}
+                      expanded={expanded === r.company_id}
+                      onToggle={() => setExpanded((e) => (e === r.company_id ? null : r.company_id))}
+                    />
                   ))}
                   {rows.length === 0 && (
                     <tr><td colSpan={6} className="py-10 text-center text-sm text-gray-400">업체가 없습니다.</td></tr>
@@ -133,8 +218,9 @@ export function B2bStats({ adminKey }: Props) {
   );
 }
 
-function CompanyRow({ row, expanded, onToggle }: { row: B2bCompanyStats; expanded: boolean; onToggle: () => void }) {
+function CompanyRow({ row, onSelectStudentById, expanded, onToggle }: { row: B2bCompanyStats; onSelectStudentById: (id: string) => void; expanded: boolean; onToggle: () => void }) {
   const dim = row.leads === 0 && !row.is_active;
+  const companyStudents = row.students;
   return (
     <>
       <tr className={`border-b border-gray-50 hover:bg-gray-50/50 ${dim ? 'opacity-40' : ''}`}>
@@ -158,20 +244,29 @@ function CompanyRow({ row, expanded, onToggle }: { row: B2bCompanyStats; expande
       </tr>
       {expanded && (
         <tr>
-          <td colSpan={6} className="px-2 py-3">
-            {row.trend.length ? (
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={row.trend} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
-                  <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="leads" name="리드" fill="#93c5fd" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="paid" name="결제" fill="#34d399" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          <td colSpan={6} className="px-2 py-3 bg-gray-50/40">
+            {companyStudents.length ? (
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold text-gray-400 px-1 mb-1">학생 {companyStudents.length}명</p>
+                {companyStudents.map((s) => {
+                  const enrolled = s.lead_status === 'enrolled' || s.funnel_stage === '8';
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => onSelectStudentById(s.id)}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white border border-gray-100 hover:border-blue-300 hover:bg-blue-50/40 transition-colors text-left"
+                    >
+                      <span className="font-medium text-blue-600 shrink-0">{s.name}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${enrolled ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
+                        {enrolled ? '수업 중' : '이탈'}
+                      </span>
+                      <span className="text-xs text-gray-400 tabular-nums ml-auto shrink-0">{kstDate(s.inquiry_date ?? s.created_at)}</span>
+                    </button>
+                  );
+                })}
+              </div>
             ) : (
-              <p className="text-xs text-gray-400 py-4 text-center">기간 내 데이터 없음</p>
+              <p className="text-xs text-gray-400 py-4 text-center">이 업체에 연결된 학생이 없습니다.</p>
             )}
           </td>
         </tr>
