@@ -7,7 +7,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const type = new URL(request.url).searchParams.get('type');
+  const sp = new URL(request.url).searchParams;
+  const type = sp.get('type');
+  const segment = sp.get('segment');
 
   let query = supabaseAdmin
     .from('retry_strategies')
@@ -17,6 +19,9 @@ export async function GET(request: NextRequest) {
   const validTypes = ['initial_contact', 'initial_sales', 'retry'];
   if (type && validTypes.includes(type)) {
     query = query.eq('type', type);
+  }
+  if (segment === 'b2c' || segment === 'b2b') {
+    query = query.eq('segment', segment);
   }
 
   const { data, error } = await query;
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { name: string; type?: 'initial_contact' | 'initial_sales' | 'retry'; description?: string };
+  let body: { name: string; type?: 'initial_contact' | 'initial_sales' | 'retry'; description?: string; segment?: 'b2c' | 'b2b' };
   try {
     body = await request.json();
   } catch {
@@ -47,10 +52,11 @@ export async function POST(request: NextRequest) {
 
   const validTypes = ['initial_contact', 'initial_sales', 'retry'];
   const strategyType = validTypes.includes(body.type ?? '') ? body.type : 'retry';
+  const segment = body.segment === 'b2b' ? 'b2b' : 'b2c';
 
   const { data, error } = await supabaseAdmin
     .from('retry_strategies')
-    .insert({ name: body.name.trim(), type: strategyType, description: body.description?.trim() || null })
+    .insert({ name: body.name.trim(), type: strategyType, description: body.description?.trim() || null, segment })
     .select()
     .single();
 

@@ -14,6 +14,7 @@ import { ExperimentModal } from './ExperimentModal';
 
 interface Props {
   adminKey: string;
+  segment?: 'b2c' | 'b2b'; // 전략 세그먼트 분리(097). 기본 b2c
 }
 
 // metric_key → /api/crm/stats 필드. avg_first_response_seconds는 by_source에만 존재.
@@ -307,7 +308,7 @@ function ExperimentCard({
   );
 }
 
-export function ExperimentBoard({ adminKey }: Props) {
+export function ExperimentBoard({ adminKey, segment = 'b2c' }: Props) {
   const [experiments, setExperiments] = useState<GrowthExperiment[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -315,13 +316,13 @@ export function ExperimentBoard({ adminKey }: Props) {
 
   const fetchAll = useCallback(async () => {
     try {
-      const res = await fetch('/api/crm/experiments', { headers: { 'x-admin-key': adminKey } });
+      const res = await fetch(`/api/crm/experiments?segment=${segment}`, { headers: { 'x-admin-key': adminKey } });
       const json = await res.json();
       setExperiments(json.data ?? []);
     } finally {
       setLoading(false);
     }
-  }, [adminKey]);
+  }, [adminKey, segment]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -370,7 +371,7 @@ export function ExperimentBoard({ adminKey }: Props) {
       )}
 
       {modalOpen && (
-        <ExperimentModal adminKey={adminKey} experiment={editing}
+        <ExperimentModal adminKey={adminKey} segment={segment} experiment={editing}
           onClose={() => { setModalOpen(false); setEditing(null); }} onSaved={handleSaved} />
       )}
     </div>

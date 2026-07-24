@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { Student } from '@/types/crm';
 import { B2bHub } from './b2b/B2bHub';
 import { B2bPipeline } from './b2b/B2bPipeline';
-import { StrategyStats } from './StrategyStats';
+import { StrategiesTab } from './StrategiesTab';
 import { WeeklyPlan } from './WeeklyPlan';
 
 type B2bTab = 'overview' | 'pipeline' | 'weekly';
@@ -50,7 +50,7 @@ export function B2bWorkspace({ adminKey, students, onStudentClick, onSelectStude
           <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
             {([
               { key: 'pipeline', label: '영업 진행중 업체' },
-              { key: 'strategy', label: '전략별 수치' },
+              { key: 'strategy', label: '세일즈 전략' },
             ] as const).map(({ key, label }) => (
               <button key={key} onClick={() => setPipeSub(key)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${pipeSub === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -59,7 +59,7 @@ export function B2bWorkspace({ adminKey, students, onStudentClick, onSelectStude
             ))}
           </div>
           {pipeSub === 'pipeline' && <B2bPipeline adminKey={adminKey} />}
-          {pipeSub === 'strategy' && <StrategyStats adminKey={adminKey} segment="b2b" onSelectStudent={onSelectStudentById} />}
+          {pipeSub === 'strategy' && <StrategiesTab adminKey={adminKey} segment="b2b" onSelectStudent={onSelectStudentById} />}
         </div>
       )}
 

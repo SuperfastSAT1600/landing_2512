@@ -261,6 +261,7 @@ export interface RetryStrategy {
   name: string;
   description: string | null;
   type: 'initial_contact' | 'initial_sales' | 'retry';
+  segment: 'b2c' | 'b2b'; // B2B/B2C 전략 분리 (097)
   created_at: string;
 }
 
@@ -377,6 +378,7 @@ export interface GrowthExperiment {
   hypothesis: string | null;
   execution_plan: string | null;
   segment_source: string | null; // traffic_source 값, null=전체
+  segment: 'b2c' | 'b2b'; // B2B/B2C 전략 분리 (097)
   metric_key: ExperimentMetricKey;
   custom_metric_label: string | null;
   baseline_from: string | null;
