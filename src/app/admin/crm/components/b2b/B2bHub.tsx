@@ -32,7 +32,7 @@ export function B2bHub({ adminKey, students, onStudentClick }: Props) {
         ))}
       </div>
 
-      {sub === 'dashboard' && <B2bStats adminKey={adminKey} />}
+      {sub === 'dashboard' && <B2bStats adminKey={adminKey} students={students} onStudentClick={onStudentClick} />}
       {sub === 'companies' && <CompaniesTab adminKey={adminKey} />}
       {sub === 'leads' && <B2bLeads adminKey={adminKey} students={students} onStudentClick={onStudentClick} />}
     </div>

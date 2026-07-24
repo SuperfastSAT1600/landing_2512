@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bStatsData, B2bCompanyStats } from '@/app/api/crm/b2b/stats/route';
+import type { Student } from '@/types/crm';
+import { FUNNEL_STAGE_LABELS, type FunnelStage } from '@/types/crm';
 import {
   type Preset,
   getPresetRange,
@@ -14,12 +16,16 @@ import {
 
 const won = (n: number) => `${n.toLocaleString()}원`;
 const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
+const kstDate = (s: string | null) =>
+  s ? new Date(s).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit' }) : '-';
 
 interface Props {
   adminKey: string;
+  students: Student[];
+  onStudentClick: (student: Student) => void;
 }
 
-export function B2bStats({ adminKey }: Props) {
+export function B2bStats({ adminKey, students, onStudentClick }: Props) {
   const [preset, setPreset] = useState<Preset>('last_6m');
   const [range, setRange] = useState(() => getPresetRange('last_6m'));
   const [data, setData] = useState<B2bStatsData | null>(null);
@@ -118,7 +124,14 @@ export function B2bStats({ adminKey }: Props) {
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <CompanyRow key={r.company_id} row={r} expanded={expanded === r.company_id} onToggle={() => setExpanded((e) => (e === r.company_id ? null : r.company_id))} />
+                    <CompanyRow
+                      key={r.company_id}
+                      row={r}
+                      students={students}
+                      onStudentClick={onStudentClick}
+                      expanded={expanded === r.company_id}
+                      onToggle={() => setExpanded((e) => (e === r.company_id ? null : r.company_id))}
+                    />
                   ))}
                   {rows.length === 0 && (
                     <tr><td colSpan={6} className="py-10 text-center text-sm text-gray-400">업체가 없습니다.</td></tr>
@@ -133,8 +146,9 @@ export function B2bStats({ adminKey }: Props) {
   );
 }
 
-function CompanyRow({ row, expanded, onToggle }: { row: B2bCompanyStats; expanded: boolean; onToggle: () => void }) {
+function CompanyRow({ row, students, onStudentClick, expanded, onToggle }: { row: B2bCompanyStats; students: Student[]; onStudentClick: (student: Student) => void; expanded: boolean; onToggle: () => void }) {
   const dim = row.leads === 0 && !row.is_active;
+  const companyStudents = students.filter((s) => s.company_id === row.company_id);
   return (
     <>
       <tr className={`border-b border-gray-50 hover:bg-gray-50/50 ${dim ? 'opacity-40' : ''}`}>
@@ -158,20 +172,25 @@ function CompanyRow({ row, expanded, onToggle }: { row: B2bCompanyStats; expande
       </tr>
       {expanded && (
         <tr>
-          <td colSpan={6} className="px-2 py-3">
-            {row.trend.length ? (
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={row.trend} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
-                  <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="leads" name="리드" fill="#93c5fd" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="paid" name="결제" fill="#34d399" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          <td colSpan={6} className="px-2 py-3 bg-gray-50/40">
+            {companyStudents.length ? (
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold text-gray-400 px-1 mb-1">학생 {companyStudents.length}명</p>
+                {companyStudents.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => onStudentClick(s)}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white border border-gray-100 hover:border-blue-300 hover:bg-blue-50/40 transition-colors text-left"
+                  >
+                    <span className="font-medium text-blue-600 shrink-0">{s.name}</span>
+                    <span className="text-xs text-gray-500 shrink-0">{FUNNEL_STAGE_LABELS[s.funnel_stage as FunnelStage] ?? s.funnel_stage}</span>
+                    <span className="text-xs text-gray-400 min-w-0 truncate">{s.lead_status}</span>
+                    <span className="text-xs text-gray-400 tabular-nums ml-auto shrink-0">{kstDate(s.inquiry_date ?? s.created_at)}</span>
+                  </button>
+                ))}
+              </div>
             ) : (
-              <p className="text-xs text-gray-400 py-4 text-center">기간 내 데이터 없음</p>
+              <p className="text-xs text-gray-400 py-4 text-center">이 업체에 연결된 학생이 없습니다.</p>
             )}
           </td>
         </tr>
