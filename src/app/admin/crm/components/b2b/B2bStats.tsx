@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bStatsData, B2bCompanyStats } from '@/app/api/crm/b2b/stats/route';
-import { FUNNEL_STAGE_LABELS, type FunnelStage } from '@/types/crm';
 import {
   type Preset,
   getPresetRange,
@@ -199,18 +198,22 @@ function CompanyRow({ row, onSelectStudentById, expanded, onToggle }: { row: B2b
             {companyStudents.length ? (
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold text-gray-400 px-1 mb-1">학생 {companyStudents.length}명</p>
-                {companyStudents.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => onSelectStudentById(s.id)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white border border-gray-100 hover:border-blue-300 hover:bg-blue-50/40 transition-colors text-left"
-                  >
-                    <span className="font-medium text-blue-600 shrink-0">{s.name}</span>
-                    <span className="text-xs text-gray-500 shrink-0">{FUNNEL_STAGE_LABELS[s.funnel_stage as FunnelStage] ?? s.funnel_stage}</span>
-                    <span className="text-xs text-gray-400 min-w-0 truncate">{s.lead_status}</span>
-                    <span className="text-xs text-gray-400 tabular-nums ml-auto shrink-0">{kstDate(s.inquiry_date ?? s.created_at)}</span>
-                  </button>
-                ))}
+                {companyStudents.map((s) => {
+                  const enrolled = s.lead_status === 'enrolled' || s.funnel_stage === '8';
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => onSelectStudentById(s.id)}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white border border-gray-100 hover:border-blue-300 hover:bg-blue-50/40 transition-colors text-left"
+                    >
+                      <span className="font-medium text-blue-600 shrink-0">{s.name}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${enrolled ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
+                        {enrolled ? '수업 중' : '이탈'}
+                      </span>
+                      <span className="text-xs text-gray-400 tabular-nums ml-auto shrink-0">{kstDate(s.inquiry_date ?? s.created_at)}</span>
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-xs text-gray-400 py-4 text-center">이 업체에 연결된 학생이 없습니다.</p>
