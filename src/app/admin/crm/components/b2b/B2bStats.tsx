@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bStatsData, B2bCompanyStats } from '@/app/api/crm/b2b/stats/route';
 import type { Student } from '@/types/crm';
@@ -58,11 +58,20 @@ export function B2bStats({ adminKey, students, onStudentClick }: Props) {
 
   const o = data?.overview;
   const rows = data?.by_company ?? [];
-  const chartData = rows.filter((r) => r.leads > 0).slice(0, 10).map((r) => ({
-    name: r.company_name.length > 8 ? r.company_name.slice(0, 8) + '…' : r.company_name,
-    리드: r.leads,
-    결제: r.paid,
-  }));
+  // 업체별 월 트렌드를 전체 월별로 합산 → 매출·리드·결제 시계열
+  const monthlyTrend = useMemo(() => {
+    const m = new Map<string, { month: string; revenue: number; leads: number; paid: number }>();
+    for (const c of rows) {
+      for (const t of c.trend) {
+        const e = m.get(t.month) ?? { month: t.month, revenue: 0, leads: 0, paid: 0 };
+        e.revenue += t.revenue;
+        e.leads += t.leads;
+        e.paid += t.paid;
+        m.set(t.month, e);
+      }
+    }
+    return [...m.values()].sort((a, b) => a.month.localeCompare(b.month));
+  }, [rows]);
 
   return (
     <div className="space-y-5">
@@ -93,18 +102,35 @@ export function B2bStats({ adminKey, students, onStudentClick }: Props) {
             <OverviewCard label="매출" value={`${manwon(o.total_revenue)}원`} title={won(o.total_revenue)} sub={`실수익 ${manwon(o.total_net_revenue)}원`} />
           </div>
 
-          {chartData.length > 1 && (
+          {monthlyTrend.length > 1 && (
             <div>
-              <p className="text-xs font-semibold text-gray-400 mb-3">업체별 리드·결제</p>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={chartData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="리드" fill="#93c5fd" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="결제" fill="#34d399" radius={[3, 3, 0, 0]} />
-                </BarChart>
+              <p className="text-xs font-semibold text-gray-400 mb-3">매출·리드·결제 트렌드</p>
+              <ResponsiveContainer width="100%" height={260}>
+                <ComposedChart data={monthlyTrend} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="b2bRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#34d399" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#34d399" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="b2bLead" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#93c5fd" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#93c5fd" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={48}
+                    tickFormatter={(v: number) => (v >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : `${Math.round(v / 1e4)}만`)} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
+                  <Tooltip
+                    formatter={(value, name) => (name === '매출' ? won(Number(value)) : `${value}명`)}
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
+                  <Area yAxisId="left" type="monotone" dataKey="revenue" name="매출" stroke="#10b981" strokeWidth={2} fill="url(#b2bRev)" />
+                  <Area yAxisId="right" type="monotone" dataKey="leads" name="리드" stroke="#60a5fa" strokeWidth={2} fill="url(#b2bLead)" />
+                  <Line yAxisId="right" type="monotone" dataKey="paid" name="결제" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 3" dot={false} />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           )}
