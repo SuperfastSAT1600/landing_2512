@@ -11,6 +11,7 @@ import {
 
 interface Props {
   adminKey: string;
+  segment?: 'b2c' | 'b2b'; // 생성 시 귀속 세그먼트(097). 기본 b2c
   experiment?: GrowthExperiment | null; // 있으면 수정, 없으면 생성
   onClose: () => void;
   onSaved: (exp: GrowthExperiment) => void;
@@ -26,7 +27,7 @@ const METRIC_KEYS: ExperimentMetricKey[] = [
 const inputCls =
   'w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20';
 
-export function ExperimentModal({ adminKey, experiment, onClose, onSaved }: Props) {
+export function ExperimentModal({ adminKey, segment = 'b2c', experiment, onClose, onSaved }: Props) {
   const e = experiment;
   const [title, setTitle] = useState(e?.title ?? '');
   const [hypothesis, setHypothesis] = useState(e?.hypothesis ?? '');
@@ -66,6 +67,7 @@ export function ExperimentModal({ adminKey, experiment, onClose, onSaved }: Prop
       test_from: testFrom || null,
       test_to: testTo || null,
       target_value: targetValue.trim() === '' ? null : Number(targetValue),
+      ...(e ? {} : { segment }), // 생성 시에만 세그먼트 귀속
     };
 
     const url = e ? `/api/crm/experiments/${e.id}` : '/api/crm/experiments';

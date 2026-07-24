@@ -105,7 +105,7 @@ export function B2cWorkspace({
       {activeTab === 'strategies' && (
         <>
           {INSIGHT_BANNER_ENABLED && <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />}
-          <StrategiesTab adminKey={adminKey} initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} onSelectStudent={onSelectStudentById} />
+          <StrategiesTab adminKey={adminKey} segment="b2c" initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} onSelectStudent={onSelectStudentById} />
         </>
       )}
 

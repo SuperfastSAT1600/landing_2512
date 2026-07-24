@@ -9,6 +9,7 @@ import { StrategyStats } from './StrategyStats';
 
 interface Props {
   adminKey: string;
+  segment?: 'b2c' | 'b2b'; // 전략 세그먼트 분리(097). 기본 b2c
   initialSubTab?: SubTab;
   strategyPeriod?: InsightPeriod;
   strategySeed?: { key: number; text: string; period: InsightPeriod }; // 배너에서 고른 안건 시드
@@ -25,12 +26,14 @@ const TYPE_LABELS: Record<StrategyType, string> = {
 
 function StrategySection({
   type,
+  segment,
   strategies,
   adminKey,
   onCreated,
   onDeleted,
 }: {
   type: StrategyType;
+  segment: 'b2c' | 'b2b';
   strategies: RetryStrategy[];
   adminKey: string;
   onCreated: (s: RetryStrategy) => void;
@@ -50,6 +53,7 @@ function StrategySection({
       body: JSON.stringify({
         name: newName.trim(),
         type,
+        segment,
         description: newDesc.trim() || undefined,
       }),
     });
@@ -162,7 +166,7 @@ type SubTab = 'experiment' | 'logic' | 'library' | 'strategy_ai';
 // 짝: CrmInsightBanner.tsx 의 동일 플래그(이어서 전략 짜기 CTA).
 const STRATEGY_AGENT_ENABLED = false;
 
-export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strategySeed, onSelectStudent }: Props) {
+export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strategyPeriod, strategySeed, onSelectStudent }: Props) {
   const [subTab, setSubTab] = useState<SubTab>(initialSubTab ?? 'experiment');
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -180,7 +184,7 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
 
   const fetchAll = useCallback(async () => {
     try {
-      const res = await fetch('/api/crm/retry-strategies', {
+      const res = await fetch(`/api/crm/retry-strategies?segment=${segment}`, {
         headers: { 'x-admin-key': adminKey },
       });
       const json = await res.json();
@@ -188,7 +192,7 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
     } finally {
       setLoading(false);
     }
-  }, [adminKey]);
+  }, [adminKey, segment]);
 
   useEffect(() => {
     fetchAll();
@@ -230,9 +234,9 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
         ))}
       </div>
 
-      {subTab === 'experiment' && <ExperimentBoard adminKey={adminKey} />}
+      {subTab === 'experiment' && <ExperimentBoard adminKey={adminKey} segment={segment} />}
 
-      {subTab === 'logic' && <StrategyStats adminKey={adminKey} onSelectStudent={onSelectStudent} />}
+      {subTab === 'logic' && <StrategyStats adminKey={adminKey} segment={segment} onSelectStudent={onSelectStudent} />}
 
       {subTab === 'strategy_ai' && <StrategyAgentChat adminKey={adminKey} period={strategyPeriod} seed={strategySeed} />}
 
@@ -247,6 +251,7 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
               </p>
               <StrategySection
                 type="initial_contact"
+                segment={segment}
                 strategies={initialContactStrategies}
                 adminKey={adminKey}
                 onCreated={handleCreated}
@@ -254,6 +259,7 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
               />
               <StrategySection
                 type="initial_sales"
+                segment={segment}
                 strategies={initialSalesStrategies}
                 adminKey={adminKey}
                 onCreated={handleCreated}
@@ -261,6 +267,7 @@ export function StrategiesTab({ adminKey, initialSubTab, strategyPeriod, strateg
               />
               <StrategySection
                 type="retry"
+                segment={segment}
                 strategies={retryStrategies}
                 adminKey={adminKey}
                 onCreated={handleCreated}

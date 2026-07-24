@@ -76,12 +76,15 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [saving, setSaving] = useState(false);
 
+  // 전략 세그먼트 분리(097): B2B 학생은 B2B 전략만, 그 외는 B2C 전략만 배정 선택지에 노출
+  const segment = student.lead_type === 'B2B' ? 'b2b' : 'b2c';
+
   useEffect(() => {
     if (!sectionOpen) return;
-    fetch('/api/crm/retry-strategies', { headers: { 'x-admin-key': adminKey } })
+    fetch(`/api/crm/retry-strategies?segment=${segment}`, { headers: { 'x-admin-key': adminKey } })
       .then(r => r.json())
       .then(j => setStrategies(j.data ?? []));
-  }, [sectionOpen, adminKey]);
+  }, [sectionOpen, adminKey, segment]);
 
   const history: StrategyHistoryEntry[] = student.strategy_history ?? [];
 

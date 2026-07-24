@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TrendingUp, Users, Phone, CreditCard, RefreshCw } from 'lucide-react';
-import type { CrmStatsData, StatsBySource, StatsWeekly } from '@/app/api/crm/stats/route';
-import type { StatsDetailMetric } from '@/lib/crm-stats-detail';
-import { StatsDetailModal } from './StatsDetailModal';
+import { useState, useEffect, useCallback, Fragment } from 'react';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { TrendingUp, Users, Phone, CreditCard, RefreshCw, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import type { CrmStatsData, StatsBySource, StatsWeekly, StatsMonthly } from '@/app/api/crm/stats/route';
+import type { StatsDetailMetric, LeadDetailItem } from '@/lib/crm-stats-detail';
+import { StatsDetailModal, leadStatus, type LeadDisplayStatus } from './StatsDetailModal';
 import {
   type Preset,
+  type TrendPreset,
   getPresetRange,
+  getTrendRange,
   PRESETS,
+  TREND_PRESETS,
   OverviewCard,
   RateBar,
   formatDuration,
@@ -17,14 +20,59 @@ import {
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
+const SRC_STATUS_STYLE: Record<LeadDisplayStatus, string> = {
+  '세일즈 중': 'bg-blue-50 text-blue-600',
+  '결제': 'bg-emerald-50 text-emerald-600',
+  '이탈': 'bg-gray-100 text-gray-500',
+};
+const srcLeadDate = (s: string | null) =>
+  s ? new Date(s).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit' }) : '-';
+
 function SourceTable({
   rows,
-  onSelect,
+  adminKey,
+  from,
+  to,
+  onSelectStudent,
 }: {
   rows: StatsBySource[];
-  onSelect: (source: string) => void;
+  adminKey: string;
+  from: string;
+  to: string;
+  onSelectStudent?: (id: string) => void;
 }) {
   const maxLeads = Math.max(...rows.map((r) => r.leads), 1);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [cache, setCache] = useState<Record<string, LeadDetailItem[]>>({});
+  const [loadingSrc, setLoadingSrc] = useState<string | null>(null);
+
+  // 기간이 바뀌면 캐시 무효화(펼친 항목 데이터가 기간과 어긋나지 않게)
+  useEffect(() => {
+    setCache({});
+    setExpanded(null);
+  }, [from, to]);
+
+  async function toggle(source: string) {
+    if (expanded === source) {
+      setExpanded(null);
+      return;
+    }
+    setExpanded(source);
+    if (cache[source]) return;
+    setLoadingSrc(source);
+    try {
+      const qs = new URLSearchParams({ metric: 'leads', from, to, source });
+      const res = await fetch(`/api/crm/stats/detail?${qs.toString()}`, { headers: { 'x-admin-key': adminKey } });
+      const json = await res.json();
+      if (res.ok && json.data?.kind === 'leads') {
+        setCache((prev) => ({ ...prev, [source]: json.data.items as LeadDetailItem[] }));
+      }
+    } catch {
+      /* 무시: 목록만 비어 보임 */
+    } finally {
+      setLoadingSrc(null);
+    }
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -45,56 +93,95 @@ function SourceTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr
-              key={r.source}
-              onClick={() => onSelect(r.source)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onSelect(r.source);
-                }
-              }}
-              className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer focus:outline-none focus:bg-gray-50"
-            >
-              <td className="py-2.5 pr-4">
-                <div>
-                  <p className="text-xs font-medium text-blue-700 hover:underline">{r.source}</p>
-                  <RateBar value={r.leads} max={maxLeads} color="bg-gray-300" />
-                </div>
-              </td>
-              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.leads}</td>
-              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.contacted}</td>
-              <td className="py-2.5 px-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-700 w-9 text-right">
-                    {r.contact_rate}%
-                  </span>
-                  <RateBar value={r.contact_rate} color="bg-gray-900" />
-                </div>
-              </td>
-              <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.paid}</td>
-              <td className="py-2.5 px-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-700 w-9 text-right">
-                    {r.conversion_rate}%
-                  </span>
-                  <RateBar value={r.conversion_rate} color="bg-gray-900" />
-                </div>
-              </td>
-              <td className="text-right py-2.5 px-2 text-xs text-gray-600 whitespace-nowrap tabular-nums">
-                {formatDuration(r.avg_first_response_seconds)}
-              </td>
-              <td className="text-right py-2.5 px-2 text-xs text-gray-600">
-                {r.revenue > 0 ? `${(r.revenue / 10000).toFixed(0)}만` : '-'}
-              </td>
-              <td className="text-right py-2.5 pl-2 text-xs font-medium text-gray-700">
-                {r.net_revenue > 0 ? `${(r.net_revenue / 10000).toFixed(0)}만` : '-'}
-              </td>
-            </tr>
-          ))}
+          {rows.map((r) => {
+            const isOpen = expanded === r.source;
+            const leads = cache[r.source];
+            return (
+              <Fragment key={r.source}>
+                <tr
+                  onClick={() => toggle(r.source)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggle(r.source);
+                    }
+                  }}
+                  className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer focus:outline-none focus:bg-gray-50"
+                >
+                  <td className="py-2.5 pr-4">
+                    <div className="flex items-center gap-1.5">
+                      {isOpen ? <ChevronDown size={13} className="text-gray-300 shrink-0" /> : <ChevronRight size={13} className="text-gray-300 shrink-0" />}
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-blue-700 hover:underline truncate">{r.source}</p>
+                        <RateBar value={r.leads} max={maxLeads} color="bg-gray-300" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.leads}</td>
+                  <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.contacted}</td>
+                  <td className="py-2.5 px-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-700 w-9 text-right">
+                        {r.contact_rate}%
+                      </span>
+                      <RateBar value={r.contact_rate} color="bg-gray-900" />
+                    </div>
+                  </td>
+                  <td className="text-right py-2.5 px-2 text-xs text-gray-700">{r.paid}</td>
+                  <td className="py-2.5 px-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-700 w-9 text-right">
+                        {r.conversion_rate}%
+                      </span>
+                      <RateBar value={r.conversion_rate} color="bg-gray-900" />
+                    </div>
+                  </td>
+                  <td className="text-right py-2.5 px-2 text-xs text-gray-600 whitespace-nowrap tabular-nums">
+                    {formatDuration(r.avg_first_response_seconds)}
+                  </td>
+                  <td className="text-right py-2.5 px-2 text-xs text-gray-600">
+                    {r.revenue > 0 ? `${(r.revenue / 10000).toFixed(0)}만` : '-'}
+                  </td>
+                  <td className="text-right py-2.5 pl-2 text-xs font-medium text-gray-700">
+                    {r.net_revenue > 0 ? `${(r.net_revenue / 10000).toFixed(0)}만` : '-'}
+                  </td>
+                </tr>
+                {isOpen && (
+                  <tr>
+                    <td colSpan={9} className="px-2 py-3 bg-gray-50/40">
+                      {loadingSrc === r.source && !leads ? (
+                        <div className="flex items-center justify-center gap-2 py-4 text-xs text-gray-400">
+                          <Loader2 size={14} className="animate-spin" /> 불러오는 중…
+                        </div>
+                      ) : leads && leads.length > 0 ? (
+                        <div className="space-y-1">
+                          <p className="text-[11px] font-semibold text-gray-400 px-1 mb-1">리드 {leads.length}명</p>
+                          {leads.map((s) => {
+                            const st = leadStatus(s);
+                            return (
+                              <button
+                                key={s.id}
+                                onClick={() => onSelectStudent?.(s.id)}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white border border-gray-100 hover:border-blue-300 hover:bg-blue-50/40 transition-colors text-left"
+                              >
+                                <span className="font-medium text-blue-600 text-xs shrink-0">{s.name}</span>
+                                <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${SRC_STATUS_STYLE[st]}`}>{st}</span>
+                                <span className="text-xs text-gray-400 tabular-nums ml-auto shrink-0">{srcLeadDate(s.date)}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 py-4 text-center">이 소스의 리드가 없습니다.</p>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -162,6 +249,11 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<CrmStatsData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 월별 트렌드 그래프는 상단 기간 선택기와 독립적인 자체 기간을 갖는다(별도 fetch).
+  const [allMonthly, setAllMonthly] = useState<StatsMonthly[]>([]);
+  const [trendPreset, setTrendPreset] = useState<TrendPreset>('all');
+  const [trendCustomFrom, setTrendCustomFrom] = useState('');
+  const [trendCustomTo, setTrendCustomTo] = useState('');
   const [trendView, setTrendView] = useState<'monthly' | 'weekly'>('monthly');
   const [detail, setDetail] = useState<{ metric: StatsDetailMetric; label: string; source?: string } | null>(null);
 
@@ -192,6 +284,25 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   useEffect(() => {
     if (preset !== 'custom') fetchStats();
   }, [preset, fetchStats]);
+
+  // 트렌드 그래프 기간(트렌드 전용 프리셋 또는 직접 입력, 상단 기간과 독립)
+  const trendRange =
+    trendPreset === 'custom'
+      ? { from: trendCustomFrom, to: trendCustomTo }
+      : getTrendRange(trendPreset);
+
+  // 트렌드 그래프용 월별 데이터 로드. 커스텀은 from~to가 유효할 때만 조회.
+  useEffect(() => {
+    const { from: tf, to: tt } = trendRange;
+    if (!tf || !tt || tf > tt) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/crm/stats?from=${tf}&to=${tt}`, { headers: { 'x-admin-key': adminKey } });
+        const json = await res.json();
+        if (res.ok && json.data) setAllMonthly((json.data as CrmStatsData).monthly);
+      } catch { /* 무시: 그래프만 비어 보임 */ }
+    })();
+  }, [adminKey, trendRange.from, trendRange.to]);
 
   const d = data;
   // 카드 값: 한눈에 비교되도록 만원 단위로 축약. 정확한 원 단위 값은 title 툴팁으로 노출.
@@ -352,7 +463,13 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
           <div className="border-b border-gray-100 pb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-500">
-                {trendView === 'monthly' ? '월별 추이' : '주차별 추이'}
+                {trendView === 'monthly'
+                  ? `월별 추이 · ${
+                      trendPreset === 'custom' && trendRange.from && trendRange.to
+                        ? `${trendRange.from} ~ ${trendRange.to}`
+                        : TREND_PRESETS.find((p) => p.key === trendPreset)?.label ?? '전체'
+                    }`
+                  : '주차별 추이'}
               </h3>
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
                 {(['monthly', 'weekly'] as const).map((v) => (
@@ -371,22 +488,58 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               </div>
             </div>
 
-            {trendView === 'monthly' ? (
-              d.monthly.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={d.monthly} barGap={2}>
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                    <Tooltip contentStyle={{ fontSize: 12 }} />
-                    <Legend
-                      formatter={(v: string) =>
-                        ({ leads: '리드', contacted: '컨택 성공', paid: '결제' })[v] ?? v
-                      }
+            {/* 트렌드 그래프 전용 기간 선택 (월별 뷰에서만) */}
+            {trendView === 'monthly' && (
+              <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                {TREND_PRESETS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setTrendPreset(key)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                      trendPreset === key
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+
+                {trendPreset === 'custom' && (
+                  <div className="flex items-center gap-1.5 ml-1">
+                    <input
+                      type="date"
+                      value={trendCustomFrom}
+                      onChange={(e) => setTrendCustomFrom(e.target.value)}
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
                     />
-                    <Bar dataKey="leads" fill="#e5e7eb" radius={[3, 3, 0, 0]} />
-                    <Bar dataKey="contacted" fill="#60a5fa" radius={[3, 3, 0, 0]} />
-                    <Bar dataKey="paid" fill="#34d399" radius={[3, 3, 0, 0]} />
-                  </BarChart>
+                    <span className="text-xs text-gray-400">~</span>
+                    <input
+                      type="date"
+                      value={trendCustomTo}
+                      onChange={(e) => setTrendCustomTo(e.target.value)}
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {trendView === 'monthly' ? (
+              allMonthly.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <ComposedChart data={allMonthly} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={52}
+                      tickFormatter={(v: number) => (Math.abs(v) >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : `${Math.round(v / 1e4)}만`)} />
+                    <Tooltip formatter={(value) => fmt원(Number(value))} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
+                    <Bar dataKey="refund" name="환불" fill="#fca5a5" radius={[3, 3, 0, 0]} maxBarSize={22} />
+                    <Line type="monotone" dataKey="gross_revenue" name="매출" stroke="#10b981" strokeWidth={2.5} dot={{ r: 2, strokeWidth: 0, fill: '#10b981' }} activeDot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="revenue" name="순매출" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 2, strokeWidth: 0, fill: '#3b82f6' }} activeDot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="net_revenue" name="순수익" stroke="#8b5cf6" strokeWidth={2.5} dot={{ r: 2, strokeWidth: 0, fill: '#8b5cf6' }} activeDot={{ r: 4 }} />
+                  </ComposedChart>
                 </ResponsiveContainer>
               ) : (
                 <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
@@ -412,9 +565,10 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
             ) : (
               <SourceTable
                 rows={d.by_source}
-                onSelect={(source) =>
-                  setDetail({ metric: 'leads', label: `${source} 리드`, source })
-                }
+                adminKey={adminKey}
+                from={from}
+                to={to}
+                onSelectStudent={onSelectStudent}
               />
             )}
           </div>

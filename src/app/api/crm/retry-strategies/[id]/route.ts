@@ -16,9 +16,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
+  const updates: { name?: string; description?: string } = {};
+  if (typeof body.name === 'string') updates.name = body.name.trim();
+  if (typeof body.description === 'string') updates.description = body.description.trim();
+
   const { data, error } = await supabaseAdmin
     .from('retry_strategies')
-    .update(body)
+    .update(updates)
     .eq('id', id)
     .select()
     .single();

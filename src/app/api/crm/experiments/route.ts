@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const status = new URL(request.url).searchParams.get('status');
+  const sp = new URL(request.url).searchParams;
+  const status = sp.get('status');
+  const segment = sp.get('segment');
   let query = supabaseAdmin
     .from('growth_experiments')
     .select('*')
@@ -17,6 +19,9 @@ export async function GET(request: NextRequest) {
 
   if (status && ['planned', 'running', 'done'].includes(status)) {
     query = query.eq('status', status);
+  }
+  if (segment === 'b2c' || segment === 'b2b') {
+    query = query.eq('segment', segment);
   }
 
   const { data, error } = await query;
@@ -53,6 +58,7 @@ export async function POST(request: NextRequest) {
     hypothesis: (body.hypothesis as string)?.trim() || null,
     execution_plan: (body.execution_plan as string)?.trim() || null,
     segment_source: (body.segment_source as string) || null,
+    segment: body.segment === 'b2b' ? 'b2b' : 'b2c',
     custom_metric_label: (body.custom_metric_label as string)?.trim() || null,
     baseline_from: (body.baseline_from as string) || null,
     baseline_to: (body.baseline_to as string) || null,
