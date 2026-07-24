@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bStatsData, B2bCompanyStats } from '@/app/api/crm/b2b/stats/route';
 import {
@@ -157,18 +157,8 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
                 </div>
               </div>
               {monthlyTrend.length > 1 ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <ComposedChart data={monthlyTrend} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="b2bRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#34d399" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#34d399" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="b2bLead" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#93c5fd" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#93c5fd" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={monthlyTrend} margin={{ top: 8, right: 4, left: -6, bottom: 0 }} barCategoryGap="30%">
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
                   <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={48}
@@ -179,9 +169,9 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
                     contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
                   />
                   <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
-                  <Area yAxisId="left" type="monotone" dataKey="revenue" name="매출" stroke="#10b981" strokeWidth={2} fill="url(#b2bRev)" />
-                  <Area yAxisId="right" type="monotone" dataKey="leads" name="리드" stroke="#60a5fa" strokeWidth={2} fill="url(#b2bLead)" />
-                  <Line yAxisId="right" type="monotone" dataKey="paid" name="결제" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 3" dot={false} />
+                  <Bar yAxisId="left" dataKey="revenue" name="매출" fill="#a7f3d0" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Line yAxisId="right" type="monotone" dataKey="leads" name="리드" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 2.5, strokeWidth: 0, fill: '#3b82f6' }} activeDot={{ r: 4 }} />
+                  <Line yAxisId="right" type="monotone" dataKey="paid" name="결제" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 2.5, strokeWidth: 0, fill: '#f59e0b' }} activeDot={{ r: 4 }} />
                 </ComposedChart>
               </ResponsiveContainer>
               ) : (
