@@ -4,7 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { computeStageFlow, type StageFlowRow } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
-import { MAX_LEAD_ROWS, isContacted, contactRate, toMonthKey, inquiryRefMs } from '@/lib/crm-stats-core';
+import { MAX_LEAD_ROWS, isContacted, contactRate, toMonthKey, inquiryRefMs, fillMonthlyGaps } from '@/lib/crm-stats-core';
 
 export interface StatsBySource {
   source: string;
@@ -258,9 +258,10 @@ export async function GET(request: NextRequest) {
     entry.net_revenue += netAmount(p);
   }
 
-  const monthly: StatsMonthly[] = Array.from(monthMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, d]) => ({ month, ...d }));
+  const monthly: StatsMonthly[] = fillMonthlyGaps(
+    Array.from(monthMap.entries()).map(([month, d]) => ({ month, ...d })),
+    (month) => ({ month, leads: 0, contacted: 0, paid: 0, gross_revenue: 0, refund: 0, revenue: 0, net_revenue: 0 }),
+  );
 
   // ── Weekly ────────────────────────────────────────────────────────────────
   const weekMap = new Map<

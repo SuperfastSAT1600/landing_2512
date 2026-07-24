@@ -25,6 +25,36 @@ export function toMonthKey(dateStr: string): string {
   return dateStr.slice(0, 7); // "2026-05"
 }
 
+/** "YYYY-MM"에 n개월 더한 월 키 반환. */
+function addMonthKey(month: string, n: number): string {
+  const [y, m] = month.split('-').map(Number);
+  const total = y * 12 + (m - 1) + n;
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12) + 1;
+  return `${ny}-${String(nm).padStart(2, '0')}`;
+}
+
+/**
+ * 월별 시계열의 내부 누락 월을 0값으로 채워 연속 배열로 만든다.
+ * rows는 `month:"YYYY-MM"`를 가진 배열(정렬 여부 무관). 최소~최대 월 사이만 채우고
+ * 리딩/트레일링 빈 달은 만들지 않는다. 빈 배열/단일 원소는 그대로 반환.
+ */
+export function fillMonthlyGaps<T extends { month: string }>(
+  rows: T[],
+  make: (month: string) => T,
+): T[] {
+  if (rows.length < 2) return [...rows].sort((a, b) => a.month.localeCompare(b.month));
+  const byMonth = new Map(rows.map((r) => [r.month, r]));
+  const months = rows.map((r) => r.month).sort((a, b) => a.localeCompare(b));
+  const first = months[0];
+  const last = months[months.length - 1];
+  const out: T[] = [];
+  for (let cur = first; cur <= last; cur = addMonthKey(cur, 1)) {
+    out.push(byMonth.get(cur) ?? make(cur));
+  }
+  return out;
+}
+
 /**
  * 첫 응답 시간 계산의 기준 문의시각(ms).
  * inquiry_date는 naive(KST 벽시계)로 저장되므로 KST(+09:00) instant로 해석한다.

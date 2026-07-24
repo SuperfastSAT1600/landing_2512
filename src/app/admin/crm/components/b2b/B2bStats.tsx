@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bStatsData, B2bCompanyStats } from '@/app/api/crm/b2b/stats/route';
+import { fillMonthlyGaps } from '@/lib/crm-stats-core';
 import {
   type Preset,
   getPresetRange,
@@ -88,7 +89,8 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
         m.set(t.month, e);
       }
     }
-    return [...m.values()].sort((a, b) => a.month.localeCompare(b.month));
+    // 데이터 없는 중간 달도 0값으로 채워 x축이 끊기지 않게 한다.
+    return fillMonthlyGaps([...m.values()], (month) => ({ month, revenue: 0, leads: 0, paid: 0 }));
   }, [rows, trendCompanies]);
 
   return (
