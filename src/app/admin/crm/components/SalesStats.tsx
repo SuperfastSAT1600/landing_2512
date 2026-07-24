@@ -8,8 +8,11 @@ import type { StatsDetailMetric, LeadDetailItem } from '@/lib/crm-stats-detail';
 import { StatsDetailModal, leadStatus, type LeadDisplayStatus } from './StatsDetailModal';
 import {
   type Preset,
+  type TrendPreset,
   getPresetRange,
+  getTrendRange,
   PRESETS,
+  TREND_PRESETS,
   OverviewCard,
   RateBar,
   formatDuration,
@@ -246,8 +249,11 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<CrmStatsData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // 월별 트렌드 그래프는 선택 기간과 무관하게 항상 전체 기간을 보여준다(별도 fetch).
+  // 월별 트렌드 그래프는 상단 기간 선택기와 독립적인 자체 기간을 갖는다(별도 fetch).
   const [allMonthly, setAllMonthly] = useState<StatsMonthly[]>([]);
+  const [trendPreset, setTrendPreset] = useState<TrendPreset>('all');
+  const [trendCustomFrom, setTrendCustomFrom] = useState('');
+  const [trendCustomTo, setTrendCustomTo] = useState('');
   const [trendView, setTrendView] = useState<'monthly' | 'weekly'>('monthly');
   const [detail, setDetail] = useState<{ metric: StatsDetailMetric; label: string; source?: string } | null>(null);
 
@@ -279,17 +285,24 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     if (preset !== 'custom') fetchStats();
   }, [preset, fetchStats]);
 
-  // 트렌드 그래프용 전체 기간 월별 데이터(1회 로드, 기간 프리셋과 독립)
+  // 트렌드 그래프 기간(트렌드 전용 프리셋 또는 직접 입력, 상단 기간과 독립)
+  const trendRange =
+    trendPreset === 'custom'
+      ? { from: trendCustomFrom, to: trendCustomTo }
+      : getTrendRange(trendPreset);
+
+  // 트렌드 그래프용 월별 데이터 로드. 커스텀은 from~to가 유효할 때만 조회.
   useEffect(() => {
-    const r = getPresetRange('all');
+    const { from: tf, to: tt } = trendRange;
+    if (!tf || !tt || tf > tt) return;
     (async () => {
       try {
-        const res = await fetch(`/api/crm/stats?from=${r.from}&to=${r.to}`, { headers: { 'x-admin-key': adminKey } });
+        const res = await fetch(`/api/crm/stats?from=${tf}&to=${tt}`, { headers: { 'x-admin-key': adminKey } });
         const json = await res.json();
         if (res.ok && json.data) setAllMonthly((json.data as CrmStatsData).monthly);
       } catch { /* 무시: 그래프만 비어 보임 */ }
     })();
-  }, [adminKey]);
+  }, [adminKey, trendRange.from, trendRange.to]);
 
   const d = data;
   // 카드 값: 한눈에 비교되도록 만원 단위로 축약. 정확한 원 단위 값은 title 툴팁으로 노출.
@@ -450,7 +463,13 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
           <div className="border-b border-gray-100 pb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-500">
-                {trendView === 'monthly' ? '월별 추이 (전체 기간)' : '주차별 추이'}
+                {trendView === 'monthly'
+                  ? `월별 추이 · ${
+                      trendPreset === 'custom' && trendRange.from && trendRange.to
+                        ? `${trendRange.from} ~ ${trendRange.to}`
+                        : TREND_PRESETS.find((p) => p.key === trendPreset)?.label ?? '전체'
+                    }`
+                  : '주차별 추이'}
               </h3>
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
                 {(['monthly', 'weekly'] as const).map((v) => (
@@ -468,6 +487,43 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                 ))}
               </div>
             </div>
+
+            {/* 트렌드 그래프 전용 기간 선택 (월별 뷰에서만) */}
+            {trendView === 'monthly' && (
+              <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                {TREND_PRESETS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setTrendPreset(key)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                      trendPreset === key
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+
+                {trendPreset === 'custom' && (
+                  <div className="flex items-center gap-1.5 ml-1">
+                    <input
+                      type="date"
+                      value={trendCustomFrom}
+                      onChange={(e) => setTrendCustomFrom(e.target.value)}
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
+                    />
+                    <span className="text-xs text-gray-400">~</span>
+                    <input
+                      type="date"
+                      value={trendCustomTo}
+                      onChange={(e) => setTrendCustomTo(e.target.value)}
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {trendView === 'monthly' ? (
               allMonthly.length > 0 ? (
