@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { computeStageFlow, type StageFlowRow, type StageHistoryEntry } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
-import { MAX_LEAD_ROWS, isContacted, contactRate, toMonthKey } from '@/lib/crm-stats-core';
+import { MAX_LEAD_ROWS, contactRate, toMonthKey, isContactedWithImpliedPartner } from '@/lib/crm-stats-core';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -96,6 +96,10 @@ export async function GET(request: NextRequest) {
   const companyRows = companies ?? [];
   const companyName = new Map<string, string>(companyRows.map((c) => [c.id, c.name]));
 
+  // 컨택 성공 판정: 센터형 파트너 소속은 퍼널 단계와 무관하게 컨택 성공으로 본다.
+  const isContactedB2b = (s: { company_id: string | null; funnel_stage: string; stage_history?: StageHistoryEntry[] | null }): boolean =>
+    isContactedWithImpliedPartner(s, s.company_id ? companyName.get(s.company_id) : undefined);
+
   // company_id 있는 B2B 리드 전체(매출 귀속용 id→company 맵 + 기간 코호트 필터)
   const { data: students, error: sErr } = await supabaseAdmin
     .from('students')
@@ -116,12 +120,12 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 결제자 집합(최초결제 amount>1, anytime)
+  // 결제자 집합(최초결제 amount>0, anytime). ₩1은 센터형 파트너 일괄 등록 placeholder — 실전환이므로 포함.
   const { data: firstPayRows } = await supabaseAdmin
     .from('payments')
     .select('student_id,student_name')
     .eq('payment_type', '최초결제')
-    .gt('amount', 1);
+    .gt('amount', 0);
   const paidIds = new Set<string>();
   const paidNames = new Set<string>();
   for (const p of firstPayRows ?? []) {
@@ -159,7 +163,7 @@ export async function GET(request: NextRequest) {
     cohort.push(s);
     const a = ensure(s.company_id);
     a.leads++;
-    if (isContacted(s)) a.contacted++;
+    if (isContactedB2b(s)) a.contacted++;
     if (isPaid(s)) a.paid++;
     const mo = toMonthKey(s.inquiry_date ?? s.created_at);
     if (!a.trend.has(mo)) a.trend.set(mo, { month: mo, leads: 0, paid: 0, revenue: 0 });
@@ -177,7 +181,7 @@ export async function GET(request: NextRequest) {
     if (!a.trend.has(mo)) a.trend.set(mo, { month: mo, leads: 0, paid: 0, revenue: 0 });
     const tp = a.trend.get(mo)!;
     tp.revenue += p.amount;
-    if (p.payment_type === '최초결제' && p.amount > 1) tp.paid++;
+    if (p.payment_type === '최초결제' && p.amount > 0) tp.paid++;
   }
 
   // 업체별 학생 목록(기간 인입 코호트 전체 — 이탈/비활성 포함). 문의일 내림차순.
@@ -216,7 +220,7 @@ export async function GET(request: NextRequest) {
   }).sort((x, y) => y.leads - x.leads || y.revenue - x.revenue || x.company_name.localeCompare(y.company_name));
 
   const totalLeads = cohort.length;
-  const totalContacted = cohort.filter(isContacted).length;
+  const totalContacted = cohort.filter(isContactedB2b).length;
   const totalPaid = cohort.filter(isPaid).length;
   let totalRevenue = 0, totalNet = 0;
   for (const a of acc.values()) { totalRevenue += a.revenue; totalNet += a.net; }

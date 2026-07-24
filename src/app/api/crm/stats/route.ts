@@ -144,12 +144,12 @@ export async function GET(request: NextRequest) {
 
   // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다.
   // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
-  // ₩1 등 placeholder 결제(amount<=1)는 실결제가 아니므로 제외한다.
+  // ₩1 최초결제는 공부하는 아이들 등 센터형 파트너의 일괄 등록 placeholder이며 실제 전환이므로 포함한다(amount>0).
   const { data: firstPayRows } = await supabaseAdmin
     .from('payments')
     .select('student_id, student_name')
     .eq('payment_type', '최초결제')
-    .gt('amount', 1);
+    .gt('amount', 0);
   for (const p of firstPayRows ?? []) {
     if (p.student_id) paidStudentIds.add(p.student_id);
     if (p.student_name) paidStudentNames.add(p.student_name);

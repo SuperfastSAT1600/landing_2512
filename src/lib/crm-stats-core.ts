@@ -16,6 +16,23 @@ export function isContacted(student: {
   return hasReachedStage(student, '2');
 }
 
+// 센터형 파트너(예: 공부하는 아이들) 기본 목록 — 소속 학생을 컨택 성공으로 간주한다.
+export const CONTACT_IMPLIED_PARTNERS = new Set(['공부하는 아이들']);
+
+/**
+ * 컨택 성공 판정 + 센터형 파트너 예외.
+ * partnerName이 impliedPartners에 있으면 퍼널 단계와 무관하게 컨택 성공으로 본다
+ * (해당 파트너 학생은 세일즈 퍼널을 거치지 않고 바로 등록되므로). 그 외에는 isContacted 그대로.
+ */
+export function isContactedWithImpliedPartner(
+  student: { funnel_stage: string; stage_history?: { stage: string; label: string; entered_at: string }[] | null },
+  partnerName: string | null | undefined,
+  impliedPartners: Set<string> = CONTACT_IMPLIED_PARTNERS,
+): boolean {
+  if (partnerName && impliedPartners.has(partnerName)) return true;
+  return isContacted(student);
+}
+
 export function contactRate(contacted: number, leads: number): number {
   if (leads === 0) return 0;
   return Math.round((contacted / leads) * 10000) / 100;
