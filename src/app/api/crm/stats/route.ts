@@ -23,8 +23,10 @@ export interface StatsMonthly {
   leads: number;
   contacted: number;
   paid: number;
-  revenue: number;
-  net_revenue: number;
+  gross_revenue: number; // 매출(양수 결제 합)
+  refund: number;        // 환불(음수 합계, 음수값)
+  revenue: number;       // 순매출(매출 − 환불 = sum(amount))
+  net_revenue: number;   // 순수익(부가세 차감 후 = sum(netAmount))
 }
 
 export interface StatsWeekly {
@@ -231,13 +233,13 @@ export async function GET(request: NextRequest) {
   // ── Monthly ───────────────────────────────────────────────────────────────
   const monthMap = new Map<
     string,
-    { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number }
+    { leads: number; contacted: number; paid: number; gross_revenue: number; refund: number; revenue: number; net_revenue: number }
   >();
 
   for (const s of leadList) {
     const mo = toMonthKey(s.inquiry_date ?? s.created_at);
     if (!monthMap.has(mo))
-      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, gross_revenue: 0, refund: 0, revenue: 0, net_revenue: 0 });
     const entry = monthMap.get(mo)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
@@ -248,8 +250,10 @@ export async function GET(request: NextRequest) {
   for (const p of paymentList) {
     const mo = toMonthKey(p.paid_at);
     if (!monthMap.has(mo))
-      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0 });
+      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, gross_revenue: 0, refund: 0, revenue: 0, net_revenue: 0 });
     const entry = monthMap.get(mo)!;
+    if (p.amount >= 0) entry.gross_revenue += p.amount;
+    else entry.refund += p.amount;
     entry.revenue += p.amount;
     entry.net_revenue += netAmount(p);
   }

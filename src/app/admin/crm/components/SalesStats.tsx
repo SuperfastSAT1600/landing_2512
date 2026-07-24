@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, Users, Phone, CreditCard, RefreshCw } from 'lucide-react';
 import type { CrmStatsData, StatsBySource, StatsWeekly } from '@/app/api/crm/stats/route';
 import type { StatsDetailMetric } from '@/lib/crm-stats-detail';
@@ -156,7 +156,7 @@ interface SalesStatsProps {
 }
 
 export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
-  const [preset, setPreset] = useState<Preset>('this_month');
+  const [preset, setPreset] = useState<Preset>('all');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [loading, setLoading] = useState(false);
@@ -373,20 +373,19 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
 
             {trendView === 'monthly' ? (
               d.monthly.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={d.monthly} barGap={2}>
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                    <Tooltip contentStyle={{ fontSize: 12 }} />
-                    <Legend
-                      formatter={(v: string) =>
-                        ({ leads: '리드', contacted: '컨택 성공', paid: '결제' })[v] ?? v
-                      }
-                    />
-                    <Bar dataKey="leads" fill="#e5e7eb" radius={[3, 3, 0, 0]} />
-                    <Bar dataKey="contacted" fill="#60a5fa" radius={[3, 3, 0, 0]} />
-                    <Bar dataKey="paid" fill="#34d399" radius={[3, 3, 0, 0]} />
-                  </BarChart>
+                <ResponsiveContainer width="100%" height={260}>
+                  <ComposedChart data={d.monthly} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={52}
+                      tickFormatter={(v: number) => (Math.abs(v) >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : `${Math.round(v / 1e4)}만`)} />
+                    <Tooltip formatter={(value) => fmt원(Number(value))} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
+                    <Bar dataKey="refund" name="환불" fill="#fca5a5" radius={[3, 3, 0, 0]} maxBarSize={22} />
+                    <Line type="monotone" dataKey="gross_revenue" name="매출" stroke="#10b981" strokeWidth={2.5} dot={{ r: 2, strokeWidth: 0, fill: '#10b981' }} activeDot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="revenue" name="순매출" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 2, strokeWidth: 0, fill: '#3b82f6' }} activeDot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="net_revenue" name="순수익" stroke="#8b5cf6" strokeWidth={2.5} dot={{ r: 2, strokeWidth: 0, fill: '#8b5cf6' }} activeDot={{ r: 4 }} />
+                  </ComposedChart>
                 </ResponsiveContainer>
               ) : (
                 <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
