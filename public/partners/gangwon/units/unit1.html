@@ -1667,6 +1667,7 @@ async function submitHomework() {
     return;
   }
 
+  fetch('/api/gangwon/homework-notify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentName: name, unit: HW_UNIT, blanks: [p01, p02, p03, p04].filter(Boolean), submittedAt: new Date().toISOString() }) }).catch(() => {});
   localStorage.setItem(HW_LS_KEY, JSON.stringify({ name }));
   showDoneState(name);
 }
