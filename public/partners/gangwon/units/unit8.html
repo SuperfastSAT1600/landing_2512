@@ -1062,6 +1062,7 @@ async function submitHomework() {
   btn.disabled = true; btn.textContent = '저장 중…';
   const { error } = await sb.from('b2b_homework_submissions').insert({ unit: HW_UNIT, student_name: session.name, student_id: session.student_id, rewatch_answer: null, prepare_answer: prepare, sentences_answer: hasSentences ? sentences : null });
   if (error) { errEl.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.'; btn.disabled = false; btn.textContent = '저장하기'; return; }
+  fetch('/api/gangwon/homework-notify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentName: session.name, unit: HW_UNIT, experience, sentences: [s01.ko, s02.ko, s03.ko].filter(Boolean), blanks: [p01, p02, p03, p04].filter(Boolean), submittedAt: new Date().toISOString() }) }).catch(() => {});
   showDoneState(session.name);
 }
 
