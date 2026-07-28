@@ -153,6 +153,7 @@ export async function GET(request: NextRequest) {
 
   // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다(위 Promise.all에서 조회).
   // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
+  if (firstPayRes.error) console.error('[stats] firstPayRows fetch failed:', firstPayRes.error.message);
   const firstPayRows = firstPayRes.data;
   for (const p of firstPayRows ?? []) {
     if (p.student_id) paidStudentIds.add(p.student_id);
