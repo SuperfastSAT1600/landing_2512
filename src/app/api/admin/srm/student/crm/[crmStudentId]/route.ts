@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { FUNNEL_STAGE_LABELS } from '@/types/crm';
+import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
 
 export async function GET(
   req: NextRequest,
@@ -70,17 +72,47 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid service_status' }, { status: 400 });
     }
     updates.service_status = body.service_status;
+
+    if (body.service_status === 'ended') {
+      const { data: current } = await supabaseAdmin
+        .from('students')
+        .select('stage_history')
+        .eq('id', crmStudentId)
+        .single();
+
+      const history: Array<{ stage: string; label: string; entered_at: string }> =
+        Array.isArray(current?.stage_history) ? current.stage_history : [];
+      history.push({
+        stage: 'churned',
+        label: FUNNEL_STAGE_LABELS['churned'] ?? '이탈',
+        entered_at: new Date().toISOString(),
+      });
+
+      updates.funnel_stage = 'churned';
+      updates.lead_status = 'inactive';
+      updates.churn_tag = '수업종료: 서비스 종료';
+      updates.stage_history = history;
+    }
   }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
-  const { error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('students')
     .update(updates)
-    .eq('id', crmStudentId);
+    .eq('id', crmStudentId)
+    .select()
+    .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if ('churn_tag' in updates && data) {
+    generateEmbedding(buildEmbeddingText(data)).then((embedding) =>
+      supabaseAdmin.from('students').update({ embedding: JSON.stringify(embedding) }).eq('id', crmStudentId)
+    ).catch((err) => console.error('[srm service_status ended embedding]', err));
+  }
+
   return NextResponse.json({ ok: true });
 }

@@ -106,6 +106,16 @@ interface PauseRecord {
   created_by: string | null;
 }
 
+type TutoringStatus = 'active' | 'paused' | 'partial_end' | 'sales' | 'ended';
+
+const TUTORING_STATUS_META: Record<TutoringStatus, { label: string; color: string }> = {
+  active:      { label: '수업중',          color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+  paused:      { label: '휴원',            color: 'bg-orange-50 text-orange-500 border-orange-200' },
+  partial_end: { label: '부분종료',         color: 'bg-gray-50 text-gray-500 border-gray-200' },
+  sales:       { label: '재결제 세일즈 중', color: 'bg-blue-50 text-blue-600 border-blue-200' },
+  ended:       { label: '종료',            color: 'bg-red-50 text-red-500 border-red-200' },
+};
+
 interface Props {
   studentId?: string;
   crmStudentId?: string;
@@ -117,9 +127,12 @@ interface Props {
   eventType?: 'coachRoom' | 'studyHall' | 'vocab';
   coachId?: string;
   onLanguageChange?: (sfv2ProfileId: string, lang: 'ko' | 'en') => void;
+  tutoringStatus?: TutoringStatus;
+  remainingHours?: number;
+  purchasedHours?: number;
 }
 
-export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, eventTime, eventType, coachId, onLanguageChange }: Props) {
+export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, eventTime, eventType, coachId, onLanguageChange, tutoringStatus, remainingHours, purchasedHours }: Props) {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [comms, setComms] = useState<CommEntry[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(true);
@@ -474,6 +487,14 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     {isLinked ? 'CRM 연결' : 'CRM 미연결'}
                   </span>
                 </>
+              )}
+              {tutoringStatus && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 border ${TUTORING_STATUS_META[tutoringStatus].color}`}>
+                  {TUTORING_STATUS_META[tutoringStatus].label}
+                  {remainingHours !== undefined && purchasedHours !== undefined && (
+                    <> · {remainingHours}h/{purchasedHours}h</>
+                  )}
+                </span>
               )}
               {detail?.hasSummerProgram && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium shrink-0">여름특강</span>
@@ -886,22 +907,18 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 {/* 종료 */}
                 <div className="flex items-center justify-between border-t border-gray-50 pt-2">
                   <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">종료</p>
-                  <button
-                    onClick={() => handleServiceStatusChange(
-                      detail?.crmStudent?.service_status === 'ended' ? 'active' : 'ended'
-                    )}
-                    disabled={serviceStatusSaving}
-                    className={`text-[11px] disabled:opacity-40 ${
-                      detail?.crmStudent?.service_status === 'ended' ? 'text-red-700' : 'text-gray-500'
-                    }`}
-                  >
-                    {serviceStatusSaving ? '처리중...'
-                      : detail?.crmStudent?.service_status === 'ended' ? '종료 해제' : '종료 처리'}
-                  </button>
+                  {detail?.crmStudent?.service_status === 'ended' ? (
+                    <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-600">종료됨</span>
+                  ) : (
+                    <button
+                      onClick={() => handleServiceStatusChange('ended')}
+                      disabled={serviceStatusSaving}
+                      className="text-[11px] disabled:opacity-40 text-gray-500"
+                    >
+                      {serviceStatusSaving ? '처리중...' : '종료 처리'}
+                    </button>
+                  )}
                 </div>
-                {detail?.crmStudent?.service_status === 'ended' && (
-                  <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-600">종료됨</span>
-                )}
               </div>
             )}
 

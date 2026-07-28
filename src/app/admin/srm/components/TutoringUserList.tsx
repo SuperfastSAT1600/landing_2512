@@ -9,6 +9,9 @@ interface SelectedStudent {
   id?: string;
   crmStudentId?: string;
   name: string;
+  tutoringStatus?: TutoringStatus;
+  remainingHours?: number;
+  purchasedHours?: number;
 }
 
 interface Props {
@@ -116,7 +119,14 @@ export function TutoringUserList({ onStudentClick }: Props) {
   );
 
   const handleClick = (u: TutoringUser) => {
-    onStudentClick({ id: u.sfv2ProfileId, crmStudentId: u.crmStudentId ?? undefined, name: u.name });
+    onStudentClick({
+      id: u.sfv2ProfileId,
+      crmStudentId: u.crmStudentId ?? undefined,
+      name: u.name,
+      tutoringStatus: u.status,
+      remainingHours: u.remainingHours,
+      purchasedHours: u.purchasedHours,
+    });
   };
 
   if (loading) {
