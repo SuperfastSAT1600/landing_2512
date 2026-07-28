@@ -5,6 +5,9 @@ import { useState, useEffect } from 'react';
 import { Copy, Check, Crown, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
+import { SessionStatusSection } from './SessionStatusSection';
+import type { SessionStatusLog } from '@/app/api/admin/srm/session-status/route';
+import type { V2SessionSuggestion } from '@/app/api/admin/srm/v2-session-status/route';
 
 type EventType = 'coachRoom' | 'studyHall' | 'vocab';
 type TaggedEvent = ScheduleEvent & { eventType: EventType; day: 'today' };
@@ -227,6 +230,9 @@ export function UnifiedTimeline({
 }: Props) {
   const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
   const [actionedIds, setActionedIds] = useState<Set<string>>(new Set());
+  const [sessionLogs, setSessionLogs] = useState<Record<string, SessionStatusLog[]>>({});
+  const [v2Suggestions, setV2Suggestions] = useState<Record<string, Record<string, V2SessionSuggestion>>>({});
+  const [v2LoadingIds, setV2LoadingIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
 
   const events = mergeAndSort(todayCoachRoom, todayStudyHall, todayVocab);
@@ -236,6 +242,72 @@ export function UnifiedTimeline({
     const el = document.querySelector(`[data-event-id="${highlightEventId}"]`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [highlightEventId, events.length]);
+
+  // 배치 조회: studyHall/vocab 이벤트 로그 + v2 세션 상태
+  useEffect(() => {
+    const shVocabEvents = events.filter((e) => e.eventType !== 'coachRoom');
+    if (!shVocabEvents.length) return;
+
+    const eventIds = shVocabEvents.map((e) => e.id);
+
+    srmFetch(`/api/admin/srm/session-status?eventIds=${eventIds.join(',')}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const grouped: Record<string, SessionStatusLog[]> = {};
+        for (const log of d.data ?? []) {
+          if (!grouped[log.event_id]) grouped[log.event_id] = [];
+          grouped[log.event_id].push(log);
+        }
+        setSessionLogs(grouped);
+      })
+      .catch(() => {});
+
+    const eventsParam = encodeURIComponent(JSON.stringify(shVocabEvents.map((e) => ({
+      id: e.id,
+      eventType: e.eventType === 'studyHall' ? 'study_hall' : 'vocab',
+      startsAt: e.startsAt,
+      endsAt: e.endsAt,
+      studentIds: e.studentIds ?? [],
+    }))));
+    srmFetch(`/api/admin/srm/v2-session-status?events=${eventsParam}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const map: Record<string, Record<string, V2SessionSuggestion>> = {};
+        for (const item of d.data ?? []) {
+          map[item.eventId] = Object.fromEntries(
+            item.suggestions.map((s: V2SessionSuggestion) => [s.studentId, s])
+          );
+        }
+        setV2Suggestions(map);
+      })
+      .catch(() => {});
+  }, [events.length, eventDate]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleRefreshV2 = async (eventId: string) => {
+    const ev = events.find((e) => e.id === eventId);
+    if (!ev) return;
+    setV2LoadingIds((prev) => new Set(prev).add(eventId));
+    try {
+      const eventsParam = encodeURIComponent(JSON.stringify([{
+        id: ev.id,
+        eventType: ev.eventType === 'studyHall' ? 'study_hall' : 'vocab',
+        startsAt: ev.startsAt,
+        endsAt: ev.endsAt,
+        studentIds: ev.studentIds ?? [],
+      }]));
+      const res = await srmFetch(`/api/admin/srm/v2-session-status?events=${eventsParam}`);
+      const d = await res.json();
+      const item = (d.data ?? [])[0];
+      if (item) {
+        setV2Suggestions((prev) => ({
+          ...prev,
+          [eventId]: Object.fromEntries(item.suggestions.map((s: V2SessionSuggestion) => [s.studentId, s])),
+        }));
+      }
+    } catch { /* non-fatal */ }
+    setV2LoadingIds((prev) => { const n = new Set(prev); n.delete(eventId); return n; });
+  };
+
   const totalCount = events.length;
 
   const handleCopy = async (ev: TaggedEvent, lang: 'ko' | 'en') => {
@@ -327,11 +399,10 @@ export function UnifiedTimeline({
       : 'border-red-200 bg-red-50 hover:bg-red-100';
 
     return (
+      <div key={ev.id} data-event-id={ev.id} className="rounded-lg border overflow-hidden">
       <div
-        key={ev.id}
-        data-event-id={ev.id}
         onClick={() => onEventClick({ ...ev, startsAtKst: kstTime })}
-        className={`flex items-stretch gap-0 rounded-lg border text-sm cursor-pointer transition-colors ${rowClass}`}
+        className={`flex items-stretch gap-0 text-sm cursor-pointer transition-colors ${rowClass} border-0`}
       >
         {/* 시간 */}
         <div className="w-[90px] shrink-0 px-3 py-3">
@@ -450,6 +521,18 @@ export function UnifiedTimeline({
             </button>
           )}
         </div>
+      </div>
+      {!isCoach && (
+        <SessionStatusSection
+          ev={{ ...ev, eventType: ev.eventType as 'studyHall' | 'vocab' }}
+          eventDate={eventDate}
+          userName={userName || '관리자'}
+          v2Suggestions={v2Suggestions}
+          onRefreshV2={handleRefreshV2}
+          v2Loading={v2LoadingIds.has(ev.id)}
+          initialLogs={sessionLogs[ev.id]}
+        />
+      )}
       </div>
     );
   };
