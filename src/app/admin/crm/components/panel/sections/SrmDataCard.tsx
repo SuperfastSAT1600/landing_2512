@@ -14,6 +14,7 @@ interface Props {
   studentName: string;
   adminKey: string;
   autoLoad?: boolean;
+  className?: string;
 }
 
 type Status = 'idle' | 'loading' | 'loaded' | 'unlinked' | 'error';
@@ -119,7 +120,7 @@ function SkillChips({ label, items, tone }: { label: string; items: SkillStat[];
 
 // CRM 학생 패널 왼쪽 카드 — v2 학습 플랫폼의 SRM 데이터(일별 학습 리포트).
 // buildSrmReport가 무거우므로 버튼 클릭(온디맨드)으로만 로딩한다.
-export function SrmDataCard({ studentId, studentName, adminKey, autoLoad }: Props) {
+export function SrmDataCard({ studentId, studentName, adminKey, autoLoad, className }: Props) {
   const [status, setStatus] = useState<Status>('idle');
   const [report, setReport] = useState<LearningReport | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
@@ -194,7 +195,7 @@ export function SrmDataCard({ studentId, studentName, adminKey, autoLoad }: Prop
   const allItems = report?.days.flatMap((d) => d.items) ?? [];
 
   return (
-    <div className="relative hidden lg:flex w-full max-w-[420px] bg-white border-l border-gray-200 flex-col h-full overflow-hidden shadow-xl">
+    <div className={className ?? "relative hidden lg:flex w-full max-w-[420px] bg-white border-l border-gray-200 flex-col h-full overflow-hidden shadow-xl"}>
       {/* 헤더 */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 shrink-0">
         <GraduationCap size={16} className="text-blue-500" />

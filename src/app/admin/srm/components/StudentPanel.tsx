@@ -1070,14 +1070,13 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
             {/* 학습 데이터 탭 */}
             {activeTab === 'learning' && resolvedCrmStudentId && (
-              <div className="flex-1 overflow-y-auto">
-                <SrmDataCard
-                  studentId={resolvedCrmStudentId}
-                  studentName={studentName}
-                  adminKey={typeof window !== 'undefined' ? (localStorage.getItem('admin_key') ?? '') : ''}
-                  autoLoad
-                />
-              </div>
+              <SrmDataCard
+                studentId={resolvedCrmStudentId}
+                studentName={studentName}
+                adminKey={typeof window !== 'undefined' ? (localStorage.getItem('admin_key') ?? '') : ''}
+                autoLoad
+                className="flex flex-col flex-1 min-h-0 bg-white overflow-hidden"
+              />
             )}
           </div>
         </div>
