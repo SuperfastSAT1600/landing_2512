@@ -471,30 +471,29 @@ export function UnifiedTimeline({
         {/* 메시지 미리보기 + KO / EN */}
         <div className="flex-1 min-w-0 px-3 py-2.5 border-l border-gray-100 flex flex-col gap-1.5 justify-center">
           <p className="text-[11px] text-gray-400 truncate leading-relaxed">{msgPreview}</p>
-          <div className="flex gap-1">
+          <div className="flex">
             <button
               onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'ko'); }}
               title="한국어 메시지 복사"
-              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-l text-[10px] font-medium border transition-colors ${
                 copiedKo
                   ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
                   : 'border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
               }`}
             >
               {copiedKo ? <Check size={10} /> : <Copy size={10} />}
-              KO
+              {isVocab ? '학습 안내' : isCoach ? '출석 안내' : '입장 안내'}
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); handleCopy(ev, 'en'); }}
               title="English message copy"
-              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+              className={`px-1.5 py-0.5 rounded-r text-[9px] font-bold border-y border-r transition-colors ${
                 copiedEn
                   ? 'border-emerald-300 text-emerald-700 bg-emerald-100'
-                  : 'border-blue-200 text-blue-600 hover:text-blue-700 hover:border-blue-300 bg-white'
+                  : 'border-gray-200 text-blue-400 hover:text-blue-600 hover:border-blue-300 bg-white'
               }`}
             >
-              {copiedEn ? <Check size={10} /> : <Copy size={10} />}
-              EN
+              {copiedEn ? <Check size={9} /> : 'EN'}
             </button>
           </div>
         </div>
