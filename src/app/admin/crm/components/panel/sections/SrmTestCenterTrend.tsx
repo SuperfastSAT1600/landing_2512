@@ -47,6 +47,12 @@ export function SrmTestCenterTrend({ report }: { report: LearningReport }) {
 
   const recent = sessions.slice(0, 8); // sessions는 최신순(days가 desc)
 
+  // 현재 예상 총점 = 가장 최근에 총점이 산출된 시험
+  const scored = sessions.filter((s) => s.sec.total != null);
+  const latest = scored[0];
+  const prev = scored[1];
+  const delta = latest && prev && latest.sec.total != null && prev.sec.total != null ? latest.sec.total - prev.sec.total : null;
+
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-3 space-y-2.5">
       <div className="flex items-center gap-1.5">
@@ -54,6 +60,27 @@ export function SrmTestCenterTrend({ report }: { report: LearningReport }) {
         <span className="text-xs font-semibold text-gray-700">테스트센터 점수 추이</span>
         <span className="ml-auto text-[10px] text-gray-400">{sessions.length}회 응시</span>
       </div>
+
+      {latest?.sec.total != null && (
+        <div className="rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 text-white px-3.5 py-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-medium text-white/70">현재 예상 SAT 총점 · {mmdd(latest.date)} 기준</span>
+            {delta != null && delta !== 0 && (
+              <span className={`text-[11px] font-semibold ${delta > 0 ? 'text-emerald-200' : 'text-red-200'}`}>
+                {delta > 0 ? '▲' : '▼'} {Math.abs(delta)} vs 이전
+              </span>
+            )}
+          </div>
+          <div className="flex items-baseline gap-1.5 mt-0.5">
+            <span className="text-3xl font-bold tabular-nums leading-none">{latest.sec.total}</span>
+            <span className="text-[11px] text-white/60">/ 1600 예상</span>
+          </div>
+          <div className="flex gap-3 mt-1.5 text-xs">
+            {latest.sec.rwScaled != null && <span className="text-white/90">RW <span className="font-bold">{latest.sec.rwScaled}</span></span>}
+            {latest.sec.mathScaled != null && <span className="text-white/90">Math <span className="font-bold">{latest.sec.mathScaled}</span></span>}
+          </div>
+        </div>
+      )}
 
       <SrmTrendChart data={trend} />
 
