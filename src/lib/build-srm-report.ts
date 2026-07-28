@@ -541,7 +541,14 @@ async function generateVocaNarrative(
   return raw ? await humanizeNarrative(raw) : '';
 }
 
-export async function buildSrmReport(profileId: string): Promise<LearningReport> {
+// skipNarratives: 캐시된 AI 내러티브는 사용하되, 캐시 미스 시 LLM 생성을 생략한다.
+// 지표(정답률·점수·단어수·스킬)와 코치 피드백·데일리리포트는 그대로 채워지므로,
+// 빠른 운영 확인용 로딩에 쓴다(포털은 옵션 없이 호출 → 전체 내러티브 유지).
+export async function buildSrmReport(
+  profileId: string,
+  opts: { skipNarratives?: boolean } = {},
+): Promise<LearningReport> {
+  const skipNarratives = opts.skipNarratives ?? false;
   const [
     narrativeCache,
     { data: shSessions },
@@ -857,7 +864,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
       const cachedEden = lookupCache(narrativeCache, date, 'eden_insight', edenCacheKey);
       if (cachedEden) {
         try { edenInsight = JSON.parse(cachedEden) as EdenInsight; } catch { /* ignore */ }
-      } else {
+      } else if (!skipNarratives) {
         edenInsight = await extractEdenInsights(stats.edenConvos);
         if (edenInsight) await setCachedNarrative(profileId, date, 'eden_insight', edenCacheKey, JSON.stringify(edenInsight));
       }
@@ -873,10 +880,14 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     const inputHash = hashInput(cacheInput);
     let narrative = lookupCache(narrativeCache, date, 'study_hall', inputHash);
     if (!narrative) {
-      narrative = stats.totalProblems > 0
-        ? await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }, tcCrossRef.length ? tcCrossRef : undefined, coachFeedback, edenInsight, vocabContext)
-        : `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
-      await setCachedNarrative(profileId, date, 'study_hall', inputHash, narrative);
+      if (stats.totalProblems === 0) {
+        narrative = `${stats.totalMinutes}분간 스터디홀에 접속했습니다.`;
+      } else if (!skipNarratives) {
+        narrative = await generateStudyHallNarrative({ durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, skills }, tcCrossRef.length ? tcCrossRef : undefined, coachFeedback, edenInsight, vocabContext);
+        await setCachedNarrative(profileId, date, 'study_hall', inputHash, narrative);
+      } else {
+        narrative = ''; // 빠른 모드: 지표만, AI 프로즈 생략
+      }
     }
     getOrCreate(date).items.push({ type: 'study_hall', durationMinutes: stats.totalMinutes, totalProblems: stats.totalProblems, correctCount: stats.correctCount, accuracy, aiNarrative: narrative, skills: skills.length > 0 ? skills : undefined } satisfies StudyHallDay);
   }));
@@ -915,7 +926,7 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     let narrative: string | undefined;
     if (totalProblems > 0) {
       narrative = lookupCache(narrativeCache, date, 'test_center', inputHash) ?? undefined;
-      if (!narrative) {
+      if (!narrative && !skipNarratives) {
         narrative = await generateTestCenterNarrative(
           { curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, totalScore, totalProblems, lessons: data.lessons, skills: tcSkills },
           shCrossRef.length ? shCrossRef : undefined, coachFeedbackTc, vocabContextTc,
@@ -962,11 +973,11 @@ export async function buildSrmReport(profileId: string): Promise<LearningReport>
     const cacheInput = { wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms: [...missedTerms].sort(), coachFeedback: coachFeedbackVoca };
     const inputHash = hashInput(cacheInput);
     let narrative = lookupCache(narrativeCache, date, 'voca', inputHash);
-    if (!narrative) {
+    if (!narrative && !skipNarratives) {
       narrative = await generateVocaNarrative({ wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms }, coachFeedbackVoca);
       await setCachedNarrative(profileId, date, 'voca', inputHash, narrative);
     }
-    getOrCreate(date).items.push({ type: 'voca', wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms, aiNarrative: narrative } satisfies VocaDay);
+    getOrCreate(date).items.push({ type: 'voca', wordCount, gradedCount: agg.gradedCount, correctCount: agg.correctCount, accuracy, masteredCount, missedTerms, aiNarrative: narrative ?? '' } satisfies VocaDay);
   }));
 
   const days = Array.from(dayMap.values()).sort((a, b) => b.date.localeCompare(a.date));

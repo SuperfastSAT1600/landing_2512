@@ -8,9 +8,10 @@ let _client: SupabaseClient | null = null;
 
 function getClient(): SupabaseClient {
   if (!_client) {
-    const url = process.env.SUPERFASTSAT_V2_SUPABASE_URL;
-    const key = process.env.SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY;
-    if (!url || !key) throw new Error('SUPERFASTSAT_V2_SUPABASE_URL / SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY not configured');
+    // 프로덕션은 SUPERFASTSAT_V2_*, 로컬(.env.local)은 동일 프로젝트를 SMS_SUPABASE_* 이름으로 보유 → 폴백.
+    const url = process.env.SUPERFASTSAT_V2_SUPABASE_URL || process.env.SMS_SUPABASE_URL;
+    const key = process.env.SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY || process.env.SMS_SUPABASE_SERVICE_KEY;
+    if (!url || !key) throw new Error('SUPERFASTSAT_V2_SUPABASE_URL / SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY (or SMS_SUPABASE_*) not configured');
     _client = createClient(url, key);
   }
   return _client;
