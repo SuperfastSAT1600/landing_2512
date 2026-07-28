@@ -23,6 +23,7 @@ import type { TaggedEvent } from './components/UnifiedTimeline';
 import type { ScheduleResponse, ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import type { AlertsResponse } from '@/app/api/admin/srm/alerts/route';
 import type { EventIssue } from '@/app/api/admin/srm/issues/route';
+import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
 import { AlertTriangle } from 'lucide-react';
 
 // sfv2 profile ID 기준 또는 CRM student ID 기준으로 패널 열기
@@ -87,6 +88,7 @@ export default function SrmPage() {
   const [studentLanguages, setStudentLanguages] = useState<Map<string, 'ko' | 'en'>>(new Map());
   const [pausedStudentIds, setPausedStudentIds] = useState<Set<string>>(new Set());
   const [loggedEventIds, setLoggedEventIds] = useState<Set<string>>(new Set());
+  const [tutoringUserMap, setTutoringUserMap] = useState<Map<string, TutoringUser>>(new Map());
   const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
   const [selectedAlertLog, setSelectedAlertLog] = useState<FlatAlert | null>(null);
   const [openIssues, setOpenIssues] = useState<EventIssue[]>([]);
@@ -154,6 +156,18 @@ export default function SrmPage() {
       .then((data) => { if (Array.isArray(data)) setOpenIssues(data); })
       .catch((err) => console.error('[SrmPage] issues fetch failed:', err));
   }, [mainTab, selectedEvent]);
+
+  useEffect(() => {
+    if (mainTab !== 'queue') return;
+    srmFetch('/api/admin/srm/tutoring-users')
+      .then((r) => r.json())
+      .then((users: TutoringUser[]) => {
+        if (Array.isArray(users)) {
+          setTutoringUserMap(new Map(users.map((u) => [u.sfv2ProfileId, u])));
+        }
+      })
+      .catch(() => {});
+  }, [mainTab]);
 
   useEffect(() => {
     if (mainTab !== 'queue') return;
@@ -315,6 +329,7 @@ export default function SrmPage() {
                 vipStudentIds={vipStudentIds}
                 studentLanguages={studentLanguages}
                 pausedStudentIds={pausedStudentIds}
+                tutoringUserMap={tutoringUserMap}
                 loggedEventIds={loggedEventIds}
                 issueEventIds={new Set(openIssues.filter((i) => i.event_id).map((i) => i.event_id!))}
                 onStudentClick={handleScheduleStudentClick}

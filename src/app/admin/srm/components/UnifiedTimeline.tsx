@@ -8,6 +8,7 @@ import { useAdminAuth } from '@/lib/useAdminAuth';
 import { SessionStatusSection } from './SessionStatusSection';
 import type { SessionStatusLog } from '@/app/api/admin/srm/session-status/route';
 import type { V2SessionSuggestion } from '@/app/api/admin/srm/v2-session-status/route';
+import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
 
 type EventType = 'coachRoom' | 'studyHall' | 'vocab';
 type TaggedEvent = ScheduleEvent & { eventType: EventType; day: 'today' };
@@ -206,6 +207,7 @@ interface Props {
   pausedStudentIds?: Set<string>;
   loggedEventIds?: Set<string>;
   issueEventIds?: Set<string>;
+  tutoringUserMap?: Map<string, TutoringUser>;
   onStudentClick: (student: StudentClickArg) => void;
   onCoachClick: (coach: CoachClickArg) => void;
   onEventClick: (ev: TaggedEvent & { startsAtKst: string }) => void;
@@ -223,6 +225,7 @@ export function UnifiedTimeline({
   pausedStudentIds,
   loggedEventIds,
   issueEventIds,
+  tutoringUserMap,
   onStudentClick,
   onCoachClick,
   onEventClick,
@@ -373,6 +376,20 @@ export function UnifiedTimeline({
     const isCoach = ev.eventType === 'coachRoom';
     const isVocab = ev.eventType === 'vocab';
 
+    // 튜터링 유저 필터: map에 데이터가 있으면 해당 유저만 표시
+    const filteredIndices = tutoringUserMap && tutoringUserMap.size > 0
+      ? ev.students.map((_, i) => i).filter((i) => {
+          const sid = ev.studentIds?.[i];
+          return !sid || tutoringUserMap.has(sid);
+        })
+      : ev.students.map((_, i) => i);
+    const filteredEv = {
+      ...ev,
+      students: filteredIndices.map((i) => ev.students[i]),
+      studentIds: filteredIndices.map((i) => ev.studentIds?.[i] ?? ''),
+      studentTimezones: filteredIndices.map((i) => ev.studentTimezones?.[i] ?? null),
+    };
+
     const copiedKo = copiedIds.has(`${ev.id}-ko`);
     const copiedEn = copiedIds.has(`${ev.id}-en`);
     const alreadyLogged = !!(loggedEventIds?.has(ev.id));
@@ -422,11 +439,12 @@ export function UnifiedTimeline({
 
         {/* 학생 + 코치 */}
         <div className="w-[180px] shrink-0 px-3 py-3 border-l border-gray-100 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-          {ev.students.map((name, i) => {
-            const studentId = ev.studentIds?.[i];
+          {filteredEv.students.map((name, i) => {
+            const studentId = filteredEv.studentIds?.[i];
             const isVip = !!(studentId && vipStudentIds?.has(studentId));
             const lang = studentId ? (studentLanguages?.get(studentId) ?? 'ko') : 'ko';
             const isPaused = !!(studentId && pausedStudentIds?.has(studentId));
+            const tUser = studentId ? tutoringUserMap?.get(studentId) : undefined;
             return (
               <button
                 key={`${ev.id}-s-${i}`}
@@ -449,6 +467,16 @@ export function UnifiedTimeline({
                 {name}
                 {isPaused && <span className="text-[10px] font-medium text-orange-700 bg-orange-100 px-1 rounded">휴원</span>}
                 {lang === 'en' && <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1 rounded">EN</span>}
+                {tUser && tUser.status !== 'active' && tUser.status !== 'paused' && (
+                  <span className={`text-[9px] font-medium px-1 rounded ${
+                    tUser.status === 'ended' ? 'text-red-600 bg-red-50' :
+                    tUser.status === 'partial_end' ? 'text-gray-500 bg-gray-100' :
+                    'text-blue-600 bg-blue-50'
+                  }`}>
+                    {tUser.status === 'ended' ? '종료' : tUser.status === 'partial_end' ? '부분종료' : '세일즈'}
+                  </span>
+                )}
+                {tUser && <span className="text-[9px] text-gray-400">잔여{tUser.remainingHours}h</span>}
               </button>
             );
           })}
@@ -523,7 +551,7 @@ export function UnifiedTimeline({
       </div>
       {!isCoach && (
         <SessionStatusSection
-          ev={{ ...ev, eventType: ev.eventType as 'studyHall' | 'vocab' }}
+          ev={{ ...filteredEv, eventType: filteredEv.eventType as 'studyHall' | 'vocab' }}
           eventDate={eventDate}
           userName={userName || '관리자'}
           v2Suggestions={v2Suggestions}
