@@ -54,10 +54,13 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
     status: SessionStatus,
     lang: 'ko' | 'en',
   ) => {
-    // 지각 로그가 있는 상태에서 제때출석 클릭 → 지각→출석으로 파생
+    // 지각 로그가 있는 상태에서 제때출석/결석 클릭 → late_present/late_absent로 파생
     const studentCurrentLogs = logs.filter((l) => l.student_name === studentName);
     const hasLateLog = studentCurrentLogs.some((l) => l.status === 'late');
-    const effectiveStatus: SessionStatus = (status === 'on_time' && hasLateLog) ? 'late_present' : status;
+    const effectiveStatus: SessionStatus =
+      status === 'on_time' && hasLateLog ? 'late_present' :
+      status === 'absent' && hasLateLog ? 'late_absent' :
+      status;
 
     const key = `${studentName}-${status}-${lang}`;
     const msg = lang === 'ko'
@@ -144,9 +147,10 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
               {STATUS_GROUPS.map((group) => (
                 <span key={group.label} className="flex items-center gap-0.5">
                   {group.statuses.map((status) => {
-                    // late_present 상태면 제때출석 버튼을 활성으로 표시
+                    // late_present/late_absent 상태면 파생 원본 버튼을 활성으로 표시
                     const isActive = lastLog?.status === status
-                      || (status === 'on_time' && lastLog?.status === 'late_present');
+                      || (status === 'on_time' && lastLog?.status === 'late_present')
+                      || (status === 'absent' && lastLog?.status === 'late_absent');
                     const saveKey = `${studentName}-${status}`;
                     const copyKeyKo = `${studentName}-${status}-ko`;
                     const copyKeyEn = `${studentName}-${status}-en`;
