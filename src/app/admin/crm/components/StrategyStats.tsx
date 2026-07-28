@@ -1,8 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
+
+// recharts는 전략 비교 차트에서만 필요 — 지연 로딩해 첫 진입 번들에서 제외한다.
+const StrategyCompareChart = dynamic(() => import('./StrategyCompareChart'), {
+  ssr: false,
+  loading: () => <div className="h-[220px] flex items-center justify-center text-sm text-gray-300">차트 로딩…</div>,
+});
 import type { StrategyHistoryType } from '@/types/crm';
 import type { StatsDetailMetric } from '@/lib/crm-stats-detail';
 import type { StrategyTypeStats, PerStrategyRow } from '@/lib/strategy-stats';
@@ -142,17 +148,7 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
           {chartData.length > 1 && (
             <div className="border-b border-gray-100 pb-6">
               <p className="text-xs font-semibold text-gray-400 mb-3">전략별 비교</p>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={chartData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis yAxisId="l" tick={{ fontSize: 11 }} />
-                  <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar yAxisId="r" dataKey="배정" fill="#d1d5db" radius={[3, 3, 0, 0]} />
-                  <Bar yAxisId="l" dataKey="전환율" fill="#2563eb" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <StrategyCompareChart data={chartData} />
             </div>
           )}
 
