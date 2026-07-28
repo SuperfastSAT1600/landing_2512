@@ -3,7 +3,7 @@ import { srmFetch } from './lib/srm-fetch';
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DayTabs, getKstDateStr } from './components/DayTabs';
+import { getKstDateStr } from './components/DayTabs';
 import { UnifiedTimeline } from './components/UnifiedTimeline';
 import { AlertFeedRows } from './components/AlertFeedRows';
 import { StudentPanel } from './components/StudentPanel';
@@ -35,6 +35,9 @@ interface SelectedStudent {
   eventTime?: string;
   eventType?: 'coachRoom' | 'studyHall' | 'vocab';
   coachId?: string;
+  tutoringStatus?: import('@/app/api/admin/srm/tutoring-users/route').TutoringStatus;
+  remainingHours?: number;
+  purchasedHours?: number;
 }
 
 interface SelectedCoach {
@@ -68,16 +71,12 @@ function collectRelatedStudents(
 
 export default function SrmPage() {
   const searchParams = useSearchParams();
-  const urlDate = searchParams.get('date');
   const urlEventId = searchParams.get('eventId');
 
   const [mainTab, setMainTab] = useState<MainTab>('queue');
   const [queueTab, setQueueTab] = useState<'schedule' | 'noClass' | 'noStudyHall' | 'noVocab' | 'yesterday'>('schedule');
   const [yesterdayIssueCount, setYesterdayIssueCount] = useState(0);
-  const [selectedDate, setSelectedDate] = useState(() => {
-    if (urlDate && /^\d{4}-\d{2}-\d{2}$/.test(urlDate)) return urlDate;
-    return getKstDateStr(0);
-  });
+  const selectedDate = getKstDateStr(0);
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
   const [alerts, setAlerts] = useState<AlertsResponse | null>(null);
   const [scheduleLoading, setScheduleLoading] = useState(true);
@@ -242,11 +241,7 @@ export default function SrmPage() {
         ))}
       </div>
 
-      {mainTab !== 'roster' && mainTab !== 'daily' && mainTab !== 'tutoring' && (
-        <DayTabs selected={selectedDate} onChange={setSelectedDate} />
-      )}
-
-      {mainTab === 'stats' && (
+{mainTab === 'stats' && (
         <DailyStatsPanel date={selectedDate} />
       )}
 
@@ -401,6 +396,9 @@ export default function SrmPage() {
           coachId={selectedStudent.coachId}
           onClose={() => setSelectedStudent(null)}
           onLanguageChange={handleLanguageChange}
+          tutoringStatus={selectedStudent.tutoringStatus}
+          remainingHours={selectedStudent.remainingHours}
+          purchasedHours={selectedStudent.purchasedHours}
         />
       )}
 
