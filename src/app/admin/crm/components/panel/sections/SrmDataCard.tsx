@@ -13,6 +13,7 @@ interface Props {
   studentId: string;
   studentName: string;
   adminKey: string;
+  autoLoad?: boolean;
 }
 
 type Status = 'idle' | 'loading' | 'loaded' | 'unlinked' | 'error';
@@ -118,7 +119,7 @@ function SkillChips({ label, items, tone }: { label: string; items: SkillStat[];
 
 // CRM 학생 패널 왼쪽 카드 — v2 학습 플랫폼의 SRM 데이터(일별 학습 리포트).
 // buildSrmReport가 무거우므로 버튼 클릭(온디맨드)으로만 로딩한다.
-export function SrmDataCard({ studentId, studentName, adminKey }: Props) {
+export function SrmDataCard({ studentId, studentName, adminKey, autoLoad }: Props) {
   const [status, setStatus] = useState<Status>('idle');
   const [report, setReport] = useState<LearningReport | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
@@ -143,6 +144,11 @@ export function SrmDataCard({ studentId, studentName, adminKey }: Props) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId, adminKey]);
+
+  useEffect(() => {
+    if (autoLoad) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoLoad]);
 
   // ── 연결(미연결 상태) ──
   const [q, setQ] = useState(studentName);

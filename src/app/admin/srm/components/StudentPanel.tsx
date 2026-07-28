@@ -1075,6 +1075,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   studentId={resolvedCrmStudentId}
                   studentName={studentName}
                   adminKey={typeof window !== 'undefined' ? (localStorage.getItem('admin_key') ?? '') : ''}
+                  autoLoad
                 />
               </div>
             )}
