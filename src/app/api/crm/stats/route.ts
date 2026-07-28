@@ -91,6 +91,7 @@ export async function GET(request: NextRequest) {
   // 기간 내 신규 리드 = inquiry_date(실제 인입 시각)가 [from, to]에 든 리드만.
   // created_at(레코드 생성 시각) 폴백은 쓰지 않는다 — 레거시 대량 임포트(inquiry_date NULL)가
   // 생성 시각 기준으로 특정 기간 신규 리드로 둔갑해 과대집계되는 문제(예: 595건)를 막는다.
+  // B2C 전용: company_id가 null인 개인 학생만 집계. B2B 업체 학생은 /api/crm/b2b/stats에서 별도 집계.
   // 서로 독립인 세 조회를 병렬 실행: 기간 리드 / 기간 결제 / 최초결제 코호트.
   const [studentsRes, paymentsRes, firstPayRes] = await Promise.all([
     supabaseAdmin
@@ -98,6 +99,7 @@ export async function GET(request: NextRequest) {
       .select(
         'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id'
       )
+      .is('company_id', null)
       .gte('inquiry_date', from)
       .lte('inquiry_date', `${to}T23:59:59`)
       .limit(MAX_LEAD_ROWS),

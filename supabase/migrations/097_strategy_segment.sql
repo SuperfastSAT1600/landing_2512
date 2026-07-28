@@ -11,3 +11,6 @@ ALTER TABLE retry_strategies
 ALTER TABLE growth_experiments
   ADD COLUMN IF NOT EXISTS segment TEXT NOT NULL DEFAULT 'b2c'
   CHECK (segment IN ('b2c', 'b2b'));
+
+CREATE INDEX IF NOT EXISTS idx_retry_strategies_segment ON retry_strategies(segment);
+CREATE INDEX IF NOT EXISTS idx_growth_experiments_segment ON growth_experiments(segment);
