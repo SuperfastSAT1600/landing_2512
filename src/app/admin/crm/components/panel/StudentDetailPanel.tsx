@@ -26,6 +26,7 @@ import { StrategyHistorySection } from './sections/StrategyHistorySection';
 import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import { ActivityFeedSection } from './sections/ActivityFeedSection';
 import { NextActionSection } from './sections/NextActionSection';
+import { SrmDataCard } from './sections/SrmDataCard';
 import type { StudentDetailPanelProps } from './types';
 
 export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
@@ -167,6 +168,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     <>
       <div className="fixed inset-0 z-50 flex justify-end">
         <div className="absolute inset-0 bg-black/50" onClick={handleBackdropClick} />
+        {/* 왼쪽 SRM 데이터 카드 (데스크톱에서만) */}
+        <SrmDataCard studentId={student.id} studentName={localStudent.name} adminKey={adminKey} />
         <div className="relative w-full max-w-[440px] bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden shadow-xl">
 
           <PanelHeader

@@ -16,6 +16,7 @@ import type { LifecycleResponse } from '@/app/api/admin/srm/lifecycle/route';
 import type { V2Summary } from '@/app/api/admin/srm/student/[profileId]/v2-summary/route';
 import type { StudentIssue } from '@/app/api/admin/srm/student-issues/route';
 import { PortalAccessToggle } from '@/app/admin/components/PortalAccessToggle';
+import { SrmDataCard } from '@/app/admin/crm/components/panel/sections/SrmDataCard';
 
 const TRIGGER_LABELS: Record<string, string> = {
   no_show: '미접속 알림',
@@ -145,7 +146,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [issueTitle, setIssueTitle] = useState('');
   const [issueDesc, setIssueDesc] = useState('');
   const [issueSaving, setIssueSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'issue' | 'comm'>('comm');
+  const [activeTab, setActiveTab] = useState<'issue' | 'comm' | 'learning'>('comm');
 
   const commKey = studentId ?? crmStudentId ?? '';
 
@@ -946,6 +947,18 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               >
                 커뮤니케이션
               </button>
+              {studentId && (
+                <button
+                  onClick={() => setActiveTab('learning')}
+                  className={`px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                    activeTab === 'learning'
+                      ? 'border-emerald-500 text-emerald-700'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  학습 데이터
+                </button>
+              )}
             </div>
 
             {/* 이슈 탭 */}
@@ -1052,6 +1065,17 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 <div className="border-t border-gray-100 px-4 py-3 shrink-0">
                   <AddForm onSave={handleAdd} saving={saving} triggerContext={triggerContext} noBorder />
                 </div>
+              </div>
+            )}
+
+            {/* 학습 데이터 탭 */}
+            {activeTab === 'learning' && studentId && (
+              <div className="flex-1 overflow-y-auto">
+                <SrmDataCard
+                  studentId={studentId}
+                  studentName={studentName}
+                  adminKey={typeof window !== 'undefined' ? (localStorage.getItem('admin_key') ?? '') : ''}
+                />
               </div>
             )}
           </div>
