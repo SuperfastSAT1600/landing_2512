@@ -246,25 +246,61 @@ export function UnifiedTimeline({
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [highlightEventId, events.length]);
 
-  // 배치 조회: studyHall/vocab 이벤트 로그 + v2 세션 상태
+  // v2 제안 → 기존 로그 없는 학생에 한해 자동 저장
+  const autoSaveSuggestions = async (
+    suggestionsMap: Record<string, Record<string, V2SessionSuggestion>>,
+    currentLogs: Record<string, SessionStatusLog[]>,
+  ) => {
+    for (const ev of events) {
+      if (ev.eventType === 'coachRoom') continue;
+      const eventSuggestions = suggestionsMap[ev.id];
+      if (!eventSuggestions) continue;
+
+      const eventLogs = currentLogs[ev.id] ?? [];
+      const eventType = ev.eventType === 'studyHall' ? 'study_hall' : 'vocab';
+
+      for (const [studentId, suggestion] of Object.entries(eventSuggestions)) {
+        if (!suggestion.suggestedStatus) continue;
+
+        const sidx = ev.studentIds?.findIndex((id) => id === studentId) ?? -1;
+        const studentName = sidx >= 0 ? ev.students[sidx] : null;
+        if (!studentName) continue;
+
+        if (eventLogs.some((l) => l.student_name === studentName)) continue;
+
+        try {
+          const res = await srmFetch('/api/admin/srm/session-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventId: ev.id,
+              eventType,
+              eventDate,
+              studentId,
+              studentName,
+              status: suggestion.suggestedStatus,
+              loggedBy: 'v2-자동',
+            }),
+          });
+          const { data } = await res.json();
+          if (data) {
+            setSessionLogs((prev) => ({
+              ...prev,
+              [ev.id]: [...(prev[ev.id] ?? []), data],
+            }));
+            eventLogs.push(data);
+          }
+        } catch { /* non-fatal */ }
+      }
+    }
+  };
+
+  // 배치 조회: studyHall/vocab 이벤트 로그 + v2 세션 상태 → 자동 저장
   useEffect(() => {
     const shVocabEvents = events.filter((e) => e.eventType !== 'coachRoom');
     if (!shVocabEvents.length) return;
 
     const eventIds = shVocabEvents.map((e) => e.id);
-
-    srmFetch(`/api/admin/srm/session-status?eventIds=${eventIds.join(',')}`)
-      .then((r) => r.json())
-      .then((d) => {
-        const grouped: Record<string, SessionStatusLog[]> = {};
-        for (const log of d.data ?? []) {
-          if (!grouped[log.event_id]) grouped[log.event_id] = [];
-          grouped[log.event_id].push(log);
-        }
-        setSessionLogs(grouped);
-      })
-      .catch(() => {});
-
     const eventsParam = encodeURIComponent(JSON.stringify(shVocabEvents.map((e) => ({
       id: e.id,
       eventType: e.eventType === 'studyHall' ? 'study_hall' : 'vocab',
@@ -272,18 +308,28 @@ export function UnifiedTimeline({
       endsAt: e.endsAt,
       studentIds: e.studentIds ?? [],
     }))));
-    srmFetch(`/api/admin/srm/v2-session-status?events=${eventsParam}`)
-      .then((r) => r.json())
-      .then((d) => {
-        const map: Record<string, Record<string, V2SessionSuggestion>> = {};
-        for (const item of d.data ?? []) {
-          map[item.eventId] = Object.fromEntries(
-            item.suggestions.map((s: V2SessionSuggestion) => [s.studentId, s])
-          );
-        }
-        setV2Suggestions(map);
-      })
-      .catch(() => {});
+
+    Promise.all([
+      srmFetch(`/api/admin/srm/session-status?eventIds=${eventIds.join(',')}`).then((r) => r.json()),
+      srmFetch(`/api/admin/srm/v2-session-status?events=${eventsParam}`).then((r) => r.json()),
+    ]).then(([statusData, v2Data]) => {
+      const grouped: Record<string, SessionStatusLog[]> = {};
+      for (const log of statusData.data ?? []) {
+        if (!grouped[log.event_id]) grouped[log.event_id] = [];
+        grouped[log.event_id].push(log);
+      }
+      setSessionLogs(grouped);
+
+      const map: Record<string, Record<string, V2SessionSuggestion>> = {};
+      for (const item of v2Data.data ?? []) {
+        map[item.eventId] = Object.fromEntries(
+          item.suggestions.map((s: V2SessionSuggestion) => [s.studentId, s])
+        );
+      }
+      setV2Suggestions(map);
+
+      autoSaveSuggestions(map, grouped);
+    }).catch(() => {});
   }, [events.length, eventDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefreshV2 = async (eventId: string) => {
@@ -302,10 +348,9 @@ export function UnifiedTimeline({
       const d = await res.json();
       const item = (d.data ?? [])[0];
       if (item) {
-        setV2Suggestions((prev) => ({
-          ...prev,
-          [eventId]: Object.fromEntries(item.suggestions.map((s: V2SessionSuggestion) => [s.studentId, s])),
-        }));
+        const newSuggestions = Object.fromEntries(item.suggestions.map((s: V2SessionSuggestion) => [s.studentId, s]));
+        setV2Suggestions((prev) => ({ ...prev, [eventId]: newSuggestions }));
+        await autoSaveSuggestions({ [eventId]: newSuggestions }, sessionLogs);
       }
     } catch { /* non-fatal */ }
     setV2LoadingIds((prev) => { const n = new Set(prev); n.delete(eventId); return n; });
