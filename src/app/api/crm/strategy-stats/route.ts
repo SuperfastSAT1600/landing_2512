@@ -57,13 +57,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'segment은 b2b|b2c 중 하나여야 합니다.' }, { status: 400 });
   }
 
-  // ── 전략 배정 이력이 있는 후보 리드 조회 ──
-  const { data: students, error: sErr } = await supabaseAdmin
-    .from('students')
-    .select(STUDENT_COLS)
-    .or('strategy_history.neq.[],retry_strategy_id.not.is.null')
-    .limit(MAX_LEAD_ROWS);
+  const PAY_COLS = 'id,student_id,student_name,amount,payment_type,tax_type,paid_at';
 
+  // ── 후보 리드 + 전략 이름 맵을 병렬 조회 (서로 독립) ──
+  const [studentsRes, strategiesRes] = await Promise.all([
+    supabaseAdmin
+      .from('students')
+      .select(STUDENT_COLS)
+      .or('strategy_history.neq.[],retry_strategy_id.not.is.null')
+      .limit(MAX_LEAD_ROWS),
+    // 해당 타입 전략 이름 맵 (0건 전략 시드 포함)
+    supabaseAdmin.from('retry_strategies').select('id,name').eq('type', type),
+  ]);
+
+  const { data: students, error: sErr } = studentsRes;
   if (sErr) {
     console.error('[strategy-stats students]', sErr);
     return NextResponse.json({ error: '리드 데이터를 불러오지 못했습니다.' }, { status: 500 });
@@ -77,35 +84,24 @@ export async function GET(request: NextRequest) {
     console.warn(`[strategy-stats] 후보 리드가 MAX_LEAD_ROWS(${MAX_LEAD_ROWS})에 도달 — 집계 절단 가능`);
   }
 
-  // ── 해당 타입 전략 이름 맵 (0건 전략 시드 포함) ──
-  const { data: strategies } = await supabaseAdmin
-    .from('retry_strategies')
-    .select('id,name')
-    .eq('type', type);
-  const strategyNames = new Map<string, string>((strategies ?? []).map((r) => [r.id, r.name]));
+  const strategyNames = new Map<string, string>((strategiesRes.data ?? []).map((r) => [r.id, r.name]));
 
-  // ── 후보 리드의 결제 전부(anytime) 조회 — id 및 name 매칭 ──
+  // ── 후보 리드의 결제 전부(anytime) 조회 — id 및 name 매칭, 모든 청크 병렬 ──
   const ids = candidates.map((s) => s.id);
   const names = [...new Set(candidates.map((s) => s.name).filter(Boolean))];
   const paymentMap = new Map<string, StrategyStatsPayment & { id: string }>();
 
-  const pushPayments = (rows: (StrategyStatsPayment & { id: string })[] | null) => {
-    for (const p of rows ?? []) paymentMap.set(p.id, p);
-  };
-
-  for (const c of chunk(ids, 150)) {
-    const { data } = await supabaseAdmin
-      .from('payments')
-      .select('id,student_id,student_name,amount,payment_type,tax_type,paid_at')
-      .in('student_id', c);
-    pushPayments(data as (StrategyStatsPayment & { id: string })[] | null);
-  }
-  for (const c of chunk(names, 150)) {
-    const { data } = await supabaseAdmin
-      .from('payments')
-      .select('id,student_id,student_name,amount,payment_type,tax_type,paid_at')
-      .in('student_name', c);
-    pushPayments(data as (StrategyStatsPayment & { id: string })[] | null);
+  const payChunks = await Promise.all([
+    ...chunk(ids, 150).map((c) =>
+      supabaseAdmin.from('payments').select(PAY_COLS).in('student_id', c),
+    ),
+    ...chunk(names, 150).map((c) =>
+      supabaseAdmin.from('payments').select(PAY_COLS).in('student_name', c),
+    ),
+  ]);
+  // id 기준 dedup — 병합 순서와 무관하게 동일 결과.
+  for (const { data } of payChunks) {
+    for (const p of (data ?? []) as (StrategyStatsPayment & { id: string })[]) paymentMap.set(p.id, p);
   }
   const payments = [...paymentMap.values()];
 

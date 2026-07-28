@@ -1,8 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import dynamic from 'next/dynamic';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+
+// recharts는 트렌드 차트에서만 필요 — 지연 로딩해 첫 진입 번들에서 제외한다.
+const B2bTrendChart = dynamic(() => import('./B2bTrendChart'), {
+  ssr: false,
+  loading: () => <div className="h-[280px] flex items-center justify-center text-sm text-gray-300">차트 로딩…</div>,
+});
 import type { B2bStatsData, B2bCompanyStats } from '@/app/api/crm/b2b/stats/route';
 import { fillMonthlyGaps } from '@/lib/crm-stats-core';
 import {
@@ -15,6 +21,15 @@ import {
 
 const won = (n: number) => `${n.toLocaleString()}원`;
 const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
+
+const TREND_METRICS = [
+  { key: 'revenue', label: '매출' },
+  { key: 'leads', label: '리드' },
+  { key: 'paid', label: '결제' },
+] as const;
+type TrendMetric = (typeof TREND_METRICS)[number]['key'];
+// 비교 차트 한 행: month + 업체 id별 지표값
+type CmpRow = { month: string; [companyId: string]: number | string };
 const kstDate = (s: string | null) =>
   s ? new Date(s).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit' }) : '-';
 
@@ -30,8 +45,9 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
-  // 트렌드 차트 업체 필터(다중 선택). 비어있으면 전체 업체 합산.
+  // 트렌드 차트 업체 필터(다중 선택). 비어있으면 전체 업체 합산, 선택 시 업체별 비교.
   const [trendCompanies, setTrendCompanies] = useState<Set<string>>(new Set());
+  const [trendMetric, setTrendMetric] = useState<TrendMetric>('revenue');
   const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
   const companyMenuRef = useRef<HTMLDivElement>(null);
 
@@ -93,6 +109,31 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
     return fillMonthlyGaps([...m.values()], (month) => ({ month, revenue: 0, leads: 0, paid: 0 }));
   }, [rows, trendCompanies]);
 
+  // 비교 모드: 업체 하나 이상 선택 시 업체별 라인으로 표시(합산 대신).
+  const compareMode = trendCompanies.size > 0;
+  const selectedCompanies = useMemo(
+    () => rows.filter((r) => trendCompanies.has(r.company_id)),
+    [rows, trendCompanies],
+  );
+  // {month, [company_id]: 선택지표값} — 업체별 라인용. 빈 달은 0으로 채운다.
+  const comparisonTrend = useMemo<CmpRow[]>(() => {
+    if (!compareMode) return [];
+    const zeros: Record<string, number> = Object.fromEntries(selectedCompanies.map((c) => [c.company_id, 0]));
+    const byMonth = new Map<string, CmpRow>();
+    for (const c of selectedCompanies) {
+      for (const t of c.trend) {
+        const e = byMonth.get(t.month) ?? ({ month: t.month, ...zeros } as CmpRow);
+        e[c.company_id] = ((e[c.company_id] as number) ?? 0) + t[trendMetric];
+        byMonth.set(t.month, e);
+      }
+    }
+    return fillMonthlyGaps([...byMonth.values()], (month) => ({ month, ...zeros } as CmpRow));
+  }, [compareMode, selectedCompanies, trendMetric]);
+
+  const metricFmt = (v: number) => (trendMetric === 'revenue' ? won(v) : `${v}명`);
+  const metricAxis = (v: number) =>
+    trendMetric === 'revenue' ? (v >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : `${Math.round(v / 1e4)}만`) : `${v}`;
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-end gap-1.5">
@@ -125,7 +166,25 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
           {rows.length > 0 && (
             <div>
               <div className="flex items-center justify-between gap-2 mb-3">
-                <p className="text-xs font-semibold text-gray-400">매출·리드·결제 트렌드</p>
+                <p className="text-xs font-semibold text-gray-400">
+                  {compareMode ? `업체별 ${TREND_METRICS.find((m) => m.key === trendMetric)!.label} 비교` : '매출·리드·결제 트렌드'}
+                </p>
+                <div className="flex items-center gap-2">
+                {compareMode && (
+                  <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                    {TREND_METRICS.map((m) => (
+                      <button
+                        key={m.key}
+                        onClick={() => setTrendMetric(m.key)}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                          trendMetric === m.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="relative" ref={companyMenuRef}>
                   <button
                     onClick={() => setCompanyMenuOpen((o) => !o)}
@@ -157,25 +216,16 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
                     </div>
                   )}
                 </div>
+                </div>
               </div>
-              {monthlyTrend.length > 1 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={monthlyTrend} margin={{ top: 8, right: 4, left: -6, bottom: 0 }} barCategoryGap="30%">
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
-                  <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={48}
-                    tickFormatter={(v: number) => (v >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : `${Math.round(v / 1e4)}만`)} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
-                  <Tooltip
-                    formatter={(value, name) => (name === '매출' ? won(Number(value)) : `${value}명`)}
-                    contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
-                  <Bar yAxisId="left" dataKey="revenue" name="매출" fill="#a7f3d0" radius={[4, 4, 0, 0]} maxBarSize={26} />
-                  <Line yAxisId="right" type="monotone" dataKey="leads" name="리드" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 2.5, strokeWidth: 0, fill: '#3b82f6' }} activeDot={{ r: 4 }} />
-                  <Line yAxisId="right" type="monotone" dataKey="paid" name="결제" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 2.5, strokeWidth: 0, fill: '#f59e0b' }} activeDot={{ r: 4 }} />
-                </ComposedChart>
-              </ResponsiveContainer>
+              {compareMode ? (
+                comparisonTrend.length > 1 ? (
+                  <B2bTrendChart mode="compare" data={comparisonTrend} companies={selectedCompanies} metricFmt={metricFmt} metricAxis={metricAxis} />
+                ) : (
+                  <p className="text-xs text-gray-400 py-10 text-center">선택한 업체의 트렌드 데이터가 부족합니다.</p>
+                )
+              ) : monthlyTrend.length > 1 ? (
+                <B2bTrendChart mode="monthly" data={monthlyTrend} formatWon={won} />
               ) : (
                 <p className="text-xs text-gray-400 py-10 text-center">선택한 업체의 트렌드 데이터가 부족합니다.</p>
               )}

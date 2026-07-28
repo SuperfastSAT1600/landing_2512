@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -34,7 +34,7 @@ interface RetryColumnProps {
   onRemove: (student: Student) => void;
 }
 
-function RetryColumn({ stage, students, onStudentClick, onRemove }: RetryColumnProps) {
+const RetryColumn = memo(function RetryColumn({ stage, students, onStudentClick, onRemove }: RetryColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
 
   return (
@@ -71,7 +71,7 @@ function RetryColumn({ stage, students, onStudentClick, onRemove }: RetryColumnP
       </div>
     </div>
   );
-}
+});
 
 export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrategyChange, onNavigateToPool, enrolledStudentId, onEnrolledHandled }: RetryKanbanProps) {
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
@@ -94,7 +94,10 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
   const [searchingLeads, setSearchingLeads] = useState(false);
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
 
-  const headers = { 'x-admin-key': adminKey, 'Content-Type': 'application/json' };
+  const headers = useMemo(
+    () => ({ 'x-admin-key': adminKey, 'Content-Type': 'application/json' }),
+    [adminKey]
+  );
 
   const fetchStrategies = useCallback(async () => {
     const res = await fetch('/api/crm/retry-strategies?type=retry', { headers: { 'x-admin-key': adminKey } });
@@ -172,7 +175,7 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     }
   };
 
-  const handleRemoveLead = async (student: Student) => {
+  const handleRemoveLead = useCallback(async (student: Student) => {
     if (!confirm(`${student.name}을(를) 이 전략에서 제거할까요?`)) return;
     const res = await fetch(`/api/crm/students/${student.id}`, {
       method: 'PATCH',
@@ -182,7 +185,7 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     if (res.ok) {
       setStudents(prev => prev.filter(s => s.id !== student.id));
     }
-  };
+  }, [headers]);
 
   const handleLeadSearch = useCallback(async (query: string) => {
     if (!query.trim()) { setSearchResults([]); return; }
@@ -226,8 +229,14 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     onStudentUpdate(active.id as string, { retry_stage: stage });
   };
 
-  const getStudentsByStage = (stage: RetryStage) =>
-    students.filter(s => s.retry_stage === stage);
+  // 스테이지별 그룹핑을 렌더당 1회만 계산 (기존: 컬럼마다 전체 filter).
+  const studentsByStage = useMemo(() => {
+    const map = new Map<RetryStage, Student[]>();
+    for (const stage of RETRY_STAGES) map.set(stage, []);
+    for (const s of students) map.get(s.retry_stage as RetryStage)?.push(s);
+    return map;
+  }, [students]);
+  const getStudentsByStage = (stage: RetryStage) => studentsByStage.get(stage) ?? [];
 
   return (
     <div className="flex gap-4 h-full">
