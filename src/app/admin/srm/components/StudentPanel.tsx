@@ -947,7 +947,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               >
                 커뮤니케이션
               </button>
-              {studentId && (
+              {resolvedCrmStudentId && (
                 <button
                   onClick={() => setActiveTab('learning')}
                   className={`px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
@@ -1069,10 +1069,10 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
             )}
 
             {/* 학습 데이터 탭 */}
-            {activeTab === 'learning' && studentId && (
+            {activeTab === 'learning' && resolvedCrmStudentId && (
               <div className="flex-1 overflow-y-auto">
                 <SrmDataCard
-                  studentId={studentId}
+                  studentId={resolvedCrmStudentId}
                   studentName={studentName}
                   adminKey={typeof window !== 'undefined' ? (localStorage.getItem('admin_key') ?? '') : ''}
                 />
