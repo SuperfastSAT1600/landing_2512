@@ -4,7 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 
 export type SessionStatus =
   | 'on_time' | 'late' | 'late_present' | 'late_absent' | 'absent'
-  | 'disconnected' | 'disconnected_end' | 'returned' | 'completed';
+  | 'normal_study' | 'disconnected' | 'disconnected_end' | 'returned' | 'completed' | 'abnormal_end';
 
 export interface SessionStatusLog {
   id: string;

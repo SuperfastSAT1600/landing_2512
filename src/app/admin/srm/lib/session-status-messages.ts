@@ -9,10 +9,12 @@ export const STATUS_LABEL: Record<SessionStatus, string> = {
   late_present: '지각→출석',
   late_absent: '지각→결석',
   absent: '결석',
+  normal_study: '정상학습',
   disconnected: '이탈',
   disconnected_end: '이탈종료',
   returned: '복귀',
   completed: '정상종료',
+  abnormal_end: '비정상종료',
 };
 
 export const STATUS_COLOR: Record<SessionStatus, string> = {
@@ -21,19 +23,21 @@ export const STATUS_COLOR: Record<SessionStatus, string> = {
   late_present: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200',
   late_absent: 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200',
   absent: 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200',
+  normal_study: 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200',
   disconnected: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200',
   disconnected_end: 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200',
   returned: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200',
   completed: 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200',
+  abnormal_end: 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200',
 };
 
 // 파생 상태 (버튼 없음):
-//   late_present  = 지각 → 제때출석
-//   late_absent   = 지각 → 결석
+//   late_present     = 지각 → 제때출석
+//   late_absent      = 지각 → 결석
 //   disconnected_end = 이탈 → 정상종료 (복귀 없이)
 export const STATUS_GROUPS: { label: string; statuses: SessionStatus[] }[] = [
   { label: '출석', statuses: ['on_time', 'late', 'absent'] },
-  { label: '학습', statuses: ['disconnected', 'returned', 'completed'] },
+  { label: '학습', statuses: ['normal_study', 'disconnected', 'returned', 'completed', 'abnormal_end'] },
 ];
 
 export function buildStatusMessageKo(
@@ -53,6 +57,8 @@ export function buildStatusMessageKo(
       return `<확인> ${studentName} 오늘 ${type} 결석 처리됩니다. 다음엔 꼭 제시간에 출석해주세요.`;
     case 'absent':
       return `<확인> ${studentName} 오늘 ${type} 결석이에요. 무슨 일이 있나요?`;
+    case 'normal_study':
+      return `<확인> ${studentName} 오늘 ${type} 정상적으로 학습 중이에요!`;
     case 'disconnected':
       return `<알림> ${studentName} ${type}에서 이탈이 감지됐어요. 다시 접속해주세요!`;
     case 'disconnected_end':
@@ -61,6 +67,8 @@ export function buildStatusMessageKo(
       return `<확인> ${studentName} 이탈 후 다시 ${type}에 돌아왔어요! 이제 집중해보자구요!`;
     case 'completed':
       return `<확인> ${studentName} 오늘 ${type} 잘 마쳤어요! 수고했어요!`;
+    case 'abnormal_end':
+      return `<확인> ${studentName} 오늘 ${type}가 비정상적으로 종료됐어요.`;
   }
 }
 
@@ -81,6 +89,8 @@ export function buildStatusMessageEn(
       return `<Confirmed> ${studentName} will be marked absent from ${type} today. Hope to see you next time!`;
     case 'absent':
       return `<Confirmed> ${studentName} is absent from ${type} today. Is everything okay?`;
+    case 'normal_study':
+      return `<Confirmed> ${studentName} is studying normally in ${type}!`;
     case 'disconnected':
       return `<Alert> ${studentName} got disconnected from ${type}. Please rejoin!`;
     case 'disconnected_end':
@@ -89,5 +99,7 @@ export function buildStatusMessageEn(
       return `<Confirmed> ${studentName} rejoined ${type} after disconnecting! Great, let's keep going!`;
     case 'completed':
       return `<Confirmed> ${studentName} completed today's ${type}! Great work!`;
+    case 'abnormal_end':
+      return `<Confirmed> ${studentName}'s ${type} session ended abnormally today.`;
   }
 }
