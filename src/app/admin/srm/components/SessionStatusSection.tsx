@@ -54,12 +54,15 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
     status: SessionStatus,
     lang: 'ko' | 'en',
   ) => {
-    // 지각 로그가 있는 상태에서 제때출석/결석 클릭 → late_present/late_absent로 파생
+    // 이전 로그 컨텍스트로 파생 상태 결정
     const studentCurrentLogs = logs.filter((l) => l.student_name === studentName);
     const hasLateLog = studentCurrentLogs.some((l) => l.status === 'late');
+    const hasDisconnectedLog = studentCurrentLogs.some((l) => l.status === 'disconnected');
+    const hasReturnedLog = studentCurrentLogs.some((l) => l.status === 'returned');
     const effectiveStatus: SessionStatus =
-      status === 'on_time' && hasLateLog ? 'late_present' :
-      status === 'absent' && hasLateLog ? 'late_absent' :
+      status === 'on_time'   && hasLateLog                             ? 'late_present' :
+      status === 'absent'    && hasLateLog                             ? 'late_absent' :
+      status === 'completed' && hasDisconnectedLog && !hasReturnedLog  ? 'disconnected_end' :
       status;
 
     const key = `${studentName}-${status}-${lang}`;
@@ -147,10 +150,11 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
               {STATUS_GROUPS.map((group) => (
                 <span key={group.label} className="flex items-center gap-0.5">
                   {group.statuses.map((status) => {
-                    // late_present/late_absent 상태면 파생 원본 버튼을 활성으로 표시
+                    // 파생 상태면 원본 트리거 버튼을 활성으로 표시
                     const isActive = lastLog?.status === status
-                      || (status === 'on_time' && lastLog?.status === 'late_present')
-                      || (status === 'absent' && lastLog?.status === 'late_absent');
+                      || (status === 'on_time'   && lastLog?.status === 'late_present')
+                      || (status === 'absent'    && lastLog?.status === 'late_absent')
+                      || (status === 'completed' && lastLog?.status === 'disconnected_end');
                     const saveKey = `${studentName}-${status}`;
                     const copyKeyKo = `${studentName}-${status}-ko`;
                     const copyKeyEn = `${studentName}-${status}-en`;

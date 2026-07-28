@@ -27,10 +27,13 @@ export const STATUS_COLOR: Record<SessionStatus, string> = {
   completed: 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200',
 };
 
-// late_present, late_absent는 버튼 없음 — 지각 후 제때출석/결석 클릭 시 자동 파생
+// 파생 상태 (버튼 없음):
+//   late_present  = 지각 → 제때출석
+//   late_absent   = 지각 → 결석
+//   disconnected_end = 이탈 → 정상종료 (복귀 없이)
 export const STATUS_GROUPS: { label: string; statuses: SessionStatus[] }[] = [
   { label: '출석', statuses: ['on_time', 'late', 'absent'] },
-  { label: '학습', statuses: ['disconnected', 'disconnected_end', 'returned', 'completed'] },
+  { label: '학습', statuses: ['disconnected', 'returned', 'completed'] },
 ];
 
 export function buildStatusMessageKo(
