@@ -14,7 +14,7 @@ export async function GET(
     .select(
       'id, name, grade, consultation_timeline, funnel_stage, sfv2_profile_id, ' +
       'previous_rw_score, previous_math_score, target_score, target_test_date, ' +
-      'school_type, desired_subjects, ot_datetime, parent_timezone, comm_language'
+      'school_type, desired_subjects, ot_datetime, parent_timezone, comm_language, service_status'
     )
     .eq('id', crmStudentId)
     .single();
@@ -55,16 +55,30 @@ export async function PATCH(
 ) {
   if (!isAuthenticated(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { crmStudentId } = await params;
-  const body = await req.json();
-  const { comm_language } = body as { comm_language?: string };
+  const body = await req.json() as { comm_language?: string; service_status?: string };
+  const updates: Record<string, unknown> = {};
 
-  if (!['ko', 'en'].includes(comm_language ?? '')) {
-    return NextResponse.json({ error: 'Invalid comm_language' }, { status: 400 });
+  if (body.comm_language !== undefined) {
+    if (!['ko', 'en'].includes(body.comm_language)) {
+      return NextResponse.json({ error: 'Invalid comm_language' }, { status: 400 });
+    }
+    updates.comm_language = body.comm_language;
+  }
+
+  if (body.service_status !== undefined) {
+    if (!['active', 'partial_end', 'ended'].includes(body.service_status)) {
+      return NextResponse.json({ error: 'Invalid service_status' }, { status: 400 });
+    }
+    updates.service_status = body.service_status;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
   const { error } = await supabaseAdmin
     .from('students')
-    .update({ comm_language } as Record<string, unknown>)
+    .update(updates)
     .eq('id', crmStudentId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

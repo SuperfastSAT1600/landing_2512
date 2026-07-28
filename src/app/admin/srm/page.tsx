@@ -12,6 +12,7 @@ import { OpsTaskList } from './components/OpsTaskList';
 import { OpsRadar } from './components/OpsRadar';
 import { StudentSearch } from './components/StudentSearch';
 import { StudentRoster } from './components/StudentRoster';
+import { TutoringUserList } from './components/TutoringUserList';
 import { EventLogPanel } from './components/EventLogPanel';
 import { AlertLogPanel } from './components/AlertLogPanel';
 import DailyLearningPage from './daily-learning/page';
@@ -42,7 +43,7 @@ interface SelectedCoach {
   relatedStudents: { name: string; events: string[] }[];
 }
 
-type MainTab = 'queue' | 'log' | 'stats' | 'roster' | 'daily';
+type MainTab = 'queue' | 'log' | 'stats' | 'roster' | 'daily' | 'tutoring';
 
 function collectRelatedStudents(
   coachId: string,
@@ -247,7 +248,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6">
-        {(['queue', 'log', 'stats', 'roster', 'daily'] as MainTab[]).map((t) => (
+        {(['queue', 'log', 'stats', 'roster', 'daily', 'tutoring'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -257,12 +258,12 @@ export default function SrmPage() {
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
             }`}
           >
-            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'stats' ? '통계' : t === 'roster' ? '명단' : '학습 리포트'}
+            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'stats' ? '통계' : t === 'roster' ? '명단' : t === 'daily' ? '학습 리포트' : '튜터링 유저'}
           </button>
         ))}
       </div>
 
-      {mainTab !== 'roster' && mainTab !== 'daily' && (
+      {mainTab !== 'roster' && mainTab !== 'daily' && mainTab !== 'tutoring' && (
         <DayTabs selected={selectedDate} onChange={setSelectedDate} />
       )}
 
@@ -406,6 +407,10 @@ export default function SrmPage() {
 
       {mainTab === 'daily' && (
         <DailyLearningPage />
+      )}
+
+      {mainTab === 'tutoring' && (
+        <TutoringUserList onStudentClick={handleRosterStudentClick} />
       )}
 
       {selectedStudent && (

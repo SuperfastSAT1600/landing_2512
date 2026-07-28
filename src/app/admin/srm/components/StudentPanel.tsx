@@ -48,6 +48,7 @@ interface CrmStudentDetail {
   parent_timezone: string | null;
   comm_language?: string | null;
   portal_token?: string | null;
+  service_status?: string | null;
 }
 
 interface DiagnosticResult {
@@ -139,6 +140,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [pauseUntil, setPauseUntil] = useState('');
   const [pauseReason, setPauseReason] = useState('');
   const [pauseSaving, setPauseSaving] = useState(false);
+  const [serviceStatusSaving, setServiceStatusSaving] = useState(false);
   const [issues, setIssues] = useState<StudentIssue[]>([]);
   const [issueTitle, setIssueTitle] = useState('');
   const [issueDesc, setIssueDesc] = useState('');
@@ -261,6 +263,22 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
       setPauseReason('');
     } finally {
       setPauseSaving(false);
+    }
+  };
+
+  const handleServiceStatusChange = async (next: 'active' | 'partial_end' | 'ended') => {
+    const resolvedCrmId = crmStudentId ?? detail?.crmStudent?.id;
+    if (!resolvedCrmId || serviceStatusSaving) return;
+    setServiceStatusSaving(true);
+    try {
+      await srmFetch(`/api/admin/srm/student/crm/${resolvedCrmId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service_status: next }),
+      });
+      await fetchDetail();
+    } finally {
+      setServiceStatusSaving(false);
     }
   };
 
@@ -837,6 +855,51 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   </div>
                 ) : (
                   <p className="text-xs text-gray-500">현재 수업 중</p>
+                )}
+              </div>
+            )}
+
+            {/* 부분종료 / 종료 섹션 */}
+            {activePause !== undefined && (crmStudentId ?? detail?.crmStudent?.id) && (
+              <div className="px-4 py-3 border-t border-gray-100 space-y-2.5">
+                {/* 부분 종료 */}
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">부분 종료</p>
+                  <button
+                    onClick={() => handleServiceStatusChange(
+                      detail?.crmStudent?.service_status === 'partial_end' ? 'active' : 'partial_end'
+                    )}
+                    disabled={serviceStatusSaving || !!activePause || detail?.crmStudent?.service_status === 'ended'}
+                    className={`text-[11px] disabled:opacity-40 ${
+                      detail?.crmStudent?.service_status === 'partial_end' ? 'text-red-700' : 'text-blue-700'
+                    }`}
+                  >
+                    {serviceStatusSaving ? '처리중...'
+                      : detail?.crmStudent?.service_status === 'partial_end' ? '해제' : '설정'}
+                  </button>
+                </div>
+                {detail?.crmStudent?.service_status === 'partial_end' && (
+                  <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">부분 종료됨</span>
+                )}
+
+                {/* 종료 */}
+                <div className="flex items-center justify-between border-t border-gray-50 pt-2">
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">종료</p>
+                  <button
+                    onClick={() => handleServiceStatusChange(
+                      detail?.crmStudent?.service_status === 'ended' ? 'active' : 'ended'
+                    )}
+                    disabled={serviceStatusSaving}
+                    className={`text-[11px] disabled:opacity-40 ${
+                      detail?.crmStudent?.service_status === 'ended' ? 'text-red-700' : 'text-gray-500'
+                    }`}
+                  >
+                    {serviceStatusSaving ? '처리중...'
+                      : detail?.crmStudent?.service_status === 'ended' ? '종료 해제' : '종료 처리'}
+                  </button>
+                </div>
+                {detail?.crmStudent?.service_status === 'ended' && (
+                  <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-600">종료됨</span>
                 )}
               </div>
             )}
