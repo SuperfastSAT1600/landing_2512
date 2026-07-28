@@ -48,29 +48,19 @@ type MainTab = 'queue' | 'log' | 'stats' | 'roster' | 'daily' | 'tutoring';
 function collectRelatedStudents(
   coachId: string,
   today: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] } | undefined,
-  tomorrow: { coachRoom: ScheduleEvent[]; studyHall: ScheduleEvent[] } | undefined,
 ): { name: string; events: string[] }[] {
   const studentMap = new Map<string, string[]>();
 
-  const processEvents = (events: ScheduleEvent[], dayLabel: string) => {
-    for (const ev of events) {
+  if (today) {
+    for (const ev of [...today.coachRoom, ...today.studyHall]) {
       const coachIdx = ev.coachIds?.indexOf(coachId) ?? -1;
       if (coachIdx === -1) continue;
       for (const studentName of ev.students) {
         const existing = studentMap.get(studentName) ?? [];
-        existing.push(dayLabel);
+        existing.push('오늘');
         studentMap.set(studentName, existing);
       }
     }
-  };
-
-  if (today) {
-    processEvents(today.coachRoom, '오늘');
-    processEvents(today.studyHall, '오늘');
-  }
-  if (tomorrow) {
-    processEvents(tomorrow.coachRoom, '내일');
-    processEvents(tomorrow.studyHall, '내일');
   }
 
   return Array.from(studentMap.entries()).map(([name, events]) => ({ name, events }));
@@ -111,14 +101,10 @@ export default function SrmPage() {
       .then(async (scheduleData: ScheduleResponse) => {
         setSchedule(scheduleData);
 
-        // 해당 날짜 스케줄의 모든 이벤트 ID 수집 (오늘 + 내일)
         const allEventIds = [
           ...(scheduleData?.today?.coachRoom ?? []),
           ...(scheduleData?.today?.studyHall ?? []),
           ...(scheduleData?.today?.vocab ?? []),
-          ...(scheduleData?.tomorrow?.coachRoom ?? []),
-          ...(scheduleData?.tomorrow?.studyHall ?? []),
-          ...(scheduleData?.tomorrow?.vocab ?? []),
         ].map((e: ScheduleEvent) => e.id);
 
         if (!allEventIds.length) { setLoggedEventIds(new Set()); return; }
@@ -195,9 +181,6 @@ export default function SrmPage() {
       ...(schedule.today.coachRoom.map((e) => ({ ...e, eventType: 'coachRoom' as const, day: 'today' as const }))),
       ...(schedule.today.studyHall.map((e) => ({ ...e, eventType: 'studyHall' as const, day: 'today' as const }))),
       ...(schedule.today.vocab.map((e) => ({ ...e, eventType: 'vocab' as const, day: 'today' as const }))),
-      ...(schedule.tomorrow.coachRoom.map((e) => ({ ...e, eventType: 'coachRoom' as const, day: 'tomorrow' as const }))),
-      ...(schedule.tomorrow.studyHall.map((e) => ({ ...e, eventType: 'studyHall' as const, day: 'tomorrow' as const }))),
-      ...(schedule.tomorrow.vocab.map((e) => ({ ...e, eventType: 'vocab' as const, day: 'tomorrow' as const }))),
     ];
     const target = allEvents.find((e) => e.id === urlEventId);
     if (!target) return;
@@ -220,11 +203,7 @@ export default function SrmPage() {
   };
 
   const handleCoachClick = (coach: { id: string; name: string }) => {
-    const relatedStudents = collectRelatedStudents(
-      coach.id,
-      schedule?.today,
-      schedule?.tomorrow,
-    );
+    const relatedStudents = collectRelatedStudents(coach.id, schedule?.today);
     setSelectedCoach({ ...coach, relatedStudents });
   };
 
@@ -336,9 +315,6 @@ export default function SrmPage() {
                 todayCoachRoom={schedule?.today?.coachRoom ?? []}
                 todayStudyHall={schedule?.today?.studyHall ?? []}
                 todayVocab={schedule?.today?.vocab ?? []}
-                tomorrowCoachRoom={schedule?.tomorrow?.coachRoom ?? []}
-                tomorrowStudyHall={schedule?.tomorrow?.studyHall ?? []}
-                tomorrowVocab={schedule?.tomorrow?.vocab ?? []}
                 loading={scheduleLoading}
                 eventDate={selectedDate}
                 vipStudentIds={vipStudentIds}

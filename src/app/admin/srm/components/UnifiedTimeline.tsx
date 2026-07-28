@@ -7,9 +7,7 @@ import { ScheduleEvent } from '@/app/api/admin/srm/schedule/route';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 
 type EventType = 'coachRoom' | 'studyHall' | 'vocab';
-type EventDay = 'today' | 'tomorrow';
-
-type TaggedEvent = ScheduleEvent & { eventType: EventType; day: EventDay };
+type TaggedEvent = ScheduleEvent & { eventType: EventType; day: 'today' };
 
 function toTimeStr(iso: string, tz: string): string {
   return new Date(iso).toLocaleTimeString('ko-KR', {
@@ -164,32 +162,18 @@ function buildVocabCopyMessageEn(ev: ScheduleEvent, isTomorrow: boolean): string
   return `${dayWord} Vocab session is on ${timeInfo}. ${verb} Join and focus on memorizing the words!`;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-// 내일 이벤트는 오늘 같은 시각에 연락해야 하므로 -24h를 sort key로 사용
-function contactTime(ev: TaggedEvent): number {
-  const ms = new Date(ev.startsAt).getTime();
-  return ev.day === 'tomorrow' ? ms - DAY_MS : ms;
-}
-
 function mergeAndSort(
   todayCoach: ScheduleEvent[],
   todaySH: ScheduleEvent[],
   todayVocab: ScheduleEvent[],
-  tomorrowCoach: ScheduleEvent[],
-  tomorrowSH: ScheduleEvent[],
-  tomorrowVocab: ScheduleEvent[],
 ): TaggedEvent[] {
-  const tag = (evs: ScheduleEvent[], eventType: EventType, day: EventDay): TaggedEvent[] =>
-    evs.map((e) => ({ ...e, eventType, day }));
+  const tag = (evs: ScheduleEvent[], eventType: EventType): TaggedEvent[] =>
+    evs.map((e) => ({ ...e, eventType, day: 'today' as const }));
   return [
-    ...tag(todayCoach, 'coachRoom', 'today'),
-    ...tag(todaySH, 'studyHall', 'today'),
-    ...tag(todayVocab, 'vocab', 'today'),
-    ...tag(tomorrowCoach, 'coachRoom', 'tomorrow'),
-    ...tag(tomorrowSH, 'studyHall', 'tomorrow'),
-    ...tag(tomorrowVocab, 'vocab', 'tomorrow'),
-  ].sort((a, b) => contactTime(a) - contactTime(b));
+    ...tag(todayCoach, 'coachRoom'),
+    ...tag(todaySH, 'studyHall'),
+    ...tag(todayVocab, 'vocab'),
+  ].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 }
 
 interface StudentClickArg {
@@ -212,9 +196,6 @@ interface Props {
   todayCoachRoom: ScheduleEvent[];
   todayStudyHall: ScheduleEvent[];
   todayVocab: ScheduleEvent[];
-  tomorrowCoachRoom: ScheduleEvent[];
-  tomorrowStudyHall: ScheduleEvent[];
-  tomorrowVocab: ScheduleEvent[];
   loading?: boolean;
   eventDate: string;
   vipStudentIds?: Set<string>;
@@ -232,9 +213,6 @@ export function UnifiedTimeline({
   todayCoachRoom,
   todayStudyHall,
   todayVocab,
-  tomorrowCoachRoom,
-  tomorrowStudyHall,
-  tomorrowVocab,
   loading,
   eventDate,
   vipStudentIds,
@@ -251,7 +229,7 @@ export function UnifiedTimeline({
   const [actionedIds, setActionedIds] = useState<Set<string>>(new Set());
   const { userName } = useAdminAuth();
 
-  const events = mergeAndSort(todayCoachRoom, todayStudyHall, todayVocab, tomorrowCoachRoom, tomorrowStudyHall, tomorrowVocab);
+  const events = mergeAndSort(todayCoachRoom, todayStudyHall, todayVocab);
 
   useEffect(() => {
     if (!highlightEventId) return;
@@ -261,14 +239,13 @@ export function UnifiedTimeline({
   const totalCount = events.length;
 
   const handleCopy = async (ev: TaggedEvent, lang: 'ko' | 'en') => {
-    const isTomorrow = ev.day === 'tomorrow';
     let msg: string;
     if (ev.eventType === 'studyHall') {
-      msg = lang === 'en' ? buildStudyHallCopyMessageEn(ev, isTomorrow) : buildStudyHallCopyMessage(ev, isTomorrow);
+      msg = lang === 'en' ? buildStudyHallCopyMessageEn(ev, false) : buildStudyHallCopyMessage(ev, false);
     } else if (ev.eventType === 'vocab') {
-      msg = lang === 'en' ? buildVocabCopyMessageEn(ev, isTomorrow) : buildVocabCopyMessage(ev, isTomorrow);
+      msg = lang === 'en' ? buildVocabCopyMessageEn(ev, false) : buildVocabCopyMessage(ev, false);
     } else {
-      msg = lang === 'en' ? buildCopyMessageEn(ev, isTomorrow) : buildCopyMessage(ev, isTomorrow);
+      msg = lang === 'en' ? buildCopyMessageEn(ev, false) : buildCopyMessage(ev, false);
     }
     await navigator.clipboard.writeText(msg);
     setCopiedIds((prev) => new Set(prev).add(`${ev.id}-${lang}`));
@@ -332,13 +309,12 @@ export function UnifiedTimeline({
     const alreadySent = copiedKo || copiedEn || alreadyLogged;
     const isComplete = alreadySent || isActioned;
     const isHighlighted = ev.id === highlightEventId;
-    const isTomorrow = ev.day === 'tomorrow';
 
     const msgPreview = isVocab
-      ? buildVocabCopyMessage(ev, isTomorrow)
+      ? buildVocabCopyMessage(ev, false)
       : ev.eventType === 'studyHall'
-      ? buildStudyHallCopyMessage(ev, isTomorrow)
-      : buildCopyMessage(ev, isTomorrow);
+      ? buildStudyHallCopyMessage(ev, false)
+      : buildCopyMessage(ev, false);
 
     const rowClass = isHighlighted
       ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-400 hover:bg-blue-100'
@@ -348,8 +324,6 @@ export function UnifiedTimeline({
       ? 'border-orange-200 bg-orange-50 hover:bg-orange-100'
       : isDone
       ? 'border-gray-200 bg-gray-50 opacity-80 hover:opacity-100'
-      : isTomorrow
-      ? 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100'
       : 'border-red-200 bg-red-50 hover:bg-red-100';
 
     return (
@@ -362,13 +336,6 @@ export function UnifiedTimeline({
         {/* 시간 */}
         <div className="w-[90px] shrink-0 px-3 py-3">
           <span className={`font-mono text-xs font-semibold whitespace-nowrap ${isDone ? 'text-gray-400' : 'text-gray-700'}`}>{timeStr}</span>
-        </div>
-
-        {/* 오늘/내일 */}
-        <div className="w-[46px] shrink-0 px-1 py-3 border-l border-gray-100 flex justify-center items-center">
-          <span className="text-[10px] font-semibold text-gray-700 whitespace-nowrap">
-            {isTomorrow ? '내일' : '오늘'}
-          </span>
         </div>
 
         {/* 유형 */}
@@ -509,7 +476,6 @@ export function UnifiedTimeline({
           {/* 헤더 */}
           <div className="flex items-center gap-0 mb-1 px-0">
             <div className="w-[90px] shrink-0 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">시간</div>
-            <div className="w-[46px] shrink-0 px-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100 flex justify-center">구분</div>
             <div className="w-[62px] shrink-0 px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100 flex justify-center">유형</div>
             <div className="w-[180px] shrink-0 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100">학생 · 코치</div>
             <div className="flex-1 min-w-0 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-l border-gray-100">메시지</div>
