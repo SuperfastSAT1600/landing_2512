@@ -91,14 +91,30 @@ export async function GET(request: NextRequest) {
   // 기간 내 신규 리드 = inquiry_date(실제 인입 시각)가 [from, to]에 든 리드만.
   // created_at(레코드 생성 시각) 폴백은 쓰지 않는다 — 레거시 대량 임포트(inquiry_date NULL)가
   // 생성 시각 기준으로 특정 기간 신규 리드로 둔갑해 과대집계되는 문제(예: 595건)를 막는다.
-  const { data: students, error: sErr } = await supabaseAdmin
-    .from('students')
-    .select(
-      'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id'
-    )
-    .gte('inquiry_date', from)
-    .lte('inquiry_date', `${to}T23:59:59`)
-    .limit(MAX_LEAD_ROWS);
+  // 서로 독립인 세 조회를 병렬 실행: 기간 리드 / 기간 결제 / 최초결제 코호트.
+  const [studentsRes, paymentsRes, firstPayRes] = await Promise.all([
+    supabaseAdmin
+      .from('students')
+      .select(
+        'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id'
+      )
+      .gte('inquiry_date', from)
+      .lte('inquiry_date', `${to}T23:59:59`)
+      .limit(MAX_LEAD_ROWS),
+    // 기간 내 payments (매출·환불 집계용, 기간=paid_at KST)
+    supabaseAdmin
+      .from('payments')
+      .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
+      .gte('paid_at', `${from}T00:00:00+09:00`)
+      .lte('paid_at', `${to}T23:59:59.999+09:00`),
+    // 결제 전환율(코호트): 인입 리드가 '언제든' 최초결제했는지. ₩1은 센터형 파트너 placeholder(실전환, amount>0 포함).
+    supabaseAdmin
+      .from('payments')
+      .select('student_id, student_name')
+      .eq('payment_type', '최초결제')
+      .gt('amount', 0),
+  ]);
+  const { data: students, error: sErr } = studentsRes;
 
   if (sErr) {
     return NextResponse.json(
@@ -112,14 +128,7 @@ export async function GET(request: NextRequest) {
     console.warn(`[stats] lead rows hit MAX_LEAD_ROWS(${MAX_LEAD_ROWS}) for ${from}~${to} — 집계가 절단됐을 수 있음`);
   }
 
-  // 기간 내 payments 조회 (매출·환불 집계용, 기간=paid_at KST)
-  const { data: payments, error: pErr } = await supabaseAdmin
-    .from('payments')
-    .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
-    .gte('paid_at', `${from}T00:00:00+09:00`)
-    .lte('paid_at', `${to}T23:59:59.999+09:00`);
-
-  const paymentList = pErr ? [] : (payments ?? []);
+  const paymentList = paymentsRes.error ? [] : (paymentsRes.data ?? []);
 
   // 학생 ID → payment 맵 (최초결제 기준)
   const paidStudentIds = new Set<string>();
@@ -142,14 +151,9 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다.
+  // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다(위 Promise.all에서 조회).
   // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
-  // ₩1 최초결제는 공부하는 아이들 등 센터형 파트너의 일괄 등록 placeholder이며 실제 전환이므로 포함한다(amount>0).
-  const { data: firstPayRows } = await supabaseAdmin
-    .from('payments')
-    .select('student_id, student_name')
-    .eq('payment_type', '최초결제')
-    .gt('amount', 0);
+  const firstPayRows = firstPayRes.data;
   for (const p of firstPayRows ?? []) {
     if (p.student_id) paidStudentIds.add(p.student_id);
     if (p.student_name) paidStudentNames.add(p.student_name);

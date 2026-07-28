@@ -1,8 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, Fragment } from 'react';
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import dynamic from 'next/dynamic';
 import { TrendingUp, Users, Phone, CreditCard, RefreshCw, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+
+// recharts는 통계 탭을 열 때만 필요 — 지연 로딩해 CRM 첫 진입 번들에서 제외한다.
+const SalesRevenueChart = dynamic(() => import('./SalesRevenueChart'), {
+  ssr: false,
+  loading: () => <div className="h-[260px] flex items-center justify-center text-sm text-gray-300">차트 로딩…</div>,
+});
 import type { CrmStatsData, StatsBySource, StatsWeekly, StatsMonthly } from '@/app/api/crm/stats/route';
 import type { StatsDetailMetric, LeadDetailItem } from '@/lib/crm-stats-detail';
 import { StatsDetailModal, leadStatus, type LeadDisplayStatus } from './StatsDetailModal';
@@ -527,20 +533,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
 
             {trendView === 'monthly' ? (
               allMonthly.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <ComposedChart data={allMonthly} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={52}
-                      tickFormatter={(v: number) => (Math.abs(v) >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : `${Math.round(v / 1e4)}만`)} />
-                    <Tooltip formatter={(value) => fmt원(Number(value))} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
-                    <Bar dataKey="refund" name="환불" fill="#fca5a5" radius={[3, 3, 0, 0]} maxBarSize={22} />
-                    <Line type="monotone" dataKey="gross_revenue" name="매출" stroke="#10b981" strokeWidth={2.5} dot={{ r: 2, strokeWidth: 0, fill: '#10b981' }} activeDot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="revenue" name="순매출" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 2, strokeWidth: 0, fill: '#3b82f6' }} activeDot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="net_revenue" name="순수익" stroke="#8b5cf6" strokeWidth={2.5} dot={{ r: 2, strokeWidth: 0, fill: '#8b5cf6' }} activeDot={{ r: 4 }} />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                <SalesRevenueChart data={allMonthly} formatWon={fmt원} />
               ) : (
                 <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
               )

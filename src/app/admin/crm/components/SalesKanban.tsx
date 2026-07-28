@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -61,7 +61,7 @@ interface KanbanRowProps {
   isSearchMatch?: boolean;
 }
 
-function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayment, onToggleSignup, onKakaoCreate, onAdd, isSearchMatch }: KanbanRowProps) {
+const KanbanColumn = memo(function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayment, onToggleSignup, onKakaoCreate, onAdd, isSearchMatch }: KanbanRowProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const isEnrollmentStage = stage === '8';
 
@@ -115,7 +115,7 @@ function KanbanColumn({ stage, students, nowMs, onStudentClick, onChurn, onPayme
       </div>
     </div>
   );
-}
+});
 
 export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, onStudentClick }: SalesKanbanProps) {
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
@@ -149,25 +149,39 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  const getStudentsForStage = useCallback(
-    (stage: FunnelStage) => {
-      const list = students.filter(s =>
-        s.funnel_stage === stage && !s.retry_strategy_id &&
-        // 8번(결제완료)은 단톡방 개설 전(미완료) 학생만 — lead_status 무관(enrolled). 그 외는 active 리드.
-        // 온보딩 순서: 회원가입 확인(signup_done_at) → 단톡방 개설(kakao_chat_created, 완료 시 제거)
-        (stage === '8' ? !s.kakao_chat_created : s.lead_status === 'active')
-      );
-      return [...list].sort((a, b) => {
+  // 스테이지별 학생 그룹핑을 렌더당 1회만 계산 (기존: 컬럼×2회 전체 filter+sort).
+  // 필터·정렬 조건은 기존 getStudentsForStage와 동일하게 유지.
+  const studentsByStage = useMemo(() => {
+    const map = new Map<FunnelStage, Student[]>();
+    for (const stage of SALES_STAGES) map.set(stage, []);
+    for (const s of students) {
+      if (s.retry_strategy_id) continue;
+      const stage = s.funnel_stage as FunnelStage;
+      const bucket = map.get(stage);
+      if (!bucket) continue;
+      // 8번(결제완료)은 단톡방 개설 전(미완료) 학생만 — lead_status 무관(enrolled). 그 외는 active 리드.
+      // 온보딩 순서: 회원가입 확인(signup_done_at) → 단톡방 개설(kakao_chat_created, 완료 시 제거)
+      if (stage === '8' ? !s.kakao_chat_created : s.lead_status === 'active') bucket.push(s);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => {
         const ao = a.sort_order ?? Infinity;
         const bo = b.sort_order ?? Infinity;
         if (ao !== bo) return ao - bo;
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
-    },
-    [students]
+    }
+    return map;
+  }, [students]);
+  const getStudentsForStage = useCallback(
+    (stage: FunnelStage) => studentsByStage.get(stage) ?? [],
+    [studentsByStage]
   );
 
-  const reactivatingStudents = students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id);
+  const reactivatingStudents = useMemo(
+    () => students.filter(s => s.lead_status === 'reactivating' && !s.retry_strategy_id),
+    [students]
+  );
 
   // 8번 컬럼 온보딩: 회원가입 확인 토글 → 단톡방 개설(칸반에서 제거)
   const handleToggleSignup = useCallback(
