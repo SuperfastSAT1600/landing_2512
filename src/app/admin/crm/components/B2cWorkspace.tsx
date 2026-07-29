@@ -7,9 +7,7 @@ import { CrmInsightBanner } from './CrmInsightBanner';
 import { DailyTasks } from './DailyTasks';
 import { LeadsHub } from './LeadsHub';
 import { WeeklyPlan } from './WeeklyPlan';
-import { TutoringUserList } from '@/app/admin/srm/components/TutoringUserList';
-
-type B2cTab = 'leads' | 'strategies' | 'weekly' | 'tutoring';
+type B2cTab = 'leads' | 'strategies' | 'weekly';
 
 // 선제 진단 인사이트 배너(CrmInsightBanner) 사용 중단으로 숨김. true로 바꾸면 복구.
 const INSIGHT_BANNER_ENABLED = false;
@@ -77,7 +75,6 @@ export function B2cWorkspace({
           { key: 'leads',      label: '리드 현황·통계' },
           { key: 'strategies', label: '세일즈 전략' },
           { key: 'weekly',     label: '주차 계획·이행' },
-          { key: 'tutoring',   label: '튜터링 유저' },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
@@ -127,9 +124,6 @@ export function B2cWorkspace({
         />
       )}
 
-      {activeTab === 'tutoring' && (
-        <TutoringUserList onStudentClick={(s) => { if (s.crmStudentId) onSelectStudentById(s.crmStudentId); }} />
-      )}
     </div>
   );
 }
