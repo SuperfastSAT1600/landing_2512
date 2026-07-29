@@ -46,7 +46,7 @@ interface SelectedCoach {
   relatedStudents: { name: string; events: string[] }[];
 }
 
-type MainTab = 'queue' | 'log' | 'stats' | 'roster' | 'tutoring';
+type MainTab = 'queue' | 'log' | 'stats' | 'tutoring';
 
 function collectRelatedStudents(
   coachId: string,
@@ -74,7 +74,7 @@ export default function SrmPage() {
   const urlEventId = searchParams.get('eventId');
 
   const [mainTab, setMainTab] = useState<MainTab>('queue');
-  const [queueTab, setQueueTab] = useState<'schedule' | 'noClass' | 'noStudyHall' | 'noVocab' | 'yesterday'>('schedule');
+  const [queueTab, setQueueTab] = useState<'schedule' | 'noClass' | 'noStudyHall' | 'noVocab'>('schedule');
   const [yesterdayIssueCount, setYesterdayIssueCount] = useState(0);
   const selectedDate = getKstDateStr(0);
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
@@ -241,7 +241,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6">
-        {(['queue', 'log', 'stats', 'roster', 'tutoring'] as MainTab[]).map((t) => (
+        {(['queue', 'log', 'stats', 'tutoring'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -251,7 +251,7 @@ export default function SrmPage() {
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
             }`}
           >
-            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'stats' ? '통계' : t === 'roster' ? '명단' : '튜터링 유저'}
+            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'stats' ? '통계' : '튜터링 유저'}
           </button>
         ))}
       </div>
@@ -289,7 +289,6 @@ export default function SrmPage() {
           { key: 'noClass'     as const, label: '수업 미정',    count: noClassCount          },
           { key: 'noStudyHall' as const, label: '스터디홀 미정', count: noSHCount            },
           { key: 'noVocab'     as const, label: '보카 미정',    count: noVocabCount          },
-          { key: 'yesterday'   as const, label: '어제 점검',    count: yesterdayIssueCount   },
         ];
 
         return (
@@ -380,12 +379,6 @@ export default function SrmPage() {
               />
             )}
 
-            {queueTab === 'yesterday' && (
-              <YesterdayCheck
-                date={yesterdayDate}
-                onStudentClick={handleStudentClick}
-              />
-            )}
           </>
         );
       })()}
@@ -398,10 +391,6 @@ export default function SrmPage() {
             <OpsTaskList date={selectedDate} onStudentClick={handleStudentClick} />
           </div>
         </>
-      )}
-
-      {mainTab === 'roster' && (
-        <StudentRoster onStudentClick={handleRosterStudentClick} />
       )}
 
       {mainTab === 'tutoring' && (
