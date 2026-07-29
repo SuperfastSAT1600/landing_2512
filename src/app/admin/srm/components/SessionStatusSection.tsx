@@ -130,27 +130,24 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
         const suggestion = studentId ? suggestions[studentId] : undefined;
 
         return (
-          <div key={`${ev.id}-${studentName}`} className="space-y-1.5">
-            {/* 학생 이름 + 상태 버튼 */}
-            <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[11px] font-semibold text-gray-700 mr-1 shrink-0">{studentName}</span>
-
-              {/* v2 제안 배지 */}
+          <div key={`${ev.id}-${studentName}`} className="space-y-1">
+            {/* 학생 이름 + v2 제안 */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-gray-700 shrink-0">{studentName}</span>
               {suggestion?.suggestedStatus && (
                 <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 border border-blue-200 shrink-0">
                   v2: {STATUS_LABEL[suggestion.suggestedStatus]}
-                  {suggestion.joinedAt && ` ${toKstTime(suggestion.joinedAt)}`}
+                  {suggestion.joinedAt && ` · 입장 ${toKstTime(suggestion.joinedAt)}`}
                 </span>
               )}
+            </div>
 
-              {/* 구분선 */}
-              <span className="text-gray-200 mx-0.5">|</span>
-
-              {/* 상태 버튼 그룹 */}
+            {/* 기록 — 상태 버튼 */}
+            <div className="flex flex-wrap items-center gap-1 pl-2">
+              <span className="text-[9px] font-medium text-gray-400 shrink-0 w-6">기록</span>
               {STATUS_GROUPS.map((group) => (
                 <span key={group.label} className="flex items-center gap-0.5">
                   {group.statuses.map((status) => {
-                    // 파생 상태면 원본 트리거 버튼을 활성으로 표시
                     const isActive = lastLog?.status === status
                       || (status === 'on_time'   && lastLog?.status === 'late_present')
                       || (status === 'absent'    && lastLog?.status === 'late_absent')
@@ -197,16 +194,17 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
               ))}
             </div>
 
-            {/* 로그 이력 */}
+            {/* 이력 — 저장된 로그 */}
             {studentLogs.length > 0 && (
-              <div className="flex flex-wrap gap-1 pl-2">
+              <div className="flex flex-wrap items-center gap-1 pl-2 py-1 bg-gray-100/70 rounded-md">
+                <span className="text-[9px] font-medium text-gray-400 shrink-0 w-6">이력</span>
                 {studentLogs.map((log) => (
                   <span
                     key={log.id}
                     className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium border ${STATUS_COLOR[log.status]}`}
                   >
                     {STATUS_LABEL[log.status]}
-                    <span className="text-[9px] opacity-70">{toKstTime(log.created_at)}</span>
+                    <span className="opacity-70">{toKstTime(log.created_at)}</span>
                     <button
                       onClick={() => handleDelete(log.id)}
                       disabled={deleting === log.id}
