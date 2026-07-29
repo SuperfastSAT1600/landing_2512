@@ -75,6 +75,10 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
     try { await navigator.clipboard.writeText(msg); } catch { /* non-fatal */ }
     setTimeout(() => setCopying((c) => c === key ? null : c), 2000);
 
+    // 같은 상태가 마지막 로그와 동일하면 중복 저장 방지
+    const lastLog = studentCurrentLogs[studentCurrentLogs.length - 1];
+    if (lastLog?.status === effectiveStatus) return;
+
     // Save log
     const saveKey = `${studentName}-${status}`;
     setSaving(saveKey);
