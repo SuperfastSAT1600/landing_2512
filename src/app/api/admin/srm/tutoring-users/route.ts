@@ -199,10 +199,6 @@ export async function GET(request: NextRequest) {
     // 미연결 sfv2 유저: 수업중/휴원/세일즈에 해당하지만 CRM에 sfv2_profile_id 미연결
     // 조건: 구매 이력 있고 환불 후 순 구매 시간 > 0 (전액 환불된 유저 제외)
     const linkedProfileIds = new Set(crmStudents.map((s) => s.sfv2_profile_id));
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    const sixMonthsAgoStr = sixMonthsAgo.toISOString();
-
     const unlinkedProfileIds = [...purchased.keys()].filter((pid) => {
       if (linkedProfileIds.has(pid)) return false;
       const purchasedH = purchased.get(pid) ?? 0;
@@ -210,9 +206,7 @@ export async function GET(request: NextRequest) {
       if (purchasedH - refundedH <= 0) return false; // 전액 환불 제외
       const usedH = used.get(pid) ?? 0;
       const remainingH = purchasedH - refundedH - usedH;
-      if (remainingH > 0) return true; // 수업중/휴원/부분종료
-      const lastPurchase = lastPurchaseDate.get(pid);
-      return !!lastPurchase && lastPurchase >= sixMonthsAgoStr; // 세일즈 (최근 6개월 내 결제)
+      return remainingH > 0; // 잔여시간 있는 학생만 (수업중/휴원/부분종료)
     });
 
     const unlinked: UnlinkedTutoringUser[] = [];
