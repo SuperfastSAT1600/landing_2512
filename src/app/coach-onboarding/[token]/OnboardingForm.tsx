@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { OnboardingStep1, OnboardingStep2, OnboardingStep3, PastAcademy } from '@/types/coach-onboarding';
+import { SubjectEditorModal } from './SubjectEditorModal';
 
 const SUBJECTS = [
   'SAT Reading & Writing',
@@ -70,6 +71,28 @@ function Step1({
         <Label required>이름</Label>
         <Input value={data.name} onChange={e => onChange({ name: e.target.value })} placeholder="홍길동" />
         <FieldError msg={errors.name} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label required>핸드폰 번호</Label>
+          <Input
+            type="tel"
+            value={data.phone}
+            onChange={e => onChange({ phone: e.target.value })}
+            placeholder="010-0000-0000"
+          />
+          <FieldError msg={errors.phone} />
+        </div>
+        <div>
+          <Label required>이메일</Label>
+          <Input
+            type="email"
+            value={data.email}
+            onChange={e => onChange({ email: e.target.value })}
+            placeholder="coach@example.com"
+          />
+          <FieldError msg={errors.email} />
+        </div>
       </div>
       <div>
         <Label required>고등학교</Label>
@@ -359,6 +382,7 @@ function Step3({
   const fileRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<{ file: File; previewUrl: string; uploaded?: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<string | null>(null);
 
   const handleFiles = async (files: FileList) => {
     const validFiles = Array.from(files).filter(f =>
@@ -425,46 +449,55 @@ function Step3({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Label required>공통 수업 방향성</Label>
-        <p className="text-xs text-gray-500 mb-2">과목에 상관없이 본인의 전반적인 수업 철학과 방식을 작성해 주세요. (최소 100자)</p>
-        <Textarea
-          rows={5}
-          value={data.teaching_philosophy}
-          onChange={e => onChange({ teaching_philosophy: e.target.value })}
-          placeholder="어떤 방식으로 수업을 진행하시나요? 학생들과 어떻게 소통하시나요?"
-        />
-        <div className="flex justify-between mt-1">
-          <FieldError msg={errors.teaching_philosophy} />
-          <span className={`text-xs ${data.teaching_philosophy.length >= 100 ? 'text-green-400' : 'text-gray-500'}`}>
-            {data.teaching_philosophy.length} / 100자
-          </span>
-        </div>
-      </div>
-
       {subjects.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <p className="text-sm font-medium text-gray-300">과목별 수업 방향성</p>
-          {subjects.map(subject => (
-            <div key={subject}>
-              <Label>{subject}</Label>
-              <Textarea
-                rows={3}
-                value={data.subject_directions[subject] ?? ''}
-                onChange={e => onChange({ subject_directions: { ...data.subject_directions, [subject]: e.target.value } })}
-                placeholder={`${subject} 수업을 어떻게 진행하시나요?`}
-              />
-            </div>
-          ))}
+          <p className="text-xs text-gray-500">선택하신 각 과목을 어떻게 가르치시는지 작성해 주세요. 자세하게 작성할수록 학부모에게 더 잘 어필됩니다.</p>
+          {subjects.map(subject => {
+            const content = data.subject_directions[subject] ?? '';
+            const hasContent = content.replace(/<[^>]*>/g, '').trim().length > 0;
+            return (
+              <button
+                key={subject}
+                type="button"
+                onClick={() => setEditingSubject(subject)}
+                className="w-full text-left bg-[#1a1d20] border border-white/10 hover:border-blue-500/50 rounded-lg px-4 py-3 transition-colors group"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-medium text-gray-300">{subject}</span>
+                  <span className="text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    클릭하여 작성 →
+                  </span>
+                </div>
+                {hasContent ? (
+                  <p
+                    className="text-xs text-gray-400 line-clamp-2 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: content }}
+                  />
+                ) : (
+                  <p className="text-xs text-gray-600">{subject} 수업을 어떻게 진행하시나요?</p>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
 
+      {editingSubject && (
+        <SubjectEditorModal
+          subject={editingSubject}
+          value={data.subject_directions[editingSubject] ?? ''}
+          onSave={html => onChange({ subject_directions: { ...data.subject_directions, [editingSubject]: html } })}
+          onClose={() => setEditingSubject(null)}
+        />
+      )}
+
       <div>
-        <Label>점수 향상 메시지 스크린샷</Label>
-        <p className="text-xs text-gray-500 mb-3">
-          학생 또는 학부모가 점수가 올랐다고 보낸 카카오톡 메시지 캡처를 올려주세요.
-          <span className="text-yellow-400 ml-1">대표코치 선정 시 5장 이상이 필요합니다.</span>
+        <Label>학부모에게 어필하고 싶은 이미지를 첨부해주세요.</Label>
+        <p className="text-xs text-gray-500 mb-1">
+          ex) 학생이 감사함을 표현한 카톡, 성적이 올랐다는 카톡, 학부모가 수업이 너무 좋다고 말한 카톡 등
         </p>
+        <p className="text-xs text-yellow-400 mb-3">5장 이상을 업로드했을 때, 대표코치 조건을 충족하게 됩니다.</p>
         <div className="grid grid-cols-3 gap-2 mb-3">
           {previews.map((p, i) => (
             <div key={i} className="relative aspect-square">
@@ -515,7 +548,8 @@ function Step3({
 const STEPS = ['기본 정보', '경력 & 수업', '프로필 초안'];
 
 const INIT_STEP1: OnboardingStep1 = {
-  name: '', high_school: '', university: '', undergrad_major: '',
+  name: '', phone: '', email: '',
+  high_school: '', university: '', undergrad_major: '',
   university_entry_year: '', enrollment_status: '',
   grad_school: '', grad_major: '', sat_rw_score: '', sat_math_score: '',
 };
@@ -527,21 +561,40 @@ const INIT_STEP3: OnboardingStep3 = {
   teaching_philosophy: '', subject_directions: {}, score_improvement_screenshots: [],
 };
 
-export function OnboardingForm({ token, coachName }: { token: string; coachName: string }) {
+interface Props {
+  token: string;
+  coachName: string;
+  draftData: Record<string, unknown> | null;
+  draftSavedAt: string | null;
+}
+
+export function OnboardingForm({ token, coachName, draftData, draftSavedAt }: Props) {
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [step1, setStep1] = useState<OnboardingStep1>(INIT_STEP1);
-  const [step2, setStep2] = useState<OnboardingStep2>(INIT_STEP2);
-  const [step3, setStep3] = useState<OnboardingStep3>(INIT_STEP3);
-  const [screenshotUrls, setScreenshotUrls] = useState<string[]>([]);
+  const [step, setStep] = useState(() => (draftData?.step as number) ?? 0);
+  const [step1, setStep1] = useState<OnboardingStep1>(() =>
+    draftData?.step1 ? { ...INIT_STEP1, ...(draftData.step1 as Partial<OnboardingStep1>) } : INIT_STEP1
+  );
+  const [step2, setStep2] = useState<OnboardingStep2>(() =>
+    draftData?.step2 ? { ...INIT_STEP2, ...(draftData.step2 as Partial<OnboardingStep2>) } : INIT_STEP2
+  );
+  const [step3, setStep3] = useState<OnboardingStep3>(() =>
+    draftData?.step3 ? { ...INIT_STEP3, ...(draftData.step3 as Partial<OnboardingStep3>) } : INIT_STEP3
+  );
+  const [screenshotUrls, setScreenshotUrls] = useState<string[]>(
+    (draftData?.screenshotUrls as string[]) ?? []
+  );
   const [errors1, setErrors1] = useState<Partial<Record<keyof OnboardingStep1, string>>>({});
   const [errors2, setErrors2] = useState<Partial<Record<keyof OnboardingStep2, string>>>({});
   const [errors3, setErrors3] = useState<Partial<Record<keyof OnboardingStep3, string>>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(draftSavedAt);
 
   function validateStep1(): boolean {
     const e: typeof errors1 = {};
     if (!step1.name.trim()) e.name = '이름을 입력해 주세요.';
+    if (!step1.phone.trim()) e.phone = '핸드폰 번호를 입력해 주세요.';
+    if (!step1.email.trim()) e.email = '이메일을 입력해 주세요.';
     if (!step1.high_school.trim()) e.high_school = '고등학교를 입력해 주세요.';
     if (!step1.university.trim()) e.university = '대학교를 입력해 주세요.';
     if (!step1.undergrad_major.trim()) e.undergrad_major = '학부 전공을 입력해 주세요.';
@@ -566,11 +619,26 @@ export function OnboardingForm({ token, coachName }: { token: string; coachName:
   }
 
   function validateStep3(): boolean {
-    const e: typeof errors3 = {};
-    if (step3.teaching_philosophy.length < 100) e.teaching_philosophy = '100자 이상 작성해 주세요.';
-    setErrors3(e);
-    return Object.keys(e).length === 0;
+    setErrors3({});
+    return true;
   }
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/coach-onboarding/draft', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, data: { step, step1, step2, step3, screenshotUrls } }),
+      });
+      if (res.ok) {
+        const { data } = await res.json();
+        setSavedAt(data.saved_at);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const goNext = () => {
     if (step === 0 && !validateStep1()) return;
@@ -593,6 +661,8 @@ export function OnboardingForm({ token, coachName }: { token: string; coachName:
         token,
         data: {
           name: step1.name.trim(),
+          phone: step1.phone.trim() || null,
+          email: step1.email.trim() || null,
           high_school: step1.high_school.trim(),
           university: step1.university.trim(),
           undergrad_major: step1.undergrad_major.trim(),
@@ -610,7 +680,7 @@ export function OnboardingForm({ token, coachName }: { token: string; coachName:
           subjects: allSubjects,
           subjects_other: step2.subjects_other.trim() || null,
           language_preference: step2.language_preference,
-          teaching_philosophy: step3.teaching_philosophy.trim(),
+          teaching_philosophy: step2.appeal_points.trim(),
           subject_directions: Object.fromEntries(
             Object.entries(step3.subject_directions).filter(([, v]) => v?.trim())
           ),
@@ -644,8 +714,28 @@ export function OnboardingForm({ token, coachName }: { token: string; coachName:
         {/* Header */}
         <div className="mb-8">
           <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">SuperfastSAT</p>
-          <h1 className="text-2xl font-bold text-white mb-1">코치 프로필 작성</h1>
-          <p className="text-sm text-gray-500">안녕하세요, <span className="text-gray-300">{coachName}</span> 코치님. 아래 정보를 입력해 주세요.</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-white mb-1">코치 프로필 작성</h1>
+              <p className="text-sm text-gray-500">안녕하세요, <span className="text-gray-300">{coachName}</span> 코치님. 아래 정보를 입력해 주세요.</p>
+            </div>
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 border border-white/10 rounded-lg text-xs font-medium text-gray-300 transition-colors flex items-center gap-1.5"
+              >
+                {saving ? (
+                  <><div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" /> 저장 중...</>
+                ) : '저장하기'}
+              </button>
+              {savedAt && (
+                <p className="text-xs text-gray-600">
+                  마지막 저장 {new Date(savedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Step indicator */}
@@ -673,7 +763,22 @@ export function OnboardingForm({ token, coachName }: { token: string; coachName:
 
         {/* Form */}
         <div className="bg-[#151719] rounded-2xl border border-white/5 p-6 mb-6">
-          <h2 className="text-base font-semibold text-white mb-5">{STEPS[step]}</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-semibold text-white">{STEPS[step]}</h2>
+            {step === 0 && (
+              <a
+                href="/coaches/ben"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                완성된 프로필 예시 보기
+              </a>
+            )}
+          </div>
           {step === 0 && <Step1 data={step1} onChange={d => setStep1(s => ({ ...s, ...d }))} errors={errors1} />}
           {step === 1 && <Step2 data={step2} onChange={d => setStep2(s => ({ ...s, ...d }))} errors={errors2} />}
           {step === 2 && (

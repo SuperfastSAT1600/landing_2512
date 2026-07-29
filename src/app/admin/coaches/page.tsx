@@ -10,6 +10,7 @@ import { CreateOnboardingLinkModal } from './CreateOnboardingLinkModal';
 interface NewCoachForm {
     name: string;
     slug: string;
+    email: string;
 }
 
 function getAdminKey(): string {
@@ -21,8 +22,10 @@ export default function AdminCoachesPage() {
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
     const [showOnboardingModal, setShowOnboardingModal] = useState(false);
-    const [newCoach, setNewCoach] = useState<NewCoachForm>({ name: '', slug: '' });
+    const [newCoach, setNewCoach] = useState<NewCoachForm>({ name: '', slug: '', email: '' });
     const [saving, setSaving] = useState(false);
+    const [onboardingUrl, setOnboardingUrl] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         fetchCoaches();
@@ -58,16 +61,17 @@ export default function AdminCoachesPage() {
                 body: JSON.stringify({
                     name: newCoach.name.trim(),
                     slug: newCoach.slug.trim(),
+                    email: newCoach.email.trim() || undefined,
                     photo: '',
                     bio: '',
                     curriculumPostSlug: '',
                     isActive: true,
                 }),
             });
-            const data: { success: boolean; error?: string } = await res.json();
+            const data: { success: boolean; error?: string; onboarding_url?: string } = await res.json();
             if (data.success) {
-                setNewCoach({ name: '', slug: '' });
-                setShowAddForm(false);
+                setOnboardingUrl(data.onboarding_url ?? null);
+                setNewCoach({ name: '', slug: '', email: '' });
                 await fetchCoaches();
             } else {
                 alert(data.error ?? '추가에 실패했습니다.');
@@ -77,6 +81,13 @@ export default function AdminCoachesPage() {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleCopyUrl = () => {
+        if (!onboardingUrl) return;
+        navigator.clipboard.writeText(onboardingUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const handleUpdate = async (slug: string, updates: Partial<CoachData>) => {
@@ -168,21 +179,42 @@ export default function AdminCoachesPage() {
                                 className="flex-1 bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none font-mono"
                             />
                         </div>
+                        <input
+                            type="email"
+                            value={newCoach.email}
+                            onChange={e => setNewCoach(s => ({ ...s, email: e.target.value }))}
+                            placeholder="이메일 (온보딩 링크 발송용, 선택)"
+                            className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                        />
                         <div className="flex gap-2">
                             <button
                                 onClick={handleAdd}
                                 disabled={saving}
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-sm font-bold text-white transition-colors"
                             >
-                                {saving ? '저장 중...' : '추가'}
+                                {saving ? '저장 중...' : '추가 + 링크 생성'}
                             </button>
                             <button
-                                onClick={() => { setShowAddForm(false); setNewCoach({ name: '', slug: '' }); }}
+                                onClick={() => { setShowAddForm(false); setOnboardingUrl(null); setNewCoach({ name: '', slug: '', email: '' }); }}
                                 className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold text-gray-400 transition-colors"
                             >
                                 취소
                             </button>
                         </div>
+                        {onboardingUrl && (
+                            <div className="mt-1 p-3 bg-green-500/10 border border-green-500/20 rounded-lg space-y-2">
+                                <p className="text-xs font-medium text-green-400">코치가 추가됐습니다. 아래 링크를 코치에게 전달해주세요.</p>
+                                <div className="flex items-center gap-2">
+                                    <code className="flex-1 text-xs text-gray-300 bg-black/30 px-2 py-1.5 rounded truncate">{onboardingUrl}</code>
+                                    <button
+                                        onClick={handleCopyUrl}
+                                        className="shrink-0 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold text-white transition-colors"
+                                    >
+                                        {copied ? '복사됨' : '복사'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

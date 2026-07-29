@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCoaches, addCoach, updateCoach, deleteCoach, CoachData } from '@/lib/coaches-data';
 import { isAuthenticated } from '@/lib/server-auth';
 import { isValidInstagramUrl } from '@/lib/instagram-url';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import crypto from 'crypto';
 
 export async function GET(request: NextRequest) {
     if (!isAuthenticated(request)) {
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
     try {
-        const body: Partial<CoachData> = await request.json();
+        const body: Partial<CoachData> & { email?: string } = await request.json();
         if (!body.slug || !body.name) {
             return NextResponse.json({ success: false, error: 'slug and name are required' }, { status: 400 });
         }
@@ -45,7 +47,22 @@ export async function POST(request: NextRequest) {
         if (!ok) {
             return NextResponse.json({ success: false, error: 'slug already exists or DB error' }, { status: 409 });
         }
-        return NextResponse.json({ success: true, coach: newCoach }, { status: 201 });
+
+        // 온보딩 invite 자동 생성
+        const token = crypto.randomBytes(32).toString('hex');
+        const expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30일
+        await supabaseAdmin.from('coach_onboarding_invites').insert({
+            token,
+            coach_name: body.name,
+            coach_email: body.email ?? null,
+            coach_slug: body.slug,
+            expires_at,
+        });
+
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+        const onboardingUrl = `${baseUrl}/coach-onboarding/${token}`;
+
+        return NextResponse.json({ success: true, coach: newCoach, onboarding_url: onboardingUrl }, { status: 201 });
     } catch {
         return NextResponse.json({ success: false, error: 'Failed to create coach' }, { status: 500 });
     }

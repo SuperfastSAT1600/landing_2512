@@ -12,7 +12,15 @@ interface Props {
   params: Promise<{ token: string }>;
 }
 
-async function validateToken(token: string): Promise<{ valid: boolean; coachName?: string; error?: string }> {
+interface TokenResult {
+  valid: boolean;
+  coachName?: string;
+  draftData?: Record<string, unknown> | null;
+  draftSavedAt?: string | null;
+  error?: string;
+}
+
+async function validateToken(token: string): Promise<TokenResult> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/coach-onboarding/token?t=${token}`, { cache: 'no-store' });
@@ -21,7 +29,12 @@ async function validateToken(token: string): Promise<{ valid: boolean; coachName
       return { valid: false, error: body.error ?? 'invalid' };
     }
     const body = await res.json();
-    return { valid: true, coachName: body.data.coach_name };
+    return {
+      valid: true,
+      coachName: body.data.coach_name,
+      draftData: body.data.draft_data ?? null,
+      draftSavedAt: body.data.draft_saved_at ?? null,
+    };
   } catch {
     return { valid: false, error: 'network_error' };
   }
@@ -55,5 +68,12 @@ export default async function CoachOnboardingPage({ params }: Props) {
     );
   }
 
-  return <OnboardingForm token={token} coachName={result.coachName ?? ''} />;
+  return (
+    <OnboardingForm
+      token={token}
+      coachName={result.coachName ?? ''}
+      draftData={result.draftData ?? null}
+      draftSavedAt={result.draftSavedAt ?? null}
+    />
+  );
 }

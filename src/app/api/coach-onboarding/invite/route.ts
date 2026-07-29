@@ -10,14 +10,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { coach_name: string; coach_email?: string; expires_days?: number };
+  let body: { coach_name: string; coach_email?: string; expires_days?: number; coach_slug?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { coach_name, coach_email, expires_days = 7 } = body;
+  const { coach_name, coach_email, expires_days = 7, coach_slug } = body;
   if (!coach_name?.trim()) {
     return NextResponse.json({ error: 'coach_name is required' }, { status: 400 });
   }
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('coach_onboarding_invites')
-    .insert({ token, coach_name: coach_name.trim(), coach_email: coach_email ?? null, expires_at })
+    .insert({ token, coach_name: coach_name.trim(), coach_email: coach_email ?? null, expires_at, coach_slug: coach_slug ?? null })
     .select()
     .single();
 

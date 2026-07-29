@@ -64,6 +64,8 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
     const [posts, setPosts] = useState<PostOption[]>([]);
     const [v2Teachers, setV2Teachers] = useState<V2Teacher[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [submission, setSubmission] = useState<Record<string, unknown> | null>(null);
+    const [showDraft, setShowDraft] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -85,7 +87,30 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                 if (data.data) setV2Teachers(data.data);
             })
             .catch((err) => console.error('[CoachRow] v2 teachers fetch failed:', err));
-    }, [editing, coach.name]);
+
+        fetch(`/api/admin/coach-onboarding?coach_slug=${coach.slug}`, {
+            headers: { 'x-admin-key': getAdminKey() },
+        })
+            .then(r => r.json())
+            .then((data: { data?: Record<string, unknown> | null }) => {
+                if (data.data) setSubmission(data.data);
+            })
+            .catch(() => null);
+    }, [editing, coach.name, coach.slug]);
+
+    const handlePrefillFromSubmission = () => {
+        if (!submission) return;
+        const subjects = submission.subjects as string[] ?? [];
+        const inferredSubjects: string[] = [];
+        if (subjects.some(s => s.startsWith('SAT'))) inferredSubjects.push('SAT');
+        if (subjects.some(s => s.startsWith('AP'))) inferredSubjects.push('AP');
+        const philosophy = submission.teaching_philosophy as string ?? '';
+        setEditState(s => ({
+            ...s,
+            subjects: inferredSubjects.length > 0 ? inferredSubjects : s.subjects,
+            bio: philosophy ? `<p>${philosophy.replace(/\n/g, '</p><p>')}</p>` : s.bio,
+        }));
+    };
 
     const handlePhotoUpload = async (file: File) => {
         setUploading(true);
@@ -220,6 +245,37 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
 
             {editing && (
                 <div className="space-y-3 border-t border-white/5 pt-3">
+                    {/* 온보딩 제출 데이터 배너 */}
+                    {submission && (
+                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-medium text-blue-400">온보딩 제출 데이터가 있습니다.</p>
+                                <button
+                                    onClick={handlePrefillFromSubmission}
+                                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold text-white transition-colors"
+                                >
+                                    과목 · Bio 불러오기
+                                </button>
+                            </div>
+                            {!!submission.blog_post_draft && (
+                                <button
+                                    onClick={() => setShowDraft(v => !v)}
+                                    className="text-xs text-blue-300 hover:text-blue-200 transition-colors"
+                                >
+                                    {showDraft ? '▲ 블로그 초안 닫기' : '▼ AI 블로그 초안 보기'}
+                                </button>
+                            )}
+                            {showDraft && !!submission.blog_post_draft && (
+                                <textarea
+                                    readOnly
+                                    value={submission.blog_post_draft as string}
+                                    rows={12}
+                                    className="w-full bg-[#0d0f10] border border-white/10 rounded-lg px-3 py-2 text-xs text-gray-300 outline-none font-mono resize-none"
+                                />
+                            )}
+                        </div>
+                    )}
+
                     {/* 이름 */}
                     <input
                         value={editState.name}

@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   const { data: invite, error } = await supabaseAdmin
     .from('coach_onboarding_invites')
-    .select('id, token, coach_name, expires_at, used_at')
+    .select('id, token, coach_name, expires_at, used_at, draft_data, draft_saved_at')
     .eq('token', token)
     .single();
 
@@ -27,5 +27,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'expired' }, { status: 410 });
   }
 
-  return NextResponse.json({ data: { id: invite.id, coach_name: invite.coach_name } });
+  return NextResponse.json({
+    data: {
+      id: invite.id,
+      coach_name: invite.coach_name,
+      draft_data: invite.draft_data ?? null,
+      draft_saved_at: invite.draft_saved_at ?? null,
+    },
+  });
 }

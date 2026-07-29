@@ -34,6 +34,8 @@ export interface CoachOnboardingSubmission {
   id: string;
   invite_id: string;
   name: string;
+  phone: string | null;
+  email: string | null;
   high_school: string;
   university: string;
   undergrad_major: string;
@@ -67,6 +69,8 @@ export interface CoachOnboardingSubmission {
 // Step-specific form data types
 export interface OnboardingStep1 {
   name: string;
+  phone: string;
+  email: string;
   high_school: string;
   university: string;
   undergrad_major: string;
