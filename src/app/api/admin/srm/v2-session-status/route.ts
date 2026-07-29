@@ -25,46 +25,31 @@ interface EventInfo {
   studentIds: string[];
 }
 
+// 현재 단계: 출석/지각/결석만 자동 감지
+// - 출석(early/on_time): 스케줄 시작 시간 기준 5분 이내 접속
+// - 지각(late): 스케줄 시작 5분 초과 후 접속
+// - 결석(absent): 스케줄 종료 시간까지 접속 이력 없음
 function suggestStatus(
   sessions: { started_at: string; ended_at: string | null }[],
   eventStartsAt: string,
   eventEndsAt: string,
-  eventType: 'study_hall' | 'vocab',
+  _eventType: 'study_hall' | 'vocab',
 ): SessionStatus | null {
-  if (sessions.length === 0) return null;
-
   const now = Date.now();
   const eventStart = new Date(eventStartsAt).getTime();
-  const eventEnd = new Date(eventEndsAt).getTime();
   const LATE_THRESHOLD_MS = 5 * 60 * 1000;
 
-  const sorted = [...sessions].sort((a, b) =>
-    new Date(a.started_at).getTime() - new Date(b.started_at).getTime()
-  );
-  const first = sorted[0];
-  const last = sorted[sorted.length - 1];
-  const firstJoin = new Date(first.started_at).getTime();
-  const lastEnded = last.ended_at ? new Date(last.ended_at).getTime() : null;
+  if (sessions.length === 0) {
+    if (now > new Date(eventEndsAt).getTime()) return 'absent';
+    return null;
+  }
 
+  const firstJoin = Math.min(...sessions.map((s) => new Date(s.started_at).getTime()));
   const isEarly = firstJoin < eventStart;
   const isLate = !isEarly && firstJoin > eventStart + LATE_THRESHOLD_MS;
-  const isEventOngoing = now >= eventStart && now <= eventEnd;
 
-  if (lastEnded === null) {
-    // 현재 세션 진행 중
-    if (isEarly) return 'early';
-    return isLate ? 'late' : 'on_time';
-  }
-
-  if (isEventOngoing) {
-    // 세션 종료됐는데 이벤트는 아직 진행 중 → 이탈
-    if (eventType === 'vocab') return null; // vocab은 세션 단위 추적 불가
-    return 'disconnected';
-  }
-
-  // 이벤트 종료 후
   if (isEarly) return 'early';
-  return isLate ? 'late' : 'completed';
+  return isLate ? 'late' : 'on_time';
 }
 
 export async function GET(req: NextRequest) {
@@ -197,13 +182,17 @@ export async function GET(req: NextRequest) {
         });
         return { eventId: ev.id, eventType: 'study_hall', suggestions };
       } else {
-        // vocab: 이벤트 시간대 내 최초 활동 시각으로 early/on_time/late 판단
+        // vocab: 이벤트 시간대 내 최초 활동 시각으로 early/on_time/late/absent 판단
         const timingMap = vocabTimingMap.get(ev.id);
         const LATE_THRESHOLD_MS = 5 * 60 * 1000;
         const eventStart = new Date(ev.startsAt).getTime();
+        const isVocabEventEnded = Date.now() > new Date(ev.endsAt).getTime();
         const suggestions: V2SessionSuggestion[] = ev.studentIds.map((studentId) => {
           const timing = timingMap?.get(studentId);
-          if (!timing) return { studentId, suggestedStatus: null, joinedAt: null, lastEndedAt: null, sessionCount: 0 };
+          if (!timing) {
+            const suggestedStatus = isVocabEventEnded ? 'absent' : null;
+            return { studentId, suggestedStatus, joinedAt: null, lastEndedAt: null, sessionCount: 0 };
+          }
           const firstJoin = new Date(timing.firstAt).getTime();
           const isEarly = firstJoin < eventStart;
           const isLate = !isEarly && firstJoin > eventStart + LATE_THRESHOLD_MS;
