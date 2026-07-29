@@ -161,10 +161,9 @@ export default function SrmPage() {
     if (mainTab !== 'queue') return;
     srmFetch('/api/admin/srm/tutoring-users')
       .then((r) => r.json())
-      .then((users: TutoringUser[]) => {
-        if (Array.isArray(users)) {
-          setTutoringUserMap(new Map(users.map((u) => [u.sfv2ProfileId, u])));
-        }
+      .then((data: { linked?: TutoringUser[]; unlinked?: unknown[] }) => {
+        const users = Array.isArray(data.linked) ? data.linked : [];
+        setTutoringUserMap(new Map(users.map((u) => [u.sfv2ProfileId, u])));
       })
       .catch(() => {});
   }, [mainTab]);

@@ -17,6 +17,17 @@ export interface TutoringUser {
   status: TutoringStatus;
 }
 
+export interface UnlinkedTutoringUser {
+  sfv2ProfileId: string;
+  name: string;
+  purchasedHours: number;
+}
+
+export interface TutoringUsersResponse {
+  linked: TutoringUser[];
+  unlinked: UnlinkedTutoringUser[];
+}
+
 async function fetchV2Hours(): Promise<{
   purchased: Map<string, number>;
   refunded: Map<string, number>;
@@ -180,7 +191,26 @@ export async function GET(request: NextRequest) {
         : a.name.localeCompare(b.name)
     );
 
-    return NextResponse.json(results);
+    // 미연결 sfv2 유저: 구매 이력 있지만 CRM에 sfv2_profile_id 미연결
+    const linkedProfileIds = new Set(crmStudents.map((s) => s.sfv2_profile_id));
+    const unlinkedProfileIds = [...purchased.keys()].filter((pid) => !linkedProfileIds.has(pid));
+
+    const unlinked: UnlinkedTutoringUser[] = [];
+    if (unlinkedProfileIds.length > 0) {
+      const { data: profiles } = await supabaseSFv2
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', unlinkedProfileIds);
+
+      for (const p of profiles ?? []) {
+        const purchasedH = Math.round((purchased.get(p.id) ?? 0) * 10) / 10;
+        if (purchasedH === 0) continue;
+        unlinked.push({ sfv2ProfileId: p.id, name: p.full_name ?? p.id, purchasedHours: purchasedH });
+      }
+      unlinked.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return NextResponse.json({ linked: results, unlinked } satisfies TutoringUsersResponse);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 500 });
