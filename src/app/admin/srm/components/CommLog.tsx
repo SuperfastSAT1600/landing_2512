@@ -103,9 +103,9 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
         </div>
       </div>
 
-      {/* 커뮤니케이션 제목 */}
+      {/* 상담 제목 */}
       <div>
-        <p className="text-[11px] text-gray-600 mb-1.5">커뮤니케이션 제목</p>
+        <p className="text-[11px] text-gray-600 mb-1.5">상담 제목</p>
         <input
           type="text"
           value={reason}
@@ -115,13 +115,13 @@ export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder
         />
       </div>
 
-      {/* 커뮤니케이션 내용 */}
+      {/* 상담 내용 */}
       <div>
-        <p className="text-[11px] text-gray-600 mb-1.5">커뮤니케이션 내용</p>
+        <p className="text-[11px] text-gray-600 mb-1.5">상담 내용</p>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="커뮤니케이션 내용 입력..."
+          placeholder="상담 내용 입력..."
           rows={3}
           className="w-full bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-500 resize-none"
         />
