@@ -713,7 +713,10 @@ export function OnboardingForm({ token, coachName, draftData, draftSavedAt }: Pr
       <div className="max-w-lg mx-auto px-4 py-10">
         {/* Header */}
         <div className="mb-8">
-          <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">SuperfastSAT</p>
+          <div className="flex justify-center mb-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo_header.png" alt="SuperfastSAT" className="h-7 w-auto" />
+          </div>
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-white mb-1">코치 프로필 작성</h1>
