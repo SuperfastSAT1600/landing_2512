@@ -143,9 +143,9 @@ export default function AdminCoachesPage() {
                         </Link>
                         <button
                             onClick={() => setShowOnboardingModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-bold text-white transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold text-gray-300 transition-colors"
                         >
-                            <LinkIcon size={15} /> 온보딩 링크 생성
+                            <LinkIcon size={15} /> 링크 재발급
                         </button>
                         <button
                             onClick={() => setShowAddForm(v => !v)}
