@@ -46,11 +46,13 @@ function suggestStatus(
   const firstJoin = new Date(first.started_at).getTime();
   const lastEnded = last.ended_at ? new Date(last.ended_at).getTime() : null;
 
-  const isLate = firstJoin > eventStart + LATE_THRESHOLD_MS;
+  const isEarly = firstJoin < eventStart;
+  const isLate = !isEarly && firstJoin > eventStart + LATE_THRESHOLD_MS;
   const isEventOngoing = now >= eventStart && now <= eventEnd;
 
   if (lastEnded === null) {
     // 현재 세션 진행 중
+    if (isEarly) return 'early';
     return isLate ? 'late_present' : 'on_time';
   }
 
@@ -61,11 +63,7 @@ function suggestStatus(
   }
 
   // 이벤트 종료 후
-  if (sessions.length > 1) {
-    // 이탈 후 복귀해서 정상 종료
-    return isLate ? 'late_present' : 'completed';
-  }
-
+  if (isEarly) return 'early';
   return isLate ? 'late_present' : 'completed';
 }
 
@@ -107,7 +105,7 @@ export async function GET(req: NextRequest) {
             .from('study_hall_session')
             .select('id, scheduled_event_id, user_id, started_at, ended_at')
             .in('user_id', allShStudentIds)
-            .gte('started_at', shEvents.reduce((m, e) => (e.startsAt < m ? e.startsAt : m), shEvents[0].startsAt))
+            .gte('started_at', new Date(new Date(shEvents.reduce((m, e) => (e.startsAt < m ? e.startsAt : m), shEvents[0].startsAt)).getTime() - 60 * 60 * 1000).toISOString())
             .lte('started_at', shEvents.reduce((m, e) => (e.endsAt > m ? e.endsAt : m), shEvents[0].endsAt))
         : Promise.resolve({ data: [], error: null }),
 
@@ -134,11 +132,16 @@ export async function GET(req: NextRequest) {
       if (linkedEventId && allShEventIds.includes(linkedEventId)) {
         matchedEventId = linkedEventId;
       } else {
-        // 시간대 기준 매칭 ±15분
+        // 시간대 기준 매칭: 이벤트 시작 60분 전부터 종료 시까지 세션 시작이 포함되면 매칭
         const sessionStart = new Date(session.started_at as string).getTime();
         for (const ev of shEvents) {
-          const diff = Math.abs(new Date(ev.startsAt).getTime() - sessionStart);
-          if (diff <= 15 * 60 * 1000 && ev.studentIds.includes(userId)) {
+          const eventStart = new Date(ev.startsAt).getTime();
+          const eventEnd = new Date(ev.endsAt).getTime();
+          if (
+            sessionStart >= eventStart - 60 * 60 * 1000 &&
+            sessionStart <= eventEnd &&
+            ev.studentIds.includes(userId)
+          ) {
             matchedEventId = ev.id;
             break;
           }

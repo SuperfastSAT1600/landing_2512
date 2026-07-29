@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 
 export type SessionStatus =
-  | 'on_time' | 'late' | 'late_present' | 'late_absent' | 'absent'
+  | 'early' | 'on_time' | 'late' | 'late_present' | 'late_absent' | 'absent'
   | 'normal_study' | 'disconnected' | 'disconnected_end' | 'returned' | 'completed' | 'abnormal_end';
 
 export interface SessionStatusLog {

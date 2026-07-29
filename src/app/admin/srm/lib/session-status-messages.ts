@@ -4,7 +4,8 @@ const TYPE_LABEL = { study_hall: '스터디홀', vocab: '단어학습' };
 const TYPE_LABEL_EN = { study_hall: 'Study Hall', vocab: 'Vocab session' };
 
 export const STATUS_LABEL: Record<SessionStatus, string> = {
-  on_time: '제때출석',
+  early: '빠른출석',
+  on_time: '출석',
   late: '지각',
   late_present: '지각→출석',
   late_absent: '지각→결석',
@@ -18,6 +19,7 @@ export const STATUS_LABEL: Record<SessionStatus, string> = {
 };
 
 export const STATUS_COLOR: Record<SessionStatus, string> = {
+  early: 'bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-200',
   on_time: 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200',
   late: 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200',
   late_present: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200',
@@ -36,7 +38,7 @@ export const STATUS_COLOR: Record<SessionStatus, string> = {
 //   late_absent      = 지각 → 결석
 //   disconnected_end = 이탈 → 정상종료 (복귀 없이)
 export const STATUS_GROUPS: { label: string; statuses: SessionStatus[] }[] = [
-  { label: '출석', statuses: ['on_time', 'late', 'absent'] },
+  { label: '출석', statuses: ['early', 'on_time', 'late', 'absent'] },
   { label: '학습', statuses: ['normal_study', 'disconnected', 'returned', 'completed', 'abnormal_end'] },
 ];
 
@@ -47,6 +49,8 @@ export function buildStatusMessageKo(
 ): string {
   const type = TYPE_LABEL[eventType];
   switch (status) {
+    case 'early':
+      return `<확인> ${studentName} 일찍부터 ${type}에 출석했어요! 오늘도 열심히 해보자구요!`;
     case 'on_time':
       return `<확인> ${studentName} 제시간에 ${type}에 잘 출석했어요! 오늘도 열심히 해보자구요!`;
     case 'late':
@@ -79,6 +83,8 @@ export function buildStatusMessageEn(
 ): string {
   const type = TYPE_LABEL_EN[eventType];
   switch (status) {
+    case 'early':
+      return `<Confirmed> ${studentName} joined ${type} early! Great enthusiasm, let's have a productive session!`;
     case 'on_time':
       return `<Confirmed> ${studentName} joined ${type} on time! Great job, let's have a productive session!`;
     case 'late':
