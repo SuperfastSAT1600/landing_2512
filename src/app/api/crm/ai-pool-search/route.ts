@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
-import Anthropic from '@anthropic-ai/sdk';
+import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen';
 import { z } from 'zod';
 import { generateEmbedding } from '@/lib/embedding';
 
@@ -158,9 +158,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: { matches: [] } });
   }
 
-  // 4단계: Claude 재랭킹
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  // 4단계: LLM 재랭킹 (Qwen)
+  if (!isQwenConfigured()) {
     return NextResponse.json(
       { error: { code: 'AI_NOT_CONFIGURED', message: 'AI 서비스가 설정되지 않았습니다.' } },
       { status: 503 }
@@ -170,11 +169,11 @@ export async function POST(request: NextRequest) {
   const profiles = students.map(buildStudentProfile).join('\n\n---\n\n');
   const userMessage = `[검색 쿼리]\n${query.trim()}\n\n[후보 학생 목록]\n\n${profiles}`;
 
-  const client = new Anthropic({ apiKey });
+  const client = getQwenAnthropicClient();
   let rawContent: string;
   try {
     const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: qwenModel('fast'),
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
@@ -183,7 +182,7 @@ export async function POST(request: NextRequest) {
     if (!block || block.type !== 'text') throw new Error('Unexpected AI response format');
     rawContent = block.text;
   } catch (err) {
-    console.error('[ai-pool-search] Claude API error:', err);
+    console.error('[ai-pool-search] Qwen API error:', err);
     return NextResponse.json(
       { error: { code: 'AI_FAILED', message: 'AI 검색에 실패했습니다.' } },
       { status: 502 }

@@ -8,6 +8,7 @@ import type { V2Profile } from '@/app/api/admin/srm/v2-search/route';
 import { SrmBrief } from './SrmBrief';
 import { SrmTestCenterTrend } from './SrmTestCenterTrend';
 import { SectionCard } from './SectionCard';
+import { stripNameSuffix } from './srm-name';
 
 interface Props {
   studentId: string;
@@ -152,7 +153,8 @@ export function SrmDataCard({ studentId, studentName, adminKey, autoLoad, classN
   }, [autoLoad]);
 
   // ── 연결(미연결 상태) ──
-  const [q, setQ] = useState(studentName);
+  // CRM 이름의 동명이인 접미사(예: "박시연03")를 떼고 프리필 → v2 순수 이름과 매칭
+  const [q, setQ] = useState(() => stripNameSuffix(studentName));
   const [candidates, setCandidates] = useState<V2Profile[]>([]);
   const [searching, setSearching] = useState(false);
   const [linking, setLinking] = useState(false);
