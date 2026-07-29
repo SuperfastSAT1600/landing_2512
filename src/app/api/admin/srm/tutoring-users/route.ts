@@ -34,6 +34,7 @@ async function fetchV2Hours(): Promise<{
   refunded: Map<string, number>;
   used: Map<string, number>;
   lastPurchaseDate: Map<string, string>;
+  lastSessionDate: Map<string, string>;
 }> {
   // 1. 구매 시간 + 최근 결제일: payment_transactions.hours by student_id
   const purchased = new Map<string, number>();
@@ -80,9 +81,10 @@ async function fetchV2Hours(): Promise<{
     offset += 1000;
   }
 
-  // 3. 사용 시간: 완료된 coach_room 세션 시간 by student_id
+  // 3. 사용 시간 + 최근 세션일: 완료된 coach_room 세션 by student_id
   const used = new Map<string, number>();
-  const eventDuration = new Map<string, number>();
+  const lastSessionDate = new Map<string, string>();
+  const eventMeta = new Map<string, { duration: number; startsAt: string }>();
   offset = 0;
   while (true) {
     const { data } = await supabaseSFv2
@@ -94,7 +96,7 @@ async function fetchV2Hours(): Promise<{
     if (!data?.length) break;
     for (const e of data as { id: string; starts_at: string; ends_at: string }[]) {
       const dur = (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 3_600_000;
-      eventDuration.set(e.id, dur);
+      eventMeta.set(e.id, { duration: dur, startsAt: e.starts_at });
     }
     if (data.length < 1000) break;
     offset += 1000;
@@ -108,15 +110,17 @@ async function fetchV2Hours(): Promise<{
       .range(offset, offset + 999);
     if (!data?.length) break;
     for (const p of data as { event_id: string; user_id: string }[]) {
-      const dur = eventDuration.get(p.event_id);
-      if (!dur) continue;
-      used.set(p.user_id, (used.get(p.user_id) ?? 0) + dur);
+      const meta = eventMeta.get(p.event_id);
+      if (!meta) continue;
+      used.set(p.user_id, (used.get(p.user_id) ?? 0) + meta.duration);
+      const prev = lastSessionDate.get(p.user_id);
+      if (!prev || meta.startsAt > prev) lastSessionDate.set(p.user_id, meta.startsAt);
     }
     if (data.length < 1000) break;
     offset += 1000;
   }
 
-  return { purchased, refunded, used, lastPurchaseDate };
+  return { purchased, refunded, used, lastPurchaseDate, lastSessionDate };
 }
 
 export async function GET(request: NextRequest) {
@@ -139,7 +143,7 @@ export async function GET(request: NextRequest) {
         .or(`pause_until.is.null,pause_until.gte.${today}`),
     ]);
 
-    const { purchased, refunded, used, lastPurchaseDate } = v2Hours;
+    const { purchased, refunded, used, lastSessionDate } = v2Hours;
     const crmStudents = (crmResult.data ?? []) as {
       id: string;
       name: string;
@@ -196,9 +200,12 @@ export async function GET(request: NextRequest) {
         : a.name.localeCompare(b.name)
     );
 
-    // 미연결 sfv2 유저: 수업중/휴원/세일즈에 해당하지만 CRM에 sfv2_profile_id 미연결
-    // 조건: 구매 이력 있고 환불 후 순 구매 시간 > 0 (전액 환불된 유저 제외)
+    // 미연결 sfv2 유저: 수업중/휴원/부분종료/세일즈에 해당하지만 CRM에 sfv2_profile_id 미연결
     const linkedProfileIds = new Set(crmStudents.map((s) => s.sfv2_profile_id));
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const ninetyDaysAgoStr = ninetyDaysAgo.toISOString();
+
     const unlinkedProfileIds = [...purchased.keys()].filter((pid) => {
       if (linkedProfileIds.has(pid)) return false;
       const purchasedH = purchased.get(pid) ?? 0;
@@ -206,7 +213,10 @@ export async function GET(request: NextRequest) {
       if (purchasedH - refundedH <= 0) return false; // 전액 환불 제외
       const usedH = used.get(pid) ?? 0;
       const remainingH = purchasedH - refundedH - usedH;
-      return remainingH > 0; // 잔여시간 있는 학생만 (수업중/휴원/부분종료)
+      if (remainingH > 0) return true; // 수업중/휴원/부분종료
+      // 세일즈: 잔여 0h이지만 최근 90일 내 세션 완료 기록 있음
+      const lastSession = lastSessionDate.get(pid);
+      return !!lastSession && lastSession >= ninetyDaysAgoStr;
     });
 
     const unlinked: UnlinkedTutoringUser[] = [];
