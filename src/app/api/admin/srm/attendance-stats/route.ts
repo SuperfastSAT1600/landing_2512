@@ -73,7 +73,6 @@ export async function GET(req: NextRequest) {
     }
 
     const totalScheduled = attended + absent + unresolved;
-    const totalResolved = attended + absent;
     result.push({
       date,
       totalScheduled,
@@ -82,7 +81,7 @@ export async function GET(req: NextRequest) {
       unresolved,
       totalLearning,
       disconnected,
-      attendanceRate: totalResolved > 0 ? Math.round((attended / totalResolved) * 100) : null,
+      attendanceRate: totalScheduled > 0 ? Math.round((attended / totalScheduled) * 100) : null,
       disconnectionRate: totalLearning > 0 ? Math.round((disconnected / totalLearning) * 100) : null,
     });
   }

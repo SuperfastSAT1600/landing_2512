@@ -128,8 +128,8 @@ export function DailyStatsPanel({ date }: Props) {
               label="출석률"
               rate={todayStats?.attendanceRate ?? null}
               numerator={todayStats?.attended ?? 0}
-              denominator={(todayStats?.attended ?? 0) + (todayStats?.absent ?? 0)}
-              sub="확정 기준"
+              denominator={todayStats?.totalScheduled ?? 0}
+              sub="스케줄 전체 기준"
               color="emerald"
             />
             <StatCard
@@ -189,7 +189,7 @@ export function DailyStatsPanel({ date }: Props) {
                       )}
                     </td>
                     <td className="px-3 py-2 text-right text-gray-300">
-                      {s.attendanceRate !== null ? `${s.attended}/${s.attended + s.absent}` : ''}
+                      {s.attendanceRate !== null ? `${s.attended}/${s.totalScheduled}` : ''}
                     </td>
                     <td className="px-3 py-2 text-right">
                       {s.disconnectionRate === null ? (
