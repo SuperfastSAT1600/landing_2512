@@ -747,80 +747,6 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               )}
             </div>
 
-            {/* v2 학습이력 */}
-            <div className="px-4 py-3 border-t border-gray-100">
-              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">v2 학습 이력</p>
-
-              {loadingV2 ? (
-                <div className="space-y-2">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="h-4 bg-gray-200 rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : !v2Summary ? (
-                <p className="text-xs text-gray-500">v2 데이터 없음</p>
-              ) : (
-                <div className="space-y-3">
-                  {/* 최근 수업 */}
-                  {v2Summary.recentSessions.length > 0 && (
-                    <div>
-                      <p className="text-[11px] text-gray-500 mb-1">최근 수업</p>
-                      <div className="space-y-0.5">
-                        {v2Summary.recentSessions.slice(0, 3).map((s) => (
-                          <div key={s.id} className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">
-                              {new Date(s.starts_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
-                            </span>
-                            <span className={`text-[11px] font-medium ${sessionStatusColor(s.status)}`}>
-                              {sessionStatusLabel(s.status)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 스터디홀 */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-gray-500">스터디홀</span>
-                    <span className="text-xs text-gray-600">
-                      최근 30일 {v2Summary.studyHallCount30d}회
-                    </span>
-                  </div>
-
-                  {/* 시험 점수 */}
-                  {v2Summary.testScores.length > 0 && (
-                    <div>
-                      <p className="text-[11px] text-gray-500 mb-1">시험 점수</p>
-                      <div className="space-y-0.5">
-                        {v2Summary.testScores.slice(0, 2).map((t, idx) => (
-                          <div key={idx} className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">
-                              {new Date(t.submitted_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
-                            </span>
-                            <span className="text-xs text-gray-600 font-medium">
-                              {t.score} / {t.total}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 잔여 세션 */}
-                  {v2Summary.package?.remaining_sessions != null && (
-                    <div className="flex items-center justify-between pt-1 border-t border-gray-100">
-                      <span className="text-[11px] text-gray-500">잔여 세션</span>
-                      <span className="text-xs text-gray-600 font-medium">
-                        {v2Summary.package.remaining_sessions}
-                        {v2Summary.package.total_sessions != null ? ` / ${v2Summary.package.total_sessions}` : ''}회
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
             {/* 학생 상태 */}
             {activePause !== undefined && (
               <div className="px-4 py-3 border-t border-gray-100">
@@ -959,7 +885,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                커뮤니케이션
+                상담
               </button>
               {resolvedCrmStudentId && (
                 <button
