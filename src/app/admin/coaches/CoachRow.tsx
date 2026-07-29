@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Trash2, Copy, Check, Edit2, X, Save, Upload } from 'lucide-react';
+import { Trash2, Copy, Check, Edit2, X, Save, Upload, Link as LinkIcon } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { CoachData } from '@/lib/coaches-data';
 import { ReelUrlsEditor } from './ReelUrlsEditor';
@@ -17,6 +17,12 @@ interface CoachRowProps {
     coach: CoachData;
     onUpdate: (slug: string, updates: Partial<CoachData>) => Promise<void>;
     onDelete: (slug: string) => Promise<void>;
+}
+
+interface InviteInfo {
+    token: string;
+    expires_at: string;
+    used_at: string | null;
 }
 
 interface EditState {
@@ -66,7 +72,18 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
     const [uploading, setUploading] = useState(false);
     const [submission, setSubmission] = useState<Record<string, unknown> | null>(null);
     const [showDraft, setShowDraft] = useState(false);
+    const [invite, setInvite] = useState<InviteInfo | null | undefined>(undefined); // undefined = loading
+    const [copiedOnboarding, setCopiedOnboarding] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        fetch(`/api/coach-onboarding/invite?coach_slug=${coach.slug}`, {
+            headers: { 'x-admin-key': getAdminKey() },
+        })
+            .then(r => r.json())
+            .then((d: { data?: InviteInfo | null }) => setInvite(d.data ?? null))
+            .catch(() => setInvite(null));
+    }, [coach.slug]);
 
     useEffect(() => {
         if (!editing) return;
@@ -155,6 +172,23 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
         });
     };
 
+    const inviteStatus = (() => {
+        if (invite === undefined) return 'loading';
+        if (!invite) return 'none';
+        if (invite.used_at) return 'submitted';
+        if (new Date(invite.expires_at) < new Date()) return 'expired';
+        return 'valid';
+    })();
+
+    const handleCopyOnboardingLink = () => {
+        if (!invite || inviteStatus !== 'valid') return;
+        const url = window.location.origin + '/coach-onboarding/' + invite.token;
+        navigator.clipboard.writeText(url).then(() => {
+            setCopiedOnboarding(true);
+            setTimeout(() => setCopiedOnboarding(false), 2000);
+        });
+    };
+
     const handleCopyCoachLink = () => {
         const url = window.location.origin + '/coaches/' + coach.slug;
         navigator.clipboard.writeText(url).then(() => {
@@ -207,6 +241,21 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         V2 미연결
                     </span>
                 )}
+                {inviteStatus === 'submitted' && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-green-500/10 text-green-400">
+                        온보딩 제출완료
+                    </span>
+                )}
+                {inviteStatus === 'valid' && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-blue-500/10 text-blue-400">
+                        온보딩 대기중
+                    </span>
+                )}
+                {inviteStatus === 'expired' && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-orange-500/10 text-orange-400">
+                        온보딩 링크 만료
+                    </span>
+                )}
 
                 <div className="ml-auto flex items-center gap-2">
                     <button
@@ -222,6 +271,14 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                     >
                         {copiedLink ? <><Check size={12} /> 복사됨</> : <><Copy size={12} /> 코치 링크</>}
                     </button>
+                    {inviteStatus === 'valid' && (
+                        <button
+                            onClick={handleCopyOnboardingLink}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copiedOnboarding ? 'bg-green-600 text-white' : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400'}`}
+                        >
+                            {copiedOnboarding ? <><Check size={12} /> 복사됨</> : <><LinkIcon size={12} /> 온보딩 링크</>}
+                        </button>
+                    )}
                     <button
                         onClick={handleCopyLink}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copied ? 'bg-green-600 text-white' : 'bg-white/10 hover:bg-white/20 text-gray-200'}`}

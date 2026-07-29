@@ -41,19 +41,27 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/coach-onboarding/invite — list invites (admin)
+// ?coach_slug=xxx → 해당 코치의 최신 invite 1건 반환
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await supabaseAdmin
+  const coachSlug = request.nextUrl.searchParams.get('coach_slug');
+
+  let query = supabaseAdmin
     .from('coach_onboarding_invites')
-    .select('*')
+    .select('id, token, coach_slug, coach_name, expires_at, used_at, created_at')
     .order('created_at', { ascending: false });
 
-  if (error) {
-    return NextResponse.json({ error: 'Failed to fetch invites' }, { status: 500 });
+  if (coachSlug) {
+    query = query.eq('coach_slug', coachSlug).limit(1);
+    const { data, error } = await query;
+    if (error) return NextResponse.json({ error: 'Failed to fetch invite' }, { status: 500 });
+    return NextResponse.json({ data: data?.[0] ?? null });
   }
 
+  const { data, error } = await query;
+  if (error) return NextResponse.json({ error: 'Failed to fetch invites' }, { status: 500 });
   return NextResponse.json({ data });
 }
