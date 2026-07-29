@@ -115,9 +115,9 @@ export async function GET(req: NextRequest) {
             .from('events')
             .select('subject_id, occurred_at')
             .in('subject_id', allVocabStudentIds)
-            .eq('kind', 'graded')
             .gte('occurred_at', vocabFrom)
             .lte('occurred_at', vocabTo)
+            .order('occurred_at', { ascending: true })
         : Promise.resolve({ data: [], error: null }),
     ]);
 
@@ -155,8 +155,8 @@ export async function GET(req: NextRequest) {
       userMap.get(userId)!.push({ started_at: session.started_at as string, ended_at: session.ended_at as string | null });
     }
 
-    // vocab activity: event_id → user_id → has activity
-    const vocabActivityMap = new Map<string, Set<string>>(); // eventId → studentIds with activity
+    // vocab activity: event_id → user_id → { firstAt, lastAt }
+    const vocabTimingMap = new Map<string, Map<string, { firstAt: string; lastAt: string }>>();
     for (const activity of vocabResult.data ?? []) {
       const userId = activity.subject_id as string;
       const occurredAt = new Date(activity.occurred_at as string).getTime();
@@ -164,8 +164,15 @@ export async function GET(req: NextRequest) {
         const start = new Date(ev.startsAt).getTime();
         const end = new Date(ev.endsAt).getTime();
         if (occurredAt >= start && occurredAt <= end && ev.studentIds.includes(userId)) {
-          if (!vocabActivityMap.has(ev.id)) vocabActivityMap.set(ev.id, new Set());
-          vocabActivityMap.get(ev.id)!.add(userId);
+          if (!vocabTimingMap.has(ev.id)) vocabTimingMap.set(ev.id, new Map());
+          const userMap = vocabTimingMap.get(ev.id)!;
+          const existing = userMap.get(userId);
+          if (!existing) {
+            userMap.set(userId, { firstAt: activity.occurred_at as string, lastAt: activity.occurred_at as string });
+          } else {
+            if (occurredAt < new Date(existing.firstAt).getTime()) existing.firstAt = activity.occurred_at as string;
+            if (occurredAt > new Date(existing.lastAt).getTime()) existing.lastAt = activity.occurred_at as string;
+          }
         }
       }
     }
@@ -186,15 +193,25 @@ export async function GET(req: NextRequest) {
         });
         return { eventId: ev.id, eventType: 'study_hall', suggestions };
       } else {
-        // vocab
-        const activeSet = vocabActivityMap.get(ev.id);
-        const suggestions: V2SessionSuggestion[] = ev.studentIds.map((studentId) => ({
-          studentId,
-          suggestedStatus: activeSet?.has(studentId) ? 'on_time' : null,
-          joinedAt: null,
-          lastEndedAt: null,
-          sessionCount: 0,
-        }));
+        // vocab: 이벤트 시간대 내 최초 활동 시각으로 early/on_time/late 판단
+        const timingMap = vocabTimingMap.get(ev.id);
+        const LATE_THRESHOLD_MS = 5 * 60 * 1000;
+        const eventStart = new Date(ev.startsAt).getTime();
+        const suggestions: V2SessionSuggestion[] = ev.studentIds.map((studentId) => {
+          const timing = timingMap?.get(studentId);
+          if (!timing) return { studentId, suggestedStatus: null, joinedAt: null, lastEndedAt: null, sessionCount: 0 };
+          const firstJoin = new Date(timing.firstAt).getTime();
+          const isEarly = firstJoin < eventStart;
+          const isLate = !isEarly && firstJoin > eventStart + LATE_THRESHOLD_MS;
+          const suggestedStatus = isEarly ? 'early' : isLate ? 'late' : 'on_time';
+          return {
+            studentId,
+            suggestedStatus,
+            joinedAt: timing.firstAt,
+            lastEndedAt: timing.lastAt,
+            sessionCount: 1,
+          };
+        });
         return { eventId: ev.id, eventType: 'vocab', suggestions };
       }
     });
