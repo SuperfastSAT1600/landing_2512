@@ -259,8 +259,10 @@ export function UnifiedTimeline({
       const eventLogs = currentLogs[ev.id] ?? [];
       const eventType = ev.eventType === 'studyHall' ? 'study_hall' : 'vocab';
 
+      if (!tutoringUserMap || tutoringUserMap.size === 0) continue; // 맵 로딩 전이면 자동저장 보류
       for (const [studentId, suggestion] of Object.entries(eventSuggestions)) {
         if (!suggestion.suggestedStatus) continue;
+        if (!tutoringUserMap.has(studentId)) continue;
 
         const sidx = ev.studentIds?.findIndex((id) => id === studentId) ?? -1;
         const studentName = sidx >= 0 ? ev.students[sidx] : null;
@@ -301,12 +303,17 @@ export function UnifiedTimeline({
     if (!shVocabEvents.length) return;
 
     const eventIds = shVocabEvents.map((e) => e.id);
+    const filterStudentIds = (ids: string[]) =>
+      tutoringUserMap && tutoringUserMap.size > 0
+        ? ids.filter((id) => tutoringUserMap.has(id))
+        : ids;
+
     const eventsParam = encodeURIComponent(JSON.stringify(shVocabEvents.map((e) => ({
       id: e.id,
       eventType: e.eventType === 'studyHall' ? 'study_hall' : 'vocab',
       startsAt: e.startsAt,
       endsAt: e.endsAt,
-      studentIds: e.studentIds ?? [],
+      studentIds: filterStudentIds(e.studentIds ?? []),
     }))));
 
     Promise.all([
@@ -330,19 +337,22 @@ export function UnifiedTimeline({
 
       autoSaveSuggestions(map, grouped);
     }).catch(() => {});
-  }, [events.length, eventDate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [events.length, eventDate, tutoringUserMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefreshV2 = async (eventId: string) => {
     const ev = events.find((e) => e.id === eventId);
     if (!ev) return;
     setV2LoadingIds((prev) => new Set(prev).add(eventId));
     try {
+      const tutoringIds = (ev.studentIds ?? []).filter(
+        (id) => !tutoringUserMap || tutoringUserMap.size === 0 || tutoringUserMap.has(id),
+      );
       const eventsParam = encodeURIComponent(JSON.stringify([{
         id: ev.id,
         eventType: ev.eventType === 'studyHall' ? 'study_hall' : 'vocab',
         startsAt: ev.startsAt,
         endsAt: ev.endsAt,
-        studentIds: ev.studentIds ?? [],
+        studentIds: tutoringIds,
       }]));
       const res = await srmFetch(`/api/admin/srm/v2-session-status?events=${eventsParam}`);
       const d = await res.json();
