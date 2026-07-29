@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
       totalLearning,
       disconnected,
       attendanceRate: totalScheduled > 0 ? Math.round((attended / totalScheduled) * 100) : null,
-      disconnectionRate: totalLearning > 0 ? Math.round((disconnected / totalLearning) * 100) : null,
+      disconnectionRate: attended > 0 ? Math.round((disconnected / attended) * 100) : null,
     });
   }
 

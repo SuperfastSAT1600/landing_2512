@@ -136,8 +136,8 @@ export function DailyStatsPanel({ date }: Props) {
               label="이탈률"
               rate={todayStats?.disconnectionRate ?? null}
               numerator={todayStats?.disconnected ?? 0}
-              denominator={todayStats?.totalLearning ?? 0}
-              sub="학습 진입 기준"
+              denominator={todayStats?.attended ?? 0}
+              sub="출석 학생 기준"
               color="orange"
             />
           </div>
@@ -201,7 +201,7 @@ export function DailyStatsPanel({ date }: Props) {
                       )}
                     </td>
                     <td className="px-3 py-2 text-right text-gray-300">
-                      {s.disconnectionRate !== null ? `${s.disconnected}/${s.totalLearning}` : ''}
+                      {s.disconnectionRate !== null ? `${s.disconnected}/${s.attended}` : ''}
                     </td>
                   </tr>
                 );
