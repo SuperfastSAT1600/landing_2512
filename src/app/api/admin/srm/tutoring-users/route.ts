@@ -21,6 +21,7 @@ export interface UnlinkedTutoringUser {
   sfv2ProfileId: string;
   name: string;
   purchasedHours: number;
+  remainingHours: number;
 }
 
 export interface TutoringUsersResponse {
@@ -191,9 +192,15 @@ export async function GET(request: NextRequest) {
         : a.name.localeCompare(b.name)
     );
 
-    // 미연결 sfv2 유저: 구매 이력 있지만 CRM에 sfv2_profile_id 미연결
+    // 미연결 sfv2 유저: 수업중/휴원/세일즈에 해당하지만 CRM에 sfv2_profile_id 미연결
+    // 조건: 구매 이력 있고 환불 후 순 구매 시간 > 0 (전액 환불된 유저 제외)
     const linkedProfileIds = new Set(crmStudents.map((s) => s.sfv2_profile_id));
-    const unlinkedProfileIds = [...purchased.keys()].filter((pid) => !linkedProfileIds.has(pid));
+    const unlinkedProfileIds = [...purchased.keys()].filter((pid) => {
+      if (linkedProfileIds.has(pid)) return false;
+      const purchasedH = purchased.get(pid) ?? 0;
+      const refundedH = refunded.get(pid) ?? 0;
+      return purchasedH - refundedH > 0; // 전액 환불 제외
+    });
 
     const unlinked: UnlinkedTutoringUser[] = [];
     if (unlinkedProfileIds.length > 0) {
@@ -204,10 +211,13 @@ export async function GET(request: NextRequest) {
 
       for (const p of profiles ?? []) {
         const purchasedH = Math.round((purchased.get(p.id) ?? 0) * 10) / 10;
-        if (purchasedH === 0) continue;
-        unlinked.push({ sfv2ProfileId: p.id, name: p.full_name ?? p.id, purchasedHours: purchasedH });
+        const refundedH = Math.round((refunded.get(p.id) ?? 0) * 10) / 10;
+        const usedH = Math.round((used.get(p.id) ?? 0) * 10) / 10;
+        const remainingH = Math.round(Math.max(0, purchasedH - refundedH - usedH) * 10) / 10;
+        unlinked.push({ sfv2ProfileId: p.id, name: p.full_name ?? p.id, purchasedHours: purchasedH, remainingHours: remainingH });
       }
-      unlinked.sort((a, b) => a.name.localeCompare(b.name));
+      // 잔여 시간 많은 순 (수업중 우선), 동일하면 이름순
+      unlinked.sort((a, b) => b.remainingHours - a.remainingHours || a.name.localeCompare(b.name));
     }
 
     return NextResponse.json({ linked: results, unlinked } satisfies TutoringUsersResponse);

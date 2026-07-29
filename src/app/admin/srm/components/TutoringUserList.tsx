@@ -68,7 +68,8 @@ function UnlinkedRow({ user, onClick }: { user: UnlinkedTutoringUser; onClick: (
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-[11px] text-gray-500">
-          구매 <span className="font-semibold text-orange-700">{user.purchasedHours}h</span>
+          잔여 <span className="font-semibold text-orange-700">{user.remainingHours}h</span>
+          <span className="text-gray-400"> / {user.purchasedHours}h</span>
         </span>
         <span className="text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded">
           연결 필요
