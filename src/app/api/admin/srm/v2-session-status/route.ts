@@ -92,8 +92,12 @@ export async function GET(req: NextRequest) {
     const allShStudentIds = [...new Set(shEvents.flatMap((e) => e.studentIds))];
 
     const allVocabStudentIds = [...new Set(vocabEvents.flatMap((e) => e.studentIds))];
-    const vocabFrom = vocabEvents.length
+    const vocabFromRaw = vocabEvents.length
       ? vocabEvents.reduce((m, e) => (e.startsAt < m ? e.startsAt : m), vocabEvents[0].startsAt)
+      : null;
+    // 빠른출석 감지를 위해 이벤트 시작 15분 전부터 조회
+    const vocabFrom = vocabFromRaw
+      ? new Date(new Date(vocabFromRaw).getTime() - 15 * 60 * 1000).toISOString()
       : null;
     const vocabTo = vocabEvents.length
       ? vocabEvents.reduce((m, e) => (e.endsAt > m ? e.endsAt : m), vocabEvents[0].endsAt)
@@ -163,7 +167,7 @@ export async function GET(req: NextRequest) {
       for (const ev of vocabEvents) {
         const start = new Date(ev.startsAt).getTime();
         const end = new Date(ev.endsAt).getTime();
-        if (occurredAt >= start && occurredAt <= end && ev.studentIds.includes(userId)) {
+        if (occurredAt >= start - 15 * 60 * 1000 && occurredAt <= end && ev.studentIds.includes(userId)) {
           if (!vocabTimingMap.has(ev.id)) vocabTimingMap.set(ev.id, new Map());
           const userMap = vocabTimingMap.get(ev.id)!;
           const existing = userMap.get(userId);
