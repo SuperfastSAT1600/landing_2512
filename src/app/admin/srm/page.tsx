@@ -221,9 +221,11 @@ export default function SrmPage() {
   };
 
   const handleScheduleStudentClick = (student: { id: string; name: string; eventId?: string; eventTime?: string; eventType?: 'coachRoom' | 'studyHall' | 'vocab'; coachId?: string }) => {
+    const tUser = tutoringUserMap.get(student.id);
     setSelectedStudent({
       id: student.id,
       name: student.name,
+      crmStudentId: tUser?.crmStudentId ?? undefined,
       eventId: student.eventId,
       eventTime: student.eventTime,
       eventType: student.eventType,
