@@ -7,7 +7,7 @@
  * **건수는 코드가 키워드로 결정론적으로 다시 센다**(LLM이 눈대중으로 세 흔들리는 문제 제거).
  * 결과는 deep 인사이트 생성기에 [상담 메모 신호] 블록으로 주입. 실패/메모 0건이면 빈 블록 degrade.
  */
-import Anthropic from '@anthropic-ai/sdk';
+import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   isStageStalled,
@@ -17,7 +17,7 @@ import {
   type InsightPeriod,
 } from '@/types/crm';
 
-const MODEL = 'claude-haiku-4-5';
+const MODEL = qwenModel('fast');
 const MAX_LEADS = 40; // 비용 가드: 분석 리드 수 상한 (정체 우선, 이탈 보충)
 const MAX_ENTRIES_PER_LEAD = 4; // Haiku 입력용: 리드당 최신 메모 수
 const MAX_CHARS_PER_ENTRY = 280; // Haiku 입력용: 메모 1건 글자 수 상한
@@ -192,8 +192,7 @@ export interface MemoSignals {
  * API 키 없음 / 코호트 없음 / 실패 시 빈 블록으로 degrade (정량만으로도 배너는 동작).
  */
 export async function buildMemoSignals(nowMs: number = Date.now(), period?: InsightPeriod): Promise<MemoSignals> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { memoBlock: '', leadCount: 0 };
+  if (!isQwenConfigured()) return { memoBlock: '', leadCount: 0 };
 
   let rows: CohortRow[];
   try {
@@ -208,7 +207,7 @@ export async function buildMemoSignals(nowMs: number = Date.now(), period?: Insi
   if (!serialized) return { memoBlock: '', leadCount: rows.length };
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = getQwenAnthropicClient();
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 1200,
