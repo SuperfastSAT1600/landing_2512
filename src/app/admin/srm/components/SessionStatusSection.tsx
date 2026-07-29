@@ -148,10 +148,6 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
               {STATUS_GROUPS.map((group) => (
                 <span key={group.label} className="flex items-center gap-0.5">
                   {group.statuses.map((status) => {
-                    const isActive = lastLog?.status === status
-                      || (status === 'on_time'   && lastLog?.status === 'late_present')
-                      || (status === 'absent'    && lastLog?.status === 'late_absent')
-                      || (status === 'completed' && lastLog?.status === 'disconnected_end');
                     const saveKey = `${studentName}-${status}`;
                     const copyKeyKo = `${studentName}-${status}-ko`;
                     const copyKeyEn = `${studentName}-${status}-en`;
@@ -164,11 +160,7 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
                         <button
                           disabled={isSaving}
                           onClick={() => handleStatus(studentName, studentId, status, 'ko')}
-                          className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-l text-[10px] font-medium border transition-colors ${
-                            isActive
-                              ? STATUS_COLOR[status].replace('hover:', '') + ' ring-1 ring-offset-0 ring-current opacity-100'
-                              : `bg-white text-gray-500 border-gray-200 hover:${STATUS_COLOR[status]}`
-                          } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-l text-[10px] font-medium border transition-colors bg-white text-gray-500 border-gray-200 hover:${STATUS_COLOR[status]} ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title={`${STATUS_LABEL[status]} (KO)`}
                         >
                           {isCopiedKo ? <Check size={9} /> : <Copy size={9} />}
@@ -177,11 +169,7 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
                         <button
                           disabled={isSaving}
                           onClick={() => handleStatus(studentName, studentId, status, 'en')}
-                          className={`px-1 py-0.5 rounded-r text-[9px] font-bold border-y border-r transition-colors ${
-                            isActive
-                              ? STATUS_COLOR[status].replace('hover:', '')
-                              : 'bg-white text-blue-400 border-gray-200 hover:text-blue-600 hover:border-blue-300'
-                          } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`px-1 py-0.5 rounded-r text-[9px] font-bold border-y border-r transition-colors bg-white text-blue-400 border-gray-200 hover:text-blue-600 hover:border-blue-300 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title={`${STATUS_LABEL[status]} (EN)`}
                         >
                           {isCopiedEn ? <Check size={9} /> : 'EN'}
