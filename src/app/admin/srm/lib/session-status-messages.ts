@@ -42,6 +42,8 @@ export const STATUS_GROUPS: { label: string; statuses: SessionStatus[] }[] = [
   { label: '학습', statuses: ['normal_study', 'disconnected', 'returned', 'completed', 'abnormal_end'] },
 ];
 
+// late_present / late_absent / disconnected_end 는 구 로그 표시 전용 (버튼 없음)
+
 export function buildStatusMessageKo(
   studentName: string,
   status: SessionStatus,

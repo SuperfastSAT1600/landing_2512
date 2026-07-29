@@ -53,7 +53,7 @@ function suggestStatus(
   if (lastEnded === null) {
     // 현재 세션 진행 중
     if (isEarly) return 'early';
-    return isLate ? 'late_present' : 'on_time';
+    return isLate ? 'late' : 'on_time';
   }
 
   if (isEventOngoing) {
@@ -64,7 +64,7 @@ function suggestStatus(
 
   // 이벤트 종료 후
   if (isEarly) return 'early';
-  return isLate ? 'late_present' : 'completed';
+  return isLate ? 'late' : 'completed';
 }
 
 export async function GET(req: NextRequest) {

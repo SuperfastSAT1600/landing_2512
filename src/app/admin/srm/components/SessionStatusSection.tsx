@@ -54,21 +54,12 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
     status: SessionStatus,
     lang: 'ko' | 'en',
   ) => {
-    // 이전 로그 컨텍스트로 파생 상태 결정
     const studentCurrentLogs = logs.filter((l) => l.student_name === studentName);
-    const hasLateLog = studentCurrentLogs.some((l) => l.status === 'late');
-    const hasDisconnectedLog = studentCurrentLogs.some((l) => l.status === 'disconnected');
-    const hasReturnedLog = studentCurrentLogs.some((l) => l.status === 'returned');
-    const effectiveStatus: SessionStatus =
-      status === 'on_time'   && hasLateLog                             ? 'late_present' :
-      status === 'absent'    && hasLateLog                             ? 'late_absent' :
-      status === 'completed' && hasDisconnectedLog && !hasReturnedLog  ? 'disconnected_end' :
-      status;
 
     const key = `${studentName}-${status}-${lang}`;
     const msg = lang === 'ko'
-      ? buildStatusMessageKo(studentName, effectiveStatus, eventType)
-      : buildStatusMessageEn(studentName, effectiveStatus, eventType);
+      ? buildStatusMessageKo(studentName, status, eventType)
+      : buildStatusMessageEn(studentName, status, eventType);
 
     // Copy message
     setCopying(key);
@@ -77,7 +68,7 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
 
     // 같은 상태가 마지막 로그와 동일하면 중복 저장 방지
     const lastLog = studentCurrentLogs[studentCurrentLogs.length - 1];
-    if (lastLog?.status === effectiveStatus) return;
+    if (lastLog?.status === status) return;
 
     // Save log
     const saveKey = `${studentName}-${status}`;
@@ -92,7 +83,7 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
           eventDate,
           studentId: studentId ?? undefined,
           studentName,
-          status: effectiveStatus,
+          status,
           loggedBy: userName || '관리자',
         }),
       });
