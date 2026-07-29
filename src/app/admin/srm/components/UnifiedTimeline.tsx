@@ -360,7 +360,41 @@ export function UnifiedTimeline({
       if (item) {
         const newSuggestions = Object.fromEntries(item.suggestions.map((s: V2SessionSuggestion) => [s.studentId, s]));
         setV2Suggestions((prev) => ({ ...prev, [eventId]: newSuggestions }));
-        await autoSaveSuggestions({ [eventId]: newSuggestions }, sessionLogs);
+
+        // 수동 조회: 마지막 로그와 다를 때만 저장 (기존 로그가 있어도 저장)
+        const eventType = ev.eventType === 'studyHall' ? 'study_hall' : 'vocab';
+        const eventLogs = sessionLogs[eventId] ?? [];
+        const newLogs: SessionStatusLog[] = [];
+        for (const suggestion of item.suggestions as V2SessionSuggestion[]) {
+          if (!suggestion.suggestedStatus) continue;
+          if (tutoringUserMap && tutoringUserMap.size > 0 && !tutoringUserMap.has(suggestion.studentId)) continue;
+          const sidx = ev.studentIds?.findIndex((id) => id === suggestion.studentId) ?? -1;
+          const studentName = sidx >= 0 ? ev.students[sidx] : null;
+          if (!studentName) continue;
+          const studentLogs = [...eventLogs, ...newLogs].filter((l) => l.student_name === studentName);
+          const lastLog = studentLogs[studentLogs.length - 1];
+          if (lastLog?.status === suggestion.suggestedStatus) continue;
+          try {
+            const res2 = await srmFetch('/api/admin/srm/session-status', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                eventId: ev.id, eventType, eventDate,
+                studentId: suggestion.studentId, studentName,
+                status: suggestion.suggestedStatus,
+                loggedBy: 'v2-자동',
+              }),
+            });
+            const { data: saved } = await res2.json();
+            if (saved) newLogs.push(saved);
+          } catch { /* non-fatal */ }
+        }
+        if (newLogs.length > 0) {
+          setSessionLogs((prev) => ({
+            ...prev,
+            [eventId]: [...(prev[eventId] ?? []), ...newLogs],
+          }));
+        }
       }
     } catch { /* non-fatal */ }
     setV2LoadingIds((prev) => { const n = new Set(prev); n.delete(eventId); return n; });
