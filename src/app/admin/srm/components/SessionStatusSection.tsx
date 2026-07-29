@@ -70,10 +70,10 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
     const lastLog = studentCurrentLogs[studentCurrentLogs.length - 1];
     if (lastLog?.status === status) return;
 
-    // Save log
     const saveKey = `${studentName}-${status}`;
     setSaving(saveKey);
-    try {
+
+    const postLog = async (s: SessionStatus) => {
       const res = await srmFetch('/api/admin/srm/session-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,12 +83,22 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
           eventDate,
           studentId: studentId ?? undefined,
           studentName,
-          status,
+          status: s,
           loggedBy: userName || '관리자',
         }),
       });
       const { data } = await res.json();
       if (data) setLogs((prev) => [...prev, data]);
+    };
+
+    try {
+      // 출석 클릭 시 이벤트 시작 5분 초과 → 지각 자동 선행 기록
+      const LATE_MS = 5 * 60 * 1000;
+      const isLateNow = status === 'on_time' && Date.now() > new Date(ev.startsAt).getTime() + LATE_MS;
+      const hasLateLog = studentCurrentLogs.some((l) => l.status === 'late');
+      if (isLateNow && !hasLateLog) await postLog('late');
+
+      await postLog(status);
     } catch { /* non-fatal */ }
     setSaving(null);
   };
