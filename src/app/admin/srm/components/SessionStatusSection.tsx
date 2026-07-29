@@ -131,16 +131,8 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
 
         return (
           <div key={`${ev.id}-${studentName}`} className="space-y-1">
-            {/* 학생 이름 + v2 제안 */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-gray-700 shrink-0">{studentName}</span>
-              {suggestion?.suggestedStatus && (
-                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 border border-blue-200 shrink-0">
-                  v2: {STATUS_LABEL[suggestion.suggestedStatus]}
-                  {suggestion.joinedAt && ` · 입장 ${toKstTime(suggestion.joinedAt)}`}
-                </span>
-              )}
-            </div>
+            {/* 학생 이름 */}
+            <span className="text-[11px] font-semibold text-gray-700">{studentName}</span>
 
             {/* 기록 — 상태 버튼 */}
             <div className="flex flex-wrap items-center gap-1 pl-2">
@@ -182,10 +174,16 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
               ))}
             </div>
 
-            {/* 이력 — 저장된 로그 */}
-            {studentLogs.length > 0 && (
+            {/* 이력 — v2 제안 + 저장된 로그 */}
+            {(suggestion?.suggestedStatus || studentLogs.length > 0) && (
               <div className="flex flex-wrap items-center gap-1 pl-2 py-1 bg-gray-100/70 rounded-md">
                 <span className="text-[9px] font-medium text-gray-400 shrink-0 w-6">이력</span>
+                {suggestion?.suggestedStatus && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium border bg-blue-50 text-blue-500 border-blue-200">
+                    v2: {STATUS_LABEL[suggestion.suggestedStatus]}
+                    {suggestion.joinedAt && <span className="opacity-70"> · 입장 {toKstTime(suggestion.joinedAt)}</span>}
+                  </span>
+                )}
                 {studentLogs.map((log) => (
                   <span
                     key={log.id}
