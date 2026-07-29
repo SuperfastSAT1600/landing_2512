@@ -56,7 +56,7 @@ export function LeadsHub({
         {([
           { key: 'kanban', label: '최초 세일즈' },
           { key: 'retry', label: '재시도' },
-          { key: 'enrolled', label: '수업 중' },
+          { key: 'enrolled', label: '튜터링 유저' },
           { key: 'pool', label: '이탈 리드풀' },
           { key: 'stats', label: '통계' },
         ] as const).map(({ key, label }) => (
