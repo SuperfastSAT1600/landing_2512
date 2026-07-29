@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { anthropicErrorMessage } from '@/lib/anthropic-error';
+import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen';
 import { FUNNEL_STAGE_LABELS, FUNNEL_NEXT_ACTION, type FunnelStage } from '@/types/crm';
 import type { ConsultationEntry, StrategyHistoryEntry } from '@/types/crm';
 
 export const maxDuration = 30;
 
-const MODEL = 'claude-haiku-4-5';
+const MODEL = qwenModel('fast');
 
 const SYSTEM = `당신은 SuperfastSAT의 노련한 세일즈 코치다. 한 리드의 현재 상태와 최근 상담 메모를 보고, 담당 매니저가 "다음에 무엇을 해야 하는지"를 즉시 알 수 있게 돕는다.
 출력은 오직 JSON 하나. 형식: {"summary": "이 리드 상황 2~3문장 요약", "recommended_action": "지금 취할 다음 액션 한 문장(구체적으로)", "draft_message": "리드에게 바로 보낼 수 있는 카톡 메시지 초안(존댓말, 2~4문장, 이모지 최소)"}
@@ -92,8 +92,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } }, { status: 401 });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!isQwenConfigured()) {
     return NextResponse.json({ error: { message: 'AI가 설정되지 않았습니다.' } }, { status: 503 });
   }
 
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = getQwenAnthropicClient();
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 800,

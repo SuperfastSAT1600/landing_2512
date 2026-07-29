@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { isAuthenticated } from '@/lib/server-auth';
+import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen';
 import { buildBriefHealth, parsePeriod } from '@/lib/strategy-brief';
 import { fallbackAreas, parseAreas } from '@/lib/insight-parse';
 import type { InsightBriefMode as BriefMode, InsightPeriod } from '@/types/crm';
 
 export const maxDuration = 30;
 
-const MODEL = 'claude-haiku-4-5';
+const MODEL = qwenModel('fast');
 
 const BRIEF_SYSTEM = `당신은 SuperfastSAT의 날카로운 성장 전략 파트너다. **분석 기간에 인입한 리드 코호트**가 퍼널(인입→컨택→상담→진단→결제)에서 어디서 막히고 빠지는지(드롭오프)를 중심으로, "우리가 지금 해야 할 부분은 여기야"라고 가장 시급한 약점/정체를 짚고 각각에 "이렇게 해보자" 한 줄짜리 구체 첫 수를 제시한다. 내가 못 본 숨은 병목을 찾는 게 목적이다.
 규칙: 빈 칭찬 금지. 추상론 금지. 아래 [KPI 건강 진단]의 수치(드롭오프·채널)에 근거할 것. 한국어, 간결하게.
@@ -44,8 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ generatedAt: new Date().toISOString(), areas: [] });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!isQwenConfigured()) {
     // LLM 미설정 → 결정론적 폴백으로라도 알림은 띄운다.
     return NextResponse.json({ generatedAt: new Date().toISOString(), areas: fallbackAreas(snap.weakest, mode) });
   }
@@ -59,13 +58,14 @@ export async function POST(request: NextRequest) {
       : `위 [KPI 건강 진단]을 근거로 "우리가 지금 해야 할 부분"을 JSON으로만 답하라. 참고 후보 신호: ${refAreas}. 이 중 지금 최우선으로 해결해야 할 것만 네 자율 판단으로 골라라(2~3개여도 좋고 전부 포함할 필요 없음, 5개를 맞추려 억지로 채우지 마라).`;
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = getQwenAnthropicClient();
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 1300,
+      // Qwen(Anthropic 호환)은 프롬프트 캐싱(cache_control) 미지원 → 일반 text 블록으로.
       system: [
         { type: 'text', text: systemPrompt },
-        { type: 'text', text: snap.summaryText, cache_control: { type: 'ephemeral' } },
+        { type: 'text', text: snap.summaryText },
       ],
       messages: [{ role: 'user', content: userContent }],
     });

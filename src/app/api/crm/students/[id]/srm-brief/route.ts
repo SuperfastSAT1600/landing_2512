@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import Anthropic from '@anthropic-ai/sdk';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { anthropicErrorMessage } from '@/lib/anthropic-error';
+import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen';
 import { buildSrmReport } from '@/lib/build-srm-report';
 import type { LearningReport, DayItem } from '@/types/srm-portal';
 
 export const maxDuration = 60;
 
 // 품질 우선(종합·통찰). 무거운 편이나 결과는 데이터 지표 해시로 캐시되어 반복 열람은 즉시.
-const MODEL = 'claude-opus-4-8';
+const MODEL = qwenModel('strong');
 const CACHE_ITEM = 'situation_brief';
 
 export interface SrmBriefData {
@@ -163,8 +163,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } }, { status: 401 });
   }
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!isQwenConfigured()) {
     return NextResponse.json({ error: { message: 'AI가 설정되지 않았습니다.' } }, { status: 503 });
   }
   const refresh = new URL(request.url).searchParams.get('refresh') === '1';
@@ -207,7 +206,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    const client = new Anthropic({ apiKey });
+    const client = getQwenAnthropicClient();
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 1400,
