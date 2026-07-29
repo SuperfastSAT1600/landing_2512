@@ -335,7 +335,24 @@ export default function SrmPage() {
                 issueEventIds={new Set(openIssues.filter((i) => i.event_id).map((i) => i.event_id!))}
                 onStudentClick={handleScheduleStudentClick}
                 onCoachClick={handleCoachClick}
-                onEventClick={setSelectedEvent}
+                onEventClick={(ev) => {
+                  const idx = (ev.studentIds ?? []).findIndex((id) => id && tutoringUserMap.has(id));
+                  if (idx >= 0) {
+                    const sid = ev.studentIds![idx];
+                    const tUser = tutoringUserMap.get(sid);
+                    setSelectedStudent({
+                      id: sid,
+                      name: ev.students[idx],
+                      crmStudentId: tUser?.crmStudentId ?? undefined,
+                      eventId: ev.id,
+                      eventTime: ev.startsAtKst,
+                      eventType: ev.eventType,
+                      coachId: ev.coachIds?.[0],
+                    });
+                  } else {
+                    setSelectedEvent(ev);
+                  }
+                }}
                 highlightEventId={urlEventId ?? undefined}
               />
             )}
