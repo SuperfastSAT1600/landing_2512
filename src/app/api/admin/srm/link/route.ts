@@ -9,6 +9,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'sfv2ProfileId and crmStudentId required' }, { status: 400 });
   }
 
+  // 동일 학생 재연결은 멱등 허용 — 다른 학생에 이미 연결된 경우만 차단
+  const { data: existing } = await supabaseAdmin
+    .from('students')
+    .select('id, name')
+    .eq('sfv2_profile_id', sfv2ProfileId)
+    .neq('id', crmStudentId)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json(
+      { error: 'already_linked', existingName: existing.name },
+      { status: 409 }
+    );
+  }
+
   const { error } = await supabaseAdmin
     .from('students')
     .update({ sfv2_profile_id: sfv2ProfileId })
