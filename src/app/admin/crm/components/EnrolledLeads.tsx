@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Loader2, AlertCircle, Users, RotateCcw, Crown, Link2Off } from 'lucide-react';
+import { Loader2, AlertCircle, RotateCcw, Crown, Link2Off } from 'lucide-react';
 import { Student } from '@/types/crm';
 import { getAdminUserName } from '@/lib/admin-user';
 import { RefundModal } from './RefundModal';
@@ -207,16 +207,6 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
 
   return (
     <div className="space-y-4">
-      {/* 헤더 */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl w-fit">
-        <Users size={15} className="text-emerald-600" />
-        <span className="text-sm font-semibold text-emerald-700">튜터링 유저</span>
-        {!loading && (
-          <span className="text-xs font-semibold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-full">
-            {counts.all}명
-          </span>
-        )}
-      </div>
 
       {/* 상태 서브 탭 */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 w-fit max-w-full overflow-x-auto scrollbar-none">
