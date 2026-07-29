@@ -336,22 +336,17 @@ export default function SrmPage() {
                 onStudentClick={handleScheduleStudentClick}
                 onCoachClick={handleCoachClick}
                 onEventClick={(ev) => {
-                  const idx = (ev.studentIds ?? []).findIndex((id) => id && tutoringUserMap.has(id));
-                  if (idx >= 0) {
-                    const sid = ev.studentIds![idx];
-                    const tUser = tutoringUserMap.get(sid);
-                    setSelectedStudent({
-                      id: sid,
-                      name: ev.students[idx],
-                      crmStudentId: tUser?.crmStudentId ?? undefined,
-                      eventId: ev.id,
-                      eventTime: ev.startsAtKst,
-                      eventType: ev.eventType,
-                      coachId: ev.coachIds?.[0],
-                    });
-                  } else {
-                    setSelectedEvent(ev);
-                  }
+                  const sid = ev.studentIds?.[0];
+                  const tUser = sid ? tutoringUserMap.get(sid) : undefined;
+                  setSelectedStudent({
+                    id: sid ?? ev.students[0],
+                    name: ev.students[0],
+                    crmStudentId: tUser?.crmStudentId ?? undefined,
+                    eventId: ev.id,
+                    eventTime: ev.startsAtKst,
+                    eventType: ev.eventType,
+                    coachId: ev.coachIds?.[0],
+                  });
                 }}
                 highlightEventId={urlEventId ?? undefined}
               />
