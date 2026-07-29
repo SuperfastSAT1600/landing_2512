@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    const [v2Hours, crmResult, pauseResult] = await Promise.all([
+    const [v2Hours, crmResult, pauseResult, activePaymentsResult] = await Promise.all([
       fetchV2Hours(),
       supabaseAdmin
         .from('students')
@@ -141,9 +141,17 @@ export async function GET(request: NextRequest) {
         .is('ended_at', null)
         .lte('pause_start', today)
         .or(`pause_until.is.null,pause_until.gte.${today}`),
+      supabaseSFv2
+        .from('payments')
+        .select('student_id')
+        .eq('management_status', 'active')
+        .not('student_id', 'is', null),
     ]);
 
     const { purchased, refunded, used, lastSessionDate } = v2Hours;
+    const activePaymentIds = new Set(
+      ((activePaymentsResult.data ?? []) as { student_id: string }[]).map((p) => p.student_id)
+    );
     const crmStudents = (crmResult.data ?? []) as {
       id: string;
       name: string;
@@ -160,17 +168,24 @@ export async function GET(request: NextRequest) {
     for (const s of crmStudents) {
       const pid = s.sfv2_profile_id;
       const purchasedH = Math.round((purchased.get(pid) ?? 0) * 10) / 10;
-      if (purchasedH === 0) continue; // 구매 이력 없으면 제외
+      const hasActivePayment = activePaymentIds.has(pid);
+
+      // 구매 이력도 없고 활성 결제도 없으면 제외
+      if (purchasedH === 0 && !hasActivePayment) continue;
 
       const refundedH = Math.round((refunded.get(pid) ?? 0) * 10) / 10;
       const usedH = Math.round((used.get(pid) ?? 0) * 10) / 10;
-      const remainingH = Math.round(Math.max(0, purchasedH - refundedH - usedH) * 10) / 10;
+      const rawRemainingH = purchasedH - refundedH - usedH;
+      const remainingH = Math.round(Math.max(0, rawRemainingH) * 10) / 10;
 
       const isPaused = pausedByStudentId.has(s.id) || pausedByProfileId.has(pid);
       const svcStatus = s.service_status ?? 'active';
 
       let status: TutoringStatus;
-      if (remainingH > 0) {
+      if (rawRemainingH < 0 && hasActivePayment) {
+        // 사용 시간이 구매 시간 초과(또는 0h 구매) + 활성 결제 → 재결제 세일즈
+        status = 'sales';
+      } else if (remainingH > 0) {
         if (isPaused) status = 'paused';
         else if (svcStatus === 'partial_end') status = 'partial_end';
         else status = 'active';
@@ -206,14 +221,18 @@ export async function GET(request: NextRequest) {
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
     const ninetyDaysAgoStr = ninetyDaysAgo.toISOString();
 
-    const unlinkedProfileIds = [...purchased.keys()].filter((pid) => {
+    // purchased.keys() + activePaymentIds 모두 후보로 (hours=0이지만 active payment인 케이스 포함)
+    const candidateIds = new Set([...purchased.keys(), ...activePaymentIds]);
+    const unlinkedProfileIds = [...candidateIds].filter((pid) => {
       if (linkedProfileIds.has(pid)) return false;
       const purchasedH = purchased.get(pid) ?? 0;
       const refundedH = refunded.get(pid) ?? 0;
-      if (purchasedH - refundedH <= 0) return false; // 전액 환불 제외
       const usedH = used.get(pid) ?? 0;
-      const remainingH = purchasedH - refundedH - usedH;
-      if (remainingH > 0) return true; // 수업중/휴원/부분종료
+      const rawRemainingH = purchasedH - refundedH - usedH;
+      // 세일즈: active payment + 잔여 마이너스 (사용 초과 또는 hours=0)
+      if (rawRemainingH < 0 && activePaymentIds.has(pid)) return true;
+      if (purchasedH - refundedH <= 0) return false; // 전액 환불 제외
+      if (rawRemainingH > 0) return true; // 수업중/휴원/부분종료
       // 세일즈: 잔여 0h이지만 최근 90일 내 세션 완료 기록 있음
       const lastSession = lastSessionDate.get(pid);
       return !!lastSession && lastSession >= ninetyDaysAgoStr;
