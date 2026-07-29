@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { OnboardingForm } from './OnboardingForm';
 
 export const metadata: Metadata = {
@@ -21,30 +22,28 @@ interface TokenResult {
 }
 
 async function validateToken(token: string): Promise<TokenResult> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/coach-onboarding/token?t=${token}`, { cache: 'no-store' });
-    if (!res.ok) {
-      const body = await res.json();
-      return { valid: false, error: body.error ?? 'invalid' };
-    }
-    const body = await res.json();
-    return {
-      valid: true,
-      coachName: body.data.coach_name,
-      draftData: body.data.draft_data ?? null,
-      draftSavedAt: body.data.draft_saved_at ?? null,
-    };
-  } catch {
-    return { valid: false, error: 'network_error' };
-  }
+  const { data: invite, error } = await supabaseAdmin
+    .from('coach_onboarding_invites')
+    .select('id, coach_name, expires_at, used_at, draft_data, draft_saved_at')
+    .eq('token', token)
+    .single();
+
+  if (error || !invite) return { valid: false, error: 'not_found' };
+  if (invite.used_at) return { valid: false, error: 'already_used' };
+  if (new Date(invite.expires_at) < new Date()) return { valid: false, error: 'expired' };
+
+  return {
+    valid: true,
+    coachName: invite.coach_name,
+    draftData: (invite.draft_data as Record<string, unknown>) ?? null,
+    draftSavedAt: invite.draft_saved_at ?? null,
+  };
 }
 
 const ERROR_MESSAGES: Record<string, { title: string; desc: string }> = {
   not_found: { title: '유효하지 않은 링크입니다', desc: '링크를 다시 확인하거나 담당자에게 문의해주세요.' },
   expired: { title: '링크가 만료되었습니다', desc: '담당자에게 연락하여 새 링크를 요청해주세요.' },
   already_used: { title: '이미 제출이 완료된 링크입니다', desc: '프로필 정보를 이미 제출하셨습니다. 수정이 필요하면 담당자에게 연락해주세요.' },
-  network_error: { title: '연결 오류가 발생했습니다', desc: '잠시 후 다시 시도해주세요.' },
 };
 
 export default async function CoachOnboardingPage({ params }: Props) {
