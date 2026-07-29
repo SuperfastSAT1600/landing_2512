@@ -117,15 +117,69 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
 
     const handlePrefillFromSubmission = () => {
         if (!submission) return;
+
+        // 과목 추론
         const subjects = submission.subjects as string[] ?? [];
         const inferredSubjects: string[] = [];
         if (subjects.some(s => s.startsWith('SAT'))) inferredSubjects.push('SAT');
         if (subjects.some(s => s.startsWith('AP'))) inferredSubjects.push('AP');
-        const philosophy = submission.teaching_philosophy as string ?? '';
+
+        // 소개글 HTML 생성
+        const li = (text: string) => `<li><p style="text-align: left;">${text}</p></li>`;
+        const section = (emoji: string, label: string, items: string[]) =>
+            `<p style="text-align: left;">${emoji} <strong>${label}</strong></p><ul>${items.map(li).join('')}</ul>`;
+
+        // 학력
+        const university = submission.university as string ?? '';
+        const major = submission.undergrad_major as string ?? '';
+        const entryYear = submission.university_entry_year as number | null;
+        const enrolled = (submission.enrollment_status as string) === 'enrolled';
+        const gradSchool = submission.grad_school as string | null;
+        const gradMajor = submission.grad_major as string | null;
+        const highSchool = submission.high_school as string | null;
+        const rw = submission.sat_rw_score as number | null;
+        const math = submission.sat_math_score as number | null;
+
+        const educationItems: string[] = [];
+        if (university) {
+            const suffix = entryYear ? ` (${entryYear}년 입학${enrolled ? ', 재학중' : ', 졸업'})` : '';
+            educationItems.push(`${university} ${major}${suffix}`.trim());
+        }
+        if (gradSchool) educationItems.push(`${gradSchool}${gradMajor ? ` ${gradMajor}` : ''}`);
+        if (highSchool) educationItems.push(highSchool);
+        if (rw && math) educationItems.push(`SAT ${rw + math}점 (RW:${rw} / Math:${math})`);
+
+        // 경력
+        const teachingYears = submission.teaching_years as number | null;
+        const teachingHours = submission.teaching_hours_total as number | null;
+        const studentCount = submission.students_taught as number | null;
+        const academies = submission.past_academies as Array<{ name: string; role: string }> | null ?? [];
+        const appealPoints = submission.appeal_points as string ?? '';
+
+        const careerItems: string[] = [];
+        if (teachingYears) {
+            const parts = [`수업 경력 ${teachingYears}년`];
+            if (teachingHours) parts.push(`누적 ${teachingHours}시간`);
+            if (studentCount) parts.push(`${studentCount}명 지도`);
+            careerItems.push(parts.join(', '));
+        }
+        for (const a of academies) {
+            const role = a.role === 'instructor' ? '강사' : a.role === 'ta' ? 'TA' : '기타';
+            careerItems.push(`${a.name} (${role})`);
+        }
+        for (const line of appealPoints.split('\n').map(l => l.trim()).filter(Boolean)) {
+            careerItems.push(line);
+        }
+
+        const bio = [
+            educationItems.length > 0 ? section('🏛️', '학력', educationItems) : '',
+            careerItems.length > 0 ? section('📝', '경력', careerItems) : '',
+        ].filter(Boolean).join('<p style="text-align: left;"></p>');
+
         setEditState(s => ({
             ...s,
             subjects: inferredSubjects.length > 0 ? inferredSubjects : s.subjects,
-            bio: philosophy ? `<p>${philosophy.replace(/\n/g, '</p><p>')}</p>` : s.bio,
+            bio: bio || s.bio,
         }));
     };
 
