@@ -33,20 +33,24 @@ async function fetchV2Hours(): Promise<{
   purchased: Map<string, number>;
   refunded: Map<string, number>;
   used: Map<string, number>;
+  lastPurchaseDate: Map<string, string>;
 }> {
-  // 1. 구매 시간: payment_transactions.hours by student_id
+  // 1. 구매 시간 + 최근 결제일: payment_transactions.hours by student_id
   const purchased = new Map<string, number>();
+  const lastPurchaseDate = new Map<string, string>();
   let offset = 0;
   while (true) {
     const { data } = await supabaseSFv2
       .from('payment_transactions')
-      .select('student_id, hours')
+      .select('student_id, hours, created_at')
       .gt('hours', 0)
       .range(offset, offset + 999);
     if (!data?.length) break;
-    for (const row of data as { student_id: string | null; hours: number }[]) {
+    for (const row of data as { student_id: string | null; hours: number; created_at: string }[]) {
       if (!row.student_id) continue;
       purchased.set(row.student_id, (purchased.get(row.student_id) ?? 0) + (row.hours ?? 0));
+      const prev = lastPurchaseDate.get(row.student_id);
+      if (!prev || row.created_at > prev) lastPurchaseDate.set(row.student_id, row.created_at);
     }
     if (data.length < 1000) break;
     offset += 1000;
@@ -112,7 +116,7 @@ async function fetchV2Hours(): Promise<{
     offset += 1000;
   }
 
-  return { purchased, refunded, used };
+  return { purchased, refunded, used, lastPurchaseDate };
 }
 
 export async function GET(request: NextRequest) {
@@ -135,7 +139,7 @@ export async function GET(request: NextRequest) {
         .or(`pause_until.is.null,pause_until.gte.${today}`),
     ]);
 
-    const { purchased, refunded, used } = v2Hours;
+    const { purchased, refunded, used, lastPurchaseDate } = v2Hours;
     const crmStudents = (crmResult.data ?? []) as {
       id: string;
       name: string;
@@ -195,11 +199,20 @@ export async function GET(request: NextRequest) {
     // 미연결 sfv2 유저: 수업중/휴원/세일즈에 해당하지만 CRM에 sfv2_profile_id 미연결
     // 조건: 구매 이력 있고 환불 후 순 구매 시간 > 0 (전액 환불된 유저 제외)
     const linkedProfileIds = new Set(crmStudents.map((s) => s.sfv2_profile_id));
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const sixMonthsAgoStr = sixMonthsAgo.toISOString();
+
     const unlinkedProfileIds = [...purchased.keys()].filter((pid) => {
       if (linkedProfileIds.has(pid)) return false;
       const purchasedH = purchased.get(pid) ?? 0;
       const refundedH = refunded.get(pid) ?? 0;
-      return purchasedH - refundedH > 0; // 전액 환불 제외
+      if (purchasedH - refundedH <= 0) return false; // 전액 환불 제외
+      const usedH = used.get(pid) ?? 0;
+      const remainingH = purchasedH - refundedH - usedH;
+      if (remainingH > 0) return true; // 수업중/휴원/부분종료
+      const lastPurchase = lastPurchaseDate.get(pid);
+      return !!lastPurchase && lastPurchase >= sixMonthsAgoStr; // 세일즈 (최근 6개월 내 결제)
     });
 
     const unlinked: UnlinkedTutoringUser[] = [];
