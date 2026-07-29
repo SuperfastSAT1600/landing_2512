@@ -1,0 +1,191 @@
+/* ── Section heading ───────────────────────────────────────────────── */
+.sectionHeading {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.sectionLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+  margin-bottom: 0.75rem;
+}
+
+.sectionTitle {
+  font-size: clamp(1.75rem, 5vw, 2.75rem);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  word-break: keep-all;
+}
+
+/* ── Two-card grid — always side by side ───────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+/* ── Card ──────────────────────────────────────────────────────────── */
+.card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.35s ease;
+  text-align: left;
+}
+
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.selected {
+  border-color: rgba(96, 133, 255, 0.65) !important;
+  background: rgba(7, 27, 233, 0.08) !important;
+  box-shadow:
+    0 0 0 1px rgba(96, 133, 255, 0.15),
+    0 0 50px -8px rgba(96, 133, 255, 0.4),
+    0 0 110px -28px rgba(7, 27, 233, 0.5),
+    inset 0 0 0 1px rgba(96, 133, 255, 0.07);
+  animation: selectPulse 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes selectPulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.018); }
+  100% { transform: scale(1); }
+}
+
+/* ── Card header ───────────────────────────────────────────────────── */
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem 1.25rem 0;
+  gap: 0.5rem;
+}
+
+.cardIcon {
+  font-size: 1.75rem;
+  line-height: 1;
+  animation: floatIcon 3s ease-in-out infinite;
+  display: block;
+}
+
+@keyframes floatIcon {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
+.cardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.typeName {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardIcon { animation: none; }
+}
+
+/* ── Personas ──────────────────────────────────────────────────────── */
+.personas {
+  padding: 1.5rem 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.personaLabel {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(96, 133, 255, 0.75);
+  background: rgba(96, 133, 255, 0.1);
+  border: 1px solid rgba(96, 133, 255, 0.2);
+  padding: 1px 7px;
+  border-radius: 99px;
+  margin-bottom: 0.55rem;
+}
+
+.personaList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.personaItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.personaDot {
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+/* ── Detail CTA button ─────────────────────────────────────────────── */
+.detailCta {
+  width: 100%;
+  margin: 0.5rem 0 0;
+  padding: 0.65rem 1rem;
+  background: transparent;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(96, 133, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: color 0.2s ease;
+}
+
+.detailCta:hover {
+  color: rgba(96, 133, 255, 1);
+}
+
+.selected .detailCta {
+  color: rgba(96, 133, 255, 0.9);
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .detailCta {
+    transition: none;
+  }
+  .card:hover,
+  .selected {
+    transform: none;
+    animation: none;
+  }
+}
