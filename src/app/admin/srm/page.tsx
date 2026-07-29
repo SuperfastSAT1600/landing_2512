@@ -15,7 +15,6 @@ import { StudentRoster } from './components/StudentRoster';
 import { TutoringUserList } from './components/TutoringUserList';
 import { EventLogPanel } from './components/EventLogPanel';
 import { AlertLogPanel } from './components/AlertLogPanel';
-import DailyLearningPage from './daily-learning/page';
 import { YesterdayCheck } from './components/YesterdayCheck';
 import type { FlatAlert } from './components/AlertFeedRows';
 import { DailyStatsPanel } from './components/DailyStatsPanel';
@@ -47,7 +46,7 @@ interface SelectedCoach {
   relatedStudents: { name: string; events: string[] }[];
 }
 
-type MainTab = 'queue' | 'log' | 'stats' | 'roster' | 'daily' | 'tutoring';
+type MainTab = 'queue' | 'log' | 'stats' | 'roster' | 'tutoring';
 
 function collectRelatedStudents(
   coachId: string,
@@ -89,6 +88,7 @@ export default function SrmPage() {
   const [pausedStudentIds, setPausedStudentIds] = useState<Set<string>>(new Set());
   const [loggedEventIds, setLoggedEventIds] = useState<Set<string>>(new Set());
   const [tutoringUserMap, setTutoringUserMap] = useState<Map<string, TutoringUser>>(new Map());
+  const [tutoringRefreshKey, setTutoringRefreshKey] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<(TaggedEvent & { startsAtKst: string }) | null>(null);
   const [selectedAlertLog, setSelectedAlertLog] = useState<FlatAlert | null>(null);
   const [openIssues, setOpenIssues] = useState<EventIssue[]>([]);
@@ -241,7 +241,7 @@ export default function SrmPage() {
 
       {/* 메인 탭 */}
       <div className="flex gap-1 mb-6">
-        {(['queue', 'log', 'stats', 'roster', 'daily', 'tutoring'] as MainTab[]).map((t) => (
+        {(['queue', 'log', 'stats', 'roster', 'tutoring'] as MainTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setMainTab(t)}
@@ -251,7 +251,7 @@ export default function SrmPage() {
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
             }`}
           >
-            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'stats' ? '통계' : t === 'roster' ? '명단' : t === 'daily' ? '학습 리포트' : '튜터링 유저'}
+            {t === 'queue' ? '업무 큐' : t === 'log' ? '업무 로그' : t === 'stats' ? '통계' : t === 'roster' ? '명단' : '튜터링 유저'}
           </button>
         ))}
       </div>
@@ -392,12 +392,8 @@ export default function SrmPage() {
         <StudentRoster onStudentClick={handleRosterStudentClick} />
       )}
 
-      {mainTab === 'daily' && (
-        <DailyLearningPage />
-      )}
-
       {mainTab === 'tutoring' && (
-        <TutoringUserList onStudentClick={handleRosterStudentClick} />
+        <TutoringUserList onStudentClick={handleRosterStudentClick} refreshKey={tutoringRefreshKey} />
       )}
 
       {selectedStudent && (
@@ -411,6 +407,7 @@ export default function SrmPage() {
           eventType={selectedStudent.eventType}
           coachId={selectedStudent.coachId}
           onClose={() => setSelectedStudent(null)}
+          onLinked={() => setTutoringRefreshKey((k) => k + 1)}
           onLanguageChange={handleLanguageChange}
           tutoringStatus={selectedStudent.tutoringStatus}
           remainingHours={selectedStudent.remainingHours}

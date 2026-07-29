@@ -127,12 +127,13 @@ interface Props {
   eventType?: 'coachRoom' | 'studyHall' | 'vocab';
   coachId?: string;
   onLanguageChange?: (sfv2ProfileId: string, lang: 'ko' | 'en') => void;
+  onLinked?: () => void;
   tutoringStatus?: TutoringStatus;
   remainingHours?: number;
   purchasedHours?: number;
 }
 
-export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, eventTime, eventType, coachId, onLanguageChange, tutoringStatus, remainingHours, purchasedHours }: Props) {
+export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, eventTime, eventType, coachId, onLanguageChange, onLinked, tutoringStatus, remainingHours, purchasedHours }: Props) {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [comms, setComms] = useState<CommEntry[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(true);
@@ -309,6 +310,18 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     }
   };
 
+  const handleStatusSelect = async (next: 'active' | 'paused' | 'partial_end' | 'ended') => {
+    if (next === effectiveStatus) return;
+    if (next === 'paused') {
+      setPauseFormOpen(true);
+      return;
+    }
+    setPauseFormOpen(false);
+    if (pauseSaving || serviceStatusSaving) return;
+    if (activePause) await handlePauseEnd();
+    await handleServiceStatusChange(next === 'active' ? 'active' : next === 'partial_end' ? 'partial_end' : 'ended');
+  };
+
   useEffect(() => {
     const lang = (detail?.crmStudent as unknown as { comm_language?: string | null } | null)?.comm_language;
     setCommLang(lang === 'en' ? 'en' : 'ko');
@@ -364,7 +377,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setComms((prev) => prev.map((c) => c.id === updated.id ? updated : c));
   };
 
-  const handleLinked = () => fetchDetail();
+  const handleLinked = () => { fetchDetail(); onLinked?.(); };
 
   const handleIssueSubmit = async () => {
     if (!issueTitle) return;
@@ -442,6 +455,12 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const isLinked = !!detail?.crmStudent;
   const resolvedCrmStudentId = crmStudentId ?? detail?.crmStudent?.id;
 
+  const effectiveStatus: 'active' | 'paused' | 'partial_end' | 'ended' =
+    activePause ? 'paused'
+    : detail?.crmStudent?.service_status === 'partial_end' ? 'partial_end'
+    : detail?.crmStudent?.service_status === 'ended' ? 'ended'
+    : 'active';
+
   const currentStageLabel = lifecycleData?.current?.stage
     ? (STAGE_LABELS[lifecycleData.current.stage] ?? null)
     : null;
@@ -470,24 +489,6 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
           <div className="flex-1 min-w-0 mr-3">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base font-bold text-gray-900">{studentName}</h2>
-              {!loadingDetail && (
-                <>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 border ${
-                    detail?.profile
-                      ? 'bg-blue-50 text-blue-600 border-blue-200'
-                      : 'bg-gray-50 text-gray-400 border-gray-200'
-                  }`}>
-                    {detail?.profile ? 'v2 연결' : 'v2 미연결'}
-                  </span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 border ${
-                    isLinked
-                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                      : 'bg-gray-50 text-gray-400 border-gray-200'
-                  }`}>
-                    {isLinked ? 'CRM 연결' : 'CRM 미연결'}
-                  </span>
-                </>
-              )}
               {tutoringStatus && (
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 border ${TUTORING_STATUS_META[tutoringStatus].color}`}>
                   {TUTORING_STATUS_META[tutoringStatus].label}
@@ -495,9 +496,6 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                     <> · {remainingHours}h/{purchasedHours}h</>
                   )}
                 </span>
-              )}
-              {detail?.hasSummerProgram && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium shrink-0">여름특강</span>
               )}
               {currentStageLabel && (
                 <button
@@ -513,9 +511,23 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               <div className="h-3 w-24 bg-gray-200 rounded animate-pulse mt-1" />
             )}
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors p-1 shrink-0">
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {!loadingDetail && (
+              <div className="flex items-center gap-1">
+                {detail?.profile
+                  ? <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-blue-50 text-blue-600 border-blue-200">v2</span>
+                  : <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-gray-100 text-gray-500 border-gray-300">v2 미연결</span>
+                }
+                {isLinked
+                  ? <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-emerald-50 text-emerald-600 border-emerald-200">CRM</span>
+                  : <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-gray-100 text-gray-500 border-gray-300">CRM 미연결</span>
+                }
+              </div>
+            )}
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors p-1">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* 라이프사이클 accordion */}
@@ -543,6 +555,9 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 </div>
               ) : (
                 <div className="space-y-1.5">
+                  {detail?.hasSummerProgram && (
+                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium">여름특강</span>
+                  )}
                   {/* 기본 프로필 */}
                   {(detail?.profile?.grade ?? detail?.crmStudent?.grade) && (
                     <InfoRow label="학년" value={detail?.profile?.grade ?? detail?.crmStudent?.grade ?? ''} />
@@ -650,7 +665,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                           className={`px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
                             commLang === lang
                               ? lang === 'en'
-                                ? 'bg-blue-500 text-gray-900'
+                                ? 'bg-blue-500 text-white'
                                 : 'bg-gray-100 text-gray-900'
                               : 'text-gray-500 hover:text-gray-700'
                           }`}
@@ -806,119 +821,101 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
               )}
             </div>
 
-            {/* 휴원 섹션 */}
+            {/* 학생 상태 */}
             {activePause !== undefined && (
               <div className="px-4 py-3 border-t border-gray-100">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">휴원</p>
-                  {activePause ? (
-                    <button
-                      onClick={handlePauseEnd}
-                      disabled={pauseSaving}
-                      className="text-[11px] text-red-700 hover:text-red-700 disabled:opacity-40"
-                    >
-                      {pauseSaving ? '처리중...' : '휴원 해제'}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setPauseFormOpen((v) => !v)}
-                      className="text-[11px] text-blue-700 hover:text-blue-700"
-                    >
-                      {pauseFormOpen ? '취소' : '휴원 설정'}
-                    </button>
-                  )}
-                </div>
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">학생 상태</p>
 
-                {activePause ? (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">휴원 중</span>
-                      {activePause.pause_until && (
-                        <span className="text-[11px] text-gray-500">
-                          ~ {new Date(activePause.pause_until).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} 재개 예정
-                        </span>
-                      )}
-                      {!activePause.pause_until && (
-                        <span className="text-[11px] text-gray-500">재개일 미정</span>
-                      )}
-                    </div>
-                    {activePause.reason && (
-                      <p className="text-[11px] text-gray-500">{activePause.reason}</p>
-                    )}
-                  </div>
-                ) : pauseFormOpen ? (
-                  <div className="space-y-2">
-                    <div>
-                      <label className="text-[11px] text-gray-500 block mb-0.5">재개 예정일 (선택)</label>
-                      <input
-                        type="date"
-                        value={pauseUntil}
-                        onChange={(e) => setPauseUntil(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-gray-500 block mb-0.5">사유 (선택)</label>
-                      <input
-                        type="text"
-                        value={pauseReason}
-                        onChange={(e) => setPauseReason(e.target.value)}
-                        placeholder="해외 여행, 시험 기간 등"
-                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
-                      />
-                    </div>
-                    <button
-                      onClick={handlePauseCreate}
-                      disabled={pauseSaving}
-                      className="w-full text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
-                    >
-                      {pauseSaving ? '저장중...' : '휴원 시작'}
-                    </button>
-                  </div>
+                {effectiveStatus === 'ended' ? (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-red-50 text-red-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                    종료됨
+                  </span>
                 ) : (
-                  <p className="text-xs text-gray-500">현재 수업 중</p>
-                )}
-              </div>
-            )}
+                  <>
+                    <div className="space-y-0.5">
+                      {([
+                        { value: 'active',      label: '수업중',   dot: 'bg-emerald-400', activeBg: 'bg-emerald-50',  activeText: 'text-emerald-700' },
+                        { value: 'paused',      label: '휴원',     dot: 'bg-orange-400',  activeBg: 'bg-orange-50',   activeText: 'text-orange-700' },
+                        { value: 'partial_end', label: '부분종료', dot: 'bg-gray-400',    activeBg: 'bg-gray-100',    activeText: 'text-gray-700' },
+                        { value: 'ended',       label: '종료',     dot: 'bg-red-400',     activeBg: 'bg-red-50',      activeText: 'text-red-600' },
+                      ] as const).map(({ value, label, dot, activeBg, activeText }) => {
+                        const isSelected = effectiveStatus === value;
+                        const isBusy = pauseSaving || serviceStatusSaving;
+                        return (
+                          <button
+                            key={value}
+                            onClick={() => handleStatusSelect(value)}
+                            disabled={isSelected || isBusy}
+                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[11px] font-medium text-left transition-colors disabled:cursor-default ${
+                              isSelected ? `${activeBg} ${activeText}` : 'text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? dot : 'bg-gray-300'}`} />
+                            {label}
+                            {isSelected && value === 'paused' && activePause?.pause_until && (
+                              <span className="ml-auto text-[10px] font-normal opacity-70">
+                                ~ {new Date(activePause.pause_until).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} 재개 예정
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
 
-            {/* 부분종료 / 종료 섹션 */}
-            {activePause !== undefined && (crmStudentId ?? detail?.crmStudent?.id) && (
-              <div className="px-4 py-3 border-t border-gray-100 space-y-2.5">
-                {/* 부분 종료 */}
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">부분 종료</p>
-                  <button
-                    onClick={() => handleServiceStatusChange(
-                      detail?.crmStudent?.service_status === 'partial_end' ? 'active' : 'partial_end'
+                    {/* 휴원 중 상세 */}
+                    {effectiveStatus === 'paused' && activePause && (
+                      <div className="mt-2 pl-3 space-y-0.5">
+                        {!activePause.pause_until && (
+                          <p className="text-[11px] text-gray-500">재개일 미정</p>
+                        )}
+                        {activePause.reason && (
+                          <p className="text-[11px] text-gray-500">{activePause.reason}</p>
+                        )}
+                      </div>
                     )}
-                    disabled={serviceStatusSaving || !!activePause || detail?.crmStudent?.service_status === 'ended'}
-                    className={`text-[11px] disabled:opacity-40 ${
-                      detail?.crmStudent?.service_status === 'partial_end' ? 'text-red-700' : 'text-blue-700'
-                    }`}
-                  >
-                    {serviceStatusSaving ? '처리중...'
-                      : detail?.crmStudent?.service_status === 'partial_end' ? '해제' : '설정'}
-                  </button>
-                </div>
-                {detail?.crmStudent?.service_status === 'partial_end' && (
-                  <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">부분 종료됨</span>
-                )}
 
-                {/* 종료 */}
-                <div className="flex items-center justify-between border-t border-gray-50 pt-2">
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">종료</p>
-                  {detail?.crmStudent?.service_status === 'ended' ? (
-                    <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-600">종료됨</span>
-                  ) : (
-                    <button
-                      onClick={() => handleServiceStatusChange('ended')}
-                      disabled={serviceStatusSaving}
-                      className="text-[11px] disabled:opacity-40 text-gray-500"
-                    >
-                      {serviceStatusSaving ? '처리중...' : '종료 처리'}
-                    </button>
-                  )}
-                </div>
+                    {/* 휴원 설정 폼 */}
+                    {pauseFormOpen && effectiveStatus !== 'paused' && (
+                      <div className="mt-2 space-y-2">
+                        <div>
+                          <label className="text-[11px] text-gray-500 block mb-0.5">재개 예정일 (선택)</label>
+                          <input
+                            type="date"
+                            value={pauseUntil}
+                            onChange={(e) => setPauseUntil(e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-gray-500 block mb-0.5">사유 (선택)</label>
+                          <input
+                            type="text"
+                            value={pauseReason}
+                            onChange={(e) => setPauseReason(e.target.value)}
+                            placeholder="해외 여행, 시험 기간 등"
+                            className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handlePauseCreate}
+                            disabled={pauseSaving}
+                            className="flex-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
+                          >
+                            {pauseSaving ? '저장중...' : '휴원 시작'}
+                          </button>
+                          <button
+                            onClick={() => { setPauseFormOpen(false); setPauseUntil(''); setPauseReason(''); }}
+                            className="text-xs text-gray-500 hover:text-gray-700 px-2"
+                          >
+                            취소
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 

@@ -16,6 +16,7 @@ interface SelectedStudent {
 
 interface Props {
   onStudentClick: (student: SelectedStudent) => void;
+  refreshKey?: number;
 }
 
 type Tab = 'unlinked' | TutoringStatus;
@@ -79,7 +80,7 @@ function UnlinkedRow({ user, onClick }: { user: UnlinkedTutoringUser; onClick: (
   );
 }
 
-export function TutoringUserList({ onStudentClick }: Props) {
+export function TutoringUserList({ onStudentClick, refreshKey }: Props) {
   const [linked, setLinked] = useState<TutoringUser[]>([]);
   const [unlinked, setUnlinked] = useState<UnlinkedTutoringUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +107,7 @@ export function TutoringUserList({ onStudentClick }: Props) {
     }
   }, []);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers, refreshKey]);
 
   const byStatus = (Object.keys(TAB_META) as Tab[]).reduce<Record<Tab, TutoringUser[]>>(
     (acc, t) => ({ ...acc, [t]: t === 'unlinked' ? [] : linked.filter((u) => u.status === t) }),
