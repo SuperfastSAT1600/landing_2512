@@ -139,11 +139,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {NAV_ITEMS.map((item) => {
                         if (item.children) {
                             const isGroupActive = item.children.some(c => pathname === c.href);
+                            const groupHref = item.children[0]?.href;
                             return (
                                 <div key={item.label}>
-                                    <div className={`flex items-center gap-3 px-3 py-2 rounded-md font-medium ${isGroupActive ? 'text-white' : 'text-gray-500'}`}>
+                                    <Link
+                                        href={groupHref ?? '#'}
+                                        className={`flex items-center gap-3 px-3 py-2 rounded-md font-medium transition-colors ${isGroupActive ? 'text-white bg-[#1e2023]' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+                                    >
                                         <span className="opacity-70">{item.icon}</span> {item.label}
-                                    </div>
+                                    </Link>
                                     <div className="ml-6 space-y-0.5">
                                         {item.children.map(child => (
                                             <Link

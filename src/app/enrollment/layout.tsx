@@ -1,6 +1,18 @@
 import type { Metadata } from 'next';
 import { LanguageProvider } from '@/lib/enrollment/i18n/LanguageContext';
+import { redirect } from 'next/navigation';
+import { readFileSync } from 'fs';
+import path from 'path';
 import './enrollment.css';
+
+function getPageStatus(slug: string): string {
+  try {
+    const data = JSON.parse(readFileSync(path.join(process.cwd(), 'src/data/enrollment-page-status.json'), 'utf-8'));
+    return data[slug] ?? 'active';
+  } catch {
+    return 'active';
+  }
+}
 
 export const metadata: Metadata = {
   title: 'SAT 목표 점수에 가장 빠르게 | SuperfastSAT',
@@ -23,6 +35,9 @@ export default function EnrollmentLayout({
 }: {
   children: React.ReactNode;
 }) {
+  if (getPageStatus('enrollment') === 'paused') {
+    redirect('/');
+  }
   return (
     <div className="enrollment-root font-sans antialiased">
       <LanguageProvider>{children}</LanguageProvider>
