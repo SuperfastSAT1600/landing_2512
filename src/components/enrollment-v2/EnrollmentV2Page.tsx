@@ -703,23 +703,22 @@ export function EnrollmentV2Page() {
     }
   }, [exam, heroInView]);
 
-  function scrollToRef(ref: React.RefObject<HTMLElement | null>, delay = 0) {
+  function scrollToRef(
+    ref: React.RefObject<HTMLElement | null>,
+    delay = 0,
+    block: ScrollLogicalPosition = 'start',
+  ) {
     setTimeout(() => {
       const el = ref.current;
       if (!el) return;
-      const y = el.getBoundingClientRect().top + window.scrollY - scrollOffsetRef.current;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+      el.scrollIntoView({ behavior: 'smooth', block });
     }, delay);
   }
 
   const handleExamSelect = useCallback((e: 'SAT' | 'AP') => {
     setExam(e);
-    // Auto-scroll to 수업선택 section after header begins fading
     setTimeout(() => {
-      const el = selectionRef.current;
-      if (!el) return;
-      const y = el.getBoundingClientRect().top + window.scrollY - 44;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+      selectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 350);
   }, []);
 
@@ -728,7 +727,7 @@ export function EnrollmentV2Page() {
     setManagementType(type);
     if (changed) { setClassFormat(null); setSelectedOption(null); }
     setShowcaseOpen(true);
-    scrollToRef(showcaseRef, 200);
+    scrollToRef(showcaseRef, 200, 'center');
   }, [managementType]);
 
   const handleThumbnailClick = useCallback((type: ManagementType) => {
@@ -736,14 +735,14 @@ export function EnrollmentV2Page() {
     setManagementType(type);
     if (changed) { setClassFormat(null); setSelectedOption(null); }
     setShowcaseOpen(true);
-    scrollToRef(showcaseRef, 200);
+    scrollToRef(showcaseRef, 200, 'center');
   }, [managementType]);
 
   const handleFormat = useCallback((format: CategoryIdV2) => {
     const changed = format !== classFormat;
     setClassFormat(format);
     if (changed) setSelectedOption(null);
-    scrollToRef(packageRef, 300);
+    scrollToRef(packageRef, 300, 'start');
   }, [classFormat]);
 
   const handleOption = useCallback((option: OptionSelectionV2) => {
