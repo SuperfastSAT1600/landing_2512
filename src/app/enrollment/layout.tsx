@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { LanguageProvider } from '@/lib/enrollment/i18n/LanguageContext';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { readFileSync } from 'fs';
 import path from 'path';
 import './enrollment.css';
@@ -12,6 +13,11 @@ function getPageStatus(slug: string): string {
   } catch {
     return 'active';
   }
+}
+
+async function isAdmin(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return cookieStore.get('admin_verified')?.value === '1';
 }
 
 export const metadata: Metadata = {
@@ -30,12 +36,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function EnrollmentLayout({
+export default async function EnrollmentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  if (getPageStatus('enrollment') === 'paused') {
+  if (getPageStatus('enrollment') === 'paused' && !(await isAdmin())) {
     redirect('/');
   }
   return (

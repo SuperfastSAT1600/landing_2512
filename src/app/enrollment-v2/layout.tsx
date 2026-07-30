@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { readFileSync } from 'fs';
 import path from 'path';
 
@@ -18,8 +19,13 @@ function getPageStatus(slug: string): string {
   }
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  if (getPageStatus('enrollment-v2') === 'paused') {
+async function isAdmin(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return cookieStore.get('admin_verified')?.value === '1';
+}
+
+export default async function Layout({ children }: { children: React.ReactNode }) {
+  if (getPageStatus('enrollment-v2') === 'paused' && !(await isAdmin())) {
     redirect('/');
   }
   return (
