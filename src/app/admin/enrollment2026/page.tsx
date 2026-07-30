@@ -13,7 +13,7 @@ export default function AdminEnrollment2026Page() {
                     <span className="opacity-80">🎫</span> enrollment2026
                 </h1>
                 <p className="text-gray-500">
-                    신규 수업권 신청 페이지(enrollment-v2)를 미리보고 관리합니다.
+                    신규 수업권 신청 페이지를 미리보고 관리합니다.
                 </p>
             </header>
 
@@ -22,7 +22,7 @@ export default function AdminEnrollment2026Page() {
                 <div className="flex items-center justify-between mb-3">
                     <h2 className="text-sm font-semibold text-gray-300">수업권 신청 페이지 v2 (공개)</h2>
                     <Link
-                        href="/enrollment-v2"
+                        href="/enrollment2026"
                         target="_blank"
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors"
                     >
@@ -31,7 +31,7 @@ export default function AdminEnrollment2026Page() {
                 </div>
                 <div className="rounded-lg border border-white/5 overflow-hidden bg-[#0d1225]">
                     <iframe
-                        src="/enrollment-v2"
+                        src="/enrollment2026"
                         title="수업권 신청 페이지 v2 미리보기"
                         className="w-full h-[560px] border-0"
                     />

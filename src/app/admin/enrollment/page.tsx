@@ -21,9 +21,9 @@ const PAGES: EnrollmentPage[] = [
         description: '기존 수업권 신청 페이지',
     },
     {
-        slug: 'enrollment-v2',
+        slug: 'enrollment2026',
         label: 'enrollment2026 (v2)',
-        url: '/enrollment-v2',
+        url: '/enrollment2026',
         description: '신규 수업권 신청 페이지 — 2026년 버전',
     },
 ];
