@@ -376,7 +376,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
             );
           })}
 
-          {/* 선착순 대표코치 패키지 */}
+          {/* 프리미엄 대표코치 패키지 */}
           <button
             type="button"
             onClick={() => onSelect({ type: 'hour-package', packageId: '1on1-director' })}
@@ -401,41 +401,35 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
             </AnimatePresence>
 
             <div className="relative z-10 flex items-center justify-between gap-4">
-              {/* 왼쪽: 선착순 + 시간 */}
-              <div className="flex-shrink-0">
-                <div className="mb-2">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wide">
-                    선착순
-                  </span>
-                </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-black text-amber-200 leading-none">10</span>
-                  <span className="text-sm text-amber-200/60 font-medium">시간</span>
-                </div>
+              {/* 왼쪽: 프리미엄 뱃지 + 타이틀 */}
+              <div className="flex-shrink-0 flex flex-col gap-1.5">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wide self-start">
+                  프리미엄
+                </span>
+                <p className="text-sm font-semibold text-amber-200 leading-snug">
+                  SuperfastSAT 대표코치의<br />1:1 수업
+                </p>
               </div>
 
-              {/* 오른쪽: 비선택=설명 / 선택=코치 소개 링크 */}
+              {/* 오른쪽: 선택 시 시간 + 가격 reveal */}
               <div className="flex-1 text-right">
-                {selectedId !== '1on1-director' && (
-                  <p className="text-[11px] font-light text-amber-200/65 leading-relaxed">
-                    SuperfastSAT 대표코치진의<br />프리미엄 1:1 수업
-                  </p>
-                )}
                 {selectedId === '1on1-director' && (
-                  <div className="space-y-1.5 text-right">
-                    <motion.p
+                  <div className="space-y-1">
+                    <motion.div
                       initial={{ opacity: 0, x: 12 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.45, duration: 0.25, ease: 'easeOut' }}
-                      className="text-[11px] font-light text-amber-300/80 leading-relaxed"
+                      className="flex items-baseline gap-1 justify-end"
                     >
-                      누적 1000시간 이상의 SuperfastSAT 수업 경력
-                    </motion.p>
+                      <span className="text-2xl font-light text-amber-100/70 leading-none tracking-tight">10</span>
+                      <span className="text-xs text-amber-200/45 font-light">시간</span>
+                    </motion.div>
                     <motion.p
                       initial={{ opacity: 0, y: 6, scale: 0.94 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ delay: 0.82, duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
-                      className="text-base font-light text-amber-200 tracking-tight"
+                      className="text-xl font-light text-amber-200 tracking-widest"
+                      style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
                     >
                       {formatWon(1800000)}
                     </motion.p>
@@ -445,7 +439,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
             </div>
           </button>
 
-          {/* 인라인 대표코치 목록 */}
+          {/* 대표코치 라인업 */}
           <div ref={coachesRef}>
           <AnimatePresence>
             {isDirector && (
@@ -456,6 +450,9 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col gap-2"
               >
+                <p className="text-[11px] font-bold text-amber-300/60 tracking-widest uppercase px-1 pt-2 pb-1">
+                  대표코치 라인업
+                </p>
                 {loadingCoaches && (
                   <div className="flex justify-center py-6">
                     <div className="w-5 h-5 rounded-full border-2 border-amber-400/30 border-t-amber-300 animate-spin" />
@@ -494,7 +491,99 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   STEP 3: 패키지 선택 (그룹 / 콘텐츠 / 자기주도)
+   STEP 3: 1:4 특강 선택 (전용 UI — ManagedPackagePicker 스타일)
+   ════════════════════════════════════════════════════════════════════ */
+function GroupPackagePicker({ selectedOption, onSelect }: {
+  selectedOption: OptionSelectionV2 | null;
+  onSelect: (o: OptionSelectionV2) => void;
+}) {
+  const selectedId = selectedOption?.type === 'group-package' ? selectedOption.packageId : null;
+
+  return (
+    <section className="px-4 py-10 border-t border-white/[0.06]">
+      <div className="max-w-xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 style={SECTION_HEADING_STYLE} className="text-white">
+            커리큘럼은<br />상담을 통해 확인하세요
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {GROUP_PACKAGES_V2.map(pkg => {
+            const isSelected = selectedId === pkg.id;
+            const isSoldOut = pkg.id === 'group-summer';
+
+            return (
+              <button
+                key={pkg.id}
+                type="button"
+                onClick={() => onSelect({ type: 'group-package', packageId: pkg.id })}
+                className={`relative overflow-hidden w-full text-left rounded-2xl border p-5 transition-colors touch-manipulation active:scale-[0.98]
+                  ${isSelected
+                    ? 'border-[#6085ff]/60'
+                    : 'border-white/[0.08] bg-white/[0.03] hover:border-white/15'
+                  }`}
+              >
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      key="fill"
+                      className="absolute inset-0"
+                      style={{ background: 'linear-gradient(105deg, rgba(7,27,233,0.5) 0%, rgba(96,133,255,0.22) 100%)' }}
+                      initial={{ clipPath: 'inset(0 100% 0 0 round 1rem)' }}
+                      animate={{ clipPath: 'inset(0 0% 0 0 round 1rem)' }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    />
+                  )}
+                </AnimatePresence>
+
+                <div className="relative z-10 flex items-center justify-between gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="mb-2">
+                      {isSoldOut ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/55 border border-white/20 tracking-wide">
+                          마감
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/55 border border-white/20 tracking-wide">
+                          NEW
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-2xl font-black text-white leading-none">{pkg.name}</span>
+                    <p className="text-xs text-white/40 mt-1">{pkg.durationLabel}</p>
+                  </div>
+
+                  <div className="flex-1 text-right">
+                    {!isSelected && (
+                      <p className="text-[11px] text-white/40 leading-relaxed">
+                        {pkg.subtitle}
+                      </p>
+                    )}
+                    {isSelected && (
+                      <motion.p
+                        initial={{ opacity: 0, y: 6, scale: 0.94 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.4, duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
+                        className="text-base font-light text-white tracking-tight"
+                      >
+                        {formatWon(pkg.totalPrice)}
+                      </motion.p>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   STEP 3: 패키지 선택 (콘텐츠 / 자기주도)
    ════════════════════════════════════════════════════════════════════ */
 function PackagePicker({
   categoryId, selectedOption, onSelect, onContentToggle, totalPrice, stepNum,
@@ -835,7 +924,15 @@ export function EnrollmentV2Page() {
                   />
                 </div>
               )}
-              {categoryId && categoryId !== 'one-on-one' && (
+              {categoryId === 'group' && (
+                <div ref={packageRef}>
+                  <GroupPackagePicker
+                    selectedOption={selectedOption}
+                    onSelect={handleOption}
+                  />
+                </div>
+              )}
+              {categoryId && categoryId !== 'one-on-one' && categoryId !== 'group' && (
                 <div ref={packageRef}>
                   <PackagePicker
                     categoryId={categoryId}
