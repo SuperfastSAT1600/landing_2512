@@ -7,7 +7,11 @@ import { LogOut, Menu } from 'lucide-react';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
-const NAV_ITEMS = [
+type NavItem =
+    | { href: string; label: string; icon: string; children?: undefined }
+    | { href?: undefined; label: string; icon: string; children: { href: string; label: string }[] };
+
+const NAV_ITEMS: NavItem[] = [
     { href: '/admin', label: 'Posts', icon: '📄' },
     { href: '/admin/fulltest', label: 'Test Contents', icon: '📋' },
     { href: '/admin/diagnosis', label: 'Diagnosis', icon: '🩺' },
@@ -18,8 +22,13 @@ const NAV_ITEMS = [
     { href: '/admin/traffic', label: '채널 유입 통계', icon: '📊' },
     { href: '/admin/marketing', label: '마케팅', icon: '📣' },
     { href: '/admin/crm', label: 'CRM', icon: '👥' },
-    { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
-    { href: '/admin/enrollment2026', label: 'enrollment2026', icon: '🎫' },
+    {
+        label: '수업권', icon: '🎫',
+        children: [
+            { href: '/admin/enrollment', label: 'enrollment' },
+            { href: '/admin/enrollment2026', label: 'enrollment2026' },
+        ],
+    },
     { href: '/admin/srm', label: 'SRM', icon: '📅' },
     { href: '/admin/partner', label: '파트너 센터', icon: '🤝' },
 ];
@@ -127,19 +136,47 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
 
                 <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-                    {NAV_ITEMS.map(({ href, label, icon }) => (
-                        <Link
-                            key={href}
-                            href={href}
-                            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors font-medium ${
-                                pathname === href
-                                    ? 'text-white bg-[#1e2023]'
-                                    : 'text-gray-500 hover:text-white hover:bg-white/5'
-                            }`}
-                        >
-                            <span className="opacity-70">{icon}</span> {label}
-                        </Link>
-                    ))}
+                    {NAV_ITEMS.map((item) => {
+                        if (item.children) {
+                            const isGroupActive = item.children.some(c => pathname === c.href);
+                            return (
+                                <div key={item.label}>
+                                    <div className={`flex items-center gap-3 px-3 py-2 rounded-md font-medium ${isGroupActive ? 'text-white' : 'text-gray-500'}`}>
+                                        <span className="opacity-70">{item.icon}</span> {item.label}
+                                    </div>
+                                    <div className="ml-6 space-y-0.5">
+                                        {item.children.map(child => (
+                                            <Link
+                                                key={child.href}
+                                                href={child.href}
+                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors font-medium ${
+                                                    pathname === child.href
+                                                        ? 'text-white bg-[#1e2023]'
+                                                        : 'text-gray-500 hover:text-white hover:bg-white/5'
+                                                }`}
+                                            >
+                                                <span className="w-1 h-1 rounded-full bg-current opacity-50 flex-shrink-0" />
+                                                {child.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors font-medium ${
+                                    pathname === item.href
+                                        ? 'text-white bg-[#1e2023]'
+                                        : 'text-gray-500 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <span className="opacity-70">{item.icon}</span> {item.label}
+                            </Link>
+                        );
+                    })}
 
                     <div className="border-t border-white/5 pt-2 mt-2">
                         <Link
