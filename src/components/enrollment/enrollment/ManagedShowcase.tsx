@@ -740,7 +740,26 @@ const PANEL_TRANSITION = { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const };
 /* ================================================================
    MAIN EXPORT
    ================================================================ */
-export function ManagedShowcase() {
+const ALL_TABS = [
+  { label: '맞춤형 수업',  panel: (v: boolean) => <CustomLessonCard forceVisible={v} /> },
+  { label: '학습 리포트',  panel: (v: boolean) => <ScoreReportCard forceVisible={v} /> },
+  { label: '온라인 독서실', panel: (v: boolean) => <OnlineLibraryCard forceVisible={v} /> },
+  { label: 'AI 코치',      panel: (v: boolean) => <AICoachCard forceVisible={v} /> },
+  { label: '단어 공부',    panel: (v: boolean) => <VocabCard forceVisible={v} /> },
+  { label: '실전 모의고사', panel: (v: boolean) => <MockExamCard forceVisible={v} /> },
+] as const;
+
+export function ManagedShowcase({
+  excludeTabs,
+  mobileColumns = 3,
+}: {
+  excludeTabs?: readonly string[];
+  mobileColumns?: 2 | 3;
+} = {}) {
+  const tabs = excludeTabs
+    ? ALL_TABS.filter(t => !excludeTabs.includes(t.label))
+    : ALL_TABS;
+
   const [activeTab, setActiveTab] = useState(0);
   const [userInteracted, setUserInteracted] = useState(false);
   const directionRef = useRef(1);
@@ -756,10 +775,10 @@ export function ManagedShowcase() {
     if (userInteracted) return;
     const iv = setInterval(() => {
       directionRef.current = 1;
-      setActiveTab(prev => (prev + 1) % TAB_LABELS.length);
+      setActiveTab(prev => (prev + 1) % tabs.length);
     }, 5000);
     return () => clearInterval(iv);
-  }, [userInteracted]);
+  }, [userInteracted, tabs.length]);
 
   return (
     <section className={styles.section} aria-labelledby="managed-showcase-heading">
@@ -770,17 +789,22 @@ export function ManagedShowcase() {
         </h2>
       </div>
 
-      <div className={styles.tabBar} role="tablist" aria-label="관리형 서비스">
-        {TAB_LABELS.map((label, idx) => (
+      <div
+        className={styles.tabBar}
+        role="tablist"
+        aria-label="관리형 서비스"
+        style={mobileColumns === 2 ? { gridTemplateColumns: 'repeat(2, 1fr)' } : undefined}
+      >
+        {tabs.map((tab, idx) => (
           <button
-            key={label}
+            key={tab.label}
             role="tab"
             aria-selected={activeTab === idx}
             aria-controls={`tab-panel-${idx}`}
             className={`${styles.tabBtn} ${activeTab === idx ? styles.tabBtnActive : ''}`}
             onClick={() => handleTabClick(idx)}
           >
-            <span className={styles.tabLabel}>{label}</span>
+            <span className={styles.tabLabel}>{tab.label}</span>
             {activeTab === idx && !userInteracted && (
               <span key={`progress-${activeTab}`} className={styles.tabBtnProgress} />
             )}
@@ -802,18 +826,13 @@ export function ManagedShowcase() {
             exit={reduce ? undefined : 'exit'}
             transition={PANEL_TRANSITION}
           >
-            {activeTab === 0 && <CustomLessonCard forceVisible />}
-            {activeTab === 1 && <ScoreReportCard forceVisible />}
-            {activeTab === 2 && <OnlineLibraryCard forceVisible />}
-            {activeTab === 3 && <AICoachCard forceVisible />}
-            {activeTab === 4 && <VocabCard forceVisible />}
-            {activeTab === 5 && <MockExamCard forceVisible />}
+            {tabs[activeTab]?.panel(true)}
           </motion.div>
         </AnimatePresence>
       </div>
 
       <div className={styles.dots} aria-hidden="true">
-        {TAB_LABELS.map((_, idx) => (
+        {tabs.map((_, idx) => (
           <button
             key={idx}
             className={`${styles.dot} ${activeTab === idx ? styles.dotActive : ''}`}

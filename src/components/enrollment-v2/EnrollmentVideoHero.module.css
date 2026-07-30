@@ -1,0 +1,183 @@
+/* ── Hero wrapper ──────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* push content below fixed site header (134px) */
+  padding-top: 134px;
+}
+
+/* ── Video background ──────────────────────────────────────────────── */
+.videoBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #0a0a10;
+}
+
+.videoBg iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Cover all viewport ratios */
+  width: max(100%, calc(100vh * 16 / 9));
+  height: max(100%, calc(100vw * 9 / 16));
+  pointer-events: none;
+  opacity: 0.4;
+  border: none;
+}
+
+/* ── Gradient overlay ──────────────────────────────────────────────── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.25) 40%,
+    rgba(0, 0, 0, 0.92) 85%,
+    rgba(0, 0, 0, 0.97) 100%
+  );
+}
+
+/* ── Blue ambient glow — ties hero into the brand accent ───────────── */
+.overlay::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 40%;
+  background: radial-gradient(
+    ellipse at center bottom,
+    rgba(7, 27, 233, 0.12) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* ── Text content ──────────────────────────────────────────────────── */
+.content {
+  position: relative;
+  z-index: 2;
+  padding: 2rem 1.25rem;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .content {
+    padding: 2rem;
+  }
+}
+
+.label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 1rem;
+}
+
+.headline {
+  font-size: clamp(2rem, 9vw, 3.5rem);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  word-break: keep-all;
+  margin: 0 0 2rem;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Exam prompt ───────────────────────────────────────────────────── */
+.examPrompt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 0.75rem;
+}
+
+/* ── SAT / AP selector ─────────────────────────────────────────────── */
+.examSelector {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.examBtn {
+  padding: 0.45rem 1.75rem;
+  border-radius: 99px;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.examBtn:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.examBtnActive {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .examBtn { transition: none; }
+}
+
+/* ── Scroll hint ───────────────────────────────────────────────────── */
+.scrollHint {
+  display: flex;
+  justify-content: center;
+}
+
+.chevron {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: rgba(255, 255, 255, 0.4);
+  animation: bounce 1.8s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50%       { transform: translateY(6px); opacity: 0.75; }
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .videoBg {
+    display: none;
+  }
+
+  .hero {
+    background: #0a0a18;
+  }
+
+  .chevron {
+    animation: none;
+    opacity: 0.4;
+  }
+}

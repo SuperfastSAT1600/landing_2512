@@ -97,6 +97,90 @@ const AP_SUBJECTS: { name: string; status: SubjectStatus }[] = [
   { name: 'Latin',                                status: 'closed' },
 ];
 
+/* ── AP 후기 데이터 (가로 스크롤용) ────────────────────────────── */
+const AP_REVIEWS = [
+  {
+    id: 'r1',
+    author: 'eunji***',
+    grade: '11학년',
+    title: 'FRQ 점수가 올라간 건 서술 구조를 배운 덕분이에요',
+    subject: 'AP Biology',
+    content: 'Joseph 선생님이 Scoring Guidelines 기준으로 어떤 키워드가 들어가야 점수가 나오는지를 직접 보여줬는데, 그게 진짜 달랐습니다. 채점관이 어디서 체크하는지를 알고 나니 FRQ 접근 방식이 완전히 바뀌었어요.',
+  },
+  {
+    id: 'r2',
+    author: 'sungmin***',
+    grade: '12학년',
+    title: 'AP Bio, AP Chem 둘 다 5점 — 개념을 이해로 잡아주는 수업이었어요',
+    subject: 'AP Biology · Chemistry',
+    content: 'Eden 선생님이 NYU Pre-med 전공이라 과학 개념 설명이 진짜 깊어요. 항상 "이 개념 왜 나오는지"부터 설명해주셔서 암기가 아니라 이해로 공부하게 됐습니다. AP 두 과목 모두 5점.',
+  },
+  {
+    id: 'r3',
+    author: 'taehyun***',
+    grade: '11학년',
+    title: '약점을 데이터처럼 보여줘서 집중도가 달라졌어요',
+    subject: 'AP Calculus BC',
+    content: '문제 유형별로 약한 파트를 정리해서 보여줬는데, 내가 어디서 점수를 잃고 있는지 시각적으로 보이니까 집중도가 완전히 달라졌습니다. Integration by parts랑 series 파트를 한 달 만에 잡았어요.',
+  },
+  {
+    id: 'r4',
+    author: 'blaze_s5***',
+    grade: '12학년',
+    title: 'AP Calc BC 5점, 코치님 수업 방식 아니었으면 못 받았을 거예요',
+    subject: 'AP Calculus BC',
+    content: '개념 → 유형 분류 → 실전 적용 순서로 단계별로 쌓아주셨어요. Free Response 답안을 AP Exam 채점 기준에 맞게 표현하는 법을 집중 훈련했는데, 아는 것과 점수로 연결되는 게 다르다는 걸 처음 알았어요.',
+  },
+  {
+    id: 'r5',
+    author: 'forest_c5***',
+    grade: '11학년',
+    title: 'AP CS A, 코드 왜 이렇게 짜는지를 처음으로 이해했어요',
+    subject: 'AP Computer Science A',
+    content: 'Tony 선생님은 객체지향 개념을 처음부터 "왜 이렇게 설계하는지"로 설명해주셔서 완전히 달랐어요. 서울대 컴공 재학 중이라 설명이 군더더기 없이 정확하고, 막히는 지점을 수업 중에 바로 짚어주셨어요. 모의고사 5점.',
+  },
+  {
+    id: 'r6',
+    author: 'atlas_w2***',
+    grade: '11학년',
+    title: 'FRQ에서 논리를 쌓는 법을 처음 배웠어요',
+    subject: 'AP Government',
+    content: '김 코치님이 "지금 네가 쓴 게 주장이야, 근거야?"를 계속 물어보셨어요. 주장과 근거를 구분해서 논리적으로 구성하는 연습을 반복하면서, FRQ가 지식 나열이 아니라 논리 구조라는 게 이해됐어요.',
+  },
+  {
+    id: 'r7',
+    author: 'vale_l8***',
+    grade: '11학년',
+    title: '역사 공부가 암기에서 논리로 바뀌었어요',
+    subject: 'AP World History',
+    content: '코치님이 "이 사건이 왜 일어났고, 그 결과가 왜 그렇게 됐는지 설명해봐"라고 계속 물어보시면서 흐름으로 이해하는 연습을 시키셨어요. 외운 게 아니라 이해한 내용은 FRQ에서 자연스럽게 연결해서 쓸 수 있었어요.',
+  },
+  {
+    id: 'r8',
+    author: 'gleams6***',
+    grade: '11학년',
+    title: 'AP Economics 5점, 개념이 연결되는 방식으로 가르쳐주셔서 달랐어요',
+    subject: 'AP Macro / Micro Economics',
+    content: 'AP Micro랑 Macro를 같이 준비했는데 두 과목을 연결해서 설명해주시는 방식이 정말 좋았어요. 헷갈리는 그래프 문제도 패턴별로 정리해주셔서 반복하다 보니 자연스럽게 익혀졌어요.',
+  },
+  {
+    id: 'r9',
+    author: 'drift_y2***',
+    grade: '11학년',
+    title: '물리 개념을 "말로 설명"하는 연습이 점수를 올렸어요',
+    subject: 'AP Physics',
+    content: '"왜 이 공식이 성립하는지 설명해봐"를 매번 물어보셨어요. 개념을 설명할 수 있을 정도로 이해하면 Free Response에서 reasoning 서술이 훨씬 자연스러워졌어요.',
+  },
+  {
+    id: 'r10',
+    author: 'keenh5***',
+    grade: '11학년',
+    title: 'SAT랑 AP를 동시에 준비했는데 효율이 너무 좋았어요',
+    subject: 'AP Chemistry',
+    content: '이준희 선생님이 두 과목을 연결해서 설명해주시는 방식이 진짜 효율적이었어요. AP Chemistry, Calculus BC, Statistics 전부 5점 받으신 분이라 AP 연계 설명의 깊이가 달랐어요.',
+  },
+];
+
 /* ════════════════════════════════════════════════════════════════════
    AP 과목 검색 섹션
    ════════════════════════════════════════════════════════════════════ */
@@ -105,11 +189,11 @@ function APSubjectSection() {
 
   const filtered = query.trim()
     ? AP_SUBJECTS.filter(s => s.name.toLowerCase().includes(query.toLowerCase()))
-    : AP_SUBJECTS;
+    : [];
 
   return (
-    <section className="px-4 py-10 border-t border-white/[0.06]">
-      <div className="max-w-xl mx-auto">
+    <section className="py-10 border-t border-white/[0.06]">
+      <div className="max-w-xl mx-auto px-4">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
             수업이 필요한<br />과목을 검색하세요.
@@ -117,7 +201,7 @@ function APSubjectSection() {
         </div>
 
         {/* 검색 입력 */}
-        <div className="relative mb-4">
+        <div className="relative mb-6">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-base pointer-events-none">
             🔍
           </span>
@@ -138,11 +222,50 @@ function APSubjectSection() {
             </button>
           )}
         </div>
+      </div>
 
-        {/* 과목 리스트 */}
+      {/* AP 수업 후기 자동 스크롤 */}
+      <style>{`
+        @keyframes ap-marquee {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        .ap-marquee-track {
+          display: flex;
+          gap: 0.75rem;
+          width: max-content;
+          animation: ap-marquee 42s linear infinite;
+          will-change: transform;
+        }
+        .ap-marquee-track:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+      <div className="overflow-hidden mb-6 py-2">
+          <div className="ap-marquee-track">
+            {[...AP_REVIEWS, ...AP_REVIEWS].map((review, i) => (
+              <div
+                key={`${review.id}-${i}`}
+                className="flex-shrink-0 w-64 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 flex flex-col gap-2"
+              >
+                <span className="text-[10px] font-semibold text-[#6085ff]/80 tracking-wide">{review.subject}</span>
+                <p className="text-[13px] font-bold text-white leading-snug line-clamp-2">{review.title}</p>
+                <p className="text-[11px] text-white/45 leading-relaxed line-clamp-4 flex-1">{review.content}</p>
+                <div className="flex items-center gap-1.5 pt-1 border-t border-white/[0.06]">
+                  <span className="text-[10px] text-white/30">{review.author}</span>
+                  <span className="text-white/15">·</span>
+                  <span className="text-[10px] text-white/30">{review.grade}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      {/* 과목 리스트 — 검색 시 표시 */}
+      <div className="max-w-xl mx-auto px-4">
         <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-1">
           <AnimatePresence initial={false}>
-            {filtered.length > 0 ? filtered.map((subject, i) => {
+            {filtered.map((subject, i) => {
               const cfg = STATUS_CONFIG[subject.status];
               return (
                 <motion.div
@@ -160,7 +283,8 @@ function APSubjectSection() {
                   </span>
                 </motion.div>
               );
-            }) : (
+            })}
+            {query.trim() && filtered.length === 0 && (
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -172,15 +296,6 @@ function APSubjectSection() {
           </AnimatePresence>
         </div>
 
-        {/* 상태 범례 */}
-        <div className="flex flex-wrap gap-3 justify-center mt-5">
-          {(Object.entries(STATUS_CONFIG) as [SubjectStatus, typeof STATUS_CONFIG[SubjectStatus]][]).map(([, cfg]) => (
-            <span key={cfg.label} className={`flex items-center gap-1.5 text-[10px] font-medium ${cfg.text}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-              {cfg.label}
-            </span>
-          ))}
-        </div>
       </div>
     </section>
   );
