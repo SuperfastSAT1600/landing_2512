@@ -140,6 +140,39 @@ export const UPCOMING_TESTS: TestDatePricing[] = TEST_SCHEDULE
         };
     });
 
+/**
+ * 어드민에서 설정한 nextTestDate 기준으로
+ * - discountTest: 해당 날짜 (30% 할인)
+ * - otherTests: 이후 날짜들 (드롭다운)
+ */
+export function getTestSplit(nextTestDate: string): {
+    discountTest: TestDatePricing | null;
+    otherTests: TestDatePricing[];
+} {
+    const all: TestDatePricing[] = TEST_SCHEDULE.map((t, i) => {
+        const d = new Date(t.date);
+        return {
+            date: t.date,
+            round: i + 1,
+            month: d.getMonth() + 1,
+            day: d.getDate(),
+            weekday: WEEKDAYS[d.getDay()],
+            discountPercent: 0,
+            checkoutUrls: CHECKOUT_URLS.regular,
+        };
+    });
+
+    const idx = all.findIndex(t => t.date === nextTestDate);
+    const pivot = idx === -1 ? 0 : idx;
+
+    if (all.length === 0) return { discountTest: null, otherTests: [] };
+
+    return {
+        discountTest: { ...all[pivot], discountPercent: DISCOUNT_PERCENT, checkoutUrls: CHECKOUT_URLS.discount },
+        otherTests: all.slice(pivot + 1),
+    };
+}
+
 // 한국 KST 09:00 기준 타임존별 시험 시작 시간 (고정 문자열)
 export const TIMEZONE_TIMES = [
     { region: '한국 (KST)', time: '오전 09:00' },

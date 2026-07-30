@@ -5,6 +5,7 @@ import Pain from './components/Pain';
 import Solution from './components/Solution';
 import Pricing from './components/Pricing';
 import FAQ from './components/FAQ';
+import { getSupertestConfig } from '@/lib/config';
 
 export const metadata: Metadata = {
     title: 'SuperTest — 가장 완벽한 SAT 실전 모의고사 | SuperfastSAT',
@@ -30,7 +31,9 @@ export const metadata: Metadata = {
     },
 };
 
-export default function SuperTestPage() {
+export default async function SuperTestPage() {
+    const { nextTestDate } = await getSupertestConfig();
+
     return (
         <div className={styles.page}>
             <Hero />
@@ -38,7 +41,7 @@ export default function SuperTestPage() {
             <div className={styles.section}>
                 <Solution />
             </div>
-            <Pricing />
+            <Pricing nextTestDate={nextTestDate} />
             <div className={styles.section}>
                 <FAQ />
             </div>

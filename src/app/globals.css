@@ -529,3 +529,13 @@ a {
     scroll-margin-top: 52px; /* desktop: fixed top nav height */
   }
 }
+
+/* ── enrollment-v2: header fade when exam selected ─────────────────── */
+.enrollment-v2 header {
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.enrollment-v2.exam-selected header {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}

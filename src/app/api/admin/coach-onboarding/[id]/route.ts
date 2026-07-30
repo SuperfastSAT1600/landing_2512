@@ -24,6 +24,41 @@ export async function GET(request: NextRequest, { params }: Params) {
   return NextResponse.json({ data });
 }
 
+// DELETE /api/admin/coach-onboarding/[id] — delete submission and reset invite
+export async function DELETE(request: NextRequest, { params }: Params) {
+  if (!isAuthenticated(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  // fetch invite_id before deleting
+  const { data: submission } = await supabaseAdmin
+    .from('coach_onboarding_submissions')
+    .select('invite_id')
+    .eq('id', id)
+    .single();
+
+  const { error } = await supabaseAdmin
+    .from('coach_onboarding_submissions')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+  }
+
+  // reset invite so coach can re-submit
+  if (submission?.invite_id) {
+    await supabaseAdmin
+      .from('coach_onboarding_invites')
+      .update({ used_at: null })
+      .eq('id', submission.invite_id);
+  }
+
+  return NextResponse.json({ data: { ok: true } });
+}
+
 // PATCH /api/admin/coach-onboarding/[id] — update status
 export async function PATCH(request: NextRequest, { params }: Params) {
   if (!isAuthenticated(request)) {

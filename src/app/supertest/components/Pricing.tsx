@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import styles from './Pricing.module.css';
-import { PLANS, UPCOMING_TESTS, getDiscountedPrice, formatKRW } from '../data/plans';
+import { PLANS, getTestSplit, getDiscountedPrice, formatKRW, type TestDatePricing } from '../data/plans';
 
 const RECOMMENDED_FOR: Record<string, string> = {
     live: '완벽하게 준비하고 싶다면',
@@ -57,16 +57,15 @@ function PlanFeatureCard({ plan, delay }: { plan: (typeof PLANS)[number]; delay:
     );
 }
 
-function FirstDateRow() {
-    const t = UPCOMING_TESTS[0];
+function FirstDateRow({ test }: { test: TestDatePricing }) {
     return (
         <div className={`${styles.scheduleRow} ${styles.scheduleRowDiscount}`}>
             <div className={styles.scheduleDateCol}>
-                <span className={styles.discountBadge}>파이널 {t.discountPercent}% 할인</span>
-                <span className={styles.scheduleDate}>{t.month}월 {t.day}일 ({t.weekday})</span>
+                <span className={styles.discountBadge}>파이널 {test.discountPercent}% 할인</span>
+                <span className={styles.scheduleDate}>{test.month}월 {test.day}일 ({test.weekday})</span>
             </div>
             {PLANS.map(plan => {
-                const url = t.checkoutUrls[plan.id];
+                const url = test.checkoutUrls[plan.id];
                 return (
                     <a key={plan.id} href={url}
                         target={url !== '#' ? '_blank' : undefined}
@@ -75,7 +74,7 @@ function FirstDateRow() {
                         <div className={styles.schedulePriceWrap}>
                             <span className={styles.schedulePriceOriginal}>{formatKRW(plan.price)}</span>
                             <span className={styles.schedulePriceFinal}>
-                                {formatKRW(getDiscountedPrice(plan.price, t.discountPercent))}
+                                {formatKRW(getDiscountedPrice(plan.price, test.discountPercent))}
                                 <span className={styles.priceArrow}>↗</span>
                             </span>
                         </div>
@@ -86,10 +85,11 @@ function FirstDateRow() {
     );
 }
 
-function OtherDatesRow() {
-    const others = UPCOMING_TESTS.filter(t => t.discountPercent === 0);
-    const [selectedDate, setSelectedDate] = useState(others[0]?.date ?? '');
-    const selected = others.find(t => t.date === selectedDate) ?? others[0];
+function OtherDatesRow({ tests }: { tests: TestDatePricing[] }) {
+    const [selectedDate, setSelectedDate] = useState(tests[0]?.date ?? '');
+    const selected = tests.find(t => t.date === selectedDate) ?? tests[0];
+
+    if (tests.length === 0) return null;
 
     return (
         <div className={`${styles.scheduleRow} ${styles.scheduleRowLast}`}>
@@ -99,7 +99,7 @@ function OtherDatesRow() {
                     value={selectedDate}
                     onChange={e => setSelectedDate(e.target.value)}
                 >
-                    {others.map(t => (
+                    {tests.map(t => (
                         <option key={t.date} value={t.date}>
                             {t.month}월 {t.day}일 ({t.weekday})
                         </option>
@@ -126,7 +126,9 @@ function OtherDatesRow() {
     );
 }
 
-export default function Pricing() {
+export default function Pricing({ nextTestDate }: { nextTestDate: string }) {
+    const { discountTest, otherTests } = getTestSplit(nextTestDate);
+
     return (
         <section id="pricing" className={styles.section} aria-labelledby="pricing-heading">
             <div className={styles.inner}>
@@ -151,8 +153,8 @@ export default function Pricing() {
                         ))}
                     </div>
 
-                    <FirstDateRow />
-                    <OtherDatesRow />
+                    {discountTest && <FirstDateRow test={discountTest} />}
+                    <OtherDatesRow tests={otherTests} />
                 </div>
 
                 <p className={styles.vat}>
