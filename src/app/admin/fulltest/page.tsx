@@ -77,6 +77,13 @@ const TESTS: TestDef[] = [
     apiType: 'practice',
     publicUrl: '/practice/quadratic',
   },
+  {
+    id: 'august-math-decimal-30',
+    label: '8월 SAT MATH 실전연습1',
+    description: '소수·분수 정답 30문항',
+    apiType: 'practice',
+    publicUrl: '/practice/august-math',
+  },
 ];
 
 function formatDate(iso: string) {
