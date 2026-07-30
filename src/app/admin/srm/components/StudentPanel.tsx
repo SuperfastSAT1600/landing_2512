@@ -161,6 +161,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [issueDesc, setIssueDesc] = useState('');
   const [issueSaving, setIssueSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'issue' | 'comm' | 'learning'>('comm');
+  const [showRelink, setShowRelink] = useState(false);
 
   const commKey = studentId ?? crmStudentId ?? '';
 
@@ -377,7 +378,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     setComms((prev) => prev.map((c) => c.id === updated.id ? updated : c));
   };
 
-  const handleLinked = () => { fetchDetail(); onLinked?.(); };
+  const handleLinked = () => { setShowRelink(false); fetchDetail(); onLinked?.(); };
 
   const handleIssueSubmit = async () => {
     if (!issueTitle) return;
@@ -519,7 +520,24 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                   : <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-gray-100 text-gray-500 border-gray-300">v2 미연결</span>
                 }
                 {isLinked
-                  ? <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-emerald-50 text-emerald-600 border-emerald-200">CRM</span>
+                  ? (
+                    <span className="flex items-center gap-1">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-emerald-50 text-emerald-600 border-emerald-200">CRM</span>
+                      {studentId && (() => {
+                        const cls = showRelink
+                          ? 'bg-blue-100 text-blue-700 border-blue-300'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300 hover:text-blue-600';
+                        return (
+                          <button
+                            onClick={() => setShowRelink((v) => !v)}
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-medium border transition-colors ${cls}`}
+                          >
+                            재연결
+                          </button>
+                        );
+                      })()}
+                    </span>
+                  )
                   : <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-gray-100 text-gray-500 border-gray-300">CRM 미연결</span>
                 }
               </div>
@@ -854,6 +872,12 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
             {!loadingDetail && !isLinked && !studentId && (
               <div className="px-4 py-3 border-t border-gray-100">
                 <p className="text-xs text-gray-500">v2 계정과 연결하려면 연결 탭을 이용하세요.</p>
+              </div>
+            )}
+            {/* CRM 재연결 섹션 (이미 연결된 경우) */}
+            {!loadingDetail && isLinked && studentId && showRelink && (
+              <div className="px-4 py-3 border-t border-gray-100">
+                <CrmLinkSection sfv2ProfileId={studentId} mode="relink" onLinked={handleLinked} />
               </div>
             )}
           </div>
