@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Loader2, AlertCircle, RotateCcw, Crown, Link2Off } from 'lucide-react';
+import { Loader2, AlertCircle, RotateCcw, Crown, Link2Off, Search } from 'lucide-react';
 import { Student } from '@/types/crm';
 import { getAdminUserName } from '@/lib/admin-user';
 import { RefundModal } from './RefundModal';
@@ -134,6 +134,7 @@ interface EnrolledLeadsProps {
 export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: EnrolledLeadsProps) {
   const [subTab, setSubTab] = useState<SubTab>('all');
   const [vipOnly, setVipOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [entries, setEntries] = useState<TutoringEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -169,14 +170,16 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
     return c;
   }, [entries]);
 
-  // 현재 탭 + VIP 필터 적용
+  // 현재 탭 + VIP + 이름 검색 필터 적용
   const visible = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     return entries.filter(e => {
       if (subTab !== 'all' && e.displayStatus !== subTab) return false;
       if (vipOnly && !e.student.is_vip) return false;
+      if (q && !e.student.name?.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [entries, subTab, vipOnly]);
+  }, [entries, subTab, vipOnly, searchQuery]);
 
   const handleRefundConfirm = async (
     refundAmount: number,
@@ -230,7 +233,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
         ))}
       </div>
 
-      {/* VIP 토글 */}
+      {/* VIP 토글 + 이름 검색 */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => setVipOnly(false)}
@@ -249,6 +252,16 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
           <Crown size={10} />
           VIP
         </button>
+        <div className="relative ml-auto">
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="이름 검색"
+            className="pl-7 pr-3 py-1 text-xs border border-gray-200 rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 w-32"
+          />
+        </div>
       </div>
 
       {/* 목록 */}
