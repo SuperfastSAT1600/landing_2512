@@ -660,8 +660,8 @@ export function UnmanagedShowcase() {
     <section className={styles.section} aria-labelledby="unmanaged-showcase-heading">
       <div className={styles.header} style={{ textAlign: 'center' }}>
         <h2 id="unmanaged-showcase-heading" className={styles.sectionTitle}>
-          자기주도 수업 시스템<br />
-          3가지 살펴보기
+          자기주도형 수업<br />
+          자세히 살펴보기
         </h2>
       </div>
 
@@ -765,8 +765,8 @@ export function ManagedShowcase() {
     <section className={styles.section} aria-labelledby="managed-showcase-heading">
       <div className={styles.header}>
         <h2 id="managed-showcase-heading" className={styles.sectionTitle}>
-          관리형 수업 시스템<br />
-          6가지 살펴보기
+          관리형 수업<br />
+          자세히 살펴보기
         </h2>
       </div>
 

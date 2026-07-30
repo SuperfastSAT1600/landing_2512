@@ -19,6 +19,7 @@ const NAV_ITEMS = [
     { href: '/admin/marketing', label: '마케팅', icon: '📣' },
     { href: '/admin/crm', label: 'CRM', icon: '👥' },
     { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
+    { href: '/admin/enrollment2026', label: 'enrollment2026', icon: '🎫' },
     { href: '/admin/srm', label: 'SRM', icon: '📅' },
     { href: '/admin/partner', label: '파트너 센터', icon: '🤝' },
 ];
