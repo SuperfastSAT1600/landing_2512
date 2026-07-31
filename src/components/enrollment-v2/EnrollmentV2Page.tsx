@@ -347,7 +347,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                   </div>
 
                   {/* 오른쪽: 미클릭=환불 안내 / 클릭됨=가격 유지 */}
-                  <div className="flex-1 text-right">
+                  <div className="flex-1 text-right flex flex-col justify-center min-h-[3rem]">
                     {!isRevealed && (
                       <p className="text-[13px] text-white/40 leading-relaxed">
                         진행되지 않은 수업 시간은<br />전부 환불됩니다.
