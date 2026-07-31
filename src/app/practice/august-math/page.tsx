@@ -14,7 +14,20 @@ interface Question {
   answers: string[];
 }
 
-type Phase = 'gate' | 'test' | 'result';
+type Phase = 'gate' | 'leaderboard' | 'test' | 'result';
+
+interface LeaderboardEntry {
+  rank: number;
+  maskedId: string;
+  correctCount: number;
+  totalCount: number;
+  score: number;
+}
+
+interface Stats {
+  leaderboard: LeaderboardEntry[];
+  questionStats: Record<string, { correct: number; total: number }>;
+}
 
 const DIFF_COLOR: Record<string, string> = {
   Hard: '#ef4444', Medium: '#f59e0b', Easy: '#22c55e',
@@ -68,6 +81,8 @@ export default function AugustMathPage() {
   const [instagramId, setInstagramId] = useState('');
   const [gateError, setGateError] = useState('');
   const [validating, setValidating] = useState(false);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -106,7 +121,11 @@ export default function AugustMathPage() {
         return;
       }
       setInstagramId(cleanIg.startsWith('@') ? cleanIg : `@${cleanIg}`);
-      setPhase('test');
+
+      const statsRes = await fetch(`/api/practice/stats?testId=${TEST_ID}`);
+      if (statsRes.ok) setStats(await statsRes.json());
+
+      setPhase('leaderboard');
     } catch {
       setGateError('Network error. Please try again.');
     } finally {
@@ -148,6 +167,10 @@ export default function AugustMathPage() {
         }),
       });
       setSubmitted(true);
+
+      const updatedStats = await fetch(`/api/practice/stats?testId=${TEST_ID}`).then(r => r.json()).catch(() => null);
+      if (updatedStats) setStats(updatedStats);
+
       setPhase('result');
     } catch {
       showToast('Submission failed. Please try again.');
@@ -171,9 +194,9 @@ export default function AugustMathPage() {
             <input type="text" placeholder="@instagram_id" value={instagramId} onChange={e => setInstagramId(e.target.value)} required
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }} />
             {gateError && <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>{gateError}</p>}
-            <button type="submit" disabled={validating}
-              style={{ padding: '13px 16px', borderRadius: 8, border: 'none', background: validating ? '#94a3b8' : '#3b82f6', color: '#fff', fontSize: 15, fontWeight: 600, cursor: validating ? 'not-allowed' : 'pointer' }}>
-              {validating ? 'Checking...' : 'Start'}
+            <button type="submit" disabled={!accessCode.trim() || !instagramId.trim() || validating}
+              style={{ width: '100%', padding: '13px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: !accessCode.trim() || !instagramId.trim() || validating ? 'not-allowed' : 'pointer', opacity: !accessCode.trim() || !instagramId.trim() || validating ? 0.4 : 1, marginTop: 4 }}>
+              {validating ? 'Checking...' : 'Start Practice'}
             </button>
           </form>
         </div>
@@ -181,73 +204,203 @@ export default function AugustMathPage() {
     );
   }
 
+  /* ── Leaderboard ── */
+  if (phase === 'leaderboard') {
+    const lb = stats?.leaderboard ?? [];
+    const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#a1a1aa' : i === 2 ? '#71717a' : '#3f3f46';
+    const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#a1a1aa' : '#52525b';
+    return (
+      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#09090b', overflow: 'hidden' }}>
+        <div style={{ width: '100%', maxWidth: 400, padding: '36px 24px 20px', textAlign: 'center', flexShrink: 0 }}>
+          <div style={{ fontSize: 10, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 4px', letterSpacing: '-0.03em' }}>Leaderboard</h2>
+          <p style={{ fontSize: 13, color: '#52525b', margin: '0 0 4px' }}>8월 SAT MATH 실전연습1</p>
+          <p style={{ fontSize: 12, color: '#3f3f46', margin: 0 }}>
+            {lb.length > 0 ? `${lb.length} students completed this set` : 'No submissions yet. Be the first.'}
+          </p>
+        </div>
+
+        <div style={{ width: '100%', maxWidth: 400, flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+          {lb.map((entry, i) => (
+            <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '11px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: 12 }}>
+              <span style={{ width: 22, fontSize: 11, fontWeight: 700, color: rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
+              <span style={{ flex: 1, fontSize: 13, color: i < 3 ? '#e4e4e7' : '#52525b', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {entry.maskedId}
+              </span>
+              <span style={{ fontSize: 11, color: '#3f3f46', flexShrink: 0, marginRight: 8 }}>{entry.correctCount}/{entry.totalCount}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: scoreColor(i), flexShrink: 0, minWidth: 36, textAlign: 'right' }}>{entry.score}%</span>
+            </div>
+          ))}
+          {lb.length === 0 && <div style={{ textAlign: 'center', color: '#3f3f46', paddingTop: 60, fontSize: 13 }}>No data</div>}
+        </div>
+
+        <div style={{ width: '100%', maxWidth: 400, padding: '20px 24px 32px', flexShrink: 0 }}>
+          <p style={{ textAlign: 'center', fontSize: 11, color: '#3f3f46', margin: '0 0 14px', letterSpacing: '0.02em' }}>
+            Can you break into the top 3?
+          </p>
+          <button onClick={() => setPhase('test')}
+            style={{ width: '100%', padding: '14px 0', background: '#071be9', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: 'pointer', letterSpacing: '-0.01em' }}>
+            Start →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   /* ── Result ── */
   if (phase === 'result') {
-    const total = QUESTIONS.length;
-    const pct = Math.round((correctCount / total) * 100);
+    const lb = stats?.leaderboard ?? [];
+    const myMasked = '@' + instagramId.replace(/^@/, '')[0] + '***';
+    const myEntry = lb.find(e => e.maskedId === myMasked);
+    const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#a1a1aa' : i === 2 ? '#71717a' : '#3f3f46';
+    const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#a1a1aa' : '#52525b';
     return (
-      <div style={{ minHeight: 'calc(100vh - 56px)', marginTop: 56, background: '#f8fafc', padding: '40px 16px' }}>
-        <div style={{ maxWidth: 520, margin: '0 auto', background: '#fff', borderRadius: 14, padding: '48px 40px', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-          <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Results</div>
-          <div style={{ fontSize: 56, fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{correctCount}<span style={{ fontSize: 28, color: '#94a3b8' }}>/{total}</span></div>
-          <div style={{ fontSize: 18, color: '#64748b', marginTop: 8, marginBottom: 32 }}>{pct}% correct</div>
-          <p style={{ fontSize: 14, color: '#64748b' }}>답안이 저장되었습니다.</p>
+      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#09090b', overflow: 'hidden' }}>
+        <div style={{ width: '100%', maxWidth: 400, padding: '28px 24px 16px', textAlign: 'center', flexShrink: 0 }}>
+          <div style={{ fontSize: 10, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.03em' }}>Your Result</h2>
+          {myEntry ? (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
+              <span style={{ fontSize: 13, color: '#a1a1aa' }}>Rank</span>
+              <span style={{ fontSize: 26, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.03em' }}>#{myEntry.rank}</span>
+              <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
+              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{myEntry.score}%</span>
+              <span style={{ fontSize: 12, color: '#52525b' }}>{myEntry.correctCount}/{myEntry.totalCount}</span>
+            </div>
+          ) : (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
+              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{correctCount} / {QUESTIONS.length}</span>
+              <span style={{ fontSize: 14, color: '#a1a1aa' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</span>
+            </div>
+          )}
+        </div>
+
+        <div style={{ width: '100%', maxWidth: 400, padding: '4px 24px 8px', flexShrink: 0 }}>
+          <div style={{ fontSize: 10, color: '#27272a', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' }}>
+            — {lb.length} students —
+          </div>
+        </div>
+
+        <div style={{ width: '100%', maxWidth: 400, flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+          {lb.map((entry, i) => {
+            const isMe = entry.maskedId === myMasked;
+            return (
+              <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '11px 8px', borderRadius: isMe ? 8 : 0, marginBottom: isMe ? 2 : 0, borderBottom: isMe ? 'none' : '1px solid rgba(255,255,255,0.05)', gap: 12, background: isMe ? 'rgba(96,133,255,0.1)' : 'transparent', border: isMe ? '1px solid rgba(96,133,255,0.25)' : undefined }}>
+                <span style={{ width: 22, fontSize: 11, fontWeight: 700, color: isMe ? '#6085FF' : rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
+                <span style={{ flex: 1, fontSize: 13, color: isMe ? '#c7d2fe' : i < 3 ? '#e4e4e7' : '#52525b', fontFamily: 'monospace', fontWeight: isMe ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {entry.maskedId}{isMe && <span style={{ fontSize: 10, color: '#6085FF', marginLeft: 6 }}>← you</span>}
+                </span>
+                <span style={{ fontSize: 11, color: '#3f3f46', flexShrink: 0, marginRight: 8 }}>{entry.correctCount}/{entry.totalCount}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: isMe ? '#6085FF' : scoreColor(i), flexShrink: 0, minWidth: 36, textAlign: 'right' }}>{entry.score}%</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ width: '100%', maxWidth: 400, padding: '16px 24px 28px', flexShrink: 0 }}>
+          <button onClick={() => setPhase('test')}
+            style={{ width: '100%', padding: '13px 0', background: 'transparent', color: '#52525b', border: '1px solid #27272a', borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+            Back to Practice
+          </button>
         </div>
       </div>
     );
   }
 
   /* ── Test ── */
-  const answeredCount = Object.keys(answers).length;
+  const currentQuestion = QUESTIONS[currentIndex] ?? null;
+  const isRevealed = currentQuestion ? !!revealed[currentQuestion.id] : false;
+  const userAnswer = currentQuestion ? (answers[currentQuestion.id] ?? '') : '';
+  const isCorrect = isRevealed && checkAnswer(userAnswer, currentQuestion?.answers ?? []);
+  const isWrong = isRevealed && !!userAnswer && !checkAnswer(userAnswer, currentQuestion?.answers ?? []);
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === QUESTIONS.length - 1;
+  const answeredCount = Object.keys(answers).filter(id => answers[id]).length;
+  const totalCorrect = QUESTIONS.filter(q => checkAnswer(answers[q.id] ?? '', q.answers)).length;
+
   return (
-    <div style={{ minHeight: 'calc(100vh - 56px)', marginTop: 56, background: '#f8fafc' }}>
-      {/* Header */}
-      <div style={{ position: 'sticky', top: 56, zIndex: 10, background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>8월 SAT MATH 실전연습1</span>
-          <span style={{ fontSize: 12, color: '#94a3b8', marginLeft: 12 }}>{answeredCount} / {QUESTIONS.length} answered</span>
+    <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#1e293b', color: '#fff', padding: '12px 24px', borderRadius: 8, fontSize: 14, fontWeight: 600, zIndex: 200, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}>
+          {toast}
         </div>
-        <button onClick={handleSubmit} disabled={submitting || submitted}
-          style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: submitted ? '#94a3b8' : '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 600, cursor: submitting || submitted ? 'not-allowed' : 'pointer' }}>
-          {submitting ? 'Submitting...' : submitted ? 'Submitted' : 'Submit'}
-        </button>
+      )}
+
+      {/* Test header */}
+      <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
+        <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>8월 SAT MATH 실전연습1</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / 30 &nbsp;({totalCorrect} correct)</span>
+          <button onClick={handleSubmit} disabled={submitting || submitted || answeredCount < 1}
+            style={{ padding: '6px 14px', background: submitted ? '#22c55e' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: submitted || submitting || answeredCount < 1 ? 'default' : 'pointer', opacity: answeredCount < 1 ? 0.4 : 1 }}>
+            {submitted ? 'Submitted ✓' : submitting ? 'Submitting...' : 'Submit Results'}
+          </button>
+        </div>
       </div>
 
-      {/* Questions */}
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {QUESTIONS.map((q, idx) => {
-          const userAnswer = answers[q.id] ?? '';
-          const isRevealed = revealed[q.id];
-          const isCorrect = isRevealed && checkAnswer(userAnswer, q.answers);
-          const isWrong = isRevealed && userAnswer && !checkAnswer(userAnswer, q.answers);
+      {/* Question number navigator */}
+      <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
+        <div style={{ display: 'flex', gap: 6, minWidth: 'max-content' }}>
+          {QUESTIONS.map((q, idx) => {
+            const isAnswered = !!answers[q.id];
+            const isCurrent = idx === currentIndex;
+            return (
+              <button key={q.id} onClick={() => setCurrentIndex(idx)}
+                style={{
+                  width: 30, height: 30, borderRadius: 6, border: isCurrent ? '2px solid #1e293b' : '1px solid #e5e7eb',
+                  background: isCurrent ? '#1e293b' : isAnswered ? '#3b82f6' : '#fff',
+                  color: isCurrent ? '#fff' : isAnswered ? '#fff' : '#94a3b8',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                {idx + 1}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-          return (
-            <div key={q.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              {/* Meta */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8' }}>#{idx + 1}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: DIFF_COLOR[q.difficulty] ?? '#64748b', background: `${DIFF_COLOR[q.difficulty]}15`, padding: '2px 8px', borderRadius: 4 }}>{q.difficulty}</span>
-                <span style={{ fontSize: 11, color: '#94a3b8' }}>{q.skill}</span>
-              </div>
-
-              {/* Passage */}
-              {q.passage && q.passage.trim() && (
-                <div style={{ background: '#f8fafc', borderRadius: 8, padding: '14px 16px', marginBottom: 14, fontSize: 14, lineHeight: 1.7, color: '#374151', borderLeft: '3px solid #e5e7eb' }}>
-                  <ContentRenderer content={q.passage} />
+      {/* Question area */}
+      {currentQuestion && (
+        <div className="test-layout" style={{ flex: 1, overflow: 'hidden' }}>
+          {currentQuestion.passage && currentQuestion.passage.trim() ? (
+            <>
+              <div className="test-passage-panel">
+                <div style={{ padding: '24px 28px 24px 24px' }}>
+                  <div className="test-passage-content">
+                    <ContentRenderer content={currentQuestion.passage} />
+                  </div>
                 </div>
-              )}
+              </div>
+              <div className="test-resizer" />
+            </>
+          ) : null}
 
-              {/* Question */}
-              <div style={{ fontSize: 15, color: '#1e293b', lineHeight: 1.7, marginBottom: 18, fontWeight: 500 }}>
-                <ContentRenderer content={q.question} />
+          <div className="test-question-panel" style={currentQuestion.passage && currentQuestion.passage.trim() ? {} : { flex: 1 }}>
+            <div style={{ padding: '24px', maxWidth: 680, margin: '0 auto' }}>
+              {/* Question meta */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 30, height: 30, borderRadius: 6, background: '#1e293b', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                  {currentIndex + 1}
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: DIFF_COLOR[currentQuestion.difficulty] ?? '#64748b' }}>
+                  {currentQuestion.difficulty}
+                </span>
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>{currentQuestion.skill}</span>
               </div>
 
-              {/* Input */}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {/* Question text */}
+              <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}>
+                <ContentRenderer content={currentQuestion.question} />
+              </div>
+
+              {/* SPR input */}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
                 <input
                   type="text"
                   value={userAnswer}
-                  onChange={e => handleAnswer(q.id, e.target.value)}
+                  onChange={e => handleAnswer(currentQuestion.id, e.target.value)}
                   placeholder="Enter answer (e.g. 2/3 or 0.667)"
                   disabled={isRevealed}
                   style={{
@@ -256,10 +409,11 @@ export default function AugustMathPage() {
                     background: isCorrect ? '#f0fdf4' : isWrong ? '#fef2f2' : '#f8fafc',
                     color: '#1e293b', fontSize: 15, outline: 'none',
                   }}
+                  onKeyDown={e => { if (e.key === 'Enter' && userAnswer && !isRevealed) handleReveal(currentQuestion.id); }}
                 />
                 {!isRevealed && userAnswer && (
-                  <button onClick={() => handleReveal(q.id)}
-                    style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#f1f5f9', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <button onClick={() => handleReveal(currentQuestion.id)}
+                    style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                     Check
                   </button>
                 )}
@@ -267,23 +421,34 @@ export default function AugustMathPage() {
 
               {/* Feedback */}
               {isRevealed && (
-                <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, background: isCorrect ? '#f0fdf4' : '#fef2f2', border: `1px solid ${isCorrect ? '#86efac' : '#fca5a5'}` }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: isCorrect ? '#16a34a' : '#dc2626' }}>
-                    {isCorrect ? '✓ Correct' : `✗ Incorrect — Answer: ${q.answers[0]}`}
-                  </span>
+                <div style={{ padding: '14px 16px', background: isCorrect ? '#f0fdf4' : '#fef2f2', border: `1px solid ${isCorrect ? '#86efac' : '#fca5a5'}`, borderRadius: 10 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? '#15803d' : '#dc2626', marginBottom: isWrong ? 4 : 0 }}>
+                    {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                  </p>
+                  {isWrong && (
+                    <p style={{ fontSize: 13, color: '#374151', margin: 0 }}>
+                      Answer: <strong>{currentQuestion.answers[0]}</strong>
+                    </p>
+                  )}
                 </div>
               )}
             </div>
-          );
-        })}
-      </div>
-
-      {/* Toast */}
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#1e293b', color: '#fff', padding: '12px 24px', borderRadius: 8, fontSize: 14, fontWeight: 500, zIndex: 100 }}>
-          {toast}
+          </div>
         </div>
       )}
+
+      {/* Footer nav */}
+      <div className="bluebook-footer" style={{ flexShrink: 0 }}>
+        <button onClick={() => !isFirst && setCurrentIndex(i => i - 1)} disabled={isFirst}
+          style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.4 : 1, color: '#374151' }}>
+          Back
+        </button>
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {QUESTIONS.length}</span>
+        <button className="bluebook-next-btn btn-press" onClick={() => !isLast && setCurrentIndex(i => i + 1)} disabled={isLast}
+          style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}>
+          Next
+        </button>
+      </div>
     </div>
   );
 }

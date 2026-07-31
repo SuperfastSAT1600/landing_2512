@@ -1,0 +1,188 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "src/components/enrollment/enrollment/ManagementFitSection.tsx",
+      "src/app/practice/august-math/page.tsx"
+    ],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/enrollment/enrollment/ManagementFitSection.module.css"
+        ],
+        "createdAt": "2026-07-28T18:56:24.777Z",
+        "reason": "Project uses Docs/design-system.md (tutoring site tokens). DESIGN.md is an ElevenLabs reference doc; enrollment components follow accent-primary #071be9 and accent-glow #6085FF."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/enrollment/enrollment/ManagementFitSection.module.css"
+        ],
+        "createdAt": "2026-07-28T18:56:24.854Z",
+        "reason": "Type scale follows Docs/design-system.md, not DESIGN.md ElevenLabs ramp."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/enrollment/enrollment/ManagementFitSection.module.css"
+        ],
+        "createdAt": "2026-07-28T18:56:24.931Z",
+        "reason": "Border-radius follows Docs/design-system.md scale, not DESIGN.md."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/enrollment-v2/EnrollmentVideoHero.module.css"
+        ],
+        "createdAt": "2026-07-28T18:57:03.685Z",
+        "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/enrollment-v2/EnrollmentV2Page.tsx"
+        ],
+        "createdAt": "2026-07-28T18:57:03.768Z",
+        "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/app/enrollment-v2/enrollment.css"
+        ],
+        "createdAt": "2026-07-28T18:57:03.841Z",
+        "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/enrollment-v2/EnrollmentVideoHero.module.css"
+        ],
+        "createdAt": "2026-07-28T18:57:03.910Z",
+        "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/enrollment-v2/EnrollmentV2Page.tsx"
+        ],
+        "createdAt": "2026-07-28T18:57:03.976Z",
+        "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/app/enrollment-v2/enrollment.css"
+        ],
+        "createdAt": "2026-07-28T18:57:04.060Z",
+        "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/enrollment-v2/EnrollmentVideoHero.module.css"
+        ],
+        "createdAt": "2026-07-28T18:57:04.129Z",
+        "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/enrollment-v2/EnrollmentV2Page.tsx"
+        ],
+        "createdAt": "2026-07-28T18:57:04.207Z",
+        "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/app/enrollment-v2/enrollment.css"
+        ],
+        "createdAt": "2026-07-28T18:57:04.281Z",
+        "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          "src/app/globals.css"
+        ],
+        "createdAt": "2026-07-30T00:00:00.000Z",
+        "reason": "globals.css follows Docs/design-system.md (tutoring site). DESIGN.md is an ElevenLabs reference doc; BookkMyungjo is an intentional brand font for the director package premium section."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/app/globals.css"
+        ],
+        "createdAt": "2026-07-30T00:00:00.000Z",
+        "reason": "globals.css follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to SuperfastSAT color tokens."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(209, 213, 219)",
+        "createdAt": "2026-07-28T22:06:08.071Z",
+        "reason": "ProseMirror style tag cannot use Tailwind; matches existing CoachBioEditor.tsx pattern"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(75, 85, 99)",
+        "createdAt": "2026-07-28T22:06:08.150Z",
+        "reason": "ProseMirror placeholder color in style tag; cannot use Tailwind; matches CoachBioEditor.tsx"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "src/app/coach-onboarding/[token]/SubjectEditorModal.tsx"
+        ],
+        "createdAt": "2026-07-28T22:06:08.227Z",
+        "reason": "Dark background #151719 — gray-300 has sufficient contrast on this surface"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "10px",
+        "createdAt": "2026-07-28T22:27:45.477Z",
+        "reason": "Admin badge labels use 10px throughout; intentional compact labeling pattern"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "src/app/admin/coaches/CoachRow.tsx"
+        ],
+        "createdAt": "2026-07-28T22:29:47.041Z",
+        "reason": "Admin dark UI: gray text on bg-gray-500/10 and bg-white/10 has sufficient contrast on #1e2023 surface; pre-existing intentional pattern"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "11px",
+        "createdAt": "2026-07-28T22:29:57.671Z",
+        "reason": "Admin form section labels use 11px throughout; intentional compact label pattern matching 10px badge pattern"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "src/app/admin/crm/components/EnrolledLeads.tsx"
+        ],
+        "createdAt": "2026-07-29T07:17:44.132Z",
+        "reason": "Admin-only internal tool; inactive tab text-gray-500 on gray-100 is intentional de-emphasis pattern"
+      }
+    ]
+  }
+}
