@@ -5,8 +5,20 @@ import { readFileSync } from 'fs';
 import path from 'path';
 
 export const metadata: Metadata = {
-  title: 'SAT 수업권 | SuperfastSAT',
-  description: '관리형 SAT 코칭 — 1:1, 그룹, 콘텐츠',
+  title: 'SAT목표 점수에 가장 빠르게 | SuperfastSAT',
+  description: '올릴 딱 맞는 수업을 받아보세요',
+  openGraph: {
+    title: 'SAT목표 점수에 가장 빠르게',
+    description: '올릴 딱 맞는 수업을 받아보세요',
+    url: 'https://tutoring.superfastsat.com/enrollment2026',
+    siteName: 'SuperfastSAT',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SAT목표 점수에 가장 빠르게',
+    description: '올릴 딱 맞는 수업을 받아보세요',
+  },
   robots: { index: false },
 };
 
