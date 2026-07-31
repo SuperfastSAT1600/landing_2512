@@ -45,7 +45,7 @@ export function EnrollmentVideoHero({ onExamSelect }: Props) {
       {/* Text content — vertically centered */}
       <div className={styles.content}>
         <h1 className={styles.headline}>
-          올릴 딱 맞는<br />수업을 받아보세요.
+          아이에게<br />딱 맞는 수업을<br />받아보세요.
         </h1>
 
         <p className={styles.examPrompt}>수업이 필요한 과목을 선택하세요</p>
