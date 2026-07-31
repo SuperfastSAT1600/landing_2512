@@ -320,7 +320,7 @@ function APHourPicker() {
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
-            필요한 시간만큼<br />수업을 신청하세요
+            필요한 시간만큼<br />수업 신청도 가능합니다
           </h2>
         </div>
 
@@ -568,8 +568,8 @@ export function APSectionV2() {
     <>
       <APSubjectSection />
       <ManagedShowcase excludeTabs={['단어 공부', '실전 모의고사']} mobileColumns={2} />
-      <APHourPicker />
       <APPricingSection />
+      <APHourPicker />
     </>
   );
 }

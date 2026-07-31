@@ -166,6 +166,17 @@
   50%       { transform: translateY(6px); opacity: 0.75; }
 }
 
+/* ── Mobile: skip video to avoid data cost and autoplay failures ───── */
+@media (max-width: 767px) {
+  .videoBg {
+    display: none;
+  }
+
+  .hero {
+    background: #0a0a18;
+  }
+}
+
 /* ── Reduced motion ────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .videoBg {
