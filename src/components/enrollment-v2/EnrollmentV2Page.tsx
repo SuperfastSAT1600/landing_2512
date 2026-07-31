@@ -849,7 +849,15 @@ export function EnrollmentV2Page() {
   const handleExamSelect = useCallback((e: 'SAT' | 'AP') => {
     setExam(e);
     setTimeout(() => {
-      selectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (e === 'AP') {
+        const el = document.getElementById('v2-ap-subject');
+        if (el) {
+          const y = el.getBoundingClientRect().top + window.scrollY - scrollOffsetRef.current;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      } else {
+        selectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }, 350);
   }, []);
 

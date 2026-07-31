@@ -192,7 +192,7 @@ function APSubjectSection() {
     : [];
 
   return (
-    <section className="py-10 border-t border-white/[0.06]">
+    <section id="v2-ap-subject" className="py-10 border-t border-white/[0.06]">
       <div className="max-w-xl mx-auto px-4">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
@@ -210,7 +210,7 @@ function APSubjectSection() {
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="과목명을 입력하세요 (예: Biology)"
-            className="w-full rounded-2xl border border-white/[0.10] bg-white/[0.04] pl-10 pr-4 py-3.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-white/25 transition-colors"
+            className="w-full rounded-2xl border border-white/30 bg-white/[0.08] pl-10 pr-4 py-3.5 text-sm text-white placeholder:text-white/45 outline-none focus:border-white/50 transition-colors"
           />
           {query && (
             <button
