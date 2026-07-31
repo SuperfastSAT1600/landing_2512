@@ -24,14 +24,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: '/admin/crm', label: 'CRM', icon: '👥' },
     { href: '/admin/srm', label: 'SRM', icon: '📅' },
     { href: '/admin/partner', label: '파트너 센터', icon: '🤝' },
-    {
-        label: '수업권',
-        icon: '🎫',
-        children: [
-            { href: '/admin/enrollment', label: '배포 관리' },
-            { href: '/admin/enrollment2026', label: 'enrollment2026' },
-        ],
-    },
+    { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
 ];
 
 
