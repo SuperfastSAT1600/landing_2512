@@ -352,7 +352,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                           transition={{ delay: 0.45, duration: 0.25, ease: 'easeOut' }}
                           className="text-[12px] font-light text-red-400 leading-snug"
                         >
-                          ~10시간 수업보다<br />{formatWon(savings)} 더 저렴합니다.
+                          ~10시간 수업보다 ({pkg.discountRate}% 할인)<br />{formatWon(savings)} 더 저렴합니다.
                         </motion.p>
 
                         <motion.p
