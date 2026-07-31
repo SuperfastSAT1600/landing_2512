@@ -588,7 +588,7 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
                           마감
                         </span>
                       ) : (
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/55 border border-white/20 tracking-wide">
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 tracking-wide">
                           NEW
                         </span>
                       )}

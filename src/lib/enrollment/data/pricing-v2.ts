@@ -26,6 +26,14 @@ export const GROUP_PACKAGES_V2: GroupPackage[] = [
     durationLabel: '2주 · 주 5일',
     salesLabel: 'new',
   },
+  {
+    id: 'group-theme',
+    name: '테마특강',
+    subtitle: '단기 집중 테마 과정',
+    totalPrice: 240000,
+    durationLabel: '3일 · 6시간 코스',
+    salesLabel: 'new',
+  },
 ];
 
 // ── 비관리형 패키지 (v1과 동일) ─────────────────────────────────────
