@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { ManagedShowcase, UnmanagedShowcase } from '@/components/enrollment/enrollment/ManagedShowcase';
@@ -84,31 +85,40 @@ function EnrollmentStepNav({ navVisible, scrollOffsetRef }: {
   }
 
   return (
-    <div className="fixed left-0 right-0 z-40 bg-black/85 border-b border-white/[0.07]"
+    <div className="fixed left-0 right-0 z-40 border-b border-white/10"
       style={{
         top: 0,
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(0,0,0,0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         opacity: navVisible ? 1 : 0,
         transform: navVisible ? 'translateY(0)' : 'translateY(-100%)',
         pointerEvents: navVisible ? 'auto' : 'none',
         transition: 'opacity 0.3s ease, transform 0.3s ease',
       }}>
-      <div className="flex justify-center">
+      <div className="flex">
         {STEPS.map((step, i) => (
           <button
             key={step.id}
             onClick={() => scrollToAnchor(step.anchor)}
-            className="relative flex items-center gap-1.5 flex-1 max-w-[140px] justify-center py-[13px] text-[11px] font-semibold tracking-wide transition-colors touch-manipulation"
-            style={{ color: active === step.id ? '#fff' : 'rgba(255,255,255,0.3)' }}
+            className="relative flex flex-col items-center justify-center flex-1 py-4 gap-1.5 touch-manipulation transition-colors"
+            style={{ color: active === step.id ? '#fff' : 'rgba(255,255,255,0.35)' }}
           >
-            <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 transition-colors
-              ${active === step.id ? 'bg-white text-black' : 'bg-white/10 text-white/30'}`}>
+            {/* 숫자 배지 */}
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-black flex-shrink-0 transition-all duration-200
+              ${active === step.id
+                ? 'bg-white text-black scale-110'
+                : 'bg-white/10 text-white/35'}`}>
               {i + 1}
             </span>
-            {step.label}
+            {/* 레이블 */}
+            <span className={`text-[13px] font-bold tracking-wide transition-all duration-200
+              ${active === step.id ? 'opacity-100' : 'opacity-40'}`}>
+              {step.label}
+            </span>
+            {/* 활성 인디케이터 */}
             {active === step.id && (
-              <span className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full bg-white/60" />
+              <span className="absolute bottom-0 left-6 right-6 h-[2.5px] rounded-full bg-white" />
             )}
           </button>
         ))}
@@ -170,7 +180,7 @@ const UNMANAGED_FORMAT_OPTIONS: FormatOption[] = [
 
 function GroupIcon({ active }: { active: boolean }) {
   return (
-    <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors
+    <div aria-hidden="true" className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors
       ${active ? 'bg-[#071be9]/10' : 'bg-white/[0.06]'}`}>
       <div className="grid grid-cols-2 gap-[3px]">
         {[...Array(4)].map((_, i) => (
@@ -199,14 +209,14 @@ function ClassFormatPicker({
                 {opt.id === 'group' ? (
                   <GroupIcon active={value === opt.id} />
                 ) : (
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors text-2xl
+                  <div aria-hidden="true" className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors text-2xl
                     ${value === opt.id ? 'bg-[#071be9]/10' : 'bg-white/[0.06]'}`}>
                     {opt.emoji}
                   </div>
                 )}
                 <div>
                   <p className="text-white mb-1" style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em' }}>{opt.name}</p>
-                  <p className="text-[11px] text-white/45 whitespace-pre-line leading-relaxed">{opt.desc}</p>
+                  <p className="text-[13px] text-white/45 whitespace-pre-line leading-relaxed">{opt.desc}</p>
                 </div>
               </div>
             </SelectCard>
@@ -331,7 +341,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                   {/* 오른쪽: 비선택=환불 안내 / 선택=가격 reveal */}
                   <div className="flex-1 text-right">
                     {!isSelected && (
-                      <p className="text-[11px] text-white/40 leading-relaxed">
+                      <p className="text-[13px] text-white/40 leading-relaxed">
                         진행되지 않은 수업 시간은<br />전부 환불됩니다.
                       </p>
                     )}
@@ -343,7 +353,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                           initial={{ opacity: 0, x: 12 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.45, duration: 0.25, ease: 'easeOut' }}
-                          className="text-[11px] font-light text-red-500 leading-relaxed"
+                          className="text-[13px] font-light text-red-500 leading-relaxed"
                         >
                           ({pkg.discountRate}% 할인) 10시간 수업보다 {formatWon(savings)} 더 저렴합니다.
                         </motion.p>
@@ -400,14 +410,14 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
               )}
             </AnimatePresence>
 
-            <div className="relative z-10 flex items-center justify-between gap-4">
+            <div className="relative z-10 flex items-center justify-between gap-4" style={{ fontFamily: "'BookkMyungjo', serif" }}>
               {/* 왼쪽: 프리미엄 뱃지 + 타이틀 */}
               <div className="flex-shrink-0 flex flex-col gap-1.5">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wide self-start">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wide self-start">
                   프리미엄
                 </span>
                 <p className="text-sm font-semibold text-amber-200 leading-snug">
-                  SuperfastSAT 대표코치의<br />1:1 수업
+                  SuperfastSAT 대표코치의 1:1 수업
                 </p>
               </div>
 
@@ -428,7 +438,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                       initial={{ opacity: 0, y: 6, scale: 0.94 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ delay: 0.82, duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
-                      className="text-xl font-light text-amber-200 tracking-widest"
+                      className="text-xl font-light text-amber-200"
                       style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
                     >
                       {formatWon(1800000)}
@@ -441,48 +451,64 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
 
           {/* 대표코치 라인업 */}
           <div ref={coachesRef}>
-          <AnimatePresence>
             {isDirector && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="flex flex-col gap-2"
-              >
-                <p className="text-[11px] font-bold text-amber-300/60 tracking-widest uppercase px-1 pt-2 pb-1">
+              <div className="mt-3">
+                <p className="text-[13px] font-bold text-amber-300/60 tracking-widest uppercase px-1 pb-3">
                   대표코치 라인업
                 </p>
                 {loadingCoaches && (
-                  <div className="flex justify-center py-6">
+                  <div className="flex justify-center py-8">
                     <div className="w-5 h-5 rounded-full border-2 border-amber-400/30 border-t-amber-300 animate-spin" />
                   </div>
                 )}
-                {!loadingCoaches && coaches.map(coach => (
-                  <div key={coach.slug} className="flex gap-3 p-4 rounded-xl bg-amber-500/[0.04] border border-amber-500/20">
-                    {coach.photo && (
-                      <img
-                        src={coach.photo}
-                        alt={coach.name}
-                        className="w-12 h-12 rounded-full object-cover flex-shrink-0 border border-amber-400/20"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-amber-100 text-sm">{coach.name}</span>
-                        {coach.subjects.map(s => (
-                          <span key={s} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/20">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-xs text-white/45 leading-relaxed line-clamp-3">{stripHtml(coach.bio)}</p>
-                    </div>
+                {!loadingCoaches && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {coaches.map(coach => (
+                      <Link
+                        key={coach.slug}
+                        href={`/coaches/${coach.slug}`}
+                        target="_blank"
+                        className="group bg-[#1e2023] rounded-xl overflow-hidden border border-amber-500/15 hover:border-amber-400/40 transition-all duration-200 flex flex-col"
+                      >
+                        <div className="relative aspect-[4/3] overflow-hidden bg-[#111]">
+                          {coach.photo ? (
+                            <img
+                              src={coach.photo}
+                              alt={coach.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-amber-300/30 text-3xl font-bold">
+                              {coach.name[0]}
+                            </div>
+                          )}
+                          {coach.subjects.length > 0 && (
+                            <div className="absolute top-2 left-2 flex gap-1">
+                              {coach.subjects.map(s => (
+                                <span key={s} className="px-1.5 py-0.5 bg-black/60 backdrop-blur-md text-white text-[11px] font-bold rounded-full border border-white/10 uppercase tracking-wide">
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-3 flex-1 flex flex-col">
+                          <p className="text-sm font-bold text-amber-100 mb-1 group-hover:text-amber-300 transition-colors">
+                            {coach.name}
+                          </p>
+                          <p className="text-[13px] text-white/40 leading-relaxed line-clamp-2 flex-1">
+                            {stripHtml(coach.bio)}
+                          </p>
+                          <p className="text-[12px] text-amber-400/60 font-semibold mt-2 group-hover:text-amber-300 transition-colors">
+                            프로필 보기 →
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                ))}
-              </motion.div>
+                )}
+              </div>
             )}
-          </AnimatePresence>
           </div>
         </div>
       </div>
@@ -542,11 +568,11 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
                   <div className="flex-shrink-0">
                     <div className="mb-2">
                       {isSoldOut ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/55 border border-white/20 tracking-wide">
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/55 border border-white/20 tracking-wide">
                           마감
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/55 border border-white/20 tracking-wide">
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/55 border border-white/20 tracking-wide">
                           NEW
                         </span>
                       )}
@@ -557,7 +583,7 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
 
                   <div className="flex-1 text-right">
                     {!isSelected && (
-                      <p className="text-[11px] text-white/40 leading-relaxed">
+                      <p className="text-[13px] text-white/40 leading-relaxed">
                         {pkg.subtitle}
                       </p>
                     )}
@@ -625,14 +651,14 @@ function PackagePicker({
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-white/70">시간</span>
                           {(pkg.salesLabel === 'popular' || pkg.salesLabel === 'bestValue') && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full
                               bg-white text-[#071be9]">
                               {pkg.salesLabel === 'popular' ? '가장 인기' : '최대 할인'}
                             </span>
                           )}
                         </div>
                         {savings > 0 && pkg.discountRate && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full mt-1
                             bg-rose-500/15 text-rose-400 border border-rose-500/20">
                             -{pkg.discountRate}% · {formatWon(savings)} 절약
                           </span>
@@ -641,7 +667,7 @@ function PackagePicker({
                     </div>
                     <div className="text-right">
                       <p className="text-base font-bold text-[#8fabff]">{formatWon(pkg.totalPrice)}</p>
-                      <p className="text-[11px] text-white/35">{formatWon(pkg.pricePerHour)}/h</p>
+                      <p className="text-[13px] text-white/35">{formatWon(pkg.pricePerHour)}/h</p>
                     </div>
                   </div>
                 </SelectCard>
@@ -663,12 +689,12 @@ function PackagePicker({
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-bold text-white">{pkg.name}</span>
                         {pkg.salesLabel === 'popular' && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-[#071be9]">
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white text-[#071be9]">
                             인기
                           </span>
                         )}
                         {pkg.salesLabel === 'new' && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full
                             bg-white/15 text-white/70">
                             NEW
                           </span>
@@ -785,7 +811,7 @@ export function EnrollmentV2Page() {
     const headerHidden = exam !== null && !heroInView;
     if (headerHidden) {
       document.documentElement.classList.add('exam-selected');
-      scrollOffsetRef.current = 44;
+      scrollOffsetRef.current = 72;
     } else {
       document.documentElement.classList.remove('exam-selected');
       scrollOffsetRef.current = 134;
@@ -866,7 +892,7 @@ export function EnrollmentV2Page() {
 
       {/* ── Post-hero content — padded for step nav when visible ──── */}
       <div style={{
-        paddingTop: (exam !== null && !heroInView) ? '44px' : '0px',
+        paddingTop: (exam !== null && !heroInView) ? '72px' : '0px',
         transition: 'padding-top 0.35s ease',
       }}>
 

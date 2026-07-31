@@ -33,13 +33,14 @@ export const metadata: Metadata = {
 import { Racing_Sans_One } from 'next/font/google';
 
 // Outfit removed — body uses Pretendard via --font-sans (globals.css), not Outfit
+// BookkMyungjo loaded via @font-face in globals.css for director package section
 
 const racing = Racing_Sans_One({
   weight: '400',
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-racing',
-  preload: false, // only used in Hero — don't preload on every page
+  preload: false,
 });
 
 export default function RootLayout({
