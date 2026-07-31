@@ -279,19 +279,8 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
       .then((data: HeadCoach[]) => {
         setCoaches(data);
         setLoadingCoaches(false);
-        setTimeout(() => {
-          coachesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 120);
       })
       .catch(() => setLoadingCoaches(false));
-  }, [isDirector, coaches.length]);
-
-  // 이미 로드된 코치가 있으면 바로 스크롤
-  useEffect(() => {
-    if (!isDirector || coaches.length === 0) return;
-    setTimeout(() => {
-      coachesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 120);
   }, [isDirector, coaches.length]);
 
   return (
@@ -347,7 +336,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                   </div>
 
                   {/* 오른쪽: 미클릭=환불 안내 / 클릭됨=가격 유지 */}
-                  <div className="flex-1 text-right flex flex-col justify-center min-h-[3rem]">
+                  <div className="flex-1 text-right flex flex-col justify-center min-h-[5rem]">
                     {!isRevealed && (
                       <p className="text-[13px] text-white/40 leading-relaxed">
                         진행되지 않은 수업 시간은<br />전부 환불됩니다.
@@ -361,9 +350,9 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                           initial={{ opacity: 0, x: 12 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.45, duration: 0.25, ease: 'easeOut' }}
-                          className="text-[13px] font-light text-red-500 leading-relaxed"
+                          className="text-[12px] font-light text-red-400 leading-snug"
                         >
-                          ({pkg.discountRate}% 할인) 10시간 수업보다 {formatWon(savings)} 더 저렴합니다.
+                          ~10시간 수업보다<br />{formatWon(savings)} 더 저렴합니다.
                         </motion.p>
 
                         <motion.p
@@ -461,7 +450,10 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
           <div ref={coachesRef}>
             {isDirector && (
               <div className="mt-3">
-                <p className="text-[13px] font-bold text-amber-300/60 tracking-widest uppercase px-1 pb-3">
+                <p
+                  className="text-[15px] font-bold text-amber-300/60 tracking-widest uppercase pb-3 text-center"
+                  style={{ fontFamily: "'BookkMyungjo', serif" }}
+                >
                   대표코치 라인업
                 </p>
                 {loadingCoaches && (
