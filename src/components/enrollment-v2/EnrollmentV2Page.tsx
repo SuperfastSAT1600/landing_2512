@@ -195,7 +195,7 @@ function ClassFormatPicker({
   value, onChange, options,
 }: { value: CategoryIdV2 | null; onChange: (v: CategoryIdV2) => void; options: FormatOption[] }) {
   return (
-    <section className="px-4 py-10 border-t border-white/[0.06]">
+    <section className="px-4 py-10 border-t border-white/[0.06] min-h-svh flex flex-col justify-center md:min-h-0 md:block">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h2 style={{ fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', wordBreak: 'keep-all' }} className="text-white">
@@ -289,7 +289,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
   }, [isDirector, coaches.length]);
 
   return (
-    <section className="px-4 py-10 border-t border-white/[0.06]">
+    <section className="px-4 py-10 border-t border-white/[0.06] min-h-svh flex flex-col justify-center md:min-h-0 md:block">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
@@ -526,7 +526,7 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
   const selectedId = selectedOption?.type === 'group-package' ? selectedOption.packageId : null;
 
   return (
-    <section className="px-4 py-10 border-t border-white/[0.06]">
+    <section className="px-4 py-10 border-t border-white/[0.06] min-h-svh flex flex-col justify-center md:min-h-0 md:block">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
@@ -629,7 +629,7 @@ function PackagePicker({
   };
 
   return (
-    <section className="px-4 py-8 border-t border-white/[0.06]">
+    <section className="px-4 py-8 border-t border-white/[0.06] min-h-svh flex flex-col justify-center md:min-h-0 md:block">
       <div className="max-w-xl mx-auto">
         <StepHeader step={stepNum} title={titleMap[categoryId]} />
 
