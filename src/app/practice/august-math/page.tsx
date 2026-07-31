@@ -70,9 +70,28 @@ function normalizeAnswer(s: string): string {
   return s.trim().replace(/\s+/g, '').toLowerCase();
 }
 
+function parseNumeric(s: string): number | null {
+  const t = s.trim();
+  const slash = t.indexOf('/');
+  if (slash > 0) {
+    const num = parseFloat(t.slice(0, slash));
+    const den = parseFloat(t.slice(slash + 1));
+    if (!isNaN(num) && !isNaN(den) && den !== 0) return num / den;
+    return null;
+  }
+  const n = parseFloat(t);
+  return isNaN(n) ? null : n;
+}
+
 function checkAnswer(input: string, accepted: string[]): boolean {
   const norm = normalizeAnswer(input);
-  return accepted.some(a => normalizeAnswer(a) === norm);
+  if (accepted.some(a => normalizeAnswer(a) === norm)) return true;
+  const inputNum = parseNumeric(input);
+  if (inputNum === null) return false;
+  return accepted.some(a => {
+    const n = parseNumeric(a);
+    return n !== null && Math.abs(inputNum - n) < 0.001;
+  });
 }
 
 export default function AugustMathPage() {
