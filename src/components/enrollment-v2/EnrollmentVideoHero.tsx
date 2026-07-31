@@ -22,6 +22,14 @@ export function EnrollmentVideoHero({ onExamSelect }: Props) {
     <section id="v2-exam" className={styles.hero} aria-label="히어로 섹션">
       {/* YouTube iframe background */}
       <div className={styles.videoBg}>
+        {/* Poster image — visible on mobile (iframe hidden), covered by iframe on desktop */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://img.youtube.com/vi/3_FyzliFEbw/maxresdefault.jpg"
+          alt=""
+          aria-hidden="true"
+          className={styles.posterImg}
+        />
         <iframe
           src="https://www.youtube.com/embed/3_FyzliFEbw?autoplay=1&mute=1&loop=1&controls=0&rel=0&showinfo=0&playlist=3_FyzliFEbw&playsinline=1"
           title="Ivy League Campus Tour"

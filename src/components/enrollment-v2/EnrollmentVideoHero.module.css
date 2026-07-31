@@ -166,15 +166,22 @@
   50%       { transform: translateY(6px); opacity: 0.75; }
 }
 
-/* ── Mobile: skip video to avoid data cost and autoplay failures ───── */
+/* ── Mobile: hide iframe, show poster image instead ────────────────── */
 @media (max-width: 767px) {
-  .videoBg {
+  .videoBg iframe {
     display: none;
   }
+}
 
-  .hero {
-    background: #0a0a18;
-  }
+/* ── Poster image (visible on mobile; covered by iframe on desktop) ── */
+.posterImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  opacity: 0.45;
 }
 
 /* ── Reduced motion ────────────────────────────────────────────────── */
