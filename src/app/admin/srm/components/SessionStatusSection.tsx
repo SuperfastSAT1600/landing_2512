@@ -94,6 +94,7 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
     try {
       // 출석 클릭 시 이벤트 시작 5분 초과 → 지각 자동 선행 기록
       const LATE_MS = 5 * 60 * 1000;
+      // eslint-disable-next-line react-hooks/purity
       const isLateNow = status === 'on_time' && Date.now() > new Date(ev.startsAt).getTime() + LATE_MS;
       const hasLateLog = studentCurrentLogs.some((l) => l.status === 'late');
       if (isLateNow && !hasLateLog) await postLog('late');
