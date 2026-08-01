@@ -37,7 +37,8 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
     setPayments(json.data ?? []);
   }, [student.id, student.name, adminKey]);
 
-  useEffect(() => { fetchPayments(); }, [fetchPayments]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchPayments(); }, []);
 
   // 화면엔 최신순
   const sorted = [...payments].sort((a, b) => b.paid_at.localeCompare(a.paid_at));
