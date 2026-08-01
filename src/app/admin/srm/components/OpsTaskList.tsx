@@ -23,6 +23,7 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setLoading(true);
     srmFetch(`/api/admin/srm/ops-tasks?date=${date}`)
@@ -31,6 +32,7 @@ export function OpsTaskList({ date, onStudentClick }: Props) {
       .finally(() => setLoading(false));
   }, [date]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setActivitiesLoading(true);
 
