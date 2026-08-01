@@ -216,7 +216,8 @@ export function StudentRoster({ onStudentClick }: Props) {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchStudents(); }, [fetchStudents]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchStudents(); }, []);
 
   const handleAutoLink = async (s: MergedStudent) => {
     if (!s.autoMatch || linking) return;
