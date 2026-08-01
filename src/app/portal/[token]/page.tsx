@@ -59,7 +59,8 @@ export default function PortalPage() {
     else setState('login');
   }, [token, searchParams]);
 
-  useEffect(() => { checkPortal(); }, [checkPortal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { checkPortal(); }, []);
 
   if (state === 'loading') {
     return (
