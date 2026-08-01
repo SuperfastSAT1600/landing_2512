@@ -49,7 +49,7 @@ export default function ReviewsList({ initialReviews }: ReviewsListProps) {
                             </div>
 
                             <h3 className={styles.reviewTitle}>{review.title}</h3>
-                            <p className={styles.fullContent}>"{review.content}"</p>
+                            <p className={styles.fullContent}>&quot;{review.content}&quot;</p>
 
                             <div className={styles.divider} />
 

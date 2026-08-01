@@ -293,9 +293,9 @@ function ReviewWriteForm() {
                             소중한 후기 감사합니다.<br />
                             확인 후 연락처로 리워드를 보내드리겠습니다.
                         </p>
-                        <a href="/" className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold transition-colors">
+                        <Link href="/" className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold transition-colors">
                             홈으로 돌아가기
-                        </a>
+                        </Link>
                     </div>
                 )}
             </div>
