@@ -45,8 +45,9 @@ export function LifecycleTab({ profileId, studentId }: Props) {
     setLoading(false);
   }, [qp]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleComplete = async () => {
     if (!data?.current || acting) return;
