@@ -57,3 +57,11 @@ build/
 /test-results/
 /playwright-report/
 tests/e2e/__screenshots__/
+
+# Preview & preview routes
+/src/app/enrollment-preview/
+/src/app/api/admin/srm/report/
+
+# Local data files & backups
+/src/data/crm.db
+/src/data/reviews.json.bak
