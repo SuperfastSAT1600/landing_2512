@@ -87,7 +87,8 @@ export function MatchQueue({ onLinked }: Props) {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchStudents(); }, [fetchStudents]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchStudents(); }, []);
 
   const handleAutoLink = async (s: UnlinkedStudent) => {
     if (!s.autoMatch || linking) return;
