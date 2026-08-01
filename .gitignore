@@ -65,3 +65,46 @@ tests/e2e/__screenshots__/
 # Local data files & backups
 /src/data/crm.db
 /src/data/reviews.json.bak
+
+# Claude Code workspace (plans, agents, logs, intermediate)
+.agents/
+.claude-upstream/
+.claude/.plan-active
+.claude/plans/
+.claude/docs/
+.claude/skills/
+.claude/logs/
+.claude-cloud/
+.claude/user/
+scheduled_tasks.lock
+slack-poll-cursor.txt
+
+# Temporary files
+*.lock.txt
+*.tmp
+_workspace/
+quest_manage/
+scripts/
+marketing/
+
+# Project-specific data
+Docs/
+PRODUCT.md
+content/posts/
+blog_database/
+blog_archive/
+blog-agent/
+crm/
+pipeline/
+sat/
+srm/
+*.xlsx
+*.csv
+*.md.bak*
+*.jsonl.bak*
+*.js.bak*
+"C\357\200\272vibecodinglanding_2512preview-blog.js"
+"black logo.png"
+"enrollment-direction-preview.html"
+"leads_20260512.xlsx"
+"publish-d55-study-check-landing.js"
