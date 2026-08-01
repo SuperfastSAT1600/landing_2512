@@ -9,6 +9,7 @@ function useAnimationVisible(forceVisible = false) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(forceVisible);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (forceVisible) { setIsVisible(true); return; }
     const el = ref.current;
