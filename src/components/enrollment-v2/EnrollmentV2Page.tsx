@@ -271,9 +271,9 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
     onSelect({ type: 'hour-package', packageId: pkgId });
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isDirector || coaches.length > 0) return;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     setLoadingCoaches(true);
     fetch('/api/coaches/head')
       .then(r => r.json())
