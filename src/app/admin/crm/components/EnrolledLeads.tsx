@@ -5,7 +5,7 @@ import { Loader2, AlertCircle, RotateCcw, Crown, Link2Off, Search } from 'lucide
 import { Student } from '@/types/crm';
 import { getAdminUserName } from '@/lib/admin-user';
 import { RefundModal } from './RefundModal';
-import type { TutoringUser, TutoringStatus } from '@/app/api/admin/srm/tutoring-users/route';
+import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
 
 // ── 분류 타입 ─────────────────────────────────────────────────────────────────
 
@@ -141,21 +141,27 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [refundTarget, setRefundTarget] = useState<Student | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-
     const headers = { 'x-admin-key': adminKey };
-    Promise.all([
-      fetch('/api/crm/students?lead_status=enrolled', { headers }).then(r => r.json()),
-      fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json()),
-    ])
-      .then(([enrolledData, tutoringData]) => {
-        const enrolled: Student[] = enrolledData.data ?? [];
-        const linked: TutoringUser[] = tutoringData.linked ?? [];
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const [enrolledRes, tutoringRes] = await Promise.all([
+          fetch('/api/crm/students?lead_status=enrolled', { headers }).then(r => r.json()),
+          fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json()),
+        ]);
+        const enrolled: Student[] = enrolledRes.data ?? [];
+        const linked: TutoringUser[] = tutoringRes.linked ?? [];
         setEntries(classifyEntries(enrolled, linked));
-      })
-      .catch(err => setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.'))
-      .finally(() => setLoading(false));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [adminKey]);
 
   // 서브 탭별 카운트
