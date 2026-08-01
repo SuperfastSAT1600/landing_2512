@@ -61,7 +61,9 @@ export function EventLogPanel({ event, onClose }: Props) {
     setLoading(false);
   }, [event.id]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSave = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
@@ -127,7 +129,7 @@ export function EventLogPanel({ event, onClose }: Props) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0">
           <div className="flex items-center gap-2.5">
             <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-              isCoach ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+              isCoach ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-900'
             }`}>
               {isCoach ? '수업' : '스터디홀'}
             </span>
