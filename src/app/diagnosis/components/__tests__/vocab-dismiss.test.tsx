@@ -42,17 +42,25 @@ const mockTestData: DiagnosticTestData = {
 };
 
 // Mock framer-motion to avoid animation issues in tests
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef(({ children, ...props }: Record<string, unknown>, ref: React.Ref<HTMLDivElement>) => (
-      <div ref={ref} {...(props as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>
-    )),
-    button: React.forwardRef(({ children, ...props }: Record<string, unknown>, ref: React.Ref<HTMLButtonElement>) => (
-      <button ref={ref} {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>
-    )),
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', () => {
+  const MotionDiv = React.forwardRef(({ children, ...props }: Record<string, unknown>, ref: React.Ref<HTMLDivElement>) => (
+    <div ref={ref} {...(props as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>
+  ));
+  MotionDiv.displayName = 'motion.div';
+
+  const MotionButton = React.forwardRef(({ children, ...props }: Record<string, unknown>, ref: React.Ref<HTMLButtonElement>) => (
+    <button ref={ref} {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>
+  ));
+  MotionButton.displayName = 'motion.button';
+
+  return {
+    motion: {
+      div: MotionDiv,
+      button: MotionButton,
+    },
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
 
 // Mock the hooks
 vi.mock('../../hooks/useTestTimer', () => ({
