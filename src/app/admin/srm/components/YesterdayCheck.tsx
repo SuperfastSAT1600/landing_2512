@@ -71,7 +71,6 @@ export function YesterdayCheck({ date, onStudentClick }: Props) {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     setLoading(true);
     setData(null);
     srmFetch(`/api/admin/srm/yesterday-check?date=${date}`)
