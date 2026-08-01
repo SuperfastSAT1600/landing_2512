@@ -45,8 +45,8 @@ export default function TrafficPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => { fetchStats(activeChannel) }, [activeChannel, fetchStats])
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchStats(activeChannel) }, [activeChannel])
 
   const handleTab = (ch: ChannelFilter) => { setActiveChannel(ch); setStats(null) }
 
