@@ -60,7 +60,8 @@ export function AlertLogPanel({ alert, onClose }: Props) {
     setLoading(false);
   }, [alert.studentId]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchData(); }, []);
 
   const handleSave = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
