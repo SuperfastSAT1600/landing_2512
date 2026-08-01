@@ -8,6 +8,7 @@ export function useAdminAuth() {
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const storedKey = typeof window !== 'undefined'
       ? (localStorage.getItem('admin_key') || localStorage.getItem('adminKey'))
