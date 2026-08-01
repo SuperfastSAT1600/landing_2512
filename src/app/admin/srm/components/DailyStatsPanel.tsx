@@ -68,6 +68,7 @@ export function DailyStatsPanel({ date }: Props) {
   const [trendStats, setTrendStats] = useState<DayStats[]>([]);
 
   // 업무 달성률 (기존)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setLoading(true);
     Promise.all([
@@ -91,6 +92,7 @@ export function DailyStatsPanel({ date }: Props) {
   }, [date]);
 
   // 출석률·이탈률 통계
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setStatsLoading(true);
     const endDate = date;
