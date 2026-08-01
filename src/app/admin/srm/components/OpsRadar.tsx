@@ -107,8 +107,9 @@ export function OpsRadar({ onStudentClick }: Props) {
     setLoading(false);
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleIssueUpdated = (updated: BaseIssue) => {
     setOpenIssues((prev) => {
