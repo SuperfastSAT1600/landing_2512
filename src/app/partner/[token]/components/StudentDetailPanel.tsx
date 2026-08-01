@@ -105,9 +105,9 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
       .finally(() => setLoading(false));
   }, [partnerToken, studentToken, adminKey]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (tab !== 'report' || report || reportLoading) return;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     setReportLoading(true);
     setReportError(null);
     const headers: HeadersInit = adminKey ? { 'x-admin-key': adminKey } : {};
