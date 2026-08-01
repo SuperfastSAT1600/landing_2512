@@ -28,6 +28,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
         const cell = editor.getAttributes('tableCell');
         const headerCell = editor.getAttributes('tableHeader');
         const attrs = cell.colwidth ? cell : headerCell.colwidth ? headerCell : {};
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         setColWidth(attrs.colwidth?.[0]?.toString() ?? '');
     }, [editor?.state.selection, editor]);
 
