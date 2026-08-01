@@ -23,12 +23,12 @@ const divider = <div className="w-px h-5 bg-white/10 mx-0.5" />;
 export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
     const [colWidth, setColWidth] = useState('');
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (!editor) return;
         const cell = editor.getAttributes('tableCell');
         const headerCell = editor.getAttributes('tableHeader');
         const attrs = cell.colwidth ? cell : headerCell.colwidth ? headerCell : {};
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         setColWidth(attrs.colwidth?.[0]?.toString() ?? '');
     }, [editor?.state.selection, editor]);
 
