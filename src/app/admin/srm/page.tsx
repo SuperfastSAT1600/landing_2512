@@ -93,9 +93,9 @@ export default function SrmPage() {
   const [selectedAlertLog, setSelectedAlertLog] = useState<FlatAlert | null>(null);
   const [openIssues, setOpenIssues] = useState<EventIssue[]>([]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (mainTab !== 'queue') return;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     setScheduleLoading(true);
     setSchedule(null);
     srmFetch(`/api/admin/srm/schedule?date=${selectedDate}`)
@@ -125,6 +125,7 @@ export default function SrmPage() {
       .finally(() => setScheduleLoading(false));
   }, [selectedDate, mainTab]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (mainTab !== 'queue') return;
     setAlertsLoading(true);
