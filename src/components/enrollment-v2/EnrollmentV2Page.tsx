@@ -273,6 +273,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
 
   useEffect(() => {
     if (!isDirector || coaches.length > 0) return;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setLoadingCoaches(true);
     fetch('/api/coaches/head')
       .then(r => r.json())
