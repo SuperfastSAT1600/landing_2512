@@ -36,6 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const isMobile = useIsMobile();
 
     // Close the mobile nav drawer whenever the route changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         setNavOpen(false);
     }, [pathname]);
