@@ -95,6 +95,7 @@ export default function SrmPage() {
 
   useEffect(() => {
     if (mainTab !== 'queue') return;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setScheduleLoading(true);
     setSchedule(null);
     srmFetch(`/api/admin/srm/schedule?date=${selectedDate}`)
