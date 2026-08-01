@@ -96,7 +96,8 @@ export function useEditorSetup() {
             pendingContentRef.current = null;
             setPendingContent(null);
         }
-    }, [editor, pendingContent]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editor]);
 
     function loadContent(content: string) {
         pendingContentRef.current = content;
