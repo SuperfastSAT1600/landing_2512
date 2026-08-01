@@ -61,9 +61,10 @@ export function EventLogPanel({ event, onClose }: Props) {
     setLoading(false);
   }, [event.id]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, []);
 
   const handleSave = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
