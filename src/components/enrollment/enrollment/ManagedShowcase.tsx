@@ -639,11 +639,11 @@ const UNMANAGED_TAB_LABELS = ['맞춤형 수업', '학습 리포트', '단어 �
 export function UnmanagedShowcase() {
   const [activeTab, setActiveTab] = useState(0);
   const [userInteracted, setUserInteracted] = useState(false);
-  const directionRef = useRef(1);
+  const [direction, setDirection] = useState(1);
   const reduce = useReducedMotion();
 
   const handleTabClick = useCallback((idx: number) => {
-    directionRef.current = idx >= activeTab ? 1 : -1;
+    setDirection(idx >= activeTab ? 1 : -1);
     setActiveTab(idx);
     setUserInteracted(true);
   }, [activeTab]);
@@ -651,7 +651,7 @@ export function UnmanagedShowcase() {
   useEffect(() => {
     if (userInteracted) return;
     const iv = setInterval(() => {
-      directionRef.current = 1;
+      setDirection(1);
       setActiveTab(prev => (prev + 1) % UNMANAGED_TAB_LABELS.length);
     }, 5000);
     return () => clearInterval(iv);
@@ -685,12 +685,12 @@ export function UnmanagedShowcase() {
       </div>
 
       <div className={styles.tabPanel}>
-        <AnimatePresence mode="wait" initial={false} custom={directionRef.current}>
+        <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
             key={activeTab}
             id={`un-tab-panel-${activeTab}`}
             role="tabpanel"
-            custom={directionRef.current}
+            custom={direction}
             variants={reduce ? undefined : PANEL_VARIANTS}
             initial={reduce ? false : 'enter'}
             animate="center"
@@ -763,11 +763,11 @@ export function ManagedShowcase({
 
   const [activeTab, setActiveTab] = useState(0);
   const [userInteracted, setUserInteracted] = useState(false);
-  const directionRef = useRef(1);
+  const [direction, setDirection] = useState(1);
   const reduce = useReducedMotion();
 
   const handleTabClick = useCallback((idx: number) => {
-    directionRef.current = idx >= activeTab ? 1 : -1;
+    setDirection(idx >= activeTab ? 1 : -1);
     setActiveTab(idx);
     setUserInteracted(true);
   }, [activeTab]);
@@ -775,7 +775,7 @@ export function ManagedShowcase({
   useEffect(() => {
     if (userInteracted) return;
     const iv = setInterval(() => {
-      directionRef.current = 1;
+      setDirection(1);
       setActiveTab(prev => (prev + 1) % tabs.length);
     }, 5000);
     return () => clearInterval(iv);
@@ -814,13 +814,13 @@ export function ManagedShowcase({
       </div>
 
       <div className={styles.tabPanel}>
-        <AnimatePresence mode="wait" initial={false} custom={directionRef.current}>
+        <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
             key={activeTab}
             id={`tab-panel-${activeTab}`}
             role="tabpanel"
             aria-labelledby={`tab-${activeTab}`}
-            custom={directionRef.current}
+            custom={direction}
             variants={reduce ? undefined : PANEL_VARIANTS}
             initial={reduce ? false : 'enter'}
             animate="center"
