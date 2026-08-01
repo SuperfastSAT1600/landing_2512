@@ -38,17 +38,15 @@ export function LifecycleTab({ profileId, studentId }: Props) {
 
   const qp = studentId ? `studentId=${studentId}` : `profileId=${profileId}`;
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    const res = await srmFetch(`/api/admin/srm/lifecycle?${qp}`);
-    setData(await res.json());
-    setLoading(false);
-  }, [qp]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const res = await srmFetch(`/api/admin/srm/lifecycle?${qp}`);
+      setData(await res.json());
+      setLoading(false);
+    };
     fetchData();
-  }, []);
+  }, [qp]);
 
   const handleComplete = async () => {
     if (!data?.current || acting) return;
