@@ -7,7 +7,7 @@ import {
 import { BookOpen, Activity, Filter, Layers, Brain, Database, Search } from 'lucide-react';
 
 export default function DashboardClient() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Filters
