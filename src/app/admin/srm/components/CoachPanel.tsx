@@ -57,10 +57,11 @@ export function CoachPanel({ coachId, coachName, relatedStudents, onClose }: Pro
     setLoadingIssues(false);
   }, [coachId]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchComms();
     fetchIssues();
-  }, [fetchComms, fetchIssues]);
+  }, []);
 
   const handleAdd = async (data: { parties: string[]; channel: string; content: string; reason?: string; resolution?: string }) => {
     setSaving(true);
