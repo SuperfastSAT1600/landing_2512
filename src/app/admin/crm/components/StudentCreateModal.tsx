@@ -5,11 +5,11 @@ import { X } from 'lucide-react';
 import {
   Student, DesiredSubjects, PreviousScoreStatus, SchoolType, ContactType,
   InquiryChannel, TrafficSource, ContentAuthor, LeadType, B2BPartner,
-  TIMEZONE_OPTIONS,
   INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
   GRADE_OPTIONS,
 } from '@/types/crm';
 import { Field, inputCls, selectCls } from './form-primitives';
+import { TimezoneCombobox } from './TimezoneCombobox';
 import { useCompanies } from '@/hooks/useCompanies';
 
 interface StudentCreateModalProps {
@@ -312,11 +312,11 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
 
           {/* 학생 거주 시간대 */}
           <Field label="학생 거주 시간대">
-            <select value={form.parent_timezone} onChange={set('parent_timezone')} className={selectCls}>
-              {TIMEZONE_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            <TimezoneCombobox
+              value={form.parent_timezone}
+              onChange={tz => setForm(prev => ({ ...prev, parent_timezone: tz }))}
+              className={selectCls}
+            />
           </Field>
 
           {/* 연락 수단 + 연락처 */}
