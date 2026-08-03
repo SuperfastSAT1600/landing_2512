@@ -39,14 +39,14 @@ describe('mapStudentToPrefill', () => {
 
 describe('buildSignupUrl', () => {
   it('builds the tutoring signup URL and encodes the token', () => {
-    expect(buildSignupUrl('https://app.superfastsat.com', 'abc123')).toBe(
-      'https://app.superfastsat.com/signup/tutoring?token=abc123',
+    expect(buildSignupUrl('https://app.superfastsat.io', 'abc123')).toBe(
+      'https://app.superfastsat.io/signup/tutoring?token=abc123',
     );
   });
 
   it('strips a trailing slash from the base', () => {
-    expect(buildSignupUrl('https://app.superfastsat.com/', 'tok')).toBe(
-      'https://app.superfastsat.com/signup/tutoring?token=tok',
+    expect(buildSignupUrl('https://app.superfastsat.io/', 'tok')).toBe(
+      'https://app.superfastsat.io/signup/tutoring?token=tok',
     );
   });
 });
