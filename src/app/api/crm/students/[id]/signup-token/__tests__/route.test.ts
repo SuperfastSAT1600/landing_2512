@@ -53,7 +53,7 @@ describe('POST /api/crm/students/[id]/signup-token', () => {
     const body = await res.json();
     expect(res.status).toBe(201);
     expect(body.signup_token).toMatch(/^[0-9a-f]{32}$/);
-    expect(body.signup_url).toContain('/signup/tutoring?token=');
+    expect(body.signup_url).toBe(`https://app.superfastsat.io/signup/tutoring?token=${body.signup_token}`);
     expect(mockUpdate).toHaveBeenCalledTimes(1);
   });
 
