@@ -95,6 +95,24 @@ describe('buildStatsDetail — leads 계열', () => {
     ]);
     expect(r.kind === 'leads' && r.items[0].is_paid).toBe(false);
   });
+
+  it('first_memo_at — consultation_timeline 중 가장 이른 created_at', () => {
+    const s = student({
+      name: 'A',
+      consultation_timeline: [
+        { created_at: '2026-06-10T09:00:00Z' },
+        { created_at: '2026-06-03T02:00:00Z' }, // 가장 이른 기록
+        { created_at: '2026-06-07T00:00:00Z' },
+      ],
+    });
+    const r = buildStatsDetail('leads', [s], []);
+    expect(r.kind === 'leads' && r.items[0].first_memo_at).toBe('2026-06-03T02:00:00Z');
+  });
+
+  it('first_memo_at — 상담메모 없으면 null', () => {
+    const r = buildStatsDetail('leads', [student({ name: 'A' })], []);
+    expect(r.kind === 'leads' && r.items[0].first_memo_at).toBeNull();
+  });
 });
 
 describe('buildStatsDetail — source 필터 (채널 드릴다운)', () => {

@@ -12,7 +12,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 // buildStatsDetail가 요구하는 컬럼 + 귀속 판정 컬럼 + segment 필터용 company_id
 const COLS =
-  'id,name,funnel_stage,stage_history,lead_status,churn_tag,traffic_source,inquiry_date,created_at,strategy_history,retry_strategy_id,retry_assigned_at,company_id';
+  'id,name,funnel_stage,stage_history,lead_status,churn_tag,traffic_source,inquiry_date,created_at,strategy_history,retry_strategy_id,retry_assigned_at,company_id,consultation_timeline';
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
