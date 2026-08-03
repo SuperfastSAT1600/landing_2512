@@ -30,6 +30,7 @@ export interface LeadDetailItem {
   churn_tag: string | null; // 이탈 사유 (이탈 리드만 값 존재)
   date: string | null; // inquiry_date ?? created_at
   is_paid: boolean; // 최초결제 완료 여부 — 상태 뱃지(결제) 판별용
+  first_memo_at: string | null; // consultation_timeline 중 가장 이른 기록 시각(ISO) — 첫 상담메모기록일
 }
 
 /** kind=payments 항목: 결제/환불 행 */
@@ -60,6 +61,7 @@ type StudentRow = {
   inquiry_date: string | null;
   created_at: string;
   retry_strategy_id?: string | null;
+  consultation_timeline?: { created_at?: string | null }[] | null;
 };
 
 type PaymentRow = {
@@ -78,6 +80,15 @@ function netAmount(p: { amount: number; tax_type?: string | null }): number {
   return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
 }
 
+/** consultation_timeline 중 가장 이른 created_at(ISO). 기록 없으면 null. */
+function firstMemoAt(s: StudentRow): string | null {
+  const times = (s.consultation_timeline ?? [])
+    .map((e) => e?.created_at)
+    .filter((t): t is string => !!t);
+  if (times.length === 0) return null;
+  return times.reduce((a, b) => (a < b ? a : b));
+}
+
 function toLeadItem(s: StudentRow, paid = false): LeadDetailItem {
   return {
     id: s.id,
@@ -88,6 +99,7 @@ function toLeadItem(s: StudentRow, paid = false): LeadDetailItem {
     churn_tag: s.churn_tag ?? null,
     date: s.inquiry_date ?? s.created_at ?? null,
     is_paid: paid,
+    first_memo_at: firstMemoAt(s),
   };
 }
 
