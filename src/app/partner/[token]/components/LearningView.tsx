@@ -312,7 +312,6 @@ function StudentHeaderRow({
 
 function DailyPivotTable({
   students,
-  startIndex,
   onSelect,
   faded,
 }: {
@@ -359,7 +358,6 @@ function DailyPivotTable({
 
 function CumulativePivotTable({
   students,
-  startIndex,
   onSelect,
   faded,
 }: {

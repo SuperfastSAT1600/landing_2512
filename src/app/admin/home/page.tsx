@@ -44,7 +44,7 @@ export default function AdminHomeConfig() {
             } else {
                 setMessage('저장 실패.');
             }
-        } catch (e) {
+        } catch {
             setMessage('Error saving config.');
         } finally {
             setSaving(false);

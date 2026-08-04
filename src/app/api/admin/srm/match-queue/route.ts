@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
   // sfv2 조회 실패해도 전체 명단은 반환
   let byPhone = new Map<string, { id: string; full_name: string }>();
   // full_name → 매칭 프로필 목록 (unique 확인용)
-  let byName = new Map<string, Array<{ id: string; full_name: string }>>();
+  const byName = new Map<string, Array<{ id: string; full_name: string }>>();
   try {
     // 전화번호 매칭
     const { data: phoneMatches } = phones.length > 0

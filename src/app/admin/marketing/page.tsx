@@ -45,7 +45,7 @@ function HeroWidget({
 }) {
   const {
     this_week_total, weekly_target, pace_prediction, yoy_week_total,
-    yoy_week_label, week_label, days_elapsed, week_start,
+    week_label, days_elapsed,
     this_week_contact_rate, this_week_conversion_rate,
     this_week_revenue, this_week_roas, this_week_ad_spend,
   } = weekly;

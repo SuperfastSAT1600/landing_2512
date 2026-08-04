@@ -104,7 +104,6 @@ function MatchingRow({ stage, students, onStudentClick, onChurn, onSendOffer }: 
 
 export function MatchingKanban({
   students,
-  assignments,
   adminKey,
   onStudentUpdate,
   onStudentClick,

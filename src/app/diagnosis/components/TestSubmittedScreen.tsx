@@ -7,7 +7,7 @@ interface Props {
   resultId: string | null;
 }
 
-export function TestSubmittedScreen({ resultId }: Props) {
+export function TestSubmittedScreen({}: Props) {
   return (
     <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#F4F5F9' }}>
       <motion.div

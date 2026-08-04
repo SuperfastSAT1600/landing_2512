@@ -270,8 +270,6 @@ async function generateStudyHallNarrative(
       })[0]
     : null;
 
-  const perfCtx = stats.accuracy >= 85 ? '우수한 성취' : stats.accuracy >= 70 ? '안정적인 수준' : stats.accuracy >= 50 ? '보완이 필요한 구간' : '기초 강화가 필요한 단계';
-
   const hasCrossRef = (tcCrossRef?.length ?? 0) > 0;
   const isShortSession = stats.totalProblems < 15 || stats.skills.length === 0;
 
@@ -532,8 +530,6 @@ async function generateTestCenterNarrative(
       }).join('\n');
     return `${header}\n${skillDetail}`;
   });
-  const lessonLines = lessonBlocks.join(' | ');
-
   const hasRWLessons = stats.lessons.some(l => l.total === 27);
   const hasMathLessons = stats.lessons.some(l => l.total === 22);
   const isFullLength = hasRWLessons && hasMathLessons;

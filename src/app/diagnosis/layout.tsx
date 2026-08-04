@@ -1,7 +1,5 @@
 'use client';
 
-import FloatingCTA from '../components/FloatingCTA';
-
 export default function DiagnosisLayout({
   children,
 }: {

@@ -33,7 +33,6 @@ function suggestStatus(
   sessions: { started_at: string; ended_at: string | null }[],
   eventStartsAt: string,
   eventEndsAt: string,
-  _eventType: 'study_hall' | 'vocab',
 ): SessionStatus | null {
   const now = Date.now();
   const eventStart = new Date(eventStartsAt).getTime();
@@ -174,7 +173,7 @@ export async function GET(req: NextRequest) {
           const sorted = [...sessions].sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime());
           return {
             studentId,
-            suggestedStatus: suggestStatus(sessions, ev.startsAt, ev.endsAt, 'study_hall'),
+            suggestedStatus: suggestStatus(sessions, ev.startsAt, ev.endsAt),
             joinedAt: sorted[0]?.started_at ?? null,
             lastEndedAt: sorted[sorted.length - 1]?.ended_at ?? null,
             sessionCount: sessions.length,

@@ -93,11 +93,6 @@ function countByGroup(students: StudentRow[]): Record<MarketingGroup, number> {
   return counts;
 }
 
-// 날짜 문자열(YYYY-MM-DD)이 [from, to] 범위에 속하는지 확인
-function inRange(dateStr: string, from: string, to: string): boolean {
-  return dateStr >= from && dateStr <= to;
-}
-
 function getInquiryDate(s: Pick<StudentRow, 'inquiry_date'>): string {
   return s.inquiry_date!.slice(0, 10);
 }
@@ -120,7 +115,6 @@ export async function GET(request: NextRequest) {
   // ── REQ-001/002: 날짜 범위 계산 (12주 + YoY) ─────────────────────────────
   // 12주 hist: week-1 ~ week-12
   let histFrom = weekStart;
-  let histTo = weekStart; // 이번 주 시작 전날
   for (let i = 1; i <= 12; i++) {
     let w = week - i;
     let y = year;
@@ -129,8 +123,8 @@ export async function GET(request: NextRequest) {
       const dec28 = new Date(Date.UTC(y, 11, 28));
       w = getISOWeekNumber(dec28) + w;
     }
-    const { start, end } = getISOWeekBounds(y, w);
-    if (i === 1) { histTo = end; histFrom = start; }
+    const { start } = getISOWeekBounds(y, w);
+    if (i === 1) { histFrom = start; }
     else if (start < histFrom) histFrom = start;
   }
 

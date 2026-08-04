@@ -42,7 +42,7 @@ interface AddFormProps {
 
 const ALL_PARTIES = ['student', 'parent', 'coach', 'us'] as const;
 
-export function AddForm({ onSave, saving, triggerContext, eventContext, noBorder }: AddFormProps) {
+export function AddForm({ onSave, saving, triggerContext, noBorder }: AddFormProps) {
   const [parties, setParties] = useState<Set<string>>(new Set(['student']));
   const [channel] = useState<string>('kakao');
   const [content, setContent] = useState('');

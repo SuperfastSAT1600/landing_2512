@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Badge } from '@/components/enrollment/ui/Badge';
 import type { ManagementType } from '@/types/enrollment';
 import styles from './ManagementFitSection.module.css';
 
@@ -166,7 +165,7 @@ interface FitCardProps {
   onThumbnailClick: () => void;
 }
 
-function FitCard({ name, icon, recommended, personas, selected, onSelect, onThumbnailClick }: FitCardProps) {
+function FitCard({ name, icon, personas, selected, onSelect, onThumbnailClick }: FitCardProps) {
   const reduce = useReducedMotion();
 
   return (
@@ -225,7 +224,7 @@ interface ManagementFitSectionProps {
 }
 
 export const ManagementFitSection = React.forwardRef<HTMLDivElement, ManagementFitSectionProps>(
-  function ManagementFitSection({ managementType, showcaseOpen, onSelect, onThumbnailClick, hideHeading }, ref) {
+  function ManagementFitSection({ managementType, onSelect, onThumbnailClick, hideHeading }, ref) {
     const reduce = useReducedMotion();
 
     const cards = [

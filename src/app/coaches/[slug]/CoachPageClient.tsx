@@ -90,7 +90,7 @@ function ReviewCard({ review }: { review: ReviewData }) {
                 {review.title && (
                     <h4 className="text-white font-bold text-[1.35rem] leading-snug mb-3">{review.title}</h4>
                 )}
-                <p className="text-gray-200 text-base leading-[1.7] mb-5">"{review.content}"</p>
+                <p className="text-gray-200 text-base leading-[1.7] mb-5">&quot;{review.content}&quot;</p>
                 <div className="h-px bg-white/10 mb-4" />
                 <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -106,7 +106,7 @@ function ReviewCard({ review }: { review: ReviewData }) {
 
 const PROSE = 'prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-[#071be9] prose-strong:text-gray-900 prose-li:text-gray-600';
 
-export default function CoachPageClient({ coach, introHtml, introThumbnail, curriculumHtml, curriculumThumbnail, articles, reviews, reelShortcodes }: CoachPageClientProps) {
+export default function CoachPageClient({ coach, introHtml, curriculumHtml, curriculumThumbnail, articles, reviews, reelShortcodes }: CoachPageClientProps) {
     const [activeTab, setActiveTab] = useState<Tab>('intro');
     const isDark = activeTab === 'articles' || activeTab === 'reviews' || activeTab === 'reels';
 
