@@ -8,7 +8,7 @@ import { BookOpen, Activity, Filter, Layers, Brain, Database, Search } from 'luc
 
 export default function DashboardClient() {
   const [data, setData] = useState<{
-    metadata: { skill: string; difficulty: string };
+    metadata: { skill: string; difficulty: string; question_id?: string };
     content?: { passage?: string; question_text?: string; explanation?: string };
     analysis?: {
       passage_logical_flow?: string;
