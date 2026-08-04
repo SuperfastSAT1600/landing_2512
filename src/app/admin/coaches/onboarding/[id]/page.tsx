@@ -76,7 +76,7 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
       <main className="p-8 pb-20 max-w-3xl space-y-6">
         {/* Header */}
         <div>
-          <Link href="/admin/coaches/onboarding" className="text-xs text-gray-500 hover:text-gray-400 mb-1 block">← 온보딩 목록</Link>
+          <Link href="/admin/coaches/onboarding" className="text-xs text-gray-500 hover:text-gray-400 mb-1 block">← 프로필 작성 현황</Link>
           <div className="flex items-center gap-3 mt-1">
             <h1 className="text-2xl font-bold text-white">{data.name}</h1>
             {data.is_head_coach_eligible && (
