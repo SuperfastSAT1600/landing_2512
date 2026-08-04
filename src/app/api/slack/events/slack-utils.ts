@@ -99,18 +99,20 @@ export async function getDraftFromThread(
     if (meta) return meta;
   }
 
-  // 2. 스레드에 없으면 채널 최근 메시지에서 가장 최근 초안 탐색
+  // 2. 스레드에 없으면 채널 최근 메시지에서 가장 최근 초안 탐색 (newest-first)
   const histRes = await fetch(
     `https://slack.com/api/conversations.history?channel=${channel}&limit=50`,
     { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
   );
   const histData = await histRes.json() as { messages?: { text: string; bot_id?: string; reply_count?: number; ts?: string }[] };
   for (const msg of histData.messages ?? []) {
-    if (!msg.bot_id) continue;
-    const meta = parseDraftMeta(msg.text ?? '');
-    if (meta) return meta;
-    // 스레드가 있는 메시지면 그 스레드도 탐색
-    if (msg.reply_count && msg.ts) {
+    // 최상위 봇 메시지에 직접 메타가 있는 경우 (admin trigger 등)
+    if (msg.bot_id) {
+      const meta = parseDraftMeta(msg.text ?? '');
+      if (meta) return meta;
+    }
+    // 유저/봇 메시지 모두: 스레드가 있으면 그 안에서 탐색
+    if ((msg.reply_count ?? 0) > 0 && msg.ts) {
       const repRes = await fetch(
         `https://slack.com/api/conversations.replies?channel=${channel}&ts=${msg.ts}&limit=20`,
         { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
