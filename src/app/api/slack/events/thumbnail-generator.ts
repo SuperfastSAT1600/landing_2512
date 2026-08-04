@@ -1,6 +1,35 @@
 import OpenAI from 'openai';
 
-async function generateImageB64(focusKeyword: string): Promise<string> {
+async function uploadBuffer(buffer: Uint8Array, slug: string, prefix: string): Promise<string> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const path = `${year}/${month}/${prefix}-${slug}-${Date.now()}.png`;
+
+  const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/uploads/${path}`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+      'Content-Type': 'image/png',
+      'x-upsert': 'false',
+    },
+    body: buffer as BodyInit,
+  });
+
+  if (!uploadRes.ok) {
+    const err = await uploadRes.text();
+    throw new Error(`Supabase Storage 업로드 실패: ${uploadRes.status} ${err}`);
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/uploads/${path}`;
+}
+
+// Ghost용: 흑백 미니멀 AI 일러스트
+export async function generateGhostThumbnail(focusKeyword: string, slug: string): Promise<string> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const prompt = `Minimalist monochrome illustration for a blog thumbnail.
@@ -21,43 +50,26 @@ Aesthetic reference: Notion, Slack, Airbnb product illustration style.`;
     n: 1,
   });
 
-  // gpt-image-1은 b64_json 반환
   const b64 = res.data?.[0]?.b64_json;
   if (!b64) throw new Error('gpt-image-1 이미지 데이터를 받지 못했습니다.');
-  return b64;
-}
-
-async function uploadToSupabase(b64: string, slug: string): Promise<string> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
   const buffer = Buffer.from(b64, 'base64');
-
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const path = `${year}/${month}/thumbnail-${slug}-${Date.now()}.png`;
-
-  const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/uploads/${path}`, {
-    method: 'POST',
-    headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
-      'Content-Type': 'image/png',
-      'x-upsert': 'false',
-    },
-    body: buffer,
-  });
-
-  if (!uploadRes.ok) {
-    const err = await uploadRes.text();
-    throw new Error(`Supabase Storage 업로드 실패: ${uploadRes.status} ${err}`);
-  }
-
-  return `${supabaseUrl}/storage/v1/object/public/uploads/${path}`;
+  return uploadBuffer(buffer, slug, 'ghost');
 }
 
+// 랜딩용: 제목이 박힌 브랜딩 OG 이미지 → 정적 저장
+export async function generateLandingThumbnail(title: string, slug: string): Promise<string> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfastsat.com';
+  const ogUrl = `${baseUrl}/api/og?title=${encodeURIComponent(title)}&category=SAT`;
+
+  const res = await fetch(ogUrl);
+  if (!res.ok) throw new Error(`OG 이미지 fetch 실패: ${res.status}`);
+
+  const arrayBuf = await res.arrayBuffer();
+  const buffer = Buffer.from(arrayBuf);
+  return uploadBuffer(buffer, slug, 'landing');
+}
+
+// 하위 호환 — Ghost 썸네일 생성 (기존 호출부 유지)
 export async function generateAndUploadThumbnail(focusKeyword: string, slug: string): Promise<string> {
-  const b64 = await generateImageB64(focusKeyword);
-  return uploadToSupabase(b64, slug);
+  return generateGhostThumbnail(focusKeyword, slug);
 }

@@ -26,7 +26,7 @@ function makeGhostJwt(): string {
 
 
 export async function saveGhostDraft(
-  title: string, html: string, slug: string, customExcerpt = ''
+  title: string, html: string, slug: string, customExcerpt = '', featureImageUrl = ''
 ): Promise<{ id: string; url: string }> {
   const jwt = makeGhostJwt();
   const res = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/?source=html`, {
@@ -36,6 +36,7 @@ export async function saveGhostDraft(
       posts: [{
         title, html: html + CTA_HTML, slug, status: 'draft',
         custom_excerpt: customExcerpt.slice(0, 300) || undefined,
+        feature_image: featureImageUrl || undefined,
         tags: [{ name: 'SAT' }, { name: 'blog-agent' }],
       }],
     }),
