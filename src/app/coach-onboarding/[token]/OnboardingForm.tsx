@@ -55,18 +55,116 @@ function FieldError({ msg }: { msg?: string }) {
   return <p className="mt-1 text-xs text-red-400">{msg}</p>;
 }
 
+// ---------- Profile Image Upload ----------
+function ProfileImageUpload({
+  token,
+  url,
+  onUrlChange,
+}: {
+  token: string;
+  url: string;
+  onUrlChange: (url: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string>(url);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File) => {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return;
+    setPreview(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const res = await fetch('/api/coach-onboarding/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, files: [{ filename: file.name, contentType: file.type }] }),
+      });
+      const { data: urls } = await res.json();
+      if (urls?.[0]) {
+        await fetch(urls[0].signedUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+        onUrlChange(urls[0].publicUrl);
+      }
+    } catch (e) {
+      console.error('Profile image upload failed', e);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <Label>프로필 사진</Label>
+      <p className="text-xs text-gray-500 mb-3">
+        제출하신 사진을 기반으로 아래 예시와 같이 일러스트 스타일의 프로필 이미지가 제작됩니다. 얼굴이 잘 보이는 사진을 올려주세요.
+      </p>
+      <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-3 mb-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/profile-example.png" alt="프로필 예시" className="w-16 h-16 object-contain rounded-lg bg-white shrink-0" />
+        <p className="text-xs text-gray-400">완성 예시 — 제출한 사진을 바탕으로 이런 형태의 일러스트 프로필이 만들어집니다.</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="relative w-20 h-20 rounded-xl border-2 border-dashed border-white/20 hover:border-blue-500 hover:bg-blue-500/5 transition-colors disabled:opacity-50 overflow-hidden shrink-0"
+        >
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={preview} alt="업로드된 사진" className="w-full h-full object-cover" />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full gap-1">
+              <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="text-xs text-gray-500">사진 추가</span>
+            </div>
+          )}
+          {uploading && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+        </button>
+        <div className="text-xs text-gray-500 space-y-1">
+          <p>jpg, png, webp · 최대 10MB</p>
+          {preview && (
+            <button type="button" onClick={() => { setPreview(''); onUrlChange(''); }} className="text-red-400 hover:text-red-300 transition-colors">
+              사진 삭제
+            </button>
+          )}
+        </div>
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+      />
+    </div>
+  );
+}
+
 // ---------- Step 1 ----------
 function Step1({
   data,
   onChange,
   errors,
+  token,
+  profileImageUrl,
+  onProfileImageUrlChange,
 }: {
   data: OnboardingStep1;
   onChange: (d: Partial<OnboardingStep1>) => void;
   errors: Partial<Record<keyof OnboardingStep1, string>>;
+  token: string;
+  profileImageUrl: string;
+  onProfileImageUrlChange: (url: string) => void;
 }) {
   return (
     <div className="space-y-5">
+      <ProfileImageUpload token={token} url={profileImageUrl} onUrlChange={onProfileImageUrlChange} />
       <div>
         <Label required>이름</Label>
         <Input value={data.name} onChange={e => onChange({ name: e.target.value })} placeholder="홍길동" />
@@ -583,6 +681,9 @@ export function OnboardingForm({ token, coachName, draftData, draftSavedAt }: Pr
   const [screenshotUrls, setScreenshotUrls] = useState<string[]>(
     (draftData?.screenshotUrls as string[]) ?? []
   );
+  const [profileImageUrl, setProfileImageUrl] = useState<string>(
+    (draftData?.profileImageUrl as string) ?? ''
+  );
   const [errors1, setErrors1] = useState<Partial<Record<keyof OnboardingStep1, string>>>({});
   const [errors2, setErrors2] = useState<Partial<Record<keyof OnboardingStep2, string>>>({});
   const [errors3, setErrors3] = useState<Partial<Record<keyof OnboardingStep3, string>>>({});
@@ -629,7 +730,7 @@ export function OnboardingForm({ token, coachName, draftData, draftSavedAt }: Pr
       const res = await fetch('/api/coach-onboarding/draft', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, data: { step, step1, step2, step3, screenshotUrls } }),
+        body: JSON.stringify({ token, data: { step, step1, step2, step3, screenshotUrls, profileImageUrl } }),
       });
       if (res.ok) {
         const { data } = await res.json();
@@ -685,6 +786,7 @@ export function OnboardingForm({ token, coachName, draftData, draftSavedAt }: Pr
             Object.entries(step3.subject_directions).filter(([, v]) => v?.trim())
           ),
           score_improvement_screenshot_urls: screenshotUrls,
+          profile_image_url: profileImageUrl || null,
         },
       };
 
@@ -782,7 +884,7 @@ export function OnboardingForm({ token, coachName, draftData, draftSavedAt }: Pr
               </a>
             )}
           </div>
-          {step === 0 && <Step1 data={step1} onChange={d => setStep1(s => ({ ...s, ...d }))} errors={errors1} />}
+          {step === 0 && <Step1 data={step1} onChange={d => setStep1(s => ({ ...s, ...d }))} errors={errors1} token={token} profileImageUrl={profileImageUrl} onProfileImageUrlChange={setProfileImageUrl} />}
           {step === 1 && <Step2 data={step2} onChange={d => setStep2(s => ({ ...s, ...d }))} errors={errors2} />}
           {step === 2 && (
             <Step3
