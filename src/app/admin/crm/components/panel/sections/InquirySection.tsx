@@ -2,7 +2,8 @@
 
 import { Pencil } from 'lucide-react';
 import type { Student } from '@/types/crm';
-import { CONTACT_TYPE_LABELS, TIMEZONE_LABEL_MAP } from '@/types/crm';
+import { CONTACT_TYPE_LABELS } from '@/types/crm';
+import { getTimezoneLabel } from '@/lib/all-timezones';
 import {
   INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
 } from '@/types/crm';
@@ -182,7 +183,7 @@ export function InquirySection({
             value={localStudent.parent_phone || '—'}
           />
           {localStudent.parent_timezone && (
-            <InquiryRow label="시간대" value={TIMEZONE_LABEL_MAP[localStudent.parent_timezone] ?? localStudent.parent_timezone} />
+            <InquiryRow label="시간대" value={getTimezoneLabel(localStudent.parent_timezone)} />
           )}
           <InquiryRow label="광고명" value={localStudent.ad_name ?? '—'} />
           <InquiryRow label="광고세트" value={localStudent.adset_name ?? '—'} />
