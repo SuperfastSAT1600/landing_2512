@@ -7,7 +7,21 @@ import {
 import { BookOpen, Activity, Filter, Layers, Brain, Database, Search } from 'lucide-react';
 
 export default function DashboardClient() {
-  const [data, setData] = useState<{ metadata: { skill: string; difficulty: string }; [key: string]: unknown }[]>([]);
+  const [data, setData] = useState<{
+    metadata: { skill: string; difficulty: string };
+    content?: { passage?: string; question_text?: string; explanation?: string };
+    analysis?: {
+      passage_logical_flow?: string;
+      target_transition_category?: string;
+      passage_topic?: string;
+      target_word_pos?: string;
+      sentence_1_summary?: string;
+      sentence_2_summary?: string;
+      synonyms_for_correct_answer?: string[];
+    };
+    _searchScore?: number;
+    [key: string]: unknown;
+  }[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Filters
