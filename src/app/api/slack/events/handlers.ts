@@ -1,8 +1,8 @@
 import { marked } from 'marked';
 import type { Topic, BlogDraft } from './blog-writer';
 import { writeBlog } from './blog-writer';
-import { saveGhostDraft, publishGhostPost } from './ghost-client';
-import { saveLandingDraft, publishLandingPost } from './landing-client';
+import { saveGhostDraft, publishGhostPost, updateGhostThumbnail } from './ghost-client';
+import { saveLandingDraft, publishLandingPost, updateLandingThumbnail } from './landing-client';
 import { generateGhostThumbnail, generateLandingThumbnail } from './thumbnail-generator';
 import { postSlack, getDraftFromThread, BLOG_CHANNEL } from './slack-utils';
 import { generateTopics, buildTopicMessage } from './topic-suggester';
@@ -50,6 +50,31 @@ async function saveDrafts(
   return { ghostId: ghostResult.value.id, landingId: landingResult.value };
 }
 
+async function attachThumbnailsAfter(
+  draft: BlogDraft, ghostId: string, landingId: string, channel: string, threadTs: string
+): Promise<void> {
+  const [ghostThumbResult, landingThumbResult] = await Promise.allSettled([
+    generateGhostThumbnail(draft.focusKeyword, draft.slug),
+    generateLandingThumbnail(draft.title, draft.slug),
+  ]);
+
+  const ghostThumbnailUrl = ghostThumbResult.status === 'fulfilled' ? ghostThumbResult.value : '';
+  const landingThumbnailUrl = landingThumbResult.status === 'fulfilled' ? landingThumbResult.value : '';
+
+  // 썸네일 URL 업데이트
+  await Promise.allSettled([
+    ghostThumbnailUrl ? updateGhostThumbnail(ghostId, ghostThumbnailUrl) : Promise.resolve(),
+    landingThumbnailUrl ? updateLandingThumbnail(landingId, landingThumbnailUrl) : Promise.resolve(),
+  ]);
+
+  const thumbMsg = [
+    ghostThumbnailUrl ? `Ghost 썸네일: ${ghostThumbnailUrl}` : '⚠️ Ghost 썸네일 생성 실패',
+    landingThumbnailUrl ? `랜딩 썸네일: ${landingThumbnailUrl}` : '⚠️ 랜딩 썸네일 생성 실패',
+  ].join('\n');
+
+  await postSlack(channel, `썸네일 생성 완료\n${thumbMsg}`, threadTs);
+}
+
 export async function handleBlogWrite(
   topic: Topic, channel: string, threadTs: string
 ): Promise<void> {
@@ -67,42 +92,23 @@ export async function handleBlogWrite(
     throw err;
   }
 
-  // 썸네일 생성 — Ghost(흑백 AI)와 Landing(브랜딩 OG) 병렬 생성
-  let ghostThumbnailUrl = '';
-  let landingThumbnailUrl = '';
-  const [ghostThumbResult, landingThumbResult] = await Promise.allSettled([
-    generateGhostThumbnail(draft.focusKeyword, draft.slug),
-    generateLandingThumbnail(draft.title, draft.slug),
-  ]);
-
-  if (ghostThumbResult.status === 'fulfilled') {
-    ghostThumbnailUrl = ghostThumbResult.value;
-  } else {
-    const msg = ghostThumbResult.reason instanceof Error ? ghostThumbResult.reason.message : String(ghostThumbResult.reason);
-    await postSlack(channel, `⚠️ Ghost 썸네일 생성 실패 (이미지 없이 저장): ${msg}`, threadTs);
-  }
-
-  if (landingThumbResult.status === 'fulfilled') {
-    landingThumbnailUrl = landingThumbResult.value;
-  } else {
-    const msg = landingThumbResult.reason instanceof Error ? landingThumbResult.reason.message : String(landingThumbResult.reason);
-    await postSlack(channel, `⚠️ 랜딩 썸네일 생성 실패 (이미지 없이 저장): ${msg}`, threadTs);
-  }
-
-  const { ghostId, landingId } = await saveDrafts(draft, topic, ghostThumbnailUrl, landingThumbnailUrl);
+  // 썸네일 없이 먼저 저장 → 슬랙 알림 → 썸네일은 별도 업데이트
+  const { ghostId, landingId } = await saveDrafts(draft, topic, '', '');
 
   const ghostExcerpt = stripFrontmatter(draft.ghostMarkdown)
     .replace(/#{1,6} .+/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
   const landingExcerpt = stripFrontmatter(draft.landingMarkdown)
     .replace(/#{1,6} .+/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
   const metaTag = `[blog-agent: ghost_id=${ghostId}|landing_id=${landingId}|title=${encodeURIComponent(draft.title)}]`;
-  const thumbLine = landingThumbnailUrl ? `\n\n*랜딩 썸네일:* ${landingThumbnailUrl}` : '';
 
   await postSlack(
     channel,
-    `${metaTag}\n\n*[검토 요청] ${draft.title}*\n\n*Ghost 버전:*\n${ghostExcerpt}...\n\n*Landing 버전:*\n${landingExcerpt}...${thumbLine}\n\n> 발행하려면 이 스레드에 *발행할게요* 를 입력해주세요. 수정이 필요하면 수정 내용을 알려주세요.`,
+    `${metaTag}\n\n*[검토 요청] ${draft.title}*\n\n*Ghost 버전:*\n${ghostExcerpt}...\n\n*Landing 버전:*\n${landingExcerpt}...\n\n> 썸네일 생성 중... 잠시 후 업데이트됩니다.\n> 발행하려면 이 스레드에 *발행할게요* 를 입력해주세요.`,
     threadTs
   );
+
+  // 썸네일은 슬랙 알림 이후 별도 생성 (타임아웃 방지)
+  await attachThumbnailsAfter(draft, ghostId, landingId, channel, threadTs);
 }
 
 export async function handleTopicSuggest(
