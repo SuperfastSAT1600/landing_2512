@@ -20,8 +20,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     const coach = await getCoachBySlug(slug);
 
     const name = coach?.name ?? '코치';
-    const fontText = `${name} 코치 대표코치 SuperfastSAT`;
-    const fontData = await loadGoogleFont(fontText);
+    const fontData = await loadGoogleFont('대표코치');
 
     return new ImageResponse(
         (
@@ -68,19 +67,6 @@ export default async function Image({ params }: { params: Promise<{ slug: string
                     </div>
                 )}
 
-                {/* Bottom gradient for name readability */}
-                <div
-                    style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: 280,
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)',
-                        display: 'flex',
-                    }}
-                />
-
                 {coach?.isHeadCoach && (
                     <div
                         style={{
@@ -104,29 +90,6 @@ export default async function Image({ params }: { params: Promise<{ slug: string
                     </div>
                 )}
 
-                <div
-                    style={{
-                        position: 'absolute',
-                        left: 56,
-                        bottom: 48,
-                        display: 'flex',
-                        flexDirection: 'column',
-                    }}
-                >
-                    <span style={{ fontSize: 56, fontWeight: 700, color: '#ffffff' }}>{name} 코치</span>
-                    <span
-                        style={{
-                            fontSize: 26,
-                            fontWeight: 700,
-                            color: '#6085FF',
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            marginTop: 8,
-                        }}
-                    >
-                        SuperfastSAT
-                    </span>
-                </div>
             </div>
         ),
         {

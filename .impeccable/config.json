@@ -4,7 +4,8 @@
     "ignoreFiles": [
       "src/components/enrollment/enrollment/ManagementFitSection.tsx",
       "src/app/practice/august-math/page.tsx",
-      "src/app/dashboard/DashboardClient.tsx"
+      "src/app/dashboard/DashboardClient.tsx",
+      "src/app/coaches/[slug]/opengraph-image.tsx"
     ],
     "ignoreValues": [
       {
@@ -40,7 +41,7 @@
         "files": [
           "src/components/enrollment-v2/EnrollmentVideoHero.module.css"
         ],
-        "createdAt": "2026-07-28T18:57:03.685Z",
+        "createdAt": "2026-07-28T18:57:03.768Z",
         "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
       },
       {
@@ -183,6 +184,24 @@
         ],
         "createdAt": "2026-07-29T07:17:44.132Z",
         "reason": "Admin-only internal tool; inactive tab text-gray-500 on gray-100 is intentional de-emphasis pattern"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "10px",
+        "files": [
+          "publish-ghost-260730.js"
+        ],
+        "createdAt": "2026-08-04T00:00:00.000Z",
+        "reason": "CTA button inline style copied verbatim from publish-ghost.js original; 10px is the established brand radius for Ghost CTA buttons."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#071be9",
+        "files": [
+          "publish-ghost-260730.js"
+        ],
+        "createdAt": "2026-08-04T00:00:00.000Z",
+        "reason": "CTA button inline style copied verbatim from publish-ghost.js original; #071be9 is the accent-primary brand color per Docs/design-system.md."
       }
     ]
   }
