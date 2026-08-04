@@ -142,12 +142,13 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
 
         const educationItems: string[] = [];
         if (university) {
-            const suffix = entryYear ? ` (${entryYear}년 입학${enrolled ? ', 재학중' : ', 졸업'})` : '';
-            educationItems.push(`${university} ${major}${suffix}`.trim());
+            educationItems.push(major ? `${university}, ${major}` : university);
         }
-        if (gradSchool) educationItems.push(`${gradSchool}${gradMajor ? ` ${gradMajor}` : ''}`);
+        if (gradSchool) educationItems.push(`${gradSchool}${gradMajor ? `, ${gradMajor}` : ''}`);
         if (highSchool) educationItems.push(highSchool);
-        if (rw && math) educationItems.push(`SAT ${rw + math}점 (RW:${rw} / Math:${math})`);
+        if (rw && math) educationItems.push(`SAT (RW:${rw}, MATH:${math})`);
+        const apSubjects = (submission.subjects as string[] ?? []).filter(s => s.startsWith('AP'));
+        for (const ap of apSubjects) educationItems.push(ap);
 
         // 경력
         const teachingYears = submission.teaching_years as number | null;
