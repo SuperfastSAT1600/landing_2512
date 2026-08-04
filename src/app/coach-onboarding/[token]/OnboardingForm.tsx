@@ -97,10 +97,10 @@ function ProfileImageUpload({
       <p className="text-xs text-gray-500 mb-3">
         제출하신 사진을 기반으로 아래 예시와 같이 일러스트 스타일의 프로필 이미지가 제작됩니다. 얼굴이 잘 보이는 사진을 올려주세요.
       </p>
-      <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-3 mb-3">
+      <div className="flex flex-col items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-4 mb-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/profile-example.png" alt="프로필 예시" className="w-16 h-16 object-contain rounded-lg bg-white shrink-0" />
-        <p className="text-xs text-gray-400">완성 예시 — 제출한 사진을 바탕으로 이런 형태의 일러스트 프로필이 만들어집니다.</p>
+        <img src="/images/profile-example.png" alt="프로필 예시" className="w-40 h-40 object-contain rounded-lg bg-white" />
+        <p className="text-xs text-gray-400 text-center">완성 예시 — 제출한 사진을 바탕으로 이런 형태의 일러스트 프로필이 만들어집니다.</p>
       </div>
       <div className="flex items-center gap-3">
         <button
