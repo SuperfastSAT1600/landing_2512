@@ -3,7 +3,7 @@
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Rows3, RowsIcon, Trash2,
     Columns3, ChevronLeft, ChevronRight,
@@ -22,6 +22,13 @@ const divider = <div className="w-px h-5 bg-white/10 mx-0.5" />;
 
 export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
     const [colWidth, setColWidth] = useState('');
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (menuRef.current) {
+            menuRef.current.style.zIndex = '100';
+        }
+    }, []);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
@@ -43,6 +50,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 
     return (
         <BubbleMenu
+            ref={menuRef}
             editor={editor}
             options={{
                 placement: 'top',

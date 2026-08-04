@@ -142,12 +142,13 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
 
         const educationItems: string[] = [];
         if (university) {
-            const suffix = entryYear ? ` (${entryYear}년 입학${enrolled ? ', 재학중' : ', 졸업'})` : '';
-            educationItems.push(`${university} ${major}${suffix}`.trim());
+            educationItems.push(major ? `${university}, ${major}` : university);
         }
-        if (gradSchool) educationItems.push(`${gradSchool}${gradMajor ? ` ${gradMajor}` : ''}`);
+        if (gradSchool) educationItems.push(`${gradSchool}${gradMajor ? `, ${gradMajor}` : ''}`);
         if (highSchool) educationItems.push(highSchool);
-        if (rw && math) educationItems.push(`SAT ${rw + math}점 (RW:${rw} / Math:${math})`);
+        if (rw && math) educationItems.push(`SAT (RW:${rw}, MATH:${math})`);
+        const apSubjects = (submission.subjects as string[] ?? []).filter(s => s.startsWith('AP'));
+        for (const ap of apSubjects) educationItems.push(ap);
 
         // 경력
         const teachingYears = submission.teaching_years as number | null;
@@ -295,19 +296,24 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         V2 미연결
                     </span>
                 )}
-                {inviteStatus === 'submitted' && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-green-500/10 text-green-400">
-                        온보딩 제출완료
+                {inviteStatus === 'none' && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-gray-500/10 text-gray-400">
+                        프로필 작성전
                     </span>
                 )}
                 {inviteStatus === 'valid' && (
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-blue-500/10 text-blue-400">
-                        온보딩 대기중
+                        프로필 작성 중
+                    </span>
+                )}
+                {inviteStatus === 'submitted' && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-green-500/10 text-green-400">
+                        프로필 제출 완료
                     </span>
                 )}
                 {inviteStatus === 'expired' && (
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-orange-500/10 text-orange-400">
-                        온보딩 링크 만료
+                        프로필 링크 만료
                     </span>
                 )}
 
