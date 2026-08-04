@@ -56,16 +56,32 @@ Aesthetic reference: Notion, Slack, Airbnb product illustration style.`;
   return uploadBuffer(buffer, slug, 'ghost');
 }
 
-// 랜딩용: 제목이 박힌 브랜딩 OG 이미지 → 정적 저장
+// 랜딩용: 스토리텔링 씬 일러스트 (인물 + 상황 중심)
 export async function generateLandingThumbnail(title: string, slug: string): Promise<string> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfastsat.com';
-  const ogUrl = `${baseUrl}/api/og?title=${encodeURIComponent(title)}&category=SAT`;
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  const res = await fetch(ogUrl);
-  if (!res.ok) throw new Error(`OG 이미지 fetch 실패: ${res.status}`);
+  const prompt = `Minimalist monochrome scene illustration for a blog thumbnail.
+Topic: ${title}
+Style rules (strictly follow):
+- Grayscale only — black, white, and light gray. Zero color.
+- Clean white (#FFFFFF) background with soft light gray (#F5F5F5) ground plane.
+- Black outline, flat design with gray shadow for depth.
+- Storytelling scene: show a person or people in a situation that metaphorically represents the topic. Think editorial illustration style.
+- No text, no labels, no letters anywhere in the image.
+- Wide cinematic composition (landscape). Generous negative space on left and right.
+- Subject occupies the center 60% of the canvas.
+Aesthetic reference: New Yorker editorial sketch, Notion illustration, Medium blog header art.`;
 
-  const arrayBuf = await res.arrayBuffer();
-  const buffer = Buffer.from(arrayBuf);
+  const res = await client.images.generate({
+    model: 'gpt-image-1',
+    prompt,
+    size: '1536x1024',
+    n: 1,
+  });
+
+  const b64 = res.data?.[0]?.b64_json;
+  if (!b64) throw new Error('gpt-image-1 랜딩 이미지 데이터를 받지 못했습니다.');
+  const buffer = Buffer.from(b64, 'base64');
   return uploadBuffer(buffer, slug, 'landing');
 }
 
