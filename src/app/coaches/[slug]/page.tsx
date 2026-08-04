@@ -27,7 +27,6 @@ export async function generateMetadata({ params }: Props) {
     if (!coach) return { title: '코치 | SuperfastSAT' };
 
     const plainBio = coach.bio ? bioToPlainText(coach.bio) : `${coach.name} 코치의 프로필과 커리큘럼을 확인해보세요.`;
-    const ogImage = coach.photo || `${BASE_URL}/og-default.png`;
 
     return {
         title: `${coach.name} 코치 | SuperfastSAT`,
@@ -37,7 +36,6 @@ export async function generateMetadata({ params }: Props) {
             description: plainBio,
             url: `${BASE_URL}/coaches/${slug}`,
             siteName: 'SuperfastSAT',
-            images: [{ url: ogImage, width: 400, height: 400, alt: `${coach.name} 코치` }],
         },
     };
 }
