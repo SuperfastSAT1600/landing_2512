@@ -181,7 +181,7 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
                 {data.past_academies.map((a, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm text-gray-200">
                     <span>{a.name}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded ${a.role === 'instructor' ? 'bg-green-500/20 text-green-400' : 'bg-gray-700 text-gray-400'}`}>
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${a.role === 'instructor' ? 'bg-green-500/20 text-green-400' : 'bg-gray-700 text-white'}`}>
                       {ROLE_LABELS[a.role] ?? a.role}
                     </span>
                   </div>
@@ -223,6 +223,16 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
             </div>
           )}
         </div>
+
+        {/* Profile image */}
+        {data.profile_image_url && (
+          <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">프로필 이미지</p>
+            <a href={data.profile_image_url} target="_blank" rel="noopener noreferrer" className="inline-block">
+              <img src={data.profile_image_url} alt="프로필 이미지" className="w-40 h-40 object-cover rounded-xl hover:opacity-80 transition-opacity" />
+            </a>
+          </div>
+        )}
 
         {/* Screenshots */}
         {data.score_improvement_screenshot_urls && data.score_improvement_screenshot_urls.length > 0 && (
