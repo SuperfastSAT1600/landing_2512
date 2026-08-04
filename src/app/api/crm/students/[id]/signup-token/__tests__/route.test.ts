@@ -9,7 +9,7 @@ vi.mock('@/lib/supabase-admin', () => ({
 }));
 
 process.env.ADMIN_SECRET_KEY = 'admin-key';
-process.env.SUPERFASTSAT_PLATFORM_URL = 'https://app.superfastsat.com';
+process.env.SUPERFASTSAT_PLATFORM_URL = 'https://app.superfastsat.io';
 
 function makeReq(key = 'admin-key') {
   return new NextRequest('http://localhost/api/crm/students/s1/signup-token', {
@@ -41,7 +41,7 @@ describe('POST /api/crm/students/[id]/signup-token', () => {
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.signup_token).toBe('existing');
-    expect(body.signup_url).toBe('https://app.superfastsat.com/signup/tutoring?token=existing');
+    expect(body.signup_url).toBe('https://app.superfastsat.io/signup/tutoring?token=existing');
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
@@ -53,7 +53,7 @@ describe('POST /api/crm/students/[id]/signup-token', () => {
     const body = await res.json();
     expect(res.status).toBe(201);
     expect(body.signup_token).toMatch(/^[0-9a-f]{32}$/);
-    expect(body.signup_url).toContain('/signup/tutoring?token=');
+    expect(body.signup_url).toBe(`https://app.superfastsat.io/signup/tutoring?token=${body.signup_token}`);
     expect(mockUpdate).toHaveBeenCalledTimes(1);
   });
 
