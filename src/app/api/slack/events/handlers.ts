@@ -57,7 +57,14 @@ export async function handleBlogWrite(
     threadTs
   );
 
-  const draft = await writeBlog(topic);
+  let draft: BlogDraft;
+  try {
+    draft = await writeBlog(topic);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await postSlack(channel, `⚠️ 블로그 초안 생성 실패: ${msg}`, threadTs);
+    throw err;
+  }
 
   // 썸네일 생성 (실패해도 초안 저장은 계속)
   let thumbnailUrl = '';
@@ -94,10 +101,10 @@ export async function handleTopicSuggest(
     return;
   }
   const message = buildTopicMessage(topics);
-  // BLOG_CHANNEL에 발행 — getTodayTopics()가 파싱할 수 있도록
+  // BLOG_CHANNEL 최상위에 발행 — getTodayTopics()가 날짜 기반으로 파싱할 수 있도록
   await postSlack(BLOG_CHANNEL, message);
-  // 요청 스레드에도 동일 내용 회신
-  if (channel !== BLOG_CHANNEL || threadTs) {
+  // 다른 채널에서 요청한 경우에만 해당 스레드에도 회신 (BLOG_CHANNEL 내에서는 중복 방지)
+  if (channel !== BLOG_CHANNEL) {
     await postSlack(channel, message, threadTs);
   }
 }
@@ -116,16 +123,20 @@ export async function handlePublish(channel: string, threadTs: string): Promise<
     publishLandingPost(meta.landingId),
   ]);
 
-  const ghostUrl = ghostResult.status === 'fulfilled'
+  const ghostOk = ghostResult.status === 'fulfilled';
+  const landingOk = landingResult.status === 'fulfilled';
+  const ghostUrl = ghostOk
     ? ghostResult.value
-    : `(Ghost 발행 실패: ${ghostResult.reason?.message})`;
-  const landingUrl = landingResult.status === 'fulfilled'
+    : `⚠️ Ghost 발행 실패: ${(ghostResult as PromiseRejectedResult).reason?.message}`;
+  const landingUrl = landingOk
     ? landingResult.value
-    : `(랜딩 발행 실패: ${landingResult.reason?.message})`;
+    : `⚠️ 랜딩 발행 실패: ${(landingResult as PromiseRejectedResult).reason?.message}`;
+
+  const status = ghostOk && landingOk ? '발행 완료!' : '부분 발행 — 아래 오류를 확인해주세요.';
 
   await postSlack(
     channel,
-    `발행 완료!\n\n*제목:* ${meta.title}\nGhost: ${ghostUrl}\n랜딩: ${landingUrl}`,
+    `${status}\n\n*제목:* ${meta.title}\nGhost: ${ghostUrl}\n랜딩: ${landingUrl}`,
     threadTs
   );
 }

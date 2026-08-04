@@ -8,6 +8,7 @@ export const maxDuration = 300;
 
 type SlackEvent = {
   type: string;
+  subtype?: string;
   text?: string;
   channel?: string;
   ts?: string;
@@ -34,7 +35,17 @@ export async function POST(request: NextRequest) {
   }
 
   const event = payload.event;
-  if (!event || event.type !== 'app_mention' || event.bot_id) {
+  if (!event || event.bot_id) {
+    return NextResponse.json({ ok: true });
+  }
+
+  // app_mention 또는 BLOG_CHANNEL의 일반 사용자 메시지만 처리
+  // message_changed / message_deleted / bot_message 등 subtype은 무시
+  const isMention = event.type === 'app_mention';
+  const isBlogChannelMsg = event.type === 'message'
+    && event.channel === BLOG_CHANNEL
+    && !event.subtype;  // subtype 없는 순수 사용자 메시지만
+  if (!isMention && !isBlogChannelMsg) {
     return NextResponse.json({ ok: true });
   }
 

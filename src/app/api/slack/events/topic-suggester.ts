@@ -149,7 +149,9 @@ export async function generateTopics(n: number): Promise<Topic[]> {
 }
 
 export function buildTopicMessage(topics: Topic[]): string {
+  // getTodayTopics()의 todayKSTString()과 반드시 동일한 포맷/타임존 사용
   const dateStr = new Date().toLocaleDateString('ko-KR', {
+    timeZone: 'Asia/Seoul',
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
   });
   let msg = `[오늘의 블로그 주제 제안 — ${dateStr}]\n\n`;

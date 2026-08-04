@@ -35,23 +35,18 @@ export async function postSlack(channel: string, text: string, threadTs?: string
   if (!data.ok) console.error('[slack/events] postMessage 실패:', data.error);
 }
 
-export async function getTodayTopics(): Promise<Topic[]> {
-  const res = await fetch(
-    `https://slack.com/api/conversations.history?channel=${BLOG_CHANNEL}&limit=30`,
-    { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
-  );
-  const data = await res.json() as { messages?: { text: string; bot_id?: string }[] };
-  const todayKST = new Date().toLocaleDateString('ko-KR', {
+function todayKSTString(): string {
+  // Vercel 서버는 UTC 기준 — 반드시 Asia/Seoul 지정
+  return new Date().toLocaleDateString('ko-KR', {
+    timeZone: 'Asia/Seoul',
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
   });
-  const topicMsg = data.messages?.find(
-    m => m.bot_id && m.text?.includes('[오늘의 블로그 주제 제안') && m.text?.includes(todayKST)
-  );
-  if (!topicMsg) return [];
+}
 
+function parseTopicsFromMessage(text: string): Topic[] {
   const topics: Topic[] = [];
   let current: Topic | null = null;
-  for (const line of topicMsg.text.split('\n')) {
+  for (const line of text.split('\n')) {
     const match = line.match(/^(\d+)\.\s+(.+)/);
     if (match) {
       if (current) topics.push(current);
@@ -63,6 +58,22 @@ export async function getTodayTopics(): Promise<Topic[]> {
   }
   if (current) topics.push(current);
   return topics;
+}
+
+export async function getTodayTopics(): Promise<Topic[]> {
+  const res = await fetch(
+    // limit=50으로 늘려 채널이 바쁜 날에도 당일 주제 메시지를 찾을 수 있도록
+    `https://slack.com/api/conversations.history?channel=${BLOG_CHANNEL}&limit=50`,
+    { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
+  );
+  const data = await res.json() as { messages?: { text: string; bot_id?: string }[] };
+  const todayKST = todayKSTString();
+
+  const topicMsg = data.messages?.find(
+    m => m.bot_id && m.text?.includes('[오늘의 블로그 주제 제안') && m.text?.includes(todayKST)
+  );
+  if (!topicMsg) return [];
+  return parseTopicsFromMessage(topicMsg.text);
 }
 
 export type DraftMeta = { ghostId: string; landingId: string; title: string };
