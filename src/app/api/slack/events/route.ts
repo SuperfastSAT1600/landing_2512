@@ -113,16 +113,16 @@ export async function POST(request: NextRequest) {
 
   // 4. 근거/포인트 블록 형식 — 주제 추천 목록을 붙여넣고 작성해줘
   // 예: "8월 SAT 20일 전 점검 리스트\n   근거: ...\n   포인트: ...\n작성해줘"
-  if (/(?:써줘|해줘|작성해줘|포스팅해줘)/.test(text) && /근거[:：]/.test(text)) {
+  if (/(?:써줘|해줘|작성해줘|포스팅해줘)/.test(text) && /근거[:\uff1a]/.test(text)) {
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
     const titleLine = lines.find(l => !l.startsWith('근거') && !l.startsWith('포인트') && !/써줘|해줘|작성해줘|포스팅해줘/.test(l) && !l.startsWith('@'));
-    const rationaleLine = lines.find(l => /근거[:：]/.test(l));
-    const pointLine = lines.find(l => /포인트[:：]/.test(l));
+    const rationaleLine = lines.find(l => /근거[:\uff1a]/.test(l));
+    const pointLine = lines.find(l => /포인트[:\uff1a]/.test(l));
     if (titleLine) {
       const topic = {
         title: titleLine.replace(/^\d+\.\s*/, '').trim(),
-        rationale: rationaleLine ? rationaleLine.replace(/근거[:：]\s*/, '').trim() : '',
-        point: pointLine ? pointLine.replace(/포인트[:：]\s*/, '').trim() : '',
+        rationale: rationaleLine ? rationaleLine.replace(/근거[:\uff1a]\s*/, '').trim() : '',
+        point: pointLine ? pointLine.replace(/포인트[:\uff1a]\s*/, '').trim() : '',
       };
       after(() => handleBlogWrite(topic, channel, threadTs).catch(async err => {
         await postSlack(channel, `오류: ${err.message}`, threadTs);
@@ -152,12 +152,12 @@ export async function POST(request: NextRequest) {
         await postSlack(channel, '상위 메시지에서 주제를 찾을 수 없습니다. 주제를 직접 입력해주세요.', threadTs);
         return;
       }
-      const rationaleLine = parentLines.find((l: string) => /근거[:：]/.test(l));
-      const pointLine = parentLines.find((l: string) => /포인트[:：]/.test(l));
+      const rationaleLine = parentLines.find((l: string) => /근거[:\uff1a]/.test(l));
+      const pointLine = parentLines.find((l: string) => /포인트[:\uff1a]/.test(l));
       const topic = {
         title: titleLine.replace(/^\d+\.\s*/, '').trim(),
-        rationale: rationaleLine ? rationaleLine.replace(/근거[:：]\s*/, '').trim() : '',
-        point: pointLine ? pointLine.replace(/포인트[:：]\s*/, '').trim() : '',
+        rationale: rationaleLine ? rationaleLine.replace(/근거[:\uff1a]\s*/, '').trim() : '',
+        point: pointLine ? pointLine.replace(/포인트[:\uff1a]\s*/, '').trim() : '',
       };
       await handleBlogWrite(topic, channel, threadTs);
     })().catch(async err => {
