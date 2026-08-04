@@ -38,15 +38,16 @@ export function LifecycleTab({ profileId, studentId }: Props) {
 
   const qp = studentId ? `studentId=${studentId}` : `profileId=${profileId}`;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const res = await srmFetch(`/api/admin/srm/lifecycle?${qp}`);
-      setData(await res.json());
-      setLoading(false);
-    };
-    fetchData();
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    const res = await srmFetch(`/api/admin/srm/lifecycle?${qp}`);
+    setData(await res.json());
+    setLoading(false);
   }, [qp]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleComplete = async () => {
     if (!data?.current || acting) return;
@@ -130,8 +131,9 @@ export function LifecycleTab({ profileId, studentId }: Props) {
           return (
             <div
               key={stage}
+              /* impeccable-disable gray-on-color — isDone/default cases have no background color */
               className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
-                isCurrent ? 'bg-blue-500/10 text-gray-900' : isDone ? 'text-gray-600' : 'text-gray-500'
+                isCurrent ? 'bg-blue-500/10 text-blue-900' : isDone ? 'text-gray-600' : 'text-gray-500'
               }`}
             >
               <div className="shrink-0 w-4 h-4 flex items-center justify-center">
@@ -171,7 +173,7 @@ export function LifecycleTab({ profileId, studentId }: Props) {
             <button
               onClick={handleComplete}
               disabled={acting}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-gray-900 text-sm font-medium rounded-md transition-colors"
+              className="w-full py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-medium rounded-md transition-colors"
             >
               {acting ? '처리 중...' : `"${STAGE_LABELS[current.stage]}" 완료 처리`}
             </button>
