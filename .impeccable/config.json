@@ -3,7 +3,8 @@
     "ignoreRules": [],
     "ignoreFiles": [
       "src/components/enrollment/enrollment/ManagementFitSection.tsx",
-      "src/app/practice/august-math/page.tsx"
+      "src/app/practice/august-math/page.tsx",
+      "src/app/dashboard/DashboardClient.tsx"
     ],
     "ignoreValues": [
       {

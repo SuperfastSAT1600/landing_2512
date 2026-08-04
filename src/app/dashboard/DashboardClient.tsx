@@ -7,7 +7,7 @@ import {
 import { BookOpen, Activity, Filter, Layers, Brain, Database, Search } from 'lucide-react';
 
 export default function DashboardClient() {
-  const [data, setData] = useState<Record<string, unknown>[]>([]);
+  const [data, setData] = useState<{ metadata: { skill: string; difficulty: string }; [key: string]: unknown }[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Filters
@@ -139,7 +139,7 @@ export default function DashboardClient() {
               <div className="p-2 bg-indigo-500/20 rounded-xl">
                 <Database className="w-6 h-6 text-indigo-400" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              <span className="text-xl font-bold text-indigo-400">
                 Ontology Explorer
               </span>
             </div>
