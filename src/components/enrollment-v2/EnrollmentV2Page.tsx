@@ -261,13 +261,11 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
 }) {
   const [coaches, setCoaches] = useState<HeadCoach[]>([]);
   const [loadingCoaches, setLoadingCoaches] = useState(false);
-  const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
   const coachesRef = useRef<HTMLDivElement>(null);
   const selectedId = selectedOption?.type === 'hour-package' ? selectedOption.packageId : null;
   const isDirector = selectedId === '1on1-director';
 
   function handlePkgClick(pkgId: string) {
-    setRevealedIds(prev => new Set([...prev, pkgId]));
     onSelect({ type: 'hour-package', packageId: pkgId });
   }
 
@@ -297,7 +295,6 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
           {/* 일반 3개 패키지 */}
           {MANAGED_PKGS.map(pkg => {
             const isSelected = selectedId === pkg.id;
-            const isRevealed = revealedIds.has(pkg.id);
             const savings = pkg.discountRate
               ? BASE_PRICE_PER_HOUR * pkg.hours - pkg.totalPrice
               : 0;
@@ -310,7 +307,6 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                 className={`relative overflow-hidden w-full text-left rounded-2xl border p-5 transition-colors touch-manipulation active:scale-[0.98]
                   ${isSelected
                     ? 'border-[#6085ff]/60'
-                    : isRevealed ? 'border-white/20 bg-white/[0.03]'
                     : 'border-white/[0.08] bg-white/[0.03] hover:border-white/15'
                   }`}
               >
@@ -336,47 +332,22 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                     <span className="text-sm text-white/55 font-medium">시간</span>
                   </div>
 
-                  {/* 오른쪽: 미클릭=환불 안내 / 클릭됨=가격 유지 */}
+                  {/* 오른쪽: 가격 상시 노출 */}
                   <div className="flex-1 text-right flex flex-col justify-center min-h-[5rem]">
-                    {!isRevealed && (
-                      <p className="text-[13px] text-white/40 leading-relaxed">
-                        진행되지 않은 수업 시간은<br />전부 환불됩니다.
-                      </p>
-                    )}
-
-                    {/* 클릭됨 + 할인: 단계별 reveal (최초 클릭 시 애니메이션) */}
-                    {isRevealed && pkg.discountRate && (
-                      <div key={pkg.id} className="space-y-1.5">
-                        <motion.p
-                          initial={{ opacity: 0, x: 12 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.45, duration: 0.25, ease: 'easeOut' }}
-                          className="text-[12px] font-light text-red-400 leading-snug"
-                        >
+                    {pkg.discountRate ? (
+                      <div className="space-y-1.5">
+                        <p className="text-[12px] font-light text-red-400 leading-snug">
                           ~10시간 수업보다 ({pkg.discountRate}% 할인)<br />{formatWon(savings)} 더 저렴합니다.
-                        </motion.p>
+                        </p>
 
-                        <motion.p
-                          initial={{ opacity: 0, y: 6, scale: 0.94 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ delay: 0.82, duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
-                          className="text-base font-light text-white tracking-tight"
-                        >
+                        <p className="text-base font-light text-white tracking-tight">
                           {formatWon(pkg.totalPrice)}
-                        </motion.p>
+                        </p>
                       </div>
-                    )}
-
-                    {/* 클릭됨 + 할인 없음(10h) */}
-                    {isRevealed && !pkg.discountRate && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4, duration: 0.25 }}
-                        className="text-base font-light text-white tracking-tight"
-                      >
+                    ) : (
+                      <p className="text-base font-light text-white tracking-tight">
                         {formatWon(pkg.totalPrice)}
-                      </motion.p>
+                      </p>
                     )}
                   </div>
                 </div>
@@ -391,7 +362,6 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
             className={`relative overflow-hidden w-full text-left rounded-2xl border p-5 transition-colors touch-manipulation active:scale-[0.98]
               ${selectedId === '1on1-director'
                 ? 'border-amber-400/70'
-                : revealedIds.has('1on1-director') ? 'border-amber-500/50 bg-amber-500/[0.04]'
                 : 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-400/50'
               }`}
           >
@@ -420,29 +390,19 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                 </p>
               </div>
 
-              {/* 오른쪽: 클릭 시 시간 + 가격 reveal (유지) */}
+              {/* 오른쪽: 시간 + 가격 상시 노출 */}
               <div className="flex-1 text-right">
-                {revealedIds.has('1on1-director') && (
-                  <div className="space-y-1">
-                    <motion.div
-                      initial={{ opacity: 0, x: 12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.45, duration: 0.25, ease: 'easeOut' }}
-                      className="flex items-baseline gap-1 justify-end"
-                    >
-                      <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">10시간</span>
-                    </motion.div>
-                    <motion.p
-                      initial={{ opacity: 0, y: 6, scale: 0.94 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: 0.82, duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
-                      className="text-sm font-semibold text-amber-200"
-                      style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
-                    >
-                      {formatWon(1800000)}
-                    </motion.p>
+                <div className="space-y-1">
+                  <div className="flex items-baseline gap-1 justify-end">
+                    <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">10시간</span>
                   </div>
-                )}
+                  <p
+                    className="text-sm font-semibold text-amber-200"
+                    style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
+                  >
+                    {formatWon(1800000)}
+                  </p>
+                </div>
               </div>
             </div>
           </button>
@@ -524,11 +484,9 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
   selectedOption: OptionSelectionV2 | null;
   onSelect: (o: OptionSelectionV2) => void;
 }) {
-  const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
   const selectedId = selectedOption?.type === 'group-package' ? selectedOption.packageId : null;
 
   function handlePkgClick(pkgId: string) {
-    setRevealedIds(prev => new Set([...prev, pkgId]));
     onSelect({ type: 'group-package', packageId: pkgId });
   }
 
@@ -544,7 +502,6 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
         <div className="flex flex-col gap-3">
           {GROUP_PACKAGES_V2.map(pkg => {
             const isSelected = selectedId === pkg.id;
-            const isRevealed = revealedIds.has(pkg.id);
             const isSoldOut = pkg.id === 'group-summer';
 
             return (
@@ -555,7 +512,6 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
                 className={`relative overflow-hidden w-full text-left rounded-2xl border p-5 transition-colors touch-manipulation active:scale-[0.98]
                   ${isSelected
                     ? 'border-[#6085ff]/60'
-                    : isRevealed ? 'border-white/20 bg-white/[0.03]'
                     : 'border-white/[0.08] bg-white/[0.03] hover:border-white/15'
                   }`}
               >
@@ -591,21 +547,9 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
                   </div>
 
                   <div className="flex-1 text-right">
-                    {!isRevealed && (
-                      <p className="text-[13px] text-white/40 leading-relaxed">
-                        {pkg.subtitle}
-                      </p>
-                    )}
-                    {isRevealed && (
-                      <motion.p
-                        initial={{ opacity: 0, y: 6, scale: 0.94 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ delay: 0.4, duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
-                        className="text-base font-light text-white tracking-tight"
-                      >
-                        {formatWon(pkg.totalPrice)}
-                      </motion.p>
-                    )}
+                    <p className="text-base font-light text-white tracking-tight">
+                      {formatWon(pkg.totalPrice)}
+                    </p>
                   </div>
                 </div>
               </button>
@@ -763,7 +707,7 @@ function PackagePicker({
             {selectedOption?.type === 'content' && selectedOption.contentIds.length > 0 && (
               <div className="mt-4 rounded-2xl border border-[#6085ff]/20 bg-[#6085ff]/5 p-4 text-center">
                 <p className="text-xs text-white/40 mb-1">합산 월 구독료</p>
-                <p className="text-2xl font-black text-white">월 {formatWon(totalPrice)}</p>
+                <p className="text-3xl font-black text-white">월 {formatWon(totalPrice)}</p>
               </div>
             )}
           </>

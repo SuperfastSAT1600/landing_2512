@@ -408,7 +408,7 @@ function APHourPicker() {
                     initial={{ scale: 0.92, opacity: 0.5 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.22, ease: [0.34, 1.56, 0.64, 1] }}
-                    className="text-2xl font-black text-white tracking-tight"
+                    className="text-3xl font-black text-white tracking-tight"
                   >
                     {formatWon(total)}
                   </motion.p>
@@ -497,42 +497,19 @@ function APPricingSection() {
                   </div>
 
                   <div className="flex-1 text-right">
-                    {!isSelected && (
-                      <p className="text-[11px] text-white/40 leading-relaxed">
-                        진행되지 않은 수업 시간은<br />전부 환불됩니다.
-                      </p>
-                    )}
-
-                    {isSelected && pkg.discountRate && (
+                    {pkg.discountRate ? (
                       <div className="space-y-1.5">
-                        <motion.p
-                          initial={{ opacity: 0, x: 12 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.45, duration: 0.25, ease: 'easeOut' }}
-                          className="text-[11px] font-light text-red-500 leading-relaxed"
-                        >
+                        <p className="text-[11px] font-light text-red-500 leading-relaxed">
                           ({pkg.discountRate}% 할인) 16시간보다 {formatWon(savings)} 더 저렴합니다.
-                        </motion.p>
-                        <motion.p
-                          initial={{ opacity: 0, y: 6, scale: 0.94 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ delay: 0.82, duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
-                          className="text-base font-light text-white tracking-tight"
-                        >
+                        </p>
+                        <p className="text-base font-light text-white tracking-tight">
                           {formatWon(pkg.totalPrice)}
-                        </motion.p>
+                        </p>
                       </div>
-                    )}
-
-                    {isSelected && !pkg.discountRate && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4, duration: 0.25 }}
-                        className="text-base font-light text-white tracking-tight"
-                      >
+                    ) : (
+                      <p className="text-base font-light text-white tracking-tight">
                         {formatWon(pkg.totalPrice)}
-                      </motion.p>
+                      </p>
                     )}
                   </div>
                 </div>
