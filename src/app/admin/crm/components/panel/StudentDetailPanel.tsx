@@ -9,7 +9,6 @@ import { usePanelData } from './hooks/usePanelData';
 import { useEditForm } from './hooks/useEditForm';
 import { useMemoSection } from './hooks/useMemoSection';
 import { useMemoAttachments } from './hooks/useMemoAttachments';
-import { usePhoneCall } from './hooks/usePhoneCall';
 import { useTimeline } from './hooks/useTimeline';
 import { useFunnel } from './hooks/useFunnel';
 import { useDiagnostic } from './hooks/useDiagnostic';
@@ -26,7 +25,9 @@ import { StrategyHistorySection } from './sections/StrategyHistorySection';
 import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import { ActivityFeedSection } from './sections/ActivityFeedSection';
 import { SrmDataCard } from './sections/SrmDataCard';
+import { PlaudRecordingPicker } from './PlaudRecordingPicker';
 import type { StudentDetailPanelProps } from './types';
+import type { ConsultationEntry } from '@/types/crm';
 
 export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
   const { userName } = useAdminAuth();
@@ -34,7 +35,19 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     usePanelData(student.id, adminKey, student);
 
   const [duplicateNames, setDuplicateNames] = useState<string[]>([]);
+  const [plaudOpen, setPlaudOpen] = useState(false);
+  const [timelineOpenSignal, setTimelineOpenSignal] = useState(0);
   const [vipToggling, setVipToggling] = useState(false);
+
+  // Plaud 초안 생성 성공 → 타임라인에 append (재진입 시 DB 순서와 동일하게 created_at 오름차순 정렬)
+  // + 상담 타임라인 섹션을 자동으로 펼쳐 새 초안이 바로 보이게 한다(기본 접힘 상태라 안 보이던 문제 해결).
+  function handlePlaudCreated(entry: ConsultationEntry) {
+    setTimeline(prev =>
+      [...prev, entry].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    );
+    setTimelineOpenSignal(s => s + 1);
+    onUpdate(student.id, { last_contacted_at: new Date().toISOString() } as Partial<Student>);
+  }
   const [isPaused, setIsPaused] = useState(false);
   const [pauseUntil, setPauseUntilDate] = useState<string | null>(null);
 
@@ -103,9 +116,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     getAttachments: attachmentsHook.toAttachments,
     clearAttachments: attachmentsHook.clear,
   });
-
-  // 인터넷 전화 → 통화 종료 후 녹음 전사·요약이 끝나면 메모가 타임라인에 자동 추가됨(realtime)
-  const phoneHook = usePhoneCall({ studentId: student.id, adminKey });
 
   const timelineHook = useTimeline({
     studentId: student.id, adminKey,
@@ -287,11 +297,11 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               memoError={memoHook.memoError}
               setMemoError={memoHook.setMemoError}
               onAddMemo={memoHook.handleAddMemo}
-              phone={phoneHook}
               staged={attachmentsHook.staged}
               onAddFiles={attachmentsHook.addFiles}
               onRemoveAttachment={attachmentsHook.remove}
               attachmentsUploading={attachmentsHook.uploading}
+              onOpenPlaud={() => setPlaudOpen(true)}
             />
 
             <TimelineSection
@@ -299,6 +309,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               adminKey={adminKey}
               timeline={timeline}
               loadingFresh={loadingFresh}
+              openSignal={timelineOpenSignal}
               publishError={timelineHook.publishError}
               publishing={timelineHook.publishing}
               memoSaving={timelineHook.memoSaving}
@@ -344,6 +355,16 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             funnelHook.setShowPaymentModal(false);
           }}
           onClose={() => funnelHook.setShowPaymentModal(false)}
+        />
+      )}
+
+      {plaudOpen && (
+        <PlaudRecordingPicker
+          studentId={student.id}
+          studentName={localStudent.name}
+          adminKey={adminKey}
+          onClose={() => setPlaudOpen(false)}
+          onCreated={handlePlaudCreated}
         />
       )}
     </>

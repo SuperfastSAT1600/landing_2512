@@ -1,0 +1,101 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { isAuthenticated } from '@/lib/server-auth';
+import { processPlaudRecording } from '@/lib/plaud-process';
+import { AudioTooLargeError } from '@/lib/plaud-transcribe';
+import { getPlaudFile } from '@/lib/plaud-client';
+import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultation-timeline';
+
+// gpt-4o-transcribe 전사에 시간이 걸릴 수 있어 서버리스 실행 한도를 늘린다.
+export const maxDuration = 300;
+
+const MEMO_HEADER = '🎙️ Plaud 상담 자동 요약';
+
+/**
+ * Plaud의 타임스탬프(start_at 등)를 한국시간(KST) "YYYY-MM-DD HH:mm"로 변환한다.
+ * Plaud는 타임존 표기 없는 UTC 문자열(예: "2026-07-31T07:39:18")을 주므로 UTC로 간주해 +9h 한다.
+ * 파싱 불가하면 원본을 그대로 반환한다.
+ */
+function toKstDisplay(iso: string): string {
+  if (!iso) return '';
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
+  const d = new Date(hasTz ? iso : `${iso}Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${kst.getUTCFullYear()}-${p(kst.getUTCMonth() + 1)}-${p(kst.getUTCDate())} ${p(kst.getUTCHours())}:${p(kst.getUTCMinutes())}`;
+}
+
+/**
+ * POST /api/crm/students/[id]/plaud-memo
+ * Plaud 녹음을 OpenAI 전사 → Qwen 4섹션 요약 → consultation_timeline에
+ * 미공개(published:false) 초안으로 추가한다. 24MB 초과 녹음은 폴백 없이 413으로 거절한다.
+ *
+ * Body(둘 중 하나):
+ *   { file_id }                          — 서버가 Plaud MCP로 오디오 URL·이름·일시를 해석(권장, UI 경로)
+ *   { audio_url, recording_name?, recorded_at? } — presigned URL 직접 전달(back-compat)
+ * Requires admin authentication.
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  if (!isAuthenticated(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let body: {
+    audio_url?: unknown;
+    recording_name?: unknown;
+    recorded_at?: unknown;
+    file_id?: unknown;
+  };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  let audioUrl = typeof body.audio_url === 'string' ? body.audio_url.trim() : '';
+  let recordingName = typeof body.recording_name === 'string' ? body.recording_name.trim() : '';
+  let recordedAt = typeof body.recorded_at === 'string' ? body.recorded_at.trim() : '';
+
+  // file_id가 오면 서버가 Plaud MCP로 presigned URL·메타를 해석한다(오디오 URL이 브라우저에 노출되지 않음).
+  const fileId = typeof body.file_id === 'string' ? body.file_id.trim() : '';
+  if (!audioUrl && fileId) {
+    try {
+      const file = await getPlaudFile(fileId);
+      audioUrl = file.presigned_url;
+      recordingName = recordingName || file.name;
+      recordedAt = recordedAt || file.start_at || '';
+    } catch (e) {
+      console.error('[crm/plaud-memo get_file]', e);
+      return NextResponse.json({ error: 'Plaud 녹음을 가져오지 못했습니다.' }, { status: 502 });
+    }
+  }
+
+  if (!audioUrl) {
+    return NextResponse.json({ error: 'file_id 또는 audio_url이 필요합니다.' }, { status: 400 });
+  }
+
+  try {
+    const { summary } = await processPlaudRecording({ audioUrl });
+
+    const meta = [recordingName, toKstDisplay(recordedAt)].filter(Boolean).join(' · ');
+    const header = meta ? `${MEMO_HEADER} · ${meta}` : MEMO_HEADER;
+    const raw_memo = `${header}\n\n${summary}`;
+
+    const entry = await appendConsultationEntry(id, { raw_memo, published: false });
+
+    return NextResponse.json({ data: { entry, summary } }, { status: 201 });
+  } catch (e) {
+    if (e instanceof AudioTooLargeError) {
+      return NextResponse.json({ error: e.message }, { status: 413 });
+    }
+    if (e instanceof StudentNotFoundError) {
+      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    }
+    console.error('[crm/plaud-memo POST]', e);
+    return NextResponse.json({ error: 'Failed to create memo from recording' }, { status: 500 });
+  }
+}
