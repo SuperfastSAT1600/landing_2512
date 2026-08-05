@@ -11,6 +11,7 @@ interface Props {
   adminKey: string;
   timeline: ConsultationEntry[];
   loadingFresh: boolean;
+  openSignal?: number;
   publishError: string;
   publishing: boolean;
   memoSaving: string | null;
@@ -25,7 +26,7 @@ interface Props {
 }
 
 export function TimelineSection({
-  studentId, adminKey, timeline, loadingFresh, publishError, publishing, memoSaving, aiLoadingFor,
+  studentId, adminKey, timeline, loadingFresh, openSignal, publishError, publishing, memoSaving, aiLoadingFor,
   pendingEdits, setPendingEdits, onAiCare, onPublish, onDeleteAi, onEditMemo,
 }: Props) {
   return (
@@ -33,6 +34,7 @@ export function TimelineSection({
       title="상담 타임라인"
       count={!loadingFresh ? timeline.length : undefined}
       defaultOpen={false}
+      openSignal={openSignal}
     >
       {loadingFresh && (
         <div className="space-y-2">

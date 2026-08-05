@@ -1,11 +1,9 @@
 'use client';
 
 import { useRef } from 'react';
-import { Loader2, Paperclip, X, FileText } from 'lucide-react';
+import { Loader2, Paperclip, X, FileText, Mic } from 'lucide-react';
 import { SectionCard } from './SectionCard';
-import { PhoneCallBox } from './PhoneCallBox';
 import type { StagedAttachment } from '../hooks/useMemoAttachments';
-import type { PhoneCall } from '../hooks/usePhoneCall';
 
 interface Props {
   memoText: string;
@@ -14,19 +12,18 @@ interface Props {
   memoError: string;
   setMemoError: (v: string) => void;
   onAddMemo: () => void;
-  // 인터넷 전화
-  phone: PhoneCall;
   // 첨부
   staged: StagedAttachment[];
   onAddFiles: (files: File[]) => void;
   onRemoveAttachment: (localId: string) => void;
   attachmentsUploading: boolean;
+  // Plaud 녹음 선택 모달 열기
+  onOpenPlaud: () => void;
 }
 
 export function MemoSection({
   memoText, setMemoText, savingMemo, memoError, setMemoError, onAddMemo,
-  phone,
-  staged, onAddFiles, onRemoveAttachment, attachmentsUploading,
+  staged, onAddFiles, onRemoveAttachment, attachmentsUploading, onOpenPlaud,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,9 +39,6 @@ export function MemoSection({
 
   return (
     <SectionCard title="상담 메모" defaultOpen={false}>
-      {/* 인터넷 전화 → 링크 생성·공유 → 통화 녹음 자동 요약 */}
-      <PhoneCallBox phone={phone} />
-
       <textarea
         value={memoText}
         onChange={e => { setMemoText(e.target.value); setMemoError(''); }}
@@ -97,12 +91,20 @@ export function MemoSection({
       {memoError && <p className="mt-1 text-xs text-red-500">{memoError}</p>}
 
       <div className="flex items-center justify-between mt-2">
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-[13px] text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          <Paperclip size={13} /> 파일 첨부
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-[13px] text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <Paperclip size={13} /> 파일 첨부
+          </button>
+          <button
+            onClick={onOpenPlaud}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-blue-200 text-[13px] text-blue-600 hover:bg-blue-50 transition-colors"
+          >
+            <Mic size={13} /> Plaud 녹음
+          </button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
