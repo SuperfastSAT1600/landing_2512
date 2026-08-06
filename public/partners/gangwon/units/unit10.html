@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강원 영어 인터뷰 수업 · Unit 10 Review · 러너스 LRS</title>
+<meta property="og:title" content="강원 영어 인터뷰 수업 · Unit 10 Review" />
+<meta property="og:description" content="Units 6–9 핵심 표현 복습 — 40개 표현 완전 정복" />
+<meta property="og:image" content="/partners/lrs-logo.png" />
+<meta property="og:type" content="website" />
+<style>
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --night:     #000000;
+  --night-s:   #0a0a0a;
+  --night-2:   #111111;
+  --white:     #ffffff;
+  --mute:      #cccccc;
+  --muted:     #aaaaaa;
+  --line:      #2a2a2f;
+  --line-l:    #e0e0e8;
+  --bg-l:      #f4f7fa;
+  --blue-tint: #e8f0ff;
+  --blue-bdr:  #c8d8ff;
+  --gold:      #c8a850;
+  --max:       1080px;
+  --pad:       clamp(24px, 5vw, 80px);
+  --u6: #4a7fcb;
+  --u7: #cb6a4a;
+  --u8: #5a9e5a;
+  --u9: #9a5acb;
+}
+
+html { scroll-behavior: smooth; }
+body { background: var(--night); color: var(--white); font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+/* Nav */
+#topnav { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.88); backdrop-filter: blur(12px); border-bottom: 0.5px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--pad); height: 48px; }
+.brand { font-size: 11px; font-weight: 700; letter-spacing: 0.4em; color: var(--white); text-transform: uppercase; }
+.nav-dropdown { position: relative; }
+.nav-trigger { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--white); cursor: pointer; display: flex; align-items: center; gap: 7px; user-select: none; transition: color 0.15s; }
+.nav-trigger:hover { opacity: 0.75; }
+.nav-trigger-arrow { font-size: 7px; transition: transform 0.2s; }
+.nav-dropdown.open .nav-trigger-arrow { transform: rotate(180deg); }
+.nav-menu { display: none; position: absolute; top: calc(100% + 14px); right: 0; background: rgba(8,8,8,0.98); border: 0.5px solid var(--line); backdrop-filter: blur(16px); min-width: 260px; z-index: 200; max-height: 80vh; overflow-y: auto; }
+.nav-dropdown.open .nav-menu { display: block; }
+.nav-right { display: flex; align-items: center; gap: 24px; }
+.nav-unit-hd { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; border-bottom: 0.5px solid var(--line); transition: background 0.12s; user-select: none; }
+.nav-unit-hd:hover { background: rgba(255,255,255,0.03); }
+.nav-unit-label { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--white); font-weight: 700; }
+.nav-unit-sub { font-size: 9px; letter-spacing: 0.05em; text-transform: none; color: var(--mute); margin-top: 3px; font-weight: 400; }
+.nav-unit-arrow { font-size: 7px; color: var(--mute); transition: transform 0.2s; flex-shrink: 0; margin-left: 12px; }
+.nav-unit.open .nav-unit-arrow { transform: rotate(90deg); }
+.nav-sections { display: none; }
+.nav-unit.open .nav-sections { display: block; }
+.nav-sec-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px 9px 24px; font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); cursor: pointer; border-bottom: 0.5px solid rgba(42,42,47,0.6); transition: color 0.12s, background 0.12s; white-space: nowrap; }
+.nav-sections .nav-sec-item:last-child { border-bottom: none; }
+.nav-sec-item:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+.nav-sec-item.active { color: var(--white); }
+.nav-sec-num { font-size: 7px; color: var(--line); min-width: 14px; flex-shrink: 0; }
+
+/* Sections */
+.section { max-width: var(--max); margin: 0 auto; padding: 80px var(--pad); border-bottom: 0.5px solid var(--line); }
+.section:last-child { border-bottom: none; }
+.section-light { background: var(--bg-l); max-width: 100%; padding: 80px 0; }
+.section-light .inner { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
+
+/* Atoms */
+.eyebrow { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--mute); font-weight: 400; display: block; margin-bottom: 16px; }
+.eyebrow-dark { color: var(--muted); }
+.hl   { height: 0.5px; background: var(--line);   margin: 24px 0; }
+.hl-l { height: 0.5px; background: var(--line-l); margin: 24px 0; }
+.display { font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; line-height: 0.94; color: var(--white); }
+.d-xxl { font-size: clamp(40px, 6.2vw, 86px); }
+.d-xl  { font-size: clamp(36px, 5.5vw, 64px); }
+.d-lg  { font-size: clamp(28px, 4vw, 48px); }
+.d-md  { font-size: clamp(22px, 3vw, 34px); }
+.d-dark { color: #111; }
+
+/* Hero */
+#hero { min-height: 88vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 var(--pad) 80px; position: relative; overflow: hidden; }
+#hero-vbg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+#hero-vbg iframe { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: max(100%, calc(100vh * 16 / 9)); height: max(100%, calc(100vw * 9 / 16)); pointer-events: none; opacity: 0.35; }
+#hero-vbg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.88) 100%); z-index: 1; }
+.hero-content { position: relative; z-index: 2; display: flex; flex-direction: column; }
+.hero-unit-tag { font-size: 9px; letter-spacing: 0.4em; color: var(--mute); text-transform: uppercase; margin-bottom: 28px; display: block; }
+.hero-h1 { margin-bottom: 0; }
+.hero-sub { margin-top: 24px; font-size: 14px; color: var(--mute); letter-spacing: 0.04em; line-height: 1.6; max-width: 480px; }
+.scroll-hint { margin-top: 48px; font-size: 9px; letter-spacing: 0.28em; color: var(--line); text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
+.scroll-hint::after { content: ''; display: block; width: 40px; height: 0.5px; background: var(--line); }
+
+/* Quick Recap */
+.recap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin-top: 40px; border: 0.5px solid var(--line); }
+@media (max-width: 640px) { .recap-grid { grid-template-columns: 1fr; } }
+.recap-card { padding: 32px; background: var(--night-s); border: 0.5px solid var(--line); display: flex; flex-direction: column; gap: 16px; }
+.recap-unit-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.32em; text-transform: uppercase; padding: 3px 10px; border-radius: 2px; display: inline-block; align-self: flex-start; }
+.recap-unit-badge.u6 { background: rgba(74,127,203,0.2); color: var(--u6); border: 0.5px solid var(--u6); }
+.recap-unit-badge.u7 { background: rgba(203,106,74,0.2); color: var(--u7); border: 0.5px solid var(--u7); }
+.recap-unit-badge.u8 { background: rgba(90,158,90,0.2); color: var(--u8); border: 0.5px solid var(--u8); }
+.recap-unit-badge.u9 { background: rgba(154,90,203,0.2); color: var(--u9); border: 0.5px solid var(--u9); }
+.recap-title { font-size: 18px; font-weight: 700; letter-spacing: 0.04em; color: var(--white); line-height: 1.2; }
+.recap-theme { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
+.recap-phrases { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }
+.recap-phrase { padding: 10px 0; border-top: 0.5px solid var(--line); font-size: 13px; font-style: italic; color: var(--white); line-height: 1.4; }
+.recap-phrase-ko { font-size: 11px; color: var(--muted); font-style: normal; margin-top: 3px; }
+
+/* Flashcard */
+.flashcard-wrap { display: flex; flex-direction: column; align-items: center; gap: 32px; margin-top: 40px; }
+.flashcard-counter { font-size: 10px; letter-spacing: 0.24em; color: var(--muted); text-transform: uppercase; }
+.flashcard { width: 100%; max-width: 680px; min-height: 220px; background: var(--night-s); border: 0.5px solid var(--line); border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; gap: 20px; text-align: center; }
+.flashcard:hover { border-color: var(--muted); background: rgba(255,255,255,0.02); }
+.flashcard-unit-tag { font-size: 8px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; padding: 2px 10px; border-radius: 2px; }
+.flashcard-unit-tag.u6 { background: rgba(74,127,203,0.15); color: var(--u6); }
+.flashcard-unit-tag.u7 { background: rgba(203,106,74,0.15); color: var(--u7); }
+.flashcard-unit-tag.u8 { background: rgba(90,158,90,0.15); color: var(--u8); }
+.flashcard-unit-tag.u9 { background: rgba(154,90,203,0.15); color: var(--u9); }
+.flashcard-en { font-size: clamp(16px, 2.2vw, 24px); font-weight: 700; font-style: italic; color: var(--white); line-height: 1.3; }
+.flashcard-ko { font-size: 15px; color: var(--muted); line-height: 1.5; transition: opacity 0.3s; }
+.flashcard-ko.hidden { opacity: 0; }
+.flashcard-hint { position: absolute; bottom: 16px; right: 20px; font-size: 8px; letter-spacing: 0.2em; color: var(--line); text-transform: uppercase; }
+.flashcard-nav { display: flex; align-items: center; gap: 16px; }
+.fc-btn { background: none; border: 0.5px solid var(--line); color: var(--muted); font-family: Arial; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
+.fc-btn:hover:not(:disabled) { border-color: var(--white); color: var(--white); }
+.fc-btn:disabled { opacity: 0.2; cursor: default; }
+.fc-btn.primary { border-color: var(--white); color: var(--white); }
+.fc-btn.primary:hover { background: var(--white); color: #000; }
+.fc-progress { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: 680px; }
+.fc-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--line); transition: background 0.2s, transform 0.15s; }
+.fc-dot.active { background: var(--white); transform: scale(1.5); }
+
+/* Master List */
+.master-section { margin-top: 40px; }
+.master-unit-header { display: flex; align-items: center; gap: 16px; padding: 20px 0 12px; border-top: 0.5px solid var(--line); margin-top: 8px; }
+.master-unit-header:first-child { border-top: none; margin-top: 0; }
+.master-unit-num { font-size: 10px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; padding: 3px 12px; border-radius: 2px; flex-shrink: 0; }
+.master-unit-num.u6 { background: rgba(74,127,203,0.15); color: var(--u6); }
+.master-unit-num.u7 { background: rgba(203,106,74,0.15); color: var(--u7); }
+.master-unit-num.u8 { background: rgba(90,158,90,0.15); color: var(--u8); }
+.master-unit-num.u9 { background: rgba(154,90,203,0.15); color: var(--u9); }
+.master-unit-title { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; }
+.master-rows { display: flex; flex-direction: column; }
+.master-row { display: grid; grid-template-columns: 32px 1fr 280px; gap: 20px; padding: 14px 0; border-top: 0.5px solid rgba(42,42,47,0.7); align-items: center; }
+@media (max-width: 640px) { .master-row { grid-template-columns: 28px 1fr; } .master-row-ko { display: none; } }
+.master-row-num { font-size: 9px; letter-spacing: 0.2em; color: var(--line); }
+.master-row-en { font-size: 14px; font-weight: 700; color: var(--white); font-style: italic; line-height: 1.4; }
+.master-row-ko { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* Drill */
+.drill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 56px; }
+@media (max-width: 640px) { .drill-grid { grid-template-columns: 1fr; } }
+.drill-item { padding: 28px 0; border-top: 0.5px solid var(--line-l); display: flex; flex-direction: column; gap: 10px; }
+.drill-num { font-size: 9px; letter-spacing: 0.2em; color: var(--muted); }
+.drill-unit-tag { font-size: 8px; letter-spacing: 0.24em; text-transform: uppercase; padding: 2px 8px; border-radius: 2px; display: inline-block; align-self: flex-start; }
+.drill-unit-tag.u6 { background: rgba(74,127,203,0.15); color: var(--u6); }
+.drill-unit-tag.u7 { background: rgba(203,106,74,0.15); color: var(--u7); }
+.drill-unit-tag.u8 { background: rgba(90,158,90,0.15); color: var(--u8); }
+.drill-unit-tag.u9 { background: rgba(154,90,203,0.15); color: var(--u9); }
+.drill-tpl { font-size: 17px; font-weight: 700; color: #111; line-height: 1.45; }
+.drill-hint { background: var(--blue-tint); border: 0.5px solid var(--blue-bdr); border-radius: 4px; padding: 10px 14px; font-size: 12px; color: #445566; line-height: 1.6; }
+.drill-ex { font-size: 12px; color: var(--muted); font-style: italic; }
+
+/* Final Challenge */
+.challenge-grid { display: flex; flex-direction: column; gap: 0; margin-top: 40px; }
+.challenge-item { padding: 36px 0; border-top: 0.5px solid var(--line); }
+.challenge-item:last-child { border-bottom: 0.5px solid var(--line); }
+.challenge-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.challenge-badge { font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; padding: 2px 10px; border-radius: 2px; }
+.challenge-badge.u6 { background: rgba(74,127,203,0.15); color: var(--u6); }
+.challenge-badge.u7 { background: rgba(203,106,74,0.15); color: var(--u7); }
+.challenge-badge.u8 { background: rgba(90,158,90,0.15); color: var(--u8); }
+.challenge-badge.u9 { background: rgba(154,90,203,0.15); color: var(--u9); }
+.challenge-num { font-size: 9px; letter-spacing: 0.28em; color: var(--line); }
+.challenge-situation { font-size: 20px; font-weight: 700; letter-spacing: 0.04em; color: var(--white); margin-bottom: 10px; line-height: 1.3; }
+.challenge-q { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+.challenge-hints { display: flex; flex-direction: column; gap: 6px; }
+.challenge-hint-label { font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--line); margin-bottom: 4px; }
+.challenge-hint-phrase { font-size: 13px; font-style: italic; color: var(--white); padding: 8px 14px; border-left: 2px solid var(--line); line-height: 1.5; }
+
+/* Instructor Bar */
+#instructor-bar { position: fixed; top: 48px; left: 0; right: 0; height: 44px; background: rgba(10,10,10,0.97); border-bottom: 0.5px solid #2a2a2f; backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--pad); z-index: 99; transition: opacity 0.2s; }
+#instructor-bar.hidden { opacity: 0; pointer-events: none; }
+.ibar-left { display: flex; align-items: center; gap: 14px; }
+.ibar-label { font-size: 9px; letter-spacing: 0.28em; color: var(--mute); text-transform: uppercase; }
+.ibar-section-name { font-size: 11px; font-weight: 700; color: var(--white); letter-spacing: 0.04em; min-width: 200px; }
+.ibar-right { display: flex; align-items: center; gap: 8px; }
+.ibar-btn { background: none; border: 0.5px solid #3a3a3f; color: var(--muted); font-family: Arial; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.ibar-btn:hover:not(:disabled) { border-color: var(--white); color: var(--white); }
+.ibar-btn:disabled { opacity: 0.25; cursor: default; }
+.ibar-btn.primary { border-color: var(--white); color: var(--white); }
+.ibar-btn.primary:hover { background: var(--white); color: #000; }
+.ibar-progress { display: flex; align-items: center; gap: 6px; }
+.ibar-dot { width: 4px; height: 4px; border-radius: 50%; background: #3a3a3f; cursor: pointer; transition: background 0.2s, transform 0.15s; flex-shrink: 0; }
+.ibar-dot.active { background: var(--white); transform: scale(1.5); }
+.ibar-dot:hover { background: var(--muted); }
+.ibar-toggle { font-size: 9px; letter-spacing: 0.2em; color: var(--mute); text-transform: uppercase; background: none; border: none; cursor: pointer; padding: 4px 0; transition: color 0.15s; }
+.ibar-toggle:hover { color: var(--white); }
+
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+#footer { border-top: 0.5px solid var(--line); padding: 32px var(--pad); display: flex; justify-content: space-between; align-items: center; max-width: 100%; }
+.footer-brand { font-size: 10px; letter-spacing: 0.32em; color: var(--mute); text-transform: uppercase; }
+.footer-note { font-size: 10px; color: var(--line); letter-spacing: 0.1em; }
+
+</style>
+</head>
+<body>
+
+<nav id="topnav">
+  <span class="brand">러너스 LRS</span>
+  <div class="nav-right">
+    <div class="nav-dropdown" id="nav-dropdown">
+      <div class="nav-trigger" onclick="toggleNavMenu(event)">
+        <span id="nav-trigger-label">목차</span>
+        <span class="nav-trigger-arrow">▾</span>
+      </div>
+      <div class="nav-menu" id="nav-menu"></div>
+    </div>
+  </div>
+</nav>
+
+<div id="instructor-bar">
+  <div class="ibar-left">
+    <span class="ibar-label">강사 모드</span>
+    <span class="ibar-section-name" id="ibar-name">Unit 10 — 복습 오프닝</span>
+  </div>
+  <div class="ibar-right">
+    <div class="ibar-progress" id="ibar-dots"></div>
+    <button class="ibar-btn" id="ibar-prev" onclick="ibarGo(-1)" disabled>← 이전</button>
+    <button class="ibar-btn primary" id="ibar-next" onclick="ibarGo(1)">다음 섹션 →</button>
+    <button class="ibar-toggle" onclick="toggleIbar()">숨기기</button>
+  </div>
+</div>
+
+<!-- S1: HERO -->
+<section id="hero" style="scroll-margin-top:92px;">
+  <div id="hero-vbg">
+    <iframe
+      src="https://www.youtube.com/embed/shkGWuni26w?autoplay=1&mute=1&loop=1&controls=0&rel=0&showinfo=0&playlist=shkGWuni26w"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>
+  </div>
+  <div class="hero-content">
+    <span class="hero-unit-tag">Unit 10 &nbsp;·&nbsp; Round 2 Review &nbsp;·&nbsp; English Interview Class &nbsp;·&nbsp; 러너스 LRS</span>
+    <h1 class="display d-xxl hero-h1">
+      4 UNITS.<br>40 PHRASES.<br>ROUND 2.
+    </h1>
+    <p class="hero-sub">Unit 6–9에서 배운 핵심 표현 전체를 복습합니다.<br>플래시카드, 마스터 리스트, 빈칸 드릴, 풀 인터뷰 챌린지까지.</p>
+    <div class="scroll-hint">Let's review</div>
+  </div>
+</section>
+
+<!-- S2: QUICK RECAP -->
+<div class="section" id="recap" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Review &nbsp;·&nbsp; 4 Units at a Glance</span>
+  <h2 class="display d-xl reveal" style="margin-bottom:0;">WHAT YOU<br>LEARNED.</h2>
+  <div class="recap-grid reveal">
+
+    <div class="recap-card">
+      <span class="recap-unit-badge u6">Unit 6</span>
+      <div class="recap-title">Self-Introduction<br>&amp; Joining the Team</div>
+      <div class="recap-theme">팀 합류 · 첫 인터뷰 · 자기소개 — Round 2</div>
+      <div class="recap-phrases">
+        <div class="recap-phrase">
+          "It means everything to me to be here."
+          <div class="recap-phrase-ko">여기 있다는 것이 저에게는 모든 것을 의미합니다.</div>
+        </div>
+        <div class="recap-phrase">
+          "This is where I want to prove myself."
+          <div class="recap-phrase-ko">이곳이 바로 제 자신을 증명하고 싶은 곳입니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="recap-card">
+      <span class="recap-unit-badge u7">Unit 7</span>
+      <div class="recap-title">Post-Match<br>Flash Interview</div>
+      <div class="recap-theme">경기 후 인터뷰 · 승리 · 패배 — Round 2</div>
+      <div class="recap-phrases">
+        <div class="recap-phrase">
+          "We showed real character out there today."
+          <div class="recap-phrase-ko">오늘 경기장에서 진짜 근성을 보여줬습니다.</div>
+        </div>
+        <div class="recap-phrase">
+          "We have to take this on the chin and move on."
+          <div class="recap-phrase-ko">이것을 받아들이고 앞으로 나아가야 합니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="recap-card">
+      <span class="recap-unit-badge u8">Unit 8</span>
+      <div class="recap-title">Goals, Motivation<br>&amp; Ambition</div>
+      <div class="recap-theme">목표 · 동기 · 야망 선언 — Round 2</div>
+      <div class="recap-phrases">
+        <div class="recap-phrase">
+          "I want to be the best version of myself every single day."
+          <div class="recap-phrase-ko">저는 매일 최고의 제 자신이 되고 싶습니다.</div>
+        </div>
+        <div class="recap-phrase">
+          "Doubters give me the most motivation."
+          <div class="recap-phrase-ko">의심하는 사람들이 제게 가장 큰 동기를 줍니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="recap-card">
+      <span class="recap-unit-badge u9">Unit 9</span>
+      <div class="recap-title">Injury, Recovery<br>&amp; Resilience</div>
+      <div class="recap-theme">부상 · 회복 · 믿음 · 귀환 — Round 2</div>
+      <div class="recap-phrases">
+        <div class="recap-phrase">
+          "I focused only on what I could control."
+          <div class="recap-phrase-ko">내가 통제할 수 있는 것에만 집중했습니다.</div>
+        </div>
+        <div class="recap-phrase">
+          "I'm grateful for the experience — it taught me so much."
+          <div class="recap-phrase-ko">그 경험에 감사합니다 — 정말 많은 것을 가르쳐 줬습니다.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- S3: FLASHCARD DRILL -->
+<div class="section" id="flashcard" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Flashcard Drill &nbsp;·&nbsp; 40 Expressions</span>
+  <h2 class="display d-lg reveal" style="margin-bottom:8px;">FLIP &amp; RECALL.</h2>
+  <p class="reveal" style="font-size:13px; color:var(--muted); margin-top:8px; margin-bottom:0;">카드를 클릭하면 한국어 번역이 나타납니다. 셔플로 순서를 섞을 수 있습니다.</p>
+  <div class="flashcard-wrap reveal">
+    <div class="flashcard-counter" id="fc-counter">1 / 40</div>
+    <div class="flashcard" id="fc-card" onclick="fcToggleKo()">
+      <span class="flashcard-unit-tag u6" id="fc-unit-tag">Unit 6</span>
+      <div class="flashcard-en" id="fc-en"></div>
+      <div class="flashcard-ko hidden" id="fc-ko"></div>
+      <span class="flashcard-hint">클릭하여 번역 보기</span>
+    </div>
+    <div class="fc-progress" id="fc-progress"></div>
+    <div class="flashcard-nav">
+      <button class="fc-btn" id="fc-prev" onclick="fcMove(-1)" disabled>← 이전</button>
+      <button class="fc-btn" onclick="fcShuffle()">셔플</button>
+      <button class="fc-btn primary" id="fc-next" onclick="fcMove(1)">다음 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S4: MASTER LIST -->
+<div class="section" id="master" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Master List &nbsp;·&nbsp; 40 Key Phrases &nbsp;·&nbsp; Units 6–9</span>
+  <h2 class="display d-lg reveal" style="margin-bottom:0;">40 PHRASES.<br>MEMORIZE ALL.</h2>
+  <div class="master-section reveal">
+
+    <div class="master-unit-header">
+      <span class="master-unit-num u6">Unit 6</span>
+      <span class="master-unit-title">Self-Introduction &amp; Joining the Team — Round 2</span>
+    </div>
+    <div class="master-rows">
+      <div class="master-row"><span class="master-row-num">01</span><span class="master-row-en">"It means everything to me to be here."</span><span class="master-row-ko">여기 있다는 것이 저에게는 모든 것을 의미합니다.</span></div>
+      <div class="master-row"><span class="master-row-num">02</span><span class="master-row-en">"I'm ready to give everything for this team."</span><span class="master-row-ko">이 팀을 위해 모든 것을 바칠 준비가 되어 있습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">03</span><span class="master-row-en">"I want to make the fans proud."</span><span class="master-row-ko">팬들을 자랑스럽게 만들고 싶습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">04</span><span class="master-row-en">"Playing at this level is a dream I've worked for my whole life."</span><span class="master-row-ko">이 수준에서 뛰는 것은 평생 꿈꿔온 꿈입니다.</span></div>
+      <div class="master-row"><span class="master-row-num">05</span><span class="master-row-en">"I know what this club means to the people here."</span><span class="master-row-ko">이 클럽이 여기 사람들에게 어떤 의미인지 압니다.</span></div>
+      <div class="master-row"><span class="master-row-num">06</span><span class="master-row-en">"I'm here to work hard and earn my place."</span><span class="master-row-ko">열심히 일하고 제 자리를 얻기 위해 왔습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">07</span><span class="master-row-en">"I feel at home already."</span><span class="master-row-ko">이미 집처럼 편합니다.</span></div>
+      <div class="master-row"><span class="master-row-num">08</span><span class="master-row-en">"Every training session, I will give 100 percent."</span><span class="master-row-ko">모든 훈련 세션마다 100%를 다하겠습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">09</span><span class="master-row-en">"I've heard so many great things about this place."</span><span class="master-row-ko">이곳에 대해 정말 좋은 이야기를 많이 들었습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">10</span><span class="master-row-en">"This is where I want to prove myself."</span><span class="master-row-ko">이곳이 바로 제 자신을 증명하고 싶은 곳입니다.</span></div>
+    </div>
+
+    <div class="master-unit-header">
+      <span class="master-unit-num u7">Unit 7</span>
+      <span class="master-unit-title">Post-Match Flash Interview — Round 2</span>
+    </div>
+    <div class="master-rows">
+      <div class="master-row"><span class="master-row-num">11</span><span class="master-row-en">"We showed real character out there today."</span><span class="master-row-ko">오늘 경기장에서 진짜 근성을 보여줬습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">12</span><span class="master-row-en">"It wasn't pretty but we got the three points."</span><span class="master-row-ko">예쁘지는 않았지만 3점을 가져왔습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">13</span><span class="master-row-en">"Every player on the pitch gave absolutely everything."</span><span class="master-row-ko">경기장의 모든 선수가 정말 모든 것을 쏟아냈습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">14</span><span class="master-row-en">"We don't celebrate too long — we focus on the next game."</span><span class="master-row-ko">너무 오래 자축하지 않습니다 — 다음 경기에 집중합니다.</span></div>
+      <div class="master-row"><span class="master-row-num">15</span><span class="master-row-en">"The manager's game plan worked perfectly today."</span><span class="master-row-ko">오늘 감독의 게임 플랜이 완벽하게 통했습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">16</span><span class="master-row-en">"We have to take this on the chin and move on."</span><span class="master-row-ko">이것을 받아들이고 앞으로 나아가야 합니다.</span></div>
+      <div class="master-row"><span class="master-row-num">17</span><span class="master-row-en">"It's not the result we wanted but we keep believing."</span><span class="master-row-ko">원하는 결과는 아니었지만 계속 믿습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">18</span><span class="master-row-en">"Credit to the other team — they were better today."</span><span class="master-row-ko">상대 팀에 공을 돌립니다 — 오늘은 그들이 더 잘했습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">19</span><span class="master-row-en">"We have to look at what went wrong and fix it."</span><span class="master-row-ko">무엇이 잘못됐는지 살펴보고 고쳐야 합니다.</span></div>
+      <div class="master-row"><span class="master-row-num">20</span><span class="master-row-en">"The dressing room is disappointed but we'll bounce back together."</span><span class="master-row-ko">라커룸은 실망스럽지만 함께 반등할 것입니다.</span></div>
+    </div>
+
+    <div class="master-unit-header">
+      <span class="master-unit-num u8">Unit 8</span>
+      <span class="master-unit-title">Goals, Motivation &amp; Ambition — Round 2</span>
+    </div>
+    <div class="master-rows">
+      <div class="master-row"><span class="master-row-num">21</span><span class="master-row-en">"I want to be the best version of myself every single day."</span><span class="master-row-ko">저는 매일 최고의 제 자신이 되고 싶습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">22</span><span class="master-row-en">"My goal is simple — to win and keep winning."</span><span class="master-row-ko">제 목표는 단순합니다 — 이기고 계속 이기는 것입니다.</span></div>
+      <div class="master-row"><span class="master-row-num">23</span><span class="master-row-en">"I'm always hungry for more — trophies, goals, records."</span><span class="master-row-ko">저는 항상 더 많은 것을 원합니다 — 트로피, 골, 기록.</span></div>
+      <div class="master-row"><span class="master-row-num">24</span><span class="master-row-en">"Whatever I achieve, I always want to push for the next level."</span><span class="master-row-ko">무엇을 이루든 항상 다음 단계를 향해 나아가고 싶습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">25</span><span class="master-row-en">"I grew up watching the greats and I want to be talked about like them."</span><span class="master-row-ko">위대한 선수들을 보며 자랐고 그들처럼 언급되고 싶습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">26</span><span class="master-row-en">"My family is the reason I work so hard every day."</span><span class="master-row-ko">제 가족이 매일 이렇게 열심히 일하는 이유입니다.</span></div>
+      <div class="master-row"><span class="master-row-num">27</span><span class="master-row-en">"When I was young, nothing was given to me — I had to earn everything."</span><span class="master-row-ko">어렸을 때 아무것도 주어지지 않았습니다 — 모든 것을 얻어야 했습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">28</span><span class="master-row-en">"Doubters give me the most motivation."</span><span class="master-row-ko">의심하는 사람들이 제게 가장 큰 동기를 줍니다.</span></div>
+      <div class="master-row"><span class="master-row-num">29</span><span class="master-row-en">"Every morning I wake up with one goal — to be better than yesterday."</span><span class="master-row-ko">매일 아침 하나의 목표로 일어납니다 — 어제보다 나아지는 것.</span></div>
+      <div class="master-row"><span class="master-row-num">30</span><span class="master-row-en">"Football gave me everything, so I give everything back to football."</span><span class="master-row-ko">축구가 제게 모든 것을 주었으니 저도 축구에 모든 것을 돌려줍니다.</span></div>
+    </div>
+
+    <div class="master-unit-header">
+      <span class="master-unit-num u9">Unit 9</span>
+      <span class="master-unit-title">Injury, Recovery &amp; Resilience — Round 2</span>
+    </div>
+    <div class="master-rows">
+      <div class="master-row"><span class="master-row-num">31</span><span class="master-row-en">"It was the hardest period of my career."</span><span class="master-row-ko">제 커리어에서 가장 힘든 시간이었습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">32</span><span class="master-row-en">"I had to dig really deep mentally."</span><span class="master-row-ko">정신적으로 깊이 파고들어야 했습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">33</span><span class="master-row-en">"The medical team deserves all the credit."</span><span class="master-row-ko">의료팀이 모든 공을 받아야 합니다.</span></div>
+      <div class="master-row"><span class="master-row-num">34</span><span class="master-row-en">"Every setback makes you appreciate the game more."</span><span class="master-row-ko">모든 역경은 경기를 더욱 감사하게 만듭니다.</span></div>
+      <div class="master-row"><span class="master-row-num">35</span><span class="master-row-en">"I focused only on what I could control."</span><span class="master-row-ko">내가 통제할 수 있는 것에만 집중했습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">36</span><span class="master-row-en">"I used that time to study the game and get smarter."</span><span class="master-row-ko">그 시간을 경기를 공부하고 더 현명해지는 데 사용했습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">37</span><span class="master-row-en">"The road back was long but I kept my head down and worked."</span><span class="master-row-ko">돌아오는 길은 멀었지만 고개를 숙이고 노력했습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">38</span><span class="master-row-en">"I told myself — this challenge will make me better."</span><span class="master-row-ko">이 도전이 나를 더 나은 사람으로 만들 것이라고 스스로에게 말했습니다.</span></div>
+      <div class="master-row"><span class="master-row-num">39</span><span class="master-row-en">"When you face that kind of challenge, you find out who you really are."</span><span class="master-row-ko">그런 도전에 직면하면 자신이 정말 어떤 사람인지 알게 됩니다.</span></div>
+      <div class="master-row"><span class="master-row-num">40</span><span class="master-row-en">"I'm grateful for the experience — it taught me so much."</span><span class="master-row-ko">그 경험에 감사합니다 — 정말 많은 것을 가르쳐 줬습니다.</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- S5: MIX DRILL -->
+<div class="section-light" id="drill" style="scroll-margin-top:92px;">
+  <div class="inner">
+    <span class="eyebrow eyebrow-dark">Unit 10 &nbsp;·&nbsp; Mix Drill &nbsp;·&nbsp; Units 6–9</span>
+    <h2 class="display d-xl d-dark reveal" style="margin-bottom:32px;">FILL IN<br>THE BLANKS</h2>
+    <div class="hl-l reveal"></div>
+    <div class="drill-grid reveal">
+      <div>
+        <div class="drill-item">
+          <div class="drill-num">01</div>
+          <span class="drill-unit-tag u6">Unit 6</span>
+          <div class="drill-tpl">It _______ everything to me to be here.</div>
+          <div class="drill-hint">means / means the world</div>
+          <div class="drill-ex">예: It means everything to me to be here.</div>
+        </div>
+        <div class="drill-item">
+          <div class="drill-num">03</div>
+          <span class="drill-unit-tag u7">Unit 7</span>
+          <div class="drill-tpl">We showed real _______ out there today.</div>
+          <div class="drill-hint">character / determination / heart</div>
+          <div class="drill-ex">예: We showed real character out there today.</div>
+        </div>
+        <div class="drill-item">
+          <div class="drill-num">05</div>
+          <span class="drill-unit-tag u8">Unit 8</span>
+          <div class="drill-tpl">I'm always _______ for more — trophies, goals, records.</div>
+          <div class="drill-hint">hungry / pushing / reaching</div>
+          <div class="drill-ex">예: I'm always hungry for more — trophies, goals, records.</div>
+        </div>
+        <div class="drill-item">
+          <div class="drill-num">07</div>
+          <span class="drill-unit-tag u9">Unit 9</span>
+          <div class="drill-tpl">I had to dig really _______ mentally.</div>
+          <div class="drill-hint">deep / hard / far</div>
+          <div class="drill-ex">예: I had to dig really deep mentally.</div>
+        </div>
+      </div>
+      <div>
+        <div class="drill-item">
+          <div class="drill-num">02</div>
+          <span class="drill-unit-tag u6">Unit 6</span>
+          <div class="drill-tpl">This is where I want to _______ myself.</div>
+          <div class="drill-hint">prove / express / push</div>
+          <div class="drill-ex">예: This is where I want to prove myself.</div>
+        </div>
+        <div class="drill-item">
+          <div class="drill-num">04</div>
+          <span class="drill-unit-tag u7">Unit 7</span>
+          <div class="drill-tpl">We have to take this on the _______ and move on.</div>
+          <div class="drill-hint">chin / shoulder / road</div>
+          <div class="drill-ex">예: We have to take this on the chin and move on.</div>
+        </div>
+        <div class="drill-item">
+          <div class="drill-num">06</div>
+          <span class="drill-unit-tag u8">Unit 8</span>
+          <div class="drill-tpl">_______ give me the most motivation.</div>
+          <div class="drill-hint">Doubters / Critics / Challenges / Setbacks</div>
+          <div class="drill-ex">예: Doubters give me the most motivation.</div>
+        </div>
+        <div class="drill-item">
+          <div class="drill-num">08</div>
+          <span class="drill-unit-tag u9">Unit 9</span>
+          <div class="drill-tpl">I'm grateful for the _______ — it taught me so much.</div>
+          <div class="drill-hint">experience / journey / process</div>
+          <div class="drill-ex">예: I'm grateful for the experience — it taught me so much.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S6: FINAL CHALLENGE -->
+<div class="section" id="challenge" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Final Challenge &nbsp;·&nbsp; Full Interview Roleplay</span>
+  <h2 class="display d-xl reveal" style="margin-bottom:8px;">YOUR VOICE.<br>ROUND 2.</h2>
+  <p class="reveal" style="font-size:14px; color:var(--muted); margin-top:16px; max-width:520px; line-height:1.7;">
+    4가지 인터뷰 상황에 직접 영어로 답하세요.<br>Unit 6–9에서 배운 표현을 최소 하나씩 사용합니다.
+  </p>
+  <div class="hl reveal"></div>
+  <div class="challenge-grid reveal">
+
+    <div class="challenge-item">
+      <div class="challenge-header">
+        <span class="challenge-num">상황 01</span>
+        <span class="challenge-badge u6">Unit 6</span>
+      </div>
+      <div class="challenge-situation">Round 2 팀 합류 인터뷰</div>
+      <div class="challenge-q">Q. 강원FC에서의 두 번째 시즌을 앞두고 어떤 각오인가요?</div>
+      <div class="challenge-hints">
+        <div class="challenge-hint-label">사용할 표현 힌트</div>
+        <div class="challenge-hint-phrase">"It means everything to me to be here."</div>
+        <div class="challenge-hint-phrase">"Every training session, I will give 100 percent."</div>
+        <div class="challenge-hint-phrase">"This is where I want to prove myself."</div>
+      </div>
+    </div>
+
+    <div class="challenge-item">
+      <div class="challenge-header">
+        <span class="challenge-num">상황 02</span>
+        <span class="challenge-badge u7">Unit 7</span>
+      </div>
+      <div class="challenge-situation">경기 후 인터뷰 (승리 또는 패배)</div>
+      <div class="challenge-q">Q. 오늘 경기 결과에 대해 한 말씀 해주세요.</div>
+      <div class="challenge-hints">
+        <div class="challenge-hint-label">사용할 표현 힌트</div>
+        <div class="challenge-hint-phrase">"We showed real character out there today."</div>
+        <div class="challenge-hint-phrase">"We don't celebrate too long — we focus on the next game."</div>
+        <div class="challenge-hint-phrase">"We have to take this on the chin and move on."</div>
+      </div>
+    </div>
+
+    <div class="challenge-item">
+      <div class="challenge-header">
+        <span class="challenge-num">상황 03</span>
+        <span class="challenge-badge u8">Unit 8</span>
+      </div>
+      <div class="challenge-situation">목표 &amp; 동기 선언</div>
+      <div class="challenge-q">Q. 이번 시즌 목표와 개인적인 동기는 무엇인가요?</div>
+      <div class="challenge-hints">
+        <div class="challenge-hint-label">사용할 표현 힌트</div>
+        <div class="challenge-hint-phrase">"I want to be the best version of myself every single day."</div>
+        <div class="challenge-hint-phrase">"Doubters give me the most motivation."</div>
+        <div class="challenge-hint-phrase">"Football gave me everything, so I give everything back to football."</div>
+      </div>
+    </div>
+
+    <div class="challenge-item">
+      <div class="challenge-header">
+        <span class="challenge-num">상황 04</span>
+        <span class="challenge-badge u9">Unit 9</span>
+      </div>
+      <div class="challenge-situation">부상 &amp; 복귀 인터뷰</div>
+      <div class="challenge-q">Q. 부상 기간 동안 어떻게 버티셨고, 무엇을 배웠나요?</div>
+      <div class="challenge-hints">
+        <div class="challenge-hint-label">사용할 표현 힌트</div>
+        <div class="challenge-hint-phrase">"I focused only on what I could control."</div>
+        <div class="challenge-hint-phrase">"I told myself — this challenge will make me better."</div>
+        <div class="challenge-hint-phrase">"I'm grateful for the experience — it taught me so much."</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer id="footer">
+  <span class="footer-brand">러너스 LRS &nbsp;·&nbsp; 강원 영어 인터뷰 수업</span>
+  <span class="footer-note">Unit 10 &nbsp;·&nbsp; Round 2 Review — 4 Units, 40 Phrases</span>
+</footer>
+
+<script>
+const CARDS = [
+  // Unit 6
+  { unit: 6, en: '"It means everything to me to be here."', ko: '여기 있다는 것이 저에게는 모든 것을 의미합니다.' },
+  { unit: 6, en: '"I\'m ready to give everything for this team."', ko: '이 팀을 위해 모든 것을 바칠 준비가 되어 있습니다.' },
+  { unit: 6, en: '"I want to make the fans proud."', ko: '팬들을 자랑스럽게 만들고 싶습니다.' },
+  { unit: 6, en: '"Playing at this level is a dream I\'ve worked for my whole life."', ko: '이 수준에서 뛰는 것은 평생 꿈꿔온 꿈입니다.' },
+  { unit: 6, en: '"I know what this club means to the people here."', ko: '이 클럽이 여기 사람들에게 어떤 의미인지 압니다.' },
+  { unit: 6, en: '"I\'m here to work hard and earn my place."', ko: '열심히 일하고 제 자리를 얻기 위해 왔습니다.' },
+  { unit: 6, en: '"I feel at home already."', ko: '이미 집처럼 편합니다.' },
+  { unit: 6, en: '"Every training session, I will give 100 percent."', ko: '모든 훈련 세션마다 100%를 다하겠습니다.' },
+  { unit: 6, en: '"I\'ve heard so many great things about this place."', ko: '이곳에 대해 정말 좋은 이야기를 많이 들었습니다.' },
+  { unit: 6, en: '"This is where I want to prove myself."', ko: '이곳이 바로 제 자신을 증명하고 싶은 곳입니다.' },
+  // Unit 7
+  { unit: 7, en: '"We showed real character out there today."', ko: '오늘 경기장에서 진짜 근성을 보여줬습니다.' },
+  { unit: 7, en: '"It wasn\'t pretty but we got the three points."', ko: '예쁘지는 않았지만 3점을 가져왔습니다.' },
+  { unit: 7, en: '"Every player on the pitch gave absolutely everything."', ko: '경기장의 모든 선수가 정말 모든 것을 쏟아냈습니다.' },
+  { unit: 7, en: '"We don\'t celebrate too long — we focus on the next game."', ko: '너무 오래 자축하지 않습니다 — 다음 경기에 집중합니다.' },
+  { unit: 7, en: '"The manager\'s game plan worked perfectly today."', ko: '오늘 감독의 게임 플랜이 완벽하게 통했습니다.' },
+  { unit: 7, en: '"We have to take this on the chin and move on."', ko: '이것을 받아들이고 앞으로 나아가야 합니다.' },
+  { unit: 7, en: '"It\'s not the result we wanted but we keep believing."', ko: '원하는 결과는 아니었지만 계속 믿습니다.' },
+  { unit: 7, en: '"Credit to the other team — they were better today."', ko: '상대 팀에 공을 돌립니다 — 오늘은 그들이 더 잘했습니다.' },
+  { unit: 7, en: '"We have to look at what went wrong and fix it."', ko: '무엇이 잘못됐는지 살펴보고 고쳐야 합니다.' },
+  { unit: 7, en: '"The dressing room is disappointed but we\'ll bounce back together."', ko: '라커룸은 실망스럽지만 함께 반등할 것입니다.' },
+  // Unit 8
+  { unit: 8, en: '"I want to be the best version of myself every single day."', ko: '저는 매일 최고의 제 자신이 되고 싶습니다.' },
+  { unit: 8, en: '"My goal is simple — to win and keep winning."', ko: '제 목표는 단순합니다 — 이기고 계속 이기는 것입니다.' },
+  { unit: 8, en: '"I\'m always hungry for more — trophies, goals, records."', ko: '저는 항상 더 많은 것을 원합니다 — 트로피, 골, 기록.' },
+  { unit: 8, en: '"Whatever I achieve, I always want to push for the next level."', ko: '무엇을 이루든 항상 다음 단계를 향해 나아가고 싶습니다.' },
+  { unit: 8, en: '"I grew up watching the greats and I want to be talked about like them."', ko: '위대한 선수들을 보며 자랐고 그들처럼 언급되고 싶습니다.' },
+  { unit: 8, en: '"My family is the reason I work so hard every day."', ko: '제 가족이 매일 이렇게 열심히 일하는 이유입니다.' },
+  { unit: 8, en: '"When I was young, nothing was given to me — I had to earn everything."', ko: '어렸을 때 아무것도 주어지지 않았습니다 — 모든 것을 얻어야 했습니다.' },
+  { unit: 8, en: '"Doubters give me the most motivation."', ko: '의심하는 사람들이 제게 가장 큰 동기를 줍니다.' },
+  { unit: 8, en: '"Every morning I wake up with one goal — to be better than yesterday."', ko: '매일 아침 하나의 목표로 일어납니다 — 어제보다 나아지는 것.' },
+  { unit: 8, en: '"Football gave me everything, so I give everything back to football."', ko: '축구가 제게 모든 것을 주었으니 저도 축구에 모든 것을 돌려줍니다.' },
+  // Unit 9
+  { unit: 9, en: '"It was the hardest period of my career."', ko: '제 커리어에서 가장 힘든 시간이었습니다.' },
+  { unit: 9, en: '"I had to dig really deep mentally."', ko: '정신적으로 깊이 파고들어야 했습니다.' },
+  { unit: 9, en: '"The medical team deserves all the credit."', ko: '의료팀이 모든 공을 받아야 합니다.' },
+  { unit: 9, en: '"Every setback makes you appreciate the game more."', ko: '모든 역경은 경기를 더욱 감사하게 만듭니다.' },
+  { unit: 9, en: '"I focused only on what I could control."', ko: '내가 통제할 수 있는 것에만 집중했습니다.' },
+  { unit: 9, en: '"I used that time to study the game and get smarter."', ko: '그 시간을 경기를 공부하고 더 현명해지는 데 사용했습니다.' },
+  { unit: 9, en: '"The road back was long but I kept my head down and worked."', ko: '돌아오는 길은 멀었지만 고개를 숙이고 노력했습니다.' },
+  { unit: 9, en: '"I told myself — this challenge will make me better."', ko: '이 도전이 나를 더 나은 사람으로 만들 것이라고 스스로에게 말했습니다.' },
+  { unit: 9, en: '"When you face that kind of challenge, you find out who you really are."', ko: '그런 도전에 직면하면 자신이 정말 어떤 사람인지 알게 됩니다.' },
+  { unit: 9, en: '"I\'m grateful for the experience — it taught me so much."', ko: '그 경험에 감사합니다 — 정말 많은 것을 가르쳐 줬습니다.' },
+];
+
+const UNIT_CLASS = { 6: 'u6', 7: 'u7', 8: 'u8', 9: 'u9' };
+
+let fcOrder = CARDS.map((_, i) => i);
+let fcCur = 0;
+let fcKoVisible = false;
+
+function fcRender() {
+  const idx = fcOrder[fcCur];
+  const card = CARDS[idx];
+  const total = CARDS.length;
+  document.getElementById('fc-counter').textContent = `${fcCur + 1} / ${total}`;
+  const tagEl = document.getElementById('fc-unit-tag');
+  tagEl.textContent = `Unit ${card.unit}`;
+  tagEl.className = `flashcard-unit-tag ${UNIT_CLASS[card.unit]}`;
+  document.getElementById('fc-en').textContent = card.en;
+  document.getElementById('fc-ko').textContent = card.ko;
+  document.getElementById('fc-ko').classList.add('hidden');
+  fcKoVisible = false;
+  document.getElementById('fc-prev').disabled = fcCur === 0;
+  document.getElementById('fc-next').disabled = fcCur === total - 1;
+  const progressEl = document.getElementById('fc-progress');
+  const showCount = Math.min(total, 20);
+  progressEl.innerHTML = '';
+  for (let i = 0; i < showCount; i++) {
+    const mapIdx = Math.floor(i * total / showCount);
+    const d = document.createElement('div');
+    d.className = 'fc-dot' + (mapIdx === fcCur ? ' active' : '');
+    progressEl.appendChild(d);
+  }
+}
+
+function fcToggleKo() {
+  fcKoVisible = !fcKoVisible;
+  document.getElementById('fc-ko').classList.toggle('hidden', !fcKoVisible);
+}
+
+function fcMove(dir) {
+  fcCur = Math.max(0, Math.min(CARDS.length - 1, fcCur + dir));
+  fcRender();
+}
+
+function fcShuffle() {
+  for (let i = fcOrder.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fcOrder[i], fcOrder[j]] = [fcOrder[j], fcOrder[i]];
+  }
+  fcCur = 0;
+  fcRender();
+}
+
+document.addEventListener('DOMContentLoaded', () => fcRender());
+
+// Instructor Bar
+const SECTIONS = [
+  { id: 'hero',      name: 'Unit 10 — 복습 오프닝' },
+  { id: 'recap',     name: '① 4 Units at a Glance' },
+  { id: 'flashcard', name: '② 플래시카드 드릴 (40장)' },
+  { id: 'master',    name: '③ 마스터 리스트 (40개)' },
+  { id: 'drill',     name: '④ 빈칸 채우기 드릴' },
+  { id: 'challenge', name: '⑤ 풀 인터뷰 챌린지' },
+];
+
+const UNITS = [
+  { id: 'unit1',  label: 'Unit 1',  subtitle: 'Self-Introduction & Joining the Team',           url: 'unit1.html' },
+  { id: 'unit2',  label: 'Unit 2',  subtitle: 'Post-Match Flash Interview',                     url: 'unit2.html' },
+  { id: 'unit3',  label: 'Unit 3',  subtitle: 'Goals, Motivation & Ambition',                   url: 'unit3.html' },
+  { id: 'unit4',  label: 'Unit 4',  subtitle: 'Injury, Recovery & Resilience',                  url: 'unit4.html' },
+  { id: 'unit5',  label: 'Unit 5',  subtitle: 'Review — 4 Units, 28 Phrases',                  url: 'unit5.html' },
+  { id: 'unit6',  label: 'Unit 6',  subtitle: 'Self-Introduction & Joining the Team — Round 2', url: 'unit6.html' },
+  { id: 'unit7',  label: 'Unit 7',  subtitle: 'Post-Match Flash Interview — Round 2',            url: 'unit7.html' },
+  { id: 'unit8',  label: 'Unit 8',  subtitle: 'Goals, Motivation & Ambition — Round 2',         url: 'unit8.html' },
+  { id: 'unit9',  label: 'Unit 9',  subtitle: 'Injury, Recovery & Resilience — Round 2',        url: 'unit9.html' },
+  { id: 'unit10', label: 'Unit 10', subtitle: 'Round 2 Review — 4 Units, 40 Phrases', current: true, sections: SECTIONS },
+];
+
+let ibarVisible = true;
+let ibarCur = 0;
+
+const navMenuEl = document.getElementById('nav-menu');
+const navDropdownEl = document.getElementById('nav-dropdown');
+
+(function buildNavMenu() {
+  UNITS.forEach(unit => {
+    const unitEl = document.createElement('div');
+    unitEl.className = 'nav-unit' + (unit.current ? ' open' : '');
+    const hd = document.createElement('div');
+    hd.className = 'nav-unit-hd';
+    hd.innerHTML = `<div class="nav-unit-hd-left"><div class="nav-unit-label">${unit.label}</div><div class="nav-unit-sub">${unit.subtitle}</div></div><span class="nav-unit-arrow">▸</span>`;
+    if (unit.current && unit.sections) {
+      hd.onclick = e => { e.stopPropagation(); unitEl.classList.toggle('open'); };
+    } else if (unit.url) {
+      hd.onclick = () => { window.location.href = unit.url; };
+    }
+    unitEl.appendChild(hd);
+    if (unit.sections) {
+      const secsEl = document.createElement('div');
+      secsEl.className = 'nav-sections';
+      unit.sections.forEach((sec, i) => {
+        const item = document.createElement('div');
+        item.className = 'nav-sec-item' + (i === 0 ? ' active' : '');
+        item.innerHTML = `<span class="nav-sec-num">${String(i).padStart(2,'0')}</span>${sec.name}`;
+        item.onclick = () => { ibarGoTo(i); closeNavMenu(); };
+        secsEl.appendChild(item);
+      });
+      unitEl.appendChild(secsEl);
+    }
+    navMenuEl.appendChild(unitEl);
+  });
+})();
+
+function toggleNavMenu(e) { e.stopPropagation(); navDropdownEl.classList.toggle('open'); }
+function closeNavMenu() { navDropdownEl.classList.remove('open'); }
+document.addEventListener('click', () => closeNavMenu());
+function updateNavMenuActive(idx) { navMenuEl.querySelectorAll('.nav-sec-item').forEach((el, i) => el.classList.toggle('active', i === idx)); }
+
+const ibarDotsEl = document.getElementById('ibar-dots');
+SECTIONS.forEach((sec, i) => {
+  const d = document.createElement('div');
+  d.className = 'ibar-dot' + (i === 0 ? ' active' : '');
+  d.title = sec.name;
+  d.onclick = () => ibarGoTo(i);
+  ibarDotsEl.appendChild(d);
+});
+
+function ibarGoTo(idx) {
+  ibarCur = Math.max(0, Math.min(SECTIONS.length - 1, idx));
+  const sec = SECTIONS[ibarCur];
+  const el = document.getElementById(sec.id);
+  if (el) { const offset = 48 + 44; const top = el.getBoundingClientRect().top + window.scrollY - offset; window.scrollTo({ top, behavior: 'smooth' }); }
+  document.getElementById('ibar-name').textContent = sec.name;
+  document.getElementById('ibar-prev').disabled = ibarCur === 0;
+  document.getElementById('ibar-next').disabled = ibarCur === SECTIONS.length - 1;
+  ibarDotsEl.querySelectorAll('.ibar-dot').forEach((d, i) => d.classList.toggle('active', i === ibarCur));
+  updateNavMenuActive(ibarCur);
+}
+
+function ibarGo(dir) { ibarGoTo(ibarCur + dir); }
+
+function toggleIbar() {
+  ibarVisible = !ibarVisible;
+  document.getElementById('instructor-bar').classList.toggle('hidden', !ibarVisible);
+  document.querySelector('.ibar-toggle').textContent = ibarVisible ? '숨기기' : '강사 바';
+}
+
+let scrollTimer;
+window.addEventListener('scroll', () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => {
+    const offset = 48 + 44 + 80;
+    let active = 0;
+    SECTIONS.forEach((sec, i) => { const el = document.getElementById(sec.id); if (el && el.getBoundingClientRect().top <= offset) active = i; });
+    if (active !== ibarCur) {
+      ibarCur = active;
+      document.getElementById('ibar-name').textContent = SECTIONS[ibarCur].name;
+      document.getElementById('ibar-prev').disabled = ibarCur === 0;
+      document.getElementById('ibar-next').disabled = ibarCur === SECTIONS.length - 1;
+      ibarDotsEl.querySelectorAll('.ibar-dot').forEach((d, i) => d.classList.toggle('active', i === ibarCur));
+    }
+  }, 80);
+});
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

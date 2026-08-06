@@ -5,7 +5,8 @@
       "src/components/enrollment/enrollment/ManagementFitSection.tsx",
       "src/app/practice/august-math/page.tsx",
       "src/app/dashboard/DashboardClient.tsx",
-      "src/app/coaches/[slug]/opengraph-image.tsx"
+      "src/app/coaches/[slug]/opengraph-image.tsx",
+      "public/partners/gangwon/units/unit10.html"
     ],
     "ignoreValues": [
       {
