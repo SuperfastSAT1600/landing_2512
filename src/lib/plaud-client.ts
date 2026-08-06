@@ -2,10 +2,14 @@
  * Plaud 호스팅 원격 MCP 서버(`mcp.plaud.ai/mcp`) HTTP 클라이언트 (서버 전용).
  * 브라우저는 Plaud에 직접 못 붙으므로 CRM 백엔드가 이 모듈로 녹음 목록·오디오 URL을 가져온다.
  *
- * 인증: PLAUD_REFRESH_TOKEN(env)로 access token을 자동 갱신(refresh_token 재사용 가능, 24h).
+ * 인증: refresh_token(저장소 → env 씨앗)으로 access token(24h)을 자동 갱신한다.
+ *       Plaud는 refresh token rotation 방식이라 갱신 응답에 새 refresh_token이 오며,
+ *       이를 Supabase(integration_tokens)에 저장해 7일 만료로 체인이 끊기지 않게 한다.
  *       PLAUD_ACCESS_TOKEN이 있으면 그것을 우선 사용(갱신 생략 — 단기 테스트용).
  * 전송: MCP Streamable HTTP, stateless(tools/call 직접). 응답은 SSE(event/data) 포맷.
  */
+
+import { readStoredRefreshToken, writeStoredRefreshToken } from './plaud-token-store';
 
 const MCP_URL = 'https://mcp.plaud.ai/mcp';
 const REFRESH_URL =
@@ -30,8 +34,10 @@ export interface PlaudFile extends PlaudRecording {
 /** access token 메모리 캐시 (프로세스 수명 동안, 만료 60s 전까지 재사용). */
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
-/** refresh_token으로 새 access token을 발급받는다. */
-async function refreshAccessToken(refreshToken: string): Promise<{ token: string; ttlSec: number }> {
+/** refresh_token으로 새 access token을 발급받는다(회전된 새 refresh_token도 함께 반환). */
+async function refreshAccessToken(
+  refreshToken: string
+): Promise<{ token: string; ttlSec: number; newRefreshToken?: string }> {
   const res = await fetch(REFRESH_URL, {
     method: 'POST',
     headers: {
@@ -46,9 +52,17 @@ async function refreshAccessToken(refreshToken: string): Promise<{ token: string
   if (!res.ok) {
     throw new Error(`Plaud 토큰 갱신 실패: ${res.status}`);
   }
-  const json = (await res.json()) as { access_token?: string; expires_in?: number };
+  const json = (await res.json()) as {
+    access_token?: string;
+    expires_in?: number;
+    refresh_token?: string;
+  };
   if (!json.access_token) throw new Error('Plaud 토큰 응답에 access_token 없음');
-  return { token: json.access_token, ttlSec: json.expires_in ?? 86400 };
+  return {
+    token: json.access_token,
+    ttlSec: json.expires_in ?? 86400,
+    newRefreshToken: json.refresh_token,
+  };
 }
 
 /** 유효한 access token을 반환한다(캐시 → env override → refresh). */
@@ -59,13 +73,35 @@ export async function getPlaudAccessToken(): Promise<string> {
   const now = Date.now();
   if (cachedToken && cachedToken.expiresAt - 60_000 > now) return cachedToken.token;
 
-  const refreshToken = process.env.PLAUD_REFRESH_TOKEN?.trim();
-  if (!refreshToken) {
+  // 저장소의 최신 회전 토큰 우선, 없으면 env 씨앗(부트스트랩). 저장소 오류는 null 폴백.
+  const stored = await readStoredRefreshToken().catch(() => null);
+  const seed = process.env.PLAUD_REFRESH_TOKEN?.trim() || undefined;
+  const primary = stored ?? seed;
+  if (!primary) {
     throw new Error('PLAUD_REFRESH_TOKEN(또는 PLAUD_ACCESS_TOKEN)이 설정되지 않았습니다.');
   }
-  const { token, ttlSec } = await refreshAccessToken(refreshToken);
-  cachedToken = { token, expiresAt: now + ttlSec * 1000 };
-  return token;
+
+  let refreshed: { token: string; ttlSec: number; newRefreshToken?: string };
+  let usedToken = primary;
+  try {
+    refreshed = await refreshAccessToken(primary);
+  } catch (e) {
+    // 저장소 토큰이 만료(7일+ 무활동)됐는데 운영자가 env 씨앗을 새로 넣은 경우, 씨앗으로 재시도해 복구한다.
+    // (저장소 우선 순서 때문에 새 씨앗이 영영 안 먹히는 함정을 막는다.)
+    if (stored && seed && seed !== stored) {
+      refreshed = await refreshAccessToken(seed);
+      usedToken = seed;
+    } else {
+      throw e;
+    }
+  }
+
+  cachedToken = { token: refreshed.token, expiresAt: now + refreshed.ttlSec * 1000 };
+  // 회전된 새 refresh_token을 저장해 다음 갱신에 사용(env 씨앗 7일 만료와 무관하게 체인 유지).
+  if (refreshed.newRefreshToken && refreshed.newRefreshToken !== usedToken) {
+    await writeStoredRefreshToken(refreshed.newRefreshToken).catch(() => {});
+  }
+  return refreshed.token;
 }
 
 /** SSE(text/event-stream) 응답 본문에서 result를 담은 JSON-RPC 페이로드를 추출한다. */
