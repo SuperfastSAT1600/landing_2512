@@ -34,10 +34,13 @@ describe('GET /api/crm/plaud/recordings', () => {
     );
   });
 
-  it('클라이언트 오류(토큰 만료 등) → 502', async () => {
-    listPlaudRecordings.mockRejectedValueOnce(new Error('token expired'));
+  it('클라이언트 오류(토큰 만료 등) → 502, 실제 원인 노출', async () => {
+    listPlaudRecordings.mockRejectedValueOnce(new Error('Plaud 토큰 갱신 실패: 401'));
     const { GET } = await import('../route');
     const res = await GET(makeReq('http://localhost/api/crm/plaud/recordings'));
+    const body = await res.json();
     expect(res.status).toBe(502);
+    // 고정 문구로 뭉개지 말고 실제 원인이 응답에 포함돼야 진단 가능.
+    expect(body.error).toContain('Plaud 토큰 갱신 실패: 401');
   });
 });
