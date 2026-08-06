@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { OnboardingStep1, OnboardingStep2, OnboardingStep3, PastAcademy } from '@/types/coach-onboarding';
 import { SubjectEditorModal } from './SubjectEditorModal';
@@ -368,7 +368,6 @@ function Step3({
   data,
   subjects,
   onChange,
-  errors,
   token,
   onScreenshotUrlsChange,
 }: {

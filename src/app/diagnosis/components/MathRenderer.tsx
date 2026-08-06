@@ -84,7 +84,7 @@ async function waitForMathJax(maxAttempts = 100, delay = 50): Promise<void> {
 
 export function MathRenderer({ children, className = '', displayMode = false }: MathRendererProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
-  const [renderError, setRenderError] = React.useState(false);
+  const [, setRenderError] = React.useState(false);
 
   useEffect(() => {
     let cancelled = false;

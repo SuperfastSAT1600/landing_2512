@@ -131,7 +131,6 @@ export function SessionStatusSection({ ev, eventDate, userName, v2Suggestions, o
       {ev.students.map((studentName, i) => {
         const studentId = ev.studentIds?.[i];
         const studentLogs = logs.filter((l) => l.student_name === studentName);
-        const lastLog = studentLogs[studentLogs.length - 1];
         const suggestion = studentId ? suggestions[studentId] : undefined;
 
         return (

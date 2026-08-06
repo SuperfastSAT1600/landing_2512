@@ -25,8 +25,6 @@ import {
 } from '@/lib/enrollment/data/pricing-v2';
 import {
   CATEGORIES,
-  MANAGEMENT_SERVICES,
-  resolveCategoryId,
 } from '@/lib/enrollment/data/pricing';
 import type { CourseType, ProgramType, ManagementType } from '@/types/enrollment';
 import type { ClassFormatV2, CategoryIdV2, OptionSelectionV2 } from '@/types/enrollment-v2';
@@ -82,7 +80,7 @@ function resolveCategoryIdV2(
 }
 
 /* ── Main Component ─────────────────────────────────────────────── */
-export function EnrollmentPageV2({ leadCoaches }: EnrollmentPageV2Props) {
+export function EnrollmentPageV2({}: EnrollmentPageV2Props) {
   const { t } = useLanguage();
   const [courseType, setCourseType] = useState<CourseType>('sat');
   const [programType, setProgramType] = useState<ProgramType | null>(null);

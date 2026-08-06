@@ -28,7 +28,7 @@ interface SummarySectionProps {
 
 export const SummarySection = React.forwardRef<HTMLDivElement, SummarySectionProps>(
   function SummarySection(
-    { resolvedCategoryId, categoryData, managementType, classFormat, selectedOption, totalPrice, summary, isMonthly, sectionNumber },
+    { resolvedCategoryId, managementType, classFormat, selectedOption, totalPrice, summary, isMonthly, sectionNumber },
     ref
   ) {
     const { t, locale } = useLanguage();

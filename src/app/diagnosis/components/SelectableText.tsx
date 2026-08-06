@@ -84,7 +84,7 @@ export function SelectableText({
             }
 
             // Add click handler
-            span.addEventListener('click', (e) => {
+            span.addEventListener('click', () => {
               const rect = span.getBoundingClientRect();
               onWordClick(
                 {

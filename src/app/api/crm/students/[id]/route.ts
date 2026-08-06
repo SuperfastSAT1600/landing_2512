@@ -54,8 +54,11 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  // Strip undefined values and id field to avoid unintended overwrites
-  const { id: _id, created_at: _ca, updated_at: _ua, ...updateFields } = body;
+  // Strip id/created_at/updated_at to avoid unintended overwrites
+  const updateFields = { ...body };
+  delete updateFields.id;
+  delete updateFields.created_at;
+  delete updateFields.updated_at;
 
   if (Object.keys(updateFields).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });

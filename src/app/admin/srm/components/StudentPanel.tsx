@@ -6,7 +6,6 @@ import { X, ChevronDown, ChevronUp, Copy, Eye, Check } from 'lucide-react';
 import { getAdminName } from '@/lib/admin-user';
 import { AddForm } from './CommLog';
 import type { CommEntry } from '@/app/api/admin/srm/communications/route';
-import type { EventContext } from './CommLog';
 import { CrmLinkSection } from './CrmLinkSection';
 import { SrmCommCard } from './SrmCommCard';
 import { EventIssueCard, type BaseIssue } from './EventIssueCard';
@@ -78,26 +77,6 @@ function InfoRow({ label, value, small }: { label: string; value: string; small?
   );
 }
 
-function sessionStatusLabel(status: string): string {
-  switch (status) {
-    case 'completed': return '완료';
-    case 'cancelled': return '취소';
-    case 'proposed': return '예정';
-    case 'approved': return '확정';
-    default: return status;
-  }
-}
-
-function sessionStatusColor(status: string): string {
-  switch (status) {
-    case 'completed': return 'text-emerald-700';
-    case 'cancelled': return 'text-red-700';
-    case 'proposed': return 'text-gray-500';
-    case 'approved': return 'text-blue-700';
-    default: return 'text-gray-500';
-  }
-}
-
 interface PauseRecord {
   id: string;
   pause_start: string;
@@ -133,7 +112,7 @@ interface Props {
   purchasedHours?: number;
 }
 
-export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, eventTime, eventType, coachId, onLanguageChange, onLinked, tutoringStatus, remainingHours, purchasedHours }: Props) {
+export function StudentPanel({ studentId, crmStudentId, studentName, onClose, triggerType, eventId, coachId, onLanguageChange, onLinked, tutoringStatus, remainingHours, purchasedHours }: Props) {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [comms, setComms] = useState<CommEntry[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(true);
@@ -142,8 +121,8 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [lifecycleData, setLifecycleData] = useState<LifecycleResponse | null>(null);
   const [lifecycleOpen, setLifecycleOpen] = useState(false);
   const [briefing, setBriefing] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
-  const [v2Summary, setV2Summary] = useState<V2Summary | null>(null);
-  const [loadingV2, setLoadingV2] = useState(false);
+  const [, setV2Summary] = useState<V2Summary | null>(null);
+  const [, setLoadingV2] = useState(false);
   const [commLang, setCommLang] = useState<'ko' | 'en'>('ko');
   const [langSaving, setLangSaving] = useState(false);
   const [portalIssuing, setPortalIssuing] = useState(false);
@@ -468,10 +447,6 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
 
   const triggerContext = triggerType && triggerType !== 'manual'
     ? { type: triggerType, label: TRIGGER_LABELS[triggerType] ?? triggerType }
-    : undefined;
-
-  const eventContext: EventContext | undefined = eventId && eventTime && eventType
-    ? { eventId, time: eventTime, type: eventType }
     : undefined;
 
   // 통합 타임라인 정렬

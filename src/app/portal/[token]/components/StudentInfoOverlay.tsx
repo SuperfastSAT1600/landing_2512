@@ -42,10 +42,6 @@ function formatKo(iso: string) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function formatMonthDay(iso: string) {
-  return new Date(iso + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
-}
-
 function getNextSatDates(): { date: string; days: number }[] {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   return SAT_DATES

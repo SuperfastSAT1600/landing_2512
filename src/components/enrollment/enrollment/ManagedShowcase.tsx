@@ -41,18 +41,6 @@ function StudyFigure({ highlight = false }: { highlight?: boolean }) {
   );
 }
 
-/* ── AI keyword highlight ───────────────────────────────────────── */
-const AI_KEYWORDS = ['ephemeral', '덧없는', 'epi'];
-
-function renderHighlighted(text: string) {
-  const parts = text.split(/(ephemeral|덧없는|epi)/g);
-  return parts.map((p, i) =>
-    AI_KEYWORDS.includes(p)
-      ? <mark key={i} className={styles.aiHighlight}>{p}</mark>
-      : <span key={i}>{p}</span>
-  );
-}
-
 /* ================================================================
    CARD 01 — 맞춤형 수업 (퍼즐)
    ================================================================ */
@@ -720,15 +708,6 @@ export function UnmanagedShowcase() {
 /* ================================================================
    TAB NAVIGATION
    ================================================================ */
-const TAB_LABELS = [
-  '맞춤형 수업',
-  '학습 리포트',
-  '온라인 독서실',
-  'AI 코치',
-  '단어 공부',
-  '실전 모의고사',
-] as const;
-
 const PANEL_VARIANTS = {
   enter: (dir: number) => ({ x: dir * 48, opacity: 0 }),
   center: { x: 0, opacity: 1 },

@@ -17,17 +17,6 @@ function buildPostUrl(channel: string, postId: string): string | null {
   return ch?.postUrlBuilder ? ch.postUrlBuilder(postId) : null
 }
 
-function ChangeRate({ current, previous }: { current: number; previous: number }) {
-  if (previous === 0) return <span className="text-gray-500 text-xs">–</span>
-  const rate = Math.round(((current - previous) / previous) * 100)
-  const positive = rate >= 0
-  return (
-    <span className={`text-xs font-semibold ${positive ? 'text-green-400' : 'text-red-400'}`}>
-      {positive ? '+' : ''}{rate}%
-    </span>
-  )
-}
-
 export default function TrafficPage() {
   const [activeChannel, setActiveChannel] = useState<ChannelFilter>('all')
   const [stats, setStats] = useState<Stats | null>(null)

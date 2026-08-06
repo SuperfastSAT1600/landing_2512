@@ -11,11 +11,9 @@ import { CoachPanel } from './components/CoachPanel';
 import { OpsTaskList } from './components/OpsTaskList';
 import { OpsRadar } from './components/OpsRadar';
 import { StudentSearch } from './components/StudentSearch';
-import { StudentRoster } from './components/StudentRoster';
 import { TutoringUserList } from './components/TutoringUserList';
 import { EventLogPanel } from './components/EventLogPanel';
 import { AlertLogPanel } from './components/AlertLogPanel';
-import { YesterdayCheck } from './components/YesterdayCheck';
 import type { FlatAlert } from './components/AlertFeedRows';
 import { DailyStatsPanel } from './components/DailyStatsPanel';
 import type { TaggedEvent } from './components/UnifiedTimeline';
@@ -75,7 +73,7 @@ export default function SrmPage() {
 
   const [mainTab, setMainTab] = useState<MainTab>('queue');
   const [queueTab, setQueueTab] = useState<'schedule' | 'noClass' | 'noStudyHall' | 'noVocab'>('schedule');
-  const [yesterdayIssueCount, setYesterdayIssueCount] = useState(0);
+  const [, setYesterdayIssueCount] = useState(0);
   const selectedDate = getKstDateStr(0);
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
   const [alerts, setAlerts] = useState<AlertsResponse | null>(null);

@@ -65,7 +65,7 @@ export function DiagnosticTestView({
   const layoutRef = useRef<HTMLDivElement>(null);
 
   const { savedWords, toggleWord, isWordSaved } = useVocabTracker();
-  const { questions: rawQuestions, title, timeLimit } = testData;
+  const { questions: rawQuestions, timeLimit } = testData;
   const questions = Array.isArray(rawQuestions) ? rawQuestions : [];
   const currentQuestion = questions[currentQuestionIndex];
   const hasPassage = !!currentQuestion?.passage;
@@ -367,7 +367,7 @@ export function DiagnosticTestView({
             className="overflow-hidden bg-blue-50 border-b border-blue-200"
           >
             <div className="px-6 py-3 text-sm text-blue-800 leading-relaxed max-w-3xl mx-auto flex items-center justify-between">
-              <span>💡 <strong>Vocabulary Tip:</strong> Click any unknown word in the passage or options, then press "Save" to mark it for vocabulary building.</span>
+              <span>💡 <strong>Vocabulary Tip:</strong> Click any unknown word in the passage or options, then press &quot;Save&quot; to mark it for vocabulary building.</span>
               <button
                 type="button"
                 onClick={() => setShowVocabNotice(false)}

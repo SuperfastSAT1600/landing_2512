@@ -53,7 +53,7 @@ export default function AdminReviewsPage() {
                 body: JSON.stringify({ id, ...updates })
             });
             if (res.ok) fetchReviews();
-        } catch (e) {
+        } catch {
             alert("Error updating review");
         }
     };
@@ -67,7 +67,7 @@ export default function AdminReviewsPage() {
                 headers: { 'x-admin-key': adminKey },
             });
             if (res.ok) fetchReviews();
-        } catch (e) {
+        } catch {
             alert("Error deleting");
         }
     };
