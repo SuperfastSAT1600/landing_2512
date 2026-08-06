@@ -1,6 +1,14 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// 토큰 저장소는 항상 mock — 유닛 테스트가 Supabase에 붙지 않도록.
+const readStoredRefreshToken = vi.fn();
+const writeStoredRefreshToken = vi.fn();
+vi.mock('@/lib/plaud-token-store', () => ({
+  readStoredRefreshToken: () => readStoredRefreshToken(),
+  writeStoredRefreshToken: (t: string) => writeStoredRefreshToken(t),
+}));
+
 // SSE(event/data) 형식 tools/call 응답을 만든다.
 function sse(result: unknown): string {
   return `event: message\ndata: ${JSON.stringify({ jsonrpc: '2.0', id: 1, result })}\n\n`;
@@ -12,8 +20,12 @@ function toolResult(obj: unknown, isError = false) {
 describe('plaud-client', () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.clearAllMocks();
     delete process.env.PLAUD_ACCESS_TOKEN;
     process.env.PLAUD_REFRESH_TOKEN = 'refresh-xyz';
+    // 기본: 저장소 비어있음 → env 씨앗 폴백.
+    readStoredRefreshToken.mockResolvedValue(null);
+    writeStoredRefreshToken.mockResolvedValue(undefined);
   });
   afterEach(() => vi.unstubAllGlobals());
 
@@ -99,5 +111,78 @@ describe('plaud-client', () => {
     }));
     const { getPlaudFile } = await import('@/lib/plaud-client');
     await expect(getPlaudFile('f1')).rejects.toThrow(/오디오 URL/);
+  });
+
+  it('저장소 refresh_token 우선 사용, 회전된 새 토큰은 저장(REQ-001/002)', async () => {
+    readStoredRefreshToken.mockResolvedValue('stored-refresh');
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        // rotation: 응답에 새 refresh_token 포함.
+        json: async () => ({ access_token: 'access-abc', expires_in: 86400, refresh_token: 'rotated-new' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => sse(toolResult({ data: [] })),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { listPlaudRecordings } = await import('@/lib/plaud-client');
+    await listPlaudRecordings();
+
+    // env('refresh-xyz')가 아니라 저장소('stored-refresh')로 갱신해야 한다.
+    expect(String(fetchMock.mock.calls[0][1].body)).toContain('refresh_token=stored-refresh');
+    // 회전된 새 refresh_token을 저장.
+    expect(writeStoredRefreshToken).toHaveBeenCalledWith('rotated-new');
+  });
+
+  it('새 refresh_token이 기존과 같으면 저장 생략', async () => {
+    readStoredRefreshToken.mockResolvedValue('same-token');
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: 'a', expires_in: 86400, refresh_token: 'same-token' }),
+      })
+      .mockResolvedValueOnce({ ok: true, text: async () => sse(toolResult({ data: [] })) }));
+    const { listPlaudRecordings } = await import('@/lib/plaud-client');
+    await listPlaudRecordings();
+    expect(writeStoredRefreshToken).not.toHaveBeenCalled();
+  });
+
+  it('저장소 토큰이 만료(401)면 env 씨앗으로 재시도·복구(REQ-003)', async () => {
+    // 저장소엔 죽은 토큰, 운영자가 env에 새 씨앗을 넣은 상황.
+    readStoredRefreshToken.mockResolvedValue('stale-stored');
+    process.env.PLAUD_REFRESH_TOKEN = 'fresh-seed';
+    const fetchMock = vi.fn()
+      // 1) stored로 refresh → 401
+      .mockResolvedValueOnce({ ok: false, status: 401 })
+      // 2) env 씨앗으로 재시도 → 성공(회전 토큰 포함)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: 'a', expires_in: 86400, refresh_token: 'recovered' }),
+      })
+      // 3) mcp
+      .mockResolvedValueOnce({ ok: true, text: async () => sse(toolResult({ data: [] })) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { listPlaudRecordings } = await import('@/lib/plaud-client');
+    await expect(listPlaudRecordings()).resolves.toEqual([]);
+    expect(String(fetchMock.mock.calls[0][1].body)).toContain('refresh_token=stale-stored');
+    expect(String(fetchMock.mock.calls[1][1].body)).toContain('refresh_token=fresh-seed');
+    // 복구된 회전 토큰을 저장해 다음부터 정상.
+    expect(writeStoredRefreshToken).toHaveBeenCalledWith('recovered');
+  });
+
+  it('저장소 read 실패해도 env 씨앗으로 폴백 동작(REQ-003)', async () => {
+    readStoredRefreshToken.mockRejectedValue(new Error('supabase down'));
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: 'a', expires_in: 86400 }) })
+      .mockResolvedValueOnce({ ok: true, text: async () => sse(toolResult({ data: [] })) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { listPlaudRecordings } = await import('@/lib/plaud-client');
+    await expect(listPlaudRecordings()).resolves.toEqual([]);
+    // env 씨앗으로 갱신.
+    expect(String(fetchMock.mock.calls[0][1].body)).toContain('refresh_token=refresh-xyz');
   });
 });

@@ -24,8 +24,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data });
   } catch (e) {
     console.error('[crm/plaud/recordings GET]', e);
+    // 고정 문구로 뭉개지 말고 실제 원인(갱신 401 / env 미설정 / MCP 오류 등)을 노출해 진단 가능하게.
+    // 메시지에는 토큰 값이 담기지 않는다(원인 코드/상태만).
+    const reason = e instanceof Error ? e.message : String(e);
     return NextResponse.json(
-      { error: 'Plaud 녹음 목록을 불러오지 못했습니다. 토큰 만료 시 재인증이 필요합니다.' },
+      { error: `Plaud 녹음 목록을 불러오지 못했습니다: ${reason}` },
       { status: 502 }
     );
   }
