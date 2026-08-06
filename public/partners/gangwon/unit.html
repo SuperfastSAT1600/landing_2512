@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강원 FC 영어 인터뷰 수업 · 러너스 LRS</title>
+<meta property="og:title" content="강원 FC 영어 인터뷰 수업 · 러너스 LRS" />
+<meta property="og:description" content="실제 선수 인터뷰로 배우는 스포츠 영어 · 10 Units" />
+<meta property="og:image" content="/partners/lrs-logo.png" />
+<meta property="og:type" content="website" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --night:   #000000;
+  --night-s: #0a0a0a;
+  --white:   #ffffff;
+  --mute:    #cccccc;
+  --muted:   #aaaaaa;
+  --line:    #2a2a2f;
+  --max:     1080px;
+  --pad:     clamp(24px, 5vw, 80px);
+}
+html { scroll-behavior: smooth; }
+body { background: var(--night); color: var(--white); font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+/* ── Nav ── */
+#topnav { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.92); backdrop-filter: blur(12px); border-bottom: 0.5px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--pad); height: 48px; }
+.brand { font-size: 11px; font-weight: 700; letter-spacing: 0.4em; color: var(--white); text-transform: uppercase; text-decoration: none; }
+.nav-links { display: flex; align-items: center; gap: 28px; }
+.nav-link { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mute); text-decoration: none; transition: color 0.15s; white-space: nowrap; }
+.nav-link:hover { color: var(--white); }
+
+/* ── Hero ── */
+#hero { max-width: var(--max); margin: 0 auto; padding: 96px var(--pad) 80px; border-bottom: 0.5px solid var(--line); }
+.hero-eyebrow { font-size: 10px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--mute); display: block; margin-bottom: 24px; }
+.hero-h1 { font-size: clamp(40px, 6.5vw, 88px); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; line-height: 0.94; color: var(--white); margin-bottom: 28px; }
+.hero-sub { font-size: 14px; color: var(--muted); line-height: 1.75; max-width: 480px; }
+
+/* ── Quick Actions ── */
+#quick-actions { max-width: var(--max); margin: 0 auto; padding: 48px var(--pad); border-bottom: 0.5px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); }
+.action-card { background: var(--night); padding: 36px 32px; display: flex; flex-direction: column; gap: 10px; text-decoration: none; transition: background 0.15s; }
+.action-card:hover { background: var(--night-s, #0a0a0a); }
+.action-tag { font-size: 8px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--muted); }
+.action-title { font-size: 18px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--white); }
+.action-arrow { font-size: 10px; letter-spacing: 0.2em; color: var(--muted); margin-top: 4px; }
+@media (max-width: 600px) { #quick-actions { grid-template-columns: 1fr; } }
+
+/* ── Curriculum ── */
+#curriculum { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad) 80px; }
+.round-header { padding: 48px 0 16px; display: flex; align-items: baseline; gap: 20px; }
+.round-label { font-size: 9px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--muted); }
+.round-sub { font-size: 9px; letter-spacing: 0.16em; color: var(--line); text-transform: uppercase; }
+.unit-row { border-top: 0.5px solid var(--line); display: grid; grid-template-columns: 56px 1fr auto; gap: 24px; align-items: center; padding: 28px 0; text-decoration: none; color: inherit; transition: background 0.12s; cursor: pointer; }
+.unit-row:last-child { border-bottom: 0.5px solid var(--line); }
+.unit-row:hover .unit-title { color: var(--white); }
+.unit-row:hover .unit-arrow { color: var(--white); }
+.unit-row.locked { cursor: default; opacity: 0.35; }
+.unit-num { font-size: 13px; font-weight: 700; letter-spacing: 0.24em; color: var(--muted); }
+.unit-info { display: flex; flex-direction: column; gap: 5px; }
+.unit-title { font-size: 16px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted); transition: color 0.15s; }
+.unit-subtitle { font-size: 11px; letter-spacing: 0.12em; color: var(--line); text-transform: uppercase; }
+.unit-tag { display: inline-block; font-size: 7px; letter-spacing: 0.28em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; font-weight: 700; margin-top: 2px; }
+.tag-intro      { background: rgba(80,140,200,0.12); color: #508CC8; border: 0.5px solid rgba(80,140,200,0.3); }
+.tag-interview  { background: rgba(200,168,80,0.10); color: #c8a850; border: 0.5px solid rgba(200,168,80,0.3); }
+.tag-goals      { background: rgba(90,158,90,0.12); color: #5a9e5a; border: 0.5px solid rgba(90,158,90,0.3); }
+.tag-injury     { background: rgba(180,80,80,0.12); color: #c85a5a; border: 0.5px solid rgba(180,80,80,0.3); }
+.tag-review     { background: rgba(255,255,255,0.06); color: var(--muted); border: 0.5px solid var(--line); }
+.unit-arrow { font-size: 16px; color: var(--line); transition: color 0.15s; }
+.lock-badge { font-size: 9px; letter-spacing: 0.16em; color: var(--line); text-transform: uppercase; }
+
+/* ── Footer ── */
+#footer { border-top: 0.5px solid var(--line); padding: 32px var(--pad); display: flex; justify-content: space-between; align-items: center; }
+.footer-brand { font-size: 10px; letter-spacing: 0.32em; color: var(--muted); text-transform: uppercase; }
+.footer-note { font-size: 10px; color: var(--line); letter-spacing: 0.1em; }
+
+.reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<nav id="topnav">
+  <a href="unit.html" class="brand">러너스 LRS</a>
+  <div class="nav-links">
+    <a href="../lesson-feedback.html" class="nav-link">레슨 피드백</a>
+    <a href="../homework.html" class="nav-link">숙제 결과 확인</a>
+  </div>
+</nav>
+
+<section id="hero">
+  <span class="hero-eyebrow reveal">강원 FC &nbsp;·&nbsp; 러너스 LRS &nbsp;·&nbsp; 영어 인터뷰 수업</span>
+  <h1 class="hero-h1 reveal">ENGLISH<br>INTERVIEW<br>CLASS.</h1>
+  <p class="hero-sub reveal">실제 축구 선수 인터뷰 영상으로 배우는 스포츠 영어.<br>10개 유닛, 100개 핵심 표현.</p>
+</section>
+
+<section id="quick-actions">
+  <a href="../homework.html" class="action-card reveal">
+    <span class="action-tag">학습 관리</span>
+    <span class="action-title">숙제 결과 확인</span>
+    <span class="action-arrow">모든 유닛 제출 현황 →</span>
+  </a>
+  <a href="../lesson-feedback.html" class="action-card reveal">
+    <span class="action-tag">수업 피드백</span>
+    <span class="action-title">레슨 피드백</span>
+    <span class="action-arrow">오늘 수업 평가하기 →</span>
+  </a>
+</section>
+
+<section id="curriculum">
+
+  <!-- Round 1 -->
+  <div class="round-header reveal">
+    <span class="round-label">Round 1</span>
+    <span class="round-sub">Units 01 – 04 &nbsp;·&nbsp; 28 Key Phrases</span>
+  </div>
+
+  <a href="units/unit1.html" class="unit-row reveal">
+    <span class="unit-num">01</span>
+    <div class="unit-info">
+      <span class="unit-title">Self-Introduction &amp; Joining the Team</span>
+      <span class="unit-tag tag-intro">Intro</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+  <a href="units/unit2.html" class="unit-row reveal">
+    <span class="unit-num">02</span>
+    <div class="unit-info">
+      <span class="unit-title">Post-Match Flash Interview</span>
+      <span class="unit-tag tag-interview">Interview</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+  <a href="units/unit3.html" class="unit-row reveal">
+    <span class="unit-num">03</span>
+    <div class="unit-info">
+      <span class="unit-title">Goals, Motivation &amp; Ambition</span>
+      <span class="unit-tag tag-goals">Goals</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+  <a href="units/unit4.html" class="unit-row reveal">
+    <span class="unit-num">04</span>
+    <div class="unit-info">
+      <span class="unit-title">Injury, Recovery &amp; Resilience</span>
+      <span class="unit-tag tag-injury">Injury</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+  <!-- Review 1 -->
+  <div class="round-header reveal">
+    <span class="round-label">Review</span>
+    <span class="round-sub">Unit 05 &nbsp;·&nbsp; 28 Phrases 총복습</span>
+  </div>
+
+  <a href="units/unit5.html" class="unit-row reveal">
+    <span class="unit-num">05</span>
+    <div class="unit-info">
+      <span class="unit-title">Review — 4 Units, 28 Phrases</span>
+      <span class="unit-tag tag-review">Review</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+  <!-- Round 2 -->
+  <div class="round-header reveal">
+    <span class="round-label">Round 2</span>
+    <span class="round-sub">Units 06 – 09 &nbsp;·&nbsp; 40 Key Phrases</span>
+  </div>
+
+  <a href="units/unit6.html" class="unit-row reveal">
+    <span class="unit-num">06</span>
+    <div class="unit-info">
+      <span class="unit-title">Self-Introduction &amp; Joining the Team</span>
+      <span class="unit-subtitle">Round 2</span>
+      <span class="unit-tag tag-intro">Intro</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+  <a href="units/unit7.html" class="unit-row reveal">
+    <span class="unit-num">07</span>
+    <div class="unit-info">
+      <span class="unit-title">Post-Match Flash Interview</span>
+      <span class="unit-subtitle">Round 2</span>
+      <span class="unit-tag tag-interview">Interview</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+  <a href="units/unit8.html" class="unit-row reveal">
+    <span class="unit-num">08</span>
+    <div class="unit-info">
+      <span class="unit-title">Goals, Motivation &amp; Ambition</span>
+      <span class="unit-subtitle">Round 2</span>
+      <span class="unit-tag tag-goals">Goals</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+  <a href="units/unit9.html" class="unit-row reveal">
+    <span class="unit-num">09</span>
+    <div class="unit-info">
+      <span class="unit-title">Injury, Recovery &amp; Resilience</span>
+      <span class="unit-subtitle">Round 2</span>
+      <span class="unit-tag tag-injury">Injury</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+  <!-- Final Review -->
+  <div class="round-header reveal">
+    <span class="round-label">Final Review</span>
+    <span class="round-sub">Unit 10 &nbsp;·&nbsp; 40 Phrases 총복습</span>
+  </div>
+
+  <a href="units/unit10.html" class="unit-row reveal">
+    <span class="unit-num">10</span>
+    <div class="unit-info">
+      <span class="unit-title">Round 2 Review — 4 Units, 40 Phrases</span>
+      <span class="unit-tag tag-review">Final Review</span>
+    </div>
+    <span class="unit-arrow">→</span>
+  </a>
+
+</section>
+
+<footer id="footer">
+  <span class="footer-brand">강원 FC &nbsp;·&nbsp; 러너스 LRS</span>
+  <span class="footer-note">English Interview Class &nbsp;·&nbsp; 10 Units</span>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

@@ -6,7 +6,9 @@
       "src/app/practice/august-math/page.tsx",
       "src/app/dashboard/DashboardClient.tsx",
       "src/app/coaches/[slug]/opengraph-image.tsx",
-      "public/partners/gangwon/units/unit10.html"
+      "public/partners/gangwon/units/unit10.html",
+      "public/partners/gangwon/index.html",
+      "public/partners/gangwon/unit.html"
     ],
     "ignoreValues": [
       {
