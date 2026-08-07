@@ -9,7 +9,11 @@
  * 전송: MCP Streamable HTTP, stateless(tools/call 직접). 응답은 SSE(event/data) 포맷.
  */
 
-import { readStoredRefreshToken, writeStoredRefreshToken } from './plaud-token-store';
+import {
+  readStoredRefreshToken,
+  writeStoredRefreshToken,
+  listStoredAccountKeys,
+} from './plaud-token-store';
 
 const MCP_URL = 'https://mcp.plaud.ai/mcp';
 const REFRESH_URL =
@@ -64,21 +68,26 @@ export function getAccountLabel(accountKey: string): string | undefined {
 }
 
 /**
- * 현재 사용 가능한 계정 목록(key+label) — seed env가 설정된 계정만(부트스트랩 전 계정은 제외).
- * PLAUD_ACCESS_TOKEN override가 있으면 기본 계정('me')은 seed 없이도 포함한다(테스트/단기용).
+ * 현재 사용 가능한 계정 목록(key+label). 다음 중 하나라도 있으면 노출:
+ *   ① seed env(PLAUD_REFRESH_TOKEN 등)가 설정됐거나
+ *   ② Supabase integration_tokens에 그 계정의 토큰이 저장돼 있거나(=Vercel env 없이 DB만으로 운영 가능)
+ *   ③ PLAUD_ACCESS_TOKEN override가 있으면 기본 계정('me')
  * UI 직원 선택 단계와 목록 조회 라우트가 공유하는 단일 소스.
  */
-export function listPlaudAccounts(): { key: string; label: string }[] {
+export async function listPlaudAccounts(): Promise<{ key: string; label: string }[]> {
   const hasOverride = !!process.env.PLAUD_ACCESS_TOKEN?.trim();
+  const storedKeys = new Set(await listStoredAccountKeys().catch(() => []));
   return PLAUD_ACCOUNTS.filter(
     (a) =>
-      !!process.env[a.seedEnv]?.trim() || (hasOverride && a.key === DEFAULT_ACCOUNT_KEY)
+      !!process.env[a.seedEnv]?.trim() ||
+      storedKeys.has(a.key) ||
+      (hasOverride && a.key === DEFAULT_ACCOUNT_KEY)
   ).map((a) => ({ key: a.key, label: a.label }));
 }
 
 /** 현재 사용 가능한 계정 키 목록. */
-export function listPlaudAccountKeys(): string[] {
-  return listPlaudAccounts().map((a) => a.key);
+export async function listPlaudAccountKeys(): Promise<string[]> {
+  return (await listPlaudAccounts()).map((a) => a.key);
 }
 
 /** 계정별 access token 메모리 캐시 (프로세스 수명 동안, 만료 60s 전까지 재사용). */

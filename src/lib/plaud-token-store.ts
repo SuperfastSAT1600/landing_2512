@@ -10,10 +10,31 @@
  * 조용히 폴백하고, 갱신 흐름은 env 씨앗 토큰으로 계속 동작한다.
  *
  * 다계정: (provider, account_key) 복합 PK로 Plaud 계정별 토큰을 분리 저장한다.
- * account_key는 코드 로스터(plaud-client)가 정의한 안정적 식별자('me', 'byungyun' 등).
+ * account_key는 코드 로스터(plaud-client)가 정의한 안정적 식별자('me', 'wooyoung' 등).
  */
 
 const PROVIDER = 'plaud';
+
+/**
+ * 저장소에 refresh_token이 들어있는 계정 키 목록을 반환한다. 없거나 오류면 빈 배열.
+ * env seed 없이 Supabase에만 토큰을 넣어도 직원이 노출되도록(=Vercel env 불필요) 쓰인다.
+ */
+export async function listStoredAccountKeys(): Promise<string[]> {
+  try {
+    const { supabaseAdmin } = await import('./supabase-admin');
+    const { data, error } = await supabaseAdmin
+      .from('integration_tokens')
+      .select('account_key')
+      .eq('provider', PROVIDER)
+      .not('refresh_token', 'is', null);
+    if (error || !data) return [];
+    return (data as { account_key?: string }[])
+      .map((r) => r.account_key)
+      .filter((k): k is string => typeof k === 'string' && k.length > 0);
+  } catch {
+    return [];
+  }
+}
 
 /** 지정 계정의 저장된 최신 refresh_token을 반환한다. 없거나 오류면 null. */
 export async function readStoredRefreshToken(accountKey: string): Promise<string | null> {
