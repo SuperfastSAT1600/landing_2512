@@ -100,5 +100,28 @@ export function useTimeline({ studentId, adminKey, timeline, setTimeline, setPen
     }
   }
 
-  return { publishing, publishError, memoSaving, handlePublish, handleUnpublish, handleDeleteAi, handleEditMemo };
+  async function handleDeleteMemo(entryId: string): Promise<boolean> {
+    if (!confirm('이 상담 메모를 삭제하시겠습니까? 되돌릴 수 없습니다.')) return false;
+    setMemoSaving(entryId);
+    try {
+      // 편집과 동일하게 해당 항목을 뺀 전체 timeline을 PATCH로 저장.
+      const updatedTimeline = timeline.filter(e => e.id !== entryId);
+      const res = await fetch(`/api/crm/students/${studentId}`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({ consultation_timeline: updatedTimeline }),
+      });
+      if (res.ok) {
+        setTimeline(prev => prev.filter(e => e.id !== entryId));
+        setPendingEdits(prev => { const next = { ...prev }; delete next[entryId]; return next; });
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      setMemoSaving(null);
+    }
+  }
+
+  return { publishing, publishError, memoSaving, handlePublish, handleUnpublish, handleDeleteAi, handleEditMemo, handleDeleteMemo };
 }

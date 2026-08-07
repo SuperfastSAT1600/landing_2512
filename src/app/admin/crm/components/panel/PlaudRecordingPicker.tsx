@@ -1,8 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Loader2, X, Search, Mic, CheckCircle2 } from 'lucide-react';
+import { Loader2, X, Search, Mic, CheckCircle2, ChevronLeft, User } from 'lucide-react';
 import type { ConsultationEntry } from '@/types/crm';
+
+interface PlaudAccount {
+  key: string;
+  label: string; // 직원 표시명(이민재/김우영)
+}
 
 interface Recording {
   id: string;
@@ -10,6 +15,8 @@ interface Recording {
   created_at?: string;
   start_at?: string;
   duration?: number; // ms
+  account_key?: string;
+  owner_label?: string;
 }
 
 interface Props {
@@ -37,8 +44,15 @@ function fmtWhen(r: Recording): string {
 }
 
 export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose, onCreated }: Props) {
+  // 1단계: 직원(Plaud 계정) 선택
+  const [accounts, setAccounts] = useState<PlaudAccount[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [accountsError, setAccountsError] = useState('');
+  const [selected, setSelected] = useState<PlaudAccount | null>(null);
+
+  // 2단계: 선택한 직원의 녹음 목록
   const [recordings, setRecordings] = useState<Recording[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [listError, setListError] = useState('');
   const [q, setQ] = useState('');
   const [runningId, setRunningId] = useState<string | null>(null);
@@ -47,15 +61,45 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
 
   const headers = { 'Content-Type': 'application/json', 'x-admin-key': adminKey };
 
+  // 마운트 시 사용 가능한 직원 계정을 불러온다. 1명뿐이면 선택 단계를 건너뛴다.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setAccountsLoading(true);
+      setAccountsError('');
+      try {
+        const res = await fetch('/api/crm/plaud/accounts', { headers: { 'x-admin-key': adminKey } });
+        const json = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          setAccountsError(json.error ?? '직원 계정을 불러오지 못했습니다.');
+          return;
+        }
+        const list: PlaudAccount[] = json.data ?? [];
+        setAccounts(list);
+        if (list.length === 0) setAccountsError('설정된 Plaud 계정이 없습니다.');
+        else if (list.length === 1) setSelected(list[0]); // 단일 계정 → 바로 녹음 목록
+      } catch {
+        if (!cancelled) setAccountsError('네트워크 오류가 발생했습니다.');
+      } finally {
+        if (!cancelled) setAccountsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [adminKey]);
+
   const load = useCallback(
-    async (query?: string) => {
+    async (accountKey: string, query?: string) => {
       setLoading(true);
       setListError('');
       try {
-        const url = query
-          ? `/api/crm/plaud/recordings?q=${encodeURIComponent(query)}`
-          : '/api/crm/plaud/recordings';
-        const res = await fetch(url, { headers: { 'x-admin-key': adminKey } });
+        const params = new URLSearchParams({ account_key: accountKey });
+        if (query) params.set('q', query);
+        const res = await fetch(`/api/crm/plaud/recordings?${params.toString()}`, {
+          headers: { 'x-admin-key': adminKey },
+        });
         const json = await res.json();
         if (res.ok) setRecordings(json.data ?? []);
         else setListError(json.error ?? '녹음 목록을 불러오지 못했습니다.');
@@ -68,25 +112,36 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
     [adminKey]
   );
 
+  // 직원 선택이 바뀌면 그 직원의 녹음을 불러온다.
   useEffect(() => {
-    load();
-  }, [load]);
+    if (selected) load(selected.key);
+  }, [selected, load]);
+
+  function backToAccounts() {
+    setSelected(null);
+    setRecordings([]);
+    setQ('');
+    setListError('');
+    setRunError('');
+  }
 
   async function pick(r: Recording) {
+    if (!selected) return;
     setRunningId(r.id);
     setRunError('');
     try {
       const res = await fetch(`/api/crm/students/${studentId}/plaud-memo`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ file_id: r.id }),
+        body: JSON.stringify({ file_id: r.id, account_key: selected.key }),
       });
       const json = await res.json();
       if (res.ok && json.data?.entry) {
         onCreated(json.data.entry); // 타임라인에 추가 + 상담 타임라인 섹션 자동 오픈
         setDoneName(r.name || '녹음'); // 완료 화면 표시(사용자가 등록 확인)
       } else if (res.status === 413) {
-        setRunError('이 녹음은 24MB를 초과해 전사할 수 없습니다. (짧은 녹음으로 시도하세요)');
+        // MP3는 청크 전사로 길이 제한이 풀렸다. 413은 이제 非MP3·초장문뿐 → 서버 메시지를 그대로 노출.
+        setRunError(json.error ?? '이 녹음은 전사할 수 없습니다. (형식/길이 제한)');
       } else {
         setRunError(json.error ?? '요약 생성에 실패했습니다.');
       }
@@ -99,6 +154,8 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
 
   const busy = runningId !== null;
   const runningName = recordings.find((r) => r.id === runningId)?.name ?? '';
+  // 계정이 2개 이상일 때만 "직원 다시 선택"을 노출(1개면 선택 단계 자체가 없음).
+  const canChangeAccount = accounts.length > 1;
 
   // 완료 화면 — 상담 히스토리 등록을 사용자가 명확히 인지하도록.
   if (doneName) {
@@ -133,93 +190,140 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
             <p className="text-sm font-semibold text-gray-900">전사·요약 중입니다…</p>
             <p className="text-xs text-gray-500 max-w-xs truncate">{runningName}</p>
             <p className="text-xs text-gray-400">
-              녹음 길이에 따라 <b>수십 초~2분</b> 걸릴 수 있어요. 창을 닫지 말고 기다려 주세요.
+              녹음 길이에 따라 <b>수십 초~수 분</b> 걸릴 수 있어요. 창을 닫지 말고 기다려 주세요.
             </p>
           </div>
         )}
 
         {/* header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Mic size={16} className="text-blue-500" />
-            <h3 className="text-sm font-semibold text-gray-900">Plaud 녹음 선택</h3>
-            <span className="text-xs text-gray-400">→ {studentName} 상담메모</span>
+          <div className="flex items-center gap-2 min-w-0">
+            {selected && canChangeAccount && (
+              <button
+                onClick={backToAccounts}
+                disabled={busy}
+                className="text-gray-400 hover:text-gray-700 disabled:opacity-40"
+                aria-label="직원 다시 선택"
+              >
+                <ChevronLeft size={18} />
+              </button>
+            )}
+            <Mic size={16} className="text-blue-500 shrink-0" />
+            <h3 className="text-sm font-semibold text-gray-900 shrink-0">
+              {selected ? `${selected.label} 녹음` : 'Plaud 직원 선택'}
+            </h3>
+            <span className="text-xs text-gray-400 truncate">→ {studentName} 상담메모</span>
           </div>
           <button onClick={onClose} disabled={busy} className="text-gray-400 hover:text-gray-600 disabled:opacity-40" aria-label="닫기">
             <X size={18} />
           </button>
         </div>
 
-        {/* search */}
-        <div className="px-5 py-3 border-b border-gray-100">
-          <div className="flex gap-2">
-            <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-              <Search size={14} className="text-gray-400" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && load(q.trim() || undefined)}
-                placeholder="녹음 이름 검색 후 Enter"
-                className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
-              />
-            </div>
-            <button
-              onClick={() => load(q.trim() || undefined)}
-              disabled={loading || busy}
-              className="px-3 py-2 rounded-lg border border-gray-200 text-[13px] text-gray-600 hover:bg-gray-50 disabled:opacity-40"
-            >
-              검색
-            </button>
-          </div>
-        </div>
-
-        {/* list */}
-        <div className="flex-1 overflow-y-auto px-2 py-2">
-          {loading ? (
-            <div className="flex items-center justify-center py-12 text-gray-400 gap-2">
-              <Loader2 size={18} className="animate-spin" /> 불러오는 중…
-            </div>
-          ) : listError ? (
-            <div className="px-4 py-8 text-center text-sm text-red-500">{listError}</div>
-          ) : recordings.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-gray-400">녹음이 없습니다.</div>
-          ) : (
-            <ul className="divide-y divide-gray-50">
-              {recordings.map((r) => (
-                <li key={r.id}>
-                  <button
-                    onClick={() => pick(r)}
-                    disabled={busy}
-                    className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-50/60 disabled:opacity-50 transition-colors flex items-center gap-3"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 truncate">{r.name || '(제목 없음)'}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {fmtWhen(r)}
-                        {r.duration ? ` · ${fmtDuration(r.duration)}` : ''}
-                      </p>
-                    </div>
-                    {runningId === r.id ? (
-                      <span className="flex items-center gap-1 text-xs text-blue-500 shrink-0">
-                        <Loader2 size={13} className="animate-spin" /> 요약 중…
+        {/* ── 1단계: 직원 선택 ────────────────────────────────── */}
+        {!selected ? (
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            {accountsLoading ? (
+              <div className="flex items-center justify-center py-12 text-gray-400 gap-2">
+                <Loader2 size={18} className="animate-spin" /> 불러오는 중…
+              </div>
+            ) : accountsError ? (
+              <div className="px-4 py-8 text-center text-sm text-red-500">{accountsError}</div>
+            ) : (
+              <>
+                <p className="text-xs text-gray-400 mb-3">어느 직원의 Plaud 녹음을 가져올까요?</p>
+                <div className="grid gap-2">
+                  {accounts.map((a) => (
+                    <button
+                      key={a.key}
+                      onClick={() => setSelected(a)}
+                      className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/60 transition-colors text-left"
+                    >
+                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-500">
+                        <User size={16} />
                       </span>
-                    ) : (
-                      <span className="text-xs text-gray-300 shrink-0">선택 →</span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                      <span className="text-sm font-medium text-gray-900">{a.label}</span>
+                      <span className="ml-auto text-xs text-gray-300">선택 →</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          /* ── 2단계: 선택한 직원의 녹음 목록 ─────────────────── */
+          <>
+            {/* search */}
+            <div className="px-5 py-3 border-b border-gray-100">
+              <div className="flex gap-2">
+                <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                  <Search size={14} className="text-gray-400" />
+                  <input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && load(selected.key, q.trim() || undefined)}
+                    placeholder="녹음 이름 검색 후 Enter"
+                    className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+                  />
+                </div>
+                <button
+                  onClick={() => load(selected.key, q.trim() || undefined)}
+                  disabled={loading || busy}
+                  className="px-3 py-2 rounded-lg border border-gray-200 text-[13px] text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+                >
+                  검색
+                </button>
+              </div>
+            </div>
 
-        {/* footer */}
-        <div className="px-5 py-3 border-t border-gray-100">
-          {runError && <p className="text-xs text-red-500 mb-2">{runError}</p>}
-          <p className="text-[11px] text-gray-400">
-            선택한 녹음을 전사·요약해 <b>미공개 초안</b>으로 상담메모에 추가합니다. 전사에 수십 초 걸릴 수 있습니다.
-          </p>
-        </div>
+            {/* list */}
+            <div className="flex-1 overflow-y-auto px-2 py-2">
+              {loading ? (
+                <div className="flex items-center justify-center py-12 text-gray-400 gap-2">
+                  <Loader2 size={18} className="animate-spin" /> 불러오는 중…
+                </div>
+              ) : listError ? (
+                <div className="px-4 py-8 text-center text-sm text-red-500">{listError}</div>
+              ) : recordings.length === 0 ? (
+                <div className="px-4 py-8 text-center text-sm text-gray-400">녹음이 없습니다.</div>
+              ) : (
+                <ul className="divide-y divide-gray-50">
+                  {recordings.map((r) => (
+                    <li key={r.id}>
+                      <button
+                        onClick={() => pick(r)}
+                        disabled={busy}
+                        className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-50/60 disabled:opacity-50 transition-colors flex items-center gap-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-900 truncate">{r.name || '(제목 없음)'}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {fmtWhen(r)}
+                            {r.duration ? ` · ${fmtDuration(r.duration)}` : ''}
+                          </p>
+                        </div>
+                        {runningId === r.id ? (
+                          <span className="flex items-center gap-1 text-xs text-blue-500 shrink-0">
+                            <Loader2 size={13} className="animate-spin" /> 요약 중…
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-300 shrink-0">선택 →</span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* footer */}
+            <div className="px-5 py-3 border-t border-gray-100">
+              {runError && <p className="text-xs text-red-500 mb-2">{runError}</p>}
+              <p className="text-[11px] text-gray-400">
+                선택한 녹음을 전사·요약해 <b>미공개 초안</b>으로 상담메모에 추가합니다. 전사에 수십 초 걸릴 수 있습니다.
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
