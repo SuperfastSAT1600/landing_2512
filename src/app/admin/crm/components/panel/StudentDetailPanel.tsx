@@ -324,6 +324,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               onUnpublish={timelineHook.handleUnpublish}
               onDeleteAi={timelineHook.handleDeleteAi}
               onEditMemo={timelineHook.handleEditMemo}
+              onDeleteMemo={timelineHook.handleDeleteMemo}
             />
 
             <PaymentHistorySection

@@ -23,11 +23,12 @@ interface Props {
   onUnpublish: (entryId: string) => void;
   onDeleteAi: (entryId: string) => void;
   onEditMemo: (entryId: string, newMemo: string) => Promise<boolean>;
+  onDeleteMemo: (entryId: string) => void;
 }
 
 export function TimelineSection({
   studentId, adminKey, timeline, loadingFresh, openSignal, publishError, publishing, memoSaving, aiLoadingFor,
-  pendingEdits, setPendingEdits, onAiCare, onPublish, onDeleteAi, onEditMemo,
+  pendingEdits, setPendingEdits, onAiCare, onPublish, onDeleteAi, onEditMemo, onDeleteMemo,
 }: Props) {
   return (
     <SectionCard
@@ -74,6 +75,7 @@ export function TimelineSection({
             }))}
             onDeleteAi={() => onDeleteAi(entry.id)}
             onEditMemo={(newMemo) => onEditMemo(entry.id, newMemo)}
+            onDeleteMemo={() => onDeleteMemo(entry.id)}
           />
         ))}
       </div>

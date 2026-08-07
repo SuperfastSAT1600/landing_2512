@@ -25,14 +25,64 @@ export interface PlaudRecording {
   created_at?: string;
   start_at?: string;
   duration?: number; // ms
+  account_key?: string; // 소속 Plaud 계정(목록 병합 시 태깅)
+  owner_label?: string; // 계정 소유자 표시명(UI 칩/작성자)
 }
 
 export interface PlaudFile extends PlaudRecording {
   presigned_url: string;
 }
 
-/** access token 메모리 캐시 (프로세스 수명 동안, 만료 60s 전까지 재사용). */
-let cachedToken: { token: string; expiresAt: number } | null = null;
+/**
+ * Plaud 계정 로스터 — 계정별 표시명과 부트스트랩 seed env를 정의하는 단일 소스.
+ * 회전된 최신 refresh_token은 Supabase(integration_tokens.account_key)에 저장되고,
+ * 여기 seedEnv는 최초 부트스트랩(저장소 비어있을 때)에만 사용된다.
+ * 인원이 거의 안 바뀌므로 코드 상수로 둔다(3명+ 확장 시 DB 관리로 이전 검토).
+ */
+export interface PlaudAccount {
+  key: string;
+  label: string;
+  seedEnv: string;
+}
+
+export const PLAUD_ACCOUNTS: PlaudAccount[] = [
+  { key: 'me', label: '이민재', seedEnv: 'PLAUD_REFRESH_TOKEN' },
+  { key: 'wooyoung', label: '김우영', seedEnv: 'PLAUD_REFRESH_TOKEN_WOOYOUNG' },
+];
+
+const DEFAULT_ACCOUNT_KEY = 'me';
+
+function getAccount(accountKey: string): PlaudAccount {
+  const acc = PLAUD_ACCOUNTS.find((a) => a.key === accountKey);
+  if (!acc) throw new Error(`알 수 없는 Plaud 계정: ${accountKey}`);
+  return acc;
+}
+
+/** 계정 표시명(작성자·UI 칩용). 알 수 없는 키면 undefined. */
+export function getAccountLabel(accountKey: string): string | undefined {
+  return PLAUD_ACCOUNTS.find((a) => a.key === accountKey)?.label;
+}
+
+/**
+ * 현재 사용 가능한 계정 목록(key+label) — seed env가 설정된 계정만(부트스트랩 전 계정은 제외).
+ * PLAUD_ACCESS_TOKEN override가 있으면 기본 계정('me')은 seed 없이도 포함한다(테스트/단기용).
+ * UI 직원 선택 단계와 목록 조회 라우트가 공유하는 단일 소스.
+ */
+export function listPlaudAccounts(): { key: string; label: string }[] {
+  const hasOverride = !!process.env.PLAUD_ACCESS_TOKEN?.trim();
+  return PLAUD_ACCOUNTS.filter(
+    (a) =>
+      !!process.env[a.seedEnv]?.trim() || (hasOverride && a.key === DEFAULT_ACCOUNT_KEY)
+  ).map((a) => ({ key: a.key, label: a.label }));
+}
+
+/** 현재 사용 가능한 계정 키 목록. */
+export function listPlaudAccountKeys(): string[] {
+  return listPlaudAccounts().map((a) => a.key);
+}
+
+/** 계정별 access token 메모리 캐시 (프로세스 수명 동안, 만료 60s 전까지 재사용). */
+const tokenCache = new Map<string, { token: string; expiresAt: number }>();
 
 /** refresh_token으로 새 access token을 발급받는다(회전된 새 refresh_token도 함께 반환). */
 async function refreshAccessToken(
@@ -65,20 +115,27 @@ async function refreshAccessToken(
   };
 }
 
-/** 유효한 access token을 반환한다(캐시 → env override → refresh). */
-export async function getPlaudAccessToken(): Promise<string> {
+/** 지정 계정의 유효한 access token을 반환한다(캐시 → env override → refresh). */
+export async function getPlaudAccessToken(
+  accountKey: string = DEFAULT_ACCOUNT_KEY
+): Promise<string> {
+  const account = getAccount(accountKey);
+
   const override = process.env.PLAUD_ACCESS_TOKEN?.trim();
   if (override) return override;
 
   const now = Date.now();
-  if (cachedToken && cachedToken.expiresAt - 60_000 > now) return cachedToken.token;
+  const cached = tokenCache.get(accountKey);
+  if (cached && cached.expiresAt - 60_000 > now) return cached.token;
 
-  // 저장소의 최신 회전 토큰 우선, 없으면 env 씨앗(부트스트랩). 저장소 오류는 null 폴백.
-  const stored = await readStoredRefreshToken().catch(() => null);
-  const seed = process.env.PLAUD_REFRESH_TOKEN?.trim() || undefined;
+  // 저장소의 최신 회전 토큰 우선, 없으면 계정 seed env(부트스트랩). 저장소 오류는 null 폴백.
+  const stored = await readStoredRefreshToken(accountKey).catch(() => null);
+  const seed = process.env[account.seedEnv]?.trim() || undefined;
   const primary = stored ?? seed;
   if (!primary) {
-    throw new Error('PLAUD_REFRESH_TOKEN(또는 PLAUD_ACCESS_TOKEN)이 설정되지 않았습니다.');
+    throw new Error(
+      `${account.seedEnv}(또는 PLAUD_ACCESS_TOKEN)이 설정되지 않았습니다. [account=${accountKey}]`
+    );
   }
 
   let refreshed: { token: string; ttlSec: number; newRefreshToken?: string };
@@ -86,7 +143,7 @@ export async function getPlaudAccessToken(): Promise<string> {
   try {
     refreshed = await refreshAccessToken(primary);
   } catch (e) {
-    // 저장소 토큰이 만료(7일+ 무활동)됐는데 운영자가 env 씨앗을 새로 넣은 경우, 씨앗으로 재시도해 복구한다.
+    // 저장소 토큰이 만료(7일+ 무활동)됐는데 운영자가 seed env를 새로 넣은 경우, 씨앗으로 재시도해 복구한다.
     // (저장소 우선 순서 때문에 새 씨앗이 영영 안 먹히는 함정을 막는다.)
     if (stored && seed && seed !== stored) {
       refreshed = await refreshAccessToken(seed);
@@ -96,10 +153,13 @@ export async function getPlaudAccessToken(): Promise<string> {
     }
   }
 
-  cachedToken = { token: refreshed.token, expiresAt: now + refreshed.ttlSec * 1000 };
-  // 회전된 새 refresh_token을 저장해 다음 갱신에 사용(env 씨앗 7일 만료와 무관하게 체인 유지).
+  tokenCache.set(accountKey, {
+    token: refreshed.token,
+    expiresAt: now + refreshed.ttlSec * 1000,
+  });
+  // 회전된 새 refresh_token을 해당 계정에 저장해 다음 갱신에 사용(seed 7일 만료와 무관하게 체인 유지).
   if (refreshed.newRefreshToken && refreshed.newRefreshToken !== usedToken) {
-    await writeStoredRefreshToken(refreshed.newRefreshToken).catch(() => {});
+    await writeStoredRefreshToken(accountKey, refreshed.newRefreshToken).catch(() => {});
   }
   return refreshed.token;
 }
@@ -129,9 +189,10 @@ function parseSseJsonRpc(raw: string): { result?: unknown; error?: unknown } {
  */
 export async function plaudMcpCall(
   name: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
+  accountKey: string = DEFAULT_ACCOUNT_KEY
 ): Promise<string> {
-  const token = await getPlaudAccessToken();
+  const token = await getPlaudAccessToken(accountKey);
   const res = await fetch(MCP_URL, {
     method: 'POST',
     headers: {
@@ -165,13 +226,16 @@ export async function plaudMcpCall(
 }
 
 /** 녹음 목록 조회. page_size는 Plaud 제약상 최소 10으로 보정한다. */
-export async function listPlaudRecordings(opts: {
-  query?: string;
-  date_from?: string;
-  date_to?: string;
-  page?: number;
-  page_size?: number;
-} = {}): Promise<PlaudRecording[]> {
+export async function listPlaudRecordings(
+  opts: {
+    query?: string;
+    date_from?: string;
+    date_to?: string;
+    page?: number;
+    page_size?: number;
+  } = {},
+  accountKey: string = DEFAULT_ACCOUNT_KEY
+): Promise<PlaudRecording[]> {
   const args: Record<string, unknown> = {
     page: opts.page ?? 1,
     page_size: Math.max(10, opts.page_size ?? 20),
@@ -180,7 +244,7 @@ export async function listPlaudRecordings(opts: {
   if (opts.date_from) args.date_from = opts.date_from;
   if (opts.date_to) args.date_to = opts.date_to;
 
-  const text = await plaudMcpCall('list_files', args);
+  const text = await plaudMcpCall('list_files', args, accountKey);
   const parsed = JSON.parse(text) as { data?: unknown } | unknown[];
   const list = Array.isArray(parsed) ? parsed : (parsed.data ?? []);
   return (list as Record<string, unknown>[]).map((r) => ({
@@ -193,8 +257,11 @@ export async function listPlaudRecordings(opts: {
 }
 
 /** 단일 녹음 상세(presigned 오디오 URL 포함) 조회. */
-export async function getPlaudFile(fileId: string): Promise<PlaudFile> {
-  const text = await plaudMcpCall('get_file', { file_id: fileId });
+export async function getPlaudFile(
+  fileId: string,
+  accountKey: string = DEFAULT_ACCOUNT_KEY
+): Promise<PlaudFile> {
+  const text = await plaudMcpCall('get_file', { file_id: fileId }, accountKey);
   const d = JSON.parse(text) as Record<string, unknown>;
   const url = typeof d.presigned_url === 'string' ? d.presigned_url : '';
   if (!url) throw new Error('녹음 오디오 URL을 가져오지 못했습니다.');

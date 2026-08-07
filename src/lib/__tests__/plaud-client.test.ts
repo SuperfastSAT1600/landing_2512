@@ -5,8 +5,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const readStoredRefreshToken = vi.fn();
 const writeStoredRefreshToken = vi.fn();
 vi.mock('@/lib/plaud-token-store', () => ({
-  readStoredRefreshToken: () => readStoredRefreshToken(),
-  writeStoredRefreshToken: (t: string) => writeStoredRefreshToken(t),
+  readStoredRefreshToken: (k: string) => readStoredRefreshToken(k),
+  writeStoredRefreshToken: (k: string, t: string) => writeStoredRefreshToken(k, t),
 }));
 
 // SSE(event/data) 형식 tools/call 응답을 만든다.
@@ -22,6 +22,7 @@ describe('plaud-client', () => {
     vi.resetModules();
     vi.clearAllMocks();
     delete process.env.PLAUD_ACCESS_TOKEN;
+    delete process.env.PLAUD_REFRESH_TOKEN_WOOYOUNG;
     process.env.PLAUD_REFRESH_TOKEN = 'refresh-xyz';
     // 기본: 저장소 비어있음 → env 씨앗 폴백.
     readStoredRefreshToken.mockResolvedValue(null);
@@ -132,8 +133,8 @@ describe('plaud-client', () => {
 
     // env('refresh-xyz')가 아니라 저장소('stored-refresh')로 갱신해야 한다.
     expect(String(fetchMock.mock.calls[0][1].body)).toContain('refresh_token=stored-refresh');
-    // 회전된 새 refresh_token을 저장.
-    expect(writeStoredRefreshToken).toHaveBeenCalledWith('rotated-new');
+    // 회전된 새 refresh_token을 'me' 계정으로 저장.
+    expect(writeStoredRefreshToken).toHaveBeenCalledWith('me', 'rotated-new');
   });
 
   it('새 refresh_token이 기존과 같으면 저장 생략', async () => {
@@ -169,8 +170,8 @@ describe('plaud-client', () => {
     await expect(listPlaudRecordings()).resolves.toEqual([]);
     expect(String(fetchMock.mock.calls[0][1].body)).toContain('refresh_token=stale-stored');
     expect(String(fetchMock.mock.calls[1][1].body)).toContain('refresh_token=fresh-seed');
-    // 복구된 회전 토큰을 저장해 다음부터 정상.
-    expect(writeStoredRefreshToken).toHaveBeenCalledWith('recovered');
+    // 복구된 회전 토큰을 'me' 계정에 저장해 다음부터 정상.
+    expect(writeStoredRefreshToken).toHaveBeenCalledWith('me', 'recovered');
   });
 
   it('저장소 read 실패해도 env 씨앗으로 폴백 동작(REQ-003)', async () => {
@@ -184,5 +185,50 @@ describe('plaud-client', () => {
     await expect(listPlaudRecordings()).resolves.toEqual([]);
     // env 씨앗으로 갱신.
     expect(String(fetchMock.mock.calls[0][1].body)).toContain('refresh_token=refresh-xyz');
+  });
+
+  it('REQ-003: 계정별 seed env로 갱신하고 회전 토큰을 해당 계정에 저장', async () => {
+    process.env.PLAUD_REFRESH_TOKEN_WOOYOUNG = 'seed-wooyoung';
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: 'acc-wy', expires_in: 86400, refresh_token: 'rot-wy' }),
+      })
+      .mockResolvedValueOnce({ ok: true, text: async () => sse(toolResult({ data: [] })) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { listPlaudRecordings } = await import('@/lib/plaud-client');
+    await listPlaudRecordings({}, 'wooyoung');
+
+    // wooyoung 계정 seed env로 갱신했는지.
+    expect(String(fetchMock.mock.calls[0][1].body)).toContain('refresh_token=seed-wooyoung');
+    expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer acc-wy');
+    // 회전 토큰이 'wooyoung' 계정으로 저장돼야 한다(다른 계정 오염 금지).
+    expect(writeStoredRefreshToken).toHaveBeenCalledWith('wooyoung', 'rot-wy');
+    // wooyoung 계정 조회는 'wooyoung' 저장소만 읽어야 한다.
+    expect(readStoredRefreshToken).toHaveBeenCalledWith('wooyoung');
+  });
+
+  it('REQ-003: 알 수 없는 계정 키는 에러', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    const { getPlaudFile } = await import('@/lib/plaud-client');
+    await expect(getPlaudFile('f1', 'nobody')).rejects.toThrow(/알 수 없는 Plaud 계정/);
+  });
+
+  it('REQ-003: getAccountLabel/listPlaudAccounts — seed 설정된 계정만 노출', async () => {
+    const mod = await import('@/lib/plaud-client');
+    expect(mod.getAccountLabel('me')).toBe('이민재');
+    expect(mod.getAccountLabel('wooyoung')).toBe('김우영');
+    expect(mod.getAccountLabel('nobody')).toBeUndefined();
+
+    // 기본: me seed만 설정됨 → ['me'] / [{key:'me',label:'이민재'}].
+    expect(mod.listPlaudAccountKeys()).toEqual(['me']);
+    expect(mod.listPlaudAccounts()).toEqual([{ key: 'me', label: '이민재' }]);
+    // wooyoung seed 추가 시 둘 다.
+    process.env.PLAUD_REFRESH_TOKEN_WOOYOUNG = 'seed-wy';
+    expect(mod.listPlaudAccounts()).toEqual([
+      { key: 'me', label: '이민재' },
+      { key: 'wooyoung', label: '김우영' },
+    ]);
   });
 });
