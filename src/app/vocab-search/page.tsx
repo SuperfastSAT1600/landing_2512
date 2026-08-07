@@ -51,8 +51,9 @@ export default function VocabSearchPage() {
       <div className="max-w-2xl mx-auto text-center mb-10">
         <h1 className="text-2xl font-bold text-gray-900">SAT 단어 검색</h1>
         <p className="text-gray-500 text-sm mt-2">
-          단어를 입력하면 SuperfastSAT이 보유한 SAT Reading &amp; Writing 지문에서
-          몇 번 등장했는지, 실제로 어떤 문장에 쓰였는지 보여드려요.
+          단어를 입력하면<br />
+          QB지문에 몇 번 등장했는지<br />
+          예문과 함께 알 수 있어요.
         </p>
       </div>
 
