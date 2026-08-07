@@ -1,11 +1,12 @@
 /**
  * Plaud 녹음 오디오 → 전사 → Qwen 4섹션 상담 메모 요약 (자체완결형).
- * - STT: OpenAI gpt-4o-transcribe (24MB 초과는 폴백 없이 AudioTooLargeError).
+ * - STT: OpenAI gpt-4o-transcribe. 24MB 초과 MP3는 프레임 경계로 청크 분할해 청크별 전사 후 이어붙인다.
+ *        非MP3 초과분은 폴백 없이 AudioTooLargeError, 너무 길면(청크 6개 초과) AudioTooLongError.
  * - 화자분리·요약: Qwen(Anthropic 호환, 텍스트 전용).
- * 전화상담(Daily) 파이프라인 제거에 따라 이 모듈은 다른 lib에 의존하지 않는다.
  */
 import OpenAI, { toFile } from 'openai';
 import { getQwenAnthropicClient } from '@/lib/qwen';
+import { isMp3, chunkMp3ByFrames } from '@/lib/mp3-chunk';
 
 // STT·요약 모델은 env로 조정 가능(속도/품질 튜닝).
 // STT는 gpt-4o-transcribe 유지 — gpt-4o-mini-transcribe는 일부 녹음에서 같은 문장을 무한 반복하는
@@ -14,14 +15,36 @@ const STT_MODEL = process.env.PLAUD_STT_MODEL?.trim() || 'gpt-4o-transcribe';
 // 요약은 qwen-plus — qwen-max보다 빠르면서 상세 메모에 충분한 품질. (최고 품질 원하면 env로 qwen-max)
 const SUMMARY_MODEL = process.env.PLAUD_SUMMARY_MODEL?.trim() || 'qwen-plus';
 
-/** OpenAI 전사 파일 한도(25MB) 아래로 둔 캡. 초과 녹음은 전사하지 않는다. */
+/** 단일 요청 STT 캡(OpenAI 25MB 아래). 이하 녹음은 한 번에 전사, 초과 MP3는 청크 분할. */
 export const MAX_AUDIO_BYTES = 24 * 1024 * 1024;
+/** 청크 목표 크기(OpenAI 25MB 여유 두고). */
+const CHUNK_TARGET_BYTES = 23 * 1024 * 1024;
+/**
+ * 청크 목표 길이(초). gpt-4o-transcribe는 요청당 1400초 길이 제한이 있어(파일크기와 별개),
+ * 바이트뿐 아니라 길이로도 잘라야 한다. 여유 두고 1200초(20분).
+ */
+const CHUNK_TARGET_SECONDS = 1200;
+/** 청크 최대 개수(20분×4=약 80분). 초과는 300s 내 처리 어려워 거절. */
+export const MAX_CHUNKS = 4;
+/**
+ * 청크 전사 동시성. 20분 청크 1개 STT가 ~130s라, MAX_CHUNKS(4)를 한 배치로 병렬 처리해
+ * wall-clock을 청크 수와 무관하게 ~1회분(~150s)으로 묶는다(300s serverless 여유). withRetry가 429 흡수.
+ */
+const CHUNK_CONCURRENCY = 4;
 
-/** 24MB 초과로 전사 불가함을 알리는 에러(라우트에서 413으로 매핑). */
+/** 전사 불가(非MP3 초과 등)를 알리는 에러(라우트에서 413으로 매핑). */
 export class AudioTooLargeError extends Error {
-  constructor() {
-    super('녹음이 24MB를 초과해 전사할 수 없습니다.');
+  constructor(message = '녹음이 24MB를 초과해 전사할 수 없습니다.') {
+    super(message);
     this.name = 'AudioTooLargeError';
+  }
+}
+
+/** 녹음이 너무 길어(청크 상한 초과) 전사 불가. AudioTooLargeError 하위 → 라우트가 동일하게 413 처리. */
+export class AudioTooLongError extends AudioTooLargeError {
+  constructor() {
+    super('녹음이 너무 길어 전사할 수 없습니다. (약 80분 이하만 지원)');
+    this.name = 'AudioTooLongError';
   }
 }
 
@@ -134,25 +157,78 @@ function mimeFilename(url: string, contentType: string): { mime: string; filenam
   return { mime: EXT_MIME[ext], filename: `plaud.${ext}` };
 }
 
-/**
- * presigned 오디오 URL → 다운로드 → (24MB 초과 시 AudioTooLargeError) → OpenAI 한국어 전사.
- * @throws AudioTooLargeError 오디오가 MAX_AUDIO_BYTES 초과일 때 (폴백 없음)
- */
-export async function transcribeAudioUrl(url: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`오디오 다운로드 실패: ${res.status}`);
-  const buffer = Buffer.from(await res.arrayBuffer());
-  if (buffer.byteLength > MAX_AUDIO_BYTES) throw new AudioTooLargeError();
-
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
-  const { mime, filename } = mimeFilename(url, res.headers.get('content-type') ?? '');
-  const openai = new OpenAI({ apiKey });
+/** 단일 오디오 버퍼를 OpenAI로 한국어 전사한다(트림된 텍스트). */
+async function transcribeBuffer(
+  buffer: Buffer,
+  url: string,
+  contentType: string,
+  openai: OpenAI
+): Promise<string> {
+  const { mime, filename } = mimeFilename(url, contentType);
   const file = await toFile(buffer, filename, { type: mime });
   const r = await withRetry(() =>
     openai.audio.transcriptions.create({ file, model: STT_MODEL, language: 'ko' })
   );
   return r.text.trim();
+}
+
+/** 청크들을 동시성 제한 배치로 전사하고 index 순서를 보존해 텍스트 배열로 반환한다. */
+async function transcribeChunks(
+  chunks: Buffer[],
+  url: string,
+  contentType: string,
+  openai: OpenAI
+): Promise<string[]> {
+  const out: string[] = new Array(chunks.length);
+  for (let i = 0; i < chunks.length; i += CHUNK_CONCURRENCY) {
+    const batch = chunks.slice(i, i + CHUNK_CONCURRENCY);
+    const texts = await Promise.all(
+      batch.map((c) => transcribeBuffer(c, url, contentType, openai))
+    );
+    texts.forEach((t, j) => {
+      out[i + j] = t;
+    });
+  }
+  return out;
+}
+
+/**
+ * presigned 오디오 URL → 다운로드 → OpenAI 한국어 전사.
+ * ≤24MB는 단일 전사. 초과 MP3는 프레임 경계로 청크 분할해 청크별 전사 후 순서대로 이어붙인다.
+ * @throws AudioTooLargeError 24MB 초과인데 청크 분할 불가한 포맷(非MP3)일 때
+ * @throws AudioTooLongError  청크가 MAX_CHUNKS(≈80분)를 초과할 때
+ */
+export async function transcribeAudioUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`오디오 다운로드 실패: ${res.status}`);
+  const buffer = Buffer.from(await res.arrayBuffer());
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
+  const contentType = res.headers.get('content-type') ?? '';
+  const openai = new OpenAI({ apiKey });
+
+  // 단일 요청 한도 이하: 기존 단일 전사 경로.
+  if (buffer.byteLength <= MAX_AUDIO_BYTES) {
+    return transcribeBuffer(buffer, url, contentType, openai);
+  }
+
+  // 초과: MP3만 프레임 경계 분할 가능. 그 외 포맷은 전사 불가.
+  if (!isMp3(buffer)) throw new AudioTooLargeError();
+
+  let chunks: Buffer[];
+  try {
+    chunks = chunkMp3ByFrames(buffer, CHUNK_TARGET_BYTES, CHUNK_TARGET_SECONDS);
+  } catch (err) {
+    // 안전하게 분할 못 하면 기존 동작(전사 불가)으로 폴백.
+    console.error('[mp3-chunk] 청킹 실패, AudioTooLargeError로 폴백:', err);
+    throw new AudioTooLargeError();
+  }
+  if (chunks.length > MAX_CHUNKS) throw new AudioTooLongError();
+
+  // 청크는 항상 MP3 바이트이므로 원본 URL 확장자와 무관하게 mime 강제.
+  const texts = await transcribeChunks(chunks, url, 'audio/mpeg', openai);
+  return texts.join('\n').trim();
 }
 
 /** Qwen(텍스트) 1회 완성. system/user를 Anthropic 호환 messages로 보낸다. */

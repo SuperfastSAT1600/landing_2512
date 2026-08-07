@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // OpenAI STT + Qwen SDK를 모킹해 네트워크·키 없이 검증한다.
-const { transcriptionsCreate, messagesCreate } = vi.hoisted(() => ({
+const { transcriptionsCreate, messagesCreate, isMp3Mock, chunkMock } = vi.hoisted(() => ({
   transcriptionsCreate: vi.fn(),
   messagesCreate: vi.fn(),
+  isMp3Mock: vi.fn(),
+  chunkMock: vi.fn(),
 }));
 
 vi.mock('openai', () => ({
@@ -16,13 +18,20 @@ vi.mock('@/lib/qwen', () => ({
   getQwenAnthropicClient: () => ({ messages: { create: messagesCreate } }),
   qwenModel: (t: string) => (t === 'strong' ? 'qwen-max' : 'qwen-turbo'),
 }));
+// MP3 청커는 mock해 청크 분할을 테스트에서 제어(실제 >24MB 버퍼 생성 불필요).
+vi.mock('@/lib/mp3-chunk', () => ({
+  isMp3: (b: Buffer) => isMp3Mock(b),
+  chunkMp3ByFrames: (b: Buffer, t?: number) => chunkMock(b, t),
+}));
 
 import { toFile } from 'openai';
 import {
   transcribeAudioUrl,
   summarizeTranscriptWithQwen,
   AudioTooLargeError,
+  AudioTooLongError,
   MAX_AUDIO_BYTES,
+  MAX_CHUNKS,
 } from '@/lib/plaud-transcribe';
 
 function mockFetch(res: { ok: boolean; status?: number; bytes?: number; contentType?: string }) {
@@ -44,6 +53,8 @@ describe('transcribeAudioUrl', () => {
   beforeEach(() => {
     process.env.OPENAI_API_KEY = 'test-key';
     transcriptionsCreate.mockReset();
+    isMp3Mock.mockReset();
+    chunkMock.mockReset();
   });
   afterEach(() => vi.unstubAllGlobals());
 
@@ -60,9 +71,49 @@ describe('transcribeAudioUrl', () => {
     expect(vi.mocked(toFile)).toHaveBeenCalledWith(expect.anything(), 'plaud.mp3', { type: 'audio/mpeg' });
   });
 
-  it('24MB 초과 → AudioTooLargeError, STT 호출 안 함', async () => {
+  it('24MB 초과 & 非MP3(m4a 등) → AudioTooLargeError, STT 호출 안 함', async () => {
     mockFetch({ ok: true, bytes: MAX_AUDIO_BYTES + 1 });
+    isMp3Mock.mockReturnValue(false); // m4a/wav 등은 바이트 분할 불가
     await expect(transcribeAudioUrl('https://x/big.m4a')).rejects.toBeInstanceOf(AudioTooLargeError);
+    expect(transcriptionsCreate).not.toHaveBeenCalled();
+  });
+
+  it('24MB 초과 MP3 → 청크별 STT 후 순서대로 이어붙여 반환', async () => {
+    mockFetch({ ok: true, bytes: MAX_AUDIO_BYTES + 1, contentType: 'binary/octet-stream' });
+    isMp3Mock.mockReturnValue(true);
+    chunkMock.mockReturnValue([Buffer.from('c1'), Buffer.from('c2'), Buffer.from('c3')]);
+    transcriptionsCreate
+      .mockResolvedValueOnce({ text: 'A' })
+      .mockResolvedValueOnce({ text: 'B' })
+      .mockResolvedValueOnce({ text: 'C' });
+    const out = await transcribeAudioUrl('https://s3/audiofiles/big.mp3?X-Amz=1');
+    expect(transcriptionsCreate).toHaveBeenCalledTimes(3);
+    expect(out).toBe('A\nB\nC'); // 완료 순서와 무관하게 청크 index 순서 보존
+  });
+
+  it('청크 수가 MAX_CHUNKS 초과 → AudioTooLongError, STT 호출 안 함', async () => {
+    mockFetch({ ok: true, bytes: MAX_AUDIO_BYTES + 1, contentType: 'binary/octet-stream' });
+    isMp3Mock.mockReturnValue(true);
+    chunkMock.mockReturnValue(Array.from({ length: MAX_CHUNKS + 1 }, (_, i) => Buffer.from(`c${i}`)));
+    await expect(transcribeAudioUrl('https://s3/audiofiles/toolong.mp3')).rejects.toBeInstanceOf(
+      AudioTooLongError,
+    );
+    expect(transcriptionsCreate).not.toHaveBeenCalled();
+  });
+
+  it('AudioTooLongError는 AudioTooLargeError의 하위(라우트 413 매핑 재사용)', () => {
+    expect(new AudioTooLongError()).toBeInstanceOf(AudioTooLargeError);
+  });
+
+  it('24MB 초과 MP3인데 청커가 throw → AudioTooLargeError로 폴백', async () => {
+    mockFetch({ ok: true, bytes: MAX_AUDIO_BYTES + 1, contentType: 'binary/octet-stream' });
+    isMp3Mock.mockReturnValue(true);
+    chunkMock.mockImplementation(() => {
+      throw new Error('오싱크');
+    });
+    await expect(transcribeAudioUrl('https://s3/audiofiles/weird.mp3')).rejects.toBeInstanceOf(
+      AudioTooLargeError,
+    );
     expect(transcriptionsCreate).not.toHaveBeenCalled();
   });
 
