@@ -4,9 +4,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // 토큰 저장소는 항상 mock — 유닛 테스트가 Supabase에 붙지 않도록.
 const readStoredRefreshToken = vi.fn();
 const writeStoredRefreshToken = vi.fn();
+const listStoredAccountKeys = vi.fn();
 vi.mock('@/lib/plaud-token-store', () => ({
   readStoredRefreshToken: (k: string) => readStoredRefreshToken(k),
   writeStoredRefreshToken: (k: string, t: string) => writeStoredRefreshToken(k, t),
+  listStoredAccountKeys: () => listStoredAccountKeys(),
 }));
 
 // SSE(event/data) 형식 tools/call 응답을 만든다.
@@ -27,6 +29,7 @@ describe('plaud-client', () => {
     // 기본: 저장소 비어있음 → env 씨앗 폴백.
     readStoredRefreshToken.mockResolvedValue(null);
     writeStoredRefreshToken.mockResolvedValue(undefined);
+    listStoredAccountKeys.mockResolvedValue([]);
   });
   afterEach(() => vi.unstubAllGlobals());
 
@@ -215,20 +218,27 @@ describe('plaud-client', () => {
     await expect(getPlaudFile('f1', 'nobody')).rejects.toThrow(/알 수 없는 Plaud 계정/);
   });
 
-  it('REQ-003: getAccountLabel/listPlaudAccounts — seed 설정된 계정만 노출', async () => {
+  it('REQ-003: getAccountLabel/listPlaudAccounts — seed env 기준 노출', async () => {
     const mod = await import('@/lib/plaud-client');
     expect(mod.getAccountLabel('me')).toBe('이민재');
     expect(mod.getAccountLabel('wooyoung')).toBe('김우영');
     expect(mod.getAccountLabel('nobody')).toBeUndefined();
 
     // 기본: me seed만 설정됨 → ['me'] / [{key:'me',label:'이민재'}].
-    expect(mod.listPlaudAccountKeys()).toEqual(['me']);
-    expect(mod.listPlaudAccounts()).toEqual([{ key: 'me', label: '이민재' }]);
+    expect(await mod.listPlaudAccountKeys()).toEqual(['me']);
+    expect(await mod.listPlaudAccounts()).toEqual([{ key: 'me', label: '이민재' }]);
     // wooyoung seed 추가 시 둘 다.
     process.env.PLAUD_REFRESH_TOKEN_WOOYOUNG = 'seed-wy';
-    expect(mod.listPlaudAccounts()).toEqual([
+    expect(await mod.listPlaudAccounts()).toEqual([
       { key: 'me', label: '이민재' },
       { key: 'wooyoung', label: '김우영' },
     ]);
+  });
+
+  it('REQ-DB: seed env 없이 Supabase 저장 토큰만으로도 계정 노출(Vercel env 불필요)', async () => {
+    // env엔 me만, 저장소엔 wooyoung 토큰이 있는 상황 → 둘 다 노출돼야 함.
+    listStoredAccountKeys.mockResolvedValue(['wooyoung']);
+    const mod = await import('@/lib/plaud-client');
+    expect(await mod.listPlaudAccountKeys()).toEqual(['me', 'wooyoung']);
   });
 });
