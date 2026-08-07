@@ -1,52 +1,73 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
-import { Search, Loader2 } from 'lucide-react';
+import { useState, useRef, useCallback, useSyncExternalStore } from 'react';
 
 const STORAGE_KEY = 'vocab_search_v2';
+const CODE_LENGTH = 6;
 
 function subscribe(callback: () => void) {
   window.addEventListener('storage', callback);
   return () => window.removeEventListener('storage', callback);
 }
-
-function getSnapshot() {
-  return localStorage.getItem(STORAGE_KEY) ?? null;
-}
-
-function getServerSnapshot() {
-  return null;
-}
+function getSnapshot() { return localStorage.getItem(STORAGE_KEY) ?? null; }
+function getServerSnapshot() { return null; }
 
 export function InstagramGate({ children }: { children: React.ReactNode }) {
   const stored = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [instagramId, setInstagramId] = useState('');
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  if (stored) return <>{children}</>;
+  const setRef = useCallback((el: HTMLInputElement | null, idx: number) => {
+    inputRefs.current[idx] = el;
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const focusInput = (idx: number) => inputRefs.current[idx]?.focus();
+
+  const handleDigitChange = (idx: number, value: string) => {
+    const digit = value.replace(/\D/g, '').slice(-1);
+    const next = [...code];
+    next[idx] = digit;
+    setCode(next);
+    setErrorMsg('');
+    if (digit && idx < CODE_LENGTH - 1) focusInput(idx + 1);
+  };
+
+  const handleKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !code[idx] && idx > 0) focusInput(idx - 1);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    if (!instagramId.trim() || !code.trim()) return;
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, CODE_LENGTH);
+    if (!pasted) return;
+    const next = [...code];
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
+    setCode(next);
+    setErrorMsg('');
+    focusInput(Math.min(pasted.length, CODE_LENGTH - 1));
+  };
+
+  const isFilled = instagramId.trim().length > 0 && code.every(d => d !== '');
+
+  const handleSubmit = async () => {
+    if (!isFilled || status === 'loading') return;
     setStatus('loading');
     setErrorMsg('');
-
     try {
       const res = await fetch('/api/vocab-access/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instagram_id: instagramId.trim(), code: code.trim() }),
+        body: JSON.stringify({ instagram_id: instagramId.trim(), code: code.join('') }),
       });
       const json = await res.json();
-
       if (!res.ok) {
         setErrorMsg(json.error?.message ?? '코드가 올바르지 않아요.');
         setStatus('error');
         return;
       }
-
       localStorage.setItem(STORAGE_KEY, json.data.instagram_id);
       window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
     } catch {
@@ -55,49 +76,67 @@ export function InstagramGate({ children }: { children: React.ReactNode }) {
     }
   };
 
+  if (stored) return <>{children}</>;
+
   return (
-    <div className="max-w-md mx-auto mt-10 rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-white">
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100 bg-gray-50">
-        <div className="w-9 h-9 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
-          <Search size={16} className="text-primary-600" />
-        </div>
-        <div>
-          <p className="text-gray-900 font-bold text-sm">SAT 단어 검색</p>
-          <p className="text-gray-500 text-xs mt-0.5">발급받은 코드를 입력하면 바로 이용할 수 있어요.</p>
-        </div>
-      </div>
+    <div className="fixed inset-0 z-50 bg-[#000000] text-gray-100 font-sans flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-md bg-[#09090b] rounded-2xl border border-white/5 shadow-2xl p-6 md:p-8">
+        <h2 className="text-2xl font-bold text-center mb-2">SAT 단어 검색</h2>
+        <p className="text-gray-500 text-sm text-center mb-8">
+          인스타그램 ID와 발급받은 6자리 코드를 입력해주세요
+        </p>
 
-      <form onSubmit={handleSubmit} className="px-6 py-6 space-y-3">
-        <input
-          value={instagramId}
-          onChange={(e) => setInstagramId(e.target.value)}
-          placeholder="인스타그램 ID (@ 제외)"
-          autoComplete="off"
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-gray-900 text-sm outline-none focus:border-primary-500 transition-colors"
-        />
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          placeholder="6자리 코드"
-          inputMode="numeric"
-          maxLength={6}
-          autoComplete="off"
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-gray-900 text-sm outline-none focus:border-primary-500 transition-colors tracking-widest font-mono"
-        />
+        {/* Instagram ID */}
+        <div className="mb-6">
+          <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+            Instagram ID
+          </label>
+          <input
+            type="text"
+            value={instagramId}
+            onChange={(e) => { setInstagramId(e.target.value.replace(/^@/, '')); setErrorMsg(''); }}
+            placeholder="@ 제외하고 입력"
+            autoComplete="off"
+            className="w-full px-4 py-3 bg-[#000000] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20 text-base"
+          />
+        </div>
 
-        {status === 'error' && (
-          <p className="text-red-500 text-xs">{errorMsg}</p>
+        {/* 6-digit code boxes */}
+        <div className="mb-2">
+          <label className="block text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">
+            접속 코드
+          </label>
+          <div className="flex justify-center gap-2 md:gap-3">
+            {Array.from({ length: CODE_LENGTH }).map((_, idx) => (
+              <input
+                key={idx}
+                ref={(el) => setRef(el, idx)}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={code[idx]}
+                onChange={(e) => handleDigitChange(idx, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(idx, e)}
+                onPaste={idx === 0 ? handlePaste : undefined}
+                className="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold bg-[#000000] border border-white/10 rounded-xl text-white outline-none transition-all focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20"
+                aria-label={`코드 ${idx + 1}번째 자리`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {errorMsg && (
+          <p className="text-red-400 text-sm text-center mt-3">{errorMsg}</p>
         )}
 
         <button
-          type="submit"
-          disabled={status === 'loading' || !instagramId.trim() || code.length !== 6}
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors"
+          onClick={handleSubmit}
+          disabled={!isFilled || status === 'loading'}
+          className="w-full mt-6 py-4 bg-[#071be9] hover:bg-[#1a31f0] rounded-xl font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed text-lg shadow-lg shadow-[#071be9]/20"
         >
-          {status === 'loading' ? <Loader2 size={14} className="animate-spin" /> : null}
-          입력 완료
+          {status === 'loading' ? '확인 중...' : '확인'}
         </button>
-      </form>
+      </div>
     </div>
   );
 }
