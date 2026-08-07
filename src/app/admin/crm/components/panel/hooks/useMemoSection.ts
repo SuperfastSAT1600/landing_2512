@@ -67,8 +67,8 @@ export function useMemoSection({ studentId, adminKey, userName, setTimeline, onU
         setMemoText('');
         clearAttachments?.();
         onUpdate(studentId, { last_contacted_at: new Date().toISOString() });
-        // 첨부만 있고 텍스트가 없으면 AI 변환은 의미 없으므로 건너뜀
-        if (newEntry.raw_memo.trim()) triggerAiCare(newEntry);
+        // AI 변환 기능 숨김(2026-08-07): UI 제거에 맞춰 메모 저장 시 자동 AI 변환도 중단(불필요한 API 비용 방지).
+        // 되살리려면 아래 한 줄을 복원: if (newEntry.raw_memo.trim()) triggerAiCare(newEntry);
       } else {
         setMemoError(json.error?.message ?? '메모 저장에 실패했습니다.');
       }

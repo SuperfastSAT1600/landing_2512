@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { processPlaudRecording } from '@/lib/plaud-process';
 import { AudioTooLargeError } from '@/lib/plaud-transcribe';
-import { getPlaudFile } from '@/lib/plaud-client';
+import { getPlaudFile, getAccountLabel } from '@/lib/plaud-client';
 import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultation-timeline';
 
 // gpt-4o-transcribe 전사에 시간이 걸릴 수 있어 서버리스 실행 한도를 늘린다.
@@ -31,8 +31,9 @@ function toKstDisplay(iso: string): string {
  * 미공개(published:false) 초안으로 추가한다. 24MB 초과 녹음은 폴백 없이 413으로 거절한다.
  *
  * Body(둘 중 하나):
- *   { file_id }                          — 서버가 Plaud MCP로 오디오 URL·이름·일시를 해석(권장, UI 경로)
- *   { audio_url, recording_name?, recorded_at? } — presigned URL 직접 전달(back-compat)
+ *   { file_id, account_key }             — 서버가 해당 계정 Plaud MCP로 오디오 URL·이름·일시를 해석(권장, UI 경로)
+ *   { audio_url, recording_name?, recorded_at?, account_key? } — presigned URL 직접 전달(back-compat)
+ * account_key가 오면 그 계정 소유자를 상담자(author)로 메모에 기록한다.
  * Requires admin authentication.
  */
 export async function POST(
@@ -49,6 +50,7 @@ export async function POST(
     recording_name?: unknown;
     recorded_at?: unknown;
     file_id?: unknown;
+    account_key?: unknown;
   };
   try {
     body = await request.json();
@@ -59,12 +61,17 @@ export async function POST(
   let audioUrl = typeof body.audio_url === 'string' ? body.audio_url.trim() : '';
   let recordingName = typeof body.recording_name === 'string' ? body.recording_name.trim() : '';
   let recordedAt = typeof body.recorded_at === 'string' ? body.recorded_at.trim() : '';
+  const accountKey = typeof body.account_key === 'string' ? body.account_key.trim() : '';
 
-  // file_id가 오면 서버가 Plaud MCP로 presigned URL·메타를 해석한다(오디오 URL이 브라우저에 노출되지 않음).
+  // file_id가 오면 서버가 해당 계정 Plaud MCP로 presigned URL·메타를 해석한다(오디오 URL이 브라우저에 노출되지 않음).
   const fileId = typeof body.file_id === 'string' ? body.file_id.trim() : '';
   if (!audioUrl && fileId) {
+    // 어느 계정 녹음인지 알아야 올바른 토큰으로 조회 가능 — file_id 경로에선 account_key 필수.
+    if (!accountKey) {
+      return NextResponse.json({ error: 'file_id 사용 시 account_key가 필요합니다.' }, { status: 400 });
+    }
     try {
-      const file = await getPlaudFile(fileId);
+      const file = await getPlaudFile(fileId, accountKey);
       audioUrl = file.presigned_url;
       recordingName = recordingName || file.name;
       recordedAt = recordedAt || file.start_at || '';
@@ -85,7 +92,9 @@ export async function POST(
     const header = meta ? `${MEMO_HEADER} · ${meta}` : MEMO_HEADER;
     const raw_memo = `${header}\n\n${summary}`;
 
-    const entry = await appendConsultationEntry(id, { raw_memo, published: false });
+    // account_key가 있으면 그 계정 소유자를 상담자(author)로 기록(누가 통화했는지 추적).
+    const author = accountKey ? getAccountLabel(accountKey) : undefined;
+    const entry = await appendConsultationEntry(id, { raw_memo, author, published: false });
 
     return NextResponse.json({ data: { entry, summary } }, { status: 201 });
   } catch (e) {

@@ -8,23 +8,32 @@ class StudentNotFoundError extends Error {
   }
 }
 class AudioTooLargeError extends Error {
-  constructor() {
-    super('녹음이 24MB를 초과해 전사할 수 없습니다.');
+  constructor(message = '녹음이 24MB를 초과해 전사할 수 없습니다.') {
+    super(message);
     this.name = 'AudioTooLargeError';
+  }
+}
+class AudioTooLongError extends AudioTooLargeError {
+  constructor() {
+    super('녹음이 너무 길어 전사할 수 없습니다. (약 80분 이하만 지원)');
+    this.name = 'AudioTooLongError';
   }
 }
 
 const processPlaudRecording = vi.fn();
 const appendConsultationEntry = vi.fn();
 const getPlaudFile = vi.fn();
+const getAccountLabel = vi.fn();
 
 vi.mock('@/lib/plaud-process', () => ({ processPlaudRecording }));
-vi.mock('@/lib/plaud-transcribe', () => ({ AudioTooLargeError }));
-vi.mock('@/lib/plaud-client', () => ({ getPlaudFile }));
+vi.mock('@/lib/plaud-transcribe', () => ({ AudioTooLargeError, AudioTooLongError }));
+vi.mock('@/lib/plaud-client', () => ({ getPlaudFile, getAccountLabel }));
 vi.mock('@/lib/consultation-timeline', () => ({
   appendConsultationEntry,
   StudentNotFoundError,
 }));
+
+const LABELS: Record<string, string> = { me: '이민재', wooyoung: '김우영' };
 
 process.env.ADMIN_SECRET_KEY = 'admin-key';
 
@@ -41,7 +50,10 @@ function makeReq(body: unknown, key: string | null = 'admin-key') {
 const params = Promise.resolve({ id: 's1' });
 
 describe('POST /api/crm/students/[id]/plaud-memo', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getAccountLabel.mockImplementation((k: string) => LABELS[k]);
+  });
 
   it('잘못된 admin key → 401', async () => {
     const { POST } = await import('../route');
@@ -69,11 +81,11 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     appendConsultationEntry.mockResolvedValueOnce(entry);
 
     const { POST } = await import('../route');
-    const res = await POST(makeReq({ file_id: 'f1' }), { params });
+    const res = await POST(makeReq({ file_id: 'f1', account_key: 'me' }), { params });
     const body = await res.json();
 
     expect(res.status).toBe(201);
-    expect(getPlaudFile).toHaveBeenCalledWith('f1');
+    expect(getPlaudFile).toHaveBeenCalledWith('f1', 'me');
     expect(processPlaudRecording).toHaveBeenCalledWith({ audioUrl: 'https://s3/audio.mp3?sig=1' });
     expect(body.data.entry).toEqual(entry);
     const [, arg] = appendConsultationEntry.mock.calls[0];
@@ -83,10 +95,38 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     expect(arg.raw_memo).not.toContain('00:31'); // UTC 시각이 그대로 노출되지 않음
   });
 
+  it('REQ-005: file_id + account_key → getPlaudFile에 계정 전달, author를 라벨로 기록', async () => {
+    getPlaudFile.mockResolvedValueOnce({
+      id: 'w1',
+      name: '우영 상담',
+      start_at: '2026-08-04T01:00:00',
+      presigned_url: 'https://s3/wy.mp3?sig=1',
+    });
+    processPlaudRecording.mockResolvedValueOnce({ transcript: 't', summary: '요약' });
+    appendConsultationEntry.mockResolvedValueOnce({ id: 'e3', published: false });
+
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ file_id: 'w1', account_key: 'wooyoung' }), { params });
+
+    expect(res.status).toBe(201);
+    expect(getPlaudFile).toHaveBeenCalledWith('w1', 'wooyoung');
+    const [, arg] = appendConsultationEntry.mock.calls[0];
+    expect(arg.author).toBe('김우영'); // 상담자 태그 기록
+    expect(arg.published).toBe(false);
+  });
+
+  it('REQ-005: file_id인데 account_key 누락 → 400 (녹음 처리 안 함)', async () => {
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ file_id: 'f1' }), { params });
+    expect(res.status).toBe(400);
+    expect(getPlaudFile).not.toHaveBeenCalled();
+    expect(processPlaudRecording).not.toHaveBeenCalled();
+  });
+
   it('file_id인데 get_file 실패 → 502', async () => {
     getPlaudFile.mockRejectedValueOnce(new Error('mcp down'));
     const { POST } = await import('../route');
-    const res = await POST(makeReq({ file_id: 'f1' }), { params });
+    const res = await POST(makeReq({ file_id: 'f1', account_key: 'me' }), { params });
     expect(res.status).toBe(502);
     expect(processPlaudRecording).not.toHaveBeenCalled();
   });
@@ -96,6 +136,16 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     const { POST } = await import('../route');
     const res = await POST(makeReq({ audio_url: 'https://x/big.m4a' }), { params });
     expect(res.status).toBe(413);
+    expect(appendConsultationEntry).not.toHaveBeenCalled();
+  });
+
+  it('너무 긴 녹음(AudioTooLongError) → 413 + 구체 메시지', async () => {
+    processPlaudRecording.mockRejectedValueOnce(new AudioTooLongError());
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ audio_url: 'https://x/long.mp3' }), { params });
+    const body = await res.json();
+    expect(res.status).toBe(413);
+    expect(body.error).toContain('너무 길어');
     expect(appendConsultationEntry).not.toHaveBeenCalled();
   });
 
