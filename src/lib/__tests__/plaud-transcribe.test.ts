@@ -31,6 +31,7 @@ import {
   AudioTooLargeError,
   AudioTooLongError,
   MAX_AUDIO_BYTES,
+  MAX_CHUNKS,
 } from '@/lib/plaud-transcribe';
 
 function mockFetch(res: { ok: boolean; status?: number; bytes?: number; contentType?: string }) {
@@ -93,7 +94,7 @@ describe('transcribeAudioUrl', () => {
   it('청크 수가 MAX_CHUNKS 초과 → AudioTooLongError, STT 호출 안 함', async () => {
     mockFetch({ ok: true, bytes: MAX_AUDIO_BYTES + 1, contentType: 'binary/octet-stream' });
     isMp3Mock.mockReturnValue(true);
-    chunkMock.mockReturnValue(Array.from({ length: 7 }, (_, i) => Buffer.from(`c${i}`)));
+    chunkMock.mockReturnValue(Array.from({ length: MAX_CHUNKS + 1 }, (_, i) => Buffer.from(`c${i}`)));
     await expect(transcribeAudioUrl('https://s3/audiofiles/toolong.mp3')).rejects.toBeInstanceOf(
       AudioTooLongError,
     );

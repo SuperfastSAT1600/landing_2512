@@ -25,7 +25,7 @@ const CHUNK_TARGET_BYTES = 23 * 1024 * 1024;
  */
 const CHUNK_TARGET_SECONDS = 1200;
 /** 청크 최대 개수(20분×4=약 80분). 초과는 300s 내 처리 어려워 거절. */
-const MAX_CHUNKS = 4;
+export const MAX_CHUNKS = 4;
 /**
  * 청크 전사 동시성. 20분 청크 1개 STT가 ~130s라, MAX_CHUNKS(4)를 한 배치로 병렬 처리해
  * wall-clock을 청크 수와 무관하게 ~1회분(~150s)으로 묶는다(300s serverless 여유). withRetry가 429 흡수.
@@ -219,13 +219,15 @@ export async function transcribeAudioUrl(url: string): Promise<string> {
   let chunks: Buffer[];
   try {
     chunks = chunkMp3ByFrames(buffer, CHUNK_TARGET_BYTES, CHUNK_TARGET_SECONDS);
-  } catch {
+  } catch (err) {
     // 안전하게 분할 못 하면 기존 동작(전사 불가)으로 폴백.
+    console.error('[mp3-chunk] 청킹 실패, AudioTooLargeError로 폴백:', err);
     throw new AudioTooLargeError();
   }
   if (chunks.length > MAX_CHUNKS) throw new AudioTooLongError();
 
-  const texts = await transcribeChunks(chunks, url, contentType, openai);
+  // 청크는 항상 MP3 바이트이므로 원본 URL 확장자와 무관하게 mime 강제.
+  const texts = await transcribeChunks(chunks, url, 'audio/mpeg', openai);
   return texts.join('\n').trim();
 }
 
