@@ -11,5 +11,5 @@ export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  return NextResponse.json({ data: listPlaudAccounts() });
+  return NextResponse.json({ data: await listPlaudAccounts() });
 }

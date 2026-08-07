@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   const opts = { query, date_from, date_to, page, page_size };
   // account_key가 오면 그 직원 계정만, 없으면 설정된 전 계정 병합.
   const accountParam = searchParams.get('account_key')?.trim();
-  const keys = accountParam ? [accountParam] : listPlaudAccountKeys();
+  const keys = accountParam ? [accountParam] : await listPlaudAccountKeys();
 
   const merged: PlaudRecording[] = [];
   const errors: string[] = [];

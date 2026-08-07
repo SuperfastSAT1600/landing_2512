@@ -4,8 +4,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Supabase admin은 항상 mock — 유닛 테스트가 실제 DB에 붙지 않도록.
 const maybeSingle = vi.fn();
 const upsert = vi.fn();
+const notFilter = vi.fn(); // .not('refresh_token','is',null) 종단
 const eqAccount = vi.fn(() => ({ maybeSingle }));
-const eqProvider = vi.fn(() => ({ eq: eqAccount }));
+const eqProvider = vi.fn(() => ({ eq: eqAccount, not: notFilter }));
 const select = vi.fn(() => ({ eq: eqProvider }));
 const from = vi.fn(() => ({ select, upsert }));
 
@@ -58,5 +59,22 @@ describe('plaud-token-store (REQ-002: 계정 인식)', () => {
     upsert.mockRejectedValue(new Error('supabase down'));
     const { writeStoredRefreshToken } = await import('@/lib/plaud-token-store');
     await expect(writeStoredRefreshToken('me', 't')).resolves.toBeUndefined();
+  });
+
+  it('REQ-DB: listStoredAccountKeys는 토큰 저장된 계정 키만 반환', async () => {
+    notFilter.mockResolvedValue({
+      data: [{ account_key: 'me' }, { account_key: 'wooyoung' }, { account_key: null }],
+      error: null,
+    });
+    const { listStoredAccountKeys } = await import('@/lib/plaud-token-store');
+    expect(await listStoredAccountKeys()).toEqual(['me', 'wooyoung']);
+    expect(eqProvider).toHaveBeenCalledWith('provider', 'plaud');
+    expect(notFilter).toHaveBeenCalledWith('refresh_token', 'is', null);
+  });
+
+  it('REQ-DB: listStoredAccountKeys는 오류 시 빈 배열', async () => {
+    notFilter.mockResolvedValue({ data: null, error: { message: 'boom' } });
+    const { listStoredAccountKeys } = await import('@/lib/plaud-token-store');
+    expect(await listStoredAccountKeys()).toEqual([]);
   });
 });
