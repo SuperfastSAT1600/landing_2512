@@ -22,7 +22,7 @@ describe('GET /api/crm/plaud/recordings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // 기본: 두 계정 활성, 라벨은 로스터에서.
-    listPlaudAccountKeys.mockReturnValue(['me', 'wooyoung']);
+    listPlaudAccountKeys.mockResolvedValue(['me', 'wooyoung']);
     getAccountLabel.mockImplementation((k: string) => LABELS[k]);
   });
 
@@ -89,7 +89,7 @@ describe('GET /api/crm/plaud/recordings', () => {
   });
 
   it('REQ-004: 모든 계정 실패 → 502, 실제 원인 노출', async () => {
-    listPlaudAccountKeys.mockReturnValue(['me']);
+    listPlaudAccountKeys.mockResolvedValue(['me']);
     listPlaudRecordings.mockRejectedValueOnce(new Error('Plaud 토큰 갱신 실패: 401'));
     const { GET } = await import('../route');
     const res = await GET(makeReq('http://localhost/api/crm/plaud/recordings'));

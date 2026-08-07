@@ -23,7 +23,7 @@ describe('GET /api/crm/plaud/accounts', () => {
   });
 
   it('REQ-006: 설정된 직원 계정 목록(key+label) 반환', async () => {
-    listPlaudAccounts.mockReturnValueOnce([
+    listPlaudAccounts.mockResolvedValueOnce([
       { key: 'me', label: '이민재' },
       { key: 'wooyoung', label: '김우영' },
     ]);
