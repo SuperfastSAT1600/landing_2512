@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadWordConcordance, normalizeLemma } from '@/lib/word-concordance';
+import { loadWordConcordance, normalizeLemma, getVerdict } from '@/lib/word-concordance';
 
 export async function GET(request: NextRequest) {
   const requestId = crypto.randomUUID();
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   if (!entry) {
     return NextResponse.json({
-      data: { query: word, lemma, count: 0, surface_forms: {}, examples: [], truncated: false },
+      data: { query: word, lemma, count: 0, surface_forms: {}, examples: [], truncated: false, verdict: null },
       meta: { requestId },
     });
   }
@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
       surface_forms: entry.surface_forms,
       examples: entry.examples,
       truncated: entry.truncated,
+      verdict: getVerdict(entry.count),
     },
     meta: { requestId },
   });
