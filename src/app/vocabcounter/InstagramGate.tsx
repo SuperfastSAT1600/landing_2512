@@ -82,7 +82,7 @@ export function InstagramGate({ children }: { children: React.ReactNode }) {
     <div className="fixed inset-0 z-50 bg-[#000000] text-gray-100 font-sans flex flex-col items-center overflow-y-auto px-4">
       <header className="pt-28 pb-10 sm:pt-32 sm:pb-16 px-6 text-center">
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
-          SAT 단어 검색
+          Vocab Counter
         </h1>
         <p className="text-xl text-gray-400">인스타그램 ID와 발급받은 코드를 입력해주세요.</p>
       </header>
