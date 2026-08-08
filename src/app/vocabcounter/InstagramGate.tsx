@@ -79,8 +79,8 @@ export function InstagramGate({ children }: { children: React.ReactNode }) {
   if (stored) return <>{children}</>;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#000000] text-gray-100 font-sans flex flex-col items-center justify-center px-4">
-      <header className="pt-4 pb-10 px-6 text-center">
+    <div className="fixed inset-0 z-50 bg-[#000000] text-gray-100 font-sans flex flex-col items-center overflow-y-auto px-4">
+      <header className="pt-28 pb-10 sm:pt-32 sm:pb-16 px-6 text-center">
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
           SAT 단어 검색
         </h1>
