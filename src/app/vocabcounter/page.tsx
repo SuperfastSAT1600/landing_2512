@@ -68,7 +68,7 @@ export default function VocabSearchPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`/api/vocab-search?word=${encodeURIComponent(trimmed)}`);
+      const res = await fetch(`/api/vocabcounter?word=${encodeURIComponent(trimmed)}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error?.message);
       setMessages(prev => prev.map(m =>
