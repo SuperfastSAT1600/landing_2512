@@ -1,8 +1,8 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
 
-const INDEX_PATH = path.join(process.cwd(), 'sat/schema/vocab/word_concordance.json');
-const OVERRIDES_PATH = path.join(process.cwd(), 'sat/schema/vocab/lemma_overrides.json');
+const INDEX_PATH = path.join(process.cwd(), 'src/data/vocab/word_concordance.json');
+const OVERRIDES_PATH = path.join(process.cwd(), 'src/data/vocab/lemma_overrides.json');
 
 export interface WordExample {
   question_id: string;
