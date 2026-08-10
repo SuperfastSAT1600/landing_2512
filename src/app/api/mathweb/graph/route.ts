@@ -1,0 +1,48 @@
+import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+
+export async function GET() {
+  const requestId = crypto.randomUUID();
+
+  const [problemsResult, conceptsResult] = await Promise.all([
+    supabaseAdmin
+      .from('math_problems')
+      .select(`
+        id, title, created_at,
+        math_problem_concepts(
+          math_concepts(id, name, slug)
+        )
+      `)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }),
+
+    supabaseAdmin
+      .from('math_concepts')
+      .select('id, name, slug, usage_count')
+      .order('usage_count', { ascending: false }),
+  ]);
+
+  if (problemsResult.error) {
+    return NextResponse.json(
+      { error: { code: 'DB_ERROR', message: problemsResult.error.message } },
+      { status: 500 },
+    );
+  }
+
+  const problems = (problemsResult.data ?? []).map((p) => ({
+    id: p.id,
+    title: p.title,
+    created_at: p.created_at,
+    concepts: (p.math_problem_concepts ?? [])
+      .map((c) => c.math_concepts)
+      .filter((c): c is { id: string; name: string; slug: string } => c !== null),
+  }));
+
+  return NextResponse.json({
+    data: {
+      problems,
+      concepts: conceptsResult.data ?? [],
+    },
+    meta: { requestId },
+  });
+}
