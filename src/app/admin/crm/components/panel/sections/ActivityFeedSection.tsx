@@ -59,6 +59,8 @@ export function ActivityFeedSection({ student, adminKey }: Props) {
     }
   }, [student.id, student.name, adminKey]);
 
+  // 학생 변경 시 결제 내역 페치(활동 피드용) — 의도된 페치
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
   const feed: ActivityItem[] = useMemo(() => buildActivityFeed(student, payments), [student, payments]);

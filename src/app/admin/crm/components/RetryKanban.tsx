@@ -36,6 +36,8 @@ interface RetryColumnProps {
 
 const RetryColumn = memo(function RetryColumn({ stage, students, onStudentClick, onRemove }: RetryColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
+  // 배정 경과일 표시용 기준 시각 — 마운트 시 1회 스냅샷(렌더 중 Date.now 호출 방지)
+  const [nowMs] = useState(() => Date.now());
 
   return (
     <div className="flex flex-col w-40 sm:w-44 shrink-0">
@@ -50,7 +52,7 @@ const RetryColumn = memo(function RetryColumn({ stage, students, onStudentClick,
         <SortableContext items={students.map(s => s.id)} strategy={verticalListSortingStrategy}>
           {students.map(s => {
             const days = s.retry_assigned_at
-              ? Math.floor((Date.now() - new Date(s.retry_assigned_at).getTime()) / 86400000)
+              ? Math.floor((nowMs - new Date(s.retry_assigned_at).getTime()) / 86400000)
               : null;
             return (
               <div key={s.id} className="flex flex-col gap-0.5">
@@ -81,6 +83,8 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
 
   useEffect(() => {
     if (!enrolledStudentId) return;
+    // 부모의 "등록 처리됨" 신호(prop) 수신 시 보드에서 제거 — 의도된 prop-이벤트 처리
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStudents(prev => prev.filter(s => s.id !== enrolledStudentId));
     onEnrolledHandled?.();
   }, [enrolledStudentId, onEnrolledHandled]);
@@ -105,6 +109,8 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     setStrategies(json.data ?? []);
   }, [adminKey]);
 
+  // 마운트 시 재도전 전략 목록 로드 — 의도된 페치
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchStrategies(); }, [fetchStrategies]);
 
   const fetchStudents = useCallback(async (strategyId: string) => {
@@ -118,6 +124,8 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
   }, [adminKey]);
 
   useEffect(() => {
+    // 전략 선택 시 학생 페치(로딩 플래그 동기 설정), 해제 시 목록 비움 — 의도된 데이터 페치/리셋
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (selectedId) fetchStudents(selectedId);
     else setStudents([]);
   }, [selectedId, fetchStudents]);

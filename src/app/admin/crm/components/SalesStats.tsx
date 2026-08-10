@@ -308,6 +308,8 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
         if (res.ok && json.data) setAllMonthly((json.data as CrmStatsData).monthly);
       } catch { /* 무시: 그래프만 비어 보임 */ }
     })();
+    // trendRange는 매 렌더 새 객체 — .from/.to 프리미티브만 의존(객체를 넣으면 매 렌더 재요청)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminKey, trendRange.from, trendRange.to]);
 
   const d = data;

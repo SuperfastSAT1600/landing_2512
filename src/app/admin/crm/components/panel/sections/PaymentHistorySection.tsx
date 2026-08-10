@@ -37,6 +37,8 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
     setPayments(json.data ?? []);
   }, [student.id, student.name, adminKey]);
 
+  // 학생 변경 시 결제 내역 페치(fetchPayments가 로딩 플래그 동기 설정) — 의도된 페치
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
   // 화면엔 최신순
