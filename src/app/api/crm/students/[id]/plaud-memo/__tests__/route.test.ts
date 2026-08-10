@@ -30,11 +30,16 @@ const processPlaudRecording = vi.fn();
 const appendConsultationEntry = vi.fn();
 const getPlaudFile = vi.fn();
 const getAccountLabel = vi.fn();
+const notifyMemoToSlack = vi.fn();
 
 vi.mock('@/lib/plaud-process', () => ({ processPlaudRecording }));
 vi.mock('@/lib/plaud-transcribe', () => ({ QuotaExhaustedError }));
 vi.mock('@/lib/qwen-asr', () => ({ AsrFailedError, AsrTimeoutError }));
 vi.mock('@/lib/plaud-client', () => ({ getPlaudFile, getAccountLabel }));
+vi.mock('@/lib/slack-memo', () => ({
+  notifyMemoToSlack,
+  PLAUD_MEMO_HEADING: '🎙️ *Plaud 녹음 상담 메모*',
+}));
 vi.mock('@/lib/consultation-timeline', () => ({
   appendConsultationEntry,
   StudentNotFoundError,
@@ -60,6 +65,7 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getAccountLabel.mockImplementation((k: string) => LABELS[k]);
+    notifyMemoToSlack.mockResolvedValue(undefined);
   });
 
   it('잘못된 admin key → 401', async () => {
@@ -199,6 +205,48 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     expect(res.status).toBe(402);
     expect(body.error).toContain('크레딧');
     expect(appendConsultationEntry).not.toHaveBeenCalled();
+  });
+
+  it('메모 생성 성공 → 슬랙 알림 전송(녹음명·상담인·요약 포함)', async () => {
+    getPlaudFile.mockResolvedValueOnce({
+      id: 'w1',
+      name: '우영 상담',
+      start_at: '2026-08-04T01:00:00',
+      presigned_url: 'https://s3/wy.mp3?sig=1',
+    });
+    processPlaudRecording.mockResolvedValueOnce({ transcript: 't', summary: '[핵심 니즈]\n- 1600 목표' });
+    appendConsultationEntry.mockResolvedValueOnce({ id: 'e4', published: false });
+
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ file_id: 'w1', account_key: 'wooyoung' }), { params });
+
+    expect(res.status).toBe(201);
+    expect(notifyMemoToSlack).toHaveBeenCalledTimes(1);
+    const arg = notifyMemoToSlack.mock.calls[0][0];
+    expect(arg.studentId).toBe('s1');
+    expect(arg.author).toBe('김우영');
+    expect(arg.heading).toContain('Plaud');
+    expect(arg.memo).toContain('1600 목표');
+    expect(arg.memo).toContain('우영 상담');
+    expect(arg.memo).toContain('2026-08-04 10:00'); // KST 변환된 녹음 시각
+  });
+
+  it('슬랙 전송이 실패해도 메모 생성은 201', async () => {
+    processPlaudRecording.mockResolvedValueOnce({ transcript: 't', summary: '요약' });
+    appendConsultationEntry.mockResolvedValueOnce({ id: 'e5', published: false });
+    notifyMemoToSlack.mockRejectedValueOnce(new Error('slack down'));
+
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ audio_url: 'https://x/a.m4a' }), { params });
+
+    expect(res.status).toBe(201);
+  });
+
+  it('메모 생성 실패 시 슬랙 알림 없음', async () => {
+    processPlaudRecording.mockRejectedValueOnce(new Error('qwen down'));
+    const { POST } = await import('../route');
+    await POST(makeReq({ audio_url: 'https://x/a.m4a' }), { params });
+    expect(notifyMemoToSlack).not.toHaveBeenCalled();
   });
 
   it('요약/전사 실패(일반 throw) → 500', async () => {
