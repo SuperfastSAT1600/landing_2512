@@ -7,6 +7,7 @@ interface CodeRow {
   instagram_id: string;
   code: string;
   is_active: boolean;
+  scope: 'vocab' | 'mathweb' | 'both';
   created_at: string;
   first_used_at: string | null;
 }
@@ -25,6 +26,7 @@ export default function VocabAccessPage() {
   const [codes, setCodes] = useState<CodeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [instagramId, setInstagramId] = useState('');
+  const [scope, setScope] = useState<'vocab' | 'mathweb' | 'both'>('vocab');
   const [creating, setCreating] = useState(false);
   const [newCode, setNewCode] = useState<{ instagram_id: string; code: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -55,7 +57,7 @@ export default function VocabAccessPage() {
       const res = await fetch('/api/admin/vocab-access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ instagram_id: instagramId.trim() }),
+        body: JSON.stringify({ instagram_id: instagramId.trim(), scope }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -121,6 +123,24 @@ export default function VocabAccessPage() {
                 outline: 'none',
               }}
             />
+            <select
+              value={scope}
+              onChange={(e) => setScope(e.target.value as 'vocab' | 'mathweb' | 'both')}
+              style={{
+                padding: '9px 12px',
+                background: '#09090b',
+                border: '1px solid #27272a',
+                borderRadius: 8,
+                color: '#e4e4e7',
+                fontSize: 13,
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="vocab">Vocab</option>
+              <option value="mathweb">Math Web</option>
+              <option value="both">Both</option>
+            </select>
             <button
               type="submit"
               disabled={!instagramId.trim() || creating}
@@ -188,7 +208,7 @@ export default function VocabAccessPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #27272a' }}>
-                  {['Instagram ID', '코드', '상태', '발급일', '첫 사용일', ''].map((h) => (
+                  {['Instagram ID', '코드', '상태', '스코프', '발급일', '첫 사용일', ''].map((h) => (
                     <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: '#52525b', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
@@ -227,6 +247,17 @@ export default function VocabAccessPage() {
                         {row.is_active ? 'active' : 'inactive'}
                       </span>
                     </td>
+                    <td style={{ padding: '12px 12px' }}>
+                      <span style={{
+                        fontSize: 11, padding: '2px 7px', borderRadius: 4,
+                        background: row.scope === 'both' ? 'rgba(168,85,247,0.1)' : row.scope === 'mathweb' ? 'rgba(7,27,233,0.1)' : 'rgba(255,255,255,0.06)',
+                        color: row.scope === 'both' ? '#c084fc' : row.scope === 'mathweb' ? '#818cf8' : '#71717a',
+                        border: `1px solid ${row.scope === 'both' ? 'rgba(168,85,247,0.3)' : row.scope === 'mathweb' ? 'rgba(7,27,233,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {row.scope === 'both' ? 'BOTH' : row.scope === 'mathweb' ? 'MATH' : 'VOCAB'}
+                      </span>
+                    </td>
                     <td style={{ padding: '12px 12px', color: '#71717a', whiteSpace: 'nowrap' }}>
                       {formatDate(row.created_at)}
                     </td>
@@ -241,6 +272,21 @@ export default function VocabAccessPage() {
                         >
                           {row.is_active ? '비활성화' : '활성화'}
                         </button>
+                        {row.scope === 'vocab' && (
+                          <button
+                            onClick={async () => {
+                              await fetch(`/api/admin/vocab-access/${row.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+                                body: JSON.stringify({ scope: 'both' }),
+                              });
+                              fetchCodes();
+                            }}
+                            style={{ padding: '5px 10px', background: 'transparent', border: '1px solid rgba(7,27,233,0.4)', borderRadius: 5, color: '#818cf8', fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          >
+                            + mathweb
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDelete(row)}
                           style={{ padding: '5px 10px', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 5, color: '#ef4444', fontSize: 11, cursor: 'pointer' }}
