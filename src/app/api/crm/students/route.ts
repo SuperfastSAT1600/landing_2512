@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { fetchAllRows } from '@/lib/supabase-paginate';
 import type { CreateStudentInput } from '@/types/crm';
 import { isActionDoneToday, todaysMemos } from '@/types/crm';
 import { toKSTNaive } from '@/lib/sheets-sync-utils';
@@ -64,28 +65,21 @@ export async function GET(request: NextRequest) {
   // 리드풀 학생에게 남긴 상담 메모가 누락된다 — 그 사각지대를 메우는 전용 경로.
   if (searchParams.get('today_actions') === 'true') {
     const nowMs = Date.now();
-    const BATCH = 1000;
     // 1차: 판정에 필요한 최소 컬럼만 전체 배치 조회 → 오늘 액션이 있는 id만 추린다.
-    const { count } = await supabaseAdmin
-      .from('students')
-      .select('id', { count: 'exact', head: true });
-    const batches = Math.max(1, Math.ceil((count ?? 0) / BATCH));
-    const scans = await Promise.all(
-      Array.from({ length: batches }, (_, i) =>
+    const { rows: scanned, error: scanError } = await fetchAllRows(
+      supabaseAdmin.from('students').select('id', { count: 'exact', head: true }),
+      (from, to) =>
         supabaseAdmin
           .from('students')
           .select('id, consultation_timeline, daily_action_done_at')
           .order('created_at', { ascending: false })
-          .range(i * BATCH, (i + 1) * BATCH - 1)
-      )
+          .range(from, to)
     );
-    const scanFailed = scans.find((r) => r.error);
-    if (scanFailed?.error) {
-      console.error('[crm/students GET today_actions scan]', scanFailed.error);
+    if (scanError) {
+      console.error('[crm/students GET today_actions scan]', scanError);
       return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
     }
-    const ids = scans
-      .flatMap((r) => r.data ?? [])
+    const ids = scanned
       .filter((s) => isActionDoneToday(s, nowMs) || todaysMemos(s, nowMs).length > 0)
       .map((s) => s.id);
     if (ids.length === 0) return NextResponse.json({ data: [] });
@@ -123,18 +117,15 @@ export async function GET(request: NextRequest) {
   // 리드풀(이탈/재활성화)은 전체를 반환한다. Supabase는 요청당 max-rows=1000 하드 캡이
   // 있어 .range()로도 못 넘기므로, count로 배치 수를 구한 뒤 1,000개씩 병렬 조회한다.
   if (pool) {
-    const BATCH = 1000;
-    const { count } = await buildQuery(true);
-    const batches = Math.max(1, Math.ceil((count ?? 0) / BATCH));
-    const results = await Promise.all(
-      Array.from({ length: batches }, (_, i) => buildQuery().range(i * BATCH, (i + 1) * BATCH - 1))
+    const { rows, error } = await fetchAllRows(
+      buildQuery(true),
+      (from, to) => buildQuery().range(from, to)
     );
-    const failed = results.find((r) => r.error);
-    if (failed?.error) {
-      console.error('[crm/students GET pool batch]', failed.error);
+    if (error) {
+      console.error('[crm/students GET pool batch]', error);
       return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
     }
-    return NextResponse.json({ data: results.flatMap((r) => r.data ?? []) });
+    return NextResponse.json({ data: rows });
   }
 
   const { data, error } = await buildQuery();
