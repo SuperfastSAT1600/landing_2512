@@ -1,104 +1,49 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import type { Topic } from './blog-writer';
 
-// ─── 캘린더 (blog-agent/data/sat-calendar.json 인라인) ───────────────────────
+export type RichTopic = Topic & {
+  type: '현상형' | '전략형' | '개념형' | '비교형' | '오류수정형';
+  confusion_scene: string;
+  existing_belief: string;
+  reversal: string;
+  opening_claim: string;
+  reader_delta: string;
+  fm_score: 'high' | 'medium' | 'low';
+};
 
-const SAT_TESTS: { date: string; name: string; topic_hints: Record<string, string[]> }[] = [
-  {
-    date: '2026-08-29', name: 'SAT August 2026',
-    topic_hints: {
-      D30: ['여름방학 마지막 SAT 스퍼트 전략', '8월 SAT 한 달 전 점검 리스트', '여름방학 SAT 준비 실수 TOP 5'],
-      D14: ['SAT 2주 전 최고 효율 학습법', '시험 직전 어휘 암기 전략', 'Reading 시간 관리 최종 점검'],
-      D7: ['SAT 1주일 전 해야 할 것 vs 하지 말 것', '시험 전날 루틴 가이드', '멘탈 관리: 시험 불안을 이기는 법'],
-      D7_after: ['8월 SAT 시험 후 점수 해석하는 법', 'SAT 재시험 결정 가이드'],
-    },
-  },
-  {
-    date: '2026-10-03', name: 'SAT October 2026',
-    topic_hints: {
-      D30: ['10월 SAT 한 달 전략', '학기 중 SAT 병행하는 법', '가을 SAT 목표 점수 설정 가이드'],
-      D14: ['SAT 2주 전 약점 스킬 집중 공략법', 'Math vs RW 마지막 2주 배분 전략', 'Words in Context 최빈출 패턴 최종 정리'],
-      D7: ['SAT 1주일 전 모의고사 활용법', '10월 SAT 최종 체크리스트', '시험 전 수면·식단 관리'],
-      D7_after: ['10월 SAT 점수 분석 방법', '낮은 점수 나왔을 때 대처법'],
-    },
-  },
-  {
-    date: '2026-11-07', name: 'SAT November 2026',
-    topic_hints: {
-      D30: ['11월 SAT 대비 10월 학습 계획', '대입 원서와 SAT 동시 준비 전략', '가을 마지막 SAT 고득점 전략'],
-      D14: ['SAT 고득점자 2주 전 루틴 공개', 'RW 1550+ 가르는 핵심 스킬', '수능 이후 SAT 준비 전환 전략'],
-      D7: ['11월 SAT 최종 준비 가이드', '시험 전 1주일 복습 우선순위'],
-      D7_after: ['11월 SAT 이후 대입 타임라인 점검'],
-    },
-  },
-  {
-    date: '2026-12-05', name: 'SAT December 2026',
-    topic_hints: {
-      D30: ['12월 SAT 준비: 겨울방학 전 마지막 기회', '연말 SAT 집중 공략법', '12월 SAT가 마지막인 학생을 위한 가이드'],
-      D14: ['2주 만에 SAT 점수 올리는 현실적인 방법', '12월 SAT 고득점 스킬 압축 정리'],
-      D7: ['마지막 SAT 1주일 전 할 일', '12월 SAT 최종 점검 리스트'],
-      D7_after: ['12월 SAT 이후 대입 전략 재수립'],
-    },
-  },
-  {
-    date: '2027-03-13', name: 'SAT March 2027',
-    topic_hints: {
-      D30: ['봄 SAT 한 달 전 전략 수립', '3월 SAT를 노리는 이유와 준비법', '겨울방학 SAT 집중 훈련 결과 점검'],
-      D14: ['3월 SAT 최종 2주 스프린트', 'Reading 지문 구조 내재화 최종 점검'],
-      D7: ['3월 SAT 1주일 전 가이드'],
-      D7_after: ['3월 SAT 결과로 여름 계획 세우기'],
-    },
-  },
+// ─── SAT 시험 캘린더 (컨텍스트용) ────────────────────────────────────────────
+
+const SAT_TESTS = [
+  { date: '2026-08-29', name: 'SAT August 2026' },
+  { date: '2026-10-03', name: 'SAT October 2026' },
+  { date: '2026-11-07', name: 'SAT November 2026' },
+  { date: '2026-12-05', name: 'SAT December 2026' },
+  { date: '2027-03-13', name: 'SAT March 2027' },
 ];
 
-// ─── 코치 인사이트 고정 주제 ──────────────────────────────────────────────────
-
-const COACH_TOPICS: Omit<Topic, 'n'>[] = [
-  { title: 'SAT 점수가 오르지 않는 진짜 이유 — 노력이 아닌 방법의 문제', rationale: '코칭 철학 "우리가 생각하는 학생" 기반 — 경쟁사가 쓸 수 없는 관점', point: '학원 철학을 콘텐츠로 전환, 상담 전환율 향상' },
-  { title: 'SAT 코치가 문제를 풀어주지 않는 이유', rationale: '코칭 철학 "코치의 역할" 기반 — 경쟁사가 쓸 수 없는 관점', point: '코치 포지셔닝 명확화, 프리미엄 서비스 차별화' },
-  { title: 'SAT RW는 지문을 많이 읽는다고 점수가 오르지 않는 이유', rationale: '코칭 철학 "내용 암기보다 구조 인식" 기반 — 경쟁사가 쓸 수 없는 관점', point: '독자 기존 학습법 반박 → 새 방법론 제시 → 전환율' },
-  { title: '"틀렸다"는 말이 왜 쓸모없는가 — SAT 오답 분석의 기준', rationale: '코칭 철학 "오류 유형이 분석의 단위" 기반 — 경쟁사가 쓸 수 없는 관점', point: '데이터 기반 코칭 차별화 포인트 부각' },
-  { title: '스터디홀에서 잘 되는데 실전에서 무너지는 이유', rationale: '코칭 철학 "연습과 검증은 다른 행위다" 기반 — 경쟁사가 쓸 수 없는 관점', point: '독자가 경험한 좌절감과 직결, 즉각 공감 유발' },
-  { title: 'SAT 단어 암기를 시작하기 전에 반드시 해야 할 것', rationale: '코칭 철학 "단어는 진단 후 처방이다" 기반 — 경쟁사가 쓸 수 없는 관점', point: 'vocab 콘텐츠 진입점, 단어장 제품 연결 가능' },
-  { title: 'SAT 준비 첫 번째 단계가 문제풀이가 되면 안 되는 이유', rationale: '코칭 철학 "진단에서 시작한다" 기반 — 경쟁사가 쓸 수 없는 관점', point: '진단 테스트 상품 연결 + 차별화 커리큘럼 소개' },
-  { title: 'SAT 점수를 스킬 단위로 관리해야 하는 이유', rationale: '코칭 철학 "스킬 단위로 쌓는다" 기반 — 경쟁사가 쓸 수 없는 관점', point: '체계적 접근법 시각화, 학습 로드맵 콘텐츠' },
-  { title: 'SuperfastSAT 한 사이클이란 무엇인가 — 학습 단위 설계 원칙', rationale: '코칭 철학 "한 사이클의 단위" 기반 — 경쟁사가 쓸 수 없는 관점', point: '커리큘럼 투명성 공개, 신뢰 구축' },
-  { title: 'SAT 학습 리포트를 제대로 읽는 법', rationale: '코칭 철학 "리포트가 이 철학을 구현하는 방식" 기반 — 경쟁사가 쓸 수 없는 관점', point: '기존 수강생 재참여 + 잠재 고객에게 시스템 소개' },
-];
-
-// ─── 헬퍼 ────────────────────────────────────────────────────────────────────
-
-function diffDays(dateStr: string): number {
-  const target = new Date(dateStr);
+function getCalendarContext(): string {
   const now = new Date();
-  target.setHours(0, 0, 0, 0);
   now.setHours(0, 0, 0, 0);
-  return Math.round((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function getCalendarTopics(): Omit<Topic, 'n'>[] {
-  const results: Omit<Topic, 'n'>[] = [];
+  const lines: string[] = [];
   for (const test of SAT_TESTS) {
-    const days = diffDays(test.date);
-    let bracket: string | null = null;
-    if (days >= 0 && days <= 7) bracket = 'D7';
-    else if (days > 7 && days <= 14) bracket = 'D14';
-    else if (days > 14 && days <= 30) bracket = 'D30';
-    else if (days < 0 && days >= -7) bracket = 'D7_after';
-    if (!bracket) continue;
-    for (const hint of test.topic_hints[bracket] ?? []) {
-      const label = days >= 0 ? `D-${days} (${test.name})` : `D+${Math.abs(days)} (${test.name} 직후)`;
-      results.push({ title: hint, rationale: `${test.name} ${label} — 독자 관심도 최고 구간`, point: '시험 임박 독자 유입 + 브랜드 신뢰도 구축' });
+    const target = new Date(test.date);
+    target.setHours(0, 0, 0, 0);
+    const days = Math.round((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (days >= -7 && days <= 60) {
+      const label = days >= 0 ? `D-${days}` : `D+${Math.abs(days)} (시험 직후)`;
+      lines.push(`${test.name}: ${label}`);
     }
-    if (results.length >= 3) break;
   }
-  return results;
+  return lines.length ? lines.join(', ') : '현재 시험 임박 구간 없음';
 }
 
-async function getStudentDataTopics(): Promise<Omit<Topic, 'n'>[]> {
+// ─── 학생 오답 데이터 ──────────────────────────────────────────────────────────
+
+async function getStudentSkillContext(): Promise<string> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return [];
+  if (!url || !key) return '학생 데이터 없음';
   try {
     const supabase = createClient(url, key);
     const since = new Date();
@@ -108,7 +53,7 @@ async function getStudentDataTopics(): Promise<Omit<Topic, 'n'>[]> {
       .select('skill_scores')
       .gte('created_at', since.toISOString())
       .limit(100);
-    if (error || !data?.length) return [];
+    if (error || !data?.length) return '학생 데이터 없음 (최근 2주 진단 없음)';
 
     const skillErrors: Record<string, { total: number; errors: number }> = {};
     for (const row of data) {
@@ -120,45 +65,188 @@ async function getStudentDataTopics(): Promise<Omit<Topic, 'n'>[]> {
         if (score < 0.6) skillErrors[skill].errors++;
       }
     }
-
-    return Object.entries(skillErrors)
+    const top = Object.entries(skillErrors)
       .filter(([, v]) => v.total >= 3)
       .map(([skill, v]) => ({ skill, rate: v.errors / v.total }))
       .sort((a, b) => b.rate - a.rate)
-      .slice(0, 3)
-      .map(({ skill, rate }) => ({
-        title: `SAT ${skill} — 학생들이 가장 많이 틀리는 이유`,
-        rationale: `최근 2주 수강생 오답률 ${Math.round(rate * 100)}% — 실제 데이터 기반 주제`,
-        point: '검증된 학습 데이터로 신뢰도 극대화, 독자 공감 유발',
-      }));
+      .slice(0, 5);
+    if (!top.length) return '학생 데이터 없음 (샘플 부족)';
+    return top.map(({ skill, rate }) => `${skill} (오답률 ${Math.round(rate * 100)}%)`).join(', ');
+  } catch {
+    return '학생 데이터 조회 실패';
+  }
+}
+
+// ─── 기발행 주제 목록 (중복 방지) ────────────────────────────────────────────
+
+async function getRecentPublishedTitles(): Promise<string[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return [];
+  try {
+    const supabase = createClient(url, key);
+    const since = new Date();
+    since.setDate(since.getDate() - 30);
+    const { data } = await supabase
+      .from('posts')
+      .select('title')
+      .gte('created_at', since.toISOString())
+      .limit(50);
+    return (data ?? []).map((r: { title: string }) => r.title).filter(Boolean);
   } catch {
     return [];
   }
 }
 
-// ─── Public ───────────────────────────────────────────────────────────────────
+// ─── Claude API 주제 생성 ─────────────────────────────────────────────────────
 
-export async function generateTopics(n: number): Promise<Topic[]> {
-  const pool: Omit<Topic, 'n'>[] = [];
+const TOPIC_SYSTEM = `당신은 SuperfastSAT 블로그 주제 전략가입니다.
 
-  pool.push(...getCalendarTopics());
-  if (pool.length < n) pool.push(...(await getStudentDataTopics()));
-  if (pool.length < n) pool.push(...COACH_TOPICS);
+[SuperfastSAT 코치 철학 — 경쟁사 차별화 원칙]
+- 진단에서 시작한다: 문제풀이 전에 스킬 단위 진단이 먼저다
+- 스킬 단위로 쌓는다: 전체 점수가 아닌 스킬별 오류 유형이 분석 단위다
+- 연습과 검증은 다른 행위다: 스터디홀(연습)과 테스트센터(검증)를 분리한다
+- 내용 암기보다 구조 인식: RW는 지문 내용이 아닌 출제 패턴을 인식하는 능력이다
+- 코치의 역할은 문제를 풀어주는 것이 아니다: 오류 유형을 찾아 처방한다
 
-  return pool.slice(0, n).map((t, i) => ({ ...t, n: i + 1 }));
+[좋은 블로그 주제 조건 — FM 구조]
+좋은 주제 = "독자가 X라고 믿는데, 실제로는 Y이다 (College Board 데이터나 코치 경험으로 증명 가능) + 이 반전 후 독자 행동이 구체적으로 바뀐다"
+
+fm_score 기준:
+- high: 혼란 장면이 구체적, 반전이 데이터/메커니즘으로 증명 가능, 독자 행동 동사가 명확
+- medium: 혼란 장면은 있으나 반전 근거가 약하거나 독자 델타가 모호
+- low: 반전이 없는 정보 나열 / 독자 행동 변화 없음 / 경쟁사도 쓸 수 있는 관점
+
+[포스팅 5유형]
+- 현상형: 독자가 모르는 패턴/사실을 데이터로 보여줌 (메커니즘 주어 = College Board / 출제 설계)
+- 전략형: 공부법/풀이법 제시 (독자 주어 가능)
+- 개념형: 헷갈리는 개념 구분
+- 비교형: A vs B 선택 기준
+- 오류수정형: 자주 하는 실수 교정
+
+반드시 JSON 배열만 반환하세요. 마크다운 코드블록 없이.`;
+
+async function callClaudeForTopics(
+  n: number,
+  context: { calendar: string; skills: string; recentTitles: string[]; excludeTypes?: string[] }
+): Promise<RichTopic[]> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const recentStr = context.recentTitles.length
+    ? `최근 30일 발행 주제 (중복 금지):\n${context.recentTitles.map(t => `- ${t}`).join('\n')}`
+    : '최근 발행 주제 없음';
+
+  const excludeStr = context.excludeTypes?.length
+    ? `이미 선정된 유형 (다른 유형으로 생성): ${context.excludeTypes.join(', ')}`
+    : '';
+
+  const today = new Date().toLocaleDateString('ko-KR', {
+    timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
+  });
+
+  const userMessage = `오늘: ${today}
+SAT 시험 D-day: ${context.calendar}
+학생 오답률 높은 스킬: ${context.skills}
+${recentStr}
+${excludeStr}
+
+위 컨텍스트를 바탕으로 fm_score가 high 또는 medium인 블로그 주제 ${n}개를 생성하세요.
+5유형을 고르게 분배하고, 경쟁사가 쓸 수 없는 SuperfastSAT 관점을 우선하세요.
+
+반환 형식 (JSON 배열):
+[
+  {
+    "title": "포스팅 제목",
+    "type": "현상형|전략형|개념형|비교형|오류수정형",
+    "confusion_scene": "독자가 실제로 겪는 혼란 장면 1~2줄",
+    "existing_belief": "독자의 현재 믿음 (반전의 출발점)",
+    "reversal": "실제로는 Y이다 — 데이터/메커니즘 기반",
+    "opening_claim": "오프닝 주장 한 문장",
+    "reader_delta": "이 글을 읽은 독자는 [구체 행동 동사]할 것이다",
+    "fm_score": "high|medium|low",
+    "rationale": "근거 요약 (1줄)",
+    "point": "핵심 포인트 (1줄)"
+  }
+]`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4000,
+    system: TOPIC_SYSTEM,
+    messages: [{ role: 'user', content: userMessage }],
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '[]';
+  const stripped = text.replace(/```(?:json)?\s*/g, '').replace(/```/g, '').trim();
+  const start = stripped.indexOf('[');
+  const end = stripped.lastIndexOf(']');
+  if (start === -1 || end === -1) return [];
+  try {
+    return JSON.parse(stripped.slice(start, end + 1)) as RichTopic[];
+  } catch {
+    return [];
+  }
 }
 
-export function buildTopicMessage(topics: Topic[]): string {
-  // getTodayTopics()의 todayKSTString()과 반드시 동일한 포맷/타임존 사용
+// ─── 필터 + 균형 ──────────────────────────────────────────────────────────────
+
+function filterAndBalance(topics: RichTopic[], n: number): RichTopic[] {
+  const filtered = topics.filter(t => t.fm_score !== 'low');
+  const typeCounts: Record<string, number> = {};
+  const balanced: RichTopic[] = [];
+  for (const t of filtered) {
+    typeCounts[t.type] = (typeCounts[t.type] ?? 0) + 1;
+    if (typeCounts[t.type] <= 2) balanced.push(t);
+    if (balanced.length >= n) break;
+  }
+  return balanced;
+}
+
+// ─── Public ───────────────────────────────────────────────────────────────────
+
+export async function generateTopics(n: number): Promise<RichTopic[]> {
+  const [calendar, skills, recentTitles] = await Promise.all([
+    Promise.resolve(getCalendarContext()),
+    getStudentSkillContext(),
+    getRecentPublishedTitles(),
+  ]);
+
+  const ctx = { calendar, skills, recentTitles };
+
+  let results = filterAndBalance(await callClaudeForTopics(n + 3, ctx), n);
+
+  // 부족하면 재시도 (최대 2회)
+  for (let retry = 0; retry < 2 && results.length < n; retry++) {
+    const usedTypes = results.map(t => t.type);
+    const extra = filterAndBalance(
+      await callClaudeForTopics(n - results.length + 2, { ...ctx, excludeTypes: usedTypes }),
+      n - results.length
+    );
+    results = [...results, ...extra];
+  }
+
+  // 그래도 부족하면 medium 포함 fallback
+  if (results.length < n) {
+    const fallback = await callClaudeForTopics(n, ctx);
+    results = fallback.filter(t => t.fm_score !== 'low').slice(0, n);
+  }
+
+  return results.slice(0, n).map((t, i) => ({ ...t, n: i + 1 }));
+}
+
+export function buildTopicMessage(topics: RichTopic[]): string {
   const dateStr = new Date().toLocaleDateString('ko-KR', {
     timeZone: 'Asia/Seoul',
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
   });
   let msg = `[오늘의 블로그 주제 제안 — ${dateStr}]\n\n`;
   topics.forEach((t, i) => {
+    const fm = t.fm_score === 'high' ? '높음' : '보통';
     msg += `${i + 1}. ${t.title}\n`;
-    msg += `   근거: ${t.rationale}\n`;
-    msg += `   포인트: ${t.point}\n`;
+    msg += `   유형: ${t.type} | FM 가능성: ${fm}\n`;
+    msg += `   혼란 장면: ${t.confusion_scene}\n`;
+    msg += `   오프닝 주장: ${t.opening_claim}\n`;
+    msg += `   독자 델타: ${t.reader_delta}\n`;
     if (i < topics.length - 1) msg += '\n';
   });
   msg += '\n\n→ 이 채널에서 @landingpage N번 써줘 를 입력하면 바로 시작합니다.';

@@ -98,14 +98,6 @@ function sessionStatusColor(status: string): string {
   }
 }
 
-interface PauseRecord {
-  id: string;
-  pause_start: string;
-  pause_until: string | null;
-  reason: string | null;
-  created_by: string | null;
-}
-
 type TutoringStatus = 'active' | 'paused' | 'partial_end' | 'sales' | 'ended';
 
 const TUTORING_STATUS_META: Record<TutoringStatus, { label: string; color: string }> = {
@@ -150,12 +142,6 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const [portalCopied, setPortalCopied] = useState(false);
   const [localPortalToken, setLocalPortalToken] = useState<string | null>(null);
   const [coachLinkCopied, setCoachLinkCopied] = useState(false);
-  const [activePause, setActivePause] = useState<PauseRecord | null | undefined>(undefined); // undefined = 아직 로딩
-  const [pauseFormOpen, setPauseFormOpen] = useState(false);
-  const [pauseUntil, setPauseUntil] = useState('');
-  const [pauseReason, setPauseReason] = useState('');
-  const [pauseSaving, setPauseSaving] = useState(false);
-  const [serviceStatusSaving, setServiceStatusSaving] = useState(false);
   const [issues, setIssues] = useState<StudentIssue[]>([]);
   const [issueTitle, setIssueTitle] = useState('');
   const [issueDesc, setIssueDesc] = useState('');
@@ -229,99 +215,13 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
     if (res.ok) setIssues(await res.json());
   }, [studentId, crmStudentId]);
 
-  const fetchPause = useCallback(async () => {
-    const url = studentId
-      ? `/api/admin/srm/student/${studentId}/pause`
-      : crmStudentId
-      ? `/api/admin/srm/student/crm/${crmStudentId}/pause`
-      : null;
-    if (!url) { setActivePause(null); return; }
-    try {
-      const res = await fetch(url);
-      if (res.ok) {
-        const json = await res.json() as { pause: PauseRecord | null };
-        setActivePause(json.pause);
-      } else {
-        setActivePause(null);
-      }
-    } catch {
-      setActivePause(null);
-    }
-  }, [studentId, crmStudentId]);
-
   useEffect(() => {
     fetchDetail();
     fetchComms();
     fetchLifecycle();
     fetchV2Summary();
-    fetchPause();
     fetchIssues();
-  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary, fetchPause, fetchIssues]);
-
-  const handlePauseCreate = async () => {
-    setPauseSaving(true);
-    const url = studentId
-      ? `/api/admin/srm/student/${studentId}/pause`
-      : `/api/admin/srm/student/crm/${crmStudentId}/pause`;
-    try {
-      await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pause_until: pauseUntil || null,
-          reason: pauseReason || null,
-          created_by: getAdminName() || '관리자',
-        }),
-      });
-      await fetchPause();
-      setPauseFormOpen(false);
-      setPauseUntil('');
-      setPauseReason('');
-    } finally {
-      setPauseSaving(false);
-    }
-  };
-
-  const handleServiceStatusChange = async (next: 'active' | 'partial_end' | 'ended') => {
-    const resolvedCrmId = crmStudentId ?? detail?.crmStudent?.id;
-    if (!resolvedCrmId || serviceStatusSaving) return;
-    setServiceStatusSaving(true);
-    try {
-      await srmFetch(`/api/admin/srm/student/crm/${resolvedCrmId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service_status: next }),
-      });
-      await fetchDetail();
-    } finally {
-      setServiceStatusSaving(false);
-    }
-  };
-
-  const handlePauseEnd = async () => {
-    setPauseSaving(true);
-    const url = studentId
-      ? `/api/admin/srm/student/${studentId}/pause/active`
-      : `/api/admin/srm/student/crm/${crmStudentId}/pause/active`;
-    try {
-      await fetch(url, { method: 'DELETE' });
-      await fetchPause();
-    } finally {
-      setPauseSaving(false);
-    }
-  };
-
-  const handleStatusSelect = async (next: 'active' | 'paused' | 'partial_end' | 'ended') => {
-    if (next === effectiveStatus) return;
-    if (next === 'paused') {
-      setPauseFormOpen(true);
-      return;
-    }
-    setPauseFormOpen(false);
-    if (pauseSaving || serviceStatusSaving) return;
-    if (activePause) await handlePauseEnd();
-    await handleServiceStatusChange(next === 'active' ? 'active' : next === 'partial_end' ? 'partial_end' : 'ended');
-  };
+  }, [fetchDetail, fetchComms, fetchLifecycle, fetchV2Summary, fetchIssues]);
 
   useEffect(() => {
     const lang = (detail?.crmStudent as unknown as { comm_language?: string | null } | null)?.comm_language;
@@ -455,12 +355,6 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
   const timeline: ConsultationEntry[] = detail?.crmStudent?.consultation_timeline ?? [];
   const isLinked = !!detail?.crmStudent;
   const resolvedCrmStudentId = crmStudentId ?? detail?.crmStudent?.id;
-
-  const effectiveStatus: 'active' | 'paused' | 'partial_end' | 'ended' =
-    activePause ? 'paused'
-    : detail?.crmStudent?.service_status === 'partial_end' ? 'partial_end'
-    : detail?.crmStudent?.service_status === 'ended' ? 'ended'
-    : 'active';
 
   const currentStageLabel = lifecycleData?.current?.stage
     ? (STAGE_LABELS[lifecycleData.current.stage] ?? null)
@@ -764,104 +658,6 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 </div>
               )}
             </div>
-
-            {/* 학생 상태 */}
-            {activePause !== undefined && (
-              <div className="px-4 py-3 border-t border-gray-100">
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">학생 상태</p>
-
-                {effectiveStatus === 'ended' ? (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-red-50 text-red-600">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
-                    종료됨
-                  </span>
-                ) : (
-                  <>
-                    <div className="space-y-0.5">
-                      {([
-                        { value: 'active',      label: '수업중',   dot: 'bg-emerald-400', activeBg: 'bg-emerald-50',  activeText: 'text-emerald-700' },
-                        { value: 'paused',      label: '휴원',     dot: 'bg-orange-400',  activeBg: 'bg-orange-50',   activeText: 'text-orange-700' },
-                        { value: 'partial_end', label: '부분종료', dot: 'bg-gray-400',    activeBg: 'bg-gray-100',    activeText: 'text-gray-700' },
-                        { value: 'ended',       label: '종료',     dot: 'bg-red-400',     activeBg: 'bg-red-50',      activeText: 'text-red-600' },
-                      ] as const).map(({ value, label, dot, activeBg, activeText }) => {
-                        const isSelected = effectiveStatus === value;
-                        const isBusy = pauseSaving || serviceStatusSaving;
-                        return (
-                          <button
-                            key={value}
-                            onClick={() => handleStatusSelect(value)}
-                            disabled={isSelected || isBusy}
-                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[11px] font-medium text-left transition-colors disabled:cursor-default ${
-                              isSelected ? `${activeBg} ${activeText}` : 'text-gray-500 hover:bg-gray-50'
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? dot : 'bg-gray-300'}`} />
-                            {label}
-                            {isSelected && value === 'paused' && activePause?.pause_until && (
-                              <span className="ml-auto text-[10px] font-normal opacity-70">
-                                ~ {new Date(activePause.pause_until).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} 재개 예정
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* 휴원 중 상세 */}
-                    {effectiveStatus === 'paused' && activePause && (
-                      <div className="mt-2 pl-3 space-y-0.5">
-                        {!activePause.pause_until && (
-                          <p className="text-[11px] text-gray-500">재개일 미정</p>
-                        )}
-                        {activePause.reason && (
-                          <p className="text-[11px] text-gray-500">{activePause.reason}</p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 휴원 설정 폼 */}
-                    {pauseFormOpen && effectiveStatus !== 'paused' && (
-                      <div className="mt-2 space-y-2">
-                        <div>
-                          <label className="text-[11px] text-gray-500 block mb-0.5">재개 예정일 (선택)</label>
-                          <input
-                            type="date"
-                            value={pauseUntil}
-                            onChange={(e) => setPauseUntil(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 focus:outline-none focus:border-blue-500/50"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[11px] text-gray-500 block mb-0.5">사유 (선택)</label>
-                          <input
-                            type="text"
-                            value={pauseReason}
-                            onChange={(e) => setPauseReason(e.target.value)}
-                            placeholder="해외 여행, 시험 기간 등"
-                            className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500/50"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handlePauseCreate}
-                            disabled={pauseSaving}
-                            className="flex-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded px-3 py-1.5 disabled:opacity-40"
-                          >
-                            {pauseSaving ? '저장중...' : '휴원 시작'}
-                          </button>
-                          <button
-                            onClick={() => { setPauseFormOpen(false); setPauseUntil(''); setPauseReason(''); }}
-                            className="text-xs text-gray-500 hover:text-gray-700 px-2"
-                          >
-                            취소
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
 
             {/* CRM 연결 섹션 (미연결 시) */}
             {!loadingDetail && !isLinked && studentId && (
