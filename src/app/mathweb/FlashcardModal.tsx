@@ -8,6 +8,7 @@ export interface Problem {
   title: string | null;
   question_image_url: string;
   answer_image_url: string | null;
+  answer_text: string | null;
   memo: string | null;
   concepts: { id: string; name: string; slug: string }[];
 }
@@ -86,6 +87,10 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
                 className="w-full h-full object-contain"
                 loading="lazy"
               />
+            ) : problem.answer_text ? (
+              <div className="flex-1 flex items-center justify-center p-8">
+                <p className="text-white text-lg leading-relaxed text-center whitespace-pre-wrap">{problem.answer_text}</p>
+              </div>
             ) : (
               <p className="text-gray-500 text-base">답이 아직 등록되지 않았어요.</p>
             )}

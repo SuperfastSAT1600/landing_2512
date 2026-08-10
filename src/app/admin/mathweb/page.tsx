@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ConceptAutocompleteInput } from './ConceptAutocompleteInput';
 import { ProblemTable } from './ProblemTable';
+import { ImagePasteZone } from './ImagePasteZone';
 
 interface Problem {
   id: string;
@@ -14,15 +15,6 @@ interface Problem {
   concepts: { id: string; name: string; slug: string }[];
 }
 
-const ALLOWED = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-const MAX_MB = 5 * 1024 * 1024;
-
-function validateImage(file: File): string | null {
-  if (!ALLOWED.includes(file.type)) return `허용되지 않는 형식: ${file.type}`;
-  if (file.size > MAX_MB) return `5MB 초과 (${(file.size / 1024 / 1024).toFixed(1)}MB)`;
-  return null;
-}
-
 export default function MathWebAdminPage() {
   const [adminKey, setAdminKey] = useState('');
   const [keyInput, setKeyInput] = useState('');
@@ -31,15 +23,13 @@ export default function MathWebAdminPage() {
 
   const [qFile, setQFile] = useState<File | null>(null);
   const [aFile, setAFile] = useState<File | null>(null);
+  const [answerText, setAnswerText] = useState('');
   const [memo, setMemo] = useState('');
   const [concepts, setConcepts] = useState<string[]>([]);
   const [title, setTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  const qRef = useRef<HTMLInputElement>(null);
-  const aRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const key = localStorage.getItem('admin_key') ?? '';
@@ -67,9 +57,6 @@ export default function MathWebAdminPage() {
     e.preventDefault();
     setError(''); setSuccess('');
     if (!qFile) { setError('문제 이미지를 선택해주세요.'); return; }
-    const qErr = validateImage(qFile);
-    if (qErr) { setError(qErr); return; }
-    if (aFile) { const aErr = validateImage(aFile); if (aErr) { setError(aErr); return; } }
     if (concepts.length === 0) { setError('개념을 1개 이상 입력해주세요.'); return; }
 
     setSubmitting(true);
@@ -77,6 +64,7 @@ export default function MathWebAdminPage() {
       const fd = new FormData();
       fd.append('question_image', qFile);
       if (aFile) fd.append('answer_image', aFile);
+      if (answerText.trim()) fd.append('answer_text', answerText.trim());
       if (memo.trim()) fd.append('memo', memo.trim());
       if (title.trim()) fd.append('title', title.trim());
       fd.append('concepts', JSON.stringify(concepts));
@@ -88,9 +76,7 @@ export default function MathWebAdminPage() {
       if (!res.ok) { setError(json.error?.message ?? '등록 실패'); return; }
 
       setSuccess('등록 완료!'); setQFile(null); setAFile(null);
-      setMemo(''); setConcepts([]); setTitle('');
-      if (qRef.current) qRef.current.value = '';
-      if (aRef.current) aRef.current.value = '';
+      setAnswerText(''); setMemo(''); setConcepts([]); setTitle('');
       fetchProblems(adminKey);
     } finally { setSubmitting(false); }
   };
@@ -127,22 +113,20 @@ export default function MathWebAdminPage() {
         <form onSubmit={handleSubmit} style={{ background: '#09090b', border: '1px solid #27272a', borderRadius: 14, padding: '24px' }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#a1a1aa', marginBottom: 18, textTransform: 'uppercase', letterSpacing: '0.06em' }}>새 문제 등록</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 11, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>문제 이미지 *</span>
-              <input ref={qRef} type="file" accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => setQFile(e.target.files?.[0] ?? null)}
-                style={{ fontSize: 12, color: '#a1a1aa', background: '#000', border: '1px solid #27272a', borderRadius: 6, padding: '8px 10px', cursor: 'pointer' }}
-              />
-              {qFile && <span style={{ fontSize: 11, color: '#52525b' }}>{qFile.name}</span>}
-            </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 11, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>답 이미지 (선택)</span>
-              <input ref={aRef} type="file" accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => setAFile(e.target.files?.[0] ?? null)}
-                style={{ fontSize: 12, color: '#a1a1aa', background: '#000', border: '1px solid #27272a', borderRadius: 6, padding: '8px 10px', cursor: 'pointer' }}
-              />
-              {aFile && <span style={{ fontSize: 11, color: '#52525b' }}>{aFile.name}</span>}
-            </label>
+            <ImagePasteZone label="문제 이미지" required value={qFile} onChange={setQFile} isDefaultPasteTarget />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <ImagePasteZone label="답 이미지 (선택)" value={aFile} onChange={setAFile} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 11, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>답 텍스트 (선택)</span>
+                <textarea
+                  value={answerText}
+                  onChange={(e) => setAnswerText(e.target.value)}
+                  rows={3}
+                  placeholder="이미지 대신 텍스트로 답 입력..."
+                  style={{ padding: '9px 12px', background: '#000', border: '1px solid #27272a', borderRadius: 8, color: '#e4e4e7', fontSize: 13, outline: 'none', resize: 'vertical' }}
+                />
+              </div>
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>

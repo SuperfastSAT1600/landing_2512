@@ -10,7 +10,7 @@ export async function GET(
   const { data, error } = await supabaseAdmin
     .from('math_problems')
     .select(`
-      id, title, question_image_url, answer_image_url, memo, is_active, created_at,
+      id, title, question_image_url, answer_image_url, answer_text, memo, is_active, created_at,
       math_problem_concepts (
         math_concepts ( id, name, slug )
       )

@@ -25,7 +25,7 @@ export async function GET(
     .from('math_problem_concepts')
     .select(`
       math_problems!inner(
-        id, title, question_image_url, answer_image_url, memo, created_at, is_active,
+        id, title, question_image_url, answer_image_url, answer_text, memo, created_at, is_active,
         math_problem_concepts(
           math_concepts(id, name, slug)
         )
@@ -44,7 +44,7 @@ export async function GET(
   const problems = (joins ?? []).map((j) => {
     const p = j.math_problems as unknown as {
       id: string; title: string | null; question_image_url: string;
-      answer_image_url: string | null; memo: string | null; created_at: string;
+      answer_image_url: string | null; answer_text: string | null; memo: string | null; created_at: string;
       math_problem_concepts: { math_concepts: { id: string; name: string; slug: string } | null }[];
     };
     return {
@@ -52,6 +52,7 @@ export async function GET(
       title: p.title,
       question_image_url: p.question_image_url,
       answer_image_url: p.answer_image_url,
+      answer_text: p.answer_text,
       memo: p.memo,
       created_at: p.created_at,
       concepts: p.math_problem_concepts

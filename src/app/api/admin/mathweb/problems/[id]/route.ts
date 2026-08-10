@@ -23,6 +23,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const body = await req.json() as {
     title?: string;
     memo?: string;
+    answer_text?: string | null;
     is_active?: boolean;
     concepts?: string[];
   };
@@ -30,6 +31,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (body.title !== undefined) updates.title = body.title;
   if (body.memo !== undefined) updates.memo = body.memo;
+  if (body.answer_text !== undefined) updates.answer_text = body.answer_text;
   if (body.is_active !== undefined) updates.is_active = body.is_active;
 
   const { data: problem, error: updateErr } = await supabaseAdmin
