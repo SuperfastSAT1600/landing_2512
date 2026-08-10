@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Save, Loader2 } from 'lucide-react';
+import { TEST_SCHEDULE } from '@/app/supertest/data/plans';
 
 export default function AdminSupertest() {
     const [spots, setSpots] = useState<number>(30);
@@ -25,7 +26,7 @@ export default function AdminSupertest() {
 
     const handleSave = async () => {
         if (!nextTestDate) {
-            setMessage('시험 날짜를 입력해 주세요.');
+            setMessage('회차를 선택해 주세요.');
             setIsError(true);
             setTimeout(() => setMessage(''), 3000);
             return;
@@ -110,27 +111,59 @@ export default function AdminSupertest() {
 
                 {/* 시험 날짜 */}
                 <section className="bg-[#1e2023] rounded-xl p-6 space-y-4">
-                    <h2 className="text-lg font-semibold text-white">다음 시험 날짜</h2>
+                    <h2 className="text-lg font-semibold text-white">30% 할인 시험 (D-day 기준)</h2>
                     <p className="text-gray-500 text-sm">
-                        Hero 섹션의 D-day 카운트다운 기준일입니다. KST 오전 9시를 기준으로 계산됩니다.
+                        선택한 회차가 Hero의 D-day 카운트다운 기준이자 구매 페이지의 30% 할인 시험이 됩니다.
                     </p>
-                    <input
-                        type="date"
+                    <select
                         value={nextTestDate}
                         onChange={e => setNextTestDate(e.target.value)}
-                        className="bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-3 text-white text-base font-bold outline-none transition-all"
-                    />
+                        className="bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-3 text-white text-base font-bold outline-none transition-all w-full"
+                    >
+                        <option value="" disabled>회차를 선택하세요</option>
+                        {TEST_SCHEDULE.map(t => (
+                            <option key={t.date} value={t.date}>{t.label}</option>
+                        ))}
+                    </select>
 
-                    {/* 미리보기 */}
+                    {/* D-day + 할인 배지 미리보기 */}
                     {nextTestDate && (
                         <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
                             <p className="text-xs text-gray-600">미리보기</p>
                             <div className="flex items-center gap-3">
                                 <span className="text-2xl font-black text-blue-400">{dday}</span>
                                 <span className="text-gray-400 text-sm">{dateLabel} SuperTest까지</span>
+                                <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold">파이널 30% 할인</span>
                             </div>
                         </div>
                     )}
+                </section>
+
+                {/* 이후 시험 목록 미리보기 */}
+                <section className="bg-[#1e2023] rounded-xl p-6 space-y-4">
+                    <h2 className="text-lg font-semibold text-white">이후 시험 목록 (드롭다운)</h2>
+                    <p className="text-gray-500 text-sm">
+                        구매 페이지에서 할인 시험 아래 드롭다운에 표시되는 이후 회차 목록입니다.
+                    </p>
+                    {(() => {
+                        const subsequent = TEST_SCHEDULE.filter(t => t.date > nextTestDate);
+                        if (!nextTestDate) {
+                            return <p className="text-gray-600 text-sm">회차를 선택하면 이후 시험 목록이 표시됩니다.</p>;
+                        }
+                        if (subsequent.length === 0) {
+                            return <p className="text-gray-600 text-sm">이후 시험 없음</p>;
+                        }
+                        return (
+                            <ul className="space-y-2">
+                                {subsequent.map(t => (
+                                    <li key={t.date} className="flex items-center gap-3 text-sm text-gray-300 bg-[#151719] rounded-lg px-4 py-2.5">
+                                        <span className="text-gray-600">·</span>
+                                        {t.label}
+                                    </li>
+                                ))}
+                            </ul>
+                        );
+                    })()}
                 </section>
 
                 {/* 남은 자리 */}
