@@ -42,7 +42,7 @@ export async function GET(
   }
 
   const problems = (joins ?? []).map((j) => {
-    const p = j.math_problems as {
+    const p = j.math_problems as unknown as {
       id: string; title: string | null; question_image_url: string;
       answer_image_url: string | null; memo: string | null; created_at: string;
       math_problem_concepts: { math_concepts: { id: string; name: string; slug: string } | null }[];

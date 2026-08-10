@@ -33,7 +33,7 @@ export async function GET() {
     id: p.id,
     title: p.title,
     created_at: p.created_at,
-    concepts: (p.math_problem_concepts ?? [])
+    concepts: ((p.math_problem_concepts ?? []) as unknown as { math_concepts: { id: string; name: string; slug: string } | null }[])
       .map((c) => c.math_concepts)
       .filter((c): c is { id: string; name: string; slug: string } => c !== null),
   }));

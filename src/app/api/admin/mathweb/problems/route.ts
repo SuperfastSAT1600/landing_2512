@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 
   const problems = (data ?? []).map((p) => ({
     ...p,
-    concepts: (p.math_problem_concepts as { math_concepts: { id: string; name: string; slug: string } | null }[])
+    concepts: (p.math_problem_concepts as unknown as { math_concepts: { id: string; name: string; slug: string } | null }[])
       .map((join) => join.math_concepts)
       .filter(Boolean),
     math_problem_concepts: undefined,

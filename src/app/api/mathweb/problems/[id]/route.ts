@@ -25,9 +25,9 @@ export async function GET(
     );
   }
 
-  const concepts = (data.math_problem_concepts ?? []).map(
-    (r: { math_concepts: { id: string; name: string; slug: string } | null }) => r.math_concepts
-  ).filter(Boolean);
+  const concepts = ((data.math_problem_concepts ?? []) as unknown as { math_concepts: { id: string; name: string; slug: string } | null }[])
+    .map((r) => r.math_concepts)
+    .filter((c): c is { id: string; name: string; slug: string } => c !== null);
 
   return NextResponse.json({
     data: { ...data, math_problem_concepts: undefined, concepts },
