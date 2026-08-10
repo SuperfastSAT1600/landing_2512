@@ -18,6 +18,7 @@ import type { CategoryIdV2, OptionSelectionV2 } from '@/types/enrollment-v2';
 
 /* ── 타입 ─────────────────────────────────────────────────────────── */
 type ManagementType = 'managed' | 'unmanaged';
+type Lang = 'ko' | 'en';
 
 /* ── 유틸 ─────────────────────────────────────────────────────────── */
 function stripHtml(html: string): string {
@@ -39,7 +40,7 @@ function getTotalPrice(categoryId: CategoryIdV2, option: OptionSelectionV2): num
     return pkgs.find(p => p.id === option.packageId)?.totalPrice ?? 0;
   }
   if (option.type === 'group-package') {
-    return 0; // 그룹 특강 가격은 문의로 안내
+    return 0;
   }
   if (option.type === 'content') {
     return option.contentIds.reduce((s, id) => s + (CONTENT_ITEMS_V2.find(c => c.id === id)?.monthlyPrice ?? 0), 0);
@@ -51,20 +52,31 @@ function getTotalPrice(categoryId: CategoryIdV2, option: OptionSelectionV2): num
 /* ════════════════════════════════════════════════════════════════════
    3-STEP ENROLLMENT NAV
    ════════════════════════════════════════════════════════════════════ */
-const STEPS = [
-  { id: 'exam',      label: '과목 선택', anchor: 'v2-exam' },
-  { id: 'selection', label: '수업 선택', anchor: 'v2-selection' },
-  { id: 'pricing',   label: '수업료',   anchor: 'v2-pricing' },
-];
+function getSteps(lang: Lang) {
+  if (lang === 'en') {
+    return [
+      { id: 'exam',      label: 'Subject',    anchor: 'v2-exam' },
+      { id: 'selection', label: 'Class Type', anchor: 'v2-selection' },
+      { id: 'pricing',   label: 'Pricing',    anchor: 'v2-pricing' },
+    ];
+  }
+  return [
+    { id: 'exam',      label: '과목 선택', anchor: 'v2-exam' },
+    { id: 'selection', label: '수업 선택', anchor: 'v2-selection' },
+    { id: 'pricing',   label: '수업료',   anchor: 'v2-pricing' },
+  ];
+}
 
-function EnrollmentStepNav({ navVisible, scrollOffsetRef }: {
+function EnrollmentStepNav({ navVisible, scrollOffsetRef, lang }: {
   navVisible: boolean;
   scrollOffsetRef: React.RefObject<number>;
+  lang: Lang;
 }) {
   const [active, setActive] = useState('exam');
+  const steps = getSteps(lang);
 
   useEffect(() => {
-    const observers = STEPS.map(step => {
+    const observers = steps.map(step => {
       const el = document.getElementById(step.anchor);
       if (!el) return null;
       const obs = new IntersectionObserver(
@@ -75,6 +87,7 @@ function EnrollmentStepNav({ navVisible, scrollOffsetRef }: {
       return obs;
     });
     return () => observers.forEach(o => o?.disconnect());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function scrollToAnchor(anchor: string) {
@@ -97,26 +110,23 @@ function EnrollmentStepNav({ navVisible, scrollOffsetRef }: {
         transition: 'opacity 0.3s ease, transform 0.3s ease',
       }}>
       <div className="flex">
-        {STEPS.map((step, i) => (
+        {steps.map((step, i) => (
           <button
             key={step.id}
             onClick={() => scrollToAnchor(step.anchor)}
             className="relative flex flex-col items-center justify-center flex-1 py-4 gap-1.5 touch-manipulation transition-colors"
             style={{ color: active === step.id ? '#fff' : 'rgba(255,255,255,0.35)' }}
           >
-            {/* 숫자 배지 */}
             <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-black flex-shrink-0 transition-all duration-200
               ${active === step.id
                 ? 'bg-white text-black scale-110'
                 : 'bg-white/10 text-white/35'}`}>
               {i + 1}
             </span>
-            {/* 레이블 */}
             <span className={`text-[13px] font-bold tracking-wide transition-all duration-200
               ${active === step.id ? 'opacity-100' : 'opacity-40'}`}>
               {step.label}
             </span>
-            {/* 활성 인디케이터 */}
             {active === step.id && (
               <span className="absolute bottom-0 left-6 right-6 h-[2.5px] rounded-full bg-white" />
             )}
@@ -168,15 +178,31 @@ function SelectCard({
    ════════════════════════════════════════════════════════════════════ */
 type FormatOption = { id: CategoryIdV2; emoji: string; name: string; desc: string };
 
-const MANAGED_FORMAT_OPTIONS: FormatOption[] = [
-  { id: 'one-on-one', emoji: '🧑‍💻', name: '1:1 정규수업', desc: '전담 코치와 1:1 맞춤 수업' },
-  { id: 'group',      emoji: '👥', name: '1:4 특강수업', desc: '소그룹 집중 특강' },
-];
+function getManagedFormatOptions(lang: Lang): FormatOption[] {
+  if (lang === 'en') {
+    return [
+      { id: 'one-on-one', emoji: '🧑‍💻', name: '1-on-1 Classes', desc: 'Custom 1-on-1 sessions with a dedicated coach' },
+      { id: 'group',      emoji: '👥', name: '1-to-4 Group Classes', desc: 'Small group intensive sessions' },
+    ];
+  }
+  return [
+    { id: 'one-on-one', emoji: '🧑‍💻', name: '1:1 정규수업', desc: '전담 코치와 1:1 맞춤 수업' },
+    { id: 'group',      emoji: '👥', name: '1:4 특강수업', desc: '소그룹 집중 특강' },
+  ];
+}
 
-const UNMANAGED_FORMAT_OPTIONS: FormatOption[] = [
-  { id: 'unmanaged', emoji: '🧑‍💻', name: '1:1 정규수업', desc: '코치와 1:1 수업\n자기주도 방식' },
-  { id: 'content',   emoji: '📱', name: '콘텐츠 학습',  desc: '단어·인강·문제풀이\n월간 구독 콘텐츠' },
-];
+function getUnmanagedFormatOptions(lang: Lang): FormatOption[] {
+  if (lang === 'en') {
+    return [
+      { id: 'unmanaged', emoji: '🧑‍💻', name: '1-on-1 Classes', desc: '1-on-1 sessions with a coach\nSelf-directed approach' },
+      { id: 'content',   emoji: '📱', name: 'Content Learning', desc: 'Vocab · Lectures · Practice\nMonthly subscription content' },
+    ];
+  }
+  return [
+    { id: 'unmanaged', emoji: '🧑‍💻', name: '1:1 정규수업', desc: '코치와 1:1 수업\n자기주도 방식' },
+    { id: 'content',   emoji: '📱', name: '콘텐츠 학습',  desc: '단어·인강·문제풀이\n월간 구독 콘텐츠' },
+  ];
+}
 
 function GroupIcon({ active }: { active: boolean }) {
   return (
@@ -192,14 +218,14 @@ function GroupIcon({ active }: { active: boolean }) {
 }
 
 function ClassFormatPicker({
-  value, onChange, options,
-}: { value: CategoryIdV2 | null; onChange: (v: CategoryIdV2) => void; options: FormatOption[] }) {
+  value, onChange, options, lang,
+}: { value: CategoryIdV2 | null; onChange: (v: CategoryIdV2) => void; options: FormatOption[]; lang: Lang }) {
   return (
     <section className="px-4 py-10 border-t border-white/[0.06] min-h-svh flex flex-col justify-center md:min-h-0 md:block">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h2 style={{ fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', wordBreak: 'keep-all' }} className="text-white">
-            필요한 SAT 수업을<br />선택하세요
+            {lang === 'en' ? <>Choose the class type<br />you need.</> : <>필요한 SAT 수업을<br />선택하세요</>}
           </h2>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -255,15 +281,17 @@ interface HeadCoach {
 }
 
 
-function ManagedPackagePicker({ selectedOption, onSelect }: {
+function ManagedPackagePicker({ selectedOption, onSelect, lang }: {
   selectedOption: OptionSelectionV2 | null;
   onSelect: (o: OptionSelectionV2) => void;
+  lang: Lang;
 }) {
   const [coaches, setCoaches] = useState<HeadCoach[]>([]);
   const [loadingCoaches, setLoadingCoaches] = useState(false);
   const coachesRef = useRef<HTMLDivElement>(null);
   const selectedId = selectedOption?.type === 'hour-package' ? selectedOption.packageId : null;
   const isDirector = selectedId === '1on1-director';
+  const hourUnit = lang === 'en' ? 'hrs' : '시간';
 
   function handlePkgClick(pkgId: string) {
     onSelect({ type: 'hour-package', packageId: pkgId });
@@ -287,7 +315,11 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
-            어떤 시간을 선택해도<br />확실하게 관리받습니다
+            {lang === 'en' ? (
+              <>Whatever package you choose,<br />you&apos;ll get full support.</>
+            ) : (
+              <>어떤 시간을 선택해도<br />확실하게 관리받습니다</>
+            )}
           </h2>
         </div>
 
@@ -310,7 +342,6 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                     : 'border-white/[0.08] bg-white/[0.03] hover:border-white/15'
                   }`}
               >
-                {/* 그라데이션 fill — 선택(최종 클릭) 시 왼쪽→오른쪽 reveal */}
                 <AnimatePresence>
                   {isSelected && (
                     <motion.div
@@ -326,20 +357,19 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                 </AnimatePresence>
 
                 <div className="relative z-10 flex items-center justify-between gap-4">
-                  {/* 왼쪽: 시간 + 레이블 */}
                   <div className="flex items-baseline gap-1.5 flex-shrink-0">
                     <span className="text-3xl font-black text-white leading-none">{pkg.hours}</span>
-                    <span className="text-sm text-white/55 font-medium">시간</span>
+                    <span className="text-sm text-white/55 font-medium">{hourUnit}</span>
                   </div>
 
-                  {/* 오른쪽: 가격 상시 노출 */}
                   <div className="flex-1 text-right flex flex-col justify-center min-h-[5rem]">
                     {pkg.discountRate ? (
                       <div className="space-y-1.5">
                         <p className="text-[12px] font-light text-red-400 leading-snug">
-                          ~10시간 수업보다 ({pkg.discountRate}% 할인)<br />{formatWon(savings)} 더 저렴합니다.
+                          {lang === 'en'
+                            ? `vs. 10 hrs (${pkg.discountRate}% off)\n${formatWon(savings)} cheaper.`
+                            : `~10시간 수업보다 (${pkg.discountRate}% 할인)\n${formatWon(savings)} 더 저렴합니다.`}
                         </p>
-
                         <p className="text-base font-light text-white tracking-tight">
                           {formatWon(pkg.totalPrice)}
                         </p>
@@ -380,21 +410,21 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
             </AnimatePresence>
 
             <div className="relative z-10 flex items-center justify-between gap-4" style={{ fontFamily: "'BookkMyungjo', serif" }}>
-              {/* 왼쪽: 프리미엄 뱃지 + 타이틀 */}
               <div className="flex-shrink-0 flex flex-col gap-1.5">
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wide self-start">
-                  프리미엄
+                  {lang === 'en' ? 'Premium' : '프리미엄'}
                 </span>
                 <p className="text-sm font-semibold text-amber-200 leading-snug">
-                  SuperfastSAT 대표코치의 1:1 수업
+                  {lang === 'en' ? '1-on-1 with a SuperfastSAT Lead Coach' : 'SuperfastSAT 대표코치의 1:1 수업'}
                 </p>
               </div>
 
-              {/* 오른쪽: 시간 + 가격 상시 노출 */}
               <div className="flex-1 text-right">
                 <div className="space-y-1">
                   <div className="flex items-baseline gap-1 justify-end">
-                    <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">10시간</span>
+                    <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">
+                      {lang === 'en' ? '10 hrs' : '10시간'}
+                    </span>
                   </div>
                   <p
                     className="text-sm font-semibold text-amber-200"
@@ -415,7 +445,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                   className="text-[15px] font-bold text-amber-300/60 tracking-widest uppercase pb-3 text-center"
                   style={{ fontFamily: "'BookkMyungjo', serif" }}
                 >
-                  대표코치 라인업
+                  {lang === 'en' ? 'LEAD COACH LINEUP' : '대표코치 라인업'}
                 </p>
                 {loadingCoaches && (
                   <div className="flex justify-center py-8">
@@ -461,7 +491,7 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
                             {stripHtml(coach.bio)}
                           </p>
                           <p className="text-[12px] text-amber-400/60 font-semibold mt-2 group-hover:text-amber-300 transition-colors">
-                            프로필 보기 →
+                            {lang === 'en' ? 'View Profile →' : '프로필 보기 →'}
                           </p>
                         </div>
                       </Link>
@@ -480,9 +510,10 @@ function ManagedPackagePicker({ selectedOption, onSelect }: {
 /* ════════════════════════════════════════════════════════════════════
    STEP 3: 1:4 특강 선택 (전용 UI — ManagedPackagePicker 스타일)
    ════════════════════════════════════════════════════════════════════ */
-function GroupPackagePicker({ selectedOption, onSelect }: {
+function GroupPackagePicker({ selectedOption, onSelect, lang }: {
   selectedOption: OptionSelectionV2 | null;
   onSelect: (o: OptionSelectionV2) => void;
+  lang: Lang;
 }) {
   const selectedId = selectedOption?.type === 'group-package' ? selectedOption.packageId : null;
 
@@ -495,7 +526,11 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
-            커리큘럼은<br />상담을 통해 확인하세요
+            {lang === 'en' ? (
+              <>Contact us to review<br />the curriculum.</>
+            ) : (
+              <>커리큘럼은<br />상담을 통해 확인하세요</>
+            )}
           </h2>
         </div>
 
@@ -534,7 +569,7 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
                     <div className="mb-2">
                       {isSoldOut ? (
                         <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/55 border border-white/20 tracking-wide">
-                          마감
+                          {lang === 'en' ? 'Closed' : '마감'}
                         </span>
                       ) : (
                         <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 tracking-wide">
@@ -565,7 +600,7 @@ function GroupPackagePicker({ selectedOption, onSelect }: {
    STEP 3: 패키지 선택 (콘텐츠 / 자기주도)
    ════════════════════════════════════════════════════════════════════ */
 function PackagePicker({
-  categoryId, selectedOption, onSelect, onContentToggle, totalPrice, stepNum,
+  categoryId, selectedOption, onSelect, onContentToggle, totalPrice, stepNum, lang,
 }: {
   categoryId: CategoryIdV2;
   selectedOption: OptionSelectionV2 | null;
@@ -573,13 +608,23 @@ function PackagePicker({
   onContentToggle: (id: string) => void;
   totalPrice: number;
   stepNum: number;
+  lang: Lang;
 }) {
-  const titleMap: Record<CategoryIdV2, string> = {
-    'one-on-one': '시간 패키지 선택',
-    'group': '특강 선택',
-    'content': '콘텐츠 선택',
-    'unmanaged': '시간 패키지 선택',
-  };
+  const titleMap: Record<CategoryIdV2, string> = lang === 'en'
+    ? {
+        'one-on-one': 'Select Hour Package',
+        'group': 'Select Group Class',
+        'content': 'Select Content',
+        'unmanaged': 'Select Hour Package',
+      }
+    : {
+        'one-on-one': '시간 패키지 선택',
+        'group': '특강 선택',
+        'content': '콘텐츠 선택',
+        'unmanaged': '시간 패키지 선택',
+      };
+
+  const hourUnit = lang === 'en' ? 'hrs' : '시간';
 
   return (
     <section className="px-4 py-8 border-t border-white/[0.06] min-h-svh flex flex-col justify-center md:min-h-0 md:block">
@@ -602,18 +647,22 @@ function PackagePicker({
                       <span className="text-4xl font-black text-white leading-none">{pkg.hours}</span>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-white/70">시간</span>
+                          <span className="text-sm font-medium text-white/70">{hourUnit}</span>
                           {(pkg.salesLabel === 'popular' || pkg.salesLabel === 'bestValue') && (
                             <span className="text-[11px] font-bold px-2 py-0.5 rounded-full
                               bg-white text-[#071be9]">
-                              {pkg.salesLabel === 'popular' ? '가장 인기' : '최대 할인'}
+                              {pkg.salesLabel === 'popular'
+                                ? (lang === 'en' ? 'Most Popular' : '가장 인기')
+                                : (lang === 'en' ? 'Best Value' : '최대 할인')}
                             </span>
                           )}
                         </div>
                         {savings > 0 && pkg.discountRate && (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full mt-1
                             bg-rose-500/15 text-rose-400 border border-rose-500/20">
-                            -{pkg.discountRate}% · {formatWon(savings)} 절약
+                            {lang === 'en'
+                              ? `-${pkg.discountRate}% · saves ${formatWon(savings)}`
+                              : `-${pkg.discountRate}% · ${formatWon(savings)} 절약`}
                           </span>
                         )}
                       </div>
@@ -643,7 +692,7 @@ function PackagePicker({
                         <span className="font-bold text-white">{pkg.name}</span>
                         {pkg.salesLabel === 'popular' && (
                           <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white text-[#071be9]">
-                            인기
+                            {lang === 'en' ? 'Popular' : '인기'}
                           </span>
                         )}
                         {pkg.salesLabel === 'new' && (
@@ -661,7 +710,7 @@ function PackagePicker({
                     </div>
                     <span className="text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0
                       bg-[#6085ff]/10 text-[#8fabff] border border-[#6085ff]/20">
-                      문의
+                      {lang === 'en' ? 'Inquire' : '문의'}
                     </span>
                   </div>
                 </SelectCard>
@@ -697,7 +746,7 @@ function PackagePicker({
                         <p className="text-xs text-white/40 mt-0.5">{item.description}</p>
                       </div>
                       <span className="text-sm font-bold text-[#8fabff] flex-shrink-0">
-                        월 {formatWon(item.monthlyPrice)}
+                        {lang === 'en' ? `Monthly ${formatWon(item.monthlyPrice)}` : `월 ${formatWon(item.monthlyPrice)}`}
                       </span>
                     </div>
                   </button>
@@ -706,8 +755,12 @@ function PackagePicker({
             </div>
             {selectedOption?.type === 'content' && selectedOption.contentIds.length > 0 && (
               <div className="mt-4 rounded-2xl border border-[#6085ff]/20 bg-[#6085ff]/5 p-4 text-center">
-                <p className="text-xs text-white/40 mb-1">합산 월 구독료</p>
-                <p className="text-3xl font-black text-white">월 {formatWon(totalPrice)}</p>
+                <p className="text-xs text-white/40 mb-1">
+                  {lang === 'en' ? 'Combined Monthly' : '합산 월 구독료'}
+                </p>
+                <p className="text-3xl font-black text-white">
+                  {lang === 'en' ? `Monthly ${formatWon(totalPrice)}` : `월 ${formatWon(totalPrice)}`}
+                </p>
               </div>
             )}
           </>
@@ -718,13 +771,9 @@ function PackagePicker({
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   STEP 4: 가격 요약 + CTA
-   ════════════════════════════════════════════════════════════════════ */
-
-/* ════════════════════════════════════════════════════════════════════
    MAIN PAGE
    ════════════════════════════════════════════════════════════════════ */
-export function EnrollmentV2Page() {
+export function EnrollmentV2Page({ lang = 'ko' }: { lang?: Lang } = {}) {
   const [exam, setExam] = useState<'SAT' | 'AP' | null>(null);
   const [managementType, setManagementType] = useState<ManagementType | null>(null);
   const [classFormat, setClassFormat] = useState<CategoryIdV2 | null>(null);
@@ -833,7 +882,6 @@ export function EnrollmentV2Page() {
     });
   }, []);
 
-  // 카테고리 계산 — 관리형/자기주도 모두 classFormat 선택 후 결정
   const categoryId: CategoryIdV2 | null = classFormat ?? null;
 
   const totalPrice = categoryId && selectedOption
@@ -842,14 +890,17 @@ export function EnrollmentV2Page() {
 
   const packageStep = 3;
 
+  const managedFormatOptions = getManagedFormatOptions(lang);
+  const unmanagedFormatOptions = getUnmanagedFormatOptions(lang);
+
   return (
     <div style={{ background: '#000', minHeight: '100vh', color: '#fff', WebkitFontSmoothing: 'antialiased' }}>
 
       {/* 3-Step Nav — fixed, slides to top when exam selected */}
-      <EnrollmentStepNav navVisible={exam !== null && !heroInView} scrollOffsetRef={scrollOffsetRef} />
+      <EnrollmentStepNav navVisible={exam !== null && !heroInView} scrollOffsetRef={scrollOffsetRef} lang={lang} />
 
       {/* ── Video Hero — fills full viewport (video extends behind fixed header) ── */}
-      <EnrollmentVideoHero onExamSelect={handleExamSelect} />
+      <EnrollmentVideoHero onExamSelect={handleExamSelect} lang={lang} />
 
       {/* ── Post-hero content — padded for step nav when visible ──── */}
       <div style={{
@@ -860,7 +911,7 @@ export function EnrollmentV2Page() {
         {exam === 'AP' ? (
           /* ── AP 전용 플로우 ─────────────────────────────────────── */
           <div ref={selectionRef}>
-            <APSectionV2 />
+            <APSectionV2 lang={lang} />
             <div className="h-20" />
           </div>
         ) : (
@@ -875,18 +926,19 @@ export function EnrollmentV2Page() {
                 onThumbnailClick={handleThumbnailClick}
                 sectionNumber={1}
                 hideHeading
+                lang={lang}
               />
             </div>
 
             {/* 서비스 쇼케이스 (관리형 6가지 / 자기주도 3가지) */}
             {managementType === 'managed' && (
               <div ref={showcaseRef} id="v2-showcase" className="border-t border-white/[0.06]">
-                <ManagedShowcase />
+                <ManagedShowcase lang={lang} />
               </div>
             )}
             {managementType === 'unmanaged' && (
               <div ref={showcaseRef} id="v2-showcase" className="border-t border-white/[0.06]">
-                <UnmanagedShowcase />
+                <UnmanagedShowcase lang={lang} />
               </div>
             )}
 
@@ -896,7 +948,8 @@ export function EnrollmentV2Page() {
                 <ClassFormatPicker
                   value={classFormat}
                   onChange={handleFormat}
-                  options={managementType === 'managed' ? MANAGED_FORMAT_OPTIONS : UNMANAGED_FORMAT_OPTIONS}
+                  options={managementType === 'managed' ? managedFormatOptions : unmanagedFormatOptions}
+                  lang={lang}
                 />
               </div>
             )}
@@ -908,6 +961,7 @@ export function EnrollmentV2Page() {
                   <ManagedPackagePicker
                     selectedOption={selectedOption}
                     onSelect={handleOption}
+                    lang={lang}
                   />
                 </div>
               )}
@@ -916,6 +970,7 @@ export function EnrollmentV2Page() {
                   <GroupPackagePicker
                     selectedOption={selectedOption}
                     onSelect={handleOption}
+                    lang={lang}
                   />
                 </div>
               )}
@@ -928,6 +983,7 @@ export function EnrollmentV2Page() {
                     onContentToggle={handleContentToggle}
                     totalPrice={totalPrice}
                     stepNum={packageStep}
+                    lang={lang}
                   />
                 </div>
               )}
