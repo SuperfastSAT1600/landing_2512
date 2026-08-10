@@ -5,7 +5,7 @@ import { Loader2, AlertCircle, RotateCcw, Crown, Link2Off, Search } from 'lucide
 import { Student } from '@/types/crm';
 import { getAdminUserName } from '@/lib/admin-user';
 import { RefundModal } from './RefundModal';
-import type { TutoringUser, TutoringStatus } from '@/app/api/admin/srm/tutoring-users/route';
+import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
 
 // ── 분류 타입 ─────────────────────────────────────────────────────────────────
 

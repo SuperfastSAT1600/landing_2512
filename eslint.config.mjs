@@ -15,6 +15,21 @@ const eslintConfig = defineConfig([
     "fetch_icons.js",
     "fetch_streamline.js",
   ]),
+  // Underscore-prefixed identifiers are intentionally-unused (destructure-to-omit,
+  // ignored args/catch bindings). Honor the convention instead of flagging them.
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;
