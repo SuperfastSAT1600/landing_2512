@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Pencil, Trash2, X, User } from 'lucide-react';
+import { Check, ChevronDown, Pencil, Trash2, X, User } from 'lucide-react';
 import type { ConsultationEntry } from '@/types/crm';
 import { AttachmentThumb } from './AttachmentThumb';
+import { resolveCrmLabels, type CrmLabels } from '@/lib/crm-labels';
 
 interface PendingEdit { purified: string; coachHistory: string; deletedItems: string[] }
 
@@ -24,35 +25,82 @@ interface Props {
   onDeleteAi: () => void;
   onEditMemo: (newMemo: string) => Promise<boolean>;
   onDeleteMemo: () => void;
+  /** 미지정 시 한글(기본). */
+  labels?: Partial<CrmLabels>;
+  /** true면 수정·삭제 액션을 감춘다. */
+  readOnly?: boolean;
+  /** true면 링 강조 — 근거 메모로 점프했을 때 시각적으로 짚어준다. */
+  highlighted?: boolean;
+  /**
+   * true면 항목을 아코디언으로 접는다 — 날짜·작성자만 보이고 눌러야 본문이 열린다.
+   * 좁은 화면에서 기록이 수십 건이면 전부 펼친 목록은 스크롤이 감당되지 않는다.
+   * 미지정 시 기존 동작(항상 펼침)이라 /admin/crm 화면은 영향이 없다.
+   */
+  collapsible?: boolean;
 }
 
-export function TimelineEntry({ studentId, adminKey, entry, memoSaving, onEditMemo, onDeleteMemo }: Props) {
+export function TimelineEntry({
+  studentId, adminKey, entry, memoSaving, onEditMemo, onDeleteMemo,
+  labels, readOnly = false, highlighted = false, collapsible = false,
+}: Props) {
+  const L = resolveCrmLabels(labels);
+  const [open, setOpen] = useState(false);
   const [editingMemo, setEditingMemo] = useState(false);
   const [memoValue, setMemoValue] = useState(entry.raw_memo);
-  const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
+  const date = new Date(entry.created_at).toLocaleDateString(L.entryDateLocale, {
     year: 'numeric', month: 'long', day: 'numeric',
   });
   // 저장된 작성자 표기 중 입력 아티팩트(예: "2)이민재")의 앞 번호를 표시할 때만 제거. DB 값은 그대로.
   const authorDisplay = entry.author?.replace(/^\s*\d+\)\s*/, '').trim() || '';
+  // 접이 모드가 아니면 항상 열림. 근거 메모로 점프해 강조된 항목은 강제로 열어준다.
+  const isOpen = !collapsible || open || highlighted;
+  // 접힌 상태에서 무슨 내용인지 짐작할 수 있게 첫 줄만 미리 보여준다.
+  const preview = entry.raw_memo.split('\n')[0];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div
+      id={`entry-${entry.id}`}
+      className={`bg-white rounded-xl border overflow-hidden transition-shadow ${
+        highlighted ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'
+      }`}
+    >
       <div className="px-4 pt-3 pb-3">
-        <div className="flex items-center justify-between mb-1.5">
+        <div
+          className={`flex items-center justify-between mb-1.5 ${collapsible ? 'cursor-pointer' : ''}`}
+          onClick={collapsible ? () => setOpen(v => !v) : undefined}
+        >
           <div className="flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0">
             <span>{date}</span>
             {authorDisplay && (
               <>
                 <span aria-hidden>·</span>
-                <span className="flex items-center gap-0.5 text-gray-500 truncate" title={`상담·작성: ${authorDisplay}`}>
+                <span className="flex items-center gap-0.5 text-gray-500 truncate" title={`${L.entryAuthorTitle}: ${authorDisplay}`}>
                   <User size={10} className="shrink-0" />
                   {authorDisplay}
                 </span>
               </>
             )}
           </div>
+          {collapsible && (
+            <ChevronDown
+              size={14}
+              className={`shrink-0 text-gray-300 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            />
+          )}
         </div>
-        {editingMemo ? (
+
+        {/* 접힌 상태: 첫 줄만 미리보기 */}
+        {collapsible && !isOpen && preview && (
+          <p
+            className="text-[12.5px] text-gray-500 leading-snug overflow-hidden"
+            style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+            onClick={() => setOpen(true)}
+          >
+            {preview}
+          </p>
+        )}
+
+        {collapsible && !isOpen ? null : editingMemo ? (
           <div className="mt-1">
             <textarea
               value={memoValue}
@@ -69,14 +117,14 @@ export function TimelineEntry({ studentId, adminKey, entry, memoSaving, onEditMe
                 disabled={memoSaving}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-xs font-semibold text-white transition-colors"
               >
-                <Check size={12} />{memoSaving ? '저장 중...' : '저장'}
+                <Check size={12} />{memoSaving ? L.entrySaving : L.entrySave}
               </button>
               <button
                 onClick={() => { setMemoValue(entry.raw_memo); setEditingMemo(false); }}
                 disabled={memoSaving}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg transition-colors"
               >
-                <X size={11} />취소
+                <X size={11} />{L.entryCancel}
               </button>
             </div>
           </div>
@@ -87,20 +135,22 @@ export function TimelineEntry({ studentId, adminKey, entry, memoSaving, onEditMe
                 {entry.raw_memo}
               </p>
             )}
-            <div className="mt-1.5 flex items-center gap-3">
-              <button
-                onClick={() => { setMemoValue(entry.raw_memo); setEditingMemo(true); }}
-                className="flex items-center gap-1 text-[11px] text-gray-300 hover:text-gray-500 transition-colors"
-              >
-                <Pencil size={10} />원본 수정
-              </button>
-              <button
-                onClick={onDeleteMemo}
-                className="flex items-center gap-1 text-[11px] text-gray-300 hover:text-red-500 transition-colors"
-              >
-                <Trash2 size={10} />메모 삭제
-              </button>
-            </div>
+            {!readOnly && (
+              <div className="mt-1.5 flex items-center gap-3">
+                <button
+                  onClick={() => { setMemoValue(entry.raw_memo); setEditingMemo(true); }}
+                  className="flex items-center gap-1 text-[11px] text-gray-300 hover:text-gray-500 transition-colors"
+                >
+                  <Pencil size={10} />{L.entryEditMemo}
+                </button>
+                <button
+                  onClick={onDeleteMemo}
+                  className="flex items-center gap-1 text-[11px] text-gray-300 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 size={10} />{L.entryDeleteMemo}
+                </button>
+              </div>
+            )}
           </div>
         )}
         {entry.attachments && entry.attachments.length > 0 && (
