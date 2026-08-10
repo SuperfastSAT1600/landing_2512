@@ -4,8 +4,9 @@ import { randomUUID } from 'crypto';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const { data, error } = await supabaseAdmin
     .from('math_problems')
     .select(`
@@ -14,7 +15,7 @@ export async function GET(
         math_concepts ( id, name, slug )
       )
     `)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('is_active', true)
     .single();
 

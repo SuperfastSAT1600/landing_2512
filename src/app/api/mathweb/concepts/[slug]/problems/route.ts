@@ -3,10 +3,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const requestId = crypto.randomUUID();
-  const { slug } = params;
+  const { slug } = await params;
 
   const { data: concept, error: conceptError } = await supabaseAdmin
     .from('math_concepts')
