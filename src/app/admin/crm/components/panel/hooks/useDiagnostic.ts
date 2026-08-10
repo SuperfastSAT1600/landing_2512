@@ -60,7 +60,9 @@ export function useDiagnostic({ studentId, adminKey, onUpdate }: Params) {
     setDiagLoading(false);
   }
 
-  useEffect(() => { fetchDiagLinked(); }, [studentId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 학생 변경 시 연결 진단 로드 (의도된 페치) — deps는 studentId만
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchDiagLinked(); }, [studentId]);
 
   useEffect(() => {
     if (!showDiagPicker) return;

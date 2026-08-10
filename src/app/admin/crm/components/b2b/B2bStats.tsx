@@ -91,7 +91,8 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const o = data?.overview;
-  const rows = data?.by_company ?? [];
+  // 매 렌더 새 배열 생성을 막아 아래 useMemo들이 불필요하게 재계산되지 않게 한다.
+  const rows = useMemo(() => data?.by_company ?? [], [data]);
   // 업체별 월 트렌드를 월별로 합산 → 매출·리드·결제 시계열. 선택 업체가 있으면 그 업체들만.
   const monthlyTrend = useMemo(() => {
     const src = trendCompanies.size ? rows.filter((r) => trendCompanies.has(r.company_id)) : rows;

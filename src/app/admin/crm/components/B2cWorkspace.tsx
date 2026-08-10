@@ -48,9 +48,12 @@ export function B2cWorkspace({
     setActiveTab('strategies');
   }, []);
 
+  // 정체·팔로업 판정 기준 시각 — 마운트 시 1회 스냅샷(렌더/memo 중 Date.now 호출 방지)
+  const [nowMs] = useState(() => Date.now());
+
   // 오늘 실행(주차 계획 내) 데이터 — 전체 활성 리드 기준
   const followUpStudents = useMemo(() => {
-    const fiveDaysAgo = Date.now() - 5 * 86400000;
+    const fiveDaysAgo = nowMs - 5 * 86400000;
     return students.filter(
       s =>
         s.lead_status === 'active' &&
@@ -58,14 +61,13 @@ export function B2cWorkspace({
         s.last_contacted_at !== null &&
         new Date(s.last_contacted_at).getTime() < fiveDaysAgo
     );
-  }, [students]);
+  }, [students, nowMs]);
 
   const stalledStudents = useMemo(() => {
-    const now = Date.now();
     return students.filter(
-      s => s.lead_status === 'active' && !s.retry_strategy_id && isStageStalled(s, now)
+      s => s.lead_status === 'active' && !s.retry_strategy_id && isStageStalled(s, nowMs)
     );
-  }, [students]);
+  }, [students, nowMs]);
 
   return (
     <div className="px-4 py-4 sm:px-8 sm:py-6">

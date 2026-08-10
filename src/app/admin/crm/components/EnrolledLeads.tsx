@@ -141,6 +141,8 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [refundTarget, setRefundTarget] = useState<Student | null>(null);
 
   useEffect(() => {
+    // 마운트/adminKey 변경 시 페치 — 로딩 플래그 동기 설정(의도된 데이터 페치 패턴)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
 
