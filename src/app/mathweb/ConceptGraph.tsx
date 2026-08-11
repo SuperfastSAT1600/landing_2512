@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Search, X } from 'lucide-react';
+import { Search, X, Maximize2 } from 'lucide-react';
 import type { Problem } from './FlashcardModal';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
+
+const SIDEBAR_W = 240;
 
 interface GraphProblem {
   id: string;
@@ -27,10 +29,11 @@ interface GraphLink {
   conceptSlug: string;
 }
 
-interface ConceptSuggestion {
+interface Concept {
   id: string;
   name: string;
   slug: string;
+  usage_count: number;
 }
 
 interface ConceptGraphProps {
@@ -80,9 +83,10 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
   const [searchConceptSlug, setSearchConceptSlug] = useState<string | null>(null);
   const [clickedConceptSlug, setClickedConceptSlug] = useState<string | null>(null);
   const [allProblems, setAllProblems] = useState<GraphProblem[]>([]);
+  const [allConcepts, setAllConcepts] = useState<Concept[]>([]);
   const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({ nodes: [], links: [] });
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<ConceptSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<Concept[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [isMobile, setIsMobile] = useState(false);
@@ -105,7 +109,9 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
       .then(r => r.json())
       .then(json => {
         const problems: GraphProblem[] = json.data?.problems ?? [];
+        const concepts: Concept[] = json.data?.concepts ?? [];
         setAllProblems(problems);
+        setAllConcepts(concepts);
         setGraphData(buildGraph(problems));
       });
   }, []);
@@ -117,7 +123,6 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
     fgRef.current.d3ReheatSimulation?.();
   }, [graphData]);
 
-  // 검색 개념 선택 → 해당 개념 문제만 필터링
   useEffect(() => {
     setClickedConceptSlug(null);
     if (!searchConceptSlug) {
@@ -130,7 +135,6 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
     }
   }, [searchConceptSlug, allProblems]);
 
-  // 링크 클릭 시 해당 개념 공유 노드 ID 집합
   const highlightedNodeIds = useMemo<Set<string> | null>(() => {
     if (!clickedConceptSlug) return null;
     return new Set(
@@ -152,7 +156,7 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
     }, 200);
   }, []);
 
-  const selectConcept = useCallback((c: ConceptSuggestion) => {
+  const selectConcept = useCallback((c: Concept) => {
     setQuery(c.name);
     setSuggestions([]);
     setShowSuggestions(false);
@@ -164,6 +168,10 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
     setSuggestions([]);
     setShowSuggestions(false);
     setSearchConceptSlug(null);
+  }, []);
+
+  const handleCenter = useCallback(() => {
+    fgRef.current?.zoomToFit(400, 60);
   }, []);
 
   const handleNodeClick = useCallback(async (node: GraphNode) => {
@@ -187,72 +195,121 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
     setClickedConceptSlug(null);
   }, []);
 
+  const graphW = isMobile ? dimensions.width : dimensions.width - SIDEBAR_W;
+
   return (
     <div className="relative w-full h-full bg-[#000000]">
-      {/* 검색바 — 우측 상단 (헤더+LiveStatus 아래) */}
-      <div className="absolute top-24 right-5 z-50 w-72">
-        <div className="relative">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={query}
-            onChange={e => handleQueryChange(e.target.value)}
-            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-            placeholder="개념 검색..."
-            className="w-full pl-10 pr-9 py-3 bg-zinc-900 border border-zinc-600 rounded-2xl text-white text-sm placeholder-zinc-400 focus:outline-none focus:border-[#6085FF] focus:ring-1 focus:ring-[#6085FF]/40 shadow-lg shadow-black/60 transition-all"
-          />
-          {query && (
-            <button onClick={clearSearch} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors">
-              <X size={14} />
+
+      {/* ── 좌측 사이드바 ── */}
+      {!isMobile && (
+        <div
+          className="absolute left-0 z-50 flex flex-col bg-zinc-950/90 backdrop-blur-md border-r border-zinc-800/70 overflow-hidden"
+          style={{ top: 88, bottom: 0, width: SIDEBAR_W }}
+        >
+          {/* 검색 */}
+          <div className="p-3 border-b border-zinc-800/70">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <input
+                type="text"
+                value={query}
+                onChange={e => handleQueryChange(e.target.value)}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                placeholder="개념 검색..."
+                className="w-full pl-9 pr-8 py-2 bg-zinc-900 border border-zinc-700 rounded-xl text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-[#6085FF] focus:ring-1 focus:ring-[#6085FF]/30 transition-all"
+              />
+              {query && (
+                <button onClick={clearSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden shadow-xl">
+                {suggestions.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => selectConcept(s)}
+                    className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors border-b border-zinc-800 last:border-0"
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {searchConceptSlug && (
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-xs text-[#6085FF]">{graphData.nodes.length}개 문제 표시 중</span>
+                <button onClick={clearSearch} className="text-zinc-600 hover:text-zinc-400 transition-colors">
+                  <X size={11} />
+                </button>
+              </div>
+            )}
+
+            {clickedConceptSlug && (
+              <div className="mt-1.5 flex items-center justify-between">
+                <span className="text-xs text-amber-400 truncate pr-1">
+                  {clickedConceptSlug.replace(/-/g, ' ')} — {highlightedNodeIds?.size ?? 0}개
+                </span>
+                <button onClick={() => setClickedConceptSlug(null)} className="text-zinc-600 hover:text-zinc-400 shrink-0">
+                  <X size={11} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 홈 버튼 */}
+          <div className="px-3 py-2.5 border-b border-zinc-800/70">
+            <button
+              onClick={handleCenter}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+            >
+              <Maximize2 size={13} />
+              <span>그래프 전체 보기</span>
             </button>
-          )}
-        </div>
-        {showSuggestions && suggestions.length > 0 && (
-          <div className="mt-1.5 bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden shadow-2xl shadow-black/80">
-            {suggestions.map(s => (
+          </div>
+
+          {/* 난이도 범례 */}
+          <div className="px-3 py-2.5 border-b border-zinc-800/70 flex flex-col gap-1.5">
+            {[
+              { key: 'easy',   label: 'Easy',   color: '#22c55e' },
+              { key: 'medium', label: 'Medium', color: '#f59e0b' },
+              { key: 'hard',   label: 'Hard',   color: '#ef4444' },
+              { key: 'killer', label: 'Killer', color: '#c084fc' },
+            ].map(d => (
+              <div key={d.key} className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                <span className="text-xs text-zinc-500">{d.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* 개념 목록 */}
+          <div className="flex-1 overflow-y-auto">
+            <p className="px-3 pt-3 pb-1.5 text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">
+              개념 목록
+            </p>
+            {allConcepts.map(c => (
               <button
-                key={s.id}
-                onClick={() => selectConcept(s)}
-                className="w-full text-left px-4 py-3 text-sm text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors border-b border-zinc-800 last:border-0"
+                key={c.id}
+                onClick={() => selectConcept(c)}
+                className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                  searchConceptSlug === c.slug
+                    ? 'text-[#6085FF] bg-[#6085FF]/10'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                }`}
               >
-                {s.name}
+                <span className="truncate text-left">{c.name}</span>
+                <span className={`text-[10px] shrink-0 ml-2 ${searchConceptSlug === c.slug ? 'text-[#6085FF]' : 'text-zinc-700'}`}>
+                  {c.usage_count}
+                </span>
               </button>
             ))}
           </div>
-        )}
-        {searchConceptSlug && (
-          <div className="mt-2 px-1">
-            <span className="text-xs font-medium text-[#6085FF] bg-[#6085FF]/15 border border-[#6085FF]/30 rounded-full px-3 py-1">
-              {graphData.nodes.length}개 문제
-            </span>
-          </div>
-        )}
-        {clickedConceptSlug && (
-          <div className="mt-2 px-1 flex items-center gap-2">
-            <span className="text-xs font-medium text-amber-400 bg-amber-400/15 border border-amber-400/30 rounded-full px-3 py-1">
-              {clickedConceptSlug.replace(/-/g, ' ')} — {highlightedNodeIds?.size ?? 0}개 강조
-            </span>
-            <button onClick={() => setClickedConceptSlug(null)} className="text-zinc-600 hover:text-zinc-300 transition-colors">
-              <X size={12} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* 난이도 범례 — 좌측 하단 (FloatingCTA 위) */}
-      <div className="absolute bottom-40 left-4 z-10 flex flex-col gap-1.5">
-        {[
-          { key: 'easy',   label: 'Easy',   color: '#22c55e' },
-          { key: 'medium', label: 'Medium', color: '#f59e0b' },
-          { key: 'hard',   label: 'Hard',   color: '#ef4444' },
-          { key: 'killer', label: 'Killer', color: '#c084fc' },
-        ].map(d => (
-          <div key={d.key} className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
-            <span className="text-xs text-gray-500">{d.label}</span>
-          </div>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Mobile fallback */}
       {isMobile ? (
@@ -268,79 +325,81 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
           ))}
         </div>
       ) : (
-        <ForceGraph2D
-          graphData={graphData as never}
-          width={dimensions.width}
-          height={dimensions.height}
-          backgroundColor="#000000"
-          nodeLabel={() => ''}
-          linkLabel={(link) => (link as unknown as GraphLink).conceptName}
-          linkDirectionalArrowLength={0}
-          ref={fgRef}
-          d3AlphaDecay={0.015}
-          d3VelocityDecay={0.25}
-          warmupTicks={60}
-          onNodeClick={(node) => handleNodeClick(node as unknown as GraphNode)}
-          onLinkClick={(link) => handleLinkClick(link as unknown as GraphLink)}
-          onBackgroundClick={handleBackgroundClick}
-          nodeCanvasObject={(node, ctx) => {
-            const n = node as unknown as GraphNode & { x: number; y: number };
-            if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) return;
-            const style = getDifficultyStyle(n.problem.difficulty ?? null);
-            const isDimmed = highlightedNodeIds !== null && !highlightedNodeIds.has(n.id);
+        <div className="absolute top-0 right-0 bottom-0" style={{ left: SIDEBAR_W }}>
+          <ForceGraph2D
+            graphData={graphData as never}
+            width={graphW}
+            height={dimensions.height}
+            backgroundColor="#000000"
+            nodeLabel={() => ''}
+            linkLabel={(link) => (link as unknown as GraphLink).conceptName}
+            linkDirectionalArrowLength={0}
+            ref={fgRef}
+            d3AlphaDecay={0.015}
+            d3VelocityDecay={0.25}
+            warmupTicks={60}
+            onNodeClick={(node) => handleNodeClick(node as unknown as GraphNode)}
+            onLinkClick={(link) => handleLinkClick(link as unknown as GraphLink)}
+            onBackgroundClick={handleBackgroundClick}
+            nodeCanvasObject={(node, ctx) => {
+              const n = node as unknown as GraphNode & { x: number; y: number };
+              if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) return;
+              const style = getDifficultyStyle(n.problem.difficulty ?? null);
+              const isDimmed = highlightedNodeIds !== null && !highlightedNodeIds.has(n.id);
 
-            ctx.globalAlpha = isDimmed ? 0.1 : 1;
+              ctx.globalAlpha = isDimmed ? 0.1 : 1;
 
-            const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, 10);
-            glow.addColorStop(0, style.glow);
-            glow.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.beginPath();
-            ctx.arc(n.x, n.y, 10, 0, 2 * Math.PI);
-            ctx.fillStyle = glow;
-            ctx.fill();
+              const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, 10);
+              glow.addColorStop(0, style.glow);
+              glow.addColorStop(1, 'rgba(0,0,0,0)');
+              ctx.beginPath();
+              ctx.arc(n.x, n.y, 10, 0, 2 * Math.PI);
+              ctx.fillStyle = glow;
+              ctx.fill();
 
-            ctx.beginPath();
-            ctx.arc(n.x, n.y, 3, 0, 2 * Math.PI);
-            ctx.fillStyle = style.dot;
-            ctx.fill();
+              ctx.beginPath();
+              ctx.arc(n.x, n.y, 3, 0, 2 * Math.PI);
+              ctx.fillStyle = style.dot;
+              ctx.fill();
 
-            ctx.beginPath();
-            ctx.arc(n.x, n.y, 1.1, 0, 2 * Math.PI);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
+              ctx.beginPath();
+              ctx.arc(n.x, n.y, 1.1, 0, 2 * Math.PI);
+              ctx.fillStyle = '#fff';
+              ctx.fill();
 
-            ctx.globalAlpha = 1;
-          }}
-          nodeCanvasObjectMode={() => 'replace'}
-          linkCanvasObject={(link, ctx) => {
-            const l = link as unknown as GraphLink & { source: { x: number; y: number }; target: { x: number; y: number } };
-            if (!l.source?.x || !l.target?.x) return;
+              ctx.globalAlpha = 1;
+            }}
+            nodeCanvasObjectMode={() => 'replace'}
+            linkCanvasObject={(link, ctx) => {
+              const l = link as unknown as GraphLink & { source: { x: number; y: number }; target: { x: number; y: number } };
+              if (!l.source?.x || !l.target?.x) return;
 
-            const isHighlighted = clickedConceptSlug === l.conceptSlug;
-            const isDimmed = clickedConceptSlug !== null && !isHighlighted;
+              const isHighlighted = clickedConceptSlug === l.conceptSlug;
+              const isDimmed = clickedConceptSlug !== null && !isHighlighted;
 
-            ctx.beginPath();
-            ctx.moveTo(l.source.x, l.source.y);
-            ctx.lineTo(l.target.x, l.target.y);
-            ctx.strokeStyle = isDimmed
-              ? 'rgba(96,133,255,0.04)'
-              : isHighlighted
-                ? 'rgba(96,133,255,0.9)'
-                : 'rgba(96,133,255,0.22)';
-            ctx.lineWidth = isHighlighted ? 1.5 : 0.5;
-            ctx.stroke();
-
-            if (!isDimmed && !isHighlighted) {
               ctx.beginPath();
               ctx.moveTo(l.source.x, l.source.y);
               ctx.lineTo(l.target.x, l.target.y);
-              ctx.strokeStyle = 'rgba(165,180,252,0.07)';
-              ctx.lineWidth = 2;
+              ctx.strokeStyle = isDimmed
+                ? 'rgba(96,133,255,0.04)'
+                : isHighlighted
+                  ? 'rgba(96,133,255,0.9)'
+                  : 'rgba(96,133,255,0.22)';
+              ctx.lineWidth = isHighlighted ? 1.5 : 0.5;
               ctx.stroke();
-            }
-          }}
-          linkCanvasObjectMode={() => 'replace'}
-        />
+
+              if (!isDimmed && !isHighlighted) {
+                ctx.beginPath();
+                ctx.moveTo(l.source.x, l.source.y);
+                ctx.lineTo(l.target.x, l.target.y);
+                ctx.strokeStyle = 'rgba(165,180,252,0.07)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+              }
+            }}
+            linkCanvasObjectMode={() => 'replace'}
+          />
+        </div>
       )}
     </div>
   );
