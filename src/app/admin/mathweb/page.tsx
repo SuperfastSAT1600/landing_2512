@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { ConceptAutocompleteInput } from './ConceptAutocompleteInput';
 import { ProblemTable } from './ProblemTable';
 import { ImagePasteZone } from './ImagePasteZone';
+import { ConceptManager } from './ConceptManager';
 
 interface Problem {
   id: string;
@@ -174,6 +175,9 @@ export default function MathWebAdminPage() {
             <ProblemTable problems={problems} adminKey={adminKey} onRefresh={() => fetchProblems(adminKey)} />
           )}
         </div>
+
+        {/* 개념 관리 */}
+        <ConceptManager adminKey={adminKey} />
       </div>
     </div>
   );
