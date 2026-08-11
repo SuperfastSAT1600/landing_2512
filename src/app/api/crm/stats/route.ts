@@ -109,12 +109,13 @@ export async function GET(request: NextRequest) {
       .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
       .gte('paid_at', `${from}T00:00:00+09:00`)
       .lte('paid_at', `${to}T23:59:59.999+09:00`),
-    // 결제 전환율(코호트): 인입 리드가 '언제든' 최초결제했는지. ₩1은 센터형 파트너 placeholder(실전환, amount>0 포함).
+    // 결제 전환율(코호트): 인입 리드가 '언제든' 최초결제했는지.
+    // 0원 가결제·₩1 placeholder도 실전환으로 포함(환불만 제외).
     supabaseAdmin
       .from('payments')
       .select('student_id, student_name')
       .eq('payment_type', '최초결제')
-      .gt('amount', 0),
+      .gte('amount', 0),
   ]);
   const { data: students, error: sErr } = studentsRes;
 

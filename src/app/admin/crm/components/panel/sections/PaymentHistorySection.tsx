@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { Payment, Student } from '@/types/crm';
 import { SectionCard } from './SectionCard';
 import { PaymentModal } from '../../PaymentModal';
+import { PaymentHistoryRow, type PaymentEdits } from './PaymentHistoryRow';
 
 interface Props {
   student: Student;
@@ -14,10 +15,6 @@ interface Props {
 
 function formatAmount(n: number) {
   return '₩' + n.toLocaleString('ko-KR');
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Props) {
@@ -57,6 +54,24 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
       alert('결제 유형 변경에 실패했습니다.');
     }
     setSavingType(null);
+  }
+
+  // 금액·시간 수정 — 가결제(0원)를 실입금액으로 보정할 때 쓴다.
+  async function handleSaveEdits(id: string, edits: PaymentEdits): Promise<boolean> {
+    const prev = payments;
+    setPayments(ps => ps.map(p => (p.id === id ? { ...p, ...edits } : p)));
+    const res = await fetch(`/api/crm/payments/${id}`, {
+      method: 'PATCH',
+      headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify(edits),
+    });
+    if (!res.ok) {
+      setPayments(prev); // 롤백
+      const json = await res.json().catch(() => null);
+      alert(json?.error ?? '결제 수정에 실패했습니다.');
+      return false;
+    }
+    return true;
   }
 
   const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
@@ -103,59 +118,17 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
               <span className="text-sm font-semibold text-gray-800">{formatAmount(totalAmount)}</span>
             </div>
 
-            {sorted.map(p => {
-              const isRefund = p.payment_type === '환불';
-              const type = p.payment_type ?? '최초결제';
-              const typeColor = type === '최초결제'
-                ? 'bg-blue-100 text-blue-700'
-                : type === '재결제'
-                ? 'bg-gray-100 text-gray-500'
-                : 'bg-violet-100 text-violet-700'; // 원포인트
-              return (
-                <div key={p.id} className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      {isRefund ? (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">환불</span>
-                      ) : (
-                        <select
-                          value={type}
-                          disabled={savingType === p.id}
-                          onChange={(e) => handleTypeChange(p.id, e.target.value)}
-                          title="결제 유형 (통계 반영) — 변경하려면 선택"
-                          className={`text-[10px] font-semibold pl-1.5 pr-0.5 py-0.5 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-400 ${typeColor} disabled:opacity-50`}
-                        >
-                          <option value="최초결제">최초결제</option>
-                          <option value="재결제">재결제</option>
-                          {type === '원포인트' && <option value="원포인트">원포인트</option>}
-                        </select>
-                      )}
-                      <span className="text-[11px] text-gray-400">{formatDate(p.paid_at)}</span>
-                    </div>
-                    <p className="text-[13px] text-gray-700 font-medium truncate">{p.product}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-[13px] font-semibold ${isRefund ? 'text-red-500' : 'text-gray-900'}`}>
-                        {isRefund ? `-${formatAmount(-p.amount)}` : formatAmount(p.amount)}
-                      </span>
-                      {!isRefund && <span className="text-[11px] text-gray-400">{p.tax_type}</span>}
-                      {p.hours && (
-                        <span className="text-[11px] text-gray-400">{p.hours}시간</span>
-                      )}
-                    </div>
-                    {p.notes && (
-                      <p className="text-[11px] text-gray-400 mt-0.5">{p.notes}</p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleDelete(p.id)}
-                    disabled={deleting === p.id}
-                    className="shrink-0 mt-1 text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              );
-            })}
+            {sorted.map(p => (
+              <PaymentHistoryRow
+                key={p.id}
+                payment={p}
+                savingType={savingType}
+                deleting={deleting === p.id}
+                onTypeChange={handleTypeChange}
+                onDelete={handleDelete}
+                onSave={handleSaveEdits}
+              />
+            ))}
           </div>
         )}
       </SectionCard>
