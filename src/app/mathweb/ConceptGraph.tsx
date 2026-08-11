@@ -68,6 +68,8 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [isMobile, setIsMobile] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fgRef = useRef<any>(null);
 
   useEffect(() => {
     const update = () => {
@@ -88,6 +90,14 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
         setGraphData(buildGraph(problems));
       });
   }, []);
+
+  // 그래프 데이터 변경 시 force 재설정 (노드를 넓게 퍼뜨려 거미줄 형태 유지)
+  useEffect(() => {
+    if (!fgRef.current) return;
+    fgRef.current.d3Force('charge')?.strength(-280);
+    fgRef.current.d3Force('link')?.distance(110);
+    fgRef.current.d3ReheatSimulation?.();
+  }, [graphData]);
 
   // 개념 선택 시 해당 개념이 태깅된 문제들만 필터링
   useEffect(() => {
@@ -126,10 +136,6 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
     setShowSuggestions(false);
     onConceptChange(null);
   }, [onConceptChange]);
-
-  const nodeColor = useCallback((_node: GraphNode) => '#6085FF', []);
-  const linkColor = useCallback((_link: GraphLink) => 'rgba(96,133,255,0.3)', []);
-  const linkWidth = useCallback((_link: GraphLink) => 1, []);
 
   const handleNodeClick = useCallback(async (node: GraphNode) => {
     try {
@@ -212,25 +218,54 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
           backgroundColor="#000000"
           nodeLabel={(node) => (node as unknown as GraphNode).label}
           linkLabel={(link) => (link as unknown as GraphLink).conceptName}
-          nodeColor={(node) => nodeColor(node as unknown as GraphNode)}
-          linkColor={(link) => linkColor(link as unknown as GraphLink)}
-          linkWidth={(link) => linkWidth(link as unknown as GraphLink)}
           linkDirectionalArrowLength={0}
+          linkColor={() => 'rgba(96,133,255,0.18)'}
+          linkWidth={0.6}
+          ref={fgRef}
+          d3AlphaDecay={0.015}
+          d3VelocityDecay={0.25}
+          warmupTicks={60}
           onNodeClick={(node) => handleNodeClick(node as unknown as GraphNode)}
-          nodeCanvasObject={(node, ctx, globalScale) => {
+          nodeCanvasObject={(node, ctx) => {
             const n = node as unknown as GraphNode & { x: number; y: number };
-            const r = 8;
+            // 외부 글로우
+            const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, 10);
+            glow.addColorStop(0, 'rgba(96,133,255,0.35)');
+            glow.addColorStop(1, 'rgba(96,133,255,0)');
             ctx.beginPath();
-            ctx.arc(n.x, n.y, r, 0, 2 * Math.PI);
-            ctx.fillStyle = nodeColor(n);
+            ctx.arc(n.x, n.y, 10, 0, 2 * Math.PI);
+            ctx.fillStyle = glow;
             ctx.fill();
-            if (globalScale > 1.5) {
-              ctx.font = `${10 / globalScale}px sans-serif`;
-              ctx.fillStyle = 'rgba(255,255,255,0.7)';
-              ctx.textAlign = 'center';
-              ctx.fillText(n.label, n.x, n.y + r + 10 / globalScale);
-            }
+            // 중심 점 (이슬방울)
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 3, 0, 2 * Math.PI);
+            ctx.fillStyle = '#a5b4fc';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 1.2, 0, 2 * Math.PI);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
           }}
+          nodeCanvasObjectMode={() => 'replace'}
+          linkCanvasObject={(link, ctx) => {
+            const l = link as unknown as GraphLink & { source: { x: number; y: number }; target: { x: number; y: number } };
+            if (!l.source?.x || !l.target?.x) return;
+            // 실 본체
+            ctx.beginPath();
+            ctx.moveTo(l.source.x, l.source.y);
+            ctx.lineTo(l.target.x, l.target.y);
+            ctx.strokeStyle = 'rgba(96,133,255,0.22)';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            // 미세한 글로우 레이어
+            ctx.beginPath();
+            ctx.moveTo(l.source.x, l.source.y);
+            ctx.lineTo(l.target.x, l.target.y);
+            ctx.strokeStyle = 'rgba(165,180,252,0.07)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }}
+          linkCanvasObjectMode={() => 'replace'}
         />
       )}
     </div>
