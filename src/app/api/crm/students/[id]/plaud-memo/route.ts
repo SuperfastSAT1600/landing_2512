@@ -5,6 +5,7 @@ import { QuotaExhaustedError } from '@/lib/plaud-transcribe';
 import { AsrFailedError } from '@/lib/qwen-asr';
 import { getPlaudFile, getAccountLabel } from '@/lib/plaud-client';
 import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultation-timeline';
+import { notifyMemoToSlack, PLAUD_MEMO_HEADING } from '@/lib/slack-memo';
 
 // 전사 작업 폴링(상한 240s)에 시간이 걸릴 수 있어 서버리스 실행 한도를 늘린다.
 export const maxDuration = 300;
@@ -96,6 +97,18 @@ export async function POST(
     // account_key가 있으면 그 계정 소유자를 상담자(author)로 기록(누가 통화했는지 추적).
     const author = accountKey ? getAccountLabel(accountKey) : undefined;
     const entry = await appendConsultationEntry(id, { raw_memo, author, published: false });
+
+    // 직접 작성 메모와 동일하게 슬랙 상담 채널에 공유 (실패해도 메모는 이미 저장됨)
+    try {
+      await notifyMemoToSlack({
+        studentId: id,
+        author,
+        heading: PLAUD_MEMO_HEADING,
+        memo: meta ? `_${meta}_\n\n${summary}` : summary,
+      });
+    } catch (e) {
+      console.error('[crm/plaud-memo slack]', e);
+    }
 
     return NextResponse.json({ data: { entry, summary } }, { status: 201 });
   } catch (e) {
