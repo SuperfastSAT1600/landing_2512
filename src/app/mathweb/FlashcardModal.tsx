@@ -70,6 +70,7 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
             className="absolute inset-0 bg-[#09090b] border border-white/10 rounded-2xl overflow-hidden flex flex-col"
             style={{ backfaceVisibility: 'hidden' }}
           >
+            <p className="text-gray-600 text-xs text-center py-2 border-b border-white/5 shrink-0">탭하여 답 보기</p>
             <div className="flex-1 relative overflow-y-auto">
               {problem.question_image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -122,7 +123,6 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
                 ))}
               </div>
               {problem.memo && <p className="text-gray-500 text-xs">{problem.memo}</p>}
-              <p className="text-gray-600 text-xs text-center">탭하여 답 보기</p>
             </div>
           </div>
 
