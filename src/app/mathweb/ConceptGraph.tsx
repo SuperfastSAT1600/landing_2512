@@ -271,21 +271,6 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
             </button>
           </div>
 
-          {/* 난이도 범례 */}
-          <div className="px-3 py-2.5 border-b border-zinc-800/70 flex flex-col gap-1.5">
-            {[
-              { key: 'easy',   label: 'Easy',   color: '#22c55e' },
-              { key: 'medium', label: 'Medium', color: '#f59e0b' },
-              { key: 'hard',   label: 'Hard',   color: '#ef4444' },
-              { key: 'killer', label: 'Killer', color: '#c084fc' },
-            ].map(d => (
-              <div key={d.key} className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                <span className="text-xs text-zinc-500">{d.label}</span>
-              </div>
-            ))}
-          </div>
-
           {/* 개념 목록 */}
           <div className="flex-1 overflow-y-auto">
             <p className="px-3 pt-3 pb-1.5 text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">
@@ -326,6 +311,20 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
         </div>
       ) : (
         <div className="absolute top-0 right-0 bottom-0" style={{ left: SIDEBAR_W }}>
+          {/* 난이도 범례 — 그래프 우측 상단 (Live Status 아래) */}
+          <div className="absolute right-4 z-10 flex flex-col gap-1.5 bg-black/40 backdrop-blur-sm rounded-xl px-3 py-2.5 border border-zinc-800/50" style={{ top: 96 }}>
+            {[
+              { key: 'easy',   label: 'Easy',   color: '#22c55e' },
+              { key: 'medium', label: 'Medium', color: '#f59e0b' },
+              { key: 'hard',   label: 'Hard',   color: '#ef4444' },
+              { key: 'killer', label: 'Killer', color: '#c084fc' },
+            ].map(d => (
+              <div key={d.key} className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                <span className="text-xs text-zinc-500">{d.label}</span>
+              </div>
+            ))}
+          </div>
           <ForceGraph2D
             graphData={graphData as never}
             width={graphW}

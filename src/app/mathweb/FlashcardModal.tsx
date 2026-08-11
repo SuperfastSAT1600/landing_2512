@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { MathHtmlBlock } from './MathHtmlBlock';
 
 export interface Option {
   label: string;
@@ -53,7 +54,7 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className="relative" style={{ perspective: '1200px', width: '90vw', maxWidth: 640, height: '80vh', maxHeight: 700 }}>
+      <div className="relative" style={{ perspective: '1200px', width: '72vw', maxWidth: 520, height: '65vh', maxHeight: 560 }}>
         {/* Flip container */}
         <div
           className="w-full h-full cursor-pointer"
@@ -80,9 +81,9 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
                 />
               ) : problem.question_html ? (
                 <div className="p-6 space-y-4">
-                  <div
+                  <MathHtmlBlock
+                    html={problem.question_html}
                     className="text-white text-sm leading-relaxed mathweb-html"
-                    dangerouslySetInnerHTML={{ __html: problem.question_html }}
                   />
                   {problem.options_json && problem.options_json.length > 0 && (
                     <ol className="space-y-2 mt-4">
@@ -91,9 +92,9 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
                           <span className="shrink-0 w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-xs text-gray-400">
                             {opt.label}
                           </span>
-                          <span
+                          <MathHtmlBlock
+                            html={opt.text}
                             className="mathweb-html"
-                            dangerouslySetInnerHTML={{ __html: opt.text }}
                           />
                         </li>
                       ))}
