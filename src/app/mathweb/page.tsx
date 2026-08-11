@@ -8,7 +8,6 @@ import { FlashcardModal, type Problem } from './FlashcardModal';
 export default function MathWebPage() {
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
   const [flipped, setFlipped] = useState(false);
-  const [highlightSlug, setHighlightSlug] = useState<string | null>(null);
 
   const handleNodeClick = useCallback((problem: Problem) => {
     setSelectedProblem(problem);
@@ -25,11 +24,7 @@ export default function MathWebPage() {
   return (
     <AccessGate>
       <main className="fixed inset-0 bg-[#000000]">
-        <ConceptGraph
-          onNodeClick={handleNodeClick}
-          highlightConceptSlug={highlightSlug}
-          onConceptChange={setHighlightSlug}
-        />
+        <ConceptGraph onNodeClick={handleNodeClick} />
         <FlashcardModal
           problem={selectedProblem}
           flipped={flipped}

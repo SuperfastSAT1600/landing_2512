@@ -34,8 +34,6 @@ interface ConceptSuggestion {
 
 interface ConceptGraphProps {
   onNodeClick: (problem: Problem) => void;
-  highlightConceptSlug: string | null;
-  onConceptChange: (slug: string | null) => void;
 }
 
 function buildGraph(problems: GraphProblem[]): { nodes: GraphNode[]; links: GraphLink[] } {
@@ -59,20 +57,26 @@ function buildGraph(problems: GraphProblem[]): { nodes: GraphNode[]; links: Grap
   return { nodes, links };
 }
 
-export function ConceptGraph({ onNodeClick, highlightConceptSlug, onConceptChange }: ConceptGraphProps) {
+export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
+  const [highlightConceptSlug, setHighlightConceptSlug] = useState<string | null>(null);
+  const onConceptChange = setHighlightConceptSlug;
+  const [allProblems, setAllProblems] = useState<GraphProblem[]>([]);
   const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({ nodes: [], links: [] });
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<ConceptSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [isMobile, setIsMobile] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMobile = graphData.nodes.length > 20 && typeof window !== 'undefined' && window.innerWidth < 768;
 
   useEffect(() => {
-    setDimensions({ width: window.innerWidth, height: window.innerHeight - 120 });
-    const onResize = () => setDimensions({ width: window.innerWidth, height: window.innerHeight - 120 });
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    const update = () => {
+      setDimensions({ width: window.innerWidth, height: window.innerHeight - 120 });
+      setIsMobile(window.innerWidth < 768);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, []);
 
   useEffect(() => {
@@ -80,9 +84,22 @@ export function ConceptGraph({ onNodeClick, highlightConceptSlug, onConceptChang
       .then(r => r.json())
       .then(json => {
         const problems: GraphProblem[] = json.data?.problems ?? [];
+        setAllProblems(problems);
         setGraphData(buildGraph(problems));
       });
   }, []);
+
+  // 개념 선택 시 해당 개념이 태깅된 문제들만 필터링
+  useEffect(() => {
+    if (!highlightConceptSlug) {
+      setGraphData(buildGraph(allProblems));
+    } else {
+      const filtered = allProblems.filter(p =>
+        p.concepts.some(c => c.slug === highlightConceptSlug)
+      );
+      setGraphData(buildGraph(filtered));
+    }
+  }, [highlightConceptSlug, allProblems]);
 
   const handleQueryChange = useCallback((val: string) => {
     setQuery(val);
@@ -110,24 +127,9 @@ export function ConceptGraph({ onNodeClick, highlightConceptSlug, onConceptChang
     onConceptChange(null);
   }, [onConceptChange]);
 
-  const nodeColor = useCallback((node: GraphNode) => {
-    if (!highlightConceptSlug) return '#6085FF';
-    const linked = graphData.links.some(
-      l => l.conceptSlug === highlightConceptSlug &&
-        ((l.source as unknown as GraphNode).id === node.id || (l.target as unknown as GraphNode).id === node.id)
-    );
-    return linked ? '#071be9' : '#333';
-  }, [highlightConceptSlug, graphData.links]);
-
-  const linkColor = useCallback((link: GraphLink) => {
-    if (!highlightConceptSlug) return 'rgba(96,133,255,0.3)';
-    return link.conceptSlug === highlightConceptSlug ? 'rgba(7,27,233,0.8)' : 'rgba(60,60,60,0.2)';
-  }, [highlightConceptSlug]);
-
-  const linkWidth = useCallback((link: GraphLink) => {
-    if (!highlightConceptSlug) return 1;
-    return link.conceptSlug === highlightConceptSlug ? 2 : 0.5;
-  }, [highlightConceptSlug]);
+  const nodeColor = useCallback((_node: GraphNode) => '#6085FF', []);
+  const linkColor = useCallback((_link: GraphLink) => 'rgba(96,133,255,0.3)', []);
+  const linkWidth = useCallback((_link: GraphLink) => 1, []);
 
   const handleNodeClick = useCallback(async (node: GraphNode) => {
     try {
@@ -173,20 +175,34 @@ export function ConceptGraph({ onNodeClick, highlightConceptSlug, onConceptChang
             ))}
           </div>
         )}
+        {highlightConceptSlug && (
+          <div className="mt-2 flex items-center gap-2 px-1">
+            <span className="text-xs text-[#6085FF] bg-[#6085FF]/10 border border-[#6085FF]/20 rounded-full px-3 py-1">
+              {graphData.nodes.length}개 문제
+            </span>
+            {graphData.nodes.length === 0 && (
+              <span className="text-xs text-gray-500">등록된 문제가 없어요</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Mobile fallback: card list */}
       {isMobile ? (
-        <div className="pt-16 px-4 overflow-y-auto h-full space-y-3">
-          {graphData.nodes.map(node => (
-            <button
-              key={node.id}
-              onClick={() => handleNodeClick(node)}
-              className="w-full text-left p-4 bg-[#09090b] border border-white/5 rounded-xl text-white text-sm hover:border-[#071be9]/50 transition-colors"
-            >
-              {node.label}
-            </button>
-          ))}
+        <div className="pt-20 px-4 overflow-y-auto h-full space-y-3">
+          {graphData.nodes.length === 0 && highlightConceptSlug ? (
+            <p className="text-center text-gray-600 text-sm pt-12">이 개념으로 등록된 문제가 없어요.</p>
+          ) : (
+            graphData.nodes.map(node => (
+              <button
+                key={node.id}
+                onClick={() => handleNodeClick(node)}
+                className="w-full text-left p-4 bg-[#09090b] border border-white/5 rounded-xl text-white text-sm hover:border-[#071be9]/50 transition-colors"
+              >
+                {node.label}
+              </button>
+            ))
+          )}
         </div>
       ) : (
         <ForceGraph2D
