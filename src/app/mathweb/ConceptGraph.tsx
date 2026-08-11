@@ -204,7 +204,7 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
   const graphW = isMobile ? dimensions.width : dimensions.width - SIDEBAR_W;
 
   return (
-    <div className="relative w-full h-full bg-[#000000]">
+    <div className="relative w-full h-full" style={{ background: 'radial-gradient(ellipse at 60% 40%, #0a0a1a 0%, #000000 70%)' }}>
 
       {/* ── 좌측 사이드바 ── */}
       {!isMobile && (
@@ -364,7 +364,7 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
             graphData={graphData as never}
             width={graphW}
             height={dimensions.height}
-            backgroundColor="#000000"
+            backgroundColor="transparent"
             nodeLabel={() => ''}
             linkLabel={(link) => (link as unknown as GraphLink).conceptName}
             linkDirectionalArrowLength={0}
