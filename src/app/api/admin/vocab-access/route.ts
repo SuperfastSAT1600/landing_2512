@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('vocab_access_codes')
-    .select('id, instagram_id, code, is_active, created_at, first_used_at')
+    .select('id, instagram_id, code, is_active, scope, created_at, first_used_at')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -31,18 +31,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { instagram_id } = await req.json() as { instagram_id?: string };
-  if (!instagram_id?.trim()) {
+  const body = await req.json() as { instagram_id?: string; scope?: string };
+  if (!body.instagram_id?.trim()) {
     return NextResponse.json({ error: 'instagram_id is required' }, { status: 400 });
   }
 
-  const normalized = instagram_id.trim().replace(/^@/, '').toLowerCase();
+  const normalized = body.instagram_id.trim().replace(/^@/, '').toLowerCase();
+  const scope = ['vocab', 'mathweb', 'both'].includes(body.scope ?? '') ? body.scope : 'vocab';
   const code = generateCode();
 
   const { data, error } = await supabaseAdmin
     .from('vocab_access_codes')
-    .insert({ instagram_id: normalized, code })
-    .select('id, instagram_id, code')
+    .insert({ instagram_id: normalized, code, scope })
+    .select('id, instagram_id, code, scope')
     .single();
 
   if (error) {

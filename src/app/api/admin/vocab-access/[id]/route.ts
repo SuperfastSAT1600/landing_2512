@@ -11,11 +11,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const { id } = await params;
-  const { is_active } = await req.json() as { is_active?: boolean };
+  const body = await req.json() as { is_active?: boolean; scope?: string };
+  const updates: Record<string, unknown> = {};
+  if (body.is_active !== undefined) updates.is_active = body.is_active;
+  if (body.scope !== undefined && ['vocab', 'mathweb', 'both'].includes(body.scope)) updates.scope = body.scope;
 
   const { error } = await supabaseAdmin
     .from('vocab_access_codes')
-    .update({ is_active })
+    .update(updates)
     .eq('id', id);
 
   if (error) {
