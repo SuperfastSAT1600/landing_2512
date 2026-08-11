@@ -8,7 +8,7 @@ export async function GET() {
     supabaseAdmin
       .from('math_problems')
       .select(`
-        id, title, created_at,
+        id, title, difficulty, created_at,
         math_problem_concepts(
           math_concepts(id, name, slug)
         )
@@ -29,9 +29,11 @@ export async function GET() {
     );
   }
 
-  const problems = (problemsResult.data ?? []).map((p) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const problems = (problemsResult.data ?? []).map((p: any) => ({
     id: p.id,
     title: p.title,
+    difficulty: p.difficulty ?? null,
     created_at: p.created_at,
     concepts: ((p.math_problem_concepts ?? []) as unknown as { math_concepts: { id: string; name: string; slug: string } | null }[])
       .map((c) => c.math_concepts)

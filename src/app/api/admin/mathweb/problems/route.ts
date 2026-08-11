@@ -75,6 +75,9 @@ export async function POST(req: NextRequest) {
   const memo = (formData.get('memo') as string | null) ?? undefined;
   const title = (formData.get('title') as string | null) ?? undefined;
   const answerText = (formData.get('answer_text') as string | null) ?? undefined;
+  const difficultyRaw = formData.get('difficulty') as string | null;
+  const difficulty = difficultyRaw && ['easy', 'medium', 'hard', 'killer'].includes(difficultyRaw)
+    ? difficultyRaw : null;
   const conceptsRaw = formData.get('concepts') as string | null;
 
   if (!questionImage) {
@@ -109,7 +112,7 @@ export async function POST(req: NextRequest) {
 
   const { data: problem, error: insertErr } = await supabaseAdmin
     .from('math_problems')
-    .insert({ id: problemId, title, question_image_url: questionUrl, answer_image_url: answerUrl, answer_text: answerText ?? null, memo })
+    .insert({ id: problemId, title, difficulty, question_image_url: questionUrl, answer_image_url: answerUrl, answer_text: answerText ?? null, memo })
     .select('id, question_image_url, answer_image_url, answer_text')
     .single();
 

@@ -544,6 +544,10 @@ a {
   }
 }
 
+/* ── mathweb: HTML 문제 렌더링 ─────────────────────────────────────── */
+.mathweb-html p { margin-bottom: 0.75rem; line-height: 1.7; }
+.mathweb-html p:last-child { margin-bottom: 0; }
+
 /* ── enrollment-v2: header fade when exam selected ─────────────────── */
 .enrollment-v2 header {
   transition: opacity 0.45s ease, transform 0.45s ease;

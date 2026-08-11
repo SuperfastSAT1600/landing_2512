@@ -3,15 +3,30 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
+export interface Option {
+  label: string;
+  text: string;
+}
+
 export interface Problem {
   id: string;
   title: string | null;
-  question_image_url: string;
+  question_image_url: string | null;
+  question_html: string | null;
+  options_json: Option[] | null;
   answer_image_url: string | null;
   answer_text: string | null;
   memo: string | null;
+  difficulty: string | null;
   concepts: { id: string; name: string; slug: string }[];
 }
+
+const DIFFICULTY_LABEL: Record<string, { label: string; color: string }> = {
+  easy:   { label: 'Easy',   color: '#22c55e' },
+  medium: { label: 'Medium', color: '#f59e0b' },
+  hard:   { label: 'Hard',   color: '#ef4444' },
+  killer: { label: 'Killer', color: '#c084fc' },
+};
 
 interface FlashcardModalProps {
   problem: Problem | null;
@@ -54,22 +69,58 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
             className="absolute inset-0 bg-[#09090b] border border-white/10 rounded-2xl overflow-hidden flex flex-col"
             style={{ backfaceVisibility: 'hidden' }}
           >
-            <div className="flex-1 relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={problem.question_image_url}
-                alt="문제"
-                className="w-full h-full object-contain"
-                loading="lazy"
-              />
+            <div className="flex-1 relative overflow-y-auto">
+              {problem.question_image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={problem.question_image_url}
+                  alt="문제"
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+                />
+              ) : problem.question_html ? (
+                <div className="p-6 space-y-4">
+                  <div
+                    className="text-white text-sm leading-relaxed mathweb-html"
+                    dangerouslySetInnerHTML={{ __html: problem.question_html }}
+                  />
+                  {problem.options_json && problem.options_json.length > 0 && (
+                    <ol className="space-y-2 mt-4">
+                      {problem.options_json.map((opt) => (
+                        <li key={opt.label} className="flex gap-3 text-sm text-gray-300">
+                          <span className="shrink-0 w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-xs text-gray-400">
+                            {opt.label}
+                          </span>
+                          <span
+                            className="mathweb-html"
+                            dangerouslySetInnerHTML={{ __html: opt.text }}
+                          />
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              ) : null}
             </div>
             <div className="p-4 border-t border-white/5 space-y-2">
-              {problem.memo && <p className="text-gray-400 text-sm">{problem.memo}</p>}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {problem.difficulty && DIFFICULTY_LABEL[problem.difficulty] && (
+                  <span
+                    className="px-2 py-1 text-xs rounded-full font-medium"
+                    style={{
+                      color: DIFFICULTY_LABEL[problem.difficulty].color,
+                      backgroundColor: DIFFICULTY_LABEL[problem.difficulty].color + '18',
+                      border: `1px solid ${DIFFICULTY_LABEL[problem.difficulty].color}33`,
+                    }}
+                  >
+                    {DIFFICULTY_LABEL[problem.difficulty].label}
+                  </span>
+                )}
                 {problem.concepts.map(c => (
                   <span key={c.id} className="px-2 py-1 bg-[#071be9]/20 text-[#6085FF] text-xs rounded-full">{c.name}</span>
                 ))}
               </div>
+              {problem.memo && <p className="text-gray-500 text-xs">{problem.memo}</p>}
               <p className="text-gray-600 text-xs text-center">탭하여 답 보기</p>
             </div>
           </div>

@@ -28,6 +28,7 @@ export default function MathWebAdminPage() {
   const [memo, setMemo] = useState('');
   const [concepts, setConcepts] = useState<string[]>([]);
   const [title, setTitle] = useState('');
+  const [difficulty, setDifficulty] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -68,6 +69,7 @@ export default function MathWebAdminPage() {
       if (answerText.trim()) fd.append('answer_text', answerText.trim());
       if (memo.trim()) fd.append('memo', memo.trim());
       if (title.trim()) fd.append('title', title.trim());
+      if (difficulty) fd.append('difficulty', difficulty);
       fd.append('concepts', JSON.stringify(concepts));
 
       const res = await fetch('/api/admin/mathweb/problems', {
@@ -77,7 +79,7 @@ export default function MathWebAdminPage() {
       if (!res.ok) { setError(json.error?.message ?? '등록 실패'); return; }
 
       setSuccess('등록 완료!'); setQFile(null); setAFile(null);
-      setAnswerText(''); setMemo(''); setConcepts([]); setTitle('');
+      setAnswerText(''); setMemo(''); setConcepts([]); setTitle(''); setDifficulty('');
       fetchProblems(adminKey);
     } finally { setSubmitting(false); }
   };
@@ -136,6 +138,37 @@ export default function MathWebAdminPage() {
               placeholder="예: 이차방정식 — 2024 QB Math #12"
               style={{ padding: '9px 12px', background: '#000', border: '1px solid #27272a', borderRadius: 8, color: '#e4e4e7', fontSize: 13, outline: 'none' }}
             />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+            <span style={{ fontSize: 11, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>난이도</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[
+                { value: 'easy',   label: 'Easy',   color: '#22c55e' },
+                { value: 'medium', label: 'Medium', color: '#f59e0b' },
+                { value: 'hard',   label: 'Hard',   color: '#ef4444' },
+                { value: 'killer', label: 'Killer', color: '#c084fc' },
+              ].map(d => (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => setDifficulty(prev => prev === d.value ? '' : d.value)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: `1px solid ${difficulty === d.value ? d.color : '#27272a'}`,
+                    background: difficulty === d.value ? d.color + '22' : '#000',
+                    color: difficulty === d.value ? d.color : '#71717a',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
