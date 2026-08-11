@@ -130,6 +130,25 @@ describe('computeStrategyStats — 지표', () => {
     expect(row.avg_days_to_convert).toBeNull();
   });
 
+  it('0원 가결제도 전환(paid)으로 집계 — 매출만 0', () => {
+    const students = [
+      reached2({ id: 'a', name: 'A', strategy_history: [entry({ strategy_id: 's2', type: 'initial_sales', applied_at: '2026-07-05T00:00:00Z' })] }),
+    ];
+    const r = computeStrategyStats('initial_sales', students, [firstPay('a', 'A', 0)], PERIOD, NAMES);
+    const row = r.by_strategy.find((x) => x.strategy_id === 's2')!;
+    expect(row.paid).toBe(1);
+    expect(row.revenue).toBe(0);
+  });
+
+  it('환불(음수)만 전환에서 제외', () => {
+    const students = [
+      reached2({ id: 'a', name: 'A', strategy_history: [entry({ strategy_id: 's2', type: 'initial_sales', applied_at: '2026-07-05T00:00:00Z' })] }),
+    ];
+    const refundOnly = [{ ...firstPay('a', 'A', -500_000), payment_type: '환불' }];
+    const r = computeStrategyStats('initial_sales', students, refundOnly, PERIOD, NAMES);
+    expect(r.by_strategy.find((x) => x.strategy_id === 's2')!.paid).toBe(0);
+  });
+
   it('0건 전략도 strategyNames 시드로 by_strategy에 포함', () => {
     const r = computeStrategyStats('initial_sales', [], [], PERIOD, NAMES);
     expect(r.by_strategy.some((x) => x.strategy_id === 's1' && x.assigned === 0)).toBe(true);
