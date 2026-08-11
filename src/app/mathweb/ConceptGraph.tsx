@@ -84,6 +84,9 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
   const [clickedConceptSlug, setClickedConceptSlug] = useState<string | null>(null);
   const [allProblems, setAllProblems] = useState<GraphProblem[]>([]);
   const [allConcepts, setAllConcepts] = useState<Concept[]>([]);
+  const [selectedDifficulties, setSelectedDifficulties] = useState<Set<string>>(
+    new Set(['easy', 'medium', 'hard', 'killer'])
+  );
   const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({ nodes: [], links: [] });
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Concept[]>([]);
@@ -125,15 +128,18 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
 
   useEffect(() => {
     setClickedConceptSlug(null);
+    const byDifficulty = allProblems.filter(p =>
+      !p.difficulty || selectedDifficulties.has(p.difficulty)
+    );
     if (!searchConceptSlug) {
-      setGraphData(buildGraph(allProblems));
+      setGraphData(buildGraph(byDifficulty));
     } else {
-      const filtered = allProblems.filter(p =>
+      const filtered = byDifficulty.filter(p =>
         p.concepts.some(c => c.slug === searchConceptSlug)
       );
       setGraphData(buildGraph(filtered));
     }
-  }, [searchConceptSlug, allProblems]);
+  }, [searchConceptSlug, allProblems, selectedDifficulties]);
 
   const highlightedNodeIds = useMemo<Set<string> | null>(() => {
     if (!clickedConceptSlug) return null;
@@ -311,19 +317,48 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
         </div>
       ) : (
         <div className="absolute top-0 right-0 bottom-0" style={{ left: SIDEBAR_W }}>
-          {/* 난이도 범례 — 그래프 우측 상단 (Live Status 아래) */}
-          <div className="absolute right-4 z-10 flex flex-col gap-1.5 bg-black/40 backdrop-blur-sm rounded-xl px-3 py-2.5 border border-zinc-800/50" style={{ top: 96 }}>
+          {/* 난이도 범례 + 필터 — 그래프 우측 상단 */}
+          <div className="absolute right-4 z-10 flex flex-col gap-1 bg-black/50 backdrop-blur-sm rounded-xl px-3 py-2.5 border border-zinc-800/50" style={{ top: 96 }}>
             {[
               { key: 'easy',   label: 'Easy',   color: '#22c55e' },
               { key: 'medium', label: 'Medium', color: '#f59e0b' },
               { key: 'hard',   label: 'Hard',   color: '#ef4444' },
               { key: 'killer', label: 'Killer', color: '#c084fc' },
-            ].map(d => (
-              <div key={d.key} className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                <span className="text-xs text-zinc-500">{d.label}</span>
-              </div>
-            ))}
+            ].map(d => {
+              const checked = selectedDifficulties.has(d.key);
+              return (
+                <button
+                  key={d.key}
+                  onClick={() => setSelectedDifficulties(prev => {
+                    const next = new Set(prev);
+                    next.has(d.key) ? next.delete(d.key) : next.add(d.key);
+                    return next;
+                  })}
+                  className="flex items-center gap-2 group"
+                >
+                  {/* 체크박스 */}
+                  <span
+                    className="w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center border transition-all"
+                    style={{
+                      backgroundColor: checked ? d.color : 'transparent',
+                      borderColor: checked ? d.color : '#52525b',
+                    }}
+                  >
+                    {checked && (
+                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                        <path d="M1 4l2 2 4-4" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </span>
+                  {/* 색상 점 */}
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color, opacity: checked ? 1 : 0.3 }} />
+                  {/* 라벨 */}
+                  <span className={`text-xs transition-colors ${checked ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                    {d.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
           <ForceGraph2D
             graphData={graphData as never}
