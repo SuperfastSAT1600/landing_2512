@@ -141,7 +141,7 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
               />
             ) : problem.answer_text ? (
               <div className="flex-1 flex items-center justify-center p-8">
-                <p className="text-white text-5xl font-bold leading-relaxed text-center whitespace-pre-wrap">
+                <p className="text-white text-6xl font-bold leading-relaxed text-center whitespace-pre-wrap">
                   {(() => {
                     try {
                       const parsed = JSON.parse(problem.answer_text!);
