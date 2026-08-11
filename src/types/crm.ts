@@ -803,3 +803,125 @@ export function getParentStatus(leadStatus: LeadStatus): ParentStatus {
   if (leadStatus === 'enrolled') return 'done';
   return 'new';
 }
+
+// ─── Winback Play (윈백 플레이) ───────────────────────────────────────────────
+// 이탈 리드에게 특정 상품(AP/SAT 수업권)을 파는 캠페인 단위 실행/측정 로그.
+// 정본은 winback_* 테이블(마이그레이션 107). students.reactivation_log/consultation_timeline에는
+// 사람이 읽는 미러 엔트리만 남긴다 — 기존 재활성화 UI·활동 피드를 그대로 재사용하기 위함.
+
+export type WinbackPlayStatus = 'draft' | 'running' | 'done' | 'archived';
+export type WinbackTargetStatus = 'candidate' | 'queued' | 'sent' | 'skipped';
+export type WinbackResponse = 'none' | 'positive' | 'negative' | 'later';
+
+/** 추천 사전필터. SQL로 거는 것과 JS로 거는 것이 섞여 있다(prefilter.ts 참조). */
+export interface WinbackRuleFilters {
+  grades?: string[];
+  school_types?: string[];
+  campaign_tag_any?: string[];        // 과목 의도의 정본 신호 (예: 'AP 문의')
+  churn_types?: ChurnType[];
+  churn_tag_prefixes?: string[];      // churn_tag는 "{태그}: {사유}" 형식
+  churn_stages?: string[];            // effectiveChurnStage 결과 (JS 후처리)
+  traffic_sources?: TrafficSource[];
+  churned_within_days?: number;       // 이탈 후 N일 이내
+  churned_after_days?: number;        // 이탈 후 최소 N일 경과
+  exclude_recent_contact_days?: number;
+  include_reactivating?: boolean;     // 기본 true
+}
+
+/** 규칙 스코어의 매치 내역 — UI 근거 칩 + 사후 가중치 튜닝용. */
+export interface WinbackSignal {
+  key: string;
+  label: string;
+  delta: number;
+}
+
+export interface WinbackPlay {
+  id: string;
+  title: string;
+  product_brief: string;
+  product_category: ProductCategory | null;
+  product_price: number | null;
+  product_hours: number | null;
+  target_exam_date: string | null;
+  audience_hint: string | null;
+  rule_filters: WinbackRuleFilters;
+  score_weights: Record<string, number> | null;
+  conversion_window_days: number;
+  contact_cooldown_days: number;
+  status: WinbackPlayStatus;
+  retrospective: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WinbackPlayVariant {
+  id: string;
+  play_id: string;
+  name: string;
+  angle: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface WinbackTarget {
+  id: string;
+  play_id: string;
+  student_id: string;
+  variant_id: string | null;
+  rank: number | null;
+  score: number | null;
+  rule_score: number | null;
+  similarity: number | null;
+  llm_fit: number | null;
+  reason: string | null;
+  signals: WinbackSignal[];
+  status: WinbackTargetStatus;
+  message_draft: string | null;
+  message_generated_at: string | null;
+  message_model: string | null;
+  sent_at: string | null;
+  sent_by: string | null;
+  sent_channel: string;
+  response: WinbackResponse | null;
+  responded_at: string | null;
+  reconnected_at: string | null;
+  converted_payment_id: string | null;
+  converted_at: string | null;
+  conversion_amount: number | null;
+  conversion_source: 'auto' | 'manual' | null;
+  reactivation_entry_id: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 타겟 + 화면 표시에 필요한 학생 요약(조인 결과). */
+export interface WinbackTargetWithStudent extends WinbackTarget {
+  student: Pick<Student, 'id' | 'name' | 'grade' | 'parent_phone' | 'lead_status' | 'churn_tag'>;
+}
+
+/** 추천 API 응답 1건 — 아직 저장되지 않은 후보. */
+export interface WinbackCandidate {
+  student_id: string;
+  name: string;
+  grade: string;
+  churn_tag: string | null;
+  rank: number;
+  score: number;
+  rule_score: number;
+  similarity: number | null;
+  llm_fit: number | null;
+  reason: string;
+  signals: WinbackSignal[];
+  last_memo: string | null;
+}
+
+/** 추천 파이프라인 진단 — degrade를 조용히 숨기지 않기 위해 항상 함께 반환한다. */
+export interface WinbackRecommendStats {
+  prefiltered: number;
+  embedded: number;
+  llm_used: boolean;
+  embedding_used: boolean;
+  degraded_reason?: string;
+}

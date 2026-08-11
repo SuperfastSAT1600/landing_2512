@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Search, Sparkles, X, Loader2, AlertCircle, ChevronDown, ArrowRight } from 'lucide-react';
+import { Search, X, Loader2, AlertCircle, ChevronDown, ArrowRight, Target } from 'lucide-react';
 import {
   Student,
   ChurnType,
@@ -14,7 +14,11 @@ import {
 import { FUNNEL_FLOW_ORDER, effectiveChurnStage } from '@/lib/funnel-stats';
 import { ReactivationModal } from './ReactivationModal';
 import { BulkContactModal } from './BulkContactModal';
-import type { AiPoolSearchMatch } from '@/app/api/crm/ai-pool-search/route';
+import { useAdminAuth } from '@/lib/useAdminAuth';
+import { useWinbackPlays } from './winback/hooks/useWinbackPlays';
+import { WinbackPlayBar } from './winback/WinbackPlayBar';
+import { WinbackPlaysTab } from './winback/WinbackPlaysTab';
+import { WinbackPlayModal } from './winback/WinbackPlayModal';
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
 
@@ -229,7 +233,7 @@ interface LeadPoolProps {
   onRetryAssignSuccess?: () => void;
 }
 
-type PoolTab = 'inactive' | 'reactivating';
+type PoolTab = 'inactive' | 'reactivating' | 'plays';
 
 const POOL_PAGE_SIZE = 50;
 
@@ -321,13 +325,16 @@ export function LeadPool({
   const [pickerLoading, setPickerLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
 
-  // ─── AI Search state ────────────────────────────────────────────────────────
-  const [aiSearchOpen, setAiSearchOpen] = useState(false);
-  const [aiQuery, setAiQuery] = useState('');
-  const [aiSearching, setAiSearching] = useState(false);
-  const [aiResults, setAiResults] = useState<AiPoolSearchMatch[] | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const aiInputRef = useRef<HTMLInputElement>(null);
+  // ─── Winback play ───────────────────────────────────────────────────────────
+  // 리드풀에서 진행 중 플레이를 고르면 카드에 타겟 배지가 붙고 선택 리드를 그 플레이에 담을 수 있다.
+  const { userName } = useAdminAuth();
+  const winback = useWinbackPlays(adminKey);
+  const [selectedPlayId, setSelectedPlayId] = useState<string | null>(null);
+  const [showPlayModal, setShowPlayModal] = useState(false);
+  const [playTargets, setPlayTargets] = useState<Map<string, { rank: number | null; score: number | null; sent: boolean }>>(
+    new Map()
+  );
+  const [addingToPlay, setAddingToPlay] = useState(false);
 
   // ─── Summary stats ─────────────────────────────────────────────────────────
 
@@ -414,35 +421,47 @@ export function LeadPool({
     [onStudentUpdate]
   );
 
-  // AI 결과가 있을 때 해당 학생 맵 (id → reason)
-  const aiResultMap = useMemo<Map<string, string>>(() => {
-    if (!aiResults) return new Map();
-    return new Map(aiResults.map((m) => [m.id, m.reason]));
-  }, [aiResults]);
-
-  // 현재 탭의 기본 목록에서 AI 결과로 필터/정렬
-  const aiFilteredList = useMemo(() => {
-    if (!aiResults) return null;
-    const baseList = [...inactiveStudents, ...reactivatingStudents];
-    return aiResults
-      .map((m) => baseList.find((s) => s.id === m.id))
-      .filter((s): s is Student => s !== undefined);
-  }, [aiResults, inactiveStudents, reactivatingStudents]);
+  // 선택한 플레이의 타겟 현황 — 리드 카드에 배지로 표시한다.
+  useEffect(() => {
+    if (!selectedPlayId) {
+      setPlayTargets(new Map());
+      return;
+    }
+    let cancelled = false;
+    winback
+      .fetchPlay(selectedPlayId)
+      .then((play) => {
+        if (cancelled) return;
+        setPlayTargets(
+          new Map(
+            play.targets.map((t) => [
+              t.student_id,
+              { rank: t.rank, score: t.score, sent: Boolean(t.sent_at) },
+            ])
+          )
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setPlayTargets(new Map());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPlayId, winback.fetchPlay]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Selection ─────────────────────────────────────────────────────────────
 
-  // AI 검색 결과가 있으면 탭/필터 무시하고 AI 결과 목록 사용
-  const currentList = aiFilteredList ?? (poolTab === 'inactive' ? filtered : reactivatingStudents);
+  const currentList = poolTab === 'reactivating' ? reactivatingStudents : filtered;
 
   // ─── Pagination (client-side) ──────────────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil(currentList.length / POOL_PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const pagedList = currentList.slice((safePage - 1) * POOL_PAGE_SIZE, safePage * POOL_PAGE_SIZE);
 
-  // 필터/검색/탭/AI 결과가 바뀌면 1페이지로
+  // 필터/검색/탭이 바뀌면 1페이지로
   useEffect(() => {
     setPage(1);
-  }, [filters, nameSearch, poolTab, aiResults]);
+  }, [filters, nameSearch, poolTab]);
 
   function toggleStudent(id: string) {
     setSelectedIds((prev) => {
@@ -461,37 +480,28 @@ export function LeadPool({
     }
   }
 
-  // ─── AI Search ─────────────────────────────────────────────────────────────
+  // ─── Winback: 선택한 리드를 플레이에 담기 ───────────────────────────────────
 
-  async function handleAiSearch() {
-    if (!aiQuery.trim() || aiSearching) return;
-    setAiSearching(true);
-    setAiError(null);
-    setAiResults(null);
+  async function handleAddToPlay() {
+    const ids = Array.from(selectedIds);
+    if (!selectedPlayId || ids.length === 0) return;
+    setAddingToPlay(true);
     try {
-      const res = await fetch('/api/crm/ai-pool-search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ query: aiQuery.trim() }),
+      const result = await winback.addTargets(selectedPlayId, { student_ids: ids });
+      setSelectedIds(new Set());
+      const skipped = result.skipped > 0 ? ` (중복 ${result.skipped}명 제외)` : '';
+      setBulkSuccessMessage(`${result.inserted.length}명을 플레이에 추가했습니다.${skipped}`);
+      setPlayTargets((prev) => {
+        const next = new Map(prev);
+        for (const t of result.inserted) next.set(t.student_id, { rank: t.rank, score: t.score, sent: false });
+        return next;
       });
-      const json = await res.json();
-      if (!res.ok) {
-        setAiError(json.error?.message ?? 'AI 검색에 실패했습니다.');
-        return;
-      }
-      setAiResults(json.data.matches as AiPoolSearchMatch[]);
-    } catch {
-      setAiError('네트워크 오류가 발생했습니다.');
+    } catch (err) {
+      setBulkSuccessMessage(null);
+      alert(`플레이 추가에 실패했습니다: ${(err as Error).message}`);
     } finally {
-      setAiSearching(false);
+      setAddingToPlay(false);
     }
-  }
-
-  function clearAiSearch() {
-    setAiResults(null);
-    setAiError(null);
-    setAiQuery('');
-    setAiSearchOpen(false);
   }
 
   async function openStrategyPicker() {
@@ -617,6 +627,7 @@ export function LeadPool({
           [
             { key: 'inactive', label: `이탈 학생 (${totalInactive})` },
             { key: 'reactivating', label: `재활성화 시도 중 (${totalReactivating})` },
+            { key: 'plays', label: `플레이 (${winback.plays.length})` },
           ] as { key: PoolTab; label: string }[]
         ).map(({ key, label }) => (
           <button
@@ -636,81 +647,31 @@ export function LeadPool({
         ))}
       </div>
 
-      {/* AI Search bar */}
-      <div className="rounded-xl border border-purple-200 bg-purple-50/60 p-3 space-y-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setAiSearchOpen((o) => !o);
-              if (!aiSearchOpen) setTimeout(() => aiInputRef.current?.focus(), 50);
-            }}
-            className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
-              aiSearchOpen || aiResults
-                ? 'bg-purple-600 text-white'
-                : 'bg-white border border-purple-200 text-purple-600 hover:bg-purple-100'
-            }`}
-          >
-            <Sparkles size={12} />
-            AI 검색
-          </button>
+      {/* 윈백 플레이 컨텍스트 바 */}
+      {poolTab !== 'plays' && (
+        <WinbackPlayBar
+          plays={winback.plays}
+          selectedPlayId={selectedPlayId}
+          onSelect={setSelectedPlayId}
+          onNew={() => setShowPlayModal(true)}
+          onOpenPlays={() => setPoolTab('plays')}
+        />
+      )}
 
-          {aiSearchOpen && (
-            <>
-              <input
-                ref={aiInputRef}
-                type="text"
-                value={aiQuery}
-                onChange={(e) => setAiQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
-                placeholder="예: 비용 문제로 이탈한 고3 수학 학생"
-                className="flex-1 text-sm border border-purple-200 bg-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-400/30 placeholder-gray-400"
-              />
-              <button
-                type="button"
-                onClick={handleAiSearch}
-                disabled={aiSearching || !aiQuery.trim()}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors"
-              >
-                {aiSearching ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <Search size={12} />
-                )}
-                {aiSearching ? '분석 중...' : '검색'}
-              </button>
-            </>
-          )}
+      {poolTab === 'plays' && (
+        <WinbackPlaysTab
+          adminKey={adminKey}
+          userName={userName}
+          winback={winback}
+          onStudentClick={(studentId) => {
+            const student = students.find((s) => s.id === studentId);
+            if (student) onStudentClick(student);
+          }}
+        />
+      )}
 
-          {aiResults && (
-            <button
-              type="button"
-              onClick={clearAiSearch}
-              className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-700 ml-auto"
-            >
-              <X size={12} />
-              AI 결과 초기화
-            </button>
-          )}
-        </div>
-
-        {aiError && (
-          <div className="flex items-center gap-1.5 text-xs text-red-600">
-            <AlertCircle size={12} />
-            {aiError}
-          </div>
-        )}
-
-        {aiResults && (
-          <p className="text-xs text-purple-600 font-medium">
-            AI 검색 결과: {aiResults.length}명 매칭
-            <span className="text-purple-400 font-normal ml-1">— 관련성 높은 순 정렬</span>
-          </p>
-        )}
-      </div>
-
-      {/* Inactive tab: filter bar (AI 검색 중에는 숨김) */}
-      {poolTab === 'inactive' && !aiResults && churnStageGroups.length > 0 && (
+      {/* Inactive tab: filter bar */}
+      {poolTab === 'inactive' && churnStageGroups.length > 0 && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
           <span className="font-medium text-gray-500">이탈 단계</span>
           {churnStageGroups.map((g) => (
@@ -733,7 +694,7 @@ export function LeadPool({
         </div>
       )}
 
-      {poolTab === 'inactive' && !aiResults && (
+      {poolTab === 'inactive' && (
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative">
             <Search
@@ -830,7 +791,7 @@ export function LeadPool({
       )}
 
       {/* Select all row */}
-      {currentList.length > 0 && (
+      {poolTab !== 'plays' && currentList.length > 0 && (
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -843,7 +804,7 @@ export function LeadPool({
       )}
 
       {/* Student list */}
-      {poolLoading ? (
+      {poolTab === 'plays' ? null : poolLoading ? (
         <div className="flex items-center justify-center py-12 text-gray-400">
           <Loader2 size={18} className="animate-spin mr-2" />
           <span className="text-sm">검색 중...</span>
@@ -859,17 +820,15 @@ export function LeadPool({
         </div>
       ) : currentList.length === 0 ? (
         <div className="py-12 text-center text-sm text-gray-400">
-          {aiResults
-            ? 'AI 검색 결과가 없습니다. 다른 표현으로 다시 시도해보세요.'
-            : poolTab === 'inactive'
-              ? '조건에 맞는 이탈 학생이 없습니다.'
-              : '재활성화 시도 중인 학생이 없습니다.'}
+          {poolTab === 'inactive'
+            ? '조건에 맞는 이탈 학생이 없습니다.'
+            : '재활성화 시도 중인 학생이 없습니다.'}
         </div>
       ) : (
         <>
           <div className="space-y-2">
             {pagedList.map((s) => {
-              const aiReason = aiResultMap.get(s.id);
+              const target = playTargets.get(s.id);
               return (
                 <div key={s.id}>
                   <StudentPoolCard
@@ -882,10 +841,15 @@ export function LeadPool({
                     onClick={() => onStudentClick(s)}
                     onSetChurnStage={handleSetChurnStage}
                   />
-                  {aiReason && (
-                    <div className="flex items-start gap-1.5 mt-1 px-2">
-                      <Sparkles size={11} className="text-purple-400 mt-0.5 shrink-0" />
-                      <p className="text-[11px] text-purple-600 leading-relaxed">{aiReason}</p>
+                  {target && (
+                    <div className="flex items-center gap-1.5 mt-1 px-2">
+                      <Target size={11} className="text-blue-400 shrink-0" />
+                      <p className="text-[11px] text-blue-600">
+                        이 플레이 타겟
+                        {target.rank != null ? ` · #${target.rank}` : ''}
+                        {target.score != null ? ` · ${Math.round(target.score)}점` : ''}
+                        {target.sent ? ' · 발송됨' : ' · 미발송'}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -959,6 +923,17 @@ export function LeadPool({
         <div className="sticky bottom-4 flex flex-wrap items-center justify-between gap-2 bg-gray-900 text-white rounded-xl px-4 py-3 shadow-lg">
           <span className="text-sm font-medium">{selectedIds.size}명 선택됨</span>
           <div className="flex flex-wrap gap-2">
+            {selectedPlayId && (
+              <button
+                type="button"
+                onClick={handleAddToPlay}
+                disabled={addingToPlay}
+                className="flex items-center gap-1.5 text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Target size={13} />
+                {addingToPlay ? '추가 중...' : `플레이에 추가 (${selectedIds.size})`}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setShowBulkContactModal(true)}
@@ -1032,6 +1007,23 @@ export function LeadPool({
             );
             if (nameSearch.trim()) fetchPoolStudents(nameSearch.trim());
             onRefetch();
+          }}
+        />
+      )}
+
+      {/* 새 플레이 위저드 (리드풀 바에서 진입) */}
+      {showPlayModal && (
+        <WinbackPlayModal
+          adminKey={adminKey}
+          createdBy={userName}
+          onClose={() => setShowPlayModal(false)}
+          createPlay={winback.createPlay}
+          recommend={winback.recommend}
+          addTargets={winback.addTargets}
+          onCreated={(playId) => {
+            setShowPlayModal(false);
+            setSelectedPlayId(playId);
+            setPoolTab('plays');
           }}
         />
       )}
