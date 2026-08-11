@@ -7,16 +7,22 @@ class StudentNotFoundError extends Error {
     this.name = 'StudentNotFoundError';
   }
 }
-class AudioTooLargeError extends Error {
-  constructor(message = '녹음이 24MB를 초과해 전사할 수 없습니다.') {
+class AsrFailedError extends Error {
+  constructor(message = '녹음 전사에 실패했습니다.') {
     super(message);
-    this.name = 'AudioTooLargeError';
+    this.name = 'AsrFailedError';
   }
 }
-class AudioTooLongError extends AudioTooLargeError {
+class AsrTimeoutError extends AsrFailedError {
   constructor() {
-    super('녹음이 너무 길어 전사할 수 없습니다. (약 80분 이하만 지원)');
-    this.name = 'AudioTooLongError';
+    super('전사가 시간 안에 끝나지 않았습니다. 잠시 후 다시 시도해주세요.');
+    this.name = 'AsrTimeoutError';
+  }
+}
+class QuotaExhaustedError extends Error {
+  constructor() {
+    super('AI 크레딧이 소진되어 처리할 수 없습니다. 결제(크레딧)를 확인해주세요.');
+    this.name = 'QuotaExhaustedError';
   }
 }
 
@@ -26,7 +32,8 @@ const getPlaudFile = vi.fn();
 const getAccountLabel = vi.fn();
 
 vi.mock('@/lib/plaud-process', () => ({ processPlaudRecording }));
-vi.mock('@/lib/plaud-transcribe', () => ({ AudioTooLargeError, AudioTooLongError }));
+vi.mock('@/lib/plaud-transcribe', () => ({ QuotaExhaustedError }));
+vi.mock('@/lib/qwen-asr', () => ({ AsrFailedError, AsrTimeoutError }));
 vi.mock('@/lib/plaud-client', () => ({ getPlaudFile, getAccountLabel }));
 vi.mock('@/lib/consultation-timeline', () => ({
   appendConsultationEntry,
@@ -131,21 +138,23 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     expect(processPlaudRecording).not.toHaveBeenCalled();
   });
 
-  it('24MB 초과(AudioTooLargeError) → 413', async () => {
-    processPlaudRecording.mockRejectedValueOnce(new AudioTooLargeError());
+  it('전사 실패(AsrFailedError) → 502 + 원인 메시지', async () => {
+    processPlaudRecording.mockRejectedValueOnce(new AsrFailedError());
     const { POST } = await import('../route');
-    const res = await POST(makeReq({ audio_url: 'https://x/big.m4a' }), { params });
-    expect(res.status).toBe(413);
+    const res = await POST(makeReq({ audio_url: 'https://x/a.mp3' }), { params });
+    const body = await res.json();
+    expect(res.status).toBe(502);
+    expect(body.error).toContain('전사');
     expect(appendConsultationEntry).not.toHaveBeenCalled();
   });
 
-  it('너무 긴 녹음(AudioTooLongError) → 413 + 구체 메시지', async () => {
-    processPlaudRecording.mockRejectedValueOnce(new AudioTooLongError());
+  it('전사 타임아웃(AsrTimeoutError) → 502 + 재시도 안내', async () => {
+    processPlaudRecording.mockRejectedValueOnce(new AsrTimeoutError());
     const { POST } = await import('../route');
     const res = await POST(makeReq({ audio_url: 'https://x/long.mp3' }), { params });
     const body = await res.json();
-    expect(res.status).toBe(413);
-    expect(body.error).toContain('너무 길어');
+    expect(res.status).toBe(502);
+    expect(body.error).toContain('다시 시도');
     expect(appendConsultationEntry).not.toHaveBeenCalled();
   });
 
@@ -180,6 +189,16 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     expect(arg.raw_memo).toContain('🎙️ Plaud 상담 자동 요약');
     expect(arg.raw_memo).toContain('핵심 니즈');
     expect(arg.raw_memo).toContain('홍길동 상담');
+  });
+
+  it('크레딧 소진(QuotaExhaustedError) → 402 + 원인 알려주는 메시지', async () => {
+    processPlaudRecording.mockRejectedValueOnce(new QuotaExhaustedError());
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ audio_url: 'https://x/a.mp3' }), { params });
+    const body = await res.json();
+    expect(res.status).toBe(402);
+    expect(body.error).toContain('크레딧');
+    expect(appendConsultationEntry).not.toHaveBeenCalled();
   });
 
   it('요약/전사 실패(일반 throw) → 500', async () => {

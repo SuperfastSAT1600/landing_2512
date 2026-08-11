@@ -139,9 +139,6 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
       if (res.ok && json.data?.entry) {
         onCreated(json.data.entry); // 타임라인에 추가 + 상담 타임라인 섹션 자동 오픈
         setDoneName(r.name || '녹음'); // 완료 화면 표시(사용자가 등록 확인)
-      } else if (res.status === 413) {
-        // MP3는 청크 전사로 길이 제한이 풀렸다. 413은 이제 非MP3·초장문뿐 → 서버 메시지를 그대로 노출.
-        setRunError(json.error ?? '이 녹음은 전사할 수 없습니다. (형식/길이 제한)');
       } else {
         setRunError(json.error ?? '요약 생성에 실패했습니다.');
       }
