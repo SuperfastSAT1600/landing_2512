@@ -141,7 +141,15 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
               />
             ) : problem.answer_text ? (
               <div className="flex-1 flex items-center justify-center p-8">
-                <p className="text-white text-lg leading-relaxed text-center whitespace-pre-wrap">{problem.answer_text}</p>
+                <p className="text-white text-lg leading-relaxed text-center whitespace-pre-wrap">
+                  {(() => {
+                    try {
+                      const parsed = JSON.parse(problem.answer_text!);
+                      if (Array.isArray(parsed)) return parsed.join(' / ');
+                    } catch { /* not JSON */ }
+                    return problem.answer_text;
+                  })()}
+                </p>
               </div>
             ) : (
               <p className="text-gray-500 text-base">답이 아직 등록되지 않았어요.</p>
