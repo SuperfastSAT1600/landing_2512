@@ -121,6 +121,9 @@ export default function AdminSupertest() {
                         className="bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-3 text-white text-base font-bold outline-none transition-all w-full"
                     >
                         <option value="" disabled>회차를 선택하세요</option>
+                        {nextTestDate && !TEST_SCHEDULE.find(t => t.date === nextTestDate) && (
+                            <option value={nextTestDate}>{nextTestDate} (커스텀)</option>
+                        )}
                         {TEST_SCHEDULE.map(t => (
                             <option key={t.date} value={t.date}>{t.label}</option>
                         ))}
