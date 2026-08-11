@@ -545,8 +545,13 @@ a {
 }
 
 /* ── mathweb: HTML 문제 렌더링 ─────────────────────────────────────── */
-.mathweb-html p { margin-bottom: 0.75rem; line-height: 1.7; }
+.mathweb-html { line-height: 1.65; overflow-wrap: break-word; word-break: break-word; }
+.mathweb-html p { margin-bottom: 0.6em; }
 .mathweb-html p:last-child { margin-bottom: 0; }
+.mathweb-html em { font-style: italic; }
+.mathweb-html strong { font-weight: 600; }
+.mathweb-html mjx-container { vertical-align: middle; }
+.mathweb-html mjx-container[display="true"] { display: block; margin: 0.5em auto; text-align: center; }
 
 /* ── enrollment-v2: header fade when exam selected ─────────────────── */
 .enrollment-v2 header {
