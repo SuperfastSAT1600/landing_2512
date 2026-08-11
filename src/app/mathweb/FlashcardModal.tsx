@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import { MathHtmlBlock } from './MathHtmlBlock';
+import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 
 export interface Option {
   label: string;
@@ -80,21 +80,21 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose }: FlashcardM
                   loading="lazy"
                 />
               ) : problem.question_html ? (
-                <div className="p-6 space-y-4">
-                  <MathHtmlBlock
-                    html={problem.question_html}
-                    className="text-white text-sm leading-relaxed mathweb-html"
+                <div className="p-6 flex flex-col gap-5">
+                  <ContentRenderer
+                    content={problem.question_html}
+                    className="text-white text-sm mathweb-html"
                   />
                   {problem.options_json && problem.options_json.length > 0 && (
-                    <ol className="space-y-2 mt-4">
+                    <ol className="flex flex-col gap-2">
                       {problem.options_json.map((opt) => (
                         <li key={opt.label} className="flex gap-3 text-sm text-gray-300">
-                          <span className="shrink-0 w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-xs text-gray-400">
+                          <span className="shrink-0 w-6 h-6 rounded-full border border-white/20 flex items-center justify-center text-xs text-gray-400 mt-0.5">
                             {opt.label}
                           </span>
-                          <MathHtmlBlock
-                            html={opt.text}
-                            className="mathweb-html"
+                          <ContentRenderer
+                            content={opt.text}
+                            className="mathweb-html flex-1"
                           />
                         </li>
                       ))}
