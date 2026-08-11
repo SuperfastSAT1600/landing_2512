@@ -25,7 +25,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: '/admin/srm', label: 'SRM', icon: '📅' },
     { href: '/admin/partner', label: '파트너 센터', icon: '🤝' },
     { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
-    { href: '/admin/vocab-access', label: '단어 검색 접근 코드', icon: '🔑' },
+    { href: '/admin/vocab-access', label: '시크릿페이지', icon: '🔐' },
     { href: '/admin/mathweb', label: 'Math Web', icon: '🕸️' },
 ];
 

@@ -96,14 +96,68 @@ export default function VocabAccessPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const SECRET_PAGES = [
+    {
+      name: 'Vocab Counter',
+      path: '/vocabcounter',
+      scope: 'vocab' as const,
+      desc: '단어 검색 · 난이도 분류 · 어원 학습',
+      color: '#6085FF',
+    },
+    {
+      name: 'Math Web',
+      path: '/mathweb',
+      scope: 'mathweb' as const,
+      desc: 'SAT Math 개념 그래프 · 플래시카드',
+      color: '#818cf8',
+    },
+  ];
+
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#e4e4e7' }}>
       <div style={{ padding: '32px 32px 24px', borderBottom: '1px solid #27272a' }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#fff', margin: 0 }}>단어 검색 접근 코드</h1>
-        <p style={{ fontSize: 13, color: '#71717a', marginTop: 4 }}>인스타 댓글 이벤트 참여자에게 개인 코드 발급</p>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#fff', margin: 0 }}>시크릿페이지</h1>
+        <p style={{ fontSize: 13, color: '#71717a', marginTop: 4 }}>코드 기반 접근 제한 페이지 — 발급 코드 관리</p>
       </div>
 
       <div style={{ padding: '24px 32px', maxWidth: 900 }}>
+        {/* 운영 중인 시크릿 페이지 */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#a1a1aa', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>운영 중인 페이지</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+            {SECRET_PAGES.map((page) => (
+              <a
+                key={page.path}
+                href={page.path}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                <div style={{
+                  background: '#141416',
+                  border: '1px solid #27272a',
+                  borderRadius: 10,
+                  padding: '16px 18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  cursor: 'pointer',
+                  transition: 'border-color 0.15s',
+                }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: `${page.color}18`, border: `1px solid ${page.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 16 }}>{page.scope === 'vocab' ? '📝' : '🕸️'}</span>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>{page.name}</div>
+                    <div style={{ fontSize: 11, color: '#52525b', marginTop: 2 }}>{page.desc}</div>
+                    <div style={{ fontSize: 11, color: page.color, marginTop: 3, fontFamily: 'monospace' }}>{page.path}</div>
+                  </div>
+                  <div style={{ marginLeft: 'auto', fontSize: 12, color: '#3f3f46', flexShrink: 0 }}>↗</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
         {/* 코드 생성 폼 */}
         <div style={{ background: '#141416', border: '1px solid #27272a', borderRadius: 12, padding: '20px 24px', marginBottom: 28 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#a1a1aa', marginBottom: 14 }}>새 코드 발급</div>
