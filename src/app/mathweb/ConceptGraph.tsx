@@ -189,31 +189,31 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
 
   return (
     <div className="relative w-full h-full bg-[#000000]">
-      {/* 검색바 — 우측 상단 */}
-      <div className="absolute top-4 right-4 z-10 w-64">
+      {/* 검색바 — 우측 상단 (헤더+LiveStatus 아래) */}
+      <div className="absolute top-24 right-5 z-50 w-72">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={query}
             onChange={e => handleQueryChange(e.target.value)}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="개념 검색..."
-            className="w-full pl-9 pr-8 py-2 bg-[#09090b]/90 backdrop-blur border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#071be9]"
+            className="w-full pl-10 pr-9 py-3 bg-zinc-900 border border-zinc-600 rounded-2xl text-white text-sm placeholder-zinc-400 focus:outline-none focus:border-[#6085FF] focus:ring-1 focus:ring-[#6085FF]/40 shadow-lg shadow-black/60 transition-all"
           />
           {query && (
-            <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
-              <X size={13} />
+            <button onClick={clearSearch} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors">
+              <X size={14} />
             </button>
           )}
         </div>
         {showSuggestions && suggestions.length > 0 && (
-          <div className="mt-1 bg-[#09090b] border border-white/10 rounded-xl overflow-hidden shadow-xl">
+          <div className="mt-1.5 bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden shadow-2xl shadow-black/80">
             {suggestions.map(s => (
               <button
                 key={s.id}
                 onClick={() => selectConcept(s)}
-                className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 transition-colors"
+                className="w-full text-left px-4 py-3 text-sm text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors border-b border-zinc-800 last:border-0"
               >
                 {s.name}
               </button>
@@ -222,26 +222,25 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
         )}
         {searchConceptSlug && (
           <div className="mt-2 px-1">
-            <span className="text-xs text-[#6085FF] bg-[#6085FF]/10 border border-[#6085FF]/20 rounded-full px-3 py-1">
+            <span className="text-xs font-medium text-[#6085FF] bg-[#6085FF]/15 border border-[#6085FF]/30 rounded-full px-3 py-1">
               {graphData.nodes.length}개 문제
             </span>
           </div>
         )}
-        {/* 클릭된 개념 표시 */}
         {clickedConceptSlug && (
           <div className="mt-2 px-1 flex items-center gap-2">
-            <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-full px-3 py-1">
+            <span className="text-xs font-medium text-amber-400 bg-amber-400/15 border border-amber-400/30 rounded-full px-3 py-1">
               {clickedConceptSlug.replace(/-/g, ' ')} — {highlightedNodeIds?.size ?? 0}개 강조
             </span>
-            <button onClick={() => setClickedConceptSlug(null)} className="text-gray-600 hover:text-gray-400">
+            <button onClick={() => setClickedConceptSlug(null)} className="text-zinc-600 hover:text-zinc-300 transition-colors">
               <X size={12} />
             </button>
           </div>
         )}
       </div>
 
-      {/* 난이도 범례 — 좌측 하단 */}
-      <div className="absolute bottom-6 left-4 z-10 flex flex-col gap-1.5">
+      {/* 난이도 범례 — 좌측 하단 (FloatingCTA 위) */}
+      <div className="absolute bottom-40 left-4 z-10 flex flex-col gap-1.5">
         {[
           { key: 'easy',   label: 'Easy',   color: '#22c55e' },
           { key: 'medium', label: 'Medium', color: '#f59e0b' },
