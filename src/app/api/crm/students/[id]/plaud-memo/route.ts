@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { processPlaudRecording } from '@/lib/plaud-process';
-import { AudioTooLargeError } from '@/lib/plaud-transcribe';
+import { QuotaExhaustedError } from '@/lib/plaud-transcribe';
+import { AsrFailedError } from '@/lib/qwen-asr';
 import { getPlaudFile, getAccountLabel } from '@/lib/plaud-client';
 import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultation-timeline';
+import { notifyMemoToSlack, PLAUD_MEMO_HEADING } from '@/lib/slack-memo';
 
-// gpt-4o-transcribe 전사에 시간이 걸릴 수 있어 서버리스 실행 한도를 늘린다.
+// 전사 작업 폴링(상한 240s)에 시간이 걸릴 수 있어 서버리스 실행 한도를 늘린다.
 export const maxDuration = 300;
 
 const MEMO_HEADER = '🎙️ Plaud 상담 자동 요약';
@@ -27,8 +29,8 @@ function toKstDisplay(iso: string): string {
 
 /**
  * POST /api/crm/students/[id]/plaud-memo
- * Plaud 녹음을 OpenAI 전사 → Qwen 4섹션 요약 → consultation_timeline에
- * 미공개(published:false) 초안으로 추가한다. 24MB 초과 녹음은 폴백 없이 413으로 거절한다.
+ * Plaud 녹음을 Qwen 전사(화자분리) → Qwen 4섹션 요약 → consultation_timeline에
+ * 미공개(published:false) 초안으로 추가한다.
  *
  * Body(둘 중 하나):
  *   { file_id, account_key }             — 서버가 해당 계정 Plaud MCP로 오디오 URL·이름·일시를 해석(권장, UI 경로)
@@ -96,10 +98,27 @@ export async function POST(
     const author = accountKey ? getAccountLabel(accountKey) : undefined;
     const entry = await appendConsultationEntry(id, { raw_memo, author, published: false });
 
+    // 직접 작성 메모와 동일하게 슬랙 상담 채널에 공유 (실패해도 메모는 이미 저장됨)
+    try {
+      await notifyMemoToSlack({
+        studentId: id,
+        author,
+        heading: PLAUD_MEMO_HEADING,
+        memo: meta ? `_${meta}_\n\n${summary}` : summary,
+      });
+    } catch (e) {
+      console.error('[crm/plaud-memo slack]', e);
+    }
+
     return NextResponse.json({ data: { entry, summary } }, { status: 201 });
   } catch (e) {
-    if (e instanceof AudioTooLargeError) {
-      return NextResponse.json({ error: e.message }, { status: 413 });
+    // 전사 실패(작업 실패·타임아웃) — 원인을 그대로 노출해 재시도 여부를 판단하게 한다.
+    if (e instanceof AsrFailedError) {
+      return NextResponse.json({ error: e.message }, { status: 502 });
+    }
+    // 크레딧 소진 — 재시도해도 안 되니 원인을 그대로 알려준다.
+    if (e instanceof QuotaExhaustedError) {
+      return NextResponse.json({ error: e.message }, { status: 402 });
     }
     if (e instanceof StudentNotFoundError) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });

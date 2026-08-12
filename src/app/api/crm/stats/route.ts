@@ -4,7 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { computeStageFlow, type StageFlowRow } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
-import { MAX_LEAD_ROWS, isContacted, contactRate, toMonthKey, inquiryRefMs, fillMonthlyGaps } from '@/lib/crm-stats-core';
+import { MAX_LEAD_ROWS, isContactedWithImpliedPartner, contactRate, toMonthKey, inquiryRefMs, fillMonthlyGaps } from '@/lib/crm-stats-core';
 
 export interface StatsBySource {
   source: string;
@@ -91,15 +91,16 @@ export async function GET(request: NextRequest) {
   // 기간 내 신규 리드 = inquiry_date(실제 인입 시각)가 [from, to]에 든 리드만.
   // created_at(레코드 생성 시각) 폴백은 쓰지 않는다 — 레거시 대량 임포트(inquiry_date NULL)가
   // 생성 시각 기준으로 특정 기간 신규 리드로 둔갑해 과대집계되는 문제(예: 595건)를 막는다.
-  // B2C 전용: company_id가 null인 개인 학생만 집계. B2B 업체 학생은 /api/crm/b2b/stats에서 별도 집계.
-  // 서로 독립인 세 조회를 병렬 실행: 기간 리드 / 기간 결제 / 최초결제 코호트.
-  const [studentsRes, paymentsRes, firstPayRes] = await Promise.all([
+  // B2C 개인 리드 + B2B 업체 리드를 함께 집계한다(업체 제외 필터 없음).
+  // 매출(payments)에는 업체 필터가 없으므로 리드만 제외하면 리드-매출 기준이 어긋난다.
+  // 업체별 세부 집계는 /api/crm/b2b/stats에서 별도로 본다.
+  // 서로 독립인 네 조회를 병렬 실행: 기간 리드 / 기간 결제 / 최초결제 코호트 / 업체 로스터.
+  const [studentsRes, paymentsRes, firstPayRes, companiesRes] = await Promise.all([
     supabaseAdmin
       .from('students')
       .select(
-        'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id'
+        'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id'
       )
-      .is('company_id', null)
       .gte('inquiry_date', from)
       .lte('inquiry_date', `${to}T23:59:59`)
       .limit(MAX_LEAD_ROWS),
@@ -109,12 +110,15 @@ export async function GET(request: NextRequest) {
       .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
       .gte('paid_at', `${from}T00:00:00+09:00`)
       .lte('paid_at', `${to}T23:59:59.999+09:00`),
-    // 결제 전환율(코호트): 인입 리드가 '언제든' 최초결제했는지. ₩1은 센터형 파트너 placeholder(실전환, amount>0 포함).
+    // 결제 전환율(코호트): 인입 리드가 '언제든' 최초결제했는지.
+    // 0원 가결제·₩1 placeholder도 실전환으로 포함(환불만 제외).
     supabaseAdmin
       .from('payments')
       .select('student_id, student_name')
       .eq('payment_type', '최초결제')
-      .gt('amount', 0),
+      .gte('amount', 0),
+    // 업체 로스터 — 센터형 파트너 컨택 판정용 company_id → name 맵
+    supabaseAdmin.from('companies').select('id, name'),
   ]);
   const { data: students, error: sErr } = studentsRes;
 
@@ -175,13 +179,27 @@ export async function GET(request: NextRequest) {
     return paidStudentIds.has(s.id) || paidStudentNames.has(s.name);
   }
 
+  // 컨택 성공 판정 — B2B 탭(/api/crm/b2b/stats)과 동일 기준.
+  // 센터형 파트너 소속 리드는 세일즈 퍼널을 거치지 않고 등록되므로 단계와 무관하게 컨택 성공으로 본다.
+  if (companiesRes.error) console.error('[stats] companies fetch failed:', companiesRes.error.message);
+  const companyName = new Map<string, string>(
+    (companiesRes.data ?? []).map((c) => [c.id, c.name])
+  );
+  function isContactedLead(s: {
+    funnel_stage: string;
+    stage_history?: { stage: string; label: string; entered_at: string }[] | null;
+    company_id?: string | null;
+  }): boolean {
+    return isContactedWithImpliedPartner(s, s.company_id ? companyName.get(s.company_id) : undefined);
+  }
+
   // ── Overview ──────────────────────────────────────────────────────────────
   const total = leadList.length;
   // 컨택 성공률: 최초 세일즈 리드(retry_strategy_id 없음)만 대상
   const initialLeads = leadList.filter(
     (s) => !(s as { retry_strategy_id?: string | null }).retry_strategy_id
   );
-  const contactedCount = initialLeads.filter((s) => isContacted(s)).length;
+  const contactedCount = initialLeads.filter((s) => isContactedLead(s)).length;
   const paidCount = leadList.filter((s) => isPaid(s)).length;
 
   // ── By Source ─────────────────────────────────────────────────────────────
@@ -197,7 +215,7 @@ export async function GET(request: NextRequest) {
     const entry = sourceMap.get(src)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
-    if (!isRetry && isContacted(s)) entry.contacted++;
+    if (!isRetry && isContactedLead(s)) entry.contacted++;
     if (isPaid(s)) entry.paid++;
     // 첫 응답 시간: 첫 메시지 발송 시각이 있는 리드만, 문의시각(inquiry_date, 없으면 created_at) 대비 경과 초.
     const sentAt = (s as { first_message_sent_at?: string | null }).first_message_sent_at;
@@ -250,7 +268,7 @@ export async function GET(request: NextRequest) {
     const entry = monthMap.get(mo)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
-    if (!isRetry && isContacted(s)) entry.contacted++;
+    if (!isRetry && isContactedLead(s)) entry.contacted++;
     if (isPaid(s)) entry.paid++;
   }
 
@@ -299,7 +317,7 @@ export async function GET(request: NextRequest) {
     const entry = weekMap.get(wk)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
-    if (!isRetry && isContacted(s)) entry.contacted++;
+    if (!isRetry && isContactedLead(s)) entry.contacted++;
     if (isPaid(s)) entry.paid++;
   }
 

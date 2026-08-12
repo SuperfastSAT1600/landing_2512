@@ -39,13 +39,8 @@ function fmtDuration(ms?: number): string {
 function fmtWhen(r: Recording): string {
   const iso = r.start_at || r.created_at;
   if (!iso) return '';
-  // Plaud는 타임존 표기 없는 UTC 문자열을 주므로 UTC로 간주해 KST(+9h)로 변환한다.
-  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
-  const d = new Date(hasTz ? iso : `${iso}Z`);
-  if (Number.isNaN(d.getTime())) return iso;
-  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${kst.getUTCFullYear()}-${p(kst.getUTCMonth() + 1)}-${p(kst.getUTCDate())} ${p(kst.getUTCHours())}:${p(kst.getUTCMinutes())}`;
+  // Plaud는 KST naive 문자열을 준다 — 그대로 날짜/시간만 보여준다.
+  return iso.replace('T', ' ').slice(0, 16);
 }
 
 export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose, onCreated }: Props) {
@@ -144,9 +139,6 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
       if (res.ok && json.data?.entry) {
         onCreated(json.data.entry); // 타임라인에 추가 + 상담 타임라인 섹션 자동 오픈
         setDoneName(r.name || '녹음'); // 완료 화면 표시(사용자가 등록 확인)
-      } else if (res.status === 413) {
-        // MP3는 청크 전사로 길이 제한이 풀렸다. 413은 이제 非MP3·초장문뿐 → 서버 메시지를 그대로 노출.
-        setRunError(json.error ?? '이 녹음은 전사할 수 없습니다. (형식/길이 제한)');
       } else {
         setRunError(json.error ?? '요약 생성에 실패했습니다.');
       }

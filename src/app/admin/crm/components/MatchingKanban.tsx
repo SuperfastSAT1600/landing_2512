@@ -18,7 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { Send } from 'lucide-react';
-import { Student, CoachAssignment, MatchingStage, MATCHING_STAGE_LABELS, ChurnType } from '@/types/crm';
+import { Student, MatchingStage, MATCHING_STAGE_LABELS, ChurnType } from '@/types/crm';
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
 import { CoachOfferModal } from './CoachOfferModal';
@@ -33,7 +33,6 @@ const MATCHING_STAGES: MatchingStage[] = [
 
 interface MatchingKanbanProps {
   students: Student[];
-  assignments: CoachAssignment[];
   adminKey: string;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
   onStudentClick: (student: Student) => void;
@@ -104,7 +103,6 @@ function MatchingRow({ stage, students, onStudentClick, onChurn, onSendOffer }: 
 
 export function MatchingKanban({
   students,
-  assignments,
   adminKey,
   onStudentUpdate,
   onStudentClick,

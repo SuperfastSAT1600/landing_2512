@@ -2,25 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { parseAttachments } from '@/lib/crm-attachment';
 import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultation-timeline';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-
-const SLACK_TOKEN = process.env.SLACK_BOT_TOKEN;
-const SLACK_CHANNEL = 'C0B8Q5WNDD3';
-
-async function postSlackMemo(studentName: string, author: string, memo: string) {
-  if (!SLACK_TOKEN) return;
-  const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' });
-  const text = `📋 *상담 메모 등록* — ${now} KST\n*학생:* ${studentName}  |  *상담인:* ${author}\n\n${memo}`;
-  try {
-    await fetch('https://slack.com/api/chat.postMessage', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${SLACK_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ channel: SLACK_CHANNEL, text }),
-    });
-  } catch {
-    // 슬랙 전송 실패는 메모 저장에 영향 없음
-  }
-}
+import { notifyMemoToSlack } from '@/lib/slack-memo';
 
 /**
  * POST /api/crm/students/[id]/memo
@@ -58,10 +40,8 @@ export async function POST(
   try {
     const newEntry = await appendConsultationEntry(id, { raw_memo, author, attachments });
 
-    // 슬랙 알림 (비동기, 메모 저장과 무관하게 처리)
-    supabaseAdmin.from('students').select('name').eq('id', id).single().then(({ data }) => {
-      postSlackMemo(data?.name ?? id, author || '미기재', raw_memo.trim());
-    });
+    // 슬랙 알림 (실패해도 메모 저장에 영향 없음)
+    await notifyMemoToSlack({ studentId: id, memo: raw_memo, author });
 
     return NextResponse.json({ data: newEntry }, { status: 201 });
   } catch (e) {
