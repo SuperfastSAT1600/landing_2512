@@ -87,7 +87,7 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
   const [allProblems, setAllProblems] = useState<GraphProblem[]>([]);
   const [allConcepts, setAllConcepts] = useState<Concept[]>([]);
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<string>>(
-    new Set(['easy', 'medium', 'hard', 'killer'])
+    new Set(['easy', 'medium', 'hard'])
   );
   const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({ nodes: [], links: [] });
   const [query, setQuery] = useState('');
