@@ -326,8 +326,8 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const d = data;
   const segmentSub: Record<CrmStatsSegment, string> = {
     all: '문의 기준 · B2C+B2B',
-    b2c: '문의 기준 · B2C만',
-    b2b: '문의 기준 · B2B만',
+    b2c: '문의 기준 · B2C',
+    b2b: '문의 기준 · B2B',
   };
   // 카드 값: 한눈에 비교되도록 만원 단위로 축약. 정확한 원 단위 값은 title 툴팁으로 노출.
   const fmt만원 = (n: number) => `${Math.round(n / 10000).toLocaleString()}만원`;

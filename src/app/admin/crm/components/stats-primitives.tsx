@@ -143,8 +143,8 @@ export function RateBar({
 
 const SEGMENT_TABS: { key: CrmStatsSegment; label: string }[] = [
   { key: 'all', label: '전체' },
-  { key: 'b2c', label: 'B2C만' },
-  { key: 'b2b', label: 'B2B만' },
+  { key: 'b2c', label: 'B2C' },
+  { key: 'b2b', label: 'B2B' },
 ];
 
 export function SegmentTabs({

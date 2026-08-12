@@ -67,7 +67,7 @@ test.describe('CRM B2C 통계 세그먼트 필터', () => {
     await mockCrmApis(page);
   });
 
-  test('통계 탭에 전체/B2C만/B2B만 탭이 표시되고 세그먼트별로 데이터가 바뀐다', async ({ page }) => {
+  test('통계 탭에 전체/B2C/B2B 탭이 표시되고 세그먼트별로 데이터가 바뀐다', async ({ page }) => {
     await page.goto('/admin/crm');
     await page.waitForLoadState('networkidle');
 
@@ -78,23 +78,23 @@ test.describe('CRM B2C 통계 세그먼트 필터', () => {
     // 세그먼트 탭 확인
     const segmentTabs = page.getByTestId('stats-segment-tabs');
     await expect(segmentTabs.getByRole('button', { name: '전체', exact: true })).toBeVisible();
-    await expect(segmentTabs.getByRole('button', { name: 'B2C만', exact: true })).toBeVisible();
-    await expect(segmentTabs.getByRole('button', { name: 'B2B만', exact: true })).toBeVisible();
+    await expect(segmentTabs.getByRole('button', { name: 'B2C', exact: true })).toBeVisible();
+    await expect(segmentTabs.getByRole('button', { name: 'B2B', exact: true })).toBeVisible();
 
-    // 전체
-    await expect(page.locator('text=문의 기준 · B2C+B2B')).toBeVisible();
+    // 전체 — 부제는 정확히 일치로 본다('B2C'가 'B2C+B2B'의 부분문자열이라 substring 매칭은 무의미)
+    await expect(page.getByText('문의 기준 · B2C+B2B', { exact: true })).toBeVisible();
     await expect(page.locator('text=10').first()).toBeVisible();
 
-    // B2C만
-    await segmentTabs.getByRole('button', { name: 'B2C만', exact: true }).click();
+    // B2C
+    await segmentTabs.getByRole('button', { name: 'B2C', exact: true }).click();
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('text=문의 기준 · B2C만')).toBeVisible();
+    await expect(page.getByText('문의 기준 · B2C', { exact: true })).toBeVisible();
     await expect(page.locator('text=7').first()).toBeVisible();
 
-    // B2B만
-    await segmentTabs.getByRole('button', { name: 'B2B만', exact: true }).click();
+    // B2B
+    await segmentTabs.getByRole('button', { name: 'B2B', exact: true }).click();
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('text=문의 기준 · B2B만')).toBeVisible();
+    await expect(page.getByText('문의 기준 · B2B', { exact: true })).toBeVisible();
     await expect(page.locator('text=3').first()).toBeVisible();
   });
 });
