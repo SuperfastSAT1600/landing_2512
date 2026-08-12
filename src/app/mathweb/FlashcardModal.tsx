@@ -100,12 +100,12 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose, onPrev, onNe
         >
           {/* Front — question */}
           <div
-            className="absolute inset-0 bg-[#0d0d10] border border-zinc-700/60 rounded-2xl overflow-hidden flex flex-col shadow-2xl"
+            className="absolute inset-0 bg-[#0d0d10] border border-zinc-500/50 rounded-2xl overflow-hidden flex flex-col shadow-[0_0_32px_rgba(96,133,255,0.12),0_0_0_1px_rgba(255,255,255,0.06)]"
             style={{ backfaceVisibility: 'hidden' }}
           >
             {/* 상단 힌트 + 인덱스 */}
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800 shrink-0">
-              <span className="text-zinc-500 text-xs">🙌 탭하여 답 보기</span>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700/60 shrink-0 bg-zinc-900/40">
+              <span className="text-zinc-300 text-sm font-medium">🙌 탭하여 답 보기</span>
               {hasNav && (
                 <span className="text-zinc-600 text-xs tabular-nums">{(currentIndex ?? 0) + 1} / {total}</span>
               )}
@@ -169,7 +169,7 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose, onPrev, onNe
 
           {/* Back — answer */}
           <div
-            className="absolute inset-0 bg-[#0d0d10] border border-zinc-700/60 rounded-2xl overflow-hidden flex flex-col items-center justify-center shadow-2xl"
+            className="absolute inset-0 bg-[#0d0d10] border border-zinc-500/50 rounded-2xl overflow-hidden flex flex-col items-center justify-center shadow-[0_0_32px_rgba(96,133,255,0.12),0_0_0_1px_rgba(255,255,255,0.06)]"
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           >
             {problem.answer_image_url ? (
