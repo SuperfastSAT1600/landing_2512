@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Search, X, Maximize2 } from 'lucide-react';
+import { Search, X, Maximize2, Lock } from 'lucide-react';
 import type { Problem } from './FlashcardModal';
+import { TutorialOverlay } from './TutorialOverlay';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 
@@ -92,6 +93,8 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Concept[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [killerLocked, setKillerLocked] = useState(false);
+  const killerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [isMobile, setIsMobile] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -195,6 +198,12 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
   }, []);
 
   const handleNodeClick = useCallback(async (node: GraphNode) => {
+    if (node.problem.difficulty === 'killer') {
+      if (killerTimerRef.current) clearTimeout(killerTimerRef.current);
+      setKillerLocked(true);
+      killerTimerRef.current = setTimeout(() => setKillerLocked(false), 3000);
+      return;
+    }
     try {
       const res = await fetch(`/api/mathweb/problems/${node.id}`);
       if (!res.ok) return;
@@ -221,6 +230,7 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
 
   return (
     <div className="relative w-full h-full" style={{ background: 'radial-gradient(ellipse at 50% 38%, #0e0e38 0%, #07071c 38%, #020208 70%, #000000 100%)' }}>
+      <TutorialOverlay />
 
       {/* ── 좌측 사이드바 ── */}
       {!isMobile && (
@@ -493,6 +503,15 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
             }}
             linkCanvasObjectMode={() => 'replace'}
           />
+        </div>
+      )}
+      {/* Killer 잠금 토스트 */}
+      {killerLocked && (
+        <div className="fixed inset-0 pointer-events-none z-[100] flex items-center justify-center">
+          <div className="flex items-center gap-3 px-6 py-4 bg-zinc-950 border border-purple-500/40 rounded-2xl shadow-[0_0_40px_rgba(192,132,252,0.2)] animate-in fade-in zoom-in-95 duration-200">
+            <Lock size={16} className="text-purple-400 shrink-0" />
+            <p className="text-purple-200 text-sm font-medium">&lt;killer 특강&gt; 수강생만 볼 수 있습니다.</p>
+          </div>
         </div>
       )}
     </div>
