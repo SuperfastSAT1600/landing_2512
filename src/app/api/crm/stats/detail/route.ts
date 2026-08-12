@@ -6,6 +6,8 @@ import {
   type CrmStatsSegment,
   parseStatsSegment,
   isCrmStatsSegment,
+  paymentMatchesSegment,
+  type RelatedCompanyRef,
 } from '@/lib/crm-stats-core';
 
 const err = (code: string, message: string, status: number) =>
@@ -67,12 +69,9 @@ export async function GET(request: NextRequest) {
   if (pErr) return err('FETCH_FAILED', pErr.message, 500);
 
   const studentList = students ?? [];
-  const filteredPayments = (payments ?? []).filter((p) => {
-    if (segment === 'all') return true;
-    const related = (p as { students?: { company_id: string | null }[] | null }).students;
-    const companyId = related?.[0]?.company_id ?? null;
-    return segment === 'b2b' ? companyId != null : companyId == null;
-  });
+  const filteredPayments = (payments ?? []).filter((p) =>
+    paymentMatchesSegment(p as { students?: RelatedCompanyRef }, segment),
+  );
 
   const result = buildStatsDetail(metric, studentList, filteredPayments, source);
   return NextResponse.json({ data: result });

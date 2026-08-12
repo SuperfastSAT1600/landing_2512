@@ -86,20 +86,34 @@ export function isCrmStatsSegment(v: string): v is CrmStatsSegment {
 }
 
 /**
- * segment에 따라 결제 목록을 필터링한다.
- * payments 테이블에는 company_id가 없으므로, 이미 segment로 필터링된 students 집합으로
- * student_id(우선) 또는 student_name(폴백) 매칭을 한다.
+ * payments의 `students:student_id(company_id)` 임베드 형태.
+ * PostgREST는 many-to-one 임베드를 단일 객체로 반환하지만, 관계 추론에 따라 배열로 올 수도 있어 둘 다 받는다.
  */
-export function filterPaymentsBySegment<
-  P extends { student_id: string | null; student_name: string },
-  S extends { id: string; name: string },
->(payments: P[], students: S[], segment: CrmStatsSegment): P[] {
-  if (segment === 'all') return payments;
-  const ids = new Set(students.map((s) => s.id));
-  const names = new Set(students.map((s) => s.name));
-  return payments.filter(
-    (p) => (p.student_id && ids.has(p.student_id)) || names.has(p.student_name),
-  );
+export type RelatedCompanyRef =
+  | { company_id: string | null }
+  | { company_id: string | null }[]
+  | null
+  | undefined;
+
+/** 임베드된 학생 관계에서 company_id를 꺼낸다. 관계가 없으면 null. */
+export function relatedCompanyId(related: RelatedCompanyRef): string | null {
+  if (!related) return null;
+  const row = Array.isArray(related) ? related[0] : related;
+  return row?.company_id ?? null;
+}
+
+/**
+ * segment에 따라 결제 1건의 포함 여부를 판정한다.
+ * payments 테이블에는 company_id가 없으므로 임베드된 학생 관계의 company_id로 분류한다.
+ * 학생 레코드가 없는 결제(관계 null)는 B2C로 본다 — b2c/b2b가 전체를 겹침 없이 나눈다.
+ */
+export function paymentMatchesSegment(
+  payment: { students?: RelatedCompanyRef },
+  segment: CrmStatsSegment,
+): boolean {
+  if (segment === 'all') return true;
+  const companyId = relatedCompanyId(payment.students);
+  return segment === 'b2b' ? companyId != null : companyId == null;
 }
 
 /**

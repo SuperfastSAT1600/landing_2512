@@ -81,7 +81,8 @@ function payment(over: Row): Row {
     payment_type: '최초결제',
     paid_at: '2026-07-30T10:00:00+09:00',
     tax_type: '면세',
-    students: [{ company_id: null }],
+    // PostgREST는 many-to-one 임베드를 배열이 아닌 단일 객체로 반환한다.
+    students: { company_id: null },
     ...over,
   };
 }
@@ -224,15 +225,27 @@ describe('GET /api/crm/stats — segment 필터 (REQ-004)', () => {
     expect(data.by_source.find((r: { source: string }) => r.source === 'B2B 파트너')?.leads).toBe(1);
   });
 
-  it('segment=b2c일 때 B2C 학생의 결제만 매출에 포함한다', async () => {
+  // 두 학생(B2C 10만원 / B2B 20만원)의 결제 — 세그먼트 분해 검증 공통 픽스처
+  function seedMixedPayments(relatedShape: 'object' | 'array' = 'object') {
+    const wrap = (companyId: string | null) =>
+      relatedShape === 'array' ? [{ company_id: companyId }] : { company_id: companyId };
     tableRows.students = [
       student({ id: 'b2c-1', name: '김B2C' }),
       student({ id: 'b2b-1', name: '이B2B', company_id: COMPANY_PLAIN }),
     ];
     tableRows.payments = [
-      payment({ student_id: 'b2c-1', student_name: '김B2C', amount: 100000, students: [{ company_id: null }] }),
-      payment({ student_id: 'b2b-1', student_name: '이B2B', amount: 200000, students: [{ company_id: COMPANY_PLAIN }] }),
+      payment({ student_id: 'b2c-1', student_name: '김B2C', amount: 100000, students: wrap(null) }),
+      payment({
+        student_id: 'b2b-1',
+        student_name: '이B2B',
+        amount: 200000,
+        students: wrap(COMPANY_PLAIN),
+      }),
     ];
+  }
+
+  it('segment=b2c일 때 B2C 학생의 결제만 매출에 포함한다', async () => {
+    seedMixedPayments();
 
     const data = (await (await callRoute('b2c')).json()).data;
 
@@ -240,18 +253,38 @@ describe('GET /api/crm/stats — segment 필터 (REQ-004)', () => {
   });
 
   it('segment=b2b일 때 B2B 학생의 결제만 매출에 포함한다', async () => {
-    tableRows.students = [
-      student({ id: 'b2c-1', name: '김B2C' }),
-      student({ id: 'b2b-1', name: '이B2B', company_id: COMPANY_PLAIN }),
-    ];
-    tableRows.payments = [
-      payment({ student_id: 'b2c-1', student_name: '김B2C', amount: 100000, students: [{ company_id: null }] }),
-      payment({ student_id: 'b2b-1', student_name: '이B2B', amount: 200000, students: [{ company_id: COMPANY_PLAIN }] }),
-    ];
+    seedMixedPayments();
 
     const data = (await (await callRoute('b2b')).json()).data;
 
     expect(data.overview.gross_revenue).toBe(200000);
+  });
+
+  it('배열 형태 관계 임베드에서도 세그먼트 매출 분해가 동일하다', async () => {
+    seedMixedPayments('array');
+    const b2b = (await (await callRoute('b2b')).json()).data;
+    expect(b2b.overview.gross_revenue).toBe(200000);
+
+    seedMixedPayments('array');
+    const b2c = (await (await callRoute('b2c')).json()).data;
+    expect(b2c.overview.gross_revenue).toBe(100000);
+  });
+
+  it('all 매출 = b2c 매출 + b2b 매출 (누락·중복 없음)', async () => {
+    seedMixedPayments();
+    const all = (await (await callRoute('all')).json()).data;
+    seedMixedPayments();
+    const b2c = (await (await callRoute('b2c')).json()).data;
+    seedMixedPayments();
+    const b2b = (await (await callRoute('b2b')).json()).data;
+
+    expect(all.overview.gross_revenue).toBe(300000);
+    expect(b2c.overview.gross_revenue + b2b.overview.gross_revenue).toBe(
+      all.overview.gross_revenue,
+    );
+    expect(b2c.overview.total_revenue + b2b.overview.total_revenue).toBe(
+      all.overview.total_revenue,
+    );
   });
 
   it('B2C 학생이 문의일(inquiry_date)이 없어도 해당 학생의 결제는 segment=b2c에 포함된다', async () => {
@@ -264,7 +297,7 @@ describe('GET /api/crm/stats — segment 필터 (REQ-004)', () => {
         student_name: '김우솔',
         amount: -1429525,
         payment_type: '환불',
-        students: [{ company_id: null }],
+        students: { company_id: null },
       }),
     ];
 
