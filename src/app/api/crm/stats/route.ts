@@ -4,7 +4,18 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { computeStageFlow, type StageFlowRow } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
-import { MAX_LEAD_ROWS, isContactedWithImpliedPartner, contactRate, toMonthKey, inquiryRefMs, fillMonthlyGaps } from '@/lib/crm-stats-core';
+import {
+  MAX_LEAD_ROWS,
+  isContactedWithImpliedPartner,
+  contactRate,
+  toMonthKey,
+  inquiryRefMs,
+  fillMonthlyGaps,
+  type CrmStatsSegment,
+  parseStatsSegment,
+  isCrmStatsSegment,
+  filterPaymentsBySegment,
+} from '@/lib/crm-stats-core';
 
 export interface StatsBySource {
   source: string;
@@ -88,6 +99,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const rawSegment = searchParams.get('segment');
+  const segment: CrmStatsSegment = parseStatsSegment(rawSegment);
+  if (rawSegment !== null && !isCrmStatsSegment(rawSegment)) {
+    return NextResponse.json(
+      { error: { code: 'INVALID_SEGMENT', message: 'segment는 all, b2c, b2b 중 하나여야 합니다.' } },
+      { status: 400 }
+    );
+  }
+
   // 기간 내 신규 리드 = inquiry_date(실제 인입 시각)가 [from, to]에 든 리드만.
   // created_at(레코드 생성 시각) 폴백은 쓰지 않는다 — 레거시 대량 임포트(inquiry_date NULL)가
   // 생성 시각 기준으로 특정 기간 신규 리드로 둔갑해 과대집계되는 문제(예: 595건)를 막는다.
@@ -95,15 +115,19 @@ export async function GET(request: NextRequest) {
   // 매출(payments)에는 업체 필터가 없으므로 리드만 제외하면 리드-매출 기준이 어긋난다.
   // 업체별 세부 집계는 /api/crm/b2b/stats에서 별도로 본다.
   // 서로 독립인 네 조회를 병렬 실행: 기간 리드 / 기간 결제 / 최초결제 코호트 / 업체 로스터.
+  let studentsQuery = supabaseAdmin
+    .from('students')
+    .select(
+      'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id'
+    )
+    .gte('inquiry_date', from)
+    .lte('inquiry_date', `${to}T23:59:59`)
+    .limit(MAX_LEAD_ROWS);
+  if (segment === 'b2c') studentsQuery = studentsQuery.is('company_id', null);
+  if (segment === 'b2b') studentsQuery = studentsQuery.not('company_id', 'is', null);
+
   const [studentsRes, paymentsRes, firstPayRes, companiesRes] = await Promise.all([
-    supabaseAdmin
-      .from('students')
-      .select(
-        'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id'
-      )
-      .gte('inquiry_date', from)
-      .lte('inquiry_date', `${to}T23:59:59`)
-      .limit(MAX_LEAD_ROWS),
+    studentsQuery,
     // 기간 내 payments (매출·환불 집계용, 기간=paid_at KST)
     supabaseAdmin
       .from('payments')
@@ -134,7 +158,20 @@ export async function GET(request: NextRequest) {
     console.warn(`[stats] lead rows hit MAX_LEAD_ROWS(${MAX_LEAD_ROWS}) for ${from}~${to} — 집계가 절단됐을 수 있음`);
   }
 
-  const paymentList = paymentsRes.error ? [] : (paymentsRes.data ?? []);
+  const leadList = students ?? [];
+
+  // segment에 따라 결제/최초결제를 필터링한다. payments 테이블에는 company_id가 없으므로
+  // 이미 segment로 좁혀진 leadList로 student_id(우선) 또는 student_name(폴백) 매칭을 한다.
+  const paymentList = filterPaymentsBySegment(
+    paymentsRes.error ? [] : (paymentsRes.data ?? []),
+    leadList,
+    segment,
+  );
+
+  // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다.
+  // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
+  if (firstPayRes.error) console.error('[stats] firstPayRows fetch failed:', firstPayRes.error.message);
+  const firstPayRows = filterPaymentsBySegment(firstPayRes.data ?? [], leadList, segment);
 
   // 학생 ID → payment 맵 (최초결제 기준)
   const paidStudentIds = new Set<string>();
@@ -157,16 +194,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다(위 Promise.all에서 조회).
-  // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
-  if (firstPayRes.error) console.error('[stats] firstPayRows fetch failed:', firstPayRes.error.message);
-  const firstPayRows = firstPayRes.data;
-  for (const p of firstPayRows ?? []) {
+  for (const p of firstPayRows) {
     if (p.student_id) paidStudentIds.add(p.student_id);
     if (p.student_name) paidStudentNames.add(p.student_name);
   }
-
-  const leadList = students ?? [];
 
   // 채널 매출용: 이 기간 인입(문의) 리드 코호트 id → 유입경로
   const leadIds = new Set(leadList.map((s) => s.id));

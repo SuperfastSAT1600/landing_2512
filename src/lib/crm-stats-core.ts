@@ -72,6 +72,36 @@ export function fillMonthlyGaps<T extends { month: string }>(
   return out;
 }
 
+// ─── Segment filter for B2C/B2B stats ─────────────────────────────────────────
+
+export type CrmStatsSegment = 'all' | 'b2c' | 'b2b';
+
+export function parseStatsSegment(v: string | null): CrmStatsSegment {
+  if (v === 'b2c' || v === 'b2b') return v;
+  return 'all';
+}
+
+export function isCrmStatsSegment(v: string): v is CrmStatsSegment {
+  return v === 'all' || v === 'b2c' || v === 'b2b';
+}
+
+/**
+ * segment에 따라 결제 목록을 필터링한다.
+ * payments 테이블에는 company_id가 없으므로, 이미 segment로 필터링된 students 집합으로
+ * student_id(우선) 또는 student_name(폴백) 매칭을 한다.
+ */
+export function filterPaymentsBySegment<
+  P extends { student_id: string | null; student_name: string },
+  S extends { id: string; name: string },
+>(payments: P[], students: S[], segment: CrmStatsSegment): P[] {
+  if (segment === 'all') return payments;
+  const ids = new Set(students.map((s) => s.id));
+  const names = new Set(students.map((s) => s.name));
+  return payments.filter(
+    (p) => (p.student_id && ids.has(p.student_id)) || names.has(p.student_name),
+  );
+}
+
 /**
  * 첫 응답 시간 계산의 기준 문의시각(ms).
  * inquiry_date는 naive(KST 벽시계)로 저장되므로 KST(+09:00) instant로 해석한다.

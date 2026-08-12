@@ -22,7 +22,9 @@ import {
   OverviewCard,
   RateBar,
   formatDuration,
+  SegmentTabs,
 } from './stats-primitives';
+import type { CrmStatsSegment } from '@/lib/crm-stats-core';
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
@@ -39,12 +41,14 @@ function SourceTable({
   adminKey,
   from,
   to,
+  segment,
   onSelectStudent,
 }: {
   rows: StatsBySource[];
   adminKey: string;
   from: string;
   to: string;
+  segment: CrmStatsSegment;
   onSelectStudent?: (id: string) => void;
 }) {
   const maxLeads = Math.max(...rows.map((r) => r.leads), 1);
@@ -67,7 +71,7 @@ function SourceTable({
     if (cache[source]) return;
     setLoadingSrc(source);
     try {
-      const qs = new URLSearchParams({ metric: 'leads', from, to, source });
+      const qs = new URLSearchParams({ metric: 'leads', from, to, source, segment });
       const res = await fetch(`/api/crm/stats/detail?${qs.toString()}`, { headers: { 'x-admin-key': adminKey } });
       const json = await res.json();
       if (res.ok && json.data?.kind === 'leads') {
@@ -252,6 +256,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const [preset, setPreset] = useState<Preset>('this_month');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
+  const [segment, setSegment] = useState<CrmStatsSegment>('all');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<CrmStatsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -271,7 +276,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/crm/stats?from=${from}&to=${to}`, {
+      const res = await fetch(`/api/crm/stats?from=${from}&to=${to}&segment=${segment}`, {
         headers: { 'x-admin-key': adminKey },
       });
       const json = await res.json();
@@ -285,11 +290,17 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     } finally {
       setLoading(false);
     }
-  }, [from, to, adminKey]);
+  }, [from, to, segment, adminKey]);
 
   useEffect(() => {
     if (preset !== 'custom') fetchStats();
   }, [preset, fetchStats]);
+
+  // 직접 입력 모드에서도 세그먼트 변경 시에는 즉시 재조회한다.
+  useEffect(() => {
+    if (preset === 'custom') fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segment]);
 
   // 트렌드 그래프 기간(트렌드 전용 프리셋 또는 직접 입력, 상단 기간과 독립)
   const trendRange =
@@ -303,14 +314,21 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     if (!tf || !tt || tf > tt) return;
     (async () => {
       try {
-        const res = await fetch(`/api/crm/stats?from=${tf}&to=${tt}`, { headers: { 'x-admin-key': adminKey } });
+        const res = await fetch(`/api/crm/stats?from=${tf}&to=${tt}&segment=${segment}`, { headers: { 'x-admin-key': adminKey } });
         const json = await res.json();
         if (res.ok && json.data) setAllMonthly((json.data as CrmStatsData).monthly);
       } catch { /* 무시: 그래프만 비어 보임 */ }
     })();
-  }, [adminKey, trendRange.from, trendRange.to]);
+    // trendRange는 from/to 외 프로퍼티가 없고 매 렌더링 재생성되므로 from/to만 의존한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminKey, trendRange.from, trendRange.to, segment]);
 
   const d = data;
+  const segmentSub: Record<CrmStatsSegment, string> = {
+    all: '문의 기준 · B2C+B2B',
+    b2c: '문의 기준 · B2C만',
+    b2b: '문의 기준 · B2B만',
+  };
   // 카드 값: 한눈에 비교되도록 만원 단위로 축약. 정확한 원 단위 값은 title 툴팁으로 노출.
   const fmt만원 = (n: number) => `${Math.round(n / 10000).toLocaleString()}만원`;
   const fmt원 = (n: number) => `${n.toLocaleString()}원`;
@@ -364,6 +382,10 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
             {from} ~ {to}
           </span>
         )}
+
+        <div className="ml-auto">
+          <SegmentTabs value={segment} onChange={setSegment} />
+        </div>
       </div>
 
       {error && (
@@ -380,7 +402,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               icon={Users}
               label="신규 리드"
               value={d.overview.total_leads}
-              sub="문의 기준 · B2B 포함"
+              sub={segmentSub[segment]}
               color="bg-gray-100 text-gray-600"
               onClick={() => setDetail({ metric: 'leads', label: '신규 리드' })}
             />
@@ -561,6 +583,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                 adminKey={adminKey}
                 from={from}
                 to={to}
+                segment={segment}
                 onSelectStudent={onSelectStudent}
               />
             )}
@@ -580,6 +603,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
           metric={detail.metric}
           label={detail.label}
           source={detail.source}
+          extraParams={{ segment }}
           onSelectStudent={onSelectStudent}
           from={from}
           to={to}

@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { buildStatsDetail, isStatsDetailMetric } from '@/lib/crm-stats-detail';
+import {
+  type CrmStatsSegment,
+  parseStatsSegment,
+  isCrmStatsSegment,
+  filterPaymentsBySegment,
+} from '@/lib/crm-stats-core';
 
 const err = (code: string, message: string, status: number) =>
   NextResponse.json({ error: { code, message } }, { status });
@@ -28,14 +34,24 @@ export async function GET(request: NextRequest) {
 
   if (!isStatsDetailMetric(metric)) return err('BAD_METRIC', `알 수 없는 metric: ${metric}`, 400);
 
+  const rawSegment = searchParams.get('segment');
+  const segment: CrmStatsSegment = parseStatsSegment(rawSegment);
+  if (rawSegment !== null && !isCrmStatsSegment(rawSegment)) {
+    return err('INVALID_SEGMENT', 'segment는 all, b2c, b2b 중 하나여야 합니다.', 400);
+  }
+
   // 기간 내 신규 리드 (집계 라우트와 동일한 필터)
-  const { data: students, error: sErr } = await supabaseAdmin
+  let studentsQuery = supabaseAdmin
     .from('students')
     .select(
-      'id, name, funnel_stage, stage_history, lead_status, churn_tag, traffic_source, inquiry_date, created_at, retry_strategy_id, consultation_timeline'
+      'id, name, funnel_stage, stage_history, lead_status, churn_tag, traffic_source, inquiry_date, created_at, retry_strategy_id, consultation_timeline, company_id'
     )
     .or(`inquiry_date.gte.${from},and(inquiry_date.is.null,created_at.gte.${from})`)
     .or(`inquiry_date.lte.${to}T23:59:59,and(inquiry_date.is.null,created_at.lte.${to}T23:59:59)`);
+  if (segment === 'b2c') studentsQuery = studentsQuery.is('company_id', null);
+  if (segment === 'b2b') studentsQuery = studentsQuery.not('company_id', 'is', null);
+
+  const { data: students, error: sErr } = await studentsQuery;
 
   if (sErr) return err('FETCH_FAILED', sErr.message, 500);
 
@@ -49,6 +65,13 @@ export async function GET(request: NextRequest) {
 
   if (pErr) return err('FETCH_FAILED', pErr.message, 500);
 
-  const result = buildStatsDetail(metric, students ?? [], payments ?? [], source);
+  const studentList = students ?? [];
+  const filteredPayments = filterPaymentsBySegment(
+    payments ?? [],
+    studentList.map((s) => ({ id: s.id, name: s.name })),
+    segment,
+  );
+
+  const result = buildStatsDetail(metric, studentList, filteredPayments, source);
   return NextResponse.json({ data: result });
 }

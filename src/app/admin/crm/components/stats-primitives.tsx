@@ -4,6 +4,7 @@
 // B2B 대시보드/세일즈 로직 통계가 동일 UI를 재사용한다. 순수 표현 컴포넌트.
 
 import type { StageFlowRow } from '@/lib/funnel-stats';
+import type { CrmStatsSegment } from '@/lib/crm-stats-core';
 
 // ─── Period helpers ────────────────────────────────────────────────────────────
 
@@ -134,6 +135,41 @@ export function RateBar({
         className={`h-full rounded-full ${color}`}
         style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
       />
+    </div>
+  );
+}
+
+// ─── Segment tabs for B2C stats ───────────────────────────────────────────────
+
+const SEGMENT_TABS: { key: CrmStatsSegment; label: string }[] = [
+  { key: 'all', label: '전체' },
+  { key: 'b2c', label: 'B2C만' },
+  { key: 'b2b', label: 'B2B만' },
+];
+
+export function SegmentTabs({
+  value,
+  onChange,
+}: {
+  value: CrmStatsSegment;
+  onChange: (v: CrmStatsSegment) => void;
+}) {
+  return (
+    <div data-testid="stats-segment-tabs" className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+      {SEGMENT_TABS.map(({ key, label }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key)}
+          className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+            value === key
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

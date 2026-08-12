@@ -41,10 +41,18 @@ process.env.ADMIN_SECRET_KEY = 'admin-key';
 const COMPANY_IMPLIED = 'company-implied';
 const COMPANY_PLAIN = 'company-plain';
 
-function makeReq(from = '2026-07-27', to = '2026-08-02', key = 'admin-key') {
-  return new NextRequest(`http://localhost/api/crm/stats?from=${from}&to=${to}`, {
+function makeReq(from = '2026-07-27', to = '2026-08-02', key = 'admin-key', segment?: string) {
+  const qs = new URLSearchParams({ from, to });
+  if (segment != null) qs.set('segment', segment);
+  return new NextRequest(`http://localhost/api/crm/stats?${qs.toString()}`, {
     headers: { 'x-admin-key': key },
   });
+}
+
+async function callRoute(segment?: string) {
+  const { GET } = await import('../route');
+  const res = await GET(makeReq('2026-07-27', '2026-08-02', 'admin-key', segment));
+  return res;
 }
 
 function student(over: Row): Row {
@@ -63,12 +71,6 @@ function student(over: Row): Row {
     company_id: null,
     ...over,
   };
-}
-
-async function callRoute() {
-  const { GET } = await import('../route');
-  const res = await GET(makeReq());
-  return (await res.json()).data;
 }
 
 beforeEach(() => {
@@ -91,7 +93,7 @@ describe('GET /api/crm/stats — B2B 리드 합산 (REQ-001)', () => {
       student({ id: 'b2b-1', name: '이도윤', company_id: COMPANY_PLAIN, traffic_source: 'B2B 파트너' }),
     ];
 
-    const data = await callRoute();
+    const data = (await (await callRoute()).json()).data;
 
     expect(data.overview.total_leads).toBe(2);
   });
@@ -111,7 +113,7 @@ describe('GET /api/crm/stats — B2B 리드 합산 (REQ-001)', () => {
       student({ id: 'b2b-1', name: '이도윤', company_id: COMPANY_PLAIN, traffic_source: 'B2B 파트너' }),
     ];
 
-    const data = await callRoute();
+    const data = (await (await callRoute()).json()).data;
 
     const b2b = data.by_source.find((r: { source: string }) => r.source === 'B2B 파트너');
     expect(b2b).toBeDefined();
@@ -125,7 +127,7 @@ describe('GET /api/crm/stats — 센터형 파트너 컨택 판정 (REQ-002)', (
       student({ id: 'b2b-1', name: '이도윤', company_id: COMPANY_IMPLIED, funnel_stage: '1' }),
     ];
 
-    const data = await callRoute();
+    const data = (await (await callRoute()).json()).data;
 
     expect(data.overview.contacted).toBe(1);
     expect(data.overview.contacted_base).toBe(1);
@@ -137,7 +139,7 @@ describe('GET /api/crm/stats — 센터형 파트너 컨택 판정 (REQ-002)', (
       student({ id: 'b2b-plain', company_id: COMPANY_PLAIN, funnel_stage: '1' }),
     ];
 
-    const data = await callRoute();
+    const data = (await (await callRoute()).json()).data;
 
     expect(data.overview.contacted).toBe(0);
   });
@@ -148,8 +150,64 @@ describe('GET /api/crm/stats — 센터형 파트너 컨택 판정 (REQ-002)', (
       student({ id: 'b2b-plain', company_id: COMPANY_PLAIN, funnel_stage: '8' }),
     ];
 
-    const data = await callRoute();
+    const data = (await (await callRoute()).json()).data;
 
     expect(data.overview.contacted).toBe(2);
+  });
+});
+
+describe('GET /api/crm/stats — segment 필터 (REQ-004)', () => {
+  it('잘못된 segment는 400 INVALID_SEGMENT를 반환한다', async () => {
+    const res = await callRoute('foo');
+
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error.code).toBe('INVALID_SEGMENT');
+  });
+
+  it('segment=all이면 students 조회에 company_id 필터를 추가하지 않는다', async () => {
+    tableRows.students = [student({ id: 'b2c-1' })];
+
+    await callRoute('all');
+
+    const companyIdFilters = appliedFilters.students.filter(
+      ([op, col]) => (op === 'is' || op === 'not') && col === 'company_id',
+    );
+    expect(companyIdFilters).toEqual([]);
+  });
+
+  it('segment=b2c면 students 조회에 .is(company_id, null) 필터를 추가한다', async () => {
+    tableRows.students = [student({ id: 'b2c-1' })];
+
+    await callRoute('b2c');
+
+    expect(appliedFilters.students).toContainEqual(['is', 'company_id', null]);
+  });
+
+  it('segment=b2b면 students 조회에 .not(company_id, is, null) 필터를 추가한다', async () => {
+    tableRows.students = [student({ id: 'b2b-1', company_id: COMPANY_PLAIN })];
+
+    await callRoute('b2b');
+
+    expect(appliedFilters.students).toContainEqual(['not', 'company_id', 'is', null]);
+  });
+
+  it('segment=b2c일 때 B2C 리드만 집계한다', async () => {
+    tableRows.students = [student({ id: 'b2c-1', name: '김B2C' })];
+
+    const data = (await (await callRoute('b2c')).json()).data;
+
+    expect(data.overview.total_leads).toBe(1);
+  });
+
+  it('segment=b2b일 때 B2B 리드만 집계한다', async () => {
+    tableRows.students = [
+      student({ id: 'b2b-1', name: '이B2B', company_id: COMPANY_PLAIN, traffic_source: 'B2B 파트너' }),
+    ];
+
+    const data = (await (await callRoute('b2b')).json()).data;
+
+    expect(data.overview.total_leads).toBe(1);
+    expect(data.by_source.find((r: { source: string }) => r.source === 'B2B 파트너')?.leads).toBe(1);
   });
 });
