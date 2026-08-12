@@ -105,10 +105,15 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   const products = getProducts();
   const selectedProduct = products.find(p => p.id === productId);
 
+  // 0원 = 가결제(수업 시작, 실입금 전). 빈 값·음수만 막는다.
+  const amountValue = Number(amount);
+  const hasAmount = amount !== '' && Number.isFinite(amountValue) && amountValue >= 0;
+  const isProvisional = hasAmount && amountValue === 0;
+
   const isValid =
     !!selectedProduct &&
     (!selectedProduct.requiresHours || (hours !== '' && Number(hours) > 0)) &&
-    amount !== '' && Number(amount) > 0;
+    hasAmount;
 
   function handleClassType(ct: ClassType) {
     setClassType(ct);
@@ -427,15 +432,19 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
                   <span className="text-xs text-gray-400">₩</span>
                   <input
                     type="number"
-                    min={1}
+                    min={0}
                     value={amount}
                     onChange={e => setAmount(e.target.value)}
-                    placeholder="예: 2990000"
+                    placeholder="예: 2990000 (가결제는 0)"
                     className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-blue-400"
                   />
                 </div>
-                {amount && Number(amount) > 0 && (
-                  <p className="text-[11px] text-gray-400">{Number(amount).toLocaleString('ko-KR')}원</p>
+                {hasAmount && (
+                  <p className={`text-[11px] ${isProvisional ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>
+                    {isProvisional
+                      ? '0원 · 가결제 (수업 시작, 실입금 전)'
+                      : `${amountValue.toLocaleString('ko-KR')}원`}
+                  </p>
                 )}
               </div>
 
@@ -457,13 +466,13 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
                     </button>
                   ))}
                 </div>
-                {amount && Number(amount) > 0 && (
+                {hasAmount && (
                   <p className="text-[11px] text-gray-400">
                     수익:{' '}
                     <span className="font-medium text-gray-700">
                       {taxType === '면세'
-                        ? Number(amount).toLocaleString('ko-KR')
-                        : Math.round(Number(amount) * 0.9).toLocaleString('ko-KR')}원
+                        ? amountValue.toLocaleString('ko-KR')
+                        : Math.round(amountValue * 0.9).toLocaleString('ko-KR')}원
                     </span>
                     {taxType === '과세' && <span className="ml-1 text-gray-400">(부가세 10% 제외)</span>}
                   </p>

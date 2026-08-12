@@ -1,35 +1,52 @@
 /**
- * Plaud 녹음 오디오 → 전사 → Qwen 4섹션 상담 메모 요약 (자체완결형).
- * - STT: OpenAI gpt-4o-transcribe (24MB 초과는 폴백 없이 AudioTooLargeError).
- * - 화자분리·요약: Qwen(Anthropic 호환, 텍스트 전용).
- * 전화상담(Daily) 파이프라인 제거에 따라 이 모듈은 다른 lib에 의존하지 않는다.
+ * Plaud 녹음 오디오 → 전사 → Qwen 4섹션 상담 메모 요약.
+ * - STT: Qwen(DashScope) 파일 전사. 오디오 URL을 그대로 넘기면 되고 길이·용량 제약이 없다
+ *        (상세는 `qwen-asr.ts`). 화자분리가 켜져 있어 전사문에 화자 라벨이 붙는다.
+ * - 요약: Qwen(Anthropic 호환, 텍스트 전용).
  */
-import OpenAI, { toFile } from 'openai';
 import { getQwenAnthropicClient } from '@/lib/qwen';
+import { transcribeAudioUrlWithQwen } from '@/lib/qwen-asr';
 
-// STT·요약 모델은 env로 조정 가능(속도/품질 튜닝).
-// STT는 gpt-4o-transcribe 유지 — gpt-4o-mini-transcribe는 일부 녹음에서 같은 문장을 무한 반복하는
-// 전사 루프 결함이 있어 정확도를 깨뜨린다(속도 이득도 미미). 정확도 우선.
-const STT_MODEL = process.env.PLAUD_STT_MODEL?.trim() || 'gpt-4o-transcribe';
 // 요약은 qwen-plus — qwen-max보다 빠르면서 상세 메모에 충분한 품질. (최고 품질 원하면 env로 qwen-max)
 const SUMMARY_MODEL = process.env.PLAUD_SUMMARY_MODEL?.trim() || 'qwen-plus';
 
-/** OpenAI 전사 파일 한도(25MB) 아래로 둔 캡. 초과 녹음은 전사하지 않는다. */
-export const MAX_AUDIO_BYTES = 24 * 1024 * 1024;
-
-/** 24MB 초과로 전사 불가함을 알리는 에러(라우트에서 413으로 매핑). */
-export class AudioTooLargeError extends Error {
-  constructor() {
-    super('녹음이 24MB를 초과해 전사할 수 없습니다.');
-    this.name = 'AudioTooLargeError';
+/**
+ * 크레딧/쿼터 소진으로 처리가 불가능한 상태(라우트에서 402로 매핑).
+ * 429로 오지만 재시도해도 절대 풀리지 않으므로 일반 rate limit과 구분한다.
+ */
+export class QuotaExhaustedError extends Error {
+  constructor(message = 'AI 크레딧이 소진되어 처리할 수 없습니다. 결제(크레딧)를 확인해주세요.') {
+    super(message);
+    this.name = 'QuotaExhaustedError';
   }
 }
 
-// 화자 미구분 전사에서 곧바로 "짧지만 밀도 높은" 상담 메모를 뽑는 단일 프롬프트.
+/**
+ * 429 중 재시도가 무의미한 크레딧·쿼터 소진 오류인지 판별한다.
+ * (예: `{ type: 'insufficient_quota', code: 'credit_balance_exhausted' }`)
+ */
+export function isQuotaError(err: unknown): boolean {
+  const e = err as {
+    type?: string;
+    code?: string;
+    error?: { type?: string; code?: string };
+  } | null;
+  if (!e) return false;
+  const type = e.type ?? e.error?.type;
+  const code = e.code ?? e.error?.code;
+  return (
+    type === 'insufficient_quota' ||
+    code === 'insufficient_quota' ||
+    code === 'credit_balance_exhausted'
+  );
+}
+
+// 전사에서 곧바로 "짧지만 밀도 높은" 상담 메모를 뽑는 단일 프롬프트.
 // 품질(정량·구체성)은 유지하되, 섹션·불릿 수를 강하게 제한해 한눈에 스캔되게 한다.
 const SUMMARY_PROMPT = `너는 SAT 학원 세일즈 담당자를 돕는 어시스턴트다.
 아래는 녹음기로 녹음·전사한 세일즈 담당자와 고객(학생/학부모)의 상담 통화 전사다.
-(오탈자·잡음이 있고 화자가 구분돼 있지 않다 — 문맥으로 세일즈 담당자와 고객을 구분해 파악하라.)
+(오탈자·잡음이 있을 수 있다. 화자는 "화자1"/"화자2"로 구분돼 있으니 문맥으로 어느 쪽이
+세일즈 담당자이고 어느 쪽이 고객인지 판단하라. 화자 라벨이 없으면 문맥만으로 구분하라.)
 
 바쁜 관리자가 10초 안에 훑어 핵심을 파악하는 **아주 짧은** 한국어 "상담 메모"를 작성하라.
 짧되, 담긴 사실은 구체적이고 정확해야 한다.
@@ -57,7 +74,7 @@ const SUMMARY_PROMPT = `너는 SAT 학원 세일즈 담당자를 돕는 어시�
 - (제안·정해진 것·후속 조치·기한 — 최대 3불릿)`;
 
 /**
- * Qwen(qwen-max)이 한국어 요약을 쓰다 중국어로 드리프트해 같은 내용을 반복 출력하는 경우가 있다.
+ * Qwen이 한국어 요약을 쓰다 중국어로 드리프트해 같은 내용을 반복 출력하는 경우가 있다.
  * 한국어 상담 메모에는 한자(CJK 표의문자)가 거의 없으므로, 한자가 많은 줄이 처음 나오면
  * 그 줄부터 끝까지 잘라내 한국어 부분만 남긴다(출력 계약: 한국어만).
  */
@@ -73,6 +90,7 @@ const TRANSIENT_STATUS = new Set([429, 500, 502, 503, 504]);
 
 /**
  * 일시적(429/5xx·네트워크) 오류면 지수 백오프로 재시도하고, 영구 오류는 즉시 throw.
+ * 크레딧 소진(429 insufficient_quota)은 재시도해도 안 풀리므로 즉시 throw.
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
@@ -90,7 +108,8 @@ export async function withRetry<T>(
     } catch (err) {
       lastErr = err;
       const status = (err as { status?: number } | null)?.status;
-      const transient = status === undefined || TRANSIENT_STATUS.has(status);
+      const transient =
+        (status === undefined || TRANSIENT_STATUS.has(status)) && !isQuotaError(err);
       if (!transient || i === attempts - 1) throw err;
       await sleep(baseDelayMs * 2 ** i);
     }
@@ -98,61 +117,12 @@ export async function withRetry<T>(
   throw lastErr;
 }
 
-/** OpenAI 전사가 지원하는 확장자 → 정규 오디오 mime. */
-const EXT_MIME: Record<string, string> = {
-  mp3: 'audio/mpeg',
-  mpeg: 'audio/mpeg',
-  mpga: 'audio/mpeg',
-  m4a: 'audio/mp4',
-  mp4: 'audio/mp4',
-  wav: 'audio/wav',
-  webm: 'audio/webm',
-  ogg: 'audio/ogg',
-  oga: 'audio/ogg',
-  flac: 'audio/flac',
-};
-
 /**
- * STT용 mime·파일명 결정. presigned URL의 경로 확장자를 우선 신뢰한다
- * (S3가 content-type을 `binary/octet-stream`으로 내려주는 경우가 있어 그것만으론 포맷 판별 불가).
- * URL로 못 정하면 content-type으로, 그래도 모르면 mp3로 가정한다.
- */
-function mimeFilename(url: string, contentType: string): { mime: string; filename: string } {
-  const urlExt = url.split(/[?#]/)[0].split('.').pop()?.toLowerCase() ?? '';
-  if (EXT_MIME[urlExt]) return { mime: EXT_MIME[urlExt], filename: `plaud.${urlExt}` };
-
-  const ct = contentType.split(';')[0].trim().toLowerCase();
-  const ext = ct.includes('webm')
-    ? 'webm'
-    : ct.includes('ogg')
-      ? 'ogg'
-      : ct.includes('wav')
-        ? 'wav'
-        : ct.includes('mp4') || ct.includes('m4a')
-          ? 'm4a'
-          : 'mp3'; // mpeg/mp3 및 알 수 없는 타입(binary/octet-stream 등)은 mp3로 가정
-  return { mime: EXT_MIME[ext], filename: `plaud.${ext}` };
-}
-
-/**
- * presigned 오디오 URL → 다운로드 → (24MB 초과 시 AudioTooLargeError) → OpenAI 한국어 전사.
- * @throws AudioTooLargeError 오디오가 MAX_AUDIO_BYTES 초과일 때 (폴백 없음)
+ * presigned 오디오 URL → 한국어 전사(화자 라벨 포함).
+ * 오디오는 DashScope가 URL로 직접 가져가므로 서버가 내려받지 않는다.
  */
 export async function transcribeAudioUrl(url: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`오디오 다운로드 실패: ${res.status}`);
-  const buffer = Buffer.from(await res.arrayBuffer());
-  if (buffer.byteLength > MAX_AUDIO_BYTES) throw new AudioTooLargeError();
-
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
-  const { mime, filename } = mimeFilename(url, res.headers.get('content-type') ?? '');
-  const openai = new OpenAI({ apiKey });
-  const file = await toFile(buffer, filename, { type: mime });
-  const r = await withRetry(() =>
-    openai.audio.transcriptions.create({ file, model: STT_MODEL, language: 'ko' })
-  );
-  return r.text.trim();
+  return transcribeAudioUrlWithQwen(url);
 }
 
 /** Qwen(텍스트) 1회 완성. system/user를 Anthropic 호환 messages로 보낸다. */
@@ -173,7 +143,6 @@ async function qwenComplete(system: string, user: string, model: string): Promis
 
 /**
  * 전사 텍스트 → Qwen 상세 상담 메모(단일 호출).
- * 별도 화자분리 호출은 최종 메모에 쓰이지 않아 제거했다(속도↑). 화자 구분은 요약 프롬프트가 문맥으로 처리.
  * @returns transcript(원본 전사)와 summary(상세 메모 초안)
  */
 export async function summarizeTranscriptWithQwen(
@@ -182,9 +151,17 @@ export async function summarizeTranscriptWithQwen(
   const raw = transcript.trim();
   if (!raw) throw new Error('전사 텍스트가 비어 있습니다.');
 
-  const rawSummary = await withRetry(() =>
-    qwenComplete(SUMMARY_PROMPT, `[상담 통화 전사]\n${raw}`, SUMMARY_MODEL)
-  );
+  let rawSummary: string;
+  try {
+    rawSummary = await withRetry(() =>
+      qwenComplete(SUMMARY_PROMPT, `[상담 통화 전사]\n${raw}`, SUMMARY_MODEL)
+    );
+  } catch (err) {
+    // 크레딧 소진은 코드 결함이 아니라 운영 상태 — 사용자에게 원인이 보이도록 전용 에러로 바꾼다.
+    if (isQuotaError(err)) throw new QuotaExhaustedError();
+    throw err;
+  }
+
   const summary = keepKoreanOnly(rawSummary);
   if (!summary) throw new Error('요약 생성에 실패했습니다.');
 

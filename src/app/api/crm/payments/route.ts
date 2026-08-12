@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: { code: 'INVALID_JSON' } }, { status: 400 });
   }
 
-  if (!body.student_name || !body.amount || !body.paid_at) {
+  // amount는 0(가결제)도 유효하므로 falsy가 아닌 타입으로 판정한다.
+  if (!body.student_name || typeof body.amount !== 'number' || !Number.isFinite(body.amount) || !body.paid_at) {
     return NextResponse.json(
       { error: { code: 'MISSING_FIELDS', message: 'student_name, amount, paid_at는 필수입니다.' } },
       { status: 400 }
@@ -81,9 +82,10 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: { code: 'INSERT_FAILED', message: error.message } }, { status: 500 });
 
-  // 결제 → "수업 중" 전환. 학생이 연결돼 있고 양수 결제(환불 아님)일 때만.
+  // 결제 → "수업 중" 전환. 학생이 연결돼 있고 환불이 아닐 때.
+  // 0원 가결제도 수업 시작이므로 함께 전환한다.
   // 입력 경로와 무관하게 단계 전환을 보장한다(근본 원인 수정).
-  if (body.student_id && body.amount > 0 && body.payment_type !== '환불') {
+  if (body.student_id && body.amount >= 0 && body.payment_type !== '환불') {
     await enrollStudentOnPayment(body.student_id);
   }
 

@@ -380,7 +380,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               icon={Users}
               label="신규 리드"
               value={d.overview.total_leads}
-              sub="문의 기준"
+              sub="문의 기준 · B2B 포함"
               color="bg-gray-100 text-gray-600"
               onClick={() => setDetail({ metric: 'leads', label: '신규 리드' })}
             />
