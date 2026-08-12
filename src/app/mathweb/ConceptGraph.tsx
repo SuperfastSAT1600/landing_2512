@@ -32,6 +32,7 @@ interface GraphLink {
 interface Concept {
   id: string;
   name: string;
+  name_en: string | null;
   slug: string;
   usage_count: number;
 }
@@ -324,13 +325,20 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
                 <button
                   key={c.id}
                   onClick={() => toggleConcept(c)}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                  className={`w-full flex items-center justify-between px-3 py-2 transition-colors ${
                     isSelected
                       ? 'text-[#6085FF] bg-[#6085FF]/10'
                       : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
                   }`}
                 >
-                  <span className="truncate text-left">{c.name}</span>
+                  <span className="truncate text-left min-w-0">
+                    <span className="block text-sm leading-tight">{c.name}</span>
+                    {c.name_en && (
+                      <span className={`block text-[10px] leading-tight mt-0.5 ${isSelected ? 'text-[#6085FF]/70' : 'text-zinc-600'}`}>
+                        {c.name_en}
+                      </span>
+                    )}
+                  </span>
                   <span className={`text-[10px] shrink-0 ml-2 ${isSelected ? 'text-[#6085FF]' : 'text-zinc-700'}`}>
                     {c.usage_count}
                   </span>

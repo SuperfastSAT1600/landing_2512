@@ -19,7 +19,7 @@ export interface Problem {
   answer_text: string | null;
   memo: string | null;
   difficulty: string | null;
-  concepts: { id: string; name: string; slug: string }[];
+  concepts: { id: string; name: string; name_en?: string | null; slug: string }[];
 }
 
 const DIFFICULTY_LABEL: Record<string, { label: string; color: string }> = {
@@ -191,7 +191,9 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose, onPrev, onNe
                 </span>
               )}
               {problem.concepts.map(c => (
-                <span key={c.id} className="px-2 py-0.5 bg-indigo-950/60 text-indigo-300 text-xs rounded-full border border-indigo-800/40">{c.name}</span>
+                <span key={c.id} className="px-2 py-0.5 bg-indigo-950/60 text-indigo-300 text-xs rounded-full border border-indigo-800/40">
+                  {c.name}{c.name_en ? <span className="text-indigo-500 ml-1">· {c.name_en}</span> : null}
+                </span>
               ))}
               {problem.memo && <p className="w-full text-zinc-600 text-xs mt-1">{problem.memo}</p>}
             </div>

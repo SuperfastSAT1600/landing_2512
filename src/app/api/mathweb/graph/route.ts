@@ -10,7 +10,7 @@ export async function GET() {
       .select(`
         id, title, difficulty, created_at,
         math_problem_concepts(
-          math_concepts(id, name, slug)
+          math_concepts(id, name, name_en, slug)
         )
       `)
       .eq('is_active', true)
@@ -18,7 +18,7 @@ export async function GET() {
 
     supabaseAdmin
       .from('math_concepts')
-      .select('id, name, slug, usage_count')
+      .select('id, name, name_en, slug, usage_count')
       .order('usage_count', { ascending: false }),
   ]);
 
@@ -35,9 +35,9 @@ export async function GET() {
     title: p.title,
     difficulty: p.difficulty ?? null,
     created_at: p.created_at,
-    concepts: ((p.math_problem_concepts ?? []) as unknown as { math_concepts: { id: string; name: string; slug: string } | null }[])
+    concepts: ((p.math_problem_concepts ?? []) as unknown as { math_concepts: { id: string; name: string; name_en: string | null; slug: string } | null }[])
       .map((c) => c.math_concepts)
-      .filter((c): c is { id: string; name: string; slug: string } => c !== null),
+      .filter((c): c is { id: string; name: string; name_en: string | null; slug: string } => c !== null),
   }));
 
   return NextResponse.json({
