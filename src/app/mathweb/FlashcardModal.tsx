@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { X, ChevronLeft, ChevronRight, BookOpen, Check } from 'lucide-react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 
 export interface Option {
@@ -40,8 +40,38 @@ interface FlashcardModalProps {
   total?: number;
 }
 
+const REQUESTED_KEY = 'mathweb_requested';
+
+function getRequested(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(REQUESTED_KEY) ?? '[]')); }
+  catch { return new Set(); }
+}
+
+function saveRequested(set: Set<string>) {
+  localStorage.setItem(REQUESTED_KEY, JSON.stringify([...set]));
+}
+
 export function FlashcardModal({ problem, flipped, onFlip, onClose, onPrev, onNext, currentIndex, total }: FlashcardModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [requested, setRequested] = useState<Set<string>>(new Set());
+  const [requesting, setRequesting] = useState(false);
+
+  useEffect(() => { setRequested(getRequested()); }, []);
+
+  const handleRequest = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!problem || requesting || requested.has(problem.id)) return;
+    setRequesting(true);
+    try {
+      await fetch(`/api/mathweb/problems/${problem.id}/request-explanation`, { method: 'POST' });
+      const next = new Set(requested);
+      next.add(problem.id);
+      setRequested(next);
+      saveRequested(next);
+    } finally {
+      setRequesting(false);
+    }
+  }, [problem, requested, requesting]);
 
   useEffect(() => {
     if (!problem) return;
@@ -198,7 +228,29 @@ export function FlashcardModal({ problem, flipped, onFlip, onClose, onPrev, onNe
             {hasNav && (
               <span className="absolute top-3 right-4 text-zinc-700 text-xs tabular-nums">{(currentIndex ?? 0) + 1} / {total}</span>
             )}
-            <p className="absolute bottom-4 text-zinc-700 text-xs">탭하여 문제로 돌아가기</p>
+
+            {/* 해설 신청 버튼 */}
+            {problem && (() => {
+              const isRequested = requested.has(problem.id);
+              return (
+                <button
+                  onClick={handleRequest}
+                  disabled={isRequested || requesting}
+                  className={`absolute bottom-10 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    isRequested
+                      ? 'bg-emerald-900/40 border border-emerald-700/50 text-emerald-400 cursor-default'
+                      : 'bg-indigo-900/40 border border-indigo-600/50 text-indigo-300 hover:bg-indigo-800/50 hover:text-white active:scale-95'
+                  }`}
+                >
+                  {isRequested
+                    ? <><Check size={14} /> 해설 신청 완료</>
+                    : <><BookOpen size={14} /> {requesting ? '신청 중...' : '해설 신청하기'}</>
+                  }
+                </button>
+              );
+            })()}
+
+            <p className="absolute bottom-3 text-zinc-700 text-xs">탭하여 문제로 돌아가기</p>
           </div>
         </div>
 
