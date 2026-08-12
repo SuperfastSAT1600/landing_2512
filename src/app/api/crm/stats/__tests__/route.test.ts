@@ -73,6 +73,19 @@ function student(over: Row): Row {
   };
 }
 
+function payment(over: Row): Row {
+  return {
+    student_id: 'x',
+    student_name: '학생',
+    amount: 0,
+    payment_type: '최초결제',
+    paid_at: '2026-07-30T10:00:00+09:00',
+    tax_type: '면세',
+    students: [{ company_id: null }],
+    ...over,
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   tableRows.students = [];
@@ -209,5 +222,54 @@ describe('GET /api/crm/stats — segment 필터 (REQ-004)', () => {
 
     expect(data.overview.total_leads).toBe(1);
     expect(data.by_source.find((r: { source: string }) => r.source === 'B2B 파트너')?.leads).toBe(1);
+  });
+
+  it('segment=b2c일 때 B2C 학생의 결제만 매출에 포함한다', async () => {
+    tableRows.students = [
+      student({ id: 'b2c-1', name: '김B2C' }),
+      student({ id: 'b2b-1', name: '이B2B', company_id: COMPANY_PLAIN }),
+    ];
+    tableRows.payments = [
+      payment({ student_id: 'b2c-1', student_name: '김B2C', amount: 100000, students: [{ company_id: null }] }),
+      payment({ student_id: 'b2b-1', student_name: '이B2B', amount: 200000, students: [{ company_id: COMPANY_PLAIN }] }),
+    ];
+
+    const data = (await (await callRoute('b2c')).json()).data;
+
+    expect(data.overview.gross_revenue).toBe(100000);
+  });
+
+  it('segment=b2b일 때 B2B 학생의 결제만 매출에 포함한다', async () => {
+    tableRows.students = [
+      student({ id: 'b2c-1', name: '김B2C' }),
+      student({ id: 'b2b-1', name: '이B2B', company_id: COMPANY_PLAIN }),
+    ];
+    tableRows.payments = [
+      payment({ student_id: 'b2c-1', student_name: '김B2C', amount: 100000, students: [{ company_id: null }] }),
+      payment({ student_id: 'b2b-1', student_name: '이B2B', amount: 200000, students: [{ company_id: COMPANY_PLAIN }] }),
+    ];
+
+    const data = (await (await callRoute('b2b')).json()).data;
+
+    expect(data.overview.gross_revenue).toBe(200000);
+  });
+
+  it('B2C 학생이 문의일(inquiry_date)이 없어도 해당 학생의 결제는 segment=b2c에 포함된다', async () => {
+    tableRows.students = [
+      student({ id: 'b2c-null-inquiry', name: '김우솔', inquiry_date: null, created_at: '2026-05-28T03:30:11Z' }),
+    ];
+    tableRows.payments = [
+      payment({
+        student_id: 'b2c-null-inquiry',
+        student_name: '김우솔',
+        amount: -1429525,
+        payment_type: '환불',
+        students: [{ company_id: null }],
+      }),
+    ];
+
+    const data = (await (await callRoute('b2c')).json()).data;
+
+    expect(data.overview.total_refund).toBe(-1429525);
   });
 });

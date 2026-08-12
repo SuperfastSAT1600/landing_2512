@@ -6,7 +6,6 @@ import {
   type CrmStatsSegment,
   parseStatsSegment,
   isCrmStatsSegment,
-  filterPaymentsBySegment,
 } from '@/lib/crm-stats-core';
 
 const err = (code: string, message: string, status: number) =>
@@ -55,10 +54,12 @@ export async function GET(request: NextRequest) {
 
   if (sErr) return err('FETCH_FAILED', sErr.message, 500);
 
-  // 기간 내 결제/환불 행
+  // 기간 내 결제/환불 행. students 관계를 통해 segment 분류에 필요한 company_id를 함께 조회.
   const { data: payments, error: pErr } = await supabaseAdmin
     .from('payments')
-    .select('id, student_id, student_name, product, amount, payment_type, tax_type, paid_at, created_by')
+    .select(
+      'id, student_id, student_name, product, amount, payment_type, tax_type, paid_at, created_by, students:student_id(company_id)'
+    )
     .gte('paid_at', `${from}T00:00:00+09:00`)
     .lte('paid_at', `${to}T23:59:59.999+09:00`)
     .order('paid_at', { ascending: true });
@@ -66,11 +67,12 @@ export async function GET(request: NextRequest) {
   if (pErr) return err('FETCH_FAILED', pErr.message, 500);
 
   const studentList = students ?? [];
-  const filteredPayments = filterPaymentsBySegment(
-    payments ?? [],
-    studentList.map((s) => ({ id: s.id, name: s.name })),
-    segment,
-  );
+  const filteredPayments = (payments ?? []).filter((p) => {
+    if (segment === 'all') return true;
+    const related = (p as { students?: { company_id: string | null }[] | null }).students;
+    const companyId = related?.[0]?.company_id ?? null;
+    return segment === 'b2b' ? companyId != null : companyId == null;
+  });
 
   const result = buildStatsDetail(metric, studentList, filteredPayments, source);
   return NextResponse.json({ data: result });

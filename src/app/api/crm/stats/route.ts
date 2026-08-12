@@ -14,7 +14,6 @@ import {
   type CrmStatsSegment,
   parseStatsSegment,
   isCrmStatsSegment,
-  filterPaymentsBySegment,
 } from '@/lib/crm-stats-core';
 
 export interface StatsBySource {
@@ -128,17 +127,20 @@ export async function GET(request: NextRequest) {
 
   const [studentsRes, paymentsRes, firstPayRes, companiesRes] = await Promise.all([
     studentsQuery,
-    // 기간 내 payments (매출·환불 집계용, 기간=paid_at KST)
+    // 기간 내 payments (매출·환불 집계용, 기간=paid_at KST).
+    // students 관계를 함께 조회해 segment 필터에서 학생의 company_id를 직접 본다.
     supabaseAdmin
       .from('payments')
-      .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
+      .select(
+        'student_id, student_name, amount, payment_type, paid_at, tax_type, students:student_id(company_id)'
+      )
       .gte('paid_at', `${from}T00:00:00+09:00`)
       .lte('paid_at', `${to}T23:59:59.999+09:00`),
     // 결제 전환율(코호트): 인입 리드가 '언제든' 최초결제했는지.
     // 0원 가결제·₩1 placeholder도 실전환으로 포함(환불만 제외).
     supabaseAdmin
       .from('payments')
-      .select('student_id, student_name')
+      .select('student_id, student_name, students:student_id(company_id)')
       .eq('payment_type', '최초결제')
       .gte('amount', 0),
     // 업체 로스터 — 센터형 파트너 컨택 판정용 company_id → name 맵
@@ -160,18 +162,21 @@ export async function GET(request: NextRequest) {
 
   const leadList = students ?? [];
 
-  // segment에 따라 결제/최초결제를 필터링한다. payments 테이블에는 company_id가 없으므로
-  // 이미 segment로 좁혀진 leadList로 student_id(우선) 또는 student_name(폴백) 매칭을 한다.
-  const paymentList = filterPaymentsBySegment(
-    paymentsRes.error ? [] : (paymentsRes.data ?? []),
-    leadList,
-    segment,
-  );
+  // segment에 따라 결제/최초결제를 필터링한다.
+  // payments에는 company_id가 없으므로 students 관계를 통해 company_id를 보고 분류한다.
+  // Supabase 관계 조회는 배열로 반환되므로 첫 번째 요소를 본다. 없으면 B2C로 폴백.
+  function paymentInSegment(p: { students?: { company_id: string | null }[] | null }): boolean {
+    if (segment === 'all') return true;
+    const companyId = p?.students?.[0]?.company_id ?? null;
+    return segment === 'b2b' ? companyId != null : companyId == null;
+  }
+
+  const paymentList = (paymentsRes.error ? [] : (paymentsRes.data ?? [])).filter(paymentInSegment);
 
   // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다.
   // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
   if (firstPayRes.error) console.error('[stats] firstPayRows fetch failed:', firstPayRes.error.message);
-  const firstPayRows = filterPaymentsBySegment(firstPayRes.data ?? [], leadList, segment);
+  const firstPayRows = (firstPayRes.data ?? []).filter(paymentInSegment);
 
   // 학생 ID → payment 맵 (최초결제 기준)
   const paidStudentIds = new Set<string>();
