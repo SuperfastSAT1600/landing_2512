@@ -80,7 +80,7 @@ function buildGraph(problems: GraphProblem[]): { nodes: GraphNode[]; links: Grap
 }
 
 export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
-  const [searchConceptSlug, setSearchConceptSlug] = useState<string | null>(null);
+  const [selectedConceptSlugs, setSelectedConceptSlugs] = useState<Set<string>>(new Set());
   const [clickedConceptSlug, setClickedConceptSlug] = useState<string | null>(null);
   const [allProblems, setAllProblems] = useState<GraphProblem[]>([]);
   const [allConcepts, setAllConcepts] = useState<Concept[]>([]);
@@ -131,15 +131,15 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
     const byDifficulty = allProblems.filter(p =>
       !p.difficulty || selectedDifficulties.has(p.difficulty)
     );
-    if (!searchConceptSlug) {
+    if (selectedConceptSlugs.size === 0) {
       setGraphData(buildGraph(byDifficulty));
     } else {
       const filtered = byDifficulty.filter(p =>
-        p.concepts.some(c => c.slug === searchConceptSlug)
+        [...selectedConceptSlugs].every(slug => p.concepts.some(c => c.slug === slug))
       );
       setGraphData(buildGraph(filtered));
     }
-  }, [searchConceptSlug, allProblems, selectedDifficulties]);
+  }, [selectedConceptSlugs, allProblems, selectedDifficulties]);
 
   const highlightedNodeIds = useMemo<Set<string> | null>(() => {
     if (!clickedConceptSlug) return null;
@@ -152,7 +152,7 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
 
   const handleQueryChange = useCallback((val: string) => {
     setQuery(val);
-    if (!val.trim()) { setSuggestions([]); setSearchConceptSlug(null); return; }
+    if (!val.trim()) { setSuggestions([]); return; }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       const res = await fetch(`/api/mathweb/concepts?q=${encodeURIComponent(val)}&limit=10`);
@@ -162,18 +162,31 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
     }, 200);
   }, []);
 
-  const selectConcept = useCallback((c: Concept) => {
-    setQuery(c.name);
+  const toggleConcept = useCallback((c: Concept) => {
+    setSelectedConceptSlugs(prev => {
+      const next = new Set(prev);
+      next.has(c.slug) ? next.delete(c.slug) : next.add(c.slug);
+      return next;
+    });
+    setQuery('');
     setSuggestions([]);
     setShowSuggestions(false);
-    setSearchConceptSlug(c.slug);
+  }, []);
+
+  // 개념 목록 클릭용 (Concept 객체 없이 slug만으로 제거)
+  const removeConcept = useCallback((slug: string) => {
+    setSelectedConceptSlugs(prev => {
+      const next = new Set(prev);
+      next.delete(slug);
+      return next;
+    });
   }, []);
 
   const clearSearch = useCallback(() => {
     setQuery('');
     setSuggestions([]);
     setShowSuggestions(false);
-    setSearchConceptSlug(null);
+    setSelectedConceptSlugs(new Set());
   }, []);
 
   const handleCenter = useCallback(() => {
@@ -236,21 +249,42 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
                 {suggestions.map(s => (
                   <button
                     key={s.id}
-                    onClick={() => selectConcept(s)}
-                    className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors border-b border-zinc-800 last:border-0"
+                    onClick={() => toggleConcept(s)}
+                    className={`w-full text-left px-3 py-2 text-sm transition-colors border-b border-zinc-800 last:border-0 flex items-center justify-between ${
+                      selectedConceptSlugs.has(s.slug)
+                        ? 'text-[#6085FF] bg-[#6085FF]/10'
+                        : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
+                    }`}
                   >
-                    {s.name}
+                    <span>{s.name}</span>
+                    {selectedConceptSlugs.has(s.slug) && <X size={11} className="shrink-0" />}
                   </button>
                 ))}
               </div>
             )}
 
-            {searchConceptSlug && (
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs text-[#6085FF]">{graphData.nodes.length}개 문제 표시 중</span>
-                <button onClick={clearSearch} className="text-zinc-600 hover:text-zinc-400 transition-colors">
-                  <X size={11} />
-                </button>
+            {/* 선택된 개념 칩 */}
+            {selectedConceptSlugs.size > 0 && (
+              <div className="mt-2 space-y-1">
+                <div className="flex flex-wrap gap-1">
+                  {allConcepts
+                    .filter(c => selectedConceptSlugs.has(c.slug))
+                    .map(c => (
+                      <button
+                        key={c.slug}
+                        onClick={() => removeConcept(c.slug)}
+                        className="flex items-center gap-1 px-2 py-0.5 bg-[#6085FF]/15 border border-[#6085FF]/30 text-[#6085FF] text-[11px] rounded-full hover:bg-[#6085FF]/25 transition-colors"
+                      >
+                        {c.name}
+                        <X size={9} />
+                      </button>
+                    ))
+                  }
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#6085FF]">{graphData.nodes.length}개 문제 표시 중</span>
+                  <button onClick={clearSearch} className="text-zinc-600 hover:text-zinc-400 text-[10px] transition-colors">전체 해제</button>
+                </div>
               </div>
             )}
 
@@ -282,22 +316,25 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
             <p className="px-3 pt-3 pb-1.5 text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">
               개념 목록
             </p>
-            {allConcepts.map(c => (
-              <button
-                key={c.id}
-                onClick={() => selectConcept(c)}
-                className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
-                  searchConceptSlug === c.slug
-                    ? 'text-[#6085FF] bg-[#6085FF]/10'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-                }`}
-              >
-                <span className="truncate text-left">{c.name}</span>
-                <span className={`text-[10px] shrink-0 ml-2 ${searchConceptSlug === c.slug ? 'text-[#6085FF]' : 'text-zinc-700'}`}>
-                  {c.usage_count}
-                </span>
-              </button>
-            ))}
+            {allConcepts.map(c => {
+              const isSelected = selectedConceptSlugs.has(c.slug);
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => toggleConcept(c)}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                    isSelected
+                      ? 'text-[#6085FF] bg-[#6085FF]/10'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                  }`}
+                >
+                  <span className="truncate text-left">{c.name}</span>
+                  <span className={`text-[10px] shrink-0 ml-2 ${isSelected ? 'text-[#6085FF]' : 'text-zinc-700'}`}>
+                    {c.usage_count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
