@@ -37,7 +37,7 @@ interface Concept {
 }
 
 interface ConceptGraphProps {
-  onNodeClick: (problem: Problem) => void;
+  onNodeClick: (problem: Problem, nodeIds: string[], currentIndex: number) => void;
 }
 
 function getDifficultyStyle(difficulty: string | null) {
@@ -198,11 +198,13 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
       const res = await fetch(`/api/mathweb/problems/${node.id}`);
       if (!res.ok) return;
       const json = await res.json();
-      onNodeClick(json.data as Problem);
+      const nodeIds = graphData.nodes.map(n => n.id);
+      const currentIndex = nodeIds.indexOf(node.id);
+      onNodeClick(json.data as Problem, nodeIds, currentIndex);
     } catch {
       // silently ignore
     }
-  }, [onNodeClick]);
+  }, [onNodeClick, graphData.nodes]);
 
   const handleLinkClick = useCallback((link: GraphLink) => {
     setClickedConceptSlug(prev =>
@@ -217,7 +219,7 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
   const graphW = isMobile ? dimensions.width : dimensions.width - SIDEBAR_W;
 
   return (
-    <div className="relative w-full h-full" style={{ background: 'radial-gradient(ellipse at 60% 40%, #0a0a1a 0%, #000000 70%)' }}>
+    <div className="relative w-full h-full" style={{ background: 'radial-gradient(ellipse at 50% 38%, #0e0e38 0%, #07071c 38%, #020208 70%, #000000 100%)' }}>
 
       {/* ── 좌측 사이드바 ── */}
       {!isMobile && (
@@ -418,23 +420,36 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
               const style = getDifficultyStyle(n.problem.difficulty ?? null);
               const isDimmed = highlightedNodeIds !== null && !highlightedNodeIds.has(n.id);
 
-              ctx.globalAlpha = isDimmed ? 0.1 : 1;
+              ctx.globalAlpha = isDimmed ? 0.08 : 1;
 
-              const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, 10);
-              glow.addColorStop(0, style.glow);
-              glow.addColorStop(1, 'rgba(0,0,0,0)');
+              // 외곽 글로우 (크고 넓게)
+              const outerGlow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, 22);
+              outerGlow.addColorStop(0, style.glow);
+              outerGlow.addColorStop(0.5, style.glow.replace('0.32', '0.12'));
+              outerGlow.addColorStop(1, 'rgba(0,0,0,0)');
               ctx.beginPath();
-              ctx.arc(n.x, n.y, 10, 0, 2 * Math.PI);
-              ctx.fillStyle = glow;
+              ctx.arc(n.x, n.y, 22, 0, 2 * Math.PI);
+              ctx.fillStyle = outerGlow;
               ctx.fill();
 
+              // 내부 글로우 (선명한 코어)
+              const innerGlow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, 7);
+              innerGlow.addColorStop(0, style.dot);
+              innerGlow.addColorStop(1, 'rgba(0,0,0,0)');
               ctx.beginPath();
-              ctx.arc(n.x, n.y, 3, 0, 2 * Math.PI);
+              ctx.arc(n.x, n.y, 7, 0, 2 * Math.PI);
+              ctx.fillStyle = innerGlow;
+              ctx.fill();
+
+              // 노드 코어
+              ctx.beginPath();
+              ctx.arc(n.x, n.y, 4, 0, 2 * Math.PI);
               ctx.fillStyle = style.dot;
               ctx.fill();
 
+              // 하이라이트 중심
               ctx.beginPath();
-              ctx.arc(n.x, n.y, 1.1, 0, 2 * Math.PI);
+              ctx.arc(n.x, n.y, 1.6, 0, 2 * Math.PI);
               ctx.fillStyle = '#fff';
               ctx.fill();
 
@@ -452,19 +467,19 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
               ctx.moveTo(l.source.x, l.source.y);
               ctx.lineTo(l.target.x, l.target.y);
               ctx.strokeStyle = isDimmed
-                ? 'rgba(96,133,255,0.04)'
+                ? 'rgba(96,133,255,0.03)'
                 : isHighlighted
-                  ? 'rgba(96,133,255,0.9)'
-                  : 'rgba(96,133,255,0.22)';
-              ctx.lineWidth = isHighlighted ? 1.5 : 0.5;
+                  ? 'rgba(120,160,255,1)'
+                  : 'rgba(96,133,255,0.35)';
+              ctx.lineWidth = isHighlighted ? 2 : 0.8;
               ctx.stroke();
 
               if (!isDimmed && !isHighlighted) {
                 ctx.beginPath();
                 ctx.moveTo(l.source.x, l.source.y);
                 ctx.lineTo(l.target.x, l.target.y);
-                ctx.strokeStyle = 'rgba(165,180,252,0.07)';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(165,180,252,0.10)';
+                ctx.lineWidth = 2.5;
                 ctx.stroke();
               }
             }}
