@@ -206,6 +206,39 @@
         ],
         "createdAt": "2026-08-04T00:00:00.000Z",
         "reason": "CTA button inline style copied verbatim from publish-ghost.js original; #071be9 is the accent-primary brand color per Docs/design-system.md."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#22c55e",
+        "createdAt": "2026-08-11T16:48:08.195Z",
+        "reason": "Difficulty indicator: easy level semantic green, user-confirmed"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f59e0b",
+        "createdAt": "2026-08-11T16:48:08.267Z",
+        "reason": "Difficulty indicator: medium level semantic amber, user-confirmed"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#ef4444",
+        "createdAt": "2026-08-11T16:48:08.344Z",
+        "reason": "Difficulty indicator: hard level semantic red, user-confirmed"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#c084fc",
+        "createdAt": "2026-08-11T16:48:08.418Z",
+        "reason": "Difficulty indicator: killer level semantic purple, user-confirmed"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/app/admin/mathweb/page.tsx"
+        ],
+        "createdAt": "2026-08-11T16:49:16.690Z",
+        "reason": "Pre-existing admin-only inline styles, not part of design system surface"
       }
     ]
   }
