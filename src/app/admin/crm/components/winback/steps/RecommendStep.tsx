@@ -11,6 +11,9 @@ interface Props {
   adminKey: string;
   playId: string;
   draft: BriefDraft;
+  initialRules?: RuleDraft;
+  autoRun?: boolean;
+  addButtonLabel?: string;
   recommend: (
     input: Record<string, unknown>
   ) => Promise<{ candidates: WinbackCandidate[]; stats: WinbackRecommendStats }>;
@@ -18,11 +21,20 @@ interface Props {
     playId: string,
     payload: { candidates: WinbackCandidate[] }
   ) => Promise<{ inserted: unknown[]; skipped: number }>;
-  onDone: () => void;
+  onDone: (result: { inserted: unknown[]; skipped: number }) => void;
 }
 
-export function RecommendStep({ playId, draft, recommend, addTargets, onDone }: Props) {
-  const [rules, setRules] = useState<RuleDraft>(EMPTY_RULES);
+export function RecommendStep({
+  playId,
+  draft,
+  initialRules,
+  autoRun = true,
+  addButtonLabel = '선택한 명 타겟 확정',
+  recommend,
+  addTargets,
+  onDone,
+}: Props) {
+  const [rules, setRules] = useState<RuleDraft>(initialRules ?? EMPTY_RULES);
   const [candidates, setCandidates] = useState<WinbackCandidate[]>([]);
   const [stats, setStats] = useState<WinbackRecommendStats | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -58,7 +70,7 @@ export function RecommendStep({ playId, draft, recommend, addTargets, onDone }: 
 
   // 진입 즉시 1회 추천 — 담당자가 버튼을 한 번 더 누르게 하지 않는다.
   useEffect(() => {
-    run();
+    if (autoRun) run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -66,10 +78,10 @@ export function RecommendStep({ playId, draft, recommend, addTargets, onDone }: 
     setSaving(true);
     setError(null);
     try {
-      await addTargets(playId, {
+      const result = await addTargets(playId, {
         candidates: candidates.filter((c) => selected.has(c.student_id)),
       });
-      onDone();
+      onDone(result);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -150,7 +162,7 @@ export function RecommendStep({ playId, draft, recommend, addTargets, onDone }: 
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 disabled:opacity-40"
             >
               {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-              선택한 {selected.size}명 타겟 확정
+              {addButtonLabel.replace('명', `${selected.size}명`)}
             </button>
           </div>
         </>

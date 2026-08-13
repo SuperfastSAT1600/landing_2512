@@ -14,6 +14,7 @@ interface BulkBody {
   action?: Action;
   author?: string;
   variant_id?: string | null;
+  messages?: Record<string, string>;
 }
 
 /**
@@ -22,7 +23,7 @@ interface BulkBody {
  *   ① winback_targets (분석 정본) ② 상담 타임라인(사람이 읽는 기록) ③ reactivation_log(기존 재활성화 UI)
  * 이미 발송 기록이 있으면 멱등하게 그대로 반환한다(중복 메모 방지).
  */
-async function markSent(targetId: string, author?: string) {
+async function markSent(targetId: string, author?: string, customMessage?: string) {
   const { data: target, error } = await supabaseAdmin
     .from('winback_targets')
     .select(`*, play:winback_plays(title), variant:winback_play_variants(name)`)
@@ -36,8 +37,9 @@ async function markSent(targetId: string, author?: string) {
   const now = new Date().toISOString();
   const entryId = randomUUID();
 
+  const sentMessage = customMessage ?? target.message_draft;
   await appendConsultationEntry(target.student_id, {
-    raw_memo: buildMirrorMemo({ playTitle, variantName, message: target.message_draft }),
+    raw_memo: buildMirrorMemo({ playTitle, variantName, message: sentMessage }),
     ...(author ? { author } : {}),
     published: false,
   });
@@ -66,18 +68,39 @@ async function markSent(targetId: string, author?: string) {
     })
     .eq('id', target.student_id);
 
-  const { data: updated, error: updateError } = await supabaseAdmin
+  const updatePayload = {
+    status: 'sent',
+    sent_at: now,
+    sent_by: author ?? null,
+    ...(sentMessage !== undefined ? { sent_message: sentMessage.trim() || null } : {}),
+    reactivation_entry_id: entryId,
+    updated_at: now,
+  };
+  let { data: updated, error: updateError } = await supabaseAdmin
     .from('winback_targets')
-    .update({
-      status: 'sent',
-      sent_at: now,
-      sent_by: author ?? null,
-      reactivation_entry_id: entryId,
-      updated_at: now,
-    })
+    .update(updatePayload)
     .eq('id', targetId)
     .select(TARGET_SELECT)
     .single();
+
+  // Migration 109 may not be applied yet. The timeline is still the source
+  // of the exact sent text, so finish the send without the optional column.
+  if (updateError?.message.includes('sent_message')) {
+    const fallback = await supabaseAdmin
+      .from('winback_targets')
+      .update({
+        status: 'sent',
+        sent_at: now,
+        sent_by: author ?? null,
+        reactivation_entry_id: entryId,
+        updated_at: now,
+      })
+      .eq('id', targetId)
+      .select(TARGET_SELECT)
+      .single();
+    updated = fallback.data;
+    updateError = fallback.error;
+  }
   if (updateError) throw new Error(updateError.message);
 
   return updated;
@@ -141,7 +164,8 @@ export async function POST(request: NextRequest) {
   const failed: { id: string; error: string }[] = [];
   for (const id of targetIds) {
     try {
-      updated.push(await markSent(id, body.author));
+      const hasCustomMessage = Object.prototype.hasOwnProperty.call(body.messages ?? {}, id);
+      updated.push(await markSent(id, body.author, hasCustomMessage ? body.messages?.[id] : undefined));
     } catch (err) {
       console.error('[winback-targets/bulk mark_sent]', id, err);
       failed.push({ id, error: (err as Error).message });

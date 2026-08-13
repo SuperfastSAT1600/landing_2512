@@ -878,6 +878,7 @@ export interface WinbackTarget {
   signals: WinbackSignal[];
   status: WinbackTargetStatus;
   message_draft: string | null;
+  sent_message: string | null;
   message_generated_at: string | null;
   message_model: string | null;
   sent_at: string | null;

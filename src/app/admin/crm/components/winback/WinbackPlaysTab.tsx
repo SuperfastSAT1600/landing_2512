@@ -28,6 +28,9 @@ export function WinbackPlaysTab({ adminKey, userName, winback, onStudentClick }:
           onBack={() => setOpenPlayId(null)}
           fetchPlay={winback.fetchPlay}
           patchTarget={winback.patchTarget}
+          generateDraft={winback.generateDraft}
+          recommend={winback.recommend}
+          addTargets={winback.addTargets}
           bulkTargets={winback.bulkTargets}
           deletePlay={winback.deletePlay}
           onStudentClick={onStudentClick}

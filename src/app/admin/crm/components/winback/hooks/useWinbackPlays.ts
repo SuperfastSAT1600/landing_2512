@@ -8,6 +8,7 @@ import type {
   WinbackRecommendStats,
   WinbackTarget,
 } from '@/types/crm';
+import type { WinbackDashboard } from '@/lib/winback/dashboard';
 
 export interface PlayRollup {
   targeted: number;
@@ -124,6 +125,17 @@ export function useWinbackPlays(adminKey: string) {
     [call]
   );
 
+  const generateDraft = useCallback(
+    (targetId: string) =>
+      call<WinbackTargetRow>(`/api/crm/winback-targets/${targetId}/draft`, { method: 'POST' }),
+    [call]
+  );
+
+  const fetchDashboard = useCallback(
+    (playId: string) => call<WinbackDashboard>(`/api/crm/winback-plays/${playId}/dashboard`),
+    [call]
+  );
+
   const deletePlay = useCallback(
     (playId: string) =>
       call<{ id: string }>(`/api/crm/winback-plays/${playId}`, { method: 'DELETE' }).then(() => {
@@ -133,7 +145,13 @@ export function useWinbackPlays(adminKey: string) {
   );
 
   const bulkTargets = useCallback(
-    (payload: { target_ids: string[]; action: string; author?: string; variant_id?: string | null }) =>
+    (payload: {
+      target_ids: string[];
+      action: string;
+      author?: string;
+      variant_id?: string | null;
+      messages?: Record<string, string>;
+    }) =>
       call<{ updated: WinbackTargetRow[]; failed: { id: string; error: string }[] }>(
         '/api/crm/winback-targets/bulk',
         { method: 'POST', body: JSON.stringify(payload) }
@@ -156,6 +174,8 @@ export function useWinbackPlays(adminKey: string) {
     recommend,
     addTargets,
     patchTarget,
+    generateDraft,
+    fetchDashboard,
     bulkTargets,
   };
 }

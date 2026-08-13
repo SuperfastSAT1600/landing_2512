@@ -1,11 +1,21 @@
+import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { appendConsultationEntry } from '@/lib/consultation-timeline';
+import { buildMirrorMemo } from '@/lib/winback/mirror';
+
+const TARGET_SELECT = `*, play:winback_plays(title), variant:winback_play_variants(name)`;
 
 // PATCH 허용 필드 화이트리스트. 발송 기록은 미러 라이트가 필요해 bulk 라우트(mark_sent)로만 처리한다.
 const EDITABLE = [
   'variant_id',
   'status',
+  'sent_at',
+  'sent_by',
+  'sent_channel',
+  'sent_message',
+  'reactivation_entry_id',
   'message_draft',
   'response',
   'responded_at',
@@ -46,7 +56,32 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const update = { ...withDerivedTimestamps(body), updated_at: new Date().toISOString() };
+  const timelineMessage = typeof body.sent_message === 'string' ? body.sent_message.trim() : null;
+  const updateBody = { ...body };
+  delete updateBody.sent_message;
+  const update: Record<string, unknown> = {
+    ...withDerivedTimestamps(updateBody),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data: target, error: targetError } = await supabaseAdmin
+    .from('winback_targets')
+    .select(TARGET_SELECT)
+    .eq('id', id)
+    .single();
+  if (targetError || !target) {
+    return NextResponse.json({ error: '타겟을 찾을 수 없습니다.' }, { status: 404 });
+  }
+
+  if (timelineMessage !== null) {
+    const playTitle = (target.play as { title?: string } | null)?.title ?? '윈백';
+    const variantName = (target.variant as { name?: string } | null)?.name ?? null;
+    await appendConsultationEntry(target.student_id, {
+      raw_memo: buildMirrorMemo({ playTitle, variantName, message: timelineMessage }),
+      published: false,
+    });
+    update.sent_message = timelineMessage || null;
+  }
 
   const { data, error } = await supabaseAdmin
     .from('winback_targets')
@@ -60,7 +95,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: `수정에 실패했습니다: ${error.message}` }, { status: 500 });
   }
   return NextResponse.json({ data });
-}
+} // only explicit per-target timeline updates use sent_message; normal patches remain unchanged.
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isAuthenticated(request)) {

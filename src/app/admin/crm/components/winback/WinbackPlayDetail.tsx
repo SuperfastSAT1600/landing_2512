@@ -1,9 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, Loader2, RefreshCw, Send, MailX, Trash2 } from 'lucide-react';
+import { ChevronLeft, Loader2, RefreshCw, Send, MailX, Trash2, Sparkles, X } from 'lucide-react';
 import type { WinbackPlayDetailData, WinbackTargetRow as TargetRow } from './hooks/useWinbackPlays';
 import { WinbackTargetRow } from './WinbackTargetRow';
+import { RecommendStep } from './steps/RecommendStep';
+import { playToBriefDraft, playToRuleDraft } from './winbackContinuation';
+import type { WinbackCandidate, WinbackRecommendStats } from '@/types/crm';
 
 interface Props {
   playId: string;
@@ -11,13 +14,22 @@ interface Props {
   onBack: () => void;
   fetchPlay: (playId: string) => Promise<WinbackPlayDetailData>;
   patchTarget: (targetId: string, patch: Record<string, unknown>) => Promise<TargetRow>;
+  generateDraft?: (targetId: string) => Promise<TargetRow>;
   bulkTargets: (payload: {
     target_ids: string[];
     action: string;
     author?: string;
+    messages?: Record<string, string>;
   }) => Promise<{ updated: TargetRow[]; failed: { id: string; error: string }[] }>;
   deletePlay: (playId: string) => Promise<void>;
   onStudentClick?: (studentId: string) => void;
+  recommend?: (
+    input: Record<string, unknown>
+  ) => Promise<{ candidates: WinbackCandidate[]; stats: WinbackRecommendStats }>;
+  addTargets?: (
+    playId: string,
+    payload: { candidates: WinbackCandidate[] }
+  ) => Promise<{ inserted: unknown[]; skipped: number }>;
 }
 
 const STAT = 'flex-1 min-w-[92px] bg-white border border-gray-100 rounded-lg px-3 py-2';
@@ -28,15 +40,22 @@ export function WinbackPlayDetail({
   onBack,
   fetchPlay,
   patchTarget,
+  generateDraft,
   bulkTargets,
   deletePlay,
   onStudentClick,
+  recommend,
+  addTargets,
 }: Props) {
   const [play, setPlay] = useState<WinbackPlayDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [messages, setMessages] = useState<Record<string, string>>({});
+
+  const [showAdditionalSearch, setShowAdditionalSearch] = useState(false);
+  const [addMessage, setAddMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,11 +105,29 @@ export function WinbackPlayDetail({
     };
   }, [targets]);
 
-  async function handleBulk(action: string, targetIds?: string[]) {
+  async function handleBulk(action: string, targetIds?: string[], message?: string) {
     const ids = targetIds ?? [...selected];
     if (ids.length === 0) return;
+    const sentMessages = message === undefined
+      ? Object.fromEntries(ids.map((id) => [id, messages[id]]).filter(([, value]) => value !== undefined))
+      : { [ids[0]]: message };
     try {
-      const result = await bulkTargets({ target_ids: ids, action, author: userName });
+      const result = await bulkTargets({
+        target_ids: ids,
+        action,
+        author: userName,
+        ...(action === 'mark_sent' && Object.keys(sentMessages).length > 0 ? { messages: sentMessages } : {}),
+      });
+      if (action === 'mark_sent' && result.failed.length > 0 && result.updated.length === 0) {
+        throw new Error(result.failed[0].error);
+      }
+      if (action === 'mark_sent') {
+        setMessages((prev) => {
+          const next = { ...prev };
+          ids.forEach((id) => delete next[id]);
+          return next;
+        });
+      }
       if (result.failed.length > 0) {
         setError(`${result.failed.length}건 실패: ${result.failed[0].error}`);
       }
@@ -149,7 +186,18 @@ export function WinbackPlayDetail({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={load}
+            onClick={() => {
+              setAddMessage(null);
+              setShowAdditionalSearch(true);
+            }}
+            className="flex items-center gap-1 px-2 py-1 rounded border border-blue-200 text-[11px] text-blue-600 hover:bg-blue-50"
+          >
+            <Sparkles size={11} /> 추가 타겟 추천
+          </button>
+          <button
+            onClick={() => {
+              load();
+            }}
             className="flex items-center gap-1 px-2 py-1 rounded border border-gray-200 text-[11px] text-gray-500 hover:bg-gray-50"
           >
             <RefreshCw size={11} /> 새로고침
@@ -183,6 +231,7 @@ export function WinbackPlayDetail({
       </div>
 
       {error && <p className="text-xs text-red-500">{error}</p>}
+      {addMessage && <p className="text-xs text-green-600">{addMessage}</p>}
 
       {selected.size > 0 && (
         <div className="flex items-center gap-2 rounded-lg bg-gray-900 px-3 py-2 text-white">
@@ -227,7 +276,13 @@ export function WinbackPlayDetail({
                     return next;
                   })
                 }
-                onMarkSent={() => handleBulk('mark_sent', [t.id])}
+                onMarkSent={(message) => handleBulk('mark_sent', [t.id], message)}
+                onMessageChange={(message) => setMessages((prev) => ({ ...prev, [t.id]: message }))}
+                onGenerateDraft={async () => {
+                  if (!generateDraft) return;
+                  await generateDraft(t.id);
+                  await load();
+                }}
                 onPatch={(patch) => handlePatch(t.id, patch)}
                 onStudentClick={onStudentClick}
               />
@@ -235,6 +290,40 @@ export function WinbackPlayDetail({
           </ul>
         )}
       </div>
+
+      {showAdditionalSearch && recommend && addTargets && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-2xl max-h-[88vh] flex flex-col rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-blue-500" />
+                <h3 className="text-sm font-semibold text-gray-900">추가 타겟 추천</h3>
+              </div>
+              <button onClick={() => setShowAdditionalSearch(false)} className="text-gray-400 hover:text-gray-600" aria-label="닫기">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <p className="mb-3 text-xs text-gray-500">기존 타겟은 자동으로 제외하고, 새 학생만 검색합니다.</p>
+              <RecommendStep
+                adminKey=""
+                playId={playId}
+                draft={playToBriefDraft(play)}
+                initialRules={playToRuleDraft(play)}
+                autoRun={false}
+                addButtonLabel="선택한 명 추가"
+                recommend={recommend}
+                addTargets={addTargets}
+                onDone={async ({ inserted, skipped }) => {
+                  await load();
+                  setAddMessage(`${inserted.length}명을 추가했습니다.${skipped ? ` 중복 ${skipped}명은 제외했습니다.` : ''}`);
+                  setShowAdditionalSearch(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
