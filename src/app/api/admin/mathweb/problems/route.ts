@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
   const { data: problem, error: insertErr } = await supabaseAdmin
     .from('math_problems')
-    .insert({ id: problemId, title, difficulty, question_image_url: questionUrl, answer_image_url: answerUrl, answer_text: answerText ?? null, memo })
+    .insert({ id: problemId, title, difficulty, question_image_url: questionUrl, answer_image_url: answerUrl, answer_text: answerText ?? null, memo, is_active: true })
     .select('id, question_image_url, answer_image_url, answer_text')
     .single();
 
