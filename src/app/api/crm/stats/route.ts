@@ -65,6 +65,11 @@ export interface CrmStatsData {
     total_refund: number; // 환불 합(음수)
     first_payment_revenue: number; // 최초결제 합(양수)
     repayment_revenue: number; // 재결제 합(양수)
+    // 기간 내 결제 트랜잭션 건수 — 코호트 전환 인원(paid)과 다른 값이다.
+    gross_count: number; // 양수 결제 건수
+    refund_count: number; // 환불 건수
+    first_payment_count: number; // 최초결제(양수) 건수
+    repayment_count: number; // 재결제(양수) 건수
   };
   by_source: StatsBySource[];
   monthly: StatsMonthly[];
@@ -183,6 +188,10 @@ export async function GET(request: NextRequest) {
   let totalRefund = 0;
   let firstPaymentRevenue = 0;
   let repaymentRevenue = 0;
+  let grossCount = 0;
+  let refundCount = 0;
+  let firstPaymentCount = 0;
+  let repaymentCount = 0;
 
   for (const p of paymentList) {
     totalRevenue += p.amount;
@@ -190,8 +199,16 @@ export async function GET(request: NextRequest) {
     if (p.amount >= 0) grossRevenue += p.amount;
     else totalRefund += p.amount;
     if (p.amount >= 0) {
-      if (p.payment_type === '최초결제') firstPaymentRevenue += p.amount;
-      else if (p.payment_type === '재결제') repaymentRevenue += p.amount;
+      grossCount++;
+      if (p.payment_type === '최초결제') {
+        firstPaymentRevenue += p.amount;
+        firstPaymentCount++;
+      } else if (p.payment_type === '재결제') {
+        repaymentRevenue += p.amount;
+        repaymentCount++;
+      }
+    } else {
+      refundCount++;
     }
   }
 
@@ -411,6 +428,10 @@ export async function GET(request: NextRequest) {
       total_refund: totalRefund,
       first_payment_revenue: firstPaymentRevenue,
       repayment_revenue: repaymentRevenue,
+      gross_count: grossCount,
+      refund_count: refundCount,
+      first_payment_count: firstPaymentCount,
+      repayment_count: repaymentCount,
     },
     by_source,
     monthly,

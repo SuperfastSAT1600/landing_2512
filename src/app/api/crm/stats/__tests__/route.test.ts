@@ -270,6 +270,37 @@ describe('GET /api/crm/stats — segment 필터 (REQ-004)', () => {
     expect(b2c.overview.gross_revenue).toBe(100000);
   });
 
+  it('결제 건수(gross/refund/최초/재결제)를 오버뷰에 담는다 (REQ-001)', async () => {
+    tableRows.students = [student({ id: 'b2c-1', name: '김B2C' })];
+    tableRows.payments = [
+      payment({ student_id: 'b2c-1', student_name: '김B2C', amount: 100000, payment_type: '최초결제' }),
+      payment({ student_id: 'b2c-1', student_name: '김B2C', amount: 200000, payment_type: '재결제' }),
+      payment({ student_id: 'b2c-1', student_name: '김B2C', amount: 300000, payment_type: '재결제' }),
+      payment({ student_id: 'b2c-1', student_name: '김B2C', amount: -50000, payment_type: '환불' }),
+    ];
+
+    const data = (await (await callRoute()).json()).data;
+
+    expect(data.overview.gross_count).toBe(3);
+    expect(data.overview.refund_count).toBe(1);
+    expect(data.overview.first_payment_count).toBe(1);
+    expect(data.overview.repayment_count).toBe(2);
+  });
+
+  it('결제 건수도 segment 필터를 따른다 (REQ-001)', async () => {
+    seedMixedPayments();
+    const b2c = (await (await callRoute('b2c')).json()).data;
+    seedMixedPayments();
+    const b2b = (await (await callRoute('b2b')).json()).data;
+    seedMixedPayments();
+    const all = (await (await callRoute('all')).json()).data;
+
+    expect(b2c.overview.gross_count).toBe(1);
+    expect(b2b.overview.gross_count).toBe(1);
+    expect(all.overview.gross_count).toBe(2);
+    expect(b2c.overview.gross_count + b2b.overview.gross_count).toBe(all.overview.gross_count);
+  });
+
   it('all 매출 = b2c 매출 + b2b 매출 (누락·중복 없음)', async () => {
     seedMixedPayments();
     const all = (await (await callRoute('all')).json()).data;
