@@ -124,6 +124,14 @@ export function useWinbackPlays(adminKey: string) {
     [call]
   );
 
+  const deletePlay = useCallback(
+    (playId: string) =>
+      call<{ id: string }>(`/api/crm/winback-plays/${playId}`, { method: 'DELETE' }).then(() => {
+        fetchPlays();
+      }),
+    [call, fetchPlays]
+  );
+
   const bulkTargets = useCallback(
     (payload: { target_ids: string[]; action: string; author?: string; variant_id?: string | null }) =>
       call<{ updated: WinbackTargetRow[]; failed: { id: string; error: string }[] }>(
@@ -144,6 +152,7 @@ export function useWinbackPlays(adminKey: string) {
     createPlay,
     fetchPlay,
     updatePlay,
+    deletePlay,
     recommend,
     addTargets,
     patchTarget,

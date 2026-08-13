@@ -1,6 +1,7 @@
 'use client';
 
-import { Loader2, Plus, Target } from 'lucide-react';
+import { useState } from 'react';
+import { Loader2, Plus, Target, Trash2 } from 'lucide-react';
 import type { WinbackPlayListItem } from './hooks/useWinbackPlays';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -23,13 +24,16 @@ export function WinbackPlayList({
   error,
   onOpen,
   onNew,
+  onDelete,
 }: {
   plays: WinbackPlayListItem[];
   loading: boolean;
   error: string | null;
   onOpen: (playId: string) => void;
   onNew: () => void;
+  onDelete: (playId: string) => Promise<void>;
 }) {
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -61,10 +65,10 @@ export function WinbackPlayList({
       ) : (
         <ul className="grid gap-2">
           {plays.map((p) => (
-            <li key={p.id}>
+            <li key={p.id} className="relative">
               <button
                 onClick={() => onOpen(p.id)}
-                className="w-full text-left rounded-xl border border-gray-100 bg-white p-3 hover:border-gray-300 transition-colors"
+                className="w-full text-left rounded-xl border border-gray-100 bg-white p-3 pr-9 hover:border-gray-300 transition-colors"
               >
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium text-gray-900">{p.title}</span>
@@ -87,6 +91,30 @@ export function WinbackPlayList({
                   <span>반응 {p.rollup.responded}</span>
                   <span className="font-medium text-emerald-600">전환 {p.rollup.converted}</span>
                 </div>
+              </button>
+              <button
+                type="button"
+                aria-label="플레이 삭제"
+                disabled={deletingIds.has(p.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!confirm(`"${p.title}" 플레이를 삭제할까요? 타겟·변형 기록도 함께 삭제됩니다.`)) {
+                    return;
+                  }
+                  setDeletingIds((prev) => new Set(prev).add(p.id));
+                  Promise.resolve(onDelete(p.id))
+                    .catch((err) => alert((err as Error).message))
+                    .finally(() =>
+                      setDeletingIds((prev) => {
+                        const next = new Set(prev);
+                        next.delete(p.id);
+                        return next;
+                      })
+                    );
+                }}
+                className="absolute top-3 right-3 text-gray-300 hover:text-red-500 p-1 disabled:opacity-50"
+              >
+                <Trash2 size={13} />
               </button>
             </li>
           ))}

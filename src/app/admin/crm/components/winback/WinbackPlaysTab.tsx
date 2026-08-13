@@ -29,6 +29,7 @@ export function WinbackPlaysTab({ adminKey, userName, winback, onStudentClick }:
           fetchPlay={winback.fetchPlay}
           patchTarget={winback.patchTarget}
           bulkTargets={winback.bulkTargets}
+          deletePlay={winback.deletePlay}
           onStudentClick={onStudentClick}
         />
       ) : (
@@ -38,6 +39,7 @@ export function WinbackPlaysTab({ adminKey, userName, winback, onStudentClick }:
           error={winback.error}
           onOpen={setOpenPlayId}
           onNew={() => setShowModal(true)}
+          onDelete={winback.deletePlay}
         />
       )}
 

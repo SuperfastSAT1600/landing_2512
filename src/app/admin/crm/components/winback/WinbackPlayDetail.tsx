@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, Loader2, RefreshCw, Send, MailX } from 'lucide-react';
+import { ChevronLeft, Loader2, RefreshCw, Send, MailX, Trash2 } from 'lucide-react';
 import type { WinbackPlayDetailData, WinbackTargetRow as TargetRow } from './hooks/useWinbackPlays';
 import { WinbackTargetRow } from './WinbackTargetRow';
 
@@ -16,6 +16,7 @@ interface Props {
     action: string;
     author?: string;
   }) => Promise<{ updated: TargetRow[]; failed: { id: string; error: string }[] }>;
+  deletePlay: (playId: string) => Promise<void>;
   onStudentClick?: (studentId: string) => void;
 }
 
@@ -28,11 +29,13 @@ export function WinbackPlayDetail({
   fetchPlay,
   patchTarget,
   bulkTargets,
+  deletePlay,
   onStudentClick,
 }: Props) {
   const [play, setPlay] = useState<WinbackPlayDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
@@ -50,6 +53,20 @@ export function WinbackPlayDetail({
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleDelete = useCallback(async () => {
+    if (!play) return;
+    if (!confirm(`"${play.title}" 플레이를 삭제할까요? 타겟·변형 기록도 함께 삭제됩니다.`)) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await deletePlay(playId);
+      onBack();
+    } catch (err) {
+      setError((err as Error).message);
+      setDeleting(false);
+    }
+  }, [play, playId, deletePlay, onBack]);
 
   const variantName = useCallback(
     (variantId: string | null) =>
@@ -130,12 +147,21 @@ export function WinbackPlayDetail({
             {play.conversion_window_days}일
           </p>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-1 px-2 py-1 rounded border border-gray-200 text-[11px] text-gray-500 hover:bg-gray-50"
-        >
-          <RefreshCw size={11} /> 새로고침
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={load}
+            className="flex items-center gap-1 px-2 py-1 rounded border border-gray-200 text-[11px] text-gray-500 hover:bg-gray-50"
+          >
+            <RefreshCw size={11} /> 새로고침
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex items-center gap-1 px-2 py-1 rounded border border-gray-200 text-[11px] text-red-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+          >
+            <Trash2 size={11} /> {deleting ? '삭제 중…' : '삭제'}
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2 flex-wrap">
