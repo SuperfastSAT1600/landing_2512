@@ -386,11 +386,19 @@ export function ConceptGraph({ onNodeClick }: ConceptGraphProps) {
               return (
                 <button
                   key={d.key}
-                  onClick={() => setSelectedDifficulties(prev => {
-                    const next = new Set(prev);
-                    next.has(d.key) ? next.delete(d.key) : next.add(d.key);
-                    return next;
-                  })}
+                  onClick={() => {
+                    if (d.key === 'killer') {
+                      if (killerTimerRef.current) clearTimeout(killerTimerRef.current);
+                      setKillerLocked(true);
+                      killerTimerRef.current = setTimeout(() => setKillerLocked(false), 3000);
+                      return;
+                    }
+                    setSelectedDifficulties(prev => {
+                      const next = new Set(prev);
+                      next.has(d.key) ? next.delete(d.key) : next.add(d.key);
+                      return next;
+                    });
+                  }}
                   className="flex items-center gap-2 group"
                 >
                   {/* 체크박스 */}
