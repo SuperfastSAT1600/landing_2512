@@ -24,8 +24,8 @@ export function ConceptAutocompleteInput({ value, onChange, adminKey }: Props) {
 
   const fetchSuggestions = useCallback(async (q: string) => {
     const url = q
-      ? `/api/admin/mathweb/concepts?q=${encodeURIComponent(q)}&limit=20`
-      : '/api/admin/mathweb/concepts?limit=20';
+      ? `/api/admin/mathweb/concepts?q=${encodeURIComponent(q)}&limit=100`
+      : '/api/admin/mathweb/concepts?limit=300';
     const res = await fetch(url, { headers: { 'x-admin-key': adminKey } });
     if (!res.ok) return;
     const json = await res.json();

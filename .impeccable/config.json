@@ -9,7 +9,8 @@
       "public/partners/gangwon/units/unit10.html",
       "public/partners/gangwon/index.html",
       "public/partners/gangwon/unit.html",
-      "public/partners/gangwon/units/unit9.html"
+      "public/partners/gangwon/units/unit9.html",
+      "src/app/admin/mathweb/ConceptAutocompleteInput.tsx"
     ],
     "ignoreValues": [
       {

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const q = searchParams.get('q') ?? '';
-  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
+  const limit = Math.min(300, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
 
   let query = supabaseAdmin
     .from('math_concepts')
