@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import { Loader2, Paperclip, X, FileText, Mic } from 'lucide-react';
 import { SectionCard } from './SectionCard';
 import type { StagedAttachment } from '../hooks/useMemoAttachments';
+import { resolveCrmLabels, type CrmLabels } from '@/lib/crm-labels';
 
 interface Props {
   memoText: string;
@@ -19,12 +20,18 @@ interface Props {
   attachmentsUploading: boolean;
   // Plaud 녹음 선택 모달 열기
   onOpenPlaud: () => void;
+  /** 미지정 시 한글(기본). */
+  labels?: Partial<CrmLabels>;
+  /** true면 섹션을 기본 펼침으로 연다. */
+  defaultOpen?: boolean;
 }
 
 export function MemoSection({
   memoText, setMemoText, savingMemo, memoError, setMemoError, onAddMemo,
   staged, onAddFiles, onRemoveAttachment, attachmentsUploading, onOpenPlaud,
+  labels, defaultOpen = false,
 }: Props) {
+  const L = resolveCrmLabels(labels);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
@@ -38,12 +45,12 @@ export function MemoSection({
   const canSave = (!!memoText.trim() || staged.some(s => s.path)) && !savingMemo && !attachmentsUploading;
 
   return (
-    <SectionCard title="상담 메모" defaultOpen={false}>
+    <SectionCard title={L.memoTitle} defaultOpen={defaultOpen}>
       <textarea
         value={memoText}
         onChange={e => { setMemoText(e.target.value); setMemoError(''); }}
         onPaste={handlePaste}
-        placeholder="상담 내용을 입력하세요... (캡처 이미지는 여기에 붙여넣기 Ctrl/⌘+V)"
+        placeholder={L.memoPlaceholder}
         rows={3}
         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 resize-y focus:outline-none focus:border-blue-400 min-h-[64px]"
       />
@@ -79,7 +86,7 @@ export function MemoSection({
               <button
                 onClick={() => onRemoveAttachment(att.localId)}
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-800 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                aria-label="첨부 삭제"
+                aria-label={L.memoRemoveAttachment}
               >
                 <X size={12} />
               </button>
@@ -96,13 +103,13 @@ export function MemoSection({
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-[13px] text-gray-600 hover:bg-gray-50 transition-colors"
           >
-            <Paperclip size={13} /> 파일 첨부
+            <Paperclip size={13} /> {L.memoAttachFile}
           </button>
           <button
             onClick={onOpenPlaud}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-blue-200 text-[13px] text-blue-600 hover:bg-blue-50 transition-colors"
           >
-            <Mic size={13} /> Plaud 녹음
+            <Mic size={13} /> {L.memoRecording}
           </button>
         </div>
         <input
@@ -122,7 +129,7 @@ export function MemoSection({
           disabled={!canSave}
           className="px-4 py-1.5 bg-gray-900 hover:bg-gray-700 disabled:opacity-40 rounded-lg text-[13px] font-semibold text-white transition-colors"
         >
-          {savingMemo ? '저장 중...' : attachmentsUploading ? '업로드 중...' : '메모 저장'}
+          {savingMemo ? L.memoSaving : attachmentsUploading ? L.memoUploading : L.memoSave}
         </button>
       </div>
     </SectionCard>
