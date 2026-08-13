@@ -72,6 +72,50 @@ export function fillMonthlyGaps<T extends { month: string }>(
   return out;
 }
 
+// ─── Segment filter for B2C/B2B stats ─────────────────────────────────────────
+
+export type CrmStatsSegment = 'all' | 'b2c' | 'b2b';
+
+export function parseStatsSegment(v: string | null): CrmStatsSegment {
+  if (v === 'b2c' || v === 'b2b') return v;
+  return 'all';
+}
+
+export function isCrmStatsSegment(v: string): v is CrmStatsSegment {
+  return v === 'all' || v === 'b2c' || v === 'b2b';
+}
+
+/**
+ * payments의 `students:student_id(company_id)` 임베드 형태.
+ * PostgREST는 many-to-one 임베드를 단일 객체로 반환하지만, 관계 추론에 따라 배열로 올 수도 있어 둘 다 받는다.
+ */
+export type RelatedCompanyRef =
+  | { company_id: string | null }
+  | { company_id: string | null }[]
+  | null
+  | undefined;
+
+/** 임베드된 학생 관계에서 company_id를 꺼낸다. 관계가 없으면 null. */
+export function relatedCompanyId(related: RelatedCompanyRef): string | null {
+  if (!related) return null;
+  const row = Array.isArray(related) ? related[0] : related;
+  return row?.company_id ?? null;
+}
+
+/**
+ * segment에 따라 결제 1건의 포함 여부를 판정한다.
+ * payments 테이블에는 company_id가 없으므로 임베드된 학생 관계의 company_id로 분류한다.
+ * 학생 레코드가 없는 결제(관계 null)는 B2C로 본다 — b2c/b2b가 전체를 겹침 없이 나눈다.
+ */
+export function paymentMatchesSegment(
+  payment: { students?: RelatedCompanyRef },
+  segment: CrmStatsSegment,
+): boolean {
+  if (segment === 'all') return true;
+  const companyId = relatedCompanyId(payment.students);
+  return segment === 'b2b' ? companyId != null : companyId == null;
+}
+
 /**
  * 첫 응답 시간 계산의 기준 문의시각(ms).
  * inquiry_date는 naive(KST 벽시계)로 저장되므로 KST(+09:00) instant로 해석한다.
