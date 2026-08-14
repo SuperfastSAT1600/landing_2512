@@ -95,3 +95,30 @@ export async function saveSupertestConfig(config: SupertestConfig): Promise<void
         .upsert({ id: 'supertest', config });
     revalidateTag('supertest-config', 'default');
 }
+
+// ── Portal Posts config ─────────────────────────────────────────────────────
+
+export interface PortalPost {
+    id: string;       // crypto.randomUUID()
+    title: string;
+    content: string;
+    active: boolean;
+    order: number;    // 표시 순서 (오름차순)
+    created_at: string; // ISO timestamp
+}
+
+export async function getPortalPosts(): Promise<PortalPost[]> {
+    const { data, error } = await supabaseAdmin
+        .from('site_config')
+        .select('config')
+        .eq('id', 'portal-posts')
+        .single();
+    if (error || !data) return [];
+    return (data.config as PortalPost[]) ?? [];
+}
+
+export async function savePortalPosts(posts: PortalPost[]): Promise<void> {
+    await supabaseAdmin
+        .from('site_config')
+        .upsert({ id: 'portal-posts', config: posts });
+}
