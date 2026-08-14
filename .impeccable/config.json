@@ -6,6 +6,7 @@
       "src/app/practice/august-math/page.tsx",
       "src/app/dashboard/DashboardClient.tsx",
       "src/app/coaches/[slug]/opengraph-image.tsx",
+      "src/app/enrollment2026/opengraph-image.tsx",
       "public/partners/gangwon/units/unit10.html",
       "public/partners/gangwon/index.html",
       "public/partners/gangwon/unit.html",
@@ -240,6 +241,138 @@
         ],
         "createdAt": "2026-08-11T16:49:16.690Z",
         "reason": "Pre-existing admin-only inline styles, not part of design system surface"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#e2e8f0",
+        "createdAt": "2026-08-14T07:17:34.978Z",
+        "reason": "Portal border color used throughout portal components — intentional portal design system separate from main site"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f0f4ff",
+        "createdAt": "2026-08-14T07:17:39.836Z",
+        "reason": "Portal accent-tinted card background, derived from #6085FF accent — intentional portal design system"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(96,133,255,0.25)",
+        "createdAt": "2026-08-14T07:17:39.910Z",
+        "reason": "Portal accent border at 25% opacity — intentional portal design system"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#64748b",
+        "createdAt": "2026-08-14T07:17:39.975Z",
+        "reason": "Standard slate-500 secondary text — intentional portal design system"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(96,133,255,0.12)",
+        "createdAt": "2026-08-14T07:17:40.051Z",
+        "reason": "Portal accent hover shadow — intentional portal design system"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#6085ff",
+        "createdAt": "2026-08-14T07:22:50.490Z",
+        "reason": "Portal primary accent color — intentional portal design system"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(96, 133, 255, 0.5)",
+        "createdAt": "2026-08-14T07:22:50.560Z",
+        "reason": "Portal accent shadow — intentional"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(96, 133, 255, 0.6)",
+        "createdAt": "2026-08-14T07:22:50.622Z",
+        "reason": "Portal accent hover shadow — intentional"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(96, 133, 255, 0.4)",
+        "createdAt": "2026-08-14T07:22:50.690Z",
+        "reason": "Portal accent border — intentional"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(0, 0, 0, 0.1)",
+        "createdAt": "2026-08-14T07:22:50.758Z",
+        "reason": "Portal card shadow — intentional"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(96, 133, 255, 0.15)",
+        "createdAt": "2026-08-14T07:22:50.824Z",
+        "reason": "Portal accent hover shadow light — intentional"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(96, 133, 255, 0.7)",
+        "createdAt": "2026-08-14T07:22:50.892Z",
+        "reason": "Portal accent border hover — intentional"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#09090b",
+        "createdAt": "2026-08-14T07:22:50.964Z",
+        "reason": "Portal dark background/text — intentional portal design system"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#94a3b8",
+        "createdAt": "2026-08-14T07:24:30.444Z",
+        "reason": "Portal slate-400 muted text — intentional portal design system"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#475569",
+        "createdAt": "2026-08-14T07:24:30.513Z",
+        "reason": "Portal slate-600 secondary text — intentional portal design system"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f1f5f9",
+        "createdAt": "2026-08-14T07:24:30.584Z",
+        "reason": "Portal slate-100 cancel button bg — intentional portal design system"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f8fafc",
+        "createdAt": "2026-08-14T07:24:30.654Z",
+        "reason": "Portal input background — intentional portal design system"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "0.82rem",
+        "createdAt": "2026-08-14T07:32:43.444Z",
+        "reason": "Portal mobile-optimized font size — intentional responsive reduction"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "10px",
+        "createdAt": "2026-08-14T07:32:43.522Z",
+        "reason": "Portal mobile border radius reduction — intentional responsive adjustment"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#071be9",
+        "createdAt": "2026-08-14T09:58:47.004Z",
+        "reason": "Portal dark header gradient accent — pre-existing intentional portal color"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "4.5rem",
+        "createdAt": "2026-08-14T09:58:47.300Z",
+        "reason": "Portal hero heading clamp max — pre-existing intentional portal typography"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(96,133,255,0.3)",
+        "createdAt": "2026-08-14T09:58:47.628Z",
+        "reason": "Portal accent border variant — intentional portal design system"
       }
     ]
   }
