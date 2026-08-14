@@ -315,7 +315,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
   <div class="hero-content">
     <span class="hero-unit-tag">Unit 14 &nbsp;·&nbsp; English Interview Class &nbsp;·&nbsp; Round 3</span>
     <h1 class="display d-xxl hero-h1">INJURY,<br>RECOVERY<br>&amp; RESILIENCE</h1>
-    <p class="hero-sub">부상과 복귀 — Round 2. 새 선수, 새 표현, 더 깊은 인터뷰 영어.</p>
+    <p class="hero-sub">부상과 복귀 — Round 3. 새 선수, 새 표현, 더 깊은 인터뷰 영어.</p>
     <div class="scroll-hint">INJURY, RECOVERY &amp; RESILIENCE — ROUND 2</div>
   </div>
 </section>
@@ -384,7 +384,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
 
 <!-- S4 — 10 핵심 문장 -->
 <div class="section" id="phrases" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Unit 9 &nbsp;·&nbsp; Round 2 &nbsp;·&nbsp; 10 Key Phrases</span>
+  <span class="eyebrow">Unit 14 &nbsp;·&nbsp; Round 3 &nbsp;·&nbsp; 10 Key Phrases</span>
   <h2 class="display d-lg reveal" style="margin-bottom:0;">10 PHRASES.<br>INJURY &amp; RECOVERY.</h2>
   <div class="phrase-list reveal">
 
@@ -627,7 +627,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
   <div class="hw-submit-wrap reveal" id="hw-login-panel" style="display:none;">
     <div class="hl" style="margin-top:56px;"></div>
     <div class="hw-submit-header">
-      <span class="eyebrow" style="margin:0;">숙제 시작 &nbsp;·&nbsp; Unit 9</span>
+      <span class="eyebrow" style="margin:0;">숙제 시작 &nbsp;·&nbsp; Unit 14</span>
     </div>
     <p class="login-title">이름을 선택하면 바로 시작됩니다.</p>
     <div class="login-fields">
@@ -776,7 +776,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
 
 <footer id="footer">
   <span class="footer-brand">강원 FC &nbsp;·&nbsp; 러너스 LRS 영어 인터뷰 수업</span>
-  <span class="footer-note">Unit 9 &nbsp;·&nbsp; Injury, Recovery &amp; Resilience — Round 2</span>
+  <span class="footer-note">Unit 14 &nbsp;·&nbsp; Injury, Recovery &amp; Resilience — Round 3</span>
 </footer>
 
 <div id="ex-compose">
@@ -1140,7 +1140,7 @@ function fmtDate(iso) { if (!iso) return ''; const d = new Date(iso); return d.t
 </script>
 
 <script>
-const COVERAGE_KEY = 'unit9_coverage';
+const COVERAGE_KEY = 'unit14_coverage';
 
 function _getCoverage() {
   try { return new Set(JSON.parse(localStorage.getItem(COVERAGE_KEY) || '[]')); } catch { return new Set(); }
@@ -1161,7 +1161,7 @@ function _applyCoverage(id, on) {
   if (btn) btn.classList.toggle('active', on);
 }
 
-function _exKey2(id, type) { return `unit9_ex_${type}_${id}`; }
+function _exKey2(id, type) { return `unit14_ex_${type}_${id}`; }
 function _getEx2(id, type) { try { return JSON.parse(localStorage.getItem(_exKey2(id, type)) || '[]'); } catch { return []; } }
 function _saveEx2(id, type, arr) { localStorage.setItem(_exKey2(id, type), JSON.stringify(arr)); }
 

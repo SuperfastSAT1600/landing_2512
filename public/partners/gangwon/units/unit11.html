@@ -408,7 +408,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
 
 <!-- S3 — 10 핵심 문장 통합 -->
 <div class="section" id="phrases" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Unit 6 &nbsp;·&nbsp; Jude Bellingham &nbsp;·&nbsp; 10 Key Phrases</span>
+  <span class="eyebrow">Unit 11 &nbsp;·&nbsp; Self-Introduction &nbsp;·&nbsp; 10 Key Phrases</span>
   <h2 class="display d-lg reveal" style="margin-bottom:0;">10 PHRASES.<br>MEMORIZE ALL.</h2>
   <div class="phrase-list reveal">
 
@@ -642,7 +642,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
   <div class="hw-submit-wrap reveal" id="hw-login-panel" style="display:none;">
     <div class="hl" style="margin-top:56px;"></div>
     <div class="hw-submit-header">
-      <span class="eyebrow" style="margin:0;">숙제 시작 &nbsp;·&nbsp; Unit 6</span>
+      <span class="eyebrow" style="margin:0;">숙제 시작 &nbsp;·&nbsp; Unit 11</span>
     </div>
     <p class="login-title">이름을 선택하면 바로 시작됩니다.</p>
     <div class="login-fields">
@@ -791,7 +791,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
 
 <footer id="footer">
   <span class="footer-brand">강원 FC &nbsp;·&nbsp; 러너스 LRS 영어 인터뷰 수업</span>
-  <span class="footer-note">Unit 6 &nbsp;·&nbsp; Self-Introduction &amp; Joining the Team — Round 2</span>
+  <span class="footer-note">Unit 11 &nbsp;·&nbsp; Self-Introduction &amp; Joining the Team — Round 3</span>
 </footer>
 
 <div id="ex-compose">
@@ -962,7 +962,7 @@ document.querySelectorAll('.quote-note[data-key]').forEach(noteEl => _renderNote
 const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
 const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
 const HW_UNIT = 'unit11';
-const HW_LS_KEY = 'b2b_hw_submitted_unit6';
+const HW_LS_KEY = 'b2b_hw_submitted_unit11';
 const SESSION_LS_KEY = 'b2b_session_unit11';
 const sb = window.supabase.createClient(SB_URL, SB_ANON);
 let session = null;
@@ -1155,7 +1155,7 @@ function fmtDate(iso) { if (!iso) return ''; const d = new Date(iso); return d.t
 
 <script>
 // ── Phrase Coverage & Coach Examples ──────────────────────────────────────
-const COVERAGE_KEY = 'unit6_coverage';
+const COVERAGE_KEY = 'unit11_coverage';
 
 function _getCoverage() {
   try { return new Set(JSON.parse(localStorage.getItem(COVERAGE_KEY) || '[]')); } catch { return new Set(); }
@@ -1176,7 +1176,7 @@ function _applyCoverage(id, on) {
   if (btn) btn.classList.toggle('active', on);
 }
 
-function _exKey(id, type) { return `unit6_ex_${type}_${id}`; }
+function _exKey(id, type) { return `unit11_ex_${type}_${id}`; }
 function _getEx(id, type) { try { return JSON.parse(localStorage.getItem(_exKey(id, type)) || '[]'); } catch { return []; } }
 function _saveEx(id, type, arr) { localStorage.setItem(_exKey(id, type), JSON.stringify(arr)); }
 

@@ -398,7 +398,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
 
 <!-- S4 — 10 Key Phrases -->
 <div class="section" id="phrases" style="scroll-margin-top:92px;">
-  <span class="eyebrow">Unit 7 &nbsp;·&nbsp; Post-Match Flash Interview &nbsp;·&nbsp; 10 Key Phrases</span>
+  <span class="eyebrow">Unit 12 &nbsp;·&nbsp; Post-Match Flash Interview &nbsp;·&nbsp; 10 Key Phrases</span>
   <h2 class="display d-lg reveal" style="margin-bottom:0;">10 PHRASES.<br>WIN &amp; LOSS.</h2>
   <div class="phrase-list">
 
@@ -671,7 +671,7 @@ body { background: var(--night); color: var(--white); font-family: 'Arial', sans
   <div class="hw-submit-wrap reveal" id="hw-login-panel" style="display:none;">
     <div class="hl" style="margin-top:56px;"></div>
     <div class="hw-submit-header">
-      <span class="eyebrow" style="margin:0;">숙제 시작 &nbsp;·&nbsp; Unit 7</span>
+      <span class="eyebrow" style="margin:0;">숙제 시작 &nbsp;·&nbsp; Unit 12</span>
     </div>
     <p class="login-title">이름을 선택하면 바로 시작됩니다.</p>
     <div class="login-fields">
@@ -972,7 +972,7 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
 const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
 const HW_UNIT = 'unit12';
-const HW_LS_KEY = 'gangwon_unit7_session';
+const HW_LS_KEY = 'gangwon_unit12_session';
 const LEITNER_MASTER = 3;
 
 const sb = { from: (t) => ({ select: (c) => ({ eq: (...a) => ({ eq: (...b) => ({ maybeSingle: () => fetch(`${SB_URL}/rest/v1/${t}?select=${c}&${a[0]}=eq.${a[1]}&${b[0]}=eq.${b[1]}`, { headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` } }).then(r => r.json()).then(d => ({ data: d?.[0] ?? null, error: null })).catch(e => ({ data: null, error: e })), order: (...o) => ({ data: null }), maybeSingle: () => fetch(`${SB_URL}/rest/v1/${t}?select=${c}&${a[0]}=eq.${a[1]}`, { headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` } }).then(r => r.json()).then(d => ({ data: d?.[0] ?? null, error: null })).catch(e => ({ data: null, error: e })) }) }) }), insert: (d) => fetch(`${SB_URL}/rest/v1/${t}`, { method: 'POST', headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(d) }).then(r => ({ error: r.ok ? null : r.statusText })).catch(e => ({ error: e })) }) };
@@ -1151,12 +1151,12 @@ function fmtDate(iso) { if (!iso) return ''; const d = new Date(iso); return d.t
 </script>
 
 <script>
-const COVERAGE_KEY = 'unit7_coverage';
+const COVERAGE_KEY = 'unit12_coverage';
 function _getCoverage() { try { return new Set(JSON.parse(localStorage.getItem(COVERAGE_KEY) || '[]')); } catch { return new Set(); } }
 function _saveCoverage(s) { localStorage.setItem(COVERAGE_KEY, JSON.stringify([...s])); }
 function toggleCoverage(phraseId) { const s = _getCoverage(); s.has(phraseId) ? s.delete(phraseId) : s.add(phraseId); _saveCoverage(s); _applyCoverage(phraseId, s.has(phraseId)); }
 function _applyCoverage(id, on) { const item = document.querySelector(`.phrase-item[data-phrase="${id}"]`); if (!item) return; item.classList.toggle('covered', on); const btn = item.querySelector('.phrase-cover-btn'); if (btn) btn.classList.toggle('active', on); }
-function _exKey(id, type) { return `unit7_ex_${type}_${id}`; }
+function _exKey(id, type) { return `unit12_ex_${type}_${id}`; }
 function _getEx(id, type) { try { return JSON.parse(localStorage.getItem(_exKey(id, type)) || '[]'); } catch { return []; } }
 function _saveEx(id, type, arr) { localStorage.setItem(_exKey(id, type), JSON.stringify(arr)); }
 function renderCoachEx(id, type) { const c = document.getElementById(`${type}-adds-${id}`); if (!c) return; const arr = _getEx(id, type); const cls = type === 'var' ? 'phrase-coach-ex' : 'phrase-drill-coach-ex'; c.innerHTML = arr.map((t, i) => `<div class="${cls}"><span>${t.replace(/</g,'&lt;')}</span><button class="phrase-ex-del" onclick="delCoachEx('${id}','${type}',${i})">✕</button></div>`).join(''); }
