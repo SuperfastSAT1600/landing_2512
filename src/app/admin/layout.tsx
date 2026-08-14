@@ -27,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
     { href: '/admin/vocab-access', label: '시크릿페이지', icon: '🔐' },
     { href: '/admin/mathweb', label: 'Math Web', icon: '🕸️' },
+    { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
 ];
 
 
