@@ -5,6 +5,7 @@ import PasscodeChange from './PasscodeChange';
 import StudentInfoOverlay from './StudentInfoOverlay';
 import ConsultationOverlay from './ConsultationOverlay';
 import LearningReport from './LearningReport';
+import PortalFloatingCTA from './PortalFloatingCTA';
 
 interface PublishedMemo {
   id: string;
@@ -39,6 +40,7 @@ interface PortalData {
   publishedMemos: PublishedMemo[];
   diagnosticResult: DiagnosticResult | null;
   hasSrmData: boolean;
+  isEnrolled: boolean;
 }
 
 // NOTE: 진단테스트 뷰는 학부모 포털에서 숨기고 데이터/API는 보존한다.
@@ -264,10 +266,12 @@ export default function PortalContent({ token }: { token: string }) {
 
       {/* Overlays — each has pt-12 to clear the fixed nav */}
       <ConsultationOverlay
+        token={token}
         memos={data.publishedMemos}
         studentName={data.student.name}
         studentCreatedAt={data.student.created_at}
         blogLinkCount={data.publishedMemos.filter((m) => m.content.includes('http')).length}
+        isEnrolled={data.isEnrolled}
       />
 
       {currentView === 'student' && <StudentInfoOverlay student={data.student} />}
@@ -283,6 +287,8 @@ export default function PortalContent({ token }: { token: string }) {
       {showChangePasscode && (
         <PasscodeChange token={token} onClose={() => setShowChangePasscode(false)} />
       )}
+
+      <PortalFloatingCTA token={token} />
     </>
   );
 }

@@ -135,6 +135,105 @@ export async function notifyDiagnosticApplication(data: ApplicationNotificationD
   }
 }
 
+// ─── 포털 도구 사용 신청 알림 ─────────────────────────────────────
+
+const PORTAL_CHANNEL = 'C07FK85V9PD';
+
+const TOOL_LABELS: Record<string, string> = {
+  'vocab-counter': 'Vocab Counter',
+  'math-web': 'Math Web',
+};
+
+export async function notifyPortalToolRequest(data: { studentName: string; toolId: string }): Promise<void> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) {
+    console.warn('[slack] SLACK_BOT_TOKEN not set — skipping portal tool request notification');
+    return;
+  }
+
+  const toolLabel = TOOL_LABELS[data.toolId] ?? data.toolId;
+
+  const blocks = [
+    {
+      type: 'header',
+      text: { type: 'plain_text', text: `🔑 ${toolLabel} 사용 신청`, emoji: true },
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: `*학생*\n${data.studentName}` },
+        { type: 'mrkdwn', text: `*도구*\n${toolLabel}` },
+      ],
+    },
+  ];
+
+  const res = await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      channel: PORTAL_CHANNEL,
+      text: `🔑 [${toolLabel} 사용 신청] ${data.studentName}`,
+      blocks,
+    }),
+  });
+
+  const result = await res.json() as { ok: boolean; error?: string };
+  if (!result.ok) throw new Error(`Slack API error: ${result.error}`);
+}
+
+// ─── 포털 원장님 상담 신청 알림 ───────────────────────────────────
+
+const PORTAL_CONSULT_CHANNEL = 'C07FK85V9PD';
+
+export interface PortalConsultRequestData {
+  studentName: string;
+  preferredDate: string;
+  preferredTime: string;
+}
+
+export async function notifyPortalConsultRequest(data: PortalConsultRequestData): Promise<void> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) {
+    console.warn('[slack] SLACK_BOT_TOKEN not set — skipping portal consult notification');
+    return;
+  }
+
+  const { studentName, preferredDate, preferredTime } = data;
+
+  const blocks = [
+    {
+      type: 'header',
+      text: { type: 'plain_text', text: '📅 원장님 상담 신청', emoji: true },
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: `*학생*\n${studentName}` },
+        { type: 'mrkdwn', text: `*희망 날짜*\n${preferredDate}` },
+        { type: 'mrkdwn', text: `*희망 시간*\n${preferredTime}` },
+      ],
+    },
+  ];
+
+  const res = await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      channel: PORTAL_CONSULT_CHANNEL,
+      text: `📅 [원장님 상담 신청] ${studentName} — ${preferredDate} ${preferredTime}`,
+      blocks,
+    }),
+  });
+
+  const result = await res.json() as { ok: boolean; error?: string };
+  if (!result.ok) {
+    throw new Error(`Slack API error: ${result.error}`);
+  }
+}
+
 // ─── 만료 미응시 알림 ──────────────────────────────────────────────
 
 export interface ExpiredTokenData {

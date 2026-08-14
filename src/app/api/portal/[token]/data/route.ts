@@ -30,6 +30,7 @@ export async function GET(
       consultation_timeline,
       diagnostic_result_id,
       sfv2_profile_id,
+      lead_status,
       created_at
     `)
     .eq('portal_token', token)
@@ -86,5 +87,6 @@ export async function GET(
     publishedMemos,
     diagnosticResult,
     hasSrmData: !!student.sfv2_profile_id,
+    isEnrolled: student.lead_status === 'enrolled',
   });
 }
