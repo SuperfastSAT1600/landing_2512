@@ -75,7 +75,7 @@ export function WinbackPlayDetail({
 
   const handleDelete = useCallback(async () => {
     if (!play) return;
-    if (!confirm(`"${play.title}" 플레이를 삭제할까요? 타겟·변형 기록도 함께 삭제됩니다.`)) return;
+    if (!confirm(`"${play.title}" 캠페인을 삭제할까요? 타겟·변형 기록도 함께 삭제됩니다.`)) return;
     setDeleting(true);
     setError(null);
     try {
@@ -157,7 +157,7 @@ export function WinbackPlayDetail({
   if (!play) {
     return (
       <div className="py-12 text-center space-y-2">
-        <p className="text-sm text-red-500">{error ?? '플레이를 불러오지 못했습니다.'}</p>
+        <p className="text-sm text-red-500">{error ?? '캠페인을 불러오지 못했습니다.'}</p>
         <button onClick={onBack} className="text-xs text-gray-500 hover:text-gray-800">
           목록으로
         </button>
@@ -175,7 +175,7 @@ export function WinbackPlayDetail({
             onClick={onBack}
             className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700"
           >
-            <ChevronLeft size={13} /> 플레이 목록
+            <ChevronLeft size={13} /> 캠페인 목록
           </button>
           <h3 className="mt-1 text-base font-semibold text-gray-900">{play.title}</h3>
           <p className="text-xs text-gray-500 whitespace-pre-wrap">{play.product_brief}</p>
