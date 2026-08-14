@@ -55,6 +55,29 @@ function MemoItem({ memo }: { memo: PublishedMemo }) {
   );
 }
 
+interface AdminPortalPost {
+  id: string;
+  title: string;
+  content: string;
+}
+
+function AdminPostCard({ post }: { post: AdminPortalPost }) {
+  return (
+    <div
+      className="rounded-2xl px-5 py-5"
+      style={{ background: '#F0F4FF', border: '1.5px solid rgba(96,133,255,0.25)' }}
+    >
+      <div className="flex items-start gap-4">
+        <span className="text-2xl flex-shrink-0 mt-0.5">📌</span>
+        <div className="min-w-0 w-full">
+          <p className="font-bold text-sm mb-1.5" style={{ color: '#09090b' }}>{post.title}</p>
+          <p className="text-xs leading-relaxed" style={{ color: '#64748b', whiteSpace: 'pre-wrap' }}>{post.content}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface SupertestInfo {
   testDatetime: string | null;
   maxFreeSlots: number;
@@ -227,6 +250,16 @@ function SecretPageCard({ title, description, icon, token, toolId }: {
 }
 
 export default function ConsultationOverlay({ token, memos, studentName, studentCreatedAt, blogLinkCount, isEnrolled }: Props) {
+  const [adminPosts, setAdminPosts] = useState<AdminPortalPost[]>([]);
+
+  useEffect(() => {
+    if (isEnrolled) return;
+    fetch('/api/portal/portal-posts')
+      .then(r => r.json())
+      .then((d: AdminPortalPost[]) => setAdminPosts(d))
+      .catch(() => {});
+  }, [isEnrolled]);
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto pt-12" style={{ background: '#F4F5F9' }}>
 
@@ -278,8 +311,13 @@ export default function ConsultationOverlay({ token, memos, studentName, student
       <div style={{ background: '#F4F5F9' }}>
         <div className="max-w-5xl mx-auto px-[6%] py-8 pb-44">
           {(() => {
+            const adminPostCards = adminPosts.map(post => (
+              <AdminPostCard key={post.id} post={post} />
+            ));
+
             const promoCards = (
               <>
+                {adminPostCards}
                 {!isEnrolled && <SuperTestCard token={token} />}
                 <SecretPageCard
                   title="Vocab Counter를 소개합니다!"
