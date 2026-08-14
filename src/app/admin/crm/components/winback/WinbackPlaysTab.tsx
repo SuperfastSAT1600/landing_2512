@@ -14,7 +14,7 @@ interface Props {
   onStudentClick?: (studentId: string) => void;
 }
 
-/** 이탈 리드풀의 '플레이' 하위탭 — 목록 ↔ 상세 마스터-디테일(모달 아님). */
+/** 이탈 리드풀의 '캠페인' 하위탭 — 목록 ↔ 상세 마스터-디테일(모달 아님). */
 export function WinbackPlaysTab({ adminKey, userName, winback, onStudentClick }: Props) {
   const [openPlayId, setOpenPlayId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);

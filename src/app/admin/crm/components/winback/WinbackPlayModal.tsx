@@ -9,7 +9,7 @@ import { RecommendStep } from './steps/RecommendStep';
 interface Props {
   adminKey: string;
   onClose: () => void;
-  /** 플레이 생성 → 추천 → 타겟 확정까지 끝나면 상세로 이동시킨다. */
+  /** 캠페인 생성 → 추천 → 타겟 확정까지 끝나면 상세로 이동시킨다. */
   onCreated: (playId: string) => void;
   createPlay: (input: Record<string, unknown>) => Promise<{ id: string }>;
   recommend: (
@@ -23,8 +23,8 @@ interface Props {
 }
 
 /**
- * 새 플레이 위저드 — ① 상품 브리프·전략 변형 입력 → ② 추천 리드 확인·확정.
- * 상품 마스터가 없으므로 상품은 매 플레이마다 여기서 직접 정의한다.
+ * 새 캠페인 위저드 — ① 상품 브리프·전략 변형 입력 → ② 추천 리드 확인·확정.
+ * 상품 마스터가 없으므로 상품은 매 캠페인마다 여기서 직접 정의한다.
  */
 export function WinbackPlayModal({
   adminKey,
@@ -85,7 +85,7 @@ export function WinbackPlayModal({
             )}
             <Sparkles size={16} className="text-blue-500" />
             <h3 className="text-sm font-semibold text-gray-900">
-              {step === 'brief' ? '새 윈백 플레이 — 상품 정의' : '추천 리드 선택'}
+              {step === 'brief' ? '새 윈백 캠페인 — 상품 정의' : '추천 리드 선택'}
             </h3>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="닫기">
