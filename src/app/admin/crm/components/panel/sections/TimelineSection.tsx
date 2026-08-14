@@ -4,7 +4,11 @@ import type { ConsultationEntry } from '@/types/crm';
 import { TimelineEntry } from './TimelineEntry';
 import { SectionCard } from './SectionCard';
 
-interface PendingEdit { purified: string; coachHistory: string; deletedItems: string[] }
+interface PendingEdit {
+  purified: string;
+  coachHistory: string;
+  deletedItems: string[];
+}
 
 interface Props {
   studentId: string;
@@ -17,7 +21,9 @@ interface Props {
   memoSaving: string | null;
   aiLoadingFor: string | null;
   pendingEdits: Record<string, PendingEdit>;
-  setPendingEdits: (updater: (prev: Record<string, PendingEdit>) => Record<string, PendingEdit>) => void;
+  setPendingEdits: (
+    updater: (prev: Record<string, PendingEdit>) => Record<string, PendingEdit>
+  ) => void;
   onAiCare: (entry: ConsultationEntry) => void;
   onPublish: (entryId: string, edit: PendingEdit) => void;
   onUnpublish: (entryId: string) => void;
@@ -27,8 +33,23 @@ interface Props {
 }
 
 export function TimelineSection({
-  studentId, adminKey, timeline, loadingFresh, openSignal, publishError, publishing, memoSaving, aiLoadingFor,
-  pendingEdits, setPendingEdits, onAiCare, onPublish, onDeleteAi, onEditMemo, onDeleteMemo,
+  studentId,
+  adminKey,
+  timeline,
+  loadingFresh,
+  openSignal,
+  publishError,
+  publishing,
+  memoSaving,
+  aiLoadingFor,
+  pendingEdits,
+  setPendingEdits,
+  onAiCare,
+  onPublish,
+  onUnpublish,
+  onDeleteAi,
+  onEditMemo,
+  onDeleteMemo,
 }: Props) {
   return (
     <SectionCard
@@ -39,7 +60,9 @@ export function TimelineSection({
     >
       {loadingFresh && (
         <div className="space-y-2">
-          {[1, 2].map(i => <div key={i} className="h-16 rounded-xl bg-gray-200 animate-pulse" />)}
+          {[1, 2].map((i) => (
+            <div key={i} className="h-16 rounded-xl bg-gray-200 animate-pulse" />
+          ))}
         </div>
       )}
       {!loadingFresh && timeline.length === 0 && (
@@ -47,7 +70,7 @@ export function TimelineSection({
       )}
       {publishError && <p className="mb-2 text-xs text-red-500">{publishError}</p>}
       <div className="space-y-3">
-        {timeline.map(entry => (
+        {timeline.map((entry) => (
           <TimelineEntry
             key={entry.id}
             studentId={studentId}
@@ -62,17 +85,22 @@ export function TimelineSection({
               const edit = pendingEdits[entry.id];
               if (edit) onPublish(entry.id, edit);
             }}
-            onChangePurified={v => setPendingEdits(prev =>
-              prev[entry.id] ? { ...prev, [entry.id]: { ...prev[entry.id], purified: v } } : prev
-            )}
-            onStartEdit={() => setPendingEdits(prev => ({
-              ...prev,
-              [entry.id]: {
-                purified: entry.ai_purified ?? '',
-                coachHistory: entry.ai_coach_history ?? '',
-                deletedItems: entry.ai_deleted_items ?? [],
-              },
-            }))}
+            onUnpublish={() => onUnpublish(entry.id)}
+            onChangePurified={(v) =>
+              setPendingEdits((prev) =>
+                prev[entry.id] ? { ...prev, [entry.id]: { ...prev[entry.id], purified: v } } : prev
+              )
+            }
+            onStartEdit={() =>
+              setPendingEdits((prev) => ({
+                ...prev,
+                [entry.id]: {
+                  purified: entry.ai_purified ?? '',
+                  coachHistory: entry.ai_coach_history ?? '',
+                  deletedItems: entry.ai_deleted_items ?? [],
+                },
+              }))
+            }
             onDeleteAi={() => onDeleteAi(entry.id)}
             onEditMemo={(newMemo) => onEditMemo(entry.id, newMemo)}
             onDeleteMemo={() => onDeleteMemo(entry.id)}

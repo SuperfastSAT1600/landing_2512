@@ -29,10 +29,23 @@ import { PlaudRecordingPicker } from './PlaudRecordingPicker';
 import type { StudentDetailPanelProps } from './types';
 import type { ConsultationEntry } from '@/types/crm';
 
-export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDelete }: StudentDetailPanelProps) {
+export function StudentDetailPanel({
+  student,
+  adminKey,
+  onClose,
+  onUpdate,
+  onDelete,
+}: StudentDetailPanelProps) {
   const { userName } = useAdminAuth();
-  const { localStudent, setLocalStudent, timeline, setTimeline, editForm, setEditForm, loadingFresh } =
-    usePanelData(student.id, adminKey, student);
+  const {
+    localStudent,
+    setLocalStudent,
+    timeline,
+    setTimeline,
+    editForm,
+    setEditForm,
+    loadingFresh,
+  } = usePanelData(student.id, adminKey, student);
 
   const [duplicateNames, setDuplicateNames] = useState<string[]>([]);
   const [plaudOpen, setPlaudOpen] = useState(false);
@@ -42,10 +55,12 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   // Plaud 초안 생성 성공 → 타임라인에 append (재진입 시 DB 순서와 동일하게 created_at 오름차순 정렬)
   // + 상담 타임라인 섹션을 자동으로 펼쳐 새 초안이 바로 보이게 한다(기본 접힘 상태라 안 보이던 문제 해결).
   function handlePlaudCreated(entry: ConsultationEntry) {
-    setTimeline(prev =>
-      [...prev, entry].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    setTimeline((prev) =>
+      [...prev, entry].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      )
     );
-    setTimelineOpenSignal(s => s + 1);
+    setTimelineOpenSignal((s) => s + 1);
     onUpdate(student.id, { last_contacted_at: new Date().toISOString() } as Partial<Student>);
   }
   const [isPaused, setIsPaused] = useState(false);
@@ -53,7 +68,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
 
   // 진단 테스트 현황(전용 퍼널) 변경 — 낙관적 반영 후 PATCH(onUpdate가 처리)
   function handleDiagFunnelChange(stage: number) {
-    setLocalStudent(prev => ({ ...prev, diagnostic_funnel_stage: stage }));
+    setLocalStudent((prev) => ({ ...prev, diagnostic_funnel_stage: stage }));
     onUpdate(student.id, { diagnostic_funnel_stage: stage });
   }
 
@@ -67,7 +82,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
         body: JSON.stringify({ is_vip: newVip }),
       });
       if (res.ok) {
-        setLocalStudent(prev => ({ ...prev, is_vip: newVip }));
+        setLocalStudent((prev) => ({ ...prev, is_vip: newVip }));
         onUpdate(student.id, { is_vip: newVip });
       }
     } finally {
@@ -80,8 +95,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     fetch(`/api/crm/students?name_search=${encodeURIComponent(localStudent.name.trim())}`, {
       headers: { 'x-admin-key': adminKey },
     })
-      .then(r => r.json())
-      .then(json => {
+      .then((r) => r.json())
+      .then((json) => {
         const others = (json.data ?? [])
           .filter((s: { id: string; name: string }) => s.id !== localStudent.id)
           .map((s: { name: string }) => s.name);
@@ -92,7 +107,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
 
   useEffect(() => {
     fetch(`/api/admin/srm/student/crm/${student.id}/pause`)
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((json: { pause: { pause_until: string | null } | null }) => {
         setIsPaused(!!json.pause);
         setPauseUntilDate(json.pause?.pause_until ?? null);
@@ -101,16 +116,21 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   }, [student.id]);
 
   const editFormHook = useEditForm({
-    studentId: student.id, adminKey,
-    localStudent, setLocalStudent,
-    editForm, setEditForm,
+    studentId: student.id,
+    adminKey,
+    localStudent,
+    setLocalStudent,
+    editForm,
+    setEditForm,
     onUpdate,
   });
 
   const attachmentsHook = useMemoAttachments({ studentId: student.id, adminKey });
 
   const memoHook = useMemoSection({
-    studentId: student.id, adminKey, userName,
+    studentId: student.id,
+    adminKey,
+    userName,
     setTimeline,
     onUpdate: (id, updates) => onUpdate(id, updates as Partial<Student>),
     getAttachments: attachmentsHook.toAttachments,
@@ -118,20 +138,23 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
   });
 
   const timelineHook = useTimeline({
-    studentId: student.id, adminKey,
+    studentId: student.id,
+    adminKey,
     timeline,
     setTimeline,
     setPendingEdits: memoHook.setPendingEdits,
   });
 
   const funnelHook = useFunnel({
-    studentId: student.id, adminKey,
+    studentId: student.id,
+    adminKey,
     setLocalStudent,
     onUpdate,
   });
 
   const diagHook = useDiagnostic({
-    studentId: student.id, adminKey,
+    studentId: student.id,
+    adminKey,
     onUpdate: (id, updates) => onUpdate(id, updates as Partial<Student>),
   });
 
@@ -140,7 +163,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     studentName: localStudent.name,
     adminKey,
     initialPortalToken: localStudent.portal_token,
-    onPortalIssued: (token) => onUpdate(student.id, { portal_token: token } as Partial<typeof student>),
+    onPortalIssued: (token) =>
+      onUpdate(student.id, { portal_token: token } as Partial<typeof student>),
     onDelete,
     onClose,
   });
@@ -158,7 +182,8 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
     if (localStudent.previous_score_status === 'dont_remember') return '기억 안남';
     const parts = [];
     if (localStudent.previous_rw_score !== null) parts.push(`RW ${localStudent.previous_rw_score}`);
-    if (localStudent.previous_math_score !== null) parts.push(`Math ${localStudent.previous_math_score}`);
+    if (localStudent.previous_math_score !== null)
+      parts.push(`Math ${localStudent.previous_math_score}`);
     return parts.length > 0 ? parts.join(' / ') : '—';
   }
 
@@ -180,7 +205,6 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
         {/* 왼쪽 SRM 데이터 카드 (데스크톱에서만) */}
         <SrmDataCard studentId={student.id} studentName={localStudent.name} adminKey={adminKey} />
         <div className="relative w-full max-w-[440px] bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden shadow-xl">
-
           <PanelHeader
             localStudent={localStudent}
             duplicateNames={duplicateNames}
@@ -211,11 +235,17 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
                 funnelHook.setShowFunnelMenu(!funnelHook.showFunnelMenu);
               }
             }}
-            onFunnelChange={(stage) => { funnelHook.handleFunnelChange(stage); funnelHook.setShowFunnelMenu(false); }}
+            onFunnelChange={(stage) => {
+              funnelHook.handleFunnelChange(stage);
+              funnelHook.setShowFunnelMenu(false);
+            }}
             onShowPayment={() => funnelHook.setShowPaymentModal(true)}
             onShowChurn={() => funnelHook.setShowChurnModal(true)}
             onShowReactivate={() => funnelHook.setShowReactivateForm(true)}
-            onHideReactivate={() => { funnelHook.setShowReactivateForm(false); funnelHook.setReactivateStrategy(''); }}
+            onHideReactivate={() => {
+              funnelHook.setShowReactivateForm(false);
+              funnelHook.setReactivateStrategy('');
+            }}
             onReactivateStrategyChange={funnelHook.setReactivateStrategy}
             onStartReactivation={funnelHook.handleStartReactivation}
             onLeadStatusChange={(status) => {
@@ -279,7 +309,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               adminKey={adminKey}
               onUpdate={(id, updates) => {
                 // 패널의 localStudent도 갱신해야 저장 직후 화면에 반영됨 (PaymentHistorySection과 동일 패턴)
-                setLocalStudent(prev => ({ ...prev, ...updates }));
+                setLocalStudent((prev) => ({ ...prev, ...updates }));
                 onUpdate(id, updates);
               }}
             />
@@ -293,6 +323,10 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
             <MemoSection
               memoText={memoHook.memoText}
               setMemoText={memoHook.setMemoText}
+              parentText={memoHook.parentText}
+              setParentText={memoHook.setParentText}
+              parentDrafting={memoHook.parentDrafting}
+              onDraftParent={memoHook.draftParentNote}
               savingMemo={memoHook.savingMemo}
               memoError={memoHook.memoError}
               setMemoError={memoHook.setMemoError}
@@ -328,7 +362,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
               student={localStudent}
               adminKey={adminKey}
               onStudentUpdate={(updates) => {
-                setLocalStudent(prev => ({ ...prev, ...updates }));
+                setLocalStudent((prev) => ({ ...prev, ...updates }));
                 onUpdate(student.id, updates);
               }}
             />
@@ -341,7 +375,9 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
       {funnelHook.showChurnModal && (
         <ChurnModal
           student={localStudent}
-          onConfirm={(churnTag: string, churnType: ChurnType) => funnelHook.handleChurnConfirm(churnTag, churnType)}
+          onConfirm={(churnTag: string, churnType: ChurnType) =>
+            funnelHook.handleChurnConfirm(churnTag, churnType)
+          }
           onClose={() => funnelHook.setShowChurnModal(false)}
         />
       )}
@@ -352,7 +388,7 @@ export function StudentDetailPanel({ student, adminKey, onClose, onUpdate, onDel
           adminKey={adminKey}
           onConfirm={(updatedStudent) => {
             onUpdate(student.id, { lead_status: updatedStudent.lead_status });
-            setLocalStudent(prev => ({ ...prev, lead_status: updatedStudent.lead_status }));
+            setLocalStudent((prev) => ({ ...prev, lead_status: updatedStudent.lead_status }));
             funnelHook.setShowPaymentModal(false);
           }}
           onClose={() => funnelHook.setShowPaymentModal(false)}

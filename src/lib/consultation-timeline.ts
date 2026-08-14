@@ -22,7 +22,13 @@ export class StudentNotFoundError extends Error {
  */
 export async function appendConsultationEntry(
   studentId: string,
-  input: { raw_memo: string; author?: string; published?: boolean; attachments?: Attachment[] }
+  input: {
+    raw_memo: string;
+    author?: string;
+    ai_purified?: string;
+    published?: boolean;
+    attachments?: Attachment[];
+  }
 ): Promise<ConsultationEntry> {
   const { data: student, error: fetchError } = await supabaseAdmin
     .from('students')
@@ -42,7 +48,8 @@ export async function appendConsultationEntry(
     created_at: new Date().toISOString(),
     raw_memo: input.raw_memo.trim(),
     ...(input.author ? { author: input.author } : {}),
-    published: input.published ?? false,
+    ...(input.ai_purified?.trim() ? { ai_purified: input.ai_purified.trim() } : {}),
+    published: Boolean(input.ai_purified?.trim()) || (input.published ?? false),
     ...(attachments.length > 0 ? { attachments } : {}),
   };
 

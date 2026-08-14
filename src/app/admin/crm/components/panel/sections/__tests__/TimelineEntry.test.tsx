@@ -23,6 +23,7 @@ function renderEntry(entry: ConsultationEntry, overrides: Partial<Record<string,
       memoSaving={false}
       onAiCare={() => {}}
       onPublish={() => {}}
+      onUnpublish={() => {}}
       onChangePurified={() => {}}
       onStartEdit={() => {}}
       onDeleteAi={() => {}}
