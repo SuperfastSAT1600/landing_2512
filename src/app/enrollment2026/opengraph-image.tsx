@@ -94,6 +94,8 @@ export default async function Image() {
           {/* Headline */}
           <div
             style={{
+              display: 'flex',
+              flexDirection: 'column',
               color: '#ffffff',
               fontSize: 72,
               fontWeight: 900,
@@ -102,9 +104,8 @@ export default async function Image() {
               marginBottom: 24,
             }}
           >
-            SAT 목표 점수에
-            <br />
-            가장 빠르게.
+            <span>SAT 목표 점수에</span>
+            <span>가장 빠르게.</span>
           </div>
 
           {/* Sub */}
