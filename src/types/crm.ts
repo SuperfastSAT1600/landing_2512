@@ -760,10 +760,6 @@ export const TIMEZONE_OPTIONS = [
   { label: '사이판 (ChST)', value: 'Pacific/Saipan' },
 ] as const;
 
-export const TIMEZONE_LABEL_MAP: Record<string, string> = Object.fromEntries(
-  TIMEZONE_OPTIONS.map((o) => [o.value, o.label])
-);
-
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   active: '활성',
   inactive: '비활성',

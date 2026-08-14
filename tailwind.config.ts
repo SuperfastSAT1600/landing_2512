@@ -70,6 +70,7 @@ const config: Config = {
                 'fade-in': 'fadeIn 0.4s ease-out',
                 'slide-up': 'slideUp 0.5s ease-out',
                 'check-pop': 'checkPop 0.5s ease-out',
+                'gradient-shift': 'gradientShift 4s ease infinite',
             },
             keyframes: {
                 fadeIn: {
@@ -84,6 +85,11 @@ const config: Config = {
                     '0%': { transform: 'scale(0)' },
                     '50%': { transform: 'scale(1.2)' },
                     '100%': { transform: 'scale(1)' },
+                },
+                gradientShift: {
+                    '0%':   { backgroundPosition: '0% 50%' },
+                    '50%':  { backgroundPosition: '100% 50%' },
+                    '100%': { backgroundPosition: '0% 50%' },
                 },
             },
         },

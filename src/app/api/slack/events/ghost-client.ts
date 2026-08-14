@@ -26,7 +26,7 @@ function makeGhostJwt(): string {
 
 
 export async function saveGhostDraft(
-  title: string, html: string, slug: string, customExcerpt = ''
+  title: string, html: string, slug: string, customExcerpt = '', featureImageUrl = ''
 ): Promise<{ id: string; url: string }> {
   const jwt = makeGhostJwt();
   const res = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/?source=html`, {
@@ -36,6 +36,7 @@ export async function saveGhostDraft(
       posts: [{
         title, html: html + CTA_HTML, slug, status: 'draft',
         custom_excerpt: customExcerpt.slice(0, 300) || undefined,
+        feature_image: featureImageUrl || undefined,
         tags: [{ name: 'SAT' }, { name: 'blog-agent' }],
       }],
     }),
@@ -43,6 +44,21 @@ export async function saveGhostDraft(
   const data = await res.json() as { posts?: { id: string; url: string }[] };
   if (!data.posts?.[0]) throw new Error(`Ghost draft 실패: ${JSON.stringify(data)}`);
   return { id: data.posts[0].id, url: data.posts[0].url };
+}
+
+export async function updateGhostThumbnail(ghostId: string, featureImageUrl: string): Promise<void> {
+  const jwt = makeGhostJwt();
+  const getRes = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/${ghostId}/`, {
+    headers: { Authorization: `Ghost ${jwt}` },
+  });
+  const getData = await getRes.json() as { posts?: { updated_at: string }[] };
+  const updatedAt = getData.posts?.[0]?.updated_at;
+
+  await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/${ghostId}/`, {
+    method: 'PUT',
+    headers: { Authorization: `Ghost ${jwt}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ posts: [{ feature_image: featureImageUrl, updated_at: updatedAt }] }),
+  });
 }
 
 export async function publishGhostPost(ghostId: string): Promise<string> {

@@ -24,7 +24,6 @@ import { StrategyHistorySection } from './sections/StrategyHistorySection';
 // import { SalesStrategySection } from './sections/SalesStrategySection'; // 미사용으로 숨김 (2026-07-14)
 import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import { ActivityFeedSection } from './sections/ActivityFeedSection';
-import { NextActionSection } from './sections/NextActionSection';
 import { SrmDataCard } from './sections/SrmDataCard';
 import { PlaudRecordingPicker } from './PlaudRecordingPicker';
 import type { StudentDetailPanelProps } from './types';
@@ -276,8 +275,6 @@ export function StudentDetailPanel({
               onSaveInquiry={editFormHook.handleSaveInquiry}
               onCancelInquiry={editFormHook.handleCancelInquiry}
             />
-
-            <NextActionSection student={localStudent} adminKey={adminKey} />
 
             <StudentInfoSection
               localStudent={localStudent}

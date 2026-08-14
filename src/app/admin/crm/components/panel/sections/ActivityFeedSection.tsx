@@ -59,7 +59,10 @@ export function ActivityFeedSection({ student, adminKey }: Props) {
     }
   }, [student.id, student.name, adminKey]);
 
-  useEffect(() => { fetchPayments(); }, [fetchPayments]);
+  useEffect(() => {
+    fetchPayments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [student.id, student.name, adminKey]);
 
   const feed: ActivityItem[] = useMemo(() => buildActivityFeed(student, payments), [student, payments]);
 

@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/diagnosis-expiry",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/blog-topics",
+      "schedule": "0 0 * * *"
     }
   ]
 }

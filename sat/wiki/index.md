@@ -3,7 +3,7 @@ title: SAT Wiki Index
 type: index
 domain: mixed
 tags: [sat, rw, vocab, analysis]
-updated: 2026-05-17
+updated: 2026-08-03
 ---
 ---
 
@@ -32,6 +32,7 @@ Claude는 이 파일을 먼저 읽고 `[[wikilink]]`를 따라 탐색한다.
 
 | 페이지 | 내용 |
 |--------|------|
+| [[qb_rw_260414_vs_260730]] | QB RW 260414 vs 260730 정량 비교 — 난이도/스킬 변화 분석 |
 | [[wic_patterns]] | WIC 241개 문항 패턴 분석 — 유형/함정/전략 |
 | [[ANALYSIS_CONTEXT]] | RW 분석 전체 맥락 및 방법론 |
 | [[automated_insight_report]] | 자동 생성 인사이트 리포트 |

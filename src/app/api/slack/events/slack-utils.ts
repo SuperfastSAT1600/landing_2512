@@ -35,23 +35,18 @@ export async function postSlack(channel: string, text: string, threadTs?: string
   if (!data.ok) console.error('[slack/events] postMessage 실패:', data.error);
 }
 
-export async function getTodayTopics(): Promise<Topic[]> {
-  const res = await fetch(
-    `https://slack.com/api/conversations.history?channel=${BLOG_CHANNEL}&limit=30`,
-    { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
-  );
-  const data = await res.json() as { messages?: { text: string; bot_id?: string }[] };
-  const todayKST = new Date().toLocaleDateString('ko-KR', {
+function todayKSTString(): string {
+  // Vercel 서버는 UTC 기준 — 반드시 Asia/Seoul 지정
+  return new Date().toLocaleDateString('ko-KR', {
+    timeZone: 'Asia/Seoul',
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
   });
-  const topicMsg = data.messages?.find(
-    m => m.bot_id && m.text?.includes('[오늘의 블로그 주제 제안') && m.text?.includes(todayKST)
-  );
-  if (!topicMsg) return [];
+}
 
+function parseTopicsFromMessage(text: string): Topic[] {
   const topics: Topic[] = [];
   let current: Topic | null = null;
-  for (const line of topicMsg.text.split('\n')) {
+  for (const line of text.split('\n')) {
     const match = line.match(/^(\d+)\.\s+(.+)/);
     if (match) {
       if (current) topics.push(current);
@@ -65,20 +60,71 @@ export async function getTodayTopics(): Promise<Topic[]> {
   return topics;
 }
 
+export async function getTodayTopics(): Promise<Topic[]> {
+  const res = await fetch(
+    // limit=50으로 늘려 채널이 바쁜 날에도 당일 주제 메시지를 찾을 수 있도록
+    `https://slack.com/api/conversations.history?channel=${BLOG_CHANNEL}&limit=50`,
+    { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
+  );
+  const data = await res.json() as { messages?: { text: string; bot_id?: string }[] };
+  const todayKST = todayKSTString();
+
+  const topicMsg = data.messages?.find(
+    m => m.bot_id && m.text?.includes('[오늘의 블로그 주제 제안') && m.text?.includes(todayKST)
+  );
+  if (!topicMsg) return [];
+  return parseTopicsFromMessage(topicMsg.text);
+}
+
 export type DraftMeta = { ghostId: string; landingId: string; title: string };
+
+function parseDraftMeta(text: string): DraftMeta | null {
+  const match = text.match(/\[blog-agent: ghost_id=([^|]+)\|landing_id=([^|]+)\|title=([^\]]+)\]/);
+  if (!match) return null;
+  return { ghostId: match[1], landingId: match[2], title: decodeURIComponent(match[3]) };
+}
 
 export async function getDraftFromThread(
   channel: string, threadTs: string
 ): Promise<DraftMeta | null> {
-  const res = await fetch(
+  // 1. 현재 스레드에서 먼저 탐색
+  const threadRes = await fetch(
     `https://slack.com/api/conversations.replies?channel=${channel}&ts=${threadTs}&limit=20`,
     { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
   );
-  const data = await res.json() as { messages?: { text: string; bot_id?: string }[] };
-  for (const msg of data.messages ?? []) {
+  const threadData = await threadRes.json() as { messages?: { text: string; bot_id?: string }[] };
+  for (const msg of threadData.messages ?? []) {
     if (!msg.bot_id) continue;
-    const match = msg.text?.match(/\[blog-agent: ghost_id=([^|]+)\|landing_id=([^|]+)\|title=([^\]]+)\]/);
-    if (match) return { ghostId: match[1], landingId: match[2], title: decodeURIComponent(match[3]) };
+    const meta = parseDraftMeta(msg.text ?? '');
+    if (meta) return meta;
   }
+
+  // 2. 스레드에 없으면 채널 최근 메시지에서 가장 최근 초안 탐색 (newest-first)
+  const histRes = await fetch(
+    `https://slack.com/api/conversations.history?channel=${channel}&limit=50`,
+    { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
+  );
+  const histData = await histRes.json() as { messages?: { text: string; bot_id?: string; reply_count?: number; ts?: string }[] };
+  for (const msg of histData.messages ?? []) {
+    // 최상위 봇 메시지에 직접 메타가 있는 경우 (admin trigger 등)
+    if (msg.bot_id) {
+      const meta = parseDraftMeta(msg.text ?? '');
+      if (meta) return meta;
+    }
+    // 유저/봇 메시지 모두: 스레드가 있으면 그 안에서 탐색
+    if ((msg.reply_count ?? 0) > 0 && msg.ts) {
+      const repRes = await fetch(
+        `https://slack.com/api/conversations.replies?channel=${channel}&ts=${msg.ts}&limit=20`,
+        { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
+      );
+      const repData = await repRes.json() as { messages?: { text: string; bot_id?: string }[] };
+      for (const rep of repData.messages ?? []) {
+        if (!rep.bot_id) continue;
+        const repMeta = parseDraftMeta(rep.text ?? '');
+        if (repMeta) return repMeta;
+      }
+    }
+  }
+
   return null;
 }

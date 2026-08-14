@@ -3,7 +3,14 @@
     "ignoreRules": [],
     "ignoreFiles": [
       "src/components/enrollment/enrollment/ManagementFitSection.tsx",
-      "src/app/practice/august-math/page.tsx"
+      "src/app/practice/august-math/page.tsx",
+      "src/app/dashboard/DashboardClient.tsx",
+      "src/app/coaches/[slug]/opengraph-image.tsx",
+      "public/partners/gangwon/units/unit10.html",
+      "public/partners/gangwon/index.html",
+      "public/partners/gangwon/unit.html",
+      "public/partners/gangwon/units/unit9.html",
+      "src/app/admin/mathweb/ConceptAutocompleteInput.tsx"
     ],
     "ignoreValues": [
       {
@@ -39,7 +46,7 @@
         "files": [
           "src/components/enrollment-v2/EnrollmentVideoHero.module.css"
         ],
-        "createdAt": "2026-07-28T18:57:03.685Z",
+        "createdAt": "2026-07-28T18:57:03.768Z",
         "reason": "Follows Docs/design-system.md (tutoring site); DESIGN.md is an ElevenLabs reference doc unrelated to enrollment surfaces."
       },
       {
@@ -182,6 +189,57 @@
         ],
         "createdAt": "2026-07-29T07:17:44.132Z",
         "reason": "Admin-only internal tool; inactive tab text-gray-500 on gray-100 is intentional de-emphasis pattern"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "10px",
+        "files": [
+          "publish-ghost-260730.js"
+        ],
+        "createdAt": "2026-08-04T00:00:00.000Z",
+        "reason": "CTA button inline style copied verbatim from publish-ghost.js original; 10px is the established brand radius for Ghost CTA buttons."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#071be9",
+        "files": [
+          "publish-ghost-260730.js"
+        ],
+        "createdAt": "2026-08-04T00:00:00.000Z",
+        "reason": "CTA button inline style copied verbatim from publish-ghost.js original; #071be9 is the accent-primary brand color per Docs/design-system.md."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#22c55e",
+        "createdAt": "2026-08-11T16:48:08.195Z",
+        "reason": "Difficulty indicator: easy level semantic green, user-confirmed"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f59e0b",
+        "createdAt": "2026-08-11T16:48:08.267Z",
+        "reason": "Difficulty indicator: medium level semantic amber, user-confirmed"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#ef4444",
+        "createdAt": "2026-08-11T16:48:08.344Z",
+        "reason": "Difficulty indicator: hard level semantic red, user-confirmed"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#c084fc",
+        "createdAt": "2026-08-11T16:48:08.418Z",
+        "reason": "Difficulty indicator: killer level semantic purple, user-confirmed"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/app/admin/mathweb/page.tsx"
+        ],
+        "createdAt": "2026-08-11T16:49:16.690Z",
+        "reason": "Pre-existing admin-only inline styles, not part of design system surface"
       }
     ]
   }

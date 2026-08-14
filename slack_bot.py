@@ -357,7 +357,7 @@ def handle_message(event, say):
             return
 
         # 직접 주제 입력: "주제명" 써줘 / 해줘 / 작성해줘
-        direct_match = re.search('[''""\'"](.+?)[''""\'"].*(?:써줘|해줘|작성해줘|포스팅해줘)', text)
+        direct_match = re.search('[\u2018\u2019\u201c\u201d\'"](.+?)[\u2018\u2019\u201c\u201d\'"].*(?:써줘|해줘|작성해줘|포스팅해줘)', text)
         if direct_match:
             topic_title = direct_match.group(1).strip()
             say(f"⏳ '{topic_title}' 주제로 블로그 작성을 시작합니다 (3~5분 소요)...", thread_ts=thread_ts)

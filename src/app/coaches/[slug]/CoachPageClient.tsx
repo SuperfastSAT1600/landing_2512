@@ -90,7 +90,7 @@ function ReviewCard({ review }: { review: ReviewData }) {
                 {review.title && (
                     <h4 className="text-white font-bold text-[1.35rem] leading-snug mb-3">{review.title}</h4>
                 )}
-                <p className="text-gray-200 text-base leading-[1.7] mb-5">"{review.content}"</p>
+                <p className="text-gray-200 text-base leading-[1.7] mb-5">&quot;{review.content}&quot;</p>
                 <div className="h-px bg-white/10 mb-4" />
                 <div>
                     <div className="flex items-center gap-2 mb-1">
