@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { cookies } from 'next/headers';
 import { notifyPortalConsultRequest } from '@/lib/slack';
+import { appendConsultationEntry } from '@/lib/consultation-timeline';
 
 export async function POST(
   request: NextRequest,
@@ -32,6 +33,12 @@ export async function POST(
   }
 
   const studentName = student.portal_name || student.name;
+
+  await appendConsultationEntry(student.id, {
+    raw_memo: `[포털 신청] 원장님 상담 — 희망 날짜: ${date}, 희망 시간: ${time}`,
+    author: '포털 자동 기록',
+    published: false,
+  });
 
   await notifyPortalConsultRequest({
     studentName,

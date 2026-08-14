@@ -110,6 +110,27 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
         </span>
       )}
 
+      {/* 포털 신청 뱃지 — [포털 신청] 키워드가 있는 타임라인 항목 존재 시 표시 */}
+      {(() => {
+        const portalEntries = (student.consultation_timeline ?? []).filter(e =>
+          e.raw_memo?.includes('[포털 신청]')
+        );
+        if (portalEntries.length === 0) return null;
+
+        const labels: string[] = [];
+        if (portalEntries.some(e => e.raw_memo.includes('SuperTest'))) labels.push('SuperTest');
+        if (portalEntries.some(e => e.raw_memo.includes('Vocab Counter'))) labels.push('Vocab');
+        if (portalEntries.some(e => e.raw_memo.includes('Math Web'))) labels.push('Math');
+        if (portalEntries.some(e => e.raw_memo.includes('원장님 상담'))) labels.push('상담');
+
+        return (
+          <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+            포털 신청 · {labels.join(', ')}
+          </span>
+        );
+      })()}
+
       {/* Days elapsed + payment icon */}
       <div className="mt-1.5 flex items-center justify-between gap-1">
         <div className="flex items-center gap-1.5 min-w-0">
