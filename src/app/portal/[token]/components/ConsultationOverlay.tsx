@@ -97,11 +97,16 @@ function useCountdown(testDatetime: string | null) {
       if (diff <= 0) { setExpired(true); setRemaining(''); return; }
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
-      setRemaining(h > 0 ? `${h}시간 ${m}분 후 시험` : `${m}분 후 시험`);
+      const s = Math.floor((diff % 60000) / 1000);
+      const parts: string[] = [];
+      if (h > 0) parts.push(`${h}시간`);
+      if (h > 0 || m > 0) parts.push(`${m}분`);
+      parts.push(`${s}초`);
+      setRemaining(parts.join(' ') + ' 후 시험');
     }
 
     update();
-    const id = setInterval(update, 60000);
+    const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, [testDatetime]);
 
@@ -243,6 +248,11 @@ function SecretPageCard({ title, description, icon, token, toolId }: {
           >
             {btnLabel}
           </button>
+          {applied && (
+            <p className="text-center text-xs font-medium mt-2" style={{ color: '#16a34a' }}>
+              신청 등록되었습니다
+            </p>
+          )}
         </div>
       </div>
     </div>
