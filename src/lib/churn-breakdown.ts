@@ -39,8 +39,8 @@ function normalizeDetail(raw: string): string {
   return s.length > SAMPLE_MAX_LEN ? `${s.slice(0, SAMPLE_MAX_LEN - 1)}…` : s;
 }
 
-/** churn_tag 한 건을 카테고리 + 자유서술로 분해. */
-function classify(rawTag: string): { category: string; detail: string | null } {
+/** churn_tag 한 건을 카테고리 + 자유서술로 분해. (윈백 스코어링도 같은 정규화를 쓴다) */
+export function classifyChurnTag(rawTag: string): { category: string; detail: string | null } {
   const tag = rawTag.trim();
   const idx = tag.indexOf(':');
   const prefix = (idx >= 0 ? tag.slice(0, idx) : tag).trim();
@@ -68,7 +68,7 @@ export function aggregateChurn(rows: ChurnRow[], maxSamples = 3): ChurnBreakdown
     if (!tag) continue;
     taggedTotal++;
 
-    const { category, detail } = classify(tag);
+    const { category, detail } = classifyChurnTag(tag);
     const entry = map.get(category) ?? { count: 0, samples: [] };
     entry.count++;
     if (detail && entry.samples.length < maxSamples && !entry.samples.includes(detail)) {

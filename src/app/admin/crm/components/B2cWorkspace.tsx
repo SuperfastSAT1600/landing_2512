@@ -36,7 +36,7 @@ export function B2cWorkspace({
   onEnrolledHandled,
 }: B2cWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<B2cTab>('leads');
-  const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'experiment' | 'logic' | 'library' | 'strategy_ai' | undefined>(undefined);
+  const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'logic' | 'library' | 'strategy_ai' | undefined>(undefined);
   const [strategyPeriod, setStrategyPeriod] = useState<InsightPeriod | undefined>(undefined);
   // 배너 '이어서 전략 짜기'에서 고른 안건 시드 — key 증가로 매 선택마다 새 스레드 트리거
   const [strategySeed, setStrategySeed] = useState<{ key: number; text: string; period: InsightPeriod } | undefined>(undefined);
