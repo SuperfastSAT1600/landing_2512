@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { RetryStrategy, InsightPeriod } from '@/types/crm';
 import { StrategyAgentChat } from './StrategyAgentChat';
-import { ExperimentBoard } from './ExperimentBoard';
 import { StrategyStats } from './StrategyStats';
 
 interface Props {
@@ -160,14 +159,14 @@ function StrategySection({
   );
 }
 
-type SubTab = 'experiment' | 'logic' | 'library' | 'strategy_ai';
+type SubTab = 'logic' | 'library' | 'strategy_ai';
 
 // 전략 에이전트(StrategyAgentChat) 사용 중단으로 UI 숨김. true로 바꾸면 탭·진입이 복구된다.
 // 짝: CrmInsightBanner.tsx 의 동일 플래그(이어서 전략 짜기 CTA).
 const STRATEGY_AGENT_ENABLED = false;
 
 export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strategyPeriod, strategySeed, onSelectStudent }: Props) {
-  const [subTab, setSubTab] = useState<SubTab>(initialSubTab ?? 'experiment');
+  const [subTab, setSubTab] = useState<SubTab>(initialSubTab === 'strategy_ai' ? 'strategy_ai' : 'logic');
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -212,10 +211,9 @@ export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strate
 
   return (
     <div className={`${subTab === 'logic' ? 'max-w-6xl' : 'max-w-3xl'} space-y-5`}>
-      {/* 서브탭: 실험 / 세일즈 로직 통계 / 전략 라이브러리 / 전략 에이전트 */}
+      {/* 서브탭: 세일즈 로직 통계 / 전략 라이브러리 / 전략 에이전트 */}
       <div className="flex gap-1 border-b border-gray-200 overflow-x-auto scrollbar-none">
         {([
-          { key: 'experiment', label: '실험' },
           { key: 'logic', label: '세일즈 로직 통계' },
           { key: 'library', label: '전략 라이브러리' },
           ...(STRATEGY_AGENT_ENABLED ? [{ key: 'strategy_ai', label: '전략 에이전트' }] : []),
@@ -233,8 +231,6 @@ export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strate
           </button>
         ))}
       </div>
-
-      {subTab === 'experiment' && <ExperimentBoard adminKey={adminKey} segment={segment} />}
 
       {subTab === 'logic' && <StrategyStats adminKey={adminKey} segment={segment} onSelectStudent={onSelectStudent} />}
 
