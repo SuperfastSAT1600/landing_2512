@@ -19,7 +19,7 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { raw_memo?: string; author?: string; attachments?: unknown };
+  let body: { raw_memo?: string; author?: string; ai_purified?: string; attachments?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -38,7 +38,12 @@ export async function POST(
   }
 
   try {
-    const newEntry = await appendConsultationEntry(id, { raw_memo, author, attachments });
+    const newEntry = await appendConsultationEntry(id, {
+      raw_memo,
+      author,
+      ai_purified: body.ai_purified,
+      attachments,
+    });
 
     // 슬랙 알림 (실패해도 메모 저장에 영향 없음)
     await notifyMemoToSlack({ studentId: id, memo: raw_memo, author });
