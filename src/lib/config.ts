@@ -61,12 +61,18 @@ export async function saveHomeConfig(config: HomeConfig): Promise<void> {
 
 export interface SupertestConfig {
     remainingSpots: number;
-    nextTestDate: string; // YYYY-MM-DD (KST 09:00 기준)
+    nextTestDate: string;         // YYYY-MM-DD (hero D-day 기준)
+    testTime: string;             // HH:MM KST — 포털 카운트다운용, 기본 '09:00'
+    maxFreeSlots: number;         // 포털 무료 응시 최대 인원
+    portalApplicantCount: number; // 현재 포털 신청자 수
 }
 
 const DEFAULT_SUPERTEST_CONFIG: SupertestConfig = {
     remainingSpots: 30,
     nextTestDate: '2026-05-30',
+    testTime: '09:00',
+    maxFreeSlots: 10,
+    portalApplicantCount: 0,
 };
 
 export const getSupertestConfig = unstable_cache(

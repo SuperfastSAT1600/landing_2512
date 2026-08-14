@@ -7,6 +7,9 @@ import { TEST_SCHEDULE } from '@/app/supertest/data/plans';
 export default function AdminSupertest() {
     const [spots, setSpots] = useState<number>(30);
     const [nextTestDate, setNextTestDate] = useState<string>('');
+    const [testTime, setTestTime] = useState<string>('09:00');
+    const [maxFreeSlots, setMaxFreeSlots] = useState<number>(10);
+    const [portalApplicantCount, setPortalApplicantCount] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
@@ -19,6 +22,9 @@ export default function AdminSupertest() {
             .then(d => {
                 setSpots(d.remainingSpots ?? 30);
                 setNextTestDate(d.nextTestDate ?? '');
+                setTestTime(d.testTime ?? '09:00');
+                setMaxFreeSlots(d.maxFreeSlots ?? 10);
+                setPortalApplicantCount(d.portalApplicantCount ?? 0);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
@@ -38,7 +44,7 @@ export default function AdminSupertest() {
             const res = await fetch('/api/admin/supertest', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-                body: JSON.stringify({ remainingSpots: spots, nextTestDate }),
+                body: JSON.stringify({ remainingSpots: spots, nextTestDate, testTime, maxFreeSlots }),
             });
             if (res.ok) {
                 setMessage('저장되었습니다!');
@@ -167,6 +173,51 @@ export default function AdminSupertest() {
                             </ul>
                         );
                     })()}
+                </section>
+
+                {/* 포털 무료 응시 설정 */}
+                <section className="bg-[#1e2023] rounded-xl p-6 space-y-4">
+                    <h2 className="text-lg font-semibold text-white">포털 무료 응시 설정</h2>
+                    <p className="text-gray-500 text-sm">
+                        학부모 포털에서 선착순 무료 응시 신청을 받을 인원과 시험 시작 시각을 설정합니다.
+                    </p>
+
+                    <div className="flex items-end gap-6 flex-wrap">
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-2">시험 시작 시각 (KST)</label>
+                            <input
+                                type="time"
+                                value={testTime}
+                                onChange={e => setTestTime(e.target.value)}
+                                className="bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-3 text-white text-base font-bold outline-none transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-2">무료 응시 최대 인원</label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={999}
+                                    value={maxFreeSlots}
+                                    onChange={e => setMaxFreeSlots(Math.max(0, parseInt(e.target.value) || 0))}
+                                    className="w-24 bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-3 text-white text-xl font-bold outline-none transition-all text-center"
+                                />
+                                <span className="text-gray-400 text-sm">명</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-white/5">
+                        <p className="text-xs text-gray-600 mb-2">현재 신청 현황</p>
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl font-black text-blue-400">{portalApplicantCount}</span>
+                            <span className="text-gray-400 text-sm">/ {maxFreeSlots}명 신청 완료</span>
+                            {portalApplicantCount >= maxFreeSlots && (
+                                <span className="text-xs bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-semibold">마감</span>
+                            )}
+                        </div>
+                    </div>
                 </section>
 
                 {/* 남은 자리 */}
