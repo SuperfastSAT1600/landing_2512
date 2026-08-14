@@ -14,7 +14,7 @@ export async function generateMetadata(
 
   if (!data) {
     return {
-      title: '상담 리포트 | SuperfastSAT',
+      title: '상담 및 학습 기록 | SuperfastSAT',
       description: 'SuperfastSAT 학부모 전용 상담 포털',
       robots: { index: false, follow: false },
     };
@@ -26,10 +26,10 @@ export async function generateMetadata(
     : `${displayName} 학생의 학습 포털 페이지`;
 
   return {
-    title: `${displayName} 학생 | SuperfastSAT 상담 리포트`,
+    title: `${displayName} 학생 | 상담 및 학습 기록`,
     description,
     openGraph: {
-      title: `${displayName} 학생 | SuperfastSAT 상담 리포트`,
+      title: `${displayName} 학생 | 상담 및 학습 기록`,
       description,
       siteName: 'SuperfastSAT',
       images: [{ url: '/og-image.png', alt: 'SuperfastSAT' }],
