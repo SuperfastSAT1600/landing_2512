@@ -1012,16 +1012,23 @@ body {
   min-height: 100vh;
   padding: 0 0 80px;
 }
-.board-cinema {
+.board-cinema-wrap {
   height: 100vh;
   height: 100svh;
+  position: relative;
   background: #000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
 }
+.board-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.75s ease;
+}
+.board-scene.active { opacity: 1; }
 
 .board-cta-section {
   background: var(--navy);
@@ -1615,7 +1622,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 0 0;
+  padding: 0 24px;
 }
 
 .chat-step {
@@ -1874,18 +1881,19 @@ body {
 
 <!-- ── 그룹 보드 뷰 ──────────────────────────────────────────────────── -->
 <div id="boardView">
-  <!-- 씬 1: 초대한 친구의 점괘 -->
-  <div class="board-cinema">
-    <div class="hero-cinema-inner">
-      <img src="main image.jpg" alt="내가 어디에 갈 상인가">
-      <div class="hero-cinema-subtitle" id="boardCinemaSubtitle"></div>
+  <!-- 씬 래퍼: 두 씬을 겹쳐 크로스페이드 -->
+  <div class="board-cinema-wrap" id="boardCinemaWrap">
+    <div class="board-scene active" id="boardScene1">
+      <div class="hero-cinema-inner">
+        <img src="main image.jpg" alt="내가 어디에 갈 상인가">
+        <div class="hero-cinema-subtitle" id="boardCinemaSubtitle"></div>
+      </div>
     </div>
-  </div>
-  <!-- 씬 2: 그대는 어떨 것 같소? -->
-  <div class="board-cinema">
-    <div class="hero-cinema-inner">
-      <img src="final image.png" alt="그대는 어떨 것 같소">
-      <div class="hero-cinema-subtitle" id="boardCtaQuestion"></div>
+    <div class="board-scene" id="boardScene2">
+      <div class="hero-cinema-inner">
+        <img src="final image.png" alt="그대는 어떨 것 같소">
+        <div class="hero-cinema-subtitle" id="boardCtaQuestion"></div>
+      </div>
     </div>
   </div>
   <!-- CTA + 참여자 수 -->
@@ -2230,6 +2238,14 @@ function renderLogo(uni, size) {
   const s = size || 80;
   const src = uni.logo ? `data/logos/${uni.logo}.png` : '';
   return `<img src="${src}" width="${s}" height="${s}" class="uni-logo-pixel" alt="${uni.name}" loading="lazy">`;
+}
+
+// ─── 한국어 조사 헬퍼 ──────────────────────────────────────────────────────────
+function eunNeun(word) {
+  const last = word[word.length - 1];
+  const code = last.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) return '는';
+  return (code - 0xAC00) % 28 === 0 ? '는' : '은';
 }
 
 // ─── 플레이버 / 서사 ─────────────────────────────────────────────────────────
@@ -3352,11 +3368,6 @@ const MOTTO_KR = {
 };
 
 // 한국어 조사 선택 (은/는)
-function eunNeun(word) {
-  const code = word.charCodeAt(word.length - 1);
-  if (code < 0xAC00 || code > 0xD7A3) return '는';
-  return (code - 0xAC00) % 28 === 0 ? '는' : '은';
-}
 
 function buildRichNarrative(uni, userProfile, userName, birthdate) {
   const dom = getDominantElement(userProfile);
@@ -3645,10 +3656,13 @@ function currentMembers() {
 // ─── 그룹 보드 렌더링 ────────────────────────────────────────────────────────
 
 function renderBoard(members) {
-  const subtitleEl = document.getElementById('boardCinemaSubtitle');
-  const ctaQuestionEl = document.getElementById('boardCtaQuestion');
+  const subtitleEl  = document.getElementById('boardCinemaSubtitle');
+  const ctaEl       = document.getElementById('boardCtaQuestion');
   const totalCountEl = document.getElementById('boardTotalCount');
-  const grid = document.getElementById('boardGrid');
+  const grid        = document.getElementById('boardGrid');
+  const wrap        = document.getElementById('boardCinemaWrap');
+  const scene1      = document.getElementById('boardScene1');
+  const scene2      = document.getElementById('boardScene2');
 
   // university → participants 매핑
   const uniMap = {};
@@ -3658,64 +3672,89 @@ function renderBoard(members) {
   }
 
   // 총 참여자 수
-  const total = members.length;
   if (totalCountEl) {
-    totalCountEl.innerHTML = `지금까지 참여한 학생 수 <strong>${total}</strong>명`;
+    totalCountEl.innerHTML = `지금까지 참여한 학생 수 <strong>${members.length}</strong>명`;
   }
 
-  // 씬2 자막 타이핑 함수
+  // ── 씬 전환 ──────────────────────────────────────────────────────────────
+  let _sceneIdx = 0;
+  let _transitioning = false;
+
   function typeScene2() {
-    if (!ctaQuestionEl) return;
+    if (!ctaEl) return;
     const q = '그대는 어떨 것 같소?';
-    ctaQuestionEl.textContent = '';
-    ctaQuestionEl.classList.remove('typed');
+    ctaEl.textContent = '';
+    ctaEl.classList.remove('typed');
     let j = 0;
     setTimeout(() => {
-      const t2 = setInterval(() => {
+      const t = setInterval(() => {
         j++;
-        ctaQuestionEl.textContent = q.slice(0, j);
-        if (j >= q.length) { clearInterval(t2); ctaQuestionEl.classList.add('typed'); }
+        ctaEl.textContent = q.slice(0, j);
+        if (j >= q.length) { clearInterval(t); ctaEl.classList.add('typed'); }
       }, 90);
-    }, 400);
+    }, 300);
   }
 
-  // 씬1 자막 타이핑 → 완료 후 씬2 시작
+  function goScene2() {
+    if (_transitioning || _sceneIdx !== 0) return;
+    _transitioning = true;
+    _sceneIdx = 1;
+    scene1.classList.remove('active');
+    scene2.classList.add('active');
+    typeScene2();
+    setTimeout(() => { _transitioning = false; }, 800);
+  }
+
+  // 휠 — 씬1에서 아래로 스크롤 시 씬2로 전환, 씬2에서는 자연 스크롤 허용
+  if (wrap) {
+    wrap.addEventListener('wheel', e => {
+      if (_sceneIdx === 0 && e.deltaY > 5) {
+        e.preventDefault();
+        goScene2();
+      }
+    }, { passive: false });
+
+    // 터치 스와이프
+    let _ty = 0;
+    wrap.addEventListener('touchstart', e => { _ty = e.touches[0].clientY; }, { passive: true });
+    wrap.addEventListener('touchend', e => {
+      if (_sceneIdx === 0 && (_ty - e.changedTouches[0].clientY) > 40) {
+        goScene2();
+      }
+    }, { passive: true });
+  }
+
+  // ── 씬1 자막 타이핑 ──────────────────────────────────────────────────────
   if (members.length > 0 && subtitleEl) {
     const inviter = members[0];
-    const invUni = UNIVERSITIES[inviter.uniIdx];
+    const invUni  = UNIVERSITIES[inviter.uniIdx];
     if (invUni) {
-      const subtitleText = `${inviter.nick}는 ${invUni.kr}에 간다는데`;
+      const text = `${inviter.nick}${eunNeun(inviter.nick)} ${invUni.kr}에 간다는데`;
       subtitleEl.textContent = '';
       subtitleEl.classList.remove('typed');
       let i = 0;
       setTimeout(() => {
-        const t1 = setInterval(() => {
+        const t = setInterval(() => {
           i++;
-          subtitleEl.textContent = subtitleText.slice(0, i);
-          if (i >= subtitleText.length) {
-            clearInterval(t1);
-            subtitleEl.classList.add('typed');
-            typeScene2();
-          }
+          subtitleEl.textContent = text.slice(0, i);
+          if (i >= text.length) { clearInterval(t); subtitleEl.classList.add('typed'); }
         }, 70);
       }, 600);
-    } else {
-      typeScene2();
     }
-  } else {
-    if (ctaQuestionEl) ctaQuestionEl.textContent = '그대는 어떨 것 같소?';
+  } else if (ctaEl) {
+    ctaEl.textContent = '그대는 어떨 것 같소?';
   }
 
-  // 대학 세로 리스트 — 참여자 있는 대학 먼저
+  // ── 대학 세로 리스트 ──────────────────────────────────────────────────────
   const rows = UNIVERSITIES.map((uni, idx) => ({
     uni, idx, members: uniMap[idx] || []
   }));
   rows.sort((a, b) => b.members.length - a.members.length);
 
   grid.innerHTML = rows.map(({ uni, idx: uIdx, members: mList }) => {
-    const count = mList.length;
+    const count  = mList.length;
     const accent = uni.accent || '#1e2a47';
-    const chips = mList.map(p =>
+    const chips  = mList.map(p =>
       `<span class="board-list-chip" style="--chip-accent:${accent}">${p.nick}</span>`
     ).join('');
     const countHtml = count > 0
