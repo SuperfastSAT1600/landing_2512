@@ -742,21 +742,24 @@ body {
 
 /* Result Cue Button */
 .result-cue-btn {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 10px 20px;
-  background: var(--gold);
-  color: #1a1200;
-  font-family: 'Nanum Myeongjo', serif;
-  font-size: 14px;
-  font-weight: 700;
+  width: 100%;
+  align-self: stretch;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #0d0b09;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
   border: none;
-  border-radius: 20px;
+  border-radius: 16px;
   cursor: pointer;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 16px rgba(214,167,90,0.3);
+  transition: opacity 0.2s, transform 0.15s;
 }
 .result-cue-btn:hover {
-  opacity: 0.85;
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 /* Site Footer */
@@ -2028,7 +2031,7 @@ body {
           </div>
 
           <!-- 연도 선택 후 캐릭터 응답 — 왼쪽 정렬 -->
-          <div id="resultCueWrap" style="display:none; opacity:0; transform:translateY(10px); transition:opacity 0.45s ease, transform 0.45s ease; margin-top:20px; width:100%; flex-direction:column; align-items:flex-start; gap:10px;">
+          <div id="resultCueWrap" style="display:none; opacity:0; transform:translateY(10px); transition:opacity 0.45s ease, transform 0.45s ease; margin-top:20px; width:100%; flex-direction:column; align-items:stretch; gap:12px;">
             <div class="q-bubble" id="resultCueQ">내 답을 주겠네...</div>
             <button id="resultCueBtn" class="result-cue-btn" onclick="runMatch()" style="opacity:0; transform:translateY(6px); transition:opacity 0.35s ease, transform 0.35s ease; pointer-events:none;">여기를 클릭하세요</button>
           </div>

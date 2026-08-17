@@ -7,7 +7,7 @@
 <meta name="description" content="내가 어디에 갈 상인가. 생년월일을 입력하면 사주 오행으로 QS 세계 랭킹 명문대 중 당신의 대학 궁합을 점지해드립니다.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,400&family=IBM+Plex+Sans+KR:ital,wght@0,400;0,700;1,400;1,700&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans+KR:wght@100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/solarlunar@2.1.2/dist/solarlunar.min.js"></script>
 <style>
@@ -402,10 +402,20 @@ body {
 }
 .compat-top-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+}
+.compat-left {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.compat-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
 }
 .compat-sublabel {
   font-size: 18px;
@@ -413,6 +423,11 @@ body {
   letter-spacing: -0.01em;
   color: rgba(255,255,255,0.75);
   line-height: 1;
+}
+.compat-year-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.06em;
 }
 .compat-big-num {
   font-size: 62px;
@@ -438,9 +453,9 @@ body {
   display: inline-block;
   background: var(--gold);
   color: var(--navy);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
-  padding: 5px 16px;
+  padding: 4px 14px;
   border-radius: 99px;
   letter-spacing: 0.02em;
 }
@@ -741,27 +756,29 @@ body {
 
 /* Result Cue Button */
 .result-cue-btn {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 10px 20px;
-  background: var(--gold);
-  color: #1a1200;
-  font-family: 'Nanum Myeongjo', serif;
-  font-size: 14px;
-  font-weight: 700;
+  width: 100%;
+  align-self: stretch;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #0d0b09;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
   border: none;
-  border-radius: 20px;
+  border-radius: 16px;
   cursor: pointer;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 16px rgba(214,167,90,0.3);
+  transition: opacity 0.2s, transform 0.15s;
 }
 .result-cue-btn:hover {
-  opacity: 0.85;
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 /* Site Footer */
 .site-footer {
-  font-family: 'IBM Plex Sans KR', sans-serif;
-  font-style: italic;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif;
   text-align: center;
   padding: 28px 20px 36px;
   background: var(--cream);
@@ -774,15 +791,19 @@ body {
 }
 .site-footer-tagline {
   font-size: 12px;
+  font-weight: 400;
+  font-style: italic;
   color: #ffffff;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  font-family: 'Instrument Serif', Georgia, serif;
 }
 .site-footer-brand {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #ffffff;
   text-decoration: none;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .site-footer-brand:hover { text-decoration: underline; text-underline-offset: 3px; }
 .site-footer-icon {
@@ -942,7 +963,7 @@ body {
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 700;
-  font-family: inherit;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s;
@@ -1490,14 +1511,16 @@ body {
   border-radius: 24px;
   padding: 22px 20px;
   margin-top: 20px;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif;
 }
 .viral-title {
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--gold);
   margin-bottom: 14px;
   text-align: center;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif;
 }
 .viral-preview {
   display: flex;
@@ -1535,11 +1558,11 @@ body {
   flex-shrink: 0;
 }
 .vp-info { flex: 1; min-width: 0; }
-.vp-nick { font-size: 13px; font-weight: 700; color: #fff; }
-.vp-uni { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+.vp-nick { font-size: 13px; font-weight: 700; color: #fff; font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif; }
+.vp-uni { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; font-family: 'Noto Sans KR', sans-serif; font-weight: 400; }
 .vp-el  { font-size: 11px; color: var(--gold); margin-top: 2px; }
-.vp-pct { font-size: 15px; font-weight: 800; color: var(--gold); flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; }
-.vp-pct small { font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; }
+.vp-pct { font-size: 13px; font-weight: 700; color: var(--gold); flex-shrink: 0; white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif; }
+.vp-pct .vp-pct-label { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.45); margin-right: 3px; }
 .viral-share-btn {
   width: 100%;
   background: transparent;
@@ -1548,7 +1571,8 @@ body {
   border-radius: 16px;
   padding: 16px;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif;
   cursor: pointer;
   transition: background 0.15s, transform 0.15s;
   letter-spacing: 0.01em;
@@ -1559,12 +1583,16 @@ body {
 }
 .viral-url-msg {
   font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 400;
   color: rgba(255,255,255,0.7);
   text-align: center;
   margin-bottom: 8px;
 }
 .viral-hint {
   font-size: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 400;
   color: rgba(255,255,255,0.45);
   text-align: center;
   margin-top: 10px;
@@ -2035,7 +2063,7 @@ body {
           </div>
 
           <!-- 연도 선택 후 캐릭터 응답 — 왼쪽 정렬 -->
-          <div id="resultCueWrap" style="display:none; opacity:0; transform:translateY(10px); transition:opacity 0.45s ease, transform 0.45s ease; margin-top:20px; width:100%; flex-direction:column; align-items:flex-start; gap:10px;">
+          <div id="resultCueWrap" style="display:none; opacity:0; transform:translateY(10px); transition:opacity 0.45s ease, transform 0.45s ease; margin-top:20px; width:100%; flex-direction:column; align-items:stretch; gap:12px;">
             <div class="q-bubble" id="resultCueQ">내 답을 주겠네...</div>
             <button id="resultCueBtn" class="result-cue-btn" onclick="runMatch()" style="opacity:0; transform:translateY(6px); transition:opacity 0.35s ease, transform 0.35s ease; pointer-events:none;">여기를 클릭하세요</button>
           </div>
@@ -3416,7 +3444,7 @@ function buildRichNarrative(uni, userProfile, userName, birthdate) {
   return `
     <div class="narrative-block">
       <div class="narrative-section">
-        <div class="narrative-label">당신은 이런 사람</div>
+        <div class="narrative-label">당신은 이런 사람이구만</div>
         <p><span class="nbullet">✦</span>${stemChar}${branchChar}(${stemName}${branchName})년생인 그대, ${stemPer}</p>
         <p><span class="nbullet">✦</span>${branchPer}</p>
         <p><span class="nbullet">✦</span>${personLines[0]} ${personLines[1]}</p>
@@ -3424,7 +3452,7 @@ function buildRichNarrative(uni, userProfile, userName, birthdate) {
         <p class="narrative-season"><span class="nbullet">✦</span>${seasonLine} ${secondLine}</p>
       </div>
       <div class="narrative-section">
-        <div class="narrative-label">${uni.kr}${eunNeun(uni.kr)} 이런 곳</div>
+        <div class="narrative-label">${uni.kr}${eunNeun(uni.kr)} 이런 곳이라네</div>
         <p><span class="nbullet">✦</span>${uniDescLine}</p>
         ${traitLine ? `<p><span class="nbullet">✦</span>${traitLine}</p>` : ''}
         <p><span class="nbullet">✦</span>${studentFitLine}</p>
@@ -3432,7 +3460,7 @@ function buildRichNarrative(uni, userProfile, userName, birthdate) {
         ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label">🎓 이 학교 출신들</div>${renderAlumniRow(al)}` : ''; })()}
       </div>
       <div class="narrative-section compat-reason">
-        <div class="narrative-label">왜 찰떡궁합인가</div>
+        <div class="narrative-label">찰떡궁합인 이유를 말해주지.</div>
         <p><span class="nbullet">✦</span>${compatLine}</p>
         <p><span class="nbullet">✦</span>${personLines[3]}</p>
         <p><span class="nbullet">✦</span>${personLines[4]}</p>
@@ -3457,6 +3485,20 @@ function buildOhangBars(profile, domEl, idPrefix) {
       <span class="ohang-bar-val">${val}</span>
     </div>`;
   }).join('');
+}
+
+function animateCompatNum(target) {
+  const el = document.getElementById('compatNum');
+  if (!el) return;
+  const duration = 900;
+  const start = performance.now();
+  const tick = (now) => {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.innerHTML = `${Math.round(eased * target)}<span>%</span>`;
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 function animateOhangBars(profile, idPrefix) {
@@ -3519,7 +3561,7 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
   const narrativeHtml = buildRichNarrative(uni, userProfile, userName, currentBirthdate);
 
   const accentColor = uni.accent || '#d6a75a';
-  const wowLabel = compatPct >= 92 ? '천생연분!' : compatPct >= 85 ? '찰떡궁합!' : '인연이에요';
+  const wowLabel = '찰떡궁합!';
   const stars = compatPct >= 92 ? '⭐⭐⭐⭐⭐' : compatPct >= 80 ? '⭐⭐⭐⭐' : '⭐⭐⭐';
 
   const smallSeal = renderLogo(uni, 52);
@@ -3541,11 +3583,15 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
         <div class="compat-integrated">
           <div class="compat-reveal">
             <div class="compat-top-row">
-              <div class="compat-sublabel">오행 궁합 지수</div>
-              <div class="compat-big-num">${compatPct}<span>%</span></div>
+              <div class="compat-left">
+                <div class="compat-sublabel">오행 궁합 지수</div>
+                ${enrollYear ? `<div class="compat-year-label">✦ ${enrollYear}년 운기 반영</div>` : ''}
+              </div>
+              <div class="compat-right">
+                <div class="compat-big-num" id="compatNum">0<span>%</span></div>
+                <div class="compat-wow-badge">${wowLabel}</div>
+              </div>
             </div>
-            <div class="compat-wow-badge">${wowLabel}</div>
-            ${enrollYear ? `<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:10px;letter-spacing:0.05em;">✦ ${enrollYear}년 운기 반영</div>` : ''}
           </div>
           <div class="profile-pair">
             <div class="ohang-profile-box">
@@ -3596,6 +3642,7 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
     if (body) {
       body.style.opacity = '1';
       setTimeout(() => {
+        animateCompatNum(compatPct);
         animateOhangBars(userProfile, 'ubr');
         animateOhangBars(uniProfile, 'kbr');
       }, 100);
@@ -3626,10 +3673,21 @@ function copyResult(uniKr, pct, domEl) {
 
 // ─── 그룹 인코딩 ─────────────────────────────────────────────────────────────
 
+function _encNick(nick) {
+  try { return btoa(encodeURIComponent(nick)); } catch { return encodeURIComponent(nick); }
+}
+function _decNick(s) {
+  // 신규: base64 인코딩 형식
+  try { return decodeURIComponent(atob(s)); } catch {}
+  // 레거시: encodeURIComponent 형식
+  try { return decodeURIComponent(s); } catch {}
+  return s;
+}
+
 // members: [{nick, uniIdx, pct}]
 function encodeGroup(members) {
   return members.map(m =>
-    `${encodeURIComponent(m.nick)}:${m.uniIdx}:${m.pct}`
+    `${_encNick(m.nick)}:${m.uniIdx}:${m.pct}`
   ).join(',');
 }
 
@@ -3640,7 +3698,7 @@ function decodeGroup(hash) {
     const parts = seg.split(':');
     if (parts.length < 3) return null;
     return {
-      nick: decodeURIComponent(parts[0]),
+      nick: _decNick(parts[0]),
       uniIdx: parseInt(parts[1]),
       pct: parseInt(parts[2])
     };
@@ -3791,7 +3849,7 @@ function renderViralPreview() {
       <div class="vp-nick">${myNick}</div>
       <div class="vp-uni">${myUni.kr}</div>
     </div>
-    <div class="vp-pct"><span>${currentResult.compatPct}%</span><small>궁합</small></div>
+    <div class="vp-pct"><span class="vp-pct-label">궁합지수</span>${currentResult.compatPct}%</div>
   </div>`;
 
   // 기존 참여 친구 카드
@@ -3803,7 +3861,7 @@ function renderViralPreview() {
         <div class="vp-nick">${m.nick}</div>
         <div class="vp-uni">${u.kr}</div>
       </div>
-      <div class="vp-pct"><span>${m.pct}%</span><small>궁합</small></div>
+      <div class="vp-pct"><span class="vp-pct-label">궁합지수</span>${m.pct}%</div>
     </div>`;
   });
 

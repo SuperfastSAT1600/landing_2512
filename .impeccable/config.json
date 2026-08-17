@@ -11,6 +11,7 @@
       "public/partners/gangwon/index.html",
       "public/partners/gangwon/unit.html",
       "public/partners/gangwon/units/unit9.html",
+      "public/partners/gangwon/units/unit12.html",
       "src/app/admin/mathweb/ConceptAutocompleteInput.tsx"
     ],
     "ignoreValues": [
@@ -373,6 +374,60 @@
         "value": "rgba(96,133,255,0.3)",
         "createdAt": "2026-08-14T09:58:47.628Z",
         "reason": "Portal accent border variant — intentional portal design system"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          "university_chem/university_destiny_match.html"
+        ],
+        "createdAt": "2026-08-14T17:20:33.419Z",
+        "reason": "Standalone project; workspace DESIGN.md is ElevenLabs, not this project. Fonts (Pretendard, Fraunces) explicitly specified in university_chem/CLAUDE.md"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "university_chem/university_destiny_match.html"
+        ],
+        "createdAt": "2026-08-14T17:20:33.492Z",
+        "reason": "Standalone project; own type scale defined in university_chem/CLAUDE.md, unrelated to ElevenLabs DESIGN.md"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "university_chem/university_destiny_match.html"
+        ],
+        "createdAt": "2026-08-14T17:20:33.573Z",
+        "reason": "26px radius explicitly specified in university_chem/CLAUDE.md. ElevenLabs DESIGN.md does not apply here."
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "university_chem/university_destiny_match.html"
+        ],
+        "createdAt": "2026-08-14T17:20:39.769Z",
+        "reason": "Cream background (#f3ecdd) explicitly specified in CLAUDE.md from doryeong.app reference"
+      },
+      {
+        "rule": "single-font",
+        "value": "*",
+        "files": [
+          "university_chem/university_destiny_match.html"
+        ],
+        "createdAt": "2026-08-14T17:20:39.838Z",
+        "reason": "Fraunces used for motto text via dynamic JS rendering; not visible to static detector. Pretendard as primary is intentional per CLAUDE.md."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "university_chem/university_destiny_match.html"
+        ],
+        "createdAt": "2026-08-14T17:20:54.199Z",
+        "reason": "Standalone project with own palette (cream/navy/gold/coral) defined in CLAUDE.md. ElevenLabs design tokens do not apply."
       }
     ]
   }
