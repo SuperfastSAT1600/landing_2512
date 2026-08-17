@@ -1,0 +1,186 @@
+import { render, screen, fireEvent } from '@testing-library/react';
+import { DndContext } from '@dnd-kit/core';
+import { SortableContext } from '@dnd-kit/sortable';
+import { RenewalCard } from '../RenewalCard';
+import type { RenewalStage, RenewalTarget } from '@/types/crm';
+import type { TutoringDisplayStatus } from '../TutoringStudentRow';
+
+const NOW = Date.parse('2026-08-17T09:00:00Z');
+
+function target(stage: RenewalStage, over: Partial<RenewalTarget> = {}): RenewalTarget {
+  return {
+    id: 'rt-1',
+    student_id: 's-1',
+    week_start: '2026-08-17',
+    stage,
+    stage_updated_at: '2026-08-14T09:00:00Z', // 3일 전
+    converted_payment_id: null,
+    drop_reason: null,
+    created_by: null,
+    created_at: '2026-08-14T09:00:00Z',
+    updated_at: '2026-08-14T09:00:00Z',
+    student: {
+      id: 's-1',
+      name: '김학생',
+      grade: '11',
+      parent_phone: '010-1111-2222',
+      is_vip: false,
+      traffic_source: null,
+      lead_type: 'B2C',
+    },
+    ...over,
+  };
+}
+
+function renderCard(
+  props: Partial<React.ComponentProps<typeof RenewalCard>> & { stage?: RenewalStage } = {}
+) {
+  const { stage = '1', ...rest } = props;
+  const t = rest.target ?? target(stage);
+  return render(
+    <DndContext>
+      <SortableContext items={[t.id]}>
+        <RenewalCard nowMs={NOW} target={t} tutoring={null} onClick={() => {}} {...rest} />
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+describe('RenewalCard', () => {
+  it('renders the student name, grade and phone', () => {
+    renderCard();
+    expect(screen.getByText('김학생')).toBeTruthy();
+    expect(screen.getByText('11')).toBeTruthy();
+    expect(screen.getByText('010-1111-2222')).toBeTruthy();
+  });
+
+  it('measures D+N from stage_updated_at, not the original inquiry date', () => {
+    renderCard();
+    expect(screen.getByText('단계 D+3')).toBeTruthy();
+  });
+
+  it('warns on stage age at the 7 and 14 day thresholds', () => {
+    const fresh = renderCard({ target: target('2', { stage_updated_at: '2026-08-16T09:00:00Z' }) });
+    expect(screen.getByText('단계 D+1').className).toContain('text-gray-400');
+    fresh.unmount();
+
+    const stale = renderCard({ target: target('2', { stage_updated_at: '2026-08-09T09:00:00Z' }) });
+    expect(screen.getByText('단계 D+8').className).toContain('text-amber-500');
+    stale.unmount();
+
+    renderCard({ target: target('2', { stage_updated_at: '2026-08-01T09:00:00Z' }) });
+    expect(screen.getByText('단계 D+16').className).toContain('text-red-400');
+  });
+
+  it('shows remaining hours and the tutoring status when known', () => {
+    renderCard({
+      tutoring: {
+        displayStatus: 'sales' as TutoringDisplayStatus,
+        remainingHours: 0,
+        scheduledHours: 0,
+        overscheduledHours: 0,
+      },
+    });
+    expect(screen.getByText('잔여 0h')).toBeTruthy();
+    expect(screen.getByText('재결제세일즈')).toBeTruthy();
+  });
+
+  it('omits the hours line when the student is not linked to SRM', () => {
+    renderCard({ tutoring: null });
+    expect(screen.queryByText(/잔여/)).toBeNull();
+  });
+
+  it('shows a negative 잔여 plus 예약/초과 — the payment-page urgency signals', () => {
+    renderCard({
+      tutoring: {
+        displayStatus: 'sales' as TutoringDisplayStatus,
+        remainingHours: -3,
+        scheduledHours: 19,
+        overscheduledHours: 22,
+      },
+    });
+    expect(screen.getByText('잔여 -3h').className).toContain('text-red-600');
+    expect(screen.getByText('예약 19h')).toBeTruthy();
+    expect(screen.getByText('초과 22h').className).toContain('text-orange-600');
+  });
+
+  it('hides 예약/초과 when they are zero so the card stays quiet', () => {
+    renderCard({
+      tutoring: {
+        displayStatus: 'active' as TutoringDisplayStatus,
+        remainingHours: 40,
+        scheduledHours: 0,
+        overscheduledHours: 0,
+      },
+    });
+    expect(screen.getByText('잔여 40h')).toBeTruthy();
+    expect(screen.queryByText(/예약/)).toBeNull();
+    expect(screen.queryByText(/초과/)).toBeNull();
+  });
+
+  it('shows the VIP badge for VIP students', () => {
+    renderCard({ target: target('1', { student: { ...target('1').student!, is_vip: true } }) });
+    expect(screen.getByText('VIP')).toBeTruthy();
+  });
+
+  it('offers 결제 only on the 결제 대기 stage', () => {
+    const onPayment = vi.fn();
+    const waiting = renderCard({ stage: '3', onPayment });
+    fireEvent.click(screen.getByRole('button', { name: '결제' }));
+    expect(onPayment).toHaveBeenCalledTimes(1);
+    waiting.unmount();
+
+    renderCard({ stage: '2', onPayment });
+    expect(screen.queryByRole('button', { name: '결제' })).toBeNull();
+  });
+
+  it('offers 미전환 on open stages and hides it on terminal stages', () => {
+    const onDrop = vi.fn();
+    const open = renderCard({ stage: '2', onDrop });
+    fireEvent.click(screen.getByRole('button', { name: '미전환' }));
+    expect(onDrop).toHaveBeenCalledTimes(1);
+    open.unmount();
+
+    const paid = renderCard({ stage: '4', onDrop });
+    expect(screen.queryByRole('button', { name: '미전환' })).toBeNull();
+    paid.unmount();
+
+    renderCard({ stage: '5', onDrop });
+    expect(screen.queryByRole('button', { name: '미전환' })).toBeNull();
+  });
+
+  it('requires a second click to confirm 제외 so a hard delete cannot happen by accident', () => {
+    const onRemove = vi.fn();
+    renderCard({ stage: '1', onRemove });
+
+    fireEvent.click(screen.getByRole('button', { name: '제외' }));
+    expect(onRemove).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }));
+    expect(onRemove).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers 되돌리기 on 미전환 cards and shows the recorded reason', () => {
+    const onReopen = vi.fn();
+    renderCard({ target: target('5', { drop_reason: '예산' }), onReopen });
+    expect(screen.getByText('미전환: 예산')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '되돌리기' }));
+    expect(onReopen).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the cohort week badge only when asked', () => {
+    const hidden = renderCard();
+    expect(screen.queryByText(/주차/)).toBeNull();
+    hidden.unmount();
+
+    renderCard({ showWeekBadge: true });
+    expect(screen.getByText('26년 08월 03주차')).toBeTruthy();
+  });
+
+  it('opens the student panel when the card body is clicked', () => {
+    const onClick = vi.fn();
+    renderCard({ onClick });
+    fireEvent.click(screen.getByText('김학생'));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+});

@@ -494,7 +494,7 @@ export function StudentPanel({ studentId, crmStudentId, studentName, onClose, tr
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 border ${TUTORING_STATUS_META[tutoringStatus].color}`}>
                   {TUTORING_STATUS_META[tutoringStatus].label}
                   {remainingHours !== undefined && purchasedHours !== undefined && (
-                    <> · {remainingHours}h/{purchasedHours}h</>
+                    <> · <span className={remainingHours < 0 ? 'text-red-600 font-semibold' : ''}>{remainingHours}h</span>/{purchasedHours}h</>
                   )}
                 </span>
               )}

@@ -5,6 +5,14 @@ import { isAuthenticated } from '@/lib/server-auth';
 
 export type TutoringStatus = 'active' | 'paused' | 'partial_end' | 'sales' | 'ended';
 
+/** SFv2 payments.management_status — 결제 관리 상태. */
+export type PaymentManagementStatus =
+  | 'onboarding'
+  | 'active'
+  | 'paused'
+  | 'inactive'
+  | 'excluded';
+
 export interface TutoringUser {
   sfv2ProfileId: string;
   crmStudentId: string | null;
@@ -12,8 +20,28 @@ export interface TutoringUser {
   grade: string | null;
   purchasedHours: number;
   refundedHours: number;
+  /** 완료된 coach_room 시간 (플랫폼 Payment 페이지의 Completed). */
   usedHours: number;
+  /**
+   * 잔여 시간 — 0 하한. 기존 SRM 화면들이 이 값을 그대로 표시하므로 의미를 바꾸지 않는다.
+   * 초과 사용(음수)을 봐야 하면 netRemainingHours를 쓴다.
+   */
   remainingHours: number;
+  /**
+   * 부호가 있는 잔여 = 구매 − 환불 − 완료. 플랫폼 Payment 페이지의 Remaining과 동일.
+   * 음수면 결제분을 넘겨 수업한 상태 → 재결제가 이미 늦은 학생이다.
+   */
+  netRemainingHours: number;
+  /** 예약됐지만 아직 진행 전인 coach_room 시간 (approved + awaiting_confirmation). */
+  scheduledHours: number;
+  /** 결제했지만 아직 캘린더에 없는 시간 = max(0, netRemaining − scheduled). */
+  unscheduledHours: number;
+  /** 결제분을 넘겨 예약된 시간 = max(0, scheduled − netRemaining). */
+  overscheduledHours: number;
+  /** 결제 과목 (SAT / AP / special). 여러 결제가 있으면 복수. */
+  subjects: string[];
+  /** 가장 우선순위 높은 결제의 관리 상태. 결제가 없으면 null. */
+  paymentStatus: PaymentManagementStatus | null;
   status: TutoringStatus;
 }
 
@@ -21,7 +49,10 @@ export interface UnlinkedTutoringUser {
   sfv2ProfileId: string;
   name: string;
   purchasedHours: number;
+  /** 0 하한 잔여 — 기존 SRM 화면 표시용. */
   remainingHours: number;
+  /** 부호 있는 잔여 = 구매 − 환불 − 완료. 활성 결제 + 사용 초과면 음수가 될 수 있다. */
+  netRemainingHours: number;
 }
 
 export interface TutoringUsersResponse {
@@ -85,17 +116,28 @@ async function fetchRefunded() {
   return { refunded };
 }
 
-// 3. 사용 시간 + 최근 세션일: 완료된 coach_room 세션 by user_id
-async function fetchUsed() {
+// 3. 세션 시간 by user_id — 완료(used) / 예약 대기(scheduled) + 최근 세션일.
+//    두 상태를 한 번의 events 스캔 + 한 번의 participants 스캔으로 함께 집계한다
+//    (participants 전량 스캔이 병목이므로 상태별로 두 번 돌리지 않는다).
+const SCHEDULED_STATUSES = ['approved', 'awaiting_confirmation'];
+
+async function fetchSessionHours() {
   const used = new Map<string, number>();
+  const scheduled = new Map<string, number>();
   const lastSessionDate = new Map<string, string>();
-  const eventMeta = new Map<string, { duration: number; startsAt: string }>();
-  await scanAll<{ id: string; starts_at: string; ends_at: string }>(
-    (f, t) => supabaseSFv2.from('scheduled_events').select('id, starts_at, ends_at').eq('status', 'completed').eq('category', 'coach_room').range(f, t),
+  const eventMeta = new Map<string, { duration: number; startsAt: string; completed: boolean }>();
+
+  await scanAll<{ id: string; starts_at: string; ends_at: string; status: string }>(
+    (f, t) => supabaseSFv2
+      .from('scheduled_events')
+      .select('id, starts_at, ends_at, status')
+      .in('status', ['completed', ...SCHEDULED_STATUSES])
+      .eq('category', 'coach_room')
+      .range(f, t),
     (rows) => {
       for (const e of rows) {
         const dur = (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 3_600_000;
-        eventMeta.set(e.id, { duration: dur, startsAt: e.starts_at });
+        eventMeta.set(e.id, { duration: dur, startsAt: e.starts_at, completed: e.status === 'completed' });
       }
     },
   );
@@ -105,31 +147,62 @@ async function fetchUsed() {
       for (const p of rows) {
         const meta = eventMeta.get(p.event_id);
         if (!meta) continue;
+        if (!meta.completed) {
+          scheduled.set(p.user_id, (scheduled.get(p.user_id) ?? 0) + meta.duration);
+          continue;
+        }
         used.set(p.user_id, (used.get(p.user_id) ?? 0) + meta.duration);
         const prev = lastSessionDate.get(p.user_id);
         if (!prev || meta.startsAt > prev) lastSessionDate.set(p.user_id, meta.startsAt);
       }
     },
   );
-  return { used, lastSessionDate };
+  return { used, scheduled, lastSessionDate };
 }
 
 async function fetchV2Hours(): Promise<{
   purchased: Map<string, number>;
   refunded: Map<string, number>;
   used: Map<string, number>;
+  scheduled: Map<string, number>;
   lastPurchaseDate: Map<string, string>;
   lastSessionDate: Map<string, string>;
 }> {
   // 세 집계는 서로 독립 → 병렬 실행(원격 SFv2 왕복 지연이 병목이므로 순차 대비 큰 단축).
-  const [p, r, u] = await Promise.all([fetchPurchased(), fetchRefunded(), fetchUsed()]);
+  const [p, r, u] = await Promise.all([fetchPurchased(), fetchRefunded(), fetchSessionHours()]);
   return {
     purchased: p.purchased,
     lastPurchaseDate: p.lastPurchaseDate,
     refunded: r.refunded,
     used: u.used,
+    scheduled: u.scheduled,
     lastSessionDate: u.lastSessionDate,
   };
+}
+
+// 결제 과목·관리 상태. Payment 페이지의 Subject / Status 컬럼과 같은 소스.
+// 한 학생이 여러 결제를 가질 수 있어 상태는 우선순위가 가장 높은 하나로 접는다.
+const PAYMENT_STATUS_PRIORITY: PaymentManagementStatus[] = [
+  'active', 'onboarding', 'paused', 'inactive', 'excluded',
+];
+
+function foldPayments(rows: { student_id: string; subject: string | null; management_status: string | null }[]) {
+  const subjects = new Map<string, Set<string>>();
+  const paymentStatus = new Map<string, PaymentManagementStatus>();
+  for (const row of rows) {
+    if (row.subject) {
+      const set = subjects.get(row.student_id) ?? new Set<string>();
+      set.add(row.subject);
+      subjects.set(row.student_id, set);
+    }
+    const next = row.management_status as PaymentManagementStatus | null;
+    if (!next || !PAYMENT_STATUS_PRIORITY.includes(next)) continue;
+    const prev = paymentStatus.get(row.student_id);
+    if (!prev || PAYMENT_STATUS_PRIORITY.indexOf(next) < PAYMENT_STATUS_PRIORITY.indexOf(prev)) {
+      paymentStatus.set(row.student_id, next);
+    }
+  }
+  return { subjects, paymentStatus };
 }
 
 export async function GET(request: NextRequest) {
@@ -138,7 +211,7 @@ export async function GET(request: NextRequest) {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    const [v2Hours, crmResult, pauseResult, activePaymentsResult] = await Promise.all([
+    const [v2Hours, crmResult, pauseResult, paymentsResult] = await Promise.all([
       fetchV2Hours(),
       supabaseAdmin
         .from('students')
@@ -150,17 +223,23 @@ export async function GET(request: NextRequest) {
         .is('ended_at', null)
         .lte('pause_start', today)
         .or(`pause_until.is.null,pause_until.gte.${today}`),
+      // 과목·관리 상태까지 함께 받는다(기존엔 active 결제의 student_id만 조회).
       supabaseSFv2
         .from('payments')
-        .select('student_id')
-        .eq('management_status', 'active')
+        .select('student_id, subject, management_status')
         .not('student_id', 'is', null),
     ]);
 
-    const { purchased, refunded, used, lastSessionDate } = v2Hours;
+    const { purchased, refunded, used, scheduled, lastSessionDate } = v2Hours;
+    const paymentRows = (paymentsResult.data ?? []) as {
+      student_id: string;
+      subject: string | null;
+      management_status: string | null;
+    }[];
     const activePaymentIds = new Set(
-      ((activePaymentsResult.data ?? []) as { student_id: string }[]).map((p) => p.student_id)
+      paymentRows.filter((p) => p.management_status === 'active').map((p) => p.student_id)
     );
+    const { subjects: subjectsByStudent, paymentStatus: statusByStudent } = foldPayments(paymentRows);
     const crmStudents = (crmResult.data ?? []) as {
       id: string;
       name: string;
@@ -202,6 +281,9 @@ export async function GET(request: NextRequest) {
         status = svcStatus === 'ended' ? 'ended' : 'sales';
       }
 
+      const scheduledH = Math.round((scheduled.get(pid) ?? 0) * 10) / 10;
+      const netRemainingH = Math.round(rawRemainingH * 10) / 10;
+
       results.push({
         sfv2ProfileId: pid,
         crmStudentId: s.id,
@@ -211,6 +293,12 @@ export async function GET(request: NextRequest) {
         refundedHours: refundedH,
         usedHours: usedH,
         remainingHours: remainingH,
+        netRemainingHours: netRemainingH,
+        scheduledHours: scheduledH,
+        unscheduledHours: Math.round(Math.max(0, netRemainingH - scheduledH) * 10) / 10,
+        overscheduledHours: Math.round(Math.max(0, scheduledH - netRemainingH) * 10) / 10,
+        subjects: [...(subjectsByStudent.get(pid) ?? [])].sort(),
+        paymentStatus: statusByStudent.get(pid) ?? null,
         status,
       });
     }
@@ -258,11 +346,18 @@ export async function GET(request: NextRequest) {
         const purchasedH = Math.round((purchased.get(p.id) ?? 0) * 10) / 10;
         const refundedH = Math.round((refunded.get(p.id) ?? 0) * 10) / 10;
         const usedH = Math.round((used.get(p.id) ?? 0) * 10) / 10;
-        const remainingH = Math.round(Math.max(0, purchasedH - refundedH - usedH) * 10) / 10;
-        unlinked.push({ sfv2ProfileId: p.id, name: p.full_name ?? p.id, purchasedHours: purchasedH, remainingHours: remainingH });
+        const netRemainingH = Math.round((purchasedH - refundedH - usedH) * 10) / 10;
+        const remainingH = Math.max(0, netRemainingH);
+        unlinked.push({
+          sfv2ProfileId: p.id,
+          name: p.full_name ?? p.id,
+          purchasedHours: purchasedH,
+          remainingHours: remainingH,
+          netRemainingHours: netRemainingH,
+        });
       }
       // 잔여 시간 많은 순 (수업중 우선), 동일하면 이름순
-      unlinked.sort((a, b) => b.remainingHours - a.remainingHours || a.name.localeCompare(b.name));
+      unlinked.sort((a, b) => b.netRemainingHours - a.netRemainingHours || a.name.localeCompare(b.name));
     }
 
     return NextResponse.json({ linked: results, unlinked } satisfies TutoringUsersResponse);

@@ -565,7 +565,11 @@ export function UnifiedTimeline({
                     {tUser.status === 'ended' ? '종료' : tUser.status === 'partial_end' ? '부분종료' : '세일즈'}
                   </span>
                 )}
-                {tUser && <span className="text-[9px] text-gray-400">잔여{tUser.remainingHours}h</span>}
+                {tUser && (
+                  <span className={`text-[9px] ${tUser.netRemainingHours < 0 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                    잔여{tUser.netRemainingHours}h
+                  </span>
+                )}
               </button>
             );
           })}

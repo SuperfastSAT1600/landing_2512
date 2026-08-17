@@ -47,7 +47,10 @@ function UserRow({ user, onClick }: { user: TutoringUser; onClick: () => void })
       </div>
       <div className="flex items-center gap-3 shrink-0">
         <span className="text-[11px] text-gray-500">
-          잔여 <span className="font-semibold text-gray-700">{user.remainingHours}h</span>
+          잔여{' '}
+          <span className={`font-semibold ${user.netRemainingHours < 0 ? 'text-red-600' : 'text-gray-700'}`}>
+            {user.netRemainingHours}h
+          </span>
           <span className="text-gray-400"> / {user.purchasedHours}h</span>
         </span>
         <span className={`flex items-center gap-0.5 text-[10px] font-medium ${meta.color}`}>
@@ -69,7 +72,10 @@ function UnlinkedRow({ user, onClick }: { user: UnlinkedTutoringUser; onClick: (
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-[11px] text-gray-500">
-          잔여 <span className="font-semibold text-orange-700">{user.remainingHours}h</span>
+          잔여{' '}
+          <span className={`font-semibold ${user.netRemainingHours < 0 ? 'text-red-600' : 'text-orange-700'}`}>
+            {user.netRemainingHours}h
+          </span>
           <span className="text-gray-400"> / {user.purchasedHours}h</span>
         </span>
         <span className="text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded">
@@ -187,7 +193,7 @@ export function TutoringUserList({ onStudentClick, refreshKey }: Props) {
                   crmStudentId: u.crmStudentId ?? undefined,
                   name: u.name,
                   tutoringStatus: u.status,
-                  remainingHours: u.remainingHours,
+                  remainingHours: u.netRemainingHours,
                   purchasedHours: u.purchasedHours,
                 })}
               />
