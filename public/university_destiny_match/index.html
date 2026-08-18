@@ -1538,7 +1538,7 @@ body {
 /* ── 하단 액션 버튼 3개 ── */
 .action-bar {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: 16px;
 }
@@ -3802,6 +3802,18 @@ function animateDestinyReveal() {
 function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYear }) {
   currentResult = { uni, uniIdx, userProfile, compatPct, userName, enrollYear };
 
+  // 방(room) URL로 진입한 친구라면 결과를 자동으로 방에 저장
+  const roomCode = sessionStorage.getItem('destinyRoomCode');
+  if (roomCode && userName) {
+    const nick = userName;
+    const pct = compatPct || 0;
+    fetch(`/api/destiny/rooms/${roomCode}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nick, uniIdx, pct })
+    }).catch(() => {});
+  }
+
   const seal = renderLogo(uni, 128);
   const dom = getDominantElement(userProfile);
   const typeLabel = ELEMENT_TYPE[dom];
@@ -3872,13 +3884,14 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
 
     <div class="action-bar">
       <button class="action-bar-btn primary" onclick="exportStoryImage()"><span class="action-icon">🖼️</span>이미지로<br>저장하기</button>
+      <button class="action-bar-btn primary" id="saveRoomBtn" onclick="saveRoom()"><span class="action-icon">🔖</span>궁합 결과<br>저장하기</button>
       <button class="action-bar-btn primary" id="viralShareBtn"
         data-idx="${uniIdx}" data-pct="${compatPct}"
         data-nick="${(userName || '나').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"
         onclick="shareResult(+this.dataset.idx, +this.dataset.pct, this.dataset.nick)">
-        <span class="action-icon">🔗</span>친구 대학이<br>궁금하다면?
+        <span class="action-icon">👥</span>친구에게<br>공유하기
       </button>
-      <button class="action-bar-btn primary" onclick="resetForm()"><span class="action-icon">↺</span>대학 궁합<br>다시하기</button>
+      <button class="action-bar-btn primary" onclick="resetForm()"><span class="action-icon">↺</span>다시<br>하기</button>
     </div>
 
     <div class="viral-url-reveal" id="viralUrlReveal" style="display:none">
@@ -4650,6 +4663,86 @@ async function runMatch() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ─── 방 코드 생성 ─────────────────────────────────────────────────────────────
+function makeRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+async function saveRoom() {
+  if (!currentResult) return;
+  const btn = document.getElementById('saveRoomBtn');
+  if (!btn) return;
+
+  const nick = currentResult.userName || '나';
+  const uniIdx = UNIVERSITIES.indexOf(currentResult.uni);
+  const pct = currentResult.compatPct || currentResult.pct || 0;
+
+  // 이미 방 코드가 있으면 재사용
+  let code = sessionStorage.getItem('destinyRoomCode');
+  if (!code) {
+    code = makeRoomCode();
+    sessionStorage.setItem('destinyRoomCode', code);
+  }
+
+  btn.textContent = '저장 중…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/destiny/rooms/${code}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nick, uniIdx, pct })
+    });
+    if (!res.ok) throw new Error('저장 실패');
+
+    const roomUrl = `${location.origin}/university_destiny_match?room=${code}`;
+    await navigator.clipboard.writeText(roomUrl).catch(() => {});
+
+    btn.innerHTML = '<span class="action-icon">✅</span>링크 복사됨!';
+    setTimeout(() => {
+      btn.innerHTML = '<span class="action-icon">🔖</span>궁합 결과<br>저장하기';
+      btn.disabled = false;
+    }, 2500);
+
+    // URL 표시 박스 재활용
+    const reveal = document.getElementById('viralUrlReveal');
+    const txt = document.getElementById('viralUrlText');
+    if (reveal && txt) {
+      txt.textContent = roomUrl;
+      reveal.style.display = 'block';
+    }
+
+    // "친구에게 공유하기" 버튼도 방 URL로 교체
+    _viralUrl = roomUrl;
+    const shareBtn = document.getElementById('viralShareBtn');
+    if (shareBtn) {
+      shareBtn.onclick = () => {
+        navigator.clipboard.writeText(roomUrl).catch(() => {});
+        shareBtn.innerHTML = '<span class="action-icon">✅</span>복사됨!';
+        setTimeout(() => { shareBtn.innerHTML = '<span class="action-icon">👥</span>친구에게<br>공유하기'; }, 2500);
+      };
+    }
+  } catch {
+    btn.innerHTML = '<span class="action-icon">❌</span>오류 발생';
+    btn.disabled = false;
+    setTimeout(() => {
+      btn.innerHTML = '<span class="action-icon">🔖</span>궁합 결과<br>저장하기';
+    }, 2000);
+  }
+}
+
+// ─── 방 코드로 멤버 로드 ───────────────────────────────────────────────────────
+async function loadRoomMembers(code) {
+  try {
+    const res = await fetch(`/api/destiny/rooms/${code}`);
+    const data = await res.json();
+    return (data.members || []);
+  } catch {
+    return [];
+  }
+}
+
 function resetForm() {
   document.getElementById('resultCard').style.display = 'none';
   const fs = document.getElementById('formSection');
@@ -4720,12 +4813,19 @@ function startCinemaTyping() {
   }, 700);
 }
 
-function init() {
-  const isBoard = window.location.hash.startsWith('#g=');
+async function init() {
+  const roomCode = new URLSearchParams(location.search).get('room');
+  const isBoard = window.location.hash.startsWith('#g=') || !!roomCode;
+
   document.getElementById('boardView').style.display = isBoard ? 'block' : 'none';
   document.getElementById('quizView').style.display = isBoard ? 'none' : 'block';
 
-  if (isBoard) {
+  if (roomCode) {
+    // ?room=CODE 진입: Supabase에서 멤버 로드 후 보드 렌더
+    sessionStorage.setItem('destinyRoomCode', roomCode);
+    const members = await loadRoomMembers(roomCode);
+    renderBoard(members);
+  } else if (window.location.hash.startsWith('#g=')) {
     const members = decodeGroup(window.location.hash);
     renderBoard(members);
   } else {
@@ -4753,7 +4853,7 @@ init();
 initLunarSelects();
 
 // 스크롤 시 대화 섹션 등장 + 첫 버블 타이핑
-if (!location.hash.startsWith('#g=')) {
+if (!location.hash.startsWith('#g=') && !new URLSearchParams(location.search).get('room')) {
   let chatRevealed = false;
   window.addEventListener('scroll', function onFirstScroll() {
     if (chatRevealed || window.scrollY < 30) return;
