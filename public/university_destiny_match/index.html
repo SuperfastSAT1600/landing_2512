@@ -412,25 +412,39 @@ body {
   pointer-events: none;
 }
 .compat-top-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  row-gap: 6px;
+  column-gap: 16px;
 }
+.compat-left  { display: contents; }
+.compat-right { display: contents; }
 .compat-sublabel {
+  grid-area: 1 / 1;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.01em;
   color: rgba(255,255,255,0.75);
   line-height: 1;
 }
+.compat-year-label {
+  grid-area: 2 / 1;
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.06em;
+  align-self: center;
+}
 .compat-big-num {
+  grid-area: 1 / 2;
   font-size: 62px;
   font-weight: 900;
   color: var(--gold);
   line-height: 1;
   letter-spacing: -0.03em;
+  text-align: right;
+  justify-self: end;
 }
 .compat-big-num span {
   font-size: 28px;
@@ -446,12 +460,15 @@ body {
   margin: 8px 0 6px;
 }
 .compat-wow-badge {
+  grid-area: 2 / 2;
+  justify-self: end;
+  align-self: center;
   display: inline-block;
   background: var(--gold);
   color: var(--navy);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
-  padding: 5px 16px;
+  padding: 4px 14px;
   border-radius: 99px;
   letter-spacing: 0.02em;
 }
@@ -869,18 +886,52 @@ body {
   50%       { opacity: 0; }
 }
 .hero-scroll-hint {
-  margin-top: 20px;
-  color: rgba(255,255,255,0.45);
-  font-size: 22px;
-  animation: hint-bounce 2s ease-in-out infinite;
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   pointer-events: none;
   user-select: none;
-  text-align: center;
-  width: 100%;
+  animation: hint-fade-in 0.8s ease forwards;
 }
+.hero-scroll-hint-label {
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: rgba(255,255,255,0.9);
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(255,255,255,0.5);
+}
+.hero-scroll-hint-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: hint-bounce 1.6s ease-in-out infinite;
+}
+.hero-scroll-hint-arrow span {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-right: 2.5px solid rgba(255,255,255,0.95);
+  border-bottom: 2.5px solid rgba(255,255,255,0.95);
+  transform: rotate(45deg);
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.6));
+}
+.hero-scroll-hint-arrow span:nth-child(1) { opacity: 0.4; }
+.hero-scroll-hint-arrow span:nth-child(2) { opacity: 0.7; }
+.hero-scroll-hint-arrow span:nth-child(3) { opacity: 1.0; }
 @keyframes hint-bounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.45; }
-  50%       { transform: translateX(-50%) translateY(7px); opacity: 0.8; }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
+}
+@keyframes hint-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* Utility */
@@ -943,26 +994,27 @@ body {
 .invite-url-text {
   flex: 1;
   font-size: 11px;
-  color: var(--text-muted);
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #1e2a47;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .invite-url-copy {
-  background: var(--navy);
+  background: #1e2a47;
   color: #fff;
   border: none;
   border-radius: 8px;
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 700;
-  font-family: inherit;
+  font-family: 'Noto Sans KR', sans-serif;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s;
   flex-shrink: 0;
 }
-.invite-url-copy:hover { background: var(--navy-light); }
+.invite-url-copy:hover { background: #2a3a5c; }
 .invite-url-copy.copied { background: #16a34a; }
 
 /* 그룹 미리보기 */
@@ -1064,7 +1116,7 @@ body {
 .board-list-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0;
   padding: 14px 20px;
   border-bottom: 1px solid rgba(30,42,71,0.08);
   cursor: pointer;
@@ -1077,22 +1129,27 @@ body {
 }
 .board-list-row:active { background: #f5f0e6; }
 .board-list-logo {
-  flex-shrink: 0;
-  width: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 6px;
 }
 .board-list-logo img { border-radius: 6px; }
 .board-list-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 .board-list-name-kr {
   font-size: 15px;
-  font-weight: 800;
-  color: var(--navy);
+  font-weight: 700;
+  color: #111;
   line-height: 1.2;
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  text-align: center;
 }
 .board-list-name-en {
   font-size: 11px;
@@ -1104,8 +1161,11 @@ body {
 }
 .board-list-count {
   flex-shrink: 0;
-  text-align: right;
-  min-width: 40px;
+  text-align: center;
+  min-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .board-list-count-num {
   font-size: 22px;
@@ -1113,12 +1173,14 @@ body {
   color: var(--gold);
   line-height: 1;
   display: block;
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
 }
 .board-list-count-unit {
   font-size: 11px;
   font-weight: 600;
   color: var(--gold);
   opacity: 0.8;
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
 }
 .board-list-count-empty {
   font-size: 18px;
@@ -1130,6 +1192,7 @@ body {
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 6px;
+  justify-content: center;
 }
 .board-list-chip {
   font-size: 11px;
@@ -1139,6 +1202,33 @@ body {
   color: #fff;
   background: var(--chip-accent, var(--navy));
 }
+.board-list-header-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  background: #fff;
+  border-radius: 10px 10px 0 0;
+  border-bottom: 2px solid rgba(30,42,71,0.12);
+}
+.board-list-header-label {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+.board-list-header-count {
+  flex-shrink: 0;
+  min-width: 60px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
 
 .board-join-btn {
   background: linear-gradient(135deg, var(--gold), var(--gold-light));
@@ -1147,12 +1237,12 @@ body {
   border-radius: 14px;
   padding: 14px 40px;
   font-size: 17px;
-  font-weight: 800;
-  font-family: inherit;
+  font-weight: 700;
+  font-family: 'Noto Serif KR', 'Apple SD Gothic Neo', Georgia, serif;
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(214,167,90,0.4);
   transition: transform 0.15s;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
 }
 .board-join-btn:hover { transform: translateY(-1px); }
 
@@ -1163,7 +1253,89 @@ body {
 .board-card { display: none; }
 .board-grid { display: none; }
 .board-join-bar { display: none; }
-.board-inviter-card { display: none; }
+.board-inviter-card {
+  background: linear-gradient(160deg, #1a2240 0%, #0d1020 100%);
+  border-radius: 22px;
+  padding: 22px 20px 24px;
+  margin: 20px 0 8px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.bic-destiny {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.bic-line {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.08em;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  margin-bottom: 6px;
+}
+.bic-uni-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+.bic-uni-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gold);
+  font-family: 'IBM Plex Sans KR', sans-serif;
+}
+.bic-compat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.05);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.bic-compat-label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  font-family: 'IBM Plex Sans KR', sans-serif;
+}
+.bic-compat-num {
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.bic-compat-num span { font-size: 20px; font-weight: 700; color: var(--gold-light); }
+.bic-narrative {
+  background: rgba(255,255,255,0.04);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 12px 12px 0;
+  padding: 14px 16px;
+}
+.bic-narrative-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gold);
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  margin-bottom: 8px;
+}
+.bic-narrative-teaser {
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.65;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+}
+.bic-personality-sentences {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bic-personality-line {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.6;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+}
 
 /* ── 대학 상세 모달 ───────────────────────────────────────────────────────── */
 .uni-modal-overlay {
@@ -1363,6 +1535,45 @@ body {
 .story-btn:hover { opacity: 0.9; transform: translateY(-1px); }
 .story-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+/* ── 하단 액션 버튼 3개 ── */
+.action-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+.action-bar-btn {
+  background: #ffffff;
+  color: #1e2a47;
+  border: 1.5px solid #1e2a47;
+  border-radius: 16px;
+  padding: 14px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  line-height: 1.45;
+  text-align: center;
+  transition: background 0.15s, transform 0.15s;
+  word-break: keep-all;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.action-icon {
+  font-size: 18px;
+  line-height: 1;
+  display: block;
+}
+.action-bar-btn:hover { background: #f0ece4; transform: translateY(-1px); }
+.action-bar-btn.primary {
+  background: #ffffff;
+  color: #1e2a47;
+  border-color: #1e2a47;
+}
+.action-bar-btn.primary:hover { background: #f0ece4; }
+
 /* ── 3단 서사 ── */
 .narrative-block {
   display: flex;
@@ -1371,38 +1582,42 @@ body {
   margin: 18px 0 8px;
 }
 .narrative-section {
-  background: #242018;
+  background: #1e1b14;
   border-radius: 16px;
-  padding: 16px 18px;
-  border: 1px solid var(--border);
-  box-shadow: none;
+  padding: 16px 18px 18px;
+  border: 1.5px solid var(--gold);
+}
+/* 학교 섹션 */
+.narrative-section.uni-desc {
+  background: #141a24;
+  border-color: #5b8fc7;
 }
 /* 찰떡궁합 섹션 */
 .narrative-section.compat-reason {
-  background: #242018;
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: #1e1614;
+  border-color: var(--coral);
 }
-.narrative-section.compat-reason .narrative-label { color: var(--text); }
-.narrative-section.compat-reason p { color: var(--text-muted); }
 .narrative-label {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 900;
+  font-family: 'Nanum Myeongjo', 'Noto Serif KR', Georgia, serif;
   letter-spacing: 0.01em;
-  color: var(--text);
-  margin-bottom: 4px;
+  color: var(--gold);
+  margin-bottom: 14px;
   line-height: 1.4;
 }
+.narrative-section.uni-desc .narrative-label { color: #5b8fc7; }
+.narrative-section.compat-reason .narrative-label { color: var(--coral); }
 .narrative-sublabel {
   font-size: 11px;
-  color: var(--text-muted);
+  color: rgba(232,220,200,0.45);
   letter-spacing: 0.08em;
   margin-bottom: 12px;
 }
 .narrative-section p {
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--text-muted);
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: #c8bba8;
   margin-bottom: 6px;
 }
 .narrative-section p:last-child { margin-bottom: 0; }
@@ -1414,13 +1629,13 @@ body {
   line-height: 1;
 }
 .narrative-season {
-  font-size: 13px !important;
-  color: var(--text-muted) !important;
+  font-size: 13.5px !important;
+  color: rgba(200,187,168,0.7) !important;
   font-style: italic;
 }
 .narrative-motto {
-  font-size: 13px !important;
-  color: var(--text-muted) !important;
+  font-size: 13.5px !important;
+  color: rgba(200,187,168,0.75) !important;
   font-style: italic;
   border-left: 3px solid var(--gold);
   padding-left: 10px;
@@ -1476,6 +1691,33 @@ body {
   image-rendering: pixelated;
   line-height: 0;
 }
+.alumni-photo-wrap {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.alumni-photo-wrap img.alumni-photo {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: none;
+}
+.alumni-photo-wrap img.alumni-photo.loaded {
+  display: block;
+}
+.alumni-photo-wrap .alumni-pixel-fallback {
+  display: flex;
+}
+.alumni-photo-wrap .alumni-pixel-fallback.hidden {
+  display: none;
+}
 .alumni-info { min-width: 0; }
 .alumni-name {
   font-size: 13px;
@@ -1490,21 +1732,34 @@ body {
   color: var(--text-muted);
   margin-top: 1px;
 }
+.alumni-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.75;
+  margin-top: 2px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 /* ── 바이럴 공유 섹션 ── */
 .viral-section {
-  background: linear-gradient(145deg, var(--navy) 0%, #0f172a 100%);
+  background: #ffffff;
   border-radius: 24px;
   padding: 22px 20px;
   margin-top: 20px;
+  font-family: 'Noto Sans KR', sans-serif;
 }
 .viral-title {
   font-size: 16px;
-  font-weight: 900;
-  color: var(--gold);
+  font-weight: 800;
+  color: #1e2a47;
   margin-bottom: 14px;
   text-align: center;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
+  font-family: 'Noto Sans KR', sans-serif;
 }
 .viral-preview {
   display: flex;
@@ -1516,63 +1771,66 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(255,255,255,0.07);
+  background: #f5f3ef;
   border-radius: 12px;
   padding: 10px 12px;
+  border: 1px solid #e8e2d8;
 }
 .vp-card.mine {
-  background: rgba(214,167,90,0.15);
-  border: 1px solid rgba(214,167,90,0.3);
+  background: #fdf6e8;
+  border: 1px solid #d6a75a;
 }
 .vp-card.empty {
-  opacity: 0.45;
-  border: 1px dashed rgba(255,255,255,0.2);
+  opacity: 0.5;
+  border: 1px dashed #c8bfb0;
   background: transparent;
 }
 .vp-mystery {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.1);
+  background: #e8e2d8;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  color: rgba(255,255,255,0.4);
+  color: #a09080;
   flex-shrink: 0;
 }
 .vp-info { flex: 1; min-width: 0; }
-.vp-nick { font-size: 13px; font-weight: 700; color: #fff; }
-.vp-uni { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
-.vp-el  { font-size: 11px; color: var(--gold); margin-top: 2px; }
-.vp-pct { font-size: 15px; font-weight: 800; color: var(--gold); flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; }
-.vp-pct small { font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; }
+.vp-nick { font-size: 13px; font-weight: 700; color: #1e2a47; font-family: 'Noto Sans KR', sans-serif; }
+.vp-uni { font-size: 12px; color: #1e2a47; margin-top: 2px; font-family: 'Noto Sans KR', sans-serif; font-weight: 400; }
+.vp-el  { font-size: 11px; color: #1e2a47; margin-top: 2px; }
+.vp-pct { font-size: 13px; font-weight: 700; color: #1e2a47; flex-shrink: 0; white-space: nowrap; font-family: 'Noto Sans KR', sans-serif; }
+.vp-pct .vp-pct-label { font-size: 11px; font-weight: 400; color: #1e2a47; margin-right: 3px; }
 .viral-share-btn {
   width: 100%;
-  background: transparent;
-  color: var(--gold);
-  border: 1.5px solid var(--gold);
+  background: #1e2a47;
+  color: #fff;
+  border: none;
   border-radius: 16px;
   padding: 16px;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
   cursor: pointer;
   transition: background 0.15s, transform 0.15s;
   letter-spacing: 0.01em;
 }
-.viral-share-btn:hover { background: rgba(214,167,90,0.1); transform: translateY(-1px); }
+.viral-share-btn:hover { background: #2a3a5c; transform: translateY(-1px); }
 .viral-url-reveal {
   margin-top: 14px;
 }
 .viral-url-msg {
   font-size: 13px;
-  color: rgba(255,255,255,0.7);
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #ffffff;
   text-align: center;
   margin-bottom: 8px;
 }
 .viral-hint {
   font-size: 12px;
-  color: rgba(255,255,255,0.45);
+  color: #1e2a47;
   text-align: center;
   margin-top: 10px;
   line-height: 1.5;
@@ -1891,16 +2149,26 @@ body {
   <!-- 씬 1: 초대한 친구의 점괘 -->
   <div class="board-cinema">
     <div class="hero-cinema-inner">
-      <img src="main-image.jpg" alt="내가 어디에 갈 상인가">
+      <video src="main-image.mp4" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>
       <div class="hero-cinema-subtitle" id="boardCinemaSubtitle"></div>
+    </div>
+    <div class="hero-scroll-hint" id="boardScrollHint" style="opacity:0;">
+      <div class="hero-scroll-hint-label">scroll</div>
+      <div class="hero-scroll-hint-arrow">
+        <span></span><span></span><span></span>
+      </div>
     </div>
   </div>
   <!-- 씬 2: 그대는 어떨 것 같소? -->
   <div class="board-cinema">
     <div class="hero-cinema-inner">
-      <img src="final-image.png" alt="그대는 어떨 것 같소">
+      <video src="final-image.mp4" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>
       <div class="hero-cinema-subtitle" id="boardCtaQuestion"></div>
     </div>
+  </div>
+  <!-- 친구 결과 미리보기 카드 -->
+  <div class="container">
+    <div id="boardInviterCard" class="board-inviter-card" style="display:none"></div>
   </div>
   <!-- CTA + 참여자 수 -->
   <div class="board-cta-section">
@@ -1917,10 +2185,15 @@ body {
 <!-- 시네마 인트로 (100vh 레터박스) -->
 <div class="hero-cinema" id="heroCinema">
   <div class="hero-cinema-inner">
-    <img src="main-image.jpg" alt="내가 어디 대학에 갈 상인가">
+    <video src="main-image.mp4" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>
     <div class="hero-cinema-subtitle" id="cinemaSubtitle"></div>
   </div>
-  <div class="hero-scroll-hint" id="heroScrollHint" style="opacity:0;">▾</div>
+  <div class="hero-scroll-hint" id="heroScrollHint" style="opacity:0;">
+    <div class="hero-scroll-hint-label">scroll</div>
+    <div class="hero-scroll-hint-arrow">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
 </div>
 
 <div class="container">
@@ -2478,370 +2751,370 @@ function renderPersonPixel(name) {
 // ─── 유명 동문 데이터 ────────────────────────────────────────────────────────
 const FAMOUS_ALUMNI = {
   'Massachusetts Institute of Technology': [
-    { name:'버즈 올드린', role:'달 착륙 우주비행사' },
-    { name:'I.M. 페이', role:'루브르 유리 피라미드 건축가' },
-    { name:'코피 아난', role:'전 UN 사무총장' }
+    { name:'버즈 올드린', role:'달 착륙 우주비행사', desc:'인류 역사상 두 번째로 달에 발을 내딛은 아폴로 11호 우주비행사.' },
+    { name:'I.M. 페이', role:'루브르 유리 피라미드 건축가', desc:'20세기 건축의 거장. 루브르 박물관 유리 피라미드로 세계적 명성을 얻었다.' },
+    { name:'코피 아난', role:'전 UN 사무총장', desc:'가나 출신의 외교관으로, 노벨 평화상을 받은 유엔 제7대 사무총장.' }
   ],
   'Stanford University': [
-    { name:'래리 페이지', role:'구글 공동 창업자' },
-    { name:'세르게이 브린', role:'구글 공동 창업자' },
-    { name:'필 나이트', role:'나이키 창업자' }
+    { name:'래리 페이지', role:'구글 공동 창업자', desc:'스탠퍼드 박사 논문 프로젝트로 시작해 세계 최대 검색 엔진 구글을 만들었다.' },
+    { name:'세르게이 브린', role:'구글 공동 창업자', desc:'래리 페이지와 함께 구글을 창업, 인터넷 검색의 역사를 바꾸었다.' },
+    { name:'필 나이트', role:'나이키 창업자', desc:'육상선수 출신으로 스와시 로고 하나로 스포츠 제국을 건설한 기업인.' }
   ],
   'Harvard University': [
-    { name:'버락 오바마', role:'미국 제44대 대통령' },
-    { name:'나탈리 포트만', role:'아카데미 수상 배우' },
-    { name:'마크 저커버그', role:'메타 창업자 (중퇴)' }
+    { name:'버락 오바마', role:'미국 제44대 대통령', desc:'하버드 로스쿨 출신으로 미국 최초의 아프리카계 대통령이 되었다.' },
+    { name:'나탈리 포트만', role:'아카데미 수상 배우', desc:'블랙 스완으로 아카데미 여우주연상을 받은 배우이자 신경과학 연구자.' },
+    { name:'마크 저커버그', role:'메타 창업자 (중퇴)', desc:'기숙사 방에서 SNS를 만들어 전 세계 30억 명을 연결한 소셜미디어의 선구자.' }
   ],
   'University of Oxford': [
-    { name:'J.R.R. 톨킨', role:'반지의 제왕 저자' },
-    { name:'오스카 와일드', role:'극작가·소설가' },
-    { name:'스티븐 호킹', role:'이론물리학의 전설' }
+    { name:'J.R.R. 톨킨', role:'반지의 제왕 저자', desc:'영문학 교수이자 판타지 문학의 아버지. 중간계라는 방대한 세계를 창조했다.' },
+    { name:'오스카 와일드', role:'극작가·소설가', desc:'재치와 역설의 문장으로 빅토리아 시대를 풍자한 아일랜드 출신 천재 작가.' },
+    { name:'스티븐 호킹', role:'이론물리학의 전설', desc:'루게릭병에도 굴하지 않고 블랙홀과 우주론 연구로 시대를 초월한 물리학자.' }
   ],
   'University of Cambridge': [
-    { name:'아이작 뉴턴', role:'만유인력 법칙 발견' },
-    { name:'찰스 다윈', role:'진화론 창시자' },
-    { name:'앨런 튜링', role:'컴퓨터 과학의 아버지' }
+    { name:'아이작 뉴턴', role:'만유인력 법칙 발견', desc:'사과 한 알로 중력을 발견했다는 전설. 근대 물리학과 수학의 기틀을 세웠다.' },
+    { name:'찰스 다윈', role:'진화론 창시자', desc:'비글호 항해 끝에 자연선택설을 완성, 인류가 세계를 바라보는 방식을 바꾸었다.' },
+    { name:'앨런 튜링', role:'컴퓨터 과학의 아버지', desc:'2차 세계대전 중 에니그마 암호를 해독하고 현대 컴퓨터의 이론적 기초를 닦았다.' }
   ],
   'Princeton University': [
-    { name:'제프 베이조스', role:'아마존 창업자' },
-    { name:'리처드 파인만', role:'노벨 물리학상 수상자' },
-    { name:'토니 모리슨', role:'노벨 문학상 수상 작가' }
+    { name:'제프 베이조스', role:'아마존 창업자', desc:'차고에서 온라인 서점으로 시작해 전 세계 물류·클라우드 시장을 지배하는 기업인.' },
+    { name:'리처드 파인만', role:'노벨 물리학상 수상자', desc:'양자전기역학을 완성하고 과학을 유머로 설명하는 재능을 가진 천재 물리학자.' },
+    { name:'토니 모리슨', role:'노벨 문학상 수상 작가', desc:'빌러비드로 퓰리처상과 노벨 문학상을 받은 미국 흑인 문학의 정점.' }
   ],
   'Yale University': [
-    { name:'힐러리 클린턴', role:'前 미국 국무장관' },
-    { name:'머릴 스트립', role:'아카데미 최다 수상 배우' },
-    { name:'폴 크루그먼', role:'노벨 경제학상 수상자' }
+    { name:'힐러리 클린턴', role:'前 미국 국무장관', desc:'법학 박사 출신으로 상원의원·국무장관을 거쳐 미국 첫 여성 대통령 후보가 된 정치인.' },
+    { name:'머릴 스트립', role:'아카데미 최다 수상 배우', desc:'아카데미 3회 수상의 전설. 수십 년간 할리우드 최고의 연기파 배우로 군림하고 있다.' },
+    { name:'폴 크루그먼', role:'노벨 경제학상 수상자', desc:'국제무역과 경제지리학 이론으로 2008년 노벨 경제학상을 받은 석학.' }
   ],
   'Columbia University': [
-    { name:'버락 오바마', role:'정치학 학부 졸업' },
-    { name:'워런 버핏', role:'투자의 전설' },
-    { name:'루 리드', role:'벨벳 언더그라운드 뮤지션' }
+    { name:'버락 오바마', role:'정치학 학부 졸업', desc:'하버드 로스쿨 출신으로 미국 최초의 아프리카계 대통령이 되었다.' },
+    { name:'워런 버핏', role:'투자의 전설', desc:'벤저민 그레이엄의 가르침을 받아 가치투자의 철학을 완성한 역사상 최고의 투자자.' },
+    { name:'루 리드', role:'벨벳 언더그라운드 뮤지션', desc:'뉴욕 언더그라운드 록의 대부. 그의 음악은 펑크와 아트록의 씨앗이 되었다.' }
   ],
   'University of Pennsylvania': [
-    { name:'일론 머스크', role:'테슬라·스페이스X CEO' },
-    { name:'도널드 트럼프', role:'미국 대통령' },
-    { name:'워런 버핏', role:'와튼스쿨 수료' }
+    { name:'일론 머스크', role:'테슬라·스페이스X CEO', desc:'전기차와 우주여행으로 인류의 미래를 바꾸고 있는 현시대 가장 논쟁적인 기업인.' },
+    { name:'도널드 트럼프', role:'미국 대통령', desc:'와튼스쿨 출신의 부동산 재벌. 미국 정치판을 뒤흔든 제45·47대 대통령.' },
+    { name:'워런 버핏', role:'와튼스쿨 수료', desc:'벤저민 그레이엄의 가르침을 받아 가치투자의 철학을 완성한 역사상 최고의 투자자.' }
   ],
   'Cornell University': [
-    { name:'빌 나이', role:'사이언스 가이' },
-    { name:'루스 베이더 긴즈버그', role:'연방 대법관' },
-    { name:'칼 세이건', role:'코스모스 저자, 천문학자' }
+    { name:'빌 나이', role:'사이언스 가이', desc:'기계공학 학위를 살려 TV로 과학을 대중화한 사이언스 가이. 미국 청소년의 우상.' },
+    { name:'루스 베이더 긴즈버그', role:'연방 대법관', desc:'여성과 소수자 권리를 위해 평생 싸운 미국 연방대법원의 전설적 진보 대법관.' },
+    { name:'칼 세이건', role:'코스모스 저자, 천문학자', desc:'코스모스 시리즈로 수십억 명에게 우주의 경이로움을 전한 천문학자이자 작가.' }
   ],
   'California Institute of Technology': [
-    { name:'리누스 폴링', role:'노벨화학상+평화상 2회 수상' },
-    { name:'고든 무어', role:'인텔 공동 창업자' },
-    { name:'프랭크 말리나', role:'JPL 창설자' }
+    { name:'리누스 폴링', role:'노벨화학상+평화상 2회 수상', desc:'화학결합 이론을 정립하고 핵실험 반대 운동으로 노벨상을 두 번 받은 전설적 과학자.' },
+    { name:'고든 무어', role:'인텔 공동 창업자', desc:'무어의 법칙을 제시하고 인텔을 공동 창업해 반도체 시대를 열었다.' },
+    { name:'프랭크 말리나', role:'JPL 창설자', desc:'NASA 제트추진연구소(JPL)를 창설해 현대 우주탐사의 초석을 놓은 공학자.' }
   ],
   'ETH Zurich': [
-    { name:'알버트 아인슈타인', role:'상대성 이론 (졸업생)' },
-    { name:'빌헬름 뢴트겐', role:'X선 발견, 노벨 물리학상' },
-    { name:'존 폰 노이만', role:'컴퓨터 구조 설계자' }
+    { name:'알버트 아인슈타인', role:'상대성 이론 (졸업생)', desc:'E=mc²로 대표되는 상대성 이론으로 현대 물리학의 패러다임을 완전히 바꾼 천재.' },
+    { name:'빌헬름 뢴트겐', role:'X선 발견, 노벨 물리학상', desc:'인체를 꿰뚫어 보는 X선을 발견, 의학과 물리학 역사를 동시에 바꾼 과학자.' },
+    { name:'존 폰 노이만', role:'컴퓨터 구조 설계자', desc:'현대 컴퓨터의 기본 구조인 폰 노이만 아키텍처를 설계한 20세기 최고의 수학자.' }
   ],
   'Imperial College London': [
-    { name:'브라이언 메이', role:'퀸 기타리스트·물리학 박사' },
-    { name:'알렉산더 플레밍', role:'페니실린 발견' },
-    { name:'H.G. 웰스', role:'공상과학 소설의 아버지' }
+    { name:'브라이언 메이', role:'퀸 기타리스트·물리학 박사', desc:'록 밴드 퀸의 기타리스트이자 임페리얼 칼리지에서 물리학 박사를 취득한 이중 천재.' },
+    { name:'알렉산더 플레밍', role:'페니실린 발견', desc:'실험실 실수에서 발견한 페니실린으로 수천만 명의 목숨을 구한 의학의 혁명가.' },
+    { name:'H.G. 웰스', role:'공상과학 소설의 아버지', desc:'타임머신·우주전쟁 등으로 SF 장르를 창시한 영국의 천재 작가.' }
   ],
   'University College London': [
-    { name:'마하트마 간디', role:'인도 독립운동 지도자' },
-    { name:'알렉산더 그레이엄 벨', role:'전화 발명가' },
-    { name:'제레미 벤담', role:'공리주의 철학 창시자' }
+    { name:'마하트마 간디', role:'인도 독립운동 지도자', desc:'UCL에서 법학을 공부한 뒤 비폭력 저항으로 인도를 독립으로 이끈 20세기의 성인.' },
+    { name:'알렉산더 그레이엄 벨', role:'전화 발명가', desc:'인류 최초의 전화기를 발명해 세상을 이어준 스코틀랜드 출신 발명가.' },
+    { name:'제레미 벤담', role:'공리주의 철학 창시자', desc:'최대 다수의 최대 행복을 철학의 원리로 삼은 공리주의 창시자. UCL의 정신적 아버지.' }
   ],
   'University of Edinburgh': [
-    { name:'아서 코난 도일', role:'셜록 홈즈 창시자' },
-    { name:'알렉산더 그레이엄 벨', role:'전화 발명가' },
-    { name:'제임스 클러크 맥스웰', role:'전자기학의 아버지' }
+    { name:'아서 코난 도일', role:'셜록 홈즈 창시자', desc:'의학도 출신으로 세계에서 가장 유명한 탐정 셜록 홈즈를 창조한 소설가.' },
+    { name:'알렉산더 그레이엄 벨', role:'전화 발명가', desc:'인류 최초의 전화기를 발명해 세상을 이어준 스코틀랜드 출신 발명가.' },
+    { name:'제임스 클러크 맥스웰', role:'전자기학의 아버지', desc:'빛이 전자기파임을 밝히고 맥스웰 방정식으로 전기·자기를 통일한 역사상 3대 물리학자.' }
   ],
   "King's College London": [
-    { name:'로절린드 프랭클린', role:'DNA 구조 발견의 숨은 주역' },
-    { name:'나이팅게일', role:'근대 간호학의 창시자' },
-    { name:'데스몬드 투투', role:'남아공 노벨평화상 수상자' }
+    { name:'로절린드 프랭클린', role:'DNA 구조 발견의 숨은 주역', desc:'X선 회절 사진으로 DNA 이중나선 구조를 밝혔으나 공로를 빼앗긴 비운의 천재 과학자.' },
+    { name:'나이팅게일', role:'근대 간호학의 창시자', desc:'킹스 칼리지에서 통계학을 배워 전장 의료를 혁신, 근대 간호학의 어머니가 되었다.' },
+    { name:'데스몬드 투투', role:'남아공 노벨평화상 수상자', desc:'인종차별 철폐를 위해 평생 싸운 남아프리카공화국의 성공회 대주교이자 평화 운동가.' }
   ],
   'University of Manchester': [
-    { name:'어니스트 러더퍼드', role:'원자핵 발견' },
-    { name:'앨런 튜링', role:'맨체스터 대학 교수 역임' },
-    { name:'안드레 가임', role:'그래핀 발견, 노벨 물리학상' }
+    { name:'어니스트 러더퍼드', role:'원자핵 발견', desc:'원자핵을 발견하고 핵분열 이론을 제시한 현대 원자물리학의 아버지.' },
+    { name:'앨런 튜링', role:'맨체스터 대학 교수 역임', desc:'2차 세계대전 중 에니그마 암호를 해독하고 현대 컴퓨터의 이론적 기초를 닦았다.' },
+    { name:'안드레 가임', role:'그래핀 발견, 노벨 물리학상', desc:'테이프 한 장으로 그래핀을 분리해 2010년 노벨 물리학상을 받은 맨체스터의 천재.' }
   ],
   'London School of Economics': [
-    { name:'조지 소로스', role:'헤지펀드의 전설' },
-    { name:'믹 재거', role:'롤링스톤스 보컬 (중퇴)' },
-    { name:'피에르 트뤼도', role:'캐나다 전 총리' }
+    { name:'조지 소로스', role:'헤지펀드의 전설', desc:'영국 파운드화를 공격해 10억 달러를 번 헤지펀드의 신화. 오픈 소사이어티 재단 설립자.' },
+    { name:'믹 재거', role:'롤링스톤스 보컬 (중퇴)', desc:'LSE 경영학 수업을 듣다 록 음악의 길을 택한 롤링스톤스 보컬의 전설.' },
+    { name:'피에르 트뤼도', role:'캐나다 전 총리', desc:'LSE에서 경제학을 공부한 캐나다의 카리스마 넘치는 전 총리이자 현 총리의 부친.' }
   ],
   'Technical University of Munich': [
-    { name:'루돌프 디젤', role:'디젤 엔진 발명가' },
-    { name:'칼 라베', role:'BMW 엔진 설계' },
-    { name:'막스 폰 라우에', role:'X선 결정학 노벨상' }
+    { name:'루돌프 디젤', role:'디젤 엔진 발명가', desc:'TUM에서 공부한 뒤 내연기관의 혁명 디젤 엔진을 발명해 산업 역사를 바꾼 공학자.' },
+    { name:'칼 라베', role:'BMW 엔진 설계', desc:'TUM 출신으로 BMW 고성능 엔진 개발을 이끈 독일 자동차 공학의 거장.' },
+    { name:'막스 폰 라우에', role:'X선 결정학 노벨상', desc:'X선이 결정에 의해 회절된다는 것을 발견, 원자 구조 연구의 문을 열었다.' }
   ],
   'Delft University of Technology': [
-    { name:'안토니 판 레이우엔훅', role:'현미경으로 미생물 발견 (동시대)' },
-    { name:'빌럼 에인트호번', role:'심전도 발명, 노벨 의학상' },
-    { name:'요리트 판 덴 베르흐', role:'유럽 항공우주 연구 리더' }
+    { name:'안토니 판 레이우엔훅', role:'현미경으로 미생물 발견 (동시대)', desc:'델프트 출신으로 직접 만든 현미경으로 미생물을 처음 발견한 미생물학의 선구자.' },
+    { name:'빌럼 에인트호번', role:'심전도 발명, 노벨 의학상', desc:'심전도(ECG)를 발명해 심장 진단을 가능케 한 공학자. 1924년 노벨 생리의학상 수상.' },
+    { name:'요리트 판 덴 베르흐', role:'유럽 항공우주 연구 리더', desc:'TU Delft 출신의 항공우주 공학자로 유럽 우주 연구를 이끈 선구적 리더.' }
   ],
   'Seoul National University': [
-    { name:'반기문', role:'전 UN 사무총장' },
-    { name:'황의경', role:'삼성전자 반도체 신화' },
-    { name:'이건희', role:'삼성그룹 회장' }
+    { name:'반기문', role:'전 UN 사무총장', desc:'서울대 외교학과 출신으로 유엔 제8대 사무총장을 지낸 한국 외교의 자랑.' },
+    { name:'황의경', role:'삼성전자 반도체 신화', desc:'서울대 전자공학 출신으로 삼성 반도체 신화 창조에 기여한 핵심 엔지니어.' },
+    { name:'이건희', role:'삼성그룹 회장', desc:'서울대 법학과 출신으로 삼성을 글로벌 초일류 기업으로 도약시킨 경영 천재.' }
   ],
   'Yonsei University': [
-    { name:'윤동주', role:'저항시인, 하늘과 바람과 별과 시' },
-    { name:'김우중', role:'대우그룹 창업자' },
-    { name:'이상화', role:'빙상 올림픽 금메달리스트' }
+    { name:'윤동주', role:'저항시인, 하늘과 바람과 별과 시', desc:'연희전문(현 연세대) 문과를 다닌 저항 시인. 일제 강점기 조국을 향한 그리움을 노래했다.' },
+    { name:'김우중', role:'대우그룹 창업자', desc:'연세대 경제학과 출신. 빈손으로 시작해 대우그룹을 세계적 재벌로 키운 한국 재계의 전설.' },
+    { name:'이상화', role:'빙상 올림픽 금메달리스트', desc:'연세대 체육학과 출신. 2010·2014 동계올림픽 스피드스케이팅 금메달리스트.' }
   ],
   'Korea University': [
-    { name:'김영삼', role:'전 대통령' },
-    { name:'류현진', role:'MLB 선발 투수' },
-    { name:'박찬욱', role:'올드보이 감독' }
+    { name:'김영삼', role:'전 대통령', desc:'고려대 철학과 출신. 민주화 투쟁을 거쳐 한국 제14대 대통령으로 금융실명제를 도입했다.' },
+    { name:'류현진', role:'MLB 선발 투수', desc:'고려대 시절부터 괴물 투수로 불린 한국 야구의 자랑. KBO·MLB에서 모두 정상을 밟았다.' },
+    { name:'박찬욱', role:'올드보이 감독', desc:'고려대 철학과 출신으로 올드보이·헤어질 결심 등으로 칸의 인정을 받은 세계적 영화감독.' }
   ],
   'KAIST': [
-    { name:'이준호', role:'카이스트 AI 혁신 연구' },
-    { name:'박성하', role:'하이닉스 메모리 기술 총괄' },
-    { name:'장병탁', role:'서울대 AI 연구소 (카이스트 출신)' }
+    { name:'이준호', role:'카이스트 AI 혁신 연구', desc:'카이스트 AI 연구소에서 세계 수준의 인공지능 연구를 선도하는 젊은 석학.' },
+    { name:'박성하', role:'하이닉스 메모리 기술 총괄', desc:'카이스트 출신으로 SK하이닉스 메모리 반도체 기술 경쟁력을 이끈 핵심 엔지니어.' },
+    { name:'장병탁', role:'서울대 AI 연구소 (카이스트 출신)', desc:'카이스트 박사 출신으로 서울대 AI 연구소장을 역임한 한국 딥러닝 연구의 선구자.' }
   ],
   'POSTECH': [
-    { name:'권오현', role:'삼성전자 前 CEO' },
-    { name:'고동진', role:'삼성전자 IM부문장' },
-    { name:'이영희', role:'포항공대 출신 재료공학 권위자' }
+    { name:'권오현', role:'삼성전자 前 CEO', desc:'포스텍 출신 엔지니어로 삼성전자 반도체 부문을 세계 1위로 이끈 대한민국 산업의 영웅.' },
+    { name:'고동진', role:'삼성전자 IM부문장', desc:'포스텍 출신으로 갤럭시 스마트폰 신화를 이끈 삼성 모바일 사업의 핵심 리더.' },
+    { name:'이영희', role:'포항공대 출신 재료공학 권위자', desc:'포스텍에서 배출한 재료공학 분야의 국제적 권위자. 신소재 연구로 산업 혁신에 기여했다.' }
   ],
   'National University of Singapore': [
-    { name:'리센룽', role:'싱가포르 총리' },
-    { name:'고촉통', role:'전 싱가포르 총리' },
-    { name:'필리 바라루스', role:'아시아 대표 기업인' }
+    { name:'리센룽', role:'싱가포르 총리', desc:'NUS 수학과 수석 졸업 후 케임브리지까지 거친 싱가포르 제3대 총리이자 리콴유의 아들.' },
+    { name:'고촉통', role:'전 싱가포르 총리', desc:'NUS 경제학 수석 졸업. 싱가포르를 동남아 금융 허브로 도약시킨 제2대 총리.' },
+    { name:'필리 바라루스', role:'아시아 대표 기업인', desc:'NUS 출신으로 아시아 금융·제조업 분야에서 두각을 나타낸 싱가포르의 대표 기업인.' }
   ],
   'Nanyang Technological University': [
-    { name:'탄추루이', role:'싱가포르 대표 기업인' },
-    { name:'테드 림', role:'아시아 AI 스타트업 선구자' },
-    { name:'유안양', role:'싱가포르 기술 혁신 리더' }
+    { name:'탄추루이', role:'싱가포르 대표 기업인', desc:'NTU 공학부 출신으로 싱가포르 제조업과 기술 창업 생태계 형성에 기여한 기업인.' },
+    { name:'테드 림', role:'아시아 AI 스타트업 선구자', desc:'NTU 컴퓨터공학 출신. 동남아 AI 스타트업 씬을 개척한 기술 창업가.' },
+    { name:'유안양', role:'싱가포르 기술 혁신 리더', desc:'NTU 출신으로 싱가포르 스마트네이션 프로젝트를 이끈 정부·산업 융합형 기술 리더.' }
   ],
   'The University of Tokyo': [
-    { name:'아베 신조', role:'일본 역대 최장 재임 총리' },
-    { name:'야마나카 신야', role:'노벨 의학상, iPS세포 발견' },
-    { name:'나쓰메 소세키', role:'나는 고양이로소이다 작가' }
+    { name:'아베 신조', role:'일본 역대 최장 재임 총리', desc:'도쿄대 법학부 출신. 아베노믹스로 일본 경제를 이끈 역사상 가장 오래 재임한 총리.' },
+    { name:'야마나카 신야', role:'노벨 의학상, iPS세포 발견', desc:'피부세포를 줄기세포로 되돌리는 iPS 기술로 재생의학의 혁명을 일으킨 2012 노벨상 수상자.' },
+    { name:'나쓰메 소세키', role:'나는 고양이로소이다 작가', desc:'도쿄대 영문학과 출신. 근대 일본 문학의 아버지로 천엔 지폐 속 인물이기도 하다.' }
   ],
   'Kyoto University': [
-    { name:'야마나카 신야', role:'노벨 의학상 교수' },
-    { name:'후쿠이 겐이치', role:'노벨 화학상 수상자' },
-    { name:'가와바타 야스나리', role:'노벨 문학상 수상 작가' }
+    { name:'야마나카 신야', role:'노벨 의학상 교수', desc:'피부세포를 줄기세포로 되돌리는 iPS 기술로 재생의학의 혁명을 일으킨 2012 노벨상 수상자.' },
+    { name:'후쿠이 겐이치', role:'노벨 화학상 수상자', desc:'프론티어 궤도 이론으로 화학반응 원리를 설명, 일본 최초의 노벨 화학상을 받은 화학자.' },
+    { name:'가와바타 야스나리', role:'노벨 문학상 수상 작가', desc:'설국·천우학 등으로 일본 고유의 미의식을 세계에 알린 아시아 최초 노벨 문학상 수상자.' }
   ],
   'University of Melbourne': [
-    { name:'루퍼트 머독', role:'미디어 제국 뉴스코프 창업자' },
-    { name:'그레이엄 클라크', role:'인공 와우 발명가' },
-    { name:'쥴리아 길라드', role:'호주 첫 여성 총리' }
+    { name:'루퍼트 머독', role:'미디어 제국 뉴스코프 창업자', desc:'멜버른대 출신으로 폭스뉴스·월스트리트저널 등 미디어 제국 뉴스코프를 건설한 언론 황제.' },
+    { name:'그레이엄 클라크', role:'인공 와우 발명가', desc:'청각장애인에게 소리를 선물한 인공 달팽이관(코클리어 임플란트)을 발명한 의학 혁신가.' },
+    { name:'쥴리아 길라드', role:'호주 첫 여성 총리', desc:'멜버른대 법학과 출신으로 호주 역사상 첫 번째 여성 총리가 된 정치 선구자.' }
   ],
   'University of Sydney': [
-    { name:'크리스 헴스워스', role:'마블 토르 배우' },
-    { name:'사이먼 베이커', role:'멘탈리스트 배우' },
-    { name:'앤 해서웨이', role:'오스카 수상 배우 (교환학생)' }
+    { name:'크리스 헴스워스', role:'마블 토르 배우', desc:'시드니대에서 공연예술을 공부한 뒤 마블 히어로 토르로 세계적인 배우가 되었다.' },
+    { name:'사이먼 베이커', role:'멘탈리스트 배우', desc:'시드니 출신 배우로 미국 드라마 멘탈리스트에서 천재 심리 전문가로 세계적 인기를 끌었다.' },
+    { name:'앤 해서웨이', role:'오스카 수상 배우 (교환학생)', desc:'레미제라블 등으로 아카데미 여우조연상을 받은 할리우드 톱스타.' }
   ],
   'McGill University': [
-    { name:'윌리엄 오슬러', role:'근대 의학의 아버지' },
-    { name:'레너드 코헨', role:'할렐루야 싱어송라이터' },
-    { name:'서마 하영', role:'노벨 물리학상 수상자' }
+    { name:'윌리엄 오슬러', role:'근대 의학의 아버지', desc:'맥길 출신으로 의학 교육 체계를 혁신해 근대 의학의 아버지라는 칭호를 얻은 의사.' },
+    { name:'레너드 코헨', role:'할렐루야 싱어송라이터', desc:'맥길대 영문학 출신으로 할렐루야·Suzanne 등 불멸의 명곡을 남긴 싱어송라이터이자 시인.' },
+    { name:'서마 하영', role:'노벨 물리학상 수상자', desc:'맥길 물리학과 출신으로 소립자 물리학 연구에서 탁월한 업적을 남긴 노벨상 수상자.' }
   ],
   'Peking University': [
-    { name:'루쉰', role:'아Q정전, 중국 현대문학의 아버지' },
-    { name:'마오쩌둥', role:'도서관 직원으로 근무, 영향 받음' },
-    { name:'천두슈', role:'중국공산당 초대 총서기' }
+    { name:'루쉰', role:'아Q정전, 중국 현대문학의 아버지', desc:'북경대 교수를 지낸 중국 현대문학의 아버지. 아Q정전으로 민족의 자아를 깨우쳤다.' },
+    { name:'마오쩌둥', role:'도서관 직원으로 근무, 영향 받음', desc:'북경대 도서관 조수로 일하며 마르크스주의를 접하고 중국 공산주의 혁명을 이끌었다.' },
+    { name:'천두슈', role:'중국공산당 초대 총서기', desc:'북경대 교수이자 신문화운동 지도자로 중국공산당을 창건한 혁명적 지식인.' }
   ],
   'Tsinghua University': [
-    { name:'시진핑', role:'중국 국가주석' },
-    { name:'양전닝', role:'노벨 물리학상 수상자' },
-    { name:'스티브 첸', role:'유튜브 공동 창업자' }
+    { name:'시진핑', role:'중국 국가주석', desc:'칭화대 화학공학과 출신으로 중국을 이끄는 최고 지도자. 세계에서 가장 영향력 있는 정치인 중 한 명.' },
+    { name:'양전닝', role:'노벨 물리학상 수상자', desc:'칭화대 물리학과 출신으로 패리티 비보존 이론으로 1957년 노벨 물리학상을 받은 이론 물리학자.' },
+    { name:'스티브 첸', role:'유튜브 공동 창업자', desc:'칭화대 출신으로 채드 헐리와 함께 유튜브를 공동 창업해 동영상 시대를 열었다.' }
   ],
   'PSL – Paris Sciences et Lettres': [
-    { name:'루이 파스퇴르', role:'저온살균법 발명, 세균학의 아버지' },
-    { name:'마리 퀴리', role:'노벨상 2회 수상자' },
-    { name:'장폴 사르트르', role:'실존주의 철학자' }
+    { name:'루이 파스퇴르', role:'저온살균법 발명, 세균학의 아버지', desc:'고온살균법으로 인류를 전염병에서 구해낸 세균학의 아버지. 파스퇴르 연구소를 창설했다.' },
+    { name:'마리 퀴리', role:'노벨상 2회 수상자', desc:'물리학·화학 노벨상을 모두 받은 유일한 인물. 방사성 원소 라듐과 폴로늄을 발견했다.' },
+    { name:'장폴 사르트르', role:'실존주의 철학자', desc:'실존은 본질에 앞선다는 명언으로 20세기 철학을 이끈 실존주의의 대가이자 노벨 문학상 거부자.' }
   ],
   'KAIST Graduate School': [
-    { name:'권오현', role:'삼성전자 前 CEO' },
-    { name:'고동진', role:'삼성전자 IM부문장' },
-    { name:'이영희', role:'포항공대 출신 재료공학 권위자' }
+    { name:'권오현', role:'삼성전자 前 CEO', desc:'포스텍 출신 엔지니어로 삼성전자 반도체 부문을 세계 1위로 이끈 대한민국 산업의 영웅.' },
+    { name:'고동진', role:'삼성전자 IM부문장', desc:'포스텍 출신으로 갤럭시 스마트폰 신화를 이끈 삼성 모바일 사업의 핵심 리더.' },
+    { name:'이영희', role:'포항공대 출신 재료공학 권위자', desc:'포스텍에서 배출한 재료공학 분야의 국제적 권위자. 신소재 연구로 산업 혁신에 기여했다.' }
   ],
   // ── 추가 동문 ─────────────────────────────────────
   'University of Chicago': [
-    { name:'밀턴 프리드먼', role:'노벨 경제학상, 자유시장 경제학' },
-    { name:'칼 세이건', role:'코스모스 저자·천문학자' },
-    { name:'버락 오바마', role:'헌법학 강의, 後 44대 대통령' }
+    { name:'밀턴 프리드먼', role:'노벨 경제학상, 자유시장 경제학', desc:'자유시장 자본주의의 지적 토대를 만든 경제학자. 시카고학파의 상징으로 1976년 노벨상 수상.' },
+    { name:'칼 세이건', role:'코스모스 저자·천문학자', desc:'코스모스 시리즈로 수십억 명에게 우주의 경이로움을 전한 천문학자이자 작가.' },
+    { name:'버락 오바마', role:'헌법학 강의, 後 44대 대통령', desc:'하버드 로스쿨 출신으로 미국 최초의 아프리카계 대통령이 되었다.' }
   ],
   'Duke University': [
-    { name:'팀 쿡', role:'애플 CEO' },
-    { name:'리처드 닉슨', role:'미국 제37대 대통령' },
-    { name:'멜린다 게이츠', role:'빌&멜린다 게이츠 재단 공동 설립자' }
+    { name:'팀 쿡', role:'애플 CEO', desc:'듀크 MBA 출신으로 스티브 잡스의 뒤를 이어 애플을 세계 최고 기업으로 키운 경영자.' },
+    { name:'리처드 닉슨', role:'미국 제37대 대통령', desc:'워터게이트 사건으로 사임한 미국 제37대 대통령. 그러나 중국 수교라는 역사적 외교를 이루었다.' },
+    { name:'멜린다 게이츠', role:'빌&멜린다 게이츠 재단 공동 설립자', desc:'듀크대 CS·경제학 출신으로 세계 최대 자선재단을 이끌며 글로벌 보건 향상에 기여하고 있다.' }
   ],
   'Northwestern University': [
-    { name:'스티븐 콜베어', role:'코미디언·TV 진행자' },
-    { name:'샐마 블레어', role:'할리우드 배우' },
-    { name:'샤를로트 퍼킨스 길먼', role:'여성주의 작가' }
+    { name:'스티븐 콜베어', role:'코미디언·TV 진행자', desc:'노스웨스턴 연기학과 출신으로 CBS 레이트 쇼 진행자가 된 미국 최고의 정치 풍자 코미디언.' },
+    { name:'샐마 블레어', role:'할리우드 배우', desc:'노스웨스턴 출신 배우로 크루얼 인텐션스 등으로 2000년대를 대표하는 할리우드 배우가 됐다.' },
+    { name:'샤를로트 퍼킨스 길먼', role:'여성주의 작가', desc:'노란 벽지 등을 통해 여성의 억압을 고발한 미국 페미니즘 문학의 선구자.' }
   ],
   'Carnegie Mellon University': [
-    { name:'앤디 워홀', role:'팝아트의 아이콘' },
-    { name:'존 포브스 내쉬', role:'게임이론, 노벨 경제학상' },
-    { name:'랜디 포시', role:'마지막 강의 저자, 교수' }
+    { name:'앤디 워홀', role:'팝아트의 아이콘', desc:'카네기멜론 디자인학과 출신으로 캠벨 수프 캔을 예술로 만든 팝아트의 황제.' },
+    { name:'존 포브스 내쉬', role:'게임이론, 노벨 경제학상', desc:'뷰티풀 마인드의 실제 주인공. 수학적 게임이론을 완성해 1994년 노벨 경제학상을 수상했다.' },
+    { name:'랜디 포시', role:'마지막 강의 저자, 교수', desc:'마지막 강의로 전 세계인에게 삶과 꿈의 소중함을 가르쳐 준 카네기멜론 교수.' }
   ],
   'New York University': [
-    { name:'우디 앨런', role:'아카데미 감독상 수상자' },
-    { name:'마틴 스코세이지', role:'갱스 오브 뉴욕 감독' },
-    { name:'앤절라 데이비스', role:'사회운동가·철학자' }
+    { name:'우디 앨런', role:'아카데미 감독상 수상자', desc:'매년 한 편의 영화를 만들어온 뉴욕 출신 천재 감독. 아카데미 감독상을 세 번 받았다.' },
+    { name:'마틴 스코세이지', role:'갱스 오브 뉴욕 감독', desc:'NYU 영화학과 출신으로 택시 드라이버·굿펠라스 등 미국 영화의 경전을 만든 거장.' },
+    { name:'앤절라 데이비스', role:'사회운동가·철학자', desc:'공산주의 철학자이자 흑인 인권운동가. 미국 사회운동의 아이콘이 된 학자.' }
   ],
   'Brown University': [
-    { name:'에마 왓슨', role:'해리포터 헤르미온느 배우' },
-    { name:'존 F. 케네디 주니어', role:'前 퍼스트 선' },
-    { name:'테드 터너', role:'CNN 창업자' }
+    { name:'에마 왓슨', role:'해리포터 헤르미온느 배우', desc:'해리포터 헤르미온느로 유명세를 얻은 뒤 브라운대에서 영문학을 공부한 지성파 배우.' },
+    { name:'존 F. 케네디 주니어', role:'前 퍼스트 선', desc:'미국의 왕자로 불린 JFK의 아들. 법조인이 되어 잡지 조지를 창간했다.' },
+    { name:'테드 터너', role:'CNN 창업자', desc:'CNN을 창업해 24시간 뉴스 방송의 시대를 연 미디어 혁신가.' }
   ],
   'University of Michigan': [
-    { name:'제럴드 포드', role:'미국 제38대 대통령' },
-    { name:'아서 밀러', role:'세일즈맨의 죽음 극작가' },
-    { name:'래리 페이지', role:'구글 공동창업자 (석사)' }
+    { name:'제럴드 포드', role:'미국 제38대 대통령', desc:'미시건대 출신으로 워터게이트 사태 후 닉슨을 사면한 미국 제38대 대통령.' },
+    { name:'아서 밀러', role:'세일즈맨의 죽음 극작가', desc:'세일즈맨의 죽음으로 퓰리처상을 받은 20세기 미국 최고의 극작가.' },
+    { name:'래리 페이지', role:'구글 공동창업자 (석사)', desc:'스탠퍼드 박사 논문 프로젝트로 시작해 세계 최대 검색 엔진 구글을 만들었다.' }
   ],
   'University of British Columbia': [
-    { name:'트뤼도 전 총리', role:'캐나다 총리' },
-    { name:'린다 불', role:'바이오테크 혁신가' },
-    { name:'짐 피터슨', role:'BC주지사 역임' }
+    { name:'트뤼도 전 총리', role:'캐나다 총리', desc:'UBC 출신으로 캐나다의 다문화주의와 진보 정치를 상징하는 전 총리.' },
+    { name:'린다 불', role:'바이오테크 혁신가', desc:'UBC 출신으로 바이오테크 분야에서 새로운 길을 개척한 캐나다의 혁신 기업인.' },
+    { name:'짐 피터슨', role:'BC주지사 역임', desc:'UBC 출신으로 BC주지사를 역임하며 캐나다 서부 발전을 이끈 정치인.' }
   ],
   'Australian National University': [
-    { name:'맬컴 턴불', role:'호주 전 총리' },
-    { name:'존 하워드', role:'호주 전 총리' },
-    { name:'브라이언 슈미트', role:'노벨 물리학상, 우주 팽창 발견' }
+    { name:'맬컴 턴불', role:'호주 전 총리', desc:'ANU 출신으로 자유무역과 기술 혁신을 주도한 호주 제29대 총리.' },
+    { name:'존 하워드', role:'호주 전 총리', desc:'ANU 출신으로 11년간 호주를 이끈 최장수 총리 중 한 명.' },
+    { name:'브라이언 슈미트', role:'노벨 물리학상, 우주 팽창 발견', desc:'ANU 교수로 재직 중 우주 가속 팽창을 발견해 2011년 노벨 물리학상을 받았다.' }
   ],
   'University of Melbourne': [
-    { name:'루퍼트 머독', role:'미디어 제국 뉴스코프 창업자' },
-    { name:'그레이엄 클라크', role:'인공 와우 발명가' },
-    { name:'줄리아 길라드', role:'호주 첫 여성 총리' }
+    { name:'루퍼트 머독', role:'미디어 제국 뉴스코프 창업자', desc:'멜버른대 출신으로 폭스뉴스·월스트리트저널 등 미디어 제국 뉴스코프를 건설한 언론 황제.' },
+    { name:'그레이엄 클라크', role:'인공 와우 발명가', desc:'청각장애인에게 소리를 선물한 인공 달팽이관(코클리어 임플란트)을 발명한 의학 혁신가.' },
+    { name:'줄리아 길라드', role:'호주 첫 여성 총리', desc:'멜버른대 법학과 출신으로 호주 역사상 첫 번째 여성 총리가 된 정치 선구자.' }
   ],
   'Kyoto University': [
-    { name:'야마나카 신야', role:'노벨 의학상, iPS세포 발견' },
-    { name:'후쿠이 겐이치', role:'노벨 화학상 수상자' },
-    { name:'가와바타 야스나리', role:'노벨 문학상 수상 작가' }
+    { name:'야마나카 신야', role:'노벨 의학상, iPS세포 발견', desc:'피부세포를 줄기세포로 되돌리는 iPS 기술로 재생의학의 혁명을 일으킨 2012 노벨상 수상자.' },
+    { name:'후쿠이 겐이치', role:'노벨 화학상 수상자', desc:'프론티어 궤도 이론으로 화학반응 원리를 설명, 일본 최초의 노벨 화학상을 받은 화학자.' },
+    { name:'가와바타 야스나리', role:'노벨 문학상 수상 작가', desc:'설국·천우학 등으로 일본 고유의 미의식을 세계에 알린 아시아 최초 노벨 문학상 수상자.' }
   ],
   'Osaka University': [
-    { name:'지로 가와구치', role:'노벨 화학상 수상자' },
-    { name:'마나베 슈쿠로', role:'노벨 물리학상 수상자' },
-    { name:'마쓰시타 고노스케', role:'파나소닉 창업자' }
+    { name:'지로 가와구치', role:'노벨 화학상 수상자', desc:'오사카대 출신으로 유기화학 분야에서 노벨 화학상을 받은 일본 화학계의 거장.' },
+    { name:'마나베 슈쿠로', role:'노벨 물리학상 수상자', desc:'기후 모델링 연구로 지구 온난화 예측의 기초를 만들어 노벨 물리학상을 수상했다.' },
+    { name:'마쓰시타 고노스케', role:'파나소닉 창업자', desc:'파나소닉을 창업해 일본 전자산업을 세계무대에 올린 경영의 신.' }
   ],
   'Ludwig-Maximilians-Universität München': [
-    { name:'막스 플랑크', role:'양자역학의 아버지' },
-    { name:'소피 숄', role:'백장미단 저항운동가' },
-    { name:'빌헬름 뢴트겐', role:'X선 발견, 노벨 물리학상' }
+    { name:'막스 플랑크', role:'양자역학의 아버지', desc:'에너지 양자 개념을 도입해 양자역학의 문을 연 독일 물리학의 거장.' },
+    { name:'소피 숄', role:'백장미단 저항운동가', desc:'나치에 저항한 백장미단의 지도자. 자유와 양심을 위해 목숨을 바친 20대 대학생.' },
+    { name:'빌헬름 뢴트겐', role:'X선 발견, 노벨 물리학상', desc:'인체를 꿰뚫어 보는 X선을 발견, 의학과 물리학 역사를 동시에 바꾼 과학자.' }
   ],
   'KU Leuven': [
-    { name:'게라르두스 메르카토르', role:'세계지도 투영법 창안' },
-    { name:'안드레아스 베살리우스', role:'근대 해부학의 아버지' },
-    { name:'헤노르흐 판 헤르시노', role:'유럽 법학 권위자' }
+    { name:'게라르두스 메르카토르', role:'세계지도 투영법 창안', desc:'KU 루뱅 출신으로 오늘날까지 쓰이는 메르카토르 도법 세계지도를 창안했다.' },
+    { name:'안드레아스 베살리우스', role:'근대 해부학의 아버지', desc:'KU 루뱅에서 의학을 공부한 뒤 인체를 직접 해부해 근대 해부학의 기초를 닦았다.' },
+    { name:'헤노르흐 판 헤르시노', role:'유럽 법학 권위자', desc:'KU 루뱅 출신으로 유럽 법학과 국제법 분야에서 권위 있는 학자.' }
   ],
   'University of Amsterdam': [
-    { name:'스피노자', role:'철학자 (인근 학파 영향)' },
-    { name:'얀 팅베르겐', role:'최초 노벨 경제학상 수상자' },
-    { name:'맥스 유웰', role:'핵물리학 선구자' }
+    { name:'스피노자', role:'철학자 (인근 학파 영향)', desc:'암스테르담 출신으로 신과 자연을 동일시한 범신론 철학으로 근대 철학의 길을 열었다.' },
+    { name:'얀 팅베르겐', role:'최초 노벨 경제학상 수상자', desc:'최초의 노벨 경제학상을 수상한 네덜란드 출신 계량경제학의 창시자.' },
+    { name:'맥스 유웰', role:'핵물리학 선구자', desc:'핵물리학 연구 분야에서 선구적 업적을 남긴 암스테르담 출신 과학자.' }
   ],
   'University of Copenhagen': [
-    { name:'닐스 보어', role:'원자모델 발견, 노벨 물리학상' },
-    { name:'쇠렌 키르케고르', role:'실존주의 철학의 아버지' },
-    { name:'하닝 망누스 옌센', role:'노벨 화학상 수상자' }
+    { name:'닐스 보어', role:'원자모델 발견, 노벨 물리학상', desc:'원자 모델을 제시해 양자역학의 기초를 세운 덴마크 출신 물리학자. 1922년 노벨상 수상.' },
+    { name:'쇠렌 키르케고르', role:'실존주의 철학의 아버지', desc:'인간의 실존적 불안을 탐구한 실존주의 철학의 아버지이자 덴마크의 국민 철학자.' },
+    { name:'하닝 망누스 옌센', role:'노벨 화학상 수상자', desc:'코펜하겐대 출신으로 화학 연구에서 탁월한 업적을 남긴 노벨 화학상 수상자.' }
   ],
   'Lund University': [
-    { name:'칼 폰 린네', role:'생물 분류체계 창시자' },
-    { name:'알프레드 노벨', role:'노벨상 창시자' },
-    { name:'고스타 에크만', role:'스웨덴 영화계의 거장' }
+    { name:'칼 폰 린네', role:'생물 분류체계 창시자', desc:'모든 생물에 학명을 부여하는 이명법을 창안한 생물 분류학의 아버지.' },
+    { name:'알프레드 노벨', role:'노벨상 창시자', desc:'다이너마이트를 발명한 뒤 노벨상을 만들어 인류 역사에 영원히 이름을 남겼다.' },
+    { name:'고스타 에크만', role:'스웨덴 영화계의 거장', desc:'스웨덴 영화와 연극계를 이끈 배우이자 감독으로 스칸디나비아 문화를 세계에 알렸다.' }
   ],
   'Sorbonne Université': [
-    { name:'마리 퀴리', role:'노벨상 2회 수상자' },
-    { name:'르네 데카르트', role:'나는 생각한다, 고로 존재한다' },
-    { name:'시몬 드 보부아르', role:'페미니즘의 어머니' }
+    { name:'마리 퀴리', role:'노벨상 2회 수상자', desc:'물리학·화학 노벨상을 모두 받은 유일한 인물. 방사성 원소 라듐과 폴로늄을 발견했다.' },
+    { name:'르네 데카르트', role:'나는 생각한다, 고로 존재한다', desc:'나는 생각한다, 고로 존재한다는 명언으로 근대 철학의 출발점을 만든 수학자이자 철학자.' },
+    { name:'시몬 드 보부아르', role:'페미니즘의 어머니', desc:'제2의 성으로 현대 페미니즘의 이론적 기반을 마련한 실존주의 작가.' }
   ],
   'Durham University': [
-    { name:'줄리안 오피', role:'팝아트 아티스트' },
-    { name:'앤드루 마', role:'BBC 저널리스트' },
-    { name:'토니 블레어', role:'영국 前 총리' }
+    { name:'줄리안 오피', role:'팝아트 아티스트', desc:'더럼대 출신으로 단순화된 초상화 스타일로 세계적으로 인정받은 영국 팝아트 아티스트.' },
+    { name:'앤드루 마', role:'BBC 저널리스트', desc:'더럼대 출신의 BBC 정치 저널리스트이자 앵커. 영국 시사 방송의 상징적 인물.' },
+    { name:'토니 블레어', role:'영국 前 총리', desc:'더럼대 법학 출신으로 신노동당을 이끌며 영국 제71대 총리를 지낸 정치인.' }
   ],
   'University of Glasgow': [
-    { name:'애덤 스미스', role:'국부론, 경제학의 아버지' },
-    { name:'제임스 와트', role:'증기기관 개량자' },
-    { name:'케빈 맥클라우드', role:'영국 건축 방송인' }
+    { name:'애덤 스미스', role:'국부론, 경제학의 아버지', desc:'국부론으로 자유 시장 경제학의 기초를 세운 글래스고 출신 경제학의 아버지.' },
+    { name:'제임스 와트', role:'증기기관 개량자', desc:'글래스고대 수리공으로 일하며 증기기관을 개량해 산업혁명의 불씨를 지핀 발명가.' },
+    { name:'케빈 맥클라우드', role:'영국 건축 방송인', desc:'영국 건축과 인테리어 방송의 대가. 그랜드 디자인으로 수백만 시청자를 매혹했다.' }
   ],
   'Trinity College Dublin': [
-    { name:'오스카 와일드', role:'도리언 그레이의 초상 저자' },
-    { name:'사뮈엘 베케트', role:'고도를 기다리며, 노벨 문학상' },
-    { name:'브램 스토커', role:'드라큘라 저자' }
+    { name:'오스카 와일드', role:'도리언 그레이의 초상 저자', desc:'재치와 역설의 문장으로 빅토리아 시대를 풍자한 아일랜드 출신 천재 작가.' },
+    { name:'사뮈엘 베케트', role:'고도를 기다리며, 노벨 문학상', desc:'고도를 기다리며로 부조리극의 새 지평을 열고 1969년 노벨 문학상을 받은 극작가.' },
+    { name:'브램 스토커', role:'드라큘라 저자', desc:'트리니티 출신으로 불멸의 흡혈귀 드라큘라 백작을 창조해 공포 문학의 고전을 남겼다.' }
   ],
   'Georgia Institute of Technology': [
-    { name:'지미 카터', role:'미국 제39대 대통령' },
-    { name:'루이스 바켈란드', role:'플라스틱(베이클라이트) 발명' },
-    { name:'제프 호킨스', role:'팜파일럿 발명가' }
+    { name:'지미 카터', role:'미국 제39대 대통령', desc:'조지아텍 해군 공학 출신으로 노벨 평화상을 받은 미국 제39대 대통령.' },
+    { name:'루이스 바켈란드', role:'플라스틱(베이클라이트) 발명', desc:'베이클라이트를 발명해 현대 플라스틱 산업의 문을 연 벨기에 출신 화학자.' },
+    { name:'제프 호킨스', role:'팜파일럿 발명가', desc:'팜파일럿을 발명하고 기억-예측 프레임워크 이론으로 AI 연구에도 기여한 기업인.' }
   ],
   'University of Texas at Austin': [
-    { name:'마이클 델', role:'델 컴퓨터 창업자' },
-    { name:'로저 클레멘스', role:'메이저리그 전설 투수' },
-    { name:'조이스 캐롤 오츠', role:'퓰리처상 소설가' }
+    { name:'마이클 델', role:'델 컴퓨터 창업자', desc:'UT 오스틴 기숙사에서 PC 조립으로 시작해 델 컴퓨터를 세계적 기업으로 키운 창업가.' },
+    { name:'로저 클레멘스', role:'메이저리그 전설 투수', desc:'사이영상 7회 수상에 빛나는 메이저리그 역대 최고 투수 중 한 명.' },
+    { name:'조이스 캐롤 오츠', role:'퓰리처상 소설가', desc:'50년 넘게 미국 문학의 정상을 지켜온 다산의 소설가이자 퓰리처상 후보.' }
   ],
   'The University of Texas at Austin': [
-    { name:'마이클 델', role:'델 컴퓨터 창업자' },
+    { name:'마이클 델', role:'델 컴퓨터 창업자', desc:'UT 오스틴 기숙사에서 PC 조립으로 시작해 델 컴퓨터를 세계적 기업으로 키운 창업가.' },
     { name:'마리아 운더그라운드', role:'실리콘밸리 여성 CEO 선구자' },
     { name:'케빈 맥브라이드', role:'유명 건축가' }
   ],
   'University of Illinois Urbana-Champaign': [
-    { name:'마크 저커버그', role:'페이스북 개발 영감 (UIUC 연구 기반)' },
+    { name:'마크 저커버그', role:'페이스북 개발 영감 (UIUC 연구 기반)', desc:'기숙사 방에서 SNS를 만들어 전 세계 30억 명을 연결한 소셜미디어의 선구자.' },
     { name:'유저넷', role:'인터넷 초기 뉴스그룹 발명지' },
-    { name:'마크 앤드리슨', role:'모자이크/넷스케이프 브라우저 발명' }
+    { name:'마크 앤드리슨', role:'모자이크/넷스케이프 브라우저 발명', desc:'모자이크 브라우저를 만들어 인터넷을 대중에게 열어준 뒤 실리콘밸리의 투자 거물이 됐다.' }
   ],
   'Boston University': [
-    { name:'마틴 루터 킹', role:'나에게는 꿈이 있습니다, 박사학위' },
-    { name:'알렉산더 그레이엄 벨', role:'전화 발명가' },
+    { name:'마틴 루터 킹', role:'나에게는 꿈이 있습니다, 박사학위', desc:'보스턴대에서 신학 박사를 받고 나에게는 꿈이 있습니다 연설로 미국 역사를 바꾼 인권 운동가.' },
+    { name:'알렉산더 그레이엄 벨', role:'전화 발명가', desc:'인류 최초의 전화기를 발명해 세상을 이어준 스코틀랜드 출신 발명가.' },
     { name:'에리카 알버트', role:'보스턴 여성 기업인 선구자' }
   ],
   'University of Washington': [
-    { name:'빌 게이츠', role:'마이크로소프트 창업자 (중퇴)' },
-    { name:'지미 헨드릭스', role:'록의 신, 기타 레전드' },
-    { name:'케니 로저스', role:'컨트리 뮤직의 전설' }
+    { name:'빌 게이츠', role:'마이크로소프트 창업자 (중퇴)', desc:'워싱턴대 중퇴 후 마이크로소프트를 창업해 PC 시대를 열고 세계 최고의 자선가가 된 기업인.' },
+    { name:'지미 헨드릭스', role:'록의 신, 기타 레전드', desc:'독학으로 기타를 마스터해 록 음악의 역사를 바꾼 시애틀 출신 기타의 신.' },
+    { name:'케니 로저스', role:'컨트리 뮤직의 전설', desc:'에모리대 출신의 컨트리 팝 가수. The Gambler 등으로 수십 년간 전 세계 팬을 매혹했다.' }
   ],
   'Fudan University': [
     { name:'첸신', role:'중국 언어학의 아버지' },
     { name:'탄쉐훙', role:'물리화학 선구자' },
-    { name:'야오밍', role:'NBA 스타 (복단 졸업)' }
+    { name:'야오밍', role:'NBA 스타 (복단 졸업)', desc:'복단대 경영학을 공부한 NBA 역대 최장신 슈퍼스타. 중국 농구의 상징.' }
   ],
   'Shanghai Jiao Tong University': [
-    { name:'장쩌민', role:'前 중국 국가주석' },
+    { name:'장쩌민', role:'前 중국 국가주석', desc:'상하이교통대 전기공학 출신으로 덩샤오핑의 후계자로 중국을 이끈 제3대 국가주석.' },
     { name:'왕전이', role:'중국 우주개발의 아버지' },
     { name:'덩샤오핑', role:'실용주의 개혁개방 지도자' }
   ],
   'Peking University': [
-    { name:'루쉰', role:'아Q정전, 중국 현대문학의 아버지' },
-    { name:'마오쩌둥', role:'도서관 직원으로 근무, 영향 받음' },
-    { name:'천두슈', role:'중국공산당 초대 총서기' }
+    { name:'루쉰', role:'아Q정전, 중국 현대문학의 아버지', desc:'북경대 교수를 지낸 중국 현대문학의 아버지. 아Q정전으로 민족의 자아를 깨우쳤다.' },
+    { name:'마오쩌둥', role:'도서관 직원으로 근무, 영향 받음', desc:'북경대 도서관 조수로 일하며 마르크스주의를 접하고 중국 공산주의 혁명을 이끌었다.' },
+    { name:'천두슈', role:'중국공산당 초대 총서기', desc:'북경대 교수이자 신문화운동 지도자로 중국공산당을 창건한 혁명적 지식인.' }
   ],
   'Tsinghua University': [
-    { name:'시진핑', role:'중국 국가주석' },
-    { name:'양전닝', role:'노벨 물리학상 수상자' },
-    { name:'스티브 첸', role:'유튜브 공동 창업자' }
+    { name:'시진핑', role:'중국 국가주석', desc:'칭화대 화학공학과 출신으로 중국을 이끄는 최고 지도자. 세계에서 가장 영향력 있는 정치인 중 한 명.' },
+    { name:'양전닝', role:'노벨 물리학상 수상자', desc:'칭화대 물리학과 출신으로 패리티 비보존 이론으로 1957년 노벨 물리학상을 받은 이론 물리학자.' },
+    { name:'스티브 첸', role:'유튜브 공동 창업자', desc:'칭화대 출신으로 채드 헐리와 함께 유튜브를 공동 창업해 동영상 시대를 열었다.' }
   ],
   'KAIST': [
-    { name:'이준호', role:'카이스트 AI 혁신 연구' },
-    { name:'박성하', role:'SK하이닉스 메모리 기술 총괄' },
-    { name:'장병탁', role:'대한민국 AI 연구의 선구자' }
+    { name:'이준호', role:'카이스트 AI 혁신 연구', desc:'카이스트 AI 연구소에서 세계 수준의 인공지능 연구를 선도하는 젊은 석학.' },
+    { name:'박성하', role:'SK하이닉스 메모리 기술 총괄', desc:'카이스트 출신으로 SK하이닉스 메모리 반도체 기술 경쟁력을 이끈 핵심 엔지니어.' },
+    { name:'장병탁', role:'대한민국 AI 연구의 선구자', desc:'카이스트 박사 출신으로 서울대 AI 연구소장을 역임한 한국 딥러닝 연구의 선구자.' }
   ],
   'University of California, Berkeley': [
-    { name:'스티브 워즈니악', role:'애플 공동 창업자' },
-    { name:'고든 무어', role:'인텔 공동 창업자, 무어의 법칙' },
-    { name:'어니스트 로렌스', role:'사이클로트론 발명, 노벨 물리학상' }
+    { name:'스티브 워즈니악', role:'애플 공동 창업자', desc:'UC 버클리 전자공학 출신으로 애플 컴퓨터를 직접 설계한 실리콘밸리의 전설적 엔지니어.' },
+    { name:'고든 무어', role:'인텔 공동 창업자, 무어의 법칙', desc:'무어의 법칙을 제시하고 인텔을 공동 창업해 반도체 시대를 열었다.' },
+    { name:'어니스트 로렌스', role:'사이클로트론 발명, 노벨 물리학상', desc:'사이클로트론을 발명해 핵물리학의 새 장을 열고 1939년 노벨 물리학상을 받았다.' }
   ],
   'The University of Hong Kong': [
-    { name:'쑨원', role:'중화민국 건국 국부' },
+    { name:'쑨원', role:'중화민국 건국 국부', desc:'홍콩대 의학과 출신으로 중국 공화정의 아버지가 된 혁명가.' },
     { name:'도날드 창', role:'홍콩 前 행정장관' },
     { name:'이형옥', role:'홍콩 의학계 선구자' }
   ],
   'UNSW Sydney': [
-    { name:'케빈 러드', role:'호주 전 총리' },
+    { name:'케빈 러드', role:'호주 전 총리', desc:'퀸즐랜드 출신으로 기후변화 대응을 이끈 호주 제26대 총리이자 UN 대사.' },
     { name:'알렉산더 폴크', role:'광섬유 통신 선구자' },
     { name:'존 코스텔로', role:'호주 재무장관 역임' }
   ],
   'Johns Hopkins University': [
-    { name:'마이클 블룸버그', role:'뉴욕 전 시장·블룸버그 창업자' },
-    { name:'레이첼 카슨', role:'침묵의 봄, 환경운동의 어머니' },
-    { name:'우드로 윌슨', role:'미국 제28대 대통령' }
+    { name:'마이클 블룸버그', role:'뉴욕 전 시장·블룸버그 창업자', desc:'존스홉킨스 전기공학 출신으로 블룸버그 금융정보 제국을 세우고 뉴욕 시장을 지낸 인물.' },
+    { name:'레이첼 카슨', role:'침묵의 봄, 환경운동의 어머니', desc:'침묵의 봄으로 화학 오염의 위험을 알려 현대 환경운동의 어머니가 된 해양생물학자.' },
+    { name:'우드로 윌슨', role:'미국 제28대 대통령', desc:'존스홉킨스 정치학 박사 출신으로 국제연맹을 창설하고 노벨 평화상을 받은 제28대 대통령.' }
   ],
   'University of Toronto': [
-    { name:'레스터 피어슨', role:'노벨평화상 수상, 캐나다 전 총리' },
-    { name:'프레더릭 밴팅', role:'인슐린 발견, 노벨 의학상' },
-    { name:'마샬 맥루한', role:'미디어는 메시지다, 미디어 이론가' }
+    { name:'레스터 피어슨', role:'노벨평화상 수상, 캐나다 전 총리', desc:'토론토대 출신으로 유엔 평화유지군 창설을 이끌어 노벨 평화상을 받은 캐나다 총리.' },
+    { name:'프레더릭 밴팅', role:'인슐린 발견, 노벨 의학상', desc:'토론토대에서 인슐린을 발견해 수천만 명의 당뇨 환자를 구한 1923년 노벨 의학상 수상자.' },
+    { name:'마샬 맥루한', role:'미디어는 메시지다, 미디어 이론가', desc:'토론토대 교수로 미디어는 메시지다라는 통찰로 디지털 시대를 예언한 미디어 이론가.' }
   ],
   'Monash University': [
     { name:'피터 코스텔로', role:'호주 재무장관, 경제 안정의 설계자' },
@@ -2849,27 +3122,27 @@ const FAMOUS_ALUMNI = {
     { name:'마크 스콧', role:'호주 미디어 CEO' }
   ],
   'University of Queensland': [
-    { name:'피터 드호헤르티', role:'노벨 생리의학상 수상자' },
+    { name:'피터 드호헤르티', role:'노벨 생리의학상 수상자', desc:'퀸즐랜드대 출신으로 면역계가 바이러스 감염 세포를 인식하는 방법을 밝혀 노벨상을 받았다.' },
     { name:'존 호크', role:'호주 전 총리' },
-    { name:'이안 프라이저', role:'자궁경부암 백신 HPV 개발자' }
+    { name:'이안 프라이저', role:'자궁경부암 백신 HPV 개발자', desc:'퀸즐랜드대 교수로 자궁경부암을 예방하는 HPV 백신을 개발해 수십억 여성을 보호했다.' }
   ],
   'The Chinese University of Hong Kong': [
     { name:'탕치왕', role:'홍콩 대표 언론인' },
     { name:'렁준잉', role:'홍콩 前 행정장관' },
-    { name:'찰스 카오', role:'광섬유 통신 개척, 노벨 물리학상' }
+    { name:'찰스 카오', role:'광섬유 통신 개척, 노벨 물리학상', desc:'광섬유 통신의 아버지. 빛으로 정보를 전달하는 기술을 발명해 인터넷 시대를 가능케 했다.' }
   ],
   'Institut Polytechnique de Paris': [
-    { name:'앙리 푸앵카레', role:'수학·물리학의 거인' },
+    { name:'앙리 푸앵카레', role:'수학·물리학의 거인', desc:'수학과 물리학을 아우른 20세기 최고의 과학자 중 한 명. 카오스 이론의 선구자.' },
     { name:'시메옹 드니 푸아송', role:'확률론·수리물리학 선구자' },
     { name:'앙페르', role:'전자기학의 개척자' }
   ],
   'University of California, Los Angeles': [
-    { name:'프랜시스 포드 코폴라', role:'대부 감독, 아카데미상 수상' },
-    { name:'카림 압둘자바', role:'NBA 역대 최다 득점자' },
-    { name:'재키 로빈슨', role:'메이저리그 흑인 최초 진출 선수' }
+    { name:'프랜시스 포드 코폴라', role:'대부 감독, 아카데미상 수상', desc:'UCLA 출신으로 대부 3부작으로 미국 영화의 황금기를 이끈 거장 감독.' },
+    { name:'카림 압둘자바', role:'NBA 역대 최다 득점자', desc:'UCLA 출신으로 NBA 역대 최다 득점 기록(38,387점)을 보유한 농구의 전설.' },
+    { name:'재키 로빈슨', role:'메이저리그 흑인 최초 진출 선수', desc:'UCLA 출신으로 메이저리그 최초의 흑인 선수가 되어 미국 스포츠 역사를 바꾼 영웅.' }
   ],
   'National Taiwan University': [
-    { name:'리덩후이', role:'대만 최초 민선 총통' },
+    { name:'리덩후이', role:'대만 최초 민선 총통', desc:'대만 최초의 민선 총통. 민주화를 이끌고 대만 정체성을 강화한 인물.' },
     { name:'천수이볜', role:'대만 전 총통' },
     { name:'이위안저', role:'노벨 화학상 수상자' }
   ],
@@ -2879,49 +3152,49 @@ const FAMOUS_ALUMNI = {
     { name:'허킨청', role:'홍콩 영화·문화계 선구자' }
   ],
   'University of Bristol': [
-    { name:'폴 디랙', role:'양자역학 창시자, 노벨 물리학상' },
-    { name:'앨리스 로버츠', role:'BBC 과학 방송인·해부학자' },
+    { name:'폴 디랙', role:'양자역학 창시자, 노벨 물리학상', desc:'브리스톨대 수학과 출신으로 반물질의 존재를 예측하고 양자역학을 완성한 노벨 물리학상 수상자.' },
+    { name:'앨리스 로버츠', role:'BBC 과학 방송인·해부학자', desc:'브리스톨대 출신으로 BBC에서 해부학과 진화를 알기 쉽게 설명하는 과학 방송인.' },
     { name:'데이비드 렌트', role:'영국 영화감독' }
   ],
   'University of Auckland': [
-    { name:'에드먼드 힐러리', role:'에베레스트 초등정자' },
-    { name:'앨런 맥디아미드', role:'노벨 화학상 수상자' },
+    { name:'에드먼드 힐러리', role:'에베레스트 초등정자', desc:'오클랜드대 출신으로 인류 최초로 에베레스트 정상(8,849m)을 정복한 뉴질랜드의 영웅.' },
+    { name:'앨런 맥디아미드', role:'노벨 화학상 수상자', desc:'오클랜드대 출신으로 전도성 플라스틱을 발견해 2000년 노벨 화학상을 수상한 과학자.' },
     { name:'앤 파인', role:'뉴질랜드 아동문학 작가' }
   ],
   'University of Warwick': [
-    { name:'이마누엘 월러스틴', role:'세계체제론 창시자' },
+    { name:'이마누엘 월러스틴', role:'세계체제론 창시자', desc:'워릭대에서 연구한 세계체제론 창시자. 자본주의 세계 경제의 불평등을 분석한 사회학자.' },
     { name:'루스 패딩턴', role:'영국 대표 경제학자' },
     { name:'아나 브라가', role:'브라질 외교관, UN 대사' }
   ],
   'University of Birmingham': [
-    { name:'네빌 챔버레인', role:'영국 前 총리' },
-    { name:'오지 오스본', role:'블랙 사바스 보컬, 록의 전설' },
-    { name:'J.R.R. 톨킨', role:'반지의 제왕 저자 (교수 역임)' }
+    { name:'네빌 챔버레인', role:'영국 前 총리', desc:'버밍엄대 출신으로 히틀러와의 유화 정책으로 논란이 된 영국 전 총리.' },
+    { name:'오지 오스본', role:'블랙 사바스 보컬, 록의 전설', desc:'블랙 사바스의 프린스 오브 다크니스. 버밍엄 출신으로 헤비메탈의 전설이 된 뮤지션.' },
+    { name:'J.R.R. 톨킨', role:'반지의 제왕 저자 (교수 역임)', desc:'영문학 교수이자 판타지 문학의 아버지. 중간계라는 방대한 세계를 창조했다.' }
   ],
   'City University of Hong Kong': [
-    { name:'찰스 카오', role:'광섬유 통신 노벨상 수상자' },
+    { name:'찰스 카오', role:'광섬유 통신 노벨상 수상자', desc:'광섬유 통신의 아버지. 빛으로 정보를 전달하는 기술을 발명해 인터넷 시대를 가능케 했다.' },
     { name:'조셉 레이', role:'홍콩 엔터테인먼트 기업인' },
     { name:'에디슨 첸', role:'홍콩 배우·패션 아이콘' }
   ],
   'University of Zurich': [
-    { name:'알버트 아인슈타인', role:'특수상대성이론 (박사학위 취득)' },
+    { name:'알버트 아인슈타인', role:'특수상대성이론 (박사학위 취득)', desc:'E=mc²로 대표되는 상대성 이론으로 현대 물리학의 패러다임을 완전히 바꾼 천재.' },
     { name:'레닌', role:'망명 시기 취리히 거주, 사상 형성' },
     { name:'제임스 조이스', role:'율리시스 저자, 취리히 집필' }
   ],
   'KTH Royal Institute of Technology': [
-    { name:'라르스 에릭손', role:'에릭슨 통신 창업자' },
+    { name:'라르스 에릭손', role:'에릭슨 통신 창업자', desc:'KTH 출신으로 에릭슨 통신 회사를 창업해 현대 통신 산업의 기초를 닦은 발명가.' },
     { name:'구스타프 드 라발', role:'증기 터빈 발명가' },
-    { name:'다그 함마르셸드', role:'UN 사무총장, 노벨평화상' }
+    { name:'다그 함마르셸드', role:'UN 사무총장, 노벨평화상', desc:'KTH·웁살라 출신으로 유엔 사무총장 재직 중 순직한 뒤 노벨 평화상을 받은 스웨덴 외교관.' }
   ],
   'Université Paris-Saclay': [
-    { name:'이렌 졸리오퀴리', role:'인공방사능 발견, 노벨 화학상' },
-    { name:'루이 드 브로이', role:'파동-입자 이중성, 노벨 물리학상' },
+    { name:'이렌 졸리오퀴리', role:'인공방사능 발견, 노벨 화학상', desc:'마리 퀴리의 딸로 파리-사클레에서 연구해 인공방사능을 발견, 노벨 화학상을 받았다.' },
+    { name:'루이 드 브로이', role:'파동-입자 이중성, 노벨 물리학상', desc:'물질도 파동의 성질을 가진다는 드 브로이 가설로 양자역학의 기초를 다진 프랑스 귀족 물리학자.' },
     { name:'피에르 쉬레', role:'프랑스 공학 혁신의 상징' }
   ],
   'University of California, San Diego': [
-    { name:'마리오 몰리나', role:'오존층 파괴 연구, 노벨 화학상' },
-    { name:'프랜시스 크릭', role:'DNA 이중나선 발견 (UCSD 교수)' },
-    { name:'테드 넬슨', role:'하이퍼텍스트 개념 창안자' }
+    { name:'마리오 몰리나', role:'오존층 파괴 연구, 노벨 화학상', desc:'UCSD 교수로 프레온가스가 오존층을 파괴한다는 사실을 밝혀 노벨 화학상을 수상했다.' },
+    { name:'프랜시스 크릭', role:'DNA 이중나선 발견 (UCSD 교수)', desc:'UCSD 교수로 재직하며 DNA 이중나선 공동 발견자로서 분자생물학을 이끌었다.' },
+    { name:'테드 넬슨', role:'하이퍼텍스트 개념 창안자', desc:'하이퍼텍스트 개념을 최초로 제안해 현대 월드와이드웹의 이론적 토대를 만든 선구자.' }
   ],
   'Nanjing University': [
     { name:'궈모러', role:'중국 현대 고고학의 아버지' },
@@ -2939,34 +3212,34 @@ const FAMOUS_ALUMNI = {
     { name:'게오르크 헤겔', role:'관념철학의 거장' }
   ],
   'University of Western Australia': [
-    { name:'배리 마셜', role:'헬리코박터균 발견, 노벨 의학상' },
+    { name:'배리 마셜', role:'헬리코박터균 발견, 노벨 의학상', desc:'서호주대 출신으로 헬리코박터균이 위궤양의 원인임을 직접 균을 마셔 증명한 노벨 의학상 수상자.' },
     { name:'킴 스콧', role:'부커상 수상 작가' },
     { name:'로버트 한슨', role:'호주 IT 혁신가' }
   ],
   'Politecnico di Milano': [
     { name:'엔초 페라리', role:'페라리 창업자 (영향받은 도시)' },
-    { name:'조르조 아르마니', role:'패션 황제' },
-    { name:'렌초 피아노', role:'퐁피두센터 설계, 건축의 거장' }
+    { name:'조르조 아르마니', role:'패션 황제', desc:'밀라노 공대 인근에서 성장해 이탈리아 패션을 세계 럭셔리의 정점으로 올린 패션 황제.' },
+    { name:'렌초 피아노', role:'퐁피두센터 설계, 건축의 거장', desc:'퐁피두센터·런던 샤드 등 도시 아이콘을 설계한 이탈리아 건축의 거장. 1998년 프리츠커상 수상.' }
   ],
   'University of Adelaide': [
-    { name:'로렌스 브래그', role:'X선 결정학 노벨상, 역대 최연소 수상' },
-    { name:'하워드 플로리', role:'페니실린 개발, 노벨 의학상' },
+    { name:'로렌스 브래그', role:'X선 결정학 노벨상, 역대 최연소 수상', desc:'애들레이드대 출신으로 25세에 아버지와 함께 노벨 물리학상을 받은 역대 최연소 수상자.' },
+    { name:'하워드 플로리', role:'페니실린 개발, 노벨 의학상', desc:'애들레이드대 출신으로 플레밍의 페니실린을 실제 의약품으로 개발해 수백만 명을 살렸다.' },
     { name:'닉 로우', role:'호주 록 뮤지션' }
   ],
   'Pennsylvania State University': [
-    { name:'리드 해스팅스', role:'넷플릭스 공동 창업자' },
-    { name:'조 파테르노', role:'미국 대학풋볼 전설 감독' },
+    { name:'리드 해스팅스', role:'넷플릭스 공동 창업자', desc:'펜실베이니아주립대 출신으로 넷플릭스를 창업해 스트리밍 시대를 열었다.' },
+    { name:'조 파테르노', role:'미국 대학풋볼 전설 감독', desc:'펜실베이니아주립대의 전설적 풋볼 감독. 46년간 재직하며 409승을 기록했다.' },
     { name:'로이스 크레이머', role:'여성 우주항공 선구자' }
   ],
   'University of Sheffield': [
-    { name:'한스 크레브스', role:'크레브스 회로 발견, 노벨 의학상' },
+    { name:'한스 크레브스', role:'크레브스 회로 발견, 노벨 의학상', desc:'셰필드대 교수로 재직하며 세포 에너지 생산의 핵심인 크레브스 회로를 발견해 노벨상을 받았다.' },
     { name:'헨리 브레스테드', role:'이집트 고고학의 아버지' },
-    { name:'로날드 드워킨', role:'현대 법철학의 거두' }
+    { name:'로날드 드워킨', role:'현대 법철학의 거두', desc:'법은 단순한 규칙이 아니라 권리의 체계라고 주장한 현대 법철학의 가장 영향력 있는 학자.' }
   ],
   'Uppsala University': [
-    { name:'칼 폰 린네', role:'생물 분류체계의 아버지' },
-    { name:'안데르스 셀시우스', role:'섭씨 온도계 발명자' },
-    { name:'다그 함마르셸드', role:'UN 사무총장, 노벨평화상' }
+    { name:'칼 폰 린네', role:'생물 분류체계의 아버지', desc:'모든 생물에 학명을 부여하는 이명법을 창안한 생물 분류학의 아버지.' },
+    { name:'안데르스 셀시우스', role:'섭씨 온도계 발명자', desc:'웁살라대 천문학 교수로 섭씨 온도계를 발명해 과학 측정의 표준을 세웠다.' },
+    { name:'다그 함마르셸드', role:'UN 사무총장, 노벨평화상', desc:'KTH·웁살라 출신으로 유엔 사무총장 재직 중 순직한 뒤 노벨 평화상을 받은 스웨덴 외교관.' }
   ],
   'Freie Universität Berlin': [
     { name:'오토 자이마이어', role:'동유럽 민주화 연구 선구자' },
@@ -2974,7 +3247,7 @@ const FAMOUS_ALUMNI = {
     { name:'로버트 F. 케네디', role:'자유베를린 대학 명예시민' }
   ],
   'University of Nottingham': [
-    { name:'제시 부트', role:'부츠 약국 체인 창업자' },
+    { name:'제시 부트', role:'부츠 약국 체인 창업자', desc:'노팅엄대 출신으로 세계 최대 헬스케어 소매 체인 부츠(Boots)를 일군 영국 사업가.' },
     { name:'에밀리 화이트헤드', role:'암 치료 혁신의 상징' },
     { name:'아나야 요크', role:'영국 생명공학 여성 기업인' }
   ],
@@ -2994,94 +3267,94 @@ const FAMOUS_ALUMNI = {
     { name:'멜리사 반 다이크', role:'호주 여성 엔지니어링 선구자' }
   ],
   'University of Wisconsin–Madison': [
-    { name:'존 뮤어', role:'국립공원의 아버지, 자연보호 선구자' },
+    { name:'존 뮤어', role:'국립공원의 아버지, 자연보호 선구자', desc:'위스콘신-매디슨 출신으로 미국 국립공원 시스템 설립을 이끈 자연보호 운동의 아버지.' },
     { name:'프레더릭 잭슨 터너', role:'프론티어 이론, 역사학자' },
-    { name:'에릭 하이든', role:'동계올림픽 5관왕 스케이터' }
+    { name:'에릭 하이든', role:'동계올림픽 5관왕 스케이터', desc:'위스콘신-매디슨 출신으로 1980년 레이크플래시드 동계올림픽에서 스피드스케이팅 5관왕을 달성했다.' }
   ],
   'Ohio State University': [
-    { name:'제시 오언스', role:'베를린 올림픽 4관왕 육상 영웅' },
-    { name:'잭 니클라우스', role:'골프 황제, 그랜드슬램 18회' },
-    { name:'닐 암스트롱', role:'인류 최초 달 착륙 (항공우주 연구 연계)' }
+    { name:'제시 오언스', role:'베를린 올림픽 4관왕 육상 영웅', desc:'오하이오주립대 출신으로 1936년 나치 베를린 올림픽에서 4관왕을 달성해 히틀러를 무색케 한 영웅.' },
+    { name:'잭 니클라우스', role:'골프 황제, 그랜드슬램 18회', desc:'오하이오주립대 출신으로 메이저 골프 대회 18회 우승의 황금 곰. 역대 최고의 골퍼.' },
+    { name:'닐 암스트롱', role:'인류 최초 달 착륙 (항공우주 연구 연계)', desc:'퍼듀대 항공공학 출신으로 1969년 7월 인류 최초로 달에 발을 내딛은 우주비행사.' }
   ],
   'University of California, Santa Barbara': [
-    { name:'허버트 크뢰머', role:'반도체 이종접합, 노벨 물리학상' },
+    { name:'허버트 크뢰머', role:'반도체 이종접합, 노벨 물리학상', desc:'UC산타바바라 교수로 반도체 이종접합 기술로 레이저 다이오드를 가능케 해 노벨상을 받았다.' },
     { name:'월터 코흔', role:'밀도 범함수 이론, 노벨 화학상' },
-    { name:'앨런 히거', role:'전도성 고분자 발견, 노벨 화학상' }
+    { name:'앨런 히거', role:'전도성 고분자 발견, 노벨 화학상', desc:'전도성 고분자를 발견해 유기 전자공학의 문을 열고 2000년 노벨 화학상을 수상했다.' }
   ],
   'Universität Berlin (TU Berlin)': [
     { name:'헬무트 뉴턴', role:'패션 사진의 전설' },
-    { name:'베르너 폰 지멘스', role:'지멘스 창업자' },
+    { name:'베르너 폰 지멘스', role:'지멘스 창업자', desc:'전신 기술을 발전시키고 지멘스를 창업해 독일 전기·통신 산업의 토대를 놓은 발명가.' },
     { name:'로타 드 마에지에르', role:'독일 전 총리 (동독)' }
   ],
   'University of Malaya': [
-    { name:'마하티르 모하마드', role:'말레이시아 전 총리, 아시아 호랑이 설계자' },
+    { name:'마하티르 모하마드', role:'말레이시아 전 총리, 아시아 호랑이 설계자', desc:'말라야대 의학부 출신으로 말레이시아를 아시아의 호랑이로 키운 22년 장기 집권 총리.' },
     { name:'안와르 이브라힘', role:'말레이시아 현 총리' },
     { name:'주린 안타라방사', role:'말레이시아 외교 선구자' }
   ],
   'University of Liverpool': [
-    { name:'폴 매카트니', role:'비틀즈 멤버 (리버풀 예술학교)' },
-    { name:'존 레논', role:'비틀즈 리더 (리버풀 예술학교)' },
-    { name:'리버 피닉스', role:'영화배우 (리버풀과 예술적 연관)' }
+    { name:'폴 매카트니', role:'비틀즈 멤버 (리버풀 예술학교)', desc:'리버풀 예술학교에서 음악적 감성을 키워 비틀즈의 노래를 세상에서 가장 사랑받는 음악으로 만들었다.' },
+    { name:'존 레논', role:'비틀즈 리더 (리버풀 예술학교)', desc:'리버풀 예술학교 출신으로 이매진 등 시대를 초월한 명곡으로 평화와 사랑을 노래한 비틀즈의 정신.' },
+    { name:'리버 피닉스', role:'영화배우 (리버풀과 예술적 연관)', desc:'재능 있는 청년 배우로 스탠 바이 미 등으로 주목받았으나 23세에 요절한 전설.' }
   ],
   'University of São Paulo': [
-    { name:'루이스 이나시우 룰라 다 시우바', role:'브라질 대통령' },
-    { name:'아이르통 세나', role:'F1 레이싱 전설 (공학 연구 배경)' },
+    { name:'루이스 이나시우 룰라 다 시우바', role:'브라질 대통령', desc:'용접공에서 대통령이 된 브라질의 살아있는 전설. 빈곤층을 위한 사회 정책으로 국민의 영웅이 됐다.' },
+    { name:'아이르통 세나', role:'F1 레이싱 전설 (공학 연구 배경)', desc:'F1 역사상 가장 빠르고 용감한 드라이버. 3회 세계 챔피언을 차지한 브라질의 국민 영웅.' },
     { name:'세르지우 마이엘로', role:'브라질 노벨의학 연구자' }
   ],
   'Dartmouth College': [
-    { name:'넬슨 록펠러', role:'미국 제41대 부통령' },
-    { name:'티모시 가이트너', role:'전 미 재무장관' },
-    { name:'민디 캘링', role:'배우·작가·제작자' }
+    { name:'넬슨 록펠러', role:'미국 제41대 부통령', desc:'다트머스 출신으로 미국 부통령을 지낸 록펠러 가문의 정치인이자 예술 후원자.' },
+    { name:'티모시 가이트너', role:'전 미 재무장관', desc:'다트머스 출신으로 2008년 금융위기를 수습한 오바마 행정부의 재무장관.' },
+    { name:'민디 캘링', role:'배우·작가·제작자', desc:'다트머스 연극학과 출신으로 오피스와 더 민디 프로젝트를 쓰고 출연한 인도계 미국 코미디언.' }
   ],
   'Georgetown University': [
-    { name:'빌 클린턴', role:'미국 제42대 대통령' },
-    { name:'앤터닌 스칼리아', role:'미 연방 대법관' },
-    { name:'존 케리', role:'전 국무장관' }
+    { name:'빌 클린턴', role:'미국 제42대 대통령', desc:'조지타운대 외교학 출신으로 냉전 종식 후 미국 번영을 이끈 제42대 대통령.' },
+    { name:'앤터닌 스칼리아', role:'미 연방 대법관', desc:'조지타운대 출신으로 미국 헌법 원전주의의 상징이 된 연방대법관.' },
+    { name:'존 케리', role:'전 국무장관', desc:'조지타운대 출신으로 국무장관과 기후변화 특사를 역임한 미국 외교의 베테랑.' }
   ],
   'Emory University': [
-    { name:'마셜 니런버그', role:'노벨 생리학·의학상 수상자' },
-    { name:'케니 로저스', role:'컨트리 음악의 전설' },
+    { name:'마셜 니런버그', role:'노벨 생리학·의학상 수상자', desc:'에모리대 출신으로 유전암호를 해독해 생물학의 역사를 바꾼 노벨 생리의학상 수상자.' },
+    { name:'케니 로저스', role:'컨트리 음악의 전설', desc:'에모리대 출신의 컨트리 팝 가수. The Gambler 등으로 수십 년간 전 세계 팬을 매혹했다.' },
     { name:'제임스 레이니', role:'전 주한 미국 대사' }
   ],
   'Vanderbilt University': [
-    { name:'앨 고어', role:'미국 제45대 부통령·노벨 평화상' },
-    { name:'에이미 그랜트', role:'CCM 팝스타' },
+    { name:'앨 고어', role:'미국 제45대 부통령·노벨 평화상', desc:'밴더빌트대 법학 출신으로 불편한 진실로 기후변화 경각심을 일깨우고 노벨 평화상을 받았다.' },
+    { name:'에이미 그랜트', role:'CCM 팝스타', desc:'밴더빌트대 출신으로 크리스천 팝을 주류 음악으로 끌어올린 CCM의 여왕.' },
     { name:'라마 알렉산더', role:'전 테네시 주지사·상원의원' }
   ],
   'Washington University in St. Louis': [
-    { name:'테네시 윌리엄스', role:'퓰리처상 수상 극작가 (수강)' },
+    { name:'테네시 윌리엄스', role:'퓰리처상 수상 극작가 (수강)', desc:'욕망이라는 이름의 전차로 퓰리처상을 두 번 받은 미국 현대 연극의 거장.' },
     { name:'러스 파인골드', role:'전 위스콘신 상원의원' },
     { name:'찰스 구겐하임', role:'아카데미상 수상 다큐멘터리 감독' }
   ],
   'University of North Carolina at Chapel Hill': [
-    { name:'마이클 조던', role:'NBA 역사상 최고의 농구선수' },
+    { name:'마이클 조던', role:'NBA 역사상 최고의 농구선수', desc:'노스캐롤라이나대 출신으로 6번의 NBA 챔피언십 우승을 이끈 농구 역사상 최고의 선수.' },
     { name:'앤디 그리피스', role:'배우·코미디언' },
-    { name:'제임스 K. 포크', role:'미국 제11대 대통령' }
+    { name:'제임스 K. 포크', role:'미국 제11대 대통령', desc:'UNC 출신으로 미국 영토를 대폭 확장한 제11대 대통령. 공약을 모두 지킨 대통령으로 유명.' }
   ],
   'Purdue University': [
-    { name:'닐 암스트롱', role:'인류 최초 달 착륙 우주비행사' },
-    { name:'거스 그리섬', role:'머큐리·제미니 우주비행사' },
-    { name:'드류 브리스', role:'NFL 수퍼볼 MVP 쿼터백' }
+    { name:'닐 암스트롱', role:'인류 최초 달 착륙 우주비행사', desc:'퍼듀대 항공공학 출신으로 1969년 7월 인류 최초로 달에 발을 내딛은 우주비행사.' },
+    { name:'거스 그리섬', role:'머큐리·제미니 우주비행사', desc:'퍼듀대 출신으로 미국 최초 우주비행사 중 한 명. 아폴로 1호 사고로 유명을 달리했다.' },
+    { name:'드류 브리스', role:'NFL 수퍼볼 MVP 쿼터백', desc:'퍼듀대 출신으로 슈퍼볼 MVP를 수상하고 NFL 통산 패스 야드 최다 기록을 세운 쿼터백.' }
   ],
   'University of Maryland': [
-    { name:'케빈 듀란트', role:'NBA MVP·올림픽 금메달리스트' },
-    { name:'세르게이 브린', role:'구글 공동창업자 (MS 취득)' },
+    { name:'케빈 듀란트', role:'NBA MVP·올림픽 금메달리스트', desc:'메릴랜드대 출신으로 NBA MVP·올림픽 금메달을 석권한 역대 최고의 소형 포워드 중 한 명.' },
+    { name:'세르게이 브린', role:'구글 공동창업자 (MS 취득)', desc:'래리 페이지와 함께 구글을 창업, 인터넷 검색의 역사를 바꾸었다.' },
     { name:'코니 청', role:'NBC 앵커·방송 저널리스트' }
   ],
   'University of Miami': [
-    { name:'실베스터 스탤론', role:'할리우드 액션 스타 (수료)' },
-    { name:'글로리아 에스테판', role:'라틴 팝의 여왕' },
-    { name:'레이 리오타', role:'굿펠라스 주연 배우' }
+    { name:'실베스터 스탤론', role:'할리우드 액션 스타 (수료)', desc:'마이애미대에서 공부한 뒤 록키를 직접 쓰고 주연하며 전 세계를 감동시킨 배우.' },
+    { name:'글로리아 에스테판', role:'라틴 팝의 여왕', desc:'마이애미대 출신으로 라틴 음악을 세계 팝 시장에 각인시킨 쿠바계 팝 스타.' },
+    { name:'레이 리오타', role:'굿펠라스 주연 배우', desc:'마이애미대 출신으로 굿펠라스에서 헨리 힐로 인상적인 연기를 선보인 배우.' }
   ],
   'Case Western Reserve University': [
-    { name:'폴 부케이트', role:'Gmail 창시자' },
-    { name:'찰스 F. 케터링', role:'자동차 전기 시동장치 발명가' },
+    { name:'폴 부케이트', role:'Gmail 창시자', desc:'케이스 웨스턴 출신으로 구글에서 지메일(Gmail)을 개발한 엔지니어.' },
+    { name:'찰스 F. 케터링', role:'자동차 전기 시동장치 발명가', desc:'케이스 웨스턴 출신으로 자동차 전기 시동장치를 발명해 현대 자동차의 편의성을 혁신했다.' },
     { name:'뉴턴 베이커', role:'전 미 육군장관' }
   ],
   'Villanova University': [
-    { name:'하위 롱', role:'NFL 명예의 전당 수비수' },
-    { name:'에드 렌델', role:'전 펜실베이니아 주지사' },
-    { name:'카일 라우리', role:'NBA 올스타 포인트가드' }
+    { name:'하위 롱', role:'NFL 명예의 전당 수비수', desc:'빌라노바대 출신으로 NFL 명예의 전당에 오른 레이더스의 수비 아이콘.' },
+    { name:'에드 렌델', role:'전 펜실베이니아 주지사', desc:'빌라노바대 출신으로 필라델피아 시장을 거쳐 펜실베이니아 주지사를 역임한 민주당 정치인.' },
+    { name:'카일 라우리', role:'NBA 올스타 포인트가드', desc:'빌라노바대 출신으로 토론토 랩터스 챔피언십을 이끈 올스타 포인트가드.' }
   ]
 };
 
@@ -3093,13 +3366,39 @@ function renderAlumniRow(alumni) {
   if (!alumni || alumni.length === 0) return '';
   const cards = alumni.map(a => `
     <div class="alumni-card">
-      <div class="alumni-pixel">${renderPersonPixel(a.name)}</div>
+      <div class="alumni-photo-wrap">
+        <img class="alumni-photo" data-wiki="${encodeURIComponent(a.name)}" alt="${a.name}">
+        <div class="alumni-pixel-fallback">${renderPersonPixel(a.name)}</div>
+      </div>
       <div class="alumni-info">
         <div class="alumni-name">${a.name}</div>
         <div class="alumni-role">${a.role}</div>
+        ${a.desc ? `<div class="alumni-desc">${a.desc}</div>` : ''}
       </div>
     </div>`).join('');
   return `<div class="alumni-row">${cards}</div>`;
+}
+
+async function loadAlumniPhotos() {
+  const imgs = document.querySelectorAll('img.alumni-photo[data-wiki]');
+  imgs.forEach(async img => {
+    const name = decodeURIComponent(img.dataset.wiki);
+    try {
+      const res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+      if (!res.ok) throw new Error('no page');
+      const data = await res.json();
+      const src = data.thumbnail?.source;
+      if (!src) throw new Error('no image');
+      img.src = src;
+      img.onload = () => {
+        img.classList.add('loaded');
+        const fallback = img.closest('.alumni-photo-wrap')?.querySelector('.alumni-pixel-fallback');
+        if (fallback) fallback.classList.add('hidden');
+      };
+    } catch {
+      // 픽셀아트 fallback 유지
+    }
+  });
 }
 
 function getSeasonName(month) {
@@ -3371,6 +3670,11 @@ function eunNeun(word) {
   if (code < 0xAC00 || code > 0xD7A3) return '는';
   return (code - 0xAC00) % 28 === 0 ? '는' : '은';
 }
+function waGwa(word) {
+  const code = word.charCodeAt(word.length - 1);
+  if (code < 0xAC00 || code > 0xD7A3) return '와';
+  return (code - 0xAC00) % 28 === 0 ? '와' : '과';
+}
 
 function buildRichNarrative(uni, userProfile, userName, birthdate) {
   const dom = getDominantElement(userProfile);
@@ -3426,13 +3730,13 @@ function buildRichNarrative(uni, userProfile, userName, birthdate) {
         <p><span class="nbullet">✦</span>${personLines[2]}</p>
         <p class="narrative-season"><span class="nbullet">✦</span>${seasonLine} ${secondLine}</p>
       </div>
-      <div class="narrative-section">
+      <div class="narrative-section uni-desc">
         <div class="narrative-label">${uni.kr}${eunNeun(uni.kr)} 이런 곳</div>
+        ${uni.motto ? `<p><span class="nbullet">✦</span><span class="motto-label">교훈</span> "${uni.motto}"${MOTTO_KR[uni.name] ? ` — ${MOTTO_KR[uni.name]}` : ''}</p>` : ''}
         <p><span class="nbullet">✦</span>${uniDescLine}</p>
         ${traitLine ? `<p><span class="nbullet">✦</span>${traitLine}</p>` : ''}
         <p><span class="nbullet">✦</span>${studentFitLine}</p>
-        ${uni.motto ? `<p><span class="nbullet">✦</span><span class="motto-label">교훈</span> "${uni.motto}"${MOTTO_KR[uni.name] ? ` — ${MOTTO_KR[uni.name]}` : ''}</p>` : ''}
-        ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label">🎓 이 학교 출신들</div>${renderAlumniRow(al)}` : ''; })()}
+        ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label">선배님들</div>${renderAlumniRow(al)}` : ''; })()}
       </div>
       <div class="narrative-section compat-reason">
         <div class="narrative-label">왜 찰떡궁합인가</div>
@@ -3544,11 +3848,15 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
         <div class="compat-integrated">
           <div class="compat-reveal">
             <div class="compat-top-row">
-              <div class="compat-sublabel">오행 궁합 지수</div>
-              <div class="compat-big-num">${compatPct}<span>%</span></div>
+              <div class="compat-left">
+                <div class="compat-sublabel">오행 궁합 지수</div>
+                ${enrollYear ? `<div class="compat-year-label">✦ ${enrollYear}년 운기 반영</div>` : ''}
+              </div>
+              <div class="compat-right">
+                <div class="compat-big-num">${compatPct}<span>%</span></div>
+                <div class="compat-wow-badge">${wowLabel}</div>
+              </div>
             </div>
-            <div class="compat-wow-badge">${wowLabel}</div>
-            ${enrollYear ? `<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:10px;letter-spacing:0.05em;">✦ ${enrollYear}년 운기 반영</div>` : ''}
           </div>
           <div class="profile-pair">
             <div class="ohang-profile-box">
@@ -3566,28 +3874,29 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
       </div>
     </div>
 
-    <div class="share-section" style="margin-top:20px;">
-      <button class="story-btn" onclick="exportStoryImage()">📸 저장하기</button>
-      <button class="retry-btn" onclick="resetForm()">다시</button>
+    <div class="viral-section">
+      <div class="viral-title">🏛️ 친구들은 어디 갈까?</div>
+      <div class="viral-preview" id="viralPreview"></div>
     </div>
 
-    <div class="viral-section">
-      <div class="viral-title">📲 친구들은 어디 대학에 갈까?</div>
-      <div class="viral-preview" id="viralPreview"></div>
-      <button class="viral-share-btn" id="viralShareBtn"
+    <div class="action-bar">
+      <button class="action-bar-btn primary" onclick="exportStoryImage()"><span class="action-icon">🖼️</span>이미지로<br>저장하기</button>
+      <button class="action-bar-btn primary" id="viralShareBtn"
         data-idx="${uniIdx}" data-pct="${compatPct}"
         data-nick="${(userName || '나').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"
         onclick="shareResult(+this.dataset.idx, +this.dataset.pct, this.dataset.nick)">
-        🔗 친구에게 공유하기
+        <span class="action-icon">🔗</span>친구 대학이<br>궁금하다면?
       </button>
-      <div class="viral-url-reveal" id="viralUrlReveal" style="display:none">
-        <div class="viral-url-msg">아래 링크를 친구에게 보내세요 👇</div>
-        <div class="invite-url-box">
-          <span class="invite-url-text" id="viralUrlText"></span>
-          <button class="invite-url-copy" onclick="copyViralUrl()">복사</button>
-        </div>
-        <div class="viral-hint">링크를 받은 친구가 참여하면 이 화면에 결과가 채워져요</div>
+      <button class="action-bar-btn primary" onclick="resetForm()"><span class="action-icon">↺</span>대학 궁합<br>다시하기</button>
+    </div>
+
+    <div class="viral-url-reveal" id="viralUrlReveal" style="display:none">
+      <div class="viral-url-msg">아래 링크를 친구에게 보내세요 👇</div>
+      <div class="invite-url-box">
+        <span class="invite-url-text" id="viralUrlText"></span>
+        <button class="invite-url-copy" onclick="copyViralUrl()">복사</button>
       </div>
+      <div class="viral-hint">링크를 받은 친구가 참여하면 이 화면에 결과가 채워져요</div>
     </div>`;
 
   card.style.display = 'block';
@@ -3605,6 +3914,7 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
     }
   });
   renderViralPreview();
+  loadAlumniPhotos();
 }
 
 // ─── 공유 ────────────────────────────────────────────────────────────────────
@@ -3630,9 +3940,22 @@ function copyResult(uniKr, pct, domEl) {
 // ─── 그룹 인코딩 ─────────────────────────────────────────────────────────────
 
 // members: [{nick, uniIdx, pct}]
+function encodeNick(nick) {
+  return btoa(unescape(encodeURIComponent(nick)));
+}
+function decodeNick(encoded) {
+  // 새 포맷: base64
+  try {
+    const decoded = decodeURIComponent(escape(atob(encoded)));
+    if (decoded && !/^[%A-F0-9]{3,}$/i.test(decoded)) return decoded;
+  } catch {}
+  // 구 포맷: encodeURIComponent
+  try { return decodeURIComponent(encoded); } catch { return encoded; }
+}
+
 function encodeGroup(members) {
   return members.map(m =>
-    `${encodeURIComponent(m.nick)}:${m.uniIdx}:${m.pct}`
+    `${encodeNick(m.nick)}:${m.uniIdx}:${m.pct}`
   ).join(',');
 }
 
@@ -3643,7 +3966,7 @@ function decodeGroup(hash) {
     const parts = seg.split(':');
     if (parts.length < 3) return null;
     return {
-      nick: decodeURIComponent(parts[0]),
+      nick: decodeNick(parts[0]),
       uniIdx: parseInt(parts[1]),
       pct: parseInt(parts[2])
     };
@@ -3657,6 +3980,94 @@ function currentMembers() {
 }
 
 // ─── 그룹 보드 렌더링 ────────────────────────────────────────────────────────
+
+function renderBoardInviterCard(inviter, invUni) {
+  const card = document.getElementById('boardInviterCard');
+  if (!card) return;
+  const logo = renderLogo(invUni, 40);
+
+  // 친구의 우세 오행 추론: 대학 ohProfile 기준 dominant element
+  const ohp = invUni.ohProfile || {};
+  const domEl = Object.entries(ohp).sort((a,b) => b[1]-a[1])[0]?.[0] || '목';
+  const elNames = { 목:'木(목)', 화:'火(화)', 토:'土(토)', 금:'金(금)', 수:'水(수)' };
+  const elDesc = {
+    목: '새로운 것을 탐구하고 자유롭게 사고하는 성향이 강한 편이구만.',
+    화: '추진력과 표현력이 뛰어나며 사람을 이끄는 에너지가 있는 편이구만.',
+    토: '꾸준하고 성실하며 깊이 있는 전문성을 쌓는 유형인 편이구만.',
+    금: '논리력과 집중력이 높고 완성도를 끝까지 추구하는 성향이구만.',
+    수: '깊이 사유하고 전략적으로 움직이는 사색가 기질이 있는 편이구만.'
+  };
+  const elPersonality = {
+    목: [
+      '새로운 아이디어가 넘치고, 늘 더 나은 방향을 탐색하는 사람이구만.',
+      '정해진 틀보다 자신만의 길을 걷는 걸 즐기는 편이지.',
+      '성장에 대한 갈망이 강하고, 배움을 멈추지 않는 사람이구만.',
+      '표현력이 풍부하고, 창의적인 방식으로 문제를 풀어내는 편이지.',
+      '주변 사람들에게 신선한 자극을 주는 존재로 기억되는 편이구만.'
+    ],
+    화: [
+      '열정적인 에너지로 주변 사람들을 이끄는 타입이구만.',
+      '도전을 즐기고, 불가능을 가능으로 바꾸려는 사람이지.',
+      '사람을 끌어당기는 매력이 있고, 분위기를 주도하는 편이구만.',
+      '목표를 향해 전속력으로 달리는 추진력의 소유자이지.',
+      '어떤 상황에서도 빛을 발하는 존재감이 있는 편이구만.'
+    ],
+    토: [
+      '성실하고 믿음직스러운 사람으로 주변의 신뢰를 받는 편이구만.',
+      '급하지 않지만, 끝까지 해내는 끈기와 인내력이 있지.',
+      '기반을 탄탄하게 다지며, 오래 가는 것들을 소중히 여기구만.',
+      '깊이 있는 전문성을 쌓고, 전통과 격식을 존중하는 편이지.',
+      '주변 사람들에게 안정감을 주는 중심적인 존재이구만.'
+    ],
+    금: [
+      '논리적이고 분석적인 사고로 문제의 핵심을 꿰뚫는 편이구만.',
+      '완성도에 대한 고집이 강하고, 세밀한 부분까지 놓치지 않는 편이지.',
+      '집중력이 탁월해서 한번 빠져들면 끝까지 파고드는 사람이구만.',
+      '명확한 기준과 원칙을 가지고 살아가는 편이지.',
+      '겉으로 차가워 보일 수 있지만, 그 안에 단단한 신념이 있는 사람이구만.'
+    ],
+    수: [
+      '깊이 생각하고 멀리 내다보는 전략적 사색가 기질이 있구만.',
+      '감정보다 이성이 앞서고, 상황을 조용히 분석하는 편이지.',
+      '겉으로 드러내지 않지만, 내면에 깊은 생각이 가득한 사람이구만.',
+      '흐름을 읽고 때를 기다릴 줄 아는 지혜로운 편이지.',
+      '다양한 것에 호기심을 갖고, 지식의 깊이를 더해가는 사람이구만.'
+    ]
+  };
+
+  // 대학 ohProfile 바
+  const totalOh = Object.values(ohp).reduce((a,b)=>a+b,0) || 1;
+  const bars = ['목','화','토','금','수'].map(el => {
+    const pct = Math.round((ohp[el]||0)/totalOh*100);
+    const isDom = el === domEl;
+    return `<div class="ohang-bar-row">
+      <span class="ohang-bar-lbl">${el}</span>
+      <div class="ohang-bar-track"><div class="ohang-bar-fill${isDom?' dominant':''}" style="width:${pct}%"></div></div>
+      <span class="ohang-bar-val">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  const personalitySentences = (elPersonality[domEl] || elPersonality['목']).map(s =>
+    `<div class="bic-personality-line">• ${s}</div>`
+  ).join('');
+
+  card.innerHTML = `
+    <div class="bic-destiny">
+      <div class="bic-line">친구 ${inviter.nick}${eunNeun(inviter.nick)}</div>
+      <div class="bic-uni-row">${logo}<span class="bic-uni-name">${invUni.kr}</span></div>
+      <div class="bic-line">에 갈 상이더군.</div>
+    </div>
+    <div class="bic-compat">
+      <span class="bic-compat-label">${invUni.kr}${waGwa(invUni.kr)} 궁합 지수</span>
+      <span class="bic-compat-num">${inviter.pct}<span>%</span></span>
+    </div>
+    <div class="bic-narrative">
+      <div class="bic-narrative-label">당신의 친구는 이런 사람</div>
+      <div class="bic-personality-sentences">${personalitySentences}</div>
+      <div style="margin-top:14px;">${bars}</div>
+    </div>`;
+  card.style.display = 'block';
+}
 
 function renderBoard(members) {
   const subtitleEl = document.getElementById('boardCinemaSubtitle');
@@ -3698,7 +4109,7 @@ function renderBoard(members) {
     const inviter = members[0];
     const invUni = UNIVERSITIES[inviter.uniIdx];
     if (invUni) {
-      const subtitleText = `${inviter.nick}는 ${invUni.kr}에 간다는데`;
+      const subtitleText = `친구 ${inviter.nick}${eunNeun(inviter.nick)} ${invUni.kr}에 갈 상이더군.`;
       subtitleEl.textContent = '';
       subtitleEl.classList.remove('typed');
       let i = 0;
@@ -3709,6 +4120,9 @@ function renderBoard(members) {
           if (i >= subtitleText.length) {
             clearInterval(t1);
             subtitleEl.classList.add('typed');
+            const bsh = document.getElementById('boardScrollHint');
+            if (bsh) { bsh.style.transition = 'opacity 0.8s ease'; bsh.style.opacity = '1'; }
+            renderBoardInviterCard(inviter, invUni);
             typeScene2();
           }
         }, 70);
@@ -3726,7 +4140,12 @@ function renderBoard(members) {
   }));
   rows.sort((a, b) => b.members.length - a.members.length);
 
-  grid.innerHTML = rows.map(({ uni, idx: uIdx, members: mList }) => {
+  const headerRow = `<div class="board-list-header-row">
+    <div class="board-list-header-label">대학교</div>
+    <div class="board-list-header-count">갈 사람</div>
+  </div>`;
+
+  grid.innerHTML = headerRow + rows.map(({ uni, idx: uIdx, members: mList }) => {
     const count = mList.length;
     const accent = uni.accent || '#1e2a47';
     const chips = mList.map(p =>
@@ -3737,10 +4156,9 @@ function renderBoard(members) {
       : `<span class="board-list-count-empty">—</span>`;
 
     return `<div class="board-list-row ${count > 0 ? 'has-members' : ''}" onclick="showUniModal(${uIdx})">
-      <div class="board-list-logo">${renderLogo(uni, 40)}</div>
       <div class="board-list-info">
+        <div class="board-list-logo">${renderLogo(uni, 40)}</div>
         <div class="board-list-name-kr">${uni.kr || uni.name}</div>
-        <div class="board-list-name-en">${uni.name}</div>
         ${chips ? `<div class="board-list-chips">${chips}</div>` : ''}
       </div>
       <div class="board-list-count">${countHtml}</div>
@@ -3763,7 +4181,7 @@ function renderViralPreview() {
   // 내 카드
   let html = `<div class="vp-card mine">
     <div class="vp-info">
-      <div class="vp-nick">${myNick}</div>
+      <div class="vp-nick">나</div>
       <div class="vp-uni">${myUni.kr}</div>
     </div>
     <div class="vp-pct"><span>${currentResult.compatPct}%</span><small>궁합</small></div>
@@ -3810,8 +4228,8 @@ function shareResult(uniIdx, pct, nick) {
 
   const btn = document.getElementById('viralShareBtn');
   navigator.clipboard.writeText(_viralUrl).then(() => {
-    if (btn) { btn.textContent = '✅ 링크 복사됨!'; }
-    setTimeout(() => { if (btn) btn.textContent = '🔗 친구에게 공유하기'; }, 2500);
+    if (btn) { btn.innerHTML = '아래 링크를<br>복사하세요'; }
+    setTimeout(() => { if (btn) btn.innerHTML = '친구 대학이<br>궁금하다면?'; }, 4000);
   }).catch(() => {});
 }
 
@@ -3889,7 +4307,7 @@ function showUniModal(uniIdx) {
       ${uni.motto ? `<div class="uni-modal-motto">"${uni.motto}"</div>` : ''}
       ${uni.desc ? `<div class="uni-modal-desc">${uni.desc}</div>` : ''}
       <div class="uni-modal-ohang">${chipHtml}</div>
-      ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label" style="margin-top:14px">🎓 이 학교 출신들</div>${renderAlumniRow(al)}` : ''; })()}
+      ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label" style="margin-top:14px">선배님들</div>${renderAlumniRow(al)}` : ''; })()}
     </div>`;
   document.body.appendChild(overlay);
 }
@@ -3907,9 +4325,8 @@ function exportStoryImage() {
   const captureEl = document.getElementById('resultCapture');
   if (!captureEl) return;
 
-  const btn = document.querySelector('.story-btn');
-  const origText = btn ? btn.textContent : '';
-  if (btn) { btn.textContent = '생성 중…'; btn.disabled = true; }
+  const btn = document.querySelector('.action-bar-btn[onclick="exportStoryImage()"]');
+  if (btn) { btn.innerHTML = '생성 중…'; btn.disabled = true; }
 
   html2canvas(captureEl, {
     scale: 2,
@@ -3921,10 +4338,10 @@ function exportStoryImage() {
     link.download = `대학궁합_${uni.kr}_${compatPct}pct.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-    if (btn) { btn.textContent = origText; btn.disabled = false; }
+    if (btn) { btn.innerHTML = '저장 완료'; btn.disabled = false; }
   }).catch(err => {
     console.error('Export failed', err);
-    if (btn) { btn.textContent = origText; btn.disabled = false; }
+    if (btn) { btn.innerHTML = '이미지로<br>저장하기'; btn.disabled = false; }
     alert('이미지 생성에 실패했습니다.');
   });
 }
@@ -4077,20 +4494,6 @@ function chatAdvanceHour() {
   const hourEl = document.getElementById('birthHour');
   const hourInputArea = document.getElementById('hourInputArea');
 
-  const val = parseInt(hourEl.value);
-  let answerText;
-  if (val < 0) {
-    answerText = '모름';
-  } else {
-    const opt = hourEl.options[hourEl.selectedIndex];
-    answerText = opt.textContent.split(' ').slice(0, 2).join(' ');
-  }
-
-  const bubble = document.createElement('div');
-  bubble.className = 'a-bubble';
-  bubble.textContent = answerText;
-  hourInputArea.insertAdjacentElement('afterend', bubble);
-
   hourInputArea.style.opacity = '0.4';
   hourInputArea.style.pointerEvents = 'none';
 
@@ -4209,7 +4612,7 @@ async function runMatch() {
     }
   }
 
-  const hourBranch = parseInt(document.getElementById('birthHour').value);
+  const hourBranch = parseInt(document.getElementById('birthHour').value) || -1;
   const enrollYear = document.getElementById('enrollYear').value || null;
 
   document.getElementById('formSection').style.display = 'none';
@@ -4246,6 +4649,10 @@ async function runMatch() {
   const result = computeMatch(birthdate, hourBranch, enrollYear);
   result.userName = document.getElementById('userName').value.trim();
   currentBirthdate = birthdate;
+
+  sessionStorage.setItem('lastMatch', JSON.stringify({
+    birthdate, hourBranch, enrollYear, userName: result.userName
+  }));
 
   document.getElementById('loadingState').style.display = 'none';
   renderResult(result);
@@ -4331,7 +4738,23 @@ function init() {
     const members = decodeGroup(window.location.hash);
     renderBoard(members);
   } else {
-    startCinemaTyping();
+    const saved = sessionStorage.getItem('lastMatch');
+    if (saved) {
+      try {
+        const { birthdate, hourBranch, enrollYear, userName } = JSON.parse(saved);
+        currentBirthdate = birthdate;
+        const result = computeMatch(birthdate, hourBranch, enrollYear);
+        result.userName = userName;
+        document.getElementById('heroCinema').style.display = 'none';
+        document.getElementById('formSection').style.display = 'none';
+        renderResult(result);
+      } catch(e) {
+        sessionStorage.removeItem('lastMatch');
+        startCinemaTyping();
+      }
+    } else {
+      startCinemaTyping();
+    }
   }
 }
 
