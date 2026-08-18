@@ -13,6 +13,7 @@ interface Props {
   strategyPeriod?: InsightPeriod;
   strategySeed?: { key: number; text: string; period: InsightPeriod }; // 배너에서 고른 안건 시드
   onSelectStudent?: (id: string) => void; // 세일즈 로직 드릴다운 → 학생 패널
+  onOpenWeekly?: () => void; // 주차 계획·이행으로 이동 (이번 주 실행·회고)
 }
 
 type StrategyType = 'initial_contact' | 'initial_sales' | 'retry';
@@ -165,7 +166,7 @@ type SubTab = 'logic' | 'library' | 'strategy_ai';
 // 짝: CrmInsightBanner.tsx 의 동일 플래그(이어서 전략 짜기 CTA).
 const STRATEGY_AGENT_ENABLED = false;
 
-export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strategyPeriod, strategySeed, onSelectStudent }: Props) {
+export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strategyPeriod, strategySeed, onSelectStudent, onOpenWeekly }: Props) {
   const [subTab, setSubTab] = useState<SubTab>(initialSubTab === 'strategy_ai' ? 'strategy_ai' : 'logic');
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -212,7 +213,7 @@ export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strate
   return (
     <div className={`${subTab === 'logic' ? 'max-w-6xl' : 'max-w-3xl'} space-y-5`}>
       {/* 서브탭: 세일즈 로직 통계 / 전략 라이브러리 / 전략 에이전트 */}
-      <div className="flex gap-1 border-b border-gray-200 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1 border-b border-gray-200 overflow-x-auto scrollbar-none">
         {([
           { key: 'logic', label: '세일즈 로직 통계' },
           { key: 'library', label: '전략 라이브러리' },
@@ -230,6 +231,14 @@ export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strate
             {label}
           </button>
         ))}
+        {onOpenWeekly && (
+          <button
+            onClick={onOpenWeekly}
+            className="ml-auto mr-1 shrink-0 text-[11px] text-gray-400 hover:text-gray-600 whitespace-nowrap"
+          >
+            이번 주 실행·회고는 주차 계획·이행 →
+          </button>
+        )}
       </div>
 
       {subTab === 'logic' && <StrategyStats adminKey={adminKey} segment={segment} onSelectStudent={onSelectStudent} />}

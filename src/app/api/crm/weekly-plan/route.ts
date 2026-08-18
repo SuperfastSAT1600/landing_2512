@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
-import { getWeekDefByStart } from '@/lib/week-definitions';
+import { getWeekDefByStart, weekByOffset } from '@/lib/week-definitions';
 import {
   WEEKLY_PLAN_METRIC_KEYS,
+  isRetroFilled,
   type WeeklyPlanMetricKey,
   type WeeklyPlanResponse,
-  type WeeklyPlanTarget,
-  type WeeklyPlanAction,
+  type WeeklyPlanSegment,
 } from '@/types/crm';
+import { buildPlanPatch, normalizePlanRow } from './sanitize';
+import { fetchWeeklyExecution } from './fetch-execution';
 
 const VALID_SEGMENTS = ['b2c', 'b2b'] as const;
-type Segment = (typeof VALID_SEGMENTS)[number];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 // stats overview 필드 → 목표 지표 매핑 (b2c/b2b overview 공통 필드명)
@@ -27,7 +28,7 @@ const OVERVIEW_MAP: Record<WeeklyPlanMetricKey, string> = {
 async function fetchActuals(
   origin: string,
   adminKey: string,
-  segment: Segment,
+  segment: WeeklyPlanSegment,
   from: string,
   to: string,
 ): Promise<Partial<Record<WeeklyPlanMetricKey, number>>> {
@@ -50,6 +51,20 @@ async function fetchActuals(
   }
 }
 
+/** 직전 주차의 회고 작성 여부 — '지난주 회고 쓰기' 배너 판정용. */
+async function fetchPrevMeta(segment: WeeklyPlanSegment, weekStart: string) {
+  const prev = weekByOffset(weekStart, -1);
+  if (!prev) return null;
+  const { data } = await supabaseAdmin
+    .from('weekly_plans')
+    .select('retrospective')
+    .eq('segment', segment)
+    .eq('week_start', prev.start)
+    .maybeSingle();
+  const retro = normalizePlanRow({ ...(data ?? {}), segment, week_start: prev.start })?.retrospective;
+  return { week_start: prev.start, week_label: prev.label, retro_filled: isRetroFilled(retro) };
+}
+
 // GET /api/crm/weekly-plan?segment=&week_start=
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
@@ -57,7 +72,7 @@ export async function GET(request: NextRequest) {
   }
 
   const sp = request.nextUrl.searchParams;
-  const segment = sp.get('segment') as Segment | null;
+  const segment = sp.get('segment') as WeeklyPlanSegment | null;
   const weekStart = sp.get('week_start');
 
   if (!segment || !(VALID_SEGMENTS as readonly string[]).includes(segment)) {
@@ -71,36 +86,47 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '주차 정의에 없는 week_start입니다.' }, { status: 400 });
   }
 
-  const { data: plan } = await supabaseAdmin
+  const { data: row } = await supabaseAdmin
     .from('weekly_plans')
     .select('*')
     .eq('segment', segment)
     .eq('week_start', weekStart)
     .maybeSingle();
 
+  const plan = normalizePlanRow(row);
   const adminKey = request.headers.get('x-admin-key') ?? '';
-  const actuals = await fetchActuals(request.nextUrl.origin, adminKey, segment, week.start, week.end);
+
+  const [actuals, execution, prev] = await Promise.all([
+    fetchActuals(request.nextUrl.origin, adminKey, segment, week.start, week.end),
+    fetchWeeklyExecution(segment, { start: week.start, end: week.end }, plan?.focus_strategies ?? []),
+    fetchPrevMeta(segment, weekStart),
+  ]);
 
   const body: WeeklyPlanResponse = {
-    plan: plan ?? null,
+    plan,
     actuals,
     week: { start: week.start, end: week.end, label: week.label },
+    execution,
+    prev,
   };
   return NextResponse.json({ data: body });
 }
 
-// PUT /api/crm/weekly-plan — targets + actions 업서트 (팀 공용 last-write-wins)
+// PUT /api/crm/weekly-plan — body에 있는 필드만 업서트 (팀 공용 last-write-wins)
 export async function PUT(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { segment?: string; week_start?: string; targets?: WeeklyPlanTarget[]; actions?: WeeklyPlanAction[] };
-  try { body = await request.json(); } catch {
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { segment, week_start } = body;
+  const segment = body.segment as string | undefined;
+  const week_start = body.week_start as string | undefined;
   if (!segment || !(VALID_SEGMENTS as readonly string[]).includes(segment)) {
     return NextResponse.json({ error: 'segment은 b2c|b2b 중 하나여야 합니다.' }, { status: 400 });
   }
@@ -108,26 +134,15 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'week_start가 올바르지 않습니다.' }, { status: 400 });
   }
 
-  // targets 정제: 유효 metric key만, target_value 숫자화
-  const targets: WeeklyPlanTarget[] = (Array.isArray(body.targets) ? body.targets : [])
-    .filter((t) => WEEKLY_PLAN_METRIC_KEYS.includes(t?.key))
-    .map((t) => ({ key: t.key, label: String(t.label ?? ''), target_value: Number(t.target_value) || 0 }));
-
-  // actions 정제
-  const actions: WeeklyPlanAction[] = (Array.isArray(body.actions) ? body.actions : [])
-    .filter((a) => a && typeof a.id === 'string' && typeof a.text === 'string')
-    .map((a) => ({
-      id: a.id,
-      text: a.text,
-      done: !!a.done,
-      done_at: a.done ? (a.done_at ?? new Date().toISOString()) : null,
-      owner: a.owner ?? null,
-    }));
+  const patch = buildPlanPatch(body);
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: '저장할 내용이 없습니다.' }, { status: 400 });
+  }
 
   const { data, error } = await supabaseAdmin
     .from('weekly_plans')
     .upsert(
-      { segment, week_start, targets, actions, updated_at: new Date().toISOString() },
+      { segment, week_start, ...patch, updated_at: new Date().toISOString() },
       { onConflict: 'segment,week_start' },
     )
     .select()
@@ -138,5 +153,5 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: '주차 계획 저장에 실패했습니다.' }, { status: 500 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ data: normalizePlanRow(data) });
 }

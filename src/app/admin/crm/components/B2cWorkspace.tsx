@@ -35,7 +35,7 @@ export function B2cWorkspace({
   retryEnrolledId,
   onEnrolledHandled,
 }: B2cWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<B2cTab>('leads');
+  const [activeTab, setActiveTab] = useState<B2cTab>('weekly');
   const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'logic' | 'library' | 'strategy_ai' | undefined>(undefined);
   const [strategyPeriod, setStrategyPeriod] = useState<InsightPeriod | undefined>(undefined);
   // 배너 '이어서 전략 짜기'에서 고른 안건 시드 — key 증가로 매 선택마다 새 스레드 트리거
@@ -104,7 +104,7 @@ export function B2cWorkspace({
       {activeTab === 'strategies' && (
         <>
           {INSIGHT_BANNER_ENABLED && <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />}
-          <StrategiesTab adminKey={adminKey} segment="b2c" initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} onSelectStudent={onSelectStudentById} />
+          <StrategiesTab adminKey={adminKey} segment="b2c" initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} onSelectStudent={onSelectStudentById} onOpenWeekly={() => setActiveTab('weekly')} />
         </>
       )}
 
@@ -112,6 +112,11 @@ export function B2cWorkspace({
         <WeeklyPlan
           segment="b2c"
           adminKey={adminKey}
+          onSelectStudent={onSelectStudentById}
+          onOpenStrategyLibrary={() => {
+            setStrategiesInitialSubTab('library');
+            setActiveTab('strategies');
+          }}
           dailyView={
             <DailyTasks
               followUpStudents={followUpStudents}
