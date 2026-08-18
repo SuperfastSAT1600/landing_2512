@@ -7,12 +7,11 @@ import { SalesKanban } from './SalesKanban';
 import { KanbanStatsStrip } from './KanbanStatsStrip';
 import { KanbanFilter, KanbanFilters, DEFAULT_FILTERS } from './KanbanFilter';
 import { LeadPool } from './LeadPool';
-import { SalesStats } from './SalesStats';
 import { EnrolledLeads } from './EnrolledLeads';
 import { RetryKanban } from './RetryKanban';
 import { RenewalKanban } from './RenewalKanban';
 
-type HubTab = 'kanban' | 'renewal' | 'retry' | 'enrolled' | 'pool' | 'stats';
+type HubTab = 'kanban' | 'renewal' | 'retry' | 'enrolled' | 'pool';
 
 // 재시도 보드 사용 빈도가 낮아 UI 숨김. true로 바꾸면 탭·진입이 복구된다.
 const RETRY_TAB_ENABLED = false;
@@ -63,7 +62,6 @@ export function LeadsHub({
           ...(RETRY_TAB_ENABLED ? [{ key: 'retry', label: '재시도' }] : []),
           { key: 'enrolled', label: '튜터링 중' },
           { key: 'pool', label: '이탈 리드풀' },
-          { key: 'stats', label: '통계' },
         ] as { key: HubTab; label: string }[]).map(({ key, label }) => (
           <button key={key} onClick={() => setSubTab(key)}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors shrink-0 whitespace-nowrap ${subTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -133,8 +131,6 @@ export function LeadsHub({
           }}
         />
       )}
-
-      {subTab === 'stats' && <SalesStats adminKey={adminKey} onSelectStudent={onSelectStudentById} />}
     </div>
   );
 }
