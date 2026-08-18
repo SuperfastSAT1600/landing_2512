@@ -3364,19 +3364,10 @@ function getAlumni(uni) {
 
 function renderAlumniRow(alumni) {
   if (!alumni || alumni.length === 0) return '';
-  const cards = alumni.map(a => `
-    <div class="alumni-card">
-      <div class="alumni-photo-wrap">
-        <img class="alumni-photo" data-wiki="${encodeURIComponent(a.name)}" alt="${a.name}">
-        <div class="alumni-pixel-fallback">${renderPersonPixel(a.name)}</div>
-      </div>
-      <div class="alumni-info">
-        <div class="alumni-name">${a.name}</div>
-        <div class="alumni-role">${a.role}</div>
-        ${a.desc ? `<div class="alumni-desc">${a.desc}</div>` : ''}
-      </div>
-    </div>`).join('');
-  return `<div class="alumni-row">${cards}</div>`;
+  const lines = alumni.map(a =>
+    `<p><span class="nbullet">✦</span><span class="motto-label">선배</span> <strong style="color:var(--text)">${a.name}</strong> — ${a.role}${a.desc ? ` · ${a.desc}` : ''}</p>`
+  ).join('');
+  return lines;
 }
 
 async function loadAlumniPhotos() {
@@ -3736,7 +3727,7 @@ function buildRichNarrative(uni, userProfile, userName, birthdate) {
         <p><span class="nbullet">✦</span>${uniDescLine}</p>
         ${traitLine ? `<p><span class="nbullet">✦</span>${traitLine}</p>` : ''}
         <p><span class="nbullet">✦</span>${studentFitLine}</p>
-        ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label">선배님들</div>${renderAlumniRow(al)}` : ''; })()}
+        ${(() => { const al = getAlumni(uni); return al ? renderAlumniRow(al) : ''; })()}
       </div>
       <div class="narrative-section compat-reason">
         <div class="narrative-label">왜 찰떡궁합인가</div>
@@ -4307,7 +4298,7 @@ function showUniModal(uniIdx) {
       ${uni.motto ? `<div class="uni-modal-motto">"${uni.motto}"</div>` : ''}
       ${uni.desc ? `<div class="uni-modal-desc">${uni.desc}</div>` : ''}
       <div class="uni-modal-ohang">${chipHtml}</div>
-      ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label" style="margin-top:14px">선배님들</div>${renderAlumniRow(al)}` : ''; })()}
+      ${(() => { const al = getAlumni(uni); return al ? renderAlumniRow(al) : ''; })()}
     </div>`;
   document.body.appendChild(overlay);
 }
