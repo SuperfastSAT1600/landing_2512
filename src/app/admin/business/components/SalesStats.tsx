@@ -11,7 +11,8 @@ const SalesRevenueChart = dynamic(() => import('./SalesRevenueChart'), {
 });
 import type { CrmStatsData, StatsBySource, StatsWeekly, StatsMonthly } from '@/app/api/crm/stats/route';
 import type { StatsDetailMetric, LeadDetailItem } from '@/lib/crm-stats-detail';
-import { StatsDetailModal, leadStatus, type LeadDisplayStatus } from './StatsDetailModal';
+// CRM 통계 공용 컴포넌트 — StrategyStats/KanbanStatsStrip/B2bStats도 함께 쓰므로 CRM에 그대로 둔다.
+import { StatsDetailModal, leadStatus, type LeadDisplayStatus } from '../../crm/components/StatsDetailModal';
 import {
   type Preset,
   type TrendPreset,
@@ -23,7 +24,7 @@ import {
   RateBar,
   formatDuration,
   SegmentTabs,
-} from './stats-primitives';
+} from '../../crm/components/stats-primitives';
 import type { CrmStatsSegment } from '@/lib/crm-stats-core';
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
