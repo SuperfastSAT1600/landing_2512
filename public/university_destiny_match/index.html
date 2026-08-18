@@ -3884,7 +3884,7 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
 
     <div class="action-bar">
       <button class="action-bar-btn primary" onclick="exportStoryImage()"><span class="action-icon">🖼️</span>이미지로<br>저장하기</button>
-      <button class="action-bar-btn primary" id="saveRoomBtn" onclick="saveRoom()"><span class="action-icon">🔖</span>궁합 결과<br>저장하기</button>
+      <button class="action-bar-btn primary" id="saveRoomBtn" onclick="saveRoom()"><span class="action-icon">🔖</span>결과 링크<br>저장하기</button>
       <button class="action-bar-btn primary" id="viralShareBtn"
         data-idx="${uniIdx}" data-pct="${compatPct}"
         data-nick="${(userName || '나').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"
@@ -3895,7 +3895,7 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
     </div>
 
     <div class="viral-url-reveal" id="viralUrlReveal" style="display:none">
-      <div class="viral-url-msg">아래 링크를 친구에게 보내세요 👇</div>
+      <div class="viral-url-msg">아래 링크로 접속하면 친구 대학 결과 볼 수 있어요 👇</div>
       <div class="invite-url-box">
         <span class="invite-url-text" id="viralUrlText"></span>
         <button class="invite-url-copy" onclick="copyViralUrl()">복사</button>
@@ -4701,7 +4701,7 @@ async function saveRoom() {
 
     btn.innerHTML = '<span class="action-icon">✅</span>링크 복사됨!';
     setTimeout(() => {
-      btn.innerHTML = '<span class="action-icon">🔖</span>궁합 결과<br>저장하기';
+      btn.innerHTML = '<span class="action-icon">🔖</span>결과 링크<br>저장하기';
       btn.disabled = false;
     }, 2500);
 
@@ -4727,7 +4727,7 @@ async function saveRoom() {
     btn.innerHTML = '<span class="action-icon">❌</span>오류 발생';
     btn.disabled = false;
     setTimeout(() => {
-      btn.innerHTML = '<span class="action-icon">🔖</span>궁합 결과<br>저장하기';
+      btn.innerHTML = '<span class="action-icon">🔖</span>결과 링크<br>저장하기';
     }, 2000);
   }
 }
