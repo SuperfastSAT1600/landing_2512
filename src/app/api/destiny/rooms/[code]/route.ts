@@ -6,12 +6,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+type Params = Promise<{ code: string }>;
+
 // GET /api/destiny/rooms/[code] — 방 멤버 조회
-export async function GET(_req: NextRequest, { params }: { params: { code: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Params }) {
+  const { code } = await params;
   const { data, error } = await supabase
     .from('destiny_rooms')
     .select('members, updated_at')
-    .eq('code', params.code)
+    .eq('code', code)
     .single();
 
   if (error || !data) {
@@ -21,7 +24,8 @@ export async function GET(_req: NextRequest, { params }: { params: { code: strin
 }
 
 // POST /api/destiny/rooms/[code] — 멤버 추가 (방 없으면 생성)
-export async function POST(req: NextRequest, { params }: { params: { code: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Params }) {
+  const { code } = await params;
   const body = await req.json();
   const { nick, uniIdx, pct } = body;
 
@@ -31,15 +35,13 @@ export async function POST(req: NextRequest, { params }: { params: { code: strin
 
   const newMember = { nick, uniIdx, pct };
 
-  // 기존 방 조회
   const { data: existing } = await supabase
     .from('destiny_rooms')
     .select('members')
-    .eq('code', params.code)
+    .eq('code', code)
     .single();
 
   if (existing) {
-    // 같은 닉네임이면 업데이트, 없으면 추가
     const members: typeof newMember[] = existing.members || [];
     const idx = members.findIndex((m) => m.nick === nick);
     if (idx >= 0) members[idx] = newMember;
@@ -48,12 +50,11 @@ export async function POST(req: NextRequest, { params }: { params: { code: strin
     await supabase
       .from('destiny_rooms')
       .update({ members, updated_at: new Date().toISOString() })
-      .eq('code', params.code);
+      .eq('code', code);
   } else {
-    // 방 신규 생성
     await supabase
       .from('destiny_rooms')
-      .insert({ code: params.code, members: [newMember] });
+      .insert({ code, members: [newMember] });
   }
 
   return NextResponse.json({ ok: true });
