@@ -20,6 +20,7 @@ interface B2bWorkspaceProps {
 export function B2bWorkspace({ adminKey, students, onStudentClick, onSelectStudentById }: B2bWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<B2bTab>('overview');
   const [pipeSub, setPipeSub] = useState<PipeSub>('pipeline');
+  const [strategySubTab, setStrategySubTab] = useState<'logic' | 'library' | undefined>(undefined);
 
   return (
     <div className="px-4 py-4 sm:px-8 sm:py-6">
@@ -59,11 +60,30 @@ export function B2bWorkspace({ adminKey, students, onStudentClick, onSelectStude
             ))}
           </div>
           {pipeSub === 'pipeline' && <B2bPipeline adminKey={adminKey} />}
-          {pipeSub === 'strategy' && <StrategiesTab adminKey={adminKey} segment="b2b" onSelectStudent={onSelectStudentById} />}
+          {pipeSub === 'strategy' && (
+            <StrategiesTab
+              adminKey={adminKey}
+              segment="b2b"
+              initialSubTab={strategySubTab}
+              onSelectStudent={onSelectStudentById}
+              onOpenWeekly={() => setActiveTab('weekly')}
+            />
+          )}
         </div>
       )}
 
-      {activeTab === 'weekly' && <WeeklyPlan segment="b2b" adminKey={adminKey} />}
+      {activeTab === 'weekly' && (
+        <WeeklyPlan
+          segment="b2b"
+          adminKey={adminKey}
+          onSelectStudent={onSelectStudentById}
+          onOpenStrategyLibrary={() => {
+            setStrategySubTab('library');
+            setPipeSub('strategy');
+            setActiveTab('pipeline');
+          }}
+        />
+      )}
     </div>
   );
 }
