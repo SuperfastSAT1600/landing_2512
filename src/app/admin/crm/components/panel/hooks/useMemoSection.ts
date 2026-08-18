@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import type { ConsultationEntry, Attachment } from '@/types/crm';
 
-interface PendingEdit { purified: string; coachHistory: string; deletedItems: string[] }
+interface PendingEdit {
+  purified: string;
+  coachHistory: string;
+  deletedItems: string[];
+}
 
 interface Params {
   studentId: string;
@@ -17,8 +21,18 @@ interface Params {
   clearAttachments?: () => void;
 }
 
-export function useMemoSection({ studentId, adminKey, userName, setTimeline, onUpdate, getAttachments, clearAttachments }: Params) {
+export function useMemoSection({
+  studentId,
+  adminKey,
+  userName,
+  setTimeline,
+  onUpdate,
+  getAttachments,
+  clearAttachments,
+}: Params) {
   const [memoText, setMemoText] = useState('');
+  const [parentText, setParentText] = useState('');
+  const [parentDrafting, setParentDrafting] = useState(false);
   const [savingMemo, setSavingMemo] = useState(false);
   const [memoError, setMemoError] = useState('');
   const [aiLoadingFor, setAiLoadingFor] = useState<string | null>(null);
@@ -29,11 +43,13 @@ export function useMemoSection({ studentId, adminKey, userName, setTimeline, onU
     setAiLoadingFor(entry.id);
     try {
       const res = await fetch('/api/crm/ai-care', {
-        method: 'POST', headers, body: JSON.stringify({ raw_memo: entry.raw_memo }),
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ raw_memo: entry.raw_memo }),
       });
       const json = await res.json();
       if (res.ok && json.data) {
-        setPendingEdits(prev => ({
+        setPendingEdits((prev) => ({
           ...prev,
           [entry.id]: {
             purified: json.data.purified,
@@ -47,6 +63,22 @@ export function useMemoSection({ studentId, adminKey, userName, setTimeline, onU
     }
   }
 
+  async function draftParentNote() {
+    if (!memoText.trim()) return;
+    setParentDrafting(true);
+    try {
+      const res = await fetch('/api/crm/ai-care', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ raw_memo: memoText.trim() }),
+      });
+      const json = await res.json();
+      if (res.ok && json.data?.purified) setParentText(json.data.purified);
+    } finally {
+      setParentDrafting(false);
+    }
+  }
+
   async function handleAddMemo() {
     const attachments = getAttachments?.() ?? [];
     if (!memoText.trim() && attachments.length === 0) return;
@@ -54,17 +86,26 @@ export function useMemoSection({ studentId, adminKey, userName, setTimeline, onU
     setMemoError('');
     try {
       const res = await fetch(`/api/crm/students/${studentId}/memo`, {
-        method: 'POST', headers,
-        body: JSON.stringify({ raw_memo: memoText.trim(), author: userName || undefined, attachments }),
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          raw_memo: memoText.trim(),
+          author: userName || undefined,
+          attachments,
+          ai_purified: parentText.trim() || undefined,
+        }),
       });
       const json = await res.json();
       if (res.ok && json.data) {
         const newEntry: ConsultationEntry = json.data;
         // 재진입 시(DB append 순서)와 동일하게 created_at 오름차순으로 정렬해 표시
-        setTimeline(prev => [...prev, newEntry].sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        ));
+        setTimeline((prev) =>
+          [...prev, newEntry].sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          )
+        );
         setMemoText('');
+        setParentText('');
         clearAttachments?.();
         onUpdate(studentId, { last_contacted_at: new Date().toISOString() });
         // AI 변환 기능 숨김(2026-08-07): UI 제거에 맞춰 메모 저장 시 자동 AI 변환도 중단(불필요한 API 비용 방지).
@@ -80,10 +121,19 @@ export function useMemoSection({ studentId, adminKey, userName, setTimeline, onU
   }
 
   return {
-    memoText, setMemoText,
-    savingMemo, memoError, setMemoError,
+    memoText,
+    setMemoText,
+    savingMemo,
+    memoError,
+    setMemoError,
     aiLoadingFor,
-    pendingEdits, setPendingEdits,
-    handleAddMemo, triggerAiCare,
+    pendingEdits,
+    setPendingEdits,
+    handleAddMemo,
+    triggerAiCare,
+    draftParentNote,
+    parentText,
+    setParentText,
+    parentDrafting,
   };
 }

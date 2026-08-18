@@ -134,7 +134,7 @@ export interface ConsultationEntry {
   created_at: string; // ISO timestamp
   raw_memo: string; // 매니저 원본 메모
   author?: string; // 작성자 이름 (로그인한 CRM 사용자)
-  ai_purified?: string; // AI 가공본 (학부모 노출)
+  ai_purified?: string; // 학부모 공개본 (AI 초안 또는 직접 작성)
   ai_deleted_items?: string[]; // AI가 삭제한 항목 목록 (매니저 확인용)
   ai_coach_history?: string; // AI가 분리한 교육 이력 (코치 노출)
   attachments?: Attachment[]; // 첨부 파일 (운영자 내부 전용, 학부모 비노출)
@@ -324,7 +324,13 @@ export const WEEKLY_PLAN_METRIC_LABELS: Record<WeeklyPlanMetricKey, string> = {
 /** 원화(정수) 지표 — 표시 포맷 분기용. 나머지는 건수. */
 export const WEEKLY_PLAN_CURRENCY_METRICS: WeeklyPlanMetricKey[] = ['revenue', 'net_revenue'];
 
-export const WEEKLY_PLAN_METRIC_KEYS: WeeklyPlanMetricKey[] = ['leads', 'contacted', 'paid', 'revenue', 'net_revenue'];
+export const WEEKLY_PLAN_METRIC_KEYS: WeeklyPlanMetricKey[] = [
+  'leads',
+  'contacted',
+  'paid',
+  'revenue',
+  'net_revenue',
+];
 
 export interface WeeklyPlanTarget {
   key: WeeklyPlanMetricKey;
@@ -759,7 +765,6 @@ export function todaysMemos(
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
-
 export const MATCHING_STAGE_LABELS: Record<MatchingStage, string> = {
   schedule_pending: '스케줄 입력 대기',
   schedule_done: '스케줄 입력 완료',
@@ -847,10 +852,6 @@ export const TIMEZONE_OPTIONS = [
   { label: '사이판 (ChST)', value: 'Pacific/Saipan' },
 ] as const;
 
-export const TIMEZONE_LABEL_MAP: Record<string, string> = Object.fromEntries(
-  TIMEZONE_OPTIONS.map((o) => [o.value, o.label])
-);
-
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   active: '활성',
   inactive: '비활성',
@@ -909,15 +910,15 @@ export type WinbackResponse = 'none' | 'positive' | 'negative' | 'later';
 export interface WinbackRuleFilters {
   grades?: string[];
   school_types?: string[];
-  campaign_tag_any?: string[];        // 과목 의도의 정본 신호 (예: 'AP 문의')
+  campaign_tag_any?: string[]; // 과목 의도의 정본 신호 (예: 'AP 문의')
   churn_types?: ChurnType[];
-  churn_tag_prefixes?: string[];      // churn_tag는 "{태그}: {사유}" 형식
-  churn_stages?: string[];            // effectiveChurnStage 결과 (JS 후처리)
+  churn_tag_prefixes?: string[]; // churn_tag는 "{태그}: {사유}" 형식
+  churn_stages?: string[]; // effectiveChurnStage 결과 (JS 후처리)
   traffic_sources?: TrafficSource[];
-  churned_within_days?: number;       // 이탈 후 N일 이내
-  churned_after_days?: number;        // 이탈 후 최소 N일 경과
+  churned_within_days?: number; // 이탈 후 N일 이내
+  churned_after_days?: number; // 이탈 후 최소 N일 경과
   exclude_recent_contact_days?: number;
-  include_reactivating?: boolean;     // 기본 true
+  include_reactivating?: boolean; // 기본 true
 }
 
 /** 규칙 스코어의 매치 내역 — UI 근거 칩 + 사후 가중치 튜닝용. */

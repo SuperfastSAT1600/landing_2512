@@ -1,5 +1,5 @@
 /**
- * 플레이 브리프 프리셋 — 실제 판매 상품(pricing.ts)에서 출발하게 한다.
+ * 캠페인 브리프 프리셋 — 실제 판매 상품(pricing.ts)에서 출발하게 한다.
  * 상품 마스터 DB를 만들지 않기로 했으므로, 여기 값은 "빠른 시작용 문구"일 뿐 정본이 아니다.
  */
 import { AP_PACKAGES, HOUR_PACKAGES } from '@/lib/enrollment/data/pricing';

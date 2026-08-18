@@ -23,7 +23,7 @@ export interface PostData {
     updatedAt?: string;
     isGated?: boolean;
     isVip?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 const LIST_COLUMNS = 'id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags, cta_featured, meta_title, meta_robots, updated_at, access_code';

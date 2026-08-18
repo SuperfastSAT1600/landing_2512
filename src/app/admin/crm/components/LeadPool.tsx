@@ -490,7 +490,7 @@ export function LeadPool({
       const result = await winback.addTargets(selectedPlayId, { student_ids: ids });
       setSelectedIds(new Set());
       const skipped = result.skipped > 0 ? ` (중복 ${result.skipped}명 제외)` : '';
-      setBulkSuccessMessage(`${result.inserted.length}명을 플레이에 추가했습니다.${skipped}`);
+      setBulkSuccessMessage(`${result.inserted.length}명을 캠페인에 추가했습니다.${skipped}`);
       setPlayTargets((prev) => {
         const next = new Map(prev);
         for (const t of result.inserted) next.set(t.student_id, { rank: t.rank, score: t.score, sent: false });
@@ -498,7 +498,7 @@ export function LeadPool({
       });
     } catch (err) {
       setBulkSuccessMessage(null);
-      alert(`플레이 추가에 실패했습니다: ${(err as Error).message}`);
+      alert(`캠페인 추가에 실패했습니다: ${(err as Error).message}`);
     } finally {
       setAddingToPlay(false);
     }
@@ -627,7 +627,7 @@ export function LeadPool({
           [
             { key: 'inactive', label: `이탈 학생 (${totalInactive})` },
             { key: 'reactivating', label: `재활성화 시도 중 (${totalReactivating})` },
-            { key: 'plays', label: `플레이 (${winback.plays.length})` },
+            { key: 'plays', label: `캠페인 (${winback.plays.length})` },
           ] as { key: PoolTab; label: string }[]
         ).map(({ key, label }) => (
           <button
@@ -845,7 +845,7 @@ export function LeadPool({
                     <div className="flex items-center gap-1.5 mt-1 px-2">
                       <Target size={11} className="text-blue-400 shrink-0" />
                       <p className="text-[11px] text-blue-600">
-                        이 플레이 타겟
+                        이 캠페인 타겟
                         {target.rank != null ? ` · #${target.rank}` : ''}
                         {target.score != null ? ` · ${Math.round(target.score)}점` : ''}
                         {target.sent ? ' · 발송됨' : ' · 미발송'}
@@ -931,7 +931,7 @@ export function LeadPool({
                 className="flex items-center gap-1.5 text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition-colors"
               >
                 <Target size={13} />
-                {addingToPlay ? '추가 중...' : `플레이에 추가 (${selectedIds.size})`}
+                {addingToPlay ? '추가 중...' : `캠페인에 추가 (${selectedIds.size})`}
               </button>
             )}
             <button

@@ -83,7 +83,7 @@ export function BriefStep({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={label} htmlFor="wb-title">
-            플레이 이름
+            캠페인 이름
           </label>
           <input
             id="wb-title"

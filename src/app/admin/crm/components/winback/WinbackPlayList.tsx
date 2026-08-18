@@ -44,7 +44,7 @@ export function WinbackPlayList({
           onClick={onNew}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-700"
         >
-          <Plus size={13} /> 새 플레이
+          <Plus size={13} /> 새 캠페인
         </button>
       </div>
 
@@ -57,9 +57,9 @@ export function WinbackPlayList({
       ) : plays.length === 0 ? (
         <div className="py-12 text-center space-y-2">
           <Target size={22} className="mx-auto text-gray-300" />
-          <p className="text-sm text-gray-400">아직 플레이가 없습니다.</p>
+          <p className="text-sm text-gray-400">아직 캠페인이 없습니다.</p>
           <button onClick={onNew} className="text-xs font-medium text-blue-600 hover:text-blue-700">
-            첫 플레이 만들기
+            첫 캠페인 만들기
           </button>
         </div>
       ) : (
@@ -94,11 +94,11 @@ export function WinbackPlayList({
               </button>
               <button
                 type="button"
-                aria-label="플레이 삭제"
+                aria-label="캠페인 삭제"
                 disabled={deletingIds.has(p.id)}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!confirm(`"${p.title}" 플레이를 삭제할까요? 타겟·변형 기록도 함께 삭제됩니다.`)) {
+                  if (!confirm(`"${p.title}" 캠페인을 삭제할까요? 타겟·변형 기록도 함께 삭제됩니다.`)) {
                     return;
                   }
                   setDeletingIds((prev) => new Set(prev).add(p.id));

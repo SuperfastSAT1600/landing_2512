@@ -162,14 +162,30 @@ export function getTestSplit(nextTestDate: string): {
         };
     });
 
-    const idx = all.findIndex(t => t.date === nextTestDate);
-    const pivot = idx === -1 ? 0 : idx;
-
     if (all.length === 0) return { discountTest: null, otherTests: [] };
 
+    const idx = all.findIndex(t => t.date === nextTestDate);
+
+    if (idx !== -1) {
+        return {
+            discountTest: { ...all[idx], discountPercent: DISCOUNT_PERCENT, checkoutUrls: CHECKOUT_URLS.discount },
+            otherTests: all.slice(idx + 1),
+        };
+    }
+
+    // 스케줄에 없는 날짜(커스텀): 해당 날짜로 할인 시험 생성, 이후 TEST_SCHEDULE 항목을 otherTests로
+    const d = new Date(`${nextTestDate}T00:00:00`);
     return {
-        discountTest: { ...all[pivot], discountPercent: DISCOUNT_PERCENT, checkoutUrls: CHECKOUT_URLS.discount },
-        otherTests: all.slice(pivot + 1),
+        discountTest: {
+            date: nextTestDate,
+            round: 0,
+            month: d.getMonth() + 1,
+            day: d.getDate(),
+            weekday: WEEKDAYS[d.getDay()],
+            discountPercent: DISCOUNT_PERCENT,
+            checkoutUrls: CHECKOUT_URLS.discount,
+        },
+        otherTests: all.filter(t => t.date > nextTestDate),
     };
 }
 
