@@ -1538,7 +1538,7 @@ body {
 /* ── 하단 액션 버튼 3개 ── */
 .action-bar {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: 16px;
 }
@@ -2371,7 +2371,7 @@ function getYearPillar(year, month, day) {
   let sYear = year;
   if (month === 1 || (month === 2 && day < 4)) sYear = year - 1;
   const stemIdx = ((sYear - 4) % 10 + 10) % 10;
-  const branchIdx = ((sYear % 12) + 12) % 12;
+  const branchIdx = ((sYear - 4) % 12 + 12) % 12;
   return {
     stem: HEAVENLY_STEM_ELEMENT[stemIdx],
     branch: EARTHLY_BRANCH_ELEMENT[branchIdx]
@@ -2459,7 +2459,7 @@ function getSatFit(uni, score) {
 
 function getEnrollYearProfile(year) {
   const stemEl = HEAVENLY_STEM_ELEMENT[((year - 4) % 10 + 10) % 10];
-  const branchEl = EARTHLY_BRANCH_ELEMENT[((year % 12) + 12) % 12];
+  const branchEl = EARTHLY_BRANCH_ELEMENT[((year - 4) % 12 + 12) % 12];
   const p = { 목:0, 화:0, 토:0, 금:0, 수:0 };
   p[stemEl] += 50;
   p[branchEl] += 50;
@@ -3364,19 +3364,10 @@ function getAlumni(uni) {
 
 function renderAlumniRow(alumni) {
   if (!alumni || alumni.length === 0) return '';
-  const cards = alumni.map(a => `
-    <div class="alumni-card">
-      <div class="alumni-photo-wrap">
-        <img class="alumni-photo" data-wiki="${encodeURIComponent(a.name)}" alt="${a.name}">
-        <div class="alumni-pixel-fallback">${renderPersonPixel(a.name)}</div>
-      </div>
-      <div class="alumni-info">
-        <div class="alumni-name">${a.name}</div>
-        <div class="alumni-role">${a.role}</div>
-        ${a.desc ? `<div class="alumni-desc">${a.desc}</div>` : ''}
-      </div>
-    </div>`).join('');
-  return `<div class="alumni-row">${cards}</div>`;
+  const lines = alumni.map(a =>
+    `<p><span class="nbullet">✦</span><span class="motto-label">선배</span> <strong style="color:var(--text)">${a.name}</strong> — ${a.role}${a.desc ? ` · ${a.desc}` : ''}</p>`
+  ).join('');
+  return lines;
 }
 
 async function loadAlumniPhotos() {
@@ -3685,7 +3676,7 @@ function buildRichNarrative(uni, userProfile, userName, birthdate) {
   const [bYear, bMonth, bDay] = birthdate ? birthdate.split('-').map(Number) : [2000, 6, 1];
   const sYear = (bMonth === 1 || (bMonth === 2 && bDay < 4)) ? bYear - 1 : bYear;
   const stemIdx = ((sYear - 4) % 10 + 10) % 10;
-  const branchIdx = ((sYear % 12) + 12) % 12;
+  const branchIdx = ((sYear - 4) % 12 + 12) % 12;
   const stemName  = HEAVENLY_STEM_NAME[stemIdx];
   const branchName = EARTHLY_BRANCH_NAME[branchIdx];
   const stemChar  = '甲乙丙丁戊己庚辛壬癸'[stemIdx];
@@ -3736,7 +3727,7 @@ function buildRichNarrative(uni, userProfile, userName, birthdate) {
         <p><span class="nbullet">✦</span>${uniDescLine}</p>
         ${traitLine ? `<p><span class="nbullet">✦</span>${traitLine}</p>` : ''}
         <p><span class="nbullet">✦</span>${studentFitLine}</p>
-        ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label">선배님들</div>${renderAlumniRow(al)}` : ''; })()}
+        ${(() => { const al = getAlumni(uni); return al ? renderAlumniRow(al) : ''; })()}
       </div>
       <div class="narrative-section compat-reason">
         <div class="narrative-label">왜 찰떡궁합인가</div>
@@ -3811,6 +3802,18 @@ function animateDestinyReveal() {
 function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYear }) {
   currentResult = { uni, uniIdx, userProfile, compatPct, userName, enrollYear };
 
+  // 방(room) URL로 진입한 친구라면 결과를 자동으로 방에 저장
+  const roomCode = sessionStorage.getItem('destinyRoomCode');
+  if (roomCode && userName) {
+    const nick = userName;
+    const pct = compatPct || 0;
+    fetch(`/api/destiny/rooms/${roomCode}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nick, uniIdx, pct })
+    }).catch(() => {});
+  }
+
   const seal = renderLogo(uni, 128);
   const dom = getDominantElement(userProfile);
   const typeLabel = ELEMENT_TYPE[dom];
@@ -3881,17 +3884,18 @@ function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYea
 
     <div class="action-bar">
       <button class="action-bar-btn primary" onclick="exportStoryImage()"><span class="action-icon">🖼️</span>이미지로<br>저장하기</button>
+      <button class="action-bar-btn primary" id="saveRoomBtn" onclick="saveRoom()"><span class="action-icon">🔖</span>결과 링크<br>저장하기</button>
       <button class="action-bar-btn primary" id="viralShareBtn"
         data-idx="${uniIdx}" data-pct="${compatPct}"
         data-nick="${(userName || '나').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"
         onclick="shareResult(+this.dataset.idx, +this.dataset.pct, this.dataset.nick)">
-        <span class="action-icon">🔗</span>친구 대학이<br>궁금하다면?
+        <span class="action-icon">👥</span>친구에게<br>공유하기
       </button>
-      <button class="action-bar-btn primary" onclick="resetForm()"><span class="action-icon">↺</span>대학 궁합<br>다시하기</button>
+      <button class="action-bar-btn primary" onclick="resetForm()"><span class="action-icon">↺</span>다시<br>하기</button>
     </div>
 
     <div class="viral-url-reveal" id="viralUrlReveal" style="display:none">
-      <div class="viral-url-msg">아래 링크를 친구에게 보내세요 👇</div>
+      <div class="viral-url-msg">아래 링크로 접속하면 친구 대학 결과 볼 수 있어요 👇</div>
       <div class="invite-url-box">
         <span class="invite-url-text" id="viralUrlText"></span>
         <button class="invite-url-copy" onclick="copyViralUrl()">복사</button>
@@ -4267,6 +4271,19 @@ function joinFromBoard() {
   document.getElementById('boardView').style.display = 'none';
   document.getElementById('quizView').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // ?room= 진입 시 폼이 opacity:0 / pointer-events:none 상태이므로 직접 활성화
+  const heroCinema = document.getElementById('heroCinema');
+  const fs = document.getElementById('formSection');
+  if (fs && fs.style.opacity !== '1') {
+    if (heroCinema) heroCinema.style.display = 'none';
+    fs.style.opacity = '1';
+    fs.style.pointerEvents = 'auto';
+    const firstBubble = document.querySelector('#cStep0 .q-bubble');
+    if (firstBubble) {
+      setTimeout(() => typewriteBubble(firstBubble, 42, () => revealStepInput(document.getElementById('cStep0'))), 300);
+    }
+  }
 }
 
 function toggleEmptyCards() {
@@ -4307,7 +4324,7 @@ function showUniModal(uniIdx) {
       ${uni.motto ? `<div class="uni-modal-motto">"${uni.motto}"</div>` : ''}
       ${uni.desc ? `<div class="uni-modal-desc">${uni.desc}</div>` : ''}
       <div class="uni-modal-ohang">${chipHtml}</div>
-      ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label" style="margin-top:14px">선배님들</div>${renderAlumniRow(al)}` : ''; })()}
+      ${(() => { const al = getAlumni(uni); return al ? renderAlumniRow(al) : ''; })()}
     </div>`;
   document.body.appendChild(overlay);
 }
@@ -4624,10 +4641,10 @@ async function runMatch() {
   const [bYear, bMonth, bDay] = birthdate.split('-').map(Number);
   const sYear = (bMonth === 1 || (bMonth === 2 && bDay < 4)) ? bYear - 1 : bYear;
   const stemName = HEAVENLY_STEM_NAME[((sYear - 4) % 10 + 10) % 10];
-  const branchName = EARTHLY_BRANCH_NAME[((sYear % 12) + 12) % 12];
+  const branchName = EARTHLY_BRANCH_NAME[((sYear - 4) % 12 + 12) % 12];
   const dom = getDominantElement(buildUserProfile(bYear, bMonth, bDay, hourBranch));
   const enrollStep = enrollYear
-    ? `${enrollYear}년 운기(${HEAVENLY_STEM_NAME[((enrollYear-4)%10+10)%10]}${EARTHLY_BRANCH_NAME[(enrollYear%12+12)%12]}년) 반영 중…`
+    ? `${enrollYear}년 운기(${HEAVENLY_STEM_NAME[((enrollYear-4)%10+10)%10]}${EARTHLY_BRANCH_NAME[((enrollYear-4)%12+12)%12]}년) 반영 중…`
     : '35개 명문대 오행 대조 중…';
   const steps = [
     `${stemName}${branchName}년생 확인 중…`,
@@ -4657,6 +4674,86 @@ async function runMatch() {
   document.getElementById('loadingState').style.display = 'none';
   renderResult(result);
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── 방 코드 생성 ─────────────────────────────────────────────────────────────
+function makeRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+async function saveRoom() {
+  if (!currentResult) return;
+  const btn = document.getElementById('saveRoomBtn');
+  if (!btn) return;
+
+  const nick = currentResult.userName || '나';
+  const uniIdx = UNIVERSITIES.indexOf(currentResult.uni);
+  const pct = currentResult.compatPct || currentResult.pct || 0;
+
+  // 이미 방 코드가 있으면 재사용
+  let code = sessionStorage.getItem('destinyRoomCode');
+  if (!code) {
+    code = makeRoomCode();
+    sessionStorage.setItem('destinyRoomCode', code);
+  }
+
+  btn.textContent = '저장 중…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/destiny/rooms/${code}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nick, uniIdx, pct })
+    });
+    if (!res.ok) throw new Error('저장 실패');
+
+    const roomUrl = `${location.origin}/university_destiny_match?room=${code}`;
+    await navigator.clipboard.writeText(roomUrl).catch(() => {});
+
+    btn.innerHTML = '<span class="action-icon">✅</span>링크 복사됨!';
+    setTimeout(() => {
+      btn.innerHTML = '<span class="action-icon">🔖</span>결과 링크<br>저장하기';
+      btn.disabled = false;
+    }, 2500);
+
+    // URL 표시 박스 재활용
+    const reveal = document.getElementById('viralUrlReveal');
+    const txt = document.getElementById('viralUrlText');
+    if (reveal && txt) {
+      txt.textContent = roomUrl;
+      reveal.style.display = 'block';
+    }
+
+    // "친구에게 공유하기" 버튼도 방 URL로 교체
+    _viralUrl = roomUrl;
+    const shareBtn = document.getElementById('viralShareBtn');
+    if (shareBtn) {
+      shareBtn.onclick = () => {
+        navigator.clipboard.writeText(roomUrl).catch(() => {});
+        shareBtn.innerHTML = '<span class="action-icon">✅</span>복사됨!';
+        setTimeout(() => { shareBtn.innerHTML = '<span class="action-icon">👥</span>친구에게<br>공유하기'; }, 2500);
+      };
+    }
+  } catch {
+    btn.innerHTML = '<span class="action-icon">❌</span>오류 발생';
+    btn.disabled = false;
+    setTimeout(() => {
+      btn.innerHTML = '<span class="action-icon">🔖</span>결과 링크<br>저장하기';
+    }, 2000);
+  }
+}
+
+// ─── 방 코드로 멤버 로드 ───────────────────────────────────────────────────────
+async function loadRoomMembers(code) {
+  try {
+    const res = await fetch(`/api/destiny/rooms/${code}`);
+    const data = await res.json();
+    return (data.members || []);
+  } catch {
+    return [];
+  }
 }
 
 function resetForm() {
@@ -4729,12 +4826,19 @@ function startCinemaTyping() {
   }, 700);
 }
 
-function init() {
-  const isBoard = window.location.hash.startsWith('#g=');
+async function init() {
+  const roomCode = new URLSearchParams(location.search).get('room');
+  const isBoard = window.location.hash.startsWith('#g=') || !!roomCode;
+
   document.getElementById('boardView').style.display = isBoard ? 'block' : 'none';
   document.getElementById('quizView').style.display = isBoard ? 'none' : 'block';
 
-  if (isBoard) {
+  if (roomCode) {
+    // ?room=CODE 진입: Supabase에서 멤버 로드 후 보드 렌더
+    sessionStorage.setItem('destinyRoomCode', roomCode);
+    const members = await loadRoomMembers(roomCode);
+    renderBoard(members);
+  } else if (window.location.hash.startsWith('#g=')) {
     const members = decodeGroup(window.location.hash);
     renderBoard(members);
   } else {
@@ -4762,7 +4866,7 @@ init();
 initLunarSelects();
 
 // 스크롤 시 대화 섹션 등장 + 첫 버블 타이핑
-if (!location.hash.startsWith('#g=')) {
+if (!location.hash.startsWith('#g=') && !new URLSearchParams(location.search).get('room')) {
   let chatRevealed = false;
   window.addEventListener('scroll', function onFirstScroll() {
     if (chatRevealed || window.scrollY < 30) return;
