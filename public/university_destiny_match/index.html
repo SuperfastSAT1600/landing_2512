@@ -4271,6 +4271,19 @@ function joinFromBoard() {
   document.getElementById('boardView').style.display = 'none';
   document.getElementById('quizView').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // ?room= 진입 시 폼이 opacity:0 / pointer-events:none 상태이므로 직접 활성화
+  const heroCinema = document.getElementById('heroCinema');
+  const fs = document.getElementById('formSection');
+  if (fs && fs.style.opacity !== '1') {
+    if (heroCinema) heroCinema.style.display = 'none';
+    fs.style.opacity = '1';
+    fs.style.pointerEvents = 'auto';
+    const firstBubble = document.querySelector('#cStep0 .q-bubble');
+    if (firstBubble) {
+      setTimeout(() => typewriteBubble(firstBubble, 42, () => revealStepInput(document.getElementById('cStep0'))), 300);
+    }
+  }
 }
 
 function toggleEmptyCards() {
