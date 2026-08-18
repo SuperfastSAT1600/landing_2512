@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { PlayCircle, PauseCircle, XCircle, AlertTriangle, HelpCircle, Loader2, Clock } from 'lucide-react';
+import { PlayCircle, PauseCircle, XCircle, AlertTriangle, MinusCircle, RefreshCw } from 'lucide-react';
 import { srmFetch } from '../lib/srm-fetch';
 import type { TutoringUser, TutoringStatus, UnlinkedTutoringUser, TutoringUsersResponse } from '@/app/api/admin/srm/tutoring-users/route';
 
@@ -22,16 +22,15 @@ interface Props {
 type Tab = 'unlinked' | TutoringStatus;
 
 const TAB_META: Record<Tab, { label: string; icon: React.ReactNode; color: string; activeColor: string }> = {
-  unlinked:         { label: '미연결',   icon: <AlertTriangle size={10} />, color: 'text-orange-500', activeColor: 'bg-orange-500 text-white' },
-  unclassified:     { label: '미분류',   icon: <HelpCircle size={10} />,    color: 'text-gray-400',   activeColor: 'bg-gray-400 text-white' },
-  onboarding:       { label: '온보딩',   icon: <Loader2 size={10} />,       color: 'text-blue-500',   activeColor: 'bg-blue-500 text-white' },
-  active:           { label: '수업중',   icon: <PlayCircle size={10} />,    color: 'text-emerald-600',activeColor: 'bg-emerald-600 text-white' },
-  paused:           { label: '휴원',     icon: <PauseCircle size={10} />,   color: 'text-orange-500', activeColor: 'bg-orange-500 text-white' },
-  renewal_pending:  { label: '연장대기', icon: <Clock size={10} />,         color: 'text-purple-600', activeColor: 'bg-purple-600 text-white' },
-  ended:            { label: '종료',     icon: <XCircle size={10} />,       color: 'text-red-500',    activeColor: 'bg-red-500 text-white' },
+  unlinked:     { label: '미연결',      icon: <AlertTriangle size={10} />, color: 'text-orange-500',  activeColor: 'bg-orange-500 text-white' },
+  active:       { label: '수업중',      icon: <PlayCircle size={10} />,    color: 'text-emerald-600', activeColor: 'bg-emerald-600 text-white' },
+  paused:       { label: '휴원',        icon: <PauseCircle size={10} />,   color: 'text-orange-500',  activeColor: 'bg-orange-500 text-white' },
+  partial_end:  { label: '부분종료',    icon: <MinusCircle size={10} />,   color: 'text-amber-600',   activeColor: 'bg-amber-600 text-white' },
+  sales:        { label: '재결제세일즈', icon: <RefreshCw size={10} />,    color: 'text-blue-600',    activeColor: 'bg-blue-600 text-white' },
+  ended:        { label: '종료',        icon: <XCircle size={10} />,       color: 'text-red-500',     activeColor: 'bg-red-500 text-white' },
 };
 
-const TAB_ORDER: Tab[] = ['unlinked', 'unclassified', 'onboarding', 'active', 'paused', 'renewal_pending', 'ended'];
+const TAB_ORDER: Tab[] = ['unlinked', 'active', 'paused', 'partial_end', 'sales', 'ended'];
 
 function UserRow({ user, onClick }: { user: TutoringUser; onClick: () => void }) {
   const meta = TAB_META[user.status];
@@ -48,7 +47,10 @@ function UserRow({ user, onClick }: { user: TutoringUser; onClick: () => void })
       </div>
       <div className="flex items-center gap-3 shrink-0">
         <span className="text-[11px] text-gray-500">
-          잔여 <span className="font-semibold text-gray-700">{user.remainingHours}h</span>
+          잔여{' '}
+          <span className={`font-semibold ${user.netRemainingHours < 0 ? 'text-red-600' : 'text-gray-700'}`}>
+            {user.netRemainingHours}h
+          </span>
           <span className="text-gray-400"> / {user.purchasedHours}h</span>
         </span>
         <span className={`flex items-center gap-0.5 text-[10px] font-medium ${meta.color}`}>
@@ -70,7 +72,10 @@ function UnlinkedRow({ user, onClick }: { user: UnlinkedTutoringUser; onClick: (
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-[11px] text-gray-500">
-          잔여 <span className="font-semibold text-orange-700">{user.remainingHours}h</span>
+          잔여{' '}
+          <span className={`font-semibold ${user.netRemainingHours < 0 ? 'text-red-600' : 'text-orange-700'}`}>
+            {user.netRemainingHours}h
+          </span>
           <span className="text-gray-400"> / {user.purchasedHours}h</span>
         </span>
         <span className="text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded">
@@ -188,7 +193,7 @@ export function TutoringUserList({ onStudentClick, refreshKey }: Props) {
                   crmStudentId: u.crmStudentId ?? undefined,
                   name: u.name,
                   tutoringStatus: u.status,
-                  remainingHours: u.remainingHours,
+                  remainingHours: u.netRemainingHours,
                   purchasedHours: u.purchasedHours,
                 })}
               />

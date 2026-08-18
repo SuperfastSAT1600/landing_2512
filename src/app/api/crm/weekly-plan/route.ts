@@ -85,6 +85,8 @@ export async function GET(request: NextRequest) {
     plan: plan ?? null,
     actuals,
     week: { start: week.start, end: week.end, label: week.label },
+    execution: [],
+    prev: null,
   };
   return NextResponse.json({ data: body });
 }

@@ -56,8 +56,10 @@ const PRODUCT_TREE: Record<ClassType, Partial<Record<Subject | '_', Product[]>>>
 interface PaymentModalProps {
   student: Student;
   adminKey: string;
-  onConfirm: (updatedStudent: Student) => void;
+  onConfirm: (updatedStudent: Student, paymentId?: string) => void;
   onClose: () => void;
+  /** 재결제 세일즈 칸반처럼 결제 종류가 이미 확정된 진입점에서 1단계를 건너뛴다. */
+  defaultPaymentType?: PaymentType;
 }
 
 type PaymentType = '최초결제' | '재결제';
@@ -67,13 +69,16 @@ function needsPartnerSelection(student: Student) {
   return student.lead_type === 'B2B' && !student.b2b_partner;
 }
 
-export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentModalProps) {
+export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPaymentType }: PaymentModalProps) {
   const { companies } = useCompanies(adminKey);
   // 동적 업체명(있으면) 우선, 없으면 정적 목록 폴백
   const partnerOptions = companies.length > 0 ? companies.map(c => c.name) : [...B2B_PARTNER_OPTIONS];
-  const [step, setStep] = useState<-1 | 0 | 1 | 2 | 3 | 4>(needsPartnerSelection(student) ? -1 : 0);
+  // 결제 종류가 이미 확정된 진입점(재결제 칸반)은 0단계(결제 유형)를 건너뛴다.
+  const [step, setStep] = useState<-1 | 0 | 1 | 2 | 3 | 4>(
+    needsPartnerSelection(student) ? -1 : defaultPaymentType ? 1 : 0
+  );
   const [selectedPartner, setSelectedPartner] = useState<string | null>(student.b2b_partner ?? null);
-  const [paymentType, setPaymentType] = useState<PaymentType | null>(null);
+  const [paymentType, setPaymentType] = useState<PaymentType | null>(defaultPaymentType ?? null);
   const [classType, setClassType] = useState<ClassType | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
   const [productId, setProductId] = useState<string>('');
@@ -87,6 +92,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
   // Step 4 — post-payment tutoring signup link.
   const [signupUrl, setSignupUrl] = useState<string | null>(null);
   const [completedStudent, setCompletedStudent] = useState<Student | null>(null);
+  const [completedPaymentId, setCompletedPaymentId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -179,12 +185,14 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
         throw new Error(responseBody.error ?? '결제 처리 실패');
       }
       const updated: Student = responseBody.data.student;
+      const paymentId: string | undefined = responseBody.data.payment?.id;
       setCompletedStudent(updated);
+      setCompletedPaymentId(paymentId ?? null);
 
       // Already onboarded (repeat payment) → close as before. First-time
       // students get the custom tutoring signup link revealed on step 4.
       if (student.signup_done_at) {
-        onConfirm(updated);
+        onConfirm(updated, paymentId);
         return;
       }
 
@@ -211,7 +219,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose }: PaymentM
 
   /** Close from the link step — refresh the payment history (payment is done). */
   function finish() {
-    if (completedStudent) onConfirm(completedStudent);
+    if (completedStudent) onConfirm(completedStudent, completedPaymentId ?? undefined);
     else onClose();
   }
 

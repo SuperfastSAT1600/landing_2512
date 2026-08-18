@@ -134,6 +134,31 @@ export function getWeekDefByStart(weekStart: string): WeekDef | null {
   return WEEK_DEFINITIONS.find((w) => w.start === weekStart) ?? null;
 }
 
+/**
+ * 기준일이 속한 주차부터 과거로 count개 주차 (최신 순).
+ * 기준일이 정의 범위 뒤라면 마지막 정의 주차를, 범위 앞이라면 빈 배열을 돌려준다.
+ * 주차별 집계 쿼리의 week_start 하한을 구하는 데 쓴다 — 전체 테이블 스캔을 피한다.
+ */
+export function getRecentWeeks(count: number, dateStr: string): WeekDef[] {
+  if (count < 1) return [];
+  const date = dateStr.slice(0, 10);
+
+  let endIdx = WEEK_DEFINITIONS.findIndex((w) => date >= w.start && date <= w.end);
+  if (endIdx < 0) {
+    // 범위 밖 — 기준일보다 앞선 마지막 주차로 폴백(기준일이 첫 주차보다 앞서면 없음).
+    for (let i = WEEK_DEFINITIONS.length - 1; i >= 0; i--) {
+      if (WEEK_DEFINITIONS[i].end < date) {
+        endIdx = i;
+        break;
+      }
+    }
+    if (endIdx < 0) return [];
+  }
+
+  const startIdx = Math.max(0, endIdx - count + 1);
+  return WEEK_DEFINITIONS.slice(startIdx, endIdx + 1).reverse();
+}
+
 /** 주어진 week_start에서 offset(±)만큼 이동한 주차. 범위 밖이면 null(클램프 없음). */
 export function weekByOffset(weekStart: string, offset: number): WeekDef | null {
   const idx = WEEK_DEFINITIONS.findIndex((w) => w.start === weekStart);
