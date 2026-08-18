@@ -1,0 +1,7001 @@
+{
+  "meta": {
+    "version": "v4",
+    "description": "GPT-4o-mini로 Hard/Medium 문제 핵심어 추출",
+    "model": "gpt-4o-mini",
+    "total_questions_processed": 420,
+    "unique_words": 694
+  },
+  "words_by_frequency": [
+    {
+      "word": "hypothesized",
+      "total_count": 11,
+      "hard_count": 5,
+      "hard_ratio": 0.455,
+      "skill_diversity": 4,
+      "difficulty_dist": {
+        "Medium": 6,
+        "Hard": 5
+      }
+    },
+    {
+      "word": "evidence",
+      "total_count": 11,
+      "hard_count": 6,
+      "hard_ratio": 0.545,
+      "skill_diversity": 7,
+      "difficulty_dist": {
+        "Hard": 6,
+        "Medium": 5
+      }
+    },
+    {
+      "word": "influence",
+      "total_count": 10,
+      "hard_count": 6,
+      "hard_ratio": 0.6,
+      "skill_diversity": 5,
+      "difficulty_dist": {
+        "Medium": 4,
+        "Hard": 6
+      }
+    },
+    {
+      "word": "asserts",
+      "total_count": 9,
+      "hard_count": 3,
+      "hard_ratio": 0.333,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Medium": 6,
+        "Hard": 3
+      }
+    },
+    {
+      "word": "concluded",
+      "total_count": 9,
+      "hard_count": 3,
+      "hard_ratio": 0.333,
+      "skill_diversity": 5,
+      "difficulty_dist": {
+        "Hard": 3,
+        "Medium": 6
+      }
+    },
+    {
+      "word": "assert",
+      "total_count": 5,
+      "hard_count": 4,
+      "hard_ratio": 0.8,
+      "skill_diversity": 4,
+      "difficulty_dist": {
+        "Hard": 4,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "contend",
+      "total_count": 4,
+      "hard_count": 1,
+      "hard_ratio": 0.25,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 3
+      }
+    },
+    {
+      "word": "claim",
+      "total_count": 4,
+      "hard_count": 3,
+      "hard_ratio": 0.75,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 3,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "reflects",
+      "total_count": 4,
+      "hard_count": 2,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2,
+        "Medium": 2
+      }
+    },
+    {
+      "word": "claims",
+      "total_count": 4,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 4
+      }
+    },
+    {
+      "word": "diverse",
+      "total_count": 4,
+      "hard_count": 2,
+      "hard_ratio": 0.5,
+      "skill_diversity": 4,
+      "difficulty_dist": {
+        "Hard": 2,
+        "Medium": 2
+      }
+    },
+    {
+      "word": "contemporary",
+      "total_count": 3,
+      "hard_count": 2,
+      "hard_ratio": 0.667,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Hard": 2,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "theorized",
+      "total_count": 3,
+      "hard_count": 1,
+      "hard_ratio": 0.333,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 2
+      }
+    },
+    {
+      "word": "mitigate",
+      "total_count": 3,
+      "hard_count": 2,
+      "hard_ratio": 0.667,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "phenomenon",
+      "total_count": 3,
+      "hard_count": 2,
+      "hard_ratio": 0.667,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Hard": 2,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "conclude",
+      "total_count": 3,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Medium": 3
+      }
+    },
+    {
+      "word": "assumed",
+      "total_count": 3,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Medium": 3
+      }
+    },
+    {
+      "word": "significant",
+      "total_count": 3,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 3
+      }
+    },
+    {
+      "word": "narrative",
+      "total_count": 3,
+      "hard_count": 3,
+      "hard_ratio": 1.0,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Hard": 3
+      }
+    },
+    {
+      "word": "suggest",
+      "total_count": 3,
+      "hard_count": 1,
+      "hard_ratio": 0.333,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "value",
+      "total_count": 3,
+      "hard_count": 2,
+      "hard_ratio": 0.667,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Hard": 2,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "depiction",
+      "total_count": 3,
+      "hard_count": 2,
+      "hard_ratio": 0.667,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Hard": 2,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "myth",
+      "total_count": 3,
+      "hard_count": 2,
+      "hard_ratio": 0.667,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 2
+      }
+    },
+    {
+      "word": "suggests",
+      "total_count": 3,
+      "hard_count": 1,
+      "hard_ratio": 0.333,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "advocated",
+      "total_count": 3,
+      "hard_count": 1,
+      "hard_ratio": 0.333,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 2
+      }
+    },
+    {
+      "word": "unlikely",
+      "total_count": 3,
+      "hard_count": 2,
+      "hard_ratio": 0.667,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 2
+      }
+    },
+    {
+      "word": "biodiversity",
+      "total_count": 3,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 3,
+      "difficulty_dist": {
+        "Medium": 3
+      }
+    },
+    {
+      "word": "mechanism",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "memoir",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "inspired",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "established",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "range",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "perspectives",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "emphasize",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "stylistic",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "analysis",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "insufficient",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "component",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "attributed",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "rejects",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "impede",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "contributions",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "conventional",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "importance",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "propose",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "moderate",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "marketing",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "theories",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "theory",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "standards",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "significance",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "trade",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "species",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "benefited",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "engagement",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "argued",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "dynamic",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "asserted",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "posits",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "recognition",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "speculate",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "concludes",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "presence",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "escape",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "persuade",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "pioneering",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "starring",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "groundbreaking",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "diminish",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "associated",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "origins",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "discovery",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "negligible",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "intermittent",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "amusement",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "empowerment",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "function",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "figures",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "historians",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "improve",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "hypothesize",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "assumption",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "explain",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "correlation",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "thriving",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "virtuous",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "retelling",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "development",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "mundane",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 1,
+        "Medium": 1
+      }
+    },
+    {
+      "word": "appeal",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "advocates",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "installation",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "plausible",
+      "total_count": 2,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 2
+      }
+    },
+    {
+      "word": "offset",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "skepticism",
+      "total_count": 2,
+      "hard_count": 1,
+      "hard_ratio": 0.5,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Medium": 1,
+        "Hard": 1
+      }
+    },
+    {
+      "word": "independence",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "expression",
+      "total_count": 2,
+      "hard_count": 2,
+      "hard_ratio": 1.0,
+      "skill_diversity": 2,
+      "difficulty_dist": {
+        "Hard": 2
+      }
+    },
+    {
+      "word": "formation",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "ideological",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "overrepresent",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "uniform",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "galactic",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "runologist",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "alphabets",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "concentration",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "activity",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "conventions",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "extinct",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "habitat",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "convey",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "information",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "determine",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "artifact",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "anticipation",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "reflection",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "blends",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "expertise",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "humility",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "optimal",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "strategy",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "exhibitions",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "velocity",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "orbit",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "endothermy",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "contentious",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "motivated",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "multiplatform",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "causality",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "avian",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "paleontologists",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "consensus",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "instrumental",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "drive",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "upended",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "premature",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "characterize",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "outdated",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "relevant",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "substantial",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "reinforced",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "unprecedented",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "embraced",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "revolutionized",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "implies",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "unintended",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "effect",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "compel",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "critical",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "representative",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "vulnerable",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "ascribing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "assumptions",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "cognitive",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "evaluate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "years",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "mixed",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "surroundings",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "example",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "serve",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "management",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "preservation",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "question",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "interruptions",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "belonging",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "inspiration",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "recognize",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "evolution",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "reflections",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "acquired",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "imported",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "purported",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "demonstrated",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "supposition",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "variable",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "elusive",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "converge",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "nuance",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "painful",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "acknowledged",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "dissenters",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "coincided",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "destabilizing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "oddity",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "engages",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "functions",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "differently",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "weaknesses",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "instigator",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "preponderance",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "flexible",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "findings",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "interest",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "depicts",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "comfort",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "efficient",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "oldest",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "mimesis",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "reductive",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "observable",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "manipulating",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "strategic",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "neglect",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "influential",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "corroborate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "shortcoming",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "interpretations",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "discrepancy",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "leach",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "deliberately",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "exclude",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "prioritize",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "realistic",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "convincingly",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "hegemonic",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "femininity",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "scholarly",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "contexts",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "tranquilly",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "germinate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "overstate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "infers",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "illustrates",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "controversial",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "emphasis",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "principal",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "complexity",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "institutions",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "establish",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "inherently",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "morally",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "threat",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "surprising",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "originate",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "confirmation",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "ecological",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "additional",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "participant",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "unifying",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "microstructures",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "manipulate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "civic",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "gesture",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "represents",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "credibility",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "experiential",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "praise",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "rethink",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "waste",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "advocating",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "treatises",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "epistolary",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "concept",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "characterized",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "population",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "evaluated",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "awe",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "reflective",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "underscores",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "exaggerated",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "traders",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "essential",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "repudiation",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "intricate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "expectations",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "dictated",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "inconsistent",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "convincing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "passive",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "actively",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "unique",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "transcribe",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "support",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "conflict",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "strongest",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "daunting",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "treatment",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "superior",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "indications",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "clinched",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "functional",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "distinguishing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "revitalizing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "accomplishments",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "sculptural",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "turning",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "point",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "insightful",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "delights",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "exacerbated",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "misunderstanding",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "individual",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "yield",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "obstructions",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "exotericity",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "grammatical",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "surveys",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "commentary",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "constraints",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "crisis",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "confidence",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "diffused",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "adapt",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "introducing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "negatively",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "impact",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "examine",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "artifacts",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "exposed",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "scenario",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "explains",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "prefers",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "rightness",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "dilemma",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "supplement",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "insights",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "complicated",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "creativity",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "masterpieces",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "complex",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "resisted",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "misinterpreted",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "mischaracterized",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "light",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "goggles",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "involvement",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "acclaim",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "depictions",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "novel",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "devotion",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "nonrenewable",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "challenging",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "address",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "irrelevant",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "restrictive",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "inaccessible",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "relationship",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "influenced",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "predict",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "probability",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "transmit",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "reproduction",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "benefits",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "substantially",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "oxygenation",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "variations",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "attitude",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "concerted",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "success",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "revolution",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "wander",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "follow",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "austerity",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "instability",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "unexceptionable",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "manifested",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "multifaceted",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "logistics",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "presented",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "enigma",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "secrets",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "coarser",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "durable",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "rigidly",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "sequestered",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "sacred",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "ceremonies",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "rejecting",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "practical",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "halt",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "account",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "excavations",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "technologies",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "reviewers",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "alloy",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "evolved",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "engagements",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "novelty",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "militant",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "scattered",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "whirl",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "demand",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "proximity",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "counterintuitive",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "extraction",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "fascinating",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "engaging",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "distinct",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "satiric",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "formed",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "challenged",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "interactions",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "differences",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "regard",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "monopsony",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "force",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "pattern",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "reduction",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "attributable",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "response",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "uptake",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "attract",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "shifting",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "portrays",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "exclusion",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "ambition",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "conveys",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "determination",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "consume",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "emotionality",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "unrelated",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "exhaustive",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "conservation",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "artistic",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "realm",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "assessing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "lush",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "inviting",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "interrogates",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "systemic",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "suspenseful",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "defect",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "cryptic",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "misconception",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "imperfect",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "conducive",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "disjointed",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "attraction",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "preference",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "character",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "precise",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "imagined",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "estimate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "significantly",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "intensity",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "justified",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "eliminating",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "scholars",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "imagery",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "incorporated",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "abandon",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "effective",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "importunate",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "sickness",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "allay",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "aesthetic",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "provokes",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "apparent",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "integral",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "mortality",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "complicates",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "relocated",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "staunch",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "coordinate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "suffragists",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "mesmerizing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "intricacy",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "harshness",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "utilizing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "disparate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "organize",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "projection",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "advocate",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "stereotypical",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "conform",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "nuanced",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "assertion",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "poetry",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "distinctive",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "appetite",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "assessment",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "philosophical",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "bounds",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "equality",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "defined",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "experience",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "collective",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "repertoire",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "timeless",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "logical",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "design",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "praised",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "exploration",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "temporality",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "identity",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "cultural",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "strengthen",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "nutritionally",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "digest",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "fermentation",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "expressed",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "consequential",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "developing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "elicit",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "intellectual",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "provoking",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "silica",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "telegenic",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "medium",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "familiar",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "distant",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "blurs",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "distinction",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "massive",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "burial",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "rights",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "flourish",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "entrepreneur",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "discrimination",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "wishcycling",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "nonrecyclable",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "machinery",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "signification",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "empirically",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "sustainably",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "depict",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "whimsical",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "persuadable",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "tended",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "analyses",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "restricts",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "survival",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "classified",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "experienced",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "similar",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "unproductively",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "argue",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "unified",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "prevalence",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "instinctively",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "signified",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "units",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "requires",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "skill",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "technology",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "frequencies",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "habitats",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "techniques",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "echoed",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "disputed",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "nanohybrids",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "conjugation",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "physiochemical",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "toxicity",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "posited",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "pastoralism",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "depleted",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "signifiers",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "minerals",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "expense",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "availability",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "postindustrial",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "misdating",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "assigning",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "implicitly",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "putatively",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "robust",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "aggregate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "rewilding",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "nontraditional",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "empirical",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "extensively",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "disagrees",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "important",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "displaced",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "heighten",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "invigorating",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "rebellion",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "freedom",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "organisms",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "declining",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "monotonous",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "accomplished",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "enlightened",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "overlooked",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "sustainability",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "division",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "gender",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "supports",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "norm",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "perception",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "effort",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "emphasizes",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "transformative",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "diverged",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "stances",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "activism",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "extensions",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "responsive",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "analytical",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "fertile",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "deciphering",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "weight",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "produces",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "hormone",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "triggers",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "abstract",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "nonmaterial",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "knowledge",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "iteration",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "immersive",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "transforms",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "categorization",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "phenomena",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "superfluorescence",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "crystalline",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "derived",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "receipts",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "imploring",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "virtue",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "contradictory",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "sights",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "contrasting",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "adopted",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "dedicated",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "monotony",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "stored",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "carefree",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "imagines",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "isolated",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "naïve",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "critically",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "dispersal",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "vicariance",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "determining",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "expressing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "hindsight",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "coincidence",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "paradigm",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "anthology",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "homogeneous",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "influences",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "series",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "brings",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "superficially",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "traditional",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "memorializing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "conductors",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "generation",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "supplanting",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "efficiency",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "correlate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "consumption",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "recombinant",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "formulas",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "overturn",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "affirmative",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "experimental",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "intuitive",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "agential",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "authorial",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "unite",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "liberalization",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "capital",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "generated",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "likelihood",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "driven",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "understands",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "concluding",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "perceived",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "ethnographic",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "protect",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "extinction",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "illustrated",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "overlook",
+      "total_count": 1,
+      "hard_count": 0,
+      "hard_ratio": 0.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Medium": 1
+      }
+    },
+    {
+      "word": "conditions",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "traits",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "affectionate",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "train",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "forerunner",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "position",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "dupe",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "changing",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "ridiculed",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "genres",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "solution",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "obviated",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "fabrication",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "unanimity",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "incentives",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "output",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "exhibit",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "torpor",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "ambivalence",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "merits",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "displeasure",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "acceleration",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "nongravitational",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "anthropogenic",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "idiosyncratic",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "heritage",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "divided",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "condition",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "provisioning",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    },
+    {
+      "word": "services",
+      "total_count": 1,
+      "hard_count": 1,
+      "hard_ratio": 1.0,
+      "skill_diversity": 1,
+      "difficulty_dist": {
+        "Hard": 1
+      }
+    }
+  ]
+}

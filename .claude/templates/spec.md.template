@@ -1,0 +1,51 @@
+# {{FEATURE_NAME}}
+
+## Overview
+
+{{Brief description of the feature, what problem it solves, and why it matters.}}
+
+## Requirements
+
+### REQ-001: {{Requirement title}}
+- **Priority**: Must
+- **Description**: {{What this requirement does}}
+- **Acceptance Criteria**: {{Observable behavior when complete}}
+- **Verification**: (TEST) {{Test description}}
+
+### REQ-002: {{Requirement title}}
+- **Priority**: Must
+- **Description**: {{What this requirement does}}
+- **Acceptance Criteria**: {{Observable behavior when complete}}
+- **Verification**: (TEST) {{Test description}}
+
+### REQ-003: {{Requirement title}}
+- **Priority**: Should
+- **Description**: {{What this requirement does}}
+- **Acceptance Criteria**: {{Observable behavior when complete}}
+- **Verification**: (BROWSER) {{What to check in browser}}
+
+## Technical Design
+
+### Architecture
+{{How this fits into the existing codebase. Key files, modules, patterns.}}
+
+### Dependencies
+{{External dependencies, APIs, services needed.}}
+
+## Traceability Matrix
+
+| REQ ID  | Description               | Verification | Test File                    | Status  |
+|---------|---------------------------|--------------|------------------------------|---------|
+| REQ-001 | {{Short description}}     | (TEST)       | `src/__tests__/{{file}}.test.ts` | Pending |
+| REQ-002 | {{Short description}}     | (TEST)       | `src/__tests__/{{file}}.test.ts` | Pending |
+| REQ-003 | {{Short description}}     | (BROWSER)    | `e2e/{{file}}.spec.ts`      | Pending |
+
+## Implementation Order
+
+1. REQ-001 — {{reason for order}}
+2. REQ-002 — {{depends on REQ-001 because...}}
+3. REQ-003 — {{verify in browser after REQ-001 and REQ-002}}
+
+## Out of Scope
+
+- {{Things explicitly NOT included in this feature}}

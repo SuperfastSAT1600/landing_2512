@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SAT Math LaTeX Rendering Test</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '$', right: '$', display: false}
+    ]});"></script>
+<style>
+body { font-family: system-ui; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; }
+.question-card { border: 1px solid #e0e0e0; border-radius: 12px; padding: 24px; margin: 24px 0; background: #fafafa; }
+.meta { font-size: 12px; color: #666; margin-bottom: 12px; }
+.difficulty-easy { color: #22c55e; }
+.difficulty-medium { color: #f59e0b; }
+.difficulty-hard { color: #ef4444; }
+.question-text { font-size: 16px; line-height: 1.6; margin-bottom: 16px; }
+.choices { display: flex; flex-direction: column; gap: 8px; }
+.choice { padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; background: white; font-size: 15px; }
+.choice:hover { background: #f0f9ff; border-color: #3b82f6; }
+.correct { background: #f0fdf4; border-color: #22c55e; }
+.figure-note { background: #fffbeb; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 14px; color: #92400e; }
+h1 { color: #1e40af; }
+</style>
+</head>
+<body>
+
+<h1>SAT Math Question Rendering — KaTeX 테스트</h1>
+<p style="color:#666">LaTeX 수식이 브라우저에서 올바르게 렌더링되는지 확인합니다.</p>
+
+<!-- Question 1: 187f74bc -->
+<div class="question-card">
+  <div class="meta">
+    ID: <code>187f74bc</code> &nbsp;|&nbsp;
+    Domain: Algebra &nbsp;|&nbsp;
+    Skill: Linear Inequalities &nbsp;|&nbsp;
+    <span class="difficulty-hard">Hard</span>
+  </div>
+
+  <div class="figure-note">
+    📊 Figure: Graph with coordinate axes. Shaded region with a horizontal line at $y = -4$, shading above this line.
+  </div>
+
+  <div class="question-text">
+    The shaded region shown represents the solutions to the inequality $ry &lt; 60$, where $r$ is a constant. What is the value of $r$?
+  </div>
+
+  <div class="choices">
+    <div class="choice"><strong>A.</strong> $15$</div>
+    <div class="choice"><strong>B.</strong> $4$</div>
+    <div class="choice"><strong>C.</strong> $-4$</div>
+    <div class="choice correct"><strong>D.</strong> $-15$ ✓</div>
+  </div>
+</div>
+
+<!-- Question 2: 1a1a95de -->
+<div class="question-card">
+  <div class="meta">
+    ID: <code>1a1a95de</code> &nbsp;|&nbsp;
+    Domain: Algebra &nbsp;|&nbsp;
+    Skill: Linear equations in two variables &nbsp;|&nbsp;
+    <span class="difficulty-hard">Hard</span>
+  </div>
+
+  <div class="figure-note">
+    📊 Figure: Graph modeling combinations of M-type stars $x$ and K-type stars $y$.
+  </div>
+
+  <div class="question-text">
+    A certain open star cluster contains M-type stars and K-type stars. The estimated total mass of M-type and K-type stars in this open star cluster is $127{,}882$ quettagrams. The graph shown models the possible combinations of the number of M-type stars, $x$, and K-type stars, $y$, that could be in this open star cluster if all the M-type stars have the same estimated mass and all the K-type stars have the same estimated mass. Based on the graph, which of the following is closest to the estimated mass, in quettagrams, of each K-type star?
+  </div>
+
+  <div class="choices">
+    <div class="choice"><strong>A.</strong> $0.07$</div>
+    <div class="choice"><strong>B.</strong> $0.36$</div>
+    <div class="choice correct"><strong>C.</strong> $2.8$ ✓</div>
+    <div class="choice"><strong>D.</strong> $14$</div>
+  </div>
+</div>
+
+<!-- Complex math examples -->
+<div class="question-card">
+  <div class="meta">복잡한 수식 렌더링 테스트</div>
+
+  <div class="question-text">
+    If $f(x) = \frac{x^2 + 3x - 4}{x - 1}$ for $x \neq 1$, what is $f(3)$?
+  </div>
+  <div class="question-text">
+    The equation $ax^2 + bx + c = 0$ has solutions $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$.
+  </div>
+  <div class="question-text">
+    If $\sqrt{2x + 5} = 7$, then $x = ?$
+  </div>
+  <div class="question-text">
+    Block math example: $$\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$$
+  </div>
+</div>
+
+<p style="margin-top:40px; color:#999; font-size:13px">
+  렌더링 엔진: KaTeX 0.16.9 &nbsp;|&nbsp;
+  웹 표시: MathJax 또는 KaTeX 모두 가능
+</p>
+</body>
+</html>

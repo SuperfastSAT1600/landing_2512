@@ -1,0 +1,263 @@
+-- =============================================================================
+-- Migration: {{MIGRATION_NAME}}
+-- Description: {{MIGRATION_DESCRIPTION}}
+-- Author: {{AUTHOR}}
+-- Date: {{DATE}}
+-- Ticket: {{TICKET_ID}}
+-- =============================================================================
+--
+-- Template Placeholders:
+-- - {{MIGRATION_NAME}}: Descriptive name (e.g., add_user_preferences_table)
+-- - {{MIGRATION_DESCRIPTION}}: What this migration does
+-- - {{TABLE_NAME}}: Name of the table being modified
+-- - {{COLUMN_NAME}}: Column name for single column operations
+-- - {{AUTHOR}}: Developer name
+-- - {{DATE}}: Migration creation date
+-- - {{TICKET_ID}}: Related ticket/issue number
+--
+-- =============================================================================
+
+-- =============================================================================
+-- UP Migration
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- Create New Table
+-- -----------------------------------------------------------------------------
+
+/*
+CREATE TABLE {{TABLE_NAME}} (
+    -- Primary key
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Foreign keys
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    -- Data columns
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'active',
+    metadata JSONB DEFAULT '{}',
+
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    -- Soft delete (optional)
+    deleted_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Indexes
+CREATE INDEX idx_{{TABLE_NAME}}_user_id ON {{TABLE_NAME}}(user_id);
+CREATE INDEX idx_{{TABLE_NAME}}_status ON {{TABLE_NAME}}(status);
+CREATE INDEX idx_{{TABLE_NAME}}_created_at ON {{TABLE_NAME}}(created_at DESC);
+
+-- Unique constraints
+CREATE UNIQUE INDEX idx_{{TABLE_NAME}}_unique_name_per_user
+    ON {{TABLE_NAME}}(user_id, name)
+    WHERE deleted_at IS NULL;
+
+-- Trigger for updated_at
+CREATE TRIGGER update_{{TABLE_NAME}}_updated_at
+    BEFORE UPDATE ON {{TABLE_NAME}}
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Comments
+COMMENT ON TABLE {{TABLE_NAME}} IS '{{MIGRATION_DESCRIPTION}}';
+COMMENT ON COLUMN {{TABLE_NAME}}.status IS 'Current status: active, inactive, archived';
+*/
+
+-- -----------------------------------------------------------------------------
+-- Add Column
+-- -----------------------------------------------------------------------------
+
+/*
+ALTER TABLE {{TABLE_NAME}}
+ADD COLUMN {{COLUMN_NAME}} VARCHAR(255);
+
+-- With default value
+ALTER TABLE {{TABLE_NAME}}
+ADD COLUMN {{COLUMN_NAME}} INTEGER NOT NULL DEFAULT 0;
+
+-- With constraint
+ALTER TABLE {{TABLE_NAME}}
+ADD COLUMN {{COLUMN_NAME}} VARCHAR(50) CHECK ({{COLUMN_NAME}} IN ('value1', 'value2', 'value3'));
+
+-- Backfill data
+UPDATE {{TABLE_NAME}}
+SET {{COLUMN_NAME}} = 'default_value'
+WHERE {{COLUMN_NAME}} IS NULL;
+
+-- Add NOT NULL constraint after backfill
+ALTER TABLE {{TABLE_NAME}}
+ALTER COLUMN {{COLUMN_NAME}} SET NOT NULL;
+*/
+
+-- -----------------------------------------------------------------------------
+-- Modify Column
+-- -----------------------------------------------------------------------------
+
+/*
+-- Change type (safe for compatible types)
+ALTER TABLE {{TABLE_NAME}}
+ALTER COLUMN {{COLUMN_NAME}} TYPE TEXT;
+
+-- Change type with conversion
+ALTER TABLE {{TABLE_NAME}}
+ALTER COLUMN {{COLUMN_NAME}} TYPE INTEGER USING {{COLUMN_NAME}}::INTEGER;
+
+-- Add/remove NOT NULL
+ALTER TABLE {{TABLE_NAME}}
+ALTER COLUMN {{COLUMN_NAME}} SET NOT NULL;
+
+ALTER TABLE {{TABLE_NAME}}
+ALTER COLUMN {{COLUMN_NAME}} DROP NOT NULL;
+
+-- Change default
+ALTER TABLE {{TABLE_NAME}}
+ALTER COLUMN {{COLUMN_NAME}} SET DEFAULT 'new_default';
+*/
+
+-- -----------------------------------------------------------------------------
+-- Add Index
+-- -----------------------------------------------------------------------------
+
+/*
+-- Standard index
+CREATE INDEX CONCURRENTLY idx_{{TABLE_NAME}}_{{COLUMN_NAME}}
+    ON {{TABLE_NAME}}({{COLUMN_NAME}});
+
+-- Unique index
+CREATE UNIQUE INDEX CONCURRENTLY idx_{{TABLE_NAME}}_{{COLUMN_NAME}}_unique
+    ON {{TABLE_NAME}}({{COLUMN_NAME}});
+
+-- Partial index
+CREATE INDEX CONCURRENTLY idx_{{TABLE_NAME}}_active
+    ON {{TABLE_NAME}}({{COLUMN_NAME}})
+    WHERE status = 'active';
+
+-- Composite index
+CREATE INDEX CONCURRENTLY idx_{{TABLE_NAME}}_composite
+    ON {{TABLE_NAME}}(user_id, created_at DESC);
+
+-- GIN index for JSONB
+CREATE INDEX CONCURRENTLY idx_{{TABLE_NAME}}_metadata
+    ON {{TABLE_NAME}} USING GIN(metadata);
+
+-- Full-text search index
+CREATE INDEX CONCURRENTLY idx_{{TABLE_NAME}}_search
+    ON {{TABLE_NAME}} USING GIN(to_tsvector('english', name || ' ' || COALESCE(description, '')));
+*/
+
+-- -----------------------------------------------------------------------------
+-- Add Foreign Key
+-- -----------------------------------------------------------------------------
+
+/*
+ALTER TABLE {{TABLE_NAME}}
+ADD CONSTRAINT fk_{{TABLE_NAME}}_{{COLUMN_NAME}}
+    FOREIGN KEY ({{COLUMN_NAME}})
+    REFERENCES other_table(id)
+    ON DELETE CASCADE;
+*/
+
+-- -----------------------------------------------------------------------------
+-- Add Check Constraint
+-- -----------------------------------------------------------------------------
+
+/*
+ALTER TABLE {{TABLE_NAME}}
+ADD CONSTRAINT chk_{{TABLE_NAME}}_{{COLUMN_NAME}}
+    CHECK ({{COLUMN_NAME}} > 0);
+*/
+
+-- =============================================================================
+-- DOWN Migration (Rollback)
+-- =============================================================================
+
+/*
+-- Drop table
+DROP TABLE IF EXISTS {{TABLE_NAME}};
+
+-- Drop column
+ALTER TABLE {{TABLE_NAME}}
+DROP COLUMN IF EXISTS {{COLUMN_NAME}};
+
+-- Drop index
+DROP INDEX CONCURRENTLY IF EXISTS idx_{{TABLE_NAME}}_{{COLUMN_NAME}};
+
+-- Drop constraint
+ALTER TABLE {{TABLE_NAME}}
+DROP CONSTRAINT IF EXISTS fk_{{TABLE_NAME}}_{{COLUMN_NAME}};
+*/
+
+-- =============================================================================
+-- Helper Functions
+-- =============================================================================
+
+/*
+-- Updated_at trigger function (create once, use everywhere)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+*/
+
+-- =============================================================================
+-- Data Migration (if needed)
+-- =============================================================================
+
+/*
+-- Backfill existing rows
+UPDATE {{TABLE_NAME}}
+SET new_column = CASE
+    WHEN condition THEN 'value1'
+    ELSE 'value2'
+END
+WHERE new_column IS NULL;
+
+-- Copy data from old column to new
+UPDATE {{TABLE_NAME}}
+SET new_column = old_column
+WHERE new_column IS NULL;
+
+-- Migrate data from one table to another
+INSERT INTO new_table (col1, col2)
+SELECT col1, col2
+FROM old_table
+WHERE NOT EXISTS (
+    SELECT 1 FROM new_table WHERE new_table.id = old_table.id
+);
+*/
+
+-- =============================================================================
+-- Verification Queries
+-- =============================================================================
+
+/*
+-- Check migration was applied
+SELECT EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_name = '{{TABLE_NAME}}'
+);
+
+-- Check column exists
+SELECT EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_name = '{{TABLE_NAME}}'
+    AND column_name = '{{COLUMN_NAME}}'
+);
+
+-- Check index exists
+SELECT EXISTS (
+    SELECT FROM pg_indexes
+    WHERE indexname = 'idx_{{TABLE_NAME}}_{{COLUMN_NAME}}'
+);
+
+-- Check row count after migration
+SELECT COUNT(*) FROM {{TABLE_NAME}};
+*/

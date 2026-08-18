@@ -1,0 +1,49 @@
+Rhetorical Synthesis total: 178
+Has Notes/While researching: 170 (95.5%)
+
+--- RS Sample 1 (has_notes=True) ---
+PASSAGE: While researching a topic, a student has taken the following notes:
+
+The Philadelphia and Lancaster Turnpike was a road built between 1792 and 1794.
+
+It was the first private turnpike in the United States.
+
+It connected the cities of Philadelphia and Lancaster in the state of Pennsylvania. It was sixty-two miles long.
+
+The student wants to emphasize the distance covered by the Philadelphia and Lancaster Turnpike.
+QUESTION: Which choice most
+effectively uses relevant information from the notes to accomplish this goal?
+
+--- RS Sample 2 (has_notes=True) ---
+PASSAGE: While researching a topic, a student has taken the following notes:
+
+In World War I, US soldiers who were members of the Choctaw Nation in Oklahoma participated in the Choctaw
+
+Code Talkers program.
+
+The Choctaw Code Talkers were trained to relay coded military information in their native language.
+
+In World War II, the US Army recruited Navajo (Diné) soldiers to transmit coded messages in their native
+
+language.
+
+These soldiers were known as the Navajo Code Talkers.
+
+The student wants to emphas
+QUESTION: US soldiers who were members of the Choctaw Nation in Oklahoma used their native language to relay coded
+information.
+
+--- RS Sample 3 (has_notes=True) ---
+PASSAGE: While researching a topic, a student has taken the following notes:
+
+Oracles of the Pink Universe was a 2021 exhibition at the Denver Museum of Art in Colorado.
+
+It featured eight artworks by South African artist Simphiwe Ndzube.
+One of these works is a painting titled Assertion of Will. Assertion of Will depicts three standing figures.
+
+The figures wear clothing made of fabric pieces stitched to the painting’s canvas.
+
+The student wants to describe how fabric is used in Assertion of Will.
+QUESTION: Which choice most effectively uses relevant
+information from the notes to accomplish this goal?
+

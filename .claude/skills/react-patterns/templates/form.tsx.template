@@ -1,0 +1,210 @@
+/**
+ * {{FORM_NAME}} Form Component
+ *
+ * {{FORM_DESCRIPTION}}
+ *
+ * @example
+ * ```tsx
+ * <{{FORM_NAME}}Form onSubmit={handleSubmit} />
+ * ```
+ *
+ * Template Placeholders:
+ * - {{FORM_NAME}}: PascalCase form name (e.g., Login, UserProfile, ContactUs)
+ * - {{FORM_DESCRIPTION}}: Brief description of form purpose
+ * - {{FORM_FIELDS}}: Additional form field definitions
+ * - {{VALIDATION_RULES}}: Additional Zod validation rules
+ */
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+
+// =============================================================================
+// Validation Schema
+// =============================================================================
+
+const {{FORM_NAME}}Schema = z.object({
+  /**
+   * Example field - replace with actual fields
+   */
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Invalid email format'),
+  /**
+   * Example optional field
+   */
+  name: z
+    .string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be less than 100 characters')
+    .optional(),
+  // {{VALIDATION_RULES}}
+});
+
+type {{FORM_NAME}}FormValues = z.infer<typeof {{FORM_NAME}}Schema>;
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface {{FORM_NAME}}FormProps {
+  /**
+   * Callback when form is submitted successfully
+   */
+  onSubmit: (data: {{FORM_NAME}}FormValues) => void | Promise<void>;
+  /**
+   * Optional initial values for the form
+   */
+  defaultValues?: Partial<{{FORM_NAME}}FormValues>;
+  /**
+   * Whether the form is currently submitting
+   */
+  isSubmitting?: boolean;
+  /**
+   * Text for the submit button
+   */
+  submitText?: string;
+}
+
+// =============================================================================
+// Component
+// =============================================================================
+
+/**
+ * {{FORM_NAME}}Form
+ *
+ * {{FORM_DESCRIPTION}}
+ */
+export function {{FORM_NAME}}Form({
+  onSubmit,
+  defaultValues,
+  isSubmitting = false,
+  submitText = 'Submit',
+}: {{FORM_NAME}}FormProps) {
+  // ---------------------------------------------------------------------------
+  // Form Setup
+  // ---------------------------------------------------------------------------
+
+  const form = useForm<{{FORM_NAME}}FormValues>({
+    resolver: zodResolver({{FORM_NAME}}Schema),
+    defaultValues: {
+      email: '',
+      name: '',
+      ...defaultValues,
+    },
+  });
+
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
+
+  const handleSubmit = async (data: {{FORM_NAME}}FormValues) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      // Handle submission error
+      console.error('Form submission error:', error);
+      form.setError('root', {
+        type: 'manual',
+        message: 'An error occurred. Please try again.',
+      });
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {/* Root error message */}
+        {form.formState.errors.root && (
+          <div className="text-sm text-destructive">
+            {form.formState.errors.root.message}
+          </div>
+        )}
+
+        {/* Email Field */}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                We'll never share your email with anyone.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Name Field (Optional) */}
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name (optional)</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  placeholder="John Doe"
+                  autoComplete="name"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* {{FORM_FIELDS}} */}
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isSubmitting || form.formState.isSubmitting}
+        >
+          {isSubmitting || form.formState.isSubmitting ? (
+            <>
+              <span className="mr-2 animate-spin">⟳</span>
+              Submitting...
+            </>
+          ) : (
+            submitText
+          )}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+// =============================================================================
+// Default Export
+// =============================================================================
+
+export default {{FORM_NAME}}Form;

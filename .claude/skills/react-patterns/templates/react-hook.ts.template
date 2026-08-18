@@ -1,0 +1,158 @@
+/**
+ * use{{HOOK_NAME}} Hook
+ *
+ * {{HOOK_DESCRIPTION}}
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { value, setValue } = use{{HOOK_NAME}}();
+ *   return <div>{value}</div>;
+ * }
+ * ```
+ *
+ * Template Placeholders:
+ * - {{HOOK_NAME}}: PascalCase hook name without "use" prefix (e.g., LocalStorage, WindowSize, Debounce)
+ * - {{HOOK_DESCRIPTION}}: Brief description of hook purpose
+ * - {{HOOK_PARAMS}}: Hook parameter types (optional)
+ * - {{HOOK_RETURN}}: Hook return type properties (optional)
+ * - {{DEPENDENCIES}}: Additional dependencies for useEffect/useCallback (optional)
+ */
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface Use{{HOOK_NAME}}Options {
+  /**
+   * Example option - replace with actual options
+   */
+  enabled?: boolean;
+  /**
+   * Callback when value changes
+   */
+  onValueChange?: (value: string) => void;
+  // {{HOOK_PARAMS}}
+}
+
+export interface Use{{HOOK_NAME}}Return {
+  /**
+   * Current value
+   */
+  value: string;
+  /**
+   * Update the value
+   */
+  setValue: (newValue: string) => void;
+  /**
+   * Whether the hook is in a loading state
+   */
+  isLoading: boolean;
+  /**
+   * Error state if any
+   */
+  error: Error | null;
+  /**
+   * Reset to initial state
+   */
+  reset: () => void;
+  // {{HOOK_RETURN}}
+}
+
+// =============================================================================
+// Hook
+// =============================================================================
+
+/**
+ * use{{HOOK_NAME}}
+ *
+ * {{HOOK_DESCRIPTION}}
+ */
+export function use{{HOOK_NAME}}(
+  options: Use{{HOOK_NAME}}Options = {}
+): Use{{HOOK_NAME}}Return {
+  const { enabled = true, onValueChange } = options;
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+
+  const [value, setValueState] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  // ---------------------------------------------------------------------------
+  // Refs
+  // ---------------------------------------------------------------------------
+
+  // Store callback in ref to avoid dependency issues
+  const onValueChangeRef = useRef(onValueChange);
+  useEffect(() => {
+    onValueChangeRef.current = onValueChange;
+  }, [onValueChange]);
+
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
+
+  const setValue = useCallback((newValue: string) => {
+    setValueState(newValue);
+    onValueChangeRef.current?.(newValue);
+  }, []);
+
+  const reset = useCallback(() => {
+    setValueState('');
+    setError(null);
+    setIsLoading(false);
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Effects
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    // Example effect - replace with actual logic
+    const handleEffect = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Your hook logic here
+
+        setIsLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Unknown error'));
+        setIsLoading(false);
+      }
+    };
+
+    handleEffect();
+
+    // Cleanup function
+    return () => {
+      // Cleanup logic here (cancel requests, remove listeners, etc.)
+    };
+  }, [enabled /* {{DEPENDENCIES}} */]);
+
+  // ---------------------------------------------------------------------------
+  // Return
+  // ---------------------------------------------------------------------------
+
+  return {
+    value,
+    setValue,
+    isLoading,
+    error,
+    reset,
+  };
+}
+
+// =============================================================================
+// Default Export
+// =============================================================================
+
+export default use{{HOOK_NAME}};

@@ -1,0 +1,504 @@
+/* ─────────────────────────────────────────────────────────────
+   Card entrance
+───────────────────────────────────────────────────────────── */
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Verb animations
+───────────────────────────────────────────────────────────── */
+
+/* 관리한 적 없으니까 — 불안으로 미세하게 떨림 */
+@keyframes trembleVerb {
+    0%   { transform: translateX(0) translateY(0); }
+    15%  { transform: translateX(-3px) translateY(1px); }
+    30%  { transform: translateX(3px) translateY(-1px); }
+    45%  { transform: translateX(-2px) translateY(1px); }
+    60%  { transform: translateX(2px) translateY(-1px); }
+    80%  { transform: translateX(-1px) translateY(1px); }
+    100% { transform: translateX(0) translateY(0); }
+}
+
+/* 확인한 적 없으니까 — 흐릿했다 잠깐 선명해지고 다시 흐려짐 */
+@keyframes blurLoop {
+    0%   { filter: blur(5px); opacity: 0.35; }
+    40%  { filter: blur(0);   opacity: 1; }
+    60%  { filter: blur(0);   opacity: 1; }
+    100% { filter: blur(5px); opacity: 0.35; }
+}
+
+/* 반복하니까 — 정면에서 잠깐 멈췄다 한 바퀴 회전 후 다시 정면 */
+@keyframes spinRepeat {
+    0%   { transform: perspective(400px) rotateY(0deg); }
+    20%  { transform: perspective(400px) rotateY(0deg); }
+    100% { transform: perspective(400px) rotateY(360deg); }
+}
+
+/* 그냥 넘기니까 — 취소선 */
+@keyframes strikethrough {
+    from { width: 0; }
+    to   { width: 100%; }
+}
+
+@keyframes skipFade {
+    to { opacity: 0.45; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Visual 1 — 긴장감 (concentric pulse rings)
+───────────────────────────────────────────────────────────── */
+
+@keyframes v1Pulse {
+    0%   { transform: scale(0.5); opacity: 0.9; }
+    100% { transform: scale(2.6); opacity: 0; }
+}
+
+@keyframes v1NumBeat {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    45%       { opacity: 0.5; transform: scale(0.92); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Visual 2 — 약점 (weak spot dots)
+───────────────────────────────────────────────────────────── */
+
+@keyframes v2WeakPulse {
+    0%, 100% { opacity: 1;   box-shadow: 0 0 8px rgba(248, 113, 113, 0.7); }
+    50%       { opacity: 0.3; box-shadow: none; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Visual 3 — 반복 (rotating ring + sequential bars)
+───────────────────────────────────────────────────────────── */
+
+@keyframes v3Rotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+@keyframes v3Seq {
+    0%, 60%, 100% { background: rgba(248, 113, 113, 0.2); }
+    30%            { background: rgba(248, 113, 113, 0.85); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Visual 4 — 넘기다 (word block skip)
+───────────────────────────────────────────────────────────── */
+
+@keyframes v4Skip {
+    0%, 100% { opacity: 1;    background: rgba(248, 113, 113, 0.55); transform: translateX(0); }
+    30%       { opacity: 0.15; background: rgba(248, 113, 113, 0.1);  transform: translateX(6px); }
+    60%       { opacity: 1;    background: rgba(248, 113, 113, 0.55); transform: translateX(0); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section & intro
+───────────────────────────────────────────────────────────── */
+
+.section {
+    background: var(--bg-base);
+    padding: 120px 5%;
+}
+
+.intro {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 72px;
+}
+
+.sectionLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #f87171;
+    margin-bottom: 16px;
+}
+
+.introTitle {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    word-break: keep-all;
+}
+
+.introDesc {
+    font-size: clamp(1rem, 2vw, 1.1rem);
+    color: var(--text-secondary);
+    line-height: 1.75;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Cards — vertical stack of horizontal cards
+───────────────────────────────────────────────────────────── */
+
+.cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.card {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 20px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(32px);
+    min-height: 220px;
+}
+
+.cards.visible .card {
+    animation: cardIn 0.6s ease calc(var(--i, 0) * 0.12s) both;
+}
+
+/* ── Visual panel (left) ── */
+
+.visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(248, 113, 113, 0.04);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 40px 24px;
+}
+
+/* ── Content panel (right) ── */
+
+.content {
+    padding: 40px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+}
+
+.cardNum {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: rgba(248, 113, 113, 0.45);
+}
+
+.cardTitle {
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    line-height: 1.35;
+    word-break: keep-all;
+    margin: 0;
+}
+
+.cardDesc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    word-break: keep-all;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.descLine {
+    display: block;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Verb styles
+───────────────────────────────────────────────────────────── */
+
+.verb {
+    color: #f87171;
+    font-weight: 900;
+    display: inline-block;
+}
+
+/* 관리한 적 없으니까 — 미세 떨림 무한 반복 */
+.cards.visible .shake {
+    animation: trembleVerb 0.45s linear calc(var(--i, 0) * 0.12s + 0.4s) infinite;
+}
+
+/* 확인한 적 없으니까 — 흐릿↔선명 루프 */
+.cards.visible .blurIn {
+    animation: blurLoop 3s ease-in-out calc(var(--i, 0) * 0.12s + 0.4s) infinite;
+}
+
+/* 반복하니까 — 3D 회전 무한 반복 */
+.cards.visible .repeat {
+    animation: spinRepeat 2.5s ease-in-out calc(var(--i, 0) * 0.12s + 0.4s) infinite;
+}
+
+/* 그냥 넘기니까 — 취소선 + 텍스트 흐려짐 */
+.skip {
+    position: relative;
+}
+
+.skip::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 0;
+    height: 2px;
+    background: rgba(248, 113, 113, 0.75);
+    border-radius: 1px;
+    transform: translateY(-50%);
+}
+
+.cards.visible .skip::after {
+    animation: strikethrough 0.5s ease calc(var(--i, 0) * 0.12s + 0.5s) forwards;
+}
+
+.cards.visible .skip {
+    animation: skipFade 0.4s ease calc(var(--i, 0) * 0.12s + 1.1s) forwards;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Visual 1 — BPM pulse
+───────────────────────────────────────────────────────────── */
+
+.v1Wrap {
+    position: relative;
+    width: 110px;
+    height: 110px;
+}
+
+.v1Ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1.5px solid rgba(248, 113, 113, 0.6);
+    opacity: 0;
+}
+
+.cards.visible .v1r1 {
+    animation: v1Pulse 2.4s ease-out calc(var(--i, 0) * 0.12s + 0.5s) infinite;
+}
+
+.cards.visible .v1r2 {
+    animation: v1Pulse 2.4s ease-out calc(var(--i, 0) * 0.12s + 1.1s) infinite;
+}
+
+.cards.visible .v1r3 {
+    animation: v1Pulse 2.4s ease-out calc(var(--i, 0) * 0.12s + 1.7s) infinite;
+}
+
+.v1Core {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.v1Label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: rgba(248, 113, 113, 0.55);
+}
+
+.v1Num {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #f87171;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.cards.visible .v1Num {
+    animation: v1NumBeat 1s ease-in-out calc(var(--i, 0) * 0.12s + 0.5s) infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Visual 2 — dot grid
+───────────────────────────────────────────────────────────── */
+
+.v2Grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.v2Dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    justify-self: center;
+}
+
+.v2Weak {
+    background: #f87171;
+}
+
+.cards.visible .v2Weak {
+    animation: v2WeakPulse 1.6s ease-in-out calc(var(--i, 0) * 0.12s + 0.5s) infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Visual 3 — rotating ring + sequential bars
+───────────────────────────────────────────────────────────── */
+
+.v3Wrap {
+    position: relative;
+    width: 110px;
+    height: 110px;
+}
+
+.v3Ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px dashed rgba(248, 113, 113, 0.35);
+}
+
+.cards.visible .v3Ring {
+    animation: v3Rotate 5s linear calc(var(--i, 0) * 0.12s) infinite;
+}
+
+.v3Inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.v3Bar {
+    width: 44px;
+    height: 7px;
+    border-radius: 4px;
+    background: rgba(248, 113, 113, 0.2);
+}
+
+.cards.visible .v3b1 {
+    animation: v3Seq 1.8s ease-in-out calc(var(--i, 0) * 0.12s + 0.5s) infinite;
+}
+
+.cards.visible .v3b2 {
+    animation: v3Seq 1.8s ease-in-out calc(var(--i, 0) * 0.12s + 0.8s) infinite;
+}
+
+.cards.visible .v3b3 {
+    animation: v3Seq 1.8s ease-in-out calc(var(--i, 0) * 0.12s + 1.1s) infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Visual 4 — text lines with unknown word
+───────────────────────────────────────────────────────────── */
+
+.v4Lines {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 160px;
+}
+
+.v4Row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.v4Block {
+    height: 9px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.12);
+    display: block;
+    flex-shrink: 0;
+}
+
+/* Use nth-child for varying widths via CSS */
+.v4Row:nth-child(1) .v4Block:nth-child(1) { width: 48px; }
+.v4Row:nth-child(1) .v4Block:nth-child(2) { width: 32px; }
+.v4Row:nth-child(1) .v4Block:nth-child(3) { width: 56px; }
+.v4Row:nth-child(2) .v4Block:nth-child(1) { width: 36px; }
+.v4Row:nth-child(2) .v4Block:nth-child(2) { width: 52px; }
+.v4Row:nth-child(2) .v4Block:nth-child(3) { width: 40px; }
+.v4Row:nth-child(3) .v4Block:nth-child(1) { width: 60px; }
+.v4Row:nth-child(3) .v4Block:nth-child(2) { width: 28px; }
+.v4Row:nth-child(3) .v4Block:nth-child(3) { width: 44px; }
+.v4Row:nth-child(4) .v4Block:nth-child(1) { width: 42px; }
+.v4Row:nth-child(4) .v4Block:nth-child(2) { width: 50px; }
+
+.v4Unknown {
+    background: rgba(248, 113, 113, 0.55) !important;
+}
+
+.cards.visible .v4Unknown {
+    animation: v4Skip 2.5s ease-in-out calc(var(--i, 0) * 0.12s + 0.6s) infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Mobile — visual on top, content below
+───────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .section {
+        padding: 80px 1.25rem;
+    }
+
+    .intro {
+        margin-bottom: 48px;
+    }
+
+    .card {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .visual {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 36px 24px;
+        min-height: 160px;
+    }
+
+    .content {
+        padding: 28px 24px;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Reduced motion
+───────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    .card { opacity: 1; transform: none; }
+
+    .cards.visible .card,
+    .cards.visible .shake,
+    .cards.visible .blurIn,
+    .cards.visible .repeat,
+    .cards.visible .skip,
+    .cards.visible .skip::after,
+    .cards.visible .v1Ring,
+    .cards.visible .v1Num,
+    .cards.visible .v2Weak,
+    .cards.visible .v3Ring,
+    .cards.visible .v3Bar,
+    .cards.visible .v4Unknown {
+        animation: none;
+        filter: none;
+        opacity: 1;
+    }
+
+    .skip::after { width: 100%; }
+    .v2Weak { opacity: 1; }
+}

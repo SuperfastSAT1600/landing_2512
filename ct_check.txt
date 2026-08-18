@@ -1,0 +1,88 @@
+--- CT Sample 1 ---
+Question: Based on the texts, how would Singh and Roy (Text 2) most likely respond to the research discussed in Text 1?
+  A: Only countries of a certain population size should implement mandatory voting.
+
+People who are forced to vote are likely to become politically engaged in other ways, such as volunteering or running
+for office.
+  B: Requiring people to vote does not necessarily lead to election outcomes that better represent the preferences of the
+country as a whole.
+  C: D. Countries that require voting must also make the process of voting easier for their citizens.
+  D: Countries that require voting must also make the process of voting easier for their citizens.
+Correct: C
+Full Rationale:
+Choice C is the best answer. Text 1 claims that mandatory voting results in elections that "better reflect the preferences
+
+of the country." Singh and Roy disagree. They claim that more voters doesn’t equal more quality votes—instead, they
+
+argue that forced voting may lead to less-informed votes that "may not reflect [voters’] actual preferences."
+
+Choice A is incorrect. Neither text mentions the population size of countries that require voting, or how that might affect
+
+election outcomes. Choice B is incorrect. Neither text discusses the effects of mandatory voting on other forms of
+
+political engagement. Choice D is incorrect. Neither text discusses the ease or difficulty of the voting process in
+
+countries that require voting.
+
+--- CT Sample 2 ---
+Question: Based on the texts, both authors would most likely agree with which statement?
+  A: Dancers who worked with Ailey greatly appreciated his supportive approach as a choreographer.
+  B: Ailey’s work was strongly influenced by jazz.
+  C: Audiences were mostly unfamiliar with the jazz music in Ailey’s works.
+  D: Ailey blended multiple genres of music together when choreographing dance pieces.
+Correct: B
+Full Rationale:
+Choice B is the best answer. Author 1 states that Ailey had a “deep admiration for jazz music” and that he “helped bring
+jazz to life for his audiences.” Author 2 states that “Jazz is present throughout Ailey’s work.” While the authors name
+different aspects of Ailey’s work as the most influenced by jazz, they agree that jazz was a strong influence. 
+
+Choice A is incorrect. This isn’t something that either text claims. Neither text mentions how Ailey’s dancers felt about his
+
+approach as a choreographer, so we have no evidence that either author would agree with this. Choice C is incorrect. This
+
+isn’t something that either text claims. Neither text mentions how familiar audiences were with any aspect of Ailey’s
+
+works, so we have no evidence that either author would agree with this. Choice D is incorrect. This isn’t something that
+
+either text claims. Neither text mentions any genre of music other than jazz, so we have no evidence that either author
+
+would agree with this.
+
+--- CT Sample 3 ---
+Question: Based on the texts, what would Lisa Trever (Text 2) most likely say about the interpretation presented in the underlined
+portion of Text 1?
+  A: Depictions of human faces are significantly more realistic than depictions of plants and other animals are.
+
+It is likely that some depictions of human faces with extensive markings are intended to portray the same historical
+individual.
+  B: C. Some vessels may have been damaged during their excavation and thus provide little insight into Moche culture.
+
+Markings on depictions of human faces are not necessarily intended to portray particular details about the physical
+appearance of individuals.
+  C: Some vessels may have been damaged during their excavation and thus provide little insight into Moche culture.
+
+Markings on depictions of human faces are not necessarily intended to portray particular details about the physical
+appearance of individuals.
+  D: 
+Correct: D
+Full Rationale:
+Choice D is the best answer. Trever thinks that the “hyper-realistic portrayal of identifiable people” interpretation ignores
+
+the sculptors’ imagination and creativity. We can infer that Trevor thinks the facial markings on the sculptures may not
+
+have represented real skin blemishes on real people.
+
+Choice A is incorrect. The text gives us no reason to think that Trever would respond to the underlined interpretation in
+
+this way. Neither text compares the depictions of human faces to the depictions of plants or animals, so we have no
+
+basis to draw this conclusion. Choice B is incorrect. The text gives us no reason to think that Trever would respond to the
+
+underlined interpretation in this way. There’s nothing in either text about multiple depictions representing the same
+
+person, so we have no basis to draw this conclusion. Choice C is incorrect. The text gives us no reason to think that
+
+Trever would respond to the underlined interpretation in this way. Neither text mentions the state of the vessels
+
+(damaged or intact), so we have no basis to draw this conclusion.
+

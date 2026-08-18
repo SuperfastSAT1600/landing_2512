@@ -1,0 +1,1782 @@
+[
+  {
+    "id": "a5e747f0",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Words in Context",
+    "difficulty": "Hard",
+    "passage": "Despite how _____ they may seem on first glance, the works of the philosopher Georg Hegel have proven to be quite influential. Readers who manage to penetrate Hegel's frustratingly dense prose often find that his thrillingly original and profound ideas wind up shaping their own thinking.",
+    "question": "Which choice completes the text with the most logical and precise word or phrase?",
+    "choices": {
+      "A": "authoritative",
+      "B": "opaque",
+      "C": "empirical",
+      "D": "facile"
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer because it most logically completes the text's discussion of Hegel's works. In this context, 'opaque' means difficult to understand or unclear. The text creates a contrast between the initial impression given by Hegel's works and their influence and insight, noting that readers must 'penetrate Hegel's frustratingly dense prose' to access his important ideas.",
+    "knowledge_graph": {
+      "parent_concept": "Vocabulary & Context Analysis",
+      "prerequisite": "Contextual Inference & Semantic Nuance",
+      "concept_tags": [
+        "vocabulary",
+        "context clues",
+        "semantic precision",
+        "word choice"
+      ],
+      "passage_topic": "Philosophy"
+    },
+    "analysis": {
+      "target_word_pos": "Adjective",
+      "passage_logical_flow": "Contrast",
+      "passage_topic": "Philosophy",
+      "synonyms_for_correct_answer": [
+        "unclear",
+        "obscure",
+        "difficult"
+      ]
+    },
+    "source": "Words in Context_hard_50_260322.pdf"
+  },
+  {
+    "id": "b92c13fa",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Words in Context",
+    "difficulty": "Easy",
+    "passage": "According to statistician Nassim Nicholas Taleb, the best way to predict the amount of time a nonperishable entity (such as a building or a technology) will continue to exist is to examine how long it has survived so far. In this view, an item’s age is the strongest _____ how much longer it will last.",
+    "question": "Which choice completes the text with the most logical and precise word or phrase?",
+    "choices": {
+      "A": "uncertainty about",
+      "B": "indicator of",
+      "C": "motivation for",
+      "D": "criticism of"
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer. “Indicator” means “something that shows or suggests,” which matches Taleb's argument that an item’s age can suggest how much longer it will last. Choice A is incorrect. The passage tells us that examining an item’s age is the best way to predict how much longer it will last. Therefore, an item’s age should add more certainty about how much longer it will last. Choice C is incorrect. “Motivation” is “a reason for doing.” Items don’t have feelings and motivations, so it wouldn’t make sense to say that their age is a motivation for how much longer they will last. Choice D is incorrect. “Criticism” can mean “describing faults or problems” or “an analysis of an artistic work.” Neither of these definitions makes sense here. An item’s age can’t criticize how much longer it will last.",
+    "knowledge_graph": {
+      "parent_concept": "Vocabulary & Context Analysis",
+      "prerequisite": "Contextual Inference & Semantic Nuance",
+      "concept_tags": [
+        "vocabulary",
+        "context clues",
+        "semantic precision",
+        "word choice"
+      ],
+      "passage_topic": "Science"
+    },
+    "analysis": {
+      "target_word_pos": "Noun",
+      "passage_logical_flow": "Cause and effect",
+      "passage_topic": "Science",
+      "synonyms_for_correct_answer": [
+        "sign",
+        "gauge",
+        "measure"
+      ]
+    },
+    "source": "Words in Context_easy_123_260322.pdf"
+  },
+  {
+    "id": "cb526866",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Words in Context",
+    "difficulty": "Easy",
+    "passage": "The recent discovery of a carved wooden figure dating to around 2,000 years ago in a ditch in England was truly surprising. Wooden objects _____ survive for so long due to their high susceptibility to rot, but archaeologists suspect layers of sediment in the ditch preserved the figure by creating an oxygen-free environment.",
+    "question": "Which choice completes the text with the most logical and precise word or phrase?",
+    "choices": {
+      "A": "sturdily",
+      "B": "carelessly",
+      "C": "rarely",
+      "D": "simply"
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer because it most logically completes the text's discussion of the discovery of a carved wooden figure dating to around 2,000 years ago. In this context, \"rarely\" means infrequently, as stated in the passage which discusses the high susceptibility of wooden objects to rot.",
+    "knowledge_graph": {
+      "parent_concept": "Vocabulary & Context Analysis",
+      "prerequisite": "Contextual Inference & Semantic Nuance",
+      "concept_tags": [
+        "vocabulary",
+        "context clues",
+        "semantic precision",
+        "word choice"
+      ],
+      "passage_topic": "Archaeology"
+    },
+    "analysis": {
+      "target_word_pos": "Adverb",
+      "passage_logical_flow": "Cause and effect",
+      "passage_topic": "Archaeology",
+      "synonyms_for_correct_answer": [
+        "infrequently",
+        "seldom",
+        "occasionally"
+      ]
+    },
+    "source": "Words in Context_easy_123_260322.pdf"
+  },
+  {
+    "id": "b0ea8c28",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Words in Context",
+    "difficulty": "Easy",
+    "passage": "Sueño de Familia is an exhibition of drawings, paintings, and ceramics that explores the artistic heritage of US-based artist Yolanda González. The exhibition _____ five generations, featuring works by González’s great-grandfather, grandmother, mother, and niece as well as González herself.",
+    "question": "Which choice completes the text with the most logical and precise word or phrase?",
+    "choices": {
+      "A": "borrows",
+      "B": "spans",
+      "C": "judges",
+      "D": "neglects"
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer because it most logically completes the text’s discussion of the Sueño de Familia art exhibition. In this context, “spans” means extends across or covers. The text states that the exhibition explores González’s artistic heritage and features artwork by her great-grandfather, grandmother, mother, and niece. This context conveys the idea that the exhibition spans, or extends across, five generations of González’s family.",
+    "knowledge_graph": {
+      "parent_concept": "Vocabulary & Context Analysis",
+      "prerequisite": "Contextual Inference & Semantic Nuance",
+      "concept_tags": [
+        "vocabulary",
+        "context clues",
+        "semantic precision",
+        "word choice"
+      ],
+      "passage_topic": "Art"
+    },
+    "analysis": {
+      "target_word_pos": "Verb",
+      "passage_logical_flow": "Cause and effect",
+      "passage_topic": "Art",
+      "synonyms_for_correct_answer": [
+        "extends",
+        "covers",
+        "encompasses"
+      ]
+    },
+    "source": "Words in Context_easy_123_260322.pdf"
+  },
+  {
+    "id": "afd48140",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Words in Context",
+    "difficulty": "Easy",
+    "passage": "In 1877, 85% of California’s railways were already controlled by the Southern Pacific Railroad. The company further solidified its _____ in rail access to the state’s Pacific coast when it completed the Sunset Route in 1883: running from Louisiana to Southern California, the route established the first transcontinental rail line across the southern United States.",
+    "question": "Which choice completes the text with the most logical and precise word or phrase?",
+    "choices": {
+      "A": "dominance",
+      "B": "creativity",
+      "C": "insignificance",
+      "D": "neutrality"
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer because it most logically and precisely completes the text’s discussion of the Southern Pacific Railroad. As used in this context, 'dominance' means the state of being more successful than others...",
+    "knowledge_graph": {
+      "parent_concept": "Vocabulary & Context Analysis",
+      "prerequisite": "Contextual Inference & Semantic Nuance",
+      "concept_tags": [
+        "vocabulary",
+        "context clues",
+        "semantic precision",
+        "word choice"
+      ],
+      "passage_topic": "History"
+    },
+    "analysis": {
+      "target_word_pos": "Noun",
+      "passage_logical_flow": "Cause and effect",
+      "passage_topic": "History",
+      "synonyms_for_correct_answer": [
+        "control",
+        "supremacy",
+        "predominance"
+      ]
+    },
+    "source": "Words in Context_easy_123_260322.pdf"
+  },
+  {
+    "id": "22105871",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Cross-Text Connections",
+    "difficulty": "Easy",
+    "passage": "Text 1\n\nIn a study of insect behavior, Samadi Galpayage and colleagues presented bumblebees with small wooden balls and\n\nobserved many of the bees clinging to, rolling, and dragging the objects. The researchers provided no external rewards\n\n(such as food) to encourage these interactions. The bees simply appeared to be playing—and for no other reason than\n\nbecause they were having fun.\n\nText 2\n\nInsects do not have cortexes or other brain areas associated with emotions in humans. Still, Galpayage and her team\n\nhave shown that bumblebees may engage in play, possibly experiencing some kind of positive emotional state. Other\nstudies have suggested that bees experience negative emotional states (for example, stress), but as Galpayage and her\n\nteam have acknowledged, emotions in insects, if they do indeed exist, are likely very rudimentary.",
+    "question": "Based on the texts, how would the author of Text 2 most likely respond to the underlined portion of Text 1?",
+    "choices": {
+      "A": "By objecting that the bees were actually experiencing a negative feeling akin to stress rather than a positive feeling",
+      "B": "By arguing that some insects other than bumblebees may be capable of experiencing complex emotional states",
+      "C": "By pointing out that even humans sometimes struggle to have fun while engaging in play\n\nBy noting that if the bees were truly playing, any positive feelings they may have experienced were probably quite",
+      "D": "basic"
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer. The author of Text 2 agrees with the author of Text 1 that bumblebees may engage in play\n\nand possibly experience some kind of positive emotional state. However, the author of Text 2 also qualifies this claim by\n\nstating that emotions in insects, if they do exist, are “likely very rudimentary.”\n\nChoice A is incorrect. While Text 2 states that other studies might indicate “negative emotional states” in bees, it does\n\nnot contradict the findings from the Galpayage study—that the bees might have been having fun. Choice B is incorrect.\n\nThe author of Text 2 does not mention or imply that any insects, including bumblebees, are capable of experiencing\n\ncomplex emotional states. The author of Text 2 states that if insects do feel emotions, those emotions are “likely very\nrudimentary.” Choice C is incorrect. The author of Text 2 does not compare or contrast the behavior or emotions of\n\ninsects and humans, and neither does the author of Text 1.",
+    "knowledge_graph": {
+      "parent_concept": "Comparative Analysis",
+      "prerequisite": "Synthesis of Information & Multi-source Integration",
+      "concept_tags": [
+        "cross-text analysis",
+        "compare-contrast",
+        "multiple passages",
+        "synthesis"
+      ],
+      "passage_topic": "Science"
+    },
+    "analysis": {
+      "relationship_type": "Agree",
+      "text_focus": "Text 1 makes assertions, Text 2 reinforces them with behavioral observations.",
+      "passage_topic": "Science"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "02fd3da7",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Cross-Text Connections",
+    "difficulty": "Easy",
+    "passage": "Text 1\n\nPublic policy researcher Anthony Fowler studied the history of elections in Australia, a country that requires citizens to\nvote. Fowler argues that requiring citizens to vote leads to a significant increase in voters who would otherwise not have\nthe time or motivation to vote. Thus, election results in countries that require citizens to vote better reflect the\npreferences of the country as a whole. \n\n  Text 2\nGovernments in democratic countries function better when more people vote. However, forcing people to vote may have\nnegative consequences. Shane P. Singh and Jason Roy studied what happens when a country requires its citizens to\nvote. They found that when people feel forced to vote, they tend to spend less time looking for information about their\nchoices when voting. As a result, votes from these voters may not reflect their actual preferences.",
+    "question": "Based on the texts, how would Singh and Roy (Text 2) most likely respond to the research discussed in Text 1?",
+    "choices": {
+      "A": "Only countries of a certain population size should implement mandatory voting.\n\nPeople who are forced to vote are likely to become politically engaged in other ways, such as volunteering or running\nfor office.",
+      "B": "Requiring people to vote does not necessarily lead to election outcomes that better represent the preferences of the\ncountry as a whole.",
+      "C": "D. Countries that require voting must also make the process of voting easier for their citizens.",
+      "D": "Countries that require voting must also make the process of voting easier for their citizens."
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. Text 1 claims that mandatory voting results in elections that \"better reflect the preferences\n\nof the country.\" Singh and Roy disagree. They claim that more voters doesn’t equal more quality votes—instead, they\n\nargue that forced voting may lead to less-informed votes that \"may not reflect [voters’] actual preferences.\"\n\nChoice A is incorrect. Neither text mentions the population size of countries that require voting, or how that might affect\n\nelection outcomes. Choice B is incorrect. Neither text discusses the effects of mandatory voting on other forms of\n\npolitical engagement. Choice D is incorrect. Neither text discusses the ease or difficulty of the voting process in\n\ncountries that require voting.",
+    "knowledge_graph": {
+      "parent_concept": "Comparative Analysis",
+      "prerequisite": "Synthesis of Information & Multi-source Integration",
+      "concept_tags": [
+        "cross-text analysis",
+        "compare-contrast",
+        "multiple passages",
+        "synthesis"
+      ],
+      "passage_topic": "Social Science"
+    },
+    "analysis": {
+      "relationship_type": "Agree",
+      "text_focus": "Text 1 presents an experiment, Text 2 supports it with research findings.",
+      "passage_topic": "Social Science"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "ab56a107",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Cross-Text Connections",
+    "difficulty": "Medium",
+    "passage": "Text 1\n\nDigital art, the use of digital technology to create or display images, isn’t really art at all. It doesn’t require as much skill as\n\ncreating physical art. “Painting” with a tablet and stylus is much easier than using paint and a brush: the technology is\n\ndoing most of the work.\n\n Text 2\n\nThe painting programs used to create digital art involve more than just pressing a few buttons. In addition to knowing the\nfundamentals of art, digital artists need to be familiar with sophisticated software. Many artists will start by drawing an\n\nimage on paper before transforming the piece to a digital format, where they can apply a variety of colors and techniques\n\nthat would otherwise require many different traditional tools.",
+    "question": "Based on the texts, how would the author of Text 2 most likely respond to the claims of the author of Text 1?",
+    "choices": {
+      "A": "By arguing that a piece of art created digitally can still be displayed traditionally",
+      "B": "By explaining that it’s actually much harder to use a tablet and stylus to create art than to use paint and a brush",
+      "C": "By insisting that digital art requires artistic abilities and skill even if it employs less traditional tools",
+      "D": "By admitting that most digital artists don’t think fundamental drawing skills are important"
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer because it reflects how the author of Text 2 would respond to the claims in Text 1. Both texts\naddress skills needed to produce digital art. Text 1 claims that digital art doesn’t require the same amount of skill as\n\ncreating physical art and that “the technology is doing most of the work.” Text 2 states that digital art requires “knowing\n\nthe fundamentals of art” and that many digital artists begin their work on paper and then transfer it to a digital format\n\nusing “sophisticated software” and “a variety of colors and techniques.” Therefore, the author of Text 2 would most likely\ninsist that digital art requires artistic abilities even if it employs less traditional tools.\n\nChoice A is incorrect because neither text discusses nondigital means of displaying art. Choice B is incorrect because\n\nthe author of Text 2 doesn’t address whether it’s harder to use a tablet and stylus than it is to use paint and a brush. Text\n\n2 does argue that digital art requires skills that aren’t part of the traditional methods for producing art, but the text\ndoesn’t address relative difficulty. Choice D is incorrect because the author of Text 2 states that digital artists still need to\n\nknow “the fundamentals of art” and that many digital artists begin their work by drafting on paper before transferring the\n\nwork to a digital format.",
+    "knowledge_graph": {
+      "parent_concept": "Comparative Analysis",
+      "prerequisite": "Synthesis of Information & Multi-source Integration",
+      "concept_tags": [
+        "cross-text analysis",
+        "compare-contrast",
+        "multiple passages",
+        "synthesis"
+      ],
+      "passage_topic": "Art"
+    },
+    "analysis": {
+      "relationship_type": "Disagree",
+      "text_focus": "Text 1 claims digital art requires less skill, Text 2 argues it demands both art fundamentals and software skill.",
+      "passage_topic": "Art"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "eae66bf9",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Cross-Text Connections",
+    "difficulty": "Medium",
+    "passage": "Text 1\n\nIn 2021, a team led by Amir Siraj hypothesized that the Chicxulub impactor—the object that struck the Yucatán Peninsula\nsixty-six million years ago, precipitating the mass extinction of the dinosaurs—was likely a member of the class of long-\n\nperiod comets. As evidence, Siraj cited the carbonaceous chondritic composition of samples from the Chicxulub impact\n\ncrater as well as of samples obtained from long-period comet Wild 2 in 2006.\n\n  Text 2\nAlthough long-period comets contain carbonaceous chondrites, asteroids are similarly rich in these materials.\n\nFurthermore, some asteroids are rich in iridium, as Natalia Artemieva points out, whereas long-period comets are not.\nGiven the prevalence of iridium at the crater and, more broadly, in geological layers deposited worldwide following the\n\nimpact, Artemieva argues that an asteroid is a more plausible candidate for the Chicxulub impactor.",
+    "question": "Based on the texts, how would Artemieva likely respond to Siraj’s hypothesis, as presented in Text 1?",
+    "choices": {
+      "A": "By insisting that it overestimates how representative Wild 2 is of long-period comets as a class\n\nBy arguing that it does not account for the amount of iridium found in geological layers dating to the Chicxulub",
+      "B": "impact",
+      "C": "By praising it for connecting the composition of Chicxulub crater samples to the composition of certain asteroids\n\nBy concurring that carbonaceous chondrites are prevalent in soil samples from sites distant from the Chicxulub",
+      "D": "crater"
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer. Siraj’s hypothesis is that the Chicxulub impactor was a long-period comet. But Artemieva\npoints to the iridium found in the crater and in “geological layers that were deposited worldwide after the impact” as\n\nevidence that it was actually an asteroid, not a long-period comet.\n\nChoice A is incorrect. We can’t infer that this is how Artemieva would respond to Siraj’s hypothesis. Text 2 never\n\ndiscusses whether Wild 2 is representative of long-period comets in general. Rather, Text 2 presents Artemieva’s\n\nargument that the Chicxulub impactor was an asteroid, not a long-term comet. Choice C is incorrect. We can’t infer that\nthis is how Artemieva would respond to Siraj’s hypothesis. Siraj’s hypothesis doesn’t make this connection: rather, Siraj\n\nhypothesizes that the Chicxulub impactor was a long-term comet. Choice D is incorrect. We can’t infer that this is how\n\nArtemieva would respond to Siraj’s hypothesis. “Soil samples from sites distant from the Chicxulub crater” is too vague.\n\nOnly soil samples from sites that are connected to the impact in some way are involved in either hypothesis.",
+    "knowledge_graph": {
+      "parent_concept": "Comparative Analysis",
+      "prerequisite": "Synthesis of Information & Multi-source Integration",
+      "concept_tags": [
+        "cross-text analysis",
+        "compare-contrast",
+        "multiple passages",
+        "synthesis"
+      ],
+      "passage_topic": "Science"
+    },
+    "analysis": {
+      "relationship_type": "Dispute",
+      "text_focus": "Text 1 suggests a comet origin for an asteroid impact; Text 2 disputes this with more complex evidence.",
+      "passage_topic": "Science"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "88bb0f6f",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Cross-Text Connections",
+    "difficulty": "Easy",
+    "passage": "Text 1\n\nA team led by Bernardo Strassburg has found that rewilding farmland (returning the land to its natural state) could help\n\npreserve biodiversity and offset carbon emissions. The amount of farmland that would need to be restored, they found, is\n\nremarkably low. Rewilding a mere 15% of the world’s current farmland would prevent 60% of expected species\nextinctions and help absorb nearly 299 gigatons of carbon dioxide—a clear win in the fight against the biodiversity and\n\nclimate crises.\n\n  Text 2\nWhile Strassburg’s team’s findings certainly offer encouraging insight into the potential benefits of rewilding, it’s\n\nimportant to consider potential effects on global food supplies. The researchers suggest that to compensate for the loss\n\nof food-producing land, remaining farmland would need to produce even more food. Thus, policies focused on rewilding\nfarmland must also address strategies for higher-yield farming.",
+    "question": "Which choice best describes a difference in how the author of Text 1 and the author of Text 2 view Strassburg’s team’s\n\nstudy?",
+    "choices": {
+      "A": "The author of Text 2 approaches the study’s findings with some caution, whereas the author of Text 1 is optimistic about the reported potential environmental benefits.",
+      "B": "The author of Text 2 claims that the percentage of farmland identified by Strassburg’s team is too low for rewilding to\nachieve meaningful results, whereas the author of Text 1 thinks the percentage is sufficient.",
+      "C": "The author of Text 2 believes that the results described by Strassburg’s team are achievable in the near future,\nwhereas the author of Text 1 argues that they likely aren’t.",
+      "D": "The author of Text 2 focuses on rewilding’s effect on carbon emissions, whereas the author of Text 1 focuses on its\neffect on biodiversity."
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer. Text 1 is extremely positive about Strassburg’s team’s findings, calling the potential results\n\n\"a clear win in the fight against the biodiversity and climate crises.\" Text 2 is not as positive, arguing that while the\n\nfindings point to \"potential benefits,\" we also need to consider the \"potential effects on global food supplies.\"\n\nChoice B is incorrect. This isn’t a difference between the two views. Text 1 does present the 15% number as enough to\nachieve meaningful results, but that’s not what Text 2 takes issue with: rather, Text 2 argues that we need to consider the\n\neffect that rewilding this much farmland would have on food supplies. Choice C is incorrect. This isn’t a difference\n\nbetween the two views. Neither text mentions the timeline for achieving the results described by Strassburg’s team.\n\nChoice D is incorrect. This isn’t a difference between the two views. Text 1 focuses on rewilding’s effects on both carbon\nemissions and biodiversity. Text 2 doesn’t focus on rewilding’s effect on carbon emissions at all. Instead, it focuses on a\n\nthird factor: global food supplies.",
+    "knowledge_graph": {
+      "parent_concept": "Comparative Analysis",
+      "prerequisite": "Synthesis of Information & Multi-source Integration",
+      "concept_tags": [
+        "cross-text analysis",
+        "compare-contrast",
+        "multiple passages",
+        "synthesis"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "56ec23a0",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Text Structure and Purpose",
+    "difficulty": "Easy",
+    "passage": "Hiroshi Senju is known worldwide for his paintings of waterfalls. These paintings are large and tend not to show the\nentire waterfall.  Instead, Senju focuses on just the point where the falling water reaches the pool below, keeping the top\n\nof the waterfall out of view. While Senju’s paintings are rooted in art movements originating in the United States, the artist\n\nuses traditional Japanese techniques and materials that make his work instantly recognizable.",
+    "question": "Which choice best describes the overall structure of the text?",
+    "choices": {
+      "A": "It introduces an artist and then explains some common characteristics of well-known paintings by that artist.",
+      "B": "It explains a specific painting technique and then provides examples of artists who use the technique.",
+      "C": "It describes a famous painting and then compares it to a lesser-known painting from the same time period. ",
+      "D": "It gives an opinion on an artist and then suggests multiple reasons why the artist’s work has been largely overlooked."
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer. The first sentence introduces Senju as a famous artist, while the next three sentences\n\ndescribe the defining features of his art, such as it only showing part of the waterfall and its origins in US art movements\nand Japanese techniques.\n\nChoice B is incorrect. The text doesn’t provide examples of any other artists who use Senju’s techniques. Choice C is\nincorrect. The text doesn’t describe any single famous painting or make comparisons between paintings. Choice D is\nincorrect. The text doesn’t provide an opinion on Senju (just facts), nor does it suggest that his art has been overlooked—\n\nin fact, it states that he is “known worldwide.”",
+    "knowledge_graph": {
+      "parent_concept": "Rhetorical Analysis",
+      "prerequisite": "Main Idea Identification & Authorial Intent",
+      "concept_tags": [
+        "text structure",
+        "author purpose",
+        "organizational patterns",
+        "passage analysis"
+      ],
+      "passage_topic": "Art"
+    },
+    "analysis": {
+      "structure_pattern": "Description",
+      "author_purpose": "Describe",
+      "passage_topic": "Art"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "0ed944c4",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Text Structure and Purpose",
+    "difficulty": "Easy",
+    "passage": "Jackie Ormes’s *Torchy Brown in Dixie to Harlem* (1937–1956) was the first comic strip by a Black woman to appear in a national newspaper.",
+    "question": "Which choice best states the main purpose of the text?",
+    "choices": {
+      "A": "To highlight the importance of the comic artist.",
+      "B": "To discuss the intricacies of cultivating work as a pioneer.",
+      "C": "To analyze how the series contributed to representation.",
+      "D": "To provide a timetable for output and changes."
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer because it offers insight into historical significance while also demonstrating how greater representation was discussed within those comics.",
+    "knowledge_graph": {
+      "parent_concept": "SAT Reading and Writing",
+      "prerequisite": "Reading Comprehension",
+      "concept_tags": [
+        "text structure",
+        "author purpose",
+        "organizational patterns",
+        "passage analysis"
+      ],
+      "passage_topic": "History"
+    },
+    "analysis": {
+      "structure_pattern": "Categorical-description",
+      "author_purpose": "Discuss",
+      "passage_topic": "History"
+    },
+    "source": "Text Structure and Purpose_easy_41.pdf"
+  },
+  {
+    "id": "a2be625e",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Text Structure and Purpose",
+    "difficulty": "Medium",
+    "passage": "The following text is from Sarah Orne Jewett’s 1899 short story “Martha’s Lady.” Martha is employed by Miss Pyne as a\nmaid.\n\nMiss Pyne sat by the window watching, in her best dress, looking stately and calm; she seldom went out now, and it\nwas almost time for the carriage. Martha was just coming in from the garden with the strawberries, and with more\nflowers in her apron. It was a bright cool evening in June, the golden robins sang in the elms, and the sun was going\n\ndown behind the apple-trees at the foot of the garden. The beautiful old house stood wide open to the long-expected\nguest.",
+    "question": "Which choice best states the main purpose of the text?",
+    "choices": {
+      "A": "To convey the worries brought about by a new guest",
+      "B": "To describe how the characters have changed over time",
+      "C": "To contrast the activity indoors with the stillness outside",
+      "D": "To depict the setting as the characters await a visitor’s arrival"
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer because it most accurately reflects the main purpose of the text. The text portrays Miss\n\nPyne as awaiting the arrival of a carriage while Martha brings strawberries and flowers from the garden into the house.\nThe text also describes the surroundings of the scene, stating that Miss Pyne looks “stately and calm,” the evening is\n\nbright and cool, and birds are singing in the garden as the sun sets. Then the last sentence states that the house was\n“wide open to the long-expected guest,” which strongly suggests that Miss Pyne’s anticipation and Martha’s activities\nwere in preparation for the guest who is expected to arrive in the carriage. Thus, the text depicts the setting and conveys\n\nwhat these characters are doing as they await the arrival of their visitor.\n\nChoice A is incorrect because there is nothing in the text to indicate that the characters feel any worry about the guest’s\narrival. The text indicates that the guest was “long-expected,“ but characterizing Miss Pyne as “stately and calm” conflicts\n\nwith the idea that the characters are worried about the guest. Choice B is incorrect because the text describes a moment\nin time when two characters are awaiting the arrival of a visitor rather than an extended period over which characters\n\ncould be seen changing. Choice C is incorrect. Although the text describes the activity indoors (Miss Pyne sitting calmly),\nit describes a higher level of activity, not stillness, outside (Martha bringing fruit and flowers and birds singing).",
+    "knowledge_graph": {
+      "parent_concept": "Rhetorical Analysis",
+      "prerequisite": "Main Idea Identification & Authorial Intent",
+      "concept_tags": [
+        "text structure",
+        "author purpose",
+        "organizational patterns",
+        "passage analysis"
+      ],
+      "passage_topic": "Literature"
+    },
+    "analysis": {
+      "structure_pattern": "Descriptive",
+      "author_purpose": "Describe",
+      "passage_topic": "Literature"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "d168e7c5",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Text Structure and Purpose",
+    "difficulty": "Medium",
+    "passage": "The following text is from Annie Dillard’s 1987 autobiographical novel An American Childhood. The narrator is a young girl\nliving in Pittsburgh.\n\nI walked. My mother had given me the freedom of the streets as soon as I could say our telephone number. I walked\n\nand memorized the neighborhood. I made a mental map and located myself upon it. At night in bed I rehearsed the\n\nsmall world’s scheme and set challenges: Find the store using backyards only. Imagine a route from the school to\nmy friend’s house.\n\n©1987 by Annie Dillard",
+    "question": "Which choice best describes the function of the underlined portion in the text as a whole?",
+    "choices": {
+      "A": "It describes the narrator trying to memorize her telephone number.",
+      "B": "It provides examples of what the narrator thinks about at night.",
+      "C": "It gives directions to the narrator’s favorite local store.",
+      "D": "It portrays the narrator’s relationship with her mother."
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer because it accurately describes how the underlined portion functions in the text as a whole.\nIn the text, the narrator explains that she walks around her neighborhood, making a \"mental map\" of the area that she\n\nimagines herself navigating through. She then states that she rehearses \"the small world’s scheme\"—that is, imagines\n\nmoving through her mental map—and challenges herself to use the map in her mind while lying in bed at night. The\nunderlined portion presents two such challenges (getting to the store through backyards and traveling from school to a\n\nfriend’s house) and thus provides examples of what the narrator thinks about at night.\n\nChoice A is incorrect because the underlined portion makes no mention of memorizing a telephone number. Although the\n\nnarrator mentions that she had to learn the home telephone number before her mother would give her permission to walk\n\naround the neighborhood, there is nothing in the underlined portion or the rest of the text about memorizing the\ntelephone number. Choice C is incorrect. Although the underlined portion refers to navigation tasks like finding a route to\n\na store only through backyards, the text contains no specific directions to any store, nor is any store identified as the\n\nnarrator’s favorite. Choice D is incorrect because the underlined portion makes no mention of the narrator’s mother and\ndoesn’t address the narrator’s relationship with her. Although the narrator mentions that her mother gave her permission\n\nas a child to walk around the neighborhood, there is nothing in the underlined portion or the rest of the text about the\n\nmother or her relationship to her child.",
+    "knowledge_graph": {
+      "parent_concept": "Rhetorical Analysis",
+      "prerequisite": "Main Idea Identification & Authorial Intent",
+      "concept_tags": [
+        "text structure",
+        "author purpose",
+        "organizational patterns",
+        "passage analysis"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "b4887dae",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Craft and Structure Text Structure and Purpose",
+    "difficulty": "Hard",
+    "passage": "Mathematician Claude Shannon is widely regarded as a foundational figure in information theory. His most important\npaper, “A Mathematical Theory of Communication,” published in 1948 when he was employed at Bell Labs, utilized a\n\nconcept called a “binary digit” (shortened to “bit”) to measure the amount of information in any signal and determine the\n\nfastest rate at which information could be transmitted while still being reliably decipherable. Robert Gallagher, one of\n\nShannon’s colleagues, said that the bit was “[Shannon’s] discovery, and from it the whole communications revolution has\nsprung.”",
+    "question": "Which choice best describes the overall structure of the text?",
+    "choices": {
+      "A": "It presents a theoretical concept, illustrates how the name of the concept has changed, and shows how the name has\nentered common usage. It introduces a respected researcher, describes an aspect of his work, and suggests why the work is historically",
+      "B": "significant.\n\nIt names the company where an important mathematician worked, details the mathematician’s career at the",
+      "C": "company, and provides an example of the recognition he received there.",
+      "D": "It mentions a paper, offers a summary of the paper’s findings, and presents a researcher’s commentary on the paper."
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer. The text starts with a general statement that introduces Shannon, then describes a specific\ncontribution from one of his papers, then provides a quote that illustrates just how important this contribution was.\n\nChoice A is incorrect. This isn’t the overall structure. The text only mentions very briefly, in parentheses, that “binary digit”\n\nwas shortened to “bit.” It doesn’t go into detail about this name change, and it doesn’t discuss any “common usage” of\n\nthe name at all. Choice C is incorrect. This isn’t the overall structure. Shannon’s employment at Bell Labs is only\nmentioned once, very briefly: the text never goes into detail about his career there, and it never mentions any recognition\n\nhe received there. Choice D is incorrect. This is too narrow. Overall, the text is about Shannon’s importance in his field, not\n\njust this one paper of his.",
+    "knowledge_graph": {
+      "parent_concept": "Rhetorical Analysis",
+      "prerequisite": "Main Idea Identification & Authorial Intent",
+      "concept_tags": [
+        "text structure",
+        "author purpose",
+        "organizational patterns",
+        "passage analysis"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "113f16da",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Rhetorical Synthesis",
+    "difficulty": "Medium",
+    "passage": "While researching a topic, a student has taken the following notes:\n\nSome animals have evolved to physically resemble another animal, plant, or object. This is known as mimicry.\n\nCrab spiders mimic the appearance of flowers. This helps crab spiders ambush their prey.\nKatydids mimic the appearance of leaves. This helps katydids hide from their predators.\n\nThe student wants to emphasize a difference in how katydids and crab spiders use mimicry.",
+    "question": "Which choice most\neffectively uses relevant information from the notes to accomplish this goal?",
+    "choices": {
+      "A": "Katydids mimic the appearance of flowers, and crab spiders mimic that of leaves. ",
+      "B": "Katydids and crab spiders are two examples of animals that use mimicry.",
+      "C": "Unlike crab spiders, which use mimicry to ambush prey, katydids use mimicry to hide from predators.",
+      "D": "Animals that use mimicry have evolved to resemble another animal, plant, or object."
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. The sentence uses \"unlike\" to emphasize a difference in how katydids and crab spiders use\nmimicry, noting that crab spiders use mimicry to ambush prey while katydids use it to hide from predators.\n\nChoice A is incorrect. While the sentence does contrast katydids and crab spiders, it misrepresents the information in the\nnotes. Katydids mimic the appearance of leaves (not flowers), whereas crab spiders mimic the appearance of flowers\n\n(not leaves). Choice B is incorrect. While the sentence indicates that katydids and crab spiders use mimicry, it doesn’t\nemphasize a difference in how they use it. Choice D is incorrect. The sentence describes what mimicry is; it doesn’t\nemphasize a difference in how katydids and crab spiders specifically use mimicry.",
+    "knowledge_graph": {
+      "parent_concept": "Strategic Revision",
+      "prerequisite": "Note Integration & Goal-Oriented Writing",
+      "concept_tags": [
+        "evidence integration",
+        "claim support",
+        "rhetorical purpose",
+        "synthesis"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "17ec916d",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Rhetorical Synthesis",
+    "difficulty": "Medium",
+    "passage": "While researching a topic, a student has taken the following notes:\n\nBharati Mukherjee was an Indian-born author of novels and short stories.\nShe published the novel The Holder of the World in 1993.\n\nA central character in the novel is a woman living in twentieth-century United States.\n\nAnother central character is a woman living in seventeenth-century India.\n\nThe student wants to introduce the novel The Holder of the World to an audience already familiar with Bharati Mukherjee.",
+    "question": "Which choice most effectively uses relevant information from the notes to accomplish this goal?",
+    "choices": {
+      "A": "Bharati Mukherjee’s settings include both twentieth-century United States and seventeenth-century India.\n\nIn addition to her novel The Holder of the World, which was published in 1993, Indian-born author Bharati Mukherjee\nwrote other novels and short stories.",
+      "B": "Bharati Mukherjee’s novel The Holder of the World centers around two women, one living in twentieth-century United\nStates and the other in seventeenth-century India.",
+      "C": "D. The Holder of the World was not the only novel written by Indian-born author Bharati Mukherjee.",
+      "D": "The Holder of the World was not the only novel written by Indian-born author Bharati Mukherjee."
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. The sentence effectively introduces The Holder of the World to an audience already familiar\nwith Mukherjee, explaining that the novel centers around two women and mentioning the author without providing any\nother identifying information.\n\nChoice A is incorrect. The sentence provides a detail about Mukherjee’s settings; it doesn’t introduce, or even mention,\n\nthe novel. Choice B is incorrect. The sentence provides introductory information about Mukherjee; it doesn’t effectively\nintroduce her novel to an audience already familiar with the author. Choice D is incorrect. The sentence provides\n\nintroductory information about Mukherjee; it doesn’t effectively introduce her novel to an audience already familiar with\nthe author.",
+    "knowledge_graph": {
+      "parent_concept": "Strategic Revision",
+      "prerequisite": "Note Integration & Goal-Oriented Writing",
+      "concept_tags": [
+        "evidence integration",
+        "claim support",
+        "rhetorical purpose",
+        "synthesis"
+      ],
+      "passage_topic": "Literature"
+    },
+    "analysis": {
+      "synthesis_task": "Introduce a quotation",
+      "rhetorical_purpose": "Inform",
+      "passage_topic": "Literature"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "a3204ab0",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Rhetorical Synthesis",
+    "difficulty": "Easy",
+    "passage": "While researching a topic, a student has taken the following notes:\n\nYellowstone is a national park in the northwest United States.\n\nIn 1995, gray wolves were reintroduced into the park.\n\nSince then, the number of gray wolves in the park has stabilized at roughly 100.\n\nThis number is believed to be the park’s carrying capacity.\n\nCarrying capacity describes the maximum number of a species that a specific environment’s resources can\n\nsustain over time.\n\nThe student wants to specify the number of gray wolves in Yellowstone.",
+    "question": "Which choice most effectively uses relevant\n\ninformation from the notes to accomplish this goal?",
+    "choices": {
+      "A": "Gray wolves were reintroduced into Yellowstone, a national park in the northwest United States, in 1995.",
+      "B": "As of 1995, there were gray wolves living in Yellowstone, a national park in the northwest United States.\n\nThe carrying capacity of an environment, such as Yellowstone, describes the maximum number of species that the",
+      "C": "environment can sustain over time.",
+      "D": "Yellowstone is a national park that has roughly 100 gray wolves living in it."
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer. This choice uses relevant information from the third bullet point to state the approximate\n\nnumber of gray wolves in Yellowstone.\n\nChoice A is incorrect. This choice mentions the year gray wolves in Yellowstone were reintroduced but not how many\nthere are currently. Choice B is incorrect. This choice mentions the year gray wolves in Yellowstone were reintroduced but\n\nnot how many there are currently. Choice C is incorrect. This choice defines the term carrying capacity but doesn’t\nconnect it to the specific number of gray wolves currently living in Yellowstone.",
+    "knowledge_graph": {
+      "parent_concept": "Strategic Revision",
+      "prerequisite": "Note Integration & Goal-Oriented Writing",
+      "concept_tags": [
+        "evidence integration",
+        "claim support",
+        "rhetorical purpose",
+        "synthesis"
+      ],
+      "passage_topic": "Science"
+    },
+    "analysis": {
+      "synthesis_task": "Describe data",
+      "rhetorical_purpose": "Analyze",
+      "passage_topic": "Science"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "eae29760",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Rhetorical Synthesis",
+    "difficulty": "Easy",
+    "passage": "While researching a topic, a student has taken the following notes:\n\nThe calendar used by most of the world (the Gregorian calendar) has 365 days.\n\nBecause 365 days can’t be divided evenly by 7 (the number of days in a week), calendar dates fall on a different\n\nday of the week each year.\n\nThe Hanke-Henry permanent calendar, developed as an alternative to the Gregorian calendar, has 364 days.\n\nBecause 364 can be divided evenly by 7, calendar dates fall on the same day of the week each year, which\n\nsupports more predictable scheduling.\n\nThe student wants to explain an advantage of the Hanke-Henry calendar.",
+    "question": "Which choice most effectively uses relevant\ninformation from the notes to accomplish this goal?",
+    "choices": {
+      "A": "The Gregorian calendar has 365 days, which is one day longer than the Hanke-Henry permanent calendar.",
+      "B": "Adopting the Hanke-Henry permanent calendar would help solve a problem with the Gregorian calendar.\n\nDesigned so calendar dates would occur on the same day of the week each year, the Hanke-Henry calendar supports\nmore predictable scheduling than does the Gregorian calendar.",
+      "C": "The Hanke-Henry permanent calendar was developed as an alternative to the Gregorian calendar, which is currently",
+      "D": "the most-used calendar in the world."
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. The sentence explains an advantage of the Hanke-Henry calendar, noting that it supports\nmore predictable scheduling than does the Gregorian calendar and describing how it does so (by having calendar dates\n\noccur on the same day each year).\n\nChoice A is incorrect. The sentence compares the number of days in the Gregorian and Hanke-Henry calendars; it doesn’t\n\nexplain an advantage of the Hanke-Henry calendar. Choice B is incorrect. While the sentence refers to a possible reason\nto adopt the Hanke-Henry calendar—that doing so would help solve a problem with the Gregorian calendar—it doesn’t\nidentify the problem or the solution and thus doesn’t explain the advantage of the Hanke-Henry calendar. Choice D is\n\nincorrect. The sentence describes the origins of the Hanke-Henry calendar; it doesn’t explain an advantage of it.",
+    "knowledge_graph": {
+      "parent_concept": "Strategic Revision",
+      "prerequisite": "Note Integration & Goal-Oriented Writing",
+      "concept_tags": [
+        "evidence integration",
+        "claim support",
+        "rhetorical purpose",
+        "synthesis"
+      ],
+      "passage_topic": "Science"
+    },
+    "analysis": {
+      "synthesis_task": "Explain a benefit",
+      "rhetorical_purpose": "Inform",
+      "passage_topic": "Science"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "6c9df5d1",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Rhetorical Synthesis",
+    "difficulty": "Hard",
+    "passage": "While researching a topic, a student has taken the following notes:\n\nSome powerful works of literature have so influenced readers that new legislation has been passed as a result.\n\nThe Interesting Narrative of the Life of Olaudah Equiano (1789) is the autobiography of a man who endured slavery\n\non both sides of the Atlantic.\n\nEquiano’s book contributed to the passage of the Slave Trade Act of 1807.\n\nThe Jungle (1906) is a fictional work by Upton Sinclair that describes unsanitary conditions in US meatpacking\n\nplants.\n\nSinclair’s book contributed to the passage of the Pure Food and Drug Act in 1906.\n\nThe student wants to emphasize a difference between the two books.",
+    "question": "Which choice most effectively uses relevant\ninformation from the notes to accomplish this goal?",
+    "choices": {
+      "A": "Although both are powerful works of literature that contributed to new legislation, Equiano’s book is an autobiography,\nwhile Sinclair’s is fictional. B. They may have written about different topics, but Equiano and Sinclair both influenced readers.\n\nThe 1807 Slave Trade Act resulted in part from a book by Equiano, while the 1906 Pure Food and Drug Act resulted in\npart from a book by Sinclair.",
+      "B": "They may have written about different topics, but Equiano and Sinclair both influenced readers.\n\nThe 1807 Slave Trade Act resulted in part from a book by Equiano, while the 1906 Pure Food and Drug Act resulted in\npart from a book by Sinclair. ",
+      "C": "The Interesting Narrative of the Life of Olaudah Equiano and The Jungle are two works of literature that contributed to\nnew legislation (concerning the slave trade and food safety, respectively). ",
+      "D": ""
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer. This choice emphasizes a difference between the two books by using relevant information\n\nfrom the notes to contrast their genres. \n\nChoice B is incorrect. This choice mentions a difference between the books (their different topics), but it emphasizes a\n\nsimilarity between the books (their influence on readers). Choice C is incorrect. This choice provides information about\n\nthe books that reflects both a similarity (both resulted in new laws) and a difference (the specific laws that resulted),\n\nwithout emphasizing either. Choice D is incorrect. This choice doesn’t emphasize a difference between the two books.\n\nInstead, it emphasizes a similarity.",
+    "knowledge_graph": {
+      "parent_concept": "Strategic Revision",
+      "prerequisite": "Note Integration & Goal-Oriented Writing",
+      "concept_tags": [
+        "evidence integration",
+        "claim support",
+        "rhetorical purpose",
+        "synthesis"
+      ],
+      "passage_topic": "History"
+    },
+    "analysis": {
+      "synthesis_task": "Compare findings",
+      "rhetorical_purpose": "Inform",
+      "passage_topic": "History"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "fd24f48f",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Transitions",
+    "difficulty": "Medium",
+    "passage": "Before California’s 1911 election to approve a proposition granting women the right to vote, activists across the state\n\nsold tea to promote the cause of suffrage. In San Francisco, the Woman’s Suffrage Party sold Equality Tea at local fairs.\n\n______ in Los Angeles, activist Nancy Tuttle Craig, who ran one of California’s largest grocery store firms, distributed\n\nVotes for Women Tea.",
+    "question": "Which choice completes the text with the most logical transition?",
+    "choices": {
+      "A": "For example,",
+      "B": "To conclude,",
+      "C": "Similarly,",
+      "D": "In other words,"
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. “Similarly” logically signals that the activity described in this sentence (Nancy Tuttle Craig\n\ndistributing Votes for Women Tea in her Los Angeles grocery stores) is like the activity described in the previous\n\nsentence (the Woman’s Suffrage Party selling Equality Tea at fairs in San Francisco). Together, the two examples support\n\nthe preceding claim that “activists across the state sold tea to promote the cause of suffrage.”\n\nChoice A is incorrect because “for example” illogically signals that the activity described in this sentence exemplifies the\n\nactivity described in the previous sentence. Instead, the two activities are similar, and both support the preceding claim\n\nabout selling tea to promote women’s right to vote. Choice B is incorrect because “to conclude” illogically signals that the\n\nactivity described in this sentence concludes or summarizes the information in the previous sentences. Instead, the\nactivity is similar to the one described in the previous sentence, and both support the preceding claim about selling tea to\n\npromote women’s right to vote. Choice D is incorrect because “in other words” illogically signals that the activity\n\ndescribed in this sentence paraphrases the activity described in the previous sentence. Instead, the two activities are\n\nsimilar, and both support the preceding claim about selling tea to promote women’s right to vote.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Flow",
+      "prerequisite": "Conjunctive Adverbs & Cohesion Markers",
+      "concept_tags": [
+        "logical connectors",
+        "text flow",
+        "argument structure",
+        "discourse markers"
+      ],
+      "passage_topic": "History"
+    },
+    "analysis": {
+      "target_transition_category": "Addition",
+      "sentence_1_summary": "Activists across California promoted women's suffrage by selling tea.",
+      "sentence_2_summary": "Nancy Tuttle Craig distributed Votes for Women Tea in Los Angeles.",
+      "passage_topic": "History"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "d3898d32",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Transitions",
+    "difficulty": "Easy",
+    "passage": "Riley Black—the author of critically acclaimed books such as My Beloved Brontosaurus (2013)—is best known for writing\n\nabout dinosaurs, but she has also conducted hands-on fieldwork. ______ her fieldwork has included paleontological digs\nin Utah, Montana, and Wyoming, and her dinosaur fossil discoveries can be seen at places such as the Carnegie Museum\n\nof Natural History.",
+    "question": "Which choice completes the text with the most logical transition?",
+    "choices": {
+      "A": "Regardless, ",
+      "B": "Subsequently,",
+      "C": "Specifically, ",
+      "D": "Conversely,"
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. The second sentence provides more specific information about the fieldwork mentioned in\nthe first sentence—that the paleontological digs took place in Utah, Montana, and Wyoming. Therefore, “specifically” fits\n\nperfectly in this context.\n\nChoice A is incorrect. This choice uses a disagreement transition. But this sentence doesn’t disagree with the previous\n\nsentence. Rather, this sentence agrees with and elaborates on the last sentence by providing more specifics about the\n\nfieldwork Black does. Choice B is incorrect. This choice uses a transition that indicates that an event took place after\nanother event. But the two sentences are not describing different events—instead, this sentence gives more details about\n\nthe fieldwork discussed in the first sentence. Choice D is incorrect. This choice uses a disagreement transition. But this\n\nsentence doesn’t disagree with the previous sentence. Rather, this sentence agrees with and elaborates on the last\nsentence by providing more specifics about the fieldwork Black does.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Flow",
+      "prerequisite": "Conjunctive Adverbs & Cohesion Markers",
+      "concept_tags": [
+        "logical connectors",
+        "text flow",
+        "argument structure",
+        "discourse markers"
+      ],
+      "passage_topic": "Science"
+    },
+    "analysis": {
+      "target_transition_category": "Addition",
+      "sentence_1_summary": "Riley Black is recognized for her writing about dinosaurs and has engaged in fieldwork.",
+      "sentence_2_summary": "Her fieldwork includes specific locations where paleontological digs occurred.",
+      "passage_topic": "Science"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "1c6e1d55",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Transitions",
+    "difficulty": "Hard",
+    "passage": "Historically, most conductors of major orchestras and opera companies have been European men, but a new, more\n\ndiverse generation of artists is stepping up to the podium. Mexico’s Alondra de la Parra took over as conductor for the\n\nQueensland Symphony Orchestra in 2017, ______ and Colombia’s Lina Gonzalez-Granados did the same for the Los\nAngeles Opera in 2022.",
+    "question": "Which choice completes the text with the most logical transition?",
+    "choices": {
+      "A": "in addition,",
+      "B": "lastly,",
+      "C": "granted,",
+      "D": "for instance,"
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer. “For instance” logically signals that the details in this sentence—that Mexican conductor\n\nAlondra de la Parra and Colombian conductor Lina Gonzalez-Granados took new conducting positions—are examples\n\nsupporting the previous claim about the new generation of artists.\n\nChoice A is incorrect because “in addition” illogically signals that the details in this sentence about de la Parra and\n\nGonzalez-Granados are merely additional facts related to the previous claim about the new generation of artists. Instead,\n\nthey are examples supporting that claim. Choice B is incorrect because “lastly” illogically signals that the details in this\n\nsentence about de la Parra and Gonzalez-Granados are the last step or a concluding summary of the previous claim\nabout the new generation of artists. Instead, they are examples supporting that claim. Choice C is incorrect because\n\n“granted” illogically signals that the details in this sentence about de la Parra and Gonzalez-Granados are exceptions to\n\nthe previous claim about the new generation of artists. Instead, they are examples supporting that claim.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Flow",
+      "prerequisite": "Conjunctive Adverbs & Cohesion Markers",
+      "concept_tags": [
+        "logical connectors",
+        "text flow",
+        "argument structure",
+        "discourse markers"
+      ],
+      "passage_topic": "Music"
+    },
+    "analysis": {
+      "target_transition_category": "Exemplification",
+      "sentence_1_summary": "A new generation of diverse artists is emerging.",
+      "sentence_2_summary": "Examples of this generation include conductors de la Parra and Gonzalez-Granados.",
+      "passage_topic": "Music"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "ff1a2e5e",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Transitions",
+    "difficulty": "Easy",
+    "passage": "Historians agree that the jazz pianist Jelly Roll Morton was exaggerating when he claimed to have invented jazz music.\n\nNo one can deny, ______ that Morton’s innovative compositions and remarkable improvisational skills helped shape jazz\n\nas a genre during its early years.",
+    "question": "Which choice completes the text with the most logical transition?",
+    "choices": {
+      "A": "therefore,",
+      "B": "in the second place,",
+      "C": "in other words,",
+      "D": "though,"
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer. \"Though\" logically signals that the claim in the sentence—that Morton’s improvisational\n\nskills helped shape jazz as a genre during its early years (\"No one can deny\" it)—is true despite the previous information\n\nabout Morton’s exaggerated claim to have invented jazz.\n\nChoice A is incorrect because \"therefore\" illogically signals that the claim in the sentence is a result of the previous\ninformation about Morton’s claim to have invented jazz. Instead, the sentence states that Morton helped to shape jazz—\n\neven if his claim was an exaggeration. Choice B is incorrect because \"in the second place\" illogically signals that the\n\nclaim in the sentence is a second, separate point in addition to Morton’s claim to have invented jazz. Instead, the\n\nsentence states that Morton helped to shape jazz—even if his claim was an exaggeration. Choice C is incorrect because\n\"in other words\" illogically signals that the claim in the sentence is merely a paraphrase or restatement of the previous\n\ninformation about Morton’s claim to have invented jazz. Instead, the sentence states that Morton helped to shape jazz—\n\neven if his claim was an exaggeration.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Flow",
+      "prerequisite": "Conjunctive Adverbs & Cohesion Markers",
+      "concept_tags": [
+        "logical connectors",
+        "text flow",
+        "argument structure",
+        "discourse markers"
+      ],
+      "passage_topic": "Music"
+    },
+    "analysis": {
+      "target_transition_category": "Contrast",
+      "sentence_1_summary": "Morton exaggerated his claim of having invented jazz music.",
+      "sentence_2_summary": "Morton’s contributions to jazz as a genre are undeniable.",
+      "passage_topic": "Music"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "c071eca2",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Expression of Ideas Transitions",
+    "difficulty": "Hard",
+    "passage": "Iraqi artist Nazik Al-Malaika, celebrated as the first Arabic poet to write in free verse, didn’t reject traditional forms\n\nentirely; her poem “Elegy for a Woman of No Importance” consists of two ten-line stanzas and a standard number of\n\nsyllables. Even in this superficially traditional work, ______ Al-Malaika was breaking new ground by memorializing an\n\nanonymous woman rather than a famous man.",
+    "question": "Which choice completes the text with the most logical transition?",
+    "choices": {
+      "A": "therefore,",
+      "B": "in fact,",
+      "C": "moreover,",
+      "D": "though,"
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer. The first sentence tells us that Al-Malaika sometimes used \"traditional forms\". The second\n\ntells us that even when she used traditional forms, Al-Malaika was \"breaking new ground\". To connect these ideas, we\n\nneed a contrast word like \"but.\" \"Though\" is a contrast word similar to \"but.\"\n\nChoice A is incorrect. This isn’t a logical transition. The first sentence tells us that Al-Malaika sometimes used \"traditional\nforms\". The second tells us that even when she used traditional forms, Al-Malaika was \"breaking new ground\". To\n\nconnect these ideas, we need a contrast word like \"but.\" \"Therefore\" doesn’t show contrast; it shows cause and effect.\n\nChoice B is incorrect. This isn’t a logical transition. The first sentence tells us that Al-Malaika sometimes used \"traditional\n\nforms\". The second tells us that even when she used traditional forms, Al-Malaika was \"breaking new ground\". To\nconnect these ideas, we need a contrast word like \"but.\" \"In fact\" is a phrase that usually emphasizes the truth of the\n\nprevious statement. Choice C is incorrect. This isn’t a logical transition. The first sentence tells us that Al-Malaika\n\nsometimes used \"traditional forms\". The second tells us that even when she used traditional forms, Al-Malaika was\n\n\"breaking new ground\". To connect these ideas, we need a contrast word like \"but.\" \"Moreover\" doesn’t show contrast—it\nintroduces additional information that continues or supports the previous idea.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Flow",
+      "prerequisite": "Conjunctive Adverbs & Cohesion Markers",
+      "concept_tags": [
+        "logical connectors",
+        "text flow",
+        "argument structure",
+        "discourse markers"
+      ],
+      "passage_topic": "Literature"
+    },
+    "analysis": {
+      "target_transition_category": "Contrast",
+      "sentence_1_summary": "Al-Malaika sometimes used traditional forms in her poetry.",
+      "sentence_2_summary": "Despite this, she was innovatively memorializing an anonymous woman.",
+      "passage_topic": "Literature"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "8a8236e1",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Central Ideas and Details",
+    "difficulty": "Easy",
+    "passage": "Scent is tightly interwoven with our daily lives, often evoking significant memories and important social events. This\nconnection is of growing interest to archaeologists who hope to use it to better understand ancient rituals, trade, social\nhierarchies, and medicine. Although the speed at which odor molecules dissipate makes identifying ancient scents\nchallenging, advancements in biomolecular technologies show promise in unlocking ancient aromas from preserved\nartifacts. Archaeological studies making use of these advancements may provide new insights into past societies.",
+    "question": "According to the text, what is one reason some archaeologists are interested in recovering scents from ancient artifacts?",
+    "choices": {
+      "A": "They are investigating whether people’s sense of smell has declined in recent centuries.",
+      "B": "They believe the scents could illuminate important aspects of ancient life.",
+      "C": "They think that ancient scents would be enjoyable to people today. ",
+      "D": "They hope to develop new medicines using ancient scent molecules."
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer. The text states that archaeologists are interested in using scents to better understand\n\"ancient rituals, trade, social hierarchies, and medicine,\" all of which are important aspects of ancient life.\n\nChoice A is incorrect. The text doesn’t say anything about investigating if people’s sense of smell has declined in recent\ncenturies. It says that scents fade over time—not that people have gotten worse at smelling scents. Choice C is incorrect.\nThe text says that archaeologists are interested in using scents to better understand \"ancient rituals, trade, social\nhierarchies, and medicine,\" but it doesn’t say anything about ancient scents being enjoyable to people today. Choice D is\nincorrect. The text doesn’t say anything about developing new medicines. Rather, it says that archaeologists are\n\ninterested in using scents to better understand \"ancient rituals, trade, social hierarchies, and medicine.\"",
+    "knowledge_graph": {
+      "parent_concept": "Textual Comprehension",
+      "prerequisite": "Active Reading & Paraphrasing",
+      "concept_tags": [
+        "main idea",
+        "supporting details",
+        "summarization",
+        "comprehension"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "baef99a5",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Central Ideas and Details",
+    "difficulty": "Easy",
+    "passage": "The following text is adapted from Oscar Wilde’s 1891 novel The Picture of Dorian Gray. Dorian Gray is taking his first look\nat a portrait that Hallward has painted of him.\n\nDorian passed listlessly in front of his picture and turned towards it. When he saw it he drew back, and his cheeks\nflushed for a moment with pleasure. A look of joy came into his eyes, as if he had recognized himself for the first time.\n\nHe stood there motionless and in wonder, dimly conscious that Hallward was speaking to him, but not catching the\nmeaning of his words. The sense of his own beauty came on him like a revelation. He had never felt it before.",
+    "question": "According to the text, what is true about Dorian?",
+    "choices": {
+      "A": "He wants to know Hallward’s opinion of the portrait.",
+      "B": "He is delighted by what he sees in the portrait.",
+      "C": "He prefers portraits to other types of paintings.",
+      "D": "He is uncertain of Hallward’s talent as an artist."
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer because it presents a statement about Dorian that is directly supported by the text. The\nnarrator of the text says that when Dorian sees his portrait, “his cheeks flushed for a moment with pleasure” and “a look\n\nof joy came into his eyes.” The narrator goes on to say that Dorian looked at the portrait “in wonder” and presents him as\nbeing so entranced by the portrait that he doesn’t notice what Hallward is saying to him. All these details support the\n\ndescription of Dorian as being delighted by what he sees in the portrait.\n\nChoice A is incorrect because Dorian isn’t depicted as interested in Hallward’s opinion of the portrait but rather as so\n\nenraptured by the painting that he’s hardly even aware of Hallward. Choice C is incorrect because the portrait of Dorian is\nthe only painting that is mentioned in the text, so there’s no evidence that Dorian prefers portraits to other types of\n\npaintings. Although Dorian is depicted as delighted with this particular portrait, there’s no way of knowing from the text\nwhether he likes portraits better than other kinds of paintings. Choice D is incorrect because nothing in the text suggests\n\nthat Dorian is uncertain about Hallward’s talent. Instead, the text is focused on Dorian’s delight with the portrait.",
+    "knowledge_graph": {
+      "parent_concept": "Textual Comprehension",
+      "prerequisite": "Active Reading & Paraphrasing",
+      "concept_tags": [
+        "main idea",
+        "supporting details",
+        "summarization",
+        "comprehension"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "1e85caa9",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Central Ideas and Details",
+    "difficulty": "Easy",
+    "passage": "The following text is from Edith Nesbit’s 1902 novel Five Children and It. Five young siblings have just moved with their\nparents from London to a house in the countryside that they call the White House.\n\nIt was not really a pretty house at all; it was quite ordinary, and mother thought it was rather inconvenient, and was\nquite annoyed at there being no shelves, to speak of, and hardly a cupboard in the place. Father used to say that the\n\nironwork on the roof and coping was like an architect’s nightmare. But the house was deep in the country, with no\nother house in sight, and the children had been in London for two years, without so much as once going to the\n\nseaside even for a day by an excursion train, and so the White House seemed to them a sort of Fairy Palace set\ndown in an Earthly Paradise.",
+    "question": "Which choice best states the main idea of the text?",
+    "choices": {
+      "A": "Although their parents believe the house has several drawbacks, the children are enchanted by it.",
+      "B": "The children don’t like the house nearly as much as their parents do.",
+      "C": "Each member of the family admires a different characteristic of the house.",
+      "D": "The house is beautiful and well built, but the children miss their old home in London."
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer. The text lists complaints about the house made by the mother and father, but then it says\n\nthat the children thought the house was a \"Fairy Palace\" and \"Earthly Paradise.\"\n\nChoice B is incorrect. The text states the opposite of this. It describes how the mother and father dislike the house and\n\nsays the children think the house seems like paradise. Choice C is incorrect. This isn’t what the text says. Only the\nchildren are said to admire the house; mother and father both complain about the house. Choice D is incorrect. The text\nstates the opposite of this. It tells us the house was ugly and poorly built (\"an architect’s nightmare\") and suggests the\n\nchildren were tired of London.",
+    "knowledge_graph": {
+      "parent_concept": "Textual Comprehension",
+      "prerequisite": "Active Reading & Paraphrasing",
+      "concept_tags": [
+        "main idea",
+        "supporting details",
+        "summarization",
+        "comprehension"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "5eda42a3",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Central Ideas and Details",
+    "difficulty": "Hard",
+    "passage": "The following text is from Maggie Pogue Johnson’s 1910 poem “Poet of Our Race.” In this poem, the speaker is\n\naddressing Paul Laurence Dunbar, a Black author.\n\nThou, with stroke of mighty pen,\n\nThe language of the flowers,\n\n Hast told of joy and mirth,\nAnd read the hearts and souls of men\n As cradled from their birth.\n\n Thou hast read them all,\nAnd e’en the little brook\n Responded to thy call.",
+    "question": "Which choice best states the main purpose of the text?",
+    "choices": {
+      "A": "To praise a certain writer for being especially perceptive regarding people and nature",
+      "B": "To establish that a certain writer has read extensively about a variety of topics",
+      "C": "To call attention to a certain writer’s careful and elaborately detailed writing process",
+      "D": "To recount fond memories of an afternoon spent in nature with a certain writer"
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer because it most accurately states the main purpose of the text. In the first part of the text,\nthe speaker addresses Paul Laurence Dunbar’s ability to understand people (he has “read the hearts and souls of men”\nand written of their “joy and mirth”). In the second part of the text, the speaker describes Dunbar’s thorough\n\nunderstanding of the natural world (he has read “the language of the flowers” and engaged with “the little brook”). Thus,\nthe text mainly praises Dunbar for being especially perceptive about people and nature. \n\nChoice B is incorrect because the speaker describes Dunbar as having read the “hearts and souls of men” and the\n“language of flowers” to convey Dunbar’s ability to comprehend people and nature, not to suggest that Dunbar has\nliterally read any of these things or has read a great deal about them. Choice C is incorrect because the text notes how\n\nwell Dunbar has made sense of the topics he’s written about but doesn’t address any specific parts of Dunbar’s writing\nprocess beyond the suggestion that he used a pen. Choice D is incorrect because the text focuses on Dunbar’s\nunderstanding of people and nature as expressed in his writing. Nothing in the text suggests that the speaker is recalling\n\na particular afternoon actually spent in nature with Dunbar; even if there had been a shared experience, the text isn’t\nfocused on reminiscing.",
+    "knowledge_graph": {
+      "parent_concept": "Textual Comprehension",
+      "prerequisite": "Active Reading & Paraphrasing",
+      "concept_tags": [
+        "main idea",
+        "supporting details",
+        "summarization",
+        "comprehension"
+      ],
+      "passage_topic": "Literature"
+    },
+    "analysis": {
+      "main_idea_location": "Opening sentence",
+      "detail_function": "Elaboration",
+      "passage_topic": "Literature"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "c228bd45",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Central Ideas and Details",
+    "difficulty": "Easy",
+    "passage": "The following text is adapted from Edith Nesbit’s 1906 novel The Railway Children.\n\nMother did not spend all her time in paying dull [visits] to dull ladies, and sitting dully at home waiting for dull ladies to\npay [visits] to her. She was almost always there, ready to play with the children, and read to them, and help them to do\ntheir home-lessons. Besides this she used to write stories for them while they were at school, and read them aloud\nafter tea, and she always made up funny pieces of poetry for their birthdays and for other great occasions.",
+    "question": "According to the text, what is true about Mother?",
+    "choices": {
+      "A": "She wishes that more ladies would visit her.",
+      "B": "Birthdays are her favorite special occasion. ",
+      "C": "She creates stories and poems for her children.",
+      "D": "Reading to her children is her favorite activity."
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer because it describes something that is true of Mother, as presented in the text. The text\nindicates that in addition to other activities, Mother writes stories for her children while they are at school and makes up\n“funny pieces of poetry” for certain occasions. \n\nChoice A is incorrect because the text suggests that Mother prefers to spend her time with her children and doesn’t sit at\nhome hoping that ladies will visit her. Choice B is incorrect because the text says only that Mother makes up poetry for\nthe children’s birthdays, not that she likes birthdays more than other special occasions. Choice D is incorrect because the\ntext doesn’t suggest that Mother prefers reading to her children over the other activities she does with them, such as\n\nplaying with them and writing stories and poems for them.",
+    "knowledge_graph": {
+      "parent_concept": "Textual Comprehension",
+      "prerequisite": "Active Reading & Paraphrasing",
+      "concept_tags": [
+        "main idea",
+        "supporting details",
+        "summarization",
+        "comprehension"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "f38b40ac",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Command of Evidence",
+    "difficulty": "Easy",
+    "passage": "In addition to her technical skill and daring feats, American stunt pilot Bessie Coleman was also known for dazzling the\ncrowds that came to watch her air shows in the 1920s with her exuberant personality. During her career, she was careful\n\nand purposeful about how she crafted her public persona. An aviation researcher has claimed that Coleman intentionally\n\ndefied social norms of the time by how she chose to present herself to the public.",
+    "question": "Which quotation from an article about Coleman would most directly support the aviation researcher’s claim?",
+    "choices": {
+      "A": "“For her air shows, Coleman frequently used the Curtiss JN-4, or ‘Jenny,’ which at that time was one of the most well- known types of planes.”\n\n“While Coleman was beloved by spectators for her charisma, she had a more complicated relationship with her\nmanagers and staff, who at times found her behavior too impulsive and demanding.”",
+      "B": "“Coleman once considered leaving her career as a stunt pilot to focus her efforts on giving speeches, which she felt\nwould better support her public image.” ",
+      "C": "“Although female pilots were typically expected to wear traditional but impractical attire that included dresses or",
+      "D": "skirts, photographs of Coleman show her wearing pants and leather jackets.”"
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer. This choice supports the claim of Coleman’s intentional defiance of social norms: female\n\npilots were expected to wear skirts, but Coleman wore pants and leather jackets instead.\n\nChoice A is incorrect. Coleman flew a well-known, common plane, which would not have defied social norms among\npilots. Choice B is incorrect. Her complicated relationship with managers and staff would not have been a component of\n\nColeman’s public persona. This choice also fails to mention any “social norms of the time.” Choice C is incorrect. While\n\nthis quotation suggests that Coleman was careful and purposeful about her public image, it doesn’t directly mention\n\nanything about “social norms of the time.”",
+    "knowledge_graph": {
+      "parent_concept": "Argumentative Support",
+      "prerequisite": "Evidence Validation & Claim-Evidence Linkage",
+      "concept_tags": [
+        "textual evidence",
+        "data interpretation",
+        "charts",
+        "quantitative reasoning"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "02848335",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Command of Evidence",
+    "difficulty": "Hard",
+    "passage": "Power Conversion Efficiency of\nLowest and Highest Performing\nSpin-coated and Spray-coated\nElectron Transport Layers\n\n18\n16\n14\n12\n10\n8\n6\n4\n2\n0\n\nlowest performing\n\nhighest performing\n\n)\n\n%\n\n(\n\ny\nc\nn\ne\ni\nc\ni\nf\nf\ne\nn\no\ni\ns\nr\ne\nv\nn\no\nc\n\nr\ne\nw\no\nP\n\nThickness\n\nspray coating\n\nspin coating\n\nPerovskite solar cells convert light into electricity more efficiently than earlier kinds of solar cells, and manufacturing\nadvances have recently made them commercially attractive. One limitation of the cells, however, has to do with their\n\nelectron transport layer (ETL), through which absorbed electrons must pass. Often the ETL is applied through a process\n\ncalled spin coating, but such ETLs are fairly inefficient at converting input power to output power. André Taylor and\n\ncolleagues tested a novel spray coating method for applying the ETL. The team produced ETLs of various thicknesses\nand concluded that spray coating holds promise for improving the power conversion efficiency of ETLs in perovskite\n\nsolar cells.",
+    "question": "Which choice best describes data from the graph that support Taylor and colleagues’ conclusion?",
+    "choices": {
+      "A": "Both the ETL applied through spin coating and the ETL applied through spray coating showed a power conversion efficiency greater than 10% at their lowest performing thickness. \n\nThe lowest performing ETL applied through spray coating had a higher power conversion efficiency than the highest",
+      "B": "performing ETL applied through spin coating. \n\nThe highest performing ETL applied through spray coating showed a power conversion efficiency of approximately\n13%, while the highest performing ETL applied through spin coating showed a power conversion efficiency of",
+      "C": "approximately 11%.\n\n \n \n \n\fThere was a substantial difference in power conversion efficiency between the lowest and highest performing ETLs",
+      "D": "applied through spray coating."
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer because it describes data from the graph that support Taylor and colleagues’ conclusion that\nspray coating holds promise for improving the power conversion efficiency of ETLs in perovskite solar cells. The text\n\nexplains that perovskite solar cells’ efficiency at converting light into electricity is diminished by their electron transport\n\nlayer (ETL), which is applied through spin coating, but that Taylor’s team devised a new spray coating method for\n\napplying the ETL that improves its power conversion efficiency. The graph displays data on the power conversion\nefficiency of solar cells in tests conducted by Taylor’s team, with bars for both the highest- and lowest-performing ETLs in\n\ntwo data categories: spray coating and spin coating. According to the graph, the lowest-performing ETL applied through\n\nspray coating had a power conversion efficiency of between 14% and 16%, while the highest-performing ETL applied\nthrough spin coating had a power conversion efficiency of less than 14%. These data confirm that ETLs applied through\n\nnovel spray coating are more efficient than those applied though traditional spin coating. Thus, the data support Taylor\n\nand colleagues’ conclusion about spray coating’s potential value.\n\nChoice A is incorrect. Although this claim correctly describes the data in the graph by stating that both the lowest-\n\nperforming ETL applied through spin coating and the lowest-performing ETL applied through spray coating had a power\nconversion efficiency greater than 10%, this relationship in the data doesn’t support or relate to Taylor and colleagues’\n\nconclusion that spray coating promises greater efficiency for solar cells than traditional spin coating does. Choice C is\n\nincorrect. This claim does address the greater power conversion efficiency of the highest-performing ETL applied\nthrough spray coating, compared with the highest-performing ETL applied through spin coating. However, it also\n\nincorrectly cites the value for the efficiency of the highest-performing ETL applied through spray coating as\n\napproximately 13%, instead of a value between 14% and 16%, and the value for the efficiency of the highest-performing\nETL applied through spin coating as approximately 11%, instead of a value between 12% and 14%, as shown in the\n\ngraph. Choice D is incorrect because Taylor and colleagues’ conclusion is based on the difference in the power\n\nconversion efficiency of ETLs applied through spray coating and that of ETLs applied through spin coating, not on the\ndifference between the highest- and lowest-performing ETLs applied through just spray coating.",
+    "knowledge_graph": {
+      "parent_concept": "Argumentative Support",
+      "prerequisite": "Evidence Validation & Claim-Evidence Linkage",
+      "concept_tags": [
+        "textual evidence",
+        "data interpretation",
+        "charts",
+        "quantitative reasoning"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "0198240a",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Command of Evidence",
+    "difficulty": "Hard",
+    "passage": "Under normal atmospheric pressure at Earth’s surface, water molecules form a tetrahedral network stabilized by\nhydrogen bonds between adjacent molecules. Extreme high pressure, such as can be found in deep ocean waters,\n\ndestabilizes these bonds and compresses water’s structure, allowing water molecules within organisms to permeate\n\nproteins and impede crucial biological functions; yet deep-sea organisms known as piezophiles have adapted to extreme\npressure. Studies have found a positive correlation between the depths that various piezophiles inhabit and\n\nconcentrations of a compound called trimethylamine N-oxide (TMAO) in their muscle tissues, which has led a team of\n\nresearchers to hypothesize that TMAO reduces water’s compressibility.",
+    "question": "Which finding, if true, would most directly support the researchers’ hypothesis?",
+    "choices": {
+      "A": "Water molecules are found to be impervious to TMAO even when the water molecules’ tetrahedral configuration has been distorted by high pressure. \n\nExamination of TMAO’s molecular structure shows that TMAO molecules retain their shape even as pressure\nincreases.",
+      "B": "A positive correlation is found between concentrations of TMAO and the rate at which water’s molecular structure\ncompresses as pressure increases.",
+      "C": "Analysis of water’s molecular structure under high pressure reveals that hydrogen bonds are more stable when TMAO",
+      "D": "is present than when it is not."
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer because it presents a finding that, if true, would support the researchers’ hypothesis that\n\nTMAO reduces water’s compressibility. The text explains that at great depths in the ocean, extreme pressure compresses\nthe molecular structure of water by destabilizing the hydrogen bonds between adjacent molecules, thereby allowing\n\nwater to penetrate proteins and harm the associated organisms. However, deep-sea organisms called piezophiles have\n\nadapted to live at these depths and previous studies show a positive correlation between the depth at which a piezophile\nspecies lives and the species’ level of the compound TMAO. Because this hypothesis links TMAO levels with reduced\n\ncompressibility of water’s tetrahedral molecular structure, a finding that TMAO helps maintain the hydrogen bonds\n\nbetween water molecules under high pressure would strongly support that hypothesis.\n\nChoice A is incorrect. Although the researchers’ hypothesis suggests a relationship between TMAO and water molecules’\n\ntetrahedral molecular structure, that relationship involves TMAO helping maintain water’s tetrahedral molecular structure\nunder high pressure; as presented in the text, the hypothesis doesn’t contend that water molecules are impervious to, or\n\nincapable of being penetrated by, TMAO. Choice B is incorrect because the text discusses how the molecular structure of\n\nwater, not TMAO, is compressed under extreme pressure and never addresses how TMAO might be affected by such\npressure. Choice C is incorrect because the researchers’ hypothesis holds that water under extreme pressure is more\n\nresistant, not less, to being compressed when TMAO concentrations are higher. Moreover, the positive correlation\n\nmentioned in the text is between TMAO concentrations and the depths at which piezophiles live, not between\n\nconcentrations of TMAO and the rate at which water’s molecular structure compresses as pressure increases.",
+    "knowledge_graph": {
+      "parent_concept": "Argumentative Support",
+      "prerequisite": "Evidence Validation & Claim-Evidence Linkage",
+      "concept_tags": [
+        "textual evidence",
+        "data interpretation",
+        "charts",
+        "quantitative reasoning"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "03e5cf33",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Command of Evidence",
+    "difficulty": "Medium",
+    "passage": "Many insects are iridescent, or have colors that appear to shimmer and change when seen from different angles.\n\nScientists have assumed that this feature helps to attract mates but could also attract predators. But biologist Karin\nKjernsmo and a team had the idea that the shifting appearance of colors might actually make it harder for other animals\nto see iridescent insects. To test this idea, the team put beetle forewings on leaves along a forest path and then asked\n\nhuman participants to look for them. Some of the wings were naturally iridescent. Others were painted with a\nnonchanging color from the iridescent spectrum, such as purple or blue.",
+    "question": "Which finding, if true, would most directly support the team’s idea?",
+    "choices": {
+      "A": "On average, participants found most of the purple wings and blue wings and far fewer of the iridescent wings.",
+      "B": "On average, participants found the iridescent wings faster than they found the purple wings or blue wings.",
+      "C": "Some participants reported that the purple wings were easier to see than the blue wings.",
+      "D": "Some participants successfully found all of the wings on the leaves."
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer because it presents the finding that, if true, would most strongly support the research team’s\n\nidea about the effect of iridescence, or colors that appear to shimmer and change. The text indicates that although some\nscientists have assumed that iridescence could attract predators, Kjernsmo’s team wondered if iridescent insects might\nbe harder for other animals to see. The team tested this idea by asking human participants to look for both iridescent\n\nbeetle wings and beetle wings that weren’t iridescent but that had been painted colors such as purple or blue. If\nparticipants located most of the purple or blue wings but far fewer of the iridescent wings, that finding would support the\n\nteam’s idea since it would suggest that noniridescent wings are easier to see than iridescent wings.\n\nChoice B is incorrect because if participants located the iridescent wings more quickly than the purple or blue wings, that\nfinding would weaken the team’s idea, not support the team’s idea, since it would suggest that the iridescent wings were\n\neasier to see than the noniridescent wings. Choice C is incorrect because finding that some participants believed that the\npurple wings were easier to see than the blue wings would be irrelevant to the team’s idea. The purple and blue wings\nwere both noniridescent, so any difference in how easy those two colors were to see would have nothing to do with the\n\nidea that iridescent insects are harder to see than noniridescent insects. Choice D is incorrect because if some\nparticipants found all the wings, that wouldn’t support the team’s idea that iridescent insects may be harder to see than\n\nnoniridescent insects. If anything, this finding might weaken the team’s idea since it could suggest that iridescence had\nno effect on how difficult the wings were to see.",
+    "knowledge_graph": {
+      "parent_concept": "Argumentative Support",
+      "prerequisite": "Evidence Validation & Claim-Evidence Linkage",
+      "concept_tags": [
+        "textual evidence",
+        "data interpretation",
+        "charts",
+        "quantitative reasoning"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "010fa3f0",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Command of Evidence",
+    "difficulty": "Hard",
+    "passage": "Simulated Change in Annual Aquifer Input and Irrigation Output if Precipitation Concentration Increases as Climate\nModels Predict\n\nBaseline concentration of\nannual precipitation\n\n% change in water\nentering aquifers\n\n% change in surface\nwater used for irrigation\n\n% change in groundwater\nused for irrigation\n\nPrecipitation is currently\n\nsomewhat concentrated\n\nPrecipitation is currently\nevenly distributed\n\n4.9\n\n11.0\n\n0.4\n\n9.0\n\n0.9\n\n7.9\n\nSome climate models for the western United States predict that while total annual precipitation may remain unchanged\n\nfrom the present level, precipitation will become concentrated into fewer but more intense rain and snow events.\n\nUniversity of Texas climate scientist Geeta Persad and her colleagues simulated how the amount of water entering\n\naquifers and the amount being used for irrigation purposes would change if this were to occur. Persad and her\ncolleagues concluded that concentration of precipitation into fewer events would result in a higher number of dry days,\n\ntriggering more irrigation, but that this change in irrigation output is highly sensitive to the baseline concentration of\n\nprecipitation that currently exists in an area.",
+    "question": "Which choice best describes data from the table that support Persad and her colleagues’ conclusion?",
+    "choices": {
+      "A": "If baseline precipitation is somewhat concentrated, the amount of water being used for irrigation will increase 0.4%\n\nfor surface water and 0.9% for groundwater, whereas the amount of water entering aquifers will increase 11.0% if baseline precipitation is evenly distributed. \n\nIf baseline precipitation is somewhat concentrated, water use for irrigation will increase only slightly, whereas it will",
+      "B": "increase 9.0% for surface water and 7.9% for groundwater if baseline precipitation is evenly distributed.\n\nIf baseline precipitation is somewhat concentrated, the amount of water entering aquifers will increase 4.9%, while",
+      "C": "the amount being used for irrigation will increase 0.4% for surface water and 0.9% for groundwater. \n\nIf baseline precipitation is somewhat concentrated, water use for irrigation will decline by a small amount, whereas it",
+      "D": "will increase 11.0% for surface water and 9.0% for groundwater if baseline precipitation is evenly distributed."
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer because it describes data from the table that support Persad and her colleagues’\n\nconclusion. The text explains that, according to some climate models, precipitation in the western United States will\n\nbecome concentrated into fewer, more intense rain and snow events. According to the text, Persad and her colleagues\nconcluded that more irrigation will consequently be needed but that the change in irrigation output will be highly sensitive\n\nto, or greatly affected by, the baseline concentration of precipitation in an area. This conclusion is supported by data from\n\nthe researchers’ simulations of changes in annual irrigation output in two different scenarios—one in which an area’s\n\nannual precipitation is already somewhat concentrated and one in which its annual precipitation is evenly distributed.\n\nThe table shows that if baseline precipitation is somewhat concentrated, water use for irrigation will increase only\n\nslightly, whereas if baseline precipitation is evenly distributed, water use for irrigation will increase much more—9.0% for\n\nsurface water and 7.9% for groundwater. This difference illustrates the researchers’ conclusion that the amount of\nadditional water needed for irrigation will vary greatly depending on how concentrated or spread out the annual\n\nprecipitation in an area already is.\n\nChoice A is incorrect because it compares changes in the amount of water being used for irrigation to changes in the\n\namount of water entering aquifers. Persad and her colleagues’ conclusion doesn’t focus on changes to the amount of\n\nwater entering aquifers; rather, the researchers’ conclusion focuses on changes to irrigation output relative to how\n\nconcentrated or spread out the annual precipitation in an area is. Choice C is incorrect because it supports only part of\n\nPersad and her colleagues’ conclusion. According to the text, the researchers concluded that the concentration of\n\nprecipitation into fewer events will trigger more irrigation but that this change in irrigation output will be highly sensitive\nto an area’s baseline concentration of annual precipitation. The data in this choice support the idea that more irrigation\n\nwill be needed, but to support the rest of the researchers’ conclusion, additional data from the table are required to show\n\nthat the increases in water use for irrigation will vary depending on how concentrated or spread out the annual\n\nprecipitation in an area already is. Choice D is incorrect because data in the table indicate no declines in water use for\n\nirrigation, showing only increases in the form of positive values.",
+    "knowledge_graph": {
+      "parent_concept": "Argumentative Support",
+      "prerequisite": "Evidence Validation & Claim-Evidence Linkage",
+      "concept_tags": [
+        "textual evidence",
+        "data interpretation",
+        "charts",
+        "quantitative reasoning"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "1b9b29f1",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Inferences",
+    "difficulty": "Hard",
+    "passage": "A team of biologists led by Jae-Hoon Jung, Antonio D. Barbosa, and Stephanie Hutin investigated the mechanism that\n\nallows Arabidopsis thaliana (thale cress) plants to accelerate flowering at high temperatures. They replaced the protein\nELF3 in the plants with a similar protein found in another species (stiff brome) that, unlike A. thaliana, displays no\nacceleration in flowering with increased temperature. A comparison of unmodified A. thaliana plants with the altered\n\nplants showed no difference in flowering at 22° Celsius, but at 27° Celsius, the unmodified plants exhibited accelerated\nflowering while the altered ones did not, which suggests that ______",
+    "question": "Which choice most logically completes the text?",
+    "choices": {
+      "A": "temperature-sensitive accelerated flowering is unique to A. thaliana.",
+      "B": "A. thaliana increases ELF3 production as temperatures rise.",
+      "C": "ELF3 enables A. thaliana to respond to increased temperatures.",
+      "D": "temperatures of at least 22° Celsius are required for A. thaliana to flower."
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer because it most logically completes the text’s discussion of accelerated flowering in A.\nthaliana plants. The text indicates that A. thaliana plants show accelerated flowering at high temperatures. To investigate\nthe mechanism for this accelerated flowering, biologists replaced the ELF3 protein in one group of A. thaliana plants with\n\na similar protein found in another plant species that doesn’t show accelerated flowering. The team then compared these\nmodified plants to A. thaliana plants that retained their original ELF3 protein. The text states that the two samples of\nplants showed no difference in flowering at 22° Celsius, but at 27° Celsius the unaltered plants with ELF3 showed\n\naccelerated flowering while the plants without ELF3 didn’t. If accelerated flowering at the higher temperature occurred in\nthe A. thaliana plants with ELF3 but not in the plants without the protein, then ELF3 likely enables A. thaliana to respond\n\nto increased temperatures.\n\nChoice A is incorrect because the text doesn’t mention whether any plants other than A. thaliana and stiff brome show\ntemperature-sensitive flowering, so there is no support for the idea that this type of flowering is unique to A. thaliana.\n\nChoice B is incorrect because the text discusses the effects of ELF3 and not the production of it. There’s nothing in the\ntext to suggest that the amount of ELF3 in A. thaliana varies with temperature. Choice D is incorrect. While the text states\nthat there was no difference in the flowering of modified and unmodified A. thaliana plants at 22° Celsius, there’s no\n\nsuggestion that A. thaliana only begins to flower at 22° Celsius; the text doesn’t mention a specific temperature threshold\nrequired for A. thaliana flowering.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Deduction",
+      "prerequisite": "Implicit Meaning Extraction & Propositional Logic",
+      "concept_tags": [
+        "inference",
+        "implication",
+        "logical reasoning",
+        "critical reading"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "1d0b5bf4",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Inferences",
+    "difficulty": "Easy",
+    "passage": "To create the poems in her 2017 collection One Last Word, poet Nikki Grimes used a writing method called the golden\nshovel. This method often involves choosing a line from an existing poem and then using each word from that line as the\nlast word of each line in a new poem. Grimes wanted the poems in One Last Word to honor important Black poets of the\npast, so she chose lines by poets such as Langston Hughes and Georgia Douglas Johnson. Writing in this way can be\nchallenging and might seem as though it would produce awkward poems. However, reviewers praised One Last Word as\na beautiful and powerful tribute to the poets who inspired it. This reaction suggests that ______",
+    "question": "Which choice most logically completes the text?",
+    "choices": {
+      "A": "most reviewers didn’t understand Grimes’s goal for One Last Word.",
+      "B": "Grimes successfully used the golden shovel method to achieve her goal for One Last Word.",
+      "C": "Langston Hughes and Georgia Douglas Johnson are two of Grimes’s favorite poets.",
+      "D": "Grimes inspired many other writers to create poems using the golden shovel method."
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer because it most logically completes the text’s discussion of Nikki Grimes’s poetry collection\nOne Last Word. The text explains that Grimes used a writing method called the golden shovel to create the poems in her\nbook. According to the text, the method involves basing a new poem on a line from an existing poem. The text then\nmentions Langston Hughes and Georgia Douglas Johnson as examples of important Black poets whose lines of poetry\nform the basis of Grimes’s poems. The text goes on to say that this writing method is difficult and that the resulting\npoems can be awkward, but reviewers have positively reviewed Grimes’s book. If the reviewers of One Last Word\nspecifically note that the work is a “beautiful and powerful tribute to the poets who inspired it,” then they must have\n\nappreciated how Grimes used the golden shovel method to pay tribute to other poets. This suggests that Grimes was\n\nsuccessful in using the golden shovel method to achieve her goal of honoring Black poets in her book.\n\nChoice A is incorrect because the reaction suggests that most reviewers did understand Grimes’s goal for her book.\n\nAccording to the text, the reviewers noted that the poems in her book were a “beautiful and powerful tribute to the poets\n\nwho inspired it.” Earlier, the text claims that Grimes intended the poems “to honor important Black poets of the past,” so\n\nin their praise of her book, the reviewers clearly indicated that they understood Grimes’s goal. Choice C is incorrect.\n\nAlthough it’s likely that Grimes sought to honor Hughes and Johnson in her book of poetry because they’re among her\n\nfavorite poets, this fact isn’t suggested by the reviewers’ positive reaction to her book. Instead, the reaction suggests that\n\nGrimes was successful in her use of the golden shovel method. Choice D is incorrect because the text doesn’t discuss\n\nwhether other writers were inspired by Grimes to use the golden shovel method in their poetry. The text mentions the\n\npoets Hughes and Johnson as examples of poets honored in Grimes’s book and describes reviewers’ positive reception\n\nof her book, but it doesn’t detail Grimes’s impact on other writers.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Deduction",
+      "prerequisite": "Implicit Meaning Extraction & Propositional Logic",
+      "concept_tags": [
+        "inference",
+        "implication",
+        "logical reasoning",
+        "critical reading"
+      ],
+      "passage_topic": "Literature"
+    },
+    "analysis": {
+      "inference_basis": "Explicit statement",
+      "reasoning_type": "Deductive",
+      "passage_topic": "Literature"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "1bf2173e",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Inferences",
+    "difficulty": "Hard",
+    "passage": "In a three-year study of parasitic infections by Anomotaenia brevis tapeworms in Temnothorax nylanderi ants,\n\nentomologist Susanne Foitzik and colleagues found something unexpected: rather than reducing its host’s fitness, as is\ntypical of parasites, A. brevis greatly extends the lifespan of a T. nylanderi worker ant and seems to halt the effects of\naging. Furthermore, those infected receive special treatment, ceasing their share of labor to sustain the colony and\n\nremaining in the nest as uninfected workers feed, groom, and transport them. By contrast, the researchers observed that\nuninfected workers in parasitized colonies have shortened lifespans, most likely because the ______",
+    "question": "Which choice most logically completes the text?",
+    "choices": {
+      "A": "uninfected workers are at high risk for direct exposure to A. brevis in the course of providing social care to the\ninfected workers in the nest. need to compensate for reduced contributions within the colony while also caring for infected workers is burdensome",
+      "B": "to the uninfected workers.\n\nhigh level of activity maintained by the uninfected workers makes them better able than infected workers to quickly\ndisperse when the nest is attacked by a predator.",
+      "C": "average lifespan of T. nylanderi worker ants in colonies without parasitic activity typically falls well below three years,",
+      "D": "the range covered by the study."
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer. The text describes a study examining the relationship between a species of parasitic\n\ntapeworm, A. brevis, and its host insect, the T. nylanderi ant. According to the text, researchers were surprised to find that\nthe tapeworm extends the life of its ant host, rather than reducing it. The text goes on to state that the infected ants end\nup doing less work to sustain the colony and that as a result, the uninfected ants take on the infected ants’ share of labor\n\nin addition to caring for them in their infected state. The study’s researchers also observed that the uninfected ants have\nshorter lifespans than expected. If the infected ants, who are doing less work in the colony, have longer lifespans, it can\n\nbe inferred that the less an ant works, the longer it will live. The opposite of this statement can also be inferred: the more\nan ant works, the shorter its life. So, since the workload within the colony is being redistributed so that the infected ants\nwork less while the uninfected ants work more (as they take on the neglected duties of the infected ants and also care\n\nfor those ants), then it can be inferred that the lifespans of the uninfected ants are shortened because the need to\ncompensate for reduced contributions within the colony while also caring for infected workers is burdensome to the\nuninfected workers.\n\nChoice A is incorrect because the text does not indicate how A. brevis is transmitted to the ants or assert that uninfected\nants are more likely to be directly exposed to A. brevis while caring for infected ants. Choice C is incorrect because the\n\ntext makes no mention of the relative abilities of infected and uninfected ants to escape predators: in fact, predators are\nnot mentioned in the text at all. Choice D is incorrect because the text does not supply any information about the average\nlifespans of the ants in colonies without parasitic activity; the text only indicates factors that lengthen and shorten the\n\nlifespans of ants in parasitized colonies.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Deduction",
+      "prerequisite": "Implicit Meaning Extraction & Propositional Logic",
+      "concept_tags": [
+        "inference",
+        "implication",
+        "logical reasoning",
+        "critical reading"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "f2250478",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Inferences",
+    "difficulty": "Hard",
+    "passage": "Among social animals that care for their young, such as chickens, macaque monkeys, and humans, newborns appear to\nshow an innate attraction to faces and face-like stimuli. Elisabetta Versace and her colleagues used an image of three\n\nblack dots arranged in the shape of eyes and a nose or mouth to test whether this trait also occurs in Testudo tortoises,\n\nwhich live alone and do not engage in parental care. They found that tortoise hatchlings showed a significant preference\nfor the image, suggesting that ______",
+    "question": "Which choice most logically completes the text?",
+    "choices": {
+      "A": "face-like stimuli are likely perceived as harmless by newborns of social species that practice parental care but as\nthreatening by newborns of solitary species without parental care. researchers should not assume that an innate attraction to face-like stimuli is necessarily an adaptation related to",
+      "B": "social interaction or parental care.\n\nresearchers can assume that the attraction to face-like stimuli that is seen in social species that practice parental",
+      "C": "care is learned rather than innate.",
+      "D": "newly hatched Testudo tortoises show a stronger preference for face-like stimuli than adult Testudo tortoises do."
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer because it presents the conclusion that most logically follows from the text’s discussion of\nthe study by Versace and colleagues. The text indicates that newborn animals of some species are attracted to faces\n\nand to stimuli that resemble faces. These species, the text says, share two characteristics: they’re social and they\n\npractice parental care, meaning that parents care for their young. The text goes on to describe Versace and colleagues’\n\nexperiment, which showed that Testudo tortoises, which aren’t social and don’t practice parental care, were attracted to a\nstimulus that resembles a face. Since Versace and colleagues have shown that a species that isn’t social and doesn’t\n\npractice parental care nevertheless has the innate characteristic of being attracted to face-like stimuli, it follows that this\n\ncharacteristic shouldn’t be assumed to be an adaptation related to social interaction or parental care.\n\nChoice A is incorrect because the text indicates that the tortoise hatchlings, which are solitary and don’t practice parental\ncare, were attracted to the face-like stimuli, not that they perceived the stimuli as threatening. Choice C is incorrect\n\nbecause the phenomenon discussed in the text is an attraction to faces and face-like stimuli on the part of newborn\n\nanimals, which can’t show any learned characteristics since they were just born. Additionally, the text tells us that the\n\ntortoises Versace and colleagues studied aren’t social and don’t practice parental care, so any findings about those\ntortoises wouldn’t be relevant to the question of whether an attraction to faces in social species that practice parental\n\ncare is innate or learned. Choice D is incorrect because the text gives no indication that adult tortoises were tested on\n\nface-like stimuli and, if adults were in fact tested, no information about how they responded is provided. Since no\ninformation about adult tortoises’ responses is provided, no conclusion comparing those responses to the responses of\n\nnewly hatched tortoises can be supported.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Deduction",
+      "prerequisite": "Implicit Meaning Extraction & Propositional Logic",
+      "concept_tags": [
+        "inference",
+        "implication",
+        "logical reasoning",
+        "critical reading"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "3882ddf6",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Information and Ideas Inferences",
+    "difficulty": "Medium",
+    "passage": "To investigate the history of plate subduction—when one of Earth’s tectonic plates slides beneath another—Sarah M.\n\nAarons and colleagues compared ancient rocks from the Acasta Gneiss Complex in Canada to modern rocks. Using\nisotope analysis, the researchers found that Acasta rocks dating to about 4.02 billion years ago (bya) most strongly\n\nresemble modern rocks formed in a plume setting (an area in which hot rocks from Earth’s mantle flow upward into the\n\ncrust). By contrast, they found that Acasta rocks dating to about 3.75 bya and 3.6 bya have an isotope composition that\n\nis similar to that of modern rocks formed in a subduction setting. Aarons’s team therefore concluded that ______",
+    "question": "Which choice most logically completes the text?",
+    "choices": {
+      "A": "subduction-like processes began occurring in some locations no later than 3.75 bya.",
+      "B": "subduction replaced mantle plume formation as the most common geological process by about 4.02 bya.",
+      "C": "the majority of the rocks in the Acasta Gneiss Complex formed through subduction.",
+      "D": "the rocks in the Acasta Gneiss Complex are of a more recent origin than scientists previously thought."
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer. Because researchers found “Acasta rocks dating to about 3.75 bya” were similar to “modern\n\nrocks formed in a subduction setting,” we can infer that subduction-like processes must have begun occurring in the\n\nAcasta Gneiss Complex by this time.\n\nChoice B is incorrect. We only know about geological processes at the Acasta Gneiss Complex, so we do not have\n\ninformation to make inferences about geological processes in general. Also, notice that the rocks dated to 4.02 bya were\n\nfound to still be formed in a plume setting, so the transition must have happened after this time. Choice C is incorrect.\n\nThere’s no mention in the passage of what proportion of the rocks within Acasta Gneiss Complex were formed through\nsubduction, so there’s no basis for this inference. Choice D is incorrect. The passage discusses various rocks in the\n\nAcasta Gneiss Complex that are dated to different periods of time, but nothing in the passage suggests that these dates\n\nare or were wrong.",
+    "knowledge_graph": {
+      "parent_concept": "Logical Deduction",
+      "prerequisite": "Implicit Meaning Extraction & Propositional Logic",
+      "concept_tags": [
+        "inference",
+        "implication",
+        "logical reasoning",
+        "critical reading"
+      ],
+      "passage_topic": "Science"
+    },
+    "analysis": {
+      "inference_basis": "Logical consequence",
+      "reasoning_type": "Inductive",
+      "passage_topic": "Science"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "62120607",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Boundaries",
+    "difficulty": "Hard",
+    "passage": "From afar, African American fiber artist Bisa Butler’s portraits look like paintings, their depictions of human faces, bodies,\nand clothing so intricate that it seems only a fine brush could have rendered them. When viewed up close, however, the\nportraits reveal themselves to be ______ stitching barely visible among the thousands of pieces of printed, microcut\n\nfabric.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "quilts, and the",
+      "B": "quilts, the",
+      "C": "quilts; the",
+      "D": "quilts. The"
+    },
+    "correct_answer": "B",
+    "rationale": "Choice B is the best answer. The convention being tested is punctuation use between a main clause and a\n\nsupplementary phrase. This choice correctly uses a comma to mark the boundary between the main clause (“the\nportraits...quilts”) and the supplementary noun phrase (“the stitching...fabric”) that provides a further description of how\nthe portraits can be identified as quilts.\n\nChoice A is incorrect. A comma and the conjunction “and” can’t be used in this way to join a main clause and a\nsupplementary noun phrase. Choice C is incorrect because a semicolon can’t be used in this way to join a main clause\nand a supplementary noun phrase. Choice D is incorrect because it results in a rhetorically unacceptable sentence\n\nfragment beginning with “the stitching.”",
+    "knowledge_graph": {
+      "parent_concept": "Sentence Structure",
+      "prerequisite": "Punctuation Syntax & Clausal Integrity",
+      "concept_tags": [
+        "punctuation",
+        "sentence boundaries",
+        "independent clauses",
+        "dependent clauses"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "1ee4485c",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Boundaries",
+    "difficulty": "Hard",
+    "passage": "Journalists have dubbed Gil Scott-Heron the “godfather of rap,” a title that has appeared in hundreds of articles about him\n\nsince the 1990s. Scott-Heron himself resisted the godfather ______ feeling that it didn’t encapsulate his devotion to the\n\nbroader African American blues music tradition as well as “bluesologist,” the moniker he preferred.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "nickname, however",
+      "B": "nickname, however;",
+      "C": "nickname, however,",
+      "D": "nickname; however,"
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. The convention being tested is punctuation use between a main clause and two\n\nsupplementary elements. In this choice, the commas after “nickname” and “however” are correctly used to separate the\n\nsupplementary adverb “however” from the main clause (“Scott-Heron…nickname”) on one side and the supplementary\nparticipial phrase (“feeling…bluesologist”) on the other.\n\nChoice A is incorrect because it fails to mark the boundary between the supplementary adverb “however” and the\nsupplementary phrase (“feeling…bluesologist”). Choice B is incorrect because a semicolon can’t be used in this way to\n\njoin the supplementary adverb “however” and the supplementary phrase (“feeling…bluesologist”). Choice D is incorrect\n\nbecause a semicolon can’t be used in this way to join the main clause (“Scott-Heron…nickname”) and the supplementary\nword and phrase (“however” and “feeling…bluesologist”). Moreover, placing the semicolon after “nickname” illogically\n\nsignals that the following information (Scott-Heron’s feeling that the nickname didn’t encapsulate his devotion to the\n\nblues tradition) is contrary to the information in the previous clause (Scott-Heron’s resistance to the nickname).",
+    "knowledge_graph": {
+      "parent_concept": "Sentence Structure",
+      "prerequisite": "Punctuation Syntax & Clausal Integrity",
+      "concept_tags": [
+        "punctuation",
+        "sentence boundaries",
+        "independent clauses",
+        "dependent clauses"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "9579581e",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Boundaries",
+    "difficulty": "Hard",
+    "passage": "As cheesemaking practices spread throughout Europe and Asia during and after the Neolithic, divergent processes for milling milk _______, whereas rennet-coagulated cheesemaking became key to milk preservation in Europe and Southwest Asia, acid-heat-coagulated cheesemaking was common among nomadic herding populations of the northeastern Eurasian steppe.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "emerged",
+      "B": "has emerged",
+      "C": "had emerged",
+      "D": "emerges"
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. The convention being tested is punctuation within a sentence. A colon can be used between two main clauses to signal that the second clause explains or summarizes the first one. The choice of 'had emerged' is correct because it is in the past perfect tense, properly situating the verb within the historical context described.",
+    "knowledge_graph": {
+      "parent_concept": "SAT Reading and Writing",
+      "prerequisite": "Reading Comprehension",
+      "concept_tags": [
+        "punctuation",
+        "sentence boundaries",
+        "independent clauses",
+        "dependent clauses"
+      ],
+      "passage_topic": "History"
+    },
+    "analysis": {
+      "boundary_rule": "Use colon to introduce an explanation or summary",
+      "clause_type": "Main clause",
+      "passage_topic": "History"
+    },
+    "source": "boundaries_hard_77.pdf"
+  },
+  {
+    "id": "432b1ede",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Boundaries",
+    "difficulty": "Medium",
+    "passage": "The forty-seven geothermal springs of Arkansas’ Hot Springs National Park are sourced via a process known as natural\ngroundwater recharge, in which rainwater percolates downward through the earth—in this case, the porous rocks of the\n\nhills around Hot ______ collect in a subterranean basin.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "Springs to",
+      "B": "Springs: to",
+      "C": "Springs—to",
+      "D": "Springs, to"
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. The convention being tested is the punctuation of a supplementary element within a\nsentence. The dash after “Springs” pairs with the dash after “earth” to separate the supplementary element “in this case,\n\nthe porous rocks of the hills around Hot Springs” from the rest of the sentence.\n\nChoice A is incorrect because it fails to use appropriate punctuation to separate the supplementary element from the rest\n\nof the sentence. Choice B is incorrect because a colon can’t be paired with a dash in this way to separate the\nsupplementary element from the rest of the sentence. Choice D is incorrect because a comma can’t be paired with a\ndash in this way to separate the supplementary element from the rest of the sentence.",
+    "knowledge_graph": {
+      "parent_concept": "Sentence Structure",
+      "prerequisite": "Punctuation Syntax & Clausal Integrity",
+      "concept_tags": [
+        "punctuation",
+        "sentence boundaries",
+        "independent clauses",
+        "dependent clauses"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "148be4da",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Boundaries",
+    "difficulty": "Easy",
+    "passage": "Human-made (synthetic) fibers used in clothes and many other consumer products are more durable than most natural\n\nplant ______ the manufacture of synthetic fibers requires toxic chemical solvents that can pollute air and water.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "fibers,",
+      "B": "fibers but",
+      "C": "fibers",
+      "D": "fibers, but"
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer. The convention being tested is the coordination of main clauses within a sentence. This\nchoice correctly uses a comma and the coordinating conjunction “but” to join the first main clause (“Human-\nmade...fibers”) and the second main clause (“the manufacture...water”).\n\nChoice A is incorrect because it results in a comma splice. Without a conjunction following it, a comma can’t be used in\nthis way to join two main clauses. Choice B is incorrect because when coordinating two longer main clauses such as\nthese, it’s conventional to use a comma before the coordinating conjunction. Choice C is incorrect because it results in a\nrun-on sentence. The two main clauses are fused without punctuation and/or a conjunction.",
+    "knowledge_graph": {
+      "parent_concept": "Sentence Structure",
+      "prerequisite": "Punctuation Syntax & Clausal Integrity",
+      "concept_tags": [
+        "punctuation",
+        "sentence boundaries",
+        "independent clauses",
+        "dependent clauses"
+      ],
+      "passage_topic": "Science"
+    },
+    "analysis": {
+      "boundary_rule": "Use semicolon to join two independent clauses",
+      "clause_type": "Independent clause",
+      "passage_topic": "Science"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "ae43985c",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Form, Structure, and Sense",
+    "difficulty": "Hard",
+    "passage": "In her 1983 book, sociologist Arlie Russell Hochschild first explored at length _____.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "are underlying",
+      "B": "is underlying",
+      "C": "underlie",
+      "D": "has underlied"
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. The convention being tested is subject-verb agreement.",
+    "knowledge_graph": {
+      "parent_concept": "Grammar & Usage",
+      "prerequisite": "Parts of Speech & Sentence Functions",
+      "concept_tags": [
+        "subject-verb agreement",
+        "verb tense",
+        "pronouns",
+        "parallelism",
+        "modifier placement"
+      ],
+      "passage_topic": "Sociology"
+    },
+    "analysis": {
+      "grammar_concept": "Subject-verb agreement",
+      "error_type": "Agreement error",
+      "passage_topic": "Sociology"
+    },
+    "source": "Form, Structure, and Sense_hard_47.pdf"
+  },
+  {
+    "id": "67614549",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Form, Structure, and Sense",
+    "difficulty": "Medium",
+    "passage": "After winning the 1860 presidential election, Abraham Lincoln appointed Edward Bates, Salmon P. Chase, and William H.\nSeward to his cabinet. Lincoln’s decision was surprising, since each of these men had run against him, but historians\nhave praised it, noting that Lincoln ______ his rivals’ diverse talents to strengthen his administration.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "has leveraged",
+      "B": "is leveraging",
+      "C": "will leverage",
+      "D": "leveraged"
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer. The subject of the verb is “Lincoln,” and the first sentence tells us that we’re talking about\nsomething that Abraham Lincoln did in 1860. So the simple past tense “leveraged” fits the logic of the text.\n\nChoice A is incorrect. This choice creates a tense issue. “Has leveraged” is the present perfect tense, which is used for\n\nan action that began in the past and continues into the present. Lincoln started leveraging his rivals’ talents in 1860—it’s\ndefinitely not still happening today. So the present perfect tense isn’t appropriate. Choice B is incorrect. This choice\n\ncreates a tense issue. “Is leveraging” is the present tense, but Lincoln leveraged his rivals’ talents in 1860, so the present\ntense isn’t appropriate. Choice C is incorrect. This choice creates a tense issue. “Will leverage” is the future tense, but\nLincoln leveraged his rivals’ talents in 1860, so the future tense isn’t appropriate.",
+    "knowledge_graph": {
+      "parent_concept": "Grammatical Morphology",
+      "prerequisite": "Subject-Verb Agreement & Verb Tense Consistency",
+      "concept_tags": [
+        "subject-verb agreement",
+        "verb tense",
+        "pronouns",
+        "parallelism",
+        "modifier placement"
+      ],
+      "passage_topic": "History"
+    },
+    "analysis": {
+      "grammar_concept": "Verb tense",
+      "error_type": "Tense error",
+      "passage_topic": "History"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "d2cf0e11",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Form, Structure, and Sense",
+    "difficulty": "Medium",
+    "passage": "Inventor John Friedman created a prototype of the first flexible straw by inserting a screw into a paper straw and, using\ndental floss, binding the straw tightly around the ______ When the floss and screw were removed, the resulting\ncorrugations in the paper allowed the straw to bend easily over the edge of a glass.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "screw’s thread’s.",
+      "B": "screws’ threads.",
+      "C": "screw’s threads.",
+      "D": "screws threads’."
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is the best answer. The convention being tested is the use of plural and possessive nouns. The singular\npossessive noun “screw’s” and the plural noun “threads” correctly indicate that there is only one screw and it has multiple\nthreads.\n\nChoice A is incorrect because the context requires the plural noun “threads,” not the singular possessive noun “thread’s.”\nChoice B is incorrect because the context requires the singular possessive noun “screw’s,” not the plural possessive noun\n\n“screws’.” Choice D is incorrect because the context requires the singular possessive noun “screw’s” and the plural noun\n“threads,” not the plural noun “screws” or the plural possessive noun “threads.’”",
+    "knowledge_graph": {
+      "parent_concept": "Grammatical Morphology",
+      "prerequisite": "Subject-Verb Agreement & Verb Tense Consistency",
+      "concept_tags": [
+        "subject-verb agreement",
+        "verb tense",
+        "pronouns",
+        "parallelism",
+        "modifier placement"
+      ],
+      "passage_topic": "Inventions"
+    },
+    "analysis": {
+      "grammar_concept": "Possessive nouns",
+      "error_type": "Possession error",
+      "passage_topic": "Inventions"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "7a0d9031",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Form, Structure, and Sense",
+    "difficulty": "Medium",
+    "passage": "In many of her landscape paintings from the 1970s and 1980s, Lebanese American artist Etel Adnan worked to capture\nthe essence of California’s fog-shrouded Mount Tamalpais region through abstraction, using splotches of color to\nrepresent the area’s features. Interestingly, the triangle representing the mountain itself ______ among the few defined\n\nfigures in her paintings.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "are",
+      "B": "have been ",
+      "C": "were",
+      "D": "is"
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D is the best answer. The convention being tested is subject–verb agreement. The singular verb “is” agrees in\n\nnumber with the singular subject “the triangle.”\n\nChoice A is incorrect because the plural verb “are” doesn’t agree in number with the singular subject “the triangle.” Choice\nB is incorrect because the plural verb “have been” doesn’t agree in number with the singular subject “the triangle.” Choice\n\nC is incorrect because the plural verb “were” doesn’t agree in number with the singular subject “the triangle.”",
+    "knowledge_graph": {
+      "parent_concept": "Grammatical Morphology",
+      "prerequisite": "Subject-Verb Agreement & Verb Tense Consistency",
+      "concept_tags": [
+        "subject-verb agreement",
+        "verb tense",
+        "pronouns",
+        "parallelism",
+        "modifier placement"
+      ]
+    },
+    "analysis": null,
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "c8607bdf",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "Standard English Conventions Form, Structure, and Sense",
+    "difficulty": "Medium",
+    "passage": "“Praise Song for the Day,” Elizabeth Alexander’s 2009 inaugural poem, asserts that “We cross dirt roads and highways…to\n\nsee what’s on the other side.” Alexander’s use of “we” ______ Americans’ collective efforts and shared desire to seek new\nopportunity.",
+    "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+    "choices": {
+      "A": "evokes",
+      "B": "are evoking",
+      "C": "have evoked",
+      "D": "evoke"
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer. The convention being tested is subject-verb agreement. The singular verb \"evokes\" agrees in\nnumber with the singular subject \"Alexander’s use.\"\n\nChoice B is incorrect because the plural verb \"are evoking\" doesn’t agree in number with the singular subject \"Alexander’s\n\nuse.\" Choice C is incorrect because the plural verb \"have evoked\" doesn’t agree in number with the singular subject\n\"Alexander’s use.\" Choice D is incorrect because the plural verb \"evoke\" doesn’t agree in number with the singular subject\n\"Alexander’s use.\"",
+    "knowledge_graph": {
+      "parent_concept": "Grammatical Morphology",
+      "prerequisite": "Subject-Verb Agreement & Verb Tense Consistency",
+      "concept_tags": [
+        "subject-verb agreement",
+        "verb tense",
+        "pronouns",
+        "parallelism",
+        "modifier placement"
+      ],
+      "passage_topic": "Poetry"
+    },
+    "analysis": {
+      "grammar_concept": "Subject-verb agreement",
+      "error_type": "Agreement error",
+      "passage_topic": "Poetry"
+    },
+    "source": "master_sat_ontology.jsonl"
+  },
+  {
+    "id": "0147b080",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "",
+    "difficulty": "Easy",
+    "passage": "Pyramids in Egypt and the Americas\n\n| Pyramid | Country | Height (meters) | Age (years before present) |\n|---|---|---|---|\n| The Pyramid of Djoser | Egypt | 60 | 4,600 |\n| The Pyramid of Sahure | Egypt | 47 | 4,450 |\n| El Castillo | Belize | 40 | 1,200 |\n\nBased on table data, the pyramid of Djoser has 60 meters tall and is from Egypt.",
+    "question": "Which choice most effectively uses data from the table to complete the text?",
+    "choices": {
+      "A": "33 meters tall.",
+      "B": "47 meters tall.",
+      "C": "40 meters tall.",
+      "D": "60 meters tall."
+    },
+    "correct_answer": "C",
+    "rationale": "Choice C is correct as it uses the data to state El Castillo's height.",
+    "knowledge_graph": {
+      "parent_concept": "SAT Reading and Writing",
+      "prerequisite": "Reading Comprehension",
+      "concept_tags": [],
+      "passage_topic": "History"
+    },
+    "analysis": {
+      "evidence_type": "Quantitative/Data",
+      "reasoning_pattern": "Identify data point",
+      "passage_topic": "History"
+    },
+    "source": "command of evidence_easy_70.pdf"
+  },
+  {
+    "id": "2a5aa08a",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "",
+    "difficulty": "Easy",
+    "passage": "Treasure Island is an 1883 novel by Robert Louis Stevenson...",
+    "question": "Which quotation from Treasure Island most effectively illustrates the sailor?",
+    "choices": {
+      "A": "[The sailor] was a very silent man by custom.",
+      "B": "The sound of the sea...",
+      "C": "[How the sailor] haunted my dreams...",
+      "D": "[The sailor], working with both hands, as we came plodding top the inland..."
+    },
+    "correct_answer": "D",
+    "rationale": "Choice D depicts the sailor actively, illustrating his description.",
+    "knowledge_graph": {
+      "parent_concept": "SAT Reading and Writing",
+      "prerequisite": "Reading Comprehension",
+      "concept_tags": [],
+      "passage_topic": "Literature"
+    },
+    "analysis": {
+      "evidence_type": "Textual",
+      "reasoning_pattern": "Illustrate finding",
+      "passage_topic": "Literature"
+    },
+    "source": "command of evidence_easy_70.pdf"
+  },
+  {
+    "id": "eb89dcc8",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "",
+    "difficulty": "Medium",
+    "passage": "Text 1: Imagine you and your friend are trying to decide where to eat lunch. ...Text 2: Research shows that people who don't state their preferences...",
+    "question": "Based on the texts, what response would the author of Text 2 most likely suggest for someone in the situation described in the underlined sentence in Text 1?",
+    "choices": {
+      "A": "Cancel the plan to have lunch altogether.",
+      "B": "Make a firm decision about where to eat.",
+      "C": "Ask the friend where they would like to eat.",
+      "D": "Change the subject to talk about something else."
+    },
+    "correct_answer": "C",
+    "rationale": "The correct answer is the best answer because it directly applies the research findings described in Text 2...",
+    "knowledge_graph": {
+      "parent_concept": "SAT Reading and Writing",
+      "prerequisite": "Reading Comprehension",
+      "concept_tags": [],
+      "passage_topic": "Social Science"
+    },
+    "analysis": {
+      "relationship_type": "Extend",
+      "text_focus": "Text 1 discusses a scenario, Text 2 provides research-based advice for such scenarios.",
+      "passage_topic": "Social Science"
+    },
+    "source": "cross-text connections_easy_16.pdf"
+  },
+  {
+    "id": "6b8a7c74",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "",
+    "difficulty": "Hard",
+    "passage": "One recognized social norm of gift giving is that the time spent obtaining a gift will be viewed as a reflection of the gift's thoughtfulness. Marketing experts Farnoush Reshad, Julian Givr, and Gopal Das addressed this view in their studies of norms specifically surrounding the giving of gift cards, noting that while recipients tend to view digital gift cards (delivered electronically and often redeemable online) as equal in appeal to physical gift cards (with cards that are purchased in person and may only be redeemable in store) in terms of usage, 94.2 percent of participants surveyed mistakenly assumed that recipients are likely to appreciate physical gift cards more. Consequently, these studies provided little support for the perception that physical gift cards require greater effort to obtain than digital gift cards do.",
+    "question": "Which choice most logically completes the text?",
+    "choices": {
+      "A": "gift givers likely overestimate the amount of effort required to obtain digital gift cards and thus mistakenly assume gift recipients will view them as less appealing than physical gift cards.",
+      "B": "physical gift cards are likely perceived by gift recipients as requiring effort that digital gift cards do not, though both types of cards are equally useful.",
+      "C": "physical gift cards are unlikely to differ significantly from digital gift cards in terms of ease of acquisition by shoppers.",
+      "D": "digital gift cards are regarded as requiring relatively low effort to obtain and therefore are often given as gifts thoughtlessly."
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer because it presents the conclusion that most logically completes the text's discussion of gift-giving norms regarding gift cards. The text notes that participants mistakenly assume that gift recipients will prefer physical gift cards over digital ones, even though they do not differ in ease of acquisition or usage.",
+    "knowledge_graph": {
+      "parent_concept": "SAT Reading and Writing",
+      "prerequisite": "Reading Comprehension",
+      "concept_tags": [],
+      "passage_topic": "Social Science"
+    },
+    "analysis": {
+      "inference_basis": "Implicit contrast",
+      "reasoning_type": "Inductive",
+      "passage_topic": "Social Science"
+    },
+    "source": "inference_hard_57.pdf"
+  },
+  {
+    "id": "881ba6f1",
+    "test": "SAT",
+    "domain": "Reading and Writing",
+    "skill": "",
+    "difficulty": "Hard",
+    "passage": "Eighteenth-century economist Adam Smith is famed for his metaphor of the invisible hand, which he putatively used to illustrate a robust model of how individuals produce aggregate benefits by pursuing their own economic interests. Note ‘putatively’: as Gavin Kennedy has shown, Smith deploys this metaphor only once in his economic writing—to make a narrow point about the then-dominant economic theory of mercantilism—and it was largely ignored until some twentieth-century economists eager to secure an intellectual pedigree for their views elevated it to a fully-fledged paradigm.",
+    "question": "Which choice best states the main idea of the text?",
+    "choices": {
+      "A": "Although Smith is famous for his metaphor of the invisible hand, he actually used it to make a narrower point.",
+      "B": "Smith developed the metaphor to target mercantilism, but his followers misunderstood it.",
+      "C": "Smith’s interpretation of the invisible hand was not as broad as some of his followers believe.",
+      "D": "Smith’s metaphor of the invisible hand is poorly understood and similarly misapplied by modern economists."
+    },
+    "correct_answer": "A",
+    "rationale": "Choice A is the best answer because it most closely reflects the information about Smith’s actual use of the metaphor.",
+    "knowledge_graph": {
+      "parent_concept": "SAT Reading and Writing",
+      "prerequisite": "Reading Comprehension",
+      "concept_tags": [],
+      "passage_topic": "History"
+    },
+    "analysis": {
+      "main_idea_location": "Implicit",
+      "detail_function": "Supporting evidence",
+      "passage_topic": "History"
+    },
+    "source": "central ideas and details_hard_38.pdf"
+  }
+]

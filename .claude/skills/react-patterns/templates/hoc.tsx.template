@@ -1,0 +1,216 @@
+/**
+ * with{{HOC_NAME}} Higher-Order Component
+ *
+ * {{HOC_DESCRIPTION}}
+ *
+ * @example
+ * ```tsx
+ * // Basic usage
+ * const EnhancedComponent = with{{HOC_NAME}}(MyComponent);
+ *
+ * // With options
+ * const EnhancedComponent = with{{HOC_NAME}}({
+ *   // options here
+ * })(MyComponent);
+ *
+ * // In component
+ * function MyComponent(props) {
+ *   // Component receives injected props
+ *   return <div>{props.injectedValue}</div>;
+ * }
+ * export default with{{HOC_NAME}}(MyComponent);
+ * ```
+ *
+ * Template Placeholders:
+ * - {{HOC_NAME}}: PascalCase HOC name without "with" prefix (e.g., Auth, Theme, ErrorBoundary, Loading)
+ * - {{HOC_DESCRIPTION}}: Brief description of HOC purpose
+ * - {{INJECTED_PROPS}}: Props that the HOC injects (optional)
+ * - {{HOC_OPTIONS}}: Configuration options for the HOC (optional)
+ */
+
+import {
+  ComponentType,
+  forwardRef,
+  useEffect,
+  useState,
+  type ComponentPropsWithRef,
+  type ForwardedRef,
+} from 'react';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+/**
+ * Props injected by the HOC into the wrapped component
+ */
+export interface Injected{{HOC_NAME}}Props {
+  /**
+   * Example injected prop - replace with actual props
+   */
+  injectedValue: string;
+  /**
+   * Whether data is loading
+   */
+  isLoading: boolean;
+  /**
+   * Error state if any
+   */
+  error: Error | null;
+  // {{INJECTED_PROPS}}
+}
+
+/**
+ * Configuration options for the HOC
+ */
+export interface With{{HOC_NAME}}Options {
+  /**
+   * Example option - replace with actual options
+   */
+  enabled?: boolean;
+  /**
+   * Display name prefix for debugging
+   */
+  displayNamePrefix?: string;
+  // {{HOC_OPTIONS}}
+}
+
+/**
+ * Props that should be excluded from being passed to wrapped component
+ * (These are consumed by the HOC itself)
+ */
+type ExcludedProps = never; // Add prop names if needed
+
+// =============================================================================
+// HOC Implementation
+// =============================================================================
+
+/**
+ * with{{HOC_NAME}}
+ *
+ * {{HOC_DESCRIPTION}}
+ */
+export function with{{HOC_NAME}}<P extends object>(
+  options: With{{HOC_NAME}}Options = {}
+) {
+  const { enabled = true, displayNamePrefix = 'with{{HOC_NAME}}' } = options;
+
+  return function enhance(
+    Component: ComponentType<P & Injected{{HOC_NAME}}Props>
+  ): ComponentType<Omit<P, keyof Injected{{HOC_NAME}}Props | ExcludedProps>> {
+    // -------------------------------------------------------------------------
+    // Enhanced Component
+    // -------------------------------------------------------------------------
+
+    const EnhancedComponent = forwardRef<
+      any,
+      Omit<P, keyof Injected{{HOC_NAME}}Props | ExcludedProps>
+    >((props, ref: ForwardedRef<any>) => {
+      // -----------------------------------------------------------------------
+      // State
+      // -----------------------------------------------------------------------
+
+      const [injectedValue, setInjectedValue] = useState<string>('');
+      const [isLoading, setIsLoading] = useState<boolean>(false);
+      const [error, setError] = useState<Error | null>(null);
+
+      // -----------------------------------------------------------------------
+      // Effects
+      // -----------------------------------------------------------------------
+
+      useEffect(() => {
+        if (!enabled) return;
+
+        const initialize = async () => {
+          try {
+            setIsLoading(true);
+            setError(null);
+
+            // Your HOC logic here
+            // Example: fetch data, subscribe to events, etc.
+            setInjectedValue('example value');
+
+            setIsLoading(false);
+          } catch (err) {
+            setError(err instanceof Error ? err : new Error('Unknown error'));
+            setIsLoading(false);
+          }
+        };
+
+        initialize();
+
+        return () => {
+          // Cleanup: cancel requests, unsubscribe, etc.
+        };
+      }, [enabled]);
+
+      // -----------------------------------------------------------------------
+      // Render
+      // -----------------------------------------------------------------------
+
+      // Optionally render loading state
+      if (isLoading) {
+        return (
+          <div className="flex items-center justify-center p-4">
+            <span className="animate-spin">⟳</span>
+            <span className="ml-2">Loading...</span>
+          </div>
+        );
+      }
+
+      // Optionally render error state
+      if (error) {
+        return (
+          <div className="p-4 text-destructive">
+            <p>Error: {error.message}</p>
+          </div>
+        );
+      }
+
+      // Render wrapped component with injected props
+      return (
+        <Component
+          {...(props as P)}
+          ref={ref}
+          injectedValue={injectedValue}
+          isLoading={isLoading}
+          error={error}
+        />
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Display Name (for debugging)
+    // -------------------------------------------------------------------------
+
+    const wrappedComponentName =
+      Component.displayName || Component.name || 'Component';
+    EnhancedComponent.displayName = `${displayNamePrefix}(${wrappedComponentName})`;
+
+    return EnhancedComponent;
+  };
+}
+
+// =============================================================================
+// Convenience Export (for simple usage without options)
+// =============================================================================
+
+/**
+ * Simple version without options
+ *
+ * @example
+ * ```tsx
+ * export default with{{HOC_NAME}}Simple(MyComponent);
+ * ```
+ */
+export function with{{HOC_NAME}}Simple<P extends object>(
+  Component: ComponentType<P & Injected{{HOC_NAME}}Props>
+): ComponentType<Omit<P, keyof Injected{{HOC_NAME}}Props>> {
+  return with{{HOC_NAME}}()(Component);
+}
+
+// =============================================================================
+// Default Export
+// =============================================================================
+
+export default with{{HOC_NAME}};

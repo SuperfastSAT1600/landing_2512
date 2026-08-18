@@ -1,0 +1,81 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import styles from './FloatingCTA.module.css';
+import { useLiveStatus } from '../context/LiveStatusContext';
+
+const CONSULT_URL = "https://forms.gle/Bm8jtojwf5iGVU9V7";
+const KAKAO_API = "/api/kakao-redirect?source=landing";
+
+interface DiscountButton {
+    label: string;
+    slug: string;
+}
+
+export default function FloatingCTA() {
+    const [isVisible, setIsVisible] = useState(false);
+    const [discount, setDiscount] = useState<DiscountButton | null>(null);
+    const pathname = usePathname();
+    const { pushMessage } = useLiveStatus();
+
+    useEffect(() => {
+        const timer = setTimeout(() => setIsVisible(true), 1500);
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        fetch('/api/featured-post')
+            .then(r => r.json())
+            .then(data => { if (data.success && data.discount) setDiscount(data.discount); })
+            .catch(() => {});
+    }, []);
+
+    if (pathname?.startsWith('/admin')) return null;
+    if (pathname?.startsWith('/reports')) return null;
+    if (pathname?.startsWith('/reviews/write')) return null;
+    if (pathname?.startsWith('/coaches')) return null;
+    if (pathname?.startsWith('/portal')) return null;
+    if (pathname?.startsWith('/diagnosis')) return null;
+    if (pathname?.startsWith('/test')) return null;
+    if (pathname?.startsWith('/practice')) return null;
+    if (!isVisible) return null;
+
+    const handleConsult = () => {
+        window.fbq?.('track', 'Lead', { content_name: 'phone_consultation', currency: 'KRW', value: 0 });
+        window.open(CONSULT_URL, '_blank', 'noopener,noreferrer');
+    };
+
+    const handleKakao = () => {
+        window.fbq?.('track', 'Lead', { content_name: 'kakao_consultation', currency: 'KRW', value: 0 });
+        pushMessage({ text: '*** 님이 카카오톡 상담을 시작하셨습니다', type: 'green' });
+        window.open(KAKAO_API, '_blank', 'noopener,noreferrer');
+    };
+
+    return (
+        <>
+            <div className={styles.wrapper}>
+                <div className={styles.container}>
+                    {/* Discount Announcement */}
+                    {discount && (
+                        <Link href={`/blog/${discount.slug}`} className={styles.announcementLink}>
+                            {discount.label}
+                        </Link>
+                    )}
+
+                    {/* Button Group */}
+                    <div className={styles.buttonGroup}>
+                        <button onClick={handleConsult} className={styles.mainBtn}>
+                            📞전화상담 예약
+                        </button>
+                        <button onClick={handleKakao} className={styles.kakaoBtn}>
+                            💬즉시 카톡상담
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </>
+    );
+}

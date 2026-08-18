@@ -1,0 +1,1698 @@
+{
+  "summary": {
+    "total_wrong_records": 3528,
+    "matched_records": 3103,
+    "match_rate_pct": 88.0
+  },
+  "by_passage_type": {
+    "ARG": {
+      "Partial Match": {
+        "count": 133,
+        "pct": 17.0
+      },
+      "Out Of Scope": {
+        "count": 219,
+        "pct": 27.9
+      },
+      "Contradiction": {
+        "count": 139,
+        "pct": 17.7
+      },
+      "Distortion": {
+        "count": 95,
+        "pct": 12.1
+      },
+      "Misattribution": {
+        "count": 90,
+        "pct": 11.5
+      },
+      "Pre-Pivot Reading": {
+        "count": 55,
+        "pct": 7.0
+      },
+      "Overgeneralization": {
+        "count": 29,
+        "pct": 3.7
+      },
+      "Degree Error": {
+        "count": 24,
+        "pct": 3.1
+      },
+      "_total": 784,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Partial Match"
+      ]
+    },
+    "EXP": {
+      "Partial Match": {
+        "count": 368,
+        "pct": 20.6
+      },
+      "Out Of Scope": {
+        "count": 361,
+        "pct": 20.2
+      },
+      "Contradiction": {
+        "count": 362,
+        "pct": 20.2
+      },
+      "Distortion": {
+        "count": 251,
+        "pct": 14.0
+      },
+      "Misattribution": {
+        "count": 235,
+        "pct": 13.1
+      },
+      "Pre-Pivot Reading": {
+        "count": 113,
+        "pct": 6.3
+      },
+      "Overgeneralization": {
+        "count": 47,
+        "pct": 2.6
+      },
+      "Degree Error": {
+        "count": 52,
+        "pct": 2.9
+      },
+      "_total": 1790,
+      "_top3": [
+        "Partial Match",
+        "Contradiction",
+        "Out Of Scope"
+      ]
+    },
+    "LIT": {
+      "Partial Match": {
+        "count": 97,
+        "pct": 24.9
+      },
+      "Out Of Scope": {
+        "count": 98,
+        "pct": 25.2
+      },
+      "Contradiction": {
+        "count": 53,
+        "pct": 13.6
+      },
+      "Distortion": {
+        "count": 71,
+        "pct": 18.3
+      },
+      "Misattribution": {
+        "count": 35,
+        "pct": 9.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 19,
+        "pct": 4.9
+      },
+      "Overgeneralization": {
+        "count": 9,
+        "pct": 2.3
+      },
+      "Degree Error": {
+        "count": 7,
+        "pct": 1.8
+      },
+      "_total": 389,
+      "_top3": [
+        "Out Of Scope",
+        "Partial Match",
+        "Distortion"
+      ]
+    },
+    "CROSS": {
+      "Partial Match": {
+        "count": 1,
+        "pct": 0.7
+      },
+      "Out Of Scope": {
+        "count": 67,
+        "pct": 47.9
+      },
+      "Contradiction": {
+        "count": 17,
+        "pct": 12.1
+      },
+      "Distortion": {
+        "count": 29,
+        "pct": 20.7
+      },
+      "Misattribution": {
+        "count": 7,
+        "pct": 5.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 16,
+        "pct": 11.4
+      },
+      "Degree Error": {
+        "count": 3,
+        "pct": 2.1
+      },
+      "_total": 140,
+      "_top3": [
+        "Out Of Scope",
+        "Distortion",
+        "Contradiction"
+      ]
+    }
+  },
+  "by_structure_pattern": {
+    "CLAIM_EVIDENCE": {
+      "Partial Match": {
+        "count": 225,
+        "pct": 21.6
+      },
+      "Out Of Scope": {
+        "count": 232,
+        "pct": 22.3
+      },
+      "Contradiction": {
+        "count": 190,
+        "pct": 18.3
+      },
+      "Distortion": {
+        "count": 146,
+        "pct": 14.0
+      },
+      "Misattribution": {
+        "count": 120,
+        "pct": 11.5
+      },
+      "Pre-Pivot Reading": {
+        "count": 64,
+        "pct": 6.2
+      },
+      "Overgeneralization": {
+        "count": 34,
+        "pct": 3.3
+      },
+      "Degree Error": {
+        "count": 29,
+        "pct": 2.8
+      },
+      "_total": 1040,
+      "_top3": [
+        "Out Of Scope",
+        "Partial Match",
+        "Contradiction"
+      ]
+    },
+    "PURE_INFO": {
+      "Partial Match": {
+        "count": 234,
+        "pct": 27.3
+      },
+      "Out Of Scope": {
+        "count": 82,
+        "pct": 9.6
+      },
+      "Contradiction": {
+        "count": 152,
+        "pct": 17.8
+      },
+      "Distortion": {
+        "count": 154,
+        "pct": 18.0
+      },
+      "Misattribution": {
+        "count": 152,
+        "pct": 17.8
+      },
+      "Pre-Pivot Reading": {
+        "count": 47,
+        "pct": 5.5
+      },
+      "Overgeneralization": {
+        "count": 3,
+        "pct": 0.4
+      },
+      "Degree Error": {
+        "count": 31,
+        "pct": 3.6
+      },
+      "_total": 856,
+      "_top3": [
+        "Partial Match",
+        "Distortion",
+        "Contradiction"
+      ]
+    },
+    "INFO_TO_CONCL": {
+      "Partial Match": {
+        "count": 106,
+        "pct": 12.6
+      },
+      "Out Of Scope": {
+        "count": 284,
+        "pct": 33.7
+      },
+      "Contradiction": {
+        "count": 167,
+        "pct": 19.8
+      },
+      "Distortion": {
+        "count": 100,
+        "pct": 11.9
+      },
+      "Misattribution": {
+        "count": 72,
+        "pct": 8.6
+      },
+      "Pre-Pivot Reading": {
+        "count": 58,
+        "pct": 6.9
+      },
+      "Overgeneralization": {
+        "count": 40,
+        "pct": 4.8
+      },
+      "Degree Error": {
+        "count": 15,
+        "pct": 1.8
+      },
+      "_total": 842,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Partial Match"
+      ]
+    },
+    "DUAL_CLAIM": {
+      "Partial Match": {
+        "count": 23,
+        "pct": 14.3
+      },
+      "Out Of Scope": {
+        "count": 54,
+        "pct": 33.5
+      },
+      "Contradiction": {
+        "count": 26,
+        "pct": 16.1
+      },
+      "Distortion": {
+        "count": 23,
+        "pct": 14.3
+      },
+      "Misattribution": {
+        "count": 13,
+        "pct": 8.1
+      },
+      "Pre-Pivot Reading": {
+        "count": 10,
+        "pct": 6.2
+      },
+      "Overgeneralization": {
+        "count": 7,
+        "pct": 4.3
+      },
+      "Degree Error": {
+        "count": 5,
+        "pct": 3.1
+      },
+      "_total": 161,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Distortion"
+      ]
+    },
+    "CLASSICAL_ARG": {
+      "Partial Match": {
+        "count": 9,
+        "pct": 6.7
+      },
+      "Out Of Scope": {
+        "count": 63,
+        "pct": 46.7
+      },
+      "Contradiction": {
+        "count": 22,
+        "pct": 16.3
+      },
+      "Distortion": {
+        "count": 11,
+        "pct": 8.1
+      },
+      "Misattribution": {
+        "count": 4,
+        "pct": 3.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 6,
+        "pct": 4.4
+      },
+      "Overgeneralization": {
+        "count": 16,
+        "pct": 11.9
+      },
+      "Degree Error": {
+        "count": 4,
+        "pct": 3.0
+      },
+      "_total": 135,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Overgeneralization"
+      ]
+    },
+    "COUNTER_REBUTTAL": {
+      "Partial Match": {
+        "count": 2,
+        "pct": 2.9
+      },
+      "Out Of Scope": {
+        "count": 30,
+        "pct": 43.5
+      },
+      "Contradiction": {
+        "count": 14,
+        "pct": 20.3
+      },
+      "Distortion": {
+        "count": 12,
+        "pct": 17.4
+      },
+      "Misattribution": {
+        "count": 6,
+        "pct": 8.7
+      },
+      "Pre-Pivot Reading": {
+        "count": 2,
+        "pct": 2.9
+      },
+      "Overgeneralization": {
+        "count": 1,
+        "pct": 1.4
+      },
+      "Degree Error": {
+        "count": 2,
+        "pct": 2.9
+      },
+      "_total": 69,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Distortion"
+      ]
+    }
+  },
+  "by_skill": {
+    "Information and Ideas Command of Evidence": {
+      "Partial Match": {
+        "count": 201,
+        "pct": 35.4
+      },
+      "Out Of Scope": {
+        "count": 112,
+        "pct": 19.7
+      },
+      "Contradiction": {
+        "count": 142,
+        "pct": 25.0
+      },
+      "Distortion": {
+        "count": 50,
+        "pct": 8.8
+      },
+      "Misattribution": {
+        "count": 34,
+        "pct": 6.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 2,
+        "pct": 0.4
+      },
+      "Overgeneralization": {
+        "count": 7,
+        "pct": 1.2
+      },
+      "Degree Error": {
+        "count": 20,
+        "pct": 3.5
+      },
+      "_total": 568,
+      "_top3": [
+        "Partial Match",
+        "Contradiction",
+        "Out Of Scope"
+      ]
+    },
+    "Standard English Conventions Boundaries": {
+      "Partial Match": {
+        "count": 212,
+        "pct": 49.5
+      },
+      "Out Of Scope": {
+        "count": 5,
+        "pct": 1.2
+      },
+      "Contradiction": {
+        "count": 16,
+        "pct": 3.7
+      },
+      "Distortion": {
+        "count": 115,
+        "pct": 26.9
+      },
+      "Misattribution": {
+        "count": 37,
+        "pct": 8.6
+      },
+      "Pre-Pivot Reading": {
+        "count": 34,
+        "pct": 7.9
+      },
+      "Overgeneralization": {
+        "count": 2,
+        "pct": 0.5
+      },
+      "Degree Error": {
+        "count": 7,
+        "pct": 1.6
+      },
+      "_total": 428,
+      "_top3": [
+        "Partial Match",
+        "Distortion",
+        "Misattribution"
+      ]
+    },
+    "Standard English Conventions Form, Structure, and Sense": {
+      "Partial Match": {
+        "count": 83,
+        "pct": 20.3
+      },
+      "Out Of Scope": {
+        "count": 1,
+        "pct": 0.2
+      },
+      "Contradiction": {
+        "count": 47,
+        "pct": 11.5
+      },
+      "Distortion": {
+        "count": 18,
+        "pct": 4.4
+      },
+      "Misattribution": {
+        "count": 229,
+        "pct": 56.1
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Degree Error": {
+        "count": 29,
+        "pct": 7.1
+      },
+      "_total": 408,
+      "_top3": [
+        "Misattribution",
+        "Partial Match",
+        "Contradiction"
+      ]
+    },
+    "Expression of Ideas Transitions": {
+      "Partial Match": {
+        "count": 38,
+        "pct": 10.0
+      },
+      "Out Of Scope": {
+        "count": 8,
+        "pct": 2.1
+      },
+      "Contradiction": {
+        "count": 124,
+        "pct": 32.7
+      },
+      "Distortion": {
+        "count": 52,
+        "pct": 13.7
+      },
+      "Misattribution": {
+        "count": 2,
+        "pct": 0.5
+      },
+      "Pre-Pivot Reading": {
+        "count": 146,
+        "pct": 38.5
+      },
+      "Overgeneralization": {
+        "count": 4,
+        "pct": 1.1
+      },
+      "Degree Error": {
+        "count": 5,
+        "pct": 1.3
+      },
+      "_total": 379,
+      "_top3": [
+        "Pre-Pivot Reading",
+        "Contradiction",
+        "Distortion"
+      ]
+    },
+    "Craft and Structure Text Structure and Purpose": {
+      "Partial Match": {
+        "count": 33,
+        "pct": 11.4
+      },
+      "Out Of Scope": {
+        "count": 160,
+        "pct": 55.2
+      },
+      "Contradiction": {
+        "count": 23,
+        "pct": 7.9
+      },
+      "Distortion": {
+        "count": 25,
+        "pct": 8.6
+      },
+      "Misattribution": {
+        "count": 23,
+        "pct": 7.9
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 22,
+        "pct": 7.6
+      },
+      "Degree Error": {
+        "count": 4,
+        "pct": 1.4
+      },
+      "_total": 290,
+      "_top3": [
+        "Out Of Scope",
+        "Partial Match",
+        "Distortion"
+      ]
+    },
+    "Information and Ideas Central Ideas and Details": {
+      "Partial Match": {
+        "count": 20,
+        "pct": 7.1
+      },
+      "Out Of Scope": {
+        "count": 161,
+        "pct": 57.5
+      },
+      "Contradiction": {
+        "count": 46,
+        "pct": 16.4
+      },
+      "Distortion": {
+        "count": 22,
+        "pct": 7.9
+      },
+      "Misattribution": {
+        "count": 7,
+        "pct": 2.5
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 22,
+        "pct": 7.9
+      },
+      "Degree Error": {
+        "count": 2,
+        "pct": 0.7
+      },
+      "_total": 280,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Distortion"
+      ]
+    },
+    "Craft and Structure Words in Context": {
+      "Partial Match": {
+        "count": 1,
+        "pct": 0.4
+      },
+      "Out Of Scope": {
+        "count": 45,
+        "pct": 16.5
+      },
+      "Contradiction": {
+        "count": 93,
+        "pct": 34.1
+      },
+      "Distortion": {
+        "count": 119,
+        "pct": 43.6
+      },
+      "Misattribution": {
+        "count": 7,
+        "pct": 2.6
+      },
+      "Pre-Pivot Reading": {
+        "count": 1,
+        "pct": 0.4
+      },
+      "Overgeneralization": {
+        "count": 1,
+        "pct": 0.4
+      },
+      "Degree Error": {
+        "count": 6,
+        "pct": 2.2
+      },
+      "_total": 273,
+      "_top3": [
+        "Distortion",
+        "Contradiction",
+        "Out Of Scope"
+      ]
+    },
+    "Information and Ideas Inferences": {
+      "Partial Match": {
+        "count": 2,
+        "pct": 0.7
+      },
+      "Out Of Scope": {
+        "count": 176,
+        "pct": 64.7
+      },
+      "Contradiction": {
+        "count": 38,
+        "pct": 14.0
+      },
+      "Distortion": {
+        "count": 9,
+        "pct": 3.3
+      },
+      "Misattribution": {
+        "count": 12,
+        "pct": 4.4
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 26,
+        "pct": 9.6
+      },
+      "Degree Error": {
+        "count": 9,
+        "pct": 3.3
+      },
+      "_total": 272,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Overgeneralization"
+      ]
+    },
+    "Craft and Structure Cross-Text Connections": {
+      "Partial Match": {
+        "count": 1,
+        "pct": 0.7
+      },
+      "Out Of Scope": {
+        "count": 73,
+        "pct": 50.0
+      },
+      "Contradiction": {
+        "count": 19,
+        "pct": 13.0
+      },
+      "Distortion": {
+        "count": 27,
+        "pct": 18.5
+      },
+      "Misattribution": {
+        "count": 7,
+        "pct": 4.8
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 16,
+        "pct": 11.0
+      },
+      "Degree Error": {
+        "count": 3,
+        "pct": 2.1
+      },
+      "_total": 146,
+      "_top3": [
+        "Out Of Scope",
+        "Distortion",
+        "Contradiction"
+      ]
+    },
+    "Transitions": {
+      "Partial Match": {
+        "count": 1,
+        "pct": 4.8
+      },
+      "Out Of Scope": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Contradiction": {
+        "count": 14,
+        "pct": 66.7
+      },
+      "Distortion": {
+        "count": 2,
+        "pct": 9.5
+      },
+      "Misattribution": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 4,
+        "pct": 19.0
+      },
+      "Overgeneralization": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Degree Error": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "_total": 21,
+      "_top3": [
+        "Contradiction",
+        "Pre-Pivot Reading",
+        "Distortion"
+      ]
+    },
+    "Boundaries": {
+      "Partial Match": {
+        "count": 4,
+        "pct": 33.3
+      },
+      "Out Of Scope": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Contradiction": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Distortion": {
+        "count": 3,
+        "pct": 25.0
+      },
+      "Misattribution": {
+        "count": 5,
+        "pct": 41.7
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Degree Error": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "_total": 12,
+      "_top3": [
+        "Misattribution",
+        "Partial Match",
+        "Distortion"
+      ]
+    },
+    "Form, Structure, and Sense": {
+      "Partial Match": {
+        "count": 3,
+        "pct": 25.0
+      },
+      "Out Of Scope": {
+        "count": 2,
+        "pct": 16.7
+      },
+      "Contradiction": {
+        "count": 3,
+        "pct": 25.0
+      },
+      "Distortion": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Misattribution": {
+        "count": 4,
+        "pct": 33.3
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Degree Error": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "_total": 12,
+      "_top3": [
+        "Misattribution",
+        "Contradiction",
+        "Partial Match"
+      ]
+    },
+    "Words in Context": {
+      "Partial Match": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Out Of Scope": {
+        "count": 1,
+        "pct": 16.7
+      },
+      "Contradiction": {
+        "count": 3,
+        "pct": 50.0
+      },
+      "Distortion": {
+        "count": 2,
+        "pct": 33.3
+      },
+      "Misattribution": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Degree Error": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "_total": 6,
+      "_top3": [
+        "Contradiction",
+        "Distortion",
+        "Out Of Scope"
+      ]
+    },
+    "Inferences": {
+      "Partial Match": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Out Of Scope": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Contradiction": {
+        "count": 3,
+        "pct": 60.0
+      },
+      "Distortion": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Misattribution": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 1,
+        "pct": 20.0
+      },
+      "Degree Error": {
+        "count": 1,
+        "pct": 20.0
+      },
+      "_total": 5,
+      "_top3": [
+        "Contradiction",
+        "Degree Error",
+        "Overgeneralization"
+      ]
+    },
+    "Cross-Text Connections": {
+      "Partial Match": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Out Of Scope": {
+        "count": 1,
+        "pct": 33.3
+      },
+      "Contradiction": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Distortion": {
+        "count": 2,
+        "pct": 66.7
+      },
+      "Misattribution": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Degree Error": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "_total": 3,
+      "_top3": [
+        "Distortion",
+        "Out Of Scope"
+      ]
+    }
+  },
+  "by_cp_count": {
+    "1-2 CPs (짧은 지문)": {
+      "Partial Match": {
+        "count": 376,
+        "pct": 28.1
+      },
+      "Out Of Scope": {
+        "count": 132,
+        "pct": 9.9
+      },
+      "Contradiction": {
+        "count": 215,
+        "pct": 16.0
+      },
+      "Distortion": {
+        "count": 246,
+        "pct": 18.4
+      },
+      "Misattribution": {
+        "count": 245,
+        "pct": 18.3
+      },
+      "Pre-Pivot Reading": {
+        "count": 74,
+        "pct": 5.5
+      },
+      "Overgeneralization": {
+        "count": 8,
+        "pct": 0.6
+      },
+      "Degree Error": {
+        "count": 43,
+        "pct": 3.2
+      },
+      "_total": 1340,
+      "_top3": [
+        "Partial Match",
+        "Distortion",
+        "Misattribution"
+      ]
+    },
+    "3-4 CPs (중간)": {
+      "Partial Match": {
+        "count": 191,
+        "pct": 14.3
+      },
+      "Out Of Scope": {
+        "count": 401,
+        "pct": 30.1
+      },
+      "Contradiction": {
+        "count": 281,
+        "pct": 21.1
+      },
+      "Distortion": {
+        "count": 151,
+        "pct": 11.3
+      },
+      "Misattribution": {
+        "count": 97,
+        "pct": 7.3
+      },
+      "Pre-Pivot Reading": {
+        "count": 113,
+        "pct": 8.5
+      },
+      "Overgeneralization": {
+        "count": 65,
+        "pct": 4.9
+      },
+      "Degree Error": {
+        "count": 34,
+        "pct": 2.6
+      },
+      "_total": 1333,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Partial Match"
+      ]
+    },
+    "5-6 CPs (긴 지문)": {
+      "Partial Match": {
+        "count": 15,
+        "pct": 5.4
+      },
+      "Out Of Scope": {
+        "count": 142,
+        "pct": 51.3
+      },
+      "Contradiction": {
+        "count": 46,
+        "pct": 16.6
+      },
+      "Distortion": {
+        "count": 34,
+        "pct": 12.3
+      },
+      "Misattribution": {
+        "count": 17,
+        "pct": 6.1
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 20,
+        "pct": 7.2
+      },
+      "Degree Error": {
+        "count": 3,
+        "pct": 1.1
+      },
+      "_total": 277,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Distortion"
+      ]
+    },
+    "7+ CPs (매우 긴)": {
+      "Partial Match": {
+        "count": 17,
+        "pct": 11.1
+      },
+      "Out Of Scope": {
+        "count": 70,
+        "pct": 45.8
+      },
+      "Contradiction": {
+        "count": 29,
+        "pct": 19.0
+      },
+      "Distortion": {
+        "count": 15,
+        "pct": 9.8
+      },
+      "Misattribution": {
+        "count": 8,
+        "pct": 5.2
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 8,
+        "pct": 5.2
+      },
+      "Degree Error": {
+        "count": 6,
+        "pct": 3.9
+      },
+      "_total": 153,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Partial Match"
+      ]
+    }
+  },
+  "by_difficulty": {
+    "Easy": {
+      "Partial Match": {
+        "count": 180,
+        "pct": 18.8
+      },
+      "Out Of Scope": {
+        "count": 200,
+        "pct": 20.9
+      },
+      "Contradiction": {
+        "count": 200,
+        "pct": 20.9
+      },
+      "Distortion": {
+        "count": 116,
+        "pct": 12.1
+      },
+      "Misattribution": {
+        "count": 123,
+        "pct": 12.8
+      },
+      "Pre-Pivot Reading": {
+        "count": 84,
+        "pct": 8.8
+      },
+      "Overgeneralization": {
+        "count": 26,
+        "pct": 2.7
+      },
+      "Degree Error": {
+        "count": 29,
+        "pct": 3.0
+      },
+      "_total": 959,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Partial Match"
+      ]
+    },
+    "Medium": {
+      "Partial Match": {
+        "count": 201,
+        "pct": 18.1
+      },
+      "Out Of Scope": {
+        "count": 304,
+        "pct": 27.3
+      },
+      "Contradiction": {
+        "count": 194,
+        "pct": 17.4
+      },
+      "Distortion": {
+        "count": 172,
+        "pct": 15.5
+      },
+      "Misattribution": {
+        "count": 120,
+        "pct": 10.8
+      },
+      "Pre-Pivot Reading": {
+        "count": 55,
+        "pct": 4.9
+      },
+      "Overgeneralization": {
+        "count": 39,
+        "pct": 3.5
+      },
+      "Degree Error": {
+        "count": 28,
+        "pct": 2.5
+      },
+      "_total": 1113,
+      "_top3": [
+        "Out Of Scope",
+        "Partial Match",
+        "Contradiction"
+      ]
+    },
+    "Hard": {
+      "Partial Match": {
+        "count": 218,
+        "pct": 21.1
+      },
+      "Out Of Scope": {
+        "count": 241,
+        "pct": 23.4
+      },
+      "Contradiction": {
+        "count": 177,
+        "pct": 17.2
+      },
+      "Distortion": {
+        "count": 158,
+        "pct": 15.3
+      },
+      "Misattribution": {
+        "count": 124,
+        "pct": 12.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 48,
+        "pct": 4.7
+      },
+      "Overgeneralization": {
+        "count": 36,
+        "pct": 3.5
+      },
+      "Degree Error": {
+        "count": 29,
+        "pct": 2.8
+      },
+      "_total": 1031,
+      "_top3": [
+        "Out Of Scope",
+        "Partial Match",
+        "Contradiction"
+      ]
+    }
+  },
+  "by_sequence_simple_top10": {
+    "EXP_I-I": {
+      "Partial Match": {
+        "count": 156,
+        "pct": 28.3
+      },
+      "Out Of Scope": {
+        "count": 41,
+        "pct": 7.4
+      },
+      "Contradiction": {
+        "count": 106,
+        "pct": 19.2
+      },
+      "Distortion": {
+        "count": 98,
+        "pct": 17.8
+      },
+      "Misattribution": {
+        "count": 92,
+        "pct": 16.7
+      },
+      "Pre-Pivot Reading": {
+        "count": 36,
+        "pct": 6.5
+      },
+      "Overgeneralization": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Degree Error": {
+        "count": 21,
+        "pct": 3.8
+      },
+      "_total": 551,
+      "_top3": [
+        "Partial Match",
+        "Contradiction",
+        "Distortion"
+      ]
+    },
+    "EXP_I-I-CL": {
+      "Partial Match": {
+        "count": 44,
+        "pct": 11.5
+      },
+      "Out Of Scope": {
+        "count": 101,
+        "pct": 26.5
+      },
+      "Contradiction": {
+        "count": 91,
+        "pct": 23.9
+      },
+      "Distortion": {
+        "count": 52,
+        "pct": 13.6
+      },
+      "Misattribution": {
+        "count": 34,
+        "pct": 8.9
+      },
+      "Pre-Pivot Reading": {
+        "count": 37,
+        "pct": 9.7
+      },
+      "Overgeneralization": {
+        "count": 15,
+        "pct": 3.9
+      },
+      "Degree Error": {
+        "count": 7,
+        "pct": 1.8
+      },
+      "_total": 381,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Distortion"
+      ]
+    },
+    "EXP_I-I-I-CL": {
+      "Partial Match": {
+        "count": 19,
+        "pct": 10.5
+      },
+      "Out Of Scope": {
+        "count": 74,
+        "pct": 40.9
+      },
+      "Contradiction": {
+        "count": 27,
+        "pct": 14.9
+      },
+      "Distortion": {
+        "count": 13,
+        "pct": 7.2
+      },
+      "Misattribution": {
+        "count": 16,
+        "pct": 8.8
+      },
+      "Pre-Pivot Reading": {
+        "count": 9,
+        "pct": 5.0
+      },
+      "Overgeneralization": {
+        "count": 17,
+        "pct": 9.4
+      },
+      "Degree Error": {
+        "count": 6,
+        "pct": 3.3
+      },
+      "_total": 181,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Partial Match"
+      ]
+    },
+    "EXP_I": {
+      "Partial Match": {
+        "count": 44,
+        "pct": 28.9
+      },
+      "Out Of Scope": {
+        "count": 16,
+        "pct": 10.5
+      },
+      "Contradiction": {
+        "count": 14,
+        "pct": 9.2
+      },
+      "Distortion": {
+        "count": 26,
+        "pct": 17.1
+      },
+      "Misattribution": {
+        "count": 43,
+        "pct": 28.3
+      },
+      "Pre-Pivot Reading": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Overgeneralization": {
+        "count": 1,
+        "pct": 0.7
+      },
+      "Degree Error": {
+        "count": 8,
+        "pct": 5.3
+      },
+      "_total": 152,
+      "_top3": [
+        "Partial Match",
+        "Misattribution",
+        "Distortion"
+      ]
+    },
+    "ARG_C-CL": {
+      "Partial Match": {
+        "count": 16,
+        "pct": 12.9
+      },
+      "Out Of Scope": {
+        "count": 16,
+        "pct": 12.9
+      },
+      "Contradiction": {
+        "count": 32,
+        "pct": 25.8
+      },
+      "Distortion": {
+        "count": 26,
+        "pct": 21.0
+      },
+      "Misattribution": {
+        "count": 17,
+        "pct": 13.7
+      },
+      "Pre-Pivot Reading": {
+        "count": 11,
+        "pct": 8.9
+      },
+      "Overgeneralization": {
+        "count": 3,
+        "pct": 2.4
+      },
+      "Degree Error": {
+        "count": 3,
+        "pct": 2.4
+      },
+      "_total": 124,
+      "_top3": [
+        "Contradiction",
+        "Distortion",
+        "Misattribution"
+      ]
+    },
+    "ARG_I-C": {
+      "Partial Match": {
+        "count": 38,
+        "pct": 36.9
+      },
+      "Out Of Scope": {
+        "count": 15,
+        "pct": 14.6
+      },
+      "Contradiction": {
+        "count": 9,
+        "pct": 8.7
+      },
+      "Distortion": {
+        "count": 10,
+        "pct": 9.7
+      },
+      "Misattribution": {
+        "count": 18,
+        "pct": 17.5
+      },
+      "Pre-Pivot Reading": {
+        "count": 7,
+        "pct": 6.8
+      },
+      "Overgeneralization": {
+        "count": 2,
+        "pct": 1.9
+      },
+      "Degree Error": {
+        "count": 4,
+        "pct": 3.9
+      },
+      "_total": 103,
+      "_top3": [
+        "Partial Match",
+        "Misattribution",
+        "Out Of Scope"
+      ]
+    },
+    "LIT_I-C": {
+      "Partial Match": {
+        "count": 50,
+        "pct": 51.0
+      },
+      "Out Of Scope": {
+        "count": 10,
+        "pct": 10.2
+      },
+      "Contradiction": {
+        "count": 4,
+        "pct": 4.1
+      },
+      "Distortion": {
+        "count": 19,
+        "pct": 19.4
+      },
+      "Misattribution": {
+        "count": 14,
+        "pct": 14.3
+      },
+      "Pre-Pivot Reading": {
+        "count": 1,
+        "pct": 1.0
+      },
+      "Overgeneralization": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "Degree Error": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "_total": 98,
+      "_top3": [
+        "Partial Match",
+        "Distortion",
+        "Misattribution"
+      ]
+    },
+    "EXP_I-I-C": {
+      "Partial Match": {
+        "count": 22,
+        "pct": 24.4
+      },
+      "Out Of Scope": {
+        "count": 26,
+        "pct": 28.9
+      },
+      "Contradiction": {
+        "count": 22,
+        "pct": 24.4
+      },
+      "Distortion": {
+        "count": 7,
+        "pct": 7.8
+      },
+      "Misattribution": {
+        "count": 2,
+        "pct": 2.2
+      },
+      "Pre-Pivot Reading": {
+        "count": 9,
+        "pct": 10.0
+      },
+      "Overgeneralization": {
+        "count": 2,
+        "pct": 2.2
+      },
+      "Degree Error": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "_total": 90,
+      "_top3": [
+        "Out Of Scope",
+        "Contradiction",
+        "Partial Match"
+      ]
+    },
+    "EXP_I-I-I": {
+      "Partial Match": {
+        "count": 18,
+        "pct": 22.2
+      },
+      "Out Of Scope": {
+        "count": 4,
+        "pct": 4.9
+      },
+      "Contradiction": {
+        "count": 25,
+        "pct": 30.9
+      },
+      "Distortion": {
+        "count": 13,
+        "pct": 16.0
+      },
+      "Misattribution": {
+        "count": 8,
+        "pct": 9.9
+      },
+      "Pre-Pivot Reading": {
+        "count": 10,
+        "pct": 12.3
+      },
+      "Overgeneralization": {
+        "count": 1,
+        "pct": 1.2
+      },
+      "Degree Error": {
+        "count": 2,
+        "pct": 2.5
+      },
+      "_total": 81,
+      "_top3": [
+        "Contradiction",
+        "Partial Match",
+        "Distortion"
+      ]
+    },
+    "EXP_I-C": {
+      "Partial Match": {
+        "count": 18,
+        "pct": 24.7
+      },
+      "Out Of Scope": {
+        "count": 12,
+        "pct": 16.4
+      },
+      "Contradiction": {
+        "count": 14,
+        "pct": 19.2
+      },
+      "Distortion": {
+        "count": 14,
+        "pct": 19.2
+      },
+      "Misattribution": {
+        "count": 8,
+        "pct": 11.0
+      },
+      "Pre-Pivot Reading": {
+        "count": 4,
+        "pct": 5.5
+      },
+      "Overgeneralization": {
+        "count": 2,
+        "pct": 2.7
+      },
+      "Degree Error": {
+        "count": 1,
+        "pct": 1.4
+      },
+      "_total": 73,
+      "_top3": [
+        "Partial Match",
+        "Contradiction",
+        "Distortion"
+      ]
+    }
+  }
+}

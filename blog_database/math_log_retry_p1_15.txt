@@ -1,0 +1,31 @@
+Math QB 파싱: p1~p15 / 83페이지 전체
+출력: math_qb_p1_15.jsonl
+
+기존 완료: 0개 문제, 0개 페이지
+
+p01: ✅ 3409707e [Easy] LaTeX=True Fig=False
+p02: ✅ 744ee7d7 [Easy] LaTeX=False Fig=True
+p03: ✅ 187f74bc [Hard] LaTeX=True Fig=True
+p04: ✅ 1a1a95de [Hard] LaTeX=True Fig=True
+p05: skip (non-question page, 178자)
+p06: ✅ 465c73ad [Easy] LaTeX=True Fig=False
+p07: ✅ 3dffe9d2 [Easy] LaTeX=True Fig=False
+p08: ✅ 4edecdba [Easy] LaTeX=True Fig=False
+p09: ✅ 00ec9102 [Easy] LaTeX=True Fig=False
+  [p10] JSON error: Invalid \escape: line 14 column 435 (char 921) | raw: {
+  "question_id": "4047cfa7",
+  "domain": "Algebra",
+  "skill": "Linear inequalities in one or two variables",
+  "difficulty": "Easy",
+  "question_text": "For a literature class, a student's essay ne
+p10: no question
+p11: ✅ 343aaff6 [Easy] LaTeX=True Fig=False
+p12: ✅ 346d5c2e [Easy] LaTeX=True Fig=False
+p13: ✅ 68f343c9 [Medium] LaTeX=True Fig=False
+p14: ✅ 5ab9903f [Medium] LaTeX=True Fig=False
+p15: ✅ 63d03c0b [Hard] LaTeX=True Fig=False
+
+=== 완료 ===
+신규 저장: 13개 | 스킵: 0개 | 에러: 0개
+출력 파일: math_qb_p1_15.jsonl
+전체 저장 수: 13개

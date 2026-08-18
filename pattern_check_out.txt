@@ -1,0 +1,225 @@
+=== PATTERN 4: EXEMPLIFICATION SAMPLES ===
+--- Sample 1 ---
+ID: 76e4c51d
+Skill: Craft and Structure Words in Context
+Passage: The güiro, a musical instrument traditionally made from a dried and hollowed gourd, is thought to have originated with
+the Taíno people of Puerto Rico. Players use a wooden stick to scrape along ridges cut into the side of the gourd,
+
+creating sounds that are highly ______: the sounds produced by güiros can differ based on the distance between the
+
+ridges, the types of strokes the player uses, and
+Question: Which choice completes the text with the most logical and precise word or phrase?
+  A: overlooked
+  B: powerful
+  C: routine
+  D: variable
+Correct: D
+Rationale: Choice D is the best answer because it most logically completes the text’s discussion of the sounds made by güiros. In
+this context, “variable” means able to change. The text begins by explaining that güiros are instruments made out of
+
+hollowed gourds with ridges cut into their sides and that players scrape the ridges with wooden sticks to produce
+
+sounds. The text goes on to say that güiros’ sounds can change depending on gourd thickness, the distance between
+
+ridges, and the types of strokes the player uses, thus supporting the idea that the sounds created by these instruments
+
+are variable
+
+--- Sample 2 ---
+ID: 84ece3f6
+Skill: Craft and Structure Words in Context
+Passage: The following text is adapted from Nathaniel Hawthorne’s 1844 short story “Drowne’s Wooden Image.” Drowne, a young
+man, is carving a wooden figure to decorate the front of a ship.
+
+Day by day, the work assumed greater precision, and settled its irregular and misty outline into distincter grace and
+beauty. The general design was now obvious to the common eye.
+Question: As used in the text, what does the word “assumed” most nearly mean?
+  A: Acquired
+  B: Acknowledged
+  C: Imitated
+  D: Speculated
+Correct: A
+Rationale: Choice A is the best answer because as used in the text, “assumed” most nearly means acquired, or came to possess.
+
+The text portrays a character named Drowne carving a figure out of wood. At first “irregular and misty,” or haphazard
+
+and indistinct, the figure’s outline gradually showed “distincter grace and beauty” until the general design of the carved
+object “was now obvious to the common eye,” or plainly recognizable to anyone. In other words, as Drowne continued to
+
+carve, the wooden object came to possess, or acquired, greater precision, changing from an indistinct outline or shape
+
+int
+
+--- Sample 3 ---
+ID: 9aa44886
+Skill: Craft and Structure Words in Context
+Passage: The following text is from F. Scott Fitzgerald’s 1925 novel The Great Gatsby.
+
+[Jay Gatsby] was balancing himself on the dashboard of his car with that resourcefulness of movement that is so
+
+peculiarly American—that comes, I suppose, with the absence of lifting work in youth and, even more, with the
+
+formless grace of our nervous, sporadic games. This quality was continually breaking through his 
+Question: As used in the text, what does the word “quality” most nearly mean?
+  A: Standard
+  B: Prestige
+  C: Characteristic
+  D: Accomplishment
+Correct: C
+Rationale: Choice C is the best answer. “This quality” refers to Gatsby’s “resourcefulness of movement,” which is described as a
+
+characteristic or trait of his. 
+
+Choice A is incorrect. This isn’t what “quality” means in this context. Here, “this quality” refers to Gatsby’s
+
+“resourcefulness of movement,” which is described as a characteristic or trait of his. “Standard” is a synonym for a
+
+different definition of “quality”: the degree of excellence of something. Choice B is incorrect. This isn’t what “quality”
+
+means in this context. Here, “this quality” refers to Gatsby’s “resourcefulness of movement,
+
+
+=== PATTERN 5: RHETORICAL SYNTHESIS SAMPLES ===
+--- Sample 1 ---
+ID: 264e7415
+Question (first 200): Which choice most
+effectively uses relevant information from the notes to accomplish this goal?
+Has Notes/While researching pattern: False
+  A: The sixty-two-mile-long Philadelphia and Lancaster Turnpike connected the Pennsylvania cities of Philadelphia and
+Lancaster. B. The Philadelphia and L
+  B: The Philadelphia and Lancaster Turnpike was the first private turnpike in the United States.
+
+The Philadelphia and Lancaster Turnpike, which connected
+  C: D. A historic Pennsylvania road, the Philadelphia and Lancaster Turnpike was completed in 1794.
+  D: A historic Pennsylvania road, the Philadelphia and Lancaster Turnpike was completed in 1794.
+Correct: A
+Rationale: Choice A is the best answer. The sentence emphasizes the distance covered by the Philadelphia and Lancaster Turnpike,
+noting that the turnpike, which connected the two Pennsylvania cities in its name, was sixty-two miles long.
+
+Choice B is incorrect. The sentence emphasizes the significance of the turnpike; it doesn’t emphasize the distance that
+the turnpike covered. Choice C is incorrect. While the sentence mentions that the turnpike connected two Pennsylvania
+cities, it doesn’t emphasize the specific distance covered by the turnpike. Choice D is incorrect. The sentence
+
+emphasizes when the t
+
+--- Sample 2 ---
+ID: e3bbf2bf
+Question (first 200): US soldiers who were members of the Choctaw Nation in Oklahoma used their native language to relay coded
+information.
+Has Notes/While researching pattern: False
+  A: B. In World War II, one group of Navajo (Diné) soldiers was known as the Navajo Code Talkers.
+
+Both the Choctaw Code Talkers and the Navajo Code Talke
+  B: In World War II, one group of Navajo (Diné) soldiers was known as the Navajo Code Talkers.
+
+Both the Choctaw Code Talkers and the Navajo Code Talkers 
+  C: D. The Choctaw Code Talkers, not the Navajo Code Talkers, served in World War I.
+  D: The Choctaw Code Talkers, not the Navajo Code Talkers, served in World War I.
+Correct: C
+Rationale: Choice C is the best answer. The sentence emphasizes a similarity between the Choctaw Code Talkers and the Navajo
+Code Talkers by explaining that both groups used their native languages to transmit coded messages for the military.
+
+Choice A is incorrect. The sentence describes the Choctaw Code Talkers; it doesn’t emphasize a similarity between the
+
+Choctaw Code Talkers and the Navajo Code Talkers. Choice B is incorrect. The sentence introduces the Navajo Code
+
+Talkers; it doesn’t emphasize a similarity between the Choctaw Code Talkers and the Navajo Code Talkers. Choice D is
+
+incorrect. The se
+
+--- Sample 3 ---
+ID: e2693197
+Question (first 200): Which choice most effectively uses relevant
+information from the notes to accomplish this goal?
+Has Notes/While researching pattern: False
+  A: In Assertion of Will, the figures’ clothing is made of fabric pieces stitched to the painting’s canvas.
+  B: The exhibition Oracles of the Pink Universe featured artworks by artist Simphiwe Ndzube.
+  C: Depicting three standing, clothed figures, Assertion of Will is a painting by Simphiwe Ndzube.
+
+Simphiwe Ndzube’s Assertion of Will was one of eight a
+  D: 
+Correct: A
+Rationale: Choice A is the best answer. This choice directly describes how fabric is used in Assertion of Will, by explaining that the
+fabric pieces are part of the painting itself. 
+
+Choice B is incorrect. This choice provides contextual information about the exhibition, but it doesn’t mention anything
+about the painting or the fabric. Choice C is incorrect. This choice mentions that the figures are clothed, but it doesn’t
+explain how the fabric is integrated into the painting. Choice D is incorrect. This choice provides contextual information
+
+about the painting, but it doesn’t mention anything about t
+
+
+=== PATTERN 6: CROSS-TEXT CONNECTIONS SAMPLES ===
+--- Sample 1 ---
+ID: 02fd3da7
+Has Text 1/Text 2: True
+Question: Based on the texts, how would Singh and Roy (Text 2) most likely respond to the research discussed in Text 1?
+  A: Only countries of a certain population size should implement mandatory voting.
+
+People who are forced to vote are likely to become politically engaged
+  B: Requiring people to vote does not necessarily lead to election outcomes that better represent the preferences of the
+country as a whole.
+  C: D. Countries that require voting must also make the process of voting easier for their citizens.
+  D: Countries that require voting must also make the process of voting easier for their citizens.
+Correct: C
+Rationale: Choice C is the best answer. Text 1 claims that mandatory voting results in elections that "better reflect the preferences
+
+of the country." Singh and Roy disagree. They claim that more voters doesn’t equal more quality votes—instead, they
+
+argue that forced voting may lead to less-informed votes that "may not reflect [voters’] actual preferences."
+
+Choice A is incorrect. Neither text mentions the population size of countries that require voting, or how that might affect
+
+election outcomes. Choice B is incorrect. Neither text discusses the effects of mandatory voting on other forms of
+
+political engagement. Choice D is incorrect. Neither text discusses the ease or difficulty of the voting pr
+
+--- Sample 2 ---
+ID: 8d802289
+Has Text 1/Text 2: True
+Question: Based on the texts, both authors would most likely agree with which statement?
+  A: Dancers who worked with Ailey greatly appreciated his supportive approach as a choreographer.
+  B: Ailey’s work was strongly influenced by jazz.
+  C: Audiences were mostly unfamiliar with the jazz music in Ailey’s works.
+  D: Ailey blended multiple genres of music together when choreographing dance pieces.
+Correct: B
+Rationale: Choice B is the best answer. Author 1 states that Ailey had a “deep admiration for jazz music” and that he “helped bring
+jazz to life for his audiences.” Author 2 states that “Jazz is present throughout Ailey’s work.” While the authors name
+different aspects of Ailey’s work as the most influenced by jazz, they agree that jazz was a strong influence. 
+
+Choice A is incorrect. This isn’t something that either text claims. Neither text mentions how Ailey’s dancers felt about his
+
+approach as a choreographer, so we have no evidence that either author would agree with this. Choice C is incorrect. This
+
+isn’t something that either text claims. Neither text mentions how familiar audiences were with 
+
+--- Sample 3 ---
+ID: 835d1ae6
+Has Text 1/Text 2: True
+Question: Based on the texts, what would Lisa Trever (Text 2) most likely say about the interpretation presented in the underlined
+portion of Text 1?
+  A: Depictions of human faces are significantly more realistic than depictions of plants and other animals are.
+
+It is likely that some depictions of huma
+  B: C. Some vessels may have been damaged during their excavation and thus provide little insight into Moche culture.
+
+Markings on depictions of human fac
+  C: Some vessels may have been damaged during their excavation and thus provide little insight into Moche culture.
+
+Markings on depictions of human faces 
+  D: 
+Correct: D
+Rationale: Choice D is the best answer. Trever thinks that the “hyper-realistic portrayal of identifiable people” interpretation ignores
+
+the sculptors’ imagination and creativity. We can infer that Trevor thinks the facial markings on the sculptures may not
+
+have represented real skin blemishes on real people.
+
+Choice A is incorrect. The text gives us no reason to think that Trever would respond to the underlined interpretation in
+
+this way. Neither text compares the depictions of human faces to the depictions of plants or animals, so we have no
+
+basis to draw this conclusion. Choice B is incorrect. The text gives us no reason to think that Trever would respond to the
+
+underlined interpretation in thi
+

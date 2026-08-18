@@ -1,0 +1,19 @@
+# User data - preserve during updates
+user/changelog.md
+user/errors.md
+user/agent-errors/*.md
+user/custom/**
+user/.errors-read-marker
+user/.mcp-markers.json
+user/.mcp-*-marker
+user/.skills-marker
+
+# Local settings
+settings.local.json
+
+# Keep folder structure
+!user/.gitkeep
+!user/agent-errors/.gitkeep
+!user/custom/agents/.gitkeep
+!user/custom/skills/.gitkeep
+!user/custom/commands/.gitkeep

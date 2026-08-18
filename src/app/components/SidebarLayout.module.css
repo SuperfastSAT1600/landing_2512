@@ -1,0 +1,29 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.main {
+    flex: 1;
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    .container {
+        flex-direction: column;
+        /* Stacked (Sidebar is fixed overlay now) */
+        padding-top: 0;
+        /* Removed top padding as Hero handles it or Header is overlay */
+    }
+
+    .main {
+        width: 100%;
+        padding-left: 320px;
+        /* Push content right to accommodate fixed sidebar */
+    }
+
+    .sidebarWrapper {
+        /* Wrapper is just a placeholder now, sidebar is fixed inside */
+    }
+}

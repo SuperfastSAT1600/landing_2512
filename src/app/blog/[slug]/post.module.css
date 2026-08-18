@@ -1,0 +1,162 @@
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--background);
+}
+
+.header {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+@media (prefers-color-scheme: dark) {
+    .header {
+        border-color: var(--gray-800);
+    }
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    transition: color 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+    .backLink {
+        color: var(--gray-200);
+    }
+}
+
+.backLink:hover {
+    color: var(--primary);
+}
+
+.main {
+    flex-grow: 1;
+    padding: 5rem 0;
+}
+
+.article {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.articleHeader {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.meta {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.category {
+    color: var(--primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.date {
+    color: var(--gray-800);
+}
+
+@media (prefers-color-scheme: dark) {
+    .date {
+        color: #888;
+    }
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--foreground);
+}
+
+/* Content Typography */
+.content {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--gray-800);
+}
+
+@media (prefers-color-scheme: dark) {
+    .content {
+        color: var(--gray-200);
+    }
+}
+
+.content h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    color: var(--foreground);
+}
+
+.content h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--foreground);
+}
+
+.content p {
+    margin-bottom: 1.5rem;
+}
+
+.content ul,
+.content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.content li {
+    margin-bottom: 0.5rem;
+}
+
+.content strong {
+    font-weight: 700;
+    color: var(--foreground);
+}
+
+.content a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* Instagram Reel embed */
+:global(.instagram-reel-wrapper) {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+:global(.instagram-reel-embed) {
+    width: 100%;
+    max-width: 420px;
+    height: min(85vh, 720px);
+    border: 0;
+    border-radius: 16px;
+    background: #000;
+    display: block;
+}

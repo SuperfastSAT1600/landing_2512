@@ -1,0 +1,3 @@
+# 누적된 수정 패턴 로그
+# 포스팅별 수정 이유를 기록해서 다음 포스팅에 반영
+# 형식: {"date": "2026-05-18", "slug": "inference-sequencing", "pattern": "...", "count": 1}

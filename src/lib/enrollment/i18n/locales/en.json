@@ -1,0 +1,294 @@
+{
+  "meta": {
+    "title": "SuperfastSAT",
+    "description": "Class packages & learning system"
+  },
+  "hero": {
+    "sat": {
+      "title": "Choose the Right Class for Your Child",
+      "description": "Follow the steps to find the perfect class package for you."
+    },
+    "ap": {
+      "title": "The Standard of Managed AP",
+      "description": "1:1 tutoring program with subject-specific expert coaches."
+    }
+  },
+  "common": {
+    "hours": "hrs",
+    "monthly": "mo",
+    "savings": "saved",
+    "recommended": "Best",
+    "managed": "Managed",
+    "unmanaged": "Self-Study",
+    "perMonth": "/mo",
+    "discountApplied": "-{{rate}}% discount applied",
+    "savingsAmount": "Save {{amount}} -{{rate}}%",
+    "savingsVsRegular": "Save {{amount}} vs. regular price (-{{rate}}%)"
+  },
+  "programType": {
+    "sectionTitle": "Choose Program",
+    "regular": {
+      "name": "Regular Class",
+      "subtitle": "Structured Learning",
+      "description": "A systematic SAT program with a dedicated coach and manager"
+    },
+    "summer-intensive": {
+      "name": "Summer Intensive",
+      "subtitle": "Short-term Intensive",
+      "description": "A special program to boost your skills intensively during summer break"
+    }
+  },
+  "managementType": {
+    "sectionTitle": "Choose Management Type",
+    "tableHeader": {
+      "service": "Service",
+      "managed": "Managed",
+      "unmanaged": "Self-Study"
+    },
+    "managed": {
+      "name": "Managed",
+      "subtitle": "Dedicated Manager",
+      "description": "A dedicated manager oversees all aspects of learning and drives score improvement",
+      "socialProof": "Chosen by 90%+ students",
+      "serviceHighlight": "6 management services included"
+    },
+    "unmanaged": {
+      "name": "Self-Study",
+      "subtitle": "Class + Learning Report Only",
+      "description": "An affordable option with class and learning report only",
+      "serviceHighlight": "Growth report only"
+    }
+  },
+  "classFormat": {
+    "sectionTitle": "Choose Class Format",
+    "one-on-one": {
+      "name": "1:1 Class",
+      "description": "Personalized 1:1 class with a dedicated coach + full management services"
+    },
+    "one-on-three": {
+      "name": "1:3 Class",
+      "description": "Small group class + curriculum-based management services"
+    },
+    "content": {
+      "name": "Content",
+      "description": "Monthly subscription for video lectures, vocab, and practice problems"
+    }
+  },
+  "category": {
+    "one-on-one": {
+      "subtitle": "Full Management",
+      "managementLevel": "Full Management"
+    },
+    "one-on-three": {
+      "subtitle": "Management Included",
+      "managementLevel": "Management Included"
+    },
+    "content": {
+      "subtitle": "Partial Management",
+      "managementLevel": "Partial Management"
+    },
+    "unmanaged": {
+      "name": "Self-Study",
+      "subtitle": "Learning Report Only",
+      "description": "An affordable option with learning report after class only",
+      "managementLevel": "Learning Report Only"
+    }
+  },
+  "packageSelection": {
+    "hourPackage": "Choose Hour Package",
+    "curriculum": "Choose Curriculum",
+    "content": "Choose Content (Multiple Selection)",
+    "totalMonthlyPrice": "Total Monthly Price",
+    "monthlyPrefix": "mo",
+    "premium": {
+      "badge": "More than FAST",
+      "name": "Lead Coach Sessions",
+      "description": "Premium 1:1 sessions with SuperfastSAT's lead coaches.",
+      "highlightExperience": "10 years of teaching experience on average",
+      "highlightHours": "1,000+ cumulative hours of SuperfastSAT sessions",
+      "viewCoaches": "Meet the lead coaches"
+    }
+  },
+  "salesLabels": {
+    "popular": "Most Popular",
+    "bestValue": "Best Value",
+    "entry": "Starter"
+  },
+  "curriculum": {
+    "curriculum-basic": {
+      "name": "Foundation + Types",
+      "description": "Systematic learning from SAT basics to type-specific strategies"
+    },
+    "curriculum-type": {
+      "name": "Type Focus",
+      "description": "Intensive practice on question types and strategies"
+    },
+    "curriculum-practice": {
+      "name": "Practice",
+      "description": "Full practice tests and time management training"
+    },
+    "curriculum-final": {
+      "name": "Final Review",
+      "description": "Last-minute review and weak point improvement before the exam"
+    }
+  },
+  "contentItems": {
+    "content-lecture": {
+      "name": "Video Lectures",
+      "description": "Full-range video lectures"
+    },
+    "content-vocab": {
+      "name": "Vocabulary",
+      "description": "SAT essential vocabulary study"
+    },
+    "content-problems": {
+      "name": "Problems",
+      "description": "Past exam questions by type"
+    },
+    "content-mock": {
+      "name": "Mock Exams",
+      "description": "Full-length practice tests"
+    },
+    "content-qna": {
+      "name": "Live Q&A",
+      "description": "Real-time question & answer support"
+    }
+  },
+  "services": {
+    "lessonFeedback": "Learning Report",
+    "pastExams": "Past Exam Materials",
+    "dailyVocab": "Daily Vocab",
+    "wrongAnswerNote": "Study Hall",
+    "homeworkSchedule": "Homework Management",
+    "biweeklyMock": "Weekly Practice Exams",
+    "learningFeedback": "Learning Progress Feedback",
+    "lectures": "Video Lectures",
+    "vocabLearning": "Vocabulary Study"
+  },
+  "serviceCard": {
+    "servicesIncluded": "{{count}} services included",
+    "notIncluded": "Not Included"
+  },
+  "summary": {
+    "sectionTitle": "Your Class Package",
+    "selectedClass": "Selected Class",
+    "monthlyPrice": "Monthly Subscription",
+    "totalPrice": "Total Price",
+    "managementTypeLabel": "Management Type",
+    "classFormatLabel": "Class Format",
+    "includedServices": "Included Services",
+    "summaryHourPackage": "{{category}} {{hours}} hrs",
+    "summaryPremiumPackage": "Lead Coach Sessions 10 hrs",
+    "summaryCurriculum": "{{category}} - {{name}} {{hours}} hrs",
+    "summaryContent": "Content - {{names}}"
+  },
+  "coachesModal": {
+    "title": "Meet the Lead Coaches",
+    "subtitle": "Get to know SuperfastSAT's lead coaches.",
+    "close": "Close"
+  },
+  "summer": {
+    "title": "Summer Encore",
+    "startDate": "July 20",
+    "classStart": "Starting {{date}}",
+    "earlyBirdDiscount": "Early Bird {{rate}}% Off",
+    "earlyBirdDeadline": "Until {{deadline}}",
+    "philosophy": {
+      "title": "Teaching Philosophy",
+      "conceptFirst": {
+        "title": "Concepts First",
+        "description": "Understanding concepts comes before problem-solving. Build practical skills on a solid foundation."
+      },
+      "repetition": {
+        "title": "Repetition & Mastery",
+        "description": "Practice the same types from various angles. Keep practicing until patterns become second nature."
+      },
+      "application": {
+        "title": "Real Application",
+        "description": "Apply learned concepts to real problems immediately. Build skills you can use on test day."
+      }
+    },
+    "weeklyStructure": {
+      "title": "Weekly Structure",
+      "monWed": {
+        "days": "Mon – Wed",
+        "focus": "Concept Lessons",
+        "description": "Core concept review and learning type-specific approaches."
+      },
+      "thuFri": {
+        "days": "Thu – Fri",
+        "focus": "Problem Solving",
+        "description": "Apply concepts to practice problems and analyze mistakes."
+      }
+    },
+    "schedule": {
+      "title": "Daily Schedule",
+      "header": "Schedule",
+      "dayGroups": {
+        "concept": "Concept-Focused Learning",
+        "practice": "Problem-Solving Focus"
+      },
+      "days": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri"
+      },
+      "cells": {
+        "vocab": "Vocab",
+        "rwLive": "RW Live Lecture",
+        "rwModule1Test": "RW Module 1\nTEST",
+        "mathModule1Test": "Math Module 1\nTEST",
+        "rwModule2Test": "RW Module 2\nTEST",
+        "mathModule2Test": "Math Module 2\nTEST",
+        "liveConceptReview": "Live\nConcept & Review",
+        "break": "Break",
+        "customLearning": "Personalized Study\n(Live Text Tutoring)",
+        "vocabTestReview": "Vocab TEST\nReview & Wrap-up"
+      }
+    },
+    "benefits": {
+      "title": "Benefits Summary",
+      "schedule": "Flexible class scheduling based on your preferences",
+      "curriculum": "Customized curriculum based on weekly progress",
+      "earlyBird": "Early Bird {{rate}}% off (until {{deadline}})"
+    },
+    "timezoneNotice": "All times are in KST (Korea Standard Time).",
+    "cta": {
+      "button": "Schedule a Consultation for Your Roadmap",
+      "description": "Get detailed program information and personalized consultation"
+    }
+  },
+  "ap": {
+    "packageTitle": "AP Class Packages",
+    "subjectsTitle": "Available Subjects",
+    "subjectsNote": "For additional subjects, please inquire during consultation",
+    "custom": {
+      "title": "Register the hours you need and see results.",
+      "description": "The more time you invest, the greater the results",
+      "classHours": "Class Hours",
+      "pricePerHour": "Price per Hour",
+      "discountRate": "Discount Rate",
+      "totalAmount": "Total Amount"
+    },
+    "valueProps": {
+      "expertCoach": {
+        "title": "Subject Expert Coaches",
+        "description": "AP specialist coaches teach every session."
+      },
+      "customCurriculum": {
+        "title": "Custom Curriculum",
+        "description": "Designed to match your current level and target score"
+      },
+      "performanceMgmt": {
+        "title": "Performance Management",
+        "description": "Progress tracking and assignment feedback maximize learning efficiency"
+      }
+    },
+    "cta": {
+      "button": "Schedule a Consultation for Your Roadmap",
+      "description": "Get subject selection and customized curriculum consultation"
+    }
+  }
+}

@@ -1,0 +1,193 @@
+# Skills Index
+
+Lightweight directory of all available skills. Load full skill files only when needed for specific tasks.
+
+**Total Skills**: 35 (32 domain patterns + 1 meta-skill + 1 thinking/strategy + 11 GEO skills — see GEO section below)
+
+**Documentation-Based Skills** (2026-01-23):
+Nine skills are now sourced from authoritative references (OpenAPI Spec, OWASP, GraphQL Spec, PostgreSQL docs, GitHub docs, RFC standards, Anthropic/OpenAI guides, LangChain, academic research). See individual skill files for sources.
+
+**Directory Structure** (2026-01-28):
+Skills now use directories for bundled resources:
+- `skill-name/SKILL.md` - Main skill content
+- `skill-name/scripts/` - Executable scripts (1 skill)
+- `skill-name/references/` - Documentation and examples (8 skills)
+- Progressive disclosure: Load metadata → SKILL.md → references as needed
+
+## Core Patterns
+
+| Skill | Coverage | Load When |
+|-------|----------|-----------|
+| **coding-standards/** | Style, naming, file organization | General coding work |
+| **tdd-workflow/** | Red-Green-Refactor cycle, test patterns | Test-driven development |
+| **spec-writing/** | Spec-driven TDD specs, REQ granularity, verification tags | Writing feature specs |
+| **documentation-patterns/** | Documentation standards and formats (sourced from JSDoc, TSDoc, Keep a Changelog) | Writing documentation |
+
+## Backend
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **backend-patterns/** | Server architecture, API design, error handling | Backend development | references/ |
+| **nodejs-patterns/** | Node.js best practices, async patterns | Node.js work | references/ |
+| **rest-api-design/** | REST API design standards (sourced from OpenAPI Spec, RFC 9110, JSON:API) | REST API design | references/ |
+| **database-patterns/** | Database design, normalization, and optimization (sourced from PostgreSQL docs, SQL standards, Supabase best practices) | Database work | references/ |
+
+## Frontend
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **frontend-patterns/** | Component architecture, state management | Frontend development | - |
+| **react-patterns/** | Hooks, context, performance optimization | React development | references/ |
+| **nextjs-patterns/** | App Router, SSR, data fetching | Next.js development | - |
+
+## Specialized Patterns
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **auth-patterns/** | Authentication and authorization patterns (sourced from OWASP, RFC 7519, RFC 6749) | Authentication work | references/ |
+| **graphql-patterns/** | GraphQL schema design and best practices (sourced from GraphQL Spec, Apollo docs) | GraphQL development | references/ |
+| **websocket-patterns/** | Real-time communication patterns (sourced from RFC 6455, Socket.io docs) | Real-time features | - |
+| **prompt-engineering/** | LLM prompt engineering best practices (sourced from Anthropic, OpenAI guides) | AI integration | - |
+| **rag-patterns/** | Retrieval-Augmented Generation implementation (sourced from LangChain, academic research) | RAG system design | - |
+
+## Content & Publishing
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **naver-blog/** | Naver blog platform optimization: Markdown structure, line-break rhythm, hashtag strategy, reader profiles, quick summaries | Writing Naver blog posts | - |
+| **ghost-blog/** | Ghost CMS SEO/GEO optimization: meta tags, FAQ schema, TL;DR boxes, quote capsules, internal linking | Writing Ghost blog posts with SEO focus | - |
+| **landing-blog/** | Landing page blog integration: JSON-LD schemas, Supabase field mapping, CTA sections, 8,000+ character depth | Writing landing page blog posts with database integration | - |
+
+## DevOps & Infrastructure
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **docker-patterns/** | Dockerfile, multi-stage builds, compose | Containerization | references/ |
+| **github-actions/** | CI/CD workflows with GitHub Actions (sourced from official GitHub docs) | CI/CD setup | - |
+
+## Video / Motion
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **remotion/** | Programmatic video creation with React (Remotion). Core mechanics + motion design (charts, typography, springs, social-media) + educational extras (KaTeX math, code highlighting, pedagogical structure for K-12/SAT/undergrad). | Building/editing Remotion videos, especially educational content | rules/ (44 topics) |
+
+## Project Utilities
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **dev-server-autoopen/** | Auto-open localhost in browser | Dev server setup | scripts/ |
+| **project-guidelines/** | Project-specific patterns and conventions | Project onboarding | - |
+| **user-intent-patterns/** | Natural language → command routing | Intent classification | - |
+
+## GEO / AI Search Optimization
+
+Generative Engine Optimization (GEO) skills for improving visibility in AI-powered search engines (ChatGPT, Perplexity, Google AI Overviews, Gemini, Bing Copilot). Use `geo/` as the entry point for full audits.
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **geo/** | Main skill: 13 GEO commands, scoring methodology, sub-skill orchestration | Any GEO/AI SEO task | - |
+| **geo-audit/** | Full audit orchestration: 5-agent parallel analysis, composite scoring | Running a complete GEO audit | - |
+| **geo-ai-visibility/** | Citability scoring, AI crawler access, llms.txt validation, brand mentions | AI visibility analysis | - |
+| **geo-brand-mentions/** | Brand scanning across Wikipedia, Reddit, YouTube, LinkedIn (14+ platforms) | Brand authority analysis | - |
+| **geo-citability/** | AI citation readiness scoring (optimal: 134-167 words/passage) | Content citability optimization | - |
+| **geo-content/** | E-E-A-T content quality assessment (4×25 pts) | Content quality audits | - |
+| **geo-crawlers/** | AI crawler detection and robots.txt validation (12+ crawlers) | Crawler access analysis | - |
+| **geo-llmstxt/** | /llms.txt file validation and generation for AI discoverability | LLM text file creation | - |
+| **geo-platform-optimizer/** | Platform-specific optimization for ChatGPT/Perplexity/Google/Gemini/Bing | Platform-specific GEO | - |
+| **geo-report/** | Markdown GEO report generation with 30-day roadmap | Report creation | - |
+| **geo-report-pdf/** | Professional PDF report generation with visualizations | Client-ready PDF reports | - |
+| **geo-schema/** | JSON-LD schema detection, validation, generation | Schema markup work | templates/ |
+| **geo-technical/** | Technical SEO: SSR dependency, Core Web Vitals, security for AI crawlers | Technical GEO audits | - |
+
+## Thinking & Strategy
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **brainstorming/** | N-dimensional brainstorming, premise deconstruction, paradigm shifts | `/brainstorming` command, strategic ideation | - |
+
+## Meta Skills
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **skill-creator/** | Guide for creating and updating skills | Creating new skills | references/ |
+
+## Progressive Disclosure
+
+Skills use a three-level loading system to minimize token usage:
+
+### Level 1: Metadata (This Index)
+- Skill name, category, and coverage summary
+- Load cost: ~500 tokens (this entire INDEX.md)
+- Use for: Task routing and skill selection
+
+### Level 2: Core Content (SKILL.md)
+- Essential patterns, rules, and quick references
+- Load cost: 1-3k tokens per skill
+- Use for: Implementation guidance
+
+### Level 3: Bundled Resources (references/, scripts/)
+- Detailed examples, templates, scripts
+- Load cost: Variable (500-2k tokens per resource)
+- Use for: Deep-dive learning or specific examples
+
+**Example Loading Strategy**:
+```
+Task: "Build REST API with Supabase"
+→ Level 1: INDEX.md identifies rest-api-design/ and database-patterns/
+→ Level 2: Load rest-api-design/SKILL.md and database-patterns/SKILL.md
+→ Level 3: If needed, load rest-api-design/references/openapi-example.yml
+→ Context saved: ~35k tokens vs loading all skills
+```
+
+## Usage
+
+Instead of loading all 23 skill directories (~45k tokens), reference this index to identify relevant skills, then load only those needed for the current task.
+
+**Skills with Bundled Resources**:
+- **scripts/** (1 skill): dev-server-autoopen
+- **references/** (8 skills): nodejs-patterns, react-patterns, docker-patterns, backend-patterns, auth-patterns, database-patterns, rest-api-design, graphql-patterns
+- **templates/** (7 skills): backend-patterns, auth-patterns, database-patterns, tdd-workflow, react-patterns, github-actions, nextjs-patterns
+
+## Skill Selection by Task Type
+
+| Task Type | Relevant Skills | Load Paths |
+|-----------|-----------------|------------|
+| **New Feature** | coding-standards, tdd-workflow, + domain-specific | coding-standards/SKILL.md, tdd-workflow/SKILL.md |
+| **API Development** | rest-api-design, backend-patterns, database-patterns | rest-api-design/SKILL.md, backend-patterns/SKILL.md, database-patterns/SKILL.md |
+| **React Component** | react-patterns, frontend-patterns, coding-standards | react-patterns/SKILL.md, frontend-patterns/SKILL.md |
+| **Next.js Page** | nextjs-patterns, react-patterns, frontend-patterns | nextjs-patterns/SKILL.md, react-patterns/SKILL.md |
+| **Authentication** | auth-patterns, backend-patterns, database-patterns | auth-patterns/SKILL.md, backend-patterns/SKILL.md |
+| **Real-time Feature** | websocket-patterns, backend-patterns | websocket-patterns/SKILL.md, backend-patterns/SKILL.md |
+| **Database Work** | database-patterns | database-patterns/SKILL.md |
+| **CI/CD Setup** | github-actions, docker-patterns | github-actions/SKILL.md, docker-patterns/SKILL.md |
+| **AI/LLM Integration** | prompt-engineering, rag-patterns | prompt-engineering/SKILL.md, rag-patterns/SKILL.md |
+| **GEO / AI SEO Audit** | geo, geo-audit, + specific sub-skills | geo/SKILL.md, geo-audit/SKILL.md |
+| **Blog Content (Naver)** | naver-blog | naver-blog/SKILL.md |
+| **Blog Content (Ghost/SEO)** | ghost-blog | ghost-blog/SKILL.md |
+| **Landing Page Blog** | landing-blog | landing-blog/SKILL.md |
+| **Creating New Skill** | skill-creator | skill-creator/SKILL.md |
+
+## Benefits
+
+- **Baseline reduction**: 45k tokens saved by not loading all skills upfront
+- **Progressive disclosure**: Load metadata → content → resources as needed
+- **Targeted loading**: Load only relevant patterns per task
+- **Bundled resources**: Scripts and references co-located with skills
+- **Faster reference**: Quick table for skill selection
+- **Better context**: More room for code and analysis
+
+## File Paths
+
+All skills use directory structure:
+```
+.claude/skills/
+├── skill-name/
+│   ├── SKILL.md           # Main content (always present)
+│   ├── scripts/           # Optional: Executable scripts
+│   ├── references/        # Optional: Examples and documentation
+│   └── templates/         # Optional: Code templates for this domain
+└── INDEX.md               # This file
+```
+
+To load a skill: Call `Skill("skill-name")` to load full content
+To access resources: Read files in `scripts/`, `references/`, or `templates/` subdirectories

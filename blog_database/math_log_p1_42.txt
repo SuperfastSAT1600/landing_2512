@@ -1,0 +1,52 @@
+Math QB 파싱: p1~p42 / 83페이지 전체
+출력: math_qb_p1_42.jsonl
+
+기존 완료: 0개 문제, 0개 페이지
+
+p01: ❌ error — Connection error.
+p02: ❌ error — Connection error.
+p03: ❌ error — Connection error.
+p04: ❌ error — Connection error.
+p05: skip (non-question page, 178자)
+p06: ❌ error — Connection error.
+p07: ❌ error — Connection error.
+p08: ❌ error — Connection error.
+p09: ❌ error — Connection error.
+p10: ❌ error — Connection error.
+p11: ❌ error — Connection error.
+p12: ❌ error — Connection error.
+p13: ❌ error — Connection error.
+p14: ❌ error — Connection error.
+p15: ❌ error — Connection error.
+p16: ✅ 58477a6c [Hard] LaTeX=True Fig=False
+p17: ✅ deee9063 [Easy] LaTeX=True Fig=False
+p18: ✅ 23c5d458 [Medium] LaTeX=True Fig=True
+p19: ✅ d76ab4f5 [Easy] LaTeX=True Fig=False
+p20: ✅ 820ad8e8 [Easy] LaTeX=True Fig=False
+p21: ✅ 36f068e2 [Medium] LaTeX=True Fig=True
+p22: 36f068e2 (이미 완료)
+p23: ✅ d1aeb6f1 [Easy] LaTeX=True Fig=False
+p24: ✅ 253985c2 [Easy] LaTeX=True Fig=False
+p25: ✅ b0543157 [Hard] LaTeX=True Fig=False
+p26: ✅ ffdfe1e1 [Easy] LaTeX=True Fig=False
+p27: ✅ 1e7a1deb [Medium] LaTeX=True Fig=False
+p28: ✅ c946d5bd [Hard] LaTeX=True Fig=True
+p29: skip (non-question page, 26자)
+p30: ✅ 7d3a84bf [Medium] LaTeX=True Fig=True
+p31: skip (non-question page, 7자)
+p32: ✅ 0a74365c [Medium] LaTeX=False Fig=False
+p33: ✅ 565428e1 [Hard] LaTeX=True Fig=False
+p34: ✅ 36b6f8ba [Hard] LaTeX=True Fig=True
+p35: ✅ 16aa9758 [Hard] LaTeX=True Fig=False
+p36: ✅ 2f8a580c [Easy] LaTeX=True Fig=False
+p37: ✅ b3b07f0c [Medium] LaTeX=True Fig=True
+p38: ✅ 63c00e2b [Easy] LaTeX=True Fig=False
+p39: ✅ 0f9f8ea7 [Medium] LaTeX=True Fig=False
+p40: ✅ c8a5c221 [Hard] LaTeX=True Fig=False
+p41: ✅ 041eda89 [Hard] LaTeX=True Fig=False
+p42: ✅ 4d425cef [Medium] LaTeX=True Fig=False
+
+=== 완료 ===
+신규 저장: 24개 | 스킵: 0개 | 에러: 14개
+출력 파일: math_qb_p1_42.jsonl
+전체 저장 수: 24개

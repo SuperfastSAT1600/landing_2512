@@ -1,0 +1,124 @@
+/**
+ * 심화 인사이트 — 우리의 모든 데이터(정량 KPI + 상담 메모) + 세계적 세일즈 기법(내부 렌즈) + 웹 검색을 합성.
+ * 무겁고 느려서(웹 검색 포함) 하루 1회 서버 캐시(crm_insight_cache). 배너의 2단계 중 Stage 2.
+ * fast(insight-brief)는 그대로 두고, 배너가 이 결과가 오면 교체한다.
+ */
+import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
+import { isAuthenticated } from '@/lib/server-auth';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { buildBriefHealth, buildCorrelationSignals, parsePeriod } from '@/lib/strategy-brief';
+import { buildMemoSignals } from '@/lib/strategy-memos';
+import { fallbackAreas, parseAreas } from '@/lib/insight-parse';
+import { DEEP_DIAGNOSIS_SYSTEM, DEEP_WEEKLY_SYSTEM } from '@/lib/insight-deep';
+import { STRATEGY_GURU_PROMPT } from '@/lib/strategy-guru';
+import { kstDateStr, type InsightBriefArea as BriefArea, type InsightBriefMode as BriefMode, type InsightPeriod } from '@/types/crm';
+
+export const maxDuration = 60;
+
+const MODEL = 'claude-opus-4-8'; // 교차신호 중 '진짜 놀라운 것 선별·반례 추론'에 숙고형 추론. 일 1회 캐시라 지연/비용 1회만.
+const WEB_SEARCH_MAX_USES = 3;
+
+async function readCache(dateKst: string, mode: BriefMode): Promise<BriefArea[] | null> {
+  try {
+    const { data } = await supabaseAdmin
+      .from('crm_insight_cache')
+      .select('payload')
+      .eq('date_kst', dateKst)
+      .eq('mode', mode)
+      .maybeSingle();
+    const areas = (data?.payload as { areas?: BriefArea[] } | undefined)?.areas;
+    return Array.isArray(areas) ? areas : null;
+  } catch {
+    return null; // 테이블 미생성 등 → 캐시 없이 생성 진행
+  }
+}
+
+async function writeCache(dateKst: string, mode: BriefMode, areas: BriefArea[]): Promise<void> {
+  try {
+    await supabaseAdmin
+      .from('crm_insight_cache')
+      .upsert({ date_kst: dateKst, mode, payload: { areas }, generated_at: new Date().toISOString() }, { onConflict: 'date_kst,mode' });
+  } catch (err) {
+    console.error('[insight-brief/deep] cache write failed (non-fatal):', err);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  if (!isAuthenticated(request)) {
+    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } }, { status: 401 });
+  }
+
+  let mode: BriefMode = 'diagnosis';
+  let period: InsightPeriod | undefined;
+  try {
+    const body = await request.json();
+    if (body?.mode === 'weekly') mode = 'weekly';
+    period = parsePeriod(body);
+  } catch {
+    /* 본문 없음 → diagnosis 기본, 이번 달 기간 */
+  }
+  const force = new URL(request.url).searchParams.get('force') === '1';
+  const dateKst = kstDateStr(Date.now());
+
+  // 서버 일 1회 캐시는 기본(이번 달) 뷰에만 적용. 커스텀 기간은 (date_kst,mode) 키와 충돌하므로 캐시 우회.
+  const useCache = !force && !period;
+  if (useCache) {
+    const cached = await readCache(dateKst, mode);
+    if (cached) return NextResponse.json({ generatedAt: new Date().toISOString(), areas: cached, cached: true });
+  }
+
+  const origin = new URL(request.url).origin;
+  const [snap, memo, correlationBlock] = await Promise.all([
+    buildBriefHealth(origin, process.env.ADMIN_SECRET_KEY ?? '', period),
+    buildMemoSignals(Date.now(), period),
+    buildCorrelationSignals(),
+  ]);
+
+  // 통계 조회 실패 또는 약점 신호 없음 → 배너 숨김(빈 areas)
+  if (!snap || snap.weakest.length === 0) {
+    return NextResponse.json({ generatedAt: new Date().toISOString(), areas: [] });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ generatedAt: new Date().toISOString(), areas: fallbackAreas(snap.weakest, mode) });
+  }
+
+  const systemPrompt = mode === 'weekly' ? DEEP_WEEKLY_SYSTEM : DEEP_DIAGNOSIS_SYSTEM;
+  // 후보 힌트 = 실제 신호(패딩된 '관찰' 필러 제외). 강제 포함이 아니라 참고용 — 개수는 에이전트가 자율 판단.
+  const refAreas = (snap.signals.length ? snap.signals : snap.weakest).map((s) => s.area).join(', ');
+  const userContent =
+    mode === 'weekly'
+      ? `위 [KPI 건강 진단]과 [상담 메모 신호]를 세계적 세일즈 기법·웹 검색과 종합해, 이번 주 방향 맞추기 회의에서 내가 꺼낼 논의 안건을 JSON으로만 답하라. 참고 후보 신호: ${refAreas}. 이 중 지금 최우선인 것만 네 자율 판단으로 골라라(2~3개여도 좋고 전부 포함할 필요 없음, 억지로 채우지 마라). 각 항목에 날카로운 질문을 붙이고, 구루 이름은 출력에 노출하지 마라.`
+      : `위 [KPI 건강 진단]과 [상담 메모 신호]를 세계적 세일즈 기법·웹 검색과 종합해, "우리가 지금 해야 할 부분"을 JSON으로만 답하라. 참고 후보 신호: ${refAreas}. 이 중 지금 최우선으로 해결해야 할 것만 네 자율 판단으로 골라라(2~3개여도 좋고 전부 포함할 필요 없음, 5개를 맞추려 억지로 채우지 마라). 각 항목에 구체 첫 수를 붙이고, 구루 이름은 출력에 노출하지 마라.`;
+
+  // 내부 데이터 블록: KPI 진단 + (있으면) 교차 신호 후보 + 상담 메모 신호
+  const dataBlock = [snap.summaryText, correlationBlock, memo.memoBlock].filter(Boolean).join('\n\n');
+
+  try {
+    const client = new Anthropic({ apiKey });
+    const resp = await client.messages.create({
+      model: MODEL,
+      max_tokens: 3500,
+      system: [
+        { type: 'text', text: systemPrompt },
+        { type: 'text', text: STRATEGY_GURU_PROMPT, cache_control: { type: 'ephemeral' } },
+        { type: 'text', text: dataBlock, cache_control: { type: 'ephemeral' } },
+      ],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: WEB_SEARCH_MAX_USES }],
+      messages: [{ role: 'user', content: userContent }],
+    });
+    const text = resp.content
+      .filter((b) => b.type === 'text')
+      .map((b) => (b as { text: string }).text)
+      .join('');
+    const areas = parseAreas(text, snap.weakest, mode);
+    // 기본 뷰(기간 미지정)면 force 여부와 무관하게 일일 캐시 갱신 → '다시 점검' 결과가 새로고침 후에도 유지.
+    if (!period) await writeCache(dateKst, mode, areas);
+    return NextResponse.json({ generatedAt: new Date().toISOString(), areas });
+  } catch (err) {
+    console.error('[insight-brief/deep]', err);
+    return NextResponse.json({ generatedAt: new Date().toISOString(), areas: fallbackAreas(snap.weakest, mode) });
+  }
+}

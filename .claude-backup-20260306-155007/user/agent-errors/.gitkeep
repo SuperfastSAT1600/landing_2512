@@ -1,0 +1,3 @@
+# Agent Error Logs Directory
+# Each agent has its own error log file: {agent-name}.md
+# These files are preserved during system updates

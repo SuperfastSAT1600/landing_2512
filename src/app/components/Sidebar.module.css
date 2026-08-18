@@ -1,0 +1,128 @@
+.sidebar {
+    width: 100%;
+    padding: 2rem;
+    background: var(--background);
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* Drastically reduced gap to compact footer */
+}
+
+.brand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    /* Tighter brand info */
+}
+
+/* ... Desktop ... */
+.sidebar {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 320px;
+    height: 100vh;
+    z-index: 50;
+
+    background: transparent;
+    border: none;
+    padding: 2rem 2rem 2rem 2rem;
+    /* Adjusted padding */
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    /* Bottom alignment matching "Below Hero" */
+    gap: 0.5rem;
+    /* Tighter gap */
+
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* ... Styles ... */
+
+.logo {
+    font-size: 1rem;
+    /* Reduced from 1.25rem */
+    font-weight: 800;
+    /* ... gradient ... */
+    background: linear-gradient(to right, var(--primary), var(--accent));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+    text-decoration: none;
+    opacity: 0.8;
+    /* Lower hierarchy */
+}
+
+.companyInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.7rem;
+    /* Keep small */
+    color: rgba(255, 255, 255, 0.4);
+    /* Dim grey */
+    line-height: 1.3;
+}
+
+.companyName {
+    font-weight: 700;
+    font-size: 0.75rem;
+    margin-bottom: 0.1rem;
+    color: rgba(255, 255, 255, 0.6);
+    /* Slightly brighter */
+}
+
+.heading {
+    font-size: 0.65rem;
+    /* Smaller */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.links a {
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    transition: color 0.2s;
+    font-size: 0.7rem;
+}
+
+.links a:hover {
+    color: var(--primary);
+    opacity: 1;
+}
+
+.copyright {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* Dark Mode Overrides (if needed ensure they don't conflict) */
+/* Since we forced dark theme essentially, these RGBA values work well on dark bg */
+/* Remove explicit @media (prefers-color-scheme: dark) blocks if they force brighter colors, or update them */
+
+@media (prefers-color-scheme: dark) {
+    .sidebar {
+        border-color: transparent;
+    }
+
+    .companyInfo {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .companyName,
+    .heading {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .links a,
+    .copyright {
+        color: rgba(255, 255, 255, 0.4);
+    }
+}

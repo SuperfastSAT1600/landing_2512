@@ -1,0 +1,112 @@
+---
+title: SAT Wiki Index
+type: index
+domain: mixed
+updated: 2026-05-17
+---
+
+# SAT Wiki — 종합 학습 자료
+
+이 위키는 College Board SAT 문제 분석 및 학습 자료를 제공합니다. 아래의 섹션을 통해 단어, 패턴, 기술을 탐색할 수 있습니다.
+
+## Reading and Writing 분석
+
+### 전체 구조 및 통계
+- [[rw_skills_analysis]] — 8개 스킬 종합 분석 (1,715개 문항)
+  - Information and Ideas (476개, 28%) — Command of Evidence, Central Ideas, Inferences
+  - Craft and Structure (447개, 26%) — Words in Context, Text Structure
+  - Standard English Conventions (395개, 23%) — Form/Structure, Boundaries
+  - Expression of Ideas (361개, 21%) — Rhetorical Synthesis, Transitions
+
+### 패턴 분석
+- [[rw_sequencing_analysis]] — 시퀀싱 패턴 분석 (1,511개 passage)
+  - standard_sequence 상위 10개 패턴 (INTRODUCE → BACKGROUND → ...)
+  - 난이도별 복잡도 (Easy: 직선적, Hard: 복합)
+  - 시퀀싱과 스킬의 관계
+  
+- [[rw_concept_tags]] — 개념 태그 분석 (상위 15개)
+  - 어휘 관련 (Vocabulary, Context Clues, Semantic Precision) 52%
+  - 문법 관련 (Agreement, Tense, Pronouns) 23%
+  - 통합 사고 (Synthesis, Evidence Integration) 15%
+  - 데이터 리터러시 (Charts, Quantitative Reasoning) 10%
+
+### 기술별 심화 분석
+
+#### Words in Context (WIC) — 241개 문항
+- [[wic_patterns]] — 종합 패턴 분석
+  - 난이도별 분포 (Easy 54% / Medium 24% / Hard 22%)
+  - 주제별 분포 (Literature 26% / Science 25% / History 15%)
+  - 학습 전략 및 Knowledge Graph 분석
+  
+- [[wic_by_topic]] — 주제별 심화 분석
+  - Literature (62개) — 감정·톤 중심
+  - Life Science (46개) — 과학 용어
+  - History (36개) — 역사적 맥락
+  - Social Science (31개) — 추상 개념
+  - Art & Music (35개) — 예술 비평
+  - 기타 (31개) — Physics, Technology, Environment
+
+---
+
+---
+
+## 데이터 아키텍처
+
+### 3계층 구조
+
+```
+raw/               ← 불변 소스 (62개 파일)
+├── extracted/     (15개 JSONL/JSON)
+├── pdf/           (32개 PDF)
+└── wiki/          (12개 문서)
+
+schema/            ← 구조화된 골드 데이터
+└── questions/
+    ├── master_sat_ontology_v3.jsonl (5.8M, 1,836개)
+    │   ├── id, domain, skill, difficulty, passage, question, choices, ...
+    │   ├── concept_structure (1,511개) — 문장별 함수
+    │   ├── structural_pattern (1,511개) — 구조 설명
+    │   └── standard_sequence (1,511개) — 시퀀스 정보
+    └── master_sat_ontology_v3.backup (4.3M)
+
+intermediate/     ← 중간 산출물 (재생성 가능)
+
+wiki/              ← 학습 문서 및 분석
+├── analysis/      (7개 분석 페이지)
+└── vocab/         (2개 어휘 프레임워크)
+```
+
+### 최신 병합 (2026-05-17)
+
+✅ **Schema Enrichment 완료**
+- baseline_passage_structure_v3.jsonl (1,511개) → master_sat_ontology_v3.jsonl 병합
+- concept_structure, structural_pattern, standard_sequence 추가
+- 파일 크기: 4.3M → 5.8M
+
+✅ **Raw 데이터 통합**
+- landing_2512/raw → sat/raw (62개 파일)
+- extracted, pdf, wiki 완전 병합
+
+---
+
+## 데이터 출처
+
+- **master_sat_ontology_v3.jsonl** — College Board Question Bank 기반 1,836개 문항
+  - RW: 1,715개 (라벨링 완료, 시퀀싱 1,511개)
+  - Math: 121개 (기본 정보)
+  
+- 원본 위치: `raw/` (불변 소스)
+- 스키마 위치: `schema/questions/` (병합 완료)
+- 최종 업데이트: 2026-05-17
+
+## 색인 유지보수
+
+`wiki/log.md`에서 모든 변경 이력을 확인할 수 있습니다.
+
+## Query 워크플로우
+
+```
+사용자 질문 → wiki/index.md → [[wikilink]] → 상세 페이지
+                          ↓
+                    schema/ 참조 (필요 시)
+```

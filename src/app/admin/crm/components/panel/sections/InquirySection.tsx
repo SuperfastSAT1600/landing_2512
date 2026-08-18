@@ -1,0 +1,204 @@
+'use client';
+
+import { Pencil } from 'lucide-react';
+import type { Student } from '@/types/crm';
+import { CONTACT_TYPE_LABELS } from '@/types/crm';
+import { getTimezoneLabel } from '@/lib/all-timezones';
+import {
+  INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
+} from '@/types/crm';
+import type { EditForm } from '../types';
+import { inputCls, selectCls, EditField } from './StudentInfoEdit';
+import { SectionCard } from './SectionCard';
+import { ReferrerPicker } from './ReferrerPicker';
+import { useCompanies } from '@/hooks/useCompanies';
+
+// 첫 메시지(timestamptz)를 로컬 시각 기준 "YYYY. MM. DD. HH:mm"(24시간)으로 — 문의일 표기와 통일.
+function formatDateTime(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}. ${pad(d.getMonth() + 1)}. ${pad(d.getDate())}. ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// naive timestamp 문자열을 "YYYY. MM. DD. HH:mm"으로. 자정(00:00)이면 시각 생략.
+function formatInquiry(s: string | null): string {
+  if (!s) return '—';
+  const [date, timeRaw = ''] = s.replace(' ', 'T').split('T');
+  const [y, mo, d] = date.split('-');
+  if (!y || !mo || !d) return s;
+  const hm = timeRaw.slice(0, 5);
+  return hm && hm !== '00:00' ? `${y}. ${mo}. ${d}. ${hm}` : `${y}. ${mo}. ${d}.`;
+}
+
+function InquiryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="text-[13px] text-gray-400 w-[28%] shrink-0">{label}</span>
+      <span className="text-[13px] text-gray-700 font-medium min-w-0 break-all">{value}</span>
+    </div>
+  );
+}
+
+interface Props {
+  localStudent: Student;
+  adminKey: string;
+  editForm: EditForm;
+  setEditForm: (f: EditForm) => void;
+  isEditingInquiry: boolean;
+  setIsEditingInquiry: (v: boolean) => void;
+  savingInquiry: boolean;
+  onSaveInquiry: () => void;
+  onCancelInquiry: () => void;
+}
+
+export function InquirySection({
+  localStudent, adminKey, editForm, setEditForm,
+  isEditingInquiry, setIsEditingInquiry, savingInquiry, onSaveInquiry, onCancelInquiry,
+}: Props) {
+  const { companies } = useCompanies(adminKey); // 활성 업체(동적 목록)
+  const partnerLabel =
+    (localStudent.company_id && companies.find(c => c.id === localStudent.company_id)?.name) ||
+    localStudent.b2b_partner ||
+    '';
+  const actions = isEditingInquiry ? (
+    <>
+      <button onClick={onCancelInquiry} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">취소</button>
+      <button
+        onClick={onSaveInquiry}
+        disabled={savingInquiry}
+        className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-2.5 py-1 rounded-lg transition-colors"
+      >
+        {savingInquiry ? '저장 중...' : '저장'}
+      </button>
+    </>
+  ) : (
+    <button
+      onClick={() => setIsEditingInquiry(true)}
+      className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 transition-colors"
+    >
+      <Pencil size={11} />편집
+    </button>
+  );
+
+  return (
+    <SectionCard title="인입 정보" defaultOpen={false} actions={actions}>
+      {isEditingInquiry ? (
+        <div className="space-y-3">
+          <p className="text-[11px] text-blue-500 font-medium">편집 모드 — 저장 버튼을 눌러야 반영됩니다</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <EditField label="문의 날짜" className="sm:col-span-2">
+              <input type="datetime-local" value={editForm.inquiry_date} onChange={e => setEditForm({ ...editForm, inquiry_date: e.target.value })} className={inputCls} />
+            </EditField>
+            <EditField label="첫 메시지 발송 시간" className="sm:col-span-2">
+              <input type="datetime-local" value={editForm.first_message_sent_at} onChange={e => setEditForm({ ...editForm, first_message_sent_at: e.target.value })} className={inputCls} />
+            </EditField>
+            <EditField label="인입 채널">
+              <select value={editForm.inquiry_channel} onChange={e => setEditForm({ ...editForm, inquiry_channel: e.target.value })} className={selectCls}>
+                <option value="">(미상)</option>
+                {INQUIRY_CHANNEL_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </EditField>
+            <EditField label="유입 소스">
+              <select value={editForm.traffic_source} onChange={e => setEditForm({ ...editForm, traffic_source: e.target.value })} className={selectCls}>
+                <option value="">(미상)</option>
+                {TRAFFIC_SOURCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </EditField>
+            {editForm.traffic_source === '소개' && (
+              <EditField label="소개자" className="sm:col-span-2">
+                <ReferrerPicker
+                  adminKey={adminKey}
+                  name={editForm.referral_student_name}
+                  linkedId={editForm.referral_student_id}
+                  selfId={localStudent.id}
+                  onChange={(name, id) => setEditForm({ ...editForm, referral_student_name: name, referral_student_id: id ?? '' })}
+                />
+              </EditField>
+            )}
+            <EditField label="콘텐츠 작성자">
+              <select value={editForm.content_author} onChange={e => setEditForm({ ...editForm, content_author: e.target.value })} className={selectCls}>
+                <option value="">(미상)</option>
+                {CONTENT_AUTHOR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </EditField>
+            <EditField label="구분">
+              <select value={editForm.lead_type} onChange={e => setEditForm({ ...editForm, lead_type: e.target.value })} className={selectCls}>
+                <option value="B2C">B2C</option>
+                <option value="B2B">B2B</option>
+              </select>
+            </EditField>
+            {editForm.lead_type === 'B2B' && (
+              <EditField label="B2B 파트너사">
+                {companies.length > 0 ? (
+                  <select
+                    value={editForm.company_id}
+                    onChange={e => {
+                      const id = e.target.value;
+                      const name = companies.find(c => c.id === id)?.name ?? '';
+                      setEditForm({ ...editForm, company_id: id, b2b_partner: name });
+                    }}
+                    className={selectCls}
+                  >
+                    <option value="">선택</option>
+                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                ) : (
+                  <select value={editForm.b2b_partner} onChange={e => setEditForm({ ...editForm, b2b_partner: e.target.value })} className={selectCls}>
+                    <option value="">선택</option>
+                    {B2B_PARTNER_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                )}
+              </EditField>
+            )}
+            <EditField label="광고명 (자동)">
+              <input readOnly value={localStudent.ad_name ?? ''} placeholder="자동 입력" className={`${inputCls} bg-gray-50 text-gray-400 cursor-default`} />
+            </EditField>
+            <EditField label="광고세트 (자동)">
+              <input readOnly value={localStudent.adset_name ?? ''} placeholder="자동 입력" className={`${inputCls} bg-gray-50 text-gray-400 cursor-default`} />
+            </EditField>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <InquiryRow label="문의일" value={formatInquiry(localStudent.inquiry_date)} />
+          {localStudent.first_message_sent_at && (
+            <InquiryRow label="첫 메시지" value={formatDateTime(localStudent.first_message_sent_at)} />
+          )}
+          <InquiryRow label="채널" value={localStudent.inquiry_channel ?? '(미상)'} />
+          <InquiryRow label="소스" value={localStudent.traffic_source ?? '(미상)'} />
+          {localStudent.traffic_source === '소개' && localStudent.referral_student_name && (
+            <InquiryRow label="소개자" value={localStudent.referral_student_name} />
+          )}
+          {localStudent.content_author && (
+            <InquiryRow label="작성자" value={localStudent.content_author} />
+          )}
+          <InquiryRow label="구분" value={localStudent.lead_type ?? '—'} />
+          {partnerLabel && (
+            <InquiryRow label="파트너" value={partnerLabel} />
+          )}
+          <InquiryRow
+            label={localStudent.contact_type ? CONTACT_TYPE_LABELS[localStudent.contact_type] : '연락처'}
+            value={localStudent.parent_phone || '—'}
+          />
+          {localStudent.parent_timezone && (
+            <InquiryRow label="시간대" value={getTimezoneLabel(localStudent.parent_timezone)} />
+          )}
+          <InquiryRow label="광고명" value={localStudent.ad_name ?? '—'} />
+          <InquiryRow label="광고세트" value={localStudent.adset_name ?? '—'} />
+          {localStudent.campaign_tags && localStudent.campaign_tags.length > 0 && (
+            <div className="flex items-start gap-2 pt-0.5">
+              <span className="text-[13px] text-gray-400 w-[28%] shrink-0">태그</span>
+              <div className="flex flex-wrap gap-1">
+                {localStudent.campaign_tags.map(tag => (
+                  <span key={tag} className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[11px] font-medium">{tag}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </SectionCard>
+  );
+}

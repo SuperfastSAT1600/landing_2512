@@ -1,0 +1,2 @@
+ALTER TABLE coaches
+  ADD COLUMN IF NOT EXISTS reel_urls TEXT[] NOT NULL DEFAULT '{}';

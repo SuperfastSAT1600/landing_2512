@@ -1,0 +1,286 @@
+{
+    "history": [
+        {
+            "breakpoints": [],
+            "visible": true,
+            "aspectRatio": 1,
+            "userDownsample": 1,
+            "layerType": "effect",
+            "type": "gradient",
+            "usesPingPong": false,
+            "speed": 0.25,
+            "trackMouse": 0,
+            "trackAxes": "xy",
+            "mouseMomentum": 0,
+            "texture": false,
+            "animating": false,
+            "isMask": 0,
+            "compiledFragmentShaders": [
+                "#version 300 es\nprecision highp float;in vec2 vTextureCoord;uniform vec2 uMousePos;vec3 getColor(int index) {\nswitch(index) {\ncase 0: return vec3(0, 0, 0);\ncase 1: return vec3(0, 0, 0);\ncase 2: return vec3(0, 0, 0);\ncase 3: return vec3(0, 0, 0);\ncase 4: return vec3(0, 0, 0);\ncase 5: return vec3(0, 0, 0);\ncase 6: return vec3(0, 0, 0);\ncase 7: return vec3(0, 0, 0);\ncase 8: return vec3(0, 0, 0);\ncase 9: return vec3(0, 0, 0);\ncase 10: return vec3(0, 0, 0);\ncase 11: return vec3(0, 0, 0);\ncase 12: return vec3(0, 0, 0);\ncase 13: return vec3(0, 0, 0);\ncase 14: return vec3(0, 0, 0);\ncase 15: return vec3(0, 0, 0);\ndefault: return vec3(0.0);\n}\n}const float PI = 3.14159265;vec2 rotate(vec2 coord, float angle) {\nfloat s = sin(angle);\nfloat c = cos(angle);\nreturn vec2(\ncoord.x * c - coord.y * s,\ncoord.x * s + coord.y * c\n);\n}out vec4 fragColor;vec3 getColor(vec2 uv) {return vec3(0, 0, 0);\n}void main() {vec2 uv = vTextureCoord;\nvec2 pos = vec2(0.5, 0.5) + mix(vec2(0), (uMousePos-0.5), 0.0000);\nuv -= pos;\nuv /= (0.5000*2.);\nuv = rotate(uv, (0.0000 - 0.5) * 2. * PI);\nvec4 color = vec4(getColor(uv), 1.0000);\nfragColor = color;\n}"
+            ],
+            "compiledVertexShaders": [
+                "#version 300 es\nprecision mediump float;in vec3 aVertexPosition;\nin vec2 aTextureCoord;uniform mat4 uMVMatrix;\nuniform mat4 uPMatrix;out vec2 vTextureCoord;\nout vec3 vVertexPosition;void main() {\ngl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\nvTextureCoord = aTextureCoord;\n}"
+            ],
+            "data": {
+                "downSample": 0.5,
+                "depth": false,
+                "uniforms": {},
+                "isBackground": true
+            },
+            "id": "effect"
+        },
+        {
+            "breakpoints": [],
+            "visible": true,
+            "aspectRatio": 1,
+            "userDownsample": 1,
+            "layerType": "effect",
+            "type": "noiseFill",
+            "usesPingPong": false,
+            "speed": 0.25,
+            "trackMouse": 0,
+            "trackAxes": "xy",
+            "mouseMomentum": 0,
+            "texture": false,
+            "animating": false,
+            "isMask": 0,
+            "compiledFragmentShaders": [
+                "#version 300 es\nprecision highp float;\nin vec2 vTextureCoord;\nin vec3 vVertexPosition;uniform sampler2D uTexture;\nuniform float uTime;\nuniform vec2 uMousePos;\nuniform vec2 uResolution;vec3 hash33(vec3 p3) {\np3 = fract(p3 * vec3(0.1031, 0.11369, 0.13787));\np3 += dot(p3, p3.yxz + 19.19);\nreturn -1.0 + 2.0 * fract(vec3(\n(p3.x + p3.y) * p3.z,\n(p3.x + p3.z) * p3.y,\n(p3.y + p3.z) * p3.x\n));\n}float perlin_noise(vec3 p) {\nvec3 pi = floor(p);\nvec3 pf = p - pi;vec3 w = pf * pf * (3.0 - 2.0 * pf);float n000 = dot(pf - vec3(0.0, 0.0, 0.0), hash33(pi + vec3(0.0, 0.0, 0.0)));\nfloat n100 = dot(pf - vec3(1.0, 0.0, 0.0), hash33(pi + vec3(1.0, 0.0, 0.0)));\nfloat n010 = dot(pf - vec3(0.0, 1.0, 0.0), hash33(pi + vec3(0.0, 1.0, 0.0)));\nfloat n110 = dot(pf - vec3(1.0, 1.0, 0.0), hash33(pi + vec3(1.0, 1.0, 0.0)));\nfloat n001 = dot(pf - vec3(0.0, 0.0, 1.0), hash33(pi + vec3(0.0, 0.0, 1.0)));\nfloat n101 = dot(pf - vec3(1.0, 0.0, 1.0), hash33(pi + vec3(1.0, 0.0, 1.0)));\nfloat n011 = dot(pf - vec3(0.0, 1.0, 1.0), hash33(pi + vec3(0.0, 1.0, 1.0)));\nfloat n111 = dot(pf - vec3(1.0, 1.0, 1.0), hash33(pi + vec3(1.0, 1.0, 1.0)));float nx00 = mix(n000, n100, w.x);\nfloat nx01 = mix(n001, n101, w.x);\nfloat nx10 = mix(n010, n110, w.x);\nfloat nx11 = mix(n011, n111, w.x);float nxy0 = mix(nx00, nx10, w.y);\nfloat nxy1 = mix(nx01, nx11, w.y);float nxyz = mix(nxy0, nxy1, w.z);return nxyz;\n}\nuvec2 pcg2d(uvec2 v) {\nv = v * 1664525u + 1013904223u;\nv.x += v.y * v.y * 1664525u + 1013904223u;\nv.y += v.x * v.x * 1664525u + 1013904223u;\nv ^= v >> 16;\nv.x += v.y * v.y * 1664525u + 1013904223u;\nv.y += v.x * v.x * 1664525u + 1013904223u;\nreturn v;\n}float randFibo(vec2 p) {\nuvec2 v = floatBitsToUint(p);\nv = pcg2d(v);\nuint r = v.x ^ v.y;\nreturn float(r) / float(0xffffffffu);\n}out vec4 fragColor;const float PI = 3.14159265359;\nconst float TAU = 6.28318530718;vec3 anchoredPal(float t, vec3 col1, vec3 col2) {\nvec3 mid = 0.5 * (col1 + col2);\nvec3 axisAmp = 0.5 * (col2 - col1);vec3 base = mid + axisAmp * cos(TAU * t);vec3 axis = length(axisAmp) > 0.0001 ? normalize(axisAmp) : vec3(1.0, 0.0, 0.0);\nvec3 ref = abs(axis.x) > 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);\nvec3 tangent1 = normalize(cross(axis, ref));\nvec3 tangent2 = normalize(cross(axis, tangent1));float richness = 0.24 * length(axisAmp) + 0.02;\nvec3 ripple =\ntangent1 * sin(TAU * (t * 2.0 + 0.123)) +\ntangent2 * sin(TAU * (t * 3.0 + 0.437));vec3 col = base + (richness * 0.5000) * ripple;\ncol = 1./(1. + exp(-col * 4. + 0.25) * 7.5);\nreturn col;\n}mat2 rot(float a) {\nreturn mat2(cos(a),-sin(a),sin(a),cos(a));\n}float getPerlinNoise(vec2 uv) {\nfloat turb = 0.2700 * 3.2;\nvec2 skew = vec2(0.5000, 1. - 0.5000);\nvec2 drift = vec2(0, 0.0000 * uTime * 0.0125) * mix(1., 14., 0.2300);\nfloat noise = perlin_noise(vec3(\nuv * skew - drift,\n0.0000 + uTime * 0.03\n));return mix(0.5, noise * 0.5 + 0.5, turb);\n}float getNoise(vec2 uv) {\nreturn getPerlinNoise(uv);\n}void main() {\nvec2 uv = vTextureCoord;\nfloat aspectRatio = uResolution.x/uResolution.y;\nvec2 aspect = vec2(aspectRatio, 1.0);vec2 mPos = vec2(0.7029616724738676, 0.03170731707317065) + mix(vec2(0), (uMousePos-0.5), 0.0000);vec2 pos = mix(vec2(0.7029616724738676, 0.03170731707317065), mPos, 0.0000);\nfloat scale = mix(1., 14., 0.2300);\nvec2 drift = vec2(0, 0.0000 * uTime * 0.0125);\nmat2 rotation = rot(0.0000 * 2. * PI);vec2 st = (uv - pos) * aspect * scale * rotation;\nfloat noise = getNoise(st);if (0.0000 > 0.0) {\nvec2 toMouse = (uv - uMousePos) * aspect;\nfloat r = length(toMouse);\nfloat radius = mix(0.1, 1., 0.5000);\nfloat falloff = 1.0 - smoothstep(0.0, radius, r);\nvec2 dir = toMouse / max(r, 1e-5);\nvec2 uvBulgeOffsetAspect = -dir * (0.0000 * radius) * falloff * falloff;\nvec2 offset = uvBulgeOffsetAspect / aspect * r * 5.;st = (uv - pos + offset * noise) * aspect * scale * rotation;\nnoise = getNoise(st);\n}vec4 color = texture(uTexture, uv);\nvec4 bg = color;\nfloat shift = 0.0000 + (0.0000 * uTime * 0.01);\nvec3 noiseColor = anchoredPal(noise + shift, vec3(0.396078431372549, 0.4392156862745098, 0.9882352941176471), vec3(0.6705882352941176, 0.8941176470588236, 1));\ncolor.rgb = noiseColor.rgb;float dither = (randFibo(gl_FragCoord.xy) - 0.5) / 255.0;\ncolor.rgb += dither * 0.5;color.rgb = mix(bg.rgb, color.rgb, 1.0000);\ncolor.a = max(bg.a, 1.0000);\nfragColor = color;}"
+            ],
+            "compiledVertexShaders": [
+                "#version 300 es\nprecision mediump float;in vec3 aVertexPosition;\nin vec2 aTextureCoord;uniform mat4 uMVMatrix;\nuniform mat4 uPMatrix;\nuniform mat4 uTextureMatrix;out vec2 vTextureCoord;\nout vec3 vVertexPosition;void main() {\ngl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\nvTextureCoord = (uTextureMatrix * vec4(aTextureCoord, 0.0, 1.0)).xy;\n}"
+            ],
+            "data": {
+                "depth": false,
+                "uniforms": {},
+                "isBackground": false
+            },
+            "id": "effect1"
+        },
+        {
+            "breakpoints": [],
+            "visible": true,
+            "locked": false,
+            "aspectRatio": 3.937649880095923,
+            "layerName": "",
+            "userDownsample": 1,
+            "isElement": true,
+            "opacity": 1,
+            "effects": [],
+            "displace": 0,
+            "trackMouse": 0,
+            "anchorPoint": "topCenter",
+            "mouseMomentum": 0,
+            "blendMode": "NORMAL",
+            "bgDisplace": 0,
+            "mask": 0,
+            "maskBackground": {
+                "type": "Vec3",
+                "_x": 0,
+                "_y": 0,
+                "_z": 0
+            },
+            "maskAlpha": 0,
+            "maskDepth": 0,
+            "maskDepthLayer": 1,
+            "dispersion": 0,
+            "axisTilt": 0,
+            "states": {
+                "appear": [],
+                "scroll": [],
+                "hover": []
+            },
+            "layerType": "shape",
+            "width": 1.43,
+            "widthMode": "relative",
+            "height": 0.5810572472594396,
+            "heightMode": "auto",
+            "left": 0.5,
+            "leftMode": "relative",
+            "top": 0.7711111111111112,
+            "topMode": "relative",
+            "rotation": 0,
+            "trackAxes": "xy",
+            "borderRadius": 0,
+            "gradientAngle": 0,
+            "strokeWidth": 6,
+            "coords": [
+                [
+                    0,
+                    0
+                ],
+                [
+                    1.43,
+                    0
+                ],
+                [
+                    1.43,
+                    0.5810572472594396
+                ],
+                [
+                    0,
+                    0.5810572472594396
+                ]
+            ],
+            "fill": [
+                "#000000"
+            ],
+            "fitToCanvas": false,
+            "gradientType": "linear",
+            "type": "circle",
+            "stroke": [
+                "#FFFFFF"
+            ],
+            "numSides": 3,
+            "compiledFragmentShaders": [
+                "#version 300 es\nprecision highp float;\nin vec2 vTextureCoord;\nin vec3 vVertexPosition;uniform vec2 uMousePos;\nuniform sampler2D uBgTexture;\nuniform sampler2D uTexture;\nuniform int uSampleBg;const float STEPS = 24.0;\nconst float PI = 3.1415926;out vec4 fragColor;vec4 getNormalOutput(vec4 color, vec4 background) {\ncolor = mix(background, color + background * (1.0 - color.a), 1.0000);\nreturn color;\n}vec4 getOutputByMode(vec4 color, vec4 background) {\nreturn getNormalOutput(color, background);\n}void main() {\nvec2 uv = vTextureCoord;\nvec2 pos = mix(vec2(0), (uMousePos - 0.5), 0.0000);uv -= pos;vec4 background = vec4(0);\nif(uSampleBg == 1) {\nbackground = texture(uBgTexture, vTextureCoord);\n}\nvec4 color = texture(uTexture, uv);vec4 col = getOutputByMode(color, background);fragColor = col;\n}"
+            ],
+            "compiledVertexShaders": [
+                "#version 300 es\nprecision highp float;in vec3 aVertexPosition;\nin vec2 aTextureCoord;uniform mat4 uMVMatrix;\nuniform mat4 uPMatrix;\nuniform mat4 uTextureMatrix;\nuniform vec2 uMousePos;out vec2 vTextureCoord;\nout vec3 vVertexPosition;void main() {\nfloat angleX = uMousePos.y * 0.5 - 0.25;\nfloat angleY = (1.-uMousePos.x) * 0.5 - 0.25;mat4 rotateX = mat4(1.0, 0.0, 0.0, 0.0,\n0.0, cos(angleX), -sin(angleX), 0.0,\n0.0, sin(angleX), cos(angleX), 0.0,\n0.0, 0.0, 0.0, 1.0);\nmat4 rotateY = mat4(cos(angleY), 0.0, sin(angleY), 0.0,\n0.0, 1.0, 0.0, 0.0,\n-sin(angleY), 0.0, cos(angleY), 0.0,\n0.0, 0.0, 0.0, 1.0);mat4 rotationMatrix = rotateX * rotateY;\ngl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\nvVertexPosition = (rotationMatrix * vec4(aVertexPosition, 1.0)).xyz;\nvTextureCoord = (uTextureMatrix * vec4(aTextureCoord, 0.0, 1.0)).xy;\n}"
+            ],
+            "data": {
+                "uniforms": {}
+            },
+            "id": "shape"
+        },
+        {
+            "breakpoints": [],
+            "visible": true,
+            "aspectRatio": 1,
+            "userDownsample": 1,
+            "layerType": "effect",
+            "type": "vignette",
+            "usesPingPong": false,
+            "trackMouse": 0,
+            "trackAxes": "xy",
+            "mouseMomentum": 0,
+            "texture": false,
+            "animating": false,
+            "isMask": 0,
+            "compiledFragmentShaders": [
+                "#version 300 es\nprecision highp float;\nin vec3 vVertexPosition;\nin vec2 vTextureCoord;\nuniform sampler2D uTexture;\nuniform vec2 uResolution;out vec4 fragColor;\nmat2 rot(float a) {\nreturn mat2(cos(a),-sin(a),sin(a),cos(a));\n}\nvoid main() {\nvec2 uv = vTextureCoord;\nvec4 bg = texture(uTexture, uv);\nfloat luma = dot(bg.rgb, vec3(0.299, 0.587, 0.114));\nfloat displacement = (luma - 0.5) * 0.0000 * 0.5;\nvec2 aspectRatio = vec2(uResolution.x/uResolution.y, 1.0);\nvec2 skew = vec2(0.5000, 1.0 - 0.5000);\nfloat halfRadius = 0.4160 * 0.5;\nfloat innerEdge = halfRadius - 2.8600 * halfRadius * 0.5;\nfloat outerEdge = halfRadius + 2.8600 * halfRadius * 0.5;\nvec2 pos = vec2(0.5121951219512195, 0.0916376306620208);\nconst float TWO_PI = 6.28318530718;\nvec2 scaledUV = uv * aspectRatio * rot(0.0108 * TWO_PI) * skew;\nvec2 scaledPos = pos * aspectRatio * rot(0.0108 * TWO_PI) * skew;\nfloat radius = distance(scaledUV, scaledPos);\nfloat falloff = smoothstep(innerEdge + displacement, outerEdge + displacement, radius);\nvec3 finalColor;finalColor = mix(bg.rgb, mix(bg.rgb, vec3(0, 0, 0), 1.0000), falloff);float alpha = max(bg.a, falloff * 1.0000);\nvec4 color = mix(bg * (1.-falloff), vec4(finalColor * alpha, alpha), 1.0000);\nfragColor = color;}"
+            ],
+            "compiledVertexShaders": [
+                "#version 300 es\nprecision mediump float;in vec3 aVertexPosition;\nin vec2 aTextureCoord;uniform mat4 uMVMatrix;\nuniform mat4 uPMatrix;\nuniform mat4 uTextureMatrix;out vec2 vTextureCoord;\nout vec3 vVertexPosition;void main() {\ngl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\nvTextureCoord = (uTextureMatrix * vec4(aTextureCoord, 0.0, 1.0)).xy;\n}"
+            ],
+            "data": {
+                "depth": false,
+                "uniforms": {},
+                "isBackground": false
+            },
+            "id": "effect2"
+        },
+        {
+            "breakpoints": [],
+            "visible": true,
+            "aspectRatio": 1,
+            "userDownsample": 1,
+            "layerType": "effect",
+            "type": "wisps",
+            "usesPingPong": false,
+            "speed": 0.05,
+            "trackMouse": 0,
+            "trackAxes": "xy",
+            "mouseMomentum": 0,
+            "texture": false,
+            "animating": true,
+            "isMask": 0,
+            "compiledFragmentShaders": [
+                "#version 300 es\nprecision highp float;in vec3 vVertexPosition;\nin vec2 vTextureCoord;\nuniform sampler2D uTexture;\nuniform float uTime;\nuniform vec2 uMousePos;\nuniform vec2 uResolution;\nvec3 blend (int blendMode, vec3 src, vec3 dst) {\nreturn src + dst;\n}out vec4 fragColor;\nconst float PI = 3.14159265359;\nmat2 rot(float a) {\nreturn mat2(cos(a), -sin(a), sin(a), cos(a));\n}vec2 hash(vec2 p) {\np = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));\nreturn -1.0 + 2.0 * fract(sin(p) * 43758.5453123);\n}float luma(vec3 color) {\nreturn dot(color, vec3(0.299, 0.587, 0.114));\n}float voronoi_additive(vec2 st, float radius, vec2 mouse_pos, float scale) {\nvec2 i_st = floor(st);\nvec2 f_st = fract(st);float wander = 0.4500 * uTime * 0.2;\nfloat total_contribution = 0.0;for (int y = -2; y <= 2; y++) {\nfor (int x = -2; x <= 2; x++) {\nvec2 neighbor = vec2(float(x), float(y));\nvec2 cell_id = i_st + neighbor;\nvec2 point = hash(cell_id);\npoint = 0.5 + 0.5 * sin(5. + wander + 6.2831 * point);\nvec2 starAbsPos = cell_id + point;\nvec2 dirToMouse = mouse_pos - starAbsPos;\nfloat distToMouse = length(dirToMouse);\nfloat attractStrength = 0.0000 * exp(-distToMouse * mix(2.0 + 0.1300 * 2., 0.5, 0.5000)) * 2.;\nstarAbsPos += dirToMouse * attractStrength;\nvec2 diff = starAbsPos - st;\nfloat dist = length(diff);float contribution = radius / max(dist, radius * 0.1);\nfloat shimmer_phase = dot(point, vec2(1.0)) * 10. + hash(cell_id).x * 5.0 + uTime * 0.5;\nfloat shimmer = mix(1., (sin(shimmer_phase) + 1.), 0.5000);\ncontribution *= shimmer;\ntotal_contribution += mix(contribution*contribution, contribution * 2., 0.2500);\n}\n}return total_contribution;\n}vec4 randomStyle() {\nvec2 uv = vTextureCoord;vec4 bg = texture(uTexture, uv);vec4 color = vec4(0.0);\nvec2 aspectRatio = vec2(uResolution.x / uResolution.y, 1.0);vec2 mPos = mix(vec2(0.0), (uMousePos - 0.5), 0.0000);uv -= vec2(0.5, 0.5);\nuv *= aspectRatio;\nuv = uv * rot(0.0000 * 2.0 * PI);\nuv *= 40.0 * 0.1300;\nuv *= mix(vec2(1.0), vec2(1.0, 0.0), 0.0000);\nuv /= aspectRatio;mPos = mPos * rot(0.0000 * 2.0 * PI);vec2 mouseGrid = uMousePos;\nmouseGrid -= vec2(0.5, 0.5);\nmouseGrid *= aspectRatio;\nmouseGrid = mouseGrid * rot(0.0000 * 2.0 * PI);\nmouseGrid *= 40.0 * 0.1300;\nmouseGrid *= mix(vec2(1.0), vec2(1.0, 0.0), 0.0000);\nmouseGrid /= aspectRatio;vec2 movementOffset = vec2(0.0, uTime * 0.1900 * -0.05);\nvec2 mouseGrid1 = mouseGrid - (mPos * 38.0 * 0.1300) + movementOffset;\nvec2 mouseGrid2 = mouseGrid - (mPos * 48.0 * 0.1300) + movementOffset;vec2 st1 = uv - (mPos * 38.0 * 0.1300);\nvec2 st2 = uv - (mPos * 48.0 * 0.1300);vec2 mouse1 = st1 + vec2(0.0, uTime * 0.1900 * -0.05);\nvec2 mouse2 = st2 + vec2(0.0, uTime * 0.1900 * -0.05);float radius1 = 0.5 * 0.1100;\nfloat radius2 = 0.5 * 0.1100;float pass1 = voronoi_additive(mouse1 * aspectRatio, radius1, mouseGrid1 * aspectRatio, 38.0 * 0.1300);\nfloat pass2 = voronoi_additive(mouse2 * aspectRatio + vec2(10), radius2, mouseGrid2 * aspectRatio + vec2(10.0), 48.0 * 0.1300);pass1 *= 0.02;\npass2 *= 0.04;color.rgb = (pass1 + pass2) * vec3(1, 1, 1) * mix(1.0, bg.r, 1.0000);\ncolor.rgb = clamp(color.rgb, 0.0, 1.0);color.rgb = blend(1, bg.rgb, color.rgb);color = vec4(color.rgb, max(bg.a, luma(color.rgb)));\nreturn color;\n}void main() {\nvec4 color;color = randomStyle();\nfragColor = color;}"
+            ],
+            "compiledVertexShaders": [
+                "#version 300 es\nprecision mediump float;in vec3 aVertexPosition;\nin vec2 aTextureCoord;uniform mat4 uMVMatrix;\nuniform mat4 uPMatrix;\nuniform mat4 uTextureMatrix;out vec2 vTextureCoord;\nout vec3 vVertexPosition;void main() {\ngl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\nvTextureCoord = (uTextureMatrix * vec4(aTextureCoord, 0.0, 1.0)).xy;\n}"
+            ],
+            "data": {
+                "depth": false,
+                "uniforms": {},
+                "isBackground": false
+            },
+            "id": "effect3"
+        },
+        {
+            "breakpoints": [],
+            "visible": true,
+            "aspectRatio": 1,
+            "userDownsample": 1,
+            "layerType": "effect",
+            "type": "bloom",
+            "usesPingPong": false,
+            "texture": false,
+            "animating": false,
+            "mouseMomentum": 0,
+            "isMask": 0,
+            "compiledFragmentShaders": [
+                "#version 300 es\nprecision highp float;\nprecision highp int;in vec3 vVertexPosition;\nin vec2 vTextureCoord;uniform sampler2D uTexture;out vec4 fragColor;float luma(vec4 color) {\nreturn dot(color.rgb, vec3(0.299, 0.587, 0.114));\n}vec4 thresholdPass(vec4 color) {\ncolor.rgb = pow(color.rgb, vec3(1.0/2.2));\ncolor.rgb = 1.2 * (color.rgb - 0.5) + 0.5;\nvec4 bloom = color * smoothstep(0.8000 - 0.1, 0.8000, luma(color));\nreturn vec4(bloom.rgb, color.a);\n}vec4 getColor(vec4 color) {\nreturn thresholdPass(color);\n}void main() {\nvec2 uv = vTextureCoord;\nvec4 color = texture(uTexture, uv);\nfragColor = getColor(color);\n}",
+                "#version 300 es\nprecision highp float;\nprecision highp int;in vec3 vVertexPosition;\nin vec2 vTextureCoord;uniform sampler2D uTexture;uniform vec2 uResolution;out vec4 fragColor;float getExponentialWeight(int index) {\nswitch(index) {\ncase 0: return 1.0000000000;\ncase 1: return 0.7165313106;\ncase 2: return 0.5134171190;\ncase 3: return 0.3678794412;\ncase 4: return 0.2636050919;\ncase 5: return 0.1888756057;\ncase 6: return 0.1353352832;\ncase 7: return 0.0969670595;\ncase 8: return 0.0694877157;\ndefault: return 0.0;\n}\n}vec4 blur(vec2 uv, bool vertical, float radius, bool diamond) {\nvec4 color = vec4(0.0);\nfloat total_weight = 0.0;\nfloat aspectRatio = uResolution.x/uResolution.y;vec2 dir;\nif (diamond) {\ndir = vertical ? vec2(1, 1) : vec2(1, -1);\n} else {\ndir = vertical ? vec2(0, 1) : vec2(1, 0);\n}\ndir *= vec2(0.5000, 1. - 0.5000);\ndir.x /= aspectRatio;\nvec4 center = texture(uTexture, uv);\nfloat center_weight = getExponentialWeight(0);\ncolor += center * center_weight;\ntotal_weight += center_weight;radius *= 0.2000;\nfor (int i = 1; i <= 8; i++) {\nfloat weight = getExponentialWeight(i);\nfloat offset = mix(0.015, 0.025, radius) * float(i)/8.;\nvec4 sample1 = texture(uTexture, uv + offset * dir);\nvec4 sample2 = texture(uTexture, uv - offset * dir);\ncolor += (sample1 + sample2) * weight;\ntotal_weight += 2.0 * weight;\n}return color / total_weight;\n}vec4 blurPass(vec2 uv, bool vertical, float radius, float intensity, bool diamond) {\nreturn blur(uv, vertical, radius, diamond);\n}vec4 getColor(vec4 color) {\nreturn blurPass(vTextureCoord, false, 40., 1.25, true);\n}void main() {\nvec2 uv = vTextureCoord;\nvec4 color = texture(uTexture, uv);\nfragColor = getColor(color);\n}",
+                "#version 300 es\nprecision highp float;\nprecision highp int;in vec3 vVertexPosition;\nin vec2 vTextureCoord;uniform sampler2D uTexture;\nuniform sampler2D uBgTexture;uniform vec2 uResolution;out vec4 fragColor;float luma(vec4 color) {\nreturn dot(color.rgb, vec3(0.299, 0.587, 0.114));\n}float getExponentialWeight(int index) {\nswitch(index) {\ncase 0: return 1.0000000000;\ncase 1: return 0.7165313106;\ncase 2: return 0.5134171190;\ncase 3: return 0.3678794412;\ncase 4: return 0.2636050919;\ncase 5: return 0.1888756057;\ncase 6: return 0.1353352832;\ncase 7: return 0.0969670595;\ncase 8: return 0.0694877157;\ndefault: return 0.0;\n}\n}vec4 blur(vec2 uv, bool vertical, float radius, bool diamond) {\nvec4 color = vec4(0.0);\nfloat total_weight = 0.0;\nfloat aspectRatio = uResolution.x/uResolution.y;vec2 dir;\nif (diamond) {\ndir = vertical ? vec2(1, 1) : vec2(1, -1);\n} else {\ndir = vertical ? vec2(0, 1) : vec2(1, 0);\n}\ndir *= vec2(0.5000, 1. - 0.5000);\ndir.x /= aspectRatio;\nvec4 center = texture(uTexture, uv);\nfloat center_weight = getExponentialWeight(0);\ncolor += center * center_weight;\ntotal_weight += center_weight;radius *= 0.2000;\nfor (int i = 1; i <= 8; i++) {\nfloat weight = getExponentialWeight(i);\nfloat offset = mix(0.015, 0.025, radius) * float(i)/8.;\nvec4 sample1 = texture(uTexture, uv + offset * dir);\nvec4 sample2 = texture(uTexture, uv - offset * dir);\ncolor += (sample1 + sample2) * weight;\ntotal_weight += 2.0 * weight;\n}return color / total_weight;\n}vec4 thresholdPass(vec4 color) {\ncolor.rgb = pow(color.rgb, vec3(1.0/2.2));\ncolor.rgb = 1.2 * (color.rgb - 0.5) + 0.5;\nvec4 bloom = color * smoothstep(0.8000 - 0.1, 0.8000, luma(color));\nreturn vec4(bloom.rgb, color.a);\n}vec4 blurCombinePass(vec2 uv, bool vertical, float radius, float intensity, bool diamond) {\nvec4 blurred = blur(uv, vertical, radius, diamond);\nreturn (thresholdPass(texture(uBgTexture, uv)) * 0.5 + blurred * intensity);\n}vec4 getColor(vec4 color) {\nreturn blurCombinePass(vTextureCoord, true, 40., 1.25, true);\n}void main() {\nvec2 uv = vTextureCoord;\nvec4 color = texture(uTexture, uv);\nfragColor = getColor(color);\n}",
+                "#version 300 es\nprecision highp float;\nprecision highp int;in vec3 vVertexPosition;\nin vec2 vTextureCoord;uniform sampler2D uTexture;uniform vec2 uResolution;out vec4 fragColor;float getExponentialWeight(int index) {\nswitch(index) {\ncase 0: return 1.0000000000;\ncase 1: return 0.7165313106;\ncase 2: return 0.5134171190;\ncase 3: return 0.3678794412;\ncase 4: return 0.2636050919;\ncase 5: return 0.1888756057;\ncase 6: return 0.1353352832;\ncase 7: return 0.0969670595;\ncase 8: return 0.0694877157;\ndefault: return 0.0;\n}\n}vec4 blur(vec2 uv, bool vertical, float radius, bool diamond) {\nvec4 color = vec4(0.0);\nfloat total_weight = 0.0;\nfloat aspectRatio = uResolution.x/uResolution.y;vec2 dir;\nif (diamond) {\ndir = vertical ? vec2(1, 1) : vec2(1, -1);\n} else {\ndir = vertical ? vec2(0, 1) : vec2(1, 0);\n}\ndir *= vec2(0.5000, 1. - 0.5000);\ndir.x /= aspectRatio;\nvec4 center = texture(uTexture, uv);\nfloat center_weight = getExponentialWeight(0);\ncolor += center * center_weight;\ntotal_weight += center_weight;radius *= 0.2000;\nfor (int i = 1; i <= 8; i++) {\nfloat weight = getExponentialWeight(i);\nfloat offset = mix(0.015, 0.025, radius) * float(i)/8.;\nvec4 sample1 = texture(uTexture, uv + offset * dir);\nvec4 sample2 = texture(uTexture, uv - offset * dir);\ncolor += (sample1 + sample2) * weight;\ntotal_weight += 2.0 * weight;\n}return color / total_weight;\n}vec4 blurPass(vec2 uv, bool vertical, float radius, float intensity, bool diamond) {\nreturn blur(uv, vertical, radius, diamond);\n}vec4 getColor(vec4 color) {\nreturn blurPass(vTextureCoord, false, 15., 1.1, true);\n}void main() {\nvec2 uv = vTextureCoord;\nvec4 color = texture(uTexture, uv);\nfragColor = getColor(color);\n}",
+                "#version 300 es\nprecision highp float;\nprecision highp int;in vec3 vVertexPosition;\nin vec2 vTextureCoord;uniform sampler2D uTexture;\nuniform sampler2D uBgTexture;uniform vec2 uResolution;out vec4 fragColor;float luma(vec4 color) {\nreturn dot(color.rgb, vec3(0.299, 0.587, 0.114));\n}float getExponentialWeight(int index) {\nswitch(index) {\ncase 0: return 1.0000000000;\ncase 1: return 0.7165313106;\ncase 2: return 0.5134171190;\ncase 3: return 0.3678794412;\ncase 4: return 0.2636050919;\ncase 5: return 0.1888756057;\ncase 6: return 0.1353352832;\ncase 7: return 0.0969670595;\ncase 8: return 0.0694877157;\ndefault: return 0.0;\n}\n}vec4 blur(vec2 uv, bool vertical, float radius, bool diamond) {\nvec4 color = vec4(0.0);\nfloat total_weight = 0.0;\nfloat aspectRatio = uResolution.x/uResolution.y;vec2 dir;\nif (diamond) {\ndir = vertical ? vec2(1, 1) : vec2(1, -1);\n} else {\ndir = vertical ? vec2(0, 1) : vec2(1, 0);\n}\ndir *= vec2(0.5000, 1. - 0.5000);\ndir.x /= aspectRatio;\nvec4 center = texture(uTexture, uv);\nfloat center_weight = getExponentialWeight(0);\ncolor += center * center_weight;\ntotal_weight += center_weight;radius *= 0.2000;\nfor (int i = 1; i <= 8; i++) {\nfloat weight = getExponentialWeight(i);\nfloat offset = mix(0.015, 0.025, radius) * float(i)/8.;\nvec4 sample1 = texture(uTexture, uv + offset * dir);\nvec4 sample2 = texture(uTexture, uv - offset * dir);\ncolor += (sample1 + sample2) * weight;\ntotal_weight += 2.0 * weight;\n}return color / total_weight;\n}vec4 thresholdPass(vec4 color) {\ncolor.rgb = pow(color.rgb, vec3(1.0/2.2));\ncolor.rgb = 1.2 * (color.rgb - 0.5) + 0.5;\nvec4 bloom = color * smoothstep(0.8000 - 0.1, 0.8000, luma(color));\nreturn vec4(bloom.rgb, color.a);\n}vec4 blurCombinePass(vec2 uv, bool vertical, float radius, float intensity, bool diamond) {\nvec4 blurred = blur(uv, vertical, radius, diamond);\nreturn (thresholdPass(texture(uBgTexture, uv)) * 0.5 + blurred * intensity);\n}vec4 getColor(vec4 color) {\nreturn blurCombinePass(vTextureCoord, true, 15., 1.1, true);\n}void main() {\nvec2 uv = vTextureCoord;\nvec4 color = texture(uTexture, uv);\nfragColor = getColor(color);\n}",
+                "#version 300 es\nprecision highp float;\nprecision highp int;in vec3 vVertexPosition;\nin vec2 vTextureCoord;uniform sampler2D uTexture;uniform vec2 uResolution;out vec4 fragColor;float getExponentialWeight(int index) {\nswitch(index) {\ncase 0: return 1.0000000000;\ncase 1: return 0.7165313106;\ncase 2: return 0.5134171190;\ncase 3: return 0.3678794412;\ncase 4: return 0.2636050919;\ncase 5: return 0.1888756057;\ncase 6: return 0.1353352832;\ncase 7: return 0.0969670595;\ncase 8: return 0.0694877157;\ndefault: return 0.0;\n}\n}vec4 blur(vec2 uv, bool vertical, float radius, bool diamond) {\nvec4 color = vec4(0.0);\nfloat total_weight = 0.0;\nfloat aspectRatio = uResolution.x/uResolution.y;vec2 dir;\nif (diamond) {\ndir = vertical ? vec2(1, 1) : vec2(1, -1);\n} else {\ndir = vertical ? vec2(0, 1) : vec2(1, 0);\n}\ndir *= vec2(0.5000, 1. - 0.5000);\ndir.x /= aspectRatio;\nvec4 center = texture(uTexture, uv);\nfloat center_weight = getExponentialWeight(0);\ncolor += center * center_weight;\ntotal_weight += center_weight;radius *= 0.2000;\nfor (int i = 1; i <= 8; i++) {\nfloat weight = getExponentialWeight(i);\nfloat offset = mix(0.015, 0.025, radius) * float(i)/8.;\nvec4 sample1 = texture(uTexture, uv + offset * dir);\nvec4 sample2 = texture(uTexture, uv - offset * dir);\ncolor += (sample1 + sample2) * weight;\ntotal_weight += 2.0 * weight;\n}return color / total_weight;\n}vec4 blurPass(vec2 uv, bool vertical, float radius, float intensity, bool diamond) {\nreturn blur(uv, vertical, radius, diamond);\n}vec4 getColor(vec4 color) {\nreturn blurPass(vTextureCoord, false, 7.5, 1., false);\n}void main() {\nvec2 uv = vTextureCoord;\nvec4 color = texture(uTexture, uv);\nfragColor = getColor(color);\n}",
+                "#version 300 es\nprecision highp float;\nprecision highp int;in vec3 vVertexPosition;\nin vec2 vTextureCoord;uniform sampler2D uTexture;uniform vec2 uResolution;out vec4 fragColor;float getExponentialWeight(int index) {\nswitch(index) {\ncase 0: return 1.0000000000;\ncase 1: return 0.7165313106;\ncase 2: return 0.5134171190;\ncase 3: return 0.3678794412;\ncase 4: return 0.2636050919;\ncase 5: return 0.1888756057;\ncase 6: return 0.1353352832;\ncase 7: return 0.0969670595;\ncase 8: return 0.0694877157;\ndefault: return 0.0;\n}\n}vec4 blur(vec2 uv, bool vertical, float radius, bool diamond) {\nvec4 color = vec4(0.0);\nfloat total_weight = 0.0;\nfloat aspectRatio = uResolution.x/uResolution.y;vec2 dir;\nif (diamond) {\ndir = vertical ? vec2(1, 1) : vec2(1, -1);\n} else {\ndir = vertical ? vec2(0, 1) : vec2(1, 0);\n}\ndir *= vec2(0.5000, 1. - 0.5000);\ndir.x /= aspectRatio;\nvec4 center = texture(uTexture, uv);\nfloat center_weight = getExponentialWeight(0);\ncolor += center * center_weight;\ntotal_weight += center_weight;radius *= 0.2000;\nfor (int i = 1; i <= 8; i++) {\nfloat weight = getExponentialWeight(i);\nfloat offset = mix(0.015, 0.025, radius) * float(i)/8.;\nvec4 sample1 = texture(uTexture, uv + offset * dir);\nvec4 sample2 = texture(uTexture, uv - offset * dir);\ncolor += (sample1 + sample2) * weight;\ntotal_weight += 2.0 * weight;\n}return color / total_weight;\n}vec4 blurPass(vec2 uv, bool vertical, float radius, float intensity, bool diamond) {\nreturn blur(uv, vertical, radius, diamond);\n}vec4 getColor(vec4 color) {\nreturn blurPass(vTextureCoord, true, 7.5, 1., false);\n}void main() {\nvec2 uv = vTextureCoord;\nvec4 color = texture(uTexture, uv);\nfragColor = getColor(color);\n}",
+                "#version 300 es\nprecision highp float;\nprecision highp int;in vec3 vVertexPosition;\nin vec2 vTextureCoord;uniform sampler2D uTexture;\nuniform sampler2D uBgTexture;uvec2 pcg2d(uvec2 v) {\nv = v * 1664525u + 1013904223u;\nv.x += v.y * v.y * 1664525u + 1013904223u;\nv.y += v.x * v.x * 1664525u + 1013904223u;\nv ^= v >> 16;\nv.x += v.y * v.y * 1664525u + 1013904223u;\nv.y += v.x * v.x * 1664525u + 1013904223u;\nreturn v;\n}float randFibo(vec2 p) {\nuvec2 v = floatBitsToUint(p);\nv = pcg2d(v);\nuint r = v.x ^ v.y;\nreturn float(r) / float(0xffffffffu);\n}out vec4 fragColor;float luma(vec4 color) {\nreturn dot(color.rgb, vec3(0.299, 0.587, 0.114));\n}vec4 finalPass(vec4 bloomColor) {\nfloat dither = (randFibo(gl_FragCoord.xy) - 0.5) / 255.0;\nbloomColor.rgb *= vec3(1, 1, 1);\nbloomColor.rgb += dither;\nbloomColor.a = luma(bloomColor);\nvec4 sceneColor = texture(uBgTexture, vTextureCoord);\nvec4 finalColor = mix(sceneColor, sceneColor + bloomColor, 0.6900 * 1.75);\nreturn finalColor;\n}vec4 getColor(vec4 color) {\nreturn finalPass(color);\n}void main() {\nvec2 uv = vTextureCoord;\nvec4 color = texture(uTexture, uv);\nfragColor = getColor(color);\n}"
+            ],
+            "compiledVertexShaders": [
+                "#version 300 es\nprecision mediump float;in vec3 aVertexPosition;\nin vec2 aTextureCoord;uniform mat4 uMVMatrix;\nuniform mat4 uPMatrix;\nuniform mat4 uTextureMatrix;out vec2 vTextureCoord;\nout vec3 vVertexPosition;void main() {\ngl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\nvTextureCoord = (uTextureMatrix * vec4(aTextureCoord, 0.0, 1.0)).xy;\n}"
+            ],
+            "data": {
+                "downSample": 0.5,
+                "depth": false,
+                "uniforms": {},
+                "isBackground": false,
+                "passes": [
+                    {
+                        "prop": "pass",
+                        "value": 1,
+                        "downSample": 0.25
+                    },
+                    {
+                        "prop": "pass",
+                        "value": 2,
+                        "downSample": 0.25,
+                        "includeBg": true
+                    },
+                    {
+                        "prop": "pass",
+                        "value": 3,
+                        "downSample": 0.25
+                    },
+                    {
+                        "prop": "pass",
+                        "value": 4,
+                        "downSample": 0.25,
+                        "includeBg": true
+                    },
+                    {
+                        "prop": "pass",
+                        "value": 5,
+                        "downSample": 0.5
+                    },
+                    {
+                        "prop": "pass",
+                        "value": 6,
+                        "downSample": 0.5,
+                        "includeBg": true
+                    },
+                    {
+                        "prop": "pass",
+                        "value": 7,
+                        "downSample": 1,
+                        "includeBg": true
+                    }
+                ]
+            },
+            "id": "effect4"
+        }
+    ],
+    "options": {
+        "name": "Alcove Hero (Remix)",
+        "fps": 60,
+        "dpi": 1.5,
+        "scale": 1,
+        "includeLogo": false,
+        "isProduction": false
+    },
+    "version": "1.5.3",
+    "id": "YxeCIfXUzLhuAd01z5RS"
+}

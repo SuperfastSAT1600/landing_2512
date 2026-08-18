@@ -1,0 +1,52 @@
+[
+  {
+    "page": 3,
+    "direct_text": "Question ID 187f74bc\nID: 187f74bc\n‒8\n‒6\n‒4\n‒2\n2\n4\n6\n8\nx\n‒10\n‒8\n‒6\n‒4\n‒2\n2\ny\nO\nThe shaded region shown represents the solutions to the inequality \n, where  is a constant. What is the value of ?\nA. \nB. \nC. \nD. \nID: 187f74bc Answer\nCorrect Answer:\nD\nRationale\nChoice D is correct. The line representing the boundary of the shaded region shown is a horizontal line; therefore, the equation of\nthe line can be written as \n. Since the shaded region represents all of the points above this boundary line, it",
+    "gpt4o": {
+      "question_id": "187f74bc",
+      "has_question": true,
+      "question_text": "The shaded region shown represents the solutions to the inequality $ry < 60$, where $r$ is a constant. What is the value of $r$?",
+      "choices": {
+        "A": "15",
+        "B": "4",
+        "C": "-4",
+        "D": "-15"
+      },
+      "has_figure": true,
+      "figure_description": "A graph with a horizontal line at $y = -4$ and shading above this line.",
+      "correct_answer": "D",
+      "difficulty": "Hard",
+      "skill": "Linear inequalities in one or two variables",
+      "raw_text_sample": "Question ID 187f74bc\nAssessment SAT\nTest Math\nDomain Algebra\nSkill Linear inequalities in one or two"
+    }
+  },
+  {
+    "page": 4,
+    "direct_text": "Question ID 1a1a95de\nID: 1a1a95de\nA certain open star cluster contains M-type stars and K-type stars. The estimated total mass of M-type and K-type stars in this\nopen star cluster is \n. The graph shown models the possible combinations of the number of M-type stars, \n, and K-type stars, , that could be in this open star cluster if all the M-type stars have the same estimated mass and all the K-type\nstars have the same estimated mass. Based on the graph, which of the following is closest to the es",
+    "gpt4o": {
+      "question_id": "1a1a95de",
+      "has_question": true,
+      "question_text": "A certain open star cluster contains M-type stars and K-type stars. The estimated total mass of M-type and K-type stars in this open star cluster is 127,882 quettagrams. The graph shown models the possible combinations of the number of M-type stars, $x$, and K-type stars, $y$, that could be in this open star cluster if all the M-type stars have the same estimated mass and all the K-type stars have the same estimated mass. Based on the graph, which of the following is closest to the estimated mass, in quettagrams, of each M-type star in this cluster?",
+      "choices": {
+        "A": "811",
+        "B": "938",
+        "C": "51,904",
+        "D": "75,978"
+      },
+      "has_figure": true,
+      "figure_description": "A graph with the x-axis labeled 'Number of M-type stars' and the y-axis labeled 'Number of K-type stars'. The graph shows a line with a negative slope, intersecting the x-axis at approximately (158, 0) and the y-axis at approximately (0, 160).",
+      "correct_answer": "A",
+      "difficulty": "Medium",
+      "skill": "Linear equations in two variables",
+      "raw_text_sample": "Question ID 1a1a95de Assessment SAT Test Math Domain Algebra Skill Linear equations in two variables"
+    }
+  },
+  {
+    "page": 5,
+    "direct_text": "Choice C is incorrect and may result from conceptual or calculation errors.\nChoice D is incorrect and may result from conceptual or calculation errors.\nQuestion Difficulty:\nHard\n",
+    "gpt4o": {
+      "question_id": "0x5a8f3b2e",
+      "has_question": false
+    }
+  }
+]

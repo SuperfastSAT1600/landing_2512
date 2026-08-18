@@ -1,0 +1,249 @@
+/**
+ * {{CONTEXT_NAME}} Context
+ *
+ * {{CONTEXT_DESCRIPTION}}
+ *
+ * @example
+ * ```tsx
+ * // Wrap your app
+ * <{{CONTEXT_NAME}}Provider>
+ *   <App />
+ * </{{CONTEXT_NAME}}Provider>
+ *
+ * // Use in components
+ * function MyComponent() {
+ *   const { state, actions } = use{{CONTEXT_NAME}}();
+ *   return <div>{state.value}</div>;
+ * }
+ * ```
+ *
+ * Template Placeholders:
+ * - {{CONTEXT_NAME}}: PascalCase context name (e.g., Auth, Theme, User, Settings)
+ * - {{CONTEXT_DESCRIPTION}}: Brief description of context purpose
+ * - {{STATE_PROPERTIES}}: Additional state properties (optional)
+ * - {{ACTION_METHODS}}: Additional action methods (optional)
+ * - {{PROVIDER_PROPS}}: Additional provider props (optional)
+ */
+
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  type ReactNode,
+} from 'react';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface {{CONTEXT_NAME}}State {
+  /**
+   * Example state property - replace with actual state
+   */
+  value: string;
+  /**
+   * Whether data is currently loading
+   */
+  isLoading: boolean;
+  /**
+   * Error state if any
+   */
+  error: Error | null;
+  // {{STATE_PROPERTIES}}
+}
+
+export interface {{CONTEXT_NAME}}Actions {
+  /**
+   * Update the value
+   */
+  setValue: (newValue: string) => void;
+  /**
+   * Reset to initial state
+   */
+  reset: () => void;
+  /**
+   * Refresh/reload data
+   */
+  refresh: () => Promise<void>;
+  // {{ACTION_METHODS}}
+}
+
+export interface {{CONTEXT_NAME}}ContextValue {
+  /**
+   * Current state
+   */
+  state: {{CONTEXT_NAME}}State;
+  /**
+   * Available actions
+   */
+  actions: {{CONTEXT_NAME}}Actions;
+}
+
+export interface {{CONTEXT_NAME}}ProviderProps {
+  /**
+   * Child components
+   */
+  children: ReactNode;
+  /**
+   * Optional initial value
+   */
+  initialValue?: string;
+  // {{PROVIDER_PROPS}}
+}
+
+// =============================================================================
+// Context
+// =============================================================================
+
+const {{CONTEXT_NAME}}Context = createContext<{{CONTEXT_NAME}}ContextValue | undefined>(
+  undefined
+);
+
+{{CONTEXT_NAME}}Context.displayName = '{{CONTEXT_NAME}}Context';
+
+// =============================================================================
+// Provider
+// =============================================================================
+
+/**
+ * {{CONTEXT_NAME}}Provider
+ *
+ * Provides {{CONTEXT_NAME}} context to child components
+ */
+export function {{CONTEXT_NAME}}Provider({
+  children,
+  initialValue = '',
+}: {{CONTEXT_NAME}}ProviderProps) {
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+
+  const [value, setValue] = useState<string>(initialValue);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  // ---------------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------------
+
+  const reset = useCallback(() => {
+    setValue(initialValue);
+    setError(null);
+    setIsLoading(false);
+  }, [initialValue]);
+
+  const refresh = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Your refresh logic here
+      // Example: const data = await fetchData();
+      // setValue(data);
+
+      setIsLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'));
+      setIsLoading(false);
+    }
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Effects
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    // Initialize or sync with external sources
+    // Example: Load from localStorage, subscribe to events, etc.
+
+    return () => {
+      // Cleanup: unsubscribe, cancel requests, etc.
+    };
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Context Value
+  // ---------------------------------------------------------------------------
+
+  const contextValue = useMemo<{{CONTEXT_NAME}}ContextValue>(
+    () => ({
+      state: {
+        value,
+        isLoading,
+        error,
+      },
+      actions: {
+        setValue,
+        reset,
+        refresh,
+      },
+    }),
+    [value, isLoading, error, reset, refresh]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
+  return (
+    <{{CONTEXT_NAME}}Context.Provider value={contextValue}>
+      {children}
+    </{{CONTEXT_NAME}}Context.Provider>
+  );
+}
+
+// =============================================================================
+// Hook
+// =============================================================================
+
+/**
+ * use{{CONTEXT_NAME}}
+ *
+ * Access {{CONTEXT_NAME}} context
+ *
+ * @throws {Error} If used outside {{CONTEXT_NAME}}Provider
+ */
+export function use{{CONTEXT_NAME}}(): {{CONTEXT_NAME}}ContextValue {
+  const context = useContext({{CONTEXT_NAME}}Context);
+
+  if (context === undefined) {
+    throw new Error(
+      'use{{CONTEXT_NAME}} must be used within a {{CONTEXT_NAME}}Provider'
+    );
+  }
+
+  return context;
+}
+
+// =============================================================================
+// Convenience Hooks
+// =============================================================================
+
+/**
+ * use{{CONTEXT_NAME}}State
+ *
+ * Access only the state portion of {{CONTEXT_NAME}} context
+ */
+export function use{{CONTEXT_NAME}}State(): {{CONTEXT_NAME}}State {
+  const { state } = use{{CONTEXT_NAME}}();
+  return state;
+}
+
+/**
+ * use{{CONTEXT_NAME}}Actions
+ *
+ * Access only the actions portion of {{CONTEXT_NAME}} context
+ */
+export function use{{CONTEXT_NAME}}Actions(): {{CONTEXT_NAME}}Actions {
+  const { actions } = use{{CONTEXT_NAME}}();
+  return actions;
+}
+
+// =============================================================================
+// Default Export
+// =============================================================================
+
+export default {{CONTEXT_NAME}}Provider;

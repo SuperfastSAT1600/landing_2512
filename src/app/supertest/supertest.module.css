@@ -1,0 +1,19 @@
+.page {
+    min-height: 100vh;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    padding-top: 88px; /* header height */
+    padding-bottom: 120px; /* floating CTA clearance */
+}
+
+.section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 5%;
+}
+
+@media (max-width: 768px) {
+    .section {
+        padding: 56px 1.25rem;
+    }
+}

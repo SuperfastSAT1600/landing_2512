@@ -1,0 +1,77 @@
+# [Design System] Argonaut AI 3D Iconography
+
+> **Context:** Argonaut AI의 SAT 학습 플랫폼을 위한 3D 아이콘 디자인 가이드라인입니다.
+> **Philosophy:** "Soft Innovation" (부드러운 혁신) - Toss의 Simplicity 철학을 기반으로 기술적 장벽을 낮추고 친근함을 전달합니다.
+
+---
+
+## 1. Core Principles (핵심 원칙)
+* **Essential Geometry:** 복잡한 디테일을 제거하고 본질적인 형태(원, 사각형, 캡슐)만 남깁니다.
+* **Soft & Safe:** 날카로운 모서리(Sharp Edge)를 배제하고 모든 끝을 둥글게(Round) 처리합니다.
+* **Tactile Warmth:** 차가운 디지털 느낌이 아닌, 만지고 싶은 아날로그 질감을 지향합니다.
+* **Anti-Gravity:** 바닥에 고정되지 않고 중력을 거스르는 듯한 가벼운 움직임을 부여합니다.
+
+---
+
+## 2. Visual Specifications (시각적 정의)
+
+### 2.1. Shape & Geometry (형태)
+* **Style:** `Claymorphism`, `Minimalist 3D`
+* **Detail Level:** Low-poly base + Smooth Shading
+* **Corner Radius:**
+    * 모든 오브젝트에 넉넉한 Bevel 적용 (Object 크기의 10~20%).
+    * 완벽한 90도 직각 금지.
+* **Abstraction:** 나사, 이음새, 텍스트 등 현실적 디테일 생략.
+
+### 2.2. Material & Texture (재질)
+* **Reference Materials:** `Matte Rubber` (무광 고무), `Clay` (점토), `Ceramic` (세라믹)
+* **Surface Properties (PBR 기준):**
+    * **Roughness:** 0.6 ~ 0.8 (빛을 부드럽게 머금음)
+    * **Metalness:** 0.0 ~ 0.1 (금속성 배제)
+    * **Specular:** 낮음 (번들거림 최소화)
+
+### 2.3. Lighting & Shadow (조명)
+* **Type:** `Softbox Studio Lighting` (부드러운 스튜디오 조명)
+* **Tone:** Warm Diffuse Light (따뜻한 산광)
+* **Shadow:** Hard Shadow 금지. `Ambient Occlusion` 위주의 부드러운 음영 처리.
+
+### 2.4. Color Palette (색상)
+* **Strategy:** `One-Tone` + `Gradient`
+* **Main:** Argonaut AI Brand Colors
+* **Background:** Pastel Tones (Soft Blue, Cream, Pale Pink)
+* **Accent:** Vivid Tones (Neon Yellow, Orange) - 중요 정보(점수, 합격) 강조용
+
+---
+
+## 3. Motion & Physics (모션 및 물리)
+
+### 3.1. Idle State (기본 상태)
+* **Floating:** Y축을 기준으로 느린 Sine Wave 움직임 (둥둥 떠 있는 느낌).
+* **Rotation:** 아주 느린 속도로 무작위 축 회전 (0.1x speed).
+
+### 3.2. Interaction (반응)
+* **Hover:**
+    * Scale: 1.1x (Ease-out-back)
+    * Tilt: 마우스 커서 방향으로 미세하게 기울어짐 (Parallax)
+* **Click:**
+    * Bouncy: 고무공처럼 통통 튀는 탄성 효과.
+
+---
+
+## 4. Object Library (오브젝트 목록)
+
+| 섹션 (Section) | 키워드 (Keyword) | 메타포 (Metaphor) | 시각적 묘사 (Description) |
+| :--- | :--- | :--- | :--- |
+| **Header** | **Start / Dream** | **우주비행사 헬멧, 망토** | 둥근 바이저가 있는 헬멧, 바람에 펄럭이며 공중에 뜬 망토 |
+| **Problem** | **Difficulty** | **엉킨 전선, 돌덩이** | 매트한 질감의 둥근 돌, 파스텔 톤의 부드럽게 꼬인 선 |
+| **Solution** | **Clarity** | **유리구슬, 큐브** | 내부가 살짝 비치는 반투명 구슬, 모서리가 둥근 단순한 큐브 |
+| **Benefit** | **Growth** | **3D 화살표, 트로피** | 위로 솟구치는 굵고 둥근 화살표, 단순화된 황금색 컵 |
+
+---
+
+## 5. Implementation Prompt Example (프롬프트 예시)
+*AI에게 코딩을 요청할 때 다음 형식을 참고하세요.*
+
+> "Argonaut AI 디자인 시스템에 맞춰 '성적 상승'을 표현하는 **3D 화살표 컴포넌트**를 만들어줘.
+> **React Three Fiber**를 사용하고, 재질은 **Roughness 0.7의 매트한 질감**이어야 해.
+> 애니메이션은 **Floating(둥둥 떠있음)** 효과를 적용해줘."

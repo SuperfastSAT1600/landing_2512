@@ -1,0 +1,42 @@
+{
+    "hero": {
+        "ctaText": "25년 11월 시험 목표달성 학생 인터뷰",
+        "ctaLink": "/blog/sat-nov25-score-interview"
+    },
+    "features": [
+        {
+            "postSlug": "1on1-online-classes",
+            "title": "1:1 온라인 수업",
+            "description": "딴짓할 틈 없는 밀착 수"
+        },
+        {
+            "postSlug": "sat-need-custom-curriculum",
+            "title": "맞춤형 커리큘럼",
+            "description": "내에게 딱 맞는 단 하나의 학습 로드맵"
+        },
+        {
+            "postSlug": "why-superfastsat-uses-ai-for-monitoring",
+            "title": "밀착 모니터링",
+            "description": "숙제하는 모든 순간, AI가 실시간 밀착 관리"
+        },
+        {
+            "postSlug": "sat-highscore-with-cb",
+            "title": "1만개 복습 문제",
+            "description": "압도적 규모의 복습 콘텐"
+        },
+        {
+            "postSlug": "sat-score-gain-from-mistakes",
+            "title": "꼼꼼한 약점 관리",
+            "description": "오답부터 단어까지 올케어"
+        },
+        {
+            "postSlug": "sat-class-feedback-reasons",
+            "title": "데일리 리포트",
+            "description": "매일 확인하는 학습 성취도"
+        }
+    ],
+    "floatingCta": {
+        "discountLabel": "📣여름특강 얼리버드 할인 혜택 받기",
+        "discountPostSlug": "sat-2026-summer-curriculum"
+    }
+}

@@ -1,0 +1,620 @@
+{
+  "_comment": "최초상담 중복 정리 매핑. key=삭제된 이름, value=유지된 이름. 상담DB 임포트 시 이 매핑으로 라우팅.",
+  "mappings": [
+    {
+      "keep": "민지",
+      "deleted": [
+        "잠재고객_260404_02",
+        "잠재고객_260405_03"
+      ],
+      "phone": "01052166927"
+    },
+    {
+      "keep": "잠재고객_260512_01",
+      "deleted": [
+        "잠재고객_260517_06"
+      ],
+      "phone": "8618977300003"
+    },
+    {
+      "keep": "Ty Suzie Kim",
+      "deleted": [
+        "Wallace Kim (Ty Suzie Kim 동일리드)"
+      ],
+      "phone": "1-770-352-4585"
+    },
+    {
+      "keep": "이희령01",
+      "deleted": [
+        "이희령"
+      ],
+      "phone": "01089576437"
+    },
+    {
+      "keep": "권은서/eunseo kwon",
+      "deleted": [],
+      "phone": "01080978622",
+      "note": "동일 이름 중복 2건"
+    },
+    {
+      "keep": "최지혜",
+      "deleted": [],
+      "phone": "01080734231",
+      "note": "동일 이름 중복 3건"
+    },
+    {
+      "keep": "오시영",
+      "deleted": [],
+      "phone": "01054801453",
+      "note": "동일 이름 중복 6건 (최초상담 2 + 상담DB 4)"
+    },
+    {
+      "keep": "Chloe im01",
+      "deleted": [
+        "임서영"
+      ],
+      "phone": "01053941696"
+    },
+    {
+      "keep": "이은성01",
+      "deleted": [
+        "이은성02"
+      ],
+      "phone": "01047881241"
+    },
+    {
+      "keep": "잠재고객_260218_02",
+      "deleted": [
+        "잠재고객_260405_02"
+      ],
+      "phone": "01045722496"
+    },
+    {
+      "keep": "오승빈",
+      "deleted": [
+        "황유림"
+      ],
+      "phone": "01035791835",
+      "note": "2026-05-28 상담메모 추가: 황유림으로 문의를 새로 함"
+    },
+    {
+      "keep": "웡지아",
+      "deleted": [
+        "Jia wong"
+      ],
+      "phone": "01034078445"
+    },
+    {
+      "keep": "김동욱",
+      "deleted": [],
+      "phone": "01030068277",
+      "note": "동일 이름 중복 2건"
+    },
+    {
+      "keep": "박시후",
+      "deleted": [
+        "Sofyan"
+      ],
+      "phone": "01027600699",
+      "note": "2026-05-28 상담메모 추가: Sofyan으로 문의가 새로 들어옴."
+    },
+    {
+      "keep": "이현경",
+      "deleted": [
+        "양예준"
+      ],
+      "phone": "01020375185"
+    },
+    {
+      "keep": "박기선",
+      "deleted": [
+        "H.Y",
+        "박기선 (H.Y 동일리드)"
+      ],
+      "phone": "010-5475-8381",
+      "note": "H.Y와 동일리드, 박기선으로 통일"
+    },
+    {
+      "keep": "Hyun Jung Kim",
+      "deleted": [],
+      "phone": "1-714-742-0600",
+      "note": "동일 이름 중복 3건"
+    },
+    {
+      "keep": "박시연01",
+      "deleted": [
+        "박시연"
+      ],
+      "phone": "",
+      "note": "상담DB의 박시연 → 박시연01 연결"
+    },
+    {
+      "keep": "오하린01",
+      "deleted": [
+        "오하린"
+      ],
+      "phone": "",
+      "note": "상담DB의 오하린 → 오하린01 연결"
+    },
+    {
+      "keep": "김동현01",
+      "deleted": [
+        "김동현"
+      ],
+      "phone": "",
+      "note": "상담DB의 김동현 → 김동현01 연결"
+    },
+    {
+      "keep": "김세현01",
+      "deleted": [
+        "김세현"
+      ],
+      "phone": "",
+      "note": "상담DB의 김세현 → 김세현01 연결"
+    },
+    {
+      "keep": "Daniel Lee01",
+      "deleted": [
+        "Daniel Lee"
+      ],
+      "phone": "",
+      "note": "상담DB의 Daniel Lee → Daniel Lee01 연결"
+    },
+    {
+      "keep": "James01",
+      "deleted": [
+        "James"
+      ],
+      "phone": "",
+      "note": "상담DB의 James → James01 연결"
+    },
+    {
+      "keep": "이현지02",
+      "deleted": [
+        "Hyunji Lee"
+      ],
+      "phone": "",
+      "note": "상담DB의 Hyunji Lee → 이현지02 연결"
+    },
+    {
+      "keep": "Nathan02",
+      "deleted": [
+        "Nathan"
+      ],
+      "phone": "",
+      "note": "상담DB의 Nathan → Nathan02 연결"
+    },
+    {
+      "keep": null,
+      "deleted": [
+        "Aron"
+      ],
+      "phone": "",
+      "note": "상담DB의 Aron 데이터 무시 — 연결할 학생 없음"
+    },
+    {
+      "keep": "이다연01",
+      "deleted": [
+        "이다연"
+      ],
+      "phone": "",
+      "note": "상담DB의 이다연 → 이다연01 연결"
+    },
+    {
+      "keep": "이서윤01",
+      "deleted": [
+        "이서윤"
+      ],
+      "phone": "",
+      "note": "상담DB의 이서윤 → 이서윤01 연결"
+    },
+    {
+      "keep": "이주원01",
+      "deleted": [
+        "이주원"
+      ],
+      "phone": "",
+      "note": "상담DB의 이주원 → 이주원01 연결"
+    },
+    {
+      "keep": "김리원",
+      "deleted": [
+        "김리원/예원"
+      ],
+      "phone": "",
+      "note": "상담DB의 김리원/예원 → 김리원 연결"
+    },
+    {
+      "keep": "장수진01",
+      "deleted": [
+        "장수진"
+      ],
+      "phone": "",
+      "note": "상담DB의 장수진 → 장수진01 연결"
+    },
+    {
+      "keep": "박서정/Seojeong Park",
+      "deleted": [
+        "Seojeong Park"
+      ],
+      "phone": "",
+      "note": "상담DB의 Seojeong Park → 박서정/Seojeong Park 연결"
+    },
+    {
+      "keep": "정지민/Caleb Jung",
+      "deleted": [
+        "정지민"
+      ],
+      "phone": "",
+      "note": "상담DB의 정지민 → 정지민/Caleb Jung 연결"
+    },
+    {
+      "keep": "문서진/Isabella Moon",
+      "deleted": [
+        "문서진"
+      ],
+      "phone": "",
+      "note": "상담DB의 문서진 → 문서진/Isabella Moon 연결, 중복 레코드 4개 삭제"
+    },
+    {
+      "keep": "Jiho Shin",
+      "deleted": [
+        "신지호"
+      ],
+      "phone": "",
+      "note": "상담DB의 신지호 → Jiho Shin 연결"
+    },
+    {
+      "keep": "Joanne Lee",
+      "deleted": [
+        "마이야"
+      ],
+      "phone": "",
+      "note": "상담DB의 마이야 → Joanne Lee 연결"
+    },
+    {
+      "keep": "이채원01",
+      "deleted": [
+        "이채원"
+      ],
+      "phone": "",
+      "note": "상담DB의 이채원 → 이채원01 연결"
+    },
+    {
+      "keep": "이채하01",
+      "deleted": [
+        "이채하"
+      ],
+      "phone": "",
+      "note": "상담DB의 이채하 → 이채하01 연결"
+    },
+    {
+      "keep": "김소현01",
+      "deleted": [
+        "김소현"
+      ],
+      "phone": "",
+      "note": "상담DB의 김소현 → 김소현01 연결"
+    },
+    {
+      "keep": "조재현01",
+      "deleted": [
+        "조재현"
+      ],
+      "phone": "",
+      "note": "상담DB의 조재현 → 조재현01 연결"
+    },
+    {
+      "keep": "김민재01",
+      "deleted": [
+        "김민재"
+      ],
+      "phone": "",
+      "note": "상담DB의 김민재 → 김민재01 연결"
+    },
+    {
+      "keep": "윤서02",
+      "deleted": [
+        "윤서"
+      ],
+      "phone": "",
+      "note": "상담DB의 윤서 → 윤서02 연결"
+    },
+    {
+      "keep": "양민호",
+      "deleted": [
+        "민호"
+      ],
+      "phone": "",
+      "note": "상담DB의 민호 → 양민호 연결"
+    },
+    {
+      "keep": "김윤서01",
+      "deleted": [
+        "김윤서"
+      ],
+      "phone": "",
+      "note": "상담DB의 김윤서 → 김윤서01 연결 (초기에 김윤서02로 잘못 연결됐다가 수정)"
+    },
+    {
+      "keep": "김서진01",
+      "deleted": [
+        "김서진"
+      ],
+      "phone": "",
+      "note": "상담DB의 김서진 → 김서진01 연결"
+    },
+    {
+      "keep": "라이언 킴01",
+      "deleted": [
+        "라이언 킴"
+      ],
+      "phone": "",
+      "note": "상담DB의 라이언 킴 → 라이언 킴01 연결"
+    },
+    {
+      "keep": "신자림",
+      "deleted": [],
+      "phone": "01043710087",
+      "note": "동일인 중복 2건 — enrolled(07733c19)와 inactive(f7d394f0) 병합. 결제(499만) inactive→enrolled 이전, grade 11th 복원, inactive 삭제. 2026-06-13"
+    },
+    {
+      "keep": "HyoLim Jin",
+      "deleted": [],
+      "phone": "",
+      "note": "동일인 중복 2건 — enrolled(b1406a67)와 inactive(eb34494d) 병합. 결제(499만) inactive→enrolled 이전, inactive 삭제. 2026-06-13"
+    },
+    {
+      "keep": "아이린",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "임서연",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "이건희",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "송지원",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "조하윤",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "이은찬",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "김지은",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "김예나02",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "Geo Kim",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "권호경",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "Nathan Ra",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "이혁진",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "여주호/Juho",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "김우솔",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "방선윤",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "김주호02",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "Eunice Cho",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "오민서",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "유신우/Abe",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "김도윤",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "은지안",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "박규리",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "아라",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "김하율",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "이예주",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "Raphael Yoo",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "송하원",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "Eres",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "Ethan02",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "연수",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "한지민02",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "김주하",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "김예윤",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "Connor Shon",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "Chris",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "이대호",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "방마리",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "이채훈",
+      "deleted": [],
+      "phone": "",
+      "note": "2026-05-28 대량임포트 중복 — enrolled+inactive 쌍. 결제 enrolled로 이전, inactive 삭제. 2026-06-14 일괄처리"
+    },
+    {
+      "keep": "김채윤",
+      "deleted": [],
+      "phone": "",
+      "note": "inactive+inactive 중복 2건 병합. SAT 결제 01-06건(250만)이 d2802a0a에 고립, 81adce82로 이전. 상담메모 동일 5건. 환불(06-10) 포함 현재 inactive. 2026-06-14"
+    },
+    {
+      "keep": "조재현02",
+      "deleted": [],
+      "phone": "01038494070",
+      "note": "inactive+inactive 중복 2건 병합. 상담11건(15c24ef3)이 메인, 결제6건(581ab7cd)을 이전. 최종 7건(25-12-12~26-06-04) 총 12,308,636원. 조재현01(01062117422)과 다른 사람. 2026-06-14"
+    },
+    {
+      "keep": "조지우",
+      "deleted": [],
+      "phone": "",
+      "note": "inactive+inactive 중복 2건 병합. grade 10th 레코드(639a11c4) 메인. 환불(-400만, b2a2b8bc) 이전. 최종 03-31 결제+05-29 환불 합계 0원. 2026-06-14"
+    },
+    {
+      "keep": "최지혜",
+      "deleted": [],
+      "phone": "01080734231",
+      "note": "최지혜(inactive, 05-28)와 최지혜02(active, 06-14)는 다른 사람. 병합 없음. 최지혜02는 신규 리드. 2026-06-14"
+    }
+  ]
+}

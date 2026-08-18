@@ -1,0 +1,155 @@
+.curriculum {
+    padding: 8rem 2rem;
+    background: var(--background);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 6rem;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: var(--foreground);
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    color: var(--gray-800);
+}
+
+@media (prefers-color-scheme: dark) {
+    .subtitle {
+        color: var(--gray-200);
+    }
+}
+
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.module {
+    display: flex;
+    gap: 3rem;
+    padding-bottom: 4rem;
+}
+
+.module:last-child {
+    padding-bottom: 0;
+}
+
+.marker {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 24px;
+}
+
+.dot {
+    width: 24px;
+    height: 24px;
+    background: var(--background);
+    border: 4px solid var(--primary);
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.line {
+    flex-grow: 1;
+    width: 2px;
+    background: var(--gray-200);
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    .line {
+        background: var(--gray-800);
+    }
+}
+
+.content {
+    padding-top: 0;
+}
+
+.week {
+    display: inline-block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.05em;
+}
+
+.moduleTitle {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--foreground);
+}
+
+.moduleDescription {
+    font-size: 1.1rem;
+    color: var(--gray-800);
+    margin-bottom: 1.5rem;
+    max-width: 600px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .moduleDescription {
+        color: var(--gray-200);
+    }
+}
+
+.points {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.point {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    color: var(--gray-800);
+}
+
+@media (prefers-color-scheme: dark) {
+    .point {
+        color: var(--gray-200);
+    }
+}
+
+.pointIcon {
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .module {
+        gap: 1.5rem;
+        padding-bottom: 3rem;
+    }
+
+    .moduleTitle {
+        font-size: 1.5rem;
+    }
+
+    .points {
+        grid-template-columns: 1fr;
+    }
+}

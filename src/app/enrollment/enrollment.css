@@ -1,0 +1,166 @@
+/*
+ * enrollment 라우트 전용 CSS.
+ * 디자인 가이드(Docs/design-system.md) 기준으로 정렬됨.
+ */
+
+/* ── 배경 / 기본 ────────────────────────────────────────────────────────────── */
+.enrollment-root {
+  background: #000000;
+  min-height: 100vh;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .enrollment-root {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ── 스크롤바 (데스크톱만) ──────────────────────────────────────────────────── */
+@media (hover: hover) {
+  .enrollment-root ::-webkit-scrollbar { width: 6px; }
+  .enrollment-root ::-webkit-scrollbar-track { background: transparent; }
+  .enrollment-root ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+  }
+  .enrollment-root ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+/* ── 카드 Glassmorphism (데스크톱만 — 모바일 GPU 보호) ─────────────────────── */
+@media (hover: hover) {
+  .enrollment-root [class*="bg-clay-solid"] {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .enrollment-root [class*="bg-surface-elevated"] {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+/* 모바일: backdrop-filter 제거 → 불투명 대체 배경 */
+@media (max-width: 767px) {
+  .enrollment-root [class*="bg-clay-solid"] {
+    background: #1a2235 !important;
+  }
+  .enrollment-root [class*="bg-surface-elevated"] {
+    background: #141c32 !important;
+  }
+}
+
+/* ── 섹션 패딩 (디자인 가이드: 8rem desktop / 5rem mobile) ────────────────── */
+.enrollment-root main section {
+  padding-bottom: 8rem;
+}
+.enrollment-root main section:first-of-type {
+  padding-top: 8rem;
+  padding-bottom: 4rem;
+}
+
+@media (max-width: 767px) {
+  .enrollment-root main section {
+    padding-bottom: 5rem;
+  }
+  .enrollment-root main section:first-of-type {
+    padding-top: 5rem;
+    padding-bottom: 2.5rem;
+  }
+}
+
+/* ── Hero h1 타이포그래피 ───────────────────────────────────────────────────── */
+.enrollment-root main h1 {
+  font-size: clamp(2rem, 8vw, 5rem);  /* 모바일 최소값 2rem으로 조정 */
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* ── 컨테이너 max-width (디자인 가이드: 1200px) ─────────────────────────────── */
+.enrollment-root main section[class*="max-w-3xl"] {
+  max-width: 1200px;
+}
+
+/* ── 스크롤 리빌 ─────────────────────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-children .reveal-item {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.5s ease calc(var(--stagger, 0) * 0.08s),
+    transform 0.5s ease calc(var(--stagger, 0) * 0.08s);
+}
+.reveal-children.is-visible .reveal-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-children .reveal-item {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* ── 카드 선택 인터랙션 ──────────────────────────────────────────────────────── */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  --tw-ring-color: rgba(96, 133, 255, 0.4);
+  --tw-ring-offset-color: #000000;
+}
+
+.card-selectable {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.card-selectable:active {
+  transform: scale(0.98);
+  transition-duration: 0.08s;
+}
+
+/* 호버 효과: 실제 hover 가능한 기기에서만 */
+@media (hover: hover) {
+  .card-selectable:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow:
+      20px 20px 40px rgba(0, 0, 0, 0.5),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+
+.card-selectable.selected {
+  border-color: rgba(96, 133, 255, 0.5);
+  box-shadow:
+    20px 20px 40px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(96, 133, 255, 0.3),
+    0 0 20px rgba(96, 133, 255, 0.15);
+}
+
+/* 모바일: selected 상태 그림자 단순화 */
+@media (max-width: 767px) {
+  .card-selectable.selected {
+    box-shadow: 0 0 0 2px rgba(96, 133, 255, 0.6);
+  }
+}

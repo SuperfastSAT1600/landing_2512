@@ -1,0 +1,101 @@
+import type { Config } from "tailwindcss";
+import typography from '@tailwindcss/typography';
+
+const config: Config = {
+    content: [
+        "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+        "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+        "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    ],
+    theme: {
+        extend: {
+            colors: {
+                background: "var(--background)",
+                foreground: "var(--foreground)",
+                // --- class-enrollment (다크 clay 테마) 전용 색상. 신규 키만 추가 → 기존 페이지 무영향 ---
+                page: '#000000',
+                surface: {
+                    DEFAULT: '#09090b',
+                    elevated: 'rgba(30, 41, 59, 0.55)',
+                    hover: '#283046',
+                },
+                clay: {
+                    DEFAULT: 'rgba(25, 30, 45, 0.6)',
+                    solid: 'rgba(30, 41, 59, 0.4)',
+                },
+                accent: {
+                    DEFAULT: '#071be9',
+                    glow: '#6085ff',
+                    secondary: '#00a6a6',
+                },
+                muted: {
+                    DEFAULT: 'rgba(255,255,255,0.3)',
+                    light: '#d1d5db',
+                },
+                border: {
+                    DEFAULT: 'rgba(255,255,255,0.08)',
+                    strong: 'rgba(255,255,255,0.1)',
+                },
+                primary: {
+                    50: '#eef2ff',
+                    100: '#dde4ff',
+                    200: '#bfcbff',
+                    300: '#93a5ff',
+                    400: '#6085ff',
+                    500: '#3b5dff',
+                    600: '#071be9',
+                    700: '#0516c0',
+                    800: '#041198',
+                    900: '#030d70',
+                },
+            },
+            fontFamily: {
+                sans: ["Pretendard Variable", "Pretendard", "sans-serif"],
+            },
+            borderRadius: {
+                soft: '2rem',
+                medium: '1.5rem',
+                card: '1.25rem',
+                btn: '9999px',
+            },
+            boxShadow: {
+                clay: '20px 20px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.1)',
+                'clay-hover': '20px 20px 40px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.15)',
+                'clay-float': '30px 30px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1)',
+                'clay-button': '10px 10px 20px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.1)',
+                glow: '0 0 20px rgba(96,133,255,0.4)',
+                'glow-strong': '0 0 40px rgba(96,133,255,0.5)',
+            },
+            animation: {
+                'fade-in': 'fadeIn 0.4s ease-out',
+                'slide-up': 'slideUp 0.5s ease-out',
+                'check-pop': 'checkPop 0.5s ease-out',
+                'gradient-shift': 'gradientShift 4s ease infinite',
+            },
+            keyframes: {
+                fadeIn: {
+                    '0%': { opacity: '0', transform: 'translateY(12px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                slideUp: {
+                    '0%': { opacity: '0', transform: 'translateY(24px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                checkPop: {
+                    '0%': { transform: 'scale(0)' },
+                    '50%': { transform: 'scale(1.2)' },
+                    '100%': { transform: 'scale(1)' },
+                },
+                gradientShift: {
+                    '0%':   { backgroundPosition: '0% 50%' },
+                    '50%':  { backgroundPosition: '100% 50%' },
+                    '100%': { backgroundPosition: '0% 50%' },
+                },
+            },
+        },
+    },
+    plugins: [
+        typography,
+    ],
+};
+export default config;
