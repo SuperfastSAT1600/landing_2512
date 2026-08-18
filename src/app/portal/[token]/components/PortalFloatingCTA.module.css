@@ -1,0 +1,97 @@
+.wrapper {
+    position: fixed;
+    bottom: clamp(1rem, 5vh, 2rem);
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    padding: 0 clamp(1rem, 3vw, 2rem);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.container {
+    pointer-events: auto;
+    width: auto;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 0.6rem;
+    width: 100%;
+}
+
+.primaryBtn {
+    background: #6085FF;
+    color: white;
+    padding: 0.85rem 2rem;
+    border: none;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 25px -5px rgba(96, 133, 255, 0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+
+.primaryBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px -5px rgba(96, 133, 255, 0.6);
+}
+
+.primaryBtn:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+.secondaryBtn {
+    flex: 1;
+    background: white;
+    color: #09090b;
+    padding: 1rem;
+    border: 1.5px solid rgba(96, 133, 255, 0.4);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+
+.secondaryBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(96, 133, 255, 0.15);
+    border-color: rgba(96, 133, 255, 0.7);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .wrapper {
+        bottom: 0.75rem;
+        padding: 0 0.75rem;
+    }
+
+    .primaryBtn {
+        font-size: 0.85rem;
+        padding: 0.8rem 1.75rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wrapper {
+        animation: none;
+    }
+}

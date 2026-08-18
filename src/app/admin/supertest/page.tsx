@@ -2,10 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Save, Loader2 } from 'lucide-react';
+import { TEST_SCHEDULE } from '@/app/supertest/data/plans';
 
 export default function AdminSupertest() {
     const [spots, setSpots] = useState<number>(30);
     const [nextTestDate, setNextTestDate] = useState<string>('');
+    const [testTime, setTestTime] = useState<string>('09:00');
+    const [maxFreeSlots, setMaxFreeSlots] = useState<number>(10);
+    const [portalApplicantCount, setPortalApplicantCount] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
@@ -18,6 +22,9 @@ export default function AdminSupertest() {
             .then(d => {
                 setSpots(d.remainingSpots ?? 30);
                 setNextTestDate(d.nextTestDate ?? '');
+                setTestTime(d.testTime ?? '09:00');
+                setMaxFreeSlots(d.maxFreeSlots ?? 10);
+                setPortalApplicantCount(d.portalApplicantCount ?? 0);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
@@ -25,7 +32,7 @@ export default function AdminSupertest() {
 
     const handleSave = async () => {
         if (!nextTestDate) {
-            setMessage('시험 날짜를 입력해 주세요.');
+            setMessage('회차를 선택해 주세요.');
             setIsError(true);
             setTimeout(() => setMessage(''), 3000);
             return;
@@ -37,7 +44,7 @@ export default function AdminSupertest() {
             const res = await fetch('/api/admin/supertest', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-                body: JSON.stringify({ remainingSpots: spots, nextTestDate }),
+                body: JSON.stringify({ remainingSpots: spots, nextTestDate, testTime, maxFreeSlots }),
             });
             if (res.ok) {
                 setMessage('저장되었습니다!');
@@ -110,27 +117,107 @@ export default function AdminSupertest() {
 
                 {/* 시험 날짜 */}
                 <section className="bg-[#1e2023] rounded-xl p-6 space-y-4">
-                    <h2 className="text-lg font-semibold text-white">다음 시험 날짜</h2>
+                    <h2 className="text-lg font-semibold text-white">30% 할인 시험 (D-day 기준)</h2>
                     <p className="text-gray-500 text-sm">
-                        Hero 섹션의 D-day 카운트다운 기준일입니다. KST 오전 9시를 기준으로 계산됩니다.
+                        선택한 회차가 Hero의 D-day 카운트다운 기준이자 구매 페이지의 30% 할인 시험이 됩니다.
                     </p>
-                    <input
-                        type="date"
+                    <select
                         value={nextTestDate}
                         onChange={e => setNextTestDate(e.target.value)}
-                        className="bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-3 text-white text-base font-bold outline-none transition-all"
-                    />
+                        className="bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-3 text-white text-base font-bold outline-none transition-all w-full"
+                    >
+                        <option value="" disabled>회차를 선택하세요</option>
+                        {nextTestDate && !TEST_SCHEDULE.find(t => t.date === nextTestDate) && (
+                            <option value={nextTestDate}>{nextTestDate} (커스텀)</option>
+                        )}
+                        {TEST_SCHEDULE.map(t => (
+                            <option key={t.date} value={t.date}>{t.label}</option>
+                        ))}
+                    </select>
 
-                    {/* 미리보기 */}
+                    {/* D-day + 할인 배지 미리보기 */}
                     {nextTestDate && (
                         <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
                             <p className="text-xs text-gray-600">미리보기</p>
                             <div className="flex items-center gap-3">
                                 <span className="text-2xl font-black text-blue-400">{dday}</span>
                                 <span className="text-gray-400 text-sm">{dateLabel} SuperTest까지</span>
+                                <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold">파이널 30% 할인</span>
                             </div>
                         </div>
                     )}
+                </section>
+
+                {/* 이후 시험 목록 미리보기 */}
+                <section className="bg-[#1e2023] rounded-xl p-6 space-y-4">
+                    <h2 className="text-lg font-semibold text-white">이후 시험 목록 (드롭다운)</h2>
+                    <p className="text-gray-500 text-sm">
+                        구매 페이지에서 할인 시험 아래 드롭다운에 표시되는 이후 회차 목록입니다.
+                    </p>
+                    {(() => {
+                        const subsequent = TEST_SCHEDULE.filter(t => t.date > nextTestDate);
+                        if (!nextTestDate) {
+                            return <p className="text-gray-600 text-sm">회차를 선택하면 이후 시험 목록이 표시됩니다.</p>;
+                        }
+                        if (subsequent.length === 0) {
+                            return <p className="text-gray-600 text-sm">이후 시험 없음</p>;
+                        }
+                        return (
+                            <ul className="space-y-2">
+                                {subsequent.map(t => (
+                                    <li key={t.date} className="flex items-center gap-3 text-sm text-gray-300 bg-[#151719] rounded-lg px-4 py-2.5">
+                                        <span className="text-gray-600">·</span>
+                                        {t.label}
+                                    </li>
+                                ))}
+                            </ul>
+                        );
+                    })()}
+                </section>
+
+                {/* 포털 무료 응시 설정 */}
+                <section className="bg-[#1e2023] rounded-xl p-6 space-y-4">
+                    <h2 className="text-lg font-semibold text-white">포털 무료 응시 설정</h2>
+                    <p className="text-gray-500 text-sm">
+                        학부모 포털에서 선착순 무료 응시 신청을 받을 인원과 시험 시작 시각을 설정합니다.
+                    </p>
+
+                    <div className="flex items-end gap-6 flex-wrap">
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-2">시험 시작 시각 (KST)</label>
+                            <input
+                                type="time"
+                                value={testTime}
+                                onChange={e => setTestTime(e.target.value)}
+                                className="bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-3 text-white text-base font-bold outline-none transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-2">무료 응시 최대 인원</label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={999}
+                                    value={maxFreeSlots}
+                                    onChange={e => setMaxFreeSlots(Math.max(0, parseInt(e.target.value) || 0))}
+                                    className="w-24 bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-3 text-white text-xl font-bold outline-none transition-all text-center"
+                                />
+                                <span className="text-gray-400 text-sm">명</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-white/5">
+                        <p className="text-xs text-gray-600 mb-2">현재 신청 현황</p>
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl font-black text-blue-400">{portalApplicantCount}</span>
+                            <span className="text-gray-400 text-sm">/ {maxFreeSlots}명 신청 완료</span>
+                            {portalApplicantCount >= maxFreeSlots && (
+                                <span className="text-xs bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-semibold">마감</span>
+                            )}
+                        </div>
+                    </div>
                 </section>
 
                 {/* 남은 자리 */}

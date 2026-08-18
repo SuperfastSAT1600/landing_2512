@@ -2,7 +2,8 @@
 
 import { Pencil, Crown } from 'lucide-react';
 import type { Student } from '@/types/crm';
-import { SCHOOL_TYPE_LABELS, TIMEZONE_OPTIONS } from '@/types/crm';
+import { SCHOOL_TYPE_LABELS } from '@/types/crm';
+import { getTimezoneLabel } from '@/lib/all-timezones';
 import { formatSatMonth, formatSatDate } from '../constants';
 import { StudentInfoEdit } from './StudentInfoEdit';
 import type { EditForm } from '../types';
@@ -97,7 +98,7 @@ export function StudentInfoSection({
             {localStudent.parent_timezone && (
               <StudentInfoCell
                 label="거주 시간대"
-                value={TIMEZONE_OPTIONS.find(o => o.value === localStudent.parent_timezone)?.label ?? localStudent.parent_timezone}
+                value={getTimezoneLabel(localStudent.parent_timezone)}
               />
             )}
             {localStudent.preferred_language && (

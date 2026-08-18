@@ -8,6 +8,7 @@ export const maxDuration = 300;
 
 type SlackEvent = {
   type: string;
+  subtype?: string;
   text?: string;
   channel?: string;
   ts?: string;
@@ -34,7 +35,17 @@ export async function POST(request: NextRequest) {
   }
 
   const event = payload.event;
-  if (!event || event.type !== 'app_mention' || event.bot_id) {
+  if (!event || event.bot_id) {
+    return NextResponse.json({ ok: true });
+  }
+
+  // app_mention 또는 BLOG_CHANNEL의 일반 사용자 메시지만 처리
+  // message_changed / message_deleted / bot_message 등 subtype은 무시
+  const isMention = event.type === 'app_mention';
+  const isBlogChannelMsg = event.type === 'message'
+    && event.channel === BLOG_CHANNEL
+    && !event.subtype;  // subtype 없는 순수 사용자 메시지만
+  if (!isMention && !isBlogChannelMsg) {
     return NextResponse.json({ ok: true });
   }
 
@@ -87,7 +98,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 3. 직접 주제 입력: @landingpage '주제명' 써줘 / 해줘 / 작성해줘
-  const directMatch = text.match(/[‘’“”'""](.+?)[‘’“”'""].*(?:써줘|해줘|작성해줘|포스팅해줘)/);
+  const directMatch = text.match(/[''""'""](.+?)[''""'""].*(?:써줘|해줘|작성해줘|포스팅해줘)/);
   if (directMatch) {
     const title = directMatch[1].trim();
     after(() => handleBlogWrite(
@@ -95,6 +106,61 @@ export async function POST(request: NextRequest) {
       channel,
       threadTs
     ).catch(async err => {
+      await postSlack(channel, `오류: ${err.message}`, threadTs);
+    }));
+    return NextResponse.json({ ok: true });
+  }
+
+  // 4. 근거/포인트 블록 형식 — 주제 추천 목록을 붙여넣고 작성해줘
+  // 예: "8월 SAT 20일 전 점검 리스트\n   근거: ...\n   포인트: ...\n작성해줘"
+  if (/(?:써줘|해줘|작성해줘|포스팅해줘)/.test(text) && /근거[:\uff1a]/.test(text)) {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const titleLine = lines.find(l => !l.startsWith('근거') && !l.startsWith('포인트') && !/써줘|해줘|작성해줘|포스팅해줘/.test(l) && !l.startsWith('@'));
+    const rationaleLine = lines.find(l => /근거[:\uff1a]/.test(l));
+    const pointLine = lines.find(l => /포인트[:\uff1a]/.test(l));
+    if (titleLine) {
+      const topic = {
+        title: titleLine.replace(/^\d+\.\s*/, '').trim(),
+        rationale: rationaleLine ? rationaleLine.replace(/근거[:\uff1a]\s*/, '').trim() : '',
+        point: pointLine ? pointLine.replace(/포인트[:\uff1a]\s*/, '').trim() : '',
+      };
+      after(() => handleBlogWrite(topic, channel, threadTs).catch(async err => {
+        await postSlack(channel, `오류: ${err.message}`, threadTs);
+      }));
+      return NextResponse.json({ ok: true });
+    }
+  }
+
+  // 5. "이것 작성해줘" / "이거 써줘" — 스레드 상위 메시지에서 주제 파싱
+  if (/(?:이것|이거|이걸)\s*(?:써줘|해줘|작성해줘|포스팅해줘)/.test(text)) {
+    after(() => (async () => {
+      // 스레드가 있으면 부모 메시지, 없으면 채널 직전 메시지에서 파싱
+      const parentTs = event.thread_ts ?? null;
+      if (!parentTs) {
+        await postSlack(channel, '어떤 주제인지 알 수 없습니다. 스레드에서 답장하거나 주제를 직접 붙여넣어 주세요.', threadTs);
+        return;
+      }
+      const res = await fetch(
+        `https://slack.com/api/conversations.replies?channel=${channel}&ts=${parentTs}&limit=5`,
+        { headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
+      );
+      const data = await res.json() as { messages?: { text: string }[] };
+      const parentText = data.messages?.[0]?.text ?? '';
+      const parentLines = parentText.split('\n').map((l: string) => l.trim()).filter(Boolean);
+      const titleLine = parentLines.find((l: string) => !l.startsWith('근거') && !l.startsWith('포인트') && !l.startsWith('@'));
+      if (!titleLine) {
+        await postSlack(channel, '상위 메시지에서 주제를 찾을 수 없습니다. 주제를 직접 입력해주세요.', threadTs);
+        return;
+      }
+      const rationaleLine = parentLines.find((l: string) => /근거[:\uff1a]/.test(l));
+      const pointLine = parentLines.find((l: string) => /포인트[:\uff1a]/.test(l));
+      const topic = {
+        title: titleLine.replace(/^\d+\.\s*/, '').trim(),
+        rationale: rationaleLine ? rationaleLine.replace(/근거[:\uff1a]\s*/, '').trim() : '',
+        point: pointLine ? pointLine.replace(/포인트[:\uff1a]\s*/, '').trim() : '',
+      };
+      await handleBlogWrite(topic, channel, threadTs);
+    })().catch(async err => {
       await postSlack(channel, `오류: ${err.message}`, threadTs);
     }));
     return NextResponse.json({ ok: true });

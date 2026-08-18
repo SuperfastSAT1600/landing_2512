@@ -33,6 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .from('winback_targets')
       .select(`*, student:students(${STUDENT_COLUMNS})`)
       .eq('play_id', id)
+      .neq('status', 'skipped')
       .order('rank', { ascending: true, nullsFirst: false }),
   ]);
 

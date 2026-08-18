@@ -48,6 +48,7 @@ export default function AdminPartnerPage() {
     setLoading(false);
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, []);
 
   async function handleCopy(token: string) {

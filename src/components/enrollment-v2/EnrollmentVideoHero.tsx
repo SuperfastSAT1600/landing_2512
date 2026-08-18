@@ -8,9 +8,10 @@ type ExamType = 'SAT' | 'AP';
 
 interface Props {
   onExamSelect?: (exam: ExamType) => void;
+  lang?: 'ko' | 'en';
 }
 
-export function EnrollmentVideoHero({ onExamSelect }: Props) {
+export function EnrollmentVideoHero({ onExamSelect, lang = 'ko' }: Props) {
   const [exam, setExam] = useState<ExamType | null>(null);
 
   function handleSelect(type: ExamType) {
@@ -19,7 +20,7 @@ export function EnrollmentVideoHero({ onExamSelect }: Props) {
   }
 
   return (
-    <section id="v2-exam" className={styles.hero} aria-label="히어로 섹션">
+    <section id="v2-exam" className={styles.hero} aria-label={lang === 'en' ? 'Hero section' : '히어로 섹션'}>
       {/* YouTube iframe background */}
       <div className={styles.videoBg}>
         {/* Poster image — visible on mobile (iframe hidden), covered by iframe on desktop */}
@@ -45,13 +46,19 @@ export function EnrollmentVideoHero({ onExamSelect }: Props) {
       {/* Text content — vertically centered */}
       <div className={styles.content}>
         <h1 className={styles.headline}>
-          아이에게<br />딱 맞는 수업을<br />받아보세요.
+          {lang === 'en' ? (
+            <>Find the perfect class<br />for your child.</>
+          ) : (
+            <>아이에게<br />딱 맞는 수업을<br />받아보세요.</>
+          )}
         </h1>
 
-        <p className={styles.examPrompt}>수업이 필요한 과목을 선택하세요</p>
+        <p className={styles.examPrompt}>
+          {lang === 'en' ? 'Select the subject you need' : '수업이 필요한 과목을 선택하세요'}
+        </p>
 
         {/* SAT / AP — first choice */}
-        <div className={styles.examSelector} role="group" aria-label="시험 종류 선택">
+        <div className={styles.examSelector} role="group" aria-label={lang === 'en' ? 'Select exam type' : '시험 종류 선택'}>
           {(['SAT', 'AP'] as ExamType[]).map(type => (
             <button
               key={type}

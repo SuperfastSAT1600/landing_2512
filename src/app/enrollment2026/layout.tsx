@@ -13,11 +13,13 @@ export const metadata: Metadata = {
     url: 'https://tutoring.superfastsat.com/enrollment2026',
     siteName: 'SuperfastSAT',
     type: 'website',
+    images: [{ url: 'https://tutoring.superfastsat.com/og-image.png', alt: 'SuperfastSAT' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SAT목표 점수에 가장 빠르게',
     description: '올릴 딱 맞는 수업을 받아보세요',
+    images: ['https://tutoring.superfastsat.com/og-image.png'],
   },
   robots: { index: false },
 };
