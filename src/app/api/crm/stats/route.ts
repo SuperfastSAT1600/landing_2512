@@ -6,6 +6,8 @@ import { computeStageFlow, type StageFlowRow } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
 import {
   MAX_LEAD_ROWS,
+  leadCohortQuery,
+  paidCohortQuery,
   isContactedWithImpliedPartner,
   contactRate,
   toMonthKey,
@@ -121,16 +123,13 @@ export async function GET(request: NextRequest) {
   // 매출(payments)에는 업체 필터가 없으므로 리드만 제외하면 리드-매출 기준이 어긋난다.
   // 업체별 세부 집계는 /api/crm/b2b/stats에서 별도로 본다.
   // 서로 독립인 네 조회를 병렬 실행: 기간 리드 / 기간 결제 / 최초결제 코호트 / 업체 로스터.
-  let studentsQuery = supabaseAdmin
-    .from('students')
-    .select(
-      'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id'
-    )
-    .gte('inquiry_date', from)
-    .lte('inquiry_date', `${to}T23:59:59`)
-    .limit(MAX_LEAD_ROWS);
-  if (segment === 'b2c') studentsQuery = studentsQuery.is('company_id', null);
-  if (segment === 'b2b') studentsQuery = studentsQuery.not('company_id', 'is', null);
+  const studentsQuery = leadCohortQuery(
+    supabaseAdmin,
+    'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id',
+    from,
+    to,
+    segment,
+  );
 
   const [studentsRes, paymentsRes, firstPayRes, companiesRes] = await Promise.all([
     studentsQuery,
@@ -143,13 +142,7 @@ export async function GET(request: NextRequest) {
       )
       .gte('paid_at', `${from}T00:00:00+09:00`)
       .lte('paid_at', `${to}T23:59:59.999+09:00`),
-    // 결제 전환율(코호트): 인입 리드가 '언제든' 최초결제했는지.
-    // 0원 가결제·₩1 placeholder도 실전환으로 포함(환불만 제외).
-    supabaseAdmin
-      .from('payments')
-      .select('student_id, student_name, students:student_id(company_id)')
-      .eq('payment_type', '최초결제')
-      .gte('amount', 0),
+    paidCohortQuery(supabaseAdmin),
     // 업체 로스터 — 센터형 파트너 컨택 판정용 company_id → name 맵
     supabaseAdmin.from('companies').select('id, name'),
   ]);
