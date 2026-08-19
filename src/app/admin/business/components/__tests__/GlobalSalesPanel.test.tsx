@@ -114,19 +114,6 @@ describe('GlobalSalesPanel', () => {
     expect(screen.queryByText(/설정된 목표가 없습니다/)).toBeNull();
   });
 
-  it('목표 대비 실적은 1$=1,400원 기준 원화 환산 안내를 보여준다', async () => {
-    vi.stubGlobal(
-      'fetch',
-      mockFetchSequence(
-        { ok: true, data: [{ id: 't-1', month: '2026-08-01', segment: 'global', target_amount: 1000000, currency: 'KRW', created_at: 'x', updated_at: 'x' }] },
-        { ok: true, data: ENTRIES },
-      ),
-    );
-    render(<GlobalSalesPanel adminKey="admin-key" />);
-    await screen.findByText('김글로벌');
-    expect(screen.getByText(/1\$ = 1,400원 환산/)).toBeTruthy();
-  });
-
   it('매출 목록·합계 카드는 계속 달러(USD)로 보여준다', async () => {
     vi.stubGlobal(
       'fetch',

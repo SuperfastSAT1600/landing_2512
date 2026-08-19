@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { toMonthKey } from '@/lib/crm-stats-core';
-import { buildTargetVsActual, USD_TO_KRW_RATE, type MonthlyTargetRow } from '@/lib/business-targets';
+import { buildTargetVsActual, niceAxisTicks, USD_TO_KRW_RATE, type MonthlyTargetRow } from '@/lib/business-targets';
 import type { GlobalSaleEntry, GlobalSalePaymentType } from '@/app/api/business/global-sales/route';
 import { MonthlyTargetEditor } from './MonthlyTargetEditor';
 
@@ -18,9 +18,7 @@ interface Props {
   adminKey: string;
 }
 
-const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
-const manwon = (n: number) => `${Math.round(n / 10000).toLocaleString()}만원`;
-const won = (n: number) => `${Math.round(n).toLocaleString()}원`;
+const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 const today = () => new Date().toISOString().slice(0, 10);
 
 const PAYMENT_BADGE: Record<GlobalSalePaymentType, string> = {
@@ -127,7 +125,16 @@ export function GlobalSalesPanel({ adminKey }: Props) {
     const key = toMonthKey(e.sale_date);
     actualByMonth[key] = (actualByMonth[key] ?? 0) + e.amount_usd * USD_TO_KRW_RATE;
   }
-  const targetVsActual = buildTargetVsActual(monthlyTargets, actualByMonth);
+  // 차트에 넘기기 전 달러로 환산해둔다 — recharts는 축 눈금을 원본 값(KRW) 기준으로
+  // "예쁜 숫자"를 계산하므로, KRW 그대로 넘기고 formatValue에서만 나누면 눈금이
+  // $10,714 같은 어중간한 값이 된다. 데이터 자체를 달러로 바꿔야 눈금도 $10,000 단위로 나온다.
+  const targetVsActual = buildTargetVsActual(monthlyTargets, actualByMonth).map((row) => ({
+    ...row,
+    target: row.target / USD_TO_KRW_RATE,
+    actual: row.actual / USD_TO_KRW_RATE,
+  }));
+  const chartMax = Math.max(0, ...targetVsActual.flatMap((row) => [row.target, row.actual]));
+  const chartTicks = niceAxisTicks(chartMax);
 
   if (loading) {
     return (
@@ -162,19 +169,21 @@ export function GlobalSalesPanel({ adminKey }: Props) {
         </div>
       </div>
 
-      {/* 월별 목표 대비 실적 — 목표·실적 모두 원화 환산 표시(원거래는 USD) */}
+      {/* 월별 목표 대비 실적 — 목표·실적 모두 달러(USD) 단위 데이터로 변환해 차트에 넘긴다.
+          (recharts 축 눈금은 원본 데이터 값 기준으로 계산되므로, KRW인 채로 넘기면
+          $10,714처럼 어중간한 눈금이 나온다 — 데이터 자체를 달러로 바꿔야 $10,000 단위로 나온다.) */}
       <div className="border-b border-gray-100 pb-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-500">월별 목표 대비 실적</h3>
           <MonthlyTargetEditor segment="global" adminKey={adminKey} onSaved={fetchMonthlyTargets} />
         </div>
         {targetVsActual.length > 0 ? (
-          <>
-            <TargetVsActualChart data={targetVsActual} formatValue={manwon} formatTooltip={won} />
-            <p className="mt-2 text-[11px] text-gray-400">
-              1$ = {USD_TO_KRW_RATE.toLocaleString()}원 환산 기준입니다.
-            </p>
-          </>
+          <TargetVsActualChart
+            data={targetVsActual}
+            formatValue={usd}
+            ticks={chartTicks}
+            domain={[0, chartTicks[chartTicks.length - 1]]}
+          />
         ) : (
           <p className="text-sm text-gray-400 text-center py-6">
             설정된 목표가 없습니다. ‘목표 설정’으로 이번 달부터 등록해보세요.

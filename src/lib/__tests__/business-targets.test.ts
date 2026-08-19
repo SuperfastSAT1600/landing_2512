@@ -3,6 +3,7 @@ import {
   buildTargetVsActual,
   combineMonthlyRevenue,
   convertToKrw,
+  niceAxisTicks,
   sumTargetVsActual,
   USD_TO_KRW_RATE,
   type MonthlyRevenueRow,
@@ -139,5 +140,25 @@ describe('combineMonthlyRevenue', () => {
 
   it('둘 다 비어 있으면 빈 배열', () => {
     expect(combineMonthlyRevenue([], {}, 1400)).toEqual([]);
+  });
+});
+
+describe('niceAxisTicks', () => {
+  it('35000처럼 애매한 최댓값도 10000 단위로 딱 떨어지게 만든다', () => {
+    expect(niceAxisTicks(35000)).toEqual([0, 10000, 20000, 30000, 40000]);
+  });
+
+  it('작은 값(700)은 더 촘촘한 단위로 딱 떨어지게 만든다', () => {
+    expect(niceAxisTicks(700)).toEqual([0, 200, 400, 600, 800]);
+  });
+
+  it('0 이하 최댓값은 [0]만 반환한다', () => {
+    expect(niceAxisTicks(0)).toEqual([0]);
+    expect(niceAxisTicks(-5)).toEqual([0]);
+  });
+
+  it('마지막 눈금은 항상 최댓값 이상이다', () => {
+    const ticks = niceAxisTicks(7000);
+    expect(ticks[ticks.length - 1]).toBeGreaterThanOrEqual(7000);
   });
 });
