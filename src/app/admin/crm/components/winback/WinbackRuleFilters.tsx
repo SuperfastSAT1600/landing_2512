@@ -1,7 +1,20 @@
 'use client';
 
 import { Filter, Loader2 } from 'lucide-react';
-import { GRADE_OPTIONS, CHURN_TAG_OPTIONS, type WinbackRuleFilters as RuleFilters } from '@/types/crm';
+import { GRADE_OPTIONS, type WinbackRuleFilters as RuleFilters } from '@/types/crm';
+import { CHURN_CATEGORIES } from '@/lib/churn-breakdown';
+
+/**
+ * 학년 칩 — 이탈풀의 27%가 grade='-' 이고 SQL은 완전일치 IN이다. '미상' 없이 칩을 켜면
+ * 그 학생들이 통째로 사라지므로, 저장값을 펼치는 가상 칩을 하나 둔다.
+ */
+export const GRADE_UNKNOWN = '미상';
+const GRADE_UNKNOWN_VALUES = ['-', '기타'];
+
+export const WINBACK_GRADE_CHIPS: string[] = [
+  ...GRADE_OPTIONS.filter((g) => g.endsWith('th')),
+  GRADE_UNKNOWN,
+];
 
 export interface RuleDraft {
   grades: string[];
@@ -25,11 +38,16 @@ export const EMPTY_RULES: RuleDraft = {
 
 const SCHOOL_TYPES = ['한국 학제', 'AP', 'IB'];
 
+/** '미상' 칩을 실제 저장값으로 펼친다. */
+function expandGrades(grades: string[]): string[] {
+  return grades.flatMap((g) => (g === GRADE_UNKNOWN ? GRADE_UNKNOWN_VALUES : [g]));
+}
+
 /** UI 초안 → API 규칙 필터. 빈 값은 조건 자체를 만들지 않는다. */
 export function toRuleFilters(d: RuleDraft): RuleFilters {
   const num = (v: string) => (v.trim() ? Number(v) : undefined);
   return {
-    ...(d.grades.length ? { grades: d.grades } : {}),
+    ...(d.grades.length ? { grades: expandGrades(d.grades) } : {}),
     ...(d.schoolTypes.length ? { school_types: d.schoolTypes } : {}),
     ...(d.churnTagPrefixes.length ? { churn_tag_prefixes: d.churnTagPrefixes } : {}),
     ...(d.campaignTagKeyword.trim() ? { campaign_tag_any: [d.campaignTagKeyword.trim()] } : {}),
@@ -75,7 +93,7 @@ export function WinbackRuleFilters({
 
       <div className="flex flex-wrap items-center gap-1">
         <span className="text-[11px] text-gray-400 w-14">학년</span>
-        {GRADE_OPTIONS.filter((g) => g.endsWith('th')).map((g) => (
+        {WINBACK_GRADE_CHIPS.map((g) => (
           <button key={g} type="button" onClick={() => set({ grades: toggle(rules.grades, g) })} className={chip(rules.grades.includes(g))}>
             {g}
           </button>
@@ -98,7 +116,7 @@ export function WinbackRuleFilters({
 
       <div className="flex flex-wrap items-center gap-1">
         <span className="text-[11px] text-gray-400 w-14">이탈 사유</span>
-        {CHURN_TAG_OPTIONS.map((t) => (
+        {CHURN_CATEGORIES.map((t) => (
           <button
             key={t}
             type="button"
@@ -145,8 +163,8 @@ export function WinbackRuleFilters({
           <input
             value={rules.campaignTagKeyword}
             onChange={(e) => set({ campaignTagKeyword: e.target.value })}
-            placeholder="예: AP 문의"
-            className="w-24 px-1.5 py-1 text-[11px] border border-gray-200 rounded focus:outline-none focus:border-gray-400"
+            placeholder="예: META (부분일치)"
+            className="w-32 px-1.5 py-1 text-[11px] border border-gray-200 rounded focus:outline-none focus:border-gray-400"
           />
         </label>
 

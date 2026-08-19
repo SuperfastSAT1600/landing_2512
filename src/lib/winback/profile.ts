@@ -3,12 +3,13 @@
  *
  * 보강 내용: 캠페인 태그(과목 의도의 정본 신호)·학제·목표 시험일·규칙 신호 요약을 넣고,
  * 신뢰할 수 없는 `desired_subjects`는 아예 넣지 않는다(자동 유입에서 'Both' 강제).
- * 상담 메모는 최근 6건·건당 400자로 제한한다 — 25명을 한 프롬프트에 넣기 때문에 상한이 필요하다.
+ * 상담 메모는 최근 3건·건당 250자로 제한한다 — 45명을 한 프롬프트에 넣기 때문에 상한이 필요하다
+ * (25명×2.4k자 시절과 총량이 같다).
  */
 import type { WinbackSignal } from '@/types/crm';
 
-const MAX_MEMOS = 6;
-const MAX_MEMO_LEN = 400;
+const MAX_MEMOS = 3;
+const MAX_MEMO_LEN = 250;
 
 export interface WinbackProfileStudent {
   id: string;
