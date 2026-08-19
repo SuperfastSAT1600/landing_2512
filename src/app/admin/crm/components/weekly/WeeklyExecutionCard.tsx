@@ -1,7 +1,8 @@
 'use client';
 
 import type { WeeklyExecutionRow } from '@/types/crm';
-import { STRATEGY_TYPE_LABELS, manwon, shortDay } from './format';
+import { LeadChips } from './LeadChips';
+import { STRATEGY_TYPE_LABELS, manwon } from './format';
 
 interface Props {
   row: WeeklyExecutionRow;
@@ -34,22 +35,8 @@ export function WeeklyExecutionCard({ row, goal, markUnplanned, onSelectStudent 
             적용 {row.applied_count} · 컨택 {row.contacted_count} · 결제 {row.paid_count} · 매출{' '}
             {manwon(row.revenue)}원
           </p>
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {row.leads.map((l) => (
-              <button
-                key={`${l.student_id}-${l.applied_at}`}
-                onClick={() => onSelectStudent?.(l.student_id)}
-                title={l.memo || undefined}
-                className={`text-[11px] px-1.5 py-0.5 rounded border transition-colors ${
-                  l.paid
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                }`}
-              >
-                {l.name}
-                <span className="ml-1 text-[10px] text-gray-400">{shortDay(l.applied_at)}</span>
-              </button>
-            ))}
+          <div className="mt-1.5">
+            <LeadChips leads={row.leads} onSelectStudent={onSelectStudent} />
           </div>
         </>
       )}

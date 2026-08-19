@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, Search } from 'lucide-react';
-import type { RetryStrategy, Student, WeeklyPlanSegment } from '@/types/crm';
+import type { Student, WeeklyPlanSegment } from '@/types/crm';
 import { appendStrategyHistoryEntry, buildStrategyHistoryEntry } from '@/lib/strategy-history';
 import { STRATEGY_TYPE_LABELS } from './format';
+import { useStrategyLibrary } from './useStrategyLibrary';
 
 interface Props {
   segment: WeeklyPlanSegment;
   adminKey: string;
   /** 기록 시각(ISO). 지난 주차를 보고 있으면 그 주 안의 날짜를 넘긴다. */
   appliedAt: string;
+  /** 있으면 이 전략들만 후보로 둔다(트랙에서 열었을 때). 비어 있으면 세그먼트 전체. */
+  strategyIds?: string[];
   onLogged: () => void;
   onClose: () => void;
 }
@@ -26,22 +29,18 @@ interface Candidate {
  * 전략 적용 기록 — students.strategy_history에 엔트리를 추가한다(학생 패널과 동일 shape).
  * 주간 실행 집계가 이 엔트리의 applied_at을 주 범위로 잡아 자동 반영한다.
  */
-export function WeeklyQuickLog({ segment, adminKey, appliedAt, onLogged, onClose }: Props) {
+export function WeeklyQuickLog({ segment, adminKey, appliedAt, strategyIds, onLogged, onClose }: Props) {
   const [query, setQuery] = useState('');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [picked, setPicked] = useState<Candidate | null>(null);
-  const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [strategyId, setStrategyId] = useState('');
   const [memo, setMemo] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetch(`/api/crm/retry-strategies?segment=${segment}`, { headers: { 'x-admin-key': adminKey } })
-      .then((r) => r.json())
-      .then((j) => setStrategies((j.data ?? []) as RetryStrategy[]))
-      .catch(() => setStrategies([]));
-  }, [segment, adminKey]);
+  const library = useStrategyLibrary(segment, adminKey);
+  const strategies = strategyIds?.length
+    ? library.filter((s) => strategyIds.includes(s.id))
+    : library;
 
   useEffect(() => {
     const q = query.trim();
