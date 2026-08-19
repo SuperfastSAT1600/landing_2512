@@ -7,6 +7,10 @@ import { TrendingUp, Users, Phone, CreditCard, RefreshCw, ChevronDown, ChevronRi
 // recharts는 통계 탭을 열 때만 필요 — 지연 로딩해 CRM 첫 진입 번들에서 제외한다.
 const SalesRevenueChart = dynamic(() => import('./SalesRevenueChart'), {
   ssr: false,
+  loading: () => <div className="h-[320px] flex items-center justify-center text-sm text-gray-300">차트 로딩…</div>,
+});
+const TargetVsActualChart = dynamic(() => import('./TargetVsActualChart'), {
+  ssr: false,
   loading: () => <div className="h-[260px] flex items-center justify-center text-sm text-gray-300">차트 로딩…</div>,
 });
 import type { CrmStatsData, StatsBySource, StatsWeekly, StatsMonthly } from '@/app/api/crm/stats/route';
@@ -23,9 +27,28 @@ import {
   OverviewCard,
   RateBar,
   formatDuration,
-  SegmentTabs,
 } from '../../crm/components/stats-primitives';
 import type { CrmStatsSegment } from '@/lib/crm-stats-core';
+import { buildTargetVsActual, type MonthlyTargetRow } from '@/lib/business-targets';
+import { GlobalSalesPanel } from './GlobalSalesPanel';
+import { MonthlyTargetEditor } from './MonthlyTargetEditor';
+import { TotalOverviewPanel } from './TotalOverviewPanel';
+
+// 2단 위계: 전체(한국비즈니스+글로벌 합산) / 한국비즈니스(구 B2C+B2B) / 글로벌.
+// "한국비즈니스"를 고르면 그 아래 [합산|B2C|B2B] 보조 탭이 나타난다.
+// CrmStatsSegment 자체는 확장하지 않는다 — 서버 집계 로직(company_id 기반)과 결합돼 있어
+// 무관한 'global'을 끼워 넣으면 API·타입 양쪽에 불필요한 위험이 생긴다.
+type TopView = 'total' | 'tutoring' | 'global';
+const TOP_TABS: { key: TopView; label: string }[] = [
+  { key: 'total', label: '전체' },
+  { key: 'tutoring', label: '한국비즈니스' },
+  { key: 'global', label: '글로벌' },
+];
+const TUTORING_SUB_TABS: { key: CrmStatsSegment; label: string }[] = [
+  { key: 'all', label: '합산' },
+  { key: 'b2c', label: 'B2C' },
+  { key: 'b2b', label: 'B2B' },
+];
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
@@ -257,7 +280,9 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const [preset, setPreset] = useState<Preset>('this_month');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
-  const [segment, setSegment] = useState<CrmStatsSegment>('all');
+  const [topView, setTopView] = useState<TopView>('total');
+  const [tutoringSub, setTutoringSub] = useState<CrmStatsSegment>('all');
+  const segment: CrmStatsSegment = tutoringSub;
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<CrmStatsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -268,12 +293,15 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const [trendCustomTo, setTrendCustomTo] = useState('');
   const [trendView, setTrendView] = useState<'monthly' | 'weekly'>('monthly');
   const [detail, setDetail] = useState<{ metric: StatsDetailMetric; label: string; source?: string } | null>(null);
+  // 전체(B2C+B2B) 탭 전용 — 월별 목표 대비 실적. 다른 세그먼트에는 결합 목표가 없어 노출하지 않는다.
+  const [monthlyMode, setMonthlyMode] = useState<'target' | 'trend'>('target');
+  const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetRow[]>([]);
 
   const { from, to } =
     preset === 'custom' ? { from: customFrom, to: customTo } : getPresetRange(preset);
 
   const fetchStats = useCallback(async () => {
-    if (!from || !to || from > to) return;
+    if (topView !== 'tutoring' || !from || !to || from > to) return;
     setLoading(true);
     setError(null);
     try {
@@ -291,7 +319,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     } finally {
       setLoading(false);
     }
-  }, [from, to, segment, adminKey]);
+  }, [topView, from, to, segment, adminKey]);
 
   useEffect(() => {
     if (preset !== 'custom') fetchStats();
@@ -311,6 +339,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
 
   // 트렌드 그래프용 월별 데이터 로드. 커스텀은 from~to가 유효할 때만 조회.
   useEffect(() => {
+    if (topView !== 'tutoring') return;
     const { from: tf, to: tt } = trendRange;
     if (!tf || !tt || tf > tt) return;
     (async () => {
@@ -322,7 +351,25 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     })();
     // trendRange는 from/to 외 프로퍼티가 없고 매 렌더링 재생성되므로 from/to만 의존한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey, trendRange.from, trendRange.to, segment]);
+  }, [topView, adminKey, trendRange.from, trendRange.to, segment]);
+
+  // 한국비즈니스 '합산' 탭의 월별 목표 — 결합(B2C+B2B) 목표만 존재하므로 B2C/B2B 단독에서는 조회하지 않는다.
+  const fetchMonthlyTargets = useCallback(async () => {
+    if (topView !== 'tutoring' || tutoringSub !== 'all') return;
+    try {
+      const res = await fetch('/api/business/monthly-targets?segment=tutoring', {
+        headers: { 'x-admin-key': adminKey },
+      });
+      const json = await res.json();
+      if (res.ok) setMonthlyTargets(json.data ?? []);
+    } catch { /* 무시: 목표 비교만 비어 보임 */ }
+  }, [topView, tutoringSub, adminKey]);
+
+  useEffect(() => { fetchMonthlyTargets(); }, [fetchMonthlyTargets]);
+
+  // allMonthly는 gross_revenue를 월 단위로 이미 담고 있어 별도 fetch 없이 재사용한다.
+  const actualByMonth = Object.fromEntries(allMonthly.map((m) => [m.month, m.gross_revenue]));
+  const targetVsActual = buildTargetVsActual(monthlyTargets, actualByMonth);
 
   const d = data;
   const segmentSub: Record<CrmStatsSegment, string> = {
@@ -336,66 +383,103 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Period picker */}
+      {/* Period picker (한국비즈니스 탭에서만 — 전체·글로벌은 자체 기간 개념) */}
       <div className="flex flex-wrap items-center gap-2">
-        {PRESETS.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setPreset(key)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-              preset === key
-                ? 'bg-gray-900 text-white border-gray-900'
-                : 'border-gray-200 text-gray-600 hover:border-gray-400'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+        {topView === 'tutoring' && (
+          <>
+            {PRESETS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setPreset(key)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  preset === key
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
 
-        {preset === 'custom' && (
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={customFrom}
-              onChange={(e) => setCustomFrom(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
-            />
-            <span className="text-xs text-gray-400">~</span>
-            <input
-              type="date"
-              value={customTo}
-              onChange={(e) => setCustomTo(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
-            />
-            <button
-              onClick={fetchStats}
-              disabled={!customFrom || !customTo}
-              className="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg disabled:opacity-40"
-            >
-              조회
-            </button>
+            {preset === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+                />
+                <span className="text-xs text-gray-400">~</span>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+                />
+                <button
+                  onClick={fetchStats}
+                  disabled={!customFrom || !customTo}
+                  className="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg disabled:opacity-40"
+                >
+                  조회
+                </button>
+              </div>
+            )}
+
+            {loading && <RefreshCw size={14} className="animate-spin text-gray-400 ml-1" />}
+            {from && to && !loading && (
+              <span className="text-xs text-gray-400 ml-1">
+                {from} ~ {to}
+              </span>
+            )}
+          </>
+        )}
+
+        <div className="ml-auto flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+            {TOP_TABS.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTopView(key)}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  topView === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-        )}
-
-        {loading && <RefreshCw size={14} className="animate-spin text-gray-400 ml-1" />}
-        {from && to && !loading && (
-          <span className="text-xs text-gray-400 ml-1">
-            {from} ~ {to}
-          </span>
-        )}
-
-        <div className="ml-auto">
-          <SegmentTabs value={segment} onChange={setSegment} />
+          {topView === 'tutoring' && (
+            <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg p-0.5">
+              {TUTORING_SUB_TABS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTutoringSub(key)}
+                  className={`px-2.5 py-0.5 text-[11px] font-medium rounded-md transition-colors ${
+                    tutoringSub === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {error && (
+      {topView === 'total' && <TotalOverviewPanel adminKey={adminKey} />}
+
+      {topView === 'global' && <GlobalSalesPanel adminKey={adminKey} />}
+
+      {topView === 'tutoring' && error && (
         <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
           {error}
         </div>
       )}
 
-      {d && (
+      {topView === 'tutoring' && d && (
         <>
           {/* Overview cards */}
           <div className="flex flex-wrap gap-x-10 gap-y-4 border-b border-gray-100 pb-6">
@@ -488,11 +572,13 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
             </div>
           </div>
 
-          {/* Monthly / Weekly trend */}
+          {/* Monthly target-vs-actual (전체 탭 기본) / 기존 월별·주차별 추이 */}
           <div className="border-b border-gray-100 pb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-500">
-                {trendView === 'monthly'
+                {tutoringSub === 'all' && monthlyMode === 'target'
+                  ? '월별 목표 대비 실적'
+                  : trendView === 'monthly'
                   ? `월별 추이 · ${
                       trendPreset === 'custom' && trendRange.from && trendRange.to
                         ? `${trendRange.from} ~ ${trendRange.to}`
@@ -500,70 +586,106 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                     }`
                   : '주차별 추이'}
               </h3>
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-                {(['monthly', 'weekly'] as const).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setTrendView(v)}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                      trendView === v
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {v === 'monthly' ? '월별' : '주차별'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 트렌드 그래프 전용 기간 선택 (월별 뷰에서만) */}
-            {trendView === 'monthly' && (
-              <div className="flex flex-wrap items-center gap-1.5 mb-4">
-                {TREND_PRESETS.map(({ key, label }) => (
-                  <button
-                    key={key}
-                    onClick={() => setTrendPreset(key)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
-                      trendPreset === key
-                        ? 'bg-gray-900 text-white border-gray-900'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-
-                {trendPreset === 'custom' && (
-                  <div className="flex items-center gap-1.5 ml-1">
-                    <input
-                      type="date"
-                      value={trendCustomFrom}
-                      onChange={(e) => setTrendCustomFrom(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
-                    />
-                    <span className="text-xs text-gray-400">~</span>
-                    <input
-                      type="date"
-                      value={trendCustomTo}
-                      onChange={(e) => setTrendCustomTo(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
-                    />
+              <div className="flex items-center gap-3">
+                {tutoringSub === 'all' && (
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                    {(['target', 'trend'] as const).map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setMonthlyMode(m)}
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                          monthlyMode === m ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {m === 'target' ? '목표 비교' : '추이 보기'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!(tutoringSub === 'all' && monthlyMode === 'target') && (
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                    {(['monthly', 'weekly'] as const).map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setTrendView(v)}
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                          trendView === v
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {v === 'monthly' ? '월별' : '주차별'}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
-            )}
+            </div>
 
-            {trendView === 'monthly' ? (
-              allMonthly.length > 0 ? (
-                <SalesRevenueChart data={allMonthly} formatWon={fmt원} />
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
-              )
-            ) : d.weekly.length > 0 ? (
-              <WeeklyTable rows={d.weekly} />
+            {tutoringSub === 'all' && monthlyMode === 'target' ? (
+              <>
+                <div className="flex justify-end mb-2">
+                  <MonthlyTargetEditor segment="tutoring" adminKey={adminKey} onSaved={fetchMonthlyTargets} />
+                </div>
+                {targetVsActual.length > 0 ? (
+                  <TargetVsActualChart data={targetVsActual} formatValue={fmt만원} />
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-6">
+                    설정된 목표가 없습니다. ‘목표 설정’으로 이번 달부터 등록해보세요.
+                  </p>
+                )}
+              </>
             ) : (
-              <p className="text-sm text-gray-400 text-center py-6">주차 데이터가 없습니다.</p>
+              <>
+                {/* 트렌드 그래프 전용 기간 선택 (월별 뷰에서만) */}
+                {trendView === 'monthly' && (
+                  <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                    {TREND_PRESETS.map(({ key, label }) => (
+                      <button
+                        key={key}
+                        onClick={() => setTrendPreset(key)}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                          trendPreset === key
+                            ? 'bg-gray-900 text-white border-gray-900'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+
+                    {trendPreset === 'custom' && (
+                      <div className="flex items-center gap-1.5 ml-1">
+                        <input
+                          type="date"
+                          value={trendCustomFrom}
+                          onChange={(e) => setTrendCustomFrom(e.target.value)}
+                          className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
+                        />
+                        <span className="text-xs text-gray-400">~</span>
+                        <input
+                          type="date"
+                          value={trendCustomTo}
+                          onChange={(e) => setTrendCustomTo(e.target.value)}
+                          className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {trendView === 'monthly' ? (
+                  allMonthly.length > 0 ? (
+                    <SalesRevenueChart data={allMonthly} formatWon={fmt원} />
+                  ) : (
+                    <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
+                  )
+                ) : d.weekly.length > 0 ? (
+                  <WeeklyTable rows={d.weekly} />
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-6">주차 데이터가 없습니다.</p>
+                )}
+              </>
             )}
           </div>
 
@@ -592,7 +714,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
         </>
       )}
 
-      {!d && !loading && !error && (
+      {topView === 'tutoring' && !d && !loading && !error && (
         <div className="py-16 text-center text-sm text-gray-400">
           기간을 선택하면 통계가 표시됩니다.
         </div>
