@@ -94,10 +94,10 @@ content/posts/
 blog_database/
 blog_archive/
 blog-agent/
-crm/
-pipeline/
-sat/
-srm/
+/crm/
+/pipeline/
+/sat/
+/srm/
 *.xlsx
 *.csv
 *.md.bak*
