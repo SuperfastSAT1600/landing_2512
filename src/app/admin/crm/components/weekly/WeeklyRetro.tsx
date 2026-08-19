@@ -5,6 +5,8 @@ import { ArrowRight, Check, Plus, Trash2 } from 'lucide-react';
 import type { WeeklyRetroNextAction, WeeklyRetrospective } from '@/types/crm';
 
 interface Props {
+  /** 섹션 제목 — 세그먼트를 표기해 어느 쪽 회고인지 드러낸다. */
+  title?: string;
   retro: WeeklyRetrospective;
   summary: string; // 이 주 실적 한 줄 요약
   nextWeekLabel: string | null;
@@ -14,7 +16,7 @@ interface Props {
 }
 
 /** 주간 회고 — 잘된 것 / 안된 것·원인 / 다음 주에 할 것(다음 주로 이어받기). */
-export function WeeklyRetro({ retro, summary, nextWeekLabel, onChange, onCarryOver }: Props) {
+export function WeeklyRetro({ title, retro, summary, nextWeekLabel, onChange, onCarryOver }: Props) {
   const [draft, setDraft] = useState<WeeklyRetrospective>(retro);
   const [newItem, setNewItem] = useState('');
   const [carrying, setCarrying] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export function WeeklyRetro({ retro, summary, nextWeekLabel, onChange, onCarryOv
   return (
     <section>
       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
-        <p className="text-xs font-semibold text-gray-400">이 주 회고</p>
+        <p className="text-xs font-semibold text-gray-400">{title ?? '이 주 회고'}</p>
         <p className="text-[11px] text-gray-400 tabular-nums">{summary}</p>
       </div>
 

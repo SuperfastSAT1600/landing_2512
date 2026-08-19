@@ -11,6 +11,7 @@ import {
 } from '@/types/crm';
 import { buildPlanPatch, normalizePlanRow } from './sanitize';
 import { fetchWeeklyExecution } from './fetch-execution';
+import { trackStrategyRefs } from '@/lib/weekly-track-progress';
 
 const VALID_SEGMENTS = ['b2c', 'b2b'] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -98,7 +99,7 @@ export async function GET(request: NextRequest) {
 
   const [actuals, execution, prev] = await Promise.all([
     fetchActuals(request.nextUrl.origin, adminKey, segment, week.start, week.end),
-    fetchWeeklyExecution(segment, { start: week.start, end: week.end }, plan?.focus_strategies ?? []),
+    fetchWeeklyExecution(segment, { start: week.start, end: week.end }, trackStrategyRefs(plan?.tracks ?? [])),
     fetchPrevMeta(segment, weekStart),
   ]);
 

@@ -10,7 +10,7 @@ import {
 
 /** PUT에 보낼 수 있는 필드 — 보낸 키만 서버에서 갱신된다(부분 업데이트). */
 export type WeeklyPlanPatch = Partial<
-  Pick<WeeklyPlan, 'targets' | 'actions' | 'focus_strategies' | 'retrospective' | 'execution_notes'>
+  Pick<WeeklyPlan, 'tracks' | 'targets' | 'actions' | 'focus_strategies' | 'retrospective' | 'execution_notes'>
 >;
 
 export function emptyWeeklyPlan(segment: WeeklyPlanSegment, weekStart: string): WeeklyPlan {
@@ -18,6 +18,7 @@ export function emptyWeeklyPlan(segment: WeeklyPlanSegment, weekStart: string): 
     id: '',
     segment,
     week_start: weekStart,
+    tracks: [],
     targets: [],
     actions: [],
     focus_strategies: [],
