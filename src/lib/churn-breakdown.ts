@@ -31,6 +31,13 @@ export interface ChurnBreakdown {
 // 알려진 사유 카테고리 접두. CHURN_TAG_OPTIONS + 환불(별도 플로우).
 const KNOWN_CATEGORIES = ['회신 없음', '노쇼', '미응시', '미결제', '환불', '기타'] as const;
 const UNCLASSIFIED = '기타/미분류';
+
+/**
+ * classifyChurnTag가 낼 수 있는 카테고리 전체. 사유 필터 UI는 반드시 이 목록을 써야 한다 —
+ * CHURN_TAG_OPTIONS(입력용)에는 환불·기타/미분류가 없어서, 그걸로 필터를 만들면
+ * 환불(47명)·미분류(11명) 리드를 어떤 조합으로도 선택할 수 없다.
+ */
+export const CHURN_CATEGORIES: readonly string[] = [...KNOWN_CATEGORIES, UNCLASSIFIED];
 const SAMPLE_MAX_LEN = 80; // 대표 사유 표시 길이 상한(프롬프트 블록 간결화)
 
 /** 자유서술 사유를 프롬프트용 한 줄로 정규화(개행·중복 공백 제거, 길이 상한). */

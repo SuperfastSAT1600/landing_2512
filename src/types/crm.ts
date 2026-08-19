@@ -1093,6 +1093,10 @@ export interface WinbackCandidate {
 /** 추천 파이프라인 진단 — degrade를 조용히 숨기지 않기 위해 항상 함께 반환한다. */
 export interface WinbackRecommendStats {
   prefiltered: number;
+  /** AI가 실제로 심사한 인원(RERANK_POOL). 나머지는 규칙 점수로 backfill된다. */
+  reranked?: number;
+  /** 그중 유효한 판정이 돌아온 인원. reranked보다 작으면 응답 누락·환각 id가 있었다는 뜻. */
+  judged?: number;
   embedded: number;
   llm_used: boolean;
   embedding_used: boolean;

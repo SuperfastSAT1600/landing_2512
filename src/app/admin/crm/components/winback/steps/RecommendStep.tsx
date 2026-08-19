@@ -7,6 +7,11 @@ import type { BriefDraft } from './BriefStep';
 import { WinbackRuleFilters, type RuleDraft, EMPTY_RULES, toRuleFilters } from '../WinbackRuleFilters';
 import { CandidateCard } from '../CandidateCard';
 
+/** 기본 선택 인원 — 발송은 되돌릴 수 없으므로 전량 자동 선택하지 않는다. */
+const DEFAULT_SELECT = 10;
+/** 이 적합도 이상만 기본 선택. 미만은 목록에는 남지만 담당자가 직접 고르게 한다. */
+const FIT_OK = 3;
+
 interface Props {
   adminKey: string;
   playId: string;
@@ -60,7 +65,16 @@ export function RecommendStep({
       });
       setCandidates(result.candidates);
       setStats(result.stats);
-      setSelected(new Set(result.candidates.slice(0, 10).map((c) => c.student_id)));
+      // 기본 선택은 상위 10명 — 단 AI가 "근거 약함"(fit<=2)으로 본 후보는 빼고 고른다.
+      // 전량 자동 선택하지 않는 이유: 발송은 되돌릴 수 없다.
+      setSelected(
+        new Set(
+          result.candidates
+            .filter((c) => c.llm_fit == null || c.llm_fit >= FIT_OK)
+            .slice(0, DEFAULT_SELECT)
+            .map((c) => c.student_id)
+        )
+      );
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -95,9 +109,14 @@ export function RecommendStep({
 
       {stats && (
         <div className="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span>사전필터 통과 {stats.prefiltered}명</span>
+          {/* 어느 단계에서 후보가 줄었는지 화면만 보고 판별할 수 있게 퍼널을 그대로 노출한다. */}
+          <span>
+            사전필터 {stats.prefiltered.toLocaleString()}명
+            {stats.reranked != null && <> → AI 검토 {stats.reranked}명</>}
+            {stats.judged != null && <> (판정 {stats.judged}명)</>} → 노출 {candidates.length}명
+          </span>
           <span>유사도 계산 {stats.embedded}명</span>
-          <span>{stats.llm_used ? 'AI 재랭킹 적용' : 'AI 재랭킹 미적용'}</span>
+          <span>{stats.llm_used ? 'AI 재랭킹 적용' : 'AI 재랭킹 미적용(규칙 점수만)'}</span>
           {stats.degraded_reason && (
             <span className="flex items-center gap-1 text-amber-600">
               <AlertTriangle size={11} /> {stats.degraded_reason}
