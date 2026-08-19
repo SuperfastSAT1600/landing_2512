@@ -41,21 +41,21 @@ describe('MonthlyTargetEditor', () => {
     expect(screen.queryByLabelText(/월/)).toBeNull();
   });
 
-  it('글로벌 목표도 원화 그대로(환산 없이) 저장한다', async () => {
+  it('글로벌 목표는 달러 입력을 1$=1,400원으로 원화 환산해 저장한다', async () => {
     const fetchMock = mockFetchOnce(true, { id: 't-1' });
     vi.stubGlobal('fetch', fetchMock);
     const onSaved = vi.fn();
     render(<MonthlyTargetEditor segment="global" adminKey="admin-key" onSaved={onSaved} />);
 
     fireEvent.click(screen.getByRole('button', { name: /목표 설정/ }));
-    expect(screen.getByPlaceholderText('목표 금액 (원)')).toBeTruthy();
+    expect(screen.getByPlaceholderText('목표 금액 ($)')).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/월/), { target: { value: '2026-08' } });
-    fireEvent.change(screen.getByPlaceholderText('목표 금액 (원)'), { target: { value: '1000000' } });
+    fireEvent.change(screen.getByPlaceholderText('목표 금액 ($)'), { target: { value: '700' } });
     fireEvent.click(screen.getByRole('button', { name: '저장' }));
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     const [, init] = fetchMock.mock.calls[0];
-    expect(JSON.parse(init.body)).toEqual({ segment: 'global', month: '2026-08', target_amount: 1000000 });
+    expect(JSON.parse(init.body)).toEqual({ segment: 'global', month: '2026-08', target_amount: 980000 });
   });
 
   it('실패하면 alert를 띄우고 폼을 닫지 않는다', async () => {
