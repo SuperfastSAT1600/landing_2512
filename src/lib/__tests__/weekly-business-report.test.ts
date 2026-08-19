@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
   lastCompletedWeek,
   splitLeadsBySource,
+  summarizeGlobalSales,
   formatBusinessReport,
   type ReportSegment,
+  type GlobalReportSummary,
+  type GlobalSaleEntryLike,
 } from '@/lib/weekly-business-report';
 
 describe('lastCompletedWeek (REQ-002)', () => {
@@ -81,9 +84,19 @@ describe('splitLeadsBySource (REQ-004)', () => {
 // 2026-08-03~08-09 실측값
 const WEEK = { label: '26년 08월 01주차', start: '2026-08-03', end: '2026-08-09' };
 
+const GLOBAL: GlobalReportSummary = {
+  totalUsd: 800, totalCount: 2,
+  firstUsd: 500, firstCount: 1,
+  repeatUsd: 300, repeatCount: 1,
+};
+
+const NO_GLOBAL: GlobalReportSummary = {
+  totalUsd: 0, totalCount: 0, firstUsd: 0, firstCount: 0, repeatUsd: 0, repeatCount: 0,
+};
+
 const SEGMENTS: ReportSegment[] = [
   {
-    label: '전체',
+    label: '한국비즈니스',
     igLeads: 9,
     otherLeads: 8,
     overview: {
@@ -117,14 +130,45 @@ const SEGMENTS: ReportSegment[] = [
   },
 ];
 
+describe('summarizeGlobalSales (REQ-005)', () => {
+  const ENTRIES: GlobalSaleEntryLike[] = [
+    { amount_usd: 500, payment_type: '최초결제', sale_date: '2026-08-05' },
+    { amount_usd: 300, payment_type: '재결제', sale_date: '2026-08-08' },
+    { amount_usd: 999, payment_type: '최초결제', sale_date: '2026-08-02' }, // 주차 밖(이전 주)
+    { amount_usd: 111, payment_type: '재결제', sale_date: '2026-08-10' }, // 주차 밖(다음 주)
+  ];
+
+  it('주차 범위 안의 항목만 최초결제/재결제로 나눠 집계한다', () => {
+    expect(summarizeGlobalSales(ENTRIES, WEEK)).toEqual({
+      totalUsd: 800, totalCount: 2,
+      firstUsd: 500, firstCount: 1,
+      repeatUsd: 300, repeatCount: 1,
+    });
+  });
+
+  it('빈 배열이나 주차 밖 항목만 있으면 전부 0', () => {
+    expect(summarizeGlobalSales([], WEEK)).toEqual(NO_GLOBAL);
+    expect(
+      summarizeGlobalSales(
+        [{ amount_usd: 100, payment_type: '최초결제', sale_date: '2026-08-01' }],
+        WEEK,
+      ),
+    ).toEqual(NO_GLOBAL);
+  });
+});
+
 describe('formatBusinessReport (REQ-003)', () => {
-  it('합의된 형식 그대로 렌더링한다', () => {
-    expect(formatBusinessReport(WEEK, SEGMENTS)).toBe(
+  it('합의된 형식 그대로 렌더링한다 — 전체(한국비즈니스+글로벌 합산)/한국비즈니스/B2C/B2B/글로벌 순서', () => {
+    expect(formatBusinessReport(WEEK, SEGMENTS, GLOBAL)).toBe(
       [
         '*비즈니스 현황 · 26년 08월 01주차*',
         '2026-08-03 ~ 2026-08-09 · 금액 단위: 만원',
         '',
         '*전체*',
+        '총매출 3,482 · 순매출 3,482 · 순수익 3,145',
+        '한국비즈니스 97% · 글로벌 3% (글로벌은 1$=1,400원 환산)',
+        '',
+        '*한국비즈니스*',
         '리드 17 → 컨택 8 (47.06%) → 결제 4명 (50%)',
         '리드 구성: 인스타 9 · 그 외 8',
         '총매출 3,370 (10건) · 환불 0 (0건)',
@@ -144,6 +188,10 @@ describe('formatBusinessReport (REQ-003)', () => {
         '총매출 980 (3건) · 환불 0 (0건)',
         '순매출 980 · 순수익 882',
         '최초결제 481 (2건) · 재결제 499 (1건)',
+        '',
+        '*글로벌*',
+        '총매출 $800 (2건)',
+        '최초결제 $500 (1건) · 재결제 $300 (1건)',
       ].join('\n'),
     );
   });
@@ -160,7 +208,7 @@ describe('formatBusinessReport (REQ-003)', () => {
         },
       },
     ];
-    const text = formatBusinessReport(WEEK, withRefund);
+    const text = formatBusinessReport(WEEK, withRefund, NO_GLOBAL);
     expect(text).toContain('환불 -143 (1건)');
     expect(text).toContain('순매출 3,227');
   });
@@ -179,14 +227,15 @@ describe('formatBusinessReport (REQ-003)', () => {
         },
       },
     ];
-    const text = formatBusinessReport(WEEK, empty);
+    const text = formatBusinessReport(WEEK, empty, NO_GLOBAL);
     expect(text).not.toMatch(/NaN|undefined/);
     expect(text).toContain('리드 0 → 컨택 0 (0%) → 결제 0명 (0%)');
     expect(text).toContain('총매출 0 (0건) · 환불 0 (0건)');
+    expect(text).toContain('한국비즈니스 0% · 글로벌 0%'); // 매출 0일 때 분모 0 나눗셈으로 NaN%가 되지 않는다
   });
 
   it('이모지·해설 문구를 넣지 않는다', () => {
-    const text = formatBusinessReport(WEEK, SEGMENTS);
+    const text = formatBusinessReport(WEEK, SEGMENTS, GLOBAL);
     expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u);
     expect(text).not.toContain('짚어볼');
     expect(text).not.toContain('테스트');

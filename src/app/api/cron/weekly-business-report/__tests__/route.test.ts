@@ -5,6 +5,13 @@ import { readFileSync } from 'node:fs';
 
 const SLACK_CHANNEL = 'C07L25RNWCX'; // 00_방향맞추기
 const STATS_URL = 'https://tutoring.superfastsat.com/api/crm/stats';
+const GLOBAL_SALES_URL = 'https://tutoring.superfastsat.com/api/business/global-sales';
+
+const GLOBAL_ENTRIES = [
+  { amount_usd: 500, payment_type: '최초결제', sale_date: '2026-08-05' },
+  { amount_usd: 300, payment_type: '재결제', sale_date: '2026-08-08' },
+  { amount_usd: 999, payment_type: '최초결제', sale_date: '2026-08-20' }, // 주차 밖
+];
 
 const fetchMock = vi.fn();
 vi.stubGlobal('fetch', fetchMock);
@@ -57,11 +64,15 @@ beforeEach(() => {
   process.env.CRON_SECRET = 'cron-secret';
   process.env.ADMIN_SECRET_KEY = 'admin-key';
   process.env.SLACK_BOT_TOKEN = 'xoxb-test';
-  fetchMock.mockImplementation((url: string) =>
-    String(url).includes('chat.postMessage')
-      ? Promise.resolve({ ok: true, json: async () => ({ ok: true }) })
-      : Promise.resolve(statsResponse(String(url))),
-  );
+  fetchMock.mockImplementation((url: string) => {
+    if (String(url).includes('chat.postMessage')) {
+      return Promise.resolve({ ok: true, json: async () => ({ ok: true }) });
+    }
+    if (String(url).startsWith(GLOBAL_SALES_URL)) {
+      return Promise.resolve({ ok: true, json: async () => ({ data: GLOBAL_ENTRIES }) });
+    }
+    return Promise.resolve(statsResponse(String(url)));
+  });
 });
 
 afterEach(() => {
@@ -90,8 +101,40 @@ describe('GET /api/cron/weekly-business-report (REQ-005)', () => {
     expect(body!.text).toContain('26년 08월 01주차');
     expect(body!.text).toContain('2026-08-03 ~ 2026-08-09');
     expect(body!.text).toContain('*전체*');
+    expect(body!.text).toContain('*한국비즈니스*');
     expect(body!.text).toContain('*B2C*');
     expect(body!.text).toContain('*B2B*');
+    expect(body!.text).toContain('*글로벌*');
+  });
+
+  it('글로벌 매출을 주차 범위로 걸러 집계해 포함한다(주차 밖 항목 제외)', async () => {
+    const { GET } = await import('../route');
+
+    await GET(makeReq());
+
+    const body = slackCall();
+    expect(body!.text).toContain('총매출 $800 (2건)');
+    expect(body!.text).toContain('최초결제 $500 (1건) · 재결제 $300 (1건)');
+  });
+
+  it('글로벌 조회가 실패해도 리포트 발송은 막지 않고 0으로 대체한다', async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if (String(url).includes('chat.postMessage')) {
+        return Promise.resolve({ ok: true, json: async () => ({ ok: true }) });
+      }
+      if (String(url).startsWith(GLOBAL_SALES_URL)) {
+        return Promise.resolve({ ok: false, status: 500, json: async () => ({}) });
+      }
+      return Promise.resolve(statsResponse(String(url)));
+    });
+    const { GET } = await import('../route');
+
+    const res = await GET(makeReq());
+
+    expect(res.status).toBe(200);
+    const body = slackCall();
+    expect(body).not.toBeNull();
+    expect(body!.text).toContain('총매출 $0 (0건)');
   });
 
   it('stats를 all/b2c/b2b 3개 세그먼트로 조회한다', async () => {

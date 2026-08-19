@@ -2,16 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   lastCompletedWeek,
   splitLeadsBySource,
+  summarizeGlobalSales,
   formatBusinessReport,
   type ReportSegment,
   type ReportOverview,
+  type GlobalSaleEntryLike,
+  type GlobalReportSummary,
 } from '@/lib/weekly-business-report';
 
 /** 슬랙 00_방향맞추기 채널 — 주간 비즈니스 현황 발송처. */
 const SLACK_CHANNEL = 'C07L25RNWCX';
 
+// Business 페이지 탭 위계와 맞춘다: 한국비즈니스(B2C+B2B 합산)가 첫 번째 —
+// formatBusinessReport가 이 순서(segments[0]=한국비즈니스 전체)로 "전체" 합산을 계산한다.
 const SEGMENTS: { key: 'all' | 'b2c' | 'b2b'; label: string }[] = [
-  { key: 'all', label: '전체' },
+  { key: 'all', label: '한국비즈니스' },
   { key: 'b2c', label: 'B2C' },
   { key: 'b2b', label: 'B2B' },
 ];
@@ -69,13 +74,28 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // 글로벌(USD) 매출 — 날짜 필터가 없는 API라 전체 이력을 받아 주차 범위로 직접 걸러 집계한다.
+  // 튜터링 통계와 달리 이 라인이 실패해도 리포트 자체를 막지 않는다(신규 소규모 라인이라 0으로 대체).
+  let globalSummary: GlobalReportSummary = { totalUsd: 0, totalCount: 0, firstUsd: 0, firstCount: 0, repeatUsd: 0, repeatCount: 0 };
+  try {
+    const res = await fetch(`${origin}/api/business/global-sales`, { headers: { 'x-admin-key': adminKey } });
+    if (res.ok) {
+      const json = (await res.json()) as { data?: GlobalSaleEntryLike[] };
+      globalSummary = summarizeGlobalSales(json.data ?? [], week);
+    } else {
+      console.error(`[cron/weekly-business-report] global-sales 실패: ${res.status}`);
+    }
+  } catch (e) {
+    console.error('[cron/weekly-business-report] global-sales 예외:', e);
+  }
+
   const token = process.env.SLACK_BOT_TOKEN;
   if (!token) {
     console.error('[cron/weekly-business-report] SLACK_BOT_TOKEN 미설정 — 발송 생략');
     return NextResponse.json({ sent: false, reason: 'SLACK_TOKEN_MISSING', week: week.label });
   }
 
-  const text = formatBusinessReport(week, segments);
+  const text = formatBusinessReport(week, segments, globalSummary);
 
   try {
     const res = await fetch('https://slack.com/api/chat.postMessage', {
