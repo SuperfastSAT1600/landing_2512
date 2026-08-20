@@ -451,7 +451,10 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
             ))}
           </div>
           {topView === 'tutoring' && (
-            <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg p-0.5">
+            <div
+              data-testid="stats-segment-tabs"
+              className="flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg p-0.5"
+            >
               {TUTORING_SUB_TABS.map(({ key, label }) => (
                 <button
                   key={key}
