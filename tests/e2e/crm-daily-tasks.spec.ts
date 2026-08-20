@@ -66,6 +66,10 @@ const json = (route: import('@playwright/test').Route, body: unknown) =>
   route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
 
 async function setup(page: Page) {
+  // 완료 체크(PATCH) 이후 재조회에 그 효과가 반영돼야 한다 — 실제 서버와 같게 상태를 들고 간다.
+  // page.tsx가 daily_action_done_at PATCH 후 today_actions=true 를 재조회하기 때문.
+  const doneIds = new Set<string>();
+
   await page.addInitScript((key) => localStorage.setItem('admin_key', key), ADMIN_KEY);
   await page.route('**/api/crm/stats**', (route) =>
     json(route, {
@@ -84,10 +88,24 @@ async function setup(page: Page) {
     if (route.request().method() !== 'GET') return json(route, { data: {} });
     const url = route.request().url();
     if (/lead_status=(enrolled|inactive)|stage=churned/.test(url)) return json(route, { data: [] });
-    return json(route, { data: [stalled, overdue, doneToday, memoToday] });
+    const withDone = <T extends { id: string }>(s: T) =>
+      doneIds.has(s.id) ? { ...s, daily_action_done_at: iso(now) } : s;
+    return json(route, { data: [stalled, overdue, doneToday, memoToday].map(withDone) });
   });
-  // 완료 체크 PATCH 등 단일 학생 — 성공 응답 (students** 보다 나중 등록 → 우선)
-  await page.route('**/api/crm/students/*', (route) => json(route, { data: {} }));
+  // 완료 체크 PATCH 등 단일 학생 (students** 보다 나중 등록 → 우선).
+  // daily_action_done_at PATCH는 기록해 두고 이후 GET에 반영한다.
+  await page.route('**/api/crm/students/*', (route) => {
+    const req = route.request();
+    if (req.method() === 'PATCH') {
+      const body = req.postDataJSON() as { daily_action_done_at?: string | null } | null;
+      const id = new URL(req.url()).pathname.split('/').pop() ?? '';
+      if (body && 'daily_action_done_at' in body) {
+        if (body.daily_action_done_at) doneIds.add(id);
+        else doneIds.delete(id);
+      }
+    }
+    return json(route, { data: {} });
+  });
 }
 
 test.describe('CRM — 오늘 할 일 탭', () => {

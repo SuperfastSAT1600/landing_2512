@@ -141,40 +141,6 @@ export function RateBar({
 
 // ─── Segment tabs for B2C stats ───────────────────────────────────────────────
 
-const SEGMENT_TABS: { key: CrmStatsSegment; label: string }[] = [
-  { key: 'all', label: '전체' },
-  { key: 'b2c', label: 'B2C' },
-  { key: 'b2b', label: 'B2B' },
-];
-
-export function SegmentTabs({
-  value,
-  onChange,
-}: {
-  value: CrmStatsSegment;
-  onChange: (v: CrmStatsSegment) => void;
-}) {
-  return (
-    <div data-testid="stats-segment-tabs" className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-      {SEGMENT_TABS.map(({ key, label }) => (
-        <button
-          key={key}
-          type="button"
-          onClick={() => onChange(key)}
-          className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-            value === key
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// 초 단위 경과 시간을 사람이 읽기 쉬운 한글 기간으로. null이면 '-'.
 export function formatDuration(seconds: number | null): string {
   if (seconds == null) return '-';
   if (seconds < 60) return '1분 미만';
