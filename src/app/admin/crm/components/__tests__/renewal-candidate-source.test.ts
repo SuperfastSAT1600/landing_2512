@@ -30,6 +30,7 @@ function entry(
     hours: null,
     subjects: [],
     paymentStatus: null,
+    bySubject: [],
     ...rest,
   };
 }
