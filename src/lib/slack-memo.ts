@@ -45,3 +45,63 @@ export async function notifyMemoToSlack(input: {
     console.error('[slack-memo]', e);
   }
 }
+
+export const WINBACK_SEND_HEADING = '📨 *윈백 발송*';
+
+export interface WinbackSend {
+  studentName: string;
+  /** "{플레이} / {변형}" 표기 — 상담 메모·재활성화 로그와 같은 라벨. */
+  playLabel: string;
+  message?: string | null;
+}
+
+function quote(message: string): string {
+  return message
+    .split('\n')
+    .map((line) => `> ${line}`)
+    .join('\n');
+}
+
+/**
+ * 윈백 발송으로 남은 상담 메모를 상담 채널에 공유한다.
+ * 일괄 발송은 한 번에 수십 건이라 건별 메시지 대신 발송 1회당 슬랙 메시지 1건으로 묶고,
+ * 같은 플레이·같은 문구끼리는 학생 명단 한 블록으로 합친다.
+ */
+export async function notifyWinbackSendsToSlack(input: {
+  sends: WinbackSend[];
+  author?: string | null;
+}): Promise<void> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token || input.sends.length === 0) return;
+
+  try {
+    const now = new Date().toLocaleString('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const groups = new Map<string, { playLabel: string; message: string; names: string[] }>();
+    for (const send of input.sends) {
+      const message = (send.message ?? '').trim();
+      const key = `${send.playLabel} ${message}`;
+      const group = groups.get(key) ?? { playLabel: send.playLabel, message, names: [] };
+      group.names.push(send.studentName);
+      groups.set(key, group);
+    }
+
+    const head = `${WINBACK_SEND_HEADING} — ${now} KST\n*발송인:* ${input.author || '미기재'}  |  *대상:* ${input.sends.length}명`;
+    const blocks = [...groups.values()].map((g) => {
+      const title = `*${g.playLabel}* (${g.names.length}명)\n${g.names.join(', ')}`;
+      return g.message ? `${title}\n${quote(g.message)}` : title;
+    });
+
+    await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ channel: SLACK_CHANNEL, text: [head, ...blocks].join('\n\n') }),
+    });
+  } catch (e) {
+    console.error('[slack-memo winback]', e);
+  }
+}
