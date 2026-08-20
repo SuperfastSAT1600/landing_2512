@@ -353,6 +353,18 @@ describe('RenewalCandidateTable', () => {
       expect(order).toEqual(['SAT', 'AP', 'Special']);
     });
 
+    it('튜터링 상태는 학생 칸, 결제 상태는 과목 칸 — 단위가 다른 값을 한 칸에 섞지 않는다', () => {
+      render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
+
+      const nameCell = screen.getByTestId('cell-name-s1').closest('td')!;
+      expect(nameCell.textContent).toContain('수업중');
+
+      const statusCells = [...document.querySelectorAll('tbody tr')].map(
+        (tr) => tr.querySelectorAll('td')[2].textContent
+      );
+      expect(statusCells).toEqual(['Active', 'Inactive']);
+    });
+
     it('그룹 첫 행(=이름·추가 버튼)은 과목 순서상 첫 과목이 갖는다', () => {
       render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
 

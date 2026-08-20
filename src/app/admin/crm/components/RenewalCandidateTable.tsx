@@ -229,9 +229,19 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
                           </span>
                         )}
                       </div>
-                      {student.parent_phone && (
-                        <p className="text-[10px] text-gray-400 mt-0.5">{student.parent_phone}</p>
-                      )}
+                      {/* 튜터링 상태는 학생 단위 — 과목별 결제 상태(상태 칸)와 섞이지 않게 여기 둔다. */}
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span
+                          title="CRM이 계산한 수업 진행 상태 — 잔여시간·휴원·부분종료 기준"
+                          className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.color}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
+                          {meta.label}
+                        </span>
+                        {student.parent_phone && (
+                          <span className="text-[10px] text-gray-400">{student.parent_phone}</span>
+                        )}
+                      </div>
                     </>
                   ) : (
                     <div className="h-4 ml-1 border-l-2 border-gray-100" />
@@ -252,21 +262,16 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
                   </span>
                 </td>
 
+                {/* 상태 = 그 과목의 결제 관리 상태(SFv2 payments). V2 Payment 페이지의 Status와 같다. */}
                 <td className="py-2 px-2">
-                  {/* 튜터링 상태는 학생 단위, 결제 상태는 과목 단위 — V2 Payment 페이지와 같은 구분. */}
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {first && (
-                      <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.color}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
-                        {meta.label}
-                      </span>
-                    )}
-                    {payMeta && (
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${payMeta.className}`}>
-                        {payMeta.label}
-                      </span>
-                    )}
-                  </div>
+                  {payMeta && (
+                    <span
+                      title="플랫폼 결제 관리 상태 — 과목별로 담당자가 지정한다"
+                      className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-semibold ${payMeta.className}`}
+                    >
+                      {payMeta.label}
+                    </span>
+                  )}
                 </td>
 
                 {METRIC_COLUMNS.map((col) => (
