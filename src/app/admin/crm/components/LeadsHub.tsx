@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { SalesKanban } from './SalesKanban';
-import { KanbanStatsStrip } from './KanbanStatsStrip';
 import { KanbanFilter, KanbanFilters, DEFAULT_FILTERS } from './KanbanFilter';
 import { LeadPool } from './LeadPool';
 import { EnrolledLeads } from './EnrolledLeads';
@@ -85,7 +84,6 @@ export function LeadsHub({
             </div>
             <KanbanFilter filters={filters} onChange={setFilters} />
           </div>
-          <KanbanStatsStrip adminKey={adminKey} onSelectStudent={onSelectStudentById} />
           <SalesKanban
             students={filteredStudents}
             adminKey={adminKey}
