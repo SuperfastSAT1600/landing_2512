@@ -9,7 +9,7 @@ import type { WinbackResponse } from '@/types/crm';
 export const MIRROR_MEMO_HEADER = '📨 윈백 발송';
 
 /** 플레이/변형 라벨 — 상담 메모와 재활성화 로그에서 같은 표기를 쓴다. */
-function playLabel(playTitle: string, variantName?: string | null): string {
+export function playLabel(playTitle: string, variantName?: string | null): string {
   return variantName ? `${playTitle} / ${variantName}` : playTitle;
 }
 
