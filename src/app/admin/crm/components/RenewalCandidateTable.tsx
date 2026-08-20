@@ -6,12 +6,8 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Crown, Plus, ChevronUp, ChevronDown } from 'lucide-react';
-import {
-  TUTORING_STATUS_META,
-  type TutoringEntry,
-  type TutoringHours,
-  type TutoringRowStudent,
-} from './TutoringStudentRow';
+import { TUTORING_STATUS_META, type TutoringHours } from './TutoringStudentRow';
+import type { CandidateRow } from './renewal-candidate-rows';
 
 type MetricKey = keyof TutoringHours;
 type SortKey = MetricKey | 'name';
@@ -107,17 +103,37 @@ function SortHeader({
 const NAME_COLUMN: Column<'name'> = { key: 'name', label: '학생', descFirst: false, hint: '이름순' };
 
 interface Props {
-  entries: TutoringEntry<TutoringRowStudent>[];
+  /** (학생 × 과목) 행 — expandSubjectRows 결과. 과목 내역이 없으면 학생당 1행. */
+  entries: CandidateRow[];
   onAdd: (studentId: string) => void;
   pendingStudentId: string | null;
   onSelectStudent?: (studentId: string) => void;
+}
+
+/** 셀 식별자 — 과목 행은 학생 안에서 과목으로 갈린다. */
+function rowKey(row: CandidateRow): string {
+  return row.subject ? `${row.student.id}-${row.subject}` : row.student.id;
+}
+
+/**
+ * 정렬된 행을 학생 단위로 다시 묶는다. 그룹 순서는 그 학생의 가장 앞선(=가장 급한) 행이 정하고,
+ * 그룹 안에서는 정렬 순서를 그대로 유지한다 — 과목 행이 표 여기저기로 흩어지면 읽기 어렵다.
+ */
+function groupByStudent(rows: CandidateRow[]): { row: CandidateRow; first: boolean }[] {
+  const groups = new Map<string, CandidateRow[]>();
+  for (const row of rows) {
+    const list = groups.get(row.student.id) ?? [];
+    list.push(row);
+    groups.set(row.student.id, list);
+  }
+  return [...groups.values()].flatMap((list) => list.map((row, i) => ({ row, first: i === 0 })));
 }
 
 export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSelectStudent }: Props) {
   // 기본 정렬 = 급한 순 (초과예약 desc → 잔여 asc). sort가 null이면 이 순서를 쓴다.
   const [sort, setSort] = useState<SortState>(null);
 
-  const rows = useMemo(() => {
+  const sorted = useMemo(() => {
     const list = entries.slice();
     if (!sort) {
       return list.sort((a, b) => {
@@ -148,6 +164,8 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
     });
   }, [entries, sort]);
 
+  const rows = useMemo(() => groupByStudent(sorted), [sorted]);
+
   const toggleSort = useCallback((col: Column) => {
     setSort((current) =>
       current?.key === col.key
@@ -170,8 +188,8 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
           </tr>
         </thead>
         <tbody>
-          {rows.map((entry) => {
-            const { student, hours, displayStatus, subjects, paymentStatus } = entry;
+          {rows.map(({ row, first }) => {
+            const { student, hours, displayStatus, subjects, paymentStatus } = row;
             const meta = TUTORING_STATUS_META[displayStatus];
             const payMeta = paymentStatus ? PAYMENT_STATUS_LABEL[paymentStatus] : null;
             // 결제분 초과 사용/예약 → Payment 페이지처럼 행 전체를 옅은 빨강으로.
@@ -179,42 +197,59 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
 
             return (
               <tr
-                key={student.id}
-                className={`border-b border-gray-50 transition-colors ${urgent ? 'bg-red-50/60 hover:bg-red-50' : 'hover:bg-gray-50'}`}
+                key={rowKey(row)}
+                data-student={student.id}
+                className={`transition-colors ${first ? 'border-t border-gray-200' : ''} ${urgent ? 'bg-red-50/60 hover:bg-red-50' : 'hover:bg-gray-50'}`}
               >
+                {/* 이름·연락처는 학생 그룹의 첫 행에만 — 아래 과목 행은 같은 학생임을 들여쓰기로 보여준다. */}
                 <td className="py-2 px-2">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <button
-                      type="button"
-                      data-testid={`cell-name-${student.id}`}
-                      onClick={() => onSelectStudent?.(student.id)}
-                      className={`text-xs font-semibold text-gray-900 ${onSelectStudent ? 'hover:text-blue-600 hover:underline' : 'cursor-default'}`}
-                    >
-                      {student.name}
-                    </button>
-                    {student.grade && <span className="text-[10px] text-gray-400">{student.grade}</span>}
-                    {student.is_vip && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded font-semibold bg-amber-100 text-amber-700">
-                        <Crown size={8} />VIP
-                      </span>
-                    )}
-                    {subjects.map((s) => (
-                      <span key={s} className="text-[10px] px-1 py-0.5 rounded font-semibold bg-gray-100 text-gray-600">
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                  {student.parent_phone && (
-                    <p className="text-[10px] text-gray-400 mt-0.5">{student.parent_phone}</p>
+                  {first ? (
+                    <>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                          type="button"
+                          data-testid={`cell-name-${student.id}`}
+                          onClick={() => onSelectStudent?.(student.id)}
+                          className={`text-xs font-semibold text-gray-900 ${onSelectStudent ? 'hover:text-blue-600 hover:underline' : 'cursor-default'}`}
+                        >
+                          {student.name}
+                        </button>
+                        {student.grade && <span className="text-[10px] text-gray-400">{student.grade}</span>}
+                        {student.is_vip && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded font-semibold bg-amber-100 text-amber-700">
+                            <Crown size={8} />VIP
+                          </span>
+                        )}
+                        {subjects.map((s) => (
+                          <span key={s} className="text-[10px] px-1 py-0.5 rounded font-semibold bg-gray-100 text-gray-600">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                      {student.parent_phone && (
+                        <p className="text-[10px] text-gray-400 mt-0.5">{student.parent_phone}</p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-1.5 pl-3 border-l-2 border-gray-100">
+                      {subjects.map((s) => (
+                        <span key={s} className="text-[10px] px-1 py-0.5 rounded font-semibold bg-gray-100 text-gray-600">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </td>
 
                 <td className="py-2 px-2">
+                  {/* 튜터링 상태는 학생 단위, 결제 상태는 과목 단위 — V2 Payment 페이지와 같은 구분. */}
                   <div className="flex items-center gap-1 flex-wrap">
-                    <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.color}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
-                      {meta.label}
-                    </span>
+                    {first && (
+                      <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.color}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
+                        {meta.label}
+                      </span>
+                    )}
                     {payMeta && (
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${payMeta.className}`}>
                         {payMeta.label}
@@ -226,7 +261,7 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
                 {METRIC_COLUMNS.map((col) => (
                   <td
                     key={col.key}
-                    data-testid={`cell-${col.key}-${student.id}`}
+                    data-testid={`cell-${col.key}-${rowKey(row)}`}
                     className={`py-2 px-2 text-right text-xs tabular-nums ${
                       hours ? metricTone(col.key, hours[col.key]) : 'text-gray-300'
                     }`}
@@ -235,16 +270,19 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
                   </td>
                 ))}
 
+                {/* 재결제 타깃은 학생 단위 — 과목마다 추가 버튼을 두지 않는다. */}
                 <td className="py-2 px-2 text-right">
-                  <button
-                    type="button"
-                    onClick={() => onAdd(student.id)}
-                    disabled={pendingStudentId === student.id}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-blue-600 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors disabled:opacity-40 whitespace-nowrap"
-                  >
-                    <Plus size={11} />
-                    추가
-                  </button>
+                  {first && (
+                    <button
+                      type="button"
+                      onClick={() => onAdd(student.id)}
+                      disabled={pendingStudentId === student.id}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-blue-600 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors disabled:opacity-40 whitespace-nowrap"
+                    >
+                      <Plus size={11} />
+                      추가
+                    </button>
+                  )}
                 </td>
               </tr>
             );

@@ -27,6 +27,7 @@ function entry(
     hours: null,
     subjects,
     paymentStatus,
+    bySubject: [],
   };
 }
 

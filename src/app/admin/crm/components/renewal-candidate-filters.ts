@@ -1,7 +1,13 @@
 // 재결제 후보 필터 — 플랫폼 Payment 페이지 좌측 사이드바(SUBJECT / STATUS)와 같은 축.
 // 순수 함수로 분리해 체크박스 UI와 무관하게 규칙을 검증한다.
 
-import type { TutoringEntry, TutoringRowStudent } from './TutoringStudentRow';
+import type { PaymentManagementStatus } from '@/lib/tutoring-subject-breakdown';
+
+/** 필터가 실제로 보는 필드만 — 학생 엔트리와 과목 행 어느 쪽이 와도 그대로 통과시킨다. */
+interface FilterableEntry {
+  subjects: string[];
+  paymentStatus: PaymentManagementStatus | null;
+}
 
 /** 과목·결제 상태가 비어 있는 항목(SRM 미연결 등)을 가리키는 옵션 값. */
 export const UNSPECIFIED = '__unspecified__';
@@ -55,9 +61,7 @@ function buildOptions(
 }
 
 /** 과목 옵션 + 각 옵션에 해당하는 학생 수. 복수 과목 학생은 각 과목에 모두 계상된다. */
-export function subjectOptions<S extends TutoringRowStudent>(
-  entries: TutoringEntry<S>[]
-): FilterOption[] {
+export function subjectOptions(entries: FilterableEntry[]): FilterOption[] {
   const counts = new Map<string, number>();
   for (const e of entries) {
     const values = e.subjects.length > 0 ? e.subjects : [UNSPECIFIED];
@@ -66,9 +70,7 @@ export function subjectOptions<S extends TutoringRowStudent>(
   return buildOptions(counts, SUBJECT_ORDER, SUBJECT_LABEL);
 }
 
-export function paymentStatusOptions<S extends TutoringRowStudent>(
-  entries: TutoringEntry<S>[]
-): FilterOption[] {
+export function paymentStatusOptions(entries: FilterableEntry[]): FilterOption[] {
   const counts = new Map<string, number>();
   for (const e of entries) {
     const v = e.paymentStatus ?? UNSPECIFIED;
@@ -82,9 +84,7 @@ export function paymentStatusOptions<S extends TutoringRowStudent>(
  * Payment 페이지는 Onboarding+Active만 켜고 시작하지만, 재결제 대상 대부분은 시간이 소진돼
  * 결제가 inactive로 넘어간 학생이다. 같은 기본값을 쓰면 정작 봐야 할 사람이 숨는다.
  */
-export function defaultCandidateFilters<S extends TutoringRowStudent>(
-  entries: TutoringEntry<S>[]
-): CandidateFilters {
+export function defaultCandidateFilters(entries: FilterableEntry[]): CandidateFilters {
   return {
     subjects: subjectOptions(entries).map((o) => o.value),
     paymentStatuses: paymentStatusOptions(entries).map((o) => o.value),
@@ -92,10 +92,10 @@ export function defaultCandidateFilters<S extends TutoringRowStudent>(
 }
 
 /** 체크된 값에 해당하는 항목만 남긴다. 그룹이 비면(전부 해제) 그 그룹 기준으로 아무것도 남지 않는다. */
-export function filterCandidates<S extends TutoringRowStudent>(
-  entries: TutoringEntry<S>[],
+export function filterCandidates<E extends FilterableEntry>(
+  entries: E[],
   filters: CandidateFilters
-): TutoringEntry<S>[] {
+): E[] {
   const subjectSet = new Set(filters.subjects);
   const statusSet = new Set(filters.paymentStatuses);
 

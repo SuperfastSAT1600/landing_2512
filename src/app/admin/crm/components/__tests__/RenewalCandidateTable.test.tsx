@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RenewalCandidateTable } from '../RenewalCandidateTable';
-import type { TutoringEntry, TutoringHours, TutoringRowStudent } from '../TutoringStudentRow';
+import type { CandidateRow } from '../renewal-candidate-rows';
+import type { TutoringHours, TutoringRowStudent } from '../TutoringStudentRow';
 
 function hours(over: Partial<TutoringHours> = {}): TutoringHours {
   return {
@@ -17,8 +18,8 @@ function hours(over: Partial<TutoringHours> = {}): TutoringHours {
 
 function entry(
   id: string,
-  over: Partial<TutoringEntry<TutoringRowStudent>> & { name?: string } = {}
-): TutoringEntry<TutoringRowStudent> {
+  over: Partial<CandidateRow> & { name?: string } = {}
+): CandidateRow {
   const { name, ...rest } = over;
   return {
     student: {
@@ -34,8 +35,27 @@ function entry(
     hours: hours(),
     subjects: ['SAT'],
     paymentStatus: 'active',
+    subject: null,
+    bySubject: [],
     ...rest,
   };
+}
+
+/** 같은 학생의 과목 행 — expandSubjectRows가 만드는 모양. */
+function subjectRow(
+  id: string,
+  name: string,
+  subject: string,
+  hoursOver: Partial<TutoringHours>,
+  over: Partial<CandidateRow> = {}
+): CandidateRow {
+  return entry(id, {
+    name,
+    subject,
+    subjects: [subject],
+    hours: hours(hoursOver),
+    ...over,
+  });
 }
 
 /** 특정 학생 행의 셀 텍스트를 컬럼 순서대로 뽑는다. */
@@ -212,5 +232,87 @@ describe('RenewalCandidateTable', () => {
     );
     fireEvent.click(screen.getByText('김학생'));
     expect(onSelectStudent).toHaveBeenCalledWith('s1');
+  });
+
+  describe('과목별 행', () => {
+    const yoonjae = [
+      subjectRow('s1', '노윤재', 'SAT', {
+        purchased: 62, completed: 22, remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0,
+      }),
+      subjectRow('s1', '노윤재', 'special', {
+        purchased: 68, completed: 68, remaining: 0, scheduled: 0, unscheduled: 0, overscheduled: 0,
+      }, { paymentStatus: 'inactive' }),
+    ];
+
+    it('과목마다 행을 그리되 이름과 추가 버튼은 학생당 한 번만', () => {
+      render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
+
+      expect(document.querySelectorAll('tbody tr')).toHaveLength(2);
+      expect(screen.getAllByTestId(/^cell-name-/)).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: '추가' })).toHaveLength(1);
+    });
+
+    it('행마다 그 과목의 수치를 보여준다', () => {
+      render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
+
+      expect(screen.getByTestId('cell-purchased-s1-SAT').textContent).toBe('62');
+      expect(screen.getByTestId('cell-completed-s1-SAT').textContent).toBe('22');
+      expect(screen.getByTestId('cell-remaining-s1-SAT').textContent).toBe('40');
+      expect(screen.getByTestId('cell-purchased-s1-special').textContent).toBe('68');
+      expect(screen.getByTestId('cell-remaining-s1-special').textContent).toBe('0');
+    });
+
+    it('행마다 그 과목의 배지와 결제 상태를 보여준다', () => {
+      render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
+
+      expect(screen.getByText('SAT')).toBeTruthy();
+      expect(screen.getByText('special')).toBeTruthy();
+      expect(screen.getByText('Active')).toBeTruthy();
+      expect(screen.getByText('Inactive')).toBeTruthy();
+    });
+
+    it('추가는 어느 과목 행에서 눌러도 학생 단위로 보낸다', () => {
+      const onAdd = vi.fn();
+      render(<RenewalCandidateTable entries={yoonjae} onAdd={onAdd} pendingStudentId={null} />);
+
+      fireEvent.click(screen.getByRole('button', { name: '추가' }));
+      expect(onAdd).toHaveBeenCalledWith('s1');
+    });
+
+    it('그룹 순서는 학생의 가장 급한 과목 행이 정한다', () => {
+      render(
+        <RenewalCandidateTable
+          entries={[
+            subjectRow('a', '여유', 'SAT', { remaining: 30, overscheduled: 0 }),
+            subjectRow('a', '여유', 'special', { remaining: 25, overscheduled: 0 }),
+            subjectRow('b', '급함', 'SAT', { remaining: 50, overscheduled: 0 }),
+            subjectRow('b', '급함', 'special', { remaining: -4, overscheduled: 6 }),
+          ]}
+          onAdd={noop}
+          pendingStudentId={null}
+        />
+      );
+      expect(screen.getAllByTestId(/^cell-name-/).map((el) => el.textContent)).toEqual(['급함', '여유']);
+    });
+
+    it('정렬을 바꿔도 같은 학생의 과목 행은 붙어 있다', () => {
+      render(
+        <RenewalCandidateTable
+          entries={[
+            subjectRow('a', '가학생', 'SAT', { purchased: 10 }),
+            subjectRow('a', '가학생', 'special', { purchased: 90 }),
+            subjectRow('b', '나학생', 'SAT', { purchased: 50 }),
+            subjectRow('b', '나학생', 'special', { purchased: 20 }),
+          ]}
+          onAdd={noop}
+          pendingStudentId={null}
+        />
+      );
+      fireEvent.click(screen.getByRole('button', { name: (n) => n === '구매' }));
+
+      const rows = [...document.querySelectorAll('tbody tr')].map((tr) => tr.getAttribute('data-student'));
+      expect(rows).toEqual(['a', 'a', 'b', 'b']);
+      expect(screen.getAllByTestId(/^cell-name-/).map((el) => el.textContent)).toEqual(['가학생', '나학생']);
+    });
   });
 });
