@@ -8,6 +8,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { Crown, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { TUTORING_STATUS_META, type TutoringHours } from './TutoringStudentRow';
 import type { CandidateRow } from './renewal-candidate-rows';
+import { subjectLabel } from './renewal-candidate-filters';
+import { compareSubjects } from '@/lib/tutoring-subject-breakdown';
 
 type MetricKey = keyof TutoringHours;
 type SortKey = MetricKey | 'name';
@@ -126,7 +128,12 @@ function groupByStudent(rows: CandidateRow[]): { row: CandidateRow; first: boole
     list.push(row);
     groups.set(row.student.id, list);
   }
-  return [...groups.values()].flatMap((list) => list.map((row, i) => ({ row, first: i === 0 })));
+  return [...groups.values()].flatMap((list) =>
+    list
+      .slice()
+      .sort((a, b) => compareSubjects(a.subject, b.subject))
+      .map((row, i) => ({ row, first: i === 0 }))
+  );
 }
 
 export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSelectStudent }: Props) {
@@ -180,6 +187,7 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
         <thead className="bg-gray-50">
           <tr className="border-b border-gray-200">
             <SortHeader col={NAME_COLUMN} align="left" sort={sort} onToggle={toggleSort} />
+            <th scope="col" className="py-2 px-2 text-left text-xs font-semibold text-gray-500">과목</th>
             <th scope="col" className="py-2 px-2 text-left text-xs font-semibold text-gray-500">상태</th>
             {METRIC_COLUMNS.map((col) => (
               <SortHeader key={col.key} col={col} align="right" sort={sort} onToggle={toggleSort} />
@@ -189,7 +197,7 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
         </thead>
         <tbody>
           {rows.map(({ row, first }) => {
-            const { student, hours, displayStatus, subjects, paymentStatus } = row;
+            const { student, hours, displayStatus, paymentStatus } = row;
             const meta = TUTORING_STATUS_META[displayStatus];
             const payMeta = paymentStatus ? PAYMENT_STATUS_LABEL[paymentStatus] : null;
             // 결제분 초과 사용/예약 → Payment 페이지처럼 행 전체를 옅은 빨강으로.
@@ -220,25 +228,28 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
                             <Crown size={8} />VIP
                           </span>
                         )}
-                        {subjects.map((s) => (
-                          <span key={s} className="text-[10px] px-1 py-0.5 rounded font-semibold bg-gray-100 text-gray-600">
-                            {s}
-                          </span>
-                        ))}
                       </div>
                       {student.parent_phone && (
                         <p className="text-[10px] text-gray-400 mt-0.5">{student.parent_phone}</p>
                       )}
                     </>
                   ) : (
-                    <div className="flex items-center gap-1.5 pl-3 border-l-2 border-gray-100">
-                      {subjects.map((s) => (
-                        <span key={s} className="text-[10px] px-1 py-0.5 rounded font-semibold bg-gray-100 text-gray-600">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
+                    <div className="h-4 ml-1 border-l-2 border-gray-100" />
                   )}
+                </td>
+
+                {/* 과목 — V2 Payment 페이지의 Subject 컬럼 */}
+                <td className="py-2 px-2">
+                  <span
+                    data-testid={`cell-subject-${rowKey(row)}`}
+                    className={
+                      row.subject
+                        ? 'inline-flex items-center px-2 py-0.5 rounded-full border border-gray-200 bg-white text-[11px] font-semibold text-gray-700'
+                        : 'text-xs text-gray-300'
+                    }
+                  >
+                    {subjectLabel(row.subject)}
+                  </span>
                 </td>
 
                 <td className="py-2 px-2">
@@ -251,7 +262,7 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
                       </span>
                     )}
                     {payMeta && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${payMeta.className}`}>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${payMeta.className}`}>
                         {payMeta.label}
                       </span>
                     )}

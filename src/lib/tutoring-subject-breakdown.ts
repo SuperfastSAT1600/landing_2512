@@ -54,7 +54,8 @@ function orderIndex(subject: SubjectKey): number {
   return known >= 0 ? known : SUBJECT_ORDER.length;
 }
 
-function compareSubjects(a: SubjectKey, b: SubjectKey): number {
+/** 과목 표시 순서 비교 — 집계와 표가 같은 순서를 쓴다. */
+export function compareSubjects(a: SubjectKey, b: SubjectKey): number {
   const diff = orderIndex(a) - orderIndex(b);
   if (diff !== 0) return diff;
   return (a ?? '').localeCompare(b ?? '');

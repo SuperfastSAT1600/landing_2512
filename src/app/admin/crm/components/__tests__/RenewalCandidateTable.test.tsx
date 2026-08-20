@@ -199,14 +199,15 @@ describe('RenewalCandidateTable', () => {
     expect(screen.getByRole('button', { name: '추가' }).getAttribute('disabled')).not.toBeNull();
   });
 
-  it('shows the subject and VIP badges alongside the tutoring status', () => {
+  it('shows the VIP badge alongside the tutoring status', () => {
     render(
       <RenewalCandidateTable
         entries={[
           entry('s1', {
             name: '김학생',
             student: { id: 's1', name: '김학생', grade: '11th', parent_phone: '', is_vip: true, traffic_source: null },
-            subjects: ['AP', 'SAT'],
+            subject: 'SAT',
+            subjects: ['SAT'],
             displayStatus: 'sales',
           }),
         ]}
@@ -215,9 +216,9 @@ describe('RenewalCandidateTable', () => {
       />
     );
     expect(screen.getByText('VIP')).toBeTruthy();
-    expect(screen.getByText('SAT')).toBeTruthy();
-    expect(screen.getByText('AP')).toBeTruthy();
     expect(screen.getByText('재결제세일즈')).toBeTruthy();
+    // 과목은 이름 옆이 아니라 전용 컬럼에 — V2 Payment 페이지와 같은 배치
+    expect(screen.getByTestId('cell-subject-s1-SAT').textContent).toBe('SAT');
   });
 
   it('opens the student panel when the name is clicked', () => {
@@ -266,7 +267,7 @@ describe('RenewalCandidateTable', () => {
       render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
 
       expect(screen.getByText('SAT')).toBeTruthy();
-      expect(screen.getByText('special')).toBeTruthy();
+      expect(screen.getByText('Special')).toBeTruthy();
       expect(screen.getByText('Active')).toBeTruthy();
       expect(screen.getByText('Inactive')).toBeTruthy();
     });
@@ -313,6 +314,51 @@ describe('RenewalCandidateTable', () => {
       const rows = [...document.querySelectorAll('tbody tr')].map((tr) => tr.getAttribute('data-student'));
       expect(rows).toEqual(['a', 'a', 'b', 'b']);
       expect(screen.getAllByTestId(/^cell-name-/).map((el) => el.textContent)).toEqual(['가학생', '나학생']);
+    });
+
+    it('과목을 전용 컬럼에 그린다 (V2 Payment 페이지와 같은 배치)', () => {
+      render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
+
+      expect(screen.getByRole('columnheader', { name: '과목' })).toBeTruthy();
+      expect(screen.getByTestId('cell-subject-s1-SAT').textContent).toBe('SAT');
+      expect(screen.getByTestId('cell-subject-s1-special').textContent).toBe('Special');
+    });
+
+    it('과목 내역이 없는 행은 과목 칸이 비어 있다', () => {
+      render(
+        <RenewalCandidateTable
+          entries={[entry('u1', { name: '미연결', hours: null, subjects: [], paymentStatus: null })]}
+          onAdd={noop}
+          pendingStudentId={null}
+        />
+      );
+      expect(screen.getByTestId('cell-subject-u1').textContent).toBe('—');
+    });
+
+    it('한 학생 안에서는 SAT → AP → special 순으로 그린다', () => {
+      render(
+        <RenewalCandidateTable
+          entries={[
+            subjectRow('s1', '노윤재', 'special', { remaining: 0 }),
+            subjectRow('s1', '노윤재', 'AP', { remaining: 12 }),
+            subjectRow('s1', '노윤재', 'SAT', { remaining: 40 }),
+          ]}
+          onAdd={noop}
+          pendingStudentId={null}
+        />
+      );
+      const order = [...document.querySelectorAll('tbody tr')].map(
+        (tr) => tr.querySelector('[data-testid^="cell-subject-"]')?.textContent
+      );
+      expect(order).toEqual(['SAT', 'AP', 'Special']);
+    });
+
+    it('그룹 첫 행(=이름·추가 버튼)은 과목 순서상 첫 과목이 갖는다', () => {
+      render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
+
+      const firstRow = document.querySelector('tbody tr')!;
+      expect(firstRow.querySelector('[data-testid="cell-name-s1"]')?.textContent).toBe('노윤재');
+      expect(firstRow.querySelector('[data-testid="cell-subject-s1-SAT"]')).toBeTruthy();
     });
   });
 });

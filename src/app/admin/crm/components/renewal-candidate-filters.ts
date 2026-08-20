@@ -29,6 +29,11 @@ export interface FilterOption {
 const SUBJECT_ORDER = ['SAT', 'AP', 'special'];
 const SUBJECT_LABEL: Record<string, string> = { SAT: 'SAT', AP: 'AP', special: 'Special' };
 
+/** 과목 표기 — 사이드바 필터와 표가 같은 라벨을 쓴다(special → Special). */
+export function subjectLabel(subject: string | null): string {
+  return subject ? SUBJECT_LABEL[subject] ?? subject : '—';
+}
+
 const STATUS_ORDER = ['onboarding', 'active', 'paused', 'inactive', 'excluded'];
 const STATUS_LABEL: Record<string, string> = {
   onboarding: 'Onboarding',
