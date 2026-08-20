@@ -121,16 +121,19 @@ test.describe('CRM — 오늘 할 일 탭', () => {
   });
 
   test('최초 세일즈 탭에는 정체/팔로업 배너가 없다', async ({ page }) => {
+    // 기본 탭이 '주차 계획·이행'이므로 상위 탭부터 이동한다 (B2cWorkspace → LeadsHub)
+    await page.getByRole('button', { name: '리드 현황·통계' }).click();
+    await page.waitForTimeout(600);
     await page.getByRole('button', { name: '최초 세일즈' }).click();
     await page.waitForTimeout(1200);
     await expect(page.locator('body')).not.toContainText('Application error');
     const body = (await page.textContent('body')) ?? '';
     expect(body).not.toContain('즉시 다음 단계로 진행'); // 단계 정체 배너 문구
     expect(body).not.toContain('오늘 팔로업 액션'); // 팔로업 배너 문구
-    // 상단 스트립에 소스별 컨택/전환율이 표시된다
-    expect(body).toContain('소스별');
-    expect(body).toContain('네이버 블로그');
-    expect(body).toContain('인스타그램 광고');
+    // 상단 통계 스트립(소스별 칩 포함)은 화면에서 제거됨
+    expect(body).not.toContain('소스별');
+    expect(body).not.toContain('컨택 성공율');
+    expect(body).not.toContain('결제전환율');
     // 8(수업 중)·9(이탈) 컬럼은 칸반에서 제거됨
     expect(body).not.toContain('9. 이탈');
     await page.screenshot({ path: 'tests/e2e/__screenshots__/crm-kanban-no-banner.png', fullPage: true });
