@@ -26,7 +26,7 @@ import {
   type Student,
 } from '@/types/crm';
 import { UserPlus } from 'lucide-react';
-import { getWeekDef, getWeekLabel } from '@/lib/week-definitions';
+import { getCurrentWeekDef, getWeekLabel } from '@/lib/week-definitions';
 import { PaymentModal } from './PaymentModal';
 import { RenewalCandidateAdd } from './RenewalCandidateAdd';
 import { getRenewalCandidates } from './renewal-candidate-source';
@@ -35,7 +35,7 @@ import { RenewalDropModal } from './RenewalDropModal';
 import { RenewalKanbanColumn } from './RenewalKanbanColumn';
 import { RenewalStatsStrip } from './RenewalStatsStrip';
 import { RenewalWeeklyStats } from './RenewalWeeklyStats';
-import { useRenewalBoard, type RenewalScope } from './use-renewal-board';
+import { defaultRenewalScope, useRenewalBoard, type RenewalScope } from './use-renewal-board';
 
 interface RenewalKanbanProps {
   adminKey: string;
@@ -56,8 +56,8 @@ export function RenewalKanban({
   onSelectStudentById,
   onStudentUpdate,
 }: RenewalKanbanProps) {
-  const [scope, setScope] = useState<RenewalScope>({ kind: 'open' });
   const [nowMs] = useState(() => Date.now());
+  const [scope, setScope] = useState<RenewalScope>(() => defaultRenewalScope());
   const [activeId, setActiveId] = useState<string | null>(null);
   // PaymentModal은 B2B 파트너·가입 여부까지 보므로 조인된 부분 학생으로는 열 수 없다.
   // 결제 버튼을 누른 순간 전체 학생을 받아온다.
@@ -97,8 +97,11 @@ export function RenewalKanban({
     return map;
   }, [entries]);
 
-  // 후보 = 튜터링 중 목록 − 이미 열린 타깃, 급한 순
-  const candidates = useMemo(() => getRenewalCandidates(entries, targets), [entries, targets]);
+  // 후보 = 튜터링 중 목록 − 이미 열린 타깃(주차 무관), 급한 순
+  const candidates = useMemo(
+    () => getRenewalCandidates(entries, board.openTargets),
+    [entries, board.openTargets]
+  );
 
   const targetsByStage = useMemo(() => {
     const map = new Map<RenewalStage, RenewalTarget[]>();
@@ -109,7 +112,7 @@ export function RenewalKanban({
 
   // 주차 셀렉터 후보 — 이번 주차 + 데이터가 있는 최근 주차
   const weekOptions = useMemo(() => {
-    const thisWeek = getWeekDef(new Date(nowMs).toISOString().slice(0, 10))?.start;
+    const thisWeek = getCurrentWeekDef(new Date(nowMs))?.start;
     const starts = new Set(weekly.map((w) => w.week_start));
     if (thisWeek) starts.add(thisWeek);
     return [...starts].sort((a, b) => b.localeCompare(a));
