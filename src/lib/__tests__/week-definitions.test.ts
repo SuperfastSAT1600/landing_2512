@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { getRecentWeeks, getWeekDef, getWeekLabel } from '../week-definitions';
+import {
+  getCurrentWeekDef,
+  getRecentWeeks,
+  getWeekDef,
+  getWeekLabel,
+} from '../week-definitions';
 
 describe('getRecentWeeks', () => {
   it('returns the requested number of weeks ending with the week containing the date, newest first', () => {
@@ -27,5 +32,28 @@ describe('getRecentWeeks', () => {
 
   it('returns an empty array for a date before the first defined week', () => {
     expect(getRecentWeeks(4, '2020-01-01')).toEqual([]);
+  });
+});
+
+describe('getCurrentWeekDef', () => {
+  it('오늘이 속한 주차를 돌려준다', () => {
+    expect(getCurrentWeekDef(new Date('2026-08-20T05:00:00Z'))).toMatchObject({
+      label: '26년 08월 03주차',
+      start: '2026-08-17',
+    });
+  });
+
+  it('월요일 이른 아침(KST)에도 그 주차로 판정한다 — UTC 날짜로 자르면 지난 주차가 된다', () => {
+    // 2026-08-16T23:00Z = 08-17(월) 08:00 KST
+    expect(getCurrentWeekDef(new Date('2026-08-16T23:00:00Z'))?.start).toBe('2026-08-17');
+  });
+
+  it('일요일 늦은 밤(KST)은 아직 그 주차다', () => {
+    // 2026-08-16T14:00Z = 08-16(일) 23:00 KST
+    expect(getCurrentWeekDef(new Date('2026-08-16T14:00:00Z'))?.start).toBe('2026-08-10');
+  });
+
+  it('정의 범위 밖이면 null', () => {
+    expect(getCurrentWeekDef(new Date('2030-01-01T00:00:00Z'))).toBeNull();
   });
 });
