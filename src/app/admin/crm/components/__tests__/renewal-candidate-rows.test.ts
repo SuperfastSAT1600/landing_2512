@@ -4,7 +4,7 @@ import { filterCandidates, subjectOptions, UNSPECIFIED } from '../renewal-candid
 import type { TutoringEntry, TutoringRowStudent } from '../TutoringStudentRow';
 
 function student(id: string, name = id): TutoringRowStudent {
-  return { id, name, grade: '10th', parent_phone: '010-0000-0000', is_vip: false, traffic_source: null };
+  return { id, name, grade: '10th', parent_phone: '010-0000-0000', is_vip: false, needs_attention: false, traffic_source: null };
 }
 
 /** 노윤재 — SAT 62/22(예약 22), special 68/68. 학생 단위는 합산값. */

@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Crown } from 'lucide-react';
+import { GripVertical, Crown, AlertTriangle } from 'lucide-react';
 import { RENEWAL_OPEN_STAGES, type RenewalTarget } from '@/types/crm';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { TUTORING_STATUS_META, type TutoringDisplayStatus } from './TutoringStudentRow';
@@ -96,6 +96,11 @@ export function RenewalCard({
         {student.is_vip && (
           <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded font-semibold bg-amber-100 text-amber-700">
             <Crown size={8} />VIP
+          </span>
+        )}
+        {student.needs_attention && (
+          <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded font-semibold bg-red-100 text-red-700">
+            <AlertTriangle size={8} />주의
           </span>
         )}
         {tutoring?.displayStatus === 'sales' && (
