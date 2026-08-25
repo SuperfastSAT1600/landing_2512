@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SubmitTestRequest, SubmitTestResponse } from '@/types/diagnosis';
 import { notifyTestSubmission } from '@/lib/slack';
+import { logLeadEvent } from '@/lib/lead-events';
 
 /**
  * POST /api/diagnosis/submit
@@ -38,12 +39,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch token to get time_limit_minutes
+    // Fetch token to get time_limit_minutes (+ CRM에서 지정한 리드 id)
     let timeLimitMinutes = 30;
+    let tokenStudentId: string | null = null;
     if (tokenId) {
       const { data: tokenData, error: tokenError } = await supabaseAdmin
         .from('diagnostic_access_tokens')
-        .select('id, time_limit_minutes, is_active')
+        .select('id, time_limit_minutes, is_active, student_id')
         .eq('id', tokenId)
         .single();
 
@@ -51,6 +53,7 @@ export async function POST(request: NextRequest) {
         console.warn('Token not found, saving result without token link');
       } else {
         timeLimitMinutes = tokenData.time_limit_minutes ?? 30;
+        tokenStudentId = tokenData.student_id ?? null;
       }
     }
 
@@ -164,6 +167,37 @@ export async function POST(request: NextRequest) {
 
       if (tokenUpdateError) {
         console.warn('Failed to mark token as used:', tokenUpdateError);
+      }
+    }
+
+    // 토큰에 리드가 지정돼 있으면 결정적 자동 연결 (ARGOSS Phase 1, REQ-003a).
+    // funnel_stage 등 세일즈 단계는 건드리지 않는다 — 연결과 이벤트 기록만.
+    if (tokenStudentId) {
+      try {
+        await supabaseAdmin
+          .from('diagnostic_test_results')
+          .update({ student_id: tokenStudentId })
+          .eq('id', resultId);
+
+        // 이미 연결된 결과가 있으면 절대 덮어쓰지 않음
+        const { data: linkedStudent } = await supabaseAdmin
+          .from('students')
+          .select('diagnostic_result_id')
+          .eq('id', tokenStudentId)
+          .single();
+
+        if (linkedStudent && !linkedStudent.diagnostic_result_id) {
+          await supabaseAdmin
+            .from('students')
+            .update({ diagnostic_result_id: resultId })
+            .eq('id', tokenStudentId);
+        }
+
+        await logLeadEvent(tokenStudentId, 'diagnostic_submitted', {
+          metadata: { matched_by: 'token', result_id: resultId },
+        });
+      } catch (err) {
+        console.warn('[submit] auto-link failed (result saved):', err);
       }
     }
 

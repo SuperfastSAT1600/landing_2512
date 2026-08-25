@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { cookies } from 'next/headers';
+import { logLeadEvent, LEAD_EVENT_DEDUP_MINUTES } from '@/lib/lead-events';
 import type { ConsultationEntry } from '@/types/crm';
 
 /**
@@ -39,6 +40,8 @@ export async function GET(
   if (error || !student) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+
+  await logLeadEvent(student.id, 'portal_viewed', { dedupMinutes: LEAD_EVENT_DEDUP_MINUTES });
 
   // Only published entries, only ai_purified content (never raw_memo)
   const publishedMemos = ((student.consultation_timeline ?? []) as ConsultationEntry[])

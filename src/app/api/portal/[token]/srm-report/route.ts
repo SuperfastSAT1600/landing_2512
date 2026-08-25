@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { cookies } from 'next/headers';
 import { buildSrmReport } from '@/lib/build-srm-report';
+import { logLeadEvent, LEAD_EVENT_DEDUP_MINUTES } from '@/lib/lead-events';
 import type { LearningReport } from '@/types/srm-portal';
 
 export async function GET(
@@ -18,7 +19,7 @@ export async function GET(
 
   const { data: student } = await supabaseAdmin
     .from('students')
-    .select('sfv2_profile_id')
+    .select('id, sfv2_profile_id')
     .eq('portal_token', token)
     .single();
 
@@ -27,5 +28,6 @@ export async function GET(
   }
 
   const report: LearningReport = await buildSrmReport(student.sfv2_profile_id);
+  await logLeadEvent(student.id, 'srm_report_viewed', { dedupMinutes: LEAD_EVENT_DEDUP_MINUTES });
   return NextResponse.json(report);
 }

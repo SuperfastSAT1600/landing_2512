@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { studentName, studentPhone, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes } = await request.json();
+    const { studentName, studentPhone, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes, studentId } = await request.json();
 
     if (!studentName || !code) {
       return NextResponse.json({ error: 'Student name and code are required' }, { status: 400 });
@@ -120,6 +120,8 @@ export async function POST(request: NextRequest) {
         expires_at: expiresAt.toISOString(),
         is_active: true,
         time_limit_minutes: timeLimitMinutes && timeLimitMinutes > 0 ? timeLimitMinutes : 30,
+        // CRM 리드 지정 발급 시 제출 → 리드 자동 연결에 사용 (ARGOSS Phase 1)
+        student_id: typeof studentId === 'string' && studentId ? studentId : null,
       }]);
 
     if (insertError) {

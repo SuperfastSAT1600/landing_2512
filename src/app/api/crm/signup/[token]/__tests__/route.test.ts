@@ -2,9 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const mockSelect = vi.fn();
+const mockLogLeadEvent = vi.fn().mockResolvedValue(true);
 
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: { from: vi.fn(() => ({ select: mockSelect })) },
+}));
+
+vi.mock('@/lib/lead-events', () => ({
+  logLeadEvent: (...args: unknown[]) => mockLogLeadEvent(...args),
+  LEAD_EVENT_DEDUP_MINUTES: 30,
 }));
 
 process.env.SIGNUP_BRIDGE_SECRET = 'bridge';
@@ -54,6 +60,9 @@ describe('GET /api/crm/signup/[token]', () => {
     expect(body.studentId).toBe('stu-1');
     expect(body.prefill.studentName).toBe('홍길동');
     expect(body.prefill.lastScoreRw).toBe(600);
+    expect(mockLogLeadEvent).toHaveBeenCalledWith('stu-1', 'signup_link_clicked', {
+      dedupMinutes: 30,
+    });
   });
 
   it('404 for an unknown token', async () => {
@@ -72,5 +81,17 @@ describe('GET /api/crm/signup/[token]', () => {
     const body = await res.json();
     expect(res.status).toBe(409);
     expect(body.status).toBe('consumed');
+  });
+
+  it('does not log a click for consumed or invalid tokens', async () => {
+    const { GET } = await import('../route');
+
+    selectReturns({ data: null, error: null });
+    await GET(makeReq(), { params });
+
+    selectReturns({ data: { id: 'stu-1', signup_done_at: '2026-06-01T00:00:00Z' }, error: null });
+    await GET(makeReq(), { params });
+
+    expect(mockLogLeadEvent).not.toHaveBeenCalled();
   });
 });
