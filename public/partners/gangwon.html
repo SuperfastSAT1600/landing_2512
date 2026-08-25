@@ -575,9 +575,15 @@ const newPin      = initPin('new-pin-boxes',        'change-btn', doChangePin);
 
 /* ── Init ────────────────────────────────────────────── */
 async function checkSetup() {
-  const { data } = await sb.from('b2b_club_pins').select('pin').eq('club_id', CLUB_ID).maybeSingle();
-  if (data) document.getElementById('login-section').style.display = 'block';
-  else       document.getElementById('setup-section').style.display = 'block';
+  try {
+    const { data, error } = await sb.from('b2b_club_pins').select('pin').eq('club_id', CLUB_ID).maybeSingle();
+    if (error) throw error;
+    if (data) document.getElementById('login-section').style.display = 'block';
+    else      document.getElementById('setup-section').style.display = 'block';
+  } catch (e) {
+    console.error('checkSetup error:', e);
+    document.getElementById('login-section').style.display = 'block';
+  }
 }
 checkSetup();
 
