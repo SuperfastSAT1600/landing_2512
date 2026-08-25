@@ -32,7 +32,12 @@ export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
         <BubbleMenu
             ref={menuRef}
             editor={editor}
-            options={{ placement: 'top', offset: 8 }}
+            options={{
+                placement: 'top',
+                offset: 8,
+                flip: { padding: { top: 116 } },
+                shift: { padding: { top: 116 } },
+            }}
             shouldShow={({ editor: e, state }) => {
                 const { selection } = state;
                 if (!(selection instanceof TextSelection)) return false;
