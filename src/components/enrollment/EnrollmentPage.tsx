@@ -47,6 +47,7 @@ export function EnrollmentPage({ leadCoaches }: EnrollmentPageProps) {
 
   const { scrollTo, autoScrollTimerRef } = useScrollBehavior();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const program = searchParams.get('program');
     if (program === 'summer-intensive' || program === 'regular') {
@@ -56,7 +57,7 @@ export function EnrollmentPage({ leadCoaches }: EnrollmentPageProps) {
         scrollTo(targetRef, 'top', 250);
       }, 100);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const resolvedCategoryId = useMemo(
     () => (managementType ? resolveCategoryId(managementType, classFormat) : null),

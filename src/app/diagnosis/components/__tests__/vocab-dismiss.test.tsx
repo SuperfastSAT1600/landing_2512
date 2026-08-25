@@ -42,17 +42,25 @@ const mockTestData: DiagnosticTestData = {
 };
 
 // Mock framer-motion to avoid animation issues in tests
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef(({ children, ...props }: any, ref: any) => (
-      <div ref={ref} {...props}>{children}</div>
-    )),
-    button: React.forwardRef(({ children, ...props }: any, ref: any) => (
-      <button ref={ref} {...props}>{children}</button>
-    )),
-  },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
-}));
+vi.mock('framer-motion', () => {
+  const MotionDiv = React.forwardRef(({ children, ...props }: Record<string, unknown>, ref: React.Ref<HTMLDivElement>) => (
+    <div ref={ref} {...(props as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>
+  ));
+  MotionDiv.displayName = 'motion.div';
+
+  const MotionButton = React.forwardRef(({ children, ...props }: Record<string, unknown>, ref: React.Ref<HTMLButtonElement>) => (
+    <button ref={ref} {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>
+  ));
+  MotionButton.displayName = 'motion.button';
+
+  return {
+    motion: {
+      div: MotionDiv,
+      button: MotionButton,
+    },
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
 
 // Mock the hooks
 vi.mock('../../hooks/useTestTimer', () => ({
@@ -84,7 +92,7 @@ vi.mock('../TestCalculator', () => ({
 }));
 
 vi.mock('../QuestionNavGrid', () => ({
-  QuestionNavGrid: ({ onNavigate }: any) => (
+  QuestionNavGrid: ({ onNavigate }: { onNavigate: (index: number) => void }) => (
     <div data-testid="question-nav">
       <button onClick={() => onNavigate(1)} data-testid="nav-to-q2">Q2</button>
     </div>

@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Pencil, Trash2, X, User } from 'lucide-react';
+import { Check, Pencil, Sparkles, Trash2, User, X } from 'lucide-react';
 import type { ConsultationEntry } from '@/types/crm';
 import { AttachmentThumb } from './AttachmentThumb';
 
-interface PendingEdit { purified: string; coachHistory: string; deletedItems: string[] }
-
-// NOTE: AI 변환/학부모 포털 노출 UI는 요청으로 숨김(2026-08-07). 관련 props·API·데이터는 보존해
-// 나중에 쉽게 되살릴 수 있도록 인터페이스는 그대로 두고, 이 컴포넌트에서만 렌더링을 제거했다.
+interface PendingEdit {
+  purified: string;
+  coachHistory: string;
+  deletedItems: string[];
+}
 interface Props {
   studentId: string;
   adminKey: string;
@@ -19,6 +20,7 @@ interface Props {
   memoSaving: boolean;
   onAiCare: () => void;
   onPublish: () => void;
+  onUnpublish: () => void;
   onChangePurified: (v: string) => void;
   onStartEdit: () => void;
   onDeleteAi: () => void;
@@ -26,89 +28,183 @@ interface Props {
   onDeleteMemo: () => void;
 }
 
-export function TimelineEntry({ studentId, adminKey, entry, memoSaving, onEditMemo, onDeleteMemo }: Props) {
+export function TimelineEntry({
+  studentId,
+  adminKey,
+  entry,
+  aiLoading,
+  pendingEdit,
+  publishing,
+  memoSaving,
+  onAiCare,
+  onPublish,
+  onUnpublish,
+  onChangePurified,
+  onStartEdit,
+  onDeleteAi,
+  onEditMemo,
+  onDeleteMemo,
+}: Props) {
   const [editingMemo, setEditingMemo] = useState(false);
   const [memoValue, setMemoValue] = useState(entry.raw_memo);
   const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
-    year: 'numeric', month: 'long', day: 'numeric',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
-  // 저장된 작성자 표기 중 입력 아티팩트(예: "2)이민재")의 앞 번호를 표시할 때만 제거. DB 값은 그대로.
-  const authorDisplay = entry.author?.replace(/^\s*\d+\)\s*/, '').trim() || '';
-
+  const hasPublic = Boolean(entry.ai_purified?.trim());
+  const author = entry.author?.replace(/^\s*\d+\)\s*/, '').trim();
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="px-4 pt-3 pb-3">
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0">
+        <div className="flex items-center justify-between mb-2 text-[11px] text-gray-400">
+          <div className="flex items-center gap-1.5">
             <span>{date}</span>
-            {authorDisplay && (
+            {author && (
               <>
-                <span aria-hidden>·</span>
-                <span className="flex items-center gap-0.5 text-gray-500 truncate" title={`상담·작성: ${authorDisplay}`}>
-                  <User size={10} className="shrink-0" />
-                  {authorDisplay}
+                <span>·</span>
+                <span className="flex items-center gap-0.5">
+                  <User size={10} />
+                  {author}
                 </span>
               </>
             )}
           </div>
+          <span className={entry.published ? 'text-emerald-600' : 'text-gray-400'}>
+            {entry.published ? '학부모 공개 중' : '내부 전용'}
+          </span>
         </div>
         {editingMemo ? (
-          <div className="mt-1">
+          <div>
             <textarea
               value={memoValue}
-              onChange={e => setMemoValue(e.target.value)}
+              onChange={(e) => setMemoValue(e.target.value)}
               rows={6}
-              className="w-full text-[13px] text-gray-800 bg-white border border-gray-300 focus:border-blue-400 rounded-lg px-3 py-2 leading-relaxed resize-y outline-none transition-colors"
+              className="w-full text-[13px] text-gray-800 border rounded-lg px-3 py-2 resize-y"
             />
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex gap-2 mt-2">
               <button
                 onClick={async () => {
-                  const ok = await onEditMemo(memoValue);
-                  if (ok) setEditingMemo(false);
+                  if (await onEditMemo(memoValue)) setEditingMemo(false);
                 }}
                 disabled={memoSaving}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-xs font-semibold text-white transition-colors"
+                className="px-3 py-1.5 bg-blue-600 rounded-lg text-xs text-white"
               >
-                <Check size={12} />{memoSaving ? '저장 중...' : '저장'}
+                <Check size={12} />
+                {memoSaving ? '저장 중...' : '저장'}
               </button>
               <button
-                onClick={() => { setMemoValue(entry.raw_memo); setEditingMemo(false); }}
+                onClick={() => {
+                  setMemoValue(entry.raw_memo);
+                  setEditingMemo(false);
+                }}
                 disabled={memoSaving}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg transition-colors"
+                className="px-2.5 py-1.5 text-xs text-gray-400 border rounded-lg"
               >
-                <X size={11} />취소
+                <X size={11} />
+                취소
               </button>
             </div>
           </div>
         ) : (
-          <div className="group relative">
+          <div>
             {entry.raw_memo && (
-              <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap" style={{ lineHeight: '1.7' }}>
+              <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {entry.raw_memo}
               </p>
             )}
-            <div className="mt-1.5 flex items-center gap-3">
-              <button
-                onClick={() => { setMemoValue(entry.raw_memo); setEditingMemo(true); }}
-                className="flex items-center gap-1 text-[11px] text-gray-300 hover:text-gray-500 transition-colors"
-              >
-                <Pencil size={10} />원본 수정
+            <div className="mt-1.5 flex gap-3">
+              <button onClick={() => setEditingMemo(true)} className="text-[11px] text-gray-400">
+                <Pencil size={10} />
+                원본 수정
               </button>
               <button
                 onClick={onDeleteMemo}
-                className="flex items-center gap-1 text-[11px] text-gray-300 hover:text-red-500 transition-colors"
+                className="text-[11px] text-gray-400 hover:text-red-500"
               >
-                <Trash2 size={10} />메모 삭제
+                <Trash2 size={10} />
+                메모 삭제
               </button>
             </div>
           </div>
         )}
-        {entry.attachments && entry.attachments.length > 0 && (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {entry.attachments.map(att => (
-              <AttachmentThumb key={att.path} studentId={studentId} adminKey={adminKey} attachment={att} />
+        {entry.attachments?.length ? (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {entry.attachments.map((att) => (
+              <AttachmentThumb
+                key={att.path}
+                studentId={studentId}
+                adminKey={adminKey}
+                attachment={att}
+              />
             ))}
           </div>
+        ) : null}
+      </div>
+      <div className="border-t border-gray-100 px-4 py-3 bg-gray-50">
+        <p className="text-[11px] font-medium text-purple-500 flex items-center gap-1 mb-2">
+          <Sparkles size={11} />
+          학부모 공개본
+        </p>
+        {aiLoading && <p className="text-xs text-gray-400">AI 초안 생성 중...</p>}
+        {!aiLoading && pendingEdit && (
+          <>
+            <textarea
+              value={pendingEdit.purified}
+              onChange={(e) => onChangePurified(e.target.value)}
+              rows={4}
+              className="w-full text-[13px] border rounded-lg px-3 py-2 resize-y"
+            />
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={onPublish}
+                disabled={publishing}
+                className="px-3 py-1.5 bg-emerald-600 rounded-lg text-xs text-white"
+              >
+                <Check size={12} />
+                공개 적용
+              </button>
+              <button
+                onClick={onAiCare}
+                disabled={publishing}
+                className="px-2.5 py-1.5 text-xs text-gray-400 border rounded-lg"
+              >
+                <Sparkles size={11} />
+                재생성
+              </button>
+            </div>
+          </>
+        )}
+        {!aiLoading && !pendingEdit && hasPublic && (
+          <>
+            <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-wrap">
+              {entry.ai_purified}
+            </p>
+            <div className="flex gap-3 mt-2">
+              <button onClick={onStartEdit} className="text-xs text-gray-400">
+                <Pencil size={11} />
+                수정
+              </button>
+              {entry.published && (
+                <button onClick={onUnpublish} className="text-xs text-gray-400">
+                  공개 해제
+                </button>
+              )}
+              <button onClick={onDeleteAi} className="text-xs text-red-400">
+                <Trash2 size={11} />
+                삭제
+              </button>
+            </div>
+          </>
+        )}
+        {!aiLoading && !pendingEdit && !hasPublic && (
+          <button
+            onClick={onAiCare}
+            disabled={!entry.raw_memo}
+            className="text-xs text-purple-500 disabled:opacity-40"
+          >
+            <Sparkles size={11} />✨ AI 초안 생성
+          </button>
         )}
       </div>
     </div>

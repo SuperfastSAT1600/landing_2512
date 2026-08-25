@@ -22,9 +22,13 @@ const NAV_ITEMS: NavItem[] = [
     { href: '/admin/traffic', label: '채널 유입 통계', icon: '📊' },
     { href: '/admin/marketing', label: '마케팅', icon: '📣' },
     { href: '/admin/crm', label: 'CRM', icon: '👥' },
+    { href: '/admin/business', label: 'Business', icon: '💼' },
     { href: '/admin/srm', label: 'SRM', icon: '📅' },
     { href: '/admin/partner', label: '파트너 센터', icon: '🤝' },
     { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
+    { href: '/admin/vocab-access', label: '시크릿페이지', icon: '🔐' },
+    { href: '/admin/mathweb', label: 'Math Web', icon: '🕸️' },
+    { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
 ];
 
 
@@ -36,6 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const isMobile = useIsMobile();
 
     // Close the mobile nav drawer whenever the route changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         setNavOpen(false);
     }, [pathname]);

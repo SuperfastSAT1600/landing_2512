@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { Student, isStageStalled, type InsightPeriod } from '@/types/crm';
 import { StrategiesTab } from './StrategiesTab';
 import { CrmInsightBanner } from './CrmInsightBanner';
@@ -35,7 +35,7 @@ export function B2cWorkspace({
   retryEnrolledId,
   onEnrolledHandled,
 }: B2cWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<B2cTab>('leads');
+  const [activeTab, setActiveTab] = useState<B2cTab>('weekly');
   const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'logic' | 'library' | 'strategy_ai' | undefined>(undefined);
   const [strategyPeriod, setStrategyPeriod] = useState<InsightPeriod | undefined>(undefined);
   // 배너 '이어서 전략 짜기'에서 고른 안건 시드 — key 증가로 매 선택마다 새 스레드 트리거
@@ -48,24 +48,22 @@ export function B2cWorkspace({
     setActiveTab('strategies');
   }, []);
 
-  // 오늘 실행(주차 계획 내) 데이터 — 전체 활성 리드 기준
-  const followUpStudents = useMemo(() => {
-    const fiveDaysAgo = Date.now() - 5 * 86400000;
-    return students.filter(
-      s =>
-        s.lead_status === 'active' &&
-        !s.retry_strategy_id &&
-        s.last_contacted_at !== null &&
-        new Date(s.last_contacted_at).getTime() < fiveDaysAgo
-    );
-  }, [students]);
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const fiveDaysAgo = now - 5 * 86400000;
 
-  const stalledStudents = useMemo(() => {
-    const now = Date.now();
-    return students.filter(
-      s => s.lead_status === 'active' && !s.retry_strategy_id && isStageStalled(s, now)
-    );
-  }, [students]);
+  const followUpStudents = students.filter(s =>
+    s.lead_status === 'active' &&
+    !s.retry_strategy_id &&
+    s.last_contacted_at !== null &&
+    new Date(s.last_contacted_at).getTime() < fiveDaysAgo
+  );
+
+  const stalledStudents = students.filter(s =>
+    s.lead_status === 'active' &&
+    !s.retry_strategy_id &&
+    isStageStalled(s, now)
+  );
 
   return (
     <div className="px-4 py-4 sm:px-8 sm:py-6">
@@ -104,7 +102,7 @@ export function B2cWorkspace({
       {activeTab === 'strategies' && (
         <>
           {INSIGHT_BANNER_ENABLED && <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />}
-          <StrategiesTab adminKey={adminKey} segment="b2c" initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} onSelectStudent={onSelectStudentById} />
+          <StrategiesTab adminKey={adminKey} segment="b2c" initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} onSelectStudent={onSelectStudentById} onOpenWeekly={() => setActiveTab('weekly')} />
         </>
       )}
 
@@ -112,6 +110,11 @@ export function B2cWorkspace({
         <WeeklyPlan
           segment="b2c"
           adminKey={adminKey}
+          onSelectStudent={onSelectStudentById}
+          onOpenStrategyLibrary={() => {
+            setStrategiesInitialSubTab('library');
+            setActiveTab('strategies');
+          }}
           dailyView={
             <DailyTasks
               followUpStudents={followUpStudents}

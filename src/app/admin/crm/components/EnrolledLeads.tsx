@@ -1,127 +1,20 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Loader2, AlertCircle, RotateCcw, Crown, Link2Off, Search } from 'lucide-react';
+import { Loader2, AlertCircle, RotateCcw } from 'lucide-react';
 import { Student } from '@/types/crm';
 import { getAdminUserName } from '@/lib/admin-user';
 import { RefundModal } from './RefundModal';
+import {
+  TutoringStudentRow,
+  TutoringListControls,
+  classifyTutoringEntries,
+  countByTutoringStatus,
+  filterTutoringEntries,
+  type TutoringEntry,
+  type TutoringSubTab,
+} from './TutoringStudentRow';
 import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
-
-// ── 분류 타입 ─────────────────────────────────────────────────────────────────
-
-// 'ended'는 목록에서 제외하므로 DisplayStatus에 포함하지 않는다
-type DisplayStatus = 'unlinked' | 'active' | 'paused' | 'partial_end' | 'sales';
-
-interface TutoringEntry {
-  student: Student;
-  displayStatus: DisplayStatus;
-  remainingHours: number | null;
-}
-
-const STATUS_META: Record<DisplayStatus, { label: string; color: string; dot: string }> = {
-  unlinked:     { label: '미연결',      color: 'bg-gray-100 text-gray-500',       dot: 'bg-gray-400' },
-  active:       { label: '수업중',      color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-  paused:       { label: '휴원',        color: 'bg-amber-100 text-amber-700',     dot: 'bg-amber-400' },
-  partial_end:  { label: '부분종료',    color: 'bg-orange-100 text-orange-700',   dot: 'bg-orange-500' },
-  sales:        { label: '재결제세일즈', color: 'bg-blue-100 text-blue-700',      dot: 'bg-blue-500' },
-};
-
-type SubTab = 'all' | DisplayStatus;
-
-const SUB_TABS: { key: SubTab; label: string }[] = [
-  { key: 'all',          label: '전체' },
-  { key: 'unlinked',     label: '미연결' },
-  { key: 'active',       label: '수업중' },
-  { key: 'paused',       label: '휴원' },
-  { key: 'partial_end',  label: '부분종료' },
-  { key: 'sales',        label: '재결제세일즈' },
-];
-
-// ── 분류 로직 ──────────────────────────────────────────────────────────────────
-
-function classifyEntries(
-  enrolled: Student[],
-  linked: TutoringUser[],
-): TutoringEntry[] {
-  // crmStudentId → TutoringUser (null 제외)
-  const crmMap = new Map<string, TutoringUser>();
-  for (const u of linked) {
-    if (u.crmStudentId) crmMap.set(u.crmStudentId, u);
-  }
-
-  const entries: TutoringEntry[] = [];
-  for (const student of enrolled) {
-    const tu = crmMap.get(student.id);
-    if (!tu) {
-      // SRM 미연결 또는 구매 이력 없음
-      entries.push({ student, displayStatus: 'unlinked', remainingHours: null });
-      continue;
-    }
-    if (tu.status === 'ended') continue; // 종료 학생은 목록에서 제외
-
-    const status = tu.status as DisplayStatus;
-    entries.push({ student, displayStatus: status, remainingHours: tu.remainingHours });
-  }
-  return entries;
-}
-
-// ── 카드 컴포넌트 ──────────────────────────────────────────────────────────────
-
-function TutoringCard({
-  entry,
-  onStudentClick,
-  onRefund,
-}: {
-  entry: TutoringEntry;
-  onStudentClick: (s: Student) => void;
-  onRefund: (s: Student) => void;
-}) {
-  const { student, displayStatus, remainingHours } = entry;
-  const meta = STATUS_META[displayStatus];
-
-  return (
-    <div
-      onClick={() => onStudentClick(student)}
-      className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
-    >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-sm text-gray-900">{student.name}</span>
-          {student.grade && <span className="text-xs text-gray-500">{student.grade}</span>}
-          {student.is_vip && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded font-semibold tracking-wide bg-amber-100 text-amber-700">
-              <Crown size={9} />VIP
-            </span>
-          )}
-          <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.color}`}>
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
-            {meta.label}
-          </span>
-          {displayStatus === 'unlinked' && (
-            <Link2Off size={11} className="text-gray-400 shrink-0" />
-          )}
-        </div>
-        <div className="flex items-center gap-3 mt-0.5">
-          <span className="text-xs text-gray-400">{student.parent_phone}</span>
-          {remainingHours !== null && (
-            <span className="text-xs text-gray-400">잔여 {remainingHours}h</span>
-          )}
-          {student.traffic_source && (
-            <span className="text-xs text-gray-400">{student.traffic_source}</span>
-          )}
-        </div>
-      </div>
-      <button
-        onClick={(e) => { e.stopPropagation(); onRefund(student); }}
-        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
-        title="환불 처리"
-      >
-        <RotateCcw size={12} />
-        <span className="hidden sm:inline">환불</span>
-      </button>
-    </div>
-  );
-}
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 
@@ -132,7 +25,7 @@ interface EnrolledLeadsProps {
 }
 
 export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: EnrolledLeadsProps) {
-  const [subTab, setSubTab] = useState<SubTab>('all');
+  const [subTab, setSubTab] = useState<TutoringSubTab>('all');
   const [vipOnly, setVipOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [entries, setEntries] = useState<TutoringEntry[]>([]);
@@ -141,45 +34,37 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [refundTarget, setRefundTarget] = useState<Student | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-
     const headers = { 'x-admin-key': adminKey };
-    Promise.all([
-      fetch('/api/crm/students?lead_status=enrolled', { headers }).then(r => r.json()),
-      fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json()),
-    ])
-      .then(([enrolledData, tutoringData]) => {
-        const enrolled: Student[] = enrolledData.data ?? [];
-        const linked: TutoringUser[] = tutoringData.linked ?? [];
-        setEntries(classifyEntries(enrolled, linked));
-      })
-      .catch(err => setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.'))
-      .finally(() => setLoading(false));
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const [enrolledRes, tutoringRes] = await Promise.all([
+          fetch('/api/crm/students?lead_status=enrolled', { headers }).then(r => r.json()),
+          fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json()),
+        ]);
+        const enrolled: Student[] = enrolledRes.data ?? [];
+        const linked: TutoringUser[] = tutoringRes.linked ?? [];
+        setEntries(classifyTutoringEntries(enrolled, linked));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [adminKey]);
 
   // 서브 탭별 카운트
-  const counts = useMemo(() => {
-    const c: Record<SubTab, number> = {
-      all: 0, unlinked: 0, active: 0, paused: 0, partial_end: 0, sales: 0,
-    };
-    for (const e of entries) {
-      c.all++;
-      if (e.displayStatus in c) (c as Record<string, number>)[e.displayStatus]++;
-    }
-    return c;
-  }, [entries]);
+  const counts = useMemo(() => countByTutoringStatus(entries), [entries]);
 
   // 현재 탭 + VIP + 이름 검색 필터 적용
-  const visible = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return entries.filter(e => {
-      if (subTab !== 'all' && e.displayStatus !== subTab) return false;
-      if (vipOnly && !e.student.is_vip) return false;
-      if (q && !e.student.name?.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [entries, subTab, vipOnly, searchQuery]);
+  const visible = useMemo(
+    () => filterTutoringEntries(entries, { subTab, vipOnly, searchQuery }),
+    [entries, subTab, vipOnly, searchQuery]
+  );
 
   const handleRefundConfirm = async (
     refundAmount: number,
@@ -211,58 +96,17 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   return (
     <div className="space-y-4">
 
-      {/* 상태 서브 탭 */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 w-fit max-w-full overflow-x-auto scrollbar-none">
-        {SUB_TABS.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setSubTab(key)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md transition-colors shrink-0 whitespace-nowrap ${
-              subTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {label}
-            {!loading && counts[key] > 0 && (
-              <span className={`text-[10px] px-1 py-0.5 rounded-full font-bold ${
-                subTab === key ? 'bg-gray-100 text-gray-700' : 'bg-gray-200 text-gray-500'
-              }`}>
-                {counts[key]}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* VIP 토글 + 이름 검색 */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setVipOnly(false)}
-          className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-            !vipOnly ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          전체
-        </button>
-        <button
-          onClick={() => setVipOnly(true)}
-          className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-            vipOnly ? 'bg-amber-400 text-white' : 'text-gray-500 hover:text-amber-600'
-          }`}
-        >
-          <Crown size={10} />
-          VIP
-        </button>
-        <div className="relative ml-auto">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="이름 검색"
-            className="pl-7 pr-3 py-1 text-xs border border-gray-200 rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 w-32"
-          />
-        </div>
-      </div>
+      {/* 상태 서브 탭 + VIP 토글 + 이름 검색 */}
+      <TutoringListControls
+        subTab={subTab}
+        onSubTabChange={setSubTab}
+        counts={counts}
+        vipOnly={vipOnly}
+        onVipOnlyChange={setVipOnly}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        showCounts={!loading}
+      />
 
       {/* 목록 */}
       {loading ? (
@@ -281,11 +125,22 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
         <div className="space-y-2">
           <p className="text-xs text-gray-400">{visible.length}명</p>
           {visible.map(entry => (
-            <TutoringCard
+            <TutoringStudentRow
               key={entry.student.id}
-              entry={entry}
-              onStudentClick={onStudentClick}
-              onRefund={setRefundTarget}
+              student={entry.student}
+              displayStatus={entry.displayStatus}
+              remainingHours={entry.remainingHours}
+              onClick={() => onStudentClick(entry.student)}
+              action={
+                <button
+                  onClick={() => setRefundTarget(entry.student)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
+                  title="환불 처리"
+                >
+                  <RotateCcw size={12} />
+                  <span className="hidden sm:inline">환불</span>
+                </button>
+              }
             />
           ))}
         </div>

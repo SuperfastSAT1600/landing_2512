@@ -25,12 +25,31 @@ export interface ReportOverview {
 }
 
 export interface ReportSegment {
-  /** 화면 표기용 이름 — 전체 / B2C / B2B */
+  /** 화면 표기용 이름 — 한국비즈니스 / B2C / B2B */
   label: string;
   igLeads: number;
   otherLeads: number;
   overview: ReportOverview;
 }
+
+/** 글로벌(USD) 매출 원본 — global_sales 테이블 행의 부분집합. */
+export interface GlobalSaleEntryLike {
+  amount_usd: number;
+  payment_type: '최초결제' | '재결제';
+  sale_date: string; // YYYY-MM-DD
+}
+
+export interface GlobalReportSummary {
+  totalUsd: number;
+  totalCount: number;
+  firstUsd: number;
+  firstCount: number;
+  repeatUsd: number;
+  repeatCount: number;
+}
+
+/** Business 페이지와 동일한 고정 환율 — 전체(한국비즈니스+글로벌) 합산에 쓴다. */
+export const REPORT_USD_TO_KRW_RATE = 1400;
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -73,17 +92,63 @@ function man(won: number): string {
   return Math.round(won / 10000).toLocaleString('ko-KR');
 }
 
+/** 달러 반올림 + 천단위 구분. */
+function usd(n: number): string {
+  return `$${Math.round(n).toLocaleString('en-US')}`;
+}
+
+/** 주간 글로벌 매출 원본(전체 이력)을 주차 범위로 걸러 집계한다. */
+export function summarizeGlobalSales(entries: GlobalSaleEntryLike[], week: WeekDef): GlobalReportSummary {
+  const inWeek = entries.filter((e) => e.sale_date >= week.start && e.sale_date <= week.end);
+  const first = inWeek.filter((e) => e.payment_type === '최초결제');
+  const repeat = inWeek.filter((e) => e.payment_type === '재결제');
+  const sum = (list: GlobalSaleEntryLike[]) => list.reduce((s, e) => s + e.amount_usd, 0);
+  return {
+    totalUsd: sum(inWeek),
+    totalCount: inWeek.length,
+    firstUsd: sum(first),
+    firstCount: first.length,
+    repeatUsd: sum(repeat),
+    repeatCount: repeat.length,
+  };
+}
+
 /** 소수점 뒤 불필요한 0을 없앤 퍼센트 표기(47.06 → "47.06%", 50 → "50%"). */
 function pct(rate: number): string {
   return `${Number(rate.toFixed(2))}%`;
 }
 
-/** 슬랙 메시지 본문. 이모지·해설 없이 라벨과 수치만. */
-export function formatBusinessReport(week: WeekDef, segments: ReportSegment[]): string {
+/**
+ * 슬랙 메시지 본문. 이모지·해설 없이 라벨과 수치만.
+ * Business 페이지 탭 위계(전체=한국비즈니스+글로벌 합산 / 한국비즈니스(B2C·B2B) / 글로벌)를 그대로 따른다.
+ * `segments[0]`은 반드시 한국비즈니스 전체(B2C+B2B 합산, segment=all) 여야 "전체" 합산 계산이 맞는다.
+ * 글로벌은 리드·컨택 개념이 없어 "전체"에도 매출 지표만 합치고 퍼널은 한국비즈니스에서만 보여준다.
+ */
+export function formatBusinessReport(
+  week: WeekDef,
+  segments: ReportSegment[],
+  global: GlobalReportSummary,
+): string {
   const lines: string[] = [
     `*비즈니스 현황 · ${week.label}*`,
     `${week.start} ~ ${week.end} · 금액 단위: 만원`,
   ];
+
+  const tutoring = segments[0]?.overview;
+  if (tutoring) {
+    const globalKrw = global.totalUsd * REPORT_USD_TO_KRW_RATE;
+    const grossTotal = tutoring.gross_revenue + globalKrw;
+    const netTotal = tutoring.total_revenue + globalKrw;
+    const netProfitTotal = tutoring.total_net_revenue + globalKrw;
+    const tutoringShare = grossTotal > 0 ? Math.round((tutoring.gross_revenue / grossTotal) * 100) : 0;
+    const globalShare = grossTotal > 0 ? 100 - tutoringShare : 0;
+    lines.push(
+      '',
+      '*전체*',
+      `총매출 ${man(grossTotal)} · 순매출 ${man(netTotal)} · 순수익 ${man(netProfitTotal)}`,
+      `한국비즈니스 ${tutoringShare}% · 글로벌 ${globalShare}% (글로벌은 1$=${REPORT_USD_TO_KRW_RATE.toLocaleString()}원 환산)`,
+    );
+  }
 
   for (const seg of segments) {
     const o = seg.overview;
@@ -97,6 +162,13 @@ export function formatBusinessReport(week: WeekDef, segments: ReportSegment[]): 
       `최초결제 ${man(o.first_payment_revenue)} (${o.first_payment_count}건) · 재결제 ${man(o.repayment_revenue)} (${o.repayment_count}건)`,
     );
   }
+
+  lines.push(
+    '',
+    '*글로벌*',
+    `총매출 ${usd(global.totalUsd)} (${global.totalCount}건)`,
+    `최초결제 ${usd(global.firstUsd)} (${global.firstCount}건) · 재결제 ${usd(global.repeatUsd)} (${global.repeatCount}건)`,
+  );
 
   return lines.join('\n');
 }

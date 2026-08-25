@@ -57,3 +57,59 @@ build/
 /test-results/
 /playwright-report/
 tests/e2e/__screenshots__/
+
+# Preview & preview routes
+/src/app/enrollment-preview/
+/src/app/api/admin/srm/report/
+
+# Local data files & backups
+/src/data/crm.db
+/src/data/reviews.json.bak
+
+# Claude Code workspace (plans, agents, logs, intermediate)
+.agents/
+.claude-upstream/
+.claude/.plan-active
+.claude/plans/
+.claude/docs/
+.claude/skills/
+.claude/logs/
+.claude-cloud/
+.claude/user/
+scheduled_tasks.lock
+slack-poll-cursor.txt
+
+# Temporary files
+*.lock.txt
+*.tmp
+_workspace/
+quest_manage/
+scripts/
+marketing/
+
+# Project-specific data
+Docs/
+PRODUCT.md
+content/posts/
+blog_database/
+blog_archive/
+blog-agent/
+crm/
+pipeline/
+sat/
+srm/
+*.xlsx
+*.csv
+*.md.bak*
+*.jsonl.bak*
+*.js.bak*
+# Specific untracked artifacts
+.gitmodules
+"C\357\200\272vibecodinglanding_2512preview-blog.js"
+"black logo.png"
+"enrollment-direction-preview.html"
+"leads_20260512.xlsx"
+"publish-d55-study-check-landing.js"
+skills-lock.json
+slack_bot.log
+sms/

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCoaches, addCoach, updateCoach, deleteCoach, CoachData } from '@/lib/coaches-data';
+import { getCoaches, addCoach, updateCoach, deleteCoach, CoachData, ProfileStatus } from '@/lib/coaches-data';
 import { isAuthenticated } from '@/lib/server-auth';
 import { isValidInstagramUrl } from '@/lib/instagram-url';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
             subjects: Array.isArray(body.subjects) ? body.subjects : [],
             isHeadCoach: body.isHeadCoach ?? false,
             v2UserId: body.v2UserId ?? null,
+            profileStatus: body.profileStatus ?? 'none',
         };
 
         const ok = await addCoach(newCoach);
@@ -114,6 +115,13 @@ export async function PATCH(request: NextRequest) {
         }
         if (updates.isHeadCoach !== undefined) safeUpdates.isHeadCoach = updates.isHeadCoach;
         if ('v2UserId' in updates) safeUpdates.v2UserId = updates.v2UserId ?? null;
+        if (updates.profileStatus !== undefined) {
+            const validStatuses: ProfileStatus[] = ['none', 'in_progress', 'submitted', 'expired'];
+            if (!validStatuses.includes(updates.profileStatus)) {
+                return NextResponse.json({ success: false, error: 'Invalid profileStatus' }, { status: 400 });
+            }
+            safeUpdates.profileStatus = updates.profileStatus;
+        }
         const ok = await updateCoach(slug, safeUpdates);
         if (!ok) {
             return NextResponse.json({ success: false, error: 'Coach not found or DB error' }, { status: 404 });

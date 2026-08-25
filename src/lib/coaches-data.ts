@@ -1,5 +1,7 @@
 import { supabaseAdmin } from './supabase-admin';
 
+export type ProfileStatus = 'none' | 'in_progress' | 'submitted' | 'expired';
+
 export interface CoachData {
     slug: string;
     name: string;
@@ -12,6 +14,7 @@ export interface CoachData {
     reelUrls: string[];
     subjects: string[];
     v2UserId: string | null;
+    profileStatus: ProfileStatus;
 }
 
 type CoachRow = {
@@ -26,6 +29,7 @@ type CoachRow = {
     reel_urls: string[] | null;
     subjects: string[] | null;
     v2_user_id: string | null;
+    profile_status: ProfileStatus | null;
 };
 
 function rowToCoach(row: CoachRow): CoachData {
@@ -41,6 +45,7 @@ function rowToCoach(row: CoachRow): CoachData {
         reelUrls: row.reel_urls ?? [],
         subjects: row.subjects ?? [],
         v2UserId: row.v2_user_id ?? null,
+        profileStatus: row.profile_status ?? 'none',
     };
 }
 
@@ -102,6 +107,7 @@ export async function updateCoach(slug: string, updates: Partial<CoachData>): Pr
     if (updates.reelUrls !== undefined) dbUpdates.reel_urls = updates.reelUrls;
     if (updates.subjects !== undefined) dbUpdates.subjects = updates.subjects;
     if (updates.v2UserId !== undefined) dbUpdates.v2_user_id = updates.v2UserId;
+    if (updates.profileStatus !== undefined) dbUpdates.profile_status = updates.profileStatus;
 
     const { error } = await supabaseAdmin.from('coaches').update(dbUpdates).eq('slug', slug);
     return !error;
