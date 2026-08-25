@@ -3,7 +3,7 @@
 // 튜터링 학생 행 — '튜터링 중' 탭과 '재결제 세일즈' 후보 목록이 같은 UI를 공유한다.
 // 우측 액션만 slot으로 갈린다 (튜터링 중 = 환불, 재결제 후보 = 대상 추가).
 
-import { Crown, Link2Off, Search } from 'lucide-react';
+import { Crown, AlertTriangle, Link2Off, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Student } from '@/types/crm';
 import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
@@ -12,7 +12,7 @@ import type { PaymentManagementStatus, SubjectHours } from '@/lib/tutoring-subje
 /** 행 렌더에 필요한 학생 필드만 — 부분 조인된 학생도 그대로 넘길 수 있다. */
 export type TutoringRowStudent = Pick<
   Student,
-  'id' | 'name' | 'grade' | 'parent_phone' | 'is_vip' | 'traffic_source'
+  'id' | 'name' | 'grade' | 'parent_phone' | 'is_vip' | 'needs_attention' | 'traffic_source'
 >;
 
 // 'ended'는 목록에서 제외하므로 포함하지 않는다
@@ -175,6 +175,11 @@ export function TutoringStudentRow({
           {student.is_vip && (
             <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded font-semibold tracking-wide bg-amber-100 text-amber-700">
               <Crown size={9} />VIP
+            </span>
+          )}
+          {student.needs_attention && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded font-semibold tracking-wide bg-red-100 text-red-700">
+              <AlertTriangle size={9} />주의
             </span>
           )}
           <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.color}`}>

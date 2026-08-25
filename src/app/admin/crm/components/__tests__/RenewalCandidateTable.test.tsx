@@ -28,6 +28,7 @@ function entry(
       grade: '11th',
       parent_phone: '010-0000-0000',
       is_vip: false,
+      needs_attention: false,
       traffic_source: null,
     },
     displayStatus: 'active',
@@ -205,7 +206,7 @@ describe('RenewalCandidateTable', () => {
         entries={[
           entry('s1', {
             name: '김학생',
-            student: { id: 's1', name: '김학생', grade: '11th', parent_phone: '', is_vip: true, traffic_source: null },
+            student: { id: 's1', name: '김학생', grade: '11th', parent_phone: '', is_vip: true, needs_attention: false, traffic_source: null },
             subject: 'SAT',
             subjects: ['SAT'],
             displayStatus: 'sales',
@@ -219,6 +220,22 @@ describe('RenewalCandidateTable', () => {
     expect(screen.getByText('재결제세일즈')).toBeTruthy();
     // 과목은 이름 옆이 아니라 전용 컬럼에 — V2 Payment 페이지와 같은 배치
     expect(screen.getByTestId('cell-subject-s1-SAT').textContent).toBe('SAT');
+  });
+
+  it('shows the 주의 badge for flagged students', () => {
+    render(
+      <RenewalCandidateTable
+        entries={[
+          entry('s1', {
+            name: '김학생',
+            student: { id: 's1', name: '김학생', grade: '11th', parent_phone: '', is_vip: false, needs_attention: true, traffic_source: null },
+          }),
+        ]}
+        onAdd={noop}
+        pendingStudentId={null}
+      />
+    );
+    expect(screen.getByText('주의')).toBeTruthy();
   });
 
   it('opens the student panel when the name is clicked', () => {

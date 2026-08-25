@@ -4,7 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { RENEWAL_STAGES, type RenewalStage } from '@/types/crm';
 
 // GET/POST와 응답 shape을 맞춘다 (route.ts의 STUDENT_FIELDS와 동일 집합).
-const STUDENT_FIELDS = 'id, name, grade, parent_phone, is_vip, traffic_source, lead_type';
+const STUDENT_FIELDS = 'id, name, grade, parent_phone, is_vip, needs_attention, traffic_source, lead_type';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isAuthenticated(request)) {
