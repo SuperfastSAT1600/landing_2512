@@ -8,6 +8,7 @@ import {
     Rows3, RowsIcon, Trash2,
     Columns3, ChevronLeft, ChevronRight,
     Combine, SplitSquareHorizontal,
+    Bold, Italic, Strikethrough, Code, Link,
 } from 'lucide-react';
 
 interface TableBubbleMenuProps {
@@ -16,6 +17,8 @@ interface TableBubbleMenuProps {
 
 const btnBase =
     'w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors';
+const btnSm = (active: boolean) =>
+    `w-7 h-7 flex items-center justify-center rounded transition-colors ${active ? 'bg-white/20 text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`;
 const btnDanger =
     'w-8 h-8 flex items-center justify-center rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors';
 const divider = <div className="w-px h-5 bg-white/10 mx-0.5" />;
@@ -56,18 +59,34 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                 placement: 'top',
                 offset: 8,
             }}
-            shouldShow={({ editor: e, state }) => {
-                const inTable =
-                    e.isActive('table') ||
-                    e.isActive('tableCell') ||
-                    e.isActive('tableHeader');
-                if (!inTable) return false;
-                // 텍스트 드래그 선택(TextSelection, non-empty)인 경우만 TextBubbleMenu에 양보
-                if (state.selection instanceof TextSelection && !state.selection.empty) return false;
-                return true;
+            shouldShow={({ editor: e }) => {
+                return e.isActive('table') || e.isActive('tableCell') || e.isActive('tableHeader');
             }}
         >
-            <div className="flex items-center gap-0.5 px-1.5 py-1 bg-[#1e2023] border border-white/10 rounded-lg shadow-xl">
+            <div className="flex flex-col gap-0 bg-[#1e2023] border border-white/10 rounded-lg shadow-xl overflow-hidden">
+            {/* 텍스트 선택 시 서식 도구 표시 */}
+            {editor.state.selection instanceof TextSelection && !editor.state.selection.empty && (
+                <div className="flex items-center gap-0.5 px-1 py-1 border-b border-white/10">
+                    <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }} title="굵게" className={btnSm(editor.isActive('bold'))}><Bold size={12} /></button>
+                    <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleItalic().run(); }} title="기울임" className={btnSm(editor.isActive('italic'))}><Italic size={12} /></button>
+                    <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }} title="취소선" className={btnSm(editor.isActive('strike'))}><Strikethrough size={12} /></button>
+                    <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleCode().run(); }} title="코드" className={btnSm(editor.isActive('code'))}><Code size={12} /></button>
+                    <div className="w-px h-4 bg-white/10 mx-0.5" />
+                    <button
+                        onMouseDown={(e) => {
+                            e.preventDefault();
+                            if (editor.isActive('link')) { editor.chain().focus().unsetLink().run(); }
+                            else {
+                                const url = window.prompt('URL을 입력하세요:', 'https://');
+                                if (url && url !== 'https://') editor.chain().focus().setLink({ href: url }).run();
+                            }
+                        }}
+                        title={editor.isActive('link') ? '링크 제거' : '링크 추가'}
+                        className={btnSm(editor.isActive('link'))}
+                    ><Link size={12} /></button>
+                </div>
+            )}
+            <div className="flex items-center gap-0.5 px-1.5 py-1">
                 {/* Column width input */}
                 <div className="flex items-center gap-1 pr-1.5 border-r border-white/10">
                     <span className="text-[10px] text-gray-500">W</span>
@@ -206,6 +225,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                 >
                     <Trash2 size={14} />
                 </button>
+            </div>
             </div>
         </BubbleMenu>
     );

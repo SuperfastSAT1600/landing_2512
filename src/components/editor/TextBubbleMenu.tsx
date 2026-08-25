@@ -33,10 +33,11 @@ export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
             ref={menuRef}
             editor={editor}
             options={{ placement: 'top', offset: 8 }}
-            shouldShow={({ state }) => {
+            shouldShow={({ editor: e, state }) => {
                 const { selection } = state;
                 if (!(selection instanceof TextSelection)) return false;
                 if (selection.empty) return false;
+                if (e.isActive('table') || e.isActive('tableCell') || e.isActive('tableHeader')) return false;
                 return true;
             }}
         >
