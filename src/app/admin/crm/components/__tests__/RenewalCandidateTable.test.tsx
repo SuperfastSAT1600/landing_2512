@@ -27,6 +27,7 @@ function entry(
       grade: '11th',
       parent_phone: '010-0000-0000',
       is_vip: false,
+      needs_attention: false,
       traffic_source: null,
     },
     displayStatus: 'active',
@@ -185,7 +186,7 @@ describe('RenewalCandidateTable', () => {
         entries={[
           entry('s1', {
             name: '김학생',
-            student: { id: 's1', name: '김학생', grade: '11th', parent_phone: '', is_vip: true, traffic_source: null },
+            student: { id: 's1', name: '김학생', grade: '11th', parent_phone: '', is_vip: true, needs_attention: false, traffic_source: null },
             subjects: ['AP', 'SAT'],
             displayStatus: 'sales',
           }),
@@ -198,6 +199,22 @@ describe('RenewalCandidateTable', () => {
     expect(screen.getByText('SAT')).toBeTruthy();
     expect(screen.getByText('AP')).toBeTruthy();
     expect(screen.getByText('재결제세일즈')).toBeTruthy();
+  });
+
+  it('shows the 주의 badge for flagged students', () => {
+    render(
+      <RenewalCandidateTable
+        entries={[
+          entry('s1', {
+            name: '김학생',
+            student: { id: 's1', name: '김학생', grade: '11th', parent_phone: '', is_vip: false, needs_attention: true, traffic_source: null },
+          }),
+        ]}
+        onAdd={noop}
+        pendingStudentId={null}
+      />
+    );
+    expect(screen.getByText('주의')).toBeTruthy();
   });
 
   it('opens the student panel when the name is clicked', () => {

@@ -232,6 +232,7 @@ export interface Student {
   sort_order: number | null;
   entered_by?: string | null;
   is_vip: boolean | null;
+  needs_attention: boolean | null; // 세일즈 단계에서 표시 → 결제 후 운영 담당자가 확인
   created_at: string;
   updated_at: string;
 }
@@ -1014,7 +1015,7 @@ export interface RenewalTarget {
 /** renewal-targets API가 join해 내려주는 학생 부분집합 (route.ts의 STUDENT_FIELDS와 일치). */
 export type RenewalTargetStudent = Pick<
   Student,
-  'id' | 'name' | 'grade' | 'parent_phone' | 'is_vip' | 'traffic_source' | 'lead_type'
+  'id' | 'name' | 'grade' | 'parent_phone' | 'is_vip' | 'needs_attention' | 'traffic_source' | 'lead_type'
 >;
 
 export interface RenewalWeeklyStat {

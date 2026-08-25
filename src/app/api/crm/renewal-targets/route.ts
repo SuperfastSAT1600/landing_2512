@@ -5,7 +5,7 @@ import { getWeekDef } from '@/lib/week-definitions';
 import { RENEWAL_OPEN_STAGES } from '@/types/crm';
 
 // RenewalTargetStudent(types/crm.ts)와 동일한 집합을 유지한다.
-const STUDENT_FIELDS = 'id, name, grade, parent_phone, is_vip, traffic_source, lead_type';
+const STUDENT_FIELDS = 'id, name, grade, parent_phone, is_vip, needs_attention, traffic_source, lead_type';
 
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {

@@ -5,7 +5,7 @@
 // 탭 이동 없이 여기서 끝낼 수 있어야 한다 → 정렬 가능한 표 + 행마다 즉시 추가 버튼.
 
 import { useCallback, useMemo, useState } from 'react';
-import { Crown, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import { Crown, AlertTriangle, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   TUTORING_STATUS_META,
   type TutoringEntry,
@@ -196,6 +196,11 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
                     {student.is_vip && (
                       <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded font-semibold bg-amber-100 text-amber-700">
                         <Crown size={8} />VIP
+                      </span>
+                    )}
+                    {student.needs_attention && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded font-semibold bg-red-100 text-red-700">
+                        <AlertTriangle size={8} />주의
                       </span>
                     )}
                     {subjects.map((s) => (

@@ -23,6 +23,7 @@ function entry(
       grade: '고3',
       parent_phone: '',
       is_vip: false,
+      needs_attention: false,
       traffic_source: null,
     },
     displayStatus: 'active',

@@ -25,6 +25,7 @@ function target(stage: RenewalStage, over: Partial<RenewalTarget> = {}): Renewal
       grade: '11',
       parent_phone: '010-1111-2222',
       is_vip: false,
+      needs_attention: false,
       traffic_source: null,
       lead_type: 'B2C',
     },
@@ -121,6 +122,11 @@ describe('RenewalCard', () => {
   it('shows the VIP badge for VIP students', () => {
     renderCard({ target: target('1', { student: { ...target('1').student!, is_vip: true } }) });
     expect(screen.getByText('VIP')).toBeTruthy();
+  });
+
+  it('shows the 주의 badge for flagged students', () => {
+    renderCard({ target: target('1', { student: { ...target('1').student!, needs_attention: true } }) });
+    expect(screen.getByText('주의')).toBeTruthy();
   });
 
   it('offers 결제 only on the 결제 대기 stage', () => {
