@@ -234,6 +234,38 @@ export async function plaudMcpCall(
   return text;
 }
 
+/**
+ * Plaud MCP 텍스트 응답 선두의 완전한 JSON 값만 추출한다.
+ * 일부 도구(get_file 등)는 트랜스크립트가 인라인이 아닐 때 JSON 뒤에
+ * `\n\nNote: ...` 형태의 비-JSON 안내문을 덧붙여 보내 JSON.parse가 깨진다.
+ * 균형 잡힌 JSON을 찾지 못하면 원본을 그대로 반환한다(기존 파싱 에러 메시지 보존용).
+ */
+function extractLeadingJson(text: string): string {
+  const start = text.search(/[[{]/);
+  if (start === -1) return text;
+  const open = text[start];
+  const close = open === '{' ? '}' : ']';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === open) depth++;
+    else if (ch === close) {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return text;
+}
+
 /** 녹음 목록 조회. page_size는 Plaud 제약상 최소 10으로 보정한다. */
 export async function listPlaudRecordings(
   opts: {
@@ -254,7 +286,7 @@ export async function listPlaudRecordings(
   if (opts.date_to) args.date_to = opts.date_to;
 
   const text = await plaudMcpCall('list_files', args, accountKey);
-  const parsed = JSON.parse(text) as { data?: unknown } | unknown[];
+  const parsed = JSON.parse(extractLeadingJson(text)) as { data?: unknown } | unknown[];
   const list = Array.isArray(parsed) ? parsed : (parsed.data ?? []);
   return (list as Record<string, unknown>[]).map((r) => ({
     id: String(r.id),
@@ -271,7 +303,7 @@ export async function getPlaudFile(
   accountKey: string = DEFAULT_ACCOUNT_KEY
 ): Promise<PlaudFile> {
   const text = await plaudMcpCall('get_file', { file_id: fileId }, accountKey);
-  const d = JSON.parse(text) as Record<string, unknown>;
+  const d = JSON.parse(extractLeadingJson(text)) as Record<string, unknown>;
   const url = typeof d.presigned_url === 'string' ? d.presigned_url : '';
   if (!url) throw new Error('녹음 오디오 URL을 가져오지 못했습니다.');
   return {
