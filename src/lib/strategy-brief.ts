@@ -7,7 +7,7 @@ import { isStageStalled, FUNNEL_STAGE_LABELS, kstDateStr, type FunnelStage, type
 import { buildHealthSnapshot, type StalledCount, type HealthSnapshot } from '@/lib/strategy-health';
 import { aggregateChurn, type ChurnBreakdown, type ChurnRow } from '@/lib/churn-breakdown';
 import { buildCorrelationBlock, type CorrelationStudent } from '@/lib/strategy-correlations';
-import type { CrmStatsData } from '@/app/api/crm/stats/route';
+import type { CrmStatsData } from '@/lib/crm-stats-service';
 import { parseISO, addDays, differenceInCalendarDays, format } from 'date-fns';
 
 interface PeriodRange {

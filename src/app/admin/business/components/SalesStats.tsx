@@ -13,7 +13,7 @@ const TargetVsActualChart = dynamic(() => import('./TargetVsActualChart'), {
   ssr: false,
   loading: () => <div className="h-[260px] flex items-center justify-center text-sm text-gray-300">차트 로딩…</div>,
 });
-import type { CrmStatsData, StatsBySource, StatsWeekly, StatsMonthly } from '@/app/api/crm/stats/route';
+import type { CrmStatsData, StatsBySource, StatsWeekly, StatsMonthly } from '@/lib/crm-stats-service';
 import type { StatsDetailMetric, LeadDetailItem } from '@/lib/crm-stats-detail';
 // CRM 통계 공용 컴포넌트 — StrategyStats/B2bStats도 함께 쓰므로 CRM에 그대로 둔다.
 import { StatsDetailModal, leadStatus, type LeadDisplayStatus } from '../../crm/components/StatsDetailModal';
