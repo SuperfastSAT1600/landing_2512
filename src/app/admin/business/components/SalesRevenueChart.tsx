@@ -1,7 +1,7 @@
 'use client';
 
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import type { StatsMonthly } from '@/app/api/crm/stats/route';
+import type { StatsMonthly } from '@/lib/crm-stats-service';
 
 // 축 하단에 반올림 여유가 넉넉히 붙는 recharts 기본 domain 대신, 실제 데이터 범위에 소폭
 // 패딩만 줘서 월별 등락의 상대적 진폭이 더 크게 보이도록 한다.

@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 import { getPresetRange, getTrendRange, TREND_PRESETS, type TrendPreset } from '../../crm/components/stats-primitives';
 import { toMonthKey } from '@/lib/crm-stats-core';
 import { combineMonthlyRevenue, USD_TO_KRW_RATE } from '@/lib/business-targets';
-import type { CrmStatsData, StatsMonthly } from '@/app/api/crm/stats/route';
+import type { CrmStatsData, StatsMonthly } from '@/lib/crm-stats-service';
 import type { GlobalSaleEntry } from '@/app/api/business/global-sales/route';
 
 const SalesRevenueChart = dynamic(() => import('./SalesRevenueChart'), {

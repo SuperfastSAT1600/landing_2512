@@ -2,7 +2,7 @@
  * KPI 건강 스냅샷 — 통계에서 약하거나/정체되거나/악화된 영역을 결정론적으로 추려
  * 선제 진단 메시지의 근거 블록을 만든다. 순수 함수(I/O 없음). 라우트가 데이터를 넘긴다.
  */
-import type { CrmStatsData } from '@/app/api/crm/stats/route';
+import type { CrmStatsData } from '@/lib/crm-stats-service';
 import { FUNNEL_STAGE_SLA_DAYS, FUNNEL_NEXT_ACTION, type FunnelStage } from '@/types/crm';
 import { formatChurnLines, type ChurnBreakdown } from '@/lib/churn-breakdown';
 
