@@ -10,6 +10,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: write
+
 jobs:
   suggest-topics:
     runs-on: ubuntu-latest
@@ -29,21 +32,21 @@ jobs:
 
       - name: Generate and send topics
         env:
-          ANTHROPIC_API_KEY: ${{ secret
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SUPERFASTSAT_V2_SUPABASE_URL:SUPABASE_URL }}
+          SUPERFASTSAT_V2_SUPABASE_URL: ${{ secrets.SUPERFASTSAT_V2_SUPABASE_URL }}
           SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY: ${{ secrets.SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY }}
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            node blog-agent/scripts/sug
+            node blog-agent/scripts/suggest-topics.js --json
           else
-            node blog-agent/scripts/sug
+            node blog-agent/scripts/suggest-topics.js
           fi
 
-      - name: Commit updated posted-topics.json
+      - name: Commit updated topic files
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "githubithub.com"
-          git add blog-agent/data/posted-topics.json blog-agent/data/today-topics.json || true
-          git diff --staged --quiet || opic suggestions $(date -u +%Y-%m-%d)"
-          git push || true
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add blog-agent/data/posted-topics.json blog-agent/data/today-topics.json
+          git diff --staged --quiet || git commit -m "chore: daily topic suggestions $(date -u +%Y-%m-%d)"
+          git push
