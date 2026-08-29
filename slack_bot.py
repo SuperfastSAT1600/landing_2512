@@ -14,7 +14,11 @@ import hashlib
 import json
 import subprocess
 import logging
+import threading
+import schedule
 import requests as http
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from dotenv import dotenv_values
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -251,6 +255,88 @@ def run_suggest_topics(n: int = 5) -> bool:
     return True
 
 
+# ── 블로그 작성 (플랫폼별 분기) ───────────────────────────────────────────────
+
+# ── 블로그 작성 모델 배치 ────────────────────────────────────────────────────
+# landing: claude-sonnet-4-6  — 전문성 + 데이터 분석
+# ghost  : claude-sonnet-4-6  — SEO/GEO, 마크다운 전문가 글
+# naver  : claude-haiku-4-5-20251001 — 친근한 포맷, 빠른 생성
+
+PLATFORM_SKILLS = {
+    'landing': ('landing-blog', 'claude-sonnet-4-6'),
+    'naver':   ('naver-blog',   'claude-haiku-4-5-20251001'),
+    'ghost':   ('ghost-blog',   'claude-sonnet-4-6'),
+}
+
+def _run_claude_blog(prompt: str, model: str) -> str:
+    log.info(f'Claude [{model}] 실행: {prompt[:60]}...')
+    try:
+        result = subprocess.run(
+            ['claude', '-p', prompt, '--model', model, '--dangerously-skip-permissions'],
+            capture_output=True, text=True, cwd=WORKSPACE, timeout=360,
+        )
+        output = result.stdout.strip()
+        if result.returncode != 0 and result.stderr:
+            output = result.stderr.strip()
+        return output or '작업이 완료되었습니다.'
+    except subprocess.TimeoutExpired:
+        return '⚠️ 작업 시간이 초과되었습니다 (6분).'
+    except FileNotFoundError:
+        return '⚠️ claude CLI를 찾을 수 없습니다.'
+    except Exception as e:
+        return f'⚠️ 오류: {e}'
+
+
+def _load_topic_title(n: int) -> str | None:
+    import json as _json
+    path = '/workspace/blog-agent/data/today-topics.json'
+    try:
+        data = _json.loads(open(path).read())
+        for t in data.get('topics', []):
+            if t.get('n') == n:
+                return t.get('title', '')
+    except Exception:
+        pass
+    return None
+
+
+def run_blog_write_async(n, platform: str, channel: str, thread_ts, say, topic_title=None):
+    def _run():
+        title = topic_title
+        if title is None and n is not None:
+            title = _load_topic_title(n)
+        if not title:
+            say(f'⚠️ {n}번 주제를 찾을 수 없습니다. 주제 목록을 먼저 생성해주세요.', thread_ts=thread_ts)
+            return
+
+        skill_name, model = PLATFORM_SKILLS.get(platform, PLATFORM_SKILLS['landing'])
+        platform_label = {'landing': '랜딩 페이지', 'naver': '네이버 블로그', 'ghost': 'Ghost 블로그'}[platform]
+
+        prompt = (
+            f'/{skill_name}\n\n'
+            f'주제: {title}\n\n'
+            f'참고: /workspace/schema/questions/master_sat_ontology_v3.jsonl 에서 '
+            f'관련 스킬의 Hard 문제, rationale, 선지 패턴을 검색해 '
+            f'구체적 수치(Hard 비율%, 문항 수, 문제 ID)를 본문에 포함할 것.'
+        )
+
+        log.info(f'블로그 작성 시작: [{platform}/{model}] {title[:50]}')
+        result = _run_claude_blog(prompt, model)
+
+        chunks = [result[i:i+3800] for i in range(0, len(result), 3800)]
+        for i, chunk in enumerate(chunks):
+            prefix = f'✅ [{platform_label}] 작성 완료\n\n' if i == 0 else ''
+            say(f'{prefix}{chunk}', thread_ts=thread_ts)
+
+        log.info(f'블로그 작성 완료: [{platform}] {title[:50]}')
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+
+
 # ── CRM 등록 ──────────────────────────────────────────────────────────────────
 
 def register_in_crm(lead: dict) -> tuple[bool, str, str]:
@@ -346,24 +432,29 @@ def handle_message(event, say):
                 say("⚠️ 주제 생성 실패. 잠시 후 다시 시도해주세요.")
             return
 
-        # N번 써줘
-        n_match = re.search(r'(\d+)번\s*써줘', text)
-        if n_match:
-            n = int(n_match.group(1))
-            say(f"⏳ {n}번 주제로 블로그 작성을 시작합니다 (3~5분 소요)...", thread_ts=thread_ts)
-            ok = call_blog_api(f"{n}번 써줘", channel, thread_ts)
-            if not ok:
-                say(f"⚠️ 블로그 작성 API 호출 실패.", thread_ts=thread_ts)
+        # N번 [플랫폼] 써줘 — 플랫폼별 포맷 분기
+        platform_match = re.search(r'(\d+)번\s*(랜딩|네이버|고스트|ghost|naver|landing)?\s*써줘', text, re.IGNORECASE)
+        if platform_match:
+            n = int(platform_match.group(1))
+            raw_platform = (platform_match.group(2) or '랜딩').lower()
+            platform = {
+                '랜딩': 'landing', 'landing': 'landing',
+                '네이버': 'naver',  'naver': 'naver',
+                '고스트': 'ghost',  'ghost': 'ghost',
+            }.get(raw_platform, 'landing')
+            platform_label = {'landing': '랜딩 페이지', 'naver': '네이버 블로그', 'ghost': 'Ghost 블로그'}[platform]
+            say(f"⏳ {n}번 주제로 {platform_label}용 포스팅 작성 중 (3~5분 소요)...", thread_ts=thread_ts)
+            run_blog_write_async(n, platform, channel, thread_ts, say)
             return
 
         # 직접 주제 입력: "주제명" 써줘 / 해줘 / 작성해줘
-        direct_match = re.search('[\u2018\u2019\u201c\u201d\'"](.+?)[\u2018\u2019\u201c\u201d\'"].*(?:써줘|해줘|작성해줘|포스팅해줘)', text)
+        direct_match = re.search('[\u2018\u2019\u201c\u201d\'\""](.+?)[\u2018\u2019\u201c\u201d\'\""].*(?:써줘|해줘|작성해줘|포스팅해줘)', text)
         if direct_match:
             topic_title = direct_match.group(1).strip()
-            say(f"⏳ '{topic_title}' 주제로 블로그 작성을 시작합니다 (3~5분 소요)...", thread_ts=thread_ts)
-            ok = call_blog_api(f'"{topic_title}" 써줘', channel, thread_ts)
-            if not ok:
-                say(f"⚠️ 블로그 작성 API 호출 실패.", thread_ts=thread_ts)
+            platform = 'naver' if '네이버' in text else ('ghost' if '고스트' in text or 'ghost' in text.lower() else 'landing')
+            platform_label = {'landing': '랜딩 페이지', 'naver': '네이버 블로그', 'ghost': 'Ghost 블로그'}[platform]
+            say(f"⏳ '{topic_title}' 주제로 {platform_label}용 포스팅 작성 중 (3~5분 소요)...", thread_ts=thread_ts)
+            run_blog_write_async(None, platform, channel, thread_ts, say, topic_title=topic_title)
             return
 
         # 발행
@@ -377,8 +468,45 @@ def handle_message(event, say):
         return
 
 
+# ── 일일 주제 자동 제안 스케줄러 ──────────────────────────────────────────────
+
+KST = ZoneInfo("Asia/Seoul")
+
+def _daily_topic_job():
+    """매일 오전 9:07 KST 주제 추천 자동 실행."""
+    now_kst = datetime.now(KST)
+    log.info(f"[스케줄] 일일 주제 제안 실행 — {now_kst.strftime('%Y-%m-%d %H:%M KST')}")
+
+    last_file = "/workspace/blog-agent/data/today-topics.json"
+    try:
+        import json as _json
+        data = _json.loads(open(last_file).read())
+        if data.get("date") == now_kst.strftime("%Y-%m-%d"):
+            log.info("[스케줄] 오늘 이미 주제가 생성됨, 스킵")
+            return
+    except Exception:
+        pass
+
+    run_suggest_topics(5)
+
+
+def _run_scheduler():
+    """스케줄러 루프 — 별도 데몬 스레드에서 실행."""
+    # 매일 오전 9:07 KST에 실행 (서버 UTC 기준 00:07)
+    schedule.every().day.at("00:07").do(_daily_topic_job)
+    log.info("[스케줄] 일일 주제 제안 등록 완료 — 매일 09:07 KST")
+    while True:
+        schedule.run_pending()
+        time.sleep(30)
+
+
 if __name__ == "__main__":
     log.info("SuperfastSAT Slack Bot 시작 (Socket Mode)")
     log.info(f"개발채널: {DEV_CHANNEL} | 리드채널: {LEADS_CHANNEL} | 블로그채널: {BLOG_CHANNEL} | CRM: {CRM_BASE_URL}")
+
+    # 스케줄러 데몬 스레드 시작
+    t = threading.Thread(target=_run_scheduler, daemon=True, name="DailyTopicScheduler")
+    t.start()
+
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
     handler.start()

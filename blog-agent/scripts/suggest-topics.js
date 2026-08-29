@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 /**
- * 매일 블로그 주제 3개를 제안하고 Slack DM으로 전송하는 스크립트
- * 우선순위: SAT 캘린더 → 학생 데이터 → 코치 인사이트
- *
- * 실행: node blog-post/scripts/suggest-topics.js
+ * 매일 블로그 주제 5개를 제안하고 Slack으로 전송
+ * 소스: question bank 통계 + 입시 뉴스 + 학생 오답 데이터 + 캘린더
  */
 
+import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -21,7 +20,7 @@ const DATA_DIR = join(__dirname, '../data');
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
 const V2_URL = process.env.SUPERFASTSAT_V2_SUPABASE_URL;
 const V2_KEY = process.env.SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY;
-const SLACK_USER_ID = 'C0A28EJQA7P'; // 블로그 주제 알림 채널
+const SLACK_CHANNEL = 'C0A28EJQA7P';
 
 // ─── 유틸 ────────────────────────────────────────────────────────────────────
 
@@ -35,111 +34,79 @@ function diffDays(targetDateStr, fromDate = new Date()) {
 
 function loadPostedTopics() {
   const path = join(DATA_DIR, 'posted-topics.json');
-  if (!existsSync(path)) {
-    writeFileSync(path, '[]', 'utf-8');
-    return [];
-  }
+  if (!existsSync(path)) { writeFileSync(path, '[]', 'utf-8'); return []; }
   return JSON.parse(readFileSync(path, 'utf-8'));
 }
 
 function isAlreadyPosted(title, postedTopics) {
-  return postedTopics.some(
-    (p) => p.title.toLowerCase().trim() === title.toLowerCase().trim()
-  );
+  return postedTopics.some(p => p.title.toLowerCase().trim() === title.toLowerCase().trim());
 }
 
 function formatDate(date = new Date()) {
   return date.toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'short',
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
   });
 }
 
-// ─── 키워드 추출 ─────────────────────────────────────────────────────────────
+// ─── 소스 1: Question Bank 통계 ──────────────────────────────────────────────
 
-function extractKeyword(topic) {
-  if (topic.source === 'calendar') {
-    // "SAT August 2026 D-61 전략 ..." → test name from rationale
-    const match = topic.rationale.match(/^(SAT \w+ \d{4})/);
-    return match ? match[1] : 'SAT test prep';
-  }
-  if (topic.source === 'student_data') {
-    // "SAT Words in Context — 학생들이..." → "SAT Words in Context"
-    const match = topic.title.match(/^(SAT [^—–]+)/);
-    return match ? match[1].trim() : 'SAT prep';
-  }
-  if (topic.source === 'coach_insight') {
-    const keywordMap = {
-      '점수가 오르지 않는': 'SAT score improvement',
-      '코치가 문제를': 'SAT tutor',
-      'RW는 지문을': 'SAT Reading Writing',
-      '틀렸다는 말이': 'SAT wrong answer analysis',
-      '스터디홀에서': 'SAT test anxiety',
-      '단어 암기를': 'SAT vocabulary',
-      '준비 첫 번째': 'SAT prep guide',
-      '스킬 단위로': 'SAT skill improvement',
-      '한 사이클': 'SAT study plan',
-      '학습 리포트': 'SAT score report',
-    };
-    for (const [phrase, keyword] of Object.entries(keywordMap)) {
-      if (topic.title.includes(phrase)) return keyword;
-    }
-    return 'SAT prep';
-  }
-  return 'SAT prep';
-}
+function loadQuestionBankStats() {
+  const qbPath = join(ROOT, 'schema/questions/master_sat_ontology_v3.jsonl');
+  if (!existsSync(qbPath)) return null;
 
-// ─── 소스 1: SAT 캘린더 ──────────────────────────────────────────────────────
+  const lines = readFileSync(qbPath, 'utf-8').split('\n').filter(l => l.trim());
+  const skillStats = {};
+  const hardSamples = {};
 
-function getCalendarTopics(postedTopics) {
-  const calendar = JSON.parse(
-    readFileSync(join(DATA_DIR, 'sat-calendar.json'), 'utf-8')
-  );
-  const today = new Date();
-  const results = [];
+  for (const line of lines) {
+    let q;
+    try { q = JSON.parse(line); } catch { continue; }
+    if (q.domain !== 'Reading and Writing') continue;
 
-  for (const test of calendar.tests) {
-    const days = diffDays(test.date, today);
+    const skill = q.skill || 'unknown';
+    if (!skillStats[skill]) skillStats[skill] = { total: 0, hard: 0, topics: new Set() };
+    skillStats[skill].total++;
 
-    let bracket = null;
-    if (days >= 0 && days <= 7) bracket = 'D7';
-    else if (days > 7 && days <= 14) bracket = 'D14';
-    else if (days > 14 && days <= 30) bracket = 'D30';
-    else if (days < 0 && days >= -7) bracket = 'D7_after';
+    if (q.difficulty === 'Hard') {
+      skillStats[skill].hard++;
+      const topic = q.topic_category || q.knowledge_graph?.passage_topic || '';
+      if (topic) skillStats[skill].topics.add(topic);
 
-    if (!bracket) continue;
-
-    const hints = test.topic_hints[bracket] || [];
-    for (const hint of hints) {
-      if (!isAlreadyPosted(hint, postedTopics)) {
-        const label =
-          days >= 0
-            ? `D-${days} (${test.name})`
-            : `D+${Math.abs(days)} (${test.name} 직후)`;
-        const topic = {
-          title: hint,
-          source: 'calendar',
-          rationale: `${test.name} ${label} — 독자 관심도 최고 구간`,
-          point: '시험 임박 독자 유입 + 브랜드 신뢰도 구축',
-        };
-        topic.keyword = extractKeyword(topic);
-        results.push(topic);
+      // 스킬별 Hard 샘플 최대 2개
+      if (!hardSamples[skill]) hardSamples[skill] = [];
+      if (hardSamples[skill].length < 2) {
+        hardSamples[skill].push({
+          id: q.id,
+          question: (q.question || '').slice(0, 120),
+          choices: q.choices ? Object.entries(q.choices).map(([k, v]) => `${k}: ${v}`).join(' / ') : '',
+          correct: q.correct_answer || '',
+          rationale: (q.rationale || '').slice(0, 200),
+          topic: q.topic_category || '',
+          passage_flow: q.analysis?.passage_logical_flow || '',
+          synonyms: q.analysis?.synonyms_for_correct_answer?.join(', ') || '',
+        });
       }
     }
-
-    if (results.length >= 2) break;
   }
 
-  return results;
+  // 직렬화 (Set → Array)
+  const stats = Object.entries(skillStats)
+    .map(([skill, v]) => ({
+      skill,
+      total: v.total,
+      hard: v.hard,
+      hardPct: Math.round((v.hard / v.total) * 100),
+      topics: [...v.topics].slice(0, 3),
+    }))
+    .sort((a, b) => b.hard - a.hard);
+
+  return { stats, hardSamples };
 }
 
-// ─── 소스 2: 학생 데이터 (Supabase V2) ──────────────────────────────────────
+// ─── 소스 2: 학생 오답 통계 (Supabase) ──────────────────────────────────────
 
-async function getStudentDataTopics(postedTopics) {
-  if (!V2_URL || !V2_KEY) return [];
-
+async function loadStudentErrorStats() {
+  if (!V2_URL || !V2_KEY) return null;
   try {
     const supabase = createClient(V2_URL, V2_KEY);
     const since = new Date();
@@ -149,11 +116,10 @@ async function getStudentDataTopics(postedTopics) {
       .from('diagnostic_test_results')
       .select('skill_scores, created_at')
       .gte('created_at', since.toISOString())
-      .limit(100);
+      .limit(200);
 
-    if (error || !data || data.length === 0) return [];
+    if (error || !data?.length) return null;
 
-    // 스킬별 오답 집계
     const skillErrors = {};
     for (const row of data) {
       const scores = row.skill_scores;
@@ -161,113 +127,229 @@ async function getStudentDataTopics(postedTopics) {
       for (const [skill, score] of Object.entries(scores)) {
         if (!skillErrors[skill]) skillErrors[skill] = { total: 0, errors: 0 };
         skillErrors[skill].total++;
-        if (typeof score === 'number' && score < 0.6) {
-          skillErrors[skill].errors++;
-        }
+        if (typeof score === 'number' && score < 0.6) skillErrors[skill].errors++;
       }
     }
 
-    // 오답률 상위 스킬 추출
-    const ranked = Object.entries(skillErrors)
+    return Object.entries(skillErrors)
       .filter(([, v]) => v.total >= 3)
-      .map(([skill, v]) => ({ skill, errorRate: v.errors / v.total }))
+      .map(([skill, v]) => ({ skill, errorRate: Math.round((v.errors / v.total) * 100) }))
       .sort((a, b) => b.errorRate - a.errorRate)
-      .slice(0, 3);
-
-    const topics = [];
-    for (const { skill, errorRate } of ranked) {
-      const pct = Math.round(errorRate * 100);
-      const title = `SAT ${skill} — 학생들이 가장 많이 틀리는 이유`;
-      if (!isAlreadyPosted(title, postedTopics)) {
-        const topic = {
-          title,
-          source: 'student_data',
-          rationale: `최근 2주 수강생 오답률 ${pct}% — 실제 데이터 기반 주제`,
-          point: '검증된 학습 데이터로 신뢰도 극대화, 독자 공감 유발',
-        };
-        topic.keyword = extractKeyword(topic);
-        topics.push(topic);
-      }
-      if (topics.length >= 2) break;
-    }
-
-    return topics;
+      .slice(0, 5);
   } catch {
-    return [];
+    return null;
   }
 }
 
-// ─── 소스 3: 코치 인사이트 (철학 문서) ──────────────────────────────────────
+// ─── 소스 3: 미 대학 입시 뉴스 (RSS fetch) ───────────────────────────────────
 
-function getCoachInsightTopics(postedTopics) {
-  const philosophyPath = join(ROOT, 'srm/superfastsat-coaching-philosophy.md');
-  if (!existsSync(philosophyPath)) return [];
+async function fetchCollegeAdmissionsNews() {
+  const feeds = [
+    'https://blog.collegeboard.org/feed',
+    'https://www.commonapp.org/feed',
+    'https://www.nacacnet.org/rss.xml',
+  ];
 
-  const content = readFileSync(philosophyPath, 'utf-8');
-  const sections = content.split(/^##+ /m).filter((s) => s.trim());
+  const items = [];
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
-  const topicMap = {
-    '우리가 생각하는 학생': {
-      title: 'SAT 점수가 오르지 않는 진짜 이유 — 노력이 아닌 방법의 문제',
-      point: '학원 철학을 콘텐츠로 전환, 상담 전환율 향상',
-    },
-    '코치의 역할': {
-      title: 'SAT 코치가 문제를 풀어주지 않는 이유',
-      point: '코치 포지셔닝 명확화, 프리미엄 서비스 차별화',
-    },
-    '내용 암기보다 구조 인식': {
-      title: 'SAT RW는 지문을 많이 읽는다고 점수가 오르지 않는 이유',
-      point: '독자 기존 학습법 반박 → 새 방법론 제시 → 전환율',
-    },
-    '오류 유형이 분석의 단위': {
-      title: '"틀렸다"는 말이 왜 쓸모없는가 — SAT 오답 분석의 기준',
-      point: '데이터 기반 코칭 차별화 포인트 부각',
-    },
-    '연습과 검증은 다른 행위다': {
-      title: '스터디홀에서 잘 되는데 실전에서 무너지는 이유',
-      point: '독자가 경험한 좌절감과 직결, 즉각 공감 유발',
-    },
-    '단어는 진단 후 처방이다': {
-      title: 'SAT 단어 암기를 시작하기 전에 반드시 해야 할 것',
-      point: 'vocab 콘텐츠 진입점, 단어장 제품 연결 가능',
-    },
-    '진단에서 시작한다': {
-      title: 'SAT 준비 첫 번째 단계가 문제풀이가 되면 안 되는 이유',
-      point: '진단 테스트 상품 연결 + 차별화 커리큘럼 소개',
-    },
-    '스킬 단위로 쌓는다': {
-      title: 'SAT 점수를 스킬 단위로 관리해야 하는 이유',
-      point: '체계적 접근법 시각화, 학습 로드맵 콘텐츠',
-    },
-    '한 사이클의 단위': {
-      title: 'SuperfastSAT 한 사이클이란 무엇인가 — 학습 단위 설계 원칙',
-      point: '커리큘럼 투명성 공개, 신뢰 구축',
-    },
-    '리포트가 이 철학을 구현하는 방식': {
-      title: 'SAT 학습 리포트를 제대로 읽는 법',
-      point: '기존 수강생 재참여 + 잠재 고객에게 시스템 소개',
-    },
-  };
+  for (const url of feeds) {
+    try {
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(8000),
+        headers: { 'User-Agent': 'SuperfastSAT-BlogBot/1.0' },
+      });
+      if (!res.ok) continue;
+      const xml = await res.text();
 
-  const topics = [];
-  for (const [key, topic] of Object.entries(topicMap)) {
-    if (
-      sections.some((s) => s.startsWith(key)) &&
-      !isAlreadyPosted(topic.title, postedTopics)
-    ) {
-      const t = {
-        title: topic.title,
-        source: 'coach_insight',
-        rationale: `코칭 철학 "${key}" 섹션 기반 — 경쟁사가 쓸 수 없는 관점`,
-        point: topic.point,
-      };
-      t.keyword = extractKeyword(t);
-      topics.push(t);
+      // 간단한 RSS 파싱 (외부 라이브러리 없이)
+      const titleMatches = xml.matchAll(/<item[^>]*>[\s\S]*?<title[^>]*><!\[CDATA\[(.*?)\]\]><\/title>|<title[^>]*>(.*?)<\/title>/g);
+      const dateMatches = xml.matchAll(/<pubDate>(.*?)<\/pubDate>|<published>(.*?)<\/published>/g);
+      const linkMatches = xml.matchAll(/<link[^>]*>(.*?)<\/link>|<link[^>]*href="([^"]*)"[^/]*\/>/g);
+
+      const titles = [...titleMatches].map(m => (m[1] || m[2] || '').trim()).filter(Boolean);
+      const dates = [...dateMatches].map(m => (m[1] || m[2] || '').trim()).filter(Boolean);
+
+      for (let i = 0; i < Math.min(titles.length, 5); i++) {
+        const pubDate = dates[i] ? new Date(dates[i]).getTime() : Date.now();
+        if (pubDate >= sevenDaysAgo) {
+          items.push({
+            title: titles[i],
+            date: dates[i] ? new Date(dates[i]).toLocaleDateString('ko-KR') : '최근',
+            source: url.includes('collegeboard') ? 'College Board' :
+                    url.includes('commonapp') ? 'Common App' : 'NACAC',
+          });
+        }
+      }
+    } catch {
+      // feed 실패 시 무시
     }
-    if (topics.length >= 5) break;
   }
 
-  return topics;
+  return items.slice(0, 6);
+}
+
+// ─── 소스 4: SAT 캘린더 ──────────────────────────────────────────────────────
+
+function getCalendarContext() {
+  const calPath = join(DATA_DIR, 'sat-calendar.json');
+  if (!existsSync(calPath)) return null;
+  const calendar = JSON.parse(readFileSync(calPath, 'utf-8'));
+  const today = new Date();
+  for (const test of calendar.tests) {
+    const days = diffDays(test.date, today);
+    if (days >= -7 && days <= 60) {
+      return {
+        name: test.name,
+        date: test.date,
+        days,
+        label: days >= 0 ? `D-${days}` : `D+${Math.abs(days)}`,
+      };
+    }
+  }
+  return null;
+}
+
+// ─── Claude Sonnet 주제 생성 ──────────────────────────────────────────────────
+
+async function generateTopicsWithClaude({ qbStats, studentErrors, newsItems, calendarCtx, postedTopics }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+
+  const todayStr = new Date().toLocaleDateString('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
+    timeZone: 'Asia/Seoul',
+  });
+
+  const recentTitles = postedTopics.slice(-30).map(t => `- ${t.title}`).join('\n') || '없음';
+
+  // Question Bank 통계 요약
+  let qbSection = '';
+  if (qbStats) {
+    const topSkills = qbStats.stats.slice(0, 6).map(s =>
+      `  - ${s.skill}: 총 ${s.total}문항, Hard ${s.hard}개(${s.hardPct}%), 주제: ${s.topics.join('/')}`
+    ).join('\n');
+
+    const hardExamples = Object.entries(qbStats.hardSamples).slice(0, 3).map(([skill, samples]) => {
+      const s = samples[0];
+      return `  [${skill}] ID:${s.id} | 지문토픽:${s.topic} | 패턴:${s.passage_flow}
+    문제: ${s.question}
+    정답근거: ${s.rationale}`;
+    }).join('\n');
+
+    qbSection = `
+## 기출 문제은행 데이터 (1,836문항 분석 결과)
+
+### 스킬별 Hard 문제 분포:
+${topSkills}
+
+### Hard 문제 샘플 (심화 해설 소재):
+${hardExamples}`;
+  }
+
+  // 학생 오답 통계
+  let errorSection = '';
+  if (studentErrors?.length) {
+    errorSection = `
+## 최근 2주 수강생 오답 통계:
+${studentErrors.map(e => `  - ${e.skill}: 오답률 ${e.errorRate}%`).join('\n')}`;
+  }
+
+  // 입시 뉴스
+  let newsSection = '';
+  if (newsItems?.length) {
+    newsSection = `
+## 최근 미 대학 입시 뉴스 (7일 이내):
+${newsItems.map(n => `  - [${n.source}] ${n.title} (${n.date})`).join('\n')}`;
+  }
+
+  // 시험 D-day
+  let calSection = '';
+  if (calendarCtx) {
+    calSection = `\n## 다음 SAT: ${calendarCtx.name} (${calendarCtx.label})`;
+  }
+
+  const prompt = `당신은 SuperfastSAT 블로그 에디터입니다. 아래 데이터를 기반으로 오늘의 블로그 주제 5개를 생성하세요.
+
+오늘: ${todayStr}
+${calSection}
+
+최근 포스팅 (중복 금지):
+${recentTitles}
+${qbSection}
+${errorSection}
+${newsSection}
+
+## SuperfastSAT 코칭 철학:
+- 데이터 기반 스킬 단위 학습 (College Board 기출 분석)
+- 독해 속도보다 문제 구조 이해
+- 진단 → 스킬 집중 → 검증 사이클
+
+## 주제 유형 (5개를 아래 유형에서 다양하게 섞어서):
+1. **deep_dive**: 특정 Hard 문제 심화 해설 — 문제 ID, 스킬명, 정답 근거를 직접 인용해 제목 구성
+2. **skill_pattern**: 특정 스킬의 출제 패턴 분석 — 오답률/Hard 비율 데이터 인용
+3. **timely**: 시험 D-day 시의성 + 실제 오답 통계 결합
+4. **news**: 입시 뉴스 기반 — 수험생/학부모 관점 해설 (뉴스 소스 명시)
+5. **coach_insight**: 경쟁사가 쓸 수 없는 코칭 철학 기반 관점
+
+## 조건:
+- 제목은 한국어 40자 이내, 구체적 숫자/스킬명/패턴명 포함
+- rationale에는 반드시 실제 데이터(문항 수, 오답률%, 뉴스 출처 등) 포함
+- 중복 금지 목록과 다른 주제
+
+JSON 배열로만 응답 (설명 없이):
+[
+  {
+    "title": "제목 (40자 이내, 구체적 데이터 포함)",
+    "type": "deep_dive | skill_pattern | timely | news | coach_insight",
+    "source_data": "근거 데이터 요약 (문항 ID, 오답률, 뉴스 제목 등)",
+    "rationale": "독자 관점 선택 이유 (1~2문장, 수치 포함)",
+    "point": "독자가 얻는 핵심 가치 (1문장)",
+    "keyword": "주요 SEO 키워드"
+  }
+]`;
+
+  const client = new Anthropic({ apiKey });
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const text = response.content[0]?.text ?? '';
+      if (!text) continue;
+
+      let rawJson = null;
+      const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (fenceMatch) {
+        rawJson = fenceMatch[1].trim();
+      } else {
+        const arrMatch = text.match(/\[[\s\S]*\]/);
+        if (!arrMatch) { console.error(`[Claude] attempt ${attempt}: JSON 없음`); continue; }
+        rawJson = arrMatch[0];
+      }
+
+      let parsed;
+      try { parsed = JSON.parse(rawJson); } catch (e) {
+        console.error(`[Claude] attempt ${attempt}: JSON 파싱 실패 — ${e.message}`);
+        continue;
+      }
+
+      const filtered = parsed
+        .filter(t => t.title && !isAlreadyPosted(t.title, postedTopics))
+        .slice(0, 5)
+        .map(t => ({ ...t, source: t.type || 'claude' }));
+
+      if (filtered.length >= 3) return filtered;
+      console.log(`[Claude] attempt ${attempt}: ${filtered.length}개 — 재시도`);
+    } catch (err) {
+      console.error(`[Claude] attempt ${attempt} 실패:`, err.message);
+    }
+  }
+  return null;
 }
 
 // ─── Slack ───────────────────────────────────────────────────────────────────
@@ -282,97 +364,113 @@ async function sendSlackMessage(channelId, text) {
     body: JSON.stringify({ channel: channelId, text }),
   });
   const data = await res.json();
-  if (!data.ok) throw new Error(`chat.postMessage failed: ${data.error}`);
+  if (!data.ok) throw new Error(`Slack 오류: ${data.error}`);
   return data;
 }
 
-function buildMessage(topics) {
+function buildMessage(topics, calendarCtx) {
   const dateStr = formatDate();
-  let msg = `[오늘의 블로그 주제 제안 — ${dateStr}]\n\n`;
+  const calLabel = calendarCtx ? ` | ${calendarCtx.name} ${calendarCtx.label}` : '';
+  let msg = `[오늘의 블로그 주제 제안 — ${dateStr}${calLabel}]\n\n`;
 
   topics.forEach((t, i) => {
-    msg += `${i + 1}. ${t.title}\n`;
+    const typeLabel = {
+      deep_dive: '심화해설',
+      skill_pattern: '스킬분석',
+      timely: '시의성',
+      news: '입시뉴스',
+      coach_insight: '코칭인사이트',
+    }[t.type] || t.source || '';
+
+    msg += `${i + 1}. [${typeLabel}] ${t.title}\n`;
     msg += `   근거: ${t.rationale}\n`;
     msg += `   포인트: ${t.point}\n`;
+    if (t.source_data) msg += `   데이터: ${t.source_data}\n`;
     if (i < topics.length - 1) msg += '\n';
   });
 
-  msg += '\n\n→ 이 메시지 스레드에서 @landingpage N번 써줘 를 입력하면 바로 시작합니다.';
+  msg += '\n\n→ 이 스레드에서:\n';
+  msg += '  • "@bot N번 랜딩 써줘" — 랜딩 페이지용\n';
+  msg += '  • "@bot N번 네이버 써줘" — 네이버 블로그용\n';
+  msg += '  • "@bot N번 고스트 써줘" — Ghost 블로그용';
   return msg;
+}
+
+// ─── posted-topics.json 업데이트 ─────────────────────────────────────────────
+
+function appendPostedTopics(newTopics) {
+  const path = join(DATA_DIR, 'posted-topics.json');
+  const existing = existsSync(path) ? JSON.parse(readFileSync(path, 'utf-8')) : [];
+  const today = new Date().toISOString().slice(0, 10);
+  const toAdd = newTopics
+    .filter(t => !existing.some(e => e.title === t.title))
+    .map(t => ({ title: t.title, date: today, source: t.source }));
+  writeFileSync(path, JSON.stringify([...existing, ...toAdd], null, 2), 'utf-8');
 }
 
 // ─── 메인 ────────────────────────────────────────────────────────────────────
 
 async function main() {
   const postedTopics = loadPostedTopics();
-  const topics = [];
 
-  // 1. SAT 캘린더 (최우선)
-  const calendarTopics = getCalendarTopics(postedTopics);
-  topics.push(...calendarTopics);
+  console.log('[1/4] Question bank 로딩...');
+  const qbStats = loadQuestionBankStats();
+  console.log(`  → 스킬 ${qbStats?.stats?.length ?? 0}개, Hard 샘플 ${Object.keys(qbStats?.hardSamples ?? {}).length}개`);
 
-  // 2. 학생 데이터
-  if (topics.length < 5) {
-    const studentTopics = await getStudentDataTopics(postedTopics);
-    topics.push(...studentTopics);
-  }
+  console.log('[2/4] 학생 오답 통계 로딩...');
+  const studentErrors = await loadStudentErrorStats();
+  console.log(`  → ${studentErrors?.length ?? 0}개 스킬`);
 
-  // 3. 코치 인사이트 (채우기)
-  if (topics.length < 5) {
-    const coachTopics = getCoachInsightTopics(postedTopics);
-    topics.push(...coachTopics);
-  }
+  console.log('[3/4] 입시 뉴스 fetch...');
+  const newsItems = await fetchCollegeAdmissionsNews();
+  console.log(`  → 뉴스 ${newsItems.length}개`);
 
-  const final = topics.slice(0, 5);
+  const calendarCtx = getCalendarContext();
+  if (calendarCtx) console.log(`  → 다음 시험: ${calendarCtx.name} (${calendarCtx.label})`);
 
-  if (final.length === 0) {
-    if (process.argv.includes('--json')) {
-      console.log(JSON.stringify([]));
-    } else {
-      console.log('주제 후보가 없습니다. posted-topics.json을 초기화하세요.');
-    }
+  console.log('[4/4] Claude Sonnet 주제 생성...');
+  const topics = await generateTopicsWithClaude({
+    qbStats, studentErrors, newsItems, calendarCtx, postedTopics,
+  });
+
+  if (!topics || topics.length === 0) {
+    console.error('주제 생성 실패');
+    if (process.argv.includes('--json')) console.log(JSON.stringify([]));
     return;
   }
 
-  // --json 모드: Slack 발송 없이 JSON만 출력 (크론 에이전트가 트렌드 enrichment 후 발송)
+  console.log(`생성 완료: ${topics.length}개`);
+
   if (process.argv.includes('--json')) {
-    console.log(JSON.stringify(final, null, 2));
+    console.log(JSON.stringify(topics, null, 2));
     return;
   }
 
-  const message = buildMessage(final);
+  const message = buildMessage(topics, calendarCtx);
   console.log('─'.repeat(60));
   console.log(message);
   console.log('─'.repeat(60));
 
-  if (!SLACK_BOT_TOKEN) {
-    console.log('SLACK_BOT_TOKEN 없음 — 콘솔 출력만 수행');
-    return;
+  if (SLACK_BOT_TOKEN) {
+    try {
+      await sendSlackMessage(SLACK_CHANNEL, message);
+      console.log('Slack 발송 완료');
+    } catch (err) {
+      console.error('Slack 발송 실패:', err.message);
+      process.exit(1);
+    }
+  } else {
+    console.log('SLACK_BOT_TOKEN 없음 — 콘솔 출력만');
   }
 
-  try {
-    await sendSlackMessage(SLACK_USER_ID, message);
-    console.log(`Slack DM 발송 완료 → ${SLACK_USER_ID}`);
-  } catch (err) {
-    console.error('Slack 발송 실패:', err.message);
-    process.exit(1);
-  }
-
-  // 당일 주제를 저장해 슬랙 폴링 에이전트가 참조할 수 있도록 함
   const todayTopicsPath = join(DATA_DIR, 'today-topics.json');
-  writeFileSync(
-    todayTopicsPath,
-    JSON.stringify(
-      {
-        date: new Date().toISOString().slice(0, 10),
-        topics: final.map((t, i) => ({ n: i + 1, ...t, triggered: false })),
-      },
-      null,
-      2
-    ),
-    'utf-8'
-  );
-  console.log(`today-topics.json 저장 완료 (${final.length}개)`);
+  writeFileSync(todayTopicsPath, JSON.stringify({
+    date: new Date().toISOString().slice(0, 10),
+    topics: topics.map((t, i) => ({ n: i + 1, ...t, triggered: false })),
+  }, null, 2));
+
+  appendPostedTopics(topics);
+  console.log('today-topics.json 저장 완료');
 }
 
 main();
