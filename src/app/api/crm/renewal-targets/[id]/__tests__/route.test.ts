@@ -45,6 +45,7 @@ const baseTarget = {
   stage_updated_at: '2026-08-10T00:00:00Z',
   converted_payment_id: null,
   drop_reason: null,
+  outcome_quality: null,
   created_by: null,
   created_at: '2026-08-10T00:00:00Z',
   updated_at: '2026-08-10T00:00:00Z',
@@ -135,6 +136,110 @@ describe('PATCH /api/crm/renewal-targets/[id]', () => {
     const { PATCH } = await import('../route');
     const res = await PATCH(makeReq('PATCH', { stage: '9' }), { params });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('PATCH /api/crm/renewal-targets/[id] — 결과 품질 (REQ-003)', () => {
+  it('stores outcome_quality when stage is 4 → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '4', outcome_quality: 'good' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { stage: '4', outcome_quality: 'good' }), { params });
+    expect(res.status).toBe(200);
+    expect(updatePayload().outcome_quality).toBe('good');
+  });
+
+  it('stores outcome_quality alongside drop_reason when stage is 5 → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({
+        data: { ...baseTarget, stage: '5', drop_reason: '예산', outcome_quality: 'bad' },
+        error: null,
+      })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(
+      makeReq('PATCH', { stage: '5', drop_reason: '예산', outcome_quality: 'bad' }),
+      { params }
+    );
+    expect(res.status).toBe(200);
+    expect(updatePayload().outcome_quality).toBe('bad');
+    expect(updatePayload().drop_reason).toBe('예산');
+  });
+
+  it('clears outcome_quality when leaving a terminal stage (되돌리기 5 → 2)', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { ...baseTarget, stage: '2' }, error: null }));
+    const { PATCH } = await import('../route');
+    await PATCH(makeReq('PATCH', { stage: '2', clear_drop_reason: true }), { params });
+    expect(updatePayload().outcome_quality).toBeNull();
+  });
+
+  it('keeps an existing quality when the pendingConversion retry re-sends stage 4', async () => {
+    // 결제 후 단계 이동만 실패했을 때의 재시도 — 품질 필드를 안 보내므로 건드리면 안 된다.
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '4' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    await PATCH(makeReq('PATCH', { stage: '4', converted_payment_id: 'pay-1' }), { params });
+    expect(updatePayload()).not.toHaveProperty('outcome_quality');
+  });
+
+  it('sets quality retroactively without touching stage_updated_at → 200', async () => {
+    // 소급 경로는 from()을 두 번 부른다 — 현재 stage 조회용, 그다음 update용.
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { stage: '4' }, error: null }));
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '4', outcome_quality: 'good' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { outcome_quality: 'good' }), { params });
+    expect(res.status).toBe(200);
+    expect(updatePayload().outcome_quality).toBe('good');
+    // D+N 경과일과 목록 정렬이 리셋되면 안 된다.
+    expect(updatePayload()).not.toHaveProperty('stage_updated_at');
+    expect(updatePayload()).not.toHaveProperty('stage');
+  });
+
+  it('clears quality retroactively when null is sent → 200', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { stage: '5' }, error: null }));
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '5', outcome_quality: null }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { outcome_quality: null }), { params });
+    expect(res.status).toBe(200);
+    expect(updatePayload().outcome_quality).toBeNull();
+  });
+
+  it('rejects a retroactive quality on a non-terminal row → 400', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { stage: '2' }, error: null }));
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { outcome_quality: 'good' }), { params });
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error.code).toBe('INVALID_OUTCOME_QUALITY');
+  });
+
+  it('returns 404 when the retroactive target does not exist', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: null, error: { message: 'no rows' } }));
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { outcome_quality: 'good' }), { params });
+    expect(res.status).toBe(404);
+  });
+
+  it('rejects an invalid outcome_quality → 400', async () => {
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { stage: '4', outcome_quality: 'meh' }), { params });
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error.code).toBe('INVALID_OUTCOME_QUALITY');
+  });
+
+  it('rejects a body with no updatable field → 400', async () => {
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', {}), { params });
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error.code).toBe('NO_UPDATABLE_FIELDS');
   });
 });
 

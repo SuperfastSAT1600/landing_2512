@@ -260,6 +260,26 @@ export const RENEWAL_STAGE_LABELS: Record<RenewalStage, string> = {
 export const RENEWAL_DROP_REASONS = ['예산', '휴학·졸업', '타학원 이전', '응답 없음', '기타'] as const;
 export type RenewalDropReason = (typeof RENEWAL_DROP_REASONS)[number];
 
+/** 터미널 단계에 도달한 대상의 결과 품질. 값이 단계에 따라 다르게 읽히므로 라벨을 분리한다. */
+export const RENEWAL_OUTCOME_QUALITIES = ['good', 'bad'] as const;
+export type RenewalOutcomeQuality = (typeof RENEWAL_OUTCOME_QUALITIES)[number];
+export const RENEWAL_PAID_QUALITY_LABELS: Record<RenewalOutcomeQuality, string> = {
+  good: '좋은 재결제',
+  bad: '나쁜 재결제',
+};
+export const RENEWAL_DROP_QUALITY_LABELS: Record<RenewalOutcomeQuality, string> = {
+  good: '좋은 이탈',
+  bad: '나쁜 이탈',
+};
+
+/** stage 4는 재결제의 질, stage 5는 이탈의 질. 그 외 단계엔 품질이 없다. */
+export function getRenewalOutcomeQualityLabel(
+  stage: RenewalStage,
+  quality: RenewalOutcomeQuality
+): string {
+  return stage === '5' ? RENEWAL_DROP_QUALITY_LABELS[quality] : RENEWAL_PAID_QUALITY_LABELS[quality];
+}
+
 export type StrategyHistoryType = 'initial_contact' | 'initial_sales' | 'retry';
 
 export interface StrategyHistoryEntry {
@@ -1053,6 +1073,7 @@ export interface RenewalTarget {
   stage_updated_at: string;
   converted_payment_id: string | null;    // stage '4' 에서만 채워진다
   drop_reason: string | null;             // stage '5' 에서만 채워진다
+  outcome_quality: RenewalOutcomeQuality | null;  // stage '4'·'5' 에서만 채워진다. null = 미분류
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -1073,6 +1094,11 @@ export interface RenewalWeeklyStat {
   completed: number;  // 4단계
   dropped: number;    // 5단계
   conversion_rate: number;
+  // 결과 품질 분포. 미분류는 별도 필드 없이 completed/dropped 에서 빼서 구한다.
+  good_completed: number;
+  bad_completed: number;
+  good_dropped: number;
+  bad_dropped: number;
 }
 
 /** 추천 API 응답 1건 — 아직 저장되지 않은 후보. */

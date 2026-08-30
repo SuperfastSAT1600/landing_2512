@@ -43,6 +43,10 @@ export function RenewalStatsStrip({
   const count = (stage: RenewalStage) => targets.filter((t) => t.stage === stage).length;
   const open = targets.filter((t) => RENEWAL_OPEN_STAGES.includes(t.stage)).length;
   const completed = count('4');
+  // 터미널에 도달했지만 아직 좋음/나쁨을 안 찍은 수 — 이 주차에 태깅이 남았다는 신호.
+  const unclassified = targets.filter(
+    (t) => (t.stage === '4' || t.stage === '5') && !t.outcome_quality
+  ).length;
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
@@ -61,6 +65,12 @@ export function RenewalStatsStrip({
           <Metric label="미전환" value={count('5')} tone="text-gray-500" />
           <Sep />
           <Metric label="전환율" value={formatRate(completed, targets.length)} tone="text-gray-900" />
+          {unclassified > 0 && (
+            <>
+              <Sep />
+              <Metric label="미분류" value={unclassified} tone="text-amber-600" />
+            </>
+          )}
         </>
       ) : (
         <>

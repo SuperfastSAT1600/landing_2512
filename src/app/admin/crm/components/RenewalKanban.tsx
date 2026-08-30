@@ -21,6 +21,7 @@ import {
 import {
   RENEWAL_OPEN_STAGES,
   RENEWAL_STAGES,
+  type RenewalOutcomeQuality,
   type RenewalStage,
   type RenewalTarget,
   type Student,
@@ -181,6 +182,21 @@ export function RenewalKanban({
       await refresh();
     } catch {
       setError(failMsg);
+    }
+  };
+
+  /** 결과 품질 토글. 즉각 반응이 필요하므로 드래그와 같은 낙관적 업데이트를 쓴다. */
+  const handleSetQuality = async (target: RenewalTarget, quality: RenewalOutcomeQuality | null) => {
+    const previous = target;
+    setTargets((current) =>
+      current.map((t) => (t.id === target.id ? { ...t, outcome_quality: quality } : t))
+    );
+    try {
+      await patchTarget(target.id, { outcome_quality: quality });
+      await refresh();
+    } catch {
+      setTargets((current) => current.map((t) => (t.id === previous.id ? previous : t)));
+      setError('결과 품질 저장에 실패했습니다.');
     }
   };
 
@@ -355,6 +371,7 @@ export function RenewalKanban({
                       ? (t) => runPatch(t, { stage: '2', clear_drop_reason: true }, '되돌리기에 실패했습니다.')
                       : undefined
                   }
+                  onSetQuality={stage === '4' || stage === '5' ? handleSetQuality : undefined}
                 />
               </div>
             ))}
@@ -402,10 +419,14 @@ export function RenewalKanban({
       {dropTarget && (
         <RenewalDropModal
           target={dropTarget}
-          onConfirm={(dropReason) => {
+          onConfirm={(dropReason, quality) => {
             const target = dropTarget;
             setDropTarget(null);
-            runPatch(target, { stage: '5', drop_reason: dropReason }, '미전환 처리에 실패했습니다.');
+            runPatch(
+              target,
+              { stage: '5', drop_reason: dropReason, outcome_quality: quality },
+              '미전환 처리에 실패했습니다.'
+            );
           }}
           onClose={() => setDropTarget(null)}
         />

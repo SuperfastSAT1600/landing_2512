@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { getRecentWeeks, getWeekLabel } from '@/lib/week-definitions';
-import type { RenewalWeeklyStat } from '@/types/crm';
+import type { RenewalWeeklyStat, RenewalOutcomeQuality } from '@/types/crm';
 
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   const recentWeeks = getRecentWeeks(weeks, new Date().toISOString().slice(0, 10));
   const cutoff = recentWeeks[recentWeeks.length - 1]?.start;
 
-  let query = supabaseAdmin.from('renewal_targets').select('week_start, stage');
+  let query = supabaseAdmin.from('renewal_targets').select('week_start, stage, outcome_quality');
   if (cutoff) query = query.gte('week_start', cutoff);
 
   const { data, error } = await query;
@@ -33,14 +33,45 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const rows = (data ?? []) as { week_start: string; stage: string }[];
-  const weekMap = new Map<string, { selected: number; completed: number; dropped: number }>();
+  const rows = (data ?? []) as {
+    week_start: string;
+    stage: string;
+    outcome_quality: RenewalOutcomeQuality | null;
+  }[];
+  type Counts = {
+    selected: number;
+    completed: number;
+    dropped: number;
+    good_completed: number;
+    bad_completed: number;
+    good_dropped: number;
+    bad_dropped: number;
+  };
+  const emptyCounts = (): Counts => ({
+    selected: 0,
+    completed: 0,
+    dropped: 0,
+    good_completed: 0,
+    bad_completed: 0,
+    good_dropped: 0,
+    bad_dropped: 0,
+  });
+  const weekMap = new Map<string, Counts>();
 
+  // 품질 미분류(null)는 어느 버킷에도 넣지 않는다 — completed/dropped 총계와의 차이가 곧 미분류 수다.
   for (const row of rows) {
-    const counts = weekMap.get(row.week_start) ?? { selected: 0, completed: 0, dropped: 0 };
+    const counts = weekMap.get(row.week_start) ?? emptyCounts();
     counts.selected += 1;
-    if (row.stage === '4') counts.completed += 1;
-    if (row.stage === '5') counts.dropped += 1;
+    if (row.stage === '4') {
+      counts.completed += 1;
+      if (row.outcome_quality === 'good') counts.good_completed += 1;
+      if (row.outcome_quality === 'bad') counts.bad_completed += 1;
+    }
+    if (row.stage === '5') {
+      counts.dropped += 1;
+      if (row.outcome_quality === 'good') counts.good_dropped += 1;
+      if (row.outcome_quality === 'bad') counts.bad_dropped += 1;
+    }
     weekMap.set(row.week_start, counts);
   }
 
@@ -59,6 +90,10 @@ export async function GET(request: NextRequest) {
         counts.selected > 0
           ? Math.round((counts.completed / counts.selected) * 100 * 100) / 100
           : 0,
+      good_completed: counts.good_completed,
+      bad_completed: counts.bad_completed,
+      good_dropped: counts.good_dropped,
+      bad_dropped: counts.bad_dropped,
     }));
 
   return NextResponse.json({ data: weekly });

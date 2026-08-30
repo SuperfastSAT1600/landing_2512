@@ -2,7 +2,12 @@
 
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { RENEWAL_STAGE_LABELS, type RenewalStage, type RenewalTarget } from '@/types/crm';
+import {
+  RENEWAL_STAGE_LABELS,
+  type RenewalOutcomeQuality,
+  type RenewalStage,
+  type RenewalTarget,
+} from '@/types/crm';
 import { RenewalCard, type RenewalCardTutoring } from './RenewalCard';
 
 interface RenewalKanbanColumnProps {
@@ -16,6 +21,7 @@ interface RenewalKanbanColumnProps {
   onDrop?: (target: RenewalTarget) => void;
   onRemove?: (target: RenewalTarget) => void;
   onReopen?: (target: RenewalTarget) => void;
+  onSetQuality?: (target: RenewalTarget, quality: RenewalOutcomeQuality | null) => void;
 }
 
 // 4(결제 완료)=emerald, 5(미전환)=무채색, 1~3=기본
@@ -38,6 +44,7 @@ export function RenewalKanbanColumn({
   onDrop,
   onRemove,
   onReopen,
+  onSetQuality,
 }: RenewalKanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const tone = STAGE_TONE[stage];
@@ -67,6 +74,7 @@ export function RenewalKanbanColumn({
               onDrop={onDrop && (() => onDrop(target))}
               onRemove={onRemove && (() => onRemove(target))}
               onReopen={onReopen && (() => onReopen(target))}
+              onSetQuality={onSetQuality && ((q) => onSetQuality(target, q))}
             />
           ))}
         </SortableContext>

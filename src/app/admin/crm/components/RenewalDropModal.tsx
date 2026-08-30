@@ -5,22 +5,31 @@
 
 import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-import { RENEWAL_DROP_REASONS, type RenewalTarget } from '@/types/crm';
+import {
+  RENEWAL_DROP_REASONS,
+  RENEWAL_DROP_QUALITY_LABELS,
+  RENEWAL_OUTCOME_QUALITIES,
+  type RenewalOutcomeQuality,
+  type RenewalTarget,
+} from '@/types/crm';
 
 interface RenewalDropModalProps {
   target: RenewalTarget;
-  onConfirm: (dropReason: string) => void;
+  onConfirm: (dropReason: string, quality: RenewalOutcomeQuality) => void;
   onClose: () => void;
 }
 
 export function RenewalDropModal({ target, onConfirm, onClose }: RenewalDropModalProps) {
   const [reasonTag, setReasonTag] = useState<string>(RENEWAL_DROP_REASONS[0]);
   const [note, setNote] = useState('');
+  // 사유와 달리 기본값을 두지 않는다 — 기본 선택이 있으면 무의식적으로 한쪽만 쌓인다.
+  const [quality, setQuality] = useState<RenewalOutcomeQuality | null>(null);
 
   function handleConfirm() {
+    if (!quality) return;
     // ChurnModal과 동일하게 "{태그}: {메모}" 로 합쳐 저장. 메모는 선택.
     const trimmed = note.trim();
-    onConfirm(trimmed ? `${reasonTag}: ${trimmed}` : reasonTag);
+    onConfirm(trimmed ? `${reasonTag}: ${trimmed}` : reasonTag, quality);
   }
 
   return (
@@ -61,6 +70,29 @@ export function RenewalDropModal({ target, onConfirm, onClose }: RenewalDropModa
           </div>
 
           <div className="space-y-1.5">
+            <label className="text-xs font-medium text-gray-400">이탈 유형</label>
+            <div className="flex gap-2">
+              {RENEWAL_OUTCOME_QUALITIES.map(q => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => setQuality(q)}
+                  aria-pressed={quality === q}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    quality === q
+                      ? q === 'good'
+                        ? 'bg-emerald-600 text-white border-emerald-600'
+                        : 'bg-rose-600 text-white border-rose-600'
+                      : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  {RENEWAL_DROP_QUALITY_LABELS[q]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
             <label className="text-xs font-medium text-gray-400">메모 (선택)</label>
             <textarea
               value={note}
@@ -81,7 +113,8 @@ export function RenewalDropModal({ target, onConfirm, onClose }: RenewalDropModa
           </button>
           <button
             onClick={handleConfirm}
-            className="px-4 py-2 text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+            disabled={!quality}
+            className="px-4 py-2 text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-800"
           >
             미전환 처리
           </button>
