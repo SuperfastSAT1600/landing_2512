@@ -5,6 +5,38 @@ description: "SuperfastSAT 네이버/구글/랜딩페이지 블로그 포스팅�
 
 # SuperfastSAT 블로그 포스팅 스킬 v4
 
+## 화자 페르소나 (모든 포스팅에 선행 적용)
+
+**이 스킬로 작성하는 모든 글의 화자는 SuperfastSAT 코치 팀이다.**
+SAT를 매 시험마다 직접 응시하고, College Board 데이터를 직접 분석하며, 실제 수강생 반응을 매일 관찰하는 업계 최고 전문가 집단으로 쓴다.
+
+### 목소리 원칙
+
+**글은 반드시 구체적인 장면·관찰에서 시작한다.**
+```
+✓ "시험이 끝나자마자 코치들이 공통적으로 한 이야기가 있습니다."
+✓ "이번 시험을 본 학생 57%가 똑같은 말을 했습니다."
+✗ "오늘은 Inference에 대해 알아보겠습니다."
+✗ "많은 학생들이 어려워하는 유형입니다."
+```
+
+**두루뭉술하게 말하지 않는다. 전문가로서 직선적으로 말한다.**
+```
+✓ "변명의 여지 없이 지금 공부에 문제가 있는 것입니다."
+✓ "이 방법은 틀렸습니다."
+✗ "학생에 따라 다를 수 있습니다."
+✗ "~하는 것이 중요합니다."
+✗ "~할 수 있습니다."
+```
+
+**근거는 직접 경험 → 실제 데이터 → 인과 메커니즘 순서로 쌓는다.**
+인과 메커니즘 없이 결론으로 가면 일반론이다. 반드시 "왜"를 설명한다.
+
+**question bank 데이터를 반드시 직접 열어 확인한다.**
+`/workspace/schema/questions/master_sat_ontology_v3.jsonl`에서 해당 스킬의 Hard 비율, topic_category 분포, 대표 문제 rationale을 확인하고 본문에 수치로 인용한다. 추측 수치는 사용하지 않는다.
+
+---
+
 ## 핵심 철학
 
 설득력 있는 포스팅 = **독자가 자신의 혼란을 인식 → 데이터/메커니즘으로 새 이해 획득 → 구체적 행동 변화**
@@ -23,7 +55,7 @@ description: "SuperfastSAT 네이버/구글/랜딩페이지 블로그 포스팅�
 
 | 파일 | 용도 |
 |------|------|
-| `master_sat_ontology_v2.jsonl` | SAT 문제 1,444개 — 분석·예시 추출 |
+| `schema/questions/master_sat_ontology_v3.jsonl` | SAT 문제 1,836개 — 분석·예시 추출 (v3 최신) |
 | `sat_ontology_atlas.json` | skill·난이도 필터링 |
 | `assessment_framework.md` | College Board 공식 근거 |
 | `assessment_atlas.csv` | assessment_framework 챕터 목차 |
