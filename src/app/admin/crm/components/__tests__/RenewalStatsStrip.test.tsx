@@ -11,6 +11,7 @@ function target(stage: RenewalStage, studentId = `s-${stage}`): RenewalTarget {
     stage_updated_at: '2026-08-10T00:00:00Z',
     converted_payment_id: null,
     drop_reason: null,
+    outcome_quality: null,
     created_by: null,
     created_at: '2026-08-10T00:00:00Z',
     updated_at: '2026-08-10T00:00:00Z',
@@ -102,5 +103,46 @@ describe('RenewalStatsStrip', () => {
     expect(screen.queryByTestId('renewal-metric-전환율')).toBeNull();
     expect(screen.queryByTestId('renewal-metric-결제 완료')).toBeNull();
     expect(screen.queryByTestId('renewal-metric-선정')).toBeNull();
+  });
+
+  it('surfaces 미분류 in cohort scope only while terminal rows are untagged (REQ-008)', () => {
+    const { unmount } = render(
+      <RenewalStatsStrip
+        scopeLabel="26년 08월 04주차"
+        mode="cohort"
+        targets={[
+          target('4', 'a'),
+          { ...target('4', 'b'), outcome_quality: 'good' as const },
+          target('5', 'c'),
+          target('2', 'd'),
+        ]}
+      />
+    );
+    // 4·5 중 품질이 없는 두 건만 센다 — 2단계는 애초에 분류 대상이 아니다.
+    expect(metric('미분류')).toBe('2');
+    unmount();
+
+    render(
+      <RenewalStatsStrip
+        scopeLabel="26년 08월 04주차"
+        mode="cohort"
+        targets={[
+          { ...target('4', 'a'), outcome_quality: 'good' as const },
+          { ...target('5', 'b'), outcome_quality: 'bad' as const },
+        ]}
+      />
+    );
+    expect(screen.queryByTestId('renewal-metric-미분류')).toBeNull();
+  });
+
+  it('never shows 미분류 in open scope — 4·5 rows cannot appear there', () => {
+    render(
+      <RenewalStatsStrip
+        scopeLabel="진행 중 전체"
+        mode="open"
+        targets={[target('1', 'a'), target('3', 'b')]}
+      />
+    );
+    expect(screen.queryByTestId('renewal-metric-미분류')).toBeNull();
   });
 });

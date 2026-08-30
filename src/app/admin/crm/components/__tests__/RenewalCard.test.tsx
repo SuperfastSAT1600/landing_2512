@@ -16,6 +16,7 @@ function target(stage: RenewalStage, over: Partial<RenewalTarget> = {}): Renewal
     stage_updated_at: '2026-08-14T09:00:00Z', // 3일 전
     converted_payment_id: null,
     drop_reason: null,
+    outcome_quality: null,
     created_by: null,
     created_at: '2026-08-14T09:00:00Z',
     updated_at: '2026-08-14T09:00:00Z',
@@ -188,5 +189,47 @@ describe('RenewalCard', () => {
     renderCard({ onClick });
     fireEvent.click(screen.getByText('김학생'));
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows quality toggles only when onSetQuality is provided (terminal stages)', () => {
+    const open = renderCard({ target: target('2'), onDrop: vi.fn() });
+    expect(screen.queryByRole('button', { name: '좋은 재결제' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '좋은 이탈' })).toBeNull();
+    open.unmount();
+
+    renderCard({ target: target('4'), onSetQuality: vi.fn() });
+    expect(screen.getByRole('button', { name: '좋은 재결제' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '나쁜 재결제' })).toBeTruthy();
+  });
+
+  it('labels the same value differently on 결제 완료 and 미전환', () => {
+    const paid = renderCard({ target: target('4'), onSetQuality: vi.fn() });
+    expect(screen.getByRole('button', { name: '좋은 재결제' })).toBeTruthy();
+    paid.unmount();
+
+    renderCard({ target: target('5'), onSetQuality: vi.fn() });
+    expect(screen.getByRole('button', { name: '좋은 이탈' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '나쁜 이탈' })).toBeTruthy();
+  });
+
+  it('emits the clicked quality when nothing is selected yet', () => {
+    const onSetQuality = vi.fn();
+    renderCard({ target: target('4'), onSetQuality });
+    fireEvent.click(screen.getByRole('button', { name: '나쁜 재결제' }));
+    expect(onSetQuality).toHaveBeenCalledWith('bad');
+  });
+
+  it('emits null when the already selected quality is clicked again (토글 해제)', () => {
+    const onSetQuality = vi.fn();
+    renderCard({ target: target('4', { outcome_quality: 'good' }), onSetQuality });
+    const good = screen.getByRole('button', { name: '좋은 재결제' });
+    expect(good.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(good);
+    expect(onSetQuality).toHaveBeenCalledWith(null);
+  });
+
+  it('hides quality toggles on the drag overlay', () => {
+    renderCard({ target: target('4', { outcome_quality: 'good' }), onSetQuality: vi.fn(), overlay: true });
+    expect(screen.queryByRole('button', { name: '좋은 재결제' })).toBeNull();
   });
 });

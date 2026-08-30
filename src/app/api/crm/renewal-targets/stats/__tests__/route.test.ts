@@ -29,7 +29,7 @@ function makeReq(weeks?: string, key = 'admin-key') {
   });
 }
 
-function row(weekStart: string, stage: string) {
+function row(weekStart: string, stage: string, outcomeQuality: 'good' | 'bad' | null = null) {
   return {
     id: `rt-${weekStart}-${stage}`,
     student_id: 's-1',
@@ -37,6 +37,7 @@ function row(weekStart: string, stage: string) {
     stage,
     stage_updated_at: `${weekStart}T00:00:00Z`,
     converted_payment_id: stage === '4' ? 'pay-1' : null,
+    outcome_quality: outcomeQuality,
     created_by: null,
     created_at: `${weekStart}T00:00:00Z`,
     updated_at: `${weekStart}T00:00:00Z`,
@@ -154,5 +155,64 @@ describe('GET /api/crm/renewal-targets/stats', () => {
     const { GET } = await import('../route');
     const res = await GET(makeReq());
     expect(res.status).toBe(200);
+  });
+});
+
+describe('GET /api/crm/renewal-targets/stats — 결과 품질 분포 (REQ-004)', () => {
+  it('counts good/bad separately for 결제 완료 and 미전환 → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({
+        data: [
+          row('2026-08-17', '4', 'good'),
+          row('2026-08-17', '4', 'good'),
+          row('2026-08-17', '4', 'bad'),
+          row('2026-08-17', '5', 'good'),
+          row('2026-08-17', '5', 'bad'),
+          row('2026-08-17', '5', 'bad'),
+        ],
+        error: null,
+      })
+    );
+    const { GET } = await import('../route');
+    const res = await GET(makeReq());
+    const json = await res.json();
+    const week = json.data.find((r: { week_start: string }) => r.week_start === '2026-08-17');
+    expect(week.good_completed).toBe(2);
+    expect(week.bad_completed).toBe(1);
+    expect(week.good_dropped).toBe(1);
+    expect(week.bad_dropped).toBe(2);
+  });
+
+  it('leaves 미분류(null) out of every bucket while keeping completed/dropped totals whole', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({
+        data: [
+          row('2026-08-17', '4', 'good'),
+          row('2026-08-17', '4', null),
+          row('2026-08-17', '4', null),
+          row('2026-08-17', '5', null),
+        ],
+        error: null,
+      })
+    );
+    const { GET } = await import('../route');
+    const res = await GET(makeReq());
+    const json = await res.json();
+    const week = json.data[0];
+    expect(week.completed).toBe(3);
+    expect(week.dropped).toBe(1);
+    // 미분류는 별도 필드 없이 총계 - 좋음 - 나쁨 으로 구한다.
+    expect(week.good_completed).toBe(1);
+    expect(week.bad_completed).toBe(0);
+    expect(week.completed - week.good_completed - week.bad_completed).toBe(2);
+    expect(week.good_dropped).toBe(0);
+    expect(week.bad_dropped).toBe(0);
+  });
+
+  it('reads outcome_quality in the same narrowed select', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
+    const { GET } = await import('../route');
+    await GET(makeReq());
+    expect(lastBuilder.select.mock.calls[0][0]).toContain('outcome_quality');
   });
 });
