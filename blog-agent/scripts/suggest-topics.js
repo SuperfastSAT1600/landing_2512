@@ -196,18 +196,22 @@ function getCalendarContext() {
   if (!existsSync(calPath)) return null;
   const calendar = JSON.parse(readFileSync(calPath, 'utf-8'));
   const today = new Date();
+
+  let upcoming = null;
+  let recent = null;
+
   for (const test of calendar.tests) {
     const days = diffDays(test.date, today);
-    if (days >= -7 && days <= 60) {
-      return {
-        name: test.name,
-        date: test.date,
-        days,
-        label: days >= 0 ? `D-${days}` : `D+${Math.abs(days)}`,
-      };
+    if (days >= 0 && days <= 60 && !upcoming) {
+      upcoming = { name: test.name, date: test.date, days, label: `D-${days}`, isPast: false };
+    }
+    if (days < 0 && days >= -7 && !recent) {
+      recent = { name: test.name, date: test.date, days, label: `D+${Math.abs(days)}`, isPast: true };
     }
   }
-  return null;
+
+  // 예정 시험을 방금 지난 시험보다 항상 우선한다
+  return upcoming || recent || null;
 }
 
 // ─── Claude Sonnet 주제 생성 ──────────────────────────────────────────────────
@@ -266,7 +270,13 @@ ${newsItems.map(n => `  - [${n.source}] ${n.title} (${n.date})`).join('\n')}`;
   // 시험 D-day
   let calSection = '';
   if (calendarCtx) {
-    calSection = `\n## 다음 SAT: ${calendarCtx.name} (${calendarCtx.label})`;
+    if (calendarCtx.isPast) {
+      calSection = `\n## 직전 SAT: ${calendarCtx.name} (${calendarCtx.label} — 시험 종료)\n`
+        + `이 시험은 이미 끝났습니다. 시험 전 준비 주제(D-day 전략, 막판 공부법 등)는 부적절합니다. `
+        + `시험 후 점수 해석, 오답 분석, 재시험 결정 등 사후 주제를 우선하세요.`;
+    } else {
+      calSection = `\n## 다음 SAT: ${calendarCtx.name} (${calendarCtx.label})`;
+    }
   }
 
   const prompt = `당신은 SuperfastSAT 블로그 에디터입니다. 아래 데이터를 기반으로 오늘의 블로그 주제 5개를 생성하세요.
@@ -370,7 +380,9 @@ async function sendSlackMessage(channelId, text) {
 
 function buildMessage(topics, calendarCtx) {
   const dateStr = formatDate();
-  const calLabel = calendarCtx ? ` | ${calendarCtx.name} ${calendarCtx.label}` : '';
+  const calLabel = calendarCtx
+    ? ` | ${calendarCtx.name} ${calendarCtx.label}${calendarCtx.isPast ? ' (시험 종료)' : ''}`
+    : '';
   let msg = `[오늘의 블로그 주제 제안 — ${dateStr}${calLabel}]\n\n`;
 
   topics.forEach((t, i) => {
