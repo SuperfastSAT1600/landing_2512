@@ -148,6 +148,8 @@ async function fetchCollegeAdmissionsNews() {
     'https://blog.collegeboard.org/feed',
     'https://www.commonapp.org/feed',
     'https://www.nacacnet.org/rss.xml',
+    'https://www.insidehighered.com/rss.xml',
+    'https://www.thechoice.blogs.nytimes.com/feed/',
   ];
 
   const items = [];
@@ -189,7 +191,50 @@ async function fetchCollegeAdmissionsNews() {
   return items.slice(0, 6);
 }
 
-// ─── 소스 4: SAT 캘린더 ──────────────────────────────────────────────────────
+// ─── 소스 4: Reddit SAT 커뮤니티 반응 ────────────────────────────────────────
+
+async function fetchRedditDiscussions(calendarCtx) {
+  const subreddits = ['Sat', 'ApplyingToCollege'];
+  const posts = [];
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+  for (const sub of subreddits) {
+    try {
+      const res = await fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=20`, {
+        signal: AbortSignal.timeout(8000),
+        headers: { 'User-Agent': 'SuperfastSAT-BlogBot/1.0' },
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const children = data?.data?.children ?? [];
+
+      for (const child of children) {
+        const post = child.data;
+        if (post.created_utc * 1000 < sevenDaysAgo) continue;
+        if (post.score < 15) continue;
+        posts.push({
+          title: post.title,
+          score: post.score,
+          comments: post.num_comments,
+          source: `r/${sub}`,
+          date: new Date(post.created_utc * 1000).toLocaleDateString('ko-KR'),
+          isPostExam: calendarCtx?.isPast && (
+            post.title.toLowerCase().includes('august') ||
+            post.title.toLowerCase().includes('test') ||
+            post.title.toLowerCase().includes('score') ||
+            post.title.toLowerCase().includes('curve')
+          ),
+        });
+      }
+    } catch {
+      // feed 실패 시 무시
+    }
+  }
+
+  return posts.sort((a, b) => (b.isPostExam ? 1 : 0) - (a.isPostExam ? 1 : 0) || b.score - a.score).slice(0, 8);
+}
+
+// ─── 소스 5: SAT 캘린더 ──────────────────────────────────────────────────────
 
 function getCalendarContext() {
   const calPath = join(DATA_DIR, 'sat-calendar.json');
@@ -216,7 +261,7 @@ function getCalendarContext() {
 
 // ─── Claude Sonnet 주제 생성 ──────────────────────────────────────────────────
 
-async function generateTopicsWithClaude({ qbStats, studentErrors, newsItems, calendarCtx, postedTopics }) {
+async function generateTopicsWithClaude({ qbStats, studentErrors, newsItems, redditPosts, calendarCtx, postedTopics }) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
@@ -267,6 +312,21 @@ ${studentErrors.map(e => `  - ${e.skill}: 오답률 ${e.errorRate}%`).join('\n')
 ${newsItems.map(n => `  - [${n.source}] ${n.title} (${n.date})`).join('\n')}`;
   }
 
+  // Reddit 커뮤니티 반응
+  let redditSection = '';
+  if (redditPosts?.length) {
+    const postExam = redditPosts.filter(p => p.isPostExam);
+    const general = redditPosts.filter(p => !p.isPostExam);
+    let content = '';
+    if (postExam.length) {
+      content += `\n직전 시험 반응 (핫 포스트):\n${postExam.map(p => `  - [${p.source}, ↑${p.score}] ${p.title}`).join('\n')}`;
+    }
+    if (general.length) {
+      content += `\n일반 커뮤니티 화제:\n${general.map(p => `  - [${p.source}, ↑${p.score}] ${p.title}`).join('\n')}`;
+    }
+    redditSection = `\n## Reddit SAT 커뮤니티 반응 (7일 이내):${content}`;
+  }
+
   // 시험 D-day
   let calSection = '';
   if (calendarCtx) {
@@ -289,6 +349,7 @@ ${recentTitles}
 ${qbSection}
 ${errorSection}
 ${newsSection}
+${redditSection}
 
 ## QB 데이터 활용 원칙 (반드시 지킬 것):
 **금지**: "X 스킬 Hard 비율이 Y%이므로 X가 나올 확률이 높다" 류의 출제 확률 예측
@@ -303,8 +364,9 @@ ${newsSection}
 1. **deep_dive**: 특정 Hard 문제 심화 해설 — 문제 ID, 정답 근거, 오답 선지 설계 방식을 직접 분해
 2. **skill_pattern**: 특정 스킬의 시퀀스·패턴 분석 — "이 스킬 문제는 이렇게 설계된다"는 규칙 발견
 3. **timely**: 시험 D-day 시의성 + 지금 당장 교정할 수 있는 풀이 습관 결합
-4. **news**: 입시 뉴스 기반 — 수험생/학부모 관점 해설 (뉴스 소스 명시)
-5. **coach_insight**: 경쟁사가 쓸 수 없는 문제 구조 분석 관점
+4. **news**: 미국 아이비리그·명문대 입시 뉴스 기반 — 수험생/학부모 관점 해설 (뉴스 소스 명시)
+5. **community**: Reddit r/Sat·r/ApplyingToCollege 해외 반응 소개 — 직전 시험 반응, 해외 수험생 화제, 아이비 입시 커뮤니티 동향 (Reddit 포스트 제목 직접 인용)
+6. **coach_insight**: 경쟁사가 쓸 수 없는 문제 구조 분석 관점
 
 ## 조건:
 - 제목은 한국어 40자 이내, 구체적 패턴명/단어/문제 ID 포함
@@ -437,16 +499,18 @@ async function main() {
   const studentErrors = await loadStudentErrorStats();
   console.log(`  → ${studentErrors?.length ?? 0}개 스킬`);
 
-  console.log('[3/4] 입시 뉴스 fetch...');
-  const newsItems = await fetchCollegeAdmissionsNews();
-  console.log(`  → 뉴스 ${newsItems.length}개`);
-
+  console.log('[3/4] 입시 뉴스 + Reddit fetch...');
   const calendarCtx = getCalendarContext();
   if (calendarCtx) console.log(`  → 다음 시험: ${calendarCtx.name} (${calendarCtx.label})`);
+  const [newsItems, redditPosts] = await Promise.all([
+    fetchCollegeAdmissionsNews(),
+    fetchRedditDiscussions(calendarCtx),
+  ]);
+  console.log(`  → 뉴스 ${newsItems.length}개, Reddit ${redditPosts.length}개`);
 
   console.log('[4/4] Claude Sonnet 주제 생성...');
   const topics = await generateTopicsWithClaude({
-    qbStats, studentErrors, newsItems, calendarCtx, postedTopics,
+    qbStats, studentErrors, newsItems, redditPosts, calendarCtx, postedTopics,
   });
 
   if (!topics || topics.length === 0) {
