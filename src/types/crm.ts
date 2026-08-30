@@ -431,7 +431,7 @@ export interface WeeklyExecutionRow {
   strategy_id: string;
   strategy_name: string;
   type: StrategyHistoryType;
-  planned: boolean; // focus_strategies에 있었는지 (false면 '계획 외 실행')
+  planned: boolean; // 트랙에 연결돼 있었는지 (false면 '계획 외 실행')
   applied_count: number;
   contacted_count: number;
   paid_count: number;
@@ -439,12 +439,59 @@ export interface WeeklyExecutionRow {
   leads: WeeklyExecutionLead[];
 }
 
+// ─── 주간 실행 트랙 (목표 하나 + 그 목표를 위한 실행 항목들) ─────────────────
+// 주차 계획 문서의 위계("세그먼트 → 목표를 가진 트랙 → 실행 항목 a·b·c")를 그대로 담는다.
+
+/** 트랙 진행률을 자동 계산할 지표 — 트랙에 연결된 전략의 적용 리드 기준(주 전체 실적이 아니다). */
+export type WeeklyTrackMetric = 'applied' | 'contacted' | 'paid' | 'revenue';
+
+export const WEEKLY_TRACK_METRIC_KEYS: WeeklyTrackMetric[] = [
+  'applied',
+  'contacted',
+  'paid',
+  'revenue',
+];
+
+export const WEEKLY_TRACK_METRIC_LABELS: Record<WeeklyTrackMetric, string> = {
+  applied: '적용 리드',
+  contacted: '컨택',
+  paid: '결제',
+  revenue: '매출',
+};
+
+/** 트랙 안의 실행 항목 1건. 전략을 연결하면 그 전략의 주간 집계가 트랙 진행률에 반영된다. */
+export interface WeeklyTrackItem {
+  id: string; // crypto.randomUUID() (클라이언트 생성)
+  text: string;
+  done: boolean;
+  done_at: string | null;
+  strategy_id: string | null; // 전략 라이브러리 연결 (선택)
+  strategy_name: string | null; // 스냅샷(전략 삭제·개명 후에도 과거 주차 보존)
+  strategy_type: StrategyHistoryType | null; // 스냅샷
+}
+
+/** 목표 하나 + 그 목표를 위한 실행 항목들. */
+export interface WeeklyTrack {
+  id: string; // crypto.randomUUID() (클라이언트 생성)
+  name: string; // "신규리드", "이탈 리드 캠페인", "소프트웨어 판매"
+  goal_text: string; // "인스타리드 2건 결제" — 문서에 쓰던 문장 그대로
+  metric: WeeklyTrackMetric | null; // null이면 수동 달성 체크로만 판정
+  target_value: number; // metric이 있을 때만 의미
+  achieved: boolean; // metric === null 인 목표의 수동 달성 체크
+  items: WeeklyTrackItem[];
+  carried_from_week?: string | null; // 회고 이어받기 출처 week_start
+}
+
 export interface WeeklyPlan {
   id: string;
   segment: WeeklyPlanSegment;
   week_start: string; // YYYY-MM-DD
+  tracks: WeeklyTrack[]; // 현행 계획 단위. 레거시 주차는 focus_strategies+actions에서 파생된다.
+  /** @deprecated 트랙 파생 소스로만 남는다(과거 주차 보존). 새 UI는 쓰지 않는다. */
   targets: WeeklyPlanTarget[];
+  /** @deprecated 트랙 파생 소스로만 남는다. */
   actions: WeeklyPlanAction[];
+  /** @deprecated 트랙 파생 소스로만 남는다. */
   focus_strategies: WeeklyFocusStrategy[];
   retrospective: WeeklyRetrospective;
   execution_notes: WeeklyExecutionNote[];
@@ -1073,6 +1120,10 @@ export interface WinbackCandidate {
 /** 추천 파이프라인 진단 — degrade를 조용히 숨기지 않기 위해 항상 함께 반환한다. */
 export interface WinbackRecommendStats {
   prefiltered: number;
+  /** AI가 실제로 심사한 인원(RERANK_POOL). 나머지는 규칙 점수로 backfill된다. */
+  reranked?: number;
+  /** 그중 유효한 판정이 돌아온 인원. reranked보다 작으면 응답 누락·환각 id가 있었다는 뜻. */
+  judged?: number;
   embedded: number;
   llm_used: boolean;
   embedding_used: boolean;

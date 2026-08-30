@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { appendConsultationEntry } from '@/lib/consultation-timeline';
-import { buildMirrorMemo } from '@/lib/winback/mirror';
+import { buildMirrorMemo, playLabel } from '@/lib/winback/mirror';
+import { notifyWinbackSendsToSlack } from '@/lib/slack-memo';
 
-const TARGET_SELECT = `*, play:winback_plays(title), variant:winback_play_variants(name)`;
+const TARGET_SELECT = `*, play:winback_plays(title), variant:winback_play_variants(name), student:students(name)`;
 
 // PATCH 허용 필드 화이트리스트. 발송 기록은 미러 라이트가 필요해 bulk 라우트(mark_sent)로만 처리한다.
 const EDITABLE = [
@@ -81,6 +82,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       published: false,
     });
     update.sent_message = timelineMessage || null;
+
+    // 상담 메모와 같은 내용을 상담 채널에도 공유(실패해도 수정에는 영향 없음).
+    const author = typeof body.sent_by === 'string' ? body.sent_by : undefined;
+    try {
+      await notifyWinbackSendsToSlack({
+        author,
+        sends: [
+          {
+            studentName: (target.student as { name?: string } | null)?.name ?? target.student_id,
+            playLabel: playLabel(playTitle, variantName),
+            message: timelineMessage,
+          },
+        ],
+      });
+    } catch (err) {
+      console.error('[winback-targets/[id] slack]', err);
+    }
   }
 
   const { data, error } = await supabaseAdmin

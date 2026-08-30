@@ -13,9 +13,9 @@ const TargetVsActualChart = dynamic(() => import('./TargetVsActualChart'), {
   ssr: false,
   loading: () => <div className="h-[260px] flex items-center justify-center text-sm text-gray-300">차트 로딩…</div>,
 });
-import type { CrmStatsData, StatsBySource, StatsWeekly, StatsMonthly } from '@/app/api/crm/stats/route';
+import type { CrmStatsData, StatsBySource, StatsWeekly, StatsMonthly } from '@/lib/crm-stats-service';
 import type { StatsDetailMetric, LeadDetailItem } from '@/lib/crm-stats-detail';
-// CRM 통계 공용 컴포넌트 — StrategyStats/KanbanStatsStrip/B2bStats도 함께 쓰므로 CRM에 그대로 둔다.
+// CRM 통계 공용 컴포넌트 — StrategyStats/B2bStats도 함께 쓰므로 CRM에 그대로 둔다.
 import { StatsDetailModal, leadStatus, type LeadDisplayStatus } from '../../crm/components/StatsDetailModal';
 import {
   type Preset,
@@ -451,7 +451,10 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
             ))}
           </div>
           {topView === 'tutoring' && (
-            <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg p-0.5">
+            <div
+              data-testid="stats-segment-tabs"
+              className="flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg p-0.5"
+            >
               {TUTORING_SUB_TABS.map(({ key, label }) => (
                 <button
                   key={key}

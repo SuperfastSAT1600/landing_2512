@@ -93,11 +93,14 @@ PRODUCT.md
 content/posts/
 blog_database/
 blog_archive/
-blog-agent/
-crm/
-pipeline/
-sat/
-srm/
+# blog-agent: 대용량/임시 파일만 제외, scripts/data는 추적
+blog-agent/node_modules/
+blog-agent/*.log
+blog-agent/.env*
+/crm/
+/pipeline/
+/sat/
+/srm/
 *.xlsx
 *.csv
 *.md.bak*

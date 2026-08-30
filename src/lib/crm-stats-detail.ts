@@ -127,7 +127,14 @@ export function buildStatsDetail(
   students: StudentRow[],
   payments: PaymentRow[],
   source?: string,
-  opts?: { includeRetryInContacted?: boolean }
+  opts?: {
+    includeRetryInContacted?: boolean;
+    /**
+     * '언제든 최초결제' 코호트(기간 무관). overview의 paid 분자와 같은 집합이다.
+     * 넘기지 않으면 payments에서 유도한다(기간 내 결제만 있는 호출자 하위호환).
+     */
+    paidCohort?: { student_id: string | null; student_name: string }[];
+  }
 ): StatsDetailResult {
   // 채널 드릴다운: by_source 집계와 동일하게 traffic_source(null→'미입력') 기준으로 필터.
   if (source != null) {
@@ -139,13 +146,21 @@ export function buildStatsDetail(
     );
   }
 
-  // 결제한 학생 집합 (최초결제 기준) — '결제 전환율' 분자와 동일
+  // 결제한 학생 집합 (최초결제 기준) — '결제 전환율' 분자와 동일.
+  // paidCohort가 있으면 그것(기간 무관 '언제든 결제')을 쓴다. 없으면 넘어온 payments에서 유도.
   const paidIds = new Set<string>();
   const paidNames = new Set<string>();
-  for (const p of payments) {
-    if (p.payment_type === '최초결제') {
+  if (opts?.paidCohort) {
+    for (const p of opts.paidCohort) {
       if (p.student_id) paidIds.add(p.student_id);
       if (p.student_name) paidNames.add(p.student_name);
+    }
+  } else {
+    for (const p of payments) {
+      if (p.payment_type === '최초결제') {
+        if (p.student_id) paidIds.add(p.student_id);
+        if (p.student_name) paidNames.add(p.student_name);
+      }
     }
   }
   const isPaid = (s: StudentRow) => paidIds.has(s.id) || paidNames.has(s.name);

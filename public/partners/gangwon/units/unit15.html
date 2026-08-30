@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNIT 15 : SMALL TALK — EVERYDAY CONVERSATIONS · 러너스 LRS</title>
+<meta property="og:title" content="UNIT 15 : SMALL TALK — EVERYDAY CONVERSATIONS" />
+<meta property="og:description" content="강원 영어 인터뷰 수업 · 러너스 LRS" />
+<meta property="og:image" content="/partners/lrs-logo.png" />
+<meta property="og:type" content="website" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --night:     #000000;
+  --night-s:   #0a0a0a;
+  --night-2:   #111111;
+  --white:     #ffffff;
+  --mute:      #cccccc;
+  --muted:     #aaaaaa;
+  --line:      #2a2a2f;
+  --line-l:    #e0e0e8;
+  --bg-l:      #f4f7fa;
+  --blue-tint: #e8f0ff;
+  --blue-bdr:  #c8d8ff;
+  --max:       1080px;
+  --pad:       clamp(24px, 5vw, 80px);
+}
+html { scroll-behavior: smooth; }
+body { background: var(--night); color: var(--white); font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+#topnav { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.88); backdrop-filter: blur(12px); border-bottom: 0.5px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--pad); height: 48px; }
+.brand { font-size: 11px; font-weight: 700; letter-spacing: 0.4em; color: var(--white); text-transform: uppercase; }
+.nav-dropdown { position: relative; }
+.nav-trigger { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mute); cursor: pointer; display: flex; align-items: center; gap: 7px; user-select: none; transition: color 0.15s; }
+.nav-trigger:hover { color: var(--white); }
+.nav-trigger-arrow { font-size: 7px; transition: transform 0.2s; }
+.nav-dropdown.open .nav-trigger-arrow { transform: rotate(180deg); }
+.nav-menu { display: none; position: absolute; top: calc(100% + 14px); right: 0; background: rgba(8,8,8,0.98); border: 0.5px solid var(--line); backdrop-filter: blur(16px); min-width: 260px; z-index: 200; max-height: 80vh; overflow-y: auto; }
+.nav-dropdown.open .nav-menu { display: block; }
+.nav-right { display: flex; align-items: center; gap: 24px; }
+.nav-hw-link { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mute); text-decoration: none; transition: color 0.15s; white-space: nowrap; }
+.nav-hw-link:hover { color: var(--white); }
+.nav-unit-hd { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; border-bottom: 0.5px solid var(--line); transition: background 0.12s; user-select: none; }
+.nav-unit-hd:hover { background: rgba(255,255,255,0.03); }
+.nav-unit-label { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--white); font-weight: 700; }
+.nav-unit-sub { font-size: 9px; letter-spacing: 0.05em; text-transform: none; color: var(--mute); margin-top: 3px; font-weight: 400; }
+.nav-unit-arrow { font-size: 7px; color: var(--mute); transition: transform 0.2s; flex-shrink: 0; margin-left: 12px; }
+.nav-unit.open .nav-unit-arrow { transform: rotate(90deg); }
+.nav-sections { display: none; }
+.nav-unit.open .nav-sections { display: block; }
+.nav-sec-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px 9px 24px; font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); cursor: pointer; border-bottom: 0.5px solid rgba(42,42,47,0.6); transition: color 0.12s, background 0.12s; white-space: nowrap; }
+.nav-sections .nav-sec-item:last-child { border-bottom: none; }
+.nav-sec-item:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+.nav-sec-item.active { color: var(--white); }
+.nav-sec-num { font-size: 7px; color: var(--line); min-width: 14px; flex-shrink: 0; }
+.section { max-width: var(--max); margin: 0 auto; padding: 80px var(--pad); border-bottom: 0.5px solid var(--line); }
+.section:last-child { border-bottom: none; }
+.eyebrow { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--mute); font-weight: 400; display: block; margin-bottom: 16px; }
+.hl  { height: 0.5px; background: var(--line);   margin: 24px 0; }
+.hl-l{ height: 0.5px; background: var(--line-l); margin: 24px 0; }
+.display { font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; line-height: 0.94; color: var(--white); }
+.d-xxl { font-size: clamp(40px, 6.2vw, 86px); }
+.d-xl  { font-size: clamp(36px, 5.5vw, 64px); }
+.d-lg  { font-size: clamp(28px, 4vw, 48px); }
+.d-md  { font-size: clamp(22px, 3vw, 34px); }
+#hero { min-height: 88vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 var(--pad) 80px; position: relative; overflow: hidden; }
+#hero-bg { position: absolute; inset: 0; z-index: 0; background: linear-gradient(135deg, #0a0a0a 0%, #111118 40%, #0d0d0d 100%); }
+#hero-bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 60%, rgba(80,140,200,0.06) 0%, transparent 60%), radial-gradient(ellipse at 70% 30%, rgba(200,120,80,0.05) 0%, transparent 50%); }
+.hero-content { position: relative; z-index: 2; display: flex; flex-direction: column; }
+.hero-unit-tag { font-size: 9px; letter-spacing: 0.4em; color: var(--mute); text-transform: uppercase; margin-bottom: 28px; display: block; }
+.hero-h1 { margin-bottom: 0; }
+.hero-sub { margin-top: 24px; font-size: 14px; color: var(--mute); letter-spacing: 0.04em; line-height: 1.6; max-width: 480px; }
+.scroll-hint { margin-top: 48px; font-size: 9px; letter-spacing: 0.28em; color: var(--line); text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
+.scroll-hint::after { content: ''; display: block; width: 40px; height: 0.5px; background: var(--line); }
+.split-section { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+@media (max-width: 720px) { .split-section { grid-template-columns: 1fr; gap: 40px; } }
+
+/* ── Instructor Bar ── */
+#instructor-bar { position: sticky; top: 48px; z-index: 90; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); border-bottom: 0.5px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--pad); height: 44px; transition: transform 0.3s; }
+#instructor-bar.hidden { transform: translateY(-100%); }
+.ibar-left { display: flex; align-items: center; gap: 20px; }
+.ibar-label { font-size: 8px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--line); flex-shrink: 0; }
+.ibar-section-name { font-size: 11px; font-weight: 700; color: var(--white); letter-spacing: 0.04em; min-width: 200px; }
+.ibar-right { display: flex; align-items: center; gap: 8px; }
+.ibar-btn { background: none; border: 0.5px solid #3a3a3f; color: var(--muted); font-family: Arial; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.ibar-btn:hover:not(:disabled) { border-color: var(--white); color: var(--white); }
+.ibar-btn:disabled { opacity: 0.25; cursor: default; }
+.ibar-btn.primary { border-color: var(--white); color: var(--white); }
+.ibar-btn.primary:hover { background: var(--white); color: #000; }
+.ibar-progress { display: flex; align-items: center; gap: 6px; }
+.ibar-dot { width: 4px; height: 4px; border-radius: 50%; background: #3a3a3f; cursor: pointer; transition: background 0.2s, transform 0.15s; flex-shrink: 0; }
+.ibar-dot.active { background: var(--white); transform: scale(1.5); }
+.ibar-dot:hover { background: var(--muted); }
+.ibar-toggle { font-size: 9px; letter-spacing: 0.2em; color: var(--mute); text-transform: uppercase; background: none; border: none; cursor: pointer; padding: 4px 0; transition: color 0.15s; }
+.ibar-toggle:hover { color: var(--white); }
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── Situation / Dialogue ── */
+.dialogue-block { display: flex; flex-direction: column; gap: 20px; }
+.dialogue-box { background: rgba(255,255,255,0.03); border: 0.5px solid var(--line); border-radius: 4px; padding: 28px 32px; display: flex; flex-direction: column; gap: 0; }
+.dialogue-label { font-size: 8px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
+.dialogue-line { display: flex; align-items: flex-start; gap: 14px; padding: 10px 0; border-bottom: 0.5px solid rgba(42,42,47,0.6); }
+.dialogue-line:last-child { border-bottom: none; padding-bottom: 0; }
+.dialogue-speaker { font-size: 9px; letter-spacing: 0.2em; font-weight: 700; text-transform: uppercase; color: var(--muted); min-width: 20px; flex-shrink: 0; padding-top: 2px; }
+.dialogue-speaker.a { color: #508CC8; }
+.dialogue-speaker.b { color: #C87850; }
+.dialogue-text { font-size: 15px; color: var(--white); line-height: 1.6; }
+.dialogue-caption { font-size: 10px; letter-spacing: 0.24em; color: var(--muted); text-transform: uppercase; }
+.situation-tag { display: inline-block; font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; font-weight: 700; padding: 3px 10px; border-radius: 2px; margin-bottom: 14px; }
+.situation-tag.on-pitch { background: rgba(80,140,200,0.12); color: #508CC8; border: 0.5px solid rgba(80,140,200,0.25); }
+.situation-tag.off-duty { background: rgba(200,120,80,0.12); color: #C87850; border: 0.5px solid rgba(200,120,80,0.25); }
+.q-block { display: flex; flex-direction: column; }
+.q-block .hl { margin: 0 0 0; }
+.q-item { padding: 20px 0; border-bottom: 0.5px solid var(--line); }
+.q-item:last-child { padding-bottom: 0; border-bottom: none; }
+.q-label { font-size: 9px; letter-spacing: 0.28em; color: var(--mute); text-transform: uppercase; margin-bottom: 8px; }
+.q-text { font-size: 16px; color: var(--white); line-height: 1.5; }
+.mission-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 8px; }
+@media (max-width: 720px) { .mission-steps { grid-template-columns: 1fr; gap: 0; } .step { border-top: 0.5px solid var(--line); padding: 28px 0; } }
+.step-title { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--white); font-weight: 700; margin-bottom: 12px; }
+.step-hl { height: 0.5px; background: var(--line); margin-bottom: 16px; }
+.step-body { font-size: 13px; color: var(--muted); line-height: 1.75; }
+.vocab-section { margin: 48px 0 0; }
+.vocab-progress-bar { display: flex; gap: 4px; margin-bottom: 20px; }
+.vocab-pip { height: 2px; flex: 1; background: var(--line); transition: background 0.3s; }
+.vocab-pip.done { background: var(--white); }
+.vocab-card-area { perspective: 1000px; height: 180px; position: relative; margin-bottom: 20px; }
+.vocab-card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.45s cubic-bezier(0.4,0,0.2,1); cursor: pointer; }
+.vocab-card.flipped { transform: rotateY(180deg); }
+.vocab-card-face { position: absolute; inset: 0; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--night-2); border: 0.5px solid var(--line); border-radius: 4px; gap: 8px; padding: 20px; }
+.vocab-card-back { transform: rotateY(180deg); }
+.vocab-hint { font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--line); }
+.vocab-word { font-size: 24px; font-weight: 700; letter-spacing: 0.04em; color: var(--white); text-align: center; }
+.vocab-box-badge { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--line); }
+.vocab-meaning { font-size: 20px; font-weight: 700; color: var(--white); text-align: center; }
+.vocab-meaning-en { font-size: 12px; color: var(--muted); text-align: center; font-style: italic; margin-top: 4px; }
+.vocab-nav { display: flex; gap: 12px; justify-content: center; }
+.vocab-btn { background: none; border: 0.5px solid var(--line); color: var(--muted); font-family: Arial; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 8px 24px; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
+.vocab-btn-know { border-color: var(--white); color: var(--white); }
+.vocab-btn-know:hover { background: var(--white); color: #000; }
+.vocab-btn-retry:hover { border-color: var(--muted); color: var(--white); }
+.vocab-done-state { display: none; text-align: center; padding: 32px 0; }
+.vocab-done-mark { font-size: 24px; margin-bottom: 8px; }
+.vocab-done-text { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); }
+.vocab-reset-btn { margin-top: 16px; background: none; border: 0.5px solid var(--line); color: var(--muted); font-family: Arial; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; padding: 6px 18px; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
+.vocab-reset-btn:hover { border-color: var(--white); color: var(--white); }
+
+/* ── Homework ── */
+.hw-submit-wrap { margin-top: 0; }
+.hw-submit-header { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 32px; }
+.hw-board-link { font-size: 10px; letter-spacing: 0.22em; color: var(--mute); text-transform: uppercase; text-decoration: none; transition: color 0.15s; }
+.hw-board-link:hover { color: var(--white); }
+.hw-fields { display: flex; flex-direction: column; gap: 0; }
+.hw-field-group { padding: 20px 0; border-top: 0.5px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.hw-field-group:last-child { border-bottom: 0.5px solid var(--line); }
+.hw-label { font-size: 9px; letter-spacing: 0.28em; color: var(--mute); text-transform: uppercase; }
+.hw-label-sub { letter-spacing: 0.06em; text-transform: none; color: var(--line); font-size: 9px; }
+.hw-input { background: var(--night-s); border: 0.5px solid var(--line); border-radius: 3px; padding: 12px 16px; color: var(--white); font-family: Arial; font-size: 14px; width: 100%; transition: border-color 0.15s; }
+.hw-input:focus { outline: none; border-color: var(--muted); }
+.hw-textarea { background: var(--night-s); border: 0.5px solid var(--line); border-radius: 3px; padding: 12px 16px; color: var(--white); font-family: Arial; font-size: 14px; width: 100%; resize: vertical; line-height: 1.7; transition: border-color 0.15s; }
+.hw-textarea:focus { outline: none; border-color: var(--muted); }
+.hw-actions { display: flex; align-items: center; gap: 20px; margin-top: 28px; }
+.hw-btn-submit { background: var(--white); color: #000; border: none; border-radius: 2px; font-family: Arial; font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; padding: 12px 32px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.hw-btn-submit:hover { background: var(--muted); }
+.hw-btn-submit:disabled { background: var(--line); color: var(--mute); cursor: default; }
+.hw-error { font-size: 11px; color: #ff6b6b; letter-spacing: 0.06em; }
+.hw-done-msg { display: flex; align-items: center; gap: 16px; padding: 24px 0; }
+.hw-done-check { width: 36px; height: 36px; border-radius: 50%; border: 0.5px solid var(--muted); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--white); flex-shrink: 0; }
+.hw-done-text { font-size: 13px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--white); }
+.hw-done-sub { font-size: 12px; color: var(--mute); }
+.hw-btn-peers { background: none; border: 0.5px solid var(--line); color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: all 0.15s; margin-bottom: 24px; }
+.hw-btn-peers:hover { border-color: var(--white); color: var(--white); }
+.hw-peers-list { display: flex; flex-direction: column; gap: 0; }
+.hw-peer-card { padding: 20px 0; border-top: 0.5px solid var(--line); }
+.hw-peer-card:last-child { border-bottom: 0.5px solid var(--line); }
+.hw-peer-name { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--white); margin-bottom: 10px; }
+.hw-peer-field { display: grid; grid-template-columns: 100px 1fr; gap: 8px; margin-bottom: 6px; }
+.hw-peer-field-label { font-size: 8px; letter-spacing: 0.2em; color: var(--mute); text-transform: uppercase; padding-top: 2px; }
+.hw-peer-field-val { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.hw-peer-time { font-size: 10px; color: var(--line); margin-top: 10px; }
+.hw-peers-empty { font-size: 13px; color: var(--mute); padding: 20px 0; }
+.hw-blanks { display: flex; flex-direction: column; gap: 14px; padding-top: 4px; }
+.hw-blank-item { display: flex; flex-direction: column; gap: 6px; }
+.hw-blank-tpl { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.hw-blank-num { color: var(--mute); font-size: 9px; letter-spacing: 0.2em; font-weight: 700; margin-right: 8px; }
+.hw-peer-prepare-row { display: grid; grid-template-columns: 28px 1fr; gap: 8px; margin-bottom: 4px; }
+.hw-peer-prepare-num { font-size: 8px; color: var(--mute); letter-spacing: 0.16em; padding-top: 2px; }
+.hw-peer-prepare-val { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.hw-peer-prepare-result { font-size: 9px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+#hw-login-panel { padding: 48px 0; }
+.login-title { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--mute); margin-bottom: 32px; }
+.login-fields { display: flex; flex-direction: column; gap: 0; }
+.login-field { padding: 20px 0; border-top: 0.5px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.login-field:last-of-type { border-bottom: 0.5px solid var(--line); }
+.login-label { font-size: 9px; letter-spacing: 0.28em; color: var(--mute); text-transform: uppercase; }
+.login-actions { display: flex; align-items: center; gap: 20px; margin-top: 28px; }
+.login-btn { background: var(--white); color: #000; border: none; border-radius: 2px; font-family: Arial; font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; padding: 12px 32px; cursor: pointer; transition: background 0.15s; }
+.login-btn:hover { background: var(--muted); }
+.login-btn:disabled { background: var(--line); color: var(--mute); cursor: default; }
+.login-error { font-size: 11px; color: #ff6b6b; letter-spacing: 0.06em; }
+#session-badge { display: none; font-size: 9px; letter-spacing: 0.2em; color: var(--mute); text-transform: uppercase; margin-bottom: 24px; align-items: center; gap: 16px; }
+#session-badge.visible { display: flex; }
+.session-name { color: var(--white); font-weight: 700; }
+.session-logout { background: none; border: none; color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; text-decoration: underline; padding: 0; }
+.session-logout:hover { color: var(--white); }
+.hw-sentences { display: flex; flex-direction: column; gap: 32px; }
+.hw-sent-block { display: flex; flex-direction: column; gap: 10px; }
+.hw-sent-num { font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted); }
+.hw-sent-src { font-size: 15px; color: var(--white); font-weight: 500; line-height: 1.5; padding-bottom: 10px; border-bottom: 0.5px solid var(--line); }
+.hw-sent-fields { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.hw-sent-row { display: grid; grid-template-columns: 72px 1fr; gap: 10px; align-items: center; }
+.hw-sent-row-label { font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); }
+
+/* ── 10 Phrases ── */
+.phrase-list { display: flex; flex-direction: column; gap: 0; margin-top: 40px; }
+.phrase-item { border-top: 0.5px solid var(--line); padding: 36px 0; display: grid; grid-template-columns: 48px 1fr; gap: 24px; align-items: start; }
+.phrase-item:last-child { border-bottom: 0.5px solid var(--line); }
+.phrase-num { font-size: 11px; letter-spacing: 0.28em; color: var(--mute); font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.phrase-cover-btn { width: 30px; height: 30px; border-radius: 50%; border: 0.5px solid var(--line); background: none; color: var(--line); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; padding: 0; font-family: Arial; flex-shrink: 0; }
+.phrase-cover-btn:hover { border-color: var(--muted); color: var(--muted); }
+.phrase-cover-btn.active { border-color: #5a9e5a; color: #5a9e5a; background: rgba(90,158,90,0.12); }
+.phrase-item.covered > .phrase-num { color: #5a9e5a; }
+.phrase-item.covered { border-top-color: rgba(90,158,90,0.25); }
+.phrase-body {}
+.phrase-en { font-size: clamp(16px, 2.2vw, 22px); color: var(--white); line-height: 1.5; font-weight: 500; margin-bottom: 8px; }
+.phrase-ko { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.phrase-vars { background: rgba(255,255,255,0.03); border-left: 2px solid var(--line); padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+.phrase-var { font-size: 13px; color: var(--muted); line-height: 1.55; padding-left: 4px; }
+.phrase-var strong { color: var(--white); font-weight: 600; }
+.phrase-step { font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--white); font-weight: 700; border-top: 0.5px solid var(--line); padding-top: 18px; margin-top: 24px; margin-bottom: 14px; }
+.phrase-note { font-size: 13px; color: var(--mute); line-height: 1.75; border-left: 2px solid var(--line); padding-left: 14px; margin-top: 10px; }
+.phrase-drill { padding: 16px 18px; background: rgba(255,255,255,0.03); border: 0.5px solid var(--line); }
+.phrase-drill-tpl { font-size: 16px; color: var(--white); font-weight: 500; line-height: 1.65; margin-bottom: 10px; }
+.phrase-drill-hint { font-size: 13px; color: var(--muted); letter-spacing: 0.04em; }
+
+/* ── Context Tags (On-Pitch / Off-Duty) ── */
+.phrase-ctx-tag { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 2px 8px; border-radius: 2px; margin-bottom: 12px; }
+.phrase-ctx-onpitch .phrase-ctx-tag { background: rgba(80,140,200,0.15); color: #508CC8; }
+.phrase-ctx-offduty .phrase-ctx-tag  { background: rgba(200,120,80,0.15); color: #C87850; }
+.phrase-ctx-onpitch { border-left: 2px solid #508CC8 !important; padding-left: 20px !important; }
+.phrase-ctx-offduty  { border-left: 2px solid #C87850 !important; padding-left: 20px !important; }
+
+/* expr list */
+#ex-compose { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; z-index: 998; padding: 40px clamp(24px, 5vw, 80px) 36px; box-sizing: border-box; }
+#ex-compose.open { display: flex; }
+#ex-compose-header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+#ex-compose-context { display: flex; align-items: baseline; gap: 14px; flex: 1; min-width: 0; }
+#ex-compose-tag { font-size: 9px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--mute); flex-shrink: 0; }
+#ex-compose-origin { font-size: 13px; color: #444; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ex-compose-close { flex-shrink: 0; margin-left: 24px; background: none; border: 0.5px solid var(--line); color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
+#ex-compose-close:hover { border-color: var(--muted); color: var(--white); }
+#ex-compose-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding-bottom: 20px; }
+.compose-ex { font-size: clamp(22px, 3.2vw, 44px); font-weight: 700; line-height: 1.2; color: #2a2a2a; transition: color 0.4s; }
+.compose-ex.fresh { color: #666; }
+#ex-compose-bottom { flex-shrink: 0; border-top: 0.5px solid var(--line); padding-top: 20px; }
+#ex-compose-hint { font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--line); margin-bottom: 10px; }
+#ex-compose-input { width: 100%; box-sizing: border-box; font-size: clamp(36px, 5.5vw, 72px); font-weight: 700; color: var(--white); background: none; border: none; outline: none; font-family: Arial; caret-color: white; padding: 0; }
+#ex-compose-input::placeholder { color: #222; }
+.compose-ex-row { display: flex; align-items: center; gap: 10px; }
+.compose-hw-btn { flex-shrink: 0; background: none; border: 0.5px solid #333; color: #555; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; padding: 4px 10px; border-radius: 12px; cursor: pointer; transition: all 0.15s; }
+.compose-hw-btn.active { border-color: #c8a850; color: #c8a850; background: rgba(200,168,80,0.08); }
+#expr-list-panel { display: none; padding: 60px clamp(24px, 5vw, 80px); border-top: 0.5px solid var(--line); }
+#expr-list-panel.has-items { display: block; }
+.expr-list-eyebrow { font-size: 9px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--mute); margin-bottom: 32px; }
+.expr-list-group { margin-bottom: 32px; }
+.expr-list-origin { font-size: 12px; font-style: italic; color: #555; margin-bottom: 10px; }
+.expr-list-sentence { font-size: clamp(16px, 2.2vw, 22px); font-weight: 700; color: var(--white); line-height: 1.35; padding: 6px 0 6px 14px; border-left: 2px solid #c8a850; margin-bottom: 8px; }
+
+/* ── Footer ── */
+#footer { border-top: 0.5px solid var(--line); padding: 32px var(--pad); display: flex; justify-content: space-between; align-items: center; max-width: 100%; }
+.footer-brand { font-size: 10px; letter-spacing: 0.32em; color: var(--muted); text-transform: uppercase; }
+.footer-note { font-size: 10px; color: var(--line); letter-spacing: 0.1em; }
+
+/* ── YT Modal (not used but kept for structure) ── */
+#yt-modal { display: none; }
+</style>
+</head>
+<body>
+
+<nav id="topnav">
+  <span class="brand">러너스 LRS</span>
+  <div class="nav-right">
+    <a href="../../lesson-feedback.html" class="nav-hw-link">레슨 피드백</a>
+    <a href="../../homework.html#unit15" class="nav-hw-link">숙제 결과 확인</a>
+    <div class="nav-dropdown" id="nav-dropdown">
+      <div class="nav-trigger" onclick="toggleNavMenu(event)">
+        <span id="nav-trigger-label">목차</span>
+        <span class="nav-trigger-arrow">▾</span>
+      </div>
+      <div class="nav-menu" id="nav-menu"></div>
+    </div>
+  </div>
+</nav>
+
+<div id="instructor-bar">
+  <div class="ibar-left">
+    <span class="ibar-label">강사 모드</span>
+    <span class="ibar-section-name" id="ibar-name">Unit 15 — 오프닝</span>
+  </div>
+  <div class="ibar-right">
+    <div class="ibar-progress" id="ibar-dots"></div>
+    <button class="ibar-btn" id="ibar-prev" onclick="ibarGo(-1)" disabled>← 이전</button>
+    <button class="ibar-btn primary" id="ibar-next" onclick="ibarGo(1)">다음 섹션 →</button>
+    <button class="ibar-toggle" onclick="toggleIbar()">숨기기</button>
+  </div>
+</div>
+
+<section id="hero" style="scroll-margin-top:92px;">
+  <div id="hero-bg"></div>
+  <div class="hero-content">
+    <span class="hero-unit-tag">Unit 15 &nbsp;·&nbsp; English Interview Class &nbsp;·&nbsp; Break Lesson</span>
+    <h1 class="display d-xxl hero-h1">SMALL<br>TALK</h1>
+    <p class="hero-sub">잠시 쉬어가며 — 인터뷰 밖에서, 팀원과 나누는 진짜 일상 영어.</p>
+    <div class="scroll-hint">EVERYDAY CONVERSATIONS WITH TEAMMATES</div>
+  </div>
+</section>
+
+<!-- S2 — Situation A -->
+<div class="section" id="situation-a" style="scroll-margin-top:92px;">
+  <span class="eyebrow">SITUATION A — ON THE TRAINING GROUND &nbsp;·&nbsp; 훈련 후 대화</span>
+  <div class="split-section reveal">
+    <div class="dialogue-block">
+      <span class="situation-tag on-pitch">On Pitch</span>
+      <div class="dialogue-box">
+        <div class="dialogue-label">훈련 직후 — 선수 A & B</div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker a">A</span>
+          <span class="dialogue-text">"You looked sharp out there today. That last run was something else."</span>
+        </div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker b">B</span>
+          <span class="dialogue-text">"Thanks, man. Honestly, I'm exhausted — but it's a good tired, you know?"</span>
+        </div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker a">A</span>
+          <span class="dialogue-text">"Same. Long week, huh? What are you doing after this?"</span>
+        </div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker b">B</span>
+          <span class="dialogue-text">"Thinking about grabbing some food. You in?"</span>
+        </div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker a">A</span>
+          <span class="dialogue-text">"For sure. I'm dead — but I can definitely eat."</span>
+        </div>
+      </div>
+      <div class="dialogue-caption">짧은 대화지만 — 칭찬, 감정 표현, 제안이 자연스럽게 이어집니다.</div>
+    </div>
+    <div class="q-block">
+      <div class="hl"></div>
+      <div class="q-item">
+        <div class="q-label">Q 01</div>
+        <div class="q-text">A는 B의 플레이를 칭찬할 때 어떤 표현을 썼나요? "sharp"은 어떤 의미인가요?</div>
+      </div>
+      <div class="q-item">
+        <div class="q-label">Q 02</div>
+        <div class="q-text">B는 피곤함을 어떻게 표현했나요? "good tired"는 무슨 뜻일까요?</div>
+      </div>
+      <div class="q-item">
+        <div class="q-label">Q 03</div>
+        <div class="q-text">식사 제안은 어떻게 했나요? "You in?"을 더 격식 있게 말하면 어떻게 될까요?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S3 — Situation B -->
+<div class="section" id="situation-b" style="scroll-margin-top:92px;">
+  <span class="eyebrow">SITUATION B — OFF DUTY &nbsp;·&nbsp; 일상 대화</span>
+  <div class="split-section reveal">
+    <div class="dialogue-block">
+      <span class="situation-tag off-duty">Off Duty</span>
+      <div class="dialogue-box">
+        <div class="dialogue-label">버스 안 — 이동 중 대화</div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker a">A</span>
+          <span class="dialogue-text">"Game day can't come soon enough. I've been itching for a real match all week."</span>
+        </div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker b">B</span>
+          <span class="dialogue-text">"Same. How long have you been with the club? You seem really settled in."</span>
+        </div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker a">A</span>
+          <span class="dialogue-text">"About eight months now. Took me a while, but I feel at home."</span>
+        </div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker b">B</span>
+          <span class="dialogue-text">"What do you do to switch off after a tough week? I've been struggling with that."</span>
+        </div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker a">A</span>
+          <span class="dialogue-text">"Honestly, just cooking and a good series. Total reset. What about you?"</span>
+        </div>
+        <div class="dialogue-line">
+          <span class="dialogue-speaker b">B</span>
+          <span class="dialogue-text">"Still figuring that out. Maybe I need some cooking tips."</span>
+        </div>
+      </div>
+      <div class="dialogue-caption">팀원을 알아가는 대화 — 질문이 자연스러운 연결고리가 됩니다.</div>
+    </div>
+    <div class="q-block">
+      <div class="hl"></div>
+      <div class="q-item">
+        <div class="q-label">Q 01</div>
+        <div class="q-text">A는 경기를 기다리는 마음을 어떻게 표현했나요? "itching for"는 무슨 뜻인가요?</div>
+      </div>
+      <div class="q-item">
+        <div class="q-label">Q 02</div>
+        <div class="q-text">"settled in"은 어떤 상태를 말하나요? 반대 상황은 어떻게 표현할 수 있을까요?</div>
+      </div>
+      <div class="q-item">
+        <div class="q-label">Q 03</div>
+        <div class="q-text">"switch off"는 여기서 무슨 의미인가요? 본인만의 switch off 방법을 영어로 말해볼 수 있나요?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S4 — 10 Key Phrases -->
+<div class="section" id="phrases" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Unit 15 &nbsp;·&nbsp; Break Lesson &nbsp;·&nbsp; 10 Key Phrases</span>
+
+  <div class="phrase-list reveal">
+
+    <!-- 01 -->
+    <div class="phrase-item phrase-ctx-onpitch">
+      <div class="phrase-num">01</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">ON PITCH</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"You looked sharp out there today."</div>
+        <div class="phrase-ko">오늘 정말 날카로웠어요 / 잘하던데요.</div>
+        <div class="phrase-note">'sharp' — 날카로운, 집중된, 준비된. 경기력에 대한 가장 자연스러운 칭찬 표현. "out there" = 훈련장/필드에서. 상대방의 퍼포먼스에 쓰는 가장 흔한 표현 중 하나.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var">You were <strong>on fire</strong> out there today.</div>
+          <div class="phrase-var">You looked <strong>dialled in</strong> from the start.</div>
+          <div class="phrase-var">That was <strong>some session</strong> — you were everywhere.</div>
+        </div>
+        <div class="phrase-step">③ 드릴 — 빈칸을 채워보세요</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">You looked _______ out there today.</div>
+          <div class="phrase-drill-hint">sharp / dialled in / focused / brilliant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 -->
+    <div class="phrase-item phrase-ctx-onpitch">
+      <div class="phrase-num">02</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">ON PITCH</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"That pass was unreal — seriously, how did you see that?"</div>
+        <div class="phrase-ko">그 패스 믿을 수가 없었어요 — 어떻게 본 거예요?</div>
+        <div class="phrase-note">'unreal' — 믿을 수 없을 만큼 훌륭한 (긍정적 의미). "how did you see that?" = 어떻게 그걸 봤어요? 팀원의 뛰어난 플레이를 칭찬하며 진짜 궁금한 척하는 자연스러운 표현.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var">That pass was <strong>incredible</strong> — where did that come from?</div>
+          <div class="phrase-var">That <strong>run</strong> was unreal — your timing was perfect.</div>
+          <div class="phrase-var">That was <strong>something else</strong> — how did you even see that angle?</div>
+        </div>
+        <div class="phrase-step">③ 드릴</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">That _______ was unreal — seriously, how did you _______?</div>
+          <div class="phrase-drill-hint">pass / run / finish &nbsp;·&nbsp; see that / time it / pull that off</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 -->
+    <div class="phrase-item phrase-ctx-onpitch">
+      <div class="phrase-num">03</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">ON PITCH</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"Long week, huh? But worth it."</div>
+        <div class="phrase-ko">힘든 한 주였죠? 그래도 보람 있었어요.</div>
+        <div class="phrase-note">'Long week' — 단순히 일주일이 길었다는 게 아니라, "힘든 한 주였다"는 관용 표현. "huh?" = 그렇지 않아요? (상대방의 동의를 구하는 짧은 추임새). "worth it" = 그만한 가치가 있다.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var"><strong>Tough week</strong>, huh? But I feel good about where we are.</div>
+          <div class="phrase-var">Long week, but <strong>the session today made up for it</strong>.</div>
+          <div class="phrase-var">It was a <strong>grind</strong>, but worth every second.</div>
+        </div>
+        <div class="phrase-step">③ 드릴</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">_______ week, huh? But _______.</div>
+          <div class="phrase-drill-hint">Long / Tough / Hard &nbsp;·&nbsp; worth it / totally worth it / I feel good</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 -->
+    <div class="phrase-item phrase-ctx-onpitch">
+      <div class="phrase-num">04</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">ON PITCH</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"Game day can't come soon enough."</div>
+        <div class="phrase-ko">빨리 경기 날이 왔으면 좋겠어요.</div>
+        <div class="phrase-note">"can't come soon enough" — 어서 빨리 왔으면 하는 마음을 강하게 표현하는 관용구. "I can't wait for game day"보다 더 자연스럽고 강조된 표현. 경기를 간절히 기다릴 때 사용.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var">The <strong>weekend</strong> can't come soon enough.</div>
+          <div class="phrase-var"><strong>Match day</strong> can't get here fast enough — I'm ready.</div>
+          <div class="phrase-var">I'm <strong>itching</strong> for game day.</div>
+        </div>
+        <div class="phrase-step">③ 드릴</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">_______ can't come soon enough.</div>
+          <div class="phrase-drill-hint">Game day / Match day / The weekend / Rest day</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 -->
+    <div class="phrase-item phrase-ctx-onpitch">
+      <div class="phrase-num">05</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">ON PITCH</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"I'm dead — someone carry me to the bus."</div>
+        <div class="phrase-ko">다 죽었어요 — 누가 버스까지 좀 들어줘요.</div>
+        <div class="phrase-note">"I'm dead" — "완전히 지쳤다"는 캐주얼한 표현. 공식 인터뷰에선 쓸 수 없지만 팀원과 나누는 농담 섞인 표현으로 자연스럽다. 과장된 유머를 통해 친근감을 형성하는 전형적인 스몰토크.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var">I'm <strong>completely done</strong> — my legs are gone.</div>
+          <div class="phrase-var">I have <strong>nothing left</strong> — tell the bus to come to me.</div>
+          <div class="phrase-var">I'm <strong>cooked</strong>. Absolutely cooked.</div>
+        </div>
+        <div class="phrase-step">③ 드릴</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">I'm _______ — someone _______ me.</div>
+          <div class="phrase-drill-hint">dead / cooked / done &nbsp;·&nbsp; carry / drag / help</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 -->
+    <div class="phrase-item phrase-ctx-offduty">
+      <div class="phrase-num">06</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">OFF DUTY</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"Honestly, I'm exhausted — but it's a good tired, you know?"</div>
+        <div class="phrase-ko">솔직히 완전히 지쳤어요 — 근데 기분 좋은 피로감이에요, 알죠?</div>
+        <div class="phrase-note">"a good tired" — 힘들었지만 보람 있는 피로. "you know?" = 알죠? 상대방의 공감을 유도하는 추임새. "exhausted"는 "tired"보다 훨씬 강한 표현으로 강도 높은 훈련 후에 딱 맞는 단어.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var">I'm <strong>wiped out</strong> — but the best kind of tired.</div>
+          <div class="phrase-var">Honestly, <strong>my body is done</strong> — but my head feels great.</div>
+          <div class="phrase-var">I'm exhausted, but <strong>I wouldn't have it any other way</strong>.</div>
+        </div>
+        <div class="phrase-step">③ 드릴</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">Honestly, I'm _______ — but it's a good _______, you know?</div>
+          <div class="phrase-drill-hint">exhausted / wiped out / drained &nbsp;·&nbsp; tired / kind of tired / feeling</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 07 -->
+    <div class="phrase-item phrase-ctx-offduty">
+      <div class="phrase-num">07</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">OFF DUTY</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"We should grab food after training sometime."</div>
+        <div class="phrase-ko">훈련 끝나고 언제 밥이나 먹어요.</div>
+        <div class="phrase-note">"grab food" — 캐주얼하게 뭔가 먹다. "eat" 보다 더 가벼운 느낌. "sometime" = 언젠가, 특정 날을 잡는 게 아닌 느슨한 제안. 팀원과 처음 친해질 때 쓰는 전형적인 소셜 표현.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var">We should <strong>get lunch</strong> after training one day.</div>
+          <div class="phrase-var">Let's <strong>grab something to eat</strong> after this session.</div>
+          <div class="phrase-var">We should <strong>hang out</strong> off the pitch sometime.</div>
+        </div>
+        <div class="phrase-step">③ 드릴</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">We should _______ after training sometime.</div>
+          <div class="phrase-drill-hint">grab food / get lunch / catch up / hang out</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 08 -->
+    <div class="phrase-item phrase-ctx-offduty">
+      <div class="phrase-num">08</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">OFF DUTY</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"What are you up to this weekend? Any plans?"</div>
+        <div class="phrase-ko">이번 주말에 뭐 해요? 계획 있어요?</div>
+        <div class="phrase-note">"What are you up to?" — "뭐 하고 있어요?" / "뭐 할 거예요?" 의 가장 캐주얼한 표현. "What are you doing?" 과 같은 뜻이지만 훨씬 자연스럽다. 'Any plans?' 로 짧게 이어주면 대화가 부드럽게 흘러간다.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var">What are you <strong>doing</strong> this weekend?</div>
+          <div class="phrase-var">Got <strong>anything on</strong> this weekend?</div>
+          <div class="phrase-var">Any <strong>big plans</strong> for the weekend?</div>
+        </div>
+        <div class="phrase-step">③ 드릴</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">What are you up to _______ ? Any _______?</div>
+          <div class="phrase-drill-hint">this weekend / tonight / after this &nbsp;·&nbsp; plans / ideas / thoughts</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 09 -->
+    <div class="phrase-item phrase-ctx-offduty">
+      <div class="phrase-num">09</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">OFF DUTY</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"How long have you been with the club? You seem really settled in."</div>
+        <div class="phrase-ko">클럽에 온 지 얼마나 됐어요? 정말 잘 적응한 것 같아요.</div>
+        <div class="phrase-note">"How long have you been with...?" — 소속 기간을 묻는 자연스러운 질문. "settled in" = 새 환경에 적응한, 편안해진. 새로운 팀원에게 건네기 좋은 관심 표현이자 대화를 이어가는 열린 질문.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var">How long have you been <strong>here</strong>? You look <strong>comfortable</strong>.</div>
+          <div class="phrase-var">Are you <strong>finding your feet</strong> here? You seem good.</div>
+          <div class="phrase-var">You've <strong>fitted right in</strong> — how long has it been?</div>
+        </div>
+        <div class="phrase-step">③ 드릴</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">How long have you been with the _______? You seem really _______.</div>
+          <div class="phrase-drill-hint">club / team / squad &nbsp;·&nbsp; settled in / comfortable / at home</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10 -->
+    <div class="phrase-item phrase-ctx-offduty">
+      <div class="phrase-num">10</div>
+      <div class="phrase-body">
+        <span class="phrase-ctx-tag">OFF DUTY</span>
+        <div class="phrase-step">① 이해 — 핵심 표현</div>
+        <div class="phrase-en">"What do you do to switch off after a tough week?"</div>
+        <div class="phrase-ko">힘든 한 주 끝나고 어떻게 머리 식혀요?</div>
+        <div class="phrase-note">"switch off" — 전원을 끄다 → 생각을 멈추다, 머리를 쉬다. "a tough week" = 힘든 주. 상대방의 일상과 회복 루틴에 관심을 보이는 표현. 답변하기 쉬운 개방형 질문이라 대화를 자연스럽게 이어가기 좋다.</div>
+        <div class="phrase-step">② 변형 — 이렇게 바꿀 수 있어요</div>
+        <div class="phrase-vars">
+          <div class="phrase-var">How do you <strong>wind down</strong> after a tough week?</div>
+          <div class="phrase-var">What's your go-to way to <strong>decompress</strong>?</div>
+          <div class="phrase-var">How do you <strong>disconnect</strong> when you need a break?</div>
+        </div>
+        <div class="phrase-step">③ 드릴</div>
+        <div class="phrase-drill">
+          <div class="phrase-drill-tpl">What do you do to _______ after a tough _______?</div>
+          <div class="phrase-drill-hint">switch off / wind down / decompress &nbsp;·&nbsp; week / session / stretch</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<div id="expr-list-panel">
+  <div class="expr-list-eyebrow">Expression Lists &nbsp;·&nbsp; 수업 중 기억할 표현</div>
+  <div id="expr-list-inner"></div>
+</div>
+
+<!-- S5 — Homework -->
+<div class="section" id="homework" style="scroll-margin-top:92px;">
+  <span class="eyebrow">Homework &nbsp;·&nbsp; 2 Steps</span>
+  <h2 class="display d-xl reveal" style="margin-bottom:0;">STUDY.<br>WRITE. SUBMIT.</h2>
+  <div class="hl reveal"></div>
+  <div class="mission-steps reveal">
+    <div class="step">
+      <div class="step-title">Vocab</div>
+      <div class="step-hl"></div>
+      <div class="step-body">오늘 배운 핵심 단어 10개를 플래시카드로 암기합니다.<br>모든 카드를 넘길 때까지 반복합니다.</div>
+    </div>
+    <div class="step">
+      <div class="step-title">Study</div>
+      <div class="step-hl"></div>
+      <div class="step-body">주요 문장 3개의 한글 뜻을 쓰고,<br>각 문장의 변형 5개를 직접 만들어 씁니다.<br>빈칸 채우기 4개도 완성합니다.</div>
+    </div>
+  </div>
+
+  <div class="hw-submit-wrap reveal" id="hw-login-panel" style="display:none;">
+    <div class="hl" style="margin-top:56px;"></div>
+    <div class="hw-submit-header">
+      <span class="eyebrow" style="margin:0;">숙제 시작 &nbsp;·&nbsp; Unit 15</span>
+    </div>
+    <p class="login-title">이름을 선택하면 바로 시작됩니다.</p>
+    <div class="login-fields">
+      <div class="login-field">
+        <label class="login-label">이름</label>
+        <select class="hw-input" id="login-name" onchange="onNameChange()">
+          <option value="">이름 선택</option>
+          <option>황은총</option>
+          <option>김어진</option>
+          <option>이용재</option>
+          <option>이정현</option>
+          <option>조원우</option>
+        </select>
+      </div>
+    </div>
+    <div class="login-actions">
+      <button class="login-btn" id="login-btn" onclick="doLogin()" disabled>시작하기</button>
+      <span class="login-error" id="login-error"></span>
+    </div>
+  </div>
+
+  <div id="session-badge">
+    <span>학습 중: <span class="session-name" id="session-name-display"></span></span>
+    <button class="session-logout" onclick="doLogout()">로그아웃</button>
+  </div>
+
+  <div class="vocab-section reveal" id="vocab-study" style="display:none;">
+    <div class="hl" style="margin-top:56px; margin-bottom:32px;"></div>
+    <span class="eyebrow" style="margin-bottom:16px; display:block;">Step 1 &nbsp;·&nbsp; Vocab — 핵심 단어 암기</span>
+    <div class="vocab-progress-bar" id="vocab-prog"></div>
+    <div class="vocab-card-area" id="vocab-card-area">
+      <div class="vocab-card" id="vocab-card" onclick="flipCard()">
+        <div class="vocab-card-face vocab-card-front">
+          <div class="vocab-hint">탭하면 뜻이 보여요</div>
+          <div class="vocab-word" id="vc-word"></div>
+          <div class="vocab-box-badge" id="vc-box-badge"></div>
+        </div>
+        <div class="vocab-card-face vocab-card-back">
+          <div class="vocab-meaning" id="vc-meaning"></div>
+          <div class="vocab-meaning-en" id="vc-en"></div>
+        </div>
+      </div>
+    </div>
+    <div class="vocab-nav" id="vocab-nav">
+      <button class="vocab-btn vocab-btn-retry" onclick="retryCard()">다시 볼게요</button>
+      <button class="vocab-btn vocab-btn-know" onclick="knowCard()">알았어요</button>
+    </div>
+    <div class="vocab-done-state" id="vocab-done">
+      <div class="vocab-done-mark">✓</div>
+      <div class="vocab-done-text">Vocab 완료</div>
+      <button class="vocab-reset-btn" onclick="resetVocab()">처음부터 다시</button>
+    </div>
+  </div>
+
+  <div class="hw-submit-wrap reveal" id="hw-submit-area" style="display:none;">
+    <div class="hl" style="margin-top:56px;"></div>
+    <div class="hw-submit-header">
+      <span class="eyebrow" style="margin:0;">Step 2 &nbsp;·&nbsp; Study — 문장 쓰기 &amp; 제출</span>
+      <a href="../../homework.html#unit15" class="hw-board-link">숙제 결과 확인 →</a>
+    </div>
+    <div id="hw-form">
+      <div class="hw-fields">
+        <div class="hw-field-group">
+          <label class="hw-label">SENTENCES &nbsp;<span class="hw-label-sub">한글 뜻을 쓰고, 변형 문장 5개를 만드세요</span></label>
+          <div class="hw-sentences">
+            <div class="hw-sent-block">
+              <div class="hw-sent-num">문장 01</div>
+              <div class="hw-sent-src">You looked sharp out there today.</div>
+              <div class="hw-sent-fields">
+                <div class="hw-sent-row"><span class="hw-sent-row-label">한글 뜻</span><input class="hw-input" id="s01-ko" type="text" placeholder="이 문장의 한글 뜻을 써보세요" maxlength="100"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 1</span><input class="hw-input" id="s01-v1" type="text" placeholder="예: You were on fire out there today." maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 2</span><input class="hw-input" id="s01-v2" type="text" placeholder="예: You looked dialled in from the start." maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 3</span><input class="hw-input" id="s01-v3" type="text" placeholder="예: You were excellent out there today." maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 4</span><input class="hw-input" id="s01-v4" type="text" maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 5</span><input class="hw-input" id="s01-v5" type="text" maxlength="120"></div>
+              </div>
+            </div>
+            <div class="hw-sent-block">
+              <div class="hw-sent-num">문장 02</div>
+              <div class="hw-sent-src">We should grab food after training sometime.</div>
+              <div class="hw-sent-fields">
+                <div class="hw-sent-row"><span class="hw-sent-row-label">한글 뜻</span><input class="hw-input" id="s02-ko" type="text" placeholder="이 문장의 한글 뜻을 써보세요" maxlength="100"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 1</span><input class="hw-input" id="s02-v1" type="text" placeholder="예: We should get lunch after training one day." maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 2</span><input class="hw-input" id="s02-v2" type="text" placeholder="예: Let's grab something to eat after this session." maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 3</span><input class="hw-input" id="s02-v3" type="text" placeholder="예: We should hang out off the pitch sometime." maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 4</span><input class="hw-input" id="s02-v4" type="text" maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 5</span><input class="hw-input" id="s02-v5" type="text" maxlength="120"></div>
+              </div>
+            </div>
+            <div class="hw-sent-block">
+              <div class="hw-sent-num">문장 03</div>
+              <div class="hw-sent-src">What do you do to switch off after a tough week?</div>
+              <div class="hw-sent-fields">
+                <div class="hw-sent-row"><span class="hw-sent-row-label">한글 뜻</span><input class="hw-input" id="s03-ko" type="text" placeholder="이 문장의 한글 뜻을 써보세요" maxlength="100"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 1</span><input class="hw-input" id="s03-v1" type="text" placeholder="예: How do you wind down after a tough week?" maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 2</span><input class="hw-input" id="s03-v2" type="text" placeholder="예: What's your go-to way to decompress?" maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 3</span><input class="hw-input" id="s03-v3" type="text" placeholder="예: How do you disconnect when you need a break?" maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 4</span><input class="hw-input" id="s03-v4" type="text" maxlength="120"></div>
+                <div class="hw-sent-row"><span class="hw-sent-row-label">변형 5</span><input class="hw-input" id="s03-v5" type="text" maxlength="120"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hw-field-group">
+          <label class="hw-label">나의 스몰토크 &nbsp;<span class="hw-label-sub">팀원에게 오늘 할 수 있는 대화 한 마디를 영어로 써보세요</span></label>
+          <textarea class="hw-textarea" id="hw-experience" rows="3" placeholder="예: Hey, you looked really sharp in training today. What are you up to after this? We should grab food." maxlength="300"></textarea>
+        </div>
+        <div class="hw-field-group">
+          <label class="hw-label">PREPARE &nbsp;<span class="hw-label-sub">빈칸을 채워 문장을 완성하세요</span></label>
+          <div class="hw-blanks">
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">01</span>Honestly, I'm _______ — but it's a good tired, you know?</div>
+              <input class="hw-input" id="hw-p01" type="text" placeholder="예: exhausted / wiped out / dead" maxlength="80">
+            </div>
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">02</span>Game day can't come _______ enough.</div>
+              <input class="hw-input" id="hw-p02" type="text" placeholder="예: soon / fast" maxlength="80">
+            </div>
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">03</span>What are you _______ this weekend? Any plans?</div>
+              <input class="hw-input" id="hw-p03" type="text" placeholder="예: up to / doing / planning" maxlength="80">
+            </div>
+            <div class="hw-blank-item">
+              <div class="hw-blank-tpl"><span class="hw-blank-num">04</span>That pass was _______ — seriously, how did you see that?</div>
+              <input class="hw-input" id="hw-p04" type="text" placeholder="예: unreal / incredible / brilliant" maxlength="80">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hw-actions">
+        <button class="hw-btn-submit" onclick="submitHomework()">저장하기</button>
+        <span class="hw-error" id="hw-error"></span>
+      </div>
+    </div>
+    <div id="hw-done" style="display:none;">
+      <div class="hw-done-msg">
+        <div class="hw-done-check">✓</div>
+        <div class="hw-done-text">제출 완료</div>
+        <div class="hw-done-sub" id="hw-done-name"></div>
+      </div>
+      <button class="hw-btn-peers" onclick="togglePeers()">팀원 답변 보기</button>
+      <div id="hw-peers" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<footer id="footer">
+  <span class="footer-brand">강원 FC &nbsp;·&nbsp; 러너스 LRS 영어 인터뷰 수업</span>
+  <span class="footer-note">Unit 15 &nbsp;·&nbsp; Small Talk — Everyday Conversations</span>
+</footer>
+
+<div id="ex-compose">
+  <div id="ex-compose-header">
+    <div id="ex-compose-context">
+      <span id="ex-compose-tag"></span>
+      <span id="ex-compose-origin"></span>
+    </div>
+    <button id="ex-compose-close" onclick="closeCompose()">✕ 닫기 (Esc)</button>
+  </div>
+  <div id="ex-compose-list"></div>
+  <div id="ex-compose-bottom">
+    <div id="ex-compose-hint">Enter — 추가 &nbsp;·&nbsp; Esc — 닫기</div>
+    <input id="ex-compose-input" type="text" placeholder="예문을 입력하세요…" onkeydown="handleComposeKey(event)" oninput="handleComposeInput(this)">
+  </div>
+</div>
+
+<div id="yt-modal"></div>
+
+<script>
+const SECTIONS = [
+  { id: 'hero',        name: 'Unit 15 — 오프닝' },
+  { id: 'situation-a', name: '① Situation A — 훈련 후 대화' },
+  { id: 'situation-b', name: '② Situation B — 일상 대화' },
+  { id: 'phrases',     name: '③ 10 핵심 표현 — 이해 · 변형 · 드릴' },
+  { id: 'homework',    name: '④ 숙제 안내' },
+];
+
+let ibarVisible = true;
+let ibarCur = 0;
+
+const UNITS = [
+  { id: 'unit1',  label: 'Unit 1',  subtitle: 'Self-Introduction & Joining the Team',             url: 'unit1.html' },
+  { id: 'unit2',  label: 'Unit 2',  subtitle: 'Post-Match Flash Interview',                       url: 'unit2.html' },
+  { id: 'unit3',  label: 'Unit 3',  subtitle: 'Goals, Motivation & Ambition',                    url: 'unit3.html' },
+  { id: 'unit4',  label: 'Unit 4',  subtitle: 'Injury, Recovery & Resilience',                   url: 'unit4.html' },
+  { id: 'unit5',  label: 'Unit 5',  subtitle: 'Review — 4 Units, 28 Phrases',                    url: 'unit5.html' },
+  { id: 'unit6',  label: 'Unit 6',  subtitle: 'Self-Introduction Round 2',                       url: 'unit6.html' },
+  { id: 'unit7',  label: 'Unit 7',  subtitle: 'Post-Match Flash Interview — Round 2',            url: 'unit7.html' },
+  { id: 'unit8',  label: 'Unit 8',  subtitle: 'Goals, Motivation & Ambition — Round 2',         url: 'unit8.html' },
+  { id: 'unit9',  label: 'Unit 9',  subtitle: 'Injury, Recovery & Resilience — Round 2',        url: 'unit9.html' },
+  { id: 'unit10', label: 'Unit 10', subtitle: 'Round 2 Review — 4 Units, 40 Phrases',            url: 'unit10.html' },
+  { id: 'unit11', label: 'Unit 11', subtitle: 'Self-Introduction & Joining the Team — Round 3',  url: 'unit11.html' },
+  { id: 'unit12', label: 'Unit 12', subtitle: 'Post-Match Flash Interview — Round 3',            url: 'unit12.html' },
+  { id: 'unit13', label: 'Unit 13', subtitle: 'Goals, Motivation & Ambition — Round 3',         url: 'unit13.html' },
+  { id: 'unit14', label: 'Unit 14', subtitle: 'Injury, Recovery & Resilience — Round 3',        url: 'unit14.html' },
+  { id: 'unit15', label: 'Unit 15', subtitle: 'Small Talk — Everyday Conversations',             current: true, sections: SECTIONS },
+];
+
+const navMenuEl = document.getElementById('nav-menu');
+const navDropdownEl = document.getElementById('nav-dropdown');
+
+(function buildNavMenu() {
+  UNITS.forEach((unit) => {
+    const unitEl = document.createElement('div');
+    unitEl.className = 'nav-unit' + (unit.current ? ' open' : '');
+    unitEl.id = 'nav-unit-' + unit.id;
+    const hd = document.createElement('div');
+    hd.className = 'nav-unit-hd';
+    hd.innerHTML = `<div class="nav-unit-hd-left"><div class="nav-unit-label">${unit.label}</div><div class="nav-unit-sub">${unit.subtitle}</div></div><span class="nav-unit-arrow">▸</span>`;
+    if (unit.current && unit.sections) {
+      hd.onclick = (e) => { e.stopPropagation(); unitEl.classList.toggle('open'); };
+    } else if (unit.url) {
+      hd.onclick = () => { window.location.href = unit.url; };
+    }
+    unitEl.appendChild(hd);
+    if (unit.sections) {
+      const secsEl = document.createElement('div');
+      secsEl.className = 'nav-sections';
+      unit.sections.forEach((sec, i) => {
+        const item = document.createElement('div');
+        item.className = 'nav-sec-item' + (i === 0 ? ' active' : '');
+        item.dataset.secIdx = i;
+        item.innerHTML = `<span class="nav-sec-num">${String(i).padStart(2,'0')}</span>${sec.name}`;
+        item.onclick = () => { ibarGoTo(i); closeNavMenu(); };
+        secsEl.appendChild(item);
+      });
+      unitEl.appendChild(secsEl);
+    }
+    navMenuEl.appendChild(unitEl);
+  });
+})();
+
+function toggleNavMenu(e) { e.stopPropagation(); navDropdownEl.classList.toggle('open'); }
+function closeNavMenu() { navDropdownEl.classList.remove('open'); }
+document.addEventListener('click', () => closeNavMenu());
+function updateNavMenuActive(idx) { navMenuEl.querySelectorAll('.nav-sec-item').forEach((el, i) => el.classList.toggle('active', i === idx)); }
+
+const ibarDotsEl = document.getElementById('ibar-dots');
+SECTIONS.forEach((sec, i) => {
+  const d = document.createElement('div');
+  d.className = 'ibar-dot' + (i === 0 ? ' active' : '');
+  d.title = sec.name;
+  d.onclick = () => ibarGoTo(i);
+  ibarDotsEl.appendChild(d);
+});
+
+function ibarGoTo(idx) {
+  ibarCur = Math.max(0, Math.min(SECTIONS.length - 1, idx));
+  const sec = SECTIONS[ibarCur];
+  const el = document.getElementById(sec.id);
+  if (el) { const offset = 48 + 44; const top = el.getBoundingClientRect().top + window.scrollY - offset; window.scrollTo({ top, behavior: 'smooth' }); }
+  document.getElementById('ibar-name').textContent = sec.name;
+  document.getElementById('ibar-prev').disabled = ibarCur === 0;
+  document.getElementById('ibar-next').disabled = ibarCur === SECTIONS.length - 1;
+  ibarDotsEl.querySelectorAll('.ibar-dot').forEach((d, i) => d.classList.toggle('active', i === ibarCur));
+  updateNavMenuActive(ibarCur);
+}
+function ibarGo(dir) { ibarGoTo(ibarCur + dir); }
+function toggleIbar() { ibarVisible = !ibarVisible; document.getElementById('instructor-bar').classList.toggle('hidden', !ibarVisible); document.querySelector('.ibar-toggle').textContent = ibarVisible ? '숨기기' : '강사 바'; }
+
+let scrollTimer;
+window.addEventListener('scroll', () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => {
+    const offset = 48 + 44 + 80;
+    let active = 0;
+    SECTIONS.forEach((sec, i) => { const el = document.getElementById(sec.id); if (el && el.getBoundingClientRect().top <= offset) active = i; });
+    if (active !== ibarCur) {
+      ibarCur = active;
+      document.getElementById('ibar-name').textContent = SECTIONS[ibarCur].name;
+      document.getElementById('ibar-prev').disabled = ibarCur === 0;
+      document.getElementById('ibar-next').disabled = ibarCur === SECTIONS.length - 1;
+      ibarDotsEl.querySelectorAll('.ibar-dot').forEach((d, i) => d.classList.toggle('active', i === ibarCur));
+    }
+  }, 80);
+});
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+<script>
+function _exKey(noteEl) { return 'ex__' + noteEl.dataset.key; }
+function _getEx(k) { try { const raw = JSON.parse(localStorage.getItem(k) || '[]'); return raw.map(item => typeof item === 'string' ? { text: item, isHomework: false } : item); } catch { return []; } }
+function _setEx(k, arr) { localStorage.setItem(k, JSON.stringify(arr)); }
+function _getContext(noteEl) { const item = noteEl.closest('.quote-item'); const tag = item ? (item.querySelector('.quote-tag') || {}).textContent || '' : ''; const en = item ? (item.querySelector('.quote-en') || {}).textContent || '' : ''; return { tag, en }; }
+function _renderNoteExamples(noteEl) { const key = _exKey(noteEl); const arr = _getEx(key); noteEl.querySelector('.note-examples').innerHTML = arr.map((item, i) => { const t = item.text; const hw = item.isHomework; const badge = hw ? '<span class="note-ex-hw-badge">숙제</span>' : ''; return `<div class="note-ex-item${hw ? ' is-hw' : ''}" onclick="reopenCompose(${JSON.stringify(noteEl.dataset.key)})">${t.replace(/</g,'&lt;')}${badge}<button class="note-ex-del" onclick="delEx(event,'${noteEl.dataset.key}',${i})">✕</button></div>`; }).join(''); }
+function delEx(e, dataKey, idx) { e.stopPropagation(); const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`); const key = _exKey(noteEl); const arr = _getEx(key); arr.splice(idx, 1); _setEx(key, arr); _renderNoteExamples(noteEl); _renderExpressionList(); }
+function toggleHomework(dataKey, idx) { const key = 'ex__' + dataKey; const arr = _getEx(key); if (arr[idx]) arr[idx].isHomework = !arr[idx].isHomework; _setEx(key, arr); _renderComposeList(); const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`); if (noteEl) _renderNoteExamples(noteEl); _renderExpressionList(); }
+let _activeKey = null;
+function addExample(btn) { const noteEl = btn.closest('.quote-note'); _openCompose(noteEl); }
+function reopenCompose(dataKey) { const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`); if (noteEl) _openCompose(noteEl); }
+function _openCompose(noteEl) { const ctx = _getContext(noteEl); _activeKey = _exKey(noteEl); document.getElementById('ex-compose-tag').textContent = ctx.tag || '강사 예문'; document.getElementById('ex-compose-origin').textContent = ctx.en; _renderComposeList(); const inp = document.getElementById('ex-compose-input'); inp.value = ''; document.getElementById('ex-compose').classList.add('open'); document.body.style.overflow = 'hidden'; inp.focus(); }
+function closeCompose() { document.getElementById('ex-compose').classList.remove('open'); document.body.style.overflow = ''; if (_activeKey) { const dataKey = _activeKey.replace('ex__', ''); const noteEl = document.querySelector(`.quote-note[data-key="${dataKey}"]`); if (noteEl) _renderNoteExamples(noteEl); } _renderExpressionList(); }
+function _renderComposeList() { const arr = _getEx(_activeKey); const dataKey = _activeKey ? _activeKey.replace('ex__', '') : ''; const list = document.getElementById('ex-compose-list'); list.innerHTML = arr.map((item, i) => { const t = item.text; const hw = item.isHomework; const fresh = i === arr.length - 1 ? ' fresh' : ''; return `<div class="compose-ex-row"><div class="compose-ex${fresh}" style="flex:1">${t.replace(/</g,'&lt;')}</div><button class="compose-hw-btn${hw ? ' active' : ''}" onclick="toggleHomework('${dataKey}',${i})">${hw ? '✓ 숙제' : '숙제'}</button></div>`; }).join(''); list.scrollTop = list.scrollHeight; }
+function _renderExpressionList() { const panel = document.getElementById('expr-list-panel'); if (!panel) return; const inner = document.getElementById('expr-list-inner'); const groups = []; document.querySelectorAll('.quote-note[data-key]').forEach(noteEl => { const arr = _getEx(_exKey(noteEl)); const hwItems = arr.filter(item => item.isHomework); if (!hwItems.length) return; const ctx = _getContext(noteEl); groups.push({ origin: ctx.en, items: hwItems }); }); inner.innerHTML = groups.map(g => `<div class="expr-list-group"><div class="expr-list-origin">${g.origin.replace(/</g,'&lt;')}</div>${g.items.map(item => `<div class="expr-list-sentence">${item.text.replace(/</g,'&lt;')}</div>`).join('')}</div>`).join(''); panel.classList.toggle('has-items', groups.length > 0); }
+function handleComposeKey(e) { if (e.key === 'Enter') { e.preventDefault(); const inp = document.getElementById('ex-compose-input'); const val = inp.value.trim(); if (!val || !_activeKey) return; const arr = _getEx(_activeKey); arr.push({ text: val, isHomework: false }); _setEx(_activeKey, arr); inp.value = ''; _renderComposeList(); } else if (e.key === 'Escape') { closeCompose(); } }
+function handleComposeInput(inp) {}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCompose(); });
+document.querySelectorAll('.quote-note[data-key]').forEach(noteEl => _renderNoteExamples(noteEl));
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL  = 'https://ualucbrrfvysmfytkdew.supabase.co';
+const SB_ANON = 'sb_publishable_nmqBIh-y6etZMXmxrUxbqA_t5uIIIOp';
+const HW_UNIT = 'unit15';
+const SESSION_LS_KEY = 'b2b_session_unit15';
+const sb = window.supabase.createClient(SB_URL, SB_ANON);
+let session = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem(SESSION_LS_KEY);
+  if (saved) { try { session = JSON.parse(saved); await onSessionReady(); return; } catch {} }
+  showLoginPanel();
+});
+
+function showLoginPanel() { document.getElementById('hw-login-panel').style.display = 'block'; document.getElementById('vocab-study').style.display = 'none'; document.getElementById('hw-submit-area').style.display = 'none'; document.getElementById('session-badge').classList.remove('visible'); }
+
+async function onSessionReady() {
+  document.getElementById('hw-login-panel').style.display = 'none';
+  document.getElementById('vocab-study').style.display = 'block';
+  document.getElementById('hw-submit-area').style.display = 'block';
+  document.getElementById('session-name-display').textContent = session.name;
+  document.getElementById('session-badge').classList.add('visible');
+  const { data: existing } = await sb.from('b2b_homework_submissions').select('id').eq('unit', HW_UNIT).eq('student_id', session.student_id).maybeSingle();
+  if (existing) showDoneState(session.name);
+  await initVocab();
+}
+
+function doLogout() { session = null; localStorage.removeItem(SESSION_LS_KEY); showLoginPanel(); }
+function onNameChange() { const name = document.getElementById('login-name').value; document.getElementById('login-btn').disabled = !name; }
+
+async function doLogin() {
+  const name  = document.getElementById('login-name').value;
+  const errEl = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+  errEl.textContent = '';
+  if (!name) { errEl.textContent = '이름을 선택하세요.'; return; }
+  btn.disabled = true; btn.textContent = '확인 중…';
+  const { data: existing } = await sb.from('b2b_students').select('id').eq('name', name).maybeSingle();
+  if (existing) {
+    session = { student_id: existing.id, name };
+  } else {
+    const { data: newStu, error } = await sb.from('b2b_students').insert({ name }).select('id').single();
+    if (error) { errEl.textContent = '오류가 발생했습니다.'; btn.disabled = false; btn.textContent = '시작하기'; return; }
+    session = { student_id: newStu.id, name };
+  }
+  localStorage.setItem(SESSION_LS_KEY, JSON.stringify(session));
+  btn.textContent = '시작하기';
+  await onSessionReady();
+}
+
+const VOCAB_LIST = [
+  { word: 'sharp',                  meaning: '날카로운, 준비된',    en: 'you looked sharp out there' },
+  { word: 'unreal',                 meaning: '믿을 수 없는 (긍정)', en: 'that pass was unreal' },
+  { word: 'exhausted',              meaning: '완전히 지친',          en: 'honestly, I\'m exhausted' },
+  { word: 'grab (food)',            meaning: '캐주얼하게 먹다',      en: 'we should grab food sometime' },
+  { word: 'up to',                  meaning: '~하고 있는, ~할',      en: 'what are you up to?' },
+  { word: 'settle in',              meaning: '적응하다, 편해지다',   en: 'you seem really settled in' },
+  { word: 'switch off',             meaning: '머리를 쉬다, 끄다',    en: 'switch off after a tough week' },
+  { word: 'in the zone',            meaning: '집중 상태, 몰입',      en: 'gets me in the zone' },
+  { word: 'long week',              meaning: '힘든 한 주',           en: 'long week, huh?' },
+  { word: "can't come soon enough", meaning: '어서 빨리 왔으면',     en: "game day can't come soon enough" },
+];
+
+const LEITNER_MASTER = 4;
+let vocabQueue = [];
+
+async function initVocab() {
+  const { data: events } = await sb.from('b2b_vocab_events').select('word_key, new_box, occurred_at').eq('student_id', session.student_id).eq('unit', HW_UNIT).order('occurred_at', { ascending: false });
+  const boxState = {};
+  for (const e of events ?? []) { if (!(e.word_key in boxState)) boxState[e.word_key] = e.new_box; }
+  vocabQueue = VOCAB_LIST.map((w, i) => ({ ...w, key: `${HW_UNIT}_${i}`, box: boxState[`${HW_UNIT}_${i}`] ?? 0 })).filter(w => w.box < LEITNER_MASTER).sort((a, b) => a.box - b.box);
+  renderVocabPips(boxState);
+  if (!vocabQueue.length) showVocabDone(); else renderVocabCard();
+}
+
+function renderVocabPips(boxState) { const bar = document.getElementById('vocab-prog'); bar.innerHTML = VOCAB_LIST.map((_, i) => { const key = `${HW_UNIT}_${i}`; const box = boxState ? (boxState[key] ?? 0) : 0; return `<div class="vocab-pip${box >= LEITNER_MASTER ? ' done' : ''}"></div>`; }).join(''); }
+function renderVocabCard() { if (!vocabQueue.length) { showVocabDone(); return; } const item = vocabQueue[0]; document.getElementById('vc-word').textContent = item.word; document.getElementById('vc-meaning').textContent = item.meaning; document.getElementById('vc-en').textContent = item.en; const boxLabels = ['새 단어', 'Lv.1', 'Lv.2', 'Lv.3']; document.getElementById('vc-box-badge').textContent = boxLabels[item.box] || ''; document.getElementById('vocab-card').classList.remove('flipped'); }
+function flipCard() { if (!vocabQueue.length) return; document.getElementById('vocab-card').classList.toggle('flipped'); }
+
+async function knowCard() {
+  if (!vocabQueue.length) return;
+  const item = vocabQueue.shift();
+  const new_box = Math.min(item.box + 1, LEITNER_MASTER);
+  await saveVocabEvent(item.key, true, item.box, new_box);
+  await refreshVocabAfterGrade();
+}
+
+async function retryCard() {
+  if (!vocabQueue.length) return;
+  const item = vocabQueue.shift();
+  await saveVocabEvent(item.key, false, item.box, 0);
+  vocabQueue.push({ ...item, box: 0 });
+  renderVocabCard();
+  updatePipsFromQueue();
+}
+
+async function saveVocabEvent(word_key, is_correct, prev_box, new_box) { await sb.from('b2b_vocab_events').insert({ student_id: session.student_id, unit: HW_UNIT, word_key, is_correct, prev_box, new_box }); }
+
+async function refreshVocabAfterGrade() {
+  if (vocabQueue.length) {
+    renderVocabCard();
+    const { data: events } = await sb.from('b2b_vocab_events').select('word_key, new_box, occurred_at').eq('student_id', session.student_id).eq('unit', HW_UNIT).order('occurred_at', { ascending: false });
+    const boxState = {};
+    for (const e of events ?? []) { if (!(e.word_key in boxState)) boxState[e.word_key] = e.new_box; }
+    renderVocabPips(boxState);
+  } else { showVocabDone(); }
+}
+
+function updatePipsFromQueue() { const bar = document.getElementById('vocab-prog'); const queueKeys = new Set(vocabQueue.map(w => w.key)); bar.innerHTML = VOCAB_LIST.map((_, i) => { const key = `${HW_UNIT}_${i}`; return `<div class="vocab-pip${!queueKeys.has(key) ? ' done' : ''}"></div>`; }).join(''); }
+function showVocabDone() { document.getElementById('vocab-card-area').style.display = 'none'; document.getElementById('vocab-nav').style.display = 'none'; document.getElementById('vocab-done').style.display = 'block'; }
+async function resetVocab() { document.getElementById('vocab-card-area').style.display = ''; document.getElementById('vocab-nav').style.display = ''; document.getElementById('vocab-done').style.display = 'none'; await initVocab(); }
+
+async function submitHomework() {
+  const experience = document.getElementById('hw-experience').value.trim();
+  const p01 = document.getElementById('hw-p01').value.trim();
+  const p02 = document.getElementById('hw-p02').value.trim();
+  const p03 = document.getElementById('hw-p03').value.trim();
+  const p04 = document.getElementById('hw-p04').value.trim();
+  const prepare = JSON.stringify({ experience, "01": p01, "02": p02, "03": p03, "04": p04 });
+  const s01 = { ko: document.getElementById('s01-ko').value.trim(), v1: document.getElementById('s01-v1').value.trim(), v2: document.getElementById('s01-v2').value.trim(), v3: document.getElementById('s01-v3').value.trim(), v4: document.getElementById('s01-v4').value.trim(), v5: document.getElementById('s01-v5').value.trim() };
+  const s02 = { ko: document.getElementById('s02-ko').value.trim(), v1: document.getElementById('s02-v1').value.trim(), v2: document.getElementById('s02-v2').value.trim(), v3: document.getElementById('s02-v3').value.trim(), v4: document.getElementById('s02-v4').value.trim(), v5: document.getElementById('s02-v5').value.trim() };
+  const s03 = { ko: document.getElementById('s03-ko').value.trim(), v1: document.getElementById('s03-v1').value.trim(), v2: document.getElementById('s03-v2').value.trim(), v3: document.getElementById('s03-v3').value.trim(), v4: document.getElementById('s03-v4').value.trim(), v5: document.getElementById('s03-v5').value.trim() };
+  const hasSentences = s01.ko || s01.v1 || s02.ko || s02.v1 || s03.ko || s03.v1;
+  const sentences = JSON.stringify({ s01, s02, s03 });
+  const errEl = document.getElementById('hw-error');
+  errEl.textContent = '';
+  if (!session) { errEl.textContent = '로그인이 필요합니다.'; return; }
+  if (!hasSentences && !p01 && !p02 && !p03 && !p04 && !experience) { errEl.textContent = '최소 하나 이상 작성해주세요.'; return; }
+  const btn = document.querySelector('.hw-btn-submit');
+  btn.disabled = true; btn.textContent = '저장 중…';
+  const { error } = await sb.from('b2b_homework_submissions').insert({ unit: HW_UNIT, student_name: session.name, student_id: session.student_id, rewatch_answer: null, prepare_answer: prepare, sentences_answer: hasSentences ? sentences : null });
+  if (error) { errEl.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.'; btn.disabled = false; btn.textContent = '저장하기'; return; }
+  fetch('/api/gangwon/homework-notify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentName: session.name, unit: HW_UNIT, experience, sentences: [s01.ko, s02.ko, s03.ko].filter(Boolean), blanks: [p01, p02, p03, p04].filter(Boolean), submittedAt: new Date().toISOString() }) }).catch(() => {});
+  showDoneState(session.name);
+}
+
+function showDoneState(name) { document.getElementById('hw-form').style.display = 'none'; const done = document.getElementById('hw-done'); done.style.display = 'block'; document.getElementById('hw-done-name').textContent = name + ' 님의 답변이 저장되었습니다.'; }
+
+let peersOpen = false;
+async function togglePeers() {
+  const peerEl = document.getElementById('hw-peers');
+  const btn = document.querySelector('.hw-btn-peers');
+  if (peersOpen) { peerEl.style.display = 'none'; btn.textContent = '팀원 답변 보기'; peersOpen = false; return; }
+  btn.textContent = '불러오는 중…';
+  const { data, error } = await sb.from('b2b_homework_submissions').select('student_name, prepare_answer, sentences_answer, submitted_at').eq('unit', HW_UNIT).order('submitted_at', { ascending: false });
+  if (error || !data) { btn.textContent = '팀원 답변 보기'; return; }
+  const SENT_LABELS = ['You looked sharp out there today.', 'We should grab food after training sometime.', 'What do you do to switch off after a tough week?'];
+  peerEl.innerHTML = data.length === 0
+    ? '<div class="hw-peers-empty">아직 제출한 팀원이 없습니다.</div>'
+    : '<div class="hw-peers-list">' + data.map(r => `
+        <div class="hw-peer-card">
+          <div class="hw-peer-name">${esc(r.student_name)}</div>
+          ${r.sentences_answer ? renderSentencesForPeer(r.sentences_answer, SENT_LABELS) : ''}
+          ${r.prepare_answer ? renderPrepareForPeer(r.prepare_answer) : ''}
+          <div class="hw-peer-time">${fmtDate(r.submitted_at)}</div>
+        </div>`).join('') + '</div>';
+  peerEl.style.display = 'block';
+  btn.textContent = '팀원 답변 닫기';
+  peersOpen = true;
+}
+
+function renderSentencesForPeer(val, labels) {
+  if (!val) return '';
+  try {
+    const s = JSON.parse(val);
+    let html = '<div class="hw-peer-field"><span class="hw-peer-field-label">Sentences</span><div>';
+    ['s01','s02','s03'].forEach((k, i) => {
+      const item = s[k]; if (!item) return;
+      html += `<div style="margin-bottom:10px;"><div class="hw-peer-prepare-result">${labels[i]}</div>`;
+      if (item.ko) html += `<div class="hw-peer-prepare-row"><span class="hw-peer-prepare-num">뜻</span><span class="hw-peer-prepare-val">${esc(item.ko)}</span></div>`;
+      ['v1','v2','v3','v4','v5'].forEach((v, j) => { if (item[v]) html += `<div class="hw-peer-prepare-row"><span class="hw-peer-prepare-num">${j+1}</span><span class="hw-peer-prepare-val">${esc(item[v])}</span></div>`; });
+      html += '</div>';
+    });
+    return html + '</div></div>';
+  } catch { return ''; }
+}
+
+function renderPrepareForPeer(val) {
+  if (!val) return '';
+  try {
+    const p = JSON.parse(val);
+    if (typeof p !== 'object' || Array.isArray(p)) return '';
+    let html = '<div class="hw-peer-field"><span class="hw-peer-field-label">Prepare</span><div>';
+    if (p.experience) html += `<div class="hw-peer-prepare-result">나의 스몰토크: ${esc(p.experience)}</div>`;
+    ['01','02','03','04'].forEach(k => { if (p[k]) html += `<div class="hw-peer-prepare-row"><span class="hw-peer-prepare-num">${k}</span><span class="hw-peer-prepare-val">${esc(p[k])}</span></div>`; });
+    return html + '</div></div>';
+  } catch { return ''; }
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(iso) { if (!iso) return ''; const d = new Date(iso); return d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) + ' ' + d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }); }
+</script>
+
+<script>
+const COVERAGE_KEY = 'unit15_coverage';
+function _getCoverage() { try { return new Set(JSON.parse(localStorage.getItem(COVERAGE_KEY) || '[]')); } catch { return new Set(); } }
+function _saveCoverage(s) { localStorage.setItem(COVERAGE_KEY, JSON.stringify([...s])); }
+
+document.querySelectorAll('.phrase-cover-btn').forEach(btn => {
+  const item = btn.closest('.phrase-item');
+  const phraseIdx = btn.dataset.idx;
+  const cov = _getCoverage();
+  if (cov.has(phraseIdx)) { item.classList.add('covered'); btn.classList.add('active'); btn.textContent = '✓'; }
+  btn.addEventListener('click', () => {
+    const cov2 = _getCoverage();
+    if (cov2.has(phraseIdx)) { cov2.delete(phraseIdx); item.classList.remove('covered'); btn.classList.remove('active'); btn.textContent = '○'; }
+    else { cov2.add(phraseIdx); item.classList.add('covered'); btn.classList.add('active'); btn.textContent = '✓'; }
+    _saveCoverage(cov2);
+  });
+});
+</script>
+
+</body>
+</html>
