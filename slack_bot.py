@@ -8,6 +8,8 @@ SuperfastSAT Slack Bot — Socket Mode
 """
 
 import re
+import os
+import glob
 import time
 import hmac
 import hashlib
@@ -309,19 +311,37 @@ def run_blog_write_async(n, platform: str, channel: str, thread_ts, say, topic_t
             say(f'⚠️ {n}번 주제를 찾을 수 없습니다. 주제 목록을 먼저 생성해주세요.', thread_ts=thread_ts)
             return
 
-        skill_name, model = PLATFORM_SKILLS.get(platform, PLATFORM_SKILLS['landing'])
+        skill_name, convert_model = PLATFORM_SKILLS.get(platform, PLATFORM_SKILLS['landing'])
         platform_label = {'landing': '랜딩 페이지', 'naver': '네이버 블로그', 'ghost': 'Ghost 블로그'}[platform]
 
-        prompt = (
-            f'/{skill_name}\n\n'
+        # Step 1: superfastsat-blog로 blueprint 생성 (항상 Sonnet)
+        say(f'📝 [1/2] blueprint 분석 및 작성 중...', thread_ts=thread_ts)
+        blueprint_prompt = (
+            f'/superfastsat-blog\n\n'
             f'주제: {title}\n\n'
             f'참고: /workspace/schema/questions/master_sat_ontology_v3.jsonl 에서 '
             f'관련 스킬의 Hard 문제, rationale, 선지 패턴을 검색해 '
             f'구체적 수치(Hard 비율%, 문항 수, 문제 ID)를 본문에 포함할 것.'
         )
+        log.info(f'blueprint 작성 시작: {title[:50]}')
+        _run_claude_blog(blueprint_prompt, 'claude-sonnet-4-6')
 
-        log.info(f'블로그 작성 시작: [{platform}/{model}] {title[:50]}')
-        result = _run_claude_blog(prompt, model)
+        # 생성된 blueprint 파일 탐색 (가장 최근 것)
+        blueprints = glob.glob('/workspace/wiki/blog/*/blueprint.md')
+        if not blueprints:
+            say('⚠️ blueprint 파일을 찾을 수 없습니다. superfastsat-blog 스킬을 확인해주세요.', thread_ts=thread_ts)
+            return
+        latest_blueprint = max(blueprints, key=os.path.getmtime)
+        log.info(f'blueprint 완료: {latest_blueprint}')
+
+        # Step 2: 플랫폼 스킬로 blueprint → 최종 포맷 변환
+        say(f'🔄 [2/2] {platform_label}용 변환 중...', thread_ts=thread_ts)
+        convert_prompt = (
+            f'/{skill_name}\n\n'
+            f'{latest_blueprint} 파일의 blueprint를 읽어 {platform_label}용 포스팅으로 변환할 것.'
+        )
+        log.info(f'플랫폼 변환 시작: [{platform}/{convert_model}] {title[:50]}')
+        result = _run_claude_blog(convert_prompt, convert_model)
 
         chunks = [result[i:i+3800] for i in range(0, len(result), 3800)]
         for i, chunk in enumerate(chunks):
@@ -331,10 +351,6 @@ def run_blog_write_async(n, platform: str, channel: str, thread_ts, say, topic_t
         log.info(f'블로그 작성 완료: [{platform}] {title[:50]}')
 
     threading.Thread(target=_run, daemon=True).start()
-
-
-    t = threading.Thread(target=_run, daemon=True)
-    t.start()
 
 
 # ── CRM 등록 ──────────────────────────────────────────────────────────────────
@@ -443,7 +459,7 @@ def handle_message(event, say):
                 '고스트': 'ghost',  'ghost': 'ghost',
             }.get(raw_platform, 'landing')
             platform_label = {'landing': '랜딩 페이지', 'naver': '네이버 블로그', 'ghost': 'Ghost 블로그'}[platform]
-            say(f"⏳ {n}번 주제로 {platform_label}용 포스팅 작성 중 (3~5분 소요)...", thread_ts=thread_ts)
+            say(f"⏳ {n}번 주제로 {platform_label}용 포스팅 작성 중 (blueprint → 변환, 8~12분 소요)...", thread_ts=thread_ts)
             run_blog_write_async(n, platform, channel, thread_ts, say)
             return
 
@@ -453,7 +469,7 @@ def handle_message(event, say):
             topic_title = direct_match.group(1).strip()
             platform = 'naver' if '네이버' in text else ('ghost' if '고스트' in text or 'ghost' in text.lower() else 'landing')
             platform_label = {'landing': '랜딩 페이지', 'naver': '네이버 블로그', 'ghost': 'Ghost 블로그'}[platform]
-            say(f"⏳ '{topic_title}' 주제로 {platform_label}용 포스팅 작성 중 (3~5분 소요)...", thread_ts=thread_ts)
+            say(f"⏳ '{topic_title}' 주제로 {platform_label}용 포스팅 작성 중 (blueprint → 변환, 8~12분 소요)...", thread_ts=thread_ts)
             run_blog_write_async(None, platform, channel, thread_ts, say, topic_title=topic_title)
             return
 
