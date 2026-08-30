@@ -33,7 +33,16 @@ SAT를 매 시험마다 직접 응시하고, College Board 데이터를 직접 �
 인과 메커니즘 없이 결론으로 가면 일반론이다. 반드시 "왜"를 설명한다.
 
 **question bank 데이터를 반드시 직접 열어 확인한다.**
-`/workspace/schema/questions/master_sat_ontology_v3.jsonl`에서 해당 스킬의 Hard 비율, topic_category 분포, 대표 문제 rationale을 확인하고 본문에 수치로 인용한다. 추측 수치는 사용하지 않는다.
+`/workspace/schema/questions/master_sat_ontology_v3.jsonl`을 열어 아래를 분석하고 본문에 수치로 인용한다. 추측 수치는 사용하지 않는다.
+
+분석 대상:
+- 해당 스킬 문제의 **시퀀스**: 지문 구조(passage_logical_flow)와 정답 위치의 반복 패턴
+- **선지 설계 패턴**: Hard 오답 선지에 반복 사용되는 언어 전략 (범위 비틀기, 지문 표현 재사용 등)
+- **특정 단어 출제 빈도**: 질문 동사(suggests/implies/indicates 등)별 정답 기준 차이
+- 대표 문제 1개의 rationale 전문 — "왜 이 선지가 정답인가"의 실제 논리
+
+**금지**: "X 스킬 Hard 비율 Y% → X가 나올 확률이 높다"는 출제 확률 예측.
+데이터는 문제 설계의 규칙을 드러내는 데 쓴다. 확률 예측에 쓰지 않는다.
 
 ---
 
