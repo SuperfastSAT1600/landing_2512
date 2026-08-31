@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import {
+  BACKFILL_BUDGET_MS,
+  BACKFILL_MAX_POLLS,
+  BACKFILL_MAX_DURATION_S,
+} from '@/lib/plaud-backfill-limits';
 
 const runBackfill = vi.fn();
 vi.mock('@/lib/plaud-backfill-run', () => ({ runBackfill }));
@@ -28,6 +33,7 @@ const makeReq = (body: unknown = {}, key: string | null = 'admin-key') =>
 const report = {
   candidates: 5, skipped: 0, inserted: 2, wouldInsert: 0,
   unmatched: 1, ambiguous: 0, failed: 0, remaining: 2,
+  budgetExhausted: false, listingMs: 1_000, elapsedMs: 5_000,
   unmatchedEntries: [], ambiguousEntries: [], failedEntries: [],
 };
 
@@ -58,8 +64,28 @@ describe('POST /api/crm/plaud/backfill-transcripts', () => {
     await POST(makeReq({}));
 
     const [, opts] = runBackfill.mock.calls[0];
-    expect(opts.budgetMs).toBeGreaterThan(0);
+    expect(opts.budgetMs).toBe(BACKFILL_BUDGET_MS);
     expect(opts.budgetMs).toBeLessThan(300_000); // maxDuration 미만이어야 응답을 돌려줄 수 있다
+  });
+
+  it('maxDuration이 시간 배분 상수와 같은 값을 본다', async () => {
+    // 상수는 lib에 두고 라우트는 리터럴을 쓴다(Next는 maxDuration을 정적으로 읽는다).
+    // 둘이 갈라지면 예산 계산이 거짓이 되므로 여기서 묶어둔다.
+    const { maxDuration } = await import('../route');
+    expect(maxDuration).toBe(BACKFILL_MAX_DURATION_S);
+  });
+
+  it('백필 전사는 폴링 상한을 낮춰 호출한다 — 마지막 한 건이 한도를 넘기지 않도록', async () => {
+    const { POST } = await import('../route');
+    const { transcribeAudioUrl } = await import('@/lib/plaud-transcribe');
+    await POST(makeReq({}));
+
+    const [deps] = runBackfill.mock.calls[0];
+    await deps.transcribe('https://s3/a.mp3?sig=1');
+
+    expect(transcribeAudioUrl).toHaveBeenCalledWith('https://s3/a.mp3?sig=1', {
+      maxPolls: BACKFILL_MAX_POLLS,
+    });
   });
 
   it('account_key를 주면 그 계정만 처리한다', async () => {

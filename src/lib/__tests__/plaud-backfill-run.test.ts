@@ -295,4 +295,62 @@ describe('runBackfill 시간 예산', () => {
     expect(report.inserted).toBe(2);
     expect(report.remaining).toBe(0);
   });
+
+  it('목록 조회가 예산을 다 쓰면 전사를 한 건도 시작하지 않는다', async () => {
+    // 예산 시계는 함수 진입 시점부터 돈다. 목록 조회(students/call_transcripts/Plaud)에
+    // 예산을 다 썼다면 새 전사를 시작해선 안 된다 — 시작하면 maxDuration을 넘겨
+    // 그 배치의 성공분 리포트까지 통째로 날아간다.
+    let clock = 0;
+    const deps = makeDeps({
+      listRecordings: vi.fn(async () => {
+        clock += 200_000;
+        return [recA, recB];
+      }),
+    });
+    const report = await runBackfill(deps, {
+      accounts: ['me'],
+      budgetMs: 150_000,
+      now: () => clock,
+    });
+
+    expect(deps.transcribe).not.toHaveBeenCalled();
+    expect(report.inserted).toBe(0);
+    expect(report.remaining).toBe(2);
+    expect(report.budgetExhausted).toBe(true);
+    expect(report.listingMs).toBeGreaterThanOrEqual(200_000);
+  });
+
+  it('시간으로 미룬 건과 limit으로 미룬 건을 구분해 보고한다', async () => {
+    const byLimit = await runBackfill(makeDeps(), { accounts: ['me'], limit: 1 });
+    expect(byLimit.remaining).toBe(1);
+    expect(byLimit.budgetExhausted).toBe(false); // 시간이 아니라 예산 상한 때문이다
+
+    let clock = 0;
+    const byTime = await runBackfill(
+      makeDeps({
+        transcribe: vi.fn(async () => {
+          clock += 200_000;
+          return '화자1: 전사';
+        }),
+      }),
+      { accounts: ['me'], budgetMs: 150_000, now: () => clock }
+    );
+    expect(byTime.remaining).toBe(1);
+    expect(byTime.budgetExhausted).toBe(true);
+  });
+
+  it('총 소요 시간을 보고한다 — 클라이언트가 다음 배치를 판단할 근거', async () => {
+    let clock = 0;
+    const report = await runBackfill(
+      makeDeps({
+        transcribe: vi.fn(async () => {
+          clock += 10_000;
+          return '화자1: 전사';
+        }),
+      }),
+      { accounts: ['me'], budgetMs: 150_000, now: () => clock }
+    );
+
+    expect(report.elapsedMs).toBe(20_000); // 2건 x 10s
+  });
 });

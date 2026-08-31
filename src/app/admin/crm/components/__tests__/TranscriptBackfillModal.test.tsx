@@ -9,7 +9,7 @@ const report = (over: Partial<Record<string, number>> = {}) => ({
   },
 });
 
-const okJson = (body: unknown) => ({ ok: true, json: async () => body });
+const okJson = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
 
 describe('TranscriptBackfillModal', () => {
   beforeEach(() => {
@@ -83,26 +83,66 @@ describe('TranscriptBackfillModal', () => {
   it('서버 오류면 반복을 멈추고 원인을 보여준다', async () => {
     (fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
+      status: 500,
       json: async () => ({ error: 'Plaud 연결 실패' }),
     });
 
     render(<TranscriptBackfillModal adminKey="k" onClose={() => {}} />);
     fireEvent.click(screen.getByText('전사 시작'));
 
-    await waitFor(() => expect(screen.getByText('Plaud 연결 실패')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/Plaud 연결 실패/)).toBeTruthy());
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('진행이 전혀 없으면 무한 루프에 빠지지 않고 중단한다', async () => {
+  it('진행이 전혀 없으면 무한 루프에 빠지지 않고 실패 사유를 보여준다', async () => {
     // 매 배치가 0건 저장 + 실패만 반복 → remaining이 줄지 않는다
-    (fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-      okJson(report({ inserted: 0, failed: 2, remaining: 3 }))
+    (fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          candidates: 7, inserted: 0, failed: 2, remaining: 3, unmatched: 0, ambiguous: 0,
+          failedEntries: [
+            { studentId: 's1', entryId: 'e1', recordingName: '녹음 A', error: 'AsrTimeoutError' },
+            { studentId: 's2', entryId: 'e2', recordingName: '녹음 B', error: 'quota exceeded' },
+          ],
+        },
+      }),
+    });
+
+    render(<TranscriptBackfillModal adminKey="k" onClose={() => {}} />);
+    fireEvent.click(screen.getByText('전사 시작'));
+
+    await waitFor(() => expect(screen.getByText(/전사 2건이 모두 실패/)).toBeTruthy());
+    expect(screen.getByText(/AsrTimeoutError/)).toBeTruthy(); // 서버 로그를 열지 않아도 원인을 안다
+    expect(screen.getByText(/quota exceeded/)).toBeTruthy();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('첫 응답 전에는 0건 표 대신 집계 중임을 보여준다', async () => {
+    // 첫 요청은 목록 스캔 + 전사까지 최대 수 분이 걸린다. 그동안 0으로 채운 표를
+    // 그리면 "대상이 없다"로 읽힌다 — 실제로는 아직 아무것도 모르는 상태다.
+    (fetch as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      () => new Promise(() => {})
     );
 
     render(<TranscriptBackfillModal adminKey="k" onClose={() => {}} />);
     fireEvent.click(screen.getByText('전사 시작'));
 
-    await waitFor(() => expect(screen.getByText(/처리가 진행되지 않아 중단/)).toBeTruthy());
-    expect(fetch).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.getByText(/대상을 집계하는 중/)).toBeTruthy());
+    expect(screen.queryByText('0건')).toBeNull();
+    expect(screen.queryByText('대상')).toBeNull();
+  });
+
+  it('진행 중에는 배치 번호와 경과 시간을 보여준다', async () => {
+    (fetch as unknown as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(okJson(report({ inserted: 2, remaining: 3 })))
+      .mockImplementationOnce(() => new Promise(() => {}));
+
+    render(<TranscriptBackfillModal adminKey="k" onClose={() => {}} />);
+    fireEvent.click(screen.getByText('전사 시작'));
+
+    await waitFor(() => expect(screen.getByText(/2번째 배치/)).toBeTruthy());
+    expect(screen.getByText(/경과/)).toBeTruthy();
   });
 });

@@ -6,13 +6,12 @@ import { getPlaudFile, listPlaudRecordings, PLAUD_ACCOUNTS } from '@/lib/plaud-c
 import { transcribeAudioUrl } from '@/lib/plaud-transcribe';
 import { insertCallTranscript, findTranscriptByExternalId } from '@/lib/call-transcripts';
 import { ASR_MODEL } from '@/lib/qwen-asr';
+import { BACKFILL_BUDGET_MS, BACKFILL_MAX_POLLS } from '@/lib/plaud-backfill-limits';
 
-// 전사 폴링(상한 240s) 때문에 한 건만으로도 오래 걸린다.
+// 전사 폴링 때문에 한 건만으로도 오래 걸린다.
+// 리터럴로 둔다 — Next가 이 값을 정적으로 읽는다. BACKFILL_MAX_DURATION_S와 같아야 하고,
+// 라우트 테스트가 두 값을 묶어둔다.
 export const maxDuration = 300;
-
-// 새 전사를 시작할 수 있는 시간. maxDuration보다 충분히 낮아야 응답을 돌려줄 수 있다
-// (예산 소진 후 진행 중인 마지막 전사가 끝날 시간을 남겨둔다).
-const BUDGET_MS = 200_000;
 
 const FETCH_PAGE = 500;
 const RECORDING_PAGE_SIZE = 100;
@@ -66,8 +65,8 @@ async function fetchAllRecordings(accountKey: string) {
  * 메모는 있는데 전사가 없는 상담 건을 찾아 전사·저장한다(관리자 인증 필요).
  *
  * 한 번의 호출은 시간 예산 안에서 처리할 수 있는 만큼만 하고 남은 건수를 돌려준다.
- * 전사 1건이 최대 240s라 전체를 한 요청에 담을 수 없다 — 호출자가 remaining이 0이 될
- * 때까지 반복 호출한다. 재호출은 안전하다(이미 저장된 건은 자동 제외).
+ * 전사 1건이 최대 BACKFILL_MAX_POLLS x 3s라 전체를 한 요청에 담을 수 없다 — 호출자가
+ * remaining이 0이 될 때까지 반복 호출한다. 재호출은 안전하다(이미 저장된 건은 자동 제외).
  *
  * Body: { account_key?: string, limit?: number }
  */
@@ -94,7 +93,9 @@ export async function POST(request: NextRequest) {
     listCapturedEntryIds: fetchCapturedEntryIds,
     listRecordings: fetchAllRecordings,
     getFile: getPlaudFile,
-    transcribe: transcribeAudioUrl,
+    // 폴링 상한을 낮춰 준다 — 예산이 꽉 찬 순간 시작된 마지막 한 건까지
+    // maxDuration 안에 끝나야 이 배치의 리포트를 돌려줄 수 있다.
+    transcribe: (url: string) => transcribeAudioUrl(url, { maxPolls: BACKFILL_MAX_POLLS }),
     insert: insertCallTranscript,
     // 한 녹음이 메모 여럿에 붙는 경우 기존 전사를 재사용한다(#297) — ASR 재과금 방지.
     findExisting: findTranscriptByExternalId,
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
     const report = await runBackfill(deps, {
       accounts: accountKey ? [accountKey] : PLAUD_ACCOUNTS.map((a) => a.key),
       ...(limit !== undefined ? { limit } : {}),
-      budgetMs: BUDGET_MS,
+      budgetMs: BACKFILL_BUDGET_MS,
       asrModel: ASR_MODEL,
     });
     return NextResponse.json({ data: report });
