@@ -30,13 +30,25 @@ const KST_STAMP = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
  * 써야 포맷이 갈라지지 않으므로 여기 한 벌만 둔다.
  */
 export function toKstDisplay(iso: string): string {
-  if (!iso) return '';
-  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
-  const d = new Date(hasTz ? iso : `${iso}Z`);
-  if (Number.isNaN(d.getTime())) return iso;
+  const d = toUtcDate(iso);
+  if (!d) return iso;
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   const p = (n: number) => String(n).padStart(2, '0');
   return `${kst.getUTCFullYear()}-${p(kst.getUTCMonth() + 1)}-${p(kst.getUTCDate())} ${p(kst.getUTCHours())}:${p(kst.getUTCMinutes())}`;
+}
+
+/**
+ * Plaud 타임스탬프를 실제 인스턴트로 만든다.
+ * Plaud는 타임존 표기 없는 UTC 문자열을 주므로, 표기가 없으면 UTC로 간주한다.
+ * 이 규칙이 헤더 표시(toKstDisplay)와 DB 저장(call_transcripts.recorded_at)에 함께
+ * 쓰이므로 한 곳에 둔다 — 갈라지면 저장 시각이 9시간 어긋난다.
+ * @returns 파싱 불가하거나 빈 값이면 null
+ */
+export function toUtcDate(iso: string): Date | null {
+  if (!iso) return null;
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
+  const d = new Date(hasTz ? iso : `${iso}Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 export interface PlaudMemoHeader {

@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { processPlaudRecording } from '@/lib/plaud-process';
 import { QuotaExhaustedError } from '@/lib/plaud-transcribe';
-import { AsrFailedError } from '@/lib/qwen-asr';
+import { AsrFailedError, ASR_MODEL } from '@/lib/qwen-asr';
 import { getPlaudFile, getAccountLabel } from '@/lib/plaud-client';
 import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultation-timeline';
 import { notifyMemoToSlack, PLAUD_MEMO_HEADING } from '@/lib/slack-memo';
 import { PLAUD_MEMO_MARKER, toKstDisplay } from '@/lib/plaud-backfill';
+import { insertCallTranscript } from '@/lib/call-transcripts';
 
 // 전사 작업 폴링(상한 240s)에 시간이 걸릴 수 있어 서버리스 실행 한도를 늘린다.
 export const maxDuration = 300;
@@ -51,6 +52,7 @@ export async function POST(
 
   // file_id가 오면 서버가 해당 계정 Plaud MCP로 presigned URL·메타를 해석한다(오디오 URL이 브라우저에 노출되지 않음).
   const fileId = typeof body.file_id === 'string' ? body.file_id.trim() : '';
+  let durationMs: number | undefined;
   if (!audioUrl && fileId) {
     // 어느 계정 녹음인지 알아야 올바른 토큰으로 조회 가능 — file_id 경로에선 account_key 필수.
     if (!accountKey) {
@@ -61,6 +63,7 @@ export async function POST(
       audioUrl = file.presigned_url;
       recordingName = recordingName || file.name;
       recordedAt = recordedAt || file.start_at || '';
+      durationMs = typeof file.duration === 'number' ? file.duration : undefined;
     } catch (e) {
       console.error('[crm/plaud-memo get_file]', e);
       return NextResponse.json({ error: 'Plaud 녹음을 가져오지 못했습니다.' }, { status: 502 });
@@ -72,7 +75,7 @@ export async function POST(
   }
 
   try {
-    const { summary } = await processPlaudRecording({ audioUrl });
+    const { transcript, summary } = await processPlaudRecording({ audioUrl });
 
     const meta = [recordingName, toKstDisplay(recordedAt)].filter(Boolean).join(' · ');
     const header = meta ? `${PLAUD_MEMO_MARKER} · ${meta}` : PLAUD_MEMO_MARKER;
@@ -81,6 +84,24 @@ export async function POST(
     // account_key가 있으면 그 계정 소유자를 상담자(author)로 기록(누가 통화했는지 추적).
     const author = accountKey ? getAccountLabel(accountKey) : undefined;
     const entry = await appendConsultationEntry(id, { raw_memo, author, published: false });
+
+    // 전사 원문 보관. 메모가 운영상의 산출물이고 전사는 부차적 캡처이므로,
+    // 저장이 실패해도 메모를 되돌리지 않고 로그만 남긴다 (아래 슬랙 알림과 같은 이유).
+    try {
+      await insertCallTranscript({
+        studentId: id,
+        timelineEntryId: entry.id,
+        source: 'plaud',
+        ...(fileId ? { externalId: fileId } : {}),
+        ...(recordingName ? { recordingName } : {}),
+        ...(recordedAt ? { recordedAt } : {}),
+        ...(durationMs !== undefined ? { durationSec: Math.round(durationMs / 1000) } : {}),
+        transcript,
+        asrModel: ASR_MODEL,
+      });
+    } catch (e) {
+      console.error('[crm/plaud-memo call_transcripts]', e);
+    }
 
     // 직접 작성 메모와 동일하게 슬랙 상담 채널에 공유 (실패해도 메모는 이미 저장됨)
     try {
