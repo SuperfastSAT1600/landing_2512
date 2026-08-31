@@ -9,6 +9,7 @@ const SLACK_CHANNEL = 'C0B8Q5WNDD3';
 
 export const MEMO_HEADING = '📋 *상담 메모 등록*';
 export const PLAUD_MEMO_HEADING = '🎙️ *Plaud 녹음 상담 메모*';
+export const RENEWAL_OUTCOME_HEADING = '🔁 *재결제 결과 기록*';
 
 export async function notifyMemoToSlack(input: {
   studentId: string;

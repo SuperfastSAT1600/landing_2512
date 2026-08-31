@@ -257,8 +257,26 @@ export const RENEWAL_STAGE_LABELS: Record<RenewalStage, string> = {
   '4': '결제 완료',
   '5': '미전환',
 };
-export const RENEWAL_DROP_REASONS = ['예산', '휴학·졸업', '타학원 이전', '응답 없음', '기타'] as const;
-export type RenewalDropReason = (typeof RENEWAL_DROP_REASONS)[number];
+/**
+ * 결과 사유 — 품질에 따라 목록이 다르다.
+ * '예산'과 '졸업'을 한 목록에 두면 "예산 부담인데 좋은 이탈" 같은 어긋난 조합이 생긴다.
+ */
+export const RENEWAL_PAID_REASONS: Record<RenewalOutcomeQuality, readonly string[]> = {
+  good: ['성적 향상', '수업 만족', '목표 상향·과목 추가', '먼저 연장 요청', '기타'],
+  bad: ['할인·조건 요구', '마지못해 연장', '단기만 결제', '강사 교체 조건', '기타'],
+};
+export const RENEWAL_DROP_REASONS: Record<RenewalOutcomeQuality, readonly string[]> = {
+  good: ['목표 점수 달성', '졸업·유학 확정', '계획된 종료', '기타'],
+  bad: ['예산 부담', '성적 불만족', '강사·수업 불만', '타학원 이전', '응답 없음', '기타'],
+};
+
+/** stage 4는 재결제 사유, stage 5는 이탈 사유. */
+export function getRenewalOutcomeReasons(
+  stage: RenewalStage,
+  quality: RenewalOutcomeQuality
+): readonly string[] {
+  return stage === '5' ? RENEWAL_DROP_REASONS[quality] : RENEWAL_PAID_REASONS[quality];
+}
 
 /** 터미널 단계에 도달한 대상의 결과 품질. 값이 단계에 따라 다르게 읽히므로 라벨을 분리한다. */
 export const RENEWAL_OUTCOME_QUALITIES = ['good', 'bad'] as const;
@@ -1079,6 +1097,8 @@ export interface RenewalTarget {
   converted_payment_id: string | null;    // stage '4' 에서만 채워진다
   drop_reason: string | null;             // stage '5' 에서만 채워진다
   outcome_quality: RenewalOutcomeQuality | null;  // stage '4'·'5' 에서만 채워진다. null = 미분류
+  outcome_reason_tag: string | null;      // 품질별 사유 목록에서 고른 값. 품질이 있으면 필수
+  outcome_reason_note: string | null;     // 사유 자유 메모 — 선택
   carried_to_week: string | null;         // 이월된 대상 주차 — NOT NULL 이면 종결(진행 중 아님)
   carried_from_week: string | null;       // 이월돼 들어온 출처 주차 — null 이면 그 주차 신규 선정
   created_by: string | null;

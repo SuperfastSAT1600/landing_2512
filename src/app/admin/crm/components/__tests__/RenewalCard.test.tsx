@@ -17,6 +17,8 @@ function target(stage: RenewalStage, over: Partial<RenewalTarget> = {}): Renewal
     converted_payment_id: null,
     drop_reason: null,
     outcome_quality: null,
+    outcome_reason_tag: null,
+    outcome_reason_note: null,
     carried_to_week: null,
     carried_from_week: null,
     created_by: null,
@@ -171,8 +173,11 @@ describe('RenewalCard', () => {
 
   it('offers 되돌리기 on 미전환 cards and shows the recorded reason', () => {
     const onReopen = vi.fn();
-    renderCard({ target: target('5', { drop_reason: '예산' }), onReopen });
-    expect(screen.getByText('미전환: 예산')).toBeTruthy();
+    renderCard({
+      target: target('5', { outcome_quality: 'bad', outcome_reason_tag: '예산 부담' }),
+      onReopen,
+    });
+    expect(screen.getByText('사유: 예산 부담')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '되돌리기' }));
     expect(onReopen).toHaveBeenCalledTimes(1);
   });
@@ -193,45 +198,70 @@ describe('RenewalCard', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('shows quality toggles only when onSetQuality is provided (terminal stages)', () => {
+  it('shows quality toggles only when onEditQuality is provided (terminal stages)', () => {
     const open = renderCard({ target: target('2'), onDrop: vi.fn() });
     expect(screen.queryByRole('button', { name: '좋은 재결제' })).toBeNull();
     expect(screen.queryByRole('button', { name: '좋은 이탈' })).toBeNull();
     open.unmount();
 
-    renderCard({ target: target('4'), onSetQuality: vi.fn() });
+    renderCard({ target: target('4'), onEditQuality: vi.fn() });
     expect(screen.getByRole('button', { name: '좋은 재결제' })).toBeTruthy();
     expect(screen.getByRole('button', { name: '나쁜 재결제' })).toBeTruthy();
   });
 
   it('labels the same value differently on 결제 완료 and 미전환', () => {
-    const paid = renderCard({ target: target('4'), onSetQuality: vi.fn() });
+    const paid = renderCard({ target: target('4'), onEditQuality: vi.fn() });
     expect(screen.getByRole('button', { name: '좋은 재결제' })).toBeTruthy();
     paid.unmount();
 
-    renderCard({ target: target('5'), onSetQuality: vi.fn() });
+    renderCard({ target: target('5'), onEditQuality: vi.fn() });
     expect(screen.getByRole('button', { name: '좋은 이탈' })).toBeTruthy();
     expect(screen.getByRole('button', { name: '나쁜 이탈' })).toBeTruthy();
   });
 
-  it('emits the clicked quality when nothing is selected yet', () => {
-    const onSetQuality = vi.fn();
-    renderCard({ target: target('4'), onSetQuality });
+  it('emits the clicked quality so the editor can open', () => {
+    const onEditQuality = vi.fn();
+    renderCard({ target: target('4'), onEditQuality });
     fireEvent.click(screen.getByRole('button', { name: '나쁜 재결제' }));
-    expect(onSetQuality).toHaveBeenCalledWith('bad');
+    expect(onEditQuality).toHaveBeenCalledWith('bad');
   });
 
-  it('emits null when the already selected quality is clicked again (토글 해제)', () => {
-    const onSetQuality = vi.fn();
-    renderCard({ target: target('4', { outcome_quality: 'good' }), onSetQuality });
+  it('이미 선택된 값을 눌러도 편집을 연다 — 사유를 나중에 채우는 경로', () => {
+    // 118 도입 시점에 사유 없이 품질만 찍힌 행들이 있어, 재클릭이 해제였다면
+    // 사유를 채워 넣을 방법이 없다.
+    const onEditQuality = vi.fn();
+    renderCard({ target: target('4', { outcome_quality: 'good' }), onEditQuality });
     const good = screen.getByRole('button', { name: '좋은 재결제' });
     expect(good.getAttribute('aria-pressed')).toBe('true');
     fireEvent.click(good);
-    expect(onSetQuality).toHaveBeenCalledWith(null);
+    expect(onEditQuality).toHaveBeenCalledWith('good');
+  });
+
+  it('사유가 있으면 태그와 메모를 보여준다', () => {
+    renderCard({
+      target: target('4', {
+        outcome_quality: 'bad',
+        outcome_reason_tag: '할인·조건 요구',
+        outcome_reason_note: '20% 깎아달라고 함',
+      }),
+      onEditQuality: vi.fn(),
+    });
+    expect(screen.getByText('사유: 할인·조건 요구 · 20% 깎아달라고 함')).toBeTruthy();
+  });
+
+  it('품질만 있고 사유가 없으면 미기재를 눈에 띄게 알린다', () => {
+    renderCard({ target: target('5', { outcome_quality: 'bad' }), onEditQuality: vi.fn() });
+    const badge = screen.getByText('사유 미기재');
+    expect(badge.className).toContain('text-amber-600');
+  });
+
+  it('품질이 없으면 사유 줄 자체가 없다', () => {
+    renderCard({ target: target('4'), onEditQuality: vi.fn() });
+    expect(screen.queryByText(/사유/)).toBeNull();
   });
 
   it('hides quality toggles on the drag overlay', () => {
-    renderCard({ target: target('4', { outcome_quality: 'good' }), onSetQuality: vi.fn(), overlay: true });
+    renderCard({ target: target('4', { outcome_quality: 'good' }), onEditQuality: vi.fn(), overlay: true });
     expect(screen.queryByRole('button', { name: '좋은 재결제' })).toBeNull();
   });
 

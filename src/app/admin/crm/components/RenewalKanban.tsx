@@ -34,6 +34,7 @@ import { RenewalCandidateAdd } from './RenewalCandidateAdd';
 import { getRenewalCandidates } from './renewal-candidate-source';
 import { RenewalCard, type RenewalCardTutoring } from './RenewalCard';
 import { RenewalDropModal } from './RenewalDropModal';
+import { RenewalOutcomeModal } from './RenewalOutcomeModal';
 import { RenewalKanbanColumn } from './RenewalKanbanColumn';
 import { RenewalStatsStrip } from './RenewalStatsStrip';
 import { RenewalWeeklyStats } from './RenewalWeeklyStats';
@@ -41,6 +42,8 @@ import { defaultRenewalScope, useRenewalBoard, type RenewalScope } from './use-r
 
 interface RenewalKanbanProps {
   adminKey: string;
+  /** 타임라인·슬랙에 남길 작성자. localStorage 의 admin_user_name. */
+  userName?: string;
   /** 학생 패널 열기 — 조인된 학생은 부분 필드라 id로 넘겨 부모가 전체를 가져온다. */
   onSelectStudentById: (id: string) => void;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
@@ -55,6 +58,7 @@ interface PendingConversion {
 
 export function RenewalKanban({
   adminKey,
+  userName,
   onSelectStudentById,
   onStudentUpdate,
 }: RenewalKanbanProps) {
@@ -65,6 +69,10 @@ export function RenewalKanban({
   // 결제 버튼을 누른 순간 전체 학생을 받아온다.
   const [payment, setPayment] = useState<{ target: RenewalTarget; student: Student } | null>(null);
   const [dropTarget, setDropTarget] = useState<RenewalTarget | null>(null);
+  const [qualityTarget, setQualityTarget] = useState<{
+    target: RenewalTarget;
+    quality: RenewalOutcomeQuality;
+  } | null>(null);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
   const [pendingConversion, setPendingConversion] = useState<PendingConversion | null>(null);
   const [candidatesOpen, setCandidatesOpen] = useState(false);
@@ -80,7 +88,11 @@ export function RenewalKanban({
         headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error('단계 변경에 실패했습니다.');
+      if (!res.ok) {
+        // 사유 검증 400 같은 건 사용자가 이유를 알아야 고칠 수 있다.
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error?.message ?? '단계 변경에 실패했습니다.');
+      }
     },
     [adminKey]
   );
@@ -188,18 +200,38 @@ export function RenewalKanban({
     }
   };
 
-  /** 결과 품질 토글. 즉각 반응이 필요하므로 드래그와 같은 낙관적 업데이트를 쓴다. */
-  const handleSetQuality = async (target: RenewalTarget, quality: RenewalOutcomeQuality | null) => {
+  /**
+   * 결과 품질·사유 저장. 즉각 반응이 필요하므로 드래그와 같은 낙관적 업데이트를 쓴다.
+   * quality 가 null 이면 사유까지 함께 비운다(미분류로 되돌리기).
+   */
+  const saveOutcome = async (
+    target: RenewalTarget,
+    next: { quality: RenewalOutcomeQuality; reasonTag: string; reasonNote: string } | null
+  ) => {
     const previous = target;
     setTargets((current) =>
-      current.map((t) => (t.id === target.id ? { ...t, outcome_quality: quality } : t))
+      current.map((t) =>
+        t.id === target.id
+          ? {
+              ...t,
+              outcome_quality: next?.quality ?? null,
+              outcome_reason_tag: next?.reasonTag ?? null,
+              outcome_reason_note: next?.reasonNote || null,
+            }
+          : t
+      )
     );
     try {
-      await patchTarget(target.id, { outcome_quality: quality });
+      await patchTarget(target.id, {
+        outcome_quality: next?.quality ?? null,
+        outcome_reason_tag: next?.reasonTag ?? null,
+        outcome_reason_note: next?.reasonNote ?? null,
+        author: userName,
+      });
       await refresh();
-    } catch {
+    } catch (e) {
       setTargets((current) => current.map((t) => (t.id === previous.id ? previous : t)));
-      setError('결과 품질 저장에 실패했습니다.');
+      setError(e instanceof Error ? e.message : '결과 저장에 실패했습니다.');
     }
   };
 
@@ -374,7 +406,11 @@ export function RenewalKanban({
                       ? (t) => runPatch(t, { stage: '2', clear_drop_reason: true }, '되돌리기에 실패했습니다.')
                       : undefined
                   }
-                  onSetQuality={stage === '4' || stage === '5' ? handleSetQuality : undefined}
+                  onEditQuality={
+                    stage === '4' || stage === '5'
+                      ? (t, q) => setQualityTarget({ target: t, quality: q })
+                      : undefined
+                  }
                 />
               </div>
             ))}
@@ -422,16 +458,40 @@ export function RenewalKanban({
       {dropTarget && (
         <RenewalDropModal
           target={dropTarget}
-          onConfirm={(dropReason, quality) => {
+          onConfirm={({ quality, reasonTag, reasonNote }) => {
             const target = dropTarget;
             setDropTarget(null);
             runPatch(
               target,
-              { stage: '5', drop_reason: dropReason, outcome_quality: quality },
+              {
+                stage: '5',
+                outcome_quality: quality,
+                outcome_reason_tag: reasonTag,
+                outcome_reason_note: reasonNote,
+                author: userName,
+              },
               '미전환 처리에 실패했습니다.'
             );
           }}
           onClose={() => setDropTarget(null)}
+        />
+      )}
+
+      {qualityTarget && (
+        <RenewalOutcomeModal
+          target={qualityTarget.target}
+          initialQuality={qualityTarget.quality}
+          onConfirm={(input) => {
+            const { target } = qualityTarget;
+            setQualityTarget(null);
+            saveOutcome(target, input);
+          }}
+          onClear={() => {
+            const { target } = qualityTarget;
+            setQualityTarget(null);
+            saveOutcome(target, null);
+          }}
+          onClose={() => setQualityTarget(null)}
         />
       )}
     </div>

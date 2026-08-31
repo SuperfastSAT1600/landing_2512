@@ -4,9 +4,13 @@ import { isAuthenticated } from '@/lib/server-auth';
 import {
   RENEWAL_STAGES,
   RENEWAL_OUTCOME_QUALITIES,
+  getRenewalOutcomeReasons,
   type RenewalStage,
   type RenewalOutcomeQuality,
 } from '@/types/crm';
+import { appendConsultationEntry } from '@/lib/consultation-timeline';
+import { notifyMemoToSlack, RENEWAL_OUTCOME_HEADING } from '@/lib/slack-memo';
+import { buildRenewalOutcomeMemo } from '@/lib/renewal/mirror';
 
 // GET/POST와 응답 shape을 맞춘다 (route.ts의 STUDENT_FIELDS와 동일 집합).
 const STUDENT_FIELDS = 'id, name, grade, parent_phone, is_vip, needs_attention, traffic_source, lead_type';
@@ -30,6 +34,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     drop_reason?: unknown;
     clear_drop_reason?: unknown;
     outcome_quality?: unknown;
+    outcome_reason_tag?: unknown;
+    outcome_reason_note?: unknown;
+    author?: unknown;
   };
   try {
     body = await request.json();
@@ -64,7 +71,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     );
   }
 
-  if (!hasStage && !hasQuality) {
+  const hasReason = 'outcome_reason_tag' in body;
+  const reasonTag = body.outcome_reason_tag;
+  if (hasReason && reasonTag !== null && typeof reasonTag !== 'string') {
+    return NextResponse.json(
+      { error: { code: 'INVALID_OUTCOME_REASON', message: '유효하지 않은 사유입니다.' } },
+      { status: 400 }
+    );
+  }
+  const reasonNote =
+    typeof body.outcome_reason_note === 'string' ? body.outcome_reason_note.trim() : '';
+
+  if (!hasStage && !hasQuality && !hasReason) {
     return NextResponse.json(
       { error: { code: 'NO_UPDATABLE_FIELDS', message: '변경할 필드가 없습니다.' } },
       { status: 400 }
@@ -73,6 +91,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const now = new Date().toISOString();
   const update: Record<string, unknown> = { updated_at: now };
+  // 사유 목록은 (단계, 품질) 조합마다 다르다 — 검증에 실제 단계가 필요하다.
+  let effectiveStage: RenewalStage | null = hasStage ? (stage as RenewalStage) : null;
 
   if (hasStage) {
     update.stage = stage;
@@ -97,27 +117,63 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         { status: 400 }
       );
     }
+    effectiveStage = current.stage as RenewalStage;
   }
 
   // 터미널 단계의 부가 정보는 해당 단계로 이동할 때만 기록한다.
   if (stage === '4' && body.converted_payment_id) {
     update.converted_payment_id = body.converted_payment_id;
   }
-  if (stage === '5' && body.drop_reason) {
-    update.drop_reason = body.drop_reason;
-  }
-  // 미전환을 되돌릴 때(5 → 2) 남아 있던 사유를 지운다.
+  // 미전환을 되돌릴 때(5 → 2) 레거시 drop_reason 이 남아 있으면 지운다(120 이전 행).
   if (hasStage && stage !== '5' && body.clear_drop_reason) {
     update.drop_reason = null;
   }
 
-  if (hasQuality && (!hasStage || QUALITY_STAGES.includes(stage as RenewalStage))) {
+  const isTerminal = effectiveStage !== null && QUALITY_STAGES.includes(effectiveStage);
+
+  if (hasQuality && isTerminal) {
     update.outcome_quality = quality;
   }
-  // 터미널을 벗어나면 품질도 함께 비운다. `hasStage &&` 가드가 없으면 소급 경로가
+  // 터미널을 벗어나면 품질과 사유를 함께 비운다. `hasStage &&` 가드가 없으면 소급 경로가
   // 이 분기에 걸려 방금 지정한 값을 즉시 지운다.
   if (hasStage && !QUALITY_STAGES.includes(stage as RenewalStage)) {
     update.outcome_quality = null;
+    update.outcome_reason_tag = null;
+    update.outcome_reason_note = null;
+  }
+
+  // 사유는 품질에 종속된다 — 품질을 지우면 사유도 없어지고, 품질을 지정하면 사유가 필수다.
+  // 품질 없이 사유만 고치는 것도 허용한다(이미 품질이 찍힌 행의 사유 보정).
+  const effectiveQuality: RenewalOutcomeQuality | null = hasQuality
+    ? ((quality ?? null) as RenewalOutcomeQuality | null)
+    : null;
+
+  if (isTerminal && hasQuality && effectiveQuality === null) {
+    update.outcome_reason_tag = null;
+    update.outcome_reason_note = null;
+  } else if (isTerminal && (hasQuality || hasReason)) {
+    const tag = typeof reasonTag === 'string' ? reasonTag.trim() : '';
+    if (!tag) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_OUTCOME_REASON', message: '사유를 선택해 주세요.' } },
+        { status: 400 }
+      );
+    }
+    // 품질을 함께 안 보냈으면 이미 저장된 품질 기준으로 목록을 고를 수 없다.
+    if (!effectiveQuality) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_OUTCOME_REASON', message: '사유는 품질과 함께 보내야 합니다.' } },
+        { status: 400 }
+      );
+    }
+    if (!getRenewalOutcomeReasons(effectiveStage!, effectiveQuality).includes(tag)) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_OUTCOME_REASON', message: '해당 결과에 없는 사유입니다.' } },
+        { status: 400 }
+      );
+    }
+    update.outcome_reason_tag = tag;
+    update.outcome_reason_note = reasonNote || null;
   }
 
   // 이월된 행은 다음 주차로 넘어가 종결됐다 — 오래된 탭에서 날아온 stage 변경이
@@ -148,6 +204,33 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       { error: { code: 'UPDATE_FAILED', message: '수정에 실패했습니다.' } },
       { status: 500 }
     );
+  }
+
+  // 정본은 renewal_targets — 타임라인과 슬랙은 사람이 읽는 미러다(윈백 발송과 같은 구조).
+  // 실패해도 이미 저장된 결과를 되돌리지 않는다.
+  if (update.outcome_reason_tag && effectiveQuality && effectiveStage) {
+    const memo = buildRenewalOutcomeMemo({
+      stage: effectiveStage,
+      quality: effectiveQuality,
+      reasonTag: update.outcome_reason_tag as string,
+      reasonNote: (update.outcome_reason_note as string | null) ?? null,
+    });
+    const author = typeof body.author === 'string' && body.author.trim() ? body.author.trim() : undefined;
+    try {
+      await appendConsultationEntry(data.student_id, { raw_memo: memo, author, published: false });
+    } catch (e) {
+      console.error('[renewal-targets/[id] timeline]', e);
+    }
+    try {
+      await notifyMemoToSlack({
+        studentId: data.student_id,
+        memo,
+        author,
+        heading: RENEWAL_OUTCOME_HEADING,
+      });
+    } catch (e) {
+      console.error('[renewal-targets/[id] slack]', e);
+    }
   }
 
   return NextResponse.json({ data });

@@ -20,9 +20,16 @@ function updatePayload(): Record<string, unknown> {
 }
 
 const mockFrom = vi.hoisted(() => vi.fn());
+const mockAppend = vi.hoisted(() => vi.fn());
+const mockSlack = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: { from: mockFrom },
+}));
+vi.mock('@/lib/consultation-timeline', () => ({ appendConsultationEntry: mockAppend }));
+vi.mock('@/lib/slack-memo', () => ({
+  notifyMemoToSlack: mockSlack,
+  RENEWAL_OUTCOME_HEADING: '🔁 *재결제 결과 기록*',
 }));
 
 process.env.ADMIN_SECRET_KEY = 'admin-key';
@@ -46,13 +53,17 @@ const baseTarget = {
   converted_payment_id: null,
   drop_reason: null,
   outcome_quality: null,
+  outcome_reason_tag: null,
+  outcome_reason_note: null,
   created_by: null,
   created_at: '2026-08-10T00:00:00Z',
   updated_at: '2026-08-10T00:00:00Z',
 };
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  // clearAllMocks 는 mockReturnValueOnce 큐를 비우지 않는다 — 한 테스트가 조기
+  // 400 으로 끝나면 남은 큐가 다음 테스트로 새므로 구현까지 초기화한다.
+  vi.resetAllMocks();
 });
 
 describe('PATCH /api/crm/renewal-targets/[id]', () => {
@@ -92,23 +103,23 @@ describe('PATCH /api/crm/renewal-targets/[id]', () => {
     expect(json.data.converted_payment_id).toBe('pay-1');
   });
 
-  it('stores drop_reason when stage is 5 (미전환) → 200', async () => {
+  it('레거시 drop_reason 은 더 이상 쓰지 않는다 (120에서 이관됨)', async () => {
     mockFrom.mockReturnValueOnce(
-      makeBuilder({ data: { ...baseTarget, stage: '5', drop_reason: '예산' }, error: null })
+      makeBuilder({ data: { ...baseTarget, stage: '5', outcome_quality: 'bad' }, error: null })
     );
     const { PATCH } = await import('../route');
-    const res = await PATCH(makeReq('PATCH', { stage: '5', drop_reason: '예산' }), { params });
+    const res = await PATCH(
+      makeReq('PATCH', {
+        stage: '5',
+        drop_reason: '예산',
+        outcome_quality: 'bad',
+        outcome_reason_tag: '예산 부담',
+      }),
+      { params }
+    );
     expect(res.status).toBe(200);
-    expect(updatePayload().drop_reason).toBe('예산');
-    const json = await res.json();
-    expect(json.data.stage).toBe('5');
-  });
-
-  it('ignores drop_reason on non-terminal stages', async () => {
-    mockFrom.mockReturnValueOnce(makeBuilder({ data: { ...baseTarget, stage: '2' }, error: null }));
-    const { PATCH } = await import('../route');
-    await PATCH(makeReq('PATCH', { stage: '2', drop_reason: '예산' }), { params });
     expect(updatePayload()).not.toHaveProperty('drop_reason');
+    expect(updatePayload().outcome_reason_tag).toBe('예산 부담');
   });
 
   it('clears drop_reason when reopening a 미전환 target', async () => {
@@ -145,26 +156,31 @@ describe('PATCH /api/crm/renewal-targets/[id] — 결과 품질 (REQ-003)', () =
       makeBuilder({ data: { ...baseTarget, stage: '4', outcome_quality: 'good' }, error: null })
     );
     const { PATCH } = await import('../route');
-    const res = await PATCH(makeReq('PATCH', { stage: '4', outcome_quality: 'good' }), { params });
+    const res = await PATCH(
+      makeReq('PATCH', { stage: '4', outcome_quality: 'good', outcome_reason_tag: '성적 향상' }),
+      { params }
+    );
     expect(res.status).toBe(200);
     expect(updatePayload().outcome_quality).toBe('good');
   });
 
-  it('stores outcome_quality alongside drop_reason when stage is 5 → 200', async () => {
+  it('stores outcome_quality alongside its reason when stage is 5 → 200', async () => {
     mockFrom.mockReturnValueOnce(
       makeBuilder({
-        data: { ...baseTarget, stage: '5', drop_reason: '예산', outcome_quality: 'bad' },
+        data: { ...baseTarget, stage: '5', outcome_quality: 'bad', outcome_reason_tag: '예산 부담' },
         error: null,
       })
     );
     const { PATCH } = await import('../route');
     const res = await PATCH(
-      makeReq('PATCH', { stage: '5', drop_reason: '예산', outcome_quality: 'bad' }),
+      makeReq('PATCH', { stage: '5', outcome_quality: 'bad', outcome_reason_tag: '예산 부담' }),
       { params }
     );
     expect(res.status).toBe(200);
     expect(updatePayload().outcome_quality).toBe('bad');
-    expect(updatePayload().drop_reason).toBe('예산');
+    expect(updatePayload().outcome_reason_tag).toBe('예산 부담');
+    // 레거시 drop_reason 은 120 이후로 쓰지 않는다.
+    expect(updatePayload()).not.toHaveProperty('drop_reason');
   });
 
   it('clears outcome_quality when leaving a terminal stage (되돌리기 5 → 2)', async () => {
@@ -191,7 +207,10 @@ describe('PATCH /api/crm/renewal-targets/[id] — 결과 품질 (REQ-003)', () =
       makeBuilder({ data: { ...baseTarget, stage: '4', outcome_quality: 'good' }, error: null })
     );
     const { PATCH } = await import('../route');
-    const res = await PATCH(makeReq('PATCH', { outcome_quality: 'good' }), { params });
+    const res = await PATCH(
+      makeReq('PATCH', { outcome_quality: 'good', outcome_reason_tag: '성적 향상' }),
+      { params }
+    );
     expect(res.status).toBe(200);
     expect(updatePayload().outcome_quality).toBe('good');
     // D+N 경과일과 목록 정렬이 리셋되면 안 된다.
@@ -278,5 +297,127 @@ describe('PATCH /api/crm/renewal-targets/[id] — 이월된 행', () => {
     expect(res.status).toBe(409);
     const json = await res.json();
     expect(json.error.code).toBe('ALREADY_CARRIED');
+  });
+});
+
+describe('PATCH /api/crm/renewal-targets/[id] — 결과 사유 + 미러 (REQ-003~005)', () => {
+  it('사유 없이 품질만 보내면 400', async () => {
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { stage: '4', outcome_quality: 'good' }), { params });
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error.code).toBe('INVALID_OUTCOME_REASON');
+    expect(mockAppend).not.toHaveBeenCalled();
+  });
+
+  it('해당 결과의 목록에 없는 사유는 400 — 좋은 이탈에 예산 부담을 넣을 수 없다', async () => {
+    const { PATCH } = await import('../route');
+    const res = await PATCH(
+      makeReq('PATCH', { stage: '5', outcome_quality: 'good', outcome_reason_tag: '예산 부담' }),
+      { params }
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe('INVALID_OUTCOME_REASON');
+  });
+
+  it('사유를 저장하고 타임라인·슬랙에 같은 본문을 남긴다 → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({
+        data: { ...baseTarget, stage: '4', outcome_quality: 'bad', outcome_reason_tag: '할인·조건 요구' },
+        error: null,
+      })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(
+      makeReq('PATCH', {
+        stage: '4',
+        outcome_quality: 'bad',
+        outcome_reason_tag: '할인·조건 요구',
+        outcome_reason_note: '20% 깎아달라고 함',
+        author: '이민재',
+      }),
+      { params }
+    );
+    expect(res.status).toBe(200);
+    expect(updatePayload().outcome_reason_tag).toBe('할인·조건 요구');
+    expect(updatePayload().outcome_reason_note).toBe('20% 깎아달라고 함');
+
+    const memo = '🔁 재결제 결과 · 나쁜 재결제\n사유: 할인·조건 요구\n\n20% 깎아달라고 함';
+    expect(mockAppend).toHaveBeenCalledWith('s-1', {
+      raw_memo: memo,
+      author: '이민재',
+      published: false, // 내부 전용
+    });
+    expect(mockSlack).toHaveBeenCalledWith({
+      studentId: 's-1',
+      memo,
+      author: '이민재',
+      heading: '🔁 *재결제 결과 기록*',
+    });
+  });
+
+  it('품질을 해제하면 사유도 비우고 미러도 남기지 않는다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { stage: '4' }, error: null }));
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { ...baseTarget, stage: '4' }, error: null }));
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { outcome_quality: null }), { params });
+    expect(res.status).toBe(200);
+    expect(updatePayload().outcome_reason_tag).toBeNull();
+    expect(updatePayload().outcome_reason_note).toBeNull();
+    expect(mockAppend).not.toHaveBeenCalled();
+    expect(mockSlack).not.toHaveBeenCalled();
+  });
+
+  it('되돌리기(5 → 2)는 품질과 사유를 함께 비운다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { ...baseTarget, stage: '2' }, error: null }));
+    const { PATCH } = await import('../route');
+    await PATCH(makeReq('PATCH', { stage: '2', clear_drop_reason: true }), { params });
+    expect(updatePayload().outcome_quality).toBeNull();
+    expect(updatePayload().outcome_reason_tag).toBeNull();
+    expect(updatePayload().outcome_reason_note).toBeNull();
+  });
+
+  it('소급 경로에서도 사유를 저장한다 (사유 없이 품질만 있던 과거 기록 보정)', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { stage: '5' }, error: null }));
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '5', outcome_quality: 'good' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(
+      makeReq('PATCH', { outcome_quality: 'good', outcome_reason_tag: '계획된 종료' }),
+      { params }
+    );
+    expect(res.status).toBe(200);
+    expect(updatePayload().outcome_reason_tag).toBe('계획된 종료');
+    // 소급 경로는 단계 경과일을 건드리면 안 된다.
+    expect(updatePayload()).not.toHaveProperty('stage_updated_at');
+    expect(mockAppend).toHaveBeenCalled();
+  });
+
+  it('슬랙이 죽어도 저장은 성공한다', async () => {
+    mockSlack.mockRejectedValueOnce(new Error('slack down'));
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '4' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(
+      makeReq('PATCH', { stage: '4', outcome_quality: 'good', outcome_reason_tag: '성적 향상' }),
+      { params }
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('타임라인 기록이 죽어도 저장은 성공한다', async () => {
+    mockAppend.mockRejectedValueOnce(new Error('db down'));
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '4' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(
+      makeReq('PATCH', { stage: '4', outcome_quality: 'good', outcome_reason_tag: '성적 향상' }),
+      { params }
+    );
+    expect(res.status).toBe(200);
+    expect(mockSlack).toHaveBeenCalled(); // 타임라인 실패가 슬랙을 막지 않는다
   });
 });
