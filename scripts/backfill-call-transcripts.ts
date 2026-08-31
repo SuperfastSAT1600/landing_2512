@@ -16,12 +16,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { runBackfill, type BackfillDeps, type StudentTimeline } from '../src/lib/plaud-backfill-run';
-import { getPlaudFile, listPlaudRecordings, PLAUD_ACCOUNTS } from '../src/lib/plaud-client';
-import { transcribeAudioUrl } from '../src/lib/plaud-transcribe';
-import { insertCallTranscript } from '../src/lib/call-transcripts';
-import { ASR_MODEL } from '../src/lib/qwen-asr';
+import type { BackfillDeps, StudentTimeline } from '../src/lib/plaud-backfill-run';
 
+// supabase-admin은 모듈 최상위에서 createClient를 호출한다 — import가 평가되는 순간
+// process.env를 읽는다는 뜻이다. 그래서 dotenv가 먼저 끝나야 하고, env를 만지는
+// 모듈들은 main() 안에서 동적 import로 뒤로 미룬다. 타입만 쓰는 import는 지워지므로 안전.
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const FETCH_PAGE = 500; // Supabase 1000행 캡 회피
@@ -34,21 +33,21 @@ interface Options {
   accounts: string[];
 }
 
-function parseArgs(argv: string[]): Options {
+function parseArgs(argv: string[], roster: readonly { key: string }[]): Options {
   const flag = (name: string) => argv.includes(`--${name}`);
   const value = (name: string) => {
     const i = argv.indexOf(`--${name}`);
     return i >= 0 ? argv[i + 1] : undefined;
   };
   const account = value('account');
-  if (account && !PLAUD_ACCOUNTS.some((a) => a.key === account)) {
-    throw new Error(`알 수 없는 계정: ${account} (가능: ${PLAUD_ACCOUNTS.map((a) => a.key).join(', ')})`);
+  if (account && !roster.some((a) => a.key === account)) {
+    throw new Error(`알 수 없는 계정: ${account} (가능: ${roster.map((a) => a.key).join(', ')})`);
   }
   const limitRaw = value('limit');
   return {
     dryRun: flag('dry-run'),
     limit: limitRaw ? Number(limitRaw) : null,
-    accounts: account ? [account] : PLAUD_ACCOUNTS.map((a) => a.key),
+    accounts: account ? [account] : roster.map((a) => a.key),
   };
 }
 
@@ -86,19 +85,28 @@ async function fetchCapturedEntryIds(db: SupabaseClient): Promise<Set<string>> {
   return ids;
 }
 
-/** 계정의 녹음을 페이지 끝까지 모은다. 오래된 메모까지 맞추려면 전량이 필요하다. */
-async function fetchAllRecordings(accountKey: string) {
-  const all = [];
-  for (let page = 1; page <= MAX_RECORDING_PAGES; page++) {
-    const batch = await listPlaudRecordings({ page, page_size: RECORDING_PAGE_SIZE }, accountKey);
-    all.push(...batch);
-    if (batch.length < RECORDING_PAGE_SIZE) break;
-  }
-  return all;
-}
-
 async function main() {
-  const opts = parseArgs(process.argv.slice(2));
+  // dotenv 이후에 로드해야 하는 모듈들 (파일 상단 주석 참고).
+  const [backfill, plaud, transcribe, transcripts, asr] = await Promise.all([
+    import('../src/lib/plaud-backfill-run'),
+    import('../src/lib/plaud-client'),
+    import('../src/lib/plaud-transcribe'),
+    import('../src/lib/call-transcripts'),
+    import('../src/lib/qwen-asr'),
+  ]);
+
+  /** 계정의 녹음을 페이지 끝까지 모은다. 오래된 메모까지 맞추려면 전량이 필요하다. */
+  const fetchAllRecordings = async (accountKey: string) => {
+    const all = [];
+    for (let page = 1; page <= MAX_RECORDING_PAGES; page++) {
+      const batch = await plaud.listPlaudRecordings({ page, page_size: RECORDING_PAGE_SIZE }, accountKey);
+      all.push(...batch);
+      if (batch.length < RECORDING_PAGE_SIZE) break;
+    }
+    return all;
+  };
+
+  const opts = parseArgs(process.argv.slice(2), plaud.PLAUD_ACCOUNTS);
   const db = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -108,9 +116,10 @@ async function main() {
     listStudents: () => fetchStudents(db),
     listCapturedEntryIds: () => fetchCapturedEntryIds(db),
     listRecordings: fetchAllRecordings,
-    getFile: getPlaudFile,
-    transcribe: transcribeAudioUrl,
-    insert: insertCallTranscript,
+    getFile: plaud.getPlaudFile,
+    transcribe: transcribe.transcribeAudioUrl,
+    insert: transcripts.insertCallTranscript,
+    findExisting: transcripts.findTranscriptByExternalId,
     log: (m) => console.log(`  ${m}`),
   };
 
@@ -118,11 +127,11 @@ async function main() {
     `백필 시작 (accounts=${opts.accounts.join(',')}, limit=${opts.limit ?? '-'}, dryRun=${opts.dryRun})`
   );
 
-  const r = await runBackfill(deps, {
+  const r = await backfill.runBackfill(deps, {
     dryRun: opts.dryRun,
     ...(opts.limit !== null ? { limit: opts.limit } : {}),
     accounts: opts.accounts,
-    asrModel: ASR_MODEL,
+    asrModel: asr.ASR_MODEL,
   });
 
   console.log(
