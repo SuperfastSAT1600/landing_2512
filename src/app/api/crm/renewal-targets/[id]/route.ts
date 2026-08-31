@@ -120,15 +120,30 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     update.outcome_quality = null;
   }
 
+  // 이월된 행은 다음 주차로 넘어가 종결됐다 — 오래된 탭에서 날아온 stage 변경이
+  // 여기서 걸리지 않으면 carried_stage_check 위반(23514)으로 500 이 난다.
   const { data, error } = await supabaseAdmin
     .from('renewal_targets')
     .update(update)
     .eq('id', id)
+    .is('carried_to_week', null)
     .select(`*, student:students(${STUDENT_FIELDS})`)
     .single();
 
   if (error) {
     console.error('[renewal-targets/[id] PATCH]', error);
+    // 0행 매칭 — 이월됐거나 삭제된 대상.
+    if (error.code === 'PGRST116') {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'ALREADY_CARRIED',
+            message: '이미 다음 주차로 이월된 대상입니다. 새로고침 후 다시 시도해 주세요.',
+          },
+        },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
       { error: { code: 'UPDATE_FAILED', message: '수정에 실패했습니다.' } },
       { status: 500 }

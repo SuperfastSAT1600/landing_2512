@@ -12,6 +12,8 @@ function target(stage: RenewalStage, studentId = `s-${stage}`): RenewalTarget {
     converted_payment_id: null,
     drop_reason: null,
     outcome_quality: null,
+    carried_to_week: null,
+    carried_from_week: null,
     created_by: null,
     created_at: '2026-08-10T00:00:00Z',
     updated_at: '2026-08-10T00:00:00Z',
@@ -144,5 +146,31 @@ describe('RenewalStatsStrip', () => {
       />
     );
     expect(screen.queryByTestId('renewal-metric-미분류')).toBeNull();
+  });
+
+  it('이월된 행을 진행 중에서 빼고 이월 개수를 따로 센다', () => {
+    render(
+      <RenewalStatsStrip
+        scopeLabel="26년 08월 04주차"
+        mode="cohort"
+        targets={[
+          target('4', 'a'),
+          { ...target('2', 'b'), carried_to_week: '2026-08-31' },
+          { ...target('3', 'c'), carried_to_week: '2026-08-31' },
+          target('2', 'd'),
+        ]}
+      />
+    );
+    expect(metric('선정')).toBe('4'); // 분모는 보존
+    expect(metric('진행 중')).toBe('1'); // 이월 2건 제외
+    expect(metric('결제 대기')).toBe('0'); // 이월된 3단계도 제외
+    expect(metric('이월')).toBe('2');
+  });
+
+  it('이월이 없으면 이월 메트릭을 숨긴다', () => {
+    render(
+      <RenewalStatsStrip scopeLabel="26년 08월 04주차" mode="cohort" targets={[target('4', 'a')]} />
+    );
+    expect(screen.queryByTestId('renewal-metric-이월')).toBeNull();
   });
 });

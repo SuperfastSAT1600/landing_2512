@@ -130,17 +130,22 @@ export function getWeekDef(dateStr: string): WeekDef | null {
 }
 
 /**
- * 지금(한국 시간) 이 속한 주차 정의. 범위 밖이면 null.
- * UTC 날짜로 자르면 월요일 00:00~09:00 KST에 지난 주차로 판정되므로 KST 날짜로 본다.
+ * 지금의 한국 날짜(YYYY-MM-DD).
+ * UTC 날짜로 자르면 월요일 00:00~09:00 KST에 지난 주차로 판정되므로, 주차를 다루는
+ * 서버 코드는 전부 이걸 거쳐야 한다.
  */
-export function getCurrentWeekDef(now: Date = new Date()): WeekDef | null {
-  const kstDate = new Intl.DateTimeFormat('en-CA', {
+export function getKstDateString(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Seoul',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   }).format(now);
-  return getWeekDef(kstDate);
+}
+
+/** 지금(한국 시간) 이 속한 주차 정의. 범위 밖이면 null. */
+export function getCurrentWeekDef(now: Date = new Date()): WeekDef | null {
+  return getWeekDef(getKstDateString(now));
 }
 
 /** week_start(정확히 일치)로 주차 정의 조회. */

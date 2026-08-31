@@ -17,6 +17,8 @@ function target(stage: RenewalStage, over: Partial<RenewalTarget> = {}): Renewal
     converted_payment_id: null,
     drop_reason: null,
     outcome_quality: null,
+    carried_to_week: null,
+    carried_from_week: null,
     created_by: null,
     created_at: '2026-08-14T09:00:00Z',
     updated_at: '2026-08-14T09:00:00Z',
@@ -231,5 +233,34 @@ describe('RenewalCard', () => {
   it('hides quality toggles on the drag overlay', () => {
     renderCard({ target: target('4', { outcome_quality: 'good' }), onSetQuality: vi.fn(), overlay: true });
     expect(screen.queryByRole('button', { name: '좋은 재결제' })).toBeNull();
+  });
+
+  it('이월된 카드는 액션을 전부 감추고 이월 주차를 알린다', () => {
+    renderCard({
+      target: target('2', { carried_to_week: '2026-08-31' }),
+      onDrop: vi.fn(),
+      onRemove: vi.fn(),
+    });
+    expect(screen.getByText('26년 09월 01주차로 이월됨')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '미전환' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '제외' })).toBeNull();
+  });
+
+  it('이월돼 들어온 카드는 출처 주차를 보여주되 액션은 그대로 쓴다', () => {
+    renderCard({
+      target: target('2', { carried_from_week: '2026-08-24' }),
+      onDrop: vi.fn(),
+    });
+    expect(screen.getByText('26년 08월 04주차부터 이월')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '미전환' })).toBeTruthy();
+  });
+
+  it('이월된 결제 대기 카드는 결제 버튼도 사라진다', () => {
+    renderCard({
+      target: target('3', { carried_to_week: '2026-08-31' }),
+      onPayment: vi.fn(),
+      onDrop: vi.fn(),
+    });
+    expect(screen.queryByRole('button', { name: '결제' })).toBeNull();
   });
 });

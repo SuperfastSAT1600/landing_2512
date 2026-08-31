@@ -30,6 +30,33 @@ export function scopeQuery(scope: RenewalScope): string {
   return scope.kind === 'open' ? '?scope=open' : `?week_start=${scope.weekStart}`;
 }
 
+/**
+ * 주차 이월은 페이지 로드당 주차당 1회만 실행한다.
+ * useRenewalBoard 는 LeadsHub 탭을 오갈 때마다 mount 되므로 훅 안의 ref 로는 못 막는다.
+ * 서버가 멱등이라 중복 호출이 데이터를 깨지는 않지만, 왕복을 낭비할 이유도 없다.
+ */
+let carriedWeek: string | null = null;
+let carryPromise: Promise<void> | null = null;
+
+function runCarryOverOnce(adminKey: string, weekStart: string): Promise<void> {
+  if (carriedWeek === weekStart) return Promise.resolve();
+  if (!carryPromise) {
+    carryPromise = fetch('/api/crm/renewal-targets/carry-over', {
+      method: 'POST',
+      headers: { 'x-admin-key': adminKey },
+    })
+      .then((res) => {
+        if (res.ok) carriedWeek = weekStart;
+      })
+      // 이월이 실패해도 보드는 떠야 한다 — 지난 주차 인원이 안 넘어올 뿐이다.
+      .catch(() => {})
+      .finally(() => {
+        carryPromise = null;
+      });
+  }
+  return carryPromise;
+}
+
 async function getJson(url: string, adminKey: string) {
   const res = await fetch(url, { headers: { 'x-admin-key': adminKey } });
   const json = await res.json().catch(() => null);
@@ -60,6 +87,11 @@ export function useRenewalBoard(adminKey: string, scope: RenewalScope) {
     async (showLoading = false) => {
       if (showLoading) setLoading(true);
       try {
+        // 데이터를 읽기 전에 이월을 끝낸다 — 순서가 뒤집히면 이월 전 보드가 한 번
+        // 그려졌다가 깜빡인다.
+        const currentWeek = getCurrentWeekDef();
+        if (currentWeek) await runCarryOverOnce(adminKey, currentWeek.start);
+
         const [targetsJson, statsJson, openJson] = await Promise.all([
           getJson(`/api/crm/renewal-targets${query}`, adminKey),
           getJson(`/api/crm/renewal-targets/stats?weeks=${WEEKS}`, adminKey),

@@ -12,6 +12,7 @@ import {
   RENEWAL_OPEN_STAGES,
   RENEWAL_OUTCOME_QUALITIES,
   getRenewalOutcomeQualityLabel,
+  isRenewalCarried,
   type RenewalOutcomeQuality,
   type RenewalTarget,
 } from '@/types/crm';
@@ -68,12 +69,16 @@ export function RenewalCard({
   overlay = false,
 }: RenewalCardProps) {
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const isCarried = isRenewalCarried(target);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: target.id,
+    // 이월된 행은 종결됐다 — 드래그로 되살아난 것처럼 보이면 안 된다.
+    disabled: isCarried,
   });
 
   const student = target.student;
-  const isOpen = RENEWAL_OPEN_STAGES.includes(target.stage);
+  // 이월된 행은 stage 상으로는 1~3이지만 종결된 행이라 어떤 액션도 받지 않는다.
+  const isOpen = RENEWAL_OPEN_STAGES.includes(target.stage) && !isCarried;
   const isDropped = target.stage === '5';
   const stageDays = daysSince(target.stage_updated_at, nowMs);
   const meta = tutoring ? TUTORING_STATUS_META[tutoring.displayStatus] : null;
@@ -87,9 +92,10 @@ export function RenewalCard({
       onClick={onClick}
       className={`group relative border rounded-lg px-3 py-2 cursor-pointer transition-all ${
         isDragging ? 'opacity-40' : ''
-      } ${overlay ? 'shadow-lg bg-white border-gray-300' : 'bg-gray-50 border-gray-200 hover:border-gray-300'}`}
+      } ${isCarried ? 'opacity-60 ' : ''}${overlay ? 'shadow-lg bg-white border-gray-300' : 'bg-gray-50 border-gray-200 hover:border-gray-300'}`}
     >
-      {/* Drag handle */}
+      {/* Drag handle — 이월된 행은 드래그 대상이 아니므로 핸들 자체를 감춘다 */}
+      {!isCarried && (
       <div
         {...attributes}
         {...listeners}
@@ -98,6 +104,7 @@ export function RenewalCard({
       >
         <GripVertical size={14} />
       </div>
+      )}
 
       <div className="flex items-center gap-1.5 flex-wrap pr-5">
         <span className="text-xs font-semibold text-gray-800 min-w-0 truncate">{student.name}</span>
@@ -166,6 +173,18 @@ export function RenewalCard({
         <p className="text-[10px] text-gray-400 mt-1">미전환: {target.drop_reason}</p>
       )}
 
+      {isCarried && (
+        <p className="text-[10px] text-gray-400 mt-1">
+          {getWeekLabel(target.carried_to_week!) ?? target.carried_to_week}로 이월됨
+        </p>
+      )}
+
+      {target.carried_from_week && (
+        <p className="text-[10px] text-gray-400 mt-1">
+          {getWeekLabel(target.carried_from_week) ?? target.carried_from_week}부터 이월
+        </p>
+      )}
+
       {/* 결과 품질 — '액션'이 아니라 편집 가능한 상태이므로 액션 바 위에 따로 둔다.
           라벨은 2자로 줄이고 전체 문구는 title 로 — 미전환 카드는 되돌리기까지 세 버튼이
           min-w-40 안에 들어가야 한다. */}
@@ -212,7 +231,7 @@ export function RenewalCard({
           className="flex items-center gap-1 mt-2 pt-1.5 border-t border-gray-200"
           onClick={(e) => e.stopPropagation()}
         >
-          {target.stage === '3' && onPayment && (
+          {target.stage === '3' && isOpen && onPayment && (
             <button
               type="button"
               onClick={onPayment}

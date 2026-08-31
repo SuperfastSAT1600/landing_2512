@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   getCurrentWeekDef,
+  getKstDateString,
   getRecentWeeks,
   getWeekDef,
   getWeekLabel,
@@ -55,5 +56,23 @@ describe('getCurrentWeekDef', () => {
 
   it('정의 범위 밖이면 null', () => {
     expect(getCurrentWeekDef(new Date('2030-01-01T00:00:00Z'))).toBeNull();
+  });
+});
+
+describe('getKstDateString', () => {
+  it('월요일 KST 00:00~09:00 을 UTC 로 자르지 않는다', () => {
+    // 2026-08-31T00:30 KST = 2026-08-30T15:30 UTC. UTC 로 자르면 지난 주차로 밀린다.
+    const mondayEarlyKst = new Date('2026-08-30T15:30:00Z');
+    expect(getKstDateString(mondayEarlyKst)).toBe('2026-08-31');
+    expect(getCurrentWeekDef(mondayEarlyKst)?.start).toBe('2026-08-31');
+    // UTC 슬라이스였다면 지난 주차(26년 08월 04주차)로 판정됐을 것.
+    expect(mondayEarlyKst.toISOString().slice(0, 10)).toBe('2026-08-30');
+  });
+
+  it('일요일 늦은 밤 KST 는 아직 지난 주차다', () => {
+    // 2026-08-30T23:00 KST = 2026-08-30T14:00 UTC
+    const sundayLateKst = new Date('2026-08-30T14:00:00Z');
+    expect(getKstDateString(sundayLateKst)).toBe('2026-08-30');
+    expect(getCurrentWeekDef(sundayLateKst)?.start).toBe('2026-08-24');
   });
 });

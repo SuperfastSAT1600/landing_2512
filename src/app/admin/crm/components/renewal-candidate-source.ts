@@ -18,8 +18,13 @@ export function getRenewalCandidates<S extends TutoringRowStudent>(
   entries: TutoringEntry<S>[],
   targets: RenewalTarget[]
 ): TutoringEntry<S>[] {
+  // carried_to_week 가 찍힌 행은 다음 주차로 넘어가 종결됐다 — 그 주차 기준으로는
+  // 열린 대상이 아니다. API(scope=open)도 같은 조건으로 거르지만, 순수 함수가
+  // 자기 완결적이어야 호출부가 바뀌어도 규칙이 어긋나지 않는다.
   const openStudentIds = new Set(
-    targets.filter((t) => OPEN_STAGES.has(t.stage)).map((t) => t.student_id)
+    targets
+      .filter((t) => OPEN_STAGES.has(t.stage) && !t.carried_to_week)
+      .map((t) => t.student_id)
   );
 
   return entries

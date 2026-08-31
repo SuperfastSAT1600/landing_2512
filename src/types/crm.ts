@@ -272,6 +272,11 @@ export const RENEWAL_DROP_QUALITY_LABELS: Record<RenewalOutcomeQuality, string> 
   bad: '나쁜 이탈',
 };
 
+/** 다음 주차로 넘어가 종결된 행인지. 진행 중 집계·액션 노출의 단일 판정 기준. */
+export function isRenewalCarried(target: Pick<RenewalTarget, 'carried_to_week'>): boolean {
+  return target.carried_to_week != null;
+}
+
 /** stage 4는 재결제의 질, stage 5는 이탈의 질. 그 외 단계엔 품질이 없다. */
 export function getRenewalOutcomeQualityLabel(
   stage: RenewalStage,
@@ -1074,6 +1079,8 @@ export interface RenewalTarget {
   converted_payment_id: string | null;    // stage '4' 에서만 채워진다
   drop_reason: string | null;             // stage '5' 에서만 채워진다
   outcome_quality: RenewalOutcomeQuality | null;  // stage '4'·'5' 에서만 채워진다. null = 미분류
+  carried_to_week: string | null;         // 이월된 대상 주차 — NOT NULL 이면 종결(진행 중 아님)
+  carried_from_week: string | null;       // 이월돼 들어온 출처 주차 — null 이면 그 주차 신규 선정
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -1099,6 +1106,10 @@ export interface RenewalWeeklyStat {
   bad_completed: number;
   good_dropped: number;
   bad_dropped: number;
+  // 이월은 두 축이다 — carried_out 은 open/completed/dropped 와 함께 selected 를 배타 분할하고,
+  // carried_in 은 selected 자체를 '신규 / 이월유입'으로 분할한다. 섞어 쓰면 안 된다.
+  carried_out: number;
+  carried_in: number;
 }
 
 /** 추천 API 응답 1건 — 아직 저장되지 않은 후보. */

@@ -29,7 +29,12 @@ function makeReq(weeks?: string, key = 'admin-key') {
   });
 }
 
-function row(weekStart: string, stage: string, outcomeQuality: 'good' | 'bad' | null = null) {
+function row(
+  weekStart: string,
+  stage: string,
+  outcomeQuality: 'good' | 'bad' | null = null,
+  carry: { to?: string | null; from?: string | null } = {}
+) {
   return {
     id: `rt-${weekStart}-${stage}`,
     student_id: 's-1',
@@ -38,6 +43,8 @@ function row(weekStart: string, stage: string, outcomeQuality: 'good' | 'bad' | 
     stage_updated_at: `${weekStart}T00:00:00Z`,
     converted_payment_id: stage === '4' ? 'pay-1' : null,
     outcome_quality: outcomeQuality,
+    carried_to_week: carry.to ?? null,
+    carried_from_week: carry.from ?? null,
     created_by: null,
     created_at: `${weekStart}T00:00:00Z`,
     updated_at: `${weekStart}T00:00:00Z`,
@@ -214,5 +221,58 @@ describe('GET /api/crm/renewal-targets/stats — 결과 품질 분포 (REQ-004)'
     const { GET } = await import('../route');
     await GET(makeReq());
     expect(lastBuilder.select.mock.calls[0][0]).toContain('outcome_quality');
+  });
+});
+
+describe('GET /api/crm/renewal-targets/stats — 주차 이월', () => {
+  it('이월된 행은 진행 중에서 빠지고 선정·전환율은 보존된다', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({
+        data: [
+          row('2026-08-24', '4', 'good'),
+          row('2026-08-24', '2', null, { to: '2026-08-31' }),
+          row('2026-08-24', '2', null, { to: '2026-08-31' }),
+        ],
+        error: null,
+      })
+    );
+    const { GET } = await import('../route');
+    const res = await GET(makeReq());
+    const json = await res.json();
+    const week = json.data[0];
+
+    expect(week.selected).toBe(3);
+    expect(week.carried_out).toBe(2);
+    expect(week.open).toBe(0); // 진행 중 0 → 그 주차가 마감된다
+    expect(week.conversion_rate).toBeCloseTo(33.33, 1); // 분모는 선정 3 그대로
+  });
+
+  it('carried_in 은 별개 축 — 선정을 신규/이월유입으로 분해한다', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({
+        data: [
+          row('2026-08-31', '2', null, { from: '2026-08-24' }),
+          row('2026-08-31', '2', null, { from: '2026-08-24' }),
+          row('2026-08-31', '1'),
+        ],
+        error: null,
+      })
+    );
+    const { GET } = await import('../route');
+    const res = await GET(makeReq());
+    const week = (await res.json()).data[0];
+
+    expect(week.selected).toBe(3);
+    expect(week.carried_in).toBe(2); // 신규 1 · 이월 2
+    expect(week.carried_out).toBe(0);
+    expect(week.open).toBe(3); // 유입은 진행 중에서 빠지지 않는다
+  });
+
+  it('이월 컬럼을 같은 좁힌 select 로 읽는다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
+    const { GET } = await import('../route');
+    await GET(makeReq());
+    expect(lastBuilder.select.mock.calls[0][0]).toContain('carried_to_week');
+    expect(lastBuilder.select.mock.calls[0][0]).toContain('carried_from_week');
   });
 });
