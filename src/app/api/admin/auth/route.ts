@@ -7,7 +7,7 @@ const CRM_USERS: { code: string; name: string }[] = [
     { code: 'rlawodus', name: '김재연' },
     { code: 'qoqudbs', name: '배병윤' },
     { code: 'qkrrmsdn', name: '박근우' },
-    { code: 'alsrud', name: '민경' },
+    { code: 'alsrudeh', name: '민경도' },
 ];
 
 export async function POST(request: NextRequest) {
