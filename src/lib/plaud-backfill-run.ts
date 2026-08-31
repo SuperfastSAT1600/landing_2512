@@ -47,6 +47,14 @@ export interface BackfillOptions {
   /** 조회할 Plaud 계정 키. 미지정이면 전체 로스터. */
   accounts?: string[];
   asrModel?: string;
+  /**
+   * 새 전사를 시작할 수 있는 시간 예산(ms). 초과분은 remaining으로 넘긴다.
+   * 서버리스 실행 한도(maxDuration) 안에서 끝내기 위한 것 — 진행 중인 전사를
+   * 중단하지는 않는다(중단하면 이미 쓴 ASR 비용이 버려진다).
+   */
+  budgetMs?: number;
+  /** 테스트용 시계 주입. */
+  now?: () => number;
 }
 
 export interface SkippedEntry {
@@ -101,6 +109,10 @@ export async function runBackfill(
 
   const recordings = await listAllRecordings(deps, accounts);
 
+  const now = options.now ?? Date.now;
+  const startedAt = now();
+  const outOfTime = () => options.budgetMs !== undefined && now() - startedAt >= options.budgetMs;
+
   let budget = options.limit ?? Infinity;
   for (const c of candidates) {
     const where: SkippedEntry = {
@@ -144,7 +156,9 @@ export async function runBackfill(
         continue;
       }
 
-      if (budget <= 0) {
+      // 시간 예산도 --limit과 같은 자리에서 본다. 둘 다 "과금되는 전사"를 묶는
+      // 값이므로, 위의 재사용 경로는 어느 쪽에도 걸리지 않는다.
+      if (budget <= 0 || outOfTime()) {
         report.remaining++;
         continue;
       }
