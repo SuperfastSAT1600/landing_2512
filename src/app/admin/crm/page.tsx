@@ -259,6 +259,7 @@ export default function CrmPage() {
       {crmMode === 'b2c' ? (
         <B2cWorkspace
           students={students}
+          userName={adminUserName}
           todayActions={todayActions}
           adminKey={adminKey}
           onStudentUpdate={handleStudentUpdate}

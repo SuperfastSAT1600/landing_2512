@@ -38,8 +38,8 @@ interface RenewalCardProps {
   onDrop?: () => void;
   onRemove?: () => void;
   onReopen?: () => void;
-  /** 결과 품질 지정. 터미널 단계(4·5)에서만 넘어온다. */
-  onSetQuality?: (quality: RenewalOutcomeQuality | null) => void;
+  /** 결과 품질·사유 편집 시작. 터미널 단계(4·5)에서만 넘어온다. 저장은 모달에서 한다. */
+  onEditQuality?: (quality: RenewalOutcomeQuality) => void;
   /** '진행 중 전체' 스코프에서는 어느 주차 코호트인지 배지로 보여준다. */
   showWeekBadge?: boolean;
   overlay?: boolean;
@@ -64,7 +64,7 @@ export function RenewalCard({
   onDrop,
   onRemove,
   onReopen,
-  onSetQuality,
+  onEditQuality,
   showWeekBadge = false,
   overlay = false,
 }: RenewalCardProps) {
@@ -169,8 +169,18 @@ export function RenewalCard({
         <span className={`font-medium ${stageAgeTone(stageDays)}`}>단계 D+{stageDays}</span>
       </div>
 
-      {isDropped && target.drop_reason && (
-        <p className="text-[10px] text-gray-400 mt-1">미전환: {target.drop_reason}</p>
+      {target.outcome_quality && (
+        <p className="text-[10px] mt-1">
+          {target.outcome_reason_tag ? (
+            <span className="text-gray-400">
+              사유: {target.outcome_reason_tag}
+              {target.outcome_reason_note && ` · ${target.outcome_reason_note}`}
+            </span>
+          ) : (
+            // 118 도입 시점에 품질만 찍힌 행들이 남아 있다 — 눈에 띄게 해서 보정을 유도한다.
+            <span className="text-amber-600 font-medium">사유 미기재</span>
+          )}
+        </p>
       )}
 
       {isCarried && (
@@ -188,7 +198,7 @@ export function RenewalCard({
       {/* 결과 품질 — '액션'이 아니라 편집 가능한 상태이므로 액션 바 위에 따로 둔다.
           라벨은 2자로 줄이고 전체 문구는 title 로 — 미전환 카드는 되돌리기까지 세 버튼이
           min-w-40 안에 들어가야 한다. */}
-      {onSetQuality && !overlay && (
+      {onEditQuality && !overlay && (
         <div
           className="flex items-center gap-1 mt-1.5"
           onClick={(e) => e.stopPropagation()}
@@ -203,7 +213,7 @@ export function RenewalCard({
                 title={label}
                 aria-label={label}
                 aria-pressed={active}
-                onClick={() => onSetQuality(active ? null : q)}
+                onClick={() => onEditQuality(q)}
                 className={`px-2 py-0.5 rounded-md text-[10px] font-medium border transition-colors ${
                   active
                     ? q === 'good'

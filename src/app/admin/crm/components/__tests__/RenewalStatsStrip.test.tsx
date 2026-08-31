@@ -12,6 +12,8 @@ function target(stage: RenewalStage, studentId = `s-${stage}`): RenewalTarget {
     converted_payment_id: null,
     drop_reason: null,
     outcome_quality: null,
+    outcome_reason_tag: null,
+    outcome_reason_note: null,
     carried_to_week: null,
     carried_from_week: null,
     created_by: null,
