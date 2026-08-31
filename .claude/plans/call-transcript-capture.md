@@ -149,8 +149,8 @@ file per the `qwen-asr.ts` comments. Bound the first run with `--limit`.
 | REQ-001 | `call_transcripts` table + RLS     | (MANUAL)     | PGlite harness 18/18; dev apply pending                   | Verified (local) |
 | REQ-002 | Route persists transcript          | (TEST)       | `src/app/api/crm/students/[id]/plaud-memo/__tests__/route.test.ts` | Pending |
 | REQ-003 | Insert failure preserves memo      | (TEST)       | `src/app/api/crm/students/[id]/plaud-memo/__tests__/route.test.ts` | Pending |
-| REQ-004 | Memo header parser                 | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Pending |
-| REQ-005 | Memo→recording matcher             | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Pending |
+| REQ-004 | Memo header parser                 | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Done    |
+| REQ-005 | Memo→recording matcher             | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Done    |
 | REQ-006 | Backfill resumable + bounded       | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Pending |
 | REQ-007 | No CRM regression                  | (BROWSER)    | Playwright MCP spot-check                                 | Pending |
 

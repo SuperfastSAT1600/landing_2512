@@ -6,26 +6,10 @@ import { AsrFailedError } from '@/lib/qwen-asr';
 import { getPlaudFile, getAccountLabel } from '@/lib/plaud-client';
 import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultation-timeline';
 import { notifyMemoToSlack, PLAUD_MEMO_HEADING } from '@/lib/slack-memo';
+import { PLAUD_MEMO_MARKER, toKstDisplay } from '@/lib/plaud-backfill';
 
 // 전사 작업 폴링(상한 240s)에 시간이 걸릴 수 있어 서버리스 실행 한도를 늘린다.
 export const maxDuration = 300;
-
-const MEMO_HEADER = '🎙️ Plaud 상담 자동 요약';
-
-/**
- * Plaud의 타임스탬프(start_at 등)를 한국시간(KST) "YYYY-MM-DD HH:mm"로 변환한다.
- * Plaud는 타임존 표기 없는 UTC 문자열(예: "2026-07-31T07:39:18")을 주므로 UTC로 간주해 +9h 한다.
- * 파싱 불가하면 원본을 그대로 반환한다.
- */
-function toKstDisplay(iso: string): string {
-  if (!iso) return '';
-  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
-  const d = new Date(hasTz ? iso : `${iso}Z`);
-  if (Number.isNaN(d.getTime())) return iso;
-  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${kst.getUTCFullYear()}-${p(kst.getUTCMonth() + 1)}-${p(kst.getUTCDate())} ${p(kst.getUTCHours())}:${p(kst.getUTCMinutes())}`;
-}
 
 /**
  * POST /api/crm/students/[id]/plaud-memo
@@ -91,7 +75,7 @@ export async function POST(
     const { summary } = await processPlaudRecording({ audioUrl });
 
     const meta = [recordingName, toKstDisplay(recordedAt)].filter(Boolean).join(' · ');
-    const header = meta ? `${MEMO_HEADER} · ${meta}` : MEMO_HEADER;
+    const header = meta ? `${PLAUD_MEMO_MARKER} · ${meta}` : PLAUD_MEMO_MARKER;
     const raw_memo = `${header}\n\n${summary}`;
 
     // account_key가 있으면 그 계정 소유자를 상담자(author)로 기록(누가 통화했는지 추적).
