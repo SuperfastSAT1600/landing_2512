@@ -125,6 +125,7 @@ into a memo has no student, no label, and no corpus value.
 | Route | `src/app/api/crm/students/[id]/plaud-memo/route.ts` | Keep `transcript`, insert row (REQ-002/003) |
 | Lib | `src/lib/call-transcripts.ts` | `insertCallTranscript()` — single write path |
 | Lib | `src/lib/plaud-backfill.ts` | Header parser + matcher, pure (REQ-004/005) |
+| Lib | `src/lib/plaud-backfill-run.ts` | `runBackfill()` — orchestration with injected I/O (REQ-006) |
 | Script | `scripts/backfill-call-transcripts.ts` | Orchestration + CLI (REQ-006) |
 
 `toKstDisplay` currently lives privately in the route. Both the route and the matcher need
@@ -151,7 +152,7 @@ file per the `qwen-asr.ts` comments. Bound the first run with `--limit`.
 | REQ-003 | Insert failure preserves memo      | (TEST)       | `src/app/api/crm/students/[id]/plaud-memo/__tests__/route.test.ts` | Done    |
 | REQ-004 | Memo header parser                 | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Done    |
 | REQ-005 | Memo→recording matcher             | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Done    |
-| REQ-006 | Backfill resumable + bounded       | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Pending |
+| REQ-006 | Backfill resumable + bounded       | (TEST)       | `src/lib/__tests__/plaud-backfill-run.test.ts` (11)        | Done (TEST); MANUAL pending |
 | REQ-007 | No CRM regression                  | (BROWSER)    | Playwright MCP spot-check                                 | Pending |
 
 ## Implementation Order
