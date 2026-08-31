@@ -256,3 +256,43 @@ describe('runBackfill', () => {
     expect(deps.listRecordings).not.toHaveBeenCalled(); // 후보가 없으면 Plaud를 부르지도 않는다
   });
 });
+
+describe('runBackfill 시간 예산', () => {
+  it('예산을 넘기면 새 전사를 시작하지 않고 남음으로 넘긴다', async () => {
+    let clock = 0;
+    const deps = makeDeps({
+      // 첫 건이 예산을 다 쓴다
+      transcribe: vi.fn(async () => {
+        clock += 200_000;
+        return '화자1: 전사';
+      }),
+    });
+    const report = await runBackfill(deps, {
+      accounts: ['me'],
+      budgetMs: 150_000,
+      now: () => clock,
+    });
+
+    expect(report.inserted).toBe(1);
+    expect(report.remaining).toBe(1);
+    expect(deps.transcribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('예산이 남아 있으면 계속 처리한다', async () => {
+    let clock = 0;
+    const deps = makeDeps({
+      transcribe: vi.fn(async () => {
+        clock += 1_000;
+        return '화자1: 전사';
+      }),
+    });
+    const report = await runBackfill(deps, {
+      accounts: ['me'],
+      budgetMs: 150_000,
+      now: () => clock,
+    });
+
+    expect(report.inserted).toBe(2);
+    expect(report.remaining).toBe(0);
+  });
+});
