@@ -8,7 +8,12 @@
 //  - open  : 1~3단계만 존재하므로 전환율·결제 완료는 항상 0 — 표시하지 않는다.
 //  - cohort: 그 주차의 5단계 전부 = 전환율의 분모가 성립한다.
 
-import { RENEWAL_OPEN_STAGES, type RenewalStage, type RenewalTarget } from '@/types/crm';
+import {
+  RENEWAL_OPEN_STAGES,
+  isRenewalCarried,
+  type RenewalStage,
+  type RenewalTarget,
+} from '@/types/crm';
 
 /** 비율 표기 정본 — 소수 1자리, 끝의 0은 버린다. 분모 0이면 '-'. */
 export function formatRate(numerator: number, denominator: number): string {
@@ -40,8 +45,13 @@ export function RenewalStatsStrip({
   scopeLabel: string;
   mode: 'open' | 'cohort';
 }) {
-  const count = (stage: RenewalStage) => targets.filter((t) => t.stage === stage).length;
-  const open = targets.filter((t) => RENEWAL_OPEN_STAGES.includes(t.stage)).length;
+  // 이월된 행은 stage 상 1~3이지만 그 주차에서는 종결됐다 — 진행 중 계열에서 전부 뺀다.
+  const count = (stage: RenewalStage) =>
+    targets.filter((t) => t.stage === stage && !isRenewalCarried(t)).length;
+  const open = targets.filter(
+    (t) => RENEWAL_OPEN_STAGES.includes(t.stage) && !isRenewalCarried(t)
+  ).length;
+  const carried = targets.filter(isRenewalCarried).length;
   const completed = count('4');
   // 터미널에 도달했지만 아직 좋음/나쁨을 안 찍은 수 — 이 주차에 태깅이 남았다는 신호.
   const unclassified = targets.filter(
@@ -63,6 +73,12 @@ export function RenewalStatsStrip({
           <Metric label="결제 완료" value={completed} tone="text-emerald-600" />
           <Sep />
           <Metric label="미전환" value={count('5')} tone="text-gray-500" />
+          {carried > 0 && (
+            <>
+              <Sep />
+              <Metric label="이월" value={carried} tone="text-gray-500" />
+            </>
+          )}
           <Sep />
           <Metric label="전환율" value={formatRate(completed, targets.length)} tone="text-gray-900" />
           {unclassified > 0 && (

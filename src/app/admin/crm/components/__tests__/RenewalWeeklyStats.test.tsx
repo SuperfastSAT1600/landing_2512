@@ -16,6 +16,8 @@ function stat(over: Partial<RenewalWeeklyStat> = {}): RenewalWeeklyStat {
     bad_completed: 0,
     good_dropped: 0,
     bad_dropped: 0,
+    carried_out: 0,
+    carried_in: 0,
     ...over,
   };
 }
@@ -71,5 +73,24 @@ describe('RenewalWeeklyStats — 결과 품질 분포 (REQ-007)', () => {
     const { onSelectWeek } = renderTable([stat()]);
     fireEvent.click(screen.getByText('26년 08월 03주차'));
     expect(onSelectWeek).toHaveBeenCalledWith('2026-08-17');
+  });
+
+  it('이월 열을 보여주고, 이월로 진행 중이 0이 되면 "진행중" 꼬리표가 사라진다', () => {
+    renderTable([
+      stat({ selected: 13, open: 0, completed: 7, dropped: 2, carried_out: 4, good_completed: 7 }),
+    ]);
+    const table = within(screen.getByRole('table'));
+    expect(table.getByText('4')).toBeTruthy();
+    expect(table.queryByText('진행중')).toBeNull();
+  });
+
+  it('이월유입이 있으면 선정을 신규/이월로 분해한다', () => {
+    renderTable([stat({ selected: 15, carried_in: 4 })]);
+    expect(screen.getByText('신규 11 · 이월 4')).toBeTruthy();
+  });
+
+  it('이월유입이 없으면 분해줄을 숨긴다', () => {
+    renderTable([stat({ selected: 13, carried_in: 0 })]);
+    expect(within(screen.getByRole('table')).queryByText(/신규/)).toBeNull();
   });
 });

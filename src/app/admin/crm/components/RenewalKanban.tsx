@@ -21,6 +21,7 @@ import {
 import {
   RENEWAL_OPEN_STAGES,
   RENEWAL_STAGES,
+  isRenewalCarried,
   type RenewalOutcomeQuality,
   type RenewalStage,
   type RenewalTarget,
@@ -131,6 +132,8 @@ export function RenewalKanban({
     if (!over) return;
     const target = targets.find((t) => t.id === active.id);
     if (!target) return;
+    // 이월된 행은 다음 주차로 넘어가 종결됐다 — 되살리지 않는다.
+    if (isRenewalCarried(target)) return;
 
     const overStage = RENEWAL_STAGES.includes(over.id as RenewalStage)
       ? (over.id as RenewalStage)

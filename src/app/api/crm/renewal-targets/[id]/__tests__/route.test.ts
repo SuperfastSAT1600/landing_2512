@@ -3,9 +3,9 @@ import { NextRequest } from 'next/server';
 
 let lastBuilder: Record<string, ReturnType<typeof vi.fn>>;
 
-function makeBuilder(result: { data: unknown; error: null | { message: string } }) {
+function makeBuilder(result: { data: unknown; error: null | { message: string; code?: string } }) {
   const builder: Record<string, unknown> = {};
-  for (const m of ['select', 'order', 'eq', 'in', 'insert', 'update', 'delete']) {
+  for (const m of ['select', 'order', 'eq', 'in', 'is', 'lt', 'gte', 'insert', 'upsert', 'update', 'delete']) {
     builder[m] = vi.fn(() => builder);
   }
   builder.single = vi.fn(() => builder);
@@ -257,5 +257,26 @@ describe('DELETE /api/crm/renewal-targets/[id]', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.data.id).toBe('rt-1');
+  });
+});
+
+describe('PATCH /api/crm/renewal-targets/[id] — 이월된 행', () => {
+  it('이월되지 않은 행만 수정한다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { ...baseTarget, stage: '3' }, error: null }));
+    const { PATCH } = await import('../route');
+    await PATCH(makeReq('PATCH', { stage: '3' }), { params });
+    expect(lastBuilder.is).toHaveBeenCalledWith('carried_to_week', null);
+  });
+
+  it('이월된 행에 온 단계 변경은 500 이 아니라 409 다 (오래된 탭)', async () => {
+    // 0행 매칭 → PGRST116. 가드가 없으면 carried_stage_check 위반으로 500 이 난다.
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: null, error: { message: 'no rows', code: 'PGRST116' } })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { stage: '4' }), { params });
+    expect(res.status).toBe(409);
+    const json = await res.json();
+    expect(json.error.code).toBe('ALREADY_CARRIED');
   });
 });

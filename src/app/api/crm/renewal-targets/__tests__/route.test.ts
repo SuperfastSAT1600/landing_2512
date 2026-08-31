@@ -3,9 +3,9 @@ import { NextRequest } from 'next/server';
 
 let lastBuilder: Record<string, ReturnType<typeof vi.fn>>;
 
-function makeBuilder(result: { data: unknown; error: null | { message: string } }) {
+function makeBuilder(result: { data: unknown; error: null | { message: string; code?: string } }) {
   const builder: Record<string, unknown> = {};
-  for (const m of ['select', 'order', 'eq', 'in', 'insert', 'update', 'delete']) {
+  for (const m of ['select', 'order', 'eq', 'in', 'is', 'lt', 'gte', 'insert', 'upsert', 'update', 'delete']) {
     builder[m] = vi.fn(() => builder);
   }
   builder.single = vi.fn(() => builder);
@@ -133,5 +133,34 @@ describe('POST /api/crm/renewal-targets', () => {
     const { POST } = await import('../route');
     const res = await POST(makeReq('POST', {}));
     expect(res.status).toBe(400);
+  });
+});
+
+describe('GET/POST /api/crm/renewal-targets — 주차 이월 (carry-over)', () => {
+  it('scope=open 에서 이월된 행을 제외한다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
+    const { GET } = await import('../route');
+    await GET(makeReq('GET', undefined, '?scope=open'));
+    expect(lastBuilder.is).toHaveBeenCalledWith('carried_to_week', null);
+  });
+
+  it('주차 스코프에서는 이월 필터를 걸지 않는다 — 그 주차에서 누가 이월됐는지 봐야 한다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
+    const { GET } = await import('../route');
+    await GET(makeReq('GET', undefined, '?week_start=2026-08-24'));
+    expect(lastBuilder.is).not.toHaveBeenCalled();
+  });
+
+  it('이번 주차에 이미 종결된 행이 있어 UNIQUE 에 걸리면 500 이 아니라 409 다', async () => {
+    // 409 가드는 열린 행만 본다 — 4·5 행이 있으면 가드를 통과해 23505 가 난다.
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: null, error: { message: 'duplicate key', code: '23505' } })
+    );
+    const { POST } = await import('../route');
+    const res = await POST(makeReq('POST', { student_id: 's-1' }));
+    expect(res.status).toBe(409);
+    const json = await res.json();
+    expect(json.error.code).toBe('ALREADY_IN_WEEK');
   });
 });

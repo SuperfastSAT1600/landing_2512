@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
-import { getWeekDef } from '@/lib/week-definitions';
+import { getCurrentWeekDef } from '@/lib/week-definitions';
 import { RENEWAL_OPEN_STAGES } from '@/types/crm';
 
 // RenewalTargetStudent(types/crm.ts)와 동일한 집합을 유지한다.
@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
     query = query.eq('week_start', weekStart);
   }
   if (openOnly) {
-    query = query.in('stage', RENEWAL_OPEN_STAGES);
+    // 이월된 행은 다음 주차로 넘어가 종결됐다 — 진행 중에서 빠지고 후보 제외 목록에서도 빠진다.
+    query = query.in('stage', RENEWAL_OPEN_STAGES).is('carried_to_week', null);
   }
 
   const { data, error } = await query;
@@ -71,7 +72,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const weekDef = getWeekDef(new Date().toISOString().slice(0, 10));
+  // KST 기준 — UTC 로 자르면 월요일 00:00~09:00 에 지난 주차 행이 생겨 보드에 안 보인다.
+  const weekDef = getCurrentWeekDef();
   if (!weekDef) {
     return NextResponse.json(
       { error: { code: 'WEEK_OUT_OF_RANGE', message: '현재 날짜에 대한 주차 정의가 없습니다.' } },
@@ -113,6 +115,14 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     console.error('[renewal-targets POST]', error);
+    // 위 가드는 열린 행만 본다 — 이번 주차에 이미 결과가 확정된(4·5) 행이 있으면
+    // 가드를 통과한 뒤 UNIQUE(student_id, week_start) 에 걸린다. 500 이 아니라 409 다.
+    if (error.code === '23505') {
+      return NextResponse.json(
+        { error: { code: 'ALREADY_IN_WEEK', message: '이번 주차에 이미 등록된 학생입니다' } },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
       { error: { code: 'INSERT_FAILED', message: '생성에 실패했습니다.' } },
       { status: 500 }
