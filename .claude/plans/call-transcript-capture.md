@@ -153,7 +153,7 @@ file per the `qwen-asr.ts` comments. Bound the first run with `--limit`.
 | REQ-004 | Memo header parser                 | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Done    |
 | REQ-005 | Memo→recording matcher             | (TEST)       | `src/lib/__tests__/plaud-backfill.test.ts`                | Done    |
 | REQ-006 | Backfill resumable + bounded       | (TEST)       | `src/lib/__tests__/plaud-backfill-run.test.ts` (11)        | Done (TEST); MANUAL pending |
-| REQ-007 | No CRM regression                  | (BROWSER)    | Playwright MCP spot-check                                 | Pending |
+| REQ-007 | No CRM regression                  | (BROWSER)    | Playwright MCP spot-check                                 | Blocked — no .env.local |
 
 ## Implementation Order
 
@@ -164,6 +164,20 @@ file per the `qwen-asr.ts` comments. Bound the first run with `--limit`.
 5. REQ-003 — failure isolation, tested against the REQ-002 path.
 6. REQ-006 — backfill composes REQ-001/004/005 and is the only step that spends ASR budget.
 7. REQ-007 — browser check once the route work is settled.
+
+## Verification Status
+
+REQ-001의 dev DB 적용과 REQ-006의 `--limit 3` 실행, REQ-007 브라우저 확인은 모두
+Supabase·Plaud·Qwen 자격 증명이 필요하고 이 작업 환경에는 `.env.local`이 없다.
+자격 증명을 쥔 쪽에서 아래 순서로 마무리해야 한다.
+
+1. `supabase/migrations/119_call_transcripts.sql` 적용 (REQ-001)
+2. `npx tsx scripts/backfill-call-transcripts.ts --dry-run` — 매칭률 확인
+3. `npx tsx scripts/backfill-call-transcripts.ts --limit 3` — ASR 예산 묶고 실물 확인
+4. CRM 학생 패널에서 녹음 → 메모 생성, 초안이 종전과 동일한지 확인 (REQ-007)
+
+UI 파일은 한 개도 건드리지 않았고(브랜치 diff 기준) 라우트는 201 응답 형태가 그대로다.
+REQ-007은 그 사실의 확인 절차이지, 변경에 대한 우려가 아니다.
 
 ## Out of Scope
 
