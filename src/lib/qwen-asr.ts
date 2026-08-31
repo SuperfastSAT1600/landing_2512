@@ -9,7 +9,7 @@
  */
 
 const BASE_URL = process.env.QWEN_ASR_BASE_URL?.trim() || 'https://dashscope-intl.aliyuncs.com';
-const ASR_MODEL = process.env.QWEN_ASR_MODEL?.trim() || 'fun-asr';
+export const ASR_MODEL = process.env.QWEN_ASR_MODEL?.trim() || 'fun-asr';
 
 /** 폴링 간격(ms)과 최대 횟수 — 라우트 maxDuration 300s 안에 끝나도록 상한 240s. */
 const POLL_INTERVAL_MS = 3000;

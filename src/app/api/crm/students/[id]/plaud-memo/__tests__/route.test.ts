@@ -31,10 +31,12 @@ const appendConsultationEntry = vi.fn();
 const getPlaudFile = vi.fn();
 const getAccountLabel = vi.fn();
 const notifyMemoToSlack = vi.fn();
+const insertCallTranscript = vi.fn();
 
 vi.mock('@/lib/plaud-process', () => ({ processPlaudRecording }));
 vi.mock('@/lib/plaud-transcribe', () => ({ QuotaExhaustedError }));
-vi.mock('@/lib/qwen-asr', () => ({ AsrFailedError, AsrTimeoutError }));
+vi.mock('@/lib/qwen-asr', () => ({ AsrFailedError, AsrTimeoutError, ASR_MODEL: 'fun-asr' }));
+vi.mock('@/lib/call-transcripts', () => ({ insertCallTranscript }));
 vi.mock('@/lib/plaud-client', () => ({ getPlaudFile, getAccountLabel }));
 vi.mock('@/lib/slack-memo', () => ({
   notifyMemoToSlack,
@@ -66,6 +68,7 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     vi.clearAllMocks();
     getAccountLabel.mockImplementation((k: string) => LABELS[k]);
     notifyMemoToSlack.mockResolvedValue(undefined);
+    insertCallTranscript.mockResolvedValue(undefined);
   });
 
   it('잘못된 admin key → 401', async () => {
@@ -255,5 +258,93 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     const res = await POST(makeReq({ audio_url: 'https://x/a.m4a' }), { params });
     expect(res.status).toBe(500);
     expect(appendConsultationEntry).not.toHaveBeenCalled();
+  });
+  describe('전사 보관 (REQ-002 / REQ-003)', () => {
+    it('file_id 경로 → 메모와 함께 call_transcripts 행을 남긴다', async () => {
+      getPlaudFile.mockResolvedValueOnce({
+        id: 'f9',
+        name: '8월 상담 녹음',
+        start_at: '2026-08-04T00:31:27',
+        duration: 1_260_000, // ms
+        presigned_url: 'https://s3/audio.mp3?sig=1',
+      });
+      processPlaudRecording.mockResolvedValueOnce({
+        transcript: '화자1: 안녕하세요\n화자2: 네 안녕하세요',
+        summary: '[핵심 요약]\n상담 진행.',
+      });
+      appendConsultationEntry.mockResolvedValueOnce({ id: 'entry-9', published: false });
+
+      const { POST } = await import('../route');
+      const res = await POST(makeReq({ file_id: 'f9', account_key: 'me' }), { params });
+
+      expect(res.status).toBe(201);
+      expect(insertCallTranscript).toHaveBeenCalledTimes(1);
+      expect(insertCallTranscript).toHaveBeenCalledWith({
+        studentId: 's1',
+        timelineEntryId: 'entry-9',
+        source: 'plaud',
+        externalId: 'f9',
+        recordingName: '8월 상담 녹음',
+        recordedAt: '2026-08-04T00:31:27',
+        durationSec: 1260,
+        transcript: '화자1: 안녕하세요\n화자2: 네 안녕하세요',
+        asrModel: 'fun-asr',
+      });
+    });
+
+    it('audio_url 직접 경로 → external_id 없이 저장한다', async () => {
+      processPlaudRecording.mockResolvedValueOnce({ transcript: '화자1: 전사', summary: '요약' });
+      appendConsultationEntry.mockResolvedValueOnce({ id: 'entry-10', published: false });
+
+      const { POST } = await import('../route');
+      const res = await POST(makeReq({ audio_url: 'https://x/a.m4a' }), { params });
+
+      expect(res.status).toBe(201);
+      const [arg] = insertCallTranscript.mock.calls[0];
+      expect(arg.externalId).toBeUndefined();
+      expect(arg.transcript).toBe('화자1: 전사');
+      expect(arg.timelineEntryId).toBe('entry-10');
+    });
+
+    it('전사 저장이 실패해도 메모는 그대로 201 (REQ-003)', async () => {
+      processPlaudRecording.mockResolvedValueOnce({ transcript: '화자1: 전사', summary: '요약' });
+      const entry = { id: 'entry-11', published: false };
+      appendConsultationEntry.mockResolvedValueOnce(entry);
+      insertCallTranscript.mockRejectedValueOnce(new Error('call_transcripts down'));
+      const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const { POST } = await import('../route');
+      const res = await POST(makeReq({ audio_url: 'https://x/a.m4a' }), { params });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body.data.entry).toEqual(entry);
+      expect(err).toHaveBeenCalled();
+      err.mockRestore();
+    });
+
+    it('전사 저장 실패가 슬랙 공유를 막지 않는다 (REQ-003)', async () => {
+      processPlaudRecording.mockResolvedValueOnce({ transcript: '화자1: 전사', summary: '요약' });
+      appendConsultationEntry.mockResolvedValueOnce({ id: 'entry-12', published: false });
+      insertCallTranscript.mockRejectedValueOnce(new Error('boom'));
+      const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const { POST } = await import('../route');
+      await POST(makeReq({ audio_url: 'https://x/a.m4a' }), { params });
+
+      expect(notifyMemoToSlack).toHaveBeenCalled();
+      err.mockRestore();
+    });
+
+    it('메모 생성이 실패하면 전사도 저장하지 않는다', async () => {
+      processPlaudRecording.mockResolvedValueOnce({ transcript: '화자1: 전사', summary: '요약' });
+      appendConsultationEntry.mockRejectedValueOnce(new StudentNotFoundError());
+
+      const { POST } = await import('../route');
+      const res = await POST(makeReq({ audio_url: 'https://x/a.m4a' }), { params });
+
+      expect(res.status).toBe(404);
+      expect(insertCallTranscript).not.toHaveBeenCalled();
+    });
   });
 });
