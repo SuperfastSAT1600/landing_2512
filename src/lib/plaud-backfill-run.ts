@@ -29,6 +29,14 @@ export interface BackfillDeps {
   getFile(fileId: string, accountKey: string): Promise<PlaudFile>;
   transcribe(audioUrl: string): Promise<string>;
   insert(input: CallTranscriptInput): Promise<void>;
+  /**
+   * 이 녹음의 전사가 이미 있으면 돌려준다. 한 녹음이 상담메모 여럿에 붙는 경우
+   * (자매 학생 한 통화, 메모 중복 생성) 두 번째부터는 이 값을 재사용한다.
+   */
+  findExisting(
+    source: 'plaud' | 'voip',
+    externalId: string
+  ): Promise<{ transcript: string; asrModel: string | null } | null>;
   log(message: string): void;
 }
 
@@ -122,13 +130,26 @@ export async function runBackfill(
       deps.log(`[dry-run] ${c.studentId} / ${c.entryId} ← ${match.recording.id}`);
       continue;
     }
-    if (budget <= 0) {
-      report.remaining++;
-      continue;
-    }
-    budget--;
 
     try {
+      // 전사는 녹음의 속성이지 메모의 속성이 아니다. 같은 오디오를 두 번 살 이유가 없고,
+      // 예산 차감보다 앞에 둬야 재사용 건이 남의 ASR 예산을 잡아먹지 않는다.
+      const existing = await deps.findExisting('plaud', match.recording.id);
+      if (existing) {
+        await deps.insert(
+          buildInput(c.studentId, c.entryId, match.recording, existing.transcript, existing.asrModel ?? undefined)
+        );
+        report.inserted++;
+        deps.log(`[reuse] ${c.studentId} / ${c.entryId} ← ${match.recording.id} (전사 재사용)`);
+        continue;
+      }
+
+      if (budget <= 0) {
+        report.remaining++;
+        continue;
+      }
+      budget--;
+
       await transcribeAndInsert(deps, c.studentId, c.entryId, match.recording, options.asrModel);
       report.inserted++;
       deps.log(`[ok] ${c.studentId} / ${c.entryId} ← ${match.recording.id}`);
@@ -160,16 +181,15 @@ async function listAllRecordings(
   return merged;
 }
 
-async function transcribeAndInsert(
-  deps: BackfillDeps,
+/** 녹음 메타데이터 → 삽입 페이로드. 전사·모델만 호출자가 정한다(신규 전사 vs 재사용). */
+function buildInput(
   studentId: string,
   entryId: string,
   recording: PlaudRecording,
+  transcript: string,
   asrModel?: string
-): Promise<void> {
-  const file = await deps.getFile(recording.id, recording.account_key ?? '');
-  const transcript = await deps.transcribe(file.presigned_url);
-  await deps.insert({
+): CallTranscriptInput {
+  return {
     studentId,
     timelineEntryId: entryId,
     source: 'plaud',
@@ -181,7 +201,19 @@ async function transcribeAndInsert(
       : {}),
     transcript,
     ...(asrModel ? { asrModel } : {}),
-  });
+  };
+}
+
+async function transcribeAndInsert(
+  deps: BackfillDeps,
+  studentId: string,
+  entryId: string,
+  recording: PlaudRecording,
+  asrModel?: string
+): Promise<void> {
+  const file = await deps.getFile(recording.id, recording.account_key ?? '');
+  const transcript = await deps.transcribe(file.presigned_url);
+  await deps.insert(buildInput(studentId, entryId, recording, transcript, asrModel));
 }
 
 /** 이미 전사가 있어 후보에서 빠진 Plaud 메모 수 — 재실행이 조용한 이유를 보여주는 값. */
