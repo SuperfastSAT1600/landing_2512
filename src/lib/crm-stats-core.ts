@@ -1,4 +1,28 @@
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import { hasReachedStage } from '@/lib/funnel-stats';
+
+// 코호트 조회 헬퍼가 받는 클라이언트 — supabaseAdmin 을 그대로 넘긴다.
+type SupabaseLike = SupabaseClient;
+type QueryResult<Row> = PromiseLike<{ data: Row[] | null; error: PostgrestError | null }>;
+
+/**
+ * leadCohortQuery 가 돌려주는 행. select 문자열에 따라 일부 필드만 채워지므로
+ * 코호트 공통 필드만 필수로 두고 나머지는 옵셔널이다.
+ */
+export interface LeadCohortRow {
+  id: string;
+  name: string;
+  funnel_stage: string;
+  lead_status: string;
+  traffic_source: string | null;
+  inquiry_date: string | null;
+  created_at: string;
+  stage_history?: { stage: string; label: string; entered_at: string }[] | null;
+  funnel_stage_updated_at?: string | null;
+  first_message_sent_at?: string | null;
+  retry_strategy_id?: string | null;
+  company_id?: string | null;
+}
 
 // CRM 통계 집계 공용 코어. stats/route.ts 에서 추출 —
 // B2B stats·세일즈 로직 통계가 동일한 컨택/전환율/월키/문의시각 계산을 공유한다.
@@ -132,4 +156,54 @@ export function inquiryRefMs(inquiry_date: string | null, created_at: string): n
   }
   const t = new Date(created_at).getTime();
   return Number.isFinite(t) ? t : null;
+}
+
+// ─── 코호트 조회 (stats overview 와 stats/detail 이 반드시 공유해야 하는 것) ──────
+
+/**
+ * 기간 리드 코호트 — `inquiry_date`(실제 인입 시각)가 [from, to]에 든 리드만.
+ *
+ * **`created_at` 폴백을 쓰지 않는다.** 레거시 대량 임포트(inquiry_date NULL)가 생성 시각 기준으로
+ * 특정 기간 신규 리드로 둔갑해 과대집계된다(2026-05-25 주: 19건 → 472건).
+ *
+ * overview의 카운트와 detail의 명단이 어긋나면 "19이라고 써놓고 472명을 보여주는" 화면이
+ * 되므로, 두 라우트가 드리프트할 수 없게 조회를 이 한 곳에서만 만든다.
+ */
+export function leadCohortQuery<Row = LeadCohortRow>(
+  db: SupabaseLike,
+  select: string,
+  from: string,
+  to: string,
+  segment: CrmStatsSegment,
+): QueryResult<Row> {
+  let q = db
+    .from('students')
+    .select(select)
+    .gte('inquiry_date', from)
+    .lte('inquiry_date', `${to}T23:59:59`)
+    .limit(MAX_LEAD_ROWS);
+  if (segment === 'b2c') q = q.is('company_id', null);
+  if (segment === 'b2b') q = q.not('company_id', 'is', null);
+  // select 문자열이 리터럴이 아니면 supabase-js가 행 타입을 추론하지 못하므로 호출자가 지정한다.
+  return q as unknown as QueryResult<Row>;
+}
+
+/**
+ * 결제 코호트 — 인입 리드가 **언제든** 최초결제했는지(기간 무관).
+ *
+ * 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
+ * 0원 가결제·₩1 placeholder도 실전환으로 포함하고 환불(음수)만 제외한다.
+ */
+export function paidCohortQuery(db: SupabaseLike): QueryResult<PaidCohortRow> {
+  return db
+    .from('payments')
+    .select('student_id, student_name, students:student_id(company_id)')
+    .eq('payment_type', '최초결제')
+    .gte('amount', 0) as unknown as QueryResult<PaidCohortRow>;
+}
+
+export interface PaidCohortRow {
+  student_id: string | null;
+  student_name: string;
+  students?: RelatedCompanyRef;
 }

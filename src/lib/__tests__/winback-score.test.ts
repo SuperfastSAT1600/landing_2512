@@ -81,6 +81,21 @@ describe('scoreWinbackCandidate', () => {
     expect(signalKeys(student({ updated_at: '2024-01-01T00:00:00Z' }))).toContain('recency_stale');
   });
 
+  it('이탈 경과일은 inactive_at을 우선한다 (updated_at은 일괄 백필로 오염된 필드)', () => {
+    // updated_at은 "방금 이탈"로 보이지만 실제 이탈은 100일 전 → 적정 구간으로 잡혀야 한다.
+    const keys = signalKeys(
+      student({ updated_at: '2026-08-10T00:00:00Z', inactive_at: '2026-05-01T00:00:00Z' })
+    );
+    expect(keys).toContain('recency_sweet');
+    expect(keys).not.toContain('recency_stale');
+  });
+
+  it('inactive_at이 오래되면 updated_at이 최신이어도 감점한다', () => {
+    expect(
+      signalKeys(student({ updated_at: '2026-08-10T00:00:00Z', inactive_at: '2024-01-01T00:00:00Z' }))
+    ).toContain('recency_stale');
+  });
+
   it('최근 컨택·무응답 누적은 피로도로 감점한다', () => {
     const fatigued = scoreWinbackCandidate(
       student({

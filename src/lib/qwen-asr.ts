@@ -9,10 +9,10 @@
  */
 
 const BASE_URL = process.env.QWEN_ASR_BASE_URL?.trim() || 'https://dashscope-intl.aliyuncs.com';
-const ASR_MODEL = process.env.QWEN_ASR_MODEL?.trim() || 'fun-asr';
+export const ASR_MODEL = process.env.QWEN_ASR_MODEL?.trim() || 'fun-asr';
 
-/** 폴링 간격(ms)과 최대 횟수 — 라우트 maxDuration 300s 안에 끝나도록 상한 240s. */
-const POLL_INTERVAL_MS = 3000;
+/** 폴링 간격(ms)과 기본 최대 횟수 — 기본값은 상한 240s(대화형 메모 경로 기준). */
+export const POLL_INTERVAL_MS = 3000;
 const MAX_POLLS = 80;
 
 /** 전사 실패(제출 거절·작업 FAILED·결과 없음). 라우트에서 502로 매핑. */

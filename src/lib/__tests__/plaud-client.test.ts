@@ -107,6 +107,28 @@ describe('plaud-client', () => {
     await expect(listPlaudRecordings()).rejects.toThrow(/Plaud 도구 오류/);
   });
 
+  it('get_file 응답 JSON 뒤에 비-JSON 안내문(Note:)이 붙어도 정상 파싱(REQ-001/002)', async () => {
+    process.env.PLAUD_ACCESS_TOKEN = 'direct-token';
+    const fileJson = JSON.stringify({ id: 'f1', name: '상담', presigned_url: 'https://s3/a.mp3?x=1' });
+    const trailingNote =
+      '\n\nNote: source_list `transaction_polish` returned an empty `data_content` — the body lives behind `data_link`, not missing. Call get_transcript with the matching `block` to read it (it fetches the link).';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        text: async () =>
+          `event: message\ndata: ${JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: { isError: false, content: [{ type: 'text', text: fileJson + trailingNote }] },
+          })}\n\n`,
+      })
+    );
+    const { getPlaudFile } = await import('@/lib/plaud-client');
+    const f = await getPlaudFile('f1');
+    expect(f.presigned_url).toBe('https://s3/a.mp3?x=1');
+  });
+
   it('presigned_url 없으면 getPlaudFile throw', async () => {
     process.env.PLAUD_ACCESS_TOKEN = 'direct-token';
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({

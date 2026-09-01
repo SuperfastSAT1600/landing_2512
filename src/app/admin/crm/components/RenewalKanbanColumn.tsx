@@ -2,7 +2,13 @@
 
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { RENEWAL_STAGE_LABELS, type RenewalStage, type RenewalTarget } from '@/types/crm';
+import {
+  RENEWAL_STAGE_LABELS,
+  isRenewalCarried,
+  type RenewalOutcomeQuality,
+  type RenewalStage,
+  type RenewalTarget,
+} from '@/types/crm';
 import { RenewalCard, type RenewalCardTutoring } from './RenewalCard';
 
 interface RenewalKanbanColumnProps {
@@ -17,6 +23,7 @@ interface RenewalKanbanColumnProps {
   onRemove?: (target: RenewalTarget) => void;
   onReopen?: (target: RenewalTarget) => void;
   onMemoSave?: (target: RenewalTarget, memo: string) => void;
+  onEditQuality?: (target: RenewalTarget, quality: RenewalOutcomeQuality) => void;
 }
 
 // 4(결제 완료)=emerald, 5(미전환)=무채색, 1~3=기본
@@ -40,9 +47,13 @@ export function RenewalKanbanColumn({
   onRemove,
   onReopen,
   onMemoSave,
+  onEditQuality,
 }: RenewalKanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const tone = STAGE_TONE[stage];
+  // 이월된 행은 이 컬럼에 남아 '누가 이월됐는지'를 보여주지만 진행 중 인원은 아니다.
+  const carried = targets.filter(isRenewalCarried).length;
+  const live = targets.length - carried;
 
   return (
     <div className="flex flex-col flex-1 min-w-40 sm:min-w-44">
@@ -50,7 +61,10 @@ export function RenewalKanbanColumn({
         <p className={`text-[11px] font-semibold leading-tight truncate ${tone.title}`}>
           {stage}. {RENEWAL_STAGE_LABELS[stage]}
         </p>
-        <span className={`text-[10px] ${tone.count}`}>{targets.length}명</span>
+        <span className={`text-[10px] ${tone.count}`}>
+          {live}명
+          {carried > 0 && <span className="text-gray-400"> · 이월 {carried}</span>}
+        </span>
       </div>
       <div
         ref={setNodeRef}
@@ -70,6 +84,7 @@ export function RenewalKanbanColumn({
               onRemove={onRemove && (() => onRemove(target))}
               onReopen={onReopen && (() => onReopen(target))}
               onMemoSave={onMemoSave && ((memo) => onMemoSave(target, memo))}
+              onEditQuality={onEditQuality && ((q) => onEditQuality(target, q))}
             />
           ))}
         </SortableContext>

@@ -22,6 +22,7 @@ import {
   subjectOptions,
   type CandidateFilters,
 } from './renewal-candidate-filters';
+import { countStudents, dedupeByStudent, expandSubjectRows } from './renewal-candidate-rows';
 
 interface RenewalCandidateAddProps {
   /** 이미 선별·정렬된 후보 (열린 타깃 제외, 급한 순). */
@@ -54,22 +55,25 @@ export function RenewalCandidateAdd({
   // 실제 체크 상태는 그때그때 옵션에서 파생한다.
   const [filters, setFilters] = useState<CandidateFilters | null>(null);
 
-  const subjectOpts = useMemo(() => subjectOptions(candidates), [candidates]);
-  const statusOpts = useMemo(() => paymentStatusOptions(candidates), [candidates]);
+  // 목록의 단위는 학생이 아니라 (학생 × 과목) — 과목 필터도 이 행에 걸린다.
+  const rows = useMemo(() => expandSubjectRows(candidates), [candidates]);
+
+  const subjectOpts = useMemo(() => subjectOptions(rows), [rows]);
+  const statusOpts = useMemo(() => paymentStatusOptions(rows), [rows]);
   const effectiveFilters = useMemo(
-    () => filters ?? defaultCandidateFilters(candidates),
-    [filters, candidates]
+    () => filters ?? defaultCandidateFilters(rows),
+    [filters, rows]
   );
 
   const visible = useMemo(() => {
-    const byGroup = filterCandidates(candidates, effectiveFilters);
+    const byGroup = filterCandidates(rows, effectiveFilters);
     return filterTutoringEntries(byGroup, { subTab, vipOnly, searchQuery });
-  }, [candidates, effectiveFilters, subTab, vipOnly, searchQuery]);
+  }, [rows, effectiveFilters, subTab, vipOnly, searchQuery]);
 
-  // 튜터링 상태 서브탭 카운트는 사이드바 필터를 반영한 뒤 센다.
+  // 서브탭·하단 카운트는 사람 수 — 과목 행이 여러 개여도 한 명으로 센다.
   const counts = useMemo(
-    () => countByTutoringStatus(filterCandidates(candidates, effectiveFilters)),
-    [candidates, effectiveFilters]
+    () => countByTutoringStatus(dedupeByStudent(filterCandidates(rows, effectiveFilters))),
+    [rows, effectiveFilters]
   );
 
   function resetFilters() {
@@ -120,8 +124,8 @@ export function RenewalCandidateAdd({
               onChange={setFilters}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              visibleCount={visible.length}
-              totalCount={candidates.length}
+              visibleCount={countStudents(visible)}
+              totalCount={countStudents(rows)}
               onReset={resetFilters}
             />
 

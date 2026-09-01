@@ -33,7 +33,17 @@ describe('parseRecommendResponse', () => {
     expect(parseRecommendResponse(raw, VALID).picks.map((p) => p.id)).toEqual(['a']);
   });
 
-  it('적합도 임계 미만은 제외한다', () => {
+  it('기본값은 낮은 적합도도 버리지 않는다 (제외는 담당자가 화면에서 판단한다)', () => {
+    const raw = JSON.stringify({
+      picks: [
+        { id: 'a', fit: 2, reason: '약함' },
+        { id: 'b', fit: 3, reason: '보통' },
+      ],
+    });
+    expect(parseRecommendResponse(raw, VALID).picks.map((p) => p.id)).toEqual(['a', 'b']);
+  });
+
+  it('minFit을 명시하면 그 미만은 제외한다 (옵션은 유지)', () => {
     const raw = JSON.stringify({
       picks: [
         { id: 'a', fit: 2, reason: '약함' },
@@ -43,9 +53,26 @@ describe('parseRecommendResponse', () => {
     expect(parseRecommendResponse(raw, VALID, 3).picks.map((p) => p.id)).toEqual(['b']);
   });
 
-  it('fit이 적합도 범위를 벗어나면 스키마 위반으로 throw', () => {
-    const raw = JSON.stringify({ picks: [{ id: 'a', fit: 9, reason: 'x' }] });
-    expect(() => parseRecommendResponse(raw, VALID)).toThrow(AiResponseError);
+  it('망가진 pick 하나 때문에 나머지 판정을 버리지 않는다', () => {
+    // 실측: Qwen이 reason 없는 원소를 하나 섞어 보내 45명 판정이 전부 날아간 적이 있다.
+    const raw = JSON.stringify({
+      picks: [
+        { id: 'a', fit: 4, reason: '정상 판정' },
+        { id: 'b', fit: 3 }, // reason 누락
+        { id: 'c', fit: 9, reason: '범위 초과' },
+        { id: 'zzz', fit: 5, reason: '없는 학생' },
+      ],
+    });
+    expect(parseRecommendResponse(raw, VALID).picks.map((p) => p.id)).toEqual(['a']);
+  });
+
+  it('picks가 배열이 아니면 응답 자체를 신뢰할 수 없으므로 throw', () => {
+    expect(() => parseRecommendResponse(JSON.stringify({ picks: 'nope' }), VALID)).toThrow(
+      AiResponseError
+    );
+    expect(() => parseRecommendResponse(JSON.stringify({ ok: true }), VALID)).toThrow(
+      AiResponseError
+    );
   });
 
   it('JSON이 없으면 throw', () => {

@@ -31,6 +31,7 @@ function entry(
     hours: null,
     subjects: [],
     paymentStatus: null,
+    bySubject: [],
     ...rest,
   };
 }
@@ -44,6 +45,12 @@ function target(studentId: string, stage: RenewalTarget['stage']): RenewalTarget
     stage_updated_at: '2026-08-14T00:00:00Z',
     converted_payment_id: null,
     drop_reason: null,
+    memo: null,
+    outcome_quality: null,
+    outcome_reason_tag: null,
+    outcome_reason_note: null,
+    carried_to_week: null,
+    carried_from_week: null,
     created_by: null,
     created_at: '2026-08-14T00:00:00Z',
     updated_at: '2026-08-14T00:00:00Z',

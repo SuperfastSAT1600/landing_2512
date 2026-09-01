@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getRecentWeeks, getWeekDef, getWeekLabel } from '../week-definitions';
+import {
+  getCurrentWeekDef,
+  getKstDateString,
+  getRecentWeeks,
+  getWeekDef,
+  getWeekLabel,
+} from '../week-definitions';
 
 describe('getRecentWeeks', () => {
   it('returns the requested number of weeks ending with the week containing the date, newest first', () => {
@@ -27,5 +33,46 @@ describe('getRecentWeeks', () => {
 
   it('returns an empty array for a date before the first defined week', () => {
     expect(getRecentWeeks(4, '2020-01-01')).toEqual([]);
+  });
+});
+
+describe('getCurrentWeekDef', () => {
+  it('오늘이 속한 주차를 돌려준다', () => {
+    expect(getCurrentWeekDef(new Date('2026-08-20T05:00:00Z'))).toMatchObject({
+      label: '26년 08월 03주차',
+      start: '2026-08-17',
+    });
+  });
+
+  it('월요일 이른 아침(KST)에도 그 주차로 판정한다 — UTC 날짜로 자르면 지난 주차가 된다', () => {
+    // 2026-08-16T23:00Z = 08-17(월) 08:00 KST
+    expect(getCurrentWeekDef(new Date('2026-08-16T23:00:00Z'))?.start).toBe('2026-08-17');
+  });
+
+  it('일요일 늦은 밤(KST)은 아직 그 주차다', () => {
+    // 2026-08-16T14:00Z = 08-16(일) 23:00 KST
+    expect(getCurrentWeekDef(new Date('2026-08-16T14:00:00Z'))?.start).toBe('2026-08-10');
+  });
+
+  it('정의 범위 밖이면 null', () => {
+    expect(getCurrentWeekDef(new Date('2030-01-01T00:00:00Z'))).toBeNull();
+  });
+});
+
+describe('getKstDateString', () => {
+  it('월요일 KST 00:00~09:00 을 UTC 로 자르지 않는다', () => {
+    // 2026-08-31T00:30 KST = 2026-08-30T15:30 UTC. UTC 로 자르면 지난 주차로 밀린다.
+    const mondayEarlyKst = new Date('2026-08-30T15:30:00Z');
+    expect(getKstDateString(mondayEarlyKst)).toBe('2026-08-31');
+    expect(getCurrentWeekDef(mondayEarlyKst)?.start).toBe('2026-08-31');
+    // UTC 슬라이스였다면 지난 주차(26년 08월 04주차)로 판정됐을 것.
+    expect(mondayEarlyKst.toISOString().slice(0, 10)).toBe('2026-08-30');
+  });
+
+  it('일요일 늦은 밤 KST 는 아직 지난 주차다', () => {
+    // 2026-08-30T23:00 KST = 2026-08-30T14:00 UTC
+    const sundayLateKst = new Date('2026-08-30T14:00:00Z');
+    expect(getKstDateString(sundayLateKst)).toBe('2026-08-30');
+    expect(getCurrentWeekDef(sundayLateKst)?.start).toBe('2026-08-24');
   });
 });

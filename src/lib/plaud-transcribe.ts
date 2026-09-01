@@ -120,9 +120,15 @@ export async function withRetry<T>(
 /**
  * presigned 오디오 URL → 한국어 전사(화자 라벨 포함).
  * 오디오는 DashScope가 URL로 직접 가져가므로 서버가 내려받지 않는다.
+ *
+ * `maxPolls`는 호출자가 자기 실행 한도에 맞춰 폴링 상한을 낮출 때 쓴다
+ * (백필처럼 한 요청에 여러 건을 처리하는 경로).
  */
-export async function transcribeAudioUrl(url: string): Promise<string> {
-  return transcribeAudioUrlWithQwen(url);
+export async function transcribeAudioUrl(
+  url: string,
+  opts: { maxPolls?: number } = {}
+): Promise<string> {
+  return transcribeAudioUrlWithQwen(url, opts);
 }
 
 /** Qwen(텍스트) 1회 완성. system/user를 Anthropic 호환 messages로 보낸다. */

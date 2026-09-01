@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Loader2, Settings2 } from 'lucide-react';
-import type { BusinessTargetSegment } from '@/lib/business-targets';
+import { USD_TO_KRW_RATE, type BusinessTargetSegment } from '@/lib/business-targets';
 
 interface Props {
   segment: BusinessTargetSegment;
@@ -12,21 +12,28 @@ interface Props {
 
 const today = () => new Date().toISOString().slice(0, 7); // YYYY-MM
 
-/** 월별 목표 추가·수정 — tutoring/global 모두 원화(KRW) 그대로 입력받아 저장한다. */
+/**
+ * 월별 목표 추가·수정 — tutoring은 원화(KRW) 그대로 입력받아 저장한다.
+ * global은 달러($)로 입력받아, 실적 집계와 같은 1$=1,400원 환율로 원화 환산해 저장한다
+ * (내부 저장 통화를 KRW로 통일해 "전체" 탭 합산 로직과 어긋나지 않게 한다).
+ */
 export function MonthlyTargetEditor({ segment, adminKey, onSaved }: Props) {
   const [editing, setEditing] = useState(false);
   const [month, setMonth] = useState(today());
   const [amount, setAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const isGlobal = segment === 'global';
+
   async function submit() {
     if (!amount) return;
     setSubmitting(true);
     try {
+      const target_amount = isGlobal ? Number(amount) * USD_TO_KRW_RATE : Number(amount);
       const res = await fetch('/api/business/monthly-targets', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ segment, month, target_amount: Number(amount) }),
+        body: JSON.stringify({ segment, month, target_amount }),
       });
       const json = await res.json();
       if (res.ok) {
@@ -66,7 +73,7 @@ export function MonthlyTargetEditor({ segment, adminKey, onSaved }: Props) {
         type="number"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        placeholder="목표 금액 (원)"
+        placeholder={isGlobal ? '목표 금액 ($)' : '목표 금액 (원)'}
         className="w-28 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
       />
       <button

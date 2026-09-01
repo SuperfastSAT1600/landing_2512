@@ -43,12 +43,12 @@ const mockTestData: DiagnosticTestData = {
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => {
-  const MotionDiv = React.forwardRef(({ children, ...props }: Record<string, unknown>, ref: React.Ref<HTMLDivElement>) => (
+  const MotionDiv = React.forwardRef(({ children, ...props }: { children?: React.ReactNode } & Record<string, unknown>, ref: React.Ref<HTMLDivElement>) => (
     <div ref={ref} {...(props as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>
   ));
   MotionDiv.displayName = 'motion.div';
 
-  const MotionButton = React.forwardRef(({ children, ...props }: Record<string, unknown>, ref: React.Ref<HTMLButtonElement>) => (
+  const MotionButton = React.forwardRef(({ children, ...props }: { children?: React.ReactNode } & Record<string, unknown>, ref: React.Ref<HTMLButtonElement>) => (
     <button ref={ref} {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>
   ));
   MotionButton.displayName = 'motion.button';

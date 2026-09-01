@@ -93,11 +93,14 @@ PRODUCT.md
 content/posts/
 blog_database/
 blog_archive/
-blog-agent/
-crm/
-pipeline/
-sat/
-srm/
+# blog-agent: 대용량/임시 파일만 제외, scripts/data는 추적
+blog-agent/node_modules/
+blog-agent/*.log
+blog-agent/.env*
+/crm/
+/pipeline/
+/sat/
+/srm/
 *.xlsx
 *.csv
 *.md.bak*
@@ -113,3 +116,7 @@ srm/
 skills-lock.json
 slack_bot.log
 sms/
+
+# IntelligentFunctions 코퍼스 내보내기 — 상담 원문이 담긴 산출물이라 추적하지 않는다.
+# 삭제 영수증(reports/intfunc/*.json)은 행으로 되돌릴 수 없고 파기의 증거이므로 커밋한다.
+out/

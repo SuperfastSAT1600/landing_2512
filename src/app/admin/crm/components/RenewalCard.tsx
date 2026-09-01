@@ -8,7 +8,14 @@ import { useRef, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Crown, AlertTriangle } from 'lucide-react';
-import { RENEWAL_OPEN_STAGES, type RenewalTarget } from '@/types/crm';
+import {
+  RENEWAL_OPEN_STAGES,
+  RENEWAL_OUTCOME_QUALITIES,
+  getRenewalOutcomeQualityLabel,
+  isRenewalCarried,
+  type RenewalOutcomeQuality,
+  type RenewalTarget,
+} from '@/types/crm';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { TUTORING_STATUS_META, type TutoringDisplayStatus } from './TutoringStudentRow';
 
@@ -33,6 +40,8 @@ interface RenewalCardProps {
   onReopen?: () => void;
   /** 카드 메모 저장. 없으면 메모는 읽기 전용으로만 보인다. */
   onMemoSave?: (memo: string) => void;
+  /** 결과 품질·사유 편집 시작. 터미널 단계(4·5)에서만 넘어온다. 저장은 모달에서 한다. */
+  onEditQuality?: (quality: RenewalOutcomeQuality) => void;
   /** '진행 중 전체' 스코프에서는 어느 주차 코호트인지 배지로 보여준다. */
   showWeekBadge?: boolean;
   overlay?: boolean;
@@ -58,12 +67,16 @@ export function RenewalCard({
   onRemove,
   onReopen,
   onMemoSave,
+  onEditQuality,
   showWeekBadge = false,
   overlay = false,
 }: RenewalCardProps) {
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const isCarried = isRenewalCarried(target);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: target.id,
+    // 이월된 행은 종결됐다 — 드래그로 되살아난 것처럼 보이면 안 된다.
+    disabled: isCarried,
   });
 
   // 메모는 비제어로 둔다 — 타이핑마다 카드를 리렌더할 이유가 없고,
@@ -72,7 +85,8 @@ export function RenewalCard({
   const memoRef = useRef<HTMLTextAreaElement>(null);
 
   const student = target.student;
-  const isOpen = RENEWAL_OPEN_STAGES.includes(target.stage);
+  // 이월된 행은 stage 상으로는 1~3이지만 종결된 행이라 어떤 액션도 받지 않는다.
+  const isOpen = RENEWAL_OPEN_STAGES.includes(target.stage) && !isCarried;
   const isDropped = target.stage === '5';
   const stageDays = daysSince(target.stage_updated_at, nowMs);
   const meta = tutoring ? TUTORING_STATUS_META[tutoring.displayStatus] : null;
@@ -86,9 +100,10 @@ export function RenewalCard({
       onClick={onClick}
       className={`group relative border rounded-lg px-3 py-2 cursor-pointer transition-all ${
         isDragging ? 'opacity-40' : ''
-      } ${overlay ? 'shadow-lg bg-white border-gray-300' : 'bg-gray-50 border-gray-200 hover:border-gray-300'}`}
+      } ${isCarried ? 'opacity-60 ' : ''}${overlay ? 'shadow-lg bg-white border-gray-300' : 'bg-gray-50 border-gray-200 hover:border-gray-300'}`}
     >
-      {/* Drag handle */}
+      {/* Drag handle — 이월된 행은 드래그 대상이 아니므로 핸들 자체를 감춘다 */}
+      {!isCarried && (
       <div
         {...attributes}
         {...listeners}
@@ -97,6 +112,7 @@ export function RenewalCard({
       >
         <GripVertical size={14} />
       </div>
+      )}
 
       <div className="flex items-center gap-1.5 flex-wrap pr-5">
         <span className="text-xs font-semibold text-gray-800 min-w-0 truncate">{student.name}</span>
@@ -161,8 +177,64 @@ export function RenewalCard({
         <span className={`font-medium ${stageAgeTone(stageDays)}`}>단계 D+{stageDays}</span>
       </div>
 
-      {isDropped && target.drop_reason && (
-        <p className="text-[10px] text-gray-400 mt-1">미전환: {target.drop_reason}</p>
+      {target.outcome_quality && (
+        <p className="text-[10px] mt-1">
+          {target.outcome_reason_tag ? (
+            <span className="text-gray-400">
+              사유: {target.outcome_reason_tag}
+              {target.outcome_reason_note && ` · ${target.outcome_reason_note}`}
+            </span>
+          ) : (
+            // 118 도입 시점에 품질만 찍힌 행들이 남아 있다 — 눈에 띄게 해서 보정을 유도한다.
+            <span className="text-amber-600 font-medium">사유 미기재</span>
+          )}
+        </p>
+      )}
+
+      {isCarried && (
+        <p className="text-[10px] text-gray-400 mt-1">
+          {getWeekLabel(target.carried_to_week!) ?? target.carried_to_week}로 이월됨
+        </p>
+      )}
+
+      {target.carried_from_week && (
+        <p className="text-[10px] text-gray-400 mt-1">
+          {getWeekLabel(target.carried_from_week) ?? target.carried_from_week}부터 이월
+        </p>
+      )}
+
+      {/* 결과 품질 — '액션'이 아니라 편집 가능한 상태이므로 액션 바 위에 따로 둔다.
+          라벨은 2자로 줄이고 전체 문구는 title 로 — 미전환 카드는 되돌리기까지 세 버튼이
+          min-w-40 안에 들어가야 한다. */}
+      {onEditQuality && !overlay && (
+        <div
+          className="flex items-center gap-1 mt-1.5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {RENEWAL_OUTCOME_QUALITIES.map((q) => {
+            const active = target.outcome_quality === q;
+            const label = getRenewalOutcomeQualityLabel(target.stage, q);
+            return (
+              <button
+                key={q}
+                type="button"
+                title={label}
+                aria-label={label}
+                aria-pressed={active}
+                onClick={() => onEditQuality(q)}
+                className={`px-2 py-0.5 rounded-md text-[10px] font-medium border transition-colors ${
+                  active
+                    ? q === 'good'
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-rose-600 text-white border-rose-600'
+                    : 'text-gray-400 border-gray-200 hover:bg-gray-100'
+                }`}
+              >
+                {q === 'good' ? '좋음' : '나쁨'}
+              </button>
+            );
+          })}
+        </div>
       )}
 
       {showWeekBadge && (
@@ -177,7 +249,7 @@ export function RenewalCard({
           className="flex items-center gap-1 mt-2 pt-1.5 border-t border-gray-200"
           onClick={(e) => e.stopPropagation()}
         >
-          {target.stage === '3' && onPayment && (
+          {target.stage === '3' && isOpen && onPayment && (
             <button
               type="button"
               onClick={onPayment}
@@ -222,9 +294,10 @@ export function RenewalCard({
         </div>
       )}
 
-      {/* 카드 메모 — 이 주차 컨택 상태를 보드에서 바로 적는다 */}
+      {/* 카드 메모 — 이 주차 컨택 상태를 보드에서 바로 적는다.
+          이월된 행은 종결됐으므로 남은 메모를 읽기만 한다. */}
       {!overlay &&
-        (onMemoSave ? (
+        (onMemoSave && !isCarried ? (
           <textarea
             key={savedMemo}
             ref={memoRef}

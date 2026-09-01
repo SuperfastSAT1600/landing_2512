@@ -2,8 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { TotalOverviewPanel } from '../TotalOverviewPanel';
 
+// 패널은 글로벌 매출을 "이번 달"로 필터하므로 픽스처 날짜도 실행 시점의 이번 달로 잡는다.
+const THIS_MONTH_DAY = `${new Date().toISOString().slice(0, 8)}11`;
+
 const GLOBAL_ENTRIES = [
-  { id: 'g-1', student_name: '김글로벌', payment_type: '최초결제', amount_usd: 500, sale_date: '2026-08-11', created_at: 'x' },
+  { id: 'g-1', student_name: '김글로벌', payment_type: '최초결제', amount_usd: 500, sale_date: THIS_MONTH_DAY, created_at: 'x', country_code: 'PK' },
 ];
 
 function crmStatsResponse(overview: Record<string, number>, monthly: Record<string, number>[] = []) {

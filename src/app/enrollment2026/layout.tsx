@@ -6,20 +6,20 @@ import path from 'path';
 
 export const metadata: Metadata = {
   title: 'SAT목표 점수에 가장 빠르게 | SuperfastSAT',
-  description: '올릴 딱 맞는 수업을 받아보세요',
+  description: '맞춤형 수업으로 목표 점수에 도달하세요.',
   openGraph: {
     title: 'SAT목표 점수에 가장 빠르게',
-    description: '올릴 딱 맞는 수업을 받아보세요',
+    description: '맞춤형 수업으로 목표 점수에 도달하세요.',
     url: 'https://tutoring.superfastsat.com/enrollment2026',
     siteName: 'SuperfastSAT',
     type: 'website',
-    images: [{ url: 'https://tutoring.superfastsat.com/og-image.png', alt: 'SuperfastSAT' }],
+    images: [{ url: 'https://tutoring.superfastsat.com/og-enrollment2026.png', alt: '수업권 | SuperfastSAT' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SAT목표 점수에 가장 빠르게',
-    description: '올릴 딱 맞는 수업을 받아보세요',
-    images: ['https://tutoring.superfastsat.com/og-image.png'],
+    description: '맞춤형 수업으로 목표 점수에 도달하세요.',
+    images: ['https://tutoring.superfastsat.com/og-enrollment2026.png'],
   },
   robots: { index: false },
 };

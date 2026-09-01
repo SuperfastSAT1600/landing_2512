@@ -20,8 +20,13 @@ const PickSchema = z.object({
   risk: z.string().optional(),
 });
 
+/**
+ * 원소는 느슨하게 받는다 — pick 하나가 망가졌다고 나머지 판정을 버리면 안 된다.
+ * 실측: Qwen이 reason 없는 원소를 하나 섞어 보내 45명 판정이 전부 날아갔다.
+ * 원소별 검증은 아래 parseRecommendResponse에서 하고, 여기서는 껍데기만 본다.
+ */
 const RecommendSchema = z.object({
-  picks: z.array(PickSchema),
+  picks: z.array(z.unknown()),
   excluded: z.array(z.object({ id: z.string(), why: z.string() })).optional(),
 });
 
@@ -83,20 +88,31 @@ function recoverTruncatedPicks(body: string): unknown | null {
 /**
  * 재랭킹 응답 → 유효한 pick 목록.
  * @param validIds 후보로 실제 보낸 학생 id 집합 — LLM이 만들어낸 id를 버리기 위함
- * @param minFit 이 적합도 미만은 제외(기본 3: 1~2는 "제안 부적합")
+ * @param minFit 이 적합도 미만은 제외. 기본 1(스키마 하한) = 무필터 — **LLM은 후보를 제외하지 않는다.**
+ *   낮은 fit도 그대로 넘겨 화면에서 "근거 약함"으로 회색 처리하고, 제외는 담당자가 판단한다.
+ *   (기본값이 3이던 시절 1,200명 풀에서 3명만 남는 사고가 났다. rank.ts 주석 참고.)
  */
 export function parseRecommendResponse(
   raw: string,
   validIds: Set<string>,
-  minFit = 3
+  minFit = 1
 ): { picks: WinbackPick[]; excluded: { id: string; why: string }[] } {
   const parsed = RecommendSchema.safeParse(extractJsonObject(raw));
   if (!parsed.success) {
     throw new AiResponseError(`AI 응답 형식이 올바르지 않습니다: ${parsed.error.issues[0]?.message}`);
   }
 
+  const picks: WinbackPick[] = [];
+  for (const raw of parsed.data.picks) {
+    const pick = PickSchema.safeParse(raw);
+    if (!pick.success) continue; // 개별 원소 위반은 그 후보만 버린다(랭킹에서 규칙 점수로 살아난다)
+    if (!validIds.has(pick.data.id)) continue; // LLM 환각 id
+    if (pick.data.fit < minFit) continue;
+    picks.push(pick.data);
+  }
+
   return {
-    picks: parsed.data.picks.filter((p) => validIds.has(p.id) && p.fit >= minFit),
+    picks,
     excluded: (parsed.data.excluded ?? []).filter((e) => validIds.has(e.id)),
   };
 }

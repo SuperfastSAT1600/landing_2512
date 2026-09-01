@@ -39,6 +39,27 @@ export function convertToKrw(rows: TargetVsActualRow[], rate: number = USD_TO_KR
   return rows.map((r) => ({ month: r.month, target: r.target * rate, actual: r.actual * rate }));
 }
 
+/**
+ * 0부터 시작해 maxValue를 덮는 "예쁜" 축 눈금(1/2/5×10^n 배수 간격)을 계산한다.
+ * recharts 기본 눈금 계산이 이 배수를 지키지 않고 9000 같은 어중간한 간격을 낼 때가 있어
+ * (특히 원화→달러처럼 이미 환산된 값에 다시 축 계산을 태우는 경우) 차트에 직접 넘길
+ * ticks/domain을 만드는 용도. 차트 렌더링 전용, I/O 없음.
+ */
+export function niceAxisTicks(maxValue: number, tickCount = 5): number[] {
+  if (maxValue <= 0) return [0];
+  const rawStep = maxValue / (tickCount - 1);
+  const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+  const normalized = rawStep / magnitude;
+  const niceNormalized = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  const step = niceNormalized * magnitude;
+
+  const ticks = [0];
+  while (ticks[ticks.length - 1] < maxValue) {
+    ticks.push(ticks[ticks.length - 1] + step);
+  }
+  return ticks;
+}
+
 /** 같은 통화로 맞춘 두 시계열을 월별로 합산한다(합집합, 월 오름차순). */
 export function sumTargetVsActual(a: TargetVsActualRow[], b: TargetVsActualRow[]): TargetVsActualRow[] {
   const byMonth = new Map<string, TargetVsActualRow>();

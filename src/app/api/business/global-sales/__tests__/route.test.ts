@@ -117,7 +117,40 @@ describe('POST /api/business/global-sales', () => {
       payment_type: '최초결제',
       amount_usd: 500,
       sale_date: '2026-08-11',
+      country_code: null,
     });
+  });
+
+  it('country_code를 대문자로 정규화해 저장한다', async () => {
+    const builder = makeBuilder({ data: row({ country_code: 'PK' }), error: null });
+    mockFrom.mockReturnValue(builder);
+
+    const { POST } = await import('../route');
+    const res = await POST(
+      postReq({
+        student_name: '김글로벌',
+        payment_type: '최초결제',
+        amount_usd: 500,
+        sale_date: '2026-08-11',
+        country_code: ' pk ',
+      }),
+    );
+    expect(res.status).toBe(201);
+    expect(builder.insert).toHaveBeenCalledWith(expect.objectContaining({ country_code: 'PK' }));
+  });
+
+  it('존재하지 않는 country_code → 400', async () => {
+    const { POST } = await import('../route');
+    const res = await POST(
+      postReq({
+        student_name: '김글로벌',
+        payment_type: '최초결제',
+        amount_usd: 500,
+        sale_date: '2026-08-11',
+        country_code: 'ZZ',
+      }),
+    );
+    expect(res.status).toBe(400);
   });
 
   it('DB 오류 → 500', async () => {

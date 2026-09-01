@@ -9,11 +9,17 @@ export default function TargetVsActualChart({
   data,
   formatValue,
   formatTooltip,
+  ticks,
+  domain,
 }: {
   data: TargetVsActualRow[];
   formatValue: (n: number) => string;
   /** 축 눈금은 formatValue(단위 반올림)로 두고, 툴팁만 이걸로 정확한 금액을 보여준다. 미지정 시 formatValue 사용. */
   formatTooltip?: (n: number) => string;
+  /** 지정하면 recharts 자동 눈금 계산 대신 이 값들을 그대로 축 눈금으로 쓴다(예: niceAxisTicks). */
+  ticks?: number[];
+  /** ticks와 함께 지정 — 축 범위를 눈금 끝까지 정확히 맞춘다. 미지정 시 recharts 자동 범위. */
+  domain?: [number, number];
 }) {
   const tooltipFormat = formatTooltip ?? formatValue;
   return (
@@ -21,7 +27,15 @@ export default function TargetVsActualChart({
       <BarChart data={data} barCategoryGap="35%" barGap={4} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
         <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
-        <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={52} tickFormatter={formatValue} />
+        <YAxis
+          tick={{ fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+          width={52}
+          tickFormatter={formatValue}
+          ticks={ticks}
+          domain={domain ?? ['auto', 'auto']}
+        />
         <Tooltip formatter={(value) => tooltipFormat(Number(value))} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} />
         <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
         <Bar dataKey="target" name="목표" fill="#e5e7eb" radius={[3, 3, 0, 0]} maxBarSize={32} />

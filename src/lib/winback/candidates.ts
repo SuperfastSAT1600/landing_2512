@@ -12,7 +12,8 @@ const PAYMENT_CHUNK = 150;
 export const CANDIDATE_COLUMNS =
   'id, name, grade, school_type, campaign_tags, churn_type, churn_tag, churn_stage_manual, ' +
   'stage_history, traffic_source, previous_rw_score, previous_math_score, target_score, ' +
-  'target_test_date, last_contacted_at, updated_at, lead_status, consultation_timeline, reactivation_log';
+  'target_test_date, last_contacted_at, inactive_at, updated_at, lead_status, consultation_timeline, ' +
+  'reactivation_log';
 
 export interface CandidateRow {
   id: string;
@@ -38,7 +39,6 @@ async function fetchByRules(rules: WinbackRuleFilters): Promise<CandidateRow[]> 
     if (plan.schoolTypes) query = query.in('school_type', plan.schoolTypes);
     if (plan.churnTypes) query = query.in('churn_type', plan.churnTypes);
     if (plan.trafficSources) query = query.in('traffic_source', plan.trafficSources);
-    if (plan.campaignTagAny) query = query.overlaps('campaign_tags', plan.campaignTagAny);
 
     const { data, error } = await query.range(from, from + FETCH_PAGE - 1);
     if (error) throw new Error(`후보 조회 실패: ${error.message}`);

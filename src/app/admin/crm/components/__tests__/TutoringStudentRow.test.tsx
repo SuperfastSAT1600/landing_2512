@@ -133,6 +133,30 @@ describe('classifyTutoringEntries', () => {
         hours: null,
         subjects: [],
         paymentStatus: null,
+        bySubject: [],
+      },
+    ]);
+  });
+
+  it('carries the per-subject breakdown through for the candidate table', () => {
+    const [entry] = classifyTutoringEntries(
+      [student()],
+      [
+        tutoringUser({
+          subjectBreakdown: [
+            {
+              subject: 'SAT', purchased: 62, completed: 22, refunded: 0,
+              remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, paymentStatus: 'active',
+            },
+          ],
+        }),
+      ]
+    );
+
+    expect(entry.bySubject).toEqual([
+      {
+        subject: 'SAT', purchased: 62, completed: 22, refunded: 0,
+        remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, paymentStatus: 'active',
       },
     ]);
   });
