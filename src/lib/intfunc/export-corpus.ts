@@ -1,5 +1,5 @@
 /**
- * Supabase → 코퍼스 행 → Parquet. 스크립트와 CRM 라우트가 함께 쓰는 단일 경로.
+ * Supabase → 코퍼스 행. 스크립트와 CRM 라우트가 함께 쓰는 단일 경로.
  *
  * 두 벌로 갈라지면 한쪽만 절단·비식별 규칙을 따라가는 날이 온다. 그 어긋남은 학습이
  * 끝난 뒤에야 드러나므로, 읽기와 쓰기를 여기 한 곳에 둔다.
@@ -8,11 +8,7 @@
  * 클라이언트를 넘긴다.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
-import * as fs from 'fs';
-import * as path from 'path';
-import { parquetWriteFile } from 'hyparquet-writer';
 import { buildCorpus, type StudentInput, type CallInput, type BuildStats } from './corpus-row';
-import { toColumnData } from './parquet';
 import type { CorpusRow } from './corpus-row';
 
 const FETCH_PAGE = 500; // Supabase 1000행 캡 회피
@@ -72,9 +68,4 @@ export async function exportCorpus(
   const students = await fetchStudents(db, limit);
   const calls = await fetchCalls(db);
   return buildCorpus(students, calls);
-}
-
-export function writeCorpusParquet(rows: readonly CorpusRow[], filename: string): void {
-  fs.mkdirSync(path.dirname(filename), { recursive: true });
-  parquetWriteFile({ filename, columnData: toColumnData(rows) });
 }
