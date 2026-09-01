@@ -15,6 +15,9 @@ import { buildRenewalOutcomeMemo } from '@/lib/renewal/mirror';
 // GET/POST와 응답 shape을 맞춘다 (route.ts의 STUDENT_FIELDS와 동일 집합).
 const STUDENT_FIELDS = 'id, name, grade, parent_phone, is_vip, needs_attention, traffic_source, lead_type';
 
+/** 카드 메모는 한 줄 상태 노트다. 상담 기록 전체는 학생 패널 타임라인이 담당한다. */
+const MEMO_MAX_LENGTH = 1000;
+
 /** 품질을 기록할 수 있는 터미널 단계. */
 const QUALITY_STAGES: RenewalStage[] = ['4', '5'];
 
@@ -36,6 +39,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     outcome_quality?: unknown;
     outcome_reason_tag?: unknown;
     outcome_reason_note?: unknown;
+    memo?: unknown;
     author?: unknown;
   };
   try {
@@ -82,7 +86,22 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const reasonNote =
     typeof body.outcome_reason_note === 'string' ? body.outcome_reason_note.trim() : '';
 
-  if (!hasStage && !hasQuality && !hasReason) {
+  const hasMemo = 'memo' in body;
+  if (hasMemo && body.memo !== null && typeof body.memo !== 'string') {
+    return NextResponse.json(
+      { error: { code: 'INVALID_MEMO', message: '메모 형식이 올바르지 않습니다.' } },
+      { status: 400 }
+    );
+  }
+  const memoText = typeof body.memo === 'string' ? body.memo.trim() : '';
+  if (memoText.length > MEMO_MAX_LENGTH) {
+    return NextResponse.json(
+      { error: { code: 'MEMO_TOO_LONG', message: `메모는 ${MEMO_MAX_LENGTH}자까지 가능합니다.` } },
+      { status: 400 }
+    );
+  }
+
+  if (!hasStage && !hasQuality && !hasReason && !hasMemo) {
     return NextResponse.json(
       { error: { code: 'NO_UPDATABLE_FIELDS', message: '변경할 필드가 없습니다.' } },
       { status: 400 }
@@ -94,10 +113,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   // 사유 목록은 (단계, 품질) 조합마다 다르다 — 검증에 실제 단계가 필요하다.
   let effectiveStage: RenewalStage | null = hasStage ? (stage as RenewalStage) : null;
 
+  // 메모는 단계·결과와 독립이다 — 메모만 저장할 때 stage_updated_at 이 바뀌면
+  // 카드의 '단계 D+N' 이 리셋된다.
+  if (hasMemo) {
+    update.memo = memoText === '' ? null : memoText;
+  }
+
   if (hasStage) {
     update.stage = stage;
     update.stage_updated_at = now;
-  } else {
+  } else if (hasQuality || hasReason) {
     // 소급 경로 — 대상 행이 실제로 터미널 단계인지 확인한다.
     const { data: current, error: currentError } = await supabaseAdmin
       .from('renewal_targets')

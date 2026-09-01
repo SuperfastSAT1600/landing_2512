@@ -45,6 +45,7 @@ function target(studentId: string, stage: RenewalTarget['stage']): RenewalTarget
     stage_updated_at: '2026-08-14T00:00:00Z',
     converted_payment_id: null,
     drop_reason: null,
+    memo: null,
     outcome_quality: null,
     outcome_reason_tag: null,
     outcome_reason_note: null,

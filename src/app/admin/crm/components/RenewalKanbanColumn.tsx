@@ -22,6 +22,7 @@ interface RenewalKanbanColumnProps {
   onDrop?: (target: RenewalTarget) => void;
   onRemove?: (target: RenewalTarget) => void;
   onReopen?: (target: RenewalTarget) => void;
+  onMemoSave?: (target: RenewalTarget, memo: string) => void;
   onEditQuality?: (target: RenewalTarget, quality: RenewalOutcomeQuality) => void;
 }
 
@@ -45,6 +46,7 @@ export function RenewalKanbanColumn({
   onDrop,
   onRemove,
   onReopen,
+  onMemoSave,
   onEditQuality,
 }: RenewalKanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
@@ -81,6 +83,7 @@ export function RenewalKanbanColumn({
               onDrop={onDrop && (() => onDrop(target))}
               onRemove={onRemove && (() => onRemove(target))}
               onReopen={onReopen && (() => onReopen(target))}
+              onMemoSave={onMemoSave && ((memo) => onMemoSave(target, memo))}
               onEditQuality={onEditQuality && ((q) => onEditQuality(target, q))}
             />
           ))}

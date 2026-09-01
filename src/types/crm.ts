@@ -1096,6 +1096,7 @@ export interface RenewalTarget {
   stage_updated_at: string;
   converted_payment_id: string | null;    // stage '4' 에서만 채워진다
   drop_reason: string | null;             // stage '5' 에서만 채워진다
+  memo: string | null;                    // 카드 메모 — 단계와 무관하게 기록. 이월 시 따라가지 않는다
   outcome_quality: RenewalOutcomeQuality | null;  // stage '4'·'5' 에서만 채워진다. null = 미분류
   outcome_reason_tag: string | null;      // 품질별 사유 목록에서 고른 값. 품질이 있으면 필수
   outcome_reason_note: string | null;     // 사유 자유 메모 — 선택

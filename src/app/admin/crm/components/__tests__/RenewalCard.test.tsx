@@ -16,6 +16,7 @@ function target(stage: RenewalStage, over: Partial<RenewalTarget> = {}): Renewal
     stage_updated_at: '2026-08-14T09:00:00Z', // 3일 전
     converted_payment_id: null,
     drop_reason: null,
+    memo: null,
     outcome_quality: null,
     outcome_reason_tag: null,
     outcome_reason_note: null,
@@ -189,6 +190,73 @@ describe('RenewalCard', () => {
 
     renderCard({ showWeekBadge: true });
     expect(screen.getByText('26년 08월 03주차')).toBeTruthy();
+  });
+
+  describe('메모', () => {
+    it('renders the saved memo in the textarea', () => {
+      renderCard({ target: target('2', { memo: '학부모 통화 예정' }), onMemoSave: vi.fn() });
+      const box = screen.getByPlaceholderText('메모...') as HTMLTextAreaElement;
+      expect(box.value).toBe('학부모 통화 예정');
+    });
+
+    it('saves the memo on blur when it changed', () => {
+      const onMemoSave = vi.fn();
+      renderCard({ stage: '2', onMemoSave });
+
+      const box = screen.getByPlaceholderText('메모...');
+      fireEvent.change(box, { target: { value: '9/3 재통화' } });
+      fireEvent.blur(box);
+
+      expect(onMemoSave).toHaveBeenCalledWith('9/3 재통화');
+    });
+
+    it('does not save when the memo is untouched', () => {
+      const onMemoSave = vi.fn();
+      renderCard({ target: target('2', { memo: '기존 메모' }), onMemoSave });
+
+      fireEvent.blur(screen.getByPlaceholderText('메모...'));
+      expect(onMemoSave).not.toHaveBeenCalled();
+    });
+
+    it('reverts the draft on Escape without saving', () => {
+      const onMemoSave = vi.fn();
+      renderCard({ target: target('2', { memo: '기존 메모' }), onMemoSave });
+
+      const box = screen.getByPlaceholderText('메모...') as HTMLTextAreaElement;
+      fireEvent.change(box, { target: { value: '수정 중' } });
+      fireEvent.keyDown(box, { key: 'Escape' });
+
+      expect(box.value).toBe('기존 메모');
+      expect(onMemoSave).not.toHaveBeenCalled();
+    });
+
+    it('does not open the student panel when the memo box is clicked', () => {
+      const onClick = vi.fn();
+      renderCard({ stage: '2', onClick, onMemoSave: vi.fn() });
+
+      fireEvent.click(screen.getByPlaceholderText('메모...'));
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('locks the memo to read-only on a carried card — 이월된 행은 종결이다', () => {
+      renderCard({
+        target: target('2', { carried_to_week: '2026-08-31', memo: '지난주 컨택 메모' }),
+        onMemoSave: vi.fn(),
+      });
+      expect(screen.queryByPlaceholderText('메모...')).toBeNull();
+      expect(screen.getByText('지난주 컨택 메모')).toBeTruthy();
+    });
+
+    it('hides the memo box on the drag overlay', () => {
+      renderCard({ stage: '2', onMemoSave: vi.fn(), overlay: true });
+      expect(screen.queryByPlaceholderText('메모...')).toBeNull();
+    });
+
+    it('shows the memo read-only when no save handler is given', () => {
+      renderCard({ target: target('4', { memo: '결제 완료 메모' }) });
+      expect(screen.queryByPlaceholderText('메모...')).toBeNull();
+      expect(screen.getByText('결제 완료 메모')).toBeTruthy();
+    });
   });
 
   it('opens the student panel when the card body is clicked', () => {

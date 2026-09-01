@@ -148,6 +148,49 @@ describe('PATCH /api/crm/renewal-targets/[id]', () => {
     const res = await PATCH(makeReq('PATCH', { stage: '9' }), { params });
     expect(res.status).toBe(400);
   });
+
+  // 카드 메모 — 단계 이동과 독립된 경로
+  it('saves a memo without a stage and leaves the stage untouched → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, memo: '9/3 재통화' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { memo: '9/3 재통화' }), { params });
+    expect(res.status).toBe(200);
+    expect(updatePayload().memo).toBe('9/3 재통화');
+    expect(updatePayload()).not.toHaveProperty('stage');
+    // 메모만 적었다고 단계 경과일(D+N)이 초기화되면 안 된다.
+    expect(updatePayload()).not.toHaveProperty('stage_updated_at');
+  });
+
+  it('stores an emptied memo as null so the card falls back to the placeholder → 200', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: { ...baseTarget, memo: null }, error: null }));
+    const { PATCH } = await import('../route');
+    await PATCH(makeReq('PATCH', { memo: '   ' }), { params });
+    expect(updatePayload().memo).toBeNull();
+  });
+
+  it('saves a memo alongside a stage move in one request → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '3', memo: '결제 안내함' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    await PATCH(makeReq('PATCH', { stage: '3', memo: '결제 안내함' }), { params });
+    expect(updatePayload().stage).toBe('3');
+    expect(updatePayload().memo).toBe('결제 안내함');
+  });
+
+  it('rejects a non-string memo → 400', async () => {
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { memo: 42 }), { params });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a request with neither stage nor memo → 400', async () => {
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', {}), { params });
+    expect(res.status).toBe(400);
+  });
 });
 
 describe('PATCH /api/crm/renewal-targets/[id] — 결과 품질 (REQ-003)', () => {

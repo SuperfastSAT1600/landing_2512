@@ -200,6 +200,25 @@ export function RenewalKanban({
     }
   };
 
+  /** 메모는 카드에서 바로 저장한다 — 낙관적 반영 후 실패 시에만 되돌린다. */
+  const handleMemoSave = async (target: RenewalTarget, memo: string) => {
+    const previous = target.memo ?? null;
+    const next = memo.trim() === '' ? null : memo.trim();
+    if (next === previous) return;
+
+    setTargets((current) =>
+      current.map((t) => (t.id === target.id ? { ...t, memo: next } : t))
+    );
+    try {
+      await patchTarget(target.id, { memo: next });
+    } catch {
+      setTargets((current) =>
+        current.map((t) => (t.id === target.id ? { ...t, memo: previous } : t))
+      );
+      setError('메모 저장에 실패했습니다.');
+    }
+  };
+
   /**
    * 결과 품질·사유 저장. 즉각 반응이 필요하므로 드래그와 같은 낙관적 업데이트를 쓴다.
    * quality 가 null 이면 사유까지 함께 비운다(미분류로 되돌리기).
@@ -406,6 +425,7 @@ export function RenewalKanban({
                       ? (t) => runPatch(t, { stage: '2', clear_drop_reason: true }, '되돌리기에 실패했습니다.')
                       : undefined
                   }
+                  onMemoSave={handleMemoSave}
                   onEditQuality={
                     stage === '4' || stage === '5'
                       ? (t, q) => setQualityTarget({ target: t, quality: q })
