@@ -7,6 +7,7 @@ import {
   type GlobalSaleEntry,
   type GlobalSalePaymentType,
 } from '@/lib/global-sales-service';
+import { isCountryCode, normalizeCountryCode } from '@/lib/countries';
 
 // 튜터링(CRM students/payments)과 무관한 별도 상품 라인의 단순 매출 기록 — USD.
 // 타입·조회는 @/lib/global-sales-service 에 있다 — 크론이 HTTP 없이 같은 조회를 쓰기 위함.
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
     payment_type?: string;
     amount_usd?: number;
     sale_date?: string;
+    country_code?: string | null;
   };
   try {
     body = await request.json();
@@ -58,6 +60,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '판매일을 입력해주세요.' }, { status: 400 });
   }
 
+  // 국가는 선택 입력 — 값이 있으면 ISO 3166-1 alpha-2 목록에 있어야 한다.
+  const countryCode = normalizeCountryCode(body.country_code);
+  if (countryCode && !isCountryCode(countryCode)) {
+    return NextResponse.json({ error: '알 수 없는 국가 코드입니다.' }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('global_sales')
     .insert({
@@ -65,6 +73,7 @@ export async function POST(request: NextRequest) {
       payment_type: body.payment_type,
       amount_usd: body.amount_usd,
       sale_date: body.sale_date,
+      country_code: countryCode,
     })
     .select()
     .single();

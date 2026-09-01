@@ -14,6 +14,7 @@ export interface GlobalSaleEntry {
   payment_type: GlobalSalePaymentType;
   amount_usd: number;
   sale_date: string; // YYYY-MM-DD
+  country_code: string | null; // ISO 3166-1 alpha-2, NULL = 미지정
   created_at: string;
 }
 

@@ -7,12 +7,12 @@ vi.mock('@/lib/supabase-admin', () => ({ supabaseAdmin: { from: mockFrom } }));
 
 process.env.ADMIN_SECRET_KEY = 'admin-key';
 
-type Result = { error: null | { message: string } };
+type Result = { data?: unknown; error: null | { message: string } };
 
 function makeBuilder(result: Result) {
   const builder: Record<string, unknown> = {};
-  builder.delete = vi.fn(() => builder);
-  builder.eq = vi.fn(() => builder);
+  for (const m of ['delete', 'update', 'eq', 'select']) builder[m] = vi.fn(() => builder);
+  builder.single = vi.fn(() => Promise.resolve(result));
   builder.then = (resolve: (v: Result) => unknown) => Promise.resolve(result).then(resolve);
   return builder;
 }
@@ -21,6 +21,14 @@ function req(key = 'admin-key') {
   return new NextRequest('http://localhost/api/business/global-sales/g-1', {
     method: 'DELETE',
     headers: { 'x-admin-key': key },
+  });
+}
+
+function patchReq(body: unknown, key = 'admin-key') {
+  return new NextRequest('http://localhost/api/business/global-sales/g-1', {
+    method: 'PATCH',
+    headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
 }
 const params = Promise.resolve({ id: 'g-1' });
@@ -49,5 +57,49 @@ describe('DELETE /api/business/global-sales/[id]', () => {
     mockFrom.mockReturnValue(makeBuilder({ error: { message: 'boom' } }));
     const { DELETE } = await import('../route');
     expect((await DELETE(req(), { params })).status).toBe(500);
+  });
+});
+
+describe('PATCH /api/business/global-sales/[id]', () => {
+  it('잘못된 admin key → 401', async () => {
+    const { PATCH } = await import('../route');
+    expect((await PATCH(patchReq({ country_code: 'PK' }, 'nope'), { params })).status).toBe(401);
+  });
+
+  it('국가 코드를 대문자로 정규화해 저장한다', async () => {
+    const builder = makeBuilder({ data: { id: 'g-1', country_code: 'PK' }, error: null });
+    mockFrom.mockReturnValue(builder);
+
+    const { PATCH } = await import('../route');
+    const res = await PATCH(patchReq({ country_code: 'pk' }), { params });
+    expect(res.status).toBe(200);
+    expect(builder.update).toHaveBeenCalledWith({ country_code: 'PK' });
+    expect(builder.eq).toHaveBeenCalledWith('id', 'g-1');
+  });
+
+  it('빈 값이면 국가를 비운다(null)', async () => {
+    const builder = makeBuilder({ data: { id: 'g-1', country_code: null }, error: null });
+    mockFrom.mockReturnValue(builder);
+
+    const { PATCH } = await import('../route');
+    const res = await PATCH(patchReq({ country_code: '' }), { params });
+    expect(res.status).toBe(200);
+    expect(builder.update).toHaveBeenCalledWith({ country_code: null });
+  });
+
+  it('알 수 없는 국가 코드 → 400', async () => {
+    const { PATCH } = await import('../route');
+    expect((await PATCH(patchReq({ country_code: 'ZZ' }), { params })).status).toBe(400);
+  });
+
+  it('country_code 필드가 없으면 → 400', async () => {
+    const { PATCH } = await import('../route');
+    expect((await PATCH(patchReq({}), { params })).status).toBe(400);
+  });
+
+  it('DB 오류 → 500', async () => {
+    mockFrom.mockReturnValue(makeBuilder({ data: null, error: { message: 'boom' } }));
+    const { PATCH } = await import('../route');
+    expect((await PATCH(patchReq({ country_code: 'PK' }), { params })).status).toBe(500);
   });
 });
