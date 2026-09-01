@@ -92,9 +92,33 @@ describe('PATCH /api/business/global-sales/[id]', () => {
     expect((await PATCH(patchReq({ country_code: 'ZZ' }), { params })).status).toBe(400);
   });
 
-  it('country_code 필드가 없으면 → 400', async () => {
+  it('수정할 필드가 하나도 없으면 → 400', async () => {
     const { PATCH } = await import('../route');
     expect((await PATCH(patchReq({}), { params })).status).toBe(400);
+  });
+
+  it('billing_type만 바꿀 수 있다', async () => {
+    const builder = makeBuilder({ data: { id: 'g-1', billing_type: '구독' }, error: null });
+    mockFrom.mockReturnValue(builder);
+
+    const { PATCH } = await import('../route');
+    const res = await PATCH(patchReq({ billing_type: '구독' }), { params });
+    expect(res.status).toBe(200);
+    expect(builder.update).toHaveBeenCalledWith({ billing_type: '구독' });
+  });
+
+  it('국가와 결제 방식을 함께 바꿀 수 있다', async () => {
+    const builder = makeBuilder({ data: { id: 'g-1' }, error: null });
+    mockFrom.mockReturnValue(builder);
+
+    const { PATCH } = await import('../route');
+    await PATCH(patchReq({ country_code: 'PK', billing_type: '구독' }), { params });
+    expect(builder.update).toHaveBeenCalledWith({ country_code: 'PK', billing_type: '구독' });
+  });
+
+  it('알 수 없는 billing_type → 400', async () => {
+    const { PATCH } = await import('../route');
+    expect((await PATCH(patchReq({ billing_type: '월정액' }), { params })).status).toBe(400);
   });
 
   it('DB 오류 → 500', async () => {

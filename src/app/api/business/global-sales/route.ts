@@ -4,14 +4,16 @@ import { isAuthenticated } from '@/lib/server-auth';
 import {
   listGlobalSales,
   GLOBAL_SALE_PAYMENT_TYPES,
+  GLOBAL_SALE_BILLING_TYPES,
   type GlobalSaleEntry,
   type GlobalSalePaymentType,
+  type GlobalSaleBillingType,
 } from '@/lib/global-sales-service';
 import { isCountryCode, normalizeCountryCode } from '@/lib/countries';
 
 // 튜터링(CRM students/payments)과 무관한 별도 상품 라인의 단순 매출 기록 — USD.
 // 타입·조회는 @/lib/global-sales-service 에 있다 — 크론이 HTTP 없이 같은 조회를 쓰기 위함.
-export type { GlobalSaleEntry, GlobalSalePaymentType };
+export type { GlobalSaleEntry, GlobalSalePaymentType, GlobalSaleBillingType };
 
 const VALID_PAYMENT_TYPES = GLOBAL_SALE_PAYMENT_TYPES;
 
@@ -40,6 +42,7 @@ export async function POST(request: NextRequest) {
     amount_usd?: number;
     sale_date?: string;
     country_code?: string | null;
+    billing_type?: string;
   };
   try {
     body = await request.json();
@@ -66,6 +69,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '알 수 없는 국가 코드입니다.' }, { status: 400 });
   }
 
+  // 결제 방식은 선택 입력 — 없으면 일회성(대부분의 기존 판매가 그렇다).
+  const billingType = (body.billing_type ?? '일회성') as GlobalSaleBillingType;
+  if (!GLOBAL_SALE_BILLING_TYPES.includes(billingType)) {
+    return NextResponse.json({ error: '결제 방식은 일회성|구독 중 하나여야 합니다.' }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('global_sales')
     .insert({
@@ -74,6 +83,7 @@ export async function POST(request: NextRequest) {
       amount_usd: body.amount_usd,
       sale_date: body.sale_date,
       country_code: countryCode,
+      billing_type: billingType,
     })
     .select()
     .single();
