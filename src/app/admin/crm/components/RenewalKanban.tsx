@@ -181,6 +181,25 @@ export function RenewalKanban({
     }
   };
 
+  /** 메모는 카드에서 바로 저장한다 — 낙관적 반영 후 실패 시에만 되돌린다. */
+  const handleMemoSave = async (target: RenewalTarget, memo: string) => {
+    const previous = target.memo ?? null;
+    const next = memo.trim() === '' ? null : memo.trim();
+    if (next === previous) return;
+
+    setTargets((current) =>
+      current.map((t) => (t.id === target.id ? { ...t, memo: next } : t))
+    );
+    try {
+      await patchTarget(target.id, { memo: next });
+    } catch {
+      setTargets((current) =>
+        current.map((t) => (t.id === target.id ? { ...t, memo: previous } : t))
+      );
+      setError('메모 저장에 실패했습니다.');
+    }
+  };
+
   const handleRemove = async (target: RenewalTarget) => {
     try {
       const res = await fetch(`/api/crm/renewal-targets/${target.id}`, {
@@ -352,6 +371,7 @@ export function RenewalKanban({
                       ? (t) => runPatch(t, { stage: '2', clear_drop_reason: true }, '되돌리기에 실패했습니다.')
                       : undefined
                   }
+                  onMemoSave={handleMemoSave}
                 />
               </div>
             ))}

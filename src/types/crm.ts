@@ -1006,6 +1006,7 @@ export interface RenewalTarget {
   stage_updated_at: string;
   converted_payment_id: string | null;    // stage '4' 에서만 채워진다
   drop_reason: string | null;             // stage '5' 에서만 채워진다
+  memo: string | null;                    // 카드 메모 — 단계와 무관하게 기록
   created_by: string | null;
   created_at: string;
   updated_at: string;

@@ -16,6 +16,7 @@ interface RenewalKanbanColumnProps {
   onDrop?: (target: RenewalTarget) => void;
   onRemove?: (target: RenewalTarget) => void;
   onReopen?: (target: RenewalTarget) => void;
+  onMemoSave?: (target: RenewalTarget, memo: string) => void;
 }
 
 // 4(결제 완료)=emerald, 5(미전환)=무채색, 1~3=기본
@@ -38,6 +39,7 @@ export function RenewalKanbanColumn({
   onDrop,
   onRemove,
   onReopen,
+  onMemoSave,
 }: RenewalKanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const tone = STAGE_TONE[stage];
@@ -67,6 +69,7 @@ export function RenewalKanbanColumn({
               onDrop={onDrop && (() => onDrop(target))}
               onRemove={onRemove && (() => onRemove(target))}
               onReopen={onReopen && (() => onReopen(target))}
+              onMemoSave={onMemoSave && ((memo) => onMemoSave(target, memo))}
             />
           ))}
         </SortableContext>

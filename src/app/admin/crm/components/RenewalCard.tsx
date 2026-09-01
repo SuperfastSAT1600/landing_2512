@@ -4,7 +4,7 @@
 // 표시 정보(잔여시간·튜터링 상태·단계 경과일)와 액션(결제/미전환/제외/되돌리기)이 다르고,
 // 이 보드의 주 액션은 hover 아이콘이 아니라 상시 노출 라벨 버튼이어야 한다.
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Crown, AlertTriangle } from 'lucide-react';
@@ -31,6 +31,8 @@ interface RenewalCardProps {
   onDrop?: () => void;
   onRemove?: () => void;
   onReopen?: () => void;
+  /** 카드 메모 저장. 없으면 메모는 읽기 전용으로만 보인다. */
+  onMemoSave?: (memo: string) => void;
   /** '진행 중 전체' 스코프에서는 어느 주차 코호트인지 배지로 보여준다. */
   showWeekBadge?: boolean;
   overlay?: boolean;
@@ -55,6 +57,7 @@ export function RenewalCard({
   onDrop,
   onRemove,
   onReopen,
+  onMemoSave,
   showWeekBadge = false,
   overlay = false,
 }: RenewalCardProps) {
@@ -62,6 +65,11 @@ export function RenewalCard({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: target.id,
   });
+
+  // 메모는 비제어로 둔다 — 타이핑마다 카드를 리렌더할 이유가 없고,
+  // key로 저장된 값이 바뀔 때만(저장·새로고침) 초안을 서버 값으로 되돌린다.
+  const savedMemo = target.memo ?? '';
+  const memoRef = useRef<HTMLTextAreaElement>(null);
 
   const student = target.student;
   const isOpen = RENEWAL_OPEN_STAGES.includes(target.stage);
@@ -213,6 +221,38 @@ export function RenewalCard({
           )}
         </div>
       )}
+
+      {/* 카드 메모 — 이 주차 컨택 상태를 보드에서 바로 적는다 */}
+      {!overlay &&
+        (onMemoSave ? (
+          <textarea
+            key={savedMemo}
+            ref={memoRef}
+            rows={2}
+            defaultValue={savedMemo}
+            placeholder="메모..."
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onBlur={(e) => {
+              const draft = e.target.value.trim();
+              if (draft !== savedMemo.trim()) onMemoSave(draft);
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Escape') {
+                if (memoRef.current) memoRef.current.value = savedMemo;
+                memoRef.current?.blur();
+              }
+            }}
+            className="mt-2 w-full resize-none rounded-md border border-gray-200 bg-white px-2 py-1.5 text-[11px] leading-snug text-gray-700 placeholder:text-gray-300 outline-none transition-colors focus:border-gray-400"
+          />
+        ) : (
+          savedMemo && (
+            <p className="mt-2 whitespace-pre-wrap rounded-md bg-white/70 px-2 py-1.5 text-[11px] leading-snug text-gray-600">
+              {savedMemo}
+            </p>
+          )
+        ))}
     </div>
   );
 }
