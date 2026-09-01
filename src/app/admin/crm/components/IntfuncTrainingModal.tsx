@@ -9,9 +9,33 @@ interface Stats {
   converted: number;
   lost: number;
   excludedNoLabel: number;
-  excludedNoCalls: number;
+  excludedNoTranscript: number;
+  excludedAllFiltered: number;
+  excludedAllTruncated: number;
   cutoffUnavailable: number;
   redactions: number;
+  callsTotal: number;
+  duplicateCalls: number;
+  callsFiltered: number;
+  callsTruncated: number;
+  callsKept: number;
+  callsByKind: {
+    new_sales: number;
+    renewal: number;
+    winback: number;
+    ops: number;
+    unknown: number;
+  };
+}
+
+/** 통계 한 줄. 제외 사유가 세 갈래라 반복이 길어져 뽑았다. */
+function Row({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  return (
+    <div className={`flex justify-between ${tone ?? 'text-gray-500'}`}>
+      <span>{label}</span>
+      <span>{value}</span>
+    </div>
+  );
 }
 
 interface JobSummary {
@@ -186,16 +210,30 @@ export function IntfuncTrainingModal({ adminKey, onClose }: IntfuncTrainingModal
               <span>학습 행</span>
               <span className="font-semibold text-gray-900">{stats.rows}행</span>
             </div>
-            <div className="flex justify-between text-gray-500">
-              <span>결제 / 이탈</span>
-              <span>
-                {stats.converted} / {stats.lost}
-              </span>
+            <Row label="결제 / 이탈" value={`${stats.converted} / ${stats.lost}`} />
+
+            <div className="!mt-2 border-t border-gray-200 pt-2 text-[11px] text-gray-400">
+              제외된 학생
             </div>
-            <div className="flex justify-between text-gray-500">
-              <span>비식별 치환</span>
-              <span>{stats.redactions}건</span>
+            <Row label="전사 없음" value={`${stats.excludedNoTranscript}명`} />
+            <Row label="세일즈 콜 아님" value={`${stats.excludedAllFiltered}명`} />
+            <Row label="결과 확정 이후" value={`${stats.excludedAllTruncated}명`} />
+
+            <div className="!mt-2 border-t border-gray-200 pt-2 text-[11px] text-gray-400">
+              통화
             </div>
+            <Row
+              label="학습 통화 / 전체"
+              value={`${stats.callsKept} / ${stats.callsTotal}건`}
+              tone="text-gray-700"
+            />
+            <Row
+              label="재결제 / 이탈 / 운영"
+              value={`${stats.callsByKind.renewal} / ${stats.callsByKind.winback} / ${stats.callsByKind.ops}건`}
+            />
+            <Row label="결과 확정 이후 절단" value={`${stats.callsTruncated}건`} />
+            <Row label="중복 제거" value={`${stats.duplicateCalls}건`} />
+            <Row label="비식별 치환" value={`${stats.redactions}건`} />
             {stats.cutoffUnavailable > 0 && (
               <div className="flex justify-between text-amber-700">
                 <span>결과 시점 불명</span>

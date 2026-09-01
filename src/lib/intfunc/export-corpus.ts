@@ -17,13 +17,18 @@ import type { CorpusRow } from './corpus-row';
 
 const FETCH_PAGE = 500; // Supabase 1000행 캡 회피
 
-/** 결과가 확정된 학생만 코퍼스 대상이다 — 진행 중인 단계는 라벨이 없다. */
-export const LABELLED_STAGES = ['9', 'churned'];
+/**
+ * 결과가 확정된 학생만 코퍼스 대상이다 — 진행 중인 단계는 라벨이 없다.
+ * `'8'`이 결제 완료다(수업 중으로 자동 전환, enrollment-state.ts). `'9'`는 존재하지 않는다.
+ */
+export const LABELLED_STAGES = ['8', 'churned'];
 
 const STUDENT_COLUMNS =
   'id, name, funnel_stage, funnel_stage_updated_at, stage_history, grade, ' +
   'school_type, desired_subjects, target_score, previous_rw_score, previous_math_score';
-const CALL_COLUMNS = 'student_id, source, recorded_at, created_at, duration_sec, transcript';
+// recording_name이 빠지면 통화 종류를 못 가려 전부 unknown이 된다 (classify-call.ts).
+const CALL_COLUMNS =
+  'student_id, source, recording_name, recorded_at, created_at, duration_sec, transcript';
 
 async function fetchStudents(db: SupabaseClient, limit: number | null): Promise<StudentInput[]> {
   const rows: StudentInput[] = [];

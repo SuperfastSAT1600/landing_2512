@@ -194,7 +194,7 @@ export interface Student {
   // 운영 필드
   lead_status: LeadStatus;
   funnel_stage: FunnelStage;
-  matching_stage: MatchingStage | null; // funnel_stage='9' 이후
+  matching_stage: MatchingStage | null; // funnel_stage='8'(결제 완료) 이후
   churn_tag: string | null;
   churn_type: ChurnType | null;
   diagnostic_result_id: string | null;

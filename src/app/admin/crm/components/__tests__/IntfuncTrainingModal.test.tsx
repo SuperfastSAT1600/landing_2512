@@ -2,15 +2,23 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { IntfuncTrainingModal } from '../IntfuncTrainingModal';
 
-const stats = (over: Record<string, number> = {}) => ({
+const stats = (over: Record<string, unknown> = {}) => ({
   students: 40,
   rows: 32,
   converted: 20,
   lost: 12,
   excludedNoLabel: 0,
-  excludedNoCalls: 8,
+  excludedNoTranscript: 4,
+  excludedAllFiltered: 1,
+  excludedAllTruncated: 2,
   cutoffUnavailable: 0,
   redactions: 91,
+  callsTotal: 82,
+  duplicateCalls: 1,
+  callsFiltered: 37,
+  callsTruncated: 16,
+  callsKept: 28,
+  callsByKind: { new_sales: 36, renewal: 18, winback: 8, ops: 11, unknown: 9 },
   ...over,
 });
 
@@ -126,6 +134,43 @@ describe('IntfuncTrainingModal', () => {
 
     await waitFor(() => expect(screen.getByText('5명')).toBeTruthy());
     expect(screen.getByText(/결과 발화를 배울 수 있습니다/)).toBeTruthy();
+  });
+
+  it('제외 사유를 사유별로 나눠 보여준다 — REQ-106', async () => {
+    mockFetch().mockResolvedValue(
+      okJson({
+        data: {
+          dryRun: true,
+          stats: stats({
+            students: 644,
+            rows: 32,
+            excludedNoTranscript: 580,
+            excludedAllFiltered: 9,
+            excludedAllTruncated: 23,
+          }),
+        },
+      })
+    );
+    render(<IntfuncTrainingModal adminKey="k" onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: '미리보기' }));
+
+    await waitFor(() => expect(screen.getByText('580명')).toBeTruthy());
+    expect(screen.getByText('전사 없음')).toBeTruthy();
+    expect(screen.getByText('세일즈 콜 아님')).toBeTruthy();
+    expect(screen.getByText('9명')).toBeTruthy();
+    expect(screen.getByText('결과 확정 이후')).toBeTruthy();
+    expect(screen.getByText('23명')).toBeTruthy();
+  });
+
+  it('통화 유형별 제외 건수를 보여준다 — REQ-106', async () => {
+    mockFetch().mockResolvedValue(okJson({ data: { dryRun: true, stats: stats() } }));
+    render(<IntfuncTrainingModal adminKey="k" onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: '미리보기' }));
+
+    await waitFor(() => expect(screen.getByText('28 / 82건')).toBeTruthy());
+    expect(screen.getByText('재결제 / 이탈 / 운영')).toBeTruthy();
+    expect(screen.getByText('18 / 8 / 11건')).toBeTruthy();
+    expect(screen.getByText('중복 제거')).toBeTruthy();
   });
 
   it('서버 오류 메시지를 그대로 보여준다', async () => {
