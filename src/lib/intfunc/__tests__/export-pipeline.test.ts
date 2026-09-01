@@ -14,9 +14,9 @@ describe('내보내기 파이프라인 — 스크립트가 실제로 밟는 경�
       {
         id: 'a',
         name: '김민준',
-        funnel_stage: '9',
+        funnel_stage: '8',
         funnel_stage_updated_at: null,
-        stage_history: [{ stage: '9', label: '결제 완료', entered_at: '2026-04-01T00:00:00.000Z' }],
+        stage_history: [{ stage: '8', label: '수업 중', entered_at: '2026-04-01T00:00:00.000Z' }],
         grade: '11',
         school_type: 'international',
         desired_subjects: 'Both',
@@ -42,6 +42,7 @@ describe('내보내기 파이프라인 — 스크립트가 실제로 밟는 경�
       {
         student_id: 'a',
         source: 'plaud' as const,
+        recording_name: '첫 세일즈콜',
         recorded_at: '2026-03-02T05:05:00.000Z',
         created_at: '2026-03-02T05:05:00.000Z',
         duration_sec: 1080,
@@ -50,6 +51,7 @@ describe('내보내기 파이프라인 — 스크립트가 실제로 밟는 경�
       {
         student_id: 'a',
         source: 'voip' as const,
+        recording_name: 'Report 세일즈콜',
         recorded_at: '2026-03-09T11:30:00.000Z',
         created_at: '2026-03-09T11:30:00.000Z',
         duration_sec: 2040,
@@ -58,6 +60,7 @@ describe('내보내기 파이프라인 — 스크립트가 실제로 밟는 경�
       {
         student_id: 'a',
         source: 'voip' as const,
+        recording_name: 'Report 세일즈콜',
         recorded_at: '2026-05-01T00:00:00.000Z',
         created_at: '2026-05-01T00:00:00.000Z',
         duration_sec: 60,
@@ -66,6 +69,7 @@ describe('내보내기 파이프라인 — 스크립트가 실제로 밟는 경�
       {
         student_id: 'b',
         source: 'plaud' as const,
+        recording_name: '첫 세일즈콜',
         recorded_at: '2026-03-01T00:00:00.000Z',
         created_at: '2026-03-01T00:00:00.000Z',
         duration_sec: 300,

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildCorpus, type StudentInput, type CallInput } from '../corpus-row';
+import { resolveCutoff } from '../select-calls';
 
 const T = (iso: string) => `${iso}.000Z`;
 
@@ -7,9 +8,9 @@ function student(partial: Partial<StudentInput> = {}): StudentInput {
   return {
     id: 's1',
     name: '김민준',
-    funnel_stage: '9',
+    funnel_stage: '8',
     funnel_stage_updated_at: null,
-    stage_history: [{ stage: '9', label: '결제 완료', entered_at: T('2026-04-01T00:00:00') }],
+    stage_history: [{ stage: '8', label: '수업 중', entered_at: T('2026-04-01T00:00:00') }],
     grade: '11',
     school_type: 'international',
     desired_subjects: 'Both',
@@ -24,6 +25,7 @@ function call(partial: Partial<CallInput> = {}): CallInput {
   return {
     student_id: 's1',
     source: 'plaud',
+    recording_name: null, // unknown — 코퍼스에 포함된다
     recorded_at: T('2026-03-02T05:05:00'), // 14:05 KST
     created_at: T('2026-03-02T05:05:00'),
     duration_sec: 1080, // 18분
@@ -72,7 +74,7 @@ describe('buildCorpus — REQ-001 학생 단위 병합', () => {
   it('통화가 없는 학생은 행을 만들지 않는다', () => {
     const { rows, stats } = buildCorpus([student()], []);
     expect(rows).toHaveLength(0);
-    expect(stats.excludedNoCalls).toBe(1);
+    expect(stats.excludedNoTranscript).toBe(1);
   });
 
   it('통화 길이를 합산한다', () => {
@@ -124,9 +126,9 @@ describe('buildCorpus — REQ-002 통화 구분자', () => {
   });
 });
 
-describe('buildCorpus — REQ-003 확정된 결과만 라벨이 된다', () => {
-  it("funnel_stage '9'는 converted", () => {
-    const { rows, stats } = buildCorpus([student({ funnel_stage: '9' })], [call()]);
+describe('buildCorpus — REQ-101 확정된 결과만 라벨이 된다', () => {
+  it("funnel_stage '8'(결제 완료)은 converted", () => {
+    const { rows, stats } = buildCorpus([student({ funnel_stage: '8' })], [call()]);
     expect(rows[0].outcome).toBe('converted');
     expect(stats.converted).toBe(1);
   });
@@ -147,6 +149,12 @@ describe('buildCorpus — REQ-003 확정된 결과만 라벨이 된다', () => {
     expect(stats.lost).toBe(1);
   });
 
+  it("존재하지 않는 단계 '9'는 라벨이 아니다", () => {
+    const { rows, stats } = buildCorpus([student({ funnel_stage: '9' })], [call()]);
+    expect(rows).toHaveLength(0);
+    expect(stats.excludedNoLabel).toBe(1);
+  });
+
   it('진행 중인 단계는 행을 만들지 않는다', () => {
     const { rows, stats } = buildCorpus([student({ funnel_stage: '4' })], [call()]);
     expect(rows).toHaveLength(0);
@@ -154,7 +162,7 @@ describe('buildCorpus — REQ-003 확정된 결과만 라벨이 된다', () => {
   });
 });
 
-describe('buildCorpus — REQ-004 결과 확정 이후 통화 절단', () => {
+describe('buildCorpus — REQ-102 결과 확정 이후 통화 절단', () => {
   it('확정 시각 이후의 통화를 제외한다', () => {
     const { rows } = buildCorpus(
       [student()], // 확정: 2026-04-01
@@ -174,22 +182,69 @@ describe('buildCorpus — REQ-004 결과 확정 이후 통화 절단', () => {
       [call({ recorded_at: T('2026-04-05T05:00:00') })]
     );
     expect(rows).toHaveLength(0);
-    expect(stats.excludedNoCalls).toBe(1);
+    expect(stats.excludedAllTruncated).toBe(1);
   });
 
-  it('같은 단계가 여러 번이면 가장 이른 진입을 쓴다', () => {
+  it('같은 단계가 여러 번이면 가장 늦은 진입을 쓴다', () => {
     const { rows } = buildCorpus(
       [
         student({
           stage_history: [
-            { stage: '9', label: '결제 완료', entered_at: T('2026-05-01T00:00:00') },
-            { stage: '9', label: '결제 완료', entered_at: T('2026-04-01T00:00:00') },
+            { stage: '8', label: '수업 중', entered_at: T('2026-05-01T00:00:00') },
+            { stage: '8', label: '수업 중', entered_at: T('2026-04-01T00:00:00') },
           ],
         }),
       ],
       [call({ recorded_at: T('2026-04-15T05:00:00') })]
     );
+    expect(rows).toHaveLength(1);
+  });
+
+  it('재유입 학생은 현재 라벨의 진입 시각으로 자른다', () => {
+    // 2025년에 이탈했다가 재유입해 2026-06 결제. 라벨은 converted이고
+    // 그 결과를 만든 것은 재유입 이후의 통화다.
+    const { rows } = buildCorpus(
+      [
+        student({
+          funnel_stage: '8',
+          stage_history: [
+            { stage: 'churned', label: '이탈', entered_at: T('2025-08-01T00:00:00') },
+            { stage: '8', label: '수업 중', entered_at: T('2026-06-01T00:00:00') },
+          ],
+        }),
+      ],
+      [call({ recorded_at: T('2026-05-01T05:00:00'), transcript: '재유입 세일즈 콜' })]
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].transcript).toContain('재유입 세일즈 콜');
+  });
+
+  it('결과가 아직 안 난 새 사이클의 통화는 그대로 잘린다', () => {
+    // 이탈 후 재상담 중이지만 아직 churned. 그 사이클엔 라벨이 없다.
+    const { rows, stats } = buildCorpus(
+      [
+        student({
+          funnel_stage: 'churned',
+          stage_history: [
+            { stage: 'churned', label: '이탈', entered_at: T('2026-07-13T00:00:00') },
+          ],
+        }),
+      ],
+      [call({ recorded_at: T('2026-08-28T05:00:00') })]
+    );
     expect(rows).toHaveLength(0);
+    expect(stats.excludedAllTruncated).toBe(1);
+  });
+
+  it('현재 단계 진입 기록이 없으면 다른 outcome 진입 중 가장 늦은 것을 쓴다', () => {
+    expect(
+      resolveCutoff(
+        student({
+          funnel_stage: 'churned',
+          stage_history: [{ stage: '8', label: '수업 중', entered_at: T('2026-04-01T00:00:00') }],
+        })
+      )
+    ).toBe(new Date(T('2026-04-01T00:00:00')).getTime());
   });
 
   it('stage_history에 없으면 funnel_stage_updated_at으로 절단한다', () => {
@@ -208,5 +263,151 @@ describe('buildCorpus — REQ-004 결과 확정 이후 통화 절단', () => {
     );
     expect(rows).toHaveLength(1);
     expect(stats.cutoffUnavailable).toBe(1);
+  });
+});
+
+describe('buildCorpus — REQ-103 세일즈 콜만 학습에 넣는다', () => {
+  it('재결제·이탈 캠페인·운영 통화는 코퍼스에서 뺀다', () => {
+    const { rows, stats } = buildCorpus(
+      [student()],
+      [
+        call({ recording_name: '김민준 어머님_첫 세일즈콜', transcript: '세일즈' }),
+        call({
+          recording_name: '김민준_재결제',
+          transcript: '재결제',
+          recorded_at: T('2026-03-03T05:00:00'),
+        }),
+        call({
+          recording_name: '김민준 어머님_이탈 캠페인 콜',
+          transcript: '윈백',
+          recorded_at: T('2026-03-04T05:00:00'),
+        }),
+        call({
+          recording_name: '김민준_코치변경',
+          transcript: '운영',
+          recorded_at: T('2026-03-05T05:00:00'),
+        }),
+      ]
+    );
+    expect(rows[0].call_count).toBe(1);
+    expect(rows[0].transcript).toContain('세일즈');
+    expect(rows[0].transcript).not.toContain('재결제');
+    expect(rows[0].transcript).not.toContain('윈백');
+    expect(rows[0].transcript).not.toContain('운영');
+    expect(stats.callsFiltered).toBe(3);
+    expect(stats.callsByKind.renewal).toBe(1);
+    expect(stats.callsByKind.winback).toBe(1);
+    expect(stats.callsByKind.ops).toBe(1);
+  });
+
+  it('이름 없는 통화(unknown)는 코퍼스에 남긴다', () => {
+    const { rows, stats } = buildCorpus([student()], [call({ recording_name: null })]);
+    expect(rows).toHaveLength(1);
+    expect(stats.callsByKind.unknown).toBe(1);
+  });
+
+  it('통화가 전부 유형 제외되면 행이 만들어지지 않는다', () => {
+    const { rows, stats } = buildCorpus(
+      [student()],
+      [
+        call({ recording_name: '김민준_재결제' }),
+        call({ recording_name: '김민준_환불상담', recorded_at: T('2026-03-03T05:00:00') }),
+      ]
+    );
+    expect(rows).toHaveLength(0);
+    expect(stats.excludedAllFiltered).toBe(1);
+    expect(stats.excludedAllTruncated).toBe(0);
+  });
+});
+
+describe('buildCorpus — REQ-104 같은 녹음 중복 제거', () => {
+  it('같은 학생의 같은 시각·같은 길이 통화는 하나로 센다', () => {
+    const { rows, stats } = buildCorpus(
+      [student()],
+      [
+        call({ recorded_at: T('2026-03-02T05:30:00'), duration_sec: 437 }),
+        call({ recorded_at: T('2026-03-02T05:30:00'), duration_sec: 437 }),
+      ]
+    );
+    expect(rows[0].call_count).toBe(1);
+    expect(rows[0].total_duration_sec).toBe(437);
+    expect(stats.duplicateCalls).toBe(1);
+  });
+
+  it('다른 학생의 같은 시각 통화는 접지 않는다 — 자매 케이스', () => {
+    const { rows, stats } = buildCorpus(
+      [student({ id: 'a', name: '엄채영' }), student({ id: 'b', name: '엄채윤' })],
+      [
+        call({ student_id: 'a', recorded_at: T('2026-03-02T05:30:00'), duration_sec: 91 }),
+        call({ student_id: 'b', recorded_at: T('2026-03-02T05:30:00'), duration_sec: 91 }),
+      ]
+    );
+    expect(rows).toHaveLength(2);
+    expect(stats.duplicateCalls).toBe(0);
+  });
+
+  it('recorded_at이 없으면 동일 녹음인지 판단하지 않는다', () => {
+    const { rows, stats } = buildCorpus(
+      [student()],
+      [
+        call({ recorded_at: null, created_at: T('2026-03-02T05:00:00'), duration_sec: 100 }),
+        call({ recorded_at: null, created_at: T('2026-03-02T05:00:00'), duration_sec: 100 }),
+      ]
+    );
+    expect(rows[0].call_count).toBe(2);
+    expect(stats.duplicateCalls).toBe(0);
+  });
+});
+
+describe('buildCorpus — REQ-105 제외 사유를 구분해 보고한다', () => {
+  it('세 가지 제외 사유가 서로 겹치지 않는다', () => {
+    const { rows, stats } = buildCorpus(
+      [
+        student({ id: 'none' }), // 전사 없음
+        student({ id: 'filtered' }), // 전부 유형 제외
+        student({ id: 'truncated' }), // 전부 절단
+        student({ id: 'ok' }), // 정상
+        student({ id: 'nolabel', funnel_stage: '4' }), // 라벨 없음
+      ],
+      [
+        call({ student_id: 'filtered', recording_name: '김민준_재결제' }),
+        call({ student_id: 'truncated', recorded_at: T('2026-04-05T05:00:00') }),
+        call({ student_id: 'ok' }),
+        call({ student_id: 'nolabel' }),
+      ]
+    );
+    expect(stats.excludedNoTranscript).toBe(1);
+    expect(stats.excludedAllFiltered).toBe(1);
+    expect(stats.excludedAllTruncated).toBe(1);
+    expect(stats.excludedNoLabel).toBe(1);
+    expect(rows).toHaveLength(1);
+    expect(
+      rows.length +
+        stats.excludedNoLabel +
+        stats.excludedNoTranscript +
+        stats.excludedAllFiltered +
+        stats.excludedAllTruncated
+    ).toBe(stats.students);
+  });
+
+  it('통화 단위 집계가 서로 맞는다', () => {
+    const { stats } = buildCorpus(
+      [student()],
+      [
+        call({ transcript: '유지' }),
+        call({ recorded_at: T('2026-03-02T05:30:00'), duration_sec: 437 }),
+        call({ recorded_at: T('2026-03-02T05:30:00'), duration_sec: 437 }), // 중복
+        call({ recording_name: '김민준_재결제', recorded_at: T('2026-03-03T05:00:00') }), // 유형
+        call({ recorded_at: T('2026-04-05T05:00:00') }), // 절단
+      ]
+    );
+    expect(stats.callsTotal).toBe(5);
+    expect(stats.duplicateCalls).toBe(1);
+    expect(stats.callsFiltered).toBe(1);
+    expect(stats.callsTruncated).toBe(1);
+    expect(stats.callsKept).toBe(2);
+    expect(
+      stats.duplicateCalls + stats.callsFiltered + stats.callsTruncated + stats.callsKept
+    ).toBe(stats.callsTotal);
   });
 });

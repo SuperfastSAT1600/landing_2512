@@ -49,8 +49,21 @@ function report(stats: BuildStats, options: Options): void {
       ``,
       `대상 학생(결과 확정)     ${stats.students}`,
       `생성 행                  ${stats.rows}  (converted ${stats.converted} / lost ${stats.lost})`,
-      `제외 — 라벨 없음         ${stats.excludedNoLabel}`,
-      `제외 — 통화 없음/절단됨  ${stats.excludedNoCalls}`,
+      ``,
+      `제외 — 라벨 없음         ${stats.excludedNoLabel}명`,
+      `제외 — 전사 없음         ${stats.excludedNoTranscript}명`,
+      `제외 — 세일즈 콜 아님    ${stats.excludedAllFiltered}명`,
+      `제외 — 결과 확정 이후    ${stats.excludedAllTruncated}명`,
+      ``,
+      `통화 전체                ${stats.callsTotal}건`,
+      `  학습에 들어간 통화     ${stats.callsKept}건`,
+      `  중복 제거              ${stats.duplicateCalls}건`,
+      `  유형 제외              ${stats.callsFiltered}건` +
+        ` (재결제 ${stats.callsByKind.renewal} / 이탈 ${stats.callsByKind.winback}` +
+        ` / 운영 ${stats.callsByKind.ops})`,
+      `  절단                   ${stats.callsTruncated}건`,
+      `  세일즈 / 미분류        ${stats.callsByKind.new_sales} / ${stats.callsByKind.unknown}건`,
+      ``,
       `비식별 치환              ${stats.redactions}건`,
     ].join('\n')
   );
