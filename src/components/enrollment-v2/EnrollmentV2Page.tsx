@@ -299,7 +299,7 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang }: {
   const [loadingCoaches, setLoadingCoaches] = useState(false);
   const coachesRef = useRef<HTMLDivElement>(null);
   const selectedId = selectedOption?.type === 'hour-package' ? selectedOption.packageId : null;
-  const isDirector = selectedId?.startsWith('1on1-director') ?? false;
+  const isDirector = selectedId === '1on1-director';
   const hourUnit = lang === 'en' ? 'hrs' : '시간';
 
   function handlePkgClick(pkgId: string) {
@@ -395,66 +395,56 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang }: {
           })}
 
           {/* 프리미엄 대표코치 패키지 */}
-          <div
-            className={`rounded-2xl border p-5 transition-colors ${
-              isDirector ? 'border-amber-400/70 bg-amber-500/[0.07]' : 'border-amber-500/30 bg-amber-500/[0.04]'
-            }`}
-            style={{ fontFamily: "'BookkMyungjo', serif" }}
+          <button
+            type="button"
+            onClick={() => handlePkgClick('1on1-director')}
+            className={`relative overflow-hidden w-full text-left rounded-2xl border p-5 transition-colors touch-manipulation active:scale-[0.98]
+              ${isDirector
+                ? 'border-amber-400/70'
+                : 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-400/50'
+              }`}
           >
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wide self-start">
-                {lang === 'en' ? 'Premium' : '프리미엄'}
-              </span>
-              <p className="text-sm font-semibold text-amber-200 leading-snug">
-                {lang === 'en' ? '1-on-1 with a SuperfastSAT Lead Coach' : 'SuperfastSAT 대표코치의 1:1 수업'}
-              </p>
-            </div>
+            <AnimatePresence>
+              {isDirector && (
+                <motion.div
+                  key="fill-director"
+                  className="absolute inset-0"
+                  style={{ background: 'linear-gradient(105deg, rgba(180,120,20,0.45) 0%, rgba(251,191,36,0.18) 100%)' }}
+                  initial={{ clipPath: 'inset(0 100% 0 0 round 1rem)' }}
+                  animate={{ clipPath: 'inset(0 0% 0 0 round 1rem)' }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
+                />
+              )}
+            </AnimatePresence>
 
-            <div className="mt-4 flex flex-col gap-2">
-              {DIRECTOR_PKGS.map(pkg => {
-                const isSelected = selectedId === pkg.id;
-                return (
-                  <button
-                    key={pkg.id}
-                    type="button"
-                    onClick={() => handlePkgClick(pkg.id)}
-                    className={`relative overflow-hidden w-full text-left rounded-xl border px-4 py-3 transition-colors touch-manipulation active:scale-[0.98]
-                      ${isSelected
-                        ? 'border-amber-400/70'
-                        : 'border-amber-500/20 bg-black/20 hover:border-amber-400/50'
-                      }`}
-                  >
-                    <AnimatePresence>
-                      {isSelected && (
-                        <motion.div
-                          key={`fill-${pkg.id}`}
-                          className="absolute inset-0"
-                          style={{ background: 'linear-gradient(105deg, rgba(180,120,20,0.45) 0%, rgba(251,191,36,0.18) 100%)' }}
-                          initial={{ clipPath: 'inset(0 100% 0 0 round 0.75rem)' }}
-                          animate={{ clipPath: 'inset(0 0% 0 0 round 0.75rem)' }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        />
-                      )}
-                    </AnimatePresence>
+            <div className="relative z-10 flex items-center justify-between gap-4" style={{ fontFamily: "'BookkMyungjo', serif" }}>
+              <div className="flex-shrink-0 flex flex-col gap-1.5">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wide self-start">
+                  {lang === 'en' ? 'Premium' : '프리미엄'}
+                </span>
+                <p className="text-sm font-semibold text-amber-200 leading-snug">
+                  {lang === 'en' ? '1-on-1 with a SuperfastSAT Lead Coach' : 'SuperfastSAT 대표코치의 1:1 수업'}
+                </p>
+              </div>
 
-                    <div className="relative z-10 flex items-baseline justify-between gap-4">
-                      <div className="flex items-baseline gap-1 flex-shrink-0">
-                        <span className="text-xl font-bold text-amber-100 leading-none">{pkg.hours}</span>
-                        <span className="text-[11px] font-bold text-amber-100/70 tracking-tight">{hourUnit}</span>
-                      </div>
-                      <p
-                        className="text-sm font-semibold text-amber-200"
-                        style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
-                      >
-                        {formatWon(pkg.totalPrice)}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+              <div className="flex-1 text-right space-y-0.5">
+                {DIRECTOR_PKGS.map(pkg => (
+                  <div key={pkg.id} className="flex items-baseline justify-end gap-2">
+                    <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">
+                      {lang === 'en' ? `${pkg.hours} ${hourUnit}` : `${pkg.hours}${hourUnit}`}
+                    </span>
+                    <span
+                      className="text-sm font-semibold text-amber-200"
+                      style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
+                    >
+                      {formatWon(pkg.totalPrice)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </button>
 
           {/* 대표코치 라인업 */}
           <div ref={coachesRef}>
