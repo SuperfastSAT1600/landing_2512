@@ -72,8 +72,14 @@ export interface BackfillReport {
   unmatched: number;
   ambiguous: number;
   failed: number;
-  /** limit에 걸려 손대지 않은 매칭 건수 — 다음 실행에서 이어서 처리된다. */
+  /** limit 또는 시간 예산에 걸려 손대지 않은 매칭 건수 — 다음 실행에서 이어서 처리된다. */
   remaining: number;
+  /** remaining의 원인이 시간 예산인가(아니면 limit인가). 호출자의 안내 문구가 갈린다. */
+  budgetExhausted: boolean;
+  /** 목록 조회(students/call_transcripts/Plaud)에 쓴 시간. 예산을 다 먹는 주범이다. */
+  listingMs: number;
+  /** 함수 진입부터 리포트 반환까지의 총 소요. */
+  elapsedMs: number;
   unmatchedEntries: SkippedEntry[];
   ambiguousEntries: SkippedEntry[];
   failedEntries: (SkippedEntry & { error: string })[];
@@ -89,7 +95,19 @@ export async function runBackfill(
   const report: BackfillReport = {
     candidates: 0, skipped: 0, inserted: 0, wouldInsert: 0,
     unmatched: 0, ambiguous: 0, failed: 0, remaining: 0,
+    budgetExhausted: false, listingMs: 0, elapsedMs: 0,
     unmatchedEntries: [], ambiguousEntries: [], failedEntries: [],
+  };
+
+  // 예산 시계는 목록 조회를 포함해 함수 진입부터 돈다. 조회 뒤에 출발시키면
+  // 조회에 쓴 시간만큼 함수가 maxDuration을 넘겨 죽는다.
+  const now = options.now ?? Date.now;
+  const startedAt = now();
+  const elapsed = () => now() - startedAt;
+  const outOfTime = () => options.budgetMs !== undefined && elapsed() >= options.budgetMs;
+  const finish = () => {
+    report.elapsedMs = elapsed();
+    return report;
   };
 
   const captured = await deps.listCapturedEntryIds();
@@ -105,13 +123,13 @@ export async function runBackfill(
   report.skipped = countAlreadyCaptured(students, captured);
 
   // 후보가 없으면 Plaud를 부르지 않는다 — 토큰 회전·MCP 호출을 공짜로 쓰지 않기 위함.
-  if (candidates.length === 0) return report;
+  if (candidates.length === 0) {
+    report.listingMs = elapsed();
+    return finish();
+  }
 
   const recordings = await listAllRecordings(deps, accounts);
-
-  const now = options.now ?? Date.now;
-  const startedAt = now();
-  const outOfTime = () => options.budgetMs !== undefined && now() - startedAt >= options.budgetMs;
+  report.listingMs = elapsed();
 
   let budget = options.limit ?? Infinity;
   for (const c of candidates) {
@@ -158,7 +176,14 @@ export async function runBackfill(
 
       // 시간 예산도 --limit과 같은 자리에서 본다. 둘 다 "과금되는 전사"를 묶는
       // 값이므로, 위의 재사용 경로는 어느 쪽에도 걸리지 않는다.
-      if (budget <= 0 || outOfTime()) {
+      // 두 원인을 구분해 남긴다 — 호출자는 "기다렸다 이어서"와 "사람이 봐야 함"을
+      // 이 값으로 가른다.
+      if (outOfTime()) {
+        report.remaining++;
+        report.budgetExhausted = true;
+        continue;
+      }
+      if (budget <= 0) {
         report.remaining++;
         continue;
       }
@@ -175,7 +200,7 @@ export async function runBackfill(
     }
   }
 
-  return report;
+  return finish();
 }
 
 /** 계정별 목록을 합친다. 한 계정이 죽어도 나머지는 진행한다(부분 성공이 전무보다 낫다). */
