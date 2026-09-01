@@ -1,5 +1,8 @@
 # IntelligentFunctions 세일즈 콜 데이터셋 파이프라인
 
+> **일부 대체됨 (2026-09-01)** — external dataset·Parquet·training 잡 부분(REQ-006 ~ REQ-012)은
+> `intfunc-internal-dataset.md`가 대체한다. 코퍼스를 만드는 규칙(REQ-001 ~ REQ-005)은 그대로다.
+
 ## Overview
 
 `call_transcripts`에 쌓인 세일즈 상담 전사를 IntelligentFunctions의 **external dataset**으로

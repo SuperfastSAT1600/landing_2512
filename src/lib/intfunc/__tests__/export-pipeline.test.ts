@@ -1,15 +1,10 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import { parquetWriteFile } from 'hyparquet-writer';
-import { parquetReadObjects, asyncBufferFromFile } from 'hyparquet';
 import { buildCorpus } from '@/lib/intfunc/corpus-row';
-import { toColumnData } from '@/lib/intfunc/parquet';
+import { toExample } from '@/lib/intfunc/import-corpus';
 
-describe('내보내기 파이프라인 — 스크립트가 실제로 밟는 경로', () => {
-  it('전사 → 코퍼스 → parquet 파일 → 재독', async () => {
+describe('내보내기 파이프라인 — 라우트가 실제로 밟는 경로', () => {
+  it('전사 → 코퍼스 → dataset example', async () => {
     const students = [
       {
         id: 'a',
@@ -78,18 +73,15 @@ describe('내보내기 파이프라인 — 스크립트가 실제로 밟는 경�
     ];
 
     const { rows, stats } = buildCorpus(students, calls);
-    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ifx-')), 'sales-calls.parquet');
-    parquetWriteFile({ filename: file, columnData: toColumnData(rows) });
-
-    const read = await parquetReadObjects({ file: await asyncBufferFromFile(file) });
+    const read = rows.map(toExample);
 
     expect(read).toHaveLength(2);
     const a = read.find((r) => r.student_id === 'a')!;
     expect(a.outcome).toBe('converted');
     expect(a.call_count).toBe(2); // 결제 이후 통화는 잘렸다
-    expect(a.transcript).not.toContain('결제 완료 후 통화');
-    expect(a.transcript).not.toContain('010-1234-5678');
-    expect(a.transcript).not.toContain('김민준');
+    expect(a.transcript as string).not.toContain('결제 완료 후 통화');
+    expect(a.transcript as string).not.toContain('010-1234-5678');
+    expect(a.transcript as string).not.toContain('김민준');
     expect(a.previous_math_score).toBeNull();
     expect(read.find((r) => r.student_id === 'b')!.outcome).toBe('lost');
     expect(stats.cutoffUnavailable).toBe(0);

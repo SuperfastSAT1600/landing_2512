@@ -33,7 +33,7 @@ export interface CallInput {
 
 export type Outcome = 'converted' | 'lost';
 
-/** Parquet 컬럼과 1:1. 중첩 없이 평면 — 선언도 읽기도 단순해진다. */
+/** dataset 컬럼과 1:1. 중첩 없이 평면 — 어느 컬럼이 텍스트고 어느 것이 라벨인지는 pack이 정한다. */
 export interface CorpusRow {
   student_id: string;
   transcript: string;
@@ -47,6 +47,24 @@ export interface CorpusRow {
   call_count: number;
   total_duration_sec: number;
 }
+
+/**
+ * 컬럼 이름의 유일한 목록. example 변환과 코퍼스 다이제스트가 같은 순서를 봐야
+ * 같은 내용에 같은 멱등키가 나온다 (REQ-204).
+ */
+export const CORPUS_COLUMNS: readonly (keyof CorpusRow)[] = [
+  'student_id',
+  'transcript',
+  'outcome',
+  'grade',
+  'school_type',
+  'desired_subjects',
+  'target_score',
+  'previous_rw_score',
+  'previous_math_score',
+  'call_count',
+  'total_duration_sec',
+];
 
 export interface BuildStats {
   students: number;

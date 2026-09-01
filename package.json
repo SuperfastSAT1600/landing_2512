@@ -56,7 +56,6 @@
     "dotenv": "^17.3.1",
     "framer-motion": "^12.23.25",
     "gray-matter": "^4.0.3",
-    "hyparquet-writer": "^0.16.9",
     "lucide-react": "^0.556.0",
     "marked": "^17.0.5",
     "next": "16.0.7",
