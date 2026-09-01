@@ -4,11 +4,12 @@
  * 패널이 쓰고, 주간 리포트에서도 같은 숫자를 낼 수 있도록 UI와 분리해 둔다.
  */
 import { countryLabelFull } from './countries';
-import type { GlobalSalePaymentType } from './global-sales-service';
+import type { GlobalSaleBillingType, GlobalSalePaymentType } from './global-sales-types';
 
 export interface CountrySaleLike {
   country_code: string | null;
   payment_type: GlobalSalePaymentType;
+  billing_type: GlobalSaleBillingType;
   amount_usd: number;
 }
 
@@ -69,4 +70,41 @@ export function aggregateByCountry(entries: CountrySaleLike[]): CountryStatRow[]
 /** 국가 미지정을 제외한 실제 판매 국가 수. */
 export function countDistinctCountries(entries: CountrySaleLike[]): number {
   return new Set(entries.map((e) => e.country_code).filter((c): c is string => !!c)).size;
+}
+
+export interface BillingStatRow {
+  billingType: GlobalSaleBillingType;
+  label: string;
+  total: number;
+  count: number;
+  share: number; // 전체 매출 대비 %
+}
+
+/** 결제 방식(일회성/구독)별 매출 합계를 내림차순으로. 기록이 없는 방식은 행을 만들지 않는다. */
+export function aggregateByBillingType(entries: CountrySaleLike[]): BillingStatRow[] {
+  if (entries.length === 0) return [];
+
+  const buckets = new Map<GlobalSaleBillingType, BillingStatRow>();
+  let grandTotal = 0;
+
+  for (const entry of entries) {
+    const row = buckets.get(entry.billing_type) ?? {
+      billingType: entry.billing_type,
+      label: entry.billing_type,
+      total: 0,
+      count: 0,
+      share: 0,
+    };
+    row.total += entry.amount_usd;
+    row.count += 1;
+    buckets.set(entry.billing_type, row);
+    grandTotal += entry.amount_usd;
+  }
+
+  const rows = [...buckets.values()];
+  for (const row of rows) {
+    row.share = grandTotal > 0 ? (row.total / grandTotal) * 100 : 0;
+  }
+
+  return rows.sort((a, b) => b.total - a.total);
 }

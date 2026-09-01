@@ -25,6 +25,7 @@ function row(over: Record<string, unknown> = {}) {
     amount_usd: 500,
     sale_date: '2026-08-11',
     created_at: '2026-08-11T00:00:00Z',
+    billing_type: '일회성',
     ...over,
   };
 }
@@ -66,6 +67,16 @@ describe('GET /api/business/global-sales', () => {
     mockFrom.mockReturnValue(makeBuilder({ data: null, error: { message: 'boom' } }));
     const { GET } = await import('../route');
     expect((await GET(getReq())).status).toBe(500);
+  });
+
+  it('billing_type이 비어 있으면 일회성으로 채워 내려준다(마이그레이션 이전 행)', async () => {
+    const legacy = row();
+    delete (legacy as Record<string, unknown>).billing_type;
+    mockFrom.mockReturnValue(makeBuilder({ data: [legacy], error: null }));
+
+    const { GET } = await import('../route');
+    const { data } = await (await GET(getReq())).json();
+    expect(data[0].billing_type).toBe('일회성');
   });
 });
 
@@ -118,7 +129,40 @@ describe('POST /api/business/global-sales', () => {
       amount_usd: 500,
       sale_date: '2026-08-11',
       country_code: null,
+      billing_type: '일회성',
     });
+  });
+
+  it('billing_type을 저장한다', async () => {
+    const builder = makeBuilder({ data: row({ billing_type: '구독' }), error: null });
+    mockFrom.mockReturnValue(builder);
+
+    const { POST } = await import('../route');
+    const res = await POST(
+      postReq({
+        student_name: '김글로벌',
+        payment_type: '최초결제',
+        amount_usd: 500,
+        sale_date: '2026-08-11',
+        billing_type: '구독',
+      }),
+    );
+    expect(res.status).toBe(201);
+    expect(builder.insert).toHaveBeenCalledWith(expect.objectContaining({ billing_type: '구독' }));
+  });
+
+  it('알 수 없는 billing_type → 400', async () => {
+    const { POST } = await import('../route');
+    const res = await POST(
+      postReq({
+        student_name: '김글로벌',
+        payment_type: '최초결제',
+        amount_usd: 500,
+        sale_date: '2026-08-11',
+        billing_type: '월정액',
+      }),
+    );
+    expect(res.status).toBe(400);
   });
 
   it('country_code를 대문자로 정규화해 저장한다', async () => {
