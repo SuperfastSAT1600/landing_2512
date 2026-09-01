@@ -264,14 +264,6 @@ const BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c]));
 /** 자주 쓰는 국가를 select 최상단에 올리기 위한 순서. */
 export const FREQUENT_COUNTRY_CODES = ['PK', 'AE', 'US', 'IN', 'SA', 'KR', 'GB', 'CA', 'AU', 'SG'];
 
-export const COUNTRIES_BY_CONTINENT: { continent: Continent; countries: Country[] }[] = (() => {
-  const order: Continent[] = ['아시아', '유럽', '북아메리카', '남아메리카', '아프리카', '오세아니아'];
-  return order.map((continent) => ({
-    continent,
-    countries: COUNTRIES.filter((c) => c.continent === continent),
-  }));
-})();
-
 export function findCountry(code: string | null | undefined): Country | undefined {
   if (!code) return undefined;
   return BY_CODE.get(code.trim().toUpperCase());
@@ -299,4 +291,46 @@ export function countryLabel(code: string | null | undefined): string {
   const country = findCountry(code);
   if (!country) return '미지정';
   return `${countryFlag(country.code)} ${country.ko}`;
+}
+
+/** 한글·영문 병기 라벨: "🇵🇰 파키스탄 · Pakistan". 미상이면 "미지정". */
+export function countryLabelFull(code: string | null | undefined): string {
+  const country = findCountry(code);
+  if (!country) return '미지정';
+  return `${countryFlag(country.code)} ${country.ko} · ${country.en}`;
+}
+
+/** 자주 쓰는 국가 먼저, 나머지는 원래 순서 — 빈 검색어의 기본 목록. */
+const DEFAULT_ORDER: Country[] = (() => {
+  const frequent = FREQUENT_COUNTRY_CODES.map((code) => BY_CODE.get(code)).filter((c) => !!c);
+  const rest = COUNTRIES.filter((c) => !FREQUENT_COUNTRY_CODES.includes(c.code));
+  return [...frequent, ...rest];
+})();
+
+/**
+ * 한글명·영문명·코드로 국가를 찾는다. 앞글자 일치가 부분 일치보다 앞에 온다
+ * ("in" → India가 Argentina보다 위). 빈 검색어는 자주 쓰는 국가를 앞세운 전체 목록.
+ */
+export function searchCountries(query: string): Country[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return DEFAULT_ORDER;
+
+  const scored: { country: Country; score: number }[] = [];
+  for (const country of COUNTRIES) {
+    const ko = country.ko.toLowerCase();
+    const en = country.en.toLowerCase();
+    const code = country.code.toLowerCase();
+
+    let score = -1;
+    if (code === q) score = 0;
+    else if (ko.startsWith(q) || en.startsWith(q)) score = 1;
+    else if (ko.includes(q) || en.includes(q)) score = 2;
+    else if (code.startsWith(q)) score = 3;
+
+    if (score >= 0) scored.push({ country, score });
+  }
+
+  return scored
+    .sort((a, b) => a.score - b.score || a.country.ko.localeCompare(b.country.ko, 'ko'))
+    .map((s) => s.country);
 }

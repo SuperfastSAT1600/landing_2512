@@ -61,7 +61,7 @@ describe('aggregateByCountry', () => {
 
   it('국가명 라벨에 국기와 한글명을 담는다', () => {
     const rows = aggregateByCountry([ENTRY({ country_code: 'PK' })]);
-    expect(rows[0].label).toBe('🇵🇰 파키스탄');
+    expect(rows[0].label).toBe('🇵🇰 파키스탄 · Pakistan');
   });
 
   it('미지정은 매출이 커도 항상 마지막에 온다', () => {

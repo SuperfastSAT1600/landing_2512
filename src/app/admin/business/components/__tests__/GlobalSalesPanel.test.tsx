@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { GlobalSalesPanel } from '../GlobalSalesPanel';
 import type { GlobalSaleEntry } from '@/app/api/business/global-sales/route';
 
@@ -85,7 +85,12 @@ describe('GlobalSalesPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /매출 추가/ }));
     fireEvent.change(screen.getByPlaceholderText('학생 이름'), { target: { value: '이신규' } });
     fireEvent.change(screen.getByPlaceholderText('금액 ($)'), { target: { value: '200' } });
-    fireEvent.change(screen.getByLabelText('국가'), { target: { value: 'PK' } });
+
+    // 국가는 검색해서 고른다 — 240개국이라 타이핑으로 좁힌다.
+    fireEvent.click(screen.getByRole('button', { name: '국가 선택' }));
+    fireEvent.change(screen.getByRole('combobox', { name: '국가 검색' }), { target: { value: 'pakistan' } });
+    fireEvent.click(within(screen.getByRole('listbox')).getAllByRole('option')[0]);
+
     fireEvent.click(screen.getByRole('button', { name: '추가' }));
 
     await waitFor(() => expect(screen.getByText('이신규')).toBeTruthy());
@@ -94,16 +99,16 @@ describe('GlobalSalesPanel', () => {
     );
   });
 
-  it('목록 행에 국기와 국가명을 보여준다', async () => {
+  it('목록 행에 국기와 한글·영문 국가명을 보여준다', async () => {
     vi.stubGlobal('fetch', mockFetchSequence(noTargets, { ok: true, data: ENTRIES }));
     render(<GlobalSalesPanel adminKey="admin-key" />);
 
     await screen.findByText('김글로벌');
-    expect(screen.getAllByText('🇵🇰 파키스탄').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('🇦🇪 아랍에미리트').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('🇵🇰 파키스탄 · Pakistan').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('🇦🇪 아랍에미리트 · United Arab Emirates').length).toBeGreaterThan(0);
   });
 
-  it('국가 셀을 눌러 국가를 바꾸면 PATCH하고 목록에 반영한다', async () => {
+  it('국가 셀에서 검색해 국가를 바꾸면 PATCH하고 목록에 반영한다', async () => {
     const fetchMock = mockFetchSequence(
       noTargets,
       { ok: true, data: [{ ...ENTRIES[0], country_code: null }] },
@@ -113,10 +118,11 @@ describe('GlobalSalesPanel', () => {
     render(<GlobalSalesPanel adminKey="admin-key" />);
 
     await screen.findByText('김글로벌');
-    fireEvent.click(screen.getByRole('button', { name: /국가 지정/ }));
-    fireEvent.change(screen.getByLabelText('국가 변경'), { target: { value: 'US' } });
+    fireEvent.click(screen.getByRole('button', { name: '미지정' }));
+    fireEvent.change(screen.getByRole('combobox', { name: '국가 검색' }), { target: { value: '미국' } });
+    fireEvent.click(within(screen.getByRole('listbox')).getAllByRole('option')[0]);
 
-    await waitFor(() => expect(screen.getAllByText('🇺🇸 미국').length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getAllByText('🇺🇸 미국 · United States').length).toBeGreaterThan(0));
     expect(fetchMock.mock.calls[2][0]).toBe('/api/business/global-sales/g-1');
     expect(fetchMock.mock.calls[2][1].method).toBe('PATCH');
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({ country_code: 'US' });
