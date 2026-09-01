@@ -3,7 +3,7 @@
  *
  * 패널이 쓰고, 주간 리포트에서도 같은 숫자를 낼 수 있도록 UI와 분리해 둔다.
  */
-import { countryLabel } from './countries';
+import { countryLabelFull } from './countries';
 import type { GlobalSalePaymentType } from './global-sales-service';
 
 export interface CountrySaleLike {
@@ -14,7 +14,7 @@ export interface CountrySaleLike {
 
 export interface CountryStatRow {
   countryCode: string | null; // null = 국가 미지정
-  label: string; // "🇵🇰 파키스탄" 또는 "미지정"
+  label: string; // "🇵🇰 파키스탄 · Pakistan" 또는 "미지정"
   total: number;
   count: number;
   firstTotal: number;
@@ -37,7 +37,7 @@ export function aggregateByCountry(entries: CountrySaleLike[]): CountryStatRow[]
     const key = code ?? '__unknown__';
     const row = buckets.get(key) ?? {
       countryCode: code,
-      label: countryLabel(code),
+      label: countryLabelFull(code),
       total: 0,
       count: 0,
       firstTotal: 0,

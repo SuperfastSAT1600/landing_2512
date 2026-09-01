@@ -5,16 +5,10 @@ import dynamic from 'next/dynamic';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { toMonthKey } from '@/lib/crm-stats-core';
 import { buildTargetVsActual, niceAxisTicks, USD_TO_KRW_RATE, type MonthlyTargetRow } from '@/lib/business-targets';
-import {
-  COUNTRIES_BY_CONTINENT,
-  FREQUENT_COUNTRY_CODES,
-  countryFlag,
-  countryLabel,
-  findCountry,
-} from '@/lib/countries';
 import { aggregateByCountry, countDistinctCountries } from '@/lib/global-sales-stats';
 import type { GlobalSaleEntry, GlobalSalePaymentType } from '@/app/api/business/global-sales/route';
 import { MonthlyTargetEditor } from './MonthlyTargetEditor';
+import { CountryPicker } from './CountryPicker';
 
 // recharts는 이 패널을 열 때만 필요 — 지연 로딩해 첫 진입 번들에서 제외한다.
 const TargetVsActualChart = dynamic(() => import('./TargetVsActualChart'), {
@@ -34,31 +28,6 @@ const PAYMENT_BADGE: Record<GlobalSalePaymentType, string> = {
   재결제: 'bg-blue-50 text-blue-600',
 };
 
-const FREQUENT_COUNTRIES = FREQUENT_COUNTRY_CODES.map(findCountry).filter((c) => !!c);
-
-/** 국가 select의 옵션 — 추가 폼과 행 인라인 수정이 같은 목록을 쓴다. */
-function CountryOptions() {
-  return (
-    <>
-      <optgroup label="자주 쓰는 국가">
-        {FREQUENT_COUNTRIES.map((c) => (
-          <option key={`freq-${c.code}`} value={c.code}>
-            {countryFlag(c.code)} {c.ko}
-          </option>
-        ))}
-      </optgroup>
-      {COUNTRIES_BY_CONTINENT.map((group) => (
-        <optgroup key={group.continent} label={group.continent}>
-          {group.countries.map((c) => (
-            <option key={c.code} value={c.code}>
-              {countryFlag(c.code)} {c.ko}
-            </option>
-          ))}
-        </optgroup>
-      ))}
-    </>
-  );
-}
 
 /**
  * 튜터링 CRM(students/payments)과 완전히 분리된 신규 상품 라인의 단순 매출 기록.
@@ -76,7 +45,6 @@ export function GlobalSalesPanel({ adminKey }: Props) {
   const [amount, setAmount] = useState('');
   const [saleDate, setSaleDate] = useState(today());
   const [countryCode, setCountryCode] = useState('');
-  const [editingCountryId, setEditingCountryId] = useState<string | null>(null);
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetRow[]>([]);
 
   const fetchMonthlyTargets = useCallback(async () => {
@@ -141,14 +109,13 @@ export function GlobalSalesPanel({ adminKey }: Props) {
   }
 
   // 국가 컬럼 도입 이전 기록에 국가를 채워 넣는 경로 — 낙관적 갱신 후 실패 시 되돌린다.
-  async function updateCountry(id: string, code: string) {
-    setEditingCountryId(null);
+  async function updateCountry(id: string, code: string | null) {
     const prev = entries;
-    setEntries((cur) => cur.map((e) => (e.id === id ? { ...e, country_code: code || null } : e)));
+    setEntries((cur) => cur.map((e) => (e.id === id ? { ...e, country_code: code } : e)));
     const res = await fetch(`/api/business/global-sales/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-      body: JSON.stringify({ country_code: code || null }),
+      body: JSON.stringify({ country_code: code }),
     });
     if (!res.ok) setEntries(prev);
   }
@@ -246,7 +213,7 @@ export function GlobalSalesPanel({ adminKey }: Props) {
           <div className="space-y-2.5">
             {countryRows.map((row) => (
               <div key={row.countryCode ?? 'unknown'} data-testid="country-stat-row" className="flex items-center gap-3">
-                <span className="w-40 shrink-0 truncate text-xs font-medium text-gray-700">{row.label}</span>
+                <span title={row.label} className="w-56 shrink-0 truncate text-xs font-medium text-gray-700">{row.label}</span>
                 <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
                   <div
                     className={`h-full rounded-full ${row.countryCode ? 'bg-blue-500' : 'bg-gray-300'}`}
@@ -319,15 +286,13 @@ export function GlobalSalesPanel({ adminKey }: Props) {
               <option value="최초결제">최초결제</option>
               <option value="재결제">재결제</option>
             </select>
-            <select
-              aria-label="국가"
-              value={countryCode}
-              onChange={(e) => setCountryCode(e.target.value)}
-              className="max-w-[11rem] text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none"
-            >
-              <option value="">국가 선택</option>
-              <CountryOptions />
-            </select>
+            <CountryPicker
+              label="국가"
+              value={countryCode || null}
+              onChange={(code) => setCountryCode(code ?? '')}
+              allowClear
+              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white"
+            />
             <input
               type="number"
               value={amount}
@@ -376,27 +341,13 @@ export function GlobalSalesPanel({ adminKey }: Props) {
                   <tr key={e.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
                     <td className="py-2.5 pr-4 text-xs font-medium text-gray-800">{e.student_name}</td>
                     <td className="py-2.5 px-2 text-xs">
-                      {editingCountryId === e.id ? (
-                        <select
-                          autoFocus
-                          aria-label="국가 변경"
-                          value={e.country_code ?? ''}
-                          onChange={(ev) => updateCountry(e.id, ev.target.value)}
-                          onBlur={() => setEditingCountryId(null)}
-                          className="max-w-[10rem] text-xs border border-blue-300 rounded px-1.5 py-1 bg-white focus:outline-none"
-                        >
-                          <option value="">미지정</option>
-                          <CountryOptions />
-                        </select>
-                      ) : (
-                        <button
-                          onClick={() => setEditingCountryId(e.id)}
-                          aria-label={e.country_code ? '국가 변경' : '국가 지정'}
-                          className={`rounded px-1 -mx-1 hover:bg-blue-50 ${e.country_code ? 'text-gray-600' : 'text-gray-300'}`}
-                        >
-                          {countryLabel(e.country_code)}
-                        </button>
-                      )}
+                      <CountryPicker
+                        label="국가 변경"
+                        value={e.country_code}
+                        onChange={(code) => updateCountry(e.id, code)}
+                        placeholder="미지정"
+                        allowClear
+                      />
                     </td>
                     <td className="py-2.5 px-2">
                       <span className={`text-[11px] px-1.5 py-0.5 rounded ${PAYMENT_BADGE[e.payment_type]}`}>

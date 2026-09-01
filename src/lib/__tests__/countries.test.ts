@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   COUNTRIES,
-  COUNTRIES_BY_CONTINENT,
   findCountry,
   countryFlag,
   countryLabel,
+  countryLabelFull,
+  searchCountries,
   isCountryCode,
   normalizeCountryCode,
 } from '../countries';
@@ -59,9 +60,54 @@ describe('countries', () => {
     expect(isCountryCode('ZZ')).toBe(false);
   });
 
-  it('대륙별 그룹은 전체 국가를 빠짐없이 나눠 담는다', () => {
-    const grouped = COUNTRIES_BY_CONTINENT.flatMap((g) => g.countries);
-    expect(grouped.length).toBe(COUNTRIES.length);
-    expect(COUNTRIES_BY_CONTINENT.map((g) => g.continent)).toContain('아시아');
+  it('countryLabelFull은 한글·영문을 병기한다', () => {
+    expect(countryLabelFull('PK')).toBe('🇵🇰 파키스탄 · Pakistan');
+    expect(countryLabelFull(null)).toBe('미지정');
+  });
+
+  it('여섯 대륙이 모두 채워져 있다', () => {
+    const continents = new Set(COUNTRIES.map((c) => c.continent));
+    expect(continents.size).toBe(6);
+    expect(continents.has('아시아')).toBe(true);
+  });
+});
+
+describe('searchCountries', () => {
+  const codes = (q: string) => searchCountries(q).map((c) => c.code);
+
+  it('영문명으로 찾는다(대소문자 무시)', () => {
+    expect(codes('pakistan')).toContain('PK');
+    expect(codes('PaKiStAn')).toContain('PK');
+    expect(codes('united arab')).toContain('AE');
+  });
+
+  it('한글명으로 찾는다(부분 일치)', () => {
+    expect(codes('파키')).toContain('PK');
+    expect(codes('아랍')).toContain('AE');
+  });
+
+  it('국가 코드로 찾는다', () => {
+    expect(codes('pk')[0]).toBe('PK');
+    expect(codes('KR')[0]).toBe('KR');
+  });
+
+  it('앞글자 일치를 부분 일치보다 앞에 둔다', () => {
+    // "in"은 India(앞글자)와 Argentina(중간 포함) 모두에 걸린다.
+    const result = codes('in');
+    expect(result.indexOf('IN')).toBeLessThan(result.indexOf('AR'));
+  });
+
+  it('빈 검색어는 자주 쓰는 국가를 앞세운 전체 목록을 준다', () => {
+    const all = searchCountries('');
+    expect(all.length).toBe(COUNTRIES.length);
+    expect(all[0].code).toBe('PK');
+  });
+
+  it('매치가 없으면 빈 배열', () => {
+    expect(searchCountries('존재하지않는나라이름')).toEqual([]);
+  });
+
+  it('공백만 있는 검색어는 빈 검색어와 같게 다룬다', () => {
+    expect(searchCountries('   ').length).toBe(COUNTRIES.length);
   });
 });
