@@ -82,6 +82,7 @@ describe('POST /api/webhooks/stripe (REQ-004)', () => {
       currency: 'krw',
       items: ['SAT 관리형 1:1 대표코치 10시간'],
       livemode: true,
+      source: 'Stripe',
     }));
     expect(fetchCheckoutLineItems).toHaveBeenCalledWith('cs_1');
   });

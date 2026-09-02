@@ -8,6 +8,12 @@
 
 const SLACK_CHANNEL = 'C08BL3EJ4V6'; // m1_26년-3분기-2억-3믿음 (결제 건을 올리는 채널)
 
+/**
+ * 토스는 웹훅에 10초 안에 2xx 를 요구한다. 조회(4초)와 합쳐 여유를 남기려면
+ * 슬랙 호출도 끊어줘야 한다 — 걸어두지 않으면 슬랙이 늦을 때 라우트 전체가 묶인다.
+ */
+const SLACK_TIMEOUT_MS = 5000;
+
 /** 최소 단위가 곧 통화 단위인 통화들 — 100으로 나누면 안 된다. */
 const ZERO_DECIMAL_CURRENCIES = new Set([
   'bif', 'clp', 'djf', 'gnf', 'jpy', 'kmf', 'krw', 'mga',
@@ -19,13 +25,17 @@ const CURRENCY_SYMBOLS: Record<string, string> = { krw: '₩', usd: '$', jpy: '�
 export interface PaymentNotification {
   customerName: string | null;
   customerEmail: string | null;
+  /** 토스는 이메일 대신 연락처를 준다. 없으면 줄을 생략한다. */
+  customerPhone?: string | null;
   /** 상품명 목록. 비어 있으면 구매내역 줄을 생략한다. */
   items: string[];
-  /** Stripe 최소 단위 금액 (KRW 1800000 = 1,800,000원). */
+  /** PG 최소 단위 금액 (KRW 1800000 = 1,800,000원). */
   amount: number;
   currency: string;
   dashboardUrl: string | null;
   livemode: boolean;
+  /** 한 채널에 두 PG 알림이 섞이므로 출처를 표기한다. 미지정 시 표기 없음. */
+  source?: 'Stripe' | '토스';
 }
 
 export function formatAmount(amount: number, currency: string): string {
@@ -59,14 +69,16 @@ export function formatPaymentMessage(p: PaymentNotification): string {
   const now = kstTimestamp();
 
   const prefix = p.livemode ? '' : '[TEST] ';
+  const pg = p.source ? ` (${p.source})` : '';
   const lines = [
-    `💳 *${prefix}새 결제* — ${now} KST`,
+    `💳 *${prefix}새 결제${pg}* — ${now} KST`,
     `• 학생 : ${p.customerName || '이름 미상'}`,
   ];
   if (p.customerEmail) lines.push(`• 이메일 : ${p.customerEmail}`);
+  if (p.customerPhone) lines.push(`• 연락처 : ${p.customerPhone}`);
   if (p.items.length > 0) lines.push(`• 구매내역 : ${p.items.join(', ')}`);
   lines.push(`• 금액 : ${formatAmount(p.amount, p.currency)}`);
-  if (p.dashboardUrl) lines.push(`<${p.dashboardUrl}|Stripe에서 보기>`);
+  if (p.dashboardUrl) lines.push(`<${p.dashboardUrl}|${p.source ?? 'Stripe'}에서 보기>`);
 
   return lines.join('\n');
 }
@@ -79,6 +91,7 @@ export async function notifyPaymentToSlack(p: PaymentNotification): Promise<void
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ channel: SLACK_CHANNEL, text: formatPaymentMessage(p) }),
+    signal: AbortSignal.timeout(SLACK_TIMEOUT_MS),
   });
 
   const data = await res.json() as { ok: boolean; error?: string };

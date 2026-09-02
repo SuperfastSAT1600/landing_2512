@@ -128,6 +128,53 @@ describe('notifyPaymentToSlack (REQ-002, REQ-003)', () => {
     expect(slackBody().text).not.toContain('[TEST]');
   });
 
+  it('source 를 주면 헤더에 PG 이름을 표기한다 (REQ-004)', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+
+    await notifyPaymentToSlack({ ...base, source: '토스' });
+
+    expect(slackBody().text).toContain('새 결제 (토스)');
+  });
+
+  it('source 가 없으면 PG 표기 없이 기존 형식을 유지한다 (REQ-004)', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+
+    await notifyPaymentToSlack(base);
+
+    const text = slackBody().text;
+    expect(text).toContain('새 결제');
+    expect(text).not.toContain('(토스)');
+    expect(text).not.toContain('(Stripe)');
+  });
+
+  it('연락처가 있으면 줄을 넣고, 없으면 생략한다 (REQ-004)', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+
+    await notifyPaymentToSlack({ ...base, customerPhone: '010-1234-5678' });
+    expect(slackBody().text).toContain('• 연락처 : 010-1234-5678');
+
+    fetchMock.mockClear();
+    await notifyPaymentToSlack({ ...base, customerPhone: null });
+    expect(slackBody().text).not.toContain('연락처');
+  });
+
+  it('링크 라벨은 source 를 따른다 (REQ-004)', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+
+    await notifyPaymentToSlack({ ...base, source: '토스', dashboardUrl: 'https://example.com/o/1' });
+
+    expect(slackBody().text).toContain('|토스에서 보기>');
+  });
+
+  it('슬랙 호출에 타임아웃을 건다 — 토스 10초 제한 대응 (REQ-005)', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+
+    await notifyPaymentToSlack(base);
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect((init as RequestInit).signal).toBeDefined();
+  });
+
   it('슬랙이 ok:false를 반환하면 실패를 던진다 (삼키지 않는다)', async () => {
     const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: false, error: 'not_in_channel' }) });

@@ -55,6 +55,7 @@ async function fromCheckoutSession(object: unknown, livemode: boolean): Promise<
       ? `https://dashboard.stripe.com/payments/${session.payment_intent}`
       : null,
     livemode,
+    source: 'Stripe',
   };
 }
 
@@ -81,6 +82,7 @@ function fromInvoice(object: unknown, livemode: boolean): PaymentNotification | 
     currency: invoice.currency ?? 'krw',
     dashboardUrl: `https://dashboard.stripe.com/invoices/${invoice.id}`,
     livemode,
+    source: 'Stripe',
   };
 }
 
