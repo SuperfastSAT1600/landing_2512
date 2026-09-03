@@ -11,6 +11,7 @@ description: "SuperfastSAT 네이버/구글/랜딩페이지 블로그 포스팅�
 
 - `/workspace/.claude/skills/superfastsat-persona.md` — 화자 페르소나, 목소리 원칙, 설득 전제 조건
 - `/workspace/.claude/skills/superfastsat-blog/voice-guide.md` — 실제 교정 사례. 같은 실수를 반복하지 않기 위한 문서.
+- `/workspace/.claude/skills/superfastsat-blog/teaching-content.md` — SuperfastSAT 수업 내용 데이터베이스. 포스팅 주제에 따라 꺼내 쓴다. 처방형/선호형 분류 확인 후 서술 방식 결정.
 
 ---
 
