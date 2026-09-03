@@ -34,7 +34,10 @@ describe('fetchTossOrder (REQ-001, REQ-005)', () => {
     amount: 1800000,
     customerName: '이중희',
     customerPhoneNumber: '010-1234-5678',
-    orderItems: [{ name: 'SAT > 관리형 > 1:1수업 > 대표코치 10시간 Chloe Lee', quantity: 1 }],
+    orderItems: [{
+      product: { name: 'SAT > 관리형 > 1:1수업 > 대표코치 10시간 Chloe Lee', amount: 1800000 },
+      quantity: 1,
+    }],
     payment: { status: 'DONE' },
   };
 
@@ -87,6 +90,25 @@ describe('fetchTossOrder (REQ-001, REQ-005)', () => {
     await expect(fetchTossOrder('ord_123')).rejects.toMatchObject({ kind: 'transient' });
   });
 
+  // REQ-009: 프로덕션 401 때 상태 코드만 남아 원인을 못 갈랐다
+  it('토스가 준 에러 코드를 메시지에 담는다', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ code: 'UNAUTHORIZED_KEY', message: '인증되지 않은 시크릿 키 혹은 클라이언트 키 입니다.' }),
+    });
+    await expect(fetchTossOrder('ord_123')).rejects.toThrow(/UNAUTHORIZED_KEY/);
+  });
+
+  it('에러 본문이 JSON 이 아니어도 종류는 그대로 판정한다', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => { throw new Error('not json'); },
+    });
+    await expect(fetchTossOrder('ord_123')).rejects.toMatchObject({ kind: 'transient' });
+  });
+
   it('네트워크 오류도 일시적 오류', async () => {
     fetchMock.mockRejectedValue(new Error('network'));
     await expect(fetchTossOrder('ord_123')).rejects.toMatchObject({ kind: 'transient' });
@@ -98,13 +120,20 @@ describe('fetchTossOrder (REQ-001, REQ-005)', () => {
   });
 });
 
-describe('mapOrderToNotification (REQ-003)', () => {
+// REQ-003, REQ-008 — 상품명은 orderItems[].product.name 에 있다 (라이브 응답 확인)
+describe('mapOrderToNotification (REQ-003, REQ-008)', () => {
+  const item = (name: string, quantity = 1) => ({
+    product: { productKey: 'p_1', name, amount: 1800000, currency: 'KRW', status: 'ON_SALE' },
+    quantity,
+    orderOptions: [],
+  });
+
   const base = {
     orderKey: 'ord_123',
     amount: 1800000,
     customerName: '이중희',
     customerPhoneNumber: '010-1234-5678',
-    orderItems: [{ name: 'SAT 대표코치 10시간', quantity: 1 }],
+    orderItems: [item('SAT 대표코치 10시간')],
     payment: { status: 'DONE' },
   };
 
@@ -123,16 +152,21 @@ describe('mapOrderToNotification (REQ-003)', () => {
   });
 
   it('수량이 2 이상이면 표기한다', () => {
-    const r = mapOrderToNotification({ ...base, orderItems: [{ name: 'SAT 10시간', quantity: 2 }] });
+    const r = mapOrderToNotification({ ...base, orderItems: [item('SAT 10시간', 2)] });
     expect(r.items).toEqual(['SAT 10시간 × 2']);
   });
 
   it('상품이 여러 건이면 모두 담는다', () => {
+    const r = mapOrderToNotification({ ...base, orderItems: [item('SAT 10시간'), item('AP 5시간')] });
+    expect(r.items).toEqual(['SAT 10시간', 'AP 5시간']);
+  });
+
+  it('product 가 없거나 이름이 비면 그 항목만 건너뛴다', () => {
     const r = mapOrderToNotification({
       ...base,
-      orderItems: [{ name: 'SAT 10시간', quantity: 1 }, { name: 'AP 5시간', quantity: 1 }],
+      orderItems: [{ quantity: 1 }, item('SAT 10시간'), { product: { name: null }, quantity: 1 }],
     });
-    expect(r.items).toEqual(['SAT 10시간', 'AP 5시간']);
+    expect(r.items).toEqual(['SAT 10시간']);
   });
 
   it('이름·연락처·상품이 비어도 죽지 않는다', () => {
