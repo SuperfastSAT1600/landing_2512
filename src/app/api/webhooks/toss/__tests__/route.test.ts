@@ -31,7 +31,7 @@ function order(status: string) {
     amount: 1800000,
     customerName: '이중희',
     customerPhoneNumber: '010-1234-5678',
-    orderItems: [{ name: 'SAT 대표코치 10시간', quantity: 1 }],
+    orderItems: [{ product: { name: 'SAT 대표코치 10시간' }, quantity: 1 }],
     payment: { status },
   };
 }
