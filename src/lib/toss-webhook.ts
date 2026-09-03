@@ -51,8 +51,9 @@ const orderSchema = z.object({
   amount: z.number().nullish(),
   customerName: z.string().nullish(),
   customerPhoneNumber: z.string().nullish(),
+  // 상품명은 항목이 아니라 그 안의 product 에 있다 (라이브 응답 확인, 문서에는 없음)
   orderItems: z.array(z.object({
-    name: z.string().nullish(),
+    product: z.object({ name: z.string().nullish() }).nullish(),
     quantity: z.number().nullish(),
   })).nullish(),
   payment: z.object({ status: z.string().nullish() }).nullish(),
@@ -81,6 +82,16 @@ export function orderPaymentStatus(order: TossOrder): string | null {
   return order.payment?.status ?? order.status ?? null;
 }
 
+/** 에러 응답 본문의 code 만 뽑는다. 본문이 JSON 이 아니어도 판정을 바꾸지 않는다. */
+async function tossErrorCode(res: Response): Promise<string> {
+  try {
+    const body = await res.json() as { code?: unknown };
+    return typeof body.code === 'string' ? ` ${body.code}` : '';
+  } catch {
+    return '';
+  }
+}
+
 export async function fetchTossOrder(orderKey: string): Promise<TossOrder> {
   const key = process.env.TOSS_SECRET_KEY;
   if (!key) throw new TossOrderLookupError('config', 'TOSS_SECRET_KEY 미설정');
@@ -99,11 +110,13 @@ export async function fetchTossOrder(orderKey: string): Promise<TossOrder> {
   }
 
   if (!res.ok) {
-    if (res.status === 404) throw new TossOrderLookupError('not_found', `주문 없음: ${orderKey}`);
+    // 상태 코드만으로는 키 불일치와 인코딩 오류를 못 가른다 — 토스가 준 code 를 같이 남긴다
+    const detail = `${res.status}${await tossErrorCode(res)}`;
+    if (res.status === 404) throw new TossOrderLookupError('not_found', `주문 없음: ${orderKey} (${detail})`);
     if (res.status === 401 || res.status === 403) {
-      throw new TossOrderLookupError('config', `토스 인증 실패 (${res.status})`);
+      throw new TossOrderLookupError('config', `토스 인증 실패 (${detail})`);
     }
-    throw new TossOrderLookupError('transient', `주문 조회 실패 (${res.status})`);
+    throw new TossOrderLookupError('transient', `주문 조회 실패 (${detail})`);
   }
 
   const parsed = orderSchema.safeParse(await res.json());
@@ -119,8 +132,8 @@ function formatItem(name: string, quantity: number | null | undefined): string {
 
 export function mapOrderToNotification(order: TossOrder): PaymentNotification {
   const items = (order.orderItems ?? [])
-    .filter((item) => item.name)
-    .map((item) => formatItem(item.name as string, item.quantity));
+    .filter((item) => item.product?.name)
+    .map((item) => formatItem(item.product?.name as string, item.quantity));
 
   return {
     customerName: order.customerName ?? null,
