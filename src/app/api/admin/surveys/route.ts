@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 
 export interface SurveyRow {
@@ -40,39 +41,56 @@ export async function GET(req: NextRequest) {
     (studentProfiles ?? []).map((p: { id: string; full_name: string }) => [p.id, p.full_name])
   );
 
-  // Batch: event participation for all students
+  // CRM coaches: v2_user_id → coach name (primary source for teacher names)
+  const { data: crmCoaches } = await supabaseAdmin
+    .from('coaches')
+    .select('slug, name, v2_user_id')
+    .not('v2_user_id', 'is', null);
+
+  const coachByV2Id = new Map<string, { slug: string; name: string }>(
+    (crmCoaches ?? [])
+      .filter((c: { v2_user_id: string | null }) => c.v2_user_id)
+      .map((c: { slug: string; name: string; v2_user_id: string }) => [c.v2_user_id, { slug: c.slug, name: c.name }])
+  );
+
+  // Batch: event participation for all students (limit 5000 to avoid default 1000 cap)
   const { data: participants } = await supabaseSFv2
     .from('scheduled_event_participants')
     .select('event_id, user_id')
-    .in('user_id', studentIds);
+    .in('user_id', studentIds)
+    .limit(5000);
 
   const eventIds = [...new Set((participants ?? []).map((p: { event_id: string }) => p.event_id))];
 
-  // Batch: coach_room events
   const studentEventMap = new Map<string, string[]>();
   for (const p of (participants ?? []) as { event_id: string; user_id: string }[]) {
     if (!studentEventMap.has(p.user_id)) studentEventMap.set(p.user_id, []);
     studentEventMap.get(p.user_id)!.push(p.event_id);
   }
 
+  // Batch: coach_room events only
   let events: { id: string; starts_at: string; status: string; assigned_teacher_id: string | null }[] = [];
   if (eventIds.length) {
     const { data: evData } = await supabaseSFv2
       .from('scheduled_events')
       .select('id, starts_at, status, assigned_teacher_id')
       .in('id', eventIds)
-      .eq('category', 'coach_room');
+      .eq('category', 'coach_room')
+      .not('assigned_teacher_id', 'is', null)
+      .limit(5000);
     events = (evData ?? []) as typeof events;
   }
 
   const eventById = new Map(events.map(e => [e.id, e]));
 
-  // Batch: teacher profiles
+  // Fallback: v2 teacher profiles for coaches not in CRM
   const teacherIds = [...new Set(
     events.map(e => e.assigned_teacher_id).filter(Boolean) as string[]
-  )];
+  )].filter(id => !coachByV2Id.has(id));
 
-  const teacherNameMap = new Map<string, string>();
+  const teacherNameMap = new Map<string, string>(
+    [...coachByV2Id.entries()].map(([id, c]) => [id, c.name])
+  );
   if (teacherIds.length) {
     const { data: teacherProfiles } = await supabaseSFv2
       .from('profiles')
