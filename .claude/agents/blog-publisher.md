@@ -231,6 +231,28 @@ node publish-landing.js --publish
 
 ---
 
+### STEP 7: 고스트 썸네일 생성 (Ghost 발행 포함 시 필수)
+
+Ghost 포스팅이 포함된 경우, 발행 직후 반드시 썸네일을 생성하고 `feature_image`에 연결합니다.
+
+**썸네일 생성 명령어**
+```bash
+node generate-ghost-thumbnail.js <slug>
+```
+
+- `<slug>`는 고스트 버전 파일 frontmatter의 `slug` 값을 사용한다.
+- 제목은 파일에서 자동 탐색하므로 인수로 전달하지 않아도 된다.
+- 내부적으로 Claude API → Playwright 렌더링 → Supabase 업로드 → Ghost `feature_image` PUT 순서로 처리된다.
+- draft 상태에서도 정상 작동한다.
+
+**결과 확인**
+- ✅ 성공: `썸네일: https://...supabase.co/...` URL 출력 + Ghost `feature_image` 자동 업데이트
+- ❌ 실패 시: Supabase 업로드 오류 또는 Ghost slug 불일치 확인 후 재시도
+
+> **순서 주의**: STEP 6(발행)이 완료된 후에 실행해야 합니다. Ghost 포스트가 존재해야 `feature_image`를 업데이트할 수 있습니다.
+
+---
+
 ## 발행 스크립트 요구사항
 
 스크립트가 작동하려면 `.env.local`에 아래 환경변수가 있어야 합니다.
@@ -258,3 +280,4 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 | Landing만 즉시 발행 | `node publish-landing.js --publish` |
 | 둘 다 저장 (draft) | `node publish-all.js --draft` |
 | 둘 다 즉시 발행 | `node publish-all.js --publish` |
+| Ghost 썸네일 생성 (발행 후 필수) | `node generate-ghost-thumbnail.js <slug>` |
