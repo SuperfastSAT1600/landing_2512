@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyStripeSignature, parseStripeEvent, fetchCheckoutLineItems, formatLineItem } from '@/lib/stripe-webhook';
 import { notifyPaymentToSlack, type PaymentNotification } from '@/lib/slack-payment';
+import { claimPaymentNotification, releasePaymentNotification } from '@/lib/payment-dedupe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -118,11 +119,25 @@ export async function POST(req: NextRequest) {
 
   if (!payment) return NextResponse.json({ data: { received: true, notified: false }, meta: { requestId: event.id } });
 
+  // 재전송은 같은 event.id 로 온다 — 보내기 전에 선점해 중복 게시를 막는다
+  try {
+    if (!await claimPaymentNotification('stripe', event.id)) {
+      console.log('[stripe-webhook] 이미 알림한 이벤트 — 재전송으로 판단:', event.id);
+      return NextResponse.json({ data: { received: true, notified: false }, meta: { requestId: event.id } });
+    }
+  } catch (e) {
+    // 중복 게시보다 알림 지연이 낫다
+    console.error('[stripe-webhook] 알림 선점 실패:', e);
+    return NextResponse.json({ error: { code: 'CLAIM_FAILED', message: '알림 선점 실패' } }, { status: 500 });
+  }
+
   try {
     await notifyPaymentToSlack(payment);
   } catch (e) {
     // 200을 주면 Stripe가 재전송하지 않아 알림이 조용히 사라진다
     console.error('[stripe-webhook] 슬랙 전송 실패:', e);
+    // 선점을 풀어줘야 재전송이 다시 시도할 수 있다
+    await releasePaymentNotification('stripe', event.id);
     return NextResponse.json({ error: { code: 'SLACK_FAILED', message: '슬랙 전송 실패' } }, { status: 500 });
   }
 
