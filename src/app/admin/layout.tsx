@@ -15,7 +15,12 @@ const NAV_ITEMS: NavItem[] = [
     { href: '/admin/home', label: 'Homepage', icon: '🏠' },
     { href: '/admin', label: 'Posts', icon: '📄' },
     { href: '/admin/coaches', label: 'Coaches', icon: '👨‍🏫' },
-    { href: '/admin/reviews', label: 'Reviews', icon: '⭐' },
+    {
+        label: 'Reviews', icon: '⭐', children: [
+            { href: '/admin/reviews', label: 'Reviews' },
+            { href: '/admin/reviews/survey', label: 'Survey' },
+        ]
+    },
     { href: '/admin/diagnosis', label: 'Diagnosis', icon: '🩺' },
     { href: '/admin/supertest', label: 'SuperTest', icon: '🎯' },
     { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
