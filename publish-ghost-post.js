@@ -72,7 +72,7 @@ async function publishToGhost({ title, html, excerpt, slug, metaTitle, metaDescr
   })
 
   return new Promise((resolve, reject) => {
-    const url = new URL(`${process.env.GHOST_URL}/ghost/api/admin/posts/`)
+    const url = new URL(`${process.env.GHOST_URL}/ghost/api/admin/posts/?source=html`)
     const req = https.request({
       hostname: url.hostname,
       path: url.pathname,
