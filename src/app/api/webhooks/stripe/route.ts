@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyStripeSignature, parseStripeEvent, fetchCheckoutLineItems, formatLineItem } from '@/lib/stripe-webhook';
 import { notifyPaymentToSlack, type PaymentNotification } from '@/lib/slack-payment';
+import { claimPaymentNotification, releasePaymentNotification } from '@/lib/payment-dedupe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -40,7 +41,7 @@ const invoiceSchema = z.object({
   }).nullish(),
 });
 
-async function fromCheckoutSession(object: unknown, livemode: boolean): Promise<PaymentNotification | null> {
+async function fromCheckoutSession(object: unknown, livemode: boolean, paidAt: string | null): Promise<PaymentNotification | null> {
   const parsed = checkoutSessionSchema.safeParse(object);
   if (!parsed.success) return null;
   const session = parsed.data;
@@ -56,6 +57,7 @@ async function fromCheckoutSession(object: unknown, livemode: boolean): Promise<
       : null,
     livemode,
     source: 'Stripe',
+    paidAt,
   };
 }
 
@@ -64,7 +66,7 @@ async function fromCheckoutSession(object: unknown, livemode: boolean): Promise<
  * 구독 최초 결제는 checkout.session.completed 와 invoice.paid 가 둘 다 발생하므로
  * subscription_create 를 여기서 걸러야 같은 결제가 두 번 올라가지 않는다.
  */
-function fromInvoice(object: unknown, livemode: boolean): PaymentNotification | null {
+function fromInvoice(object: unknown, livemode: boolean, paidAt: string | null): PaymentNotification | null {
   const parsed = invoiceSchema.safeParse(object);
   if (!parsed.success) return null;
   const invoice = parsed.data;
@@ -83,6 +85,7 @@ function fromInvoice(object: unknown, livemode: boolean): PaymentNotification | 
     dashboardUrl: `https://dashboard.stripe.com/invoices/${invoice.id}`,
     livemode,
     source: 'Stripe',
+    paidAt,
   };
 }
 
@@ -104,20 +107,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: { code: 'INVALID_PAYLOAD', message: '이벤트 파싱 실패' } }, { status: 400 });
   }
 
+  // 재전송으로 늦게 도착해도 결제 시각이 흔들리지 않도록 이벤트 발생 시각을 쓴다
+  const paidAt = event.created ? new Date(event.created * 1000).toISOString() : null;
+
   let payment: PaymentNotification | null = null;
   if (event.type === 'checkout.session.completed') {
-    payment = await fromCheckoutSession(event.data.object, event.livemode);
+    payment = await fromCheckoutSession(event.data.object, event.livemode, paidAt);
   } else if (event.type === 'invoice.paid') {
-    payment = fromInvoice(event.data.object, event.livemode);
+    payment = fromInvoice(event.data.object, event.livemode, paidAt);
   }
 
   if (!payment) return NextResponse.json({ data: { received: true, notified: false }, meta: { requestId: event.id } });
+
+  // 재전송은 같은 event.id 로 온다 — 보내기 전에 선점해 중복 게시를 막는다
+  try {
+    if (!await claimPaymentNotification('stripe', event.id)) {
+      console.log('[stripe-webhook] 이미 알림한 이벤트 — 재전송으로 판단:', event.id);
+      return NextResponse.json({ data: { received: true, notified: false }, meta: { requestId: event.id } });
+    }
+  } catch (e) {
+    // 중복 게시보다 알림 지연이 낫다
+    console.error('[stripe-webhook] 알림 선점 실패:', e);
+    return NextResponse.json({ error: { code: 'CLAIM_FAILED', message: '알림 선점 실패' } }, { status: 500 });
+  }
 
   try {
     await notifyPaymentToSlack(payment);
   } catch (e) {
     // 200을 주면 Stripe가 재전송하지 않아 알림이 조용히 사라진다
     console.error('[stripe-webhook] 슬랙 전송 실패:', e);
+    // 선점을 풀어줘야 재전송이 다시 시도할 수 있다
+    await releasePaymentNotification('stripe', event.id);
     return NextResponse.json({ error: { code: 'SLACK_FAILED', message: '슬랙 전송 실패' } }, { status: 500 });
   }
 

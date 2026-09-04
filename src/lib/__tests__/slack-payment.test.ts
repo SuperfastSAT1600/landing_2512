@@ -112,6 +112,59 @@ describe('notifyPaymentToSlack (REQ-002, REQ-003)', () => {
     vi.useRealTimers();
   });
 
+  // REQ-010: 재전송으로 하루 지난 결제가 그날 밤 새 결제처럼 보였다
+  it('승인 시각이 있으면 발송 시각이 아니라 그 시각을 찍는다', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-03T22:32:00+09:00'));
+
+    await notifyPaymentToSlack({ ...base, paidAt: '2026-09-02T23:47:05+09:00' });
+
+    const text = slackBody().text;
+    expect(text).toContain('09/02 23:47 KST');
+    expect(text).not.toContain('09/03 22:32 KST');
+    vi.useRealTimers();
+  });
+
+  it('승인 후 1시간 넘게 지나 도착하면 지연 수신을 표기한다', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-03T22:32:00+09:00'));
+
+    await notifyPaymentToSlack({ ...base, paidAt: '2026-09-02T23:47:05+09:00' });
+
+    expect(slackBody().text).toContain('지연 수신');
+    expect(slackBody().text).toContain('09/03 22:32');
+    vi.useRealTimers();
+  });
+
+  it('제때 도착한 결제에는 지연 표기를 하지 않는다', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-02T23:47:20+09:00'));
+
+    await notifyPaymentToSlack({ ...base, paidAt: '2026-09-02T23:47:05+09:00' });
+
+    expect(slackBody().text).toContain('09/02 23:47 KST');
+    expect(slackBody().text).not.toContain('지연 수신');
+    vi.useRealTimers();
+  });
+
+  it('승인 시각이 없거나 형식이 깨졌으면 기존대로 현재 시각을 쓴다', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-03T22:32:00+09:00'));
+
+    await notifyPaymentToSlack({ ...base, paidAt: null });
+    expect(slackBody().text).toContain('09/03 22:32 KST');
+
+    fetchMock.mockClear();
+    await notifyPaymentToSlack({ ...base, paidAt: '언제인지 모를 값' });
+    expect(slackBody().text).toContain('09/03 22:32 KST');
+    expect(slackBody().text).not.toContain('지연 수신');
+    vi.useRealTimers();
+  });
+
   it('테스트 모드 결제는 [TEST] 접두사를 붙인다', async () => {
     const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
 
