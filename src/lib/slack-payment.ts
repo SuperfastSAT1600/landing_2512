@@ -92,7 +92,8 @@ export function formatPaymentMessage(p: PaymentNotification): string {
   const pg = p.source ? ` (${p.source})` : '';
   const lines = [
     `💳 *${prefix}새 결제${pg}* — ${stamp} KST${arrival}`,
-    `• 학생 : ${p.customerName || '이름 미상'}`,
+    // PG 가 주는 건 결제자 이름이다 — 학부모가 결제하면 수강생과 다르다
+    `• 구매자 : ${p.customerName || '이름 미상'}`,
   ];
   if (p.customerEmail) lines.push(`• 이메일 : ${p.customerEmail}`);
   if (p.customerPhone) lines.push(`• 연락처 : ${p.customerPhone}`);

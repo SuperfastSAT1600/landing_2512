@@ -72,6 +72,17 @@ describe('notifyPaymentToSlack (REQ-002, REQ-003)', () => {
     expect(text).toContain('Chloe Lee02');
   });
 
+  // REQ-012: 값은 결제자 이름인데 라벨이 "학생"이라 수강생으로 읽혔다
+  it('이름 줄은 구매자로 표기한다', async () => {
+    const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
+
+    await notifyPaymentToSlack(base);
+
+    const text = slackBody().text;
+    expect(text).toContain('• 구매자 : Chloe Lee02');
+    expect(text).not.toContain('학생');
+  });
+
   it('이름이 없으면 이름 미상으로 표기한다', async () => {
     const { notifyPaymentToSlack } = await import('@/lib/slack-payment');
 
