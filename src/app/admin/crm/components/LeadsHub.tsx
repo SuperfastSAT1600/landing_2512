@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { SalesKanban } from './SalesKanban';
-import { KanbanStatsStrip } from './KanbanStatsStrip';
 import { KanbanFilter, KanbanFilters, DEFAULT_FILTERS } from './KanbanFilter';
 import { LeadPool } from './LeadPool';
 import { EnrolledLeads } from './EnrolledLeads';
@@ -19,6 +18,7 @@ const RETRY_TAB_ENABLED = false;
 interface Props {
   students: Student[];
   adminKey: string;
+  userName?: string;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
   onStudentClick: (student: Student) => void;
   onSelectStudentById: (id: string) => void;
@@ -29,7 +29,7 @@ interface Props {
 
 // 메뉴1: 리드 현황·통계 (최초 세일즈 / 재시도 / 수업 중 / 이탈 리드풀 / 통계)
 export function LeadsHub({
-  students, adminKey, onStudentUpdate, onStudentClick, onSelectStudentById,
+  students, adminKey, userName, onStudentUpdate, onStudentClick, onSelectStudentById,
   fetchStudents, retryEnrolledId, onEnrolledHandled,
 }: Props) {
   const [subTab, setSubTab] = useState<HubTab>('kanban');
@@ -85,7 +85,6 @@ export function LeadsHub({
             </div>
             <KanbanFilter filters={filters} onChange={setFilters} />
           </div>
-          <KanbanStatsStrip adminKey={adminKey} onSelectStudent={onSelectStudentById} />
           <SalesKanban
             students={filteredStudents}
             adminKey={adminKey}
@@ -97,7 +96,7 @@ export function LeadsHub({
       )}
 
       {subTab === 'renewal' && (
-        <RenewalKanban adminKey={adminKey} onSelectStudentById={onSelectStudentById} onStudentUpdate={onStudentUpdate} />
+        <RenewalKanban adminKey={adminKey} userName={userName} onSelectStudentById={onSelectStudentById} onStudentUpdate={onStudentUpdate} />
       )}
 
       {RETRY_TAB_ENABLED && subTab === 'retry' && (

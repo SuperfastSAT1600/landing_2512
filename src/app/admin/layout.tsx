@@ -12,23 +12,29 @@ type NavItem =
     | { href?: undefined; label: string; icon: string; children: { href: string; label: string }[] };
 
 const NAV_ITEMS: NavItem[] = [
-    { href: '/admin', label: 'Posts', icon: '📄' },
-    { href: '/admin/fulltest', label: 'Test Contents', icon: '📋' },
-    { href: '/admin/diagnosis', label: 'Diagnosis', icon: '🩺' },
-    { href: '/admin/reviews', label: 'Reviews', icon: '⭐' },
-    { href: '/admin/coaches', label: 'Coaches', icon: '👨‍🏫' },
     { href: '/admin/home', label: 'Homepage', icon: '🏠' },
+    { href: '/admin', label: 'Posts', icon: '📄' },
+    { href: '/admin/coaches', label: 'Coaches', icon: '👨‍🏫' },
+    {
+        label: 'Reviews', icon: '⭐', children: [
+            { href: '/admin/reviews', label: 'Reviews' },
+            { href: '/admin/reviews/survey', label: 'Survey' },
+        ]
+    },
+    { href: '/admin/diagnosis', label: 'Diagnosis', icon: '🩺' },
     { href: '/admin/supertest', label: 'SuperTest', icon: '🎯' },
-    { href: '/admin/traffic', label: '채널 유입 통계', icon: '📊' },
+    { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
+    {
+        label: '시크릿페이지', icon: '🔐', children: [
+            { href: '/admin/vocab-access', label: '시크릿페이지' },
+            { href: '/admin/fulltest', label: 'Test Contents' },
+            { href: '/admin/mathweb', label: 'Math Web' },
+        ]
+    },
+    { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
+    { href: '/admin/business', label: 'Business', icon: '💼' },
     { href: '/admin/marketing', label: '마케팅', icon: '📣' },
     { href: '/admin/crm', label: 'CRM', icon: '👥' },
-    { href: '/admin/business', label: 'Business', icon: '💼' },
-    { href: '/admin/srm', label: 'SRM', icon: '📅' },
-    { href: '/admin/partner', label: '파트너 센터', icon: '🤝' },
-    { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
-    { href: '/admin/vocab-access', label: '시크릿페이지', icon: '🔐' },
-    { href: '/admin/mathweb', label: 'Math Web', icon: '🕸️' },
-    { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
 ];
 
 

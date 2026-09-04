@@ -8,6 +8,17 @@ const nextConfig: NextConfig = {
     '/api/vocabcounter': ['./src/data/vocab/word_concordance.json', './src/data/vocab/lemma_overrides.json'],
     '/vocabcounter': ['./src/data/vocab/word_concordance.json', './src/data/vocab/lemma_overrides.json'],
   },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          // Instruct AI crawlers and image scrapers not to use this content for training
+          { key: 'X-Robots-Tag', value: 'noai, noimageai' },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       { source: '/admin/naver', destination: '/admin/traffic', permanent: false },

@@ -193,6 +193,9 @@ export function SettingsSidebar({
                                 className="w-full bg-[#1e2023] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none">
                                 <option value="SuperfastSAT">SuperfastSAT</option>
                                 {coaches.map(c => <option key={c.slug} value={c.name}>{c.name}</option>)}
+                                {author && author !== 'SuperfastSAT' && !coaches.some(c => c.name === author) && (
+                                    <option value={author}>{author}</option>
+                                )}
                             </select>
                         </div>
 

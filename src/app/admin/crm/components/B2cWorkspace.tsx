@@ -13,6 +13,7 @@ type B2cTab = 'leads' | 'strategies' | 'weekly';
 const INSIGHT_BANNER_ENABLED = false;
 
 interface B2cWorkspaceProps {
+  userName?: string;
   students: Student[];
   todayActions: Student[];
   adminKey: string;
@@ -28,6 +29,7 @@ export function B2cWorkspace({
   students,
   todayActions,
   adminKey,
+  userName,
   onStudentUpdate,
   onStudentClick,
   onSelectStudentById,
@@ -88,6 +90,7 @@ export function B2cWorkspace({
 
       {activeTab === 'leads' && (
         <LeadsHub
+          userName={userName}
           students={students}
           adminKey={adminKey}
           onStudentUpdate={onStudentUpdate}

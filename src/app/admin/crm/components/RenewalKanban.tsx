@@ -21,24 +21,29 @@ import {
 import {
   RENEWAL_OPEN_STAGES,
   RENEWAL_STAGES,
+  isRenewalCarried,
+  type RenewalOutcomeQuality,
   type RenewalStage,
   type RenewalTarget,
   type Student,
 } from '@/types/crm';
 import { UserPlus } from 'lucide-react';
-import { getWeekDef, getWeekLabel } from '@/lib/week-definitions';
+import { getCurrentWeekDef, getWeekLabel } from '@/lib/week-definitions';
 import { PaymentModal } from './PaymentModal';
 import { RenewalCandidateAdd } from './RenewalCandidateAdd';
 import { getRenewalCandidates } from './renewal-candidate-source';
 import { RenewalCard, type RenewalCardTutoring } from './RenewalCard';
 import { RenewalDropModal } from './RenewalDropModal';
+import { RenewalOutcomeModal } from './RenewalOutcomeModal';
 import { RenewalKanbanColumn } from './RenewalKanbanColumn';
 import { RenewalStatsStrip } from './RenewalStatsStrip';
 import { RenewalWeeklyStats } from './RenewalWeeklyStats';
-import { useRenewalBoard, type RenewalScope } from './use-renewal-board';
+import { defaultRenewalScope, useRenewalBoard, type RenewalScope } from './use-renewal-board';
 
 interface RenewalKanbanProps {
   adminKey: string;
+  /** 타임라인·슬랙에 남길 작성자. localStorage 의 admin_user_name. */
+  userName?: string;
   /** 학생 패널 열기 — 조인된 학생은 부분 필드라 id로 넘겨 부모가 전체를 가져온다. */
   onSelectStudentById: (id: string) => void;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
@@ -53,16 +58,21 @@ interface PendingConversion {
 
 export function RenewalKanban({
   adminKey,
+  userName,
   onSelectStudentById,
   onStudentUpdate,
 }: RenewalKanbanProps) {
-  const [scope, setScope] = useState<RenewalScope>({ kind: 'open' });
   const [nowMs] = useState(() => Date.now());
+  const [scope, setScope] = useState<RenewalScope>(() => defaultRenewalScope());
   const [activeId, setActiveId] = useState<string | null>(null);
   // PaymentModal은 B2B 파트너·가입 여부까지 보므로 조인된 부분 학생으로는 열 수 없다.
   // 결제 버튼을 누른 순간 전체 학생을 받아온다.
   const [payment, setPayment] = useState<{ target: RenewalTarget; student: Student } | null>(null);
   const [dropTarget, setDropTarget] = useState<RenewalTarget | null>(null);
+  const [qualityTarget, setQualityTarget] = useState<{
+    target: RenewalTarget;
+    quality: RenewalOutcomeQuality;
+  } | null>(null);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
   const [pendingConversion, setPendingConversion] = useState<PendingConversion | null>(null);
   const [candidatesOpen, setCandidatesOpen] = useState(false);
@@ -78,7 +88,11 @@ export function RenewalKanban({
         headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error('단계 변경에 실패했습니다.');
+      if (!res.ok) {
+        // 사유 검증 400 같은 건 사용자가 이유를 알아야 고칠 수 있다.
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error?.message ?? '단계 변경에 실패했습니다.');
+      }
     },
     [adminKey]
   );
@@ -97,8 +111,11 @@ export function RenewalKanban({
     return map;
   }, [entries]);
 
-  // 후보 = 튜터링 중 목록 − 이미 열린 타깃, 급한 순
-  const candidates = useMemo(() => getRenewalCandidates(entries, targets), [entries, targets]);
+  // 후보 = 튜터링 중 목록 − 이미 열린 타깃(주차 무관), 급한 순
+  const candidates = useMemo(
+    () => getRenewalCandidates(entries, board.openTargets),
+    [entries, board.openTargets]
+  );
 
   const targetsByStage = useMemo(() => {
     const map = new Map<RenewalStage, RenewalTarget[]>();
@@ -109,7 +126,7 @@ export function RenewalKanban({
 
   // 주차 셀렉터 후보 — 이번 주차 + 데이터가 있는 최근 주차
   const weekOptions = useMemo(() => {
-    const thisWeek = getWeekDef(new Date(nowMs).toISOString().slice(0, 10))?.start;
+    const thisWeek = getCurrentWeekDef(new Date(nowMs))?.start;
     const starts = new Set(weekly.map((w) => w.week_start));
     if (thisWeek) starts.add(thisWeek);
     return [...starts].sort((a, b) => b.localeCompare(a));
@@ -127,6 +144,8 @@ export function RenewalKanban({
     if (!over) return;
     const target = targets.find((t) => t.id === active.id);
     if (!target) return;
+    // 이월된 행은 다음 주차로 넘어가 종결됐다 — 되살리지 않는다.
+    if (isRenewalCarried(target)) return;
 
     const overStage = RENEWAL_STAGES.includes(over.id as RenewalStage)
       ? (over.id as RenewalStage)
@@ -178,6 +197,60 @@ export function RenewalKanban({
       await refresh();
     } catch {
       setError(failMsg);
+    }
+  };
+
+  /** 메모는 카드에서 바로 저장한다 — 낙관적 반영 후 실패 시에만 되돌린다. */
+  const handleMemoSave = async (target: RenewalTarget, memo: string) => {
+    const previous = target.memo ?? null;
+    const next = memo.trim() === '' ? null : memo.trim();
+    if (next === previous) return;
+
+    setTargets((current) =>
+      current.map((t) => (t.id === target.id ? { ...t, memo: next } : t))
+    );
+    try {
+      await patchTarget(target.id, { memo: next });
+    } catch {
+      setTargets((current) =>
+        current.map((t) => (t.id === target.id ? { ...t, memo: previous } : t))
+      );
+      setError('메모 저장에 실패했습니다.');
+    }
+  };
+
+  /**
+   * 결과 품질·사유 저장. 즉각 반응이 필요하므로 드래그와 같은 낙관적 업데이트를 쓴다.
+   * quality 가 null 이면 사유까지 함께 비운다(미분류로 되돌리기).
+   */
+  const saveOutcome = async (
+    target: RenewalTarget,
+    next: { quality: RenewalOutcomeQuality; reasonTag: string; reasonNote: string } | null
+  ) => {
+    const previous = target;
+    setTargets((current) =>
+      current.map((t) =>
+        t.id === target.id
+          ? {
+              ...t,
+              outcome_quality: next?.quality ?? null,
+              outcome_reason_tag: next?.reasonTag ?? null,
+              outcome_reason_note: next?.reasonNote || null,
+            }
+          : t
+      )
+    );
+    try {
+      await patchTarget(target.id, {
+        outcome_quality: next?.quality ?? null,
+        outcome_reason_tag: next?.reasonTag ?? null,
+        outcome_reason_note: next?.reasonNote ?? null,
+        author: userName,
+      });
+      await refresh();
+    } catch (e) {
+      setTargets((current) => current.map((t) => (t.id === previous.id ? previous : t)));
+      setError(e instanceof Error ? e.message : '결과 저장에 실패했습니다.');
     }
   };
 
@@ -352,6 +425,12 @@ export function RenewalKanban({
                       ? (t) => runPatch(t, { stage: '2', clear_drop_reason: true }, '되돌리기에 실패했습니다.')
                       : undefined
                   }
+                  onMemoSave={handleMemoSave}
+                  onEditQuality={
+                    stage === '4' || stage === '5'
+                      ? (t, q) => setQualityTarget({ target: t, quality: q })
+                      : undefined
+                  }
                 />
               </div>
             ))}
@@ -399,12 +478,40 @@ export function RenewalKanban({
       {dropTarget && (
         <RenewalDropModal
           target={dropTarget}
-          onConfirm={(dropReason) => {
+          onConfirm={({ quality, reasonTag, reasonNote }) => {
             const target = dropTarget;
             setDropTarget(null);
-            runPatch(target, { stage: '5', drop_reason: dropReason }, '미전환 처리에 실패했습니다.');
+            runPatch(
+              target,
+              {
+                stage: '5',
+                outcome_quality: quality,
+                outcome_reason_tag: reasonTag,
+                outcome_reason_note: reasonNote,
+                author: userName,
+              },
+              '미전환 처리에 실패했습니다.'
+            );
           }}
           onClose={() => setDropTarget(null)}
+        />
+      )}
+
+      {qualityTarget && (
+        <RenewalOutcomeModal
+          target={qualityTarget.target}
+          initialQuality={qualityTarget.quality}
+          onConfirm={(input) => {
+            const { target } = qualityTarget;
+            setQualityTarget(null);
+            saveOutcome(target, input);
+          }}
+          onClear={() => {
+            const { target } = qualityTarget;
+            setQualityTarget(null);
+            saveOutcome(target, null);
+          }}
+          onClose={() => setQualityTarget(null)}
         />
       )}
     </div>

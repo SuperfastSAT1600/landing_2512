@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#ffffff"/>
+
+  <!-- ===== DESK ===== -->
+  <rect x="220" y="348" width="760" height="22" rx="4" fill="none" stroke="#000000" stroke-width="4.5"/>
+  <line x1="248" y1="370" x2="240" y2="528" stroke="#000000" stroke-width="4.5"/>
+  <line x1="952" y1="370" x2="960" y2="528" stroke="#000000" stroke-width="4.5"/>
+  <line x1="248" y1="468" x2="952" y2="468" stroke="#000000" stroke-width="3"/>
+
+  <!-- ===== PAPERS ON DESK ===== -->
+  <rect x="348" y="305" width="215" height="43" rx="2" fill="none" stroke="#000000" stroke-width="3.5"/>
+  <rect x="342" y="311" width="215" height="37" rx="2" fill="none" stroke="#000000" stroke-width="2"/>
+  <line x1="362" y1="319" x2="538" y2="319" stroke="#000000" stroke-width="1.5"/>
+  <line x1="362" y1="328" x2="538" y2="328" stroke="#000000" stroke-width="1.5"/>
+  <line x1="362" y1="337" x2="510" y2="337" stroke="#000000" stroke-width="1.5"/>
+
+  <!-- ===== OPEN BOOK ===== -->
+  <rect x="618" y="300" width="176" height="48" rx="3" fill="none" stroke="#000000" stroke-width="3.5"/>
+  <line x1="706" y1="300" x2="706" y2="348" stroke="#000000" stroke-width="2.5"/>
+  <line x1="634" y1="314" x2="698" y2="314" stroke="#000000" stroke-width="1.5"/>
+  <line x1="634" y1="323" x2="698" y2="323" stroke="#000000" stroke-width="1.5"/>
+  <line x1="634" y1="332" x2="698" y2="332" stroke="#000000" stroke-width="1.5"/>
+  <line x1="714" y1="314" x2="778" y2="314" stroke="#000000" stroke-width="1.5"/>
+  <line x1="714" y1="323" x2="778" y2="323" stroke="#000000" stroke-width="1.5"/>
+  <line x1="714" y1="332" x2="778" y2="332" stroke="#000000" stroke-width="1.5"/>
+
+  <!-- ===== PENCIL ===== -->
+  <line x1="826" y1="348" x2="852" y2="294" stroke="#000000" stroke-width="3.5"/>
+  <polygon points="852,294 843,290 847,280" fill="#000000"/>
+  <line x1="822" y1="348" x2="830" y2="348" stroke="#000000" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- ===== CHAIR ===== -->
+  <line x1="468" y1="270" x2="468" y2="432" stroke="#000000" stroke-width="4.5"/>
+  <line x1="714" y1="270" x2="714" y2="432" stroke="#000000" stroke-width="4.5"/>
+  <line x1="468" y1="280" x2="714" y2="280" stroke="#000000" stroke-width="4.5"/>
+  <line x1="468" y1="342" x2="714" y2="342" stroke="#000000" stroke-width="3"/>
+  <rect x="450" y="430" width="282" height="18" rx="4" fill="none" stroke="#000000" stroke-width="4.5"/>
+  <line x1="464" y1="448" x2="452" y2="540" stroke="#000000" stroke-width="4.5"/>
+  <line x1="718" y1="448" x2="730" y2="540" stroke="#000000" stroke-width="4.5"/>
+
+  <!-- ===== STUDENT BODY ===== -->
+  <!-- Left arm (resting on desk, leaning forward) -->
+  <path d="M 470 305 Q 420 322 372 348" fill="none" stroke="#000000" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 470 305 Q 420 322 372 348" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Right arm (writing side) -->
+  <path d="M 714 305 Q 768 322 818 346" fill="none" stroke="#000000" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 714 305 Q 768 322 818 346" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Torso (white fill masks chair behind body) -->
+  <path d="M 468 288 L 466 430 L 714 430 L 712 288 Z" fill="#ffffff" stroke="#000000" stroke-width="4.5"/>
+
+  <!-- Shoulder curve left -->
+  <path d="M 468 288 Q 500 274 562 278" fill="none" stroke="#000000" stroke-width="4.5"/>
+  <!-- Shoulder curve right -->
+  <path d="M 618 278 Q 678 274 712 288" fill="none" stroke="#000000" stroke-width="4.5"/>
+
+  <!-- Neck -->
+  <rect x="564" y="248" width="32" height="32" rx="4" fill="none" stroke="#000000" stroke-width="4"/>
+  <!-- Collar V -->
+  <path d="M 564 278 L 590 295 L 618 278" fill="none" stroke="#000000" stroke-width="3"/>
+
+  <!-- ===== STUDENT HEAD ===== -->
+  <circle cx="590" cy="194" r="56" fill="none" stroke="#000000" stroke-width="4.5"/>
+
+  <!-- Hair (covering top and sides) -->
+  <path d="M 534 182 Q 536 148 560 136 Q 590 124 620 136 Q 644 148 646 182"
+        fill="none" stroke="#000000" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 534 182 Q 530 195 534 210" fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 646 182 Q 650 195 646 210" fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+  <!-- Hair top fill (thicker stroke over top arc) -->
+  <path d="M 536 178 Q 590 128 644 178" fill="none" stroke="#000000" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Left eye -->
+  <ellipse cx="568" cy="196" rx="8" ry="7" fill="#000000"/>
+  <ellipse cx="570" cy="194" rx="2.5" ry="2" fill="#ffffff"/>
+
+  <!-- Right eye -->
+  <ellipse cx="612" cy="196" rx="8" ry="7" fill="#000000"/>
+  <ellipse cx="614" cy="194" rx="2.5" ry="2" fill="#ffffff"/>
+
+  <!-- Eyebrows (slightly furrowed, concentrating) -->
+  <path d="M 556 182 Q 568 178 578 181" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 602 181 Q 612 178 624 182" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Nose -->
+  <path d="M 588 207 Q 584 218 587 222 Q 590 225 593 222 Q 596 218 592 207"
+        fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Mouth (neutral, focused) -->
+  <path d="M 576 234 Q 590 240 604 234" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Left ear -->
+  <path d="M 534 192 Q 522 202 534 215" fill="none" stroke="#000000" stroke-width="3.5"/>
+</svg>

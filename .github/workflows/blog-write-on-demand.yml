@@ -1,0 +1,72 @@
+name: Blog Write on Demand
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic_n:
+        description: '주제 번호 (today-topics.json의 n 값)'
+        required: true
+        type: string
+      platform:
+        description: '발행 플랫폼'
+        required: true
+        type: choice
+        options:
+          - ghost
+          - landing
+      thread_ts:
+        description: 'Slack 스레드 타임스탬프 (결과 보고용)'
+        required: false
+        type: string
+      channel_id:
+        description: 'Slack 채널 ID'
+        required: false
+        default: 'C0A28EJQA7P'
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  write-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 최신 today-topics.json 포함
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write and publish blog post
+        env:
+          ANTHROPIC_API_KEY:                  ${{ secrets.ANTHROPIC_API_KEY }}
+          SLACK_BOT_TOKEN:                    ${{ secrets.SLACK_BOT_TOKEN }}
+          GHOST_ADMIN_KEY:                    ${{ secrets.GHOST_ADMIN_KEY }}
+          GHOST_URL:                          ${{ secrets.GHOST_URL }}
+          GHOST_API_URL:                      ${{ secrets.GHOST_API_URL }}
+          NEXT_PUBLIC_SUPABASE_URL:           ${{ secrets.SUPERFASTSAT_V2_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY:          ${{ secrets.SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY }}
+        run: |
+          node blog-agent/scripts/write-and-publish.js \
+            --topic ${{ inputs.topic_n }} \
+            --platform ${{ inputs.platform }} \
+            --thread "${{ inputs.thread_ts }}" \
+            --channel "${{ inputs.channel_id }}"
+
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add content/posts/ blog-agent/data/today-topics.json
+          git diff --staged --quiet || git commit -m "feat(blog): auto-publish topic ${{ inputs.topic_n }} to ${{ inputs.platform }} [skip ci]"
+          git push

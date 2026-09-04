@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Crown } from 'lucide-react';
+import { Pencil, Crown, AlertTriangle } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { SCHOOL_TYPE_LABELS } from '@/types/crm';
 import { getTimezoneLabel } from '@/lib/all-timezones';
@@ -44,12 +44,14 @@ interface Props {
   adminKey?: string;
   onVipToggle: () => void;
   vipToggling?: boolean;
+  onAttentionToggle: () => void;
+  attentionToggling?: boolean;
 }
 
 export function StudentInfoSection({
   localStudent, isEditing, setIsEditing, savingEdit, editForm, setEditForm,
   onSaveEdit, onCancelEdit, scoreDisplay, adminKey,
-  onVipToggle, vipToggling,
+  onVipToggle, vipToggling, onAttentionToggle, attentionToggling,
 }: Props) {
   const actions = !isEditing ? (
     <button
@@ -145,6 +147,21 @@ export function StudentInfoSection({
               <span className={localStudent.is_vip ? 'text-amber-700' : 'text-gray-400'}>VIP 학생</span>
               <span className={`relative inline-flex h-4 w-7 shrink-0 rounded-full transition-colors duration-200 ${localStudent.is_vip ? 'bg-amber-400' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-3 w-3 rounded-full bg-white shadow-sm mt-0.5 transition-transform duration-200 ${localStudent.is_vip ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+              </span>
+            </button>
+            <button
+              onClick={onAttentionToggle}
+              disabled={attentionToggling}
+              className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg text-[12px] font-medium transition-colors disabled:opacity-50 ${
+                localStudent.needs_attention
+                  ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100'
+                  : 'border-gray-200 bg-white text-gray-400 hover:bg-gray-50'
+              }`}
+            >
+              <AlertTriangle size={12} className={localStudent.needs_attention ? 'text-red-500' : 'text-gray-300'} />
+              <span className={localStudent.needs_attention ? 'text-red-700' : 'text-gray-400'}>주의</span>
+              <span className={`relative inline-flex h-4 w-7 shrink-0 rounded-full transition-colors duration-200 ${localStudent.needs_attention ? 'bg-red-400' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-3 w-3 rounded-full bg-white shadow-sm mt-0.5 transition-transform duration-200 ${localStudent.needs_attention ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
               </span>
             </button>
           </div>

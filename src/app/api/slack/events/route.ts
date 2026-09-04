@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { after } from 'next/server';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { verifySlackRequest, postSlack, getTodayTopics, BLOG_CHANNEL } from './slack-utils';
 import { handleBlogWrite, handlePublish, handleTopicSuggest } from './handlers';
+import type { Topic } from './blog-writer';
+
+function getTodayTopicsFromFile(): Topic[] {
+  try {
+    const data = JSON.parse(readFileSync(join(process.cwd(), 'blog-agent/data/today-topics.json'), 'utf-8'));
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }); // YYYY-MM-DD
+    if (data.date !== today) return [];
+    return (data.topics ?? []) as Topic[];
+  } catch { return []; }
+}
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -79,13 +91,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // 2. N번 써줘
-  const nMatch = text.match(/(\d+)번\s*써줘/);
+  // 2. N번 [랜딩|고스트] 써줘
+  const nMatch = text.match(/(\d+)번\s*(?:랜딩|고스트|ghost|landing)?\s*써줘/);
   if (nMatch) {
     const n = parseInt(nMatch[1]);
     after(() => (async () => {
-      const topics = await getTodayTopics();
-      const topic = topics.find(t => t.n === n);
+      const slackTopics = await getTodayTopics();
+      const topic =
+        slackTopics.find(t => t.n === n) ??
+        getTodayTopicsFromFile().find(t => t.n === n);
       if (!topic) {
         await postSlack(channel, `오늘의 ${n}번 주제를 찾을 수 없습니다.`, threadTs);
         return;

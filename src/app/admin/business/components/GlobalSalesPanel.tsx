@@ -2,11 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import { toMonthKey } from '@/lib/crm-stats-core';
 import { buildTargetVsActual, niceAxisTicks, USD_TO_KRW_RATE, type MonthlyTargetRow } from '@/lib/business-targets';
-import type { GlobalSaleEntry, GlobalSalePaymentType } from '@/app/api/business/global-sales/route';
+import { aggregateByBillingType, aggregateByCountry, countDistinctCountries } from '@/lib/global-sales-stats';
+import type { GlobalSaleEntry } from '@/lib/global-sales-types';
 import { MonthlyTargetEditor } from './MonthlyTargetEditor';
+import { RevenueBreakdownBars } from './RevenueBreakdownBars';
+import { GlobalSalesTable } from './GlobalSalesTable';
+import { GlobalSaleAddForm, type NewGlobalSale } from './GlobalSaleAddForm';
 
 // recharts는 이 패널을 열 때만 필요 — 지연 로딩해 첫 진입 번들에서 제외한다.
 const TargetVsActualChart = dynamic(() => import('./TargetVsActualChart'), {
@@ -19,12 +23,7 @@ interface Props {
 }
 
 const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
-const today = () => new Date().toISOString().slice(0, 10);
 
-const PAYMENT_BADGE: Record<GlobalSalePaymentType, string> = {
-  최초결제: 'bg-emerald-50 text-emerald-600',
-  재결제: 'bg-blue-50 text-blue-600',
-};
 
 /**
  * 튜터링 CRM(students/payments)과 완전히 분리된 신규 상품 라인의 단순 매출 기록.
@@ -37,10 +36,6 @@ export function GlobalSalesPanel({ adminKey }: Props) {
   const [adding, setAdding] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [name, setName] = useState('');
-  const [paymentType, setPaymentType] = useState<GlobalSalePaymentType>('최초결제');
-  const [amount, setAmount] = useState('');
-  const [saleDate, setSaleDate] = useState(today());
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetRow[]>([]);
 
   const fetchMonthlyTargets = useCallback(async () => {
@@ -72,27 +67,17 @@ export function GlobalSalesPanel({ adminKey }: Props) {
     })();
   }, [adminKey]);
 
-  async function submit() {
-    if (!name.trim() || !amount) return;
+  async function submit(sale: NewGlobalSale) {
     setSubmitting(true);
     try {
       const res = await fetch('/api/business/global-sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({
-          student_name: name.trim(),
-          payment_type: paymentType,
-          amount_usd: Number(amount),
-          sale_date: saleDate,
-        }),
+        body: JSON.stringify(sale),
       });
       const json = await res.json();
       if (res.ok) {
         setEntries((prev) => [json.data as GlobalSaleEntry, ...prev]);
-        setName('');
-        setAmount('');
-        setPaymentType('최초결제');
-        setSaleDate(today());
         setAdding(false);
       } else {
         alert(json.error ?? '기록에 실패했습니다.');
@@ -100,6 +85,18 @@ export function GlobalSalesPanel({ adminKey }: Props) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // 컬럼 도입 이전 기록을 뒤늦게 채워 넣는 경로 — 낙관적 갱신 후 실패 시 되돌린다.
+  async function patchEntry(id: string, updates: Partial<GlobalSaleEntry>) {
+    const prev = entries;
+    setEntries((cur) => cur.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+    const res = await fetch(`/api/business/global-sales/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) setEntries(prev);
   }
 
   async function remove(id: string, studentName: string) {
@@ -136,6 +133,13 @@ export function GlobalSalesPanel({ adminKey }: Props) {
   const chartMax = Math.max(0, ...targetVsActual.flatMap((row) => [row.target, row.actual]));
   const chartTicks = niceAxisTicks(chartMax);
 
+  const countryRows = aggregateByCountry(entries);
+  const billingRows = aggregateByBillingType(entries);
+  const onetime = entries.filter((e) => e.billing_type === '일회성');
+  const subscription = entries.filter((e) => e.billing_type === '구독');
+  const countryCount = countDistinctCountries(entries);
+  const topShare = countryRows[0]?.share ?? 0;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-2 py-16 text-sm text-gray-400">
@@ -167,6 +171,70 @@ export function GlobalSalesPanel({ adminKey }: Props) {
           <p data-testid="repeat-usd" className="text-2xl font-semibold text-gray-900 tabular-nums">{usd(sumOf(repeat))}</p>
           <p className="text-[11px] text-gray-400 mt-1">{repeat.length}건</p>
         </div>
+        <div>
+          <p className="text-xs text-gray-400 mb-1">일회성</p>
+          <p data-testid="onetime-usd" className="text-2xl font-semibold text-gray-900 tabular-nums">{usd(sumOf(onetime))}</p>
+          <p className="text-[11px] text-gray-400 mt-1">{onetime.length}건</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-400 mb-1">구독</p>
+          <p data-testid="subscription-usd" className="text-2xl font-semibold text-gray-900 tabular-nums">{usd(sumOf(subscription))}</p>
+          <p className="text-[11px] text-gray-400 mt-1">{subscription.length}건</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-400 mb-1">판매 국가</p>
+          <p data-testid="country-count" className="text-2xl font-semibold text-gray-900 tabular-nums">
+            {countryCount}개국
+          </p>
+          <p className="text-[11px] text-gray-400 mt-1">
+            {countryRows[0] && countryRows[0].countryCode
+              ? `1위 ${countryRows[0].label} ${Math.round(topShare)}%`
+              : '국가 미입력'}
+          </p>
+        </div>
+      </div>
+
+      {/* 국가별 매출 — 어느 시장이 실제로 돈을 내는지 보는 구간 */}
+      <div className="border-b border-gray-100 pb-6">
+        <h3 className="text-sm font-semibold text-gray-500 mb-3">국가별 매출</h3>
+        {countryRows.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">
+            국가별 매출이 아직 없습니다. ‘매출 추가’에서 국가를 함께 기록해보세요.
+          </p>
+        ) : (
+          <RevenueBreakdownBars
+            rowTestId="country-stat-row"
+            formatAmount={usd}
+            rows={countryRows.map((row) => ({
+              key: row.countryCode ?? 'unknown',
+              label: row.label,
+              total: row.total,
+              share: row.share,
+              note: `${row.count}건 · 재${usd(row.repeatTotal)}`,
+              muted: !row.countryCode,
+            }))}
+          />
+        )}
+      </div>
+
+      {/* 결제 방식별 매출 — 일회성 판매와 구독이 각각 얼마를 만드는지 */}
+      <div className="border-b border-gray-100 pb-6">
+        <h3 className="text-sm font-semibold text-gray-500 mb-3">결제 방식별 매출</h3>
+        {billingRows.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">결제 방식별 매출이 아직 없습니다.</p>
+        ) : (
+          <RevenueBreakdownBars
+            rowTestId="billing-stat-row"
+            formatAmount={usd}
+            rows={billingRows.map((row) => ({
+              key: row.billingType,
+              label: row.label,
+              total: row.total,
+              share: row.share,
+              note: `${row.count}건`,
+            }))}
+          />
+        )}
       </div>
 
       {/* 월별 목표 대비 실적 — 목표·실적 모두 달러(USD) 단위 데이터로 변환해 차트에 넘긴다.
@@ -204,46 +272,11 @@ export function GlobalSalesPanel({ adminKey }: Props) {
         </div>
 
         {adding && (
-          <div className="mb-4 flex flex-wrap items-end gap-2 rounded-lg border border-blue-200 bg-blue-50/50 p-3">
-            <input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="학생 이름"
-              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none"
-            />
-            <select
-              value={paymentType}
-              onChange={(e) => setPaymentType(e.target.value as GlobalSalePaymentType)}
-              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none"
-            >
-              <option value="최초결제">최초결제</option>
-              <option value="재결제">재결제</option>
-            </select>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="금액 ($)"
-              className="w-24 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none"
-            />
-            <input
-              type="date"
-              value={saleDate}
-              onChange={(e) => setSaleDate(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none"
-            />
-            <button
-              onClick={submit}
-              disabled={submitting || !name.trim() || !amount}
-              className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded-lg"
-            >
-              추가
-            </button>
-            <button onClick={() => setAdding(false)} className="px-2 py-1.5 text-xs text-gray-500 hover:text-gray-700">
-              취소
-            </button>
-          </div>
+          <GlobalSaleAddForm
+            submitting={submitting}
+            onSubmit={submit}
+            onCancel={() => setAdding(false)}
+          />
         )}
 
         {entries.length === 0 ? (
@@ -251,44 +284,12 @@ export function GlobalSalesPanel({ adminKey }: Props) {
             등록된 매출이 없습니다. ‘매출 추가’로 기록해보세요.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left py-2 pr-4 text-xs font-medium text-gray-400">이름</th>
-                  <th className="text-left py-2 px-2 text-xs font-medium text-gray-400">유형</th>
-                  <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">금액</th>
-                  <th className="text-right py-2 px-2 text-xs font-medium text-gray-400">날짜</th>
-                  <th className="py-2 pl-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((e) => (
-                  <tr key={e.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
-                    <td className="py-2.5 pr-4 text-xs font-medium text-gray-800">{e.student_name}</td>
-                    <td className="py-2.5 px-2">
-                      <span className={`text-[11px] px-1.5 py-0.5 rounded ${PAYMENT_BADGE[e.payment_type]}`}>
-                        {e.payment_type}
-                      </span>
-                    </td>
-                    <td className="text-right py-2.5 px-2 text-xs font-medium text-gray-700 tabular-nums">
-                      {usd(e.amount_usd)}
-                    </td>
-                    <td className="text-right py-2.5 px-2 text-xs text-gray-400 tabular-nums">{e.sale_date}</td>
-                    <td className="py-2.5 pl-2 text-right">
-                      <button
-                        onClick={() => remove(e.id, e.student_name)}
-                        aria-label="삭제"
-                        className="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <GlobalSalesTable
+            entries={entries}
+            formatAmount={usd}
+            onPatch={patchEntry}
+            onRemove={remove}
+          />
         )}
       </div>
     </div>

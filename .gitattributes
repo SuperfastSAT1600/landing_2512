@@ -1,0 +1,5 @@
+# vercel.json 은 2026-08-13~08-18 사이 CRLF 재작성 때문에 두 번 깨졌다.
+# 파일 12줄 전체가 달라 보여서 git 3-way 병합이 충돌 없이 한쪽을 통째로 채택했고,
+# 그 결과 크론 항목(blog-topics ↔ weekly-business-report)이 번갈아 삭제되면서
+# 2026-08-17 주간 비즈니스 리포트가 발송되지 않았다.
+vercel.json text eol=lf

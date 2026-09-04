@@ -194,7 +194,7 @@ export interface Student {
   // 운영 필드
   lead_status: LeadStatus;
   funnel_stage: FunnelStage;
-  matching_stage: MatchingStage | null; // funnel_stage='9' 이후
+  matching_stage: MatchingStage | null; // funnel_stage='8'(결제 완료) 이후
   churn_tag: string | null;
   churn_type: ChurnType | null;
   diagnostic_result_id: string | null;
@@ -232,6 +232,7 @@ export interface Student {
   sort_order: number | null;
   entered_by?: string | null;
   is_vip: boolean | null;
+  needs_attention: boolean | null; // 세일즈 단계에서 표시 → 결제 후 운영 담당자가 확인
   created_at: string;
   updated_at: string;
 }
@@ -256,8 +257,51 @@ export const RENEWAL_STAGE_LABELS: Record<RenewalStage, string> = {
   '4': '결제 완료',
   '5': '미전환',
 };
-export const RENEWAL_DROP_REASONS = ['예산', '휴학·졸업', '타학원 이전', '응답 없음', '기타'] as const;
-export type RenewalDropReason = (typeof RENEWAL_DROP_REASONS)[number];
+/**
+ * 결과 사유 — 품질에 따라 목록이 다르다.
+ * '예산'과 '졸업'을 한 목록에 두면 "예산 부담인데 좋은 이탈" 같은 어긋난 조합이 생긴다.
+ */
+export const RENEWAL_PAID_REASONS: Record<RenewalOutcomeQuality, readonly string[]> = {
+  good: ['성적 향상', '수업 만족', '목표 상향·과목 추가', '먼저 연장 요청', '기타'],
+  bad: ['할인·조건 요구', '마지못해 연장', '단기만 결제', '강사 교체 조건', '기타'],
+};
+export const RENEWAL_DROP_REASONS: Record<RenewalOutcomeQuality, readonly string[]> = {
+  good: ['목표 점수 달성', '졸업·유학 확정', '계획된 종료', '기타'],
+  bad: ['예산 부담', '성적 불만족', '강사·수업 불만', '타학원 이전', '응답 없음', '기타'],
+};
+
+/** stage 4는 재결제 사유, stage 5는 이탈 사유. */
+export function getRenewalOutcomeReasons(
+  stage: RenewalStage,
+  quality: RenewalOutcomeQuality
+): readonly string[] {
+  return stage === '5' ? RENEWAL_DROP_REASONS[quality] : RENEWAL_PAID_REASONS[quality];
+}
+
+/** 터미널 단계에 도달한 대상의 결과 품질. 값이 단계에 따라 다르게 읽히므로 라벨을 분리한다. */
+export const RENEWAL_OUTCOME_QUALITIES = ['good', 'bad'] as const;
+export type RenewalOutcomeQuality = (typeof RENEWAL_OUTCOME_QUALITIES)[number];
+export const RENEWAL_PAID_QUALITY_LABELS: Record<RenewalOutcomeQuality, string> = {
+  good: '좋은 재결제',
+  bad: '나쁜 재결제',
+};
+export const RENEWAL_DROP_QUALITY_LABELS: Record<RenewalOutcomeQuality, string> = {
+  good: '좋은 이탈',
+  bad: '나쁜 이탈',
+};
+
+/** 다음 주차로 넘어가 종결된 행인지. 진행 중 집계·액션 노출의 단일 판정 기준. */
+export function isRenewalCarried(target: Pick<RenewalTarget, 'carried_to_week'>): boolean {
+  return target.carried_to_week != null;
+}
+
+/** stage 4는 재결제의 질, stage 5는 이탈의 질. 그 외 단계엔 품질이 없다. */
+export function getRenewalOutcomeQualityLabel(
+  stage: RenewalStage,
+  quality: RenewalOutcomeQuality
+): string {
+  return stage === '5' ? RENEWAL_DROP_QUALITY_LABELS[quality] : RENEWAL_PAID_QUALITY_LABELS[quality];
+}
 
 export type StrategyHistoryType = 'initial_contact' | 'initial_sales' | 'retry';
 
@@ -410,7 +454,7 @@ export interface WeeklyExecutionRow {
   strategy_id: string;
   strategy_name: string;
   type: StrategyHistoryType;
-  planned: boolean; // focus_strategies에 있었는지 (false면 '계획 외 실행')
+  planned: boolean; // 트랙에 연결돼 있었는지 (false면 '계획 외 실행')
   applied_count: number;
   contacted_count: number;
   paid_count: number;
@@ -418,12 +462,59 @@ export interface WeeklyExecutionRow {
   leads: WeeklyExecutionLead[];
 }
 
+// ─── 주간 실행 트랙 (목표 하나 + 그 목표를 위한 실행 항목들) ─────────────────
+// 주차 계획 문서의 위계("세그먼트 → 목표를 가진 트랙 → 실행 항목 a·b·c")를 그대로 담는다.
+
+/** 트랙 진행률을 자동 계산할 지표 — 트랙에 연결된 전략의 적용 리드 기준(주 전체 실적이 아니다). */
+export type WeeklyTrackMetric = 'applied' | 'contacted' | 'paid' | 'revenue';
+
+export const WEEKLY_TRACK_METRIC_KEYS: WeeklyTrackMetric[] = [
+  'applied',
+  'contacted',
+  'paid',
+  'revenue',
+];
+
+export const WEEKLY_TRACK_METRIC_LABELS: Record<WeeklyTrackMetric, string> = {
+  applied: '적용 리드',
+  contacted: '컨택',
+  paid: '결제',
+  revenue: '매출',
+};
+
+/** 트랙 안의 실행 항목 1건. 전략을 연결하면 그 전략의 주간 집계가 트랙 진행률에 반영된다. */
+export interface WeeklyTrackItem {
+  id: string; // crypto.randomUUID() (클라이언트 생성)
+  text: string;
+  done: boolean;
+  done_at: string | null;
+  strategy_id: string | null; // 전략 라이브러리 연결 (선택)
+  strategy_name: string | null; // 스냅샷(전략 삭제·개명 후에도 과거 주차 보존)
+  strategy_type: StrategyHistoryType | null; // 스냅샷
+}
+
+/** 목표 하나 + 그 목표를 위한 실행 항목들. */
+export interface WeeklyTrack {
+  id: string; // crypto.randomUUID() (클라이언트 생성)
+  name: string; // "신규리드", "이탈 리드 캠페인", "소프트웨어 판매"
+  goal_text: string; // "인스타리드 2건 결제" — 문서에 쓰던 문장 그대로
+  metric: WeeklyTrackMetric | null; // null이면 수동 달성 체크로만 판정
+  target_value: number; // metric이 있을 때만 의미
+  achieved: boolean; // metric === null 인 목표의 수동 달성 체크
+  items: WeeklyTrackItem[];
+  carried_from_week?: string | null; // 회고 이어받기 출처 week_start
+}
+
 export interface WeeklyPlan {
   id: string;
   segment: WeeklyPlanSegment;
   week_start: string; // YYYY-MM-DD
+  tracks: WeeklyTrack[]; // 현행 계획 단위. 레거시 주차는 focus_strategies+actions에서 파생된다.
+  /** @deprecated 트랙 파생 소스로만 남는다(과거 주차 보존). 새 UI는 쓰지 않는다. */
   targets: WeeklyPlanTarget[];
+  /** @deprecated 트랙 파생 소스로만 남는다. */
   actions: WeeklyPlanAction[];
+  /** @deprecated 트랙 파생 소스로만 남는다. */
   focus_strategies: WeeklyFocusStrategy[];
   retrospective: WeeklyRetrospective;
   execution_notes: WeeklyExecutionNote[];
@@ -1005,6 +1096,12 @@ export interface RenewalTarget {
   stage_updated_at: string;
   converted_payment_id: string | null;    // stage '4' 에서만 채워진다
   drop_reason: string | null;             // stage '5' 에서만 채워진다
+  memo: string | null;                    // 카드 메모 — 단계와 무관하게 기록. 이월 시 따라가지 않는다
+  outcome_quality: RenewalOutcomeQuality | null;  // stage '4'·'5' 에서만 채워진다. null = 미분류
+  outcome_reason_tag: string | null;      // 품질별 사유 목록에서 고른 값. 품질이 있으면 필수
+  outcome_reason_note: string | null;     // 사유 자유 메모 — 선택
+  carried_to_week: string | null;         // 이월된 대상 주차 — NOT NULL 이면 종결(진행 중 아님)
+  carried_from_week: string | null;       // 이월돼 들어온 출처 주차 — null 이면 그 주차 신규 선정
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -1014,7 +1111,7 @@ export interface RenewalTarget {
 /** renewal-targets API가 join해 내려주는 학생 부분집합 (route.ts의 STUDENT_FIELDS와 일치). */
 export type RenewalTargetStudent = Pick<
   Student,
-  'id' | 'name' | 'grade' | 'parent_phone' | 'is_vip' | 'traffic_source' | 'lead_type'
+  'id' | 'name' | 'grade' | 'parent_phone' | 'is_vip' | 'needs_attention' | 'traffic_source' | 'lead_type'
 >;
 
 export interface RenewalWeeklyStat {
@@ -1025,6 +1122,15 @@ export interface RenewalWeeklyStat {
   completed: number;  // 4단계
   dropped: number;    // 5단계
   conversion_rate: number;
+  // 결과 품질 분포. 미분류는 별도 필드 없이 completed/dropped 에서 빼서 구한다.
+  good_completed: number;
+  bad_completed: number;
+  good_dropped: number;
+  bad_dropped: number;
+  // 이월은 두 축이다 — carried_out 은 open/completed/dropped 와 함께 selected 를 배타 분할하고,
+  // carried_in 은 selected 자체를 '신규 / 이월유입'으로 분할한다. 섞어 쓰면 안 된다.
+  carried_out: number;
+  carried_in: number;
 }
 
 /** 추천 API 응답 1건 — 아직 저장되지 않은 후보. */
@@ -1046,6 +1152,10 @@ export interface WinbackCandidate {
 /** 추천 파이프라인 진단 — degrade를 조용히 숨기지 않기 위해 항상 함께 반환한다. */
 export interface WinbackRecommendStats {
   prefiltered: number;
+  /** AI가 실제로 심사한 인원(RERANK_POOL). 나머지는 규칙 점수로 backfill된다. */
+  reranked?: number;
+  /** 그중 유효한 판정이 돌아온 인원. reranked보다 작으면 응답 누락·환각 id가 있었다는 뜻. */
+  judged?: number;
   embedded: number;
   llm_used: boolean;
   embedding_used: boolean;

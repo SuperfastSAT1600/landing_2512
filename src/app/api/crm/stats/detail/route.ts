@@ -3,6 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { buildStatsDetail, isStatsDetailMetric } from '@/lib/crm-stats-detail';
 import {
+  leadCohortQuery,
+  paidCohortQuery,
   type CrmStatsSegment,
   parseStatsSegment,
   isCrmStatsSegment,
@@ -42,37 +44,49 @@ export async function GET(request: NextRequest) {
   }
 
   // 기간 내 신규 리드 (집계 라우트와 동일한 필터)
-  let studentsQuery = supabaseAdmin
-    .from('students')
-    .select(
-      'id, name, funnel_stage, stage_history, lead_status, churn_tag, traffic_source, inquiry_date, created_at, retry_strategy_id, consultation_timeline, company_id'
-    )
-    .or(`inquiry_date.gte.${from},and(inquiry_date.is.null,created_at.gte.${from})`)
-    .or(`inquiry_date.lte.${to}T23:59:59,and(inquiry_date.is.null,created_at.lte.${to}T23:59:59)`);
-  if (segment === 'b2c') studentsQuery = studentsQuery.is('company_id', null);
-  if (segment === 'b2b') studentsQuery = studentsQuery.not('company_id', 'is', null);
-
-  const { data: students, error: sErr } = await studentsQuery;
-
-  if (sErr) return err('FETCH_FAILED', sErr.message, 500);
-
-  // 기간 내 결제/환불 행. students 관계를 통해 segment 분류에 필요한 company_id를 함께 조회.
-  const { data: payments, error: pErr } = await supabaseAdmin
-    .from('payments')
-    .select(
-      'id, student_id, student_name, product, amount, payment_type, tax_type, paid_at, created_by, students:student_id(company_id)'
-    )
-    .gte('paid_at', `${from}T00:00:00+09:00`)
-    .lte('paid_at', `${to}T23:59:59.999+09:00`)
-    .order('paid_at', { ascending: true });
-
-  if (pErr) return err('FETCH_FAILED', pErr.message, 500);
-
-  const studentList = students ?? [];
-  const filteredPayments = (payments ?? []).filter((p) =>
-    paymentMatchesSegment(p as { students?: RelatedCompanyRef }, segment),
+  // overview(/api/crm/stats)와 반드시 같은 코호트를 봐야 한다 — 공용 조회 사용.
+  const studentsQuery = leadCohortQuery(
+    supabaseAdmin,
+    'id, name, funnel_stage, stage_history, lead_status, churn_tag, traffic_source, inquiry_date, created_at, retry_strategy_id, consultation_timeline, company_id',
+    from,
+    to,
+    segment,
   );
 
-  const result = buildStatsDetail(metric, studentList, filteredPayments, source);
+  const [studentsRes, paymentsRes, paidCohortRes] = await Promise.all([
+    studentsQuery,
+    // 기간 내 결제/환불 행. students 관계를 통해 segment 분류에 필요한 company_id를 함께 조회.
+    supabaseAdmin
+      .from('payments')
+      .select(
+        'id, student_id, student_name, product, amount, payment_type, tax_type, paid_at, created_by, students:student_id(company_id)'
+      )
+      .gte('paid_at', `${from}T00:00:00+09:00`)
+      .lte('paid_at', `${to}T23:59:59.999+09:00`)
+      .order('paid_at', { ascending: true }),
+    // paid/is_paid 판정용 '언제든 최초결제' 코호트 — overview의 paid 분자와 같은 집합.
+    paidCohortQuery(supabaseAdmin),
+  ]);
+
+  const { data: students, error: sErr } = studentsRes;
+  if (sErr) return err('FETCH_FAILED', sErr.message, 500);
+
+  const { data: payments, error: pErr } = paymentsRes;
+  if (pErr) return err('FETCH_FAILED', pErr.message, 500);
+
+  if (paidCohortRes.error) {
+    console.error('[stats/detail] paidCohort fetch failed:', paidCohortRes.error.message);
+  }
+
+  const inSegment = (p: { students?: RelatedCompanyRef }) => paymentMatchesSegment(p, segment);
+  const studentList = students ?? [];
+  const filteredPayments = (payments ?? []).filter((p) =>
+    inSegment(p as { students?: RelatedCompanyRef }),
+  );
+  const paidCohort = (paidCohortRes.data ?? [])
+    .filter((p) => inSegment(p as { students?: RelatedCompanyRef }))
+    .map((p) => ({ student_id: p.student_id, student_name: p.student_name }));
+
+  const result = buildStatsDetail(metric, studentList, filteredPayments, source, { paidCohort });
   return NextResponse.json({ data: result });
 }

@@ -13,6 +13,7 @@ function student(over: Partial<TutoringRowStudent> = {}): TutoringRowStudent {
     grade: '11',
     parent_phone: '010-1111-2222',
     is_vip: false,
+    needs_attention: false,
     traffic_source: '소개',
     ...over,
   };
@@ -62,6 +63,23 @@ describe('TutoringStudentRow', () => {
       />
     );
     expect(screen.getByText('VIP')).toBeTruthy();
+  });
+
+  it('renders the 주의 badge only for flagged students', () => {
+    const { unmount } = render(
+      <TutoringStudentRow student={student()} displayStatus="active" remainingHours={null} />
+    );
+    expect(screen.queryByText('주의')).toBeNull();
+    unmount();
+
+    render(
+      <TutoringStudentRow
+        student={student({ needs_attention: true })}
+        displayStatus="active"
+        remainingHours={null}
+      />
+    );
+    expect(screen.getByText('주의')).toBeTruthy();
   });
 
   it('omits remaining hours when unknown', () => {
@@ -115,6 +133,30 @@ describe('classifyTutoringEntries', () => {
         hours: null,
         subjects: [],
         paymentStatus: null,
+        bySubject: [],
+      },
+    ]);
+  });
+
+  it('carries the per-subject breakdown through for the candidate table', () => {
+    const [entry] = classifyTutoringEntries(
+      [student()],
+      [
+        tutoringUser({
+          subjectBreakdown: [
+            {
+              subject: 'SAT', purchased: 62, completed: 22, refunded: 0,
+              remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, paymentStatus: 'active',
+            },
+          ],
+        }),
+      ]
+    );
+
+    expect(entry.bySubject).toEqual([
+      {
+        subject: 'SAT', purchased: 62, completed: 22, refunded: 0,
+        remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, paymentStatus: 'active',
       },
     ]);
   });

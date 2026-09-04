@@ -10,6 +10,7 @@ import type { WinbackSignal } from '@/types/crm';
 import { classifyChurnTag } from '@/lib/churn-breakdown';
 import { effectiveChurnStage, FUNNEL_FLOW_ORDER } from '@/lib/funnel-stats';
 import type { ParsedBrief } from '@/lib/winback/brief';
+import { churnedDaysOf } from '@/lib/winback/recency';
 
 export interface WinbackScoreStudent {
   id: string;
@@ -24,7 +25,9 @@ export interface WinbackScoreStudent {
   stage_history?: { stage: string }[] | null;
   target_test_date?: string | null;
   last_contacted_at?: string | null;
-  /** lead_status 변경 시 갱신되므로 이탈 시점 proxy로 쓴다(별도 inactive_at 컬럼이 없음). */
+  /** 이탈 전환 시점(마이그레이션 116). 경과일의 정본 기준. */
+  inactive_at?: string | null;
+  /** inactive_at이 아직 없는 행의 폴백. 일괄 백필로 오염돼 있으니 단독으로 믿지 않는다. */
   updated_at: string;
   consultation_timeline?: Array<{ raw_memo?: string; ai_purified?: string; created_at?: string }> | null;
   reactivation_log?: Array<{ outcome?: string }> | null;
@@ -70,14 +73,20 @@ const SIMILARITY_FLOOR = 0.35;
 const SIMILARITY_CEIL = 0.75;
 const EXAM_MONTH_TOLERANCE = 2;
 
+/**
+ * ⚠️ 실측(2026-08-19, 이탈풀 1,000명 표본): `campaign_tags`는 93%가 비어 있고 값도
+ *    'META 리드'(61)·'랜딩페이지'(9) 뿐이라 `campaign_tag_*` 두 신호의 **발동률이 0%**다.
+ *    값은 남겨둔다(태그 정비 후 자동 부활). 대신 실제로 채워져 있는 신호에 무게를 옮겼다:
+ *    consultation_timeline 807/1,000 · target_test_date 1,119/1,261.
+ */
 export const DEFAULT_WINBACK_WEIGHTS: Record<string, number> = {
   campaign_tag_intent: 22,
   campaign_tag_subject: 14,
-  memo_subject_mention: 16,
+  memo_subject_mention: 24,
   grade_exact: 12,
   grade_adjacent: 6,
   school_type_fit: 8,
-  exam_timing: 14,
+  exam_timing: 18,
   churn_unpaid: 10,
   churn_deferred: 12,
   churn_noshow: 6,
@@ -239,14 +248,14 @@ const RULES: Rule[] = [
   {
     key: 'recency_sweet',
     scale: (s, _b, ctx) => {
-      const days = (ctx.now - new Date(s.updated_at).getTime()) / DAY_MS;
+      const days = churnedDaysOf(s, ctx.now);
       return days >= RECENCY_SWEET_MIN && days <= RECENCY_SWEET_MAX ? 1 : null;
     },
   },
   {
     key: 'recency_stale',
     scale: (s, _b, ctx) => {
-      const days = (ctx.now - new Date(s.updated_at).getTime()) / DAY_MS;
+      const days = churnedDaysOf(s, ctx.now);
       return days > RECENCY_STALE_DAYS ? 1 : null;
     },
   },

@@ -15,6 +15,18 @@ interface RenewalWeeklyStatsProps {
   onSelectWeek: (weekStart: string) => void;
 }
 
+/** 품질 분포 보조줄. 미분류는 별도 필드 없이 총계에서 빼서 구한다 — 0이면 항 자체를 숨긴다. */
+function QualityBreakdown({ total, good, bad }: { total: number; good: number; bad: number }) {
+  if (total <= 0) return null;
+  const unclassified = total - good - bad;
+  return (
+    <span className="block text-[10px] text-gray-400 font-normal tabular-nums">
+      좋음 {good} · 나쁨 {bad}
+      {unclassified > 0 && ` · 미분류 ${unclassified}`}
+    </span>
+  );
+}
+
 export function RenewalWeeklyStats({
   rows,
   loading,
@@ -27,7 +39,9 @@ export function RenewalWeeklyStats({
       <div className="px-4 py-3 border-b border-gray-100">
         <h3 className="text-xs font-semibold text-gray-700">주차별 재결제 퍼널</h3>
         <p className="text-[10px] text-gray-400 mt-0.5">
-          선정 주차 기준 · 전환율 = 결제 완료 / 선정 인원 · 행을 누르면 그 주차만 보드에 표시
+          전환율 = 결제 완료 / 선정 인원 · 행을 누르면 그 주차만 보드에 표시
+          <br />
+          결제 완료·미전환 아래는 좋음/나쁨 분포 · 결제 못 한 대상은 다음 주차로 이월돼 그 주차가 마감된다
         </p>
       </div>
       {loading ? (
@@ -50,6 +64,7 @@ export function RenewalWeeklyStats({
                   결제 완료
                 </th>
                 <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">미전환</th>
+                <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">이월</th>
                 <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">전환율</th>
               </tr>
             </thead>
@@ -65,15 +80,33 @@ export function RenewalWeeklyStats({
                   <td className="py-2.5 pr-4 text-xs font-medium text-gray-800">{row.week_label}</td>
                   <td className="text-right py-2.5 px-2 text-xs text-gray-700 tabular-nums">
                     {row.selected}
+                    {row.carried_in > 0 && (
+                      <span className="block text-[10px] text-gray-400 font-normal tabular-nums">
+                        신규 {row.selected - row.carried_in} · 이월 {row.carried_in}
+                      </span>
+                    )}
                   </td>
                   <td className="text-right py-2.5 px-2 text-xs text-blue-600 tabular-nums">
                     {row.open || '-'}
                   </td>
                   <td className="text-right py-2.5 px-2 text-xs text-emerald-600 tabular-nums">
                     {row.completed || '-'}
+                    <QualityBreakdown
+                      total={row.completed}
+                      good={row.good_completed}
+                      bad={row.bad_completed}
+                    />
                   </td>
                   <td className="text-right py-2.5 px-2 text-xs text-gray-500 tabular-nums">
                     {row.dropped || '-'}
+                    <QualityBreakdown
+                      total={row.dropped}
+                      good={row.good_dropped}
+                      bad={row.bad_dropped}
+                    />
+                  </td>
+                  <td className="text-right py-2.5 px-2 text-xs text-gray-500 tabular-nums">
+                    {row.carried_out || '-'}
                   </td>
                   <td className="text-right py-2.5 pl-2 text-xs font-semibold text-gray-800 tabular-nums">
                     {formatRate(row.completed, row.selected)}

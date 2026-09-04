@@ -20,6 +20,7 @@ function entry(
       grade: '11th',
       parent_phone: '',
       is_vip: false,
+      needs_attention: false,
       traffic_source: null,
     },
     displayStatus: 'active',
@@ -27,6 +28,7 @@ function entry(
     hours: null,
     subjects,
     paymentStatus,
+    bySubject: [],
   };
 }
 

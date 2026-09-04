@@ -1,0 +1,60 @@
+{
+  "date": "2026-09-04",
+  "topics": [
+    {
+      "n": 1,
+      "title": "Words in Context 'dogmatic' 오답, 왜 지문 표현 재사용에 속나 — ID:22a41819 분해",
+      "type": "deep_dive",
+      "source_data": "문항 ID:22a41819 | 스킬: Craft and Structure Words in Context | 패턴: Contrast | 정답근거: 'dogmatic' = 원칙·의견을 강하게 믿는 사람, Du Bois·Locke의 'unified vision' 대비 구조",
+      "rationale": "Words in Context Hard 문항 54개 중 Contrast 패턴이 반복 등장하며, 오답 선지는 지문 속 표현(예: 'unified vision')을 재가공해 삽입하는 설계가 기출에서 확인된다. D-8 시점에 이 설계 원리를 1문항으로 완전히 해부하면 같은 패턴 전체에 적용된다.",
+      "point": "Contrast 패턴 지문에서 오답 선지가 '반전 이전 주절의 표현'을 재사용하는 설계 규칙을 꿰뚫는다.",
+      "keyword": "SAT Words in Context Contrast 패턴 오답 설계 기출 분석",
+      "source": "deep_dive",
+      "triggered": false
+    },
+    {
+      "n": 2,
+      "title": "Cross-Text Connections ID:97e5bf55 — '두 지문 모두 동의'가 함정인 이유",
+      "type": "skill_pattern",
+      "source_data": "문항 ID:97e5bf55 | 스킬: Craft and Structure Cross-Text Connections | 지문토픽: Literature | 정답근거: Text1 Sykes=Fletcher의 문체 식별, Text2 scholars=같은 문체 근거로 공동저작 판단 — 두 지문의 '동의 지점'이 선지에서 과잉 일반화로 오답 처리됨",
+      "rationale": "Cross-Text Connections 문항에서 'both would agree' 질문은 두 지문의 교집합만 정답으로 허용하며, 한 지문에서만 지지되는 진술은 Hard 선지에서 매력적 오답으로 반복 등장하는 패턴이 기출에서 관찰된다.",
+      "point": "'두 지문 모두 동의' 질문에서 정답 범위를 좁히는 교집합 필터링 기술을 습득한다.",
+      "keyword": "SAT Cross-Text Connections 기출 패턴 두 지문 비교 풀이법",
+      "source": "skill_pattern",
+      "triggered": false
+    },
+    {
+      "n": 3,
+      "title": "D-8 오늘, Inferences Hard(48%) 문항에서 '추론 근거 문장'을 먼저 밑줄 긋는 습관 교정법",
+      "type": "timely",
+      "source_data": "Information and Ideas Inferences: 총 126문항 중 Hard 60개(48%) — 전체 스킬 중 Hard 비율 최고. 오답 선지 설계: 지문에 명시된 사실을 한 단계 이상 넘어선 과잉 추론 삽입",
+      "rationale": "Inferences는 전체 스킬 중 Hard 비율 48%로 가장 높고, 시험 8일 전 지금이 '추론 근거 문장 먼저 특정 후 선지 접근'이라는 단일 습관을 교정할 수 있는 마지막 실전 반복 가능 시점이다.",
+      "point": "Inferences 문항에서 '지문 근거 없는 선지'를 30초 안에 소거하는 루틴을 오늘 확정한다.",
+      "keyword": "SAT Inferences Hard 문제 풀이법 D-8 시험 전략",
+      "source": "timely",
+      "triggered": false
+    },
+    {
+      "n": 4,
+      "title": "Text Structure and Purpose ID:ca50de52 — 첫 문장이 질문일 때 정답은 항상 '기능' 진술이다",
+      "type": "coach_insight",
+      "source_data": "문항 ID:ca50de52 | 스킬: Craft and Structure Text Structure and Purpose | 지문토픽: Art & Music | 정답근거: 지문 첫 문장 'How lifelike are they?'가 수사적 질문으로 기능 — Choice A가 '텍스트 전체에서 질문의 역할'을 정확히 기술함",
+      "rationale": "Text Structure and Purpose 문항에서 지문 첫 문장이 수사적 질문 형태일 때, 오답 선지는 질문의 '내용'을 다루고 정답 선지는 질문의 '기능(역할)'을 기술하는 설계가 기출 ID:ca50de52에서 명확히 확인된다.",
+      "point": "수사적 질문 도입부 지문에서 '내용 선지 vs 기능 선지'를 5초 안에 구분하는 판별 기준을 갖는다.",
+      "keyword": "SAT Text Structure and Purpose 수사적 질문 정답 패턴 기출",
+      "source": "coach_insight",
+      "triggered": false
+    },
+    {
+      "n": 5,
+      "title": "NACAC 2026 보고서: 가정환경 불리한 지원자 50% 이상 — 입시전략에 미치는 실질적 함의",
+      "type": "news",
+      "source_data": "뉴스 출처: Inside Higher Ed (2026.9.3.) NACAC 발표 — 'More Than Half of College Applicants Reported Key Home-Based Challenges'",
+      "rationale": "지원자 절반 이상이 가정환경 어려움을 보고했다는 NACAC 데이터는 미 명문대 입시에서 SAT 점수 외 맥락(Context) 요소가 심사에 미치는 비중을 재조명하며, 한국 학생·학부모가 SAT 점수 목표치와 에세이 전략을 동시에 재검토해야 하는 근거가 된다.",
+      "point": "NACAC 최신 데이터로 SAT 점수가 입시에서 어떤 맥락 안에 놓이는지, 지금 점수 목표를 어떻게 재설정할지 판단 기준을 얻는다.",
+      "keyword": "NACAC 2026 미국 대입 SAT 점수 입시 전략 명문대",
+      "source": "news",
+      "triggered": false
+    }
+  ]
+}

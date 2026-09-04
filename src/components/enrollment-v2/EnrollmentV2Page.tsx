@@ -264,6 +264,15 @@ const MANAGED_PKGS = [
   { id: '1on1-40h',  hours: 40, totalPrice: 5390000, pricePerHour: 134750, discountRate: 18 },
 ];
 
+/* 대표코치 수업권 — 할인 없는 정액 (시간당 18만원) */
+const DIRECTOR_PRICE_PER_HOUR = 180000;
+
+const DIRECTOR_PKGS = [10, 20, 30].map(hours => ({
+  id: `1on1-director-${hours}h`,
+  hours,
+  totalPrice: hours * DIRECTOR_PRICE_PER_HOUR,
+}));
+
 const SECTION_HEADING_STYLE: React.CSSProperties = {
   fontSize: 'clamp(1.75rem, 5vw, 2.5rem)',
   fontWeight: 800,
@@ -390,13 +399,13 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang }: {
             type="button"
             onClick={() => handlePkgClick('1on1-director')}
             className={`relative overflow-hidden w-full text-left rounded-2xl border p-5 transition-colors touch-manipulation active:scale-[0.98]
-              ${selectedId === '1on1-director'
+              ${isDirector
                 ? 'border-amber-400/70'
                 : 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-400/50'
               }`}
           >
             <AnimatePresence>
-              {selectedId === '1on1-director' && (
+              {isDirector && (
                 <motion.div
                   key="fill-director"
                   className="absolute inset-0"
@@ -419,20 +428,20 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang }: {
                 </p>
               </div>
 
-              <div className="flex-1 text-right">
-                <div className="space-y-1">
-                  <div className="flex items-baseline gap-1 justify-end">
+              <div className="flex-1 text-right space-y-0.5">
+                {DIRECTOR_PKGS.map(pkg => (
+                  <div key={pkg.id} className="flex items-baseline justify-end gap-2">
                     <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">
-                      {lang === 'en' ? '10 hrs' : '10시간'}
+                      {lang === 'en' ? `${pkg.hours} ${hourUnit}` : `${pkg.hours}${hourUnit}`}
+                    </span>
+                    <span
+                      className="text-sm font-semibold text-amber-200"
+                      style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
+                    >
+                      {formatWon(pkg.totalPrice)}
                     </span>
                   </div>
-                  <p
-                    className="text-sm font-semibold text-amber-200"
-                    style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
-                  >
-                    {formatWon(1800000)}
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
           </button>

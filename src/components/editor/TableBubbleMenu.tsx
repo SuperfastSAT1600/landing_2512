@@ -2,7 +2,6 @@
 
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
-import { TextSelection } from '@tiptap/pm/state';
 import { useState, useEffect, useRef } from 'react';
 import {
     Rows3, RowsIcon, Trash2,
@@ -53,21 +52,20 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
             ref={menuRef}
             editor={editor}
             options={{
-                placement: 'top',
+                placement: 'bottom',
                 offset: 8,
             }}
             shouldShow={({ editor: e, state }) => {
-                const inTable =
-                    e.isActive('table') ||
-                    e.isActive('tableCell') ||
-                    e.isActive('tableHeader');
+                const inTable = e.isActive('table') || e.isActive('tableCell') || e.isActive('tableHeader');
                 if (!inTable) return false;
-                // 텍스트 드래그 선택(TextSelection, non-empty)인 경우만 TextBubbleMenu에 양보
-                if (state.selection instanceof TextSelection && !state.selection.empty) return false;
+                // 텍스트 선택 시엔 상단 FormattingToolbar로 서식 처리 — 표 컨트롤만 표시
+                const { selection } = state;
+                if (selection && !selection.empty) return false;
                 return true;
             }}
         >
-            <div className="flex items-center gap-0.5 px-1.5 py-1 bg-[#1e2023] border border-white/10 rounded-lg shadow-xl">
+            <div className="flex flex-col gap-0 bg-[#1e2023] border border-white/10 rounded-lg shadow-xl overflow-hidden">
+            <div className="flex items-center gap-0.5 px-1.5 py-1">
                 {/* Column width input */}
                 <div className="flex items-center gap-1 pr-1.5 border-r border-white/10">
                     <span className="text-[10px] text-gray-500">W</span>
@@ -207,6 +205,8 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                     <Trash2 size={14} />
                 </button>
             </div>
+            </div>
         </BubbleMenu>
+
     );
 }

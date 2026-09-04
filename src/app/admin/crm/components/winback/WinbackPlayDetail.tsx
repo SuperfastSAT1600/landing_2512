@@ -6,6 +6,7 @@ import type { WinbackPlayDetailData, WinbackTargetRow as TargetRow } from './hoo
 import { WinbackTargetRow } from './WinbackTargetRow';
 import { RecommendStep } from './steps/RecommendStep';
 import { playToBriefDraft, playToRuleDraft } from './winbackContinuation';
+import { EMPTY_RULES } from './WinbackRuleFilters';
 import type { WinbackCandidate, WinbackRecommendStats } from '@/types/crm';
 
 interface Props {
@@ -55,6 +56,8 @@ export function WinbackPlayDetail({
   const [messages, setMessages] = useState<Record<string, string>>({});
 
   const [showAdditionalSearch, setShowAdditionalSearch] = useState(false);
+  // 캠페인 생성 때의 좁은 rule_filters가 매번 복원돼 후보가 마르는 걸 담당자가 직접 풀 수 있게 한다.
+  const [useSavedRules, setUseSavedRules] = useState(true);
   const [addMessage, setAddMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -188,6 +191,7 @@ export function WinbackPlayDetail({
           <button
             onClick={() => {
               setAddMessage(null);
+              setUseSavedRules(true);
               setShowAdditionalSearch(true);
             }}
             className="flex items-center gap-1 px-2 py-1 rounded border border-blue-200 text-[11px] text-blue-600 hover:bg-blue-50"
@@ -304,12 +308,24 @@ export function WinbackPlayDetail({
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="mb-3 text-xs text-gray-500">기존 타겟은 자동으로 제외하고, 새 학생만 검색합니다.</p>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <p className="text-xs text-gray-500">기존 타겟은 자동으로 제외하고, 새 학생만 검색합니다.</p>
+                <label className="flex items-center gap-1.5 text-[11px] text-gray-500 shrink-0 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useSavedRules}
+                    onChange={(e) => setUseSavedRules(e.target.checked)}
+                    className="accent-gray-900"
+                  />
+                  캠페인에 저장된 후보 조건 사용
+                </label>
+              </div>
               <RecommendStep
+                key={useSavedRules ? 'saved-rules' : 'reset-rules'}
                 adminKey=""
                 playId={playId}
                 draft={playToBriefDraft(play)}
-                initialRules={playToRuleDraft(play)}
+                initialRules={useSavedRules ? playToRuleDraft(play) : EMPTY_RULES}
                 autoRun={false}
                 addButtonLabel="선택한 명 추가"
                 recommend={recommend}

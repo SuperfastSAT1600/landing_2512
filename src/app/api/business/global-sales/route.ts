@@ -1,37 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import {
+  listGlobalSales,
+  GLOBAL_SALE_PAYMENT_TYPES,
+  GLOBAL_SALE_BILLING_TYPES,
+  type GlobalSaleEntry,
+  type GlobalSalePaymentType,
+  type GlobalSaleBillingType,
+} from '@/lib/global-sales-service';
+import { isCountryCode, normalizeCountryCode } from '@/lib/countries';
 
 // 튜터링(CRM students/payments)과 무관한 별도 상품 라인의 단순 매출 기록 — USD.
-export type GlobalSalePaymentType = '최초결제' | '재결제';
+// 타입·조회는 @/lib/global-sales-service 에 있다 — 크론이 HTTP 없이 같은 조회를 쓰기 위함.
+export type { GlobalSaleEntry, GlobalSalePaymentType, GlobalSaleBillingType };
 
-export interface GlobalSaleEntry {
-  id: string;
-  student_name: string;
-  payment_type: GlobalSalePaymentType;
-  amount_usd: number;
-  sale_date: string; // YYYY-MM-DD
-  created_at: string;
-}
-
-const VALID_PAYMENT_TYPES: GlobalSalePaymentType[] = ['최초결제', '재결제'];
+const VALID_PAYMENT_TYPES = GLOBAL_SALE_PAYMENT_TYPES;
 
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await supabaseAdmin
-    .from('global_sales')
-    .select('*')
-    .order('sale_date', { ascending: false });
+  const result = await listGlobalSales();
 
-  if (error) {
-    console.error('[global-sales GET]', error);
+  if (!result.ok) {
     return NextResponse.json({ error: '글로벌 매출 목록을 불러오지 못했습니다.' }, { status: 500 });
   }
 
-  return NextResponse.json({ data: data as GlobalSaleEntry[] });
+  return NextResponse.json({ data: result.data });
 }
 
 export async function POST(request: NextRequest) {
@@ -44,6 +41,8 @@ export async function POST(request: NextRequest) {
     payment_type?: string;
     amount_usd?: number;
     sale_date?: string;
+    country_code?: string | null;
+    billing_type?: string;
   };
   try {
     body = await request.json();
@@ -64,6 +63,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '판매일을 입력해주세요.' }, { status: 400 });
   }
 
+  // 국가는 선택 입력 — 값이 있으면 ISO 3166-1 alpha-2 목록에 있어야 한다.
+  const countryCode = normalizeCountryCode(body.country_code);
+  if (countryCode && !isCountryCode(countryCode)) {
+    return NextResponse.json({ error: '알 수 없는 국가 코드입니다.' }, { status: 400 });
+  }
+
+  // 결제 방식은 선택 입력 — 없으면 일회성(대부분의 기존 판매가 그렇다).
+  const billingType = (body.billing_type ?? '일회성') as GlobalSaleBillingType;
+  if (!GLOBAL_SALE_BILLING_TYPES.includes(billingType)) {
+    return NextResponse.json({ error: '결제 방식은 일회성|구독 중 하나여야 합니다.' }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('global_sales')
     .insert({
@@ -71,6 +82,8 @@ export async function POST(request: NextRequest) {
       payment_type: body.payment_type,
       amount_usd: body.amount_usd,
       sale_date: body.sale_date,
+      country_code: countryCode,
+      billing_type: billingType,
     })
     .select()
     .single();

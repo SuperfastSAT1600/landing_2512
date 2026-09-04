@@ -3,18 +3,16 @@
 // 튜터링 학생 행 — '튜터링 중' 탭과 '재결제 세일즈' 후보 목록이 같은 UI를 공유한다.
 // 우측 액션만 slot으로 갈린다 (튜터링 중 = 환불, 재결제 후보 = 대상 추가).
 
-import { Crown, Link2Off, Search } from 'lucide-react';
+import { Crown, AlertTriangle, Link2Off, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Student } from '@/types/crm';
-import type {
-  PaymentManagementStatus,
-  TutoringUser,
-} from '@/app/api/admin/srm/tutoring-users/route';
+import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
+import type { PaymentManagementStatus, SubjectHours } from '@/lib/tutoring-subject-breakdown';
 
 /** 행 렌더에 필요한 학생 필드만 — 부분 조인된 학생도 그대로 넘길 수 있다. */
 export type TutoringRowStudent = Pick<
   Student,
-  'id' | 'name' | 'grade' | 'parent_phone' | 'is_vip' | 'traffic_source'
+  'id' | 'name' | 'grade' | 'parent_phone' | 'is_vip' | 'needs_attention' | 'traffic_source'
 >;
 
 // 'ended'는 목록에서 제외하므로 포함하지 않는다
@@ -44,6 +42,11 @@ export interface TutoringEntry<S extends TutoringRowStudent = Student> {
   hours: TutoringHours | null;
   subjects: string[];
   paymentStatus: PaymentManagementStatus | null;
+  /**
+   * 같은 수치를 과목별로 쪼갠 내역 — V2 Payment 페이지의 (학생 × 과목) 행 단위.
+   * 재결제 후보 표가 이걸로 행을 나눈다. SRM 미연결이면 빈 배열.
+   */
+  bySubject: SubjectHours[];
 }
 
 export const TUTORING_STATUS_META: Record<
@@ -93,6 +96,7 @@ export function classifyTutoringEntries<S extends TutoringRowStudent>(
         hours: null,
         subjects: [],
         paymentStatus: null,
+        bySubject: [],
       });
       continue;
     }
@@ -113,6 +117,7 @@ export function classifyTutoringEntries<S extends TutoringRowStudent>(
       },
       subjects: tu.subjects ?? [],
       paymentStatus: tu.paymentStatus ?? null,
+      bySubject: tu.subjectBreakdown ?? [],
     });
   }
   return entries;
@@ -170,6 +175,11 @@ export function TutoringStudentRow({
           {student.is_vip && (
             <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded font-semibold tracking-wide bg-amber-100 text-amber-700">
               <Crown size={9} />VIP
+            </span>
+          )}
+          {student.needs_attention && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded font-semibold tracking-wide bg-red-100 text-red-700">
+              <AlertTriangle size={9} />주의
             </span>
           )}
           <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.color}`}>
@@ -282,8 +292,8 @@ export function TutoringListControls({
 }
 
 /** 서브탭별 카운트 — 두 목록이 같은 방식으로 센다. */
-export function countByTutoringStatus<S extends TutoringRowStudent>(
-  entries: TutoringEntry<S>[]
+export function countByTutoringStatus(
+  entries: Pick<TutoringEntry<TutoringRowStudent>, 'displayStatus'>[]
 ): Record<TutoringSubTab, number> {
   const c: Record<TutoringSubTab, number> = {
     all: 0, unlinked: 0, active: 0, paused: 0, partial_end: 0, sales: 0,
@@ -296,10 +306,10 @@ export function countByTutoringStatus<S extends TutoringRowStudent>(
 }
 
 /** 서브탭 + VIP + 이름 검색 필터. */
-export function filterTutoringEntries<S extends TutoringRowStudent>(
-  entries: TutoringEntry<S>[],
+export function filterTutoringEntries<E extends Pick<TutoringEntry<TutoringRowStudent>, 'student' | 'displayStatus'>>(
+  entries: E[],
   { subTab, vipOnly, searchQuery }: { subTab: TutoringSubTab; vipOnly: boolean; searchQuery: string }
-): TutoringEntry<S>[] {
+): E[] {
   const q = searchQuery.trim().toLowerCase();
   return entries.filter((e) => {
     if (subTab !== 'all' && e.displayStatus !== subTab) return false;

@@ -85,6 +85,11 @@ async function setup(page: Page) {
 async function openPaymentHistory(page: Page) {
   await page.goto('/admin/crm');
   await page.waitForTimeout(1500);
+  // 기본 탭이 '주차 계획·이행'이라 학생 카드가 없다 → 칸반까지 내려가야 한다
+  await page.getByRole('button', { name: '리드 현황·통계' }).click();
+  await page.waitForTimeout(600);
+  await page.getByRole('button', { name: '최초 세일즈' }).click();
+  await page.waitForTimeout(1000);
   await page.getByText('정예준', { exact: false }).first().click();
   await page.waitForTimeout(800);
   await page.getByText('결제 히스토리', { exact: false }).first().click();
