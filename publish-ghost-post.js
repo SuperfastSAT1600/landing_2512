@@ -37,7 +37,7 @@ const CTA_HTML = `
 <div style="text-align:center;margin-top:40px;">
   <a
     id="kakao-openchat-btn"
-    href="https://superfastsat.com/api/kakao-redirect?source=ghost"
+    href="https://open.kakao.com/o/s858Ajch"
     target="_blank"
     rel="noopener noreferrer"
     style="
@@ -50,7 +50,7 @@ const CTA_HTML = `
       text-decoration:none;
     "
   >
-    카카오톡으로 수업 상담 신청하기🖐️
+    카카오톡으로 즉시 상담받기🖐️
   </a>
 </div>
 `
