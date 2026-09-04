@@ -36,6 +36,11 @@ export interface PaymentNotification {
   livemode: boolean;
   /** 한 채널에 두 PG 알림이 섞이므로 출처를 표기한다. 미지정 시 표기 없음. */
   source?: 'Stripe' | '토스';
+  /**
+   * PG 가 준 결제 승인 시각(ISO). 웹훅은 재전송될 수 있어 발송 시각과 결제 시각이 다르다 —
+   * 실제로 하루 지난 결제가 재전송으로 도착해 새 결제로 읽힌 적이 있다. 없으면 현재 시각을 쓴다.
+   */
+  paidAt?: string | null;
 }
 
 export function formatAmount(amount: number, currency: string): string {
@@ -51,8 +56,11 @@ export function formatAmount(amount: number, currency: string): string {
   return symbol ? `${symbol}${formatted}` : `${formatted} ${currency.toUpperCase()}`;
 }
 
+/** 이만큼 늦게 도착하면 재전송으로 본다 — 새 결제로 오해하지 않도록 표기한다. */
+const DELAYED_ARRIVAL_MS = 60 * 60 * 1000;
+
 /** Vercel 서버는 UTC — 반드시 Asia/Seoul 지정. 로케일별 오전/AM 표기가 섞이지 않게 직접 조립한다. */
-function kstTimestamp(): string {
+function kstTimestamp(when: Date): string {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Seoul',
     month: '2-digit',
@@ -60,18 +68,30 @@ function kstTimestamp(): string {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  }).formatToParts(new Date());
+  }).formatToParts(when);
   const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? '';
   return `${get('month')}/${get('day')} ${get('hour')}:${get('minute')}`;
 }
 
+/** 외부에서 온 값이라 형식을 믿지 않는다 — 파싱되지 않으면 없는 것으로 본다. */
+function parsePaidAt(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export function formatPaymentMessage(p: PaymentNotification): string {
-  const now = kstTimestamp();
+  const sentAt = new Date();
+  const paidAt = parsePaidAt(p.paidAt);
+  // 결제 시각을 모르면 발송 시각이 최선의 근사치다
+  const stamp = kstTimestamp(paidAt ?? sentAt);
+  const delayed = paidAt !== null && sentAt.getTime() - paidAt.getTime() >= DELAYED_ARRIVAL_MS;
+  const arrival = delayed ? ` · 지연 수신(${kstTimestamp(sentAt)} 게시)` : '';
 
   const prefix = p.livemode ? '' : '[TEST] ';
   const pg = p.source ? ` (${p.source})` : '';
   const lines = [
-    `💳 *${prefix}새 결제${pg}* — ${now} KST`,
+    `💳 *${prefix}새 결제${pg}* — ${stamp} KST${arrival}`,
     `• 학생 : ${p.customerName || '이름 미상'}`,
   ];
   if (p.customerEmail) lines.push(`• 이메일 : ${p.customerEmail}`);

@@ -45,6 +45,8 @@ const stripeEventSchema = z.object({
   id: z.string(),
   type: z.string(),
   livemode: z.boolean().default(false),
+  /** 이벤트 발생 시각(unix). 재전송돼도 결제 시각을 정확히 찍기 위해 쓴다. */
+  created: z.number().nullish(),
   data: z.object({ object: z.record(z.string(), z.unknown()) }),
 });
 

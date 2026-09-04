@@ -40,7 +40,7 @@ const invoiceSchema = z.object({
   }).nullish(),
 });
 
-async function fromCheckoutSession(object: unknown, livemode: boolean): Promise<PaymentNotification | null> {
+async function fromCheckoutSession(object: unknown, livemode: boolean, paidAt: string | null): Promise<PaymentNotification | null> {
   const parsed = checkoutSessionSchema.safeParse(object);
   if (!parsed.success) return null;
   const session = parsed.data;
@@ -56,6 +56,7 @@ async function fromCheckoutSession(object: unknown, livemode: boolean): Promise<
       : null,
     livemode,
     source: 'Stripe',
+    paidAt,
   };
 }
 
@@ -64,7 +65,7 @@ async function fromCheckoutSession(object: unknown, livemode: boolean): Promise<
  * 구독 최초 결제는 checkout.session.completed 와 invoice.paid 가 둘 다 발생하므로
  * subscription_create 를 여기서 걸러야 같은 결제가 두 번 올라가지 않는다.
  */
-function fromInvoice(object: unknown, livemode: boolean): PaymentNotification | null {
+function fromInvoice(object: unknown, livemode: boolean, paidAt: string | null): PaymentNotification | null {
   const parsed = invoiceSchema.safeParse(object);
   if (!parsed.success) return null;
   const invoice = parsed.data;
@@ -83,6 +84,7 @@ function fromInvoice(object: unknown, livemode: boolean): PaymentNotification | 
     dashboardUrl: `https://dashboard.stripe.com/invoices/${invoice.id}`,
     livemode,
     source: 'Stripe',
+    paidAt,
   };
 }
 
@@ -104,11 +106,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: { code: 'INVALID_PAYLOAD', message: '이벤트 파싱 실패' } }, { status: 400 });
   }
 
+  // 재전송으로 늦게 도착해도 결제 시각이 흔들리지 않도록 이벤트 발생 시각을 쓴다
+  const paidAt = event.created ? new Date(event.created * 1000).toISOString() : null;
+
   let payment: PaymentNotification | null = null;
   if (event.type === 'checkout.session.completed') {
-    payment = await fromCheckoutSession(event.data.object, event.livemode);
+    payment = await fromCheckoutSession(event.data.object, event.livemode, paidAt);
   } else if (event.type === 'invoice.paid') {
-    payment = fromInvoice(event.data.object, event.livemode);
+    payment = fromInvoice(event.data.object, event.livemode, paidAt);
   }
 
   if (!payment) return NextResponse.json({ data: { received: true, notified: false }, meta: { requestId: event.id } });
