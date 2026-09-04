@@ -50,7 +50,7 @@ function parseTopicsFromMessage(text: string): Topic[] {
     const match = line.match(/^(\d+)\.\s+(.+)/);
     if (match) {
       if (current) topics.push(current);
-      current = { n: parseInt(match[1]), title: match[2].trim(), rationale: '', point: '' };
+      current = { n: parseInt(match[1]), title: match[2].replace(/^\[.+?\]\s*/, '').trim(), rationale: '', point: '' };
     } else if (current) {
       if (line.includes('근거:')) current.rationale = line.replace(/^\s*근거:\s*/, '').trim();
       else if (line.includes('포인트:')) current.point = line.replace(/^\s*포인트:\s*/, '').trim();
