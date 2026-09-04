@@ -16,6 +16,7 @@ import {
   TossOrderLookupError,
 } from '@/lib/toss-webhook';
 import { notifyPaymentToSlack } from '@/lib/slack-payment';
+import { claimPaymentNotification, releasePaymentNotification } from '@/lib/payment-dedupe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -60,11 +61,28 @@ export async function POST(req: NextRequest) {
     return ok(false, event.orderKey);
   }
 
+  // 재전송이 두 번 성공하면 같은 결제가 두 번 올라간다 — 보내기 전에 선점한다.
+  // 키는 orderKey 로 고정한다. 링크페이는 주문 1건 = 결제 1건이고(결제를 다시 시도하면
+  // 새 주문이 생긴다), paymentKey 는 응답에 없을 수 있어 폴백을 두면 키가 갈려 중복이 샌다.
+  const eventKey = event.orderKey;
+  try {
+    if (!await claimPaymentNotification('toss', eventKey)) {
+      console.log('[toss-webhook] 이미 알림한 결제 — 재전송으로 판단:', eventKey);
+      return ok(false, event.orderKey);
+    }
+  } catch (e) {
+    // 중복 게시보다 알림 지연이 낫다 — 보내지 않고 재전송을 기다린다
+    console.error('[toss-webhook] 알림 선점 실패:', e);
+    return NextResponse.json({ error: { code: 'CLAIM_FAILED', message: '알림 선점 실패' } }, { status: 500 });
+  }
+
   try {
     await notifyPaymentToSlack(mapOrderToNotification(order));
   } catch (e) {
     // 200을 주면 재전송이 끊겨 결제 알림이 조용히 사라진다
     console.error('[toss-webhook] 슬랙 전송 실패:', e);
+    // 선점을 풀어줘야 재전송이 다시 시도할 수 있다
+    await releasePaymentNotification('toss', eventKey);
     return NextResponse.json({ error: { code: 'SLACK_FAILED', message: '슬랙 전송 실패' } }, { status: 500 });
   }
 

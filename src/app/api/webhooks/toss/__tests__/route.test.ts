@@ -11,6 +11,10 @@ vi.mock('@/lib/toss-webhook', async (importOriginal) => {
   return { ...actual, fetchTossOrder };
 });
 
+const claimPaymentNotification = vi.hoisted(() => vi.fn());
+const releasePaymentNotification = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/payment-dedupe', () => ({ claimPaymentNotification, releasePaymentNotification }));
+
 function request(payload: object | string): NextRequest {
   return new NextRequest('https://example.com/api/webhooks/toss', {
     method: 'POST',
@@ -32,7 +36,7 @@ function order(status: string) {
     customerName: '이중희',
     customerPhoneNumber: '010-1234-5678',
     orderItems: [{ product: { name: 'SAT 대표코치 10시간' }, quantity: 1 }],
-    payment: { status },
+    payment: { status, paymentKey: 'link_20260902234455tdPR7' },
   };
 }
 
@@ -42,6 +46,60 @@ describe('POST /api/webhooks/toss', () => {
     process.env.TOSS_SECRET_KEY = 'live_sk_test';
     notifyPaymentToSlack.mockResolvedValue(undefined);
     fetchTossOrder.mockResolvedValue(order('DONE'));
+    claimPaymentNotification.mockResolvedValue(true);
+    releasePaymentNotification.mockResolvedValue(undefined);
+  });
+
+  // REQ-011: 재전송이 두 번 성공하면 같은 결제가 두 번 올라간다
+  describe('중복 게시 방지 (REQ-011)', () => {
+    it('보내기 전에 orderKey 로 선점한다', async () => {
+      const { POST } = await import('../route');
+
+      await POST(request(webhook));
+
+      expect(claimPaymentNotification).toHaveBeenCalledWith('toss', 'ord_123');
+    });
+
+    // 폴백을 두면 첫 전달과 재전송의 키가 갈려 중복이 샌다
+    it('paymentKey 유무와 무관하게 같은 키로 선점한다', async () => {
+      const { POST } = await import('../route');
+      fetchTossOrder.mockResolvedValue({ ...order('DONE'), payment: { status: 'DONE' } });
+
+      await POST(request(webhook));
+
+      expect(claimPaymentNotification).toHaveBeenCalledWith('toss', 'ord_123');
+    });
+
+    it('이미 보낸 결제면 슬랙에 보내지 않고 200 을 준다', async () => {
+      const { POST } = await import('../route');
+      claimPaymentNotification.mockResolvedValue(false);
+
+      const res = await POST(request(webhook));
+
+      expect(res.status).toBe(200);
+      expect(notifyPaymentToSlack).not.toHaveBeenCalled();
+      expect(await res.json()).toMatchObject({ data: { notified: false } });
+    });
+
+    it('슬랙 전송이 실패하면 선점을 해제해 재전송이 다시 시도하게 한다', async () => {
+      const { POST } = await import('../route');
+      notifyPaymentToSlack.mockRejectedValue(new Error('not_in_channel'));
+
+      const res = await POST(request(webhook));
+
+      expect(res.status).toBe(500);
+      expect(releasePaymentNotification).toHaveBeenCalledWith('toss', 'ord_123');
+    });
+
+    it('선점 자체가 실패하면 보내지 않고 500 — 중복보다 지연을 택한다', async () => {
+      const { POST } = await import('../route');
+      claimPaymentNotification.mockRejectedValue(new Error('db down'));
+
+      const res = await POST(request(webhook));
+
+      expect(res.status).toBe(500);
+      expect(notifyPaymentToSlack).not.toHaveBeenCalled();
+    });
   });
 
   it('결제 완료(DONE)면 슬랙으로 보낸다 (REQ-002)', async () => {

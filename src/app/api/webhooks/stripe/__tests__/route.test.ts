@@ -12,6 +12,10 @@ vi.mock('@/lib/stripe-webhook', async (importOriginal) => {
   return { ...actual, fetchCheckoutLineItems };
 });
 
+const claimPaymentNotification = vi.hoisted(() => vi.fn());
+const releasePaymentNotification = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/payment-dedupe', () => ({ claimPaymentNotification, releasePaymentNotification }));
+
 const SECRET = 'whsec_test_secret';
 
 function signedRequest(payload: object, opts: { secret?: string } = {}): NextRequest {
@@ -66,6 +70,49 @@ describe('POST /api/webhooks/stripe (REQ-004)', () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_123';
     notifyPaymentToSlack.mockResolvedValue(undefined);
     fetchCheckoutLineItems.mockResolvedValue(['SAT 관리형 1:1 대표코치 10시간']);
+    claimPaymentNotification.mockResolvedValue(true);
+    releasePaymentNotification.mockResolvedValue(undefined);
+  });
+
+  // REQ-011: Stripe 재전송도 같은 event.id 로 온다
+  describe('중복 게시 방지 (REQ-011)', () => {
+    it('보내기 전에 event.id 로 선점한다', async () => {
+      const { POST } = await import('../route');
+
+      await POST(signedRequest(checkoutEvent));
+
+      expect(claimPaymentNotification).toHaveBeenCalledWith('stripe', 'evt_checkout');
+    });
+
+    it('이미 보낸 이벤트면 슬랙에 보내지 않고 200 을 준다', async () => {
+      const { POST } = await import('../route');
+      claimPaymentNotification.mockResolvedValue(false);
+
+      const res = await POST(signedRequest(checkoutEvent));
+
+      expect(res.status).toBe(200);
+      expect(notifyPaymentToSlack).not.toHaveBeenCalled();
+    });
+
+    it('슬랙 전송이 실패하면 선점을 해제한다', async () => {
+      const { POST } = await import('../route');
+      notifyPaymentToSlack.mockRejectedValue(new Error('not_in_channel'));
+
+      const res = await POST(signedRequest(checkoutEvent));
+
+      expect(res.status).toBe(500);
+      expect(releasePaymentNotification).toHaveBeenCalledWith('stripe', 'evt_checkout');
+    });
+
+    it('선점 자체가 실패하면 보내지 않고 500', async () => {
+      const { POST } = await import('../route');
+      claimPaymentNotification.mockRejectedValue(new Error('db down'));
+
+      const res = await POST(signedRequest(checkoutEvent));
+
+      expect(res.status).toBe(500);
+      expect(notifyPaymentToSlack).not.toHaveBeenCalled();
+    });
   });
 
   it('checkout.session.completed 를 슬랙으로 보낸다', async () => {
