@@ -138,7 +138,7 @@ describe('mapOrderToNotification (REQ-003, REQ-008)', () => {
   };
 
   it('링크페이 Order 를 슬랙 알림 형태로 옮긴다', () => {
-    expect(mapOrderToNotification(base)).toEqual({
+    expect(mapOrderToNotification({ ...base, payment: { status: 'DONE', approvedAt: '2026-09-02T23:47:05+09:00' } })).toEqual({
       customerName: '이중희',
       customerEmail: null,
       customerPhone: '010-1234-5678',
@@ -148,7 +148,13 @@ describe('mapOrderToNotification (REQ-003, REQ-008)', () => {
       dashboardUrl: null,
       livemode: true,
       source: '토스',
+      paidAt: '2026-09-02T23:47:05+09:00',
     });
+  });
+
+  // REQ-010: 재전송으로 늦게 도착해도 결제 시각은 승인 시각이어야 한다
+  it('승인 시각이 없으면 paidAt 은 null 이다', () => {
+    expect(mapOrderToNotification(base).paidAt).toBeNull();
   });
 
   it('수량이 2 이상이면 표기한다', () => {

@@ -56,7 +56,10 @@ const orderSchema = z.object({
     product: z.object({ name: z.string().nullish() }).nullish(),
     quantity: z.number().nullish(),
   })).nullish(),
-  payment: z.object({ status: z.string().nullish() }).nullish(),
+  payment: z.object({
+    status: z.string().nullish(),
+    approvedAt: z.string().nullish(),
+  }).nullish(),
   status: z.string().nullish(),
 });
 
@@ -146,5 +149,7 @@ export function mapOrderToNotification(order: TossOrder): PaymentNotification {
     dashboardUrl: null,
     livemode: true,
     source: '토스',
+    // 웹훅은 재전송될 수 있다 — 알림에 찍을 시각은 도착 시각이 아니라 승인 시각이다
+    paidAt: order.payment?.approvedAt ?? null,
   };
 }

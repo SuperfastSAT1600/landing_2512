@@ -87,6 +87,23 @@ describe('POST /api/webhooks/stripe (REQ-004)', () => {
     expect(fetchCheckoutLineItems).toHaveBeenCalledWith('cs_1');
   });
 
+  // REQ-010: 재전송으로 늦게 도착해도 결제 시각은 이벤트 발생 시각이어야 한다
+  it('이벤트 created 를 결제 시각으로 넘긴다', async () => {
+    const { POST } = await import('../route');
+
+    await POST(signedRequest({ ...checkoutEvent, created: 1788400025 }));
+
+    expect(notifyPaymentToSlack.mock.calls[0][0].paidAt).toBe(new Date(1788400025 * 1000).toISOString());
+  });
+
+  it('created 가 없으면 결제 시각은 null 이다', async () => {
+    const { POST } = await import('../route');
+
+    await POST(signedRequest(checkoutEvent));
+
+    expect(notifyPaymentToSlack.mock.calls[0][0].paidAt).toBeNull();
+  });
+
   it('checkout 결제는 payment_intent 로 대시보드 링크를 만든다', async () => {
     const { POST } = await import('../route');
 
