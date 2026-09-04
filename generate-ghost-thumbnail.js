@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 /**
  * Ghost 블로그 썸네일 생성기 (텍스트 기반, Playwright 렌더링)
- * Usage: node generate-ghost-thumbnail.js <slug> "<줄1>" "<줄2>"
- * Example: node generate-ghost-thumbnail.js sat-math-m2-time-management "SAT Math M2 시간 관리" "고난도 5개를 두 번 검토할 시간을 만드는 법"
+ * Usage: node generate-ghost-thumbnail.js <slug> [<제목>]
+ * - 제목 생략 시 content/posts/ 에서 자동 탐색
+ * - Claude API가 제목을 썸네일용 2줄 텍스트로 자동 요약
+ * Example: node generate-ghost-thumbnail.js sat-math-time-management
+ *          node generate-ghost-thumbnail.js sat-math-time-management "SAT Math M2 시간 관리 전략"
  */
 
 require('dotenv').config({ path: '.env.local' })
@@ -17,12 +20,65 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const GHOST_URL = process.env.GHOST_URL
 const [GHOST_KEY_ID, GHOST_SECRET] = (process.env.GHOST_ADMIN_KEY || ':').split(':')
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
 
-const [slug, line1, line2] = process.argv.slice(2)
+const [slug, titleArg] = process.argv.slice(2)
 
-if (!slug || !line1) {
-  console.error('Usage: node generate-ghost-thumbnail.js <slug> "<줄1>" "<줄2>"')
+if (!slug) {
+  console.error('Usage: node generate-ghost-thumbnail.js <slug> [<제목>]')
   process.exit(1)
+}
+
+function findTitleFromSlug(slug) {
+  const contentDir = path.join(__dirname, 'content/posts')
+  if (!fs.existsSync(contentDir)) return null
+  const files = fs.readdirSync(contentDir).filter(f => f.includes(slug) && f.endsWith('.md'))
+  if (!files.length) return null
+  const raw = fs.readFileSync(path.join(contentDir, files[0]), 'utf8')
+  const m = raw.match(/^title:\s*["']?(.+?)["']?\s*$/m)
+  return m ? m[1].trim() : null
+}
+
+async function summarizeTitle(title) {
+  const body = JSON.stringify({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 100,
+    messages: [{
+      role: 'user',
+      content: `다음 블로그 제목을 썸네일 이미지에 들어갈 임팩트 있는 2줄 텍스트로 요약해줘.
+규칙: 각 줄 한글 12자 이내, 핵심 키워드 중심, 구어체 금지, 숫자/영어 활용 권장.
+JSON만 반환 (다른 텍스트 없이): { "line1": "...", "line2": "..." }
+제목: ${title}`
+    }]
+  })
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = ''
+      res.on('data', chunk => data += chunk)
+      res.on('end', () => {
+        if (res.statusCode >= 400) return reject(new Error(`Anthropic API ${res.statusCode}: ${data}`))
+        const result = JSON.parse(data)
+        const text = result.content?.[0]?.text || ''
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        if (!jsonMatch) return reject(new Error('JSON 파싱 실패: ' + text))
+        resolve(JSON.parse(jsonMatch[0]))
+      })
+    })
+    req.on('error', reject)
+    req.write(body)
+    req.end()
+  })
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -113,9 +169,19 @@ function buildHTML(line1, line2, logoBase64) {
 }
 
 async function run() {
-  console.log('[1/3] 썸네일 렌더링 중...')
+  const title = titleArg || findTitleFromSlug(slug)
+  if (!title) {
+    console.error(`❌ 제목을 찾을 수 없습니다. 인수로 직접 전달하거나 content/posts/ 에 파일이 있어야 합니다.`)
+    process.exit(1)
+  }
+  console.log(`      제목: ${title}`)
+
+  console.log('[0/3] Claude로 썸네일 텍스트 생성 중...')
+  const { line1, line2 } = await summarizeTitle(title)
   console.log(`      줄1: ${line1}`)
-  if (line2) console.log(`      줄2: ${line2}`)
+  console.log(`      줄2: ${line2}`)
+
+  console.log('[1/3] 썸네일 렌더링 중...')
 
   const logoPath = path.join(__dirname, 'public/white-logo.png')
   const logoBase64 = fs.existsSync(logoPath) ? fs.readFileSync(logoPath).toString('base64') : null
