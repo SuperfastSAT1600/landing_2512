@@ -14,7 +14,7 @@ async function generateSkeleton(
 ): Promise<Record<string, unknown>> {
   const response = await client.chat.completions.create({
     model: OPENAI_MODEL,
-    max_tokens: 2000,
+    max_completion_tokens: 2000,
     messages: [
       { role: 'system', content: SKELETON_SYSTEM },
       { role: 'user', content: `주제: ${topic.title}\n근거: ${topic.rationale || '없음'}\n핵심 포인트: ${topic.point || '없음'}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격 JSON을 반환해주세요.` },
@@ -34,7 +34,7 @@ async function generateGhostProse(
   const systemPrompt = relatedContext ? GHOST_PROSE_SYSTEM + relatedContext : GHOST_PROSE_SYSTEM;
   const response = await client.chat.completions.create({
     model: OPENAI_MODEL,
-    max_tokens: 8000,
+    max_completion_tokens: 8000,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 Ghost 블로그 포스팅을 마크다운으로 작성해주세요.` },
@@ -49,7 +49,7 @@ async function generateLandingProse(
   const systemPrompt = relatedContext ? LANDING_PROSE_SYSTEM + relatedContext : LANDING_PROSE_SYSTEM;
   const response = await client.chat.completions.create({
     model: OPENAI_MODEL,
-    max_tokens: 10000,
+    max_completion_tokens: 10000,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 랜딩 페이지 블로그를 마크다운으로 작성해주세요.` },
