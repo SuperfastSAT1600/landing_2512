@@ -88,20 +88,16 @@ async function generateQwenThumbnail(prompt: string, slug: string, prefix: strin
   return uploadBuffer(buffer, slug, prefix);
 }
 
-// Ghost용: 흑백 미니멀 심볼 일러스트
-export async function generateGhostThumbnail(focusKeyword: string, slug: string): Promise<string> {
-  const prompt = `당신은 Notion, Slack, Airbnb와 같은 글로벌 IT 기업의 미니멀리즘 일러스트레이션을 전문으로 하는 수석 일러스트레이터입니다.
-주제: ${focusKeyword}
+// Ghost용: /api/og 엔드포인트로 브랜딩 텍스트 썸네일 생성 후 Supabase에 업로드
+export async function generateGhostThumbnail(title: string, slug: string): Promise<string> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfastsat.com';
+  const ogUrl = `${baseUrl}/api/og?title=${encodeURIComponent(title)}&category=SAT`;
 
-스타일 규칙:
-- Grayscale Only: 오직 검정색, 흰색, 회색만 사용. 유채색 절대 금지.
-- Clean Background: 배경은 흰색(#FFFFFF).
-- Minimalist Line Art: 깔끔하고 일정한 굵기의 검은색 외곽선. 심볼적이고 단순화된 형태.
-- Flat Design with Subtle Shading: 부드러운 회색 음영으로 약간의 입체감.
-- Negative Space: 여백의 미. 피사체가 캔버스의 약 70%를 차지.
-- No Text: 이미지 내부에 텍스트 절대 금지.`;
+  const res = await fetch(ogUrl);
+  if (!res.ok) throw new Error(`OG 이미지 fetch 실패: ${res.status}`);
 
-  return generateQwenThumbnail(prompt, slug, 'ghost');
+  const buffer = Buffer.from(await res.arrayBuffer());
+  return uploadBuffer(buffer, slug, 'ghost');
 }
 
 // 랜딩용: 스토리텔링 씬 일러스트 (인물 + 상황)
@@ -121,6 +117,6 @@ export async function generateLandingThumbnail(title: string, slug: string): Pro
 }
 
 // 하위 호환
-export async function generateAndUploadThumbnail(focusKeyword: string, slug: string): Promise<string> {
-  return generateGhostThumbnail(focusKeyword, slug);
+export async function generateAndUploadThumbnail(title: string, slug: string): Promise<string> {
+  return generateGhostThumbnail(title, slug);
 }

@@ -62,7 +62,7 @@ async function attachThumbnailsAfter(
   channel: string, threadTs: string, platform: Platform = 'both'
 ): Promise<void> {
   const tasks = await Promise.allSettled([
-    (platform === 'ghost' || platform === 'both') ? generateGhostThumbnail(draft.focusKeyword, draft.slug) : Promise.resolve(''),
+    (platform === 'ghost' || platform === 'both') ? generateGhostThumbnail(draft.title, draft.slug) : Promise.resolve(''),
     (platform === 'landing' || platform === 'both') ? generateLandingThumbnail(draft.title, draft.slug) : Promise.resolve(''),
   ]);
 
