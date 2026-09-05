@@ -4,36 +4,48 @@
  * 발행된 포스팅의 임베딩을 Supabase posts.embedding에 저장하고,
  * 새 글 작성 전에 관련 과거 포스팅 상위 N개를 검색해 프롬프트에 주입한다.
  *
- * 사전 조건: supabase/migrations/125_posts_embedding.sql 이 적용되어 있어야 함.
- * 임베딩 모델: OpenAI text-embedding-3-small (1536d)
+ * 사전 조건: supabase/migrations/126_posts_embedding_qwen.sql 이 적용되어 있어야 함.
+ * 임베딩 모델: Qwen text-embedding-v3 (DashScope, 1024d)
  * 에러 발생 시 임베딩 실패가 발행 자체를 막지 않도록 try/catch로 보호.
  */
 
-import OpenAI from 'openai';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-const EMBEDDING_MODEL = 'text-embedding-3-small';
-const EMBEDDING_DIMENSIONS = 1536;
+const EMBEDDING_DIMENSIONS = 1024;
+const DASHSCOPE_EMBED_URL =
+  'https://dashscope-intl.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding';
 const BASE_URL = 'https://superfastsat.com/blog';
 
 // ─── 임베딩 생성 ──────────────────────────────────────────────────────────────
 
 async function generatePostEmbedding(text: string): Promise<number[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  if (!apiKey) throw new Error('DASHSCOPE_API_KEY is not set');
 
-  const client = new OpenAI({ apiKey });
-  const res = await client.embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: text.slice(0, 8000),
-    dimensions: EMBEDDING_DIMENSIONS,
+  const res = await fetch(DASHSCOPE_EMBED_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'text-embedding-v3',
+      input: { texts: [text.slice(0, 8000)] },
+      parameters: { dimension: EMBEDDING_DIMENSIONS },
+    }),
   });
 
-  const embedding = res.data[0].embedding;
-  if (embedding.length !== EMBEDDING_DIMENSIONS) {
-    throw new Error(
-      `embedding dimension mismatch: ${embedding.length} (expected ${EMBEDDING_DIMENSIONS})`
-    );
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`DashScope embedding failed: ${res.status} ${err}`);
+  }
+
+  const data = await res.json() as {
+    output?: { embeddings?: { text_index: number; embedding: number[] }[] };
+  };
+  const embedding = data.output?.embeddings?.[0]?.embedding;
+  if (!embedding || embedding.length !== EMBEDDING_DIMENSIONS) {
+    throw new Error(`embedding dimension mismatch: got ${embedding?.length} (expected ${EMBEDDING_DIMENSIONS})`);
   }
   return embedding;
 }

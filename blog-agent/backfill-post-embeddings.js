@@ -2,25 +2,24 @@
  * 기존 posts 임베딩 백필 스크립트
  *
  * 사용법:
- *   node blog-agent/scripts/backfill-post-embeddings.js
- *   node blog-agent/scripts/backfill-post-embeddings.js --limit 10   # 10개만 처리
- *   node blog-agent/scripts/backfill-post-embeddings.js --dry-run    # DB 저장 없이 로그만
+ *   node blog-agent/backfill-post-embeddings.js
+ *   node blog-agent/backfill-post-embeddings.js --limit 10   # 10개만 처리
+ *   node blog-agent/backfill-post-embeddings.js --dry-run    # DB 저장 없이 로그만
  *
  * 사전 조건:
- *   - supabase/migrations/125_posts_embedding.sql 이 적용되어 있어야 함
- *   - .env.local 에 OPENAI_API_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY 설정
+ *   - supabase/migrations/126_posts_embedding_qwen.sql 이 적용되어 있어야 함
+ *   - .env.local 에 DASHSCOPE_API_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY 설정
  *
- * 임베딩 모델: OpenAI text-embedding-3-small (1536d)
+ * 임베딩 모델: Qwen text-embedding-v3 (DashScope, 1024d)
  */
 
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, '../../');
+const ROOT = resolve(__dirname, '../');
 
 // .env.local 파싱
 function loadEnv() {
@@ -38,21 +37,21 @@ const env = loadEnv();
 
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
-const OPENAI_API_KEY = env.OPENAI_API_KEY;
-const EMBEDDING_MODEL = 'text-embedding-3-small';
-const EMBEDDING_DIMENSIONS = 1536;
+const DASHSCOPE_API_KEY = env.DASHSCOPE_API_KEY;
+const EMBEDDING_DIMENSIONS = 1024;
+const DASHSCOPE_EMBED_URL =
+  'https://dashscope-intl.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding';
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('NEXT_PUBLIC_SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 미설정');
   process.exit(1);
 }
-if (!OPENAI_API_KEY) {
-  console.error('OPENAI_API_KEY 미설정');
+if (!DASHSCOPE_API_KEY) {
+  console.error('DASHSCOPE_API_KEY 미설정');
   process.exit(1);
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 const args = process.argv.slice(2);
 const isDryRun = args.includes('--dry-run');
@@ -69,18 +68,34 @@ function buildPostEmbeddingText(post) {
 }
 
 async function generateEmbedding(text) {
-  const res = await openai.embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: text.slice(0, 8000),
-    dimensions: EMBEDDING_DIMENSIONS,
+  const res = await fetch(DASHSCOPE_EMBED_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${DASHSCOPE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'text-embedding-v3',
+      input: { texts: [text.slice(0, 8000)] },
+      parameters: { dimension: EMBEDDING_DIMENSIONS },
+    }),
   });
-  return res.data[0].embedding;
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`DashScope 오류: ${res.status} ${err}`);
+  }
+
+  const data = await res.json();
+  const embedding = data.output?.embeddings?.[0]?.embedding;
+  if (!embedding) throw new Error('임베딩 데이터를 받지 못했습니다.');
+  return embedding;
 }
 
 async function main() {
   console.log(`[backfill] 시작 (dry-run: ${isDryRun}, limit: ${limit ?? 'all'})`);
+  console.log(`[backfill] 모델: Qwen text-embedding-v3 (${EMBEDDING_DIMENSIONS}d)`);
 
-  // embedding이 없는 published 포스팅 조회
   let query = supabase
     .from('posts')
     .select('id, title, excerpt, description, focus_keyword')
@@ -95,7 +110,7 @@ async function main() {
   if (error) {
     if (error.message.includes('column') || error.message.includes('does not exist')) {
       console.error('[backfill] posts.embedding 컬럼이 없습니다.');
-      console.error('supabase/migrations/125_posts_embedding.sql 을 먼저 적용해주세요.');
+      console.error('supabase/migrations/126_posts_embedding_qwen.sql 을 먼저 적용해주세요.');
       process.exit(1);
     }
     console.error('[backfill] posts 조회 실패:', error.message);
@@ -133,8 +148,8 @@ async function main() {
       console.log(`[backfill] ${isDryRun ? '(dry)' : ''} OK: ${post.id} — ${post.title}`);
       success++;
 
-      // rate limit 회피 (OpenAI tier 1: 500 RPM)
-      await new Promise((r) => setTimeout(r, 120));
+      // DashScope rate limit 회피
+      await new Promise((r) => setTimeout(r, 200));
     } catch (err) {
       console.error(`[backfill] ${post.id} 임베딩 생성 실패:`, err.message);
       failure++;
