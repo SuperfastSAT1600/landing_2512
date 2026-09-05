@@ -5,7 +5,7 @@ import { matchRelatedPosts, buildRelatedPostsContext } from './post-memory';
 export type Topic = { n?: number; title: string; rationale: string; point: string };
 export type BlogDraft = { ghostMarkdown: string; landingMarkdown: string; slug: string; title: string; focusKeyword: string };
 
-const OPENAI_MODEL = 'gpt-4o';
+const OPENAI_MODEL = 'gpt-5.6-luna';
 
 // ─── API Calls ────────────────────────────────────────────────────────────────
 
