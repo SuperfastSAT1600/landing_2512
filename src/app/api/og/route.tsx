@@ -20,13 +20,11 @@ export async function GET(request: NextRequest) {
     const line1 = searchParams.get('line1') || title;
     const line2 = searchParams.get('line2') || '';
 
-    // Pretendard 폰트 (실패 시 sans-serif 폴백)
+    // Pretendard 폰트 (로컬 서빙 → 실패 시 sans-serif 폴백)
     let fontOption: { name: string; data: ArrayBuffer; style: 'normal'; weight: 800 }[] = [];
     try {
-      const fontData = await fetch(
-        'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-ExtraBold.otf',
-        { signal: AbortSignal.timeout(5000) }
-      ).then(r => r.arrayBuffer());
+      const fontUrl = new URL('/pretendard-extrabold.otf', request.url).href;
+      const fontData = await fetch(fontUrl, { signal: AbortSignal.timeout(3000) }).then(r => r.arrayBuffer());
       fontOption = [{ name: 'Pretendard', data: fontData, style: 'normal', weight: 800 }];
     } catch { /* 폴백: 기본 sans-serif */ }
 
