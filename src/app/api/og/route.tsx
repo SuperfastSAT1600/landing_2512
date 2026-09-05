@@ -18,7 +18,19 @@ export async function GET(request: NextRequest) {
 
   if (isGhost) {
     const [line1, line2] = splitTitle(title);
-    const fontSize = title.length > 30 ? 56 : 68;
+
+    // Pretendard ExtraBold 폰트 로딩
+    const fontData = await fetch(
+      'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-ExtraBold.otf'
+    ).then(r => r.arrayBuffer());
+
+    // 로고 로딩 (base64로 변환)
+    const logoUrl = new URL('/white-logo.png', request.url).href;
+    const logoData = await fetch(logoUrl).then(r => r.arrayBuffer());
+    const logoBase64 = `data:image/png;base64,${Buffer.from(logoData).toString('base64')}`;
+
+    // 검은색 외곽선 — textShadow 4방향
+    const stroke = '-3px 0 #000, 3px 0 #000, 0 -3px #000, 0 3px #000, -2px -2px #000, 2px -2px #000, -2px 2px #000, 2px 2px #000';
 
     return new ImageResponse(
       (
@@ -31,73 +43,65 @@ export async function GET(request: NextRequest) {
             justifyContent: 'center',
             alignItems: 'flex-start',
             background: '#071be9',
-            padding: '64px 80px',
-            fontFamily: 'sans-serif',
+            padding: '60px 80px 100px',
           }}
         >
-          {/* Title line 1 — yellow */}
+          {/* 윗줄 — 노란색 */}
           <div
             style={{
               display: 'flex',
-              fontSize,
+              fontSize: 85,
               fontWeight: 800,
+              fontFamily: 'Pretendard',
               color: '#fcfd00',
-              lineHeight: 1.15,
-              letterSpacing: '-1.5px',
-              maxWidth: '1040px',
+              letterSpacing: '-5px',
+              lineHeight: 1.1,
+              textShadow: stroke,
             }}
           >
             {line1}
           </div>
 
-          {/* Title line 2 — white */}
+          {/* 아랫줄 — 흰색 */}
           {line2 && (
             <div
               style={{
                 display: 'flex',
-                fontSize,
+                fontSize: 85,
                 fontWeight: 800,
+                fontFamily: 'Pretendard',
                 color: '#ffffff',
-                lineHeight: 1.15,
-                letterSpacing: '-1.5px',
-                maxWidth: '1040px',
-                marginTop: '8px',
+                letterSpacing: '-5px',
+                lineHeight: 1.1,
+                textShadow: stroke,
+                marginTop: '10px',
               }}
             >
               {line2}
             </div>
           )}
 
-          {/* Branding */}
-          <div
+          {/* 하단 중앙 로고 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={logoBase64}
+            alt="SuperfastSAT"
             style={{
               position: 'absolute',
-              bottom: '44px',
-              left: '80px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
+              bottom: '40px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              height: '52px',
+              objectFit: 'contain',
             }}
-          >
-            <span
-              style={{
-                fontSize: '22px',
-                fontWeight: 700,
-                color: '#ffffff',
-                opacity: 0.9,
-                letterSpacing: '-0.5px',
-              }}
-            >
-              SuperfastSAT
-            </span>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '22px' }}>|</span>
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '18px' }}>
-              satmasterclass.com
-            </span>
-          </div>
+          />
         </div>
       ),
-      { width: 1200, height: 630 }
+      {
+        width: 1200,
+        height: 630,
+        fonts: [{ name: 'Pretendard', data: fontData, style: 'normal', weight: 800 }],
+      }
     );
   }
 
