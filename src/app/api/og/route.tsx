@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
   const isGhost = searchParams.get('ghost') === 'true';
 
   if (isGhost) {
-    const [line1, line2] = splitTitle(title);
+    // line1/line2를 URL 파라미터로 직접 받음 (Qwen이 사전에 요약)
+    const line1 = searchParams.get('line1') || title;
+    const line2 = searchParams.get('line2') || '';
 
     // Pretendard ExtraBold 폰트 로딩
     const fontData = await fetch(
@@ -29,8 +31,14 @@ export async function GET(request: NextRequest) {
     const logoData = await fetch(logoUrl).then(r => r.arrayBuffer());
     const logoBase64 = `data:image/png;base64,${Buffer.from(logoData).toString('base64')}`;
 
-    // 검은색 외곽선 — textShadow 4방향
-    const stroke = '-3px 0 #000, 3px 0 #000, 0 -3px #000, 0 3px #000, -2px -2px #000, 2px -2px #000, -2px 2px #000, 2px 2px #000';
+    // 검은색 외곽선 — 원본: -webkit-text-stroke 10px 재현 (다방향 textShadow)
+    const s = 6;
+    const stroke = [
+      `-${s}px -${s}px 0 #000`, `${s}px -${s}px 0 #000`,
+      `-${s}px ${s}px 0 #000`, `${s}px ${s}px 0 #000`,
+      `0 -${s}px 0 #000`, `0 ${s}px 0 #000`,
+      `-${s}px 0 #000`, `${s}px 0 #000`,
+    ].join(', ');
 
     return new ImageResponse(
       (
@@ -41,22 +49,24 @@ export async function GET(request: NextRequest) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             background: '#071be9',
-            padding: '60px 80px 100px',
+            padding: '60px 100px 100px',
           }}
         >
           {/* 윗줄 — 노란색 */}
           <div
             style={{
               display: 'flex',
-              fontSize: 85,
+              fontSize: 90,
               fontWeight: 800,
               fontFamily: 'Pretendard',
               color: '#fcfd00',
-              letterSpacing: '-5px',
+              letterSpacing: '-0.06em',
               lineHeight: 1.1,
               textShadow: stroke,
+              textAlign: 'center',
+              wordBreak: 'keep-all',
             }}
           >
             {line1}
@@ -67,13 +77,15 @@ export async function GET(request: NextRequest) {
             <div
               style={{
                 display: 'flex',
-                fontSize: 85,
+                fontSize: 90,
                 fontWeight: 800,
                 fontFamily: 'Pretendard',
                 color: '#ffffff',
-                letterSpacing: '-5px',
+                letterSpacing: '-0.06em',
                 lineHeight: 1.1,
                 textShadow: stroke,
+                textAlign: 'center',
+                wordBreak: 'keep-all',
                 marginTop: '10px',
               }}
             >
@@ -88,10 +100,10 @@ export async function GET(request: NextRequest) {
             alt="SuperfastSAT"
             style={{
               position: 'absolute',
-              bottom: '40px',
+              bottom: '44px',
               left: '50%',
               transform: 'translateX(-50%)',
-              height: '52px',
+              height: '40px',
               objectFit: 'contain',
             }}
           />

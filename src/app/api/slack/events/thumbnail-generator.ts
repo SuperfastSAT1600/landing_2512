@@ -88,10 +88,43 @@ async function generateQwenThumbnail(prompt: string, slug: string, prefix: strin
   return uploadBuffer(buffer, slug, prefix);
 }
 
-// Ghost용: /api/og 엔드포인트로 브랜딩 텍스트 썸네일 생성 후 Supabase에 업로드
+// Qwen으로 제목 → 썸네일용 2줄 요약
+async function summarizeTitleToLines(title: string): Promise<{ line1: string; line2: string }> {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  if (!apiKey) throw new Error('DASHSCOPE_API_KEY is not set');
+
+  const res = await fetch(
+    'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'qwen-turbo',
+        max_tokens: 60,
+        messages: [{
+          role: 'user',
+          content: `다음 블로그 제목을 썸네일 이미지에 들어갈 임팩트 있는 2줄 텍스트로 요약해줘.
+규칙: 각 줄 한글 12자 이내, 핵심 키워드 중심, 구어체 금지, 숫자/영어 활용 권장.
+JSON만 반환 (다른 텍스트 없이): {"line1":"...","line2":"..."}
+제목: ${title}`,
+        }],
+      }),
+    }
+  );
+  const data = await res.json() as { choices?: { message?: { content?: string } }[] };
+  const text = data.choices?.[0]?.message?.content ?? '';
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('2줄 요약 JSON 파싱 실패: ' + text);
+  return JSON.parse(match[0]) as { line1: string; line2: string };
+}
+
+// Ghost용: Qwen 2줄 요약 → /api/og?ghost=true 렌더링 → Supabase 업로드
 export async function generateGhostThumbnail(title: string, slug: string): Promise<string> {
+  const { line1, line2 } = await summarizeTitleToLines(title);
+  console.log(`[thumbnail] Ghost 2줄 요약: "${line1}" / "${line2}"`);
+
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfastsat.com';
-  const ogUrl = `${baseUrl}/api/og?title=${encodeURIComponent(title)}&category=SAT&ghost=true`;
+  const ogUrl = `${baseUrl}/api/og?ghost=true&line1=${encodeURIComponent(line1)}&line2=${encodeURIComponent(line2)}`;
 
   const res = await fetch(ogUrl);
   if (!res.ok) throw new Error(`OG 이미지 fetch 실패: ${res.status}`);
