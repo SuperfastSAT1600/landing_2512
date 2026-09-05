@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SKELETON_SYSTEM, GHOST_PROSE_SYSTEM, LANDING_PROSE_SYSTEM } from './blog-prompts';
+import { matchRelatedPosts, buildRelatedPostsContext } from './post-memory';
 
 export type Topic = { n?: number; title: string; rationale: string; point: string };
 export type BlogDraft = { ghostMarkdown: string; landingMarkdown: string; slug: string; title: string; focusKeyword: string };
@@ -28,12 +29,16 @@ async function generateSkeleton(
 }
 
 async function generateGhostProse(
-  topic: Topic, skeleton: Record<string, unknown>, client: Anthropic
+  topic: Topic, skeleton: Record<string, unknown>, relatedContext: string, client: Anthropic
 ): Promise<string> {
+  const systemPrompt = relatedContext
+    ? GHOST_PROSE_SYSTEM + relatedContext
+    : GHOST_PROSE_SYSTEM;
+
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 8000,
-    system: GHOST_PROSE_SYSTEM,
+    system: systemPrompt,
     messages: [{
       role: 'user',
       content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 Ghost 블로그 포스팅을 마크다운으로 작성해주세요.`,
@@ -43,12 +48,16 @@ async function generateGhostProse(
 }
 
 async function generateLandingProse(
-  topic: Topic, skeleton: Record<string, unknown>, client: Anthropic
+  topic: Topic, skeleton: Record<string, unknown>, relatedContext: string, client: Anthropic
 ): Promise<string> {
+  const systemPrompt = relatedContext
+    ? LANDING_PROSE_SYSTEM + relatedContext
+    : LANDING_PROSE_SYSTEM;
+
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 10000,
-    system: LANDING_PROSE_SYSTEM,
+    system: systemPrompt,
     messages: [{
       role: 'user',
       content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 랜딩 페이지 블로그를 마크다운으로 작성해주세요.`,
@@ -69,12 +78,21 @@ export function extractSlugFromMarkdown(markdown: string, title: string): string
 export async function writeBlog(topic: Topic, platform: 'ghost' | 'landing' | 'both' = 'both'): Promise<BlogDraft> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+  // 관련 과거 포스팅 검색 (RAG) — 실패해도 글 작성은 계속됨
+  const queryText = `${topic.title}\n${topic.rationale || ''}\n${topic.point || ''}`;
+  const relatedPosts = await matchRelatedPosts(queryText, 3, 0.65);
+  const relatedContext = buildRelatedPostsContext(relatedPosts);
+
+  if (relatedPosts.length > 0) {
+    console.log(`[blog-writer] related posts found: ${relatedPosts.map(p => p.title).join(', ')}`);
+  }
+
   const skeleton = await generateSkeleton(topic, client);
   const ghostMarkdown = (platform === 'ghost' || platform === 'both')
-    ? await generateGhostProse(topic, skeleton, client)
+    ? await generateGhostProse(topic, skeleton, relatedContext, client)
     : '';
   const landingMarkdown = (platform === 'landing' || platform === 'both')
-    ? await generateLandingProse(topic, skeleton, client)
+    ? await generateLandingProse(topic, skeleton, relatedContext, client)
     : '';
 
   const baseMarkdown = ghostMarkdown || landingMarkdown;

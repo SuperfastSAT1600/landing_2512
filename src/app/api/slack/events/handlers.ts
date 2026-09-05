@@ -6,6 +6,7 @@ import { saveLandingDraft, publishLandingPost, updateLandingThumbnail } from './
 import { generateGhostThumbnail, generateLandingThumbnail } from './thumbnail-generator';
 import { postSlack, getDraftFromThread, BLOG_CHANNEL } from './slack-utils';
 import { generateTopics, buildTopicMessage } from './topic-suggester';
+import { savePostEmbedding } from './post-memory';
 
 function extractFrontmatter(markdown: string): Record<string, string> {
   const match = markdown.match(/^```(?:yaml)?\s*\r?\n(---\r?\n[\s\S]+?\r?\n---)/m)
@@ -102,6 +103,20 @@ export async function handleBlogWrite(
 
   const { ghostId, landingId } = await saveDrafts(draft, topic, '', '', platform);
 
+  // 랜딩 포스팅 임베딩 저장 (장기 기억) — 실패해도 발행 차단 안 함
+  const postId = landingId || ghostId;
+  if (postId) {
+    const meta = extractFrontmatter(draft.ghostMarkdown || draft.landingMarkdown);
+    void savePostEmbedding({
+      postId,
+      title: draft.title,
+      excerpt: meta.description || topic.rationale,
+      description: meta.description,
+      focusKeyword: draft.focusKeyword,
+      singleClaim: topic.point,
+    });
+  }
+
   const excerptParts: string[] = [];
   if (platform === 'ghost' || platform === 'both') {
     const ghostExcerpt = stripFrontmatter(draft.ghostMarkdown)
@@ -169,7 +184,7 @@ export async function handlePublish(channel: string, threadTs: string): Promise<
 
   await postSlack(
     channel,
-    `${status}\n\n*제목:* ${meta.title}\nGhost: ${ghostUrl}\n랜딩: ${landingUrl}`,
+    `${status}\n*제목:* ${meta.title}\nGhost: ${ghostUrl}\n랜딩: ${landingUrl}`,
     threadTs
   );
 }
