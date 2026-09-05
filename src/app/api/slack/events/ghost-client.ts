@@ -2,9 +2,14 @@ import crypto from 'crypto';
 
 const GHOST_BASE_URL = process.env.GHOST_URL || 'https://superfastsat.ghost.io';
 
-const CTA_HTML = `<div style="text-align:center;margin-top:32px;">
-  <a href="https://superfastsat.com/api/kakao-redirect?source=ghost" target="_blank" rel="noopener noreferrer"
-    style="display:inline-block;padding:14px 22px;border-radius:10px;background:#071be9;color:#ffffff;font-weight:600;text-decoration:none;">
+const CTA_HTML = `<div style="text-align:center;">
+  <a
+    id="kakao-openchat-btn"
+    href="https://open.kakao.com/o/s858Ajch"
+    target="_blank"
+    rel="noopener noreferrer"
+    style="display:inline-block;padding:14px 22px;border-radius:10px;background:#071be9;color:#ffffff;font-weight:600;text-decoration:none;"
+  >
     카카오톡으로 수업 상담 신청하기🖐️
   </a>
 </div>`;
