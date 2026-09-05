@@ -91,7 +91,7 @@ async function generateQwenThumbnail(prompt: string, slug: string, prefix: strin
 // Ghost용: /api/og 엔드포인트로 브랜딩 텍스트 썸네일 생성 후 Supabase에 업로드
 export async function generateGhostThumbnail(title: string, slug: string): Promise<string> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfastsat.com';
-  const ogUrl = `${baseUrl}/api/og?title=${encodeURIComponent(title)}&category=SAT`;
+  const ogUrl = `${baseUrl}/api/og?title=${encodeURIComponent(title)}&category=SAT&ghost=true`;
 
   const res = await fetch(ogUrl);
   if (!res.ok) throw new Error(`OG 이미지 fetch 실패: ${res.status}`);
