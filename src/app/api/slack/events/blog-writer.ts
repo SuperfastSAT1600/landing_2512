@@ -1,25 +1,26 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { SKELETON_SYSTEM, GHOST_PROSE_SYSTEM, LANDING_PROSE_SYSTEM } from './blog-prompts';
 import { matchRelatedPosts, buildRelatedPostsContext } from './post-memory';
 
 export type Topic = { n?: number; title: string; rationale: string; point: string };
 export type BlogDraft = { ghostMarkdown: string; landingMarkdown: string; slug: string; title: string; focusKeyword: string };
 
+const OPENAI_MODEL = 'gpt-4o';
+
 // ─── API Calls ────────────────────────────────────────────────────────────────
 
 async function generateSkeleton(
-  topic: Topic, client: Anthropic
+  topic: Topic, client: OpenAI
 ): Promise<Record<string, unknown>> {
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+  const response = await client.chat.completions.create({
+    model: OPENAI_MODEL,
     max_tokens: 2000,
-    system: SKELETON_SYSTEM,
-    messages: [{
-      role: 'user',
-      content: `주제: ${topic.title}\n근거: ${topic.rationale || '없음'}\n핵심 포인트: ${topic.point || '없음'}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격 JSON을 반환해주세요.`,
-    }],
+    messages: [
+      { role: 'system', content: SKELETON_SYSTEM },
+      { role: 'user', content: `주제: ${topic.title}\n근거: ${topic.rationale || '없음'}\n핵심 포인트: ${topic.point || '없음'}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격 JSON을 반환해주세요.` },
+    ],
   });
-  const text = response.content[0].type === 'text' ? response.content[0].text : '{}';
+  const text = response.choices[0]?.message?.content ?? '{}';
   const stripped = text.replace(/```(?:json)?\s*/g, '').replace(/```/g, '');
   const start = stripped.indexOf('{');
   const end = stripped.lastIndexOf('}');
@@ -28,35 +29,33 @@ async function generateSkeleton(
 }
 
 async function generateGhostProse(
-  topic: Topic, skeleton: Record<string, unknown>, relatedContext: string, client: Anthropic
+  topic: Topic, skeleton: Record<string, unknown>, relatedContext: string, client: OpenAI
 ): Promise<string> {
   const systemPrompt = relatedContext ? GHOST_PROSE_SYSTEM + relatedContext : GHOST_PROSE_SYSTEM;
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+  const response = await client.chat.completions.create({
+    model: OPENAI_MODEL,
     max_tokens: 8000,
-    system: systemPrompt,
-    messages: [{
-      role: 'user',
-      content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 Ghost 블로그 포스팅을 마크다운으로 작성해주세요.`,
-    }],
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 Ghost 블로그 포스팅을 마크다운으로 작성해주세요.` },
+    ],
   });
-  return response.content[0].type === 'text' ? response.content[0].text : '';
+  return response.choices[0]?.message?.content ?? '';
 }
 
 async function generateLandingProse(
-  topic: Topic, skeleton: Record<string, unknown>, relatedContext: string, client: Anthropic
+  topic: Topic, skeleton: Record<string, unknown>, relatedContext: string, client: OpenAI
 ): Promise<string> {
   const systemPrompt = relatedContext ? LANDING_PROSE_SYSTEM + relatedContext : LANDING_PROSE_SYSTEM;
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+  const response = await client.chat.completions.create({
+    model: OPENAI_MODEL,
     max_tokens: 10000,
-    system: systemPrompt,
-    messages: [{
-      role: 'user',
-      content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 랜딩 페이지 블로그를 마크다운으로 작성해주세요.`,
-    }],
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 랜딩 페이지 블로그를 마크다운으로 작성해주세요.` },
+    ],
   });
-  return response.content[0].type === 'text' ? response.content[0].text : '';
+  return response.choices[0]?.message?.content ?? '';
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -69,7 +68,7 @@ export function extractSlugFromMarkdown(markdown: string, title: string): string
 }
 
 export async function writeBlog(topic: Topic, platform: 'ghost' | 'landing' | 'both' = 'both'): Promise<BlogDraft> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const queryText = `${topic.title}\n${topic.rationale || ''}\n${topic.point || ''}`;
   const relatedPosts = await matchRelatedPosts(queryText, 3, 0.65);
@@ -90,7 +89,6 @@ export async function writeBlog(topic: Topic, platform: 'ghost' | 'landing' | 'b
   const baseMarkdown = ghostMarkdown || landingMarkdown;
   const slug = extractSlugFromMarkdown(baseMarkdown, topic.title);
   const focusKeyword = (skeleton.focus_keyword as string | undefined) || topic.title;
-  // 골격의 meta_title을 SEO 제목으로 사용 (없으면 Slack 요청 텍스트 폴백)
   const title = (skeleton.meta_title as string | undefined)?.trim() || topic.title;
   return { ghostMarkdown, landingMarkdown, slug, title, focusKeyword };
 }
