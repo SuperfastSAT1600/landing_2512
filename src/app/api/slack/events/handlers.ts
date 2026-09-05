@@ -28,87 +28,100 @@ function stripFrontmatter(markdown: string): string {
   return markdown.replace(/^---\r?\n[\s\S]+?\r?\n---\r?\n?/, '').trim();
 }
 
+export type Platform = 'ghost' | 'landing' | 'both';
+
 async function saveDrafts(
   draft: BlogDraft, topic: Topic,
-  ghostThumbnailUrl: string, landingThumbnailUrl: string
+  ghostThumbnailUrl: string, landingThumbnailUrl: string,
+  platform: Platform = 'both'
 ): Promise<{ ghostId: string; landingId: string }> {
-  const ghostHtml = await marked(stripFrontmatter(draft.ghostMarkdown));
-  const landingHtml = await marked(stripFrontmatter(draft.landingMarkdown));
-
   const meta = extractFrontmatter(draft.ghostMarkdown);
   const focusKeyword = meta.focus_keyword || draft.focusKeyword;
   const description = meta.description || topic.rationale || draft.title;
 
-  const [ghostResult, landingResult] = await Promise.allSettled([
-    saveGhostDraft(draft.title, ghostHtml, draft.slug, meta.description || '', ghostThumbnailUrl),
-    saveLandingDraft(draft.title, landingHtml, draft.slug, topic, description, focusKeyword, landingThumbnailUrl),
-  ]);
+  let ghostId = '';
+  let landingId = '';
 
-  if (ghostResult.status === 'rejected') throw new Error(`Ghost 저장 실패: ${ghostResult.reason?.message}`);
-  if (landingResult.status === 'rejected') throw new Error(`랜딩 저장 실패: ${landingResult.reason?.message}`);
+  if (platform === 'ghost' || platform === 'both') {
+    const ghostHtml = await marked(stripFrontmatter(draft.ghostMarkdown));
+    const result = await saveGhostDraft(draft.title, ghostHtml, draft.slug, meta.description || '', ghostThumbnailUrl);
+    ghostId = result.id;
+  }
 
-  return { ghostId: ghostResult.value.id, landingId: landingResult.value };
+  if (platform === 'landing' || platform === 'both') {
+    const landingHtml = await marked(stripFrontmatter(draft.landingMarkdown));
+    landingId = await saveLandingDraft(draft.title, landingHtml, draft.slug, topic, description, focusKeyword, landingThumbnailUrl);
+  }
+
+  return { ghostId, landingId };
 }
 
 async function attachThumbnailsAfter(
-  draft: BlogDraft, ghostId: string, landingId: string, channel: string, threadTs: string
+  draft: BlogDraft, ghostId: string, landingId: string,
+  channel: string, threadTs: string, platform: Platform = 'both'
 ): Promise<void> {
-  const [ghostThumbResult, landingThumbResult] = await Promise.allSettled([
-    generateGhostThumbnail(draft.focusKeyword, draft.slug),
-    generateLandingThumbnail(draft.title, draft.slug),
+  const tasks = await Promise.allSettled([
+    (platform === 'ghost' || platform === 'both') ? generateGhostThumbnail(draft.focusKeyword, draft.slug) : Promise.resolve(''),
+    (platform === 'landing' || platform === 'both') ? generateLandingThumbnail(draft.title, draft.slug) : Promise.resolve(''),
   ]);
 
-  const ghostThumbnailUrl = ghostThumbResult.status === 'fulfilled' ? ghostThumbResult.value : '';
-  const landingThumbnailUrl = landingThumbResult.status === 'fulfilled' ? landingThumbResult.value : '';
+  const ghostThumbnailUrl = tasks[0].status === 'fulfilled' ? tasks[0].value : '';
+  const landingThumbnailUrl = tasks[1].status === 'fulfilled' ? tasks[1].value : '';
 
-  // 썸네일 URL 업데이트
   await Promise.allSettled([
     ghostThumbnailUrl ? updateGhostThumbnail(ghostId, ghostThumbnailUrl) : Promise.resolve(),
     landingThumbnailUrl ? updateLandingThumbnail(landingId, landingThumbnailUrl) : Promise.resolve(),
   ]);
 
-  const thumbMsg = [
-    ghostThumbnailUrl ? `Ghost 썸네일: ${ghostThumbnailUrl}` : '⚠️ Ghost 썸네일 생성 실패',
-    landingThumbnailUrl ? `랜딩 썸네일: ${landingThumbnailUrl}` : '⚠️ 랜딩 썸네일 생성 실패',
-  ].join('\n');
+  const lines: string[] = [];
+  if (platform === 'ghost' || platform === 'both')
+    lines.push(ghostThumbnailUrl ? `Ghost 썸네일: ${ghostThumbnailUrl}` : '⚠️ Ghost 썸네일 생성 실패');
+  if (platform === 'landing' || platform === 'both')
+    lines.push(landingThumbnailUrl ? `랜딩 썸네일: ${landingThumbnailUrl}` : '⚠️ 랜딩 썸네일 생성 실패');
 
-  await postSlack(channel, `썸네일 생성 완료\n${thumbMsg}`, threadTs);
+  await postSlack(channel, `썸네일 생성 완료\n${lines.join('\n')}`, threadTs);
 }
 
 export async function handleBlogWrite(
-  topic: Topic, channel: string, threadTs: string
+  topic: Topic, channel: string, threadTs: string, platform: Platform = 'both'
 ): Promise<void> {
+  const platformLabel = platform === 'ghost' ? 'Ghost' : platform === 'landing' ? '랜딩' : 'Ghost + 랜딩';
   await postSlack(channel,
-    `블로그 작성을 시작합니다.\n\n제목: ${topic.title}\n\n골격 설계 → Ghost 산문 → 랜딩 산문 순서로 작성합니다. 약 3~5분 소요됩니다.`,
+    `블로그 작성을 시작합니다. (${platformLabel})\n\n제목: ${topic.title}\n\n골격 설계 → 산문 작성 순서로 진행합니다. 약 3~5분 소요됩니다.`,
     threadTs
   );
 
   let draft: BlogDraft;
   try {
-    draft = await writeBlog(topic);
+    draft = await writeBlog(topic, platform);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await postSlack(channel, `⚠️ 블로그 초안 생성 실패: ${msg}`, threadTs);
     throw err;
   }
 
-  // 썸네일 없이 먼저 저장 → 슬랙 알림 → 썸네일은 별도 업데이트
-  const { ghostId, landingId } = await saveDrafts(draft, topic, '', '');
+  const { ghostId, landingId } = await saveDrafts(draft, topic, '', '', platform);
 
-  const ghostExcerpt = stripFrontmatter(draft.ghostMarkdown)
-    .replace(/#{1,6} .+/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
-  const landingExcerpt = stripFrontmatter(draft.landingMarkdown)
-    .replace(/#{1,6} .+/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
+  const excerptParts: string[] = [];
+  if (platform === 'ghost' || platform === 'both') {
+    const ghostExcerpt = stripFrontmatter(draft.ghostMarkdown)
+      .replace(/#{1,6} .+/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
+    excerptParts.push(`*Ghost 버전:*\n${ghostExcerpt}...`);
+  }
+  if (platform === 'landing' || platform === 'both') {
+    const landingExcerpt = stripFrontmatter(draft.landingMarkdown)
+      .replace(/#{1,6} .+/g, '').replace(/\n+/g, ' ').trim().slice(0, 200);
+    excerptParts.push(`*랜딩 버전:*\n${landingExcerpt}...`);
+  }
+
   const metaTag = `[blog-agent: ghost_id=${ghostId}|landing_id=${landingId}|title=${encodeURIComponent(draft.title)}]`;
-
   await postSlack(
     channel,
-    `${metaTag}\n\n*[검토 요청] ${draft.title}*\n\n*Ghost 버전:*\n${ghostExcerpt}...\n\n*Landing 버전:*\n${landingExcerpt}...\n\n> 썸네일 생성 중... 잠시 후 업데이트됩니다.\n> 발행하려면 이 스레드에 *발행할게요* 를 입력해주세요.`,
+    `${metaTag}\n\n*[검토 요청] ${draft.title}*\n\n${excerptParts.join('\n\n')}\n\n> 썸네일 생성 중... 잠시 후 업데이트됩니다.\n> 발행하려면 이 스레드에 *발행할게요* 를 입력해주세요.`,
     threadTs
   );
 
-  // 썸네일은 슬랙 알림 이후 별도 생성 (타임아웃 방지)
-  await attachThumbnailsAfter(draft, ghostId, landingId, channel, threadTs);
+  await attachThumbnailsAfter(draft, ghostId, landingId, channel, threadTs, platform);
 }
 
 export async function handleTopicSuggest(

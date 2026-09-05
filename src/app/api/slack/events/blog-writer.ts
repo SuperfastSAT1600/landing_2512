@@ -66,14 +66,19 @@ export function extractSlugFromMarkdown(markdown: string, title: string): string
     .replace(/\s+/g, '-').slice(0, 60) + '-' + Date.now().toString(36);
 }
 
-export async function writeBlog(topic: Topic): Promise<BlogDraft> {
+export async function writeBlog(topic: Topic, platform: 'ghost' | 'landing' | 'both' = 'both'): Promise<BlogDraft> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const skeleton = await generateSkeleton(topic, client);
-  const ghostMarkdown = await generateGhostProse(topic, skeleton, client);
-  const landingMarkdown = await generateLandingProse(topic, skeleton, client);
+  const ghostMarkdown = (platform === 'ghost' || platform === 'both')
+    ? await generateGhostProse(topic, skeleton, client)
+    : '';
+  const landingMarkdown = (platform === 'landing' || platform === 'both')
+    ? await generateLandingProse(topic, skeleton, client)
+    : '';
 
-  const slug = extractSlugFromMarkdown(ghostMarkdown, topic.title);
+  const baseMarkdown = ghostMarkdown || landingMarkdown;
+  const slug = extractSlugFromMarkdown(baseMarkdown, topic.title);
   const focusKeyword = (skeleton.focus_keyword as string | undefined) || topic.title;
   return { ghostMarkdown, landingMarkdown, slug, title: topic.title, focusKeyword };
 }
