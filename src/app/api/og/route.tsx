@@ -96,19 +96,23 @@ export async function GET(request: NextRequest) {
           )}
 
           {logoBase64 && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoBase64}
-              alt="SuperfastSAT"
+            <div
               style={{
                 position: 'absolute',
                 bottom: '44px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                height: '40px',
-                objectFit: 'contain',
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'center',
               }}
-            />
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoBase64}
+                alt="SuperfastSAT"
+                style={{ height: '40px', objectFit: 'contain' }}
+              />
+            </div>
           )}
         </div>
       ),
