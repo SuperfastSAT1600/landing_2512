@@ -104,5 +104,7 @@ export async function writeBlog(topic: Topic, platform: 'ghost' | 'landing' | 'b
   const baseMarkdown = ghostMarkdown || landingMarkdown;
   const slug = extractSlugFromMarkdown(baseMarkdown, topic.title);
   const focusKeyword = (skeleton.focus_keyword as string | undefined) || topic.title;
-  return { ghostMarkdown, landingMarkdown, slug, title: topic.title, focusKeyword };
+  // 골격의 meta_title을 SEO 제목으로 사용 (없으면 Slack 요청 텍스트 폴백)
+  const title = (skeleton.meta_title as string | undefined)?.trim() || topic.title;
+  return { ghostMarkdown, landingMarkdown, slug, title, focusKeyword };
 }
