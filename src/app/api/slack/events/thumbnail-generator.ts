@@ -73,7 +73,7 @@ async function generateQwenThumbnail(prompt: string, slug: string, prefix: strin
     if (status === 'SUCCEEDED') {
       const content = pollData.output?.choices?.[0]?.message?.content;
       imageUrl = Array.isArray(content)
-        ? (content.find((c: { type?: string; image?: string }) => c.type === 'image') as { image?: string })?.image ?? null
+        ? ((content as { type?: string; image?: string }[]).find(c => c.type === 'image'))?.image ?? null
         : pollData.output?.results?.[0]?.url ?? null;
       break;
     }
