@@ -17,21 +17,29 @@ export async function GET(request: NextRequest) {
   const isGhost = searchParams.get('ghost') === 'true';
 
   if (isGhost) {
-    // line1/line2를 URL 파라미터로 직접 받음 (Qwen이 사전에 요약)
     const line1 = searchParams.get('line1') || title;
     const line2 = searchParams.get('line2') || '';
 
-    // Pretendard ExtraBold 폰트 로딩
-    const fontData = await fetch(
-      'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-ExtraBold.otf'
-    ).then(r => r.arrayBuffer());
+    // Pretendard 폰트 (실패 시 sans-serif 폴백)
+    let fontOption: { name: string; data: ArrayBuffer; style: 'normal'; weight: 800 }[] = [];
+    try {
+      const fontData = await fetch(
+        'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-ExtraBold.otf',
+        { signal: AbortSignal.timeout(5000) }
+      ).then(r => r.arrayBuffer());
+      fontOption = [{ name: 'Pretendard', data: fontData, style: 'normal', weight: 800 }];
+    } catch { /* 폴백: 기본 sans-serif */ }
 
-    // 로고 로딩 (base64로 변환)
-    const logoUrl = new URL('/white-logo.png', request.url).href;
-    const logoData = await fetch(logoUrl).then(r => r.arrayBuffer());
-    const logoBase64 = `data:image/png;base64,${Buffer.from(logoData).toString('base64')}`;
+    const fontFamily = fontOption.length ? 'Pretendard' : 'sans-serif';
 
-    // 검은색 외곽선 — 원본: -webkit-text-stroke 10px 재현 (다방향 textShadow)
+    // 로고 (실패 시 생략)
+    let logoBase64 = '';
+    try {
+      const logoUrl = new URL('/white-logo.png', request.url).href;
+      const logoData = await fetch(logoUrl, { signal: AbortSignal.timeout(3000) }).then(r => r.arrayBuffer());
+      logoBase64 = `data:image/png;base64,${Buffer.from(logoData).toString('base64')}`;
+    } catch { /* 로고 생략 */ }
+
     const s = 6;
     const stroke = [
       `-${s}px -${s}px 0 #000`, `${s}px -${s}px 0 #000`,
@@ -54,38 +62,34 @@ export async function GET(request: NextRequest) {
             padding: '60px 100px 100px',
           }}
         >
-          {/* 윗줄 — 노란색 */}
           <div
             style={{
               display: 'flex',
               fontSize: 90,
               fontWeight: 800,
-              fontFamily: 'Pretendard',
+              fontFamily,
               color: '#fcfd00',
               letterSpacing: '-0.06em',
               lineHeight: 1.1,
               textShadow: stroke,
               textAlign: 'center',
-              wordBreak: 'keep-all',
             }}
           >
             {line1}
           </div>
 
-          {/* 아랫줄 — 흰색 */}
           {line2 && (
             <div
               style={{
                 display: 'flex',
                 fontSize: 90,
                 fontWeight: 800,
-                fontFamily: 'Pretendard',
+                fontFamily,
                 color: '#ffffff',
                 letterSpacing: '-0.06em',
                 lineHeight: 1.1,
                 textShadow: stroke,
                 textAlign: 'center',
-                wordBreak: 'keep-all',
                 marginTop: '10px',
               }}
             >
@@ -93,26 +97,27 @@ export async function GET(request: NextRequest) {
             </div>
           )}
 
-          {/* 하단 중앙 로고 */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={logoBase64}
-            alt="SuperfastSAT"
-            style={{
-              position: 'absolute',
-              bottom: '44px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              height: '40px',
-              objectFit: 'contain',
-            }}
-          />
+          {logoBase64 && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoBase64}
+              alt="SuperfastSAT"
+              style={{
+                position: 'absolute',
+                bottom: '44px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                height: '40px',
+                objectFit: 'contain',
+              }}
+            />
+          )}
         </div>
       ),
       {
         width: 1200,
         height: 630,
-        fonts: [{ name: 'Pretendard', data: fontData, style: 'normal', weight: 800 }],
+        fonts: fontOption,
       }
     );
   }
