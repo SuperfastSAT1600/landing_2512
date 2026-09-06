@@ -19,6 +19,7 @@ async function qwenReview(prompt: string): Promise<string> {
 export interface ReviewResult {
   content: string;
   seo: string;
+  factCheck: string;
 }
 
 export async function reviewBlogDraft(
@@ -26,7 +27,7 @@ export async function reviewBlogDraft(
   ghostMarkdown: string,
   focusKeyword: string,
 ): Promise<ReviewResult> {
-  const [content, seo] = await Promise.all([
+  const [content, seo, factCheck] = await Promise.all([
     qwenReview(`다음 블로그 포스팅 초안을 검수해줘. 항목별로 ✅ 또는 ⚠️ 이모지와 한 줄 코멘트로만 답해.
 
 검수 항목:
@@ -36,6 +37,7 @@ export async function reviewBlogDraft(
 4. H2(##) 섹션 2개 이상 존재 여부
 5. Ghost 포스팅에 CTA 포함 여부 (있으면 ⚠️)
 6. 한 문단 4줄 초과 여부
+7. [UNIQUE INSIGHT], [ORIGINAL DATA], [PERSONAL EXPERIENCE] 등 대괄호 마커 포함 여부 (있으면 ⚠️)
 
 포스팅 제목: ${title}
 본문(앞 2000자):
@@ -54,7 +56,23 @@ ${ghostMarkdown.slice(0, 2000)}`),
 focus_keyword: ${focusKeyword}
 본문 앞 500자:
 ${ghostMarkdown.slice(0, 500)}`),
+
+    qwenReview(`당신은 SAT 전문가입니다. 다음 블로그 포스팅에서 사실과 다르거나 출처 없이 단정하는 주장을 찾아주세요.
+
+판단 기준:
+- 구체적인 수치(%, 점수, 문항 수 등)를 출처 없이 단정하면 ⚠️
+- College Board 공식 정책과 다른 내용이면 ⚠️
+- SAT 시험 구조·채점 방식에 대한 잘못된 설명이면 ⚠️
+- 사실처럼 서술했지만 실제로는 확인 불가능한 주장이면 ⚠️
+- 출처가 명시된 수치이거나 일반적으로 알려진 사실이면 ✅
+
+각 항목은 "⚠️ [의심 문장 요약] — 이유" 또는 "✅ 사실 관계 이상 없음" 형식으로만 답해.
+의심 항목이 없으면 "✅ 사실 관계 이상 없음"만 출력.
+
+포스팅 제목: ${title}
+본문 전체:
+${ghostMarkdown.slice(0, 3000)}`),
   ]);
 
-  return { content, seo };
+  return { content, seo, factCheck };
 }

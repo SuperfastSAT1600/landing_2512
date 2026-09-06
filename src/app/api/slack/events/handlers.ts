@@ -151,7 +151,7 @@ export async function handleBlogWrite(
 
   await postSlack(
     channel,
-    `📋 *Qwen 검수 결과*\n\n*내용 검수*\n${review.content}\n\n*SEO 검수*\n${review.seo}`,
+    `📋 *Qwen 검수 결과*\n\n*내용 검수*\n${review.content}\n\n*SEO 검수*\n${review.seo}\n\n*팩트체크*\n${review.factCheck}`,
     threadTs,
   );
 }
