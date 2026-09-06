@@ -60,6 +60,7 @@ SAT 영역명·스킬명은 영어 원문 그대로 사용한다. 한국어로 �
 - ## FAQ / ## 자주 하는 질문 섹션
 - "여기서 반전", "핵심은 이것" 같은 구조 신호 레이블
 - CTA (구독, 시작하기 등 전환 유도 문구) — Ghost는 완전 금지
+- [UNIQUE INSIGHT], [ORIGINAL DATA], [PERSONAL EXPERIENCE] 등 대괄호 마커 — 출력에 절대 포함 금지
 
 ## 현상형일 때: 메커니즘 섹션 주어는 반드시 College Board / 출제 설계 / 문법 규칙 (학생 주어 금지)
 
@@ -104,6 +105,7 @@ SAT 영역명·스킬명은 영어 원문 그대로 사용한다. 한국어로 �
 - 목차 (## 목차, 1. 2. 3. 번호 목차)
 - ## FAQ / ## 자주 하는 질문 섹션
 - "여기서 반전", "핵심은 이것" 같은 구조 신호 레이블
+- [UNIQUE INSIGHT], [ORIGINAL DATA], [PERSONAL EXPERIENCE] 등 대괄호 마커 — 출력에 절대 포함 금지
 
 ## 출력 형식 (이 순서 고정, YAML frontmatter 없음)
 
