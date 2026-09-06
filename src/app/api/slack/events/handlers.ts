@@ -7,6 +7,7 @@ import { generateGhostThumbnail, generateLandingThumbnail } from './thumbnail-ge
 import { postSlack, getDraftFromThread, BLOG_CHANNEL } from './slack-utils';
 import { generateTopics, buildTopicMessage } from './topic-suggester';
 import { savePostEmbedding } from './post-memory';
+import { reviewBlogDraft } from './blog-reviewer';
 
 function extractFrontmatter(markdown: string): Record<string, string> {
   const match = markdown.match(/^```(?:yaml)?\s*\r?\n(---\r?\n[\s\S]+?\r?\n---)/m)
@@ -129,6 +130,13 @@ export async function handleBlogWrite(
     excerptParts.push(`*랜딩 버전:*\n${landingExcerpt}...`);
   }
 
+  // Qwen 검수 (작성과 병렬)
+  const reviewPromise = reviewBlogDraft(
+    draft.title,
+    draft.ghostMarkdown || draft.landingMarkdown,
+    draft.focusKeyword,
+  ).catch(() => ({ content: '(검수 실패)', seo: '(검수 실패)' }));
+
   const metaTag = `[blog-agent: ghost_id=${ghostId}|landing_id=${landingId}|title=${encodeURIComponent(draft.title)}]`;
   await postSlack(
     channel,
@@ -136,7 +144,16 @@ export async function handleBlogWrite(
     threadTs
   );
 
-  await attachThumbnailsAfter(draft, ghostId, landingId, channel, threadTs, platform);
+  const [, review] = await Promise.all([
+    attachThumbnailsAfter(draft, ghostId, landingId, channel, threadTs, platform),
+    reviewPromise,
+  ]);
+
+  await postSlack(
+    channel,
+    `📋 *Qwen 검수 결과*\n\n*내용 검수*\n${review.content}\n\n*SEO 검수*\n${review.seo}`,
+    threadTs,
+  );
 }
 
 export async function handleTopicSuggest(
