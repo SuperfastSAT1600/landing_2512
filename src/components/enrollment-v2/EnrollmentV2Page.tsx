@@ -578,13 +578,6 @@ function GroupPackagePicker({ selectedOption, onSelect, lang }: {
                       )}
                     </div>
                     <span className="text-2xl font-black text-white leading-none">{pkg.name}</span>
-                    <p className="text-xs text-white/40 mt-1">{pkg.durationLabel}</p>
-                  </div>
-
-                  <div className="flex-1 text-right">
-                    <p className="text-base font-light text-white tracking-tight">
-                      {formatWon(pkg.totalPrice)}
-                    </p>
                   </div>
                 </div>
               </button>
