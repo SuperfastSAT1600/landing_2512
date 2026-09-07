@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/weekly-business-report",
       "schedule": "0 19 * * 0"
+    },
+    {
+      "path": "/api/cron/marketing-weekly-report",
+      "schedule": "0 19 * * 0"
     }
   ]
 }

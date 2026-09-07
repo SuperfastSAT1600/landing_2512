@@ -104,3 +104,4 @@ describe('PAID_GROUPS', () => {
     expect(PAID_GROUPS).toHaveLength(2);
   });
 });
+
