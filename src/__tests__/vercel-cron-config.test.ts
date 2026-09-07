@@ -16,8 +16,10 @@ import { readFileSync } from 'node:fs';
 const EXPECTED_CRONS: Record<string, string> = {
   '/api/cron/diagnosis-expiry': '0 0 * * *',
   '/api/cron/blog-topics': '0 0 * * *',
-  // 월요일 04:00 KST = 일요일 19:00 UTC (Vercel 크론 타임존은 항상 UTC)
+  // 월요일 04:00 KST = 일요일 19:00 UTC (Vercel 크론 타임존은 항상 UTC).
+  // 두 리포트가 같은 슬롯을 쓴다 — 읽는 데이터도 올리는 메시지도 서로 다르다.
   '/api/cron/weekly-business-report': '0 19 * * 0',
+  '/api/cron/marketing-weekly-report': '0 19 * * 0',
 };
 
 function readCrons(): { path: string; schedule: string }[] {

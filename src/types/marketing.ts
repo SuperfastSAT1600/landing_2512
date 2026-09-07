@@ -49,3 +49,29 @@ export interface MarketingStatsResponse {
   groups: MarketingGroupStats[];
   daily: MarketingDailyRow[];
 }
+
+export interface WeeklyStats {
+  week_label: string;
+  week_number: number;
+  year: number;
+  week_start: string;
+  week_end: string;
+  days_elapsed: number;
+  /** 주차 총합 리드 목표. null = 목표 미설정. */
+  weekly_target: number | null;
+  this_week: Record<MarketingGroup, number>;
+  this_week_total: number;
+  this_week_contacted: number;
+  this_week_contact_rate: number;
+  this_week_paid: number;
+  this_week_conversion_rate: number;
+  this_week_revenue: number;
+  this_week_ad_spend: number;
+  this_week_roas: number | null;
+  pace_prediction: number;
+  yoy_week: Record<MarketingGroup, number> | null;
+  yoy_week_total: number | null;
+  yoy_week_label: string | null;
+  hist_weekly_avg: Record<MarketingGroup, number>;
+  hist_weekly_avg_total: number;
+}

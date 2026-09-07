@@ -1,22 +1,17 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { ChevronDown, ChevronUp, TrendingUp, Users, CreditCard, DollarSign } from 'lucide-react';
 import { MARKETING_GROUPS, PAID_GROUPS, GROUP_COLORS, GROUP_ICONS } from '@/lib/marketing-groups';
-import type { MarketingGroupStats, MarketingDailyRow, AdSpend } from '@/types/marketing';
-import type { WeeklyStats } from '@/app/api/crm/marketing/weekly/route';
-
-function getAdminKey() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('admin_key') || '';
-}
-
-function fmt(n: number) { return n.toLocaleString('ko-KR'); }
-function fmtRate(n: number) { return `${n.toFixed(1)}%`; }
-function toDateStr(d: Date) { return d.toISOString().slice(0, 10); }
+import type { MarketingGroupStats, MarketingDailyRow, AdSpend, WeeklyStats } from '@/types/marketing';
+import HeroWidget from './components/HeroWidget';
+import ChannelHealthTable from './components/ChannelHealthTable';
+import MarketingTabs from './components/MarketingTabs';
+import { fmt, fmtRate, toDateStr } from './components/format';
 
 function defaultRange() {
   const to = new Date();
@@ -25,225 +20,11 @@ function defaultRange() {
   return { from: toDateStr(from), to: toDateStr(to) };
 }
 
-const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-
-function getSignal(actual: number, expected: number): '🟢' | '🟡' | '🔴' | '—' {
-  if (expected === 0) return '—';
-  if (actual >= expected * 0.9) return '🟢';
-  if (actual >= expected * 0.5) return '🟡';
-  return '🔴';
+function getAdminKey() {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('admin_key') || '';
 }
 
-// ── Layer 1: Hero Widget ──────────────────────────────────────────────────────
-
-function HeroWidget({
-  weekly,
-  onAddSpend,
-}: {
-  weekly: WeeklyStats;
-  onAddSpend: (group: 'META' | '구글 SEO') => void;
-}) {
-  const {
-    this_week_total, weekly_target, pace_prediction, yoy_week_total,
-    yoy_week_label, week_label, days_elapsed, week_start,
-    this_week_contact_rate, this_week_conversion_rate,
-    this_week_revenue, this_week_roas, this_week_ad_spend,
-  } = weekly;
-
-  const progress = Math.min((this_week_total / weekly_target) * 100, 100);
-  const todayLabel = days_elapsed === 7 ? '일요일 기준' : `${DAY_LABELS[new Date().getUTCDay()]}요일 기준`;
-
-  const progressColor =
-    progress >= 100 ? 'bg-emerald-500' :
-    progress >= 70  ? 'bg-amber-400' :
-    'bg-red-500';
-
-  const statusDot =
-    progress >= 100 ? 'bg-emerald-400' :
-    progress >= 70  ? 'bg-amber-400' :
-    'bg-red-400';
-
-  const yoyDiff = yoy_week_total != null && yoy_week_total > 0
-    ? Math.round(((this_week_total - yoy_week_total) / yoy_week_total) * 100)
-    : null;
-
-  const paceStatus =
-    pace_prediction >= weekly_target ? '🟢 목표 달성 페이스' :
-    pace_prediction >= weekly_target * 0.7 ? '🟡 목표 근접' :
-    '🔴 목표 미달 예상';
-
-  return (
-    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-6 space-y-5">
-      {/* Title row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${statusDot} animate-pulse`} />
-          <span className="text-white font-semibold">이번 주 리드 인입</span>
-          <span className="text-xs text-gray-500 ml-1">{week_label} · {todayLabel}</span>
-        </div>
-        <span className="text-xs text-gray-500">{paceStatus}</span>
-      </div>
-
-      {/* Progress bar */}
-      <div>
-        <div className="flex items-end gap-3 mb-2">
-          <span className="text-4xl font-bold text-white">{this_week_total}</span>
-          <span className="text-lg text-gray-500 mb-1">/ {weekly_target}개 목표</span>
-          <span className="text-sm text-gray-500 mb-1 ml-auto">
-            {this_week_total >= weekly_target
-              ? <span className="text-emerald-400">달성!</span>
-              : <span>{weekly_target - this_week_total}개 남음</span>}
-          </span>
-        </div>
-        <div className="w-full bg-white/5 rounded-full h-2">
-          <div
-            className={`h-2 rounded-full transition-all duration-500 ${progressColor}`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="flex justify-between mt-1.5 text-xs text-gray-600">
-          <span>주말 예상 {pace_prediction}개 ({days_elapsed}일 경과)</span>
-          <span>
-            {yoy_week_total != null
-              ? `작년 동기 ${yoy_week_total}개 (${yoyDiff != null ? `${yoyDiff >= 0 ? '+' : ''}${yoyDiff}%` : '—'})`
-              : '작년 데이터 없음'}
-          </span>
-        </div>
-      </div>
-
-      {/* 5대 핵심 지표 */}
-      <div className="grid grid-cols-5 gap-3 pt-1 border-t border-white/5">
-        <KpiCell label="인입" value={`${this_week_total}명`} />
-        <KpiCell label="컨택 성공률" value={fmtRate(this_week_contact_rate)} />
-        <KpiCell label="결제 전환율" value={fmtRate(this_week_conversion_rate)} />
-        <KpiCell label="결제금액" value={`${fmt(this_week_revenue)}원`} />
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-gray-500">ROAS</span>
-          {this_week_roas != null ? (
-            <>
-              <span className={`text-lg font-bold ${this_week_roas >= 1 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {this_week_roas.toFixed(2)}x
-              </span>
-              <span className="text-xs text-gray-600">{fmt(this_week_ad_spend)}원 지출</span>
-            </>
-          ) : (
-            <>
-              <span className="text-lg font-bold text-gray-600">—</span>
-              <div className="flex gap-1 mt-0.5">
-                <button
-                  onClick={() => onAddSpend('META')}
-                  className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded px-1.5 py-0.5 transition-colors"
-                >
-                  META
-                </button>
-                <button
-                  onClick={() => onAddSpend('구글 SEO')}
-                  className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded px-1.5 py-0.5 transition-colors"
-                >
-                  구글
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function KpiCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-gray-500">{label}</span>
-      <span className="text-lg font-bold text-white">{value}</span>
-    </div>
-  );
-}
-
-// ── Layer 2: Channel Health Table ─────────────────────────────────────────────
-
-function ChannelHealthTable({ weekly }: { weekly: WeeklyStats }) {
-  const { this_week, hist_weekly_avg } = weekly;
-
-  const rows = MARKETING_GROUPS.map((group) => {
-    const actual = this_week[group] ?? 0;
-    const expected = hist_weekly_avg[group] ?? 0;
-    const diff = actual - expected;
-    const signal = getSignal(actual, expected);
-    return { group, actual, expected, diff, signal };
-  });
-
-  const signalBg: Record<string, string> = {
-    '🟢': 'text-emerald-400',
-    '🟡': 'text-amber-400',
-    '🔴': 'text-red-400',
-    '—': 'text-gray-600',
-  };
-
-  return (
-    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-semibold">채널별 이번 주 현황</h3>
-        <span className="text-xs text-gray-500">기대치 = 최근 12주 평균</span>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-white/5 text-xs text-gray-500">
-              <th className="text-left py-2 pr-4 font-medium">채널</th>
-              <th className="text-right py-2 px-3 font-medium">이번 주</th>
-              <th className="text-right py-2 px-3 font-medium">기대치</th>
-              <th className="text-right py-2 px-3 font-medium">차이</th>
-              <th className="text-center py-2 pl-3 font-medium">판정</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ group, actual, expected, diff, signal }) => {
-              const color = GROUP_COLORS[group];
-              const icon = GROUP_ICONS[group];
-              return (
-                <tr key={group} className="border-b border-white/5 last:border-0">
-                  <td className="py-3 pr-4">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-5 h-5 rounded flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                        style={{ backgroundColor: color }}
-                      >
-                        {icon}
-                      </span>
-                      <span className="text-gray-200">{group}</span>
-                    </div>
-                  </td>
-                  <td className="text-right py-3 px-3 text-white font-semibold">{actual}개</td>
-                  <td className="text-right py-3 px-3 text-gray-400">
-                    {expected === 0 ? '—' : `${expected.toFixed(1)}개`}
-                  </td>
-                  <td className={`text-right py-3 px-3 font-medium ${
-                    expected === 0 ? 'text-gray-600' :
-                    diff >= 0 ? 'text-emerald-400' : 'text-red-400'
-                  }`}>
-                    {expected === 0 ? '—' : `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}`}
-                  </td>
-                  <td className={`text-center py-3 pl-3 text-base ${signalBg[signal]}`}>
-                    {signal}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Legend */}
-      <div className="flex gap-4 mt-4 pt-3 border-t border-white/5 text-xs text-gray-500">
-        <span><span className="text-emerald-400">🟢</span> 기대치 90% 이상</span>
-        <span><span className="text-amber-400">🟡</span> 50~89%</span>
-        <span><span className="text-red-400">🔴</span> 50% 미만</span>
-      </div>
-    </div>
-  );
-}
 
 // ── Ad Spend Modal ────────────────────────────────────────────────────────────
 
@@ -506,6 +287,7 @@ const PRESETS = [
 ];
 
 export default function MarketingPage() {
+  const router = useRouter();
   const range = defaultRange();
   const [appliedFrom, setAppliedFrom] = useState(range.from);
   const [appliedTo, setAppliedTo] = useState(range.to);
@@ -600,6 +382,8 @@ export default function MarketingPage() {
             />
           </div>
         </div>
+        <MarketingTabs active="/admin/marketing" />
+
         {/* 빠른 기간 선택 */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-gray-500">빠른 선택:</span>
@@ -627,7 +411,11 @@ export default function MarketingPage() {
           <div className="h-2 w-full bg-white/5 rounded" />
         </div>
       ) : weekly ? (
-        <HeroWidget weekly={weekly} onAddSpend={(g) => setAdSpendModal(g)} />
+        <HeroWidget
+          weekly={weekly}
+          onAddSpend={(g) => setAdSpendModal(g)}
+          onSetGoal={() => router.push('/admin/marketing/goals')}
+        />
       ) : null}
 
       {/* ── Layer 2: 채널별 현황 ── */}
