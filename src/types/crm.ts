@@ -630,7 +630,9 @@ export type ProductCategory =
 export type ProductSubcategory =
   | '관리형 수업'
   | '원포인트'
+  | '대표코치'
   | '여름방학 특강'
+  | '추석특강'
   | '단어학습'
   | 'SuperTest'
   | '인강'
