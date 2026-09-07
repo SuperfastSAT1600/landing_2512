@@ -23,6 +23,7 @@ const PRODUCT_TREE: Record<ClassType, Partial<Record<Subject | '_', Product[]>>>
     SAT: [
       { id: 'sat_1on1_managed',  label: 'SAT 정규 1:1 수업 (관리형)',  requiresHours: true,  category: 'SAT 정규 1:1 수업', subcategory: '관리형 수업' },
       { id: 'sat_1on1_onepoint', label: 'SAT 정규 1:1 수업 (원포인트)', requiresHours: true,  category: 'SAT 정규 1:1 수업', subcategory: '원포인트' },
+      { id: 'sat_1on1_lead',     label: 'SAT 정규 1:1 수업 (대표코치)', requiresHours: true,  category: 'SAT 정규 1:1 수업', subcategory: '대표코치' },
       { id: 'sat_trial',         label: 'SAT 체험 1:1 수업',            requiresHours: false, category: 'SAT 체험 1:1 수업', subcategory: '체험수업' },
     ],
     AP: [
@@ -41,7 +42,8 @@ const PRODUCT_TREE: Record<ClassType, Partial<Record<Subject | '_', Product[]>>>
   },
   '그룹': {
     SAT: [
-      { id: 'sat_group', label: 'SAT 정규 그룹 수업 (여름방학 특강)', requiresHours: false, category: 'SAT 정규 그룹 수업', subcategory: '여름방학 특강' },
+      { id: 'sat_group',         label: 'SAT 정규 그룹 수업 (여름방학 특강)', requiresHours: false, category: 'SAT 정규 그룹 수업', subcategory: '여름방학 특강' },
+      { id: 'sat_group_chuseok', label: 'SAT 정규 그룹 수업 (추석특강)',     requiresHours: false, category: 'SAT 정규 그룹 수업', subcategory: '추석특강' },
     ],
   },
   '콘텐츠': {
