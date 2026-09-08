@@ -133,19 +133,61 @@ export async function generateGhostThumbnail(title: string, slug: string): Promi
   return uploadBuffer(buffer, slug, 'ghost');
 }
 
-// 랜딩용: 스토리텔링 씬 일러스트 (인물 + 상황)
-export async function generateLandingThumbnail(title: string, slug: string): Promise<string> {
-  const prompt = `A minimalist editorial illustration for a blog post thumbnail.
-Topic: ${title}
+// 제목 → 핵심 소재(1) + 부소재(2~3) 추출
+async function extractThumbnailSubjects(title: string): Promise<{ primary: string; supporting: string[] }> {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  if (!apiKey) throw new Error('DASHSCOPE_API_KEY is not set');
 
-Style rules (follow strictly):
-- Grayscale only — black, white, and gray tones. No color whatsoever.
-- Clean white (#FFFFFF) background with generous negative space.
-- Storytelling scene: show a person or situation that metaphorically represents the topic. Editorial illustration style.
-- Consistent black outline, flat design with soft gray shading for depth.
-- Wide cinematic landscape composition. Subject centered, with space on both sides.
-- Absolutely no text, letters, words, or numbers anywhere in the image.
-Aesthetic reference: New Yorker editorial sketch, Notion product illustration, Medium blog header art.`;
+  const res = await fetch(
+    'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'qwen-turbo',
+        max_tokens: 120,
+        messages: [{
+          role: 'user',
+          content: `다음 블로그 제목에서 썸네일 일러스트에 쓸 소재를 영어로 뽑아줘.
+
+규칙:
+- primary: 화면 정중앙에 놓일 핵심 시각 오브젝트 1개 (구체적인 사물/인물, 영어로)
+- supporting: 주변에 배치할 보조 오브젝트 2~3개 (짧고 구체적으로, 영어로)
+- 추상 개념은 구체적인 사물로 변환 (예: "시간 관리" → "hourglass", "점수" → "score report")
+- JSON만 반환: {"primary":"...","supporting":["...","...","..."]}
+
+제목: ${title}`,
+        }],
+      }),
+    }
+  );
+  const data = await res.json() as { choices?: { message?: { content?: string } }[] };
+  const text = data.choices?.[0]?.message?.content ?? '';
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('소재 추출 JSON 파싱 실패: ' + text);
+  return JSON.parse(match[0]) as { primary: string; supporting: string[] };
+}
+
+// 랜딩용: 제목에서 소재 자동 추출 → 중앙 구도 doodle 일러스트
+export async function generateLandingThumbnail(title: string, slug: string): Promise<string> {
+  const subjects = await extractThumbnailSubjects(title);
+  console.log(`[thumbnail] 소재 추출: primary="${subjects.primary}", supporting=[${subjects.supporting.join(', ')}]`);
+
+  const prompt = `A thumbnail illustration.
+
+Composition (strictly follow):
+- Primary subject at the exact center: ${subjects.primary}
+- Supporting elements around it (one on the left, one on the right${subjects.supporting.length > 2 ? ', one below' : ''}): ${subjects.supporting.join(', ')}
+- Only these figures. Nothing else. Generous white space around all figures.
+
+Style rules:
+- Rough hand-drawn doodle icon style.
+- Only black lines (#000000) on a white (#FFFFFF) background. No gray, no color, no shading, no fill, no gradient.
+- Lines must look like they were drawn quickly in a single stroke — like a marker doodle.
+- Avoid perfect circles, perfect straight lines, or any smooth vector feel.
+- Line ends may slightly overshoot or leave gaps. Corners may overlap or be slightly misaligned.
+- Overall feel: rough, wobbly, hand-scribbled marker sketch.
+- Absolutely no text, letters, words, or numbers anywhere in the image.`;
 
   return generateQwenThumbnail(prompt, slug, 'landing');
 }
