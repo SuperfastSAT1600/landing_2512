@@ -188,15 +188,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // 6. 자유형: [주제] [랜딩|고스트] 써줘
+  // 6. 자유형: [주제] [랜딩|고스트] 써줘 (멀티라인·마침표 허용)
   const cleanText = text.replace(/<@[A-Z0-9]+>/g, '').trim();
-  const freeMatch = cleanText.match(/^(.+?)\s*(랜딩|고스트|ghost|landing|둘\s*다|both)?\s*(?:써줘|해줘|작성해줘|포스팅해줘)$/);
+  // 마침표·느낌표·물음표 등 후행 구두점 제거 후 매칭
+  const normalizedText = cleanText.replace(/[.。!?！？\s]+$/, '');
+  const freeMatch = normalizedText.match(/([\s\S]+?)\s*(랜딩|고스트|ghost|landing|둘\s*다|both)?\s*(?:써줘|해줘|작성해줘|포스팅해줘)$/);
   if (freeMatch) {
-    const title = freeMatch[1].trim();
+    const rawTitle = freeMatch[1].trim();
     const platform = parsePlatform(freeMatch[2]);
+    // 멀티라인·장문 요청: 전체 내용을 rationale로 전달, 첫 줄을 title로
+    const lines = rawTitle.split('\n').map(l => l.trim()).filter(Boolean);
+    const title = lines[0].slice(0, 100);
+    // 장문(200자 초과)이면 전체를 rationale로 넘겨 AI가 풍부한 맥락으로 작성
+    const rationale = rawTitle.length > 200
+      ? rawTitle.slice(0, 2000)
+      : (lines.length > 1 ? lines.slice(1).join(' ').slice(0, 500) : '');
     if (title.length >= 5) {
       after(() => handleBlogWrite(
-        { title, rationale: '', point: '' }, channel, threadTs, platform
+        { title, rationale, point: '' }, channel, threadTs, platform
       ).catch(async err => {
         await postSlack(channel, `오류: ${err.message}`, threadTs);
       }));
