@@ -279,11 +279,8 @@ export default async function Post({ params }: Props) {
 
             {(popupTargetPost || relatedPosts.length > 0) && (
                 <ReadCompletePopup
-                    relatedPost={popupTargetPost ?? {
-                        id: relatedPosts[0].id,
-                        title: relatedPosts[0].title,
-                        featuredImage: relatedPosts[0].featuredImage,
-                    }}
+                    fixedPost={popupTargetPost ?? null}
+                    relatedPosts={relatedPosts.map(p => ({ id: p.id, title: p.title, featuredImage: p.featuredImage }))}
                     sentinelId="post-end-sentinel"
                 />
             )}

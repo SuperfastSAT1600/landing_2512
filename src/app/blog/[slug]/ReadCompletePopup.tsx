@@ -5,14 +5,22 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { PostData } from '@/lib/posts';
 
+type PostSummary = Pick<PostData, 'id' | 'title' | 'featuredImage'>;
+
 interface Props {
-  relatedPost: Pick<PostData, 'id' | 'title' | 'featuredImage'>;
+  fixedPost: PostSummary | null;
+  relatedPosts: PostSummary[];
   sentinelId: string;
 }
 
 const COUNTDOWN_SEC = 5;
 
-export function ReadCompletePopup({ relatedPost, sentinelId }: Props) {
+export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props) {
+  const relatedPost: PostSummary | null = fixedPost ?? (
+    relatedPosts.length > 0
+      ? relatedPosts[Math.floor(Math.random() * relatedPosts.length)]
+      : null
+  );
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [remaining, setRemaining] = useState(COUNTDOWN_SEC);
@@ -20,8 +28,8 @@ export function ReadCompletePopup({ relatedPost, sentinelId }: Props) {
   const router = useRouter();
 
   const goToPost = useCallback(() => {
-    router.push(`/blog/${relatedPost.id}`);
-  }, [router, relatedPost.id]);
+    if (relatedPost) router.push(`/blog/${relatedPost.id}`);
+  }, [router, relatedPost]);
 
   const dismiss = useCallback(() => {
     setDismissed(true);
@@ -64,7 +72,7 @@ export function ReadCompletePopup({ relatedPost, sentinelId }: Props) {
     };
   }, [visible, goToPost]);
 
-  if (!visible) return null;
+  if (!visible || !relatedPost) return null;
 
   const progress = ((COUNTDOWN_SEC - remaining) / COUNTDOWN_SEC) * 100;
 

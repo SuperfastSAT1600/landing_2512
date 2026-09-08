@@ -46,6 +46,10 @@ export async function saveGhostDraft(
       }],
     }),
   });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Ghost draft 실패 (${res.status}): ${err.slice(0, 300)}`);
+  }
   const data = await res.json() as { posts?: { id: string; url: string }[] };
   if (!data.posts?.[0]) throw new Error(`Ghost draft 실패: ${JSON.stringify(data)}`);
   return { id: data.posts[0].id, url: data.posts[0].url };
