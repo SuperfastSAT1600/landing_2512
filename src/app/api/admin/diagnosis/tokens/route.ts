@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { studentName, studentPhone, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes } = await request.json();
+    const { studentName, studentPhone, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes, testId } = await request.json();
 
     if (!studentName || !code) {
       return NextResponse.json({ error: 'Student name and code are required' }, { status: 400 });
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         student_email: null,
         student_name: studentName,
         phone_number: studentPhone?.trim() || null,
-        test_id: 'diagnostic-test-1',
+        test_id: testId === 'diagnostic-test-2' ? 'diagnostic-test-2' : 'diagnostic-test-1',
         test_version_id: resolvedVersionId,
         expires_at: expiresAt.toISOString(),
         is_active: true,

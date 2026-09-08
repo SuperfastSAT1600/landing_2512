@@ -3,13 +3,16 @@
 import { useState, useRef, useCallback } from 'react';
 import { setPixelAdvancedMatching } from '@/lib/pixel-matching';
 import { DiagnosticTestView } from './components/DiagnosticTestView';
+import { VocabSection } from './components/VocabSection';
 import { ApplicationForm } from './components/ApplicationForm';
+import { diagnosticTest2Vocab } from './data/diagnostic-test-2-vocab';
 import type { DiagnosticTestData } from './data/diagnostic-test-1';
+import type { VocabAnswer } from '@/types/diagnosis';
 
 const CODE_LENGTH = 6;
 
 type DiagnosisTab = 'code' | 'apply';
-type Phase = 'code-entry' | 'student-confirm' | 'email-input' | 'previous-score-input' | 'test-loading' | 'test-active';
+type Phase = 'code-entry' | 'student-confirm' | 'email-input' | 'previous-score-input' | 'test-loading' | 'vocab-active' | 'test-active';
 type PreviousScoreStatus = 'scored' | 'never_taken' | 'dont_remember';
 
 function formatKoreanDate(isoString: string | null): string {
@@ -58,7 +61,9 @@ export default function DiagnosisPage() {
 
   const [tokenId, setTokenId] = useState('');
   const [testVersionId, setTestVersionId] = useState<string | null>(null);
+  const [testId, setTestId] = useState('diagnostic-test-1');
   const [testData, setTestData] = useState<DiagnosticTestData | null>(null);
+  const [vocabAnswers, setVocabAnswers] = useState<VocabAnswer[]>([]);
   const [studentEmail, setStudentEmail] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -132,6 +137,7 @@ export default function DiagnosisPage() {
       setStudentName(data.studentName);
       setExpiresAt(data.expiresAt);
       setTestVersionId(data.testVersionId ?? null);
+      setTestId(data.testId ?? 'diagnostic-test-1');
       setTimeLimitMinutes(data.timeLimitMinutes ?? 30);
       setPhase('student-confirm');
     } catch {
@@ -182,8 +188,12 @@ export default function DiagnosisPage() {
 
   const handlePreviousScoreDone = useCallback((status: PreviousScoreStatus) => {
     setPreviousScoreStatus(status);
-    setPhase(testData ? 'test-active' : 'test-loading');
-  }, [testData]);
+    if (testId === 'diagnostic-test-2') {
+      setPhase('vocab-active');
+    } else {
+      setPhase(testData ? 'test-active' : 'test-loading');
+    }
+  }, [testData, testId]);
 
   const handleScoreSubmit = () => {
     const errors = { date: '', rw: '', math: '' };
@@ -377,6 +387,19 @@ export default function DiagnosisPage() {
     );
   }
 
+  // Vocab active phase (v2 only)
+  if (phase === 'vocab-active') {
+    return (
+      <VocabSection
+        questions={diagnosticTest2Vocab}
+        onComplete={(answers) => {
+          setVocabAnswers(answers);
+          setPhase(testData ? 'test-active' : 'test-loading');
+        }}
+      />
+    );
+  }
+
   // Test loading phase
   if (phase === 'test-loading') {
     return (
@@ -398,12 +421,14 @@ export default function DiagnosisPage() {
           tokenId={tokenId}
           studentEmail={studentEmail}
           studentName={studentName}
+          testId={testId}
           testVersionId={testVersionId ?? undefined}
           timeLimitMinutes={timeLimitMinutes}
           previousScoreStatus={previousScoreStatus ?? undefined}
           previousTestDate={previousTestYear && previousTestMonth ? `${previousTestYear}-${previousTestMonth}-01` : undefined}
           previousRwScore={previousRwScore ? parseInt(previousRwScore, 10) : undefined}
           previousMathScore={previousMathScore ? parseInt(previousMathScore, 10) : undefined}
+          vocabAnswers={testId === 'diagnostic-test-2' ? vocabAnswers : undefined}
         />
       </div>
     );

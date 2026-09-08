@@ -96,6 +96,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
   const [expiresAt, setExpiresAt] = useState(() => getDefaultExpiresAt(getPreferredTimezone()));
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(30);
   const [selectedVersionId, setSelectedVersionId] = useState<string>('');
+  const [testFormat, setTestFormat] = useState<'diagnostic-test-1' | 'diagnostic-test-2'>('diagnostic-test-1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [warning, setWarning] = useState<string | null>(null);
@@ -199,6 +200,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
           expiresAt: localToUTC(expiresAt, selectedTimezone),
           testVersionId: selectedVersionId || undefined,
           timeLimitMinutes,
+          testId: testFormat,
         }),
       });
 
@@ -256,9 +258,42 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
             <p className="text-xs text-gray-400 mt-1">픽셀 최적화용. 입력 시 Meta CAPI 이벤트 전송.</p>
           </div>
 
+          <div>
+            <label className="block text-sm font-semibold mb-2">테스트 형식</label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setTestFormat('diagnostic-test-1')}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold border transition-colors ${
+                  testFormat === 'diagnostic-test-1'
+                    ? 'bg-blue-600 border-blue-500 text-white'
+                    : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                }`}
+                disabled={loading}
+              >
+                v1 — 기존 (RW + Math)
+              </button>
+              <button
+                type="button"
+                onClick={() => setTestFormat('diagnostic-test-2')}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold border transition-colors ${
+                  testFormat === 'diagnostic-test-2'
+                    ? 'bg-purple-600 border-purple-500 text-white'
+                    : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                }`}
+                disabled={loading}
+              >
+                v2 — 단어 + RW 순차 공개
+              </button>
+            </div>
+            {testFormat === 'diagnostic-test-2' && (
+              <p className="text-xs text-purple-400 mt-1.5">단어 진단 20문항(200초) → RW 순차 공개 → Math 포함</p>
+            )}
+          </div>
+
           {versions.length > 0 && (
             <div>
-              <label className="block text-sm font-semibold mb-2">진단테스트 버전</label>
+              <label className="block text-sm font-semibold mb-2">진단테스트 버전 <span className="text-gray-400 font-normal">(RW/Math 문제 세트)</span></label>
               <select
                 value={selectedVersionId}
                 onChange={(e) => setSelectedVersionId(e.target.value)}
