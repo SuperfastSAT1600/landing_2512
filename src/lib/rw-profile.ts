@@ -105,10 +105,10 @@ export function classifyRWStudent(questionTypes: RWQuestionType[]): RWStudentPro
   }
 
   // Fallback: dominant type wins
-  const dominant = (Object.entries(counts) as [RWProfileType, number][])
+  const dominant = (Object.entries(counts) as [RWQuestionType, number][])
     .sort((a, b) => b[1] - a[1])[0][0];
 
-  const fallbacks: Record<RWProfileType, RWStudentProfile> = {
+  const fallbacks: Record<RWQuestionType, RWStudentProfile> = {
     sniper: {
       profileType: 'master',
       headline: '이 영역은 준비된 상태다',
@@ -132,12 +132,6 @@ export function classifyRWStudent(questionTypes: RWQuestionType[]): RWStudentPro
       headline: '정답을 보고도 지나쳤다',
       evidence,
       prescription: 'College Board 후반 선택지 함정 패턴 학습.',
-    },
-    chaotic: {
-      profileType: 'chaotic',
-      headline: '전략 없이 풀고 있다',
-      evidence,
-      prescription: '선택지를 보기 전에 "내 답은 뭐다"를 먼저 말하는 습관부터.',
     },
   };
 
