@@ -181,7 +181,9 @@ export async function generateLandingThumbnail(title: string, slug: string): Pro
 Composition (strictly follow):
 - Primary subject at the exact center: ${subjects.primary}
 - Supporting elements around it (one on the left, one on the right${subjects.supporting.length > 2 ? ', one below' : ''}): ${subjects.supporting.join(', ')}
-- Only these figures. Nothing else. Generous white space around all figures.
+- All figures together must occupy approximately 40% of the total canvas area. The remaining 60% is empty white space.
+- Leave 20% margin on the top and 20% on the bottom. Leave visible margins on both left and right sides.
+- The figures should feel small and well-spaced within the large white canvas — do not fill the frame.
 
 Style rules:
 - Rough hand-drawn doodle icon style.
