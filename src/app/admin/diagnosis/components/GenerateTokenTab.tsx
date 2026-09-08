@@ -304,7 +304,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
               >
                 {versions.map((v) => (
                   <option key={v.id} value={v.id}>
-                    v{v.version_number}{v.is_current ? ' (현재 버전)' : ''}
+                    문제 세트 {v.version_number}{v.is_current ? ' (현재)' : ''}
                   </option>
                 ))}
               </select>
