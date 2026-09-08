@@ -291,23 +291,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
             )}
           </div>
 
-          {versions.length > 0 && (
-            <div>
-              <label className="block text-sm font-semibold mb-2">진단테스트 버전 <span className="text-gray-400 font-normal">(RW/Math 문제 세트)</span></label>
-              <select
-                value={selectedVersionId}
-                onChange={(e) => setSelectedVersionId(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={loading}
-              >
-                {versions.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    v{v.version_number}{v.is_current ? ' (현재 버전)' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
 
           <div>
             <label className="block text-sm font-semibold mb-2">시험 시간 (분)</label>
