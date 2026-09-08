@@ -71,6 +71,7 @@ const config: Config = {
                 'slide-up': 'slideUp 0.5s ease-out',
                 'check-pop': 'checkPop 0.5s ease-out',
                 'gradient-shift': 'gradientShift 4s ease infinite',
+                'bottom-sheet': 'bottomSheet 0.35s cubic-bezier(0.32,0.72,0,1)',
             },
             keyframes: {
                 fadeIn: {
@@ -80,6 +81,10 @@ const config: Config = {
                 slideUp: {
                     '0%': { opacity: '0', transform: 'translateY(24px)' },
                     '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                bottomSheet: {
+                    '0%': { transform: 'translateY(100%)' },
+                    '100%': { transform: 'translateY(0)' },
                 },
                 checkPop: {
                     '0%': { transform: 'scale(0)' },

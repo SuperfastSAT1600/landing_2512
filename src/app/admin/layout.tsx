@@ -31,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
             { href: '/admin/mathweb', label: 'Math Web' },
         ]
     },
+    { href: '/admin/popup-settings', label: '팝업 설정', icon: '🔔' },
     { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
     { href: '/admin/business', label: 'Business', icon: '💼' },
     {

@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getPostData, getAllPostIds, getRelatedPosts } from '../../../lib/posts';
+import { getPopupTargetPost } from '../../../lib/popup-rules';
 import Footer from '../../components/Footer';
 import { PostContent } from './PostContent';
+import { ReadCompletePopup } from './ReadCompletePopup';
 import { Calendar, ArrowLeft, Tag } from 'lucide-react';
 
 export const revalidate = 3600;
@@ -75,7 +77,10 @@ export default async function Post({ params }: Props) {
     const { slug } = await params;
     const decodedSlug = decodeURIComponent(slug);
     const postData = await getPostData(decodedSlug);
-    const relatedPosts = await getRelatedPosts(decodedSlug, postData.category, 3);
+    const [relatedPosts, popupTargetPost] = await Promise.all([
+        getRelatedPosts(decodedSlug, postData.category, 3),
+        getPopupTargetPost(decodedSlug),
+    ]);
 
     return (
         <div className="bg-[#fafaf9] min-h-screen text-gray-800 font-sans selection:bg-blue-200">
@@ -214,6 +219,8 @@ export default async function Post({ params }: Props) {
                                     </div>
                                 </div>
                             )}
+                            {/* Sentinel: popup triggers when this becomes visible */}
+                            <div id="post-end-sentinel" className="h-px mt-8" />
                         </>
                     )}
                 </article>
@@ -269,6 +276,17 @@ export default async function Post({ params }: Props) {
                     </div>
                 )}
             </main>
+
+            {(popupTargetPost || relatedPosts.length > 0) && (
+                <ReadCompletePopup
+                    relatedPost={popupTargetPost ?? {
+                        id: relatedPosts[0].id,
+                        title: relatedPosts[0].title,
+                        featuredImage: relatedPosts[0].featuredImage,
+                    }}
+                    sentinelId="post-end-sentinel"
+                />
+            )}
 
             <Footer />
         </div>

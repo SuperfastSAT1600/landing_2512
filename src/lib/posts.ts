@@ -28,7 +28,7 @@ export interface PostData {
 
 const LIST_COLUMNS = 'id, title, date, category, excerpt, description, featured_image, featured_image_alt, feature_image, focus_keyword, author, tags, cta_featured, meta_title, meta_robots, updated_at, access_code';
 
-function mapRow(row: Record<string, unknown>): PostData {
+export function mapRow(row: Record<string, unknown>): PostData {
     return {
         id: row.id as string,
         title: row.title as string,
