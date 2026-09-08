@@ -59,14 +59,23 @@ export async function getCoaches(): Promise<CoachData[]> {
 }
 
 export async function getActiveCoaches(): Promise<CoachData[]> {
-    const { data, error } = await supabaseAdmin
-        .from('coaches')
-        .select('*')
-        .eq('is_active', true)
-        .order('is_head_coach', { ascending: false })
-        .order('created_at', { ascending: false });
-    if (error || !data) return [];
-    return data.map(rowToCoach);
+    const [headResult, restResult] = await Promise.all([
+        supabaseAdmin
+            .from('coaches')
+            .select('*')
+            .eq('is_active', true)
+            .eq('is_head_coach', true)
+            .order('created_at', { ascending: true }),
+        supabaseAdmin
+            .from('coaches')
+            .select('*')
+            .eq('is_active', true)
+            .eq('is_head_coach', false)
+            .order('created_at', { ascending: false }),
+    ]);
+    const headCoaches = headResult.data ? headResult.data.map(rowToCoach) : [];
+    const restCoaches = restResult.data ? restResult.data.map(rowToCoach) : [];
+    return [...headCoaches, ...restCoaches];
 }
 
 export async function getCoachBySlug(slug: string): Promise<CoachData | undefined> {
