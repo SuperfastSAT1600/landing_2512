@@ -97,13 +97,15 @@ export async function POST(request: NextRequest) {
     // Use provided expiresAt or default to 24 hours from now
     const expiresAt = expiresAtInput ? new Date(expiresAtInput) : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Resolve version: use provided testVersionId or current version
+    // Resolve version: use provided testVersionId or current version scoped to format
+    const resolvedTestId = testId === 'diagnostic-test-2' ? 'diagnostic-test-2' : 'diagnostic-test-1';
     let resolvedVersionId = testVersionId ?? null;
     if (!resolvedVersionId) {
       const { data: current } = await supabaseAdmin
         .from('diagnostic_test_versions')
         .select('id')
         .eq('is_current', true)
+        .eq('test_id', resolvedTestId)
         .maybeSingle();
       resolvedVersionId = current?.id ?? null;
     }

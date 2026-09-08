@@ -36,13 +36,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '이미 사용된 코드입니다' }, { status: 401 });
     }
 
-    // Resolve test version: use token's assigned version, or fall back to current
+    // Resolve test version: use token's assigned version, or fall back to current scoped to format
+    const tokenTestId = tokenData.test_id ?? 'diagnostic-test-1';
     let testVersionId: string | null = tokenData.test_version_id ?? null;
     if (!testVersionId) {
       const { data: currentVersion } = await supabaseAdmin
         .from('diagnostic_test_versions')
         .select('id')
         .eq('is_current', true)
+        .eq('test_id', tokenTestId)
         .maybeSingle();
       testVersionId = currentVersion?.id ?? null;
     }
