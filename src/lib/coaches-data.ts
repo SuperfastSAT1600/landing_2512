@@ -63,6 +63,7 @@ export async function getActiveCoaches(): Promise<CoachData[]> {
         .from('coaches')
         .select('*')
         .eq('is_active', true)
+        .order('is_head_coach', { ascending: false })
         .order('created_at', { ascending: false });
     if (error || !data) return [];
     return data.map(rowToCoach);
