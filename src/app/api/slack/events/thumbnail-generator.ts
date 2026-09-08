@@ -148,15 +148,18 @@ async function extractThumbnailSubjects(title: string): Promise<{ primary: strin
         max_tokens: 120,
         messages: [{
           role: 'user',
-          content: `다음 블로그 제목에서 썸네일 일러스트에 쓸 소재를 영어로 뽑아줘.
+          content: `Extract thumbnail illustration subjects from this Korean SAT blog title. Return in English.
 
-규칙:
-- primary: 화면 정중앙에 놓일 핵심 시각 오브젝트 1개 (구체적인 사물/인물, 영어로)
-- supporting: 주변에 배치할 보조 오브젝트 2~3개 (짧고 구체적으로, 영어로)
-- 추상 개념은 구체적인 사물로 변환 (예: "시간 관리" → "hourglass", "점수" → "score report")
-- JSON만 반환: {"primary":"...","supporting":["...","...","..."]}
+Context: This blog targets Korean parents and students preparing for the SAT exam.
 
-제목: ${title}`,
+Rules:
+- primary: ONE human figure showing an emotional moment or decision (e.g. "a parent sitting, hand on chin, looking worried", "a student with furrowed brows staring at a paper"). Must be a PERSON in a specific pose.
+- supporting: 2 concrete objects or silhouette figures that represent the options or context (short noun phrases, e.g. "profile silhouette of a young tutor", "score report paper")
+- If the title is about SELECTING or COMPARING, primary = the person deciding, supporting = what they are choosing between
+- If the title is about STRATEGY or METHOD, primary = student in action, supporting = the tools/documents
+- Return JSON only: {"primary":"...","supporting":["...","..."]}
+
+Title: ${title}`,
         }],
       }),
     }
