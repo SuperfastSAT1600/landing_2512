@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     if (listError) throw listError;
 
-    // Auto-seed v1 from the hardcoded TS file if no versions exist
+    // Auto-seed v1 if empty
     if (!existing || existing.length === 0) {
       const { data: seeded, error: seedError } = await supabaseAdmin
         .from('diagnostic_test_versions')
@@ -38,6 +38,26 @@ export async function GET(request: NextRequest) {
 
       if (seedError) throw seedError;
       return NextResponse.json({ versions: [seeded] }, { status: 200 });
+    }
+
+    // Check if current version is missing RW questions — if so, update it with full question set
+    const currentVersion = existing.find(v => v.is_current);
+    if (currentVersion) {
+      const { data: currentData } = await supabaseAdmin
+        .from('diagnostic_test_versions')
+        .select('questions')
+        .eq('id', currentVersion.id)
+        .single();
+
+      const qs = currentData?.questions as Array<{ section?: string }> | null;
+      const hasRW = Array.isArray(qs) && qs.some(q => q.section === 'Reading and Writing');
+
+      if (!hasRW) {
+        await supabaseAdmin
+          .from('diagnostic_test_versions')
+          .update({ questions: diagnosticTest1.questions })
+          .eq('id', currentVersion.id);
+      }
     }
 
     // Add question count for each version

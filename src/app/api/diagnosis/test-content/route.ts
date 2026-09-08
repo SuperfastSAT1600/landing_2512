@@ -21,13 +21,16 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (!error && data && Array.isArray(data.questions) && data.questions.length > 0) {
+        const dbQuestions = data.questions as Array<{ section?: string }>;
+        const hasRW = dbQuestions.some(q => q.section === 'Reading and Writing');
         return NextResponse.json({
           id: data.id,
           versionNumber: data.version_number,
           title: data.title,
           timeLimit: data.time_limit_minutes,
           directions: data.directions,
-          questions: data.questions,
+          // DB version이 RW 문제 없으면 하드코딩 전체 세트로 폴백
+          questions: hasRW ? data.questions : diagnosticTest1.questions,
         }, { status: 200 });
       }
     } catch (err) {
