@@ -42,8 +42,7 @@ async function generateQwenThumbnail(prompt: string, slug: string, prefix: strin
       body: JSON.stringify({
         model: 'wan2.7-image-pro',
         input: {
-          prompt,
-          negative_prompt: 'text, words, letters, watermark, signature, caption, typography, font, writing',
+          messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
         },
         parameters: { size: '1376*768', n: 1 },
       }),
@@ -68,11 +67,14 @@ async function generateQwenThumbnail(prompt: string, slug: string, prefix: strin
       { headers: { Authorization: `Bearer ${apiKey}` } }
     );
     const pollData = await pollRes.json() as {
-      output?: { task_status?: string; results?: { url?: string }[] }
+      output?: { task_status?: string; choices?: { message?: { content?: { type?: string; image?: string }[] } }[]; results?: { url?: string }[] }
     };
     const status = pollData.output?.task_status;
     if (status === 'SUCCEEDED') {
-      imageUrl = pollData.output?.results?.[0]?.url ?? null;
+      const content = pollData.output?.choices?.[0]?.message?.content;
+      imageUrl = content?.find(c => c.type === 'image')?.image
+        ?? pollData.output?.results?.[0]?.url
+        ?? null;
       break;
     }
     if (status === 'FAILED') throw new Error('Qwen 이미지 생성 실패: ' + JSON.stringify(pollData));
