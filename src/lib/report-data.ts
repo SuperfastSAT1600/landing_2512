@@ -105,10 +105,12 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
       .single();
     if (version?.questions) questions = version.questions as TestQuestion[];
   } else {
+    const resultTestId = (result as { test_id?: string }).test_id ?? 'diagnostic-test-1';
     const { data: current } = await supabaseAdmin
       .from('diagnostic_test_versions')
       .select('questions')
       .eq('is_current', true)
+      .eq('test_id', resultTestId)
       .maybeSingle();
     if (current?.questions) questions = current.questions as TestQuestion[];
   }

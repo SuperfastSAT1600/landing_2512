@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const versionId = searchParams.get('versionId');
+    const testId = searchParams.get('testId') ?? 'diagnostic-test-1';
 
     // Resolve which version to use
     let resolvedVersionId = versionId;
@@ -33,11 +34,12 @@ export async function GET(request: NextRequest) {
       }
       questions = version.questions as TestQuestion[];
     } else {
-      // Fall back to current version
+      // Fall back to current version scoped to test format
       const { data: current, error } = await supabaseAdmin
         .from('diagnostic_test_versions')
         .select('id, questions')
         .eq('is_current', true)
+        .eq('test_id', testId)
         .maybeSingle();
       if (error || !current) {
         return NextResponse.json({ stats: [], totalResults: 0 }, { status: 200 });
