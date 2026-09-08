@@ -42,9 +42,10 @@ async function generateQwenThumbnail(prompt: string, slug: string, prefix: strin
       body: JSON.stringify({
         model: 'wan2.7-image-pro',
         input: {
-          messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+          prompt,
+          negative_prompt: 'text, words, letters, watermark, signature, caption, typography, font, writing',
         },
-        parameters: { size: '1792*1024', n: 1 },
+        parameters: { size: '1376*768', n: 1 },
       }),
     }
   );
@@ -67,14 +68,11 @@ async function generateQwenThumbnail(prompt: string, slug: string, prefix: strin
       { headers: { Authorization: `Bearer ${apiKey}` } }
     );
     const pollData = await pollRes.json() as {
-      output?: { task_status?: string; choices?: { message?: { content?: unknown[] } }[]; results?: { url?: string }[] }
+      output?: { task_status?: string; results?: { url?: string }[] }
     };
     const status = pollData.output?.task_status;
     if (status === 'SUCCEEDED') {
-      const content = pollData.output?.choices?.[0]?.message?.content;
-      imageUrl = Array.isArray(content)
-        ? ((content as { type?: string; image?: string }[]).find(c => c.type === 'image'))?.image ?? null
-        : pollData.output?.results?.[0]?.url ?? null;
+      imageUrl = pollData.output?.results?.[0]?.url ?? null;
       break;
     }
     if (status === 'FAILED') throw new Error('Qwen 이미지 생성 실패: ' + JSON.stringify(pollData));
@@ -135,16 +133,17 @@ export async function generateGhostThumbnail(title: string, slug: string): Promi
 
 // 랜딩용: 스토리텔링 씬 일러스트 (인물 + 상황)
 export async function generateLandingThumbnail(title: string, slug: string): Promise<string> {
-  const prompt = `당신은 Notion, Slack, Airbnb와 같은 글로벌 IT 기업의 미니멀리즘 일러스트레이션을 전문으로 하는 수석 일러스트레이터입니다.
-주제: ${title}
+  const prompt = `A minimalist editorial illustration for a blog post thumbnail.
+Topic: ${title}
 
-스타일 규칙:
-- Grayscale Only: 오직 검정색, 흰색, 회색만 사용. 유채색 절대 금지.
-- Clean Background: 배경은 흰색(#FFFFFF) 또는 아주 연한 회색.
-- Storytelling Scene: 주제를 은유적으로 표현하는 인물 또는 상황 중심의 장면. 에디토리얼 일러스트 스타일.
-- Minimalist Line Art: 깔끔한 검은색 외곽선, 회색 음영으로 입체감.
-- Wide cinematic composition: 가로형 구도, 좌우 여백 충분히.
-- No Text: 이미지 내부에 텍스트 절대 금지.`;
+Style rules (follow strictly):
+- Grayscale only — black, white, and gray tones. No color whatsoever.
+- Clean white (#FFFFFF) background with generous negative space.
+- Storytelling scene: show a person or situation that metaphorically represents the topic. Editorial illustration style.
+- Consistent black outline, flat design with soft gray shading for depth.
+- Wide cinematic landscape composition. Subject centered, with space on both sides.
+- Absolutely no text, letters, words, or numbers anywhere in the image.
+Aesthetic reference: New Yorker editorial sketch, Notion product illustration, Medium blog header art.`;
 
   return generateQwenThumbnail(prompt, slug, 'landing');
 }
