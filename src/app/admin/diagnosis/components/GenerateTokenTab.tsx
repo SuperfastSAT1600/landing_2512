@@ -483,7 +483,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
         {codes.length > 0 && (
           <TokenListTable
             codes={codes}
-            versions={versions}
             adminKey={adminKey}
             onRefresh={fetchCodes}
           />

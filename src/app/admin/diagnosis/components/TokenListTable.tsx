@@ -13,6 +13,7 @@ export interface CodeRecord {
   created_at: string;
   status: 'pending' | 'completed' | 'expired';
   test_version_id?: string | null;
+  test_id?: string | null;
 }
 
 export interface TestVersion {
@@ -23,7 +24,6 @@ export interface TestVersion {
 
 interface TokenListTableProps {
   codes: CodeRecord[];
-  versions: TestVersion[];
   adminKey: string;
   onRefresh: () => void;
 }
@@ -51,7 +51,7 @@ const FILTER_TABS = [
 
 type StatusFilter = 'all' | 'pending' | 'expired' | 'completed';
 
-export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenListTableProps) {
+export function TokenListTable({ codes, adminKey, onRefresh }: TokenListTableProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingExpiry, setEditingExpiry] = useState('');
@@ -62,10 +62,10 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
 
   const formatDate = (s: string) => new Date(s).toLocaleString('ko-KR');
 
-  const getVersionLabel = (versionId: string | null | undefined) => {
-    if (!versionId) return '-';
-    const v = versions.find((v) => v.id === versionId);
-    return v ? `v${v.version_number}` : '-';
+  const getFormatLabel = (testId: string | null | undefined) => {
+    if (testId === 'diagnostic-test-2') return { text: 'v2', color: 'text-purple-400' };
+    if (testId === 'diagnostic-test-1') return { text: 'v1', color: 'text-blue-400' };
+    return { text: '-', color: 'text-gray-500' };
   };
 
   const copyToClipboard = (text: string) => navigator.clipboard.writeText(text);
@@ -195,7 +195,7 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
           <thead>
             <tr className="border-b border-gray-600">
               <th className="text-left py-3 px-4 font-semibold">학생명</th>
-              <th className="text-left py-3 px-4 font-semibold">버전</th>
+              <th className="text-left py-3 px-4 font-semibold">형식</th>
               <th className="text-left py-3 px-4 font-semibold">코드</th>
               <th className="text-left py-3 px-4 font-semibold">만료일시</th>
               <th className="text-left py-3 px-4 font-semibold">상태</th>
@@ -254,8 +254,8 @@ export function TokenListTable({ codes, versions, adminKey, onRefresh }: TokenLi
                       </button>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-gray-400 font-mono text-xs">
-                    {getVersionLabel(c.test_version_id)}
+                  <td className="py-3 px-4 font-mono text-xs">
+                    {(() => { const f = getFormatLabel(c.test_id); return <span className={f.color}>{f.text}</span>; })()}
                   </td>
                   <td className="py-3 px-4">
                     <button
