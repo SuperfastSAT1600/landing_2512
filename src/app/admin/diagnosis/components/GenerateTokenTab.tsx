@@ -122,9 +122,14 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
         const current = vList.find((v) => v.is_current);
         if (current) setSelectedVersionId(current.id);
         else if (vList.length > 0) setSelectedVersionId(vList[0].id);
+        else setSelectedVersionId('');
+      } else {
+        setVersions([]);
+        setSelectedVersionId('');
       }
     } catch {
-      // silently fail
+      setVersions([]);
+      setSelectedVersionId('');
     }
   };
 
@@ -265,7 +270,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => { setTestFormat('diagnostic-test-1'); fetchVersions('diagnostic-test-1'); }}
+                onClick={() => { setTestFormat('diagnostic-test-1'); setVersions([]); setSelectedVersionId(''); fetchVersions('diagnostic-test-1'); }}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold border transition-colors ${
                   testFormat === 'diagnostic-test-1'
                     ? 'bg-blue-600 border-blue-500 text-white'
@@ -277,7 +282,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
               </button>
               <button
                 type="button"
-                onClick={() => { setTestFormat('diagnostic-test-2'); fetchVersions('diagnostic-test-2'); }}
+                onClick={() => { setTestFormat('diagnostic-test-2'); setVersions([]); setSelectedVersionId(''); fetchVersions('diagnostic-test-2'); }}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold border transition-colors ${
                   testFormat === 'diagnostic-test-2'
                     ? 'bg-purple-600 border-purple-500 text-white'
