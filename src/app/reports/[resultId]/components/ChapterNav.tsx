@@ -10,7 +10,7 @@ const CHAPTERS_V1 = [
 ];
 
 const CHAPTERS_V2_EXTRA = [
-  { id: 'section-04', label: 'RW 이해도' },
+  { id: 'section-04', label: '정오답 패턴' },
   { id: 'section-05', label: '단어 진단' },
 ];
 

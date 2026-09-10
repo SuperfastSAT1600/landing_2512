@@ -198,13 +198,13 @@ export default async function ReportPage({ params }: PageProps) {
 
           <Divider />
 
-          {/* ── SECTION 04: RW 이해도 분석 (v2 only) ── */}
+          {/* ── SECTION 04: 정오답 패턴 (v2 only) ── */}
           {data.testId === 'diagnostic-test-2' && data.rwCognitionData && data.rwCognitionData.length > 0 && (
             <>
               <section id="section-04" className="report-section">
                 <SectionHeader
                   number="04"
-                  title="RW 이해도 분석"
+                  title="정오답 패턴"
                   titleEn="Reading Comprehension Depth"
                   subtitle="답의 이유를 정확히 알고 풀었나요?"
                 />
