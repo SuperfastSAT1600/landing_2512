@@ -224,14 +224,20 @@ export function DiagnosticTestView({
   };
 
   // Auto-submit when time runs out — ref ensures latest answers/confidence are captured
+  // Guard: require at least 1 answer before auto-submitting.
+  // Prevents zombie submissions when tab visibility correction jumps elapsed to time limit
+  // on students who left the tab open immediately after clicking "Begin Test".
+  const hasAnswers = isV2
+    ? (rwSequentialData.length > 0 || Object.keys(answers).length > 0)
+    : Object.keys(answers).length > 0;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSubmitRef = React.useRef(handleSubmit);
   React.useEffect(() => { handleSubmitRef.current = handleSubmit; });
   React.useEffect(() => {
-    if (timer.remaining === 0 && startTime && !submitting && !submitted) {
+    if (timer.remaining === 0 && startTime && !submitting && !submitted && hasAnswers) {
       handleSubmitRef.current();
     }
-  }, [timer.remaining, startTime, submitting, submitted]);
+  }, [timer.remaining, startTime, submitting, submitted, hasAnswers]);
 
   if (submitted) return <TestSubmittedScreen resultId={resultId} />;
 
