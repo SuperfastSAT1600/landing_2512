@@ -16,7 +16,7 @@ export type TutoringRowStudent = Pick<
 >;
 
 // 'ended'는 목록에서 제외하므로 포함하지 않는다
-export type TutoringDisplayStatus = 'unlinked' | 'active' | 'paused' | 'partial_end' | 'sales';
+export type TutoringDisplayStatus = 'unlinked' | 'active' | 'paused' | 'sales';
 
 /**
  * 플랫폼 Payment 페이지(app.superfastsat.io/admin/payment)의 수치 컬럼과 1:1 대응.
@@ -56,7 +56,6 @@ export const TUTORING_STATUS_META: Record<
   unlinked:     { label: '미연결',      color: 'bg-gray-100 text-gray-500',       dot: 'bg-gray-400' },
   active:       { label: '수업중',      color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
   paused:       { label: '휴원',        color: 'bg-amber-100 text-amber-700',     dot: 'bg-amber-400' },
-  partial_end:  { label: '부분종료',    color: 'bg-orange-100 text-orange-700',   dot: 'bg-orange-500' },
   sales:        { label: '재결제세일즈', color: 'bg-blue-100 text-blue-700',      dot: 'bg-blue-500' },
 };
 
@@ -67,7 +66,6 @@ export const TUTORING_SUB_TABS: { key: TutoringSubTab; label: string }[] = [
   { key: 'unlinked',     label: '미연결' },
   { key: 'active',       label: '수업중' },
   { key: 'paused',       label: '휴원' },
-  { key: 'partial_end',  label: '부분종료' },
   { key: 'sales',        label: '재결제세일즈' },
 ];
 
@@ -296,7 +294,7 @@ export function countByTutoringStatus(
   entries: Pick<TutoringEntry<TutoringRowStudent>, 'displayStatus'>[]
 ): Record<TutoringSubTab, number> {
   const c: Record<TutoringSubTab, number> = {
-    all: 0, unlinked: 0, active: 0, paused: 0, partial_end: 0, sales: 0,
+    all: 0, unlinked: 0, active: 0, paused: 0, sales: 0,
   };
   for (const e of entries) {
     c.all++;
