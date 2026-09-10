@@ -87,6 +87,43 @@ describe('POST /api/crm/students/[id]/payment', () => {
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
+  it('accepts a 소수점 시간 (41.5) → 201', async () => {
+    happyPath();
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ ...VALID, hours: 41.5 }), { params });
+    expect(res.status).toBe(201);
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ hours: 41.5 }));
+  });
+
+  it('accepts a null 시간 (시간 없는 상품) → 201', async () => {
+    happyPath();
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ ...VALID, hours: null }), { params });
+    expect(res.status).toBe(201);
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ hours: null }));
+  });
+
+  it('rejects a zero 시간 → 400', async () => {
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ ...VALID, hours: 0 }), { params });
+    expect(res.status).toBe(400);
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('rejects a negative 시간 → 400', async () => {
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ ...VALID, hours: -3 }), { params });
+    expect(res.status).toBe(400);
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('rejects a non-numeric 시간 → 400', async () => {
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ ...VALID, hours: '41.5' }), { params });
+    expect(res.status).toBe(400);
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
   it('rejects a missing product → 400', async () => {
     const { POST } = await import('../route');
     const res = await POST(makeReq({ amount: 0 }), { params });

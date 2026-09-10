@@ -28,6 +28,12 @@ export async function POST(
     return NextResponse.json({ error: '상품과 금액(0 이상)은 필수입니다.' }, { status: 400 });
   }
 
+  // 시간은 소수 허용(예: 41.5). 시간 단위가 아닌 상품은 null/미지정으로 온다.
+  if (hours !== undefined && hours !== null &&
+      (typeof hours !== 'number' || !Number.isFinite(hours) || hours <= 0)) {
+    return NextResponse.json({ error: '시간은 0보다 큰 숫자여야 합니다.' }, { status: 400 });
+  }
+
   // student_name 조회 (payments 테이블 기록용)
   const { data: studentRow } = await supabaseAdmin
     .from('students')

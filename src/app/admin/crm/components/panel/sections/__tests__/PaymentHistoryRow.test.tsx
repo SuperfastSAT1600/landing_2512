@@ -57,6 +57,27 @@ describe('PaymentHistoryRow', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledWith('pay-1', { amount: 1200000, hours: 12 }));
   });
 
+  it('saves a 소수점 시간 (41.5)', async () => {
+    const { onSave } = renderRow();
+    startEditing();
+
+    fireEvent.change(screen.getByLabelText('시간'), { target: { value: '41.5' } });
+    expect((screen.getByText('저장') as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByText('저장'));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith('pay-1', { amount: 0, hours: 41.5 }));
+  });
+
+  it('blocks saving a zero 시간', () => {
+    const { onSave } = renderRow();
+    startEditing();
+
+    fireEvent.change(screen.getByLabelText('시간'), { target: { value: '0' } });
+    expect((screen.getByText('저장') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByText('저장'));
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it('sends hours: null when the 시간 field is cleared', async () => {
     const { onSave } = renderRow();
     startEditing();
