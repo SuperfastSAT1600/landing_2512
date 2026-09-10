@@ -275,8 +275,6 @@ SuperfastSAT의 Inference 스킬 완전 정복 과정:
 랜딩 페이지는 **진단형 도입**으로 시작합니다:
 
 ```markdown
-# [Skill명] 문제는 왜 어려울까?
-
 D-43이라는 숫자가 낯설지 않다면, 당신은 이미 SAT Inference 문제로 고민한 경험이 있습니다.
 
 D-43은 College Board가 SAT Reading and Writing 시험지에서 부여하는 난이도 표시입니다. D급(어려움)이면서도 43번 문제라는 뜻은, 이 문제가 **같은 시험 범위에서 가장 어려운 Inference 문제** 중 하나라는 의미입니다.

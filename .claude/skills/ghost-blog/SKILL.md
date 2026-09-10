@@ -229,8 +229,7 @@ Inference 문제 외에도 [Words in Context는 비슷한 패턴](/blog/sat-word
 ### 7. 본문 구조
 
 blueprint.md를 거의 그대로 포함:
-- H1 제목
-- YAML frontmatter 이후 TL;DR
+- YAML frontmatter 이후 TL;DR (H1 제목은 Ghost가 frontmatter title로 자동 렌더링 — 본문에 중복 삽입 금지)
 - 모든 H2 섹션 (blueprint와 동일)
 - 각 섹션 내 quote capsules 80%+ 포함
 - 결론부
