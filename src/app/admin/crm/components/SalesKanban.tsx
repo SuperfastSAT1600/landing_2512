@@ -312,6 +312,7 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
       {churnTarget && (
         <ChurnModal
           student={churnTarget}
+          adminKey={adminKey}
           onConfirm={(churnTag: string, churnType: ChurnType) => {
             onStudentUpdate(churnTarget.id, {
               funnel_stage: 'churned',

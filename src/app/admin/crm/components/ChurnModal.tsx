@@ -3,24 +3,42 @@
 import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 import { Student, ChurnType, CHURN_TAG_OPTIONS } from '@/types/crm';
+import { getAdminUserName } from '@/lib/admin-user';
 
 interface ChurnModalProps {
   student: Student;
+  adminKey: string;
   onConfirm: (churnTag: string, churnType: ChurnType) => void;
   onClose: () => void;
 }
 
-export function ChurnModal({ student, onConfirm, onClose }: ChurnModalProps) {
+export function ChurnModal({ student, adminKey, onConfirm, onClose }: ChurnModalProps) {
   const [churnTag, setChurnTag] = useState<string>(CHURN_TAG_OPTIONS[0]);
   const [reason, setReason] = useState('');
   const [churnType, setChurnType] = useState<ChurnType>('potential');
   const [error, setError] = useState('');
 
-  function handleConfirm() {
+  async function handleConfirm() {
     const trimmed = reason.trim();
     if (!trimmed) {
       setError('이탈 사유를 입력해주세요.');
       return;
+    }
+    // 사유를 상담 타임라인에 남겨야 "오늘 취한 액션"에 잡히고 상담내역 슬랙에도 올라간다.
+    // 전송 실패가 이탈 처리 자체를 막지는 않는다.
+    try {
+      await fetch(`/api/crm/students/${student.id}/churn-memo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({
+          churn_tag: churnTag,
+          reason: trimmed,
+          churn_type: churnType,
+          author: getAdminUserName(),
+        }),
+      });
+    } catch (e) {
+      console.error('[ChurnModal churn-memo]', e);
     }
     // 환불 플로우와 동일하게 "{태그}: {사유}"로 합쳐 저장 (LeadPool 필터는 prefix 매칭)
     onConfirm(`${churnTag}: ${trimmed}`, churnType);

@@ -202,6 +202,7 @@ export function MatchingKanban({
       {churnTarget && (
         <ChurnModal
           student={churnTarget}
+          adminKey={adminKey}
           onConfirm={(churnTag: string, churnType: ChurnType) => {
             onStudentUpdate(churnTarget.id, {
               funnel_stage: 'churned',
