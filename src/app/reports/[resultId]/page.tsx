@@ -198,15 +198,43 @@ export default async function ReportPage({ params }: PageProps) {
 
           <Divider />
 
-          {/* ── SECTION 04: 모르는 단어 ── */}
-          <section id="section-04" className="report-section">
+          {/* ── SECTION 04: RW 이해도 분석 (v2 only) ── */}
+          {data.testId === 'diagnostic-test-2' && data.rwCognitionData && data.rwCognitionData.length > 0 && (
+            <>
+              <section id="section-04" className="report-section">
+                <SectionHeader
+                  number="04"
+                  title="RW 이해도 분석"
+                  titleEn="Reading Comprehension Depth"
+                  subtitle="답의 이유를 정확히 알고 풀었나요?"
+                />
+                <ReportRWCognition rwCognitionData={data.rwCognitionData} rwStudentProfile={data.rwStudentProfile} />
+              </section>
+              <Divider />
+            </>
+          )}
+
+          {/* ── SECTION 05: 단어 진단 (단어 점수 + 문제에서 모르는 단어) ── */}
+          <section id="section-05" className="report-section">
             <SectionHeader
-              number="04"
-              title="모르는 단어"
-              titleEn="Vocabulary Gap"
-              subtitle="단어 때문에 틀린 문제가 있었나요?"
+              number={data.testId === 'diagnostic-test-2' ? '05' : '04'}
+              title="단어 진단"
+              titleEn="Vocabulary Check"
+              subtitle="단어를 얼마나 알고 있었나요?"
             />
-            <ReportVocabularyGap savedWords={data.savedWords} />
+            {/* v2: 사전 단어 진단 점수 */}
+            {data.testId === 'diagnostic-test-2' && data.vocabResults && data.vocabResults.length > 0 && (
+              <ReportVocabDiagnosis vocabResults={data.vocabResults} />
+            )}
+            {/* 문제에서 모르는 단어 */}
+            <div className={data.testId === 'diagnostic-test-2' && data.vocabResults && data.vocabResults.length > 0 ? 'mt-8' : ''}>
+              {data.testId === 'diagnostic-test-2' && (
+                <p className="text-xs font-bold uppercase tracking-[0.12em] mb-4" style={{ color: '#6085FF' }}>
+                  문제에서 모르는 단어
+                </p>
+              )}
+              <ReportVocabularyGap savedWords={data.savedWords} />
+            </div>
             {insights.vocabulary && (
               <div className="mt-5">
                 <GenericInsightBlock
@@ -218,38 +246,6 @@ export default async function ReportPage({ params }: PageProps) {
               </div>
             )}
           </section>
-
-          {/* ── SECTION 05: 단어 진단 (v2 only) ── */}
-          {data.testId === 'diagnostic-test-2' && data.vocabResults && data.vocabResults.length > 0 && (
-            <>
-              <Divider />
-              <section id="section-05" className="report-section">
-                <SectionHeader
-                  number="05"
-                  title="단어 진단"
-                  titleEn="Vocabulary Check"
-                  subtitle="20개 단어를 얼마나 알고 있었나요?"
-                />
-                <ReportVocabDiagnosis vocabResults={data.vocabResults} />
-              </section>
-            </>
-          )}
-
-          {/* ── SECTION 06: RW 이해도 분석 (v2 only) ── */}
-          {data.testId === 'diagnostic-test-2' && data.rwCognitionData && data.rwCognitionData.length > 0 && (
-            <>
-              <Divider />
-              <section id="section-06" className="report-section">
-                <SectionHeader
-                  number="06"
-                  title="RW 이해도 분석"
-                  titleEn="Reading Comprehension Depth"
-                  subtitle="정확히 알고 풀었나요, 아니면 소거법으로 맞췄나요?"
-                />
-                <ReportRWCognition rwCognitionData={data.rwCognitionData} rwStudentProfile={data.rwStudentProfile} />
-              </section>
-            </>
-          )}
 
           {/* Key Recommendations */}
           {insights.keyRecommendations.length > 0 && (

@@ -6,12 +6,12 @@ const CHAPTERS_V1 = [
   { id: 'section-01', label: '전체 성적' },
   { id: 'section-02', label: '비교 성적' },
   { id: 'section-03', label: '풀이 패턴' },
-  { id: 'section-04', label: '단어 상태' },
+  { id: 'section-05', label: '단어 진단' },
 ];
 
 const CHAPTERS_V2_EXTRA = [
+  { id: 'section-04', label: 'RW 이해도' },
   { id: 'section-05', label: '단어 진단' },
-  { id: 'section-06', label: 'RW 이해도' },
 ];
 
 function useScrollProgress() {
@@ -38,7 +38,9 @@ interface ChapterNavProps {
 export function ChapterNav({ isV2 = false }: ChapterNavProps) {
   const [activeSection, setActiveSection] = useState<string>('section-01');
   const progress = useScrollProgress();
-  const CHAPTERS = isV2 ? [...CHAPTERS_V1, ...CHAPTERS_V2_EXTRA] : CHAPTERS_V1;
+  const CHAPTERS = isV2
+    ? [CHAPTERS_V1[0], CHAPTERS_V1[1], CHAPTERS_V1[2], ...CHAPTERS_V2_EXTRA]
+    : CHAPTERS_V1;
 
   useEffect(() => {
     const sections = CHAPTERS.map((c) => document.getElementById(c.id)).filter(Boolean) as HTMLElement[];
