@@ -14,12 +14,15 @@ interface Props {
 }
 
 const COUNTDOWN_SEC = 5;
+// Delay before observing sentinel — prevents popup from firing immediately
+// when arriving via auto-nav (scroll position may not have reset yet)
+const OBSERVE_DELAY_MS = 2000;
 
 export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props) {
-  const relatedPost: PostSummary | null = fixedPost ?? (
-    relatedPosts.length > 0
+  const [relatedPost] = useState<PostSummary | null>(
+    fixedPost ?? (relatedPosts.length > 0
       ? relatedPosts[Math.floor(Math.random() * relatedPosts.length)]
-      : null
+      : null)
   );
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -38,18 +41,22 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
   }, []);
 
   useEffect(() => {
-    const sentinel = document.getElementById(sentinelId);
-    if (!sentinel) return;
+    const timeoutId = setTimeout(() => {
+      const sentinel = document.getElementById(sentinelId);
+      if (!sentinel) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !dismissed) setVisible(true);
-      },
-      { threshold: 0.5 }
-    );
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting && !dismissed) setVisible(true);
+        },
+        { threshold: 0.5 }
+      );
 
-    observer.observe(sentinel);
-    return () => observer.disconnect();
+      observer.observe(sentinel);
+      return () => observer.disconnect();
+    }, OBSERVE_DELAY_MS);
+
+    return () => clearTimeout(timeoutId);
   }, [sentinelId, dismissed]);
 
   useEffect(() => {
