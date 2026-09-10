@@ -9,7 +9,7 @@ import {
   type SubjectKey,
 } from '@/lib/tutoring-subject-breakdown';
 
-export type TutoringStatus = 'active' | 'paused' | 'partial_end' | 'sales' | 'ended';
+export type TutoringStatus = 'active' | 'paused' | 'sales' | 'ended';
 
 /** SFv2 payments.management_status — 결제 관리 상태. 정의는 집계 유틸과 공유한다. */
 export type { PaymentManagementStatus, SubjectHours };
@@ -328,9 +328,7 @@ export async function GET(request: NextRequest) {
         // 사용 시간이 구매 시간 초과(또는 0h 구매) + 활성 결제 → 재결제 세일즈
         status = 'sales';
       } else if (remainingH > 0) {
-        if (isPaused) status = 'paused';
-        else if (svcStatus === 'partial_end') status = 'partial_end';
-        else status = 'active';
+        status = isPaused ? 'paused' : 'active';
       } else {
         status = svcStatus === 'ended' ? 'ended' : 'sales';
       }
@@ -365,7 +363,7 @@ export async function GET(request: NextRequest) {
     }
 
     const statusOrder: Record<TutoringStatus, number> = {
-      active: 0, paused: 1, partial_end: 2, sales: 3, ended: 4,
+      active: 0, paused: 1, sales: 2, ended: 3,
     };
     results.sort((a, b) =>
       statusOrder[a.status] !== statusOrder[b.status]
@@ -373,7 +371,7 @@ export async function GET(request: NextRequest) {
         : a.name.localeCompare(b.name)
     );
 
-    // 미연결 sfv2 유저: 수업중/휴원/부분종료/세일즈에 해당하지만 CRM에 sfv2_profile_id 미연결
+    // 미연결 sfv2 유저: 수업중/휴원/세일즈에 해당하지만 CRM에 sfv2_profile_id 미연결
     const linkedProfileIds = new Set(crmStudents.map((s) => s.sfv2_profile_id));
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
@@ -390,7 +388,7 @@ export async function GET(request: NextRequest) {
       // 세일즈: active payment + 잔여 마이너스 (사용 초과 또는 hours=0)
       if (rawRemainingH < 0 && activePaymentIds.has(pid)) return true;
       if (purchasedH - refundedH <= 0) return false; // 전액 환불 제외
-      if (rawRemainingH > 0) return true; // 수업중/휴원/부분종료
+      if (rawRemainingH > 0) return true; // 수업중/휴원
       // 세일즈: 잔여 0h이지만 최근 90일 내 세션 완료 기록 있음
       const lastSession = lastSessionDate.get(pid);
       return !!lastSession && lastSession >= ninetyDaysAgoStr;
