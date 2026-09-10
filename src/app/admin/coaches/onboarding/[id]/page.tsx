@@ -14,7 +14,7 @@ const ENROLLMENT_LABELS: Record<string, string> = {
   enrolled: '재학중',
 };
 const LANGUAGE_LABELS = { english: '영어 선호', korean: '우리말 선호', any: '상관없음' };
-const ROLE_LABELS = { instructor: '강사', ta: 'TA', other: '기타' };
+const ROLE_LABELS: Record<string, string> = { instructor: '강사', ta: 'TA', other: '기타' };
 
 function Field({ label, value }: { label: string; value?: string | number | null }) {
   if (!value && value !== 0) return null;
@@ -37,11 +37,58 @@ const CRITERIA_LABELS: Record<keyof HeadCoachCriteria, string> = {
   five_score_screenshots: '점수향상 스크린샷 5장+',
 };
 
+function buildBioHtml(data: CoachOnboardingSubmission): string {
+  const li = (text: string) => `<li><p style="text-align: left;">${text}</p></li>`;
+
+  const educationItems: string[] = [];
+  if (data.university) {
+    educationItems.push(data.undergrad_major ? `${data.university} ${data.undergrad_major}` : data.university);
+  }
+  if (data.grad_school) {
+    educationItems.push(data.grad_major ? `${data.grad_school} ${data.grad_major}` : data.grad_school);
+  }
+  if (data.high_school) educationItems.push(data.high_school);
+  if (data.sat_rw_score && data.sat_math_score) {
+    const total = data.sat_rw_score + data.sat_math_score;
+    educationItems.push(`SAT ${total}점 (RW:${data.sat_rw_score} / Math:${data.sat_math_score})`);
+  }
+
+  const careerItems: string[] = [];
+  const parts: string[] = [`수업 경력 ${data.teaching_years}년`];
+  if (data.teaching_hours_total) parts.push(`누적 ${data.teaching_hours_total}시간`);
+  if (data.students_taught) parts.push(`${data.students_taught}명 지도`);
+  careerItems.push(parts.join(', '));
+  for (const a of data.past_academies ?? []) {
+    const role = ROLE_LABELS[a.role] ?? a.role;
+    careerItems.push(`${a.name.trim()} (${role})`);
+  }
+
+  const eduSection = educationItems.length > 0
+    ? `<p style="text-align: left;">🏛️ <strong>학력</strong></p><ul>${educationItems.map(li).join('')}</ul>`
+    : '';
+  const carSection = careerItems.length > 0
+    ? `<p style="text-align: left;">📝 <strong>경력</strong></p><ul>${careerItems.map(li).join('')}</ul>`
+    : '';
+
+  return [eduSection, carSection].filter(Boolean).join('<p style="text-align: left;"></p>') + '<p></p>';
+}
+
+function deriveSubjects(subjects: string[]): string[] {
+  const result: string[] = [];
+  if (subjects.some(s => s.startsWith('SAT'))) result.push('SAT');
+  if (subjects.some(s => s.startsWith('AP'))) result.push('AP');
+  return result;
+}
+
+type SubmissionWithSlug = CoachOnboardingSubmission & { coach_slug: string | null };
+
 export default function OnboardingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [data, setData] = useState<CoachOnboardingSubmission | null>(null);
+  const [data, setData] = useState<SubmissionWithSlug | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [genResult, setGenResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   useEffect(() => {
     fetch(`/api/admin/coach-onboarding/${id}`, { headers: { 'x-admin-key': getAdminKey() } })
@@ -62,6 +109,35 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
       setData(d => d ? { ...d, status } : d);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleGenerateBio = async () => {
+    if (!data) return;
+    if (!data.coach_slug) {
+      setGenResult({ ok: false, message: '코치 slug가 연결되지 않았습니다. 어드민에서 코치 레코드를 먼저 확인해주세요.' });
+      return;
+    }
+    setGenerating(true);
+    setGenResult(null);
+    try {
+      const bio = buildBioHtml(data);
+      const subjects = deriveSubjects(data.subjects);
+      const res = await fetch('/api/admin/coaches', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
+        body: JSON.stringify({ slug: data.coach_slug, bio, subjects }),
+      });
+      const result: { success: boolean; error?: string } = await res.json();
+      if (result.success) {
+        setGenResult({ ok: true, message: `소개글이 저장됐습니다. (${data.coach_slug})` });
+      } else {
+        setGenResult({ ok: false, message: result.error ?? '저장 실패' });
+      }
+    } catch {
+      setGenResult({ ok: false, message: '네트워크 오류가 발생했습니다.' });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -95,10 +171,7 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
               <span className="text-gray-500 mb-1">/100</span>
             </div>
             <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500 rounded-full transition-all"
-                style={{ width: `${data.completeness_score ?? 0}%` }}
-              />
+              <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${data.completeness_score ?? 0}%` }} />
             </div>
           </div>
           <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5">
@@ -251,27 +324,53 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
         )}
 
         {/* Admin actions */}
-        <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">상태 관리</p>
-          <p className="text-sm text-gray-400 mb-4">
-            현재 상태: <span className="text-white font-medium">{data.status}</span>
-            {data.reviewed_at && ` · ${new Date(data.reviewed_at).toLocaleDateString('ko-KR')} 검토`}
-          </p>
-          <div className="flex gap-2">
+        <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5 space-y-4">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">관리</p>
+
+          {/* 소개글 자동 생성 */}
+          <div className="space-y-2">
+            <p className="text-xs text-gray-400">
+              연결된 코치: {' '}
+              {data.coach_slug
+                ? <span className="text-white font-mono">{data.coach_slug}</span>
+                : <span className="text-red-400">slug 미연결</span>}
+            </p>
             <button
-              onClick={() => updateStatus('reviewed')}
-              disabled={saving || data.status === 'reviewed'}
-              className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 disabled:opacity-40 text-blue-400 rounded-lg text-sm font-medium transition-colors"
+              onClick={handleGenerateBio}
+              disabled={generating || !data.coach_slug}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors"
             >
-              검토완료
+              {generating ? '생성 중...' : '소개글 자동 생성 및 저장'}
             </button>
-            <button
-              onClick={() => updateStatus('rejected')}
-              disabled={saving || data.status === 'rejected'}
-              className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 disabled:opacity-40 text-red-400 rounded-lg text-sm font-medium transition-colors"
-            >
-              반려
-            </button>
+            {genResult && (
+              <p className={`text-xs px-3 py-2 rounded-lg ${genResult.ok ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                {genResult.message}
+              </p>
+            )}
+          </div>
+
+          {/* 상태 관리 */}
+          <div className="pt-3 border-t border-white/5 space-y-3">
+            <p className="text-sm text-gray-400">
+              현재 상태: <span className="text-white font-medium">{data.status}</span>
+              {data.reviewed_at && ` · ${new Date(data.reviewed_at).toLocaleDateString('ko-KR')} 검토`}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => updateStatus('reviewed')}
+                disabled={saving || data.status === 'reviewed'}
+                className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 disabled:opacity-40 text-blue-400 rounded-lg text-sm font-medium transition-colors"
+              >
+                검토완료
+              </button>
+              <button
+                onClick={() => updateStatus('rejected')}
+                disabled={saving || data.status === 'rejected'}
+                className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 disabled:opacity-40 text-red-400 rounded-lg text-sm font-medium transition-colors"
+              >
+                반려
+              </button>
+            </div>
           </div>
         </div>
       </main>

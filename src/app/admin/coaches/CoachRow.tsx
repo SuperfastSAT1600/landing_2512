@@ -70,8 +70,6 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
     const [posts, setPosts] = useState<PostOption[]>([]);
     const [v2Teachers, setV2Teachers] = useState<V2Teacher[]>([]);
     const [uploading, setUploading] = useState(false);
-    const [submission, setSubmission] = useState<Record<string, unknown> | null>(null);
-    const [showDraft, setShowDraft] = useState(false);
     const [invite, setInvite] = useState<InviteInfo | null | undefined>(undefined); // undefined = loading
     const [copiedOnboarding, setCopiedOnboarding] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -105,84 +103,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             })
             .catch((err) => console.error('[CoachRow] v2 teachers fetch failed:', err));
 
-        fetch(`/api/admin/coach-onboarding?coach_slug=${coach.slug}`, {
-            headers: { 'x-admin-key': getAdminKey() },
-        })
-            .then(r => r.json())
-            .then((data: { data?: Record<string, unknown> | null }) => {
-                if (data.data) setSubmission(data.data);
-            })
-            .catch(() => null);
     }, [editing, coach.name, coach.slug]);
-
-    const handlePrefillFromSubmission = () => {
-        if (!submission) return;
-
-        // 과목 추론
-        const subjects = submission.subjects as string[] ?? [];
-        const inferredSubjects: string[] = [];
-        if (subjects.some(s => s.startsWith('SAT'))) inferredSubjects.push('SAT');
-        if (subjects.some(s => s.startsWith('AP'))) inferredSubjects.push('AP');
-
-        // 소개글 HTML 생성
-        const li = (text: string) => `<li><p style="text-align: left;">${text}</p></li>`;
-        const section = (emoji: string, label: string, items: string[]) =>
-            `<p style="text-align: left;">${emoji} <strong>${label}</strong></p><ul>${items.map(li).join('')}</ul>`;
-
-        // 학력
-        const university = submission.university as string ?? '';
-        const major = submission.undergrad_major as string ?? '';
-        const entryYear = submission.university_entry_year as number | null;
-        const enrolled = (submission.enrollment_status as string) === 'enrolled';
-        const gradSchool = submission.grad_school as string | null;
-        const gradMajor = submission.grad_major as string | null;
-        const highSchool = submission.high_school as string | null;
-        const rw = submission.sat_rw_score as number | null;
-        const math = submission.sat_math_score as number | null;
-
-        const educationItems: string[] = [];
-        if (university) {
-            educationItems.push(major ? `${university}, ${major}` : university);
-        }
-        if (gradSchool) educationItems.push(`${gradSchool}${gradMajor ? `, ${gradMajor}` : ''}`);
-        if (highSchool) educationItems.push(highSchool);
-        if (rw && math) educationItems.push(`SAT (RW:${rw}, MATH:${math})`);
-        const apSubjects = (submission.subjects as string[] ?? []).filter(s => s.startsWith('AP'));
-        for (const ap of apSubjects) educationItems.push(ap);
-
-        // 경력
-        const teachingYears = submission.teaching_years as number | null;
-        const teachingHours = submission.teaching_hours_total as number | null;
-        const studentCount = submission.students_taught as number | null;
-        const academies = submission.past_academies as Array<{ name: string; role: string }> | null ?? [];
-        const appealPoints = submission.appeal_points as string ?? '';
-
-        const careerItems: string[] = [];
-        if (teachingYears) {
-            const parts = [`수업 경력 ${teachingYears}년`];
-            if (teachingHours) parts.push(`누적 ${teachingHours}시간`);
-            if (studentCount) parts.push(`${studentCount}명 지도`);
-            careerItems.push(parts.join(', '));
-        }
-        for (const a of academies) {
-            const role = a.role === 'instructor' ? '강사' : a.role === 'ta' ? 'TA' : '기타';
-            careerItems.push(`${a.name} (${role})`);
-        }
-        for (const line of appealPoints.split('\n').map(l => l.trim()).filter(Boolean)) {
-            careerItems.push(line);
-        }
-
-        const bio = [
-            educationItems.length > 0 ? section('🏛️', '학력', educationItems) : '',
-            careerItems.length > 0 ? section('📝', '경력', careerItems) : '',
-        ].filter(Boolean).join('<p style="text-align: left;"></p>');
-
-        setEditState(s => ({
-            ...s,
-            subjects: inferredSubjects.length > 0 ? inferredSubjects : s.subjects,
-            bio: bio || s.bio,
-        }));
-    };
 
     const handlePhotoUpload = async (file: File) => {
         setUploading(true);
@@ -384,37 +305,6 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
 
             {editing && (
                 <div className="space-y-3 border-t border-white/5 pt-3">
-                    {/* 온보딩 제출 데이터 배너 */}
-                    {submission && (
-                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg space-y-2">
-                            <div className="flex items-center justify-between">
-                                <p className="text-xs font-medium text-blue-400">온보딩 제출 데이터가 있습니다.</p>
-                                <button
-                                    onClick={handlePrefillFromSubmission}
-                                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold text-white transition-colors"
-                                >
-                                    과목 · Bio 불러오기
-                                </button>
-                            </div>
-                            {!!submission.blog_post_draft && (
-                                <button
-                                    onClick={() => setShowDraft(v => !v)}
-                                    className="text-xs text-blue-300 hover:text-blue-200 transition-colors"
-                                >
-                                    {showDraft ? '▲ 블로그 초안 닫기' : '▼ AI 블로그 초안 보기'}
-                                </button>
-                            )}
-                            {showDraft && !!submission.blog_post_draft && (
-                                <textarea
-                                    readOnly
-                                    value={submission.blog_post_draft as string}
-                                    rows={12}
-                                    className="w-full bg-[#0d0f10] border border-white/10 rounded-lg px-3 py-2 text-xs text-gray-300 outline-none font-mono resize-none"
-                                />
-                            )}
-                        </div>
-                    )}
-
                     {/* 이름 */}
                     <input
                         value={editState.name}
