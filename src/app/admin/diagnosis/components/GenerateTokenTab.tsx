@@ -47,7 +47,10 @@ function getTimezoneCountry(iana: string): string {
   return TIMEZONE_OPTIONS.find((t) => t.iana === iana)?.country ?? iana;
 }
 
-function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string): string {
+function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string, isV2 = false): string {
+  const timeDesc = isV2
+    ? '응시 시간은 (1)단어 3분 20초(20개) (2)RW+MATH 35분(25문항) 입니다.'
+    : '응시 시간은 총 30분, 25문항입니다. (RW+Math 포함)';
   return `진단테스트 안내 드리도록 하겠습니다.
 
 [진단테스트 안내]
@@ -58,12 +61,15 @@ function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string):
 1. 응시 페이지 링크 접속하여 코드 6자리입력
 2. ${expiryKo}까지 진행 가능
    (${timezoneLabel} 기준)
-3. 응시 시간은 총 30분, 25문항입니다. (RW+Math 포함)
+3. ${timeDesc}
 4. 각 문항별로 '내가 얼마나 정답을 확신하는지' Confidence Level도 함께 체크하며 최종 제출해주세요!
 5. Math 시험의 경우 계산이 필요하기 때문에 Desmos를 사용해도 되며 아직 어렵다면 노트와 필기구를 준비해주세요!`;
 }
 
-function buildEnTemplate(code: string, expiryEn: string, timezoneCountry: string): string {
+function buildEnTemplate(code: string, expiryEn: string, timezoneCountry: string, isV2 = false): string {
+  const timeDesc = isV2
+    ? 'Time: (1) Vocabulary — 3 min 20 sec (20 words) (2) RW + Math — 35 min (25 questions)'
+    : 'Total time: 30 minutes, 25 questions (RW + Math)';
   return `Here is your SAT Diagnostic Test information.
 
 [Diagnostic Test Info]
@@ -74,7 +80,7 @@ function buildEnTemplate(code: string, expiryEn: string, timezoneCountry: string
 1. Go to the test page and enter your 6-digit code
 2. You have until ${expiryEn} to complete the test
    (${timezoneCountry} time)
-3. Total time: 30 minutes, 25 questions (RW + Math)
+3. ${timeDesc}
 4. For each question, please also check your Confidence Level — how sure you are about your answer — before submitting!
 5. For Math questions, you may use Desmos if needed. If you're not comfortable with it yet, have a notebook and pencil ready!`;
 }
@@ -406,8 +412,9 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
       {successResult && (() => {
         const expiryKo = formatExpiryKo(successResult.expiresAt, successResult.timezone);
         const expiryEn = formatExpiryEn(successResult.expiresAt, successResult.timezone);
-        const koMessage = buildKoTemplate(successResult.code, expiryKo, getTimezoneKoLabel(successResult.timezone));
-        const enMessage = buildEnTemplate(successResult.code, expiryEn, getTimezoneCountry(successResult.timezone));
+        const isV2 = testFormat === 'diagnostic-test-2';
+        const koMessage = buildKoTemplate(successResult.code, expiryKo, getTimezoneKoLabel(successResult.timezone), isV2);
+        const enMessage = buildEnTemplate(successResult.code, expiryEn, getTimezoneCountry(successResult.timezone), isV2);
         const message = activeTab === 'ko' ? koMessage : enMessage;
         return (
           <div className="p-5 rounded-xl border border-green-500/40 bg-green-900/20">
