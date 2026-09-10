@@ -29,7 +29,7 @@ import {
   formatDuration,
 } from '../../crm/components/stats-primitives';
 import type { CrmStatsSegment } from '@/lib/crm-stats-core';
-import { buildTargetVsActual, type MonthlyTargetRow } from '@/lib/business-targets';
+import { buildTargetVsActual, sliceRecentMonths, type MonthlyTargetRow } from '@/lib/business-targets';
 import { GlobalSalesPanel } from './GlobalSalesPanel';
 import { MonthlyTargetEditor } from './MonthlyTargetEditor';
 import { TotalOverviewPanel } from './TotalOverviewPanel';
@@ -369,7 +369,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
 
   // allMonthly는 gross_revenue를 월 단위로 이미 담고 있어 별도 fetch 없이 재사용한다.
   const actualByMonth = Object.fromEntries(allMonthly.map((m) => [m.month, m.gross_revenue]));
-  const targetVsActual = buildTargetVsActual(monthlyTargets, actualByMonth);
+  const targetVsActual = sliceRecentMonths(buildTargetVsActual(monthlyTargets, actualByMonth));
 
   const d = data;
   const segmentSub: Record<CrmStatsSegment, string> = {
