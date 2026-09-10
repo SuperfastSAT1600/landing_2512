@@ -396,6 +396,7 @@ export function StudentDetailPanel({
       {funnelHook.showChurnModal && (
         <ChurnModal
           student={localStudent}
+          adminKey={adminKey}
           onConfirm={(churnTag: string, churnType: ChurnType) =>
             funnelHook.handleChurnConfirm(churnTag, churnType)
           }
