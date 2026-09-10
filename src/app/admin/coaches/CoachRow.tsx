@@ -70,6 +70,8 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
     const [posts, setPosts] = useState<PostOption[]>([]);
     const [v2Teachers, setV2Teachers] = useState<V2Teacher[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [submission, setSubmission] = useState<Record<string, unknown> | null>(null);
+    const [generating, setGenerating] = useState(false);
     const [invite, setInvite] = useState<InviteInfo | null | undefined>(undefined); // undefined = loading
     const [copiedOnboarding, setCopiedOnboarding] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -103,7 +105,71 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             })
             .catch((err) => console.error('[CoachRow] v2 teachers fetch failed:', err));
 
+        fetch(`/api/admin/coach-onboarding?coach_slug=${coach.slug}`, {
+            headers: { 'x-admin-key': getAdminKey() },
+        })
+            .then(r => r.json())
+            .then((data: { data?: Record<string, unknown> | null }) => {
+                if (data.data) setSubmission(data.data);
+            })
+            .catch(() => null);
     }, [editing, coach.name, coach.slug]);
+
+    const handleGenerateBio = async () => {
+        if (!submission) return;
+        setGenerating(true);
+        try {
+            const li = (text: string) => `<li><p style="text-align: left;">${text}</p></li>`;
+            const ROLES: Record<string, string> = { instructor: '강사', ta: 'TA', other: '기타' };
+
+            const educationItems: string[] = [];
+            const university = submission.university as string ?? '';
+            const major = submission.undergrad_major as string ?? '';
+            if (university) educationItems.push(major ? `${university} ${major}` : university);
+            const gradSchool = submission.grad_school as string | null;
+            const gradMajor = submission.grad_major as string | null;
+            if (gradSchool) educationItems.push(gradMajor ? `${gradSchool} ${gradMajor}` : gradSchool);
+            const highSchool = submission.high_school as string | null;
+            if (highSchool) educationItems.push(highSchool);
+            const rw = submission.sat_rw_score as number | null;
+            const math = submission.sat_math_score as number | null;
+            if (rw && math) educationItems.push(`SAT ${rw + math}점 (RW:${rw} / Math:${math})`);
+
+            const careerItems: string[] = [];
+            const years = submission.teaching_years as number | null;
+            const hours = submission.teaching_hours_total as number | null;
+            const students = submission.students_taught as number | null;
+            const parts: string[] = years ? [`수업 경력 ${years}년`] : [];
+            if (hours) parts.push(`누적 ${hours}시간`);
+            if (students) parts.push(`${students}명 지도`);
+            if (parts.length) careerItems.push(parts.join(', '));
+            const academies = submission.past_academies as Array<{ name: string; role: string }> | null ?? [];
+            for (const a of academies) {
+                careerItems.push(`${a.name.trim()} (${ROLES[a.role] ?? a.role})`);
+            }
+
+            const eduSection = educationItems.length > 0
+                ? `<p style="text-align: left;">🏛️ <strong>학력</strong></p><ul>${educationItems.map(li).join('')}</ul>`
+                : '';
+            const carSection = careerItems.length > 0
+                ? `<p style="text-align: left;">📝 <strong>경력</strong></p><ul>${careerItems.map(li).join('')}</ul>`
+                : '';
+            const bio = [eduSection, carSection].filter(Boolean).join('<p style="text-align: left;"></p>') + '<p></p>';
+
+            const subjectList = submission.subjects as string[] ?? [];
+            const inferredSubjects: string[] = [];
+            if (subjectList.some((s: string) => s.startsWith('SAT'))) inferredSubjects.push('SAT');
+            if (subjectList.some((s: string) => s.startsWith('AP'))) inferredSubjects.push('AP');
+
+            setEditState(s => ({
+                ...s,
+                bio,
+                subjects: inferredSubjects.length > 0 ? inferredSubjects : s.subjects,
+            }));
+        } finally {
+            setGenerating(false);
+        }
+    };
 
     const handlePhotoUpload = async (file: File) => {
         setUploading(true);
@@ -305,6 +371,20 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
 
             {editing && (
                 <div className="space-y-3 border-t border-white/5 pt-3">
+                    {/* 소개글 자동 생성 */}
+                    {submission && (
+                        <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                            <p className="text-xs text-blue-400">온보딩 제출 데이터로 소개글을 자동 생성합니다.</p>
+                            <button
+                                onClick={handleGenerateBio}
+                                disabled={generating}
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded text-xs font-bold text-white transition-colors"
+                            >
+                                {generating ? '생성 중...' : '소개글 자동 생성'}
+                            </button>
+                        </div>
+                    )}
+
                     {/* 이름 */}
                     <input
                         value={editState.name}
