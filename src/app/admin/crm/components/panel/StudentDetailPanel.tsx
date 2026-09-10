@@ -18,6 +18,7 @@ import { PanelHeader } from './sections/PanelHeader';
 import { InquirySection } from './sections/InquirySection';
 import { StudentInfoSection } from './sections/StudentInfoSection';
 import { DiagnosticSection } from './sections/DiagnosticSection';
+import { ExamScoreSection } from './sections/ExamScoreSection';
 import { MemoSection } from './sections/MemoSection';
 import { TimelineSection } from './sections/TimelineSection';
 import { StrategyHistorySection } from './sections/StrategyHistorySection';
@@ -324,6 +325,8 @@ export function StudentDetailPanel({
               setDiagSearchQuery={diagHook.setDiagSearchQuery}
               onDiagLink={diagHook.handleDiagLink}
             />
+
+            <ExamScoreSection student={localStudent} adminKey={adminKey} />
 
             <StrategyHistorySection
               student={localStudent}
