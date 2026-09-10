@@ -952,6 +952,20 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   enrolled: '수강 중',
 };
 
+/** 학생이 실제 응시한 SAT 회차별 성적 (student_exam_scores). 총점은 저장하지 않고 조회 측에서 합산한다. */
+export interface ExamScore {
+  id: string;
+  student_id: string;
+  /** 'YYYY-MM' */
+  exam_month: string;
+  rw_score: number | null;
+  math_score: number | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export const CHURN_TAG_OPTIONS = ['회신 없음', '노쇼', '미응시', '미결제', '기타'] as const;
 
 export const GRADE_OPTIONS = ['7th', '8th', '9th', '10th', '11th', '12th', '졸업', '기타'] as const;
