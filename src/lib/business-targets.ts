@@ -60,11 +60,19 @@ export function niceAxisTicks(maxValue: number, tickCount = 5): number[] {
   return ticks;
 }
 
-/** targetVsActual 배열에서 현재 달 이하 항목만 추리고, 가장 최근 n개월만 반환한다. */
-export function sliceRecentMonths(rows: TargetVsActualRow[], n = 6): TargetVsActualRow[] {
+/** 이번 달 포함 최근 n개월 고정 창을 항상 생성한다. 목표·실적이 없는 달은 0으로 채운다. */
+export function buildSixMonthWindow(
+  targets: MonthlyTargetRow[],
+  actualByMonth: Record<string, number>,
+  n = 6,
+): TargetVsActualRow[] {
   const today = new Date();
-  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-  return rows.filter((r) => r.month <= currentMonth).slice(-n);
+  const targetByMonth = Object.fromEntries(targets.map((t) => [t.month.slice(0, 7), t.target_amount]));
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(today.getFullYear(), today.getMonth() - (n - 1 - i), 1);
+    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return { month, target: targetByMonth[month] ?? 0, actual: actualByMonth[month] ?? 0 };
+  });
 }
 
 /** 같은 통화로 맞춘 두 시계열을 월별로 합산한다(합집합, 월 오름차순). */
