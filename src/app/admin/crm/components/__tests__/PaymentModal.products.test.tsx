@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PaymentModal } from '../PaymentModal';
 import type { Student } from '@/types/crm';
 
@@ -32,6 +32,29 @@ describe('PaymentModal — 상품 목록', () => {
 
     fireEvent.click(option);
     expect(screen.getByPlaceholderText('시간 수')).toBeTruthy();
+  });
+
+  it('소수점 시간(41.5)을 그대로 결제 API로 보낸다', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { student: STUDENT, payment: { id: 'pay-1' } } }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    openProductStep('1:1 수업');
+    fireEvent.click(screen.getByText('SAT 정규 1:1 수업 (관리형)'));
+    fireEvent.change(screen.getByPlaceholderText('시간 수'), { target: { value: '41.5' } });
+    fireEvent.change(screen.getByPlaceholderText('예: 2990000 (가결제는 0)'), { target: { value: '4450000' } });
+
+    const confirm = screen.getByText('결제 완료') as HTMLButtonElement;
+    expect(confirm.disabled).toBe(false);
+    fireEvent.click(confirm);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body.hours).toBe(41.5);
+
+    vi.unstubAllGlobals();
   });
 
   it('그룹 SAT에 추석특강 상품을 여름방학 특강과 함께 노출한다', () => {

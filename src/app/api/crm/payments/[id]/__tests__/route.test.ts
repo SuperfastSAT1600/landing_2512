@@ -114,6 +114,21 @@ describe('PATCH /api/crm/payments/[id]', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
+  it('updates 시간 to a 소수점 값 (41.5) → 200', async () => {
+    updateSucceeds();
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq({ hours: 41.5 }), { params });
+    expect(res.status).toBe(200);
+    expect(mockUpdate).toHaveBeenCalledWith({ hours: 41.5 });
+  });
+
+  it('rejects a non-numeric 시간 → 400', async () => {
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq({ hours: '41.5' }), { params });
+    expect(res.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
   it('rejects a zero or negative 시간 → 400', async () => {
     const { PATCH } = await import('../route');
     const res = await PATCH(makeReq({ hours: 0 }), { params });
