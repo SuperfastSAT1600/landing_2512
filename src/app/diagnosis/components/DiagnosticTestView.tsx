@@ -476,13 +476,6 @@ export function DiagnosticTestView({
                               Mark for Review
                             </button>
                           </div>
-                          {currentQuestion.type === 'multiple-choice' && (
-                            <span className="text-xs text-gray-400 font-semibold tracking-wide" style={{ cursor: 'default' }}>
-                              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}>
-                                <text x="2" y="14" fontSize="14" fontWeight="800" fill="#9ca3af" fontFamily="serif" style={{ textDecoration: 'line-through' }}>ABC</text>
-                              </svg>
-                            </span>
-                          )}
                         </div>
 
                         {/* Question text */}
