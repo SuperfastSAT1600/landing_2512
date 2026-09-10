@@ -29,7 +29,7 @@ import {
   formatDuration,
 } from '../../crm/components/stats-primitives';
 import type { CrmStatsSegment } from '@/lib/crm-stats-core';
-import { buildTargetVsActual, sliceRecentMonths, type MonthlyTargetRow } from '@/lib/business-targets';
+import { buildSixMonthWindow, type MonthlyTargetRow } from '@/lib/business-targets';
 import { GlobalSalesPanel } from './GlobalSalesPanel';
 import { MonthlyTargetEditor } from './MonthlyTargetEditor';
 import { TotalOverviewPanel } from './TotalOverviewPanel';
@@ -369,7 +369,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
 
   // allMonthly는 gross_revenue를 월 단위로 이미 담고 있어 별도 fetch 없이 재사용한다.
   const actualByMonth = Object.fromEntries(allMonthly.map((m) => [m.month, m.gross_revenue]));
-  const targetVsActual = sliceRecentMonths(buildTargetVsActual(monthlyTargets, actualByMonth));
+  const targetVsActual = buildSixMonthWindow(monthlyTargets, actualByMonth);
 
   const d = data;
   const segmentSub: Record<CrmStatsSegment, string> = {
@@ -630,7 +630,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                 <div className="flex justify-end mb-2">
                   <MonthlyTargetEditor segment="tutoring" adminKey={adminKey} onSaved={fetchMonthlyTargets} />
                 </div>
-                {targetVsActual.length > 0 ? (
+                {targetVsActual.some((r) => r.target > 0 || r.actual > 0) ? (
                   <TargetVsActualChart data={targetVsActual} formatValue={fmt만원} />
                 ) : (
                   <p className="text-sm text-gray-400 text-center py-6">
