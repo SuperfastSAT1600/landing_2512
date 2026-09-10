@@ -1,6 +1,7 @@
 import { computeStageFlow, type StageFlowRow, type StageHistoryEntry } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
 import { isContacted, contactRate } from '@/lib/crm-stats-core';
+import { toKstDay, toMs } from '@/lib/kst-day';
 import type { StrategyHistoryEntry, StrategyHistoryType } from '@/types/crm';
 
 // 세일즈 로직(전략)별 통계 집계 — 순수 함수. I/O 없음(students/payments는 라우트에서 주입).
@@ -63,32 +64,6 @@ export interface StrategyTypeStats {
 }
 
 const MS_PER_DAY = 86_400_000;
-
-/** ISO/naive 문자열 → KST 달력 날짜(YYYY-MM-DD). 인스턴트(Z/offset)는 KST로 변환, naive는 벽시계로 간주. */
-function toKstDay(ts: string | null | undefined): string | null {
-  if (!ts) return null;
-  const hasZone = /[zZ]$/.test(ts) || /[+-]\d{2}:?\d{2}$/.test(ts);
-  if (!hasZone) return ts.slice(0, 10); // naive = KST 벽시계
-  const ms = new Date(ts).getTime();
-  if (!Number.isFinite(ms)) return null;
-  // KST = UTC + 9h
-  return new Date(ms + 9 * 3600 * 1000).toISOString().slice(0, 10);
-}
-
-/** 비교용 절대시각(ms). naive는 KST 벽시계로 해석. */
-function toMs(ts: string | null | undefined): number | null {
-  if (!ts) return null;
-  const hasZone = /[zZ]$/.test(ts) || /[+-]\d{2}:?\d{2}$/.test(ts);
-  if (hasZone) {
-    const ms = new Date(ts).getTime();
-    return Number.isFinite(ms) ? ms : null;
-  }
-  const [d, t = '00:00:00'] = ts.replace(' ', 'T').split('T');
-  const [Y, Mo, D] = d.split('-').map(Number);
-  const [H = 0, Mi = 0, Se = 0] = t.split(':').map(Number);
-  if (!Y || !Mo || !D) return null;
-  return Date.UTC(Y, Mo - 1, D, H, Mi, Se) - 9 * 3600 * 1000; // KST 벽시계 → UTC instant
-}
 
 interface Attribution {
   strategy_id: string;
@@ -168,14 +143,15 @@ export function computeStrategyStats(
 ): StrategyTypeStats {
   const inPeriod = makeInPeriod(period);
 
-  // ── 최초결제(amount>1) 결제자 집합 (paid = anytime) ──
+  // ── 최초결제 결제자 집합 (paid = anytime) ──
+  // 0원(가결제)·₩1(구 placeholder)도 실전환으로 센다. 환불(음수)만 제외.
   const paidIds = new Set<string>();
   const paidNames = new Set<string>();
   // 학생별 첫 최초결제 시각(ms) — avg_days_to_convert용
   const firstPaidMsById = new Map<string, number>();
   const firstPaidMsByName = new Map<string, number>();
   for (const p of payments) {
-    if (p.payment_type === '최초결제' && p.amount > 1) {
+    if (p.payment_type === '최초결제' && p.amount >= 0) {
       const ms = toMs(p.paid_at);
       if (p.student_id) {
         paidIds.add(p.student_id);

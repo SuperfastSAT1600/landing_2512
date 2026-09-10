@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import OpenAI from 'openai';
 import { z } from 'zod';
+import { getQwenAnthropicClient, isQwenConfigured, qwenModel } from '@/lib/qwen';
+import { anthropicErrorMessage } from '@/lib/anthropic-error';
 import type { AiCareResult } from '@/types/crm';
 
 const AiCareResultSchema = z.object({
@@ -67,31 +69,41 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'raw_memo is required' }, { status: 400 });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.error('[ai-care] OPENAI_API_KEY is not set');
-    return NextResponse.json({ error: 'AI service not configured' }, { status: 503 });
-  }
-
-  const client = new OpenAI({ apiKey });
-
   let rawContent: string;
   try {
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      max_tokens: 1024,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `[상담 메모]\n${raw_memo.trim()}` },
-      ],
-    });
-
-    rawContent = response.choices[0]?.message?.content ?? '';
-    if (!rawContent) throw new Error('Empty response from OpenAI');
+    if (isQwenConfigured()) {
+      const response = await getQwenAnthropicClient().messages.create({
+        model: qwenModel('strong'),
+        max_tokens: 1024,
+        system: [{ type: 'text', text: SYSTEM_PROMPT }],
+        messages: [{ role: 'user', content: `[상담 메모]\n${raw_memo.trim()}` }],
+      });
+      rawContent = response.content
+        .filter((b) => b.type === 'text')
+        .map((b) => (b as { text: string }).text)
+        .join('');
+    } else {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey)
+        return NextResponse.json({ error: 'AI service not configured' }, { status: 503 });
+      const response = await new OpenAI({ apiKey }).chat.completions.create({
+        model: 'gpt-4o-mini',
+        max_tokens: 1024,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: `[상담 메모]\n${raw_memo.trim()}` },
+        ],
+      });
+      rawContent = response.choices[0]?.message?.content ?? '';
+    }
+    if (!rawContent) throw new Error('Empty AI response');
   } catch (err) {
-    console.error('[ai-care] OpenAI API error:', err);
-    return NextResponse.json({ error: 'AI processing failed' }, { status: 502 });
+    console.error('[ai-care] provider error:', err);
+    return NextResponse.json(
+      { error: isQwenConfigured() ? anthropicErrorMessage(err) : 'AI processing failed' },
+      { status: 502 }
+    );
   }
 
   let parsed: unknown;

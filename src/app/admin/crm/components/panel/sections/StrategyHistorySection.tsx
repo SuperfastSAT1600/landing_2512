@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
 import { SectionCard } from './SectionCard';
+import { appendStrategyHistoryEntry, buildStrategyHistoryEntry } from '@/lib/strategy-history';
 import type { Student, RetryStrategy, StrategyHistoryEntry, StrategyHistoryType } from '@/types/crm';
 
 const HISTORY_TYPES: { type: StrategyHistoryType; label: string }[] = [
@@ -90,12 +91,8 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
 
   async function handleSave(entry: Omit<StrategyHistoryEntry, 'id' | 'applied_at'>) {
     setSaving(true);
-    const newEntry: StrategyHistoryEntry = {
-      ...entry,
-      id: crypto.randomUUID(),
-      applied_at: new Date().toISOString(),
-    };
-    const updated = [...history, newEntry];
+    // 엔트리 shape은 주차 계획의 '전략 적용 기록'과 공유한다(집계가 이 shape에 의존).
+    const updated = appendStrategyHistoryEntry(history, buildStrategyHistoryEntry(entry));
     const res = await fetch(`/api/crm/students/${student.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },

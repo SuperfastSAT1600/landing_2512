@@ -23,8 +23,9 @@ export async function POST(
   // 모달에서 보낸 결제 유형. 미지정 시 '최초결제'(DB 기본값과 동일).
   const resolvedPaymentType = payment_type === '재결제' ? '재결제' : '최초결제';
 
-  if (!product || !amount || amount <= 0) {
-    return NextResponse.json({ error: '상품과 금액은 필수입니다.' }, { status: 400 });
+  // 0원은 가결제(수업 시작, 실입금 전)로 허용. 음수는 환불 전용 경로에서만 처리한다.
+  if (!product || typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) {
+    return NextResponse.json({ error: '상품과 금액(0 이상)은 필수입니다.' }, { status: 400 });
   }
 
   // student_name 조회 (payments 테이블 기록용)

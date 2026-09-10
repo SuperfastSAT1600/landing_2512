@@ -105,6 +105,7 @@ export function StudentDetailPanel({ partnerToken, studentToken, studentName, ad
       .finally(() => setLoading(false));
   }, [partnerToken, studentToken, adminKey]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (tab !== 'report' || report || reportLoading) return;
     setReportLoading(true);

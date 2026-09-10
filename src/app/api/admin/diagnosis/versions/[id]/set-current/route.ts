@@ -18,11 +18,21 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    // Clear all current flags
+    // Fetch this version's test_id to scope the clear
+    const { data: target } = await supabaseAdmin
+      .from('diagnostic_test_versions')
+      .select('test_id')
+      .eq('id', id)
+      .single();
+
+    const scopedTestId = target?.test_id ?? 'diagnostic-test-1';
+
+    // Clear current flag only within the same test_id scope
     const { error: clearError } = await supabaseAdmin
       .from('diagnostic_test_versions')
       .update({ is_current: false })
-      .eq('is_current', true);
+      .eq('is_current', true)
+      .eq('test_id', scopedTestId);
 
     if (clearError) throw clearError;
 

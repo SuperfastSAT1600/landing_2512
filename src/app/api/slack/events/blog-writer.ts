@@ -1,25 +1,26 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { SKELETON_SYSTEM, GHOST_PROSE_SYSTEM, LANDING_PROSE_SYSTEM } from './blog-prompts';
+import { matchRelatedPosts, buildRelatedPostsContext } from './post-memory';
 
 export type Topic = { n?: number; title: string; rationale: string; point: string };
 export type BlogDraft = { ghostMarkdown: string; landingMarkdown: string; slug: string; title: string; focusKeyword: string };
 
+const OPENAI_MODEL = 'gpt-5.6-luna';
+
 // ─── API Calls ────────────────────────────────────────────────────────────────
 
 async function generateSkeleton(
-  topic: Topic, client: Anthropic
+  topic: Topic, client: OpenAI
 ): Promise<Record<string, unknown>> {
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2000,
-    system: SKELETON_SYSTEM,
-    messages: [{
-      role: 'user',
-      content: `주제: ${topic.title}\n근거: ${topic.rationale || '없음'}\n핵심 포인트: ${topic.point || '없음'}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격 JSON을 반환해주세요.`,
-    }],
+  const response = await client.chat.completions.create({
+    model: OPENAI_MODEL,
+    max_completion_tokens: 2000,
+    messages: [
+      { role: 'system', content: SKELETON_SYSTEM },
+      { role: 'user', content: `주제: ${topic.title}\n근거: ${topic.rationale || '없음'}\n핵심 포인트: ${topic.point || '없음'}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격 JSON을 반환해주세요.` },
+    ],
   });
-  const text = response.content[0].type === 'text' ? response.content[0].text : '{}';
-  // Strip markdown code fences, then extract outermost JSON object
+  const text = response.choices[0]?.message?.content ?? '{}';
   const stripped = text.replace(/```(?:json)?\s*/g, '').replace(/```/g, '');
   const start = stripped.indexOf('{');
   const end = stripped.lastIndexOf('}');
@@ -28,33 +29,33 @@ async function generateSkeleton(
 }
 
 async function generateGhostProse(
-  topic: Topic, skeleton: Record<string, unknown>, client: Anthropic
+  topic: Topic, skeleton: Record<string, unknown>, relatedContext: string, client: OpenAI
 ): Promise<string> {
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 8000,
-    system: GHOST_PROSE_SYSTEM,
-    messages: [{
-      role: 'user',
-      content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 Ghost 블로그 포스팅을 마크다운으로 작성해주세요.`,
-    }],
+  const systemPrompt = relatedContext ? GHOST_PROSE_SYSTEM + relatedContext : GHOST_PROSE_SYSTEM;
+  const response = await client.chat.completions.create({
+    model: OPENAI_MODEL,
+    max_completion_tokens: 8000,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 Ghost 블로그 포스팅을 마크다운으로 작성해주세요.` },
+    ],
   });
-  return response.content[0].type === 'text' ? response.content[0].text : '';
+  return response.choices[0]?.message?.content ?? '';
 }
 
 async function generateLandingProse(
-  topic: Topic, skeleton: Record<string, unknown>, client: Anthropic
+  topic: Topic, skeleton: Record<string, unknown>, relatedContext: string, client: OpenAI
 ): Promise<string> {
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 10000,
-    system: LANDING_PROSE_SYSTEM,
-    messages: [{
-      role: 'user',
-      content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 랜딩 페이지 블로그를 마크다운으로 작성해주세요.`,
-    }],
+  const systemPrompt = relatedContext ? LANDING_PROSE_SYSTEM + relatedContext : LANDING_PROSE_SYSTEM;
+  const response = await client.chat.completions.create({
+    model: OPENAI_MODEL,
+    max_completion_tokens: 10000,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `주제: ${topic.title}\n오늘 날짜: ${new Date().toISOString().slice(0, 10)}\n\n골격:\n${JSON.stringify(skeleton, null, 2)}\n\n위 골격을 따라 랜딩 페이지 블로그를 마크다운으로 작성해주세요.` },
+    ],
   });
-  return response.content[0].type === 'text' ? response.content[0].text : '';
+  return response.choices[0]?.message?.content ?? '';
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -66,14 +67,28 @@ export function extractSlugFromMarkdown(markdown: string, title: string): string
     .replace(/\s+/g, '-').slice(0, 60) + '-' + Date.now().toString(36);
 }
 
-export async function writeBlog(topic: Topic): Promise<BlogDraft> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+export async function writeBlog(topic: Topic, platform: 'ghost' | 'landing' | 'both' = 'both'): Promise<BlogDraft> {
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  const queryText = `${topic.title}\n${topic.rationale || ''}\n${topic.point || ''}`;
+  const relatedPosts = await matchRelatedPosts(queryText, 3, 0.65);
+  const relatedContext = buildRelatedPostsContext(relatedPosts);
+
+  if (relatedPosts.length > 0) {
+    console.log(`[blog-writer] related posts found: ${relatedPosts.map(p => p.title).join(', ')}`);
+  }
 
   const skeleton = await generateSkeleton(topic, client);
-  const ghostMarkdown = await generateGhostProse(topic, skeleton, client);
-  const landingMarkdown = await generateLandingProse(topic, skeleton, client);
+  const ghostMarkdown = (platform === 'ghost' || platform === 'both')
+    ? await generateGhostProse(topic, skeleton, relatedContext, client)
+    : '';
+  const landingMarkdown = (platform === 'landing' || platform === 'both')
+    ? await generateLandingProse(topic, skeleton, relatedContext, client)
+    : '';
 
-  const slug = extractSlugFromMarkdown(ghostMarkdown, topic.title);
+  const baseMarkdown = ghostMarkdown || landingMarkdown;
+  const slug = extractSlugFromMarkdown(baseMarkdown, topic.title);
   const focusKeyword = (skeleton.focus_keyword as string | undefined) || topic.title;
-  return { ghostMarkdown, landingMarkdown, slug, title: topic.title, focusKeyword };
+  const title = (skeleton.meta_title as string | undefined)?.trim() || topic.title;
+  return { ghostMarkdown, landingMarkdown, slug, title, focusKeyword };
 }

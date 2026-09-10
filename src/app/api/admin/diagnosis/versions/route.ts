@@ -4,9 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
 
 /**
- * GET /api/admin/diagnosis/versions
- * List all test versions, ordered by version_number desc.
- * Auto-seeds v1 from the hardcoded TS file if no versions exist.
+ * GET /api/admin/diagnosis/versions?testId=diagnostic-test-1
+ * List versions for a specific test format, ordered by version_number desc.
+ * Auto-seeds one version per format if none exist for that format.
  */
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
@@ -14,14 +14,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const testId = searchParams.get('testId') ?? 'diagnostic-test-1';
+
     const { data: existing, error: listError } = await supabaseAdmin
       .from('diagnostic_test_versions')
-      .select('id, version_number, title, time_limit_minutes, is_current, created_at, created_from')
+      .select('id, version_number, title, time_limit_minutes, is_current, created_at, created_from, test_id')
+      .eq('test_id', testId)
       .order('version_number', { ascending: false });
 
     if (listError) throw listError;
 
-    // Auto-seed v1 from the hardcoded TS file if no versions exist
+    // Auto-seed if no versions exist for this format
     if (!existing || existing.length === 0) {
       const { data: seeded, error: seedError } = await supabaseAdmin
         .from('diagnostic_test_versions')
@@ -32,12 +36,33 @@ export async function GET(request: NextRequest) {
           directions: diagnosticTest1.directions ?? null,
           questions: diagnosticTest1.questions,
           is_current: true,
+          test_id: testId,
         })
-        .select('id, version_number, title, time_limit_minutes, is_current, created_at, created_from')
+        .select('id, version_number, title, time_limit_minutes, is_current, created_at, created_from, test_id')
         .single();
 
       if (seedError) throw seedError;
       return NextResponse.json({ versions: [seeded] }, { status: 200 });
+    }
+
+    // Check if current version is missing RW questions — if so, repair it
+    const currentVersion = existing.find(v => v.is_current);
+    if (currentVersion) {
+      const { data: currentData } = await supabaseAdmin
+        .from('diagnostic_test_versions')
+        .select('questions')
+        .eq('id', currentVersion.id)
+        .single();
+
+      const qs = currentData?.questions as Array<{ section?: string }> | null;
+      const hasRW = Array.isArray(qs) && qs.some(q => q.section === 'Reading and Writing');
+
+      if (!hasRW) {
+        await supabaseAdmin
+          .from('diagnostic_test_versions')
+          .update({ questions: diagnosticTest1.questions })
+          .eq('id', currentVersion.id);
+      }
     }
 
     // Add question count for each version
@@ -82,10 +107,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch base version
+    // Fetch base version (including test_id to inherit)
     const { data: base, error: baseError } = await supabaseAdmin
       .from('diagnostic_test_versions')
-      .select('version_number, title, time_limit_minutes, directions, questions')
+      .select('version_number, title, time_limit_minutes, directions, questions, test_id')
       .eq('id', baseVersionId)
       .single();
 
@@ -99,10 +124,11 @@ export async function POST(request: NextRequest) {
       return question.id === editedQuestion.id ? editedQuestion : q;
     });
 
-    // Get next version number
+    // Get next version number within same test_id
     const { data: maxRow } = await supabaseAdmin
       .from('diagnostic_test_versions')
       .select('version_number')
+      .eq('test_id', base.test_id ?? 'diagnostic-test-1')
       .order('version_number', { ascending: false })
       .limit(1)
       .single();
@@ -119,8 +145,9 @@ export async function POST(request: NextRequest) {
         questions,
         is_current: false,
         created_from: baseVersionId,
+        test_id: base.test_id ?? 'diagnostic-test-1',
       })
-      .select('id, version_number, title, is_current, created_at')
+      .select('id, version_number, title, is_current, created_at, test_id')
       .single();
 
     if (insertError) throw insertError;

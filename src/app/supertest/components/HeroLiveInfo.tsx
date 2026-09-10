@@ -38,6 +38,7 @@ export default function HeroLiveInfo() {
             .catch(() => {});
     }, []);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (!nextTestDate) return;
         const target = new Date(`${nextTestDate}T09:00:00+09:00`);

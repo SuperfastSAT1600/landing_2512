@@ -37,7 +37,7 @@ body { background: var(--night); color: var(--light); font-family: 'Inter', 'Ari
 .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(56px + 48px) clamp(20px, 5vw, 48px) 80px; text-align: center; position: relative; }
 .hero::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 40% at 50% 30%, rgba(255,255,255,0.025) 0%, transparent 70%); }
 .eyebrow-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px; }
-.eyebrow-rule { height: 1px; width: 40px; background: var(--hairline); }
+.eyebrow-rule { height: 1px; width: 40px; background: rgba(255,255,255,0.55); }
 .eyebrow-text { font-size: 10px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); }
 .hero-title { font-size: clamp(36px, 7vw, 64px); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; line-height: 0.95; margin-bottom: 10px; }
 .hero-sub { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); margin-bottom: 52px; }
@@ -481,8 +481,6 @@ const sb = supabase.createClient(SB_URL, SB_ANON);
 const CLUB_ID = 'gangwon';
 const ROSTER  = ['황은총','김어진','이용재','이정현','강준혁','조원우'];
 // UNIT_LABELS, HW_UNITS, UNIT_URLS는 gangwon-config.js에서 로드됩니다.
-// gangwon.html에서는 UNIT_LABELS_LONG을 기본 레이블로 사용합니다.
-const UNIT_LABELS = UNIT_LABELS_LONG;
 
 let allFeedback = [];
 let allHomework = [];
@@ -575,9 +573,15 @@ const newPin      = initPin('new-pin-boxes',        'change-btn', doChangePin);
 
 /* ── Init ────────────────────────────────────────────── */
 async function checkSetup() {
-  const { data } = await sb.from('b2b_club_pins').select('pin').eq('club_id', CLUB_ID).maybeSingle();
-  if (data) document.getElementById('login-section').style.display = 'block';
-  else       document.getElementById('setup-section').style.display = 'block';
+  try {
+    const { data, error } = await sb.from('b2b_club_pins').select('pin').eq('club_id', CLUB_ID).maybeSingle();
+    if (error) throw error;
+    if (data) document.getElementById('login-section').style.display = 'block';
+    else      document.getElementById('setup-section').style.display = 'block';
+  } catch (e) {
+    console.error('checkSetup error:', e);
+    document.getElementById('login-section').style.display = 'block';
+  }
 }
 checkSetup();
 

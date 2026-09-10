@@ -10,10 +10,11 @@ import { SelectableText } from './SelectableText';
 import { TestCalculator } from './TestCalculator';
 import { QuestionNavGrid } from './QuestionNavGrid';
 import { ConfidencePicker } from './ConfidencePicker';
+import { SequentialRevealQuestion } from './SequentialRevealQuestion';
 import { TestSubmittedScreen } from './TestSubmittedScreen';
 import { SubmitConfirmationScreen } from './SubmitConfirmationScreen';
 import type { DiagnosticTestData } from '../data/diagnostic-test-1';
-import { SubmitTestRequest, SavedWord } from '@/types/diagnosis';
+import { SubmitTestRequest, SavedWord, VocabAnswer, RWSequentialAnswer } from '@/types/diagnosis';
 import { calcAverageConfidence } from '../utils/calcAverageConfidence';
 
 interface DiagnosticTestViewProps {
@@ -21,12 +22,14 @@ interface DiagnosticTestViewProps {
   tokenId?: string;
   studentEmail?: string;
   studentName?: string;
+  testId?: string;
   testVersionId?: string;
   timeLimitMinutes?: number;
   previousScoreStatus?: 'scored' | 'never_taken' | 'dont_remember';
   previousTestDate?: string;
   previousRwScore?: number;
   previousMathScore?: number;
+  vocabAnswers?: VocabAnswer[];
 }
 
 export function DiagnosticTestView({
@@ -34,17 +37,21 @@ export function DiagnosticTestView({
   tokenId = '',
   studentEmail = '',
   studentName = '',
+  testId = 'diagnostic-test-1',
   testVersionId,
   timeLimitMinutes,
   previousScoreStatus,
   previousTestDate,
   previousRwScore,
   previousMathScore,
+  vocabAnswers,
 }: DiagnosticTestViewProps) {
+  const isV2 = testId === 'diagnostic-test-2';
   const [startTime, setStartTime] = useState<number | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [confidence, setConfidence] = useState<Record<string, number>>({});
+  const [rwSequentialData, setRwSequentialData] = useState<RWSequentialAnswer[]>([]);
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
   const [crossedOut, setCrossedOut] = useState<Record<string, Set<string>>>({});
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
@@ -176,7 +183,7 @@ export function DiagnosticTestView({
         tokenId,
         studentEmail,
         studentName,
-        testId: 'diagnostic-test-1',
+        testId,
         testVersionId,
         startedAt: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
         submittedAt: new Date().toISOString(),
@@ -190,6 +197,7 @@ export function DiagnosticTestView({
         previousTestDate,
         previousRwScore,
         previousMathScore,
+        ...(isV2 && { vocabAnswers, rwSequentialData }),
       };
 
       const response = await fetch('/api/diagnosis/submit', {
@@ -367,7 +375,7 @@ export function DiagnosticTestView({
             className="overflow-hidden bg-blue-50 border-b border-blue-200"
           >
             <div className="px-6 py-3 text-sm text-blue-800 leading-relaxed max-w-3xl mx-auto flex items-center justify-between">
-              <span>💡 <strong>Vocabulary Tip:</strong> Click any unknown word in the passage or options, then press "Save" to mark it for vocabulary building.</span>
+              <span>💡 <strong>Vocabulary Tip:</strong> Click any unknown word in the passage or options, then press &quot;Save&quot; to mark it for vocabulary building.</span>
               <button
                 type="button"
                 onClick={() => setShowVocabNotice(false)}
@@ -415,117 +423,142 @@ export function DiagnosticTestView({
               >
                 {currentQuestion && (
                   <div>
-                    {/* Question number + Mark for Review + Cross-out toggle */}
-                    <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="inline-flex items-center justify-center font-bold text-white text-sm flex-shrink-0"
-                          style={{ width: 32, height: 32, borderRadius: 8, background: '#1e293b' }}
-                        >
-                          {currentQuestionIndex + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={toggleFlag}
-                          className={`bluebook-mark-review btn-press ${isFlagged ? 'active' : ''}`}
-                        >
-                          <span className="bluebook-mark-checkbox">
-                            {isFlagged && (
-                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </span>
-                          Mark for Review
-                        </button>
-                      </div>
-                      {currentQuestion.type === 'multiple-choice' && (
-                        <span className="text-xs text-gray-400 font-semibold tracking-wide" style={{ cursor: 'default' }}>
-                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}>
-                            <text x="2" y="14" fontSize="14" fontWeight="800" fill="#9ca3af" fontFamily="serif" style={{ textDecoration: 'line-through' }}>ABC</text>
-                          </svg>
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Question text */}
-                    <div
-                      className="text-gray-800"
-                      style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20 }}
-                    >
-                      <SelectableText
-                        content={currentQuestion.question}
-                        questionId={currentQuestion.id}
-                        section="question"
+                    {/* v2 RW: sequential reveal mode */}
+                    {isV2 && currentQuestion.section === 'Reading and Writing' && currentQuestion.type === 'multiple-choice' ? (
+                      <SequentialRevealQuestion
+                        key={currentQuestion.id}
+                        question={currentQuestion}
+                        questionNumber={currentQuestionIndex + 1}
                         savedWords={savedWords}
                         onWordClick={handleWordClick}
+                        onAnswer={(result) => {
+                          setRwSequentialData(prev => {
+                            const filtered = prev.filter(r => r.questionId !== result.questionId);
+                            return [...filtered, result];
+                          });
+                          setAnswers(prev => ({ ...prev, [result.questionId]: result.finalAnswer }));
+                          setConfidence(prev => ({ ...prev, [result.questionId]: result.confidence }));
+                          // Auto-advance to next question
+                          if (currentQuestionIndex < questions.length - 1) {
+                            navigateToQuestion(currentQuestionIndex + 1);
+                          }
+                        }}
                       />
-                    </div>
+                    ) : (
+                      <>
+                        {/* Question number + Mark for Review + Cross-out toggle */}
+                        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+                          <div className="flex items-center gap-3">
+                            <span
+                              className="inline-flex items-center justify-center font-bold text-white text-sm flex-shrink-0"
+                              style={{ width: 32, height: 32, borderRadius: 8, background: '#1e293b' }}
+                            >
+                              {currentQuestionIndex + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={toggleFlag}
+                              className={`bluebook-mark-review btn-press ${isFlagged ? 'active' : ''}`}
+                            >
+                              <span className="bluebook-mark-checkbox">
+                                {isFlagged && (
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                )}
+                              </span>
+                              Mark for Review
+                            </button>
+                          </div>
+                          {currentQuestion.type === 'multiple-choice' && (
+                            <span className="text-xs text-gray-400 font-semibold tracking-wide" style={{ cursor: 'default' }}>
+                              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}>
+                                <text x="2" y="14" fontSize="14" fontWeight="800" fill="#9ca3af" fontFamily="serif" style={{ textDecoration: 'line-through' }}>ABC</text>
+                              </svg>
+                            </span>
+                          )}
+                        </div>
 
-                    {/* Multiple choice — Bluebook style */}
-                    {currentQuestion.type === 'multiple-choice' && currentQuestion.options && (
-                      <div className="space-y-3">
-                        {currentQuestion.options.map((option, idx) => {
-                          const isSelected = answers[currentQuestion.id] === option.id;
-                          const isCrossed = crossedOut[currentQuestion.id]?.has(option.id);
-                          return (
-                            <div key={option.id} className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleAnswer(currentQuestion.id, option.id)}
-                                className={`bluebook-option btn-press ${isSelected ? 'selected' : ''} ${isCrossed && !isSelected ? 'crossedout' : ''}`}
-                              >
-                                <span className="bluebook-option-label">
-                                  {String.fromCharCode(65 + idx)}
-                                </span>
-                                <span className="bluebook-option-text">
-                                  <SelectableText
-                                    content={option.text}
-                                    questionId={currentQuestion.id}
-                                    section="option"
-                                    optionId={option.id}
-                                    savedWords={savedWords}
-                                    onWordClick={handleWordClick}
-                                    className="inline"
-                                  />
-                                </span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => toggleCrossOut(currentQuestion.id, option.id)}
-                                className={`bluebook-option-crossout btn-press ${isCrossed ? 'active' : ''}`}
-                                title="Cross out"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                  <path d="M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                                </svg>
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                        {/* Question text */}
+                        <div
+                          className="text-gray-800"
+                          style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20 }}
+                        >
+                          <SelectableText
+                            content={currentQuestion.question}
+                            questionId={currentQuestion.id}
+                            section="question"
+                            savedWords={savedWords}
+                            onWordClick={handleWordClick}
+                          />
+                        </div>
 
-                    {/* Short answer */}
-                    {currentQuestion.type === 'short-answer' && (
-                      <input
-                        type="text"
-                        value={answers[currentQuestion.id] ?? ''}
-                        onChange={e => handleAnswer(currentQuestion.id, e.target.value)}
-                        placeholder="Type your answer (no spaces)..."
-                        className="toss-input"
-                        style={{ marginTop: 8 }}
-                      />
-                    )}
+                        {/* Multiple choice — Bluebook style */}
+                        {currentQuestion.type === 'multiple-choice' && currentQuestion.options && (
+                          <div className="space-y-3">
+                            {currentQuestion.options.map((option, idx) => {
+                              const isSelected = answers[currentQuestion.id] === option.id;
+                              const isCrossed = crossedOut[currentQuestion.id]?.has(option.id);
+                              return (
+                                <div key={option.id} className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAnswer(currentQuestion.id, option.id)}
+                                    className={`bluebook-option btn-press ${isSelected ? 'selected' : ''} ${isCrossed && !isSelected ? 'crossedout' : ''}`}
+                                  >
+                                    <span className="bluebook-option-label">
+                                      {String.fromCharCode(65 + idx)}
+                                    </span>
+                                    <span className="bluebook-option-text">
+                                      <SelectableText
+                                        content={option.text}
+                                        questionId={currentQuestion.id}
+                                        section="option"
+                                        optionId={option.id}
+                                        savedWords={savedWords}
+                                        onWordClick={handleWordClick}
+                                        className="inline"
+                                      />
+                                    </span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleCrossOut(currentQuestion.id, option.id)}
+                                    className={`bluebook-option-crossout btn-press ${isCrossed ? 'active' : ''}`}
+                                    title="Cross out"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                      <path d="M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
 
-                    {/* Confidence picker — shown after answer is given */}
-                    {answers[currentQuestion.id] && (
-                      <ConfidencePicker
-                        questionId={currentQuestion.id}
-                        confidence={confidence}
-                        onConfidence={handleConfidence}
-                        highlight={highlightConfidence}
-                      />
+                        {/* Short answer */}
+                        {currentQuestion.type === 'short-answer' && (
+                          <input
+                            type="text"
+                            value={answers[currentQuestion.id] ?? ''}
+                            onChange={e => handleAnswer(currentQuestion.id, e.target.value)}
+                            placeholder="Type your answer (no spaces)..."
+                            className="toss-input"
+                            style={{ marginTop: 8 }}
+                          />
+                        )}
+
+                        {/* Confidence picker — shown after answer is given */}
+                        {answers[currentQuestion.id] && (
+                          <ConfidencePicker
+                            questionId={currentQuestion.id}
+                            confidence={confidence}
+                            onConfidence={handleConfidence}
+                            highlight={highlightConfidence}
+                          />
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -606,6 +639,7 @@ export function DiagnosticTestView({
           <Icon icon={showNav ? "fluent:chevron-up-20-regular" : "fluent:chevron-down-20-regular"} width={14} height={14} style={{ marginLeft: 4 }} />
         </button>
 
+        {/* v2 RW questions auto-advance — hide Back/Next, show placeholder */}
         <div className="flex items-center gap-2">
           {currentQuestionIndex > 0 && (
             <button
@@ -618,6 +652,10 @@ export function DiagnosticTestView({
             </button>
           )}
           {currentQuestionIndex < questions.length - 1 ? (
+            isV2 && currentQuestion?.section === 'Reading and Writing' ? (
+              // RW sequential: no manual Next button (auto-advances on confidence select)
+              <span className="text-xs text-gray-400 px-2">Select answer to continue</span>
+            ) : (
             <button
               type="button"
               onClick={() => {
@@ -632,6 +670,7 @@ export function DiagnosticTestView({
             >
               Next
             </button>
+            )
           ) : (
             <button
               type="button"

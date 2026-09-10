@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { UserPlus, AlertCircle } from 'lucide-react';
+import { UserPlus, AlertCircle, FileAudio, UploadCloud } from 'lucide-react';
 import { Student } from '@/types/crm';
 import { useCrmRealtime, RealtimeStatus } from '@/hooks/useCrmRealtime';
 import { StudentCreateModal } from './components/StudentCreateModal';
 import { StudentDetailPanel } from './components/StudentDetailPanel';
 import { B2cWorkspace } from './components/B2cWorkspace';
 import { B2bWorkspace } from './components/B2bWorkspace';
+import { TranscriptBackfillModal } from './components/TranscriptBackfillModal';
+import { IntfuncImportModal } from './components/IntfuncImportModal';
 
 type CrmMode = 'b2c' | 'b2b';
 
@@ -74,6 +76,9 @@ export default function CrmPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [adminKey, setAdminKey] = useState('');
+  // 임시: 과거 녹음 전사 복구용. 정리가 끝나면 이 상태와 버튼을 함께 제거한다.
+  const [showTranscriptBackfill, setShowTranscriptBackfill] = useState(false);
+  const [showIntfuncImport, setShowIntfuncImport] = useState(false);
   const [adminUserName, setAdminUserName] = useState('');
   const [crmMode, setCrmMode] = useState<CrmMode>('b2c');
   // 수업 시작(enrolled) 전환 시 재시도 보드에서 후처리하도록 신호로 전달
@@ -244,6 +249,23 @@ export default function CrmPage() {
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <RealtimeIndicator status={status} />
+            {/* 임시: 지난 녹음 전사 복구용. 정리가 끝나면 제거한다. */}
+            <button
+              onClick={() => setShowTranscriptBackfill(true)}
+              title="메모는 있는데 전사가 없는 상담 건을 일괄 전사합니다 (임시 기능)"
+              className="flex items-center gap-2 px-3 py-1.5 border border-amber-300 bg-amber-50 hover:bg-amber-100 rounded-lg text-xs font-semibold text-amber-900 transition-colors"
+            >
+              <FileAudio size={13} />
+              전사 일괄 처리 (임시)
+            </button>
+            <button
+              onClick={() => setShowIntfuncImport(true)}
+              title="결과가 확정된 학생의 상담 전사를 IntelligentFunctions 데이터셋으로 보냅니다"
+              className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 bg-white hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 transition-colors"
+            >
+              <UploadCloud size={13} />
+              IF 데이터 전송
+            </button>
             <button
               onClick={() => setShowCreateModal(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold text-white transition-colors"
@@ -259,6 +281,7 @@ export default function CrmPage() {
       {crmMode === 'b2c' ? (
         <B2cWorkspace
           students={students}
+          userName={adminUserName}
           todayActions={todayActions}
           adminKey={adminKey}
           onStudentUpdate={handleStudentUpdate}
@@ -300,6 +323,18 @@ export default function CrmPage() {
             setShowCreateModal(false);
           }}
         />
+      )}
+
+      {/* 임시: 지난 녹음 전사 복구용. 정리가 끝나면 제거한다. */}
+      {showTranscriptBackfill && (
+        <TranscriptBackfillModal
+          adminKey={adminKey}
+          onClose={() => setShowTranscriptBackfill(false)}
+        />
+      )}
+
+      {showIntfuncImport && (
+        <IntfuncImportModal adminKey={adminKey} onClose={() => setShowIntfuncImport(false)} />
       )}
     </div>
   );

@@ -12,6 +12,27 @@ updated: 2026-05-19
 
 ---
 
+## 2026-08-03
+
+- [INGEST] 260730 QB RW 150 텍스트 추출 완료
+  - 추출 스크립트: `pipeline/extract/extract_260730_rw_text.py` (PyMuPDF 직접 텍스트 파싱)
+  - 스킬 패치 스크립트: `pipeline/extract/fix_260730_skills.py` (멀티라인 스킬 재파싱)
+  - 결과: 150개 전량 추출 (`sat/raw/extracted/260730_rw_150_parsed.jsonl`)
+  - 배경: Claude Vision API 크레딧 부족으로 49개 이후 중단 → PyMuPDF 텍스트 추출로 전환
+- [WIKI] `wiki/analysis/qb_rw_260414_vs_260730.md` 생성
+  - 260414 99문제 vs 260730 150문제 정량 비교
+  - 핵심 발견: Hard 비중 31.3% → 56.7% 급증, Boundaries Hard 11.1% → 66.7%, WIC Hard 26.7% → 55.6%
+  - Command of Evidence 스킬이 Textual/Quantitative로 세분화
+- [INGEST] 260414 QB RW 98 + Math 75 Vision 추출 완료 (동일 세션)
+  - 추출 스크립트: `pipeline/extract/extract_260414_rw.py`, `extract_260414_math.py` (Claude Sonnet Vision)
+  - 결과: RW 98개, Math 67개 추출 — 대부분 기존 온톨로지와 중복 (과거 세션 병합분)
+  - 신규 발견: 1개 (`72cbdbc6`, Easy, Inferences)
+- [SCHEMA] `master_sat_ontology_v3.jsonl` 1,837개로 갱신 (RW 1,716 / Math 121)
+  - 병합 스크립트: `pipeline/build/merge_260414.py`
+- [PIPELINE] Python 패키지 설치 (`pymupdf`, `anthropic`) — `--break-system-packages`로 진행
+
+---
+
 ## 2026-05-19
 
 - [SKILL] **Markdown 기반 블로그 워크플로우** 완성

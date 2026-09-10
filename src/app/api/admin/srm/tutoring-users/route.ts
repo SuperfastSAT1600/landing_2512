@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import { isAuthenticated } from '@/lib/server-auth';
+import {
+  buildSubjectBreakdown,
+  type PaymentManagementStatus,
+  type SubjectHours,
+  type SubjectKey,
+} from '@/lib/tutoring-subject-breakdown';
 
 export type TutoringStatus = 'active' | 'paused' | 'partial_end' | 'sales' | 'ended';
+
+/** SFv2 payments.management_status — 결제 관리 상태. 정의는 집계 유틸과 공유한다. */
+export type { PaymentManagementStatus, SubjectHours };
 
 export interface TutoringUser {
   sfv2ProfileId: string;
@@ -12,8 +21,33 @@ export interface TutoringUser {
   grade: string | null;
   purchasedHours: number;
   refundedHours: number;
+  /** 완료된 coach_room 시간 (플랫폼 Payment 페이지의 Completed). */
   usedHours: number;
+  /**
+   * 잔여 시간 — 0 하한. 기존 SRM 화면들이 이 값을 그대로 표시하므로 의미를 바꾸지 않는다.
+   * 초과 사용(음수)을 봐야 하면 netRemainingHours를 쓴다.
+   */
   remainingHours: number;
+  /**
+   * 부호가 있는 잔여 = 구매 − 환불 − 완료. 플랫폼 Payment 페이지의 Remaining과 동일.
+   * 음수면 결제분을 넘겨 수업한 상태 → 재결제가 이미 늦은 학생이다.
+   */
+  netRemainingHours: number;
+  /** 예약됐지만 아직 진행 전인 coach_room 시간 (approved + awaiting_confirmation). */
+  scheduledHours: number;
+  /** 결제했지만 아직 캘린더에 없는 시간 = max(0, netRemaining − scheduled). */
+  unscheduledHours: number;
+  /** 결제분을 넘겨 예약된 시간 = max(0, scheduled − netRemaining). */
+  overscheduledHours: number;
+  /** 결제 과목 (SAT / AP / special). 여러 결제가 있으면 복수. */
+  subjects: string[];
+  /** 가장 우선순위 높은 결제의 관리 상태. 결제가 없으면 null. */
+  paymentStatus: PaymentManagementStatus | null;
+  /**
+   * 과목별로 쪼갠 같은 수치 — V2 Payment 페이지가 (학생 × 과목) 한 행으로 보여주는 단위.
+   * 합은 위의 학생 단위 값과 일치한다. 과목을 알 수 없는 시간은 subject: null 버킷.
+   */
+  subjectBreakdown: SubjectHours[];
   status: TutoringStatus;
 }
 
@@ -21,7 +55,10 @@ export interface UnlinkedTutoringUser {
   sfv2ProfileId: string;
   name: string;
   purchasedHours: number;
+  /** 0 하한 잔여 — 기존 SRM 화면 표시용. */
   remainingHours: number;
+  /** 부호 있는 잔여 = 구매 − 환불 − 완료. 활성 결제 + 사용 초과면 음수가 될 수 있다. */
+  netRemainingHours: number;
 }
 
 export interface TutoringUsersResponse {
@@ -44,28 +81,40 @@ async function scanAll<T>(
   }
 }
 
-// 1. 구매 시간 + 최근 결제일: payment_transactions.hours by student_id
+/** 학생 → 과목 → 시간. 과목 행(V2 Payment 페이지 단위)을 만들기 위한 이중 집계. */
+type HoursBySubject = Map<string, Map<SubjectKey, number>>;
+
+function addSubjectHours(target: HoursBySubject, ownerId: string, subject: SubjectKey, hours: number) {
+  const bySubject = target.get(ownerId) ?? new Map<SubjectKey, number>();
+  bySubject.set(subject, (bySubject.get(subject) ?? 0) + hours);
+  target.set(ownerId, bySubject);
+}
+
+// 1. 구매 시간 + 최근 결제일: payment_transactions.hours by student_id (과목은 transaction.subject)
 async function fetchPurchased() {
   const purchased = new Map<string, number>();
+  const purchasedBySubject: HoursBySubject = new Map();
   const lastPurchaseDate = new Map<string, string>();
-  await scanAll<{ student_id: string | null; hours: number; created_at: string }>(
-    (f, t) => supabaseSFv2.from('payment_transactions').select('student_id, hours, created_at').gt('hours', 0).range(f, t),
+  await scanAll<{ student_id: string | null; hours: number; created_at: string; subject: string | null }>(
+    (f, t) => supabaseSFv2.from('payment_transactions').select('student_id, hours, created_at, subject').gt('hours', 0).range(f, t),
     (rows) => {
       for (const row of rows) {
         if (!row.student_id) continue;
         purchased.set(row.student_id, (purchased.get(row.student_id) ?? 0) + (row.hours ?? 0));
+        addSubjectHours(purchasedBySubject, row.student_id, row.subject, row.hours ?? 0);
         const prev = lastPurchaseDate.get(row.student_id);
         if (!prev || row.created_at > prev) lastPurchaseDate.set(row.student_id, row.created_at);
       }
     },
   );
-  return { purchased, lastPurchaseDate };
+  return { purchased, purchasedBySubject, lastPurchaseDate };
 }
 
 // 2. 환불 시간: payment_refunds.hours_refunded → payments.student_id
 async function fetchRefunded() {
   const refunded = new Map<string, number>();
-  // payment_refunds → payments(student_id) 매핑이 필요하므로 전 페이지 수집 후 배치 처리.
+  const refundedBySubject: HoursBySubject = new Map();
+  // payment_refunds → payments(student_id, subject) 매핑이 필요하므로 전 페이지 수집 후 배치 처리.
   const refundRows: { payment_id: string; hours_refunded: number }[] = [];
   await scanAll<{ payment_id: string; hours_refunded: number }>(
     (f, t) => supabaseSFv2.from('payment_refunds').select('hours_refunded, payment_id').range(f, t),
@@ -74,28 +123,61 @@ async function fetchRefunded() {
   for (let i = 0; i < refundRows.length; i += 1000) {
     const batch = refundRows.slice(i, i + 1000);
     const { data: payments } = await supabaseSFv2
-      .from('payments').select('id, student_id').in('id', batch.map((r) => r.payment_id));
-    const paymentToStudent = new Map((payments ?? []).map((p: { id: string; student_id: string | null }) => [p.id, p.student_id]));
+      .from('payments').select('id, student_id, subject').in('id', batch.map((r) => r.payment_id));
+    const paymentOwner = new Map(
+      (payments ?? []).map((p: { id: string; student_id: string | null; subject: string | null }) => [p.id, p])
+    );
     for (const row of batch) {
-      const sid = paymentToStudent.get(row.payment_id);
-      if (!sid) continue;
-      refunded.set(sid, (refunded.get(sid) ?? 0) + (row.hours_refunded ?? 0));
+      const payment = paymentOwner.get(row.payment_id);
+      if (!payment?.student_id) continue;
+      refunded.set(payment.student_id, (refunded.get(payment.student_id) ?? 0) + (row.hours_refunded ?? 0));
+      addSubjectHours(refundedBySubject, payment.student_id, payment.subject, row.hours_refunded ?? 0);
     }
   }
-  return { refunded };
+  return { refunded, refundedBySubject };
 }
 
-// 3. 사용 시간 + 최근 세션일: 완료된 coach_room 세션 by user_id
-async function fetchUsed() {
+// 3. 세션 시간 by user_id — 완료(used) / 예약 대기(scheduled) + 최근 세션일.
+//    두 상태를 한 번의 events 스캔 + 한 번의 participants 스캔으로 함께 집계한다
+//    (participants 전량 스캔이 병목이므로 상태별로 두 번 돌리지 않는다).
+const SCHEDULED_STATUSES = ['approved', 'awaiting_confirmation'];
+
+async function fetchSessionHours() {
   const used = new Map<string, number>();
+  const scheduled = new Map<string, number>();
+  const usedBySubject: HoursBySubject = new Map();
+  const scheduledBySubject: HoursBySubject = new Map();
   const lastSessionDate = new Map<string, string>();
-  const eventMeta = new Map<string, { duration: number; startsAt: string }>();
-  await scanAll<{ id: string; starts_at: string; ends_at: string }>(
-    (f, t) => supabaseSFv2.from('scheduled_events').select('id, starts_at, ends_at').eq('status', 'completed').eq('category', 'coach_room').range(f, t),
+  const eventMeta = new Map<
+    string,
+    { duration: number; startsAt: string; completed: boolean; subject: SubjectKey }
+  >();
+
+  // 수업의 과목은 매칭이 갖고 있다 (scheduled_events → matchings.subject).
+  const matchingSubject = new Map<string, string | null>();
+  await scanAll<{ id: string; subject: string | null }>(
+    (f, t) => supabaseSFv2.from('matchings').select('id, subject').range(f, t),
+    (rows) => {
+      for (const m of rows) matchingSubject.set(m.id, m.subject);
+    },
+  );
+
+  await scanAll<{ id: string; starts_at: string; ends_at: string; status: string; matching_id: string | null }>(
+    (f, t) => supabaseSFv2
+      .from('scheduled_events')
+      .select('id, starts_at, ends_at, status, matching_id')
+      .in('status', ['completed', ...SCHEDULED_STATUSES])
+      .eq('category', 'coach_room')
+      .range(f, t),
     (rows) => {
       for (const e of rows) {
         const dur = (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 3_600_000;
-        eventMeta.set(e.id, { duration: dur, startsAt: e.starts_at });
+        eventMeta.set(e.id, {
+          duration: dur,
+          startsAt: e.starts_at,
+          completed: e.status === 'completed',
+          subject: e.matching_id ? matchingSubject.get(e.matching_id) ?? null : null,
+        });
       }
     },
   );
@@ -105,31 +187,69 @@ async function fetchUsed() {
       for (const p of rows) {
         const meta = eventMeta.get(p.event_id);
         if (!meta) continue;
+        if (!meta.completed) {
+          scheduled.set(p.user_id, (scheduled.get(p.user_id) ?? 0) + meta.duration);
+          addSubjectHours(scheduledBySubject, p.user_id, meta.subject, meta.duration);
+          continue;
+        }
         used.set(p.user_id, (used.get(p.user_id) ?? 0) + meta.duration);
+        addSubjectHours(usedBySubject, p.user_id, meta.subject, meta.duration);
         const prev = lastSessionDate.get(p.user_id);
         if (!prev || meta.startsAt > prev) lastSessionDate.set(p.user_id, meta.startsAt);
       }
     },
   );
-  return { used, lastSessionDate };
+  return { used, scheduled, usedBySubject, scheduledBySubject, lastSessionDate };
 }
 
-async function fetchV2Hours(): Promise<{
-  purchased: Map<string, number>;
-  refunded: Map<string, number>;
-  used: Map<string, number>;
-  lastPurchaseDate: Map<string, string>;
-  lastSessionDate: Map<string, string>;
-}> {
+async function fetchV2Hours() {
   // 세 집계는 서로 독립 → 병렬 실행(원격 SFv2 왕복 지연이 병목이므로 순차 대비 큰 단축).
-  const [p, r, u] = await Promise.all([fetchPurchased(), fetchRefunded(), fetchUsed()]);
+  const [p, r, u] = await Promise.all([fetchPurchased(), fetchRefunded(), fetchSessionHours()]);
   return {
     purchased: p.purchased,
+    purchasedBySubject: p.purchasedBySubject,
     lastPurchaseDate: p.lastPurchaseDate,
     refunded: r.refunded,
+    refundedBySubject: r.refundedBySubject,
     used: u.used,
+    scheduled: u.scheduled,
+    usedBySubject: u.usedBySubject,
+    scheduledBySubject: u.scheduledBySubject,
     lastSessionDate: u.lastSessionDate,
   };
+}
+
+// 결제 과목·관리 상태. Payment 페이지의 Subject / Status 컬럼과 같은 소스.
+// 한 학생이 여러 결제를 가질 수 있어 상태는 우선순위가 가장 높은 하나로 접는다.
+const PAYMENT_STATUS_PRIORITY: PaymentManagementStatus[] = [
+  'active', 'onboarding', 'paused', 'inactive', 'excluded',
+];
+
+function foldPayments(rows: { student_id: string; subject: string | null; management_status: string | null }[]) {
+  const subjects = new Map<string, Set<string>>();
+  const paymentStatus = new Map<string, PaymentManagementStatus>();
+  const statusBySubject = new Map<string, Map<SubjectKey, PaymentManagementStatus>>();
+  for (const row of rows) {
+    if (row.subject) {
+      const set = subjects.get(row.student_id) ?? new Set<string>();
+      set.add(row.subject);
+      subjects.set(row.student_id, set);
+    }
+    const next = row.management_status as PaymentManagementStatus | null;
+    if (!next || !PAYMENT_STATUS_PRIORITY.includes(next)) continue;
+    const prev = paymentStatus.get(row.student_id);
+    if (!prev || PAYMENT_STATUS_PRIORITY.indexOf(next) < PAYMENT_STATUS_PRIORITY.indexOf(prev)) {
+      paymentStatus.set(row.student_id, next);
+    }
+    // 과목별 상태 — (학생, 과목)은 결제 1행이 원칙이지만, 중복이 생겨도 같은 우선순위로 접는다.
+    const bySubject = statusBySubject.get(row.student_id) ?? new Map<SubjectKey, PaymentManagementStatus>();
+    const prevForSubject = bySubject.get(row.subject);
+    if (!prevForSubject || PAYMENT_STATUS_PRIORITY.indexOf(next) < PAYMENT_STATUS_PRIORITY.indexOf(prevForSubject)) {
+      bySubject.set(row.subject, next);
+      statusBySubject.set(row.student_id, bySubject);
+    }
+  }
+  return { subjects, paymentStatus, statusBySubject };
 }
 
 export async function GET(request: NextRequest) {
@@ -138,7 +258,7 @@ export async function GET(request: NextRequest) {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    const [v2Hours, crmResult, pauseResult, activePaymentsResult] = await Promise.all([
+    const [v2Hours, crmResult, pauseResult, paymentsResult] = await Promise.all([
       fetchV2Hours(),
       supabaseAdmin
         .from('students')
@@ -150,17 +270,30 @@ export async function GET(request: NextRequest) {
         .is('ended_at', null)
         .lte('pause_start', today)
         .or(`pause_until.is.null,pause_until.gte.${today}`),
+      // 과목·관리 상태까지 함께 받는다(기존엔 active 결제의 student_id만 조회).
       supabaseSFv2
         .from('payments')
-        .select('student_id')
-        .eq('management_status', 'active')
+        .select('student_id, subject, management_status')
         .not('student_id', 'is', null),
     ]);
 
-    const { purchased, refunded, used, lastSessionDate } = v2Hours;
+    const {
+      purchased, refunded, used, scheduled, lastSessionDate,
+      purchasedBySubject, refundedBySubject, usedBySubject, scheduledBySubject,
+    } = v2Hours;
+    const paymentRows = (paymentsResult.data ?? []) as {
+      student_id: string;
+      subject: string | null;
+      management_status: string | null;
+    }[];
     const activePaymentIds = new Set(
-      ((activePaymentsResult.data ?? []) as { student_id: string }[]).map((p) => p.student_id)
+      paymentRows.filter((p) => p.management_status === 'active').map((p) => p.student_id)
     );
+    const {
+      subjects: subjectsByStudent,
+      paymentStatus: statusByStudent,
+      statusBySubject,
+    } = foldPayments(paymentRows);
     const crmStudents = (crmResult.data ?? []) as {
       id: string;
       name: string;
@@ -202,6 +335,9 @@ export async function GET(request: NextRequest) {
         status = svcStatus === 'ended' ? 'ended' : 'sales';
       }
 
+      const scheduledH = Math.round((scheduled.get(pid) ?? 0) * 10) / 10;
+      const netRemainingH = Math.round(rawRemainingH * 10) / 10;
+
       results.push({
         sfv2ProfileId: pid,
         crmStudentId: s.id,
@@ -211,6 +347,19 @@ export async function GET(request: NextRequest) {
         refundedHours: refundedH,
         usedHours: usedH,
         remainingHours: remainingH,
+        netRemainingHours: netRemainingH,
+        scheduledHours: scheduledH,
+        unscheduledHours: Math.round(Math.max(0, netRemainingH - scheduledH) * 10) / 10,
+        overscheduledHours: Math.round(Math.max(0, scheduledH - netRemainingH) * 10) / 10,
+        subjects: [...(subjectsByStudent.get(pid) ?? [])].sort(),
+        paymentStatus: statusByStudent.get(pid) ?? null,
+        subjectBreakdown: buildSubjectBreakdown({
+          purchased: purchasedBySubject.get(pid),
+          refunded: refundedBySubject.get(pid),
+          used: usedBySubject.get(pid),
+          scheduled: scheduledBySubject.get(pid),
+          paymentStatus: statusBySubject.get(pid),
+        }),
         status,
       });
     }
@@ -258,11 +407,18 @@ export async function GET(request: NextRequest) {
         const purchasedH = Math.round((purchased.get(p.id) ?? 0) * 10) / 10;
         const refundedH = Math.round((refunded.get(p.id) ?? 0) * 10) / 10;
         const usedH = Math.round((used.get(p.id) ?? 0) * 10) / 10;
-        const remainingH = Math.round(Math.max(0, purchasedH - refundedH - usedH) * 10) / 10;
-        unlinked.push({ sfv2ProfileId: p.id, name: p.full_name ?? p.id, purchasedHours: purchasedH, remainingHours: remainingH });
+        const netRemainingH = Math.round((purchasedH - refundedH - usedH) * 10) / 10;
+        const remainingH = Math.max(0, netRemainingH);
+        unlinked.push({
+          sfv2ProfileId: p.id,
+          name: p.full_name ?? p.id,
+          purchasedHours: purchasedH,
+          remainingHours: remainingH,
+          netRemainingHours: netRemainingH,
+        });
       }
       // 잔여 시간 많은 순 (수업중 우선), 동일하면 이름순
-      unlinked.sort((a, b) => b.remainingHours - a.remainingHours || a.name.localeCompare(b.name));
+      unlinked.sort((a, b) => b.netRemainingHours - a.netRemainingHours || a.name.localeCompare(b.name));
     }
 
     return NextResponse.json({ linked: results, unlinked } satisfies TutoringUsersResponse);

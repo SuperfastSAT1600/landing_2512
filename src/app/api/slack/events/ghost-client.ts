@@ -2,9 +2,14 @@ import crypto from 'crypto';
 
 const GHOST_BASE_URL = process.env.GHOST_URL || 'https://superfastsat.ghost.io';
 
-const CTA_HTML = `<div style="text-align:center;margin-top:32px;">
-  <a href="https://superfastsat.com/api/kakao-redirect?source=ghost" target="_blank" rel="noopener noreferrer"
-    style="display:inline-block;padding:14px 22px;border-radius:10px;background:#071be9;color:#ffffff;font-weight:600;text-decoration:none;">
+const CTA_HTML = `<div style="text-align:center;">
+  <a
+    id="kakao-openchat-btn"
+    href="https://open.kakao.com/o/s858Ajch"
+    target="_blank"
+    rel="noopener noreferrer"
+    style="display:inline-block;padding:14px 22px;border-radius:10px;background:#071be9;color:#ffffff;font-weight:600;text-decoration:none;"
+  >
     카카오톡으로 수업 상담 신청하기🖐️
   </a>
 </div>`;
@@ -26,7 +31,7 @@ function makeGhostJwt(): string {
 
 
 export async function saveGhostDraft(
-  title: string, html: string, slug: string, customExcerpt = ''
+  title: string, html: string, slug: string, customExcerpt = '', featureImageUrl = ''
 ): Promise<{ id: string; url: string }> {
   const jwt = makeGhostJwt();
   const res = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/?source=html`, {
@@ -36,13 +41,33 @@ export async function saveGhostDraft(
       posts: [{
         title, html: html + CTA_HTML, slug, status: 'draft',
         custom_excerpt: customExcerpt.slice(0, 300) || undefined,
+        feature_image: featureImageUrl || undefined,
         tags: [{ name: 'SAT' }, { name: 'blog-agent' }],
       }],
     }),
   });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Ghost draft 실패 (${res.status}): ${err.slice(0, 300)}`);
+  }
   const data = await res.json() as { posts?: { id: string; url: string }[] };
   if (!data.posts?.[0]) throw new Error(`Ghost draft 실패: ${JSON.stringify(data)}`);
   return { id: data.posts[0].id, url: data.posts[0].url };
+}
+
+export async function updateGhostThumbnail(ghostId: string, featureImageUrl: string): Promise<void> {
+  const jwt = makeGhostJwt();
+  const getRes = await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/${ghostId}/`, {
+    headers: { Authorization: `Ghost ${jwt}` },
+  });
+  const getData = await getRes.json() as { posts?: { updated_at: string }[] };
+  const updatedAt = getData.posts?.[0]?.updated_at;
+
+  await fetch(`${GHOST_BASE_URL}/ghost/api/admin/posts/${ghostId}/`, {
+    method: 'PUT',
+    headers: { Authorization: `Ghost ${jwt}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ posts: [{ feature_image: featureImageUrl, updated_at: updatedAt }] }),
+  });
 }
 
 export async function publishGhostPost(ghostId: string): Promise<string> {

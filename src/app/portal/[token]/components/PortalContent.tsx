@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import PasscodeChange from './PasscodeChange';
 import StudentInfoOverlay from './StudentInfoOverlay';
-import DiagnosticOverlay from './DiagnosticOverlay';
 import ConsultationOverlay from './ConsultationOverlay';
 import LearningReport from './LearningReport';
+import PortalFloatingCTA from './PortalFloatingCTA';
 
 interface PublishedMemo {
   id: string;
@@ -40,9 +40,11 @@ interface PortalData {
   publishedMemos: PublishedMemo[];
   diagnosticResult: DiagnosticResult | null;
   hasSrmData: boolean;
+  isEnrolled: boolean;
 }
 
-type View = 'consultation' | 'student' | 'diagnostic' | 'study_hall';
+// NOTE: 진단테스트 뷰는 학부모 포털에서 숨기고 데이터/API는 보존한다.
+type View = 'consultation' | 'student' | 'study_hall';
 
 const CRM_NAV_ITEMS: { view: View; label: string }[] = [
   { view: 'consultation', label: '상담 기록' },
@@ -67,7 +69,10 @@ export default function PortalContent({ token }: { token: string }) {
 
   useEffect(() => {
     fetch(`/api/portal/${token}/data`)
-      .then(r => { if (!r.ok) throw new Error('unauthorized'); return r.json(); })
+      .then((r) => {
+        if (!r.ok) throw new Error('unauthorized');
+        return r.json();
+      })
       .then((d: PortalData) => {
         setData(d);
         setView(d.hasSrmData ? 'study_hall' : 'consultation');
@@ -94,18 +99,21 @@ export default function PortalContent({ token }: { token: string }) {
   if (!data) {
     return (
       <div className="space-y-3">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-20 rounded-2xl animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="h-20 rounded-2xl animate-pulse"
+            style={{ background: 'rgba(255,255,255,0.04)' }}
+          />
         ))}
       </div>
     );
   }
 
-  const hasDiagnostic = !!data.diagnosticResult;
   const { hasSrmData } = data;
   const currentView = view ?? (hasSrmData ? 'study_hall' : 'consultation');
   const allNavItems = hasSrmData ? SRM_NAV_ITEMS : CRM_NAV_ITEMS;
-  const activeItem = allNavItems.find(item => item.view === currentView) ?? allNavItems[0];
+  const activeItem = allNavItems.find((item) => item.view === currentView) ?? allNavItems[0];
 
   return (
     <>
@@ -116,36 +124,58 @@ export default function PortalContent({ token }: { token: string }) {
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-[6%]">
           <div className="flex items-center justify-between h-12">
-
             {/* ── Mobile: Logo + current tab dropdown ── */}
             <div className="flex sm:hidden items-center gap-2 min-w-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo_black.png" alt="SuperfastSAT" className="h-4 w-auto flex-shrink-0" />
               <div className="relative flex-shrink-0" ref={navDropdownRef}>
                 <button
-                  onClick={() => setNavDropdownOpen(o => !o)}
+                  onClick={() => setNavDropdownOpen((o) => !o)}
                   className="flex items-center gap-1 rounded-full px-3 py-1 transition-colors"
-                  style={{ background: '#09090b', fontSize: 12, fontWeight: 600, color: '#fff', border: 'none' }}
+                  style={{
+                    background: '#09090b',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: '#fff',
+                    border: 'none',
+                  }}
                 >
                   {activeItem.label}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ transform: navDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      transform: navDropdownOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.15s',
+                    }}
+                  >
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>
                 {navDropdownOpen && (
                   <div
                     className="absolute left-0 top-9 rounded-xl py-1 z-10 bg-white"
-                    style={{ border: '1px solid #E2E8F0', boxShadow: '0 8px 24px rgba(0,0,0,0.10)', minWidth: 140 }}
+                    style={{
+                      border: '1px solid #E2E8F0',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
+                      minWidth: 140,
+                    }}
                   >
-                    {allNavItems.map(item => {
-                      const isDisabled = item.view === 'diagnostic' && !hasDiagnostic;
+                    {allNavItems.map((item) => {
                       const isActive = currentView === item.view;
                       return (
                         <button
                           key={item.view}
-                          disabled={isDisabled}
-                          onClick={() => { if (!isDisabled) { setView(item.view); setNavDropdownOpen(false); } }}
+                          onClick={() => {
+                            setView(item.view);
+                            setNavDropdownOpen(false);
+                          }}
                           className="w-full text-left px-4 py-2.5 text-sm transition-colors disabled:opacity-40"
                           style={{
                             fontWeight: isActive ? 600 : 400,
@@ -167,14 +197,12 @@ export default function PortalContent({ token }: { token: string }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo_black.png" alt="SuperfastSAT" className="h-4 w-auto flex-shrink-0" />
               <div className="flex items-center gap-1">
-                {allNavItems.map(item => {
+                {allNavItems.map((item) => {
                   const isActive = currentView === item.view;
-                  const isDisabled = item.view === 'diagnostic' && !hasDiagnostic;
                   return (
                     <button
                       key={item.view}
-                      onClick={() => { if (!isDisabled) setView(item.view); }}
-                      disabled={isDisabled}
+                      onClick={() => setView(item.view)}
                       className="flex-shrink-0 rounded-full transition-colors disabled:opacity-40"
                       style={{
                         padding: '4px 12px',
@@ -183,7 +211,7 @@ export default function PortalContent({ token }: { token: string }) {
                         background: isActive ? '#09090b' : '#F1F5F9',
                         color: isActive ? '#ffffff' : '#475569',
                         border: 'none',
-                        cursor: isDisabled ? 'default' : 'pointer',
+                        cursor: 'pointer',
                       }}
                     >
                       {item.label}
@@ -196,11 +224,22 @@ export default function PortalContent({ token }: { token: string }) {
             {/* Settings */}
             <div className="relative flex-shrink-0" ref={settingsRef}>
               <button
-                onClick={() => setSettingsOpen(o => !o)}
+                onClick={() => setSettingsOpen((o) => !o)}
                 className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors px-2 py-1"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="1" />
+                  <circle cx="12" cy="5" r="1" />
+                  <circle cx="12" cy="19" r="1" />
                 </svg>
                 설정
               </button>
@@ -210,7 +249,10 @@ export default function PortalContent({ token }: { token: string }) {
                   style={{ border: '1px solid #E2E8F0', boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
                 >
                   <button
-                    onClick={() => { setSettingsOpen(false); setShowChangePasscode(true); }}
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      setShowChangePasscode(true);
+                    }}
                     className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                   >
                     비밀번호 변경
@@ -224,22 +266,15 @@ export default function PortalContent({ token }: { token: string }) {
 
       {/* Overlays — each has pt-12 to clear the fixed nav */}
       <ConsultationOverlay
+        token={token}
         memos={data.publishedMemos}
         studentName={data.student.name}
         studentCreatedAt={data.student.created_at}
-        blogLinkCount={data.publishedMemos.filter(m => m.content.includes('http')).length}
+        blogLinkCount={data.publishedMemos.filter((m) => m.content.includes('http')).length}
+        isEnrolled={data.isEnrolled}
       />
 
-      {currentView === 'student' && (
-        <StudentInfoOverlay
-          student={data.student}
-          onShowDiagnostic={hasDiagnostic ? () => setView('diagnostic') : undefined}
-        />
-      )}
-
-      {currentView === 'diagnostic' && data.diagnosticResult && (
-        <DiagnosticOverlay resultId={data.diagnosticResult.id} />
-      )}
+      {currentView === 'student' && <StudentInfoOverlay student={data.student} />}
 
       {currentView === 'study_hall' && hasSrmData && (
         <LearningReport
@@ -252,6 +287,8 @@ export default function PortalContent({ token }: { token: string }) {
       {showChangePasscode && (
         <PasscodeChange token={token} onClose={() => setShowChangePasscode(false)} />
       )}
+
+      <PortalFloatingCTA token={token} />
     </>
   );
 }

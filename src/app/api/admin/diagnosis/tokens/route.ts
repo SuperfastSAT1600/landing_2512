@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     // Fetch all active codes ordered by creation date (soft-deleted excluded)
     const { data: codes, error: codesError } = await supabaseAdmin
       .from('diagnostic_access_tokens')
-      .select('id, token, student_email, student_name, expires_at, is_active, created_at, test_version_id')
+      .select('id, token, student_email, student_name, expires_at, is_active, created_at, test_version_id, test_id')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
 
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { studentName, studentPhone, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes } = await request.json();
+    const { studentName, studentPhone, code, expiresAt: expiresAtInput, testVersionId, timeLimitMinutes, testId } = await request.json();
 
     if (!studentName || !code) {
       return NextResponse.json({ error: 'Student name and code are required' }, { status: 400 });
@@ -97,13 +97,15 @@ export async function POST(request: NextRequest) {
     // Use provided expiresAt or default to 24 hours from now
     const expiresAt = expiresAtInput ? new Date(expiresAtInput) : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Resolve version: use provided testVersionId or current version
+    // Resolve version: use provided testVersionId or current version scoped to format
+    const resolvedTestId = testId === 'diagnostic-test-2' ? 'diagnostic-test-2' : 'diagnostic-test-1';
     let resolvedVersionId = testVersionId ?? null;
     if (!resolvedVersionId) {
       const { data: current } = await supabaseAdmin
         .from('diagnostic_test_versions')
         .select('id')
         .eq('is_current', true)
+        .eq('test_id', resolvedTestId)
         .maybeSingle();
       resolvedVersionId = current?.id ?? null;
     }
@@ -115,7 +117,7 @@ export async function POST(request: NextRequest) {
         student_email: null,
         student_name: studentName,
         phone_number: studentPhone?.trim() || null,
-        test_id: 'diagnostic-test-1',
+        test_id: testId === 'diagnostic-test-2' ? 'diagnostic-test-2' : 'diagnostic-test-1',
         test_version_id: resolvedVersionId,
         expires_at: expiresAt.toISOString(),
         is_active: true,

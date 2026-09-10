@@ -25,6 +25,7 @@ export function CouponCountdown({ discountPercent, expiresAt }: Props) {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setTimeLeft(getTimeLeft(expiresAt));
     const id = setInterval(() => {
       const tl = getTimeLeft(expiresAt);

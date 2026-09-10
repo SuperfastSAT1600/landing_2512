@@ -164,9 +164,10 @@ interface FitCardProps {
   selected: boolean;
   onSelect: () => void;
   onThumbnailClick: () => void;
+  lang?: 'ko' | 'en';
 }
 
-function FitCard({ name, icon, recommended, personas, selected, onSelect, onThumbnailClick }: FitCardProps) {
+function FitCard({ name, icon, recommended, personas, selected, onSelect, onThumbnailClick, lang = 'ko' }: FitCardProps) {
   const reduce = useReducedMotion();
 
   return (
@@ -205,9 +206,9 @@ function FitCard({ name, icon, recommended, personas, selected, onSelect, onThum
         type="button"
         className={styles.detailCta}
         onClick={(e) => { e.stopPropagation(); onThumbnailClick(); }}
-        aria-label={`${name} 자세히 살펴보기`}
+        aria-label={lang === 'en' ? `See details for ${name}` : `${name} 자세히 살펴보기`}
       >
-        더 보기
+        {lang === 'en' ? 'See more' : '더 보기'}
         <span aria-hidden="true">→</span>
       </button>
     </motion.div>
@@ -222,26 +223,35 @@ interface ManagementFitSectionProps {
   onThumbnailClick: (type: ManagementType) => void;
   sectionNumber?: number;
   hideHeading?: boolean;
+  lang?: 'ko' | 'en';
 }
 
 export const ManagementFitSection = React.forwardRef<HTMLDivElement, ManagementFitSectionProps>(
-  function ManagementFitSection({ managementType, showcaseOpen, onSelect, onThumbnailClick, hideHeading }, ref) {
+  function ManagementFitSection({ managementType, showcaseOpen, onSelect, onThumbnailClick, hideHeading, lang = 'ko' }, ref) {
     const reduce = useReducedMotion();
+
+    const managed_personas = lang === 'en'
+      ? ['Students who struggle to make a plan', "Students unsure of where they're going wrong", 'Students who want to prepare for the SAT systematically']
+      : MANAGED_PERSONAS;
+
+    const unmanaged_personas = lang === 'en'
+      ? ['Students who plan independently', 'Students with a solid study environment', 'Students who know their SAT weak spots']
+      : UNMANAGED_PERSONAS;
 
     const cards = [
       {
-        name: '관리형 수업' as const,
+        name: lang === 'en' ? 'Managed Classes' : '관리형 수업' as const,
         icon: '🤝',
         recommended: true,
-        personas: MANAGED_PERSONAS,
+        personas: managed_personas,
         items: ALL_ITEMS,
         type: 'managed' as const,
       },
       {
-        name: '자기주도 수업' as const,
+        name: lang === 'en' ? 'Self-Directed Classes' : '자기주도 수업' as const,
         icon: '✍️',
         recommended: false,
-        personas: UNMANAGED_PERSONAS,
+        personas: unmanaged_personas,
         items: UNMANAGED_ITEMS,
         type: 'unmanaged' as const,
       },
@@ -251,9 +261,9 @@ export const ManagementFitSection = React.forwardRef<HTMLDivElement, ManagementF
       <section ref={ref} className={`max-w-3xl mx-auto px-4 sm:px-6 pb-10 sm:pb-16 scroll-mt-20 ${hideHeading ? 'pt-10 sm:pt-14' : ''}`}>
         {!hideHeading && (
           <div className={styles.sectionHeading}>
-            <p className={styles.sectionLabel}>수업 방식 선택</p>
+            <p className={styles.sectionLabel}>{lang === 'en' ? 'Choose your class type' : '수업 방식 선택'}</p>
             <h2 className={styles.sectionTitle}>
-              어떤 수업이<br />우리 아이에게 맞을까요?
+              {lang === 'en' ? <>Which class is right<br />for your child?</> : <>어떤 수업이<br />우리 아이에게 맞을까요?</>}
             </h2>
           </div>
         )}
@@ -274,6 +284,7 @@ export const ManagementFitSection = React.forwardRef<HTMLDivElement, ManagementF
                 selected={managementType === card.type}
                 onSelect={() => onSelect(card.type)}
                 onThumbnailClick={() => onThumbnailClick(card.type)}
+                lang={lang}
               />
             </motion.div>
           ))}

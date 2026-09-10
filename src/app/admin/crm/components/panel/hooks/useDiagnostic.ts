@@ -60,14 +60,16 @@ export function useDiagnostic({ studentId, adminKey, onUpdate }: Params) {
     setDiagLoading(false);
   }
 
-  useEffect(() => { fetchDiagLinked(); }, [studentId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchDiagLinked(); }, [studentId]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!showDiagPicker) return;
     if (diagSearchQuery.length < 2) { setDiagCandidates([]); return; }
     const timer = setTimeout(() => searchDiagCandidates(diagSearchQuery), 300);
     return () => clearTimeout(timer);
-  }, [diagSearchQuery, showDiagPicker]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [diagSearchQuery, showDiagPicker]);
 
   return {
     diagLinked, diagCandidates, showDiagPicker, setShowDiagPicker,

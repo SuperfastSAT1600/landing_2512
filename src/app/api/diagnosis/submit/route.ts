@@ -28,7 +28,15 @@ export async function POST(request: NextRequest) {
       previousTestDate,
       previousRwScore,
       previousMathScore,
+      vocabAnswers,
+      rwSequentialData,
     } = body;
+
+    // For v2, merge vocab + rw sequential + math answers into the answers JSONB
+    const isV2 = testId === 'diagnostic-test-2';
+    const storedAnswers = isV2
+      ? { __v2__: true, vocab: vocabAnswers ?? [], rw: rwSequentialData ?? [], math: answers }
+      : answers;
 
     // Validate required fields (studentEmail is optional — student may skip)
     if (!studentName || !testId) {
@@ -124,7 +132,7 @@ export async function POST(request: NextRequest) {
           submitted_at: submittedAt,
           total_time_seconds: totalTimeSeconds,
           time_limit_minutes: timeLimitMinutes,
-          answers: answers || {},
+          answers: storedAnswers || {},
           confidence_levels: confidenceLevels || {},
           flagged_questions: flaggedQuestions || [],
           question_times: questionTimes || {},

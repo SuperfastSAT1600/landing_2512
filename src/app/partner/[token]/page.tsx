@@ -33,10 +33,11 @@ export default function PartnerPortalPage() {
     else setState('login');
   }, [token, isAdmin]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (adminLoading) return; // wait for localStorage check before deciding auth flow
     checkPortal();
-  }, [checkPortal, adminLoading]);
+  }, [adminLoading]);
 
   const canvas = '#f6f5f4';
 

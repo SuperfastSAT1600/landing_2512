@@ -34,6 +34,11 @@ interface RetryColumnProps {
   onRemove: (student: Student) => void;
 }
 
+function getDaysAssigned(retryAssignedAt: string | null): number | null {
+  if (!retryAssignedAt) return null;
+  return Math.floor((Date.now() - new Date(retryAssignedAt).getTime()) / 86400000);
+}
+
 const RetryColumn = memo(function RetryColumn({ stage, students, onStudentClick, onRemove }: RetryColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
 
@@ -49,9 +54,7 @@ const RetryColumn = memo(function RetryColumn({ stage, students, onStudentClick,
       >
         <SortableContext items={students.map(s => s.id)} strategy={verticalListSortingStrategy}>
           {students.map(s => {
-            const days = s.retry_assigned_at
-              ? Math.floor((Date.now() - new Date(s.retry_assigned_at).getTime()) / 86400000)
-              : null;
+            const days = getDaysAssigned(s.retry_assigned_at);
             return (
               <div key={s.id} className="flex flex-col gap-0.5">
                 <StudentCard
@@ -80,9 +83,10 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
   const [loadingStudents, setLoadingStudents] = useState(false);
 
   useEffect(() => {
-    if (!enrolledStudentId) return;
-    setStudents(prev => prev.filter(s => s.id !== enrolledStudentId));
-    onEnrolledHandled?.();
+    if (enrolledStudentId) {
+      setStudents(prev => prev.filter(s => s.id !== enrolledStudentId));
+      onEnrolledHandled?.();
+    }
   }, [enrolledStudentId, onEnrolledHandled]);
   const [newStrategyName, setNewStrategyName] = useState('');
   const [creatingStrategy, setCreatingStrategy] = useState(false);
@@ -105,21 +109,29 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     setStrategies(json.data ?? []);
   }, [adminKey]);
 
-  useEffect(() => { fetchStrategies(); }, [fetchStrategies]);
+  useEffect(() => {
+    fetchStrategies();
+  }, [fetchStrategies]);
 
   const fetchStudents = useCallback(async (strategyId: string) => {
     setLoadingStudents(true);
-    const res = await fetch(`/api/crm/students?retry_strategy_id=${strategyId}`, {
-      headers: { 'x-admin-key': adminKey },
-    });
-    const json = await res.json();
-    setStudents(json.data ?? []);
-    setLoadingStudents(false);
+    try {
+      const res = await fetch(`/api/crm/students?retry_strategy_id=${strategyId}`, {
+        headers: { 'x-admin-key': adminKey },
+      });
+      const json = await res.json();
+      setStudents(json.data ?? []);
+    } finally {
+      setLoadingStudents(false);
+    }
   }, [adminKey]);
 
   useEffect(() => {
-    if (selectedId) fetchStudents(selectedId);
-    else setStudents([]);
+    if (selectedId) {
+      fetchStudents(selectedId);
+    } else {
+      setStudents([]);
+    }
   }, [selectedId, fetchStudents]);
 
   useEffect(() => {

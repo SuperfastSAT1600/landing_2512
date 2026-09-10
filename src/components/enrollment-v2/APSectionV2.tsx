@@ -39,7 +39,7 @@ function getTier(h: number) {
 /* ── AP 과목 + 상태 데이터 ──────────────────────────────────────── */
 type SubjectStatus = 'available' | 'waiting' | 'closed';
 
-const STATUS_CONFIG: Record<SubjectStatus, { label: string; dot: string; text: string; border: string; bg: string }> = {
+const STATUS_CONFIG_KO: Record<SubjectStatus, { label: string; dot: string; text: string; border: string; bg: string }> = {
   available: {
     label: '수업이 가능합니다',
     dot:    'bg-emerald-400',
@@ -56,6 +56,30 @@ const STATUS_CONFIG: Record<SubjectStatus, { label: string; dot: string; text: s
   },
   closed: {
     label: '선생님의 요청으로 마감되었습니다',
+    dot:    'bg-white/30',
+    text:   'text-white/35',
+    border: 'border-white/[0.08]',
+    bg:     'bg-white/[0.02]',
+  },
+};
+
+const STATUS_CONFIG_EN: Record<SubjectStatus, { label: string; dot: string; text: string; border: string; bg: string }> = {
+  available: {
+    label: 'Available',
+    dot:    'bg-emerald-400',
+    text:   'text-emerald-400',
+    border: 'border-emerald-500/30',
+    bg:     'bg-emerald-500/[0.07]',
+  },
+  waiting: {
+    label: 'Waitlisting',
+    dot:    'bg-amber-400',
+    text:   'text-amber-400',
+    border: 'border-amber-500/30',
+    bg:     'bg-amber-500/[0.07]',
+  },
+  closed: {
+    label: 'Closed by coach',
     dot:    'bg-white/30',
     text:   'text-white/35',
     border: 'border-white/[0.08]',
@@ -184,8 +208,9 @@ const AP_REVIEWS = [
 /* ════════════════════════════════════════════════════════════════════
    AP 과목 검색 섹션
    ════════════════════════════════════════════════════════════════════ */
-function APSubjectSection() {
+function APSubjectSection({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
   const [query, setQuery] = useState('');
+  const statusConfig = lang === 'en' ? STATUS_CONFIG_EN : STATUS_CONFIG_KO;
 
   const filtered = query.trim()
     ? AP_SUBJECTS.filter(s => s.name.toLowerCase().includes(query.toLowerCase()))
@@ -196,7 +221,11 @@ function APSubjectSection() {
       <div className="max-w-xl mx-auto px-4">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
-            수업이 필요한<br />과목을 검색하세요.
+            {lang === 'en' ? (
+              <>Search for the<br />subject you need.</>
+            ) : (
+              <>수업이 필요한<br />과목을 검색하세요.</>
+            )}
           </h2>
         </div>
 
@@ -209,7 +238,7 @@ function APSubjectSection() {
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="과목명을 입력하세요 (예: Biology)"
+            placeholder={lang === 'en' ? 'Enter a subject (e.g. Biology)' : '과목명을 입력하세요 (예: Biology)'}
             className="w-full rounded-2xl border border-white/30 bg-white/[0.08] pl-10 pr-4 py-3.5 text-sm text-white placeholder:text-white/45 outline-none focus:border-white/50 transition-colors"
           />
           {query && (
@@ -254,7 +283,9 @@ function APSubjectSection() {
                 <div className="flex items-center gap-1.5 pt-1 border-t border-white/[0.06]">
                   <span className="text-[10px] text-white/30">{review.author}</span>
                   <span className="text-white/15">·</span>
-                  <span className="text-[10px] text-white/30">{review.grade}</span>
+                  <span className="text-[10px] text-white/30">
+                    {lang === 'en' ? review.grade.replace('학년', 'th grade') : review.grade}
+                  </span>
                 </div>
               </div>
             ))}
@@ -266,7 +297,7 @@ function APSubjectSection() {
         <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-1">
           <AnimatePresence initial={false}>
             {filtered.map((subject, i) => {
-              const cfg = STATUS_CONFIG[subject.status];
+              const cfg = statusConfig[subject.status];
               return (
                 <motion.div
                   key={subject.name}
@@ -290,7 +321,7 @@ function APSubjectSection() {
                 animate={{ opacity: 1 }}
                 className="text-sm text-white/30 text-center py-8"
               >
-                검색 결과가 없습니다
+                {lang === 'en' ? 'No subjects found.' : '검색 결과가 없습니다'}
               </motion.p>
             )}
           </AnimatePresence>
@@ -304,7 +335,7 @@ function APSubjectSection() {
 /* ════════════════════════════════════════════════════════════════════
    AP HOUR PICKER
    ════════════════════════════════════════════════════════════════════ */
-function APHourPicker() {
+function APHourPicker({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
   const [hours, setHours] = useState(16);
 
   const tier = getTier(hours);
@@ -315,12 +346,18 @@ function APHourPicker() {
     return Math.min(60, Math.max(1, v));
   }
 
+  const hourUnit = lang === 'en' ? 'hrs' : '시간';
+
   return (
     <section className="px-4 py-10 border-t border-white/[0.06]">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
-            필요한 시간만큼<br />수업 신청도 가능합니다
+            {lang === 'en' ? (
+              <>Book as many hours<br />as you need.</>
+            ) : (
+              <>필요한 시간만큼<br />수업 신청도 가능합니다</>
+            )}
           </h2>
         </div>
 
@@ -335,7 +372,7 @@ function APHourPicker() {
           </button>
           <div className="text-center min-w-[80px]">
             <span className="text-5xl font-black text-white leading-none">{hours}</span>
-            <span className="text-base text-white/50 ml-1.5">시간</span>
+            <span className="text-base text-white/50 ml-1.5">{hourUnit}</span>
           </div>
           <button
             type="button"
@@ -393,22 +430,24 @@ function APHourPicker() {
                     <span className="inline-flex items-baseline gap-1 drop-shadow-[0_0_16px_rgba(239,68,68,0.45)]">
                       <span className="text-6xl font-black text-red-500 leading-none">{tier.discount}</span>
                       <span className="text-3xl font-black text-red-500">%</span>
-                      <span className="text-xl font-bold text-red-400/80 ml-1">할인</span>
+                      <span className="text-xl font-bold text-red-400/80 ml-1">{lang === 'en' ? 'off' : '할인'}</span>
                     </span>
                     <p className="text-[11px] text-red-400/60 mt-1.5">
-                      기본가보다 {formatWon(savedVsBase)} 저렴합니다
+                      {lang === 'en'
+                        ? `saves ${formatWon(savedVsBase)} vs. base rate`
+                        : `기본가보다 ${formatWon(savedVsBase)} 저렴합니다`}
                     </p>
                   </motion.div>
                 </div>
 
                 <div className="border-t border-white/[0.06] pt-4">
-                  <p className="text-xs text-white/40 mb-1">총 수업료</p>
+                  <p className="text-xs text-white/40 mb-1">{lang === 'en' ? 'Total Tuition' : '총 수업료'}</p>
                   <motion.p
                     key={total}
                     initial={{ scale: 0.92, opacity: 0.5 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.22, ease: [0.34, 1.56, 0.64, 1] }}
-                    className="text-2xl font-black text-white tracking-tight"
+                    className="text-3xl font-black text-white tracking-tight"
                   >
                     {formatWon(total)}
                   </motion.p>
@@ -416,7 +455,7 @@ function APHourPicker() {
               </>
             ) : (
               <div>
-                <p className="text-xs text-white/40 mb-1">총 수업료</p>
+                <p className="text-xs text-white/40 mb-1">{lang === 'en' ? 'Total Tuition' : '총 수업료'}</p>
                 <motion.p
                   key={total}
                   initial={{ scale: 0.94, opacity: 0.5 }}
@@ -426,7 +465,9 @@ function APHourPicker() {
                 >
                   {formatWon(total)}
                 </motion.p>
-                <p className="text-[11px] text-white/25 mt-2">17시간부터 할인 적용</p>
+                <p className="text-[11px] text-white/25 mt-2">
+                  {lang === 'en' ? 'Discounts apply from 17 hrs' : '17시간부터 할인 적용'}
+                </p>
               </div>
             )}
           </motion.div>
@@ -446,15 +487,20 @@ const AP_PKGS = [
 /* ════════════════════════════════════════════════════════════════════
    AP PRICING SECTION (인기 패키지)
    ════════════════════════════════════════════════════════════════════ */
-function APPricingSection() {
+function APPricingSection({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const hourUnit = lang === 'en' ? 'hrs' : '시간';
 
   return (
     <section id="v2-pricing" className="px-4 py-10 border-t border-white/[0.06]">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
-            아래 세 가지 시간을<br />가장 많이 선택합니다.
+            {lang === 'en' ? (
+              <>These three packages<br />are most popular.</>
+            ) : (
+              <>아래 세 가지 시간을<br />가장 많이 선택합니다.</>
+            )}
           </h2>
         </div>
 
@@ -493,46 +539,25 @@ function APPricingSection() {
                 <div className="relative z-10 flex items-center justify-between gap-4">
                   <div className="flex items-baseline gap-1.5 flex-shrink-0">
                     <span className="text-3xl font-black text-white leading-none">{pkg.hours}</span>
-                    <span className="text-sm text-white/55 font-medium">시간</span>
+                    <span className="text-sm text-white/55 font-medium">{hourUnit}</span>
                   </div>
 
                   <div className="flex-1 text-right">
-                    {!isSelected && (
-                      <p className="text-[11px] text-white/40 leading-relaxed">
-                        진행되지 않은 수업 시간은<br />전부 환불됩니다.
-                      </p>
-                    )}
-
-                    {isSelected && pkg.discountRate && (
+                    {pkg.discountRate ? (
                       <div className="space-y-1.5">
-                        <motion.p
-                          initial={{ opacity: 0, x: 12 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.45, duration: 0.25, ease: 'easeOut' }}
-                          className="text-[11px] font-light text-red-500 leading-relaxed"
-                        >
-                          ({pkg.discountRate}% 할인) 16시간보다 {formatWon(savings)} 더 저렴합니다.
-                        </motion.p>
-                        <motion.p
-                          initial={{ opacity: 0, y: 6, scale: 0.94 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ delay: 0.82, duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
-                          className="text-base font-light text-white tracking-tight"
-                        >
+                        <p className="text-[11px] font-light text-red-500 leading-relaxed">
+                          {lang === 'en'
+                            ? `(${pkg.discountRate}% off) saves ${formatWon(savings)} vs. 16 hrs`
+                            : `(${pkg.discountRate}% 할인) 16시간보다 ${formatWon(savings)} 더 저렴합니다.`}
+                        </p>
+                        <p className="text-base font-light text-white tracking-tight">
                           {formatWon(pkg.totalPrice)}
-                        </motion.p>
+                        </p>
                       </div>
-                    )}
-
-                    {isSelected && !pkg.discountRate && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4, duration: 0.25 }}
-                        className="text-base font-light text-white tracking-tight"
-                      >
+                    ) : (
+                      <p className="text-base font-light text-white tracking-tight">
                         {formatWon(pkg.totalPrice)}
-                      </motion.p>
+                      </p>
                     )}
                   </div>
                 </div>
@@ -544,7 +569,9 @@ function APPricingSection() {
         {/* CTA */}
         <div className="mt-8 text-center">
           <p className="text-xs text-white/35 mb-4 leading-relaxed">
-            과목 선택과 맞춤 커리큘럼 상담을 받으실 수 있습니다
+            {lang === 'en'
+              ? 'Subject selection and custom curriculum consultation available.'
+              : '과목 선택과 맞춤 커리큘럼 상담을 받으실 수 있습니다'}
           </p>
           <a
             href="https://open.kakao.com/o/sxHGVZ4h"
@@ -552,7 +579,9 @@ function APPricingSection() {
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center w-full rounded-2xl border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.07] active:scale-[0.98] transition-all touch-manipulation px-6 py-4 text-base font-bold text-white tracking-tight"
           >
-            원장님과 직접 상담하고 로드맵 만드세요
+            {lang === 'en'
+              ? 'Talk with the director and build your roadmap.'
+              : '원장님과 직접 상담하고 로드맵 만드세요'}
           </a>
         </div>
       </div>
@@ -563,13 +592,13 @@ function APPricingSection() {
 /* ════════════════════════════════════════════════════════════════════
    MAIN EXPORT
    ════════════════════════════════════════════════════════════════════ */
-export function APSectionV2() {
+export function APSectionV2({ lang = 'ko' }: { lang?: 'ko' | 'en' } = {}) {
   return (
     <>
-      <APSubjectSection />
-      <ManagedShowcase excludeTabs={['단어 공부', '실전 모의고사']} mobileColumns={2} />
-      <APPricingSection />
-      <APHourPicker />
+      <APSubjectSection lang={lang} />
+      <ManagedShowcase excludeTabs={['단어 공부', '실전 모의고사']} mobileColumns={2} lang={lang} />
+      <APPricingSection lang={lang} />
+      <APHourPicker lang={lang} />
     </>
   );
 }

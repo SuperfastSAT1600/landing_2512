@@ -4,18 +4,21 @@ import { useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { SalesKanban } from './SalesKanban';
-import { KanbanStatsStrip } from './KanbanStatsStrip';
 import { KanbanFilter, KanbanFilters, DEFAULT_FILTERS } from './KanbanFilter';
 import { LeadPool } from './LeadPool';
-import { SalesStats } from './SalesStats';
 import { EnrolledLeads } from './EnrolledLeads';
 import { RetryKanban } from './RetryKanban';
+import { RenewalKanban } from './RenewalKanban';
 
-type HubTab = 'kanban' | 'retry' | 'enrolled' | 'pool' | 'stats';
+type HubTab = 'kanban' | 'renewal' | 'retry' | 'enrolled' | 'pool';
+
+// 재시도 보드 사용 빈도가 낮아 UI 숨김. true로 바꾸면 탭·진입이 복구된다.
+const RETRY_TAB_ENABLED = false;
 
 interface Props {
   students: Student[];
   adminKey: string;
+  userName?: string;
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
   onStudentClick: (student: Student) => void;
   onSelectStudentById: (id: string) => void;
@@ -26,7 +29,7 @@ interface Props {
 
 // 메뉴1: 리드 현황·통계 (최초 세일즈 / 재시도 / 수업 중 / 이탈 리드풀 / 통계)
 export function LeadsHub({
-  students, adminKey, onStudentUpdate, onStudentClick, onSelectStudentById,
+  students, adminKey, userName, onStudentUpdate, onStudentClick, onSelectStudentById,
   fetchStudents, retryEnrolledId, onEnrolledHandled,
 }: Props) {
   const [subTab, setSubTab] = useState<HubTab>('kanban');
@@ -55,11 +58,11 @@ export function LeadsHub({
       <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 w-fit max-w-full overflow-x-auto scrollbar-none">
         {([
           { key: 'kanban', label: '최초 세일즈' },
-          { key: 'retry', label: '재시도' },
+          { key: 'renewal', label: '재결제 세일즈' },
+          ...(RETRY_TAB_ENABLED ? [{ key: 'retry', label: '재시도' }] : []),
           { key: 'enrolled', label: '튜터링 중' },
           { key: 'pool', label: '이탈 리드풀' },
-          { key: 'stats', label: '통계' },
-        ] as const).map(({ key, label }) => (
+        ] as { key: HubTab; label: string }[]).map(({ key, label }) => (
           <button key={key} onClick={() => setSubTab(key)}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors shrink-0 whitespace-nowrap ${subTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
             {label}
@@ -82,7 +85,6 @@ export function LeadsHub({
             </div>
             <KanbanFilter filters={filters} onChange={setFilters} />
           </div>
-          <KanbanStatsStrip adminKey={adminKey} onSelectStudent={onSelectStudentById} />
           <SalesKanban
             students={filteredStudents}
             adminKey={adminKey}
@@ -93,7 +95,11 @@ export function LeadsHub({
         </>
       )}
 
-      {subTab === 'retry' && (
+      {subTab === 'renewal' && (
+        <RenewalKanban adminKey={adminKey} userName={userName} onSelectStudentById={onSelectStudentById} onStudentUpdate={onStudentUpdate} />
+      )}
+
+      {RETRY_TAB_ENABLED && subTab === 'retry' && (
         <RetryKanban
           adminKey={adminKey}
           onStudentClick={onStudentClick}
@@ -117,11 +123,13 @@ export function LeadsHub({
           onRefetch={fetchStudents}
           retryContext={retryContext}
           onRetryContextClear={() => setRetryContext(null)}
-          onRetryAssignSuccess={() => { setRetryContext(null); setSubTab('retry'); }}
+          onRetryAssignSuccess={() => {
+            setRetryContext(null);
+            // 재시도 탭이 숨겨져 있으면 이동할 곳이 없으므로 리드풀에 머문다(성공 배너로 결과 안내).
+            if (RETRY_TAB_ENABLED) setSubTab('retry');
+          }}
         />
       )}
-
-      {subTab === 'stats' && <SalesStats adminKey={adminKey} onSelectStudent={onSelectStudentById} />}
     </div>
   );
 }

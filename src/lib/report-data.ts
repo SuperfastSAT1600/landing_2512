@@ -8,10 +8,34 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SECTION_BENCHMARKS, DOMAIN_BENCHMARKS } from '@/lib/report-benchmarks';
 import { difficultyToLevel } from '@/lib/vocab-levels';
 import diagnosticTest1, { type TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';
+import { diagnosticTest2Vocab } from '@/app/diagnosis/data/diagnostic-test-2-vocab';
+import { classifyRWQuestion, classifyRWStudent, type RWQuestionType, type RWStudentProfile } from '@/lib/rw-profile';
 
 // REQ-003: type guard — JSONB can store any type, not just string
 const safeStr = (v: unknown): string =>
   typeof v === 'string' ? v : String(v ?? '');
+
+export type { RWQuestionType, RWStudentProfile };
+
+export interface VocabDiagnosisItem {
+  wordId: string;
+  word: string;
+  selectedOptionId: string | null;
+  isCorrect: boolean;
+  timeTaken: number;
+}
+
+export interface RWCognitionItem {
+  questionId: string;
+  questionNumber: number;
+  domain: string;
+  skill: string;
+  difficulty: string;
+  optionsViewedCount: number;
+  confidence: number;
+  isCorrect: boolean;
+  questionType: RWQuestionType;
+}
 
 export interface ReportData {
   studentName: string;
@@ -49,6 +73,10 @@ export interface ReportData {
   previousTestDate?: string;
   previousRwScore?: number;
   previousMathScore?: number;
+  testId: string;
+  vocabResults?: VocabDiagnosisItem[];
+  rwCognitionData?: RWCognitionItem[];
+  rwStudentProfile?: RWStudentProfile;
 }
 
 /**
@@ -77,10 +105,12 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
       .single();
     if (version?.questions) questions = version.questions as TestQuestion[];
   } else {
+    const resultTestId = (result as { test_id?: string }).test_id ?? 'diagnostic-test-1';
     const { data: current } = await supabaseAdmin
       .from('diagnostic_test_versions')
       .select('questions')
       .eq('is_current', true)
+      .eq('test_id', resultTestId)
       .maybeSingle();
     if (current?.questions) questions = current.questions as TestQuestion[];
   }
@@ -90,31 +120,68 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
   }
 
   // REQ-003: JSONB values are cast but may be any type at runtime
-  const answers: Record<string, unknown> = result.answers ?? {};
+  const rawAnswers: Record<string, unknown> = result.answers ?? {};
   const confidenceLevels: Record<string, number> = result.confidence_levels ?? {};
   const questionTimes: Record<string, number> = result.question_times ?? {};
   const flaggedQuestions: string[] = result.flagged_questions ?? [];
   const savedWords: { word: string; questionId: string; section: string }[] =
     result.saved_words ?? [];
 
+  // v2 detection — answers stored as { __v2__: true, vocab, rw, math }
+  const isV2 = result.test_id === 'diagnostic-test-2' || rawAnswers.__v2__ === true;
+  const mathAnswers: Record<string, unknown> = isV2
+    ? (rawAnswers.math as Record<string, unknown> ?? {})
+    : rawAnswers;
+  type RawRWResult = { questionId: string; firstYesOptionId: string; optionsViewedCount: number; finalAnswer: string; confidence: number; isCorrect: boolean };
+  type RawVocabResult = { wordId: string; selectedOptionId: string | null; isCorrect: boolean; timeTaken: number };
+  const rwResultsRaw: RawRWResult[] = isV2 ? (rawAnswers.rw as RawRWResult[] ?? []) : [];
+  const vocabResultsRaw: RawVocabResult[] = isV2 ? (rawAnswers.vocab as RawVocabResult[] ?? []) : [];
+
   const domainStats: Record<string, { correct: number; total: number }> = {};
   const sectionStats: Record<string, { correct: number; total: number }> = {};
+  const rwCognitionItems: RWCognitionItem[] = [];
 
   const questionDetails = questions.map((q, idx) => {
-    const studentAnswer = answers[q.id];
-    const correctAnswer =
-      q.type === 'multiple-choice'
-        ? (q.options?.find((o) => o.type === 'correct')?.id ?? '')
-        : (q.answers?.[0] ?? '');
+    let isCorrect = false;
+    let answered = false;
+    let confidence = 0;
 
-    const isCorrect = studentAnswer !== undefined
-      ? q.type === 'multiple-choice'
-        ? safeStr(studentAnswer) === safeStr(correctAnswer)
-        // REQ-003: safeStr() prevents TypeError when JSONB has non-string values
-        : safeStr(studentAnswer).trim().toLowerCase() === safeStr(correctAnswer).trim().toLowerCase()
-      : false;
-
-    const answered = studentAnswer !== undefined;
+    if (isV2 && q.section === 'Reading and Writing') {
+      const rwResult = rwResultsRaw.find(r => r.questionId === q.id);
+      if (rwResult) {
+        isCorrect = rwResult.isCorrect;
+        answered = true;
+        confidence = rwResult.confidence ?? 0;
+        const options = q.options ?? [];
+        const correctOptionIdx = options.findIndex(o => o.type === 'correct');
+        const chosenOptionIdx = options.findIndex(o => o.id === rwResult.firstYesOptionId);
+        const questionType = classifyRWQuestion({ isCorrect, confidence, chosenOptionIdx, correctOptionIdx });
+        rwCognitionItems.push({
+          questionId: q.id,
+          questionNumber: idx + 1,
+          domain: q.domain,
+          skill: q.skill,
+          difficulty: q.difficulty,
+          optionsViewedCount: rwResult.optionsViewedCount,
+          confidence,
+          isCorrect,
+          questionType,
+        });
+      }
+    } else {
+      const studentAnswer = mathAnswers[q.id];
+      const correctAnswer =
+        q.type === 'multiple-choice'
+          ? (q.options?.find((o) => o.type === 'correct')?.id ?? '')
+          : (q.answers?.[0] ?? '');
+      isCorrect = studentAnswer !== undefined
+        ? q.type === 'multiple-choice'
+          ? safeStr(studentAnswer) === safeStr(correctAnswer)
+          : safeStr(studentAnswer).trim().toLowerCase() === safeStr(correctAnswer).trim().toLowerCase()
+        : false;
+      answered = studentAnswer !== undefined;
+      confidence = confidenceLevels[q.id] ?? 0;
+    }
 
     if (!domainStats[q.domain]) domainStats[q.domain] = { correct: 0, total: 0 };
     domainStats[q.domain].total++;
@@ -134,10 +201,20 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
       isCorrect,
       answered,
       timeSeconds: questionTimes[q.id] ?? 0,
-      confidence: confidenceLevels[q.id] ?? 0,
+      confidence,
       flagged: flaggedQuestions.includes(q.id),
     };
   });
+
+  // v2 vocab results — cross-reference with word list for display text
+  const vocabWordMap = new Map(diagnosticTest2Vocab.map(v => [v.id, v.word]));
+  const vocabResults: VocabDiagnosisItem[] = vocabResultsRaw.map(v => ({
+    wordId: v.wordId,
+    word: vocabWordMap.get(v.wordId) ?? v.wordId,
+    selectedOptionId: v.selectedOptionId,
+    isCorrect: v.isCorrect,
+    timeTaken: v.timeTaken,
+  }));
 
   const sections = Object.entries(sectionStats).map(([name, stats]) => {
     const domainBreakdown = Object.entries(domainStats)
@@ -191,5 +268,11 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
     previousTestDate: result.previous_test_date ?? undefined,
     previousRwScore: result.previous_rw_score ?? undefined,
     previousMathScore: result.previous_math_score ?? undefined,
+    testId: result.test_id ?? 'diagnostic-test-1',
+    vocabResults: isV2 ? vocabResults : undefined,
+    rwCognitionData: isV2 && rwCognitionItems.length > 0 ? rwCognitionItems : undefined,
+    rwStudentProfile: isV2 && rwCognitionItems.length > 0
+      ? classifyRWStudent(rwCognitionItems.map(i => i.questionType))
+      : undefined,
   };
 }

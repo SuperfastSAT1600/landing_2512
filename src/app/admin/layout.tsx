@@ -12,19 +12,37 @@ type NavItem =
     | { href?: undefined; label: string; icon: string; children: { href: string; label: string }[] };
 
 const NAV_ITEMS: NavItem[] = [
-    { href: '/admin', label: 'Posts', icon: '📄' },
-    { href: '/admin/fulltest', label: 'Test Contents', icon: '📋' },
-    { href: '/admin/diagnosis', label: 'Diagnosis', icon: '🩺' },
-    { href: '/admin/reviews', label: 'Reviews', icon: '⭐' },
-    { href: '/admin/coaches', label: 'Coaches', icon: '👨‍🏫' },
     { href: '/admin/home', label: 'Homepage', icon: '🏠' },
+    { href: '/admin', label: 'Posts', icon: '📄' },
+    { href: '/admin/coaches', label: 'Coaches', icon: '👨‍🏫' },
+    {
+        label: 'Reviews', icon: '⭐', children: [
+            { href: '/admin/reviews', label: 'Reviews' },
+            { href: '/admin/reviews/survey', label: 'Survey' },
+        ]
+    },
+    { href: '/admin/diagnosis', label: 'Diagnosis', icon: '🩺' },
     { href: '/admin/supertest', label: 'SuperTest', icon: '🎯' },
-    { href: '/admin/traffic', label: '채널 유입 통계', icon: '📊' },
-    { href: '/admin/marketing', label: '마케팅', icon: '📣' },
-    { href: '/admin/crm', label: 'CRM', icon: '👥' },
-    { href: '/admin/srm', label: 'SRM', icon: '📅' },
-    { href: '/admin/partner', label: '파트너 센터', icon: '🤝' },
     { href: '/admin/enrollment', label: '수업권', icon: '🎫' },
+    {
+        label: '시크릿페이지', icon: '🔐', children: [
+            { href: '/admin/vocab-access', label: '시크릿페이지' },
+            { href: '/admin/fulltest', label: 'Test Contents' },
+            { href: '/admin/mathweb', label: 'Math Web' },
+        ]
+    },
+    { href: '/admin/popup-settings', label: '팝업 설정', icon: '🔔' },
+    { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
+    { href: '/admin/business', label: 'Business', icon: '💼' },
+    {
+        label: '마케팅', icon: '📣',
+        children: [
+            // 첫 항목이 부모('마케팅') 클릭 시 이동할 기본 화면이다.
+            { href: '/admin/marketing/goals', label: '목표' },
+            { href: '/admin/marketing', label: '채널 현황' },
+        ],
+    },
+    { href: '/admin/crm', label: 'CRM', icon: '👥' },
 ];
 
 
@@ -36,6 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const isMobile = useIsMobile();
 
     // Close the mobile nav drawer whenever the route changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         setNavOpen(false);
     }, [pathname]);

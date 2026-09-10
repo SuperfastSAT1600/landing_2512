@@ -31,6 +31,13 @@ export interface ChurnBreakdown {
 // 알려진 사유 카테고리 접두. CHURN_TAG_OPTIONS + 환불(별도 플로우).
 const KNOWN_CATEGORIES = ['회신 없음', '노쇼', '미응시', '미결제', '환불', '기타'] as const;
 const UNCLASSIFIED = '기타/미분류';
+
+/**
+ * classifyChurnTag가 낼 수 있는 카테고리 전체. 사유 필터 UI는 반드시 이 목록을 써야 한다 —
+ * CHURN_TAG_OPTIONS(입력용)에는 환불·기타/미분류가 없어서, 그걸로 필터를 만들면
+ * 환불(47명)·미분류(11명) 리드를 어떤 조합으로도 선택할 수 없다.
+ */
+export const CHURN_CATEGORIES: readonly string[] = [...KNOWN_CATEGORIES, UNCLASSIFIED];
 const SAMPLE_MAX_LEN = 80; // 대표 사유 표시 길이 상한(프롬프트 블록 간결화)
 
 /** 자유서술 사유를 프롬프트용 한 줄로 정규화(개행·중복 공백 제거, 길이 상한). */
@@ -39,8 +46,8 @@ function normalizeDetail(raw: string): string {
   return s.length > SAMPLE_MAX_LEN ? `${s.slice(0, SAMPLE_MAX_LEN - 1)}…` : s;
 }
 
-/** churn_tag 한 건을 카테고리 + 자유서술로 분해. */
-function classify(rawTag: string): { category: string; detail: string | null } {
+/** churn_tag 한 건을 카테고리 + 자유서술로 분해. (윈백 스코어링도 같은 정규화를 쓴다) */
+export function classifyChurnTag(rawTag: string): { category: string; detail: string | null } {
   const tag = rawTag.trim();
   const idx = tag.indexOf(':');
   const prefix = (idx >= 0 ? tag.slice(0, idx) : tag).trim();
@@ -68,7 +75,7 @@ export function aggregateChurn(rows: ChurnRow[], maxSamples = 3): ChurnBreakdown
     if (!tag) continue;
     taggedTotal++;
 
-    const { category, detail } = classify(tag);
+    const { category, detail } = classifyChurnTag(tag);
     const entry = map.get(category) ?? { count: 0, samples: [] };
     entry.count++;
     if (detail && entry.samples.length < maxSamples && !entry.samples.includes(detail)) {

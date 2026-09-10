@@ -1,213 +1,188 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Loader2, Check } from 'lucide-react';
-import {
-  WEEKLY_PLAN_METRIC_KEYS,
-  WEEKLY_PLAN_METRIC_LABELS,
-  WEEKLY_PLAN_CURRENCY_METRICS,
-  type WeeklyPlanSegment,
-  type WeeklyPlanMetricKey,
-  type WeeklyPlanResponse,
-  type WeeklyPlanTarget,
-  type WeeklyPlanAction,
-} from '@/types/crm';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import type { WeeklyPlanSegment, WeeklyRetroNextAction, WeeklyTrack } from '@/types/crm';
 import { getWeekDef, weekByOffset, type WeekDef } from '@/lib/week-definitions';
+import { appendToWeek, useWeeklyPlan } from './weekly/useWeeklyPlan';
+import { WeeklyKpiStrip } from './weekly/WeeklyKpiStrip';
+import { WeeklyNotes } from './weekly/WeeklyNotes';
+import { WeeklyRetro } from './weekly/WeeklyRetro';
+import { WeeklyRetroBanner } from './weekly/WeeklyRetroBanner';
+import { WeeklyTrackSections, type SegmentFilter } from './weekly/WeeklyTrackSections';
+import { WeeklyWeekNav } from './weekly/WeeklyWeekNav';
+import { SEGMENT_LABELS } from './weekly/presets';
+import { manwon } from './weekly/format';
 
 interface Props {
-  segment: WeeklyPlanSegment;
+  segment: WeeklyPlanSegment; // 워크스페이스 세그먼트 — 회고·보완 기록의 기준
   adminKey: string;
   dailyView?: React.ReactNode; // 있으면 '오늘 실행' 서브뷰 노출(b2c)
   todayISO?: string; // 초기 주차 계산용. 기본 현재 시각.
+  onSelectStudent?: (id: string) => void; // 실행 리드 클릭 → 학생 패널
+  onOpenStrategyLibrary?: () => void; // 세일즈 전략 > 전략 라이브러리로 이동
 }
 
-const isCurrency = (k: WeeklyPlanMetricKey) => WEEKLY_PLAN_CURRENCY_METRICS.includes(k);
-const fmtVal = (k: WeeklyPlanMetricKey, n: number) =>
-  isCurrency(k) ? `${Math.round(n / 10000).toLocaleString()}만` : n.toLocaleString();
+const CARRY_TRACK_NAME = '지난주 회고 이어받기';
 
-export function WeeklyPlan({ segment, adminKey, dailyView, todayISO }: Props) {
+/**
+ * 주간 운영 루프 — 이번 주 실적(읽기) → 트랙(목표 + 실행 항목) → 회고 → 다음 주 이어받기.
+ *
+ * 트랙 진행률은 트랙에 연결된 전략의 주간 집계(students.strategy_history)에서 나온다.
+ * 세그먼트별로 저장되지만(weekly_plans는 segment,week_start 유일) 한 화면에서 함께 편집한다.
+ */
+export function WeeklyPlan({
+  segment, adminKey, dailyView, todayISO, onSelectStudent, onOpenStrategyLibrary,
+}: Props) {
   const today = todayISO ?? new Date().toISOString();
-  const [subView, setSubView] = useState<'plan' | 'today'>('plan');
+  const [subView, setSubView] = useState<'plan' | 'today'>(dailyView ? 'today' : 'plan');
+  const [filter, setFilter] = useState<SegmentFilter>('all');
   const [week, setWeek] = useState<WeekDef | null>(() => getWeekDef(today));
-  const [resp, setResp] = useState<WeeklyPlanResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [targets, setTargets] = useState<WeeklyPlanTarget[]>([]);
-  const [actions, setActions] = useState<WeeklyPlanAction[]>([]);
-  const [editTargets, setEditTargets] = useState(false);
-  const [newAction, setNewAction] = useState('');
 
   const weekStart = week?.start ?? null;
+  // 두 세그먼트를 한 화면에서 편집하므로 항상 둘 다 불러온다(훅은 조건부 호출 불가).
+  const b2c = useWeeklyPlan('b2c', adminKey, weekStart);
+  const b2b = useWeeklyPlan('b2b', adminKey, weekStart);
+  const bySegment = { b2c, b2b } as const;
+  const primary = bySegment[segment];
 
-  const load = useCallback(async () => {
-    if (!weekStart) { setLoading(false); return; }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/crm/weekly-plan?segment=${segment}&week_start=${weekStart}`, {
-        headers: { 'x-admin-key': adminKey },
-      });
-      const json = await res.json();
-      if (res.ok && json.data) {
-        const data = json.data as WeeklyPlanResponse;
-        setResp(data);
-        setTargets(data.plan?.targets ?? []);
-        setActions(data.plan?.actions ?? []);
-      }
-    } finally {
-      setLoading(false);
+  const visible: WeeklyPlanSegment[] = filter === 'all' ? ['b2c', 'b2b'] : [filter];
+  const loading = visible.some((s) => bySegment[s].loading) || !primary.plan;
+  const error = visible.map((s) => bySegment[s].error).find(Boolean) ?? '';
+
+  const nextWeek = week ? weekByOffset(week.start, 1) : null;
+
+  // 기록 시각: 이번 주면 지금, 지난 주차를 보고 있으면 그 주 마지막 날 정오(주 범위 안에 들도록).
+  const currentWeek = getWeekDef(today);
+  const logAt =
+    week && currentWeek && week.start === currentWeek.start
+      ? new Date().toISOString()
+      : `${week?.end ?? today.slice(0, 10)}T12:00:00+09:00`;
+
+  // 한 리드가 여러 전략을 받았을 수 있으므로 리드 단위로 중복 제거해 합산한다.
+  const summary = (() => {
+    const seen = new Map<string, { paid: boolean; revenue: number }>();
+    for (const row of primary.data?.execution ?? []) {
+      for (const l of row.leads) seen.set(l.student_id, { paid: l.paid, revenue: l.revenue });
     }
-  }, [segment, weekStart, adminKey]);
+    const leads = [...seen.values()];
+    const revenue = leads.reduce((n, l) => n + l.revenue, 0);
+    return `이 주 실적: 적용 리드 ${leads.length} · 결제 ${leads.filter((l) => l.paid).length} · 매출 ${manwon(revenue)}원`;
+  })();
 
-  useEffect(() => { load(); }, [load]);
-
-  const save = useCallback(async (nextTargets: WeeklyPlanTarget[], nextActions: WeeklyPlanAction[]) => {
-    if (!weekStart) return;
-    await fetch('/api/crm/weekly-plan', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-      body: JSON.stringify({ segment, week_start: weekStart, targets: nextTargets, actions: nextActions }),
+  /** 회고 항목을 다음 주 '지난주 회고 이어받기' 트랙으로 넘긴다. */
+  const carryOver = async (item: WeeklyRetroNextAction) => {
+    if (!nextWeek || !week) return false;
+    const newItem = {
+      id: crypto.randomUUID(),
+      text: item.text,
+      done: false,
+      done_at: null,
+      strategy_id: null,
+      strategy_name: null,
+      strategy_type: null,
+    };
+    return appendToWeek(segment, adminKey, nextWeek.start, (target) => {
+      const existing = target.tracks.find((t) => t.name === CARRY_TRACK_NAME);
+      if (existing) {
+        return {
+          tracks: target.tracks.map((t) =>
+            t.id === existing.id ? { ...t, items: [...t.items, newItem] } : t,
+          ),
+        };
+      }
+      const carried: WeeklyTrack = {
+        id: crypto.randomUUID(),
+        name: CARRY_TRACK_NAME,
+        goal_text: '',
+        metric: null,
+        target_value: 0,
+        achieved: false,
+        items: [newItem],
+        carried_from_week: week.start,
+      };
+      return { tracks: [...target.tracks, carried] };
     });
-  }, [segment, weekStart, adminKey]);
-
-  const actuals = resp?.actuals ?? {};
-  const usedKeys = new Set(targets.map((t) => t.key));
-  const availableKeys = WEEKLY_PLAN_METRIC_KEYS.filter((k) => !usedKeys.has(k));
-
-  // ── target 편집 ──
-  const setTargetValue = (key: WeeklyPlanMetricKey, value: number) =>
-    setTargets((prev) => prev.map((t) => (t.key === key ? { ...t, target_value: value } : t)));
-  const addTarget = (key: WeeklyPlanMetricKey) =>
-    setTargets((prev) => [...prev, { key, label: WEEKLY_PLAN_METRIC_LABELS[key], target_value: 0 }]);
-  const removeTarget = (key: WeeklyPlanMetricKey) => setTargets((prev) => prev.filter((t) => t.key !== key));
-  const saveTargets = async () => { setEditTargets(false); await save(targets, actions); };
-
-  // ── action (낙관적) ──
-  const persistActions = async (next: WeeklyPlanAction[]) => {
-    const prev = actions;
-    setActions(next);
-    try { await save(targets, next); } catch { setActions(prev); }
   };
-  const addAction = async () => {
-    const text = newAction.trim();
-    if (!text) return;
-    setNewAction('');
-    await persistActions([...actions, { id: crypto.randomUUID(), text, done: false, done_at: null }]);
-  };
-  const toggleAction = async (id: string) =>
-    persistActions(actions.map((a) => (a.id === id ? { ...a, done: !a.done, done_at: !a.done ? new Date().toISOString() : null } : a)));
-  const removeAction = async (id: string) => persistActions(actions.filter((a) => a.id !== id));
-
-  const doneCount = actions.filter((a) => a.done).length;
 
   return (
     <div className="space-y-5">
-      {/* 서브뷰 + 주 네비 */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {dailyView ? (
-          <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
-            {([['plan', '주간 계획'], ['today', '오늘 실행']] as const).map(([k, label]) => (
-              <button key={k} onClick={() => setSubView(k)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${subView === k ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-        ) : <div />}
-
-        {subView === 'plan' && (
-          <div className="flex items-center gap-2">
-            <button onClick={() => week && setWeek(weekByOffset(week.start, -1) ?? week)} className="p-1 rounded text-gray-400 hover:bg-gray-100" aria-label="이전 주"><ChevronLeft size={16} /></button>
-            <span className="text-sm font-semibold text-gray-800 min-w-[130px] text-center">{week?.label ?? '-'}</span>
-            <button onClick={() => week && setWeek(weekByOffset(week.start, 1) ?? week)} className="p-1 rounded text-gray-400 hover:bg-gray-100" aria-label="다음 주"><ChevronRight size={16} /></button>
-            <button onClick={() => setWeek(getWeekDef(today))} className="ml-1 px-2.5 py-1 text-xs rounded-md text-gray-500 hover:bg-gray-100">이번 주</button>
-          </div>
-        )}
-      </div>
+      <WeeklyWeekNav
+        week={week}
+        subView={dailyView ? subView : undefined}
+        onSubView={dailyView ? setSubView : undefined}
+        onShift={(offset) => week && setWeek(weekByOffset(week.start, offset) ?? week)}
+        onThisWeek={() => setWeek(getWeekDef(today))}
+      />
 
       {subView === 'today' && dailyView}
 
       {subView === 'plan' && (
         loading ? (
-          <div className="flex items-center justify-center gap-2 py-16 text-sm text-gray-400"><Loader2 size={16} className="animate-spin" /> 불러오는 중…</div>
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-gray-400">
+            <Loader2 size={16} className="animate-spin" /> 불러오는 중…
+          </div>
         ) : (
           <>
-            {/* 목표 vs 실적 */}
+            {error && <p className="text-xs text-red-500">{error}</p>}
+
+            {primary.data?.prev && !primary.data.prev.retro_filled && (
+              <WeeklyRetroBanner
+                weekLabel={primary.data.prev.week_label}
+                onGoToWeek={() => {
+                  const target = weekByOffset(primary.data!.prev!.week_start, 0);
+                  if (target) setWeek(target);
+                }}
+              />
+            )}
+
+            <WeeklyKpiStrip
+              showSegmentLabel={filter === 'all'}
+              adminKey={adminKey}
+              week={{ start: week!.start, end: week!.end }}
+              onSelectStudent={onSelectStudent}
+              rows={visible.map((s) => ({ segment: s, actuals: bySegment[s].data?.actuals ?? {} }))}
+            />
+
+            <WeeklyTrackSections
+              adminKey={adminKey}
+              logAt={logAt}
+              filter={filter}
+              visible={visible}
+              onFilter={setFilter}
+              onSelectStudent={onSelectStudent}
+              onOpenLibrary={onOpenStrategyLibrary}
+              data={{
+                b2c: {
+                  tracks: b2c.plan?.tracks ?? [],
+                  execution: b2c.data?.execution ?? [],
+                  onChange: (tracks) => b2c.save({ tracks }),
+                  onLogged: b2c.reload,
+                },
+                b2b: {
+                  tracks: b2b.plan?.tracks ?? [],
+                  execution: b2b.data?.execution ?? [],
+                  onChange: (tracks) => b2b.save({ tracks }),
+                  onLogged: b2b.reload,
+                },
+              }}
+            />
+
             <div className="border-b border-gray-100 pb-6">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-gray-400">목표 vs 실적</p>
-                {editTargets ? (
-                  <button onClick={saveTargets} className="text-xs font-semibold text-blue-600 hover:underline">완료</button>
-                ) : (
-                  <button onClick={() => setEditTargets(true)} className="text-xs text-gray-400 hover:text-gray-600">목표 편집</button>
-                )}
-              </div>
-
-              {targets.length === 0 && !editTargets && (
-                <p className="text-sm text-gray-400 py-6 text-center border border-dashed border-gray-200 rounded-lg">‘목표 편집’으로 이번 주 목표 수치를 설정하세요.</p>
-              )}
-
-              <div className="flex flex-wrap gap-x-10 gap-y-5">
-                {targets.map((t) => {
-                  const actual = actuals[t.key] ?? 0;
-                  const pct = t.target_value > 0 ? Math.round((actual / t.target_value) * 100) : 0;
-                  return (
-                    <div key={t.key} className="min-w-[150px]">
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <p className="text-xs text-gray-400">{t.label}</p>
-                        {editTargets && <button onClick={() => removeTarget(t.key)} className="text-gray-300 hover:text-red-400"><Trash2 size={11} /></button>}
-                      </div>
-                      <p className="text-[26px] leading-none font-semibold text-gray-900 tabular-nums">{fmtVal(t.key, actual)}</p>
-                      {editTargets ? (
-                        <div className="flex items-center gap-1 mt-2">
-                          <span className="text-[11px] text-gray-400">목표</span>
-                          <input type="number" value={t.target_value || ''} onChange={(e) => setTargetValue(t.key, Number(e.target.value) || 0)}
-                            className="w-24 text-xs border border-gray-200 rounded px-1.5 py-0.5" />
-                          {isCurrency(t.key) && <span className="text-[11px] text-gray-400">원</span>}
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-[11px] text-gray-400 mt-1.5">목표 {fmtVal(t.key, t.target_value)} · 달성 {pct}%</p>
-                          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
-                            <div className={`h-full rounded-full ${pct >= 100 ? 'bg-emerald-500' : 'bg-gray-900'}`} style={{ width: `${Math.min(100, pct)}%` }} />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {editTargets && availableKeys.length > 0 && (
-                <div className="mt-4 flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] text-gray-400">지표 추가:</span>
-                  {availableKeys.map((k) => (
-                    <button key={k} onClick={() => addTarget(k)} className="text-xs px-2 py-0.5 rounded border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600">+ {WEEKLY_PLAN_METRIC_LABELS[k]}</button>
-                  ))}
-                </div>
-              )}
+              <WeeklyNotes
+                notes={primary.plan?.execution_notes ?? []}
+                onChange={(execution_notes) => primary.save({ execution_notes })}
+              />
             </div>
 
-            {/* 액션 체크리스트 */}
-            <div>
-              <p className="text-xs font-semibold text-gray-400 mb-3">이번 주 할 일 <span className="text-gray-300 font-normal">({doneCount}/{actions.length})</span></p>
-              <div className="space-y-1.5">
-                {actions.map((a) => (
-                  <div key={a.id} className="flex items-center gap-2.5 group">
-                    <button onClick={() => toggleAction(a.id)}
-                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${a.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 hover:border-gray-400'}`}>
-                      {a.done && <Check size={11} strokeWidth={3} />}
-                    </button>
-                    <span className={`text-sm flex-1 ${a.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{a.text}</span>
-                    <button onClick={() => removeAction(a.id)} className="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={13} /></button>
-                  </div>
-                ))}
-                {actions.length === 0 && <p className="text-sm text-gray-400 py-4 text-center">할 일을 추가하세요.</p>}
-              </div>
-              <div className="flex items-center gap-2 mt-3">
-                <input value={newAction} onChange={(e) => setNewAction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addAction(); }}
-                  placeholder="할 일 추가…" className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400" />
-                <button onClick={addAction} className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg"><Plus size={13} /> 추가</button>
-              </div>
-            </div>
+            <WeeklyRetro
+              title={`이 주 회고 · ${SEGMENT_LABELS[segment]}`}
+              retro={primary.plan!.retrospective}
+              summary={summary}
+              nextWeekLabel={nextWeek?.label ?? null}
+              onChange={(retrospective) => primary.save({ retrospective })}
+              onCarryOver={carryOver}
+            />
           </>
         )
       )}

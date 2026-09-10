@@ -56,6 +56,7 @@ export interface CoachOnboardingSubmission {
   teaching_philosophy: string;
   subject_directions: Record<string, string> | null;
   score_improvement_screenshot_urls: string[] | null;
+  profile_image_url: string | null;
   completeness_score: number | null;
   head_coach_criteria: HeadCoachCriteria | null;
   head_coach_criteria_met: number;

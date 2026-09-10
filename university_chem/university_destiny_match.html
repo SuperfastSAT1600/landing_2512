@@ -1,0 +1,4575 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>내가 어디 대학에 갈 상인가.</title>
+<meta name="description" content="생년월일을 입력하면 사주 오행으로 QS 세계 랭킹 명문대 중 당신의 대학 궁합을 점지해드립니다.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="내가 어디 대학에 갈 상인가.">
+<meta property="og:description" content="생년월일을 입력하면 사주 오행으로 QS 세계 랭킹 명문대 중 당신의 대학 궁합을 점지해드립니다.">
+<meta property="og:image" content="https://tutoring.superfastsat.com/university_destiny_match/main-image.jpg">
+<meta property="og:url" content="https://tutoring.superfastsat.com/university_destiny_match">
+<meta property="og:site_name" content="SuperfastSAT">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="내가 어디 대학에 갈 상인가.">
+<meta name="twitter:description" content="생년월일을 입력하면 사주 오행으로 QS 세계 랭킹 명문대 중 당신의 대학 궁합을 점지해드립니다.">
+<meta name="twitter:image" content="https://tutoring.superfastsat.com/university_destiny_match/main-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans+KR:wght@100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/solarlunar@2.1.2/dist/solarlunar.min.js"></script>
+<style>
+:root {
+  --cream: #0d0b09;
+  --card: #1a1712;
+  --navy: #000000;
+  --navy-light: #1c1914;
+  --gold: #d6a75a;
+  --gold-light: #e8c07a;
+  --coral: #e8935c;
+  --text: #e8dcc8;
+  --text-muted: #7a6e5c;
+  --border: #2e2820;
+  --shadow: 0 4px 24px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.7);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nanum Myeongjo', 'Noto Serif KR', Georgia, serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 0 60px;
+  overflow-x: hidden;
+}
+
+/* Header */
+.site-header {
+  text-align: center;
+  padding: 28px 20px 16px;
+}
+.site-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.site-logo span { font-size: 20px; }
+
+.hero {
+  text-align: center;
+  padding: 8px 20px 32px;
+}
+.hero h1 {
+  font-size: clamp(26px, 6vw, 40px);
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+.hero p {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Signature Input Card */
+.signature-card {
+  background: var(--navy);
+  border-radius: 26px;
+  max-width: 480px;
+  margin: 0 auto 32px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow-lg);
+}
+.signature-card .card-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.signature-card .card-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(214,167,90,0.3);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 7px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.form-group input {
+  width: 100%;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 16px;
+  font-family: inherit;
+  color: #fff;
+  transition: border-color 0.2s, background 0.2s;
+  outline: none;
+}
+.form-group input::placeholder { color: rgba(255,255,255,0.35); }
+.form-group input:focus {
+  border-color: var(--gold);
+  background: rgba(255,255,255,0.15);
+}
+.form-group input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+.form-group select {
+  width: 100%;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 16px;
+  font-family: inherit;
+  color: #fff;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='rgba(255,255,255,0.4)'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.form-group select:focus { border-color: var(--gold); background-color: rgba(255,255,255,0.15); }
+.form-group select option { background: #1e2a47; color: #fff; }
+
+/* 양력/음력 토글 */
+.cal-toggle {
+  display: flex;
+  gap: 0;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.cal-toggle-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 9px 0;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cal-toggle-btn.active {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+
+/* 음력 날짜 셀렉터 */
+.lunar-date-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.5fr;
+  gap: 8px;
+}
+.lunar-leap-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.lunar-leap-row label {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 0 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  cursor: pointer;
+}
+.lunar-leap-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 5px;
+}
+
+/* 동의 체크박스 */
+.consent-section {
+  width: 100%;
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.consent-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #1a1712;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+.consent-box input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--navy);
+  cursor: pointer;
+}
+.consent-box-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.5;
+}
+.consent-box-text .consent-required {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.cta-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--navy);
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px rgba(214,167,90,0.4);
+}
+.cta-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(214,167,90,0.5); }
+.cta-btn:active { transform: translateY(0); }
+.cta-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* Loading */
+.loading-state {
+  display: none;
+  text-align: center;
+  padding: 48px 20px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border);
+  border-top-color: var(--navy);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-state p { color: var(--text-muted); font-size: 14px; }
+
+/* Result Card */
+.result-card {
+  display: none;
+  background: var(--card);
+  border-radius: 26px;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slideUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform:none; } }
+
+.result-header {
+  background: var(--card);
+  padding: 28px 24px 20px;
+  text-align: center;
+  position: relative;
+}
+/* 대학 accent 컬러 탑 스트라이프 — 비활성 */
+.result-accent-band {
+  display: none;
+}
+.result-rank-badge {
+  display: none;
+}
+.crest-container {
+  margin: 0 auto 20px;
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.uni-logo-pixel {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+.university-name-en {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+/* ── 결과 상단 타이핑 연출 ── */
+.destiny-reveal-wrap {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.destiny-line {
+  font-family: 'Nanum Myeongjo', Georgia, serif;
+  font-size: clamp(20px, 5.5vw, 28px);
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1.5;
+  min-height: 1.5em;
+}
+.destiny-uni-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0 8px;
+}
+.destiny-crest {
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.destiny-uni-name {
+  font-family: 'Nanum Myeongjo', Georgia, serif;
+  font-size: clamp(24px, 7vw, 34px);
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+/* ── (기존 university-name-kr — 이제 destiny-uni-name 으로 대체됨) ── */
+.university-name-kr {
+  font-size: clamp(28px, 8vw, 38px);
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.university-tag {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+/* ── 궁합 퍼센트 히어로 ── */
+.compat-reveal {
+  background: linear-gradient(145deg, #1e2a47 0%, #0f172a 100%);
+  border-radius: 22px;
+  padding: 18px 20px 16px;
+  margin: 0 0 14px;
+  position: relative;
+  overflow: hidden;
+}
+.compat-reveal::after {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(214,167,90,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+.compat-top-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  row-gap: 6px;
+  column-gap: 16px;
+}
+.compat-left  { display: contents; }
+.compat-right { display: contents; }
+.compat-sublabel {
+  grid-area: 1 / 1;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: rgba(255,255,255,0.75);
+  line-height: 1;
+}
+.compat-year-label {
+  grid-area: 2 / 1;
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.06em;
+  align-self: center;
+}
+.compat-big-num {
+  grid-area: 1 / 2;
+  font-size: 62px;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-align: right;
+  justify-self: end;
+}
+.compat-big-num span {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold-light);
+  vertical-align: top;
+  margin-top: 8px;
+  display: inline-block;
+}
+.compat-stars {
+  font-size: 22px;
+  letter-spacing: 2px;
+  margin: 8px 0 6px;
+}
+.compat-wow-badge {
+  grid-area: 2 / 2;
+  justify-self: end;
+  align-self: center;
+  display: inline-block;
+  background: var(--gold);
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 900;
+  padding: 4px 14px;
+  border-radius: 99px;
+  letter-spacing: 0.02em;
+}
+/* ── 오행 타입 칩 ── */
+.element-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.element-type-chip .el-char { font-size: 17px; font-weight: 900; }
+.el-chip-목, .el-chip-화, .el-chip-토, .el-chip-금, .el-chip-수 {
+  background: rgba(214,167,90,0.12);
+  color: var(--gold);
+}
+
+.result-body { padding: 28px; }
+
+/* Compat Score */
+.compat-section {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.compat-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.compat-score {
+  font-size: 56px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.compat-score span { font-size: 28px; font-weight: 600; }
+.compat-bar-wrap {
+  background: var(--cream);
+  border-radius: 99px;
+  height: 8px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+.compat-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--navy), var(--gold));
+  border-radius: 99px;
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* SAT Badge */
+.sat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(214,167,90,0.08);
+  border: 1px solid rgba(214,167,90,0.2);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  margin-top: 8px;
+}
+.sat-badge.stable, .sat-badge.target, .sat-badge.reach {
+  background: rgba(214,167,90,0.08);
+  border-color: rgba(214,167,90,0.2);
+  color: var(--text-muted);
+}
+.sat-fallback {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: #242018;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  text-align: left;
+}
+
+/* 오행 Strip */
+.ohang-section { margin-bottom: 24px; }
+.ohang-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.ohang-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ohang-chip {
+  flex: 1;
+  min-width: 52px;
+  background: var(--cream);
+  border-radius: 10px;
+  padding: 8px 6px;
+  text-align: center;
+  border: 1.5px solid var(--border);
+  transition: border-color 0.2s;
+}
+.ohang-chip.dominant {
+  border-color: var(--gold);
+  background: rgba(214,167,90,0.08);
+}
+.ohang-chip .char { font-size: 16px; font-weight: 700; display: block; margin-bottom: 2px; }
+.ohang-chip .val { font-size: 12px; color: var(--text-muted); display: block; }
+.ohang-chip.dominant .char { color: var(--navy); }
+.ohang-chip.dominant .val { color: var(--gold); font-weight: 700; }
+
+/* Flavor text */
+.flavor-section { margin-bottom: 24px; }
+.flavor-section p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text);
+}
+.flavor-section strong { color: var(--navy); font-weight: 700; }
+
+/* Motto */
+.motto-section {
+  background: #242018;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+}
+.motto-section .motto-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.motto-section .motto-text {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Tags */
+.tags-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.uni-tag {
+  background: #242018;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+
+/* Share */
+.share-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.share-action-row {
+  display: flex;
+  gap: 10px;
+}
+.share-btn {
+  flex: 1;
+  background: #1e2a47;
+  color: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.share-btn:hover { background: var(--navy-light); transform: translateY(-1px); }
+.retry-btn {
+  flex: 0 0 auto;
+  background: #242018;
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.retry-btn:hover { background: var(--border); }
+.link-save-reveal {
+  display: none;
+  background: #1a1712;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  animation: slideUp 0.2s ease;
+}
+.link-save-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.link-save-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.link-save-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #242018;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  width: 100%;
+  text-align: left;
+}
+.link-save-opt:hover { background: var(--border); transform: translateY(-1px); }
+.link-save-opt .opt-icon { font-size: 18px; flex-shrink: 0; }
+.link-save-url-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #0d0b09;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 4px;
+}
+.link-save-url-text {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: monospace;
+}
+.link-save-copy-btn {
+  background: var(--gold);
+  color: #0d0b09;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.link-save-copy-btn:hover { opacity: 0.85; }
+
+/* ── 궁합 + 오행 통합 블록 ── */
+.compat-integrated {
+  background: linear-gradient(160deg, #1a2240 0%, #0d1020 100%);
+  border-radius: 22px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.compat-integrated .compat-reveal {
+  background: transparent;
+  border-radius: 0;
+  margin: 0;
+  padding: 22px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.compat-integrated .profile-pair {
+  padding: 14px 14px 16px;
+  margin-bottom: 0;
+}
+.compat-integrated .ohang-profile-box {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+}
+.compat-integrated .ohang-profile-title {
+  color: rgba(255,255,255,0.45);
+}
+
+/* ── 오행 프로필 비교 ── */
+.profile-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.ohang-profile-box {
+  background: #242018;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 12px;
+}
+.ohang-profile-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.ohang-bars { display: flex; flex-direction: column; gap: 5px; }
+.ohang-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ohang-bar-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  width: 12px;
+  flex-shrink: 0;
+}
+.ohang-bar-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.ohang-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  width: 0;
+  background: rgba(255,255,255,0.12);
+  transition: width 1s cubic-bezier(0.16,1,0.3,1);
+}
+.ohang-bar-fill.el-목, .ohang-bar-fill.el-화, .ohang-bar-fill.el-토,
+.ohang-bar-fill.el-금, .ohang-bar-fill.el-수 { background: rgba(255,255,255,0.12); }
+.ohang-bar-fill.dominant { background: var(--gold); }
+.ohang-bar-val {
+  font-size: 9px;
+  color: var(--text-muted);
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Disclaimer */
+.disclaimer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 480px;
+  margin: 24px auto 0;
+  padding: 0 20px;
+  line-height: 1.6;
+}
+
+/* Result Cue Button */
+.result-cue-btn {
+  width: 100%;
+  align-self: stretch;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #0d0b09;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 16px rgba(214,167,90,0.3);
+  transition: opacity 0.2s, transform 0.15s;
+}
+.result-cue-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* Site Footer */
+.site-footer {
+  font-family: 'Noto Sans KR', sans-serif;
+  text-align: center;
+  padding: 28px 20px 36px;
+  background: var(--cream);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.site-footer-tagline {
+  font-size: 12px;
+  font-weight: 400;
+  font-style: italic;
+  color: #ffffff;
+  letter-spacing: 0.03em;
+  font-family: 'Instrument Serif', Georgia, serif;
+}
+.site-footer-brand {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.site-footer-brand:hover { text-decoration: underline; text-underline-offset: 3px; }
+.site-footer-icon {
+  display: flex;
+  align-items: center;
+  color: #ffffff;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+.site-footer-icon:hover { opacity: 1; }
+.site-footer-sep {
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+}
+
+/* Hero Banner */
+/* ── 시네마 인트로 ── */
+.hero-cinema {
+  height: 100vh;        /* fallback (구형 iOS Safari) */
+  height: 100svh;       /* 모바일 브라우저 주소창 제외한 실제 높이 */
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero-cinema-inner {
+  position: relative;
+  width: 100%;
+  /* 가로 모드에서도 이미지가 뷰포트 높이를 넘지 않도록 */
+  max-width: calc(100vh * 16 / 9);
+  max-width: calc(100svh * 16 / 9);
+}
+.hero-cinema-inner img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: contain;  /* 이미지 전체가 보이도록 (crop 없음) */
+  display: block;
+}
+.hero-cinema-subtitle {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.72);
+  color: #fff;
+  font-size: clamp(13px, 3.5vw, 17px);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  padding: 4px 18px 5px;
+  border-radius: 2px;
+  white-space: nowrap;
+  font-family: 'Noto Serif KR', 'Apple SD Gothic Neo', Georgia, serif;
+  min-height: 1.6em;
+}
+.hero-cinema-subtitle::after {
+  content: '|';
+  display: inline-block;
+  opacity: 1;
+  animation: cursor-blink 0.7s step-end infinite;
+  margin-left: 1px;
+}
+.hero-cinema-subtitle.typed::after {
+  display: none;
+}
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.hero-scroll-hint {
+  margin-top: 20px;
+  color: rgba(255,255,255,0.45);
+  font-size: 22px;
+  animation: hint-bounce 2s ease-in-out infinite;
+  pointer-events: none;
+  user-select: none;
+  text-align: center;
+  width: 100%;
+}
+@keyframes hint-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.45; }
+  50%       { transform: translateX(-50%) translateY(7px); opacity: 0.8; }
+}
+
+/* Utility */
+.container { max-width: 520px; margin: 0 auto; padding: 28px 0 0; }
+.hidden { display: none !important; }
+
+/* ── 닉네임 입력 (결과 카드 하단) ─────────────────────────────────────── */
+.nick-section {
+  border-top: 1px solid var(--border);
+  padding: 20px 28px 24px;
+  background: var(--cream);
+}
+.nick-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.invite-main-btn {
+  width: 100%;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 15px 20px;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+.invite-main-btn:hover { background: var(--navy-light); }
+.invite-main-btn:active { transform: scale(0.98); }
+.invite-main-btn.copied { background: #16a34a; }
+
+/* URL 공개 영역 */
+.invite-url-reveal {
+  display: none;
+  margin-top: 12px;
+  animation: slideUp 0.25s ease;
+}
+.invite-url-msg {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-align: center;
+}
+.invite-url-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.invite-url-text {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.invite-url-copy {
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.invite-url-copy:hover { background: var(--navy-light); }
+.invite-url-copy.copied { background: #16a34a; }
+
+/* 그룹 미리보기 */
+.group-preview {
+  margin-top: 16px;
+}
+.group-preview-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.group-preview-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 16px 0 4px;
+  opacity: 0.7;
+}
+.gp-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gp-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.gp-crest { flex-shrink: 0; }
+.gp-info { flex: 1; min-width: 0; }
+.gp-nick {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.gp-uni {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gp-pct {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy);
+  flex-shrink: 0;
+}
+
+/* ── 그룹 보드 ──────────────────────────────────────────────────────────── */
+#boardView {
+  display: none;
+  min-height: 100vh;
+  padding: 0 0 80px;
+}
+.board-cinema-wrap {
+  height: 100vh;
+  height: 100svh;
+  position: relative;
+  background: #000;
+  overflow: hidden;
+}
+.board-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.75s ease;
+}
+.board-scene.active { opacity: 1; }
+
+.board-cta-section {
+  background: var(--navy);
+  padding: 36px 24px 40px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.board-total-count {
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.04em;
+}
+.board-total-count strong {
+  color: var(--gold);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.board-list {
+  background: var(--cream);
+  padding: 0 0 100px;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.board-list-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(30,42,71,0.08);
+  cursor: pointer;
+  transition: background 0.15s;
+  background: #fff;
+}
+.board-list-row:first-child { border-top: none; }
+.board-list-row.has-members {
+  background: linear-gradient(90deg, #fef9ec 0%, #fff 100%);
+}
+.board-list-row:active { background: #f5f0e6; }
+.board-list-logo {
+  flex-shrink: 0;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.board-list-logo img { border-radius: 6px; }
+.board-list-info {
+  flex: 1;
+  min-width: 0;
+}
+.board-list-name-kr {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.2;
+}
+.board-list-name-en {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.board-list-count {
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 40px;
+}
+.board-list-count-num {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  display: block;
+}
+.board-list-count-unit {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+  opacity: 0.8;
+}
+.board-list-count-empty {
+  font-size: 18px;
+  color: rgba(30,42,71,0.15);
+  font-weight: 300;
+}
+.board-list-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.board-list-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  color: #fff;
+  background: var(--chip-accent, var(--navy));
+}
+
+.board-join-btn {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--navy);
+  border: none;
+  border-radius: 14px;
+  padding: 14px 40px;
+  font-size: 17px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(214,167,90,0.4);
+  transition: transform 0.15s;
+  letter-spacing: 0.02em;
+}
+.board-join-btn:hover { transform: translateY(-1px); }
+
+/* 구 CSS — 더 이상 사용 안 함, 모달 등에서 혹시 참조할 수 있으니 유지 */
+.board-header { display: none; }
+.board-share-bar { display: none; }
+.board-toggle-row { display: none; }
+.board-card { display: none; }
+.board-grid { display: none; }
+.board-join-bar { display: none; }
+.board-inviter-card { display: none; }
+
+/* ── 대학 상세 모달 ───────────────────────────────────────────────────────── */
+.uni-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeInOverlay 0.2s;
+}
+@keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } }
+.uni-modal {
+  background: var(--card);
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 540px;
+  padding: 20px 24px calc(32px + env(safe-area-inset-bottom));
+  max-height: 75vh;
+  overflow-y: auto;
+  position: relative;
+  animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.uni-modal-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 18px;
+}
+.uni-modal-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.uni-modal-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 4px 0 2px;
+}
+.uni-modal-tag {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.uni-modal-motto {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--navy);
+  background: var(--cream);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.uni-modal-desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.uni-modal-ohang { display: flex; gap: 6px; flex-wrap: wrap; }
+.uni-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--cream);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── 친구 오행 비교 ───────────────────────────────────────────────────────── */
+.compare-section {
+  border-top: 1px solid var(--border);
+  padding: 20px 28px 24px;
+  background: #fff;
+}
+.compare-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.compare-row {
+  display: flex;
+  gap: 8px;
+}
+.compare-date-input {
+  flex: 1;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.compare-date-input:focus { border-color: var(--navy); }
+.compare-run-btn {
+  background: var(--coral);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.compare-run-btn:hover { background: #d4804f; }
+.compare-output {
+  margin-top: 14px;
+  background: var(--cream);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: none;
+}
+.compare-pair {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.compare-person { flex: 1; text-align: center; }
+.compare-person-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.compare-person-type {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-top: 2px;
+}
+.compare-person-uni {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.compare-vs {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--border);
+  flex: 0 0 auto;
+}
+.compare-pct {
+  text-align: center;
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1;
+}
+.compare-pct span { font-size: 20px; font-weight: 600; }
+.compare-pct-label {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── 스토리 저장 버튼 ─────────────────────────────────────────────────────── */
+.story-btn {
+  flex: 1;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #0d0b09;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(214,167,90,0.3);
+}
+.story-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.story-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ── 3단 서사 ── */
+.narrative-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0 8px;
+}
+.narrative-section {
+  background: #242018;
+  border-radius: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+/* 찰떡궁합 섹션 */
+.narrative-section.compat-reason {
+  background: #242018;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.narrative-section.compat-reason .narrative-label { color: var(--text); }
+.narrative-section.compat-reason p { color: var(--text-muted); }
+.narrative-label {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.narrative-sublabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+.narrative-section p {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.narrative-section p:last-child { margin-bottom: 0; }
+.nbullet {
+  color: var(--gold);
+  font-size: 10px;
+  margin-right: 6px;
+  vertical-align: middle;
+  line-height: 1;
+}
+.narrative-season {
+  font-size: 13px !important;
+  color: var(--text-muted) !important;
+  font-style: italic;
+}
+.narrative-motto {
+  font-size: 13px !important;
+  color: var(--text-muted) !important;
+  font-style: italic;
+  border-left: 3px solid var(--gold);
+  padding-left: 10px;
+  margin-top: 8px !important;
+  line-height: 1.6;
+}
+.motto-label {
+  display: inline-block;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(214,167,90,0.12);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.motto-kr-translation {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--gold);
+  font-weight: 600;
+  margin-top: 3px;
+  letter-spacing: 0.01em;
+}
+.alumni-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin: 14px 0 8px;
+}
+.alumni-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.alumni-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+.alumni-pixel {
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  line-height: 0;
+}
+.alumni-info { min-width: 0; }
+.alumni-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.alumni-role {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* ── 바이럴 공유 섹션 ── */
+.viral-section {
+  background: linear-gradient(145deg, var(--navy) 0%, #0f172a 100%);
+  border-radius: 24px;
+  padding: 22px 20px;
+  margin-top: 20px;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.viral-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 14px;
+  text-align: center;
+  letter-spacing: -0.01em;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.viral-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.vp-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.vp-card.mine {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.vp-card.empty {
+  opacity: 0.45;
+  border: 1px dashed rgba(255,255,255,0.2);
+  background: transparent;
+}
+.vp-mystery {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+.vp-info { flex: 1; min-width: 0; }
+.vp-nick { font-size: 13px; font-weight: 700; color: #fff; font-family: 'Noto Sans KR', sans-serif; }
+.vp-uni { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; font-family: 'Noto Sans KR', sans-serif; font-weight: 400; }
+.vp-el  { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+.vp-pct { font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; white-space: nowrap; font-family: 'Noto Sans KR', sans-serif; }
+.vp-pct .vp-pct-label { font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.45); margin-right: 3px; }
+.viral-share-btn {
+  width: 100%;
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  letter-spacing: 0.01em;
+}
+.viral-share-btn:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+.viral-url-reveal {
+  margin-top: 14px;
+}
+.viral-url-msg {
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 400;
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.viral-hint {
+  font-size: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 400;
+  color: rgba(255,255,255,0.45);
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+/* ── 모바일 최적화 ────────────────────────────────────────────────────────── */
+@media (max-width: 540px) {
+  /* Hero 이미지 — 좌우 여백 없이 full-bleed */
+  .hero-banner {
+    border-radius: 0;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 100%;
+  }
+  /* 채팅 폼 — 좌우 16px 여백 */
+  .chat-flow {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  /* 동의 섹션 (chat-flow 외부에 있을 때) */
+  .consent-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  /* disclaimer */
+  .disclaimer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  /* 헤더 좌우 패딩 */
+  .site-header { padding: 20px 16px 12px; }
+}
+
+@media (max-width: 480px) {
+  .board-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    padding: 12px 10px;
+  }
+  .result-header { padding: 20px 20px; }
+  .result-body { padding: 20px 20px; }
+  .nick-section { padding: 16px 20px 20px; }
+  .board-join-bar {
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+  .share-section { flex-wrap: wrap; }
+  .story-btn { flex: 1; }
+}
+
+/* ─── 대화형 폼 ─────────────────────────────────────────────────────────────── */
+.chat-flow {
+  max-width: 480px;
+  margin: 0 auto 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 24px;
+}
+
+.chat-step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-bottom: 20px;
+}
+
+.chat-step[hidden] { display: none; }
+
+.chat-step.step-enter {
+  animation: chatFadeUp 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes chatFadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 완료된 스텝: 질문 + 답변만 남기고 나머지 숨김 */
+.chat-step.step-done .chat-input-row,
+.chat-step.step-done .choice-row,
+.chat-step.step-done .step-input { display: none !important; }
+
+/* 타이핑 전: 입력 영역 숨김 */
+.step-input {
+  align-self: flex-end;
+  width: 88%;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.step-input.revealed {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.chat-step.step-done .q-bubble {
+  font-size: 13px;
+  opacity: 0.55;
+  padding: 10px 14px;
+}
+
+/* 질문 버블 */
+.q-bubble {
+  background: #1e1c18;
+  border: 1px solid #3a3328;
+  color: #e8dcc8;
+  border-radius: 4px 18px 18px 18px;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
+  display: inline-block;
+  max-width: 88%;
+  margin-bottom: 12px;
+}
+
+/* 타이핑 커서 */
+.q-bubble.typing::after {
+  content: '▌';
+  display: inline-block;
+  color: var(--gold);
+  animation: blink 0.7s step-end infinite;
+  margin-left: 2px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.q-hint {
+  font-size: 13px;
+  font-weight: 400;
+  opacity: 0.65;
+}
+
+/* 답변 버블 */
+.a-bubble {
+  display: block;
+  background: rgba(214,167,90,0.12);
+  color: var(--navy);
+  border: 1.5px solid rgba(214,167,90,0.35);
+  border-radius: 18px 4px 18px 18px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  max-width: 75%;
+  margin-left: auto;
+  margin-top: 8px;
+}
+
+/* 이름 입력 행 */
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.chat-text-input {
+  flex: 1;
+  background: #1a1712;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-text-input::placeholder { color: var(--text-muted); }
+.chat-text-input:focus { border-color: var(--gold); }
+
+.chat-btn {
+  background: var(--gold);
+  color: #0d0b09;
+  border: none;
+  border-radius: 12px;
+  padding: 0 20px;
+  height: 48px;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.chat-btn:hover { background: var(--gold-light); }
+.chat-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.chat-skip {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 8px 2px 0;
+  display: block;
+  margin-left: auto;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* 양력/음력 선택 버튼 */
+.choice-row {
+  display: flex;
+  gap: 10px;
+}
+
+.choice-btn {
+  flex: 1;
+  background: #1a1712;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 15px 0;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.choice-btn:hover {
+  border-color: var(--gold);
+  color: #fff;
+  background: rgba(214,167,90,0.12);
+}
+
+/* 날짜 + 다음 버튼 한 행 */
+.date-row-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.date-row-wrap > .chat-btn {
+  align-self: flex-start;
+}
+
+.date-group-col { flex: 1; min-width: 0; }
+
+/* 날짜 셀렉터 행 */
+.date-selects {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.5fr;
+  gap: 8px;
+}
+
+.date-selects select,
+.chat-select {
+  width: 100%;
+  background: #1a1712;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s;
+}
+
+.date-selects select option,
+.chat-select option {
+  background: #1a1712;
+  color: var(--text);
+}
+
+.date-selects select:focus,
+.chat-select:focus { border-color: var(--navy); }
+
+.lunar-leap-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.lunar-leap-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--navy);
+}
+
+.chat-select {
+  display: block;
+  margin-top: 4px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%237a6e5c'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+</style>
+</head>
+<body>
+
+<!-- ── 그룹 보드 뷰 ──────────────────────────────────────────────────── -->
+<div id="boardView">
+  <!-- 씬 래퍼: 두 씬을 겹쳐 크로스페이드 -->
+  <div class="board-cinema-wrap" id="boardCinemaWrap">
+    <div class="board-scene active" id="boardScene1">
+      <div class="hero-cinema-inner">
+        <img src="main image.jpg" alt="내가 어디에 갈 상인가">
+        <div class="hero-cinema-subtitle" id="boardCinemaSubtitle"></div>
+      </div>
+    </div>
+    <div class="board-scene" id="boardScene2">
+      <div class="hero-cinema-inner">
+        <img src="final image.png" alt="그대는 어떨 것 같소">
+        <div class="hero-cinema-subtitle" id="boardCtaQuestion"></div>
+      </div>
+    </div>
+  </div>
+  <!-- CTA + 참여자 수 -->
+  <div class="board-cta-section">
+    <button class="board-join-btn" onclick="joinFromBoard()">✨ 나도 참여하기</button>
+    <div class="board-total-count" id="boardTotalCount"></div>
+  </div>
+  <!-- 대학별 세로 리스트 -->
+  <div class="board-list" id="boardGrid"></div>
+</div>
+
+<!-- ── 기존 퀴즈 뷰 ──────────────────────────────────────────────────── -->
+<div id="quizView">
+
+<!-- 시네마 인트로 (100vh 레터박스) -->
+<div class="hero-cinema" id="heroCinema">
+  <div class="hero-cinema-inner">
+    <img src="main image.jpg" alt="내가 어디 대학에 갈 상인가">
+    <div class="hero-cinema-subtitle" id="cinemaSubtitle"></div>
+  </div>
+  <div class="hero-scroll-hint" id="heroScrollHint" style="opacity:0;">▾</div>
+</div>
+
+<div class="container">
+
+  <!-- 대화형 입력 (스크롤 전까지 숨김) -->
+  <div id="formSection" style="opacity:0; pointer-events:none; transition:opacity 0.6s ease;">
+    <div class="chat-flow" id="chatFlow">
+
+      <!-- 스텝 0: 이름 -->
+      <div class="chat-step" id="cStep0">
+        <div class="q-bubble">그래, 이름이 어떻게 되시는가</div>
+        <div class="step-input">
+          <div class="chat-input-row">
+            <input type="text" id="userName" maxlength="10" placeholder="홍길동"
+                   class="chat-text-input"
+                   onkeydown="if(event.key==='Enter')chatAdvance(0)">
+            <button class="chat-btn" onclick="chatAdvance(0)">↑</button>
+          </div>
+          <button class="chat-skip" onclick="chatAdvance(0)">이름 없이 계속하기</button>
+        </div>
+      </div>
+
+      <!-- 스텝 1: 양력/음력 -->
+      <div class="chat-step" id="cStep1" hidden>
+        <div class="q-bubble">먼저 양력 생일, 음력 생일 뭘로 하시겠소.</div>
+        <div class="step-input">
+          <div class="choice-row">
+            <button class="choice-btn" onclick="chatPickCal('solar')">양력</button>
+            <button class="choice-btn" onclick="chatPickCal('lunar')">음력</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 스텝 2: 날짜 -->
+      <div class="chat-step" id="cStep2" hidden>
+        <div class="q-bubble">이제, 년, 월, 일을 입력해주시구려</div>
+        <div class="step-input">
+          <div class="date-row-wrap">
+            <div class="date-group-col">
+              <div id="solarDateGroup">
+                <div class="date-selects">
+                  <select id="solarYear" onchange="checkDateComplete()"><option value="">연도</option></select>
+                  <select id="solarMonth" onchange="checkDateComplete()"><option value="">월</option></select>
+                  <select id="solarDay" onchange="checkDateComplete()"><option value="">일</option></select>
+                </div>
+              </div>
+              <div id="lunarDateGroup" style="display:none">
+                <div class="date-selects">
+                  <select id="lunarYear" onchange="checkDateComplete()"><option value="">연도</option></select>
+                  <select id="lunarMonth" onchange="checkDateComplete()"><option value="">월</option></select>
+                  <select id="lunarDay" onchange="checkDateComplete()"><option value="">일</option></select>
+                </div>
+                <label class="lunar-leap-label">
+                  <input type="checkbox" id="lunarLeap"> 윤달
+                </label>
+              </div>
+            </div>
+            <button class="chat-btn" id="dateNextBtn" onclick="chatAdvance(2)" disabled>↑</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 스텝 3: 태어난 시간 -->
+      <div class="chat-step" id="cStep3" hidden>
+        <div class="q-bubble">태어난 시간을 알고 있으면 그것도 참고하고 싶소만.<br><span class="q-hint">모르면 뭐, 괜찮소</span></div>
+        <div class="step-input" id="hourInputArea">
+          <div style="display:flex; gap:8px; align-items:stretch;">
+            <select id="birthHour" class="chat-select" style="flex:1;">
+              <option value="-1">모름 (선택 안 함)</option>
+              <option value="0">子 자시 23:00–01:00 (水)</option>
+              <option value="1">丑 축시 01:00–03:00 (土)</option>
+              <option value="2">寅 인시 03:00–05:00 (木)</option>
+              <option value="3">卯 묘시 05:00–07:00 (木)</option>
+              <option value="4">辰 진시 07:00–09:00 (土)</option>
+              <option value="5">巳 사시 09:00–11:00 (火)</option>
+              <option value="6">午 오시 11:00–13:00 (火)</option>
+              <option value="7">未 미시 13:00–15:00 (土)</option>
+              <option value="8">申 신시 15:00–17:00 (金)</option>
+              <option value="9">酉 유시 17:00–19:00 (金)</option>
+              <option value="10">戌 술시 19:00–21:00 (土)</option>
+              <option value="11">亥 해시 21:00–23:00 (水)</option>
+            </select>
+            <button class="chat-btn" onclick="chatAdvanceHour()">↑</button>
+          </div>
+        </div>
+
+        <!-- 동의 단계 — 시간 확인 후 등장 -->
+        <div id="consentPhase" style="opacity:0; pointer-events:none; transform:translateY(8px); transition:opacity 0.35s ease, transform 0.35s ease; margin-top:8px; width:100%; display:flex; flex-direction:column; align-items:flex-start;">
+          <div class="q-bubble" id="consentQ">내가 대학을 찾기 위해 그대가 동의해 주어야 할 것이 있소만.</div>
+          <!-- 체크박스 — 오른쪽 88% -->
+          <div id="consentCheckWrap" style="opacity:0; pointer-events:none; transform:translateY(8px); transition:opacity 0.35s ease, transform 0.35s ease; margin-top:12px; margin-left:auto; width:88%;">
+            <div class="consent-section">
+              <label class="consent-box">
+                <input type="checkbox" id="consentCheck1" onchange="updateMatchBtn()">
+                <span class="consent-box-text">입력한 이름·생년월일을 대학 궁합 계산과 친구 그룹 공유에 이용하는 데 동의해야 하오.</span>
+              </label>
+              <label class="consent-box">
+                <input type="checkbox" id="consentCheck2" onchange="updateMatchBtn()">
+                <span class="consent-box-text">만 14세 이상이며, 대학 궁합을 직접 알아보고 있는 것 맞소? <span class="consent-required">(필수)</span></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 입학년도 질문 — consentPhase 직하위 (q-bubble 왼쪽, select 오른쪽) -->
+          <div id="enrollStep" style="display:none; opacity:0; transform:translateY(12px); transition:opacity 0.45s ease, transform 0.45s ease; margin-top:20px; width:100%;">
+            <div class="q-bubble" id="enrollQ">대학교 입학은 언제로 생각하고 있는가. 마지막 질문이네.</div>
+            <div class="step-input" id="enrollYearWrap" style="margin-top:12px;">
+              <select id="enrollYear" class="chat-select" onchange="onEnrollYearChange()">
+                <option value="">년도를 선택하시오</option>
+                <option value="2025">2025년 — 을사년 乙巳</option>
+                <option value="2026">2026년 — 병오년 丙午</option>
+                <option value="2027">2027년 — 정미년 丁未</option>
+                <option value="2028">2028년 — 무신년 戊申</option>
+                <option value="2029">2029년 — 기유년 己酉</option>
+                <option value="2030">2030년 — 경술년 庚戌</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 연도 선택 후 캐릭터 응답 — 왼쪽 정렬 -->
+          <div id="resultCueWrap" style="display:none; opacity:0; transform:translateY(10px); transition:opacity 0.45s ease, transform 0.45s ease; margin-top:20px; width:100%; flex-direction:column; align-items:stretch; gap:12px;">
+            <div class="q-bubble" id="resultCueQ">내 답을 주겠네...</div>
+            <button id="resultCueBtn" class="result-cue-btn" onclick="runMatch()" style="opacity:0; transform:translateY(6px); transition:opacity 0.35s ease, transform 0.35s ease; pointer-events:none;">여기를 클릭하세요</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 로딩 -->
+  <div class="loading-state" id="loadingState">
+    <div class="loading-spinner"></div>
+    <p id="loadingText">사주 오행을 분석하고 있어요…</p>
+  </div>
+
+  <!-- 결과 카드 -->
+  <div class="result-card" id="resultCard"></div>
+
+</div><!-- /.container -->
+</div><!-- /#quizView -->
+
+<footer class="site-footer">
+  <span class="site-footer-tagline">SAT 목표 점수에 가장 빠르게</span>
+  <a class="site-footer-brand" href="https://www.superfastsat.io" target="_blank" rel="noopener">SuperfastSAT</a>
+  <span class="site-footer-sep">|</span>
+  <a class="site-footer-icon" href="https://www.superfastsat.io" target="_blank" rel="noopener" aria-label="홈페이지">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+  </a>
+  <a class="site-footer-icon" href="https://www.instagram.com/superfastsat.official" target="_blank" rel="noopener" aria-label="인스타그램">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+  </a>
+</footer>
+
+<script>
+// ─── 데이터 ─────────────────────────────────────────────────────────────────
+const UNIVERSITIES = [{"name":"Harvard University","kr":"하버드 대학교","rank":"5","motto":"Veritas","tag":"진리를 향한 300년 여정","accent":"#A51C30","traits":{"전통과격식":98,"사회적감각":92,"논리력":90,"실용주의":85,"전략적사고":88},"desc":"미국 최초의 대학, 세계에서 가장 영향력 있는 동문 네트워크.","tags":["리더십","전통","네트워크"],"satRange":[1500,1580],"rankSort":0,"ohProfile":{"목":0,"화":92,"토":183,"금":90,"수":88},"logo":"harvard"},{"name":"Yale University","kr":"예일 대학교","rank":"16","motto":"Lux et Veritas","tag":"예술가적 지성의 전당","accent":"#00356B","traits":{"표현력":97,"자유로운사고":95,"철학적깊이":85,"전통과격식":82,"예술적감성":88},"desc":"인문학과 예술의 아이비리그. 지도자보다 사유하는 인간을 키운다.","tags":["인문","예술","아이비리그"],"satRange":[1500,1580],"rankSort":1,"ohProfile":{"목":280,"화":0,"토":82,"금":0,"수":85},"logo":"yale"},{"name":"Princeton University","kr":"프린스턴 대학교","rank":"6","rankSort":2,"country":"USA","accent":"#FF6900","tag":"지성과 전통의 아이비리그 정수","traits":{"전략적사고":95,"철학적깊이":90,"전통과격식":88,"논리력":87,"국제정치감각":82},"desc":"조용한 숲속에 깃든 아이비의 정수. 수학·철학·국제정치의 깊이가 남다른 곳.","ohProfile":{"목":0,"화":0,"토":88,"금":87,"수":267},"logo":"princeton"},{"name":"Columbia University","kr":"컬럼비아 대학교","rank":"22","motto":"In lumine tuo videbimus lumen","tag":"뉴욕 한가운데 아이비리그","accent":"#B9D9EB","traits":{"표현력":96,"사회적감각":94,"자유로운사고":90,"전략적사고":87,"국제정치감각":82},"desc":"뉴욕의 에너지를 흡수하는 아이비리그. 언론, 법학, 국제관계의 명문.","tags":["뉴욕","아이비리그","국제"],"satRange":[1470,1570],"rankSort":3,"ohProfile":{"목":186,"화":94,"토":0,"금":0,"수":169},"logo":"columbia"},{"name":"University of Pennsylvania","kr":"펜실베이니아 대학교","rank":"11","motto":"Leges sine moribus vanae","tag":"비즈니스와 학문의 완벽한 균형","accent":"#011F5B","traits":{"전략적사고":97,"사회적감각":93,"논리력":88,"국제정치감각":85,"철학적깊이":78},"desc":"아이비리그 중 가장 실무 친화적. 와튼스쿨의 비즈니스 DNA.","tags":["비즈니스","아이비리그","전략"],"satRange":[1470,1570],"rankSort":4,"ohProfile":{"목":0,"화":93,"토":0,"금":88,"수":260},"logo":"upenn"},{"name":"Dartmouth College","kr":"다트머스 칼리지","rank":"270","rankSort":5,"country":"USA","accent":"#00693E","tag":"아이비리그의 숲속 자유인","traits":{"전통과격식":90,"자유로운사고":86,"표현력":82,"철학적깊이":78,"국제정치감각":72},"desc":"뉴햄프셔 숲속 아이비리그의 보석. D-플랜 학기제와 Tuck 경영대학원으로 자기 주도적 인재를 키운다.","satRange":[1500,1580],"motto":"Vox clamantis in deserto","ohProfile":{"목":168,"화":0,"토":90,"금":0,"수":150},"logo":"dartmouth"},{"name":"Brown University","kr":"브라운 대학교","rank":"58","rankSort":6,"country":"USA","accent":"#4E3629","tag":"자유로운 커리큘럼의 아이비리그","traits":{"자유로운사고":96,"예술적감성":92,"다양성포용":90,"표현력":88,"철학적깊이":80},"desc":"필수 과목이 없는 아이비. 자유로운 커리큘럼이 다양한 지성을 빚어내는 실험 공간.","ohProfile":{"목":366,"화":0,"토":0,"금":0,"수":80},"logo":"brown"},{"name":"Cornell University","kr":"코넬 대학교","rank":"13","motto":"I would found an institution where any person can find instruction in any study","tag":"모든 학문을 품은 아이비","accent":"#B31B1B","traits":{"자유로운사고":95,"다양성포용":90,"도전정신":88,"공학혁신":82,"사회적감각":85},"desc":"가장 개방적인 아이비리그. 농업부터 건축까지 모든 분야를 아우름.","tags":["다양성","아이비리그","개방"],"satRange":[1470,1560],"rankSort":7,"ohProfile":{"목":185,"화":173,"토":0,"금":82,"수":0},"logo":"cornell"},{"name":"Massachusetts Institute of Technology","kr":"MIT","rank":"1","motto":"Mens et Manus","tag":"공학적 상상력의 최전선","accent":"#8B0000","traits":{"논리력":98,"공학혁신":97,"수리과학":92,"도전정신":88,"전략적사고":80},"desc":"세상을 바꾸는 기술을 만드는 곳. 이론과 실천이 하나 되는 공간.","tags":["공학","혁신","연구"],"satRange":[1530,1580],"rankSort":8,"ohProfile":{"목":0,"화":88,"토":0,"금":287,"수":80},"logo":"mit"},{"name":"Stanford University","kr":"스탠퍼드 대학교","rank":"3","motto":"Die Luft der Freiheit weht","tag":"실리콘밸리의 심장","accent":"#8C1515","traits":{"도전정신":97,"기업가정신":95,"자유로운사고":88,"논리력":84,"글로벌영향력":90},"desc":"기업가 정신과 학문적 깊이가 동시에 살아있는 서부의 아이콘.","tags":["창업","혁신","테크"],"satRange":[1500,1580],"rankSort":9,"ohProfile":{"목":88,"화":282,"토":0,"금":84,"수":0},"logo":"stanford"},{"name":"California Institute of Technology","kr":"칼텍","rank":"7","motto":"The truth shall make you free","tag":"극소수 최고 두뇌들의 성지","accent":"#FF6C0C","traits":{"수리과학":99,"논리력":99,"집중력":97,"철학적깊이":80,"전통과격식":68},"desc":"세상에서 가장 작고 가장 치열한 대학. 순수 지적 능력의 극한 훈련.","tags":["이공계","소규모","천재"],"satRange":[1520,1580],"rankSort":10,"ohProfile":{"목":0,"화":0,"토":68,"금":295,"수":80},"logo":"caltech"},{"name":"University of Chicago","kr":"시카고 대학교","rank":"24","rankSort":11,"country":"USA","accent":"#800000","tag":"분석적 지성의 미국 심장부","traits":{"전략적사고":95,"철학적깊이":90,"논리력":89,"전통과격식":85,"국제정치감각":82},"desc":"불편한 진실을 끝까지 파고드는 학풍. 경제학과 법학이 세상을 바꾼 도시.","ohProfile":{"목":0,"화":0,"토":85,"금":89,"수":267},"logo":"uchicago"},{"name":"Duke University","kr":"듀크 대학교","rank":"39","rankSort":12,"country":"USA","accent":"#003087","tag":"미국 남부의 의학·법학·정책 명문","traits":{"전략적사고":92,"사회적감각":87,"논리력":85,"국제정치감각":82,"철학적깊이":80},"desc":"미국 남부의 의학·법학·정책 명문. 담쟁이 덮인 고딕 캠퍼스에 야망이 깃든 곳.","ohProfile":{"목":0,"화":87,"토":0,"금":85,"수":254},"logo":"duke"},{"name":"Northwestern University","kr":"노스웨스턴 대학교","rank":"40","rankSort":13,"country":"USA","accent":"#4E2A84","tag":"언론·의학·경영의 트리플 명문","traits":{"사회적감각":92,"표현력":88,"전략적사고":86,"도전정신":84,"글로벌영향력":82},"desc":"언론·의학·경영 세 분야를 동시에 정복한 시카고 북부의 복합 명문.","ohProfile":{"목":88,"화":258,"토":0,"금":0,"수":86},"logo":"northwestern"},{"name":"Johns Hopkins University","kr":"존스 홉킨스 대학교","rank":"25","motto":"Veritas vos liberabit","tag":"의학과 공중보건의 세계 수도","accent":"#002D72","traits":{"집중력":98,"수리과학":90,"논리력":93,"도전정신":86,"공학혁신":88},"desc":"미국 최초의 연구 중심 대학. 의학 연구의 세계 표준을 만들어온 곳.","tags":["의학","연구","집중"],"satRange":[1500,1570],"rankSort":14,"ohProfile":{"목":0,"화":86,"토":0,"금":369,"수":0},"logo":"jhu"},{"name":"Carnegie Mellon University","kr":"카네기멜런 대학교","rank":"48","rankSort":15,"country":"USA","accent":"#C41230","tag":"AI·CS의 글로벌 메카","traits":{"논리력":97,"공학혁신":95,"기업가정신":88,"집중력":93,"수리과학":90},"desc":"AI와 컴퓨터과학의 세계적 메카. 코드와 예술이 같은 캠퍼스에서 공존하는 공간.","ohProfile":{"목":0,"화":88,"토":0,"금":375,"수":0},"logo":"cmu"},{"name":"Georgetown University","kr":"조지타운 대학교","rank":"285","rankSort":16,"country":"USA","accent":"#063278","tag":"외교관의 요람, 워싱턴 심장부","traits":{"국제정치감각":95,"전통과격식":88,"사회적감각":85,"전략적사고":82,"도전정신":76},"desc":"워싱턴 D.C. 심장부의 예수회 명문. 외교·국제관계·법학으로 미국 정계와 국제무대 인재를 배출.","satRange":[1430,1540],"motto":"Utraque Unum","ohProfile":{"목":0,"화":161,"토":88,"금":0,"수":177},"logo":"georgetown"},{"name":"Vanderbilt University","kr":"밴더빌트 대학교","rank":"265","rankSort":17,"country":"USA","accent":"#866D4B","tag":"내슈빌의 음악과 학문이 교차하는 곳","traits":{"사회적감각":90,"기업가정신":85,"표현력":82,"자유로운사고":78,"도전정신":74},"desc":"테네시 내슈빌 컨트리 음악의 도시에서 전통과 혁신이 공존하는 미국 남부 최고 사립대학.","satRange":[1500,1580],"ohProfile":{"목":160,"화":249,"토":0,"금":0,"수":0},"logo":"vanderbilt"},{"name":"Washington University in St. Louis","kr":"워싱턴 대학교 세인트루이스","rank":"162","rankSort":18,"country":"USA","accent":"#A51417","tag":"드림스쿨의 숨겨진 명문","traits":{"논리력":92,"수리과학":88,"공학혁신":85,"철학적깊이":80,"실용주의":76},"desc":"세인트루이스의 숨겨진 명문. 의대·공학·예술·법학 전 분야가 균등하게 강한, 한국 학생의 드림스쿨.","satRange":[1510,1580],"ohProfile":{"목":0,"화":0,"토":76,"금":265,"수":80},"logo":"wustl"},{"name":"University of California, Berkeley","kr":"UC 버클리","rank":"12","motto":"Fiat lux","tag":"공립 대학의 신화","accent":"#003262","traits":{"도전정신":96,"자유로운사고":95,"사회적감각":91,"글로벌영향력":87,"기업가정신":85},"desc":"자유와 저항의 전통. 공립 대학으로 아이비리그와 당당히 겨루는 명문.","tags":["공립","자유","사회"],"satRange":[1340,1540],"rankSort":19,"ohProfile":{"목":95,"화":359,"토":0,"금":0,"수":0},"logo":"ucberkeley"},{"name":"University of California, Los Angeles","kr":"UCLA","rank":"46","rankSort":20,"country":"USA","accent":"#2D68C4","tag":"서부 캘리포니아의 종합 드림스쿨","traits":{"자유로운사고":91,"사회적감각":89,"도전정신":86,"예술적감성":84,"글로벌영향력":83},"desc":"캘리포니아 태양 아래 예술·과학·의학이 동시에 빛나는 서부 드림스쿨.","ohProfile":{"목":175,"화":258,"토":0,"금":0,"수":0},"logo":"ucla"},{"name":"University of Michigan","kr":"미시건 대학교","rank":"50","rankSort":21,"country":"USA","accent":"#00274C","tag":"미국 중서부 최대 종합 연구대학","traits":{"전략적사고":90,"사회적감각":87,"논리력":85,"국제정치감각":82,"자유로운사고":78},"desc":"미국 중서부를 대표하는 최대 종합 연구대학. 공학·의학·법학이 함께 숨 쉬는 거대한 지성.","ohProfile":{"목":78,"화":87,"토":0,"금":85,"수":172},"logo":"umich"},{"name":"New York University","kr":"뉴욕 대학교","rank":"51","rankSort":22,"country":"USA","accent":"#57068C","tag":"세계의 수도 뉴욕이 품은 글로벌 대학","traits":{"표현력":93,"사회적감각":91,"자유로운사고":88,"글로벌영향력":87,"예술적감성":84},"desc":"세계의 수도 뉴욕이 품은 글로벌 대학. 도시 자체가 캠퍼스이고 교실이 된다.","ohProfile":{"목":265,"화":178,"토":0,"금":0,"수":0},"logo":"nyu"},{"name":"University of Oxford","kr":"옥스퍼드 대학교","rank":"4","motto":"Dominus Illuminatio Mea","tag":"800년 지성의 무게","accent":"#003E74","traits":{"전통과격식":99,"실용주의":87,"논리력":89,"철학적깊이":90,"표현력":85},"desc":"세계에서 가장 오래된 영어권 대학. 전통과 탁월함의 화신.","tags":["전통","인문","엘리트"],"rankSort":23,"ohProfile":{"목":85,"화":0,"토":186,"금":89,"수":90},"logo":"oxford"},{"name":"University of Cambridge","kr":"케임브리지 대학교","rank":"5","motto":"Hinc lucem et pocula sacra","tag":"뉴턴의 사과나무가 있는 곳","accent":"#A3C1AD","traits":{"논리력":97,"집중력":94,"전통과격식":90,"수리과학":88,"철학적깊이":84},"desc":"과학혁명을 낳은 땅. 깊은 학문과 오래된 전통이 공존하는 공간.","tags":["과학","전통","연구"],"rankSort":24,"ohProfile":{"목":0,"화":0,"토":90,"금":279,"수":84},"logo":"cambridge"},{"name":"Imperial College London","kr":"임페리얼 칼리지 런던","rank":"2","motto":"Scientia imperii decus et tutamen","tag":"과학으로 세계를 이끄는 엘리트","accent":"#003E74","traits":{"도전정신":92,"논리력":96,"집중력":90,"글로벌영향력":85,"사회적감각":80},"desc":"영국 최고의 이공계 명문. 엄격한 학문과 실용적 혁신의 교차점.","tags":["이공계","영국","연구"],"rankSort":25,"ohProfile":{"목":0,"화":257,"토":0,"금":186,"수":0},"logo":"imperial"},{"name":"London School of Economics","kr":"런던 정경대학교","rank":"57","rankSort":26,"country":"UK","accent":"#D4002A","tag":"세계 정치경제의 싱크탱크","traits":{"전략적사고":95,"사회적감각":91,"국제정치감각":88,"논리력":85,"철학적깊이":82},"desc":"세계 정치경제를 설계하는 싱크탱크. 권력과 시장을 가장 날카롭게 분석하는 곳.","ohProfile":{"목":0,"화":91,"토":0,"금":85,"수":265},"logo":"lse"},{"name":"Seoul National University","kr":"서울대학교","rank":"38","motto":"진리는 나의 빛","tag":"대한민국 학문의 정점","accent":"#003478","traits":{"전통과격식":95,"집중력":93,"논리력":91,"지역사회기여":85,"실용주의":82},"desc":"한국 최고의 명문. 국가 발전과 함께 성장한 학문의 중심.","tags":["한국","전통","명문"],"rankSort":27,"ohProfile":{"목":0,"화":0,"토":262,"금":184,"수":0},"logo":"snu"},{"name":"Yonsei University","kr":"연세대학교","rank":"42","motto":"진리가 너희를 자유케 하리라","tag":"한국의 자유로운 지성","accent":"#003087","traits":{"표현력":93,"자유로운사고":92,"전통과격식":85,"글로벌영향력":82,"사회적감각":88},"desc":"국내 최초의 근대식 대학. 자유와 진리를 향한 열린 학문 정신.","tags":["한국","자유","개방"],"rankSort":28,"ohProfile":{"목":185,"화":170,"토":85,"금":0,"수":0},"logo":"yonsei"},{"name":"Korea University","kr":"고려대학교","rank":"45","rankSort":29,"country":"Korea","accent":"#841B2D","tag":"민족대학의 자존심과 글로벌 비전","traits":{"도전정신":88,"사회적감각":86,"전통과격식":87,"글로벌영향력":82,"실용주의":79},"desc":"민족대학의 정신과 글로벌 비전이 공존하는 곳. 한국 사회 곳곳에 뿌리내린 저력.","ohProfile":{"목":0,"화":256,"토":166,"금":0,"수":0},"logo":"korea"},{"name":"KAIST","kr":"한국과학기술원","rank":"43","rankSort":30,"country":"Korea","accent":"#002F6C","tag":"대한민국 이공계의 자부심","traits":{"논리력":96,"집중력":93,"공학혁신":91,"수리과학":88,"도전정신":85},"desc":"대한민국 이공계의 자부심. 작지만 집요한 연구 DNA가 살아 숨 쉬는 곳.","ohProfile":{"목":0,"화":85,"토":0,"금":368,"수":0},"logo":"kaist"},{"name":"National University of Singapore","kr":"싱가포르 국립대학교","rank":"8","motto":"Towards a Global Knowledge Enterprise","tag":"아시아와 서구를 잇는 교두보","accent":"#003D7C","traits":{"도전정신":90,"전략적사고":88,"글로벌영향력":86,"사회적감각":84,"국제정치감각":80},"desc":"아시아 최고의 글로벌 대학. 동양과 서양이 만나는 전략적 거점.","tags":["아시아","글로벌","전략"],"rankSort":31,"ohProfile":{"목":0,"화":260,"토":0,"금":0,"수":168},"logo":"nus"},{"name":"The University of Tokyo","kr":"도쿄 대학교","rank":"28","motto":"Universal Values","tag":"일본 지성의 최고봉","accent":"#7B3F9E","traits":{"전통과격식":97,"집중력":93,"논리력":90,"실용주의":86,"수리과학":82},"desc":"일본 근대화를 이끈 국가 대표 대학. 깊은 전통과 엄격한 학문의 세계.","tags":["일본","전통","연구"],"rankSort":32,"ohProfile":{"목":0,"화":0,"토":183,"금":265,"수":0},"logo":"utokyo"},{"name":"ETH Zurich","kr":"취리히 연방 공과대학","rank":"7","motto":"Zukunft braucht Herkunft","tag":"알프스가 낳은 공학 천재들","accent":"#215732","traits":{"공학혁신":98,"논리력":97,"수리과학":93,"전통과격식":82,"실용주의":80},"desc":"아인슈타인의 모교. 유럽 공학의 자존심이자 혁신의 산실.","tags":["공학","유럽","정밀"],"rankSort":33,"ohProfile":{"목":0,"화":0,"토":162,"금":288,"수":0},"logo":"eth"},{"name":"University of Toronto","kr":"토론토 대학교","rank":"25","motto":"Velut arbor aevo","tag":"캐나다 지성의 중심","accent":"#002A5C","traits":{"자유로운사고":90,"전략적사고":88,"글로벌영향력":85,"사회적감각":87,"다양성포용":83},"desc":"AI 연구의 요람. 힌튼, 르쿤이 거쳐간 딥러닝의 발상지 중 하나.","tags":["캐나다","AI","다양성"],"rankSort":34,"ohProfile":{"목":173,"화":172,"토":0,"금":0,"수":88},"logo":"toronto"}];
+let currentResult = null;
+let showAllEmpty = false;
+let currentBirthdate = '';
+
+// ─── 사주 오행 계산 ──────────────────────────────────────────────────────────
+
+const HEAVENLY_STEM_ELEMENT = ['금','수','수','목','목','화','화','토','토','금']; // 갑을병정무기경신임계
+const EARTHLY_BRANCH_ELEMENT = ['수','수','목','목','토','화','화','토','금','금','토','수']; // 자축인묘진사오미신유술해
+const HEAVENLY_STEM_NAME = ['갑','을','병','정','무','기','경','신','임','계'];
+const EARTHLY_BRANCH_NAME = ['자','축','인','묘','진','사','오','미','신','유','술','해'];
+const ELEMENT_KR = { '목':'木', '화':'火', '토':'土', '금':'金', '수':'水' };
+const ELEMENT_NAME = { '목':'목(木)', '화':'화(火)', '토':'토(土)', '금':'금(金)', '수':'수(水)' };
+const ELEMENT_TYPE = { '목':'성장형', '화':'추진형', '토':'안정형', '금':'정밀형', '수':'전략형' };
+const ELEMENT_KEYS = ['목','화','토','금','수'];
+
+function getYearPillar(year, month, day) {
+  // 입춘(立春) 기준: 통상 2월 4일. 입춘 이전 출생자는 사주상 전년도 생
+  let sYear = year;
+  if (month === 1 || (month === 2 && day < 4)) sYear = year - 1;
+  const stemIdx = ((sYear - 4) % 10 + 10) % 10;
+  const branchIdx = ((sYear % 12) + 12) % 12;
+  return {
+    stem: HEAVENLY_STEM_ELEMENT[stemIdx],
+    branch: EARTHLY_BRANCH_ELEMENT[branchIdx]
+  };
+}
+
+function getSeasonElement(month) {
+  const map = {1:'수',2:'토',3:'목',4:'목',5:'토',6:'화',7:'화',8:'토',9:'금',10:'금',11:'토',12:'수'};
+  return map[month];
+}
+
+function getDayElement(day) {
+  return ELEMENT_KEYS[(day - 1) % 5];
+}
+
+function buildUserProfile(year, month, day, hourBranch) {
+  // hourBranch: 0-11 (자~해) or -1 for unknown
+  const { stem, branch } = getYearPillar(year, month, day);
+  const season = getSeasonElement(month);
+  const dayEl = getDayElement(day);
+
+  const profile = { 목:0, 화:0, 토:0, 금:0, 수:0 };
+  const add = (el, weight) => { profile[el] = (profile[el] || 0) + weight; };
+
+  if (hourBranch >= 0) {
+    const hourEl = EARTHLY_BRANCH_ELEMENT[hourBranch];
+    add(stem, 30); add(branch, 22); add(season, 22); add(dayEl, 13); add(hourEl, 13);
+  } else {
+    add(stem, 35); add(branch, 25); add(season, 25); add(dayEl, 15);
+  }
+
+  return profile;
+}
+
+// ─── 대학 오행 프로필 ─────────────────────────────────────────────────────────
+
+const TRAIT_ELEMENT_MAP = {
+  '자유로운사고': '목', '표현력': '목', '예술적감성': '목', '다양성포용': '목',
+  '도전정신': '화', '사회적감각': '화', '기업가정신': '화', '글로벌영향력': '화',
+  '전통과격식': '토', '실용주의': '토', '지역사회기여': '토',
+  '논리력': '금', '집중력': '금', '공학혁신': '금', '수리과학': '금',
+  '전략적사고': '수', '철학적깊이': '수', '국제정치감각': '수'
+};
+
+function buildUniversityProfile(uni) {
+  const profile = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
+  const traits = uni.traits || {};
+  for (const [traitName, value] of Object.entries(traits)) {
+    const el = TRAIT_ELEMENT_MAP[traitName];
+    if (el) profile[el] += value;
+  }
+  return profile;
+}
+
+// ─── 코사인 유사도 ───────────────────────────────────────────────────────────
+
+function cosineSim(a, b) {
+  let dot = 0, na = 0, nb = 0;
+  for (const k of ELEMENT_KEYS) {
+    dot += a[k] * b[k];
+    na += a[k] * a[k];
+    nb += b[k] * b[k];
+  }
+  if (na === 0 || nb === 0) return 0;
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+}
+
+function rescaleScore(sim) {
+  // 코사인 유사도(0~1) → 78~99% 구간
+  return Math.round(78 + sim * 21);
+}
+
+// ─── SAT 필터링 ──────────────────────────────────────────────────────────────
+
+function getSatFit(uni, score) {
+  if (!uni.satRange || !score) return null;
+  const [lo, hi] = uni.satRange;
+  if (score >= hi) return 'stable';
+  if (score >= lo) return 'target';
+  if (score >= lo - 80) return 'reach';
+  return 'miss';
+}
+
+// ─── 매칭 메인 ───────────────────────────────────────────────────────────────
+
+function getEnrollYearProfile(year) {
+  const stemEl = HEAVENLY_STEM_ELEMENT[((year - 4) % 10 + 10) % 10];
+  const branchEl = EARTHLY_BRANCH_ELEMENT[((year % 12) + 12) % 12];
+  const p = { 목:0, 화:0, 토:0, 금:0, 수:0 };
+  p[stemEl] += 50;
+  p[branchEl] += 50;
+  return p;
+}
+
+function computeMatch(birthdate, hourBranch, enrollYear) {
+  const [year, month, day] = birthdate.split('-').map(Number);
+  const userProfile = buildUserProfile(year, month, day, hourBranch ?? -1);
+  const enrollProfile = enrollYear ? getEnrollYearProfile(Number(enrollYear)) : null;
+
+  // 타이브레이크: 생년월일 × 대학명 조합 해시 → 같은 오행이어도 생년월일마다 다른 대학으로 분산
+  const userKey = hashStr(birthdate, 99991);
+  let best = null, bestSim = -1;
+  for (const uni of UNIVERSITIES) {
+    const uniProfile = uni.ohProfile;  // 사전 계산된 오행 벡터 사용
+    const baseSim = cosineSim(userProfile, uniProfile);
+    const yearSim = enrollProfile ? cosineSim(enrollProfile, uniProfile) : 0;
+    const sim = enrollProfile ? baseSim * 0.85 + yearSim * 0.15 : baseSim;
+    const tiebreak = hashStr(uni.name + userKey, 99997) / 10000000;
+    if (sim + tiebreak > bestSim) { bestSim = sim + tiebreak; best = uni; }
+  }
+
+  const rawSim = cosineSim(userProfile, best.ohProfile);
+  const compatPct = rescaleScore(rawSim);
+
+  const uniIdx = UNIVERSITIES.indexOf(best);
+  return { uni: best, uniIdx, userProfile, compatPct, enrollYear: enrollYear || null };
+}
+
+// ─── 픽셀 아트 배지 ──────────────────────────────────────────────────────────
+
+function hashStr(s, mod) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return Math.abs(h) % mod;
+}
+
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+const PALETTES = [
+  ['#8B0000','#C41E3A'],['#003E74','#1a5fa8'],['#215732','#2d7a47'],
+  ['#560026','#8a1040'],['#002A5C','#1a4a8a'],['#7B3F9E','#a855c8'],
+  ['#003262','#1a5fa0'],['#C17F24','#d4a853']
+];
+
+function renderLogo(uni, size) {
+  const s = size || 80;
+  const src = uni.logo ? `data/logos/${uni.logo}.png` : '';
+  return `<img src="${src}" width="${s}" height="${s}" class="uni-logo-pixel" alt="${uni.name}" loading="lazy">`;
+}
+
+// ─── 한국어 조사 헬퍼 ──────────────────────────────────────────────────────────
+function eunNeun(word) {
+  const last = word[word.length - 1];
+  const code = last.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) return '는';
+  return (code - 0xAC00) % 28 === 0 ? '는' : '은';
+}
+
+// ─── 플레이버 / 서사 ─────────────────────────────────────────────────────────
+
+function getDominantElement(profile) {
+  return ELEMENT_KEYS.reduce((a, b) => profile[a] >= profile[b] ? a : b);
+}
+
+function getWeakestElement(profile) {
+  return ELEMENT_KEYS.reduce((a, b) => profile[a] <= profile[b] ? a : b);
+}
+
+// 오행별 인물 유형 서사 (3문장씩)
+// 천간(天干) 성격 — 10개
+const HEAVENLY_STEM_PERSONALITY = [
+  '거침없이 뻗는 큰 나무처럼, 누구보다 먼저 길을 내는 선구자 기질이 있구만.',       // 甲
+  '부드럽게 감고 오르는 넝쿨처럼, 유연하게 환경에 적응하며 결국 원하는 곳에 도달하는 재주가 있소.', // 乙
+  '한낮의 태양처럼 빛나는 에너지로 주변을 밝히고 사람을 끌어당기는 카리스마를 타고났구만.', // 丙
+  '촛불처럼 한곳을 집중적으로 비추는, 섬세하고 헌신적인 내면의 힘이 있소.',       // 丁
+  '넓은 대지처럼 포용력이 크고, 주변 사람들이 자연스럽게 의지하게 되는 든든함이 있구만.', // 戊
+  '기름진 밭처럼 무엇이든 실용적으로 키워내는, 손으로 직접 만들어가는 실천형 기질이 강하려.', // 己
+  '단단한 철처럼 결단력이 강하고, 한번 정한 원칙은 어떤 상황에서도 끝까지 지키는 강직함이 있소.', // 庚
+  '날카롭게 빛나는 보석처럼, 섬세한 감각과 완성에 대한 집착이 남다르구만.',           // 辛
+  '넓고 깊은 바다처럼 지식의 폭이 넓고, 어떤 사람도 받아들이는 깊은 포용력이 있소.', // 壬
+  '땅속으로 스며드는 빗물처럼, 눈에 띄지 않아도 핵심을 꿰뚫는 통찰력이 남다르려.'   // 癸
+];
+
+// 지지(地支) 성격 — 12개
+const EARTHLY_BRANCH_PERSONALITY = [
+  '쥐처럼 영민하고 상황 파악이 빠르며, 기회를 결코 놓치지 않는 민첩함이 있구만.',    // 子
+  '소처럼 묵묵히 나아가는 인내와 성실함이 있으며, 늦더라도 반드시 목표에 도달하고 마는 법이오.', // 丑
+  '호랑이처럼 담대하고 개척 정신이 넘치며, 아무도 가지 않은 길을 두려워하지 않는구만.', // 寅
+  '토끼처럼 감각이 예민하고 민첩하며, 아름다운 것을 알아보는 심미안이 발달해 있소.', // 卯
+  '용처럼 큰 그림을 그리는 상상력과 웅장한 스케일을 타고났구만.',                   // 辰
+  '뱀처럼 깊은 직관과 통찰로 남들이 보지 못하는 것을 꿰뚫어 보는 눈이 있소.',               // 巳
+  '말처럼 활동적이고 열정이 넘치며, 가만히 있으면 오히려 에너지가 쌓여 버거울 정도구만.', // 午
+  '양처럼 온화하고 예술적 감성이 풍부하며, 사람들과 조화롭게 어울리는 친화력이 있소.', // 未
+  '원숭이처럼 기지가 넘치고 변화에 빠르게 적응하는 유연한 지능이 있구만.',   // 申
+  '닭처럼 정교하고 섬세하며, 마무리와 완성도에서 타의 추종을 불허하려.',           // 酉
+  '개처럼 충성스럽고 신의가 깊으며, 한번 믿은 사람과 가치관을 끝까지 지키는 법이오.',     // 戌
+  '돼지처럼 풍요롭고 직관이 뛰어나며, 겉으로 드러나는 것보다 내면이 훨씬 깊구만.'  // 亥
+];
+
+// 오행별 인물 서사 — 각 5문장
+const ELEMENT_PERSON_NARRATIVE = {
+  목: [
+    "새로운 가능성을 탐색하고 자신만의 방식으로 세상을 해석하는 창조형 인재구만.",
+    "관심사가 넓고 다양한 분야를 넘나들며, 전혀 다른 두 영역이 만나는 지점에서 누구도 생각 못한 아이디어를 끌어내는 법이오.",
+    "틀에 박힌 해답보다 스스로 탐험하며 발견하는 과정을 더 즐기고, 그 과정에서 오히려 빛이 나는구만.",
+    "남들이 당연하게 여기는 것에 의문을 던지는 힘이 그대의 가장 큰 무기이니, 그 질문이 곧 혁신의 씨앗이 되는 법이오.",
+    "자유로운 환경에서 잠재력이 폭발하며, 구조보다 가능성을 먼저 보는 눈이 있소."
+  ],
+  화: [
+    "강한 에너지와 열정으로 주변을 움직이는 행동형 인재구만.",
+    "관중 앞에 서는 것을 두려워하지 않으며, 큰 무대일수록 진가가 드러나는 법이오.",
+    "빠른 판단력과 실행력으로 기회를 먼저 잡고, 사람을 모으는 자력이 자연스럽게 발달해 있소.",
+    "말 한마디로 분위기를 바꾸는 힘이 있으며, 조직이나 팀에서 방향을 제시하는 역할을 맡게 되는구만.",
+    "가만히 있으면 오히려 에너지가 쌓이는 기질이니, 끊임없이 움직이고 도전하는 환경이 맞는 법이오."
+  ],
+  토: [
+    "신중하고 성실하게 기초를 쌓아 오래가는 결과물을 만드는 신뢰형 인재구만.",
+    "빠른 성과보다 완성도를 중시하며, 함부로 흔들리지 않는 원칙과 기준이 있소.",
+    "주변 사람들이 자연스럽게 기대고 의지하는 중심이 되며, 갈등 상황에서 조율하는 역할을 맡게 되는 법이오.",
+    "오래 두고 볼수록 진가가 드러나는 스타일이니, 시간이 지나면 가장 단단한 결과를 남기는구만.",
+    "변화 속에서도 흔들리지 않는 중심축 역할이 그대에게 자연스럽게 주어지는구만."
+  ],
+  금: [
+    "논리와 집중력으로 핵심을 꿰뚫는 분석형 인재구만.",
+    "복잡한 문제일수록 오히려 더 날카로워지며, 수많은 선택지 중 정답을 가장 빠르게 찾아내는 법이오.",
+    "높은 기준을 스스로에게 적용하는 완벽주의적 성향이 결과물의 밀도를 높이고, 주변에도 기준을 세우는구만.",
+    "감정보다 근거를 중시하며, 어떤 상황에서도 냉정하게 사실과 논리로 접근하는 능력이 있소.",
+    "한번 목표를 정하면 흔들리지 않고 끝까지 파고드는 집념이 그대의 가장 강력한 무기구만."
+  ],
+  수: [
+    "깊이 생각하고 멀리 내다보는 전략형 인재구만.",
+    "표면 아래 흐르는 구조를 읽어내며, 남들이 아직 보지 못한 흐름과 패턴을 먼저 포착하는 법이오.",
+    "혼자 사색하는 시간에서 가장 강력한 통찰이 탄생하며, 때를 기다릴 줄 아는 인내심이 있소.",
+    "정보를 단순히 수집하는 것이 아니라 서로 연결해 의미를 만드는 능력이 탁월하니, 이것이 그대를 남다른 기획자로 만드는구만.",
+    "말수가 많지 않아도 한마디를 하면 주변이 집중하는, 깊은 울림을 가진 사람이오."
+  ]
+};
+
+// 계절별 보조 서사
+const SEASON_NARRATIVE = {
+  봄: "봄(木)에 태어나 새로운 시작의 기운을 머금었으니, 성장과 확장의 국면에서 특히 강한 에너지가 솟는 법이오.",
+  여름: "여름(火)에 태어나 열정과 표현의 기운을 타고났으니, 사람들 앞에 나서야 할 때 더욱 빛이 나는 법이오.",
+  환절기: "환절기(土)에 태어나 변화와 안정 사이에서 균형을 잡는 능력이 남다르니, 어떤 상황에서도 중심을 잃지 않는구만.",
+  가을: "가을(金)에 태어나 수확과 마무리의 기운을 품었으니, 일을 끝내고 완성하는 능력이 탁월하오.",
+  겨울: "겨울(水)에 태어나 내면의 깊이와 성찰의 힘이 강하게 흐르니, 조용히 쌓아가는 것들이 나중에 폭발적 결과로 이어지는 법이오."
+};
+
+// 트레이트 → 대학 서사 문구
+const TRAIT_PHRASE = {
+  '논리력':      '냉철한 논리와 수학적 사고를 중심에 두는',
+  '집중력':      '한 분야를 끝까지 파고드는 전문성을 추구하는',
+  '공학혁신':    '기술로 세상의 문제를 해결하는 공학 혁신의 산실인',
+  '수리과학':    '수학과 자연과학의 근원을 탐구하는',
+  '도전정신':    '불가능에 도전하는 개척자 정신이 살아있는',
+  '기업가정신':  '아이디어를 현실로 만드는 창업 DNA를 가진',
+  '글로벌영향력':'세계 무대에서 각 분야의 리더를 배출해온',
+  '사회적감각':  '사회 변화를 이끄는 활동가와 정책가를 키워온',
+  '자유로운사고':'틀을 깨는 자유로운 탐구를 적극 장려하는',
+  '표현력':      '인문학적 글쓰기와 표현의 힘을 학문의 중심에 두는',
+  '예술적감성':  '예술과 학문의 경계를 허무는',
+  '다양성포용':  '세계 각지의 다양한 시각이 충돌하고 융합되는',
+  '전통과격식':  '수백 년의 역사와 전통이 학풍에 깊이 배어있는',
+  '실용주의':    '이론보다 현장과 실용을 강조하는',
+  '지역사회기여':'지역 사회와 긴밀하게 연결된',
+  '전략적사고':  '큰 그림을 그리고 세계를 설계하는 인재를 키우는',
+  '철학적깊이':  '인간과 세계에 대한 깊은 성찰을 학문의 출발점으로 삼는',
+  '국제정치감각':'국제 질서와 글로벌 외교의 중심에 서온'
+};
+
+// 국가별 대학 맥락 서사
+const COUNTRY_NARRATIVE = {
+  'UK':          '영국은 옥스브리지로 대표되는 수백 년의 학문 전통과 현대 연구의 혁신이 공존하는 곳입니다.',
+  'USA':         '미국의 대학 캠퍼스는 전 세계 인재가 모여드는 경쟁과 협업의 용광로입니다.',
+  'Germany':     '독일의 대학은 깊이 있는 이론 연구와 실용 공학의 전통이 결합된 학문의 요람입니다.',
+  'France':      '프랑스 특유의 비판적 지성과 철학적 깊이가 이 학교의 학풍에도 그대로 스며 있습니다.',
+  'Switzerland': '알프스의 정밀함과 여러 언어권이 공존하는 스위스의 개방성이 이 학교를 세계적으로 만들었습니다.',
+  'Singapore':   '아시아의 관문이자 전 세계 인재가 집결하는 도시국가 싱가포르에서, 이 학교는 동서양의 가교 역할을 합니다.',
+  'Japan':       '일본 특유의 장인 정신과 집중력이 학문 문화에 반영되어, 한 분야를 극한까지 파고드는 환경이 갖춰져 있습니다.',
+  'Korea':       '한국의 뜨거운 교육열과 빠른 성장의 DNA가 이 학교에도 흐르며, 이공계 분야에서 세계와 어깨를 나란히 합니다.',
+  'Canada':      '다양성을 사회적 자산으로 삼는 캐나다의 열린 문화 속에서, 이 학교는 전 세계 학생을 환영합니다.',
+  'Australia':   '개방적이고 실용적인 호주의 가치관이 이 학교의 국제적이고 친화적인 분위기를 만들어냅니다.',
+  'Netherlands': '국제 무역과 개방의 역사를 가진 네덜란드의 실용주의와 다국어 환경이 이 학교의 강점입니다.',
+  'China':       '수천 년 문명의 기반 위에서 빠르게 성장하는 중국의 에너지가 이 학교를 세계 무대로 이끌고 있습니다.',
+  'Hong Kong':   '동서양이 교차하는 홍콩의 독특한 위치 덕분에, 이 학교는 아시아와 세계를 잇는 학문의 허브입니다.',
+  'Denmark':     '행복 지수와 혁신 지수 모두 세계 최상위인 덴마크의 복지와 창의성이 이 학교의 문화에 녹아 있습니다.',
+  'Sweden':      '지속가능성과 혁신을 동시에 추구하는 북유럽의 가치관이 이 학교의 연구 방향을 이끌고 있습니다.',
+  'Belgium':     '유럽의 심장 벨기에에서, 이 학교는 다언어·다문화 환경 속에서 국제적 학풍을 키워왔습니다.',
+  'Ireland':     '문학과 철학의 전통이 깊은 아일랜드에서, 이 학교는 인문학적 깊이와 실용적 역량을 함께 추구합니다.'
+};
+
+// 오행별 "이 학교에서 빛나는 사람" 서사
+const UNI_ELEMENT_STUDENT_FIT = {
+  목: "이 학교에서 특히 빛나는 사람은 정해진 답보다 새로운 질문을 즐기는 탐험가 유형이구만. 다양한 분야를 넘나들며 스스로 길을 만들어가는 학생이 이 환경에서 가장 크게 성장하는 법이오.",
+  화: "이 학교에서 특히 빛나는 사람은 아이디어를 실행으로 옮기는 추진력과 사람을 모으는 에너지를 가진 리더형 인재구만. 무대 위에서 자신을 드러내는 것을 두려워하지 않는 사람이 이곳에 어울리려.",
+  토: "이 학교에서 특히 빛나는 사람은 꾸준한 성실함으로 깊이 있는 전문성을 쌓아가는 유형이구만. 빠른 성과보다 탄탄한 기초를 중시하는 학생이 이 학교의 엄격한 훈련에서 진가를 발휘하는 법이오.",
+  금: "이 학교에서 특히 빛나는 사람은 날카로운 논리와 집중력으로 완성도를 끝까지 추구하는 유형이구만. 높은 기준을 당연하게 여기고 그것을 즐길 수 있는 학생에게 이 환경은 최적의 연마 장소려.",
+  수: "이 학교에서 특히 빛나는 사람은 깊이 사유하고 전략적으로 움직이는 사색가 유형이구만. 표면보다 구조를 읽고 말보다 행동으로 말하는 학생이 이 학교의 지적 분위기와 가장 잘 맞는 법이오."
+};
+
+// 오행 상생(相生) 관계 궁합 서사
+const COMPAT_NARRATIVE = {
+  목화: "그대의 목(木) 에너지는 화(火)를 키우는 상생 관계구만. 이 학교의 열정적 문화가 그대의 창의성에 불을 지피고, 그대는 그 불꽃을 더 크게 만드는 법이오.",
+  화토: "그대의 화(火) 에너지는 토(土)를 살찌우는 상생 관계구만. 이 학교의 안정적 토대 위에서 그대의 추진력이 실질적인 성과로 쌓이는 법이오.",
+  토금: "그대의 토(土) 에너지는 금(金)을 빚어내는 상생 관계구만. 이 학교의 정밀한 훈련이 그대의 성실함과 만나 날카로운 전문성을 완성하는 법이오.",
+  금수: "그대의 금(金) 에너지는 수(水)를 흐르게 하는 상생 관계구만. 이 학교의 전략적 사고 방식이 그대의 논리력에 깊이를 더해주는 법이오.",
+  수목: "그대의 수(水) 에너지는 목(木)을 길러내는 상생 관계구만. 이 학교의 탐구적 분위기가 그대의 통찰력과 만나 끊임없이 새로운 아이디어를 싹틔우는 법이오.",
+  목목: "같은 목(木)의 기운이 깊이 공명하는구만. 창의성과 탐구심이라는 공통 언어로 이 학교와 대화할 수 있고, 자신만의 색깔을 잃지 않으면서 성장하는 법이오.",
+  화화: "같은 화(火)의 열정이 서로를 끌어당기는구만. 도전을 두려워하지 않는 이 학교의 문화가 그대의 에너지와 정확히 공명하여 큰 시너지를 만들어내는 법이오.",
+  토토: "같은 토(土)의 안정감이 서로를 이해하는구만. 신중함과 깊은 완성도를 중시하는 이 학교의 가치관이 그대의 성향과 자연스럽게 맞닿는 법이오.",
+  금금: "같은 금(金)의 정밀함이 서로를 인정하는구만. 높은 기준과 논리적 훈련을 강조하는 이 학교의 문화가 그대의 완벽주의를 최고의 무기로 만들어주는 법이오.",
+  수수: "같은 수(水)의 깊이가 서로를 끌어당기는구만. 이 학교의 전략적이고 성찰적인 분위기 속에서 그대의 통찰이 마음껏 흐르는 법이오.",
+  목토: "목(木)이 토(土)를 다스리는 관계구만. 그대의 창의성이 이 학교의 전통적 구조에 새로운 바람을 불어넣으며 서로 균형을 이루게 되는구만.",
+  화금: "화(火)가 금(金)을 단련하는 관계구만. 그대의 열정이 이 학교의 정밀한 훈련을 통해 더욱 단단하게 벼려지는 법이오.",
+  토수: "토(土)가 수(水)를 담아내는 관계구만. 이 학교의 전략적 사고를 그대의 안정적 성향이 현실에 뿌리내리게 하는 법이오.",
+  금목: "금(金)이 목(木)을 빚는 관계구만. 이 학교의 자유로운 탐구 문화가 그대의 분석력을 통해 명확한 방향을 얻는 법이오.",
+  수화: "수(水)가 화(火)를 조절하는 관계구만. 그대의 깊은 통찰이 이 학교의 뜨거운 에너지를 정제하여 특별한 힘을 만들어내는 법이오."
+};
+
+// ─── 픽셀 아트 인물 초상 ────────────────────────────────────────────────────
+function renderPersonPixel(name) {
+  const seed = hashStr(name, 99991);
+  const rng  = mulberry32(seed);
+  const r    = () => rng();
+
+  const PX = 3;
+  const GW = 10, GH = 13;
+
+  const SKINS  = ['#FFD5BB','#F1C27D','#C68642','#8D5524','#FFECD2','#E8B89A'];
+  const HAIRS  = ['#1C1C1C','#4A3728','#8B5E3C','#D4A017','#CC5500','#8B0000','#595959','#2C1654','#E8D5B0'];
+  const BODIES = ['#4ECDC4','#FF6B6B','#45B7D1','#96CEB4','#9B59B6','#E67E22','#27AE60','#2980B9','#C0392B','#16A085'];
+
+  const skin  = SKINS [Math.floor(r() * SKINS.length)];
+  const hair  = HAIRS [Math.floor(r() * HAIRS.length)];
+  const body  = BODIES[Math.floor(r() * BODIES.length)];
+  const eye   = '#1a1a2e';
+  const cheek = '#FFB3C1';
+  const mouth = '#CC4444';
+
+  const g = Array.from({length: GH}, () => Array(GW).fill(null));
+  const set = (x, y, c) => { if (x>=0&&x<GW&&y>=0&&y<GH) g[y][x]=c; };
+
+  // 얼굴 (타원: cols 1-8, rows 2-7)
+  [[2,8],[1,9],[1,9],[1,9],[1,9],[2,8]].forEach(([l,r2], i) => {
+    for (let x=l; x<r2; x++) set(x, i+2, skin);
+  });
+
+  // 머리 스타일 (5종)
+  const hs = Math.floor(r() * 5);
+  const hairPatterns = [
+    [[0,1,9],[1,0,10]],                              // 0: 풀 볼컷
+    [[0,2,8],[1,1,9]],                               // 1: 단발
+    [[0,1,9],[1,0,10],[2,0,1],[2,9,10],[3,0,1],[3,9,10]], // 2: 긴 옆머리
+    [[0,3,7],[1,2,8]],                               // 3: 짧은 숏컷
+    [[0,0,6],[1,0,7],[2,0,2],[3,0,2]]                // 4: 옆가르마
+  ];
+  hairPatterns[hs].forEach(seg => {
+    const [y, ...pairs] = seg;
+    for (let i=0; i<pairs.length; i+=2) for (let x=pairs[i]; x<pairs[i+1]; x++) set(x,y,hair);
+  });
+
+  // 눈 (row 4)
+  [3,4,6,7].forEach(x => set(x, 4, eye));
+  // 볼터치 (row 5)
+  set(2,5,cheek); set(7,5,cheek);
+  // 입 (row 6, 스마일)
+  [3,4,5,6].forEach(x => set(x, 6, mouth));
+  // 목 (row 8)
+  [4,5].forEach(x => set(x, 8, skin));
+  // 몸통 (rows 9-12)
+  for (let y=9; y<GH; y++) for (let x=2; x<8; x++) set(x, y, body);
+
+  // 안경 (랜덤 30%)
+  if (r() > 0.70) {
+    const gc = '#888';
+    [[2,3],[5,4],[8,3]].forEach(([x,idx])=>{});
+    [2,3,5,6,7,8].forEach(x => set(x, 4, x===4||x===5 ? gc : (x===3||x===6 ? eye : gc)));
+  }
+
+  let rects = '';
+  for (let y=0; y<GH; y++)
+    for (let x=0; x<GW; x++)
+      if (g[y][x]) rects += `<rect x="${x*PX}" y="${y*PX}" width="${PX}" height="${PX}" fill="${g[y][x]}"/>`;
+
+  const sw = GW*PX, sh = GH*PX;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sw} ${sh}" width="${sw}" height="${sh}" style="image-rendering:pixelated">${rects}</svg>`;
+}
+
+// ─── 유명 동문 데이터 ────────────────────────────────────────────────────────
+const FAMOUS_ALUMNI = {
+  'Massachusetts Institute of Technology': [
+    { name:'버즈 올드린', role:'달 착륙 우주비행사' },
+    { name:'I.M. 페이', role:'루브르 유리 피라미드 건축가' },
+    { name:'코피 아난', role:'전 UN 사무총장' }
+  ],
+  'Stanford University': [
+    { name:'래리 페이지', role:'구글 공동 창업자' },
+    { name:'세르게이 브린', role:'구글 공동 창업자' },
+    { name:'필 나이트', role:'나이키 창업자' }
+  ],
+  'Harvard University': [
+    { name:'버락 오바마', role:'미국 제44대 대통령' },
+    { name:'나탈리 포트만', role:'아카데미 수상 배우' },
+    { name:'마크 저커버그', role:'메타 창업자 (중퇴)' }
+  ],
+  'University of Oxford': [
+    { name:'J.R.R. 톨킨', role:'반지의 제왕 저자' },
+    { name:'오스카 와일드', role:'극작가·소설가' },
+    { name:'스티븐 호킹', role:'이론물리학의 전설' }
+  ],
+  'University of Cambridge': [
+    { name:'아이작 뉴턴', role:'만유인력 법칙 발견' },
+    { name:'찰스 다윈', role:'진화론 창시자' },
+    { name:'앨런 튜링', role:'컴퓨터 과학의 아버지' }
+  ],
+  'Princeton University': [
+    { name:'제프 베이조스', role:'아마존 창업자' },
+    { name:'리처드 파인만', role:'노벨 물리학상 수상자' },
+    { name:'토니 모리슨', role:'노벨 문학상 수상 작가' }
+  ],
+  'Yale University': [
+    { name:'힐러리 클린턴', role:'前 미국 국무장관' },
+    { name:'머릴 스트립', role:'아카데미 최다 수상 배우' },
+    { name:'폴 크루그먼', role:'노벨 경제학상 수상자' }
+  ],
+  'Columbia University': [
+    { name:'버락 오바마', role:'정치학 학부 졸업' },
+    { name:'워런 버핏', role:'투자의 전설' },
+    { name:'루 리드', role:'벨벳 언더그라운드 뮤지션' }
+  ],
+  'University of Pennsylvania': [
+    { name:'일론 머스크', role:'테슬라·스페이스X CEO' },
+    { name:'도널드 트럼프', role:'미국 대통령' },
+    { name:'워런 버핏', role:'와튼스쿨 수료' }
+  ],
+  'Cornell University': [
+    { name:'빌 나이', role:'사이언스 가이' },
+    { name:'루스 베이더 긴즈버그', role:'연방 대법관' },
+    { name:'칼 세이건', role:'코스모스 저자, 천문학자' }
+  ],
+  'California Institute of Technology': [
+    { name:'리누스 폴링', role:'노벨화학상+평화상 2회 수상' },
+    { name:'고든 무어', role:'인텔 공동 창업자' },
+    { name:'프랭크 말리나', role:'JPL 창설자' }
+  ],
+  'ETH Zurich': [
+    { name:'알버트 아인슈타인', role:'상대성 이론 (졸업생)' },
+    { name:'빌헬름 뢴트겐', role:'X선 발견, 노벨 물리학상' },
+    { name:'존 폰 노이만', role:'컴퓨터 구조 설계자' }
+  ],
+  'Imperial College London': [
+    { name:'브라이언 메이', role:'퀸 기타리스트·물리학 박사' },
+    { name:'알렉산더 플레밍', role:'페니실린 발견' },
+    { name:'H.G. 웰스', role:'공상과학 소설의 아버지' }
+  ],
+  'University College London': [
+    { name:'마하트마 간디', role:'인도 독립운동 지도자' },
+    { name:'알렉산더 그레이엄 벨', role:'전화 발명가' },
+    { name:'제레미 벤담', role:'공리주의 철학 창시자' }
+  ],
+  'University of Edinburgh': [
+    { name:'아서 코난 도일', role:'셜록 홈즈 창시자' },
+    { name:'알렉산더 그레이엄 벨', role:'전화 발명가' },
+    { name:'제임스 클러크 맥스웰', role:'전자기학의 아버지' }
+  ],
+  "King's College London": [
+    { name:'로절린드 프랭클린', role:'DNA 구조 발견의 숨은 주역' },
+    { name:'나이팅게일', role:'근대 간호학의 창시자' },
+    { name:'데스몬드 투투', role:'남아공 노벨평화상 수상자' }
+  ],
+  'University of Manchester': [
+    { name:'어니스트 러더퍼드', role:'원자핵 발견' },
+    { name:'앨런 튜링', role:'맨체스터 대학 교수 역임' },
+    { name:'안드레 가임', role:'그래핀 발견, 노벨 물리학상' }
+  ],
+  'London School of Economics': [
+    { name:'조지 소로스', role:'헤지펀드의 전설' },
+    { name:'믹 재거', role:'롤링스톤스 보컬 (중퇴)' },
+    { name:'피에르 트뤼도', role:'캐나다 전 총리' }
+  ],
+  'Technical University of Munich': [
+    { name:'루돌프 디젤', role:'디젤 엔진 발명가' },
+    { name:'칼 라베', role:'BMW 엔진 설계' },
+    { name:'막스 폰 라우에', role:'X선 결정학 노벨상' }
+  ],
+  'Delft University of Technology': [
+    { name:'안토니 판 레이우엔훅', role:'현미경으로 미생물 발견 (동시대)' },
+    { name:'빌럼 에인트호번', role:'심전도 발명, 노벨 의학상' },
+    { name:'요리트 판 덴 베르흐', role:'유럽 항공우주 연구 리더' }
+  ],
+  'Seoul National University': [
+    { name:'반기문', role:'전 UN 사무총장' },
+    { name:'황의경', role:'삼성전자 반도체 신화' },
+    { name:'이건희', role:'삼성그룹 회장' }
+  ],
+  'Yonsei University': [
+    { name:'윤동주', role:'저항시인, 하늘과 바람과 별과 시' },
+    { name:'김우중', role:'대우그룹 창업자' },
+    { name:'이상화', role:'빙상 올림픽 금메달리스트' }
+  ],
+  'Korea University': [
+    { name:'김영삼', role:'전 대통령' },
+    { name:'류현진', role:'MLB 선발 투수' },
+    { name:'박찬욱', role:'올드보이 감독' }
+  ],
+  'KAIST': [
+    { name:'이준호', role:'카이스트 AI 혁신 연구' },
+    { name:'박성하', role:'하이닉스 메모리 기술 총괄' },
+    { name:'장병탁', role:'서울대 AI 연구소 (카이스트 출신)' }
+  ],
+  'POSTECH': [
+    { name:'권오현', role:'삼성전자 前 CEO' },
+    { name:'고동진', role:'삼성전자 IM부문장' },
+    { name:'이영희', role:'포항공대 출신 재료공학 권위자' }
+  ],
+  'National University of Singapore': [
+    { name:'리센룽', role:'싱가포르 총리' },
+    { name:'고촉통', role:'전 싱가포르 총리' },
+    { name:'필리 바라루스', role:'아시아 대표 기업인' }
+  ],
+  'Nanyang Technological University': [
+    { name:'탄추루이', role:'싱가포르 대표 기업인' },
+    { name:'테드 림', role:'아시아 AI 스타트업 선구자' },
+    { name:'유안양', role:'싱가포르 기술 혁신 리더' }
+  ],
+  'The University of Tokyo': [
+    { name:'아베 신조', role:'일본 역대 최장 재임 총리' },
+    { name:'야마나카 신야', role:'노벨 의학상, iPS세포 발견' },
+    { name:'나쓰메 소세키', role:'나는 고양이로소이다 작가' }
+  ],
+  'Kyoto University': [
+    { name:'야마나카 신야', role:'노벨 의학상 교수' },
+    { name:'후쿠이 겐이치', role:'노벨 화학상 수상자' },
+    { name:'가와바타 야스나리', role:'노벨 문학상 수상 작가' }
+  ],
+  'University of Melbourne': [
+    { name:'루퍼트 머독', role:'미디어 제국 뉴스코프 창업자' },
+    { name:'그레이엄 클라크', role:'인공 와우 발명가' },
+    { name:'쥴리아 길라드', role:'호주 첫 여성 총리' }
+  ],
+  'University of Sydney': [
+    { name:'크리스 헴스워스', role:'마블 토르 배우' },
+    { name:'사이먼 베이커', role:'멘탈리스트 배우' },
+    { name:'앤 해서웨이', role:'오스카 수상 배우 (교환학생)' }
+  ],
+  'McGill University': [
+    { name:'윌리엄 오슬러', role:'근대 의학의 아버지' },
+    { name:'레너드 코헨', role:'할렐루야 싱어송라이터' },
+    { name:'서마 하영', role:'노벨 물리학상 수상자' }
+  ],
+  'Peking University': [
+    { name:'루쉰', role:'아Q정전, 중국 현대문학의 아버지' },
+    { name:'마오쩌둥', role:'도서관 직원으로 근무, 영향 받음' },
+    { name:'천두슈', role:'중국공산당 초대 총서기' }
+  ],
+  'Tsinghua University': [
+    { name:'시진핑', role:'중국 국가주석' },
+    { name:'양전닝', role:'노벨 물리학상 수상자' },
+    { name:'스티브 첸', role:'유튜브 공동 창업자' }
+  ],
+  'PSL – Paris Sciences et Lettres': [
+    { name:'루이 파스퇴르', role:'저온살균법 발명, 세균학의 아버지' },
+    { name:'마리 퀴리', role:'노벨상 2회 수상자' },
+    { name:'장폴 사르트르', role:'실존주의 철학자' }
+  ],
+  'KAIST Graduate School': [
+    { name:'권오현', role:'삼성전자 前 CEO' },
+    { name:'고동진', role:'삼성전자 IM부문장' },
+    { name:'이영희', role:'포항공대 출신 재료공학 권위자' }
+  ],
+  // ── 추가 동문 ─────────────────────────────────────
+  'University of Chicago': [
+    { name:'밀턴 프리드먼', role:'노벨 경제학상, 자유시장 경제학' },
+    { name:'칼 세이건', role:'코스모스 저자·천문학자' },
+    { name:'버락 오바마', role:'헌법학 강의, 後 44대 대통령' }
+  ],
+  'Duke University': [
+    { name:'팀 쿡', role:'애플 CEO' },
+    { name:'리처드 닉슨', role:'미국 제37대 대통령' },
+    { name:'멜린다 게이츠', role:'빌&멜린다 게이츠 재단 공동 설립자' }
+  ],
+  'Northwestern University': [
+    { name:'스티븐 콜베어', role:'코미디언·TV 진행자' },
+    { name:'샐마 블레어', role:'할리우드 배우' },
+    { name:'샤를로트 퍼킨스 길먼', role:'여성주의 작가' }
+  ],
+  'Carnegie Mellon University': [
+    { name:'앤디 워홀', role:'팝아트의 아이콘' },
+    { name:'존 포브스 내쉬', role:'게임이론, 노벨 경제학상' },
+    { name:'랜디 포시', role:'마지막 강의 저자, 교수' }
+  ],
+  'New York University': [
+    { name:'우디 앨런', role:'아카데미 감독상 수상자' },
+    { name:'마틴 스코세이지', role:'갱스 오브 뉴욕 감독' },
+    { name:'앤절라 데이비스', role:'사회운동가·철학자' }
+  ],
+  'Brown University': [
+    { name:'에마 왓슨', role:'해리포터 헤르미온느 배우' },
+    { name:'존 F. 케네디 주니어', role:'前 퍼스트 선' },
+    { name:'테드 터너', role:'CNN 창업자' }
+  ],
+  'University of Michigan': [
+    { name:'제럴드 포드', role:'미국 제38대 대통령' },
+    { name:'아서 밀러', role:'세일즈맨의 죽음 극작가' },
+    { name:'래리 페이지', role:'구글 공동창업자 (석사)' }
+  ],
+  'University of British Columbia': [
+    { name:'트뤼도 전 총리', role:'캐나다 총리' },
+    { name:'린다 불', role:'바이오테크 혁신가' },
+    { name:'짐 피터슨', role:'BC주지사 역임' }
+  ],
+  'Australian National University': [
+    { name:'맬컴 턴불', role:'호주 전 총리' },
+    { name:'존 하워드', role:'호주 전 총리' },
+    { name:'브라이언 슈미트', role:'노벨 물리학상, 우주 팽창 발견' }
+  ],
+  'University of Melbourne': [
+    { name:'루퍼트 머독', role:'미디어 제국 뉴스코프 창업자' },
+    { name:'그레이엄 클라크', role:'인공 와우 발명가' },
+    { name:'줄리아 길라드', role:'호주 첫 여성 총리' }
+  ],
+  'Kyoto University': [
+    { name:'야마나카 신야', role:'노벨 의학상, iPS세포 발견' },
+    { name:'후쿠이 겐이치', role:'노벨 화학상 수상자' },
+    { name:'가와바타 야스나리', role:'노벨 문학상 수상 작가' }
+  ],
+  'Osaka University': [
+    { name:'지로 가와구치', role:'노벨 화학상 수상자' },
+    { name:'마나베 슈쿠로', role:'노벨 물리학상 수상자' },
+    { name:'마쓰시타 고노스케', role:'파나소닉 창업자' }
+  ],
+  'Ludwig-Maximilians-Universität München': [
+    { name:'막스 플랑크', role:'양자역학의 아버지' },
+    { name:'소피 숄', role:'백장미단 저항운동가' },
+    { name:'빌헬름 뢴트겐', role:'X선 발견, 노벨 물리학상' }
+  ],
+  'KU Leuven': [
+    { name:'게라르두스 메르카토르', role:'세계지도 투영법 창안' },
+    { name:'안드레아스 베살리우스', role:'근대 해부학의 아버지' },
+    { name:'헤노르흐 판 헤르시노', role:'유럽 법학 권위자' }
+  ],
+  'University of Amsterdam': [
+    { name:'스피노자', role:'철학자 (인근 학파 영향)' },
+    { name:'얀 팅베르겐', role:'최초 노벨 경제학상 수상자' },
+    { name:'맥스 유웰', role:'핵물리학 선구자' }
+  ],
+  'University of Copenhagen': [
+    { name:'닐스 보어', role:'원자모델 발견, 노벨 물리학상' },
+    { name:'쇠렌 키르케고르', role:'실존주의 철학의 아버지' },
+    { name:'하닝 망누스 옌센', role:'노벨 화학상 수상자' }
+  ],
+  'Lund University': [
+    { name:'칼 폰 린네', role:'생물 분류체계 창시자' },
+    { name:'알프레드 노벨', role:'노벨상 창시자' },
+    { name:'고스타 에크만', role:'스웨덴 영화계의 거장' }
+  ],
+  'Sorbonne Université': [
+    { name:'마리 퀴리', role:'노벨상 2회 수상자' },
+    { name:'르네 데카르트', role:'나는 생각한다, 고로 존재한다' },
+    { name:'시몬 드 보부아르', role:'페미니즘의 어머니' }
+  ],
+  'Durham University': [
+    { name:'줄리안 오피', role:'팝아트 아티스트' },
+    { name:'앤드루 마', role:'BBC 저널리스트' },
+    { name:'토니 블레어', role:'영국 前 총리' }
+  ],
+  'University of Glasgow': [
+    { name:'애덤 스미스', role:'국부론, 경제학의 아버지' },
+    { name:'제임스 와트', role:'증기기관 개량자' },
+    { name:'케빈 맥클라우드', role:'영국 건축 방송인' }
+  ],
+  'Trinity College Dublin': [
+    { name:'오스카 와일드', role:'도리언 그레이의 초상 저자' },
+    { name:'사뮈엘 베케트', role:'고도를 기다리며, 노벨 문학상' },
+    { name:'브램 스토커', role:'드라큘라 저자' }
+  ],
+  'Georgia Institute of Technology': [
+    { name:'지미 카터', role:'미국 제39대 대통령' },
+    { name:'루이스 바켈란드', role:'플라스틱(베이클라이트) 발명' },
+    { name:'제프 호킨스', role:'팜파일럿 발명가' }
+  ],
+  'University of Texas at Austin': [
+    { name:'마이클 델', role:'델 컴퓨터 창업자' },
+    { name:'로저 클레멘스', role:'메이저리그 전설 투수' },
+    { name:'조이스 캐롤 오츠', role:'퓰리처상 소설가' }
+  ],
+  'The University of Texas at Austin': [
+    { name:'마이클 델', role:'델 컴퓨터 창업자' },
+    { name:'마리아 운더그라운드', role:'실리콘밸리 여성 CEO 선구자' },
+    { name:'케빈 맥브라이드', role:'유명 건축가' }
+  ],
+  'University of Illinois Urbana-Champaign': [
+    { name:'마크 저커버그', role:'페이스북 개발 영감 (UIUC 연구 기반)' },
+    { name:'유저넷', role:'인터넷 초기 뉴스그룹 발명지' },
+    { name:'마크 앤드리슨', role:'모자이크/넷스케이프 브라우저 발명' }
+  ],
+  'Boston University': [
+    { name:'마틴 루터 킹', role:'나에게는 꿈이 있습니다, 박사학위' },
+    { name:'알렉산더 그레이엄 벨', role:'전화 발명가' },
+    { name:'에리카 알버트', role:'보스턴 여성 기업인 선구자' }
+  ],
+  'University of Washington': [
+    { name:'빌 게이츠', role:'마이크로소프트 창업자 (중퇴)' },
+    { name:'지미 헨드릭스', role:'록의 신, 기타 레전드' },
+    { name:'케니 로저스', role:'컨트리 뮤직의 전설' }
+  ],
+  'Fudan University': [
+    { name:'첸신', role:'중국 언어학의 아버지' },
+    { name:'탄쉐훙', role:'물리화학 선구자' },
+    { name:'야오밍', role:'NBA 스타 (복단 졸업)' }
+  ],
+  'Shanghai Jiao Tong University': [
+    { name:'장쩌민', role:'前 중국 국가주석' },
+    { name:'왕전이', role:'중국 우주개발의 아버지' },
+    { name:'덩샤오핑', role:'실용주의 개혁개방 지도자' }
+  ],
+  'Peking University': [
+    { name:'루쉰', role:'아Q정전, 중국 현대문학의 아버지' },
+    { name:'마오쩌둥', role:'도서관 직원으로 근무, 영향 받음' },
+    { name:'천두슈', role:'중국공산당 초대 총서기' }
+  ],
+  'Tsinghua University': [
+    { name:'시진핑', role:'중국 국가주석' },
+    { name:'양전닝', role:'노벨 물리학상 수상자' },
+    { name:'스티브 첸', role:'유튜브 공동 창업자' }
+  ],
+  'KAIST': [
+    { name:'이준호', role:'카이스트 AI 혁신 연구' },
+    { name:'박성하', role:'SK하이닉스 메모리 기술 총괄' },
+    { name:'장병탁', role:'대한민국 AI 연구의 선구자' }
+  ],
+  'University of California, Berkeley': [
+    { name:'스티브 워즈니악', role:'애플 공동 창업자' },
+    { name:'고든 무어', role:'인텔 공동 창업자, 무어의 법칙' },
+    { name:'어니스트 로렌스', role:'사이클로트론 발명, 노벨 물리학상' }
+  ],
+  'The University of Hong Kong': [
+    { name:'쑨원', role:'중화민국 건국 국부' },
+    { name:'도날드 창', role:'홍콩 前 행정장관' },
+    { name:'이형옥', role:'홍콩 의학계 선구자' }
+  ],
+  'UNSW Sydney': [
+    { name:'케빈 러드', role:'호주 전 총리' },
+    { name:'알렉산더 폴크', role:'광섬유 통신 선구자' },
+    { name:'존 코스텔로', role:'호주 재무장관 역임' }
+  ],
+  'Johns Hopkins University': [
+    { name:'마이클 블룸버그', role:'뉴욕 전 시장·블룸버그 창업자' },
+    { name:'레이첼 카슨', role:'침묵의 봄, 환경운동의 어머니' },
+    { name:'우드로 윌슨', role:'미국 제28대 대통령' }
+  ],
+  'University of Toronto': [
+    { name:'레스터 피어슨', role:'노벨평화상 수상, 캐나다 전 총리' },
+    { name:'프레더릭 밴팅', role:'인슐린 발견, 노벨 의학상' },
+    { name:'마샬 맥루한', role:'미디어는 메시지다, 미디어 이론가' }
+  ],
+  'Monash University': [
+    { name:'피터 코스텔로', role:'호주 재무장관, 경제 안정의 설계자' },
+    { name:'수잔 콜린스', role:'헝거게임 작가 (영향받은 대학)' },
+    { name:'마크 스콧', role:'호주 미디어 CEO' }
+  ],
+  'University of Queensland': [
+    { name:'피터 드호헤르티', role:'노벨 생리의학상 수상자' },
+    { name:'존 호크', role:'호주 전 총리' },
+    { name:'이안 프라이저', role:'자궁경부암 백신 HPV 개발자' }
+  ],
+  'The Chinese University of Hong Kong': [
+    { name:'탕치왕', role:'홍콩 대표 언론인' },
+    { name:'렁준잉', role:'홍콩 前 행정장관' },
+    { name:'찰스 카오', role:'광섬유 통신 개척, 노벨 물리학상' }
+  ],
+  'Institut Polytechnique de Paris': [
+    { name:'앙리 푸앵카레', role:'수학·물리학의 거인' },
+    { name:'시메옹 드니 푸아송', role:'확률론·수리물리학 선구자' },
+    { name:'앙페르', role:'전자기학의 개척자' }
+  ],
+  'University of California, Los Angeles': [
+    { name:'프랜시스 포드 코폴라', role:'대부 감독, 아카데미상 수상' },
+    { name:'카림 압둘자바', role:'NBA 역대 최다 득점자' },
+    { name:'재키 로빈슨', role:'메이저리그 흑인 최초 진출 선수' }
+  ],
+  'National Taiwan University': [
+    { name:'리덩후이', role:'대만 최초 민선 총통' },
+    { name:'천수이볜', role:'대만 전 총통' },
+    { name:'이위안저', role:'노벨 화학상 수상자' }
+  ],
+  'Hong Kong Polytechnic University': [
+    { name:'리우칭', role:'중국 테크 혁신 리더' },
+    { name:'레지나 입', role:'홍콩 보안국장 역임' },
+    { name:'허킨청', role:'홍콩 영화·문화계 선구자' }
+  ],
+  'University of Bristol': [
+    { name:'폴 디랙', role:'양자역학 창시자, 노벨 물리학상' },
+    { name:'앨리스 로버츠', role:'BBC 과학 방송인·해부학자' },
+    { name:'데이비드 렌트', role:'영국 영화감독' }
+  ],
+  'University of Auckland': [
+    { name:'에드먼드 힐러리', role:'에베레스트 초등정자' },
+    { name:'앨런 맥디아미드', role:'노벨 화학상 수상자' },
+    { name:'앤 파인', role:'뉴질랜드 아동문학 작가' }
+  ],
+  'University of Warwick': [
+    { name:'이마누엘 월러스틴', role:'세계체제론 창시자' },
+    { name:'루스 패딩턴', role:'영국 대표 경제학자' },
+    { name:'아나 브라가', role:'브라질 외교관, UN 대사' }
+  ],
+  'University of Birmingham': [
+    { name:'네빌 챔버레인', role:'영국 前 총리' },
+    { name:'오지 오스본', role:'블랙 사바스 보컬, 록의 전설' },
+    { name:'J.R.R. 톨킨', role:'반지의 제왕 저자 (교수 역임)' }
+  ],
+  'City University of Hong Kong': [
+    { name:'찰스 카오', role:'광섬유 통신 노벨상 수상자' },
+    { name:'조셉 레이', role:'홍콩 엔터테인먼트 기업인' },
+    { name:'에디슨 첸', role:'홍콩 배우·패션 아이콘' }
+  ],
+  'University of Zurich': [
+    { name:'알버트 아인슈타인', role:'특수상대성이론 (박사학위 취득)' },
+    { name:'레닌', role:'망명 시기 취리히 거주, 사상 형성' },
+    { name:'제임스 조이스', role:'율리시스 저자, 취리히 집필' }
+  ],
+  'KTH Royal Institute of Technology': [
+    { name:'라르스 에릭손', role:'에릭슨 통신 창업자' },
+    { name:'구스타프 드 라발', role:'증기 터빈 발명가' },
+    { name:'다그 함마르셸드', role:'UN 사무총장, 노벨평화상' }
+  ],
+  'Université Paris-Saclay': [
+    { name:'이렌 졸리오퀴리', role:'인공방사능 발견, 노벨 화학상' },
+    { name:'루이 드 브로이', role:'파동-입자 이중성, 노벨 물리학상' },
+    { name:'피에르 쉬레', role:'프랑스 공학 혁신의 상징' }
+  ],
+  'University of California, San Diego': [
+    { name:'마리오 몰리나', role:'오존층 파괴 연구, 노벨 화학상' },
+    { name:'프랜시스 크릭', role:'DNA 이중나선 발견 (UCSD 교수)' },
+    { name:'테드 넬슨', role:'하이퍼텍스트 개념 창안자' }
+  ],
+  'Nanjing University': [
+    { name:'궈모러', role:'중국 현대 고고학의 아버지' },
+    { name:'쉬베이훙', role:'중국 근대 회화의 거장' },
+    { name:'우젠슝', role:'물리학계 퀴리 부인, 여성 과학 선구자' }
+  ],
+  'University of Leeds': [
+    { name:'줄리아 클라리지', role:'영국 문화계 선구자' },
+    { name:'노먼 포스터', role:'세계적 건축가 (학부 출신)' },
+    { name:'마크 E. 스미스', role:'포스트펑크 밴드 더 폴 리더' }
+  ],
+  'Heidelberg University': [
+    { name:'헬무트 콜', role:'독일 재통일의 아버지, 前 총리' },
+    { name:'막스 베버', role:'사회학의 아버지' },
+    { name:'게오르크 헤겔', role:'관념철학의 거장' }
+  ],
+  'University of Western Australia': [
+    { name:'배리 마셜', role:'헬리코박터균 발견, 노벨 의학상' },
+    { name:'킴 스콧', role:'부커상 수상 작가' },
+    { name:'로버트 한슨', role:'호주 IT 혁신가' }
+  ],
+  'Politecnico di Milano': [
+    { name:'엔초 페라리', role:'페라리 창업자 (영향받은 도시)' },
+    { name:'조르조 아르마니', role:'패션 황제' },
+    { name:'렌초 피아노', role:'퐁피두센터 설계, 건축의 거장' }
+  ],
+  'University of Adelaide': [
+    { name:'로렌스 브래그', role:'X선 결정학 노벨상, 역대 최연소 수상' },
+    { name:'하워드 플로리', role:'페니실린 개발, 노벨 의학상' },
+    { name:'닉 로우', role:'호주 록 뮤지션' }
+  ],
+  'Pennsylvania State University': [
+    { name:'리드 해스팅스', role:'넷플릭스 공동 창업자' },
+    { name:'조 파테르노', role:'미국 대학풋볼 전설 감독' },
+    { name:'로이스 크레이머', role:'여성 우주항공 선구자' }
+  ],
+  'University of Sheffield': [
+    { name:'한스 크레브스', role:'크레브스 회로 발견, 노벨 의학상' },
+    { name:'헨리 브레스테드', role:'이집트 고고학의 아버지' },
+    { name:'로날드 드워킨', role:'현대 법철학의 거두' }
+  ],
+  'Uppsala University': [
+    { name:'칼 폰 린네', role:'생물 분류체계의 아버지' },
+    { name:'안데르스 셀시우스', role:'섭씨 온도계 발명자' },
+    { name:'다그 함마르셸드', role:'UN 사무총장, 노벨평화상' }
+  ],
+  'Freie Universität Berlin': [
+    { name:'오토 자이마이어', role:'동유럽 민주화 연구 선구자' },
+    { name:'존 F. 케네디', role:'이히 빈 아인 베를리너 연설 (방문)' },
+    { name:'로버트 F. 케네디', role:'자유베를린 대학 명예시민' }
+  ],
+  'University of Nottingham': [
+    { name:'제시 부트', role:'부츠 약국 체인 창업자' },
+    { name:'에밀리 화이트헤드', role:'암 치료 혁신의 상징' },
+    { name:'아나야 요크', role:'영국 생명공학 여성 기업인' }
+  ],
+  'University of Alberta': [
+    { name:'마이클 무어', role:'다큐멘터리 감독 (캐나다 연구)' },
+    { name:'헤일 아브라함', role:'캐나다 의학 혁신가' },
+    { name:'얼 닐슨', role:'캐나다 에너지 경제 선구자' }
+  ],
+  'Institute of Science Tokyo': [
+    { name:'오키나와 야마자키', role:'재료공학 혁신 연구자' },
+    { name:'다나카 고이치', role:'노벨 화학상, 단백질 분석' },
+    { name:'가와니시 히사시', role:'일본 우주개발 리더' }
+  ],
+  'University of Technology Sydney': [
+    { name:'닉 채스마', role:'호주 테크 스타트업 개척자' },
+    { name:'데이비드 왓슨', role:'호주 미디어 혁신가' },
+    { name:'멜리사 반 다이크', role:'호주 여성 엔지니어링 선구자' }
+  ],
+  'University of Wisconsin–Madison': [
+    { name:'존 뮤어', role:'국립공원의 아버지, 자연보호 선구자' },
+    { name:'프레더릭 잭슨 터너', role:'프론티어 이론, 역사학자' },
+    { name:'에릭 하이든', role:'동계올림픽 5관왕 스케이터' }
+  ],
+  'Ohio State University': [
+    { name:'제시 오언스', role:'베를린 올림픽 4관왕 육상 영웅' },
+    { name:'잭 니클라우스', role:'골프 황제, 그랜드슬램 18회' },
+    { name:'닐 암스트롱', role:'인류 최초 달 착륙 (항공우주 연구 연계)' }
+  ],
+  'University of California, Santa Barbara': [
+    { name:'허버트 크뢰머', role:'반도체 이종접합, 노벨 물리학상' },
+    { name:'월터 코흔', role:'밀도 범함수 이론, 노벨 화학상' },
+    { name:'앨런 히거', role:'전도성 고분자 발견, 노벨 화학상' }
+  ],
+  'Universität Berlin (TU Berlin)': [
+    { name:'헬무트 뉴턴', role:'패션 사진의 전설' },
+    { name:'베르너 폰 지멘스', role:'지멘스 창업자' },
+    { name:'로타 드 마에지에르', role:'독일 전 총리 (동독)' }
+  ],
+  'University of Malaya': [
+    { name:'마하티르 모하마드', role:'말레이시아 전 총리, 아시아 호랑이 설계자' },
+    { name:'안와르 이브라힘', role:'말레이시아 현 총리' },
+    { name:'주린 안타라방사', role:'말레이시아 외교 선구자' }
+  ],
+  'University of Liverpool': [
+    { name:'폴 매카트니', role:'비틀즈 멤버 (리버풀 예술학교)' },
+    { name:'존 레논', role:'비틀즈 리더 (리버풀 예술학교)' },
+    { name:'리버 피닉스', role:'영화배우 (리버풀과 예술적 연관)' }
+  ],
+  'University of São Paulo': [
+    { name:'루이스 이나시우 룰라 다 시우바', role:'브라질 대통령' },
+    { name:'아이르통 세나', role:'F1 레이싱 전설 (공학 연구 배경)' },
+    { name:'세르지우 마이엘로', role:'브라질 노벨의학 연구자' }
+  ],
+  'Dartmouth College': [
+    { name:'넬슨 록펠러', role:'미국 제41대 부통령' },
+    { name:'티모시 가이트너', role:'전 미 재무장관' },
+    { name:'민디 캘링', role:'배우·작가·제작자' }
+  ],
+  'Georgetown University': [
+    { name:'빌 클린턴', role:'미국 제42대 대통령' },
+    { name:'앤터닌 스칼리아', role:'미 연방 대법관' },
+    { name:'존 케리', role:'전 국무장관' }
+  ],
+  'Emory University': [
+    { name:'마셜 니런버그', role:'노벨 생리학·의학상 수상자' },
+    { name:'케니 로저스', role:'컨트리 음악의 전설' },
+    { name:'제임스 레이니', role:'전 주한 미국 대사' }
+  ],
+  'Vanderbilt University': [
+    { name:'앨 고어', role:'미국 제45대 부통령·노벨 평화상' },
+    { name:'에이미 그랜트', role:'CCM 팝스타' },
+    { name:'라마 알렉산더', role:'전 테네시 주지사·상원의원' }
+  ],
+  'Washington University in St. Louis': [
+    { name:'테네시 윌리엄스', role:'퓰리처상 수상 극작가 (수강)' },
+    { name:'러스 파인골드', role:'전 위스콘신 상원의원' },
+    { name:'찰스 구겐하임', role:'아카데미상 수상 다큐멘터리 감독' }
+  ],
+  'University of North Carolina at Chapel Hill': [
+    { name:'마이클 조던', role:'NBA 역사상 최고의 농구선수' },
+    { name:'앤디 그리피스', role:'배우·코미디언' },
+    { name:'제임스 K. 포크', role:'미국 제11대 대통령' }
+  ],
+  'Purdue University': [
+    { name:'닐 암스트롱', role:'인류 최초 달 착륙 우주비행사' },
+    { name:'거스 그리섬', role:'머큐리·제미니 우주비행사' },
+    { name:'드류 브리스', role:'NFL 수퍼볼 MVP 쿼터백' }
+  ],
+  'University of Maryland': [
+    { name:'케빈 듀란트', role:'NBA MVP·올림픽 금메달리스트' },
+    { name:'세르게이 브린', role:'구글 공동창업자 (MS 취득)' },
+    { name:'코니 청', role:'NBC 앵커·방송 저널리스트' }
+  ],
+  'University of Miami': [
+    { name:'실베스터 스탤론', role:'할리우드 액션 스타 (수료)' },
+    { name:'글로리아 에스테판', role:'라틴 팝의 여왕' },
+    { name:'레이 리오타', role:'굿펠라스 주연 배우' }
+  ],
+  'Case Western Reserve University': [
+    { name:'폴 부케이트', role:'Gmail 창시자' },
+    { name:'찰스 F. 케터링', role:'자동차 전기 시동장치 발명가' },
+    { name:'뉴턴 베이커', role:'전 미 육군장관' }
+  ],
+  'Villanova University': [
+    { name:'하위 롱', role:'NFL 명예의 전당 수비수' },
+    { name:'에드 렌델', role:'전 펜실베이니아 주지사' },
+    { name:'카일 라우리', role:'NBA 올스타 포인트가드' }
+  ]
+};
+
+function getAlumni(uni) {
+  return FAMOUS_ALUMNI[uni.name] || null;
+}
+
+function renderAlumniRow(alumni) {
+  if (!alumni || alumni.length === 0) return '';
+  const cards = alumni.map(a => `
+    <div class="alumni-card">
+      <div class="alumni-pixel">${renderPersonPixel(a.name)}</div>
+      <div class="alumni-info">
+        <div class="alumni-name">${a.name}</div>
+        <div class="alumni-role">${a.role}</div>
+      </div>
+    </div>`).join('');
+  return `<div class="alumni-row">${cards}</div>`;
+}
+
+function getSeasonName(month) {
+  if ([3, 4].includes(month)) return '봄';
+  if ([6, 7].includes(month)) return '여름';
+  if ([2, 5, 8].includes(month)) return '환절기';
+  if ([9, 10].includes(month)) return '가을';
+  return '겨울';
+}
+
+function getUniCountry(uni) {
+  if (uni.country) return uni.country;
+  const n = uni.name || '';
+  if (/London|Oxford|Cambridge|Edinburgh|Manchester|Imperial|UCL|King's College|LSE|Warwick|Bristol/.test(n)) return 'UK';
+  if (/MIT|Stanford|Harvard|Yale|Princeton|Columbia|Cornell|Penn|Chicago|UCLA|NYU|USC|Carnegie|Brown|Johns Hopkins|Duke|Northwestern|Michigan|Caltech|Vanderbilt|Notre Dame|Emory|Rice|Washington|Purdue|Georgia/.test(n)) return 'USA';
+  if (/Munich|Berlin|Heidelberg|TUM|RWTH|Stuttgart|Dresden|Karlsruhe|Hamburg/.test(n)) return 'Germany';
+  if (/Paris|Sorbonne|PSL|Polytechnique|Sciences Po/.test(n)) return 'France';
+  if (/ETH|EPFL|Zurich|Geneva|Lausanne/.test(n)) return 'Switzerland';
+  if (/Singapore|NUS|NTU|Nanyang/.test(n)) return 'Singapore';
+  if (/Tokyo|Kyoto|Osaka|Tohoku|Nagoya|Keio|Waseda/.test(n)) return 'Japan';
+  if (/KAIST|Seoul|Yonsei|POSTECH|Korea University/.test(n)) return 'Korea';
+  if (/Toronto|McGill|British Columbia|UBC|Waterloo|Alberta|Montreal/.test(n)) return 'Canada';
+  if (/Peking|Tsinghua|Fudan|Shanghai|Zhejiang|Nanjing/.test(n)) return 'China';
+  if (/Hong Kong/.test(n)) return 'Hong Kong';
+  if (/Melbourne|Sydney|Australian|Queensland|Monash|UNSW|Adelaide/.test(n)) return 'Australia';
+  if (/Delft|Leiden|Amsterdam|Utrecht|Eindhoven|Groningen/.test(n)) return 'Netherlands';
+  if (/Copenhagen|DTU/.test(n)) return 'Denmark';
+  if (/Karolinska|Stockholm|KTH|Lund|Uppsala/.test(n)) return 'Sweden';
+  if (/Louvain|Ghent|Brussels/.test(n)) return 'Belgium';
+  if (/Dublin|Trinity College, Dublin/.test(n)) return 'Ireland';
+  return '';
+}
+
+// ─── 대학 좌표 ──────────────────────────────────────────────────────────────
+
+const UNIVERSITY_COORDS = {
+  'Massachusetts Institute of Technology':          {lat:42.36,lng:-71.09,city:'케임브리지',flag:'🇺🇸'},
+  'Harvard University':                             {lat:42.37,lng:-71.12,city:'보스턴',flag:'🇺🇸'},
+  'Tufts University':                               {lat:42.41,lng:-71.12,city:'보스턴',flag:'🇺🇸'},
+  'Yale University':                                {lat:41.31,lng:-72.92,city:'뉴헤이번',flag:'🇺🇸'},
+  'Princeton University':                           {lat:40.35,lng:-74.66,city:'프린스턴',flag:'🇺🇸'},
+  'Columbia University':                            {lat:40.81,lng:-73.96,city:'뉴욕',flag:'🇺🇸'},
+  'New York University':                            {lat:40.73,lng:-73.99,city:'뉴욕',flag:'🇺🇸'},
+  'Cornell University':                             {lat:42.45,lng:-76.48,city:'이타카',flag:'🇺🇸'},
+  'University of Pennsylvania':                     {lat:39.95,lng:-75.19,city:'필라델피아',flag:'🇺🇸'},
+  'Johns Hopkins University':                       {lat:39.33,lng:-76.62,city:'볼티모어',flag:'🇺🇸'},
+  'Brown University':                               {lat:41.83,lng:-71.40,city:'프로비던스',flag:'🇺🇸'},
+  'Dartmouth College':                              {lat:43.70,lng:-72.29,city:'하노버',flag:'🇺🇸'},
+  'Georgetown University':                          {lat:38.91,lng:-77.07,city:'워싱턴',flag:'🇺🇸'},
+  'University of Virginia':                         {lat:38.03,lng:-78.51,city:'샬러츠빌',flag:'🇺🇸'},
+  'University of Rochester':                        {lat:43.13,lng:-77.63,city:'로체스터',flag:'🇺🇸'},
+  'University of Chicago':                          {lat:41.79,lng:-87.60,city:'시카고',flag:'🇺🇸'},
+  'Northwestern University':                        {lat:42.06,lng:-87.68,city:'에번스턴',flag:'🇺🇸'},
+  'University of Michigan-Ann Arbor':               {lat:42.29,lng:-83.72,city:'앤아버',flag:'🇺🇸'},
+  'Carnegie Mellon University':                     {lat:40.44,lng:-79.94,city:'피츠버그',flag:'🇺🇸'},
+  'University of Notre Dame':                       {lat:41.70,lng:-86.24,city:'사우스벤드',flag:'🇺🇸'},
+  'Washington University in St. Louis':             {lat:38.65,lng:-90.31,city:'세인트루이스',flag:'🇺🇸'},
+  'Vanderbilt University':                          {lat:36.14,lng:-86.80,city:'내슈빌',flag:'🇺🇸'},
+  'Duke University':                                {lat:36.00,lng:-78.94,city:'더럼',flag:'🇺🇸'},
+  'Emory University':                               {lat:33.79,lng:-84.32,city:'애틀랜타',flag:'🇺🇸'},
+  'Georgia Institute of Technology':                {lat:33.77,lng:-84.40,city:'애틀랜타',flag:'🇺🇸'},
+  'University of North Carolina at Chapel Hill':    {lat:35.91,lng:-79.05,city:'채플힐',flag:'🇺🇸'},
+  'University of Maryland':                         {lat:38.99,lng:-76.94,city:'칼리지파크',flag:'🇺🇸'},
+  'Purdue University':                              {lat:40.43,lng:-86.92,city:'웨스트라파예트',flag:'🇺🇸'},
+  'Case Western Reserve University':               {lat:41.51,lng:-81.61,city:'클리블랜드',flag:'🇺🇸'},
+  'Villanova University':                           {lat:40.04,lng:-75.34,city:'빌라노바',flag:'🇺🇸'},
+  'University of Miami':                            {lat:25.72,lng:-80.28,city:'마이애미',flag:'🇺🇸'},
+  'Rice University':                                {lat:29.72,lng:-95.40,city:'휴스턴',flag:'🇺🇸'},
+  'University of Texas at Austin':                  {lat:30.29,lng:-97.74,city:'오스틴',flag:'🇺🇸'},
+  'Stanford University':                            {lat:37.42,lng:-122.17,city:'스탠퍼드',flag:'🇺🇸'},
+  'University of California, Berkeley':             {lat:37.87,lng:-122.26,city:'버클리',flag:'🇺🇸'},
+  'University of California, Los Angeles':          {lat:34.07,lng:-118.44,city:'LA',flag:'🇺🇸'},
+  'University of Southern California':              {lat:34.02,lng:-118.29,city:'LA',flag:'🇺🇸'},
+  'California Institute of Technology':             {lat:34.14,lng:-118.13,city:'패서디나',flag:'🇺🇸'},
+  'University of Washington':                       {lat:47.66,lng:-122.31,city:'시애틀',flag:'🇺🇸'},
+  'University of Oxford':                           {lat:51.75,lng:-1.25, city:'옥스퍼드',flag:'🇬🇧'},
+  'University of Cambridge':                        {lat:52.20,lng:0.12,  city:'케임브리지',flag:'🇬🇧'},
+  'Imperial College London':                        {lat:51.50,lng:-0.18, city:'런던',flag:'🇬🇧'},
+  'University College London':                      {lat:51.52,lng:-0.13, city:'런던',flag:'🇬🇧'},
+  "King's College London":                          {lat:51.51,lng:-0.12, city:'런던',flag:'🇬🇧'},
+  'London School of Economics and Political Science':{lat:51.51,lng:-0.12,city:'런던',flag:'🇬🇧'},
+  'University of Edinburgh':                        {lat:55.95,lng:-3.19, city:'에든버러',flag:'🇬🇧'},
+  'University of Manchester':                       {lat:53.47,lng:-2.23, city:'맨체스터',flag:'🇬🇧'},
+  'University of Birmingham':                       {lat:52.45,lng:-1.93, city:'버밍엄',flag:'🇬🇧'},
+  'University of Sheffield':                        {lat:53.38,lng:-1.48, city:'셰필드',flag:'🇬🇧'},
+  'University of Nottingham':                       {lat:52.94,lng:-1.19, city:'노팅엄',flag:'🇬🇧'},
+  'University of Bristol':                          {lat:51.46,lng:-2.60, city:'브리스틀',flag:'🇬🇧'},
+  'University of Leeds':                            {lat:53.80,lng:-1.55, city:'리즈',flag:'🇬🇧'},
+  'University of Southampton':                      {lat:50.93,lng:-1.40, city:'사우샘프턴',flag:'🇬🇧'},
+  'University of Warwick':                          {lat:52.38,lng:-1.56, city:'코번트리',flag:'🇬🇧'},
+  'University of Glasgow':                          {lat:55.87,lng:-4.29, city:'글래스고',flag:'🇬🇧'},
+  'ETH Zurich':                                     {lat:47.38,lng:8.55,  city:'취리히',flag:'🇨🇭'},
+  'EPFL':                                           {lat:46.52,lng:6.57,  city:'로잔',flag:'🇨🇭'},
+  'University of Zurich':                           {lat:47.37,lng:8.55,  city:'취리히',flag:'🇨🇭'},
+  'University of Geneva':                           {lat:46.20,lng:6.14,  city:'제네바',flag:'🇨🇭'},
+  'Sorbonne University':                            {lat:48.85,lng:2.35,  city:'파리',flag:'🇫🇷'},
+  'PSL Research University':                        {lat:48.85,lng:2.35,  city:'파리',flag:'🇫🇷'},
+  'LMU Munich':                                     {lat:48.15,lng:11.58, city:'뮌헨',flag:'🇩🇪'},
+  'Technical University of Munich':                 {lat:48.15,lng:11.57, city:'뮌헨',flag:'🇩🇪'},
+  'Heidelberg University':                          {lat:49.41,lng:8.71,  city:'하이델베르크',flag:'🇩🇪'},
+  'Humboldt University of Berlin':                  {lat:52.52,lng:13.40, city:'베를린',flag:'🇩🇪'},
+  'Delft University of Technology':                 {lat:52.00,lng:4.37,  city:'델프트',flag:'🇳🇱'},
+  'University of Amsterdam':                        {lat:52.37,lng:4.90,  city:'암스테르담',flag:'🇳🇱'},
+  'Leiden University':                              {lat:52.16,lng:4.48,  city:'레이던',flag:'🇳🇱'},
+  'Wageningen University':                          {lat:51.97,lng:5.67,  city:'바헤닝언',flag:'🇳🇱'},
+  'Eindhoven University of Technology':             {lat:51.45,lng:5.49,  city:'에인트호번',flag:'🇳🇱'},
+  'Utrecht University':                             {lat:52.09,lng:5.12,  city:'위트레흐트',flag:'🇳🇱'},
+  'KU Leuven':                                      {lat:50.88,lng:4.70,  city:'루뱅',flag:'🇧🇪'},
+  'Ghent University':                               {lat:51.05,lng:3.72,  city:'겐트',flag:'🇧🇪'},
+  'Uppsala University':                             {lat:59.86,lng:17.63, city:'웁살라',flag:'🇸🇪'},
+  'Lund University':                                {lat:55.71,lng:13.20, city:'룬드',flag:'🇸🇪'},
+  'KTH Royal Institute of Technology':              {lat:59.35,lng:18.07, city:'스톡홀름',flag:'🇸🇪'},
+  'Karolinska Institute':                           {lat:59.35,lng:18.03, city:'스톡홀름',flag:'🇸🇪'},
+  'University of Copenhagen':                       {lat:55.69,lng:12.57, city:'코펜하겐',flag:'🇩🇰'},
+  'Technical University of Denmark':                {lat:55.79,lng:12.52, city:'코펜하겐',flag:'🇩🇰'},
+  'University of Oslo':                             {lat:59.94,lng:10.72, city:'오슬로',flag:'🇳🇴'},
+  'University of Helsinki':                         {lat:60.17,lng:24.95, city:'헬싱키',flag:'🇫🇮'},
+  'Aalto University':                               {lat:60.19,lng:24.83, city:'헬싱키',flag:'🇫🇮'},
+  'University College Dublin':                      {lat:53.31,lng:-6.22, city:'더블린',flag:'🇮🇪'},
+  'Trinity College Dublin':                         {lat:53.34,lng:-6.25, city:'더블린',flag:'🇮🇪'},
+  'University of Toronto':                          {lat:43.66,lng:-79.39,city:'토론토',flag:'🇨🇦'},
+  'McGill University':                              {lat:45.51,lng:-73.58,city:'몬트리올',flag:'🇨🇦'},
+  'University of British Columbia':                 {lat:49.27,lng:-123.25,city:'밴쿠버',flag:'🇨🇦'},
+  'University of Alberta':                          {lat:53.52,lng:-113.52,city:'에드먼턴',flag:'🇨🇦'},
+  'University of Melbourne':                        {lat:-37.80,lng:144.96,city:'멜버른',flag:'🇦🇺'},
+  'University of Sydney':                           {lat:-33.89,lng:151.20,city:'시드니',flag:'🇦🇺'},
+  'Australian National University':                 {lat:-35.28,lng:149.12,city:'캔버라',flag:'🇦🇺'},
+  'University of Queensland':                       {lat:-27.50,lng:153.01,city:'브리즈번',flag:'🇦🇺'},
+  'Monash University':                              {lat:-37.91,lng:145.13,city:'멜버른',flag:'🇦🇺'},
+  'University of New South Wales':                  {lat:-33.92,lng:151.23,city:'시드니',flag:'🇦🇺'},
+  'University of Western Australia':                {lat:-31.98,lng:115.82,city:'퍼스',flag:'🇦🇺'},
+  'The University of Tokyo':                        {lat:35.71,lng:139.76, city:'도쿄',flag:'🇯🇵'},
+  'Kyoto University':                               {lat:35.03,lng:135.78, city:'교토',flag:'🇯🇵'},
+  'Osaka University':                               {lat:34.69,lng:135.50, city:'오사카',flag:'🇯🇵'},
+  'Tohoku University':                              {lat:38.26,lng:140.87, city:'센다이',flag:'🇯🇵'},
+  'Tokyo Institute of Technology':                  {lat:35.60,lng:139.68, city:'도쿄',flag:'🇯🇵'},
+  'Nagoya University':                              {lat:35.16,lng:136.97, city:'나고야',flag:'🇯🇵'},
+  'Hokkaido University':                            {lat:43.08,lng:141.34, city:'삿포로',flag:'🇯🇵'},
+  'Seoul National University':                      {lat:37.46,lng:126.95, city:'서울',flag:'🇰🇷'},
+  'Yonsei University':                              {lat:37.57,lng:126.94, city:'서울',flag:'🇰🇷'},
+  'KAIST':                                          {lat:36.37,lng:127.36, city:'대전',flag:'🇰🇷'},
+  'Korea University':                               {lat:37.59,lng:127.03, city:'서울',flag:'🇰🇷'},
+  'POSTECH':                                        {lat:36.02,lng:129.32, city:'포항',flag:'🇰🇷'},
+  'National University of Singapore':               {lat:1.30, lng:103.82, city:'싱가포르',flag:'🇸🇬'},
+  'Nanyang Technological University':               {lat:1.35, lng:103.68, city:'싱가포르',flag:'🇸🇬'},
+  'Peking University':                              {lat:39.99,lng:116.31, city:'베이징',flag:'🇨🇳'},
+  'Tsinghua University':                            {lat:40.00,lng:116.33, city:'베이징',flag:'🇨🇳'},
+  'Fudan University':                               {lat:31.30,lng:121.50, city:'상하이',flag:'🇨🇳'},
+  'Zhejiang University':                            {lat:30.31,lng:120.09, city:'항저우',flag:'🇨🇳'},
+  'Shanghai Jiao Tong University':                  {lat:31.20,lng:121.42, city:'상하이',flag:'🇨🇳'},
+  'Nanjing University':                             {lat:32.06,lng:118.80, city:'난징',flag:'🇨🇳'},
+  'Wuhan University':                               {lat:30.54,lng:114.36, city:'우한',flag:'🇨🇳'},
+  'University of Science and Technology of China':  {lat:31.84,lng:117.25, city:'허페이',flag:'🇨🇳'},
+  'The University of Hong Kong':                    {lat:22.28,lng:114.14, city:'홍콩',flag:'🇭🇰'},
+  'The Hong Kong University of Science and Technology':{lat:22.34,lng:114.27,city:'홍콩',flag:'🇭🇰'},
+  'The Chinese University of Hong Kong':            {lat:22.42,lng:114.21, city:'홍콩',flag:'🇭🇰'},
+  'City University of Hong Kong':                   {lat:22.34,lng:114.17, city:'홍콩',flag:'🇭🇰'},
+  'National Taiwan University':                     {lat:25.02,lng:121.53, city:'타이베이',flag:'🇹🇼'},
+  'Indian Institute of Technology Bombay':          {lat:19.13,lng:72.91,  city:'뭄바이',flag:'🇮🇳'},
+  'Indian Institute of Technology Delhi':           {lat:28.54,lng:77.19,  city:'델리',flag:'🇮🇳'},
+  'Indian Institute of Science':                    {lat:13.02,lng:77.57,  city:'방갈로르',flag:'🇮🇳'},
+  'University of São Paulo':                        {lat:-23.56,lng:-46.73,city:'상파울루',flag:'🇧🇷'},
+  'University of Cape Town':                        {lat:-33.96,lng:18.46, city:'케이프타운',flag:'🇿🇦'},
+  // ── 추가 누락분 ───────────────────────────────────
+  'UNSW Sydney':                                    {lat:-33.92,lng:151.23, city:'시드니',flag:'🇦🇺'},
+  "King's College London":                          {lat:51.51, lng:-0.12,  city:'런던',flag:'🇬🇧'},
+  'PSL – Paris Sciences et Lettres':                {lat:48.85, lng:2.35,   city:'파리',flag:'🇫🇷'},
+  'Institut Polytechnique de Paris':                {lat:48.71, lng:2.21,   city:'팔레조',flag:'🇫🇷'},
+  'Hong Kong Polytechnic University':               {lat:22.30, lng:114.18, city:'홍콩',flag:'🇭🇰'},
+  'University of Michigan':                         {lat:42.29, lng:-83.72, city:'앤아버',flag:'🇺🇸'},
+  'Ludwig-Maximilians-Universität München':         {lat:48.15, lng:11.58,  city:'뮌헨',flag:'🇩🇪'},
+  'London School of Economics':                     {lat:51.51, lng:-0.12,  city:'런던',flag:'🇬🇧'},
+  'University of Auckland':                         {lat:-36.85,lng:174.77, city:'오클랜드',flag:'🇳🇿'},
+  'KAIST Graduate School':                          {lat:36.02, lng:129.32, city:'포항',flag:'🇰🇷'},
+  'Durham University':                              {lat:54.77, lng:-1.58,  city:'더럼',flag:'🇬🇧'},
+  'The University of Texas at Austin':              {lat:30.29, lng:-97.74, city:'오스틴',flag:'🇺🇸'},
+  'Sorbonne Université':                            {lat:48.85, lng:2.35,   city:'파리',flag:'🇫🇷'},
+  'University of Illinois Urbana-Champaign':        {lat:40.11, lng:-88.23, city:'어배너',flag:'🇺🇸'},
+  'Université Paris-Saclay':                        {lat:48.71, lng:2.17,   city:'사클레',flag:'🇫🇷'},
+  'University of California, San Diego':            {lat:32.88, lng:-117.24,city:'샌디에이고',flag:'🇺🇸'},
+  'Politecnico di Milano':                          {lat:45.48, lng:9.23,   city:'밀라노',flag:'🇮🇹'},
+  'University of Adelaide':                         {lat:-34.92,lng:138.60, city:'애들레이드',flag:'🇦🇺'},
+  'Pennsylvania State University':                  {lat:40.80, lng:-77.86, city:'스테이트칼리지',flag:'🇺🇸'},
+  'Boston University':                              {lat:42.35, lng:-71.10, city:'보스턴',flag:'🇺🇸'},
+  'Freie Universität Berlin':                       {lat:52.45, lng:13.29,  city:'베를린',flag:'🇩🇪'},
+  'Institute of Science Tokyo':                     {lat:35.60, lng:139.68, city:'도쿄',flag:'🇯🇵'},
+  'University of Technology Sydney':               {lat:-33.88,lng:151.20, city:'시드니',flag:'🇦🇺'},
+  'University of Wisconsin–Madison':                {lat:43.07, lng:-89.41, city:'매디슨',flag:'🇺🇸'},
+  'Ohio State University':                          {lat:39.99, lng:-83.03, city:'콜럼버스',flag:'🇺🇸'},
+  'University of California, Santa Barbara':        {lat:34.41, lng:-119.85,city:'샌타바버라',flag:'🇺🇸'},
+  'Universität Berlin (TU Berlin)':                 {lat:52.51, lng:13.33,  city:'베를린',flag:'🇩🇪'},
+  'University of Malaya':                           {lat:3.12,  lng:101.65, city:'쿠알라룸푸르',flag:'🇲🇾'},
+  'University of Liverpool':                        {lat:53.41, lng:-2.97,  city:'리버풀',flag:'🇬🇧'},
+};
+
+// 국가명 → 대표 도시 좌표 + 플래그 fallback
+const COUNTRY_COORDS = {
+  'USA':         {lat:38.9,  lng:-77.0,  city:'미국',      flag:'🇺🇸'},
+  'UK':          {lat:51.5,  lng:-0.1,   city:'영국',      flag:'🇬🇧'},
+  'Germany':     {lat:52.5,  lng:13.4,   city:'독일',      flag:'🇩🇪'},
+  'France':      {lat:48.9,  lng:2.3,    city:'프랑스',    flag:'🇫🇷'},
+  'Switzerland': {lat:47.4,  lng:8.5,    city:'스위스',    flag:'🇨🇭'},
+  'Netherlands': {lat:52.4,  lng:4.9,    city:'네덜란드',  flag:'🇳🇱'},
+  'Belgium':     {lat:50.9,  lng:4.7,    city:'벨기에',    flag:'🇧🇪'},
+  'Sweden':      {lat:59.3,  lng:18.1,   city:'스웨덴',    flag:'🇸🇪'},
+  'Denmark':     {lat:55.7,  lng:12.6,   city:'덴마크',    flag:'🇩🇰'},
+  'Norway':      {lat:59.9,  lng:10.7,   city:'노르웨이',  flag:'🇳🇴'},
+  'Finland':     {lat:60.2,  lng:25.0,   city:'핀란드',    flag:'🇫🇮'},
+  'Ireland':     {lat:53.3,  lng:-6.3,   city:'아일랜드',  flag:'🇮🇪'},
+  'Canada':      {lat:43.7,  lng:-79.4,  city:'캐나다',    flag:'🇨🇦'},
+  'Australia':   {lat:-33.9, lng:151.2,  city:'호주',      flag:'🇦🇺'},
+  'Japan':       {lat:35.7,  lng:139.7,  city:'일본',      flag:'🇯🇵'},
+  'Korea':       {lat:37.5,  lng:127.0,  city:'한국',      flag:'🇰🇷'},
+  'China':       {lat:39.9,  lng:116.4,  city:'중국',      flag:'🇨🇳'},
+  'Hong Kong':   {lat:22.3,  lng:114.2,  city:'홍콩',      flag:'🇭🇰'},
+  'Singapore':   {lat:1.3,   lng:103.8,  city:'싱가포르',  flag:'🇸🇬'},
+  'India':       {lat:28.6,  lng:77.2,   city:'인도',      flag:'🇮🇳'},
+  'Taiwan':      {lat:25.0,  lng:121.5,  city:'대만',      flag:'🇹🇼'},
+  'Italy':       {lat:45.5,  lng:9.2,    city:'이탈리아',  flag:'🇮🇹'},
+  'New Zealand': {lat:-36.9, lng:174.8,  city:'뉴질랜드',  flag:'🇳🇿'},
+  'Malaysia':    {lat:3.1,   lng:101.7,  city:'말레이시아',flag:'🇲🇾'},
+  'Brazil':      {lat:-23.6, lng:-46.7,  city:'브라질',    flag:'🇧🇷'},
+};
+
+function getUniCoords(uni) {
+  if (UNIVERSITY_COORDS[uni.name]) return UNIVERSITY_COORDS[uni.name];
+  // fallback: country 필드 또는 getUniCountry()로 추론
+  const country = uni.country || getUniCountry(uni);
+  if (country && COUNTRY_COORDS[country]) return COUNTRY_COORDS[country];
+  return null;
+}
+
+function greatCircleKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return Math.round(R * 2 * Math.asin(Math.sqrt(a)));
+}
+
+
+// 대학 모토 한국어 해설
+const MOTTO_KR = {
+  'Harvard University':                    '진리',
+  'Yale University':                       '빛과 진리',
+  'Columbia University':                   '당신의 빛 안에서 우리는 빛을 보리라',
+  'University of Pennsylvania':            '도덕 없는 법률은 공허하다',
+  'Dartmouth College':                     '광야에서 외치는 자의 소리',
+  'Cornell University':                    '어떤 사람이든 어떤 학문이든 배울 수 있는 곳',
+  'Massachusetts Institute of Technology': '정신과 손',
+  'Stanford University':                   '자유의 바람이 분다',
+  'California Institute of Technology':    '진리가 너희를 자유케 하리라',
+  'Johns Hopkins University':              '진리가 너희를 자유케 하리라',
+  'Georgetown University':                 '둘이지만 하나',
+  'University of California, Berkeley':    '빛이 있으라',
+  'University of Oxford':                  '주는 나의 빛이시다',
+  'University of Cambridge':               '이곳에서 빛과 신성한 지식을',
+  'Imperial College London':               '지식은 제국의 영광이자 방패',
+  'National University of Singapore':      '글로벌 지식 기업을 향하여',
+  'The University of Tokyo':               '보편적 가치를 향하여',
+  'ETH Zurich':                            '미래는 뿌리가 있어야 한다',
+  'University of Toronto':                 '나무처럼 세월 속에 자라다',
+};
+
+// 한국어 조사 선택 (은/는)
+
+function buildRichNarrative(uni, userProfile, userName, birthdate) {
+  const dom = getDominantElement(userProfile);
+  const uniProfile = buildUniversityProfile(uni);
+  const uniDom = getDominantElement(uniProfile);
+
+  // ─── ① 나는 이런 사람 ────────────────────────────────────────────────────
+  const [bYear, bMonth, bDay] = birthdate ? birthdate.split('-').map(Number) : [2000, 6, 1];
+  const sYear = (bMonth === 1 || (bMonth === 2 && bDay < 4)) ? bYear - 1 : bYear;
+  const stemIdx = ((sYear - 4) % 10 + 10) % 10;
+  const branchIdx = ((sYear % 12) + 12) % 12;
+  const stemName  = HEAVENLY_STEM_NAME[stemIdx];
+  const branchName = EARTHLY_BRANCH_NAME[branchIdx];
+  const stemChar  = '甲乙丙丁戊己庚辛壬癸'[stemIdx];
+  const branchChar = '子丑寅卯辰巳午未申酉戌亥'[branchIdx];
+  const stemPer   = HEAVENLY_STEM_PERSONALITY[stemIdx];
+  const branchPer = EARTHLY_BRANCH_PERSONALITY[branchIdx];
+  const seasonName = getSeasonName(bMonth);
+  const seasonLine = SEASON_NARRATIVE[seasonName] || '';
+  const personLines = ELEMENT_PERSON_NARRATIVE[dom];
+
+  // 2위 오행
+  const sorted = [...ELEMENT_KEYS].sort((a, b) => userProfile[b] - userProfile[a]);
+  const second = sorted[1];
+  const secondLine = `${ELEMENT_NAME[second]} 기운도 함께 흘러, ${
+    { 목:'유연하고 창의적인', 화:'열정적이고 표현이 풍부한', 토:'신중하고 안정적인', 금:'섬세하고 분석적인', 수:'깊고 전략적인' }[second]
+  } 면이 보완되어 있소.`;
+
+  // ─── ② 이 학교는 이런 곳 ─────────────────────────────────────────────────
+  const topTraits = Object.entries(uni.traits || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([t]) => TRAIT_PHRASE[t])
+    .filter(Boolean);
+  const traitLine = topTraits.length >= 2
+    ? `${topTraits[0]}, 동시에 ${topTraits[1]} 곳이구만.`
+    : topTraits[0] ? `${topTraits[0]} 곳이구만.` : '';
+  const uniDescLine = uni.desc || uni.tag + '.';
+  const studentFitLine = UNI_ELEMENT_STUDENT_FIT[uniDom] || '';
+
+  // ─── ③ 왜 궁합인가 ──────────────────────────────────────────────────────
+  const compatKey = dom + uniDom;
+  const compatLine = COMPAT_NARRATIVE[compatKey] ||
+    `당신의 ${ELEMENT_NAME[dom]} 기운과 이 학교의 ${ELEMENT_NAME[uniDom]} 에너지가 만나 독특한 시너지를 만들어내려.`;
+
+  return `
+    <div class="narrative-block">
+      <div class="narrative-section">
+        <div class="narrative-label">당신은 이런 사람이구만</div>
+        <p><span class="nbullet">✦</span>${stemChar}${branchChar}(${stemName}${branchName})년생인 그대, ${stemPer}</p>
+        <p><span class="nbullet">✦</span>${branchPer}</p>
+        <p><span class="nbullet">✦</span>${personLines[0]} ${personLines[1]}</p>
+        <p><span class="nbullet">✦</span>${personLines[2]}</p>
+        <p class="narrative-season"><span class="nbullet">✦</span>${seasonLine} ${secondLine}</p>
+      </div>
+      <div class="narrative-section">
+        <div class="narrative-label">${uni.kr}${eunNeun(uni.kr)} 이런 곳이라네</div>
+        ${uni.motto ? `<p><span class="nbullet">✦</span><span class="motto-label">교훈</span> "${uni.motto}"${MOTTO_KR[uni.name] ? ` — ${MOTTO_KR[uni.name]}` : ''}</p>` : ''}
+        <p><span class="nbullet">✦</span>${uniDescLine}</p>
+        ${traitLine ? `<p><span class="nbullet">✦</span>${traitLine}</p>` : ''}
+        <p><span class="nbullet">✦</span>${studentFitLine}</p>
+        ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label">🎓 이 학교 출신들</div>${renderAlumniRow(al)}` : ''; })()}
+      </div>
+      <div class="narrative-section compat-reason">
+        <div class="narrative-label">찰떡궁합인 이유를 말해주지.</div>
+        <p><span class="nbullet">✦</span>${compatLine}</p>
+        <p><span class="nbullet">✦</span>${personLines[3]}</p>
+        <p><span class="nbullet">✦</span>${personLines[4]}</p>
+      </div>
+    </div>`;
+}
+
+// ─── UI 렌더링 ───────────────────────────────────────────────────────────────
+
+function buildOhangBars(profile, domEl, idPrefix) {
+  const maxVal = Math.max(...ELEMENT_KEYS.map(k => profile[k]), 1);
+  return ELEMENT_KEYS.map(el => {
+    const val = Math.round(profile[el]);
+    const pct = Math.round(val / maxVal * 100);
+    const isDom = el === domEl;
+    return `<div class="ohang-bar-row">
+      <span class="ohang-bar-lbl">${ELEMENT_KR[el]}</span>
+      <div class="ohang-bar-track">
+        <div class="ohang-bar-fill el-${el}${isDom ? ' dominant' : ''}"
+             id="${idPrefix}-${el}" style="width:0%"></div>
+      </div>
+      <span class="ohang-bar-val">${val}</span>
+    </div>`;
+  }).join('');
+}
+
+function animateCompatNum(target) {
+  const el = document.getElementById('compatNum');
+  if (!el) return;
+  const duration = 900;
+  const start = performance.now();
+  const tick = (now) => {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.innerHTML = `${Math.round(eased * target)}<span>%</span>`;
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function animateOhangBars(profile, idPrefix) {
+  const maxVal = Math.max(...ELEMENT_KEYS.map(k => profile[k]), 1);
+  ELEMENT_KEYS.forEach(el => {
+    const pct = Math.round(profile[el] / maxVal * 100);
+    const el2 = document.getElementById(`${idPrefix}-${el}`);
+    if (el2) el2.style.width = pct + '%';
+  });
+}
+
+// ─── 결과 상단 타이핑 연출 ─────────────────────────────────────────────────────
+
+function typewriteText(el, text, speed, onDone) {
+  el.textContent = '▌';
+  let i = 0;
+  const tick = setInterval(() => {
+    i++;
+    el.textContent = text.slice(0, i) + (i < text.length ? '▌' : '');
+    if (i >= text.length) {
+      clearInterval(tick);
+      if (onDone) onDone();
+    }
+  }, speed);
+}
+
+function animateDestinyReveal() {
+  const line1   = document.getElementById('destinyLine1');
+  const uniRow  = document.getElementById('destinyUniRow');
+  const line2   = document.getElementById('destinyLine2');
+  if (!line1 || !uniRow || !line2) return;
+
+  setTimeout(() => {
+    typewriteText(line1, '자네는', 60, () => {
+      setTimeout(() => {
+        uniRow.style.opacity = '1';
+        setTimeout(() => {
+          typewriteText(line2, '에 갈 상이구만', 60);
+        }, 450);
+      }, 200);
+    });
+  }, 150);
+}
+
+function renderResult({ uni, uniIdx, userProfile, compatPct, userName, enrollYear }) {
+  currentResult = { uni, uniIdx, userProfile, compatPct, userName, enrollYear };
+
+  const seal = renderLogo(uni, 128);
+  const dom = getDominantElement(userProfile);
+  const typeLabel = ELEMENT_TYPE[dom];
+
+  const uniProfile = uni.ohProfile;
+  const uniDom = getDominantElement(uniProfile);
+  const uniTypeLabel = ELEMENT_TYPE[uniDom];
+
+  const userBarsHtml = buildOhangBars(userProfile, dom, 'ubr');
+  const uniBarsHtml  = buildOhangBars(uniProfile,  uniDom, 'kbr');
+
+  // 3단 서사 (왜 찰떡궁합인가 포함)
+  const narrativeHtml = buildRichNarrative(uni, userProfile, userName, currentBirthdate);
+
+  const accentColor = uni.accent || '#d6a75a';
+  const wowLabel = '찰떡궁합!';
+  const stars = compatPct >= 92 ? '⭐⭐⭐⭐⭐' : compatPct >= 80 ? '⭐⭐⭐⭐' : '⭐⭐⭐';
+
+  const smallSeal = renderLogo(uni, 52);
+  const card = document.getElementById('resultCard');
+  card.innerHTML = `
+    <div id="resultCapture">
+      <div class="result-header">
+        <div class="destiny-reveal-wrap">
+          <div class="destiny-line" id="destinyLine1"></div>
+          <div class="destiny-uni-row" id="destinyUniRow" style="opacity:0;transition:opacity 0.5s ease;">
+            <div class="destiny-crest">${smallSeal}</div>
+            <span class="destiny-uni-name">${uni.kr}</span>
+          </div>
+          <div class="destiny-line" id="destinyLine2"></div>
+        </div>
+      </div>
+
+      <div class="result-body" id="resultBody" style="opacity:0;transition:opacity 0.5s ease;">
+        <div class="compat-integrated">
+          <div class="compat-reveal">
+            <div class="compat-top-row">
+              <div class="compat-left">
+                <div class="compat-sublabel">오행 궁합 지수</div>
+                ${enrollYear ? `<div class="compat-year-label">✦ ${enrollYear}년 운기 반영</div>` : ''}
+              </div>
+              <div class="compat-right">
+                <div class="compat-big-num" id="compatNum">0<span>%</span></div>
+                <div class="compat-wow-badge">${wowLabel}</div>
+              </div>
+            </div>
+          </div>
+          <div class="profile-pair">
+            <div class="ohang-profile-box">
+              <div class="ohang-profile-title">나의 오행</div>
+              <div class="ohang-bars">${userBarsHtml}</div>
+            </div>
+            <div class="ohang-profile-box">
+              <div class="ohang-profile-title">학교 오행</div>
+              <div class="ohang-bars">${uniBarsHtml}</div>
+            </div>
+          </div>
+        </div>
+
+        ${narrativeHtml}
+      </div>
+    </div>
+
+    <div class="share-section" style="margin-top:20px;">
+      <div class="share-action-row">
+        <button class="share-btn" onclick="toggleLinkSave('${uniIdx}','${compatPct}','${(userName || '나').replace(/'/g,"\\'")}')">🔗 링크 저장하기</button>
+        <button class="story-btn" onclick="exportStoryImage()">📸 이미지로 저장하기</button>
+        <button class="retry-btn" onclick="resetForm()">다시</button>
+      </div>
+      <div class="link-save-reveal" id="linkSaveReveal">
+        <div class="link-save-label">링크 보내기</div>
+        <div class="link-save-options">
+          <button class="link-save-opt" onclick="linkSaveCopy()">
+            <span class="opt-icon">📋</span>
+            <span>링크 복사하기</span>
+          </button>
+          <button class="link-save-opt" onclick="linkSaveShare()">
+            <span class="opt-icon">↗</span>
+            <span>다른 앱으로 공유하기</span>
+          </button>
+        </div>
+        <div class="link-save-url-box">
+          <span class="link-save-url-text" id="linkSaveUrlText"></span>
+          <button class="link-save-copy-btn" onclick="linkSaveCopy()">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="viral-section">
+      <div class="viral-title">🏛️ 친구들은 어디 갈까?</div>
+      <div class="viral-preview" id="viralPreview"></div>
+      <button class="viral-share-btn" id="viralShareBtn"
+        onclick="toggleLinkSave('${uniIdx}','${compatPct}','${(userName || '나').replace(/'/g,"\\'")}'); document.getElementById('linkSaveReveal').scrollIntoView({behavior:'smooth',block:'nearest'})">
+        🔗 친구에게 공유하기
+      </button>
+    </div>`;
+
+  card.style.display = 'block';
+
+  // 타이핑 연출 + body 페이드인 + 오행 바 애니메이션
+  const body = document.getElementById('resultBody');
+  requestAnimationFrame(() => {
+    animateDestinyReveal();
+    if (body) {
+      body.style.opacity = '1';
+      setTimeout(() => {
+        animateCompatNum(compatPct);
+        animateOhangBars(userProfile, 'ubr');
+        animateOhangBars(uniProfile, 'kbr');
+      }, 100);
+    }
+  });
+  renderViralPreview();
+}
+
+// ─── 공유 ────────────────────────────────────────────────────────────────────
+
+function copyResult(uniKr, pct, domEl) {
+  const text =
+    `🎓 대학궁합 결과\n\n` +
+    `나는 ${ELEMENT_KR[domEl]} · ${ELEMENT_TYPE[domEl]} 인재\n` +
+    `사주 우세 오행: ${ELEMENT_NAME[domEl]}\n` +
+    `매칭 대학: ${uniKr}\n` +
+    `오행 궁합 지수: ${pct}%\n\n` +
+    `✨ 나의 사주와 맞는 대학은? → superfastsat.com`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.share-btn');
+    const orig = btn.textContent;
+    btn.textContent = '✅ 복사됨!';
+    btn.style.background = '#16a34a';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
+  }).catch(() => alert('복사에 실패했습니다. 수동으로 복사해 주세요.'));
+}
+
+// ─── 그룹 인코딩 ─────────────────────────────────────────────────────────────
+
+function _encNick(nick) {
+  try { return btoa(encodeURIComponent(nick)); } catch { return encodeURIComponent(nick); }
+}
+function _decNick(s) {
+  // 신규: base64 인코딩 형식
+  try { return decodeURIComponent(atob(s)); } catch {}
+  // 레거시: encodeURIComponent 형식
+  try { return decodeURIComponent(s); } catch {}
+  return s;
+}
+
+// members: [{nick, uniIdx, pct}]
+function encodeGroup(members) {
+  return members.map(m =>
+    `${_encNick(m.nick)}:${m.uniIdx}:${m.pct}`
+  ).join(',');
+}
+
+function decodeGroup(hash) {
+  const raw = hash.replace(/^#g=/, '');
+  if (!raw) return [];
+  return raw.split(',').map(seg => {
+    const parts = seg.split(':');
+    if (parts.length < 3) return null;
+    return {
+      nick: _decNick(parts[0]),
+      uniIdx: parseInt(parts[1]),
+      pct: parseInt(parts[2])
+    };
+  }).filter(m => m && !isNaN(m.uniIdx) && !isNaN(m.pct));
+}
+
+function currentMembers() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#g=')) return [];
+  return decodeGroup(hash);
+}
+
+// ─── 그룹 보드 렌더링 ────────────────────────────────────────────────────────
+
+function renderBoard(members) {
+  const subtitleEl  = document.getElementById('boardCinemaSubtitle');
+  const ctaEl       = document.getElementById('boardCtaQuestion');
+  const totalCountEl = document.getElementById('boardTotalCount');
+  const grid        = document.getElementById('boardGrid');
+  const wrap        = document.getElementById('boardCinemaWrap');
+  const scene1      = document.getElementById('boardScene1');
+  const scene2      = document.getElementById('boardScene2');
+
+  // university → participants 매핑
+  const uniMap = {};
+  for (const m of members) {
+    if (!uniMap[m.uniIdx]) uniMap[m.uniIdx] = [];
+    uniMap[m.uniIdx].push(m);
+  }
+
+  // 총 참여자 수
+  if (totalCountEl) {
+    totalCountEl.innerHTML = `지금까지 참여한 학생 수 <strong>${members.length}</strong>명`;
+  }
+
+  // ── 씬 전환 ──────────────────────────────────────────────────────────────
+  let _sceneIdx = 0;
+  let _transitioning = false;
+
+  function typeScene2() {
+    if (!ctaEl) return;
+    const q = '그대는 어떨 것 같소?';
+    ctaEl.textContent = '';
+    ctaEl.classList.remove('typed');
+    let j = 0;
+    setTimeout(() => {
+      const t = setInterval(() => {
+        j++;
+        ctaEl.textContent = q.slice(0, j);
+        if (j >= q.length) { clearInterval(t); ctaEl.classList.add('typed'); }
+      }, 90);
+    }, 300);
+  }
+
+  function goScene2() {
+    if (_transitioning || _sceneIdx !== 0) return;
+    _transitioning = true;
+    _sceneIdx = 1;
+    scene1.classList.remove('active');
+    scene2.classList.add('active');
+    typeScene2();
+    setTimeout(() => { _transitioning = false; }, 800);
+  }
+
+  // 휠 — 씬1에서 아래로 스크롤 시 씬2로 전환, 씬2에서는 자연 스크롤 허용
+  if (wrap) {
+    wrap.addEventListener('wheel', e => {
+      if (_sceneIdx === 0 && e.deltaY > 5) {
+        e.preventDefault();
+        goScene2();
+      }
+    }, { passive: false });
+
+    // 터치 스와이프
+    let _ty = 0;
+    wrap.addEventListener('touchstart', e => { _ty = e.touches[0].clientY; }, { passive: true });
+    wrap.addEventListener('touchend', e => {
+      if (_sceneIdx === 0 && (_ty - e.changedTouches[0].clientY) > 40) {
+        goScene2();
+      }
+    }, { passive: true });
+  }
+
+  // ── 씬1 자막 타이핑 ──────────────────────────────────────────────────────
+  if (members.length > 0 && subtitleEl) {
+    const inviter = members[0];
+    const invUni  = UNIVERSITIES[inviter.uniIdx];
+    if (invUni) {
+      const text = `${inviter.nick}${eunNeun(inviter.nick)} ${invUni.kr}에 간다는데`;
+      subtitleEl.textContent = '';
+      subtitleEl.classList.remove('typed');
+      let i = 0;
+      setTimeout(() => {
+        const t = setInterval(() => {
+          i++;
+          subtitleEl.textContent = text.slice(0, i);
+          if (i >= text.length) { clearInterval(t); subtitleEl.classList.add('typed'); }
+        }, 70);
+      }, 600);
+    }
+  } else if (ctaEl) {
+    ctaEl.textContent = '그대는 어떨 것 같소?';
+  }
+
+  // ── 대학 세로 리스트 ──────────────────────────────────────────────────────
+  const rows = UNIVERSITIES.map((uni, idx) => ({
+    uni, idx, members: uniMap[idx] || []
+  }));
+  rows.sort((a, b) => b.members.length - a.members.length);
+
+  grid.innerHTML = rows.map(({ uni, idx: uIdx, members: mList }) => {
+    const count  = mList.length;
+    const accent = uni.accent || '#1e2a47';
+    const chips  = mList.map(p =>
+      `<span class="board-list-chip" style="--chip-accent:${accent}">${p.nick}</span>`
+    ).join('');
+    const countHtml = count > 0
+      ? `<span class="board-list-count-num">${count}</span><span class="board-list-count-unit">명</span>`
+      : `<span class="board-list-count-empty">—</span>`;
+
+    return `<div class="board-list-row ${count > 0 ? 'has-members' : ''}">
+      <div class="board-list-logo">${renderLogo(uni, 40)}</div>
+      <div class="board-list-info">
+        <div class="board-list-name-kr">${uni.kr || uni.name}</div>
+        <div class="board-list-name-en">${uni.name}</div>
+        ${chips ? `<div class="board-list-chips">${chips}</div>` : ''}
+      </div>
+      <div class="board-list-count">${countHtml}</div>
+    </div>`;
+  }).join('');
+}
+// ─── 그룹 액션 ───────────────────────────────────────────────────────────────
+
+let _viralUrl = '';
+
+function renderViralPreview() {
+  const container = document.getElementById('viralPreview');
+  if (!container || !currentResult) return;
+
+  const existing = currentMembers();
+  const myUni = currentResult.uni;
+  const myDom = getDominantElement(currentResult.userProfile);
+  const myNick = currentResult.userName || '나';
+
+  // 내 카드
+  let html = `<div class="vp-card mine">
+    <div class="vp-info">
+      <div class="vp-nick">${myNick}</div>
+      <div class="vp-uni">${myUni.kr}</div>
+    </div>
+    <div class="vp-pct"><span class="vp-pct-label">궁합지수</span>${currentResult.compatPct}%</div>
+  </div>`;
+
+  // 기존 참여 친구 카드
+  existing.forEach(m => {
+    const u = UNIVERSITIES[m.uniIdx];
+    if (!u) return;
+    html += `<div class="vp-card friend">
+      <div class="vp-info">
+        <div class="vp-nick">${m.nick}</div>
+        <div class="vp-uni">${u.kr}</div>
+      </div>
+      <div class="vp-pct"><span class="vp-pct-label">궁합지수</span>${m.pct}%</div>
+    </div>`;
+  });
+
+  // 빈 슬롯 2~3개
+  const emptyCount = Math.max(2, 4 - existing.length);
+  for (let i = 0; i < emptyCount; i++) {
+    html += `<div class="vp-card empty">
+      <div class="vp-info">
+        <div class="vp-nick">친구 ${i + 1}</div>
+        <div class="vp-uni">참여 대기중</div>
+      </div>
+      <div class="vp-pct">?%</div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function shareResult(uniIdx, pct, nick) {
+  const existing = currentMembers();
+  const filtered = existing.filter(m => m.nick !== nick);
+  const updated = [...filtered, { nick, uniIdx, pct }];
+  _viralUrl = window.location.href.split('#')[0] + '#g=' + encodeGroup(updated);
+}
+
+function toggleLinkSave(uniIdx, pct, nick) {
+  // URL 먼저 생성
+  shareResult(+uniIdx, +pct, nick);
+
+  const reveal = document.getElementById('linkSaveReveal');
+  const urlText = document.getElementById('linkSaveUrlText');
+  if (!reveal) return;
+
+  const isOpen = reveal.style.display === 'block';
+  reveal.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen && urlText) urlText.textContent = _viralUrl;
+}
+
+function linkSaveCopy() {
+  if (!_viralUrl) return;
+  navigator.clipboard.writeText(_viralUrl).then(() => {
+    const btn = document.querySelector('.link-save-copy-btn');
+    if (btn) { btn.textContent = '✅ 복사됨'; setTimeout(() => { btn.textContent = '복사'; }, 2000); }
+    const opt = document.querySelector('.link-save-opt');
+    if (opt) { opt.querySelector('span:last-child').textContent = '✅ 복사됨!'; setTimeout(() => { opt.querySelector('span:last-child').textContent = '링크 복사하기'; }, 2000); }
+  }).catch(() => { prompt('링크를 복사해서 친구에게 보내세요:', _viralUrl); });
+}
+
+function linkSaveShare() {
+  if (!_viralUrl) return;
+  if (navigator.share) {
+    navigator.share({ title: '내가 어디에 갈 상인가 — 대학궁합', url: _viralUrl })
+      .catch(() => {});
+  } else {
+    linkSaveCopy();
+  }
+}
+
+function copyViralUrl() {
+  linkSaveCopy();
+}
+
+// 기존 그룹 미리보기 (보드 진입 등 다른 곳에서도 활용 가능하도록 유지)
+function renderGroupPreview() {
+  // viral-preview로 통합됨 — 빈 함수로 유지 (호환성)
+}
+
+// inviteFriends는 _viralUrl 통합으로 shareResult가 대체. 하위 호환용 alias
+function inviteFriends(uniIdx, pct, nick) {
+  shareResult(uniIdx, pct, nick);
+}
+
+function copyInviteUrl() {
+  copyViralUrl();
+}
+
+function copyBoardLink() {
+  const url = window.location.href;
+  const btn = document.querySelector('.board-share-btn');
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅ 복사됨!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+
+function joinFromBoard() {
+  document.getElementById('boardView').style.display = 'none';
+  document.getElementById('quizView').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleEmptyCards() {
+  showAllEmpty = !showAllEmpty;
+  const empties = document.querySelectorAll('.board-card[data-empty="true"]');
+  empties.forEach(c => { c.style.display = showAllEmpty ? '' : 'none'; });
+  const btn = document.getElementById('boardToggleBtn');
+  btn.textContent = showAllEmpty
+    ? '활성 카드만 보기'
+    : `전체 보기 (${empties.length}개 더 보기)`;
+}
+
+function showUniModal(uniIdx) {
+  const uni = UNIVERSITIES[uniIdx];
+  if (!uni) return;
+
+  const uniProf = buildUniversityProfile(uni);
+  const domEl = getDominantElement(uniProf);
+  const chipHtml = ELEMENT_KEYS.map(el => {
+    const isDom = el === domEl;
+    return `<div class="ohang-chip${isDom ? ' dominant' : ''}">
+      <span class="char">${ELEMENT_KR[el]}</span>
+      <span class="val">${Math.round(uniProf[el])}</span>
+    </div>`;
+  }).join('');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'uni-modal-overlay';
+  overlay.id = 'uniModalOverlay';
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeUniModal(); });
+  overlay.innerHTML = `
+    <div class="uni-modal">
+      <div class="uni-modal-handle"></div>
+      <button class="uni-modal-close" onclick="closeUniModal()">✕</button>
+      <div class="uni-modal-rank">QS 세계 랭킹 #${uni.rank}</div>
+      <div class="uni-modal-name">${uni.name}</div>
+      <div class="uni-modal-tag">${uni.kr} · ${uni.tag}</div>
+      ${uni.motto ? `<div class="uni-modal-motto">"${uni.motto}"</div>` : ''}
+      ${uni.desc ? `<div class="uni-modal-desc">${uni.desc}</div>` : ''}
+      <div class="uni-modal-ohang">${chipHtml}</div>
+      ${(() => { const al = getAlumni(uni); return al ? `<div class="alumni-label" style="margin-top:14px">🎓 이 학교 출신들</div>${renderAlumniRow(al)}` : ''; })()}
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function closeUniModal() {
+  const overlay = document.getElementById('uniModalOverlay');
+  if (overlay) overlay.remove();
+}
+
+
+function exportStoryImage() {
+  if (!currentResult) return;
+  const { uni, compatPct } = currentResult;
+
+  const captureEl = document.getElementById('resultCapture');
+  if (!captureEl) return;
+
+  const btn = document.querySelector('.story-btn');
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '생성 중…'; btn.disabled = true; }
+
+  html2canvas(captureEl, {
+    scale: 2,
+    backgroundColor: '#0d0b09',
+    useCORS: true, allowTaint: true,
+    logging: false
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `대학궁합_${uni.kr}_${compatPct}pct.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+  }).catch(err => {
+    console.error('Export failed', err);
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+    alert('이미지 생성에 실패했습니다.');
+  });
+}
+
+// ─── 폼 처리 ─────────────────────────────────────────────────────────────────
+
+let currentCalType = 'solar';
+
+function updateMatchBtn() {
+  const c1 = document.getElementById('consentCheck1');
+  const c2 = document.getElementById('consentCheck2');
+  const bothChecked = c1 && c1.checked && c2 && c2.checked;
+
+  const enrollStep = document.getElementById('enrollStep');
+  if (bothChecked && enrollStep.style.display === 'none') {
+    enrollStep.style.display = 'flex';
+    enrollStep.style.flexDirection = 'column';
+    enrollStep.style.alignItems = 'flex-start';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      enrollStep.style.opacity = '1';
+      enrollStep.style.transform = 'none';
+      enrollStep.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const enrollQ = document.getElementById('enrollQ');
+      setTimeout(() => typewriteBubble(enrollQ, 42, () => {
+        const wrap = document.getElementById('enrollYearWrap');
+        wrap.classList.add('revealed');
+        setTimeout(() => wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+      }), 100);
+    }));
+  }
+}
+
+let _enrollBtnTimer = null;
+function onEnrollYearChange() {
+  const year = document.getElementById('enrollYear').value;
+  const cueWrap = document.getElementById('resultCueWrap');
+  const cueQ = document.getElementById('resultCueQ');
+  const cueBtn = document.getElementById('resultCueBtn');
+  clearTimeout(_enrollBtnTimer);
+
+  if (year) {
+    // 캐릭터 응답 버블 등장 → 타이프라이트 → 버튼 등장
+    cueWrap.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      cueWrap.style.opacity = '1';
+      cueWrap.style.transform = 'none';
+      cueWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }));
+    _enrollBtnTimer = setTimeout(() => {
+      typewriteBubble(cueQ, 50, () => {
+        setTimeout(() => {
+          cueBtn.style.opacity = '1';
+          cueBtn.style.transform = 'none';
+          cueBtn.style.pointerEvents = 'auto';
+          cueBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 200);
+      });
+    }, 400);
+  } else {
+    // 연도 선택 취소 시 숨김
+    cueWrap.style.opacity = '0';
+    cueWrap.style.transform = 'translateY(10px)';
+    cueBtn.style.opacity = '0';
+    cueBtn.style.pointerEvents = 'none';
+    setTimeout(() => { if (!document.getElementById('enrollYear').value) cueWrap.style.display = 'none'; }, 450);
+  }
+}
+
+function setCalType(type) {
+  currentCalType = type;
+  document.getElementById('solarDateGroup').style.display = type === 'solar' ? 'block' : 'none';
+  document.getElementById('lunarDateGroup').style.display = type === 'lunar' ? 'block' : 'none';
+}
+
+// ─── 대화형 폼 스텝 ──────────────────────────────────────────────────────────
+
+function typewriteBubble(el, speed = 38, onDone) {
+  const full = el.textContent;
+  el.textContent = '';
+  el.classList.add('typing');
+  let i = 0;
+  const tick = () => {
+    if (i < full.length) {
+      el.textContent += full[i++];
+      setTimeout(tick, speed);
+    } else {
+      el.classList.remove('typing');
+      if (onDone) onDone();
+    }
+  };
+  tick();
+}
+
+function revealStepInput(stepEl) {
+  const input = stepEl.querySelector('.step-input');
+  if (!input) return;
+  input.classList.add('revealed');
+  setTimeout(() => stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+}
+
+function showNextStep(stepEl) {
+  stepEl.hidden = false;
+  stepEl.classList.add('step-enter');
+  requestAnimationFrame(() => requestAnimationFrame(() => stepEl.classList.remove('step-enter')));
+  setTimeout(() => stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  const bubble = stepEl.querySelector('.q-bubble');
+  if (bubble) {
+    setTimeout(() => typewriteBubble(bubble, 42, () => revealStepInput(stepEl)), 80);
+  }
+}
+
+function chatAdvance(fromStep) {
+  const step = document.getElementById(`cStep${fromStep}`);
+
+  let answer = null;
+  if (fromStep === 0) {
+    const name = document.getElementById('userName').value.trim();
+    answer = name || null;
+  } else if (fromStep === 2) {
+    answer = getChatDateSummary();
+  }
+
+  if (answer) {
+    const bubble = document.createElement('div');
+    bubble.className = 'a-bubble';
+    bubble.textContent = answer;
+    step.appendChild(bubble);
+  }
+
+  step.classList.add('step-done');
+
+  const next = document.getElementById(`cStep${fromStep + 1}`);
+  if (next) showNextStep(next);
+}
+
+function chatPickCal(type) {
+  setCalType(type);
+
+  const step = document.getElementById('cStep1');
+  const bubble = document.createElement('div');
+  bubble.className = 'a-bubble';
+  bubble.textContent = type === 'solar' ? '양력' : '음력';
+  step.appendChild(bubble);
+  step.classList.add('step-done');
+
+  showNextStep(document.getElementById('cStep2'));
+}
+
+function chatAdvanceHour() {
+  const hourEl = document.getElementById('birthHour');
+  const hourInputArea = document.getElementById('hourInputArea');
+
+  const val = parseInt(hourEl.value);
+  let answerText;
+  if (val < 0) {
+    answerText = '모름';
+  } else {
+    const opt = hourEl.options[hourEl.selectedIndex];
+    answerText = opt.textContent.split(' ').slice(0, 2).join(' ');
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = 'a-bubble';
+  bubble.textContent = answerText;
+  hourInputArea.insertAdjacentElement('afterend', bubble);
+
+  hourInputArea.style.opacity = '0.4';
+  hourInputArea.style.pointerEvents = 'none';
+
+  const consentPhase = document.getElementById('consentPhase');
+  consentPhase.style.opacity = '1';
+  consentPhase.style.transform = 'none';
+  consentPhase.style.pointerEvents = 'auto';
+
+  const consentQ = document.getElementById('consentQ');
+  setTimeout(() => typewriteBubble(consentQ, 42, () => {
+    const wrap = document.getElementById('consentCheckWrap');
+    wrap.style.opacity = '1';
+    wrap.style.transform = 'none';
+    wrap.style.pointerEvents = 'auto';
+    setTimeout(() => consentPhase.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+  }), 200);
+}
+
+function getChatDateSummary() {
+  if (currentCalType === 'solar') {
+    const y = document.getElementById('solarYear').value;
+    const m = document.getElementById('solarMonth').value;
+    const d = document.getElementById('solarDay').value;
+    if (!y || !m || !d) return null;
+    return `${y}년 ${m}월 ${d}일이요`;
+  } else {
+    const y = document.getElementById('lunarYear').value;
+    const m = document.getElementById('lunarMonth').value;
+    const d = document.getElementById('lunarDay').value;
+    const leap = document.getElementById('lunarLeap').checked;
+    if (!y || !m || !d) return null;
+    return `음력 ${y}년 ${m}월 ${d}일${leap ? ' (윤달)' : ''}이요`;
+  }
+}
+
+function checkDateComplete() {
+  const btn = document.getElementById('dateNextBtn');
+  if (!btn) return;
+  let ok = false;
+  if (currentCalType === 'solar') {
+    ok = !!document.getElementById('solarYear').value &&
+         !!document.getElementById('solarMonth').value &&
+         !!document.getElementById('solarDay').value;
+  } else {
+    ok = !!document.getElementById('lunarYear').value &&
+         !!document.getElementById('lunarMonth').value &&
+         !!document.getElementById('lunarDay').value;
+  }
+  btn.disabled = !ok;
+}
+
+function initDateSelects() {
+  function fillYear(sel) {
+    for (let y = 2012; y >= 1950; y--) {
+      const o = document.createElement('option'); o.value = y; o.textContent = y + '년'; sel.appendChild(o);
+    }
+  }
+  function fillMonth(sel) {
+    for (let m = 1; m <= 12; m++) {
+      const o = document.createElement('option'); o.value = m; o.textContent = m + '월'; sel.appendChild(o);
+    }
+  }
+  function fillDay(sel, max) {
+    for (let d = 1; d <= max; d++) {
+      const o = document.createElement('option'); o.value = d; o.textContent = d + '일'; sel.appendChild(o);
+    }
+  }
+  fillYear(document.getElementById('solarYear'));
+  fillMonth(document.getElementById('solarMonth'));
+  fillDay(document.getElementById('solarDay'), 31);
+  fillYear(document.getElementById('lunarYear'));
+  fillMonth(document.getElementById('lunarMonth'));
+  fillDay(document.getElementById('lunarDay'), 30);
+}
+
+function initLunarSelects() { initDateSelects(); }
+
+function getLunarBirthdate() {
+  const y = parseInt(document.getElementById('lunarYear').value);
+  const m = parseInt(document.getElementById('lunarMonth').value);
+  const d = parseInt(document.getElementById('lunarDay').value);
+  const isLeap = document.getElementById('lunarLeap').checked;
+  if (!y || !m || !d) return null;
+  if (typeof solarlunar !== 'undefined') {
+    try {
+      const r = solarlunar.lunar2solar(y, m, d, isLeap);
+      if (r && r.cYear) {
+        return `${r.cYear}-${String(r.cMonth).padStart(2,'0')}-${String(r.cDay).padStart(2,'0')}`;
+      }
+    } catch(e) {}
+  }
+  // fallback: treat as solar
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+async function runMatch() {
+  const c1 = document.getElementById('consentCheck1');
+  const c2 = document.getElementById('consentCheck2');
+  if (!c1.checked || !c2.checked) return;
+
+  let birthdate;
+  if (currentCalType === 'solar') {
+    const sy = document.getElementById('solarYear').value;
+    const sm = document.getElementById('solarMonth').value;
+    const sd = document.getElementById('solarDay').value;
+    if (!sy || !sm || !sd) {
+      alert('양력 연/월/일을 모두 선택해 주세요.');
+      return;
+    }
+    birthdate = `${sy}-${String(sm).padStart(2,'0')}-${String(sd).padStart(2,'0')}`;
+  } else {
+    birthdate = getLunarBirthdate();
+    if (!birthdate) {
+      alert('음력 연/월/일을 모두 선택해 주세요.');
+      return;
+    }
+  }
+
+  const hourBranch = parseInt(document.getElementById('birthHour').value);
+  const enrollYear = document.getElementById('enrollYear').value || null;
+
+  document.getElementById('formSection').style.display = 'none';
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('heroCinema').style.display = 'none';
+
+  // 로딩 내러티브
+  const [bYear, bMonth, bDay] = birthdate.split('-').map(Number);
+  const sYear = (bMonth === 1 || (bMonth === 2 && bDay < 4)) ? bYear - 1 : bYear;
+  const stemName = HEAVENLY_STEM_NAME[((sYear - 4) % 10 + 10) % 10];
+  const branchName = EARTHLY_BRANCH_NAME[((sYear % 12) + 12) % 12];
+  const dom = getDominantElement(buildUserProfile(bYear, bMonth, bDay, hourBranch));
+  const enrollStep = enrollYear
+    ? `${enrollYear}년 운기(${HEAVENLY_STEM_NAME[((enrollYear-4)%10+10)%10]}${EARTHLY_BRANCH_NAME[(enrollYear%12+12)%12]}년) 반영 중…`
+    : '35개 명문대 오행 대조 중…';
+  const steps = [
+    `${stemName}${branchName}년생 확인 중…`,
+    `${ELEMENT_NAME[dom]} 기운 감지…`,
+    enrollStep,
+    '궁합 발견!'
+  ];
+  const textEl = document.getElementById('loadingText');
+  let stepIdx = 0;
+  if (textEl) textEl.textContent = steps[0];
+  const stepInterval = setInterval(() => {
+    stepIdx = Math.min(stepIdx + 1, steps.length - 1);
+    if (textEl) textEl.textContent = steps[stepIdx];
+  }, 280);
+
+  await new Promise(r => setTimeout(r, 1050));
+  clearInterval(stepInterval);
+
+  const result = computeMatch(birthdate, hourBranch, enrollYear);
+  result.userName = document.getElementById('userName').value.trim();
+  currentBirthdate = birthdate;
+
+  document.getElementById('loadingState').style.display = 'none';
+  renderResult(result);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetForm() {
+  document.getElementById('resultCard').style.display = 'none';
+  const fs = document.getElementById('formSection');
+  fs.style.display = 'block';
+  fs.style.opacity = '1';
+  fs.style.pointerEvents = 'auto';
+  document.getElementById('heroCinema').style.display = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── 분포 측정 (콘솔: checkDistribution()) ───────────────────────────────────
+// 목표: 최다 학교 비중 10% 이하, 등장 학교 80% 이상
+
+window.checkDistribution = function(startYear = 2000, endYear = 2010) {
+  if (UNIVERSITIES.length === 0) { console.warn('데이터 오류'); return; }
+  const counts = {};
+  let total = 0;
+  for (let y = startYear; y <= endYear; y++) {
+    for (let m = 1; m <= 12; m++) {
+      const days = new Date(y, m, 0).getDate();
+      for (let d = 1; d <= days; d++) {
+        const bd = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const r = computeMatch(bd, -1);
+        counts[r.uni.name] = (counts[r.uni.name] || 0) + 1;
+        total++;
+      }
+    }
+  }
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const appeared = sorted.length;
+  const topPct = ((sorted[0][1]/total)*100).toFixed(1);
+  console.log(`총 날짜: ${total} | 등장 학교: ${appeared}/${UNIVERSITIES.length} (${((appeared/UNIVERSITIES.length)*100).toFixed(1)}%) | 1위: ${sorted[0][0]} ${topPct}%`);
+  console.table(sorted.slice(0,15).map(([name,cnt])=>({name, count:cnt, pct:((cnt/total)*100).toFixed(2)+'%'})));
+  return { total, appeared, topPct: parseFloat(topPct), sorted };
+};
+
+// ─── 초기화 ──────────────────────────────────────────────────────────────────
+
+
+// ─── 초기 라우팅 ─────────────────────────────────────────────────────────────
+
+function startCinemaTyping() {
+  const el = document.getElementById('cinemaSubtitle');
+  const hint = document.getElementById('heroScrollHint');
+  if (!el) return;
+
+  const text = '내가 어디 대학에 갈 상인가';
+  el.textContent = '';
+
+  let i = 0;
+  // 이미지 로드 후 약간의 여유를 두고 시작
+  setTimeout(() => {
+    const timer = setInterval(() => {
+      i++;
+      el.textContent = text.slice(0, i);
+      if (i >= text.length) {
+        clearInterval(timer);
+        el.classList.add('typed'); // 커서 숨김
+        // 타이핑 완료 후 스크롤 힌트 페이드인
+        setTimeout(() => {
+          if (hint) {
+            hint.style.transition = 'opacity 0.8s ease';
+            hint.style.opacity = '1';
+          }
+        }, 400);
+      }
+    }, 90);
+  }, 700);
+}
+
+function init() {
+  const isBoard = window.location.hash.startsWith('#g=');
+  document.getElementById('boardView').style.display = isBoard ? 'block' : 'none';
+  document.getElementById('quizView').style.display = isBoard ? 'none' : 'block';
+
+  if (isBoard) {
+    const members = decodeGroup(window.location.hash);
+    renderBoard(members);
+  } else {
+    startCinemaTyping();
+  }
+}
+
+init();
+initLunarSelects();
+
+// 스크롤 시 대화 섹션 등장 + 첫 버블 타이핑
+if (!location.hash.startsWith('#g=')) {
+  let chatRevealed = false;
+  window.addEventListener('scroll', function onFirstScroll() {
+    if (chatRevealed || window.scrollY < 30) return;
+    chatRevealed = true;
+    window.removeEventListener('scroll', onFirstScroll);
+
+    const fs = document.getElementById('formSection');
+    fs.style.opacity = '1';
+    fs.style.pointerEvents = 'auto';
+
+    const firstBubble = document.querySelector('#cStep0 .q-bubble');
+    if (firstBubble) setTimeout(() => typewriteBubble(firstBubble, 42, () => revealStepInput(document.getElementById('cStep0'))), 300);
+  }, { passive: true });
+}
+
+// 해시 변경 시 보드 ↔ 퀴즈 전환 (같은 페이지 내 내비게이션)
+window.addEventListener('hashchange', () => init());
+
+// Enter 키로 폼 제출
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('formSection').style.display !== 'none') {
+    runMatch();
+  }
+});
+</script>
+</body>
+</html>

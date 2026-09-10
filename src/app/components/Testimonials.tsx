@@ -37,7 +37,7 @@ export default function Testimonials({ reviews = [] }: TestimonialsProps) {
                                 </div>
 
                                 <h3 className={styles.reviewTitle}>{review.title}</h3>
-                                <p className={styles.content}>"{review.content}"</p>
+                                <p className={styles.content}>&quot;{review.content}&quot;</p>
 
                                 <div className={styles.divider} />
 

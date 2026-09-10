@@ -41,14 +41,14 @@ export default function OnboardingListPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <Link href="/admin/coaches" className="text-xs text-gray-500 hover:text-gray-400 mb-1 block">← 코치 관리</Link>
-            <h1 className="text-2xl font-bold text-white">코치 온보딩 제출 목록</h1>
+            <h1 className="text-2xl font-bold text-white">코치 프로필 작성 현황</h1>
           </div>
         </div>
 
         {loading ? (
           <div className="text-gray-500 py-10 text-center">불러오는 중...</div>
         ) : rows.length === 0 ? (
-          <div className="text-gray-500 py-10 text-center">제출된 온보딩 폼이 없습니다.</div>
+          <div className="text-gray-500 py-10 text-center">제출된 프로필 작성 폼이 없습니다.</div>
         ) : (
           <div className="space-y-3">
             {rows.map(row => {

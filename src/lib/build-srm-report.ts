@@ -64,7 +64,19 @@ const VOCAB_MAX_MISSED = 6;
 const TC_TREND_THRESHOLD = 0.12;
 const COACH_FEEDBACK_MAX_CHARS = 500;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/**
+ * 지연 생성 — 모듈 로드 시점에 만들면 `next build`가 페이지 데이터를 수집할 때
+ * OPENAI_API_KEY를 요구해 빌드가 깨진다(키는 런타임 시크릿이다). 호출 시점에 만든다.
+ */
+let _openai: OpenAI | null = null;
+function openaiClient(): OpenAI {
+  if (!_openai) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
+    _openai = new OpenAI({ apiKey });
+  }
+  return _openai;
+}
 
 function toKSTDate(isoStr: string): string {
   const d = new Date(isoStr);
@@ -115,7 +127,7 @@ async function extractEdenInsights(
     return `[${c.skill} — ${c.isCorrect ? '정답' : '오답'}]\n${lines}`;
   }).join('\n\n');
 
-  const res = await openai.chat.completions.create({
+  const res = await openaiClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -161,7 +173,7 @@ async function extractEdenInsights(
 }
 
 async function humanizeNarrative(text: string): Promise<string> {
-  const res = await openai.chat.completions.create({
+  const res = await openaiClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -376,7 +388,7 @@ async function generateStudyHallNarrative(
   // 5문항 미만은 무조건 compact — 코치 피드백·크로스레프 여부와 무관
   const isCompact = stats.totalProblems < 5 || (isShortSession && !hasCrossRef && !coachFeedback && !hasEden && !hasVocab);
 
-  const res = await openai.chat.completions.create({
+  const res = await openaiClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -617,7 +629,7 @@ async function generateTestCenterNarrative(
     ? '2문장으로 작성합니다.'
     : '3문장으로 작성합니다.';
 
-  const res = await openai.chat.completions.create({
+  const res = await openaiClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -702,7 +714,7 @@ async function generateVocaNarrative(
     ? '3문장으로 작성합니다.'
     : stats.wordCount < 20 ? '2문장으로 작성합니다.' : '3문장으로 작성합니다.';
 
-  const res = await openai.chat.completions.create({
+  const res = await openaiClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {

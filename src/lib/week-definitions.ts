@@ -129,9 +129,53 @@ export function getWeekDef(dateStr: string): WeekDef | null {
   return WEEK_DEFINITIONS.find((w) => date >= w.start && date <= w.end) ?? null;
 }
 
+/**
+ * 지금의 한국 날짜(YYYY-MM-DD).
+ * UTC 날짜로 자르면 월요일 00:00~09:00 KST에 지난 주차로 판정되므로, 주차를 다루는
+ * 서버 코드는 전부 이걸 거쳐야 한다.
+ */
+export function getKstDateString(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+}
+
+/** 지금(한국 시간) 이 속한 주차 정의. 범위 밖이면 null. */
+export function getCurrentWeekDef(now: Date = new Date()): WeekDef | null {
+  return getWeekDef(getKstDateString(now));
+}
+
 /** week_start(정확히 일치)로 주차 정의 조회. */
 export function getWeekDefByStart(weekStart: string): WeekDef | null {
   return WEEK_DEFINITIONS.find((w) => w.start === weekStart) ?? null;
+}
+
+/**
+ * 기준일이 속한 주차부터 과거로 count개 주차 (최신 순).
+ * 기준일이 정의 범위 뒤라면 마지막 정의 주차를, 범위 앞이라면 빈 배열을 돌려준다.
+ * 주차별 집계 쿼리의 week_start 하한을 구하는 데 쓴다 — 전체 테이블 스캔을 피한다.
+ */
+export function getRecentWeeks(count: number, dateStr: string): WeekDef[] {
+  if (count < 1) return [];
+  const date = dateStr.slice(0, 10);
+
+  let endIdx = WEEK_DEFINITIONS.findIndex((w) => date >= w.start && date <= w.end);
+  if (endIdx < 0) {
+    // 범위 밖 — 기준일보다 앞선 마지막 주차로 폴백(기준일이 첫 주차보다 앞서면 없음).
+    for (let i = WEEK_DEFINITIONS.length - 1; i >= 0; i--) {
+      if (WEEK_DEFINITIONS[i].end < date) {
+        endIdx = i;
+        break;
+      }
+    }
+    if (endIdx < 0) return [];
+  }
+
+  const startIdx = Math.max(0, endIdx - count + 1);
+  return WEEK_DEFINITIONS.slice(startIdx, endIdx + 1).reverse();
 }
 
 /** 주어진 week_start에서 offset(±)만큼 이동한 주차. 범위 밖이면 null(클램프 없음). */

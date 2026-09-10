@@ -1,0 +1,315 @@
+'use client';
+
+// 재결제 후보 표 — 플랫폼 Payment 페이지(app.superfastsat.io/admin/payment)와 같은 수치 컬럼을
+// CRM 안으로 옮긴 것. 담당자가 그 페이지에서 잔여 시간을 보고 대상을 고르던 동작을
+// 탭 이동 없이 여기서 끝낼 수 있어야 한다 → 정렬 가능한 표 + 행마다 즉시 추가 버튼.
+
+import { useCallback, useMemo, useState } from 'react';
+import { Crown, AlertTriangle, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import { TUTORING_STATUS_META, type TutoringHours } from './TutoringStudentRow';
+import type { CandidateRow } from './renewal-candidate-rows';
+import { subjectLabel } from './renewal-candidate-filters';
+import { compareSubjects } from '@/lib/tutoring-subject-breakdown';
+
+type MetricKey = keyof TutoringHours;
+type SortKey = MetricKey | 'name';
+
+interface Column<K extends SortKey = SortKey> {
+  key: K;
+  label: string;
+  /** 큰 값이 급한 지표는 내림차순으로 먼저 정렬한다. */
+  descFirst: boolean;
+  hint: string;
+}
+
+const METRIC_COLUMNS: Column<MetricKey>[] = [
+  { key: 'purchased', label: '구매', descFirst: true, hint: '결제한 총 시간' },
+  { key: 'completed', label: '완료', descFirst: true, hint: '진행 완료한 수업 시간' },
+  { key: 'refunded', label: '환불', descFirst: true, hint: '환불된 시간' },
+  { key: 'remaining', label: '잔여', descFirst: false, hint: '구매 − 환불 − 완료. 음수면 결제분을 넘겨 수업한 상태' },
+  { key: 'scheduled', label: '예약', descFirst: true, hint: '캘린더에 잡혀 있는 미진행 수업 시간' },
+  { key: 'unscheduled', label: '미예약', descFirst: true, hint: '결제했지만 아직 캘린더에 없는 시간' },
+  { key: 'overscheduled', label: '초과예약', descFirst: true, hint: '결제분을 넘겨 예약된 시간 — 가장 급한 신호' },
+];
+
+const PAYMENT_STATUS_LABEL: Record<string, { label: string; className: string }> = {
+  onboarding: { label: 'Onboarding', className: 'bg-sky-100 text-sky-700' },
+  active: { label: 'Active', className: 'bg-emerald-100 text-emerald-700' },
+  paused: { label: 'Paused', className: 'bg-amber-100 text-amber-700' },
+  inactive: { label: 'Inactive', className: 'bg-gray-100 text-gray-500' },
+  excluded: { label: 'Excluded', className: 'bg-gray-100 text-gray-400' },
+};
+
+/**
+ * Payment 페이지 표기 규칙을 그대로 따른다:
+ * 구매·완료·잔여·예약은 0도 숫자로 (0 자체가 정보), 환불·미예약·초과예약은 0이면 '—'.
+ */
+const ALWAYS_NUMERIC: MetricKey[] = ['purchased', 'completed', 'remaining', 'scheduled'];
+
+function num(key: MetricKey, value: number): string {
+  if (value === 0 && !ALWAYS_NUMERIC.includes(key)) return '—';
+  return String(value);
+}
+
+function metricTone(key: MetricKey, value: number): string {
+  if (key === 'remaining') {
+    if (value < 0) return 'text-red-600 font-bold';
+    if (value === 0) return 'text-red-500 font-semibold';
+    if (value <= 5) return 'text-amber-600 font-semibold';
+    return 'text-gray-700';
+  }
+  if (key === 'overscheduled' && value > 0) return 'text-orange-600 font-bold';
+  if (key === 'unscheduled' && value > 0) return 'text-amber-600 font-medium';
+  if (key === 'refunded' && value > 0) return 'text-gray-500';
+  return 'text-gray-700';
+}
+
+type SortState = { key: SortKey; desc: boolean } | null;
+
+function SortHeader({
+  col,
+  align,
+  sort,
+  onToggle,
+}: {
+  col: Column;
+  align: 'left' | 'right';
+  sort: SortState;
+  onToggle: (col: Column) => void;
+}) {
+  const active = sort?.key === col.key;
+  return (
+    <th
+      scope="col"
+      className={`py-2 px-2 ${align === 'right' ? 'text-right' : 'text-left'} whitespace-nowrap`}
+    >
+      <button
+        type="button"
+        onClick={() => onToggle(col)}
+        title={col.hint}
+        className={`inline-flex items-center gap-0.5 text-xs font-semibold transition-colors ${
+          active ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        {col.label}
+        {active ? (
+          sort!.desc ? <ChevronDown size={11} /> : <ChevronUp size={11} />
+        ) : (
+          <span className="w-[11px]" />
+        )}
+      </button>
+    </th>
+  );
+}
+
+const NAME_COLUMN: Column<'name'> = { key: 'name', label: '학생', descFirst: false, hint: '이름순' };
+
+interface Props {
+  /** (학생 × 과목) 행 — expandSubjectRows 결과. 과목 내역이 없으면 학생당 1행. */
+  entries: CandidateRow[];
+  onAdd: (studentId: string) => void;
+  pendingStudentId: string | null;
+  onSelectStudent?: (studentId: string) => void;
+}
+
+/** 셀 식별자 — 과목 행은 학생 안에서 과목으로 갈린다. */
+function rowKey(row: CandidateRow): string {
+  return row.subject ? `${row.student.id}-${row.subject}` : row.student.id;
+}
+
+/**
+ * 정렬된 행을 학생 단위로 다시 묶는다. 그룹 순서는 그 학생의 가장 앞선(=가장 급한) 행이 정하고,
+ * 그룹 안에서는 정렬 순서를 그대로 유지한다 — 과목 행이 표 여기저기로 흩어지면 읽기 어렵다.
+ */
+function groupByStudent(rows: CandidateRow[]): { row: CandidateRow; first: boolean }[] {
+  const groups = new Map<string, CandidateRow[]>();
+  for (const row of rows) {
+    const list = groups.get(row.student.id) ?? [];
+    list.push(row);
+    groups.set(row.student.id, list);
+  }
+  return [...groups.values()].flatMap((list) =>
+    list
+      .slice()
+      .sort((a, b) => compareSubjects(a.subject, b.subject))
+      .map((row, i) => ({ row, first: i === 0 }))
+  );
+}
+
+export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSelectStudent }: Props) {
+  // 기본 정렬 = 급한 순 (초과예약 desc → 잔여 asc). sort가 null이면 이 순서를 쓴다.
+  const [sort, setSort] = useState<SortState>(null);
+
+  const sorted = useMemo(() => {
+    const list = entries.slice();
+    if (!sort) {
+      return list.sort((a, b) => {
+        const over = (b.hours?.overscheduled ?? 0) - (a.hours?.overscheduled ?? 0);
+        if (over !== 0) return over;
+        const ah = a.hours ? a.hours.remaining : Number.POSITIVE_INFINITY;
+        const bh = b.hours ? b.hours.remaining : Number.POSITIVE_INFINITY;
+        if (ah !== bh) return ah - bh;
+        return a.student.name.localeCompare(b.student.name);
+      });
+    }
+    if (sort.key === 'name') {
+      return list.sort((a, b) =>
+        sort.desc
+          ? b.student.name.localeCompare(a.student.name)
+          : a.student.name.localeCompare(b.student.name)
+      );
+    }
+    const key: MetricKey = sort.key;
+    return list.sort((a, b) => {
+      // SRM 미연결(수치 없음)은 방향과 무관하게 항상 뒤로.
+      if (!a.hours && !b.hours) return a.student.name.localeCompare(b.student.name);
+      if (!a.hours) return 1;
+      if (!b.hours) return -1;
+      const diff = a.hours[key] - b.hours[key];
+      if (diff !== 0) return sort.desc ? -diff : diff;
+      return a.student.name.localeCompare(b.student.name);
+    });
+  }, [entries, sort]);
+
+  const rows = useMemo(() => groupByStudent(sorted), [sorted]);
+
+  const toggleSort = useCallback((col: Column) => {
+    setSort((current) =>
+      current?.key === col.key
+        ? { key: col.key, desc: !current.desc }
+        : { key: col.key, desc: col.descFirst }
+    );
+  }, []);
+
+  return (
+    <div className="overflow-x-auto -mx-4 px-4">
+      <table className="w-full min-w-[860px]">
+        <thead className="bg-gray-50">
+          <tr className="border-b border-gray-200">
+            <SortHeader col={NAME_COLUMN} align="left" sort={sort} onToggle={toggleSort} />
+            <th scope="col" className="py-2 px-2 text-left text-xs font-semibold text-gray-500">과목</th>
+            <th scope="col" className="py-2 px-2 text-left text-xs font-semibold text-gray-500">상태</th>
+            {METRIC_COLUMNS.map((col) => (
+              <SortHeader key={col.key} col={col} align="right" sort={sort} onToggle={toggleSort} />
+            ))}
+            <th scope="col" className="py-2 px-2 w-20" />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ row, first }) => {
+            const { student, hours, displayStatus, paymentStatus } = row;
+            const meta = TUTORING_STATUS_META[displayStatus];
+            const payMeta = paymentStatus ? PAYMENT_STATUS_LABEL[paymentStatus] : null;
+            // 결제분 초과 사용/예약 → Payment 페이지처럼 행 전체를 옅은 빨강으로.
+            const urgent = (hours?.remaining ?? 1) < 0 || (hours?.overscheduled ?? 0) > 0;
+
+            return (
+              <tr
+                key={rowKey(row)}
+                data-student={student.id}
+                className={`transition-colors ${first ? 'border-t border-gray-200' : ''} ${urgent ? 'bg-red-50/60 hover:bg-red-50' : 'hover:bg-gray-50'}`}
+              >
+                {/* 이름·연락처는 학생 그룹의 첫 행에만 — 아래 과목 행은 같은 학생임을 들여쓰기로 보여준다. */}
+                <td className="py-2 px-2">
+                  {first ? (
+                    <>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                          type="button"
+                          data-testid={`cell-name-${student.id}`}
+                          onClick={() => onSelectStudent?.(student.id)}
+                          className={`text-xs font-semibold text-gray-900 ${onSelectStudent ? 'hover:text-blue-600 hover:underline' : 'cursor-default'}`}
+                        >
+                          {student.name}
+                        </button>
+                        {student.grade && <span className="text-[10px] text-gray-400">{student.grade}</span>}
+                        {student.is_vip && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded font-semibold bg-amber-100 text-amber-700">
+                            <Crown size={8} />VIP
+                          </span>
+                        )}
+                        {student.needs_attention && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded font-semibold bg-red-100 text-red-700">
+                            <AlertTriangle size={8} />주의
+                          </span>
+                        )}
+                      </div>
+                      {/* 튜터링 상태는 학생 단위 — 과목별 결제 상태(상태 칸)와 섞이지 않게 여기 둔다. */}
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span
+                          title="CRM이 계산한 수업 진행 상태 — 잔여시간·휴원·부분종료 기준"
+                          className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.color}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
+                          {meta.label}
+                        </span>
+                        {student.parent_phone && (
+                          <span className="text-[10px] text-gray-400">{student.parent_phone}</span>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="h-4 ml-1 border-l-2 border-gray-100" />
+                  )}
+                </td>
+
+                {/* 과목 — V2 Payment 페이지의 Subject 컬럼 */}
+                <td className="py-2 px-2">
+                  <span
+                    data-testid={`cell-subject-${rowKey(row)}`}
+                    className={
+                      row.subject
+                        ? 'inline-flex items-center px-2 py-0.5 rounded-full border border-gray-200 bg-white text-[11px] font-semibold text-gray-700'
+                        : 'text-xs text-gray-300'
+                    }
+                  >
+                    {subjectLabel(row.subject)}
+                  </span>
+                </td>
+
+                {/* 상태 = 그 과목의 결제 관리 상태(SFv2 payments). V2 Payment 페이지의 Status와 같다. */}
+                <td className="py-2 px-2">
+                  {payMeta && (
+                    <span
+                      title="플랫폼 결제 관리 상태 — 과목별로 담당자가 지정한다"
+                      className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-semibold ${payMeta.className}`}
+                    >
+                      {payMeta.label}
+                    </span>
+                  )}
+                </td>
+
+                {METRIC_COLUMNS.map((col) => (
+                  <td
+                    key={col.key}
+                    data-testid={`cell-${col.key}-${rowKey(row)}`}
+                    className={`py-2 px-2 text-right text-xs tabular-nums ${
+                      hours ? metricTone(col.key, hours[col.key]) : 'text-gray-300'
+                    }`}
+                  >
+                    {hours ? num(col.key, hours[col.key]) : '—'}
+                  </td>
+                ))}
+
+                {/* 재결제 타깃은 학생 단위 — 과목마다 추가 버튼을 두지 않는다. */}
+                <td className="py-2 px-2 text-right">
+                  {first && (
+                    <button
+                      type="button"
+                      onClick={() => onAdd(student.id)}
+                      disabled={pendingStudentId === student.id}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-blue-600 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors disabled:opacity-40 whitespace-nowrap"
+                    >
+                      <Plus size={11} />
+                      추가
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}

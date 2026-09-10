@@ -9,6 +9,7 @@ function useAnimationVisible(forceVisible = false) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(forceVisible);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (forceVisible) { setIsVisible(true); return; }
     const el = ref.current;
@@ -54,14 +55,16 @@ function renderHighlighted(text: string) {
 }
 
 /* ================================================================
-   CARD 01 — 맞춤형 수업 (퍼즐)
+   CARD 01 — Custom Lessons / 맞춤형 수업 (퍼즐)
    ================================================================ */
-const PUZZLE_PIECES = ['스케줄', '시험 목표', '약점', '수업 스타일'] as const;
+const PUZZLE_PIECES_KO = ['스케줄', '시험 목표', '약점', '수업 스타일'] as const;
+const PUZZLE_PIECES_EN = ['Schedule', 'Exam Goal', 'Weakness', 'Class Style'] as const;
 const PUZZLE_POS_CLS = ['puzzleTL', 'puzzleTR', 'puzzleBL', 'puzzleBR'] as const;
 
-export function CustomLessonCard({ forceVisible = false }: { forceVisible?: boolean }) {
+export function CustomLessonCard({ forceVisible = false, lang = 'ko' }: { forceVisible?: boolean; lang?: 'ko' | 'en' }) {
   const { ref, isVisible } = useAnimationVisible(forceVisible);
   const [step, setStep] = useState(0);
+  const puzzlePieces = lang === 'en' ? PUZZLE_PIECES_EN : PUZZLE_PIECES_KO;
 
   useEffect(() => {
     if (!isVisible) return;
@@ -69,23 +72,24 @@ export function CustomLessonCard({ forceVisible = false }: { forceVisible?: bool
 
     function run() {
       setStep(0);
-      PUZZLE_PIECES.forEach((_, i) => {
+      puzzlePieces.forEach((_, i) => {
         timeouts.push(setTimeout(() => setStep(i + 1), 400 + i * 550));
       });
-      timeouts.push(setTimeout(() => setStep(5), 400 + PUZZLE_PIECES.length * 550 + 200));
-      timeouts.push(setTimeout(run, 400 + PUZZLE_PIECES.length * 550 + 200 + 1800));
+      timeouts.push(setTimeout(() => setStep(5), 400 + puzzlePieces.length * 550 + 200));
+      timeouts.push(setTimeout(run, 400 + puzzlePieces.length * 550 + 200 + 1800));
     }
 
     run();
     return () => timeouts.forEach(clearTimeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
 
   return (
-    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label="맞춤형 수업">
+    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label={lang === 'en' ? 'Custom Lessons' : '맞춤형 수업'}>
       <div className={`${styles.visual} ${styles.visual1}`} aria-hidden="true">
         <div className={styles.puzzleWrap}>
           <div className={styles.puzzleGrid}>
-            {PUZZLE_PIECES.map((label, i) => (
+            {puzzlePieces.map((label, i) => (
               <div
                 key={label}
                 className={[
@@ -99,16 +103,19 @@ export function CustomLessonCard({ forceVisible = false }: { forceVisible?: bool
             ))}
           </div>
           <div className={`${styles.puzzleCenter} ${step >= 5 ? styles.puzzleGlow : ''}`}>
-            <span className={styles.puzzleCenterLabel}>학생</span>
+            <span className={styles.puzzleCenterLabel}>{lang === 'en' ? 'Student' : '학생'}</span>
           </div>
         </div>
       </div>
       <div className={styles.text}>
         <p className={styles.cardNum}>01</p>
-        <h3 className={styles.cardTitle}>맞춤형 수업</h3>
+        <h3 className={styles.cardTitle}>{lang === 'en' ? 'Custom Lessons' : '맞춤형 수업'}</h3>
         <p className={styles.cardDesc}>
-          우리 아이의 현재 수준과 약점을<br />
-          분석해 코치가 1:1로 수업을 설계합니다.
+          {lang === 'en' ? (
+            <>Your coach analyzes your child&apos;s current level and weak spots<br />to design a personalized 1-on-1 lesson plan.</>
+          ) : (
+            <>우리 아이의 현재 수준과 약점을<br />분석해 코치가 1:1로 수업을 설계합니다.</>
+          )}
         </p>
       </div>
     </article>
@@ -116,9 +123,10 @@ export function CustomLessonCard({ forceVisible = false }: { forceVisible?: bool
 }
 
 /* ================================================================
-   CARD 02 — 학습 리포트 (리포트 스크롤 리딩)
+   CARD 02 — Progress Reports / 학습 리포트 (리포트 스크롤 리딩)
    ================================================================ */
-const REPORT_DATES = ['5월 22일', '5월 23일', '5월 24일', '5월 25일', '5월 26일'] as const;
+const REPORT_DATES_KO = ['5월 22일', '5월 23일', '5월 24일', '5월 25일', '5월 26일'] as const;
+const REPORT_DATES_EN = ['May 22', 'May 23', 'May 24', 'May 25', 'May 26'] as const;
 const REPORT_CONTENT = [
   { score: 55, rw: 54, math: 56 },
   { score: 61, rw: 60, math: 63 },
@@ -127,7 +135,7 @@ const REPORT_CONTENT = [
   { score: 81, rw: 80, math: 82 },
 ] as const;
 
-const COACH_MEMOS = [
+const COACH_MEMOS_KO = [
   `오늘은 첫 진단 수업이었습니다. R&W 54점, Math 56점으로 기준점을 확인했습니다. Words in Context 영역에서 오답률이 높아 어휘 실력 보강이 가장 우선 과제입니다. 다음 수업부터 고빈도 SAT 단어와 문맥 추론 전략을 집중적으로 다룰 예정입니다.`,
   `Words in Context 파트에서 +6점 향상이 확인되었습니다. 문맥 단서를 활용한 어휘 추론 능력이 빠르게 성장하고 있습니다. 다음 단계로 Expression of Ideas 영역을 추가하겠습니다. 오늘 학습한 어휘 30개를 주말까지 복습해주시기 바랍니다.`,
   `R&W +6점으로 꾸준한 상승세가 이어지고 있습니다. Math 68점은 기초 개념이 안정적으로 자리잡은 수준입니다. 이번 수업부터 Standard English Conventions 파트를 본격 시작합니다. 문법 규칙 시트를 출력해 매일 1회 확인하는 루틴을 권장합니다.`,
@@ -135,10 +143,20 @@ const COACH_MEMOS = [
   `R&W 80점, Math 82점으로 5주 만에 총 +26점을 달성했습니다. Words in Context 파트 정확도는 현재 94% 수준입니다. 이제 풀 모의고사 단계로 전환합니다. 실전과 동일한 환경에서 시험을 보고, 매회 오답 분석 사이클을 유지해주세요.`,
 ] as const;
 
-const XY_POINTS: [number, number][] = [[28, 44], [65, 37], [102, 30], [139, 21], [176, 12]];
-const GRAPH_DATE_LABELS = ['22일', '23일', '24일', '25일', '26일'];
+const COACH_MEMOS_EN = [
+  `This was our first diagnostic session. R&W: 54, Math: 56 established our baseline. Words in Context showed the highest error rate — vocabulary building is the top priority. Starting next session, we'll focus intensively on high-frequency SAT words and context inference strategies.`,
+  `Words in Context showed +6 points improvement. Vocabulary inference using context clues is growing rapidly. We'll add Expression of Ideas as the next area. Please review today's 30 vocabulary words by this weekend.`,
+  `R&W +6 points — steady upward trend continues. Math 68 shows solid foundational concepts. Starting this session, we begin Standard English Conventions in earnest. Recommend reviewing the grammar rules sheet once daily.`,
+  `This session broke into the 75-point range. Time management is taking hold and errors have dropped significantly. Moving to full practice exam phase. Keep an error log recording each mistake's type and cause.`,
+  `R&W 80, Math 82 — total +26 points in just 5 weeks. Words in Context accuracy is now at 94%. Transitioning to full mock exams. Replicate real test conditions each time and maintain the post-exam error analysis cycle.`,
+] as const;
 
-export function ScoreReportCard({ forceVisible = false }: { forceVisible?: boolean }) {
+const GRAPH_DATE_LABELS_KO = ['22일', '23일', '24일', '25일', '26일'];
+const GRAPH_DATE_LABELS_EN = ['22nd', '23rd', '24th', '25th', '26th'];
+
+const XY_POINTS: [number, number][] = [[28, 44], [65, 37], [102, 30], [139, 21], [176, 12]];
+
+export function ScoreReportCard({ forceVisible = false, lang = 'ko' }: { forceVisible?: boolean; lang?: 'ko' | 'en' }) {
   const { ref, isVisible } = useAnimationVisible(forceVisible);
   const [idx, setIdx] = useState(0);
   const [reading, setReading] = useState(false);
@@ -167,10 +185,12 @@ export function ScoreReportCard({ forceVisible = false }: { forceVisible?: boole
   const content = REPORT_CONTENT[idx];
   const prev = idx > 0 ? REPORT_CONTENT[idx - 1] : null;
   const delta = prev ? content.score - prev.score : null;
-  const date = REPORT_DATES[idx];
+  const date = lang === 'en' ? REPORT_DATES_EN[idx] : REPORT_DATES_KO[idx];
+  const graphDateLabels = lang === 'en' ? GRAPH_DATE_LABELS_EN : GRAPH_DATE_LABELS_KO;
+  const coachMemos = lang === 'en' ? COACH_MEMOS_EN : COACH_MEMOS_KO;
 
   return (
-    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label="학습 리포트">
+    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label={lang === 'en' ? 'Progress Reports' : '학습 리포트'}>
       <div className={`${styles.visual} ${styles.visual2}`} aria-hidden="true">
         <div className={styles.reportWindow}>
           <div
@@ -184,13 +204,15 @@ export function ScoreReportCard({ forceVisible = false }: { forceVisible?: boole
               <span className={styles.rdBrand}>SuperfastSAT</span>
               <span className={styles.rdDate}>{date}</span>
             </div>
-            <h3 className={styles.rdTitle}>학&nbsp;&nbsp;습&nbsp;&nbsp;리&nbsp;&nbsp;포&nbsp;&nbsp;트</h3>
+            <h3 className={styles.rdTitle}>
+              {lang === 'en' ? 'PROGRESS REPORT' : '학  습  리  포  트'}
+            </h3>
             <div className={styles.rdRule} />
 
-            <p className={styles.rdSectionLabel}>수업 점수</p>
+            <p className={styles.rdSectionLabel}>{lang === 'en' ? 'Session Score' : '수업 점수'}</p>
             <div className={styles.rdScoreBlock}>
               <span className={styles.rdScoreBig}>{content.score}</span>
-              <span className={styles.rdScoreUnit}>점</span>
+              <span className={styles.rdScoreUnit}>{lang === 'en' ? ' pts' : '점'}</span>
               {delta !== null && delta > 0 && (
                 <span className={styles.rdScoreDelta}>↑ +{delta}</span>
               )}
@@ -199,17 +221,17 @@ export function ScoreReportCard({ forceVisible = false }: { forceVisible?: boole
               <div className={styles.rdSkillRow}>
                 <span className={styles.rdSkillName}>Reading &amp; Writing</span>
                 <span className={styles.rdLeader} />
-                <span className={styles.rdSkillScore}>{content.rw}점</span>
+                <span className={styles.rdSkillScore}>{content.rw}{lang === 'en' ? ' pts' : '점'}</span>
               </div>
               <div className={styles.rdSkillRow}>
                 <span className={styles.rdSkillName}>Mathematics</span>
                 <span className={styles.rdLeader} />
-                <span className={styles.rdSkillScore}>{content.math}점</span>
+                <span className={styles.rdSkillScore}>{content.math}{lang === 'en' ? ' pts' : '점'}</span>
               </div>
             </div>
 
             <div className={styles.rdGraph}>
-              <span className={styles.rdGraphLabel}>점수 추이</span>
+              <span className={styles.rdGraphLabel}>{lang === 'en' ? 'Score Trend' : '점수 추이'}</span>
               <svg
                 viewBox="0 0 220 60"
                 width="100%"
@@ -254,7 +276,7 @@ export function ScoreReportCard({ forceVisible = false }: { forceVisible?: boole
                 >
                   {content.score}
                 </text>
-                {GRAPH_DATE_LABELS.map((d, i) => (
+                {graphDateLabels.map((d, i) => (
                   <text key={i} x={XY_POINTS[i][0]} y={58} textAnchor="middle" fontSize="6.5" fill="rgba(0,0,0,0.28)">{d}</text>
                 ))}
               </svg>
@@ -262,21 +284,24 @@ export function ScoreReportCard({ forceVisible = false }: { forceVisible?: boole
 
             <div className={styles.rdRule} />
 
-            <p className={styles.rdSectionLabel}>코치 메모</p>
-            <p className={styles.rdNote}>{COACH_MEMOS[idx]}</p>
+            <p className={styles.rdSectionLabel}>{lang === 'en' ? 'Coach Notes' : '코치 메모'}</p>
+            <p className={styles.rdNote}>{coachMemos[idx]}</p>
             <div className={styles.rdSignature}>
-              <span className={styles.rdCoach}>코치 Jason</span>
-              <span className={styles.rdStamp}>발송됨</span>
+              <span className={styles.rdCoach}>Coach Jason</span>
+              <span className={styles.rdStamp}>{lang === 'en' ? 'Sent' : '발송됨'}</span>
             </div>
           </div>
         </div>
       </div>
       <div className={styles.text}>
         <p className={styles.cardNum}>02</p>
-        <h3 className={styles.cardTitle}>학습 리포트</h3>
+        <h3 className={styles.cardTitle}>{lang === 'en' ? 'Progress Reports' : '학습 리포트'}</h3>
         <p className={styles.cardDesc}>
-          매 수업 후 스킬별 점수와 성장 추이를<br />
-          리포트로 확인합니다.
+          {lang === 'en' ? (
+            <>After each session, check skill scores and growth trends<br />in your progress report.</>
+          ) : (
+            <>매 수업 후 스킬별 점수와 성장 추이를<br />리포트로 확인합니다.</>
+          )}
         </p>
       </div>
     </article>
@@ -284,7 +309,7 @@ export function ScoreReportCard({ forceVisible = false }: { forceVisible?: boole
 }
 
 /* ================================================================
-   CARD 03 — 온라인 독서실 (2×2 화상 타일)
+   CARD 03 — Online Study Hall / 온라인 독서실 (2×2 화상 타일)
    ================================================================ */
 const LIBRARY_STUDENTS = [
   { name: '김민서',  status: '출석' },
@@ -299,7 +324,15 @@ const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }
   휴식: { bg: 'rgba(148,163,184,0.15)',border: 'rgba(148,163,184,0.35)',text: '#94a3b8' },
 };
 
-export function OnlineLibraryCard({ forceVisible = false }: { forceVisible?: boolean }) {
+function getStatusLabel(status: string, lang: 'ko' | 'en'): string {
+  if (lang !== 'en') return status;
+  if (status === '출석') return 'Present';
+  if (status === '지각') return 'Late';
+  if (status === '휴식') return 'Break';
+  return status;
+}
+
+export function OnlineLibraryCard({ forceVisible = false, lang = 'ko' }: { forceVisible?: boolean; lang?: 'ko' | 'en' }) {
   const { ref, isVisible } = useAnimationVisible(forceVisible);
   const [step, setStep] = useState(0);
 
@@ -320,7 +353,7 @@ export function OnlineLibraryCard({ forceVisible = false }: { forceVisible?: boo
   }, [isVisible]);
 
   return (
-    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label="온라인 독서실">
+    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label={lang === 'en' ? 'Online Study Hall' : '온라인 독서실'}>
       <div className={`${styles.visual} ${styles.visual3}`} aria-hidden="true">
         <div className={styles.videoGrid4}>
           {LIBRARY_STUDENTS.map((s, i) => (
@@ -336,7 +369,7 @@ export function OnlineLibraryCard({ forceVisible = false }: { forceVisible?: boo
                   color: STATUS_COLORS[s.status].text,
                 }}
               >
-                {s.status}
+                {getStatusLabel(s.status, lang)}
               </span>
               <StudyFigure highlight={i === LIBRARY_STUDENTS.length - 1} />
               <div className={styles.videoFooter}>
@@ -349,10 +382,13 @@ export function OnlineLibraryCard({ forceVisible = false }: { forceVisible?: boo
       </div>
       <div className={styles.text}>
         <p className={styles.cardNum}>03</p>
-        <h3 className={styles.cardTitle}>온라인 독서실</h3>
+        <h3 className={styles.cardTitle}>{lang === 'en' ? 'Online Study Hall' : '온라인 독서실'}</h3>
         <p className={styles.cardDesc}>
-          약속한 시간에 화상 카메라를 켜고<br />
-          독서실에 접속해 숙제를 합니다.
+          {lang === 'en' ? (
+            <>Turn on your camera at the scheduled time<br />and join the study hall to complete homework.</>
+          ) : (
+            <>약속한 시간에 화상 카메라를 켜고<br />독서실에 접속해 숙제를 합니다.</>
+          )}
         </p>
       </div>
     </article>
@@ -360,20 +396,28 @@ export function OnlineLibraryCard({ forceVisible = false }: { forceVisible?: boo
 }
 
 /* ================================================================
-   CARD 04 — AI 코치 (학생↔AI 번갈아 대화)
+   CARD 04 — AI Coach / AI 코치 (학생↔AI 번갈아 대화)
    ================================================================ */
-const AI_MSGS = [
+const AI_MSGS_KO = [
   '지금 3번 문제 같이 좀 봐야겠는데요?',
   '논리 구조 파악했어요?',
   '그럼 거기부터 설명해줄게요',
 ] as const;
 
+const AI_MSGS_EN = [
+  "Let's look at question 3 together.",
+  'Did you understand the logic?',
+  "I'll explain it from there.",
+] as const;
+
 type CoachPhase = 'student1' | 'ai1' | 'ai2' | 'student2' | 'ai3' | 'done';
 
-export function AICoachCard({ forceVisible = false }: { forceVisible?: boolean }) {
+export function AICoachCard({ forceVisible = false, lang = 'ko' }: { forceVisible?: boolean; lang?: 'ko' | 'en' }) {
   const { ref, isVisible } = useAnimationVisible(forceVisible);
   const [phase, setPhase] = useState<CoachPhase>('student1');
   const [aiTyped, setAiTyped] = useState('');
+
+  const aiMsgs = lang === 'en' ? AI_MSGS_EN : AI_MSGS_KO;
 
   useEffect(() => {
     if (!isVisible) return;
@@ -396,15 +440,15 @@ export function AICoachCard({ forceVisible = false }: { forceVisible?: boolean }
 
       timeouts.push(setTimeout(() => {
         setPhase('ai1');
-        typeAi(AI_MSGS[0], () => {
+        typeAi(aiMsgs[0], () => {
           timeouts.push(setTimeout(() => {
             setPhase('ai2');
-            typeAi(AI_MSGS[1], () => {
+            typeAi(aiMsgs[1], () => {
               timeouts.push(setTimeout(() => {
                 setPhase('student2');
                 timeouts.push(setTimeout(() => {
                   setPhase('ai3');
-                  typeAi(AI_MSGS[2], () => {
+                  typeAi(aiMsgs[2], () => {
                     timeouts.push(setTimeout(() => setPhase('done'), 400));
                   });
                 }, 900));
@@ -414,24 +458,27 @@ export function AICoachCard({ forceVisible = false }: { forceVisible?: boolean }
         });
       }, 1800));
 
-      const cycle = 1800 + AI_MSGS[0].length * 44 + 600 + AI_MSGS[1].length * 44 + 600 + 900 + AI_MSGS[2].length * 44 + 400 + 2200;
+      const cycle = 1800 + aiMsgs[0].length * 44 + 600 + aiMsgs[1].length * 44 + 600 + 900 + aiMsgs[2].length * 44 + 400 + 2200;
       timeouts.push(setTimeout(run, cycle));
     }
 
     run();
     return () => { timeouts.forEach(clearTimeout); intervals.forEach(clearInterval); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
 
   const isAiTurn = phase === 'ai1' || phase === 'ai2' || phase === 'ai3';
   const isStudentTurn = phase === 'student1' || phase === 'student2' || phase === 'done';
-  const studentText = (phase === 'student2' || phase === 'done') ? '아뇨...' : '이 문제 어떻게 풀어야 할 지 헷갈리네..';
+  const studentText = lang === 'en'
+    ? ((phase === 'student2' || phase === 'done') ? 'No...' : "I'm confused about how to solve this..")
+    : ((phase === 'student2' || phase === 'done') ? '아뇨...' : '이 문제 어떻게 풀어야 할 지 헷갈리네..');
 
   return (
-    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label="AI 코치">
+    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label={lang === 'en' ? 'AI Coach' : 'AI 코치'}>
       <div className={`${styles.visual} ${styles.visual4}`} aria-hidden="true">
         <div className={styles.coachScene}>
 
-          {/* 왼쪽 — 학생 */}
+          {/* Left — student */}
           <div className={styles.coachStudent}>
             <div className={styles.confusionCloud} />
             <svg width="66" height="66" viewBox="0 0 52 52" fill="none" aria-hidden="true">
@@ -446,7 +493,7 @@ export function AICoachCard({ forceVisible = false }: { forceVisible?: boolean }
 
           <div className={styles.coachDivider} />
 
-          {/* 오른쪽 — AI 로봇 */}
+          {/* Right — AI robot */}
           <div className={styles.coachAI}>
             <div className={styles.aiTopSpacer} />
             <div className={`${styles.aiOrb} ${phase !== 'student1' ? styles.aiOrbVisible : ''}`}>
@@ -479,10 +526,13 @@ export function AICoachCard({ forceVisible = false }: { forceVisible?: boolean }
       </div>
       <div className={styles.text}>
         <p className={styles.cardNum}>04</p>
-        <h3 className={styles.cardTitle}>AI 코치</h3>
+        <h3 className={styles.cardTitle}>{lang === 'en' ? 'AI Coach' : 'AI 코치'}</h3>
         <p className={styles.cardDesc}>
-          부족한 부분을 발견해서 AI 코치가<br />
-          실시간으로 수업을 진행합니다.
+          {lang === 'en' ? (
+            <>The AI Coach identifies weak spots and<br />delivers real-time personalized instruction.</>
+          ) : (
+            <>부족한 부분을 발견해서 AI 코치가<br />실시간으로 수업을 진행합니다.</>
+          )}
         </p>
       </div>
     </article>
@@ -490,18 +540,25 @@ export function AICoachCard({ forceVisible = false }: { forceVisible?: boolean }
 }
 
 /* ================================================================
-   CARD 05 — 단어 공부 (플래시카드 플립)
+   CARD 05 — Vocab Study / 단어 공부 (플래시카드 플립)
    ================================================================ */
-const FLASH_CARDS = [
+const FLASH_CARDS_KO = [
   { word: 'ephemeral',  meaning: '단기적인, 덧없는' },
   { word: 'reticent',   meaning: '과묵한, 말이 없는' },
   { word: 'cogent',     meaning: '설득력 있는' },
 ] as const;
 
-export function VocabCard({ forceVisible = false }: { forceVisible?: boolean }) {
+const FLASH_CARDS_EN = [
+  { word: 'ephemeral',  meaning: 'lasting for a very short time' },
+  { word: 'reticent',   meaning: "not revealing one's thoughts" },
+  { word: 'cogent',     meaning: 'powerfully persuasive' },
+] as const;
+
+export function VocabCard({ forceVisible = false, lang = 'ko' }: { forceVisible?: boolean; lang?: 'ko' | 'en' }) {
   const { ref, isVisible } = useAnimationVisible(forceVisible);
   const [cardIdx, setCardIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const flashCards = lang === 'en' ? FLASH_CARDS_EN : FLASH_CARDS_KO;
 
   useEffect(() => {
     if (!isVisible) return;
@@ -511,31 +568,32 @@ export function VocabCard({ forceVisible = false }: { forceVisible?: boolean }) 
       setCardIdx(idx);
       setFlipped(false);
       timeouts.push(setTimeout(() => setFlipped(true), 1300));
-      timeouts.push(setTimeout(() => cycle((idx + 1) % FLASH_CARDS.length), 1300 + 700 + 1400));
+      timeouts.push(setTimeout(() => cycle((idx + 1) % flashCards.length), 1300 + 700 + 1400));
     }
 
     cycle(0);
     return () => timeouts.forEach(clearTimeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
 
   return (
-    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label="단어 공부">
+    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label={lang === 'en' ? 'Vocab Study' : '단어 공부'}>
       <div className={`${styles.visual} ${styles.visual5}`} aria-hidden="true">
         <div className={styles.flashWrap}>
           <div className={styles.flashDots}>
-            {FLASH_CARDS.map((_, i) => (
+            {flashCards.map((_, i) => (
               <span key={i} className={`${styles.flashDot} ${cardIdx === i ? styles.flashDotActive : ''}`} />
             ))}
           </div>
           <div className={styles.flipWrap}>
             <div className={`${styles.flipCard} ${flipped ? styles.flipped : ''}`}>
               <div className={styles.flipFront}>
-                <span className={styles.flipWord}>{FLASH_CARDS[cardIdx].word}</span>
-                <span className={styles.flipHint}>탭해서 뜻 보기 →</span>
+                <span className={styles.flipWord}>{flashCards[cardIdx].word}</span>
+                <span className={styles.flipHint}>{lang === 'en' ? 'Tap to see definition →' : '탭해서 뜻 보기 →'}</span>
               </div>
               <div className={styles.flipBack}>
-                <span className={styles.flipMeaning}>{FLASH_CARDS[cardIdx].meaning}</span>
-                <span className={styles.flipWordSmall}>{FLASH_CARDS[cardIdx].word}</span>
+                <span className={styles.flipMeaning}>{flashCards[cardIdx].meaning}</span>
+                <span className={styles.flipWordSmall}>{flashCards[cardIdx].word}</span>
               </div>
             </div>
           </div>
@@ -543,10 +601,13 @@ export function VocabCard({ forceVisible = false }: { forceVisible?: boolean }) 
       </div>
       <div className={styles.text}>
         <p className={styles.cardNum}>05</p>
-        <h3 className={styles.cardTitle}>단어 공부</h3>
+        <h3 className={styles.cardTitle}>{lang === 'en' ? 'Vocab Study' : '단어 공부'}</h3>
         <p className={styles.cardDesc}>
-          학생에게 가장 맞는 방식을 AI로 찾아<br />
-          SAT 단어를 공부합니다.
+          {lang === 'en' ? (
+            <>AI finds the best method for your child<br />to master SAT vocabulary.</>
+          ) : (
+            <>학생에게 가장 맞는 방식을 AI로 찾아<br />SAT 단어를 공부합니다.</>
+          )}
         </p>
       </div>
     </article>
@@ -554,10 +615,10 @@ export function VocabCard({ forceVisible = false }: { forceVisible?: boolean }) 
 }
 
 /* ================================================================
-   CARD 06 — 실전 모의고사 (달력 별표)
+   CARD 06 — Mock Exams / 실전 모의고사 (달력 별표)
    ================================================================ */
-// Month starting on Saturday (토 = col 6), 31 days → 5 Saturdays
-const CAL_DAYS = ['일', '월', '화', '수', '목', '금', '토'] as const;
+const CAL_DAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const;
+const CAL_DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 const CAL_CELLS: (number | null)[] = [
   null, null, null, null, null, null,  1,
      2,    3,    4,    5,    6,    7,  8,
@@ -568,9 +629,10 @@ const CAL_CELLS: (number | null)[] = [
 ];
 const CAL_SAT_DATES = [1, 8, 15, 22, 29];
 
-export function MockExamCard({ forceVisible = false }: { forceVisible?: boolean }) {
+export function MockExamCard({ forceVisible = false, lang = 'ko' }: { forceVisible?: boolean; lang?: 'ko' | 'en' }) {
   const { ref, isVisible } = useAnimationVisible(forceVisible);
   const [starStep, setStarStep] = useState(0);
+  const calDays = lang === 'en' ? CAL_DAYS_EN : CAL_DAYS_KO;
 
   useEffect(() => {
     if (!isVisible) return;
@@ -589,11 +651,11 @@ export function MockExamCard({ forceVisible = false }: { forceVisible?: boolean 
   }, [isVisible]);
 
   return (
-    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label="실전 모의고사">
+    <article className={`${styles.card} ${isVisible ? styles.visible : ''}`} ref={ref} aria-label={lang === 'en' ? 'Mock Exams' : '실전 모의고사'}>
       <div className={`${styles.visual} ${styles.visual6}`} aria-hidden="true">
         <div className={styles.calendarWrap}>
           <div className={styles.calHeader}>
-            {CAL_DAYS.map((d, i) => (
+            {calDays.map((d, i) => (
               <span key={d} className={`${styles.calDayLabel} ${i === 6 ? styles.calSatLabel : ''}`}>{d}</span>
             ))}
           </div>
@@ -620,10 +682,13 @@ export function MockExamCard({ forceVisible = false }: { forceVisible?: boolean 
       </div>
       <div className={styles.text}>
         <p className={styles.cardNum}>06</p>
-        <h3 className={styles.cardTitle}>실전 모의고사</h3>
+        <h3 className={styles.cardTitle}>{lang === 'en' ? 'Mock Exams' : '실전 모의고사'}</h3>
         <p className={styles.cardDesc}>
-          매주 SAT 모의고사로<br />
-          실전 감각을 유지합니다.
+          {lang === 'en' ? (
+            <>Weekly SAT mock exams to keep<br />real test instincts sharp.</>
+          ) : (
+            <>매주 SAT 모의고사로<br />실전 감각을 유지합니다.</>
+          )}
         </p>
       </div>
     </article>
@@ -631,18 +696,65 @@ export function MockExamCard({ forceVisible = false }: { forceVisible?: boolean 
 }
 
 /* ================================================================
+   TAB NAVIGATION helpers
+   ================================================================ */
+const PANEL_VARIANTS = {
+  enter: (dir: number) => ({ x: dir * 48, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir * -48, opacity: 0 }),
+};
+
+const PANEL_TRANSITION = { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const };
+
+type TabEntry = {
+  id: string;
+  label: string;
+  panel: (v: boolean) => React.ReactNode;
+};
+
+function getTabsForLang(lang: 'ko' | 'en'): TabEntry[] {
+  const labels = lang === 'en'
+    ? {
+        customLesson: 'Custom Lessons',
+        scoreReport: 'Progress Reports',
+        studyHall: 'Online Study Hall',
+        aiCoach: 'AI Coach',
+        vocab: 'Vocab Study',
+        mockExam: 'Mock Exams',
+      }
+    : {
+        customLesson: '맞춤형 수업',
+        scoreReport: '학습 리포트',
+        studyHall: '온라인 독서실',
+        aiCoach: 'AI 코치',
+        vocab: '단어 공부',
+        mockExam: '실전 모의고사',
+      };
+
+  return [
+    { id: '맞춤형 수업',    label: labels.customLesson, panel: (v) => <CustomLessonCard forceVisible={v} lang={lang} /> },
+    { id: '학습 리포트',    label: labels.scoreReport,  panel: (v) => <ScoreReportCard forceVisible={v} lang={lang} /> },
+    { id: '온라인 독서실',  label: labels.studyHall,    panel: (v) => <OnlineLibraryCard forceVisible={v} lang={lang} /> },
+    { id: 'AI 코치',       label: labels.aiCoach,      panel: (v) => <AICoachCard forceVisible={v} lang={lang} /> },
+    { id: '단어 공부',      label: labels.vocab,        panel: (v) => <VocabCard forceVisible={v} lang={lang} /> },
+    { id: '실전 모의고사',  label: labels.mockExam,     panel: (v) => <MockExamCard forceVisible={v} lang={lang} /> },
+  ];
+}
+
+/* ================================================================
    UNMANAGED SHOWCASE — 3-tab animated showcase
    ================================================================ */
-const UNMANAGED_TAB_LABELS = ['맞춤형 수업', '학습 리포트', '단어 공부'] as const;
+export function UnmanagedShowcase({ lang = 'ko' }: { lang?: 'ko' | 'en' } = {}) {
+  const allTabs = getTabsForLang(lang);
+  const tabs = [allTabs[0], allTabs[1], allTabs[4]]; // customLesson, scoreReport, vocab
 
-export function UnmanagedShowcase() {
   const [activeTab, setActiveTab] = useState(0);
   const [userInteracted, setUserInteracted] = useState(false);
-  const directionRef = useRef(1);
+  const [direction, setDirection] = useState(1);
   const reduce = useReducedMotion();
 
   const handleTabClick = useCallback((idx: number) => {
-    directionRef.current = idx >= activeTab ? 1 : -1;
+    setDirection(idx >= activeTab ? 1 : -1);
     setActiveTab(idx);
     setUserInteracted(true);
   }, [activeTab]);
@@ -650,32 +762,38 @@ export function UnmanagedShowcase() {
   useEffect(() => {
     if (userInteracted) return;
     const iv = setInterval(() => {
-      directionRef.current = 1;
-      setActiveTab(prev => (prev + 1) % UNMANAGED_TAB_LABELS.length);
+      setDirection(1);
+      setActiveTab(prev => (prev + 1) % tabs.length);
     }, 5000);
     return () => clearInterval(iv);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userInteracted]);
+
+  const headingText = lang === 'en'
+    ? <>Self-Directed Classes<br />Up Close</>
+    : <>자기주도형 수업<br />자세히 살펴보기</>;
+
+  const ariaLabel = lang === 'en' ? 'Self-directed services' : '자기주도 서비스';
 
   return (
     <section className={styles.section} aria-labelledby="unmanaged-showcase-heading">
       <div className={styles.header} style={{ textAlign: 'center' }}>
         <h2 id="unmanaged-showcase-heading" className={styles.sectionTitle}>
-          자기주도형 수업<br />
-          자세히 살펴보기
+          {headingText}
         </h2>
       </div>
 
-      <div className={styles.tabBar} role="tablist" aria-label="자기주도 서비스" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        {UNMANAGED_TAB_LABELS.map((label, idx) => (
+      <div className={styles.tabBar} role="tablist" aria-label={ariaLabel} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        {tabs.map((tab, idx) => (
           <button
-            key={label}
+            key={tab.id}
             role="tab"
             aria-selected={activeTab === idx}
             aria-controls={`un-tab-panel-${idx}`}
             className={`${styles.tabBtn} ${activeTab === idx ? styles.tabBtnActive : ''}`}
             onClick={() => handleTabClick(idx)}
           >
-            <span className={styles.tabLabel}>{label}</span>
+            <span className={styles.tabLabel}>{tab.label}</span>
             {activeTab === idx && !userInteracted && (
               <span key={`un-progress-${activeTab}`} className={styles.tabBtnProgress} />
             )}
@@ -684,27 +802,25 @@ export function UnmanagedShowcase() {
       </div>
 
       <div className={styles.tabPanel}>
-        <AnimatePresence mode="wait" initial={false} custom={directionRef.current}>
+        <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
             key={activeTab}
             id={`un-tab-panel-${activeTab}`}
             role="tabpanel"
-            custom={directionRef.current}
+            custom={direction}
             variants={reduce ? undefined : PANEL_VARIANTS}
             initial={reduce ? false : 'enter'}
             animate="center"
             exit={reduce ? undefined : 'exit'}
             transition={PANEL_TRANSITION}
           >
-            {activeTab === 0 && <CustomLessonCard forceVisible />}
-            {activeTab === 1 && <ScoreReportCard forceVisible />}
-            {activeTab === 2 && <VocabCard forceVisible />}
+            {tabs[activeTab]?.panel(true)}
           </motion.div>
         </AnimatePresence>
       </div>
 
       <div className={styles.dots} aria-hidden="true">
-        {UNMANAGED_TAB_LABELS.map((_, idx) => (
+        {tabs.map((_, idx) => (
           <button
             key={idx}
             className={`${styles.dot} ${activeTab === idx ? styles.dotActive : ''}`}
@@ -718,55 +834,29 @@ export function UnmanagedShowcase() {
 }
 
 /* ================================================================
-   TAB NAVIGATION
+   MAIN EXPORT — ManagedShowcase
    ================================================================ */
-const TAB_LABELS = [
-  '맞춤형 수업',
-  '학습 리포트',
-  '온라인 독서실',
-  'AI 코치',
-  '단어 공부',
-  '실전 모의고사',
-] as const;
-
-const PANEL_VARIANTS = {
-  enter: (dir: number) => ({ x: dir * 48, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (dir: number) => ({ x: dir * -48, opacity: 0 }),
-};
-
-const PANEL_TRANSITION = { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const };
-
-/* ================================================================
-   MAIN EXPORT
-   ================================================================ */
-const ALL_TABS = [
-  { label: '맞춤형 수업',  panel: (v: boolean) => <CustomLessonCard forceVisible={v} /> },
-  { label: '학습 리포트',  panel: (v: boolean) => <ScoreReportCard forceVisible={v} /> },
-  { label: '온라인 독서실', panel: (v: boolean) => <OnlineLibraryCard forceVisible={v} /> },
-  { label: 'AI 코치',      panel: (v: boolean) => <AICoachCard forceVisible={v} /> },
-  { label: '단어 공부',    panel: (v: boolean) => <VocabCard forceVisible={v} /> },
-  { label: '실전 모의고사', panel: (v: boolean) => <MockExamCard forceVisible={v} /> },
-] as const;
-
 export function ManagedShowcase({
   excludeTabs,
   mobileColumns = 3,
+  lang = 'ko',
 }: {
   excludeTabs?: readonly string[];
   mobileColumns?: 2 | 3;
+  lang?: 'ko' | 'en';
 } = {}) {
+  const allTabs = getTabsForLang(lang);
   const tabs = excludeTabs
-    ? ALL_TABS.filter(t => !excludeTabs.includes(t.label))
-    : ALL_TABS;
+    ? allTabs.filter(t => !excludeTabs.includes(t.id))
+    : allTabs;
 
   const [activeTab, setActiveTab] = useState(0);
   const [userInteracted, setUserInteracted] = useState(false);
-  const directionRef = useRef(1);
+  const [direction, setDirection] = useState(1);
   const reduce = useReducedMotion();
 
   const handleTabClick = useCallback((idx: number) => {
-    directionRef.current = idx >= activeTab ? 1 : -1;
+    setDirection(idx >= activeTab ? 1 : -1);
     setActiveTab(idx);
     setUserInteracted(true);
   }, [activeTab]);
@@ -774,30 +864,36 @@ export function ManagedShowcase({
   useEffect(() => {
     if (userInteracted) return;
     const iv = setInterval(() => {
-      directionRef.current = 1;
+      setDirection(1);
       setActiveTab(prev => (prev + 1) % tabs.length);
     }, 5000);
     return () => clearInterval(iv);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userInteracted, tabs.length]);
+
+  const headingText = lang === 'en'
+    ? <>Managed Classes<br />Up Close</>
+    : <>관리형 수업<br />자세히 살펴보기</>;
+
+  const ariaLabel = lang === 'en' ? 'Managed services' : '관리형 서비스';
 
   return (
     <section className={styles.section} aria-labelledby="managed-showcase-heading">
       <div className={styles.header}>
         <h2 id="managed-showcase-heading" className={styles.sectionTitle}>
-          관리형 수업<br />
-          자세히 살펴보기
+          {headingText}
         </h2>
       </div>
 
       <div
         className={styles.tabBar}
         role="tablist"
-        aria-label="관리형 서비스"
+        aria-label={ariaLabel}
         style={mobileColumns === 2 ? { gridTemplateColumns: 'repeat(2, 1fr)' } : undefined}
       >
         {tabs.map((tab, idx) => (
           <button
-            key={tab.label}
+            key={tab.id}
             role="tab"
             aria-selected={activeTab === idx}
             aria-controls={`tab-panel-${idx}`}
@@ -813,13 +909,13 @@ export function ManagedShowcase({
       </div>
 
       <div className={styles.tabPanel}>
-        <AnimatePresence mode="wait" initial={false} custom={directionRef.current}>
+        <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
             key={activeTab}
             id={`tab-panel-${activeTab}`}
             role="tabpanel"
             aria-labelledby={`tab-${activeTab}`}
-            custom={directionRef.current}
+            custom={direction}
             variants={reduce ? undefined : PANEL_VARIANTS}
             initial={reduce ? false : 'enter'}
             animate="center"

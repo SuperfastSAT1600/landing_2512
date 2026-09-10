@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# 실 시크릿을 쓰지 않는다. CI 게이트에 들어가는 테스트는 전부 hermetic이라
+# 더미 값으로 앱이 부팅되기만 하면 된다. (프로덕션 DB를 건드리는 스펙은 게이트에서 제외 —
+# playwright.config.ts 의 CI_SPECS 주석 참고)
+env:
+  NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
+  SUPABASE_SERVICE_ROLE_KEY: dummy-service-role-key
+  ADMIN_SECRET_KEY: missionto1600!1600!
+
+jobs:
+  unit:
+    name: 타입체크·유닛테스트
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: 타입체크
+        run: npx tsc --noEmit
+      - name: 유닛테스트
+        run: npx vitest run
+      # 린트는 게이트에 넣지 않는다 — 저장소 전체 eslint가 오류 4,116건(경고 22,274건)이라
+      # 지금 걸면 CI가 영구 빨간불이 된다. 정리 후 별도로 추가할 것.
+
+  build:
+    name: 프로덕션 빌드
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx next build
+
+  e2e:
+    name: E2E (hermetic)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Playwright 브라우저 설치
+        run: npx playwright install --with-deps chromium
+      - name: E2E 실행 (ci 프로젝트만)
+        run: npx playwright test --project=ci
+      - name: 실패 리포트 업로드
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

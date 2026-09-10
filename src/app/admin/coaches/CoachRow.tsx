@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Trash2, Copy, Check, Edit2, X, Save, Upload, Link as LinkIcon } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
-import { CoachData } from '@/lib/coaches-data';
+import { CoachData, ProfileStatus } from '@/lib/coaches-data';
 import { ReelUrlsEditor } from './ReelUrlsEditor';
 import { CoachBioEditor } from './CoachBioEditor';
 import { isValidInstagramUrl } from '@/lib/instagram-url';
@@ -142,12 +142,13 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
 
         const educationItems: string[] = [];
         if (university) {
-            const suffix = entryYear ? ` (${entryYear}년 입학${enrolled ? ', 재학중' : ', 졸업'})` : '';
-            educationItems.push(`${university} ${major}${suffix}`.trim());
+            educationItems.push(major ? `${university}, ${major}` : university);
         }
-        if (gradSchool) educationItems.push(`${gradSchool}${gradMajor ? ` ${gradMajor}` : ''}`);
+        if (gradSchool) educationItems.push(`${gradSchool}${gradMajor ? `, ${gradMajor}` : ''}`);
         if (highSchool) educationItems.push(highSchool);
-        if (rw && math) educationItems.push(`SAT ${rw + math}점 (RW:${rw} / Math:${math})`);
+        if (rw && math) educationItems.push(`SAT (RW:${rw}, MATH:${math})`);
+        const apSubjects = (submission.subjects as string[] ?? []).filter(s => s.startsWith('AP'));
+        for (const ap of apSubjects) educationItems.push(ap);
 
         // 경력
         const teachingYears = submission.teaching_years as number | null;
@@ -226,6 +227,8 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
         });
     };
 
+    const [savingStatus, setSavingStatus] = useState(false);
+
     const inviteStatus = (() => {
         if (invite === undefined) return 'loading';
         if (!invite) return 'none';
@@ -233,6 +236,15 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
         if (new Date(invite.expires_at) < new Date()) return 'expired';
         return 'valid';
     })();
+
+    const handleProfileStatusChange = async (status: ProfileStatus) => {
+        setSavingStatus(true);
+        try {
+            await onUpdate(coach.slug, { profileStatus: status });
+        } finally {
+            setSavingStatus(false);
+        }
+    };
 
     const handleCopyOnboardingLink = () => {
         if (!invite || inviteStatus !== 'valid') return;
@@ -295,20 +307,36 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         V2 미연결
                     </span>
                 )}
-                {inviteStatus === 'submitted' && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-green-500/10 text-green-400">
-                        온보딩 제출완료
-                    </span>
-                )}
-                {inviteStatus === 'valid' && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-blue-500/10 text-blue-400">
-                        온보딩 대기중
-                    </span>
-                )}
-                {inviteStatus === 'expired' && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-orange-500/10 text-orange-400">
-                        온보딩 링크 만료
-                    </span>
+                {inviteStatus === 'none' ? (
+                    <select
+                        value={coach.profileStatus ?? 'none'}
+                        onChange={e => handleProfileStatusChange(e.target.value as ProfileStatus)}
+                        disabled={savingStatus}
+                        className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-gray-500/10 text-gray-400 border border-white/10 cursor-pointer disabled:opacity-50 appearance-none"
+                    >
+                        <option value="none">프로필 작성전</option>
+                        <option value="in_progress">프로필 작성 중</option>
+                        <option value="submitted">프로필 제출 완료</option>
+                        <option value="expired">프로필 링크 만료</option>
+                    </select>
+                ) : (
+                    <>
+                        {inviteStatus === 'valid' && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-blue-500/10 text-blue-400">
+                                프로필 작성 중
+                            </span>
+                        )}
+                        {inviteStatus === 'submitted' && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-green-500/10 text-green-400">
+                                프로필 제출 완료
+                            </span>
+                        )}
+                        {inviteStatus === 'expired' && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-orange-500/10 text-orange-400">
+                                프로필 링크 만료
+                            </span>
+                        )}
+                    </>
                 )}
 
                 <div className="ml-auto flex items-center gap-2">

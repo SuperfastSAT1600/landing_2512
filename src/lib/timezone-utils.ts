@@ -112,12 +112,13 @@ export function getUTCOffsetLabel(timezone: string, date: Date = new Date()): st
   // Use 'sv' locale which formats as "YYYY-MM-DD HH:mm:ss" — ISO-like, easy to parse
   const localStr = date.toLocaleString('sv', { timeZone: timezone });
   const localAsUTC = new Date(localStr.replace(' ', 'T') + 'Z');
-  const offsetMs = localAsUTC.getTime() - date.getTime();
-  const offsetHours = offsetMs / (1000 * 60 * 60);
-  const sign = offsetHours >= 0 ? '+' : '-';
-  const abs = Math.abs(offsetHours);
-  const h = Math.floor(abs);
-  const m = Math.round((abs - h) * 60);
+  // localStr is second-resolution while `date` may carry milliseconds; round to
+  // whole minutes so sub-second drift can't produce values like "UTC+8:60".
+  const offsetMinutes = Math.round((localAsUTC.getTime() - date.getTime()) / (1000 * 60));
+  const sign = offsetMinutes >= 0 ? '+' : '-';
+  const abs = Math.abs(offsetMinutes);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
   if (m === 0) return `UTC${sign}${h}`;
   return `UTC${sign}${h}:${String(m).padStart(2, '0')}`;
 }

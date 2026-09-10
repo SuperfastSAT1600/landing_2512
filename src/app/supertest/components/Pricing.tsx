@@ -40,10 +40,10 @@ function PlanFeatureCard({ plan, delay }: { plan: (typeof PLANS)[number]; delay:
             <hr className={styles.divider} />
             <ul className={styles.featureList}>
                 {([
-                    [plan.features.camera,   '테스트 리뷰 수업'],
+                    [plan.features.camera,   '대표코치 해설강의'],
                     [plan.features.analysis, '응시자 비교 리포트'],
                     [plan.features.vocab,    '단어 학습'],
-                    [plan.features.lecture,  '해설 강의'],
+                    [plan.features.lecture,  'ai튜터 리뷰'],
                 ] as [boolean | string, string][]).map(([available, label]) => (
                     <li key={label} className={styles.featureItem} data-available={!!available}>
                         <span className={`${styles.featureIcon} ${available ? styles.check : styles.cross}`}>

@@ -1,0 +1,85 @@
+{
+  "_comment": "Tier 2 university description templates. Slots: {university}, {country}, {region}, {topMetricLabel}, {secondMetricLabel}",
+  "templates": [
+    {
+      "id": "research-specialist",
+      "condition": { "focus": "Specialist", "topMetric": "ar" },
+      "text": "{university}는 {country}의 특화 연구 기관으로, 학계에서 높은 평판을 자랑합니다. 한 분야를 깊이 파고드는 전문 연구형 기질이 강하며, 이 분야의 최고 전문가를 꿈꾸는 사람에게 맞는 곳입니다."
+    },
+    {
+      "id": "global-comprehensive",
+      "condition": { "focus": "Full Comprehensive", "topMetric": "ifr" },
+      "text": "{university}는 {country}의 종합 대학으로, 유독 국제화 지수가 높습니다. 다양한 문화권의 학생과 교원이 어우러지는 글로벌 캠퍼스 환경에서 세계 시민으로 성장하기 좋은 곳입니다."
+    },
+    {
+      "id": "outcomes-focused",
+      "condition": { "topMetric": "eo" },
+      "text": "{university}는 {country}에서 졸업생 성과 지수가 특히 뛰어납니다. 취업 경쟁력과 실무 연결이 강점이며, 학위가 곧 경력으로 이어지는 실용 중심 교육 환경을 제공합니다."
+    },
+    {
+      "id": "employer-reputation",
+      "condition": { "topMetric": "er" },
+      "text": "{university}는 {country} 기업계에서 높은 신뢰를 받는 대학입니다. 고용주 평판 지수가 높아, 졸업장이 현업에서 실질적인 가치를 발휘하는 실속형 명문입니다."
+    },
+    {
+      "id": "citation-powerhouse",
+      "condition": { "topMetric": "cpf" },
+      "text": "{university}는 {country}의 연구 중심 대학으로, 논문 피인용 지수가 두드러집니다. 학문적 기여도가 높아 순수 연구나 대학원 진학을 목표로 한다면 강력한 환경을 제공합니다."
+    },
+    {
+      "id": "asia-tech",
+      "condition": { "region": "Asia", "research": "Very High" },
+      "text": "{university}는 아시아를 대표하는 연구 집약형 대학입니다. 빠르게 성장하는 아시아 학문 생태계의 중심에서, 기술과 혁신의 최전선에 서있는 곳입니다."
+    },
+    {
+      "id": "europe-traditional",
+      "condition": { "region": "Europe", "status": "Public" },
+      "text": "{university}는 유럽의 공립 연구 대학입니다. 오랜 역사와 안정된 학문 환경 속에서 유럽 특유의 깊이 있는 학문 전통을 계승하고 있습니다."
+    },
+    {
+      "id": "americas-innovation",
+      "condition": { "region": "Americas" },
+      "text": "{university}는 아메리카 대륙의 종합 연구 대학으로, 실용주의와 학문적 열정이 공존합니다. 창의적이고 도전적인 분위기에서 스스로를 증명하고 싶은 사람에게 어울립니다."
+    },
+    {
+      "id": "oceania-open",
+      "condition": { "region": "Oceania" },
+      "text": "{university}는 오세아니아 지역의 개방적인 대학입니다. 자연과 도시가 공존하는 환경에서 자유로운 사고와 탐구를 장려하는 학풍을 가지고 있습니다."
+    },
+    {
+      "id": "small-elite",
+      "condition": { "size": "Small" },
+      "text": "{university}는 소규모 엘리트 대학입니다. 적은 학생 수가 오히려 강점 — 교수와의 긴밀한 소통, 집중된 커뮤니티, 높은 개인 성장이 이 대학의 핵심입니다."
+    },
+    {
+      "id": "large-vibrant",
+      "condition": { "size": "Extra Large" },
+      "text": "{university}는 대규모 종합 대학으로, 다채로운 학문과 활발한 캠퍼스 문화를 경험할 수 있습니다. 자신만의 길을 스스로 개척하는 능동적인 학생에게 최적입니다."
+    },
+    {
+      "id": "private-competitive",
+      "condition": { "status": "Private not for Profit" },
+      "text": "{university}는 {country}의 비영리 사립 대학입니다. 경쟁적이고 동기부여 높은 동료들 사이에서 최고의 자신을 끌어내는 환경을 제공합니다."
+    },
+    {
+      "id": "sustainability-leader",
+      "condition": { "topMetric": "sus" },
+      "text": "{university}는 지속가능성 분야에서 세계적 수준의 대학입니다. 환경·사회적 책임에 민감하며, 미래 세대를 위한 학문을 실천하는 곳입니다."
+    },
+    {
+      "id": "faculty-student-balance",
+      "condition": { "topMetric": "fsr" },
+      "text": "{university}는 교수 대 학생 비율이 뛰어납니다. 학생 한 명 한 명에게 충분한 관심과 지원이 돌아가는 환경에서, 깊이 있는 멘토링과 학문적 성장이 가능합니다."
+    },
+    {
+      "id": "international-network",
+      "condition": { "topMetric": "irn" },
+      "text": "{university}는 국제 연구 네트워크가 특히 강합니다. 전 세계 대학·연구소와의 협력을 통해 글로벌 시각과 넓은 연구 커뮤니티를 동시에 얻을 수 있습니다."
+    },
+    {
+      "id": "default-academic",
+      "condition": {},
+      "text": "{university}는 {country}의 권위 있는 대학으로, 학문적 엄격함과 성장 가능성을 두루 갖추고 있습니다. 자신의 가능성을 다방면으로 탐구하고 싶은 사람에게 어울리는 곳입니다."
+    }
+  ]
+}

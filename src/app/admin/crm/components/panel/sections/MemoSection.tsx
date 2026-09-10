@@ -8,6 +8,10 @@ import type { StagedAttachment } from '../hooks/useMemoAttachments';
 interface Props {
   memoText: string;
   setMemoText: (v: string) => void;
+  parentText: string;
+  setParentText: (v: string) => void;
+  parentDrafting: boolean;
+  onDraftParent: () => void;
   savingMemo: boolean;
   memoError: string;
   setMemoError: (v: string) => void;
@@ -22,8 +26,21 @@ interface Props {
 }
 
 export function MemoSection({
-  memoText, setMemoText, savingMemo, memoError, setMemoError, onAddMemo,
-  staged, onAddFiles, onRemoveAttachment, attachmentsUploading, onOpenPlaud,
+  memoText,
+  setMemoText,
+  parentText,
+  setParentText,
+  parentDrafting,
+  onDraftParent,
+  savingMemo,
+  memoError,
+  setMemoError,
+  onAddMemo,
+  staged,
+  onAddFiles,
+  onRemoveAttachment,
+  attachmentsUploading,
+  onOpenPlaud,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,23 +52,46 @@ export function MemoSection({
     }
   }
 
-  const canSave = (!!memoText.trim() || staged.some(s => s.path)) && !savingMemo && !attachmentsUploading;
+  const canSave =
+    (!!memoText.trim() || staged.some((s) => s.path)) && !savingMemo && !attachmentsUploading;
 
   return (
     <SectionCard title="상담 메모" defaultOpen={false}>
+      <label className="block text-xs font-semibold text-gray-600 mb-1">내부 메모</label>
       <textarea
         value={memoText}
-        onChange={e => { setMemoText(e.target.value); setMemoError(''); }}
+        onChange={(e) => {
+          setMemoText(e.target.value);
+          setMemoError('');
+        }}
         onPaste={handlePaste}
         placeholder="상담 내용을 입력하세요... (캡처 이미지는 여기에 붙여넣기 Ctrl/⌘+V)"
         rows={3}
         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 resize-y focus:outline-none focus:border-blue-400 min-h-[64px]"
       />
+      <div className="flex items-center justify-between mt-3 mb-1">
+        <label className="text-xs font-semibold text-gray-600">학부모 공개용</label>
+        <button
+          onClick={onDraftParent}
+          disabled={!memoText.trim() || parentDrafting}
+          className="text-[11px] text-blue-600 disabled:opacity-40"
+        >
+          {parentDrafting ? '생성 중...' : '✨ AI 초안 생성'}
+        </button>
+      </div>
+      <textarea
+        value={parentText}
+        onChange={(e) => setParentText(e.target.value)}
+        placeholder="학부모님께 전달할 상담 내용을 입력하세요"
+        rows={4}
+        className="w-full bg-blue-50/30 border border-blue-100 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 resize-y focus:outline-none focus:border-blue-400"
+      />
+      <p className="mt-1 text-[11px] text-gray-400">비워두면 학부모 포털에 공개되지 않습니다</p>
 
       {/* staged 첨부 미리보기 */}
       {staged.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
-          {staged.map(att => (
+          {staged.map((att) => (
             <div key={att.localId} className="relative group">
               {att.previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -61,9 +101,13 @@ export function MemoSection({
                   className={`h-20 w-20 rounded-lg border border-gray-200 object-cover ${att.uploading ? 'opacity-50' : ''}`}
                 />
               ) : (
-                <div className={`h-20 w-20 rounded-lg border border-gray-200 flex flex-col items-center justify-center gap-1 px-1 ${att.uploading ? 'opacity-50' : ''}`}>
+                <div
+                  className={`h-20 w-20 rounded-lg border border-gray-200 flex flex-col items-center justify-center gap-1 px-1 ${att.uploading ? 'opacity-50' : ''}`}
+                >
                   <FileText size={20} className="text-gray-400" />
-                  <span className="text-[9px] text-gray-500 truncate w-full text-center">{att.name}</span>
+                  <span className="text-[9px] text-gray-500 truncate w-full text-center">
+                    {att.name}
+                  </span>
                 </div>
               )}
               {att.uploading && (
@@ -111,7 +155,7 @@ export function MemoSection({
           accept="image/*,application/pdf"
           multiple
           className="hidden"
-          onChange={e => {
+          onChange={(e) => {
             const files = Array.from(e.target.files ?? []);
             if (files.length > 0) onAddFiles(files);
             e.target.value = '';

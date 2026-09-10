@@ -41,6 +41,21 @@ export async function saveLandingDraft(
   return data[0]?.id ?? slug;
 }
 
+export async function updateLandingThumbnail(landingId: string, featuredImageUrl: string): Promise<void> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  await fetch(`${supabaseUrl}/rest/v1/posts?id=eq.${encodeURIComponent(landingId)}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ featured_image: featuredImageUrl }),
+  });
+}
+
 export async function publishLandingPost(landingId: string): Promise<string> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;

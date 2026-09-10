@@ -4,6 +4,7 @@
 // B2B 대시보드/세일즈 로직 통계가 동일 UI를 재사용한다. 순수 표현 컴포넌트.
 
 import type { StageFlowRow } from '@/lib/funnel-stats';
+import type { CrmStatsSegment } from '@/lib/crm-stats-core';
 
 // ─── Period helpers ────────────────────────────────────────────────────────────
 
@@ -138,7 +139,8 @@ export function RateBar({
   );
 }
 
-// 초 단위 경과 시간을 사람이 읽기 쉬운 한글 기간으로. null이면 '-'.
+// ─── Segment tabs for B2C stats ───────────────────────────────────────────────
+
 export function formatDuration(seconds: number | null): string {
   if (seconds == null) return '-';
   if (seconds < 60) return '1분 미만';

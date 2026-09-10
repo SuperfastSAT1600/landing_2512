@@ -66,6 +66,10 @@ const json = (route: import('@playwright/test').Route, body: unknown) =>
   route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
 
 async function setup(page: Page) {
+  // 완료 체크(PATCH) 이후 재조회에 그 효과가 반영돼야 한다 — 실제 서버와 같게 상태를 들고 간다.
+  // page.tsx가 daily_action_done_at PATCH 후 today_actions=true 를 재조회하기 때문.
+  const doneIds = new Set<string>();
+
   await page.addInitScript((key) => localStorage.setItem('admin_key', key), ADMIN_KEY);
   await page.route('**/api/crm/stats**', (route) =>
     json(route, {
@@ -84,10 +88,24 @@ async function setup(page: Page) {
     if (route.request().method() !== 'GET') return json(route, { data: {} });
     const url = route.request().url();
     if (/lead_status=(enrolled|inactive)|stage=churned/.test(url)) return json(route, { data: [] });
-    return json(route, { data: [stalled, overdue, doneToday, memoToday] });
+    const withDone = <T extends { id: string }>(s: T) =>
+      doneIds.has(s.id) ? { ...s, daily_action_done_at: iso(now) } : s;
+    return json(route, { data: [stalled, overdue, doneToday, memoToday].map(withDone) });
   });
-  // 완료 체크 PATCH 등 단일 학생 — 성공 응답 (students** 보다 나중 등록 → 우선)
-  await page.route('**/api/crm/students/*', (route) => json(route, { data: {} }));
+  // 완료 체크 PATCH 등 단일 학생 (students** 보다 나중 등록 → 우선).
+  // daily_action_done_at PATCH는 기록해 두고 이후 GET에 반영한다.
+  await page.route('**/api/crm/students/*', (route) => {
+    const req = route.request();
+    if (req.method() === 'PATCH') {
+      const body = req.postDataJSON() as { daily_action_done_at?: string | null } | null;
+      const id = new URL(req.url()).pathname.split('/').pop() ?? '';
+      if (body && 'daily_action_done_at' in body) {
+        if (body.daily_action_done_at) doneIds.add(id);
+        else doneIds.delete(id);
+      }
+    }
+    return json(route, { data: {} });
+  });
 }
 
 test.describe('CRM — 오늘 할 일 탭', () => {
@@ -121,16 +139,19 @@ test.describe('CRM — 오늘 할 일 탭', () => {
   });
 
   test('최초 세일즈 탭에는 정체/팔로업 배너가 없다', async ({ page }) => {
+    // 기본 탭이 '주차 계획·이행'이므로 상위 탭부터 이동한다 (B2cWorkspace → LeadsHub)
+    await page.getByRole('button', { name: '리드 현황·통계' }).click();
+    await page.waitForTimeout(600);
     await page.getByRole('button', { name: '최초 세일즈' }).click();
     await page.waitForTimeout(1200);
     await expect(page.locator('body')).not.toContainText('Application error');
     const body = (await page.textContent('body')) ?? '';
     expect(body).not.toContain('즉시 다음 단계로 진행'); // 단계 정체 배너 문구
     expect(body).not.toContain('오늘 팔로업 액션'); // 팔로업 배너 문구
-    // 상단 스트립에 소스별 컨택/전환율이 표시된다
-    expect(body).toContain('소스별');
-    expect(body).toContain('네이버 블로그');
-    expect(body).toContain('인스타그램 광고');
+    // 상단 통계 스트립(소스별 칩 포함)은 화면에서 제거됨
+    expect(body).not.toContain('소스별');
+    expect(body).not.toContain('컨택 성공율');
+    expect(body).not.toContain('결제전환율');
     // 8(수업 중)·9(이탈) 컬럼은 칸반에서 제거됨
     expect(body).not.toContain('9. 이탈');
     await page.screenshot({ path: 'tests/e2e/__screenshots__/crm-kanban-no-banner.png', fullPage: true });

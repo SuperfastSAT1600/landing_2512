@@ -4,6 +4,7 @@ import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
 import { Bold, Italic, Strikethrough, Code, Link } from 'lucide-react';
+import { useRef, useEffect } from 'react';
 
 interface TextBubbleMenuProps {
     editor: Editor | null;
@@ -17,16 +18,31 @@ const btn = (active: boolean) =>
     }`;
 
 export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (menuRef.current) {
+            menuRef.current.style.zIndex = '100';
+        }
+    }, []);
+
     if (!editor) return null;
 
     return (
         <BubbleMenu
+            ref={menuRef}
             editor={editor}
-            options={{ placement: 'top', offset: 8 }}
-            shouldShow={({ state }) => {
+            options={{
+                placement: 'top',
+                offset: 8,
+                flip: { padding: { top: 116 } },
+                shift: { padding: { top: 116 } },
+            }}
+            shouldShow={({ editor: e, state }) => {
                 const { selection } = state;
                 if (!(selection instanceof TextSelection)) return false;
                 if (selection.empty) return false;
+                if (e.isActive('table') || e.isActive('tableCell') || e.isActive('tableHeader')) return false;
                 return true;
             }}
         >

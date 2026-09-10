@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학원 입학 요강 — 비주얼 방향 프리뷰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── 토큰 ──────────────────────────────────────────────── */
+  :root {
+    --canvas:    #F4F0E8;
+    --canvas-soft: #EDE9DF;
+    --ink:       #1A1614;
+    --ink-soft:  #3D3632;
+    --muted:     #7A726A;
+    --hairline:  #D4CFC7;
+    --indigo:    #2B3A8C;
+    --indigo-soft: rgba(43,58,140,0.08);
+    --indigo-mid:  rgba(43,58,140,0.18);
+    --serif: 'Noto Serif KR', 'Georgia', serif;
+    --sans:  'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    /* 종이 질감 */
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
+
+  /* ── 페이지 레이블 ─────────────────────────────────────── */
+  .dir-label {
+    position: fixed; top: 16px; right: 16px; z-index: 999;
+    background: var(--indigo); color: #fff;
+    font-family: var(--sans); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 6px 12px; border-radius: 2px;
+  }
+
+  /* ── 네비게이션 ────────────────────────────────────────── */
+  nav {
+    position: sticky; top: 0; z-index: 40;
+    background: var(--canvas);
+    border-bottom: 1px solid var(--hairline);
+    padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  .nav-wordmark {
+    font-family: var(--serif); font-size: 14px; font-weight: 600;
+    letter-spacing: 0.04em; color: var(--ink);
+  }
+  .nav-right {
+    display: flex; gap: 20px; align-items: center;
+  }
+  .nav-link {
+    font-size: 13px; color: var(--muted); text-decoration: none;
+    font-weight: 400;
+  }
+  .nav-cta {
+    font-size: 12px; font-weight: 600; color: var(--indigo);
+    border: 1.5px solid var(--indigo);
+    padding: 7px 16px; text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── 히어로 ────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    display: flex; align-items: flex-end;
+    overflow: hidden;
+    background: var(--ink);
+  }
+  .hero-photo {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      135deg,
+      #2a2016 0%,
+      #1a1208 40%,
+      #0e0d0b 100%
+    );
+    /* 실제 사진 자리 — 코치와 학생의 1:1 수업 사진 */
+  }
+  /* 코칭 씬 SVG 합성 */
+  .hero-photo::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 65% 40%, rgba(180,160,120,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 30% 60%, rgba(43,58,140,0.08) 0%, transparent 60%);
+  }
+  .hero-illustration {
+    position: absolute;
+    inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.18;
+  }
+  .hero-illustration svg { width: 55%; height: 55%; }
+
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(10,8,6,0.88) 0%,
+      rgba(10,8,6,0.45) 50%,
+      rgba(10,8,6,0.1) 100%
+    );
+  }
+  .hero-content {
+    position: relative; z-index: 2;
+    padding: 48px 28px 52px;
+    max-width: 480px;
+  }
+  .hero-kicker {
+    font-family: var(--sans); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .hero-kicker::before {
+    content: '';
+    display: block; width: 24px; height: 1px;
+    background: rgba(255,255,255,0.3);
+  }
+  .hero-h1 {
+    font-family: var(--serif); font-size: clamp(38px, 9vw, 54px);
+    font-weight: 300; line-height: 1.12;
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    /* 헤드라인이 오른쪽 가장자리를 살짝 넘침 */
+    margin-right: -8px;
+  }
+  .hero-sub {
+    font-size: 14px; color: rgba(255,255,255,0.55);
+    line-height: 1.7; font-weight: 300;
+    margin-bottom: 32px;
+    max-width: 280px;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap-6: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 14px;
+    font-size: 11px; color: rgba(255,255,255,0.6);
+    letter-spacing: 0.06em;
+    gap: 8px;
+  }
+  .hero-badge span { color: rgba(255,255,255,0.9); font-weight: 600; }
+  .hero-scroll {
+    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+    z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .hero-scroll-line {
+    width: 1px; height: 36px; background: rgba(255,255,255,0.2);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+  .hero-scroll-label {
+    font-size: 9px; letter-spacing: 0.15em; color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(1); }
+    50% { opacity: 0.7; transform: scaleY(1.2); transform-origin: top; }
+  }
+
+  /* ── 섹션 기본 ──────────────────────────────────────────── */
+  section { padding: 64px 24px; }
+  .section-rule { width: 32px; height: 2px; background: var(--indigo); margin-bottom: 16px; }
+  .section-kicker {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--indigo); margin-bottom: 12px;
+  }
+  .section-h2 {
+    font-family: var(--serif); font-size: clamp(26px, 6vw, 34px);
+    font-weight: 400; line-height: 1.2;
+    letter-spacing: -0.01em; color: var(--ink);
+    margin-bottom: 16px;
+  }
+  .section-lead {
+    font-size: 14px; color: var(--muted); line-height: 1.75;
+    max-width: 360px;
+  }
+
+  /* ── 선택 카드 (관리형 / 비관리형) ────────────────────── */
+  .selection-grid {
+    display: grid; grid-template-columns: 1fr;
+    gap: 12px; margin-top: 36px;
+  }
+  @media (min-width: 600px) {
+    .selection-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+  }
+
+  .sel-card {
+    border: 1px solid var(--hairline);
+    padding: 28px 24px 24px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    position: relative; overflow: hidden;
+    background: rgba(255,255,255,0.5);
+    /* 종이 느낌 */
+    backdrop-filter: blur(0);
+  }
+  .sel-card:hover {
+    border-color: rgba(43,58,140,0.35);
+    box-shadow: 0 2px 16px rgba(43,58,140,0.07);
+  }
+  .sel-card.selected {
+    border-color: var(--indigo);
+    background: var(--indigo-soft);
+    box-shadow: 0 4px 24px rgba(43,58,140,0.12);
+  }
+
+  /* 스탬프 인터랙션 */
+  .sel-card .stamp {
+    position: absolute; top: 16px; right: 18px;
+    width: 44px; height: 44px;
+    border: 2px solid var(--indigo);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transform: scale(0.5) rotate(-15deg);
+    transition: opacity 0.25s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: var(--indigo); font-size: 18px;
+  }
+  .sel-card.selected .stamp {
+    opacity: 1; transform: scale(1) rotate(-8deg);
+  }
+
+  .card-number {
+    font-family: var(--serif); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.15em; color: var(--muted); margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: var(--serif); font-size: 24px; font-weight: 400;
+    color: var(--ink); margin-bottom: 6px; line-height: 1.2;
+  }
+  .card-subtitle {
+    font-size: 12px; color: var(--muted); margin-bottom: 24px; line-height: 1.6;
+  }
+  .card-divider { width: 100%; height: 1px; background: var(--hairline); margin-bottom: 20px; }
+
+  /* 서비스 태그들 */
+  .service-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .service-tag {
+    font-size: 10px; color: var(--indigo); border: 1px solid var(--indigo-mid);
+    padding: 4px 10px; background: var(--indigo-soft);
+    letter-spacing: 0.04em;
+  }
+  .service-tag.dim {
+    color: var(--muted); border-color: var(--hairline);
+    background: transparent;
+  }
+
+  .card-for {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+  }
+  .card-for-list { list-style: none; }
+  .card-for-list li {
+    font-size: 12px; color: var(--muted);
+    padding: 5px 0; border-bottom: 1px solid var(--hairline);
+    display: flex; align-items: center; gap: 10px; line-height: 1.5;
+  }
+  .card-for-list li::before {
+    content: '—'; color: var(--hairline); flex-shrink: 0; font-size: 10px;
+  }
+  .sel-card.selected .card-for-list li::before {
+    content: '✓'; color: var(--indigo);
+  }
+
+  /* ── 선택 언더라인 인터랙션 표시 ───────────────────────── */
+  .underline-demo {
+    margin-top: 28px; padding: 20px 24px;
+    border: 1px solid var(--hairline); background: rgba(255,255,255,0.6);
+    position: relative;
+  }
+  .underline-demo::before {
+    content: '선택 시 적용됩니다 →';
+    position: absolute; top: -10px; left: 12px;
+    font-size: 9px; letter-spacing: 0.1em; color: var(--muted);
+    background: var(--canvas); padding: 0 6px;
+    text-transform: uppercase;
+  }
+  .ud-label { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+  .ud-item {
+    font-family: var(--serif); font-size: 18px; color: var(--ink);
+    font-weight: 400; padding: 6px 0;
+    border-bottom: 1px solid var(--hairline);
+    position: relative;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ud-item.chosen {
+    color: var(--indigo);
+    border-bottom-color: var(--indigo);
+    border-bottom-width: 2px;
+  }
+  .ud-stamp {
+    font-size: 10px; font-weight: 600; color: var(--indigo);
+    border: 1.5px solid var(--indigo); padding: 2px 8px;
+    letter-spacing: 0.08em; transform: rotate(-2deg);
+    display: inline-block;
+    opacity: 0;
+  }
+  .ud-item.chosen .ud-stamp { opacity: 1; }
+
+  /* ── 증거 섹션 ─────────────────────────────────────────── */
+  .evidence-section {
+    background: var(--canvas-soft);
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .evidence-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: var(--hairline); margin-top: 32px;
+    border: 1px solid var(--hairline);
+  }
+  .evidence-cell {
+    background: var(--canvas); padding: 24px 20px;
+  }
+  .ev-number {
+    font-family: var(--serif); font-size: 36px; font-weight: 300;
+    color: var(--ink); letter-spacing: -0.03em; line-height: 1;
+    margin-bottom: 6px;
+  }
+  .ev-number em {
+    font-style: normal; font-size: 16px; color: var(--indigo);
+    font-weight: 600; font-family: var(--sans);
+  }
+  .ev-label {
+    font-size: 11px; color: var(--muted); line-height: 1.5;
+  }
+
+  /* ── 분해도 서비스 섹션 ─────────────────────────────────── */
+  .services-section { }
+  .service-diagram {
+    margin-top: 36px; position: relative;
+  }
+  .service-item {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 20px 0; border-bottom: 1px solid var(--hairline);
+    position: relative;
+  }
+  .service-item:last-child { border-bottom: none; }
+  .service-num {
+    font-family: var(--serif); font-size: 11px; font-weight: 600;
+    color: var(--indigo); letter-spacing: 0.1em;
+    min-width: 28px; padding-top: 2px;
+  }
+  .service-content { flex: 1; }
+  .service-name {
+    font-family: var(--serif); font-size: 16px; font-weight: 400;
+    color: var(--ink); margin-bottom: 4px;
+  }
+  .service-desc {
+    font-size: 12px; color: var(--muted); line-height: 1.65;
+  }
+  .service-connector {
+    position: absolute; left: 13px; top: 0; bottom: 0;
+    width: 1px; background: var(--indigo-mid);
+  }
+
+  /* ── 가격 섹션 ─────────────────────────────────────────── */
+  .price-card {
+    border: 1px solid var(--hairline);
+    background: rgba(255,255,255,0.7);
+    margin-top: 32px; overflow: hidden;
+  }
+  .price-header {
+    padding: 20px 24px; background: var(--indigo);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .price-header-label { font-size: 11px; color: rgba(255,255,255,0.6); letter-spacing: 0.1em; }
+  .price-header-name { font-family: var(--serif); font-size: 16px; color: #fff; font-weight: 400; }
+  .price-body { padding: 24px; }
+  .price-amount {
+    font-family: var(--serif); font-size: 40px; font-weight: 300;
+    color: var(--ink); letter-spacing: -0.03em; margin-bottom: 4px;
+  }
+  .price-per { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  .price-includes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
+  .pi-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+  .pi-check {
+    width: 14px; height: 14px; border: 1.5px solid var(--indigo);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .pi-check::after { content: '✓'; font-size: 9px; color: var(--indigo); }
+  .cta-btn {
+    display: block; width: 100%; padding: 16px;
+    background: var(--indigo); color: #fff; border: none;
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    letter-spacing: 0.04em; cursor: pointer; text-align: center;
+    transition: background 0.2s;
+  }
+  .cta-btn:hover { background: #1d2a6b; }
+  .cta-note {
+    text-align: center; font-size: 11px; color: var(--muted);
+    margin-top: 12px; line-height: 1.5;
+  }
+
+  /* ── 방향 비교 섹션 ─────────────────────────────────────── */
+  .compare-panel {
+    background: var(--ink); color: #fff;
+    padding: 40px 24px;
+  }
+  .compare-title {
+    font-family: var(--serif); font-size: 11px; font-weight: 400;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(255,255,255,0.35); margin-bottom: 28px;
+    text-align: center;
+  }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .compare-col { }
+  .compare-col h4 {
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(255,255,255,0.35); margin-bottom: 12px;
+  }
+  .compare-col h4 span {
+    color: #90A0FF; font-weight: 600;
+  }
+  .compare-attr {
+    font-size: 11px; color: rgba(255,255,255,0.55);
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+    line-height: 1.5;
+  }
+  .compare-attr strong { display: block; font-size: 12px; color: rgba(255,255,255,0.85); font-weight: 500; margin-bottom: 2px; }
+
+  /* ── 인터랙션 데모 ───────────────────────────────────────── */
+  .demo-note {
+    text-align: center; font-size: 11px; color: var(--muted);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 12px; border: 1px dashed var(--hairline);
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="dir-label">비주얼 방향 프리뷰 · 학원 입학 요강</div>
+
+<!-- ── 네비게이션 ──────────────────────────────────────────── -->
+<nav>
+  <span class="nav-wordmark">SuperfastSAT</span>
+  <div class="nav-right">
+    <a href="#" class="nav-link">서비스 소개</a>
+    <a href="#" class="nav-link">가격</a>
+    <a href="#" class="nav-cta">상담 신청</a>
+  </div>
+</nav>
+
+<!-- ── 히어로 ──────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-photo">
+    <!-- 실제 코치 수업 사진 자리 (풀블리드) -->
+    <!-- SVG로 분위기 표현 -->
+    <div class="hero-illustration">
+      <svg viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- 책상 실루엣 -->
+        <rect x="60" y="200" width="280" height="3" fill="white" opacity="0.15"/>
+        <!-- 노트북 -->
+        <rect x="160" y="140" width="100" height="65" rx="4" fill="white" opacity="0.08"/>
+        <rect x="150" y="202" width="120" height="4" rx="2" fill="white" opacity="0.06"/>
+        <!-- 학생 실루엣 -->
+        <ellipse cx="130" cy="115" rx="20" ry="20" fill="white" opacity="0.06"/>
+        <path d="M100 200 Q130 160 160 200" stroke="white" stroke-width="1" opacity="0.06" fill="none"/>
+        <!-- 코치 실루엣 -->
+        <ellipse cx="270" cy="110" rx="22" ry="22" fill="white" opacity="0.08"/>
+        <path d="M240 200 Q270 155 300 200" stroke="white" stroke-width="1" opacity="0.08" fill="none"/>
+        <!-- 연결선 (가르치는 제스처) -->
+        <line x1="155" y1="160" x2="245" y2="160" stroke="white" stroke-width="0.5" opacity="0.1" stroke-dasharray="4 4"/>
+        <!-- 화면 글자 -->
+        <rect x="170" y="155" width="60" height="4" rx="1" fill="white" opacity="0.12"/>
+        <rect x="170" y="165" width="45" height="4" rx="1" fill="white" opacity="0.08"/>
+        <rect x="170" y="175" width="52" height="4" rx="1" fill="white" opacity="0.06"/>
+      </svg>
+    </div>
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-kicker">SuperfastSAT · SAT 전문 수업</div>
+    <h1 class="hero-h1">아이의 SAT,<br>혼자 두지<br>마세요.</h1>
+    <p class="hero-sub">점수는 수업만으로 오르지 않습니다.<br>체계적인 관리가 함께해야 합니다.</p>
+    <div class="hero-badge">
+      <span>1,200+</span> 명 수강생 · 평균 점수 향상 <span>+180pt</span>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="hero-scroll-line"></div>
+    <span class="hero-scroll-label">Scroll</span>
+  </div>
+</div>
+
+<!-- ── 관리형 vs 비관리형 선택 ──────────────────────────── -->
+<section>
+  <div class="section-rule"></div>
+  <div class="section-kicker">01 · 수업 유형 선택</div>
+  <h2 class="section-h2">어떤 방식이<br>우리 아이에게 맞나요?</h2>
+  <p class="section-lead">두 가지 수업 방식 중 하나를 선택하세요. 선택하신 후 수업 형태와 패키지를 결정하실 수 있습니다.</p>
+
+  <div class="demo-note">↓ 카드를 클릭해 인터랙션을 확인해보세요</div>
+
+  <div class="selection-grid">
+    <!-- 관리형 카드 -->
+    <div class="sel-card" id="card-managed" onclick="selectCard('managed')">
+      <div class="stamp">✓</div>
+      <div class="card-number">01</div>
+      <div class="card-title">관리형</div>
+      <div class="card-subtitle">코치·매니저와 함께<br>학습 전반을 체계적으로</div>
+      <div class="card-divider"></div>
+      <div class="service-tags">
+        <span class="service-tag">맞춤형 수업</span>
+        <span class="service-tag">학습 리포트</span>
+        <span class="service-tag">온라인 독서실</span>
+        <span class="service-tag">AI 코치</span>
+        <span class="service-tag">단어 공부</span>
+        <span class="service-tag">모의고사</span>
+      </div>
+      <div class="card-for">이런 학생에게 맞아요</div>
+      <ul class="card-for-list">
+        <li>학습 전반을 관리받고 싶은 학생</li>
+        <li>데이터 기반 피드백을 원하는 학생</li>
+        <li>혼자서는 집중이 잘 안 되는 학생</li>
+      </ul>
+    </div>
+
+    <!-- 비관리형 카드 -->
+    <div class="sel-card" id="card-unmanaged" onclick="selectCard('unmanaged')">
+      <div class="stamp">✓</div>
+      <div class="card-number">02</div>
+      <div class="card-title">비관리형</div>
+      <div class="card-subtitle">수업 + 기본 리포트만<br>나머지는 스스로 관리</div>
+      <div class="card-divider"></div>
+      <div class="service-tags">
+        <span class="service-tag">맞춤형 수업</span>
+        <span class="service-tag">학습 리포트</span>
+        <span class="service-tag dim">온라인 독서실</span>
+        <span class="service-tag dim">AI 코치</span>
+        <span class="service-tag dim">단어 공부</span>
+        <span class="service-tag dim">모의고사</span>
+      </div>
+      <div class="card-for">이런 학생에게 맞아요</div>
+      <ul class="card-for-list">
+        <li>자기주도 학습이 가능한 학생</li>
+        <li>특정 영역만 집중 보강할 학생</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 선택 인터랙션 언더라인 데모 -->
+  <div class="underline-demo" style="margin-top: 28px;">
+    <div class="ud-label">패키지 선택 화면의 인터랙션 예시</div>
+    <div class="ud-item chosen">
+      1:1 정규수업 · 20시간 패키지
+      <span class="ud-stamp">선택</span>
+    </div>
+    <div class="ud-item">
+      1:1 정규수업 · 10시간 패키지
+      <span class="ud-stamp">선택</span>
+    </div>
+    <div class="ud-item">
+      1:1 정규수업 · 40시간 패키지
+      <span class="ud-stamp">선택</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── 증거 섹션 ─────────────────────────────────────────── -->
+<section class="evidence-section">
+  <div class="section-rule"></div>
+  <div class="section-kicker">02 · 성과 데이터</div>
+  <h2 class="section-h2">숫자로 보는<br>SuperfastSAT</h2>
+  <div class="evidence-grid">
+    <div class="evidence-cell">
+      <div class="ev-number">+180<em>pt</em></div>
+      <div class="ev-label">평균 점수 향상<br>(관리형 수강생 기준)</div>
+    </div>
+    <div class="evidence-cell">
+      <div class="ev-number">90<em>%</em></div>
+      <div class="ev-label">관리형 선택 비율<br>(전체 수강생 중)</div>
+    </div>
+    <div class="evidence-cell">
+      <div class="ev-number">1,200<em>+</em></div>
+      <div class="ev-label">누적 수강생</div>
+    </div>
+    <div class="evidence-cell">
+      <div class="ev-number">6<em>개</em></div>
+      <div class="ev-label">관리형 포함 서비스<br>통합 제공</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 6개 서비스 분해도 ──────────────────────────────────── -->
+<section class="services-section">
+  <div class="section-rule"></div>
+  <div class="section-kicker">03 · 관리형 서비스 구성</div>
+  <h2 class="section-h2">하나의 시스템으로<br>움직입니다</h2>
+  <p class="section-lead">6가지 서비스가 유기적으로 연결되어 점수를 끌어올립니다.</p>
+  <div class="service-diagram">
+    <div style="position:relative; padding-left: 0;">
+      <div class="service-item">
+        <div class="service-num">01</div>
+        <div class="service-content">
+          <div class="service-name">맞춤형 수업</div>
+          <div class="service-desc">전담 코치와 1:1로 진행. 취약 영역을 분석해 매 수업 커리큘럼을 조정합니다.</div>
+        </div>
+      </div>
+      <div class="service-item">
+        <div class="service-num">02</div>
+        <div class="service-content">
+          <div class="service-name">학습 리포트</div>
+          <div class="service-desc">수업 후 스킬별 데이터 리포트. 무엇을 틀리는지, 왜 틀리는지 시각화합니다.</div>
+        </div>
+      </div>
+      <div class="service-item">
+        <div class="service-num">03</div>
+        <div class="service-content">
+          <div class="service-name">온라인 독서실</div>
+          <div class="service-desc">수업 외 자습 시간도 매니저가 확인. 학습 지속성을 시스템으로 만듭니다.</div>
+        </div>
+      </div>
+      <div class="service-item">
+        <div class="service-num">04</div>
+        <div class="service-content">
+          <div class="service-name">AI 코치</div>
+          <div class="service-desc">24시간 AI가 질문에 응답. 수업 밖에서도 학습이 멈추지 않습니다.</div>
+        </div>
+      </div>
+      <div class="service-item">
+        <div class="service-num">05</div>
+        <div class="service-content">
+          <div class="service-name">단어 공부</div>
+          <div class="service-desc">SAT 필수 어휘를 데이터 기반으로 맞춤 제공. 암기 효율을 높입니다.</div>
+        </div>
+      </div>
+      <div class="service-item">
+        <div class="service-num">06</div>
+        <div class="service-content">
+          <div class="service-name">매주 실전 모의고사</div>
+          <div class="service-desc">실제 시험 조건으로 매주 응시. 점수 변화를 추적하고 전략을 조정합니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 가격 카드 ─────────────────────────────────────────── -->
+<section>
+  <div class="section-rule"></div>
+  <div class="section-kicker">04 · 가격 확인</div>
+  <h2 class="section-h2">선택하신 수업의<br>수강료입니다</h2>
+  <div class="price-card">
+    <div class="price-header">
+      <div>
+        <div class="price-header-label">선택한 수업</div>
+        <div class="price-header-name">1:1 정규수업 · 20시간 패키지</div>
+      </div>
+      <div style="background: rgba(255,255,255,0.15); padding: 6px 12px; font-size: 10px; color: rgba(255,255,255,0.8); letter-spacing: 0.08em;">가장 인기</div>
+    </div>
+    <div class="price-body">
+      <div class="price-amount">299만원</div>
+      <div class="price-per">149,500원/h · 10h 대비 9% 절약</div>
+      <div class="price-includes">
+        <div class="pi-item"><div class="pi-check"></div>맞춤형 수업</div>
+        <div class="pi-item"><div class="pi-check"></div>학습 리포트</div>
+        <div class="pi-item"><div class="pi-check"></div>온라인 독서실</div>
+        <div class="pi-item"><div class="pi-check"></div>AI 코치</div>
+        <div class="pi-item"><div class="pi-check"></div>단어 공부</div>
+        <div class="pi-item"><div class="pi-check"></div>매주 모의고사</div>
+      </div>
+      <button class="cta-btn">무료 상담 신청하기</button>
+      <p class="cta-note">상담 후 결제 진행 · 수강 전 언제든지 변경 가능</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── 방향 vs 현재 비교 패널 ─────────────────────────────── -->
+<div class="compare-panel">
+  <div class="compare-title">비주얼 방향 비교</div>
+  <div class="compare-grid">
+    <div class="compare-col">
+      <h4><span>이 방향</span> (학원 입학 요강)</h4>
+      <div class="compare-attr"><strong>배경</strong>따뜻한 아이보리 (#F4F0E8) · 종이 질감</div>
+      <div class="compare-attr"><strong>포인트 색</strong>딥 인디고 (#2B3A8C) · 스탬프·규칙선</div>
+      <div class="compare-attr"><strong>서체</strong>Noto Serif KR (헤드) + Noto Sans (본문)</div>
+      <div class="compare-attr"><strong>선택 인터랙션</strong>인디고 스탬프 찍힘 · 밑줄</div>
+      <div class="compare-attr"><strong>신뢰 언어</strong>제도적 권위 · 인쇄물 정밀성</div>
+    </div>
+    <div class="compare-col">
+      <h4>현재 enrollment-v2</h4>
+      <div class="compare-attr"><strong>배경</strong>순검정 (#000)</div>
+      <div class="compare-attr"><strong>포인트 색</strong>파란 형광 (#6085ff)</div>
+      <div class="compare-attr"><strong>서체</strong>Inter · 시스템 sans-serif</div>
+      <div class="compare-attr"><strong>선택 인터랙션</strong>파란 테두리 글로우</div>
+      <div class="compare-attr"><strong>신뢰 언어</strong>테크 앱 · 다크 모드</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selected = null;
+function selectCard(type) {
+  selected = type;
+  document.querySelectorAll('.sel-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('card-' + type).classList.add('selected');
+}
+</script>
+</body>
+</html>

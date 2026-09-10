@@ -37,7 +37,7 @@ const CTA_HTML = `
 <div style="text-align:center;margin-top:40px;">
   <a
     id="kakao-openchat-btn"
-    href="https://superfastsat.com/api/kakao-redirect?source=ghost"
+    href="https://open.kakao.com/o/s858Ajch"
     target="_blank"
     rel="noopener noreferrer"
     style="
@@ -50,7 +50,7 @@ const CTA_HTML = `
       text-decoration:none;
     "
   >
-    카카오톡으로 수업 상담 신청하기🖐️
+    카카오톡으로 즉시 상담받기🖐️
   </a>
 </div>
 `
@@ -72,7 +72,7 @@ async function publishToGhost({ title, html, excerpt, slug, metaTitle, metaDescr
   })
 
   return new Promise((resolve, reject) => {
-    const url = new URL(`${process.env.GHOST_URL}/ghost/api/admin/posts/`)
+    const url = new URL(`${process.env.GHOST_URL}/ghost/api/admin/posts/?source=html`)
     const req = https.request({
       hostname: url.hostname,
       path: url.pathname,

@@ -72,6 +72,28 @@ export interface ValidateTokenResponse {
 }
 
 /**
+ * v2 vocab answer — one per vocabulary question
+ */
+export interface VocabAnswer {
+  wordId: string;
+  selectedOptionId: string | null;
+  isCorrect: boolean;
+  timeTaken: number;
+}
+
+/**
+ * v2 RW sequential reveal answer — one per RW question
+ */
+export interface RWSequentialAnswer {
+  questionId: string;
+  firstYesOptionId: string;
+  optionsViewedCount: number;
+  finalAnswer: string;
+  confidence: number;
+  isCorrect: boolean;
+}
+
+/**
  * Payload for test submission API request
  */
 export interface SubmitTestRequest {
@@ -87,11 +109,14 @@ export interface SubmitTestRequest {
   confidenceLevels: Record<string, number>;
   flaggedQuestions: string[];
   questionTimes: Record<string, number>;
-  savedWords?: SavedWord[];           // Words student marked as unknown
+  savedWords?: SavedWord[];
   previousScoreStatus?: 'scored' | 'never_taken' | 'dont_remember';
   previousTestDate?: string;
   previousRwScore?: number;
   previousMathScore?: number;
+  // v2-only fields
+  vocabAnswers?: VocabAnswer[];
+  rwSequentialData?: RWSequentialAnswer[];
 }
 
 /**

@@ -100,6 +100,7 @@ export function EnrollmentPageV2({ leadCoaches }: EnrollmentPageV2Props) {
 
   const { scrollTo, autoScrollTimerRef } = useScrollBehavior();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const program = searchParams.get('program');
     if (program === 'summer-intensive' || program === 'regular') {
@@ -109,7 +110,7 @@ export function EnrollmentPageV2({ leadCoaches }: EnrollmentPageV2Props) {
         scrollTo(targetRef, 'top', 250);
       }, 100);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ── 파생 상태 ────────────────────────────────────────────────── */
   const categoryId = useMemo(

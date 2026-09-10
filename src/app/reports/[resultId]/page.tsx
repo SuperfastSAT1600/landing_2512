@@ -5,6 +5,8 @@ import { ReportBenchmarkChart } from './components/ReportBenchmarkChart';
 import { ReportRadarChart } from './components/ReportRadarChart';
 import { ReportBehavioralMatrix } from './components/ReportBehavioralMatrix';
 import { ReportVocabularyGap } from './components/ReportVocabularyGap';
+import { ReportVocabDiagnosis } from './components/ReportVocabDiagnosis';
+import { ReportRWCognition } from './components/ReportRWCognition';
 import { SectionHeader } from './components/SectionHeader';
 import { ChapterNav } from './components/ChapterNav';
 import { InsightBlock, GenericInsightBlock } from './components/InsightBlock';
@@ -95,7 +97,7 @@ export default async function ReportPage({ params }: PageProps) {
       />
 
       {/* Chapter navigation — sticky at the very top */}
-      <ChapterNav />
+      <ChapterNav isV2={data.testId === 'diagnostic-test-2'} />
 
       {/* Single-column main content — sm:pt-14 offsets the fixed top nav */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:pt-14 print:py-6">
@@ -216,6 +218,38 @@ export default async function ReportPage({ params }: PageProps) {
               </div>
             )}
           </section>
+
+          {/* ── SECTION 05: 단어 진단 (v2 only) ── */}
+          {data.testId === 'diagnostic-test-2' && data.vocabResults && data.vocabResults.length > 0 && (
+            <>
+              <Divider />
+              <section id="section-05" className="report-section">
+                <SectionHeader
+                  number="05"
+                  title="단어 진단"
+                  titleEn="Vocabulary Check"
+                  subtitle="20개 단어를 얼마나 알고 있었나요?"
+                />
+                <ReportVocabDiagnosis vocabResults={data.vocabResults} />
+              </section>
+            </>
+          )}
+
+          {/* ── SECTION 06: RW 이해도 분석 (v2 only) ── */}
+          {data.testId === 'diagnostic-test-2' && data.rwCognitionData && data.rwCognitionData.length > 0 && (
+            <>
+              <Divider />
+              <section id="section-06" className="report-section">
+                <SectionHeader
+                  number="06"
+                  title="RW 이해도 분석"
+                  titleEn="Reading Comprehension Depth"
+                  subtitle="정확히 알고 풀었나요, 아니면 소거법으로 맞췄나요?"
+                />
+                <ReportRWCognition rwCognitionData={data.rwCognitionData} rwStudentProfile={data.rwStudentProfile} />
+              </section>
+            </>
+          )}
 
           {/* Key Recommendations */}
           {insights.keyRecommendations.length > 0 && (

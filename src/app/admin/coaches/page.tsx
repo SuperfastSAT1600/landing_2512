@@ -139,7 +139,7 @@ export default function AdminCoachesPage() {
                             href="/admin/coaches/onboarding"
                             className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold text-gray-300 transition-colors"
                         >
-                            <ClipboardList size={15} /> 온보딩 제출 목록
+                            <ClipboardList size={15} /> 프로필 작성 현황
                         </Link>
                         <button
                             onClick={() => setShowOnboardingModal(true)}

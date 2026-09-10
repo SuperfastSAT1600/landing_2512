@@ -3,6 +3,18 @@
     {
       "path": "/api/cron/diagnosis-expiry",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/blog-topics",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-business-report",
+      "schedule": "0 19 * * 0"
+    },
+    {
+      "path": "/api/cron/marketing-weekly-report",
+      "schedule": "0 19 * * 0"
     }
   ]
 }

@@ -1,0 +1,419 @@
+/**
+ * CRM 통계 집계 서비스 — Supabase 조회 + 집계를 한곳에 모은다.
+ *
+ * 라우트(/api/crm/stats)와 크론(/api/cron/weekly-business-report)이 함께 쓴다.
+ * 크론이 이 모듈을 직접 부르는 이유: Vercel 크론은 SSO로 보호된 배포 URL
+ * (https://*.vercel.app)로 요청하므로, 함수 안에서 자기 도메인을 HTTP로 되부르면
+ * SSO 페이지(HTTP 200 + HTML)를 받아 조용히 실패한다. in-process 호출은
+ * origin·인증 헤더·네트워크 타임아웃이라는 실패 축을 아예 없앤다.
+ *
+ * 집계 계산부(순수 함수)는 @/lib/crm-stats-core 에 있다.
+ */
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getWeekLabel } from '@/lib/week-definitions';
+import { computeStageFlow, type StageFlowRow } from '@/lib/funnel-stats';
+import { netAmount } from '@/lib/payment-utils';
+import {
+  MAX_LEAD_ROWS,
+  leadCohortQuery,
+  paidCohortQuery,
+  isContactedWithImpliedPartner,
+  contactRate,
+  toMonthKey,
+  inquiryRefMs,
+  fillMonthlyGaps,
+  type CrmStatsSegment,
+  paymentMatchesSegment,
+  type RelatedCompanyRef,
+} from '@/lib/crm-stats-core';
+
+export interface StatsBySource {
+  source: string;
+  leads: number;
+  contacted: number;
+  contact_rate: number;
+  paid: number;
+  conversion_rate: number;
+  revenue: number;
+  net_revenue: number;
+  avg_first_response_seconds: number | null; // 문의시각(inquiry_date, 없으면 created_at) → 첫 메시지 발송 평균 시간(초). 데이터 없으면 null
+}
+
+export interface StatsMonthly {
+  month: string; // "2026-01"
+  leads: number;
+  contacted: number;
+  paid: number;
+  gross_revenue: number; // 매출(양수 결제 합)
+  refund: number;        // 환불(음수 합계, 음수값)
+  revenue: number;       // 순매출(매출 − 환불 = sum(amount))
+  net_revenue: number;   // 순수익(부가세 차감 후 = sum(netAmount))
+}
+
+export interface StatsWeekly {
+  week: string; // "25년 05월 03주차"
+  leads: number;
+  contacted: number;
+  paid: number;
+  revenue: number;
+  net_revenue: number;
+}
+
+export interface CrmStatsData {
+  period: { from: string; to: string };
+  overview: {
+    total_leads: number;
+    contacted: number;
+    contacted_base: number; // 컨택 성공률 분모 (재시도 제외 초기 리드 수)
+    contact_rate: number;
+    paid: number;
+    conversion_rate: number;
+    total_revenue: number; // 순매출(결제 − 환불)
+    total_net_revenue: number; // 부가세 제외 실수익
+    gross_revenue: number; // 환불 전 총 결제(양수 합)
+    total_refund: number; // 환불 합(음수)
+    first_payment_revenue: number; // 최초결제 합(양수)
+    repayment_revenue: number; // 재결제 합(양수)
+    // 기간 내 결제 트랜잭션 건수 — 코호트 전환 인원(paid)과 다른 값이다.
+    gross_count: number; // 양수 결제 건수
+    refund_count: number; // 환불 건수
+    first_payment_count: number; // 최초결제(양수) 건수
+    repayment_count: number; // 재결제(양수) 건수
+  };
+  by_source: StatsBySource[];
+  monthly: StatsMonthly[];
+  weekly: StatsWeekly[];
+  stage_flow: StageFlowRow[];
+}
+
+export type CrmStatsResult =
+  | { ok: true; data: CrmStatsData }
+  | { ok: false; code: 'FETCH_FAILED'; message: string };
+
+/**
+ * 기간·세그먼트별 CRM 통계를 집계한다.
+ * from/to 는 YYYY-MM-DD (호출자가 검증한다). 조회 실패는 예외 대신 결과값으로 돌려준다.
+ */
+export async function computeCrmStats({
+  from,
+  to,
+  segment,
+}: {
+  from: string;
+  to: string;
+  segment: CrmStatsSegment;
+}): Promise<CrmStatsResult> {
+
+  // 기간 내 신규 리드 = inquiry_date(실제 인입 시각)가 [from, to]에 든 리드만.
+  // created_at(레코드 생성 시각) 폴백은 쓰지 않는다 — 레거시 대량 임포트(inquiry_date NULL)가
+  // 생성 시각 기준으로 특정 기간 신규 리드로 둔갑해 과대집계되는 문제(예: 595건)를 막는다.
+  // B2C 개인 리드 + B2B 업체 리드를 함께 집계한다(업체 제외 필터 없음).
+  // 매출(payments)에는 업체 필터가 없으므로 리드만 제외하면 리드-매출 기준이 어긋난다.
+  // 업체별 세부 집계는 /api/crm/b2b/stats에서 별도로 본다.
+  // 서로 독립인 네 조회를 병렬 실행: 기간 리드 / 기간 결제 / 최초결제 코호트 / 업체 로스터.
+  const studentsQuery = leadCohortQuery(
+    supabaseAdmin,
+    'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id',
+    from,
+    to,
+    segment,
+  );
+
+  const [studentsRes, paymentsRes, firstPayRes, companiesRes] = await Promise.all([
+    studentsQuery,
+    // 기간 내 payments (매출·환불 집계용, 기간=paid_at KST).
+    // students 관계를 함께 조회해 segment 필터에서 학생의 company_id를 직접 본다.
+    supabaseAdmin
+      .from('payments')
+      .select(
+        'student_id, student_name, amount, payment_type, paid_at, tax_type, students:student_id(company_id)'
+      )
+      .gte('paid_at', `${from}T00:00:00+09:00`)
+      .lte('paid_at', `${to}T23:59:59.999+09:00`),
+    paidCohortQuery(supabaseAdmin),
+    // 업체 로스터 — 센터형 파트너 컨택 판정용 company_id → name 맵
+    supabaseAdmin.from('companies').select('id, name'),
+  ]);
+  const { data: students, error: sErr } = studentsRes;
+  if (sErr) {
+    return { ok: false, code: 'FETCH_FAILED', message: sErr.message };
+  }
+  // 무음 절단 방어: 반환 행수가 상한에 닿으면 집계가 잘렸을 수 있으니 경고(정상 기간 조회는 도달 불가).
+  if ((students?.length ?? 0) >= MAX_LEAD_ROWS) {
+    console.warn(`[stats] lead rows hit MAX_LEAD_ROWS(${MAX_LEAD_ROWS}) for ${from}~${to} — 집계가 절단됐을 수 있음`);
+  }
+
+  const leadList = students ?? [];
+
+  // segment에 따라 결제/최초결제를 필터링한다 (임베드된 students.company_id 기준).
+  const inSegment = (p: { students?: RelatedCompanyRef }) => paymentMatchesSegment(p, segment);
+
+  const paymentList = (paymentsRes.error ? [] : (paymentsRes.data ?? [])).filter(inSegment);
+
+  // 결제 전환율(코호트 기준): 인입 리드가 '언제든' 최초결제했는지로 판단한다.
+  // 기간(paid_at) 내 결제만 세면 인입 후 다음 달에 결제한 리드를 놓쳐 전환율이 과소집계된다.
+  if (firstPayRes.error) console.error('[stats] firstPayRows fetch failed:', firstPayRes.error.message);
+  const firstPayRows = (firstPayRes.data ?? []).filter(inSegment);
+
+  // 학생 ID → payment 맵 (최초결제 기준)
+  const paidStudentIds = new Set<string>();
+  const paidStudentNames = new Set<string>();
+  let totalRevenue = 0;
+  let totalNetRevenue = 0;
+  let grossRevenue = 0;
+  let totalRefund = 0;
+  let firstPaymentRevenue = 0;
+  let repaymentRevenue = 0;
+  let grossCount = 0;
+  let refundCount = 0;
+  let firstPaymentCount = 0;
+  let repaymentCount = 0;
+
+  for (const p of paymentList) {
+    totalRevenue += p.amount;
+    totalNetRevenue += netAmount(p);
+    if (p.amount >= 0) grossRevenue += p.amount;
+    else totalRefund += p.amount;
+    if (p.amount >= 0) {
+      grossCount++;
+      if (p.payment_type === '최초결제') {
+        firstPaymentRevenue += p.amount;
+        firstPaymentCount++;
+      } else if (p.payment_type === '재결제') {
+        repaymentRevenue += p.amount;
+        repaymentCount++;
+      }
+    } else {
+      refundCount++;
+    }
+  }
+
+  for (const p of firstPayRows) {
+    if (p.student_id) paidStudentIds.add(p.student_id);
+    if (p.student_name) paidStudentNames.add(p.student_name);
+  }
+
+  // 채널 매출용: 이 기간 인입(문의) 리드 코호트 id → 유입경로
+  const leadIds = new Set(leadList.map((s) => s.id));
+  const leadSourceById = new Map<string, string>(
+    leadList.map((s) => [s.id, s.traffic_source ?? '미입력'])
+  );
+
+  // 학생이 결제했는지 판단
+  function isPaid(s: { id: string; name: string }): boolean {
+    return paidStudentIds.has(s.id) || paidStudentNames.has(s.name);
+  }
+
+  // 컨택 성공 판정 — B2B 탭(/api/crm/b2b/stats)과 동일 기준.
+  // 센터형 파트너 소속 리드는 세일즈 퍼널을 거치지 않고 등록되므로 단계와 무관하게 컨택 성공으로 본다.
+  if (companiesRes.error) console.error('[stats] companies fetch failed:', companiesRes.error.message);
+  const companyName = new Map<string, string>(
+    (companiesRes.data ?? []).map((c) => [c.id, c.name])
+  );
+  function isContactedLead(s: {
+    funnel_stage: string;
+    stage_history?: { stage: string; label: string; entered_at: string }[] | null;
+    company_id?: string | null;
+  }): boolean {
+    return isContactedWithImpliedPartner(s, s.company_id ? companyName.get(s.company_id) : undefined);
+  }
+
+  // ── Overview ──────────────────────────────────────────────────────────────
+  const total = leadList.length;
+  // 컨택 성공률: 최초 세일즈 리드(retry_strategy_id 없음)만 대상
+  const initialLeads = leadList.filter(
+    (s) => !(s as { retry_strategy_id?: string | null }).retry_strategy_id
+  );
+  const contactedCount = initialLeads.filter((s) => isContactedLead(s)).length;
+  const paidCount = leadList.filter((s) => isPaid(s)).length;
+
+  // ── By Source ─────────────────────────────────────────────────────────────
+  const sourceMap = new Map<
+    string,
+    { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number; respSum: number; respCount: number }
+  >();
+
+  for (const s of leadList) {
+    const src = s.traffic_source ?? '미입력';
+    if (!sourceMap.has(src))
+      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0, respSum: 0, respCount: 0 });
+    const entry = sourceMap.get(src)!;
+    entry.leads++;
+    const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
+    if (!isRetry && isContactedLead(s)) entry.contacted++;
+    if (isPaid(s)) entry.paid++;
+    // 첫 응답 시간: 첫 메시지 발송 시각이 있는 리드만, 문의시각(inquiry_date, 없으면 created_at) 대비 경과 초.
+    const sentAt = (s as { first_message_sent_at?: string | null }).first_message_sent_at;
+    if (sentAt) {
+      const refMs = inquiryRefMs(s.inquiry_date, s.created_at);
+      const sentMs = new Date(sentAt).getTime();
+      if (refMs != null && Number.isFinite(sentMs)) {
+        const delta = (sentMs - refMs) / 1000;
+        if (delta >= 0) { entry.respSum += delta; entry.respCount++; }
+      }
+    }
+  }
+
+  // 채널별 매출 = 이 기간에 인입(문의)한 리드(코호트)가 낸 결제만 — 결제·전환율과 동일 기준.
+  // (전 기간 인입 → 이번 기간 결제는 상단 총매출엔 잡히지만 채널표에는 제외 → 채널 합 ≠ 총매출)
+  for (const p of paymentList) {
+    if (!p.student_id || !leadIds.has(p.student_id)) continue;
+    const src = leadSourceById.get(p.student_id) ?? '미입력';
+    const entry = sourceMap.get(src);
+    if (!entry) continue;
+    entry.revenue += p.amount;
+    entry.net_revenue += netAmount(p);
+  }
+
+  const by_source: StatsBySource[] = Array.from(sourceMap.entries())
+    .map(([source, d]) => ({
+      source,
+      leads: d.leads,
+      contacted: d.contacted,
+      contact_rate: contactRate(d.contacted, d.leads),
+      paid: d.paid,
+      // 결제 전환율 = 컨택 성공 인원 중 결제 인원
+      conversion_rate: d.contacted > 0 ? Math.round((d.paid / d.contacted) * 10000) / 100 : 0,
+      revenue: d.revenue,
+      net_revenue: d.net_revenue,
+      avg_first_response_seconds: d.respCount > 0 ? Math.round(d.respSum / d.respCount) : null,
+    }))
+    .sort((a, b) => b.leads - a.leads);
+
+  // ── Monthly ───────────────────────────────────────────────────────────────
+  const monthMap = new Map<
+    string,
+    { leads: number; contacted: number; paid: number; gross_revenue: number; refund: number; revenue: number; net_revenue: number }
+  >();
+
+  for (const s of leadList) {
+    const mo = toMonthKey(s.inquiry_date ?? s.created_at);
+    if (!monthMap.has(mo))
+      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, gross_revenue: 0, refund: 0, revenue: 0, net_revenue: 0 });
+    const entry = monthMap.get(mo)!;
+    entry.leads++;
+    const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
+    if (!isRetry && isContactedLead(s)) entry.contacted++;
+    if (isPaid(s)) entry.paid++;
+  }
+
+  for (const p of paymentList) {
+    const mo = toMonthKey(p.paid_at);
+    if (!monthMap.has(mo))
+      monthMap.set(mo, { leads: 0, contacted: 0, paid: 0, gross_revenue: 0, refund: 0, revenue: 0, net_revenue: 0 });
+    const entry = monthMap.get(mo)!;
+    if (p.amount >= 0) entry.gross_revenue += p.amount;
+    else entry.refund += p.amount;
+    entry.revenue += p.amount;
+    entry.net_revenue += netAmount(p);
+  }
+
+  const monthly: StatsMonthly[] = fillMonthlyGaps(
+    Array.from(monthMap.entries()).map(([month, d]) => ({ month, ...d })),
+    (month) => ({ month, leads: 0, contacted: 0, paid: 0, gross_revenue: 0, refund: 0, revenue: 0, net_revenue: 0 }),
+  );
+
+  // ── Weekly ────────────────────────────────────────────────────────────────
+  const weekMap = new Map<
+    string,
+    {
+      leads: number;
+      contacted: number;
+      paid: number;
+      revenue: number;
+      net_revenue: number;
+      start: string;
+    }
+  >();
+
+  for (const s of leadList) {
+    const dateStr = s.inquiry_date ?? s.created_at;
+    const wk = getWeekLabel(dateStr);
+    if (!wk) continue;
+    if (!weekMap.has(wk))
+      weekMap.set(wk, {
+        leads: 0,
+        contacted: 0,
+        paid: 0,
+        revenue: 0,
+        net_revenue: 0,
+        start: dateStr.slice(0, 10),
+      });
+    const entry = weekMap.get(wk)!;
+    entry.leads++;
+    const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
+    if (!isRetry && isContactedLead(s)) entry.contacted++;
+    if (isPaid(s)) entry.paid++;
+  }
+
+  for (const p of paymentList) {
+    const wk = getWeekLabel(p.paid_at);
+    if (!wk) continue;
+    if (!weekMap.has(wk))
+      weekMap.set(wk, {
+        leads: 0,
+        contacted: 0,
+        paid: 0,
+        revenue: 0,
+        net_revenue: 0,
+        start: p.paid_at.slice(0, 10),
+      });
+    const entry = weekMap.get(wk)!;
+    entry.revenue += p.amount;
+    entry.net_revenue += netAmount(p);
+  }
+
+  const weekly: StatsWeekly[] = Array.from(weekMap.entries())
+    .sort(([, a], [, b]) => a.start.localeCompare(b.start))
+    .map(([week, d]) => ({
+      week,
+      leads: d.leads,
+      contacted: d.contacted,
+      paid: d.paid,
+      revenue: d.revenue,
+      net_revenue: d.net_revenue,
+    }));
+
+  // ── Stage Flow (단계별 체류 기간 + 이동률) ──────────────────────────────────
+  const stage_flow = computeStageFlow(
+    leadList.map((s) => ({
+      funnel_stage: s.funnel_stage,
+      funnel_stage_updated_at:
+        (s as { funnel_stage_updated_at?: string | null }).funnel_stage_updated_at ?? null,
+      created_at: s.created_at,
+      stage_history:
+        (s as { stage_history?: { stage: string; label: string; entered_at: string }[] | null })
+          .stage_history ?? [],
+    }))
+  );
+
+  const data: CrmStatsData = {
+    period: { from, to },
+    overview: {
+      total_leads: total,
+      contacted: contactedCount,
+      contacted_base: initialLeads.length,
+      contact_rate: contactRate(contactedCount, initialLeads.length),
+      paid: paidCount,
+      // 결제 전환율 = 컨택 성공 인원 중 결제 인원 (신규 리드 전체 아님)
+      conversion_rate:
+        contactedCount > 0 ? Math.round((paidCount / contactedCount) * 10000) / 100 : 0,
+      total_revenue: totalRevenue,
+      total_net_revenue: totalNetRevenue,
+      gross_revenue: grossRevenue,
+      total_refund: totalRefund,
+      first_payment_revenue: firstPaymentRevenue,
+      repayment_revenue: repaymentRevenue,
+      gross_count: grossCount,
+      refund_count: refundCount,
+      first_payment_count: firstPaymentCount,
+      repayment_count: repaymentCount,
+    },
+    by_source,
+    monthly,
+    weekly,
+    stage_flow,
+  };
+
+  return { ok: true, data };
+}

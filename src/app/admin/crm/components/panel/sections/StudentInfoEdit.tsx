@@ -2,11 +2,12 @@
 
 import React, { useState, useRef, useMemo } from 'react';
 import {
-  GRADE_OPTIONS_BY_SCHOOL_TYPE, TIMEZONE_OPTIONS,
+  GRADE_OPTIONS_BY_SCHOOL_TYPE,
 } from '@/types/crm';
 import {
   INQUIRY_CHANNEL_OPTIONS, TRAFFIC_SOURCE_OPTIONS, CONTENT_AUTHOR_OPTIONS, B2B_PARTNER_OPTIONS,
 } from '@/types/crm';
+import { TimezoneCombobox } from '../../TimezoneCombobox';
 import { getSatTestDates, getSatPastMonths, formatSatDate } from '../constants';
 import type { EditForm } from '../types';
 
@@ -141,9 +142,11 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
         </EditField>
       </div>
       <EditField label="학생 거주 시간대">
-        <select value={form.parent_timezone} onChange={set('parent_timezone')} className={selectCls}>
-          {TIMEZONE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-        </select>
+        <TimezoneCombobox
+          value={form.parent_timezone}
+          onChange={tz => onChange({ ...form, parent_timezone: tz })}
+          className={selectCls}
+        />
       </EditField>
       <EditField label="희망 과목">
         <select value={form.desired_subjects} onChange={set('desired_subjects')} className={selectCls}>

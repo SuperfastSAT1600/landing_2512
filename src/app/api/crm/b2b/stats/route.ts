@@ -120,12 +120,12 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 결제자 집합(최초결제 amount>0, anytime). ₩1은 센터형 파트너 일괄 등록 placeholder — 실전환이므로 포함.
+  // 결제자 집합(최초결제, anytime). 0원 가결제·₩1 placeholder도 실전환이므로 포함(환불만 제외).
   const { data: firstPayRows } = await supabaseAdmin
     .from('payments')
     .select('student_id,student_name')
     .eq('payment_type', '최초결제')
-    .gt('amount', 0);
+    .gte('amount', 0);
   const paidIds = new Set<string>();
   const paidNames = new Set<string>();
   for (const p of firstPayRows ?? []) {
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
     if (!a.trend.has(mo)) a.trend.set(mo, { month: mo, leads: 0, paid: 0, revenue: 0 });
     const tp = a.trend.get(mo)!;
     tp.revenue += p.amount;
-    if (p.payment_type === '최초결제' && p.amount > 0) tp.paid++;
+    if (p.payment_type === '최초결제' && p.amount >= 0) tp.paid++;
   }
 
   // 업체별 학생 목록(기간 인입 코호트 전체 — 이탈/비활성 포함). 문의일 내림차순.

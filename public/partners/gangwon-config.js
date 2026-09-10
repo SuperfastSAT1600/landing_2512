@@ -62,6 +62,48 @@ const GANGWON_UNITS = [
     url: 'gangwon/units/unit8.html',
     template: `Unit 8: Goals, Motivation & Ambition — Round 2\n\n오늘 수업에서는 목표와 동기 표현을 5분 짧은 영상으로 집중 복습했습니다.\n\n주요 학습 내용:\n- WATCH GOALS: Career Goals Interview (5분)\n- WATCH MOTIVATION: Personal Motivation Interview (5분)\n- 10 Key Phrases (GOALS 5 + MOTIVATION 5): 이해 → 변형 → 드릴\n- VOCAB: aspire / drive / relentless / perseverance / sacrifice / inspire / grind / breakthrough / purpose / champion\n- HOMEWORK: 문장 쓰기 + 빈칸 채우기`,
   },
+  {
+    id: 'unit9',
+    label: 'Unit 9 — Injury, Recovery & Resilience (Round 2)',
+    short: 'Unit 9',
+    url: 'gangwon/units/unit9.html',
+    template: `Unit 9: Injury, Recovery & Resilience — Round 2\n\n오늘 수업에서는 부상·회복·의지를 주제로 새 영상과 새 표현으로 2회차 심화 연습했습니다.\n\n주요 학습 내용:\n- WATCH: 새 선수 부상 복귀 인터뷰 분석 (Round 2)\n- 10 Key Phrases: 이해 → 변형 → 드릴\n  01. "It was the hardest period of my career."\n  02. "I had to dig really deep mentally."\n  03. "The medical team deserves all the credit."\n  04. "Every setback makes you appreciate the game more."\n  05. "I focused only on what I could control."\n  06. "I used that time to study the game and get smarter."\n  07. "The road back was long but I kept my head down and worked."\n  08. "I told myself — this challenge will make me better."\n  09. "When you face that kind of challenge, you find out who you really are."\n  10. "I'm grateful for the experience — it taught me so much."\n- VOCAB: rehabilitation / mentality / endurance / gratitude / awareness / persistence / challenge / breakthrough / reflection / recovery\n- HOMEWORK: 문장 쓰기 + 빈칸 채우기`,
+  },
+  {
+    id: 'unit10',
+    label: 'Unit 10 — Round 2 Review: 4 Units, 40 Phrases',
+    short: 'Unit 10',
+    url: 'gangwon/units/unit10.html',
+    template: `Unit 10: Round 2 Review — 4 Units, 40 Phrases\n\n오늘 수업에서는 Unit 6~9에서 배운 핵심 표현 40개를 전체 복습했습니다.\n\n주요 학습 내용:\n- Quick Recap: Unit 6/7/8/9 핵심 표현 한눈에 보기\n- 플래시카드 드릴: 40개 표현 플립 카드 연습\n- 마스터 리스트: 40개 표현 전체 확인\n- 빈칸 채우기 드릴: Unit 6–9 혼합 드릴\n- 풀 인터뷰 챌린지: 4가지 상황 롤플레이\n  · 상황 01 (Unit 6): Round 2 팀 합류 인터뷰\n  · 상황 02 (Unit 7): 경기 후 인터뷰 (승리 또는 패배)\n  · 상황 03 (Unit 8): 목표 & 동기 선언\n  · 상황 04 (Unit 9): 부상 & 복귀 인터뷰`,
+  },
+  {
+    id: 'unit11',
+    label: 'Unit 11 — Self-Introduction & Joining the Team (Round 3)',
+    short: 'Unit 11',
+    url: 'gangwon/units/unit11.html',
+    template: `Unit 11: Self-Introduction & Joining the Team — Round 3\n\n오늘 수업에서는 팀 합류 자기소개 표현을 새로운 영상과 함께 3회차 심화 연습했습니다.\n\n주요 학습 내용:\n- WATCH: Round 3 선수 팀 합류 인터뷰 분석\n- 10 Key Phrases: 이해 → 변형 → 드릴\n- VOCAB: 10개 핵심 단어 학습\n- HOMEWORK: 문장 쓰기 + 빈칸 채우기`,
+  },
+  {
+    id: 'unit12',
+    label: 'Unit 12 — Post-Match Flash Interview (Round 3)',
+    short: 'Unit 12',
+    url: 'gangwon/units/unit12.html',
+    template: `Unit 12: Post-Match Flash Interview — Round 3\n\n오늘 수업에서는 경기 후 인터뷰 표현을 새로운 영상과 함께 3회차 심화 연습했습니다.\n\n주요 학습 내용:\n- WATCH WIN: 승리 후 인터뷰 분석 (Round 3)\n- WATCH LOSS: 패배 후 인터뷰 분석 (Round 3)\n- 10 Key Phrases (WIN 5 + LOSS 5): 이해 → 변형 → 드릴\n- VOCAB: 10개 핵심 단어 학습\n- HOMEWORK: 문장 쓰기 + 빈칸 채우기`,
+  },
+  {
+    id: 'unit13',
+    label: 'Unit 13 — Goals, Motivation & Ambition (Round 3)',
+    short: 'Unit 13',
+    url: 'gangwon/units/unit13.html',
+    template: `Unit 13: Goals, Motivation & Ambition — Round 3\n\n오늘 수업에서는 목표와 동기 표현을 새로운 영상과 함께 3회차 심화 연습했습니다.\n\n주요 학습 내용:\n- WATCH GOALS: 목표 인터뷰 분석 (Round 3)\n- WATCH MOTIVATION: 동기 인터뷰 분석 (Round 3)\n- 10 Key Phrases (GOALS 5 + MOTIVATION 5): 이해 → 변형 → 드릴\n- VOCAB: 10개 핵심 단어 학습\n- HOMEWORK: 문장 쓰기 + 빈칸 채우기`,
+  },
+  {
+    id: 'unit14',
+    label: 'Unit 14 — Injury, Recovery & Resilience (Round 3)',
+    short: 'Unit 14',
+    url: 'gangwon/units/unit14.html',
+    template: `Unit 14: Injury, Recovery & Resilience — Round 3\n\n오늘 수업에서는 부상·회복·의지를 주제로 새로운 영상과 함께 3회차 심화 연습했습니다.\n\n주요 학습 내용:\n- WATCH: Round 3 선수 부상 복귀 인터뷰 분석\n- 10 Key Phrases: 이해 → 변형 → 드릴\n- VOCAB: 10개 핵심 단어 학습\n- HOMEWORK: 문장 쓰기 + 빈칸 채우기`,
+  },
 ];
 
 // ── 파생 조회 테이블 (GANGWON_UNITS에서 자동 생성) ──────────────────────────

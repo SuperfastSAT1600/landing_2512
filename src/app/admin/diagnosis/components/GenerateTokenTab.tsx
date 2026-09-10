@@ -47,7 +47,10 @@ function getTimezoneCountry(iana: string): string {
   return TIMEZONE_OPTIONS.find((t) => t.iana === iana)?.country ?? iana;
 }
 
-function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string): string {
+function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string, isV2 = false): string {
+  const timeDesc = isV2
+    ? '응시 시간은 (1)단어 3분 20초(20개) (2)RW+MATH 35분(25문항) 입니다.'
+    : '응시 시간은 총 30분, 25문항입니다. (RW+Math 포함)';
   return `진단테스트 안내 드리도록 하겠습니다.
 
 [진단테스트 안내]
@@ -58,12 +61,15 @@ function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string):
 1. 응시 페이지 링크 접속하여 코드 6자리입력
 2. ${expiryKo}까지 진행 가능
    (${timezoneLabel} 기준)
-3. 응시 시간은 총 30분, 25문항입니다. (RW+Math 포함)
+3. ${timeDesc}
 4. 각 문항별로 '내가 얼마나 정답을 확신하는지' Confidence Level도 함께 체크하며 최종 제출해주세요!
 5. Math 시험의 경우 계산이 필요하기 때문에 Desmos를 사용해도 되며 아직 어렵다면 노트와 필기구를 준비해주세요!`;
 }
 
-function buildEnTemplate(code: string, expiryEn: string, timezoneCountry: string): string {
+function buildEnTemplate(code: string, expiryEn: string, timezoneCountry: string, isV2 = false): string {
+  const timeDesc = isV2
+    ? 'Time: (1) Vocabulary — 3 min 20 sec (20 words) (2) RW + Math — 35 min (25 questions)'
+    : 'Total time: 30 minutes, 25 questions (RW + Math)';
   return `Here is your SAT Diagnostic Test information.
 
 [Diagnostic Test Info]
@@ -74,7 +80,7 @@ function buildEnTemplate(code: string, expiryEn: string, timezoneCountry: string
 1. Go to the test page and enter your 6-digit code
 2. You have until ${expiryEn} to complete the test
    (${timezoneCountry} time)
-3. Total time: 30 minutes, 25 questions (RW + Math)
+3. ${timeDesc}
 4. For each question, please also check your Confidence Level — how sure you are about your answer — before submitting!
 5. For Math questions, you may use Desmos if needed. If you're not comfortable with it yet, have a notebook and pencil ready!`;
 }
@@ -96,6 +102,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
   const [expiresAt, setExpiresAt] = useState(() => getDefaultExpiresAt(getPreferredTimezone()));
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(30);
   const [selectedVersionId, setSelectedVersionId] = useState<string>('');
+  const [testFormat, setTestFormat] = useState<'diagnostic-test-1' | 'diagnostic-test-2'>('diagnostic-test-1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [warning, setWarning] = useState<string | null>(null);
@@ -108,9 +115,10 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
   const [listLoading, setListLoading] = useState(false);
   const [versions, setVersions] = useState<TestVersion[]>([]);
 
-  const fetchVersions = async () => {
+  const fetchVersions = async (format?: string) => {
     try {
-      const res = await fetch('/api/admin/diagnosis/versions', {
+      const testId = format ?? testFormat;
+      const res = await fetch(`/api/admin/diagnosis/versions?testId=${testId}`, {
         headers: { 'x-admin-key': adminKey },
       });
       if (res.ok) {
@@ -119,9 +127,15 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
         setVersions(vList);
         const current = vList.find((v) => v.is_current);
         if (current) setSelectedVersionId(current.id);
+        else if (vList.length > 0) setSelectedVersionId(vList[0].id);
+        else setSelectedVersionId('');
+      } else {
+        setVersions([]);
+        setSelectedVersionId('');
       }
     } catch {
-      // silently fail
+      setVersions([]);
+      setSelectedVersionId('');
     }
   };
 
@@ -143,7 +157,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
   };
 
   useEffect(() => {
-    fetchVersions();
+    fetchVersions(testFormat);
     fetchCodes();
   }, []);
 
@@ -199,6 +213,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
           expiresAt: localToUTC(expiresAt, selectedTimezone),
           testVersionId: selectedVersionId || undefined,
           timeLimitMinutes,
+          testId: testFormat,
         }),
       });
 
@@ -256,9 +271,42 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
             <p className="text-xs text-gray-400 mt-1">픽셀 최적화용. 입력 시 Meta CAPI 이벤트 전송.</p>
           </div>
 
+          <div>
+            <label className="block text-sm font-semibold mb-2">테스트 형식</label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => { setTestFormat('diagnostic-test-1'); setVersions([]); setSelectedVersionId(''); fetchVersions('diagnostic-test-1'); }}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold border transition-colors ${
+                  testFormat === 'diagnostic-test-1'
+                    ? 'bg-blue-600 border-blue-500 text-white'
+                    : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                }`}
+                disabled={loading}
+              >
+                v1 — 기존 (RW + Math)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setTestFormat('diagnostic-test-2'); setVersions([]); setSelectedVersionId(''); fetchVersions('diagnostic-test-2'); }}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold border transition-colors ${
+                  testFormat === 'diagnostic-test-2'
+                    ? 'bg-purple-600 border-purple-500 text-white'
+                    : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                }`}
+                disabled={loading}
+              >
+                v2 — 단어 + RW 순차 공개
+              </button>
+            </div>
+            {testFormat === 'diagnostic-test-2' && (
+              <p className="text-xs text-purple-400 mt-1.5">단어 진단 20문항(200초) → RW 순차 공개 → Math 포함</p>
+            )}
+          </div>
+
           {versions.length > 0 && (
             <div>
-              <label className="block text-sm font-semibold mb-2">진단테스트 버전</label>
+              <label className="block text-sm font-semibold mb-2">진단테스트 버전 <span className="text-gray-400 font-normal">(RW/Math 문제 세트)</span></label>
               <select
                 value={selectedVersionId}
                 onChange={(e) => setSelectedVersionId(e.target.value)}
@@ -267,7 +315,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
               >
                 {versions.map((v) => (
                   <option key={v.id} value={v.id}>
-                    v{v.version_number}{v.is_current ? ' (현재 버전)' : ''}
+                    문제 세트 {v.version_number}{v.is_current ? ' (현재)' : ''}
                   </option>
                 ))}
               </select>
@@ -364,8 +412,9 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
       {successResult && (() => {
         const expiryKo = formatExpiryKo(successResult.expiresAt, successResult.timezone);
         const expiryEn = formatExpiryEn(successResult.expiresAt, successResult.timezone);
-        const koMessage = buildKoTemplate(successResult.code, expiryKo, getTimezoneKoLabel(successResult.timezone));
-        const enMessage = buildEnTemplate(successResult.code, expiryEn, getTimezoneCountry(successResult.timezone));
+        const isV2 = testFormat === 'diagnostic-test-2';
+        const koMessage = buildKoTemplate(successResult.code, expiryKo, getTimezoneKoLabel(successResult.timezone), isV2);
+        const enMessage = buildEnTemplate(successResult.code, expiryEn, getTimezoneCountry(successResult.timezone), isV2);
         const message = activeTab === 'ko' ? koMessage : enMessage;
         return (
           <div className="p-5 rounded-xl border border-green-500/40 bg-green-900/20">
@@ -441,7 +490,6 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
         {codes.length > 0 && (
           <TokenListTable
             codes={codes}
-            versions={versions}
             adminKey={adminKey}
             onRefresh={fetchCodes}
           />

@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getPostData, getAllPostIds, getRelatedPosts } from '../../../lib/posts';
+import { getPopupTargetPost } from '../../../lib/popup-rules';
 import Footer from '../../components/Footer';
 import { PostContent } from './PostContent';
-import { Calendar, ArrowLeft } from 'lucide-react';
+import { ReadCompletePopup } from './ReadCompletePopup';
+import { Calendar, ArrowLeft, Tag } from 'lucide-react';
 
 export const revalidate = 3600;
 
@@ -75,7 +77,10 @@ export default async function Post({ params }: Props) {
     const { slug } = await params;
     const decodedSlug = decodeURIComponent(slug);
     const postData = await getPostData(decodedSlug);
-    const relatedPosts = await getRelatedPosts(decodedSlug, postData.category, 3);
+    const [relatedPosts, popupTargetPost] = await Promise.all([
+        getRelatedPosts(decodedSlug, postData.category, 3),
+        getPopupTargetPost(decodedSlug),
+    ]);
 
     return (
         <div className="bg-[#fafaf9] min-h-screen text-gray-800 font-sans selection:bg-blue-200">
@@ -190,8 +195,34 @@ export default async function Post({ params }: Props) {
                         {postData.title}
                     </h1>
 
-                    {/* Content (or GateWall if gated) */}
-                    <PostContent postData={postData} />
+                    {/* Content: server-rendered for non-gated (avoids RSC large-string serialization bug),
+                        client PostContent only for gated posts (GateWall unlock flow) */}
+                    {postData.isGated ? (
+                        <PostContent postData={postData} />
+                    ) : (
+                        <>
+                            <div className={`prose prose-base sm:prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl prose-table:border-collapse [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200 [&_td]:p-2 [&_th]:p-2 [&_.instagram-reel-wrapper]:flex [&_.instagram-reel-wrapper]:justify-center [&_.instagram-reel-wrapper]:py-4 [&_.instagram-reel-embed]:max-w-[420px] [&_.instagram-reel-embed]:w-full [&_.instagram-reel-embed]:rounded-2xl [&_.instagram-reel-embed]:border-0`}>
+                                <div dangerouslySetInnerHTML={{ __html: postData.contentHtml ?? '' }} />
+                            </div>
+                            {postData.tags && postData.tags.filter((t: string) => t !== 'vip').length > 0 && (
+                                <div className="mt-16 pt-8 border-t border-gray-200">
+                                    <div className="flex flex-wrap gap-2">
+                                        {postData.tags.filter((t: string) => t !== 'vip').map((tag: string) => (
+                                            <Link
+                                                key={tag}
+                                                href={`/blog?tag=${encodeURIComponent(tag)}`}
+                                                className="bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 px-3 py-1 rounded-full text-sm border border-gray-200 flex items-center gap-1 transition-colors"
+                                            >
+                                                <Tag size={12} /> {tag}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {/* Sentinel: popup triggers when this becomes visible */}
+                            <div id="post-end-sentinel" className="h-px mt-8" />
+                        </>
+                    )}
                 </article>
 
                 {/* Related Posts */}
@@ -245,6 +276,14 @@ export default async function Post({ params }: Props) {
                     </div>
                 )}
             </main>
+
+            {(popupTargetPost || relatedPosts.length > 0) && (
+                <ReadCompletePopup
+                    fixedPost={popupTargetPost ?? null}
+                    relatedPosts={relatedPosts.map(p => ({ id: p.id, title: p.title, featuredImage: p.featuredImage }))}
+                    sentinelId="post-end-sentinel"
+                />
+            )}
 
             <Footer />
         </div>

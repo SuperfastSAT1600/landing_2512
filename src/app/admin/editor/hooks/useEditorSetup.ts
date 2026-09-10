@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { useEditor } from '@tiptap/react';
+import { useEditor, type Editor } from '@tiptap/react';
+import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model';
 import StarterKit from '@tiptap/starter-kit';
 import TiptapLink from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
@@ -20,6 +21,15 @@ export function useEditorSetup() {
     const pendingContentRef = useRef<string | null>(null);
     const anchorCellRef = useRef<number | null>(null);
     const [pendingContent, setPendingContent] = useState<string | null>(null);
+
+    function setHtml(ed: Editor, html: string) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        const doc = ProseMirrorDOMParser.fromSchema(ed.schema).parse(div);
+        ed.view.dispatch(
+            ed.state.tr.replaceWith(0, ed.state.doc.content.size, doc.content)
+        );
+    }
 
     const editor = useEditor({
         extensions: [
@@ -76,9 +86,9 @@ export function useEditorSetup() {
         onCreate({ editor: newEditor }) {
             if (pendingContentRef.current !== null) {
                 try {
-                    newEditor.commands.setContent(pendingContentRef.current);
+                    setHtml(newEditor, pendingContentRef.current);
                 } catch (e) {
-                    console.error('onCreate setContent failed:', e);
+                    console.error('onCreate setHtml failed:', e);
                 }
                 pendingContentRef.current = null;
                 setPendingContent(null);
@@ -89,9 +99,9 @@ export function useEditorSetup() {
     useEffect(() => {
         if (editor && pendingContent !== null) {
             try {
-                editor.commands.setContent(pendingContent);
+                setHtml(editor, pendingContent);
             } catch (e) {
-                console.error('setContent failed:', e);
+                console.error('setHtml failed:', e);
             }
             pendingContentRef.current = null;
             setPendingContent(null);
