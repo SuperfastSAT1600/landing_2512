@@ -16,6 +16,7 @@ import { mergeInsights, getEditedFieldKeys } from '@/lib/merge-insights';
 // REQ-001: Call DB logic directly — no HTTP self-fetch (was crashing on tutoring.superfastsat.com)
 import { fetchReportData } from '@/lib/report-data';
 import type { Metadata } from 'next';
+import Image from 'next/image';
 
 interface PageProps {
   params: Promise<{ resultId: string }>;
@@ -77,9 +78,9 @@ export default async function ReportPage({ params }: PageProps) {
 
       {/* Print-only header */}
       <div className="hidden print:flex print:items-center print:justify-between px-8 py-5 border-b border-slate-200">
-        <div>
-          <span className="font-bold text-[#09090b] text-lg">SuperfastSAT</span>
-          <span className="text-slate-400 text-sm ml-2">· SAT Diagnostic Report</span>
+        <div className="flex items-center gap-2">
+          <Image src="/logo-black.png" alt="SuperfastSAT" width={120} height={24} style={{ objectFit: 'contain' }} />
+          <span className="text-slate-400 text-sm">· SAT Diagnostic Report</span>
         </div>
         <span className="text-slate-400 text-sm">{new Date().toLocaleDateString('en-US')}</span>
       </div>

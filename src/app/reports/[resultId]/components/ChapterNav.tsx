@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 const CHAPTERS_V1 = [
   { id: 'section-01', label: '전체 성적' },
@@ -129,7 +130,7 @@ export function ChapterNav({ isV2 = false }: ChapterNavProps) {
       >
         <div className="max-w-3xl mx-auto px-6">
           <div className="flex items-center gap-2 py-2">
-            <span className="text-xs font-bold text-slate-800 mr-2">SuperfastSAT</span>
+            <Image src="/logo-black.png" alt="SuperfastSAT" width={120} height={24} className="mr-1" style={{ objectFit: 'contain' }} />
             <span className="text-slate-300 text-xs mr-2">|</span>
             {CHAPTERS.map((chapter) => {
               const isActive = activeSection === chapter.id;
