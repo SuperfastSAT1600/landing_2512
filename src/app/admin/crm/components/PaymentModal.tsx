@@ -420,7 +420,8 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
                         <div className="mt-1.5 ml-7 flex items-center gap-2">
                           <input
                             type="number"
-                            min={1}
+                            min={0.5}
+                            step={0.5}
                             value={hours}
                             onChange={e => setHours(e.target.value)}
                             placeholder="시간 수"

@@ -48,6 +48,7 @@ export type TrafficSource =
   | '소개'
   | 'B2B 파트너'
   | '인스타그램 광고'
+  | 'Youtube 광고_홍진경'
   | '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT'
   | '(구) 랜딩 구글폼 상담 예약'
   | '랜딩 상담 예약 폼 카톡 - SuperfastSAT!'
@@ -880,6 +881,7 @@ export const TRAFFIC_SOURCE_OPTIONS: TrafficSource[] = [
   '소개',
   'B2B 파트너',
   '인스타그램 광고',
+  'Youtube 광고_홍진경',
   '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
   '(구) 랜딩 구글폼 상담 예약',
   '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',
@@ -951,6 +953,20 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   reactivating: '재활성화 시도 중',
   enrolled: '수강 중',
 };
+
+/** 학생이 실제 응시한 SAT 회차별 성적 (student_exam_scores). 총점은 저장하지 않고 조회 측에서 합산한다. */
+export interface ExamScore {
+  id: string;
+  student_id: string;
+  /** 'YYYY-MM' */
+  exam_month: string;
+  rw_score: number | null;
+  math_score: number | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export const CHURN_TAG_OPTIONS = ['회신 없음', '노쇼', '미응시', '미결제', '기타'] as const;
 

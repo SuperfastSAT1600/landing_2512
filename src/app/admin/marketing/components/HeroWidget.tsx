@@ -62,7 +62,15 @@ export default function HeroWidget({
           <span className="text-white font-semibold">이번 주 리드 인입</span>
           <span className="text-xs text-gray-500 ml-1">{week_label} · {todayLabel}</span>
         </div>
-        {paceStatus && <span className="text-xs text-gray-500">{paceStatus}</span>}
+        <div className="flex items-center gap-3">
+          {paceStatus && <span className="text-xs text-gray-500">{paceStatus}</span>}
+          <button
+            onClick={onSetGoal}
+            className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded px-2 py-1 transition-colors"
+          >
+            {hasGoal ? '목표 수정' : '목표 설정'}
+          </button>
+        </div>
       </div>
 
       {/* 목표 대비 진행 */}
@@ -79,15 +87,7 @@ export default function HeroWidget({
               </span>
             </>
           ) : (
-            <>
-              <span className="text-lg text-gray-500 mb-1">목표 미설정</span>
-              <button
-                onClick={onSetGoal}
-                className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded px-2 py-1 mb-1 ml-auto transition-colors"
-              >
-                목표 설정
-              </button>
-            </>
+            <span className="text-lg text-gray-500 mb-1">목표 미설정</span>
           )}
         </div>
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import WeeklyGoalEditor from '../WeeklyGoalEditor';
 
-const ALL_GROUPS = ['네이버 SEO', '구글 SEO', 'META', '소개', 'B2B', '미분류'];
+const ALL_GROUPS = ['네이버 SEO', '구글 SEO', 'META', 'Youtube 광고', '소개', 'B2B', '미분류'];
 
 function weekRow(weekStart: string, target: number | null, actuals: Record<string, number> = {}) {
   const total = Object.values(actuals).reduce((a, b) => a + b, 0);

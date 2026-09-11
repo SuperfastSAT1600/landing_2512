@@ -1,17 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 const CHAPTERS_V1 = [
   { id: 'section-01', label: '전체 성적' },
   { id: 'section-02', label: '비교 성적' },
   { id: 'section-03', label: '풀이 패턴' },
-  { id: 'section-04', label: '단어 상태' },
+  { id: 'section-05', label: '단어 진단' },
 ];
 
 const CHAPTERS_V2_EXTRA = [
+  { id: 'section-04', label: '정오답 패턴' },
   { id: 'section-05', label: '단어 진단' },
-  { id: 'section-06', label: 'RW 이해도' },
 ];
 
 function useScrollProgress() {
@@ -38,7 +39,9 @@ interface ChapterNavProps {
 export function ChapterNav({ isV2 = false }: ChapterNavProps) {
   const [activeSection, setActiveSection] = useState<string>('section-01');
   const progress = useScrollProgress();
-  const CHAPTERS = isV2 ? [...CHAPTERS_V1, ...CHAPTERS_V2_EXTRA] : CHAPTERS_V1;
+  const CHAPTERS = isV2
+    ? [CHAPTERS_V1[0], CHAPTERS_V1[1], CHAPTERS_V1[2], ...CHAPTERS_V2_EXTRA]
+    : CHAPTERS_V1;
 
   useEffect(() => {
     const sections = CHAPTERS.map((c) => document.getElementById(c.id)).filter(Boolean) as HTMLElement[];
@@ -127,7 +130,7 @@ export function ChapterNav({ isV2 = false }: ChapterNavProps) {
       >
         <div className="max-w-3xl mx-auto px-6">
           <div className="flex items-center gap-2 py-2">
-            <span className="text-xs font-bold text-slate-800 mr-2">SuperfastSAT</span>
+            <Image src="/logo-black.png" alt="SuperfastSAT" width={120} height={24} className="mr-1" style={{ objectFit: 'contain' }} />
             <span className="text-slate-300 text-xs mr-2">|</span>
             {CHAPTERS.map((chapter) => {
               const isActive = activeSection === chapter.id;

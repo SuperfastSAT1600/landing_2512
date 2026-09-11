@@ -237,7 +237,7 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
                       {/* 튜터링 상태는 학생 단위 — 과목별 결제 상태(상태 칸)와 섞이지 않게 여기 둔다. */}
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span
-                          title="CRM이 계산한 수업 진행 상태 — 잔여시간·휴원·부분종료 기준"
+                          title="CRM이 계산한 수업 진행 상태 — 잔여시간·휴원 기준"
                           className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.color}`}
                         >
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />

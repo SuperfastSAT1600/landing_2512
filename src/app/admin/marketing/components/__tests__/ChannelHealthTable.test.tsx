@@ -58,9 +58,9 @@ describe('ChannelHealthTable', () => {
     expect(rowOf('META').textContent).toContain('-5.2');
   });
 
-  it('5개 채널을 모두 렌더한다', () => {
+  it('6개 채널을 모두 렌더한다', () => {
     render(<ChannelHealthTable weekly={weeklyStats()} />);
-    for (const g of ['네이버 SEO', '구글 SEO', 'META', '소개', 'B2B']) {
+    for (const g of ['네이버 SEO', '구글 SEO', 'META', 'Youtube 광고', '소개', 'B2B']) {
       expect(screen.getByText(g)).toBeTruthy();
     }
   });

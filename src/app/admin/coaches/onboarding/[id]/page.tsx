@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { use } from 'react';
 import type { CoachOnboardingSubmission, HeadCoachCriteria } from '@/types/coach-onboarding';
@@ -14,7 +14,7 @@ const ENROLLMENT_LABELS: Record<string, string> = {
   enrolled: '재학중',
 };
 const LANGUAGE_LABELS = { english: '영어 선호', korean: '우리말 선호', any: '상관없음' };
-const ROLE_LABELS = { instructor: '강사', ta: 'TA', other: '기타' };
+const ROLE_LABELS: Record<string, string> = { instructor: '강사', ta: 'TA', other: '기타' };
 
 function Field({ label, value }: { label: string; value?: string | number | null }) {
   if (!value && value !== 0) return null;
@@ -37,11 +37,72 @@ const CRITERIA_LABELS: Record<keyof HeadCoachCriteria, string> = {
   five_score_screenshots: '점수향상 스크린샷 5장+',
 };
 
+function buildBioHtml(data: CoachOnboardingSubmission): string {
+  const li = (text: string) => `<li><p style="text-align: left;">${text}</p></li>`;
+
+  const educationItems: string[] = [];
+  if (data.university) {
+    educationItems.push(data.undergrad_major ? `${data.university} ${data.undergrad_major}` : data.university);
+  }
+  if (data.grad_school) {
+    educationItems.push(data.grad_major ? `${data.grad_school} ${data.grad_major}` : data.grad_school);
+  }
+  if (data.high_school) educationItems.push(data.high_school);
+  if (data.sat_rw_score && data.sat_math_score) {
+    const total = data.sat_rw_score + data.sat_math_score;
+    educationItems.push(`SAT ${total}점 (RW:${data.sat_rw_score} / Math:${data.sat_math_score})`);
+  }
+
+  const careerItems: string[] = [];
+  const parts: string[] = [`수업 경력 ${data.teaching_years}년`];
+  if (data.teaching_hours_total) parts.push(`누적 ${data.teaching_hours_total}시간`);
+  if (data.students_taught) parts.push(`${data.students_taught}명 지도`);
+  careerItems.push(parts.join(', '));
+  for (const a of data.past_academies ?? []) {
+    const role = ROLE_LABELS[a.role] ?? a.role;
+    careerItems.push(`${a.name.trim()} (${role})`);
+  }
+
+  const eduSection = educationItems.length > 0
+    ? `<p style="text-align: left;">🏛️ <strong>학력</strong></p><ul>${educationItems.map(li).join('')}</ul>`
+    : '';
+  const carSection = careerItems.length > 0
+    ? `<p style="text-align: left;">📝 <strong>경력</strong></p><ul>${careerItems.map(li).join('')}</ul>`
+    : '';
+
+  return [eduSection, carSection].filter(Boolean).join('<p style="text-align: left;"></p>') + '<p></p>';
+}
+
+function deriveSubjects(subjects: string[]): string[] {
+  const result: string[] = [];
+  if (subjects.some(s => s.startsWith('SAT'))) result.push('SAT');
+  if (subjects.some(s => s.startsWith('AP'))) result.push('AP');
+  return result;
+}
+
+type SubmissionWithSlug = CoachOnboardingSubmission & { coach_slug: string | null };
+
 export default function OnboardingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [data, setData] = useState<CoachOnboardingSubmission | null>(null);
+  const [data, setData] = useState<SubmissionWithSlug | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [genResult, setGenResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  // Blog post generation state
+  const [postContent, setPostContent] = useState<string>('');
+  const [generatingPost, setGeneratingPost] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
+
+  // Doodle generation state
+  const [doodleUrl, setDoodleUrl] = useState<string>('');
+  const [generatingDoodle, setGeneratingDoodle] = useState(false);
+  const [doodleError, setDoodleError] = useState<string | null>(null);
+
+  // Ghost save state
+  const [savingGhost, setSavingGhost] = useState(false);
+  const [ghostResult, setGhostResult] = useState<{ ok: boolean; message: string; url?: string } | null>(null);
 
   useEffect(() => {
     fetch(`/api/admin/coach-onboarding/${id}`, { headers: { 'x-admin-key': getAdminKey() } })
@@ -62,6 +123,108 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
       setData(d => d ? { ...d, status } : d);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleGeneratePost = useCallback(async () => {
+    if (!data) return;
+    setGeneratingPost(true);
+    setPostError(null);
+    setPostContent('');
+    setGhostResult(null);
+    try {
+      const res = await fetch(`/api/admin/coach-onboarding/${id}/generate-post`, {
+        method: 'POST',
+        headers: { 'x-admin-key': getAdminKey() },
+      });
+      const result: { data?: { content: string }; error?: string } = await res.json();
+      if (!res.ok || result.error) {
+        setPostError(result.error ?? '생성 실패');
+      } else {
+        setPostContent(result.data?.content ?? '');
+      }
+    } catch {
+      setPostError('네트워크 오류가 발생했습니다.');
+    } finally {
+      setGeneratingPost(false);
+    }
+  }, [data, id]);
+
+  const handleGenerateDoodle = useCallback(async () => {
+    if (!data) return;
+    setGeneratingDoodle(true);
+    setDoodleError(null);
+    try {
+      const res = await fetch(`/api/admin/coach-onboarding/${id}/generate-doodle`, {
+        method: 'POST',
+        headers: { 'x-admin-key': getAdminKey() },
+      });
+      const result: { data?: { url: string }; error?: string } = await res.json();
+      if (!res.ok || result.error) {
+        setDoodleError(result.error ?? '두들 생성 실패');
+      } else {
+        setDoodleUrl(result.data?.url ?? '');
+      }
+    } catch {
+      setDoodleError('네트워크 오류가 발생했습니다.');
+    } finally {
+      setGeneratingDoodle(false);
+    }
+  }, [data, id]);
+
+  const handleSaveToGhost = useCallback(async () => {
+    if (!postContent || !data) return;
+    setSavingGhost(true);
+    setGhostResult(null);
+    try {
+      const res = await fetch(`/api/admin/coach-onboarding/${id}/save-to-ghost`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
+        body: JSON.stringify({
+          content: postContent,
+          doodleUrl: doodleUrl || undefined,
+          coachName: data.name,
+        }),
+      });
+      const result: { data?: { url: string; slug: string }; error?: string } = await res.json();
+      if (!res.ok || result.error) {
+        setGhostResult({ ok: false, message: result.error ?? 'Ghost 저장 실패' });
+      } else {
+        setGhostResult({ ok: true, message: `Ghost 초안 저장 완료 (${result.data?.slug})`, url: result.data?.url });
+      }
+    } catch {
+      setGhostResult({ ok: false, message: '네트워크 오류가 발생했습니다.' });
+    } finally {
+      setSavingGhost(false);
+    }
+  }, [postContent, data, id, doodleUrl]);
+
+  const handleGenerateBio = async () => {
+    if (!data) return;
+    if (!data.coach_slug) {
+      setGenResult({ ok: false, message: '코치 slug가 연결되지 않았습니다. 어드민에서 코치 레코드를 먼저 확인해주세요.' });
+      return;
+    }
+    setGenerating(true);
+    setGenResult(null);
+    try {
+      const bio = buildBioHtml(data);
+      const subjects = deriveSubjects(data.subjects);
+      const res = await fetch('/api/admin/coaches', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
+        body: JSON.stringify({ slug: data.coach_slug, bio, subjects }),
+      });
+      const result: { success: boolean; error?: string } = await res.json();
+      if (result.success) {
+        setGenResult({ ok: true, message: `소개글이 저장됐습니다. (${data.coach_slug})` });
+      } else {
+        setGenResult({ ok: false, message: result.error ?? '저장 실패' });
+      }
+    } catch {
+      setGenResult({ ok: false, message: '네트워크 오류가 발생했습니다.' });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -95,10 +258,7 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
               <span className="text-gray-500 mb-1">/100</span>
             </div>
             <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500 rounded-full transition-all"
-                style={{ width: `${data.completeness_score ?? 0}%` }}
-              />
+              <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${data.completeness_score ?? 0}%` }} />
             </div>
           </div>
           <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5">
@@ -250,28 +410,162 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
+        {/* Blog post generation */}
+        <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5 space-y-5">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">코치 소개 블로그 포스팅</p>
+
+          {/* Step 1: Generate post */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 rounded-full bg-blue-600/30 text-blue-400 text-xs flex items-center justify-center font-bold shrink-0">1</span>
+              <p className="text-sm text-gray-300 font-medium">소개 글 생성</p>
+            </div>
+            <button
+              onClick={handleGeneratePost}
+              disabled={generatingPost}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+            >
+              {generatingPost ? (
+                <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 생성 중...</>
+              ) : postContent ? '다시 생성' : 'AI로 소개 글 생성'}
+            </button>
+            {postError && (
+              <p className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-400">{postError}</p>
+            )}
+            {postContent && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-green-400">생성 완료 ({postContent.length.toLocaleString()}자)</p>
+                </div>
+                <textarea
+                  value={postContent}
+                  onChange={e => setPostContent(e.target.value)}
+                  rows={12}
+                  className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2.5 text-xs text-gray-300 outline-none focus:border-blue-500 font-mono resize-y"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Step 2: Generate doodle */}
+          <div className="pt-4 border-t border-white/5 space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 rounded-full bg-purple-600/30 text-purple-400 text-xs flex items-center justify-center font-bold shrink-0">2</span>
+              <p className="text-sm text-gray-300 font-medium">두들 프로필 이미지 생성</p>
+              {!data.profile_image_url && (
+                <span className="text-xs text-yellow-500">(프로필 사진 없음)</span>
+              )}
+            </div>
+            <button
+              onClick={handleGenerateDoodle}
+              disabled={generatingDoodle || !data.profile_image_url}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+            >
+              {generatingDoodle ? (
+                <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 생성 중 (약 30초)...</>
+              ) : doodleUrl ? '다시 생성' : '두들 이미지 생성'}
+            </button>
+            {doodleError && (
+              <p className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-400">{doodleError}</p>
+            )}
+            {doodleUrl && (
+              <div className="flex items-start gap-3">
+                <a href={doodleUrl} target="_blank" rel="noopener noreferrer">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={doodleUrl} alt="두들 프로필" className="w-28 h-28 object-cover rounded-xl border border-white/10 hover:opacity-80 transition-opacity" />
+                </a>
+                <div className="space-y-1">
+                  <p className="text-xs text-green-400">두들 생성 완료</p>
+                  <input
+                    type="text"
+                    value={doodleUrl}
+                    onChange={e => setDoodleUrl(e.target.value)}
+                    className="w-full bg-[#151719] border border-white/10 rounded px-2 py-1 text-xs text-gray-400 font-mono outline-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Step 3: Save to Ghost */}
+          <div className="pt-4 border-t border-white/5 space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 rounded-full bg-green-600/30 text-green-400 text-xs flex items-center justify-center font-bold shrink-0">3</span>
+              <p className="text-sm text-gray-300 font-medium">Ghost에 초안 저장</p>
+            </div>
+            <button
+              onClick={handleSaveToGhost}
+              disabled={savingGhost || !postContent}
+              className="px-4 py-2 bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+            >
+              {savingGhost ? (
+                <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 저장 중...</>
+              ) : 'Ghost 초안으로 저장'}
+            </button>
+            {!postContent && (
+              <p className="text-xs text-gray-600">1단계에서 소개 글을 먼저 생성해주세요.</p>
+            )}
+            {ghostResult && (
+              <div className={`text-xs px-3 py-2 rounded-lg ${ghostResult.ok ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                <p>{ghostResult.message}</p>
+                {ghostResult.url && (
+                  <a href={ghostResult.url} target="_blank" rel="noopener noreferrer" className="underline mt-1 block hover:text-green-300">
+                    Ghost 편집기에서 열기 →
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Admin actions */}
-        <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">상태 관리</p>
-          <p className="text-sm text-gray-400 mb-4">
-            현재 상태: <span className="text-white font-medium">{data.status}</span>
-            {data.reviewed_at && ` · ${new Date(data.reviewed_at).toLocaleDateString('ko-KR')} 검토`}
-          </p>
-          <div className="flex gap-2">
+        <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5 space-y-4">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">관리</p>
+
+          {/* 소개글 자동 생성 */}
+          <div className="space-y-2">
+            <p className="text-xs text-gray-400">
+              연결된 코치: {' '}
+              {data.coach_slug
+                ? <span className="text-white font-mono">{data.coach_slug}</span>
+                : <span className="text-red-400">slug 미연결</span>}
+            </p>
             <button
-              onClick={() => updateStatus('reviewed')}
-              disabled={saving || data.status === 'reviewed'}
-              className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 disabled:opacity-40 text-blue-400 rounded-lg text-sm font-medium transition-colors"
+              onClick={handleGenerateBio}
+              disabled={generating || !data.coach_slug}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors"
             >
-              검토완료
+              {generating ? '생성 중...' : '소개글 자동 생성 및 저장'}
             </button>
-            <button
-              onClick={() => updateStatus('rejected')}
-              disabled={saving || data.status === 'rejected'}
-              className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 disabled:opacity-40 text-red-400 rounded-lg text-sm font-medium transition-colors"
-            >
-              반려
-            </button>
+            {genResult && (
+              <p className={`text-xs px-3 py-2 rounded-lg ${genResult.ok ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                {genResult.message}
+              </p>
+            )}
+          </div>
+
+          {/* 상태 관리 */}
+          <div className="pt-3 border-t border-white/5 space-y-3">
+            <p className="text-sm text-gray-400">
+              현재 상태: <span className="text-white font-medium">{data.status}</span>
+              {data.reviewed_at && ` · ${new Date(data.reviewed_at).toLocaleDateString('ko-KR')} 검토`}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => updateStatus('reviewed')}
+                disabled={saving || data.status === 'reviewed'}
+                className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 disabled:opacity-40 text-blue-400 rounded-lg text-sm font-medium transition-colors"
+              >
+                검토완료
+              </button>
+              <button
+                onClick={() => updateStatus('rejected')}
+                disabled={saving || data.status === 'rejected'}
+                className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 disabled:opacity-40 text-red-400 rounded-lg text-sm font-medium transition-colors"
+              >
+                반려
+              </button>
+            </div>
           </div>
         </div>
       </main>

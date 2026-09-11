@@ -4,7 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 
 type Params = { params: Promise<{ id: string }> };
 
-// GET /api/admin/coach-onboarding/[id] — full submission detail
+// GET /api/admin/coach-onboarding/[id] — full submission detail (+ coach_slug from invite)
 export async function GET(request: NextRequest, { params }: Params) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const { data, error } = await supabaseAdmin
     .from('coach_onboarding_submissions')
-    .select('*')
+    .select('*, coach_onboarding_invites(coach_slug)')
     .eq('id', id)
     .single();
 
@@ -21,7 +21,16 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ data });
+  const { coach_onboarding_invites, ...submission } = data as typeof data & {
+    coach_onboarding_invites: { coach_slug: string | null } | null;
+  };
+
+  return NextResponse.json({
+    data: {
+      ...submission,
+      coach_slug: coach_onboarding_invites?.coach_slug ?? null,
+    },
+  });
 }
 
 // DELETE /api/admin/coach-onboarding/[id] — delete submission and reset invite

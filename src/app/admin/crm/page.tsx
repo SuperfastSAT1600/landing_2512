@@ -184,8 +184,9 @@ export default function CrmPage() {
         if (prevSelected) setSelectedStudent(prevSelected);
         const data = await res.json().catch(() => ({}));
         alert(data.error?.message ?? '업데이트에 실패했습니다.');
-      } else if (updates.daily_action_done_at !== undefined) {
-        // 완료 체크/해제는 "오늘 취한 액션" 명단을 바꾸므로 재조회한다.
+      } else if (updates.daily_action_done_at !== undefined || updates.churn_tag !== undefined) {
+        // 완료 체크/해제와 이탈 처리는 "오늘 취한 액션" 명단을 바꾸므로 재조회한다.
+        // (이탈 모달이 상담 타임라인에 사유 메모를 남긴다 — churn-memo 라우트)
         fetchTodayActions();
       }
     } catch {

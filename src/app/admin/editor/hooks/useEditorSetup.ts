@@ -13,6 +13,7 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { CellSelection, cellAround } from '@tiptap/pm/tables';
 import Youtube from '@tiptap/extension-youtube';
+import Highlight from '@tiptap/extension-highlight';
 import { Markdown } from 'tiptap-markdown';
 import { CustomImage } from '../components/ImageNodeView';
 import { InstagramReelExtension } from '../extensions/InstagramReelExtension';
@@ -47,6 +48,7 @@ export function useEditorSetup() {
             TableHeader,
             TableCell,
             Youtube.configure({ width: 680, height: 480 }),
+            Highlight.configure({ HTMLAttributes: { class: 'blog-highlight' } }),
             InstagramReelExtension,
             Markdown.configure({ html: true, transformPastedText: true }),
         ],
@@ -58,7 +60,8 @@ export function useEditorSetup() {
                     'prose-a:text-blue-400 prose-code:bg-white/10 prose-code:px-1 prose-code:rounded ' +
                     'prose-pre:bg-[#1e2023] prose-blockquote:border-l-blue-500 ' +
                     'prose-table:border-collapse [&_td]:border [&_th]:border [&_td]:border-white/10 [&_th]:border-white/10 ' +
-                    '[&_td]:p-2 [&_th]:p-2',
+                    '[&_td]:p-2 [&_th]:p-2 ' +
+                    '[&_mark]:bg-teal-400/20 [&_mark]:text-teal-200 [&_mark]:rounded [&_mark]:px-0.5',
             },
             handleClick(view, pos, event) {
                 const target = event.target as HTMLElement;

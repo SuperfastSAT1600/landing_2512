@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Loader2, Plus } from 'lucide-react';
 import { toMonthKey } from '@/lib/crm-stats-core';
-import { buildTargetVsActual, niceAxisTicks, USD_TO_KRW_RATE, type MonthlyTargetRow } from '@/lib/business-targets';
+import { buildSixMonthWindow, niceAxisTicks, USD_TO_KRW_RATE, type MonthlyTargetRow } from '@/lib/business-targets';
 import { aggregateByBillingType, aggregateByCountry, countDistinctCountries } from '@/lib/global-sales-stats';
 import type { GlobalSaleEntry } from '@/lib/global-sales-types';
 import { MonthlyTargetEditor } from './MonthlyTargetEditor';
@@ -125,7 +125,7 @@ export function GlobalSalesPanel({ adminKey }: Props) {
   // 차트에 넘기기 전 달러로 환산해둔다 — recharts는 축 눈금을 원본 값(KRW) 기준으로
   // "예쁜 숫자"를 계산하므로, KRW 그대로 넘기고 formatValue에서만 나누면 눈금이
   // $10,714 같은 어중간한 값이 된다. 데이터 자체를 달러로 바꿔야 눈금도 $10,000 단위로 나온다.
-  const targetVsActual = buildTargetVsActual(monthlyTargets, actualByMonth).map((row) => ({
+  const targetVsActual = buildSixMonthWindow(monthlyTargets, actualByMonth).map((row) => ({
     ...row,
     target: row.target / USD_TO_KRW_RATE,
     actual: row.actual / USD_TO_KRW_RATE,
@@ -245,7 +245,7 @@ export function GlobalSalesPanel({ adminKey }: Props) {
           <h3 className="text-sm font-semibold text-gray-500">월별 목표 대비 실적</h3>
           <MonthlyTargetEditor segment="global" adminKey={adminKey} onSaved={fetchMonthlyTargets} />
         </div>
-        {targetVsActual.length > 0 ? (
+        {targetVsActual.some((r) => r.target > 0 || r.actual > 0) ? (
           <TargetVsActualChart
             data={targetVsActual}
             formatValue={usd}

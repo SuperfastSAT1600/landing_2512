@@ -2,6 +2,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import {
   TutoringStudentRow,
   classifyTutoringEntries,
+  countByTutoringStatus,
+  TUTORING_SUB_TABS,
   type TutoringRowStudent,
 } from '../TutoringStudentRow';
 import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
@@ -218,5 +220,21 @@ describe('classifyTutoringEntries', () => {
       [tutoringUser({ crmStudentId: null, status: 'active' })]
     );
     expect(entries[0].displayStatus).toBe('unlinked');
+  });
+});
+
+
+describe('부분종료 퍼널 제거', () => {
+  it('하위 탭에 부분종료가 없다', () => {
+    expect(TUTORING_SUB_TABS.map((t) => t.key)).toEqual([
+      'all', 'unlinked', 'active', 'paused', 'sales',
+    ]);
+    expect(TUTORING_SUB_TABS.some((t) => t.label === '부분종료')).toBe(false);
+  });
+
+  it('카운트에도 부분종료 칸이 없다', () => {
+    const counts = countByTutoringStatus([{ displayStatus: 'active' }, { displayStatus: 'paused' }]);
+    expect(Object.keys(counts).sort()).toEqual(['active', 'all', 'paused', 'sales', 'unlinked']);
+    expect(counts.all).toBe(2);
   });
 });

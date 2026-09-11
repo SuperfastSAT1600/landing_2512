@@ -1,4 +1,4 @@
-export const MARKETING_GROUPS = ['네이버 SEO', '구글 SEO', 'META', '소개', 'B2B'] as const;
+export const MARKETING_GROUPS = ['네이버 SEO', '구글 SEO', 'META', 'Youtube 광고', '소개', 'B2B'] as const;
 export type MarketingGroup = typeof MARKETING_GROUPS[number] | '미분류';
 
 export const PAID_GROUPS: MarketingGroup[] = ['META', '구글 SEO'];
@@ -19,6 +19,8 @@ export const SOURCE_GROUP_MAP: Record<string, MarketingGroup> = {
   '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)': '구글 SEO',
   '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT': '구글 SEO',
   '레딧': '구글 SEO',
+  // Youtube 광고
+  'Youtube 광고_홍진경': 'Youtube 광고',
   // META
   '인스타그램 오가닉': 'META',
   '인스타그램 광고': 'META',
@@ -38,8 +40,9 @@ export function getMarketingGroup(source: string | null | undefined): MarketingG
 
 export const GROUP_COLORS: Record<MarketingGroup, string> = {
   '네이버 SEO': '#03C75A',
-  '구글 SEO': '#4285F4',
-  'META': '#0866FF',
+  '구글 SEO': '#3B82F6',
+  'META': '#EF4444',
+  'Youtube 광고': '#EC4899',
   '소개': '#F59E0B',
   'B2B': '#8B5CF6',
   '미분류': '#6B7280',
@@ -49,6 +52,7 @@ export const GROUP_ICONS: Record<MarketingGroup, string> = {
   '네이버 SEO': 'N',
   '구글 SEO': 'G',
   'META': 'M',
+  'Youtube 광고': 'Y',
   '소개': '👥',
   'B2B': 'B',
   '미분류': '?',

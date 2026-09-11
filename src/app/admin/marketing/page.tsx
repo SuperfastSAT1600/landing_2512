@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import { ChevronDown, ChevronUp, TrendingUp, Users, CreditCard, DollarSign } from 'lucide-react';
-import { MARKETING_GROUPS, PAID_GROUPS, GROUP_COLORS, GROUP_ICONS } from '@/lib/marketing-groups';
+import { MARKETING_GROUPS, PAID_GROUPS, GROUP_COLORS } from '@/lib/marketing-groups';
 import type { MarketingGroupStats, MarketingDailyRow, AdSpend, WeeklyStats } from '@/types/marketing';
 import HeroWidget from './components/HeroWidget';
 import ChannelHealthTable from './components/ChannelHealthTable';
+import WeeklyGoalEditor from './components/WeeklyGoalEditor';
 import MarketingTabs from './components/MarketingTabs';
 import { fmt, fmtRate, toDateStr } from './components/format';
 
@@ -24,7 +23,6 @@ function getAdminKey() {
   if (typeof window === 'undefined') return '';
   return localStorage.getItem('admin_key') || '';
 }
-
 
 // ── Ad Spend Modal ────────────────────────────────────────────────────────────
 
@@ -94,110 +92,64 @@ function AdSpendModal({
   );
 }
 
-// ── Source Detail Table ───────────────────────────────────────────────────────
+// ── Channel Compare Table ─────────────────────────────────────────────────────
 
-function SourceTable({ sources }: { sources: MarketingGroupStats['sources'] }) {
+function ChannelCompareTable({ groups, onAddSpend }: {
+  groups: MarketingGroupStats[];
+  onAddSpend: (group: 'META' | '구글 SEO') => void;
+}) {
+  const rows = groups.filter((g) => g.group !== '미분류' || g.leads > 0);
+  if (rows.length === 0) return <p className="text-gray-600 text-sm text-center py-8">데이터 없음</p>;
+
   return (
-    <div className="mt-3 overflow-x-auto">
-      <table className="w-full text-xs text-gray-300">
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/5 text-gray-500">
-            <th className="text-left py-2 pr-4 font-medium">소스</th>
-            <th className="text-right py-2 px-2 font-medium">인입</th>
-            <th className="text-right py-2 px-2 font-medium">컨택률</th>
-            <th className="text-right py-2 px-2 font-medium">전환율</th>
-            <th className="text-right py-2 pl-2 font-medium">매출</th>
+          <tr className="border-b border-white/5">
+            <th className="text-left py-2.5 pr-4 text-xs text-gray-500 font-medium">채널</th>
+            <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">리드</th>
+            <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">컨택 성공률</th>
+            <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">결제 전환율</th>
+            <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">매출</th>
+            <th className="text-right py-2.5 px-3 text-xs text-orange-400 font-medium">광고비</th>
+            <th className="text-right py-2.5 pl-3 text-xs text-yellow-400 font-medium">ROAS</th>
           </tr>
         </thead>
         <tbody>
-          {sources.map((s) => (
-            <tr key={s.source} className="border-b border-white/5 last:border-0">
-              <td className="py-2 pr-4 text-gray-200">{s.source}</td>
-              <td className="text-right py-2 px-2">{fmt(s.leads)}</td>
-              <td className="text-right py-2 px-2">{fmtRate(s.contact_rate)}</td>
-              <td className="text-right py-2 px-2">{fmtRate(s.conversion_rate)}</td>
-              <td className="text-right py-2 pl-2">{fmt(s.revenue)}원</td>
-            </tr>
-          ))}
+          {rows.map((g) => {
+            const isPaid = PAID_GROUPS.includes(g.group as typeof PAID_GROUPS[number]);
+            return (
+              <tr key={g.group} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
+                <td className="py-3 pr-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: GROUP_COLORS[g.group] }} />
+                    <span className="font-semibold text-xs" style={{ color: GROUP_COLORS[g.group] }}>{g.group}</span>
+                  </div>
+                </td>
+                <td className="text-right py-3 px-3 text-white font-semibold">{fmt(g.leads)}</td>
+                <td className="text-right py-3 px-3 text-gray-300">{fmtRate(g.contact_rate)}</td>
+                <td className="text-right py-3 px-3 text-gray-300">{fmtRate(g.conversion_rate)}</td>
+                <td className="text-right py-3 px-3 text-gray-300 text-xs">{fmt(g.revenue)}원</td>
+                <td className="text-right py-3 px-3 text-xs">
+                  {isPaid ? (
+                    g.ad_spend && g.ad_spend > 0
+                      ? <span className="text-orange-300">{fmt(g.ad_spend)}원</span>
+                      : <button onClick={() => onAddSpend(g.group as 'META' | '구글 SEO')}
+                          className="text-blue-400 hover:text-blue-300 border border-blue-500/30 rounded px-2 py-0.5 transition-colors">
+                          + 입력
+                        </button>
+                  ) : <span className="text-gray-600">—</span>}
+                </td>
+                <td className="text-right py-3 pl-3 text-xs">
+                  {isPaid && g.roas != null
+                    ? <span className={g.roas >= 1 ? 'text-emerald-400' : 'text-red-400'}>{g.roas.toFixed(2)}x</span>
+                    : <span className="text-gray-600">—</span>}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-// ── Group Card ────────────────────────────────────────────────────────────────
-
-function GroupCard({ stats, isPaid: isPaidChannel, onAddSpend }: {
-  stats: MarketingGroupStats;
-  isPaid: boolean;
-  onAddSpend: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const color = GROUP_COLORS[stats.group];
-  const icon = GROUP_ICONS[stats.group];
-
-  return (
-    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5 transition-all"
-      style={{ borderLeftColor: color, borderLeftWidth: 3 }}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <span className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold text-white"
-            style={{ backgroundColor: color }}>{icon}</span>
-          <span className="text-white font-semibold">{stats.group}</span>
-          <span className="text-xs text-gray-500 ml-1">{fmt(stats.leads)}명</span>
-        </div>
-        {isPaidChannel && (
-          <button onClick={onAddSpend}
-            className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/30 rounded px-2 py-1 transition-colors">
-            + 광고비
-          </button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Metric icon={<Users size={13} />} label="컨택 성공률" value={fmtRate(stats.contact_rate)} sub={`${fmt(stats.contacted)}명 / ${fmt(stats.leads)}명`} />
-        <Metric icon={<CreditCard size={13} />} label="결제 전환율" value={fmtRate(stats.conversion_rate)} sub={`${fmt(stats.paid)}건`} />
-        <Metric icon={<DollarSign size={13} />} label="매출" value={`${fmt(stats.revenue)}원`} sub={`순매출 ${fmt(stats.net_revenue)}원`} />
-        {isPaidChannel && stats.ad_spend != null && stats.ad_spend > 0 ? (
-          <Metric icon={<TrendingUp size={13} />} label="ROAS / ROI" value={`${stats.roas?.toFixed(2)}x`}
-            sub={`ROI ${stats.roi! >= 0 ? '+' : ''}${stats.roi?.toFixed(0)}%`}
-            highlight={stats.roi != null && stats.roi > 0} />
-        ) : isPaidChannel ? (
-          <div className="bg-[#151719] rounded-lg p-3 flex flex-col gap-1">
-            <span className="text-xs text-gray-500 flex items-center gap-1"><TrendingUp size={13} /> ROAS / ROI</span>
-            <span className="text-sm text-gray-600">광고비 미입력</span>
-          </div>
-        ) : null}
-      </div>
-
-      {isPaidChannel && stats.ad_spend != null && stats.ad_spend > 0 && (
-        <p className="text-xs text-gray-500 mt-3">
-          이 기간 광고비 합계: <span className="text-gray-300">{fmt(stats.ad_spend)}원</span>
-        </p>
-      )}
-
-      {stats.sources.length > 0 && (
-        <>
-          <button onClick={() => setExpanded((v) => !v)}
-            className="mt-4 flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition-colors w-full">
-            {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-            {expanded ? '접기' : `소스 상세 보기 (${stats.sources.length}개)`}
-          </button>
-          {expanded && <SourceTable sources={stats.sources} />}
-        </>
-      )}
-    </div>
-  );
-}
-
-function Metric({ icon, label, value, sub, highlight }: {
-  icon: React.ReactNode; label: string; value: string; sub: string; highlight?: boolean;
-}) {
-  return (
-    <div className="bg-[#151719] rounded-lg p-3 flex flex-col gap-1">
-      <span className="text-xs text-gray-500 flex items-center gap-1">{icon} {label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-emerald-400' : 'text-white'}`}>{value}</span>
-      <span className="text-xs text-gray-600">{sub}</span>
     </div>
   );
 }
@@ -205,6 +157,8 @@ function Metric({ icon, label, value, sub, highlight }: {
 // ── Trend Chart ───────────────────────────────────────────────────────────────
 
 function TrendChart({ daily }: { daily: MarketingDailyRow[] }) {
+  const allChannels = [...MARKETING_GROUPS, '미분류' as const];
+
   const chartData = useMemo(() => {
     const dateMap = new Map<string, Record<string, number>>();
     for (const row of daily) {
@@ -221,17 +175,30 @@ function TrendChart({ daily }: { daily: MarketingDailyRow[] }) {
     <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5">
       <h3 className="text-white font-semibold mb-4">일별 리드 인입 추이</h3>
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+          <defs>
+            {allChannels.map((ch) => (
+              <linearGradient key={ch} id={`tg-${ch}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={GROUP_COLORS[ch]} stopOpacity={0.25} />
+                <stop offset="95%" stopColor={GROUP_COLORS[ch]} stopOpacity={0.03} />
+              </linearGradient>
+            ))}
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-          <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11 }} tickLine={false} />
+          <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11 }} tickLine={false} interval="preserveStartEnd" />
           <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} tickLine={false} axisLine={false} />
           <Tooltip contentStyle={{ background: '#1e2023', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
-            labelStyle={{ color: '#e0e0e0', fontSize: 12 }} itemStyle={{ color: '#9ca3af', fontSize: 11 }} />
+            labelStyle={{ color: '#e0e0e0', fontSize: 12 }} itemStyle={{ fontSize: 11 }} />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: '#9ca3af' }} />
-          {[...MARKETING_GROUPS, '미분류' as const].map((g) => (
-            <Bar key={g} dataKey={g} stackId="a" fill={GROUP_COLORS[g]} />
+          {allChannels.map((ch) => (
+            <Area key={ch} type="monotone" dataKey={ch}
+              stroke={GROUP_COLORS[ch]} strokeWidth={2}
+              fill={`url(#tg-${ch})`}
+              dot={{ r: 2.5, fill: GROUP_COLORS[ch], strokeWidth: 0 }}
+              activeDot={{ r: 4, strokeWidth: 0 }}
+            />
           ))}
-        </BarChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );
@@ -287,11 +254,11 @@ const PRESETS = [
 ];
 
 export default function MarketingPage() {
-  const router = useRouter();
   const range = defaultRange();
   const [appliedFrom, setAppliedFrom] = useState(range.from);
   const [appliedTo, setAppliedTo] = useState(range.to);
   const [activePreset, setActivePreset] = useState<string | null>('30일');
+  const [showGoalEditor, setShowGoalEditor] = useState(false);
 
   const [groups, setGroups] = useState<MarketingGroupStats[]>([]);
   const [daily, setDaily] = useState<MarketingDailyRow[]>([]);
@@ -328,13 +295,8 @@ export default function MarketingPage() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    fetchWeekly();
-  }, [fetchWeekly]);
-
-  useEffect(() => {
-    fetchStats(appliedFrom, appliedTo);
-  }, [appliedFrom, appliedTo, fetchStats]);
+  useEffect(() => { fetchWeekly(); }, [fetchWeekly]);
+  useEffect(() => { fetchStats(appliedFrom, appliedTo); }, [appliedFrom, appliedTo, fetchStats]);
 
   function applyPreset(label: string, from: string, to: string) {
     setAppliedFrom(from);
@@ -355,55 +317,18 @@ export default function MarketingPage() {
     });
   }, [groups, adSpends]);
 
-  const mainGroups = enrichedGroups.filter((g) => g.group !== '미분류');
-  const unclassified = enrichedGroups.find((g) => g.group === '미분류');
-
   return (
     <div className="min-h-screen bg-[#151719] text-[#E0E0E0] p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-white">마케팅</h1>
-            <p className="text-sm text-gray-500 mt-0.5">채널별 리드 인입 · 컨택 성공률 · 결제 전환율 · ROI</p>
-          </div>
-          {/* 날짜 직접 입력 */}
-          <div className="flex items-center gap-2">
-            <input
-              type="date" value={appliedFrom}
-              onChange={(e) => { setAppliedFrom(e.target.value); setActivePreset(null); }}
-              className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
-            <span className="text-gray-500 text-sm">~</span>
-            <input
-              type="date" value={appliedTo}
-              onChange={(e) => { setAppliedTo(e.target.value); setActivePreset(null); }}
-              className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-white">마케팅</h1>
+          <p className="text-sm text-gray-500 mt-0.5">채널별 리드 인입 · 컨택 성공률 · 결제 전환율 · ROI</p>
         </div>
         <MarketingTabs active="/admin/marketing" />
-
-        {/* 빠른 기간 선택 */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-gray-500">빠른 선택:</span>
-          {PRESETS.map(({ label, fn }) => (
-            <button
-              key={label}
-              onClick={() => { const r = fn(); applyPreset(label, r.from, r.to); }}
-              className={`text-xs px-3 py-1.5 rounded-md transition-colors font-medium ${
-                activePreset === label
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-[#1e2023] text-gray-400 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* ── Layer 1: 이번 주 헬스체크 ── */}
+      {/* ── 이번 주 헬스체크 ── */}
       {weeklyLoading ? (
         <div className="bg-[#1e2023] border border-white/5 rounded-xl p-6 animate-pulse">
           <div className="h-4 w-48 bg-white/5 rounded mb-4" />
@@ -414,14 +339,45 @@ export default function MarketingPage() {
         <HeroWidget
           weekly={weekly}
           onAddSpend={(g) => setAdSpendModal(g)}
-          onSetGoal={() => router.push('/admin/marketing/goals')}
+          onSetGoal={() => setShowGoalEditor((v) => !v)}
         />
       ) : null}
 
-      {/* ── Layer 2: 채널별 현황 ── */}
+      {showGoalEditor && weekly && (
+        <WeeklyGoalEditor
+          adminKey={adminKey}
+          currentWeekStart={weekly.week_start}
+          onSaved={() => { fetchWeekly(); setShowGoalEditor(false); }}
+        />
+      )}
+
+      {/* ── 채널별 현황 ── */}
       {weekly && !weeklyLoading && <ChannelHealthTable weekly={weekly} />}
 
-      {/* ── Layer 3: 기간별 상세 ── */}
+      {/* ── 기간 선택 ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500">빠른 선택:</span>
+          {PRESETS.map(({ label, fn }) => (
+            <button key={label}
+              onClick={() => { const r = fn(); applyPreset(label, r.from, r.to); }}
+              className={`text-xs px-3 py-1.5 rounded-md transition-colors font-medium ${
+                activePreset === label ? 'bg-blue-600 text-white' : 'bg-[#1e2023] text-gray-400 hover:text-white hover:bg-white/10'
+              }`}>{label}</button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <input type="date" value={appliedFrom}
+            onChange={(e) => { setAppliedFrom(e.target.value); setActivePreset(null); }}
+            className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
+          <span className="text-gray-500 text-sm">~</span>
+          <input type="date" value={appliedTo}
+            onChange={(e) => { setAppliedTo(e.target.value); setActivePreset(null); }}
+            className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
+        </div>
+      </div>
+
+      {/* ── 기간별 상세 ── */}
       {loading ? (
         <div className="flex items-center justify-center h-32 text-gray-500">불러오는 중...</div>
       ) : (
@@ -429,20 +385,13 @@ export default function MarketingPage() {
           <SectionLabel label={`${appliedFrom} ~ ${appliedTo} 기간 상세`} />
           <OverviewStrip groups={enrichedGroups} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {mainGroups.map((g) => (
-              <GroupCard key={g.group} stats={g}
-                isPaid={PAID_GROUPS.includes(g.group as typeof PAID_GROUPS[number])}
-                onAddSpend={() => setAdSpendModal(g.group as 'META' | '구글 SEO')} />
-            ))}
+          <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5">
+            <h3 className="text-white font-semibold mb-4">채널별 성과 비교</h3>
+            <ChannelCompareTable
+              groups={enrichedGroups}
+              onAddSpend={(g) => setAdSpendModal(g)}
+            />
           </div>
-
-          {unclassified && unclassified.leads > 0 && (
-            <div>
-              <p className="text-xs text-gray-500 mb-2">미분류 리드</p>
-              <GroupCard stats={unclassified} isPaid={false} onAddSpend={() => {}} />
-            </div>
-          )}
 
           <TrendChart daily={daily} />
         </>

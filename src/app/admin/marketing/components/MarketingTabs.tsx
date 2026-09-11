@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 const TABS = [
-  { href: '/admin/marketing/goals', label: '목표' },
+  { href: '/admin/marketing/status', label: '마케팅 현황' },
   { href: '/admin/marketing', label: '채널 현황' },
 ];
 

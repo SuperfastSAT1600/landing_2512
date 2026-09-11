@@ -224,14 +224,20 @@ export function DiagnosticTestView({
   };
 
   // Auto-submit when time runs out — ref ensures latest answers/confidence are captured
+  // Guard: require at least 1 answer before auto-submitting.
+  // Prevents zombie submissions when tab visibility correction jumps elapsed to time limit
+  // on students who left the tab open immediately after clicking "Begin Test".
+  const hasAnswers = isV2
+    ? (rwSequentialData.length > 0 || Object.keys(answers).length > 0)
+    : Object.keys(answers).length > 0;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSubmitRef = React.useRef(handleSubmit);
   React.useEffect(() => { handleSubmitRef.current = handleSubmit; });
   React.useEffect(() => {
-    if (timer.remaining === 0 && startTime && !submitting && !submitted) {
+    if (timer.remaining === 0 && startTime && !submitting && !submitted && hasAnswers) {
       handleSubmitRef.current();
     }
-  }, [timer.remaining, startTime, submitting, submitted]);
+  }, [timer.remaining, startTime, submitting, submitted, hasAnswers]);
 
   if (submitted) return <TestSubmittedScreen resultId={resultId} />;
 
@@ -470,13 +476,6 @@ export function DiagnosticTestView({
                               Mark for Review
                             </button>
                           </div>
-                          {currentQuestion.type === 'multiple-choice' && (
-                            <span className="text-xs text-gray-400 font-semibold tracking-wide" style={{ cursor: 'default' }}>
-                              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}>
-                                <text x="2" y="14" fontSize="14" fontWeight="800" fill="#9ca3af" fontFamily="serif" style={{ textDecoration: 'line-through' }}>ABC</text>
-                              </svg>
-                            </span>
-                          )}
                         </div>
 
                         {/* Question text */}
@@ -503,6 +502,16 @@ export function DiagnosticTestView({
                                 <div key={option.id} className="flex items-center gap-2">
                                   <button
                                     type="button"
+                                    onClick={() => toggleCrossOut(currentQuestion.id, option.id)}
+                                    className={`bluebook-option-crossout btn-press ${isCrossed ? 'active' : ''}`}
+                                    title="Cross out"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                      <path d="M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    type="button"
                                     onClick={() => handleAnswer(currentQuestion.id, option.id)}
                                     className={`bluebook-option btn-press ${isSelected ? 'selected' : ''} ${isCrossed && !isSelected ? 'crossedout' : ''}`}
                                   >
@@ -520,16 +529,6 @@ export function DiagnosticTestView({
                                         className="inline"
                                       />
                                     </span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleCrossOut(currentQuestion.id, option.id)}
-                                    className={`bluebook-option-crossout btn-press ${isCrossed ? 'active' : ''}`}
-                                    title="Cross out"
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                      <path d="M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                                    </svg>
                                   </button>
                                 </div>
                               );

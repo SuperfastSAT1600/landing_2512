@@ -68,7 +68,7 @@ export async function PATCH(
   }
 
   if (body.service_status !== undefined) {
-    if (!['active', 'partial_end', 'ended'].includes(body.service_status)) {
+    if (!['active', 'ended'].includes(body.service_status)) {
       return NextResponse.json({ error: 'Invalid service_status' }, { status: 400 });
     }
     updates.service_status = body.service_status;

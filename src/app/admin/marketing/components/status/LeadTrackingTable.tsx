@@ -1,0 +1,135 @@
+'use client';
+
+import type { WeekRow, MonthRow } from './utils/groupByPeriod';
+import { MARKETING_GROUPS, GROUP_COLORS } from '@/lib/marketing-groups';
+import type { MarketingGroup } from '@/lib/marketing-groups';
+
+function fmtWon(amount: number): string {
+  return amount.toLocaleString('ko-KR') + '원';
+}
+
+interface WeekTableProps {
+  rows: WeekRow[];
+  selectedChannels: MarketingGroup[];
+}
+
+export function WeekLeadTable({ rows, selectedChannels }: WeekTableProps) {
+  const visible = MARKETING_GROUPS.filter((ch) => selectedChannels.includes(ch));
+
+  if (rows.length === 0) {
+    return <p className="text-gray-600 text-sm text-center py-8">데이터 없음</p>;
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-white/5">
+            <th className="text-left py-2.5 pr-4 text-xs text-gray-500 font-medium whitespace-nowrap">주차</th>
+            {visible.map((ch) => (
+              <th key={ch} className="text-right py-2.5 px-3 text-xs font-medium whitespace-nowrap"
+                style={{ color: GROUP_COLORS[ch] }}>{ch}</th>
+            ))}
+            <th className="text-right py-2.5 pl-3 text-xs text-gray-400 font-medium">합계</th>
+            <th className="text-right py-2.5 pl-4 text-xs text-orange-400 font-medium whitespace-nowrap">광고비</th>
+            <th className="text-right py-2.5 pl-3 text-xs text-yellow-400 font-medium whitespace-nowrap">CPL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <>
+              <tr key={`${row.key}-count`} className="border-b border-white/5">
+                <td className="py-2 pr-4 text-gray-300 text-xs whitespace-nowrap">{row.label}</td>
+                {visible.map((ch) => (
+                  <td key={ch} className="text-right py-2 px-3 text-white font-medium">
+                    {row.channels[ch] ?? 0}
+                  </td>
+                ))}
+                <td className="text-right py-2 pl-3 text-gray-300 font-semibold">{row.total}</td>
+                <td className="text-right py-2 pl-4 text-orange-300 text-xs whitespace-nowrap">
+                  {row.spend > 0 ? fmtWon(row.spend) : '—'}
+                </td>
+                <td className="text-right py-2 pl-3 text-yellow-300 text-xs whitespace-nowrap">
+                  {row.cpl != null ? fmtWon(row.cpl) : '—'}
+                </td>
+              </tr>
+              <tr key={`${row.key}-mix`} className="border-b border-white/10">
+                <td className="pb-2 pr-4 text-gray-600 text-xs">비중</td>
+                {visible.map((ch) => (
+                  <td key={ch} className="text-right pb-2 px-3 text-gray-500 text-xs">
+                    {row.mix[ch] ?? 0}%
+                  </td>
+                ))}
+                <td className="text-right pb-2 pl-3 text-gray-500 text-xs">100%</td>
+                <td colSpan={2} />
+              </tr>
+            </>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+interface MonthTableProps {
+  rows: MonthRow[];
+  selectedChannels: MarketingGroup[];
+}
+
+export function MonthLeadTable({ rows, selectedChannels }: MonthTableProps) {
+  const visible = MARKETING_GROUPS.filter((ch) => selectedChannels.includes(ch));
+
+  if (rows.length === 0) {
+    return <p className="text-gray-600 text-sm text-center py-8">데이터 없음</p>;
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-white/5">
+            <th className="text-left py-2.5 pr-4 text-xs text-gray-500 font-medium">월</th>
+            {visible.map((ch) => (
+              <th key={ch} className="text-right py-2.5 px-3 text-xs font-medium whitespace-nowrap"
+                style={{ color: GROUP_COLORS[ch] }}>{ch}</th>
+            ))}
+            <th className="text-right py-2.5 pl-3 text-xs text-gray-400 font-medium">합계</th>
+            <th className="text-right py-2.5 pl-4 text-xs text-orange-400 font-medium whitespace-nowrap">광고비</th>
+            <th className="text-right py-2.5 pl-3 text-xs text-yellow-400 font-medium whitespace-nowrap">CPL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <>
+              <tr key={`${row.key}-count`} className="border-b border-white/5">
+                <td className="py-2 pr-4 text-gray-300 text-xs whitespace-nowrap">{row.label}</td>
+                {visible.map((ch) => (
+                  <td key={ch} className="text-right py-2 px-3 text-white font-medium">
+                    {row.channels[ch] ?? 0}
+                  </td>
+                ))}
+                <td className="text-right py-2 pl-3 text-gray-300 font-semibold">{row.total}</td>
+                <td className="text-right py-2 pl-4 text-orange-300 text-xs whitespace-nowrap">
+                  {row.spend > 0 ? fmtWon(row.spend) : '—'}
+                </td>
+                <td className="text-right py-2 pl-3 text-yellow-300 text-xs whitespace-nowrap">
+                  {row.cpl != null ? fmtWon(row.cpl) : '—'}
+                </td>
+              </tr>
+              <tr key={`${row.key}-mix`} className="border-b border-white/10">
+                <td className="pb-2 pr-4 text-gray-600 text-xs">비중</td>
+                {visible.map((ch) => (
+                  <td key={ch} className="text-right pb-2 px-3 text-gray-500 text-xs">
+                    {row.mix[ch] ?? 0}%
+                  </td>
+                ))}
+                <td className="text-right pb-2 pl-3 text-gray-500 text-xs">100%</td>
+                <td colSpan={2} />
+              </tr>
+            </>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

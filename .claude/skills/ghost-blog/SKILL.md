@@ -229,8 +229,7 @@ Inference 문제 외에도 [Words in Context는 비슷한 패턴](/blog/sat-word
 ### 7. 본문 구조
 
 blueprint.md를 거의 그대로 포함:
-- H1 제목
-- YAML frontmatter 이후 TL;DR
+- YAML frontmatter 이후 TL;DR (H1 제목은 Ghost가 frontmatter title로 자동 렌더링 — 본문에 중복 삽입 금지)
 - 모든 H2 섹션 (blueprint와 동일)
 - 각 섹션 내 quote capsules 80%+ 포함
 - 결론부
@@ -286,7 +285,7 @@ Ghost의 `updated_at` 필드와 동기화하여 AI 검색 엔진에 신선도 �
 - [ ] Canonical URL: 절대 URL : Yes / No
 
 ### 글자 수
-- [ ] 총 글자: ___자 (5,000~8,000자)
+- [ ] 총 글자: ___자 (2,500~4,000자)
 
 **결과:**
 - **모든 항목 Pass** → 발행 준비 완료
@@ -361,7 +360,7 @@ blueprint과 동일하게 유지:
 - [ ] Quote capsules 80%+ 섹션에 포함
 - [ ] 비교 테이블 (해당하면)
 - [ ] 내부 링크 3~8개
-- [ ] 글자 수 5,000~8,000자
+- [ ] 글자 수 2,500~4,000자
 - [ ] "마지막 업데이트: YYYY-MM-DD" 포함
 - [ ] 데이터 출처 "College Board Question Bank — ..., SuperfastSAT 분석" 형식
 - [ ] OG Image 1200×630+ 준비

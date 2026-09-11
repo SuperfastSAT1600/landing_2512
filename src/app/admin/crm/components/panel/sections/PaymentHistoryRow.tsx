@@ -50,7 +50,8 @@ export function PaymentHistoryRow({ payment: p, savingType, deleting, onTypeChan
     Number.isInteger(amountValue) &&
     (isRefund ? amountValue < 0 : amountValue >= 0);
   const hoursValue = hours.trim() === '' ? null : Number(hours);
-  const hoursValid = hoursValue === null || (Number.isInteger(hoursValue) && hoursValue > 0);
+  // 시간은 소수 허용(예: 41.5). 금액과 달리 정수 제약을 두지 않는다.
+  const hoursValid = hoursValue === null || (Number.isFinite(hoursValue) && hoursValue > 0);
   const canSave = amountValid && hoursValid && !saving;
 
   function startEditing() {
@@ -113,7 +114,8 @@ export function PaymentHistoryRow({ payment: p, savingType, deleting, onTypeChan
               <input
                 id={`hours-${p.id}`}
                 type="number"
-                min={1}
+                min={0.5}
+                step={0.5}
                 value={hours}
                 onChange={(e) => setHours(e.target.value)}
                 placeholder="없음"
@@ -121,7 +123,7 @@ export function PaymentHistoryRow({ payment: p, savingType, deleting, onTypeChan
                   hoursValid ? 'border-blue-200 focus:border-blue-400' : 'border-red-300'
                 }`}
               />
-              <span className="text-[11px] text-gray-400">{hoursValid ? '시간' : '1 이상 정수'}</span>
+              <span className="text-[11px] text-gray-400">{hoursValid ? '시간' : '0보다 큰 숫자'}</span>
             </div>
             <div className="flex items-center gap-1.5 pt-0.5">
               <button

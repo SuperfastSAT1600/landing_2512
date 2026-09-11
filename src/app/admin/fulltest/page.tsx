@@ -84,6 +84,13 @@ const TESTS: TestDef[] = [
     apiType: 'practice',
     publicUrl: '/practice/august-math',
   },
+  {
+    id: 'september-math-final-14',
+    label: '9월 SAT MATH 파이널 연습',
+    description: '혼합형 14문항 (객관식 + 주관식)',
+    apiType: 'practice',
+    publicUrl: '/practice/september-math',
+  },
 ];
 
 function formatDate(iso: string) {

@@ -66,8 +66,9 @@ export async function PATCH(
   }
   if ('hours' in body) {
     const hours = body.hours;
-    if (hours !== null && (!Number.isInteger(hours) || (hours as number) <= 0)) {
-      return NextResponse.json({ error: '시간은 1 이상의 정수여야 합니다.' }, { status: 400 });
+    // 시간은 소수 허용(예: 41.5). 금액과 달리 정수 제약을 두지 않는다.
+    if (hours !== null && (typeof hours !== 'number' || !Number.isFinite(hours) || hours <= 0)) {
+      return NextResponse.json({ error: '시간은 0보다 큰 숫자여야 합니다.' }, { status: 400 });
     }
     updates.hours = hours ?? null;
   }

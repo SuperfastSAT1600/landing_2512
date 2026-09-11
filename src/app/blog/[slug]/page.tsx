@@ -4,6 +4,7 @@ import { getPostData, getAllPostIds, getRelatedPosts } from '../../../lib/posts'
 import { getPopupTargetPost } from '../../../lib/popup-rules';
 import Footer from '../../components/Footer';
 import { PostContent } from './PostContent';
+import { HighlightObserver } from './HighlightObserver';
 import { ReadCompletePopup } from './ReadCompletePopup';
 import { Calendar, ArrowLeft, Tag } from 'lucide-react';
 
@@ -165,7 +166,7 @@ export default async function Post({ params }: Props) {
             </nav>
 
             <main className="pt-24 pb-32 sm:pb-20">
-                <article className="max-w-[680px] mx-auto px-4 md:px-6">
+                <article className="max-w-[680px] mx-auto px-5 md:px-6">
                     {/* Header: Category & Date */}
                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 justify-center">
                         <span className="text-blue-600 font-bold uppercase tracking-wider">{postData.category}</span>
@@ -201,9 +202,10 @@ export default async function Post({ params }: Props) {
                         <PostContent postData={postData} />
                     ) : (
                         <>
-                            <div className={`prose prose-base sm:prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl prose-table:border-collapse [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200 [&_td]:p-2 [&_th]:p-2 [&_.instagram-reel-wrapper]:flex [&_.instagram-reel-wrapper]:justify-center [&_.instagram-reel-wrapper]:py-4 [&_.instagram-reel-embed]:max-w-[420px] [&_.instagram-reel-embed]:w-full [&_.instagram-reel-embed]:rounded-2xl [&_.instagram-reel-embed]:border-0`}>
+                            <div className={`prose max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl prose-table:border-collapse text-[1.0625rem] leading-[1.85] break-keep [&_p]:mb-6 [&_p]:break-keep [&_li]:break-keep [&_h2]:text-[1.65rem] [&_h2]:font-extrabold [&_h2]:mt-14 [&_h2]:mb-4 [&_h2]:leading-snug [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-10 [&_h3]:mb-3 [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200 [&_td]:p-3 [&_th]:p-3 [&_th]:bg-gray-50 [&_th]:font-semibold [&_.instagram-reel-wrapper]:flex [&_.instagram-reel-wrapper]:justify-center [&_.instagram-reel-wrapper]:py-4 [&_.instagram-reel-embed]:max-w-[420px] [&_.instagram-reel-embed]:w-full [&_.instagram-reel-embed]:rounded-2xl [&_.instagram-reel-embed]:border-0`}>
                                 <div dangerouslySetInnerHTML={{ __html: postData.contentHtml ?? '' }} />
                             </div>
+                            <HighlightObserver />
                             {postData.tags && postData.tags.filter((t: string) => t !== 'vip').length > 0 && (
                                 <div className="mt-16 pt-8 border-t border-gray-200">
                                     <div className="flex flex-wrap gap-2">

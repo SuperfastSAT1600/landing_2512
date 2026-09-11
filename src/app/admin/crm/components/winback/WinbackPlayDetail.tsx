@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, Loader2, RefreshCw, Send, MailX, Trash2, Sparkles, X } from 'lucide-react';
+import { ChevronLeft, Loader2, RefreshCw, Trash2, Sparkles, X } from 'lucide-react';
 import type { WinbackPlayDetailData, WinbackTargetRow as TargetRow } from './hooks/useWinbackPlays';
 import { WinbackTargetRow } from './WinbackTargetRow';
+import { WinbackBulkBar } from './WinbackBulkBar';
 import { RecommendStep } from './steps/RecommendStep';
 import { playToBriefDraft, playToRuleDraft } from './winbackContinuation';
 import { EMPTY_RULES } from './WinbackRuleFilters';
@@ -108,12 +109,19 @@ export function WinbackPlayDetail({
     };
   }, [targets]);
 
+  // 공통 발송은 이미 보낸 건을 덮어쓰지 않는다(markSent 가 멱등) — 바에서 미리 알린다.
+  const selectedAlreadySent = useMemo(
+    () => targets.filter((t) => selected.has(t.id) && t.sent_at).length,
+    [targets, selected]
+  );
+
   async function handleBulk(action: string, targetIds?: string[], message?: string) {
     const ids = targetIds ?? [...selected];
     if (ids.length === 0) return;
+    // message 가 오면 전원 같은 문구(공통 발송), 없으면 행마다 입력한 문구를 모은다.
     const sentMessages = message === undefined
       ? Object.fromEntries(ids.map((id) => [id, messages[id]]).filter(([, value]) => value !== undefined))
-      : { [ids[0]]: message };
+      : Object.fromEntries(ids.map((id) => [id, message]));
     try {
       const result = await bulkTargets({
         target_ids: ids,
@@ -131,11 +139,12 @@ export function WinbackPlayDetail({
           return next;
         });
       }
+      setSelected(new Set());
+      await load();
+      // load()가 setError(null)로 시작하므로, 부분 실패 안내는 새로고침 뒤에 세운다.
       if (result.failed.length > 0) {
         setError(`${result.failed.length}건 실패: ${result.failed[0].error}`);
       }
-      setSelected(new Set());
-      await load();
     } catch (err) {
       setError((err as Error).message);
     }
@@ -238,27 +247,14 @@ export function WinbackPlayDetail({
       {addMessage && <p className="text-xs text-green-600">{addMessage}</p>}
 
       {selected.size > 0 && (
-        <div className="flex items-center gap-2 rounded-lg bg-gray-900 px-3 py-2 text-white">
-          <span className="text-xs">{selected.size}명 선택</span>
-          <button
-            onClick={() => handleBulk('mark_sent')}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-white/15 text-[11px] font-medium hover:bg-white/25"
-          >
-            <Send size={11} /> 발송함으로 기록
-          </button>
-          <button
-            onClick={() => handleBulk('mark_no_response')}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-white/15 text-[11px] font-medium hover:bg-white/25"
-          >
-            <MailX size={11} /> 무응답 처리
-          </button>
-          <button
-            onClick={() => setSelected(new Set())}
-            className="ml-auto text-[11px] text-white/60 hover:text-white"
-          >
-            해제
-          </button>
-        </div>
+        <WinbackBulkBar
+          selectedCount={selected.size}
+          alreadySentCount={selectedAlreadySent}
+          onSharedSend={(message) => handleBulk('mark_sent', [...selected], message)}
+          onMarkSent={() => handleBulk('mark_sent')}
+          onMarkNoResponse={() => handleBulk('mark_no_response')}
+          onClear={() => setSelected(new Set())}
+        />
       )}
 
       <div className="rounded-xl border border-gray-100 bg-white">
