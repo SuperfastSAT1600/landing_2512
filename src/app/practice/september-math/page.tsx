@@ -488,7 +488,7 @@ export default function SeptemberMathPage() {
           <div style={{ fontSize: 10, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.03em' }}>Your Result</h2>
           {myEntry ? (
-            <button onClick={() => setPhase('review')} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8, cursor: 'pointer' }}>
+            <button onClick={() => { setCurrentIndex(0); setPhase('review'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8, cursor: 'pointer' }}>
               <span style={{ fontSize: 13, color: '#a1a1aa' }}>Rank</span>
               <span style={{ fontSize: 26, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.03em' }}>#{myEntry.rank}</span>
               <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
@@ -497,7 +497,7 @@ export default function SeptemberMathPage() {
               <span style={{ fontSize: 10, color: '#6085FF' }}>리뷰 →</span>
             </button>
           ) : (
-            <button onClick={() => setPhase('review')} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8, cursor: 'pointer' }}>
+            <button onClick={() => { setCurrentIndex(0); setPhase('review'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8, cursor: 'pointer' }}>
               <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{correctCount} / {QUESTIONS.length}</span>
               <span style={{ fontSize: 14, color: '#a1a1aa' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</span>
               <span style={{ fontSize: 10, color: '#6085FF' }}>리뷰 →</span>
@@ -691,7 +691,7 @@ export default function SeptemberMathPage() {
         {/* Footer nav — 테스트와 동일 스타일 */}
         <div className="bluebook-footer" style={{ flexShrink: 0 }}>
           <button
-            onClick={() => setCurrentIndex(i => Math.max(0, i - 1))}
+            onClick={() => setCurrentIndex(reviewIndex - 1)}
             disabled={rIsFirst}
             style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: rIsFirst ? 'not-allowed' : 'pointer', opacity: rIsFirst ? 0.4 : 1, color: '#374151' }}
           >
@@ -700,7 +700,7 @@ export default function SeptemberMathPage() {
           <span style={{ fontSize: 12, color: '#94a3b8' }}>{reviewIndex + 1} / {wrongQuestions.length}</span>
           <button
             className="bluebook-next-btn btn-press"
-            onClick={() => setCurrentIndex(i => Math.min(wrongQuestions.length - 1, i + 1))}
+            onClick={() => setCurrentIndex(reviewIndex + 1)}
             disabled={rIsLast}
             style={{ opacity: rIsLast ? 0.4 : 1, cursor: rIsLast ? 'not-allowed' : 'pointer' }}
           >
