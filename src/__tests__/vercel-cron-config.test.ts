@@ -20,6 +20,10 @@ const EXPECTED_CRONS: Record<string, string> = {
   // 두 리포트가 같은 슬롯을 쓴다 — 읽는 데이터도 올리는 메시지도 서로 다르다.
   '/api/cron/weekly-business-report': '0 19 * * 0',
   '/api/cron/marketing-weekly-report': '0 19 * * 0',
+  // FB 광고비 동기화 (매일 02:00 KST = 17:00 UTC 전일)
+  '/api/cron/fb-ad-spend-sync': '0 17 * * *',
+  // 주간 방문자 리포트 (화요일 04:00 KST = 월요일 19:00 UTC)
+  '/api/cron/weekly-visitor-report': '0 19 * * 2',
 };
 
 function readCrons(): { path: string; schedule: string }[] {

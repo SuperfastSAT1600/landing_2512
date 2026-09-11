@@ -68,12 +68,12 @@ describe('groupByWeek', () => {
     expect(result[1].weekStart <= result[2].weekStart).toBe(true);
   });
 
-  it('주 레이블 형식 확인 — "2026년 8월 W3 (8/17~8/23)"', () => {
+  it('주 레이블 형식 확인 — "26년 08월 03주차 (8/17~8/23)"', () => {
     // 2026-08-17(Mon) = 8월의 3번째 월요일 주
     const result = groupByWeek([row('2026-08-17', 'META', 1)]);
     const label = result[0].label;
-    // Label should be "2026년 8월 W{n} (8/17~8/23)"
-    expect(label).toMatch(/^2026년 8월 W\d \(8\/17~8\/23\)$/);
+    // monthWeekLabel 형식: "26년 08월 03주차 (8/17~8/23)"
+    expect(label).toMatch(/^\d{2}년 \d{2}월 \d{2}주차 \(8\/17~8\/23\)$/);
   });
 
   it('미분류 포함 모든 채널 키 존재 (값 0 포함)', () => {
