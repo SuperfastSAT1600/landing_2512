@@ -10,6 +10,7 @@ import ChannelSignalCards from '../components/status/ChannelSignalCards';
 import { groupByWeek, groupByMonth } from '../components/status/utils/groupByPeriod';
 import { classifyChannelSignals } from '../components/status/utils/signalUtils';
 import { MARKETING_GROUPS } from '@/lib/marketing-groups';
+import type { MarketingGroup } from '@/lib/marketing-groups';
 
 type PeriodUnit = 'week' | 'month';
 type ViewMode = 'table' | 'chart';
@@ -67,8 +68,8 @@ export default function MarketingStatusPage() {
     const recentWeeks = weekRows.slice(-3);
     const weeklyActual = weekly.this_week as Record<string, number>;
     const actual = Object.fromEntries(
-      MARKETING_GROUPS.map((ch) => [ch, weeklyActual[ch] ?? 0])
-    ) as Record<typeof MARKETING_GROUPS[number], number>;
+      [...MARKETING_GROUPS, '미분류' as const].map((ch) => [ch, weeklyActual[ch] ?? 0])
+    ) as Record<MarketingGroup, number>;
     return classifyChannelSignals(recentWeeks, weekly.weekly_target, actual);
   }, [weekRows, weekly]);
 
