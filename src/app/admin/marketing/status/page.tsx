@@ -55,13 +55,13 @@ export default function MarketingStatusPage() {
   const [view, setView] = useState<ViewMode>('table');
 
   const {
-    recentDaily, recentDailyLoading,
+    recentDaily, recentDailyLoading, adSpendByDate,
     momData, qoqData, yoyMonthData, yoyQuarterData, compareLoading,
     weekly, weeklyLoading,
   } = useMarketingStatus();
 
-  const weekRows = useMemo(() => groupByWeek(recentDaily), [recentDaily]);
-  const monthRows = useMemo(() => groupByMonth(recentDaily), [recentDaily]);
+  const weekRows = useMemo(() => groupByWeek(recentDaily, adSpendByDate), [recentDaily, adSpendByDate]);
+  const monthRows = useMemo(() => groupByMonth(recentDaily, adSpendByDate), [recentDaily, adSpendByDate]);
 
   const signals = useMemo(() => {
     if (!weekly) return [];

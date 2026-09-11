@@ -10,6 +10,8 @@ export interface WeekRow {
   channels: Record<MarketingGroup, number>;
   total: number;
   mix: Record<MarketingGroup, number>;
+  spend: number;
+  cpl: number | null;
 }
 
 export interface MonthRow {
@@ -18,6 +20,8 @@ export interface MonthRow {
   channels: Record<MarketingGroup, number>;
   total: number;
   mix: Record<MarketingGroup, number>;
+  spend: number;
+  cpl: number | null;
 }
 
 const ALL_GROUPS: MarketingGroup[] = [...MARKETING_GROUPS, '미분류'];
@@ -79,7 +83,7 @@ function makeWeekLabel(weekStart: string, weekEnd: string): string {
   return `${year}년 ${month}월 W${wNum} (${range})`;
 }
 
-export function groupByWeek(rows: MarketingDailyRow[]): WeekRow[] {
+export function groupByWeek(rows: MarketingDailyRow[], spendByDate: Record<string, number> = {}): WeekRow[] {
   const map = new Map<string, { channels: Record<MarketingGroup, number>; weekEnd: string }>();
 
   for (const row of rows) {
@@ -95,6 +99,7 @@ export function groupByWeek(rows: MarketingDailyRow[]): WeekRow[] {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([weekStart, { channels, weekEnd }]) => {
       const total = ALL_GROUPS.reduce((s, g) => s + channels[g], 0);
+      const spend = sumSpendInRange(spendByDate, weekStart, weekEnd);
       return {
         key: weekStart,
         label: makeWeekLabel(weekStart, weekEnd),
@@ -103,11 +108,13 @@ export function groupByWeek(rows: MarketingDailyRow[]): WeekRow[] {
         channels,
         total,
         mix: calcMix(channels, total),
+        spend,
+        cpl: total > 0 && spend > 0 ? Math.round(spend / total) : null,
       };
     });
 }
 
-export function groupByMonth(rows: MarketingDailyRow[]): MonthRow[] {
+export function groupByMonth(rows: MarketingDailyRow[], spendByDate: Record<string, number> = {}): MonthRow[] {
   const map = new Map<string, Record<MarketingGroup, number>>();
 
   for (const row of rows) {
@@ -122,12 +129,26 @@ export function groupByMonth(rows: MarketingDailyRow[]): MonthRow[] {
     .map(([key, channels]) => {
       const [y, m] = key.split('-');
       const total = ALL_GROUPS.reduce((s, g) => s + channels[g], 0);
+      const monthStart = key + '-01';
+      const lastDay = new Date(parseInt(y), parseInt(m), 0).getDate();
+      const monthEnd = `${key}-${String(lastDay).padStart(2, '0')}`;
+      const spend = sumSpendInRange(spendByDate, monthStart, monthEnd);
       return {
         key,
         label: `${y}년 ${parseInt(m)}월`,
         channels,
         total,
         mix: calcMix(channels, total),
+        spend,
+        cpl: total > 0 && spend > 0 ? Math.round(spend / total) : null,
       };
     });
+}
+
+function sumSpendInRange(spendByDate: Record<string, number>, start: string, end: string): number {
+  let total = 0;
+  for (const [date, amount] of Object.entries(spendByDate)) {
+    if (date >= start && date <= end) total += amount;
+  }
+  return total;
 }

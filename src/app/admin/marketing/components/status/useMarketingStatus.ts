@@ -28,6 +28,7 @@ export interface MarketingStatusData {
   // Part A: 인입 트래킹
   recentDaily: MarketingDailyRow[];
   recentDailyLoading: boolean;
+  adSpendByDate: Record<string, number>;
 
   // Part B: 비교 분석
   momData: CompareData | null;
@@ -55,6 +56,7 @@ function getRecentRange(weeks: number): { from: string; to: string } {
 export function useMarketingStatus(): MarketingStatusData {
   const [recentDaily, setRecentDaily] = useState<MarketingDailyRow[]>([]);
   const [recentDailyLoading, setRecentDailyLoading] = useState(true);
+  const [adSpendByDate, setAdSpendByDate] = useState<Record<string, number>>({});
 
   const [momData, setMomData] = useState<CompareData | null>(null);
   const [qoqData, setQoqData] = useState<CompareData | null>(null);
@@ -72,12 +74,23 @@ export function useMarketingStatus(): MarketingStatusData {
     const { year: qYear, quarter: qNum } = getCurrentQuarter(now);
     const prevQ = getPreviousQuarter(qYear, qNum);
 
-    // Part A: 최근 12주 일별 데이터
+    // Part A: 최근 12주 일별 데이터 + 광고비 병렬 조회
     setRecentDailyLoading(true);
     const recentRange = getRecentRange(12);
-    fetchStats(recentRange.from, recentRange.to)
-      .then(({ daily }) => setRecentDaily(daily))
-      .finally(() => setRecentDailyLoading(false));
+    Promise.all([
+      fetchStats(recentRange.from, recentRange.to),
+      fetch(`/api/crm/marketing/ad-spend?from=${recentRange.from}&to=${recentRange.to}`, {
+        headers: { 'x-admin-key': getAdminKey() },
+      }).then((r) => r.json()),
+    ]).then(([{ daily }, spendJson]) => {
+      setRecentDaily(daily);
+      const spendRows: { date: string; amount: number }[] = spendJson.data ?? [];
+      const byDate: Record<string, number> = {};
+      for (const row of spendRows) {
+        byDate[row.date] = (byDate[row.date] ?? 0) + row.amount;
+      }
+      setAdSpendByDate(byDate);
+    }).finally(() => setRecentDailyLoading(false));
 
     // Part B: 비교 분석 — 4개 기간 병렬 fetch
     setCompareLoading(true);
@@ -140,7 +153,7 @@ export function useMarketingStatus(): MarketingStatusData {
   useEffect(() => { load(); }, [load]);
 
   return {
-    recentDaily, recentDailyLoading,
+    recentDaily, recentDailyLoading, adSpendByDate,
     momData, qoqData, yoyMonthData, yoyQuarterData, compareLoading,
     weekly, weeklyLoading,
     refetch: load,

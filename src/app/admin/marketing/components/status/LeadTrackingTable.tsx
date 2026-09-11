@@ -18,6 +18,10 @@ function DeltaBadge({ rate }: { rate: number | null }) {
   );
 }
 
+function fmtWon(amount: number): string {
+  return amount.toLocaleString('ko-KR') + '원';
+}
+
 interface WeekTableProps {
   rows: WeekRow[];
 }
@@ -38,6 +42,8 @@ export function WeekLeadTable({ rows }: WeekTableProps) {
                 style={{ color: GROUP_COLORS[ch] }}>{ch}</th>
             ))}
             <th className="text-right py-2.5 pl-3 text-xs text-gray-400 font-medium">합계</th>
+            <th className="text-right py-2.5 pl-4 text-xs text-orange-400 font-medium whitespace-nowrap">광고비</th>
+            <th className="text-right py-2.5 pl-3 text-xs text-yellow-400 font-medium whitespace-nowrap">CPL</th>
           </tr>
         </thead>
         <tbody>
@@ -51,6 +57,12 @@ export function WeekLeadTable({ rows }: WeekTableProps) {
                   </td>
                 ))}
                 <td className="text-right py-2 pl-3 text-gray-300 font-semibold">{row.total}</td>
+                <td className="text-right py-2 pl-4 text-orange-300 text-xs whitespace-nowrap">
+                  {row.spend > 0 ? fmtWon(row.spend) : '—'}
+                </td>
+                <td className="text-right py-2 pl-3 text-yellow-300 text-xs whitespace-nowrap">
+                  {row.cpl != null ? fmtWon(row.cpl) : '—'}
+                </td>
               </tr>
               <tr key={`${row.key}-mix`} className="border-b border-white/10">
                 <td className="pb-2 pr-4 text-gray-600 text-xs">비중</td>
@@ -60,6 +72,7 @@ export function WeekLeadTable({ rows }: WeekTableProps) {
                   </td>
                 ))}
                 <td className="text-right pb-2 pl-3 text-gray-500 text-xs">100%</td>
+                <td colSpan={2} />
               </tr>
             </>
           ))}
@@ -89,6 +102,8 @@ export function MonthLeadTable({ rows }: MonthTableProps) {
                 style={{ color: GROUP_COLORS[ch] }}>{ch}</th>
             ))}
             <th className="text-right py-2.5 pl-3 text-xs text-gray-400 font-medium">합계</th>
+            <th className="text-right py-2.5 pl-4 text-xs text-orange-400 font-medium whitespace-nowrap">광고비</th>
+            <th className="text-right py-2.5 pl-3 text-xs text-yellow-400 font-medium whitespace-nowrap">CPL</th>
           </tr>
         </thead>
         <tbody>
@@ -102,6 +117,12 @@ export function MonthLeadTable({ rows }: MonthTableProps) {
                   </td>
                 ))}
                 <td className="text-right py-2 pl-3 text-gray-300 font-semibold">{row.total}</td>
+                <td className="text-right py-2 pl-4 text-orange-300 text-xs whitespace-nowrap">
+                  {row.spend > 0 ? fmtWon(row.spend) : '—'}
+                </td>
+                <td className="text-right py-2 pl-3 text-yellow-300 text-xs whitespace-nowrap">
+                  {row.cpl != null ? fmtWon(row.cpl) : '—'}
+                </td>
               </tr>
               <tr key={`${row.key}-mix`} className="border-b border-white/10">
                 <td className="pb-2 pr-4 text-gray-600 text-xs">비중</td>
@@ -111,6 +132,7 @@ export function MonthLeadTable({ rows }: MonthTableProps) {
                   </td>
                 ))}
                 <td className="text-right pb-2 pl-3 text-gray-500 text-xs">100%</td>
+                <td colSpan={2} />
               </tr>
             </>
           ))}

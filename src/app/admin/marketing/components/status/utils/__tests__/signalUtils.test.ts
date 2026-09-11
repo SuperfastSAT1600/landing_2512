@@ -17,6 +17,8 @@ function makeWeekRow(weekStart: string, channelOverrides: Partial<Record<Marketi
     channels,
     total,
     mix: Object.fromEntries(ALL_GROUPS.map((g) => [g, 0])) as Record<MarketingGroup, number>,
+    spend: 0,
+    cpl: null,
   };
 }
 
