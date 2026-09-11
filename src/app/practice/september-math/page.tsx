@@ -491,39 +491,61 @@ export default function SeptemberMathPage() {
     const myEntry = lb.find(e => e.maskedId === myMasked);
     const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#c0c0c0' : i === 2 ? '#a0a0a0' : '#71717a';
     const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#c0c0c0' : '#a1a1aa';
+    const percentile = myEntry && lb.length > 0
+      ? Math.round((1 - (myEntry.rank - 1) / lb.length) * 100)
+      : null;
+    const myScore = myEntry ? myEntry.score : Math.round((correctCount / QUESTIONS.length) * 100);
+    const myCorrect = myEntry ? myEntry.correctCount : correctCount;
+    const myTotal = myEntry ? myEntry.totalCount : QUESTIONS.length;
     return (
       <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#09090b', overflow: 'hidden' }}>
         {/* 내 결과 헤더 */}
-        <div style={{ width: '100%', maxWidth: 480, padding: '24px 24px 12px', textAlign: 'center', flexShrink: 0 }}>
+        <div style={{ width: '100%', maxWidth: 480, padding: '24px 24px 0', textAlign: 'center', flexShrink: 0 }}>
           <div style={{ fontSize: 11, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10 }}>SuperfastSAT</div>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: '#a1a1aa', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Your Result</h2>
-          {myEntry ? (
-            <button onClick={() => { setCurrentIndex(0); setPhase('review'); }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, width: '100%', background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.35)', borderRadius: 14, padding: '16px 24px', cursor: 'pointer' }}>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 12, color: '#6085FF', fontWeight: 600, marginBottom: 2 }}>Rank</div>
-                <div style={{ fontSize: 36, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.04em', lineHeight: 1 }}>#{myEntry.rank}</div>
+
+          {/* 결과 stat 카드 — 순수 표시 전용 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, width: '100%', background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.35)', borderRadius: 14, padding: '16px 24px' }}>
+            {myEntry ? (
+              <>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 12, color: '#6085FF', fontWeight: 600, marginBottom: 2 }}>Rank</div>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.04em', lineHeight: 1 }}>#{myEntry.rank}</div>
+                </div>
+                <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.1)' }} />
+              </>
+            ) : null}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600, marginBottom: 2 }}>Score</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{myScore}%</div>
+            </div>
+            <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.1)' }} />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600, marginBottom: 2 }}>Correct</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{myCorrect}<span style={{ fontSize: 18, color: '#52525b' }}>/{myTotal}</span></div>
+            </div>
+          </div>
+
+          {/* 퍼센타일 bar */}
+          {percentile !== null && (
+            <div style={{ margin: '10px 0 0', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: '#6085FF', fontWeight: 700 }}>상위 {percentile}%</span>
+                <span style={{ fontSize: 11, color: '#3f3f46' }}>{lb.length}명 중 #{myEntry!.rank}</span>
               </div>
-              <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.1)' }} />
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600, marginBottom: 2 }}>Score</div>
-                <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{myEntry.score}%</div>
+              <div style={{ height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${percentile}%`, background: 'linear-gradient(90deg, #3b5bdb, #6085FF)', borderRadius: 99, transition: 'width 0.6s ease' }} />
               </div>
-              <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.1)' }} />
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600, marginBottom: 2 }}>Correct</div>
-                <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{myEntry.correctCount}<span style={{ fontSize: 18, color: '#52525b' }}>/{myEntry.totalCount}</span></div>
-              </div>
-              <span style={{ fontSize: 11, color: '#6085FF', marginLeft: 4 }}>리뷰 →</span>
-            </button>
-          ) : (
-            <button onClick={() => { setCurrentIndex(0); setPhase('review'); }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, width: '100%', background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.35)', borderRadius: 14, padding: '16px 24px', cursor: 'pointer' }}>
-              <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em' }}>{correctCount}<span style={{ fontSize: 20, color: '#52525b' }}>/{QUESTIONS.length}</span></div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#a1a1aa' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</div>
-              <span style={{ fontSize: 11, color: '#6085FF' }}>리뷰 →</span>
-            </button>
+            </div>
           )}
+
+          {/* 독립 Review CTA 버튼 */}
+          <button
+            onClick={() => { setCurrentIndex(0); setPhase('review'); }}
+            style={{ display: 'block', width: '100%', margin: '10px 0 0', padding: '14px 0', background: '#6085FF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.01em' }}
+          >
+            틀린 문제 리뷰하기 →
+          </button>
         </div>
 
         {/* 리더보드 헤더 */}
