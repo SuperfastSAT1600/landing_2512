@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
+import { TestCalculator } from '@/app/diagnosis/components/TestCalculator';
 
 const TEST_ID = 'september-math-final-14';
 const TEST_LABEL = '9월 SAT MATH 파이널 연습';
@@ -315,6 +316,16 @@ export default function SeptemberMathPage() {
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
+  const [crossedOut, setCrossedOut] = useState<Record<string, Set<string>>>({});
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+
+  const toggleCrossOut = useCallback((qId: string, label: string) => {
+    setCrossedOut(prev => {
+      const set = new Set(prev[qId] ?? []);
+      set.has(label) ? set.delete(label) : set.add(label);
+      return { ...prev, [qId]: set };
+    });
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -556,11 +567,24 @@ export default function SeptemberMathPage() {
         </div>
       )}
 
-      {/* Test header */}
+      {/* Desmos Calculator */}
+      <TestCalculator isOpen={calculatorOpen} onClose={() => setCalculatorOpen(false)} />
+
+      {/* Test header — 진단테스트 스타일 */}
       <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{TEST_LABEL}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {QUESTIONS.length} &nbsp;({totalCorrect} correct)</span>
+          {/* Calculator button */}
+          <button
+            onClick={() => setCalculatorOpen(o => !o)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: calculatorOpen ? '#3b82f6' : 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/>
+            </svg>
+            Calculator
+          </button>
           <button onClick={handleSubmit} disabled={submitting || submitted || answeredCount < 1}
             style={{ padding: '6px 14px', background: submitted ? '#22c55e' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: submitted || submitting || answeredCount < 1 ? 'default' : 'pointer', opacity: answeredCount < 1 ? 0.4 : 1 }}>
             {submitted ? 'Submitted ✓' : submitting ? 'Submitting...' : 'Submit Results'}
@@ -568,21 +592,18 @@ export default function SeptemberMathPage() {
         </div>
       </div>
 
-      {/* Question number navigator */}
+      {/* Question number navigator — test-nav-dot 클래스 */}
       <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
-        <div style={{ display: 'flex', gap: 6, minWidth: 'max-content' }}>
+        <div className="test-nav-grid" style={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
           {QUESTIONS.map((q, idx) => {
             const isAnswered = !!answers[q.id];
             const isCurrent = idx === currentIndex;
             return (
-              <button key={q.id} onClick={() => setCurrentIndex(idx)}
-                style={{
-                  width: 30, height: 30, borderRadius: 6, border: isCurrent ? '2px solid #1e293b' : '1px solid #e5e7eb',
-                  background: isCurrent ? '#1e293b' : isAnswered ? '#3b82f6' : '#fff',
-                  color: isCurrent ? '#fff' : isAnswered ? '#fff' : '#94a3b8',
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
+              <button
+                key={q.id}
+                onClick={() => setCurrentIndex(idx)}
+                className={`test-nav-dot ${isCurrent ? 'current' : isAnswered ? 'answered' : ''}`}
+              >
                 {idx + 1}
               </button>
             );
@@ -608,11 +629,14 @@ export default function SeptemberMathPage() {
 
           <div className="test-question-panel" style={currentQuestion.passage && currentQuestion.passage.trim() ? {} : { flex: 1 }}>
             <div style={{ padding: '24px', maxWidth: 680, margin: '0 auto' }}>
-              {/* Question meta */}
+              {/* 문제 번호 + 난이도 — 진단테스트 스타일 (32×32, r8) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 6, background: '#1e293b', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                <span
+                  className="inline-flex items-center justify-center font-bold text-white text-sm flex-shrink-0"
+                  style={{ width: 32, height: 32, borderRadius: 8, background: '#1e293b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: 14 }}
+                >
                   {currentIndex + 1}
-                </div>
+                </span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: DIFF_COLOR[currentQuestion.difficulty] ?? '#64748b' }}>
                   {currentQuestion.difficulty}
                 </span>
@@ -627,41 +651,59 @@ export default function SeptemberMathPage() {
                 <ContentRenderer content={currentQuestion.question} />
               </div>
 
-              {/* MCQ options */}
+              {/* MCQ options — bluebook-option 클래스 + 크로스아웃 */}
               {currentQuestion.type === 'mcq' && currentQuestion.options && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                <div className="space-y-3" style={{ marginBottom: 16 }}>
                   {currentQuestion.options.map(opt => {
                     const isSelected = userAnswer === opt.label;
+                    const isCrossed = crossedOut[currentQuestion.id]?.has(opt.label);
                     const isThisCorrect = isRevealed && opt.label === currentQuestion.correctOption;
                     const isThisWrong = isRevealed && isSelected && opt.label !== currentQuestion.correctOption;
                     return (
-                      <button
-                        key={opt.label}
-                        onClick={() => !isRevealed && handleAnswer(currentQuestion.id, opt.label)}
-                        disabled={isRevealed}
-                        style={{
-                          display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px',
-                          borderRadius: 10, border: `1px solid ${isThisCorrect ? '#86efac' : isThisWrong ? '#fca5a5' : isSelected ? '#1e293b' : '#e5e7eb'}`,
-                          background: isThisCorrect ? '#f0fdf4' : isThisWrong ? '#fef2f2' : isSelected ? '#f8fafc' : '#fff',
-                          cursor: isRevealed ? 'default' : 'pointer', textAlign: 'left', width: '100%',
-                        }}
-                      >
-                        <span style={{
-                          width: 26, height: 26, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700,
-                          background: isThisCorrect ? '#22c55e' : isThisWrong ? '#ef4444' : isSelected ? '#1e293b' : '#f1f5f9',
-                          color: isThisCorrect || isThisWrong || isSelected ? '#fff' : '#64748b',
-                        }}>
-                          {opt.label}
-                        </span>
-                        <span style={{ fontSize: 14, color: '#1e293b', lineHeight: 1.6, paddingTop: 3 }}>
-                          <ContentRenderer content={opt.text} />
-                        </span>
-                      </button>
+                      <div key={opt.label} className="flex items-center gap-2">
+                        {/* 크로스아웃 토글 — 정답 확인 전만 표시 */}
+                        {!isRevealed && (
+                          <button
+                            type="button"
+                            onClick={() => toggleCrossOut(currentQuestion.id, opt.label)}
+                            className={`bluebook-option-crossout btn-press ${isCrossed ? 'active' : ''}`}
+                            title="Cross out"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path d="M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => !isRevealed && handleAnswer(currentQuestion.id, opt.label)}
+                          className={`bluebook-option btn-press ${isSelected && !isRevealed ? 'selected' : ''} ${isCrossed && !isSelected ? 'crossedout' : ''}`}
+                          style={
+                            isThisCorrect ? { borderColor: '#22c55e', background: '#f0fdf4' } :
+                            isThisWrong ? { borderColor: '#ef4444', background: '#fef2f2' } : {}
+                          }
+                        >
+                          <span
+                            className="bluebook-option-label"
+                            style={
+                              isThisCorrect ? { background: '#22c55e', borderColor: '#22c55e', color: '#fff' } :
+                              isThisWrong ? { background: '#ef4444', borderColor: '#ef4444', color: '#fff' } : {}
+                            }
+                          >
+                            {opt.label}
+                          </span>
+                          <span className="bluebook-option-text">
+                            <ContentRenderer content={opt.text} />
+                          </span>
+                        </button>
+                      </div>
                     );
                   })}
                   {!isRevealed && userAnswer && (
-                    <button onClick={() => handleReveal(currentQuestion.id)}
-                      style={{ marginTop: 4, padding: '10px 20px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start' }}>
+                    <button
+                      onClick={() => handleReveal(currentQuestion.id)}
+                      style={{ marginTop: 4, padding: '10px 20px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start' }}
+                    >
                       Check
                     </button>
                   )}
@@ -677,17 +719,19 @@ export default function SeptemberMathPage() {
                     onChange={e => handleAnswer(currentQuestion.id, e.target.value)}
                     placeholder="Enter answer"
                     disabled={isRevealed}
+                    className="toss-input"
                     style={{
-                      flex: 1, padding: '10px 14px', borderRadius: 8,
+                      flex: 1,
                       border: `1px solid ${isCorrect ? '#22c55e' : isWrong ? '#ef4444' : '#e5e7eb'}`,
-                      background: isCorrect ? '#f0fdf4' : isWrong ? '#fef2f2' : '#f8fafc',
-                      color: '#1e293b', fontSize: 15, outline: 'none',
+                      background: isCorrect ? '#f0fdf4' : isWrong ? '#fef2f2' : undefined,
                     }}
                     onKeyDown={e => { if (e.key === 'Enter' && userAnswer && !isRevealed) handleReveal(currentQuestion.id); }}
                   />
                   {!isRevealed && userAnswer && (
-                    <button onClick={() => handleReveal(currentQuestion.id)}
-                      style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <button
+                      onClick={() => handleReveal(currentQuestion.id)}
+                      style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
                       Check
                     </button>
                   )}
@@ -696,7 +740,7 @@ export default function SeptemberMathPage() {
 
               {/* Feedback */}
               {isRevealed && (
-                <div style={{ padding: '14px 16px', background: isCorrect ? '#f0fdf4' : '#fef2f2', border: `1px solid ${isCorrect ? '#86efac' : '#fca5a5'}`, borderRadius: 10 }}>
+                <div style={{ padding: '14px 16px', background: isCorrect ? '#f0fdf4' : '#fef2f2', border: `1px solid ${isCorrect ? '#86efac' : '#fca5a5'}`, borderRadius: 10, marginTop: 8 }}>
                   <p style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? '#15803d' : '#dc2626', marginBottom: isWrong ? 4 : 0 }}>
                     {isCorrect ? '✓ Correct' : '✗ Incorrect'}
                   </p>
@@ -714,13 +758,20 @@ export default function SeptemberMathPage() {
 
       {/* Footer nav */}
       <div className="bluebook-footer" style={{ flexShrink: 0 }}>
-        <button onClick={() => !isFirst && setCurrentIndex(i => i - 1)} disabled={isFirst}
-          style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.4 : 1, color: '#374151' }}>
+        <button
+          onClick={() => !isFirst && setCurrentIndex(i => i - 1)}
+          disabled={isFirst}
+          style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.4 : 1, color: '#374151' }}
+        >
           Back
         </button>
         <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {QUESTIONS.length}</span>
-        <button className="bluebook-next-btn btn-press" onClick={() => !isLast && setCurrentIndex(i => i + 1)} disabled={isLast}
-          style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}>
+        <button
+          className="bluebook-next-btn btn-press"
+          onClick={() => !isLast && setCurrentIndex(i => i + 1)}
+          disabled={isLast}
+          style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}
+        >
           Next
         </button>
       </div>

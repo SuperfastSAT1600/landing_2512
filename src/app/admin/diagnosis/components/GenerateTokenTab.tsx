@@ -47,10 +47,10 @@ function getTimezoneCountry(iana: string): string {
   return TIMEZONE_OPTIONS.find((t) => t.iana === iana)?.country ?? iana;
 }
 
-function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string, isV2 = false): string {
+function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string, isV2 = false, timeLimitMinutes = 30): string {
   const timeDesc = isV2
-    ? '응시 시간은 (1)단어 3분 20초(20개) (2)RW+MATH 35분(25문항) 입니다.'
-    : '응시 시간은 총 30분, 25문항입니다. (RW+Math 포함)';
+    ? `응시 시간은 (1)단어 3분 20초(20개) (2)RW+MATH ${timeLimitMinutes}분(25문항) 입니다.`
+    : `응시 시간은 총 ${timeLimitMinutes}분, 25문항입니다. (RW+Math 포함)`;
   return `진단테스트 안내 드리도록 하겠습니다.
 
 [진단테스트 안내]
@@ -66,10 +66,10 @@ function buildKoTemplate(code: string, expiryKo: string, timezoneLabel: string, 
 5. Math 시험의 경우 계산이 필요하기 때문에 Desmos를 사용해도 되며 아직 어렵다면 노트와 필기구를 준비해주세요!`;
 }
 
-function buildEnTemplate(code: string, expiryEn: string, timezoneCountry: string, isV2 = false): string {
+function buildEnTemplate(code: string, expiryEn: string, timezoneCountry: string, isV2 = false, timeLimitMinutes = 30): string {
   const timeDesc = isV2
-    ? 'Time: (1) Vocabulary — 3 min 20 sec (20 words) (2) RW + Math — 35 min (25 questions)'
-    : 'Total time: 30 minutes, 25 questions (RW + Math)';
+    ? `Time: (1) Vocabulary — 3 min 20 sec (20 words) (2) RW + Math — ${timeLimitMinutes} min (25 questions)`
+    : `Total time: ${timeLimitMinutes} minutes, 25 questions (RW + Math)`;
   return `Here is your SAT Diagnostic Test information.
 
 [Diagnostic Test Info]
@@ -413,8 +413,8 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
         const expiryKo = formatExpiryKo(successResult.expiresAt, successResult.timezone);
         const expiryEn = formatExpiryEn(successResult.expiresAt, successResult.timezone);
         const isV2 = testFormat === 'diagnostic-test-2';
-        const koMessage = buildKoTemplate(successResult.code, expiryKo, getTimezoneKoLabel(successResult.timezone), isV2);
-        const enMessage = buildEnTemplate(successResult.code, expiryEn, getTimezoneCountry(successResult.timezone), isV2);
+        const koMessage = buildKoTemplate(successResult.code, expiryKo, getTimezoneKoLabel(successResult.timezone), isV2, timeLimitMinutes);
+        const enMessage = buildEnTemplate(successResult.code, expiryEn, getTimezoneCountry(successResult.timezone), isV2, timeLimitMinutes);
         const message = activeTab === 'ko' ? koMessage : enMessage;
         return (
           <div className="p-5 rounded-xl border border-green-500/40 bg-green-900/20">
