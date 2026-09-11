@@ -1149,6 +1149,10 @@ export interface RenewalWeeklyStat {
   // carried_in 은 selected 자체를 '신규 / 이월유입'으로 분할한다. 섞어 쓰면 안 된다.
   carried_out: number;
   carried_in: number;
+  // 결제 완료 건에 연결된 payments.amount 합계(원). amount_missing 은 그 합계에 잡히지 않은
+  // 결제 완료 건 수 — 금액이 실제보다 적게 보일 수 있음을 드러낸다.
+  completed_amount: number;
+  amount_missing: number;
 }
 
 /** 추천 API 응답 1건 — 아직 저장되지 않은 후보. */

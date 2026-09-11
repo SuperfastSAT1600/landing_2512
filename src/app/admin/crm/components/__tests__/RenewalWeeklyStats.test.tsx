@@ -18,6 +18,8 @@ function stat(over: Partial<RenewalWeeklyStat> = {}): RenewalWeeklyStat {
     bad_dropped: 0,
     carried_out: 0,
     carried_in: 0,
+    completed_amount: 0,
+    amount_missing: 0,
     ...over,
   };
 }
@@ -92,5 +94,34 @@ describe('RenewalWeeklyStats — 결과 품질 분포 (REQ-007)', () => {
   it('이월유입이 없으면 분해줄을 숨긴다', () => {
     renderTable([stat({ selected: 13, carried_in: 0 })]);
     expect(within(screen.getByRole('table')).queryByText(/신규/)).toBeNull();
+  });
+});
+
+describe('RenewalWeeklyStats — 주차별 재결제 금액 (REQ-003)', () => {
+  it('결제액을 만원 단위로 보여주고 원 단위는 툴팁에 남긴다', () => {
+    renderTable([stat({ completed: 3, completed_amount: 4_350_000 })]);
+    const cell = screen.getByText('435만');
+    expect(cell).toBeTruthy();
+    expect(cell.closest('td')?.getAttribute('title')).toBe('4,350,000원');
+  });
+
+  it('금액이 0이면 - 로 남긴다', () => {
+    renderTable([stat({ completed: 0, completed_amount: 0 })]);
+    expect(within(screen.getByRole('table')).queryByText(/만$/)).toBeNull();
+  });
+
+  it('결제가 연결되지 않은 건이 있으면 미연결 수를 함께 표시한다', () => {
+    renderTable([stat({ completed: 3, completed_amount: 1_000_000, amount_missing: 2 })]);
+    expect(screen.getByText('미연결 2')).toBeTruthy();
+  });
+
+  it('미연결이 없으면 보조줄을 숨긴다', () => {
+    renderTable([stat({ completed: 3, completed_amount: 3_000_000, amount_missing: 0 })]);
+    expect(within(screen.getByRole('table')).queryByText(/미연결/)).toBeNull();
+  });
+
+  it('결제액 열 머리글이 있다', () => {
+    renderTable([stat()]);
+    expect(screen.getByText('결제액')).toBeTruthy();
   });
 });

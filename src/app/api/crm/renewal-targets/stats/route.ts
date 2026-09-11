@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { getRecentWeeks, getWeekLabel, getKstDateString } from '@/lib/week-definitions';
+import { resolveWeeklyAmounts, type RenewalPaymentRow } from '@/lib/renewal-amount';
 import type { RenewalWeeklyStat, RenewalOutcomeQuality } from '@/types/crm';
 
 export async function GET(request: NextRequest) {
@@ -22,7 +23,9 @@ export async function GET(request: NextRequest) {
 
   let query = supabaseAdmin
     .from('renewal_targets')
-    .select('week_start, stage, outcome_quality, carried_to_week, carried_from_week');
+    .select(
+      'week_start, stage, outcome_quality, carried_to_week, carried_from_week, converted_payment_id, student_id'
+    );
   if (cutoff) query = query.gte('week_start', cutoff);
 
   const { data, error } = await query;
@@ -41,7 +44,47 @@ export async function GET(request: NextRequest) {
     outcome_quality: RenewalOutcomeQuality | null;
     carried_to_week: string | null;
     carried_from_week: string | null;
+    converted_payment_id: string | null;
+    student_id: string;
   }[];
+
+  const completedTargets = rows.filter((r) => r.stage === '4');
+
+  // 1) 링크가 가리키는 결제. 링크가 하나도 없으면 조회 자체를 생략한다.
+  const paymentIds = [
+    ...new Set(completedTargets.filter((r) => r.converted_payment_id).map((r) => r.converted_payment_id!)),
+  ];
+  const amountById = new Map<string, number>();
+  if (paymentIds.length > 0) {
+    const { data: payments, error: paymentError } = await supabaseAdmin
+      .from('payments')
+      .select('id, amount')
+      .in('id', paymentIds);
+    // 금액 조회가 실패해도 인원 통계는 내려준다 — 금액은 0 + 미연결로 드러난다.
+    if (paymentError) console.error('[renewal-targets/stats GET payments]', paymentError);
+    for (const p of (payments ?? []) as { id: string; amount: number | null }[]) {
+      if (typeof p.amount === 'number') amountById.set(p.id, p.amount);
+    }
+  }
+
+  // 2) 링크로 풀리지 않은 결제 완료 건이 있을 때만, 되짚을 재결제 결제를 조회 범위만큼 읽는다.
+  const needsLookup = completedTargets.some(
+    (r) => !r.converted_payment_id || !amountById.has(r.converted_payment_id)
+  );
+  let renewalPayments: RenewalPaymentRow[] = [];
+  if (needsLookup && cutoff) {
+    const { data: paid, error: paidError } = await supabaseAdmin
+      .from('payments')
+      .select('id, student_id, amount, paid_at')
+      .eq('payment_type', '재결제')
+      .gte('paid_at', `${cutoff}T00:00:00+09:00`)
+      .lte('paid_at', `${recentWeeks[0].end}T23:59:59.999+09:00`);
+    if (paidError) console.error('[renewal-targets/stats GET renewal payments]', paidError);
+    renewalPayments = (paid ?? []) as RenewalPaymentRow[];
+  }
+
+  const amountByWeek = resolveWeeklyAmounts(completedTargets, amountById, renewalPayments);
+
   type Counts = {
     selected: number;
     completed: number;
@@ -108,6 +151,8 @@ export async function GET(request: NextRequest) {
       bad_dropped: counts.bad_dropped,
       carried_out: counts.carried_out,
       carried_in: counts.carried_in,
+      completed_amount: amountByWeek.get(week_start)?.completed_amount ?? 0,
+      amount_missing: amountByWeek.get(week_start)?.amount_missing ?? 0,
     }));
 
   return NextResponse.json({ data: weekly });
