@@ -34,14 +34,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: '/admin/popup-settings', label: '팝업 설정', icon: '🔔' },
     { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
     { href: '/admin/business', label: 'Business', icon: '💼' },
-    {
-        label: '마케팅', icon: '📣',
-        children: [
-            // 첫 항목이 부모('마케팅') 클릭 시 이동할 기본 화면이다.
-            { href: '/admin/marketing/goals', label: '목표' },
-            { href: '/admin/marketing', label: '채널 현황' },
-        ],
-    },
+    { href: '/admin/marketing', label: '마케팅', icon: '📣' },
     { href: '/admin/crm', label: 'CRM', icon: '👥' },
 ];
 
