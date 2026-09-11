@@ -3,7 +3,7 @@
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
-import { Bold, Italic, Strikethrough, Code, Link } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Code, Link, Highlighter } from 'lucide-react';
 import { useRef, useEffect } from 'react';
 
 interface TextBubbleMenuProps {
@@ -90,6 +90,19 @@ export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
                     className={btn(editor.isActive('code'))}
                 >
                     <Code size={13} />
+                </button>
+
+                <div className="w-px h-4 bg-white/10 mx-0.5" />
+
+                <button
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleHighlight().run();
+                    }}
+                    title="하이라이트 (랜딩 페이지에서 스윕 애니메이션)"
+                    className={btn(editor.isActive('highlight'))}
+                >
+                    <Highlighter size={13} />
                 </button>
 
                 <div className="w-px h-4 bg-white/10 mx-0.5" />
