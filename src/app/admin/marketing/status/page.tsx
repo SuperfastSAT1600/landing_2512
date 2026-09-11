@@ -12,6 +12,30 @@ import { classifyChannelSignals } from '../components/status/utils/signalUtils';
 import { MARKETING_GROUPS, GROUP_COLORS } from '@/lib/marketing-groups';
 import type { MarketingGroup } from '@/lib/marketing-groups';
 
+type RangePreset = '4w' | '8w' | '12w' | '24w' | 'custom';
+
+const PRESETS: { key: RangePreset; label: string; weeks?: number }[] = [
+  { key: '4w', label: '4주', weeks: 4 },
+  { key: '8w', label: '8주', weeks: 8 },
+  { key: '12w', label: '12주', weeks: 12 },
+  { key: '24w', label: '24주', weeks: 24 },
+  { key: 'custom', label: '직접 선택' },
+];
+
+function fmtDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function weeksAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n * 7);
+  return fmtDate(d);
+}
+
+function today(): string {
+  return fmtDate(new Date());
+}
+
 type PeriodUnit = 'week' | 'month';
 type ViewMode = 'table' | 'chart';
 
@@ -103,11 +127,21 @@ export default function MarketingStatusPage() {
   const [view, setView] = useState<ViewMode>('table');
   const [selectedChannels, setSelectedChannels] = useState<MarketingGroup[]>([...MARKETING_GROUPS]);
 
+  const [rangePreset, setRangePreset] = useState<RangePreset>('12w');
+  const [customFrom, setCustomFrom] = useState(() => weeksAgo(12));
+  const [customTo, setCustomTo] = useState(() => today());
+
+  const trackingRange = useMemo(() => {
+    if (rangePreset === 'custom') return { from: customFrom, to: customTo };
+    const preset = PRESETS.find((p) => p.key === rangePreset);
+    return preset?.weeks ? { from: weeksAgo(preset.weeks), to: today() } : undefined;
+  }, [rangePreset, customFrom, customTo]);
+
   const {
     recentDaily, recentDailyLoading, adSpendByDate,
     momData, qoqData, yoyMonthData, yoyQuarterData, compareLoading,
     weekly, weeklyLoading,
-  } = useMarketingStatus();
+  } = useMarketingStatus(trackingRange);
 
   const weekRows = useMemo(() => groupByWeek(recentDaily, adSpendByDate), [recentDaily, adSpendByDate]);
   const monthRows = useMemo(() => groupByMonth(recentDaily, adSpendByDate), [recentDaily, adSpendByDate]);
@@ -156,6 +190,39 @@ export default function MarketingStatusPage() {
                 onChange={setView}
               />
             </div>
+            {/* 기간 선택 */}
+            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+              {PRESETS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setRangePreset(key)}
+                  className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors border ${
+                    rangePreset === key
+                      ? 'bg-blue-600 border-blue-500 text-white'
+                      : 'border-white/10 text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {rangePreset === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="text-xs bg-[#151719] border border-white/10 rounded-md px-2 py-1 text-gray-300 [color-scheme:dark]"
+                />
+                <span className="text-gray-600 text-xs">~</span>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="text-xs bg-[#151719] border border-white/10 rounded-md px-2 py-1 text-gray-300 [color-scheme:dark]"
+                />
+              </div>
+            )}
             <ChannelFilter selected={selectedChannels} onChange={setSelectedChannels} />
           </div>
         </div>

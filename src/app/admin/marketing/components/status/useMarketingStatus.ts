@@ -53,7 +53,7 @@ function getRecentRange(weeks: number): { from: string; to: string } {
   return { from: fmt(from), to: fmt(to) };
 }
 
-export function useMarketingStatus(): MarketingStatusData {
+export function useMarketingStatus(trackingRange?: { from: string; to: string }): MarketingStatusData {
   const [recentDaily, setRecentDaily] = useState<MarketingDailyRow[]>([]);
   const [recentDailyLoading, setRecentDailyLoading] = useState(true);
   const [adSpendByDate, setAdSpendByDate] = useState<Record<string, number>>({});
@@ -67,6 +67,9 @@ export function useMarketingStatus(): MarketingStatusData {
   const [weekly, setWeekly] = useState<WeeklyStats | null>(null);
   const [weeklyLoading, setWeeklyLoading] = useState(true);
 
+  const rangeFrom = trackingRange?.from;
+  const rangeTo = trackingRange?.to;
+
   const load = useCallback(async () => {
     const now = new Date();
     const thisYear = now.getFullYear();
@@ -74,9 +77,9 @@ export function useMarketingStatus(): MarketingStatusData {
     const { year: qYear, quarter: qNum } = getCurrentQuarter(now);
     const prevQ = getPreviousQuarter(qYear, qNum);
 
-    // Part A: 최근 12주 일별 데이터 + 광고비 병렬 조회
+    // Part A: 지정 범위(없으면 최근 12주) 일별 데이터 + 광고비 병렬 조회
     setRecentDailyLoading(true);
-    const recentRange = getRecentRange(12);
+    const recentRange = (rangeFrom && rangeTo) ? { from: rangeFrom, to: rangeTo } : getRecentRange(12);
     Promise.all([
       fetchStats(recentRange.from, recentRange.to),
       fetch(`/api/crm/marketing/ad-spend?from=${recentRange.from}&to=${recentRange.to}`, {
@@ -148,7 +151,7 @@ export function useMarketingStatus(): MarketingStatusData {
       .then((r) => r.json())
       .then((j) => setWeekly(j.data ?? null))
       .finally(() => setWeeklyLoading(false));
-  }, []);
+  }, [rangeFrom, rangeTo]);
 
   useEffect(() => { load(); }, [load]);
 
