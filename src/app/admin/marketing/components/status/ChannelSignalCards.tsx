@@ -17,11 +17,11 @@ interface Props {
 export default function ChannelSignalCards({ signals, loading }: Props) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div className="flex gap-2 flex-wrap">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="bg-[#1e2023] border border-white/5 rounded-xl p-4 animate-pulse">
-            <div className="h-4 w-16 bg-white/5 rounded mb-2" />
-            <div className="h-3 w-full bg-white/5 rounded" />
+          <div key={i} className="bg-[#1e2023] border border-white/5 rounded-lg px-3 py-2 animate-pulse flex gap-2 items-center">
+            <div className="h-3 w-14 bg-white/5 rounded" />
+            <div className="h-3 w-10 bg-white/5 rounded" />
           </div>
         ))}
       </div>
@@ -33,32 +33,28 @@ export default function ChannelSignalCards({ signals, loading }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+    <div className="flex gap-2 flex-wrap">
       {signals.map((sig) => {
         const cfg = LEVEL_CONFIG[sig.level];
+        const reasonText = sig.reasons.length > 0 ? sig.reasons.join(' · ') : '이상 없음';
         return (
           <div
             key={sig.channel}
-            className={`rounded-xl p-4 border ${cfg.bg} ${cfg.border} space-y-2`}
+            title={reasonText}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 border ${cfg.bg} ${cfg.border} cursor-default`}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-white"
-                style={{ color: GROUP_COLORS[sig.channel] }}>
-                {sig.channel}
+            <span className="text-xs font-semibold whitespace-nowrap"
+              style={{ color: GROUP_COLORS[sig.channel] }}>
+              {sig.channel}
+            </span>
+            <span className={`flex items-center gap-1 text-xs font-medium whitespace-nowrap ${cfg.text}`}>
+              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
+              {cfg.label}
+            </span>
+            {sig.reasons.length > 0 && (
+              <span className="text-xs text-gray-500 whitespace-nowrap hidden sm:inline">
+                {sig.reasons[0]}
               </span>
-              <span className={`flex items-center gap-1 text-xs font-medium ${cfg.text}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                {cfg.label}
-              </span>
-            </div>
-            {sig.reasons.length > 0 ? (
-              <ul className="space-y-0.5">
-                {sig.reasons.map((r, i) => (
-                  <li key={i} className="text-xs text-gray-500 leading-tight">{r}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-gray-600">이상 없음</p>
             )}
           </div>
         );

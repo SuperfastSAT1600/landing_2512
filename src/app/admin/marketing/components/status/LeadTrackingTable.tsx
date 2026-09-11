@@ -4,29 +4,18 @@ import type { WeekRow, MonthRow } from './utils/groupByPeriod';
 import { MARKETING_GROUPS, GROUP_COLORS } from '@/lib/marketing-groups';
 import type { MarketingGroup } from '@/lib/marketing-groups';
 
-const CHANNELS: MarketingGroup[] = [...MARKETING_GROUPS];
-
-function DeltaBadge({ rate }: { rate: number | null }) {
-  if (rate === null) return <span className="text-gray-600 text-xs">—</span>;
-  const isUp = rate > 0;
-  const color = isUp ? 'text-emerald-400' : rate < 0 ? 'text-red-400' : 'text-gray-500';
-  return (
-    <span className={`text-xs font-medium ${color}`}>
-      {isUp ? '▲' : rate < 0 ? '▼' : ''}
-      {Math.abs(rate).toFixed(1)}%
-    </span>
-  );
-}
-
 function fmtWon(amount: number): string {
   return amount.toLocaleString('ko-KR') + '원';
 }
 
 interface WeekTableProps {
   rows: WeekRow[];
+  selectedChannels: MarketingGroup[];
 }
 
-export function WeekLeadTable({ rows }: WeekTableProps) {
+export function WeekLeadTable({ rows, selectedChannels }: WeekTableProps) {
+  const visible = MARKETING_GROUPS.filter((ch) => selectedChannels.includes(ch));
+
   if (rows.length === 0) {
     return <p className="text-gray-600 text-sm text-center py-8">데이터 없음</p>;
   }
@@ -37,7 +26,7 @@ export function WeekLeadTable({ rows }: WeekTableProps) {
         <thead>
           <tr className="border-b border-white/5">
             <th className="text-left py-2.5 pr-4 text-xs text-gray-500 font-medium whitespace-nowrap">주차</th>
-            {CHANNELS.map((ch) => (
+            {visible.map((ch) => (
               <th key={ch} className="text-right py-2.5 px-3 text-xs font-medium whitespace-nowrap"
                 style={{ color: GROUP_COLORS[ch] }}>{ch}</th>
             ))}
@@ -51,7 +40,7 @@ export function WeekLeadTable({ rows }: WeekTableProps) {
             <>
               <tr key={`${row.key}-count`} className="border-b border-white/5">
                 <td className="py-2 pr-4 text-gray-300 text-xs whitespace-nowrap">{row.label}</td>
-                {CHANNELS.map((ch) => (
+                {visible.map((ch) => (
                   <td key={ch} className="text-right py-2 px-3 text-white font-medium">
                     {row.channels[ch] ?? 0}
                   </td>
@@ -66,9 +55,9 @@ export function WeekLeadTable({ rows }: WeekTableProps) {
               </tr>
               <tr key={`${row.key}-mix`} className="border-b border-white/10">
                 <td className="pb-2 pr-4 text-gray-600 text-xs">비중</td>
-                {CHANNELS.map((ch) => (
+                {visible.map((ch) => (
                   <td key={ch} className="text-right pb-2 px-3 text-gray-500 text-xs">
-                    {(row.mix[ch] ?? 0)}%
+                    {row.mix[ch] ?? 0}%
                   </td>
                 ))}
                 <td className="text-right pb-2 pl-3 text-gray-500 text-xs">100%</td>
@@ -84,9 +73,12 @@ export function WeekLeadTable({ rows }: WeekTableProps) {
 
 interface MonthTableProps {
   rows: MonthRow[];
+  selectedChannels: MarketingGroup[];
 }
 
-export function MonthLeadTable({ rows }: MonthTableProps) {
+export function MonthLeadTable({ rows, selectedChannels }: MonthTableProps) {
+  const visible = MARKETING_GROUPS.filter((ch) => selectedChannels.includes(ch));
+
   if (rows.length === 0) {
     return <p className="text-gray-600 text-sm text-center py-8">데이터 없음</p>;
   }
@@ -97,7 +89,7 @@ export function MonthLeadTable({ rows }: MonthTableProps) {
         <thead>
           <tr className="border-b border-white/5">
             <th className="text-left py-2.5 pr-4 text-xs text-gray-500 font-medium">월</th>
-            {CHANNELS.map((ch) => (
+            {visible.map((ch) => (
               <th key={ch} className="text-right py-2.5 px-3 text-xs font-medium whitespace-nowrap"
                 style={{ color: GROUP_COLORS[ch] }}>{ch}</th>
             ))}
@@ -111,7 +103,7 @@ export function MonthLeadTable({ rows }: MonthTableProps) {
             <>
               <tr key={`${row.key}-count`} className="border-b border-white/5">
                 <td className="py-2 pr-4 text-gray-300 text-xs whitespace-nowrap">{row.label}</td>
-                {CHANNELS.map((ch) => (
+                {visible.map((ch) => (
                   <td key={ch} className="text-right py-2 px-3 text-white font-medium">
                     {row.channels[ch] ?? 0}
                   </td>
@@ -126,9 +118,9 @@ export function MonthLeadTable({ rows }: MonthTableProps) {
               </tr>
               <tr key={`${row.key}-mix`} className="border-b border-white/10">
                 <td className="pb-2 pr-4 text-gray-600 text-xs">비중</td>
-                {CHANNELS.map((ch) => (
+                {visible.map((ch) => (
                   <td key={ch} className="text-right pb-2 px-3 text-gray-500 text-xs">
-                    {(row.mix[ch] ?? 0)}%
+                    {row.mix[ch] ?? 0}%
                   </td>
                 ))}
                 <td className="text-right pb-2 pl-3 text-gray-500 text-xs">100%</td>
@@ -141,5 +133,3 @@ export function MonthLeadTable({ rows }: MonthTableProps) {
     </div>
   );
 }
-
-export { DeltaBadge };
