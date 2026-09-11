@@ -734,7 +734,6 @@ export default function SeptemberMathPage() {
                 >
                   {currentIndex + 1}
                 </span>
-                <span style={{ fontSize: 11, color: '#94a3b8' }}>{currentQuestion.skill}</span>
                 <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 'auto', background: '#f1f5f9', padding: '2px 8px', borderRadius: 4 }}>
                   {currentQuestion.type === 'mcq' ? 'MCQ' : 'Free Response'}
                 </span>
