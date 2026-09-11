@@ -548,7 +548,6 @@ export default function SeptemberMathPage() {
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === QUESTIONS.length - 1;
   const answeredCount = Object.keys(answers).filter(id => answers[id]).length;
-  const totalCorrect = QUESTIONS.filter(q => checkAnswer(q, answers[q.id] ?? '')).length;
 
   const correctAnswerDisplay = currentQuestion?.type === 'mcq'
     ? `(${currentQuestion.correctOption}) ${currentQuestion.options?.find(o => o.label === currentQuestion.correctOption)?.text ?? ''}`
@@ -569,7 +568,7 @@ export default function SeptemberMathPage() {
       <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{TEST_LABEL}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {QUESTIONS.length} &nbsp;({totalCorrect} correct)</span>
+          <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {QUESTIONS.length}</span>
           {/* Calculator button */}
           <button
             onClick={() => setCalculatorOpen(o => !o)}
@@ -745,14 +744,24 @@ export default function SeptemberMathPage() {
           Back
         </button>
         <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {QUESTIONS.length}</span>
-        <button
-          className="bluebook-next-btn btn-press"
-          onClick={() => !isLast && setCurrentIndex(i => i + 1)}
-          disabled={isLast}
-          style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}
-        >
-          Next
-        </button>
+        {isLast && answeredCount === QUESTIONS.length && !submitted ? (
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.6 : 1 }}
+          >
+            {submitting ? 'Submitting...' : 'Submit Results'}
+          </button>
+        ) : (
+          <button
+            className="bluebook-next-btn btn-press"
+            onClick={() => !isLast && setCurrentIndex(i => i + 1)}
+            disabled={isLast}
+            style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}
+          >
+            Next
+          </button>
+        )}
       </div>
     </div>
   );
