@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Tag } from 'lucide-react';
 import { GateWall } from './GateWall';
 import type { PostData } from '@/lib/posts';
 import styles from './post.module.css';
@@ -33,23 +32,21 @@ export function PostContent({ postData }: PostContentProps) {
 
   return (
     <>
-      <div className={`prose prose-base sm:prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl prose-table:border-collapse [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200 [&_td]:p-2 [&_th]:p-2 [&_.instagram-reel-wrapper]:flex [&_.instagram-reel-wrapper]:justify-center [&_.instagram-reel-wrapper]:py-4 [&_.instagram-reel-embed]:max-w-[420px] [&_.instagram-reel-embed]:w-full [&_.instagram-reel-embed]:rounded-2xl [&_.instagram-reel-embed]:border-0 ${styles.postContent ?? ''}`}>
+      <div className={`prose prose-base max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-[1.85] prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-teal-600 prose-img:rounded-xl prose-table:border-collapse [&_h2]:text-[1.65rem] [&_h2]:font-extrabold [&_h2]:mt-14 [&_h2]:mb-4 [&_h2]:leading-snug [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-10 [&_h3]:mb-3 [&_p]:mb-6 [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200 [&_td]:p-3 [&_th]:p-3 [&_th]:bg-gray-50 [&_th]:font-semibold [&_mark]:bg-teal-50 [&_mark]:border-b-2 [&_mark]:border-teal-400 [&_mark]:text-gray-900 [&_mark]:pb-px [&_mark]:rounded-none [&_.instagram-reel-wrapper]:flex [&_.instagram-reel-wrapper]:justify-center [&_.instagram-reel-wrapper]:py-4 [&_.instagram-reel-embed]:max-w-[420px] [&_.instagram-reel-embed]:w-full [&_.instagram-reel-embed]:rounded-2xl [&_.instagram-reel-embed]:border-0 ${styles.postContent ?? ''}`}>
         <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
       </div>
 
       {postData.tags && postData.tags.filter(t => t !== 'vip').length > 0 && (
-        <div className="mt-16 pt-8 border-t border-gray-200">
-          <div className="flex flex-wrap gap-2">
-            {postData.tags.filter(t => t !== 'vip').map(tag => (
-              <Link
-                key={tag}
-                href={`/blog?tag=${encodeURIComponent(tag)}`}
-                className="bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 px-3 py-1 rounded-full text-sm border border-gray-200 flex items-center gap-1 transition-colors"
-              >
-                <Tag size={12} /> {tag}
-              </Link>
-            ))}
-          </div>
+        <div className="mt-14 pt-6 border-t border-gray-100 flex flex-wrap gap-2">
+          {postData.tags.filter(t => t !== 'vip').map(tag => (
+            <Link
+              key={tag}
+              href={`/blog?tag=${encodeURIComponent(tag)}`}
+              className="bg-gray-100 text-gray-500 hover:bg-teal-50 hover:text-teal-700 px-3 py-1 rounded-full text-sm transition-colors"
+            >
+              #{tag}
+            </Link>
+          ))}
         </div>
       )}
     </>

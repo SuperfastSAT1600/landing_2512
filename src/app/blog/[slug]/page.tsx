@@ -5,7 +5,7 @@ import { getPopupTargetPost } from '../../../lib/popup-rules';
 import Footer from '../../components/Footer';
 import { PostContent } from './PostContent';
 import { ReadCompletePopup } from './ReadCompletePopup';
-import { Calendar, ArrowLeft, Tag } from 'lucide-react';
+import { Calendar, ArrowLeft } from 'lucide-react';
 
 export const revalidate = 3600;
 
@@ -166,18 +166,32 @@ export default async function Post({ params }: Props) {
 
             <main className="pt-24 pb-32 sm:pb-20">
                 <article className="max-w-[680px] mx-auto px-4 md:px-6">
-                    {/* Header: Category & Date */}
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 justify-center">
-                        <span className="text-blue-600 font-bold uppercase tracking-wider">{postData.category}</span>
-                        <span>•</span>
-                        <div className="flex items-center gap-1">
-                            <Calendar size={14} /> {postData.date}
-                        </div>
+                    {/* Top Tags */}
+                    <div className="flex flex-wrap gap-2 mb-5">
+                        <Link href={`/blog?category=${encodeURIComponent(postData.category)}`} className="text-sm text-gray-500 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full transition-colors">
+                            #{postData.category}
+                        </Link>
+                        {postData.tags && postData.tags.filter((t: string) => t !== 'vip').slice(0, 2).map((tag: string) => (
+                            <Link key={tag} href={`/blog?tag=${encodeURIComponent(tag)}`} className="text-sm text-gray-500 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full transition-colors">
+                                #{tag}
+                            </Link>
+                        ))}
+                    </div>
+
+                    {/* Title */}
+                    <h1 className="text-[1.85rem] sm:text-[2.4rem] font-extrabold text-gray-900 leading-[1.25] mb-3">
+                        {postData.title}
+                    </h1>
+
+                    {/* Date */}
+                    <div className="flex items-center gap-1.5 text-sm text-gray-400 mb-8">
+                        <Calendar size={13} />
+                        <span>{postData.date}</span>
                     </div>
 
                     {/* Featured Image */}
                     {postData.featuredImage && (
-                        <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-10 border border-gray-200 shadow-md">
+                        <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-10 border border-gray-200 shadow-sm">
                             <Image
                                 src={postData.featuredImage}
                                 alt={postData.featuredImageAlt || postData.title}
@@ -190,35 +204,26 @@ export default async function Post({ params }: Props) {
                         </div>
                     )}
 
-                    {/* Title */}
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 text-center mb-6 sm:mb-12 leading-tight">
-                        {postData.title}
-                    </h1>
-
                     {/* Content: server-rendered for non-gated (avoids RSC large-string serialization bug),
                         client PostContent only for gated posts (GateWall unlock flow) */}
                     {postData.isGated ? (
                         <PostContent postData={postData} />
                     ) : (
                         <>
-                            <div className={`prose prose-base sm:prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl prose-table:border-collapse [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200 [&_td]:p-2 [&_th]:p-2 [&_.instagram-reel-wrapper]:flex [&_.instagram-reel-wrapper]:justify-center [&_.instagram-reel-wrapper]:py-4 [&_.instagram-reel-embed]:max-w-[420px] [&_.instagram-reel-embed]:w-full [&_.instagram-reel-embed]:rounded-2xl [&_.instagram-reel-embed]:border-0`}>
+                            <div className={`prose prose-base max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-[1.85] prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-teal-600 prose-img:rounded-xl prose-table:border-collapse [&_h2]:text-[1.65rem] [&_h2]:font-extrabold [&_h2]:mt-14 [&_h2]:mb-4 [&_h2]:leading-snug [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-10 [&_h3]:mb-3 [&_p]:mb-6 [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200 [&_td]:p-3 [&_th]:p-3 [&_th]:bg-gray-50 [&_th]:font-semibold [&_mark]:bg-teal-50 [&_mark]:border-b-2 [&_mark]:border-teal-400 [&_mark]:text-gray-900 [&_mark]:pb-px [&_mark]:rounded-none [&_.instagram-reel-wrapper]:flex [&_.instagram-reel-wrapper]:justify-center [&_.instagram-reel-wrapper]:py-4 [&_.instagram-reel-embed]:max-w-[420px] [&_.instagram-reel-embed]:w-full [&_.instagram-reel-embed]:rounded-2xl [&_.instagram-reel-embed]:border-0`}>
                                 <div dangerouslySetInnerHTML={{ __html: postData.contentHtml ?? '' }} />
                             </div>
-                            {postData.tags && postData.tags.filter((t: string) => t !== 'vip').length > 0 && (
-                                <div className="mt-16 pt-8 border-t border-gray-200">
-                                    <div className="flex flex-wrap gap-2">
-                                        {postData.tags.filter((t: string) => t !== 'vip').map((tag: string) => (
-                                            <Link
-                                                key={tag}
-                                                href={`/blog?tag=${encodeURIComponent(tag)}`}
-                                                className="bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 px-3 py-1 rounded-full text-sm border border-gray-200 flex items-center gap-1 transition-colors"
-                                            >
-                                                <Tag size={12} /> {tag}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                            <div className="mt-14 pt-6 border-t border-gray-100 flex flex-wrap gap-2">
+                                {postData.tags && postData.tags.filter((t: string) => t !== 'vip').map((tag: string) => (
+                                    <Link
+                                        key={tag}
+                                        href={`/blog?tag=${encodeURIComponent(tag)}`}
+                                        className="bg-gray-100 text-gray-500 hover:bg-teal-50 hover:text-teal-700 px-3 py-1 rounded-full text-sm transition-colors"
+                                    >
+                                        #{tag}
+                                    </Link>
+                                ))}
+                            </div>
                             {/* Sentinel: popup triggers when this becomes visible */}
                             <div id="post-end-sentinel" className="h-px mt-8" />
                         </>
