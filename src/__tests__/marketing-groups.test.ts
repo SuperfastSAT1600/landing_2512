@@ -8,7 +8,7 @@ import {
 import type { TrafficSource } from '@/types/crm';
 
 const ALL_SOURCES: TrafficSource[] = [
-  '소개', 'B2B 파트너', '인스타그램 광고',
+  '소개', 'B2B 파트너', '인스타그램 광고', 'Youtube 광고_홍진경',
   '(구) 랜딩 즉시 카톡 상담 - [LD] SuperfastSAT',
   '(구) 랜딩 구글폼 상담 예약',
   '랜딩 상담 예약 폼 카톡 - SuperfastSAT!',
@@ -46,6 +46,7 @@ describe('SOURCE_GROUP_MAP', () => {
       '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)',
       '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT',
       '레딧',
+      'Youtube 광고_홍진경',
     ];
     for (const src of googleSources) {
       expect(SOURCE_GROUP_MAP[src]).toBe('구글 SEO');

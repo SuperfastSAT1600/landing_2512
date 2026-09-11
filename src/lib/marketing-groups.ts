@@ -19,6 +19,7 @@ export const SOURCE_GROUP_MAP: Record<string, MarketingGroup> = {
   '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)': '구글 SEO',
   '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT': '구글 SEO',
   '레딧': '구글 SEO',
+  'Youtube 광고_홍진경': '구글 SEO',
   // META
   '인스타그램 오가닉': 'META',
   '인스타그램 광고': 'META',
