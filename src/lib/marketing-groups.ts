@@ -38,8 +38,8 @@ export function getMarketingGroup(source: string | null | undefined): MarketingG
 
 export const GROUP_COLORS: Record<MarketingGroup, string> = {
   '네이버 SEO': '#03C75A',
-  '구글 SEO': '#4285F4',
-  'META': '#0866FF',
+  '구글 SEO': '#3B82F6',
+  'META': '#EF4444',
   '소개': '#F59E0B',
   'B2B': '#8B5CF6',
   '미분류': '#6B7280',
