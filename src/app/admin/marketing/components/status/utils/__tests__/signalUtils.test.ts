@@ -3,7 +3,7 @@ import { classifyChannelSignals } from '../signalUtils';
 import type { WeekRow } from '../groupByPeriod';
 import type { MarketingGroup } from '@/lib/marketing-groups';
 
-const ALL_GROUPS: MarketingGroup[] = ['네이버 SEO', '구글 SEO', 'META', '소개', 'B2B', '미분류'];
+const ALL_GROUPS: MarketingGroup[] = ['네이버 SEO', '구글 SEO', 'META', 'Youtube 광고', '소개', 'B2B', '미분류'];
 
 function makeWeekRow(weekStart: string, channelOverrides: Partial<Record<MarketingGroup, number>>): WeekRow {
   const channels = Object.fromEntries(ALL_GROUPS.map((g) => [g, 0])) as Record<MarketingGroup, number>;

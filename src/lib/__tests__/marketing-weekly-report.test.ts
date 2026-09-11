@@ -3,7 +3,7 @@ import { lastCompletedWeekStart, formatMarketingGoalReport } from '../marketing-
 import type { MarketingGroup } from '@/lib/marketing-groups';
 import type { WeeklyGoalRow } from '../marketing-goals';
 
-const ALL = ['네이버 SEO', '구글 SEO', 'META', '소개', 'B2B', '미분류'];
+const ALL = ['네이버 SEO', '구글 SEO', 'META', 'Youtube 광고', '소개', 'B2B', '미분류'];
 
 function row(target: number | null, actuals: Partial<Record<MarketingGroup, number>>): WeeklyGoalRow {
   const a = Object.fromEntries(ALL.map((k) => [k, actuals[k as MarketingGroup] ?? 0])) as Record<MarketingGroup, number>;
@@ -43,7 +43,7 @@ describe('lastCompletedWeekStart', () => {
 describe('formatMarketingGoalReport', () => {
   it('목표 대비와 유입 소스를 낸다', () => {
     const text = formatMarketingGoalReport(
-      row(20, { '네이버 SEO': 1, '구글 SEO': 6, META: 8, 소개: 3, B2B: 1 })
+      row(20, { '네이버 SEO': 1, '구글 SEO': 6, META: 8, 'Youtube 광고': 2, 소개: 3, B2B: 1 })
     );
 
     expect(text).toBe(
@@ -52,14 +52,15 @@ describe('formatMarketingGoalReport', () => {
         '2026-08-24 ~ 2026-08-30',
         '',
         '*목표 대비*',
-        '목표 20개 / 실적 19개 (95%)',
+        '목표 20개 / 실적 21개 (105%)',
         '',
         '*유입 소스*',
-        '네이버 SEO 1개 (5.3%)',
-        '구글 SEO 6개 (31.6%)',
-        'META 8개 (42.1%)',
-        '소개 3개 (15.8%)',
-        'B2B 1개 (5.3%)',
+        '네이버 SEO 1개 (4.8%)',
+        '구글 SEO 6개 (28.6%)',
+        'META 8개 (38.1%)',
+        'Youtube 광고 2개 (9.5%)',
+        '소개 3개 (14.3%)',
+        'B2B 1개 (4.8%)',
       ].join('\n')
     );
   });
@@ -67,7 +68,7 @@ describe('formatMarketingGoalReport', () => {
   it('인입이 없는 채널을 마지막에 한 줄로 모은다', () => {
     const text = formatMarketingGoalReport(row(20, { META: 19 }));
     expect(text).toContain('META 19개 (100.0%)');
-    expect(text).toContain('인입 없음: 네이버 SEO, 구글 SEO, 소개, B2B');
+    expect(text).toContain('인입 없음: 네이버 SEO, 구글 SEO, Youtube 광고, 소개, B2B');
   });
 
   it('목표 미설정이면 실적만 낸다', () => {

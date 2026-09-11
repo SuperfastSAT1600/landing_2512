@@ -4,6 +4,8 @@ import {
   getMarketingGroup,
   MARKETING_GROUPS,
   PAID_GROUPS,
+  GROUP_COLORS,
+  GROUP_ICONS,
 } from '@/lib/marketing-groups';
 import type { TrafficSource } from '@/types/crm';
 
@@ -46,11 +48,14 @@ describe('SOURCE_GROUP_MAP', () => {
       '고스트블로그 메인페이지 카톡 - SuperfastSAT(@공식블로그)',
       '고스트블로그 게시물 푸터 카톡 - [BR]SuperfastSAT',
       '레딧',
-      'Youtube 광고_홍진경',
     ];
     for (const src of googleSources) {
       expect(SOURCE_GROUP_MAP[src]).toBe('구글 SEO');
     }
+  });
+
+  it('maps youtube ad sources to Youtube 광고', () => {
+    expect(SOURCE_GROUP_MAP['Youtube 광고_홍진경']).toBe('Youtube 광고');
   });
 
   it('maps instagram sources to META', () => {
@@ -85,16 +90,24 @@ describe('getMarketingGroup', () => {
 });
 
 describe('MARKETING_GROUPS', () => {
-  it('contains exactly 5 groups', () => {
-    expect(MARKETING_GROUPS).toHaveLength(5);
+  it('contains exactly 6 groups', () => {
+    expect(MARKETING_GROUPS).toHaveLength(6);
   });
 
   it('includes all expected group names', () => {
     expect(MARKETING_GROUPS).toContain('네이버 SEO');
     expect(MARKETING_GROUPS).toContain('구글 SEO');
     expect(MARKETING_GROUPS).toContain('META');
+    expect(MARKETING_GROUPS).toContain('Youtube 광고');
     expect(MARKETING_GROUPS).toContain('소개');
     expect(MARKETING_GROUPS).toContain('B2B');
+  });
+
+  it('has a color and icon for every group including 미분류', () => {
+    for (const g of [...MARKETING_GROUPS, '미분류' as const]) {
+      expect(GROUP_COLORS[g], `${g} needs a color`).toBeDefined();
+      expect(GROUP_ICONS[g], `${g} needs an icon`).toBeDefined();
+    }
   });
 });
 
