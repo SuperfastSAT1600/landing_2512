@@ -27,7 +27,7 @@ interface Question {
   correctOption?: string;
 }
 
-type Phase = 'gate' | 'leaderboard' | 'test' | 'result';
+type Phase = 'gate' | 'leaderboard' | 'test' | 'result' | 'review';
 
 interface LeaderboardEntry {
   rank: number;
@@ -492,18 +492,20 @@ export default function SeptemberMathPage() {
           <div style={{ fontSize: 10, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.03em' }}>Your Result</h2>
           {myEntry ? (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
+            <button onClick={() => setPhase('review')} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8, cursor: 'pointer' }}>
               <span style={{ fontSize: 13, color: '#a1a1aa' }}>Rank</span>
               <span style={{ fontSize: 26, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.03em' }}>#{myEntry.rank}</span>
               <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
               <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{myEntry.score}%</span>
               <span style={{ fontSize: 12, color: '#52525b' }}>{myEntry.correctCount}/{myEntry.totalCount}</span>
-            </div>
+              <span style={{ fontSize: 10, color: '#6085FF' }}>리뷰 →</span>
+            </button>
           ) : (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
+            <button onClick={() => setPhase('review')} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8, cursor: 'pointer' }}>
               <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{correctCount} / {QUESTIONS.length}</span>
               <span style={{ fontSize: 14, color: '#a1a1aa' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</span>
-            </div>
+              <span style={{ fontSize: 10, color: '#6085FF' }}>리뷰 →</span>
+            </button>
           )}
         </div>
 
@@ -533,6 +535,111 @@ export default function SeptemberMathPage() {
           <button onClick={() => setPhase('test')}
             style={{ width: '100%', padding: '13px 0', background: 'transparent', color: '#52525b', border: '1px solid #27272a', borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
             Back to Practice
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Review ── */
+  if (phase === 'review') {
+    const wrongQuestions = QUESTIONS.filter(q => !checkAnswer(q, answers[q.id] ?? ''));
+    const reviewIndex = Math.min(currentIndex, wrongQuestions.length - 1);
+    const rq = wrongQuestions[reviewIndex] ?? null;
+    const rAnswer = rq ? (answers[rq.id] ?? '') : '';
+    const rCorrectDisplay = rq?.type === 'mcq'
+      ? `(${rq.correctOption}) ${rq.options?.find(o => o.label === rq.correctOption)?.text ?? ''}`
+      : (rq?.answers ?? []).join(' or ');
+
+    if (wrongQuestions.length === 0) {
+      return (
+        <div style={{ minHeight: 'calc(100vh - 56px)', marginTop: 56, background: '#09090b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+            <p style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Perfect Score!</p>
+            <p style={{ fontSize: 13, color: '#52525b', marginBottom: 24 }}>No wrong answers to review.</p>
+            <button onClick={() => setPhase('result')} style={{ padding: '10px 24px', background: '#6085FF', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+              Back to Results
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#09090b', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <button onClick={() => setPhase('result')} style={{ fontSize: 12, color: '#52525b', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>← Results</button>
+          <span style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600 }}>틀린 문제 리뷰 {reviewIndex + 1} / {wrongQuestions.length}</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {wrongQuestions.map((_, i) => (
+              <button key={i} onClick={() => setCurrentIndex(i)} style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: i === reviewIndex ? '#6085FF' : 'rgba(255,255,255,0.08)', color: i === reviewIndex ? '#fff' : '#52525b', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
+                {QUESTIONS.indexOf(wrongQuestions[i]) + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Question body */}
+        {rq && (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px' }}>
+            <div style={{ maxWidth: 680, margin: '0 auto' }}>
+              <div style={{ fontSize: 11, color: '#52525b', fontWeight: 600, marginBottom: 8 }}>
+                Q{QUESTIONS.indexOf(rq) + 1} — {rq.skill}
+              </div>
+              {rq.passage && (
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '14px 16px', marginBottom: 14, fontSize: 14, color: '#a1a1aa', lineHeight: 1.7 }}>
+                  <ContentRenderer content={rq.passage} />
+                </div>
+              )}
+              <div style={{ fontSize: 15, color: '#e4e4e7', lineHeight: 1.7, marginBottom: 16 }}>
+                <ContentRenderer content={rq.question} />
+              </div>
+
+              {rq.type === 'mcq' && rq.options && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {rq.options.map(opt => {
+                    const isCorrectOpt = opt.label === rq.correctOption;
+                    const isMyWrongChoice = opt.label === rAnswer && !isCorrectOpt;
+                    return (
+                      <div key={opt.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', borderRadius: 8, border: `1px solid ${isCorrectOpt ? '#22c55e' : isMyWrongChoice ? '#ef4444' : 'rgba(255,255,255,0.08)'}`, background: isCorrectOpt ? 'rgba(34,197,94,0.08)' : isMyWrongChoice ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.02)' }}>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: isCorrectOpt ? '#22c55e' : isMyWrongChoice ? '#ef4444' : '#52525b', flexShrink: 0, minWidth: 18 }}>{opt.label}</span>
+                        <span style={{ fontSize: 13, color: isCorrectOpt ? '#bbf7d0' : isMyWrongChoice ? '#fca5a5' : '#71717a', lineHeight: 1.5 }}><ContentRenderer content={opt.text} /></span>
+                        {isCorrectOpt && <span style={{ fontSize: 10, color: '#22c55e', flexShrink: 0, marginLeft: 'auto', paddingLeft: 8 }}>✓ 정답</span>}
+                        {isMyWrongChoice && <span style={{ fontSize: 10, color: '#ef4444', flexShrink: 0, marginLeft: 'auto', paddingLeft: 8 }}>내 답</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {rq.type === 'spr' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.08)' }}>
+                    <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 600 }}>내 답: </span>
+                    <span style={{ fontSize: 13, color: '#fca5a5' }}>{rAnswer || '(미입력)'}</span>
+                  </div>
+                  <div style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.4)', background: 'rgba(34,197,94,0.08)' }}>
+                    <span style={{ fontSize: 11, color: '#22c55e', fontWeight: 600 }}>정답: </span>
+                    <span style={{ fontSize: 13, color: '#bbf7d0' }}>{rCorrectDisplay}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Footer nav */}
+        <div className="bluebook-footer" style={{ flexShrink: 0, background: '#09090b', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <button onClick={() => setCurrentIndex(i => Math.max(0, i - 1))} disabled={reviewIndex === 0}
+            style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', fontSize: 13, fontWeight: 600, cursor: reviewIndex === 0 ? 'not-allowed' : 'pointer', opacity: reviewIndex === 0 ? 0.3 : 1, color: '#a1a1aa' }}>
+            Back
+          </button>
+          <span style={{ fontSize: 12, color: '#3f3f46' }}>{reviewIndex + 1} / {wrongQuestions.length}</span>
+          <button onClick={() => setCurrentIndex(i => Math.min(wrongQuestions.length - 1, i + 1))} disabled={reviewIndex === wrongQuestions.length - 1}
+            style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', fontSize: 13, fontWeight: 600, cursor: reviewIndex === wrongQuestions.length - 1 ? 'not-allowed' : 'pointer', opacity: reviewIndex === wrongQuestions.length - 1 ? 0.3 : 1, color: '#a1a1aa' }}>
+            Next
           </button>
         </div>
       </div>
