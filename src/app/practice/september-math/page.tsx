@@ -330,7 +330,7 @@ export default function SeptemberMathPage() {
   const handleGateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = accessCode.trim().toUpperCase();
-    const cleanIg = instagramId.trim();
+    const cleanIg = instagramId.trim().replace(/^@+/, '');
     if (!cleanCode || !cleanIg) return;
 
     setValidating(true);
@@ -419,7 +419,7 @@ export default function SeptemberMathPage() {
           <form onSubmit={handleGateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input type="text" placeholder="Access code" value={accessCode} onChange={e => setAccessCode(e.target.value)} required
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }} />
-            <input type="text" placeholder="@instagram_id" value={instagramId} onChange={e => setInstagramId(e.target.value)} required
+            <input type="text" placeholder="instagram_id (@ 없이 입력)" value={instagramId} onChange={e => setInstagramId(e.target.value)} required
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }} />
             {gateError && <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>{gateError}</p>}
             <button type="submit" disabled={!accessCode.trim() || !instagramId.trim() || validating}
