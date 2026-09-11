@@ -6,8 +6,8 @@ import { weekEndOf, weekLabelOf } from '@/lib/marketing-week';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-/** 슬랙 00_방향맞추기 채널 — 주간 마케팅 리드 리포트 발송처. */
-const SLACK_CHANNEL = 'C07L25RNWCX';
+/** 슬랙 m1_26년-3분기-2억-1마케팅 채널 — 주간 마케팅 리드 리포트 발송처. */
+const SLACK_CHANNEL = 'C0A28EJQA7P';
 
 /** 슬랙 발송. 성공 여부만 돌려준다. */
 async function postToSlack(token: string, text: string): Promise<boolean> {

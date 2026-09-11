@@ -13,8 +13,8 @@ import {
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-/** 슬랙 00_방향맞추기 채널 — 주간 비즈니스 현황 발송처. */
-const SLACK_CHANNEL = 'C07L25RNWCX';
+/** 슬랙 m1_26년-3분기-2억-1마케팅 채널 — 주간 비즈니스 현황 발송처. */
+const SLACK_CHANNEL = 'C0A28EJQA7P';
 
 // Business 페이지 탭 위계와 맞춘다: 한국비즈니스(B2C+B2B 합산)가 첫 번째 —
 // formatBusinessReport가 이 순서(segments[0]=한국비즈니스 전체)로 "전체" 합산을 계산한다.
