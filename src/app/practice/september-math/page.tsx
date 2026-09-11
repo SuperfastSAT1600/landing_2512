@@ -42,10 +42,6 @@ interface Stats {
   questionStats: Record<string, { correct: number; total: number }>;
 }
 
-const DIFF_COLOR: Record<string, string> = {
-  Hard: '#ef4444', Medium: '#f59e0b', Easy: '#22c55e',
-};
-
 const WIND_CHILL_TABLE = `<table style="border-collapse:collapse;width:100%;font-size:14px;">
   <thead>
     <tr style="background:#f1f5f9;">
@@ -737,9 +733,6 @@ export default function SeptemberMathPage() {
                   style={{ width: 32, height: 32, borderRadius: 8, background: '#1e293b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: 14 }}
                 >
                   {currentIndex + 1}
-                </span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: DIFF_COLOR[currentQuestion.difficulty] ?? '#64748b' }}>
-                  {currentQuestion.difficulty}
                 </span>
                 <span style={{ fontSize: 11, color: '#94a3b8' }}>{currentQuestion.skill}</span>
                 <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 'auto', background: '#f1f5f9', padding: '2px 8px', borderRadius: 4 }}>
