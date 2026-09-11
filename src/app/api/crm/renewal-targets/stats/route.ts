@@ -22,7 +22,9 @@ export async function GET(request: NextRequest) {
 
   let query = supabaseAdmin
     .from('renewal_targets')
-    .select('week_start, stage, outcome_quality, carried_to_week, carried_from_week');
+    .select(
+      'week_start, stage, outcome_quality, carried_to_week, carried_from_week, converted_payment_id'
+    );
   if (cutoff) query = query.gte('week_start', cutoff);
 
   const { data, error } = await query;
@@ -41,7 +43,27 @@ export async function GET(request: NextRequest) {
     outcome_quality: RenewalOutcomeQuality | null;
     carried_to_week: string | null;
     carried_from_week: string | null;
+    converted_payment_id: string | null;
   }[];
+
+  // 결제 완료 건에 연결된 실제 결제 금액. 연결된 결제가 없으면 조회 자체를 생략한다.
+  const paymentIds = [
+    ...new Set(
+      rows.filter((r) => r.stage === '4' && r.converted_payment_id).map((r) => r.converted_payment_id!)
+    ),
+  ];
+  const amountById = new Map<string, number>();
+  if (paymentIds.length > 0) {
+    const { data: payments, error: paymentError } = await supabaseAdmin
+      .from('payments')
+      .select('id, amount')
+      .in('id', paymentIds);
+    // 금액 조회가 실패해도 인원 통계는 내려준다 — 금액은 0 + 미연결로 드러난다.
+    if (paymentError) console.error('[renewal-targets/stats GET payments]', paymentError);
+    for (const p of (payments ?? []) as { id: string; amount: number | null }[]) {
+      if (typeof p.amount === 'number') amountById.set(p.id, p.amount);
+    }
+  }
   type Counts = {
     selected: number;
     completed: number;
@@ -52,6 +74,8 @@ export async function GET(request: NextRequest) {
     bad_dropped: number;
     carried_out: number;
     carried_in: number;
+    completed_amount: number;
+    amount_missing: number;
   };
   const emptyCounts = (): Counts => ({
     selected: 0,
@@ -63,6 +87,8 @@ export async function GET(request: NextRequest) {
     bad_dropped: 0,
     carried_out: 0,
     carried_in: 0,
+    completed_amount: 0,
+    amount_missing: 0,
   });
   const weekMap = new Map<string, Counts>();
 
@@ -78,6 +104,10 @@ export async function GET(request: NextRequest) {
       counts.completed += 1;
       if (row.outcome_quality === 'good') counts.good_completed += 1;
       if (row.outcome_quality === 'bad') counts.bad_completed += 1;
+      // 금액에 잡히지 않은 결제 완료 건(결제 미연결·조회 실패)은 숨기지 않고 센다.
+      const amount = row.converted_payment_id ? amountById.get(row.converted_payment_id) : undefined;
+      if (amount === undefined) counts.amount_missing += 1;
+      else counts.completed_amount += amount;
     }
     if (row.stage === '5') {
       counts.dropped += 1;
@@ -108,6 +138,8 @@ export async function GET(request: NextRequest) {
       bad_dropped: counts.bad_dropped,
       carried_out: counts.carried_out,
       carried_in: counts.carried_in,
+      completed_amount: counts.completed_amount,
+      amount_missing: counts.amount_missing,
     }));
 
   return NextResponse.json({ data: weekly });
