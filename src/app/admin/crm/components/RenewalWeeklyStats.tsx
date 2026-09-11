@@ -45,6 +45,8 @@ export function RenewalWeeklyStats({
           결제 완료·미전환 아래는 좋음/나쁨 분포 · 결제 못 한 대상은 다음 주차로 이월돼 그 주차가 마감된다
           <br />
           결제액 = 그 주차 결제 완료 건의 실제 결제 금액 합계 · 미연결은 결제 기록을 찾지 못해 금액에서 빠진 건수
+          <br />
+          보드 외 = 그 주차에 결제됐지만 보드가 추적하지 않은 재결제 · 결제액 + 보드 외 = Business 의 그 주차 재결제
         </p>
       </div>
       {loading ? (
@@ -109,6 +111,14 @@ export function RenewalWeeklyStats({
                     {row.amount_missing > 0 && (
                       <span className="block text-[10px] text-gray-400 font-normal tabular-nums">
                         미연결 {row.amount_missing}
+                      </span>
+                    )}
+                    {row.off_board_amount > 0 && (
+                      <span
+                        className="block text-[10px] text-amber-600 font-normal tabular-nums"
+                        title={`${row.off_board_amount.toLocaleString('ko-KR')}원`}
+                      >
+                        보드 외 {manwon(row.off_board_amount)}
                       </span>
                     )}
                   </td>

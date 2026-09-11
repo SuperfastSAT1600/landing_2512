@@ -336,15 +336,38 @@ describe('GET /api/crm/renewal-targets/stats — 주차별 재결제 금액', ()
     expect(json.data[0].amount_missing).toBe(2);
   });
 
-  it('결제 완료가 없으면 금액 0 이고 payments 를 조회하지 않는다', async () => {
-    mockFrom.mockReturnValueOnce(
-      makeBuilder({ data: [row('2026-09-07', '2'), row('2026-09-07', '5')], error: null })
-    );
+  it('결제 완료가 없으면 금액 0 이지만 보드 외 재결제는 계속 본다', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({ data: [row('2026-09-07', '2'), row('2026-09-07', '5')], error: null })
+      )
+      // 링크가 없으니 id 조회는 건너뛰고 재결제 조회만 뒤따른다.
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            {
+              id: 'pay-9',
+              student_id: 'ruby',
+              amount: 4_450_000,
+              paid_at: '2026-09-10T12:00:00+09:00',
+            },
+          ],
+          error: null,
+        })
+      );
     const { GET } = await import('../route');
     const json = await (await GET(makeReq())).json();
 
     expect(json.data[0].completed_amount).toBe(0);
     expect(json.data[0].amount_missing).toBe(0);
+    expect(json.data[0].off_board_amount).toBe(4_450_000);
+  });
+
+  it('대상이 하나도 없으면 결제를 조회하지 않는다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
+    const { GET } = await import('../route');
+    await GET(makeReq());
+
     expect(mockFrom).toHaveBeenCalledTimes(1);
     expect(mockFrom).not.toHaveBeenCalledWith('payments');
   });
@@ -399,17 +422,30 @@ describe('GET /api/crm/renewal-targets/stats — 주차별 재결제 금액', ()
     expect(lastBuilder.lte).toHaveBeenCalledWith('paid_at', expect.stringContaining('+09:00'));
   });
 
-  it('링크가 전부 풀리면 되짚기 조회 자체를 하지 않는다', async () => {
+  it('링크로 이미 잡힌 결제는 보드 외로 중복 계산하지 않는다', async () => {
     mockFrom
       .mockReturnValueOnce(
         makeBuilder({ data: [{ ...paid('2026-08-24', 'pay-1'), student_id: 's-1' }], error: null })
       )
-      .mockReturnValueOnce(makeBuilder({ data: [{ id: 'pay-1', amount: 1_000_000 }], error: null }));
+      .mockReturnValueOnce(makeBuilder({ data: [{ id: 'pay-1', amount: 1_000_000 }], error: null }))
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            {
+              id: 'pay-1',
+              student_id: 's-1',
+              amount: 1_000_000,
+              paid_at: '2026-08-26T12:00:00+09:00',
+            },
+          ],
+          error: null,
+        })
+      );
     const { GET } = await import('../route');
     const json = await (await GET(makeReq())).json();
 
     expect(json.data[0].completed_amount).toBe(1_000_000);
-    expect(mockFrom).toHaveBeenCalledTimes(2);
+    expect(json.data[0].off_board_amount).toBe(0);
   });
 
   it('결제 조회가 실패해도 인원 통계는 내려주고 금액만 0 으로 둔다', async () => {

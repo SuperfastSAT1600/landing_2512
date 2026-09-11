@@ -67,12 +67,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 2) 링크로 풀리지 않은 결제 완료 건이 있을 때만, 되짚을 재결제 결제를 조회 범위만큼 읽는다.
-  const needsLookup = completedTargets.some(
-    (r) => !r.converted_payment_id || !amountById.has(r.converted_payment_id)
-  );
+  // 2) 조회 범위의 재결제 결제. 링크 없는 건을 되짚고, 남은 건은 '보드 외'로 드러낸다.
+  // 결제 완료가 하나도 없는 주차에도 보드 외 재결제는 있을 수 있으니 항상 읽는다.
   let renewalPayments: RenewalPaymentRow[] = [];
-  if (needsLookup && cutoff) {
+  if (rows.length > 0 && cutoff) {
     const { data: paid, error: paidError } = await supabaseAdmin
       .from('payments')
       .select('id, student_id, amount, paid_at')
@@ -153,6 +151,7 @@ export async function GET(request: NextRequest) {
       carried_in: counts.carried_in,
       completed_amount: amountByWeek.get(week_start)?.completed_amount ?? 0,
       amount_missing: amountByWeek.get(week_start)?.amount_missing ?? 0,
+      off_board_amount: amountByWeek.get(week_start)?.off_board_amount ?? 0,
     }));
 
   return NextResponse.json({ data: weekly });

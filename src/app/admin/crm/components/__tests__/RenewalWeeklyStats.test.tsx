@@ -20,6 +20,7 @@ function stat(over: Partial<RenewalWeeklyStat> = {}): RenewalWeeklyStat {
     carried_in: 0,
     completed_amount: 0,
     amount_missing: 0,
+    off_board_amount: 0,
     ...over,
   };
 }
@@ -123,5 +124,33 @@ describe('RenewalWeeklyStats — 주차별 재결제 금액 (REQ-003)', () => {
   it('결제액 열 머리글이 있다', () => {
     renderTable([stat()]);
     expect(screen.getByText('결제액')).toBeTruthy();
+  });
+});
+
+describe('RenewalWeeklyStats — 보드 외 재결제 (REQ-004)', () => {
+  it('보드가 추적하지 않은 재결제 금액을 보조줄로 함께 보여준다', () => {
+    renderTable([stat({ completed: 3, completed_amount: 9_176_000, off_board_amount: 4_450_000 })]);
+    const line = screen.getByText('보드 외 445만');
+    expect(line).toBeTruthy();
+    // 원 단위는 툴팁에 — 만원 반올림만 보고 대조하다 어긋나지 않게.
+    expect(line.getAttribute('title')).toBe('4,450,000원');
+  });
+
+  it('보드 외가 0이면 보조줄을 숨긴다', () => {
+    renderTable([stat({ completed: 3, completed_amount: 9_176_000, off_board_amount: 0 })]);
+    expect(within(screen.getByRole('table')).queryByText(/보드 외/)).toBeNull();
+  });
+
+  it('결제 완료가 없는 주차도 보드 외 금액은 드러낸다', () => {
+    renderTable([stat({ completed: 0, completed_amount: 0, off_board_amount: 1_800_000 })]);
+    expect(screen.getByText('보드 외 180만')).toBeTruthy();
+  });
+
+  it('미연결과 보드 외는 함께 표시된다 — 서로 다른 누락이다', () => {
+    renderTable([
+      stat({ completed: 3, completed_amount: 1_000_000, amount_missing: 1, off_board_amount: 500_000 }),
+    ]);
+    expect(screen.getByText('미연결 1')).toBeTruthy();
+    expect(screen.getByText('보드 외 50만')).toBeTruthy();
   });
 });
