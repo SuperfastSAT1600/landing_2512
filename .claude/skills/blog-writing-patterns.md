@@ -440,6 +440,37 @@ your evidence.
 [Provide real example with questions and passage]
 ```
 
+## TDS 작성 원칙 (Toss Design System 기반)
+
+SuperfastSAT 블로그는 Toss의 콘텐츠 원칙을 준용한다.
+
+### 1. 핵심 먼저 (Answer First)
+- 결론을 첫 문장에 쓴다. 이유나 배경은 그 다음이다.
+- "왜냐면…", "먼저 알아야 할 것이…" 같은 도입 금지.
+
+### 2. 한 문장에 한 가지만
+- 접속사(`그리고`, `하지만`, `또한`)로 두 주장을 붙이지 않는다.
+- 문장이 두 줄을 넘으면 쪼갠다.
+
+### 3. 능동형 + 단정형
+- "~할 수 있습니다" → "~합니다"
+- "~인 것 같습니다" → "~입니다"
+- "~을 해주세요" → "~하세요"
+
+### 4. 숫자·고유명사는 정확하게
+- 추정 수치에 "약", "대략" 사용 허용. 단, 출처 없는 수치는 쓰지 않는다.
+- 시험 공식 명칭: SAT (대문자), College Board, Reading and Writing, Math
+
+### 5. 문단 길이
+- 한 문단 = 3~5줄 (모바일 기준). 7줄 초과 시 분리.
+- 문단 간 공백 1줄로 호흡을 끊는다.
+
+### 6. 불필요한 꾸밈 제거
+- "정말", "굉장히", "매우" 같은 부사 삭제. 팩트가 설득한다.
+- 첫 문장에 인용문·수사의문문 금지.
+
+---
+
 ## Final Notes
 
 - **Consistency is key**: Maintain the same voice across all posts
