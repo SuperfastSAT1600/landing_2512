@@ -682,10 +682,6 @@ export default function SeptemberMathPage() {
             </svg>
             Calculator
           </button>
-          <button onClick={handleSubmit} disabled={submitting || submitted || answeredCount < 1}
-            style={{ padding: '6px 14px', background: submitted ? '#22c55e' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: submitted || submitting || answeredCount < 1 ? 'default' : 'pointer', opacity: answeredCount < 1 ? 0.4 : 1 }}>
-            {submitted ? 'Submitted ✓' : submitting ? 'Submitting...' : 'Submit Results'}
-          </button>
         </div>
       </div>
 
