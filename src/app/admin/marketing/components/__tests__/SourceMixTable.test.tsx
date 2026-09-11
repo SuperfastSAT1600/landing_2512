@@ -4,7 +4,7 @@ import SourceMixTable from '../SourceMixTable';
 import type { WeeklyGoalRow } from '@/lib/marketing-goals';
 import type { MarketingGroup } from '@/lib/marketing-groups';
 
-const ALL = ['네이버 SEO', '구글 SEO', 'META', '소개', 'B2B', '미분류'];
+const ALL = ['네이버 SEO', '구글 SEO', 'META', 'Youtube 광고', '소개', 'B2B', '미분류'];
 
 function week(actuals: Record<string, number>, over: Partial<WeeklyGoalRow> = {}): WeeklyGoalRow {
   const a = Object.fromEntries(ALL.map((g) => [g, actuals[g] ?? 0])) as Record<MarketingGroup, number>;
