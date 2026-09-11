@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { getRecentWeeks, getWeekLabel, getKstDateString } from '@/lib/week-definitions';
+import { resolveWeeklyAmounts, type RenewalPaymentRow } from '@/lib/renewal-amount';
 import type { RenewalWeeklyStat, RenewalOutcomeQuality } from '@/types/crm';
 
 export async function GET(request: NextRequest) {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   let query = supabaseAdmin
     .from('renewal_targets')
     .select(
-      'week_start, stage, outcome_quality, carried_to_week, carried_from_week, converted_payment_id'
+      'week_start, stage, outcome_quality, carried_to_week, carried_from_week, converted_payment_id, student_id'
     );
   if (cutoff) query = query.gte('week_start', cutoff);
 
@@ -44,13 +45,14 @@ export async function GET(request: NextRequest) {
     carried_to_week: string | null;
     carried_from_week: string | null;
     converted_payment_id: string | null;
+    student_id: string;
   }[];
 
-  // 결제 완료 건에 연결된 실제 결제 금액. 연결된 결제가 없으면 조회 자체를 생략한다.
+  const completedTargets = rows.filter((r) => r.stage === '4');
+
+  // 1) 링크가 가리키는 결제. 링크가 하나도 없으면 조회 자체를 생략한다.
   const paymentIds = [
-    ...new Set(
-      rows.filter((r) => r.stage === '4' && r.converted_payment_id).map((r) => r.converted_payment_id!)
-    ),
+    ...new Set(completedTargets.filter((r) => r.converted_payment_id).map((r) => r.converted_payment_id!)),
   ];
   const amountById = new Map<string, number>();
   if (paymentIds.length > 0) {
@@ -64,6 +66,25 @@ export async function GET(request: NextRequest) {
       if (typeof p.amount === 'number') amountById.set(p.id, p.amount);
     }
   }
+
+  // 2) 링크로 풀리지 않은 결제 완료 건이 있을 때만, 되짚을 재결제 결제를 조회 범위만큼 읽는다.
+  const needsLookup = completedTargets.some(
+    (r) => !r.converted_payment_id || !amountById.has(r.converted_payment_id)
+  );
+  let renewalPayments: RenewalPaymentRow[] = [];
+  if (needsLookup && cutoff) {
+    const { data: paid, error: paidError } = await supabaseAdmin
+      .from('payments')
+      .select('id, student_id, amount, paid_at')
+      .eq('payment_type', '재결제')
+      .gte('paid_at', `${cutoff}T00:00:00+09:00`)
+      .lte('paid_at', `${recentWeeks[0].end}T23:59:59.999+09:00`);
+    if (paidError) console.error('[renewal-targets/stats GET renewal payments]', paidError);
+    renewalPayments = (paid ?? []) as RenewalPaymentRow[];
+  }
+
+  const amountByWeek = resolveWeeklyAmounts(completedTargets, amountById, renewalPayments);
+
   type Counts = {
     selected: number;
     completed: number;
@@ -74,8 +95,6 @@ export async function GET(request: NextRequest) {
     bad_dropped: number;
     carried_out: number;
     carried_in: number;
-    completed_amount: number;
-    amount_missing: number;
   };
   const emptyCounts = (): Counts => ({
     selected: 0,
@@ -87,8 +106,6 @@ export async function GET(request: NextRequest) {
     bad_dropped: 0,
     carried_out: 0,
     carried_in: 0,
-    completed_amount: 0,
-    amount_missing: 0,
   });
   const weekMap = new Map<string, Counts>();
 
@@ -104,10 +121,6 @@ export async function GET(request: NextRequest) {
       counts.completed += 1;
       if (row.outcome_quality === 'good') counts.good_completed += 1;
       if (row.outcome_quality === 'bad') counts.bad_completed += 1;
-      // 금액에 잡히지 않은 결제 완료 건(결제 미연결·조회 실패)은 숨기지 않고 센다.
-      const amount = row.converted_payment_id ? amountById.get(row.converted_payment_id) : undefined;
-      if (amount === undefined) counts.amount_missing += 1;
-      else counts.completed_amount += amount;
     }
     if (row.stage === '5') {
       counts.dropped += 1;
@@ -138,8 +151,8 @@ export async function GET(request: NextRequest) {
       bad_dropped: counts.bad_dropped,
       carried_out: counts.carried_out,
       carried_in: counts.carried_in,
-      completed_amount: counts.completed_amount,
-      amount_missing: counts.amount_missing,
+      completed_amount: amountByWeek.get(week_start)?.completed_amount ?? 0,
+      amount_missing: amountByWeek.get(week_start)?.amount_missing ?? 0,
     }));
 
   return NextResponse.json({ data: weekly });

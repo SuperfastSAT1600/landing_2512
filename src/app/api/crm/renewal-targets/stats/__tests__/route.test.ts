@@ -5,7 +5,7 @@ let lastBuilder: Record<string, ReturnType<typeof vi.fn>>;
 
 function makeBuilder(result: { data: unknown; error: null | { message: string } }) {
   const builder: Record<string, unknown> = {};
-  for (const m of ['select', 'order', 'eq', 'in', 'gte', 'insert', 'update', 'delete']) {
+  for (const m of ['select', 'order', 'eq', 'in', 'gte', 'lte', 'insert', 'update', 'delete']) {
     builder[m] = vi.fn(() => builder);
   }
   builder.single = vi.fn(() => builder);
@@ -347,6 +347,69 @@ describe('GET /api/crm/renewal-targets/stats — 주차별 재결제 금액', ()
     expect(json.data[0].amount_missing).toBe(0);
     expect(mockFrom).toHaveBeenCalledTimes(1);
     expect(mockFrom).not.toHaveBeenCalledWith('payments');
+  });
+
+  it('링크가 없어도 그 주차에 찍힌 같은 학생의 재결제로 금액을 되짚는다 (REQ-003)', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            { ...paid('2026-08-24', 'pay-1'), student_id: 's-1' },
+            { ...paid('2026-08-24', null), student_id: 'grace' },
+          ],
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(makeBuilder({ data: [{ id: 'pay-1', amount: 4_990_000 }], error: null }))
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            {
+              id: 'pay-9',
+              student_id: 'grace',
+              amount: 1_650_000,
+              paid_at: '2026-08-24T03:00:00+09:00',
+            },
+          ],
+          error: null,
+        })
+      );
+    const { GET } = await import('../route');
+    const json = await (await GET(makeReq())).json();
+
+    expect(json.data[0].completed_amount).toBe(6_640_000);
+    expect(json.data[0].amount_missing).toBe(0);
+  });
+
+  it('되짚기는 재결제 결제만, 조회 주차 안에서만 본다', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [{ ...paid('2026-08-24', null), student_id: 'grace' }],
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(makeBuilder({ data: [], error: null }));
+    const { GET } = await import('../route');
+    await GET(makeReq());
+
+    expect(mockFrom).toHaveBeenCalledWith('payments');
+    expect(lastBuilder.eq).toHaveBeenCalledWith('payment_type', '재결제');
+    expect(lastBuilder.gte).toHaveBeenCalledWith('paid_at', expect.stringContaining('+09:00'));
+    expect(lastBuilder.lte).toHaveBeenCalledWith('paid_at', expect.stringContaining('+09:00'));
+  });
+
+  it('링크가 전부 풀리면 되짚기 조회 자체를 하지 않는다', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({ data: [{ ...paid('2026-08-24', 'pay-1'), student_id: 's-1' }], error: null })
+      )
+      .mockReturnValueOnce(makeBuilder({ data: [{ id: 'pay-1', amount: 1_000_000 }], error: null }));
+    const { GET } = await import('../route');
+    const json = await (await GET(makeReq())).json();
+
+    expect(json.data[0].completed_amount).toBe(1_000_000);
+    expect(mockFrom).toHaveBeenCalledTimes(2);
   });
 
   it('결제 조회가 실패해도 인원 통계는 내려주고 금액만 0 으로 둔다', async () => {
