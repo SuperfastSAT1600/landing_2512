@@ -2,6 +2,7 @@ import { MARKETING_GROUPS } from '@/lib/marketing-groups';
 import type { MarketingGroup } from '@/lib/marketing-groups';
 import type { MarketingDailyRow } from '@/types/marketing';
 import { monthWeekLabel } from '@/lib/marketing-week';
+import { WEEK_DEFINITIONS } from '@/lib/week-definitions';
 
 export interface WeekRow {
   key: string;
@@ -38,38 +39,44 @@ function calcMix(channels: Record<MarketingGroup, number>, total: number): Recor
   ) as Record<MarketingGroup, number>;
 }
 
-/** ISO 월요일 기준 weekStart (YYYY-MM-DD) */
-function getWeekStart(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  const day = d.getDay(); // 0=Sun
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return d.toISOString().slice(0, 10);
+/** week-definitions.ts 룩업 — 날짜가 속한 주 정의 반환. 표 범위 밖이면 null. */
+function findWeekDef(dateStr: string) {
+  return WEEK_DEFINITIONS.find((d) => dateStr >= d.start && dateStr <= d.end) ?? null;
 }
 
 function addDays(dateStr: string, n: number): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setDate(d.getDate() + n);
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
 
-/** 목요일 기준 달 소속 주차 라벨 + 날짜 범위 */
+/** 표 범위 밖 날짜용 ISO 월요일 계산 */
+function getWeekStart(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  const day = d.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setUTCDate(d.getUTCDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
 function makeWeekLabel(weekStart: string, weekEnd: string): string {
-  const label = monthWeekLabel(weekStart); // 예: '26년 09월 01주차'
-  const sM = new Date(weekStart + 'T00:00:00').getMonth() + 1;
-  const sD = new Date(weekStart + 'T00:00:00').getDate();
-  const eM = new Date(weekEnd + 'T00:00:00').getMonth() + 1;
-  const eD = new Date(weekEnd + 'T00:00:00').getDate();
+  const label = monthWeekLabel(weekStart);
+  const sM = new Date(weekStart + 'T00:00:00Z').getUTCMonth() + 1;
+  const sD = new Date(weekStart + 'T00:00:00Z').getUTCDate();
+  const eM = new Date(weekEnd + 'T00:00:00Z').getUTCMonth() + 1;
+  const eD = new Date(weekEnd + 'T00:00:00Z').getUTCDate();
   return `${label} (${sM}/${sD}~${eM}/${eD})`;
 }
 
 export function groupByWeek(rows: MarketingDailyRow[], spendByDate: Record<string, number> = {}): WeekRow[] {
-  const map = new Map<string, { channels: Record<MarketingGroup, number>; weekEnd: string }>();
+  const map = new Map<string, { channels: Record<MarketingGroup, number>; weekEnd: string; defLabel: string | null }>();
 
   for (const row of rows) {
-    const ws = getWeekStart(row.date);
+    const def = findWeekDef(row.date);
+    const ws = def ? def.start : getWeekStart(row.date);
     if (!map.has(ws)) {
-      map.set(ws, { channels: zeroChannels(), weekEnd: addDays(ws, 6) });
+      const weekEnd = def ? def.end : addDays(ws, 6);
+      map.set(ws, { channels: zeroChannels(), weekEnd, defLabel: def ? def.label : null });
     }
     const entry = map.get(ws)!;
     entry.channels[row.group] = (entry.channels[row.group] ?? 0) + row.leads;
@@ -77,12 +84,17 @@ export function groupByWeek(rows: MarketingDailyRow[], spendByDate: Record<strin
 
   return Array.from(map.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([weekStart, { channels, weekEnd }]) => {
+    .map(([weekStart, { channels, weekEnd, defLabel }]) => {
       const total = ALL_GROUPS.reduce((s, g) => s + channels[g], 0);
       const spend = sumSpendInRange(spendByDate, weekStart, weekEnd);
+      const baseLabel = defLabel ?? monthWeekLabel(weekStart);
+      const sM = new Date(weekStart + 'T00:00:00Z').getUTCMonth() + 1;
+      const sD = new Date(weekStart + 'T00:00:00Z').getUTCDate();
+      const eM = new Date(weekEnd + 'T00:00:00Z').getUTCMonth() + 1;
+      const eD = new Date(weekEnd + 'T00:00:00Z').getUTCDate();
       return {
         key: weekStart,
-        label: makeWeekLabel(weekStart, weekEnd),
+        label: `${baseLabel} (${sM}/${sD}~${eM}/${eD})`,
         weekStart,
         weekEnd,
         channels,
