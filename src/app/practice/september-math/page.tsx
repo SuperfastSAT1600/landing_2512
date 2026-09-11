@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 import { TestCalculator } from '@/app/diagnosis/components/TestCalculator';
+import { useTestTimer } from '@/app/diagnosis/hooks/useTestTimer';
 
 const TEST_ID = 'september-math-final-14';
 const TEST_LABEL = '9월 SAT MATH 파이널 연습';
@@ -314,6 +315,16 @@ export default function SeptemberMathPage() {
   const [crossedOut, setCrossedOut] = useState<Record<string, Set<string>>>({});
   const [calculatorOpen, setCalculatorOpen] = useState(false);
 
+  const timer = useTestTimer(15, phase === 'test' && !submitted);
+
+  // 시간 초과 자동 제출
+  useEffect(() => {
+    if (timer.remaining === 0 && phase === 'test' && !submitting && !submitted) {
+      handleSubmit();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer.remaining]);
+
   const toggleCrossOut = useCallback((qId: string, label: string) => {
     setCrossedOut(prev => {
       const set = new Set(prev[qId] ?? []);
@@ -395,11 +406,9 @@ export default function SeptemberMathPage() {
         }),
       });
       setSubmitted(true);
-
-      const updatedStats = await fetch(`/api/practice/stats?testId=${TEST_ID}`).then(r => r.json()).catch(() => null);
-      if (updatedStats) setStats(updatedStats);
-
       setPhase('result');
+
+      fetch(`/api/practice/stats?testId=${TEST_ID}`).then(r => r.json()).then(data => { if (data) setStats(data); }).catch(() => null);
     } catch {
       showToast('Submission failed. Please try again.');
     } finally {
@@ -480,56 +489,72 @@ export default function SeptemberMathPage() {
     const lb = stats?.leaderboard ?? [];
     const myMasked = '@' + instagramId.replace(/^@/, '')[0] + '***';
     const myEntry = lb.find(e => e.maskedId === myMasked);
-    const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#a1a1aa' : i === 2 ? '#71717a' : '#3f3f46';
-    const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#a1a1aa' : '#52525b';
+    const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#c0c0c0' : i === 2 ? '#a0a0a0' : '#71717a';
+    const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#c0c0c0' : '#a1a1aa';
     return (
       <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#09090b', overflow: 'hidden' }}>
-        <div style={{ width: '100%', maxWidth: 400, padding: '28px 24px 16px', textAlign: 'center', flexShrink: 0 }}>
-          <div style={{ fontSize: 10, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.03em' }}>Your Result</h2>
+        {/* 내 결과 헤더 */}
+        <div style={{ width: '100%', maxWidth: 480, padding: '24px 24px 12px', textAlign: 'center', flexShrink: 0 }}>
+          <div style={{ fontSize: 11, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10 }}>SuperfastSAT</div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#a1a1aa', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Your Result</h2>
           {myEntry ? (
-            <button onClick={() => { setCurrentIndex(0); setPhase('review'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8, cursor: 'pointer' }}>
-              <span style={{ fontSize: 13, color: '#a1a1aa' }}>Rank</span>
-              <span style={{ fontSize: 26, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.03em' }}>#{myEntry.rank}</span>
-              <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
-              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{myEntry.score}%</span>
-              <span style={{ fontSize: 12, color: '#52525b' }}>{myEntry.correctCount}/{myEntry.totalCount}</span>
-              <span style={{ fontSize: 10, color: '#6085FF' }}>리뷰 →</span>
+            <button onClick={() => { setCurrentIndex(0); setPhase('review'); }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, width: '100%', background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.35)', borderRadius: 14, padding: '16px 24px', cursor: 'pointer' }}>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: 12, color: '#6085FF', fontWeight: 600, marginBottom: 2 }}>Rank</div>
+                <div style={{ fontSize: 36, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.04em', lineHeight: 1 }}>#{myEntry.rank}</div>
+              </div>
+              <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.1)' }} />
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600, marginBottom: 2 }}>Score</div>
+                <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{myEntry.score}%</div>
+              </div>
+              <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.1)' }} />
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600, marginBottom: 2 }}>Correct</div>
+                <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{myEntry.correctCount}<span style={{ fontSize: 18, color: '#52525b' }}>/{myEntry.totalCount}</span></div>
+              </div>
+              <span style={{ fontSize: 11, color: '#6085FF', marginLeft: 4 }}>리뷰 →</span>
             </button>
           ) : (
-            <button onClick={() => { setCurrentIndex(0); setPhase('review'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8, cursor: 'pointer' }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{correctCount} / {QUESTIONS.length}</span>
-              <span style={{ fontSize: 14, color: '#a1a1aa' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</span>
-              <span style={{ fontSize: 10, color: '#6085FF' }}>리뷰 →</span>
+            <button onClick={() => { setCurrentIndex(0); setPhase('review'); }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, width: '100%', background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.35)', borderRadius: 14, padding: '16px 24px', cursor: 'pointer' }}>
+              <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em' }}>{correctCount}<span style={{ fontSize: 20, color: '#52525b' }}>/{QUESTIONS.length}</span></div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: '#a1a1aa' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</div>
+              <span style={{ fontSize: 11, color: '#6085FF' }}>리뷰 →</span>
             </button>
           )}
         </div>
 
-        <div style={{ width: '100%', maxWidth: 400, padding: '4px 24px 8px', flexShrink: 0 }}>
-          <div style={{ fontSize: 10, color: '#27272a', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' }}>
-            — {lb.length} students —
+        {/* 리더보드 헤더 */}
+        <div style={{ width: '100%', maxWidth: 480, padding: '8px 24px 6px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+            <span style={{ fontSize: 11, color: '#3f3f46', fontWeight: 600, letterSpacing: '0.08em' }}>{lb.length} students</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
           </div>
         </div>
 
-        <div style={{ width: '100%', maxWidth: 400, flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+        {/* 리더보드 목록 */}
+        <div style={{ width: '100%', maxWidth: 480, flex: 1, overflowY: 'auto', padding: '0 16px' }}>
           {lb.map((entry, i) => {
             const isMe = entry.maskedId === myMasked;
             return (
-              <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '11px 8px', borderRadius: isMe ? 8 : 0, marginBottom: isMe ? 2 : 0, borderBottom: isMe ? 'none' : '1px solid rgba(255,255,255,0.05)', gap: 12, background: isMe ? 'rgba(96,133,255,0.1)' : 'transparent', border: isMe ? '1px solid rgba(96,133,255,0.25)' : undefined }}>
-                <span style={{ width: 22, fontSize: 11, fontWeight: 700, color: isMe ? '#6085FF' : rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
-                <span style={{ flex: 1, fontSize: 13, color: isMe ? '#c7d2fe' : i < 3 ? '#e4e4e7' : '#52525b', fontFamily: 'monospace', fontWeight: isMe ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {entry.maskedId}{isMe && <span style={{ fontSize: 10, color: '#6085FF', marginLeft: 6 }}>← you</span>}
+              <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '13px 12px', borderRadius: isMe ? 10 : 0, marginBottom: isMe ? 2 : 0, borderBottom: isMe ? 'none' : '1px solid rgba(255,255,255,0.06)', gap: 14, background: isMe ? 'rgba(96,133,255,0.1)' : 'transparent', border: isMe ? '1px solid rgba(96,133,255,0.25)' : undefined }}>
+                <span style={{ width: 28, fontSize: 15, fontWeight: 700, color: isMe ? '#6085FF' : rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
+                <span style={{ flex: 1, fontSize: 15, color: isMe ? '#c7d2fe' : i < 3 ? '#e4e4e7' : '#a1a1aa', fontFamily: 'monospace', fontWeight: isMe ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {entry.maskedId}{isMe && <span style={{ fontSize: 11, color: '#6085FF', marginLeft: 8 }}>← you</span>}
                 </span>
-                <span style={{ fontSize: 11, color: '#3f3f46', flexShrink: 0, marginRight: 8 }}>{entry.correctCount}/{entry.totalCount}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: isMe ? '#6085FF' : scoreColor(i), flexShrink: 0, minWidth: 36, textAlign: 'right' }}>{entry.score}%</span>
+                <span style={{ fontSize: 13, color: '#52525b', flexShrink: 0, marginRight: 4 }}>{entry.correctCount}/{entry.totalCount}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: isMe ? '#6085FF' : scoreColor(i), flexShrink: 0, minWidth: 46, textAlign: 'right' }}>{entry.score}%</span>
               </div>
             );
           })}
         </div>
 
-        <div style={{ width: '100%', maxWidth: 400, padding: '16px 24px 28px', flexShrink: 0 }}>
+        <div style={{ width: '100%', maxWidth: 480, padding: '12px 24px 24px', flexShrink: 0 }}>
           <button onClick={() => setPhase('test')}
-            style={{ width: '100%', padding: '13px 0', background: 'transparent', color: '#52525b', border: '1px solid #27272a', borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+            style={{ width: '100%', padding: '13px 0', background: 'transparent', color: '#3f3f46', border: '1px solid #27272a', borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
             Back to Practice
           </button>
         </div>
@@ -739,6 +764,14 @@ export default function SeptemberMathPage() {
       {/* Test header — 진단테스트 스타일 */}
       <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{TEST_LABEL}</span>
+        {/* 타이머 — 진단테스트와 동일 */}
+        <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+          {timer.remaining !== null && (
+            <span className={`bluebook-timer ${timer.isWarning ? 'warning' : ''} ${timer.isDanger ? 'danger' : ''}`}>
+              {timer.format(timer.remaining)}
+            </span>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {QUESTIONS.length}</span>
           {/* Calculator button */}
