@@ -311,7 +311,6 @@ export default function SeptemberMathPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState('');
@@ -372,10 +371,6 @@ export default function SeptemberMathPage() {
 
   const handleAnswer = useCallback((qId: string, value: string) => {
     setAnswers(prev => ({ ...prev, [qId]: value }));
-  }, []);
-
-  const handleReveal = useCallback((qId: string) => {
-    setRevealed(prev => ({ ...prev, [qId]: true }));
   }, []);
 
   const handleSubmit = async () => {
@@ -546,8 +541,8 @@ export default function SeptemberMathPage() {
 
   /* ── Test ── */
   const currentQuestion = QUESTIONS[currentIndex] ?? null;
-  const isRevealed = currentQuestion ? !!revealed[currentQuestion.id] : false;
   const userAnswer = currentQuestion ? (answers[currentQuestion.id] ?? '') : '';
+  const isRevealed = submitted;
   const isCorrect = isRevealed && checkAnswer(currentQuestion!, userAnswer);
   const isWrong = isRevealed && !!userAnswer && !checkAnswer(currentQuestion!, userAnswer);
   const isFirst = currentIndex === 0;
@@ -699,14 +694,6 @@ export default function SeptemberMathPage() {
                       </div>
                     );
                   })}
-                  {!isRevealed && userAnswer && (
-                    <button
-                      onClick={() => handleReveal(currentQuestion.id)}
-                      style={{ marginTop: 4, padding: '10px 20px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start' }}
-                    >
-                      Check
-                    </button>
-                  )}
                 </div>
               )}
 
@@ -718,23 +705,15 @@ export default function SeptemberMathPage() {
                     value={userAnswer}
                     onChange={e => handleAnswer(currentQuestion.id, e.target.value)}
                     placeholder="Enter answer"
-                    disabled={isRevealed}
+                    disabled={submitted}
                     className="toss-input"
                     style={{
                       flex: 1,
                       border: `1px solid ${isCorrect ? '#22c55e' : isWrong ? '#ef4444' : '#e5e7eb'}`,
                       background: isCorrect ? '#f0fdf4' : isWrong ? '#fef2f2' : undefined,
                     }}
-                    onKeyDown={e => { if (e.key === 'Enter' && userAnswer && !isRevealed) handleReveal(currentQuestion.id); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && userAnswer && !submitted) handleAnswer(currentQuestion.id, userAnswer); }}
                   />
-                  {!isRevealed && userAnswer && (
-                    <button
-                      onClick={() => handleReveal(currentQuestion.id)}
-                      style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                    >
-                      Check
-                    </button>
-                  )}
                 </div>
               )}
 
