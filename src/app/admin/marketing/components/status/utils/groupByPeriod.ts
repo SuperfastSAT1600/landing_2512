@@ -1,6 +1,7 @@
 import { MARKETING_GROUPS } from '@/lib/marketing-groups';
 import type { MarketingGroup } from '@/lib/marketing-groups';
 import type { MarketingDailyRow } from '@/types/marketing';
+import { monthWeekLabel } from '@/lib/marketing-week';
 
 export interface WeekRow {
   key: string;
@@ -52,35 +53,14 @@ function addDays(dateStr: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** 해당 월 기준 몇 번째 월요일 주인지 (1-based) */
-function weekOfMonth(weekStartStr: string): number {
-  const ws = new Date(weekStartStr + 'T00:00:00');
-  const year = ws.getFullYear();
-  const month = ws.getMonth();
-  // 해당 월 1일의 첫 번째 월요일 주 시작
-  let count = 0;
-  for (let d = new Date(year, month, 1); d <= ws; d.setDate(d.getDate() + 7)) {
-    // 이 날이 속한 주의 월요일
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    const monDate = new Date(d);
-    monDate.setDate(monDate.getDate() + diff);
-    if (monDate.getMonth() <= month) count++;
-  }
-  return count;
-}
-
+/** 목요일 기준 달 소속 주차 라벨 + 날짜 범위 */
 function makeWeekLabel(weekStart: string, weekEnd: string): string {
-  const ws = new Date(weekStart + 'T00:00:00');
-  const year = ws.getFullYear();
-  const month = ws.getMonth() + 1;
-  const wNum = weekOfMonth(weekStart);
+  const label = monthWeekLabel(weekStart); // 예: '26년 09월 01주차'
   const sM = new Date(weekStart + 'T00:00:00').getMonth() + 1;
   const sD = new Date(weekStart + 'T00:00:00').getDate();
   const eM = new Date(weekEnd + 'T00:00:00').getMonth() + 1;
   const eD = new Date(weekEnd + 'T00:00:00').getDate();
-  const range = `${sM}/${sD}~${eM}/${eD}`;
-  return `${year}년 ${month}월 W${wNum} (${range})`;
+  return `${label} (${sM}/${sD}~${eM}/${eD})`;
 }
 
 export function groupByWeek(rows: MarketingDailyRow[], spendByDate: Record<string, number> = {}): WeekRow[] {
