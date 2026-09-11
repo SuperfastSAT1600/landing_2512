@@ -1149,10 +1149,13 @@ export interface RenewalWeeklyStat {
   // carried_in 은 selected 자체를 '신규 / 이월유입'으로 분할한다. 섞어 쓰면 안 된다.
   carried_out: number;
   carried_in: number;
-  // 결제 완료 건에 연결된 payments.amount 합계(원). amount_missing 은 그 합계에 잡히지 않은
-  // 결제 완료 건 수 — 금액이 실제보다 적게 보일 수 있음을 드러낸다.
+  // 그 주차 결제 완료 건의 실제 결제 금액 합계(원). amount_missing 은 결제 기록을 끝내 찾지
+  // 못해 그 합계에서 빠진 건수 — 금액이 실제보다 적게 보일 수 있음을 드러낸다.
   completed_amount: number;
   amount_missing: number;
+  // 그 주차에 찍혔지만 보드의 어느 대상도 가져가지 않은 재결제 금액(원).
+  // completed_amount + off_board_amount = 그 주차 재결제 총액(Business 기준).
+  off_board_amount: number;
 }
 
 /** 추천 API 응답 1건 — 아직 저장되지 않은 후보. */

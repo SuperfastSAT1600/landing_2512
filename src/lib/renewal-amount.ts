@@ -4,7 +4,7 @@
 // 4단계가 되고, 결제는 다른 화면에서 기록될 수 있다. 그래서 링크만 합산하면 실제로 들어온 돈이
 // 조용히 빠진다. 금액의 출처는 언제나 payments 이고, 링크는 정확도를 높이는 힌트로만 쓴다.
 
-import { getWeekDefByStart } from './week-definitions';
+import { getWeekDef, getWeekDefByStart } from './week-definitions';
 
 export interface CompletedTargetRow {
   week_start: string;
@@ -24,6 +24,11 @@ export interface WeekAmount {
   completed_amount: number;
   /** 결제를 끝내 찾지 못한 결제 완료 건 수 — 합계가 실제보다 적을 수 있음을 드러낸다. */
   amount_missing: number;
+  /**
+   * 그 주차에 찍혔지만 보드의 어느 대상도 가져가지 않은 재결제 금액(원).
+   * 보드에 올리지 않고 재결제된 건 — Business 의 재결제와 퍼널 결제액의 차이가 곧 이 값이다.
+   */
+  off_board_amount: number;
 }
 
 /** paid_at(timestamptz) → KST 날짜. 주차 경계는 KST 기준이라 UTC 로 자르면 하루 밀린다. */
@@ -45,7 +50,8 @@ export function resolveWeeklyAmounts(
 ): Map<string, WeekAmount> {
   const byWeek = new Map<string, WeekAmount>();
   const weekOf = (weekStart: string) => {
-    const found = byWeek.get(weekStart) ?? { completed_amount: 0, amount_missing: 0 };
+    const found =
+      byWeek.get(weekStart) ?? { completed_amount: 0, amount_missing: 0, off_board_amount: 0 };
     byWeek.set(weekStart, found);
     return found;
   };
@@ -85,6 +91,15 @@ export function resolveWeeklyAmounts(
       counts.completed_amount += m.amount!;
       claimed.add(m.id);
     }
+  }
+
+  // 남은 재결제는 보드가 아예 추적하지 않은 돈이다 — 결제일이 속한 주차에 그대로 붙인다.
+  // 선정 주차로 밀 수 없다. 보드에 없는 건이라 코호트가 존재하지 않는다.
+  for (const p of renewalPayments) {
+    if (claimed.has(p.id) || typeof p.amount !== 'number') continue;
+    const week = getWeekDef(kstDate(p.paid_at));
+    if (!week) continue;
+    weekOf(week.start).off_board_amount += p.amount;
   }
 
   return byWeek;
