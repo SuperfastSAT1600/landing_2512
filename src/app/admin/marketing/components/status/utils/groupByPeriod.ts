@@ -68,6 +68,7 @@ function weekOfMonth(weekStartStr: string): number {
 
 function makeWeekLabel(weekStart: string, weekEnd: string): string {
   const ws = new Date(weekStart + 'T00:00:00');
+  const year = ws.getFullYear();
   const month = ws.getMonth() + 1;
   const wNum = weekOfMonth(weekStart);
   const sM = new Date(weekStart + 'T00:00:00').getMonth() + 1;
@@ -75,7 +76,7 @@ function makeWeekLabel(weekStart: string, weekEnd: string): string {
   const eM = new Date(weekEnd + 'T00:00:00').getMonth() + 1;
   const eD = new Date(weekEnd + 'T00:00:00').getDate();
   const range = `${sM}/${sD}~${eM}/${eD}`;
-  return `${month}월 W${wNum} (${range})`;
+  return `${year}년 ${month}월 W${wNum} (${range})`;
 }
 
 export function groupByWeek(rows: MarketingDailyRow[]): WeekRow[] {
