@@ -55,13 +55,15 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                 placement: 'bottom',
                 offset: 8,
             }}
-            shouldShow={({ editor: e, state }) => {
-                const inTable = e.isActive('table') || e.isActive('tableCell') || e.isActive('tableHeader');
-                if (!inTable) return false;
-                // 텍스트 선택 시엔 상단 FormattingToolbar로 서식 처리 — 표 컨트롤만 표시
+            shouldShow={({ state }) => {
                 const { selection } = state;
-                if (selection && !selection.empty) return false;
-                return true;
+                if (!selection.empty) return false;
+                const $from = selection.$from;
+                for (let d = $from.depth; d > 0; d--) {
+                    const name = $from.node(d).type.name;
+                    if (name === 'tableCell' || name === 'tableHeader') return true;
+                }
+                return false;
             }}
         >
             <div className="flex flex-col gap-0 bg-[#1e2023] border border-white/10 rounded-lg shadow-xl overflow-hidden">
