@@ -418,6 +418,27 @@ Ghost 버전 대비 추가 요소 (분량 추가 아닌 밀도 강화):
 
 ## 랜딩 페이지 전용 마크업
 
+### 이미지 캡션 표준 (`<figcaption>`)
+
+본문 이미지 아래에 출처·설명이 필요할 때 `<figure>` + `<figcaption>` 구조를 사용한다.
+랜딩 페이지 CSS가 자동으로 `△ ` 접두어를 붙인다.
+
+```markdown
+<figure>
+  <img src="..." alt="설명" />
+  <figcaption>출처: College Board SAT Practice Test 1</figcaption>
+</figure>
+```
+
+렌더링 결과: `△ 출처: College Board SAT Practice Test 1`
+
+**규칙:**
+- `<figcaption>` 텍스트 앞에 `△`를 직접 쓰지 않는다 (CSS가 자동 삽입).
+- 이미지 출처, 차트 설명, 스크린샷 주석에만 사용한다.
+- Ghost·네이버 버전에서는 일반 이탤릭 텍스트로 대체한다.
+
+---
+
 ### 동적 하이라이트 (`<mark>`)
 
 본문에서 "이 부분이 중요하다"고 강조하고 싶은 문구에 `<mark>` 태그를 사용한다.
