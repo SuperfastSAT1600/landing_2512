@@ -6,15 +6,20 @@ import { join } from 'path';
 
 type Params = { params: Promise<{ id: string }> };
 
-const TEACHER_INTRO_SKILL = readFileSync(
-  join(process.cwd(), 'Docs/teacher-intro-skill.md'),
-  'utf-8'
-);
+let _teacherIntroSkill: string | null = null;
 
-const SYSTEM_PROMPT = `당신은 SAT/AP 과외 선생님의 소개 글을 작성하는 전문가입니다.
+function getSystemPrompt(): string {
+  if (!_teacherIntroSkill) {
+    _teacherIntroSkill = readFileSync(
+      join(process.cwd(), 'Docs/teacher-intro-skill.md'),
+      'utf-8'
+    );
+  }
+  return `당신은 SAT/AP 과외 선생님의 소개 글을 작성하는 전문가입니다.
 아래의 스킬 가이드라인을 따라 선생님 소개 페이지를 작성하세요.
 
-${TEACHER_INTRO_SKILL}`;
+${_teacherIntroSkill}`;
+}
 
 function formatCoachInput(data: Record<string, unknown>): string {
   const lines: string[] = ['[선생님 초안 정보]', ''];
@@ -114,7 +119,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
-      system: SYSTEM_PROMPT,
+      system: getSystemPrompt(),
       messages: [{ role: 'user', content: userInput }],
     }),
   });
