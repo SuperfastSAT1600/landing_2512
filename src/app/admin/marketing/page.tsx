@@ -321,32 +321,11 @@ export default function MarketingPage() {
     <div className="min-h-screen bg-[#151719] text-[#E0E0E0] p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-white">마케팅</h1>
-            <p className="text-sm text-gray-500 mt-0.5">채널별 리드 인입 · 컨택 성공률 · 결제 전환율 · ROI</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <input type="date" value={appliedFrom}
-              onChange={(e) => { setAppliedFrom(e.target.value); setActivePreset(null); }}
-              className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
-            <span className="text-gray-500 text-sm">~</span>
-            <input type="date" value={appliedTo}
-              onChange={(e) => { setAppliedTo(e.target.value); setActivePreset(null); }}
-              className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-white">마케팅</h1>
+          <p className="text-sm text-gray-500 mt-0.5">채널별 리드 인입 · 컨택 성공률 · 결제 전환율 · ROI</p>
         </div>
         <MarketingTabs active="/admin/marketing" />
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-gray-500">빠른 선택:</span>
-          {PRESETS.map(({ label, fn }) => (
-            <button key={label}
-              onClick={() => { const r = fn(); applyPreset(label, r.from, r.to); }}
-              className={`text-xs px-3 py-1.5 rounded-md transition-colors font-medium ${
-                activePreset === label ? 'bg-blue-600 text-white' : 'bg-[#1e2023] text-gray-400 hover:text-white hover:bg-white/10'
-              }`}>{label}</button>
-          ))}
-        </div>
       </div>
 
       {/* ── 이번 주 헬스체크 ── */}
@@ -374,6 +353,29 @@ export default function MarketingPage() {
 
       {/* ── 채널별 현황 ── */}
       {weekly && !weeklyLoading && <ChannelHealthTable weekly={weekly} />}
+
+      {/* ── 기간 선택 ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500">빠른 선택:</span>
+          {PRESETS.map(({ label, fn }) => (
+            <button key={label}
+              onClick={() => { const r = fn(); applyPreset(label, r.from, r.to); }}
+              className={`text-xs px-3 py-1.5 rounded-md transition-colors font-medium ${
+                activePreset === label ? 'bg-blue-600 text-white' : 'bg-[#1e2023] text-gray-400 hover:text-white hover:bg-white/10'
+              }`}>{label}</button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <input type="date" value={appliedFrom}
+            onChange={(e) => { setAppliedFrom(e.target.value); setActivePreset(null); }}
+            className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
+          <span className="text-gray-500 text-sm">~</span>
+          <input type="date" value={appliedTo}
+            onChange={(e) => { setAppliedTo(e.target.value); setActivePreset(null); }}
+            className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
+        </div>
+      </div>
 
       {/* ── 기간별 상세 ── */}
       {loading ? (
