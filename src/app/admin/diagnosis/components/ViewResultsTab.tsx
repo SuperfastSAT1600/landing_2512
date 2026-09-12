@@ -9,6 +9,7 @@ interface TestResult {
   student_name: string;
   submitted_at: string;
   total_time_seconds: number;
+  test_id: string;
   answeredCount: number;
   totalQuestions: number;
   correctCount: number;
@@ -162,6 +163,7 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-600">
+                <th className="text-left py-3 px-4 font-semibold">버전</th>
                 <th className="text-left py-3 px-4 font-semibold">학생명</th>
                 <th className="text-left py-3 px-4 font-semibold">이메일</th>
                 <th className="text-left py-3 px-4 font-semibold">응시 날짜</th>
@@ -177,6 +179,15 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
             <tbody>
               {results.map((result) => (
                 <tr key={result.id} className="border-b border-gray-700 hover:bg-gray-700/50">
+                  <td className="py-3 px-4">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      result.test_id === 'diagnostic-test-2'
+                        ? 'bg-purple-500/20 text-purple-300'
+                        : 'bg-blue-500/20 text-blue-300'
+                    }`}>
+                      {result.test_id === 'diagnostic-test-2' ? 'v2' : 'v1'}
+                    </span>
+                  </td>
                   <td className="py-3 px-4">{result.student_name}</td>
                   <td className="py-3 px-4 break-all">{result.student_email}</td>
                   <td className="py-3 px-4">{formatDate(result.submitted_at)}</td>
