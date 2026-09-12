@@ -9,6 +9,7 @@ import ComparePanel from '../components/status/ComparePanel';
 import ChannelSignalCards from '../components/status/ChannelSignalCards';
 import { groupByWeek, groupByMonth } from '../components/status/utils/groupByPeriod';
 import { classifyChannelSignals } from '../components/status/utils/signalUtils';
+import WeeklyTotalChart from '../components/status/WeeklyTotalChart';
 import { MARKETING_GROUPS, GROUP_COLORS } from '@/lib/marketing-groups';
 import type { MarketingGroup } from '@/lib/marketing-groups';
 
@@ -171,6 +172,32 @@ export default function MarketingStatusPage() {
       {/* ── Part C: 채널 시그널 ── */}
       <SectionLabel label="채널 시그널" />
       <ChannelSignalCards signals={signals} loading={weeklyLoading} />
+
+      {/* ── Part D: 주별 전체 리드 그래프 ── */}
+      <SectionLabel label="주별 전체 리드" />
+      <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="text-white font-semibold">주별 전체 리드 추이</h3>
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-3 h-3 rounded-sm bg-indigo-500/70" />전체 리드
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-5 h-0.5 bg-emerald-400" />8주 이동평균
+            </span>
+            {weekly?.weekly_target && (
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-5 h-0.5 bg-amber-400/70 border-dashed border-t border-amber-400" />목표
+              </span>
+            )}
+          </div>
+        </div>
+        {recentDailyLoading ? (
+          <div className="h-[240px] bg-white/5 rounded animate-pulse" />
+        ) : (
+          <WeeklyTotalChart rows={weekRows} weeklyTarget={weekly?.weekly_target ?? null} />
+        )}
+      </div>
 
       {/* ── Part A: 인입 트래킹 ── */}
       <SectionLabel label="인입 현황" />
