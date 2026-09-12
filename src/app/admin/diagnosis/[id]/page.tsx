@@ -7,6 +7,8 @@ import { TestResult } from '@/types/diagnosis';
 import { QuestionStat } from '@/lib/diagnosis-analysis';
 import QuestionStatCard from './QuestionStatCard';
 import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
+import { diagnosticTest2Vocab } from '@/app/diagnosis/data/diagnostic-test-2-vocab';
+import type { VocabAnswer, RWSequentialAnswer } from '@/types/diagnosis';
 
 export default function AdminDiagnosisDetailPage() {
   const params = useParams();
@@ -143,7 +145,23 @@ export default function AdminDiagnosisDetailPage() {
     );
   }
 
-  const answers = (result.answers || {}) as Record<string, string>;
+  const rawAnswers = (result.answers || {}) as Record<string, unknown>;
+  const isV2 = rawAnswers.__v2__ === true;
+
+  let answers: Record<string, string>;
+  if (isV2) {
+    const vocab = (rawAnswers.vocab as VocabAnswer[]) ?? [];
+    const rw = (rawAnswers.rw as RWSequentialAnswer[]) ?? [];
+    const math = (rawAnswers.math as Record<string, string>) ?? {};
+    answers = {
+      ...math,
+      ...Object.fromEntries(rw.map(r => [r.questionId, r.finalAnswer])),
+      ...Object.fromEntries(vocab.map(v => [v.wordId, v.selectedOptionId ?? ''])),
+    };
+  } else {
+    answers = rawAnswers as Record<string, string>;
+  }
+
   const confidenceLevels = (result.confidenceLevels || {}) as Record<string, number>;
   const questionTimes = (result.questionTimes || {}) as Record<string, number>;
   const flaggedQuestions = (result.flaggedQuestions || []) as string[];
@@ -153,6 +171,12 @@ export default function AdminDiagnosisDetailPage() {
     correctAnswersMap[q.id] = q.type === 'multiple-choice'
       ? (q.options?.find(o => o.type === 'correct')?.id ?? '')
       : (q.answers?.[0] ?? '');
+  }
+  if (isV2) {
+    for (const v of diagnosticTest2Vocab) {
+      const correctOption = v.options.find(o => o.type === 'correct');
+      if (correctOption) correctAnswersMap[v.id] = correctOption.id;
+    }
   }
 
   return (
