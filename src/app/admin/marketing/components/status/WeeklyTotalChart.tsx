@@ -6,6 +6,35 @@ import {
 } from 'recharts';
 import type { WeekRow } from './utils/groupByPeriod';
 
+interface TooltipEntry {
+  dataKey: string;
+  value: number | null;
+  payload?: { fullLabel?: string };
+}
+
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) {
+  if (!active || !payload?.length) return null;
+  const totalEntry = payload.find((p) => p.dataKey === 'total');
+  const ma8Entry = payload.find((p) => p.dataKey === 'ma8');
+  const fullLabel = totalEntry?.payload?.fullLabel ?? label;
+
+  return (
+    <div className="bg-[#1e2023] border border-white/10 rounded-xl px-4 py-3 shadow-xl min-w-[140px]">
+      <p className="text-gray-400 text-xs mb-2">{fullLabel}</p>
+      {totalEntry != null && (
+        <p className="text-white font-bold text-xl leading-none">
+          {totalEntry.value}<span className="text-sm font-normal text-gray-400 ml-1">명</span>
+        </p>
+      )}
+      {ma8Entry?.value != null && (
+        <p className="text-emerald-400 text-xs mt-1.5">
+          8주 평균 {ma8Entry.value}명
+        </p>
+      )}
+    </div>
+  );
+}
+
 interface Props {
   rows: WeekRow[];
   weeklyTarget?: number | null;
@@ -68,23 +97,7 @@ export default function WeeklyTotalChart({ rows, weeklyTarget }: Props) {
           axisLine={false}
           domain={[0, yMax]}
         />
-        <Tooltip
-          contentStyle={{
-            background: '#1e2023',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 8,
-            fontSize: 12,
-          }}
-          labelStyle={{ color: '#e0e0e0', fontSize: 12, marginBottom: 4 }}
-          formatter={(value: unknown, name: unknown) => {
-            const v = value as number;
-            const n = name as string;
-            if (n === 'total') return [`${v}명`, '전체 리드'];
-            if (n === 'ma8') return v != null ? [`${v}명`, '8주 이동평균'] : [``, ''];
-            return [`${v}`, `${n}`];
-          }}
-          labelFormatter={(_label, payload) => payload?.[0]?.payload?.fullLabel ?? _label}
-        />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
 
         {/* 전체 평균 기준선 */}
         <ReferenceLine
