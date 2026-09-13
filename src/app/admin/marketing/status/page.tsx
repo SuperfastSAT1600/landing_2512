@@ -167,6 +167,40 @@ export default function MarketingStatusPage() {
           <p className="text-sm text-gray-500 mt-0.5">채널별 리드 인입 추이 · 기간 비교 · 시그널 감지</p>
         </div>
         <MarketingTabs active="/admin/marketing/status" />
+        {/* 전역 기간 선택 */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500 mr-1">조회 기간</span>
+          {PRESETS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setRangePreset(key)}
+              className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors border ${
+                rangePreset === key
+                  ? 'bg-blue-600 border-blue-500 text-white'
+                  : 'border-white/10 text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+          {rangePreset === 'custom' && (
+            <>
+              <input
+                type="date"
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="text-xs bg-[#1e2023] border border-white/10 rounded-md px-2 py-1 text-gray-300 [color-scheme:dark]"
+              />
+              <span className="text-gray-600 text-xs">~</span>
+              <input
+                type="date"
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="text-xs bg-[#1e2023] border border-white/10 rounded-md px-2 py-1 text-gray-300 [color-scheme:dark]"
+              />
+            </>
+          )}
+        </div>
       </div>
 
       {/* ── Part C: 채널 시그널 ── */}
@@ -217,39 +251,6 @@ export default function MarketingStatusPage() {
                 onChange={setView}
               />
             </div>
-            {/* 기간 선택 */}
-            <div className="flex items-center gap-1.5 flex-wrap justify-end">
-              {PRESETS.map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setRangePreset(key)}
-                  className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors border ${
-                    rangePreset === key
-                      ? 'bg-blue-600 border-blue-500 text-white'
-                      : 'border-white/10 text-gray-500 hover:text-gray-300'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            {rangePreset === 'custom' && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={customFrom}
-                  onChange={(e) => setCustomFrom(e.target.value)}
-                  className="text-xs bg-[#151719] border border-white/10 rounded-md px-2 py-1 text-gray-300 [color-scheme:dark]"
-                />
-                <span className="text-gray-600 text-xs">~</span>
-                <input
-                  type="date"
-                  value={customTo}
-                  onChange={(e) => setCustomTo(e.target.value)}
-                  className="text-xs bg-[#151719] border border-white/10 rounded-md px-2 py-1 text-gray-300 [color-scheme:dark]"
-                />
-              </div>
-            )}
             <ChannelFilter selected={selectedChannels} onChange={setSelectedChannels} />
           </div>
         </div>
