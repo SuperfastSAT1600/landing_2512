@@ -148,9 +148,10 @@ export async function getPostData(id: string): Promise<PostData> {
 
     const rawContent = (data.content as string) || '';
     const isHtml = rawContent.trim().startsWith('<');
-    const contentHtml = isHtml
+    const renderedHtml = isHtml
         ? rawContent
         : (await remark().use(html, { allowDangerousHtml: true }).process(rawContent)).toString();
+    const contentHtml = renderedHtml.replace(/^\s*<h1[^>]*>[\s\S]*?<\/h1>\s*/i, '');
 
     return {
         ...mapRow(data),
