@@ -554,15 +554,102 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               color="bg-red-50 text-red-500"
               onClick={() => setDetail({ metric: 'refund', label: '환불' })}
             />
-            <OverviewCard
-              icon={TrendingUp}
-              label="순매출"
-              value={fmt만원(d.overview.total_revenue)}
-              title={fmt원(d.overview.total_revenue)}
-              sub="총매출 − 환불"
-              color="bg-purple-50 text-purple-600"
-              onClick={() => setDetail({ metric: 'net_revenue', label: '순매출' })}
-            />
+            {/* 순매출 + 결제 유형별 구성 — 순매출 카드 바로 아래에 표시 */}
+            <div className="flex flex-col gap-2">
+              <OverviewCard
+                icon={TrendingUp}
+                label="순매출"
+                value={fmt만원(d.overview.total_revenue)}
+                title={fmt원(d.overview.total_revenue)}
+                sub="총매출 − 환불"
+                color="bg-purple-50 text-purple-600"
+                onClick={() => setDetail({ metric: 'net_revenue', label: '순매출' })}
+              />
+              {/* 결제 유형별 구성 — 순매출의 세부 내역 */}
+              <div className="pl-2 border-l-2 border-purple-100 space-y-1.5">
+                {(() => {
+                  const gross = d.overview.gross_revenue;
+                  const firstAmt = d.overview.first_payment_revenue;
+                  const reAmt = d.overview.repayment_revenue;
+                  const firstPct = gross > 0 ? Math.round((firstAmt / gross) * 100) : 0;
+                  const rePct = gross > 0 ? Math.round((reAmt / gross) * 100) : 0;
+                  const refundAmt = d.overview.total_refund;
+
+                  return (
+                    <>
+                      {/* 최초결제 */}
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setDetail({ metric: 'first_payment', label: '최초결제' })}
+                          className="w-full flex items-baseline justify-between gap-2 rounded-md py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-gray-400">최초결제</span>
+                            <span className="text-[10px] text-gray-300 tabular-nums">{firstPct}%</span>
+                          </span>
+                          <span title={fmt원(firstAmt)} className="text-sm font-semibold text-gray-800 tabular-nums whitespace-nowrap">
+                            {fmt만원(firstAmt)}
+                          </span>
+                        </button>
+                        {isSingleMonth && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {(() => {
+                              const rate = achievementRate(firstAmt, firstTarget?.target_amount);
+                              if (rate === null) return <span className="text-[10px] text-gray-300">목표 미설정</span>;
+                              return (
+                                <>
+                                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${rateColor(rate)}`}>{rate}% 달성</span>
+                                  <span className="text-[10px] text-gray-400">/ 목표 {fmt만원(firstTarget!.target_amount)}</span>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                      {/* 재결제 */}
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setDetail({ metric: 'repayment', label: '재결제' })}
+                          className="w-full flex items-baseline justify-between gap-2 rounded-md py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-gray-400">재결제</span>
+                            <span className="text-[10px] text-gray-300 tabular-nums">{rePct}%</span>
+                          </span>
+                          <span title={fmt원(reAmt)} className="text-sm font-semibold text-gray-600 tabular-nums whitespace-nowrap">
+                            {fmt만원(reAmt)}
+                          </span>
+                        </button>
+                        {isSingleMonth && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {(() => {
+                              const rate = achievementRate(reAmt, reTarget?.target_amount);
+                              if (rate === null) return <span className="text-[10px] text-gray-300">목표 미설정</span>;
+                              return (
+                                <>
+                                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${rateColor(rate)}`}>{rate}% 달성</span>
+                                  <span className="text-[10px] text-gray-400">/ 목표 {fmt만원(reTarget!.target_amount)}</span>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                      {/* 환불 */}
+                      {refundAmt < 0 && (
+                        <div className="flex items-baseline justify-between pt-1 border-t border-gray-50">
+                          <span className="text-[11px] text-gray-300">환불 차감</span>
+                          <span className="text-[11px] text-red-400 tabular-nums">−{fmt만원(-refundAmt)}</span>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-gray-300">클릭하면 세부 내역</p>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
             <OverviewCard
               icon={TrendingUp}
               label="순 수익"
@@ -572,91 +659,6 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               color="bg-emerald-50 text-emerald-600"
               onClick={() => setDetail({ metric: 'net_profit', label: '순 수익' })}
             />
-            {/* 결제 유형별 구성 — 비중 + 달성률 */}
-            <div className="flex-1 min-w-[180px] py-1">
-              <p className="text-xs text-gray-400 mb-2">결제 유형별 구성</p>
-              {(() => {
-                const gross = d.overview.gross_revenue;
-                const firstAmt = d.overview.first_payment_revenue;
-                const reAmt = d.overview.repayment_revenue;
-                const firstPct = gross > 0 ? Math.round((firstAmt / gross) * 100) : 0;
-                const rePct = gross > 0 ? Math.round((reAmt / gross) * 100) : 0;
-                const refundAmt = d.overview.total_refund; // 음수
-
-                return (
-                  <div className="space-y-2">
-                    {/* 최초결제 */}
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setDetail({ metric: 'first_payment', label: '최초결제' })}
-                        className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-gray-400">최초결제</span>
-                          <span className="text-[10px] text-gray-300 tabular-nums">{firstPct}%</span>
-                        </span>
-                        <span title={fmt원(firstAmt)} className="text-base font-semibold text-gray-900 tabular-nums whitespace-nowrap">
-                          {fmt만원(firstAmt)}
-                        </span>
-                      </button>
-                      {isSingleMonth && (
-                        <div className="flex items-center gap-1 mt-0.5 px-1">
-                          {(() => {
-                            const rate = achievementRate(firstAmt, firstTarget?.target_amount);
-                            if (rate === null) return <span className="text-[10px] text-gray-300">목표 미설정</span>;
-                            return (
-                              <>
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${rateColor(rate)}`}>{rate}% 달성</span>
-                                <span className="text-[10px] text-gray-400">/ 목표 {fmt만원(firstTarget!.target_amount)}</span>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                    {/* 재결제 */}
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setDetail({ metric: 'repayment', label: '재결제' })}
-                        className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-gray-400">재결제</span>
-                          <span className="text-[10px] text-gray-300 tabular-nums">{rePct}%</span>
-                        </span>
-                        <span title={fmt원(reAmt)} className="text-base font-semibold text-gray-700 tabular-nums whitespace-nowrap">
-                          {fmt만원(reAmt)}
-                        </span>
-                      </button>
-                      {isSingleMonth && (
-                        <div className="flex items-center gap-1 mt-0.5 px-1">
-                          {(() => {
-                            const rate = achievementRate(reAmt, reTarget?.target_amount);
-                            if (rate === null) return <span className="text-[10px] text-gray-300">목표 미설정</span>;
-                            return (
-                              <>
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${rateColor(rate)}`}>{rate}% 달성</span>
-                                <span className="text-[10px] text-gray-400">/ 목표 {fmt만원(reTarget!.target_amount)}</span>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                    {/* 환불 합계 */}
-                    {refundAmt < 0 && (
-                      <div className="flex items-baseline justify-between px-1 pt-1 border-t border-gray-50">
-                        <span className="text-[11px] text-gray-300">환불</span>
-                        <span className="text-xs text-red-400 tabular-nums">−{fmt만원(-refundAmt)}</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-              <p className="text-[10px] text-gray-300 mt-2">클릭하면 세부 내역 · 비중은 총 결제 대비</p>
-            </div>
           </div>
 
           {/* Monthly target-vs-actual (전체 탭 기본) / 기존 월별·주차별 추이 */}
