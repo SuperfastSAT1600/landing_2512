@@ -395,8 +395,8 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     })();
   }, [topView, from, to, adminKey]);
 
-  // allMonthly의 net_revenue(순매출)를 월별 실적으로 쓴다 — 목표 대비 비교는 순매출 기준.
-  const actualByMonth = Object.fromEntries(allMonthly.map((m) => [m.month, m.net_revenue]));
+  // allMonthly의 revenue(순매출 = 매출 − 환불)를 월별 실적으로 쓴다 — 목표 대비 비교는 순매출 기준.
+  const actualByMonth = Object.fromEntries(allMonthly.map((m) => [m.month, m.revenue]));
   const targetVsActual = buildSixMonthWindow(monthlyTargets, actualByMonth);
 
   const d = data;
