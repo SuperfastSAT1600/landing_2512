@@ -30,9 +30,11 @@ import {
 } from '../../crm/components/stats-primitives';
 import type { CrmStatsSegment } from '@/lib/crm-stats-core';
 import { buildSixMonthWindow, type MonthlyTargetRow } from '@/lib/business-targets';
+import { buildComparisonRows } from '@/lib/business-comparison';
 import { GlobalSalesPanel } from './GlobalSalesPanel';
 import { MonthlyTargetEditor } from './MonthlyTargetEditor';
 import { TotalOverviewPanel } from './TotalOverviewPanel';
+import PeriodComparisonPanel from './PeriodComparisonPanel';
 
 // 2단 위계: 전체(한국비즈니스+글로벌 합산) / 한국비즈니스(구 B2C+B2B) / 글로벌.
 // "한국비즈니스"를 고르면 그 아래 [합산|B2C|B2B] 보조 탭이 나타난다.
@@ -300,6 +302,14 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const [reTargets, setReTargets] = useState<MonthlyTargetRow[]>([]);
   const [renewalConvRate, setRenewalConvRate] = useState<number | null>(null);
   const [renewalCounts, setRenewalCounts] = useState<{ completed: number; selected: number } | null>(null);
+  // VS 비교 모드
+  const [vsMode, setVsMode] = useState(false);
+  const [presetB, setPresetB] = useState<Preset>('last_month');
+  const [customFromB, setCustomFromB] = useState('');
+  const [customToB, setCustomToB] = useState('');
+  const [dataB, setDataB] = useState<CrmStatsData | null>(null);
+  const [loadingB, setLoadingB] = useState(false);
+  const [renewalRateB, setRenewalRateB] = useState<number | null>(null);
 
   const { from, to } =
     preset === 'custom' ? { from: customFrom, to: customTo } : getPresetRange(preset);
@@ -334,6 +344,36 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     if (preset === 'custom') fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [segment]);
+
+  // B 기간 fetch (VS 모드 전용)
+  const { from: fromB, to: toB } =
+    presetB === 'custom' ? { from: customFromB, to: customToB } : getPresetRange(presetB);
+
+  const fetchStatsB = useCallback(async () => {
+    if (!vsMode || topView !== 'tutoring' || !fromB || !toB || fromB > toB) return;
+    setLoadingB(true);
+    try {
+      const [statsRes, renewalRes] = await Promise.all([
+        fetch(`/api/crm/stats?from=${fromB}&to=${toB}&segment=${segment}`, { headers: { 'x-admin-key': adminKey } }),
+        fetch('/api/crm/renewal-targets/stats?weeks=52', { headers: { 'x-admin-key': adminKey } }),
+      ]);
+      const statsJson = await statsRes.json();
+      if (statsRes.ok) setDataB(statsJson.data as CrmStatsData);
+      if (renewalRes.ok) {
+        const renewalJson = await renewalRes.json();
+        const weeks = (renewalJson.data ?? []) as { week_start: string; completed: number; selected: number }[];
+        const filtered = weeks.filter((w) => w.week_start >= fromB && w.week_start <= toB);
+        const totalSelected = filtered.reduce((s, w) => s + w.selected, 0);
+        const totalCompleted = filtered.reduce((s, w) => s + w.completed, 0);
+        setRenewalRateB(totalSelected > 0 ? Math.round((totalCompleted / totalSelected) * 1000) / 10 : null);
+      }
+    } catch { /* 무시 */ } finally {
+      setLoadingB(false);
+    }
+  }, [vsMode, topView, fromB, toB, segment, adminKey]);
+
+  useEffect(() => { if (vsMode && presetB !== 'custom') fetchStatsB(); }, [vsMode, presetB, fetchStatsB]);
+  useEffect(() => { if (vsMode) fetchStatsB(); }, [vsMode, segment]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 트렌드 그래프 기간(트렌드 전용 프리셋 또는 직접 입력, 상단 기간과 독립)
   const trendRange =
@@ -434,6 +474,8 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
       <div className="flex flex-wrap items-center gap-2">
         {topView === 'tutoring' && (
           <>
+            {/* A 기간 (VS 모드에서는 "A" 레이블 표시) */}
+            {vsMode && <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">A</span>}
             {PRESETS.map(({ key, label }) => (
               <button
                 key={key}
@@ -478,6 +520,67 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               <span className="text-xs text-gray-400 ml-1">
                 {from} ~ {to}
               </span>
+            )}
+
+            {/* VS 기간 비교 토글 */}
+            <button
+              type="button"
+              onClick={() => { setVsMode((v) => !v); setDataB(null); }}
+              className={`ml-2 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                vsMode
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-200 text-gray-500 hover:border-gray-400'
+              }`}
+            >
+              기간 비교
+            </button>
+
+            {/* B 기간 선택 (VS 모드에서만) */}
+            {vsMode && (
+              <div className="flex flex-wrap items-center gap-2 w-full mt-2 pt-2 border-t border-gray-100">
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">B</span>
+                {PRESETS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setPresetB(key)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                      presetB === key
+                        ? 'bg-gray-600 text-white border-gray-600'
+                        : 'border-gray-200 text-gray-500 hover:border-gray-400'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+                {presetB === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={customFromB}
+                      onChange={(e) => setCustomFromB(e.target.value)}
+                      className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+                    />
+                    <span className="text-xs text-gray-400">~</span>
+                    <input
+                      type="date"
+                      value={customToB}
+                      onChange={(e) => setCustomToB(e.target.value)}
+                      className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none"
+                    />
+                    <button
+                      onClick={fetchStatsB}
+                      disabled={!customFromB || !customToB}
+                      className="px-3 py-1.5 bg-gray-700 text-white text-xs font-medium rounded-lg disabled:opacity-40"
+                    >
+                      조회
+                    </button>
+                  </div>
+                )}
+                {loadingB && <RefreshCw size={14} className="animate-spin text-gray-400 ml-1" />}
+                {fromB && toB && !loadingB && (
+                  <span className="text-xs text-gray-400 ml-1">{fromB} ~ {toB}</span>
+                )}
+              </div>
             )}
           </>
         )}
@@ -688,6 +791,34 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               onClick={() => setDetail({ metric: 'net_profit', label: '순 수익' })}
             />
           </div>
+
+          {/* VS 기간 비교 패널 */}
+          {vsMode && (
+            <div className="border-b border-gray-100 pb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-500">기간 비교</h3>
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />A · {from} ~ {to}</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-400 inline-block" />B · {fromB} ~ {toB}</span>
+                </div>
+              </div>
+              {loadingB && (
+                <div className="flex items-center justify-center gap-2 py-8 text-xs text-gray-400">
+                  <RefreshCw size={14} className="animate-spin" /> B 기간 데이터 로딩 중…
+                </div>
+              )}
+              {!loadingB && d && dataB && (
+                <PeriodComparisonPanel
+                  rows={buildComparisonRows(d, dataB, renewalConvRate, renewalRateB)}
+                  labelA={`${from} ~ ${to}`}
+                  labelB={`${fromB} ~ ${toB}`}
+                />
+              )}
+              {!loadingB && d && !dataB && (
+                <p className="text-sm text-gray-400 text-center py-6">B 기간을 선택해 비교하세요.</p>
+              )}
+            </div>
+          )}
 
           {/* Monthly target-vs-actual (전체 탭 기본) / 기존 월별·주차별 추이 */}
           <div className="border-b border-gray-100 pb-6">
