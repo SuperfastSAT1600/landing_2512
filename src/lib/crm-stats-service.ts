@@ -72,8 +72,11 @@ export interface CrmStatsData {
     total_net_revenue: number; // 부가세 제외 실수익
     gross_revenue: number; // 환불 전 총 결제(양수 합)
     total_refund: number; // 환불 합(음수)
-    first_payment_revenue: number; // 최초결제 합(양수)
-    repayment_revenue: number; // 재결제 합(양수)
+    first_payment_revenue: number; // 최초결제 합(양수, 환불 전)
+    repayment_revenue: number; // 재결제 합(양수, 환불 전)
+    net_first_payment_revenue: number; // 최초결제 순매출(직전 결제 귀속 환불 차감)
+    net_repayment_revenue: number; // 재결제 순매출(직전 결제 귀속 환불 차감)
+    unattributed_refund: number; // 귀속 불가 환불(직전 결제 없음, 음수)
     // 기간 내 결제 트랜잭션 건수 — 코호트 전환 인원(paid)과 다른 값이다.
     gross_count: number; // 양수 결제 건수
     refund_count: number; // 환불 건수
@@ -164,6 +167,9 @@ export async function computeCrmStats({
   let totalRefund = 0;
   let firstPaymentRevenue = 0;
   let repaymentRevenue = 0;
+  let netFirstPaymentRevenue = 0;
+  let netRepaymentRevenue = 0;
+  let unattributedRefund = 0;
   let grossCount = 0;
   let refundCount = 0;
   let firstPaymentCount = 0;
@@ -185,6 +191,32 @@ export async function computeCrmStats({
       }
     } else {
       refundCount++;
+    }
+  }
+
+  // 환불을 직전 양수 결제 유형에 귀속시켜 유형별 순매출을 계산한다.
+  // 환불(payment_type='환불')은 별도 유형으로 저장되므로, 학생별 paid_at 오름차순 정렬 후
+  // 환불 직전의 최초결제/재결제를 찾아 해당 유형에서 차감한다.
+  {
+    const byStudent = new Map<string, typeof paymentList>();
+    for (const p of paymentList) {
+      const key = p.student_id ?? p.student_name ?? '__unknown__';
+      if (!byStudent.has(key)) byStudent.set(key, []);
+      byStudent.get(key)!.push(p);
+    }
+    for (const payments of byStudent.values()) {
+      payments.sort((a, b) => a.paid_at.localeCompare(b.paid_at));
+      let lastType: 'first' | 're' | null = null;
+      for (const p of payments) {
+        if (p.amount >= 0) {
+          if (p.payment_type === '최초결제') { netFirstPaymentRevenue += p.amount; lastType = 'first'; }
+          else if (p.payment_type === '재결제') { netRepaymentRevenue += p.amount; lastType = 're'; }
+        } else {
+          if (lastType === 'first') netFirstPaymentRevenue += p.amount;
+          else if (lastType === 're') netRepaymentRevenue += p.amount;
+          else unattributedRefund += p.amount;
+        }
+      }
     }
   }
 
@@ -404,6 +436,9 @@ export async function computeCrmStats({
       total_refund: totalRefund,
       first_payment_revenue: firstPaymentRevenue,
       repayment_revenue: repaymentRevenue,
+      net_first_payment_revenue: netFirstPaymentRevenue,
+      net_repayment_revenue: netRepaymentRevenue,
+      unattributed_refund: unattributedRefund,
       gross_count: grossCount,
       refund_count: refundCount,
       first_payment_count: firstPaymentCount,

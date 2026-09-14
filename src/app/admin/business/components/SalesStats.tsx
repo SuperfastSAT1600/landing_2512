@@ -568,12 +568,12 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               {/* 결제 유형별 구성 — 순매출의 세부 내역 */}
               <div className="pl-2 border-l-2 border-purple-100 space-y-1.5">
                 {(() => {
-                  const gross = d.overview.gross_revenue;
-                  const firstAmt = d.overview.first_payment_revenue;
-                  const reAmt = d.overview.repayment_revenue;
-                  const firstPct = gross > 0 ? Math.round((firstAmt / gross) * 100) : 0;
-                  const rePct = gross > 0 ? Math.round((reAmt / gross) * 100) : 0;
-                  const refundAmt = d.overview.total_refund;
+                  const netFirst = d.overview.net_first_payment_revenue;
+                  const netRe = d.overview.net_repayment_revenue;
+                  const netTotal = d.overview.total_revenue;
+                  const firstPct = netTotal > 0 ? Math.round((netFirst / netTotal) * 100) : 0;
+                  const rePct = netTotal > 0 ? Math.round((netRe / netTotal) * 100) : 0;
+                  const unattributed = d.overview.unattributed_refund; // 귀속 불가 환불(음수)
 
                   return (
                     <>
@@ -588,14 +588,14 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                             <span className="text-[11px] text-gray-400">최초결제</span>
                             <span className="text-[10px] text-gray-300 tabular-nums">{firstPct}%</span>
                           </span>
-                          <span title={fmt원(firstAmt)} className="text-sm font-semibold text-gray-800 tabular-nums whitespace-nowrap">
-                            {fmt만원(firstAmt)}
+                          <span title={fmt원(netFirst)} className="text-sm font-semibold text-gray-800 tabular-nums whitespace-nowrap">
+                            {fmt만원(netFirst)}
                           </span>
                         </button>
                         {isSingleMonth && (
                           <div className="flex items-center gap-1 mt-0.5">
                             {(() => {
-                              const rate = achievementRate(firstAmt, firstTarget?.target_amount);
+                              const rate = achievementRate(netFirst, firstTarget?.target_amount);
                               if (rate === null) return <span className="text-[10px] text-gray-300">목표 미설정</span>;
                               return (
                                 <>
@@ -618,14 +618,14 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                             <span className="text-[11px] text-gray-400">재결제</span>
                             <span className="text-[10px] text-gray-300 tabular-nums">{rePct}%</span>
                           </span>
-                          <span title={fmt원(reAmt)} className="text-sm font-semibold text-gray-600 tabular-nums whitespace-nowrap">
-                            {fmt만원(reAmt)}
+                          <span title={fmt원(netRe)} className="text-sm font-semibold text-gray-600 tabular-nums whitespace-nowrap">
+                            {fmt만원(netRe)}
                           </span>
                         </button>
                         {isSingleMonth && (
                           <div className="flex items-center gap-1 mt-0.5">
                             {(() => {
-                              const rate = achievementRate(reAmt, reTarget?.target_amount);
+                              const rate = achievementRate(netRe, reTarget?.target_amount);
                               if (rate === null) return <span className="text-[10px] text-gray-300">목표 미설정</span>;
                               return (
                                 <>
@@ -637,11 +637,11 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                           </div>
                         )}
                       </div>
-                      {/* 환불 */}
-                      {refundAmt < 0 && (
+                      {/* 미귀속 환불 (직전 결제 없어 유형 특정 불가) */}
+                      {unattributed < 0 && (
                         <div className="flex items-baseline justify-between pt-1 border-t border-gray-50">
-                          <span className="text-[11px] text-gray-300">환불 차감</span>
-                          <span className="text-[11px] text-red-400 tabular-nums">−{fmt만원(-refundAmt)}</span>
+                          <span className="text-[11px] text-gray-300">미귀속 환불</span>
+                          <span className="text-[11px] text-red-400 tabular-nums">−{fmt만원(-unattributed)}</span>
                         </div>
                       )}
                       <p className="text-[10px] text-gray-300">클릭하면 세부 내역</p>
