@@ -298,6 +298,8 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetRow[]>([]);
   const [firstTargets, setFirstTargets] = useState<MonthlyTargetRow[]>([]);
   const [reTargets, setReTargets] = useState<MonthlyTargetRow[]>([]);
+  const [renewalConvRate, setRenewalConvRate] = useState<number | null>(null);
+  const [renewalCounts, setRenewalCounts] = useState<{ completed: number; selected: number } | null>(null);
 
   const { from, to } =
     preset === 'custom' ? { from: customFrom, to: customTo } : getPresetRange(preset);
@@ -373,6 +375,25 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   }, [topView, tutoringSub, adminKey]);
 
   useEffect(() => { fetchMonthlyTargets(); }, [fetchMonthlyTargets]);
+
+  // 재결제 전환율 — renewal_targets 주차 집계를 기간에 맞게 필터링
+  useEffect(() => {
+    if (topView !== 'tutoring' || !from || !to) { setRenewalConvRate(null); setRenewalCounts(null); return; }
+    (async () => {
+      try {
+        const res = await fetch('/api/crm/renewal-targets/stats?weeks=52', { headers: { 'x-admin-key': adminKey } });
+        if (!res.ok) return;
+        const json = await res.json();
+        const weeks = (json.data ?? []) as { week_start: string; completed: number; selected: number }[];
+        const filtered = weeks.filter((w) => w.week_start >= from && w.week_start <= to);
+        const totalSelected = filtered.reduce((s, w) => s + w.selected, 0);
+        const totalCompleted = filtered.reduce((s, w) => s + w.completed, 0);
+        if (totalSelected === 0) { setRenewalConvRate(null); setRenewalCounts(null); return; }
+        setRenewalConvRate(Math.round((totalCompleted / totalSelected) * 1000) / 10);
+        setRenewalCounts({ completed: totalCompleted, selected: totalSelected });
+      } catch { /* 무시: 카드만 '-' 표시 */ }
+    })();
+  }, [topView, from, to, adminKey]);
 
   // allMonthly는 gross_revenue를 월 단위로 이미 담고 있어 별도 fetch 없이 재사용한다.
   const actualByMonth = Object.fromEntries(allMonthly.map((m) => [m.month, m.gross_revenue]));
@@ -530,11 +551,18 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
             />
             <OverviewCard
               icon={CreditCard}
-              label="결제 전환율"
+              label="최초결제 전환율"
               value={`${d.overview.conversion_rate}%`}
               sub={`${d.overview.paid}명 / ${d.overview.contacted}명 · 컨택 성공`}
               color="bg-emerald-50 text-emerald-600"
               onClick={() => setDetail({ metric: 'paid', label: '결제 전환(결제 인원)' })}
+            />
+            <OverviewCard
+              icon={CreditCard}
+              label="재결제 전환율"
+              value={renewalConvRate !== null ? `${renewalConvRate}%` : '-'}
+              sub={renewalCounts ? `${renewalCounts.completed}명 / ${renewalCounts.selected}명 · 재결제 선정` : '기간 내 재결제 선정 없음'}
+              color="bg-teal-50 text-teal-600"
             />
             <OverviewCard
               icon={TrendingUp}
