@@ -41,8 +41,8 @@ import { TotalOverviewPanel } from './TotalOverviewPanel';
 type TopView = 'total' | 'tutoring' | 'global';
 const TOP_TABS: { key: TopView; label: string }[] = [
   { key: 'total', label: '전체' },
-  { key: 'tutoring', label: '한국비즈니스' },
-  { key: 'global', label: '글로벌' },
+  { key: 'global', label: '글로벌 사업' },
+  { key: 'tutoring', label: '한국 사업' },
 ];
 const TUTORING_SUB_TABS: { key: CrmStatsSegment; label: string }[] = [
   { key: 'all', label: '합산' },
@@ -296,6 +296,8 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   // 전체(B2C+B2B) 탭 전용 — 월별 목표 대비 실적. 다른 세그먼트에는 결합 목표가 없어 노출하지 않는다.
   const [monthlyMode, setMonthlyMode] = useState<'target' | 'trend'>('target');
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetRow[]>([]);
+  const [firstTargets, setFirstTargets] = useState<MonthlyTargetRow[]>([]);
+  const [reTargets, setReTargets] = useState<MonthlyTargetRow[]>([]);
 
   const { from, to } =
     preset === 'custom' ? { from: customFrom, to: customTo } : getPresetRange(preset);
@@ -353,15 +355,20 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topView, adminKey, trendRange.from, trendRange.to, segment]);
 
-  // 한국비즈니스 '합산' 탭의 월별 목표 — 결합(B2C+B2B) 목표만 존재하므로 B2C/B2B 단독에서는 조회하지 않는다.
+  // 한국 사업 '합산' 탭의 월별 목표 — 합산·최초결제·재결제 세 payment_type을 모두 조회한다.
   const fetchMonthlyTargets = useCallback(async () => {
     if (topView !== 'tutoring' || tutoringSub !== 'all') return;
     try {
-      const res = await fetch('/api/business/monthly-targets?segment=tutoring', {
-        headers: { 'x-admin-key': adminKey },
-      });
-      const json = await res.json();
-      if (res.ok) setMonthlyTargets(json.data ?? []);
+      const headers = { 'x-admin-key': adminKey };
+      const [allRes, firstRes, reRes] = await Promise.all([
+        fetch('/api/business/monthly-targets?segment=tutoring&payment_type=all', { headers }),
+        fetch('/api/business/monthly-targets?segment=tutoring&payment_type=first', { headers }),
+        fetch('/api/business/monthly-targets?segment=tutoring&payment_type=re', { headers }),
+      ]);
+      const [allJson, firstJson, reJson] = await Promise.all([allRes.json(), firstRes.json(), reRes.json()]);
+      if (allRes.ok) setMonthlyTargets(allJson.data ?? []);
+      if (firstRes.ok) setFirstTargets(firstJson.data ?? []);
+      if (reRes.ok) setReTargets(reJson.data ?? []);
     } catch { /* 무시: 목표 비교만 비어 보임 */ }
   }, [topView, tutoringSub, adminKey]);
 
@@ -372,6 +379,25 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const targetVsActual = buildSixMonthWindow(monthlyTargets, actualByMonth);
 
   const d = data;
+
+  // 단일 월 선택 시 해당 월의 payment_type별 달성률 계산
+  const isSingleMonth = from && to && from.slice(0, 7) === to.slice(0, 7);
+  const currentMonthKey = from ? from.slice(0, 7) : '';
+  const firstTarget = firstTargets.find((t) => t.month.slice(0, 7) === currentMonthKey);
+  const reTarget = reTargets.find((t) => t.month.slice(0, 7) === currentMonthKey);
+
+  function achievementRate(actual: number, target: number | undefined): number | null {
+    if (!target || target <= 0) return null;
+    return Math.round((actual / target) * 100);
+  }
+
+  function rateColor(rate: number): string {
+    if (rate >= 100) return 'text-emerald-600 bg-emerald-50';
+    if (rate >= 80) return 'text-blue-600 bg-blue-50';
+    if (rate >= 60) return 'text-yellow-600 bg-yellow-50';
+    return 'text-red-500 bg-red-50';
+  }
+
   const segmentSub: Record<CrmStatsSegment, string> = {
     all: '문의 기준 · B2C+B2B',
     b2c: '문의 기준 · B2C',
@@ -546,30 +572,76 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
               color="bg-emerald-50 text-emerald-600"
               onClick={() => setDetail({ metric: 'net_profit', label: '순 수익' })}
             />
-            {/* 결제 유형별 매출 (최초/재결제) */}
-            <div className="flex-1 min-w-[130px] py-1">
-              <p className="text-xs text-gray-400 mb-1.5">결제 유형별</p>
-              <div className="space-y-0.5">
-                <button
-                  type="button"
-                  onClick={() => setDetail({ metric: 'first_payment', label: '최초결제' })}
-                  className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
-                >
-                  <span className="text-[11px] text-gray-400">최초결제</span>
-                  <span title={fmt원(d.overview.first_payment_revenue)} className="text-base font-semibold text-gray-900 tabular-nums whitespace-nowrap">
-                    {fmt만원(d.overview.first_payment_revenue)}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDetail({ metric: 'repayment', label: '재결제' })}
-                  className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
-                >
-                  <span className="text-[11px] text-gray-400">재결제</span>
-                  <span title={fmt원(d.overview.repayment_revenue)} className="text-base font-semibold text-gray-700 tabular-nums whitespace-nowrap">
-                    {fmt만원(d.overview.repayment_revenue)}
-                  </span>
-                </button>
+            {/* 결제 유형별 매출 (최초/재결제) + 달성률 */}
+            <div className="flex-1 min-w-[160px] py-1">
+              <p className="text-xs text-gray-400 mb-1.5">결제 유형별{isSingleMonth && ' · 달성률'}</p>
+              <div className="space-y-1.5">
+                {/* 최초결제 */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setDetail({ metric: 'first_payment', label: '최초결제' })}
+                    className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
+                  >
+                    <span className="text-[11px] text-gray-400">최초결제</span>
+                    <span title={fmt원(d.overview.first_payment_revenue)} className="text-base font-semibold text-gray-900 tabular-nums whitespace-nowrap">
+                      {fmt만원(d.overview.first_payment_revenue)}
+                    </span>
+                  </button>
+                  {isSingleMonth && (
+                    <div className="flex items-center gap-1 mt-0.5 px-1">
+                      {(() => {
+                        const rate = achievementRate(d.overview.first_payment_revenue, firstTarget?.target_amount);
+                        if (rate === null) {
+                          return <span className="text-[10px] text-gray-300">목표 미설정</span>;
+                        }
+                        return (
+                          <>
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${rateColor(rate)}`}>
+                              {rate}%
+                            </span>
+                            <span className="text-[10px] text-gray-400">
+                              / 목표 {fmt만원(firstTarget!.target_amount)}
+                            </span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+                {/* 재결제 */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setDetail({ metric: 'repayment', label: '재결제' })}
+                    className="w-full flex items-baseline justify-between gap-2 rounded-md px-1 -mx-1 py-0.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400/40 transition-colors"
+                  >
+                    <span className="text-[11px] text-gray-400">재결제</span>
+                    <span title={fmt원(d.overview.repayment_revenue)} className="text-base font-semibold text-gray-700 tabular-nums whitespace-nowrap">
+                      {fmt만원(d.overview.repayment_revenue)}
+                    </span>
+                  </button>
+                  {isSingleMonth && (
+                    <div className="flex items-center gap-1 mt-0.5 px-1">
+                      {(() => {
+                        const rate = achievementRate(d.overview.repayment_revenue, reTarget?.target_amount);
+                        if (rate === null) {
+                          return <span className="text-[10px] text-gray-300">목표 미설정</span>;
+                        }
+                        return (
+                          <>
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${rateColor(rate)}`}>
+                              {rate}%
+                            </span>
+                            <span className="text-[10px] text-gray-400">
+                              / 목표 {fmt만원(reTarget!.target_amount)}
+                            </span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
               </div>
               <p className="text-[11px] text-gray-400 mt-1.5">클릭하면 세부 내역 · 환불 전</p>
             </div>

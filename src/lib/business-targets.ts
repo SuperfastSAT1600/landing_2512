@@ -4,9 +4,11 @@
 
 export type BusinessTargetSegment = 'tutoring' | 'global';
 export type BusinessTargetCurrency = 'KRW' | 'USD';
+export type BusinessTargetPaymentType = 'all' | 'first' | 're';
 
 export interface MonthlyTargetRow {
   month: string; // 'YYYY-MM-01' 또는 'YYYY-MM'
+  payment_type?: BusinessTargetPaymentType;
   target_amount: number;
   currency: BusinessTargetCurrency;
 }
