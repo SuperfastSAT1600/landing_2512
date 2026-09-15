@@ -88,13 +88,17 @@ export async function GET(request: NextRequest) {
       let answeredCount: number;
       let correctCount: number;
 
+      let vocabAnsweredCount: number | undefined;
+      let vocabCorrectCount: number | undefined;
+
       if (isV2) {
         const vocab = (rawAnswers.vocab as VocabAnswer[]) ?? [];
         const rw = (rawAnswers.rw as RWSequentialAnswer[]) ?? [];
         const math = (rawAnswers.math as Record<string, string>) ?? {};
-        answeredCount = vocab.length + rw.length + Object.keys(math).length;
+        vocabAnsweredCount = vocab.length;
+        vocabCorrectCount = vocab.filter(v => v.isCorrect).length;
+        answeredCount = rw.length + Object.keys(math).length;
         correctCount =
-          vocab.filter(v => v.isCorrect).length +
           rw.filter(r => r.isCorrect).length +
           calcMathCorrect(math);
       } else {
@@ -113,6 +117,11 @@ export async function GET(request: NextRequest) {
         }, 0);
       }
 
+      const allQuestionTimeKeys = Object.keys((item.question_times as Record<string, number>) ?? {});
+      const totalQuestions = isV2
+        ? allQuestionTimeKeys.filter(k => !k.match(/^v\d+$/)).length
+        : allQuestionTimeKeys.length;
+
       return {
         id: item.id,
         student_email: item.student_email,
@@ -121,8 +130,10 @@ export async function GET(request: NextRequest) {
         total_time_seconds: item.total_time_seconds,
         test_id: item.test_id,
         answeredCount,
-        totalQuestions: Object.keys((item.question_times as Record<string, number>) ?? {}).length,
+        totalQuestions,
         correctCount,
+        vocabAnsweredCount,
+        vocabCorrectCount,
         slack_sent_at: item.slack_sent_at ?? null,
         slack_error: item.slack_error ?? null,
       };
