@@ -13,6 +13,8 @@ interface TestResult {
   answeredCount: number;
   totalQuestions: number;
   correctCount: number;
+  vocabAnsweredCount?: number;
+  vocabCorrectCount?: number;
   slack_sent_at: string | null;
   slack_error: string | null;
 }
@@ -192,8 +194,12 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
                   <td className="py-3 px-4 break-all">{result.student_email}</td>
                   <td className="py-3 px-4">{formatDate(result.submitted_at)}</td>
                   <td className="py-3 px-4">{formatTime(result.total_time_seconds)}</td>
-                  <td className="py-3 px-4">{result.answeredCount}/{result.totalQuestions}</td>
-                  <td className="py-3 px-4">{result.correctCount}/{result.totalQuestions}</td>
+                  <td className="py-3 px-4">
+                    <span>{result.answeredCount}/{result.totalQuestions}문제</span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span>{result.correctCount}/{result.totalQuestions}문제</span>
+                  </td>
                   <td className="py-3 px-4">
                     <Link
                       href={`/admin/diagnosis/${result.id}`}
