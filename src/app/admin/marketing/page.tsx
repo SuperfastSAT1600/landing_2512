@@ -58,30 +58,30 @@ function AdSpendModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-[#1e2023] border border-white/10 rounded-xl w-full max-w-sm p-6 space-y-4">
-        <h3 className="text-white font-semibold text-lg">{group} 광고비 입력</h3>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white border border-gray-200 rounded-xl w-full max-w-sm p-6 space-y-4 shadow-xl">
+        <h3 className="text-gray-900 font-semibold text-lg">{group} 광고비 입력</h3>
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">날짜</label>
+            <label className="text-xs text-gray-500 mb-1 block">날짜</label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-blue-500" />
+              className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500" />
           </div>
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">광고비 (원)</label>
+            <label className="text-xs text-gray-500 mb-1 block">광고비 (원)</label>
             <input type="text" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)}
               placeholder="예: 150000"
-              className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-blue-500" />
+              className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500" />
           </div>
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">메모 (선택)</label>
+            <label className="text-xs text-gray-500 mb-1 block">메모 (선택)</label>
             <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="캠페인명 등"
-              className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-blue-500" />
+              className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm outline-none focus:border-blue-500" />
           </div>
-          {error && <p className="text-red-400 text-xs">{error}</p>}
+          {error && <p className="text-red-500 text-xs">{error}</p>}
         </div>
         <div className="flex gap-2 pt-2">
-          <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-white/10 text-gray-400 hover:text-white text-sm transition-colors">취소</button>
+          <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-sm transition-colors">취소</button>
           <button onClick={handleSave} disabled={saving}
             className="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors disabled:opacity-50">
             {saving ? '저장 중...' : '저장'}
@@ -99,51 +99,51 @@ function ChannelCompareTable({ groups, onAddSpend }: {
   onAddSpend: (group: 'META' | '구글 SEO') => void;
 }) {
   const rows = groups.filter((g) => g.group !== '미분류' || g.leads > 0);
-  if (rows.length === 0) return <p className="text-gray-600 text-sm text-center py-8">데이터 없음</p>;
+  if (rows.length === 0) return <p className="text-gray-400 text-sm text-center py-8">데이터 없음</p>;
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/5">
+          <tr className="border-b border-gray-100">
             <th className="text-left py-2.5 pr-4 text-xs text-gray-500 font-medium">채널</th>
             <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">리드</th>
             <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">컨택 성공률</th>
             <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">결제 전환율</th>
             <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">매출</th>
-            <th className="text-right py-2.5 px-3 text-xs text-orange-400 font-medium">광고비</th>
-            <th className="text-right py-2.5 pl-3 text-xs text-yellow-400 font-medium">ROAS</th>
+            <th className="text-right py-2.5 px-3 text-xs text-orange-500 font-medium">광고비</th>
+            <th className="text-right py-2.5 pl-3 text-xs text-amber-600 font-medium">ROAS</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((g) => {
             const isPaid = PAID_GROUPS.includes(g.group as typeof PAID_GROUPS[number]);
             return (
-              <tr key={g.group} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
+              <tr key={g.group} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
                 <td className="py-3 pr-4">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: GROUP_COLORS[g.group] }} />
                     <span className="font-semibold text-xs" style={{ color: GROUP_COLORS[g.group] }}>{g.group}</span>
                   </div>
                 </td>
-                <td className="text-right py-3 px-3 text-white font-semibold">{fmt(g.leads)}</td>
-                <td className="text-right py-3 px-3 text-gray-300">{fmtRate(g.contact_rate)}</td>
-                <td className="text-right py-3 px-3 text-gray-300">{fmtRate(g.conversion_rate)}</td>
-                <td className="text-right py-3 px-3 text-gray-300 text-xs">{fmt(g.revenue)}원</td>
+                <td className="text-right py-3 px-3 text-gray-900 font-semibold">{fmt(g.leads)}</td>
+                <td className="text-right py-3 px-3 text-gray-600">{fmtRate(g.contact_rate)}</td>
+                <td className="text-right py-3 px-3 text-gray-600">{fmtRate(g.conversion_rate)}</td>
+                <td className="text-right py-3 px-3 text-gray-600 text-xs">{fmt(g.revenue)}원</td>
                 <td className="text-right py-3 px-3 text-xs">
                   {isPaid ? (
                     g.ad_spend && g.ad_spend > 0
-                      ? <span className="text-orange-300">{fmt(g.ad_spend)}원</span>
+                      ? <span className="text-orange-600">{fmt(g.ad_spend)}원</span>
                       : <button onClick={() => onAddSpend(g.group as 'META' | '구글 SEO')}
-                          className="text-blue-400 hover:text-blue-300 border border-blue-500/30 rounded px-2 py-0.5 transition-colors">
+                          className="text-blue-600 hover:text-blue-500 border border-blue-300 rounded px-2 py-0.5 transition-colors">
                           + 입력
                         </button>
-                  ) : <span className="text-gray-600">—</span>}
+                  ) : <span className="text-gray-400">—</span>}
                 </td>
                 <td className="text-right py-3 pl-3 text-xs">
                   {isPaid && g.roas != null
-                    ? <span className={g.roas >= 1 ? 'text-emerald-400' : 'text-red-400'}>{g.roas.toFixed(2)}x</span>
-                    : <span className="text-gray-600">—</span>}
+                    ? <span className={g.roas >= 1 ? 'text-emerald-600' : 'text-red-500'}>{g.roas.toFixed(2)}x</span>
+                    : <span className="text-gray-400">—</span>}
                 </td>
               </tr>
             );
@@ -172,8 +172,8 @@ function TrendChart({ daily }: { daily: MarketingDailyRow[] }) {
   if (chartData.length === 0) return null;
 
   return (
-    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5">
-      <h3 className="text-white font-semibold mb-4">일별 리드 인입 추이</h3>
+    <div className="bg-white border border-gray-200 rounded-xl p-5">
+      <h3 className="text-gray-900 font-semibold mb-4">일별 리드 인입 추이</h3>
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
@@ -184,11 +184,11 @@ function TrendChart({ daily }: { daily: MarketingDailyRow[] }) {
               </linearGradient>
             ))}
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11 }} tickLine={false} interval="preserveStartEnd" />
           <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} tickLine={false} axisLine={false} />
-          <Tooltip contentStyle={{ background: '#1e2023', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
-            labelStyle={{ color: '#e0e0e0', fontSize: 12 }} itemStyle={{ fontSize: 11 }} />
+          <Tooltip contentStyle={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+            labelStyle={{ color: '#111827', fontSize: 12 }} itemStyle={{ fontSize: 11 }} />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: '#9ca3af' }} />
           {allChannels.map((ch) => (
             <Area key={ch} type="monotone" dataKey={ch}
@@ -224,9 +224,9 @@ function OverviewStrip({ groups }: { groups: MarketingGroupStats[] }) {
         { label: '결제 전환율', value: fmtRate(convRate) },
         { label: '총 매출', value: `${fmt(totals.revenue)}원` },
       ].map(({ label, value }) => (
-        <div key={label} className="bg-[#1e2023] border border-white/5 rounded-xl p-4">
+        <div key={label} className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs text-gray-500 mb-1">{label}</p>
-          <p className="text-xl font-bold text-white">{value}</p>
+          <p className="text-xl font-bold text-gray-900">{value}</p>
         </div>
       ))}
     </div>
@@ -239,7 +239,7 @@ function SectionLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3">
       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</span>
-      <div className="flex-1 h-px bg-white/5" />
+      <div className="flex-1 h-px bg-gray-200" />
     </div>
   );
 }
@@ -318,11 +318,11 @@ export default function MarketingPage() {
   }, [groups, adSpends]);
 
   return (
-    <div className="min-h-screen bg-[#151719] text-[#E0E0E0] p-6 space-y-6">
+    <div className="min-h-screen bg-white text-gray-800 p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">마케팅</h1>
+          <h1 className="text-2xl font-bold text-gray-900">마케팅</h1>
           <p className="text-sm text-gray-500 mt-0.5">채널별 리드 인입 · 컨택 성공률 · 결제 전환율 · ROI</p>
         </div>
         <MarketingTabs active="/admin/marketing" />
@@ -330,10 +330,10 @@ export default function MarketingPage() {
 
       {/* ── 이번 주 헬스체크 ── */}
       {weeklyLoading ? (
-        <div className="bg-[#1e2023] border border-white/5 rounded-xl p-6 animate-pulse">
-          <div className="h-4 w-48 bg-white/5 rounded mb-4" />
-          <div className="h-10 w-24 bg-white/5 rounded mb-3" />
-          <div className="h-2 w-full bg-white/5 rounded" />
+        <div className="bg-white border border-gray-200 rounded-xl p-6 animate-pulse">
+          <div className="h-4 w-48 bg-gray-100 rounded mb-4" />
+          <div className="h-10 w-24 bg-gray-100 rounded mb-3" />
+          <div className="h-2 w-full bg-gray-100 rounded" />
         </div>
       ) : weekly ? (
         <HeroWidget
@@ -362,18 +362,18 @@ export default function MarketingPage() {
             <button key={label}
               onClick={() => { const r = fn(); applyPreset(label, r.from, r.to); }}
               className={`text-xs px-3 py-1.5 rounded-md transition-colors font-medium ${
-                activePreset === label ? 'bg-blue-600 text-white' : 'bg-[#1e2023] text-gray-400 hover:text-white hover:bg-white/10'
+                activePreset === label ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
               }`}>{label}</button>
           ))}
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
           <input type="date" value={appliedFrom}
             onChange={(e) => { setAppliedFrom(e.target.value); setActivePreset(null); }}
-            className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
           <span className="text-gray-500 text-sm">~</span>
           <input type="date" value={appliedTo}
             onChange={(e) => { setAppliedTo(e.target.value); setActivePreset(null); }}
-            className="bg-[#1e2023] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
         </div>
       </div>
 
@@ -385,8 +385,8 @@ export default function MarketingPage() {
           <SectionLabel label={`${appliedFrom} ~ ${appliedTo} 기간 상세`} />
           <OverviewStrip groups={enrichedGroups} />
 
-          <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5">
-            <h3 className="text-white font-semibold mb-4">채널별 성과 비교</h3>
+          <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <h3 className="text-gray-900 font-semibold mb-4">채널별 성과 비교</h3>
             <ChannelCompareTable
               groups={enrichedGroups}
               onAddSpend={(g) => setAdSpendModal(g)}

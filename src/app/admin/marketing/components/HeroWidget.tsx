@@ -54,19 +54,19 @@ export default function HeroWidget({
     '🔴 목표 미달 예상';
 
   return (
-    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-6 space-y-5">
+    <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
       {/* Title row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${statusDot} ${hasGoal ? 'animate-pulse' : ''}`} />
-          <span className="text-white font-semibold">이번 주 리드 인입</span>
+          <span className="text-gray-900 font-semibold">이번 주 리드 인입</span>
           <span className="text-xs text-gray-500 ml-1">{week_label} · {todayLabel}</span>
         </div>
         <div className="flex items-center gap-3">
           {paceStatus && <span className="text-xs text-gray-500">{paceStatus}</span>}
           <button
             onClick={onSetGoal}
-            className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded px-2 py-1 transition-colors"
+            className="text-xs text-blue-600 hover:text-blue-500 border border-blue-300 rounded px-2 py-1 transition-colors"
           >
             {hasGoal ? '목표 수정' : '목표 설정'}
           </button>
@@ -76,23 +76,23 @@ export default function HeroWidget({
       {/* 목표 대비 진행 */}
       <div>
         <div className="flex items-end gap-3 mb-2">
-          <span className="text-4xl font-bold text-white">{this_week_total}</span>
+          <span className="text-4xl font-bold text-gray-900">{this_week_total}</span>
           {hasGoal ? (
             <>
-              <span className="text-lg text-gray-500 mb-1">/ {weekly_target}개 목표</span>
-              <span className="text-sm text-gray-500 mb-1 ml-auto">
+              <span className="text-lg text-gray-400 mb-1">/ {weekly_target}개 목표</span>
+              <span className="text-sm text-gray-400 mb-1 ml-auto">
                 {this_week_total >= weekly_target
-                  ? <span className="text-emerald-400">달성!</span>
+                  ? <span className="text-emerald-600">달성!</span>
                   : <span>{weekly_target - this_week_total}개 남음</span>}
               </span>
             </>
           ) : (
-            <span className="text-lg text-gray-500 mb-1">목표 미설정</span>
+            <span className="text-lg text-gray-400 mb-1">목표 미설정</span>
           )}
         </div>
 
         {hasGoal && (
-          <div className="w-full bg-white/5 rounded-full h-2" data-testid="goal-progress">
+          <div className="w-full bg-gray-100 rounded-full h-2" data-testid="goal-progress">
             <div
               className={`h-2 rounded-full transition-all duration-500 ${progressColor}`}
               style={{ width: `${progress}%` }}
@@ -100,7 +100,7 @@ export default function HeroWidget({
           </div>
         )}
 
-        <div className="flex justify-between mt-1.5 text-xs text-gray-600">
+        <div className="flex justify-between mt-1.5 text-xs text-gray-400">
           <span>주말 예상 {pace_prediction}개 ({days_elapsed}일 경과)</span>
           <span>
             {yoy_week_total != null
@@ -111,7 +111,7 @@ export default function HeroWidget({
       </div>
 
       {/* 5대 핵심 지표 */}
-      <div className="grid grid-cols-5 gap-3 pt-1 border-t border-white/5">
+      <div className="grid grid-cols-5 gap-3 pt-1 border-t border-gray-100">
         <KpiCell label="인입" value={`${this_week_total}명`} />
         <KpiCell label="컨택 성공률" value={fmtRate(this_week_contact_rate)} />
         <KpiCell label="결제 전환율" value={fmtRate(this_week_conversion_rate)} />
@@ -120,24 +120,24 @@ export default function HeroWidget({
           <span className="text-xs text-gray-500">ROAS</span>
           {this_week_roas != null ? (
             <>
-              <span className={`text-lg font-bold ${this_week_roas >= 1 ? 'text-emerald-400' : 'text-red-400'}`}>
+              <span className={`text-lg font-bold ${this_week_roas >= 1 ? 'text-emerald-600' : 'text-red-500'}`}>
                 {this_week_roas.toFixed(2)}x
               </span>
-              <span className="text-xs text-gray-600">{fmt(this_week_ad_spend)}원 지출</span>
+              <span className="text-xs text-gray-400">{fmt(this_week_ad_spend)}원 지출</span>
             </>
           ) : (
             <div className="flex flex-col gap-1">
-              <span className="text-lg font-bold text-gray-600">—</span>
+              <span className="text-lg font-bold text-gray-400">—</span>
               <div className="flex gap-1">
                 <button
                   onClick={() => onAddSpend('META')}
-                  className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded px-1.5 py-0.5 transition-colors"
+                  className="text-xs text-blue-600 hover:text-blue-500 border border-blue-300 rounded px-1.5 py-0.5 transition-colors"
                 >
                   META
                 </button>
                 <button
                   onClick={() => onAddSpend('구글 SEO')}
-                  className="text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded px-1.5 py-0.5 transition-colors"
+                  className="text-xs text-blue-600 hover:text-blue-500 border border-blue-300 rounded px-1.5 py-0.5 transition-colors"
                 >
                   구글
                 </button>
@@ -154,7 +154,7 @@ export function KpiCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs text-gray-500">{label}</span>
-      <span className="text-lg font-bold text-white">{value}</span>
+      <span className="text-lg font-bold text-gray-900">{value}</span>
     </div>
   );
 }

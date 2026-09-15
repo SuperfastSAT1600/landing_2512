@@ -12,8 +12,8 @@ function offsetBadge(offset: number): { text: string; className: string } {
   if (offset === 0) return { text: '이번 주', className: 'bg-blue-600 text-white' };
   if (offset === -1) return { text: '지난주', className: 'bg-amber-500 text-black' };
   if (offset === 1) return { text: '다음 주', className: 'bg-emerald-600 text-white' };
-  if (offset < -1) return { text: `${-offset}주 전`, className: 'bg-white/10 text-gray-300' };
-  return { text: `${offset}주 후`, className: 'bg-white/10 text-gray-300' };
+  if (offset < -1) return { text: `${-offset}주 전`, className: 'bg-gray-100 text-gray-600' };
+  return { text: `${offset}주 후`, className: 'bg-gray-100 text-gray-600' };
 }
 
 function weeksBetween(from: string, to: string): number {
@@ -56,29 +56,29 @@ export default function WeeklyGoalEditor({
   }
 
   return (
-    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5 space-y-4">
+    <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
       {/* 주차 네비게이션 */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <h3 className="text-white font-semibold">주차 리드 목표</h3>
+          <h3 className="text-gray-900 font-semibold">주차 리드 목표</h3>
           <div className="flex items-center gap-1">
             <button
               aria-label="이전 주차"
               onClick={() => setWeekStart(shiftWeekStart(weekStart, -1))}
-              className="w-7 h-7 rounded-md bg-white/5 text-gray-300 hover:bg-white/10 transition-colors"
+              className="w-7 h-7 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
             >
               ◀
             </button>
             <span
               data-testid="week-label"
-              className="text-sm text-gray-200 font-medium min-w-[8.5rem] text-center"
+              className="text-sm text-gray-700 font-medium min-w-[8.5rem] text-center"
             >
               {weekLabelOf(weekStart)}
             </span>
             <button
               aria-label="다음 주차"
               onClick={() => setWeekStart(shiftWeekStart(weekStart, 1))}
-              className="w-7 h-7 rounded-md bg-white/5 text-gray-300 hover:bg-white/10 transition-colors"
+              className="w-7 h-7 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
             >
               ▶
             </button>
@@ -89,9 +89,9 @@ export default function WeeklyGoalEditor({
           >
             {badge.text}
           </span>
-          {loading && <Loader2 size={13} className="animate-spin text-gray-500" />}
+          {loading && <Loader2 size={13} className="animate-spin text-gray-400" />}
         </div>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-gray-400">
           {weekStart} ~ {weekEndOf(weekStart)}
         </span>
       </div>
@@ -111,7 +111,7 @@ export default function WeeklyGoalEditor({
               placeholder="미설정"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              className="w-28 bg-[#151719] border border-white/10 rounded-md px-3 py-2 text-lg text-white text-right outline-none focus:border-blue-500"
+              className="w-28 bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-lg text-gray-900 text-right outline-none focus:border-blue-500"
             />
             <span className="text-sm text-gray-500">개</span>
           </div>
@@ -119,7 +119,7 @@ export default function WeeklyGoalEditor({
 
         <div className="flex flex-col gap-1.5">
           <span className="text-xs text-gray-500">실적</span>
-          <span className="text-lg font-bold text-white pb-1.5" data-testid="actual-total">
+          <span className="text-lg font-bold text-gray-900 pb-1.5" data-testid="actual-total">
             {actualTotal}개
           </span>
         </div>
@@ -129,9 +129,9 @@ export default function WeeklyGoalEditor({
           <span
             data-testid="achievement-rate"
             className={`text-lg font-bold pb-1.5 ${
-              rate === null ? 'text-gray-600' :
-              rate >= 100 ? 'text-emerald-400' :
-              rate >= 70 ? 'text-amber-400' : 'text-red-400'
+              rate === null ? 'text-gray-400' :
+              rate >= 100 ? 'text-emerald-600' :
+              rate >= 70 ? 'text-amber-500' : 'text-red-500'
             }`}
           >
             {rate === null ? '—' : `${rate}%`}
@@ -141,14 +141,14 @@ export default function WeeklyGoalEditor({
         <button
           onClick={handleSave}
           disabled={!dirty || saving}
-          className="ml-auto flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-md bg-blue-600 text-white disabled:bg-white/5 disabled:text-gray-600 hover:bg-blue-500 disabled:hover:bg-white/5 transition-colors"
+          className="ml-auto flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-md bg-blue-600 text-white disabled:bg-gray-100 disabled:text-gray-400 hover:bg-blue-500 disabled:hover:bg-gray-100 transition-colors"
         >
           {saving && <Loader2 size={11} className="animate-spin" />}
           저장
         </button>
       </div>
 
-      <p className="text-xs text-gray-600 pt-1 border-t border-white/5">
+      <p className="text-xs text-gray-400 pt-1 border-t border-gray-100">
         비우고 저장하면 목표 미설정으로 되돌아갑니다. 0 은 &quot;0개 목표&quot;로 저장됩니다.
       </p>
     </div>
