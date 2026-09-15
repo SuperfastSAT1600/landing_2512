@@ -465,6 +465,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   };
   // 카드 값: 한눈에 비교되도록 만원 단위로 축약. 정확한 원 단위 값은 title 툴팁으로 노출.
   const fmt만원 = (n: number) => `${Math.round(n / 10000).toLocaleString()}만원`;
+  const fmt억 = (n: number) => `${(n / 100_000_000).toFixed(1)}억`;
   const fmt원 = (n: number) => `${n.toLocaleString()}원`;
 
   // VS 모드에서 각 카드 아래에 렌더링할 B 기간 값 + 증감
@@ -922,7 +923,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
             {tutoringSub === 'all' && monthlyMode === 'target' ? (
               <>
                 {targetVsActual.some((r) => r.target > 0 || r.actual > 0) ? (
-                  <TargetVsActualChart data={targetVsActual} formatValue={fmt만원} />
+                  <TargetVsActualChart data={targetVsActual} formatValue={fmt억} formatTooltip={fmt만원} />
                 ) : (
                   <p className="text-sm text-gray-400 text-center py-6">
                     설정된 목표가 없습니다. ‘목표 설정’으로 이번 달부터 등록해보세요.
