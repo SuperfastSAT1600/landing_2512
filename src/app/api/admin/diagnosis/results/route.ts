@@ -97,7 +97,8 @@ export async function GET(request: NextRequest) {
         const math = (rawAnswers.math as Record<string, string>) ?? {};
         vocabAnsweredCount = vocab.length;
         vocabCorrectCount = vocab.filter(v => v.isCorrect).length;
-        answeredCount = rw.length + Object.keys(math).length;
+        const mathAnsweredCount = mathQuestions.filter(q => math[q.id] !== undefined).length;
+        answeredCount = rw.length + mathAnsweredCount;
         correctCount =
           rw.filter(r => r.isCorrect).length +
           calcMathCorrect(math);
