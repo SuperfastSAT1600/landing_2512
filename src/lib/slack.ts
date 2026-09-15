@@ -234,6 +234,69 @@ export async function notifyPortalConsultRequest(data: PortalConsultRequestData)
   }
 }
 
+// ─── 학부모 포털 열람 알림 ────────────────────────────────────────
+
+const PARENT_PORTAL_CHANNEL = 'C0C1VGHRNFL';
+
+export interface PortalPageViewData {
+  studentName: string;
+  studentId: string;
+}
+
+export async function notifyPortalPageView(data: PortalPageViewData): Promise<void> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) {
+    console.warn('[slack] SLACK_BOT_TOKEN not set — skipping portal page view notification');
+    return;
+  }
+
+  const { studentName, studentId } = data;
+  const viewedAtKST = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+  const adminUrl = `https://tutoring.superfastsat.com/admin/crm?student=${studentId}`;
+
+  const blocks = [
+    {
+      type: 'header',
+      text: { type: 'plain_text', text: '👁 학부모 포털 열람', emoji: true },
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: `*학생*\n${studentName}` },
+        { type: 'mrkdwn', text: `*열람 시각*\n${viewedAtKST}` },
+      ],
+    },
+    {
+      type: 'actions',
+      elements: [
+        {
+          type: 'button',
+          text: { type: 'plain_text', text: 'CRM에서 확인 →', emoji: true },
+          url: adminUrl,
+        },
+      ],
+    },
+  ];
+
+  const res = await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      channel: PARENT_PORTAL_CHANNEL,
+      text: `👁 [포털 열람] ${studentName} — ${viewedAtKST}`,
+      blocks,
+    }),
+  });
+
+  const result = await res.json() as { ok: boolean; error?: string };
+  if (!result.ok) {
+    console.error(`[slack] Portal page view notification failed: ${result.error}`);
+  }
+}
+
 // ─── 만료 미응시 알림 ──────────────────────────────────────────────
 
 export interface ExpiredTokenData {

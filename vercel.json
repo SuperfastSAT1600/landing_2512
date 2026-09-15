@@ -21,6 +21,10 @@
       "schedule": "0 17 * * *"
     },
     {
+      "path": "/api/cron/ig-content-spend-sync",
+      "schedule": "30 17 * * *"
+    },
+    {
       "path": "/api/cron/weekly-visitor-report",
       "schedule": "0 19 * * 2"
     }
