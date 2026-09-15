@@ -4,9 +4,9 @@ import type { ChannelSignal } from './utils/signalUtils';
 import { GROUP_COLORS } from '@/lib/marketing-groups';
 
 const LEVEL_CONFIG = {
-  good: { label: '정상', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', dot: 'bg-emerald-400' },
-  warning: { label: '주의', bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', dot: 'bg-amber-400' },
-  danger: { label: '위험', bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', dot: 'bg-red-400' },
+  good: { label: '정상', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600', dot: 'bg-emerald-500' },
+  warning: { label: '주의', bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600', dot: 'bg-amber-500' },
+  danger: { label: '위험', bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-600', dot: 'bg-red-500' },
 };
 
 interface Props {
@@ -19,9 +19,9 @@ export default function ChannelSignalCards({ signals, loading }: Props) {
     return (
       <div className="flex gap-2 flex-wrap">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="bg-[#1e2023] border border-white/5 rounded-lg px-3 py-2 animate-pulse flex gap-2 items-center">
-            <div className="h-3 w-14 bg-white/5 rounded" />
-            <div className="h-3 w-10 bg-white/5 rounded" />
+          <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 animate-pulse flex gap-2 items-center">
+            <div className="h-3 w-14 bg-gray-200 rounded" />
+            <div className="h-3 w-10 bg-gray-200 rounded" />
           </div>
         ))}
       </div>
@@ -29,7 +29,7 @@ export default function ChannelSignalCards({ signals, loading }: Props) {
   }
 
   if (signals.length === 0) {
-    return <p className="text-gray-600 text-sm text-center py-6">채널 데이터 없음</p>;
+    return <p className="text-gray-400 text-sm text-center py-6">채널 데이터 없음</p>;
   }
 
   return (
@@ -56,6 +56,7 @@ export default function ChannelSignalCards({ signals, loading }: Props) {
                 {sig.reasons[0]}
               </span>
             )}
+
           </div>
         );
       })}

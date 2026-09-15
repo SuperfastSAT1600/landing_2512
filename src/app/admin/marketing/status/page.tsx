@@ -44,7 +44,7 @@ function SectionLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3">
       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</span>
-      <div className="flex-1 h-px bg-white/5" />
+      <div className="flex-1 h-px bg-gray-200" />
     </div>
   );
 }
@@ -57,13 +57,13 @@ function ToggleGroup<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 bg-[#151719] rounded-lg p-1">
+    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
       {options.map(({ key, label }) => (
         <button
           key={key}
           onClick={() => onChange(key)}
           className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
-            value === key ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+            value === key ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           {label}
@@ -98,8 +98,8 @@ function ChannelFilter({
         onClick={() => onChange([...MARKETING_GROUPS])}
         className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
           allSelected
-            ? 'bg-white/10 text-white'
-            : 'text-gray-500 hover:text-gray-300 border border-white/10'
+            ? 'bg-gray-200 text-gray-900'
+            : 'text-gray-500 hover:text-gray-700 border border-gray-200'
         }`}
       >
         전체
@@ -113,7 +113,7 @@ function ChannelFilter({
             className={`text-xs px-2.5 py-1 rounded-md font-medium transition-all ${
               active ? 'text-white' : 'text-gray-600 hover:text-gray-400'
             }`}
-            style={active ? { backgroundColor: GROUP_COLORS[ch] + '33', color: GROUP_COLORS[ch], border: `1px solid ${GROUP_COLORS[ch]}55` } : { border: '1px solid rgba(255,255,255,0.08)' }}
+            style={active ? { backgroundColor: GROUP_COLORS[ch] + '33', color: GROUP_COLORS[ch], border: `1px solid ${GROUP_COLORS[ch]}55` } : { border: '1px solid #e5e7eb' }}
           >
             {ch}
           </button>
@@ -160,10 +160,10 @@ export default function MarketingStatusPage() {
   const displayedRows = unit === 'week' ? weekRows : monthRows;
 
   return (
-    <div className="min-h-screen bg-[#151719] text-[#E0E0E0] p-6 space-y-6">
+    <div className="min-h-screen bg-white text-gray-800 p-6 space-y-6">
       <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">마케팅 현황</h1>
+          <h1 className="text-2xl font-bold text-gray-900">마케팅 현황</h1>
           <p className="text-sm text-gray-500 mt-0.5">채널별 리드 인입 추이 · 기간 비교 · 시그널 감지</p>
         </div>
         <MarketingTabs active="/admin/marketing/status" />
@@ -177,7 +177,7 @@ export default function MarketingStatusPage() {
               className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors border ${
                 rangePreset === key
                   ? 'bg-blue-600 border-blue-500 text-white'
-                  : 'border-white/10 text-gray-500 hover:text-gray-300'
+                  : 'border-gray-200 text-gray-500 hover:text-gray-700'
               }`}
             >
               {label}
@@ -189,14 +189,14 @@ export default function MarketingStatusPage() {
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="text-xs bg-[#1e2023] border border-white/10 rounded-md px-2 py-1 text-gray-300 [color-scheme:dark]"
+                className="text-xs bg-white border border-gray-200 rounded-md px-2 py-1 text-gray-700"
               />
-              <span className="text-gray-600 text-xs">~</span>
+              <span className="text-gray-400 text-xs">~</span>
               <input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="text-xs bg-[#1e2023] border border-white/10 rounded-md px-2 py-1 text-gray-300 [color-scheme:dark]"
+                className="text-xs bg-white border border-gray-200 rounded-md px-2 py-1 text-gray-700"
               />
             </>
           )}
@@ -209,9 +209,9 @@ export default function MarketingStatusPage() {
 
       {/* ── Part D: 주별 전체 리드 그래프 ── */}
       <SectionLabel label="주별 전체 리드" />
-      <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h3 className="text-white font-semibold">주별 전체 리드 추이</h3>
+          <h3 className="text-gray-900 font-semibold">주별 전체 리드 추이</h3>
           <div className="flex items-center gap-3 text-xs text-gray-500">
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-3 h-3 rounded-sm bg-indigo-500/70" />전체 리드
@@ -227,7 +227,7 @@ export default function MarketingStatusPage() {
           </div>
         </div>
         {recentDailyLoading ? (
-          <div className="h-[240px] bg-white/5 rounded animate-pulse" />
+          <div className="h-[240px] bg-gray-100 rounded animate-pulse" />
         ) : (
           <WeeklyTotalChart rows={weekRows} weeklyTarget={weekly?.weekly_target ?? null} />
         )}
@@ -235,9 +235,9 @@ export default function MarketingStatusPage() {
 
       {/* ── Part A: 인입 트래킹 ── */}
       <SectionLabel label="인입 현황" />
-      <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5 space-y-4">
+      <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
         <div className="flex items-start justify-between flex-wrap gap-3">
-          <h3 className="text-white font-semibold">채널별 리드 인입</h3>
+          <h3 className="text-gray-900 font-semibold">채널별 리드 인입</h3>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2 flex-wrap justify-end">
               <ToggleGroup
@@ -258,7 +258,7 @@ export default function MarketingStatusPage() {
         {recentDailyLoading ? (
           <div className="space-y-2 animate-pulse">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-8 bg-white/5 rounded" />
+              <div key={i} className="h-8 bg-gray-100 rounded" />
             ))}
           </div>
         ) : view === 'table' ? (

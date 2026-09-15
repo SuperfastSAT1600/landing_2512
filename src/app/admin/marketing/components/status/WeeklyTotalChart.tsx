@@ -19,15 +19,15 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   const fullLabel = totalEntry?.payload?.fullLabel ?? label;
 
   return (
-    <div className="bg-[#1e2023] border border-white/10 rounded-xl px-4 py-3 shadow-xl min-w-[140px]">
-      <p className="text-gray-400 text-xs mb-2">{fullLabel}</p>
+    <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-lg min-w-[140px]">
+      <p className="text-gray-500 text-xs mb-2">{fullLabel}</p>
       {totalEntry != null && (
-        <p className="text-white font-bold text-xl leading-none">
-          {totalEntry.value}<span className="text-sm font-normal text-gray-400 ml-1">명</span>
+        <p className="text-gray-900 font-bold text-xl leading-none">
+          {totalEntry.value}<span className="text-sm font-normal text-gray-500 ml-1">명</span>
         </p>
       )}
       {ma8Entry?.value != null && (
-        <p className="text-emerald-400 text-xs mt-1.5">
+        <p className="text-emerald-600 text-xs mt-1.5">
           8주 평균 {ma8Entry.value}명
         </p>
       )}
@@ -58,7 +58,7 @@ function movingAvg(data: number[], window = 8): (number | null)[] {
 
 export default function WeeklyTotalChart({ rows, weeklyTarget }: Props) {
   if (rows.length === 0) {
-    return <p className="text-gray-600 text-sm text-center py-8">데이터 없음</p>;
+    return <p className="text-gray-400 text-sm text-center py-8">데이터 없음</p>;
   }
 
   const totals = rows.map((r) => r.total);
@@ -84,7 +84,7 @@ export default function WeeklyTotalChart({ rows, weeklyTarget }: Props) {
             <stop offset="100%" stopColor="#6366f1" stopOpacity={0.45} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis
           dataKey="name"
           tick={{ fill: '#6b7280', fontSize: 10 }}
@@ -97,12 +97,12 @@ export default function WeeklyTotalChart({ rows, weeklyTarget }: Props) {
           axisLine={false}
           domain={[0, yMax]}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
 
         {/* 전체 평균 기준선 */}
         <ReferenceLine
           y={overallAvg}
-          stroke="#ffffff22"
+          stroke="#d1d5db"
           strokeDasharray="4 4"
           label={{ value: `평균 ${overallAvg}`, position: 'insideTopRight', fill: '#6b7280', fontSize: 10 }}
         />
