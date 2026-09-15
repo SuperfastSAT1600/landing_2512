@@ -39,7 +39,7 @@ export default function PortalPage() {
           await fetch(`/api/portal/${token}/auth`, {
             headers: { 'x-admin-key': adminKey },
           });
-          const portalRes = await fetch(`/api/portal/${token}`);
+          const portalRes = await fetch(`/api/portal/${token}?preview=admin`);
           if (portalRes.ok) {
             const data: PortalMeta & { exists: boolean } = await portalRes.json();
             setMeta(data);
