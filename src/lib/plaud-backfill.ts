@@ -22,6 +22,14 @@ const SEP = ' · ';
 const KST_STAMP = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
 
 /**
+ * `2026-08-04T08:04:46`(±Z/오프셋) — toKstDisplay 도입 전 메모는 원본 ISO가 그대로 박혀 있다.
+ * 읽는 쪽에서 흡수하지 않으면 시각 조각이 이름 뒤에 붙어 그 메모는 영영 매칭되지 않는다.
+ * 녹음 이름도 시각으로 끝날 수 있으므로(`..._2026-08-04 17:04:46`) `T` 구분자를 요구해
+ * 이름 끝의 시각과 헤더의 시각을 갈라낸다.
+ */
+const ISO_STAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[zZ]|[+-]\d{2}:?\d{2})?$/;
+
+/**
  * Plaud의 타임스탬프(start_at 등)를 한국시간(KST) "YYYY-MM-DD HH:mm"로 변환한다.
  * Plaud는 타임존 표기 없는 UTC 문자열(예: "2026-07-31T07:39:18")을 주므로 UTC로 간주해 +9h 한다.
  * 파싱 불가하면 원본을 그대로 반환한다.
@@ -76,6 +84,10 @@ export function parsePlaudMemoHeader(rawMemo: string): PlaudMemoHeader | null {
   if (last !== undefined && KST_STAMP.test(last)) {
     return { recordingName: rest.slice(0, -1).join(SEP), recordedAtKst: last };
   }
+  // 옛 형식(ISO)은 표시 형식으로 정규화해 받아들인다 — 저장된 값이 아니라 형식만 다르다.
+  if (last !== undefined && ISO_STAMP.test(last)) {
+    return { recordingName: rest.slice(0, -1).join(SEP), recordedAtKst: toKstDisplay(last) };
+  }
   return { recordingName: rest.join(SEP), recordedAtKst: '' };
 }
 
@@ -103,9 +115,55 @@ export function selectBackfillCandidates(
 }
 
 export type MatchResult =
-  | { status: 'matched'; recording: PlaudRecording }
+  | {
+      status: 'matched';
+      recording: PlaudRecording;
+      /** 개명 보정으로 찾은 경우의 헤더 원래 이름. 완전일치로 찾았으면 없다. */
+      renamedFrom?: string;
+    }
   | { status: 'ambiguous'; candidates: PlaudRecording[] }
   | { status: 'unmatched'; reason: 'no_identifiers' | 'not_found' };
+
+/** 이름 비교용 정규화 — 표기 흔들림(공백·구분자·대소문자)을 지운다. */
+function normalizeName(name: string): string {
+  return name.replace(/[\s·_,()[\]-]+/g, '').toLowerCase();
+}
+
+/** 편집거리. 이름이 짧아(수십 자) DP 전체를 돌려도 비용이 문제되지 않는다. */
+function editDistance(a: string, b: string): number {
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = prev[j];
+      prev[j] = Math.min(
+        prev[j] + 1,
+        prev[j - 1] + 1,
+        diag + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+      diag = tmp;
+    }
+  }
+  return prev[b.length];
+}
+
+/**
+ * 두 이름을 "같은 녹음이 개명된 것"으로 볼 수 있는가.
+ *
+ * 실제로 관측되는 개명은 오타 교정(추동민→츄동민), 표기 통일(공백·구분자), 접미 추가다.
+ * 편집거리 상한을 2로 못박아 둔다 — 늘리면 다른 학생의 통화까지 통과하기 시작한다.
+ */
+const MAX_RENAME_DISTANCE = 2;
+
+export function isLikelyRename(headerName: string, recordingName: string): boolean {
+  const a = normalizeName(headerName);
+  const b = normalizeName(recordingName);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (a.includes(b) || b.includes(a)) return true;
+  return editDistance(a, b) <= MAX_RENAME_DISTANCE;
+}
 
 /**
  * 헤더를 녹음 목록(여러 계정 병합 가능)에 맞춘다.
@@ -129,7 +187,19 @@ export function matchRecording(
       (!recordedAtKst || toKstDisplay(r.start_at ?? '') === recordedAtKst)
   );
 
-  if (candidates.length === 0) return { status: 'unmatched', reason: 'not_found' };
   if (candidates.length === 1) return { status: 'matched', recording: candidates[0] };
-  return { status: 'ambiguous', candidates };
+  if (candidates.length > 1) return { status: 'ambiguous', candidates };
+
+  // 완전일치가 없다 — Plaud에서 녹음 이름이 바뀐 경우를 되찾는다.
+  // 시각은 녹음 자신의 start_at에서 온 값이라 개명에 흔들리지 않는다. 다만 시각 하나만으로
+  // 붙이면 원본이 삭제된 뒤 같은 분에 시작한 남의 통화가 걸릴 수 있으므로,
+  // 시각이 유일하게 일치하면서 이름까지 유사할 때만 인정한다.
+  if (!recordingName || !recordedAtKst) return { status: 'unmatched', reason: 'not_found' };
+
+  const sameTime = recordings.filter((r) => toKstDisplay(r.start_at ?? '') === recordedAtKst);
+  if (sameTime.length > 1) return { status: 'ambiguous', candidates: sameTime };
+  if (sameTime.length === 1 && isLikelyRename(recordingName, sameTime[0].name)) {
+    return { status: 'matched', recording: sameTime[0], renamedFrom: recordingName };
+  }
+  return { status: 'unmatched', reason: 'not_found' };
 }

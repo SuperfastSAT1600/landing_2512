@@ -354,3 +354,33 @@ describe('runBackfill 시간 예산', () => {
     expect(report.elapsedMs).toBe(20_000); // 2건 x 10s
   });
 });
+
+describe('개명 보정으로 매칭된 건', () => {
+  it('원래 이름과 현재 이름을 모두 로그에 남긴다', async () => {
+    // 조용히 붙이면 남의 상담이 들어가도 아무도 모른다. 보정은 흔적을 남겨야 한다.
+    const logs: string[] = [];
+    const deps = makeDeps({
+      listStudents: vi.fn().mockResolvedValue([
+        {
+          id: 'stu-1',
+          consultation_timeline: [entry('e1', memoOf('김가나 어머님_첫 세일즈콜', '2026-08-26 11:39'))],
+        },
+      ]),
+      listRecordings: vi
+        .fn()
+        .mockResolvedValue([
+          { id: 'file_r', name: '김카나 어머님_첫 세일즈콜', start_at: '2026-08-26T02:39:40', duration: 600_000 },
+        ]),
+      log: (m: string) => logs.push(m),
+    });
+
+    const report = await runBackfill(deps, { accounts: ['me'] });
+
+    expect(report.inserted).toBe(1);
+    expect(report.unmatched).toBe(0);
+    const line = logs.find((l) => l.includes('[renamed]'));
+    expect(line).toBeDefined();
+    expect(line).toContain('김가나 어머님_첫 세일즈콜');
+    expect(line).toContain('김카나 어머님_첫 세일즈콜');
+  });
+});
