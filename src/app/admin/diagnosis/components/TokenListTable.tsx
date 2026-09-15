@@ -14,11 +14,14 @@ export interface CodeRecord {
   status: 'pending' | 'completed' | 'expired';
   test_version_id?: string | null;
   test_id?: string | null;
+  set_number?: number | null;
 }
 
 export interface TestVersion {
   id: string;
+  set_number: number;
   version_number: number;
+  title: string;
   is_current: boolean;
 }
 
@@ -62,10 +65,12 @@ export function TokenListTable({ codes, adminKey, onRefresh }: TokenListTablePro
 
   const formatDate = (s: string) => new Date(s).toLocaleString('ko-KR');
 
-  const getFormatLabel = (testId: string | null | undefined) => {
-    if (testId === 'diagnostic-test-2') return { text: 'v2', color: 'text-purple-400' };
-    if (testId === 'diagnostic-test-1') return { text: 'v1', color: 'text-blue-400' };
-    return { text: '-', color: 'text-gray-500' };
+  const getFormatLabel = (testId: string | null | undefined, setNumber?: number | null) => {
+    const format = testId === 'diagnostic-test-2' ? { text: 'v2', color: 'text-purple-400' }
+      : testId === 'diagnostic-test-1' ? { text: 'v1', color: 'text-blue-400' }
+      : { text: '-', color: 'text-gray-500' };
+    const setLabel = setNumber != null ? `세트 ${setNumber}` : '';
+    return { ...format, setLabel };
   };
 
   const copyToClipboard = (text: string) => navigator.clipboard.writeText(text);
@@ -255,7 +260,14 @@ export function TokenListTable({ codes, adminKey, onRefresh }: TokenListTablePro
                     )}
                   </td>
                   <td className="py-3 px-4 font-mono text-xs">
-                    {(() => { const f = getFormatLabel(c.test_id); return <span className={f.color}>{f.text}</span>; })()}
+                    {(() => {
+                      const f = getFormatLabel(c.test_id, c.set_number);
+                      return (
+                        <span className={f.color}>
+                          {f.text}{f.setLabel && <span className="text-gray-400 ml-1">/ {f.setLabel}</span>}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="py-3 px-4">
                     <button

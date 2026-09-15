@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Fetch all active codes ordered by creation date (soft-deleted excluded)
+    // Fetch all active codes with set_number join for display
     const { data: codes, error: codesError } = await supabaseAdmin
       .from('diagnostic_access_tokens')
-      .select('id, token, student_email, student_name, expires_at, is_active, created_at, test_version_id, test_id')
+      .select('id, token, student_email, student_name, expires_at, is_active, created_at, test_version_id, test_id, diagnostic_test_versions(set_number)')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
 
@@ -42,7 +42,8 @@ export async function GET(request: NextRequest) {
       } else {
         status = 'pending';
       }
-      return { ...code, status };
+      const versionData = (code.diagnostic_test_versions as unknown) as { set_number: number } | null;
+      return { ...code, set_number: versionData?.set_number ?? null, diagnostic_test_versions: undefined, status };
     });
 
     return NextResponse.json({ codes: codesWithStatus }, { status: 200 });
@@ -97,15 +98,13 @@ export async function POST(request: NextRequest) {
     // Use provided expiresAt or default to 24 hours from now
     const expiresAt = expiresAtInput ? new Date(expiresAtInput) : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Resolve version: use provided testVersionId or current version scoped to format
-    const resolvedTestId = testId === 'diagnostic-test-2' ? 'diagnostic-test-2' : 'diagnostic-test-1';
+    // Resolve version: use provided testVersionId or global is_current
     let resolvedVersionId = testVersionId ?? null;
     if (!resolvedVersionId) {
       const { data: current } = await supabaseAdmin
         .from('diagnostic_test_versions')
         .select('id')
         .eq('is_current', true)
-        .eq('test_id', resolvedTestId)
         .maybeSingle();
       resolvedVersionId = current?.id ?? null;
     }
@@ -117,7 +116,7 @@ export async function POST(request: NextRequest) {
         student_email: null,
         student_name: studentName,
         phone_number: studentPhone?.trim() || null,
-        test_id: testId === 'diagnostic-test-2' ? 'diagnostic-test-2' : 'diagnostic-test-1',
+        test_id: testId ?? 'diagnostic-test-1',
         test_version_id: resolvedVersionId,
         expires_at: expiresAt.toISOString(),
         is_active: true,

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 
 interface TestVersion {
   id: string;
+  set_number: number;
   version_number: number;
   title: string;
   time_limit_minutes: number;
@@ -30,7 +31,7 @@ export function VersionManagementTab({ adminKey }: VersionManagementTabProps) {
       const res = await fetch('/api/admin/diagnosis/versions', {
         headers: { 'x-admin-key': adminKey },
       });
-      if (!res.ok) throw new Error('버전 목록을 불러올 수 없습니다.');
+      if (!res.ok) throw new Error('문제 세트 목록을 불러올 수 없습니다.');
       const data = await res.json();
       setVersions(data.versions ?? []);
     } catch (err) {
@@ -54,7 +55,7 @@ export function VersionManagementTab({ adminKey }: VersionManagementTabProps) {
       if (!res.ok) throw new Error('설정 실패');
       await fetchVersions();
     } catch {
-      setError('현재 버전 설정에 실패했습니다.');
+      setError('기본 문제 세트 설정에 실패했습니다.');
     } finally {
       setSettingCurrent(null);
     }
@@ -64,9 +65,9 @@ export function VersionManagementTab({ adminKey }: VersionManagementTabProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold">진단테스트 버전 관리</h2>
+          <h2 className="text-xl font-bold">문제 세트 관리</h2>
           <p className="text-gray-400 text-sm mt-1">
-            문항을 수정하면 새 버전이 생성됩니다. 현재 버전으로 지정된 버전이 새 코드에 배정됩니다.
+            문항을 수정하면 새 문제 세트가 생성됩니다. 기본 문제 세트로 지정된 세트가 새 코드에 배정됩니다.
           </p>
         </div>
         <button
@@ -81,7 +82,7 @@ export function VersionManagementTab({ adminKey }: VersionManagementTabProps) {
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
       {!loading && versions.length === 0 && (
-        <p className="text-gray-400">버전이 없습니다. (자동 생성됩니다)</p>
+        <p className="text-gray-400">문제 세트가 없습니다.</p>
       )}
 
       <div className="space-y-3">
@@ -101,20 +102,20 @@ export function VersionManagementTab({ adminKey }: VersionManagementTabProps) {
                     v.is_current ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'
                   }`}
                 >
-                  v{v.version_number}
+                  {v.set_number}
                 </span>
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-white">{v.title}</span>
+                  <span className="font-semibold text-white">문제 세트 {v.set_number} — {v.title}</span>
                   {v.is_current && (
                     <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-semibold">
-                      현재 버전
+                      기본 세트
                     </span>
                   )}
                   {v.created_from && (
                     <span className="text-xs text-gray-500">
-                      (이전 버전에서 파생)
+                      (이전 세트에서 파생)
                     </span>
                   )}
                 </div>
@@ -134,7 +135,7 @@ export function VersionManagementTab({ adminKey }: VersionManagementTabProps) {
                 disabled={settingCurrent === v.id}
                 className="flex-shrink-0 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
               >
-                {settingCurrent === v.id ? '설정 중...' : '현재 버전으로 설정'}
+                {settingCurrent === v.id ? '설정 중...' : '기본 세트로 설정'}
               </button>
             )}
           </div>
