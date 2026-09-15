@@ -657,6 +657,13 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
 
       {topView === 'tutoring' && d && (
         <>
+          {/* 목표 설정 — 이번 달 실적을 보면서 바로 목표를 설정할 수 있도록 Overview cards 위에 배치 */}
+          {tutoringSub === 'all' && (
+            <div className="flex justify-end">
+              <MonthlyTargetEditor segment="tutoring" adminKey={adminKey} onSaved={fetchMonthlyTargets} />
+            </div>
+          )}
+
           {/* Overview cards — VS 모드 시 각 카드 아래에 B 기간 값이 붙는다 */}
           {vsMode && (
             <div className="flex items-center gap-3 text-xs text-gray-400 -mb-2">
@@ -914,9 +921,6 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
 
             {tutoringSub === 'all' && monthlyMode === 'target' ? (
               <>
-                <div className="flex justify-end mb-2">
-                  <MonthlyTargetEditor segment="tutoring" adminKey={adminKey} onSaved={fetchMonthlyTargets} />
-                </div>
                 {targetVsActual.some((r) => r.target > 0 || r.actual > 0) ? (
                   <TargetVsActualChart data={targetVsActual} formatValue={fmt만원} />
                 ) : (
