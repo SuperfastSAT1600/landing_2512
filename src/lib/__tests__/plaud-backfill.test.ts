@@ -78,6 +78,31 @@ describe('parsePlaudMemoHeader', () => {
     expect(r).toEqual({ recordingName: '8월 상담 · 2026-08-01', recordedAtKst: '' });
   });
 
+  it('마지막 조각이 ISO 타임스탬프여도 시각으로 인정하고 KST로 정규화한다', () => {
+    // 옛 메모는 toKstDisplay 이전 형식이라 헤더에 원본 ISO가 그대로 박혀 있다.
+    // 읽는 쪽이 흡수하지 않으면 시각 조각이 이름 뒤에 붙어 영영 매칭되지 않는다.
+    const r = parsePlaudMemoHeader(memo(`${PLAUD_MEMO_MARKER} · 8월 상담 녹음 · 2026-08-04T08:04:46`));
+    expect(r).toEqual({ recordingName: '8월 상담 녹음', recordedAtKst: '2026-08-04 17:04' });
+  });
+
+  it('ISO에 Z나 오프셋이 붙어도 같은 인스턴트로 정규화한다', () => {
+    const z = parsePlaudMemoHeader(memo(`${PLAUD_MEMO_MARKER} · 녹음 · 2026-08-04T08:04:46Z`));
+    const off = parsePlaudMemoHeader(memo(`${PLAUD_MEMO_MARKER} · 녹음 · 2026-08-04T17:04:46+09:00`));
+    expect(z?.recordedAtKst).toBe('2026-08-04 17:04');
+    expect(off?.recordedAtKst).toBe('2026-08-04 17:04');
+  });
+
+  it('이름 자체가 시각으로 끝나도 ISO 조각만 시각으로 떼어낸다', () => {
+    // 실제로 발생한 형태 — 녹음 이름에 시각이 들어가고 헤더 시각은 ISO였다.
+    const r = parsePlaudMemoHeader(
+      memo(`${PLAUD_MEMO_MARKER} · 김가나 어머님_유선 전화_2026-08-04 17:04:46 · 2026-08-04T08:04:46`)
+    );
+    expect(r).toEqual({
+      recordingName: '김가나 어머님_유선 전화_2026-08-04 17:04:46',
+      recordedAtKst: '2026-08-04 17:04',
+    });
+  });
+
   it('Plaud 메모가 아니면 null', () => {
     expect(parsePlaudMemoHeader(memo('직접 작성한 상담 메모'))).toBeNull();
     expect(parsePlaudMemoHeader('')).toBeNull();
@@ -152,6 +177,59 @@ describe('matchRecording', () => {
   it('이름은 맞지만 시각이 어긋나면 매칭하지 않는다', () => {
     const r = matchRecording({ recordingName: '녹음 A', recordedAtKst: '2026-08-03 10:05' }, [a, b]);
     expect(r).toEqual({ status: 'unmatched', reason: 'not_found' });
+  });
+
+  describe('Plaud에서 녹음 이름이 바뀐 경우', () => {
+    // 시각(분 단위)은 녹음 자신의 start_at에서 온 값이라 개명에 영향받지 않는다.
+    const renamed = rec('file_r', '김카나 어머님_첫 세일즈콜', '2026-08-26T02:39:40');
+
+    it('시각이 유일하게 일치하고 이름이 유사하면 매칭하고 원래 이름을 남긴다', () => {
+      const r = matchRecording(
+        { recordingName: '김가나 어머님_첫 세일즈콜', recordedAtKst: '2026-08-26 11:39' },
+        [renamed, b]
+      );
+      expect(r.status).toBe('matched');
+      expect(r.status === 'matched' && r.recording.id).toBe('file_r');
+      expect(r.status === 'matched' && r.renamedFrom).toBe('김가나 어머님_첫 세일즈콜');
+    });
+
+    it('공백·구분자만 다른 경우도 같은 녹음으로 본다', () => {
+      const spaced = rec('file_s', '녹음A', '2026-08-01T01:05:00');
+      const r = matchRecording({ recordingName: '녹음 A', recordedAtKst: '2026-08-01 10:05' }, [spaced]);
+      expect(r.status).toBe('matched');
+    });
+
+    it('이름 뒤에 말이 덧붙은 경우도 같은 녹음으로 본다', () => {
+      const suffixed = rec('file_x', '녹음 A (재통화)', '2026-08-01T01:05:00');
+      const r = matchRecording({ recordingName: '녹음 A', recordedAtKst: '2026-08-01 10:05' }, [suffixed]);
+      expect(r.status).toBe('matched');
+    });
+
+    it('시각만 같고 이름이 전혀 다르면 매칭하지 않는다', () => {
+      // 원본이 삭제되고 같은 분에 시작한 남의 통화가 남아 있는 상황.
+      // 여기서 붙이면 학생 기록에 남의 상담이 들어간다.
+      const other = rec('file_o', '전혀 다른 학부모_상담', '2026-08-01T01:05:00');
+      const r = matchRecording({ recordingName: '녹음 A', recordedAtKst: '2026-08-01 10:05' }, [other]);
+      expect(r).toEqual({ status: 'unmatched', reason: 'not_found' });
+    });
+
+    it('시각이 같은 후보가 둘 이상이면 추측하지 않고 ambiguous', () => {
+      const twin = rec('file_t', '녹음 A 2', '2026-08-01T01:05:00');
+      const twin2 = rec('file_u', '녹음 A 3', '2026-08-01T01:05:00');
+      const r = matchRecording({ recordingName: '녹음 A', recordedAtKst: '2026-08-01 10:05' }, [twin, twin2]);
+      expect(r.status).toBe('ambiguous');
+    });
+
+    it('이름 완전일치가 되는 한 개명 경로는 타지 않는다', () => {
+      const r = matchRecording({ recordingName: '녹음 A', recordedAtKst: '2026-08-01 10:05' }, [a, b]);
+      expect(r.status === 'matched' && r.renamedFrom).toBeUndefined();
+    });
+
+    it('시각이 없으면 개명 보정을 하지 않는다', () => {
+      // 시각이 없으면 유일성을 보증할 근거가 이름뿐이라 완화가 곧 추측이 된다.
+      const r = matchRecording({ recordingName: '김가나 어머님_첫 세일즈콜', recordedAtKst: '' }, [renamed]);
+      expect(r).toEqual({ status: 'unmatched', reason: 'not_found' });
+    });
   });
 
   it('여러 계정 목록을 합쳐 넘겨도 계정 태그를 유지한 채 매칭한다', () => {
