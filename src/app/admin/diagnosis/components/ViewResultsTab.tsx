@@ -167,7 +167,6 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
               <tr className="border-b border-gray-600">
                 <th className="text-left py-3 px-4 font-semibold">버전</th>
                 <th className="text-left py-3 px-4 font-semibold">학생명</th>
-                <th className="text-left py-3 px-4 font-semibold">이메일</th>
                 <th className="text-left py-3 px-4 font-semibold">응시 날짜</th>
                 <th className="text-left py-3 px-4 font-semibold">소요 시간</th>
                 <th className="text-left py-3 px-4 font-semibold">푼 문제 수</th>
@@ -191,7 +190,6 @@ export function ViewResultsTab({ adminKey }: ViewResultsTabProps) {
                     </span>
                   </td>
                   <td className="py-3 px-4">{result.student_name}</td>
-                  <td className="py-3 px-4 break-all">{result.student_email}</td>
                   <td className="py-3 px-4">{formatDate(result.submitted_at)}</td>
                   <td className="py-3 px-4">{formatTime(result.total_time_seconds)}</td>
                   <td className="py-3 px-4">
