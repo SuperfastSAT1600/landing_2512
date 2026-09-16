@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Loader2, AlertCircle, RotateCcw, ExternalLink } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Loader2, AlertCircle, RotateCcw } from 'lucide-react';
 import { Student } from '@/types/crm';
 import { getAdminUserName } from '@/lib/admin-user';
 import { RefundModal } from './RefundModal';
+import { SrmLinkModal } from './SrmLinkModal';
 import {
   TutoringStudentRow,
   TutoringListControls,
@@ -15,8 +16,6 @@ import {
   type TutoringSubTab,
 } from './TutoringStudentRow';
 import type { TutoringUser, CrmUnlinkedStudent } from '@/app/api/admin/srm/tutoring-users/route';
-
-// ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 
 interface EnrolledLeadsProps {
   adminKey: string;
@@ -29,61 +28,57 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   const [vipOnly, setVipOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [entries, setEntries] = useState<TutoringEntry[]>([]);
+  const [sfv2Unlinked, setSfv2Unlinked] = useState<TutoringUser[]>([]);
   const [crmUnlinked, setCrmUnlinked] = useState<CrmUnlinkedStudent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refundTarget, setRefundTarget] = useState<Student | null>(null);
+  const [linkTarget, setLinkTarget] = useState<CrmUnlinkedStudent | null>(null);
 
-  useEffect(() => {
-    const headers = { 'x-admin-key': adminKey };
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const headers = { 'x-admin-key': adminKey };
+      const tutoringRes = await fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json());
+      const linked: TutoringUser[] = tutoringRes.linked ?? [];
+      const unlinked: CrmUnlinkedStudent[] = tutoringRes.crmUnlinked ?? [];
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const tutoringRes = await fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json());
-        const linked: TutoringUser[] = tutoringRes.linked ?? [];
-        const unlinked: CrmUnlinkedStudent[] = tutoringRes.crmUnlinked ?? [];
-        // SFv2 연결된 학생만 상태 탭에 표시
-        setEntries(classifyTutoringEntries([], linked).filter(e => e.isCrmLinked));
-        setCrmUnlinked(unlinked);
-        // 미연결 학생이 없으면 재원 탭으로
-        if (unlinked.length === 0) setSubTab('active');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+      const allEntries = classifyTutoringEntries([], linked);
+      // SFv2 연결 완료 학생 → 상태 탭
+      setEntries(allEntries.filter(e => e.isCrmLinked));
+      // SFv2에만 있는 학생 → 연결 모달에서 사용
+      setSfv2Unlinked(linked.filter(u => !u.crmStudentId));
+      // CRM 결제 완료 & SFv2 미연결 → 미연결 탭
+      setCrmUnlinked(unlinked);
+      if (unlinked.length === 0) setSubTab('active');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   }, [adminKey]);
 
-  // 서브 탭별 카운트 — 미연결은 CRM 미연결 학생 수로 override
+  useEffect(() => { fetchData(); }, [fetchData]);
+
   const counts = useMemo(() => {
     const c = countByTutoringStatus(entries);
     c.unlinked = crmUnlinked.length;
     return c;
   }, [entries, crmUnlinked]);
 
-  // 상태 탭 필터 (미연결 탭일 때는 entries 무시)
   const visible = useMemo(
     () => subTab === 'unlinked' ? [] : filterTutoringEntries(entries, { subTab, vipOnly, searchQuery }),
     [entries, subTab, vipOnly, searchQuery]
   );
 
-  // CRM 미연결 탭 — 이름 검색만 적용
   const visibleCrmUnlinked = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return crmUnlinked;
     return crmUnlinked.filter(s => s.name?.toLowerCase().includes(q));
   }, [crmUnlinked, searchQuery]);
 
-  const handleRefundConfirm = async (
-    refundAmount: number,
-    refundReason: string,
-    churnType: string,
-  ) => {
+  const handleRefundConfirm = async (refundAmount: number, refundReason: string, churnType: string) => {
     if (!refundTarget) return;
     const res = await fetch(`/api/crm/students/${refundTarget.id}/refund`, {
       method: 'POST',
@@ -106,6 +101,11 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
     setRefundTarget(null);
   };
 
+  const handleLinked = () => {
+    setLinkTarget(null);
+    fetchData();
+  };
+
   const isUnlinkedTab = subTab === 'unlinked';
   const listCount = isUnlinkedTab ? visibleCrmUnlinked.length : visible.length;
   const isEmpty = isUnlinkedTab ? visibleCrmUnlinked.length === 0 : visible.length === 0;
@@ -113,7 +113,6 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   return (
     <div className="space-y-4">
 
-      {/* 상태 서브 탭 + VIP 토글 + 이름 검색 */}
       <TutoringListControls
         subTab={subTab}
         onSubTabChange={setSubTab}
@@ -125,7 +124,6 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
         showCounts={!loading}
       />
 
-      {/* 목록 */}
       {loading ? (
         <div className="flex items-center justify-center py-12 text-gray-400">
           <Loader2 size={18} className="animate-spin mr-2" />
@@ -144,7 +142,6 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
         <div className="space-y-2">
           <p className="text-xs text-gray-400">{listCount}명</p>
 
-          {/* CRM 미연결 탭 — CRM에 결제됐지만 SFv2 계정 미연결 */}
           {isUnlinkedTab ? (
             visibleCrmUnlinked.map(student => (
               <div
@@ -165,15 +162,12 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
                   )}
                 </div>
                 <div className="shrink-0" onClick={e => e.stopPropagation()}>
-                  <a
-                    href="/admin/srm"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => setLinkTarget(student)}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
                   >
-                    <ExternalLink size={11} />
                     SRM 연결
-                  </a>
+                  </button>
                 </div>
               </div>
             ))
@@ -206,6 +200,16 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
           student={refundTarget}
           onConfirm={handleRefundConfirm}
           onClose={() => setRefundTarget(null)}
+        />
+      )}
+
+      {linkTarget && (
+        <SrmLinkModal
+          crmStudent={linkTarget}
+          sfv2Unlinked={sfv2Unlinked}
+          adminKey={adminKey}
+          onLinked={handleLinked}
+          onClose={() => setLinkTarget(null)}
         />
       )}
     </div>
