@@ -59,10 +59,6 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
             }}
             shouldShow={({ state }) => {
                 const { selection } = state;
-                // CellSelection은 $anchorCell 속성을 가짐 (instanceof보다 안전)
-                if ('$anchorCell' in selection) return true;
-                // 커서가 셀 안에 있을 때
-                if (!selection.empty) return false;
                 const $from = selection.$from;
                 for (let d = $from.depth; d > 0; d--) {
                     const name = $from.node(d).type.name;
