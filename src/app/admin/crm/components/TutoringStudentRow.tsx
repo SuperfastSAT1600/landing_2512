@@ -15,8 +15,7 @@ export type TutoringRowStudent = Pick<
   'id' | 'name' | 'grade' | 'parent_phone' | 'is_vip' | 'needs_attention' | 'traffic_source'
 >;
 
-// 'ended'는 목록에서 제외하므로 포함하지 않는다
-export type TutoringDisplayStatus = 'onboarding' | 'active' | 'paused' | 'sales';
+export type TutoringDisplayStatus = 'onboarding' | 'active' | 'paused' | 'sales' | 'unclassified' | 'ended';
 
 /**
  * 플랫폼 Payment 페이지(app.superfastsat.io/admin/payment)의 수치 컬럼과 1:1 대응.
@@ -59,16 +58,20 @@ export const TUTORING_STATUS_META: Record<
   active:       { label: '재원',        color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
   paused:       { label: '휴원',        color: 'bg-amber-100 text-amber-700',     dot: 'bg-amber-400' },
   sales:        { label: '재결제세일즈', color: 'bg-blue-100 text-blue-700',      dot: 'bg-blue-500' },
+  unclassified: { label: '미분류',      color: 'bg-gray-100 text-gray-500',       dot: 'bg-gray-400' },
+  ended:        { label: '종료',        color: 'bg-red-100 text-red-600',         dot: 'bg-red-400' },
 };
 
 export type TutoringSubTab = 'all' | 'unlinked' | TutoringDisplayStatus;
 
 export const TUTORING_SUB_TABS: { key: TutoringSubTab; label: string }[] = [
-  { key: 'all',        label: '전체' },
-  { key: 'unlinked',   label: '미연결' },
-  { key: 'onboarding', label: '온보딩' },
-  { key: 'active',     label: '재원' },
-  { key: 'paused',     label: '휴원' },
+  { key: 'all',          label: '전체' },
+  { key: 'unlinked',     label: '미연결' },
+  { key: 'onboarding',   label: '온보딩' },
+  { key: 'active',       label: '재원' },
+  { key: 'paused',       label: '휴원' },
+  { key: 'unclassified', label: '미분류' },
+  { key: 'ended',        label: '종료' },
 ];
 
 /**
@@ -83,7 +86,6 @@ export function classifyTutoringEntries<S extends TutoringRowStudent>(
   linked: TutoringUser[]
 ): TutoringEntry<S>[] {
   return linked
-    .filter((tu) => tu.status !== 'ended' && tu.status !== 'unclassified')
     .map((tu) => ({
       student: {
         id: tu.crmStudentId ?? tu.sfv2ProfileId,
@@ -282,7 +284,7 @@ export function countByTutoringStatus(
   entries: Pick<TutoringEntry<TutoringRowStudent>, 'displayStatus' | 'isCrmLinked'>[]
 ): Record<TutoringSubTab, number> {
   const c: Record<TutoringSubTab, number> = {
-    all: 0, unlinked: 0, onboarding: 0, active: 0, paused: 0, sales: 0,
+    all: 0, unlinked: 0, onboarding: 0, active: 0, paused: 0, sales: 0, unclassified: 0, ended: 0,
   };
   for (const e of entries) {
     c.all++;
