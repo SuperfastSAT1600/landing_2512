@@ -6,6 +6,7 @@ import { Student, ProductCategory, ProductSubcategory, B2B_PARTNER_OPTIONS } fro
 import { useCompanies } from '@/hooks/useCompanies';
 import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
 import { getAdminUserName } from '@/lib/admin-user';
+import { netAmount } from '@/lib/payment-utils';
 
 type ClassType = '1:1' | '1:2' | '그룹' | '콘텐츠';
 type Subject = 'SAT' | 'AP';
@@ -481,9 +482,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
                   <p className="text-[11px] text-gray-400">
                     수익:{' '}
                     <span className="font-medium text-gray-700">
-                      {taxType === '면세'
-                        ? amountValue.toLocaleString('ko-KR')
-                        : Math.round(amountValue * 0.9).toLocaleString('ko-KR')}원
+                      {netAmount({ amount: amountValue, tax_type: taxType }).toLocaleString('ko-KR')}원
                     </span>
                     {taxType === '과세' && <span className="ml-1 text-gray-400">(부가세 10% 제외)</span>}
                   </p>
