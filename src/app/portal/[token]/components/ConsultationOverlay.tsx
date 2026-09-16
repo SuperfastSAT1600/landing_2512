@@ -59,6 +59,7 @@ interface AdminPortalPost {
   id: string;
   title: string;
   content: string;
+  buttons?: Array<{ text: string; url: string }>;
 }
 
 function AdminPostCard({ post }: { post: AdminPortalPost }) {
@@ -72,6 +73,22 @@ function AdminPostCard({ post }: { post: AdminPortalPost }) {
         <div className="min-w-0 w-full">
           <p className="font-bold text-sm mb-1.5" style={{ color: '#09090b' }}>{post.title}</p>
           <p className="text-xs leading-relaxed" style={{ color: '#64748b', whiteSpace: 'pre-wrap' }}>{post.content}</p>
+          {post.buttons && post.buttons.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {post.buttons.map((btn, i) => (
+                <a
+                  key={i}
+                  href={btn.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: '#6085FF', color: '#fff' }}
+                >
+                  {btn.text}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
