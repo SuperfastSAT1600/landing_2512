@@ -126,8 +126,13 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
               student={entry.student}
               displayStatus={entry.displayStatus}
               remainingHours={entry.remainingHours}
-              onClick={() => onStudentClick(entry.student)}
-              action={
+              onClick={entry.isCrmLinked ? () => onStudentClick(entry.student) : undefined}
+              badge={!entry.isCrmLinked ? (
+                <span className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded font-semibold bg-orange-100 text-orange-700">
+                  CRM 미연결
+                </span>
+              ) : undefined}
+              action={entry.isCrmLinked ? (
                 <button
                   onClick={() => setRefundTarget(entry.student)}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
@@ -136,7 +141,17 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
                   <RotateCcw size={12} />
                   <span className="hidden sm:inline">환불</span>
                 </button>
-              }
+              ) : (
+                <a
+                  href="/admin/srm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                  title="SRM에서 연결"
+                >
+                  SRM 연결
+                </a>
+              )}
             />
           ))}
         </div>

@@ -36,6 +36,8 @@ export interface TutoringHours {
 export interface TutoringEntry<S extends TutoringRowStudent = Student> {
   student: S;
   displayStatus: TutoringDisplayStatus;
+  /** CRM 학생 레코드와 연결됐으면 true. false면 SFv2 계정만 있고 CRM 미연결 상태. */
+  isCrmLinked: boolean;
   /** 0 하한 잔여 — '튜터링 중' 행 표시용(기존 동작 유지). */
   remainingHours: number | null;
   /** Payment 페이지와 동일한 전체 수치. SRM 미연결이면 null. */
@@ -59,10 +61,11 @@ export const TUTORING_STATUS_META: Record<
   sales:        { label: '재결제세일즈', color: 'bg-blue-100 text-blue-700',      dot: 'bg-blue-500' },
 };
 
-export type TutoringSubTab = 'all' | TutoringDisplayStatus;
+export type TutoringSubTab = 'all' | 'unlinked' | TutoringDisplayStatus;
 
 export const TUTORING_SUB_TABS: { key: TutoringSubTab; label: string }[] = [
   { key: 'all',        label: '전체' },
+  { key: 'unlinked',   label: '미연결' },
   { key: 'onboarding', label: '온보딩' },
   { key: 'active',     label: '재원' },
   { key: 'paused',     label: '휴원' },
@@ -92,6 +95,7 @@ export function classifyTutoringEntries<S extends TutoringRowStudent>(
         traffic_source: null,
       } as unknown as S,
       displayStatus: tu.status as TutoringDisplayStatus,
+      isCrmLinked: !!tu.crmStudentId,
       remainingHours: tu.remainingHours,
       hours: {
         purchased: tu.purchasedHours,
@@ -275,26 +279,31 @@ export function TutoringListControls({
 
 /** 서브탭별 카운트 — 두 목록이 같은 방식으로 센다. */
 export function countByTutoringStatus(
-  entries: Pick<TutoringEntry<TutoringRowStudent>, 'displayStatus'>[]
+  entries: Pick<TutoringEntry<TutoringRowStudent>, 'displayStatus' | 'isCrmLinked'>[]
 ): Record<TutoringSubTab, number> {
   const c: Record<TutoringSubTab, number> = {
-    all: 0, onboarding: 0, active: 0, paused: 0, sales: 0,
+    all: 0, unlinked: 0, onboarding: 0, active: 0, paused: 0, sales: 0,
   };
   for (const e of entries) {
     c.all++;
-    c[e.displayStatus]++;
+    if (!e.isCrmLinked) c.unlinked++;
+    else c[e.displayStatus]++;
   }
   return c;
 }
 
 /** 서브탭 + VIP + 이름 검색 필터. */
-export function filterTutoringEntries<E extends Pick<TutoringEntry<TutoringRowStudent>, 'student' | 'displayStatus'>>(
+export function filterTutoringEntries<E extends Pick<TutoringEntry<TutoringRowStudent>, 'student' | 'displayStatus' | 'isCrmLinked'>>(
   entries: E[],
   { subTab, vipOnly, searchQuery }: { subTab: TutoringSubTab; vipOnly: boolean; searchQuery: string }
 ): E[] {
   const q = searchQuery.trim().toLowerCase();
   return entries.filter((e) => {
-    if (subTab !== 'all' && e.displayStatus !== subTab) return false;
+    if (subTab === 'unlinked') {
+      if (e.isCrmLinked) return false;
+    } else if (subTab !== 'all') {
+      if (!e.isCrmLinked || e.displayStatus !== subTab) return false;
+    }
     if (vipOnly && !e.student.is_vip) return false;
     if (q && !e.student.name?.toLowerCase().includes(q)) return false;
     return true;

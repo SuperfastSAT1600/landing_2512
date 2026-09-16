@@ -27,6 +27,7 @@ function entry(
       traffic_source: null,
     },
     displayStatus: 'active',
+    isCrmLinked: true,
     remainingHours: 10,
     hours: null,
     subjects: [],

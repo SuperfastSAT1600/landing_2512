@@ -233,7 +233,7 @@ describe('부분종료 퍼널 제거', () => {
   });
 
   it('카운트에도 부분종료 칸이 없다', () => {
-    const counts = countByTutoringStatus([{ displayStatus: 'active' }, { displayStatus: 'paused' }]);
+    const counts = countByTutoringStatus([{ displayStatus: 'active', isCrmLinked: true }, { displayStatus: 'paused', isCrmLinked: true }]);
     expect(Object.keys(counts).sort()).toEqual(['active', 'all', 'onboarding', 'paused', 'sales']);
     expect(counts.all).toBe(2);
   });
