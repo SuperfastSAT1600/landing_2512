@@ -31,7 +31,7 @@ const TYPE_CONFIG: Record<RWQuestionType, {
   },
   hasty: {
     labelKo: '성급한 선택',
-    desc: '정답 보기 등장 전에 오답 확정. 성급한 학생 특유의 패턴.',
+    desc: '정답 보기 등장 전에 오답 확정. 보기를 끝까지 확인하지 않는 패턴.',
     bg: '#FFF7ED',
     border: '#FED7AA',
     text: '#C2410C',
@@ -60,7 +60,7 @@ const PROFILE_STYLE: Record<string, { bg: string; border: string; text: string; 
 const PROFILE_LABEL: Record<string, string> = {
   master:  '준비 완료',
   doubt:   '불확실 정답형',
-  hasty:   '성급한 학생',
+  hasty:   '성급한 선택형',
   avoider: '논리적 디테일 부족',
   chaotic: '성급함 + 논리 부재',
 };
@@ -109,16 +109,6 @@ export function ReportRWCognition({ rwCognitionData, rwStudentProfile }: Props) 
             {rwStudentProfile.evidence}
           </p>
 
-          {rwStudentProfile.prescription && (
-            <div className="border-t pt-3" style={{ borderColor: profileStyle.border }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: profileStyle.text }}>
-                처방
-              </p>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {rwStudentProfile.prescription}
-              </p>
-            </div>
-          )}
         </div>
       )}
 
