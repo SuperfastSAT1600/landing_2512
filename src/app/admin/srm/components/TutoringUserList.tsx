@@ -23,13 +23,14 @@ type Tab = 'unlinked' | TutoringStatus;
 
 const TAB_META: Record<Tab, { label: string; icon: React.ReactNode; color: string; activeColor: string }> = {
   unlinked:     { label: '미연결',      icon: <AlertTriangle size={10} />, color: 'text-orange-500',  activeColor: 'bg-orange-500 text-white' },
-  active:       { label: '수업중',      icon: <PlayCircle size={10} />,    color: 'text-emerald-600', activeColor: 'bg-emerald-600 text-white' },
+  onboarding:   { label: '온보딩',      icon: <PlayCircle size={10} />,    color: 'text-purple-600',  activeColor: 'bg-purple-600 text-white' },
+  active:       { label: '재원',        icon: <PlayCircle size={10} />,    color: 'text-emerald-600', activeColor: 'bg-emerald-600 text-white' },
   paused:       { label: '휴원',        icon: <PauseCircle size={10} />,   color: 'text-orange-500',  activeColor: 'bg-orange-500 text-white' },
   sales:        { label: '재결제세일즈', icon: <RefreshCw size={10} />,    color: 'text-blue-600',    activeColor: 'bg-blue-600 text-white' },
   ended:        { label: '종료',        icon: <XCircle size={10} />,       color: 'text-red-500',     activeColor: 'bg-red-500 text-white' },
 };
 
-const TAB_ORDER: Tab[] = ['unlinked', 'active', 'paused', 'sales', 'ended'];
+const TAB_ORDER: Tab[] = ['unlinked', 'onboarding', 'active', 'paused', 'sales', 'ended'];
 
 function UserRow({ user, onClick }: { user: TutoringUser; onClick: () => void }) {
   const meta = TAB_META[user.status];
