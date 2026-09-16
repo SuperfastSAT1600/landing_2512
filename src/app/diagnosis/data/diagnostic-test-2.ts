@@ -567,33 +567,33 @@ const diagnosticTest2: DiagnosticTestData = {
       "answers": []
     },
     {
-      "id": "mgvu93jxz30mcefakqj",
+      "id": "dt2q19quadratic2025",
       "type": "multiple-choice",
       "section": "Math",
-      "domain": "Algebra",
-      "skill": "Systems of two linear equations in two variables",
-      "difficulty": "Medium",
+      "domain": "Advanced Math",
+      "skill": "Nonlinear functions",
+      "difficulty": "Hard",
       "passage": null,
-      "question": "\\[\\tfrac{1}{2}y = 2x + 1\\]\\[y - a = a^2x&nbsp;\\]In the given system of equations above, \\(a\\) is a constant. If the system has no solutions, what is the value of \\(a\\)?",
+      "question": "For the quadratic function \\(g\\), the equation \\(g(x) = 6x + 1\\) has exactly one real solution, \\(x = 2\\). If the minimum value of \\(g(x)\\) is \\(4\\), what is the value of \\(g(6)\\)?",
       "options": [
         {
           "id": "A",
-          "text": "\\(-2\\)",
+          "text": "\\(53\\)",
           "type": "correct"
         },
         {
           "id": "B",
-          "text": "\\(-1\\)",
+          "text": "\\(29\\)",
           "type": "distractor"
         },
         {
           "id": "C",
-          "text": "\\(2\\)",
+          "text": "\\(49\\)",
           "type": "distractor"
         },
         {
           "id": "D",
-          "text": "\\(4\\)",
+          "text": "\\(20\\)",
           "type": "distractor"
         }
       ],
