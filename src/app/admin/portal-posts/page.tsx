@@ -93,12 +93,15 @@ function UserPreviewSection({ activePosts }: { activePosts: PortalPost[] }) {
     const [students, setStudents] = useState<PreviewStudent[]>([]);
     const [selected, setSelected] = useState<PreviewStudent | null>(null);
     const [searched, setSearched] = useState(false);
+    const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+    const [togglingId, setTogglingId] = useState<string | null>(null);
 
     async function handleSearch() {
         if (!query.trim()) return;
         setSearching(true);
         setSelected(null);
         setSearched(false);
+        setExcludedIds(new Set());
         try {
             const r = await fetch(
                 `/api/admin/portal-posts/preview?name=${encodeURIComponent(query.trim())}`,
@@ -112,14 +115,49 @@ function UserPreviewSection({ activePosts }: { activePosts: PortalPost[] }) {
         }
     }
 
+    async function selectStudent(s: PreviewStudent) {
+        setSelected(s);
+        if (!s.portal_token) return;
+        const r = await fetch(
+            `/api/admin/portal-posts/exclusions?token=${encodeURIComponent(s.portal_token)}`,
+            { headers: { 'x-admin-key': adminKey() } }
+        );
+        const data = await r.json() as { excludedPostIds: string[] };
+        setExcludedIds(new Set(data.excludedPostIds));
+    }
+
+    async function toggleHidden(postId: string) {
+        if (!selected?.portal_token) return;
+        const nowHidden = !excludedIds.has(postId);
+        setTogglingId(postId);
+        const r = await fetch('/api/admin/portal-posts/exclusions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey() },
+            body: JSON.stringify({ portal_token: selected.portal_token, post_id: postId, hidden: nowHidden }),
+        });
+        const data = await r.json() as { excludedPostIds: string[] };
+        setExcludedIds(new Set(data.excludedPostIds));
+        setTogglingId(null);
+    }
+
+    function reset() {
+        setSelected(null);
+        setStudents([]);
+        setSearched(false);
+        setQuery('');
+        setExcludedIds(new Set());
+    }
+
     const portalUrl = selected?.portal_token
         ? `${typeof window !== 'undefined' ? window.location.origin : ''}/portal/${selected.portal_token}`
         : null;
 
+    const visibleCount = activePosts.filter(p => !excludedIds.has(p.id)).length;
+
     return (
         <section className="bg-[#1e2023] rounded-xl p-6 space-y-4 border border-white/5">
-            <h2 className="text-base font-semibold text-white">유저별 포털 게시글 조회</h2>
-            <p className="text-xs text-gray-500">학생 이름으로 검색해 해당 학부모 포털에 노출되는 게시글을 확인합니다.</p>
+            <h2 className="text-base font-semibold text-white">학생별 게시글 노출 관리</h2>
+            <p className="text-xs text-gray-500">학생 이름으로 검색해 노출 중인 게시글을 확인하고 개별로 숨기거나 다시 보일 수 있습니다.</p>
 
             <div className="flex gap-2">
                 <input
@@ -150,7 +188,7 @@ function UserPreviewSection({ activePosts }: { activePosts: PortalPost[] }) {
                     {students.map(s => (
                         <button
                             key={s.portal_token ?? s.name}
-                            onClick={() => setSelected(s)}
+                            onClick={() => selectStudent(s)}
                             className="w-full text-left px-4 py-2.5 rounded-lg bg-[#151719] hover:bg-white/5 text-sm text-white border border-white/5 transition-colors flex items-center justify-between"
                         >
                             <span>{s.name}</span>
@@ -164,7 +202,10 @@ function UserPreviewSection({ activePosts }: { activePosts: PortalPost[] }) {
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-semibold text-white">{selected.name} 학생 포털</p>
+                            <p className="text-sm font-semibold text-white">{selected.name} 학생</p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                                노출 중 {visibleCount}개 · 숨김 {excludedIds.size}개
+                            </p>
                             {portalUrl && (
                                 <a
                                     href={portalUrl}
@@ -176,39 +217,51 @@ function UserPreviewSection({ activePosts }: { activePosts: PortalPost[] }) {
                                 </a>
                             )}
                             {!selected.portal_token && (
-                                <p className="text-xs text-red-400 mt-0.5">포털 토큰이 없어 링크를 생성할 수 없습니다.</p>
+                                <p className="text-xs text-red-400 mt-0.5">포털 토큰이 없어 숨기기 기능을 사용할 수 없습니다.</p>
                             )}
                         </div>
-                        <button
-                            onClick={() => { setSelected(null); setStudents([]); setSearched(false); setQuery(''); }}
-                            className="text-xs text-gray-500 hover:text-white transition-colors"
-                        >
+                        <button onClick={reset} className="text-xs text-gray-500 hover:text-white transition-colors">
                             초기화
                         </button>
                     </div>
 
-                    <div className="border-t border-white/5 pt-3">
-                        <p className="text-xs text-gray-500 mb-2">현재 노출 중인 게시글 ({activePosts.length}개)</p>
+                    <div className="border-t border-white/5 pt-3 space-y-2">
                         {activePosts.length === 0 ? (
                             <p className="text-xs text-gray-600">활성 게시글이 없습니다.</p>
                         ) : (
-                            <div className="space-y-2">
-                                {activePosts.map(post => (
-                                    <div key={post.id} className="bg-[#151719] rounded-lg px-4 py-3 border border-white/5">
-                                        <p className="text-sm font-medium text-white">{post.title}</p>
-                                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 whitespace-pre-wrap">{post.content}</p>
-                                        {post.buttons && post.buttons.length > 0 && (
-                                            <div className="flex flex-wrap gap-1.5 mt-2">
-                                                {post.buttons.map((btn, i) => (
-                                                    <span key={i} className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/20">
-                                                        {btn.text}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
+                            activePosts.map(post => {
+                                const hidden = excludedIds.has(post.id);
+                                const toggling = togglingId === post.id;
+                                return (
+                                    <div
+                                        key={post.id}
+                                        className={`flex items-start gap-3 bg-[#151719] rounded-lg px-4 py-3 border transition-all ${hidden ? 'border-white/5 opacity-50' : 'border-white/5'}`}
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <p className={`text-sm font-medium ${hidden ? 'text-gray-500' : 'text-white'}`}>
+                                                {post.title}
+                                            </p>
+                                            <p className="text-xs text-gray-600 mt-0.5 line-clamp-1 whitespace-pre-wrap">{post.content}</p>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                                            {hidden && (
+                                                <span className="text-xs text-gray-600 bg-white/5 px-1.5 py-0.5 rounded">숨김</span>
+                                            )}
+                                            <button
+                                                onClick={() => toggleHidden(post.id)}
+                                                disabled={toggling || !selected.portal_token}
+                                                className={`p-1.5 rounded-md transition-colors disabled:opacity-30 ${hidden ? 'text-gray-600 hover:text-gray-300' : 'text-blue-400 hover:text-blue-300'}`}
+                                                title={hidden ? '이 학생에게 다시 보이기' : '이 학생에게 숨기기'}
+                                            >
+                                                {toggling
+                                                    ? <Loader2 size={14} className="animate-spin" />
+                                                    : hidden ? <EyeOff size={14} /> : <Eye size={14} />
+                                                }
+                                            </button>
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
+                                );
+                            })
                         )}
                     </div>
                 </div>

@@ -281,11 +281,11 @@ export default function ConsultationOverlay({ token, memos, studentName, student
 
   useEffect(() => {
     if (isEnrolled) return;
-    fetch('/api/portal/portal-posts')
+    fetch(`/api/portal/portal-posts?token=${encodeURIComponent(token)}`)
       .then(r => r.json())
       .then((d: AdminPortalPost[]) => setAdminPosts(d))
       .catch(() => {});
-  }, [isEnrolled]);
+  }, [isEnrolled, token]);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto pt-12" style={{ background: '#F4F5F9' }}>
