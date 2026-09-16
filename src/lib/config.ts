@@ -108,6 +108,7 @@ export interface PortalPost {
     title: string;
     content: string;
     buttons?: PortalPostButton[];
+    toolId?: string;  // 툴 카드 식별자 (vocab-counter, math-web 등). 있으면 SecretPageCard로 렌더링
     active: boolean;
     order: number;    // 표시 순서 (오름차순)
     created_at: string; // ISO timestamp

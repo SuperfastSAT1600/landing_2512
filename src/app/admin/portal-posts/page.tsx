@@ -497,7 +497,14 @@ export default function AdminPortalPosts() {
                                     <>
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
-                                                <p className="text-sm font-semibold text-white truncate">{post.title}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-semibold text-white truncate">{post.title}</p>
+                                                    {post.toolId && (
+                                                        <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/20">
+                                                            툴 카드
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="text-xs text-gray-600 mt-0.5">{formatDate(post.created_at)}</p>
                                             </div>
                                             <div className="flex items-center gap-1 shrink-0">
