@@ -4,12 +4,14 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 
 interface CodeRow {
   id: string;
-  instagram_id: string;
+  instagram_id: string | null;
   code: string;
   is_active: boolean;
   scope: 'vocab' | 'mathweb' | 'both';
   created_at: string;
   first_used_at: string | null;
+  lead_id?: string | null;
+  label?: string | null;
 }
 
 interface LeadResult {
@@ -36,7 +38,7 @@ export default function VocabAccessPage() {
   const [instagramId, setInstagramId] = useState('');
   const [scope, setScope] = useState<'vocab' | 'mathweb' | 'both'>('vocab');
   const [creating, setCreating] = useState(false);
-  const [newCode, setNewCode] = useState<{ instagram_id: string; code: string } | null>(null);
+  const [newCode, setNewCode] = useState<{ instagram_id?: string | null; code: string; access_links?: string[] } | null>(null);
   const [copied, setCopied] = useState(false);
 
   // 리드 검색 모드
@@ -100,14 +102,18 @@ export default function VocabAccessPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!instagramId.trim()) return;
+    if (mode === 'lead' && !selectedLead) return;
+    if (mode === 'direct' && !instagramId.trim()) return;
     setCreating(true);
     setNewCode(null);
     try {
+      const payload = mode === 'lead'
+        ? { lead_id: selectedLead!.id, scope }
+        : { instagram_id: instagramId.trim(), scope };
       const res = await fetch('/api/admin/vocab-access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ instagram_id: instagramId.trim(), scope }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -134,7 +140,8 @@ export default function VocabAccessPage() {
   };
 
   const handleDelete = async (row: CodeRow) => {
-    if (!confirm(`@${row.instagram_id}의 코드를 삭제하시겠습니까?`)) return;
+    const displayName = row.instagram_id ? `@${row.instagram_id}` : (row.label ?? '리드');
+    if (!confirm(`${displayName}의 코드를 삭제하시겠습니까?`)) return;
     await fetch(`/api/admin/vocab-access/${row.id}`, {
       method: 'DELETE',
       headers: { 'x-admin-key': adminKey },
@@ -165,7 +172,7 @@ export default function VocabAccessPage() {
     },
   ];
 
-  const canSubmit = instagramId.trim() && !creating;
+  const canSubmit = (mode === 'lead' ? !!selectedLead : !!instagramId.trim()) && !creating;
 
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#e4e4e7' }}>
@@ -395,25 +402,9 @@ export default function VocabAccessPage() {
                   </div>
                 )}
 
-                {/* Instagram ID + scope + 발급 버튼 (리드 선택 후 표시) */}
+                {/* scope + 발급 버튼 (리드 선택 후 표시, Instagram ID 불필요) */}
                 {selectedLead && (
                   <div style={{ display: 'flex', gap: 10 }}>
-                    <input
-                      value={instagramId}
-                      onChange={(e) => setInstagramId(e.target.value.replace(/^@/, ''))}
-                      placeholder="인스타그램 ID (@ 제외)"
-                      autoFocus
-                      style={{
-                        flex: 1,
-                        padding: '9px 14px',
-                        background: '#09090b',
-                        border: '1px solid #27272a',
-                        borderRadius: 8,
-                        color: '#e4e4e7',
-                        fontSize: 14,
-                        outline: 'none',
-                      }}
-                    />
                     <ScopeSelect value={scope} onChange={setScope} />
                     <IssueButton disabled={!canSubmit} creating={creating} />
                   </div>
@@ -430,22 +421,41 @@ export default function VocabAccessPage() {
               border: '1px solid rgba(96,133,255,0.3)',
               borderRadius: 8,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              flexDirection: 'column',
+              gap: 10,
             }}>
-              <div>
-                <span style={{ fontSize: 12, color: '#6085FF' }}>@{newCode.instagram_id}</span>
-                <span style={{ fontSize: 13, color: '#71717a', margin: '0 8px' }}>→</span>
-                <span style={{ fontFamily: 'monospace', fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '0.15em' }}>
-                  {newCode.code}
-                </span>
+              {/* 코드 행 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  {newCode.instagram_id && (
+                    <>
+                      <span style={{ fontSize: 12, color: '#6085FF' }}>@{newCode.instagram_id}</span>
+                      <span style={{ fontSize: 13, color: '#71717a', margin: '0 8px' }}>→</span>
+                    </>
+                  )}
+                  <span style={{ fontFamily: 'monospace', fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '0.15em' }}>
+                    {newCode.code}
+                  </span>
+                </div>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(newCode.code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                  style={{ padding: '6px 14px', background: copied ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.07)', border: `1px solid ${copied ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.12)'}`, borderRadius: 6, color: copied ? '#22c55e' : '#a1a1aa', fontSize: 12, cursor: 'pointer' }}
+                >
+                  {copied ? '복사됨!' : '코드 복사'}
+                </button>
               </div>
-              <button
-                onClick={() => { navigator.clipboard.writeText(newCode.code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                style={{ padding: '6px 14px', background: copied ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.07)', border: `1px solid ${copied ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.12)'}`, borderRadius: 6, color: copied ? '#22c55e' : '#a1a1aa', fontSize: 12, cursor: 'pointer' }}
-              >
-                {copied ? '복사됨!' : '코드 복사'}
-              </button>
+              {/* 전용 링크 행 */}
+              {newCode.access_links?.map((link) => (
+                <div key={link} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#a1a1aa', wordBreak: 'break-all' }}>{link}</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(link)}
+                    style={{ flexShrink: 0, padding: '5px 12px', background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 6, color: '#6085FF', fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  >
+                    링크 복사
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -481,14 +491,21 @@ export default function VocabAccessPage() {
                 {codes.map((row) => (
                   <tr key={row.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                     <td style={{ padding: '12px 12px' }}>
-                      <a
-                        href={`https://instagram.com/${row.instagram_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#6085FF', textDecoration: 'none', fontWeight: 500 }}
-                      >
-                        @{row.instagram_id}
-                      </a>
+                      {row.instagram_id ? (
+                        <a
+                          href={`https://instagram.com/${row.instagram_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#6085FF', textDecoration: 'none', fontWeight: 500 }}
+                        >
+                          @{row.instagram_id}
+                        </a>
+                      ) : (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ color: '#e4e4e7', fontWeight: 500 }}>{row.label ?? '리드'}</span>
+                          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.25)', color: '#6085FF' }}>리드</span>
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '12px 12px' }}>
                       <button
