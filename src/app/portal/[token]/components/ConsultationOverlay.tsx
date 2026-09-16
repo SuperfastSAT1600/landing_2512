@@ -63,7 +63,15 @@ interface AdminPortalPost {
   toolId?: string;
 }
 
-function AdminPostCard({ post }: { post: AdminPortalPost }) {
+function AdminPostCard({ post, token }: { post: AdminPortalPost; token: string }) {
+  function trackClick(buttonLabel: string) {
+    fetch(`/api/portal/${token}/button-click`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ buttonLabel }),
+    }).catch(() => {});
+  }
+
   return (
     <div
       className="rounded-2xl px-5 py-5"
@@ -75,14 +83,15 @@ function AdminPostCard({ post }: { post: AdminPortalPost }) {
           <p className="font-bold text-sm mb-1.5" style={{ color: '#09090b' }}>{post.title}</p>
           <p className="text-xs leading-relaxed" style={{ color: '#64748b', whiteSpace: 'pre-wrap' }}>{post.content}</p>
           {post.buttons && post.buttons.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
+            <div className="flex flex-col gap-2 mt-3">
               {post.buttons.map((btn, i) => (
                 <a
                   key={i}
                   href={btn.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold transition-opacity hover:opacity-80"
+                  onClick={() => trackClick(btn.text)}
+                  className="w-full text-center rounded-xl py-2.5 text-sm font-bold transition-opacity hover:opacity-80"
                   style={{ background: '#6085FF', color: '#fff' }}
                 >
                   {btn.text}
@@ -363,7 +372,7 @@ export default function ConsultationOverlay({ token, memos, studentName, student
                       />
                     );
                   }
-                  return <AdminPostCard key={post.id} post={post} />;
+                  return <AdminPostCard key={post.id} post={post} token={token} />;
                 })}
               </>
             );

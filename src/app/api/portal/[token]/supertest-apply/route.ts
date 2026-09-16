@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { cookies } from 'next/headers';
 import { appendConsultationEntry } from '@/lib/consultation-timeline';
 import { getSupertestConfig, saveSupertestConfig } from '@/lib/config';
+import { notifyPortalButtonClick } from '@/lib/slack';
 import type { ConsultationEntry } from '@/types/crm';
 
 const MEMO_MARKER = '[포털 신청] SuperTest';
@@ -21,7 +22,7 @@ export async function POST(
 
   const { data: student, error } = await supabaseAdmin
     .from('students')
-    .select('id, consultation_timeline')
+    .select('id, name, portal_name, consultation_timeline')
     .eq('portal_token', token)
     .single();
 
@@ -53,6 +54,12 @@ export async function POST(
   });
 
   await saveSupertestConfig({ ...config, portalApplicantCount: currentCount + 1 });
+
+  notifyPortalButtonClick({
+    studentName: student.portal_name || student.name,
+    studentId: student.id,
+    buttonLabel: 'SuperTest 신청',
+  }).catch((err) => console.error('[supertest-apply] Slack notify failed:', err));
 
   return NextResponse.json({ success: true });
 }

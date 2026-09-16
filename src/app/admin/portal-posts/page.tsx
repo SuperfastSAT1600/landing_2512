@@ -23,7 +23,14 @@ function ButtonEditor({ buttons, onChange }: { buttons: ButtonField[]; onChange:
     return (
         <div className="space-y-2">
             <div className="flex items-center justify-between">
-                <label className="text-xs text-gray-500">버튼 (선택, 최대 3개)</label>
+                <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-500">버튼 (선택, 최대 3개)</label>
+                    {buttons.length > 0 && (
+                        <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                            슬랙 알림 자동 연동
+                        </span>
+                    )}
+                </div>
                 {buttons.length < 3 && (
                     <button type="button" onClick={() => onChange([...buttons, { text: '', url: '' }])}
                         className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors">
