@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback, useSyncExternalStore } from 'react';
+import { useState, useRef, useCallback, useSyncExternalStore, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const STORAGE_KEY = 'mathweb_access_v1';
 const CODE_LENGTH = 6;
@@ -14,6 +15,9 @@ function getServerSnapshot() { return null; }
 
 export function AccessGate({ children }: { children: React.ReactNode }) {
   const stored = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const searchParams = useSearchParams();
+  const codeFromUrl = searchParams.get('c');
+
   const [instagramId, setInstagramId] = useState('');
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -50,17 +54,16 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
     focusInput(Math.min(pasted.length, CODE_LENGTH - 1));
   };
 
-  const isFilled = instagramId.trim().length > 0 && code.every(d => d !== '');
-
-  const handleSubmit = async () => {
-    if (!isFilled || status === 'loading') return;
+  const verifyCode = useCallback(async (codeStr: string, igId?: string) => {
     setStatus('loading');
     setErrorMsg('');
     try {
+      const body: Record<string, string> = { code: codeStr };
+      if (igId) body.instagram_id = igId;
       const res = await fetch('/api/mathweb/access/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instagram_id: instagramId.trim(), code: code.join('') }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -74,10 +77,80 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
       setErrorMsg('네트워크 오류가 발생했어요. 다시 시도해주세요.');
       setStatus('error');
     }
+  }, []);
+
+  // ?c= 파라미터가 있으면 자동 인증
+  useEffect(() => {
+    if (codeFromUrl && codeFromUrl.length === CODE_LENGTH) {
+      setCode(codeFromUrl.split(''));
+      verifyCode(codeFromUrl);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codeFromUrl]);
+
+  const isFilled = instagramId.trim().length > 0 && code.every(d => d !== '');
+
+  const handleSubmit = async () => {
+    if (!isFilled || status === 'loading') return;
+    await verifyCode(code.join(''), instagramId.trim());
   };
 
   if (stored) return <>{children}</>;
 
+  // ?c= 파라미터 있는 경우: 코드 전용 UI
+  if (codeFromUrl) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#000000] text-gray-100 font-sans flex flex-col items-center overflow-y-auto px-4">
+        <header className="pt-28 pb-10 sm:pt-32 sm:pb-16 px-6 text-center">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
+            Math Web
+          </h1>
+          <p className="text-xl text-gray-400">
+            {status === 'loading' ? '코드를 확인하는 중...' : status === 'error' ? '코드 확인에 실패했어요.' : '접속 코드를 확인합니다.'}
+          </p>
+        </header>
+
+        <div className="w-full max-w-md bg-[#09090b] rounded-2xl border border-white/5 shadow-2xl p-6 md:p-8">
+          <div className="mb-2">
+            <label className="block text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">
+              접속 코드
+            </label>
+            <div className="flex justify-center gap-2 md:gap-3">
+              {codeFromUrl.split('').map((digit, idx) => (
+                <div
+                  key={idx}
+                  className="w-12 h-14 md:w-14 md:h-16 flex items-center justify-center text-2xl font-bold bg-[#000000] border border-white/10 rounded-xl text-white"
+                >
+                  {digit}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {errorMsg && (
+            <p className="text-red-400 text-sm text-center mt-3">{errorMsg}</p>
+          )}
+
+          {status === 'error' && (
+            <button
+              onClick={() => verifyCode(codeFromUrl)}
+              className="w-full mt-6 py-4 bg-[#071be9] hover:bg-[#1a31f0] rounded-xl font-bold transition-all text-lg shadow-lg shadow-[#071be9]/20"
+            >
+              다시 시도
+            </button>
+          )}
+
+          {status === 'loading' && (
+            <div className="w-full mt-6 py-4 text-center text-gray-500 text-sm">
+              확인 중...
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 일반 UI: Instagram ID + 코드 입력
   return (
     <div className="fixed inset-0 z-50 bg-[#000000] text-gray-100 font-sans flex flex-col items-center overflow-y-auto px-4">
       <header className="pt-28 pb-10 sm:pt-32 sm:pb-16 px-6 text-center">
