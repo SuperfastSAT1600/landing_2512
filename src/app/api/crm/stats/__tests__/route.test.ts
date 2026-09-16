@@ -422,7 +422,8 @@ describe('GET /api/crm/stats — 채널별 전환율도 같은 모수를 쓴다'
       payment({ student_id: 'c', student_name: 'C', amount: 1_000_000 }),
     ];
 
-    const src = (await (await callRoute()).json()).data.by_source.find((r: Record<string, number>) => r.source === '인스타');
+    type SourceRow = { source: string; leads: number; contacted: number; paid: number; paid_contacted: number; conversion_rate: number };
+    const src = (await (await callRoute()).json()).data.by_source.find((r: SourceRow) => r.source === '인스타') as SourceRow;
     expect(src.leads).toBe(3);
     expect(src.contacted).toBe(2);
     expect(src.paid).toBe(2);
