@@ -61,9 +61,19 @@ export interface UnlinkedTutoringUser {
   netRemainingHours: number;
 }
 
+/** CRM 결제 완료 학생 중 SFv2 계정 미연결 — CRM 미연결 탭 전용. */
+export interface CrmUnlinkedStudent {
+  id: string;
+  name: string;
+  grade: string | null;
+  parent_phone: string | null;
+}
+
 export interface TutoringUsersResponse {
   linked: TutoringUser[];
   unlinked: UnlinkedTutoringUser[];
+  /** CRM funnel_stage='8' & sfv2_profile_id IS NULL 학생 목록. */
+  crmUnlinked: CrmUnlinkedStudent[];
 }
 
 // 오프셋 페이지네이션(1000행 캡)을 한 곳에서 처리. 페이지별 처리는 onPage 콜백에 위임.
@@ -279,7 +289,7 @@ export async function GET(request: NextRequest) {
       (rows) => allPaymentRows.push(...rows),
     );
 
-    const [v2Hours, crmResult, pauseResult] = await Promise.all([
+    const [v2Hours, crmResult, pauseResult, crmUnlinkedResult] = await Promise.all([
       fetchV2Hours(),
       supabaseAdmin
         .from('students')
@@ -291,6 +301,13 @@ export async function GET(request: NextRequest) {
         .is('ended_at', null)
         .lte('pause_start', today)
         .or(`pause_until.is.null,pause_until.gte.${today}`),
+      // CRM 결제 완료(funnel_stage='8') 학생 중 SFv2 계정 미연결
+      supabaseAdmin
+        .from('students')
+        .select('id, name, grade, parent_phone')
+        .eq('funnel_stage', '8')
+        .is('sfv2_profile_id', null)
+        .order('name'),
     ]);
 
     const {
@@ -441,7 +458,14 @@ export async function GET(request: NextRequest) {
       unlinked.sort((a, b) => b.netRemainingHours - a.netRemainingHours || a.name.localeCompare(b.name));
     }
 
-    return NextResponse.json({ linked: results, unlinked } satisfies TutoringUsersResponse);
+    const crmUnlinked: CrmUnlinkedStudent[] = (crmUnlinkedResult.data ?? []).map((s) => ({
+      id: s.id,
+      name: s.name ?? '',
+      grade: s.grade ?? null,
+      parent_phone: s.parent_phone ?? null,
+    }));
+
+    return NextResponse.json({ linked: results, unlinked, crmUnlinked } satisfies TutoringUsersResponse);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 500 });
