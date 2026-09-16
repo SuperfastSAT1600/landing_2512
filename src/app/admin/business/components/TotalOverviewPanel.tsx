@@ -8,6 +8,7 @@ import { toMonthKey } from '@/lib/crm-stats-core';
 import { combineMonthlyRevenue, USD_TO_KRW_RATE } from '@/lib/business-targets';
 import type { CrmStatsData, StatsMonthly } from '@/lib/crm-stats-service';
 import type { GlobalSaleEntry } from '@/app/api/business/global-sales/route';
+import { OutcomeQualityPanel } from './OutcomeQualityPanel';
 
 const SalesRevenueChart = dynamic(() => import('./SalesRevenueChart'), {
   ssr: false,
@@ -187,6 +188,10 @@ export function TotalOverviewPanel({ adminKey }: Props) {
         <p className="mt-3 text-[11px] text-gray-400">
           리드·컨택·전환 같은 퍼널 지표는 글로벌에 해당 개념이 없어 여기서 합치지 않습니다 — 한국비즈니스 탭에서 확인하세요.
         </p>
+      </div>
+
+      <div className="border-t border-gray-100 pt-6">
+        <OutcomeQualityPanel adminKey={adminKey} />
       </div>
     </div>
   );
