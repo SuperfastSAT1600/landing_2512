@@ -267,7 +267,19 @@ export async function GET(request: NextRequest) {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    const [v2Hours, crmResult, pauseResult, paymentsResult] = await Promise.all([
+    // payments는 학생×과목 단위라 1000행 cap을 넘을 수 있다 → scanAll 필요.
+    // SRM v2 카운트와 동일한 소스: payments 먼저 수집 → profile_id 기준 집계.
+    const allPaymentRows: { student_id: string; subject: string | null; management_status: string | null }[] = [];
+    await scanAll<{ student_id: string; subject: string | null; management_status: string | null }>(
+      (f, t) => supabaseSFv2
+        .from('payments')
+        .select('student_id, subject, management_status')
+        .not('student_id', 'is', null)
+        .range(f, t),
+      (rows) => allPaymentRows.push(...rows),
+    );
+
+    const [v2Hours, crmResult, pauseResult] = await Promise.all([
       fetchV2Hours(),
       supabaseAdmin
         .from('students')
@@ -279,31 +291,23 @@ export async function GET(request: NextRequest) {
         .is('ended_at', null)
         .lte('pause_start', today)
         .or(`pause_until.is.null,pause_until.gte.${today}`),
-      supabaseSFv2
-        .from('payments')
-        .select('student_id, subject, management_status')
-        .not('student_id', 'is', null),
     ]);
 
     const {
       purchased, refunded, used, scheduled, lastSessionDate,
       purchasedBySubject, refundedBySubject, usedBySubject, scheduledBySubject,
     } = v2Hours;
-    const paymentRows = (paymentsResult.data ?? []) as {
-      student_id: string;
-      subject: string | null;
-      management_status: string | null;
-    }[];
     const {
       subjects: subjectsByStudent,
       paymentStatus: statusByStudent,
       statusBySubject,
-    } = foldPayments(paymentRows);
+    } = foldPayments(allPaymentRows);
 
-    // sfv2 profile_id → 결제 management_status 중 가장 우선순위 높은 값
-    const MGMT_PRIORITY = ['onboarding', 'active', 'paused', 'inactive', 'excluded'];
+    // profile_id → 가장 우선순위 높은 management_status
+    // PAYMENT_STATUS_PRIORITY와 동일 순서 사용
+    const MGMT_PRIORITY = ['active', 'onboarding', 'paused', 'inactive', 'excluded'];
     const mgmtByProfile = new Map<string, string>();
-    for (const row of paymentRows) {
+    for (const row of allPaymentRows) {
       if (!row.student_id || !row.management_status) continue;
       const prev = mgmtByProfile.get(row.student_id);
       if (!prev || MGMT_PRIORITY.indexOf(row.management_status) < MGMT_PRIORITY.indexOf(prev)) {
@@ -311,24 +315,46 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const pausedByStudentId = new Set((pauseResult.data ?? []).map((p) => p.student_id).filter(Boolean) as string[]);
-    const pausedByProfileId = new Set((pauseResult.data ?? []).map((p) => p.sfv2_profile_id).filter(Boolean) as string[]);
+    // onboarding·active·paused 인 profile_id만 (SRM v2 카운트와 동일하게)
+    const relevantProfileIds = [...mgmtByProfile.entries()]
+      .filter(([, ms]) => managementStatusToTutoring(ms) !== null)
+      .map(([pid]) => pid);
 
+    // SFv2 profiles 이름 조회 — 배치 500
+    const sfv2ProfilesById = new Map<string, { id: string; full_name: string | null }>();
+    for (let i = 0; i < relevantProfileIds.length; i += 500) {
+      const { data } = await supabaseSFv2
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', relevantProfileIds.slice(i, i + 500));
+      for (const p of data ?? []) sfv2ProfilesById.set(p.id, p);
+    }
+
+    // CRM 학생은 enrichment (이름·학년·crmStudentId)
     const crmStudents = (crmResult.data ?? []) as {
       id: string; name: string; grade: string | null; sfv2_profile_id: string;
     }[];
+    const crmByProfile = new Map<string, typeof crmStudents[0]>();
+    for (const s of crmStudents) crmByProfile.set(s.sfv2_profile_id, s);
+
+    const pausedByStudentId = new Set((pauseResult.data ?? []).map((p) => p.student_id).filter(Boolean) as string[]);
+    const pausedByProfileId = new Set((pauseResult.data ?? []).map((p) => p.sfv2_profile_id).filter(Boolean) as string[]);
 
     const results: TutoringUser[] = [];
 
-    for (const s of crmStudents) {
-      const pid = s.sfv2_profile_id;
+    for (const pid of relevantProfileIds) {
       const mgmt = mgmtByProfile.get(pid) ?? null;
       const baseStatus = managementStatusToTutoring(mgmt);
-      if (!baseStatus) continue; // inactive·excluded·결제없음 → 제외
+      if (!baseStatus) continue;
 
-      const isPaused = pausedByStudentId.has(s.id) || pausedByProfileId.has(pid);
+      const crmStudent = crmByProfile.get(pid);
+      const isPaused = (crmStudent ? pausedByStudentId.has(crmStudent.id) : false) || pausedByProfileId.has(pid);
       // active 상태에서 휴원 중이면 paused로 override (onboarding은 유지)
       const status: TutoringStatus = (isPaused && baseStatus === 'active') ? 'paused' : baseStatus;
+
+      const sfv2Profile = sfv2ProfilesById.get(pid);
+      const name = crmStudent?.name ?? sfv2Profile?.full_name ?? pid;
+      const grade = crmStudent?.grade ?? null;
 
       const purchasedH = Math.round((purchased.get(pid) ?? 0) * 10) / 10;
       const refundedH  = Math.round((refunded.get(pid) ?? 0) * 10) / 10;
@@ -340,9 +366,9 @@ export async function GET(request: NextRequest) {
 
       results.push({
         sfv2ProfileId: pid,
-        crmStudentId: s.id,
-        name: s.name,
-        grade: s.grade,
+        crmStudentId: crmStudent?.id ?? null,
+        name,
+        grade,
         purchasedHours: purchasedH,
         refundedHours: refundedH,
         usedHours: usedH,
