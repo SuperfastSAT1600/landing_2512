@@ -44,7 +44,7 @@ describe('TutoringStudentRow', () => {
 
     expect(screen.getByText('김학생')).toBeTruthy();
     expect(screen.getByText('11')).toBeTruthy();
-    expect(screen.getByText('수업중')).toBeTruthy();
+    expect(screen.getByText('재원')).toBeTruthy();
     expect(screen.getByText('010-1111-2222')).toBeTruthy();
     expect(screen.getByText('잔여 12h')).toBeTruthy();
     expect(screen.getByText('소개')).toBeTruthy();
@@ -88,8 +88,9 @@ describe('TutoringStudentRow', () => {
     render(
       <TutoringStudentRow student={student()} displayStatus="active" remainingHours={null} />
     );
+    // 잔여만 감춘다. '미연결'은 행 배지가 아니라 하위 탭(isCrmLinked 기반)이다.
     expect(screen.queryByText(/잔여/)).toBeNull();
-    expect(screen.getByText('미연결')).toBeTruthy();
+    expect(screen.queryByText('미연결')).toBeNull();
   });
 
   it('labels the 재결제세일즈 status', () => {
@@ -125,19 +126,10 @@ describe('TutoringStudentRow', () => {
 });
 
 describe('classifyTutoringEntries', () => {
-  it('marks students with no SRM match as unlinked with unknown hours', () => {
-    const entries = classifyTutoringEntries([student()], []);
-    expect(entries).toEqual([
-      {
-        student: student(),
-        displayStatus: 'active',
-        remainingHours: null,
-        hours: null,
-        subjects: [],
-        paymentStatus: null,
-        bySubject: [],
-      },
-    ]);
+  // 학생 소스가 CRM(enrolled)에서 SRM 라이프사이클(linked)로 바뀌었다.
+  // enrolled 인자는 하위 호환으로 남아 있을 뿐 더는 행을 만들지 않는다.
+  it('SRM 목록이 비면 CRM 학생이 있어도 행을 만들지 않는다', () => {
+    expect(classifyTutoringEntries([student()], [])).toEqual([]);
   });
 
   it('carries the per-subject breakdown through for the candidate table', () => {
@@ -163,12 +155,12 @@ describe('classifyTutoringEntries', () => {
     ]);
   });
 
-  it('drops students whose tutoring has ended', () => {
-    const entries = classifyTutoringEntries(
-      [student()],
-      [tutoringUser({ status: 'ended' })]
-    );
-    expect(entries).toEqual([]);
+  // 종료·미분류 제외는 API(/api/admin/srm/tutoring-users)가 맡는다.
+  // 여기서 또 걸러내면 '종료'·'미분류' 하위 탭이 영원히 비게 된다.
+  it('종료 상태도 그대로 통과시킨다 — 제외는 API 몫이다', () => {
+    const entries = classifyTutoringEntries([student()], [tutoringUser({ status: 'ended' })]);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].displayStatus).toBe('ended');
   });
 
   it('carries the SRM status and remaining hours through', () => {
@@ -214,27 +206,38 @@ describe('classifyTutoringEntries', () => {
     expect(entries[0].remainingHours).toBe(0);
   });
 
-  it('ignores tutoring users that are not linked to a CRM student', () => {
+  // CRM 미연결 SFv2 계정도 목록에 남긴다 — '미연결' 탭에서 연결 작업을 해야 하기 때문.
+  // 미연결 여부는 displayStatus 가 아니라 isCrmLinked 로 표현한다(라이프사이클 축과 별개).
+  it('CRM 미연결 계정은 isCrmLinked=false 로 남기고 라이프사이클 상태는 보존한다', () => {
     const entries = classifyTutoringEntries(
       [student()],
       [tutoringUser({ crmStudentId: null, status: 'active' })]
     );
-    expect(entries[0].displayStatus).toBe('unlinked');
+    expect(entries[0].isCrmLinked).toBe(false);
+    expect(entries[0].displayStatus).toBe('active');
   });
 });
 
 
-describe('부분종료 퍼널 제거', () => {
-  it('하위 탭에 부분종료가 없다', () => {
+describe('하위 탭 구성', () => {
+  it('부분종료는 없고, 미연결·미분류·종료가 있다', () => {
     expect(TUTORING_SUB_TABS.map((t) => t.key)).toEqual([
-      'all', 'onboarding', 'active', 'paused', 'sales',
+      'all', 'unlinked', 'onboarding', 'active', 'paused', 'unclassified', 'ended',
     ]);
     expect(TUTORING_SUB_TABS.some((t) => t.label === '부분종료')).toBe(false);
   });
 
-  it('카운트에도 부분종료 칸이 없다', () => {
-    const counts = countByTutoringStatus([{ displayStatus: 'active', isCrmLinked: true }, { displayStatus: 'paused', isCrmLinked: true }]);
-    expect(Object.keys(counts).sort()).toEqual(['active', 'all', 'onboarding', 'paused', 'sales']);
-    expect(counts.all).toBe(2);
+  it('카운트는 CRM 미연결을 라이프사이클 상태와 배타적으로 센다', () => {
+    const counts = countByTutoringStatus([
+      { displayStatus: 'active', isCrmLinked: true },
+      { displayStatus: 'paused', isCrmLinked: true },
+      { displayStatus: 'active', isCrmLinked: false }, // 미연결 → unlinked 로만 센다
+    ]);
+    expect(Object.keys(counts).sort()).toEqual(
+      ['active', 'all', 'ended', 'onboarding', 'paused', 'sales', 'unclassified', 'unlinked']
+    );
+    expect(counts.all).toBe(3);
+    expect(counts.unlinked).toBe(1);
+    expect(counts.active).toBe(1); // 미연결 건은 active 에 중복 계상되지 않는다
   });
 });

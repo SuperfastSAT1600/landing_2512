@@ -107,13 +107,13 @@ describe('PUT /api/business/monthly-targets', () => {
     await PUT(putReq({ segment: 'tutoring', month: '2026-08', target_amount: 150000000 }));
     expect(builder.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ month: '2026-08-01', segment: 'tutoring', target_amount: 150000000, currency: 'KRW' }),
-      { onConflict: 'month,segment' },
+      { onConflict: 'month,segment,payment_type' },
     );
 
     await PUT(putReq({ segment: 'global', month: '2026-09', target_amount: 10000000 }));
     expect(builder.upsert).toHaveBeenLastCalledWith(
       expect.objectContaining({ month: '2026-09-01', segment: 'global', target_amount: 10000000, currency: 'KRW' }),
-      { onConflict: 'month,segment' },
+      { onConflict: 'month,segment,payment_type' },
     );
   });
 

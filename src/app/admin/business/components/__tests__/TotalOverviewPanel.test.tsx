@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { TotalOverviewPanel } from '../TotalOverviewPanel';
+
+// 패널 하단의 OutcomeQualityPanel도 같은 기간 프리셋과 빈 상태 문구를 쓴다.
+// 전역 쿼리는 둘을 구분하지 못하므로 '월별 추이 (합산)' 섹션 안으로 범위를 좁힌다.
+const trendSection = () => within(screen.getByText('월별 추이 (합산)').closest('div')!);
 
 // 패널은 글로벌 매출을 "이번 달"로 필터하므로 픽스처 날짜도 실행 시점의 이번 달로 잡는다.
 const THIS_MONTH_DAY = `${new Date().toISOString().slice(0, 8)}11`;
@@ -83,7 +87,7 @@ describe('TotalOverviewPanel', () => {
     await waitFor(() => expect(screen.getByText('월별 추이 (합산)')).toBeTruthy());
 
     fetchMock.mockClear();
-    screen.getByRole('button', { name: '최근 6개월' }).click();
+    trendSection().getByRole('button', { name: '최근 6개월' }).click();
 
     await waitFor(() => {
       const crmCalls = fetchMock.mock.calls.filter(([url]: [string]) => url.includes('/api/crm/stats') && url.includes('segment=all'));
@@ -109,6 +113,6 @@ describe('TotalOverviewPanel', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
     render(<TotalOverviewPanel adminKey="admin-key" />);
-    await waitFor(() => expect(screen.getByText('데이터가 없습니다.')).toBeTruthy());
+    await waitFor(() => expect(trendSection().getByText('데이터가 없습니다.')).toBeTruthy());
   });
 });
