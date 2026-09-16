@@ -342,25 +342,29 @@ export default function ConsultationOverlay({ token, memos, studentName, student
             const TOOL_ICONS: Record<string, string> = {
               'vocab-counter': '📊',
               'math-web': '🕸️',
+              'supertest': '🎯',
             };
 
             const promoCards = (
               <>
-                {adminPosts.map(post =>
-                  post.toolId ? (
-                    <SecretPageCard
-                      key={post.id}
-                      title={post.title}
-                      description={post.content}
-                      icon={TOOL_ICONS[post.toolId] ?? '🔧'}
-                      token={token}
-                      toolId={post.toolId}
-                    />
-                  ) : (
-                    <AdminPostCard key={post.id} post={post} />
-                  )
-                )}
-                {!isEnrolled && <SuperTestCard token={token} />}
+                {adminPosts.map(post => {
+                  if (post.toolId === 'supertest') {
+                    return <SuperTestCard key={post.id} token={token} />;
+                  }
+                  if (post.toolId) {
+                    return (
+                      <SecretPageCard
+                        key={post.id}
+                        title={post.title}
+                        description={post.content}
+                        icon={TOOL_ICONS[post.toolId] ?? '🔧'}
+                        token={token}
+                        toolId={post.toolId}
+                      />
+                    );
+                  }
+                  return <AdminPostCard key={post.id} post={post} />;
+                })}
               </>
             );
 
