@@ -1,17 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { getPortalPostExclusions, savePortalPostExclusions } from '@/lib/config';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(request: NextRequest) {
     if (!isAuthenticated(request)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
     const token = request.nextUrl.searchParams.get('token');
-    if (!token) {
-        return NextResponse.json({ error: 'token is required' }, { status: 400 });
+    const postId = request.nextUrl.searchParams.get('post_id');
+
+    if (!token && !postId) {
+        return NextResponse.json({ error: 'token or post_id is required' }, { status: 400 });
     }
+
     const exclusions = await getPortalPostExclusions();
-    return NextResponse.json({ excludedPostIds: exclusions[token] ?? [] });
+
+    // 특정 토큰의 숨긴 게시글 목록
+    if (token) {
+        return NextResponse.json({ excludedPostIds: exclusions[token] ?? [] });
+    }
+
+    // 특정 게시글을 숨긴 학생 목록
+    const hiddenTokens = Object.entries(exclusions)
+        .filter(([, ids]) => ids.includes(postId!))
+        .map(([portalToken]) => portalToken);
+
+    if (hiddenTokens.length === 0) {
+        return NextResponse.json({ students: [] });
+    }
+
+    const { data } = await supabaseAdmin
+        .from('students')
+        .select('name, portal_token')
+        .in('portal_token', hiddenTokens);
+
+    const students = (data ?? []).map(s => ({
+        name: s.name as string,
+        portal_token: s.portal_token as string,
+    }));
+
+    return NextResponse.json({ students });
 }
 
 export async function POST(request: NextRequest) {
