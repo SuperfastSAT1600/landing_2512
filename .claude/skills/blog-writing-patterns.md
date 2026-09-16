@@ -21,8 +21,6 @@ tags: [specific, relevant, searchable]
 readingTime: 5-7
 ---
 
-# Main Title (H1)
-
 **Hook**: Start with a relatable question, surprising fact, or common problem.
 
 ## Introduction
