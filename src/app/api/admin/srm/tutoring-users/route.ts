@@ -252,12 +252,13 @@ function foldPayments(rows: { student_id: string; subject: string | null; manage
   return { subjects, paymentStatus, statusBySubject };
 }
 
-/** srm_lifecycle_stages.stage → TutoringStatus 매핑. churned는 목록에서 제외(ended 반환). */
-function lifecycleToBaseStatus(stage: string): TutoringStatus {
-  if (stage === 'churned') return 'ended';
-  if (stage === 'renewal_pending') return 'sales';
-  if (stage.startsWith('onboarding_')) return 'onboarding';
-  return 'active'; // active, cycle_*
+/** payments.management_status → TutoringStatus 매핑.
+ *  inactive·excluded는 미분류/이탈이므로 null 반환 → 목록에서 제외. */
+function managementStatusToTutoring(ms: string | null): TutoringStatus | null {
+  if (ms === 'onboarding') return 'onboarding';
+  if (ms === 'active') return 'active';
+  if (ms === 'paused') return 'paused';
+  return null; // inactive, excluded → 제외
 }
 
 export async function GET(request: NextRequest) {
@@ -266,13 +267,12 @@ export async function GET(request: NextRequest) {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    const [v2Hours, lifecycleResult, pauseResult, paymentsResult] = await Promise.all([
+    const [v2Hours, crmResult, pauseResult, paymentsResult] = await Promise.all([
       fetchV2Hours(),
-      // 라이프사이클 스테이지가 활성(completed_at IS NULL)인 학생 전체
       supabaseAdmin
-        .from('srm_lifecycle_stages')
-        .select('student_id, sfv2_profile_id, stage')
-        .is('completed_at', null),
+        .from('students')
+        .select('id, name, grade, sfv2_profile_id')
+        .not('sfv2_profile_id', 'is', null),
       supabaseAdmin
         .from('student_pauses')
         .select('student_id, sfv2_profile_id')
@@ -286,9 +286,8 @@ export async function GET(request: NextRequest) {
     ]);
 
     const {
-      purchased, refunded, used, scheduled,
+      purchased, refunded, used, scheduled, lastSessionDate,
       purchasedBySubject, refundedBySubject, usedBySubject, scheduledBySubject,
-      lastSessionDate,
     } = v2Hours;
     const paymentRows = (paymentsResult.data ?? []) as {
       student_id: string;
@@ -301,63 +300,47 @@ export async function GET(request: NextRequest) {
       statusBySubject,
     } = foldPayments(paymentRows);
 
-    const pausedByStudentId = new Set((pauseResult.data ?? []).map((p) => p.student_id).filter(Boolean) as string[]);
-    const pausedByProfileId = new Set((pauseResult.data ?? []).map((p) => p.sfv2_profile_id).filter(Boolean) as string[]);
-
-    // 라이프사이클 기준 학생 목록 구성 — churned·미분류 제외
-    type LifecycleRow = { student_id: string | null; sfv2_profile_id: string | null; stage: string };
-    const lifecycleRows = (lifecycleResult.data ?? []) as LifecycleRow[];
-
-    // student_id로 조회할 대상 수집 (sfv2_profile_id만 있는 경우는 별도)
-    const studentIds = [...new Set(lifecycleRows.map((r) => r.student_id).filter(Boolean) as string[])];
-
-    const [studentsResult] = await Promise.all([
-      studentIds.length > 0
-        ? supabaseAdmin
-            .from('students')
-            .select('id, name, grade, sfv2_profile_id')
-            .in('id', studentIds)
-        : Promise.resolve({ data: [] }),
-    ]);
-
-    const studentById = new Map(
-      ((studentsResult.data ?? []) as { id: string; name: string; grade: string | null; sfv2_profile_id: string | null }[])
-        .map((s) => [s.id, s])
-    );
-
-    // student_id → lifecycle stage 매핑 (중복 시 첫 번째 사용)
-    const stageByStudentId = new Map<string, string>();
-    for (const row of lifecycleRows) {
-      if (row.student_id && !stageByStudentId.has(row.student_id)) {
-        stageByStudentId.set(row.student_id, row.stage);
+    // sfv2 profile_id → 결제 management_status 중 가장 우선순위 높은 값
+    const MGMT_PRIORITY = ['onboarding', 'active', 'paused', 'inactive', 'excluded'];
+    const mgmtByProfile = new Map<string, string>();
+    for (const row of paymentRows) {
+      if (!row.student_id || !row.management_status) continue;
+      const prev = mgmtByProfile.get(row.student_id);
+      if (!prev || MGMT_PRIORITY.indexOf(row.management_status) < MGMT_PRIORITY.indexOf(prev)) {
+        mgmtByProfile.set(row.student_id, row.management_status);
       }
     }
 
+    const pausedByStudentId = new Set((pauseResult.data ?? []).map((p) => p.student_id).filter(Boolean) as string[]);
+    const pausedByProfileId = new Set((pauseResult.data ?? []).map((p) => p.sfv2_profile_id).filter(Boolean) as string[]);
+
+    const crmStudents = (crmResult.data ?? []) as {
+      id: string; name: string; grade: string | null; sfv2_profile_id: string;
+    }[];
+
     const results: TutoringUser[] = [];
 
-    for (const [studentId, stage] of stageByStudentId) {
-      const baseStatus = lifecycleToBaseStatus(stage);
-      if (baseStatus === 'ended') continue; // churned → 제외
+    for (const s of crmStudents) {
+      const pid = s.sfv2_profile_id;
+      const mgmt = mgmtByProfile.get(pid) ?? null;
+      const baseStatus = managementStatusToTutoring(mgmt);
+      if (!baseStatus) continue; // inactive·excluded·결제없음 → 제외
 
-      const s = studentById.get(studentId);
-      if (!s) continue;
+      const isPaused = pausedByStudentId.has(s.id) || pausedByProfileId.has(pid);
+      // active 상태에서 휴원 중이면 paused로 override (onboarding은 유지)
+      const status: TutoringStatus = (isPaused && baseStatus === 'active') ? 'paused' : baseStatus;
 
-      const pid = s.sfv2_profile_id ?? '';
-      const isPaused = pausedByStudentId.has(studentId) || (pid && pausedByProfileId.has(pid));
-      // 온보딩/재원 중 휴원 처리 중인 경우 → 휴원으로 override
-      const status: TutoringStatus = (isPaused && baseStatus !== 'sales') ? 'paused' : baseStatus;
-
-      const purchasedH = pid ? Math.round((purchased.get(pid) ?? 0) * 10) / 10 : 0;
-      const refundedH = pid ? Math.round((refunded.get(pid) ?? 0) * 10) / 10 : 0;
-      const usedH = pid ? Math.round((used.get(pid) ?? 0) * 10) / 10 : 0;
+      const purchasedH = Math.round((purchased.get(pid) ?? 0) * 10) / 10;
+      const refundedH  = Math.round((refunded.get(pid) ?? 0) * 10) / 10;
+      const usedH      = Math.round((used.get(pid) ?? 0) * 10) / 10;
       const rawRemainingH = purchasedH - refundedH - usedH;
-      const remainingH = Math.round(Math.max(0, rawRemainingH) * 10) / 10;
-      const scheduledH = pid ? Math.round((scheduled.get(pid) ?? 0) * 10) / 10 : 0;
+      const remainingH    = Math.round(Math.max(0, rawRemainingH) * 10) / 10;
+      const scheduledH    = Math.round((scheduled.get(pid) ?? 0) * 10) / 10;
       const netRemainingH = Math.round(rawRemainingH * 10) / 10;
 
       results.push({
         sfv2ProfileId: pid,
-        crmStudentId: studentId,
+        crmStudentId: s.id,
         name: s.name,
         grade: s.grade,
         purchasedHours: purchasedH,
@@ -368,15 +351,15 @@ export async function GET(request: NextRequest) {
         scheduledHours: scheduledH,
         unscheduledHours: Math.round(Math.max(0, netRemainingH - scheduledH) * 10) / 10,
         overscheduledHours: Math.round(Math.max(0, scheduledH - netRemainingH) * 10) / 10,
-        subjects: pid ? [...(subjectsByStudent.get(pid) ?? [])].sort() : [],
-        paymentStatus: pid ? (statusByStudent.get(pid) ?? null) : null,
-        subjectBreakdown: pid ? buildSubjectBreakdown({
+        subjects: [...(subjectsByStudent.get(pid) ?? [])].sort(),
+        paymentStatus: statusByStudent.get(pid) ?? null,
+        subjectBreakdown: buildSubjectBreakdown({
           purchased: purchasedBySubject.get(pid),
           refunded: refundedBySubject.get(pid),
           used: usedBySubject.get(pid),
           scheduled: scheduledBySubject.get(pid),
           paymentStatus: statusBySubject.get(pid),
-        }) : [],
+        }),
         status,
       });
     }
