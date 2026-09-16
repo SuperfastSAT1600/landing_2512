@@ -60,6 +60,7 @@ interface AdminPortalPost {
   title: string;
   content: string;
   buttons?: Array<{ text: string; url: string }>;
+  toolId?: string;
 }
 
 function AdminPostCard({ post }: { post: AdminPortalPost }) {
@@ -338,28 +339,28 @@ export default function ConsultationOverlay({ token, memos, studentName, student
       <div style={{ background: '#F4F5F9' }}>
         <div className="max-w-5xl mx-auto px-[6%] py-8 pb-44">
           {(() => {
-            const adminPostCards = adminPosts.map(post => (
-              <AdminPostCard key={post.id} post={post} />
-            ));
+            const TOOL_ICONS: Record<string, string> = {
+              'vocab-counter': '📊',
+              'math-web': '🕸️',
+            };
 
             const promoCards = (
               <>
-                {adminPostCards}
+                {adminPosts.map(post =>
+                  post.toolId ? (
+                    <SecretPageCard
+                      key={post.id}
+                      title={post.title}
+                      description={post.content}
+                      icon={TOOL_ICONS[post.toolId] ?? '🔧'}
+                      token={token}
+                      toolId={post.toolId}
+                    />
+                  ) : (
+                    <AdminPostCard key={post.id} post={post} />
+                  )
+                )}
                 {!isEnrolled && <SuperTestCard token={token} />}
-                <SecretPageCard
-                  title="Vocab Counter를 소개합니다!"
-                  description="SAT에서 자주 나오는 단어부터 전략적으로 공부할 수 있는 도구입니다. College Board가 공개한 실전 문제 전체를 분석해, 특정 단어가 시험에 몇 번 출제됐는지 즉시 확인할 수 있습니다. 예문과 문맥도 함께 제공되어 단순 암기가 아닌 실전 감각으로 어휘를 익힐 수 있습니다."
-                  icon="📊"
-                  token={token}
-                  toolId="vocab-counter"
-                />
-                <SecretPageCard
-                  title="Math Web을 소개합니다!"
-                  description="개념별로 실전 문제를 바로 찾아볼 수 있는 수학 학습 도구입니다. QB Math 문제 전체에 개념이 태깅되어 있어, 자녀가 취약한 개념의 실전 문제만 골라 집중 연습하는 것이 가능합니다. 개념 이해에서 실전 적용까지 빈틈 없이 대비할 수 있습니다."
-                  icon="🕸️"
-                  token={token}
-                  toolId="math-web"
-                />
               </>
             );
 
