@@ -9,7 +9,7 @@ import {
   type SubjectKey,
 } from '@/lib/tutoring-subject-breakdown';
 
-export type TutoringStatus = 'onboarding' | 'active' | 'paused' | 'sales' | 'ended';
+export type TutoringStatus = 'onboarding' | 'active' | 'paused' | 'sales' | 'ended' | 'unclassified';
 
 /** SFv2 payments.management_status — 결제 관리 상태. 정의는 집계 유틸과 공유한다. */
 export type { PaymentManagementStatus, SubjectHours };
@@ -262,13 +262,14 @@ function foldPayments(rows: { student_id: string; subject: string | null; manage
   return { subjects, paymentStatus, statusBySubject };
 }
 
-/** payments.management_status → TutoringStatus 매핑.
- *  inactive·excluded는 미분류/이탈이므로 null 반환 → 목록에서 제외. */
+/** payments.management_status → TutoringStatus 매핑. */
 function managementStatusToTutoring(ms: string | null): TutoringStatus | null {
   if (ms === 'onboarding') return 'onboarding';
   if (ms === 'active') return 'active';
   if (ms === 'paused') return 'paused';
-  return null; // inactive, excluded → 제외
+  if (ms === 'inactive') return 'ended';
+  if (ms === 'excluded') return 'unclassified';
+  return null;
 }
 
 export async function GET(request: NextRequest) {
@@ -408,7 +409,7 @@ export async function GET(request: NextRequest) {
     }
 
     const statusOrder: Record<TutoringStatus, number> = {
-      onboarding: 0, active: 1, paused: 2, sales: 3, ended: 4,
+      onboarding: 0, active: 1, paused: 2, sales: 3, ended: 4, unclassified: 5,
     };
     results.sort((a, b) =>
       statusOrder[a.status] !== statusOrder[b.status]

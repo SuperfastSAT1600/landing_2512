@@ -28,9 +28,10 @@ const TAB_META: Record<Tab, { label: string; icon: React.ReactNode; color: strin
   paused:       { label: '휴원',        icon: <PauseCircle size={10} />,   color: 'text-orange-500',  activeColor: 'bg-orange-500 text-white' },
   sales:        { label: '재결제세일즈', icon: <RefreshCw size={10} />,    color: 'text-blue-600',    activeColor: 'bg-blue-600 text-white' },
   ended:        { label: '종료',        icon: <XCircle size={10} />,       color: 'text-red-500',     activeColor: 'bg-red-500 text-white' },
+  unclassified: { label: '미분류',      icon: <AlertTriangle size={10} />, color: 'text-gray-400',    activeColor: 'bg-gray-400 text-white' },
 };
 
-const TAB_ORDER: Tab[] = ['unlinked', 'onboarding', 'active', 'paused', 'sales', 'ended'];
+const TAB_ORDER: Tab[] = ['unlinked', 'onboarding', 'active', 'paused', 'sales', 'ended', 'unclassified'];
 
 function UserRow({ user, onClick }: { user: TutoringUser; onClick: () => void }) {
   const meta = TAB_META[user.status];
