@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 interface CodeRow {
   id: string;
@@ -10,6 +10,14 @@ interface CodeRow {
   scope: 'vocab' | 'mathweb' | 'both';
   created_at: string;
   first_used_at: string | null;
+}
+
+interface LeadResult {
+  id: string;
+  name: string;
+  parent_phone: string | null;
+  grade: string | null;
+  inquiry_date: string | null;
 }
 
 function formatDate(iso: string) {
@@ -31,6 +39,15 @@ export default function VocabAccessPage() {
   const [newCode, setNewCode] = useState<{ instagram_id: string; code: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // 리드 검색 모드
+  const [mode, setMode] = useState<'direct' | 'lead'>('direct');
+  const [leadSearch, setLeadSearch] = useState('');
+  const [leadResults, setLeadResults] = useState<LeadResult[]>([]);
+  const [selectedLead, setSelectedLead] = useState<LeadResult | null>(null);
+  const [leadSearching, setLeadSearching] = useState(false);
+  const [showLeadDropdown, setShowLeadDropdown] = useState(false);
+  const leadSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const adminKey = typeof window !== 'undefined' ? localStorage.getItem('admin_key') ?? '' : '';
 
   const fetchCodes = useCallback(async () => {
@@ -47,6 +64,39 @@ export default function VocabAccessPage() {
   }, [adminKey]);
 
   useEffect(() => { fetchCodes(); }, [fetchCodes]);
+
+  const handleLeadSearchInput = (value: string) => {
+    setLeadSearch(value);
+    setSelectedLead(null);
+    setInstagramId('');
+    if (leadSearchTimeout.current) clearTimeout(leadSearchTimeout.current);
+    if (!value.trim()) {
+      setLeadResults([]);
+      setShowLeadDropdown(false);
+      return;
+    }
+    leadSearchTimeout.current = setTimeout(async () => {
+      setLeadSearching(true);
+      try {
+        const res = await fetch(`/api/crm/students?name_search=${encodeURIComponent(value.trim())}`, {
+          headers: { 'x-admin-key': adminKey },
+        });
+        const data = await res.json();
+        setLeadResults(data.data ?? []);
+        setShowLeadDropdown(true);
+      } finally {
+        setLeadSearching(false);
+      }
+    }, 300);
+  };
+
+  const selectLead = (lead: LeadResult) => {
+    setSelectedLead(lead);
+    setLeadSearch(lead.name);
+    setLeadResults([]);
+    setShowLeadDropdown(false);
+    setInstagramId('');
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +116,8 @@ export default function VocabAccessPage() {
       }
       setNewCode(data);
       setInstagramId('');
+      setSelectedLead(null);
+      setLeadSearch('');
       fetchCodes();
     } finally {
       setCreating(false);
@@ -113,6 +165,8 @@ export default function VocabAccessPage() {
     },
   ];
 
+  const canSubmit = instagramId.trim() && !creating;
+
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#e4e4e7' }}>
       <div style={{ padding: '32px 32px 24px', borderBottom: '1px solid #27272a' }}>
@@ -158,60 +212,214 @@ export default function VocabAccessPage() {
             ))}
           </div>
         </div>
+
         {/* 코드 생성 폼 */}
         <div style={{ background: '#141416', border: '1px solid #27272a', borderRadius: 12, padding: '20px 24px', marginBottom: 28 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#a1a1aa', marginBottom: 14 }}>새 코드 발급</div>
-          <form onSubmit={handleCreate} style={{ display: 'flex', gap: 10 }}>
-            <input
-              value={instagramId}
-              onChange={(e) => setInstagramId(e.target.value.replace(/^@/, ''))}
-              placeholder="인스타그램 ID (@ 제외)"
-              style={{
-                flex: 1,
-                padding: '9px 14px',
-                background: '#09090b',
-                border: '1px solid #27272a',
-                borderRadius: 8,
-                color: '#e4e4e7',
-                fontSize: 14,
-                outline: 'none',
-              }}
-            />
-            <select
-              value={scope}
-              onChange={(e) => setScope(e.target.value as 'vocab' | 'mathweb' | 'both')}
-              style={{
-                padding: '9px 12px',
-                background: '#09090b',
-                border: '1px solid #27272a',
-                borderRadius: 8,
-                color: '#e4e4e7',
-                fontSize: 13,
-                outline: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="vocab">Vocab</option>
-              <option value="mathweb">Math Web</option>
-              <option value="both">Both</option>
-            </select>
-            <button
-              type="submit"
-              disabled={!instagramId.trim() || creating}
-              style={{
-                padding: '9px 20px',
-                background: '#6085FF',
-                border: 'none',
-                borderRadius: 8,
-                color: '#fff',
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: 'pointer',
-                opacity: !instagramId.trim() || creating ? 0.5 : 1,
-              }}
-            >
-              {creating ? '생성 중...' : '코드 발급'}
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#a1a1aa' }}>새 코드 발급</div>
+            {/* 모드 탭 */}
+            <div style={{ display: 'flex', gap: 2, background: '#09090b', borderRadius: 7, padding: 3, border: '1px solid #27272a' }}>
+              {(['direct', 'lead'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => {
+                    setMode(m);
+                    setInstagramId('');
+                    setSelectedLead(null);
+                    setLeadSearch('');
+                    setLeadResults([]);
+                    setNewCode(null);
+                  }}
+                  style={{
+                    padding: '5px 13px',
+                    borderRadius: 5,
+                    border: 'none',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: mode === m ? '#27272a' : 'transparent',
+                    color: mode === m ? '#e4e4e7' : '#52525b',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {m === 'direct' ? 'Instagram ID' : '리드 검색'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={handleCreate}>
+            {mode === 'direct' ? (
+              /* 직접 입력 모드 */
+              <div style={{ display: 'flex', gap: 10 }}>
+                <input
+                  value={instagramId}
+                  onChange={(e) => setInstagramId(e.target.value.replace(/^@/, ''))}
+                  placeholder="인스타그램 ID (@ 제외)"
+                  style={{
+                    flex: 1,
+                    padding: '9px 14px',
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: 8,
+                    color: '#e4e4e7',
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+                <ScopeSelect value={scope} onChange={setScope} />
+                <IssueButton disabled={!canSubmit} creating={creating} />
+              </div>
+            ) : (
+              /* 리드 검색 모드 */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* 리드 검색 입력 */}
+                <div style={{ position: 'relative' }}>
+                  <input
+                    value={leadSearch}
+                    onChange={(e) => handleLeadSearchInput(e.target.value)}
+                    onFocus={() => leadResults.length > 0 && setShowLeadDropdown(true)}
+                    placeholder="학생 이름으로 검색..."
+                    style={{
+                      width: '100%',
+                      padding: '9px 14px',
+                      background: '#09090b',
+                      border: `1px solid ${selectedLead ? 'rgba(96,133,255,0.5)' : '#27272a'}`,
+                      borderRadius: 8,
+                      color: '#e4e4e7',
+                      fontSize: 14,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  {leadSearching && (
+                    <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#52525b' }}>
+                      검색 중...
+                    </div>
+                  )}
+
+                  {/* 드롭다운 결과 */}
+                  {showLeadDropdown && leadResults.length > 0 && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      marginTop: 4,
+                      background: '#1c1c1f',
+                      border: '1px solid #27272a',
+                      borderRadius: 8,
+                      zIndex: 50,
+                      overflow: 'hidden',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                    }}>
+                      {leadResults.map((lead) => (
+                        <button
+                          key={lead.id}
+                          type="button"
+                          onClick={() => selectLead(lead)}
+                          style={{
+                            width: '100%',
+                            padding: '10px 14px',
+                            background: 'transparent',
+                            border: 'none',
+                            borderBottom: '1px solid #27272a',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            textAlign: 'left',
+                          }}
+                        >
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, color: '#71717a', fontWeight: 600 }}>
+                            {lead.name.charAt(0)}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{lead.name}</div>
+                            <div style={{ fontSize: 11, color: '#52525b', marginTop: 1 }}>
+                              {[lead.grade, lead.parent_phone, lead.inquiry_date ? formatDate(lead.inquiry_date) : null].filter(Boolean).join(' · ')}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {showLeadDropdown && !leadSearching && leadResults.length === 0 && leadSearch.trim() && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      marginTop: 4,
+                      background: '#1c1c1f',
+                      border: '1px solid #27272a',
+                      borderRadius: 8,
+                      zIndex: 50,
+                      padding: '12px 14px',
+                      fontSize: 13,
+                      color: '#52525b',
+                    }}>
+                      검색 결과 없음
+                    </div>
+                  )}
+                </div>
+
+                {/* 선택된 리드 정보 */}
+                {selectedLead && (
+                  <div style={{
+                    padding: '10px 14px',
+                    background: 'rgba(96,133,255,0.06)',
+                    border: '1px solid rgba(96,133,255,0.2)',
+                    borderRadius: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(96,133,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, color: '#6085FF', fontWeight: 700 }}>
+                      {selectedLead.name.charAt(0)}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{selectedLead.name}</div>
+                      <div style={{ fontSize: 11, color: '#52525b', marginTop: 1 }}>
+                        {[selectedLead.grade, selectedLead.parent_phone].filter(Boolean).join(' · ')}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedLead(null); setLeadSearch(''); setInstagramId(''); }}
+                      style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 16, padding: '2px 4px' }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+
+                {/* Instagram ID + scope + 발급 버튼 (리드 선택 후 표시) */}
+                {selectedLead && (
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <input
+                      value={instagramId}
+                      onChange={(e) => setInstagramId(e.target.value.replace(/^@/, ''))}
+                      placeholder="인스타그램 ID (@ 제외)"
+                      autoFocus
+                      style={{
+                        flex: 1,
+                        padding: '9px 14px',
+                        background: '#09090b',
+                        border: '1px solid #27272a',
+                        borderRadius: 8,
+                        color: '#e4e4e7',
+                        fontSize: 14,
+                        outline: 'none',
+                      }}
+                    />
+                    <ScopeSelect value={scope} onChange={setScope} />
+                    <IssueButton disabled={!canSubmit} creating={creating} />
+                  </div>
+                )}
+              </div>
+            )}
           </form>
 
           {newCode && (
@@ -357,5 +565,51 @@ export default function VocabAccessPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function ScopeSelect({ value, onChange }: { value: string; onChange: (v: 'vocab' | 'mathweb' | 'both') => void }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as 'vocab' | 'mathweb' | 'both')}
+      style={{
+        padding: '9px 12px',
+        background: '#09090b',
+        border: '1px solid #27272a',
+        borderRadius: 8,
+        color: '#e4e4e7',
+        fontSize: 13,
+        outline: 'none',
+        cursor: 'pointer',
+      }}
+    >
+      <option value="vocab">Vocab</option>
+      <option value="mathweb">Math Web</option>
+      <option value="both">Both</option>
+    </select>
+  );
+}
+
+function IssueButton({ disabled, creating }: { disabled: boolean; creating: boolean }) {
+  return (
+    <button
+      type="submit"
+      disabled={disabled}
+      style={{
+        padding: '9px 20px',
+        background: '#6085FF',
+        border: 'none',
+        borderRadius: 8,
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: 700,
+        cursor: 'pointer',
+        opacity: disabled ? 0.5 : 1,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {creating ? '생성 중...' : '코드 발급'}
+    </button>
   );
 }
