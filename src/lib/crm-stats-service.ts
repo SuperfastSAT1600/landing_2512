@@ -34,8 +34,7 @@ export interface StatsBySource {
   leads: number;
   contacted: number;
   contact_rate: number;
-  paid: number; // 이 채널 리드 중 결제 인원(컨택 여부 무관)
-  paid_contacted: number; // 그중 컨택 성공한 인원 — conversion_rate 의 분자
+  paid: number; // 이 채널 리드 중 결제 인원(컨택 여부 무관) — conversion_rate 의 분자
   conversion_rate: number;
   revenue: number;
   net_revenue: number;
@@ -69,9 +68,9 @@ export interface CrmStatsData {
     contacted: number;
     contacted_base: number; // 컨택 성공률 분모 (재시도 제외 초기 리드 수)
     contact_rate: number;
-    paid: number; // 기간 내 인입 리드 중 결제 인원(컨택 여부 무관) — 실제 결제자 수
-    paid_contacted: number; // 그중 컨택 성공한 인원 — conversion_rate 의 분자
-    conversion_rate: number;
+    paid: number; // 기간 내 인입 리드 중 결제 인원(컨택 여부 무관) — conversion_rate 의 분자
+    conversion_rate: number; // paid / contacted. 정의상 100%를 넘을 수 있다(아래 주석 참고)
+
     total_revenue: number; // 순매출(결제 − 환불)
     total_net_revenue: number; // 부가세 제외 실수익
     gross_revenue: number; // 환불 전 총 결제(양수 합)
@@ -254,30 +253,32 @@ export async function computeCrmStats({
     (s) => !(s as { retry_strategy_id?: string | null }).retry_strategy_id
   );
   const contactedCount = initialLeads.filter((s) => isContactedLead(s)).length;
-  // 결제 인원(총계) — 기간 내 인입 리드 중 언제든 최초결제한 사람. 실제 결제자 수라 그대로 센다.
+  // 결제 전환율 분자 — 기간 내 인입 리드 중 언제든 최초결제한 **전체** 인원.
+  //
+  // 분모(contactedCount)는 컨택 성공자라 분자가 분모의 부분집합이 아니다. 통상적인
+  // 비율과 형태가 다르지만 **의도된 회사 표준 정의**다: 컨택 기록이 유실된 채 결제까지
+  // 간 리드(시트 마이그레이션 유입 등)를 전환 실적에서 빼지 않으려는 것이다 —
+  // 결제했다면 실제로는 컨택된 것이고, 2단계 기록이 안 남았을 뿐이다.
+  //
+  // 그 결과 conversion_rate 가 100%를 넘을 수 있다. 버그가 아니므로 '고치지' 말 것.
+  // 정의는 stats/__tests__/route.test.ts 의 '결제 전환율 정의 (회사 표준)' 이 고정한다.
   const paidCount = leadList.filter((s) => isPaid(s)).length;
-  // 전환율 분자 — 분모(contactedCount)와 같은 집합에서 센다.
-  // leadList 전체에서 세면 분모에 없는 사람이 분자에 들어가 100%를 넘을 수 있었다
-  // (컨택 기록이 비었는데 결제한 리드, 재시도 리드가 그렇다).
-  const paidContactedCount = initialLeads.filter((s) => isContactedLead(s) && isPaid(s)).length;
 
   // ── By Source ─────────────────────────────────────────────────────────────
   const sourceMap = new Map<
     string,
-    { leads: number; contacted: number; paid: number; paidContacted: number; revenue: number; net_revenue: number; respSum: number; respCount: number }
+    { leads: number; contacted: number; paid: number; revenue: number; net_revenue: number; respSum: number; respCount: number }
   >();
 
   for (const s of leadList) {
     const src = s.traffic_source ?? '미입력';
     if (!sourceMap.has(src))
-      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, paidContacted: 0, revenue: 0, net_revenue: 0, respSum: 0, respCount: 0 });
+      sourceMap.set(src, { leads: 0, contacted: 0, paid: 0, revenue: 0, net_revenue: 0, respSum: 0, respCount: 0 });
     const entry = sourceMap.get(src)!;
     entry.leads++;
     const isRetry = !!(s as { retry_strategy_id?: string | null }).retry_strategy_id;
     if (!isRetry && isContactedLead(s)) entry.contacted++;
     if (isPaid(s)) entry.paid++;
-    // 전환율 분자 — overview 와 같은 규칙(분모와 동일 집합)으로 센다.
-    if (!isRetry && isContactedLead(s) && isPaid(s)) entry.paidContacted++;
     // 첫 응답 시간: 첫 메시지 발송 시각이 있는 리드만, 문의시각(inquiry_date, 없으면 created_at) 대비 경과 초.
     const sentAt = (s as { first_message_sent_at?: string | null }).first_message_sent_at;
     if (sentAt) {
@@ -308,9 +309,8 @@ export async function computeCrmStats({
       contacted: d.contacted,
       contact_rate: contactRate(d.contacted, d.leads),
       paid: d.paid,
-      paid_contacted: d.paidContacted,
       // 결제 전환율 = 컨택 성공 인원 중 결제 인원
-      conversion_rate: d.contacted > 0 ? Math.round((d.paidContacted / d.contacted) * 10000) / 100 : 0,
+      conversion_rate: d.contacted > 0 ? Math.round((d.paid / d.contacted) * 10000) / 100 : 0,
       revenue: d.revenue,
       net_revenue: d.net_revenue,
       avg_first_response_seconds: d.respCount > 0 ? Math.round(d.respSum / d.respCount) : null,
@@ -432,10 +432,9 @@ export async function computeCrmStats({
       contacted_base: initialLeads.length,
       contact_rate: contactRate(contactedCount, initialLeads.length),
       paid: paidCount,
-      paid_contacted: paidContactedCount,
-      // 결제 전환율 = 컨택 성공 인원 중 결제 인원 (신규 리드 전체 아님)
+      // 결제 전환율 = 전체 결제 인원 / 컨택 성공 인원 (회사 표준 — 위 paidCount 주석 참고)
       conversion_rate:
-        contactedCount > 0 ? Math.round((paidContactedCount / contactedCount) * 10000) / 100 : 0,
+        contactedCount > 0 ? Math.round((paidCount / contactedCount) * 10000) / 100 : 0,
       total_revenue: totalRevenue,
       total_net_revenue: totalNetRevenue,
       gross_revenue: grossRevenue,
