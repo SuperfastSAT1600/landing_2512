@@ -31,6 +31,12 @@ import {
 import type { CrmStatsSegment } from '@/lib/crm-stats-core';
 import { buildSixMonthWindow, type MonthlyTargetRow } from '@/lib/business-targets';
 import { calcDiff } from '@/lib/business-comparison';
+import {
+  sumRenewalWeeks,
+  renewalCoverageLabel,
+  type RenewalWeekRow,
+  type RenewalTotals,
+} from '@/lib/renewal-summary';
 import { GlobalSalesPanel } from './GlobalSalesPanel';
 import { MonthlyTargetEditor } from './MonthlyTargetEditor';
 import { TotalOverviewPanel } from './TotalOverviewPanel';
@@ -300,7 +306,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
   const [firstTargets, setFirstTargets] = useState<MonthlyTargetRow[]>([]);
   const [reTargets, setReTargets] = useState<MonthlyTargetRow[]>([]);
   const [renewalConvRate, setRenewalConvRate] = useState<number | null>(null);
-  const [renewalCounts, setRenewalCounts] = useState<{ completed: number; selected: number } | null>(null);
+  const [renewalCounts, setRenewalCounts] = useState<RenewalTotals | null>(null);
   // VS 비교 모드
   const [vsMode, setVsMode] = useState(false);
   const [presetB, setPresetB] = useState<Preset>('last_month');
@@ -354,17 +360,14 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
     try {
       const [statsRes, renewalRes] = await Promise.all([
         fetch(`/api/crm/stats?from=${fromB}&to=${toB}&segment=${segment}`, { headers: { 'x-admin-key': adminKey } }),
-        fetch('/api/crm/renewal-targets/stats?weeks=52', { headers: { 'x-admin-key': adminKey } }),
+        fetch(`/api/crm/renewal-targets/stats?from=${fromB}&to=${toB}`, { headers: { 'x-admin-key': adminKey } }),
       ]);
       const statsJson = await statsRes.json();
       if (statsRes.ok) setDataB(statsJson.data as CrmStatsData);
       if (renewalRes.ok) {
         const renewalJson = await renewalRes.json();
-        const weeks = (renewalJson.data ?? []) as { week_start: string; completed: number; selected: number }[];
-        const filtered = weeks.filter((w) => w.week_start >= fromB && w.week_start <= toB);
-        const totalSelected = filtered.reduce((s, w) => s + w.selected, 0);
-        const totalCompleted = filtered.reduce((s, w) => s + w.completed, 0);
-        setRenewalRateB(totalSelected > 0 ? Math.round((totalCompleted / totalSelected) * 1000) / 10 : null);
+        const totals = sumRenewalWeeks((renewalJson.data ?? []) as RenewalWeekRow[]);
+        setRenewalRateB(totals ? Math.round((totals.completed / totals.selected) * 1000) / 10 : null);
       }
     } catch { /* 무시 */ } finally {
       setLoadingB(false);
@@ -415,21 +418,19 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
 
   useEffect(() => { fetchMonthlyTargets(); }, [fetchMonthlyTargets]);
 
-  // 재결제 전환율 — renewal_targets 주차 집계를 기간에 맞게 필터링
+  // 재결제 전환율 — renewal_targets 주차 집계를 기간(from/to)으로 서버에서 조회한다.
+  // weeks=52 창은 '오늘 기준 최근 52주'라, 과거 기간은 데이터가 있어도 조용히 비어 나왔다.
   useEffect(() => {
     if (topView !== 'tutoring' || !from || !to) { setRenewalConvRate(null); setRenewalCounts(null); return; }
     (async () => {
       try {
-        const res = await fetch('/api/crm/renewal-targets/stats?weeks=52', { headers: { 'x-admin-key': adminKey } });
+        const res = await fetch(`/api/crm/renewal-targets/stats?from=${from}&to=${to}`, { headers: { 'x-admin-key': adminKey } });
         if (!res.ok) return;
         const json = await res.json();
-        const weeks = (json.data ?? []) as { week_start: string; completed: number; selected: number }[];
-        const filtered = weeks.filter((w) => w.week_start >= from && w.week_start <= to);
-        const totalSelected = filtered.reduce((s, w) => s + w.selected, 0);
-        const totalCompleted = filtered.reduce((s, w) => s + w.completed, 0);
-        if (totalSelected === 0) { setRenewalConvRate(null); setRenewalCounts(null); return; }
-        setRenewalConvRate(Math.round((totalCompleted / totalSelected) * 1000) / 10);
-        setRenewalCounts({ completed: totalCompleted, selected: totalSelected });
+        const totals = sumRenewalWeeks((json.data ?? []) as RenewalWeekRow[]);
+        if (!totals) { setRenewalConvRate(null); setRenewalCounts(null); return; }
+        setRenewalConvRate(Math.round((totals.completed / totals.selected) * 1000) / 10);
+        setRenewalCounts(totals);
       } catch { /* 무시: 카드만 '-' 표시 */ }
     })();
   }, [topView, from, to, adminKey]);
@@ -723,7 +724,9 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                 icon={CreditCard}
                 label="재결제 전환율"
                 value={renewalConvRate !== null ? `${renewalConvRate}%` : '-'}
-                sub={vsMode ? undefined : (renewalCounts ? `${renewalCounts.completed}명 / ${renewalCounts.selected}명 · 재결제 선정` : '기간 내 재결제 선정 없음')}
+                sub={vsMode ? undefined : (renewalCounts
+                  ? `${renewalCounts.completed}명 / ${renewalCounts.selected}명 · ${renewalCoverageLabel(renewalCounts)}`
+                  : '기간 내 재결제 선정 없음')}
                 color="bg-teal-50 text-teal-600"
               />
               {renderBRow(renewalConvRate ?? 0, renewalRateB ?? 0, 'rate')}

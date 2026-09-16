@@ -19,6 +19,8 @@ import {
   paidCohortQuery,
   isContactedWithImpliedPartner,
   contactRate,
+  attributeRevenueByType,
+  buildPriorTypeMap,
   toMonthKey,
   inquiryRefMs,
   fillMonthlyGaps,
@@ -113,7 +115,8 @@ export async function computeCrmStats({
   // B2C 개인 리드 + B2B 업체 리드를 함께 집계한다(업체 제외 필터 없음).
   // 매출(payments)에는 업체 필터가 없으므로 리드만 제외하면 리드-매출 기준이 어긋난다.
   // 업체별 세부 집계는 /api/crm/b2b/stats에서 별도로 본다.
-  // 서로 독립인 네 조회를 병렬 실행: 기간 리드 / 기간 결제 / 최초결제 코호트 / 업체 로스터.
+  // 서로 독립인 다섯 조회를 병렬 실행:
+  // 기간 리드 / 기간 결제 / 기간 이전 결제(환불 귀속용) / 최초결제 코호트 / 업체 로스터.
   const studentsQuery = leadCohortQuery(
     supabaseAdmin,
     'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id',
@@ -122,7 +125,7 @@ export async function computeCrmStats({
     segment,
   );
 
-  const [studentsRes, paymentsRes, firstPayRes, companiesRes] = await Promise.all([
+  const [studentsRes, paymentsRes, priorPayRes, firstPayRes, companiesRes] = await Promise.all([
     studentsQuery,
     // 기간 내 payments (매출·환불 집계용, 기간=paid_at KST).
     // students 관계를 함께 조회해 segment 필터에서 학생의 company_id를 직접 본다.
@@ -133,6 +136,13 @@ export async function computeCrmStats({
       )
       .gte('paid_at', `${from}T00:00:00+09:00`)
       .lte('paid_at', `${to}T23:59:59.999+09:00`),
+    // 기간 이전 양수 결제 — 환불을 유형별로 귀속시킬 때 "직전 결제 유형"의 출발점이 된다.
+    // 이게 없으면 작년 결제에 대한 올해 환불이 어느 유형에도 안 잡혀 비중 합이 100%를 넘는다.
+    supabaseAdmin
+      .from('payments')
+      .select('student_id, student_name, amount, payment_type, paid_at, students:student_id(company_id)')
+      .lt('paid_at', `${from}T00:00:00+09:00`)
+      .gte('amount', 0),
     paidCohortQuery(supabaseAdmin),
     // 업체 로스터 — 센터형 파트너 컨택 판정용 company_id → name 맵
     supabaseAdmin.from('companies').select('id, name'),
@@ -195,29 +205,14 @@ export async function computeCrmStats({
   }
 
   // 환불을 직전 양수 결제 유형에 귀속시켜 유형별 순매출을 계산한다.
-  // 환불(payment_type='환불')은 별도 유형으로 저장되므로, 학생별 paid_at 오름차순 정렬 후
-  // 환불 직전의 최초결제/재결제를 찾아 해당 유형에서 차감한다.
+  // 기간 이전 결제까지 출발점으로 삼아야 "작년 결제 → 올해 환불"이 미귀속으로 새지 않는다.
+  if (priorPayRes.error) console.error('[stats] priorPayRows fetch failed:', priorPayRes.error.message);
   {
-    const byStudent = new Map<string, typeof paymentList>();
-    for (const p of paymentList) {
-      const key = p.student_id ?? p.student_name ?? '__unknown__';
-      if (!byStudent.has(key)) byStudent.set(key, []);
-      byStudent.get(key)!.push(p);
-    }
-    for (const payments of byStudent.values()) {
-      payments.sort((a, b) => a.paid_at.localeCompare(b.paid_at));
-      let lastType: 'first' | 're' | null = null;
-      for (const p of payments) {
-        if (p.amount >= 0) {
-          if (p.payment_type === '최초결제') { netFirstPaymentRevenue += p.amount; lastType = 'first'; }
-          else if (p.payment_type === '재결제') { netRepaymentRevenue += p.amount; lastType = 're'; }
-        } else {
-          if (lastType === 'first') netFirstPaymentRevenue += p.amount;
-          else if (lastType === 're') netRepaymentRevenue += p.amount;
-          else unattributedRefund += p.amount;
-        }
-      }
-    }
+    const priorTypeByStudent = buildPriorTypeMap((priorPayRes.data ?? []).filter(inSegment));
+    const attributed = attributeRevenueByType(paymentList, priorTypeByStudent);
+    netFirstPaymentRevenue = attributed.netFirst;
+    netRepaymentRevenue = attributed.netRepayment;
+    unattributedRefund = attributed.unattributedRefund;
   }
 
   for (const p of firstPayRows) {

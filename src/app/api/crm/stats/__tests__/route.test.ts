@@ -23,7 +23,7 @@ function makeBuilder(table: string) {
     then: (resolve: (v: { data: Row[]; error: null }) => unknown) =>
       Promise.resolve({ data: rows(), error: null }).then(resolve),
   };
-  for (const op of ['select', 'is', 'not', 'gte', 'lte', 'eq', 'order', 'limit']) {
+  for (const op of ['select', 'is', 'not', 'gte', 'lte', 'lt', 'eq', 'order', 'limit']) {
     builder[op] = (...args: unknown[]) => {
       record(op, ...args);
       return builder;
