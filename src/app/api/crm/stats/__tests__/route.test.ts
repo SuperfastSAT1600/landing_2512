@@ -337,3 +337,96 @@ describe('GET /api/crm/stats — segment 필터 (REQ-004)', () => {
     expect(data.overview.total_refund).toBe(-1429525);
   });
 });
+
+describe('GET /api/crm/stats — 결제 전환율 모수 일치', () => {
+  const reached2 = (over: Row = {}) =>
+    student({ funnel_stage: '4', stage_history: [{ stage: '2', label: '', entered_at: '' }], ...over });
+
+  it('전환율 분자는 분모(컨택 성공)와 같은 집합에서 센다', async () => {
+    tableRows.students = [
+      reached2({ id: 'a', name: '컨택+결제' }),
+      reached2({ id: 'b', name: '컨택만' }),
+      // 1단계에 머물렀는데 결제한 리드 — 분모에 없으니 분자에도 없어야 한다.
+      student({ id: 'c', name: '미컨택+결제' }),
+    ];
+    tableRows.payments = [
+      payment({ student_id: 'a', student_name: '컨택+결제', amount: 1_000_000 }),
+      payment({ student_id: 'c', student_name: '미컨택+결제', amount: 1_000_000 }),
+    ];
+
+    const json = await (await callRoute()).json();
+    const o = json.data.overview;
+
+    expect(o.contacted).toBe(2);
+    // 결제 인원(총계)은 미컨택 결제자까지 그대로 센다 — 실제 결제자 수다.
+    expect(o.paid).toBe(2);
+    // 전환율 분자는 컨택 성공자만.
+    expect(o.paid_contacted).toBe(1);
+    expect(o.conversion_rate).toBe(50);
+  });
+
+  it('컨택 성공자가 전원 결제해도 100%를 넘지 않는다', async () => {
+    tableRows.students = [
+      reached2({ id: 'a', name: 'A' }),
+      student({ id: 'c', name: 'C' }), // 미컨택 결제자
+    ];
+    tableRows.payments = [
+      payment({ student_id: 'a', student_name: 'A', amount: 1_000_000 }),
+      payment({ student_id: 'c', student_name: 'C', amount: 1_000_000 }),
+    ];
+
+    const o = (await (await callRoute()).json()).data.overview;
+    expect(o.contacted).toBe(1);
+    expect(o.paid).toBe(2);
+    expect(o.conversion_rate).toBe(100); // 이전 구현은 200% 가 나왔다
+  });
+
+  it('재시도 리드는 분자·분모 양쪽에서 제외한다', async () => {
+    tableRows.students = [
+      reached2({ id: 'a', name: 'A' }),
+      reached2({ id: 'r', name: 'R', retry_strategy_id: 'strategy-1' }),
+    ];
+    tableRows.payments = [
+      payment({ student_id: 'a', student_name: 'A', amount: 1_000_000 }),
+      payment({ student_id: 'r', student_name: 'R', amount: 1_000_000 }),
+    ];
+
+    const o = (await (await callRoute()).json()).data.overview;
+    expect(o.contacted_base).toBe(1);
+    expect(o.contacted).toBe(1);
+    expect(o.paid_contacted).toBe(1);
+    expect(o.conversion_rate).toBe(100);
+  });
+
+  it('컨택 성공이 0명이면 전환율은 0이다', async () => {
+    tableRows.students = [student({ id: 'c', name: 'C' })];
+    tableRows.payments = [payment({ student_id: 'c', student_name: 'C', amount: 1_000_000 })];
+
+    const o = (await (await callRoute()).json()).data.overview;
+    expect(o.contacted).toBe(0);
+    expect(o.paid).toBe(1);
+    expect(o.paid_contacted).toBe(0);
+    expect(o.conversion_rate).toBe(0);
+  });
+});
+
+describe('GET /api/crm/stats — 채널별 전환율도 같은 모수를 쓴다', () => {
+  it('미컨택 결제자는 채널 전환율 분자에서 빠지되 결제 인원에는 남는다', async () => {
+    tableRows.students = [
+      student({ id: 'a', name: 'A', traffic_source: '인스타', funnel_stage: '4', stage_history: [{ stage: '2', label: '', entered_at: '' }] }),
+      student({ id: 'b', name: 'B', traffic_source: '인스타', funnel_stage: '4', stage_history: [{ stage: '2', label: '', entered_at: '' }] }),
+      student({ id: 'c', name: 'C', traffic_source: '인스타' }), // 1단계인데 결제
+    ];
+    tableRows.payments = [
+      payment({ student_id: 'a', student_name: 'A', amount: 1_000_000 }),
+      payment({ student_id: 'c', student_name: 'C', amount: 1_000_000 }),
+    ];
+
+    const src = (await (await callRoute()).json()).data.by_source.find((r: Record<string, number>) => r.source === '인스타');
+    expect(src.leads).toBe(3);
+    expect(src.contacted).toBe(2);
+    expect(src.paid).toBe(2);
+    expect(src.paid_contacted).toBe(1);
+    expect(src.conversion_rate).toBe(50);
+  });
+});

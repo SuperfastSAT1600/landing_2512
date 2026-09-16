@@ -711,7 +711,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
                 icon={CreditCard}
                 label="최초결제 전환율"
                 value={`${d.overview.conversion_rate}%`}
-                sub={vsMode ? undefined : `${d.overview.paid}명 / ${d.overview.contacted}명 · 컨택 성공`}
+                sub={vsMode ? undefined : `${d.overview.paid_contacted}명 / ${d.overview.contacted}명 · 컨택 성공`}
                 color="bg-emerald-50 text-emerald-600"
                 onClick={() => setDetail({ metric: 'paid', label: '결제 전환(결제 인원)' })}
               />
