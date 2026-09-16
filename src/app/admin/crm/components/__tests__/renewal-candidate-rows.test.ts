@@ -33,7 +33,7 @@ const yoonjae: TutoringEntry<TutoringRowStudent> = {
 /** SRM 미연결 — 과목 내역이 없다. */
 const unlinked: TutoringEntry<TutoringRowStudent> = {
   student: student('s2', '김미연결'),
-  displayStatus: 'unlinked',
+  displayStatus: 'active',
   remainingHours: null,
   hours: null,
   subjects: [],

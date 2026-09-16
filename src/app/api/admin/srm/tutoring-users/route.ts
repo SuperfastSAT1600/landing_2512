@@ -9,7 +9,7 @@ import {
   type SubjectKey,
 } from '@/lib/tutoring-subject-breakdown';
 
-export type TutoringStatus = 'active' | 'paused' | 'sales' | 'ended';
+export type TutoringStatus = 'onboarding' | 'active' | 'paused' | 'sales' | 'ended';
 
 /** SFv2 payments.management_status — 결제 관리 상태. 정의는 집계 유틸과 공유한다. */
 export type { PaymentManagementStatus, SubjectHours };
@@ -252,25 +252,33 @@ function foldPayments(rows: { student_id: string; subject: string | null; manage
   return { subjects, paymentStatus, statusBySubject };
 }
 
+/** srm_lifecycle_stages.stage → TutoringStatus 매핑. churned는 목록에서 제외(ended 반환). */
+function lifecycleToBaseStatus(stage: string): TutoringStatus {
+  if (stage === 'churned') return 'ended';
+  if (stage === 'renewal_pending') return 'sales';
+  if (stage.startsWith('onboarding_')) return 'onboarding';
+  return 'active'; // active, cycle_*
+}
+
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    const [v2Hours, crmResult, pauseResult, paymentsResult] = await Promise.all([
+    const [v2Hours, lifecycleResult, pauseResult, paymentsResult] = await Promise.all([
       fetchV2Hours(),
+      // 라이프사이클 스테이지가 활성(completed_at IS NULL)인 학생 전체
       supabaseAdmin
-        .from('students')
-        .select('id, name, grade, sfv2_profile_id, service_status')
-        .not('sfv2_profile_id', 'is', null),
+        .from('srm_lifecycle_stages')
+        .select('student_id, sfv2_profile_id, stage')
+        .is('completed_at', null),
       supabaseAdmin
         .from('student_pauses')
         .select('student_id, sfv2_profile_id')
         .is('ended_at', null)
         .lte('pause_start', today)
         .or(`pause_until.is.null,pause_until.gte.${today}`),
-      // 과목·관리 상태까지 함께 받는다(기존엔 active 결제의 student_id만 조회).
       supabaseSFv2
         .from('payments')
         .select('student_id, subject, management_status')
@@ -278,67 +286,78 @@ export async function GET(request: NextRequest) {
     ]);
 
     const {
-      purchased, refunded, used, scheduled, lastSessionDate,
+      purchased, refunded, used, scheduled,
       purchasedBySubject, refundedBySubject, usedBySubject, scheduledBySubject,
+      lastSessionDate,
     } = v2Hours;
     const paymentRows = (paymentsResult.data ?? []) as {
       student_id: string;
       subject: string | null;
       management_status: string | null;
     }[];
-    const activePaymentIds = new Set(
-      paymentRows.filter((p) => p.management_status === 'active').map((p) => p.student_id)
-    );
     const {
       subjects: subjectsByStudent,
       paymentStatus: statusByStudent,
       statusBySubject,
     } = foldPayments(paymentRows);
-    const crmStudents = (crmResult.data ?? []) as {
-      id: string;
-      name: string;
-      grade: string | null;
-      sfv2_profile_id: string;
-      service_status: string | null;
-    }[];
 
     const pausedByStudentId = new Set((pauseResult.data ?? []).map((p) => p.student_id).filter(Boolean) as string[]);
     const pausedByProfileId = new Set((pauseResult.data ?? []).map((p) => p.sfv2_profile_id).filter(Boolean) as string[]);
 
+    // 라이프사이클 기준 학생 목록 구성 — churned·미분류 제외
+    type LifecycleRow = { student_id: string | null; sfv2_profile_id: string | null; stage: string };
+    const lifecycleRows = (lifecycleResult.data ?? []) as LifecycleRow[];
+
+    // student_id로 조회할 대상 수집 (sfv2_profile_id만 있는 경우는 별도)
+    const studentIds = [...new Set(lifecycleRows.map((r) => r.student_id).filter(Boolean) as string[])];
+
+    const [studentsResult] = await Promise.all([
+      studentIds.length > 0
+        ? supabaseAdmin
+            .from('students')
+            .select('id, name, grade, sfv2_profile_id')
+            .in('id', studentIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const studentById = new Map(
+      ((studentsResult.data ?? []) as { id: string; name: string; grade: string | null; sfv2_profile_id: string | null }[])
+        .map((s) => [s.id, s])
+    );
+
+    // student_id → lifecycle stage 매핑 (중복 시 첫 번째 사용)
+    const stageByStudentId = new Map<string, string>();
+    for (const row of lifecycleRows) {
+      if (row.student_id && !stageByStudentId.has(row.student_id)) {
+        stageByStudentId.set(row.student_id, row.stage);
+      }
+    }
+
     const results: TutoringUser[] = [];
 
-    for (const s of crmStudents) {
-      const pid = s.sfv2_profile_id;
-      const purchasedH = Math.round((purchased.get(pid) ?? 0) * 10) / 10;
-      const hasActivePayment = activePaymentIds.has(pid);
+    for (const [studentId, stage] of stageByStudentId) {
+      const baseStatus = lifecycleToBaseStatus(stage);
+      if (baseStatus === 'ended') continue; // churned → 제외
 
-      // 구매 이력도 없고 활성 결제도 없으면 제외
-      if (purchasedH === 0 && !hasActivePayment) continue;
+      const s = studentById.get(studentId);
+      if (!s) continue;
 
-      const refundedH = Math.round((refunded.get(pid) ?? 0) * 10) / 10;
-      const usedH = Math.round((used.get(pid) ?? 0) * 10) / 10;
+      const pid = s.sfv2_profile_id ?? '';
+      const isPaused = pausedByStudentId.has(studentId) || (pid && pausedByProfileId.has(pid));
+      // 온보딩/재원 중 휴원 처리 중인 경우 → 휴원으로 override
+      const status: TutoringStatus = (isPaused && baseStatus !== 'sales') ? 'paused' : baseStatus;
+
+      const purchasedH = pid ? Math.round((purchased.get(pid) ?? 0) * 10) / 10 : 0;
+      const refundedH = pid ? Math.round((refunded.get(pid) ?? 0) * 10) / 10 : 0;
+      const usedH = pid ? Math.round((used.get(pid) ?? 0) * 10) / 10 : 0;
       const rawRemainingH = purchasedH - refundedH - usedH;
       const remainingH = Math.round(Math.max(0, rawRemainingH) * 10) / 10;
-
-      const isPaused = pausedByStudentId.has(s.id) || pausedByProfileId.has(pid);
-      const svcStatus = s.service_status ?? 'active';
-
-      let status: TutoringStatus;
-      if (rawRemainingH < 0 && hasActivePayment) {
-        // 사용 시간이 구매 시간 초과(또는 0h 구매) + 활성 결제 → 재결제 세일즈
-        status = 'sales';
-      } else if (remainingH > 0) {
-        status = isPaused ? 'paused' : 'active';
-      } else {
-        status = svcStatus === 'ended' ? 'ended' : 'sales';
-      }
-
-      const scheduledH = Math.round((scheduled.get(pid) ?? 0) * 10) / 10;
+      const scheduledH = pid ? Math.round((scheduled.get(pid) ?? 0) * 10) / 10 : 0;
       const netRemainingH = Math.round(rawRemainingH * 10) / 10;
 
       results.push({
         sfv2ProfileId: pid,
-        crmStudentId: s.id,
+        crmStudentId: studentId,
         name: s.name,
         grade: s.grade,
         purchasedHours: purchasedH,
@@ -349,21 +368,21 @@ export async function GET(request: NextRequest) {
         scheduledHours: scheduledH,
         unscheduledHours: Math.round(Math.max(0, netRemainingH - scheduledH) * 10) / 10,
         overscheduledHours: Math.round(Math.max(0, scheduledH - netRemainingH) * 10) / 10,
-        subjects: [...(subjectsByStudent.get(pid) ?? [])].sort(),
-        paymentStatus: statusByStudent.get(pid) ?? null,
-        subjectBreakdown: buildSubjectBreakdown({
+        subjects: pid ? [...(subjectsByStudent.get(pid) ?? [])].sort() : [],
+        paymentStatus: pid ? (statusByStudent.get(pid) ?? null) : null,
+        subjectBreakdown: pid ? buildSubjectBreakdown({
           purchased: purchasedBySubject.get(pid),
           refunded: refundedBySubject.get(pid),
           used: usedBySubject.get(pid),
           scheduled: scheduledBySubject.get(pid),
           paymentStatus: statusBySubject.get(pid),
-        }),
+        }) : [],
         status,
       });
     }
 
     const statusOrder: Record<TutoringStatus, number> = {
-      active: 0, paused: 1, sales: 2, ended: 3,
+      onboarding: 0, active: 1, paused: 2, sales: 3, ended: 4,
     };
     results.sort((a, b) =>
       statusOrder[a.status] !== statusOrder[b.status]
@@ -371,25 +390,20 @@ export async function GET(request: NextRequest) {
         : a.name.localeCompare(b.name)
     );
 
-    // 미연결 sfv2 유저: 수업중/휴원/세일즈에 해당하지만 CRM에 sfv2_profile_id 미연결
-    const linkedProfileIds = new Set(crmStudents.map((s) => s.sfv2_profile_id));
+    // 미연결 sfv2 유저: 구매 이력이 있지만 라이프사이클에 연결되지 않은 SFv2 프로필
+    const linkedProfileIds = new Set(results.map((r) => r.sfv2ProfileId).filter(Boolean));
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
     const ninetyDaysAgoStr = ninetyDaysAgo.toISOString();
 
-    // purchased.keys() + activePaymentIds 모두 후보로 (hours=0이지만 active payment인 케이스 포함)
-    const candidateIds = new Set([...purchased.keys(), ...activePaymentIds]);
-    const unlinkedProfileIds = [...candidateIds].filter((pid) => {
+    const unlinkedProfileIds = [...purchased.keys()].filter((pid) => {
       if (linkedProfileIds.has(pid)) return false;
       const purchasedH = purchased.get(pid) ?? 0;
       const refundedH = refunded.get(pid) ?? 0;
       const usedH = used.get(pid) ?? 0;
       const rawRemainingH = purchasedH - refundedH - usedH;
-      // 세일즈: active payment + 잔여 마이너스 (사용 초과 또는 hours=0)
-      if (rawRemainingH < 0 && activePaymentIds.has(pid)) return true;
-      if (purchasedH - refundedH <= 0) return false; // 전액 환불 제외
-      if (rawRemainingH > 0) return true; // 수업중/휴원
-      // 세일즈: 잔여 0h이지만 최근 90일 내 세션 완료 기록 있음
+      if (purchasedH - refundedH <= 0) return false;
+      if (rawRemainingH > 0) return true;
       const lastSession = lastSessionDate.get(pid);
       return !!lastSession && lastSession >= ninetyDaysAgoStr;
     });
@@ -415,7 +429,6 @@ export async function GET(request: NextRequest) {
           netRemainingHours: netRemainingH,
         });
       }
-      // 잔여 시간 많은 순 (수업중 우선), 동일하면 이름순
       unlinked.sort((a, b) => b.netRemainingHours - a.netRemainingHours || a.name.localeCompare(b.name));
     }
 

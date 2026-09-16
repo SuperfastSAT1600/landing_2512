@@ -101,7 +101,7 @@ describe('getRenewalCandidates', () => {
 
   it('orders by remaining hours ascending, unknown hours last', () => {
     const entries = [
-      entry('unknown', { displayStatus: 'unlinked', remainingHours: null, hours: null }),
+      entry('unknown', { displayStatus: 'active', remainingHours: null, hours: null }),
       entry('many', { hours: hours({ remaining: 40 }) }),
       entry('few', { hours: hours({ remaining: 2 }) }),
     ];

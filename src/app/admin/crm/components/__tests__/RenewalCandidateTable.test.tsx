@@ -165,7 +165,7 @@ describe('RenewalCandidateTable', () => {
     render(
       <RenewalCandidateTable
         entries={[
-          entry('unlinked', { name: '미연결', displayStatus: 'unlinked', hours: null, subjects: [], paymentStatus: null }),
+          entry('unlinked', { name: '미연결', displayStatus: 'active', hours: null, subjects: [], paymentStatus: null }),
           entry('known', { name: '연결', hours: hours({ remaining: 30 }) }),
         ]}
         onAdd={noop}

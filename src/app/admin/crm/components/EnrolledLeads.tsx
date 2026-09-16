@@ -40,13 +40,9 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
       try {
         setLoading(true);
         setError(null);
-        const [enrolledRes, tutoringRes] = await Promise.all([
-          fetch('/api/crm/students?lead_status=enrolled', { headers }).then(r => r.json()),
-          fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json()),
-        ]);
-        const enrolled: Student[] = enrolledRes.data ?? [];
+        const tutoringRes = await fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json());
         const linked: TutoringUser[] = tutoringRes.linked ?? [];
-        setEntries(classifyTutoringEntries(enrolled, linked));
+        setEntries(classifyTutoringEntries([], linked));
       } catch (err) {
         setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
       } finally {

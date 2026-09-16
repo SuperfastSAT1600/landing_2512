@@ -3,7 +3,7 @@
 // 튜터링 학생 행 — '튜터링 중' 탭과 '재결제 세일즈' 후보 목록이 같은 UI를 공유한다.
 // 우측 액션만 slot으로 갈린다 (튜터링 중 = 환불, 재결제 후보 = 대상 추가).
 
-import { Crown, AlertTriangle, Link2Off, Search } from 'lucide-react';
+import { Crown, AlertTriangle, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Student } from '@/types/crm';
 import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
@@ -16,7 +16,7 @@ export type TutoringRowStudent = Pick<
 >;
 
 // 'ended'는 목록에서 제외하므로 포함하지 않는다
-export type TutoringDisplayStatus = 'unlinked' | 'active' | 'paused' | 'sales';
+export type TutoringDisplayStatus = 'onboarding' | 'active' | 'paused' | 'sales';
 
 /**
  * 플랫폼 Payment 페이지(app.superfastsat.io/admin/payment)의 수치 컬럼과 1:1 대응.
@@ -53,8 +53,8 @@ export const TUTORING_STATUS_META: Record<
   TutoringDisplayStatus,
   { label: string; color: string; dot: string }
 > = {
-  unlinked:     { label: '미연결',      color: 'bg-gray-100 text-gray-500',       dot: 'bg-gray-400' },
-  active:       { label: '수업중',      color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
+  onboarding:   { label: '온보딩',      color: 'bg-purple-100 text-purple-700',   dot: 'bg-purple-500' },
+  active:       { label: '재원',        color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
   paused:       { label: '휴원',        color: 'bg-amber-100 text-amber-700',     dot: 'bg-amber-400' },
   sales:        { label: '재결제세일즈', color: 'bg-blue-100 text-blue-700',      dot: 'bg-blue-500' },
 };
@@ -62,46 +62,35 @@ export const TUTORING_STATUS_META: Record<
 export type TutoringSubTab = 'all' | TutoringDisplayStatus;
 
 export const TUTORING_SUB_TABS: { key: TutoringSubTab; label: string }[] = [
-  { key: 'all',          label: '전체' },
-  { key: 'unlinked',     label: '미연결' },
-  { key: 'active',       label: '수업중' },
-  { key: 'paused',       label: '휴원' },
-  { key: 'sales',        label: '재결제세일즈' },
+  { key: 'all',        label: '전체' },
+  { key: 'onboarding', label: '온보딩' },
+  { key: 'active',     label: '재원' },
+  { key: 'paused',     label: '휴원' },
 ];
 
 /**
- * enrolled 학생을 SRM 튜터링 상태와 결합한다. enrolled가 유일한 학생 소스이며
- * 튜터링 상태는 (a) 종료 학생 제외 (b) 잔여시간·상태 보강만 한다.
+ * SRM 라이프사이클 기반으로 분류된 TutoringUser 목록을 TutoringEntry[]로 변환한다.
+ * 학생 소스는 라이프사이클 스테이지(온보딩/재원/휴원/재결제세일즈)이며,
+ * ended(종료)·미분류는 API 단에서 이미 제외되어 있다.
+ *
+ * enrolled 인자는 하위 호환을 위해 남겨두지만 실제 학생 소스로 쓰이지 않는다.
  */
 export function classifyTutoringEntries<S extends TutoringRowStudent>(
-  enrolled: S[],
+  _enrolled: S[],
   linked: TutoringUser[]
 ): TutoringEntry<S>[] {
-  const crmMap = new Map<string, TutoringUser>();
-  for (const u of linked) {
-    if (u.crmStudentId) crmMap.set(u.crmStudentId, u);
-  }
-
-  const entries: TutoringEntry<S>[] = [];
-  for (const student of enrolled) {
-    const tu = crmMap.get(student.id);
-    if (!tu) {
-      // SRM 미연결 또는 구매 이력 없음
-      entries.push({
-        student,
-        displayStatus: 'unlinked',
-        remainingHours: null,
-        hours: null,
-        subjects: [],
-        paymentStatus: null,
-        bySubject: [],
-      });
-      continue;
-    }
-    if (tu.status === 'ended') continue; // 종료 학생은 목록에서 제외
-
-    entries.push({
-      student,
+  return linked
+    .filter((tu) => tu.status !== 'ended')
+    .map((tu) => ({
+      student: {
+        id: tu.crmStudentId ?? tu.sfv2ProfileId,
+        name: tu.name,
+        grade: tu.grade,
+        parent_phone: null,
+        is_vip: false,
+        needs_attention: false,
+        traffic_source: null,
+      } as unknown as S,
       displayStatus: tu.status as TutoringDisplayStatus,
       remainingHours: tu.remainingHours,
       hours: {
@@ -116,9 +105,7 @@ export function classifyTutoringEntries<S extends TutoringRowStudent>(
       subjects: tu.subjects ?? [],
       paymentStatus: tu.paymentStatus ?? null,
       bySubject: tu.subjectBreakdown ?? [],
-    });
-  }
-  return entries;
+    }));
 }
 
 /**
@@ -184,9 +171,6 @@ export function TutoringStudentRow({
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
             {meta.label}
           </span>
-          {displayStatus === 'unlinked' && (
-            <Link2Off size={11} className="text-gray-400 shrink-0" />
-          )}
           {badge}
         </div>
         <div className="flex items-center gap-3 mt-0.5">
@@ -294,7 +278,7 @@ export function countByTutoringStatus(
   entries: Pick<TutoringEntry<TutoringRowStudent>, 'displayStatus'>[]
 ): Record<TutoringSubTab, number> {
   const c: Record<TutoringSubTab, number> = {
-    all: 0, unlinked: 0, active: 0, paused: 0, sales: 0,
+    all: 0, onboarding: 0, active: 0, paused: 0, sales: 0,
   };
   for (const e of entries) {
     c.all++;

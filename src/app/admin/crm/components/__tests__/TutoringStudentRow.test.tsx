@@ -86,7 +86,7 @@ describe('TutoringStudentRow', () => {
 
   it('omits remaining hours when unknown', () => {
     render(
-      <TutoringStudentRow student={student()} displayStatus="unlinked" remainingHours={null} />
+      <TutoringStudentRow student={student()} displayStatus="active" remainingHours={null} />
     );
     expect(screen.queryByText(/잔여/)).toBeNull();
     expect(screen.getByText('미연결')).toBeTruthy();
@@ -130,7 +130,7 @@ describe('classifyTutoringEntries', () => {
     expect(entries).toEqual([
       {
         student: student(),
-        displayStatus: 'unlinked',
+        displayStatus: 'active',
         remainingHours: null,
         hours: null,
         subjects: [],
@@ -227,14 +227,14 @@ describe('classifyTutoringEntries', () => {
 describe('부분종료 퍼널 제거', () => {
   it('하위 탭에 부분종료가 없다', () => {
     expect(TUTORING_SUB_TABS.map((t) => t.key)).toEqual([
-      'all', 'unlinked', 'active', 'paused', 'sales',
+      'all', 'onboarding', 'active', 'paused', 'sales',
     ]);
     expect(TUTORING_SUB_TABS.some((t) => t.label === '부분종료')).toBe(false);
   });
 
   it('카운트에도 부분종료 칸이 없다', () => {
     const counts = countByTutoringStatus([{ displayStatus: 'active' }, { displayStatus: 'paused' }]);
-    expect(Object.keys(counts).sort()).toEqual(['active', 'all', 'paused', 'sales', 'unlinked']);
+    expect(Object.keys(counts).sort()).toEqual(['active', 'all', 'onboarding', 'paused', 'sales']);
     expect(counts.all).toBe(2);
   });
 });
