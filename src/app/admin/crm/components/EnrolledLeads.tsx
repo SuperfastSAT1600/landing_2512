@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Loader2, AlertCircle, RotateCcw } from 'lucide-react';
+import { Loader2, AlertCircle, RotateCcw, ExternalLink } from 'lucide-react';
 import { Student } from '@/types/crm';
 import { getAdminUserName } from '@/lib/admin-user';
 import { RefundModal } from './RefundModal';
@@ -14,7 +14,7 @@ import {
   type TutoringEntry,
   type TutoringSubTab,
 } from './TutoringStudentRow';
-import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
+import type { TutoringUser, CrmUnlinkedStudent } from '@/app/api/admin/srm/tutoring-users/route';
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 
@@ -25,10 +25,11 @@ interface EnrolledLeadsProps {
 }
 
 export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: EnrolledLeadsProps) {
-  const [subTab, setSubTab] = useState<TutoringSubTab>('all');
+  const [subTab, setSubTab] = useState<TutoringSubTab>('unlinked');
   const [vipOnly, setVipOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [entries, setEntries] = useState<TutoringEntry[]>([]);
+  const [crmUnlinked, setCrmUnlinked] = useState<CrmUnlinkedStudent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refundTarget, setRefundTarget] = useState<Student | null>(null);
@@ -42,7 +43,12 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
         setError(null);
         const tutoringRes = await fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json());
         const linked: TutoringUser[] = tutoringRes.linked ?? [];
-        setEntries(classifyTutoringEntries([], linked));
+        const unlinked: CrmUnlinkedStudent[] = tutoringRes.crmUnlinked ?? [];
+        // SFv2 연결된 학생만 상태 탭에 표시
+        setEntries(classifyTutoringEntries([], linked).filter(e => e.isCrmLinked));
+        setCrmUnlinked(unlinked);
+        // 미연결 학생이 없으면 재원 탭으로
+        if (unlinked.length === 0) setSubTab('active');
       } catch (err) {
         setError(err instanceof Error ? err.message : '데이터 로드에 실패했습니다.');
       } finally {
@@ -53,14 +59,25 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
     fetchData();
   }, [adminKey]);
 
-  // 서브 탭별 카운트
-  const counts = useMemo(() => countByTutoringStatus(entries), [entries]);
+  // 서브 탭별 카운트 — 미연결은 CRM 미연결 학생 수로 override
+  const counts = useMemo(() => {
+    const c = countByTutoringStatus(entries);
+    c.unlinked = crmUnlinked.length;
+    return c;
+  }, [entries, crmUnlinked]);
 
-  // 현재 탭 + VIP + 이름 검색 필터 적용
+  // 상태 탭 필터 (미연결 탭일 때는 entries 무시)
   const visible = useMemo(
-    () => filterTutoringEntries(entries, { subTab, vipOnly, searchQuery }),
+    () => subTab === 'unlinked' ? [] : filterTutoringEntries(entries, { subTab, vipOnly, searchQuery }),
     [entries, subTab, vipOnly, searchQuery]
   );
+
+  // CRM 미연결 탭 — 이름 검색만 적용
+  const visibleCrmUnlinked = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return crmUnlinked;
+    return crmUnlinked.filter(s => s.name?.toLowerCase().includes(q));
+  }, [crmUnlinked, searchQuery]);
 
   const handleRefundConfirm = async (
     refundAmount: number,
@@ -89,6 +106,10 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
     setRefundTarget(null);
   };
 
+  const isUnlinkedTab = subTab === 'unlinked';
+  const listCount = isUnlinkedTab ? visibleCrmUnlinked.length : visible.length;
+  const isEmpty = isUnlinkedTab ? visibleCrmUnlinked.length === 0 : visible.length === 0;
+
   return (
     <div className="space-y-4">
 
@@ -115,45 +136,68 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
           <AlertCircle size={16} />
           <p className="text-sm">{error}</p>
         </div>
-      ) : visible.length === 0 ? (
-        <div className="py-16 text-center text-sm text-gray-400">해당 학생이 없습니다.</div>
+      ) : isEmpty ? (
+        <div className="py-16 text-center text-sm text-gray-400">
+          {isUnlinkedTab ? 'SFv2 미연결 학생이 없습니다.' : '해당 학생이 없습니다.'}
+        </div>
       ) : (
         <div className="space-y-2">
-          <p className="text-xs text-gray-400">{visible.length}명</p>
-          {visible.map(entry => (
-            <TutoringStudentRow
-              key={entry.student.id}
-              student={entry.student}
-              displayStatus={entry.displayStatus}
-              remainingHours={entry.remainingHours}
-              onClick={entry.isCrmLinked ? () => onStudentClick(entry.student) : undefined}
-              badge={!entry.isCrmLinked ? (
-                <span className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded font-semibold bg-orange-100 text-orange-700">
-                  CRM 미연결
-                </span>
-              ) : undefined}
-              action={entry.isCrmLinked ? (
-                <button
-                  onClick={() => setRefundTarget(entry.student)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
-                  title="환불 처리"
-                >
-                  <RotateCcw size={12} />
-                  <span className="hidden sm:inline">환불</span>
-                </button>
-              ) : (
-                <a
-                  href="/admin/srm"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
-                  title="SRM에서 연결"
-                >
-                  SRM 연결
-                </a>
-              )}
-            />
-          ))}
+          <p className="text-xs text-gray-400">{listCount}명</p>
+
+          {/* CRM 미연결 탭 — CRM에 결제됐지만 SFv2 계정 미연결 */}
+          {isUnlinkedTab ? (
+            visibleCrmUnlinked.map(student => (
+              <div
+                key={student.id}
+                onClick={() => onStudentClick({ id: student.id, name: student.name } as Student)}
+                className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm text-gray-900">{student.name}</span>
+                    {student.grade && <span className="text-xs text-gray-500">{student.grade}</span>}
+                    <span className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded font-semibold bg-blue-50 text-blue-600">
+                      SFv2 미연결
+                    </span>
+                  </div>
+                  {student.parent_phone && (
+                    <p className="text-xs text-gray-400 mt-0.5">{student.parent_phone}</p>
+                  )}
+                </div>
+                <div className="shrink-0" onClick={e => e.stopPropagation()}>
+                  <a
+                    href="/admin/srm"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    <ExternalLink size={11} />
+                    SRM 연결
+                  </a>
+                </div>
+              </div>
+            ))
+          ) : (
+            visible.map(entry => (
+              <TutoringStudentRow
+                key={entry.student.id}
+                student={entry.student}
+                displayStatus={entry.displayStatus}
+                remainingHours={entry.remainingHours}
+                onClick={() => onStudentClick(entry.student)}
+                action={
+                  <button
+                    onClick={() => setRefundTarget(entry.student)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
+                    title="환불 처리"
+                  >
+                    <RotateCcw size={12} />
+                    <span className="hidden sm:inline">환불</span>
+                  </button>
+                }
+              />
+            ))
+          )}
         </div>
       )}
 
