@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { notifyPortalPageView } from '@/lib/slack';
 
 /**
  * GET /api/portal/[token]
@@ -25,15 +24,6 @@ export async function GET(
   const isLocked =
     data.passcode_locked_until != null &&
     new Date(data.passcode_locked_until) > new Date();
-
-  // 학부모 포털 열람 알림 (fire-and-forget, 어드민 preview 제외)
-  const isAdminPreview = request.nextUrl.searchParams.get('preview') === 'admin';
-  if (!isAdminPreview) {
-    notifyPortalPageView({
-      studentName: data.portal_name || data.name,
-      studentId: data.id,
-    }).catch((err) => console.error('[portal] Slack notify failed:', err));
-  }
 
   return NextResponse.json({
     exists: true,
