@@ -22,6 +22,8 @@ const EXPECTED_CRONS: Record<string, string> = {
   '/api/cron/marketing-weekly-report': '0 19 * * 0',
   // FB 광고비 동기화 (매일 02:00 KST = 17:00 UTC 전일)
   '/api/cron/fb-ad-spend-sync': '0 17 * * *',
+  // IG 콘텐츠 광고비 동기화 (매일 02:30 KST = 17:30 UTC 전일) — FB 동기화 30분 뒤
+  '/api/cron/ig-content-spend-sync': '30 17 * * *',
   // 주간 방문자 리포트 (화요일 04:00 KST = 월요일 19:00 UTC)
   '/api/cron/weekly-visitor-report': '0 19 * * 2',
 };

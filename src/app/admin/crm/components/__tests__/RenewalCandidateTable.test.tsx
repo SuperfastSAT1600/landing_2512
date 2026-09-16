@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RenewalCandidateTable } from '../RenewalCandidateTable';
 import type { CandidateRow } from '../renewal-candidate-rows';
+import { TUTORING_STATUS_META } from '../TutoringStudentRow';
 import type { TutoringHours, TutoringRowStudent } from '../TutoringStudentRow';
 
 function hours(over: Partial<TutoringHours> = {}): TutoringHours {
@@ -375,7 +376,8 @@ describe('RenewalCandidateTable', () => {
       render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
 
       const nameCell = screen.getByTestId('cell-name-s1').closest('td')!;
-      expect(nameCell.textContent).toContain('수업중');
+      // 튜터링 상태 배지 — active 의 라벨은 '재원'(구 '수업중').
+      expect(nameCell.textContent).toContain(TUTORING_STATUS_META.active.label);
 
       const statusCells = [...document.querySelectorAll('tbody tr')].map(
         (tr) => tr.querySelectorAll('td')[2].textContent
