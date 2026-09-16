@@ -83,7 +83,7 @@ export function classifyTutoringEntries<S extends TutoringRowStudent>(
   linked: TutoringUser[]
 ): TutoringEntry<S>[] {
   return linked
-    .filter((tu) => tu.status !== 'ended')
+    .filter((tu) => tu.status !== 'ended' && tu.status !== 'unclassified')
     .map((tu) => ({
       student: {
         id: tu.crmStudentId ?? tu.sfv2ProfileId,
