@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { isValidExamMonth, isValidSectionScore } from '@/lib/exam-score';
+import { syncLatestExamScore } from '@/app/api/crm/_lib/syncLatestExamScore';
 
 const SCORE_MESSAGE = '점수는 200~800 사이 10점 단위여야 합니다.';
 
@@ -89,6 +90,8 @@ export async function POST(
     console.error('[crm/exam-scores POST]', error);
     return NextResponse.json({ error: '시험 성적 저장에 실패했습니다.' }, { status: 500 });
   }
+
+  await syncLatestExamScore(id);
 
   return NextResponse.json({ data }, { status: 201 });
 }
