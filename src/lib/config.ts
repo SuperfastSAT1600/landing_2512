@@ -98,10 +98,16 @@ export async function saveSupertestConfig(config: SupertestConfig): Promise<void
 
 // ── Portal Posts config ─────────────────────────────────────────────────────
 
+export interface PortalPostButton {
+    text: string;
+    url: string;
+}
+
 export interface PortalPost {
     id: string;       // crypto.randomUUID()
     title: string;
     content: string;
+    buttons?: PortalPostButton[];
     active: boolean;
     order: number;    // 표시 순서 (오름차순)
     created_at: string; // ISO timestamp

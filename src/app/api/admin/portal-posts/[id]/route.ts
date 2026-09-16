@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
-import { getPortalPosts, savePortalPosts } from '@/lib/config';
+import { getPortalPosts, savePortalPosts, type PortalPostButton } from '@/lib/config';
+
+function parseButtons(raw: unknown): PortalPostButton[] | undefined {
+    if (raw === null || raw === undefined) return undefined;
+    if (!Array.isArray(raw)) return [];
+    const filtered = raw
+        .filter((b): b is { text: string; url: string } =>
+            b && typeof b.text === 'string' && typeof b.url === 'string' &&
+            b.text.trim() !== '' && b.url.trim() !== ''
+        )
+        .map(b => ({ text: b.text.trim(), url: b.url.trim() }))
+        .slice(0, 3);
+    return filtered;
+}
 
 export async function PATCH(
     request: NextRequest,
@@ -11,7 +24,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body = await request.json() as { title?: string; content?: string; active?: boolean; order?: number };
+    const body = await request.json() as { title?: string; content?: string; active?: boolean; order?: number; buttons?: unknown };
     const posts = await getPortalPosts();
     const idx = posts.findIndex(p => p.id === id);
     if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -21,6 +34,14 @@ export async function PATCH(
     if (body.content !== undefined) updated.content = String(body.content).trim();
     if (body.active !== undefined) updated.active = Boolean(body.active);
     if (body.order !== undefined) updated.order = Number(body.order);
+    if ('buttons' in body) {
+        const parsed = parseButtons(body.buttons);
+        if (parsed === undefined || parsed.length === 0) {
+            delete updated.buttons;
+        } else {
+            updated.buttons = parsed;
+        }
+    }
 
     posts[idx] = updated;
     await savePortalPosts(posts);

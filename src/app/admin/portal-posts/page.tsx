@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Loader2, Eye, EyeOff, ChevronUp, ChevronDown } from 'lucide-react';
-import type { PortalPost } from '@/lib/config';
+import { Plus, Trash2, Loader2, Eye, EyeOff, ChevronUp, ChevronDown, X, Search, ExternalLink } from 'lucide-react';
+import type { PortalPost, PortalPostButton } from '@/lib/config';
 
 function adminKey() {
     return typeof window !== 'undefined' ? (localStorage.getItem('admin_key') || '') : '';
@@ -12,16 +12,223 @@ function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+interface ButtonField {
+    text: string;
+    url: string;
+}
+
+function ButtonEditor({
+    buttons,
+    onChange,
+}: {
+    buttons: ButtonField[];
+    onChange: (buttons: ButtonField[]) => void;
+}) {
+    function add() {
+        if (buttons.length >= 3) return;
+        onChange([...buttons, { text: '', url: '' }]);
+    }
+
+    function remove(i: number) {
+        onChange(buttons.filter((_, idx) => idx !== i));
+    }
+
+    function update(i: number, field: 'text' | 'url', value: string) {
+        const next = buttons.map((b, idx) => idx === i ? { ...b, [field]: value } : b);
+        onChange(next);
+    }
+
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <label className="block text-xs text-gray-500">버튼 (선택사항, 최대 3개)</label>
+                {buttons.length < 3 && (
+                    <button
+                        type="button"
+                        onClick={add}
+                        className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                        <Plus size={12} />
+                        버튼 추가
+                    </button>
+                )}
+            </div>
+            {buttons.map((btn, i) => (
+                <div key={i} className="flex items-center gap-2">
+                    <input
+                        type="text"
+                        value={btn.text}
+                        onChange={e => update(i, 'text', e.target.value)}
+                        placeholder="버튼 이름"
+                        className="flex-1 bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-3 py-2 text-white text-xs outline-none transition-all"
+                    />
+                    <input
+                        type="url"
+                        value={btn.url}
+                        onChange={e => update(i, 'url', e.target.value)}
+                        placeholder="https://..."
+                        className="flex-[2] bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-3 py-2 text-white text-xs outline-none transition-all"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => remove(i)}
+                        className="p-1.5 text-gray-600 hover:text-red-400 transition-colors shrink-0"
+                    >
+                        <X size={14} />
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+interface PreviewStudent {
+    name: string;
+    portal_token: string | null;
+}
+
+function UserPreviewSection({ activePosts }: { activePosts: PortalPost[] }) {
+    const [query, setQuery] = useState('');
+    const [searching, setSearching] = useState(false);
+    const [students, setStudents] = useState<PreviewStudent[]>([]);
+    const [selected, setSelected] = useState<PreviewStudent | null>(null);
+    const [searched, setSearched] = useState(false);
+
+    async function handleSearch() {
+        if (!query.trim()) return;
+        setSearching(true);
+        setSelected(null);
+        setSearched(false);
+        try {
+            const r = await fetch(
+                `/api/admin/portal-posts/preview?name=${encodeURIComponent(query.trim())}`,
+                { headers: { 'x-admin-key': adminKey() } }
+            );
+            const data = await r.json() as { students: PreviewStudent[]; activePosts: PortalPost[] };
+            setStudents(data.students);
+        } finally {
+            setSearching(false);
+            setSearched(true);
+        }
+    }
+
+    const portalUrl = selected?.portal_token
+        ? `${typeof window !== 'undefined' ? window.location.origin : ''}/portal/${selected.portal_token}`
+        : null;
+
+    return (
+        <section className="bg-[#1e2023] rounded-xl p-6 space-y-4 border border-white/5">
+            <h2 className="text-base font-semibold text-white">유저별 포털 게시글 조회</h2>
+            <p className="text-xs text-gray-500">학생 이름으로 검색해 해당 학부모 포털에 노출되는 게시글을 확인합니다.</p>
+
+            <div className="flex gap-2">
+                <input
+                    type="text"
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                    placeholder="학생 이름 입력"
+                    className="flex-1 bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-2.5 text-white text-sm outline-none transition-all"
+                />
+                <button
+                    onClick={handleSearch}
+                    disabled={searching || !query.trim()}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-bold transition-all shrink-0"
+                >
+                    {searching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                    검색
+                </button>
+            </div>
+
+            {searched && students.length === 0 && (
+                <p className="text-sm text-gray-500">검색 결과가 없습니다.</p>
+            )}
+
+            {students.length > 0 && !selected && (
+                <div className="space-y-1">
+                    <p className="text-xs text-gray-500 mb-2">{students.length}명 검색됨 — 학생을 선택하세요</p>
+                    {students.map(s => (
+                        <button
+                            key={s.portal_token ?? s.name}
+                            onClick={() => setSelected(s)}
+                            className="w-full text-left px-4 py-2.5 rounded-lg bg-[#151719] hover:bg-white/5 text-sm text-white border border-white/5 transition-colors flex items-center justify-between"
+                        >
+                            <span>{s.name}</span>
+                            {!s.portal_token && <span className="text-xs text-gray-600">포털 토큰 없음</span>}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {selected && (
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-semibold text-white">{selected.name} 학생 포털</p>
+                            {portalUrl && (
+                                <a
+                                    href={portalUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-0.5 transition-colors"
+                                >
+                                    포털 열기 <ExternalLink size={10} />
+                                </a>
+                            )}
+                            {!selected.portal_token && (
+                                <p className="text-xs text-red-400 mt-0.5">포털 토큰이 없어 링크를 생성할 수 없습니다.</p>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => { setSelected(null); setStudents([]); setSearched(false); setQuery(''); }}
+                            className="text-xs text-gray-500 hover:text-white transition-colors"
+                        >
+                            초기화
+                        </button>
+                    </div>
+
+                    <div className="border-t border-white/5 pt-3">
+                        <p className="text-xs text-gray-500 mb-2">현재 노출 중인 게시글 ({activePosts.length}개)</p>
+                        {activePosts.length === 0 ? (
+                            <p className="text-xs text-gray-600">활성 게시글이 없습니다.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {activePosts.map(post => (
+                                    <div key={post.id} className="bg-[#151719] rounded-lg px-4 py-3 border border-white/5">
+                                        <p className="text-sm font-medium text-white">{post.title}</p>
+                                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 whitespace-pre-wrap">{post.content}</p>
+                                        {post.buttons && post.buttons.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                {post.buttons.map((btn, i) => (
+                                                    <span key={i} className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/20">
+                                                        {btn.text}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </section>
+    );
+}
+
 export default function AdminPortalPosts() {
     const [posts, setPosts] = useState<PortalPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [newTitle, setNewTitle] = useState('');
     const [newContent, setNewContent] = useState('');
+    const [newButtons, setNewButtons] = useState<ButtonField[]>([]);
     const [creating, setCreating] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState('');
     const [editContent, setEditContent] = useState('');
+    const [editButtons, setEditButtons] = useState<ButtonField[]>([]);
     const [saving, setSaving] = useState<string | null>(null);
     const [msg, setMsg] = useState('');
 
@@ -39,13 +246,14 @@ export default function AdminPortalPosts() {
     async function handleCreate() {
         if (!newTitle.trim() || !newContent.trim()) return;
         setCreating(true);
+        const validButtons = newButtons.filter(b => b.text.trim() && b.url.trim());
         const r = await fetch('/api/admin/portal-posts', {
             method: 'POST',
             headers,
-            body: JSON.stringify({ title: newTitle, content: newContent }),
+            body: JSON.stringify({ title: newTitle, content: newContent, buttons: validButtons }),
         });
         if (r.ok) {
-            setNewTitle(''); setNewContent(''); setShowForm(false);
+            setNewTitle(''); setNewContent(''); setNewButtons([]); setShowForm(false);
             await load();
             flash('게시글이 추가됐습니다.');
         }
@@ -73,10 +281,11 @@ export default function AdminPortalPosts() {
 
     async function saveEdit(id: string) {
         setSaving(id);
+        const validButtons = editButtons.filter(b => b.text.trim() && b.url.trim());
         await fetch(`/api/admin/portal-posts/${id}`, {
             method: 'PATCH',
             headers,
-            body: JSON.stringify({ title: editTitle, content: editContent }),
+            body: JSON.stringify({ title: editTitle, content: editContent, buttons: validButtons }),
         });
         setEditId(null);
         await load();
@@ -103,6 +312,15 @@ export default function AdminPortalPosts() {
         setMsg(text);
         setTimeout(() => setMsg(''), 3000);
     }
+
+    function startEdit(post: PortalPost) {
+        setEditId(post.id);
+        setEditTitle(post.title);
+        setEditContent(post.content);
+        setEditButtons((post.buttons ?? []).map(b => ({ text: b.text, url: b.url })));
+    }
+
+    const activePosts = posts.filter(p => p.active);
 
     if (loading) {
         return (
@@ -161,9 +379,10 @@ export default function AdminPortalPosts() {
                                 className="w-full bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-2.5 text-white text-sm outline-none transition-all resize-none"
                             />
                         </div>
+                        <ButtonEditor buttons={newButtons} onChange={setNewButtons} />
                         <div className="flex gap-2 justify-end">
                             <button
-                                onClick={() => { setShowForm(false); setNewTitle(''); setNewContent(''); }}
+                                onClick={() => { setShowForm(false); setNewTitle(''); setNewContent(''); setNewButtons([]); }}
                                 className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
                             >
                                 취소
@@ -207,6 +426,7 @@ export default function AdminPortalPosts() {
                                             rows={4}
                                             className="w-full bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-3 py-2 text-white text-sm outline-none resize-none"
                                         />
+                                        <ButtonEditor buttons={editButtons} onChange={setEditButtons} />
                                         <div className="flex gap-2 justify-end">
                                             <button onClick={() => setEditId(null)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white">취소</button>
                                             <button
@@ -268,8 +488,25 @@ export default function AdminPortalPosts() {
 
                                         <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap line-clamp-3">{post.content}</p>
 
+                                        {post.buttons && post.buttons.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {post.buttons.map((btn: PortalPostButton, i: number) => (
+                                                    <a
+                                                        key={i}
+                                                        href={btn.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/20 hover:bg-blue-500/25 transition-colors"
+                                                    >
+                                                        {btn.text}
+                                                        <ExternalLink size={9} />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+
                                         <button
-                                            onClick={() => { setEditId(post.id); setEditTitle(post.title); setEditContent(post.content); }}
+                                            onClick={() => startEdit(post)}
                                             className="text-xs text-gray-600 hover:text-gray-300 transition-colors"
                                         >
                                             수정
@@ -280,6 +517,9 @@ export default function AdminPortalPosts() {
                         ))}
                     </div>
                 )}
+
+                {/* 유저별 포털 게시글 조회 */}
+                <UserPreviewSection activePosts={activePosts} />
             </main>
         </div>
     );
