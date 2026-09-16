@@ -2,7 +2,6 @@
 
 import { BubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
-import { CellSelection } from '@tiptap/pm/tables';
 import { useState, useEffect, useRef } from 'react';
 import {
     Rows3, RowsIcon, Trash2,
@@ -60,8 +59,8 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
             }}
             shouldShow={({ state }) => {
                 const { selection } = state;
-                // CellSelection = 여러 셀 선택 (병합에 필요)
-                if (selection instanceof CellSelection) return true;
+                // CellSelection은 $anchorCell 속성을 가짐 (instanceof보다 안전)
+                if ('$anchorCell' in selection) return true;
                 // 커서가 셀 안에 있을 때
                 if (!selection.empty) return false;
                 const $from = selection.$from;
