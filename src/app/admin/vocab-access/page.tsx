@@ -445,17 +445,21 @@ export default function VocabAccessPage() {
                 </button>
               </div>
               {/* 전용 링크 행 */}
-              {newCode.access_links?.map((link) => (
+              {newCode.access_links?.map((link) => {
+                const pageName = link.includes('mathweb') ? 'Math Web' : 'Vocab Counter';
+                const message = `어머님 요청주신 ${pageName} 접속 코드와 링크 보내드립니다\n${link}`;
+                return (
                 <div key={link} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                   <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#a1a1aa', wordBreak: 'break-all' }}>{link}</span>
                   <button
-                    onClick={() => navigator.clipboard.writeText(link)}
+                    onClick={() => navigator.clipboard.writeText(message)}
                     style={{ flexShrink: 0, padding: '5px 12px', background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 6, color: '#6085FF', fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap' }}
                   >
                     링크 복사
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
