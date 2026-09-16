@@ -108,7 +108,21 @@ function TableToolbar({ editor }: { editor: Editor }) {
 export function FormattingToolbar({
     editor, showSettings, onInsertLink, onInsertYoutube, onInsertReel, onInsertInlineImage, onAlign,
 }: FormattingToolbarProps) {
-    const inTable = editor?.isActive('tableCell') || editor?.isActive('tableHeader');
+    const [inTable, setInTable] = useState(false);
+
+    useEffect(() => {
+        if (!editor) return;
+        const update = () => setInTable(
+            editor.isActive('tableCell') || editor.isActive('tableHeader')
+        );
+        update();
+        editor.on('selectionUpdate', update);
+        editor.on('transaction', update);
+        return () => {
+            editor.off('selectionUpdate', update);
+            editor.off('transaction', update);
+        };
+    }, [editor]);
 
     return (
         <div className={`fixed top-16 w-full z-[90] bg-[#151719]/95 backdrop-blur-sm border-b border-white/5 flex items-center gap-0.5 px-4 h-11 transition-all duration-300 ${showSettings ? 'pr-[332px]' : ''}`}>
