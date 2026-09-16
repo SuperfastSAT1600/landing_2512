@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PlayCircle, PauseCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { srmFetch } from '../lib/srm-fetch';
-import type { TutoringUser, TutoringStatus, UnlinkedTutoringUser, TutoringUsersResponse } from '@/app/api/admin/srm/tutoring-users/route';
+import type { TutoringUser, TutoringStatus, TutoringUsersResponse } from '@/app/api/admin/srm/tutoring-users/route';
 
 interface SelectedStudent {
   id?: string;
@@ -61,34 +61,9 @@ function UserRow({ user, onClick }: { user: TutoringUser; onClick: () => void })
   );
 }
 
-function UnlinkedRow({ user, onClick }: { user: UnlinkedTutoringUser; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 py-2.5 bg-white border border-gray-100 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors text-left"
-    >
-      <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium text-gray-800 truncate">{user.name}</span>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <span className="text-[11px] text-gray-500">
-          잔여{' '}
-          <span className={`font-semibold ${user.netRemainingHours < 0 ? 'text-red-600' : 'text-orange-700'}`}>
-            {user.netRemainingHours}h
-          </span>
-          <span className="text-gray-400"> / {user.purchasedHours}h</span>
-        </span>
-        <span className="text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded">
-          연결 필요
-        </span>
-      </div>
-    </button>
-  );
-}
 
 export function TutoringUserList({ onStudentClick, refreshKey }: Props) {
   const [linked, setLinked] = useState<TutoringUser[]>([]);
-  const [unlinked, setUnlinked] = useState<UnlinkedTutoringUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('unlinked');
@@ -101,11 +76,10 @@ export function TutoringUserList({ onStudentClick, refreshKey }: Props) {
       if (!res.ok) throw new Error(`${res.status}`);
       const data: TutoringUsersResponse = await res.json();
       const linkedUsers = Array.isArray(data.linked) ? data.linked : [];
-      const unlinkedUsers = Array.isArray(data.unlinked) ? data.unlinked : [];
       setLinked(linkedUsers);
-      setUnlinked(unlinkedUsers);
-      // 미연결이 없으면 수업중 탭으로 기본 이동
-      if (unlinkedUsers.length === 0) setActiveTab('active');
+      // CRM 미연결 학생이 없으면 재원 탭으로 기본 이동
+      const unlinkedCount = linkedUsers.filter((u) => !u.crmStudentId).length;
+      if (unlinkedCount === 0) setActiveTab('active');
     } catch (e) {
       setError(e instanceof Error ? e.message : '불러오기 실패');
     } finally {
@@ -115,12 +89,15 @@ export function TutoringUserList({ onStudentClick, refreshKey }: Props) {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers, refreshKey]);
 
+  // 미연결 = linked 중 CRM 미연결 (sfv2ProfileId만 있고 crmStudentId 없는 학생)
+  const crmUnlinked = linked.filter((u) => !u.crmStudentId);
+
   const byStatus = (Object.keys(TAB_META) as Tab[]).reduce<Record<Tab, TutoringUser[]>>(
     (acc, t) => ({ ...acc, [t]: t === 'unlinked' ? [] : linked.filter((u) => u.status === t) }),
     {} as Record<Tab, TutoringUser[]>
   );
 
-  const countOf = (t: Tab) => t === 'unlinked' ? unlinked.length : byStatus[t].length;
+  const countOf = (t: Tab) => t === 'unlinked' ? crmUnlinked.length : byStatus[t].length;
 
   if (loading) {
     return (
@@ -169,14 +146,20 @@ export function TutoringUserList({ onStudentClick, refreshKey }: Props) {
       {/* 탭 콘텐츠 */}
       <div className="space-y-1">
         {activeTab === 'unlinked' ? (
-          unlinked.length === 0 ? (
+          crmUnlinked.length === 0 ? (
             <p className="text-xs text-gray-400 py-6 text-center">미연결 학생 없음 — 모두 연결됨</p>
           ) : (
-            unlinked.map((u) => (
-              <UnlinkedRow
+            crmUnlinked.map((u) => (
+              <UserRow
                 key={u.sfv2ProfileId}
                 user={u}
-                onClick={() => onStudentClick({ id: u.sfv2ProfileId, name: u.name, purchasedHours: u.purchasedHours })}
+                onClick={() => onStudentClick({
+                  id: u.sfv2ProfileId,
+                  name: u.name,
+                  tutoringStatus: u.status,
+                  remainingHours: u.netRemainingHours,
+                  purchasedHours: u.purchasedHours,
+                })}
               />
             ))
           )
