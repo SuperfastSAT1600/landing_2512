@@ -100,10 +100,6 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
   const [generatingDoodle, setGeneratingDoodle] = useState(false);
   const [doodleError, setDoodleError] = useState<string | null>(null);
 
-  // Ghost save state
-  const [savingGhost, setSavingGhost] = useState(false);
-  const [ghostResult, setGhostResult] = useState<{ ok: boolean; message: string; url?: string } | null>(null);
-
   useEffect(() => {
     fetch(`/api/admin/coach-onboarding/${id}`, { headers: { 'x-admin-key': getAdminKey() } })
       .then(r => r.json())
@@ -131,7 +127,6 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
     setGeneratingPost(true);
     setPostError(null);
     setPostContent('');
-    setGhostResult(null);
     try {
       const res = await fetch(`/api/admin/coach-onboarding/${id}/generate-post`, {
         method: 'POST',
@@ -171,33 +166,6 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
       setGeneratingDoodle(false);
     }
   }, [data, id]);
-
-  const handleSaveToGhost = useCallback(async () => {
-    if (!postContent || !data) return;
-    setSavingGhost(true);
-    setGhostResult(null);
-    try {
-      const res = await fetch(`/api/admin/coach-onboarding/${id}/save-to-ghost`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
-        body: JSON.stringify({
-          content: postContent,
-          doodleUrl: doodleUrl || undefined,
-          coachName: data.name,
-        }),
-      });
-      const result: { data?: { url: string; slug: string }; error?: string } = await res.json();
-      if (!res.ok || result.error) {
-        setGhostResult({ ok: false, message: result.error ?? 'Ghost 저장 실패' });
-      } else {
-        setGhostResult({ ok: true, message: `Ghost 초안 저장 완료 (${result.data?.slug})`, url: result.data?.url });
-      }
-    } catch {
-      setGhostResult({ ok: false, message: '네트워크 오류가 발생했습니다.' });
-    } finally {
-      setSavingGhost(false);
-    }
-  }, [postContent, data, id, doodleUrl]);
 
   const handleGenerateBio = async () => {
     if (!data) return;
@@ -487,35 +455,6 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
             )}
           </div>
 
-          {/* Step 3: Save to Ghost */}
-          <div className="pt-4 border-t border-white/5 space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="w-5 h-5 rounded-full bg-green-600/30 text-green-400 text-xs flex items-center justify-center font-bold shrink-0">3</span>
-              <p className="text-sm text-gray-300 font-medium">Ghost에 초안 저장</p>
-            </div>
-            <button
-              onClick={handleSaveToGhost}
-              disabled={savingGhost || !postContent}
-              className="px-4 py-2 bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
-            >
-              {savingGhost ? (
-                <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 저장 중...</>
-              ) : 'Ghost 초안으로 저장'}
-            </button>
-            {!postContent && (
-              <p className="text-xs text-gray-600">1단계에서 소개 글을 먼저 생성해주세요.</p>
-            )}
-            {ghostResult && (
-              <div className={`text-xs px-3 py-2 rounded-lg ${ghostResult.ok ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                <p>{ghostResult.message}</p>
-                {ghostResult.url && (
-                  <a href={ghostResult.url} target="_blank" rel="noopener noreferrer" className="underline mt-1 block hover:text-green-300">
-                    Ghost 편집기에서 열기 →
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Admin actions */}
