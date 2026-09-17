@@ -41,6 +41,7 @@ function source(over: Record<string, unknown> = {}) {
     week_start: '2026-08-24',
     stage: '2',
     stage_updated_at: '2026-08-20T00:00:00Z',
+    next_contact_date: null,
     ...over,
   };
 }
@@ -85,6 +86,19 @@ describe('carryOverRenewalTargets', () => {
       created_by: 'carry-over',
     });
     expect(res).toEqual({ ok: true, data: { week_start: '2026-08-31', created: 1, closed: 1 } });
+  });
+
+  it('컨택 예정일을 새 주차 행으로 승계한다 — 메모와 달리 아직 지키지 않은 미래 약속이다', async () => {
+    respond(
+      { data: [source({ next_contact_date: '2026-09-03' })], error: null },
+      { data: [{ id: 'rt-new' }], error: null },
+      { data: [{ id: 'rt-old' }], error: null }
+    );
+    const { carryOverRenewalTargets } = await import('../renewal-carry-over');
+    await carryOverRenewalTargets(NOW);
+
+    const [rows] = argsOf('upsert') as [Record<string, unknown>[]];
+    expect(rows[0].next_contact_date).toBe('2026-09-03');
   });
 
   it('충돌은 무시하고 통과시킨다 — 배열 insert 는 한 행만 겹쳐도 배치 전체가 죽는다', async () => {

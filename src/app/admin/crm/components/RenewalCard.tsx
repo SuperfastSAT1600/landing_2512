@@ -16,7 +16,7 @@ import {
   type RenewalOutcomeQuality,
   type RenewalTarget,
 } from '@/types/crm';
-import { getWeekLabel } from '@/lib/week-definitions';
+import { getKstDateString, getWeekLabel } from '@/lib/week-definitions';
 import { TUTORING_STATUS_META, type TutoringDisplayStatus } from './TutoringStudentRow';
 
 export interface RenewalCardTutoring {
@@ -40,6 +40,8 @@ interface RenewalCardProps {
   onReopen?: () => void;
   /** 카드 메모 저장. 없으면 메모는 읽기 전용으로만 보인다. */
   onMemoSave?: (memo: string) => void;
+  /** 컨택 예정일 저장. 없으면 입력칸 자체가 없다 — 터미널(4·5)·이월 행이 그렇다. */
+  onContactDateSave?: (date: string | null) => void;
   /** 결과 품질·사유 편집 시작. 터미널 단계(4·5)에서만 넘어온다. 저장은 모달에서 한다. */
   onEditQuality?: (quality: RenewalOutcomeQuality) => void;
   /** '진행 중 전체' 스코프에서는 어느 주차 코호트인지 배지로 보여준다. */
@@ -57,6 +59,13 @@ function stageAgeTone(days: number): string {
   return 'text-gray-400';
 }
 
+/** 예정일 임박도 — 날짜는 KST 달력 기준이므로 오늘도 KST 로 잘라야 하루씩 밀리지 않는다. */
+function contactDateTone(date: string, today: string): { input: string; badge: string | null } {
+  if (date < today) return { input: 'text-red-600 border-red-300 font-semibold', badge: '지남' };
+  if (date === today) return { input: 'text-amber-700 border-amber-300 font-semibold', badge: '오늘' };
+  return { input: 'text-gray-600 border-gray-200', badge: null };
+}
+
 export function RenewalCard({
   target,
   tutoring,
@@ -67,6 +76,7 @@ export function RenewalCard({
   onRemove,
   onReopen,
   onMemoSave,
+  onContactDateSave,
   onEditQuality,
   showWeekBadge = false,
   overlay = false,
@@ -89,6 +99,10 @@ export function RenewalCard({
   const isOpen = RENEWAL_OPEN_STAGES.includes(target.stage) && !isCarried;
   const isDropped = target.stage === '5';
   const stageDays = daysSince(target.stage_updated_at, nowMs);
+  const contactDate = target.next_contact_date ?? '';
+  const contactTone = contactDate
+    ? contactDateTone(contactDate, getKstDateString(new Date(nowMs)))
+    : null;
   const meta = tutoring ? TUTORING_STATUS_META[tutoring.displayStatus] : null;
 
   if (!student) return null;
@@ -176,6 +190,40 @@ export function RenewalCard({
         {(tutoring?.remainingHours != null || meta) && <span className="text-gray-300">·</span>}
         <span className={`font-medium ${stageAgeTone(stageDays)}`}>단계 D+{stageDays}</span>
       </div>
+
+      {/* 컨택 예정일 — 다음 액션이 언제인지가 이 보드의 우선순위다.
+          진행 단계(1~3)에만 내려오며, 지난 날짜는 컬럼 맨 위로 올라와 붉게 드러난다. */}
+      {onContactDateSave && !isCarried && !overlay && (
+        <div
+          className="flex items-center gap-1 mt-1.5"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <input
+            type="date"
+            aria-label="컨택 예정일"
+            value={contactDate}
+            onChange={(e) => onContactDateSave(e.target.value === '' ? null : e.target.value)}
+            className={`min-w-0 flex-1 rounded-md border bg-white px-1 py-0.5 text-[10px] outline-none transition-colors focus:border-gray-400 ${
+              contactTone ? contactTone.input : 'text-gray-400 border-gray-200'
+            }`}
+          />
+          {contactTone?.badge && (
+            <span
+              className={`shrink-0 text-[10px] font-semibold ${
+                contactTone.badge === '지남' ? 'text-red-600' : 'text-amber-700'
+              }`}
+            >
+              {contactTone.badge}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* 이월된 행은 종결됐다 — 남은 예정일을 읽기만 한다(메모와 같은 규약). */}
+      {isCarried && contactDate && !overlay && (
+        <p className="text-[10px] text-gray-400 mt-1">컨택 예정 {contactDate}</p>
+      )}
 
       {target.outcome_quality && (
         <p className="text-[10px] mt-1">

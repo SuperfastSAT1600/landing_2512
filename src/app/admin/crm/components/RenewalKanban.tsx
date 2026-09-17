@@ -36,6 +36,7 @@ import { RenewalCard, type RenewalCardTutoring } from './RenewalCard';
 import { RenewalDropModal } from './RenewalDropModal';
 import { RenewalOutcomeModal } from './RenewalOutcomeModal';
 import { RenewalKanbanColumn } from './RenewalKanbanColumn';
+import { sortByNextContact } from './renewal-sort';
 import { RenewalStatsStrip } from './RenewalStatsStrip';
 import { RenewalWeeklyStats } from './RenewalWeeklyStats';
 import { defaultRenewalScope, useRenewalBoard, type RenewalScope } from './use-renewal-board';
@@ -121,6 +122,11 @@ export function RenewalKanban({
     const map = new Map<RenewalStage, RenewalTarget[]>();
     for (const stage of RENEWAL_STAGES) map.set(stage, []);
     for (const target of targets) map.get(target.stage)?.push(target);
+    // 진행 단계만 임박순으로 다시 세운다 — 터미널(4·5)은 결과 기록이라 서버 정렬
+    // (stage_updated_at DESC, 최근 확정순)이 그대로 맞다.
+    for (const stage of RENEWAL_OPEN_STAGES) {
+      map.set(stage, sortByNextContact(map.get(stage) ?? []));
+    }
     return map;
   }, [targets]);
 
@@ -216,6 +222,24 @@ export function RenewalKanban({
         current.map((t) => (t.id === target.id ? { ...t, memo: previous } : t))
       );
       setError('메모 저장에 실패했습니다.');
+    }
+  };
+
+  /** 컨택 예정일 — 메모와 같이 단계와 독립이며 낙관적으로 반영한다. 정렬이 즉시 따라온다. */
+  const handleContactDateSave = async (target: RenewalTarget, date: string | null) => {
+    const previous = target.next_contact_date ?? null;
+    if (date === previous) return;
+
+    setTargets((current) =>
+      current.map((t) => (t.id === target.id ? { ...t, next_contact_date: date } : t))
+    );
+    try {
+      await patchTarget(target.id, { next_contact_date: date });
+    } catch {
+      setTargets((current) =>
+        current.map((t) => (t.id === target.id ? { ...t, next_contact_date: previous } : t))
+      );
+      setError('컨택 예정일 저장에 실패했습니다.');
     }
   };
 
@@ -426,6 +450,9 @@ export function RenewalKanban({
                       : undefined
                   }
                   onMemoSave={handleMemoSave}
+                  onContactDateSave={
+                    RENEWAL_OPEN_STAGES.includes(stage) ? handleContactDateSave : undefined
+                  }
                   onEditQuality={
                     stage === '4' || stage === '5'
                       ? (t, q) => setQualityTarget({ target: t, quality: q })

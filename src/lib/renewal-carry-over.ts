@@ -29,6 +29,7 @@ type SourceRow = {
   week_start: string;
   stage: RenewalStage;
   stage_updated_at: string;
+  next_contact_date: string | null;
 };
 
 export type CarryOverOutcome =
@@ -48,7 +49,7 @@ export async function carryOverRenewalTargets(now: Date = new Date()): Promise<C
 
   const { data, error } = await supabaseAdmin
     .from('renewal_targets')
-    .select('id, student_id, week_start, stage, stage_updated_at')
+    .select('id, student_id, week_start, stage, stage_updated_at, next_contact_date')
     .in('stage', RENEWAL_OPEN_STAGES)
     .lt('week_start', current)
     .is('carried_to_week', null);
@@ -80,6 +81,9 @@ export async function carryOverRenewalTargets(now: Date = new Date()): Promise<C
     // 리셋 금지 — 카드의 '단계 D+N' 과 목록 정렬이 여기 걸려 있다. 승계해야 주차를 넘어
     // 정체 기간이 누적돼 7일/14일 경고가 제대로 뜬다.
     stage_updated_at: row.stage_updated_at,
+    // 메모(122)와 달리 승계한다 — 예정일은 그 주차의 기록이 아니라 아직 지키지 않은
+    // 미래 약속이라, 주차가 바뀐다고 "9/22 전화"가 사라지면 안 된다.
+    next_contact_date: row.next_contact_date,
     carried_from_week: row.week_start,
     created_by: 'carry-over',
     updated_at: nowIso,
