@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import type { NodeViewProps } from '@tiptap/core';
 import TiptapImage from '@tiptap/extension-image';
@@ -7,15 +8,30 @@ import { AlignLeft, AlignCenter, AlignRight, Trash2 } from 'lucide-react';
 
 function ImageNodeViewComponent({ node, updateAttributes, deleteNode, selected }: NodeViewProps) {
     const { src, alt, dataAlign } = node.attrs;
+    const [localAlt, setLocalAlt] = useState<string>(alt || '');
+
+    useEffect(() => {
+        setLocalAlt(alt || '');
+    }, [alt]);
+
     return (
         <NodeViewWrapper className="relative group my-4" data-align={dataAlign}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt={alt || ''}
+            <img src={src} alt={localAlt}
                 className={`rounded-lg max-w-full ${selected ? 'ring-2 ring-blue-500' : ''}`}
                 data-align={dataAlign} />
             <input
-                value={alt || ''}
-                onChange={(e) => updateAttributes({ alt: e.target.value })}
+                value={localAlt}
+                onChange={(e) => setLocalAlt(e.target.value)}
+                onBlur={() => updateAttributes({ alt: localAlt })}
+                onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        (e.target as HTMLInputElement).blur();
+                    }
+                }}
+                onClick={(e) => e.stopPropagation()}
                 placeholder="이미지 설명을 입력하세요..."
                 className="w-full text-center text-xs text-gray-500 bg-transparent border-none outline-none mt-1 placeholder-gray-600/50"
             />
