@@ -17,6 +17,7 @@ function target(stage: RenewalStage, over: Partial<RenewalTarget> = {}): Renewal
     converted_payment_id: null,
     drop_reason: null,
     memo: null,
+    next_contact_date: null,
     outcome_quality: null,
     outcome_reason_tag: null,
     outcome_reason_note: null,
@@ -360,5 +361,84 @@ describe('RenewalCard', () => {
       onDrop: vi.fn(),
     });
     expect(screen.queryByRole('button', { name: '결제' })).toBeNull();
+  });
+  // ── 컨택 예정일 ─────────────────────────────────────────────────────────────
+
+  describe('컨택 예정일', () => {
+    const dateInput = () => screen.getByLabelText('컨택 예정일') as HTMLInputElement;
+
+    it('저장 핸들러가 없으면(4·5단계) 입력칸을 그리지 않는다', () => {
+      renderCard({ stage: '4' });
+      expect(screen.queryByLabelText('컨택 예정일')).toBeNull();
+    });
+
+    it('이월된 행은 종결됐으므로 예정일을 읽기만 한다', () => {
+      renderCard({
+        target: target('2', { next_contact_date: '2026-08-20', carried_to_week: '2026-08-24' }),
+        onContactDateSave: () => {},
+      });
+      expect(screen.queryByLabelText('컨택 예정일')).toBeNull();
+      expect(screen.getByText('컨택 예정 2026-08-20')).toBeTruthy();
+    });
+
+    it('저장된 예정일을 입력칸에 보여준다', () => {
+      renderCard({
+        target: target('2', { next_contact_date: '2026-08-20' }),
+        onContactDateSave: () => {},
+      });
+      expect(dateInput().value).toBe('2026-08-20');
+    });
+
+    it('날짜를 고르면 곧바로 저장한다', () => {
+      const onContactDateSave = vi.fn();
+      renderCard({ stage: '1', onContactDateSave });
+      fireEvent.change(dateInput(), { target: { value: '2026-08-21' } });
+      expect(onContactDateSave).toHaveBeenCalledWith('2026-08-21');
+    });
+
+    it('값을 비우면 null 로 저장한다', () => {
+      const onContactDateSave = vi.fn();
+      renderCard({
+        target: target('2', { next_contact_date: '2026-08-20' }),
+        onContactDateSave,
+      });
+      fireEvent.change(dateInput(), { target: { value: '' } });
+      expect(onContactDateSave).toHaveBeenCalledWith(null);
+    });
+
+    it('지난 예정일은 빨강으로, 오늘은 주황으로 드러낸다', () => {
+      // NOW = 2026-08-17T09:00:00Z → KST 2026-08-17
+      const overdue = renderCard({
+        target: target('2', { next_contact_date: '2026-08-16' }),
+        onContactDateSave: () => {},
+      });
+      expect(dateInput().className).toContain('text-red-600');
+      expect(screen.getByText('지남')).toBeTruthy();
+      overdue.unmount();
+
+      const today = renderCard({
+        target: target('2', { next_contact_date: '2026-08-17' }),
+        onContactDateSave: () => {},
+      });
+      expect(dateInput().className).toContain('text-amber-700');
+      expect(screen.getByText('오늘')).toBeTruthy();
+      today.unmount();
+
+      renderCard({
+        target: target('2', { next_contact_date: '2026-08-25' }),
+        onContactDateSave: () => {},
+      });
+      expect(dateInput().className).toContain('text-gray-600');
+      expect(screen.queryByText('지남')).toBeNull();
+    });
+
+    it('드래그 오버레이에는 입력칸을 그리지 않는다', () => {
+      renderCard({
+        target: target('2', { next_contact_date: '2026-08-20' }),
+        onContactDateSave: () => {},
+        overlay: true,
+      });
+      expect(screen.queryByLabelText('컨택 예정일')).toBeNull();
+    });
   });
 });
