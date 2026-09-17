@@ -13,6 +13,27 @@ function parseButtons(raw: unknown): PortalPostButton[] {
         .slice(0, 3);
 }
 
+// PUT: 전체 순서 일괄 저장 (reorder)
+export async function PUT(request: NextRequest) {
+    if (!isAuthenticated(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const body = await request.json() as { orderedIds?: string[] };
+    if (!Array.isArray(body.orderedIds)) {
+        return NextResponse.json({ error: 'orderedIds array required' }, { status: 400 });
+    }
+    const posts = await getPortalPosts();
+    const idToPost = new Map(posts.map(p => [p.id, p]));
+    const reordered = body.orderedIds
+        .map((id, idx) => {
+            const post = idToPost.get(id);
+            return post ? { ...post, order: idx } : null;
+        })
+        .filter((p): p is PortalPost => p !== null);
+    await savePortalPosts(reordered);
+    return NextResponse.json({ success: true });
+}
+
 export async function GET(request: NextRequest) {
     if (!isAuthenticated(request)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -370,9 +370,12 @@ export default function AdminPortalPosts() {
         const idx = sorted.findIndex(p => p.id === post.id);
         const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
         if (swapIdx < 0 || swapIdx >= sorted.length) return;
+        [sorted[idx], sorted[swapIdx]] = [sorted[swapIdx], sorted[idx]];
         setSaving(post.id);
-        await fetch(`/api/admin/portal-posts/${sorted[idx].id}`, { method: 'PATCH', headers, body: JSON.stringify({ order: sorted[swapIdx].order }) });
-        await fetch(`/api/admin/portal-posts/${sorted[swapIdx].id}`, { method: 'PATCH', headers, body: JSON.stringify({ order: sorted[idx].order }) });
+        await fetch('/api/admin/portal-posts', {
+            method: 'PUT', headers,
+            body: JSON.stringify({ orderedIds: sorted.map(p => p.id) }),
+        });
         await load(); setSaving(null);
     }
 
