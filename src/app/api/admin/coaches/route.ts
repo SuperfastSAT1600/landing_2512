@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
             expires_at,
         });
 
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+        const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000').toLowerCase();
         const onboardingUrl = `${baseUrl}/coach-onboarding/${token}`;
 
         return NextResponse.json({ success: true, coach: newCoach, onboarding_url: onboardingUrl }, { status: 201 });
