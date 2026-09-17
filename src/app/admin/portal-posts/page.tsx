@@ -282,12 +282,20 @@ function PostHiddenUsersPanel({ post }: { post: PortalPost | null }) {
 
 // ── 메인 페이지 ────────────────────────────────────────────────────────────
 
+const TOOL_OPTIONS = [
+    { id: 'vocab-counter', label: 'Vocab Counter', icon: '📊', defaultTitle: 'Vocab Counter', defaultContent: 'SAT 어휘 학습 도구입니다. 사용을 원하시면 신청해 주세요.' },
+    { id: 'math-web',      label: 'Math Web',      icon: '🕸️', defaultTitle: 'Math Web',      defaultContent: 'SAT 수학 학습 도구입니다. 사용을 원하시면 신청해 주세요.' },
+    { id: 'supertest',     label: 'SuperTest',     icon: '🎯', defaultTitle: 'SuperTest 모의고사', defaultContent: 'SuperfastSAT이 매주 진행하는 실전 모의고사입니다. 선착순으로 무료 응시 기회를 드리고 있습니다.' },
+] as const;
+
 export default function AdminPortalPosts() {
     const [posts, setPosts] = useState<PortalPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [newTitle, setNewTitle] = useState('');
     const [newContent, setNewContent] = useState('');
     const [newButtons, setNewButtons] = useState<ButtonField[]>([]);
+    const [newToolId, setNewToolId] = useState<string>('');
+    const [newIsToolCard, setNewIsToolCard] = useState(false);
     const [creating, setCreating] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
@@ -315,10 +323,17 @@ export default function AdminPortalPosts() {
         const validButtons = newButtons.filter(b => b.text.trim() && b.url.trim());
         const r = await fetch('/api/admin/portal-posts', {
             method: 'POST', headers,
-            body: JSON.stringify({ title: newTitle, content: newContent, buttons: validButtons }),
+            body: JSON.stringify({
+                title: newTitle,
+                content: newContent,
+                buttons: validButtons,
+                ...(newIsToolCard && newToolId && { toolId: newToolId }),
+            }),
         });
         if (r.ok) {
-            setNewTitle(''); setNewContent(''); setNewButtons([]); setShowForm(false);
+            setNewTitle(''); setNewContent(''); setNewButtons([]);
+            setNewIsToolCard(false); setNewToolId('');
+            setShowForm(false);
             await load(); flash('게시글이 추가됐습니다.');
         }
         setCreating(false);
@@ -356,10 +371,8 @@ export default function AdminPortalPosts() {
         const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
         if (swapIdx < 0 || swapIdx >= sorted.length) return;
         setSaving(post.id);
-        await Promise.all([
-            fetch(`/api/admin/portal-posts/${sorted[idx].id}`, { method: 'PATCH', headers, body: JSON.stringify({ order: sorted[swapIdx].order }) }),
-            fetch(`/api/admin/portal-posts/${sorted[swapIdx].id}`, { method: 'PATCH', headers, body: JSON.stringify({ order: sorted[idx].order }) }),
-        ]);
+        await fetch(`/api/admin/portal-posts/${sorted[idx].id}`, { method: 'PATCH', headers, body: JSON.stringify({ order: sorted[swapIdx].order }) });
+        await fetch(`/api/admin/portal-posts/${sorted[swapIdx].id}`, { method: 'PATCH', headers, body: JSON.stringify({ order: sorted[idx].order }) });
         await load(); setSaving(null);
     }
 
@@ -406,6 +419,40 @@ export default function AdminPortalPosts() {
                         {showForm && (
                             <section className="bg-[#1e2023] rounded-xl p-5 space-y-4 border border-blue-500/20">
                                 <h2 className="text-sm font-semibold text-white">새 게시글 작성</h2>
+
+                                {/* 툴 카드 토글 */}
+                                <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-white/3 border border-white/5">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const next = !newIsToolCard;
+                                            setNewIsToolCard(next);
+                                            if (!next) { setNewToolId(''); }
+                                        }}
+                                        className={`relative w-8 h-4.5 rounded-full transition-colors flex-shrink-0 ${newIsToolCard ? 'bg-blue-600' : 'bg-white/15'}`}
+                                        style={{ width: 32, height: 18 }}
+                                    >
+                                        <span className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform ${newIsToolCard ? 'translate-x-3.5' : 'translate-x-0.5'}`} style={{ width: 14, height: 14 }} />
+                                    </button>
+                                    <span className="text-xs text-gray-300">툴 카드로 만들기</span>
+                                    {newIsToolCard && (
+                                        <select
+                                            value={newToolId}
+                                            onChange={e => {
+                                                const opt = TOOL_OPTIONS.find(o => o.id === e.target.value);
+                                                setNewToolId(e.target.value);
+                                                if (opt) { setNewTitle(opt.defaultTitle); setNewContent(opt.defaultContent); }
+                                            }}
+                                            className="ml-auto bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-3 py-1.5 text-white text-xs outline-none"
+                                        >
+                                            <option value="">선택하세요</option>
+                                            {TOOL_OPTIONS.map(o => (
+                                                <option key={o.id} value={o.id}>{o.icon} {o.label}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+
                                 <div>
                                     <label className="block text-xs text-gray-500 mb-1.5">제목</label>
                                     <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)}
@@ -418,9 +465,9 @@ export default function AdminPortalPosts() {
                                         placeholder="학부모에게 전달할 내용을 입력하세요." rows={4}
                                         className="w-full bg-[#151719] border border-white/10 focus:border-blue-500 rounded-lg px-4 py-2.5 text-white text-sm outline-none transition-all resize-none" />
                                 </div>
-                                <ButtonEditor buttons={newButtons} onChange={setNewButtons} />
+                                {!newIsToolCard && <ButtonEditor buttons={newButtons} onChange={setNewButtons} />}
                                 <div className="flex gap-2 justify-end">
-                                    <button onClick={() => { setShowForm(false); setNewTitle(''); setNewContent(''); setNewButtons([]); }}
+                                    <button onClick={() => { setShowForm(false); setNewTitle(''); setNewContent(''); setNewButtons([]); setNewIsToolCard(false); setNewToolId(''); }}
                                         className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white transition-colors">취소</button>
                                     <button onClick={handleCreate} disabled={creating || !newTitle.trim() || !newContent.trim()}
                                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-bold transition-all">

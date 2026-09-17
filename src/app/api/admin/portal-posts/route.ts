@@ -26,9 +26,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json() as { title?: string; content?: string; buttons?: unknown };
+    const VALID_TOOL_IDS = ['vocab-counter', 'math-web', 'supertest'];
+    const body = await request.json() as { title?: string; content?: string; buttons?: unknown; toolId?: string };
     const title = String(body.title ?? '').trim();
     const content = String(body.content ?? '').trim();
+    const toolId = typeof body.toolId === 'string' && VALID_TOOL_IDS.includes(body.toolId) ? body.toolId : undefined;
 
     if (!title || !content) {
         return NextResponse.json({ error: 'title and content are required' }, { status: 400 });
@@ -44,6 +46,7 @@ export async function POST(request: NextRequest) {
         title,
         content,
         ...(buttons.length > 0 && { buttons }),
+        ...(toolId && { toolId }),
         active: true,
         order: maxOrder + 1,
         created_at: new Date().toISOString(),
