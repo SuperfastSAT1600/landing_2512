@@ -317,6 +317,7 @@ export function StudentDetailPanel({
               localStudent={localStudent}
               onDiagFunnelChange={handleDiagFunnelChange}
               diagLinked={diagHook.diagLinked}
+              diagLegacy={diagHook.diagLegacy}
               diagCandidates={diagHook.diagCandidates}
               showDiagPicker={diagHook.showDiagPicker}
               setShowDiagPicker={diagHook.setShowDiagPicker}

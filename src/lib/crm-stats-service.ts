@@ -19,6 +19,7 @@ import {
   paidCohortQuery,
   isContactedWithImpliedPartner,
   contactRate,
+  ratePct,
   attributeRevenueByType,
   buildPriorTypeMap,
   toMonthKey,
@@ -28,6 +29,7 @@ import {
   paymentMatchesSegment,
   type RelatedCompanyRef,
 } from '@/lib/crm-stats-core';
+import { isDiagnosticDone } from '@/lib/diagnostic-status';
 
 export interface StatsBySource {
   source: string;
@@ -69,6 +71,9 @@ export interface CrmStatsData {
     contacted_base: number; // 컨택 성공률 분모 (재시도 제외 초기 리드 수)
     contact_rate: number;
     paid: number; // 기간 내 인입 리드 중 결제 인원(컨택 여부 무관) — conversion_rate 의 분자
+    // 진단테스트 완료 — 현행(퍼널 4·5 또는 결과 연결) + 2025 구 진단 응시를 함께 센다.
+    diagnostic_done: number;
+    diagnostic_rate: number; // 코호트 리드 중 진단 완료 비율(%)
     conversion_rate: number; // paid / contacted. 정의상 100%를 넘을 수 있다(아래 주석 참고)
 
     total_revenue: number; // 순매출(결제 − 환불)
@@ -120,7 +125,7 @@ export async function computeCrmStats({
   // 기간 리드 / 기간 결제 / 기간 이전 결제(환불 귀속용) / 최초결제 코호트 / 업체 로스터.
   const studentsQuery = leadCohortQuery(
     supabaseAdmin,
-    'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id',
+    'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id, diagnostic_funnel_stage, diagnostic_result_id',
     from,
     to,
     segment,
@@ -263,6 +268,27 @@ export async function computeCrmStats({
   // 그 결과 conversion_rate 가 100%를 넘을 수 있다. 버그가 아니므로 '고치지' 말 것.
   // 정의는 stats/__tests__/route.test.ts 의 '결제 전환율 정의 (회사 표준)' 이 고정한다.
   const paidCount = leadList.filter((s) => isPaid(s)).length;
+
+  // 진단 완료: 현행 퍼널 4·5(또는 결과 연결) + 2025 구 진단 응시(legacy_diagnostic_results).
+  // 구 진단은 students 에 컬럼이 없어 따로 읽는다. 테이블이 없거나 조회가 실패하면
+  // '구 진단 이력 없음'과 같으므로 0건으로 두고 현행 기준만으로 집계한다.
+  const legacyDiag = await supabaseAdmin
+    .from('legacy_diagnostic_results')
+    .select('student_id')
+    .not('student_id', 'is', null)
+    .eq('is_internal', false);
+  if (legacyDiag.error) console.warn('[stats] 구 진단 이력 조회 생략:', legacyDiag.error.message);
+  const legacyDiagIds = new Set(
+    ((legacyDiag.data ?? []) as Array<{ student_id: string }>).map((r) => r.student_id)
+  );
+  const diagnosticDoneCount = leadList.filter((s) =>
+    isDiagnosticDone({
+      diagnostic_result_id: (s as { diagnostic_result_id?: string | null }).diagnostic_result_id ?? null,
+      diagnostic_funnel_stage:
+        (s as { diagnostic_funnel_stage?: number | null }).diagnostic_funnel_stage ?? null,
+      legacy_diagnostic_taken_at: legacyDiagIds.has(s.id) ? 'legacy' : null,
+    })
+  ).length;
 
   // ── By Source ─────────────────────────────────────────────────────────────
   const sourceMap = new Map<
@@ -432,6 +458,8 @@ export async function computeCrmStats({
       contacted_base: initialLeads.length,
       contact_rate: contactRate(contactedCount, initialLeads.length),
       paid: paidCount,
+      diagnostic_done: diagnosticDoneCount,
+      diagnostic_rate: ratePct(diagnosticDoneCount, total),
       // 결제 전환율 = 전체 결제 인원 / 컨택 성공 인원 (회사 표준 — 위 paidCount 주석 참고)
       conversion_rate:
         contactedCount > 0 ? Math.round((paidCount / contactedCount) * 10000) / 100 : 0,
