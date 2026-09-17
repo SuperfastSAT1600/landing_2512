@@ -62,6 +62,9 @@ export function contactRate(contacted: number, leads: number): number {
   return Math.round((contacted / leads) * 10000) / 100;
 }
 
+/** 일반 비율(%) — contactRate 와 같은 반올림 규칙을 쓴다(지표 간 표기 일관성). */
+export const ratePct = contactRate;
+
 export function toMonthKey(dateStr: string): string {
   return dateStr.slice(0, 7); // "2026-05"
 }

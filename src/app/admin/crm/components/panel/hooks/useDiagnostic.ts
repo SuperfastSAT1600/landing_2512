@@ -11,6 +11,17 @@ export interface DiagCandidate {
   total_time_seconds: number;
 }
 
+/** 2025 구 진단테스트 응시 이력 (legacy_diagnostic_results). 현행 결과와 테이블이 다르다. */
+export interface LegacyDiag {
+  id: string;
+  student_grade: string | null;
+  score: number | null;
+  rw_score: number | null;
+  math_score: number | null;
+  taken_at: string | null;
+  match_confidence: 'high' | 'medium' | 'low' | null;
+}
+
 interface Params {
   studentId: string;
   adminKey: string;
@@ -19,6 +30,7 @@ interface Params {
 
 export function useDiagnostic({ studentId, adminKey, onUpdate }: Params) {
   const [diagLinked, setDiagLinked] = useState<DiagCandidate | null>(null);
+  const [diagLegacy, setDiagLegacy] = useState<LegacyDiag[]>([]);
   const [diagCandidates, setDiagCandidates] = useState<DiagCandidate[]>([]);
   const [showDiagPicker, setShowDiagPicker] = useState(false);
   const [diagLoading, setDiagLoading] = useState(false);
@@ -28,8 +40,9 @@ export function useDiagnostic({ studentId, adminKey, onUpdate }: Params) {
   async function fetchDiagLinked() {
     const res = await fetch(`/api/crm/students/${studentId}/diagnostic-link`, { headers });
     if (res.ok) {
-      const { linked } = await res.json();
+      const { linked, legacy } = await res.json();
       setDiagLinked(linked);
+      setDiagLegacy(legacy ?? []);
     }
   }
 
@@ -72,7 +85,7 @@ export function useDiagnostic({ studentId, adminKey, onUpdate }: Params) {
   }, [diagSearchQuery, showDiagPicker]);
 
   return {
-    diagLinked, diagCandidates, showDiagPicker, setShowDiagPicker,
+    diagLinked, diagLegacy, diagCandidates, showDiagPicker, setShowDiagPicker,
     diagLoading, diagSearchQuery, setDiagSearchQuery,
     handleDiagLink,
   };
