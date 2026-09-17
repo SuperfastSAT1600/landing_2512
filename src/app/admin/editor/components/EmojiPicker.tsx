@@ -1,11 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
-import data from '@emoji-mart/data';
-
-// SSR 방지: Picker는 window를 참조하므로 클라이언트에서만 로드
-const Picker = dynamic(() => import('@emoji-mart/react').then((m) => m.default), { ssr: false });
 
 interface EmojiPickerProps {
     onSelect: (emoji: string) => void;
@@ -15,6 +10,37 @@ interface EmojiPickerProps {
 
 export function EmojiPicker({ onSelect, onClose, anchorRef }: EmojiPickerProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // emoji-mart를 useEffect 안에서 동적 import → SSR 문제 없음, React 19 호환
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        Promise.all([
+            import('emoji-mart'),
+            import('@emoji-mart/data'),
+        ]).then(([{ Picker }, { default: data }]) => {
+            if (!container) return;
+            new (Picker as any)({
+                data,
+                onEmojiSelect: (emoji: { native: string }) => {
+                    onSelect(emoji.native);
+                    onClose();
+                },
+                theme: 'dark',
+                locale: 'ko',
+                previewPosition: 'none',
+                skinTonePosition: 'none',
+                autoFocus: true,
+                parent: container,
+            });
+        });
+
+        return () => {
+            container.innerHTML = '';
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         function handleClick(e: MouseEvent) {
@@ -36,19 +62,6 @@ export function EmojiPicker({ onSelect, onClose, anchorRef }: EmojiPickerProps) 
             ref={containerRef}
             className="fixed z-[200]"
             style={{ top: '108px', left: '50%', transform: 'translateX(-50%)' }}
-        >
-            <Picker
-                data={data}
-                onEmojiSelect={(emoji: { native: string }) => {
-                    onSelect(emoji.native);
-                    onClose();
-                }}
-                theme="dark"
-                locale="ko"
-                previewPosition="none"
-                skinTonePosition="none"
-                autoFocus
-            />
-        </div>
+        />
     );
 }
