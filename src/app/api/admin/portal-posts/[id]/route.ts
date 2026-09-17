@@ -24,7 +24,8 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body = await request.json() as { title?: string; content?: string; active?: boolean; order?: number; buttons?: unknown };
+    const VALID_TOOL_IDS = ['vocab-counter', 'math-web', 'supertest'];
+    const body = await request.json() as { title?: string; content?: string; active?: boolean; order?: number; buttons?: unknown; toolId?: string | null };
     const posts = await getPortalPosts();
     const idx = posts.findIndex(p => p.id === id);
     if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -40,6 +41,13 @@ export async function PATCH(
             delete updated.buttons;
         } else {
             updated.buttons = parsed;
+        }
+    }
+    if ('toolId' in body) {
+        if (body.toolId && VALID_TOOL_IDS.includes(body.toolId)) {
+            updated.toolId = body.toolId;
+        } else {
+            delete updated.toolId;
         }
     }
 
