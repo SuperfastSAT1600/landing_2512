@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   const apiKey = process.env.POSTHOG_PERSONAL_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: { code: 'POSTHOG_KEY_MISSING' } }, { status: 500 });
+    return NextResponse.json({ error: { code: 'POSTHOG_KEY_MISSING', message: 'POSTHOG_PERSONAL_API_KEY 환경변수가 설정되지 않았습니다' } }, { status: 500 });
   }
 
   const params = request.nextUrl.searchParams;
@@ -70,8 +70,8 @@ export async function GET(request: NextRequest) {
 
     if (!res.ok) {
       const text = await res.text();
-      console.error('[active-learners] PostHog 쿼리 실패:', text.slice(0, 200));
-      return NextResponse.json({ error: { code: 'POSTHOG_QUERY_FAILED' } }, { status: 500 });
+      console.error('[active-learners] PostHog 쿼리 실패:', text.slice(0, 300));
+      return NextResponse.json({ error: { code: 'POSTHOG_QUERY_FAILED', message: `PostHog 오류 (${res.status}): ${text.slice(0, 100)}` } }, { status: 500 });
     }
 
     const json = await res.json();
