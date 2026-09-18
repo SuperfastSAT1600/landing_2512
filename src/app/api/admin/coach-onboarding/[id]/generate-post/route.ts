@@ -4,6 +4,8 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
+export const maxDuration = 60;
+
 type Params = { params: Promise<{ id: string }> };
 
 let _teacherIntroSkill: string | null = null;
@@ -107,29 +109,43 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
   }
 
+  let systemPrompt: string;
+  try {
+    systemPrompt = getSystemPrompt();
+  } catch (e) {
+    console.error('[generate-post] system prompt read failed', e);
+    return NextResponse.json({ error: '소개글 생성 설정 파일을 읽지 못했습니다.' }, { status: 500 });
+  }
+
   const userInput = formatCoachInput(submission as Record<string, unknown>);
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: getSystemPrompt(),
-      messages: [{ role: 'user', content: userInput }],
-    }),
-  });
+  let apiRes: Response;
+  try {
+    apiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userInput }],
+      }),
+    });
+  } catch (e) {
+    console.error('[generate-post] Anthropic API fetch failed', e);
+    return NextResponse.json({ error: 'Claude API 연결에 실패했습니다.' }, { status: 500 });
+  }
 
-  if (!res.ok) {
-    const err = await res.text();
+  if (!apiRes.ok) {
+    const err = await apiRes.text();
     return NextResponse.json({ error: `Claude API 오류: ${err.slice(0, 200)}` }, { status: 500 });
   }
 
-  const result = await res.json() as { content?: { type: string; text: string }[] };
+  const result = await apiRes.json() as { content?: { type: string; text: string }[] };
   const content = result.content?.find(c => c.type === 'text')?.text ?? '';
 
   return NextResponse.json({ data: { content } });
