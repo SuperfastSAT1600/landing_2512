@@ -70,7 +70,7 @@ export default function MissionPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-lg mx-auto px-4 pt-20 pb-12">
+      <div className="max-w-lg mx-auto px-4 pt-24 pb-12">
         {/* 헤더 */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-black text-gray-900 mb-1">턱걸이 1600 챌린지</h1>
