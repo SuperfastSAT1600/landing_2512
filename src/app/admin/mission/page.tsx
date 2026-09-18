@@ -75,7 +75,11 @@ export default function AdminMissionPage() {
             placeholder="https://www.instagram.com/reel/..."
             className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
-          <p className="text-xs text-gray-400 mt-1">릴스/피드 게시물 URL을 붙여넣으세요</p>
+          {instagramUrl.includes('/stories/') ? (
+            <p className="text-xs text-amber-600 mt-1">⚠️ 스토리 URL은 임베드가 안 됩니다. 링크 버튼으로 표시돼요. 릴스/피드 URL을 사용하면 게시물이 직접 보여요.</p>
+          ) : (
+            <p className="text-xs text-gray-400 mt-1">릴스/피드 게시물 URL을 붙여넣으세요</p>
+          )}
         </div>
 
         <div>
