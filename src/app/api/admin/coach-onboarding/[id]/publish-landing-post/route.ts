@@ -77,7 +77,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       description: description.slice(0, 155) || title,
       category: '코치소개',
       tags: ['코치', '선생님소개'],
-      author: 'SuperfastSAT',
+      author: name,
       date: new Date().toISOString().split('T')[0],
       focus_keyword: `${name} SAT 과외`,
       featured_image: featuredImage || undefined,
