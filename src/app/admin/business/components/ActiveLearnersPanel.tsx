@@ -48,6 +48,13 @@ interface HourRow {
   vocab: number;
 }
 
+interface StudentCount {
+  total: number;
+  onboarding: number;
+  active: number;
+  paused: number;
+}
+
 interface Props {
   adminKey: string;
 }
@@ -57,6 +64,7 @@ export function ActiveLearnersPanel({ adminKey }: Props) {
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<ActiveLearnerRow[]>([]);
   const [error, setError] = useState('');
+  const [studentCount, setStudentCount] = useState<StudentCount | null>(null);
 
   const fetchData = useCallback(async (targetDate: string) => {
     setLoading(true);
@@ -80,6 +88,15 @@ export function ActiveLearnersPanel({ adminKey }: Props) {
   }, [adminKey]);
 
   useEffect(() => { fetchData(date); }, [date, fetchData]);
+
+  useEffect(() => {
+    fetch('/api/admin/srm/active-student-count', {
+      headers: { 'x-admin-key': adminKey },
+    })
+      .then((r) => r.json())
+      .then((json) => { if (json.data) setStudentCount(json.data); })
+      .catch(() => {});
+  }, [adminKey]);
 
   const goDay = (delta: number) => setDate((d) => stepDate(d, delta));
   const isToday = date === kstToday();
@@ -129,7 +146,6 @@ export function ActiveLearnersPanel({ adminKey }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-500">튜터링 활성 학습자</h3>
         {/* 날짜 네비게이션 */}
         <div className="flex items-center gap-1">
           <button
@@ -159,35 +175,46 @@ export function ActiveLearnersPanel({ adminKey }: Props) {
         </div>
       )}
 
+      {/* 총 학생 수 + 공간별 요약 카드 (항상 표시) */}
+      <div className="flex gap-3 mb-5 flex-wrap">
+        <div className="flex-1 min-w-[80px] px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-100">
+          <p className="text-[10px] text-indigo-400 mb-0.5">총 학생 수</p>
+          <p className="text-xl font-bold text-indigo-700 tabular-nums">
+            {studentCount ? studentCount.total : '—'}
+          </p>
+          {studentCount && (
+            <p className="text-[10px] text-indigo-400">
+              온{studentCount.onboarding} 재{studentCount.active} 휴{studentCount.paused}
+            </p>
+          )}
+        </div>
+        {SPACE_CONFIG.map(({ key, label, color }) => (
+          <div key={key} className="flex-1 min-w-[80px] px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
+            <p className="text-[10px] text-gray-400 mb-0.5 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />
+              {label}
+            </p>
+            <p className="text-xl font-bold tabular-nums" style={{ color }}>
+              {totals[key] ?? 0}
+            </p>
+            <p className="text-[10px] text-gray-400">명 접속</p>
+          </div>
+        ))}
+        {peak.sum > 0 && (
+          <div className="flex-1 min-w-[80px] px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
+            <p className="text-[10px] text-gray-400 mb-0.5">피크 시간</p>
+            <p className="text-xl font-bold text-gray-800 tabular-nums">{peak.hour}시</p>
+            <p className="text-[10px] text-gray-400">{peak.sum}명 동시</p>
+          </div>
+        )}
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-400">
           <Loader2 size={16} className="animate-spin" /> 불러오는 중…
         </div>
       ) : hasData ? (
         <>
-          {/* 일별 합산 카드 */}
-          <div className="flex gap-4 mb-5">
-            {SPACE_CONFIG.map(({ key, label, color }) => (
-              <div key={key} className="flex-1 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
-                <p className="text-[10px] text-gray-400 mb-0.5 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />
-                  {label}
-                </p>
-                <p className="text-xl font-bold tabular-nums" style={{ color }}>
-                  {totals[key] ?? 0}
-                </p>
-                <p className="text-[10px] text-gray-400">명 접속</p>
-              </div>
-            ))}
-            {peak.sum > 0 && (
-              <div className="flex-1 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
-                <p className="text-[10px] text-gray-400 mb-0.5">피크 시간</p>
-                <p className="text-xl font-bold text-gray-800 tabular-nums">{peak.hour}시</p>
-                <p className="text-[10px] text-gray-400">{peak.sum}명 동시</p>
-              </div>
-            )}
-          </div>
-
           {/* 시간대별 막대 그래프 */}
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
