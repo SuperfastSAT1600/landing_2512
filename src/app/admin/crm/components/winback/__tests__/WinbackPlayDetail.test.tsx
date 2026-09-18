@@ -146,3 +146,80 @@ describe('WinbackPlayDetail 공통 문구 일괄 발송 (REQ-001)', () => {
     await screen.findByText(/1건 실패: 타겟을 찾을 수 없습니다./);
   });
 });
+
+describe('WinbackPlayDetail 타겟 전체 선택', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  async function renderWith(play: WinbackPlayDetailData) {
+    render(
+      <WinbackPlayDetail
+        playId="p1"
+        userName="이민재"
+        onBack={vi.fn()}
+        fetchPlay={vi.fn().mockResolvedValue(play)}
+        patchTarget={vi.fn()}
+        bulkTargets={vi.fn()}
+        deletePlay={vi.fn()}
+      />
+    );
+    await screen.findByText('AP 5월 프로모션');
+  }
+
+  const selectAllBox = () =>
+    screen.getByRole('checkbox', { name: '타겟 전체 선택' }) as HTMLInputElement;
+  const rowBoxes = () =>
+    screen.getAllByRole('checkbox').filter((b) => b !== selectAllBox()) as HTMLInputElement[];
+
+  it('전체 선택을 누르면 모든 타겟이 선택된다', async () => {
+    await renderWith(PLAY_WITH_TARGETS);
+
+    fireEvent.click(screen.getByRole('button', { name: '전체 선택' }));
+
+    expect(rowBoxes().every((b) => b.checked)).toBe(true);
+    expect(screen.getByText('3명 선택')).toBeTruthy();
+  });
+
+  it('전체 선택된 상태에서 다시 누르면 전부 해제된다', async () => {
+    await renderWith(PLAY_WITH_TARGETS);
+
+    fireEvent.click(screen.getByRole('button', { name: '전체 선택' }));
+    fireEvent.click(screen.getByRole('button', { name: '전체 해제' }));
+
+    expect(rowBoxes().some((b) => b.checked)).toBe(false);
+  });
+
+  it('헤더 체크박스로도 전체 선택·해제가 된다', async () => {
+    await renderWith(PLAY_WITH_TARGETS);
+
+    fireEvent.click(selectAllBox());
+    expect(rowBoxes().every((b) => b.checked)).toBe(true);
+
+    fireEvent.click(selectAllBox());
+    expect(rowBoxes().some((b) => b.checked)).toBe(false);
+  });
+
+  it('일부만 선택하면 헤더 체크박스가 indeterminate가 된다', async () => {
+    await renderWith(PLAY_WITH_TARGETS);
+
+    fireEvent.click(rowBoxes()[0]);
+
+    expect(selectAllBox().indeterminate).toBe(true);
+    expect(selectAllBox().checked).toBe(false);
+  });
+
+  it('선택 수와 전체 수를 함께 보여준다', async () => {
+    await renderWith(PLAY_WITH_TARGETS);
+
+    expect(screen.getByText('타겟 3명')).toBeTruthy();
+
+    fireEvent.click(rowBoxes()[0]);
+    expect(screen.getByText('3명 중 1명 선택')).toBeTruthy();
+  });
+
+  it('타겟이 없으면 전체 선택 UI를 띄우지 않는다', async () => {
+    await renderWith(PLAY);
+
+    expect(screen.queryByRole('button', { name: '전체 선택' })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: '타겟 전체 선택' })).toBeNull();
+  });
+});
