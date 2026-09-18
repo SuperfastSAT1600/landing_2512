@@ -16,13 +16,26 @@ export default function TeacherPost({ instagramUrl, date, repCount }: Props) {
 
   useEffect(() => {
     if (!instagramUrl) return;
-    if ((window as unknown as { instgrm?: { Embeds: { process: () => void } } }).instgrm) {
-      (window as unknown as { instgrm: { Embeds: { process: () => void } } }).instgrm.Embeds.process();
+    type WinWithInstgrm = { instgrm?: { Embeds: { process: () => void } } };
+    const win = window as unknown as WinWithInstgrm;
+
+    const process = () => win.instgrm?.Embeds.process();
+
+    if (win.instgrm) {
+      process();
       return;
     }
+
+    const existing = document.querySelector('script[src="https://www.instagram.com/embed.js"]');
+    if (existing) {
+      existing.addEventListener('load', process);
+      return;
+    }
+
     const script = document.createElement('script');
     script.src = 'https://www.instagram.com/embed.js';
     script.async = true;
+    script.onload = process;
     document.body.appendChild(script);
   }, [instagramUrl]);
 
