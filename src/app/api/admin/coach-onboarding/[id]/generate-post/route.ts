@@ -12,6 +12,8 @@ function getSystemPrompt(): string {
   return `당신은 SAT/AP 과외 선생님의 소개 글을 작성하는 전문가입니다.
 아래의 스킬 가이드라인을 따라 선생님 소개 페이지를 작성하세요.
 
+중요: 이 글은 작성 즉시 블로그에 발행됩니다. "보완하면 좋은 정보", "톤·분량 조정" 등 작성 후 안내(스킬 6번)는 절대 포함하지 마세요. 본문 + Excerpt + Meta Description만 출력하세요.
+
 ${TEACHER_INTRO_SKILL}`;
 }
 
