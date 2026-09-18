@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get('date') ?? new Date().toISOString().split('T')[0];
 
-  const [postResult, submissionsResult, totalResult] = await Promise.all([
+  const [postResult, submissionsResult, totalResult, configResult] = await Promise.all([
     supabaseAdmin
       .from('mission_daily_posts')
       .select('*')
@@ -19,9 +19,15 @@ export async function GET(request: NextRequest) {
     supabaseAdmin
       .from('mission_submissions')
       .select('rep_count'),
+    supabaseAdmin
+      .from('mission_config')
+      .select('value')
+      .eq('key', 'base_reps')
+      .single(),
   ]);
 
-  const totalReps = (totalResult.data ?? []).reduce((sum, r) => sum + (r.rep_count as number), 0);
+  const baseReps = configResult.data?.value ?? 0;
+  const totalReps = (totalResult.data ?? []).reduce((sum, r) => sum + (r.rep_count as number), 0) + baseReps;
 
   return NextResponse.json({
     data: {
