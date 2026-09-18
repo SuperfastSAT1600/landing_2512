@@ -1,26 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { TEACHER_INTRO_SKILL } from '@/lib/coach-intro-skill';
 
 export const maxDuration = 60;
 
 type Params = { params: Promise<{ id: string }> };
 
-let _teacherIntroSkill: string | null = null;
-
 function getSystemPrompt(): string {
-  if (!_teacherIntroSkill) {
-    _teacherIntroSkill = readFileSync(
-      join(process.cwd(), 'Docs/teacher-intro-skill.md'),
-      'utf-8'
-    );
-  }
   return `당신은 SAT/AP 과외 선생님의 소개 글을 작성하는 전문가입니다.
 아래의 스킬 가이드라인을 따라 선생님 소개 페이지를 작성하세요.
 
-${_teacherIntroSkill}`;
+${TEACHER_INTRO_SKILL}`;
 }
 
 function formatCoachInput(data: Record<string, unknown>): string {
@@ -109,14 +100,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
   }
 
-  let systemPrompt: string;
-  try {
-    systemPrompt = getSystemPrompt();
-  } catch (e) {
-    console.error('[generate-post] system prompt read failed', e);
-    return NextResponse.json({ error: '소개글 생성 설정 파일을 읽지 못했습니다.' }, { status: 500 });
-  }
-
+  const systemPrompt = getSystemPrompt();
   const userInput = formatCoachInput(submission as Record<string, unknown>);
 
   let apiRes: Response;
