@@ -21,12 +21,13 @@ export async function GET(request: NextRequest) {
       .select('rep_count'),
     supabaseAdmin
       .from('mission_config')
-      .select('value')
-      .eq('key', 'base_reps')
-      .single(),
+      .select('key, value, value_text')
+      .in('key', ['base_reps', 'mission_title']),
   ]);
 
-  const baseReps = configResult.data?.value ?? 0;
+  const configRows = configResult.data ?? [];
+  const baseReps = configRows.find(r => r.key === 'base_reps')?.value ?? 0;
+  const missionTitle = configRows.find(r => r.key === 'mission_title')?.value_text ?? '10월 SAT 미션';
   const totalReps = (totalResult.data ?? []).reduce((sum, r) => sum + (r.rep_count as number), 0) + baseReps;
 
   return NextResponse.json({
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
       post: postResult.data ?? null,
       submissions: submissionsResult.data ?? [],
       totalReps,
+      missionTitle,
     },
   });
 }

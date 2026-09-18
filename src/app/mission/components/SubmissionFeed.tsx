@@ -33,19 +33,20 @@ export default function SubmissionFeed({ submissions, totalReps, goal = 1600 }: 
       {/* 진행률 바 */}
       <div className="mb-6">
         <div className="flex justify-between items-end mb-1.5">
-          <span className="text-sm font-semibold text-gray-700">챌린지 누적 횟수</span>
-          <span className="text-sm font-bold text-orange-600">
+          <span className="text-sm font-semibold text-gray-700">미션 누적 횟수</span>
+          <span className="text-sm font-bold text-[#3182F6]">
             {totalReps.toLocaleString()} / {goal.toLocaleString()}개
           </span>
         </div>
         <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-orange-500 rounded-full transition-all duration-500"
+            className="h-full bg-[#3182F6] rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
         <p className="text-xs text-gray-400 mt-1 text-right">{progress.toFixed(1)}% 달성</p>
       </div>
+
 
       {/* 인증 피드 */}
       <div className="flex items-center gap-2 mb-3">
@@ -69,7 +70,7 @@ export default function SubmissionFeed({ submissions, totalReps, goal = 1600 }: 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-sm text-gray-800 truncate">{s.display_name}</span>
-                  <span className="text-orange-600 font-bold text-sm whitespace-nowrap">{s.rep_count}개</span>
+                  <span className="text-[#3182F6] font-bold text-sm whitespace-nowrap">{s.rep_count}개</span>
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">@{s.instagram_username}</p>
                 <p className="text-xs text-gray-300 mt-1">{timeAgo(s.created_at)}</p>

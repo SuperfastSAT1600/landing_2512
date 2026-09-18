@@ -43,6 +43,10 @@ export default function AdminMissionPage() {
   const [baseReps, setBaseReps] = useState('');
   const [baseStatus, setBaseStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
+  // 미션 이름
+  const [missionTitle, setMissionTitle] = useState('');
+  const [titleStatus, setTitleStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
   useEffect(() => {
     setAdminKey(localStorage.getItem('admin_key') ?? '');
   }, []);
@@ -70,12 +74,15 @@ export default function AdminMissionPage() {
       .then(json => setSubmissions(json.data ?? []));
   }, [date, adminKey, headers]);
 
-  // 전체 시작 횟수 로드 (한번만)
+  // 전체 시작 횟수 + 미션 이름 로드 (한번만)
   useEffect(() => {
     if (!adminKey) return;
     fetch('/api/admin/mission/config', { headers: headers() })
       .then(r => r.json())
-      .then(json => setBaseReps(json.data?.base_reps?.toString() ?? '0'));
+      .then(json => {
+        setBaseReps(json.data?.base_reps?.toString() ?? '0');
+        setMissionTitle(json.data?.mission_title ?? '10월 SAT 미션');
+      });
   }, [adminKey, headers]);
 
   function goDate(delta: number) {
@@ -141,6 +148,22 @@ export default function AdminMissionPage() {
     setDeletingId(null);
   }
 
+  async function handleSaveMissionTitle() {
+    if (!missionTitle.trim()) return;
+    setTitleStatus('saving');
+    const res = await fetch('/api/admin/mission/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify({ mission_title: missionTitle.trim() }),
+    });
+    if (res.ok) {
+      setTitleStatus('saved');
+      setTimeout(() => setTitleStatus('idle'), 2000);
+    } else {
+      setTitleStatus('error');
+    }
+  }
+
   async function handleSaveBaseReps() {
     const val = parseInt(baseReps, 10);
     if (isNaN(val) || val < 0) return;
@@ -163,7 +186,7 @@ export default function AdminMissionPage() {
 
   return (
     <div className="max-w-xl mx-auto px-4 py-10 space-y-6">
-      <h1 className="text-xl font-bold text-gray-900">미션 챌린지 관리</h1>
+      <h1 className="text-xl font-bold text-gray-900">미션 관리</h1>
 
       {/* ── 포스팅 등록/수정 ── */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
@@ -253,6 +276,24 @@ export default function AdminMissionPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* ── 미션 이름 설정 ── */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-3">
+        <div>
+          <p className="text-sm font-semibold text-gray-800 mb-0.5">미션 이름</p>
+          <p className="text-xs text-gray-400">페이지 상단에 표시되는 미션 이름입니다. 예: 10월 SAT 미션, 11월 SAT 미션</p>
+        </div>
+        <div className="flex gap-2">
+          <input type="text" value={missionTitle} onChange={e => setMissionTitle(e.target.value)}
+            placeholder="10월 SAT 미션"
+            className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#3182F6]" />
+          <button onClick={handleSaveMissionTitle} disabled={titleStatus === 'saving' || !missionTitle.trim()}
+            className="px-4 py-2.5 bg-[#3182F6] hover:bg-[#1B6AE0] text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors">
+            {titleStatus === 'saving' ? '...' : titleStatus === 'saved' ? '저장됨!' : '저장'}
+          </button>
+        </div>
+        {titleStatus === 'error' && <p className="text-xs text-red-500">저장 오류가 발생했어요.</p>}
       </div>
 
       {/* ── 전체 시작 횟수 설정 ── */}
