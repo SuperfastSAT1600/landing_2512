@@ -100,6 +100,11 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
   const [generatingDoodle, setGeneratingDoodle] = useState(false);
   const [doodleError, setDoodleError] = useState<string | null>(null);
 
+  // Landing blog publish state
+  const [publishing, setPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
+
   useEffect(() => {
     fetch(`/api/admin/coach-onboarding/${id}`, { headers: { 'x-admin-key': getAdminKey() } })
       .then(r => r.json())
@@ -166,6 +171,30 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
       setGeneratingDoodle(false);
     }
   }, [data, id]);
+
+  const handlePublishLandingPost = useCallback(async () => {
+    if (!postContent) return;
+    setPublishing(true);
+    setPublishError(null);
+    setPublishedUrl(null);
+    try {
+      const res = await fetch(`/api/admin/coach-onboarding/${id}/publish-landing-post`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
+        body: JSON.stringify({ content: postContent, featuredImage: doodleUrl || undefined }),
+      });
+      const result: { data?: { url: string }; error?: string } = await res.json();
+      if (!res.ok || result.error) {
+        setPublishError(result.error ?? '발행 실패');
+      } else {
+        setPublishedUrl(result.data?.url ?? null);
+      }
+    } catch {
+      setPublishError('네트워크 오류가 발생했습니다.');
+    } finally {
+      setPublishing(false);
+    }
+  }, [postContent, id]);
 
   const handleGenerateBio = async () => {
     if (!data) return;
@@ -411,6 +440,28 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
                   rows={12}
                   className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2.5 text-xs text-gray-300 outline-none focus:border-blue-500 font-mono resize-y"
                 />
+                <div className="pt-1 space-y-2">
+                  <button
+                    onClick={handlePublishLandingPost}
+                    disabled={publishing}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+                  >
+                    {publishing ? (
+                      <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 발행 중...</>
+                    ) : '랜딩 블로그에 발행'}
+                  </button>
+                  {publishError && (
+                    <p className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-400">{publishError}</p>
+                  )}
+                  {publishedUrl && (
+                    <p className="text-xs px-3 py-2 rounded-lg bg-green-500/10 text-green-400">
+                      발행 완료 →{' '}
+                      <a href={publishedUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-green-300">
+                        {publishedUrl}
+                      </a>
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -166,7 +166,12 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const coachName = (submission as { name?: string }).name ?? 'coach';
-  const slug = coachName.toLowerCase().replace(/\s+/g, '-') + '-' + id.slice(0, 6);
+  const slug = coachName.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')  // 한글·특수문자 제거, ASCII만 유지
+    .trim()
+    .replace(/\s+/g, '-')
+    || id.slice(0, 8);
+  const safeSlug = slug + '-' + id.slice(0, 6);
 
   // Step 1: Analyze photo with GPT-4o
   let appearanceDescription: string;
@@ -201,7 +206,7 @@ ${DOODLE_STYLE}`;
   // Step 4: Upload to Supabase
   let url: string;
   try {
-    url = await uploadToSupabase(buffer, slug);
+    url = await uploadToSupabase(buffer, safeSlug);
   } catch (e) {
     console.error('[generate-doodle] Supabase 업로드 실패', e);
     return NextResponse.json({ error: `이미지 업로드에 실패했습니다: ${(e as Error).message}` }, { status: 500 });
