@@ -391,6 +391,128 @@ transform: scale(0.96);
 
 ---
 
+## 11. 페이지별 OG 이미지 표준
+
+tutoring.superfastsat.com의 특정 페이지(시크릿 페이지 등)에 OG 이미지를 추가할 때 반드시 이 구조를 따른다.
+
+### 디자인 스펙
+
+| 항목 | 값 |
+|------|-----|
+| 사이즈 | 1024 × 537px |
+| 배경색 | `#1400FF` |
+| 페이지 타이틀 | 흰색(`#ffffff`), 96px, weight 800, letter-spacing `-0.02em`, 중앙 정렬 |
+| 로고 | `public/white-logo.png`, 하단 중앙 `bottom: 40px` |
+| 로고 크기 | **width 285, height 36** (원본 비율 1362×172 유지) |
+
+### 구조
+
+```
+┌─────────────────────────────────────────┐
+│                                         │
+│                                         │
+│           페이지 타이틀 텍스트           │
+│                                         │
+│                                         │
+│           ⌞ Superfast SAT ⌟            │
+└─────────────────────────────────────────┘
+```
+
+### 구현 파일
+
+각 페이지 디렉터리에 `opengraph-image.tsx`를 생성한다.
+
+```tsx
+import { ImageResponse } from 'next/og';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+export const runtime = 'nodejs';
+export const size = { width: 1024, height: 537 };
+export const contentType = 'image/png';
+
+const logoData = readFileSync(join(process.cwd(), 'public/white-logo.png'));
+const logoSrc = `data:image/png;base64,${logoData.toString('base64')}`;
+
+export default function Image() {
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: 1024,
+          height: 537,
+          background: '#1400FF',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          fontFamily: 'sans-serif',
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            fontSize: 96,
+            fontWeight: 800,
+            color: '#ffffff',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          페이지 타이틀
+        </div>
+
+        <img
+          src={logoSrc}
+          width={285}
+          height={36}
+          alt=""
+          style={{ position: 'absolute', bottom: 40 }}
+        />
+      </div>
+    ),
+    { ...size },
+  );
+}
+```
+
+### 주의사항
+
+- `runtime = 'nodejs'` 필수 — `readFileSync`는 Edge runtime에서 동작 안 함
+- 로고 width/height를 반드시 **285×36**으로 고정 (임의 변경 시 원본 비율 7.92:1 깨짐)
+- Turbopack dev server는 `opengraph-image` 라우트를 늦게 컴파일하는 버그 있음 — 미리보기는 Node.js 직접 렌더로 확인:
+
+```bash
+node -e "
+const { ImageResponse } = require('next/og');
+const { readFileSync, writeFileSync } = require('fs');
+const { join } = require('path');
+const React = require('react');
+const logoData = readFileSync(join(process.cwd(), 'public/white-logo.png'));
+const logoSrc = \`data:image/png;base64,\${logoData.toString('base64')}\`;
+async function go() {
+  const r = new ImageResponse(
+    React.createElement('div', { style: { width:1024, height:537, background:'#1400FF', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', fontFamily:'sans-serif', position:'relative' } },
+      React.createElement('div', { style: { fontSize:96, fontWeight:800, color:'#ffffff', letterSpacing:'-0.02em' } }, '페이지 타이틀'),
+      React.createElement('img', { src:logoSrc, width:285, height:36, alt:'', style:{ position:'absolute', bottom:40 } })
+    ),
+    { width:1024, height:537 }
+  );
+  writeFileSync('public/thumbnails/output.png', Buffer.from(await r.arrayBuffer()));
+  console.log('saved');
+}
+go();
+"
+```
+
+### 적용된 페이지
+
+| 페이지 | 파일 | 타이틀 |
+|--------|------|--------|
+| Math Web | `src/app/mathweb/opengraph-image.tsx` | Math Web |
+| Vocab Counter | `src/app/vocabcounter/opengraph-image.tsx` | Vocab Counter |
+
+---
+
 ## 10. 핵심 파일 참조
 
 | 용도 | 파일 |

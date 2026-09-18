@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
+import { TestCalculator } from '@/app/diagnosis/components/TestCalculator';
+import { useTestTimer } from '@/app/diagnosis/hooks/useTestTimer';
 
 const TEST_ID = 'september-math-final-14';
 const TEST_LABEL = '9월 SAT MATH 파이널 연습';
@@ -26,7 +28,7 @@ interface Question {
   correctOption?: string;
 }
 
-type Phase = 'gate' | 'leaderboard' | 'test' | 'result';
+type Phase = 'gate' | 'leaderboard' | 'test' | 'result' | 'review';
 
 interface LeaderboardEntry {
   rank: number;
@@ -40,10 +42,6 @@ interface Stats {
   leaderboard: LeaderboardEntry[];
   questionStats: Record<string, { correct: number; total: number }>;
 }
-
-const DIFF_COLOR: Record<string, string> = {
-  Hard: '#ef4444', Medium: '#f59e0b', Easy: '#22c55e',
-};
 
 const WIND_CHILL_TABLE = `<table style="border-collapse:collapse;width:100%;font-size:14px;">
   <thead>
@@ -310,11 +308,30 @@ export default function SeptemberMathPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
+  const [crossedOut, setCrossedOut] = useState<Record<string, Set<string>>>({});
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+
+  const timer = useTestTimer(15, phase === 'test' && !submitted);
+
+  // 시간 초과 자동 제출
+  useEffect(() => {
+    if (timer.remaining === 0 && phase === 'test' && !submitting && !submitted) {
+      handleSubmit();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer.remaining]);
+
+  const toggleCrossOut = useCallback((qId: string, label: string) => {
+    setCrossedOut(prev => {
+      const set = new Set(prev[qId] ?? []);
+      set.has(label) ? set.delete(label) : set.add(label);
+      return { ...prev, [qId]: set };
+    });
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -324,7 +341,7 @@ export default function SeptemberMathPage() {
   const handleGateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = accessCode.trim().toUpperCase();
-    const cleanIg = instagramId.trim();
+    const cleanIg = instagramId.trim().replace(/^@+/, '');
     if (!cleanCode || !cleanIg) return;
 
     setValidating(true);
@@ -363,10 +380,6 @@ export default function SeptemberMathPage() {
     setAnswers(prev => ({ ...prev, [qId]: value }));
   }, []);
 
-  const handleReveal = useCallback((qId: string) => {
-    setRevealed(prev => ({ ...prev, [qId]: true }));
-  }, []);
-
   const handleSubmit = async () => {
     if (submitting || submitted) return;
     const answeredCount = Object.keys(answers).filter(id => answers[id]).length;
@@ -393,11 +406,9 @@ export default function SeptemberMathPage() {
         }),
       });
       setSubmitted(true);
-
-      const updatedStats = await fetch(`/api/practice/stats?testId=${TEST_ID}`).then(r => r.json()).catch(() => null);
-      if (updatedStats) setStats(updatedStats);
-
       setPhase('result');
+
+      fetch(`/api/practice/stats?testId=${TEST_ID}`).then(r => r.json()).then(data => { if (data) setStats(data); }).catch(() => null);
     } catch {
       showToast('Submission failed. Please try again.');
     } finally {
@@ -417,7 +428,7 @@ export default function SeptemberMathPage() {
           <form onSubmit={handleGateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input type="text" placeholder="Access code" value={accessCode} onChange={e => setAccessCode(e.target.value)} required
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }} />
-            <input type="text" placeholder="@instagram_id" value={instagramId} onChange={e => setInstagramId(e.target.value)} required
+            <input type="text" placeholder="instagram_id (@ 없이 입력)" value={instagramId} onChange={e => setInstagramId(e.target.value)} required
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }} />
             {gateError && <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>{gateError}</p>}
             <button type="submit" disabled={!accessCode.trim() || !instagramId.trim() || validating}
@@ -478,55 +489,269 @@ export default function SeptemberMathPage() {
     const lb = stats?.leaderboard ?? [];
     const myMasked = '@' + instagramId.replace(/^@/, '')[0] + '***';
     const myEntry = lb.find(e => e.maskedId === myMasked);
-    const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#a1a1aa' : i === 2 ? '#71717a' : '#3f3f46';
-    const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#a1a1aa' : '#52525b';
+    const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#c0c0c0' : i === 2 ? '#a0a0a0' : '#71717a';
+    const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#c0c0c0' : '#a1a1aa';
+    const percentile = myEntry && lb.length > 0
+      ? Math.round((1 - (myEntry.rank - 1) / lb.length) * 100)
+      : null;
+    const myScore = myEntry ? myEntry.score : Math.round((correctCount / QUESTIONS.length) * 100);
+    const myCorrect = myEntry ? myEntry.correctCount : correctCount;
+    const myTotal = myEntry ? myEntry.totalCount : QUESTIONS.length;
     return (
       <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#09090b', overflow: 'hidden' }}>
-        <div style={{ width: '100%', maxWidth: 400, padding: '28px 24px 16px', textAlign: 'center', flexShrink: 0 }}>
-          <div style={{ fontSize: 10, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.03em' }}>Your Result</h2>
-          {myEntry ? (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
-              <span style={{ fontSize: 13, color: '#a1a1aa' }}>Rank</span>
-              <span style={{ fontSize: 26, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.03em' }}>#{myEntry.rank}</span>
-              <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
-              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{myEntry.score}%</span>
-              <span style={{ fontSize: 12, color: '#52525b' }}>{myEntry.correctCount}/{myEntry.totalCount}</span>
+        {/* 내 결과 헤더 */}
+        <div style={{ width: '100%', maxWidth: 480, padding: '24px 24px 0', textAlign: 'center', flexShrink: 0 }}>
+          <div style={{ fontSize: 11, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10 }}>SuperfastSAT</div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#a1a1aa', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Your Result</h2>
+
+          {/* 결과 stat 카드 — 순수 표시 전용 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, width: '100%', background: 'rgba(96,133,255,0.1)', border: '1px solid rgba(96,133,255,0.35)', borderRadius: 14, padding: '16px 24px' }}>
+            {myEntry ? (
+              <>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 12, color: '#6085FF', fontWeight: 600, marginBottom: 2 }}>Rank</div>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.04em', lineHeight: 1 }}>#{myEntry.rank}</div>
+                </div>
+                <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.1)' }} />
+              </>
+            ) : null}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600, marginBottom: 2 }}>Score</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{myScore}%</div>
             </div>
-          ) : (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{correctCount} / {QUESTIONS.length}</span>
-              <span style={{ fontSize: 14, color: '#a1a1aa' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</span>
+            <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.1)' }} />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600, marginBottom: 2 }}>Correct</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}>{myCorrect}<span style={{ fontSize: 18, color: '#52525b' }}>/{myTotal}</span></div>
+            </div>
+          </div>
+
+          {/* 퍼센타일 bar */}
+          {percentile !== null && (
+            <div style={{ margin: '10px 0 0', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: '#6085FF', fontWeight: 700 }}>상위 {percentile}%</span>
+                <span style={{ fontSize: 11, color: '#3f3f46' }}>{lb.length}명 중 #{myEntry!.rank}</span>
+              </div>
+              <div style={{ height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${percentile}%`, background: 'linear-gradient(90deg, #3b5bdb, #6085FF)', borderRadius: 99, transition: 'width 0.6s ease' }} />
+              </div>
             </div>
           )}
+
+          {/* 독립 Review CTA 버튼 */}
+          <button
+            onClick={() => { setCurrentIndex(0); setPhase('review'); }}
+            style={{ display: 'block', width: '100%', margin: '10px 0 0', padding: '14px 0', background: '#6085FF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.01em' }}
+          >
+            틀린 문제 리뷰하기 →
+          </button>
         </div>
 
-        <div style={{ width: '100%', maxWidth: 400, padding: '4px 24px 8px', flexShrink: 0 }}>
-          <div style={{ fontSize: 10, color: '#27272a', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' }}>
-            — {lb.length} students —
+        {/* 리더보드 헤더 */}
+        <div style={{ width: '100%', maxWidth: 480, padding: '8px 24px 6px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+            <span style={{ fontSize: 11, color: '#3f3f46', fontWeight: 600, letterSpacing: '0.08em' }}>{lb.length} students</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
           </div>
         </div>
 
-        <div style={{ width: '100%', maxWidth: 400, flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+        {/* 리더보드 목록 */}
+        <div style={{ width: '100%', maxWidth: 480, flex: 1, overflowY: 'auto', padding: '0 16px' }}>
           {lb.map((entry, i) => {
             const isMe = entry.maskedId === myMasked;
             return (
-              <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '11px 8px', borderRadius: isMe ? 8 : 0, marginBottom: isMe ? 2 : 0, borderBottom: isMe ? 'none' : '1px solid rgba(255,255,255,0.05)', gap: 12, background: isMe ? 'rgba(96,133,255,0.1)' : 'transparent', border: isMe ? '1px solid rgba(96,133,255,0.25)' : undefined }}>
-                <span style={{ width: 22, fontSize: 11, fontWeight: 700, color: isMe ? '#6085FF' : rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
-                <span style={{ flex: 1, fontSize: 13, color: isMe ? '#c7d2fe' : i < 3 ? '#e4e4e7' : '#52525b', fontFamily: 'monospace', fontWeight: isMe ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {entry.maskedId}{isMe && <span style={{ fontSize: 10, color: '#6085FF', marginLeft: 6 }}>← you</span>}
+              <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '13px 12px', borderRadius: isMe ? 10 : 0, marginBottom: isMe ? 2 : 0, borderBottom: isMe ? 'none' : '1px solid rgba(255,255,255,0.06)', gap: 14, background: isMe ? 'rgba(96,133,255,0.1)' : 'transparent', border: isMe ? '1px solid rgba(96,133,255,0.25)' : undefined }}>
+                <span style={{ width: 28, fontSize: 15, fontWeight: 700, color: isMe ? '#6085FF' : rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
+                <span style={{ flex: 1, fontSize: 15, color: isMe ? '#c7d2fe' : i < 3 ? '#e4e4e7' : '#a1a1aa', fontFamily: 'monospace', fontWeight: isMe ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {entry.maskedId}{isMe && <span style={{ fontSize: 11, color: '#6085FF', marginLeft: 8 }}>← you</span>}
                 </span>
-                <span style={{ fontSize: 11, color: '#3f3f46', flexShrink: 0, marginRight: 8 }}>{entry.correctCount}/{entry.totalCount}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: isMe ? '#6085FF' : scoreColor(i), flexShrink: 0, minWidth: 36, textAlign: 'right' }}>{entry.score}%</span>
+                <span style={{ fontSize: 13, color: '#52525b', flexShrink: 0, marginRight: 4 }}>{entry.correctCount}/{entry.totalCount}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: isMe ? '#6085FF' : scoreColor(i), flexShrink: 0, minWidth: 46, textAlign: 'right' }}>{entry.score}%</span>
               </div>
             );
           })}
         </div>
 
-        <div style={{ width: '100%', maxWidth: 400, padding: '16px 24px 28px', flexShrink: 0 }}>
+        <div style={{ width: '100%', maxWidth: 480, padding: '12px 24px 24px', flexShrink: 0 }}>
           <button onClick={() => setPhase('test')}
-            style={{ width: '100%', padding: '13px 0', background: 'transparent', color: '#52525b', border: '1px solid #27272a', borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+            style={{ width: '100%', padding: '13px 0', background: 'transparent', color: '#3f3f46', border: '1px solid #27272a', borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
             Back to Practice
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Review ── */
+  if (phase === 'review') {
+    const wrongQuestions = QUESTIONS.filter(q => !checkAnswer(q, answers[q.id] ?? ''));
+    const reviewIndex = Math.min(currentIndex, Math.max(0, wrongQuestions.length - 1));
+    const rq = wrongQuestions[reviewIndex] ?? null;
+    const rAnswer = rq ? (answers[rq.id] ?? '') : '';
+    const rIsCorrect = rq ? checkAnswer(rq, rAnswer) : false;
+    const rIsWrong = !!rAnswer && !rIsCorrect;
+    const rCorrectDisplay = rq?.type === 'mcq'
+      ? `(${rq.correctOption}) ${rq.options?.find(o => o.label === rq.correctOption)?.text ?? ''}`
+      : (rq?.answers ?? []).join(' or ');
+    const rIsFirst = reviewIndex === 0;
+    const rIsLast = reviewIndex === wrongQuestions.length - 1;
+
+    if (wrongQuestions.length === 0) {
+      return (
+        <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+            <p style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Perfect Score!</p>
+            <p style={{ fontSize: 13, color: '#64748b', marginBottom: 24 }}>No wrong answers to review.</p>
+            <button onClick={() => setPhase('result')} style={{ padding: '10px 24px', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+              Back to Results
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
+        {/* Header — 테스트 헤더와 동일 스타일 */}
+        <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
+          <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>Review — 틀린 문제</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ color: '#94a3b8', fontSize: 12 }}>{reviewIndex + 1} / {wrongQuestions.length}</span>
+            <button onClick={() => setPhase('result')}
+              style={{ padding: '5px 12px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+              ← Results
+            </button>
+          </div>
+        </div>
+
+        {/* 문제 번호 네비게이터 — 틀린 문제만 표시 */}
+        <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
+          <div className="test-nav-grid" style={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
+            {wrongQuestions.map((q, i) => {
+              const isCurrent = i === reviewIndex;
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => setCurrentIndex(i)}
+                  className={`test-nav-dot ${isCurrent ? 'current' : 'answered'}`}
+                >
+                  {QUESTIONS.indexOf(q) + 1}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Question area — 테스트와 동일한 레이아웃 */}
+        {rq && (
+          <div className="test-layout" style={{ flex: 1, overflow: 'hidden' }}>
+            {rq.passage && rq.passage.trim() ? (
+              <>
+                <div className="test-passage-panel">
+                  <div style={{ padding: '24px 28px 24px 24px' }}>
+                    <div className="test-passage-content">
+                      <ContentRenderer content={rq.passage} />
+                    </div>
+                  </div>
+                </div>
+                <div className="test-resizer" />
+              </>
+            ) : null}
+
+            <div className="test-question-panel" style={rq.passage && rq.passage.trim() ? {} : { flex: 1 }}>
+              <div style={{ padding: '24px', maxWidth: 680, margin: '0 auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <span style={{ width: 32, height: 32, borderRadius: 8, background: '#1e293b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: 14, flexShrink: 0 }}>
+                    {QUESTIONS.indexOf(rq) + 1}
+                  </span>
+                  <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 'auto', background: '#f1f5f9', padding: '2px 8px', borderRadius: 4 }}>
+                    {rq.type === 'mcq' ? 'MCQ' : 'Free Response'}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}>
+                  <ContentRenderer content={rq.question} />
+                </div>
+
+                {rq.type === 'mcq' && rq.options && (
+                  <div className="space-y-3" style={{ marginBottom: 16 }}>
+                    {rq.options.map(opt => {
+                      const isThisCorrect = opt.label === rq.correctOption;
+                      const isThisWrong = opt.label === rAnswer && !isThisCorrect;
+                      return (
+                        <div key={opt.label} className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled
+                            className="bluebook-option"
+                            style={
+                              isThisCorrect ? { borderColor: '#22c55e', background: '#f0fdf4' } :
+                              isThisWrong ? { borderColor: '#ef4444', background: '#fef2f2' } : {}
+                            }
+                          >
+                            <span
+                              className="bluebook-option-label"
+                              style={
+                                isThisCorrect ? { background: '#22c55e', borderColor: '#22c55e', color: '#fff' } :
+                                isThisWrong ? { background: '#ef4444', borderColor: '#ef4444', color: '#fff' } : {}
+                              }
+                            >
+                              {opt.label}
+                            </span>
+                            <span className="bluebook-option-text">
+                              <ContentRenderer content={opt.text} />
+                            </span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {rq.type === 'spr' && (
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                    <input
+                      type="text"
+                      value={rAnswer}
+                      readOnly
+                      className="toss-input"
+                      style={{ flex: 1, border: `1px solid ${rIsWrong ? '#ef4444' : '#e5e7eb'}`, background: rIsWrong ? '#fef2f2' : undefined }}
+                    />
+                  </div>
+                )}
+
+                {/* Feedback — 항상 표시 */}
+                <div style={{ padding: '14px 16px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, marginTop: 8 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', marginBottom: 4 }}>✗ Incorrect</p>
+                  <p style={{ fontSize: 13, color: '#374151', margin: 0 }}>
+                    Answer: <strong>{rCorrectDisplay}</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer nav — 테스트와 동일 스타일 */}
+        <div className="bluebook-footer" style={{ flexShrink: 0 }}>
+          <button
+            onClick={() => setCurrentIndex(reviewIndex - 1)}
+            disabled={rIsFirst}
+            style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: rIsFirst ? 'not-allowed' : 'pointer', opacity: rIsFirst ? 0.4 : 1, color: '#374151' }}
+          >
+            Back
+          </button>
+          <span style={{ fontSize: 12, color: '#94a3b8' }}>{reviewIndex + 1} / {wrongQuestions.length}</span>
+          <button
+            className="bluebook-next-btn btn-press"
+            onClick={() => setCurrentIndex(reviewIndex + 1)}
+            disabled={rIsLast}
+            style={{ opacity: rIsLast ? 0.4 : 1, cursor: rIsLast ? 'not-allowed' : 'pointer' }}
+          >
+            Next
           </button>
         </div>
       </div>
@@ -535,14 +760,13 @@ export default function SeptemberMathPage() {
 
   /* ── Test ── */
   const currentQuestion = QUESTIONS[currentIndex] ?? null;
-  const isRevealed = currentQuestion ? !!revealed[currentQuestion.id] : false;
   const userAnswer = currentQuestion ? (answers[currentQuestion.id] ?? '') : '';
+  const isRevealed = submitted;
   const isCorrect = isRevealed && checkAnswer(currentQuestion!, userAnswer);
   const isWrong = isRevealed && !!userAnswer && !checkAnswer(currentQuestion!, userAnswer);
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === QUESTIONS.length - 1;
   const answeredCount = Object.keys(answers).filter(id => answers[id]).length;
-  const totalCorrect = QUESTIONS.filter(q => checkAnswer(q, answers[q.id] ?? '')).length;
 
   const correctAnswerDisplay = currentQuestion?.type === 'mcq'
     ? `(${currentQuestion.correctOption}) ${currentQuestion.options?.find(o => o.label === currentQuestion.correctOption)?.text ?? ''}`
@@ -556,33 +780,47 @@ export default function SeptemberMathPage() {
         </div>
       )}
 
-      {/* Test header */}
+      {/* Desmos Calculator */}
+      <TestCalculator isOpen={calculatorOpen} onClose={() => setCalculatorOpen(false)} />
+
+      {/* Test header — 진단테스트 스타일 */}
       <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{TEST_LABEL}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {QUESTIONS.length} &nbsp;({totalCorrect} correct)</span>
-          <button onClick={handleSubmit} disabled={submitting || submitted || answeredCount < 1}
-            style={{ padding: '6px 14px', background: submitted ? '#22c55e' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: submitted || submitting || answeredCount < 1 ? 'default' : 'pointer', opacity: answeredCount < 1 ? 0.4 : 1 }}>
-            {submitted ? 'Submitted ✓' : submitting ? 'Submitting...' : 'Submit Results'}
+        {/* 타이머 — 진단테스트와 동일 */}
+        <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+          {timer.remaining !== null && (
+            <span className={`bluebook-timer ${timer.isWarning ? 'warning' : ''} ${timer.isDanger ? 'danger' : ''}`}>
+              {timer.format(timer.remaining)}
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {QUESTIONS.length}</span>
+          {/* Calculator button */}
+          <button
+            onClick={() => setCalculatorOpen(o => !o)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: calculatorOpen ? '#3b82f6' : 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/>
+            </svg>
+            Calculator
           </button>
         </div>
       </div>
 
-      {/* Question number navigator */}
+      {/* Question number navigator — test-nav-dot 클래스 */}
       <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
-        <div style={{ display: 'flex', gap: 6, minWidth: 'max-content' }}>
+        <div className="test-nav-grid" style={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
           {QUESTIONS.map((q, idx) => {
             const isAnswered = !!answers[q.id];
             const isCurrent = idx === currentIndex;
             return (
-              <button key={q.id} onClick={() => setCurrentIndex(idx)}
-                style={{
-                  width: 30, height: 30, borderRadius: 6, border: isCurrent ? '2px solid #1e293b' : '1px solid #e5e7eb',
-                  background: isCurrent ? '#1e293b' : isAnswered ? '#3b82f6' : '#fff',
-                  color: isCurrent ? '#fff' : isAnswered ? '#fff' : '#94a3b8',
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
+              <button
+                key={q.id}
+                onClick={() => setCurrentIndex(idx)}
+                className={`test-nav-dot ${isCurrent ? 'current' : isAnswered ? 'answered' : ''}`}
+              >
                 {idx + 1}
               </button>
             );
@@ -608,15 +846,14 @@ export default function SeptemberMathPage() {
 
           <div className="test-question-panel" style={currentQuestion.passage && currentQuestion.passage.trim() ? {} : { flex: 1 }}>
             <div style={{ padding: '24px', maxWidth: 680, margin: '0 auto' }}>
-              {/* Question meta */}
+              {/* 문제 번호 + 난이도 — 진단테스트 스타일 (32×32, r8) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 6, background: '#1e293b', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                <span
+                  className="inline-flex items-center justify-center font-bold text-white text-sm flex-shrink-0"
+                  style={{ width: 32, height: 32, borderRadius: 8, background: '#1e293b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: 14 }}
+                >
                   {currentIndex + 1}
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: DIFF_COLOR[currentQuestion.difficulty] ?? '#64748b' }}>
-                  {currentQuestion.difficulty}
                 </span>
-                <span style={{ fontSize: 11, color: '#94a3b8' }}>{currentQuestion.skill}</span>
                 <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 'auto', background: '#f1f5f9', padding: '2px 8px', borderRadius: 4 }}>
                   {currentQuestion.type === 'mcq' ? 'MCQ' : 'Free Response'}
                 </span>
@@ -627,44 +864,54 @@ export default function SeptemberMathPage() {
                 <ContentRenderer content={currentQuestion.question} />
               </div>
 
-              {/* MCQ options */}
+              {/* MCQ options — bluebook-option 클래스 + 크로스아웃 */}
               {currentQuestion.type === 'mcq' && currentQuestion.options && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                <div className="space-y-3" style={{ marginBottom: 16 }}>
                   {currentQuestion.options.map(opt => {
                     const isSelected = userAnswer === opt.label;
+                    const isCrossed = crossedOut[currentQuestion.id]?.has(opt.label);
                     const isThisCorrect = isRevealed && opt.label === currentQuestion.correctOption;
                     const isThisWrong = isRevealed && isSelected && opt.label !== currentQuestion.correctOption;
                     return (
-                      <button
-                        key={opt.label}
-                        onClick={() => !isRevealed && handleAnswer(currentQuestion.id, opt.label)}
-                        disabled={isRevealed}
-                        style={{
-                          display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px',
-                          borderRadius: 10, border: `1px solid ${isThisCorrect ? '#86efac' : isThisWrong ? '#fca5a5' : isSelected ? '#1e293b' : '#e5e7eb'}`,
-                          background: isThisCorrect ? '#f0fdf4' : isThisWrong ? '#fef2f2' : isSelected ? '#f8fafc' : '#fff',
-                          cursor: isRevealed ? 'default' : 'pointer', textAlign: 'left', width: '100%',
-                        }}
-                      >
-                        <span style={{
-                          width: 26, height: 26, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700,
-                          background: isThisCorrect ? '#22c55e' : isThisWrong ? '#ef4444' : isSelected ? '#1e293b' : '#f1f5f9',
-                          color: isThisCorrect || isThisWrong || isSelected ? '#fff' : '#64748b',
-                        }}>
-                          {opt.label}
-                        </span>
-                        <span style={{ fontSize: 14, color: '#1e293b', lineHeight: 1.6, paddingTop: 3 }}>
-                          <ContentRenderer content={opt.text} />
-                        </span>
-                      </button>
+                      <div key={opt.label} className="flex items-center gap-2">
+                        {/* 크로스아웃 토글 — 정답 확인 전만 표시 */}
+                        {!isRevealed && (
+                          <button
+                            type="button"
+                            onClick={() => toggleCrossOut(currentQuestion.id, opt.label)}
+                            className={`bluebook-option-crossout btn-press ${isCrossed ? 'active' : ''}`}
+                            title="Cross out"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path d="M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => !isRevealed && handleAnswer(currentQuestion.id, opt.label)}
+                          className={`bluebook-option btn-press ${isSelected && !isRevealed ? 'selected' : ''} ${isCrossed && !isSelected ? 'crossedout' : ''}`}
+                          style={
+                            isThisCorrect ? { borderColor: '#22c55e', background: '#f0fdf4' } :
+                            isThisWrong ? { borderColor: '#ef4444', background: '#fef2f2' } : {}
+                          }
+                        >
+                          <span
+                            className="bluebook-option-label"
+                            style={
+                              isThisCorrect ? { background: '#22c55e', borderColor: '#22c55e', color: '#fff' } :
+                              isThisWrong ? { background: '#ef4444', borderColor: '#ef4444', color: '#fff' } : {}
+                            }
+                          >
+                            {opt.label}
+                          </span>
+                          <span className="bluebook-option-text">
+                            <ContentRenderer content={opt.text} />
+                          </span>
+                        </button>
+                      </div>
                     );
                   })}
-                  {!isRevealed && userAnswer && (
-                    <button onClick={() => handleReveal(currentQuestion.id)}
-                      style={{ marginTop: 4, padding: '10px 20px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start' }}>
-                      Check
-                    </button>
-                  )}
                 </div>
               )}
 
@@ -676,27 +923,21 @@ export default function SeptemberMathPage() {
                     value={userAnswer}
                     onChange={e => handleAnswer(currentQuestion.id, e.target.value)}
                     placeholder="Enter answer"
-                    disabled={isRevealed}
+                    disabled={submitted}
+                    className="toss-input"
                     style={{
-                      flex: 1, padding: '10px 14px', borderRadius: 8,
+                      flex: 1,
                       border: `1px solid ${isCorrect ? '#22c55e' : isWrong ? '#ef4444' : '#e5e7eb'}`,
-                      background: isCorrect ? '#f0fdf4' : isWrong ? '#fef2f2' : '#f8fafc',
-                      color: '#1e293b', fontSize: 15, outline: 'none',
+                      background: isCorrect ? '#f0fdf4' : isWrong ? '#fef2f2' : undefined,
                     }}
-                    onKeyDown={e => { if (e.key === 'Enter' && userAnswer && !isRevealed) handleReveal(currentQuestion.id); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && userAnswer && !submitted) handleAnswer(currentQuestion.id, userAnswer); }}
                   />
-                  {!isRevealed && userAnswer && (
-                    <button onClick={() => handleReveal(currentQuestion.id)}
-                      style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                      Check
-                    </button>
-                  )}
                 </div>
               )}
 
               {/* Feedback */}
               {isRevealed && (
-                <div style={{ padding: '14px 16px', background: isCorrect ? '#f0fdf4' : '#fef2f2', border: `1px solid ${isCorrect ? '#86efac' : '#fca5a5'}`, borderRadius: 10 }}>
+                <div style={{ padding: '14px 16px', background: isCorrect ? '#f0fdf4' : '#fef2f2', border: `1px solid ${isCorrect ? '#86efac' : '#fca5a5'}`, borderRadius: 10, marginTop: 8 }}>
                   <p style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? '#15803d' : '#dc2626', marginBottom: isWrong ? 4 : 0 }}>
                     {isCorrect ? '✓ Correct' : '✗ Incorrect'}
                   </p>
@@ -714,15 +955,32 @@ export default function SeptemberMathPage() {
 
       {/* Footer nav */}
       <div className="bluebook-footer" style={{ flexShrink: 0 }}>
-        <button onClick={() => !isFirst && setCurrentIndex(i => i - 1)} disabled={isFirst}
-          style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.4 : 1, color: '#374151' }}>
+        <button
+          onClick={() => !isFirst && setCurrentIndex(i => i - 1)}
+          disabled={isFirst}
+          style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.4 : 1, color: '#374151' }}
+        >
           Back
         </button>
         <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {QUESTIONS.length}</span>
-        <button className="bluebook-next-btn btn-press" onClick={() => !isLast && setCurrentIndex(i => i + 1)} disabled={isLast}
-          style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}>
-          Next
-        </button>
+        {isLast && answeredCount === QUESTIONS.length && !submitted ? (
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.6 : 1 }}
+          >
+            {submitting ? 'Submitting...' : 'Submit Results'}
+          </button>
+        ) : (
+          <button
+            className="bluebook-next-btn btn-press"
+            onClick={() => !isLast && setCurrentIndex(i => i + 1)}
+            disabled={isLast}
+            style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}
+          >
+            Next
+          </button>
+        )}
       </div>
     </div>
   );

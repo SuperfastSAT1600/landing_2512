@@ -1114,7 +1114,8 @@ export interface RenewalTarget {
   stage_updated_at: string;
   converted_payment_id: string | null;    // stage '4' 에서만 채워진다
   drop_reason: string | null;             // stage '5' 에서만 채워진다
-  memo: string | null;                    // 카드 메모 — 단계와 무관하게 기록. 이월 시 따라가지 않는다
+  memo: string | null;                    // 카드 메모 — 단계와 무관하게 기록. 이월 시 따라간다
+  next_contact_date: string | null;       // YYYY-MM-DD 컨택 예정일 — 1~3단계에서만. 이월 시 따라간다
   outcome_quality: RenewalOutcomeQuality | null;  // stage '4'·'5' 에서만 채워진다. null = 미분류
   outcome_reason_tag: string | null;      // 품질별 사유 목록에서 고른 값. 품질이 있으면 필수
   outcome_reason_note: string | null;     // 사유 자유 메모 — 선택
@@ -1149,6 +1150,13 @@ export interface RenewalWeeklyStat {
   // carried_in 은 selected 자체를 '신규 / 이월유입'으로 분할한다. 섞어 쓰면 안 된다.
   carried_out: number;
   carried_in: number;
+  // 그 주차 결제 완료 건의 실제 결제 금액 합계(원). amount_missing 은 결제 기록을 끝내 찾지
+  // 못해 그 합계에서 빠진 건수 — 금액이 실제보다 적게 보일 수 있음을 드러낸다.
+  completed_amount: number;
+  amount_missing: number;
+  // 그 주차에 찍혔지만 보드의 어느 대상도 가져가지 않은 재결제 금액(원).
+  // completed_amount + off_board_amount = 그 주차 재결제 총액(Business 기준).
+  off_board_amount: number;
 }
 
 /** 추천 API 응답 1건 — 아직 저장되지 않은 후보. */

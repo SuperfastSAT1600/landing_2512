@@ -11,6 +11,7 @@ function student(id: string, name = id): TutoringRowStudent {
 const yoonjae: TutoringEntry<TutoringRowStudent> = {
   student: student('s1', '노윤재'),
   displayStatus: 'active',
+  isCrmLinked: true,
   remainingHours: 40,
   hours: {
     purchased: 130, completed: 90, refunded: 0,
@@ -33,7 +34,8 @@ const yoonjae: TutoringEntry<TutoringRowStudent> = {
 /** SRM 미연결 — 과목 내역이 없다. */
 const unlinked: TutoringEntry<TutoringRowStudent> = {
   student: student('s2', '김미연결'),
-  displayStatus: 'unlinked',
+  displayStatus: 'active',
+  isCrmLinked: false,
   remainingHours: null,
   hours: null,
   subjects: [],

@@ -72,7 +72,6 @@ tests/e2e/__screenshots__/
 .claude/.plan-active
 .claude/plans/
 .claude/docs/
-.claude/skills/
 .claude/logs/
 .claude-cloud/
 .claude/user/

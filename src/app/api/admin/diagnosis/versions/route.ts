@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
 
 /**
- * GET /api/admin/diagnosis/versions?testId=diagnostic-test-1
- * List versions for a specific test format, ordered by version_number desc.
- * Auto-seeds one version per format if none exist for that format.
+ * GET /api/admin/diagnosis/versions
+ * 전체 문제 세트를 set_number ASC 정렬로 반환. testId 파라미터 무시.
  */
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
@@ -14,60 +12,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { searchParams } = new URL(request.url);
-    const testId = searchParams.get('testId') ?? 'diagnostic-test-1';
-
     const { data: existing, error: listError } = await supabaseAdmin
       .from('diagnostic_test_versions')
-      .select('id, version_number, title, time_limit_minutes, is_current, created_at, created_from, test_id')
-      .eq('test_id', testId)
-      .order('version_number', { ascending: false });
+      .select('id, set_number, version_number, title, time_limit_minutes, is_current, created_at, created_from, test_id')
+      .order('set_number', { ascending: true });
 
     if (listError) throw listError;
 
-    // Auto-seed if no versions exist for this format
-    if (!existing || existing.length === 0) {
-      const { data: seeded, error: seedError } = await supabaseAdmin
-        .from('diagnostic_test_versions')
-        .insert({
-          version_number: 1,
-          title: 'SAT Diagnostic Test',
-          time_limit_minutes: diagnosticTest1.timeLimit,
-          directions: diagnosticTest1.directions ?? null,
-          questions: diagnosticTest1.questions,
-          is_current: true,
-          test_id: testId,
-        })
-        .select('id, version_number, title, time_limit_minutes, is_current, created_at, created_from, test_id')
-        .single();
-
-      if (seedError) throw seedError;
-      return NextResponse.json({ versions: [seeded] }, { status: 200 });
-    }
-
-    // Check if current version is missing RW questions — if so, repair it
-    const currentVersion = existing.find(v => v.is_current);
-    if (currentVersion) {
-      const { data: currentData } = await supabaseAdmin
-        .from('diagnostic_test_versions')
-        .select('questions')
-        .eq('id', currentVersion.id)
-        .single();
-
-      const qs = currentData?.questions as Array<{ section?: string }> | null;
-      const hasRW = Array.isArray(qs) && qs.some(q => q.section === 'Reading and Writing');
-
-      if (!hasRW) {
-        await supabaseAdmin
-          .from('diagnostic_test_versions')
-          .update({ questions: diagnosticTest1.questions })
-          .eq('id', currentVersion.id);
-      }
-    }
-
     // Add question count for each version
     const versions = await Promise.all(
-      existing.map(async (v) => {
+      (existing ?? []).map(async (v) => {
         const { data: versionData } = await supabaseAdmin
           .from('diagnostic_test_versions')
           .select('questions')
@@ -89,7 +43,8 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/admin/diagnosis/versions
- * Create a new version based on an existing one with one edited question.
+ * 기존 문제 세트 기반으로 새 문제 세트 생성 (질문 1개 교체).
+ * set_number = MAX(set_number) + 1 전역 부여. test_id 저장 안 함.
  * Body: { baseVersionId: string, editedQuestion: TestQuestion }
  */
 export async function POST(request: NextRequest) {
@@ -107,10 +62,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch base version (including test_id to inherit)
+    // Fetch base version
     const { data: base, error: baseError } = await supabaseAdmin
       .from('diagnostic_test_versions')
-      .select('version_number, title, time_limit_minutes, directions, questions, test_id')
+      .select('version_number, title, time_limit_minutes, directions, questions')
       .eq('id', baseVersionId)
       .single();
 
@@ -118,36 +73,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Base version not found' }, { status: 404 });
     }
 
-    // Replace the edited question in the questions array
+    // Replace the edited question
     const questions = (base.questions as object[]).map((q: object) => {
       const question = q as { id: string };
       return question.id === editedQuestion.id ? editedQuestion : q;
     });
 
-    // Get next version number within same test_id
+    // Get next global set_number
     const { data: maxRow } = await supabaseAdmin
       .from('diagnostic_test_versions')
-      .select('version_number')
-      .eq('test_id', base.test_id ?? 'diagnostic-test-1')
-      .order('version_number', { ascending: false })
+      .select('set_number')
+      .order('set_number', { ascending: false })
       .limit(1)
       .single();
 
-    const nextVersionNumber = (maxRow?.version_number ?? 0) + 1;
+    const nextSetNumber = (maxRow?.set_number ?? 0) + 1;
 
     const { data: newVersion, error: insertError } = await supabaseAdmin
       .from('diagnostic_test_versions')
       .insert({
-        version_number: nextVersionNumber,
+        set_number: nextSetNumber,
+        version_number: (base.version_number ?? 0) + 1,
         title: base.title,
         time_limit_minutes: base.time_limit_minutes,
         directions: base.directions,
         questions,
         is_current: false,
         created_from: baseVersionId,
-        test_id: base.test_id ?? 'diagnostic-test-1',
+        test_id: null,
       })
-      .select('id, version_number, title, is_current, created_at, test_id')
+      .select('id, set_number, version_number, title, is_current, created_at')
       .single();
 
     if (insertError) throw insertError;

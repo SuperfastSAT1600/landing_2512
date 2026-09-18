@@ -23,7 +23,7 @@ function makeBuilder(table: string) {
     then: (resolve: (v: { data: Row[]; error: null }) => unknown) =>
       Promise.resolve({ data: rows(), error: null }).then(resolve),
   };
-  for (const op of ['select', 'is', 'not', 'gte', 'lte', 'eq', 'order', 'limit']) {
+  for (const op of ['select', 'is', 'not', 'gte', 'lte', 'lt', 'eq', 'order', 'limit']) {
     builder[op] = (...args: unknown[]) => {
       record(op, ...args);
       return builder;
@@ -335,5 +335,106 @@ describe('GET /api/crm/stats — segment 필터 (REQ-004)', () => {
     const data = (await (await callRoute('b2c')).json()).data;
 
     expect(data.overview.total_refund).toBe(-1429525);
+  });
+});
+
+/**
+ * 결제 전환율 정의 — 회사 표준. 바꾸지 말 것.
+ *
+ *   분자 = 기간 내 인입 리드 중 최초결제한 **전체** 인원 (컨택 기록 유무 무관)
+ *   분모 = 그중 컨택 성공(2단계+ 도달)한 인원
+ *
+ * 분자가 분모의 부분집합이 아니라 통상적인 비율과는 형태가 다르지만,
+ * 의도된 정의다. 컨택 기록이 유실된 채 결제까지 간 리드(마이그레이션 유입 등)를
+ * 전환 실적에서 빼지 않으려는 것이다 — 결제했다면 실제로는 컨택된 것이다.
+ *
+ * 그 결과 분자 > 분모가 되어 100%를 넘을 수 있다. 버그가 아니다.
+ * 아래 테스트가 이 정의를 고정한다.
+ */
+describe('GET /api/crm/stats — 결제 전환율 정의 (회사 표준)', () => {
+  const reached2 = (over: Row = {}) =>
+    student({ funnel_stage: '4', stage_history: [{ stage: '2', label: '', entered_at: '' }], ...over });
+
+  it('분자는 전체 리드 중 결제자 — 컨택 기록이 없는 결제자도 센다', async () => {
+    tableRows.students = [
+      reached2({ id: 'a', name: '컨택+결제' }),
+      reached2({ id: 'b', name: '컨택만' }),
+      // 컨택 기록이 유실된 채 결제까지 간 리드 — 분자에 포함한다.
+      student({ id: 'c', name: '기록없음+결제', funnel_stage: 'churned', stage_history: [{ stage: 'churned', label: '', entered_at: '' }] }),
+    ];
+    tableRows.payments = [
+      payment({ student_id: 'a', student_name: '컨택+결제', amount: 1_000_000 }),
+      payment({ student_id: 'c', student_name: '기록없음+결제', amount: 1_000_000 }),
+    ];
+
+    const o = (await (await callRoute()).json()).data.overview;
+    expect(o.contacted).toBe(2);
+    expect(o.paid).toBe(2);
+    expect(o.conversion_rate).toBe(100); // 2 / 2
+  });
+
+  it('분자가 분모를 넘으면 100%를 넘긴 채로 둔다 — 자르지 않는다', async () => {
+    tableRows.students = [
+      reached2({ id: 'a', name: 'A' }),
+      student({ id: 'c', name: 'C', funnel_stage: 'churned', stage_history: [{ stage: 'churned', label: '', entered_at: '' }] }),
+    ];
+    tableRows.payments = [
+      payment({ student_id: 'a', student_name: 'A', amount: 1_000_000 }),
+      payment({ student_id: 'c', student_name: 'C', amount: 1_000_000 }),
+    ];
+
+    const o = (await (await callRoute()).json()).data.overview;
+    expect(o.contacted).toBe(1);
+    expect(o.paid).toBe(2);
+    expect(o.conversion_rate).toBe(200); // 정의상 가능한 값
+  });
+
+  it('분모는 재시도 리드를 뺀 초기 리드 중 컨택 성공자', async () => {
+    tableRows.students = [
+      reached2({ id: 'a', name: 'A' }),
+      reached2({ id: 'r', name: 'R', retry_strategy_id: 'strategy-1' }),
+    ];
+    tableRows.payments = [payment({ student_id: 'a', student_name: 'A', amount: 1_000_000 })];
+
+    const o = (await (await callRoute()).json()).data.overview;
+    expect(o.contacted_base).toBe(1); // 재시도 리드는 분모 모수에서 빠진다
+    expect(o.contacted).toBe(1);
+    expect(o.conversion_rate).toBe(100);
+  });
+
+  it('컨택 성공이 0명이면 0으로 떨어뜨린다 — 0 나누기를 하지 않는다', async () => {
+    tableRows.students = [student({ id: 'c', name: 'C' })];
+    tableRows.payments = [payment({ student_id: 'c', student_name: 'C', amount: 1_000_000 })];
+
+    const o = (await (await callRoute()).json()).data.overview;
+    expect(o.contacted).toBe(0);
+    expect(o.paid).toBe(1);
+    expect(o.conversion_rate).toBe(0);
+  });
+
+  it('채널별 전환율도 같은 정의를 쓴다', async () => {
+    type SourceRow = { source: string; leads: number; contacted: number; paid: number; conversion_rate: number };
+    tableRows.students = [
+      reached2({ id: 'a', name: 'A', traffic_source: '인스타' }),
+      reached2({ id: 'b', name: 'B', traffic_source: '인스타' }),
+      student({ id: 'c', name: 'C', traffic_source: '인스타', funnel_stage: 'churned', stage_history: [{ stage: 'churned', label: '', entered_at: '' }] }),
+    ];
+    tableRows.payments = [
+      payment({ student_id: 'a', student_name: 'A', amount: 1_000_000 }),
+      payment({ student_id: 'c', student_name: 'C', amount: 1_000_000 }),
+    ];
+
+    const src = (await (await callRoute()).json()).data.by_source.find((r: SourceRow) => r.source === '인스타') as SourceRow;
+    expect(src.contacted).toBe(2);
+    expect(src.paid).toBe(2);
+    expect(src.conversion_rate).toBe(100);
+  });
+
+  it('paid_contacted 같은 별도 분자 필드를 두지 않는다', async () => {
+    tableRows.students = [reached2({ id: 'a', name: 'A' })];
+    tableRows.payments = [payment({ student_id: 'a', student_name: 'A', amount: 1_000_000 })];
+
+    const o = (await (await callRoute()).json()).data.overview;
+    expect(o).not.toHaveProperty('paid_contacted');
   });
 });

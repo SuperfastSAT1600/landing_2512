@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import type { StatsDetailMetric, StatsDetailResult } from '@/lib/crm-stats-detail';
 import { CRM_MEMBER_NAMES } from '@/lib/admin-user';
+import { netAmount } from '@/lib/payment-utils';
 import { LeadDetailTable, kstDate } from './LeadDetailTable';
 
 // 리드 상태 판정·뱃지는 LeadDetailTable로 이전 — 기존 import 경로 호환을 위해 재노출한다.
@@ -106,7 +107,7 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, en
     }
   }
 
-  // 세금 유형(면세/과세) 수동 수정 — 실수익(net_amount = 과세면 ×0.9) 함께 재계산
+  // 세금 유형(면세/과세) 수동 수정 — 실수익(net_amount = 과세면 공급가액) 함께 재계산
   async function updateTaxType(paymentId: string, tax_type: string) {
     let previous: typeof result = null;
     setResult((prev) => {
@@ -116,7 +117,7 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, en
             ...prev,
             items: prev.items.map((it) =>
               it.id === paymentId
-                ? { ...it, tax_type, net_amount: tax_type === '과세' ? Math.round(it.amount * 0.9) : it.amount }
+                ? { ...it, tax_type, net_amount: netAmount({ amount: it.amount, tax_type }) }
                 : it
             ),
           }

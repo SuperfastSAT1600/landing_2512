@@ -160,6 +160,13 @@
     background-size: 100% 38%;
 }
 
+/* Image caption standard: △ prefix */
+:global(figcaption)::before {
+    content: '△ ';
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
 /* Instagram Reel embed */
 :global(.instagram-reel-wrapper) {
     width: 100%;

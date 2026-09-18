@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 
+export const maxDuration = 300;
+
 type Params = { params: Promise<{ id: string }> };
 
 const DOODLE_STYLE = `Style rules (strictly follow):
@@ -164,7 +166,12 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const coachName = (submission as { name?: string }).name ?? 'coach';
-  const slug = coachName.toLowerCase().replace(/\s+/g, '-') + '-' + id.slice(0, 6);
+  const slug = coachName.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')  // 한글·특수문자 제거, ASCII만 유지
+    .trim()
+    .replace(/\s+/g, '-')
+    || id.slice(0, 8);
+  const safeSlug = slug + '-' + id.slice(0, 6);
 
   // Step 1: Analyze photo with GPT-4o
   let appearanceDescription: string;
@@ -188,10 +195,22 @@ Composition:
 ${DOODLE_STYLE}`;
 
   // Step 3: Generate with Qwen
-  const buffer = await generateQwenDoodle(doodlePrompt);
+  let buffer: Uint8Array;
+  try {
+    buffer = await generateQwenDoodle(doodlePrompt);
+  } catch (e) {
+    console.error('[generate-doodle] Qwen 생성 실패', e);
+    return NextResponse.json({ error: `두들 이미지 생성에 실패했습니다: ${(e as Error).message}` }, { status: 500 });
+  }
 
   // Step 4: Upload to Supabase
-  const url = await uploadToSupabase(buffer, slug);
+  let url: string;
+  try {
+    url = await uploadToSupabase(buffer, safeSlug);
+  } catch (e) {
+    console.error('[generate-doodle] Supabase 업로드 실패', e);
+    return NextResponse.json({ error: `이미지 업로드에 실패했습니다: ${(e as Error).message}` }, { status: 500 });
+  }
 
   return NextResponse.json({ data: { url } });
 }

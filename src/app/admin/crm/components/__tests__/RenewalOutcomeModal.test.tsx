@@ -14,6 +14,7 @@ function target(stage: RenewalStage, over: Partial<RenewalTarget> = {}): Renewal
     converted_payment_id: null,
     drop_reason: null,
     memo: null,
+    next_contact_date: null,
     outcome_quality: null,
     outcome_reason_tag: null,
     outcome_reason_note: null,

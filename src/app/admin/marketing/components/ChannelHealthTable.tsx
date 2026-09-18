@@ -1,6 +1,6 @@
 'use client';
 
-import { MARKETING_GROUPS, GROUP_COLORS, GROUP_ICONS } from '@/lib/marketing-groups';
+import { MARKETING_GROUPS, GROUP_COLORS, GROUP_ICONS, GROUP_ICON_BG } from '@/lib/marketing-groups';
 import type { WeeklyStats } from '@/types/marketing';
 import { getSignal } from './format';
 import type { Signal } from './format';
@@ -27,23 +27,23 @@ export default function ChannelHealthTable({ weekly }: { weekly: WeeklyStats }) 
   });
 
   const signalColor: Record<Signal, string> = {
-    '🟢': 'text-emerald-400',
-    '🟡': 'text-amber-400',
-    '🔴': 'text-red-400',
-    '—': 'text-gray-600',
+    '🟢': 'text-emerald-500',
+    '🟡': 'text-amber-500',
+    '🔴': 'text-red-500',
+    '—': 'text-gray-400',
   };
 
   return (
-    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5">
+    <div className="bg-white border border-gray-200 rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-semibold">채널별 이번 주 현황</h3>
-        <span className="text-xs text-gray-500">기대치 = 최근 12주 평균</span>
+        <h3 className="text-gray-900 font-semibold">채널별 이번 주 현황</h3>
+        <span className="text-xs text-gray-400">기대치 = 최근 12주 평균</span>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/5 text-xs text-gray-500">
+            <tr className="border-b border-gray-100 text-xs text-gray-500">
               <th className="text-left py-2 pr-4 font-medium">채널</th>
               <th className="text-right py-2 px-3 font-medium">이번 주</th>
               <th className="text-right py-2 px-3 font-medium">기대치</th>
@@ -53,24 +53,24 @@ export default function ChannelHealthTable({ weekly }: { weekly: WeeklyStats }) 
           </thead>
           <tbody>
             {rows.map(({ group, actual, expected, diff, signal }) => (
-              <tr key={group} className="border-b border-white/5 last:border-0">
+              <tr key={group} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
                 <td className="py-3 pr-4">
                   <div className="flex items-center gap-2">
                     <span
                       className="w-5 h-5 rounded flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                      style={{ backgroundColor: GROUP_COLORS[group] }}
+                      style={{ backgroundColor: GROUP_ICON_BG[group] }}
                     >
                       {GROUP_ICONS[group]}
                     </span>
-                    <span className="text-gray-200">{group}</span>
+                    <span className="text-gray-700">{group}</span>
                   </div>
                 </td>
-                <td className="text-right py-3 px-3 text-white font-semibold">{actual}개</td>
-                <td className="text-right py-3 px-3 text-gray-400">
+                <td className="text-right py-3 px-3 text-gray-900 font-semibold">{actual}개</td>
+                <td className="text-right py-3 px-3 text-gray-500">
                   {expected === 0 ? '—' : `${expected.toFixed(1)}개`}
                 </td>
                 <td className={`text-right py-3 px-3 font-medium ${
-                  expected === 0 ? 'text-gray-600' : diff >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  expected === 0 ? 'text-gray-400' : diff >= 0 ? 'text-emerald-600' : 'text-red-500'
                 }`}>
                   {expected === 0 ? '—' : `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}`}
                 </td>
@@ -81,10 +81,10 @@ export default function ChannelHealthTable({ weekly }: { weekly: WeeklyStats }) 
         </table>
       </div>
 
-      <div className="flex gap-4 mt-4 pt-3 border-t border-white/5 text-xs text-gray-500">
-        <span><span className="text-emerald-400">🟢</span> 기대치 90% 이상</span>
-        <span><span className="text-amber-400">🟡</span> 50~89%</span>
-        <span><span className="text-red-400">🔴</span> 50% 미만</span>
+      <div className="flex gap-4 mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500">
+        <span><span className="text-emerald-500">🟢</span> 기대치 90% 이상</span>
+        <span><span className="text-amber-500">🟡</span> 50~89%</span>
+        <span><span className="text-red-500">🔴</span> 50% 미만</span>
       </div>
     </div>
   );

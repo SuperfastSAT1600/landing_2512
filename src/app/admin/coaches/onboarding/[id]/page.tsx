@@ -92,6 +92,7 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
 
   // Blog post generation state
   const [postContent, setPostContent] = useState<string>('');
+  const [postTitle, setPostTitle] = useState<string>('');
   const [generatingPost, setGeneratingPost] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
 
@@ -100,9 +101,10 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
   const [generatingDoodle, setGeneratingDoodle] = useState(false);
   const [doodleError, setDoodleError] = useState<string | null>(null);
 
-  // Ghost save state
-  const [savingGhost, setSavingGhost] = useState(false);
-  const [ghostResult, setGhostResult] = useState<{ ok: boolean; message: string; url?: string } | null>(null);
+  // Landing blog publish state
+  const [publishing, setPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/admin/coach-onboarding/${id}`, { headers: { 'x-admin-key': getAdminKey() } })
@@ -131,17 +133,18 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
     setGeneratingPost(true);
     setPostError(null);
     setPostContent('');
-    setGhostResult(null);
+    setPostTitle('');
     try {
       const res = await fetch(`/api/admin/coach-onboarding/${id}/generate-post`, {
         method: 'POST',
         headers: { 'x-admin-key': getAdminKey() },
       });
-      const result: { data?: { content: string }; error?: string } = await res.json();
+      const result: { data?: { content: string; title: string }; error?: string } = await res.json();
       if (!res.ok || result.error) {
         setPostError(result.error ?? '생성 실패');
       } else {
         setPostContent(result.data?.content ?? '');
+        setPostTitle(result.data?.title ?? '');
       }
     } catch {
       setPostError('네트워크 오류가 발생했습니다.');
@@ -172,32 +175,29 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
     }
   }, [data, id]);
 
-  const handleSaveToGhost = useCallback(async () => {
-    if (!postContent || !data) return;
-    setSavingGhost(true);
-    setGhostResult(null);
+  const handlePublishLandingPost = useCallback(async () => {
+    if (!postContent) return;
+    setPublishing(true);
+    setPublishError(null);
+    setPublishedUrl(null);
     try {
-      const res = await fetch(`/api/admin/coach-onboarding/${id}/save-to-ghost`, {
+      const res = await fetch(`/api/admin/coach-onboarding/${id}/publish-landing-post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
-        body: JSON.stringify({
-          content: postContent,
-          doodleUrl: doodleUrl || undefined,
-          coachName: data.name,
-        }),
+        body: JSON.stringify({ content: postContent, featuredImage: doodleUrl || undefined, title: postTitle || undefined }),
       });
-      const result: { data?: { url: string; slug: string }; error?: string } = await res.json();
+      const result: { data?: { url: string }; error?: string } = await res.json();
       if (!res.ok || result.error) {
-        setGhostResult({ ok: false, message: result.error ?? 'Ghost 저장 실패' });
+        setPublishError(result.error ?? '발행 실패');
       } else {
-        setGhostResult({ ok: true, message: `Ghost 초안 저장 완료 (${result.data?.slug})`, url: result.data?.url });
+        setPublishedUrl(result.data?.url ?? null);
       }
     } catch {
-      setGhostResult({ ok: false, message: '네트워크 오류가 발생했습니다.' });
+      setPublishError('네트워크 오류가 발생했습니다.');
     } finally {
-      setSavingGhost(false);
+      setPublishing(false);
     }
-  }, [postContent, data, id, doodleUrl]);
+  }, [postContent, id]);
 
   const handleGenerateBio = async () => {
     if (!data) return;
@@ -434,9 +434,7 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
             )}
             {postContent && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-green-400">생성 완료 ({postContent.length.toLocaleString()}자)</p>
-                </div>
+                <p className="text-xs text-green-400">생성 완료 ({postContent.length.toLocaleString()}자)</p>
                 <textarea
                   value={postContent}
                   onChange={e => setPostContent(e.target.value)}
@@ -487,35 +485,47 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
             )}
           </div>
 
-          {/* Step 3: Save to Ghost */}
-          <div className="pt-4 border-t border-white/5 space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="w-5 h-5 rounded-full bg-green-600/30 text-green-400 text-xs flex items-center justify-center font-bold shrink-0">3</span>
-              <p className="text-sm text-gray-300 font-medium">Ghost에 초안 저장</p>
-            </div>
-            <button
-              onClick={handleSaveToGhost}
-              disabled={savingGhost || !postContent}
-              className="px-4 py-2 bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
-            >
-              {savingGhost ? (
-                <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 저장 중...</>
-              ) : 'Ghost 초안으로 저장'}
-            </button>
-            {!postContent && (
-              <p className="text-xs text-gray-600">1단계에서 소개 글을 먼저 생성해주세요.</p>
-            )}
-            {ghostResult && (
-              <div className={`text-xs px-3 py-2 rounded-lg ${ghostResult.ok ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                <p>{ghostResult.message}</p>
-                {ghostResult.url && (
-                  <a href={ghostResult.url} target="_blank" rel="noopener noreferrer" className="underline mt-1 block hover:text-green-300">
-                    Ghost 편집기에서 열기 →
-                  </a>
-                )}
+          {/* Step 3: Publish */}
+          {postContent && doodleUrl && (
+            <div className="pt-4 border-t border-white/5 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="w-5 h-5 rounded-full bg-green-600/30 text-green-400 text-xs flex items-center justify-center font-bold shrink-0">3</span>
+                <p className="text-sm text-gray-300 font-medium">랜딩 블로그 발행</p>
               </div>
-            )}
-          </div>
+              {postTitle && (
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-500">포스팅 제목 (수정 가능)</p>
+                  <input
+                    type="text"
+                    value={postTitle}
+                    onChange={e => setPostTitle(e.target.value)}
+                    className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                  />
+                </div>
+              )}
+              <button
+                onClick={handlePublishLandingPost}
+                disabled={publishing}
+                className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+              >
+                {publishing ? (
+                  <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 발행 중...</>
+                ) : '랜딩 블로그에 발행'}
+              </button>
+              {publishError && (
+                <p className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-400">{publishError}</p>
+              )}
+              {publishedUrl && (
+                <p className="text-xs px-3 py-2 rounded-lg bg-green-500/10 text-green-400">
+                  발행 완료 →{' '}
+                  <a href={publishedUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-green-300">
+                    {publishedUrl}
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
+
         </div>
 
         {/* Admin actions */}

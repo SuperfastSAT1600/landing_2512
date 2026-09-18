@@ -38,11 +38,15 @@ export function TextBubbleMenu({ editor }: TextBubbleMenuProps) {
                 flip: { padding: { top: 116 } },
                 shift: { padding: { top: 116 } },
             }}
-            shouldShow={({ editor: e, state }) => {
+            shouldShow={({ state }) => {
                 const { selection } = state;
                 if (!(selection instanceof TextSelection)) return false;
                 if (selection.empty) return false;
-                if (e.isActive('table') || e.isActive('tableCell') || e.isActive('tableHeader')) return false;
+                const $from = selection.$from;
+                for (let d = $from.depth; d > 0; d--) {
+                    const name = $from.node(d).type.name;
+                    if (name === 'table' || name === 'tableCell' || name === 'tableHeader') return false;
+                }
                 return true;
             }}
         >

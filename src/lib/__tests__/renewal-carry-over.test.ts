@@ -41,6 +41,8 @@ function source(over: Record<string, unknown> = {}) {
     week_start: '2026-08-24',
     stage: '2',
     stage_updated_at: '2026-08-20T00:00:00Z',
+    next_contact_date: null,
+    memo: null,
     ...over,
   };
 }
@@ -85,6 +87,45 @@ describe('carryOverRenewalTargets', () => {
       created_by: 'carry-over',
     });
     expect(res).toEqual({ ok: true, data: { week_start: '2026-08-31', created: 1, closed: 1 } });
+  });
+
+  it('카드 메모를 새 주차 행으로 승계한다 — 매주 같은 맥락을 다시 적게 하면 안 된다', async () => {
+    respond(
+      { data: [source({ memo: '10월 시험 접수해둠, 혼자 해보다 연락 주기로 함' })], error: null },
+      { data: [{ id: 'rt-new' }], error: null },
+      { data: [{ id: 'rt-old' }], error: null }
+    );
+    const { carryOverRenewalTargets } = await import('../renewal-carry-over');
+    await carryOverRenewalTargets(NOW);
+
+    const [rows] = argsOf('upsert') as [Record<string, unknown>[]];
+    expect(rows[0].memo).toBe('10월 시험 접수해둠, 혼자 해보다 연락 주기로 함');
+  });
+
+  it('메모가 비어 있으면 빈 채로 넘어간다', async () => {
+    respond(
+      { data: [source()], error: null },
+      { data: [{ id: 'rt-new' }], error: null },
+      { data: [{ id: 'rt-old' }], error: null }
+    );
+    const { carryOverRenewalTargets } = await import('../renewal-carry-over');
+    await carryOverRenewalTargets(NOW);
+
+    const [rows] = argsOf('upsert') as [Record<string, unknown>[]];
+    expect(rows[0].memo).toBeNull();
+  });
+
+  it('컨택 예정일을 새 주차 행으로 승계한다 — 메모와 달리 아직 지키지 않은 미래 약속이다', async () => {
+    respond(
+      { data: [source({ next_contact_date: '2026-09-03' })], error: null },
+      { data: [{ id: 'rt-new' }], error: null },
+      { data: [{ id: 'rt-old' }], error: null }
+    );
+    const { carryOverRenewalTargets } = await import('../renewal-carry-over');
+    await carryOverRenewalTargets(NOW);
+
+    const [rows] = argsOf('upsert') as [Record<string, unknown>[]];
+    expect(rows[0].next_contact_date).toBe('2026-09-03');
   });
 
   it('충돌은 무시하고 통과시킨다 — 배열 insert 는 한 행만 겹쳐도 배치 전체가 죽는다', async () => {

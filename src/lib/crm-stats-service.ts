@@ -19,6 +19,9 @@ import {
   paidCohortQuery,
   isContactedWithImpliedPartner,
   contactRate,
+  ratePct,
+  attributeRevenueByType,
+  buildPriorTypeMap,
   toMonthKey,
   inquiryRefMs,
   fillMonthlyGaps,
@@ -26,13 +29,14 @@ import {
   paymentMatchesSegment,
   type RelatedCompanyRef,
 } from '@/lib/crm-stats-core';
+import { isDiagnosticDone } from '@/lib/diagnostic-status';
 
 export interface StatsBySource {
   source: string;
   leads: number;
   contacted: number;
   contact_rate: number;
-  paid: number;
+  paid: number; // 이 채널 리드 중 결제 인원(컨택 여부 무관) — conversion_rate 의 분자
   conversion_rate: number;
   revenue: number;
   net_revenue: number;
@@ -66,14 +70,21 @@ export interface CrmStatsData {
     contacted: number;
     contacted_base: number; // 컨택 성공률 분모 (재시도 제외 초기 리드 수)
     contact_rate: number;
-    paid: number;
-    conversion_rate: number;
+    paid: number; // 기간 내 인입 리드 중 결제 인원(컨택 여부 무관) — conversion_rate 의 분자
+    // 진단테스트 완료 — 현행(퍼널 4·5 또는 결과 연결) + 2025 구 진단 응시를 함께 센다.
+    diagnostic_done: number;
+    diagnostic_rate: number; // 코호트 리드 중 진단 완료 비율(%)
+    conversion_rate: number; // paid / contacted. 정의상 100%를 넘을 수 있다(아래 주석 참고)
+
     total_revenue: number; // 순매출(결제 − 환불)
     total_net_revenue: number; // 부가세 제외 실수익
     gross_revenue: number; // 환불 전 총 결제(양수 합)
     total_refund: number; // 환불 합(음수)
-    first_payment_revenue: number; // 최초결제 합(양수)
-    repayment_revenue: number; // 재결제 합(양수)
+    first_payment_revenue: number; // 최초결제 합(양수, 환불 전)
+    repayment_revenue: number; // 재결제 합(양수, 환불 전)
+    net_first_payment_revenue: number; // 최초결제 순매출(직전 결제 귀속 환불 차감)
+    net_repayment_revenue: number; // 재결제 순매출(직전 결제 귀속 환불 차감)
+    unattributed_refund: number; // 귀속 불가 환불(직전 결제 없음, 음수)
     // 기간 내 결제 트랜잭션 건수 — 코호트 전환 인원(paid)과 다른 값이다.
     gross_count: number; // 양수 결제 건수
     refund_count: number; // 환불 건수
@@ -110,16 +121,17 @@ export async function computeCrmStats({
   // B2C 개인 리드 + B2B 업체 리드를 함께 집계한다(업체 제외 필터 없음).
   // 매출(payments)에는 업체 필터가 없으므로 리드만 제외하면 리드-매출 기준이 어긋난다.
   // 업체별 세부 집계는 /api/crm/b2b/stats에서 별도로 본다.
-  // 서로 독립인 네 조회를 병렬 실행: 기간 리드 / 기간 결제 / 최초결제 코호트 / 업체 로스터.
+  // 서로 독립인 다섯 조회를 병렬 실행:
+  // 기간 리드 / 기간 결제 / 기간 이전 결제(환불 귀속용) / 최초결제 코호트 / 업체 로스터.
   const studentsQuery = leadCohortQuery(
     supabaseAdmin,
-    'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id',
+    'id, name, funnel_stage, funnel_stage_updated_at, stage_history, lead_status, traffic_source, inquiry_date, created_at, first_message_sent_at, retry_strategy_id, company_id, diagnostic_funnel_stage, diagnostic_result_id',
     from,
     to,
     segment,
   );
 
-  const [studentsRes, paymentsRes, firstPayRes, companiesRes] = await Promise.all([
+  const [studentsRes, paymentsRes, priorPayRes, firstPayRes, companiesRes] = await Promise.all([
     studentsQuery,
     // 기간 내 payments (매출·환불 집계용, 기간=paid_at KST).
     // students 관계를 함께 조회해 segment 필터에서 학생의 company_id를 직접 본다.
@@ -130,6 +142,13 @@ export async function computeCrmStats({
       )
       .gte('paid_at', `${from}T00:00:00+09:00`)
       .lte('paid_at', `${to}T23:59:59.999+09:00`),
+    // 기간 이전 양수 결제 — 환불을 유형별로 귀속시킬 때 "직전 결제 유형"의 출발점이 된다.
+    // 이게 없으면 작년 결제에 대한 올해 환불이 어느 유형에도 안 잡혀 비중 합이 100%를 넘는다.
+    supabaseAdmin
+      .from('payments')
+      .select('student_id, student_name, amount, payment_type, paid_at, students:student_id(company_id)')
+      .lt('paid_at', `${from}T00:00:00+09:00`)
+      .gte('amount', 0),
     paidCohortQuery(supabaseAdmin),
     // 업체 로스터 — 센터형 파트너 컨택 판정용 company_id → name 맵
     supabaseAdmin.from('companies').select('id, name'),
@@ -164,6 +183,9 @@ export async function computeCrmStats({
   let totalRefund = 0;
   let firstPaymentRevenue = 0;
   let repaymentRevenue = 0;
+  let netFirstPaymentRevenue = 0;
+  let netRepaymentRevenue = 0;
+  let unattributedRefund = 0;
   let grossCount = 0;
   let refundCount = 0;
   let firstPaymentCount = 0;
@@ -186,6 +208,17 @@ export async function computeCrmStats({
     } else {
       refundCount++;
     }
+  }
+
+  // 환불을 직전 양수 결제 유형에 귀속시켜 유형별 순매출을 계산한다.
+  // 기간 이전 결제까지 출발점으로 삼아야 "작년 결제 → 올해 환불"이 미귀속으로 새지 않는다.
+  if (priorPayRes.error) console.error('[stats] priorPayRows fetch failed:', priorPayRes.error.message);
+  {
+    const priorTypeByStudent = buildPriorTypeMap((priorPayRes.data ?? []).filter(inSegment));
+    const attributed = attributeRevenueByType(paymentList, priorTypeByStudent);
+    netFirstPaymentRevenue = attributed.netFirst;
+    netRepaymentRevenue = attributed.netRepayment;
+    unattributedRefund = attributed.unattributedRefund;
   }
 
   for (const p of firstPayRows) {
@@ -225,7 +258,37 @@ export async function computeCrmStats({
     (s) => !(s as { retry_strategy_id?: string | null }).retry_strategy_id
   );
   const contactedCount = initialLeads.filter((s) => isContactedLead(s)).length;
+  // 결제 전환율 분자 — 기간 내 인입 리드 중 언제든 최초결제한 **전체** 인원.
+  //
+  // 분모(contactedCount)는 컨택 성공자라 분자가 분모의 부분집합이 아니다. 통상적인
+  // 비율과 형태가 다르지만 **의도된 회사 표준 정의**다: 컨택 기록이 유실된 채 결제까지
+  // 간 리드(시트 마이그레이션 유입 등)를 전환 실적에서 빼지 않으려는 것이다 —
+  // 결제했다면 실제로는 컨택된 것이고, 2단계 기록이 안 남았을 뿐이다.
+  //
+  // 그 결과 conversion_rate 가 100%를 넘을 수 있다. 버그가 아니므로 '고치지' 말 것.
+  // 정의는 stats/__tests__/route.test.ts 의 '결제 전환율 정의 (회사 표준)' 이 고정한다.
   const paidCount = leadList.filter((s) => isPaid(s)).length;
+
+  // 진단 완료: 현행 퍼널 4·5(또는 결과 연결) + 2025 구 진단 응시(legacy_diagnostic_results).
+  // 구 진단은 students 에 컬럼이 없어 따로 읽는다. 테이블이 없거나 조회가 실패하면
+  // '구 진단 이력 없음'과 같으므로 0건으로 두고 현행 기준만으로 집계한다.
+  const legacyDiag = await supabaseAdmin
+    .from('legacy_diagnostic_results')
+    .select('student_id')
+    .not('student_id', 'is', null)
+    .eq('is_internal', false);
+  if (legacyDiag.error) console.warn('[stats] 구 진단 이력 조회 생략:', legacyDiag.error.message);
+  const legacyDiagIds = new Set(
+    ((legacyDiag.data ?? []) as Array<{ student_id: string }>).map((r) => r.student_id)
+  );
+  const diagnosticDoneCount = leadList.filter((s) =>
+    isDiagnosticDone({
+      diagnostic_result_id: (s as { diagnostic_result_id?: string | null }).diagnostic_result_id ?? null,
+      diagnostic_funnel_stage:
+        (s as { diagnostic_funnel_stage?: number | null }).diagnostic_funnel_stage ?? null,
+      legacy_diagnostic_taken_at: legacyDiagIds.has(s.id) ? 'legacy' : null,
+    })
+  ).length;
 
   // ── By Source ─────────────────────────────────────────────────────────────
   const sourceMap = new Map<
@@ -395,7 +458,9 @@ export async function computeCrmStats({
       contacted_base: initialLeads.length,
       contact_rate: contactRate(contactedCount, initialLeads.length),
       paid: paidCount,
-      // 결제 전환율 = 컨택 성공 인원 중 결제 인원 (신규 리드 전체 아님)
+      diagnostic_done: diagnosticDoneCount,
+      diagnostic_rate: ratePct(diagnosticDoneCount, total),
+      // 결제 전환율 = 전체 결제 인원 / 컨택 성공 인원 (회사 표준 — 위 paidCount 주석 참고)
       conversion_rate:
         contactedCount > 0 ? Math.round((paidCount / contactedCount) * 10000) / 100 : 0,
       total_revenue: totalRevenue,
@@ -404,6 +469,9 @@ export async function computeCrmStats({
       total_refund: totalRefund,
       first_payment_revenue: firstPaymentRevenue,
       repayment_revenue: repaymentRevenue,
+      net_first_payment_revenue: netFirstPaymentRevenue,
+      net_repayment_revenue: netRepaymentRevenue,
+      unattributed_refund: unattributedRefund,
       gross_count: grossCount,
       refund_count: refundCount,
       first_payment_count: firstPaymentCount,

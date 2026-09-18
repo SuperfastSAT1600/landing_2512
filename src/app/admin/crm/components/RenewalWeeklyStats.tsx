@@ -5,6 +5,7 @@
 
 import type { RenewalWeeklyStat } from '@/types/crm';
 import { formatRate } from './RenewalStatsStrip';
+import { manwon } from './weekly/format';
 
 interface RenewalWeeklyStatsProps {
   rows: RenewalWeeklyStat[];
@@ -42,6 +43,10 @@ export function RenewalWeeklyStats({
           전환율 = 결제 완료 / 선정 인원 · 행을 누르면 그 주차만 보드에 표시
           <br />
           결제 완료·미전환 아래는 좋음/나쁨 분포 · 결제 못 한 대상은 다음 주차로 이월돼 그 주차가 마감된다
+          <br />
+          결제액 = 그 주차 재결제 총액(= Business 의 그 주차 재결제) · 미연결은 결제 기록을 찾지 못해 금액에서 빠진 건수
+          <br />
+          보드 내 = 보드에서 관리한 대상의 결제액 · 보드 외 = 보드에 없이 재결제된 금액
         </p>
       </div>
       {loading ? (
@@ -63,6 +68,7 @@ export function RenewalWeeklyStats({
                 <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">
                   결제 완료
                 </th>
+                <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">결제액</th>
                 <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">미전환</th>
                 <th className="text-right py-2 px-2 text-xs font-semibold text-gray-500">이월</th>
                 <th className="text-right py-2 pl-2 text-xs font-semibold text-gray-500">전환율</th>
@@ -96,6 +102,26 @@ export function RenewalWeeklyStats({
                       good={row.good_completed}
                       bad={row.bad_completed}
                     />
+                  </td>
+                  <td
+                    className="text-right py-2.5 px-2 text-xs text-emerald-700 font-medium tabular-nums"
+                    title={`${(row.completed_amount + row.off_board_amount).toLocaleString('ko-KR')}원`}
+                  >
+                    {row.completed_amount + row.off_board_amount > 0
+                      ? manwon(row.completed_amount + row.off_board_amount)
+                      : '-'}
+                    {row.amount_missing > 0 && (
+                      <span className="block text-[10px] text-gray-400 font-normal tabular-nums">
+                        미연결 {row.amount_missing}
+                      </span>
+                    )}
+                    {/* 보드 외가 0이면 총액이 곧 보드 내라 쪼갤 게 없다. */}
+                    {row.off_board_amount > 0 && (
+                      <span className="block text-[10px] text-amber-600 font-normal tabular-nums">
+                        보드 내 {manwon(row.completed_amount)} · 보드 외{' '}
+                        {manwon(row.off_board_amount)}
+                      </span>
+                    )}
                   </td>
                   <td className="text-right py-2.5 px-2 text-xs text-gray-500 tabular-nums">
                     {row.dropped || '-'}

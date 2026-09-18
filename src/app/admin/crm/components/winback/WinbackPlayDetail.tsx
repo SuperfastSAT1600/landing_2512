@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, Loader2, RefreshCw, Trash2, Sparkles, X } from 'lucide-react';
+import { CheckCircle2, PlayCircle, ChevronLeft, Loader2, RefreshCw, Trash2, Sparkles, X } from 'lucide-react';
 import type { WinbackPlayDetailData, WinbackTargetRow as TargetRow } from './hooks/useWinbackPlays';
 import { WinbackTargetRow } from './WinbackTargetRow';
 import { WinbackBulkBar } from './WinbackBulkBar';
+import { STATUS_LABELS, STATUS_STYLES } from './WinbackPlayList';
 import { RecommendStep } from './steps/RecommendStep';
 import { playToBriefDraft, playToRuleDraft } from './winbackContinuation';
 import { EMPTY_RULES } from './WinbackRuleFilters';
@@ -24,6 +25,8 @@ interface Props {
     messages?: Record<string, string>;
   }) => Promise<{ updated: TargetRow[]; failed: { id: string; error: string }[] }>;
   deletePlay: (playId: string) => Promise<void>;
+  /** 없으면 종료 버튼을 띄우지 않는다. */
+  updatePlay?: (playId: string, patch: Record<string, unknown>) => Promise<unknown>;
   onStudentClick?: (studentId: string) => void;
   recommend?: (
     input: Record<string, unknown>
@@ -45,6 +48,7 @@ export function WinbackPlayDetail({
   generateDraft,
   bulkTargets,
   deletePlay,
+  updatePlay,
   onStudentClick,
   recommend,
   addTargets,
@@ -53,6 +57,7 @@ export function WinbackPlayDetail({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [messages, setMessages] = useState<Record<string, string>>({});
 
@@ -113,6 +118,46 @@ export function WinbackPlayDetail({
   const selectedAlreadySent = useMemo(
     () => targets.filter((t) => selected.has(t.id) && t.sent_at).length,
     [targets, selected]
+  );
+
+  /**
+   * 선택 상태는 id Set이라 목록이 갱신되면 없는 id가 남을 수 있다.
+   * 그래서 `selected.size`가 아니라 현재 목록 기준으로 판정한다.
+   */
+  const allSelected = targets.length > 0 && targets.every((t) => selected.has(t.id));
+  const someSelected = targets.some((t) => selected.has(t.id)) && !allSelected;
+
+  const toggleAll = () =>
+    setSelected(allSelected ? new Set() : new Set(targets.map((t) => t.id)));
+
+  /**
+   * 캠페인 종료·재개. `winback_plays.status`는 draft|running|done|archived이고
+   * PATCH 화이트리스트에도 있는데 화면에서 바꿀 경로가 없었다.
+   * 종료해도 타겟·발송·전환 기록은 그대로 남는다(삭제와 다르다).
+   */
+  const setStatus = useCallback(
+    async (next: 'done' | 'running') => {
+      if (!updatePlay || !play) return;
+      if (
+        next === 'done' &&
+        !confirm(`"${play.title}" 캠페인을 종료할까요? 발송·전환 기록은 그대로 남습니다.`)
+      ) {
+        return;
+      }
+      const before = play.status;
+      setError(null);
+      setClosing(true);
+      setPlay({ ...play, status: next }); // 낙관적 반영
+      try {
+        await updatePlay(playId, { status: next });
+      } catch (err) {
+        setPlay((cur) => (cur ? { ...cur, status: before } : cur));
+        setError((err as Error).message);
+      } finally {
+        setClosing(false);
+      }
+    },
+    [updatePlay, play, playId]
   );
 
   async function handleBulk(action: string, targetIds?: string[], message?: string) {
@@ -189,7 +234,16 @@ export function WinbackPlayDetail({
           >
             <ChevronLeft size={13} /> 캠페인 목록
           </button>
-          <h3 className="mt-1 text-base font-semibold text-gray-900">{play.title}</h3>
+          <div className="mt-1 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-900">{play.title}</h3>
+            <span
+              className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                STATUS_STYLES[play.status] ?? STATUS_STYLES.draft
+              }`}
+            >
+              {STATUS_LABELS[play.status] ?? play.status}
+            </span>
+          </div>
           <p className="text-xs text-gray-500 whitespace-pre-wrap">{play.product_brief}</p>
           <p className="mt-0.5 text-[11px] text-gray-400">
             전략 변형 {play.variants.map((v) => v.name).join(' / ') || '없음'} · 전환 인정{' '}
@@ -215,6 +269,24 @@ export function WinbackPlayDetail({
           >
             <RefreshCw size={11} /> 새로고침
           </button>
+          {updatePlay &&
+            (play.status === 'done' ? (
+              <button
+                onClick={() => setStatus('running')}
+                disabled={closing}
+                className="flex items-center gap-1 px-2 py-1 rounded border border-gray-200 text-[11px] text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <PlayCircle size={11} /> {closing ? '처리 중…' : '진행 재개'}
+              </button>
+            ) : (
+              <button
+                onClick={() => setStatus('done')}
+                disabled={closing}
+                className="flex items-center gap-1 px-2 py-1 rounded border border-emerald-200 text-[11px] text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+              >
+                <CheckCircle2 size={11} /> {closing ? '처리 중…' : '종료'}
+              </button>
+            ))}
           <button
             onClick={handleDelete}
             disabled={deleting}
@@ -261,33 +333,59 @@ export function WinbackPlayDetail({
         {targets.length === 0 ? (
           <p className="py-10 text-center text-sm text-gray-400">아직 타겟이 없습니다.</p>
         ) : (
-          <ul>
-            {targets.map((t) => (
-              <WinbackTargetRow
-                key={t.id}
-                target={t}
-                variantName={variantName(t.variant_id)}
-                checked={selected.has(t.id)}
-                onToggle={() =>
-                  setSelected((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(t.id)) next.delete(t.id);
-                    else next.add(t.id);
-                    return next;
-                  })
-                }
-                onMarkSent={(message) => handleBulk('mark_sent', [t.id], message)}
-                onMessageChange={(message) => setMessages((prev) => ({ ...prev, [t.id]: message }))}
-                onGenerateDraft={async () => {
-                  if (!generateDraft) return;
-                  await generateDraft(t.id);
-                  await load();
+          <>
+            <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2.5">
+              <input
+                type="checkbox"
+                aria-label="타겟 전체 선택"
+                checked={allSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someSelected;
                 }}
-                onPatch={(patch) => handlePatch(t.id, patch)}
-                onStudentClick={onStudentClick}
+                onChange={toggleAll}
+                className="accent-gray-900"
               />
-            ))}
-          </ul>
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="text-xs font-medium text-gray-600 hover:text-gray-900"
+              >
+                {allSelected ? '전체 해제' : '전체 선택'}
+              </button>
+              <span className="text-[11px] text-gray-400">
+                {selected.size > 0
+                  ? `${targets.length}명 중 ${selected.size}명 선택`
+                  : `타겟 ${targets.length}명`}
+              </span>
+            </div>
+            <ul>
+              {targets.map((t) => (
+                <WinbackTargetRow
+                  key={t.id}
+                  target={t}
+                  variantName={variantName(t.variant_id)}
+                  checked={selected.has(t.id)}
+                  onToggle={() =>
+                    setSelected((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(t.id)) next.delete(t.id);
+                      else next.add(t.id);
+                      return next;
+                    })
+                  }
+                  onMarkSent={(message) => handleBulk('mark_sent', [t.id], message)}
+                  onMessageChange={(message) => setMessages((prev) => ({ ...prev, [t.id]: message }))}
+                  onGenerateDraft={async () => {
+                    if (!generateDraft) return;
+                    await generateDraft(t.id);
+                    await load();
+                  }}
+                  onPatch={(patch) => handlePatch(t.id, patch)}
+                  onStudentClick={onStudentClick}
+                />
+                ))}
+            </ul>
+          </>
         )}
       </div>
 

@@ -137,7 +137,7 @@ export async function notifyDiagnosticApplication(data: ApplicationNotificationD
 
 // ─── 포털 도구 사용 신청 알림 ─────────────────────────────────────
 
-const PORTAL_CHANNEL = 'C07FK85V9PD';
+const PORTAL_CHANNEL = 'C0C1VGHRNFL';
 
 const TOOL_LABELS: Record<string, string> = {
   'vocab-counter': 'Vocab Counter',
@@ -183,7 +183,7 @@ export async function notifyPortalToolRequest(data: { studentName: string; toolI
 
 // ─── 포털 원장님 상담 신청 알림 ───────────────────────────────────
 
-const PORTAL_CONSULT_CHANNEL = 'C07FK85V9PD';
+const PARENT_PORTAL_CHANNEL = 'C0C1VGHRNFL';
 
 export interface PortalConsultRequestData {
   studentName: string;
@@ -215,6 +215,71 @@ export async function notifyPortalConsultRequest(data: PortalConsultRequestData)
     },
   ];
 
+  const payload = {
+    text: `📅 [원장님 상담 신청] ${studentName} — ${preferredDate} ${preferredTime}`,
+    blocks,
+  };
+
+  const sendTo = async (channel: string) => {
+    const res = await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ channel, ...payload }),
+    });
+    const result = await res.json() as { ok: boolean; error?: string };
+    if (!result.ok) throw new Error(`Slack API error (${channel}): ${result.error}`);
+  };
+
+  await sendTo(PARENT_PORTAL_CHANNEL);
+}
+
+// ─── 학부모 포털 열람 알림 ────────────────────────────────────────
+
+export interface PortalPageViewData {
+  studentName: string;
+  studentId: string;
+  page: string;
+}
+
+export async function notifyPortalPageView(data: PortalPageViewData): Promise<void> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) {
+    console.warn('[slack] SLACK_BOT_TOKEN not set — skipping portal page view notification');
+    return;
+  }
+
+  const { studentName, studentId, page } = data;
+  const viewedAtKST = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+  const adminUrl = `https://tutoring.superfastsat.com/admin/crm?student=${studentId}`;
+
+  const blocks = [
+    {
+      type: 'header',
+      text: { type: 'plain_text', text: '👁 학부모 포털 열람', emoji: true },
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: `*학생*\n${studentName}` },
+        { type: 'mrkdwn', text: `*페이지*\n${page}` },
+        { type: 'mrkdwn', text: `*열람 시각*\n${viewedAtKST}` },
+      ],
+    },
+    {
+      type: 'actions',
+      elements: [
+        {
+          type: 'button',
+          text: { type: 'plain_text', text: 'CRM에서 확인 →', emoji: true },
+          url: adminUrl,
+        },
+      ],
+    },
+  ];
+
   const res = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
     headers: {
@@ -222,15 +287,76 @@ export async function notifyPortalConsultRequest(data: PortalConsultRequestData)
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      channel: PORTAL_CONSULT_CHANNEL,
-      text: `📅 [원장님 상담 신청] ${studentName} — ${preferredDate} ${preferredTime}`,
+      channel: PARENT_PORTAL_CHANNEL,
+      text: `👁 [포털 열람] ${studentName} — ${viewedAtKST}`,
       blocks,
     }),
   });
 
   const result = await res.json() as { ok: boolean; error?: string };
   if (!result.ok) {
-    throw new Error(`Slack API error: ${result.error}`);
+    console.error(`[slack] Portal page view notification failed: ${result.error}`);
+  }
+}
+
+// ─── 포털 버튼 클릭 알림 ─────────────────────────────────────────
+
+export interface PortalButtonClickData {
+  studentName: string;
+  studentId: string;
+  buttonLabel: string;
+}
+
+export async function notifyPortalButtonClick(data: PortalButtonClickData): Promise<void> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) {
+    console.warn('[slack] SLACK_BOT_TOKEN not set — skipping portal button click notification');
+    return;
+  }
+
+  const { studentName, studentId, buttonLabel } = data;
+  const adminUrl = `https://tutoring.superfastsat.com/admin/crm?student=${studentId}`;
+
+  const blocks = [
+    {
+      type: 'header',
+      text: { type: 'plain_text', text: '👆 버튼 클릭', emoji: true },
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: `*학생*\n${studentName}` },
+        { type: 'mrkdwn', text: `*버튼*\n${buttonLabel}` },
+      ],
+    },
+    {
+      type: 'actions',
+      elements: [
+        {
+          type: 'button',
+          text: { type: 'plain_text', text: 'CRM에서 확인 →', emoji: true },
+          url: adminUrl,
+        },
+      ],
+    },
+  ];
+
+  const res = await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      channel: PARENT_PORTAL_CHANNEL,
+      text: `👆 [버튼 클릭] ${studentName} — ${buttonLabel}`,
+      blocks,
+    }),
+  });
+
+  const result = await res.json() as { ok: boolean; error?: string };
+  if (!result.ok) {
+    console.error(`[slack] Portal button click notification failed: ${result.error}`);
   }
 }
 

@@ -3,7 +3,6 @@
 import { EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import { ImageIcon, UploadCloud } from 'lucide-react';
-import { TableBubbleMenu } from '@/components/editor/TableBubbleMenu';
 import { TextBubbleMenu } from '@/components/editor/TextBubbleMenu';
 import React from 'react';
 
@@ -65,7 +64,6 @@ function EditorArea({ editor, onPaste, onDrop, onKeyDown }: {
     return (
         <div onPaste={onPaste} onDrop={onDrop} onDragOver={(e) => e.preventDefault()} onKeyDown={onKeyDown}>
             <EditorContent editor={editor} className="text-gray-200" />
-            <TableBubbleMenu editor={editor} />
             <TextBubbleMenu editor={editor} />
         </div>
     );

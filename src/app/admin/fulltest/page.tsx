@@ -91,6 +91,13 @@ const TESTS: TestDef[] = [
     apiType: 'practice',
     publicUrl: '/practice/september-math',
   },
+  {
+    id: 'september-rw-final-14',
+    label: '9월 SAT RW 파이널 연습',
+    description: '14문항 (4지선다)',
+    apiType: 'practice',
+    publicUrl: '/practice/september-rw',
+  },
 ];
 
 function formatDate(iso: string) {

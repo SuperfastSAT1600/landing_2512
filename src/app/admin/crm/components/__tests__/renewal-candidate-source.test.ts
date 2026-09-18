@@ -27,6 +27,7 @@ function entry(
       traffic_source: null,
     },
     displayStatus: 'active',
+    isCrmLinked: true,
     remainingHours: 10,
     hours: null,
     subjects: [],
@@ -46,6 +47,7 @@ function target(studentId: string, stage: RenewalTarget['stage']): RenewalTarget
     converted_payment_id: null,
     drop_reason: null,
     memo: null,
+    next_contact_date: null,
     outcome_quality: null,
     outcome_reason_tag: null,
     outcome_reason_note: null,
@@ -101,7 +103,7 @@ describe('getRenewalCandidates', () => {
 
   it('orders by remaining hours ascending, unknown hours last', () => {
     const entries = [
-      entry('unknown', { displayStatus: 'unlinked', remainingHours: null, hours: null }),
+      entry('unknown', { displayStatus: 'active', remainingHours: null, hours: null }),
       entry('many', { hours: hours({ remaining: 40 }) }),
       entry('few', { hours: hours({ remaining: 2 }) }),
     ];

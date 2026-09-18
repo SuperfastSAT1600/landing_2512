@@ -25,9 +25,10 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
       : null)
   );
   const [visible, setVisible] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   const [remaining, setRemaining] = useState(COUNTDOWN_SEC);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const dismissedRef = useRef(false);
   const router = useRouter();
 
   const goToPost = useCallback(() => {
@@ -35,29 +36,40 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
   }, [router, relatedPost]);
 
   const dismiss = useCallback(() => {
-    setDismissed(true);
+    dismissedRef.current = true;
     setVisible(false);
     if (timerRef.current) clearInterval(timerRef.current);
+    // Disconnect observer so sentinel can never re-trigger the popup
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const sentinel = document.getElementById(sentinelId);
-      if (!sentinel) return;
+      if (!sentinel || dismissedRef.current) return;
 
       const observer = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting && !dismissed) setVisible(true);
+          if (entry.isIntersecting && !dismissedRef.current) setVisible(true);
         },
         { threshold: 0.5 }
       );
 
+      observerRef.current = observer;
       observer.observe(sentinel);
-      return () => observer.disconnect();
     }, OBSERVE_DELAY_MS);
 
-    return () => clearTimeout(timeoutId);
-  }, [sentinelId, dismissed]);
+    return () => {
+      clearTimeout(timeoutId);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, [sentinelId]);
 
   useEffect(() => {
     if (!visible) return;

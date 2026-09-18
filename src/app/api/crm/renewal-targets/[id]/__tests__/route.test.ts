@@ -191,6 +191,51 @@ describe('PATCH /api/crm/renewal-targets/[id]', () => {
     const res = await PATCH(makeReq('PATCH', {}), { params });
     expect(res.status).toBe(400);
   });
+
+  it('saves next_contact_date without touching the stage clock → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, next_contact_date: '2026-08-20' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { next_contact_date: '2026-08-20' }), { params });
+    expect(res.status).toBe(200);
+    expect(updatePayload().next_contact_date).toBe('2026-08-20');
+    expect(updatePayload().stage_updated_at).toBeUndefined();
+  });
+
+  it('clears next_contact_date when null is sent → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, next_contact_date: null }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    await PATCH(makeReq('PATCH', { next_contact_date: null }), { params });
+    expect(updatePayload().next_contact_date).toBeNull();
+  });
+
+  it('rejects a malformed next_contact_date → 400', async () => {
+    const { PATCH } = await import('../route');
+    const res = await PATCH(makeReq('PATCH', { next_contact_date: '2026/08/20' }), { params });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe('INVALID_CONTACT_DATE');
+  });
+
+  it('drops next_contact_date when the target moves to a terminal stage → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '5', next_contact_date: null }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    await PATCH(makeReq('PATCH', { stage: '5' }), { params });
+    expect(updatePayload().next_contact_date).toBeNull();
+  });
+
+  it('keeps next_contact_date when the target moves between open stages → 200', async () => {
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { ...baseTarget, stage: '3' }, error: null })
+    );
+    const { PATCH } = await import('../route');
+    await PATCH(makeReq('PATCH', { stage: '3' }), { params });
+    expect('next_contact_date' in updatePayload()).toBe(false);
+  });
 });
 
 describe('PATCH /api/crm/renewal-targets/[id] — 결과 품질 (REQ-003)', () => {

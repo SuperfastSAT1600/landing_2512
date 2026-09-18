@@ -1,24 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { TEACHER_INTRO_SKILL } from '@/lib/coach-intro-skill';
+
+export const maxDuration = 60;
 
 type Params = { params: Promise<{ id: string }> };
 
-let _teacherIntroSkill: string | null = null;
-
 function getSystemPrompt(): string {
-  if (!_teacherIntroSkill) {
-    _teacherIntroSkill = readFileSync(
-      join(process.cwd(), 'Docs/teacher-intro-skill.md'),
-      'utf-8'
-    );
-  }
   return `당신은 SAT/AP 과외 선생님의 소개 글을 작성하는 전문가입니다.
 아래의 스킬 가이드라인을 따라 선생님 소개 페이지를 작성하세요.
 
-${_teacherIntroSkill}`;
+## 분량 및 깊이 요구사항 (필수)
+
+**과목별 수업 방식 섹션이 이 글의 핵심입니다.** 코치가 제공한 정보가 짧더라도 반드시 다음을 지켜주세요:
+
+- 각 과목/시험 섹션은 **최소 3문단(문단당 3~5문장)** 이상 작성
+- 문단 1: 해당 시험의 본질적 구조와 함정 (AI 지식을 적극 활용해 구체적으로)
+- 문단 2: 코치의 접근 방법론 + **왜 효과적인지 논리적 근거** (코치 입력이 짧아도 원리·메커니즘을 덧붙여 설득력 있게 확장)
+- 문단 3: 학생이 실제로 경험하게 되는 변화와 결과
+
+코치가 "독해 실력을 키운다"처럼 짧게 썼다면, 그것이 **왜** 효과적인지, **어떤 메커니즘**으로 작동하는지, **다른 접근법과 무엇이 다른지**를 AI 지식으로 채워주세요.
+
+**전체 분량**: 최소 1,200자(한글) 이상. 과목이 2개 이상이면 1,800자 이상.
+
+## 본문 형식 규칙
+
+- 본문 최상단에 `#` H1 헤딩 절대 금지 — 제목은 별도로 설정됨
+- 소제목은 `##`만 사용
+- 본문은 바로 첫 문단(산문)으로 시작
+
+## 1인칭 규칙 (절대 준수)
+
+이 글은 선생님이 **자기 자신을 소개하는 글**입니다.
+- "저는~", "제가~", "우리는~" 으로만 서술
+- "OOO 선생님은~", "그는~", "그녀는~" 등 3인칭 표현 절대 금지
+- 본문 전체에서 단 한 문장도 3인칭으로 쓰지 말 것
+
+## 발행 규칙
+
+이 글은 작성 즉시 블로그에 발행됩니다. 다음은 절대 포함하지 마세요:
+- "보완하면 좋은 정보", "톤·분량 조정" 등 작성 후 안내(스킬 6번)
+- 메타 코멘트, 작성자 주석, 괄호 안 보완 요청
+
+출력: 본문 + Excerpt + Meta Description만.
+
+${TEACHER_INTRO_SKILL}`;
 }
 
 function formatCoachInput(data: Record<string, unknown>): string {
@@ -102,35 +130,53 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 });
   }
 
+  const systemPrompt = getSystemPrompt();
   const userInput = formatCoachInput(submission as Record<string, unknown>);
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: getSystemPrompt(),
-      messages: [{ role: 'user', content: userInput }],
-    }),
-  });
+  let content: string;
+  let title: string;
+  try {
+    const client = new OpenAI({ apiKey });
+    const [contentRes, titleRes] = await Promise.all([
+      client.chat.completions.create({
+        model: 'gpt-5.6-luna',
+        max_completion_tokens: 4096,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userInput },
+        ],
+      }),
+      client.chat.completions.create({
+        model: 'gpt-5.6-luna',
+        max_completion_tokens: 60,
+        messages: [
+          {
+            role: 'system',
+            content: `선생님 정보를 보고 학부모·학생이 클릭하고 싶어지는 블로그 제목을 한 줄로 만드세요.
 
-  if (!res.ok) {
-    const err = await res.text();
-    return NextResponse.json({ error: `Claude API 오류: ${err.slice(0, 200)}` }, { status: 500 });
+규칙:
+- 반드시 구체적인 수치나 경력이 포함되어야 함 (SAT 점수, 누적 수업 시간, 경력 연수, 출신 학교 등)
+- "~입니다", "~소개", 선생님 이름 포함 금지
+- 인사말·자기소개 형식 금지
+- 20자 이내, 제목 텍스트만 출력 (꺾쇠·따옴표·마크다운 없이)
+- 좋은 예: "1,000시간 수업한 SAT 1580점 선생님", "아이비리그 출신 10년 경력 SAT 강사", "SAT 만점 출신 UCLA 재학생 과외"
+- 나쁜 예: "SAT Reading & Writing, 김예슬입니다", "김예슬 선생님 소개", "열정적인 SAT 선생님"`,
+          },
+          { role: 'user', content: userInput },
+        ],
+      }),
+    ]);
+    content = contentRes.choices[0]?.message?.content ?? '';
+    title = titleRes.choices[0]?.message?.content?.trim() ?? '';
+  } catch (e) {
+    console.error('[generate-post] OpenAI API 호출 실패', e);
+    return NextResponse.json({ error: `OpenAI API 오류: ${(e as Error).message}` }, { status: 500 });
   }
 
-  const result = await res.json() as { content?: { type: string; text: string }[] };
-  const content = result.content?.find(c => c.type === 'text')?.text ?? '';
-
-  return NextResponse.json({ data: { content } });
+  return NextResponse.json({ data: { content, title } });
 }

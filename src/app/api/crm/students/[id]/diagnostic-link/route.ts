@@ -3,8 +3,11 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 
 /**
- * GET  — 현재 연결된 결과 + 연결 가능한 후보 목록 반환
+ * GET  — 현재 연결된 결과 + 연결 가능한 후보 목록 + 2025 구 진단 응시 이력 반환
  * POST — 특정 결과를 이 학생에 연결 (양방향 업데이트)
+ *
+ * 구 진단(legacy_diagnostic_results)은 students.diagnostic_result_id 로 이을 수 없다 —
+ * 그 컬럼에는 현행 diagnostic_test_results(id) 로 FK가 걸려 있다. 그래서 따로 조회해 같이 내려준다.
  */
 
 export async function GET(
@@ -46,7 +49,16 @@ export async function GET(
     candidates = data ?? [];
   }
 
-  return NextResponse.json({ linked, candidates });
+  // 적재 전(마이그레이션 미실행)에도 패널이 깨지지 않도록 조회 실패는 빈 목록으로 흡수한다.
+  const { data: legacyRows, error: legacyErr } = await supabaseAdmin
+    .from('legacy_diagnostic_results')
+    .select('id, student_grade, score, rw_score, math_score, taken_at, match_confidence')
+    .eq('student_id', id)
+    .eq('is_internal', false)
+    .order('taken_at');
+  if (legacyErr) console.error('[diagnostic-link] legacy 조회 실패:', legacyErr.message);
+
+  return NextResponse.json({ linked, candidates, legacy: legacyErr ? [] : (legacyRows ?? []) });
 }
 
 export async function POST(

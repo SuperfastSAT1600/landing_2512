@@ -57,3 +57,14 @@ export const GROUP_ICONS: Record<MarketingGroup, string> = {
   'B2B': 'B',
   '미분류': '?',
 };
+
+// 브랜드 아이덴티티 색상 (아이콘 배경에만 사용)
+export const GROUP_ICON_BG: Record<MarketingGroup, string> = {
+  '네이버 SEO': '#03C75A',
+  '구글 SEO': '#5F6368',
+  'META': '#1877F2',
+  'Youtube 광고': '#FF0000',
+  '소개': '#F59E0B',
+  'B2B': '#8B5CF6',
+  '미분류': '#6B7280',
+};

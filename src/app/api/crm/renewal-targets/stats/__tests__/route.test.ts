@@ -5,7 +5,7 @@ let lastBuilder: Record<string, ReturnType<typeof vi.fn>>;
 
 function makeBuilder(result: { data: unknown; error: null | { message: string } }) {
   const builder: Record<string, unknown> = {};
-  for (const m of ['select', 'order', 'eq', 'in', 'gte', 'insert', 'update', 'delete']) {
+  for (const m of ['select', 'order', 'eq', 'in', 'gte', 'lte', 'insert', 'update', 'delete']) {
     builder[m] = vi.fn(() => builder);
   }
   builder.single = vi.fn(() => builder);
@@ -53,6 +53,8 @@ function row(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // 결제 금액 조회(payments)가 뒤따를 수 있다 — 지정하지 않은 테스트는 빈 결제로 본다.
+  mockFrom.mockReturnValue(makeBuilder({ data: [], error: null }));
 });
 
 describe('GET /api/crm/renewal-targets/stats', () => {
@@ -274,5 +276,251 @@ describe('GET /api/crm/renewal-targets/stats — 주차 이월', () => {
     await GET(makeReq());
     expect(lastBuilder.select.mock.calls[0][0]).toContain('carried_to_week');
     expect(lastBuilder.select.mock.calls[0][0]).toContain('carried_from_week');
+  });
+});
+
+describe('GET /api/crm/renewal-targets/stats — 주차별 재결제 금액', () => {
+  /** 결제가 연결된 4단계 행. */
+  function paid(weekStart: string, paymentId: string | null) {
+    return { ...row(weekStart, '4'), converted_payment_id: paymentId };
+  }
+
+  it('그 주차 결제 완료 건의 payments.amount 를 합산한다 (REQ-001)', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            paid('2026-09-07', 'pay-1'),
+            paid('2026-09-07', 'pay-2'),
+            paid('2026-08-31', 'pay-3'),
+            row('2026-08-31', '5'),
+          ],
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            { id: 'pay-1', amount: 1_200_000 },
+            { id: 'pay-2', amount: 800_000 },
+            { id: 'pay-3', amount: 450_000 },
+          ],
+          error: null,
+        })
+      );
+    const { GET } = await import('../route');
+    const res = await GET(makeReq());
+    const json = await res.json();
+
+    expect(json.data[0].week_start).toBe('2026-09-07');
+    expect(json.data[0].completed_amount).toBe(2_000_000);
+    expect(json.data[1].completed_amount).toBe(450_000);
+  });
+
+  it('결제가 연결되지 않은 결제 완료 건은 amount_missing 으로 드러낸다 (REQ-002)', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [paid('2026-09-07', 'pay-1'), paid('2026-09-07', null), paid('2026-09-07', null)],
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(
+        makeBuilder({ data: [{ id: 'pay-1', amount: 1_000_000 }], error: null })
+      );
+    const { GET } = await import('../route');
+    const json = await (await GET(makeReq())).json();
+
+    expect(json.data[0].completed).toBe(3);
+    expect(json.data[0].completed_amount).toBe(1_000_000);
+    expect(json.data[0].amount_missing).toBe(2);
+  });
+
+  it('결제 완료가 없으면 금액 0 이지만 보드 외 재결제는 계속 본다', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({ data: [row('2026-09-07', '2'), row('2026-09-07', '5')], error: null })
+      )
+      // 링크가 없으니 id 조회는 건너뛰고 재결제 조회만 뒤따른다.
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            {
+              id: 'pay-9',
+              student_id: 'ruby',
+              amount: 4_450_000,
+              paid_at: '2026-09-10T12:00:00+09:00',
+            },
+          ],
+          error: null,
+        })
+      );
+    const { GET } = await import('../route');
+    const json = await (await GET(makeReq())).json();
+
+    expect(json.data[0].completed_amount).toBe(0);
+    expect(json.data[0].amount_missing).toBe(0);
+    expect(json.data[0].off_board_amount).toBe(4_450_000);
+  });
+
+  it('대상이 하나도 없으면 결제를 조회하지 않는다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
+    const { GET } = await import('../route');
+    await GET(makeReq());
+
+    expect(mockFrom).toHaveBeenCalledTimes(1);
+    expect(mockFrom).not.toHaveBeenCalledWith('payments');
+  });
+
+  it('링크가 없어도 그 주차에 찍힌 같은 학생의 재결제로 금액을 되짚는다 (REQ-003)', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            { ...paid('2026-08-24', 'pay-1'), student_id: 's-1' },
+            { ...paid('2026-08-24', null), student_id: 'grace' },
+          ],
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(makeBuilder({ data: [{ id: 'pay-1', amount: 4_990_000 }], error: null }))
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            {
+              id: 'pay-9',
+              student_id: 'grace',
+              amount: 1_650_000,
+              paid_at: '2026-08-24T03:00:00+09:00',
+            },
+          ],
+          error: null,
+        })
+      );
+    const { GET } = await import('../route');
+    const json = await (await GET(makeReq())).json();
+
+    expect(json.data[0].completed_amount).toBe(6_640_000);
+    expect(json.data[0].amount_missing).toBe(0);
+  });
+
+  it('되짚기는 재결제 결제만, 조회 주차 안에서만 본다', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [{ ...paid('2026-08-24', null), student_id: 'grace' }],
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(makeBuilder({ data: [], error: null }));
+    const { GET } = await import('../route');
+    await GET(makeReq());
+
+    expect(mockFrom).toHaveBeenCalledWith('payments');
+    expect(lastBuilder.eq).toHaveBeenCalledWith('payment_type', '재결제');
+    expect(lastBuilder.gte).toHaveBeenCalledWith('paid_at', expect.stringContaining('+09:00'));
+    expect(lastBuilder.lte).toHaveBeenCalledWith('paid_at', expect.stringContaining('+09:00'));
+  });
+
+  it('링크로 이미 잡힌 결제는 보드 외로 중복 계산하지 않는다', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        makeBuilder({ data: [{ ...paid('2026-08-24', 'pay-1'), student_id: 's-1' }], error: null })
+      )
+      .mockReturnValueOnce(makeBuilder({ data: [{ id: 'pay-1', amount: 1_000_000 }], error: null }))
+      .mockReturnValueOnce(
+        makeBuilder({
+          data: [
+            {
+              id: 'pay-1',
+              student_id: 's-1',
+              amount: 1_000_000,
+              paid_at: '2026-08-26T12:00:00+09:00',
+            },
+          ],
+          error: null,
+        })
+      );
+    const { GET } = await import('../route');
+    const json = await (await GET(makeReq())).json();
+
+    expect(json.data[0].completed_amount).toBe(1_000_000);
+    expect(json.data[0].off_board_amount).toBe(0);
+  });
+
+  it('결제 조회가 실패해도 인원 통계는 내려주고 금액만 0 으로 둔다', async () => {
+    mockFrom
+      .mockReturnValueOnce(makeBuilder({ data: [paid('2026-09-07', 'pay-1')], error: null }))
+      .mockReturnValueOnce(makeBuilder({ data: null, error: { message: 'boom' } }));
+    const { GET } = await import('../route');
+    const res = await GET(makeReq());
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.data[0].completed).toBe(1);
+    expect(json.data[0].completed_amount).toBe(0);
+    // 금액에 잡히지 않은 건은 숨기지 않는다.
+    expect(json.data[0].amount_missing).toBe(1);
+  });
+});
+
+describe('GET /api/crm/renewal-targets/stats — 기간(from/to) 조회', () => {
+  /** from() 호출을 테이블명별로 기록해 renewal_targets 쿼리에 직접 단언한다. */
+  function captureBuilders(renewalRows: unknown[]) {
+    const byTable: Record<string, Record<string, ReturnType<typeof vi.fn>>> = {};
+    mockFrom.mockImplementation((table: string) => {
+      const b = makeBuilder({ data: table === 'renewal_targets' ? renewalRows : [], error: null });
+      byTable[table] = lastBuilder;
+      return b;
+    });
+    return byTable;
+  }
+
+  it('from/to 를 주면 week_start 범위로 DB에서 필터한다', async () => {
+    const byTable = captureBuilders([row('2026-08-10', '4')]);
+    const { GET } = await import('../route');
+    const req = new NextRequest(
+      'http://localhost/api/crm/renewal-targets/stats?from=2026-01-01&to=2026-12-31',
+      { headers: { 'x-admin-key': 'admin-key' } }
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    expect(byTable.renewal_targets.gte).toHaveBeenCalledWith('week_start', '2026-01-01');
+    expect(byTable.renewal_targets.lte).toHaveBeenCalledWith('week_start', '2026-12-31');
+  });
+
+  it('기간 조회는 weeks 상한으로 잘리지 않는다 — 범위 내 주차를 모두 반환한다', async () => {
+    // weeks 기본값(8)보다 많은 10개 주차. 기간 조회에서는 전부 나와야 한다.
+    const rows = [
+      '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26', '2026-02-02',
+      '2026-02-09', '2026-02-16', '2026-02-23', '2026-03-02', '2026-03-09',
+    ].map((w) => row(w, '4'));
+    captureBuilders(rows);
+    const { GET } = await import('../route');
+    const req = new NextRequest(
+      'http://localhost/api/crm/renewal-targets/stats?from=2026-01-01&to=2026-12-31',
+      { headers: { 'x-admin-key': 'admin-key' } }
+    );
+    const json = await (await GET(req)).json();
+    expect(json.data).toHaveLength(10);
+  });
+
+  it('from/to 가 없으면 기존처럼 오늘 기준 최근 weeks 창을 쓴다', async () => {
+    const byTable = captureBuilders([row('2026-08-10', '4')]);
+    const { GET } = await import('../route');
+    await GET(makeReq('8'));
+    // 기간 조회가 아니면 상한(lte)은 걸지 않는다 — 시작 컷오프만 있다.
+    expect(byTable.renewal_targets.lte).not.toHaveBeenCalled();
+    expect(byTable.renewal_targets.gte).toHaveBeenCalled();
+  });
+
+  it('from 만 있고 to 가 없으면 기간 조회로 보지 않는다', async () => {
+    const byTable = captureBuilders([row('2026-08-10', '4')]);
+    const { GET } = await import('../route');
+    const req = new NextRequest('http://localhost/api/crm/renewal-targets/stats?from=2026-01-01', {
+      headers: { 'x-admin-key': 'admin-key' },
+    });
+    expect((await GET(req)).status).toBe(200);
+    expect(byTable.renewal_targets.lte).not.toHaveBeenCalled();
   });
 });

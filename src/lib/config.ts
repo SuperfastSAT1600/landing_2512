@@ -98,10 +98,17 @@ export async function saveSupertestConfig(config: SupertestConfig): Promise<void
 
 // ── Portal Posts config ─────────────────────────────────────────────────────
 
+export interface PortalPostButton {
+    text: string;
+    url: string;
+}
+
 export interface PortalPost {
     id: string;       // crypto.randomUUID()
     title: string;
     content: string;
+    buttons?: PortalPostButton[];
+    toolId?: string;  // 툴 카드 식별자 (vocab-counter, math-web 등). 있으면 SecretPageCard로 렌더링
     active: boolean;
     order: number;    // 표시 순서 (오름차순)
     created_at: string; // ISO timestamp
@@ -121,4 +128,23 @@ export async function savePortalPosts(posts: PortalPost[]): Promise<void> {
     await supabaseAdmin
         .from('site_config')
         .upsert({ id: 'portal-posts', config: posts });
+}
+
+// ── 포털 게시글 학생별 숨김 ─────────────────────────────────────────────────
+// config: { [portal_token: string]: string[] }  // 토큰 → 숨긴 post_id 배열
+
+export async function getPortalPostExclusions(): Promise<Record<string, string[]>> {
+    const { data, error } = await supabaseAdmin
+        .from('site_config')
+        .select('config')
+        .eq('id', 'portal-post-exclusions')
+        .single();
+    if (error || !data) return {};
+    return (data.config as Record<string, string[]>) ?? {};
+}
+
+export async function savePortalPostExclusions(exclusions: Record<string, string[]>): Promise<void> {
+    await supabaseAdmin
+        .from('site_config')
+        .upsert({ id: 'portal-post-exclusions', config: exclusions });
 }

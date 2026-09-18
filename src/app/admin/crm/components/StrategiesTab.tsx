@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import type { RetryStrategy, InsightPeriod } from '@/types/crm';
 import { StrategyAgentChat } from './StrategyAgentChat';
 import { StrategyStats } from './StrategyStats';
@@ -31,6 +31,7 @@ function StrategySection({
   adminKey,
   onCreated,
   onDeleted,
+  onUpdated,
 }: {
   type: StrategyType;
   segment: 'b2c' | 'b2b';
@@ -38,11 +39,45 @@ function StrategySection({
   adminKey: string;
   onCreated: (s: RetryStrategy) => void;
   onDeleted: (id: string) => void;
+  onUpdated: (id: string, name: string, description: string | null) => void;
 }) {
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  function startEdit(s: RetryStrategy) {
+    setEditingId(s.id);
+    setEditName(s.name);
+    setEditDesc(s.description ?? '');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditName('');
+    setEditDesc('');
+  }
+
+  async function handleSave(id: string) {
+    if (!editName.trim()) return;
+    setSaving(true);
+    const res = await fetch(`/api/crm/retry-strategies/${id}`, {
+      method: 'PATCH',
+      headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editName.trim(), description: editDesc.trim() || null }),
+    });
+    if (res.ok) {
+      onUpdated(id, editName.trim(), editDesc.trim() || null);
+      cancelEdit();
+    } else {
+      alert('수정에 실패했습니다.');
+    }
+    setSaving(false);
+  }
 
   async function handleCreate() {
     if (!newName.trim()) return;
@@ -141,17 +176,70 @@ function StrategySection({
       ) : (
         <ul className="space-y-2">
           {strategies.map((s) => (
-            <li
-              key={s.id}
-              className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
-            >
-              <span className="text-sm text-gray-700 font-medium">{s.name}</span>
-              <button
-                onClick={() => handleDelete(s.id, s.name)}
-                className="text-gray-300 hover:text-red-500 transition-colors"
-              >
-                <Trash2 size={13} />
-              </button>
+            <li key={s.id} className="bg-gray-50 rounded-lg px-3 py-2">
+              {editingId === s.id ? (
+                <div className="flex flex-col gap-2">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') cancelEdit();
+                      if (e.key === 'Enter' && !e.shiftKey) handleSave(s.id);
+                    }}
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <textarea
+                    rows={3}
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') cancelEdit(); }}
+                    placeholder="전략 내용 (선택)..."
+                    className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSave(s.id)}
+                      disabled={saving || !editName.trim()}
+                      className="flex items-center gap-1 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <Check size={12} /> 저장
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 px-2"
+                    >
+                      <X size={12} /> 취소
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm text-gray-700 font-medium">{s.name}</p>
+                    {s.description && (
+                      <p className="text-xs text-gray-400 mt-0.5 whitespace-pre-wrap">{s.description}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => startEdit(s)}
+                      className="text-gray-300 hover:text-blue-500 transition-colors"
+                      title="수정"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(s.id, s.name)}
+                      className="text-gray-300 hover:text-red-500 transition-colors"
+                      title="삭제"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -210,6 +298,10 @@ export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strate
     setStrategies((prev) => prev.filter((s) => s.id !== id));
   }
 
+  function handleUpdated(id: string, name: string, description: string | null) {
+    setStrategies((prev) => prev.map((s) => s.id === id ? { ...s, name, description } : s));
+  }
+
   return (
     <div className={`${subTab === 'logic' ? 'max-w-6xl' : 'max-w-3xl'} space-y-5`}>
       {/* 서브탭: 세일즈 로직 통계 / 전략 라이브러리 / 전략 에이전트 */}
@@ -261,6 +353,7 @@ export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strate
                 adminKey={adminKey}
                 onCreated={handleCreated}
                 onDeleted={handleDeleted}
+                onUpdated={handleUpdated}
               />
               <StrategySection
                 type="initial_sales"
@@ -269,6 +362,7 @@ export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strate
                 adminKey={adminKey}
                 onCreated={handleCreated}
                 onDeleted={handleDeleted}
+                onUpdated={handleUpdated}
               />
               <StrategySection
                 type="retry"
@@ -277,6 +371,7 @@ export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strate
                 adminKey={adminKey}
                 onCreated={handleCreated}
                 onDeleted={handleDeleted}
+                onUpdated={handleUpdated}
               />
             </div>
           </>

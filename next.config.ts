@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     '/api/practice/june-2026': ['./master_sat_ontology_v3.jsonl'],
     '/api/vocabcounter': ['./src/data/vocab/word_concordance.json', './src/data/vocab/lemma_overrides.json'],
     '/vocabcounter': ['./src/data/vocab/word_concordance.json', './src/data/vocab/lemma_overrides.json'],
+    '/api/admin/coach-onboarding/[id]/generate-post': ['./Docs/teacher-intro-skill.md'],
   },
   async headers() {
     return [
