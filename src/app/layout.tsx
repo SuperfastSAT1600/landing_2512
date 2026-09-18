@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
 };
 
-import { Racing_Sans_One } from 'next/font/google';
+import { Racing_Sans_One, Black_Han_Sans } from 'next/font/google';
 
 // Outfit removed — body uses Pretendard via --font-sans (globals.css), not Outfit
 // BookkMyungjo loaded via @font-face in globals.css for director package section
@@ -43,13 +43,21 @@ const racing = Racing_Sans_One({
   preload: false,
 });
 
+const blackHanSans = Black_Han_Sans({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-black-han',
+  preload: false,
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={racing.variable}>
+    <html lang="ko" className={`${racing.variable} ${blackHanSans.variable}`}>
       <head>
         {/* REQ-006: preconnect to Pretendard CDN — eliminates DNS + TLS handshake delay */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
