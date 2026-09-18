@@ -92,6 +92,7 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
 
   // Blog post generation state
   const [postContent, setPostContent] = useState<string>('');
+  const [postTitle, setPostTitle] = useState<string>('');
   const [generatingPost, setGeneratingPost] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
 
@@ -132,16 +133,18 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
     setGeneratingPost(true);
     setPostError(null);
     setPostContent('');
+    setPostTitle('');
     try {
       const res = await fetch(`/api/admin/coach-onboarding/${id}/generate-post`, {
         method: 'POST',
         headers: { 'x-admin-key': getAdminKey() },
       });
-      const result: { data?: { content: string }; error?: string } = await res.json();
+      const result: { data?: { content: string; title: string }; error?: string } = await res.json();
       if (!res.ok || result.error) {
         setPostError(result.error ?? '생성 실패');
       } else {
         setPostContent(result.data?.content ?? '');
+        setPostTitle(result.data?.title ?? '');
       }
     } catch {
       setPostError('네트워크 오류가 발생했습니다.');
@@ -181,7 +184,7 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
       const res = await fetch(`/api/admin/coach-onboarding/${id}/publish-landing-post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
-        body: JSON.stringify({ content: postContent, featuredImage: doodleUrl || undefined }),
+        body: JSON.stringify({ content: postContent, featuredImage: doodleUrl || undefined, title: postTitle || undefined }),
       });
       const result: { data?: { url: string }; error?: string } = await res.json();
       if (!res.ok || result.error) {
@@ -434,6 +437,17 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-green-400">생성 완료 ({postContent.length.toLocaleString()}자)</p>
                 </div>
+                {postTitle && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">포스팅 제목 (수정 가능)</p>
+                    <input
+                      type="text"
+                      value={postTitle}
+                      onChange={e => setPostTitle(e.target.value)}
+                      className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                    />
+                  </div>
+                )}
                 <textarea
                   value={postContent}
                   onChange={e => setPostContent(e.target.value)}
