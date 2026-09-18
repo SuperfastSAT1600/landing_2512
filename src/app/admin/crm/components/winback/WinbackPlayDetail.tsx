@@ -115,6 +115,16 @@ export function WinbackPlayDetail({
     [targets, selected]
   );
 
+  /**
+   * 선택 상태는 id Set이라 목록이 갱신되면 없는 id가 남을 수 있다.
+   * 그래서 `selected.size`가 아니라 현재 목록 기준으로 판정한다.
+   */
+  const allSelected = targets.length > 0 && targets.every((t) => selected.has(t.id));
+  const someSelected = targets.some((t) => selected.has(t.id)) && !allSelected;
+
+  const toggleAll = () =>
+    setSelected(allSelected ? new Set() : new Set(targets.map((t) => t.id)));
+
   async function handleBulk(action: string, targetIds?: string[], message?: string) {
     const ids = targetIds ?? [...selected];
     if (ids.length === 0) return;
@@ -261,33 +271,59 @@ export function WinbackPlayDetail({
         {targets.length === 0 ? (
           <p className="py-10 text-center text-sm text-gray-400">아직 타겟이 없습니다.</p>
         ) : (
-          <ul>
-            {targets.map((t) => (
-              <WinbackTargetRow
-                key={t.id}
-                target={t}
-                variantName={variantName(t.variant_id)}
-                checked={selected.has(t.id)}
-                onToggle={() =>
-                  setSelected((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(t.id)) next.delete(t.id);
-                    else next.add(t.id);
-                    return next;
-                  })
-                }
-                onMarkSent={(message) => handleBulk('mark_sent', [t.id], message)}
-                onMessageChange={(message) => setMessages((prev) => ({ ...prev, [t.id]: message }))}
-                onGenerateDraft={async () => {
-                  if (!generateDraft) return;
-                  await generateDraft(t.id);
-                  await load();
+          <>
+            <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2.5">
+              <input
+                type="checkbox"
+                aria-label="타겟 전체 선택"
+                checked={allSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someSelected;
                 }}
-                onPatch={(patch) => handlePatch(t.id, patch)}
-                onStudentClick={onStudentClick}
+                onChange={toggleAll}
+                className="accent-gray-900"
               />
-            ))}
-          </ul>
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="text-xs font-medium text-gray-600 hover:text-gray-900"
+              >
+                {allSelected ? '전체 해제' : '전체 선택'}
+              </button>
+              <span className="text-[11px] text-gray-400">
+                {selected.size > 0
+                  ? `${targets.length}명 중 ${selected.size}명 선택`
+                  : `타겟 ${targets.length}명`}
+              </span>
+            </div>
+            <ul>
+              {targets.map((t) => (
+                <WinbackTargetRow
+                  key={t.id}
+                  target={t}
+                  variantName={variantName(t.variant_id)}
+                  checked={selected.has(t.id)}
+                  onToggle={() =>
+                    setSelected((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(t.id)) next.delete(t.id);
+                      else next.add(t.id);
+                      return next;
+                    })
+                  }
+                  onMarkSent={(message) => handleBulk('mark_sent', [t.id], message)}
+                  onMessageChange={(message) => setMessages((prev) => ({ ...prev, [t.id]: message }))}
+                  onGenerateDraft={async () => {
+                    if (!generateDraft) return;
+                    await generateDraft(t.id);
+                    await load();
+                  }}
+                  onPatch={(patch) => handlePatch(t.id, patch)}
+                  onStudentClick={onStudentClick}
+                />
+                ))}
+            </ul>
+          </>
         )}
       </div>
 
