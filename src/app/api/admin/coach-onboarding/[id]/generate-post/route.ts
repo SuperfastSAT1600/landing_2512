@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { TEACHER_INTRO_SKILL } from '@/lib/coach-intro-skill';
@@ -95,42 +96,30 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 });
   }
 
   const systemPrompt = getSystemPrompt();
   const userInput = formatCoachInput(submission as Record<string, unknown>);
 
-  let apiRes: Response;
+  let content: string;
   try {
-    apiRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userInput }],
-      }),
+    const client = new OpenAI({ apiKey });
+    const response = await client.chat.completions.create({
+      model: 'gpt-5.6-luna',
+      max_completion_tokens: 4096,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userInput },
+      ],
     });
+    content = response.choices[0]?.message?.content ?? '';
   } catch (e) {
-    console.error('[generate-post] Anthropic API fetch failed', e);
-    return NextResponse.json({ error: 'Claude API 연결에 실패했습니다.' }, { status: 500 });
+    console.error('[generate-post] OpenAI API 호출 실패', e);
+    return NextResponse.json({ error: `OpenAI API 오류: ${(e as Error).message}` }, { status: 500 });
   }
-
-  if (!apiRes.ok) {
-    const err = await apiRes.text();
-    return NextResponse.json({ error: `Claude API 오류: ${err.slice(0, 200)}` }, { status: 500 });
-  }
-
-  const result = await apiRes.json() as { content?: { type: string; text: string }[] };
-  const content = result.content?.find(c => c.type === 'text')?.text ?? '';
 
   return NextResponse.json({ data: { content } });
 }
