@@ -39,6 +39,7 @@ export default function MissionPage() {
   const [loading, setLoading] = useState(true);
   const [verifiedUsername, setVerifiedUsername] = useState<string | null>(null);
   const [showVerifyFlow, setShowVerifyFlow] = useState(false);
+  const [missionTitle, setMissionTitle] = useState('SAT 미션');
 
   const fetchData = useCallback(async (date: string) => {
     setLoading(true);
@@ -48,6 +49,7 @@ export default function MissionPage() {
       setPost(json.data.post);
       setSubmissions(json.data.submissions);
       setTotalReps(json.data.totalReps);
+      if (json.data.missionTitle) setMissionTitle(json.data.missionTitle);
     } finally {
       setLoading(false);
     }
@@ -73,7 +75,7 @@ export default function MissionPage() {
       <div className="max-w-lg mx-auto px-4 pt-24 pb-12">
         {/* 헤더 */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-black text-gray-900 mb-1">턱걸이 1600 챌린지</h1>
+          <h1 className="text-2xl font-black text-gray-900 mb-1">{missionTitle}</h1>
         </div>
 
         {/* 날짜 네비게이터 */}

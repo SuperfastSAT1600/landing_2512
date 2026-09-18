@@ -47,7 +47,7 @@ export default function StudentFeed({ submissions }: Props) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-sm text-gray-800 truncate">{s.display_name}</span>
-                  <span className="text-orange-600 font-bold text-sm whitespace-nowrap">{s.rep_count}개</span>
+                  <span className="text-[#3182F6] font-bold text-sm whitespace-nowrap">{s.rep_count}개</span>
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">@{s.instagram_username}</p>
                 <p className="text-xs text-gray-300 mt-1">{timeAgo(s.created_at)}</p>
