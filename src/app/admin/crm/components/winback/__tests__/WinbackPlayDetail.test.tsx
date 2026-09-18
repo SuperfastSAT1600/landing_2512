@@ -223,3 +223,105 @@ describe('WinbackPlayDetail 타겟 전체 선택', () => {
     expect(screen.queryByRole('checkbox', { name: '타겟 전체 선택' })).toBeNull();
   });
 });
+
+describe('WinbackPlayDetail 캠페인 종료', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const DONE_PLAY = { ...PLAY, status: 'done' } as unknown as WinbackPlayDetailData;
+
+  async function setupClose(
+    play: WinbackPlayDetailData = PLAY,
+    updatePlay?: ReturnType<typeof vi.fn>
+  ) {
+    const fn = updatePlay ?? vi.fn().mockResolvedValue({});
+    render(
+      <WinbackPlayDetail
+        playId="p1"
+        userName="이민재"
+        onBack={vi.fn()}
+        fetchPlay={vi.fn().mockResolvedValue(play)}
+        patchTarget={vi.fn()}
+        bulkTargets={vi.fn()}
+        deletePlay={vi.fn()}
+        updatePlay={fn as unknown as Parameters<typeof WinbackPlayDetail>[0]['updatePlay']}
+      />
+    );
+    await screen.findByText('AP 5월 프로모션');
+    return fn;
+  }
+
+  it('진행 중 캠페인에는 종료 버튼과 상태 배지를 보여준다', async () => {
+    await setupClose();
+
+    expect(screen.getByRole('button', { name: /종료/ })).toBeTruthy();
+    expect(screen.getByText('진행 중')).toBeTruthy();
+  });
+
+  it('종료를 확인하면 status를 done으로 바꾼다', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const updatePlay = await setupClose();
+
+    fireEvent.click(screen.getByRole('button', { name: /종료/ }));
+
+    await waitFor(() => expect(updatePlay).toHaveBeenCalledWith('p1', { status: 'done' }));
+  });
+
+  it('종료 확인을 취소하면 아무것도 바꾸지 않는다', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const updatePlay = await setupClose();
+
+    fireEvent.click(screen.getByRole('button', { name: /종료/ }));
+
+    expect(updatePlay).not.toHaveBeenCalled();
+  });
+
+  it('종료하면 배지가 즉시 종료로 바뀐다', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await setupClose();
+
+    fireEvent.click(screen.getByRole('button', { name: /종료/ }));
+
+    await screen.findByText('종료');
+  });
+
+  it('종료된 캠페인은 진행 재개 버튼을 보여준다', async () => {
+    await setupClose(DONE_PLAY);
+
+    expect(screen.getByRole('button', { name: /진행 재개/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^종료$/ })).toBeNull();
+  });
+
+  it('진행 재개는 확인 없이 status를 running으로 되돌린다', async () => {
+    const updatePlay = await setupClose(DONE_PLAY);
+
+    fireEvent.click(screen.getByRole('button', { name: /진행 재개/ }));
+
+    await waitFor(() => expect(updatePlay).toHaveBeenCalledWith('p1', { status: 'running' }));
+  });
+
+  it('실패하면 에러를 보여주고 배지를 되돌린다', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await setupClose(PLAY, vi.fn().mockRejectedValue(new Error('종료 실패')));
+
+    fireEvent.click(screen.getByRole('button', { name: /종료/ }));
+
+    await screen.findByText('종료 실패');
+    expect(screen.getByText('진행 중')).toBeTruthy();
+  });
+
+  it('updatePlay를 넘기지 않으면 종료 버튼을 띄우지 않는다', async () => {
+    render(
+      <WinbackPlayDetail
+        playId="p1"
+        onBack={vi.fn()}
+        fetchPlay={vi.fn().mockResolvedValue(PLAY)}
+        patchTarget={vi.fn()}
+        bulkTargets={vi.fn()}
+        deletePlay={vi.fn()}
+      />
+    );
+    await screen.findByText('AP 5월 프로모션');
+
+    expect(screen.queryByRole('button', { name: /종료/ })).toBeNull();
+  });
+});

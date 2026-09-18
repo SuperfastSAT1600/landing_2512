@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { Loader2, Plus, Target, Trash2 } from 'lucide-react';
 import type { WinbackPlayListItem } from './hooks/useWinbackPlays';
 
-const STATUS_LABELS: Record<string, string> = {
+export const STATUS_LABELS: Record<string, string> = {
   draft: '초안',
   running: '진행 중',
   done: '종료',
   archived: '보관',
 };
 
-const STATUS_STYLES: Record<string, string> = {
+export const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-600',
   running: 'bg-blue-100 text-blue-700',
   done: 'bg-emerald-100 text-emerald-700',

@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, Loader2, RefreshCw, Trash2, Sparkles, X } from 'lucide-react';
+import { CheckCircle2, PlayCircle, ChevronLeft, Loader2, RefreshCw, Trash2, Sparkles, X } from 'lucide-react';
 import type { WinbackPlayDetailData, WinbackTargetRow as TargetRow } from './hooks/useWinbackPlays';
 import { WinbackTargetRow } from './WinbackTargetRow';
 import { WinbackBulkBar } from './WinbackBulkBar';
+import { STATUS_LABELS, STATUS_STYLES } from './WinbackPlayList';
 import { RecommendStep } from './steps/RecommendStep';
 import { playToBriefDraft, playToRuleDraft } from './winbackContinuation';
 import { EMPTY_RULES } from './WinbackRuleFilters';
@@ -24,6 +25,8 @@ interface Props {
     messages?: Record<string, string>;
   }) => Promise<{ updated: TargetRow[]; failed: { id: string; error: string }[] }>;
   deletePlay: (playId: string) => Promise<void>;
+  /** 없으면 종료 버튼을 띄우지 않는다. */
+  updatePlay?: (playId: string, patch: Record<string, unknown>) => Promise<unknown>;
   onStudentClick?: (studentId: string) => void;
   recommend?: (
     input: Record<string, unknown>
@@ -45,6 +48,7 @@ export function WinbackPlayDetail({
   generateDraft,
   bulkTargets,
   deletePlay,
+  updatePlay,
   onStudentClick,
   recommend,
   addTargets,
@@ -53,6 +57,7 @@ export function WinbackPlayDetail({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [messages, setMessages] = useState<Record<string, string>>({});
 
@@ -124,6 +129,36 @@ export function WinbackPlayDetail({
 
   const toggleAll = () =>
     setSelected(allSelected ? new Set() : new Set(targets.map((t) => t.id)));
+
+  /**
+   * 캠페인 종료·재개. `winback_plays.status`는 draft|running|done|archived이고
+   * PATCH 화이트리스트에도 있는데 화면에서 바꿀 경로가 없었다.
+   * 종료해도 타겟·발송·전환 기록은 그대로 남는다(삭제와 다르다).
+   */
+  const setStatus = useCallback(
+    async (next: 'done' | 'running') => {
+      if (!updatePlay || !play) return;
+      if (
+        next === 'done' &&
+        !confirm(`"${play.title}" 캠페인을 종료할까요? 발송·전환 기록은 그대로 남습니다.`)
+      ) {
+        return;
+      }
+      const before = play.status;
+      setError(null);
+      setClosing(true);
+      setPlay({ ...play, status: next }); // 낙관적 반영
+      try {
+        await updatePlay(playId, { status: next });
+      } catch (err) {
+        setPlay((cur) => (cur ? { ...cur, status: before } : cur));
+        setError((err as Error).message);
+      } finally {
+        setClosing(false);
+      }
+    },
+    [updatePlay, play, playId]
+  );
 
   async function handleBulk(action: string, targetIds?: string[], message?: string) {
     const ids = targetIds ?? [...selected];
@@ -199,7 +234,16 @@ export function WinbackPlayDetail({
           >
             <ChevronLeft size={13} /> 캠페인 목록
           </button>
-          <h3 className="mt-1 text-base font-semibold text-gray-900">{play.title}</h3>
+          <div className="mt-1 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-900">{play.title}</h3>
+            <span
+              className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                STATUS_STYLES[play.status] ?? STATUS_STYLES.draft
+              }`}
+            >
+              {STATUS_LABELS[play.status] ?? play.status}
+            </span>
+          </div>
           <p className="text-xs text-gray-500 whitespace-pre-wrap">{play.product_brief}</p>
           <p className="mt-0.5 text-[11px] text-gray-400">
             전략 변형 {play.variants.map((v) => v.name).join(' / ') || '없음'} · 전환 인정{' '}
@@ -225,6 +269,24 @@ export function WinbackPlayDetail({
           >
             <RefreshCw size={11} /> 새로고침
           </button>
+          {updatePlay &&
+            (play.status === 'done' ? (
+              <button
+                onClick={() => setStatus('running')}
+                disabled={closing}
+                className="flex items-center gap-1 px-2 py-1 rounded border border-gray-200 text-[11px] text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <PlayCircle size={11} /> {closing ? '처리 중…' : '진행 재개'}
+              </button>
+            ) : (
+              <button
+                onClick={() => setStatus('done')}
+                disabled={closing}
+                className="flex items-center gap-1 px-2 py-1 rounded border border-emerald-200 text-[11px] text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+              >
+                <CheckCircle2 size={11} /> {closing ? '처리 중…' : '종료'}
+              </button>
+            ))}
           <button
             onClick={handleDelete}
             disabled={deleting}
