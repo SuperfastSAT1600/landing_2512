@@ -78,6 +78,11 @@ export default function MissionPage() {
           <h1 className="text-3xl text-gray-900 mb-1" style={{ fontFamily: 'var(--font-black-han)' }}>{missionTitle}</h1>
         </div>
 
+        {/* 미션 현황 */}
+        {!loading && (
+          <MissionStatus totalReps={totalReps} goal={1600} title={`${missionTitle} : 풀업 1600개`} />
+        )}
+
         {/* 날짜 네비게이터 */}
         <DateNavigator selectedDate={selectedDate} onSelect={handleDateSelect} />
 
@@ -88,11 +93,6 @@ export default function MissionPage() {
             date={post.date}
             repCount={post.teacher_rep_count}
           />
-        )}
-
-        {/* 미션 현황 */}
-        {!loading && (
-          <MissionStatus totalReps={totalReps} goal={1600} />
         )}
 
         {/* 학생 인증 포스팅 */}
