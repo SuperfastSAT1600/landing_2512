@@ -119,8 +119,13 @@ export async function updateCoach(slug: string, updates: Partial<CoachData>): Pr
     if (updates.v2UserId !== undefined) dbUpdates.v2_user_id = updates.v2UserId;
     if (updates.profileStatus !== undefined) dbUpdates.profile_status = updates.profileStatus;
 
-    const { error } = await supabaseAdmin.from('coaches').update(dbUpdates).eq('slug', slug);
-    return !error;
+    const { data: updated, error } = await supabaseAdmin
+        .from('coaches')
+        .update(dbUpdates)
+        .eq('slug', slug)
+        .select('slug');
+    if (error) return false;
+    return (updated?.length ?? 0) > 0;
 }
 
 export async function deleteCoach(slug: string): Promise<boolean> {

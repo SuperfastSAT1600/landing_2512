@@ -124,7 +124,7 @@ export async function PATCH(request: NextRequest) {
         }
         const ok = await updateCoach(slug, safeUpdates);
         if (!ok) {
-            return NextResponse.json({ success: false, error: 'Coach not found or DB error' }, { status: 404 });
+            return NextResponse.json({ success: false, error: `slug "${slug}"에 해당하는 코치를 찾을 수 없습니다.` }, { status: 404 });
         }
         return NextResponse.json({ success: true });
     } catch {
