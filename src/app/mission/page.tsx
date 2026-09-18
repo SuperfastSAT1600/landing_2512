@@ -108,8 +108,7 @@ export default function MissionPage() {
             ) : !showVerifyFlow ? (
               <button
                 onClick={() => setShowVerifyFlow(true)}
-                className="w-full py-4 text-white text-base font-bold rounded-2xl active:scale-95 transition-all shadow-md hover:opacity-90"
-                style={{ background: '#3182F6' }}
+                className="w-full py-4 bg-[#3182F6] hover:bg-[#1B6AE0] text-white text-base font-bold rounded-2xl active:scale-95 transition-colors shadow-md"
               >
                 내 미션 인증하기
               </button>

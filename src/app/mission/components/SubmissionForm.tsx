@@ -99,8 +99,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
             placeholder="홍길동"
             maxLength={50}
             required
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2"
-            style={{ '--tw-ring-color': '#3182F6' } as React.CSSProperties}
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#3182F6]"
           />
         </div>
 
@@ -114,8 +113,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
             min={1}
             max={10000}
             required
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2"
-            style={{ '--tw-ring-color': '#3182F6' } as React.CSSProperties}
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#3182F6]"
           />
         </div>
 
@@ -146,8 +144,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
       <button
         type="submit"
         disabled={isLoading || !displayName.trim() || !repCount}
-        className="mt-4 w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 transition-opacity hover:opacity-90"
-        style={{ background: '#3182F6' }}
+        className="mt-4 w-full py-3 bg-[#3182F6] hover:bg-[#1B6AE0] text-white font-semibold rounded-xl disabled:opacity-50 transition-colors"
       >
         {status === 'uploading' ? '사진 업로드 중...' : status === 'submitting' ? '제출 중...' : '인증 제출'}
       </button>

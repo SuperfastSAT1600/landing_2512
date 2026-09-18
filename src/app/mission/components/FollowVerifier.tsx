@@ -55,8 +55,7 @@ export default function FollowVerifier({ onVerified }: Props) {
         }}
         placeholder="인스타 아이디 (@ 없이)"
         disabled={step === 'checking'}
-        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 mb-3 disabled:opacity-50"
-        style={{ '--tw-ring-color': '#3182F6' } as React.CSSProperties}
+        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#3182F6] mb-3 disabled:opacity-50"
       />
 
       {step === 'not_following' && (
@@ -66,8 +65,7 @@ export default function FollowVerifier({ onVerified }: Props) {
             href="https://www.instagram.com/superfastsat.official/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-2.5 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity mb-2"
-            style={{ background: '#3182F6' }}
+            className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#3182F6] hover:bg-[#1B6AE0] text-white text-sm font-semibold rounded-xl transition-colors mb-2"
           >
             @superfastsat.official 팔로우 하러가기
           </a>
@@ -88,15 +86,14 @@ export default function FollowVerifier({ onVerified }: Props) {
         <button
           onClick={handleCheck}
           disabled={!trimmed}
-          className="w-full py-2.5 text-white text-sm font-semibold rounded-xl disabled:opacity-40 transition-opacity hover:opacity-90"
-          style={{ background: '#3182F6' }}
+          className="w-full py-2.5 bg-[#3182F6] hover:bg-[#1B6AE0] text-white text-sm font-semibold rounded-xl disabled:opacity-40 transition-colors"
         >
           팔로우 확인하기
         </button>
       )}
 
       {step === 'checking' && (
-        <button disabled className="w-full py-2.5 text-white text-sm font-semibold rounded-xl opacity-70" style={{ background: '#3182F6' }}>
+        <button disabled className="w-full py-2.5 bg-[#3182F6] text-white text-sm font-semibold rounded-xl opacity-70">
           확인 중...
         </button>
       )}
