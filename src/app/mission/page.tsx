@@ -16,7 +16,9 @@ interface Submission {
 }
 
 interface DailyPost {
+  date: string;
   instagram_url: string;
+  teacher_rep_count?: number;
 }
 
 export default function MissionPage() {
@@ -44,19 +46,26 @@ export default function MissionPage() {
     ? submissions.some((s) => s.instagram_username === verifiedUsername)
     : false;
 
+  const today = new Date();
+  const todayLabel = `${today.getMonth() + 1}월 ${today.getDate()}일`;
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-lg mx-auto px-4 py-8">
         {/* 헤더 */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-black text-gray-900 mb-1">턱걸이 1600 챌린지</h1>
-          <p className="text-sm text-gray-500">
-            {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
-          </p>
+          <p className="text-sm text-gray-500">{todayLabel}</p>
         </div>
 
         {/* 선생님 인증 임베드 */}
-        {post?.instagram_url && <TeacherPost instagramUrl={post.instagram_url} />}
+        {post?.instagram_url && (
+          <TeacherPost
+            instagramUrl={post.instagram_url}
+            date={post.date}
+            repCount={post.teacher_rep_count}
+          />
+        )}
 
         {/* 진행률 + 학생 피드 */}
         {!loading && (
