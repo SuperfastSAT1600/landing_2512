@@ -115,34 +115,40 @@ export function TotalOverviewPanel({ adminKey }: Props) {
   const combinedMonthly = combineMonthlyRevenue(tutoringMonthly, globalByMonth);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-0">
       {error && (
-        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>
+        <div className="px-4 py-3 mb-6 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>
       )}
 
-      <div className="flex flex-wrap gap-x-10 gap-y-4 border-b border-gray-100 pb-6">
-        <div>
-          <p className="text-xs text-gray-400 mb-1">총 매출</p>
-          <p data-testid="total-revenue-krw" className="text-2xl font-semibold text-gray-900 tabular-nums">
-            {manwon(grossRevenue)}
-          </p>
-          <p className="text-[11px] text-gray-400 mt-1">
-            이번 달 · 한국비즈니스 {tutoringShare}% · 글로벌 {globalShare}%
-          </p>
+      {/* ── 매출 현황 ── */}
+      <section>
+        <div className="flex items-center gap-3 mb-5">
+          <h2 className="text-base font-bold text-gray-800 tracking-tight">매출 현황</h2>
+          <div className="flex-1 h-px bg-gray-200" />
         </div>
-        <div>
-          <p className="text-xs text-gray-400 mb-1">순매출</p>
-          <p className="text-2xl font-semibold text-gray-900 tabular-nums">{manwon(netRevenue)}</p>
-          <p className="text-[11px] text-gray-400 mt-1">이번 달 · 원화 환산 기준</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400 mb-1">순 수익</p>
-          <p className="text-2xl font-semibold text-gray-900 tabular-nums">{manwon(netProfit)}</p>
-          <p className="text-[11px] text-gray-400 mt-1">글로벌은 1$ = {USD_TO_KRW_RATE.toLocaleString()}원 환산</p>
-        </div>
-      </div>
 
-      <div>
+        <div className="flex flex-wrap gap-x-10 gap-y-4 mb-6">
+          <div>
+            <p className="text-xs text-gray-400 mb-1">총 매출</p>
+            <p data-testid="total-revenue-krw" className="text-2xl font-semibold text-gray-900 tabular-nums">
+              {manwon(grossRevenue)}
+            </p>
+            <p className="text-[11px] text-gray-400 mt-1">
+              이번 달 · 한국비즈니스 {tutoringShare}% · 글로벌 {globalShare}%
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 mb-1">순매출</p>
+            <p className="text-2xl font-semibold text-gray-900 tabular-nums">{manwon(netRevenue)}</p>
+            <p className="text-[11px] text-gray-400 mt-1">이번 달 · 원화 환산 기준</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 mb-1">순 수익</p>
+            <p className="text-2xl font-semibold text-gray-900 tabular-nums">{manwon(netProfit)}</p>
+            <p className="text-[11px] text-gray-400 mt-1">글로벌은 1$ = {USD_TO_KRW_RATE.toLocaleString()}원 환산</p>
+          </div>
+        </div>
+
         <h3 className="text-sm font-semibold text-gray-500 mb-3">월별 추이 (합산)</h3>
 
         <div className="flex flex-wrap items-center gap-1.5 mb-4">
@@ -189,15 +195,25 @@ export function TotalOverviewPanel({ adminKey }: Props) {
         <p className="mt-3 text-[11px] text-gray-400">
           리드·컨택·전환 같은 퍼널 지표는 글로벌에 해당 개념이 없어 여기서 합치지 않습니다 — 한국비즈니스 탭에서 확인하세요.
         </p>
-      </div>
+      </section>
 
-      <div className="border-t border-gray-100 pt-6">
+      {/* ── 튜터링 동시 접속자 ── */}
+      <section className="border-t-2 border-gray-200 pt-7 mt-8">
+        <div className="flex items-center gap-3 mb-5">
+          <h2 className="text-base font-bold text-gray-800 tracking-tight">튜터링 동시 접속자</h2>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
         <ActiveLearnersPanel adminKey={adminKey} />
-      </div>
+      </section>
 
-      <div className="border-t border-gray-100 pt-6">
+      {/* ── 서비스 평가 ── */}
+      <section className="border-t-2 border-gray-200 pt-7 mt-8">
+        <div className="flex items-center gap-3 mb-5">
+          <h2 className="text-base font-bold text-gray-800 tracking-tight">서비스 평가</h2>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
         <OutcomeQualityPanel adminKey={adminKey} />
-      </div>
+      </section>
     </div>
   );
 }
