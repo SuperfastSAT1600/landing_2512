@@ -50,7 +50,7 @@ export default function FollowVerifier({ onVerified }: Props) {
           onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
           placeholder="인스타 아이디 (@ 없이)"
           disabled={status === 'verified'}
-          className="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-gray-100"
+          className="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-gray-100"
         />
         {status !== 'verified' && (
           <button
