@@ -29,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
             { href: '/admin/vocab-access', label: '시크릿페이지' },
             { href: '/admin/fulltest', label: 'Test Contents' },
             { href: '/admin/mathweb', label: 'Math Web' },
+            { href: '/admin/mission', label: '미션 챌린지' },
         ]
     },
     { href: '/admin/popup-settings', label: '팝업 설정', icon: '🔔' },

@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 
 export default function AdminMissionPage() {
   const [instagramUrl, setInstagramUrl] = useState('');
+  const [teacherRepCount, setTeacherRepCount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [currentPost, setCurrentPost] = useState<{ instagram_url: string; date: string } | null>(null);
+  const [currentPost, setCurrentPost] = useState<{ instagram_url: string; date: string; teacher_rep_count?: number } | null>(null);
   const [adminKey, setAdminKey] = useState('');
 
   useEffect(() => {
@@ -21,8 +22,8 @@ export default function AdminMissionPage() {
       .then((r) => r.json())
       .then((json) => {
         setCurrentPost(json.data);
-        if (json.data?.instagram_url) setInstagramUrl(json.data.instagram_url);
-        else setInstagramUrl('');
+        setInstagramUrl(json.data?.instagram_url ?? '');
+        setTeacherRepCount(json.data?.teacher_rep_count?.toString() ?? '');
       });
   }, [date, adminKey]);
 
@@ -33,7 +34,11 @@ export default function AdminMissionPage() {
     const res = await fetch('/api/admin/mission', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-      body: JSON.stringify({ date, instagram_url: instagramUrl.trim() }),
+      body: JSON.stringify({
+        date,
+        instagram_url: instagramUrl.trim(),
+        teacher_rep_count: teacherRepCount ? parseInt(teacherRepCount, 10) : null,
+      }),
     });
 
     if (res.ok) {
@@ -57,7 +62,7 @@ export default function AdminMissionPage() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm"
+            className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white"
           />
         </div>
 
@@ -68,9 +73,21 @@ export default function AdminMissionPage() {
             value={instagramUrl}
             onChange={(e) => setInstagramUrl(e.target.value)}
             placeholder="https://www.instagram.com/reel/..."
-            className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
           <p className="text-xs text-gray-400 mt-1">릴스/피드 게시물 URL을 붙여넣으세요</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">오늘 선생님 횟수</label>
+          <input
+            type="number"
+            value={teacherRepCount}
+            onChange={(e) => setTeacherRepCount(e.target.value)}
+            placeholder="예: 50"
+            min={1}
+            className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+          />
         </div>
 
         <button
@@ -87,10 +104,11 @@ export default function AdminMissionPage() {
       </div>
 
       {currentPost && (
-        <div className="mt-4 text-sm text-gray-500">
-          현재 설정: <a href={currentPost.instagram_url} target="_blank" rel="noopener noreferrer" className="underline text-orange-500 truncate">
-            {currentPost.instagram_url}
-          </a>
+        <div className="mt-4 text-sm text-gray-500 space-y-1">
+          <p>현재 설정: <a href={currentPost.instagram_url} target="_blank" rel="noopener noreferrer" className="underline text-orange-500">{currentPost.instagram_url}</a></p>
+          {currentPost.teacher_rep_count != null && (
+            <p>선생님 횟수: <strong className="text-orange-600">{currentPost.teacher_rep_count}개</strong></p>
+          )}
         </div>
       )}
 

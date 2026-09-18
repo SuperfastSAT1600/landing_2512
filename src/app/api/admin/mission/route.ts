@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 const PostSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   instagram_url: z.string().url(),
+  teacher_rep_count: z.number().int().positive().nullable().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -25,17 +26,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message } }, { status: 400 });
   }
 
-  const { date, instagram_url } = parsed.data;
+  const { date, instagram_url, teacher_rep_count } = parsed.data;
 
   const { data, error } = await supabaseAdmin
     .from('mission_daily_posts')
-    .upsert({ date, instagram_url, updated_at: new Date().toISOString() }, { onConflict: 'date' })
+    .upsert({ date, instagram_url, teacher_rep_count: teacher_rep_count ?? null, updated_at: new Date().toISOString() }, { onConflict: 'date' })
     .select()
     .single();
 
   if (error) {
     console.error('[admin/mission]', error);
-    return NextResponse.json({ error: { code: 'DB_ERROR' } }, { status: 500 });
+    return NextResponse.json({ error: { code: 'DB_ERROR', message: error.message } }, { status: 500 });
   }
 
   return NextResponse.json({ data });
