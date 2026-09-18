@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import DateTabs from './components/DateTabs';
+import DateNavigator from './components/DateTabs';
 import TeacherPost from './components/TeacherPost';
 import MissionStatus from './components/MissionStatus';
 import StudentFeed from './components/StudentFeed';
@@ -76,8 +76,8 @@ export default function MissionPage() {
           <h1 className="text-2xl font-black text-gray-900 mb-1">턱걸이 1600 챌린지</h1>
         </div>
 
-        {/* 날짜 탭 */}
-        <DateTabs selectedDate={selectedDate} onSelect={handleDateSelect} />
+        {/* 날짜 네비게이터 */}
+        <DateNavigator selectedDate={selectedDate} onSelect={handleDateSelect} />
 
         {/* 인스타 피드 */}
         {post?.instagram_url && (
@@ -102,13 +102,14 @@ export default function MissionPage() {
         {isToday && !loading && (
           <div className="mt-2">
             {alreadySubmitted ? (
-              <div className="text-center text-sm text-gray-500 py-4 bg-green-50 rounded-2xl">
+              <div className="text-center text-sm text-gray-500 py-4 bg-blue-50 rounded-2xl">
                 오늘 인증을 이미 제출했어요!
               </div>
             ) : !showVerifyFlow ? (
               <button
                 onClick={() => setShowVerifyFlow(true)}
-                className="w-full py-4 bg-orange-500 text-white text-base font-bold rounded-2xl hover:bg-orange-600 active:scale-95 transition-all shadow-md"
+                className="w-full py-4 text-white text-base font-bold rounded-2xl active:scale-95 transition-all shadow-md hover:opacity-90"
+                style={{ background: '#3182F6' }}
               >
                 내 미션 인증하기
               </button>

@@ -41,10 +41,6 @@ export default function FollowVerifier({ onVerified }: Props) {
     }
   }
 
-  function handleRetry() {
-    setStep('input');
-  }
-
   return (
     <div className="bg-gray-50 rounded-2xl p-5">
       <p className="text-sm font-semibold text-gray-800 mb-1">인스타그램 팔로우를 인증하세요</p>
@@ -59,22 +55,24 @@ export default function FollowVerifier({ onVerified }: Props) {
         }}
         placeholder="인스타 아이디 (@ 없이)"
         disabled={step === 'checking'}
-        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:opacity-50 mb-3"
+        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 mb-3 disabled:opacity-50"
+        style={{ '--tw-ring-color': '#3182F6' } as React.CSSProperties}
       />
 
       {step === 'not_following' && (
-        <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-          <p className="text-sm text-amber-700 font-medium mb-2">팔로우가 확인되지 않았어요</p>
+        <div className="mb-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+          <p className="text-sm text-blue-700 font-medium mb-2">팔로우가 확인되지 않았어요</p>
           <a
             href="https://www.instagram.com/superfastsat.official/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-orange-400 to-pink-500 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity mb-2"
+            className="flex items-center justify-center gap-2 w-full py-2.5 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity mb-2"
+            style={{ background: '#3182F6' }}
           >
             @superfastsat.official 팔로우 하러가기
           </a>
           <button
-            onClick={handleRetry}
+            onClick={() => setStep('input')}
             className="w-full py-2 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors"
           >
             팔로우 후 다시 확인하기
@@ -82,7 +80,7 @@ export default function FollowVerifier({ onVerified }: Props) {
         </div>
       )}
 
-      {(step === 'error') && (
+      {step === 'error' && (
         <p className="text-sm text-red-500 mb-3">{errorMsg}</p>
       )}
 
@@ -90,14 +88,15 @@ export default function FollowVerifier({ onVerified }: Props) {
         <button
           onClick={handleCheck}
           disabled={!trimmed}
-          className="w-full py-2.5 bg-orange-500 text-white text-sm font-semibold rounded-xl hover:bg-orange-600 disabled:opacity-40 transition-colors"
+          className="w-full py-2.5 text-white text-sm font-semibold rounded-xl disabled:opacity-40 transition-opacity hover:opacity-90"
+          style={{ background: '#3182F6' }}
         >
           팔로우 확인하기
         </button>
       )}
 
       {step === 'checking' && (
-        <button disabled className="w-full py-2.5 bg-orange-400 text-white text-sm font-semibold rounded-xl opacity-70">
+        <button disabled className="w-full py-2.5 text-white text-sm font-semibold rounded-xl opacity-70" style={{ background: '#3182F6' }}>
           확인 중...
         </button>
       )}
