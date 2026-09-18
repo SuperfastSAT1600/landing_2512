@@ -73,11 +73,6 @@ export default function MissionPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-lg mx-auto px-4 pt-24 pb-12">
-        {/* 헤더 */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl text-gray-900 mb-1" style={{ fontFamily: 'var(--font-black-han)' }}>{missionTitle}</h1>
-        </div>
-
         {/* 미션 현황 */}
         {!loading && (
           <MissionStatus totalReps={totalReps} goal={1600} title={`${missionTitle} : 풀업 1600개`} />
