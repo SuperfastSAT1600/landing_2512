@@ -441,25 +441,31 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
                   className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2.5 text-xs text-gray-300 outline-none focus:border-blue-500 font-mono resize-y"
                 />
                 <div className="pt-1 space-y-2">
-                  <button
-                    onClick={handlePublishLandingPost}
-                    disabled={publishing}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
-                  >
-                    {publishing ? (
-                      <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 발행 중...</>
-                    ) : '랜딩 블로그에 발행'}
-                  </button>
-                  {publishError && (
-                    <p className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-400">{publishError}</p>
-                  )}
-                  {publishedUrl && (
-                    <p className="text-xs px-3 py-2 rounded-lg bg-green-500/10 text-green-400">
-                      발행 완료 →{' '}
-                      <a href={publishedUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-green-300">
-                        {publishedUrl}
-                      </a>
-                    </p>
+                  {doodleUrl ? (
+                    <>
+                      <button
+                        onClick={handlePublishLandingPost}
+                        disabled={publishing}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+                      >
+                        {publishing ? (
+                          <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 발행 중...</>
+                        ) : '랜딩 블로그에 발행'}
+                      </button>
+                      {publishError && (
+                        <p className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-400">{publishError}</p>
+                      )}
+                      {publishedUrl && (
+                        <p className="text-xs px-3 py-2 rounded-lg bg-green-500/10 text-green-400">
+                          발행 완료 →{' '}
+                          <a href={publishedUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-green-300">
+                            {publishedUrl}
+                          </a>
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-yellow-500/80">두들 프로필 이미지를 먼저 생성해주세요.</p>
                   )}
                 </div>
               </div>
