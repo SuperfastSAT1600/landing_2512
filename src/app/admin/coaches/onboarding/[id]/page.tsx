@@ -434,54 +434,13 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
             )}
             {postContent && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-green-400">생성 완료 ({postContent.length.toLocaleString()}자)</p>
-                </div>
-                {postTitle && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-500">포스팅 제목 (수정 가능)</p>
-                    <input
-                      type="text"
-                      value={postTitle}
-                      onChange={e => setPostTitle(e.target.value)}
-                      className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-                    />
-                  </div>
-                )}
+                <p className="text-xs text-green-400">생성 완료 ({postContent.length.toLocaleString()}자)</p>
                 <textarea
                   value={postContent}
                   onChange={e => setPostContent(e.target.value)}
                   rows={12}
                   className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2.5 text-xs text-gray-300 outline-none focus:border-blue-500 font-mono resize-y"
                 />
-                <div className="pt-1 space-y-2">
-                  {doodleUrl ? (
-                    <>
-                      <button
-                        onClick={handlePublishLandingPost}
-                        disabled={publishing}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
-                      >
-                        {publishing ? (
-                          <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 발행 중...</>
-                        ) : '랜딩 블로그에 발행'}
-                      </button>
-                      {publishError && (
-                        <p className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-400">{publishError}</p>
-                      )}
-                      {publishedUrl && (
-                        <p className="text-xs px-3 py-2 rounded-lg bg-green-500/10 text-green-400">
-                          발행 완료 →{' '}
-                          <a href={publishedUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-green-300">
-                            {publishedUrl}
-                          </a>
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-xs text-yellow-500/80">두들 프로필 이미지를 먼저 생성해주세요.</p>
-                  )}
-                </div>
               </div>
             )}
           </div>
@@ -525,6 +484,47 @@ export default function OnboardingDetailPage({ params }: { params: Promise<{ id:
               </div>
             )}
           </div>
+
+          {/* Step 3: Publish */}
+          {postContent && doodleUrl && (
+            <div className="pt-4 border-t border-white/5 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="w-5 h-5 rounded-full bg-green-600/30 text-green-400 text-xs flex items-center justify-center font-bold shrink-0">3</span>
+                <p className="text-sm text-gray-300 font-medium">랜딩 블로그 발행</p>
+              </div>
+              {postTitle && (
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-500">포스팅 제목 (수정 가능)</p>
+                  <input
+                    type="text"
+                    value={postTitle}
+                    onChange={e => setPostTitle(e.target.value)}
+                    className="w-full bg-[#151719] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                  />
+                </div>
+              )}
+              <button
+                onClick={handlePublishLandingPost}
+                disabled={publishing}
+                className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+              >
+                {publishing ? (
+                  <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 발행 중...</>
+                ) : '랜딩 블로그에 발행'}
+              </button>
+              {publishError && (
+                <p className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-400">{publishError}</p>
+              )}
+              {publishedUrl && (
+                <p className="text-xs px-3 py-2 rounded-lg bg-green-500/10 text-green-400">
+                  발행 완료 →{' '}
+                  <a href={publishedUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-green-300">
+                    {publishedUrl}
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
 
         </div>
 
