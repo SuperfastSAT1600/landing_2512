@@ -25,7 +25,7 @@ export default function FollowVerifier({ onVerified }: Props) {
       const json = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(json.error?.message ?? '오류가 발생했어요. 다시 시도해주세요.');
+        setErrorMsg(json.error?.message ?? 'An error occurred. Please try again.');
         setStep('error');
         return;
       }
@@ -36,15 +36,15 @@ export default function FollowVerifier({ onVerified }: Props) {
         setStep('not_following');
       }
     } catch {
-      setErrorMsg('네트워크 오류가 발생했어요. 다시 시도해주세요.');
+      setErrorMsg('Network error. Please try again.');
       setStep('error');
     }
   }
 
   return (
     <div className="bg-gray-50 rounded-2xl p-5">
-      <p className="text-sm font-semibold text-gray-800 mb-1">인스타그램 팔로우를 인증하세요</p>
-      <p className="text-xs text-gray-400 mb-4">@superfastsat.official 팔로우 후 아이디를 입력해주세요</p>
+      <p className="text-sm font-semibold text-gray-800 mb-1">Verify your Instagram follow</p>
+      <p className="text-xs text-gray-400 mb-4">Follow @superfastsat.official and enter your username below</p>
 
       <input
         type="text"
@@ -53,27 +53,27 @@ export default function FollowVerifier({ onVerified }: Props) {
           setUsername(e.target.value);
           if (step !== 'input') setStep('input');
         }}
-        placeholder="인스타 아이디 (@ 없이)"
+        placeholder="Instagram username (without @)"
         disabled={step === 'checking'}
         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#3182F6] mb-3 disabled:opacity-50"
       />
 
       {step === 'not_following' && (
         <div className="mb-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
-          <p className="text-sm text-blue-700 font-medium mb-2">팔로우가 확인되지 않았어요</p>
+          <p className="text-sm text-blue-700 font-medium mb-2">Follow not confirmed</p>
           <a
             href="https://www.instagram.com/superfastsat.official/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#3182F6] hover:bg-[#1B6AE0] text-white text-sm font-semibold rounded-xl transition-colors mb-2"
           >
-            @superfastsat.official 팔로우 하러가기
+            Follow @superfastsat.official
           </a>
           <button
             onClick={() => setStep('input')}
             className="w-full py-2 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors"
           >
-            팔로우 후 다시 확인하기
+            I&apos;ve followed — check again
           </button>
         </div>
       )}
@@ -88,13 +88,13 @@ export default function FollowVerifier({ onVerified }: Props) {
           disabled={!trimmed}
           className="w-full py-2.5 bg-[#3182F6] hover:bg-[#1B6AE0] text-white text-sm font-semibold rounded-xl disabled:opacity-40 transition-colors"
         >
-          팔로우 확인하기
+          Verify Follow
         </button>
       )}
 
       {step === 'checking' && (
         <button disabled className="w-full py-2.5 bg-[#3182F6] text-white text-sm font-semibold rounded-xl opacity-70">
-          확인 중...
+          Checking...
         </button>
       )}
     </div>

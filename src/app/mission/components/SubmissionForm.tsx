@@ -43,7 +43,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
 
       if (!uploadRes.ok) {
         setStatus('error');
-        setErrorMsg(uploadJson.error?.message ?? '업로드 오류');
+        setErrorMsg(uploadJson.error?.message ?? 'Upload error');
         return;
       }
       photoUrl = uploadJson.data.url;
@@ -66,7 +66,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
 
     if (!res.ok) {
       setStatus('error');
-      setErrorMsg(json.error?.message ?? '제출 오류');
+      setErrorMsg(json.error?.message ?? 'Submission error');
       return;
     }
 
@@ -77,8 +77,8 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
   if (status === 'done') {
     return (
       <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center">
-        <p className="text-green-700 font-semibold text-lg mb-1">인증 완료!</p>
-        <p className="text-green-600 text-sm">오늘도 수고했어요.</p>
+        <p className="text-green-700 font-semibold text-lg mb-1">Submitted!</p>
+        <p className="text-green-600 text-sm">Great work today!</p>
       </div>
     );
   }
@@ -87,16 +87,16 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-50 rounded-2xl p-5 mb-6">
-      <p className="text-sm font-semibold text-gray-800 mb-4">Step 2. 오늘의 운동 인증</p>
+      <p className="text-sm font-semibold text-gray-800 mb-4">Step 2. Log Today&apos;s Workout</p>
 
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">이름 (닉네임 가능)</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Name (nickname OK)</label>
           <input
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="홍길동"
+            placeholder="Your name"
             maxLength={50}
             required
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#3182F6]"
@@ -104,7 +104,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">오늘 횟수</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Today&apos;s reps</label>
           <input
             type="number"
             value={repCount}
@@ -118,15 +118,15 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">인증 사진/영상 (선택)</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Proof photo / video (optional)</label>
           <div
             onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-orange-400 transition-colors"
+            className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-[#3182F6] transition-colors"
           >
             {preview ? (
               <img src={preview} alt="preview" className="max-h-40 mx-auto rounded-lg object-cover" />
             ) : (
-              <p className="text-sm text-gray-400">클릭해서 사진/영상 선택</p>
+              <p className="text-sm text-gray-400">Click to add a photo or video</p>
             )}
           </div>
           <input
@@ -146,7 +146,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
         disabled={isLoading || !displayName.trim() || !repCount}
         className="mt-4 w-full py-3 bg-[#3182F6] hover:bg-[#1B6AE0] text-white font-semibold rounded-xl disabled:opacity-50 transition-colors"
       >
-        {status === 'uploading' ? '사진 업로드 중...' : status === 'submitting' ? '제출 중...' : '인증 제출'}
+        {status === 'uploading' ? 'Uploading...' : status === 'submitting' ? 'Submitting...' : 'Submit'}
       </button>
     </form>
   );
