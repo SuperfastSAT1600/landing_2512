@@ -27,12 +27,12 @@ export default function StudentFeed({ submissions }: Props) {
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-semibold text-gray-700">학생 인증 포스팅</span>
-        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{submissions.length}명</span>
+        <span className="text-sm font-semibold text-gray-700">Student Submissions</span>
+        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{submissions.length}</span>
       </div>
 
       {submissions.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-8">아직 인증이 없어요. 첫 번째로 인증해보세요!</p>
+        <p className="text-sm text-gray-400 text-center py-8">No submissions yet. Be the first!</p>
       ) : (
         <div className="space-y-3">
           {submissions.map((s) => (

@@ -75,7 +75,7 @@ export default function MissionPage() {
       <div className="max-w-lg mx-auto px-4 pt-24 pb-12">
         {/* 미션 현황 */}
         {!loading && (
-          <MissionStatus totalReps={totalReps} goal={1600} title={`${missionTitle} : 풀업 1600개`} />
+          <MissionStatus totalReps={totalReps} goal={1600} title={`${missionTitle} · 1,600 Pull-ups`} />
         )}
 
         {/* 날짜 네비게이터 */}
@@ -100,14 +100,14 @@ export default function MissionPage() {
           <div className="mt-2">
             {alreadySubmitted ? (
               <div className="text-center text-sm text-gray-500 py-4 bg-blue-50 rounded-2xl">
-                오늘 인증을 이미 제출했어요!
+                You&apos;ve already submitted today!
               </div>
             ) : !showVerifyFlow ? (
               <button
                 onClick={() => setShowVerifyFlow(true)}
                 className="w-full py-4 bg-[#3182F6] hover:bg-[#1B6AE0] text-white text-base font-bold rounded-2xl active:scale-95 transition-colors shadow-md"
               >
-                내 미션 인증하기
+                Log My Mission
               </button>
             ) : verifiedUsername ? (
               <SubmissionForm
