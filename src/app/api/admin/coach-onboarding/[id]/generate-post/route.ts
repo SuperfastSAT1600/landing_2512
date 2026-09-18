@@ -105,21 +105,40 @@ export async function POST(request: NextRequest, { params }: Params) {
   const userInput = formatCoachInput(submission as Record<string, unknown>);
 
   let content: string;
+  let title: string;
   try {
     const client = new OpenAI({ apiKey });
-    const response = await client.chat.completions.create({
-      model: 'gpt-5.6-luna',
-      max_completion_tokens: 4096,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userInput },
-      ],
-    });
-    content = response.choices[0]?.message?.content ?? '';
+    const [contentRes, titleRes] = await Promise.all([
+      client.chat.completions.create({
+        model: 'gpt-5.6-luna',
+        max_completion_tokens: 4096,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userInput },
+        ],
+      }),
+      client.chat.completions.create({
+        model: 'gpt-5.6-luna',
+        max_completion_tokens: 60,
+        messages: [
+          {
+            role: 'system',
+            content: `선생님 정보를 보고 블로그 포스팅 제목을 한 줄로 만드세요.
+규칙:
+- 선생님의 가장 임팩트 있는 수치/경력을 앞에 배치 (예: SAT 점수, 수업 시간, 경력 연수, 출신 학교)
+- 15자 내외, 꺾쇠·따옴표 없이 제목만 출력
+- 예시: "1,000시간 수업한 SAT 1580점 선생님", "아이비리그 출신 10년 경력 SAT 강사"`,
+          },
+          { role: 'user', content: userInput },
+        ],
+      }),
+    ]);
+    content = contentRes.choices[0]?.message?.content ?? '';
+    title = titleRes.choices[0]?.message?.content?.trim() ?? '';
   } catch (e) {
     console.error('[generate-post] OpenAI API 호출 실패', e);
     return NextResponse.json({ error: `OpenAI API 오류: ${(e as Error).message}` }, { status: 500 });
   }
 
-  return NextResponse.json({ data: { content } });
+  return NextResponse.json({ data: { content, title } });
 }

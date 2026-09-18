@@ -17,12 +17,13 @@ function stripTrailingMeta(markdown: string): string {
   return idx !== -1 ? markdown.slice(0, idx).trim() : markdown.trim();
 }
 
-function nameToSlug(name: string, id: string): string {
-  const base = name.toLowerCase()
-    .replace(/[^\w\s가-힣]/g, '')
+function titleToSlug(title: string, id: string): string {
+  const base = title
+    .replace(/[^\w\s가-힣0-9]/g, '')
     .trim()
-    .replace(/\s+/g, '-');
-  return `coach-${base}-${id.slice(0, 6)}`;
+    .replace(/\s+/g, '-')
+    .slice(0, 50);
+  return `${base}-${id.slice(0, 6)}`;
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const { id } = await params;
 
-  const body = await request.json() as { content?: string; featuredImage?: string };
+  const body = await request.json() as { content?: string; featuredImage?: string; title?: string };
   const markdown = body.content?.trim();
   const featuredImage = body.featuredImage?.trim() ?? '';
   if (!markdown) {
@@ -50,8 +51,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const name = (submission as { name: string }).name;
-  const title = `${name} 선생님 소개`;
-  const slug = nameToSlug(name, id);
+  const title = body.title?.trim() || `${name} 선생님 소개`;
+  const slug = titleToSlug(title, id);
 
   const excerpt = extractSection(markdown, 'Excerpt');
   const description = extractSection(markdown, 'Meta Description');
