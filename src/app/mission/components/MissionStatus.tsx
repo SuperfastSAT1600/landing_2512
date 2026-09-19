@@ -11,10 +11,10 @@ export default function MissionStatus({ totalReps, goal = 1600, title }: Props) 
 
   return (
     <div className="mb-6">
-      {title && (
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-4 tracking-tight">{title}</h1>
-      )}
       <div className="bg-blue-50 rounded-2xl p-5">
+        {title && (
+          <h1 className="text-xl font-bold text-center text-gray-900 mb-4 tracking-tight">{title}</h1>
+        )}
         <div className="flex items-end justify-between mb-2">
           <span className="text-2xl font-black text-[#3182F6]">{totalReps.toLocaleString()}</span>
           <span className="text-sm text-gray-400 pb-0.5">/ {goal.toLocaleString()} goal</span>
