@@ -9,7 +9,6 @@ interface Props {
 
 export default function SubmissionForm({ instagramUsername, onSubmitted }: Props) {
   const [displayName, setDisplayName] = useState('');
-  const [repCount, setRepCount] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'submitting' | 'done' | 'error'>('idle');
@@ -28,7 +27,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!displayName.trim() || !repCount) return;
+    if (!displayName.trim()) return;
 
     setStatus('uploading');
     setErrorMsg('');
@@ -58,7 +57,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
         instagram_username: instagramUsername,
         display_name: displayName.trim(),
         photo_url: photoUrl,
-        rep_count: parseInt(repCount, 10),
+        rep_count: 1,
       }),
     });
 
@@ -87,7 +86,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-50 rounded-2xl p-5 mb-6">
-      <p className="text-sm font-semibold text-gray-800 mb-4">Step 2. Log Today&apos;s Workout</p>
+      <p className="text-sm font-semibold text-gray-800 mb-4">Step 2. Submit Your Proof</p>
 
       <div className="space-y-3">
         <div>
@@ -98,20 +97,6 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Your name"
             maxLength={50}
-            required
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#3182F6]"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Today&apos;s reps</label>
-          <input
-            type="number"
-            value={repCount}
-            onChange={(e) => setRepCount(e.target.value)}
-            placeholder="50"
-            min={1}
-            max={10000}
             required
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#3182F6]"
           />
@@ -143,7 +128,7 @@ export default function SubmissionForm({ instagramUsername, onSubmitted }: Props
 
       <button
         type="submit"
-        disabled={isLoading || !displayName.trim() || !repCount}
+        disabled={isLoading || !displayName.trim()}
         className="mt-4 w-full py-3 bg-[#3182F6] hover:bg-[#1B6AE0] text-white font-semibold rounded-xl disabled:opacity-50 transition-colors"
       >
         {status === 'uploading' ? 'Uploading...' : status === 'submitting' ? 'Submitting...' : 'Submit'}
