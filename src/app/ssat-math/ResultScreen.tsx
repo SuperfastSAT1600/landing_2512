@@ -23,6 +23,84 @@ interface Question {
   choice_e: string;
 }
 
+const CHOICES = ['A', 'B', 'C', 'D', 'E'] as const;
+
+function QuestionModal({
+  question,
+  detail,
+  wasPredicted,
+  onClose,
+}: {
+  question: Question;
+  detail: GradedDetail;
+  wasPredicted: boolean;
+  onClose: () => void;
+}) {
+  const choiceMap: Record<string, string> = {
+    A: question.choice_a, B: question.choice_b, C: question.choice_c,
+    D: question.choice_d, E: question.choice_e,
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 px-0 sm:px-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#0f0f0f] border border-white/10 rounded-t-3xl sm:rounded-2xl p-6 w-full sm:max-w-xl max-h-[85vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 text-sm">Q{question.question_number}</span>
+            {wasPredicted && (
+              <span className="text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-bold">예측함</span>
+            )}
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${detail.is_correct ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+              {detail.is_correct ? '정답' : '오답'}
+            </span>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-white text-2xl leading-none transition-colors">×</button>
+        </div>
+
+        {/* Question */}
+        <div className="text-white text-base font-medium leading-relaxed mb-5">
+          <ContentRenderer content={question.question_text} />
+        </div>
+
+        {/* Choices */}
+        <div className="space-y-2 mb-4">
+          {CHOICES.map(letter => {
+            const isCorrect = letter === detail.correct;
+            const isStudentAnswer = letter === detail.answer;
+            let style = 'border-white/8 bg-white/3 text-gray-400';
+            if (isCorrect) style = 'border-green-500/60 bg-green-500/10 text-green-300';
+            else if (isStudentAnswer) style = 'border-red-500/60 bg-red-500/10 text-red-300';
+
+            return (
+              <div key={letter} className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm ${style}`}>
+                <span className="font-bold shrink-0 mt-0.5">{letter}</span>
+                <ContentRenderer content={choiceMap[letter]} className="inline flex-1" />
+                {isCorrect && <span className="ml-auto shrink-0 text-green-400 text-xs font-bold self-center">정답</span>}
+                {isStudentAnswer && !isCorrect && <span className="ml-auto shrink-0 text-red-400 text-xs font-bold self-center">내 답</span>}
+              </div>
+            );
+          })}
+        </div>
+
+        {!detail.is_correct && (
+          <div className="text-xs text-gray-500 text-center">
+            내 답 <strong className="text-red-400">{detail.answer || '미응답'}</strong>
+            &nbsp;→&nbsp;
+            정답 <strong className="text-green-400">{detail.correct}</strong>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   result: { score: number; total: number; graded_detail: Record<string, GradedDetail> };
   setNumber: number;
@@ -223,11 +301,12 @@ function RevealPhase({
   onReturnToSelect: () => void;
 }) {
   const wrongCount = total - score;
+  const [selectedQ, setSelectedQ] = useState<Question | null>(null);
 
   // Categorise
-  let correctPredictions = 0; // 예측 맞음 (둘 다 틀림)
-  let missedMistakes = 0;     // 실제 틀렸지만 예측 못함
-  let falseAlarms = 0;        // 예측했지만 실제 맞음
+  let correctPredictions = 0;
+  let missedMistakes = 0;
+  let falseAlarms = 0;
 
   questions.forEach(q => {
     const isWrong = !graded_detail[q.id]?.is_correct;
@@ -267,6 +346,7 @@ function RevealPhase({
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500/30 border border-green-500/40 inline-block" /> 정답</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500/30 border border-red-500/40 inline-block" /> 오답</span>
             <span className="flex items-center gap-1 ml-auto">🔴 예측함</span>
+            <span className="text-gray-600">· 클릭하면 문제 확인</span>
           </div>
           <div className="grid grid-cols-5 gap-2">
             {questions.map(q => {
@@ -274,13 +354,14 @@ function RevealPhase({
               const wasPredicted = predicted.has(q.id);
               const detail = graded_detail[q.id];
 
-              let bg = 'bg-green-500/10 border-green-500/20 text-green-400';
-              if (isWrong) bg = 'bg-red-500/10 border-red-500/20 text-red-400';
+              let bg = 'bg-green-500/10 border-green-500/20 text-green-400 hover:bg-green-500/20';
+              if (isWrong) bg = 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20';
 
               return (
-                <div
+                <button
                   key={q.id}
-                  className={`relative flex flex-col items-center justify-center rounded-xl py-3 border text-sm font-bold ${bg}`}
+                  onClick={() => setSelectedQ(q)}
+                  className={`relative flex flex-col items-center justify-center rounded-xl py-3 border text-sm font-bold transition-all active:scale-95 ${bg}`}
                 >
                   {wasPredicted && (
                     <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full text-[9px] text-white flex items-center justify-center font-bold leading-none">●</span>
@@ -290,7 +371,7 @@ function RevealPhase({
                   {isWrong && detail && (
                     <span className="text-[10px] text-gray-500 mt-0.5">→{detail.correct}</span>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -303,6 +384,15 @@ function RevealPhase({
           다른 세트 풀기
         </button>
       </div>
+
+      {selectedQ && graded_detail[selectedQ.id] && (
+        <QuestionModal
+          question={selectedQ}
+          detail={graded_detail[selectedQ.id]}
+          wasPredicted={predicted.has(selectedQ.id)}
+          onClose={() => setSelectedQ(null)}
+        />
+      )}
     </div>
   );
 }
