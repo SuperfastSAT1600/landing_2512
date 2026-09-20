@@ -1,19 +1,13 @@
-export interface SSATQuestion {
-  set_number: number;
-  question_number: number;
-  question_text: string;
-  choice_a: string;
-  choice_b: string;
-  choice_c: string;
-  choice_d: string;
-  choice_e: string;
-  correct_answer: 'A' | 'B' | 'C' | 'D' | 'E';
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  domain: string;
-}
+import { createClient } from '/workspace/node_modules/@supabase/supabase-js/dist/index.mjs';
 
-export const ssatMathQuestions: SSATQuestion[] = [
-  // ===== SET 1 =====
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ualucbrrfvysmfytkdew.supabase.co';
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+// All 150 Upper Level SSAT questions with LaTeX formatting
+const questions = [
+  // SET 1
   { set_number: 1, question_number: 1, question_text: 'If \\(x^2 - 5x + 6 = 0\\), what is the larger root?', choice_a: '1', choice_b: '2', choice_c: '3', choice_d: '4', choice_e: '5', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 1, question_number: 2, question_text: 'If \\(2^x = 32\\), what is the value of \\(2^{x+2}\\)?', choice_a: '64', choice_b: '96', choice_c: '112', choice_d: '128', choice_e: '256', correct_answer: 'D', difficulty: 'Hard', domain: 'Number Operations' },
   { set_number: 1, question_number: 3, question_text: 'If \\(f(x) = x^2 + 2x - 3\\), what is \\(f(-2)\\)?', choice_a: '-5', choice_b: '-4', choice_c: '-3', choice_d: '-2', choice_e: '-1', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
@@ -29,8 +23,7 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 1, question_number: 13, question_text: 'What is the sum of the arithmetic series \\(3 + 6 + 9 + \\cdots + 60\\)?', choice_a: '580', choice_b: '600', choice_c: '620', choice_d: '630', choice_e: '650', correct_answer: 'D', difficulty: 'Hard', domain: 'Number Operations' },
   { set_number: 1, question_number: 14, question_text: 'What is the median of the data set: 7, 12, 3, 18, 5, 9, 14?', choice_a: '7', choice_b: '8', choice_c: '9', choice_d: '10', choice_e: '12', correct_answer: 'C', difficulty: 'Medium', domain: 'Probability & Statistics' },
   { set_number: 1, question_number: 15, question_text: 'A car travels 120 miles at 60 mph, then returns 120 miles at 40 mph. What is the average speed for the entire trip in mph?', choice_a: '44', choice_b: '46', choice_c: '48', choice_d: '50', choice_e: '52', correct_answer: 'C', difficulty: 'Hard', domain: 'Word Problems' },
-
-  // ===== SET 2 =====
+  // SET 2
   { set_number: 2, question_number: 1, question_text: 'If \\(x^2 - 7x + 12 = 0\\), what is the sum of the solutions?', choice_a: '5', choice_b: '6', choice_c: '7', choice_d: '8', choice_e: '9', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 2, question_number: 2, question_text: 'What is the value of \\(3^4 \\times 3^{-2}\\)?', choice_a: '3', choice_b: '6', choice_c: '9', choice_d: '12', choice_e: '27', correct_answer: 'C', difficulty: 'Medium', domain: 'Number Operations' },
   { set_number: 2, question_number: 3, question_text: 'What is the minimum value of \\(y = x^2 - 4x + 4\\)?', choice_a: '-2', choice_b: '-1', choice_c: '0', choice_d: '1', choice_e: '2', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
@@ -46,8 +39,7 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 2, question_number: 13, question_text: 'A cone has radius 5 and slant height 13. What is its lateral surface area in terms of \\(\\pi\\)?', choice_a: '\\(45\\pi\\)', choice_b: '\\(55\\pi\\)', choice_c: '\\(60\\pi\\)', choice_d: '\\(65\\pi\\)', choice_e: '\\(75\\pi\\)', correct_answer: 'D', difficulty: 'Hard', domain: 'Geometry' },
   { set_number: 2, question_number: 14, question_text: 'If \\(5^{x-1} = 25^{x-3}\\), what is \\(x\\)?', choice_a: '3', choice_b: '4', choice_c: '5', choice_d: '6', choice_e: '7', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 2, question_number: 15, question_text: 'What is the sum of the first 8 terms of the geometric sequence \\(2, 6, 18, 54, \\ldots\\)?', choice_a: '2186', choice_b: '3280', choice_c: '4920', choice_d: '6560', choice_e: '9840', correct_answer: 'D', difficulty: 'Hard', domain: 'Number Operations' },
-
-  // ===== SET 3 =====
+  // SET 3
   { set_number: 3, question_number: 1, question_text: 'If \\(2^{2x} = 64\\), what is \\(x\\)?', choice_a: '2', choice_b: '3', choice_c: '4', choice_d: '5', choice_e: '6', correct_answer: 'B', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 3, question_number: 2, question_text: 'What are the coordinates of the midpoint of the segment from \\(A(1, 2)\\) to \\(B(4, 6)\\)?', choice_a: '(2, 3.5)', choice_b: '(2.5, 4)', choice_c: '(3, 4)', choice_d: '(3, 4.5)', choice_e: '(3.5, 4)', correct_answer: 'B', difficulty: 'Medium', domain: 'Geometry' },
   { set_number: 3, question_number: 3, question_text: 'If \\(p\\) and \\(q\\) are prime numbers and \\(pq = 77\\), what is \\(p + q\\)?', choice_a: '14', choice_b: '16', choice_c: '18', choice_d: '20', choice_e: '22', correct_answer: 'C', difficulty: 'Medium', domain: 'Number Operations' },
@@ -63,8 +55,7 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 3, question_number: 13, question_text: 'What is the area of a regular hexagon with side length 6?', choice_a: '\\(36\\sqrt{3}\\)', choice_b: '\\(48\\sqrt{3}\\)', choice_c: '\\(54\\sqrt{3}\\)', choice_d: '\\(60\\sqrt{3}\\)', choice_e: '\\(72\\sqrt{3}\\)', correct_answer: 'C', difficulty: 'Hard', domain: 'Geometry' },
   { set_number: 3, question_number: 14, question_text: 'A set of 6 numbers has a mean of 15. If 4 is added to each number, what is the new mean?', choice_a: '15', choice_b: '17', choice_c: '19', choice_d: '21', choice_e: '23', correct_answer: 'C', difficulty: 'Medium', domain: 'Probability & Statistics' },
   { set_number: 3, question_number: 15, question_text: 'For what value of \\(k\\) does \\(kx^2 + 12x + 9 = 0\\) have exactly one real solution?', choice_a: '1', choice_b: '2', choice_c: '3', choice_d: '4', choice_e: '6', correct_answer: 'D', difficulty: 'Hard', domain: 'Algebra' },
-
-  // ===== SET 4 =====
+  // SET 4
   { set_number: 4, question_number: 1, question_text: 'If \\(f(x) = 3x - 2\\) and \\(g(x) = x^2 + 1\\), what is \\(f(g(2))\\)?', choice_a: '9', choice_b: '11', choice_c: '13', choice_d: '15', choice_e: '17', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 4, question_number: 2, question_text: 'What is the value of \\(\\dfrac{\\sqrt{75} - \\sqrt{12}}{\\sqrt{3}}\\)?', choice_a: '1', choice_b: '2', choice_c: '3', choice_d: '4', choice_e: '5', correct_answer: 'C', difficulty: 'Hard', domain: 'Number Operations' },
   { set_number: 4, question_number: 3, question_text: 'A cylinder has radius 4 and height 10. What is its volume in terms of \\(\\pi\\)?', choice_a: '\\(120\\pi\\)', choice_b: '\\(140\\pi\\)', choice_c: '\\(160\\pi\\)', choice_d: '\\(180\\pi\\)', choice_e: '\\(200\\pi\\)', correct_answer: 'C', difficulty: 'Medium', domain: 'Geometry' },
@@ -80,8 +71,7 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 4, question_number: 13, question_text: 'How many pounds of $8/lb coffee must be mixed with 12 lb of $5/lb coffee to make a blend worth $6/lb?', choice_a: '4', choice_b: '5', choice_c: '6', choice_d: '7', choice_e: '8', correct_answer: 'C', difficulty: 'Hard', domain: 'Word Problems' },
   { set_number: 4, question_number: 14, question_text: 'A sequence is defined by \\(a_1 = 2\\) and \\(a_n = 3a_{n-1} - 1\\). What is \\(a_4\\)?', choice_a: '35', choice_b: '38', choice_c: '41', choice_d: '44', choice_e: '47', correct_answer: 'C', difficulty: 'Hard', domain: 'Number Operations' },
   { set_number: 4, question_number: 15, question_text: 'The sum of the squares of two consecutive positive integers is 85. What is the larger integer?', choice_a: '5', choice_b: '6', choice_c: '7', choice_d: '8', choice_e: '9', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
-
-  // ===== SET 5 =====
+  // SET 5
   { set_number: 5, question_number: 1, question_text: 'If \\(9^x = 27\\), what is \\(x\\)?', choice_a: '1', choice_b: '\\(\\frac{3}{2}\\)', choice_c: '2', choice_d: '\\(\\frac{5}{2}\\)', choice_e: '3', correct_answer: 'B', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 5, question_number: 2, question_text: 'A rhombus has diagonals of length 10 and 24. What is its perimeter?', choice_a: '40', choice_b: '44', choice_c: '48', choice_d: '52', choice_e: '56', correct_answer: 'D', difficulty: 'Hard', domain: 'Geometry' },
   { set_number: 5, question_number: 3, question_text: 'A bag contains 3 red, 4 blue, and 5 green balls. Two balls are drawn without replacement. What is the probability both are red?', choice_a: '\\(\\frac{1}{22}\\)', choice_b: '\\(\\frac{1}{16}\\)', choice_c: '\\(\\frac{1}{12}\\)', choice_d: '\\(\\frac{1}{8}\\)', choice_e: '\\(\\frac{3}{22}\\)', correct_answer: 'A', difficulty: 'Hard', domain: 'Probability & Statistics' },
@@ -97,8 +87,7 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 5, question_number: 13, question_text: 'Five students scored 70, 80, 90, 85, and 75 on a test. What is the variance of the scores?', choice_a: '30', choice_b: '40', choice_c: '50', choice_d: '60', choice_e: '70', correct_answer: 'C', difficulty: 'Hard', domain: 'Probability & Statistics' },
   { set_number: 5, question_number: 14, question_text: 'Train A leaves City X at 8 AM at 60 mph. Train B leaves City X at 10 AM at 90 mph in the same direction. At what time does Train B overtake Train A?', choice_a: '12 PM', choice_b: '1 PM', choice_c: '2 PM', choice_d: '3 PM', choice_e: '4 PM', correct_answer: 'C', difficulty: 'Hard', domain: 'Word Problems' },
   { set_number: 5, question_number: 15, question_text: 'What values of \\(x\\) satisfy \\(\\dfrac{x - 2}{x + 3} = \\dfrac{2}{x + 3}\\), given \\(x \\neq -3\\)?', choice_a: 'x = -3', choice_b: 'x = 0', choice_c: 'x = 2', choice_d: 'x = 4', choice_e: 'No solution', correct_answer: 'D', difficulty: 'Hard', domain: 'Algebra' },
-
-  // ===== SET 6 =====
+  // SET 6
   { set_number: 6, question_number: 1, question_text: 'The roots of \\(x^2 + bx + c = 0\\) are 3 and -7. What is \\(b + c\\)?', choice_a: '-21', choice_b: '-17', choice_c: '-13', choice_d: '-4', choice_e: '4', correct_answer: 'B', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 6, question_number: 2, question_text: 'What is the distance from point \\((2, -1)\\) to the line \\(3x - 4y + 5 = 0\\)?', choice_a: '1', choice_b: '2', choice_c: '3', choice_d: '4', choice_e: '5', correct_answer: 'C', difficulty: 'Hard', domain: 'Geometry' },
   { set_number: 6, question_number: 3, question_text: 'If \\(x\\)% of 80 equals 12, what is \\(x\\)?', choice_a: '10', choice_b: '12', choice_c: '15', choice_d: '18', choice_e: '20', correct_answer: 'C', difficulty: 'Medium', domain: 'Number Operations' },
@@ -114,8 +103,7 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 6, question_number: 13, question_text: 'A sphere has surface area \\(100\\pi\\). What is its radius?', choice_a: '4', choice_b: '5', choice_c: '6', choice_d: '7', choice_e: '8', correct_answer: 'B', difficulty: 'Hard', domain: 'Geometry' },
   { set_number: 6, question_number: 14, question_text: 'A 12% acid solution and a 20% acid solution are mixed to make 60 liters of 15% solution. How many liters of the 12% solution are needed?', choice_a: '30', choice_b: '33', choice_c: '35', choice_d: '37.5', choice_e: '40', correct_answer: 'D', difficulty: 'Hard', domain: 'Word Problems' },
   { set_number: 6, question_number: 15, question_text: 'For \\(f(x) = 2x^2 - 8x + 6\\), what is the x-coordinate of the vertex?', choice_a: '1', choice_b: '2', choice_c: '3', choice_d: '4', choice_e: '-2', correct_answer: 'B', difficulty: 'Hard', domain: 'Algebra' },
-
-  // ===== SET 7 =====
+  // SET 7
   { set_number: 7, question_number: 1, question_text: 'If \\(|2x - 6| = 10\\), what is the sum of all solutions?', choice_a: '2', choice_b: '4', choice_c: '6', choice_d: '8', choice_e: '10', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 7, question_number: 2, question_text: 'What is the equation of the circle with center \\((2, -3)\\) and radius 4?', choice_a: '\\((x+2)^2+(y-3)^2=16\\)', choice_b: '\\((x-2)^2+(y+3)^2=4\\)', choice_c: '\\((x-2)^2+(y+3)^2=16\\)', choice_d: '\\((x+2)^2+(y-3)^2=4\\)', choice_e: '\\((x-2)^2+(y-3)^2=16\\)', correct_answer: 'C', difficulty: 'Hard', domain: 'Geometry' },
   { set_number: 7, question_number: 3, question_text: 'What is the value of \\(\\dfrac{5!}{3! \\times 2!}\\)?', choice_a: '6', choice_b: '8', choice_c: '10', choice_d: '12', choice_e: '15', correct_answer: 'C', difficulty: 'Medium', domain: 'Number Operations' },
@@ -131,8 +119,7 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 7, question_number: 13, question_text: 'A car depreciates 15% per year. If it costs $20,000 now, what will it be worth in 2 years?', choice_a: '$12,000', choice_b: '$13,600', choice_c: '$14,450', choice_d: '$14,500', choice_e: '$15,000', correct_answer: 'C', difficulty: 'Hard', domain: 'Word Problems' },
   { set_number: 7, question_number: 14, question_text: 'What is the sum of the first 5 terms of the geometric sequence with first term 2 and common ratio 3?', choice_a: '182', choice_b: '242', choice_c: '302', choice_d: '362', choice_e: '422', correct_answer: 'B', difficulty: 'Hard', domain: 'Number Operations' },
   { set_number: 7, question_number: 15, question_text: 'If \\(2x - y = 5\\) and \\(x + 2y = 10\\), what is \\(5x + 5y\\)?', choice_a: '25', choice_b: '30', choice_c: '35', choice_d: '40', choice_e: '45', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
-
-  // ===== SET 8 =====
+  // SET 8
   { set_number: 8, question_number: 1, question_text: 'What is the sum of the roots of \\(3x^2 - 6x + 2 = 0\\)?', choice_a: '1', choice_b: '2', choice_c: '3', choice_d: '4', choice_e: '6', correct_answer: 'B', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 8, question_number: 2, question_text: 'The sides of a triangle are in ratio 3:4:5 and its perimeter is 60. What is its area?', choice_a: '100', choice_b: '125', choice_c: '150', choice_d: '175', choice_e: '200', correct_answer: 'C', difficulty: 'Hard', domain: 'Geometry' },
   { set_number: 8, question_number: 3, question_text: 'What is the value of \\(\\left(\\dfrac{2}{3}\\right)^{-2}\\)?', choice_a: '\\(\\frac{4}{9}\\)', choice_b: '\\(\\frac{2}{3}\\)', choice_c: '\\(\\frac{3}{2}\\)', choice_d: '\\(\\frac{9}{4}\\)', choice_e: '4', correct_answer: 'D', difficulty: 'Hard', domain: 'Number Operations' },
@@ -148,8 +135,7 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 8, question_number: 13, question_text: 'An airplane travels 500 miles with the wind in 2 hours and 500 miles against the wind in 2.5 hours. What is the wind speed in mph?', choice_a: '20', choice_b: '25', choice_c: '30', choice_d: '35', choice_e: '40', correct_answer: 'B', difficulty: 'Hard', domain: 'Word Problems' },
   { set_number: 8, question_number: 14, question_text: 'How many integers from 1 to 100 are divisible by 3 or 5 but NOT by both?', choice_a: '37', choice_b: '39', choice_c: '41', choice_d: '43', choice_e: '47', correct_answer: 'C', difficulty: 'Hard', domain: 'Number Operations' },
   { set_number: 8, question_number: 15, question_text: 'If \\(x + y = 8\\) and \\(x^2 + y^2 = 40\\), what is \\(xy\\)?', choice_a: '8', choice_b: '10', choice_c: '12', choice_d: '14', choice_e: '16', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
-
-  // ===== SET 9 =====
+  // SET 9
   { set_number: 9, question_number: 1, question_text: 'The graph of \\(y = 3x^2 - 12x + 9\\) crosses the x-axis at \\(x = a\\) and \\(x = b\\). What is \\(|a - b|\\)?', choice_a: '1', choice_b: '2', choice_c: '3', choice_d: '4', choice_e: '6', correct_answer: 'B', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 9, question_number: 2, question_text: 'In a right triangle, one acute angle is 30°. If the hypotenuse is 16, what is the length of the shorter leg?', choice_a: '4', choice_b: '6', choice_c: '8', choice_d: '10', choice_e: '12', correct_answer: 'C', difficulty: 'Hard', domain: 'Geometry' },
   { set_number: 9, question_number: 3, question_text: 'Which of the following has the greatest value?', choice_a: '\\(2^{10}\\)', choice_b: '\\(3^7\\)', choice_c: '\\(5^4\\)', choice_d: '\\(10^3\\)', choice_e: '\\(7^4\\)', correct_answer: 'E', difficulty: 'Medium', domain: 'Number Operations' },
@@ -165,8 +151,7 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 9, question_number: 13, question_text: 'If the \\(n\\)th term of a sequence is given by \\(2n^2 - n\\), what is the sum of the 3rd and 5th terms?', choice_a: '50', choice_b: '55', choice_c: '60', choice_d: '65', choice_e: '70', correct_answer: 'C', difficulty: 'Hard', domain: 'Number Operations' },
   { set_number: 9, question_number: 14, question_text: 'A tank is \\(\\dfrac{3}{4}\\) full. When 30 gallons are removed, it becomes \\(\\dfrac{1}{2}\\) full. What is the total capacity of the tank?', choice_a: '90', choice_b: '100', choice_c: '110', choice_d: '120', choice_e: '150', correct_answer: 'D', difficulty: 'Hard', domain: 'Word Problems' },
   { set_number: 9, question_number: 15, question_text: 'For what value(s) of \\(x\\) is \\(\\dfrac{x}{x-2}\\) undefined or equal to zero? What is the sum of those values?', choice_a: '0', choice_b: '2', choice_c: '-2', choice_d: '4', choice_e: 'The function is always defined', correct_answer: 'B', difficulty: 'Hard', domain: 'Algebra' },
-
-  // ===== SET 10 =====
+  // SET 10
   { set_number: 10, question_number: 1, question_text: 'What is the product of the roots of \\(2x^2 - 5x + 3 = 0\\)?', choice_a: '\\(\\frac{1}{2}\\)', choice_b: '1', choice_c: '\\(\\frac{3}{2}\\)', choice_d: '2', choice_e: '\\(\\frac{5}{2}\\)', correct_answer: 'C', difficulty: 'Hard', domain: 'Algebra' },
   { set_number: 10, question_number: 2, question_text: 'In a circle, chord AB has length 16 and is 6 cm from the center. What is the radius?', choice_a: '8', choice_b: '9', choice_c: '10', choice_d: '11', choice_e: '12', correct_answer: 'C', difficulty: 'Hard', domain: 'Geometry' },
   { set_number: 10, question_number: 3, question_text: 'If \\(a = 0.\\overline{1}\\) and \\(b = 0.\\overline{2}\\), what is \\(\\dfrac{1}{a+b}\\)?', choice_a: '\\(\\frac{1}{3}\\)', choice_b: '1', choice_c: '3', choice_d: '9', choice_e: '27', correct_answer: 'C', difficulty: 'Hard', domain: 'Number Operations' },
@@ -183,3 +168,32 @@ export const ssatMathQuestions: SSATQuestion[] = [
   { set_number: 10, question_number: 14, question_text: 'What is the units digit of \\(7^{53}\\)?', choice_a: '1', choice_b: '3', choice_c: '7', choice_d: '9', choice_e: '4', correct_answer: 'C', difficulty: 'Hard', domain: 'Number Operations' },
   { set_number: 10, question_number: 15, question_text: 'If \\(f(x) = \\dfrac{x}{x+1}\\), what is \\(f(f(x))\\)?', choice_a: '\\(\\dfrac{x}{x+2}\\)', choice_b: '\\(\\dfrac{x}{2x+1}\\)', choice_c: '\\(\\dfrac{x}{x^2+1}\\)', choice_d: '\\(\\dfrac{2x}{x+1}\\)', choice_e: '\\(\\dfrac{x}{x+2}\\)', correct_answer: 'B', difficulty: 'Hard', domain: 'Algebra' },
 ];
+
+async function seed() {
+  console.log('Deleting existing SSAT math questions...');
+  const { error: deleteError } = await supabase
+    .from('ssat_math_questions')
+    .delete()
+    .gte('set_number', 1);
+
+  if (deleteError) {
+    console.error('Delete error:', deleteError);
+    process.exit(1);
+  }
+
+  console.log(`Inserting ${questions.length} questions in batches...`);
+  const BATCH = 30;
+  for (let i = 0; i < questions.length; i += BATCH) {
+    const batch = questions.slice(i, i + BATCH);
+    const { error } = await supabase.from('ssat_math_questions').insert(batch);
+    if (error) {
+      console.error(`Batch ${i / BATCH + 1} error:`, error);
+      process.exit(1);
+    }
+    console.log(`Batch ${i / BATCH + 1} inserted (${i + batch.length}/${questions.length})`);
+  }
+
+  console.log('Done! All questions seeded with LaTeX formatting.');
+}
+
+seed();
