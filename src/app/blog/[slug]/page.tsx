@@ -202,7 +202,7 @@ export default async function Post({ params }: Props) {
                         <PostContent postData={postData} />
                     ) : (
                         <>
-                            <div className={`prose max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl prose-table:border-collapse text-[1.0625rem] leading-[1.5] break-keep [&_p]:mb-5 [&_p]:break-keep [&_li]:break-keep [&_h2]:text-[1.375rem] [&_h2]:font-extrabold [&_h2]:mt-14 [&_h2]:mb-3 [&_h2]:leading-[1.41] [&_h3]:text-[1.1875rem] [&_h3]:font-bold [&_h3]:mt-9 [&_h3]:mb-2 [&_h3]:leading-[1.47] [&_figcaption]:text-[0.8125rem] [&_figcaption]:leading-[1.5] [&_figcaption]:text-gray-400 [&_figcaption]:mt-2 [&_figcaption]:text-center [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200 [&_td]:p-3 [&_th]:p-3 [&_th]:bg-gray-50 [&_th]:font-semibold [&_.instagram-reel-wrapper]:flex [&_.instagram-reel-wrapper]:justify-center [&_.instagram-reel-wrapper]:py-4 [&_.instagram-reel-embed]:max-w-[420px] [&_.instagram-reel-embed]:w-full [&_.instagram-reel-embed]:rounded-2xl [&_.instagram-reel-embed]:border-0`}>
+                            <div className={`prose max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl prose-table:border-collapse text-[1rem] leading-[1.7] sm:text-[1.0625rem] sm:leading-[1.5] break-keep [&_p]:mb-7 sm:[&_p]:mb-5 [&_p]:break-keep [&_li]:break-keep [&_h2]:text-[1.25rem] sm:[&_h2]:text-[1.375rem] [&_h2]:font-extrabold [&_h2]:mt-8 sm:[&_h2]:mt-14 [&_h2]:mb-3 [&_h2]:leading-[1.41] [&_h3]:text-[1.125rem] sm:[&_h3]:text-[1.1875rem] [&_h3]:font-bold [&_h3]:mt-9 [&_h3]:mb-2 [&_h3]:leading-[1.47] [&_figcaption]:text-[0.8125rem] [&_figcaption]:leading-[1.5] [&_figcaption]:text-gray-400 [&_figcaption]:mt-2 [&_figcaption]:text-center [&_table]:block [&_table]:overflow-x-auto [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200 [&_td]:p-3 [&_th]:p-3 [&_th]:bg-gray-50 [&_th]:font-semibold [&_.instagram-reel-wrapper]:flex [&_.instagram-reel-wrapper]:justify-center [&_.instagram-reel-wrapper]:py-4 [&_.instagram-reel-embed]:max-w-[420px] [&_.instagram-reel-embed]:w-full [&_.instagram-reel-embed]:rounded-2xl [&_.instagram-reel-embed]:border-0`}>
                                 <div dangerouslySetInnerHTML={{ __html: postData.contentHtml ?? '' }} />
                             </div>
                             <HighlightObserver />
@@ -221,8 +221,6 @@ export default async function Post({ params }: Props) {
                                     </div>
                                 </div>
                             )}
-                            {/* Sentinel: popup triggers when this becomes visible */}
-                            <div id="post-end-sentinel" className="h-px mt-8" />
                         </>
                     )}
                 </article>
@@ -277,6 +275,9 @@ export default async function Post({ params }: Props) {
                         </div>
                     </div>
                 )}
+
+                {/* Sentinel: 페이지 맨 끝에 도달했을 때 팝업 트리거 */}
+                <div id="post-end-sentinel" className="h-px" />
             </main>
 
             {(popupTargetPost || relatedPosts.length > 0) && (
