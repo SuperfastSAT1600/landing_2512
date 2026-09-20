@@ -2,11 +2,25 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useAdminAuth } from '@/lib/useAdminAuth';
+import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 
 interface GradedDetail {
   answer: string;
   correct: string;
   is_correct: boolean;
+}
+
+interface Question {
+  id: string;
+  question_number: number;
+  question_text: string;
+  choice_a: string;
+  choice_b: string;
+  choice_c: string;
+  choice_d: string;
+  choice_e: string;
+  difficulty: string;
+  domain: string;
 }
 
 interface StudentResult {
@@ -19,6 +33,14 @@ interface StudentResult {
   graded_detail: Record<string, GradedDetail>;
   submitted_at: string;
 }
+
+interface SelectedQuestion {
+  question: Question;
+  detail: GradedDetail;
+  studentId: string;
+}
+
+const CHOICES = ['A', 'B', 'C', 'D', 'E'] as const;
 
 function pad(n: number) {
   return n.toString().padStart(2, '0');
@@ -34,28 +56,118 @@ function formatDate(iso: string) {
   return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function QuestionModal({ selected, onClose }: { selected: SelectedQuestion; onClose: () => void }) {
+  const { question: q, detail, studentId } = selected;
+  const choiceMap: Record<string, string> = {
+    A: q.choice_a, B: q.choice_b, C: q.choice_c, D: q.choice_d, E: q.choice_e,
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#1a1c1f] border border-white/10 rounded-2xl p-6 max-w-xl w-full max-h-[80vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+              {q.domain} · {q.difficulty}
+            </div>
+            <div className="text-sm text-gray-400">
+              Q{q.question_number} · {studentId.split('_')[0]}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={`text-sm font-bold px-2 py-1 rounded-lg ${detail.is_correct ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+              {detail.is_correct ? '정답' : '오답'}
+            </span>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-white transition-colors text-xl leading-none"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Question text */}
+        <div className="text-white text-base font-medium leading-relaxed mb-5">
+          <ContentRenderer content={q.question_text} />
+        </div>
+
+        {/* Choices */}
+        <div className="space-y-2">
+          {CHOICES.map(letter => {
+            const isCorrect = letter === detail.correct;
+            const isStudentAnswer = letter === detail.answer;
+            let bg = 'border-white/10 bg-[#09090b] text-gray-400';
+            if (isCorrect) bg = 'border-green-500 bg-green-500/10 text-green-300';
+            else if (isStudentAnswer && !isCorrect) bg = 'border-red-500 bg-red-500/10 text-red-300';
+
+            return (
+              <div
+                key={letter}
+                className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm ${bg}`}
+              >
+                <span className="font-bold shrink-0">{letter}</span>
+                <ContentRenderer content={choiceMap[letter]} className="inline" />
+                {isCorrect && <span className="ml-auto shrink-0 text-green-400 text-xs font-bold">정답</span>}
+                {isStudentAnswer && !isCorrect && <span className="ml-auto shrink-0 text-red-400 text-xs font-bold">학생 답</span>}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer summary */}
+        {!detail.is_correct && (
+          <div className="mt-4 flex gap-4 text-sm text-gray-500">
+            <span>학생 답: <strong className="text-red-400">{detail.answer || '미응답'}</strong></span>
+            <span>정답: <strong className="text-green-400">{detail.correct}</strong></span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SSATMathAdminPage() {
   const { adminKey } = useAdminAuth();
   const [activeSet, setActiveSet] = useState(1);
   const [results, setResults] = useState<StudentResult[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedQuestion, setSelectedQuestion] = useState<SelectedQuestion | null>(null);
 
   const fetchResults = useCallback(async (setNumber: number) => {
     if (!adminKey) return;
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/admin/ssat-math/results?set_number=${setNumber}`, {
-        headers: { 'x-admin-key': adminKey },
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error?.message ?? '결과를 불러올 수 없습니다.');
+      const [resResults, resQuestions] = await Promise.all([
+        fetch(`/api/admin/ssat-math/results?set_number=${setNumber}`, {
+          headers: { 'x-admin-key': adminKey },
+        }),
+        fetch(`/api/ssat-math/sets/${setNumber}/questions`),
+      ]);
+
+      const jsonResults = await resResults.json();
+      const jsonQuestions = await resQuestions.json();
+
+      if (!resResults.ok) {
+        setError(jsonResults.error?.message ?? '결과를 불러올 수 없습니다.');
         setResults([]);
-        return;
+      } else {
+        setResults(jsonResults.data as StudentResult[]);
       }
-      setResults(json.data as StudentResult[]);
+
+      if (resQuestions.ok) {
+        setQuestions((jsonQuestions.data?.questions ?? []) as Question[]);
+      }
     } catch {
       setError('네트워크 오류가 발생했습니다.');
     } finally {
@@ -67,13 +179,15 @@ export default function SSATMathAdminPage() {
     fetchResults(activeSet);
   }, [activeSet, fetchResults]);
 
+  // Build UUID → Question map
+  const questionMap = Object.fromEntries(questions.map(q => [q.id, q]));
+
+  // Ordered question IDs by question_number
+  const orderedQIds = questions.map(q => q.id);
+
   const avgScore = results.length > 0
     ? (results.reduce((sum, r) => sum + r.score, 0) / results.length).toFixed(1)
     : '-';
-
-  const questionIds = results.length > 0
-    ? Object.keys(results[0].graded_detail).sort()
-    : [];
 
   return (
     <div className="p-6 min-h-screen bg-[#151719] text-gray-200">
@@ -81,7 +195,7 @@ export default function SSATMathAdminPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">SSAT Math 결과</h1>
-            <p className="text-gray-500 text-sm mt-1">학생들의 세트별 정오답 결과</p>
+            <p className="text-gray-500 text-sm mt-1">학생들의 세트별 정오답 결과 · 문제 클릭 시 내용 확인</p>
           </div>
           <button
             onClick={() => fetchResults(activeSet)}
@@ -144,19 +258,16 @@ export default function SSATMathAdminPage() {
                   <th className="text-center px-3 py-3 whitespace-nowrap">점수</th>
                   <th className="text-center px-3 py-3 whitespace-nowrap">시간</th>
                   <th className="text-center px-3 py-3 whitespace-nowrap">제출</th>
-                  {Array.from({ length: 15 }, (_, i) => (
-                    <th key={i} className="text-center px-2 py-3 whitespace-nowrap">Q{i + 1}</th>
+                  {questions.map(q => (
+                    <th key={q.id} className="text-center px-2 py-3 whitespace-nowrap">
+                      Q{q.question_number}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {results.map(r => {
                   const displayName = r.student_id.split('_')[0] ?? r.student_id;
-                  const detailEntries = Object.entries(r.graded_detail);
-                  const sortedDetails = detailEntries.sort((a, b) => {
-                    const findQ = (id: string) => questionIds.indexOf(id);
-                    return findQ(a[0]) - findQ(b[0]);
-                  });
                   return (
                     <tr key={r.id} className="hover:bg-white/3 transition-colors">
                       <td className="px-4 py-3 text-white font-medium whitespace-nowrap">{displayName}</td>
@@ -171,16 +282,29 @@ export default function SSATMathAdminPage() {
                       <td className="px-3 py-3 text-center text-gray-500 whitespace-nowrap text-xs">
                         {formatDate(r.submitted_at)}
                       </td>
-                      {sortedDetails.map(([qid, detail]) => (
-                        <td key={qid} className="px-2 py-3 text-center">
-                          {detail.is_correct
-                            ? <span className="text-green-400 font-bold">O</span>
-                            : detail.answer
-                            ? <span className="text-red-400 font-bold">X</span>
-                            : <span className="text-gray-600">-</span>
-                          }
-                        </td>
-                      ))}
+                      {orderedQIds.map(qid => {
+                        const detail = r.graded_detail[qid];
+                        const question = questionMap[qid];
+                        if (!detail || !question) {
+                          return <td key={qid} className="px-2 py-3 text-center"><span className="text-gray-600">-</span></td>;
+                        }
+                        return (
+                          <td key={qid} className="px-2 py-3 text-center">
+                            <button
+                              onClick={() => setSelectedQuestion({ question, detail, studentId: r.student_id })}
+                              className={`w-7 h-7 rounded-md font-bold text-xs transition-all hover:scale-110 hover:ring-2 ${
+                                detail.is_correct
+                                  ? 'text-green-400 hover:ring-green-500/50 hover:bg-green-500/10'
+                                  : detail.answer
+                                  ? 'text-red-400 hover:ring-red-500/50 hover:bg-red-500/10'
+                                  : 'text-gray-600 hover:ring-white/20 hover:bg-white/5'
+                              }`}
+                            >
+                              {detail.is_correct ? 'O' : detail.answer ? 'X' : '-'}
+                            </button>
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
@@ -189,6 +313,13 @@ export default function SSATMathAdminPage() {
           </div>
         )}
       </div>
+
+      {selectedQuestion && (
+        <QuestionModal
+          selected={selectedQuestion}
+          onClose={() => setSelectedQuestion(null)}
+        />
+      )}
     </div>
   );
 }
