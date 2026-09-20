@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 
 interface Question {
   id: string;
@@ -135,7 +136,9 @@ export function TestScreen({ setNumber, questions, studentId, onComplete }: Prop
       {/* Question */}
       <div className="flex-1 max-w-2xl mx-auto w-full px-4 py-8">
         <div className="mb-2 text-xs text-gray-500 uppercase tracking-wider">{q.domain} · {q.difficulty}</div>
-        <p className="text-lg font-medium leading-relaxed mb-8 whitespace-pre-wrap">{q.question_text}</p>
+        <div className="text-lg font-medium leading-relaxed mb-8">
+          <ContentRenderer content={q.question_text} />
+        </div>
 
         <div className="space-y-3">
           {CHOICES.map(letter => {
@@ -151,7 +154,7 @@ export function TestScreen({ setNumber, questions, studentId, onComplete }: Prop
                 }`}
               >
                 <span className={`font-bold mr-3 ${selected ? 'text-[#6085FF]' : 'text-gray-500'}`}>{letter}</span>
-                {choiceMap[letter]}
+                <ContentRenderer content={choiceMap[letter]} className="inline" />
               </button>
             );
           })}
