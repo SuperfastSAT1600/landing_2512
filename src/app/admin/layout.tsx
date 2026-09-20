@@ -30,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
             { href: '/admin/fulltest', label: 'Test Contents' },
             { href: '/admin/mathweb', label: 'Math Web' },
             { href: '/admin/mission', label: '미션 챌린지' },
+            { href: '/admin/ssat-math', label: 'SSAT Math' },
         ]
     },
     { href: '/admin/popup-settings', label: '팝업 설정', icon: '🔔' },
