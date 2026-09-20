@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
+
+const POLL_INTERVAL = 5000; // 5초마다 자동 갱신
 
 interface GradedDetail {
   answer: string;
@@ -56,6 +58,10 @@ function formatDate(iso: string) {
   return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function formatClock(d: Date) {
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
 function QuestionModal({ selected, onClose }: { selected: SelectedQuestion; onClose: () => void }) {
   const { question: q, detail, studentId } = selected;
   const choiceMap: Record<string, string> = {
@@ -71,7 +77,6 @@ function QuestionModal({ selected, onClose }: { selected: SelectedQuestion; onCl
         className="bg-[#1a1c1f] border border-white/10 rounded-2xl p-6 max-w-xl w-full max-h-[80vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
@@ -85,21 +90,14 @@ function QuestionModal({ selected, onClose }: { selected: SelectedQuestion; onCl
             <span className={`text-sm font-bold px-2 py-1 rounded-lg ${detail.is_correct ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
               {detail.is_correct ? '정답' : '오답'}
             </span>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-white transition-colors text-xl leading-none"
-            >
-              ×
-            </button>
+            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-xl leading-none">×</button>
           </div>
         </div>
 
-        {/* Question text */}
         <div className="text-white text-base font-medium leading-relaxed mb-5">
           <ContentRenderer content={q.question_text} />
         </div>
 
-        {/* Choices */}
         <div className="space-y-2">
           {CHOICES.map(letter => {
             const isCorrect = letter === detail.correct;
@@ -109,10 +107,7 @@ function QuestionModal({ selected, onClose }: { selected: SelectedQuestion; onCl
             else if (isStudentAnswer && !isCorrect) bg = 'border-red-500 bg-red-500/10 text-red-300';
 
             return (
-              <div
-                key={letter}
-                className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm ${bg}`}
-              >
+              <div key={letter} className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm ${bg}`}>
                 <span className="font-bold shrink-0">{letter}</span>
                 <ContentRenderer content={choiceMap[letter]} className="inline" />
                 {isCorrect && <span className="ml-auto shrink-0 text-green-400 text-xs font-bold">정답</span>}
@@ -122,7 +117,6 @@ function QuestionModal({ selected, onClose }: { selected: SelectedQuestion; onCl
           })}
         </div>
 
-        {/* Footer summary */}
         {!detail.is_correct && (
           <div className="mt-4 flex gap-4 text-sm text-gray-500">
             <span>학생 답: <strong className="text-red-400">{detail.answer || '미응답'}</strong></span>
@@ -139,50 +133,94 @@ export default function SSATMathAdminPage() {
   const [activeSet, setActiveSet] = useState(1);
   const [results, setResults] = useState<StudentResult[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedQuestion, setSelectedQuestion] = useState<SelectedQuestion | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [live, setLive] = useState(true);
 
-  const fetchResults = useCallback(async (setNumber: number) => {
+  const prevIdsRef = useRef<Set<string>>(new Set());
+  const questionsLoadedForSet = useRef<number | null>(null);
+
+  const fetchResults = useCallback(async (setNumber: number, isBackground = false) => {
     if (!adminKey) return;
-    setLoading(true);
+    if (!isBackground) setInitialLoading(true);
     setError('');
+
     try {
-      const [resResults, resQuestions] = await Promise.all([
+      const fetches: Promise<Response>[] = [
         fetch(`/api/admin/ssat-math/results?set_number=${setNumber}`, {
           headers: { 'x-admin-key': adminKey },
         }),
-        fetch(`/api/ssat-math/sets/${setNumber}/questions`),
-      ]);
+      ];
 
+      // 문제는 세트가 바뀔 때만 다시 로드
+      const needQuestions = questionsLoadedForSet.current !== setNumber;
+      if (needQuestions) {
+        fetches.push(fetch(`/api/ssat-math/sets/${setNumber}/questions`));
+      }
+
+      const responses = await Promise.all(fetches);
+      const [resResults] = responses;
       const jsonResults = await resResults.json();
-      const jsonQuestions = await resQuestions.json();
 
       if (!resResults.ok) {
         setError(jsonResults.error?.message ?? '결과를 불러올 수 없습니다.');
         setResults([]);
       } else {
-        setResults(jsonResults.data as StudentResult[]);
+        const incoming = jsonResults.data as StudentResult[];
+
+        // 새로 들어온 항목 감지
+        const incomingIds = new Set(incoming.map(r => r.id));
+        const appeared = new Set<string>();
+        if (isBackground) {
+          incomingIds.forEach(id => {
+            if (!prevIdsRef.current.has(id)) appeared.add(id);
+          });
+          if (appeared.size > 0) {
+            setNewIds(appeared);
+            setTimeout(() => setNewIds(new Set()), 3000);
+          }
+        }
+        prevIdsRef.current = incomingIds;
+        setResults(incoming);
+        setLastUpdated(new Date());
       }
 
-      if (resQuestions.ok) {
-        setQuestions((jsonQuestions.data?.questions ?? []) as Question[]);
+      if (needQuestions && responses[1]) {
+        const jsonQ = await responses[1].json();
+        if (responses[1].ok) {
+          setQuestions((jsonQ.data?.questions ?? []) as Question[]);
+          questionsLoadedForSet.current = setNumber;
+        }
       }
     } catch {
-      setError('네트워크 오류가 발생했습니다.');
+      if (!isBackground) setError('네트워크 오류가 발생했습니다.');
     } finally {
-      setLoading(false);
+      if (!isBackground) setInitialLoading(false);
     }
   }, [adminKey]);
 
+  // 세트 변경 시 초기 로드
   useEffect(() => {
-    fetchResults(activeSet);
+    questionsLoadedForSet.current = null;
+    setInitialLoading(true);
+    setResults([]);
+    prevIdsRef.current = new Set();
+    fetchResults(activeSet, false);
   }, [activeSet, fetchResults]);
 
-  // Build UUID → Question map
-  const questionMap = Object.fromEntries(questions.map(q => [q.id, q]));
+  // 자동 폴링
+  useEffect(() => {
+    if (!live) return;
+    const timer = setInterval(() => {
+      fetchResults(activeSet, true);
+    }, POLL_INTERVAL);
+    return () => clearInterval(timer);
+  }, [activeSet, fetchResults, live]);
 
-  // Ordered question IDs by question_number
+  const questionMap = Object.fromEntries(questions.map(q => [q.id, q]));
   const orderedQIds = questions.map(q => q.id);
 
   const avgScore = results.length > 0
@@ -192,16 +230,36 @@ export default function SSATMathAdminPage() {
   return (
     <div className="p-6 min-h-screen bg-[#151719] text-gray-200">
       <div className="max-w-full">
+
+        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">SSAT Math 결과</h1>
-            <p className="text-gray-500 text-sm mt-1">학생들의 세트별 정오답 결과 · 문제 클릭 시 내용 확인</p>
+            <div className="flex items-center gap-3 mt-1">
+              {/* Live indicator */}
+              <button
+                onClick={() => setLive(v => !v)}
+                className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-all ${
+                  live
+                    ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                    : 'bg-white/5 border-white/10 text-gray-500'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${live ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`} />
+                {live ? 'LIVE' : '일시정지'}
+              </button>
+              {lastUpdated && (
+                <span className="text-xs text-gray-600">
+                  마지막 업데이트 {formatClock(lastUpdated)}
+                </span>
+              )}
+            </div>
           </div>
           <button
-            onClick={() => fetchResults(activeSet)}
+            onClick={() => fetchResults(activeSet, false)}
             className="px-4 py-2 bg-[#1e2023] hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
           >
-            새로고침
+            수동 새로고침
           </button>
         </div>
 
@@ -238,18 +296,17 @@ export default function SSATMathAdminPage() {
           </div>
         </div>
 
-        {loading && (
+        {initialLoading && (
           <div className="text-gray-500 text-center py-12">불러오는 중...</div>
         )}
         {error && (
           <div className="text-red-400 bg-red-400/10 rounded-xl p-4 mb-4">{error}</div>
         )}
-
-        {!loading && results.length === 0 && !error && (
+        {!initialLoading && results.length === 0 && !error && (
           <div className="text-gray-500 text-center py-12">아직 제출된 결과가 없습니다.</div>
         )}
 
-        {!loading && results.length > 0 && (
+        {!initialLoading && results.length > 0 && (
           <div className="overflow-x-auto rounded-xl border border-white/5">
             <table className="w-full text-sm">
               <thead>
@@ -268,9 +325,22 @@ export default function SSATMathAdminPage() {
               <tbody className="divide-y divide-white/5">
                 {results.map(r => {
                   const displayName = r.student_id.split('_')[0] ?? r.student_id;
+                  const isNew = newIds.has(r.id);
                   return (
-                    <tr key={r.id} className="hover:bg-white/3 transition-colors">
-                      <td className="px-4 py-3 text-white font-medium whitespace-nowrap">{displayName}</td>
+                    <tr
+                      key={r.id}
+                      className={`transition-colors duration-700 ${
+                        isNew ? 'bg-blue-500/10' : 'hover:bg-white/3'
+                      }`}
+                    >
+                      <td className="px-4 py-3 text-white font-medium whitespace-nowrap">
+                        <span className="flex items-center gap-2">
+                          {isNew && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shrink-0" />
+                          )}
+                          {displayName}
+                        </span>
+                      </td>
                       <td className="px-3 py-3 text-center whitespace-nowrap">
                         <span className={`font-bold ${r.score >= 12 ? 'text-green-400' : r.score >= 9 ? 'text-yellow-400' : 'text-red-400'}`}>
                           {r.score}/{r.total}
