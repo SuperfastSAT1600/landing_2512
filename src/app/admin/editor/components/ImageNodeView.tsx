@@ -7,18 +7,27 @@ import TiptapImage from '@tiptap/extension-image';
 import { AlignLeft, AlignCenter, AlignRight, Trash2 } from 'lucide-react';
 
 function ImageNodeViewComponent({ node, updateAttributes, deleteNode, selected }: NodeViewProps) {
-    const { src, alt, dataAlign } = node.attrs;
+    const { src, alt, dataAlign, width } = node.attrs;
     const [localAlt, setLocalAlt] = useState<string>(alt || '');
+    const [localWidth, setLocalWidth] = useState<string>(width ? String(width) : '');
 
-    useEffect(() => {
-        setLocalAlt(alt || '');
-    }, [alt]);
+    useEffect(() => { setLocalAlt(alt || ''); }, [alt]);
+    useEffect(() => { setLocalWidth(width ? String(width) : ''); }, [width]);
+
+    function applyWidth() {
+        const parsed = parseInt(localWidth);
+        updateAttributes({ width: (localWidth && parsed >= 50) ? parsed : null });
+    }
+
+    const wrapperStyle = width
+        ? { maxWidth: `${width}px`, marginLeft: 'auto', marginRight: 'auto' }
+        : {};
 
     return (
-        <NodeViewWrapper className="relative group my-4" data-align={dataAlign}>
+        <NodeViewWrapper className="relative group my-4" data-align={dataAlign} style={wrapperStyle}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={src} alt={localAlt}
-                className={`rounded-lg max-w-full ${selected ? 'ring-2 ring-blue-500' : ''}`}
+                className={`rounded-lg max-w-full w-full ${selected ? 'ring-2 ring-blue-500' : ''}`}
                 data-align={dataAlign} />
             <input
                 value={localAlt}
@@ -26,16 +35,33 @@ function ImageNodeViewComponent({ node, updateAttributes, deleteNode, selected }
                 onBlur={() => updateAttributes({ alt: localAlt })}
                 onKeyDown={(e) => {
                     e.stopPropagation();
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        (e.target as HTMLInputElement).blur();
-                    }
+                    if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
                 }}
                 onClick={(e) => e.stopPropagation()}
                 placeholder="이미지 설명을 입력하세요..."
                 className="w-full text-center text-xs text-gray-500 bg-transparent border-none outline-none mt-1 placeholder-gray-600/50"
             />
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 items-center">
+                {/* Width input */}
+                <div className="flex items-center bg-black/60 rounded h-7 px-1.5 gap-0.5">
+                    <input
+                        type="number"
+                        min="50"
+                        max="680"
+                        value={localWidth}
+                        onChange={(e) => setLocalWidth(e.target.value)}
+                        onBlur={applyWidth}
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter') { e.preventDefault(); applyWidth(); (e.target as HTMLInputElement).blur(); }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder="폭"
+                        className="w-10 bg-transparent text-white text-xs outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <span className="text-gray-400 text-xs">px</span>
+                </div>
+                {/* Alignment buttons */}
                 {(['left', 'center', 'right'] as const).map((align) => (
                     <button key={align}
                         onClick={() => updateAttributes({ dataAlign: align })}
@@ -64,6 +90,20 @@ export const CustomImage = TiptapImage.extend({
                 default: 'center',
                 parseHTML: (el: HTMLElement) => el.getAttribute('data-align') || 'center',
                 renderHTML: (attrs: Record<string, string>) => ({ 'data-align': attrs.dataAlign }),
+            },
+            width: {
+                default: null,
+                parseHTML: (el: HTMLElement) => {
+                    const styleWidth = el.style.maxWidth;
+                    if (styleWidth) return parseInt(styleWidth);
+                    const attrWidth = el.getAttribute('width');
+                    if (attrWidth) return parseInt(attrWidth);
+                    return null;
+                },
+                renderHTML: (attrs: Record<string, number | null>) => {
+                    if (!attrs.width) return {};
+                    return { style: `max-width: ${attrs.width}px; display: block; margin: 0 auto;` };
+                },
             },
         };
     },
