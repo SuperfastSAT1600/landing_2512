@@ -114,6 +114,36 @@ a {
 .prose img[data-align="center"] { display: block; margin-left: auto; margin-right: auto; }
 .prose img[data-align="right"] { display: block; margin-left: auto; margin-right: 0; }
 
+/* Blog image width utilities
+   Usage:
+     <figure class="img-narrow">  → 45% width, centered
+     <figure class="img-half">    → 50% width, centered
+     <figure class="img-wide">    → 75% width, centered
+     <figure style="max-width: 400px; margin: 0 auto;"> → exact px, centered
+     <img style="max-width: 400px; display: block; margin: 0 auto;"> → exact px inline
+*/
+.prose figure.img-narrow,
+.prose figure.img-half,
+.prose figure.img-wide {
+  margin-left: auto;
+  margin-right: auto;
+}
+.prose figure.img-narrow { max-width: 45%; }
+.prose figure.img-half   { max-width: 50%; }
+.prose figure.img-wide   { max-width: 75%; }
+.prose figure.img-narrow img,
+.prose figure.img-half img,
+.prose figure.img-wide img { width: 100%; height: auto; }
+
+/* Standalone img width classes (without figure wrapper) */
+.prose img.img-narrow { max-width: 45%; display: block; margin-left: auto; margin-right: auto; }
+.prose img.img-half   { max-width: 50%; display: block; margin-left: auto; margin-right: auto; }
+.prose img.img-wide   { max-width: 75%; display: block; margin-left: auto; margin-right: auto; }
+
+/* figure with inline style: ensure img fills the figure width */
+.prose figure[style] { display: block; }
+.prose figure[style] img { width: 100%; height: auto; }
+
 /* Editor (ProseMirror) image alignment */
 .ProseMirror img[data-align="left"] { display: block; margin-left: 0; margin-right: auto; }
 .ProseMirror img[data-align="center"] { display: block; margin-left: auto; margin-right: auto; }
