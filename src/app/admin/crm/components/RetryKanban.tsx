@@ -16,6 +16,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { Plus, Trash2, Search, X, ArrowUpRight } from 'lucide-react';
 import { Student, RetryStage, RETRY_STAGES, RetryStrategy } from '@/types/crm';
 import { StudentCard } from './StudentCard';
+import { resolveDefaultCategoryId } from './strategies/resolveDefaultCategoryId';
 
 interface RetryKanbanProps {
   adminKey: string;
@@ -111,12 +112,13 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     setStrategies(json.data ?? []);
   }, [adminKey]);
 
-  // 새 전략 생성 시 필요한 "재시도 세일즈 전략" 시드 카테고리 id를 한 번 조회해둔다 (146).
+  // 새 전략 생성 시 넣을 기본 카테고리를 조회해둔다. 이름 매칭이 아니라
+  // sort_order가 가장 낮은 카테고리를 쓴다 — 카테고리 이름이 바뀌거나 특정
+  // 카테고리가 삭제돼도 깨지지 않는다 (146).
   const fetchRetryCategoryId = useCallback(async () => {
     const res = await fetch('/api/crm/strategy-categories?segment=b2c', { headers: { 'x-admin-key': adminKey } });
     const json = await res.json();
-    const category = (json.data ?? []).find((c: { name: string }) => c.name === '재시도 세일즈 전략');
-    setRetryCategoryId(category?.id ?? null);
+    setRetryCategoryId(resolveDefaultCategoryId(json.data ?? []));
   }, [adminKey]);
 
   useEffect(() => {
@@ -292,11 +294,15 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
             />
             <button
               onClick={handleCreateStrategy}
-              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-500"
+              disabled={!retryCategoryId}
+              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-40"
             >
               추가
             </button>
           </div>
+        )}
+        {creatingStrategy && !retryCategoryId && (
+          <p className="text-[11px] text-amber-600 mb-2">전략 라이브러리에서 카테고리를 먼저 만드세요.</p>
         )}
 
         <div className="flex flex-col gap-1">
