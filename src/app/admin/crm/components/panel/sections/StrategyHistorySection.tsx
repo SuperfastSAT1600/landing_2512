@@ -4,13 +4,10 @@ import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
 import { SectionCard } from './SectionCard';
 import { appendStrategyHistoryEntry, buildStrategyHistoryEntry } from '@/lib/strategy-history';
+import { useKindLabels } from '../../strategies/useKindLabels';
 import type { Student, RetryStrategy, StrategyHistoryEntry, StrategyHistoryType } from '@/types/crm';
 
-const HISTORY_TYPES: { type: StrategyHistoryType; label: string }[] = [
-  { type: 'initial_contact', label: '컨텍 전략' },
-  { type: 'initial_sales',   label: '최초 세일즈 전략' },
-  { type: 'retry',           label: '재시도 세일즈 전략' },
-];
+const HISTORY_TYPE_ORDER: StrategyHistoryType[] = ['initial_contact', 'initial_sales', 'retry'];
 
 interface Props {
   student: Student;
@@ -79,6 +76,8 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
 
   // 전략 세그먼트 분리(097): B2B 학생은 B2B 전략만, 그 외는 B2C 전략만 배정 선택지에 노출
   const segment = student.lead_type === 'B2B' ? 'b2b' : 'b2c';
+  // 섹션 제목은 그 kind에 실제로 속한 전략들의 현재 카테고리 이름을 따른다 (146, 라이브)
+  const kindLabels = useKindLabels(segment, adminKey);
 
   useEffect(() => {
     if (!sectionOpen) return;
@@ -130,7 +129,8 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
       onOpenChange={setSectionOpen}
     >
       <div className="divide-y divide-gray-100">
-        {HISTORY_TYPES.map(({ type, label }) => {
+        {HISTORY_TYPE_ORDER.map((type) => {
+            const label = kindLabels[type];
             const entries = history.filter(e => e.type === type);
             const isOpen = openType === type;
             return (
