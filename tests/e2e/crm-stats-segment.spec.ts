@@ -50,14 +50,33 @@ function mockStatsApi(page: Page) {
   });
 }
 
+function fulfillJson(route: Parameters<Parameters<Page['route']>[1]>[0], body: unknown) {
+  return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+}
+
 async function mockCrmApis(page: Page) {
-  await page.route('**/api/crm/students**', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ data: [] }),
-    });
-  });
+  await page.route('**/api/crm/students**', (route) => fulfillJson(route, { data: [] }));
+  // '전체' 개요(TotalOverviewPanel)가 기본 진입 화면이라 한국비즈니스 탭을 누르기 전에
+  // 이 화면이 먼저 마운트되어 아래 API들을 전부 호출한다 — hermetic 원칙상 실 Supabase/
+  // PostHog를 타면 안 되므로 전부 목으로 막는다(미스매치가 있으면 networkidle이 실제
+  // 실패 재시도로 계속 갱신되며 클릭 타임아웃까지 이어졌다).
+  await page.route('**/api/business/global-sales**', (route) => fulfillJson(route, { data: [] }));
+  await page.route('**/api/admin/active-learners**', (route) => fulfillJson(route, { data: [], from: '', to: '' }));
+  await page.route('**/api/admin/srm/active-student-count**', (route) =>
+    fulfillJson(route, { data: { total: 0, onboarding: 0, active: 0, paused: 0 } })
+  );
+  await page.route('**/api/crm/renewal-targets/outcomes**', (route) =>
+    fulfillJson(route, {
+      data: {
+        good_completed: 0,
+        bad_completed: 0,
+        unclassified_completed: 0,
+        good_dropped: 0,
+        bad_dropped: 0,
+        unclassified_dropped: 0,
+      },
+    })
+  );
   await mockStatsApi(page);
 }
 
