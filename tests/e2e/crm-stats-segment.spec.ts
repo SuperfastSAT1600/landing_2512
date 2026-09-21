@@ -56,10 +56,9 @@ function fulfillJson(route: Parameters<Parameters<Page['route']>[1]>[0], body: u
 
 async function mockCrmApis(page: Page) {
   await page.route('**/api/crm/students**', (route) => fulfillJson(route, { data: [] }));
-  // '전체' 개요(TotalOverviewPanel)가 기본 진입 화면이라 한국비즈니스 탭을 누르기 전에
+  // '전체' 개요(TotalOverviewPanel)가 기본 진입 화면이라 한국 사업 탭을 누르기 전에
   // 이 화면이 먼저 마운트되어 아래 API들을 전부 호출한다 — hermetic 원칙상 실 Supabase/
-  // PostHog를 타면 안 되므로 전부 목으로 막는다(미스매치가 있으면 networkidle이 실제
-  // 실패 재시도로 계속 갱신되며 클릭 타임아웃까지 이어졌다).
+  // PostHog를 타면 안 되므로 전부 목으로 막는다.
   await page.route('**/api/business/global-sales**', (route) => fulfillJson(route, { data: [] }));
   await page.route('**/api/admin/active-learners**', (route) => fulfillJson(route, { data: [], from: '', to: '' }));
   await page.route('**/api/admin/srm/active-student-count**', (route) =>
@@ -81,7 +80,7 @@ async function mockCrmApis(page: Page) {
 }
 
 // 세그먼트 통계 화면은 CRM '통계' 서브탭에서 Business 페이지로 이전됐다
-// (한국비즈니스 탭 → 합산 / B2C / B2B). 'all' 라벨도 '전체' → '합산'으로 바뀌었다.
+// (한국 사업 탭 → 합산 / B2C / B2B). 'all' 라벨도 '전체' → '합산'으로 바뀌었다.
 test.describe('Business 한국비즈니스 통계 세그먼트 필터', () => {
   test.beforeEach(async ({ page }) => {
     await setAdminAuth(page);
@@ -92,8 +91,8 @@ test.describe('Business 한국비즈니스 통계 세그먼트 필터', () => {
     await page.goto('/admin/business');
     await page.waitForLoadState('networkidle');
 
-    // 한국비즈니스 상위 탭 진입 (기본은 '전체' 개요 패널이라 세그먼트 탭이 없다)
-    await page.getByRole('button', { name: '한국비즈니스', exact: true }).click();
+    // 한국 사업(구 '한국비즈니스') 상위 탭 진입 (기본은 '전체' 개요 패널이라 세그먼트 탭이 없다)
+    await page.getByRole('button', { name: '한국 사업', exact: true }).click();
     await page.waitForLoadState('networkidle');
 
     // 세그먼트 탭 확인
