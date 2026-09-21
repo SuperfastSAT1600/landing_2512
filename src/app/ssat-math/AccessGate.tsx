@@ -10,17 +10,14 @@ export function AccessGate({ children }: { children: (studentId: string) => Reac
   const [name, setName] = useState('');
 
   const handleStart = () => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    sessionStorage.setItem(STORAGE_KEY, trimmed);
-    setStudentId(trimmed);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleStart();
+    if (!name) return;
+    sessionStorage.setItem(STORAGE_KEY, name);
+    setStudentId(name);
   };
 
   if (studentId) return <>{children(studentId)}</>;
+
+  const STUDENTS = ['김윤서'];
 
   return (
     <div className="fixed inset-0 z-50 bg-[#000000] text-gray-100 font-sans flex flex-col items-center justify-center px-4">
@@ -28,26 +25,26 @@ export function AccessGate({ children }: { children: (studentId: string) => Reac
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3 text-white">
           SSAT Math Practice
         </h1>
-        <p className="text-gray-400 text-lg">이름을 입력하고 시작하세요.</p>
+        <p className="text-gray-400 text-lg">이름을 선택하고 시작하세요.</p>
       </header>
 
       <div className="w-full max-w-sm bg-[#09090b] rounded-2xl border border-white/5 shadow-2xl p-6 md:p-8">
         <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
           이름
         </label>
-        <input
-          type="text"
+        <select
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="이름을 입력해주세요"
-          autoComplete="off"
-          autoFocus
-          className="w-full px-4 py-3 bg-[#000000] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20 text-base mb-4"
-        />
+          className="w-full px-4 py-3 bg-[#000000] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20 text-base mb-4 appearance-none cursor-pointer"
+        >
+          <option value="" disabled>이름을 선택해주세요</option>
+          {STUDENTS.map(s => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
         <button
           onClick={handleStart}
-          disabled={!name.trim()}
+          disabled={!name}
           className="w-full py-4 bg-[#071be9] hover:bg-[#1a31f0] rounded-xl font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed text-lg shadow-lg shadow-[#071be9]/20"
         >
           시작하기
