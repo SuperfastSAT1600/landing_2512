@@ -32,6 +32,8 @@ function mockStatsApi(page: Page) {
             contacted_base: totals[segment] ?? 0,
             contact_rate: 0,
             paid: 0,
+            diagnostic_done: 0,
+            diagnostic_rate: 0,
             conversion_rate: 0,
             total_revenue: 0,
             total_net_revenue: 0,
@@ -39,6 +41,13 @@ function mockStatsApi(page: Page) {
             total_refund: 0,
             first_payment_revenue: 0,
             repayment_revenue: 0,
+            net_first_payment_revenue: 0,
+            net_repayment_revenue: 0,
+            unattributed_refund: 0,
+            gross_count: 0,
+            refund_count: 0,
+            first_payment_count: 0,
+            repayment_count: 0,
           },
           by_source: [],
           monthly: [],
@@ -76,6 +85,9 @@ async function mockCrmApis(page: Page) {
       },
     })
   );
+  // 한국 사업 탭(SalesStats)이 마운트되며 추가로 호출하는 API들.
+  await page.route('**/api/business/monthly-targets**', (route) => fulfillJson(route, { data: [] }));
+  await page.route('**/api/crm/renewal-targets/stats**', (route) => fulfillJson(route, { data: [] }));
   await mockStatsApi(page);
 }
 
