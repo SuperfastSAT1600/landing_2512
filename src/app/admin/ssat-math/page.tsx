@@ -356,21 +356,21 @@ export default function SSATMathAdminPage() {
                         const detail = r.graded_detail[qid];
                         const question = questionMap[qid];
                         if (!detail || !question) {
-                          return <td key={qid} className="px-2 py-3 text-center"><span className="text-gray-600">-</span></td>;
+                          return <td key={qid} className="px-2 py-3 text-center"><span className="text-gray-600 text-xs">-</span></td>;
                         }
+                        const badgeClass = detail.is_correct
+                          ? 'bg-green-500/25 text-green-300 ring-1 ring-green-500/40 hover:bg-green-500/40'
+                          : detail.answer
+                          ? 'bg-red-500/25 text-red-300 ring-1 ring-red-500/40 hover:bg-red-500/40'
+                          : 'bg-white/5 text-gray-600 ring-1 ring-white/10 hover:bg-white/10';
                         return (
-                          <td key={qid} className="px-2 py-3 text-center">
+                          <td key={qid} className="px-1.5 py-3 text-center">
                             <button
                               onClick={() => setSelectedQuestion({ question, detail, studentId: r.student_id })}
-                              className={`w-7 h-7 rounded-md font-bold text-xs transition-all hover:scale-110 hover:ring-2 ${
-                                detail.is_correct
-                                  ? 'text-green-400 hover:ring-green-500/50 hover:bg-green-500/10'
-                                  : detail.answer
-                                  ? 'text-red-400 hover:ring-red-500/50 hover:bg-red-500/10'
-                                  : 'text-gray-600 hover:ring-white/20 hover:bg-white/5'
-                              }`}
+                              className={`w-8 h-8 rounded-lg font-bold text-sm transition-all hover:scale-105 ${badgeClass}`}
+                              title={detail.is_correct ? `정답 (${detail.answer})` : detail.answer ? `오답: ${detail.answer} → 정답 ${detail.correct}` : '미응답'}
                             >
-                              {detail.is_correct ? 'O' : detail.answer ? 'X' : '-'}
+                              {detail.answer || '-'}
                             </button>
                           </td>
                         );
