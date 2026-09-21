@@ -89,6 +89,10 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
 
   const history: StrategyHistoryEntry[] = student.strategy_history ?? [];
 
+  // 라이브 전략명 우선, 삭제된 전략은 기록 시점 스냅샷으로 폴백 (전략 통계·이번 주 실행과 동일 패턴)
+  const strategyNameById = new Map(strategies.map(s => [s.id, s.name]));
+  const displayName = (e: StrategyHistoryEntry) => strategyNameById.get(e.strategy_id) ?? e.strategy_name;
+
   async function handleSave(entry: Omit<StrategyHistoryEntry, 'id' | 'applied_at'>) {
     setSaving(true);
     // 엔트리 shape은 주차 계획의 '전략 적용 기록'과 공유한다(집계가 이 shape에 의존).
@@ -152,7 +156,7 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
                     {entries.map(e => (
                       <div key={e.id} className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 space-y-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-gray-700 min-w-0 truncate">{e.strategy_name}</span>
+                          <span className="text-xs font-semibold text-gray-700 min-w-0 truncate">{displayName(e)}</span>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-[10px] text-gray-400">{e.applied_at.slice(0, 10)}</span>
                             <button

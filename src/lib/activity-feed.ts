@@ -40,7 +40,11 @@ function toMs(ts: string | null | undefined): number {
   return new Date(ts).getTime();
 }
 
-export function buildActivityFeed(student: FeedStudent, payments: FeedPayment[] = []): ActivityItem[] {
+export function buildActivityFeed(
+  student: FeedStudent,
+  payments: FeedPayment[] = [],
+  strategyNames?: Map<string, string>
+): ActivityItem[] {
   const items: ActivityItem[] = [];
 
   // 상담 메모
@@ -70,7 +74,7 @@ export function buildActivityFeed(student: FeedStudent, payments: FeedPayment[] 
       kind: 'strategy',
       at: e.applied_at,
       title: '전략 배정',
-      detail: e.strategy_name,
+      detail: strategyNames?.get(e.strategy_id) ?? e.strategy_name,
       meta: e.memo || undefined,
     });
   }
