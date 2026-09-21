@@ -127,6 +127,7 @@ export default function ServicePage() {
   const [tab, setTab] = useState<StatusTab>('active');
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [fromCache, setFromCache] = useState<boolean | null>(null);
 
   const fetchData = useCallback(async (targetDate: string) => {
     setLoading(true);
@@ -136,6 +137,7 @@ export default function ServicePage() {
       if (!res.ok) throw new Error(`${res.status}`);
       const json: ServiceUsageResponse = await res.json();
       setData(json);
+      setFromCache(json.fromCache ?? false);
     } catch (e) {
       setError(e instanceof Error ? e.message : '불러오기 실패');
     } finally {
@@ -179,10 +181,15 @@ export default function ServicePage() {
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-lg font-bold text-gray-900 tracking-tight">서비스 이용 현황</h1>
         <div className="flex items-center gap-2">
+          {fromCache === true && !loading && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-500 border border-blue-100 font-medium">
+              캐시됨
+            </span>
+          )}
           <input
             type="date"
             value={date}
-            onChange={e => setDate(e.target.value)}
+            onChange={e => { setFromCache(null); setDate(e.target.value); }}
             className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 focus:outline-none focus:border-blue-400"
           />
           <button
