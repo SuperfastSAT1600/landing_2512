@@ -32,6 +32,11 @@ export interface VocabResult {
   missedTerms: string[];
 }
 
+export interface CoachRoomResult {
+  sessionCount: number;
+  durationMinutes: number;
+}
+
 export interface StudentDayResult {
   name: string;
   crmStudentId: string;
@@ -50,6 +55,80 @@ export interface DailyLearningResponse {
 
 export interface CumulativeResponse {
   students: StudentDayResult[];
+}
+
+// ── Coach Room Batch ──────────────────────────────────────────────────────────
+
+export async function fetchCoachRoomBatch(profileIds: string[], start: string, end: string): Promise<Map<string, CoachRoomResult | null>> {
+  if (!profileIds.length) return new Map();
+
+  const PAGE_SIZE = 1000;
+
+  // Step 1: scheduled_event_participants → event_ids for each user
+  const allParticipants: { event_id: string; user_id: string }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('scheduled_event_participants')
+      .select('event_id, user_id')
+      .in('user_id', profileIds)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allParticipants.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+
+  if (!allParticipants.length) return new Map(profileIds.map(id => [id, null]));
+
+  const allEventIds = [...new Set(allParticipants.map(p => p.event_id))];
+
+  // Step 2: scheduled_events filtered by coach_room + date range
+  const allEvents: { id: string; starts_at: string; ends_at: string | null; status: string }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('scheduled_events')
+      .select('id, starts_at, ends_at, status')
+      .in('id', allEventIds)
+      .eq('category', 'coach_room')
+      .gte('starts_at', start)
+      .lte('starts_at', end)
+      .in('status', ['completed', 'approved', 'awaiting_confirmation'])
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allEvents.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+
+  if (!allEvents.length) return new Map(profileIds.map(id => [id, null]));
+
+  const validEventIds = new Set(allEvents.map(e => e.id));
+  const eventById = new Map(allEvents.map(e => [e.id, e]));
+
+  // Group event_ids by user
+  const eventIdsByUser = new Map<string, string[]>();
+  for (const p of allParticipants) {
+    if (!validEventIds.has(p.event_id)) continue;
+    if (!eventIdsByUser.has(p.user_id)) eventIdsByUser.set(p.user_id, []);
+    eventIdsByUser.get(p.user_id)!.push(p.event_id);
+  }
+
+  const result = new Map<string, CoachRoomResult | null>();
+  for (const profileId of profileIds) {
+    const eventIds = eventIdsByUser.get(profileId);
+    if (!eventIds?.length) { result.set(profileId, null); continue; }
+
+    let durationMinutes = 0;
+    for (const eid of eventIds) {
+      const ev = eventById.get(eid);
+      if (ev?.ends_at && ev.starts_at) {
+        durationMinutes += Math.round(
+          (new Date(ev.ends_at).getTime() - new Date(ev.starts_at).getTime()) / 60000
+        );
+      }
+    }
+    result.set(profileId, { sessionCount: eventIds.length, durationMinutes });
+  }
+
+  return result;
 }
 
 // ── Per-student helpers (public API, kept for direct use) ─────────────────────
@@ -71,7 +150,7 @@ export async function fetchVocab(profileId: string, start: string, end: string):
 
 // ── Batch helpers (N students → fixed number of queries) ─────────────────────
 
-async function fetchStudyHallBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, StudyHallResult | null>> {
+export async function fetchStudyHallBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, StudyHallResult | null>> {
   if (!profileIds.length) return new Map();
 
   const PAGE_SIZE = 1000;
@@ -175,7 +254,7 @@ async function fetchStudyHallBatch(profileIds: string[], start: string, end: str
   return result;
 }
 
-async function fetchTestCenterBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, TestCenterResult[]>> {
+export async function fetchTestCenterBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, TestCenterResult[]>> {
   if (!profileIds.length) return new Map();
 
   const PAGE_SIZE = 1000;
@@ -261,7 +340,7 @@ async function fetchTestCenterBatch(profileIds: string[], start: string, end: st
   return result;
 }
 
-async function fetchVocabBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, VocabResult | null>> {
+export async function fetchVocabBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, VocabResult | null>> {
   const VOCAB_MASTER_BOX = 5;
   const VOCAB_MAX_MISSED = 6;
 
