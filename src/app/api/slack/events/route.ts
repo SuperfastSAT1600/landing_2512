@@ -4,7 +4,10 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { verifySlackRequest, postSlack, getTodayTopics, BLOG_CHANNEL } from './slack-utils';
 import { handleBlogWrite, handlePublish, handleTopicSuggest, type Platform } from './handlers';
+import { buildLeadFormBlocks } from '@/app/api/slack/interactions/lead-blocks';
 import type { Topic } from './blog-writer';
+
+const LEAD_CHANNEL = 'C07FK85V9PD';
 
 function parsePlatform(word: string | undefined): Platform {
   if (!word) return 'both';
@@ -25,6 +28,8 @@ function getTodayTopicsFromFile(): Topic[] {
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
+type SlackFile = { url_private?: string; mimetype?: string };
+
 type SlackEvent = {
   type: string;
   subtype?: string;
@@ -33,6 +38,7 @@ type SlackEvent = {
   ts?: string;
   thread_ts?: string;
   bot_id?: string;
+  files?: SlackFile[];
 };
 
 type SlackPayload = {
@@ -62,6 +68,30 @@ export async function POST(request: NextRequest) {
   const isBlogChannelMsg = event.type === 'message'
     && event.channel === BLOG_CHANNEL
     && !event.subtype;
+
+  // 리드 채널 파일 업로드 감지 (subtype: file_share 또는 files 배열이 있는 메시지)
+  const isLeadChannelFile = event.type === 'message'
+    && event.channel === LEAD_CHANNEL
+    && (event.subtype === 'file_share' || (event.files && event.files.length > 0));
+
+  if (isLeadChannelFile) {
+    after(async () => {
+      const token = process.env.SLACK_BOT_TOKEN;
+      if (!token) return;
+      await fetch('https://slack.com/api/chat.postMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          channel: LEAD_CHANNEL,
+          thread_ts: event.ts,
+          text: '새 리드 인입 — 아래에서 분류해주세요.',
+          blocks: buildLeadFormBlocks(),
+        }),
+      });
+    });
+    return NextResponse.json({ ok: true });
+  }
+
   if (!isMention && !isBlogChannelMsg) {
     return NextResponse.json({ ok: true });
   }
