@@ -54,7 +54,7 @@ export function WeeklyTrackItems({ items, strategies, onChange }: Props) {
     onChange(patch(id, {
       strategy_id: s?.id ?? null,
       strategy_name: s?.name ?? null,
-      strategy_type: s?.type ?? null,
+      strategy_type: s?.kind ?? null,
     }));
   };
 
@@ -122,7 +122,7 @@ export function WeeklyTrackItems({ items, strategies, onChange }: Props) {
                       className="w-full text-left text-[11px] px-1.5 py-1 rounded hover:bg-gray-50"
                     >
                       {s.name}
-                      <span className="ml-1 text-[10px] text-gray-400">{STRATEGY_TYPE_LABELS[s.type]}</span>
+                      <span className="ml-1 text-[10px] text-gray-400">{STRATEGY_TYPE_LABELS[s.kind]}</span>
                     </button>
                   ))
                 )}

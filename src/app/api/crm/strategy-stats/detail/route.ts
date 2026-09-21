@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
   const { data: strategies } = await supabaseAdmin
     .from('retry_strategies')
     .select('id,name')
-    .eq('type', type);
+    .eq('kind', type);
   const strategyNames = new Map<string, string>((strategies ?? []).map((r) => [r.id, r.name]));
 
   // segment(b2b/b2c) + 이 전략 귀속 코호트만 필터

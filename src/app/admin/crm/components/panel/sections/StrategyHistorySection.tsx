@@ -29,7 +29,7 @@ function AddForm({ type, strategies, onSave, onCancel }: AddFormProps) {
   const [strategyId, setStrategyId] = useState('');
   const [memo, setMemo] = useState('');
 
-  const available = strategies.filter(s => s.type === type);
+  const available = strategies.filter(s => s.kind === type);
   const selected = available.find(s => s.id === strategyId);
 
   return (

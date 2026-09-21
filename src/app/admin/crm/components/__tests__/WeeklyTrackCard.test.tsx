@@ -5,7 +5,7 @@ import { computeTrackProgress } from '@/lib/weekly-track-progress';
 import type { RetryStrategy, WeeklyExecutionRow, WeeklyTrack } from '@/types/crm';
 
 const STRATEGIES: RetryStrategy[] = [
-  { id: 's-report', name: '진단리포트 당일등록 할인', description: null, type: 'initial_sales', segment: 'b2c', created_at: 'x' },
+  { id: 's-report', name: '진단리포트 당일등록 할인', description: null, kind: 'initial_sales', category_id: 'cat-1', segment: 'b2c', created_at: 'x' },
 ];
 
 const EXECUTION: WeeklyExecutionRow[] = [

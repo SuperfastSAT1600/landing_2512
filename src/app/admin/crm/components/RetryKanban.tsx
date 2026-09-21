@@ -103,15 +103,26 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     [adminKey]
   );
 
+  const [retryCategoryId, setRetryCategoryId] = useState<string | null>(null);
+
   const fetchStrategies = useCallback(async () => {
-    const res = await fetch('/api/crm/retry-strategies?type=retry', { headers: { 'x-admin-key': adminKey } });
+    const res = await fetch('/api/crm/retry-strategies?kind=retry', { headers: { 'x-admin-key': adminKey } });
     const json = await res.json();
     setStrategies(json.data ?? []);
   }, [adminKey]);
 
+  // 새 전략 생성 시 필요한 "재시도 세일즈 전략" 시드 카테고리 id를 한 번 조회해둔다 (146).
+  const fetchRetryCategoryId = useCallback(async () => {
+    const res = await fetch('/api/crm/strategy-categories?segment=b2c', { headers: { 'x-admin-key': adminKey } });
+    const json = await res.json();
+    const category = (json.data ?? []).find((c: { name: string }) => c.name === '재시도 세일즈 전략');
+    setRetryCategoryId(category?.id ?? null);
+  }, [adminKey]);
+
   useEffect(() => {
     fetchStrategies();
-  }, [fetchStrategies]);
+    fetchRetryCategoryId();
+  }, [fetchStrategies, fetchRetryCategoryId]);
 
   const fetchStudents = useCallback(async (strategyId: string) => {
     setLoadingStudents(true);
@@ -141,11 +152,11 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
   }, [selectedId, strategies, onStrategyChange]);
 
   const handleCreateStrategy = async () => {
-    if (!newStrategyName.trim()) return;
+    if (!newStrategyName.trim() || !retryCategoryId) return;
     const res = await fetch('/api/crm/retry-strategies', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ name: newStrategyName.trim() }),
+      body: JSON.stringify({ name: newStrategyName.trim(), kind: 'retry', category_id: retryCategoryId }),
     });
     if (res.ok) {
       const json = await res.json();
