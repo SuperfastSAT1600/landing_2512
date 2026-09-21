@@ -11,14 +11,16 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { name?: string; description?: string };
+  let body: { name?: string; description?: string; category_id?: string; kind?: 'initial_contact' | 'initial_sales' | 'retry' };
   try { body = await request.json(); } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const updates: { name?: string; description?: string } = {};
+  const updates: { name?: string; description?: string; category_id?: string; kind?: string } = {};
   if (typeof body.name === 'string') updates.name = body.name.trim();
   if (typeof body.description === 'string') updates.description = body.description.trim();
+  if (typeof body.category_id === 'string') updates.category_id = body.category_id;
+  if (typeof body.kind === 'string') updates.kind = body.kind;
 
   const { data, error } = await supabaseAdmin
     .from('retry_strategies')

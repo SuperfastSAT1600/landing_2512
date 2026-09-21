@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 
+const VALID_KINDS = ['initial_contact', 'initial_sales', 'retry'];
+
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const sp = new URL(request.url).searchParams;
-  const type = sp.get('type');
+  const kind = sp.get('kind');
+  const categoryId = sp.get('category_id');
   const segment = sp.get('segment');
 
   let query = supabaseAdmin
@@ -16,9 +19,11 @@ export async function GET(request: NextRequest) {
     .select('*')
     .order('created_at', { ascending: true });
 
-  const validTypes = ['initial_contact', 'initial_sales', 'retry'];
-  if (type && validTypes.includes(type)) {
-    query = query.eq('type', type);
+  if (kind && VALID_KINDS.includes(kind)) {
+    query = query.eq('kind', kind);
+  }
+  if (categoryId) {
+    query = query.eq('category_id', categoryId);
   }
   if (segment === 'b2c' || segment === 'b2b') {
     query = query.eq('segment', segment);
@@ -39,7 +44,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { name: string; type?: 'initial_contact' | 'initial_sales' | 'retry'; description?: string; segment?: 'b2c' | 'b2b' };
+  let body: {
+    name: string;
+    kind?: 'initial_contact' | 'initial_sales' | 'retry';
+    category_id?: string;
+    description?: string;
+    segment?: 'b2c' | 'b2b';
+  };
   try {
     body = await request.json();
   } catch {
@@ -49,14 +60,24 @@ export async function POST(request: NextRequest) {
   if (!body.name?.trim()) {
     return NextResponse.json({ error: '전략 이름을 입력해주세요.' }, { status: 400 });
   }
+  if (!body.kind || !VALID_KINDS.includes(body.kind)) {
+    return NextResponse.json({ error: '전략 용도를 선택해주세요.' }, { status: 400 });
+  }
+  if (!body.category_id) {
+    return NextResponse.json({ error: '카테고리를 선택해주세요.' }, { status: 400 });
+  }
 
-  const validTypes = ['initial_contact', 'initial_sales', 'retry'];
-  const strategyType = validTypes.includes(body.type ?? '') ? body.type : 'retry';
   const segment = body.segment === 'b2b' ? 'b2b' : 'b2c';
 
   const { data, error } = await supabaseAdmin
     .from('retry_strategies')
-    .insert({ name: body.name.trim(), type: strategyType, description: body.description?.trim() || null, segment })
+    .insert({
+      name: body.name.trim(),
+      kind: body.kind,
+      category_id: body.category_id,
+      description: body.description?.trim() || null,
+      segment,
+    })
     .select()
     .single();
 

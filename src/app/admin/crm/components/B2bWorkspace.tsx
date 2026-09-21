@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { Student } from '@/types/crm';
 import { B2bHub } from './b2b/B2bHub';
 import { B2bPipeline } from './b2b/B2bPipeline';
-import { StrategiesTab } from './StrategiesTab';
+import { StrategiesTab } from './strategies/StrategiesTab';
 import { WeeklyPlan } from './WeeklyPlan';
 
 type B2bTab = 'overview' | 'pipeline' | 'weekly';

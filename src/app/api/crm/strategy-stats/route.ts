@@ -66,8 +66,8 @@ export async function GET(request: NextRequest) {
       .select(STUDENT_COLS)
       .or('strategy_history.neq.[],retry_strategy_id.not.is.null')
       .limit(MAX_LEAD_ROWS),
-    // 해당 타입 전략 이름 맵 (0건 전략 시드 포함)
-    supabaseAdmin.from('retry_strategies').select('id,name').eq('type', type),
+    // 해당 타입 전략 이름 맵 (0건 전략 시드 포함) — retry_strategies.kind (구 type, 146)
+    supabaseAdmin.from('retry_strategies').select('id,name').eq('kind', type),
   ]);
 
   const { data: students, error: sErr } = studentsRes;

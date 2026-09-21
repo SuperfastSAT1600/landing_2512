@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Student, isStageStalled, type InsightPeriod } from '@/types/crm';
-import { StrategiesTab } from './StrategiesTab';
+import { StrategiesTab } from './strategies/StrategiesTab';
 import { CrmInsightBanner } from './CrmInsightBanner';
 import { DailyTasks } from './DailyTasks';
 import { LeadsHub } from './LeadsHub';

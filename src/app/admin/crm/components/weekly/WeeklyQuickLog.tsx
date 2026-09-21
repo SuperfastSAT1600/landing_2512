@@ -68,7 +68,7 @@ export function WeeklyQuickLog({ segment, adminKey, appliedAt, strategyIds, onLo
       const student = curJson.data as Student;
 
       const entry = buildStrategyHistoryEntry({
-        type: selected.type,
+        type: selected.kind,
         strategy_id: selected.id,
         strategy_name: selected.name,
         memo,
@@ -139,7 +139,7 @@ export function WeeklyQuickLog({ segment, adminKey, appliedAt, strategyIds, onLo
         <option value="">전략 선택…</option>
         {strategies.map((s) => (
           <option key={s.id} value={s.id}>
-            {s.name} ({STRATEGY_TYPE_LABELS[s.type]})
+            {s.name} ({STRATEGY_TYPE_LABELS[s.kind]})
           </option>
         ))}
       </select>

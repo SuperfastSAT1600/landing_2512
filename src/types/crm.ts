@@ -320,9 +320,20 @@ export interface RetryStrategy {
   id: string;
   name: string;
   description: string | null;
-  type: 'initial_contact' | 'initial_sales' | 'retry';
+  kind: 'initial_contact' | 'initial_sales' | 'retry'; // 재시도 칸반·통계·학생 FK 배정 등 기능 분류 (146, 구 type)
+  category_id: string; // 전략 라이브러리 진열 카테고리 (146) — kind와 독립, 자유 이동 가능
   segment: 'b2c' | 'b2b'; // B2B/B2C 전략 분리 (097)
   created_at: string;
+}
+
+/** 전략 라이브러리 진열 카테고리 — segment별 독립, 자유 생성/이름변경/삭제/순서변경 (146) */
+export interface StrategyCategory {
+  id: string;
+  segment: 'b2c' | 'b2b';
+  name: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // ─── B2B 업체 (파트너) ───────────────────────────────────────────────────────

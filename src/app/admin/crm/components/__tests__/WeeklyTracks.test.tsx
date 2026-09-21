@@ -4,8 +4,8 @@ import { WeeklyTracks } from '../weekly/WeeklyTracks';
 import type { RetryStrategy, WeeklyExecutionRow, WeeklyTrack } from '@/types/crm';
 
 const LIBRARY: RetryStrategy[] = [
-  { id: 's-report', name: '진단리포트 당일등록 할인', description: null, type: 'initial_sales', segment: 'b2c', created_at: 'x' },
-  { id: 's-retry', name: '인스타 상담 재신청', description: null, type: 'retry', segment: 'b2c', created_at: 'x' },
+  { id: 's-report', name: '진단리포트 당일등록 할인', description: null, kind: 'initial_sales', category_id: 'cat-1', segment: 'b2c', created_at: 'x' },
+  { id: 's-retry', name: '인스타 상담 재신청', description: null, kind: 'retry', category_id: 'cat-2', segment: 'b2c', created_at: 'x' },
 ];
 
 const track: WeeklyTrack = {
