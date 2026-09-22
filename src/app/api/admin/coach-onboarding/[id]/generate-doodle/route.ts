@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import OpenAI from 'openai';
+import { toFile } from 'openai';
 
 export const maxDuration = 300;
 
@@ -20,53 +22,28 @@ Style rules (strictly follow):
 - Overall mood: approachable, professional, warm.
 - The doodle MUST resemble the actual person in the photo.`;
 
-async function generateGeminiDoodle(imageUrl: string): Promise<Uint8Array> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+async function generateDoodle(imageUrl: string): Promise<Uint8Array> {
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  // Download the original photo and convert to base64
   const imgRes = await fetch(imageUrl);
   if (!imgRes.ok) throw new Error(`원본 이미지 다운로드 실패: ${imgRes.status}`);
   const imgBuffer = await imgRes.arrayBuffer();
-  const base64Image = Buffer.from(imgBuffer).toString('base64');
-  const mimeType = imgRes.headers.get('content-type') ?? 'image/jpeg';
+  const mimeType = (imgRes.headers.get('content-type') ?? 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp';
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: mimeType, data: base64Image } },
-            { text: DOODLE_PROMPT },
-          ],
-        }],
-        generationConfig: { responseModalities: ['IMAGE'] },
-      }),
-    }
-  );
+  const imageFile = await toFile(Buffer.from(imgBuffer), 'profile.png', { type: mimeType });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gemini 이미지 생성 실패: ${res.status} ${err.slice(0, 300)}`);
-  }
+  const response = await client.images.edit({
+    model: 'gpt-image-1',
+    image: imageFile,
+    prompt: DOODLE_PROMPT,
+    n: 1,
+    size: '1024x1024',
+  });
 
-  const data = await res.json() as {
-    candidates?: {
-      content?: {
-        parts?: { inlineData?: { mimeType?: string; data?: string } }[]
-      }
-    }[]
-  };
+  const b64 = response.data?.[0]?.b64_json;
+  if (!b64) throw new Error('OpenAI 응답에 이미지 데이터가 없습니다.');
 
-  const imagePart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData?.data);
-  if (!imagePart?.inlineData?.data) {
-    throw new Error('Gemini 응답에 이미지 데이터가 없습니다.');
-  }
-
-  return new Uint8Array(Buffer.from(imagePart.inlineData.data, 'base64'));
+  return new Uint8Array(Buffer.from(b64, 'base64'));
 }
 
 async function uploadToSupabase(buffer: Uint8Array, slug: string): Promise<string> {
@@ -128,9 +105,9 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   let buffer: Uint8Array;
   try {
-    buffer = await generateGeminiDoodle(profileImageUrl);
+    buffer = await generateDoodle(profileImageUrl);
   } catch (e) {
-    console.error('[generate-doodle] Gemini 생성 실패', e);
+    console.error('[generate-doodle] 생성 실패', e);
     return NextResponse.json({ error: `두들 이미지 생성에 실패했습니다: ${(e as Error).message}` }, { status: 500 });
   }
 
