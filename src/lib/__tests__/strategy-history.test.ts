@@ -1,6 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { appendStrategyHistoryEntry, buildStrategyHistoryEntry } from '@/lib/strategy-history';
+import {
+  appendStrategyHistoryEntry,
+  buildStrategyHistoryEntry,
+  hasInitialSalesStrategy,
+  isActiveInitialSalesLead,
+} from '@/lib/strategy-history';
 import type { StrategyHistoryEntry } from '@/types/crm';
+
+const existing: StrategyHistoryEntry = {
+  id: 'e-1',
+  type: 'initial_contact',
+  strategy_id: 's-0',
+  strategy_name: '첫 컨택',
+  memo: '',
+  applied_at: '2026-08-01T00:00:00.000Z',
+};
 
 describe('buildStrategyHistoryEntry', () => {
   it('id·applied_at을 채우고 memo는 트림한다', () => {
@@ -30,15 +44,6 @@ describe('buildStrategyHistoryEntry', () => {
 });
 
 describe('appendStrategyHistoryEntry', () => {
-  const existing: StrategyHistoryEntry = {
-    id: 'e-1',
-    type: 'initial_contact',
-    strategy_id: 's-0',
-    strategy_name: '첫 컨택',
-    memo: '',
-    applied_at: '2026-08-01T00:00:00.000Z',
-  };
-
   it('기존 이력을 보존하며 뒤에 붙인다', () => {
     const next = buildStrategyHistoryEntry({ type: 'retry', strategy_id: 's-2', strategy_name: '재시도' });
     const result = appendStrategyHistoryEntry([existing], next);
@@ -55,5 +60,34 @@ describe('appendStrategyHistoryEntry', () => {
   it('이력이 null이어도 새 배열을 만든다', () => {
     const next = buildStrategyHistoryEntry({ type: 'retry', strategy_id: 's-2', strategy_name: '재시도' });
     expect(appendStrategyHistoryEntry(null, next)).toEqual([next]);
+  });
+});
+
+describe('hasInitialSalesStrategy', () => {
+  it('type이 initial_sales인 이력이 하나라도 있으면 true', () => {
+    expect(hasInitialSalesStrategy({ strategy_history: [existing, { ...existing, type: 'initial_sales' }] })).toBe(true);
+  });
+
+  it('initial_sales 이력이 없으면 false (컨택·재시도만 있어도)', () => {
+    expect(hasInitialSalesStrategy({ strategy_history: [existing] })).toBe(false);
+  });
+
+  it('strategy_history가 없거나 빈 배열이면 false', () => {
+    expect(hasInitialSalesStrategy({ strategy_history: [] })).toBe(false);
+    expect(hasInitialSalesStrategy({ strategy_history: null as unknown as StrategyHistoryEntry[] })).toBe(false);
+  });
+});
+
+describe('isActiveInitialSalesLead', () => {
+  it('활성 + 재시도 트랙 아님 → true', () => {
+    expect(isActiveInitialSalesLead({ lead_status: 'active', retry_strategy_id: null })).toBe(true);
+  });
+
+  it('재시도 트랙(retry_strategy_id 있음) → false', () => {
+    expect(isActiveInitialSalesLead({ lead_status: 'active', retry_strategy_id: 'rs-1' })).toBe(false);
+  });
+
+  it('활성 상태가 아니면 → false', () => {
+    expect(isActiveInitialSalesLead({ lead_status: 'inactive', retry_strategy_id: null })).toBe(false);
   });
 });
