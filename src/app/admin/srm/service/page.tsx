@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, BookOpen, FlaskConical, Brain, Monitor, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { srmFetch } from '../lib/srm-fetch';
 import type { ServiceUsageResponse, ServiceUsageStudent } from '@/app/api/admin/srm/service-usage/route';
+import StudentHistoryModal from './StudentHistoryModal';
 
 function toKstDateString(date: Date): string {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(date);
@@ -128,6 +129,7 @@ export default function ServicePage() {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [fromCache, setFromCache] = useState<boolean | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<{ profileId: string; name: string } | null>(null);
 
   const fetchData = useCallback(async (targetDate: string, refresh = false) => {
     setLoading(true);
@@ -177,6 +179,7 @@ export default function ServicePage() {
   const pausedCount = data?.students.filter(s => s.tutoringStatus === 'paused').length ?? 0;
 
   return (
+    <>
     <div className="min-h-screen bg-white text-gray-900 p-8 max-w-7xl">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
@@ -313,7 +316,13 @@ export default function ServicePage() {
                   >
                     <td className="py-2.5 px-3 text-xs text-gray-400">{i + 1}</td>
                     <td className="py-2.5 px-3">
-                      <span className="font-medium text-gray-800">{s.name}</span>
+                      <button
+                        className="font-medium text-gray-800 hover:text-blue-600 hover:underline text-left transition-colors"
+                        onClick={() => s.sfv2ProfileId && setSelectedStudent({ profileId: s.sfv2ProfileId, name: s.name })}
+                        disabled={!s.sfv2ProfileId}
+                      >
+                        {s.name}
+                      </button>
                     </td>
                     <td className="py-2.5 px-3 text-right">
                       <CoachRoomCell result={s.coachRoom} hasSchedule={s.schedule.coachRoom} />
@@ -365,5 +374,14 @@ export default function ServicePage() {
         )
       )}
     </div>
+
+    {selectedStudent && (
+      <StudentHistoryModal
+        profileId={selectedStudent.profileId}
+        name={selectedStudent.name}
+        onClose={() => setSelectedStudent(null)}
+      />
+    )}
+    </>
   );
 }

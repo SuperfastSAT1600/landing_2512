@@ -57,6 +57,74 @@ export interface CumulativeResponse {
   students: StudentDayResult[];
 }
 
+// ── Schedule Batch ────────────────────────────────────────────────────────────
+
+export async function fetchScheduleBatch(
+  profileIds: string[],
+  start: string,
+  end: string,
+): Promise<Map<string, { coachRoom: boolean; studyHall: boolean; vocab: boolean }>> {
+  const empty = { coachRoom: false, studyHall: false, vocab: false };
+  if (!profileIds.length) return new Map();
+
+  const PAGE_SIZE = 1000;
+
+  const allEvents: { id: string; category: string }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('scheduled_events')
+      .select('id, category')
+      .in('category', ['coach_room', 'study_hall', 'vocab'])
+      .neq('status', 'cancelled')
+      .gte('starts_at', start)
+      .lte('starts_at', end)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allEvents.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+
+  if (!allEvents.length) return new Map(profileIds.map(id => [id, { ...empty }]));
+
+  const eventIds = allEvents.map(e => e.id);
+  const categoryById = new Map(allEvents.map(e => [e.id, e.category as string]));
+
+  const CHUNK = 100;
+  const chunks: string[][] = [];
+  for (let i = 0; i < eventIds.length; i += CHUNK) chunks.push(eventIds.slice(i, i + CHUNK));
+
+  const chunkResults = await Promise.all(chunks.map(async chunk => {
+    const rows: { event_id: string; user_id: string }[] = [];
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+      const { data: page } = await supabaseSFv2
+        .from('scheduled_event_participants')
+        .select('event_id, user_id')
+        .in('event_id', chunk)
+        .in('user_id', profileIds)
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (!page?.length) break;
+      rows.push(...page);
+      if (page.length < PAGE_SIZE) break;
+    }
+    return rows;
+  }));
+  const allParticipants = chunkResults.flat();
+
+  if (!allParticipants.length) return new Map(profileIds.map(id => [id, { ...empty }]));
+
+  const byUser = new Map<string, { coachRoom: boolean; studyHall: boolean; vocab: boolean }>();
+  for (const p of allParticipants) {
+    if (!byUser.has(p.user_id)) byUser.set(p.user_id, { ...empty });
+    const entry = byUser.get(p.user_id)!;
+    const cat = categoryById.get(p.event_id);
+    if (cat === 'coach_room') entry.coachRoom = true;
+    else if (cat === 'study_hall') entry.studyHall = true;
+    else if (cat === 'vocab') entry.vocab = true;
+  }
+
+  return new Map(profileIds.map(id => [id, byUser.get(id) ?? { ...empty }]));
+}
+
 // ── Coach Room Batch ──────────────────────────────────────────────────────────
 
 export async function fetchCoachRoomBatch(profileIds: string[], start: string, end: string): Promise<Map<string, CoachRoomResult | null>> {
