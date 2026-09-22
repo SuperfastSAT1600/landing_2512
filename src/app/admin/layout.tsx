@@ -35,13 +35,12 @@ const NAV_ITEMS: NavItem[] = [
     },
     { href: '/admin/popup-settings', label: '팝업 설정', icon: '🔔' },
     { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
-    { href: '/admin/business', label: 'Business', icon: '💼' },
-    { href: '/admin/marketing', label: '마케팅', icon: '📣' },
-    { href: '/admin/crm', label: 'CRM', icon: '👥' },
     {
-        label: 'SRM', icon: '📊', children: [
-            { href: '/admin/srm', label: '튜터링 유저' },
-            { href: '/admin/srm/service', label: 'Service' },
+        label: 'Superfastsat', icon: '⚡', children: [
+            { href: '/admin/business', label: 'Business' },
+            { href: '/admin/marketing', label: '마케팅' },
+            { href: '/admin/crm', label: 'CRM' },
+            { href: '/admin/srm/service', label: '학습현황' },
         ]
     },
 ];
