@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
-import { kstDayRange, fetchCoachRoomBatch, fetchStudyHallBatch, fetchTestCenterBatch, fetchVocabBatch } from '@/lib/learning-data';
+import { kstDayRange, fetchCoachRoomBatch, fetchStudyHallBatch, fetchTestCenterBatch, fetchVocabBatch, fetchScheduleBatch } from '@/lib/learning-data';
 import type { TutoringUsersResponse } from '@/app/api/admin/srm/tutoring-users/route';
 
 export interface ServiceUsageStudent {
   name: string;
   sfv2ProfileId: string | null;
-  tutoringStatus: 'active' | 'paused';
+  tutoringStatus: string;
   schedule: {
     coachRoom: boolean;
     studyHall: boolean;
@@ -30,73 +30,6 @@ function kstToday(): string {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date());
 }
 
-async function fetchScheduleBatch(
-  profileIds: string[],
-  start: string,
-  end: string,
-): Promise<Map<string, { coachRoom: boolean; studyHall: boolean; vocab: boolean }>> {
-  const empty = { coachRoom: false, studyHall: false, vocab: false };
-  if (!profileIds.length) return new Map();
-
-  const PAGE_SIZE = 1000;
-
-  // Step 1: 날짜 범위로 먼저 좁히기 (소수 결과) → in() URL 한도 문제 방지
-  const allEvents: { id: string; category: string }[] = [];
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const { data: page } = await supabaseSFv2
-      .from('scheduled_events')
-      .select('id, category')
-      .in('category', ['coach_room', 'study_hall', 'vocab'])
-      .neq('status', 'cancelled')
-      .gte('starts_at', start)
-      .lte('starts_at', end)
-      .range(offset, offset + PAGE_SIZE - 1);
-    if (!page?.length) break;
-    allEvents.push(...page);
-    if (page.length < PAGE_SIZE) break;
-  }
-
-  if (!allEvents.length) return new Map(profileIds.map(id => [id, { ...empty }]));
-
-  const eventIds = allEvents.map(e => e.id);
-  const categoryById = new Map(allEvents.map(e => [e.id, e.category as string]));
-
-  // Step 2: 청크 분리 → eventIds가 많아도 URL 한도 초과 방지 (100개씩 병렬)
-  const CHUNK = 100;
-  const chunks: string[][] = [];
-  for (let i = 0; i < eventIds.length; i += CHUNK) chunks.push(eventIds.slice(i, i + CHUNK));
-
-  const chunkResults = await Promise.all(chunks.map(async chunk => {
-    const rows: { event_id: string; user_id: string }[] = [];
-    for (let offset = 0; ; offset += PAGE_SIZE) {
-      const { data: page } = await supabaseSFv2
-        .from('scheduled_event_participants')
-        .select('event_id, user_id')
-        .in('event_id', chunk)
-        .in('user_id', profileIds)
-        .range(offset, offset + PAGE_SIZE - 1);
-      if (!page?.length) break;
-      rows.push(...page);
-      if (page.length < PAGE_SIZE) break;
-    }
-    return rows;
-  }));
-  const allParticipants = chunkResults.flat();
-
-  if (!allParticipants.length) return new Map(profileIds.map(id => [id, { ...empty }]));
-
-  const byUser = new Map<string, { coachRoom: boolean; studyHall: boolean; vocab: boolean }>();
-  for (const p of allParticipants) {
-    if (!byUser.has(p.user_id)) byUser.set(p.user_id, { ...empty });
-    const entry = byUser.get(p.user_id)!;
-    const cat = categoryById.get(p.event_id);
-    if (cat === 'coach_room') entry.coachRoom = true;
-    else if (cat === 'study_hall') entry.studyHall = true;
-    else if (cat === 'vocab') entry.vocab = true;
-  }
-
-  return new Map(profileIds.map(id => [id, byUser.get(id) ?? { ...empty }]));
-}
 
 // ── Cache helpers ─────────────────────────────────────────────────────────────
 
@@ -115,7 +48,7 @@ function cacheRowToStudent(row: CacheRow): ServiceUsageStudent {
   return {
     name: row.name,
     sfv2ProfileId: row.sfv2_profile_id,
-    tutoringStatus: row.tutoring_status as 'active' | 'paused',
+    tutoringStatus: row.tutoring_status,
     schedule: row.schedule,
     coachRoom: row.coach_room,
     studyHall: row.study_hall,
@@ -161,7 +94,7 @@ async function fetchLiveForProfiles(
   profileIds: string[],
   start: string,
   end: string,
-  usersByProfileId: Map<string, { name: string; status: 'active' | 'paused' }>,
+  usersByProfileId: Map<string, { name: string; status: string }>,
 ): Promise<ServiceUsageStudent[]> {
   if (!profileIds.length) return [];
 
@@ -211,27 +144,36 @@ export async function GET(req: NextRequest) {
     if (!usersRes.ok) throw new Error(`tutoring-users fetch failed: ${usersRes.status}`);
     const usersData: TutoringUsersResponse = await usersRes.json();
 
+    const isPast = date < kstToday();
+    const { start, end } = kstDayRange(date);
+
+    // 오늘: 재원/휴원만 실시간 표시
+    // 과거: 전체 linked 학생 캐싱 — 이탈 전 재원생 이력 보존
     const activeAndPaused = usersData.linked.filter(
       u => u.status === 'active' || u.status === 'paused'
     );
+    const studentsPool = isPast ? usersData.linked : activeAndPaused;
 
-    const profileIds = activeAndPaused
+    const profileIds = studentsPool
       .map(u => u.sfv2ProfileId)
       .filter((id): id is string => Boolean(id));
 
-    // Students without a profileId always show as empty
+    const usersByProfileId = new Map(
+      studentsPool
+        .filter(u => u.sfv2ProfileId)
+        .map(u => [u.sfv2ProfileId!, { name: u.name, status: u.status }])
+    );
+
+    // profileId 없는 학생은 오늘 재원/휴원만 표시 (활동 데이터 조회 불가)
     const noProfileStudents: ServiceUsageStudent[] = activeAndPaused
       .filter(u => !u.sfv2ProfileId)
       .map(u => ({
         name: u.name,
         sfv2ProfileId: null,
-        tutoringStatus: u.status as 'active' | 'paused',
+        tutoringStatus: u.status,
         schedule: { coachRoom: false, studyHall: false, vocab: false },
         coachRoom: null, studyHall: null, vocab: null, testCenter: null,
       }));
-
-    const { start, end } = kstDayRange(date);
-    const isPast = date < kstToday();
 
     let students: ServiceUsageStudent[];
     let fromCache = false;
@@ -256,12 +198,6 @@ export async function GET(req: NextRequest) {
         fromCache = true;
       } else {
         // Partial or full miss — fetch live for missed IDs, write to cache
-        const usersByProfileId = new Map(
-          activeAndPaused
-            .filter(u => u.sfv2ProfileId)
-            .map(u => [u.sfv2ProfileId!, { name: u.name, status: u.status as 'active' | 'paused' }])
-        );
-
         const freshStudents = await fetchLiveForProfiles(missedIds, start, end, usersByProfileId);
         await writeCache(date, freshStudents);
 
@@ -274,12 +210,7 @@ export async function GET(req: NextRequest) {
         fromCache = cached.size > 0;
       }
     } else {
-      // Today (or future) — always live
-      const usersByProfileId = new Map(
-        activeAndPaused
-          .filter(u => u.sfv2ProfileId)
-          .map(u => [u.sfv2ProfileId!, { name: u.name, status: u.status as 'active' | 'paused' }])
-      );
+      // Today (or future) — always live, active/paused only
       students = await fetchLiveForProfiles(profileIds, start, end, usersByProfileId);
     }
 
