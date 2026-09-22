@@ -169,3 +169,34 @@ describe('assignedStrategyOf', () => {
     expect(assignedStrategyOf(s, 'retry', PERIOD, NAMES)).toBeNull();
   });
 });
+
+describe('computeStrategyStats — exists 플래그 (REQ-001)', () => {
+  it('라이브러리에 실재하는 전략은 exists:true', () => {
+    const s = reached2({
+      id: 'a',
+      strategy_history: [entry({ strategy_id: 's1', type: 'initial_sales', applied_at: '2026-07-10T00:00:00Z' })],
+    });
+    const out = computeStrategyStats('initial_sales', [s], [], PERIOD, NAMES);
+    expect(out.by_strategy.find((r) => r.strategy_id === 's1')?.exists).toBe(true);
+  });
+
+  it('이력에만 남은(이미 삭제된) 전략은 exists:false', () => {
+    const s = reached2({
+      id: 'a',
+      strategy_history: [
+        { id: 'e9', strategy_id: 'gone', strategy_name: '옛 전략', type: 'initial_sales', applied_at: '2026-07-10T00:00:00Z', memo: '' },
+      ],
+    });
+    const out = computeStrategyStats('initial_sales', [s], [], PERIOD, NAMES);
+    const row = out.by_strategy.find((r) => r.strategy_id === 'gone');
+    expect(row?.exists).toBe(false);
+    // 이름은 이력 스냅샷을 그대로 쓴다 — 과거 실적이 '(삭제된 전략)'으로 뭉개지지 않는다
+    expect(row?.strategy_name).toBe('옛 전략');
+  });
+
+  it('배정 0건 시드 전략도 실재하면 exists:true', () => {
+    const out = computeStrategyStats('initial_sales', [], [], PERIOD, NAMES);
+    expect(out.by_strategy.every((r) => r.exists)).toBe(true);
+    expect(out.by_strategy.length).toBe(NAMES.size);
+  });
+});
