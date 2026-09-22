@@ -61,19 +61,27 @@ async function fetchScheduleBatch(
   const eventIds = allEvents.map(e => e.id);
   const categoryById = new Map(allEvents.map(e => [e.id, e.category as string]));
 
-  // Step 2: 그 이벤트들에 우리 학생이 참여했는지 확인
-  const allParticipants: { event_id: string; user_id: string }[] = [];
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const { data: page } = await supabaseSFv2
-      .from('scheduled_event_participants')
-      .select('event_id, user_id')
-      .in('event_id', eventIds)
-      .in('user_id', profileIds)
-      .range(offset, offset + PAGE_SIZE - 1);
-    if (!page?.length) break;
-    allParticipants.push(...page);
-    if (page.length < PAGE_SIZE) break;
-  }
+  // Step 2: 청크 분리 → eventIds가 많아도 URL 한도 초과 방지 (100개씩 병렬)
+  const CHUNK = 100;
+  const chunks: string[][] = [];
+  for (let i = 0; i < eventIds.length; i += CHUNK) chunks.push(eventIds.slice(i, i + CHUNK));
+
+  const chunkResults = await Promise.all(chunks.map(async chunk => {
+    const rows: { event_id: string; user_id: string }[] = [];
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+      const { data: page } = await supabaseSFv2
+        .from('scheduled_event_participants')
+        .select('event_id, user_id')
+        .in('event_id', chunk)
+        .in('user_id', profileIds)
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (!page?.length) break;
+      rows.push(...page);
+      if (page.length < PAGE_SIZE) break;
+    }
+    return rows;
+  }));
+  const allParticipants = chunkResults.flat();
 
   if (!allParticipants.length) return new Map(profileIds.map(id => [id, { ...empty }]));
 
