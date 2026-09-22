@@ -194,6 +194,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const date = searchParams.get('date') ?? kstToday();
+  const forceRefresh = searchParams.get('refresh') === 'true';
 
   try {
     const usersUrl = new URL('/api/admin/srm/tutoring-users', req.url);
@@ -228,8 +229,17 @@ export async function GET(req: NextRequest) {
     let fromCache = false;
 
     if (isPast) {
+      // forceRefresh: delete stale cache rows first
+      if (forceRefresh && profileIds.length) {
+        await supabaseAdmin
+          .from('srm_service_usage_cache')
+          .delete()
+          .eq('date', date)
+          .in('sfv2_profile_id', profileIds);
+      }
+
       // Try cache first
-      const cached = await readCache(date, profileIds);
+      const cached = forceRefresh ? new Map() : await readCache(date, profileIds);
       const missedIds = profileIds.filter(id => !cached.has(id));
 
       if (missedIds.length === 0) {

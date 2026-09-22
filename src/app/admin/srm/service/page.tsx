@@ -129,11 +129,12 @@ export default function ServicePage() {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [fromCache, setFromCache] = useState<boolean | null>(null);
 
-  const fetchData = useCallback(async (targetDate: string) => {
+  const fetchData = useCallback(async (targetDate: string, refresh = false) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await srmFetch(`/api/admin/srm/service-usage?date=${targetDate}`);
+      const url = `/api/admin/srm/service-usage?date=${targetDate}${refresh ? '&refresh=true' : ''}`;
+      const res = await srmFetch(url);
       if (!res.ok) throw new Error(`${res.status}`);
       const json: ServiceUsageResponse = await res.json();
       setData(json);
@@ -182,9 +183,13 @@ export default function ServicePage() {
         <h1 className="text-lg font-bold text-gray-900 tracking-tight">서비스 이용 현황</h1>
         <div className="flex items-center gap-2">
           {fromCache === true && !loading && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-500 border border-blue-100 font-medium">
-              캐시됨
-            </span>
+            <button
+              onClick={() => fetchData(date, true)}
+              className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-500 border border-blue-100 font-medium hover:bg-blue-100 transition-colors"
+              title="캐시를 삭제하고 다시 계산"
+            >
+              캐시됨 · 초기화
+            </button>
           )}
           <input
             type="date"
