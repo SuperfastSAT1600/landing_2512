@@ -42,17 +42,11 @@ beforeEach(() => {
   vi.stubGlobal('alert', vi.fn());
 });
 
-describe('StrategyStatsListItem — 삭제 버튼 노출 (REQ-002)', () => {
-  it('실재하는 전략에는 삭제 버튼이 있다', () => {
-    setup({ exists: true });
+describe('StrategyStatsListItem — 삭제 버튼 노출', () => {
+  it('모든 행에 삭제 버튼이 있다 — 삭제된 전략은 목록에 오기 전에 걸러진다', () => {
+    setup();
     expect(screen.getByRole('button', { name: '전략 삭제' })).toBeTruthy();
     expect(screen.queryByText('삭제됨')).toBeNull();
-  });
-
-  it('이력에만 남은 전략에는 삭제 버튼 대신 "삭제됨" 배지가 보인다', () => {
-    setup({ exists: false });
-    expect(screen.queryByRole('button', { name: '전략 삭제' })).toBeNull();
-    expect(screen.getByText('삭제됨')).toBeTruthy();
   });
 });
 
