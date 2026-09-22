@@ -3,17 +3,11 @@
 import { useState } from 'react';
 import type { RetryStrategy } from '@/types/crm';
 
-const KIND_OPTIONS: { value: 'initial_contact' | 'initial_sales' | 'retry'; label: string }[] = [
-  { value: 'initial_contact', label: '최초 컨텍용' },
-  { value: 'initial_sales', label: '최초 세일즈용' },
-  { value: 'retry', label: '재시도용' },
-];
-
 interface Props {
   categoryId: string;
   segment: 'b2c' | 'b2b';
   adminKey: string;
-  /** 카테고리 안 기존 전략들의 다수결 kind — 매번 직접 고르지 않아도 되게 기본 선택해둔다. */
+  /** 카테고리 안 기존 전략들의 다수결 kind — 사용자가 고르지 않고 이 값을 그대로 쓴다. */
   defaultKind: 'initial_contact' | 'initial_sales' | 'retry';
   onCreated: (s: RetryStrategy) => void;
   onCancel: () => void;
@@ -22,7 +16,6 @@ interface Props {
 export function StrategyCreateForm({ categoryId, segment, adminKey, defaultKind, onCreated, onCancel }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [kind, setKind] = useState<'initial_contact' | 'initial_sales' | 'retry'>(defaultKind);
   const [adding, setAdding] = useState(false);
 
   async function handleCreate() {
@@ -34,7 +27,7 @@ export function StrategyCreateForm({ categoryId, segment, adminKey, defaultKind,
       body: JSON.stringify({
         name: name.trim(),
         description: description.trim() || undefined,
-        kind,
+        kind: defaultKind,
         category_id: categoryId,
         segment,
       }),
@@ -66,19 +59,6 @@ export function StrategyCreateForm({ categoryId, segment, adminKey, defaultKind,
         placeholder="전략 내용 입력 (선택)..."
         className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
       />
-      <div className="flex items-center gap-3 flex-wrap">
-        {KIND_OPTIONS.map((opt) => (
-          <label key={opt.value} className="flex items-center gap-1 text-xs text-gray-600">
-            <input
-              type="radio"
-              name={`kind-${categoryId}`}
-              checked={kind === opt.value}
-              onChange={() => setKind(opt.value)}
-            />
-            {opt.label}
-          </label>
-        ))}
-      </div>
       <div className="flex gap-2">
         <button
           onClick={handleCreate}
