@@ -6,8 +6,7 @@ import { StrategiesTab } from './strategies/StrategiesTab';
 import { CrmInsightBanner } from './CrmInsightBanner';
 import { DailyTasks } from './DailyTasks';
 import { LeadsHub } from './LeadsHub';
-import { WeeklyPlan } from './WeeklyPlan';
-type B2cTab = 'leads' | 'strategies' | 'weekly';
+type B2cTab = 'leads' | 'strategies' | 'daily';
 
 // 선제 진단 인사이트 배너(CrmInsightBanner) 사용 중단으로 숨김. true로 바꾸면 복구.
 const INSIGHT_BANNER_ENABLED = false;
@@ -37,7 +36,7 @@ export function B2cWorkspace({
   retryEnrolledId,
   onEnrolledHandled,
 }: B2cWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<B2cTab>('weekly');
+  const [activeTab, setActiveTab] = useState<B2cTab>('daily');
   const [strategiesInitialSubTab, setStrategiesInitialSubTab] = useState<'logic' | 'library' | 'strategy_ai' | undefined>(undefined);
   const [strategyPeriod, setStrategyPeriod] = useState<InsightPeriod | undefined>(undefined);
   // 배너 '이어서 전략 짜기'에서 고른 안건 시드 — key 증가로 매 선택마다 새 스레드 트리거
@@ -74,7 +73,7 @@ export function B2cWorkspace({
         {([
           { key: 'leads',      label: '리드 현황·통계' },
           { key: 'strategies', label: '세일즈 전략' },
-          { key: 'weekly',     label: '주차 계획·이행' },
+          { key: 'daily',      label: '오늘 실행' },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
@@ -105,28 +104,17 @@ export function B2cWorkspace({
       {activeTab === 'strategies' && (
         <>
           {INSIGHT_BANNER_ENABLED && <CrmInsightBanner adminKey={adminKey} onOpenStrategy={openStrategyAgent} />}
-          <StrategiesTab adminKey={adminKey} segment="b2c" initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} onSelectStudent={onSelectStudentById} onOpenWeekly={() => setActiveTab('weekly')} />
+          <StrategiesTab adminKey={adminKey} segment="b2c" initialSubTab={strategiesInitialSubTab} strategyPeriod={strategyPeriod} strategySeed={strategySeed} onSelectStudent={onSelectStudentById} />
         </>
       )}
 
-      {activeTab === 'weekly' && (
-        <WeeklyPlan
-          segment="b2c"
-          adminKey={adminKey}
-          onSelectStudent={onSelectStudentById}
-          onOpenStrategyLibrary={() => {
-            setStrategiesInitialSubTab('library');
-            setActiveTab('strategies');
-          }}
-          dailyView={
-            <DailyTasks
-              followUpStudents={followUpStudents}
-              stalledStudents={stalledStudents}
-              actionedStudents={todayActions}
-              onStudentClick={onStudentClick}
-              onStudentUpdate={onStudentUpdate}
-            />
-          }
+      {activeTab === 'daily' && (
+        <DailyTasks
+          followUpStudents={followUpStudents}
+          stalledStudents={stalledStudents}
+          actionedStudents={todayActions}
+          onStudentClick={onStudentClick}
+          onStudentUpdate={onStudentUpdate}
         />
       )}
 

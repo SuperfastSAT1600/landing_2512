@@ -13,7 +13,6 @@ interface Props {
   strategyPeriod?: InsightPeriod;
   strategySeed?: { key: number; text: string; period: InsightPeriod }; // 배너에서 고른 안건 시드
   onSelectStudent?: (id: string) => void; // 세일즈 로직 드릴다운 → 학생 패널
-  onOpenWeekly?: () => void; // 주차 계획·이행으로 이동 (이번 주 실행·회고)
 }
 
 type SubTab = 'logic' | 'library' | 'strategy_ai';
@@ -22,7 +21,7 @@ type SubTab = 'logic' | 'library' | 'strategy_ai';
 // 짝: CrmInsightBanner.tsx 의 동일 플래그(이어서 전략 짜기 CTA).
 const STRATEGY_AGENT_ENABLED = false;
 
-export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strategyPeriod, strategySeed, onSelectStudent, onOpenWeekly }: Props) {
+export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strategyPeriod, strategySeed, onSelectStudent }: Props) {
   const [subTab, setSubTab] = useState<SubTab>(initialSubTab === 'strategy_ai' ? 'strategy_ai' : 'logic');
 
   // 배너에서 '이어서 전략 짜기'로 진입 시 전략 에이전트 서브탭으로 전환
@@ -57,14 +56,6 @@ export function StrategiesTab({ adminKey, segment = 'b2c', initialSubTab, strate
             {label}
           </button>
         ))}
-        {onOpenWeekly && (
-          <button
-            onClick={onOpenWeekly}
-            className="ml-auto mr-1 shrink-0 text-[11px] text-gray-400 hover:text-gray-600 whitespace-nowrap"
-          >
-            이번 주 실행·회고는 주차 계획·이행 →
-          </button>
-        )}
       </div>
 
       {subTab === 'logic' && <StrategyStats adminKey={adminKey} segment={segment} onSelectStudent={onSelectStudent} />}
