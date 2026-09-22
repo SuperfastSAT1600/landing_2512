@@ -18,7 +18,9 @@ import { useKindLabels } from './strategies/useKindLabels';
 import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
 import { visibleStrategyRows } from './strategy-stats/visibleRows';
 
-const TYPE_ORDER: StrategyHistoryType[] = ['initial_contact', 'initial_sales', 'retry'];
+// 재시도 세일즈 전략은 운영에서 쓰지 않아 통계 탭에서 제외한다.
+// (type='retry' 집계 API·전략 라이브러리는 그대로 유지)
+const TYPE_ORDER: StrategyHistoryType[] = ['initial_contact', 'initial_sales'];
 
 const won = (n: number) => `${n.toLocaleString()}원`;
 const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
