@@ -33,9 +33,13 @@ export function appendStrategyHistoryEntry(
   return [...(history ?? []), entry];
 }
 
-/** 최초 세일즈 전략이 하나라도 적용됐는지 — 세일즈 칸반 이동·메모 차단 기준(146 연장). */
-export function hasInitialSalesStrategy(student: { strategy_history: StrategyHistoryEntry[] | null | undefined }): boolean {
-  return (student.strategy_history ?? []).some((e) => e.type === 'initial_sales');
+/**
+ * 최초 세일즈 퍼널(첫 컨택 ~ 세일즈 콜) 전략이 하나라도 적용됐는지 — 세일즈 칸반
+ * 이동·메모 차단 기준. 컨택 전략(initial_contact)도 정당한 전략 적용이라 인정한다
+ * — 재시도(retry)는 별도 트랙이라 제외.
+ */
+export function hasInitialFunnelStrategy(student: { strategy_history: StrategyHistoryEntry[] | null | undefined }): boolean {
+  return (student.strategy_history ?? []).some((e) => e.type === 'initial_contact' || e.type === 'initial_sales');
 }
 
 /** 현재 활성 최초 세일즈 트랙 리드인지 — 재시도 트랙(retry_strategy_id 있음)은 제외. */
