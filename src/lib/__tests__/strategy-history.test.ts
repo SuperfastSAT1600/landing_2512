@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   appendStrategyHistoryEntry,
   buildStrategyHistoryEntry,
-  hasInitialSalesStrategy,
+  hasInitialFunnelStrategy,
   isActiveInitialSalesLead,
 } from '@/lib/strategy-history';
 import type { StrategyHistoryEntry } from '@/types/crm';
@@ -63,18 +63,22 @@ describe('appendStrategyHistoryEntry', () => {
   });
 });
 
-describe('hasInitialSalesStrategy', () => {
-  it('type이 initial_sales인 이력이 하나라도 있으면 true', () => {
-    expect(hasInitialSalesStrategy({ strategy_history: [existing, { ...existing, type: 'initial_sales' }] })).toBe(true);
+describe('hasInitialFunnelStrategy', () => {
+  it('컨택 전략(initial_contact)만 있어도 true — 첫 컨택도 정당한 전략 적용이다', () => {
+    expect(hasInitialFunnelStrategy({ strategy_history: [existing] })).toBe(true);
   });
 
-  it('initial_sales 이력이 없으면 false (컨택·재시도만 있어도)', () => {
-    expect(hasInitialSalesStrategy({ strategy_history: [existing] })).toBe(false);
+  it('세일즈 전략(initial_sales)만 있어도 true', () => {
+    expect(hasInitialFunnelStrategy({ strategy_history: [{ ...existing, type: 'initial_sales' }] })).toBe(true);
+  });
+
+  it('재시도 전략(retry)만 있으면 false — 별도 트랙이라 제외', () => {
+    expect(hasInitialFunnelStrategy({ strategy_history: [{ ...existing, type: 'retry' }] })).toBe(false);
   });
 
   it('strategy_history가 없거나 빈 배열이면 false', () => {
-    expect(hasInitialSalesStrategy({ strategy_history: [] })).toBe(false);
-    expect(hasInitialSalesStrategy({ strategy_history: null as unknown as StrategyHistoryEntry[] })).toBe(false);
+    expect(hasInitialFunnelStrategy({ strategy_history: [] })).toBe(false);
+    expect(hasInitialFunnelStrategy({ strategy_history: null as unknown as StrategyHistoryEntry[] })).toBe(false);
   });
 });
 

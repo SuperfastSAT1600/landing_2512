@@ -29,7 +29,7 @@ import { SrmDataCard } from './sections/SrmDataCard';
 import { PlaudRecordingPicker } from './PlaudRecordingPicker';
 import type { StudentDetailPanelProps } from './types';
 import type { ConsultationEntry } from '@/types/crm';
-import { hasInitialSalesStrategy, isActiveInitialSalesLead } from '@/lib/strategy-history';
+import { hasInitialFunnelStrategy, isActiveInitialSalesLead } from '@/lib/strategy-history';
 
 export function StudentDetailPanel({
   student,
@@ -362,7 +362,7 @@ export function StudentDetailPanel({
               onRemoveAttachment={attachmentsHook.remove}
               attachmentsUploading={attachmentsHook.uploading}
               onOpenPlaud={() => setPlaudOpen(true)}
-              blocked={isActiveInitialSalesLead(localStudent) && !hasInitialSalesStrategy(localStudent)}
+              blocked={isActiveInitialSalesLead(localStudent) && !hasInitialFunnelStrategy(localStudent)}
               blockedReason="이 리드에 적용된 전략이 없어 메모를 입력할 수 없습니다."
             />
 
