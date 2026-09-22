@@ -64,30 +64,12 @@ export async function fetchCoachRoomBatch(profileIds: string[], start: string, e
 
   const PAGE_SIZE = 1000;
 
-  // Step 1: scheduled_event_participants → event_ids for each user
-  const allParticipants: { event_id: string; user_id: string }[] = [];
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const { data: page } = await supabaseSFv2
-      .from('scheduled_event_participants')
-      .select('event_id, user_id')
-      .in('user_id', profileIds)
-      .range(offset, offset + PAGE_SIZE - 1);
-    if (!page?.length) break;
-    allParticipants.push(...page);
-    if (page.length < PAGE_SIZE) break;
-  }
-
-  if (!allParticipants.length) return new Map(profileIds.map(id => [id, null]));
-
-  const allEventIds = [...new Set(allParticipants.map(p => p.event_id))];
-
-  // Step 2: scheduled_events filtered by coach_room + date range
+  // Step 1: 날짜 범위로 먼저 좁히기 → in(event_ids) URL 한도 문제 방지
   const allEvents: { id: string; starts_at: string; ends_at: string | null; status: string }[] = [];
   for (let offset = 0; ; offset += PAGE_SIZE) {
     const { data: page } = await supabaseSFv2
       .from('scheduled_events')
       .select('id, starts_at, ends_at, status')
-      .in('id', allEventIds)
       .eq('category', 'coach_room')
       .gte('starts_at', start)
       .lte('starts_at', end)
@@ -100,24 +82,38 @@ export async function fetchCoachRoomBatch(profileIds: string[], start: string, e
 
   if (!allEvents.length) return new Map(profileIds.map(id => [id, null]));
 
-  const validEventIds = new Set(allEvents.map(e => e.id));
+  const eventIds = allEvents.map(e => e.id);
   const eventById = new Map(allEvents.map(e => [e.id, e]));
 
-  // Group event_ids by user
+  // Step 2: 그 이벤트의 참여자 중 우리 학생만
+  const allParticipants: { event_id: string; user_id: string }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('scheduled_event_participants')
+      .select('event_id, user_id')
+      .in('event_id', eventIds)
+      .in('user_id', profileIds)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allParticipants.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+
+  if (!allParticipants.length) return new Map(profileIds.map(id => [id, null]));
+
   const eventIdsByUser = new Map<string, string[]>();
   for (const p of allParticipants) {
-    if (!validEventIds.has(p.event_id)) continue;
     if (!eventIdsByUser.has(p.user_id)) eventIdsByUser.set(p.user_id, []);
     eventIdsByUser.get(p.user_id)!.push(p.event_id);
   }
 
   const result = new Map<string, CoachRoomResult | null>();
   for (const profileId of profileIds) {
-    const eventIds = eventIdsByUser.get(profileId);
-    if (!eventIds?.length) { result.set(profileId, null); continue; }
+    const ids = eventIdsByUser.get(profileId);
+    if (!ids?.length) { result.set(profileId, null); continue; }
 
     let durationMinutes = 0;
-    for (const eid of eventIds) {
+    for (const eid of ids) {
       const ev = eventById.get(eid);
       if (ev?.ends_at && ev.starts_at) {
         durationMinutes += Math.round(
@@ -125,7 +121,7 @@ export async function fetchCoachRoomBatch(profileIds: string[], start: string, e
         );
       }
     }
-    result.set(profileId, { sessionCount: eventIds.length, durationMinutes });
+    result.set(profileId, { sessionCount: ids.length, durationMinutes });
   }
 
   return result;
