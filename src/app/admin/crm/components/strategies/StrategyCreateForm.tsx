@@ -13,18 +13,20 @@ interface Props {
   categoryId: string;
   segment: 'b2c' | 'b2b';
   adminKey: string;
+  /** 카테고리 안 기존 전략들의 다수결 kind — 매번 직접 고르지 않아도 되게 기본 선택해둔다. */
+  defaultKind: 'initial_contact' | 'initial_sales' | 'retry';
   onCreated: (s: RetryStrategy) => void;
   onCancel: () => void;
 }
 
-export function StrategyCreateForm({ categoryId, segment, adminKey, onCreated, onCancel }: Props) {
+export function StrategyCreateForm({ categoryId, segment, adminKey, defaultKind, onCreated, onCancel }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [kind, setKind] = useState<'initial_contact' | 'initial_sales' | 'retry' | ''>('');
+  const [kind, setKind] = useState<'initial_contact' | 'initial_sales' | 'retry'>(defaultKind);
   const [adding, setAdding] = useState(false);
 
   async function handleCreate() {
-    if (!name.trim() || !kind) return;
+    if (!name.trim()) return;
     setAdding(true);
     const res = await fetch('/api/crm/retry-strategies', {
       method: 'POST',
@@ -80,7 +82,7 @@ export function StrategyCreateForm({ categoryId, segment, adminKey, onCreated, o
       <div className="flex gap-2">
         <button
           onClick={handleCreate}
-          disabled={adding || !name.trim() || !kind}
+          disabled={adding || !name.trim()}
           className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
         >
           추가
