@@ -23,7 +23,9 @@ export function StrategyCreateForm({ categoryId, segment, adminKey, defaultKind,
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [kind, setKind] = useState<'initial_contact' | 'initial_sales' | 'retry'>(defaultKind);
+  const [showKindPicker, setShowKindPicker] = useState(false);
   const [adding, setAdding] = useState(false);
+  const kindLabel = KIND_OPTIONS.find((opt) => opt.value === kind)?.label ?? kind;
 
   async function handleCreate() {
     if (!name.trim()) return;
@@ -66,19 +68,32 @@ export function StrategyCreateForm({ categoryId, segment, adminKey, defaultKind,
         placeholder="전략 내용 입력 (선택)..."
         className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
       />
-      <div className="flex items-center gap-3 flex-wrap">
-        {KIND_OPTIONS.map((opt) => (
-          <label key={opt.value} className="flex items-center gap-1 text-xs text-gray-600">
-            <input
-              type="radio"
-              name={`kind-${categoryId}`}
-              checked={kind === opt.value}
-              onChange={() => setKind(opt.value)}
-            />
-            {opt.label}
-          </label>
-        ))}
-      </div>
+      {showKindPicker ? (
+        <div className="flex items-center gap-3 flex-wrap">
+          {KIND_OPTIONS.map((opt) => (
+            <label key={opt.value} className="flex items-center gap-1 text-xs text-gray-600">
+              <input
+                type="radio"
+                name={`kind-${categoryId}`}
+                checked={kind === opt.value}
+                onChange={() => setKind(opt.value)}
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-gray-400">
+          용도: {kindLabel}{' '}
+          <button
+            type="button"
+            onClick={() => setShowKindPicker(true)}
+            className="text-blue-500 hover:text-blue-600 underline underline-offset-2"
+          >
+            변경
+          </button>
+        </p>
+      )}
       <div className="flex gap-2">
         <button
           onClick={handleCreate}
