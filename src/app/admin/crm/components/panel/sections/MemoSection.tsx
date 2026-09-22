@@ -23,6 +23,9 @@ interface Props {
   attachmentsUploading: boolean;
   // Plaud 녹음 선택 모달 열기
   onOpenPlaud: () => void;
+  /** 최초 세일즈 전략 없는 활성 리드 — 결제 전환율을 위해 메모 입력을 막는다. */
+  blocked?: boolean;
+  blockedReason?: string;
 }
 
 export function MemoSection({
@@ -41,6 +44,8 @@ export function MemoSection({
   onRemoveAttachment,
   attachmentsUploading,
   onOpenPlaud,
+  blocked = false,
+  blockedReason,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,6 +58,7 @@ export function MemoSection({
   }
 
   const canSave =
+    !blocked &&
     (!!memoText.trim() || staged.some((s) => s.path)) && !savingMemo && !attachmentsUploading;
 
   return (
@@ -65,15 +71,19 @@ export function MemoSection({
           setMemoError('');
         }}
         onPaste={handlePaste}
+        disabled={blocked}
         placeholder="상담 내용을 입력하세요... (캡처 이미지는 여기에 붙여넣기 Ctrl/⌘+V)"
         rows={3}
-        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 resize-y focus:outline-none focus:border-blue-400 min-h-[64px]"
+        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 resize-y focus:outline-none focus:border-blue-400 min-h-[64px] disabled:opacity-50 disabled:cursor-not-allowed"
       />
+      {blocked && blockedReason && (
+        <p className="mt-1 text-xs text-amber-600">{blockedReason}</p>
+      )}
       <div className="flex items-center justify-between mt-3 mb-1">
         <label className="text-xs font-semibold text-gray-600">학부모 공개용</label>
         <button
           onClick={onDraftParent}
-          disabled={!memoText.trim() || parentDrafting}
+          disabled={!memoText.trim() || parentDrafting || blocked}
           className="text-[11px] text-blue-600 disabled:opacity-40"
         >
           {parentDrafting ? '생성 중...' : '✨ AI 초안 생성'}
@@ -82,9 +92,10 @@ export function MemoSection({
       <textarea
         value={parentText}
         onChange={(e) => setParentText(e.target.value)}
+        disabled={blocked}
         placeholder="학부모님께 전달할 상담 내용을 입력하세요"
         rows={4}
-        className="w-full bg-blue-50/30 border border-blue-100 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 resize-y focus:outline-none focus:border-blue-400"
+        className="w-full bg-blue-50/30 border border-blue-100 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 resize-y focus:outline-none focus:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
       />
       <p className="mt-1 text-[11px] text-gray-400">비워두면 학부모 포털에 공개되지 않습니다</p>
 
@@ -138,13 +149,15 @@ export function MemoSection({
         <div className="flex items-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-[13px] text-gray-600 hover:bg-gray-50 transition-colors"
+            disabled={blocked}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-[13px] text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Paperclip size={13} /> 파일 첨부
           </button>
           <button
             onClick={onOpenPlaud}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-blue-200 text-[13px] text-blue-600 hover:bg-blue-50 transition-colors"
+            disabled={blocked}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-blue-200 text-[13px] text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Mic size={13} /> Plaud 녹음
           </button>

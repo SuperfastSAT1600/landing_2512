@@ -32,3 +32,13 @@ export function appendStrategyHistoryEntry(
 ): StrategyHistoryEntry[] {
   return [...(history ?? []), entry];
 }
+
+/** 최초 세일즈 전략이 하나라도 적용됐는지 — 세일즈 칸반 이동·메모 차단 기준(146 연장). */
+export function hasInitialSalesStrategy(student: { strategy_history: StrategyHistoryEntry[] | null | undefined }): boolean {
+  return (student.strategy_history ?? []).some((e) => e.type === 'initial_sales');
+}
+
+/** 현재 활성 최초 세일즈 트랙 리드인지 — 재시도 트랙(retry_strategy_id 있음)은 제외. */
+export function isActiveInitialSalesLead(student: { lead_status: string; retry_strategy_id: string | null }): boolean {
+  return student.lead_status === 'active' && !student.retry_strategy_id;
+}

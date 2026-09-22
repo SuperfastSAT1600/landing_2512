@@ -30,6 +30,7 @@ import {
 import { StudentCard } from './StudentCard';
 import { ChurnModal } from './ChurnModal';
 import { PaymentModal } from './PaymentModal';
+import { hasInitialSalesStrategy } from '@/lib/strategy-history';
 
 // 최초 세일즈 칸반: 진행 중(0~7) + 결제완료·가입대기(8).
 // 8번은 결제 완료 후 회원가입/카톡 단톡방 개설을 추적하는 컬럼 — 회원가입 완료 시 칸반에서 제거.
@@ -95,6 +96,7 @@ const KanbanColumn = memo(function KanbanColumn({ stage, students, nowMs, onStud
               enrollmentMode={isEnrollmentStage}
               onToggleSignup={() => onToggleSignup(student)}
               onKakaoCreate={() => onKakaoCreate(student)}
+              strategyMissing={!hasInitialSalesStrategy(student)}
             />
           ))}
         </SortableContext>
@@ -217,6 +219,11 @@ export function SalesKanban({ students, adminKey, searchQuery, onStudentUpdate, 
 
     // 컬럼 간 이동
     if (targetStage !== student.funnel_stage) {
+      // 결제 전환율을 위해 세일즈 전략 없이는 단계를 옮길 수 없다 — 먼저 전략을 입력해야 한다.
+      if (!hasInitialSalesStrategy(student)) {
+        alert('이 리드는 아직 전략이 없어요. 먼저 전략을 입력해주세요.');
+        return;
+      }
       onStudentUpdate(student.id, { funnel_stage: targetStage, funnel_stage_updated_at: new Date().toISOString() });
       return;
     }
