@@ -21,6 +21,7 @@ interface Question {
   choice_c: string;
   choice_d: string;
   choice_e: string;
+  correct_answer: string;
   difficulty: string;
   domain: string;
 }
@@ -60,6 +61,64 @@ function formatDate(iso: string) {
 
 function formatClock(d: Date) {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function QuestionsListModal({ questions, setNumber, onClose }: { questions: Question[]; setNumber: number; onClose: () => void }) {
+  const choiceMap = (q: Question): Record<string, string> => ({
+    A: q.choice_a, B: q.choice_b, C: q.choice_c, D: q.choice_d, E: q.choice_e,
+  });
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#1a1c1f] border border-white/10 rounded-2xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5 shrink-0">
+          <h2 className="text-lg font-bold text-white">Set {setNumber} 문제 목록</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-xl leading-none">×</button>
+        </div>
+        <div className="overflow-y-auto space-y-6 pr-1">
+          {questions.map(q => {
+            const choices = choiceMap(q);
+            return (
+              <div key={q.id} className="border border-white/8 rounded-xl p-4 bg-[#09090b]">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md">Q{q.question_number}</span>
+                  <span className="text-xs text-gray-500">{q.domain} · {q.difficulty}</span>
+                </div>
+                <div className="text-white text-sm leading-relaxed mb-4">
+                  <ContentRenderer content={q.question_text} />
+                </div>
+                <div className="space-y-1.5">
+                  {CHOICES.map(letter => {
+                    const isCorrect = letter === q.correct_answer;
+                    return (
+                      <div
+                        key={letter}
+                        className={`flex items-start gap-2.5 px-3 py-2 rounded-lg text-sm ${
+                          isCorrect
+                            ? 'bg-green-500/15 border border-green-500/30 text-green-300'
+                            : 'bg-white/3 border border-white/5 text-gray-400'
+                        }`}
+                      >
+                        <span className="font-bold shrink-0 w-4">{letter}</span>
+                        <ContentRenderer content={choices[letter]} className="inline" />
+                        {isCorrect && <span className="ml-auto shrink-0 text-green-400 text-xs font-bold">정답</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function QuestionModal({ selected, onClose }: { selected: SelectedQuestion; onClose: () => void }) {
@@ -136,6 +195,7 @@ export default function SSATMathAdminPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedQuestion, setSelectedQuestion] = useState<SelectedQuestion | null>(null);
+  const [showQuestionsModal, setShowQuestionsModal] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [live, setLive] = useState(true);
@@ -158,7 +218,9 @@ export default function SSATMathAdminPage() {
       // 문제는 세트가 바뀔 때만 다시 로드
       const needQuestions = questionsLoadedForSet.current !== setNumber;
       if (needQuestions) {
-        fetches.push(fetch(`/api/ssat-math/sets/${setNumber}/questions`));
+        fetches.push(fetch(`/api/admin/ssat-math/sets/${setNumber}/questions`, {
+          headers: { 'x-admin-key': adminKey },
+        }));
       }
 
       const responses = await Promise.all(fetches);
@@ -255,12 +317,21 @@ export default function SSATMathAdminPage() {
               )}
             </div>
           </div>
-          <button
-            onClick={() => fetchResults(activeSet, false)}
-            className="px-4 py-2 bg-[#1e2023] hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
-          >
-            수동 새로고침
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowQuestionsModal(true)}
+              disabled={questions.length === 0}
+              className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 rounded-lg text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              문제 보기
+            </button>
+            <button
+              onClick={() => fetchResults(activeSet, false)}
+              className="px-4 py-2 bg-[#1e2023] hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
+            >
+              수동 새로고침
+            </button>
+          </div>
         </div>
 
         {/* Set tabs */}
@@ -383,6 +454,14 @@ export default function SSATMathAdminPage() {
           </div>
         )}
       </div>
+
+      {showQuestionsModal && (
+        <QuestionsListModal
+          questions={questions}
+          setNumber={activeSet}
+          onClose={() => setShowQuestionsModal(false)}
+        />
+      )}
 
       {selectedQuestion && (
         <QuestionModal
