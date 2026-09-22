@@ -15,6 +15,7 @@ import {
 import { StatsDetailModal } from './StatsDetailModal';
 import { LeadDetailTable } from './LeadDetailTable';
 import { useKindLabels } from './strategies/useKindLabels';
+import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
 
 const TYPE_ORDER: StrategyHistoryType[] = ['initial_contact', 'initial_sales', 'retry'];
 
@@ -86,6 +87,10 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows.map((r) => r.strategy_id).join(','), rows.length]);
 
+  // 삭제한 전략에 이력이 있으면 '삭제됨' 행으로 남는다(집계 기준이 strategy_history라 정상).
+  // 어느 쪽인지는 서버만 아니까 낙관적 제거 대신 재조회한다.
+  const handleDeleted = useCallback(() => { fetchStats(); }, [fetchStats]);
+
   const selected = rows.find((r) => r.strategy_id === selectedId) ?? null;
 
   return (
@@ -147,11 +152,13 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
           {/* 좌: 전략 목록 */}
           <div className="md:w-64 md:shrink-0 space-y-1.5">
             {rows.map((r) => (
-              <StrategyListItem
+              <StrategyStatsListItem
                 key={r.strategy_id}
                 row={r}
                 active={r.strategy_id === selectedId}
+                adminKey={adminKey}
                 onClick={() => setSelectedId(r.strategy_id)}
+                onDeleted={handleDeleted}
               />
             ))}
           </div>
@@ -191,39 +198,6 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
         />
       )}
     </div>
-  );
-}
-
-function StrategyListItem({
-  row,
-  active,
-  onClick,
-}: {
-  row: PerStrategyRow;
-  active: boolean;
-  onClick: () => void;
-}) {
-  const zero = row.assigned === 0;
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left rounded-lg border px-3 py-2.5 transition-colors ${
-        active
-          ? 'border-gray-900 bg-gray-900/[0.03] ring-1 ring-gray-900'
-          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-      }`}
-    >
-      <p className={`text-sm font-semibold truncate ${zero ? 'text-gray-400' : 'text-gray-900'}`}>
-        {row.strategy_name}
-      </p>
-      {zero ? (
-        <p className="mt-0.5 text-[11px] text-gray-400">이 기간 배정 없음</p>
-      ) : (
-        <p className="mt-0.5 text-[11px] text-gray-500 tabular-nums">
-          전환율 {row.conversion_rate}% · 결제 {row.paid} · 배정 {row.assigned}
-        </p>
-      )}
-    </button>
   );
 }
 

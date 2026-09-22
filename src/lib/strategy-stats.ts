@@ -50,9 +50,15 @@ export interface PerStrategyRow {
   net_revenue: number; // 부가세 제외 실수익
   avg_days_to_convert: number | null; // (첫 최초결제 - applied_at) 평균 일수
   stage_flow: StageFlowRow[];
+  /**
+   * retry_strategies 에 아직 실재하는 전략인가.
+   * false면 이력(strategy_history)에만 남은 과거 전략이라 삭제할 대상이 없다 —
+   * 화면이 '지울 수 있는 것'과 '이미 지워진 기록'을 구분하는 근거다.
+   */
+  exists: boolean;
 }
 
-export type StrategyRollup = Omit<PerStrategyRow, 'strategy_id' | 'strategy_name' | 'touched' | 'stage_flow'> & {
+export type StrategyRollup = Omit<PerStrategyRow, 'strategy_id' | 'strategy_name' | 'touched' | 'stage_flow' | 'exists'> & {
   stage_flow: StageFlowRow[];
 };
 
@@ -255,6 +261,7 @@ export function computeStrategyStats(
       net_revenue: rev.net,
       avg_days_to_convert: avgDays,
       stage_flow: computeStageFlow(cohort),
+      exists: strategyNames.has(strategyId),
     };
   }
 
