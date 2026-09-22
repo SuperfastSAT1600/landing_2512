@@ -16,6 +16,7 @@ import { StatsDetailModal } from './StatsDetailModal';
 import { LeadDetailTable } from './LeadDetailTable';
 import { useKindLabels } from './strategies/useKindLabels';
 import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
+import { visibleStrategyRows } from './strategy-stats/visibleRows';
 
 const TYPE_ORDER: StrategyHistoryType[] = ['initial_contact', 'initial_sales', 'retry'];
 
@@ -73,8 +74,8 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
-  // 배정 많은 전략부터 — 배정 0 전략은 뒤로.
-  const rows = [...(data?.by_strategy ?? [])].sort((a, b) => b.assigned - a.assigned);
+  // 삭제된 전략은 빼고, 배정 많은 전략부터.
+  const rows = visibleStrategyRows(data?.by_strategy ?? []);
 
   // 선택 동기화: 목록이 바뀌면 유효한 선택을 유지하고, 없으면 첫 배정 전략(없으면 첫 전략)을 고른다.
   useEffect(() => {

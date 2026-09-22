@@ -16,10 +16,8 @@ interface Props {
 /**
  * 전략 통계 좌측 목록의 카드 1장.
  *
- * 삭제는 `row.exists`(= retry_strategies 에 실재)인 행에만 연다. 이력에만 남은 전략은
- * 지울 대상이 없어 눌러도 아무 일이 없으므로, 버튼 대신 '삭제됨' 배지로 상태를 드러낸다.
- * 이력이 있는 전략을 지우면 라이브러리에서는 사라지지만 통계 목록에는 과거 기록으로 남는다 —
- * 집계 기준이 strategy_history 라서 그렇고, 숨기면 과거 실적이 사라져 통계가 틀린다.
+ * 여기 오는 행은 전부 실재 전략이다(삭제된 전략은 visibleRows 에서 이미 걸러진다).
+ * 그래서 삭제 버튼을 조건 없이 연다.
  *
  * 선택 버튼과 삭제 버튼은 **형제**로 둔다. 카드를 role="button"으로 만들고 그 안에 버튼을
  * 중첩하면 부모가 자식의 접근성 이름을 흡수해 삭제 버튼을 이름으로 집을 수 없게 된다
@@ -71,22 +69,16 @@ export function StrategyStatsListItem({ row, active, adminKey, onClick, onDelete
         )}
       </button>
 
-      {row.exists ? (
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={deleting}
-          aria-label="전략 삭제"
-          title="전략 삭제"
-          className="absolute right-2 top-2.5 text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
-        >
-          {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-        </button>
-      ) : (
-        <span className="absolute right-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-400">
-          삭제됨
-        </span>
-      )}
+      <button
+        type="button"
+        onClick={handleDelete}
+        disabled={deleting}
+        aria-label="전략 삭제"
+        title="전략 삭제"
+        className="absolute right-2 top-2.5 text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
+      >
+        {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+      </button>
     </div>
   );
 }
