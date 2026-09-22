@@ -40,28 +40,12 @@ async function fetchScheduleBatch(
 
   const PAGE_SIZE = 1000;
 
-  const allParticipants: { event_id: string; user_id: string }[] = [];
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const { data: page } = await supabaseSFv2
-      .from('scheduled_event_participants')
-      .select('event_id, user_id')
-      .in('user_id', profileIds)
-      .range(offset, offset + PAGE_SIZE - 1);
-    if (!page?.length) break;
-    allParticipants.push(...page);
-    if (page.length < PAGE_SIZE) break;
-  }
-
-  if (!allParticipants.length) return new Map(profileIds.map(id => [id, { ...empty }]));
-
-  const allEventIds = [...new Set(allParticipants.map(p => p.event_id))];
-
+  // Step 1: 날짜 범위로 먼저 좁히기 (소수 결과) → in() URL 한도 문제 방지
   const allEvents: { id: string; category: string }[] = [];
   for (let offset = 0; ; offset += PAGE_SIZE) {
     const { data: page } = await supabaseSFv2
       .from('scheduled_events')
       .select('id, category')
-      .in('id', allEventIds)
       .in('category', ['coach_room', 'study_hall', 'vocab'])
       .neq('status', 'cancelled')
       .gte('starts_at', start)
@@ -74,12 +58,27 @@ async function fetchScheduleBatch(
 
   if (!allEvents.length) return new Map(profileIds.map(id => [id, { ...empty }]));
 
-  const validEventIds = new Set(allEvents.map(e => e.id));
+  const eventIds = allEvents.map(e => e.id);
   const categoryById = new Map(allEvents.map(e => [e.id, e.category as string]));
+
+  // Step 2: 그 이벤트들에 우리 학생이 참여했는지 확인
+  const allParticipants: { event_id: string; user_id: string }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('scheduled_event_participants')
+      .select('event_id, user_id')
+      .in('event_id', eventIds)
+      .in('user_id', profileIds)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allParticipants.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+
+  if (!allParticipants.length) return new Map(profileIds.map(id => [id, { ...empty }]));
 
   const byUser = new Map<string, { coachRoom: boolean; studyHall: boolean; vocab: boolean }>();
   for (const p of allParticipants) {
-    if (!validEventIds.has(p.event_id)) continue;
     if (!byUser.has(p.user_id)) byUser.set(p.user_id, { ...empty });
     const entry = byUser.get(p.user_id)!;
     const cat = categoryById.get(p.event_id);
