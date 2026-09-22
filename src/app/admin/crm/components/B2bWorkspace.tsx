@@ -5,9 +5,8 @@ import type { Student } from '@/types/crm';
 import { B2bHub } from './b2b/B2bHub';
 import { B2bPipeline } from './b2b/B2bPipeline';
 import { StrategiesTab } from './strategies/StrategiesTab';
-import { WeeklyPlan } from './WeeklyPlan';
 
-type B2bTab = 'overview' | 'pipeline' | 'weekly';
+type B2bTab = 'overview' | 'pipeline';
 type PipeSub = 'pipeline' | 'strategy';
 
 interface B2bWorkspaceProps {
@@ -28,7 +27,6 @@ export function B2bWorkspace({ adminKey, students, onStudentClick, onSelectStude
         {([
           { key: 'overview', label: '업체·리드 현황·통계' },
           { key: 'pipeline', label: '영업 파이프라인·전략' },
-          { key: 'weekly',   label: '주차 계획·이행' },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
@@ -66,24 +64,11 @@ export function B2bWorkspace({ adminKey, students, onStudentClick, onSelectStude
               segment="b2b"
               initialSubTab={strategySubTab}
               onSelectStudent={onSelectStudentById}
-              onOpenWeekly={() => setActiveTab('weekly')}
             />
           )}
         </div>
       )}
 
-      {activeTab === 'weekly' && (
-        <WeeklyPlan
-          segment="b2b"
-          adminKey={adminKey}
-          onSelectStudent={onSelectStudentById}
-          onOpenStrategyLibrary={() => {
-            setStrategySubTab('library');
-            setPipeSub('strategy');
-            setActiveTab('pipeline');
-          }}
-        />
-      )}
     </div>
   );
 }
