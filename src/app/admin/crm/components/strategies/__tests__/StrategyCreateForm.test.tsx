@@ -1,41 +1,48 @@
 /// <reference types="vitest/globals" />
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { StrategyCreateForm } from '../StrategyCreateForm';
 
 function renderForm(defaultKind: 'initial_contact' | 'initial_sales' | 'retry' = 'initial_contact') {
-  return render(
+  const onCreated = vi.fn();
+  render(
     <StrategyCreateForm
       categoryId="cat-1"
       segment="b2c"
       adminKey="key"
       defaultKind={defaultKind}
-      onCreated={vi.fn()}
+      onCreated={onCreated}
       onCancel={vi.fn()}
     />
   );
+  return { onCreated };
 }
 
-describe('StrategyCreateForm — 용도 선택 접기', () => {
-  it('기본 상태에선 라디오 3개가 안 보이고 기본값 텍스트만 보인다', () => {
+describe('StrategyCreateForm — 용도 선택 UI 없음', () => {
+  it('용도 라디오·안내 문구가 전혀 렌더링되지 않는다', () => {
     renderForm('initial_contact');
-    expect(screen.queryByRole('radio', { name: '최초 컨텍용' })).toBeNull();
-    expect(screen.queryByRole('radio', { name: '최초 세일즈용' })).toBeNull();
-    expect(screen.queryByRole('radio', { name: '재시도용' })).toBeNull();
-    expect(screen.getByText(/최초 컨텍용/)).toBeTruthy();
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.queryByText(/용도/)).toBeNull();
+    expect(screen.queryByText('변경')).toBeNull();
   });
 
-  it('"변경" 클릭 시 라디오 3개가 펼쳐진다', () => {
-    renderForm('initial_contact');
-    fireEvent.click(screen.getByText('변경'));
-    expect(screen.getByRole('radio', { name: '최초 컨텍용' })).toBeTruthy();
-    expect(screen.getByRole('radio', { name: '최초 세일즈용' })).toBeTruthy();
-    expect(screen.getByRole('radio', { name: '재시도용' })).toBeTruthy();
-  });
+  it('전략 생성 시 defaultKind가 그대로 kind로 전송된다', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 's-1' } }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
 
-  it('펼친 뒤 다른 용도를 고르면 기본값 텍스트도 바뀐다', () => {
-    renderForm('initial_contact');
-    fireEvent.click(screen.getByText('변경'));
-    fireEvent.click(screen.getByRole('radio', { name: '재시도용' }));
-    expect(screen.getByRole('radio', { name: '재시도용' })).toHaveProperty('checked', true);
+    const { onCreated } = renderForm('retry');
+    fireEvent.change(screen.getByPlaceholderText('전략 이름 입력...'), { target: { value: '새 전략' } });
+    await act(async () => {
+      fireEvent.click(screen.getByText('추가'));
+    });
+
+    expect(onCreated).toHaveBeenCalled();
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.kind).toBe('retry');
+    expect(body.category_id).toBe('cat-1');
+
+    vi.unstubAllGlobals();
   });
 });
