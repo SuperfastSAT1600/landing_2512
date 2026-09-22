@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { computeKindLabels } from '../useKindLabels';
 
 const CATEGORIES = [
-  { id: 'cat-1', name: '컨택 전략' },
-  { id: 'cat-2', name: '최초 세일즈 전략' },
-  { id: 'cat-3', name: '진단 Report 세일즈 전략' },
+  { id: 'cat-1', name: '컨택 전략', sort_order: 0 },
+  { id: 'cat-2', name: '첫 세일즈콜', sort_order: 1 },
+  { id: 'cat-3', name: '진단 Report 세일즈 전략', sort_order: 2 },
 ];
 
 describe('computeKindLabels', () => {
@@ -14,13 +14,13 @@ describe('computeKindLabels', () => {
     expect(labels.initial_contact).toBe('컨택 전략');
   });
 
-  it('kind에 속한 전략이 여러 카테고리에 걸쳐 있으면 이름을 · 로 이어붙인다', () => {
+  it('kind에 속한 전략이 여러 카테고리에 걸쳐 있으면 sort_order가 가장 작은 카테고리 이름만 쓴다(이어붙이지 않는다)', () => {
     const strategies = [
-      { kind: 'initial_sales' as const, category_id: 'cat-2' },
       { kind: 'initial_sales' as const, category_id: 'cat-3' },
+      { kind: 'initial_sales' as const, category_id: 'cat-2' },
     ];
     const labels = computeKindLabels(strategies, CATEGORIES);
-    expect(labels.initial_sales).toBe('최초 세일즈 전략 · 진단 Report 세일즈 전략');
+    expect(labels.initial_sales).toBe('첫 세일즈콜');
   });
 
   it('kind에 속한 전략이 하나도 없으면 고정 폴백 라벨을 쓴다', () => {
