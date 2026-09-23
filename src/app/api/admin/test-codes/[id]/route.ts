@@ -14,17 +14,21 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const { isActive } = body as { isActive?: boolean };
+  const { isActive, mode } = body as { isActive?: boolean; mode?: string };
 
-  if (typeof isActive !== 'boolean') {
-    return NextResponse.json({ error: 'isActive (boolean) is required' }, { status: 400 });
+  const updateData: Record<string, unknown> = {};
+  if (typeof isActive === 'boolean') updateData.is_active = isActive;
+  if (mode && ['timed', 'untimed', 'per_question'].includes(mode)) updateData.mode = mode;
+
+  if (Object.keys(updateData).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
   const { id } = await params;
 
   const { error } = await supabaseAdmin
     .from('test_codes')
-    .update({ is_active: isActive })
+    .update(updateData)
     .eq('id', id);
 
   if (error) {
