@@ -4,6 +4,8 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { MAX_LEAD_ROWS } from '@/lib/crm-stats-core';
 import { buildStatsDetail, isStatsDetailMetric } from '@/lib/crm-stats-detail';
 import { assignedStrategyOf, type StrategyStatsStudent } from '@/lib/strategy-stats';
+import { resolveRequestCategoryId } from '../resolve-category';
+
 const VALID_SEGMENTS = ['b2b', 'b2c'] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -27,16 +29,12 @@ export async function GET(request: NextRequest) {
   }
 
   const sp = new URL(request.url).searchParams;
-  const categoryId = sp.get('category_id');
   const strategyId = sp.get('strategy_id');
   const metric = sp.get('metric') ?? '';
   const from = sp.get('from');
   const to = sp.get('to');
   const segment = sp.get('segment');
 
-  if (!categoryId) {
-    return NextResponse.json({ error: 'category_id가 필요합니다.' }, { status: 400 });
-  }
   if (segment && !(VALID_SEGMENTS as readonly string[]).includes(segment)) {
     return NextResponse.json({ error: 'segment이 올바르지 않습니다.' }, { status: 400 });
   }
@@ -48,6 +46,11 @@ export async function GET(request: NextRequest) {
   }
   if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to)) {
     return NextResponse.json({ error: 'from/to는 YYYY-MM-DD 형식이어야 합니다.' }, { status: 400 });
+  }
+
+  const categoryId = await resolveRequestCategoryId(sp.get('category_id'), segment);
+  if (!categoryId) {
+    return NextResponse.json({ error: '전략 카테고리가 없습니다.' }, { status: 400 });
   }
 
   const { data: students, error: sErr } = await supabaseAdmin
