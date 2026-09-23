@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { StrategyHistoryType } from '@/types/crm';
 import type { StatsDetailMetric, LeadDetailItem, StatsDetailResult } from '@/lib/crm-stats-detail';
 import type { StrategyTypeStats, PerStrategyRow } from '@/lib/strategy-stats';
 import {
@@ -16,12 +15,6 @@ import { StatsDetailModal } from './StatsDetailModal';
 import { LeadDetailTable } from './LeadDetailTable';
 import { useStrategyCategories } from './strategies/useStrategyCategories';
 import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
-
-/**
- * 집계 축은 category_id 다. 다만 두 통계 라우트가 하위호환을 위해 type 을 여전히 필수로
- * 검증하므로 유효한 값 하나를 함께 보낸다 — category_id 가 오면 라우트는 type 을 쓰지 않는다.
- */
-const LEGACY_TYPE: StrategyHistoryType = 'initial_sales';
 
 const won = (n: number) => `${n.toLocaleString()}원`;
 const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
@@ -66,8 +59,7 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
     setLoading(true);
     setError('');
     try {
-      const qs = new URLSearchParams({ type: LEGACY_TYPE, from: range.from, to: range.to });
-      qs.set('category_id', categoryId!);
+      const qs = new URLSearchParams({ category_id: categoryId!, from: range.from, to: range.to });
       if (segment) qs.set('segment', segment);
       const res = await fetch(`/api/crm/strategy-stats?${qs.toString()}`, {
         headers: { 'x-admin-key': adminKey },
@@ -203,7 +195,7 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
           from={range.from}
           to={range.to}
           endpoint="/api/crm/strategy-stats/detail"
-          extraParams={{ type: LEGACY_TYPE, category_id: categoryId!, strategy_id: detail.strategyId, ...(segment ? { segment } : {}) }}
+          extraParams={{ category_id: categoryId!, strategy_id: detail.strategyId, ...(segment ? { segment } : {}) }}
           onSelectStudent={onSelectStudent}
           onClose={() => setDetail(null)}
         />
@@ -242,7 +234,7 @@ function StrategyDetailPane({
       setLeadsLoading(true);
       setLeadsError('');
       try {
-        const qs = new URLSearchParams({ metric: 'leads', type: LEGACY_TYPE, category_id: categoryId, strategy_id: row.strategy_id, from, to });
+        const qs = new URLSearchParams({ metric: 'leads', category_id: categoryId, strategy_id: row.strategy_id, from, to });
         if (segment) qs.set('segment', segment);
         const res = await fetch(`/api/crm/strategy-stats/detail?${qs.toString()}`, {
           headers: { 'x-admin-key': adminKey },

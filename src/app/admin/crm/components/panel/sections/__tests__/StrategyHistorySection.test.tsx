@@ -5,7 +5,6 @@ import type { Student, StrategyHistoryEntry } from '@/types/crm';
 
 const ENTRY: StrategyHistoryEntry = {
   id: 'h1',
-  type: 'initial_contact',
   strategy_id: 's-live',
   strategy_name: '옛날 이름(스냅샷)',
   memo: '',
@@ -30,7 +29,7 @@ async function openSection(headerText: string) {
 describe('StrategyHistorySection', () => {
   it('전략이 라이브러리에서 개명되면 히스토리 항목도 최신 이름을 보여준다', async () => {
     mockFetch(
-      [{ id: 's-live', name: '새 이름(라이브)', kind: 'initial_contact', category_id: 'cat-1' }],
+      [{ id: 's-live', name: '새 이름(라이브)', category_id: 'cat-1' }],
       [{ id: 'cat-1', name: '컨택 전략', sort_order: 0 }]
     );
     render(<StrategyHistorySection student={STUDENT} adminKey="k" onUpdate={vi.fn()} />);
@@ -52,7 +51,7 @@ describe('StrategyHistorySection', () => {
 
   it('전략 라이브러리에서 카테고리 이름을 바꾸면 섹션 제목도 즉시 바뀐다', async () => {
     mockFetch(
-      [{ id: 's-live', name: '개인화 메시지', kind: 'initial_contact', category_id: 'cat-1' }],
+      [{ id: 's-live', name: '개인화 메시지', category_id: 'cat-1' }],
       [{ id: 'cat-1', name: '컨택 전략', sort_order: 0 }] // 라이브러리에서 개명된 상태
     );
     render(<StrategyHistorySection student={STUDENT} adminKey="k" onUpdate={vi.fn()} />);

@@ -8,11 +8,8 @@ import {
   type StrategyStatsPayment,
   type StrategyTypeStats,
 } from '@/lib/strategy-stats';
-import type { StrategyHistoryType } from '@/types/crm';
-
 export type { StrategyTypeStats };
 
-const VALID_TYPES: StrategyHistoryType[] = ['initial_contact', 'initial_sales', 'retry'];
 const VALID_SEGMENTS = ['b2b', 'b2c'] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -33,8 +30,8 @@ function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 /**
- * GET /api/crm/strategy-stats?type=<initial_contact|initial_sales|retry>&from=YYYY-MM-DD&to=YYYY-MM-DD
- * 세일즈 로직(전략) 타입별 롤업 + 개별 전략 통계. 코호트 기준일 = strategy_history.applied_at.
+ * GET /api/crm/strategy-stats?category_id=<uuid>&from=YYYY-MM-DD&to=YYYY-MM-DD
+ * 전략 라이브러리 카테고리별 롤업 + 개별 전략 통계. 코호트 기준일 = strategy_history.applied_at.
  */
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
@@ -42,14 +39,13 @@ export async function GET(request: NextRequest) {
   }
 
   const sp = new URL(request.url).searchParams;
-  const type = sp.get('type') as StrategyHistoryType | null;
   const categoryId = sp.get('category_id');
   const from = sp.get('from');
   const to = sp.get('to');
   const segment = sp.get('segment');
 
-  if (!type || !VALID_TYPES.includes(type)) {
-    return NextResponse.json({ error: 'type은 initial_contact|initial_sales|retry 중 하나여야 합니다.' }, { status: 400 });
+  if (!categoryId) {
+    return NextResponse.json({ error: 'category_id가 필요합니다.' }, { status: 400 });
   }
   if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to)) {
     return NextResponse.json({ error: 'from/to는 YYYY-MM-DD 형식이어야 합니다.' }, { status: 400 });
@@ -68,11 +64,8 @@ export async function GET(request: NextRequest) {
       .or('strategy_history.neq.[],retry_strategy_id.not.is.null')
       .limit(MAX_LEAD_ROWS),
     // 집계 범위가 되는 전략 이름 맵 (0건 전략 시드 포함).
-    // category_id 가 오면 그 카테고리 소속(kind 무관) — 라이브러리 카테고리가 표시 축이다.
-    // 없으면 기존 kind 축을 유지한다(하위호환).
-    categoryId
-      ? supabaseAdmin.from('retry_strategies').select('id,name').eq('category_id', categoryId)
-      : supabaseAdmin.from('retry_strategies').select('id,name').eq('kind', type),
+    // 축은 전략 라이브러리 카테고리 하나뿐이다.
+    supabaseAdmin.from('retry_strategies').select('id,name').eq('category_id', categoryId),
   ]);
 
   const { data: students, error: sErr } = studentsRes;
@@ -110,7 +103,7 @@ export async function GET(request: NextRequest) {
   }
   const payments = [...paymentMap.values()];
 
-  const data = computeStrategyStats(type, candidates, payments, { from, to }, strategyNames);
+  const data = computeStrategyStats(candidates, payments, { from, to }, strategyNames);
 
   return NextResponse.json({ data });
 }

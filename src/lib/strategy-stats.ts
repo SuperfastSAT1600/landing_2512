@@ -2,7 +2,7 @@ import { computeStageFlow, type StageFlowRow, type StageHistoryEntry } from '@/l
 import { netAmount } from '@/lib/payment-utils';
 import { isContacted, contactRate } from '@/lib/crm-stats-core';
 import { toKstDay, toMs } from '@/lib/kst-day';
-import type { StrategyHistoryEntry, StrategyHistoryType } from '@/types/crm';
+import type { StrategyHistoryEntry } from '@/types/crm';
 
 // 세일즈 로직(전략)별 통계 집계 — 순수 함수. I/O 없음(students/payments는 라우트에서 주입).
 //
@@ -57,7 +57,6 @@ export type StrategyRollup = Omit<PerStrategyRow, 'strategy_id' | 'strategy_name
 };
 
 export interface StrategyTypeStats {
-  type: StrategyHistoryType;
   period: { from: string; to: string };
   rollup: StrategyRollup;
   by_strategy: PerStrategyRow[];
@@ -82,9 +81,8 @@ interface Attribution {
  * 맵에 없는 전략(=삭제됨)을 가리키는 엔트리는 빠진다. 화면에서도 이미 숨기고 있어
  * 표시 결과는 같고, 집계와 표시가 같은 기준을 쓰게 된다.
  */
-function typeEntries(
+function scopedEntries(
   s: StrategyStatsStudent,
-  type: StrategyHistoryType,
   strategyNames: Map<string, string>,
 ): Attribution[] {
   const list: Attribution[] = [];
@@ -97,8 +95,9 @@ function typeEntries(
       });
     }
   }
-  // retry FK 폴백: history에 해당 전략 엔트리가 없고 retry_strategy_id가 범위 안이면 합성
-  if (type === 'retry' && s.retry_strategy_id && strategyNames.has(s.retry_strategy_id)) {
+  // FK 폴백: history에 해당 전략 엔트리가 없고 retry_strategy_id가 범위 안이면 합성.
+  // 예전엔 kind === 'retry' 일 때만 했지만, 범위 판정이 곧 맵이라 kind를 볼 필요가 없다.
+  if (s.retry_strategy_id && strategyNames.has(s.retry_strategy_id)) {
     const already = list.some((a) => a.strategy_id === s.retry_strategy_id);
     if (!already) {
       list.push({
@@ -135,17 +134,15 @@ function makeInPeriod(period: { from: string; to: string }) {
  */
 export function assignedStrategyOf(
   s: StrategyStatsStudent,
-  type: StrategyHistoryType,
   period: { from: string; to: string },
   strategyNames: Map<string, string>,
 ): string | null {
-  const top = latest(typeEntries(s, type, strategyNames));
+  const top = latest(scopedEntries(s, strategyNames));
   if (!top) return null;
   return makeInPeriod(period)(top.applied_at) ? top.strategy_id : null;
 }
 
 export function computeStrategyStats(
-  type: StrategyHistoryType,
   students: StrategyStatsStudent[],
   payments: StrategyStatsPayment[],
   period: { from: string; to: string },
@@ -189,7 +186,7 @@ export function computeStrategyStats(
   const names = new Map<string, string>(); // strategy_id → 표시명
 
   for (const s of students) {
-    const entries = typeEntries(s, type, strategyNames);
+    const entries = scopedEntries(s, strategyNames);
     if (!entries.length) continue;
 
     // touched: 기간 내 적용된 모든 전략(귀속 무관)
@@ -311,5 +308,5 @@ export function computeStrategyStats(
     stage_flow: computeStageFlow(allCohort),
   };
 
-  return { type, period, rollup, by_strategy };
+  return { period, rollup, by_strategy };
 }

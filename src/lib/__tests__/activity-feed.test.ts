@@ -4,7 +4,6 @@ import type { StrategyHistoryEntry } from '@/types/crm';
 
 const ENTRY: StrategyHistoryEntry = {
   id: 'h1',
-  type: 'retry',
   strategy_id: 's-live',
   strategy_name: '옛날 이름(스냅샷)',
   memo: '',

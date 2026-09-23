@@ -19,7 +19,6 @@ const entry = (id: string, strategy_id: string): StrategyHistoryEntry => ({
   id,
   strategy_id,
   strategy_name: 'snapshot',
-  type: 'initial_sales',
   applied_at: '2026-07-01T00:00:00Z',
   memo: '',
 });

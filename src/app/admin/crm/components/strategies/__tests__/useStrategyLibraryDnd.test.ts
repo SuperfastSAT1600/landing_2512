@@ -8,8 +8,8 @@ const categories: StrategyCategory[] = [
 ];
 
 const strategies: RetryStrategy[] = [
-  { id: 's-1', name: '전략1', description: null, kind: 'initial_contact', category_id: 'cat-1', segment: 'b2c', created_at: 'x' },
-  { id: 's-2', name: '전략2', description: null, kind: 'retry', category_id: 'cat-2', segment: 'b2c', created_at: 'x' },
+  { id: 's-1', name: '전략1', description: null, category_id: 'cat-1', segment: 'b2c', created_at: 'x' },
+  { id: 's-2', name: '전략2', description: null, category_id: 'cat-2', segment: 'b2c', created_at: 'x' },
 ];
 
 describe('resolveTargetCategoryId', () => {

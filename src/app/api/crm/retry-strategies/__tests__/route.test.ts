@@ -38,14 +38,14 @@ function makePostReq(body: Record<string, unknown>) {
 describe('GET /api/crm/retry-strategies', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('filters by kind (not the legacy type param)', async () => {
+  it('kind 파라미터는 더 이상 필터로 쓰이지 않는다 — 축은 카테고리 하나다', async () => {
     const chain = chainable({ data: [], error: null });
     mockFrom.mockReturnValueOnce(chain);
 
     const { GET } = await import('../route');
     const res = await GET(makeGetReq('?kind=retry&segment=b2c'));
     expect(res.status).toBe(200);
-    expect(chain.eq).toHaveBeenCalledWith('kind', 'retry');
+    expect(chain.eq).not.toHaveBeenCalledWith('kind', 'retry');
     expect(chain.eq).toHaveBeenCalledWith('segment', 'b2c');
   });
 
@@ -63,30 +63,36 @@ describe('GET /api/crm/retry-strategies', () => {
 describe('POST /api/crm/retry-strategies', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('rejects missing kind → 400', async () => {
+  it('kind 없이도 만들 수 있다 — 더 이상 요구하지 않는다', async () => {
+    const chain = chainable({ data: { id: 's1' }, error: null });
+    mockFrom.mockReturnValueOnce(chain);
+
     const { POST } = await import('../route');
     const res = await POST(makePostReq({ name: '새 전략', category_id: 'cat-1' }));
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(201);
   });
 
-  it('rejects missing category_id → 400', async () => {
+  it('rejects missing category_id → 400 — 카테고리가 유일한 분류다', async () => {
     const { POST } = await import('../route');
-    const res = await POST(makePostReq({ name: '새 전략', kind: 'retry' }));
+    const res = await POST(makePostReq({ name: '새 전략' }));
     expect(res.status).toBe(400);
   });
 
-  it('creates a strategy with kind + category_id → 201', async () => {
+  it('insert 에 kind 를 싣지 않는다', async () => {
     const chain = chainable({
-      data: { id: 's1', name: '새 전략', kind: 'retry', category_id: 'cat-1' },
+      data: { id: 's1', name: '새 전략', category_id: 'cat-1' },
       error: null,
     });
     mockFrom.mockReturnValueOnce(chain);
 
     const { POST } = await import('../route');
-    const res = await POST(makePostReq({ name: '새 전략', kind: 'retry', category_id: 'cat-1' }));
+    const res = await POST(makePostReq({ name: '새 전략', category_id: 'cat-1' }));
     expect(res.status).toBe(201);
     expect(chain.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ name: '새 전략', kind: 'retry', category_id: 'cat-1' })
+      expect.objectContaining({ name: '새 전략', category_id: 'cat-1' })
+    );
+    expect(chain.insert).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kind: expect.anything() })
     );
   });
 });
