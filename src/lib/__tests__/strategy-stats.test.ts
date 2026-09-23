@@ -207,3 +207,124 @@ describe('computeStrategyStats — 집계 범위는 전략 id 맵이 정한다 (
     expect(out.by_strategy.find((r) => r.strategy_id === 's1')?.assigned).toBe(1);
   });
 });
+
+describe('computeStrategyStats — 진행 전/후 귀속 (계획이 성과를 가로채지 않는다)', () => {
+  const planned = (strategy_id: string, applied_at: string) =>
+    entry({ strategy_id, applied_at, phase: 'planned' as const });
+  const applied = (strategy_id: string, applied_at: string) =>
+    entry({ strategy_id, applied_at, phase: 'applied' as const });
+
+  it('계획이 실제보다 늦게 기록돼도 실제 전략에 귀속된다', () => {
+    const s = reached2({
+      id: 'a',
+      strategy_history: [
+        applied('s1', '2026-07-10T00:00:00Z'),
+        planned('s2', '2026-07-20T00:00:00Z'), // 더 최신이지만 계획일 뿐
+      ],
+    });
+    const out = computeStrategyStats([s], [firstPay('a', 'a')], PERIOD, NAMES);
+    expect(out.by_strategy.find((r) => r.strategy_id === 's1')?.assigned).toBe(1);
+    expect(out.by_strategy.find((r) => r.strategy_id === 's2')?.assigned).toBe(0);
+    expect(out.by_strategy.find((r) => r.strategy_id === 's1')?.paid).toBe(1);
+  });
+
+  it('실제 기록이 없으면 계획으로 폴백한다 — 리드가 집계에서 사라지지 않는다', () => {
+    const s = reached2({ id: 'a', strategy_history: [planned('s2', '2026-07-10T00:00:00Z')] });
+    const out = computeStrategyStats([s], [], PERIOD, NAMES);
+    expect(out.by_strategy.find((r) => r.strategy_id === 's2')?.assigned).toBe(1);
+  });
+
+  it('phase 없는 기존 기록은 실제로 간주된다', () => {
+    const s = reached2({
+      id: 'a',
+      strategy_history: [
+        entry({ strategy_id: 's1', applied_at: '2026-07-10T00:00:00Z' }),
+        planned('s2', '2026-07-20T00:00:00Z'),
+      ],
+    });
+    const out = computeStrategyStats([s], [], PERIOD, NAMES);
+    expect(out.by_strategy.find((r) => r.strategy_id === 's1')?.assigned).toBe(1);
+  });
+
+  it('실제가 여러 건이면 그중 최신이 이긴다', () => {
+    const s = reached2({
+      id: 'a',
+      strategy_history: [applied('s1', '2026-07-10T00:00:00Z'), applied('s2', '2026-07-12T00:00:00Z')],
+    });
+    const out = computeStrategyStats([s], [], PERIOD, NAMES);
+    expect(out.by_strategy.find((r) => r.strategy_id === 's2')?.assigned).toBe(1);
+  });
+
+  it('리드당 정확히 1개 전략 귀속 불변식이 유지된다', () => {
+    const s = reached2({
+      id: 'a',
+      strategy_history: [planned('s1', '2026-07-05T00:00:00Z'), applied('s2', '2026-07-06T00:00:00Z')],
+    });
+    const out = computeStrategyStats([s], [], PERIOD, NAMES);
+    const sum = out.by_strategy.reduce((n, r) => n + r.assigned, 0);
+    expect(sum).toBe(out.rollup.assigned);
+  });
+});
+
+describe('computeStrategyStats — transitions (계획 → 실제)', () => {
+  const planned = (strategy_id: string, applied_at: string) =>
+    entry({ strategy_id, applied_at, phase: 'planned' as const });
+  const applied = (strategy_id: string, applied_at: string) =>
+    entry({ strategy_id, applied_at, phase: 'applied' as const });
+
+  it('계획과 실제가 다르면 changed=true 로 한 줄이 나온다', () => {
+    const s = reached2({
+      id: 'a',
+      strategy_history: [planned('s1', '2026-07-05T00:00:00Z'), applied('s2', '2026-07-06T00:00:00Z')],
+    });
+    const out = computeStrategyStats([s], [firstPay('a', 'a')], PERIOD, NAMES);
+    expect(out.transitions).toHaveLength(1);
+    const t = out.transitions[0];
+    expect([t.planned_id, t.applied_id]).toEqual(['s1', 's2']);
+    expect(t.changed).toBe(true);
+    expect(t.leads).toBe(1);
+    expect(t.paid).toBe(1);
+    expect(t.rate).toBe(100);
+  });
+
+  it('계획대로 진행했으면 changed=false', () => {
+    const s = reached2({
+      id: 'a',
+      strategy_history: [planned('s1', '2026-07-05T00:00:00Z'), applied('s1', '2026-07-06T00:00:00Z')],
+    });
+    const out = computeStrategyStats([s], [], PERIOD, NAMES);
+    expect(out.transitions[0].changed).toBe(false);
+  });
+
+  it('계획 기록이 없으면 planned_id 가 null', () => {
+    const s = reached2({ id: 'a', strategy_history: [applied('s1', '2026-07-06T00:00:00Z')] });
+    const out = computeStrategyStats([s], [], PERIOD, NAMES);
+    expect(out.transitions[0].planned_id).toBeNull();
+    expect(out.transitions[0].changed).toBe(false);
+  });
+
+  it('실제 기록이 없으면 applied_id 가 null — 기록 누락이 드러난다', () => {
+    const s = reached2({ id: 'a', strategy_history: [planned('s1', '2026-07-06T00:00:00Z')] });
+    const out = computeStrategyStats([s], [], PERIOD, NAMES);
+    expect(out.transitions[0].applied_id).toBeNull();
+  });
+
+  it('같은 전환끼리 묶어 세고, 리드 수 많은 순으로 정렬한다', () => {
+    const mk = (id: string) =>
+      reached2({
+        id,
+        strategy_history: [planned('s1', '2026-07-05T00:00:00Z'), applied('s2', '2026-07-06T00:00:00Z')],
+      });
+    const solo = reached2({
+      id: 'z',
+      strategy_history: [planned('s2', '2026-07-05T00:00:00Z'), applied('s1', '2026-07-06T00:00:00Z')],
+    });
+    const out = computeStrategyStats([mk('a'), mk('b'), solo], [], PERIOD, NAMES);
+    expect(out.transitions[0].leads).toBe(2);
+    expect(out.transitions[1].leads).toBe(1);
+  });
+
+  it('코호트가 비면 transitions 는 빈 배열', () => {
+    expect(computeStrategyStats([], [], PERIOD, NAMES).transitions).toEqual([]);
+  });
+});

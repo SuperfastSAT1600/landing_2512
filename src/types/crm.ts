@@ -304,6 +304,25 @@ export function getRenewalOutcomeQualityLabel(
   return stage === '5' ? RENEWAL_DROP_QUALITY_LABELS[quality] : RENEWAL_PAID_QUALITY_LABELS[quality];
 }
 
+/**
+ * 전략을 콜 **전에 준비한 것**인지, 콜을 하며 **실제로 쓴 것**인지.
+ * 준비한 전략대로 흘러가지 않는 경우를 기록하려고 둔다.
+ */
+export type StrategyPhase = 'planned' | 'applied';
+
+export const STRATEGY_PHASE_LABELS: Record<StrategyPhase, string> = {
+  planned: '진행 전',
+  applied: '진행 후',
+};
+
+/** 목록·배지처럼 좁은 자리에서 쓰는 짧은 라벨. */
+export const STRATEGY_PHASE_SHORT_LABELS: Record<StrategyPhase, string> = {
+  planned: '계획',
+  applied: '실제',
+};
+
+export const STRATEGY_PHASES: StrategyPhase[] = ['planned', 'applied'];
+
 export interface StrategyHistoryEntry {
   id: string;
   strategy_id: string;
@@ -311,6 +330,11 @@ export interface StrategyHistoryEntry {
   memo: string;
   applied_at: string;
   manager_id?: string;
+  /**
+   * 없으면 'applied'. 이 필드가 생기기 전 기록(261건)은 전부 "실제로 쓴 전략"이라
+   * 그렇게 읽는다. 판정은 항상 lib/strategy-history 의 effectivePhase 를 거친다.
+   */
+  phase?: StrategyPhase;
 }
 
 export interface RetryStrategy {
