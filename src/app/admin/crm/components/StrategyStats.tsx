@@ -14,10 +14,14 @@ import {
 } from './stats-primitives';
 import { StatsDetailModal } from './StatsDetailModal';
 import { LeadDetailTable } from './LeadDetailTable';
-import { useKindLabels } from './strategies/useKindLabels';
+import { useStrategyCategories } from './strategies/useStrategyCategories';
 import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
-import { visibleStrategyRows } from './strategy-stats/visibleRows';
-import { STATS_KIND_TABS, DEFAULT_STATS_KIND } from './strategy-stats/kindTabs';
+
+/**
+ * 집계 축은 category_id 다. 다만 두 통계 라우트가 하위호환을 위해 type 을 여전히 필수로
+ * 검증하므로 유효한 값 하나를 함께 보낸다 — category_id 가 오면 라우트는 type 을 쓰지 않는다.
+ */
+const LEGACY_TYPE: StrategyHistoryType = 'initial_sales';
 
 const won = (n: number) => `${n.toLocaleString()}원`;
 const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
@@ -36,9 +40,9 @@ interface DetailTarget {
 }
 
 export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
-  // 탭 제목은 그 kind에 실제로 속한 전략들의 현재 카테고리 이름을 따른다 (146, 라이브)
-  const kindLabels = useKindLabels(segment ?? 'b2c', adminKey);
-  const [type, setType] = useState<StrategyHistoryType>(DEFAULT_STATS_KIND);
+  // 탭 = 전략 라이브러리 카테고리. 라이브러리에서 추가·개명하면 그대로 반영된다 (146).
+  const { categories } = useStrategyCategories(segment ?? 'b2c', adminKey);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [preset, setPreset] = useState<Preset>('last_6m');
   const [range, setRange] = useState(() => getPresetRange('last_6m'));
   const [data, setData] = useState<StrategyTypeStats | null>(null);
@@ -46,6 +50,12 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
   const [error, setError] = useState('');
   const [detail, setDetail] = useState<DetailTarget | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // 카테고리 목록이 오면 첫 탭을 고르고, 보고 있던 카테고리가 사라지면 다시 첫 탭으로.
+  useEffect(() => {
+    if (!categories.length) { setCategoryId(null); return; }
+    setCategoryId((cur) => (cur && categories.some((c) => c.id === cur) ? cur : categories[0].id));
+  }, [categories]);
 
   const applyPreset = (p: Preset) => {
     setPreset(p);
@@ -56,7 +66,8 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
     setLoading(true);
     setError('');
     try {
-      const qs = new URLSearchParams({ type, from: range.from, to: range.to });
+      const qs = new URLSearchParams({ type: LEGACY_TYPE, from: range.from, to: range.to });
+      qs.set('category_id', categoryId!);
       if (segment) qs.set('segment', segment);
       const res = await fetch(`/api/crm/strategy-stats?${qs.toString()}`, {
         headers: { 'x-admin-key': adminKey },
@@ -69,12 +80,12 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [type, range.from, range.to, segment, adminKey]);
+  }, [categoryId, range.from, range.to, segment, adminKey]);
 
-  useEffect(() => { fetchStats(); }, [fetchStats]);
+  useEffect(() => { if (categoryId) fetchStats(); }, [fetchStats, categoryId]);
 
-  // 삭제된 전략은 빼고, 배정 많은 전략부터.
-  const rows = visibleStrategyRows(data?.by_strategy ?? []);
+  // 배정 많은 전략부터 — 배정 0 전략은 뒤로.
+  const rows = [...(data?.by_strategy ?? [])].sort((a, b) => b.assigned - a.assigned);
 
   // 선택 동기화: 목록이 바뀌면 유효한 선택을 유지하고, 없으면 첫 배정 전략(없으면 첫 전략)을 고른다.
   useEffect(() => {
@@ -98,15 +109,15 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
       {/* 타입 탭 + 기간 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
-          {STATS_KIND_TABS.map((key) => (
+          {categories.map((c) => (
             <button
-              key={key}
-              onClick={() => setType(key)}
+              key={c.id}
+              onClick={() => setCategoryId(c.id)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                type === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                categoryId === c.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {kindLabels[key]}
+              {c.name}
             </button>
           ))}
         </div>
@@ -167,10 +178,10 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
           <div className="flex-1 min-w-0">
             {selected ? (
               <StrategyDetailPane
-                key={`${selected.strategy_id}:${type}:${range.from}:${range.to}`}
+                key={`${selected.strategy_id}:${categoryId}:${range.from}:${range.to}`}
                 row={selected}
                 adminKey={adminKey}
-                type={type}
+                categoryId={categoryId!}
                 from={range.from}
                 to={range.to}
                 segment={segment}
@@ -192,7 +203,7 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
           from={range.from}
           to={range.to}
           endpoint="/api/crm/strategy-stats/detail"
-          extraParams={{ type, strategy_id: detail.strategyId, ...(segment ? { segment } : {}) }}
+          extraParams={{ type: LEGACY_TYPE, category_id: categoryId!, strategy_id: detail.strategyId, ...(segment ? { segment } : {}) }}
           onSelectStudent={onSelectStudent}
           onClose={() => setDetail(null)}
         />
@@ -204,7 +215,7 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
 function StrategyDetailPane({
   row,
   adminKey,
-  type,
+  categoryId,
   from,
   to,
   segment,
@@ -213,7 +224,7 @@ function StrategyDetailPane({
 }: {
   row: PerStrategyRow;
   adminKey: string;
-  type: StrategyHistoryType;
+  categoryId: string;
   from: string;
   to: string;
   segment?: 'b2b' | 'b2c';
@@ -231,7 +242,7 @@ function StrategyDetailPane({
       setLeadsLoading(true);
       setLeadsError('');
       try {
-        const qs = new URLSearchParams({ metric: 'leads', type, strategy_id: row.strategy_id, from, to });
+        const qs = new URLSearchParams({ metric: 'leads', type: LEGACY_TYPE, category_id: categoryId, strategy_id: row.strategy_id, from, to });
         if (segment) qs.set('segment', segment);
         const res = await fetch(`/api/crm/strategy-stats/detail?${qs.toString()}`, {
           headers: { 'x-admin-key': adminKey },
@@ -250,7 +261,7 @@ function StrategyDetailPane({
       }
     })();
     return () => { cancelled = true; };
-  }, [row.strategy_id, row.assigned, type, from, to, segment, adminKey]);
+  }, [row.strategy_id, row.assigned, categoryId, from, to, segment, adminKey]);
 
   return (
     <div className="border border-gray-200 rounded-xl p-4 bg-white">

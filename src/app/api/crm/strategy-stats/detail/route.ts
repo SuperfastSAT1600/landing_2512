@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
 
   const sp = new URL(request.url).searchParams;
   const type = sp.get('type') as StrategyHistoryType | null;
+  const categoryId = sp.get('category_id');
   const strategyId = sp.get('strategy_id');
   const metric = sp.get('metric') ?? '';
   const from = sp.get('from');
@@ -63,10 +64,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '리드 데이터를 불러오지 못했습니다.' }, { status: 500 });
   }
 
-  const { data: strategies } = await supabaseAdmin
-    .from('retry_strategies')
-    .select('id,name')
-    .eq('kind', type);
+  // 집계(strategy-stats)와 같은 축으로 범위를 잡아야 카드 숫자와 드릴다운 명단이 일치한다.
+  const strategyQuery = supabaseAdmin.from('retry_strategies').select('id,name');
+  const { data: strategies } = await (categoryId
+    ? strategyQuery.eq('category_id', categoryId)
+    : strategyQuery.eq('kind', type));
   const strategyNames = new Map<string, string>((strategies ?? []).map((r) => [r.id, r.name]));
 
   // segment(b2b/b2c) + 이 전략 귀속 코호트만 필터
