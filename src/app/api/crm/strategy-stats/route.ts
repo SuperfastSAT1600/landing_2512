@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { MAX_LEAD_ROWS } from '@/lib/crm-stats-core';
+import { resolveRequestCategoryId } from './resolve-category';
 import {
   computeStrategyStats,
   type StrategyStatsStudent,
@@ -39,19 +40,20 @@ export async function GET(request: NextRequest) {
   }
 
   const sp = new URL(request.url).searchParams;
-  const categoryId = sp.get('category_id');
   const from = sp.get('from');
   const to = sp.get('to');
   const segment = sp.get('segment');
 
-  if (!categoryId) {
-    return NextResponse.json({ error: 'category_id가 필요합니다.' }, { status: 400 });
-  }
   if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to)) {
     return NextResponse.json({ error: 'from/to는 YYYY-MM-DD 형식이어야 합니다.' }, { status: 400 });
   }
   if (segment && !(VALID_SEGMENTS as readonly string[]).includes(segment)) {
     return NextResponse.json({ error: 'segment은 b2b|b2c 중 하나여야 합니다.' }, { status: 400 });
+  }
+
+  const categoryId = await resolveRequestCategoryId(sp.get('category_id'), segment);
+  if (!categoryId) {
+    return NextResponse.json({ error: '전략 카테고리가 없습니다. 전략 라이브러리에서 먼저 만들어주세요.' }, { status: 400 });
   }
 
   const PAY_COLS = 'id,student_id,student_name,amount,payment_type,tax_type,paid_at';
