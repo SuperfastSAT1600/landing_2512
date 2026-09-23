@@ -18,7 +18,6 @@ const row = (over: Partial<PerStrategyRow> = {}): PerStrategyRow => ({
   net_revenue: 4_200_000,
   avg_days_to_convert: 2,
   stage_flow: [],
-  exists: true,
   ...over,
 });
 
@@ -43,10 +42,9 @@ beforeEach(() => {
 });
 
 describe('StrategyStatsListItem — 삭제 버튼 노출', () => {
-  it('모든 행에 삭제 버튼이 있다 — 삭제된 전략은 목록에 오기 전에 걸러진다', () => {
+  it('모든 행에 삭제 버튼이 있다 — 삭제된 전략은 집계 단계에서 이미 빠진다', () => {
     setup();
     expect(screen.getByRole('button', { name: '전략 삭제' })).toBeTruthy();
-    expect(screen.queryByText('삭제됨')).toBeNull();
   });
 });
 

@@ -29,20 +29,23 @@ async function openSection(headerText: string) {
 
 describe('StrategyHistorySection', () => {
   it('전략이 라이브러리에서 개명되면 히스토리 항목도 최신 이름을 보여준다', async () => {
-    mockFetch([{ id: 's-live', name: '새 이름(라이브)', kind: 'initial_contact', category_id: 'cat-1' }]);
+    mockFetch(
+      [{ id: 's-live', name: '새 이름(라이브)', kind: 'initial_contact', category_id: 'cat-1' }],
+      [{ id: 'cat-1', name: '컨택 전략', sort_order: 0 }]
+    );
     render(<StrategyHistorySection student={STUDENT} adminKey="k" onUpdate={vi.fn()} />);
 
-    await openSection('최초 컨텍 전략'); // 카테고리 미제공 → kind 기본 폴백 라벨
+    await openSection('컨택 전략');
 
     expect(await screen.findByText('새 이름(라이브)')).toBeTruthy();
     expect(screen.queryByText('옛날 이름(스냅샷)')).toBeNull();
   });
 
-  it('전략이 삭제되었으면(라이브 목록에 없으면) 스냅샷 이름으로 폴백한다', async () => {
-    mockFetch([]);
+  it('전략이 삭제되었으면 스냅샷 이름으로 "분류 없음" 그룹에 남는다 — 기록을 잃지 않는다', async () => {
+    mockFetch([], [{ id: 'cat-1', name: '컨택 전략', sort_order: 0 }]);
     render(<StrategyHistorySection student={STUDENT} adminKey="k" onUpdate={vi.fn()} />);
 
-    await openSection('최초 컨텍 전략');
+    await openSection('분류 없음');
 
     expect(await screen.findByText('옛날 이름(스냅샷)')).toBeTruthy();
   });
@@ -50,7 +53,7 @@ describe('StrategyHistorySection', () => {
   it('전략 라이브러리에서 카테고리 이름을 바꾸면 섹션 제목도 즉시 바뀐다', async () => {
     mockFetch(
       [{ id: 's-live', name: '개인화 메시지', kind: 'initial_contact', category_id: 'cat-1' }],
-      [{ id: 'cat-1', name: '컨택 전략' }] // "최초 컨텍 전략" → "컨택 전략"으로 개명된 상태
+      [{ id: 'cat-1', name: '컨택 전략', sort_order: 0 }] // 라이브러리에서 개명된 상태
     );
     render(<StrategyHistorySection student={STUDENT} adminKey="k" onUpdate={vi.fn()} />);
 

@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
 import { SectionCard } from './SectionCard';
 import { appendStrategyHistoryEntry, buildStrategyHistoryEntry } from '@/lib/strategy-history';
-import { useKindLabels } from '../../strategies/useKindLabels';
-import type { Student, RetryStrategy, StrategyHistoryEntry, StrategyHistoryType } from '@/types/crm';
-
-const HISTORY_TYPE_ORDER: StrategyHistoryType[] = ['initial_contact', 'initial_sales', 'retry'];
+import { useStrategyCategories } from '../../strategies/useStrategyCategories';
+import { groupHistoryByCategory } from '../../strategies/groupByCategory';
+import type { Student, RetryStrategy, StrategyHistoryEntry } from '@/types/crm';
 
 interface Props {
   student: Student;
@@ -16,17 +15,16 @@ interface Props {
 }
 
 interface AddFormProps {
-  type: StrategyHistoryType;
-  strategies: RetryStrategy[];
+  /** 이 그룹(카테고리)에서 고를 수 있는 전략. */
+  available: RetryStrategy[];
   onSave: (entry: Omit<StrategyHistoryEntry, 'id' | 'applied_at'>) => void;
   onCancel: () => void;
 }
 
-function AddForm({ type, strategies, onSave, onCancel }: AddFormProps) {
+function AddForm({ available, onSave, onCancel }: AddFormProps) {
   const [strategyId, setStrategyId] = useState('');
   const [memo, setMemo] = useState('');
 
-  const available = strategies.filter(s => s.kind === type);
   const selected = available.find(s => s.id === strategyId);
 
   return (
@@ -51,7 +49,7 @@ function AddForm({ type, strategies, onSave, onCancel }: AddFormProps) {
       <div className="flex gap-2">
         <button
           disabled={!strategyId}
-          onClick={() => onSave({ type, strategy_id: strategyId, strategy_name: selected!.name, memo: memo.trim() })}
+          onClick={() => onSave({ type: selected!.kind, strategy_id: strategyId, strategy_name: selected!.name, memo: memo.trim() })}
           className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded-lg transition-colors"
         >
           저장
@@ -69,15 +67,15 @@ function AddForm({ type, strategies, onSave, onCancel }: AddFormProps) {
 
 export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
   const [sectionOpen, setSectionOpen] = useState(true);
-  const [openType, setOpenType] = useState<StrategyHistoryType | null>(null);
-  const [addingFor, setAddingFor] = useState<StrategyHistoryType | null>(null);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [addingFor, setAddingFor] = useState<string | null>(null);
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [saving, setSaving] = useState(false);
 
   // 전략 세그먼트 분리(097): B2B 학생은 B2B 전략만, 그 외는 B2C 전략만 배정 선택지에 노출
   const segment = student.lead_type === 'B2B' ? 'b2b' : 'b2c';
-  // 섹션 제목은 그 kind에 실제로 속한 전략들의 현재 카테고리 이름을 따른다 (146, 라이브)
-  const kindLabels = useKindLabels(segment, adminKey);
+  // 섹션은 전략 라이브러리 카테고리를 그대로 따른다 — 라이브러리에서 바꾸면 여기도 바뀐다.
+  const { categories } = useStrategyCategories(segment, adminKey);
 
   useEffect(() => {
     if (!sectionOpen) return;
@@ -119,6 +117,7 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
   }
 
   const totalCount = history.length;
+  const groups = groupHistoryByCategory(history, categories, strategies);
 
   return (
     <SectionCard
@@ -129,14 +128,14 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
       onOpenChange={setSectionOpen}
     >
       <div className="divide-y divide-gray-100">
-        {HISTORY_TYPE_ORDER.map((type) => {
-            const label = kindLabels[type];
-            const entries = history.filter(e => e.type === type);
-            const isOpen = openType === type;
+        {groups.map((group) => {
+            const key = group.id ?? '__orphan__';
+            const { label, entries } = group;
+            const isOpen = openGroup === key;
             return (
-              <div key={type}>
+              <div key={key}>
                 <button
-                  onClick={() => setOpenType(isOpen ? null : type)}
+                  onClick={() => setOpenGroup(isOpen ? null : key)}
                   className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-2">
@@ -150,7 +149,7 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
 
                 {isOpen && (
                   <div className="px-4 pb-3 space-y-2">
-                    {entries.length === 0 && addingFor !== type && (
+                    {entries.length === 0 && addingFor !== key && (
                       <p className="text-[11px] text-gray-400 py-1">적용된 전략이 없습니다.</p>
                     )}
                     {entries.map(e => (
@@ -171,23 +170,22 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
                       </div>
                     ))}
 
-                    {addingFor === type ? (
+                    {addingFor === key ? (
                       <AddForm
-                        type={type}
-                        strategies={strategies}
+                        available={group.strategies as RetryStrategy[]}
                         onSave={handleSave}
                         onCancel={() => setAddingFor(null)}
                       />
-                    ) : (
+                    ) : group.addable ? (
                       <button
                         disabled={saving}
-                        onClick={() => setAddingFor(type)}
+                        onClick={() => setAddingFor(key)}
                         className="flex items-center gap-1 text-[11px] text-blue-500 hover:text-blue-700 transition-colors mt-1"
                       >
                         <Plus size={11} />
                         전략 추가
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 )}
               </div>

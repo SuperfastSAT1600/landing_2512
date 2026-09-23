@@ -50,15 +50,9 @@ export interface PerStrategyRow {
   net_revenue: number; // 부가세 제외 실수익
   avg_days_to_convert: number | null; // (첫 최초결제 - applied_at) 평균 일수
   stage_flow: StageFlowRow[];
-  /**
-   * retry_strategies 에 아직 실재하는 전략인가.
-   * false면 이력(strategy_history)에만 남은 과거 전략이라 삭제할 대상이 없다 —
-   * 화면이 '지울 수 있는 것'과 '이미 지워진 기록'을 구분하는 근거다.
-   */
-  exists: boolean;
 }
 
-export type StrategyRollup = Omit<PerStrategyRow, 'strategy_id' | 'strategy_name' | 'touched' | 'stage_flow' | 'exists'> & {
+export type StrategyRollup = Omit<PerStrategyRow, 'strategy_id' | 'strategy_name' | 'touched' | 'stage_flow'> & {
   stage_flow: StageFlowRow[];
 };
 
@@ -77,7 +71,17 @@ interface Attribution {
   applied_at: string;
 }
 
-/** 타입 T에 대한 리드의 "적용 이력" 목록(합성 포함). */
+/**
+ * 집계 범위 안의 "적용 이력" 목록(합성 포함).
+ *
+ * 범위는 `strategyNames`(= 이 축에 속한 전략 id → 현재 이름)가 정한다. 호출부가 맵에
+ * 무엇을 담느냐로 축이 결정된다 — kind로 담으면 kind 축, 카테고리 소속으로 담으면
+ * 카테고리 축이다. 엔트리의 `type`(kind)은 더 이상 범위 판정에 쓰지 않는다:
+ * 한 카테고리에 여러 kind가 섞여 있고(146 이후), kind로 거르면 카테고리를 표현할 수 없다.
+ *
+ * 맵에 없는 전략(=삭제됨)을 가리키는 엔트리는 빠진다. 화면에서도 이미 숨기고 있어
+ * 표시 결과는 같고, 집계와 표시가 같은 기준을 쓰게 된다.
+ */
 function typeEntries(
   s: StrategyStatsStudent,
   type: StrategyHistoryType,
@@ -85,21 +89,21 @@ function typeEntries(
 ): Attribution[] {
   const list: Attribution[] = [];
   for (const e of s.strategy_history ?? []) {
-    if (e.type === type && e.strategy_id && e.applied_at) {
+    if (e.strategy_id && e.applied_at && strategyNames.has(e.strategy_id)) {
       list.push({
         strategy_id: e.strategy_id,
-        strategy_name: strategyNames.get(e.strategy_id) ?? e.strategy_name ?? '(삭제된 전략)',
+        strategy_name: strategyNames.get(e.strategy_id)!,
         applied_at: e.applied_at,
       });
     }
   }
-  // retry FK 폴백: history에 해당 전략 엔트리가 없고 retry_strategy_id가 있으면 합성
-  if (type === 'retry' && s.retry_strategy_id) {
+  // retry FK 폴백: history에 해당 전략 엔트리가 없고 retry_strategy_id가 범위 안이면 합성
+  if (type === 'retry' && s.retry_strategy_id && strategyNames.has(s.retry_strategy_id)) {
     const already = list.some((a) => a.strategy_id === s.retry_strategy_id);
     if (!already) {
       list.push({
         strategy_id: s.retry_strategy_id,
-        strategy_name: strategyNames.get(s.retry_strategy_id) ?? '(삭제된 전략)',
+        strategy_name: strategyNames.get(s.retry_strategy_id)!,
         applied_at: s.retry_assigned_at ?? s.created_at,
       });
     }
@@ -249,7 +253,7 @@ export function computeStrategyStats(
 
     return {
       strategy_id: strategyId,
-      strategy_name: names.get(strategyId) ?? strategyNames.get(strategyId) ?? '(삭제된 전략)',
+      strategy_name: names.get(strategyId) ?? strategyNames.get(strategyId) ?? '(이름 없음)',
       assigned,
       touched: touchedByStrategy.get(strategyId)?.size ?? 0,
       contacted,
@@ -261,7 +265,6 @@ export function computeStrategyStats(
       net_revenue: rev.net,
       avg_days_to_convert: avgDays,
       stage_flow: computeStageFlow(cohort),
-      exists: strategyNames.has(strategyId),
     };
   }
 

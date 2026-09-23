@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
 
   const sp = new URL(request.url).searchParams;
   const type = sp.get('type') as StrategyHistoryType | null;
+  const categoryId = sp.get('category_id');
   const from = sp.get('from');
   const to = sp.get('to');
   const segment = sp.get('segment');
@@ -66,8 +67,12 @@ export async function GET(request: NextRequest) {
       .select(STUDENT_COLS)
       .or('strategy_history.neq.[],retry_strategy_id.not.is.null')
       .limit(MAX_LEAD_ROWS),
-    // 해당 타입 전략 이름 맵 (0건 전략 시드 포함) — retry_strategies.kind (구 type, 146)
-    supabaseAdmin.from('retry_strategies').select('id,name').eq('kind', type),
+    // 집계 범위가 되는 전략 이름 맵 (0건 전략 시드 포함).
+    // category_id 가 오면 그 카테고리 소속(kind 무관) — 라이브러리 카테고리가 표시 축이다.
+    // 없으면 기존 kind 축을 유지한다(하위호환).
+    categoryId
+      ? supabaseAdmin.from('retry_strategies').select('id,name').eq('category_id', categoryId)
+      : supabaseAdmin.from('retry_strategies').select('id,name').eq('kind', type),
   ]);
 
   const { data: students, error: sErr } = studentsRes;

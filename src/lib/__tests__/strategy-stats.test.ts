@@ -166,21 +166,26 @@ describe('assignedStrategyOf', () => {
     });
     expect(assignedStrategyOf(s, 'initial_sales', PERIOD, NAMES)).toBe('s2');
     expect(assignedStrategyOf(s, 'initial_sales', { from: '2026-08-01', to: '2026-08-31' }, NAMES)).toBeNull();
-    expect(assignedStrategyOf(s, 'retry', PERIOD, NAMES)).toBeNull();
+    // 범위 밖(맵에 없는 전략만 가진) 축에서는 귀속되지 않는다
+    expect(assignedStrategyOf(s, 'retry', PERIOD, new Map([['r1', '자발적 연락']]))).toBeNull();
   });
 });
 
-describe('computeStrategyStats — exists 플래그 (REQ-001)', () => {
-  it('라이브러리에 실재하는 전략은 exists:true', () => {
+describe('computeStrategyStats — 집계 범위는 전략 id 맵이 정한다 (REQ-001)', () => {
+  it('맵에 없는 전략 엔트리는 같은 kind여도 집계에서 빠진다 — 카테고리 축을 쓰기 위한 전제', () => {
     const s = reached2({
       id: 'a',
-      strategy_history: [entry({ strategy_id: 's1', type: 'initial_sales', applied_at: '2026-07-10T00:00:00Z' })],
+      strategy_history: [
+        entry({ strategy_id: 's1', type: 'initial_sales', applied_at: '2026-07-10T00:00:00Z' }),
+        entry({ strategy_id: 's2', type: 'initial_sales', applied_at: '2026-07-11T00:00:00Z' }),
+      ],
     });
-    const out = computeStrategyStats('initial_sales', [s], [], PERIOD, NAMES);
-    expect(out.by_strategy.find((r) => r.strategy_id === 's1')?.exists).toBe(true);
+    const onlyS1 = new Map([['s1', '개인화 메시지']]);
+    const out = computeStrategyStats('initial_sales', [s], [], PERIOD, onlyS1);
+    expect(out.by_strategy.map((r) => r.strategy_id)).toEqual(['s1']);
   });
 
-  it('이력에만 남은(이미 삭제된) 전략은 exists:false', () => {
+  it('삭제된 전략(맵에 없음) 엔트리는 집계되지 않는다', () => {
     const s = reached2({
       id: 'a',
       strategy_history: [
@@ -188,15 +193,17 @@ describe('computeStrategyStats — exists 플래그 (REQ-001)', () => {
       ],
     });
     const out = computeStrategyStats('initial_sales', [s], [], PERIOD, NAMES);
-    const row = out.by_strategy.find((r) => r.strategy_id === 'gone');
-    expect(row?.exists).toBe(false);
-    // 이름은 이력 스냅샷을 그대로 쓴다 — 과거 실적이 '(삭제된 전략)'으로 뭉개지지 않는다
-    expect(row?.strategy_name).toBe('옛 전략');
+    expect(out.by_strategy.find((r) => r.strategy_id === 'gone')).toBeUndefined();
   });
 
-  it('배정 0건 시드 전략도 실재하면 exists:true', () => {
-    const out = computeStrategyStats('initial_sales', [], [], PERIOD, NAMES);
-    expect(out.by_strategy.every((r) => r.exists)).toBe(true);
-    expect(out.by_strategy.length).toBe(NAMES.size);
+  it('kind가 달라도 맵에 있으면 집계한다 — 카테고리엔 kind가 섞여 있다', () => {
+    const s = reached2({
+      id: 'a',
+      strategy_history: [
+        entry({ strategy_id: 's1', type: 'initial_contact', applied_at: '2026-07-10T00:00:00Z' }),
+      ],
+    });
+    const out = computeStrategyStats('initial_sales', [s], [], PERIOD, new Map([['s1', '개인화 메시지']]));
+    expect(out.by_strategy.find((r) => r.strategy_id === 's1')?.assigned).toBe(1);
   });
 });
