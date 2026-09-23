@@ -17,8 +17,7 @@ import { LeadDetailTable } from './LeadDetailTable';
 import { useKindLabels } from './strategies/useKindLabels';
 import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
 import { visibleStrategyRows } from './strategy-stats/visibleRows';
-
-const TYPE_ORDER: StrategyHistoryType[] = ['initial_contact', 'initial_sales', 'retry'];
+import { STATS_KIND_TABS, DEFAULT_STATS_KIND } from './strategy-stats/kindTabs';
 
 const won = (n: number) => `${n.toLocaleString()}원`;
 const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
@@ -39,7 +38,7 @@ interface DetailTarget {
 export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
   // 탭 제목은 그 kind에 실제로 속한 전략들의 현재 카테고리 이름을 따른다 (146, 라이브)
   const kindLabels = useKindLabels(segment ?? 'b2c', adminKey);
-  const [type, setType] = useState<StrategyHistoryType>('initial_sales');
+  const [type, setType] = useState<StrategyHistoryType>(DEFAULT_STATS_KIND);
   const [preset, setPreset] = useState<Preset>('last_6m');
   const [range, setRange] = useState(() => getPresetRange('last_6m'));
   const [data, setData] = useState<StrategyTypeStats | null>(null);
@@ -99,7 +98,7 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
       {/* 타입 탭 + 기간 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
-          {TYPE_ORDER.map((key) => (
+          {STATS_KIND_TABS.map((key) => (
             <button
               key={key}
               onClick={() => setType(key)}
