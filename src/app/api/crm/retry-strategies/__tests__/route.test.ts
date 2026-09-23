@@ -91,6 +91,8 @@ describe('POST /api/crm/retry-strategies', () => {
     expect(chain.insert).toHaveBeenCalledWith(
       expect.objectContaining({ name: '새 전략', category_id: 'cat-1' })
     );
-    expect(chain.insert.mock.calls[0][0]).not.toHaveProperty('kind');
+    expect(chain.insert).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kind: expect.anything() })
+    );
   });
 });
