@@ -7,13 +7,11 @@ interface Props {
   categoryId: string;
   segment: 'b2c' | 'b2b';
   adminKey: string;
-  /** 카테고리 안 기존 전략들의 다수결 kind — 사용자가 고르지 않고 이 값을 그대로 쓴다. */
-  defaultKind: 'initial_contact' | 'initial_sales' | 'retry';
   onCreated: (s: RetryStrategy) => void;
   onCancel: () => void;
 }
 
-export function StrategyCreateForm({ categoryId, segment, adminKey, defaultKind, onCreated, onCancel }: Props) {
+export function StrategyCreateForm({ categoryId, segment, adminKey, onCreated, onCancel }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [adding, setAdding] = useState(false);
@@ -27,7 +25,6 @@ export function StrategyCreateForm({ categoryId, segment, adminKey, defaultKind,
       body: JSON.stringify({
         name: name.trim(),
         description: description.trim() || undefined,
-        kind: defaultKind,
         category_id: categoryId,
         segment,
       }),

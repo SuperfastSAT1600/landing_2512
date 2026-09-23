@@ -1,11 +1,10 @@
-import type { StrategyHistoryEntry, StrategyHistoryType } from '@/types/crm';
+import type { StrategyHistoryEntry } from '@/types/crm';
 
 // students.strategy_history(045) 엔트리 생성·추가 — 학생 패널(전략 히스토리)이
 // 쓰는 shape을 여기 한 곳에 모은다.
-// 전략 통계(strategy-stats.ts)가 이 shape의 type/strategy_id/applied_at 에 의존한다.
+// 전략 통계(strategy-stats.ts)가 이 shape의 strategy_id/applied_at 에 의존한다.
 
 export interface StrategyHistoryInput {
-  type: StrategyHistoryType;
   strategy_id: string;
   strategy_name: string;
   memo?: string;
@@ -16,7 +15,6 @@ export interface StrategyHistoryInput {
 export function buildStrategyHistoryEntry(input: StrategyHistoryInput): StrategyHistoryEntry {
   return {
     id: crypto.randomUUID(),
-    type: input.type,
     strategy_id: input.strategy_id,
     strategy_name: input.strategy_name,
     memo: (input.memo ?? '').trim(),
@@ -33,12 +31,12 @@ export function appendStrategyHistoryEntry(
 }
 
 /**
- * 최초 세일즈 퍼널(첫 컨택 ~ 세일즈 콜) 전략이 하나라도 적용됐는지 — 세일즈 칸반
- * 이동·메모 차단 기준. 컨택 전략(initial_contact)도 정당한 전략 적용이라 인정한다
- * — 재시도(retry)는 별도 트랙이라 제외.
+ * 전략이 하나라도 적용됐는지 — 세일즈 칸반 이동·메모 차단 기준.
+ * 예전에는 엔트리의 kind 로 재시도를 걸러냈지만 kind 는 더 이상 없다. 재시도 트랙 구분은
+ * `retry_strategy_id`(= isActiveInitialSalesLead)가 이미 하므로 여기서는 적용 여부만 본다.
  */
-export function hasInitialFunnelStrategy(student: { strategy_history: StrategyHistoryEntry[] | null | undefined }): boolean {
-  return (student.strategy_history ?? []).some((e) => e.type === 'initial_contact' || e.type === 'initial_sales');
+export function hasAnyStrategy(student: { strategy_history: StrategyHistoryEntry[] | null | undefined }): boolean {
+  return (student.strategy_history ?? []).length > 0;
 }
 
 /** 현재 활성 최초 세일즈 트랙 리드인지 — 재시도 트랙(retry_strategy_id 있음)은 제외. */

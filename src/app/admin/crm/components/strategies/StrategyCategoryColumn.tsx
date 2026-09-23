@@ -7,7 +7,6 @@ import type { RetryStrategy, StrategyCategory } from '@/types/crm';
 import { StrategyCategoryHeader } from './StrategyCategoryHeader';
 import { StrategyCreateForm } from './StrategyCreateForm';
 import { StrategyCard } from './StrategyCard';
-import { resolveDefaultKind } from './resolveDefaultKind';
 
 interface Props {
   category: StrategyCategory;
@@ -53,7 +52,6 @@ export function StrategyCategoryColumn({
           categoryId={category.id}
           segment={segment}
           adminKey={adminKey}
-          defaultKind={resolveDefaultKind(strategies)}
           onCreated={(s) => { onCreated(s); setCreating(false); }}
           onCancel={() => setCreating(false)}
         />

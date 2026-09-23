@@ -104,10 +104,12 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     [adminKey]
   );
 
+  const [categories, setCategories] = useState<{ id: string; name: string; sort_order: number }[]>([]);
   const [retryCategoryId, setRetryCategoryId] = useState<string | null>(null);
 
+  // kind 축이 없어졌으므로 세그먼트 전체 전략을 불러와 카테고리로 묶어 보여준다.
   const fetchStrategies = useCallback(async () => {
-    const res = await fetch('/api/crm/retry-strategies?kind=retry', { headers: { 'x-admin-key': adminKey } });
+    const res = await fetch('/api/crm/retry-strategies?segment=b2c', { headers: { 'x-admin-key': adminKey } });
     const json = await res.json();
     setStrategies(json.data ?? []);
   }, [adminKey]);
@@ -118,6 +120,7 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
   const fetchRetryCategoryId = useCallback(async () => {
     const res = await fetch('/api/crm/strategy-categories?segment=b2c', { headers: { 'x-admin-key': adminKey } });
     const json = await res.json();
+    setCategories(json.data ?? []);
     setRetryCategoryId(resolveDefaultCategoryId(json.data ?? []));
   }, [adminKey]);
 
@@ -158,7 +161,7 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     const res = await fetch('/api/crm/retry-strategies', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ name: newStrategyName.trim(), kind: 'retry', category_id: retryCategoryId }),
+      body: JSON.stringify({ name: newStrategyName.trim(), category_id: retryCategoryId, segment: 'b2c' }),
     });
     if (res.ok) {
       const json = await res.json();
@@ -263,6 +266,21 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
   }, [students]);
   const getStudentsByStage = (stage: RetryStage) => studentsByStage.get(stage) ?? [];
 
+  // 전략 목록을 라이브러리 카테고리 순서대로 묶는다. 카테고리를 찾을 수 없는 전략도
+  // 목록에서 빠지지 않도록 마지막 '분류 없음' 묶음에 남긴다.
+  const strategyGroups = useMemo(() => {
+    const ordered = [...categories].sort((a, b) => a.sort_order - b.sort_order);
+    const groups = ordered.map((c) => ({
+      id: c.id,
+      name: c.name,
+      items: strategies.filter((s) => s.category_id === c.id),
+    }));
+    const known = new Set(ordered.map((c) => c.id));
+    const rest = strategies.filter((s) => !known.has(s.category_id));
+    if (rest.length) groups.push({ id: '__none__', name: '분류 없음', items: rest });
+    return groups.filter((g) => g.items.length > 0);
+  }, [categories, strategies]);
+
   return (
     <div className="flex gap-4 h-full">
       {/* Strategy sidebar */}
@@ -309,7 +327,12 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
           {strategies.length === 0 && !creatingStrategy && (
             <p className="text-[11px] text-gray-400 py-2">전략이 없습니다. + 버튼으로 추가하세요.</p>
           )}
-          {strategies.map(s => (
+          {strategyGroups.map(group => (
+            <div key={group.id} className="mb-1">
+              <p className="px-2 pt-1.5 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                {group.name}
+              </p>
+              {group.items.map(s => (
             <div
               key={s.id}
               onClick={() => setSelectedId(s.id)}
@@ -328,6 +351,8 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
               >
                 <Trash2 size={11} />
               </button>
+            </div>
+              ))}
             </div>
           ))}
         </div>

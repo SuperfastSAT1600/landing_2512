@@ -43,14 +43,14 @@ describe('PATCH /api/crm/retry-strategies/[id]', () => {
     expect(chain.update).toHaveBeenCalledWith({ category_id: 'cat-2' });
   });
 
-  it('updates kind alongside category_id', async () => {
+  it('kind 는 무시한다 — 더 이상 전략의 분류가 아니다', async () => {
     const chain = chainable({ data: { id: 's1' }, error: null });
     mockFrom.mockReturnValueOnce(chain);
 
     const { PATCH } = await import('../route');
-    const res = await PATCH(makePatchReq({ kind: 'initial_sales' }), { params });
+    const res = await PATCH(makePatchReq({ kind: 'initial_sales', name: '새 이름' }), { params });
     expect(res.status).toBe(200);
-    expect(chain.update).toHaveBeenCalledWith({ kind: 'initial_sales' });
+    expect(chain.update).toHaveBeenCalledWith({ name: '새 이름' });
   });
 
   it('still supports renaming name/description', async () => {

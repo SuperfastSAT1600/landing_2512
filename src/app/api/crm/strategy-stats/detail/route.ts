@@ -4,9 +4,6 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { MAX_LEAD_ROWS } from '@/lib/crm-stats-core';
 import { buildStatsDetail, isStatsDetailMetric } from '@/lib/crm-stats-detail';
 import { assignedStrategyOf, type StrategyStatsStudent } from '@/lib/strategy-stats';
-import type { StrategyHistoryType } from '@/types/crm';
-
-const VALID_TYPES: StrategyHistoryType[] = ['initial_contact', 'initial_sales', 'retry'];
 const VALID_SEGMENTS = ['b2b', 'b2c'] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -30,7 +27,6 @@ export async function GET(request: NextRequest) {
   }
 
   const sp = new URL(request.url).searchParams;
-  const type = sp.get('type') as StrategyHistoryType | null;
   const categoryId = sp.get('category_id');
   const strategyId = sp.get('strategy_id');
   const metric = sp.get('metric') ?? '';
@@ -38,8 +34,8 @@ export async function GET(request: NextRequest) {
   const to = sp.get('to');
   const segment = sp.get('segment');
 
-  if (!type || !VALID_TYPES.includes(type)) {
-    return NextResponse.json({ error: 'type이 올바르지 않습니다.' }, { status: 400 });
+  if (!categoryId) {
+    return NextResponse.json({ error: 'category_id가 필요합니다.' }, { status: 400 });
   }
   if (segment && !(VALID_SEGMENTS as readonly string[]).includes(segment)) {
     return NextResponse.json({ error: 'segment이 올바르지 않습니다.' }, { status: 400 });
@@ -65,10 +61,10 @@ export async function GET(request: NextRequest) {
   }
 
   // 집계(strategy-stats)와 같은 축으로 범위를 잡아야 카드 숫자와 드릴다운 명단이 일치한다.
-  const strategyQuery = supabaseAdmin.from('retry_strategies').select('id,name');
-  const { data: strategies } = await (categoryId
-    ? strategyQuery.eq('category_id', categoryId)
-    : strategyQuery.eq('kind', type));
+  const { data: strategies } = await supabaseAdmin
+    .from('retry_strategies')
+    .select('id,name')
+    .eq('category_id', categoryId);
   const strategyNames = new Map<string, string>((strategies ?? []).map((r) => [r.id, r.name]));
 
   // segment(b2b/b2c) + 이 전략 귀속 코호트만 필터
@@ -80,7 +76,7 @@ export async function GET(request: NextRequest) {
       return true;
     })
     .filter(
-      (s) => assignedStrategyOf(s as unknown as StrategyStatsStudent, type, { from, to }, strategyNames) === strategyId
+      (s) => assignedStrategyOf(s as unknown as StrategyStatsStudent, { from, to }, strategyNames) === strategyId
     );
 
   // 코호트 결제(anytime)

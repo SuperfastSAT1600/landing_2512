@@ -49,7 +49,7 @@ function AddForm({ available, onSave, onCancel }: AddFormProps) {
       <div className="flex gap-2">
         <button
           disabled={!strategyId}
-          onClick={() => onSave({ type: selected!.kind, strategy_id: strategyId, strategy_name: selected!.name, memo: memo.trim() })}
+          onClick={() => onSave({ strategy_id: strategyId, strategy_name: selected!.name, memo: memo.trim() })}
           className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded-lg transition-colors"
         >
           저장

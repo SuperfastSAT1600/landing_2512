@@ -2,15 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 
-const VALID_KINDS = ['initial_contact', 'initial_sales', 'retry'];
-
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const sp = new URL(request.url).searchParams;
-  const kind = sp.get('kind');
   const categoryId = sp.get('category_id');
   const segment = sp.get('segment');
 
@@ -19,9 +16,6 @@ export async function GET(request: NextRequest) {
     .select('*')
     .order('created_at', { ascending: true });
 
-  if (kind && VALID_KINDS.includes(kind)) {
-    query = query.eq('kind', kind);
-  }
   if (categoryId) {
     query = query.eq('category_id', categoryId);
   }
@@ -46,7 +40,6 @@ export async function POST(request: NextRequest) {
 
   let body: {
     name: string;
-    kind?: 'initial_contact' | 'initial_sales' | 'retry';
     category_id?: string;
     description?: string;
     segment?: 'b2c' | 'b2b';
@@ -60,9 +53,6 @@ export async function POST(request: NextRequest) {
   if (!body.name?.trim()) {
     return NextResponse.json({ error: '전략 이름을 입력해주세요.' }, { status: 400 });
   }
-  if (!body.kind || !VALID_KINDS.includes(body.kind)) {
-    return NextResponse.json({ error: '전략 용도를 선택해주세요.' }, { status: 400 });
-  }
   if (!body.category_id) {
     return NextResponse.json({ error: '카테고리를 선택해주세요.' }, { status: 400 });
   }
@@ -73,7 +63,6 @@ export async function POST(request: NextRequest) {
     .from('retry_strategies')
     .insert({
       name: body.name.trim(),
-      kind: body.kind,
       category_id: body.category_id,
       description: body.description?.trim() || null,
       segment,
