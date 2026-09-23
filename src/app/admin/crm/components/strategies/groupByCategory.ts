@@ -1,4 +1,5 @@
 import type { StrategyHistoryEntry } from '@/types/crm';
+import { effectivePhase } from '@/lib/strategy-history';
 
 /** 현재 카테고리를 찾을 수 없는 엔트리(삭제된 전략 등)를 모으는 그룹 이름. */
 export const ORPHAN_GROUP_LABEL = '분류 없음';
@@ -19,7 +20,12 @@ export interface HistoryGroup {
   /** 카테고리 id. 끊긴 엔트리 그룹은 null. */
   id: string | null;
   label: string;
+  /** 이 그룹에 속한 기록 전부 — 총계·'분류 없음' 목록용. */
   entries: StrategyHistoryEntry[];
+  /** 진행 전 슬롯(최신 1건). 없으면 null. */
+  planned: StrategyHistoryEntry | null;
+  /** 진행 후 슬롯(최신 1건). phase 없는 기존 기록도 여기로 온다. */
+  applied: StrategyHistoryEntry | null;
   /** 이 그룹에서 새로 적용할 수 있는 전략. */
   strategies: StrategyRef[];
   /** 전략 추가가 가능한 그룹인가. 끊긴 엔트리 그룹은 불가. */
@@ -49,6 +55,8 @@ export function groupHistoryByCategory(
     id: c.id,
     label: c.name,
     entries: [],
+    planned: null,
+    applied: null,
     strategies: strategies.filter((s) => s.category_id === c.id),
     addable: true,
   }));
@@ -58,6 +66,8 @@ export function groupHistoryByCategory(
     id: null,
     label: ORPHAN_GROUP_LABEL,
     entries: [],
+    planned: null,
+    applied: null,
     strategies: [],
     addable: false,
   };
@@ -67,5 +77,24 @@ export function groupHistoryByCategory(
     (group ?? orphan).entries.push(e);
   }
 
+  // 슬롯은 카테고리 안에서 최신 1건씩. 저장은 슬롯을 교체하지만(upsertPhaseEntry),
+  // 과거에 쌓인 중복이나 카테고리 이동으로 2건이 될 수 있어 여기서도 최신을 고른다.
+  for (const g of groups) {
+    g.planned = newestOfPhase(g.entries, 'planned');
+    g.applied = newestOfPhase(g.entries, 'applied');
+  }
+
   return orphan.entries.length ? [...groups, orphan] : groups;
+}
+
+function newestOfPhase(
+  entries: StrategyHistoryEntry[],
+  phase: 'planned' | 'applied'
+): StrategyHistoryEntry | null {
+  let best: StrategyHistoryEntry | null = null;
+  for (const e of entries) {
+    if (effectivePhase(e) !== phase) continue;
+    if (!best || String(e.applied_at) >= String(best.applied_at)) best = e;
+  }
+  return best;
 }

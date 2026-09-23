@@ -3,6 +3,8 @@ import {
   appendStrategyHistoryEntry,
   buildStrategyHistoryEntry,
   hasAnyStrategy,
+  effectivePhase,
+  upsertPhaseEntry,
   isActiveInitialSalesLead,
 } from '@/lib/strategy-history';
 import type { StrategyHistoryEntry } from '@/types/crm';
@@ -86,5 +88,72 @@ describe('isActiveInitialSalesLead', () => {
 
   it('활성 상태가 아니면 → false', () => {
     expect(isActiveInitialSalesLead({ lead_status: 'inactive', retry_strategy_id: null })).toBe(false);
+  });
+});
+
+describe('phase — 진행 전/후 구분', () => {
+  const CAT_OF = new Map([
+    ['s-a', 'cat-1'],
+    ['s-b', 'cat-1'],
+    ['s-c', 'cat-2'],
+  ]);
+
+  it('effectivePhase: phase가 없으면 실제(applied)로 읽는다 — 기존 기록 호환', () => {
+    expect(effectivePhase({ ...existing })).toBe('applied');
+    expect(effectivePhase({ ...existing, phase: 'planned' })).toBe('planned');
+    expect(effectivePhase({ ...existing, phase: 'applied' })).toBe('applied');
+  });
+
+  it('buildStrategyHistoryEntry가 phase를 떨어뜨리지 않는다 — 화이트리스트 회귀 방지', () => {
+    const entry = buildStrategyHistoryEntry({
+      strategy_id: 's-a',
+      strategy_name: '진단 없이 결제 유도',
+      phase: 'planned',
+    });
+    expect(entry.phase).toBe('planned');
+  });
+
+  it('phase를 안 주면 실제(applied)로 만든다', () => {
+    const entry = buildStrategyHistoryEntry({ strategy_id: 's-a', strategy_name: 'x' });
+    expect(effectivePhase(entry)).toBe('applied');
+  });
+
+  it('upsertPhaseEntry: 같은 카테고리·같은 슬롯은 교체한다 — 슬롯당 1건', () => {
+    const before = buildStrategyHistoryEntry({ strategy_id: 's-a', strategy_name: 'A', phase: 'planned' });
+    const after = buildStrategyHistoryEntry({ strategy_id: 's-b', strategy_name: 'B', phase: 'planned' });
+    const out = upsertPhaseEntry(upsertPhaseEntry([], before, CAT_OF), after, CAT_OF);
+    expect(out).toHaveLength(1);
+    expect(out[0].strategy_id).toBe('s-b');
+  });
+
+  it('upsertPhaseEntry: 같은 카테고리라도 다른 슬롯은 함께 남는다', () => {
+    const planned = buildStrategyHistoryEntry({ strategy_id: 's-a', strategy_name: 'A', phase: 'planned' });
+    const applied = buildStrategyHistoryEntry({ strategy_id: 's-b', strategy_name: 'B', phase: 'applied' });
+    const out = upsertPhaseEntry(upsertPhaseEntry([], planned, CAT_OF), applied, CAT_OF);
+    expect(out).toHaveLength(2);
+    expect(out.map((e) => e.phase)).toEqual(['planned', 'applied']);
+  });
+
+  it('upsertPhaseEntry: 다른 카테고리 기록은 건드리지 않는다', () => {
+    const other = buildStrategyHistoryEntry({ strategy_id: 's-c', strategy_name: 'C', phase: 'planned' });
+    const mine = buildStrategyHistoryEntry({ strategy_id: 's-a', strategy_name: 'A', phase: 'planned' });
+    const out = upsertPhaseEntry([other], mine, CAT_OF);
+    expect(out).toHaveLength(2);
+    expect(out.map((e) => e.strategy_id).sort()).toEqual(['s-a', 's-c']);
+  });
+
+  it('upsertPhaseEntry: phase 없는 기존 기록은 실제 슬롯으로 보고 교체한다', () => {
+    const legacy: StrategyHistoryEntry = { ...existing, strategy_id: 's-a' };
+    const next = buildStrategyHistoryEntry({ strategy_id: 's-b', strategy_name: 'B', phase: 'applied' });
+    const out = upsertPhaseEntry([legacy], next, CAT_OF);
+    expect(out).toHaveLength(1);
+    expect(out[0].strategy_id).toBe('s-b');
+  });
+
+  it('upsertPhaseEntry: 카테고리를 모르는 전략이면 그냥 덧붙인다 — 남의 기록을 지우지 않는다', () => {
+    const known = buildStrategyHistoryEntry({ strategy_id: 's-a', strategy_name: 'A', phase: 'planned' });
+    const unknown = buildStrategyHistoryEntry({ strategy_id: 's-zzz', strategy_name: 'Z', phase: 'planned' });
+    const out = upsertPhaseEntry([known], unknown, CAT_OF);
+    expect(out).toHaveLength(2);
   });
 });
