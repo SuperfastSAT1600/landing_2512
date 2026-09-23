@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from('test_codes')
-    .select('id, code, test_id, label, max_uses, is_active, created_at, expires_at')
+    .select('id, code, test_id, label, max_uses, is_active, created_at, expires_at, mode')
     .order('created_at', { ascending: false });
 
   if (testId) {
@@ -48,12 +48,13 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { code, testId, label, maxUses, expiresAt } = body as {
+  const { code, testId, label, maxUses, expiresAt, mode } = body as {
     code?: string;
     testId?: string;
     label?: string;
     maxUses?: number;
     expiresAt?: string;
+    mode?: string;
   };
 
   if (!code || !testId) {
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
       label: label ?? '',
       max_uses: maxUses ?? 50,
       expires_at: expiresAt ?? null,
+      mode: mode ?? 'untimed',
     })
     .select('id')
     .single();
