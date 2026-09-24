@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { BluebookPageShell } from '@/components/shared/BluebookPageShell';
+import { BluebookQuestionUnit } from '@/components/shared/BluebookQuestionUnit';
 
 interface Option {
   label: string;
@@ -395,116 +397,70 @@ export default function TestPage() {
     : (isLastUnit && isLastModule ? '최종 제출' : 'Next');
   const nextDisabled = isPerQuestion && currentUnit ? !answers[currentUnit.id] : false;
 
+  const passageNode: React.ReactNode = hasPassage ? (
+    <div
+      className="test-passage-content"
+      style={{ fontSize: 15, lineHeight: 1.8, color: '#374151' }}
+      dangerouslySetInnerHTML={{ __html: currentUnit.passage! }}
+    />
+  ) : undefined;
+
+  const timerNode = testMode === 'timed' && moduleTimeLeft !== null ? (
+    <span style={{ color: timerColor, fontSize: 15, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+      {formatTime(moduleTimeLeft)}
+    </span>
+  ) : undefined;
+
+  const headerRightNode = (
+    <span style={{ color: '#94a3b8', fontSize: 13 }}>
+      {answeredCount} / {totalUnits} answered
+    </span>
+  );
+
+  const footerCenterNode = (
+    <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+      {currentUnitIndex + 1} / {currentUnits.length}
+    </span>
+  );
+
   return (
-    <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ height: 56, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0 }}>
-        <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>
-          {currentModule?.section === 'Reading and Writing' ? 'Section 1: Reading and Writing' : 'Section 2: Math'}
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {testMode === 'timed' && moduleTimeLeft !== null && (
-            <span style={{ color: timerColor, fontSize: 15, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-              {formatTime(moduleTimeLeft)}
-            </span>
-          )}
-          <span style={{ color: '#94a3b8', fontSize: 13 }}>
-            {answeredCount} / {totalUnits} answered
-          </span>
-        </div>
-      </div>
-
-      {/* Bluebook split layout */}
-      <div className="test-layout" style={{ flex: 1, overflow: 'hidden' }}>
-        {hasPassage && (
-          <>
-            <div className="test-passage-panel">
-              <div style={{ padding: '24px 28px 24px 24px' }}>
-                <div
-                  className="test-passage-content"
-                  style={{ fontSize: 15, lineHeight: 1.8, color: '#374151' }}
-                  dangerouslySetInnerHTML={{ __html: currentUnit.passage! }}
-                />
-              </div>
-            </div>
-            <div className="test-resizer" />
-          </>
-        )}
-
-        <div className={`test-question-panel ${hasPassage ? 'has-passage' : ''}`}>
-          <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 20px 120px' }}>
-            {currentUnit && (
-              <>
-                <div style={{ marginBottom: 16 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: '#1e293b', color: '#fff', fontWeight: 700, fontSize: 14 }}>
-                    {globalIndex + 1}
-                  </span>
-                </div>
-
-                <div
-                  style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}
-                  dangerouslySetInnerHTML={{ __html: currentUnit.question }}
-                />
-
-                {currentUnit.type === 'multiple_choice' && currentUnit.options && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {currentUnit.options.map((opt) => {
-                      const isSelected = answers[currentUnit.id] === opt.label;
-                      return (
-                        <button
-                          key={opt.label}
-                          type="button"
-                          onClick={() => setAnswers((prev) => ({ ...prev, [currentUnit.id]: opt.label }))}
-                          className={`bluebook-option btn-press${isSelected ? ' selected' : ''}`}
-                        >
-                          <span className="bluebook-option-label">{opt.label}</span>
-                          <span
-                            className="bluebook-option-text"
-                            dangerouslySetInnerHTML={{ __html: opt.text }}
-                          />
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {currentUnit.type === 'short_answer' && (
-                  <input
-                    type="text"
-                    placeholder="답 입력"
-                    value={answers[currentUnit.id] ?? ''}
-                    onChange={(e) => setAnswers((prev) => ({ ...prev, [currentUnit.id]: e.target.value }))}
-                    style={{ padding: '10px 14px', borderRadius: 8, border: answers[currentUnit.id] ? '1.5px solid #3b82f6' : '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, width: 180 }}
-                  />
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="bluebook-footer">
-        <button
-          onClick={goPrev}
-          disabled={isAtStart}
-          className="bluebook-next-btn"
-          style={{ opacity: isAtStart || isPerQuestion ? 0 : 1, pointerEvents: isAtStart || isPerQuestion ? 'none' : 'auto' }}
-        >
-          Back
-        </button>
-        <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
-          {currentUnitIndex + 1} / {currentUnits.length}
-        </span>
-        <button
-          onClick={goNext}
-          disabled={nextDisabled}
-          className="bluebook-next-btn"
-          style={{ opacity: nextDisabled ? 0.4 : 1 }}
-        >
-          {nextLabel}
-        </button>
-      </div>
+    <>
+    <BluebookPageShell
+      sectionTitle={currentModule?.section === 'Reading and Writing' ? 'Section 1: Reading and Writing' : 'Section 2: Math'}
+      timer={timerNode}
+      headerRight={headerRightNode}
+      passage={passageNode}
+      onPrev={goPrev}
+      onNext={goNext}
+      prevHidden={isAtStart || isPerQuestion}
+      nextDisabled={nextDisabled}
+      nextLabel={nextLabel}
+      footerCenter={footerCenterNode}
+    >
+      {currentUnit && (
+        <BluebookQuestionUnit
+          questionNumber={globalIndex + 1}
+          question={<span dangerouslySetInnerHTML={{ __html: currentUnit.question }} />}
+          options={
+            currentUnit.type === 'multiple_choice' && currentUnit.options
+              ? currentUnit.options.map((opt) => ({
+                  label: opt.label,
+                  text: <span dangerouslySetInnerHTML={{ __html: opt.text }} />,
+                }))
+              : undefined
+          }
+          selectedAnswer={answers[currentUnit.id]}
+          onSelect={(label) => setAnswers((prev) => ({ ...prev, [currentUnit.id]: label }))}
+          shortAnswer={currentUnit.type === 'short_answer' ? (answers[currentUnit.id] ?? '') : undefined}
+          onShortAnswer={
+            currentUnit.type === 'short_answer'
+              ? (val) => setAnswers((prev) => ({ ...prev, [currentUnit.id]: val }))
+              : undefined
+          }
+          shortAnswerPlaceholder="답 입력"
+        />
+      )}
+    </BluebookPageShell>
 
       {/* Submit confirm modal */}
       {confirmOpen && (
@@ -592,6 +548,7 @@ export default function TestPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
+

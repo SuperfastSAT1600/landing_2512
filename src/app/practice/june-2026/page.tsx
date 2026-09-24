@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
+import { BluebookPageShell } from '@/components/shared/BluebookPageShell';
+import { BluebookQuestionUnit } from '@/components/shared/BluebookQuestionUnit';
 
 interface Choice {
   A: string;
@@ -384,191 +386,124 @@ export default function JunePracticePage() {
   const qStatTotal = qStat?.total ?? 0;
   const qStatPct = qStatTotal > 0 ? Math.round((qStat!.correct / qStatTotal) * 100) : null;
 
+  const skillTabsStrip = (
+    <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0 }}>
+      <div style={{ display: 'flex', minWidth: 'max-content', padding: '0 16px' }}>
+        {data.groups.map((g) => {
+          const gAnswered = g.questions.filter((q) => answers[q.id]).length;
+          const active = activeSkill === g.skill;
+          return (
+            <button
+              key={g.skill}
+              onClick={() => setActiveSkill(g.skill)}
+              style={{ padding: '10px 14px', background: 'none', border: 'none', borderBottom: active ? '2px solid #1e293b' : '2px solid transparent', color: active ? '#1e293b' : '#64748b', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
+              {g.label}
+              <span style={{ marginLeft: 6, color: active ? '#3b82f6' : '#94a3b8', fontSize: 11 }}>
+                {gAnswered}/{g.total}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const passageNode = hasPassage && currentQuestion ? (
+    <div className="test-passage-content">
+      <ContentRenderer content={currentQuestion.passage} />
+    </div>
+  ) : undefined;
+
+  const headerRightNode = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>
+          {answeredCount > 0 ? `${correctCount}/${answeredCount}` : `${data.total} questions`}
+        </div>
+        <div style={{ fontSize: 11, color: '#94a3b8' }}>
+          {answeredCount > 0 ? `${Math.round((correctCount / answeredCount) * 100)}% correct` : 'All RW'}
+        </div>
+      </div>
+      <button
+        onClick={handleResultSubmit}
+        disabled={!canSubmit || submitting}
+        style={{ padding: '7px 14px', background: canSubmit ? '#3b82f6' : '#334155', color: canSubmit ? '#fff' : '#64748b', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: canSubmit ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
+      >
+        {submitting ? 'Submitting...' : submitted ? 'Submitted' : 'Submit Results'}
+      </button>
+    </div>
+  );
+
+  const isNextGroupAdvance = isLastQuestion && allSectionDone && !!nextGroup;
+  const nextLabel = isNextGroupAdvance ? `${nextGroup!.label} →` : 'Next';
+  const nextDisabled = isLastQuestion && !isNextGroupAdvance;
+
   return (
-    <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
-      {/* Toast */}
+    <>
       {toast && (
         <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: submitted ? '#1e293b' : '#ef4444', color: '#fff', padding: '12px 24px', borderRadius: 8, fontSize: 14, fontWeight: 600, zIndex: 200, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
           {toast}
         </div>
       )}
-
-      {/* Header */}
-      <div style={{ height: 56, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
-        <div>
-          <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.05em', textTransform: 'uppercase' }}>SuperfastSAT</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>June SAT Practice 300</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>
-              {answeredCount > 0 ? `${correctCount}/${answeredCount}` : `${data.total} questions`}
-            </div>
-            <div style={{ fontSize: 11, color: '#94a3b8' }}>
-              {answeredCount > 0 ? `${Math.round((correctCount / answeredCount) * 100)}% correct` : 'All RW'}
-            </div>
-          </div>
-          <button
-            onClick={handleResultSubmit}
-            disabled={!canSubmit || submitting}
-            style={{ padding: '7px 14px', background: canSubmit ? '#3b82f6' : '#334155', color: canSubmit ? '#fff' : '#64748b', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: canSubmit ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
+      <BluebookPageShell
+        sectionTitle="June SAT Practice 300"
+        headerRight={headerRightNode}
+        navStrip={skillTabsStrip}
+        passage={passageNode}
+        onPrev={() => setCurrentIndex((i) => i - 1)}
+        prevHidden={isFirstQuestion}
+        onNext={() => {
+          if (isNextGroupAdvance) {
+            setActiveSkill(nextGroup!.skill);
+            setCurrentIndex(0);
+          } else {
+            setCurrentIndex((i) => i + 1);
+          }
+        }}
+        nextLabel={nextLabel}
+        nextDisabled={nextDisabled}
+        footerCenter={
+          <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+            {currentIndex + 1} / {groupQuestions.length}
+          </span>
+        }
+      >
+        {currentQuestion && (
+          <BluebookQuestionUnit
+            questionNumber={currentIndex + 1}
+            question={<ContentRenderer content={currentQuestion.question} />}
+            difficulty={currentQuestion.difficulty}
+            difficultyColor={DIFFICULTY_COLOR[currentQuestion.difficulty]}
+            options={LETTERS.map((letter) => ({
+              label: letter,
+              text: <ContentRenderer content={currentQuestion.choices[letter]} />,
+            }))}
+            selectedAnswer={userAnswer}
+            onSelect={(label) => handleAnswer(currentQuestion.id, label)}
+            disabled={isRevealed}
+            feedback={isRevealed ? { selectedLabel: userAnswer ?? '', correctLabel: currentQuestion.correct_answer } : null}
           >
-            {submitting ? 'Submitting...' : submitted ? 'Submitted' : 'Submit Results'}
-          </button>
-        </div>
-      </div>
-
-      {/* Skill tabs */}
-      <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0 }}>
-        <div style={{ display: 'flex', minWidth: 'max-content', padding: '0 16px' }}>
-          {data.groups.map((g) => {
-            const gAnswered = g.questions.filter((q) => answers[q.id]).length;
-            const active = activeSkill === g.skill;
-            return (
-              <button
-                key={g.skill}
-                onClick={() => setActiveSkill(g.skill)}
-                style={{ padding: '10px 14px', background: 'none', border: 'none', borderBottom: active ? '2px solid #1e293b' : '2px solid transparent', color: active ? '#1e293b' : '#64748b', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
-              >
-                {g.label}
-                <span style={{ marginLeft: 6, color: active ? '#3b82f6' : '#94a3b8', fontSize: 11 }}>
-                  {gAnswered}/{g.total}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Bluebook split layout */}
-      <div className="test-layout" style={{ flex: 1, overflow: 'hidden' }}>
-        {hasPassage && currentQuestion && (
-          <>
-            <div className="test-passage-panel">
-              <div style={{ padding: '24px 28px 24px 24px' }}>
-                <div className="test-passage-content">
-                  <ContentRenderer content={currentQuestion.passage} />
-                </div>
-              </div>
-            </div>
-            <div className="test-resizer" />
-          </>
-        )}
-
-        <div className={`test-question-panel${hasPassage ? ' has-passage' : ''}`}>
-          <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 20px 120px' }}>
-            {currentQuestion && (
+            {isRevealed && (
               <>
-                {/* Question header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: '#1e293b', color: '#fff', fontWeight: 700, fontSize: 14 }}>
-                    {currentIndex + 1}
-                  </span>
-                  <span style={{ fontSize: 11, color: DIFFICULTY_COLOR[currentQuestion.difficulty] ?? '#94a3b8', fontWeight: 600 }}>
-                    {currentQuestion.difficulty}
-                  </span>
-                </div>
-
-                {/* Question text */}
-                <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}>
-                  <ContentRenderer content={currentQuestion.question} />
-                </div>
-
-                {/* Answer choices */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {LETTERS.map((letter) => {
-                    const text = currentQuestion.choices[letter];
-                    const isSelected = userAnswer === letter;
-                    const isCorrectChoice = letter === currentQuestion.correct_answer;
-
-                    let revealedStyle: React.CSSProperties = {};
-                    if (isRevealed) {
-                      if (isCorrectChoice) {
-                        revealedStyle = { background: 'rgba(34,197,94,0.08)', borderColor: 'rgba(34,197,94,0.5)' };
-                      } else if (isSelected) {
-                        revealedStyle = { background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.4)' };
-                      } else {
-                        revealedStyle = { opacity: 0.5 };
-                      }
-                    }
-
-                    const labelColor = isRevealed
-                      ? isCorrectChoice ? '#22c55e' : isSelected ? '#ef4444' : '#94a3b8'
-                      : isSelected ? '#3b82f6' : '#64748b';
-
-                    return (
-                      <button
-                        key={letter}
-                        type="button"
-                        onClick={() => !isRevealed && handleAnswer(currentQuestion.id, letter)}
-                        disabled={isRevealed}
-                        className={`bluebook-option btn-press${!isRevealed && isSelected ? ' selected' : ''}`}
-                        style={revealedStyle}
-                      >
-                        <span className="bluebook-option-label" style={{ color: labelColor, borderColor: labelColor }}>
-                          {letter}
-                        </span>
-                        <span className="bluebook-option-text"><ContentRenderer content={text} /></span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Revealed: rationale + question stats */}
-                {isRevealed && (
-                  <>
-                    {currentQuestion.rationale && (
-                      <div style={{ marginTop: 20, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10 }}>
-                        <span style={{ color: '#3b82f6', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solution </span>
-                        <span style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}><ContentRenderer content={currentQuestion.rationale} /></span>
-                      </div>
-                    )}
-                    {qStatPct !== null && (
-                      <div style={{ marginTop: 10, display: 'flex', gap: 16, alignItems: 'center', fontSize: 12 }}>
-                        <span style={{ color: '#22c55e', fontWeight: 700 }}>{qStatPct}% correct</span>
-                        <span style={{ color: '#ef4444', fontWeight: 700 }}>{100 - qStatPct}% incorrect</span>
-                        <span style={{ color: '#94a3b8' }}>({qStatTotal} students)</span>
-                      </div>
-                    )}
-                  </>
+                {currentQuestion.rationale && (
+                  <div style={{ marginTop: 20, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10 }}>
+                    <span style={{ color: '#3b82f6', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solution </span>
+                    <span style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}><ContentRenderer content={currentQuestion.rationale} /></span>
+                  </div>
+                )}
+                {qStatPct !== null && (
+                  <div style={{ marginTop: 10, display: 'flex', gap: 16, alignItems: 'center', fontSize: 12 }}>
+                    <span style={{ color: '#22c55e', fontWeight: 700 }}>{qStatPct}% correct</span>
+                    <span style={{ color: '#ef4444', fontWeight: 700 }}>{100 - qStatPct}% incorrect</span>
+                    <span style={{ color: '#94a3b8' }}>({qStatTotal} students)</span>
+                  </div>
                 )}
               </>
             )}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="bluebook-footer">
-        <button
-          onClick={() => setCurrentIndex((i) => i - 1)}
-          disabled={isFirstQuestion}
-          className="bluebook-next-btn"
-          style={{ opacity: isFirstQuestion ? 0 : 1, pointerEvents: isFirstQuestion ? 'none' : 'auto' }}
-        >
-          Back
-        </button>
-        <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
-          {currentIndex + 1} / {groupQuestions.length}
-        </span>
-        {isLastQuestion && allSectionDone && nextGroup ? (
-          <button
-            className="bluebook-next-btn btn-press"
-            onClick={() => { setActiveSkill(nextGroup.skill); setCurrentIndex(0); }}
-            style={{ background: '#071be9', minWidth: 140 }}
-          >
-            {nextGroup.label} →
-          </button>
-        ) : (
-          <button
-            onClick={() => setCurrentIndex((i) => i + 1)}
-            disabled={isLastQuestion}
-            className="bluebook-next-btn"
-          >
-            Next
-          </button>
+          </BluebookQuestionUnit>
         )}
-      </div>
-    </div>
+      </BluebookPageShell>
+    </>
   );
 }
