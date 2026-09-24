@@ -52,10 +52,19 @@ export default function Sep26GrammarPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const prefetchRef = useRef<Promise<PracticeSet> | null>(null);
+  const igRef = useRef('');
 
   useEffect(() => {
     prefetchRef.current = fetch('/api/practice/sep26-grammar').then((r) => r.json());
   }, []);
+
+  function saveProgress(ig: string, idx: number, ans: Record<string, string>) {
+    fetch('/api/practice/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ testId: TEST_ID, instagramId: ig, currentIndex: idx, answers: ans }),
+    }).catch(() => {/* fire-and-forget */});
+  }
 
   async function handleGateSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,10 +94,27 @@ export default function Sep26GrammarPage() {
         return;
       }
 
-      setInstagramId(cleanIg.startsWith('@') ? cleanIg : `@${cleanIg}`);
-      const data = await (prefetchRef.current ?? fetch('/api/practice/sep26-grammar').then((r) => r.json()));
-      const flat = data.groups.flatMap((g: PracticeSet['groups'][number]) => g.questions);
+      const normalizedIg = cleanIg.startsWith('@') ? cleanIg : `@${cleanIg}`;
+      setInstagramId(normalizedIg);
+      igRef.current = normalizedIg;
+
+      const [practiceData, progressRes] = await Promise.all([
+        prefetchRef.current ?? fetch('/api/practice/sep26-grammar').then((r) => r.json()),
+        fetch(`/api/practice/progress?testId=${TEST_ID}&instagramId=${encodeURIComponent(normalizedIg)}`).then((r) => r.json()),
+      ]);
+
+      const flat = practiceData.groups.flatMap((g: PracticeSet['groups'][number]) => g.questions);
       setQuestions(flat);
+
+      if (progressRes.progress) {
+        const { current_index, answers: savedAnswers } = progressRes.progress;
+        setCurrentIndex(current_index);
+        setAnswers(savedAnswers);
+        const restoredRevealed: Record<string, boolean> = {};
+        Object.keys(savedAnswers).forEach((id) => { restoredRevealed[id] = true; });
+        setRevealed(restoredRevealed);
+      }
+
       setLoading(false);
       setPhase('test');
     } catch {
@@ -99,20 +125,26 @@ export default function Sep26GrammarPage() {
 
   function handleSelect(qId: string, label: string) {
     if (revealed[qId]) return;
-    setAnswers((prev) => ({ ...prev, [qId]: label }));
+    const newAnswers = { ...answers, [qId]: label };
+    setAnswers(newAnswers);
     setRevealed((prev) => ({ ...prev, [qId]: true }));
+    saveProgress(igRef.current, currentIndex, newAnswers);
   }
 
   function goNext() {
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex((i) => i + 1);
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
+      saveProgress(igRef.current, nextIndex, answers);
     } else {
       setPhase('result');
     }
   }
 
   function goPrev() {
-    setCurrentIndex((i) => Math.max(0, i - 1));
+    const prevIndex = Math.max(0, currentIndex - 1);
+    setCurrentIndex(prevIndex);
+    saveProgress(igRef.current, prevIndex, answers);
   }
 
   async function handleSubmitScore() {
@@ -136,7 +168,12 @@ export default function Sep26GrammarPage() {
           questionResults,
         }),
       });
-      if (res.ok) setSubmitted(true);
+      if (res.ok) {
+        setSubmitted(true);
+        fetch(`/api/practice/progress?testId=${TEST_ID}&instagramId=${encodeURIComponent(igRef.current)}`, {
+          method: 'DELETE',
+        }).catch(() => {});
+      }
     } finally {
       setSubmitting(false);
     }
