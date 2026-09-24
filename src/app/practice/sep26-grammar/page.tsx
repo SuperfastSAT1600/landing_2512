@@ -27,7 +27,7 @@ interface PracticeSet {
   groups: { skill: string; label: string; total: number; questions: Question[] }[];
 }
 
-type Phase = 'gate' | 'test' | 'result';
+type Phase = 'gate' | 'test' | 'result' | 'review';
 
 const DIFF_COLOR: Record<string, string> = {
   hard: '#ef4444',
@@ -46,14 +46,20 @@ export default function Sep26GrammarPage() {
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  // answers: selected label per question id
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  // revealed: whether feedback is shown for this question
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
   const [showQMap, setShowQMap] = useState(false);
+
+  // Review marks
+  const [markedForReview, setMarkedForReview] = useState<Set<string>>(new Set());
+
+  // Review phase state
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [reviewAnswers, setReviewAnswers] = useState<Record<string, string>>({});
+  const [reviewRevealed, setReviewRevealed] = useState<Record<string, boolean>>({});
+
   const prefetchRef = useRef<Promise<PracticeSet> | null>(null);
   const igRef = useRef('');
 
@@ -61,12 +67,18 @@ export default function Sep26GrammarPage() {
     prefetchRef.current = fetch('/api/practice/sep26-grammar').then((r) => r.json());
   }, []);
 
-  function saveProgress(ig: string, idx: number, ans: Record<string, string>) {
+  function saveProgress(ig: string, idx: number, ans: Record<string, string>, marked: Set<string>) {
     fetch('/api/practice/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ testId: TEST_ID, instagramId: ig, currentIndex: idx, answers: ans }),
-    }).catch(() => {/* fire-and-forget */});
+      body: JSON.stringify({
+        testId: TEST_ID,
+        instagramId: ig,
+        currentIndex: idx,
+        answers: ans,
+        markedForReview: Array.from(marked),
+      }),
+    }).catch(() => {});
   }
 
   async function handleGateSubmit(e: React.FormEvent) {
@@ -101,29 +113,58 @@ export default function Sep26GrammarPage() {
       setInstagramId(normalizedIg);
       igRef.current = normalizedIg;
 
-      const [practiceData, progressRes] = await Promise.all([
+      const [practiceData, progressRes, submissionRes] = await Promise.all([
         prefetchRef.current ?? fetch('/api/practice/sep26-grammar').then((r) => r.json()),
         fetch(`/api/practice/progress?testId=${TEST_ID}&instagramId=${encodeURIComponent(normalizedIg)}`).then((r) => r.json()),
+        fetch(`/api/practice/sep26-grammar/submission?instagramId=${encodeURIComponent(normalizedIg)}`).then((r) => r.json()),
       ]);
 
       const flat = practiceData.groups.flatMap((g: PracticeSet['groups'][number]) => g.questions);
       setQuestions(flat);
 
       if (progressRes.progress) {
-        const { current_index, answers: savedAnswers } = progressRes.progress;
+        // Resume in-progress test
+        const { current_index, answers: savedAnswers, marked_for_review } = progressRes.progress;
         setCurrentIndex(current_index);
         setAnswers(savedAnswers);
+        if (Array.isArray(marked_for_review) && marked_for_review.length) {
+          setMarkedForReview(new Set(marked_for_review));
+        }
         const restoredRevealed: Record<string, boolean> = {};
         Object.keys(savedAnswers).forEach((id) => { restoredRevealed[id] = true; });
         setRevealed(restoredRevealed);
+        setPhase('test');
+      } else if (submissionRes.submission) {
+        // Show previous submission result
+        const { answers: prevAnswers, marked_for_review } = submissionRes.submission;
+        setAnswers(prevAnswers ?? {});
+        if (Array.isArray(marked_for_review) && marked_for_review.length) {
+          setMarkedForReview(new Set(marked_for_review));
+        }
+        const restoredRevealed: Record<string, boolean> = {};
+        Object.keys(prevAnswers ?? {}).forEach((id) => { restoredRevealed[id] = true; });
+        setRevealed(restoredRevealed);
+        setSubmitted(true);
+        setPhase('result');
+      } else {
+        setPhase('test');
       }
 
       setLoading(false);
-      setPhase('test');
     } catch {
       setGateError('Network error. Please try again.');
       setLoading(false);
     }
+  }
+
+  function toggleMark(qId: string) {
+    setMarkedForReview((prev) => {
+      const next = new Set(prev);
+      if (next.has(qId)) next.delete(qId);
+      else next.add(qId);
+      saveProgress(igRef.current, currentIndex, answers, next);
+      return next;
+    });
   }
 
   function handleSelect(qId: string, label: string) {
@@ -131,14 +172,14 @@ export default function Sep26GrammarPage() {
     const newAnswers = { ...answers, [qId]: label };
     setAnswers(newAnswers);
     setRevealed((prev) => ({ ...prev, [qId]: true }));
-    saveProgress(igRef.current, currentIndex, newAnswers);
+    saveProgress(igRef.current, currentIndex, newAnswers, markedForReview);
   }
 
   function goNext() {
     if (currentIndex < questions.length - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
-      saveProgress(igRef.current, nextIndex, answers);
+      saveProgress(igRef.current, nextIndex, answers, markedForReview);
     } else {
       setPhase('result');
     }
@@ -147,7 +188,7 @@ export default function Sep26GrammarPage() {
   function goPrev() {
     const prevIndex = Math.max(0, currentIndex - 1);
     setCurrentIndex(prevIndex);
-    saveProgress(igRef.current, prevIndex, answers);
+    saveProgress(igRef.current, prevIndex, answers, markedForReview);
   }
 
   async function handleSubmitScore() {
@@ -156,9 +197,7 @@ export default function Sep26GrammarPage() {
     const correct = questions.filter((q) => answers[q.id] === q.correct_answer).length;
     const total = questions.length;
     const questionResults: Record<string, boolean> = {};
-    questions.forEach((q) => {
-      questionResults[q.id] = answers[q.id] === q.correct_answer;
-    });
+    questions.forEach((q) => { questionResults[q.id] = answers[q.id] === q.correct_answer; });
     try {
       const res = await fetch('/api/practice/sep26-grammar/submit', {
         method: 'POST',
@@ -169,6 +208,7 @@ export default function Sep26GrammarPage() {
           correctCount: correct,
           totalCount: total,
           questionResults,
+          markedForReview: Array.from(markedForReview),
         }),
       });
       if (res.ok) {
@@ -180,6 +220,35 @@ export default function Sep26GrammarPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleRetry() {
+    await fetch(
+      `/api/practice/sep26-grammar/submission?instagramId=${encodeURIComponent(igRef.current)}`,
+      { method: 'DELETE' }
+    ).catch(() => {});
+    setAnswers({});
+    setRevealed({});
+    setMarkedForReview(new Set());
+    setCurrentIndex(0);
+    setSubmitted(false);
+    setReviewIndex(0);
+    setReviewAnswers({});
+    setReviewRevealed({});
+    setPhase('test');
+  }
+
+  function handleStartReview() {
+    setReviewIndex(0);
+    setReviewAnswers({});
+    setReviewRevealed({});
+    setPhase('review');
+  }
+
+  function handleReviewSelect(qId: string, label: string) {
+    if (reviewRevealed[qId]) return;
+    setReviewAnswers((prev) => ({ ...prev, [qId]: label }));
+    setReviewRevealed((prev) => ({ ...prev, [qId]: true }));
   }
 
   // ── Gate ────────────────────────────────────────────────────────────────────
@@ -210,7 +279,7 @@ export default function Sep26GrammarPage() {
               disabled={loading || !accessCode.trim() || !instagramId.trim()}
               style={{ width: '100%', padding: '12px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: loading || !accessCode.trim() || !instagramId.trim() ? 0.4 : 1 }}
             >
-              {loading ? '문제 불러오는 중...' : '연습 시작'}
+              {loading ? '불러오는 중...' : '연습 시작'}
             </button>
           </form>
         </div>
@@ -223,23 +292,195 @@ export default function Sep26GrammarPage() {
     const correct = questions.filter((q) => answers[q.id] === q.correct_answer).length;
     const total = questions.length;
     const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+    const markedCount = markedForReview.size;
+
     return (
       <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '48px 40px', width: 380, textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
           <div style={{ fontSize: 52, fontWeight: 800, color: '#1e293b', marginBottom: 8 }}>{pct}%</div>
           <p style={{ fontSize: 16, color: '#374151', marginBottom: 4 }}>{correct} / {total} correct</p>
           <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 32 }}>9월 SAT 신유형 문법 100문제</p>
-          {!submitted ? (
-            <button
-              onClick={handleSubmitScore}
-              disabled={submitting}
-              style={{ width: '100%', padding: '12px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: submitting ? 0.5 : 1 }}
-            >
-              {submitting ? '제출 중...' : '결과 제출'}
-            </button>
-          ) : (
-            <p style={{ color: '#22c55e', fontWeight: 600, fontSize: 15 }}>제출 완료 ✓</p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {!submitted ? (
+              <button
+                onClick={handleSubmitScore}
+                disabled={submitting}
+                style={{ width: '100%', padding: '12px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: submitting ? 0.5 : 1 }}
+              >
+                {submitting ? '제출 중...' : '결과 제출'}
+              </button>
+            ) : (
+              <p style={{ color: '#22c55e', fontWeight: 600, fontSize: 14, marginBottom: 4 }}>제출 완료 ✓</p>
+            )}
+
+            {submitted && markedCount > 0 && (
+              <button
+                onClick={handleStartReview}
+                style={{ width: '100%', padding: '12px 0', background: '#fef9c3', color: '#854d0e', border: '1.5px solid #fde68a', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+              >
+                복습하기 ({markedCount}문제)
+              </button>
+            )}
+
+            {submitted && (
+              <button
+                onClick={handleRetry}
+                style={{ width: '100%', padding: '12px 0', background: '#fff', color: '#64748b', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+              >
+                다시 풀어보기
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Review ───────────────────────────────────────────────────────────────────
+  if (phase === 'review') {
+    const reviewQuestions = questions.filter((q) => markedForReview.has(q.id));
+    const reviewQ = reviewQuestions[reviewIndex];
+    const isReviewFirst = reviewIndex === 0;
+    const isReviewLast = reviewIndex === reviewQuestions.length - 1;
+    const revSelectedLabel = reviewAnswers[reviewQ?.id ?? ''];
+    const revIsRevealed = reviewRevealed[reviewQ?.id ?? ''];
+
+    return (
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
+        <div style={{ height: 56, background: '#92400e', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0 }}>
+          <span style={{ color: '#fef3c7', fontWeight: 700, fontSize: 14 }}>
+            복습 모드 — {reviewIndex + 1} / {reviewQuestions.length}문제
+          </span>
+          <button
+            onClick={() => setPhase('result')}
+            style={{ background: 'transparent', border: '1.5px solid #fde68a', borderRadius: 6, padding: '4px 12px', color: '#fde68a', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            결과로 돌아가기
+          </button>
+        </div>
+
+        <div className="test-layout" style={{ flex: 1, overflow: 'hidden' }}>
+          {reviewQ?.passage && (
+            <>
+              <div className="test-passage-panel">
+                <div style={{ padding: '24px 28px 24px 24px' }}>
+                  <div className="test-passage-content" dangerouslySetInnerHTML={{ __html: reviewQ.passage }} />
+                </div>
+              </div>
+              <div className="test-resizer" />
+            </>
           )}
+
+          <div className={`test-question-panel ${reviewQ?.passage ? 'has-passage' : ''}`}>
+            <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 20px 120px' }}>
+              {reviewQ && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: '#92400e', color: '#fff', fontWeight: 700, fontSize: 14 }}>
+                      {reviewIndex + 1}
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 4, background: '#f1f5f9', color: '#64748b' }}>
+                      {reviewQ.skill === 'Form, Structure, and Sense' ? 'FSS' : 'Boundaries'}
+                    </span>
+                    {reviewQ.difficulty && (
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 4, background: '#f8fafc', color: DIFF_COLOR[reviewQ.difficulty] ?? '#64748b' }}>
+                        {reviewQ.difficulty}
+                      </span>
+                    )}
+                    {reviewQ.grammar_rule && (
+                      <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, background: '#eff6ff', color: '#3b82f6', fontWeight: 600 }}>
+                        {reviewQ.grammar_rule}
+                      </span>
+                    )}
+                  </div>
+
+                  <div
+                    style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}
+                    dangerouslySetInnerHTML={{ __html: reviewQ.question ?? '' }}
+                  />
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {(reviewQ.options ?? []).map((opt) => {
+                      const isSelected = revSelectedLabel === opt.label;
+                      const isCorrect = opt.label === reviewQ.correct_answer;
+                      const showCorrect = revIsRevealed && isCorrect;
+                      const showWrong = revIsRevealed && isSelected && !isCorrect;
+
+                      const optionClass = `bluebook-option btn-press${showCorrect ? ' correct-answer' : showWrong ? ' wrong-answer' : isSelected ? ' selected' : ''}`;
+
+                      return (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          onClick={() => handleReviewSelect(reviewQ.id, opt.label)}
+                          disabled={revIsRevealed}
+                          className={optionClass}
+                          style={
+                            showCorrect
+                              ? { borderColor: '#22c55e', background: '#f0fdf4' }
+                              : showWrong
+                              ? { borderColor: '#ef4444', background: '#fef2f2' }
+                              : undefined
+                          }
+                        >
+                          <span
+                            className="bluebook-option-label"
+                            style={
+                              showCorrect
+                                ? { background: '#22c55e', borderColor: '#22c55e', color: '#fff' }
+                                : showWrong
+                                ? { background: '#ef4444', borderColor: '#ef4444', color: '#fff' }
+                                : undefined
+                            }
+                          >
+                            {opt.label}
+                          </span>
+                          <span className="bluebook-option-text" dangerouslySetInnerHTML={{ __html: opt.text }} />
+                          {showCorrect && <span style={{ fontSize: 18, color: '#22c55e', flexShrink: 0 }}>✓</span>}
+                          {showWrong && <span style={{ fontSize: 18, color: '#ef4444', flexShrink: 0 }}>✗</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {revIsRevealed && (
+                    <div style={{
+                      marginTop: 16, padding: '10px 16px', borderRadius: 8,
+                      background: revSelectedLabel === reviewQ.correct_answer ? '#f0fdf4' : '#fef2f2',
+                      border: `1px solid ${revSelectedLabel === reviewQ.correct_answer ? '#bbf7d0' : '#fecaca'}`,
+                      fontSize: 13, fontWeight: 600,
+                      color: revSelectedLabel === reviewQ.correct_answer ? '#166534' : '#991b1b',
+                    }}>
+                      {revSelectedLabel === reviewQ.correct_answer ? '정답입니다!' : `오답 — 정답: ${reviewQ.correct_answer}`}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="bluebook-footer">
+          <button
+            onClick={() => setReviewIndex((i) => Math.max(0, i - 1))}
+            disabled={isReviewFirst}
+            className="bluebook-next-btn"
+            style={{ opacity: isReviewFirst ? 0 : 1, pointerEvents: isReviewFirst ? 'none' : 'auto' }}
+          >
+            Back
+          </button>
+
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
+            {reviewIndex + 1} / {reviewQuestions.length}
+          </span>
+
+          <button
+            onClick={isReviewLast ? () => setPhase('result') : () => setReviewIndex((i) => i + 1)}
+            className="bluebook-next-btn"
+          >
+            {isReviewLast ? '복습 완료' : 'Next'}
+          </button>
         </div>
       </div>
     );
@@ -250,9 +491,9 @@ export default function Sep26GrammarPage() {
   const isAtStart = currentIndex === 0;
   const isLastQ = currentIndex === questions.length - 1;
   const answeredCount = Object.keys(answers).length;
-
   const selectedLabel = answers[currentQ?.id ?? ''];
   const isRevealed = revealed[currentQ?.id ?? ''];
+  const isMarked = currentQ ? markedForReview.has(currentQ.id) : false;
 
   const qMapCenter = (
     <div style={{ position: 'relative' }}>
@@ -286,6 +527,7 @@ export default function Sep26GrammarPage() {
                 const isCorrect = isAnswered && answers[q.id] === q.correct_answer;
                 const isWrong = isAnswered && answers[q.id] !== q.correct_answer;
                 const isCurrent = i === currentIndex;
+                const isMark = markedForReview.has(q.id);
                 let bg = '#f8fafc', color = '#64748b', border = '1.5px solid #e2e8f0';
                 if (isCorrect) { bg = '#dcfce7'; color = '#166534'; border = '1.5px solid #86efac'; }
                 if (isWrong) { bg = '#fee2e2'; color = '#991b1b'; border = '1.5px solid #fca5a5'; }
@@ -294,12 +536,21 @@ export default function Sep26GrammarPage() {
                   <button key={q.id} onClick={() => { setCurrentIndex(i); setShowQMap(false); }}
                     style={{ width: 30, height: 30, borderRadius: 6, background: bg, color, border,
                       fontSize: 11, fontWeight: isCurrent ? 700 : 500, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none' }}>
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none',
+                      position: 'relative' }}>
                     {i + 1}
+                    {isMark && !isCurrent && (
+                      <span style={{ position: 'absolute', top: -3, right: -3, fontSize: 8, color: '#eab308', lineHeight: 1 }}>★</span>
+                    )}
                   </button>
                 );
               })}
             </div>
+            {markedForReview.size > 0 && (
+              <p style={{ fontSize: 10, color: '#eab308', fontWeight: 600, marginTop: 8, textAlign: 'center' }}>
+                ★ 복습 표시 {markedForReview.size}문제
+              </p>
+            )}
           </div>
         </>
       )}
@@ -317,13 +568,32 @@ export default function Sep26GrammarPage() {
           {currentQ.grammar_rule}
         </span>
       )}
+      <button
+        onClick={() => toggleMark(currentQ.id)}
+        style={{
+          marginLeft: 'auto', padding: '3px 10px', borderRadius: 6,
+          border: `1.5px solid ${isMarked ? '#fde68a' : '#e2e8f0'}`,
+          background: isMarked ? '#fef9c3' : '#f8fafc',
+          color: isMarked ? '#854d0e' : '#94a3b8',
+          fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+        }}
+      >
+        {isMarked ? '★ 복습 표시됨' : '☆ 복습 표시'}
+      </button>
     </>
   ) : undefined;
 
   return (
     <BluebookPageShell
       sectionTitle="Section 1: Reading and Writing — Standard English Conventions"
-      headerRight={<span style={{ color: '#94a3b8', fontSize: 13 }}>{answeredCount} / {questions.length} answered</span>}
+      headerRight={
+        <span style={{ color: '#94a3b8', fontSize: 13 }}>
+          {answeredCount} / {questions.length} answered
+          {markedForReview.size > 0 && (
+            <span style={{ marginLeft: 10, color: '#fde68a' }}>★ {markedForReview.size}</span>
+          )}
+        </span>
+      }
       passage={passageNode}
       onPrev={goPrev}
       onNext={goNext}

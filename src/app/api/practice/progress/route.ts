@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const { data } = await supabaseAdmin
     .from('practice_progress')
-    .select('current_index, answers')
+    .select('current_index, answers, marked_for_review')
     .eq('test_id', testId)
     .eq('instagram_id', instagramId)
     .maybeSingle();
@@ -21,11 +21,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { testId, instagramId, currentIndex, answers } = await req.json() as {
+  const { testId, instagramId, currentIndex, answers, markedForReview } = await req.json() as {
     testId: string;
     instagramId: string;
     currentIndex: number;
     answers: Record<string, string>;
+    markedForReview?: string[];
   };
 
   if (!testId || !instagramId) {
@@ -35,7 +36,14 @@ export async function POST(req: NextRequest) {
   const { error } = await supabaseAdmin
     .from('practice_progress')
     .upsert(
-      { test_id: testId, instagram_id: instagramId, current_index: currentIndex, answers, updated_at: new Date().toISOString() },
+      {
+        test_id: testId,
+        instagram_id: instagramId,
+        current_index: currentIndex,
+        answers,
+        marked_for_review: markedForReview ?? [],
+        updated_at: new Date().toISOString(),
+      },
       { onConflict: 'test_id,instagram_id' }
     );
 
