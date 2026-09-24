@@ -51,13 +51,9 @@ export default function Sep26GrammarPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const [showQMap, setShowQMap] = useState(false);
   const prefetchRef = useRef<Promise<PracticeSet> | null>(null);
   const igRef = useRef('');
-  const qBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
-
-  useEffect(() => {
-    qBtnRefs.current[currentIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }, [currentIndex]);
 
   useEffect(() => {
     prefetchRef.current = fetch('/api/practice/sep26-grammar').then((r) => r.json());
@@ -392,57 +388,87 @@ export default function Sep26GrammarPage() {
       </div>
 
       {/* Footer */}
-      <div className="bluebook-footer" style={{ flexDirection: 'column', height: 'auto', padding: 0 }}>
-        {/* Question map strip */}
-        <div style={{ overflowX: 'auto', display: 'flex', gap: 4, padding: '8px 16px 6px', width: '100%', boxSizing: 'border-box', scrollbarWidth: 'thin' }}>
-          {questions.map((q, i) => {
-            const isAnswered = revealed[q.id];
-            const isCorrect = isAnswered && answers[q.id] === q.correct_answer;
-            const isWrong = isAnswered && answers[q.id] !== q.correct_answer;
-            const isCurrent = i === currentIndex;
+      <div className="bluebook-footer">
+        <button
+          onClick={goPrev}
+          disabled={isAtStart}
+          className="bluebook-next-btn"
+          style={{ opacity: isAtStart ? 0 : 1, pointerEvents: isAtStart ? 'none' : 'auto' }}
+        >
+          Back
+        </button>
 
-            let bg = '#f1f5f9';
-            let color = '#64748b';
-            let border = '1.5px solid #e2e8f0';
-            if (isCorrect) { bg = '#dcfce7'; color = '#166534'; border = '1.5px solid #86efac'; }
-            if (isWrong) { bg = '#fee2e2'; color = '#991b1b'; border = '1.5px solid #fca5a5'; }
-            if (isCurrent) { border = '2px solid #1e293b'; }
-
-            return (
-              <button
-                key={q.id}
-                ref={(el) => { qBtnRefs.current[i] = el; }}
-                onClick={() => setCurrentIndex(i)}
-                style={{
-                  width: 28, height: 28, flexShrink: 0,
-                  borderRadius: 6, background: bg, color, border,
-                  fontSize: 11, fontWeight: isCurrent ? 700 : 500,
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  outline: 'none',
-                }}
-              >
-                {i + 1}
-              </button>
-            );
-          })}
-        </div>
-        {/* Nav row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 24px 10px', width: '100%', boxSizing: 'border-box' }}>
+        {/* Question map trigger */}
+        <div style={{ position: 'relative' }}>
           <button
-            onClick={goPrev}
-            disabled={isAtStart}
-            className="bluebook-next-btn"
-            style={{ opacity: isAtStart ? 0 : 1, pointerEvents: isAtStart ? 'none' : 'auto' }}
+            onClick={() => setShowQMap((v) => !v)}
+            style={{
+              fontSize: 13, fontWeight: 600, color: '#1e293b',
+              background: showQMap ? '#f1f5f9' : 'transparent',
+              border: '1.5px solid #e2e8f0', borderRadius: 8,
+              padding: '5px 14px', cursor: 'pointer',
+            }}
           >
-            Back
-          </button>
-          <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
             {currentIndex + 1} / {questions.length}
-          </span>
-          <button onClick={goNext} className="bluebook-next-btn">
-            {isLastQ ? '결과 보기' : 'Next'}
           </button>
+
+          {showQMap && (
+            <>
+              {/* Backdrop */}
+              <div
+                onClick={() => setShowQMap(false)}
+                style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+              />
+              {/* Grid popup */}
+              <div style={{
+                position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
+                padding: '14px 14px 12px', boxShadow: '0 -4px 24px rgba(0,0,0,0.13)',
+                zIndex: 50,
+              }}>
+                <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 10, textAlign: 'center', letterSpacing: '0.03em' }}>
+                  문제 이동
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4 }}>
+                  {questions.map((q, i) => {
+                    const isAnswered = revealed[q.id];
+                    const isCorrect = isAnswered && answers[q.id] === q.correct_answer;
+                    const isWrong = isAnswered && answers[q.id] !== q.correct_answer;
+                    const isCurrent = i === currentIndex;
+
+                    let bg = '#f8fafc';
+                    let color = '#64748b';
+                    let border = '1.5px solid #e2e8f0';
+                    if (isCorrect) { bg = '#dcfce7'; color = '#166534'; border = '1.5px solid #86efac'; }
+                    if (isWrong) { bg = '#fee2e2'; color = '#991b1b'; border = '1.5px solid #fca5a5'; }
+                    if (isCurrent) { bg = '#1e293b'; color = '#fff'; border = '1.5px solid #1e293b'; }
+
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => { setCurrentIndex(i); setShowQMap(false); }}
+                        style={{
+                          width: 30, height: 30,
+                          borderRadius: 6, background: bg, color, border,
+                          fontSize: 11, fontWeight: isCurrent ? 700 : 500,
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          outline: 'none',
+                        }}
+                      >
+                        {i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </div>
+
+        <button onClick={goNext} className="bluebook-next-btn">
+          {isLastQ ? '결과 보기' : 'Next'}
+        </button>
       </div>
     </div>
   );
