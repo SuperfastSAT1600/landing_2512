@@ -53,6 +53,11 @@ export default function Sep26GrammarPage() {
 
   const prefetchRef = useRef<Promise<PracticeSet> | null>(null);
   const igRef = useRef('');
+  const qBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    qBtnRefs.current[currentIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, [currentIndex]);
 
   useEffect(() => {
     prefetchRef.current = fetch('/api/practice/sep26-grammar').then((r) => r.json());
@@ -387,21 +392,57 @@ export default function Sep26GrammarPage() {
       </div>
 
       {/* Footer */}
-      <div className="bluebook-footer">
-        <button
-          onClick={goPrev}
-          disabled={isAtStart}
-          className="bluebook-next-btn"
-          style={{ opacity: isAtStart ? 0 : 1, pointerEvents: isAtStart ? 'none' : 'auto' }}
-        >
-          Back
-        </button>
-        <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
-          {currentIndex + 1} / {questions.length}
-        </span>
-        <button onClick={goNext} className="bluebook-next-btn">
-          {isLastQ ? '결과 보기' : 'Next'}
-        </button>
+      <div className="bluebook-footer" style={{ flexDirection: 'column', height: 'auto', padding: 0 }}>
+        {/* Question map strip */}
+        <div style={{ overflowX: 'auto', display: 'flex', gap: 4, padding: '8px 16px 6px', width: '100%', boxSizing: 'border-box', scrollbarWidth: 'thin' }}>
+          {questions.map((q, i) => {
+            const isAnswered = revealed[q.id];
+            const isCorrect = isAnswered && answers[q.id] === q.correct_answer;
+            const isWrong = isAnswered && answers[q.id] !== q.correct_answer;
+            const isCurrent = i === currentIndex;
+
+            let bg = '#f1f5f9';
+            let color = '#64748b';
+            let border = '1.5px solid #e2e8f0';
+            if (isCorrect) { bg = '#dcfce7'; color = '#166534'; border = '1.5px solid #86efac'; }
+            if (isWrong) { bg = '#fee2e2'; color = '#991b1b'; border = '1.5px solid #fca5a5'; }
+            if (isCurrent) { border = '2px solid #1e293b'; }
+
+            return (
+              <button
+                key={q.id}
+                ref={(el) => { qBtnRefs.current[i] = el; }}
+                onClick={() => setCurrentIndex(i)}
+                style={{
+                  width: 28, height: 28, flexShrink: 0,
+                  borderRadius: 6, background: bg, color, border,
+                  fontSize: 11, fontWeight: isCurrent ? 700 : 500,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  outline: 'none',
+                }}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
+        </div>
+        {/* Nav row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 24px 10px', width: '100%', boxSizing: 'border-box' }}>
+          <button
+            onClick={goPrev}
+            disabled={isAtStart}
+            className="bluebook-next-btn"
+            style={{ opacity: isAtStart ? 0 : 1, pointerEvents: isAtStart ? 'none' : 'auto' }}
+          >
+            Back
+          </button>
+          <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+            {currentIndex + 1} / {questions.length}
+          </span>
+          <button onClick={goNext} className="bluebook-next-btn">
+            {isLastQ ? '결과 보기' : 'Next'}
+          </button>
+        </div>
       </div>
     </div>
   );
