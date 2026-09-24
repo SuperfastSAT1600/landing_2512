@@ -37,13 +37,14 @@ export async function GET() {
     (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)
   );
 
-  const fss = sorted.filter((u) => u.skill === 'Form, Structure, and Sense');
-  const bou = sorted.filter((u) => u.skill === 'Boundaries');
+  const valid = sorted.filter((u) => u.options != null && u.question != null);
+  const fss = valid.filter((u) => u.skill === 'Form, Structure, and Sense');
+  const bou = valid.filter((u) => u.skill === 'Boundaries');
 
   return NextResponse.json({
     setId: SEP26_GRAMMAR_SET.setId,
     title: SEP26_GRAMMAR_SET.title,
-    total: sorted.length,
+    total: valid.length,
     groups: [
       { skill: 'Form, Structure, and Sense', label: 'Form, Structure & Sense', total: fss.length, questions: fss },
       { skill: 'Boundaries', label: 'Boundaries', total: bou.length, questions: bou },

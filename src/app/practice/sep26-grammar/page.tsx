@@ -306,12 +306,12 @@ export default function Sep26GrammarPage() {
                 {/* Question text */}
                 <div
                   style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}
-                  dangerouslySetInnerHTML={{ __html: currentQ.question }}
+                  dangerouslySetInnerHTML={{ __html: currentQ.question ?? '' }}
                 />
 
                 {/* Options */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {currentQ.options.map((opt) => {
+                  {(currentQ.options ?? []).map((opt) => {
                     const isSelected = selectedLabel === opt.label;
                     const isCorrect = opt.label === currentQ.correct_answer;
                     const showCorrect = isRevealed && isCorrect;
