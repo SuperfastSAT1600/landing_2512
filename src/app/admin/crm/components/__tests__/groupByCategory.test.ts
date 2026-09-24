@@ -65,3 +65,47 @@ describe('groupHistoryByCategory', () => {
     expect(out.find((g) => g.id === 'c3')!.strategies.map((s) => s.id)).toEqual(['s4']);
   });
 });
+
+describe('groupHistoryByCategory — 진행 전/후 슬롯', () => {
+  const withPhase = (id: string, strategy_id: string, phase: 'planned' | 'applied') =>
+    ({ ...entry(id, strategy_id), phase });
+
+  it('계획·실제를 각 슬롯에 나눠 담는다', () => {
+    const out = groupHistoryByCategory(
+      [withPhase('e1', 's1', 'planned'), withPhase('e2', 's2', 'applied')],
+      CATEGORIES,
+      STRATEGIES
+    );
+    const g = out.find((x) => x.id === 'c1')!;
+    expect(g.planned?.id).toBe('e1');
+    expect(g.applied?.id).toBe('e2');
+  });
+
+  it('phase 없는 기존 기록은 실제 슬롯에 들어간다', () => {
+    const g = groupHistoryByCategory([entry('e1', 's1')], CATEGORIES, STRATEGIES).find((x) => x.id === 'c1')!;
+    expect(g.applied?.id).toBe('e1');
+    expect(g.planned).toBeNull();
+  });
+
+  it('같은 슬롯에 2건이 있으면 최신(applied_at) 하나만 슬롯에 오른다', () => {
+    const older = { ...withPhase('old', 's1', 'applied'), applied_at: '2026-07-01T00:00:00Z' };
+    const newer = { ...withPhase('new', 's2', 'applied'), applied_at: '2026-07-09T00:00:00Z' };
+    const g = groupHistoryByCategory([newer, older], CATEGORIES, STRATEGIES).find((x) => x.id === 'c1')!;
+    expect(g.applied?.id).toBe('new');
+    expect(g.entries).toHaveLength(2); // 총계는 잃지 않는다
+  });
+
+  it('빈 슬롯은 null', () => {
+    const g = groupHistoryByCategory([], CATEGORIES, STRATEGIES).find((x) => x.id === 'c1')!;
+    expect(g.planned).toBeNull();
+    expect(g.applied).toBeNull();
+  });
+
+  it('분류 없음 그룹에도 슬롯 키가 있고 둘 다 null — 렌더가 분기 없이 돌아간다', () => {
+    const out = groupHistoryByCategory([entry('e9', 'gone')], CATEGORIES, STRATEGIES);
+    const orphan = out[out.length - 1];
+    expect(orphan.planned).toBeNull();
+    expect(orphan.applied).toBeNull();
+    expect(orphan.entries).toHaveLength(1);
+  });
+});

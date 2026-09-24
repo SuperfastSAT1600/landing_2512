@@ -3,7 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { anthropicErrorMessage } from '@/lib/anthropic-error';
 import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen';
-import { FUNNEL_STAGE_LABELS, FUNNEL_NEXT_ACTION, type FunnelStage } from '@/types/crm';
+import { FUNNEL_STAGE_LABELS, FUNNEL_NEXT_ACTION, STRATEGY_PHASE_LABELS, type FunnelStage } from '@/types/crm';
+import { effectivePhase } from '@/lib/strategy-history';
 import type { ConsultationEntry, StrategyHistoryEntry } from '@/types/crm';
 
 export const maxDuration = 30;
@@ -63,8 +64,14 @@ function buildContext(s: StudentRow, strategyNames: Map<string, string> = new Ma
     .filter((l) => l.length > 6);
   if (memos.length) lines.push(`\n최근 상담 메모:\n${memos.join('\n')}`);
 
-  const strat = (s.strategy_history ?? []).slice(-3).map((e) => `- ${strategyNames.get(e.strategy_id) ?? e.strategy_name}${e.memo ? ` (${e.memo})` : ''}`);
-  if (strat.length) lines.push(`\n적용 전략:\n${strat.join('\n')}`);
+  // 준비만 한 전략과 실제로 쓴 전략을 구분해 준다 — 뭉뚱그리면 AI 제안이 어긋난다.
+  const strat = (s.strategy_history ?? [])
+    .slice(-3)
+    .map(
+      (e) =>
+        `- [${STRATEGY_PHASE_LABELS[effectivePhase(e)]}] ${strategyNames.get(e.strategy_id) ?? e.strategy_name}${e.memo ? ` (${e.memo})` : ''}`,
+    );
+  if (strat.length) lines.push(`\n전략 기록:\n${strat.join('\n')}`);
 
   return lines.join('\n');
 }

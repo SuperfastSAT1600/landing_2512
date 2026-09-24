@@ -2,7 +2,8 @@ import { computeStageFlow, type StageFlowRow, type StageHistoryEntry } from '@/l
 import { netAmount } from '@/lib/payment-utils';
 import { isContacted, contactRate } from '@/lib/crm-stats-core';
 import { toKstDay, toMs } from '@/lib/kst-day';
-import type { StrategyHistoryEntry } from '@/types/crm';
+import type { StrategyHistoryEntry, StrategyPhase } from '@/types/crm';
+import { effectivePhase } from './strategy-history';
 
 // 세일즈 로직(전략)별 통계 집계 — 순수 함수. I/O 없음(students/payments는 라우트에서 주입).
 //
@@ -56,10 +57,27 @@ export type StrategyRollup = Omit<PerStrategyRow, 'strategy_id' | 'strategy_name
   stage_flow: StageFlowRow[];
 };
 
+/**
+ * '계획 → 실제' 한 쌍. 콜 전에 준비한 전략이 실제로 어떤 전략으로 바뀌었는지,
+ * 그 조합이 얼마나 팔렸는지를 본다. null 은 그쪽 기록이 없다는 뜻이다.
+ */
+export interface StrategyTransitionRow {
+  planned_id: string | null;
+  planned_name: string | null;
+  applied_id: string | null;
+  applied_name: string | null;
+  leads: number;
+  paid: number;
+  rate: number; // paid/leads %
+  /** 계획과 실제가 다른가. 한쪽 기록이 없으면 false — 바뀐 걸 본 게 아니다. */
+  changed: boolean;
+}
+
 export interface StrategyTypeStats {
   period: { from: string; to: string };
   rollup: StrategyRollup;
   by_strategy: PerStrategyRow[];
+  transitions: StrategyTransitionRow[];
 }
 
 const MS_PER_DAY = 86_400_000;
@@ -68,6 +86,7 @@ interface Attribution {
   strategy_id: string;
   strategy_name: string;
   applied_at: string;
+  phase: StrategyPhase;
 }
 
 /**
@@ -92,6 +111,7 @@ function scopedEntries(
         strategy_id: e.strategy_id,
         strategy_name: strategyNames.get(e.strategy_id)!,
         applied_at: e.applied_at,
+        phase: effectivePhase(e),
       });
     }
   }
@@ -104,6 +124,7 @@ function scopedEntries(
         strategy_id: s.retry_strategy_id,
         strategy_name: strategyNames.get(s.retry_strategy_id)!,
         applied_at: s.retry_assigned_at ?? s.created_at,
+        phase: 'applied',
       });
     }
   }
@@ -119,6 +140,18 @@ function latest(entries: Attribution[]): Attribution | null {
     if (ms >= bestMs) { bestMs = ms; best = e; }
   }
   return best;
+}
+
+/**
+ * 리드를 어느 전략에 귀속시킬지 고른다 — **실제로 쓴 전략 우선, 없으면 계획**.
+ *
+ * 그냥 최신 엔트리를 쓰면, 콜 전에 적어둔 '계획'이 나중에 기록됐다는 이유만으로
+ * 실행되지도 않은 전략이 결제·매출을 가져간다. 성과는 실제 쓴 전략에 붙어야 한다.
+ * 계획만 있고 실제 기록이 없는 리드는 집계에서 사라지지 않도록 계획으로 폴백한다.
+ */
+function pickAttribution(entries: Attribution[]): Attribution | null {
+  const applied = entries.filter((e) => e.phase === 'applied');
+  return latest(applied) ?? latest(entries);
 }
 
 function makeInPeriod(period: { from: string; to: string }) {
@@ -137,7 +170,7 @@ export function assignedStrategyOf(
   period: { from: string; to: string },
   strategyNames: Map<string, string>,
 ): string | null {
-  const top = latest(scopedEntries(s, strategyNames));
+  const top = pickAttribution(scopedEntries(s, strategyNames));
   if (!top) return null;
   return makeInPeriod(period)(top.applied_at) ? top.strategy_id : null;
 }
@@ -181,6 +214,10 @@ export function computeStrategyStats(
   // ── 귀속: 리드 → (전략, applied_at). 기간 내 최신-엔트리 기준. ──
   const cohortByStrategy = new Map<string, { students: StrategyStatsStudent[]; applied: Map<string, number> }>();
   const cohortStrategyOf = new Map<string, string>(); // studentId → strategy_id (매출 귀속용)
+  const transitionOf = new Map<
+    string,
+    { student: StrategyStatsStudent; planned: Attribution | null; applied: Attribution | null }
+  >();
   const nameToStrategy = new Map<string, string>();
   const touchedByStrategy = new Map<string, Set<string>>();
   const names = new Map<string, string>(); // strategy_id → 표시명
@@ -198,7 +235,7 @@ export function computeStrategyStats(
     }
 
     // assigned: 최신 엔트리가 기간 내인 경우만
-    const top = latest(entries);
+    const top = pickAttribution(entries);
     if (!top || !inPeriod(top.applied_at)) continue;
 
     if (!cohortByStrategy.has(top.strategy_id)) {
@@ -211,6 +248,12 @@ export function computeStrategyStats(
     cohortStrategyOf.set(s.id, top.strategy_id);
     if (s.name) nameToStrategy.set(s.name, top.strategy_id);
     if (!names.has(top.strategy_id)) names.set(top.strategy_id, top.strategy_name);
+
+    // 전환 추적: 이 리드의 (계획 최신, 실제 최신) 쌍. 한쪽이 없으면 null 로 남겨
+    // "계획만 세우고 실제를 안 남겼다"가 화면에 드러나게 한다.
+    const plannedTop = latest(entries.filter((e) => e.phase === 'planned'));
+    const appliedTop = latest(entries.filter((e) => e.phase === 'applied'));
+    transitionOf.set(s.id, { student: s, planned: plannedTop, applied: appliedTop });
   }
 
   // ── 매출을 전략별로 귀속 (payment → student → strategy) ──
@@ -308,5 +351,29 @@ export function computeStrategyStats(
     stage_flow: computeStageFlow(allCohort),
   };
 
-  return { period, rollup, by_strategy };
+  // ── 전환 집계: 같은 (계획, 실제) 쌍끼리 묶는다 ──
+  const transitionMap = new Map<string, StrategyTransitionRow>();
+  for (const { student, planned, applied } of transitionOf.values()) {
+    const key = `${planned?.strategy_id ?? ''}>${applied?.strategy_id ?? ''}`;
+    if (!transitionMap.has(key)) {
+      transitionMap.set(key, {
+        planned_id: planned?.strategy_id ?? null,
+        planned_name: planned ? names.get(planned.strategy_id) ?? planned.strategy_name : null,
+        applied_id: applied?.strategy_id ?? null,
+        applied_name: applied ? names.get(applied.strategy_id) ?? applied.strategy_name : null,
+        leads: 0,
+        paid: 0,
+        rate: 0,
+        changed: !!planned && !!applied && planned.strategy_id !== applied.strategy_id,
+      });
+    }
+    const row = transitionMap.get(key)!;
+    row.leads++;
+    if (isPaid(student)) row.paid++;
+  }
+  const transitions = [...transitionMap.values()]
+    .map((t) => ({ ...t, rate: contactRate(t.paid, t.leads) }))
+    .sort((a, b) => b.leads - a.leads || b.paid - a.paid);
+
+  return { period, rollup, by_strategy, transitions };
 }

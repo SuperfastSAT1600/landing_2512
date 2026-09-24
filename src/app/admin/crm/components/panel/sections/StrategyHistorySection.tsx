@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
 import { SectionCard } from './SectionCard';
-import { appendStrategyHistoryEntry, buildStrategyHistoryEntry } from '@/lib/strategy-history';
+import { buildStrategyHistoryEntry, upsertPhaseEntry } from '@/lib/strategy-history';
 import { useStrategyCategories } from '../../strategies/useStrategyCategories';
 import { groupHistoryByCategory } from '../../strategies/groupByCategory';
-import type { Student, RetryStrategy, StrategyHistoryEntry } from '@/types/crm';
+import type { Student, RetryStrategy, StrategyHistoryEntry, StrategyPhase } from '@/types/crm';
+import { STRATEGY_PHASE_LABELS, STRATEGY_PHASES } from '@/types/crm';
 
 interface Props {
   student: Student;
@@ -17,11 +18,13 @@ interface Props {
 interface AddFormProps {
   /** 이 그룹(카테고리)에서 고를 수 있는 전략. */
   available: RetryStrategy[];
+  /** 어느 슬롯에 기록하는지 — 폼 안에서 고르지 않고 슬롯이 이미 정한다. */
+  phase: StrategyPhase;
   onSave: (entry: Omit<StrategyHistoryEntry, 'id' | 'applied_at'>) => void;
   onCancel: () => void;
 }
 
-function AddForm({ available, onSave, onCancel }: AddFormProps) {
+function AddForm({ available, phase, onSave, onCancel }: AddFormProps) {
   const [strategyId, setStrategyId] = useState('');
   const [memo, setMemo] = useState('');
 
@@ -43,13 +46,13 @@ function AddForm({ available, onSave, onCancel }: AddFormProps) {
         rows={3}
         value={memo}
         onChange={e => setMemo(e.target.value)}
-        placeholder="이 전략을 적용하는 이유나 계획을 메모하세요... (선택)"
+        placeholder={phase === 'planned' ? '왜 이 전략으로 준비했는지 메모하세요... (선택)' : '실제로 어떻게 진행됐는지 메모하세요... (선택)'}
         className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
       />
       <div className="flex gap-2">
         <button
           disabled={!strategyId}
-          onClick={() => onSave({ strategy_id: strategyId, strategy_name: selected!.name, memo: memo.trim() })}
+          onClick={() => onSave({ strategy_id: strategyId, strategy_name: selected!.name, memo: memo.trim(), phase })}
           className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded-lg transition-colors"
         >
           저장
@@ -68,6 +71,7 @@ function AddForm({ available, onSave, onCancel }: AddFormProps) {
 export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
   const [sectionOpen, setSectionOpen] = useState(true);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  // '<그룹키>:<phase>' — 어느 카테고리의 어느 슬롯에 폼을 열었는지.
   const [addingFor, setAddingFor] = useState<string | null>(null);
   const [strategies, setStrategies] = useState<RetryStrategy[]>([]);
   const [saving, setSaving] = useState(false);
@@ -93,7 +97,9 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
   async function handleSave(entry: Omit<StrategyHistoryEntry, 'id' | 'applied_at'>) {
     setSaving(true);
     // 엔트리 shape은 주차 계획의 '전략 적용 기록'과 공유한다(집계가 이 shape에 의존).
-    const updated = appendStrategyHistoryEntry(history, buildStrategyHistoryEntry(entry));
+    // 카테고리 × 진행 전/후 = 슬롯 1개. 같은 슬롯에 다시 고르면 갈아끼운다.
+    const categoryOfStrategy = new Map(strategies.map((s) => [s.id, s.category_id]));
+    const updated = upsertPhaseEntry(history, buildStrategyHistoryEntry(entry), categoryOfStrategy);
     const res = await fetch(`/api/crm/students/${student.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
@@ -149,43 +155,55 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
 
                 {isOpen && (
                   <div className="px-4 pb-3 space-y-2">
-                    {entries.length === 0 && addingFor !== key && (
-                      <p className="text-[11px] text-gray-400 py-1">적용된 전략이 없습니다.</p>
-                    )}
-                    {entries.map(e => (
-                      <div key={e.id} className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 space-y-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-gray-700 min-w-0 truncate">{displayName(e)}</span>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-[10px] text-gray-400">{e.applied_at.slice(0, 10)}</span>
-                            <button
-                              onClick={() => handleDelete(e.id)}
-                              className="text-gray-300 hover:text-red-400 transition-colors"
-                            >
-                              <X size={11} />
-                            </button>
+                    {group.addable ? (
+                      STRATEGY_PHASES.map((phase) => {
+                        const slotKey = `${key}:${phase}`;
+                        const slot = phase === 'planned' ? group.planned : group.applied;
+                        return (
+                          <div key={phase} className="space-y-1">
+                            <p className="text-[10px] font-semibold text-gray-400">{STRATEGY_PHASE_LABELS[phase]}</p>
+                            {slot ? (
+                              <EntryRow entry={slot} name={displayName(slot)} onDelete={() => handleDelete(slot.id)} />
+                            ) : addingFor !== slotKey ? (
+                              <button
+                                disabled={saving}
+                                onClick={() => setAddingFor(slotKey)}
+                                className="flex items-center gap-1 text-[11px] text-blue-500 hover:text-blue-700 transition-colors"
+                              >
+                                <Plus size={11} />
+                                {STRATEGY_PHASE_LABELS[phase]} 기록
+                              </button>
+                            ) : null}
+                            {addingFor === slotKey && (
+                              <AddForm
+                                available={group.strategies as RetryStrategy[]}
+                                phase={phase}
+                                onSave={handleSave}
+                                onCancel={() => setAddingFor(null)}
+                              />
+                            )}
+                            {slot && addingFor !== slotKey && (
+                              <button
+                                disabled={saving}
+                                onClick={() => setAddingFor(slotKey)}
+                                className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                다른 전략으로 변경
+                              </button>
+                            )}
                           </div>
-                        </div>
-                        {e.memo?.trim() && <p className="text-[11px] text-gray-600 whitespace-pre-wrap leading-relaxed">{e.memo}</p>}
-                      </div>
-                    ))}
-
-                    {addingFor === key ? (
-                      <AddForm
-                        available={group.strategies as RetryStrategy[]}
-                        onSave={handleSave}
-                        onCancel={() => setAddingFor(null)}
-                      />
-                    ) : group.addable ? (
-                      <button
-                        disabled={saving}
-                        onClick={() => setAddingFor(key)}
-                        className="flex items-center gap-1 text-[11px] text-blue-500 hover:text-blue-700 transition-colors mt-1"
-                      >
-                        <Plus size={11} />
-                        전략 추가
-                      </button>
-                    ) : null}
+                        );
+                      })
+                    ) : (
+                      <>
+                        {entries.length === 0 && (
+                          <p className="text-[11px] text-gray-400 py-1">적용된 전략이 없습니다.</p>
+                        )}
+                        {entries.map((e) => (
+                          <EntryRow key={e.id} entry={e} name={displayName(e)} onDelete={() => handleDelete(e.id)} />
+                        ))}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -193,5 +211,32 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
         })}
       </div>
     </SectionCard>
+  );
+}
+
+function EntryRow({
+  entry,
+  name,
+  onDelete,
+}: {
+  entry: StrategyHistoryEntry;
+  name: string;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold text-gray-700 min-w-0 truncate">{name}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] text-gray-400">{entry.applied_at.slice(0, 10)}</span>
+          <button onClick={onDelete} className="text-gray-300 hover:text-red-400 transition-colors">
+            <X size={11} />
+          </button>
+        </div>
+      </div>
+      {entry.memo?.trim() && (
+        <p className="text-[11px] text-gray-600 whitespace-pre-wrap leading-relaxed">{entry.memo}</p>
+      )}
+    </div>
   );
 }
