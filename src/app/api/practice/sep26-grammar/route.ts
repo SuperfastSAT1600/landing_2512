@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { SEP26_GRAMMAR_SET } from '@/data/practice-sets/sep26-grammar';
 
-export const revalidate = 86400;
+export const revalidate = 0;
 
 interface V2Unit {
   id: string;
