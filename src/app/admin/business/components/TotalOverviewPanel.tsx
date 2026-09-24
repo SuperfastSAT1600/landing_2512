@@ -10,6 +10,7 @@ import type { CrmStatsData, StatsMonthly } from '@/lib/crm-stats-service';
 import type { GlobalSaleEntry } from '@/app/api/business/global-sales/route';
 import { OutcomeQualityPanel } from './OutcomeQualityPanel';
 import { ActiveLearnersPanel } from './ActiveLearnersPanel';
+import { CustomerMetricsPanel } from './CustomerMetricsPanel';
 
 const SalesRevenueChart = dynamic(() => import('./SalesRevenueChart'), {
   ssr: false,
@@ -195,6 +196,15 @@ export function TotalOverviewPanel({ adminKey }: Props) {
         <p className="mt-3 text-[11px] text-gray-400">
           리드·컨택·전환 같은 퍼널 지표는 글로벌에 해당 개념이 없어 여기서 합치지 않습니다 — 한국비즈니스 탭에서 확인하세요.
         </p>
+      </section>
+
+      {/* ── 고객 지표 (VC 피치용) ── */}
+      <section className="border-t-2 border-gray-200 pt-7 mt-8">
+        <div className="flex items-center gap-3 mb-5">
+          <h2 className="text-base font-bold text-gray-800 tracking-tight">고객 지표</h2>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+        <CustomerMetricsPanel adminKey={adminKey} />
       </section>
 
       {/* ── 튜터링 동시 접속자 ── */}

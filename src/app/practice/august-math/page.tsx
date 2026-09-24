@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
+import { BluebookPageShell } from '@/components/shared/BluebookPageShell';
+import { BluebookQuestionUnit } from '@/components/shared/BluebookQuestionUnit';
 
 const TEST_ID = 'august-math-decimal-30';
 
@@ -337,137 +339,86 @@ export default function AugustMathPage() {
   const answeredCount = Object.keys(answers).filter(id => answers[id]).length;
   const totalCorrect = QUESTIONS.filter(q => checkAnswer(answers[q.id] ?? '', q.answers)).length;
 
+  const navStrip = (
+    <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
+      <div style={{ display: 'flex', gap: 6, minWidth: 'max-content' }}>
+        {QUESTIONS.map((q, idx) => {
+          const isAnswered = !!answers[q.id];
+          const isCurrent = idx === currentIndex;
+          return (
+            <button key={q.id} onClick={() => setCurrentIndex(idx)}
+              style={{
+                width: 30, height: 30, borderRadius: 6, border: isCurrent ? '2px solid #1e293b' : '1px solid #e5e7eb',
+                background: isCurrent ? '#1e293b' : isAnswered ? '#3b82f6' : '#fff',
+                color: isCurrent ? '#fff' : isAnswered ? '#fff' : '#94a3b8',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+              {idx + 1}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const headerRight = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / 30 &nbsp;({totalCorrect} correct)</span>
+      <button onClick={handleSubmit} disabled={submitting || submitted || answeredCount < 1}
+        style={{ padding: '6px 14px', background: submitted ? '#22c55e' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: submitted || submitting || answeredCount < 1 ? 'default' : 'pointer', opacity: answeredCount < 1 ? 0.4 : 1 }}>
+        {submitted ? 'Submitted ✓' : submitting ? 'Submitting...' : 'Submit Results'}
+      </button>
+    </div>
+  );
+
+  const passageNode = currentQuestion?.passage && currentQuestion.passage.trim() ? (
+    <div className="test-passage-content">
+      <ContentRenderer content={currentQuestion.passage} />
+    </div>
+  ) : undefined;
+
   return (
-    <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
-      {/* Toast */}
+    <>
       {toast && (
         <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#1e293b', color: '#fff', padding: '12px 24px', borderRadius: 8, fontSize: 14, fontWeight: 600, zIndex: 200, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}>
           {toast}
         </div>
       )}
-
-      {/* Test header */}
-      <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
-        <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>8월 SAT MATH 실전연습1</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / 30 &nbsp;({totalCorrect} correct)</span>
-          <button onClick={handleSubmit} disabled={submitting || submitted || answeredCount < 1}
-            style={{ padding: '6px 14px', background: submitted ? '#22c55e' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: submitted || submitting || answeredCount < 1 ? 'default' : 'pointer', opacity: answeredCount < 1 ? 0.4 : 1 }}>
-            {submitted ? 'Submitted ✓' : submitting ? 'Submitting...' : 'Submit Results'}
-          </button>
-        </div>
-      </div>
-
-      {/* Question number navigator */}
-      <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
-        <div style={{ display: 'flex', gap: 6, minWidth: 'max-content' }}>
-          {QUESTIONS.map((q, idx) => {
-            const isAnswered = !!answers[q.id];
-            const isCurrent = idx === currentIndex;
-            return (
-              <button key={q.id} onClick={() => setCurrentIndex(idx)}
-                style={{
-                  width: 30, height: 30, borderRadius: 6, border: isCurrent ? '2px solid #1e293b' : '1px solid #e5e7eb',
-                  background: isCurrent ? '#1e293b' : isAnswered ? '#3b82f6' : '#fff',
-                  color: isCurrent ? '#fff' : isAnswered ? '#fff' : '#94a3b8',
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                {idx + 1}
+      <BluebookPageShell
+        sectionTitle="8월 SAT MATH 실전연습1"
+        headerRight={headerRight}
+        navStrip={navStrip}
+        passage={passageNode}
+        onPrev={() => setCurrentIndex(i => i - 1)}
+        prevHidden={isFirst}
+        onNext={() => setCurrentIndex(i => i + 1)}
+        nextDisabled={isLast}
+        footerCenter={
+          <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {QUESTIONS.length}</span>
+        }
+      >
+        {currentQuestion && (
+          <BluebookQuestionUnit
+            questionNumber={currentIndex + 1}
+            question={<ContentRenderer content={currentQuestion.question} />}
+            skill={currentQuestion.skill}
+            difficulty={currentQuestion.difficulty}
+            difficultyColor={DIFF_COLOR[currentQuestion.difficulty]}
+            shortAnswer={userAnswer}
+            onShortAnswer={(val) => handleAnswer(currentQuestion.id, val)}
+            shortAnswerPlaceholder="Enter answer (e.g. 2/3 or 0.667)"
+            shortAnswerFeedback={isRevealed ? { isCorrect, correctAnswer: isWrong ? currentQuestion.answers[0] : undefined } : null}
+          >
+            {!isRevealed && userAnswer && (
+              <button onClick={() => handleReveal(currentQuestion.id)}
+                style={{ marginTop: 8, padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Check
               </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Question area */}
-      {currentQuestion && (
-        <div className="test-layout" style={{ flex: 1, overflow: 'hidden' }}>
-          {currentQuestion.passage && currentQuestion.passage.trim() ? (
-            <>
-              <div className="test-passage-panel">
-                <div style={{ padding: '24px 28px 24px 24px' }}>
-                  <div className="test-passage-content">
-                    <ContentRenderer content={currentQuestion.passage} />
-                  </div>
-                </div>
-              </div>
-              <div className="test-resizer" />
-            </>
-          ) : null}
-
-          <div className="test-question-panel" style={currentQuestion.passage && currentQuestion.passage.trim() ? {} : { flex: 1 }}>
-            <div style={{ padding: '24px', maxWidth: 680, margin: '0 auto' }}>
-              {/* Question meta */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 6, background: '#1e293b', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
-                  {currentIndex + 1}
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: DIFF_COLOR[currentQuestion.difficulty] ?? '#64748b' }}>
-                  {currentQuestion.difficulty}
-                </span>
-                <span style={{ fontSize: 11, color: '#94a3b8' }}>{currentQuestion.skill}</span>
-              </div>
-
-              {/* Question text */}
-              <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}>
-                <ContentRenderer content={currentQuestion.question} />
-              </div>
-
-              {/* SPR input */}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-                <input
-                  type="text"
-                  value={userAnswer}
-                  onChange={e => handleAnswer(currentQuestion.id, e.target.value)}
-                  placeholder="Enter answer (e.g. 2/3 or 0.667)"
-                  disabled={isRevealed}
-                  style={{
-                    flex: 1, padding: '10px 14px', borderRadius: 8,
-                    border: `1px solid ${isCorrect ? '#22c55e' : isWrong ? '#ef4444' : '#e5e7eb'}`,
-                    background: isCorrect ? '#f0fdf4' : isWrong ? '#fef2f2' : '#f8fafc',
-                    color: '#1e293b', fontSize: 15, outline: 'none',
-                  }}
-                  onKeyDown={e => { if (e.key === 'Enter' && userAnswer && !isRevealed) handleReveal(currentQuestion.id); }}
-                />
-                {!isRevealed && userAnswer && (
-                  <button onClick={() => handleReveal(currentQuestion.id)}
-                    style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    Check
-                  </button>
-                )}
-              </div>
-
-              {/* Feedback */}
-              {isRevealed && (
-                <div style={{ padding: '14px 16px', background: isCorrect ? '#f0fdf4' : '#fef2f2', border: `1px solid ${isCorrect ? '#86efac' : '#fca5a5'}`, borderRadius: 10 }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? '#15803d' : '#dc2626', marginBottom: isWrong ? 4 : 0 }}>
-                    {isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                  </p>
-                  {isWrong && (
-                    <p style={{ fontSize: 13, color: '#374151', margin: 0 }}>
-                      Answer: <strong>{currentQuestion.answers[0]}</strong>
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer nav */}
-      <div className="bluebook-footer" style={{ flexShrink: 0 }}>
-        <button onClick={() => !isFirst && setCurrentIndex(i => i - 1)} disabled={isFirst}
-          style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.4 : 1, color: '#374151' }}>
-          Back
-        </button>
-        <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {QUESTIONS.length}</span>
-        <button className="bluebook-next-btn btn-press" onClick={() => !isLast && setCurrentIndex(i => i + 1)} disabled={isLast}
-          style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}>
-          Next
-        </button>
-      </div>
-    </div>
+            )}
+          </BluebookQuestionUnit>
+        )}
+      </BluebookPageShell>
+    </>
   );
 }
