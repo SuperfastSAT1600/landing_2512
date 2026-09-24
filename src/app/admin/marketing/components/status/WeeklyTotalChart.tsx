@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer, Cell,
 } from 'recharts';
 import type { WeekRow } from './utils/groupByPeriod';
@@ -15,7 +15,6 @@ interface TooltipEntry {
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) {
   if (!active || !payload?.length) return null;
   const totalEntry = payload.find((p) => p.dataKey === 'total');
-  const ma8Entry = payload.find((p) => p.dataKey === 'ma8');
   const fullLabel = totalEntry?.payload?.fullLabel ?? label;
 
   return (
@@ -24,11 +23,6 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
       {totalEntry != null && (
         <p className="text-gray-900 font-bold text-xl leading-none">
           {totalEntry.value}<span className="text-sm font-normal text-gray-500 ml-1">명</span>
-        </p>
-      )}
-      {ma8Entry?.value != null && (
-        <p className="text-emerald-600 text-xs mt-1.5">
-          8주 평균 {ma8Entry.value}명
         </p>
       )}
     </div>
@@ -47,14 +41,6 @@ function shortenLabel(label: string): string {
   return label.replace(/\(.+\)/, '').trim();
 }
 
-// 8주 단순이동평균
-function movingAvg(data: number[], window = 8): (number | null)[] {
-  return data.map((_, i) => {
-    if (i < window - 1) return null;
-    const slice = data.slice(i - window + 1, i + 1);
-    return Math.round(slice.reduce((s, v) => s + v, 0) / window);
-  });
-}
 
 export default function WeeklyTotalChart({ rows, weeklyTarget }: Props) {
   if (rows.length === 0) {
@@ -62,13 +48,11 @@ export default function WeeklyTotalChart({ rows, weeklyTarget }: Props) {
   }
 
   const totals = rows.map((r) => r.total);
-  const avg8 = movingAvg(totals, Math.min(8, rows.length));
   const overallAvg = Math.round(totals.reduce((s, v) => s + v, 0) / totals.length);
 
-  const chartData = rows.map((row, i) => ({
+  const chartData = rows.map((row) => ({
     name: shortenLabel(row.label),
     total: row.total,
-    ma8: avg8[i],
     fullLabel: row.label,
   }));
 
@@ -77,7 +61,7 @@ export default function WeeklyTotalChart({ rows, weeklyTarget }: Props) {
 
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+      <BarChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#6366f1" stopOpacity={0.85} />
@@ -124,17 +108,7 @@ export default function WeeklyTotalChart({ rows, weeklyTarget }: Props) {
             return <Cell key={i} fill={color} />;
           })}
         </Bar>
-
-        <Line
-          type="monotone"
-          dataKey="ma8"
-          stroke="#34d399"
-          strokeWidth={1.5}
-          dot={false}
-          activeDot={{ r: 3, strokeWidth: 0 }}
-          connectNulls={false}
-        />
-      </ComposedChart>
+      </BarChart>
     </ResponsiveContainer>
   );
 }

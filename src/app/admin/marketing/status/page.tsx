@@ -10,6 +10,7 @@ import ChannelSignalCards from '../components/status/ChannelSignalCards';
 import { groupByWeek, groupByMonth } from '../components/status/utils/groupByPeriod';
 import { classifyChannelSignals } from '../components/status/utils/signalUtils';
 import WeeklyTotalChart from '../components/status/WeeklyTotalChart';
+import WeeklyAdSpendChart from '../components/status/WeeklyAdSpendChart';
 import { MARKETING_GROUPS, GROUP_COLORS } from '@/lib/marketing-groups';
 import type { MarketingGroup } from '@/lib/marketing-groups';
 
@@ -216,9 +217,6 @@ export default function MarketingStatusPage() {
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-3 h-3 rounded-sm bg-indigo-500/70" />전체 리드
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-5 h-0.5 bg-emerald-400" />8주 이동평균
-            </span>
             {weekly?.weekly_target && (
               <span className="flex items-center gap-1.5">
                 <span className="inline-block w-5 h-0.5 bg-amber-400/70 border-dashed border-t border-amber-400" />목표
@@ -230,6 +228,24 @@ export default function MarketingStatusPage() {
           <div className="h-[240px] bg-gray-100 rounded animate-pulse" />
         ) : (
           <WeeklyTotalChart rows={weekRows} weeklyTarget={weekly?.weekly_target ?? null} />
+        )}
+      </div>
+
+      {/* ── Part E: 주별 광고비 그래프 ── */}
+      <SectionLabel label="주별 광고비" />
+      <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="text-gray-900 font-semibold">주별 광고비 추이</h3>
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-3 h-3 rounded-sm bg-amber-400/70" />광고비
+            </span>
+          </div>
+        </div>
+        {recentDailyLoading ? (
+          <div className="h-[240px] bg-gray-100 rounded animate-pulse" />
+        ) : (
+          <WeeklyAdSpendChart rows={weekRows} />
         )}
       </div>
 
