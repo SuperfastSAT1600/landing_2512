@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { BluebookPageShell } from '@/components/shared/BluebookPageShell';
+import { BluebookQuestionUnit } from '@/components/shared/BluebookQuestionUnit';
 
 interface Option {
   label: string;
@@ -252,224 +254,114 @@ export default function Sep26GrammarPage() {
   const selectedLabel = answers[currentQ?.id ?? ''];
   const isRevealed = revealed[currentQ?.id ?? ''];
 
-  return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ height: 56, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0 }}>
-        <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>
-          Section 1: Reading and Writing — Standard English Conventions
-        </span>
-        <span style={{ color: '#94a3b8', fontSize: 13 }}>
-          {answeredCount} / {questions.length} answered
-        </span>
-      </div>
-
-      {/* Bluebook split layout */}
-      <div className="test-layout" style={{ flex: 1, overflow: 'hidden' }}>
-        {currentQ?.passage && (
-          <>
-            <div className="test-passage-panel">
-              <div style={{ padding: '24px 28px 24px 24px' }}>
-                <div
-                  className="test-passage-content"
-                  dangerouslySetInnerHTML={{ __html: currentQ.passage }}
-                />
-              </div>
+  const qMapCenter = (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => setShowQMap((v) => !v)}
+        style={{
+          fontSize: 13, fontWeight: 600, color: '#1e293b',
+          background: showQMap ? '#f1f5f9' : 'transparent',
+          border: '1.5px solid #e2e8f0', borderRadius: 8,
+          padding: '5px 14px', cursor: 'pointer',
+        }}
+      >
+        {currentIndex + 1} / {questions.length}
+      </button>
+      {showQMap && (
+        <>
+          <div onClick={() => setShowQMap(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+          <div style={{
+            position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
+            padding: '14px 14px 12px', boxShadow: '0 -4px 24px rgba(0,0,0,0.13)',
+            zIndex: 50,
+          }}>
+            <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 10, textAlign: 'center', letterSpacing: '0.03em' }}>
+              문제 이동
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4 }}>
+              {questions.map((q, i) => {
+                const isAnswered = revealed[q.id];
+                const isCorrect = isAnswered && answers[q.id] === q.correct_answer;
+                const isWrong = isAnswered && answers[q.id] !== q.correct_answer;
+                const isCurrent = i === currentIndex;
+                let bg = '#f8fafc', color = '#64748b', border = '1.5px solid #e2e8f0';
+                if (isCorrect) { bg = '#dcfce7'; color = '#166534'; border = '1.5px solid #86efac'; }
+                if (isWrong) { bg = '#fee2e2'; color = '#991b1b'; border = '1.5px solid #fca5a5'; }
+                if (isCurrent) { bg = '#1e293b'; color = '#fff'; border = '1.5px solid #1e293b'; }
+                return (
+                  <button key={q.id} onClick={() => { setCurrentIndex(i); setShowQMap(false); }}
+                    style={{ width: 30, height: 30, borderRadius: 6, background: bg, color, border,
+                      fontSize: 11, fontWeight: isCurrent ? 700 : 500, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none' }}>
+                    {i + 1}
+                  </button>
+                );
+              })}
             </div>
-            <div className="test-resizer" />
-          </>
-        )}
-
-        <div className={`test-question-panel ${currentQ?.passage ? 'has-passage' : ''}`}>
-          <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 20px 120px' }}>
-            {currentQ && (
-              <>
-                {/* Question number + meta badges */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: '#1e293b', color: '#fff', fontWeight: 700, fontSize: 14 }}>
-                    {currentIndex + 1}
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 4, background: '#f1f5f9', color: '#64748b' }}>
-                    {currentQ.skill === 'Form, Structure, and Sense' ? 'FSS' : 'Boundaries'}
-                  </span>
-                  {currentQ.difficulty && (
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 4, background: '#f8fafc', color: DIFF_COLOR[currentQ.difficulty] ?? '#64748b' }}>
-                      {currentQ.difficulty}
-                    </span>
-                  )}
-                  {currentQ.grammar_rule && (
-                    <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, background: '#eff6ff', color: '#3b82f6', fontWeight: 600 }}>
-                      {currentQ.grammar_rule}
-                    </span>
-                  )}
-                </div>
-
-                {/* Question text */}
-                <div
-                  style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}
-                  dangerouslySetInnerHTML={{ __html: currentQ.question ?? '' }}
-                />
-
-                {/* Options */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {(currentQ.options ?? []).map((opt) => {
-                    const isSelected = selectedLabel === opt.label;
-                    const isCorrect = opt.label === currentQ.correct_answer;
-                    const showCorrect = isRevealed && isCorrect;
-                    const showWrong = isRevealed && isSelected && !isCorrect;
-
-                    const optionClass = `bluebook-option btn-press${
-                      showCorrect ? ' correct-answer' : showWrong ? ' wrong-answer' : isSelected ? ' selected' : ''
-                    }`;
-
-                    return (
-                      <button
-                        key={opt.label}
-                        type="button"
-                        onClick={() => handleSelect(currentQ.id, opt.label)}
-                        disabled={isRevealed}
-                        className={optionClass}
-                        style={
-                          showCorrect
-                            ? { borderColor: '#22c55e', background: '#f0fdf4' }
-                            : showWrong
-                            ? { borderColor: '#ef4444', background: '#fef2f2' }
-                            : undefined
-                        }
-                      >
-                        <span
-                          className="bluebook-option-label"
-                          style={
-                            showCorrect
-                              ? { background: '#22c55e', borderColor: '#22c55e', color: '#fff' }
-                              : showWrong
-                              ? { background: '#ef4444', borderColor: '#ef4444', color: '#fff' }
-                              : undefined
-                          }
-                        >
-                          {opt.label}
-                        </span>
-                        <span
-                          className="bluebook-option-text"
-                          dangerouslySetInnerHTML={{ __html: opt.text }}
-                        />
-                        {showCorrect && (
-                          <span style={{ fontSize: 18, color: '#22c55e', flexShrink: 0 }}>✓</span>
-                        )}
-                        {showWrong && (
-                          <span style={{ fontSize: 18, color: '#ef4444', flexShrink: 0 }}>✗</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Feedback message */}
-                {isRevealed && (
-                  <div style={{
-                    marginTop: 16,
-                    padding: '10px 16px',
-                    borderRadius: 8,
-                    background: selectedLabel === currentQ.correct_answer ? '#f0fdf4' : '#fef2f2',
-                    border: `1px solid ${selectedLabel === currentQ.correct_answer ? '#bbf7d0' : '#fecaca'}`,
-                    fontSize: 13,
-                    color: selectedLabel === currentQ.correct_answer ? '#166534' : '#991b1b',
-                    fontWeight: 600,
-                  }}>
-                    {selectedLabel === currentQ.correct_answer
-                      ? '정답입니다!'
-                      : `오답 — 정답: ${currentQ.correct_answer}`}
-                  </div>
-                )}
-              </>
-            )}
           </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="bluebook-footer">
-        <button
-          onClick={goPrev}
-          disabled={isAtStart}
-          className="bluebook-next-btn"
-          style={{ opacity: isAtStart ? 0 : 1, pointerEvents: isAtStart ? 'none' : 'auto' }}
-        >
-          Back
-        </button>
-
-        {/* Question map trigger */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowQMap((v) => !v)}
-            style={{
-              fontSize: 13, fontWeight: 600, color: '#1e293b',
-              background: showQMap ? '#f1f5f9' : 'transparent',
-              border: '1.5px solid #e2e8f0', borderRadius: 8,
-              padding: '5px 14px', cursor: 'pointer',
-            }}
-          >
-            {currentIndex + 1} / {questions.length}
-          </button>
-
-          {showQMap && (
-            <>
-              {/* Backdrop */}
-              <div
-                onClick={() => setShowQMap(false)}
-                style={{ position: 'fixed', inset: 0, zIndex: 40 }}
-              />
-              {/* Grid popup */}
-              <div style={{
-                position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%',
-                transform: 'translateX(-50%)',
-                background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
-                padding: '14px 14px 12px', boxShadow: '0 -4px 24px rgba(0,0,0,0.13)',
-                zIndex: 50,
-              }}>
-                <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 10, textAlign: 'center', letterSpacing: '0.03em' }}>
-                  문제 이동
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4 }}>
-                  {questions.map((q, i) => {
-                    const isAnswered = revealed[q.id];
-                    const isCorrect = isAnswered && answers[q.id] === q.correct_answer;
-                    const isWrong = isAnswered && answers[q.id] !== q.correct_answer;
-                    const isCurrent = i === currentIndex;
-
-                    let bg = '#f8fafc';
-                    let color = '#64748b';
-                    let border = '1.5px solid #e2e8f0';
-                    if (isCorrect) { bg = '#dcfce7'; color = '#166534'; border = '1.5px solid #86efac'; }
-                    if (isWrong) { bg = '#fee2e2'; color = '#991b1b'; border = '1.5px solid #fca5a5'; }
-                    if (isCurrent) { bg = '#1e293b'; color = '#fff'; border = '1.5px solid #1e293b'; }
-
-                    return (
-                      <button
-                        key={q.id}
-                        onClick={() => { setCurrentIndex(i); setShowQMap(false); }}
-                        style={{
-                          width: 30, height: 30,
-                          borderRadius: 6, background: bg, color, border,
-                          fontSize: 11, fontWeight: isCurrent ? 700 : 500,
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          outline: 'none',
-                        }}
-                      >
-                        {i + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <button onClick={goNext} className="bluebook-next-btn">
-          {isLastQ ? '결과 보기' : 'Next'}
-        </button>
-      </div>
+        </>
+      )}
     </div>
+  );
+
+  const passageNode = currentQ?.passage ? (
+    <div className="test-passage-content" dangerouslySetInnerHTML={{ __html: currentQ.passage }} />
+  ) : undefined;
+
+  const extraBadges = currentQ ? (
+    <>
+      {currentQ.grammar_rule && (
+        <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, background: '#eff6ff', color: '#3b82f6', fontWeight: 600 }}>
+          {currentQ.grammar_rule}
+        </span>
+      )}
+    </>
+  ) : undefined;
+
+  return (
+    <BluebookPageShell
+      sectionTitle="Section 1: Reading and Writing — Standard English Conventions"
+      headerRight={<span style={{ color: '#94a3b8', fontSize: 13 }}>{answeredCount} / {questions.length} answered</span>}
+      passage={passageNode}
+      onPrev={goPrev}
+      onNext={goNext}
+      prevHidden={isAtStart}
+      nextLabel={isLastQ ? '결과 보기' : 'Next'}
+      footerCenter={qMapCenter}
+    >
+      {currentQ && (
+        <BluebookQuestionUnit
+          questionNumber={currentIndex + 1}
+          question={<span dangerouslySetInnerHTML={{ __html: currentQ.question ?? '' }} />}
+          skill={currentQ.skill === 'Form, Structure, and Sense' ? 'FSS' : 'Boundaries'}
+          difficulty={currentQ.difficulty}
+          difficultyColor={DIFF_COLOR[currentQ.difficulty] ?? '#64748b'}
+          options={(currentQ.options ?? []).map((opt) => ({
+            label: opt.label,
+            text: <span dangerouslySetInnerHTML={{ __html: opt.text }} />,
+          }))}
+          selectedAnswer={selectedLabel}
+          onSelect={(label) => handleSelect(currentQ.id, label)}
+          disabled={isRevealed}
+          feedback={isRevealed ? { selectedLabel, correctLabel: currentQ.correct_answer } : null}
+        >
+          {extraBadges}
+          {isRevealed && (
+            <div style={{
+              marginTop: 16, padding: '10px 16px', borderRadius: 8,
+              background: selectedLabel === currentQ.correct_answer ? '#f0fdf4' : '#fef2f2',
+              border: `1px solid ${selectedLabel === currentQ.correct_answer ? '#bbf7d0' : '#fecaca'}`,
+              fontSize: 13,
+              color: selectedLabel === currentQ.correct_answer ? '#166534' : '#991b1b',
+              fontWeight: 600,
+            }}>
+              {selectedLabel === currentQ.correct_answer ? '정답입니다!' : `오답 — 정답: ${currentQ.correct_answer}`}
+            </div>
+          )}
+        </BluebookQuestionUnit>
+      )}
+    </BluebookPageShell>
   );
 }
