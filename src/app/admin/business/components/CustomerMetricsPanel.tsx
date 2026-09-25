@@ -39,8 +39,16 @@ const TABS: { key: Segment; label: string }[] = [
   { key: 'global', label: '글로벌' },
 ];
 
-// '전체' 프리셋만 제외하고 싶지 않으니 PRESETS 그대로 사용
-const METRIC_PRESETS = PRESETS; // 이번 달 | 지난 달 | 이번 분기 | 최근 6개월 | 전체 | 직접 입력
+const METRIC_PRESETS: { key: Preset; label: string }[] = [
+  { key: 'this_month',   label: '이번 달' },
+  { key: 'last_month',   label: '지난 달' },
+  { key: 'this_quarter', label: '이번 분기' },
+  { key: 'last_6m',      label: '최근 6개월' },
+  { key: 'this_year',    label: '올해' },
+  { key: 'last_year',    label: '지난해' },
+  { key: 'all',          label: '전체' },
+  { key: 'custom',       label: '직접 입력' },
+];
 
 function MetricCard({
   icon: Icon,
