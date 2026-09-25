@@ -124,7 +124,9 @@ export function TotalOverviewPanel({ adminKey }: Props) {
       {/* ── 매출 현황 ── */}
       <section>
         <div className="flex items-center gap-3 mb-5">
-          <h2 className="text-base font-bold text-gray-800 tracking-tight">매출 현황</h2>
+          <h2 className="text-base font-bold text-gray-800 tracking-tight">
+            {new Date(thisMonthKey + '-01').toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })} 매출 현황
+          </h2>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
