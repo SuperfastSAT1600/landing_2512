@@ -5,18 +5,24 @@
  * POST: 리드 수신 → Graph API 조회 → Supabase CRM 등록 → Slack 알림
  *
  * 응답 규칙:
- *   서명/토큰 오류 → 400/403 (Meta가 재시도하지 않도록)
- *   Graph API·DB 오류 → 500 (Meta가 재시도)
- *   중복 lead → 200 skip (idempotent)
+ *   서명/토큰 오류 → 400/403
+ *   그 외 모든 실패 → 200 (Meta 재시도 방지)
+ *   중복 lead → 200 skip
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { verifyMetaSignature, fetchMetaLeadData, parseLeadFields } from '@/lib/meta-lead-webhook';
+import {
+  verifyMetaSignature,
+  fetchMetaLeadData,
+  fetchAdTimezone,
+  fetchFormLabels,
+  buildLeadSlackText,
+  sendSlackLeadWebhook,
+  parseLeadFields,
+} from '@/lib/meta-lead-webhook';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const LEAD_CHANNEL = 'C07FK85V9PD';
 
 // ── GET: hub.challenge 검증 ──────────────────────────────────────────────────
 
@@ -42,14 +48,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const appSecret = process.env.META_APP_SECRET;
-  const accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
+  const accessToken = process.env.META_PAGE_ACCESS_TOKEN;
+  const slackWebhookUrl = process.env.SLACK_LEADS_WEBHOOK_URL;
 
   if (!appSecret || !accessToken) {
-    console.error('[meta-leads] META_APP_SECRET 또는 FACEBOOK_ACCESS_TOKEN 미설정');
+    console.error('[meta-leads] META_APP_SECRET 또는 META_PAGE_ACCESS_TOKEN 미설정');
     return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
   }
 
-  // REQ-002: 서명 검증
+  // 서명 검증
   const signature = request.headers.get('x-hub-signature-256') ?? '';
   const rawBody = Buffer.from(await request.arrayBuffer());
 
@@ -69,13 +76,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, skipped: 'no leadgen entries' });
   }
 
-  try {
-    const results = await Promise.all(entries.map(entry => processLeadEntry(entry, accessToken)));
-    return NextResponse.json({ ok: true, results });
-  } catch (err) {
-    console.error('[meta-leads] 처리 실패:', err);
-    return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
-  }
+  // 각 entry를 독립 처리 — 하나 실패해도 나머지 계속
+  const results = await Promise.all(
+    entries.map(entry => processLeadEntry(entry, accessToken, slackWebhookUrl))
+  );
+
+  return NextResponse.json({ ok: true, results });
 }
 
 // ── 내부 처리 ────────────────────────────────────────────────────────────────
@@ -118,8 +124,12 @@ function extractLeadEntries(payload: unknown): LeadEntry[] {
   return entries;
 }
 
-async function processLeadEntry(entry: LeadEntry, accessToken: string): Promise<{ leadgenId: string; status: string }> {
-  const { leadgenId, adName } = entry;
+async function processLeadEntry(
+  entry: LeadEntry,
+  accessToken: string,
+  slackWebhookUrl: string | undefined,
+): Promise<{ leadgenId: string; status: string }> {
+  const { leadgenId } = entry;
 
   // REQ-006: 중복 체크
   const { data: existing } = await supabaseAdmin
@@ -132,18 +142,45 @@ async function processLeadEntry(entry: LeadEntry, accessToken: string): Promise<
     return { leadgenId, status: 'skipped_duplicate' };
   }
 
-  // REQ-003: Graph API에서 폼 데이터 조회
+  // REQ-A01: Graph API 확장 조회
   let leadData;
   try {
     leadData = await fetchMetaLeadData(leadgenId, accessToken);
   } catch (err) {
     console.error('[meta-leads] Graph API 실패:', leadgenId, err);
-    throw err;
+    if (slackWebhookUrl) {
+      const msg = `⚠️ 리드 상세 조회 실패 / leadgen_id: ${leadgenId} / form_id: 알 수 없음`;
+      await sendSlackLeadWebhook(msg, slackWebhookUrl).catch(e =>
+        console.error('[meta-leads] Slack 오류 알림 실패:', e)
+      );
+    }
+    return { leadgenId, status: 'graph_api_error' };
   }
 
+  // REQ-A02: 광고 계정 시간대
+  let localTz: string | null = null;
+  if (leadData.ad_id) {
+    localTz = await fetchAdTimezone(leadData.ad_id, accessToken).catch(() => null);
+  }
+
+  // REQ-A03: 폼 질문 라벨
+  const labels = leadData.form_id
+    ? await fetchFormLabels(leadData.form_id, accessToken).catch(() => new Map<string, string>())
+    : new Map<string, string>();
+
+  // REQ-A04: Slack Incoming Webhook 전송
+  if (slackWebhookUrl) {
+    try {
+      const text = buildLeadSlackText({ leadData, localTz, labels });
+      await sendSlackLeadWebhook(text, slackWebhookUrl);
+    } catch (err) {
+      console.error('[meta-leads] Slack 전송 실패:', leadgenId, err);
+    }
+  }
+
+  // REQ-004: Supabase CRM 등록
   const { name: formName, phone } = parseLeadFields(leadData.field_data);
 
-  // 자동 이름: 폼에 이름이 없으면 타임스탬프 기반 생성
   const now = new Date();
   const kst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
   const stamp = kst.getFullYear().toString()
@@ -155,8 +192,7 @@ async function processLeadEntry(entry: LeadEntry, accessToken: string): Promise<
     + String(kst.getSeconds()).padStart(2, '0');
   const name = formName ?? `인스타_${stamp}`;
 
-  // REQ-004: Supabase 삽입
-  const { data: student, error: dbError } = await supabaseAdmin
+  const { error: dbError } = await supabaseAdmin
     .from('students')
     .insert([{
       name,
@@ -173,65 +209,12 @@ async function processLeadEntry(entry: LeadEntry, accessToken: string): Promise<
       consultation_timeline: [],
       entered_by: 'meta-webhook',
       meta_lead_id: leadgenId,
-    }])
-    .select()
-    .single();
+    }]);
 
   if (dbError) {
     console.error('[meta-leads] DB 삽입 실패:', dbError);
-    throw new Error(dbError.message);
+    return { leadgenId, status: 'db_error' };
   }
-
-  const studentId = (student as { id: string }).id;
-
-  // REQ-005: Slack 알림
-  await postLeadSlack({ name, phone, adName, studentId });
 
   return { leadgenId, status: 'created' };
-}
-
-async function postLeadSlack(info: {
-  name: string;
-  phone: string | null;
-  adName: string | null;
-  studentId: string;
-}): Promise<void> {
-  const token = process.env.SLACK_BOT_TOKEN;
-  if (!token) {
-    console.warn('[meta-leads] SLACK_BOT_TOKEN 미설정 — Slack 알림 skip');
-    return;
-  }
-
-  const crmUrl = 'https://tutoring.superfastsat.com/admin/crm';
-  const lines = [
-    `*인스타그램 광고 리드 신규 접수*`,
-    `*이름:* ${info.name}`,
-    info.phone ? `*전화:* ${info.phone}` : null,
-    info.adName ? `*광고:* ${info.adName}` : null,
-  ].filter(Boolean).join('\n');
-
-  const blocks = [
-    {
-      type: 'section',
-      text: { type: 'mrkdwn', text: lines },
-      accessory: {
-        type: 'button',
-        text: { type: 'plain_text', text: 'CRM 보기 →' },
-        url: crmUrl,
-      },
-    },
-  ];
-
-  const res = await fetch('https://slack.com/api/chat.postMessage', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      channel: LEAD_CHANNEL,
-      text: `인스타 광고 리드: ${info.name}`,
-      blocks,
-    }),
-  });
-
-  const data = await res.json() as { ok: boolean; error?: string };
-  if (!data.ok) console.error('[meta-leads] Slack 전송 실패:', data.error);
 }
