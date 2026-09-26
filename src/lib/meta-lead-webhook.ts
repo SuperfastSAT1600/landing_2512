@@ -79,31 +79,61 @@ export async function fetchAdTimezone(adId: string, accessToken: string): Promis
   }
 }
 
+// ── 키워드 기반 라벨 매핑 ────────────────────────────────────────────────────────
+// 폼 필드 키가 바뀌거나 새 질문이 생기면 여기만 수정
+
+const KEYWORD_LABEL_RULES: Array<{
+  test: (key: string) => boolean;
+  label: string;
+  isPhone: boolean;
+}> = [
+  { test: k => k === 'full_name' || k.includes('이름'),                  label: '이름',     isPhone: false },
+  { test: k => k.includes('학년'),                                        label: '학년',     isPhone: false },
+  { test: k => k.includes('목표') || k.includes('점수'),                  label: '목표점수', isPhone: false },
+  { test: k => k === 'phone' || k === 'phone_number',                     label: '연락처',   isPhone: true  },
+  { test: k => k !== 'phone' && k !== 'phone_number' && k.includes('연락처'), label: '연락처2',  isPhone: true  },
+  { test: k => k === 'email',                                             label: '이메일',   isPhone: false },
+];
+
+function resolveFieldLabel(key: string, formApiLabels: Map<string, string>): { label: string; isPhone: boolean } {
+  // 1. 키워드 규칙 우선
+  for (const rule of KEYWORD_LABEL_RULES) {
+    if (rule.test(key)) return { label: rule.label, isPhone: rule.isPhone };
+  }
+  // 2. form questions API 라벨
+  const apiLabel = formApiLabels.get(key);
+  if (apiLabel) return { label: apiLabel, isPhone: false };
+  // 3. 밑줄 → 공백 fallback
+  return { label: key.replace(/_/g, ' '), isPhone: false };
+}
+
 // ── 폼 질문 라벨 캐시 ────────────────────────────────────────────────────────────
 
 const formQuestionsCache = new Map<string, Map<string, string>>();
 
-const DEFAULT_LABELS: Record<string, string> = {
-  full_name: '이름',
-  phone_number: '연락처',
-  email: '이메일',
-};
-
 /** form_id → { key → label } 매핑 조회 (form_id별 캐시) */
 export async function fetchFormLabels(formId: string, accessToken: string): Promise<Map<string, string>> {
-  if (formQuestionsCache.has(formId)) return formQuestionsCache.get(formId)!;
+  if (formQuestionsCache.has(formId)) {
+    return formQuestionsCache.get(formId)!;
+  }
 
-  const map = new Map<string, string>(Object.entries(DEFAULT_LABELS));
+  const map = new Map<string, string>();
   try {
     const res = await fetch(`${GRAPH_BASE}/${formId}?fields=questions&access_token=${accessToken}`);
-    if (!res.ok) return map;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[meta-leads] fetchFormLabels: HTTP ${res.status} for form ${formId} —`, errText);
+      return map;
+    }
     const data = await res.json() as { questions?: { key: string; label: string }[] };
-    for (const q of data.questions ?? []) {
+    const qs = data.questions ?? [];
+    console.log(`[meta-leads] fetchFormLabels: form ${formId} — ${qs.length}개 질문 수신`);
+    for (const q of qs) {
       if (q.key && q.label) map.set(q.key, q.label);
     }
     formQuestionsCache.set(formId, map);
-  } catch {
-    // 라벨 조회 실패 시 기본값 그대로 반환
+  } catch (err) {
+    console.error(`[meta-leads] fetchFormLabels: exception for form ${formId}:`, err);
   }
   return map;
 }
@@ -148,9 +178,9 @@ export function buildLeadSlackText({ leadData, localTz, labels }: SlackLeadMessa
   const campaignName = leadData.campaign_name ?? '없음';
 
   const fieldLines = (leadData.field_data ?? []).map(f => {
-    const label = labels.get(f.name) ?? f.name;
+    const { label, isPhone } = resolveFieldLabel(f.name, labels);
     const value = f.values.join(', ');
-    const display = label === '연락처' ? `p:${value}` : value;
+    const display = isPhone ? `p:${value}` : value;
     return `${label}:${display}`;
   }).join('\n');
 
