@@ -15,6 +15,7 @@ import {
   verifyMetaSignature,
   fetchMetaLeadData,
   fetchAdTimezone,
+  fetchCampaignName,
   fetchFormLabels,
   buildLeadSlackText,
   sendSlackLeadWebhook,
@@ -157,10 +158,20 @@ async function processLeadEntry(
     return { leadgenId, status: 'graph_api_error' };
   }
 
-  // REQ-A02: 광고 계정 시간대
+  // 웹훅 payload의 ad_name을 Graph API 값 부재 시 fallback으로 사용
+  if (!leadData.ad_name && entry.adName) leadData.ad_name = entry.adName;
+
+  // REQ-A02: 광고 계정 시간대 + 캠페인명 조회
   let localTz: string | null = null;
   if (leadData.ad_id) {
-    localTz = await fetchAdTimezone(leadData.ad_id, accessToken).catch(() => null);
+    [localTz] = await Promise.all([
+      fetchAdTimezone(leadData.ad_id, accessToken).catch(() => null),
+      !leadData.campaign_name
+        ? fetchCampaignName(leadData.ad_id, accessToken)
+            .then(name => { if (name) leadData.campaign_name = name; })
+            .catch(() => null)
+        : Promise.resolve(),
+    ]);
   }
 
   // REQ-A03: 폼 질문 라벨

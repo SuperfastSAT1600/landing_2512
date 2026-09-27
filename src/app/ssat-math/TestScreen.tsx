@@ -50,6 +50,7 @@ export function TestScreen({ setNumber, questions, studentId, onComplete }: Prop
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const startTime = useRef(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const answersRef = useRef<Record<string, string>>({});
 
   const submit = useCallback(async (currentAnswers: Record<string, string>) => {
     if (submitting) return;
@@ -71,12 +72,15 @@ export function TestScreen({ setNumber, questions, studentId, onComplete }: Prop
     }
   }, [submitting, studentId, setNumber, onComplete]);
 
+  const submitRef = useRef(submit);
+  useEffect(() => { submitRef.current = submit; }, [submit]);
+
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          submit(answers);
+          submitRef.current(answersRef.current);
           return 0;
         }
         return prev - 1;
@@ -103,7 +107,11 @@ export function TestScreen({ setNumber, questions, studentId, onComplete }: Prop
   const allAnswered = answeredCount === questions.length;
 
   const handleSelect = (letter: string) => {
-    setAnswers(prev => ({ ...prev, [q.id]: letter }));
+    setAnswers(prev => {
+      const next = { ...prev, [q.id]: letter };
+      answersRef.current = next;
+      return next;
+    });
   };
 
   const handleSubmitClick = () => {

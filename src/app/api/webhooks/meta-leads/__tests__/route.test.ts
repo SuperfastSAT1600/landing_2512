@@ -208,8 +208,13 @@ describe('POST /api/webhooks/meta-leads', () => {
 
   it('REQ-A04: ad_name/campaign_name 없으면 "없음" 표시', async () => {
     mockFetchMetaLeadData.mockResolvedValue(makeLeadData({ ad_name: undefined, campaign_name: undefined }));
+    // payload에도 ad_name 없는 케이스
+    const payloadNoAd = {
+      object: 'page',
+      entry: [{ id: 'page_1', time: 1234567890, changes: [{ field: 'leadgen', value: { leadgen_id: LEADGEN_ID, page_id: 'page_1' } }] }],
+    };
     const { POST } = await import('../route');
-    await POST(signedRequest(JSON.stringify(makePayload())));
+    await POST(signedRequest(JSON.stringify(payloadNoAd)));
     const text = mockSendSlackLeadWebhook.mock.calls[0][0] as string;
     expect(text).toContain('크리에이티브 : 없음');
     expect(text).toContain('캠페인 : 없음');
