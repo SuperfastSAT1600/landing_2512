@@ -54,20 +54,47 @@ export async function fetchMetaLeadData(leadgenId: string, accessToken: string):
 
 const timezoneCache = new Map<string, string>();
 
+interface AdMeta {
+  accountId: string | null;
+  campaignName: string | null;
+}
+
+const adMetaCache = new Map<string, AdMeta>();
+
+/** ad_id → { accountId, campaignName } 조회 (ad_id별 캐시) */
+async function fetchAdMeta(adId: string, accessToken: string): Promise<AdMeta> {
+  if (adMetaCache.has(adId)) return adMetaCache.get(adId)!;
+
+  try {
+    const res = await fetch(
+      `${GRAPH_BASE}/${adId}?fields=account_id,campaign{name}&access_token=${accessToken}`
+    );
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[meta-leads] fetchAdMeta: HTTP ${res.status} for ad ${adId} —`, errText);
+      return { accountId: null, campaignName: null };
+    }
+    const data = await res.json() as { account_id?: string; campaign?: { name?: string } };
+    const result: AdMeta = {
+      accountId: data.account_id ?? null,
+      campaignName: data.campaign?.name ?? null,
+    };
+    adMetaCache.set(adId, result);
+    return result;
+  } catch (err) {
+    console.error(`[meta-leads] fetchAdMeta: exception for ad ${adId}:`, err);
+    return { accountId: null, campaignName: null };
+  }
+}
+
 /** ad_id → account_id → IANA 시간대 이름 조회 (account_id별 캐시) */
 export async function fetchAdTimezone(adId: string, accessToken: string): Promise<string | null> {
   try {
-    // Step 1: ad_id → account_id
-    const adRes = await fetch(`${GRAPH_BASE}/${adId}?fields=account_id&access_token=${accessToken}`);
-    if (!adRes.ok) return null;
-    const adData = await adRes.json() as { account_id?: string };
-    const accountId = adData.account_id;
+    const { accountId } = await fetchAdMeta(adId, accessToken);
     if (!accountId) return null;
 
-    // Step 2: account_id 캐시 확인
     if (timezoneCache.has(accountId)) return timezoneCache.get(accountId)!;
 
-    // Step 3: account → timezone_name
     const acctRes = await fetch(`${GRAPH_BASE}/act_${accountId}?fields=timezone_name&access_token=${accessToken}`);
     if (!acctRes.ok) return null;
     const acctData = await acctRes.json() as { timezone_name?: string };
@@ -77,6 +104,12 @@ export async function fetchAdTimezone(adId: string, accessToken: string): Promis
   } catch {
     return null;
   }
+}
+
+/** ad_id → campaign name 조회 */
+export async function fetchCampaignName(adId: string, accessToken: string): Promise<string | null> {
+  const { campaignName } = await fetchAdMeta(adId, accessToken).catch(() => ({ accountId: null, campaignName: null }));
+  return campaignName;
 }
 
 // ── 키워드 기반 라벨 매핑 ────────────────────────────────────────────────────────
