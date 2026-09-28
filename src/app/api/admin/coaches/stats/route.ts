@@ -63,48 +63,53 @@ export async function GET(request: NextRequest) {
         }
 
         // 재원 학생 수 (v2 기준): student_id → sfv2_profile_id → management_status='active'
+        // SFv2 연결 실패 시 non-fatal — 기존 studentCount/totalHours는 영향 없음
         const activeStudentCount = new Map<string, number>();
-        const assignmentRows = assignmentsResult.data ?? [];
-        const studentIds = [...new Set(assignmentRows.map(r => r.student_id).filter(Boolean))];
+        try {
+            const assignmentRows = assignmentsResult.data ?? [];
+            const studentIds = [...new Set(assignmentRows.map(r => r.student_id).filter(Boolean))];
 
-        if (studentIds.length > 0) {
-            // student_id → sfv2_profile_id
-            const { data: crmStudents } = await supabaseAdmin
-                .from('students')
-                .select('id, sfv2_profile_id')
-                .in('id', studentIds)
-                .not('sfv2_profile_id', 'is', null);
+            if (studentIds.length > 0) {
+                // student_id → sfv2_profile_id
+                const { data: crmStudents } = await supabaseAdmin
+                    .from('students')
+                    .select('id, sfv2_profile_id')
+                    .in('id', studentIds)
+                    .not('sfv2_profile_id', 'is', null);
 
-            const profileToStudentId = new Map<string, string>();
-            for (const s of crmStudents ?? []) {
-                if (s.sfv2_profile_id) profileToStudentId.set(s.sfv2_profile_id, s.id);
-            }
-
-            const profileIds = [...profileToStudentId.keys()];
-            if (profileIds.length > 0) {
-                // v2 payments: management_status='active' 인 profile_id 조회
-                const { data: v2Payments } = await supabaseSFv2
-                    .from('payments')
-                    .select('student_id')
-                    .in('student_id', profileIds)
-                    .eq('management_status', 'active');
-
-                const activeProfileIds = new Set((v2Payments ?? []).map(p => p.student_id));
-
-                // student_id → coach_slug 매핑
-                const studentToCoach = new Map<string, string>();
-                for (const row of assignmentRows) {
-                    if (row.student_id) studentToCoach.set(row.student_id, row.coach_slug);
+                const profileToStudentId = new Map<string, string>();
+                for (const s of crmStudents ?? []) {
+                    if (s.sfv2_profile_id) profileToStudentId.set(s.sfv2_profile_id, s.id);
                 }
 
-                for (const profileId of activeProfileIds) {
-                    const studentId = profileToStudentId.get(profileId);
-                    if (!studentId) continue;
-                    const slug = studentToCoach.get(studentId);
-                    if (!slug) continue;
-                    activeStudentCount.set(slug, (activeStudentCount.get(slug) ?? 0) + 1);
+                const profileIds = [...profileToStudentId.keys()];
+                if (profileIds.length > 0) {
+                    // v2 payments: management_status='active' 인 profile_id 조회
+                    const { data: v2Payments } = await supabaseSFv2
+                        .from('payments')
+                        .select('student_id')
+                        .in('student_id', profileIds)
+                        .eq('management_status', 'active');
+
+                    const activeProfileIds = new Set((v2Payments ?? []).map(p => p.student_id));
+
+                    // student_id → coach_slug 매핑
+                    const studentToCoach = new Map<string, string>();
+                    for (const row of assignmentRows) {
+                        if (row.student_id) studentToCoach.set(row.student_id, row.coach_slug);
+                    }
+
+                    for (const profileId of activeProfileIds) {
+                        const studentId = profileToStudentId.get(profileId);
+                        if (!studentId) continue;
+                        const slug = studentToCoach.get(studentId);
+                        if (!slug) continue;
+                        activeStudentCount.set(slug, (activeStudentCount.get(slug) ?? 0) + 1);
+                    }
                 }
             }
+        } catch {
+            // v2 재원 집계 실패는 non-fatal — activeStudentCount는 0으로 유지
         }
 
         // 모든 코치 slug를 union해서 결과 조립
