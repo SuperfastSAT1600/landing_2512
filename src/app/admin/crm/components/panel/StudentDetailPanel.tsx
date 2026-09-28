@@ -54,6 +54,14 @@ export function StudentDetailPanel({
   const [timelineOpenSignal, setTimelineOpenSignal] = useState(0);
   const [vipToggling, setVipToggling] = useState(false);
   const [attentionToggling, setAttentionToggling] = useState(false);
+  const [coachPrepCopied, setCoachPrepCopied] = useState(false);
+
+  function handleCopyCoachPrepLink() {
+    const url = `${window.location.origin}/coach-prep/${student.id}`;
+    navigator.clipboard.writeText(url);
+    setCoachPrepCopied(true);
+    setTimeout(() => setCoachPrepCopied(false), 2000);
+  }
 
   // Plaud 초안 생성 성공 → 타임라인에 append (재진입 시 DB 순서와 동일하게 created_at 오름차순 정렬)
   // + 상담 타임라인 섹션을 자동으로 펼쳐 새 초안이 바로 보이게 한다(기본 접힘 상태라 안 보이던 문제 해결).
@@ -238,6 +246,7 @@ export function StudentDetailPanel({
             signupConsumed={signupHook.isConsumed}
             signupCopied={signupHook.signupCopied}
             signupLoading={signupHook.signupLoading}
+            coachPrepCopied={coachPrepCopied}
             deleting={portalHook.deleting}
             funnelChanging={funnelHook.funnelChanging}
             showFunnelMenu={funnelHook.showFunnelMenu}
@@ -250,6 +259,7 @@ export function StudentDetailPanel({
             onPreviewPortal={portalHook.handlePreviewPortal}
             onCopySignupLink={signupHook.handleCopySignupLink}
             onRegenerateSignup={signupHook.handleRegenerate}
+            onCopyCoachPrepLink={handleCopyCoachPrepLink}
             onDelete={portalHook.handleDelete}
             onToggleFunnelMenu={() => {
               if (!funnelHook.funnelChanging && localStudent.lead_status !== 'inactive') {
