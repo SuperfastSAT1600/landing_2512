@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Pencil, Sparkles, Trash2, User, X } from 'lucide-react';
+import { Check, Pencil, Sparkles, Trash2, User, X, BookOpen } from 'lucide-react';
 import type { ConsultationEntry } from '@/types/crm';
 import { AttachmentThumb } from './AttachmentThumb';
+import { CoachShareModal } from './CoachShareModal';
 
 interface PendingEdit {
   purified: string;
@@ -26,6 +27,7 @@ interface Props {
   onDeleteAi: () => void;
   onEditMemo: (newMemo: string) => Promise<boolean>;
   onDeleteMemo: () => void;
+  onCoachShare: (content: string, visible: boolean) => Promise<boolean>;
 }
 
 export function TimelineEntry({
@@ -44,9 +46,12 @@ export function TimelineEntry({
   onDeleteAi,
   onEditMemo,
   onDeleteMemo,
+  onCoachShare,
 }: Props) {
   const [editingMemo, setEditingMemo] = useState(false);
   const [memoValue, setMemoValue] = useState(entry.raw_memo);
+  const [coachModalOpen, setCoachModalOpen] = useState(false);
+  const [coachSaving, setCoachSaving] = useState(false);
   const date = new Date(entry.created_at).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -55,6 +60,7 @@ export function TimelineEntry({
   const hasPublic = Boolean(entry.ai_purified?.trim());
   const author = entry.author?.replace(/^\s*\d+\)\s*/, '').trim();
   return (
+    <>
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="px-4 pt-3 pb-3">
         <div className="flex items-center justify-between mb-2 text-[11px] text-gray-400">
@@ -70,9 +76,23 @@ export function TimelineEntry({
               </>
             )}
           </div>
-          <span className={entry.published ? 'text-emerald-600' : 'text-gray-400'}>
-            {entry.published ? '학부모 공개 중' : '내부 전용'}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={entry.published ? 'text-emerald-600' : 'text-gray-400'}>
+              {entry.published ? '학부모 공개 중' : '내부 전용'}
+            </span>
+            <button
+              onClick={() => setCoachModalOpen(true)}
+              title="코치 준비 자료 공유 설정"
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+                entry.coach_visible
+                  ? 'bg-violet-50 border-violet-200 text-violet-600'
+                  : 'bg-gray-100 border-gray-200 text-gray-400 hover:border-violet-200 hover:text-violet-500'
+              }`}
+            >
+              <BookOpen size={9} />
+              {entry.coach_visible ? '코치 공유 중' : '코치 공유'}
+            </button>
+          </div>
         </div>
         {editingMemo ? (
           <div>
@@ -208,5 +228,20 @@ export function TimelineEntry({
         )}
       </div>
     </div>
+
+    {coachModalOpen && (
+      <CoachShareModal
+        entry={entry}
+        saving={coachSaving}
+        onSave={async (content, visible) => {
+          setCoachSaving(true);
+          const ok = await onCoachShare(content, visible);
+          setCoachSaving(false);
+          if (ok) setCoachModalOpen(false);
+        }}
+        onClose={() => setCoachModalOpen(false)}
+      />
+    )}
+    </>
   );
 }

@@ -394,6 +394,7 @@ export function StudentDetailPanel({
               onDeleteAi={timelineHook.handleDeleteAi}
               onEditMemo={timelineHook.handleEditMemo}
               onDeleteMemo={timelineHook.handleDeleteMemo}
+              onCoachShare={timelineHook.handleCoachShare}
             />
 
             <PaymentHistorySection

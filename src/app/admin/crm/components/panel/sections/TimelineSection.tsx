@@ -30,6 +30,7 @@ interface Props {
   onDeleteAi: (entryId: string) => void;
   onEditMemo: (entryId: string, newMemo: string) => Promise<boolean>;
   onDeleteMemo: (entryId: string) => void;
+  onCoachShare: (entryId: string, content: string, visible: boolean) => Promise<boolean>;
 }
 
 export function TimelineSection({
@@ -50,6 +51,7 @@ export function TimelineSection({
   onDeleteAi,
   onEditMemo,
   onDeleteMemo,
+  onCoachShare,
 }: Props) {
   return (
     <SectionCard
@@ -104,6 +106,7 @@ export function TimelineSection({
             onDeleteAi={() => onDeleteAi(entry.id)}
             onEditMemo={(newMemo) => onEditMemo(entry.id, newMemo)}
             onDeleteMemo={() => onDeleteMemo(entry.id)}
+            onCoachShare={(content, visible) => onCoachShare(entry.id, content, visible)}
           />
         ))}
       </div>

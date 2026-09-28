@@ -138,6 +138,7 @@ export interface ConsultationEntry {
   ai_purified?: string; // 학부모 공개본 (AI 초안 또는 직접 작성)
   ai_deleted_items?: string[]; // AI가 삭제한 항목 목록 (매니저 확인용)
   ai_coach_history?: string; // AI가 분리한 교육 이력 (코치 노출)
+  coach_visible?: boolean; // true면 코치 준비 자료에 노출
   attachments?: Attachment[]; // 첨부 파일 (운영자 내부 전용, 학부모 비노출)
   published: boolean; // true면 학부모 타임라인에 노출
   manager_id?: string;

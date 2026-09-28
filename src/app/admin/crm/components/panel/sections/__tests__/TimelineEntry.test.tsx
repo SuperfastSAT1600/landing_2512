@@ -29,6 +29,7 @@ function renderEntry(entry: ConsultationEntry, overrides: Partial<Record<string,
       onDeleteAi={() => {}}
       onEditMemo={async () => true}
       onDeleteMemo={() => {}}
+      onCoachShare={async () => true}
       {...overrides}
     />
   );
