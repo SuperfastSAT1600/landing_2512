@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, ToggleLeft, ToggleRight, Users, Clock } from 'lucide-react';
+import { ArrowLeft, ToggleLeft, ToggleRight, Users, Clock, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import { CoachData } from '@/lib/coaches-data';
 import type { CoachStat } from '@/app/api/admin/coaches/stats/route';
@@ -73,6 +73,11 @@ function CoachStatusCard({
                                 icon={<Users size={10} />}
                                 value={`${stat?.studentCount ?? 0}명`}
                                 label="현재 학생 수"
+                            />
+                            <StatBadge
+                                icon={<GraduationCap size={10} className="text-emerald-400" />}
+                                value={`재원 ${stat?.activeStudentCount ?? 0}명`}
+                                label="v2 SRM 재원 학생 수"
                             />
                             <StatBadge
                                 icon={<Clock size={10} />}
@@ -195,6 +200,7 @@ export default function CoachStatusPage() {
     // 활성 코치 전체 집계
     const totalActiveStudents = active.reduce((sum, c) => sum + (stats[c.slug]?.studentCount ?? 0), 0);
     const totalActiveHours = active.reduce((sum, c) => sum + (stats[c.slug]?.totalHours ?? 0), 0);
+    const totalActiveEnrolled = active.reduce((sum, c) => sum + (stats[c.slug]?.activeStudentCount ?? 0), 0);
 
     if (loading) {
         return (
@@ -228,6 +234,12 @@ export default function CoachStatusPage() {
                             <Users size={14} className="text-blue-400" />
                             <span className="text-xs text-gray-400">전체 학생</span>
                             <span className="text-sm font-bold text-white">{totalActiveStudents}명</span>
+                        </div>
+                        <div className="w-px bg-white/5" />
+                        <div className="flex items-center gap-2">
+                            <GraduationCap size={14} className="text-emerald-400" />
+                            <span className="text-xs text-gray-400">재원 (v2)</span>
+                            <span className="text-sm font-bold text-emerald-300">{totalActiveEnrolled}명</span>
                         </div>
                         <div className="w-px bg-white/5" />
                         <div className="flex items-center gap-2">
