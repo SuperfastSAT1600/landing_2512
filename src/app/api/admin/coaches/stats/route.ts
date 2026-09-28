@@ -4,9 +4,11 @@ import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import { isAuthenticated } from '@/lib/server-auth';
 
 export interface CoachStat {
+    /** SFv2 active matching 기준 현재 학생 수 */
     studentCount: number;
+    /** CRM payments 누적 contracted hours */
     totalHours: number;
-    /** v2 payments.management_status='active' 인 재원 학생 수 */
+    /** SFv2 payments.management_status='active' 인 재원 학생 수 */
     activeStudentCount: number;
 }
 
@@ -14,46 +16,155 @@ export interface CoachStatsResponse {
     stats: Record<string, CoachStat>;
 }
 
+async function scanAll<T>(
+    build: (from: number, to: number) => PromiseLike<{ data: T[] | null }>,
+    onPage: (rows: T[]) => void,
+): Promise<void> {
+    let offset = 0;
+    while (true) {
+        const { data } = await build(offset, offset + 999);
+        if (!data?.length) break;
+        onPage(data);
+        if (data.length < 1000) break;
+        offset += 1000;
+    }
+}
+
 /**
- * GET /api/admin/coaches/stats
- * 코치별 현재 학생 수 + 누적 수업 시간(contracted hours) 집계.
- * - 학생 수: student_coach_assignments WHERE is_confirmed=true, grouped by coach_slug
- * - 누적 시간: payments WHERE hours IS NOT NULL, grouped by coach_name → matched to coach slug
+ * SFv2 active matching 기반 코치별 학생 수 집계.
+ * coaches.v2_user_id → scheduled_events.assigned_teacher_id → 참여 학생(participants)
  */
+async function fetchSFv2StudentCounts(teacherIds: string[]): Promise<{
+    studentCount: Map<string, number>;
+    activeStudentCount: Map<string, number>;
+}> {
+    if (teacherIds.length === 0) {
+        return { studentCount: new Map(), activeStudentCount: new Map() };
+    }
+
+    // Step 1: scheduled_events 전체 스캔 (coach_room, 해당 teacher들)
+    // matching_id → teacher_id, matching_id → event_ids 동시 구축
+    const matchingTeacher = new Map<string, string>();
+    const matchingEvents = new Map<string, string[]>();
+
+    await scanAll<{ id: string; matching_id: string | null; assigned_teacher_id: string | null }>(
+        (f, t) => supabaseSFv2
+            .from('scheduled_events')
+            .select('id, matching_id, assigned_teacher_id')
+            .eq('category', 'coach_room')
+            .in('assigned_teacher_id', teacherIds)
+            .not('matching_id', 'is', null)
+            .range(f, t),
+        (rows) => {
+            for (const r of rows) {
+                if (!r.assigned_teacher_id || !r.matching_id) continue;
+                matchingTeacher.set(r.matching_id, r.assigned_teacher_id);
+                const evts = matchingEvents.get(r.matching_id) ?? [];
+                evts.push(r.id);
+                matchingEvents.set(r.matching_id, evts);
+            }
+        },
+    );
+
+    // Step 2: matchings 전체 스캔 후 메모리 필터로 active만 추출
+    const knownMatchingIds = new Set(matchingTeacher.keys());
+    const activeMatchingIds = new Set<string>();
+    await scanAll<{ id: string; status: string }>(
+        (f, t) => supabaseSFv2.from('matchings').select('id, status').range(f, t),
+        (rows) => {
+            for (const m of rows) {
+                if (m.status === 'active' && knownMatchingIds.has(m.id)) activeMatchingIds.add(m.id);
+            }
+        },
+    );
+
+    // Step 3: active matching의 event_ids 수집
+    const activeEventIds: string[] = [];
+    const eventTeacher = new Map<string, string>();
+    for (const matchingId of activeMatchingIds) {
+        const teacher = matchingTeacher.get(matchingId);
+        if (!teacher) continue;
+        for (const evtId of matchingEvents.get(matchingId) ?? []) {
+            activeEventIds.push(evtId);
+            eventTeacher.set(evtId, teacher);
+        }
+    }
+
+    // Step 4: participants 전체 스캔 (in() 대신 range 페이지네이션)
+    // → event_id IN (...) 은 수백 개 UUID로 URL 초과 문제 발생, 전체 스캔 후 메모리 필터
+    const activeEventIdSet = new Set(activeEventIds);
+    const teacherIdSet = new Set(teacherIds);
+    const teacherStudents = new Map<string, Set<string>>();
+
+    await scanAll<{ event_id: string; user_id: string }>(
+        (f, t) => supabaseSFv2
+            .from('scheduled_event_participants')
+            .select('event_id, user_id')
+            .range(f, t),
+        (rows) => {
+            for (const p of rows) {
+                if (!activeEventIdSet.has(p.event_id)) continue;
+                const teacher = eventTeacher.get(p.event_id);
+                if (!teacher || p.user_id === teacher || teacherIdSet.has(p.user_id)) continue;
+                const students = teacherStudents.get(teacher) ?? new Set();
+                students.add(p.user_id);
+                teacherStudents.set(teacher, students);
+            }
+        },
+    );
+
+    // Step 5: active payment 학생 집합 구축 (재원 카운트용)
+    // payments 전체 스캔 후 메모리 필터 (in() URL 초과 방지)
+    const allStudentIds = new Set(
+        [...teacherStudents.values()].flatMap(s => [...s])
+    );
+    const activePayStudents = new Set<string>();
+    await scanAll<{ student_id: string; management_status: string | null }>(
+        (f, t) => supabaseSFv2
+            .from('payments')
+            .select('student_id, management_status')
+            .range(f, t),
+        (rows) => {
+            for (const p of rows) {
+                if (p.management_status === 'active' && allStudentIds.has(p.student_id)) {
+                    activePayStudents.add(p.student_id);
+                }
+            }
+        },
+    );
+
+    const studentCount = new Map<string, number>();
+    const activeStudentCount = new Map<string, number>();
+    for (const [teacher, students] of teacherStudents) {
+        studentCount.set(teacher, students.size);
+        activeStudentCount.set(teacher, [...students].filter(s => activePayStudents.has(s)).length);
+    }
+    return { studentCount, activeStudentCount };
+}
+
 export async function GET(request: NextRequest) {
     if (!isAuthenticated(request)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-        const [assignmentsResult, paymentsResult, coachesResult] = await Promise.all([
-            supabaseAdmin
-                .from('student_coach_assignments')
-                .select('coach_slug, student_id')
-                .eq('is_confirmed', true),
+        // CRM: 코치 목록 (v2_user_id 포함) + 누적 contracted hours
+        const [coachesResult, paymentsResult] = await Promise.all([
+            supabaseAdmin.from('coaches').select('slug, name, v2_user_id'),
             supabaseAdmin
                 .from('payments')
                 .select('coach_name, hours')
                 .not('hours', 'is', null)
                 .gt('hours', 0),
-            supabaseAdmin
-                .from('coaches')
-                .select('slug, name'),
         ]);
 
-        // coach name → slug 매핑 (대소문자 무시)
+        const coaches = coachesResult.data ?? [];
+
+        // coach name → slug 매핑 (누적 시간용)
         const nameToSlug = new Map<string, string>();
-        for (const c of coachesResult.data ?? []) {
-            nameToSlug.set(c.name.toLowerCase().trim(), c.slug);
-        }
+        for (const c of coaches) nameToSlug.set(c.name.toLowerCase().trim(), c.slug);
 
-        // 학생 수: coach_slug → count
-        const studentCount = new Map<string, number>();
-        for (const row of assignmentsResult.data ?? []) {
-            studentCount.set(row.coach_slug, (studentCount.get(row.coach_slug) ?? 0) + 1);
-        }
-
-        // 누적 시간: coach_name → hours 합산 → slug로 매핑
+        // 누적 시간: coach_name → hours → slug 변환
         const totalHours = new Map<string, number>();
         for (const row of paymentsResult.data ?? []) {
             if (!row.coach_name || row.hours == null) continue;
@@ -62,94 +173,34 @@ export async function GET(request: NextRequest) {
             totalHours.set(slug, (totalHours.get(slug) ?? 0) + Number(row.hours));
         }
 
-        // 재원 학생 수 집계
-        // - v2 연결된 학생: SFv2 payments.management_status='active'
-        // - v2 미연결 학생: CRM students.lead_status='enrolled' + 현재 휴원 아님 (폴백)
-        // SFv2 연결 실패 시 non-fatal — 기존 studentCount/totalHours는 영향 없음
-        const activeStudentCount = new Map<string, number>();
+        // v2_user_id → slug 매핑
+        const v2IdToSlug = new Map<string, string>();
+        for (const c of coaches) {
+            if (c.v2_user_id) v2IdToSlug.set(c.v2_user_id, c.slug);
+        }
+        const teacherIds = [...v2IdToSlug.keys()];
+
+        // SFv2 학생 카운트 (실패 시 non-fatal)
+        let sfv2StudentCount = new Map<string, number>();
+        let sfv2ActiveStudentCount = new Map<string, number>();
         try {
-            const assignmentRows = assignmentsResult.data ?? [];
-            const studentIds = [...new Set(assignmentRows.map(r => r.student_id).filter(Boolean))];
-
-            if (studentIds.length > 0) {
-                const today = new Date().toISOString().slice(0, 10);
-
-                // 현재 휴원 중인 student_id 집합
-                const { data: pauseRows } = await supabaseAdmin
-                    .from('student_pauses')
-                    .select('student_id')
-                    .not('student_id', 'is', null)
-                    .is('ended_at', null)
-                    .lte('pause_start', today)
-                    .or(`pause_until.is.null,pause_until.gte.${today}`);
-                const pausedStudentIds = new Set(
-                    (pauseRows ?? []).map(p => p.student_id).filter(Boolean)
-                );
-
-                // student_id → { sfv2_profile_id, lead_status }
-                const { data: crmStudents } = await supabaseAdmin
-                    .from('students')
-                    .select('id, sfv2_profile_id, lead_status')
-                    .in('id', studentIds);
-
-                // v2 연결된 학생: profile_id → student_id 매핑
-                const profileToStudentId = new Map<string, string>();
-                // v2 미연결 학생: CRM lead_status='enrolled' + 미휴원이면 바로 카운트
-                const studentToCoach = new Map<string, string>();
-                for (const row of assignmentRows) {
-                    if (row.student_id) studentToCoach.set(row.student_id, row.coach_slug);
-                }
-
-                for (const s of crmStudents ?? []) {
-                    if (s.sfv2_profile_id) {
-                        profileToStudentId.set(s.sfv2_profile_id, s.id);
-                    } else {
-                        // 폴백: v2 미연결 → CRM 기준 재원 판별
-                        if (s.lead_status === 'enrolled' && !pausedStudentIds.has(s.id)) {
-                            const slug = studentToCoach.get(s.id);
-                            if (slug) activeStudentCount.set(slug, (activeStudentCount.get(slug) ?? 0) + 1);
-                        }
-                    }
-                }
-
-                // v2 연결된 학생: SFv2 management_status='active' 기준
-                const profileIds = [...profileToStudentId.keys()];
-                if (profileIds.length > 0) {
-                    const { data: v2Payments } = await supabaseSFv2
-                        .from('payments')
-                        .select('student_id')
-                        .in('student_id', profileIds)
-                        .eq('management_status', 'active');
-
-                    const activeProfileIds = new Set((v2Payments ?? []).map(p => p.student_id));
-
-                    for (const profileId of activeProfileIds) {
-                        const studentId = profileToStudentId.get(profileId);
-                        if (!studentId) continue;
-                        if (pausedStudentIds.has(studentId)) continue;
-                        const slug = studentToCoach.get(studentId);
-                        if (!slug) continue;
-                        activeStudentCount.set(slug, (activeStudentCount.get(slug) ?? 0) + 1);
-                    }
-                }
-            }
+            const result = await fetchSFv2StudentCounts(teacherIds);
+            sfv2StudentCount = result.studentCount;
+            sfv2ActiveStudentCount = result.activeStudentCount;
         } catch {
-            // 재원 집계 실패는 non-fatal — activeStudentCount는 0으로 유지
+            // SFv2 연결 실패 → 0으로 유지
         }
 
-        // 모든 코치 slug를 union해서 결과 조립
-        const allSlugs = new Set([
-            ...studentCount.keys(),
-            ...totalHours.keys(),
-            ...(coachesResult.data ?? []).map(c => c.slug),
-        ]);
-
+        // 결과 조립 (모든 코치 slug 포함)
+        const allSlugs = new Set(coaches.map(c => c.slug));
         const stats: Record<string, CoachStat> = {};
         for (const slug of allSlugs) {
+            // v2_user_id가 있는 코치만 SFv2 카운트 사용
+            const v2Id = coaches.find(c => c.slug === slug)?.v2_user_id ?? null;
             stats[slug] = {
-                studentCount: studentCount.get(slug) ?? 0,
+                studentCount: v2Id ? (sfv2StudentCount.get(v2Id) ?? 0) : 0,
                 totalHours: Math.round((totalHours.get(slug) ?? 0) * 10) / 10,
-                activeStudentCount: activeStudentCount.get(slug) ?? 0,
+                activeStudentCount: v2Id ? (sfv2ActiveStudentCount.get(v2Id) ?? 0) : 0,
             };
         }
 
