@@ -9,6 +9,7 @@ export interface CoachViewData {
   grade: string;
   school_type: string | null;
   desired_subjects: string | null;
+  preferred_language: string | null;
   previous_rw_score: number | null;
   previous_math_score: number | null;
   target_score: number | null;
@@ -39,7 +40,8 @@ export async function GET(
 
   type StudentRow = {
     id: string; name: string; grade: string; school_type: string | null;
-    desired_subjects: string | null; previous_rw_score: number | null;
+    desired_subjects: string | null; preferred_language: string | null;
+    previous_rw_score: number | null;
     previous_math_score: number | null; target_score: number | null;
     target_test_date: string | null; ot_datetime: string | null;
     weekly_schedule: unknown; parent_timezone: string | null;
@@ -49,7 +51,7 @@ export async function GET(
   const { data: raw, error } = await supabaseAdmin
     .from('students')
     .select(
-      'id, name, grade, school_type, desired_subjects, ' +
+      'id, name, grade, school_type, desired_subjects, preferred_language, ' +
       'previous_rw_score, previous_math_score, target_score, target_test_date, ' +
       'ot_datetime, weekly_schedule, parent_timezone, consultation_timeline'
     )
@@ -90,6 +92,7 @@ export async function GET(
     grade: student.grade,
     school_type: student.school_type ?? null,
     desired_subjects: student.desired_subjects ?? null,
+    preferred_language: student.preferred_language ?? null,
     previous_rw_score: student.previous_rw_score ?? null,
     previous_math_score: student.previous_math_score ?? null,
     target_score: student.target_score ?? null,
