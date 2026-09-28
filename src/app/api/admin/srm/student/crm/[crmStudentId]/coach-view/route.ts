@@ -68,7 +68,10 @@ export async function GET(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
   const coachHistoryEntries = sorted
-    .filter((e) => e.ai_coach_history?.trim() || e.raw_memo?.trim())
+    .filter((e) =>
+      e.coach_visible === true ||
+      (e.coach_visible === undefined && e.ai_coach_history?.trim())
+    )
     .map((e) => ({
       id: e.id,
       created_at: e.created_at,

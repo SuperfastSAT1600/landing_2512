@@ -100,6 +100,34 @@ export function useTimeline({ studentId, adminKey, timeline, setTimeline, setPen
     }
   }
 
+  async function handleCoachShare(entryId: string, content: string, visible: boolean): Promise<boolean> {
+    setMemoSaving(entryId);
+    try {
+      const updatedTimeline = timeline.map(e =>
+        e.id === entryId
+          ? { ...e, coach_visible: visible, ai_coach_history: visible ? content : e.ai_coach_history }
+          : e
+      );
+      const res = await fetch(`/api/crm/students/${studentId}`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({ consultation_timeline: updatedTimeline }),
+      });
+      if (res.ok) {
+        setTimeline(prev => prev.map(e =>
+          e.id === entryId
+            ? { ...e, coach_visible: visible, ai_coach_history: visible ? content : e.ai_coach_history }
+            : e
+        ));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      setMemoSaving(null);
+    }
+  }
+
   async function handleDeleteMemo(entryId: string): Promise<boolean> {
     if (!confirm('이 상담 메모를 삭제하시겠습니까? 되돌릴 수 없습니다.')) return false;
     setMemoSaving(entryId);
@@ -123,5 +151,5 @@ export function useTimeline({ studentId, adminKey, timeline, setTimeline, setPen
     }
   }
 
-  return { publishing, publishError, memoSaving, handlePublish, handleUnpublish, handleDeleteAi, handleEditMemo, handleDeleteMemo };
+  return { publishing, publishError, memoSaving, handlePublish, handleUnpublish, handleDeleteAi, handleEditMemo, handleDeleteMemo, handleCoachShare };
 }
