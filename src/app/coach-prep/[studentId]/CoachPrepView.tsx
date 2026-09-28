@@ -131,9 +131,12 @@ export function CoachPrepView({ data }: { data: CoachViewData }) {
     return parts.join(' / ') + total;
   })();
 
-  const targetDateValue = data.target_test_date
-    ? formatDate(data.target_test_date)
-    : '목표 시험일 미입력';
+  const targetDateValue = (() => {
+    const parts: string[] = [];
+    if (data.target_test_date) parts.push(`1차 ${formatDate(data.target_test_date)}${data.target_score != null ? ` (목표 ${data.target_score})` : ''}`);
+    if (data.target_test_date_2) parts.push(`2차 ${formatDate(data.target_test_date_2)}${data.target_score_2 != null ? ` (목표 ${data.target_score_2})` : ''}`);
+    return parts.length > 0 ? parts.join('\n') : '목표 시험일 미입력';
+  })();
 
   const languageValue = data.preferred_language
     ? LANGUAGE_LABELS[data.preferred_language] ?? data.preferred_language
@@ -239,19 +242,36 @@ export function CoachPrepView({ data }: { data: CoachViewData }) {
                     </p>
                   )}
                 </div>
-                {data.target_score != null && (
-                  <div className="border-t border-gray-700 pt-4">
-                    <p className="text-xs text-gray-500 mb-2">목표</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-emerald-400">{data.target_score}</span>
-                      {data.target_test_date && (
-                        <span className="text-sm text-gray-400">{formatDate(data.target_test_date)}</span>
-                      )}
-                    </div>
-                    {totalPrevious != null && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        목표까지 +{data.target_score - totalPrevious}점
-                      </p>
+                {(data.target_score != null || data.target_score_2 != null) && (
+                  <div className="border-t border-gray-700 pt-4 space-y-3">
+                    <p className="text-xs text-gray-500">목표</p>
+                    {data.target_score != null && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-[11px] text-gray-500 mr-1.5">1차</span>
+                          <span className="text-lg font-bold text-emerald-400">{data.target_score}</span>
+                          {totalPrevious != null && (
+                            <span className="text-xs text-gray-500 ml-2">+{data.target_score - totalPrevious}점</span>
+                          )}
+                        </div>
+                        {data.target_test_date && (
+                          <span className="text-sm text-gray-400">{formatDate(data.target_test_date)}</span>
+                        )}
+                      </div>
+                    )}
+                    {data.target_score_2 != null && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-[11px] text-gray-500 mr-1.5">2차</span>
+                          <span className="text-lg font-bold text-emerald-300">{data.target_score_2}</span>
+                          {totalPrevious != null && (
+                            <span className="text-xs text-gray-500 ml-2">+{data.target_score_2 - totalPrevious}점</span>
+                          )}
+                        </div>
+                        {data.target_test_date_2 && (
+                          <span className="text-sm text-gray-400">{formatDate(data.target_test_date_2)}</span>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}

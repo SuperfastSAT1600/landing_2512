@@ -14,6 +14,8 @@ export interface CoachViewData {
   previous_math_score: number | null;
   target_score: number | null;
   target_test_date: string | null;
+  target_score_2: number | null;
+  target_test_date_2: string | null;
   ot_datetime: string | null;
   weekly_schedule: WeeklySlot[] | null;
   parent_timezone: string | null;
@@ -43,7 +45,8 @@ export async function GET(
     desired_subjects: string | null; preferred_language: string | null;
     previous_rw_score: number | null;
     previous_math_score: number | null; target_score: number | null;
-    target_test_date: string | null; ot_datetime: string | null;
+    target_test_date: string | null; target_score_2: number | null;
+    target_test_date_2: string | null; ot_datetime: string | null;
     weekly_schedule: unknown; parent_timezone: string | null;
     consultation_timeline: unknown;
   };
@@ -52,7 +55,7 @@ export async function GET(
     .from('students')
     .select(
       'id, name, grade, school_type, desired_subjects, preferred_language, ' +
-      'previous_rw_score, previous_math_score, target_score, target_test_date, ' +
+      'previous_rw_score, previous_math_score, target_score, target_test_date, target_score_2, target_test_date_2, ' +
       'ot_datetime, weekly_schedule, parent_timezone, consultation_timeline'
     )
     .eq('id', crmStudentId)
@@ -100,6 +103,8 @@ export async function GET(
     previous_math_score: student.previous_math_score ?? null,
     target_score: student.target_score ?? null,
     target_test_date: student.target_test_date ?? null,
+    target_score_2: student.target_score_2 ?? null,
+    target_test_date_2: student.target_test_date_2 ?? null,
     ot_datetime: student.ot_datetime ?? null,
     weekly_schedule: (student.weekly_schedule ?? null) as WeeklySlot[] | null,
     parent_timezone: student.parent_timezone ?? null,
