@@ -62,7 +62,9 @@ export async function GET(request: NextRequest) {
             totalHours.set(slug, (totalHours.get(slug) ?? 0) + Number(row.hours));
         }
 
-        // 재원 학생 수 (v2 기준): student_id → sfv2_profile_id → management_status='active'
+        // 재원 학생 수 집계
+        // - v2 연결된 학생: SFv2 payments.management_status='active'
+        // - v2 미연결 학생: CRM students.lead_status='enrolled' + 현재 휴원 아님 (폴백)
         // SFv2 연결 실패 시 non-fatal — 기존 studentCount/totalHours는 영향 없음
         const activeStudentCount = new Map<string, number>();
         try {
@@ -70,21 +72,49 @@ export async function GET(request: NextRequest) {
             const studentIds = [...new Set(assignmentRows.map(r => r.student_id).filter(Boolean))];
 
             if (studentIds.length > 0) {
-                // student_id → sfv2_profile_id
+                const today = new Date().toISOString().slice(0, 10);
+
+                // 현재 휴원 중인 student_id 집합
+                const { data: pauseRows } = await supabaseAdmin
+                    .from('student_pauses')
+                    .select('student_id')
+                    .not('student_id', 'is', null)
+                    .is('ended_at', null)
+                    .lte('pause_start', today)
+                    .or(`pause_until.is.null,pause_until.gte.${today}`);
+                const pausedStudentIds = new Set(
+                    (pauseRows ?? []).map(p => p.student_id).filter(Boolean)
+                );
+
+                // student_id → { sfv2_profile_id, lead_status }
                 const { data: crmStudents } = await supabaseAdmin
                     .from('students')
-                    .select('id, sfv2_profile_id')
-                    .in('id', studentIds)
-                    .not('sfv2_profile_id', 'is', null);
+                    .select('id, sfv2_profile_id, lead_status')
+                    .in('id', studentIds);
 
+                // v2 연결된 학생: profile_id → student_id 매핑
                 const profileToStudentId = new Map<string, string>();
-                for (const s of crmStudents ?? []) {
-                    if (s.sfv2_profile_id) profileToStudentId.set(s.sfv2_profile_id, s.id);
+                // v2 미연결 학생: CRM lead_status='enrolled' + 미휴원이면 바로 카운트
+                const studentToCoach = new Map<string, string>();
+                for (const row of assignmentRows) {
+                    if (row.student_id) studentToCoach.set(row.student_id, row.coach_slug);
                 }
 
+                for (const s of crmStudents ?? []) {
+                    if (s.sfv2_profile_id) {
+                        profileToStudentId.set(s.sfv2_profile_id, s.id);
+                    } else {
+                        // 폴백: v2 미연결 → CRM 기준 재원 판별
+                        if (s.lead_status === 'enrolled' && !pausedStudentIds.has(s.id)) {
+                            const slug = studentToCoach.get(s.id);
+                            if (slug) activeStudentCount.set(slug, (activeStudentCount.get(slug) ?? 0) + 1);
+                        }
+                    }
+                }
+
+                // v2 연결된 학생: SFv2 management_status='active' 기준
                 const profileIds = [...profileToStudentId.keys()];
                 if (profileIds.length > 0) {
-                    // v2 payments: management_status='active' 인 profile_id 조회
                     const { data: v2Payments } = await supabaseSFv2
                         .from('payments')
                         .select('student_id')
@@ -93,15 +123,10 @@ export async function GET(request: NextRequest) {
 
                     const activeProfileIds = new Set((v2Payments ?? []).map(p => p.student_id));
 
-                    // student_id → coach_slug 매핑
-                    const studentToCoach = new Map<string, string>();
-                    for (const row of assignmentRows) {
-                        if (row.student_id) studentToCoach.set(row.student_id, row.coach_slug);
-                    }
-
                     for (const profileId of activeProfileIds) {
                         const studentId = profileToStudentId.get(profileId);
                         if (!studentId) continue;
+                        if (pausedStudentIds.has(studentId)) continue;
                         const slug = studentToCoach.get(studentId);
                         if (!slug) continue;
                         activeStudentCount.set(slug, (activeStudentCount.get(slug) ?? 0) + 1);
@@ -109,7 +134,7 @@ export async function GET(request: NextRequest) {
                 }
             }
         } catch {
-            // v2 재원 집계 실패는 non-fatal — activeStudentCount는 0으로 유지
+            // 재원 집계 실패는 non-fatal — activeStudentCount는 0으로 유지
         }
 
         // 모든 코치 slug를 union해서 결과 조립
