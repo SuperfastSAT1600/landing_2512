@@ -16,11 +16,17 @@ import {
   fetchMetaLeadData,
   fetchAdTimezone,
   fetchCampaignName,
+  fetchAdsetName,
   fetchFormLabels,
-  buildLeadSlackText,
+  buildLeadSlackBlocks,
   sendSlackLeadWebhook,
+  sendSlackLeadMessage,
   parseLeadFields,
 } from '@/lib/meta-lead-webhook';
+
+const SLACK_LEADS_CHANNEL_ID = 'C07FK85V9PD';
+const RETRY_DELAY_MS = process.env.NODE_ENV === 'test' ? 0 : 5000;
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -143,10 +149,14 @@ async function processLeadEntry(
     return { leadgenId, status: 'skipped_duplicate' };
   }
 
-  // REQ-A01: Graph API 확장 조회
+  // REQ-A01: Graph API 확장 조회 (ad_id 없으면 1회 재시도)
   let leadData;
   try {
     leadData = await fetchMetaLeadData(leadgenId, accessToken);
+    if (!leadData.ad_id) {
+      await sleep(RETRY_DELAY_MS);
+      leadData = await fetchMetaLeadData(leadgenId, accessToken);
+    }
   } catch (err) {
     console.error('[meta-leads] Graph API 실패:', leadgenId, err);
     if (slackWebhookUrl) {
@@ -161,17 +171,21 @@ async function processLeadEntry(
   // 웹훅 payload의 ad_name을 Graph API 값 부재 시 fallback으로 사용
   if (!leadData.ad_name && entry.adName) leadData.ad_name = entry.adName;
 
-  // REQ-A02: 광고 계정 시간대 + 캠페인명 조회
+  // REQ-A02: 광고 계정 시간대 + 캠페인명 + 광고세트명 조회
   let localTz: string | null = null;
+  let adsetName: string | null = null;
   if (leadData.ad_id) {
-    [localTz] = await Promise.all([
+    const adResults = await Promise.all([
       fetchAdTimezone(leadData.ad_id, accessToken).catch(() => null),
+      fetchAdsetName(leadData.ad_id, accessToken).catch(() => null),
       !leadData.campaign_name
         ? fetchCampaignName(leadData.ad_id, accessToken)
             .then(name => { if (name) leadData.campaign_name = name; })
             .catch(() => null)
-        : Promise.resolve(),
+        : Promise.resolve(null),
     ]);
+    localTz = adResults[0];
+    adsetName = adResults[1];
   }
 
   // REQ-A03: 폼 질문 라벨
@@ -179,11 +193,17 @@ async function processLeadEntry(
     ? await fetchFormLabels(leadData.form_id, accessToken).catch(() => new Map<string, string>())
     : new Map<string, string>();
 
-  // REQ-A04: Slack Incoming Webhook 전송
-  if (slackWebhookUrl) {
+  // REQ-A04: Slack Block Kit 알림 (Bot Token 우선, incoming webhook fallback)
+  if (slackWebhookUrl || process.env.SLACK_BOT_TOKEN) {
     try {
-      const text = buildLeadSlackText({ leadData, localTz, labels });
-      await sendSlackLeadWebhook(text, slackWebhookUrl);
+      const { text, blocks } = buildLeadSlackBlocks({ leadData, localTz, labels, adsetName });
+      await sendSlackLeadMessage({
+        text,
+        blocks,
+        botToken: process.env.SLACK_BOT_TOKEN,
+        channelId: SLACK_LEADS_CHANNEL_ID,
+        webhookUrl: slackWebhookUrl,
+      });
     } catch (err) {
       console.error('[meta-leads] Slack 전송 실패:', leadgenId, err);
     }
@@ -220,6 +240,8 @@ async function processLeadEntry(
       consultation_timeline: [],
       entered_by: 'meta-webhook',
       meta_lead_id: leadgenId,
+      ad_name: leadData.ad_name ?? null,
+      adset_name: adsetName,
     }]);
 
   if (dbError) {

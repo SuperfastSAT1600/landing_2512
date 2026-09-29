@@ -57,33 +57,35 @@ const timezoneCache = new Map<string, string>();
 interface AdMeta {
   accountId: string | null;
   campaignName: string | null;
+  adsetName: string | null;
 }
 
 const adMetaCache = new Map<string, AdMeta>();
 
-/** ad_id → { accountId, campaignName } 조회 (ad_id별 캐시) */
+/** ad_id → { accountId, campaignName, adsetName } 조회 (ad_id별 캐시) */
 async function fetchAdMeta(adId: string, accessToken: string): Promise<AdMeta> {
   if (adMetaCache.has(adId)) return adMetaCache.get(adId)!;
 
   try {
     const res = await fetch(
-      `${GRAPH_BASE}/${adId}?fields=account_id,campaign{name}&access_token=${accessToken}`
+      `${GRAPH_BASE}/${adId}?fields=account_id,campaign{name},adset{name}&access_token=${accessToken}`
     );
     if (!res.ok) {
       const errText = await res.text();
       console.error(`[meta-leads] fetchAdMeta: HTTP ${res.status} for ad ${adId} —`, errText);
-      return { accountId: null, campaignName: null };
+      return { accountId: null, campaignName: null, adsetName: null };
     }
-    const data = await res.json() as { account_id?: string; campaign?: { name?: string } };
+    const data = await res.json() as { account_id?: string; campaign?: { name?: string }; adset?: { name?: string } };
     const result: AdMeta = {
       accountId: data.account_id ?? null,
       campaignName: data.campaign?.name ?? null,
+      adsetName: data.adset?.name ?? null,
     };
     adMetaCache.set(adId, result);
     return result;
   } catch (err) {
     console.error(`[meta-leads] fetchAdMeta: exception for ad ${adId}:`, err);
-    return { accountId: null, campaignName: null };
+    return { accountId: null, campaignName: null, adsetName: null };
   }
 }
 
@@ -108,8 +110,14 @@ export async function fetchAdTimezone(adId: string, accessToken: string): Promis
 
 /** ad_id → campaign name 조회 */
 export async function fetchCampaignName(adId: string, accessToken: string): Promise<string | null> {
-  const { campaignName } = await fetchAdMeta(adId, accessToken).catch(() => ({ accountId: null, campaignName: null }));
+  const { campaignName } = await fetchAdMeta(adId, accessToken).catch(() => ({ accountId: null, campaignName: null, adsetName: null }));
   return campaignName;
+}
+
+/** ad_id → adset name 조회 */
+export async function fetchAdsetName(adId: string, accessToken: string): Promise<string | null> {
+  const { adsetName } = await fetchAdMeta(adId, accessToken).catch(() => ({ accountId: null, campaignName: null, adsetName: null }));
+  return adsetName;
 }
 
 // ── 키워드 기반 라벨 매핑 ────────────────────────────────────────────────────────
@@ -199,6 +207,7 @@ export interface SlackLeadMessage {
   leadData: MetaLeadData;
   localTz: string | null;
   labels: Map<string, string>;
+  adsetName?: string | null;
 }
 
 export function buildLeadSlackText({ leadData, localTz, labels }: SlackLeadMessage): string {
@@ -227,7 +236,61 @@ export function buildLeadSlackText({ leadData, localTz, labels }: SlackLeadMessa
   ].join('\n');
 }
 
-// ── Slack Incoming Webhook 전송 ──────────────────────────────────────────────────
+export interface SlackLeadBlocksResult {
+  text: string;
+  blocks: Record<string, unknown>[];
+}
+
+export function buildLeadSlackBlocks({ leadData, localTz, labels, adsetName }: SlackLeadMessage): SlackLeadBlocksResult {
+  const createdUtc = leadData.created_time ? new Date(leadData.created_time) : new Date();
+  const kstStr = toIsoWithOffset(createdUtc, 'Asia/Seoul');
+  const localStr = localTz ? `${toIsoWithOffset(createdUtc, localTz)} (${localTz})` : '알 수 없음';
+
+  const adName = leadData.ad_name ?? '없음';
+  const campaignName = leadData.campaign_name ?? '없음';
+  const adsetStr = adsetName ?? '없음';
+
+  const fieldLines = (leadData.field_data ?? []).map(f => {
+    const { label, isPhone } = resolveFieldLabel(f.name, labels);
+    const value = f.values.join(', ');
+    const display = isPhone ? `p:${value}` : value;
+    return `${label}: ${display}`;
+  }).join('\n');
+
+  const bodyText = [
+    `*작성일(한국):* ${kstStr}`,
+    `*작성일(현지):* ${localStr}`,
+    `*크리에이티브:* ${adName}`,
+    `*광고세트:* ${adsetStr}`,
+    `*캠페인:* ${campaignName}`,
+    '',
+    fieldLines,
+  ].join('\n');
+
+  const nameField = (leadData.field_data ?? []).find(f => ['full_name', 'name'].includes(f.name) || f.name.includes('이름'));
+  const fallbackName = nameField?.values?.[0] ?? leadgenIdShort(leadData.id);
+
+  return {
+    text: `새 Meta 리드: ${adName} — ${fallbackName}`,
+    blocks: [
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: bodyText },
+        accessory: {
+          type: 'button',
+          text: { type: 'plain_text', text: 'CRM에서 보기 →' },
+          url: 'https://tutoring.superfastsat.com/admin/crm',
+        },
+      },
+    ],
+  };
+}
+
+function leadgenIdShort(id: string): string {
+  return id ? id.slice(-6) : '??????';
+}
+
+// ── Slack 전송 ──────────────────────────────────────────────────────────────────
 
 export async function sendSlackLeadWebhook(text: string, webhookUrl: string): Promise<void> {
   const res = await fetch(webhookUrl, {
@@ -238,6 +301,40 @@ export async function sendSlackLeadWebhook(text: string, webhookUrl: string): Pr
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Slack webhook error ${res.status}: ${body}`);
+  }
+}
+
+/** Bot Token으로 Block Kit 메시지 전송. Bot Token 미설정 시 incoming webhook fallback. */
+export async function sendSlackLeadMessage({
+  text,
+  blocks,
+  botToken,
+  channelId,
+  webhookUrl,
+}: {
+  text: string;
+  blocks: Record<string, unknown>[];
+  botToken?: string;
+  channelId?: string;
+  webhookUrl?: string;
+}): Promise<void> {
+  if (botToken && channelId) {
+    try {
+      const res = await fetch('https://slack.com/api/chat.postMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${botToken}` },
+        body: JSON.stringify({ channel: channelId, text, blocks }),
+      });
+      const data = await res.json() as { ok: boolean; error?: string };
+      if (!data.ok) throw new Error(`Slack API error: ${data.error}`);
+      return;
+    } catch (err) {
+      if (!webhookUrl) throw err;
+      console.warn('[meta-leads] botToken 실패, webhookUrl fallback:', (err as Error).message);
+    }
+  }
+  if (webhookUrl) {
+    await sendSlackLeadWebhook(text, webhookUrl);
   }
 }
 

@@ -21,8 +21,10 @@ vi.mock('@/lib/supabase-admin', () => ({
 
 const mockFetchMetaLeadData = vi.hoisted(() => vi.fn());
 const mockFetchAdTimezone = vi.hoisted(() => vi.fn());
+const mockFetchAdsetName = vi.hoisted(() => vi.fn());
 const mockFetchFormLabels = vi.hoisted(() => vi.fn());
 const mockSendSlackLeadWebhook = vi.hoisted(() => vi.fn());
+const mockSendSlackLeadMessage = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/meta-lead-webhook', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/meta-lead-webhook')>();
@@ -30,8 +32,10 @@ vi.mock('@/lib/meta-lead-webhook', async (importOriginal) => {
     ...actual,
     fetchMetaLeadData: mockFetchMetaLeadData,
     fetchAdTimezone: mockFetchAdTimezone,
+    fetchAdsetName: mockFetchAdsetName,
     fetchFormLabels: mockFetchFormLabels,
     sendSlackLeadWebhook: mockSendSlackLeadWebhook,
+    sendSlackLeadMessage: mockSendSlackLeadMessage,
   };
 });
 
@@ -122,8 +126,10 @@ describe('POST /api/webhooks/meta-leads', () => {
     mockMaybeSingle.mockResolvedValue({ data: null });
     mockInsert.mockResolvedValue({ error: null });
     mockFetchAdTimezone.mockResolvedValue('America/New_York');
+    mockFetchAdsetName.mockResolvedValue('TestAdset');
     mockFetchFormLabels.mockResolvedValue(new Map([['full_name', '이름'], ['phone_number', '연락처']]));
     mockSendSlackLeadWebhook.mockResolvedValue(undefined);
+    mockSendSlackLeadMessage.mockResolvedValue(undefined);
   });
 
   it('REQ-002: 잘못된 서명 → 400', async () => {
@@ -178,46 +184,60 @@ describe('POST /api/webhooks/meta-leads', () => {
     expect(mockFetchFormLabels).toHaveBeenCalledWith(FORM_ID, ACCESS_TOKEN);
   });
 
-  it('REQ-A04: Slack Incoming Webhook 호출', async () => {
+  it('REQ-A02: adset 이름 조회', async () => {
     mockFetchMetaLeadData.mockResolvedValue(makeLeadData());
     const { POST } = await import('../route');
     await POST(signedRequest(JSON.stringify(makePayload())));
-    expect(mockSendSlackLeadWebhook).toHaveBeenCalledWith(
-      expect.any(String),
-      'https://hooks.slack.com/test',
+    expect(mockFetchAdsetName).toHaveBeenCalledWith(AD_ID, ACCESS_TOKEN);
+  });
+
+  it('REQ-A04: Slack Block Kit 메시지 전송', async () => {
+    mockFetchMetaLeadData.mockResolvedValue(makeLeadData());
+    const { POST } = await import('../route');
+    await POST(signedRequest(JSON.stringify(makePayload())));
+    expect(mockSendSlackLeadMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: expect.any(String),
+        blocks: expect.any(Array),
+        webhookUrl: 'https://hooks.slack.com/test',
+      }),
     );
   });
 
-  it('REQ-A04: Slack 메시지에 크리에이티브·캠페인 포함', async () => {
+  it('REQ-A04: Block Kit 본문에 크리에이티브·광고세트·캠페인 포함', async () => {
     mockFetchMetaLeadData.mockResolvedValue(makeLeadData());
     const { POST } = await import('../route');
     await POST(signedRequest(JSON.stringify(makePayload())));
-    const text = mockSendSlackLeadWebhook.mock.calls[0][0] as string;
-    expect(text).toContain('크리에이티브 : TestAd');
-    expect(text).toContain('캠페인 : TestCampaign');
-    expect(text).toContain('----');
+    const { blocks } = mockSendSlackLeadMessage.mock.calls[0][0] as { blocks: { text?: { text: string } }[] };
+    const bodyText = blocks[0]?.text?.text ?? '';
+    expect(bodyText).toContain('크리에이티브:* TestAd');
+    expect(bodyText).toContain('광고세트:* TestAdset');
+    expect(bodyText).toContain('캠페인:* TestCampaign');
   });
 
   it('REQ-A04: 연락처 앞에 p: 붙음', async () => {
     mockFetchMetaLeadData.mockResolvedValue(makeLeadData());
     const { POST } = await import('../route');
     await POST(signedRequest(JSON.stringify(makePayload())));
-    const text = mockSendSlackLeadWebhook.mock.calls[0][0] as string;
-    expect(text).toContain('연락처:p:01012345678');
+    const { blocks } = mockSendSlackLeadMessage.mock.calls[0][0] as { blocks: { text?: { text: string } }[] };
+    const bodyText = blocks[0]?.text?.text ?? '';
+    expect(bodyText).toContain('p:01012345678');
   });
 
   it('REQ-A04: ad_name/campaign_name 없으면 "없음" 표시', async () => {
     mockFetchMetaLeadData.mockResolvedValue(makeLeadData({ ad_name: undefined, campaign_name: undefined }));
-    // payload에도 ad_name 없는 케이스
+    mockFetchAdsetName.mockResolvedValue(null);
     const payloadNoAd = {
       object: 'page',
       entry: [{ id: 'page_1', time: 1234567890, changes: [{ field: 'leadgen', value: { leadgen_id: LEADGEN_ID, page_id: 'page_1' } }] }],
     };
     const { POST } = await import('../route');
     await POST(signedRequest(JSON.stringify(payloadNoAd)));
-    const text = mockSendSlackLeadWebhook.mock.calls[0][0] as string;
-    expect(text).toContain('크리에이티브 : 없음');
-    expect(text).toContain('캠페인 : 없음');
+    const { blocks } = mockSendSlackLeadMessage.mock.calls[0][0] as { blocks: { text?: { text: string } }[] };
+    const bodyText = blocks[0]?.text?.text ?? '';
+    expect(bodyText).toContain('크리에이티브:* 없음');
+    expect(bodyText).toContain('캠페인:* 없음');
+    expect(bodyText).toContain('광고세트:* 없음');
   });
 
   it('REQ-A05: Graph API 실패 → 200 반환 + Slack 오류 알림', async () => {
@@ -233,10 +253,50 @@ describe('POST /api/webhooks/meta-leads', () => {
 
   it('REQ-A05: Slack 전송 실패해도 200 반환', async () => {
     mockFetchMetaLeadData.mockResolvedValue(makeLeadData());
-    mockSendSlackLeadWebhook.mockRejectedValue(new Error('Slack down'));
+    mockSendSlackLeadMessage.mockRejectedValue(new Error('Slack down'));
     const { POST } = await import('../route');
     const res = await POST(signedRequest(JSON.stringify(makePayload())));
     expect(res.status).toBe(200);
+  });
+
+  it('REQ-RETRY-01: ad_id 없으면 재시도 후 ad_name 저장', async () => {
+    mockFetchMetaLeadData
+      .mockResolvedValueOnce(makeLeadData({ ad_id: undefined, ad_name: undefined, campaign_name: undefined }))
+      .mockResolvedValueOnce(makeLeadData());
+    const { POST } = await import('../route');
+    await POST(signedRequest(JSON.stringify(makePayload())));
+    expect(mockFetchMetaLeadData).toHaveBeenCalledTimes(2);
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ ad_name: 'TestAd', adset_name: 'TestAdset' })]),
+    );
+  });
+
+  it('REQ-RETRY-02: 재시도 후에도 ad_id 없으면 null로 저장', async () => {
+    mockFetchMetaLeadData.mockResolvedValue(makeLeadData({ ad_id: undefined, ad_name: undefined }));
+    const payloadNoAdName = {
+      object: 'page',
+      entry: [{ id: 'page_1', time: 1234567890, changes: [{ field: 'leadgen', value: { leadgen_id: LEADGEN_ID, page_id: 'page_1' } }] }],
+    };
+    const { POST } = await import('../route');
+    await POST(signedRequest(JSON.stringify(payloadNoAdName)));
+    expect(mockFetchMetaLeadData).toHaveBeenCalledTimes(2);
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ ad_name: null })]),
+    );
+  });
+
+  it('REQ-BUG-01: SLACK_BOT_TOKEN 실패 시 webhookUrl fallback 없음 재현 (버그)', async () => {
+    // botToken은 설정되어 있지만 Slack API가 ok:false 반환
+    process.env.SLACK_BOT_TOKEN = 'xoxb-expired-token';
+    mockFetchMetaLeadData.mockResolvedValue(makeLeadData());
+    mockSendSlackLeadMessage.mockRejectedValue(new Error('Slack API error: token_expired'));
+    const { POST } = await import('../route');
+    await POST(signedRequest(JSON.stringify(makePayload())));
+    // 버그: webhookUrl fallback이 없어 sendSlackLeadWebhook도 호출 안 됨
+    expect(mockSendSlackLeadWebhook).not.toHaveBeenCalled();
+    // 그래도 DB 삽입은 성공
+    expect(mockInsert).toHaveBeenCalled();
+    delete process.env.SLACK_BOT_TOKEN;
   });
 
   it('REQ-006: 중복 leadgen_id → 200 skip', async () => {
@@ -259,7 +319,7 @@ describe('POST /api/webhooks/meta-leads', () => {
     expect(json.skipped).toContain('no leadgen');
   });
 
-  it('REQ-004: DB에 인스타그램 광고 학생 삽입', async () => {
+  it('REQ-004: DB에 인스타그램 광고 학생 삽입 (ad_name, adset_name 포함)', async () => {
     mockFetchMetaLeadData.mockResolvedValue(makeLeadData());
     const { POST } = await import('../route');
     await POST(signedRequest(JSON.stringify(makePayload())));
@@ -270,9 +330,81 @@ describe('POST /api/webhooks/meta-leads', () => {
           inquiry_channel: '인스타그램 링크',
           entered_by: 'meta-webhook',
           meta_lead_id: LEADGEN_ID,
+          ad_name: 'TestAd',
+          adset_name: 'TestAdset',
         }),
       ]),
     );
+  });
+});
+
+// ── buildLeadSlackBlocks 단위 테스트 ─────────────────────────────────────────
+
+describe('buildLeadSlackBlocks', () => {
+  it('REQ-03: Block Kit 구조 — section + accessory button', async () => {
+    const { buildLeadSlackBlocks } = await import('@/lib/meta-lead-webhook');
+    const labels = new Map([['full_name', '이름'], ['phone_number', '연락처']]);
+    const leadData = {
+      id: '1',
+      created_time: '2026-09-24T00:28:58+0000',
+      field_data: [
+        { name: 'full_name', values: ['홍길동'] },
+        { name: 'phone_number', values: ['01012345678'] },
+      ],
+      ad_name: 'TestAd',
+      campaign_name: 'TestCampaign',
+    };
+    const { text, blocks } = buildLeadSlackBlocks({ leadData, localTz: 'America/New_York', labels, adsetName: 'TestAdset' });
+    expect(text).toContain('TestAd');
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatchObject({ type: 'section' });
+    const block = blocks[0] as { text: { text: string }; accessory: { url: string } };
+    expect(block.text.text).toContain('크리에이티브:* TestAd');
+    expect(block.text.text).toContain('광고세트:* TestAdset');
+    expect(block.text.text).toContain('캠페인:* TestCampaign');
+    expect(block.text.text).toContain('p:01012345678');
+    expect(block.accessory.url).toBe('https://tutoring.superfastsat.com/admin/crm');
+  });
+
+  it('REQ-03: adsetName null이면 "없음" 표시', async () => {
+    const { buildLeadSlackBlocks } = await import('@/lib/meta-lead-webhook');
+    const { blocks } = buildLeadSlackBlocks({
+      leadData: { id: '1', field_data: [], ad_name: 'Ad' },
+      localTz: null,
+      labels: new Map(),
+      adsetName: null,
+    });
+    const block = blocks[0] as { text: { text: string } };
+    expect(block.text.text).toContain('광고세트:* 없음');
+  });
+});
+
+// ── sendSlackLeadMessage fallback 단위 테스트 ─────────────────────────────────
+
+describe('sendSlackLeadMessage fallback (unit)', () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it('REQ-FIX-01: botToken 실패 시 webhookUrl로 fallback 전송', async () => {
+    const { sendSlackLeadMessage } = await vi.importActual<typeof import('@/lib/meta-lead-webhook')>('@/lib/meta-lead-webhook');
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ ok: false, error: 'token_expired' }) } as unknown as Response)
+      .mockResolvedValueOnce({ ok: true, text: () => Promise.resolve('') } as unknown as Response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await sendSlackLeadMessage({ text: 'test', blocks: [], botToken: 'xoxb-bad', channelId: 'C123', webhookUrl: 'https://hooks.slack.com/fallback' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toBe('https://hooks.slack.com/fallback');
+  });
+
+  it('REQ-FIX-01: botToken 실패 + webhookUrl 없으면 throw', async () => {
+    const { sendSlackLeadMessage } = await vi.importActual<typeof import('@/lib/meta-lead-webhook')>('@/lib/meta-lead-webhook');
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ ok: false, error: 'token_revoked' }) } as unknown as Response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(sendSlackLeadMessage({ text: 'test', blocks: [], botToken: 'xoxb-bad', channelId: 'C123' }))
+      .rejects.toThrow('Slack API error: token_revoked');
   });
 });
 
