@@ -4,13 +4,17 @@ import crypto from 'crypto';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
-const mockSingle = vi.fn();
+const mockSingle = vi.hoisted(() => vi.fn());
+const mockEq = vi.hoisted(() => vi.fn().mockResolvedValue({ error: null }));
+const mockUpdate = vi.hoisted(() => vi.fn().mockReturnValue({ eq: mockEq }));
+
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
     from: () => ({
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({ single: mockSingle }),
       }),
+      update: mockUpdate,
     }),
   },
 }));
@@ -70,6 +74,8 @@ describe('POST /api/slack/interactions', () => {
       data: { id: 'student-1', name: '카톡_20260921_143022' },
       error: null,
     });
+    mockUpdate.mockReturnValue({ eq: mockEq });
+    mockEq.mockResolvedValue({ error: null });
   });
 
   // REQ-003: 서명 검증
@@ -159,6 +165,45 @@ describe('POST /api/slack/interactions', () => {
       });
       const res = await POST(makeSlackRequest(body));
       expect(res.status).toBe(400);
+    });
+  });
+
+  // REQ-BTN-03~04: 재문의 리드 인입 복귀
+  describe('reinquiry_restore action (REQ-BTN-03~04)', () => {
+    const STUDENT_ID = 'student-abc-123';
+
+    function makeReinquiryPayload() {
+      return makePayload({
+        actions: [{ action_id: 'reinquiry_restore', value: STUDENT_ID }],
+        message: { ts: '1234567890.123456', blocks: [{ type: 'section', text: { type: 'mrkdwn', text: '⚠️ 재문의' } }] },
+        user: { name: 'test_user' },
+      });
+    }
+
+    it('REQ-BTN-03: DB funnel_stage "0"으로 업데이트', async () => {
+      const { POST } = await import('../route');
+      const res = await POST(makeSlackRequest(makeReinquiryPayload()));
+      expect(res.status).toBe(200);
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ funnel_stage: '0', lead_status: 'active' }),
+      );
+      expect(mockEq).toHaveBeenCalledWith('id', STUDENT_ID);
+    });
+
+    it('REQ-BTN-04: chat.update 호출', async () => {
+      const { POST } = await import('../route');
+      await POST(makeSlackRequest(makeReinquiryPayload()));
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://slack.com/api/chat.update',
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    it('DB 실패 시 200 반환 (메시지 갱신 없음)', async () => {
+      mockEq.mockResolvedValueOnce({ error: { message: 'db error' } });
+      const { POST } = await import('../route');
+      const res = await POST(makeSlackRequest(makeReinquiryPayload()));
+      expect(res.status).toBe(200);
     });
   });
 });

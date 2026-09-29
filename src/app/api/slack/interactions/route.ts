@@ -16,11 +16,12 @@ type StateValues = {
 
 type BlockActionsPayload = {
   type: string;
-  actions: { action_id: string }[];
+  actions: { action_id: string; value?: string }[];
   channel: { id: string };
-  message: { ts: string };
+  message: { ts: string; blocks?: unknown[] };
   response_url: string;
   state: { values: StateValues };
+  user?: { name?: string };
 };
 
 function toKSTNaive(iso: string): string {
@@ -74,7 +75,42 @@ export async function POST(request: NextRequest) {
   // 드롭다운 변경 이벤트는 무시 (버튼 클릭만 처리)
   if (payload.type !== 'block_actions') return NextResponse.json({ ok: true });
   const action = payload.actions[0];
-  if (!action || action.action_id !== 'submit_lead') return NextResponse.json({ ok: true });
+  if (!action) return NextResponse.json({ ok: true });
+
+  // REQ-BTN-03~04: 재문의 리드 인입 복귀
+  if (action.action_id === 'reinquiry_restore') {
+    const studentId = action.value ?? '';
+    const now = new Date();
+    const kst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+    const { error } = await supabaseAdmin
+      .from('students')
+      .update({
+        funnel_stage: '0',
+        lead_status: 'active',
+        inquiry_date: kst.toISOString().slice(0, 16) + ':00',
+      })
+      .eq('id', studentId);
+
+    if (error) {
+      console.error('[slack/interactions] reinquiry_restore DB 실패:', error);
+      return NextResponse.json({ ok: true });
+    }
+
+    const userName = payload.user?.name ?? '담당자';
+    const sectionBlock = payload.message.blocks?.[0];
+    await updateMessage(
+      payload.channel.id,
+      payload.message.ts,
+      [
+        sectionBlock,
+        { type: 'section', text: { type: 'mrkdwn', text: `✅ *리드 인입 복귀 완료* — ${userName}` } },
+      ],
+      '✅ 리드 인입 복귀 완료',
+    );
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action.action_id !== 'submit_lead') return NextResponse.json({ ok: true });
 
   // REQ-006: 미선택 방어
   const vals = payload.state?.values ?? {};
