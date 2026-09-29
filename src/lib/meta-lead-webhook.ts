@@ -208,6 +208,7 @@ export interface SlackLeadMessage {
   localTz: string | null;
   labels: Map<string, string>;
   adsetName?: string | null;
+  existingStudentId?: string | null;
 }
 
 export function buildLeadSlackText({ leadData, localTz, labels }: SlackLeadMessage): string {
@@ -241,7 +242,7 @@ export interface SlackLeadBlocksResult {
   blocks: Record<string, unknown>[];
 }
 
-export function buildLeadSlackBlocks({ leadData, localTz, labels, adsetName }: SlackLeadMessage): SlackLeadBlocksResult {
+export function buildLeadSlackBlocks({ leadData, localTz, labels, adsetName, existingStudentId }: SlackLeadMessage): SlackLeadBlocksResult {
   const createdUtc = leadData.created_time ? new Date(leadData.created_time) : new Date();
   const kstStr = toIsoWithOffset(createdUtc, 'Asia/Seoul');
   const localStr = localTz ? `${toIsoWithOffset(createdUtc, localTz)} (${localTz})` : '알 수 없음';
@@ -249,6 +250,7 @@ export function buildLeadSlackBlocks({ leadData, localTz, labels, adsetName }: S
   const adName = leadData.ad_name ?? '없음';
   const campaignName = leadData.campaign_name ?? '없음';
   const adsetStr = adsetName ?? '없음';
+  const isReinquiry = !!existingStudentId;
 
   const fieldLines = (leadData.field_data ?? []).map(f => {
     const { label, isPhone } = resolveFieldLabel(f.name, labels);
@@ -258,6 +260,7 @@ export function buildLeadSlackBlocks({ leadData, localTz, labels, adsetName }: S
   }).join('\n');
 
   const bodyText = [
+    isReinquiry ? `⚠️ *기존 등록 리드 재문의*` : null,
     `*작성일(한국):* ${kstStr}`,
     `*작성일(현지):* ${localStr}`,
     `*크리에이티브:* ${adName}`,
@@ -265,21 +268,30 @@ export function buildLeadSlackBlocks({ leadData, localTz, labels, adsetName }: S
     `*캠페인:* ${campaignName}`,
     '',
     fieldLines,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 
   const nameField = (leadData.field_data ?? []).find(f => ['full_name', 'name'].includes(f.name) || f.name.includes('이름'));
   const fallbackName = nameField?.values?.[0] ?? leadgenIdShort(leadData.id);
 
+  const crmUrl = isReinquiry
+    ? `https://tutoring.superfastsat.com/admin/crm?studentId=${existingStudentId}`
+    : 'https://tutoring.superfastsat.com/admin/crm';
+
+  const buttonText = isReinquiry ? '기존 카드 보기 →' : 'CRM에서 보기 →';
+  const headerText = isReinquiry
+    ? `⚠️ 재문의: ${adName} — ${fallbackName}`
+    : `새 Meta 리드: ${adName} — ${fallbackName}`;
+
   return {
-    text: `새 Meta 리드: ${adName} — ${fallbackName}`,
+    text: headerText,
     blocks: [
       {
         type: 'section',
         text: { type: 'mrkdwn', text: bodyText },
         accessory: {
           type: 'button',
-          text: { type: 'plain_text', text: 'CRM에서 보기 →' },
-          url: 'https://tutoring.superfastsat.com/admin/crm',
+          text: { type: 'plain_text', text: buttonText },
+          url: crmUrl,
         },
       },
     ],

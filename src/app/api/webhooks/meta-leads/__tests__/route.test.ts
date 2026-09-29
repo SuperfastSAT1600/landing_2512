@@ -8,12 +8,17 @@ import { NextRequest } from 'next/server';
 const mockInsert = vi.hoisted(() => vi.fn());
 const mockSelect = vi.hoisted(() => vi.fn());
 const mockEq = vi.hoisted(() => vi.fn());
+const mockOr = vi.hoisted(() => vi.fn());
+const mockLimit = vi.hoisted(() => vi.fn());
 const mockMaybeSingle = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
     from: vi.fn(() => ({
-      select: mockSelect.mockReturnValue({ eq: mockEq.mockReturnValue({ maybeSingle: mockMaybeSingle }) }),
+      select: mockSelect.mockReturnValue({
+        eq: mockEq.mockReturnValue({ maybeSingle: mockMaybeSingle }),
+        or: mockOr.mockReturnValue({ limit: mockLimit.mockReturnValue({ maybeSingle: mockMaybeSingle }) }),
+      }),
       insert: mockInsert.mockResolvedValue({ error: null }),
     })),
   },
@@ -123,7 +128,8 @@ describe('POST /api/webhooks/meta-leads', () => {
   beforeEach(() => {
     setEnv();
     vi.clearAllMocks();
-    mockMaybeSingle.mockResolvedValue({ data: null });
+    mockMaybeSingle.mockResolvedValue({ data: null }); // meta_lead_id 중복 없음 + 전화번호 중복 없음
+    mockOr.mockReturnValue({ limit: mockLimit.mockReturnValue({ maybeSingle: mockMaybeSingle }) });
     mockInsert.mockResolvedValue({ error: null });
     mockFetchAdTimezone.mockResolvedValue('America/New_York');
     mockFetchAdsetName.mockResolvedValue('TestAdset');
@@ -283,6 +289,41 @@ describe('POST /api/webhooks/meta-leads', () => {
     expect(mockInsert).toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ ad_name: null })]),
     );
+  });
+
+  it('REQ-PHONE-01: 동일 전화번호 기존 학생 존재 → 새 CRM 카드 생성 안 함', async () => {
+    mockFetchMetaLeadData.mockResolvedValue(makeLeadData());
+    // 전화번호 중복 감지용 mock: meta_lead_id 없음, 전화번호로 기존 학생 발견
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null })        // meta_lead_id 중복 없음
+      .mockResolvedValueOnce({ data: { id: 'existing-student-id', name: '홍길동' } }); // 전화번호 중복
+    const { POST } = await import('../route');
+    await POST(signedRequest(JSON.stringify(makePayload())));
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('REQ-PHONE-02: 재문의 Slack 알림에 기존 카드 링크 포함', async () => {
+    mockFetchMetaLeadData.mockResolvedValue(makeLeadData());
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null })
+      .mockResolvedValueOnce({ data: { id: 'existing-student-id', name: '홍길동' } });
+    const { POST } = await import('../route');
+    await POST(signedRequest(JSON.stringify(makePayload())));
+    expect(mockSendSlackLeadMessage).toHaveBeenCalled();
+    const { blocks } = mockSendSlackLeadMessage.mock.calls[0][0] as { blocks: { text?: { text: string }; accessory?: { url: string } }[] };
+    const bodyText = blocks[0]?.text?.text ?? '';
+    expect(bodyText).toContain('기존 등록 리드');
+    expect(blocks[0]?.accessory?.url).toContain('existing-student-id');
+  });
+
+  it('REQ-PHONE-03: 전화번호 없는 리드 → 신규 등록 유지', async () => {
+    mockFetchMetaLeadData.mockResolvedValue(makeLeadData({
+      field_data: [{ name: 'full_name', values: ['이름만'] }],
+    }));
+    mockMaybeSingle.mockResolvedValue({ data: null });
+    const { POST } = await import('../route');
+    await POST(signedRequest(JSON.stringify(makePayload())));
+    expect(mockInsert).toHaveBeenCalled();
   });
 
   it('REQ-BUG-01: SLACK_BOT_TOKEN 실패 시 webhookUrl fallback 없음 재현 (버그)', async () => {

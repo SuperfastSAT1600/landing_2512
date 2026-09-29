@@ -193,10 +193,27 @@ async function processLeadEntry(
     ? await fetchFormLabels(leadData.form_id, accessToken).catch(() => new Map<string, string>())
     : new Map<string, string>();
 
+  // REQ-PHONE-01: 전화번호 기반 기존 리드 중복 체크
+  const { name: formName, phone } = parseLeadFields(leadData.field_data);
+
+  let existingStudentId: string | null = null;
+  if (phone) {
+    const normalizedPhone = phone.startsWith('+82') ? '0' + phone.slice(3) : phone;
+    const { data: existingByPhone } = await supabaseAdmin
+      .from('students')
+      .select('id, name')
+      .or(`parent_phone.eq.${phone},parent_phone.eq.${normalizedPhone}`)
+      .limit(1)
+      .maybeSingle();
+    if (existingByPhone) {
+      existingStudentId = existingByPhone.id;
+    }
+  }
+
   // REQ-A04: Slack Block Kit 알림 (Bot Token 우선, incoming webhook fallback)
   if (slackWebhookUrl || process.env.SLACK_BOT_TOKEN) {
     try {
-      const { text, blocks } = buildLeadSlackBlocks({ leadData, localTz, labels, adsetName });
+      const { text, blocks } = buildLeadSlackBlocks({ leadData, localTz, labels, adsetName, existingStudentId });
       await sendSlackLeadMessage({
         text,
         blocks,
@@ -209,8 +226,12 @@ async function processLeadEntry(
     }
   }
 
+  // REQ-PHONE-01: 재문의 리드는 새 CRM 카드 생성 안 함
+  if (existingStudentId) {
+    return { leadgenId, status: 'reinquiry' };
+  }
+
   // REQ-004: Supabase CRM 등록
-  const { name: formName, phone } = parseLeadFields(leadData.field_data);
 
   const now = new Date();
   const kst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
