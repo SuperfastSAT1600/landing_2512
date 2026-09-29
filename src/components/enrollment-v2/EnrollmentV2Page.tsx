@@ -264,10 +264,10 @@ const MANAGED_PKGS = [
   { id: '1on1-40h',  hours: 40, totalPrice: 5390000, pricePerHour: 134750, discountRate: 18 },
 ];
 
-/* 대표코치 수업권 — 할인 없는 정액 (시간당 18만원) */
-const DIRECTOR_PRICE_PER_HOUR = 180000;
+/* 대표코치 수업권 — 할인 없는 정액 (시간당 21만원), 10시간권만 판매 */
+const DIRECTOR_PRICE_PER_HOUR = 210000;
 
-const DIRECTOR_PKGS = [10, 20, 30].map(hours => ({
+const DIRECTOR_PKGS = [10].map(hours => ({
   id: `1on1-director-${hours}h`,
   hours,
   totalPrice: hours * DIRECTOR_PRICE_PER_HOUR,
