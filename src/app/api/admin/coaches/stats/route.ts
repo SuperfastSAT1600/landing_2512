@@ -117,11 +117,12 @@ async function fetchSFv2StudentCounts(teacherIds: string[]): Promise<{
     );
 
     // Step 5: active payment 학생 집합 구축 (재원 카운트용)
-    // payments 전체 스캔 후 메모리 필터 (in() URL 초과 방지)
+    // payments 전체 스캔 — 코치 배정 여부와 무관하게 전체 재원생도 함께 집계
     const allStudentIds = new Set(
         [...teacherStudents.values()].flatMap(s => [...s])
     );
-    const activePayStudents = new Set<string>();
+    const activePayStudents = new Set<string>(); // 코치 담당 학생 중 재원생
+    const globalActiveStudents = new Set<string>(); // SRM 기준 전체 재원생
     await scanAll<{ student_id: string; management_status: string | null }>(
         (f, t) => supabaseSFv2
             .from('payments')
@@ -129,9 +130,9 @@ async function fetchSFv2StudentCounts(teacherIds: string[]): Promise<{
             .range(f, t),
         (rows) => {
             for (const p of rows) {
-                if (p.management_status === 'active' && allStudentIds.has(p.student_id)) {
-                    activePayStudents.add(p.student_id);
-                }
+                if (p.management_status !== 'active') continue;
+                globalActiveStudents.add(p.student_id);
+                if (allStudentIds.has(p.student_id)) activePayStudents.add(p.student_id);
             }
         },
     );
@@ -142,7 +143,7 @@ async function fetchSFv2StudentCounts(teacherIds: string[]): Promise<{
         studentCount.set(teacher, students.size);
         activeStudentCount.set(teacher, [...students].filter(s => activePayStudents.has(s)).length);
     }
-    return { studentCount, activeStudentCount, uniqueActiveStudentCount: activePayStudents.size };
+    return { studentCount, activeStudentCount, uniqueActiveStudentCount: globalActiveStudents.size };
 }
 
 export async function GET(request: NextRequest) {
