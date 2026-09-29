@@ -14,6 +14,8 @@ export interface CoachStat {
 
 export interface CoachStatsResponse {
     stats: Record<string, CoachStat>;
+    /** SFv2 전체 유니크 재원생 수 (중복 제거) */
+    uniqueActiveStudentCount: number;
 }
 
 async function scanAll<T>(
@@ -37,9 +39,10 @@ async function scanAll<T>(
 async function fetchSFv2StudentCounts(teacherIds: string[]): Promise<{
     studentCount: Map<string, number>;
     activeStudentCount: Map<string, number>;
+    uniqueActiveStudentCount: number;
 }> {
     if (teacherIds.length === 0) {
-        return { studentCount: new Map(), activeStudentCount: new Map() };
+        return { studentCount: new Map(), activeStudentCount: new Map(), uniqueActiveStudentCount: 0 };
     }
 
     // Step 1: scheduled_events 전체 스캔 (coach_room, 해당 teacher들)
@@ -139,7 +142,7 @@ async function fetchSFv2StudentCounts(teacherIds: string[]): Promise<{
         studentCount.set(teacher, students.size);
         activeStudentCount.set(teacher, [...students].filter(s => activePayStudents.has(s)).length);
     }
-    return { studentCount, activeStudentCount };
+    return { studentCount, activeStudentCount, uniqueActiveStudentCount: activePayStudents.size };
 }
 
 export async function GET(request: NextRequest) {
@@ -183,10 +186,12 @@ export async function GET(request: NextRequest) {
         // SFv2 학생 카운트 (실패 시 non-fatal)
         let sfv2StudentCount = new Map<string, number>();
         let sfv2ActiveStudentCount = new Map<string, number>();
+        let sfv2UniqueActiveStudentCount = 0;
         try {
             const result = await fetchSFv2StudentCounts(teacherIds);
             sfv2StudentCount = result.studentCount;
             sfv2ActiveStudentCount = result.activeStudentCount;
+            sfv2UniqueActiveStudentCount = result.uniqueActiveStudentCount;
         } catch {
             // SFv2 연결 실패 → 0으로 유지
         }
@@ -204,7 +209,7 @@ export async function GET(request: NextRequest) {
             };
         }
 
-        return NextResponse.json({ stats } satisfies CoachStatsResponse);
+        return NextResponse.json({ stats, uniqueActiveStudentCount: sfv2UniqueActiveStudentCount } satisfies CoachStatsResponse);
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         return NextResponse.json({ error: msg }, { status: 500 });

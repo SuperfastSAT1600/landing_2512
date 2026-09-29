@@ -43,6 +43,7 @@ function Th({
 export default function CoachStatusPage() {
     const [coaches, setCoaches] = useState<CoachData[]>([]);
     const [stats, setStats] = useState<Record<string, CoachStat>>({});
+    const [uniqueActiveStudentCount, setUniqueActiveStudentCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [statLoading, setStatLoading] = useState(true);
     const [togglingSlug, setTogglingSlug] = useState<string | null>(null);
@@ -75,8 +76,9 @@ export default function CoachStatusPage() {
             const res = await fetch('/api/admin/coaches/stats', {
                 headers: { 'x-admin-key': getAdminKey() },
             });
-            const data: { stats?: Record<string, CoachStat> } = await res.json();
+            const data: { stats?: Record<string, CoachStat>; uniqueActiveStudentCount?: number } = await res.json();
             if (data.stats) setStats(data.stats);
+            if (data.uniqueActiveStudentCount != null) setUniqueActiveStudentCount(data.uniqueActiveStudentCount);
         } catch {
             // non-fatal
         } finally {
@@ -156,7 +158,7 @@ export default function CoachStatusPage() {
 
     // 요약 집계 (활성 코치 기준)
     const activeCoaches = coaches.filter(c => c.isActive);
-    const summaryEnrolled = activeCoaches.reduce((s, c) => s + (stats[c.slug]?.activeStudentCount ?? 0), 0);
+    const summaryEnrolled = uniqueActiveStudentCount; // 유니크 재원생 (중복 제거)
     const summaryTotal = activeCoaches.reduce((s, c) => s + (stats[c.slug]?.studentCount ?? 0), 0);
     const summaryHours = activeCoaches.reduce((s, c) => s + (stats[c.slug]?.totalHours ?? 0), 0);
 
@@ -187,7 +189,7 @@ export default function CoachStatusPage() {
                 {!statLoading && (
                     <div className="grid grid-cols-3 gap-3">
                         {[
-                            { label: '재원생 합계', value: summaryEnrolled, unit: '명', color: 'text-emerald-300', desc: '현재 수업 중인 학생' },
+                            { label: '재원생 합계', value: summaryEnrolled, unit: '명', color: 'text-emerald-300', desc: '유니크 재원생 (중복 제거)' },
                             { label: '전체 학생 합계', value: summaryTotal, unit: '명', color: 'text-white', desc: '활성 코치 누적 담당' },
                             { label: '누적 수업 시간', value: Math.round(summaryHours * 10) / 10, unit: 'h', color: 'text-blue-300', desc: '활성 코치 contracted' },
                         ].map(item => (
