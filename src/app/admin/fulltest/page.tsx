@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { PracticeDetailPanel } from './PracticeDetailPanel';
 
 interface FulltestSubmission {
   id: string;
@@ -142,6 +143,7 @@ export default function TestContentsPage() {
   const [codesLoading, setCodesLoading] = useState(false);
   const [newCodeForm, setNewCodeForm] = useState({ code: '', label: '', maxUses: 50, mode: 'untimed' as string });
   const [creatingCode, setCreatingCode] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<SubmissionRow | null>(null);
 
   const adminKey = typeof window !== 'undefined' ? localStorage.getItem('admin_key') ?? '' : '';
 
@@ -224,6 +226,7 @@ export default function TestContentsPage() {
   const selectedTest = TESTS.find((t) => t.id === selectedTestId) ?? TESTS[0];
 
   return (
+    <>
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#e4e4e7' }}>
       {/* Header */}
       <div style={{ padding: '32px 32px 24px', borderBottom: '1px solid #27272a' }}>
@@ -556,10 +559,20 @@ export default function TestContentsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {submissions.map((row) => (
+                    {submissions.map((row) => {
+                      const isPractice = selectedTest.apiType === 'practice';
+                      return (
                       <tr
                         key={row.id}
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                        onClick={isPractice ? () => setSelectedRow(row) : undefined}
+                        style={{
+                          borderBottom: '1px solid rgba(255,255,255,0.04)',
+                          cursor: isPractice ? 'pointer' : 'default',
+                          background: selectedRow?.id === row.id ? 'rgba(96,133,255,0.07)' : 'transparent',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={(e) => { if (isPractice) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                        onMouseLeave={(e) => { if (isPractice) e.currentTarget.style.background = selectedRow?.id === row.id ? 'rgba(96,133,255,0.07)' : 'transparent'; }}
                       >
                         <td style={{ padding: '12px 12px', fontWeight: 500 }}>
                           {row.instagram_id ? (() => {
@@ -598,7 +611,8 @@ export default function TestContentsPage() {
                           <ScoreBadge score={row.score} />
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -607,6 +621,16 @@ export default function TestContentsPage() {
         </div>
       </div>
     </div>
+
+    {selectedRow && selectedTest.apiType === 'practice' && (
+      <PracticeDetailPanel
+        submissionId={selectedRow.id}
+        testId={selectedTest.id}
+        adminKey={adminKey}
+        onClose={() => setSelectedRow(null)}
+      />
+    )}
+    </>
   );
 }
 
