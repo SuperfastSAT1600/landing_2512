@@ -282,20 +282,32 @@ export function buildLeadSlackBlocks({ leadData, localTz, labels, adsetName, exi
     ? `⚠️ 재문의: ${adName} — ${fallbackName}`
     : `새 Meta 리드: ${adName} — ${fallbackName}`;
 
-  return {
-    text: headerText,
-    blocks: [
-      {
-        type: 'section',
-        text: { type: 'mrkdwn', text: bodyText },
-        accessory: {
-          type: 'button',
-          text: { type: 'plain_text', text: buttonText },
-          url: crmUrl,
-        },
+  const blocks: Record<string, unknown>[] = [
+    {
+      type: 'section',
+      text: { type: 'mrkdwn', text: bodyText },
+      accessory: {
+        type: 'button',
+        text: { type: 'plain_text', text: buttonText },
+        url: crmUrl,
       },
-    ],
-  };
+    },
+  ];
+
+  if (isReinquiry) {
+    blocks.push({
+      type: 'actions',
+      elements: [{
+        type: 'button',
+        text: { type: 'plain_text', text: '리드 인입으로 복귀 →' },
+        style: 'primary',
+        action_id: 'reinquiry_restore',
+        value: existingStudentId,
+      }],
+    });
+  }
+
+  return { text: headerText, blocks };
 }
 
 function leadgenIdShort(id: string): string {
