@@ -151,3 +151,38 @@ describe('StrategyHistorySection — 진행 전/후 슬롯', () => {
     expect(body.strategy_history.map((e: { phase: string }) => e.phase).sort()).toEqual(['applied', 'planned']);
   });
 });
+
+describe('StrategyHistorySection — 전략이 없는 카테고리', () => {
+  const CATS = [{ id: 'cat-1', name: '컨택 전략', sort_order: 0 }];
+
+  function renderWith(leadType: string | null) {
+    mockFetch([], CATS);
+    const student = { id: 'stu-1', lead_type: leadType, strategy_history: [] } as unknown as Student;
+    render(<StrategyHistorySection student={student} adminKey="k" onUpdate={vi.fn()} />);
+  }
+
+  // REQ-001
+  it('전략이 0개면 기록 버튼 대신 안내 문구를 보여준다', async () => {
+    renderWith(null);
+    await openSection('컨택 전략');
+
+    expect(await screen.findByText(/등록된 전략이 없습니다/)).toBeTruthy();
+    expect(screen.queryByText('진행 전 기록')).toBeNull();
+    expect(screen.queryByText('진행 후 기록')).toBeNull();
+  });
+
+  // REQ-003
+  it('B2B 학생이면 어느 라이브러리가 비었는지 문구에 드러낸다', async () => {
+    renderWith('B2B');
+    await openSection('컨택 전략');
+
+    expect(await screen.findByText(/B2B 전략 라이브러리/)).toBeTruthy();
+  });
+
+  it('B2B가 아니면 B2C 라이브러리라고 안내한다', async () => {
+    renderWith(null);
+    await openSection('컨택 전략');
+
+    expect(await screen.findByText(/B2C 전략 라이브러리/)).toBeTruthy();
+  });
+});
