@@ -1,7 +1,7 @@
 'use client';
 
 import NextLink from 'next/link';
-import { ArrowLeft, LayoutTemplate } from 'lucide-react';
+import { ArrowLeft, LayoutTemplate, Smartphone, Monitor } from 'lucide-react';
 
 interface EditorHeaderProps {
     category: string;
@@ -9,14 +9,16 @@ interface EditorHeaderProps {
     editId: string | null;
     viewMode: 'edit' | 'split' | 'preview';
     showSettings: boolean;
+    mobileView: boolean;
     onViewModeChange: (mode: 'edit' | 'split' | 'preview') => void;
     onSave: () => void;
     onToggleSettings: () => void;
+    onToggleMobileView: () => void;
 }
 
 export function EditorHeader({
-    category, saving, editId, viewMode, showSettings,
-    onViewModeChange, onSave, onToggleSettings,
+    category, saving, editId, viewMode, showSettings, mobileView,
+    onViewModeChange, onSave, onToggleSettings, onToggleMobileView,
 }: EditorHeaderProps) {
     return (
         <header className="fixed top-0 w-full h-16 flex items-center justify-between px-6 z-[100] bg-[#151719]/90 backdrop-blur-sm border-b border-white/5">
@@ -54,6 +56,14 @@ export function EditorHeader({
                     className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
                 >
                     {editId ? 'Update' : 'Publish'}
+                </button>
+
+                <button
+                    onClick={onToggleMobileView}
+                    title={mobileView ? '데스크탑 뷰로 전환' : '모바일 뷰로 전환'}
+                    className={`p-2 rounded transition-colors ${mobileView ? 'bg-blue-500/20 text-blue-400' : 'text-gray-400 hover:text-white'}`}
+                >
+                    {mobileView ? <Smartphone size={20} /> : <Monitor size={20} />}
                 </button>
 
                 <button

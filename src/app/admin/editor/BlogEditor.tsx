@@ -21,6 +21,7 @@ export default function BlogEditor() {
 
     const [viewMode, setViewMode] = useState<'edit' | 'split' | 'preview'>('edit');
     const [showSettings, setShowSettings] = useState(false);
+    const [mobileView, setMobileView] = useState(true);
 
     const form = usePostForm();
     const { editor, loadContent } = useEditorSetup();
@@ -106,9 +107,11 @@ export default function BlogEditor() {
             <EditorHeader
                 category={form.category} saving={form.saving} editId={editId}
                 viewMode={viewMode} showSettings={showSettings}
+                mobileView={mobileView}
                 onViewModeChange={setViewMode}
                 onSave={() => form.handleSave(editor, editId)}
                 onToggleSettings={() => setShowSettings(s => !s)}
+                onToggleMobileView={() => setMobileView(v => !v)}
             />
 
             {viewMode !== 'preview' && (
@@ -128,6 +131,7 @@ export default function BlogEditor() {
 
             <EditorCanvas
                 editor={editor} viewMode={viewMode} showSettings={showSettings}
+                mobileView={mobileView}
                 title={form.title} setTitle={form.setTitle}
                 date={form.date} category={form.category}
                 featuredImage={form.featuredImage}
