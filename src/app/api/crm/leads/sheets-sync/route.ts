@@ -19,6 +19,9 @@ function isSyncAuthenticated(request: NextRequest): boolean {
  * 동일 전화번호가 존재하면 campaign_tags만 병합(merge)한다.
  */
 export async function POST(request: NextRequest) {
+  // Meta 웹훅이 직접 처리하므로 비활성화
+  return NextResponse.json({ ok: true, skipped: 'disabled' });
+
   if (!isSyncAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
