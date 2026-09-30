@@ -152,6 +152,8 @@ export default function CrmPage() {
         const deletedId = payload.old.id;
         if (deletedId) {
           setStudents(prev => prev.filter(s => s.id !== deletedId));
+          // 삭제된 리드의 상세 패널을 열어둔 채로 두면 편집·저장이 0행 PATCH로 이어진다.
+          setSelectedStudent(prev => (prev?.id === deletedId ? null : prev));
         }
       }
     },
