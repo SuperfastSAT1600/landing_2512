@@ -18,9 +18,17 @@ function isSyncAuthenticated(request: NextRequest): boolean {
  * Google Apps Script에서 META 인스턴트폼 리드 데이터를 수신해 CRM에 등록한다.
  * 동일 전화번호가 존재하면 campaign_tags만 병합(merge)한다.
  */
+/**
+ * Meta 웹훅이 CRM 카드를 직접 만들므로 시트싱크는 비활성화 상태다.
+ * 무조건 return 하면 아래 코드가 도달 불가가 되어 TS 흐름 분석이 꺼지고
+ * `existing` narrowing이 사라져 빌드가 깨진다 — 플래그 분기로 둔다.
+ */
+const SHEETS_SYNC_DISABLED: boolean = true;
+
 export async function POST(request: NextRequest) {
-  // Meta 웹훅이 직접 처리하므로 비활성화
-  return NextResponse.json({ ok: true, skipped: 'disabled' });
+  if (SHEETS_SYNC_DISABLED) {
+    return NextResponse.json({ ok: true, skipped: 'disabled' });
+  }
 
   if (!isSyncAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
