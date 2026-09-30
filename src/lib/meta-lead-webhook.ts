@@ -271,7 +271,7 @@ export function buildLeadSlackBlocks({ leadData, localTz, labels, adsetName, exi
   ].filter(Boolean).join('\n');
 
   const nameField = (leadData.field_data ?? []).find(f => ['full_name', 'name'].includes(f.name) || f.name.includes('이름'));
-  const fallbackName = nameField?.values?.[0] ?? leadgenIdShort(leadData.id);
+  const fallbackName = nameField?.values?.[0] ?? '(이름 없음)';
 
   const crmUrl = isReinquiry
     ? `https://tutoring.superfastsat.com/admin/crm?studentId=${existingStudentId}`

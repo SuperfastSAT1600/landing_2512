@@ -242,7 +242,7 @@ async function processLeadEntry(
     + String(kst.getHours()).padStart(2, '0')
     + String(kst.getMinutes()).padStart(2, '0')
     + String(kst.getSeconds()).padStart(2, '0');
-  const name = formName ?? `인스타_${stamp}`;
+  const name = formName ?? '(이름 없음)';
 
   const { error: dbError } = await supabaseAdmin
     .from('students')
