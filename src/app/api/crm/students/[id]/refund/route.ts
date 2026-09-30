@@ -43,7 +43,8 @@ export async function POST(
       student_name: student.name,
       amount: -refund_amount,
       payment_type: '환불',
-      payment_method: '계좌이체',
+      // 환불 경로는 실제 수단을 모른다 — 추측해서 채우지 않는다.
+      payment_method: null,
       product: '환불',
       notes: refund_reason,
       tax_type: '면세',

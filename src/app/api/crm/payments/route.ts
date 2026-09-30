@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     coach_name?: string;
     amount: number;
     payment_type: string;
-    payment_method: string;
+    payment_method?: string | null;
     plan_duration?: string;
     plan_subjects?: string;
     paid_at: string;
@@ -70,7 +70,8 @@ export async function POST(request: NextRequest) {
       coach_name: body.coach_name ?? null,
       amount: body.amount,
       payment_type: body.payment_type ?? '최초결제',
-      payment_method: body.payment_method ?? '계좌이체',
+      // 모르는 결제수단에 '계좌이체'를 박지 않는다 — NULL이 "기록되지 않음"이다.
+      payment_method: body.payment_method ?? null,
       plan_duration: body.plan_duration ?? null,
       plan_subjects: body.plan_subjects ?? null,
       paid_at: body.paid_at,

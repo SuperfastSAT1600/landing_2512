@@ -311,6 +311,17 @@ export function getRenewalOutcomeQualityLabel(
  */
 export type StrategyPhase = 'planned' | 'applied';
 
+/**
+ * 결제수단. 값이 없으면(NULL) "기록되지 않음"이다 —
+ * 예전에는 스키마 기본값 '계좌이체'가 박혀서 "계좌이체"와 "미입력"을 구분할 수 없었다.
+ */
+export const PAYMENT_METHODS = ['계좌이체', '신용카드', '토스결제', 'Stripe', '기타'] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export function isPaymentMethod(v: unknown): v is PaymentMethod {
+  return typeof v === 'string' && (PAYMENT_METHODS as readonly string[]).includes(v);
+}
+
 export const STRATEGY_PHASE_LABELS: Record<StrategyPhase, string> = {
   planned: '진행 전',
   applied: '진행 후',
