@@ -81,12 +81,15 @@ export async function PATCH(
     updateFields.stage_history = history;
   }
 
+  // maybeSingle: 삭제된 리드를 수정하면 0행이 돌아온다. single()이면 PostgREST가
+  // PGRST116("Cannot coerce the result to a single JSON object")를 DB 오류로 올려보내
+  // 그 원문이 그대로 사용자 alert에 노출된다.
   const { data, error } = await supabaseAdmin
     .from('students')
     .update(updateFields)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('[crm/students PATCH]', error);
@@ -97,7 +100,15 @@ export async function PATCH(
   }
 
   if (!data) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return NextResponse.json(
+      {
+        error: {
+          code: 'STUDENT_NOT_FOUND',
+          message: '이미 삭제된 리드입니다. 목록을 새로고침해 주세요.',
+        },
+      },
+      { status: 404 }
+    );
   }
 
   // 상담 기록 변경 시 임베딩 백그라운드 갱신

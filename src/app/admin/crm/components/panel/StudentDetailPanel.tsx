@@ -47,7 +47,7 @@ export function StudentDetailPanel({
     editForm,
     setEditForm,
     loadingFresh,
-  } = usePanelData(student.id, adminKey, student);
+  } = usePanelData(student.id, adminKey, student, onClose);
 
   const [duplicateNames, setDuplicateNames] = useState<string[]>([]);
   const [plaudOpen, setPlaudOpen] = useState(false);
