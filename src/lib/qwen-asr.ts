@@ -120,6 +120,64 @@ async function pollTask(
   throw new AsrTimeoutError();
 }
 
+/** 작업 상태 1회 조회 결과. 진행 중이면 아무것도 저장할 게 없다. */
+export type AsrTaskCheck = { status: 'running' } | { status: 'done'; text: string };
+
+/** 완료된 작업의 transcription_url 문서를 읽어 화자 라벨이 붙은 전사문으로 만든다. */
+async function readTranscript(transcriptionUrl: string): Promise<string> {
+  const doc = (await (await fetch(transcriptionUrl)).json()) as {
+    transcripts?: { text?: string; sentences?: Sentence[] }[];
+  };
+  const transcript = doc.transcripts?.[0];
+  const text = joinBySpeaker(transcript?.sentences ?? []) || (transcript?.text ?? '').trim();
+  if (!text) throw new AsrFailedError('전사 결과가 비어 있습니다.');
+  return text;
+}
+
+/**
+ * 전사 작업만 제출하고 즉시 task_id를 돌려준다.
+ *
+ * 대화형 경로(상담 메모)는 이 함수로 제출만 하고 대기는 클라이언트 폴링에 맡긴다 —
+ * 한 요청 안에서 끝까지 기다리면 DashScope 큐 지연 편차를 서버리스 실행 한도가 못 버티고,
+ * 재시도할 때마다 돌고 있는 작업을 버리고 새로 제출하게 된다.
+ * @throws AsrFailedError 제출 거절
+ */
+export async function submitAsrTask(audioUrl: string): Promise<string> {
+  const apiKey = process.env.QWEN_API_KEY;
+  if (!apiKey) throw new Error('QWEN_API_KEY is not set');
+  return submitTask(audioUrl, apiKey);
+}
+
+/**
+ * 제출한 작업을 **한 번만** 조회한다. sleep 하지 않는다 — 대기는 호출자(브라우저)가 한다.
+ * @throws AsrFailedError 작업 실패·빈 결과
+ */
+export async function checkAsrTask(taskId: string): Promise<AsrTaskCheck> {
+  const apiKey = process.env.QWEN_API_KEY;
+  if (!apiKey) throw new Error('QWEN_API_KEY is not set');
+
+  const res = await fetch(`${BASE_URL}/api/v1/tasks/${taskId}`, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  });
+  const json = (await res.json()) as {
+    output?: {
+      task_status?: string;
+      message?: string;
+      results?: { transcription_url?: string }[];
+    };
+  };
+  const status = json.output?.task_status;
+  if (!status || status === 'PENDING' || status === 'RUNNING') return { status: 'running' };
+
+  if (status !== 'SUCCEEDED') {
+    throw new AsrFailedError(`전사에 실패했습니다. (${json.output?.message ?? status})`);
+  }
+  const url = json.output?.results?.[0]?.transcription_url;
+  if (!url) throw new AsrFailedError('전사 결과를 받지 못했습니다.');
+
+  return { status: 'done', text: await readTranscript(url) };
+}
+
 /**
  * presigned 오디오 URL → Qwen 파일 전사 → 화자 라벨이 붙은 한국어 전사문.
  * 화자분리 정보가 없으면 평문 전사로 폴백한다.
@@ -139,12 +197,5 @@ export async function transcribeAudioUrlWithQwen(
   const taskId = await submitTask(audioUrl, apiKey);
   const result = await pollTask(taskId, apiKey, sleep, maxPolls);
 
-  const doc = (await (await fetch(result.transcription_url!)).json()) as {
-    transcripts?: { text?: string; sentences?: Sentence[] }[];
-  };
-  const transcript = doc.transcripts?.[0];
-  const text = joinBySpeaker(transcript?.sentences ?? []) || (transcript?.text ?? '').trim();
-
-  if (!text) throw new AsrFailedError('전사 결과가 비어 있습니다.');
-  return text;
+  return readTranscript(result.transcription_url!);
 }

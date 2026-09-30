@@ -19,6 +19,42 @@ interface Recording {
   owner_label?: string;
 }
 
+/** 제출한 전사 작업 — 모달을 닫아도 잃지 않도록 localStorage에 학생별로 둔다. */
+interface AsrJob {
+  task_id: string;
+  recording_id: string;
+  recording_name: string;
+  recorded_at?: string;
+  duration_sec?: number;
+  account_key: string;
+}
+
+/** 전사 진행 확인 간격. DashScope 큐 지연 편차가 커서 상한은 넉넉히 둔다. */
+const POLL_MS = 3000;
+const MAX_WAIT_MS = 20 * 60 * 1000;
+
+function jobKey(studentId: string): string {
+  return `plaud-asr-job:${studentId}`;
+}
+
+function readJob(studentId: string): AsrJob | null {
+  try {
+    const raw = localStorage.getItem(jobKey(studentId));
+    return raw ? (JSON.parse(raw) as AsrJob) : null;
+  } catch {
+    return null; // 프라이빗 모드·차단 등 — 저장이 안 될 뿐 기능은 돌아간다.
+  }
+}
+
+function writeJob(studentId: string, job: AsrJob | null): void {
+  try {
+    if (job) localStorage.setItem(jobKey(studentId), JSON.stringify(job));
+    else localStorage.removeItem(jobKey(studentId));
+  } catch {
+    /* 저장 실패는 무시 — 이 탭에서는 state로 계속 폴링한다. */
+  }
+}
+
 interface Props {
   studentId: string;
   studentName: string;
@@ -60,7 +96,9 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
   const [loading, setLoading] = useState(false);
   const [listError, setListError] = useState('');
   const [q, setQ] = useState('');
-  const [runningId, setRunningId] = useState<string | null>(null);
+  const [job, setJob] = useState<AsrJob | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [waitedSec, setWaitedSec] = useState(0);
   const [runError, setRunError] = useState('');
   const [doneName, setDoneName] = useState<string | null>(null);
 
@@ -130,32 +168,111 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
     setRunError('');
   }
 
+  // 전사 작업을 제출만 한다. 완료까지 한 요청에서 기다리면 DashScope 큐 지연 편차를
+  // 서버리스 실행 한도가 못 버티고, 재시도할 때마다 돌던 작업을 버리게 된다.
   async function pick(r: Recording) {
-    if (!selected) return;
-    setRunningId(r.id);
+    if (!selected || job || submitting) return;
+    setSubmitting(true);
     setRunError('');
     try {
-      const res = await fetch(`/api/crm/students/${studentId}/plaud-memo`, {
+      const res = await fetch(`/api/crm/students/${studentId}/plaud-memo/job`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ file_id: r.id, account_key: selected.key }),
       });
       const json = await res.json();
-      if (res.ok && json.data?.entry) {
-        onCreated(json.data.entry); // 타임라인에 추가 + 상담 타임라인 섹션 자동 오픈
-        setDoneName(r.name || '녹음'); // 완료 화면 표시(사용자가 등록 확인)
+      if (res.ok && json.data?.task_id) {
+        const next: AsrJob = {
+          task_id: json.data.task_id,
+          recording_id: r.id,
+          recording_name: json.data.recording_name || r.name || '녹음',
+          recorded_at: json.data.recorded_at,
+          duration_sec: json.data.duration_sec,
+          account_key: selected.key,
+        };
+        writeJob(studentId, next);
+        setWaitedSec(0);
+        setJob(next);
       } else {
-        setRunError(json.error ?? '요약 생성에 실패했습니다.');
+        setRunError(json.error ?? '전사 작업을 시작하지 못했습니다.');
       }
     } catch {
       setRunError('네트워크 오류가 발생했습니다.');
     } finally {
-      setRunningId(null);
+      setSubmitting(false);
     }
   }
 
-  const busy = runningId !== null;
-  const runningName = recordings.find((r) => r.id === runningId)?.name ?? '';
+  // 모달을 다시 열면 돌고 있던 작업을 이어받는다 — 새로 제출하지 않는다.
+  useEffect(() => {
+    const saved = readJob(studentId);
+    if (saved) setJob(saved);
+  }, [studentId]);
+
+  // 제출된 작업이 있으면 끝날 때까지 확인한다.
+  useEffect(() => {
+    if (!job) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const startedAt = Date.now();
+
+    function finish(err: string) {
+      writeJob(studentId, null);
+      setJob(null);
+      if (err) setRunError(err);
+    }
+
+    async function tick() {
+      if (cancelled || !job) return;
+      try {
+        const res = await fetch(`/api/crm/students/${studentId}/plaud-memo/job`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            task_id: job.task_id,
+            account_key: job.account_key,
+            file_id: job.recording_id,
+            recording_name: job.recording_name,
+            recorded_at: job.recorded_at,
+            duration_sec: job.duration_sec,
+          }),
+        });
+        const json = await res.json();
+        if (cancelled) return;
+
+        if (res.ok && json.data?.status === 'done') {
+          onCreated(json.data.entry); // 타임라인에 추가 + 상담 타임라인 섹션 자동 오픈
+          const name = job.recording_name;
+          finish('');
+          setDoneName(name); // 완료 화면 표시(사용자가 등록 확인)
+          return;
+        }
+        if (!res.ok) {
+          finish(json.error ?? '요약 생성에 실패했습니다.');
+          return;
+        }
+        if (Date.now() - startedAt > MAX_WAIT_MS) {
+          finish('전사가 너무 오래 걸립니다. 잠시 후 다시 시도해주세요.');
+          return;
+        }
+        setWaitedSec(Math.round((Date.now() - startedAt) / 1000));
+        timer = setTimeout(tick, POLL_MS);
+      } catch {
+        // 일시적 네트워크 오류로 작업을 버리지 않는다 — 다음 주기에 다시 확인한다.
+        if (!cancelled) timer = setTimeout(tick, POLL_MS);
+      }
+    }
+
+    tick();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job, studentId]);
+
+  const busy = job !== null || submitting;
+  const runningName = job?.recording_name ?? '';
   // 계정이 2개 이상일 때만 "직원 다시 선택"을 노출(1개면 선택 단계 자체가 없음).
   const canChangeAccount = accounts.length > 1;
 
@@ -189,10 +306,13 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
         {busy && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl bg-white/95 px-8 text-center">
             <Loader2 size={32} className="animate-spin text-blue-500" />
-            <p className="text-sm font-semibold text-gray-900">전사·요약 중입니다…</p>
+            <p className="text-sm font-semibold text-gray-900">
+              전사·요약 중입니다…{waitedSec > 0 && ` (${waitedSec}초)`}
+            </p>
             <p className="text-xs text-gray-500 max-w-xs truncate">{runningName}</p>
             <p className="text-xs text-gray-400">
-              녹음 길이에 따라 <b>수십 초~수 분</b> 걸릴 수 있어요. 창을 닫지 말고 기다려 주세요.
+              녹음 길이와 대기열에 따라 <b>수십 초~수 분</b> 걸립니다.
+              창을 닫아도 작업은 계속되고, 다시 열면 이어서 확인합니다.
             </p>
           </div>
         )}
@@ -303,7 +423,7 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
                             {r.duration ? ` · ${fmtDuration(r.duration)}` : ''}
                           </p>
                         </div>
-                        {runningId === r.id ? (
+                        {job?.recording_id === r.id ? (
                           <span className="flex items-center gap-1 text-xs text-blue-500 shrink-0">
                             <Loader2 size={13} className="animate-spin" /> 요약 중…
                           </span>
