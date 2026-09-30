@@ -155,7 +155,13 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
 
                 {isOpen && (
                   <div className="px-4 pb-3 space-y-2">
-                    {group.addable ? (
+                    {group.addable && group.strategies.length === 0 ? (
+                      // 세그먼트 라이브러리가 비어 있으면 빈 드롭다운을 여는 대신 원인을 말해준다 —
+                      // b2b 전략이 0건이던 동안 화면이 침묵해 코드 버그로 오인됐다.
+                      <p className="text-[11px] text-gray-400 py-1">
+                        {segment === 'b2b' ? 'B2B' : 'B2C'} 전략 라이브러리에 등록된 전략이 없습니다 — 전략 라이브러리에서 먼저 추가하세요.
+                      </p>
+                    ) : group.addable ? (
                       STRATEGY_PHASES.map((phase) => {
                         const slotKey = `${key}:${phase}`;
                         const slot = phase === 'planned' ? group.planned : group.applied;
