@@ -19,14 +19,18 @@ function isSyncAuthenticated(request: NextRequest): boolean {
  * 동일 전화번호가 존재하면 campaign_tags만 병합(merge)한다.
  */
 /**
- * Meta 웹훅이 CRM 카드를 직접 만들므로 시트싱크는 비활성화 상태다.
- * 무조건 return 하면 아래 코드가 도달 불가가 되어 TS 흐름 분석이 꺼지고
- * `existing` narrowing이 사라져 빌드가 깨진다 — 플래그 분기로 둔다.
+ * Meta 웹훅이 CRM 카드를 직접 만들므로 시트싱크는 기본 비활성화다.
+ * 되살릴 때는 SHEETS_SYNC_ENABLED=true 만 세팅하면 된다(재배포 불필요).
+ *
+ * 무조건 return으로 막으면 이후 코드가 도달 불가가 되어 TS 흐름 분석이 꺼지고
+ * `existing` narrowing이 사라져 빌드가 깨진다 — 분기로 둔다.
  */
-const SHEETS_SYNC_DISABLED: boolean = true;
+function isSheetsSyncDisabled(): boolean {
+  return process.env.SHEETS_SYNC_ENABLED !== 'true';
+}
 
 export async function POST(request: NextRequest) {
-  if (SHEETS_SYNC_DISABLED) {
+  if (isSheetsSyncDisabled()) {
     return NextResponse.json({ ok: true, skipped: 'disabled' });
   }
 
