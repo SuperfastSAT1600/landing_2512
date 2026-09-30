@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { enrollStudentOnPayment } from '@/lib/enroll-on-payment';
+import { isPaymentMethod, PAYMENT_METHODS } from '@/types/crm';
 
 export async function POST(
   request: NextRequest,
@@ -12,16 +13,24 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { product: string; product_category?: string | null; product_subcategory?: string | null; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세'; payment_type?: string; is_vip?: boolean; created_by?: string | null; b2b_partner?: string | null };
+  let body: { product: string; product_category?: string | null; product_subcategory?: string | null; hours?: number | null; amount: number; paid_at?: string; tax_type?: '면세' | '과세'; payment_type?: string; payment_method?: string | null; is_vip?: boolean; created_by?: string | null; b2b_partner?: string | null };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { product, product_category, product_subcategory, hours, amount, paid_at, tax_type, payment_type, is_vip, created_by, b2b_partner } = body;
+  const { product, product_category, product_subcategory, hours, amount, paid_at, tax_type, payment_type, payment_method, is_vip, created_by, b2b_partner } = body;
   // 모달에서 보낸 결제 유형. 미지정 시 '최초결제'(DB 기본값과 동일).
   const resolvedPaymentType = payment_type === '재결제' ? '재결제' : '최초결제';
+
+  // 결제수단은 선택 입력 — 안 고르면 NULL("기록되지 않음")로 남긴다.
+  if (payment_method != null && payment_method !== '' && !isPaymentMethod(payment_method)) {
+    return NextResponse.json(
+      { error: `결제수단은 ${PAYMENT_METHODS.join(' / ')} 중 하나여야 합니다.` },
+      { status: 400 }
+    );
+  }
 
   // 0원은 가결제(수업 시작, 실입금 전)로 허용. 음수는 환불 전용 경로에서만 처리한다.
   if (!product || typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) {
@@ -57,6 +66,7 @@ export async function POST(
       amount,
       tax_type: tax_type ?? '면세',
       payment_type: resolvedPaymentType,
+      payment_method: isPaymentMethod(payment_method) ? payment_method : null,
       paid_at: paid_at ?? new Date().toISOString().slice(0, 10),
       created_by: created_by ?? null,
     })

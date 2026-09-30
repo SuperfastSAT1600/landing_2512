@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { X, CreditCard, ChevronLeft, Crown, CheckCircle2, Copy, Check } from 'lucide-react';
-import { Student, ProductCategory, ProductSubcategory, B2B_PARTNER_OPTIONS } from '@/types/crm';
+import { Student, ProductCategory, ProductSubcategory, B2B_PARTNER_OPTIONS, PAYMENT_METHODS } from '@/types/crm';
+import type { PaymentMethod } from '@/types/crm';
 import { useCompanies } from '@/hooks/useCompanies';
 import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
 import { getAdminUserName } from '@/lib/admin-user';
@@ -89,6 +90,8 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
   const [hours, setHours] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [taxType, setTaxType] = useState<'면세' | '과세'>('면세');
+  // 선택 입력 — 안 고르면 보내지 않아 NULL("기록되지 않음")로 남는다.
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [detectedReasons, setDetectedReasons] = useState<VipReason[]>([]);
   const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -178,6 +181,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
           hours: selectedProduct.requiresHours ? Number(hours) : null,
           amount: Number(amount),
           tax_type: taxType,
+          ...(paymentMethod ? { payment_method: paymentMethod } : {}),
           payment_type: paymentType ?? '최초결제',
           is_vip: isVip,
           created_by: getAdminUserName(),
@@ -488,6 +492,32 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
                     {taxType === '과세' && <span className="ml-1 text-gray-400">(부가세 10% 제외)</span>}
                   </p>
                 )}
+              </div>
+
+              {/* 결제수단 — 선택 사항. 모르면 비워두는 게 낫다(예전 기본값 '계좌이체'가
+                  실제 계좌이체인지 미입력인지 구분이 안 돼 574건이 무의미해졌다). */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-500">
+                  결제수단 <span className="text-gray-300">(선택)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {PAYMENT_METHODS.map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setPaymentMethod((prev) => (prev === m ? null : m))}
+                      className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                        paymentMethod === m
+                          ? 'bg-blue-50 border-blue-400 text-blue-700'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400">
+                  모르면 비워두세요 — 추측해서 고르면 집계가 틀어집니다.
+                </p>
               </div>
 
               {/* VIP 여부 */}
