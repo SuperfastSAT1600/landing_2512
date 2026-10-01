@@ -32,158 +32,28 @@ export interface PassageTwoTexts {
   text2: string;
 }
 
+export const pageConfig = {
+  badge: '10월 SAT 예상',
+  date: '2026-10-01',
+  title: 'SuperfastSAT 코치 6인이 고른 10월 SAT 예상 36문항',
+  description:
+    'Ben, Julie, Dana Jung, 박시원, Laura, 김예슬 — 코치 여섯 명이 각자 6문항씩 골랐습니다. 읽기·쓰기 3문항, 수학 3문항. 10월 시험에서 다시 만날 가능성이 높은 유형, 한 번만 이해하면 다시 틀리지 않는 함정 포인트를 담았습니다. 먼저 직접 풀어 보고 이유를 읽어 보세요.',
+};
+
 export interface Coach {
   id: string;
   name: string;
   tagline: string;
+  profileUrl?: string;
   problems: Problem[];
 }
 
 export const coaches: Coach[] = [
   {
-    id: 'brandon',
-    name: 'Brandon',
-    tagline: '그림을 주지 않거나 새로 등장한 유형 위주 — 9월에 처음 나왔거나 예상 정답률 35% 이하',
-    problems: [
-      {
-        id: 'brandon-1',
-        coach: 'Brandon',
-        index: 1,
-        section: 'Math',
-        title: 'Similar triangles without a figure',
-        skill: 'Lines, angles, and triangles',
-        difficulty: '35%',
-        isGridIn: false,
-        question:
-          'In isosceles triangle $ABC$, $AB = AC$. Point $D$ lies on segment $\\overline{BC}$ such that $BD = \\frac{3}{4}BC$. Points $E$ and $F$ lie on segments $\\overline{AB}$ and $\\overline{AC}$, respectively. If $\\angle BED \\cong \\angle CFD$ and $BE = 12$, what is the length of $CF$?',
-        choices: { A: '4', B: '16', C: '72', D: '96' },
-        correctAnswer: 'B',
-        reason:
-          '그림을 주지 않는 기하 문항입니다. 조건만 글로 주고 도형은 학생이 직접 그려야 합니다. 그려 놓으면 이등변삼각형 밑각과 AA 닮음으로 풀리지만, $BD = \\frac{3}{4}BC$를 닮음비로 그대로 쓰면 틀립니다. 닮음비는 $BD : CD = 3 : 1$이라는 것을 그림 없이 잡아야 합니다. 이 방식의 기하 문항이 9월에 여럿 나왔고 10월에도 이어질 가능성이 높습니다.',
-      },
-      {
-        id: 'brandon-2',
-        coach: 'Brandon',
-        index: 2,
-        section: 'Math',
-        title: 'Quadratic model after outlier removal',
-        skill: 'Two-variable data: Models and scatterplots',
-        difficulty: '27%',
-        isGridIn: false,
-        question:
-          'A scatterplot shows 9 data points and the quadratic model $y = 0.19x^2 - 1.24x + 7.57$. The data point at $x = 0$ was identified as a recording error and removed. If the new best-fit quadratic model for the remaining data is $y = ax^2 + bx + c$, which of the following must be true?',
-        statements: ['$a > 0.19$', '$c < 7.57$'],
-        choices: { A: 'I only', B: 'II only', C: 'Both I and II', D: 'Neither' },
-        correctAnswer: 'B',
-        reason:
-          '9월 수학에서 예상 정답률이 가장 낮은 축에 속한 문항입니다. 계산이 아니라 계수가 어느 방향으로 움직이는지 추론해야 합니다. $c$가 $x = 0$에서의 모델 값이라는 것을 떠올리면 II는 빠르게 판단됩니다. 점 하나를 빼면 곡선이 더 많이 휜다고 착각해 I까지 참으로 고르는 C 함정이 설계되어 있습니다.',
-      },
-      {
-        id: 'brandon-3',
-        coach: 'Brandon',
-        index: 3,
-        section: 'Math',
-        title: 'Similar cylinders — surface area to volume',
-        skill: 'Area and volume',
-        difficulty: '30%',
-        isGridIn: true,
-        question:
-          "Cylinders $A$ and $B$ are similar right circular cylinders. The total surface area of cylinder $A$ is $486\\pi$ cm² and its height equals its diameter. The ratio of the diameter of $A$ to the diameter of $B$ is 3 to 4. If the volume of cylinder $B$ is $k\\pi$ cm³, what is the value of $k$?",
-        correctAnswer: '3456',
-        reason:
-          '겉넓이 → 반지름 → 닮음비 → 부피까지 세 단계를 이어가야 합니다. 각 단계에 실수 포인트가 하나씩 있습니다. 밑면 두 개를 빠뜨리거나, 닮음비를 부피에 세제곱하지 않으면 틀립니다. 단답형이라 보기로 검산도 할 수 없습니다.',
-      },
-      {
-        id: 'brandon-4',
-        coach: 'Brandon',
-        index: 4,
-        section: 'RW',
-        title: 'Table + hypothesis support (new question type)',
-        skill: 'Command of Evidence (Quantitative)',
-        difficulty: 'Hard',
-        isGridIn: false,
-        passage: {
-          type: 'table',
-          headers: ['Species', 'Family', 'Habitat', 'Preferred substrate', 'Frontation angle (°)'],
-          rows: [
-            ['Vulpes macrotis', 'Canidae', 'open', 'terrestrial', '54.14'],
-            ['Nyctereutes procyonoides', 'Canidae', 'closed', 'arboreal', '56.51'],
-            ['Leptailurus serval', 'Felidae', 'open', 'terrestrial', '65.80'],
-            ['Leopardus wiedii', 'Felidae', 'closed', 'arboreal', '67.61'],
-            ['Leopardus guigna', 'Felidae', 'closed', 'terrestrial', '67.90'],
-          ],
-        },
-        question:
-          'By examining trait distributions across phylogenetic lineages, evolutionary biologists can determine whether trait similarities result from shared ancestry, leading to consistent presence of the trait among closely related species, or from convergent evolution under similar selective pressures, leading to the independent appearance of the trait in more distantly related species occupying similar ecological niches. Hypothesizing that orbit (eye socket) orientation in the families Canidae and Felidae (both within the order Carnivora) is primarily driven by the latter mechanism, a researcher measured frontation angles—the extent to which orbits face downward or upward—in felid and canid species occupying various habitats and preferring different substrates.\n\nAssuming the data in the table are broadly representative, do the data support the researcher\'s hypothesis as presented in the text?',
-        choices: {
-          A: 'Yes, because frontation angles show a moderately strong relationship with ecological niches, with two out of the three species with the highest frontation angles either inhabiting closed habitats or preferring terrestrial substrates.',
-          B: 'No, because frontation angles cluster by taxonomic family rather than by ecological categories, with similar values measured for species from the same family despite their occupation of different ecological niches.',
-          C: 'No, because frontation angles are relatively consistent across ecological categories, with values for species inhabiting closed arboreal habitats and species inhabiting open terrestrial habitats ranging from 56.51 to 67.61 and from 54.14 to 65.80, respectively.',
-          D: 'Yes, because frontation angles are lower for canid species than for felid species regardless of habitat or preferred substrate, with values for species from the same taxonomic family clustering in a relatively narrow range.',
-        },
-        correctAnswer: 'B',
-        reason:
-          '9월에 처음 등장한 유형입니다. 긴 과학 지문 + 5열 표 + 가설 지지 여부 판정을 한 문항에 묶었습니다. 가설이 "the latter mechanism"으로만 표현되어 앞 문장에서 수렴 진화라는 것을 직접 찾아야 합니다. D는 관찰은 맞지만 결론이 틀렸고, C는 결론은 맞지만 핵심 근거를 비껴갑니다.',
-      },
-      {
-        id: 'brandon-5',
-        coach: 'Brandon',
-        index: 5,
-        section: 'RW',
-        title: 'Long scientific passage — inference',
-        skill: 'Inferences',
-        difficulty: '38%',
-        isGridIn: false,
-        passage: {
-          type: 'text',
-          paragraphs: [
-            'As observed in a 2011 study by Emilio García-Robledo and Alfonso Corzo, macroalgal proliferation may have a suppressive effect on the abundance of chlorophytes and other microphytobenthos (MPB)—chlorophyll-producing microbes inhabiting marine sediment—in part by reducing the amount of sunlight available to MPB. Examining benthic chlorophyll concentrations (a widely used proxy for MPB biomass) in mudflats near Cobb Island and other coastal sites in Virginia, Alice F. Besterman and Michael L. Pace found that those concentrations did not negatively correlate with macroalgal proliferation. However, they noted that MPB may respond to low-light conditions by producing higher-than-normal concentrations of chlorophyll, and they thus concluded that _____',
-          ],
-        },
-        question: 'Which choice most logically completes the text?',
-        choices: {
-          A: 'although elevated levels of macroalgae do not always correspond to increased levels of benthic chlorophyll, there is likely a larger trend in MPB biomass that is related to macroalgal presence but unrelated to light conditions.',
-          B: 'although their finding was inconsistent with that of García-Robledo and Corzo, this discrepancy was not attributable to the ability of MPB to accelerate chlorophyll production to mitigate the negative impact of macroalgal accumulations.',
-          C: 'the effect of macroalgal concentrations on MPB abundance that García-Robledo and Corzo reported was not observed near Cobb Island and other Virginia sites because low-light conditions likely are not generalizable across the sites in the studies.',
-          D: 'researchers ought to account for the possibility that because MPB have the capacity to compensate for reduced sunlight availability, benthic chlorophyll concentrations may not always be a reliable indicator of MPB biomass.',
-        },
-        correctAnswer: 'D',
-        reason:
-          '"엽록소 농도 = MPB 생물량의 대용치"라는 전제를 끝까지 붙잡아야 결론이 보입니다. 두 연구를 대비하고 However로 한 번 뒤집은 뒤 결론을 추론하는 구조입니다. B는 지문의 인과를 정반대로 말하는데 표현이 비슷해 헷갈립니다.',
-      },
-      {
-        id: 'brandon-6',
-        coach: 'Brandon',
-        index: 6,
-        section: 'RW',
-        title: 'Philosophy argument — which quote best challenges it (new question type)',
-        skill: 'Command of Evidence (Textual)',
-        difficulty: 'Hard',
-        isGridIn: false,
-        passage: {
-          type: 'text',
-          paragraphs: [
-            'Elizabeth Gaskell, who was born in 1810, is the author of North and South. In a commonsense view, "Elizabeth Gaskell was born in 1810" and "the author of North and South was born in 1810" are identical in meaning and thus—because "was born in 1810" is constant—"Elizabeth Gaskell" is identical to "the author of North and South." But this conclusion conflicts with the principle, foundational to logic and mathematics, that identical entities are necessarily substitutable in any possible world (i.e., if A = B, then B can always be substituted for A), since it was possible for Gaskell to exist but to not write North and South. This situation suggests that there may be something wrong with our principle about the substitutability of identical entities.',
-          ],
-        },
-        question:
-          'In a paper for a philosophy class, a student wants to challenge the line of reasoning presented in the text. Which quotation from a work of philosophy would be most effective for the student to include?',
-        choices: {
-          A: '"In everyday speech, we tend to talk about circumstantial characteristics of individuals (e.g., a person behaves shyly at a party) as though they are inherent characteristics of those individuals (we say the person is shy) though unfair; this tendency is more efficient than spelling out all the contingent circumstances every time we want to communicate about individuals."',
-          B: '"A proper name is a mere tag that refers to an individual but lacks any content; although it and a description of an attribute of a person may happen to evoke the same person in our minds, equating them is a mistake, since a name communicates no properties of the person, while a description does."',
-          C: '"Although the principle that two entities that are identical are necessarily substitutable sounds plausible and is useful in everyday life, it is very hard to demonstrate the validity of this principle through a logical proof without making some highly debatable assumptions."',
-          D: '"When scholars write about an author, they typically use the author\'s full name or last name, whereas acquaintances would typically have referred to that author by first name alone; though different parts of the same proper name are used in different contexts, it would be incorrect to think that different people are therefore being referenced."',
-        },
-        correctAnswer: 'B',
-        reason:
-          '9월에 처음 등장한 유형입니다. 논증을 challenge하라는 말은 결론이 아니라 전제를 공격하라는 뜻입니다. 논증의 약점은 첫 전제—이름과 서술을 동일시한 것—입니다. B는 고유명사와 서술 표현의 차이를 지적해 첫 전제를 무너뜨립니다.',
-      },
-    ],
-  },
-  {
     id: 'ben',
     name: 'Ben',
-    tagline: '함정이 명확하고 핵심 스킬 하나로 해결되는 문항 — 한 번 이해하면 다시 틀리지 않는 유형',
+    tagline: '학생의 성향과 강점을 반영한 맞춤형 학습 전략 전문가',
+    profileUrl: '/coaches/ben',
     problems: [
       {
         id: 'ben-1',
@@ -320,296 +190,10 @@ export const coaches: Coach[] = [
     ],
   },
   {
-    id: 'park',
-    name: '박시원',
-    tagline: '판정 실수가 생기기 쉬운 문항 — 데이터 해석, 추론, 대명사 용법 각각 기준 하나면 풀림',
-    problems: [
-      {
-        id: 'park-1',
-        coach: '박시원',
-        index: 1,
-        section: 'RW',
-        title: 'P50 table + hypothesis support',
-        skill: 'Command of Evidence (Quantitative)',
-        difficulty: 'Hard',
-        isGridIn: false,
-        passage: {
-          type: 'table',
-          headers: ['Species', 'P50 (megapascal)', 'Mean elevation (m)', 'Rainforest occupancy (%)'],
-          rows: [
-            ['Paracryphia alticola', '−2.1', '1,011', '91'],
-            ['Ascarina rubricaulis', '−2.28', '825', '86'],
-            ['Amborella trichopoda', '−2.77', '756', '82'],
-            ['Hedycarya parvifolia', '−3.19', '956', '86'],
-            ['Zygogynum crassifolium', '−4.05', '57', '24'],
-          ],
-        },
-        question:
-          'P50—the pressure in the xylem (water-conducting tissue) at which a plant loses 50% of its hydraulic conductivity due to embolisms (air bubbles in the water flow)—is a key index of xylem embolism resistance and, by extension, tolerance of water stress; lower P50 values indicate lower vulnerability to xylem embolisms. Studies have found that variation in this functional trait corresponds with the distribution of plant species along moisture gradients. A student hypothesizes that this pattern would persist in woody species in New Caledonia, which is home to moist tropical rainforests, dry forests, and a range of elevations. To test the hypothesis, the student analyzes P50 values as well as mean elevation and rainforest occupancy rates for New Caledonian woody species.\n\nWhich choice best describes the extent to which the student\'s hypothesis is supported by data from the table?',
-        choices: {
-          A: 'Although the data indicate that species\' vulnerability to xylem embolisms varies within a relatively narrow range, their rainforest occupancy rates and elevation distributions vary much more widely; the hypothesis is therefore not supported.',
-          B: 'The data suggest a pattern in which species with enhanced tolerance to water stress are generally found at higher elevations and have higher rainforest occupancy, a relationship that holds across the majority of species examined; the hypothesis is therefore strongly supported.',
-          C: 'The data indicate that compared with Zygogynum crassifolium, which has the lowest rainforest occupancy rate and occurs at the lowest mean elevation, Paracryphia alticola, which has the highest rainforest occupancy rate and occurs at the highest mean elevation, is more vulnerable to water stress; the hypothesis is therefore strongly supported.',
-          D: 'Although the data suggest a pattern in which species\' resistance to xylem embolisms tends to increase with decreasing elevation and rainforest occupancy, Hedycarya parvifolia is an exception to this trend; the hypothesis is therefore moderately supported.',
-        },
-        correctAnswer: 'D',
-        reason:
-          'B와 D 사이에서 많이 틀립니다. B는 전반적 패턴을 말하지만 Hedycarya(P50 −3.19인데 고도 956 m, 점유율 86%)가 패턴과 맞지 않아 "strongly supported"가 과장입니다. D는 Hedycarya 예외를 정확히 인정하면서 가설이 부분 지지된다고 결론 냅니다.',
-      },
-      {
-        id: 'park-2',
-        coach: '박시원',
-        index: 2,
-        section: 'RW',
-        title: 'Inference from comparison — sea otter tool use',
-        skill: 'Inferences',
-        difficulty: 'Hard',
-        isGridIn: false,
-        passage: {
-          type: 'text',
-          paragraphs: [
-            'Researchers who examined data from radio-tagged southern sea otters (Enhydra lutris nereis) identified fitness benefits gained by otters that used tools. By using fixed stones as anvils, tool-using otters gained access to high-quality, hard-shelled prey (e.g., mussels and clams) that they could usually not access through biting alone. Non-tool-using otters foraged abundant, energy-poor, easily extractable prey instead (e.g., snails). Even when easily processed prey were depleted, tool-using otters were able to maintain their caloric intake by increasing their consumption of hard-shelled prey.',
-          ],
-        },
-        question:
-          'What does the text most strongly suggest about southern sea otters in environments where snails, mussels, and clams are present?',
-        choices: {
-          A: 'Those otters that do not use tools will likely have more robust health than those otters that do use tools.',
-          B: 'Those otters that do not use tools will likely need to process larger amounts of prey to meet their energy requirements than will those otters that use tools.',
-          C: 'Those otters that consume mussels and clams without the use of tools will likely spend less time foraging than will those otters that use tools to access the same prey resources.',
-          D: 'Those otters whose diet consists mainly of snails will likely exhibit less tooth damage than will those otters that use tools to consume mussels and clams.',
-        },
-        correctAnswer: 'B',
-        reason:
-          'D가 매력적인 오답입니다. 지문에 치아 손상 언급이 없으므로 지문 밖 추론입니다. B는 도구 없는 해달이 달팽이를 더 많이 먹어야 했다는 지문 내용에서 직접 이어집니다.',
-      },
-      {
-        id: 'park-3',
-        coach: '박시원',
-        index: 3,
-        section: 'RW',
-        title: 'Demonstrative pronoun — these vs that/this/each',
-        skill: 'Form, Structure, and Sense',
-        difficulty: 'Easy',
-        isGridIn: false,
-        passage: {
-          type: 'text',
-          paragraphs: [
-            'Both Nakuru, Kenya, and Ibarra, Ecuador, are located at less than one degree latitude. In other words, _____ cities basically sit right on the equator!',
-          ],
-        },
-        question:
-          'Which choice completes the text so that it conforms to the conventions of Standard English?',
-        choices: { A: 'these', B: 'that', C: 'this', D: 'each' },
-        correctAnswer: 'A',
-        reason:
-          '두 도시를 앞에서 복수로 언급했으므로 복수 지시 대명사 these가 필요합니다. "Both A and B" 뒤에 받는 대명사는 복수라는 것을 확인하는 습관을 만드는 문항입니다.',
-      },
-      {
-        id: 'park-4',
-        coach: '박시원',
-        index: 4,
-        section: 'Math',
-        title: 'Parabola with vertex constraints — greatest value of b',
-        skill: 'Nonlinear functions',
-        difficulty: 'Hard',
-        isGridIn: true,
-        question:
-          'The graph of $y = -ax^2 + bx + c$ has a vertex at $(1, 20)$, where $a$, $b$, and $c$ are positive integer constants. What is the greatest possible value of $b$?',
-        correctAnswer: '38',
-        reason:
-          '꼭짓점 $(1, 20)$이므로 $y = -a(x-1)^2 + 20$. 전개하면 $b = 2a$이고 $c = 20 - a$. $c > 0$이 되려면 $a < 20$, 정수이므로 $a$의 최대값은 19. 따라서 $b = 2 \\times 19 = 38$. 단답형에서 $c > 0$ 조건을 빠뜨리면 $b$를 무한히 키울 수 있다고 착각하게 됩니다.',
-      },
-      {
-        id: 'park-5',
-        coach: '박시원',
-        index: 5,
-        section: 'Math',
-        title: 'Arithmetic sequence as a linear function',
-        skill: 'Linear functions',
-        difficulty: 'Hard',
-        isGridIn: false,
-        question:
-          'In a sequence of numbers, each term is 10 greater than the preceding term. The first term is 15, and $f(n)$ represents the $n^{\\text{th}}$ term in the sequence. Which of the following functions models this situation?',
-        choices: {
-          A: '$f(n) = 15(10)^{(n-1)}$',
-          B: '$f(n) = 15(10)^{n}$',
-          C: '$f(n) = 15 + 10n$',
-          D: '$f(n) = 15 + (n-1)(10)$',
-        },
-        correctAnswer: 'D',
-        reason:
-          'A·B는 지수 성장(등비수열)으로 잘못 판단한 경우, C는 인덱스 오류입니다. $n = 1$일 때 $f(1) = 15$여야 하는데 C는 25가 나옵니다. D는 $f(1) = 15$로 조건을 만족합니다.',
-      },
-      {
-        id: 'park-6',
-        coach: '박시원',
-        index: 6,
-        section: 'Math',
-        title: 'Exponential function — reading the y-intercept from the equation',
-        skill: 'Nonlinear functions',
-        difficulty: 'Hard',
-        isGridIn: false,
-        question:
-          'The function $f$ is defined by $f(x) = a(2.7)^x + 2.7^b$, where $a$ and $b$ are integers with $0 < a < b$. Two functions $g$ and $h$ are equivalent to $f$:\n\n$$\\text{I.} \\quad g(x) = a(2.7)^x + k \\qquad \\text{II.} \\quad h(x) = a(2.7^x + m)$$\n\nFor which of the following can the y-coordinate of the y-intercept be directly determined from the equation without additional calculation?',
-        choices: {
-          A: 'II only',
-          B: 'Neither',
-          C: 'Both I and II',
-          D: 'I only',
-        },
-        correctAnswer: 'B',
-        reason:
-          'I의 $g(x) = a(2.7)^x + k$에서 y절편은 $a + k$인데, 이 값은 두 상수의 합이라 식에서 곧장 읽히지 않습니다. II의 $h(x) = a(2.7^x + m)$에서 y절편은 $a(1+m)$으로 역시 두 상수를 계산해야 합니다. 둘 다 y절편을 단일 상수나 계수로 표시하지 않으므로 정답은 B입니다.',
-      },
-    ],
-  },
-  {
-    id: 'laura',
-    name: 'Laura',
-    tagline: '"문장 구조가 유도하는 함정" — 지문이 직접 말하지 않는 논리적 방향을 스스로 잡아야 함',
-    problems: [
-      {
-        id: 'laura-1',
-        coach: 'Laura',
-        index: 1,
-        section: 'RW',
-        title: 'Consumer revolution argument + sampling bias',
-        skill: 'Inferences',
-        difficulty: 'Hard',
-        isGridIn: false,
-        passage: {
-          type: 'text',
-          paragraphs: [
-            'Support for the argument that a "consumer revolution"—in which possession of consumer goods among an increasingly wide range of socioeconomic groups surged despite only marginal wage growth—occurred in England between 1600 and 1750 has largely hinged on scholars\' analyses of probate inventories (detailed legal records of deceased persons\' possessions). Reexamining these data, Gregory Clark notes that while inventories from the period appear consistent with the consumer-revolution argument, the proportion of the population whose wills included such documentation decreased considerably between 1600 and 1750, with this documentation increasingly representing more affluent individuals. Clark\'s findings thus directly raise the possibility that _____',
-          ],
-        },
-        question: 'Which choice most logically completes the text?',
-        choices: {
-          A: 'probate inventories from 1600 to 1750 that have been analyzed by scholars exaggerated the number of consumer goods that relatively prosperous individuals possessed.',
-          B: 'scholars\' previous conclusions based on analysis of probate inventories from 1600 to 1750 overstated broader demographic shifts in the possession of consumer goods.',
-          C: 'advocates of the consumer-revolution argument may have failed to account for the possibility that the increased acquisition of consumer goods in England between 1600 and 1750 was attributable to an increase in the proportion of wealthy individuals.',
-          D: 'wage increases in England between 1600 and 1750 did not account for the widespread acquisition of consumer goods among less-wealthy individuals.',
-        },
-        correctAnswer: 'B',
-        reason:
-          'Clark의 발견: 유언장에 기록된 사람들이 점점 더 부유층만 대표하게 됐다. 그렇다면 기존 학자들이 그 기록을 근거로 내린 "광범위한 계층에 걸친 소비 증가" 결론은 과장됐을 수 있다. A는 부유층의 재산을 기록이 과장했다고 말하는데, Clark은 그런 말을 하지 않았다. B가 핵심: 표본이 점점 부유층만 반영하게 됐으므로, 그 표본으로 내린 "모든 계층" 결론이 과장됐다.',
-      },
-      {
-        id: 'laura-2',
-        coach: 'Laura',
-        index: 2,
-        section: 'RW',
-        title: 'Granted followed by a result, not a contrast',
-        skill: 'Transitions',
-        difficulty: 'Hard',
-        isGridIn: false,
-        passage: {
-          type: 'text',
-          paragraphs: [
-            'Photogrammetry, used by digital artists to develop 3D assets for video games, yields objects with precise mathematical proportions. Granted, as they are formed from perfect geometric shapes, such 3D elements lack organic realism; _____ post-modeling processes such as UV surface mapping are needed to add the appearance of imperfect organic properties.',
-          ],
-        },
-        question: 'Which choice completes the text with the most logical transition?',
-        choices: {
-          A: 'however,',
-          B: 'similarly,',
-          C: 'in sum,',
-          D: 'consequently,',
-        },
-        correctAnswer: 'D',
-        reason:
-          '"Granted, [문제점]" 뒤에는 보통 "but" 또는 "however"가 온다는 패턴 때문에 A를 고르기 쉽습니다. 그러나 세미콜론 앞뒤를 정확히 보면: lack organic realism → post-modeling processes are needed. 이것은 대조가 아니라 인과 관계입니다. "Granted" 양보절이 이미 대조를 처리했고, 세미콜론 이후는 그 결과가 됩니다.',
-      },
-      {
-        id: 'laura-3',
-        coach: 'Laura',
-        index: 3,
-        section: 'RW',
-        title: 'What the word describes — motivations, not people',
-        skill: 'Words in Context',
-        difficulty: 'Hard',
-        isGridIn: false,
-        passage: {
-          type: 'text',
-          paragraphs: [
-            'While some of the Mediterranean islands inhabited by prehistoric peoples were rich in resources and easily accessible from the mainland, others were resource-poor and could only be reached by grueling, hazardous, multiday voyages in rowboats. The motivations of the people who settled the latter are thus, from our modern perspective, _____.',
-          ],
-        },
-        question: 'Which choice most logically completes the text?',
-        choices: {
-          A: 'pragmatic',
-          B: 'ambivalent',
-          C: 'enigmatic',
-          D: 'impulsive',
-        },
-        correctAnswer: 'C',
-        reason:
-          '빈칸이 묘사하는 것은 정착민의 성격이 아니라 우리 현대인의 관점에서 본 그들의 동기입니다. 자원도 부족하고 목숨을 걸어야 하는 섬에 왜 갔는지 — 우리 눈에는 이유가 전혀 이해되지 않습니다. A(pragmatic = 실용적)를 고르는 학생은 정착민의 성격을 묘사한다고 읽습니다. "from our modern perspective"를 놓치면 A로 가게 됩니다.',
-      },
-      {
-        id: 'laura-4',
-        coach: 'Laura',
-        index: 4,
-        section: 'Math',
-        title: 'Isosceles triangle — exterior angle',
-        skill: 'Lines, angles, and triangles',
-        difficulty: 'Hard',
-        isGridIn: true,
-        question:
-          'In triangle $PQR$, the measure of angle $P$ is $(4x + 17)°$, the measure of angle $Q$ is $(5x + 16)°$, $PQ = 6$, and $QR = 6$. Side $\\overline{PR}$ is extended through point $R$ to point $S$. The measure of angle $QRS$ is $y°$. What is the value of $y$?',
-        correctAnswer: '123',
-        reason:
-          '각 P와 Q의 식이 있고 삼각형 내각 합이 180°이면 방정식을 세울 수 있다 — 처럼 보이지만 미지수가 $x$와 각 R, 두 개입니다. $PQ = QR = 6$이라는 조건이 열쇠입니다. $PQ = QR$이면 두 변에 인접하지 않는 꼭짓점의 대각이 같으므로 각 R = 각 P = $(4x + 17)°$. 이렇게 세 각을 모두 $x$로 표현하면 풀립니다. 외각 $y$ = 각 P + 각 Q.',
-      },
-      {
-        id: 'laura-5',
-        coach: 'Laura',
-        index: 5,
-        section: 'Math',
-        title: 'Reflection + vertical shift — direction of x-intercept',
-        skill: 'Nonlinear functions',
-        difficulty: 'Hard',
-        isGridIn: false,
-        question:
-          'The function $f$ is defined by $f(x) = 11x^3$. The graph of $y = f(-x) + c$ in the $xy$-plane, where $c$ is a positive integer constant, has an x-intercept at $(r, 0)$ and a y-intercept at $(0, t)$, where $r$ and $t$ are constants. Which of the following must be true about $r$ and $t$?',
-        choices: {
-          A: '$r < 0$ and $t < 0$',
-          B: '$r < 0$ and $t > 0$',
-          C: '$r > 0$ and $t > 0$',
-          D: '$r > 0$ and $t < 0$',
-        },
-        correctAnswer: 'C',
-        reason:
-          '$f(-x) = -11x^3$. 여기에 양의 정수 $c$를 더하면 $y = -11x^3 + c$. x절편: $r^3 = c/11 > 0$이므로 $r > 0$. y절편: $t = c > 0$. 학생들이 틀리는 지점: $f(-x)$는 y축 기준 반사이므로 x절편이 왼쪽으로 이동한다고 착각합니다. 그러나 $f(x) = 11x^3$의 x절편은 이미 원점이고, 수직이동 $c$가 더해져 x절편이 양의 방향으로 생깁니다.',
-      },
-      {
-        id: 'laura-6',
-        coach: 'Laura',
-        index: 6,
-        section: 'Math',
-        title: 'Two equations, one line — infinitely many solutions',
-        skill: 'Systems of two linear equations',
-        difficulty: 'Hard',
-        isGridIn: false,
-        question:
-          'For each real number $r$, which of the following points lies on the graph of each equation in the $xy$-plane?\n\n$$5x + 8y = 9$$\n$$15x + 24y = 27$$',
-        choices: {
-          A: '$\\left(r,\\ -\\dfrac{5r}{8}+\\dfrac{9}{8}\\right)$',
-          B: '$\\left(-\\dfrac{5r}{8}+\\dfrac{9}{8},\\ r\\right)$',
-          C: '$\\left(-\\dfrac{5r}{8}+9,\\ \\dfrac{5r}{8}+27\\right)$',
-          D: '$\\left(\\dfrac{r}{3}+9,\\ -\\dfrac{r}{3}+27\\right)$',
-        },
-        correctAnswer: 'A',
-        reason:
-          '두 식이 있으면 대입법이나 소거법을 쓰는 것이 학생의 반응입니다. 그런데 $15x + 24y = 27$은 $5x + 8y = 9$에 정확히 3을 곱한 식입니다. 두 식은 같은 직선이고, 해는 그 직선 위의 모든 점입니다. "for each real number $r$"가 해가 무한히 존재함을 암시합니다. $5x + 8y = 9$를 $y$에 대해 풀면 $y = -\\frac{5}{8}x + \\frac{9}{8}$이고, $x = r$로 놓으면 A가 됩니다.',
-      },
-    ],
-  },
-  {
     id: 'julie',
     name: 'Julie',
-    tagline: '"두 대상 사이의 관계를 끝까지 따라가야 하는" 문항 — 중간에 끊으면 오답',
+    tagline: '독립적으로 학습하는 방법을 알려주는 SAT 전문가',
+    profileUrl: '/coaches/julie',
     problems: [
       {
         id: 'julie-1',
@@ -755,7 +339,8 @@ export const coaches: Coach[] = [
   {
     id: 'dana',
     name: 'Dana Jung',
-    tagline: '"논리 방향을 먼저 잡고 세부 내용을 채운다" — 인과 방향, 지문 보장 추론, 주어의 이동',
+    tagline: '사고하는 힘을 기르는 SAT수업을 합니다',
+    profileUrl: '/coaches/dana_jung',
     problems: [
       {
         id: 'dana-1',
@@ -886,6 +471,436 @@ export const coaches: Coach[] = [
         correctAnswer: '12',
         reason:
           '쉬운 문항처럼 보이지만, Systems에서 가장 중요한 개념을 가장 직관적으로 보여줍니다. 두 조건이 동시에 성립해야 합니다: $a + s = 20$ (총 인원) / $120a + 90s = 2{,}040$ (총 수익). 두 직선의 교점 $(8, 12)$은 이 두 조건을 동시에 만족하는 유일한 조합입니다. 어떤 맥락이 주어지더라도 "두 식의 교점 = 두 조건이 동시에 성립하는 유일한 상태"라는 뜻을 파악하면 풀립니다.',
+      },
+    ],
+  },
+  {
+    id: 'park',
+    name: '박시원',
+    tagline: 'SAT 1600점 만점자의 수업',
+    profileUrl: '/coaches/siwonpark',
+    problems: [
+      {
+        id: 'park-1',
+        coach: '박시원',
+        index: 1,
+        section: 'RW',
+        title: 'P50 table + hypothesis support',
+        skill: 'Command of Evidence (Quantitative)',
+        difficulty: 'Hard',
+        isGridIn: false,
+        passage: {
+          type: 'table',
+          headers: ['Species', 'P50 (megapascal)', 'Mean elevation (m)', 'Rainforest occupancy (%)'],
+          rows: [
+            ['Paracryphia alticola', '−2.1', '1,011', '91'],
+            ['Ascarina rubricaulis', '−2.28', '825', '86'],
+            ['Amborella trichopoda', '−2.77', '756', '82'],
+            ['Hedycarya parvifolia', '−3.19', '956', '86'],
+            ['Zygogynum crassifolium', '−4.05', '57', '24'],
+          ],
+        },
+        question:
+          'P50—the pressure in the xylem (water-conducting tissue) at which a plant loses 50% of its hydraulic conductivity due to embolisms (air bubbles in the water flow)—is a key index of xylem embolism resistance and, by extension, tolerance of water stress; lower P50 values indicate lower vulnerability to xylem embolisms. Studies have found that variation in this functional trait corresponds with the distribution of plant species along moisture gradients. A student hypothesizes that this pattern would persist in woody species in New Caledonia, which is home to moist tropical rainforests, dry forests, and a range of elevations. To test the hypothesis, the student analyzes P50 values as well as mean elevation and rainforest occupancy rates for New Caledonian woody species.\n\nWhich choice best describes the extent to which the student\'s hypothesis is supported by data from the table?',
+        choices: {
+          A: 'Although the data indicate that species\' vulnerability to xylem embolisms varies within a relatively narrow range, their rainforest occupancy rates and elevation distributions vary much more widely; the hypothesis is therefore not supported.',
+          B: 'The data suggest a pattern in which species with enhanced tolerance to water stress are generally found at higher elevations and have higher rainforest occupancy, a relationship that holds across the majority of species examined; the hypothesis is therefore strongly supported.',
+          C: 'The data indicate that compared with Zygogynum crassifolium, which has the lowest rainforest occupancy rate and occurs at the lowest mean elevation, Paracryphia alticola, which has the highest rainforest occupancy rate and occurs at the highest mean elevation, is more vulnerable to water stress; the hypothesis is therefore strongly supported.',
+          D: 'Although the data suggest a pattern in which species\' resistance to xylem embolisms tends to increase with decreasing elevation and rainforest occupancy, Hedycarya parvifolia is an exception to this trend; the hypothesis is therefore moderately supported.',
+        },
+        correctAnswer: 'D',
+        reason:
+          'B와 D 사이에서 많이 틀립니다. B는 전반적 패턴을 말하지만 Hedycarya(P50 −3.19인데 고도 956 m, 점유율 86%)가 패턴과 맞지 않아 "strongly supported"가 과장입니다. D는 Hedycarya 예외를 정확히 인정하면서 가설이 부분 지지된다고 결론 냅니다.',
+      },
+      {
+        id: 'park-2',
+        coach: '박시원',
+        index: 2,
+        section: 'RW',
+        title: 'Inference from comparison — sea otter tool use',
+        skill: 'Inferences',
+        difficulty: 'Hard',
+        isGridIn: false,
+        passage: {
+          type: 'text',
+          paragraphs: [
+            'Researchers who examined data from radio-tagged southern sea otters (Enhydra lutris nereis) identified fitness benefits gained by otters that used tools. By using fixed stones as anvils, tool-using otters gained access to high-quality, hard-shelled prey (e.g., mussels and clams) that they could usually not access through biting alone. Non-tool-using otters foraged abundant, energy-poor, easily extractable prey instead (e.g., snails). Even when easily processed prey were depleted, tool-using otters were able to maintain their caloric intake by increasing their consumption of hard-shelled prey.',
+          ],
+        },
+        question:
+          'What does the text most strongly suggest about southern sea otters in environments where snails, mussels, and clams are present?',
+        choices: {
+          A: 'Those otters that do not use tools will likely have more robust health than those otters that do use tools.',
+          B: 'Those otters that do not use tools will likely need to process larger amounts of prey to meet their energy requirements than will those otters that use tools.',
+          C: 'Those otters that consume mussels and clams without the use of tools will likely spend less time foraging than will those otters that use tools to access the same prey resources.',
+          D: 'Those otters whose diet consists mainly of snails will likely exhibit less tooth damage than will those otters that use tools to consume mussels and clams.',
+        },
+        correctAnswer: 'B',
+        reason:
+          'D가 매력적인 오답입니다. 지문에 치아 손상 언급이 없으므로 지문 밖 추론입니다. B는 도구 없는 해달이 달팽이를 더 많이 먹어야 했다는 지문 내용에서 직접 이어집니다.',
+      },
+      {
+        id: 'park-3',
+        coach: '박시원',
+        index: 3,
+        section: 'RW',
+        title: 'Demonstrative pronoun — these vs that/this/each',
+        skill: 'Form, Structure, and Sense',
+        difficulty: 'Easy',
+        isGridIn: false,
+        passage: {
+          type: 'text',
+          paragraphs: [
+            'Both Nakuru, Kenya, and Ibarra, Ecuador, are located at less than one degree latitude. In other words, _____ cities basically sit right on the equator!',
+          ],
+        },
+        question:
+          'Which choice completes the text so that it conforms to the conventions of Standard English?',
+        choices: { A: 'these', B: 'that', C: 'this', D: 'each' },
+        correctAnswer: 'A',
+        reason:
+          '두 도시를 앞에서 복수로 언급했으므로 복수 지시 대명사 these가 필요합니다. "Both A and B" 뒤에 받는 대명사는 복수라는 것을 확인하는 습관을 만드는 문항입니다.',
+      },
+      {
+        id: 'park-4',
+        coach: '박시원',
+        index: 4,
+        section: 'Math',
+        title: 'Parabola with vertex constraints — greatest value of b',
+        skill: 'Nonlinear functions',
+        difficulty: 'Hard',
+        isGridIn: true,
+        question:
+          'The graph of $y = -ax^2 + bx + c$ has a vertex at $(1, 20)$, where $a$, $b$, and $c$ are positive integer constants. What is the greatest possible value of $b$?',
+        correctAnswer: '38',
+        reason:
+          '꼭짓점 $(1, 20)$이므로 $y = -a(x-1)^2 + 20$. 전개하면 $b = 2a$이고 $c = 20 - a$. $c > 0$이 되려면 $a < 20$, 정수이므로 $a$의 최대값은 19. 따라서 $b = 2 \\times 19 = 38$. 단답형에서 $c > 0$ 조건을 빠뜨리면 $b$를 무한히 키울 수 있다고 착각하게 됩니다.',
+      },
+      {
+        id: 'park-5',
+        coach: '박시원',
+        index: 5,
+        section: 'Math',
+        title: 'Arithmetic sequence as a linear function',
+        skill: 'Linear functions',
+        difficulty: 'Hard',
+        isGridIn: false,
+        question:
+          'In a sequence of numbers, each term is 10 greater than the preceding term. The first term is 15, and $f(n)$ represents the $n^{\\text{th}}$ term in the sequence. Which of the following functions models this situation?',
+        choices: {
+          A: '$f(n) = 15(10)^{(n-1)}$',
+          B: '$f(n) = 15(10)^{n}$',
+          C: '$f(n) = 15 + 10n$',
+          D: '$f(n) = 15 + (n-1)(10)$',
+        },
+        correctAnswer: 'D',
+        reason:
+          'A·B는 지수 성장(등비수열)으로 잘못 판단한 경우, C는 인덱스 오류입니다. $n = 1$일 때 $f(1) = 15$여야 하는데 C는 25가 나옵니다. D는 $f(1) = 15$로 조건을 만족합니다.',
+      },
+      {
+        id: 'park-6',
+        coach: '박시원',
+        index: 6,
+        section: 'Math',
+        title: 'Exponential function — reading the y-intercept from the equation',
+        skill: 'Nonlinear functions',
+        difficulty: 'Hard',
+        isGridIn: false,
+        question:
+          'The function $f$ is defined by $f(x) = a(2.7)^x + 2.7^b$, where $a$ and $b$ are integers with $0 < a < b$. Two functions $g$ and $h$ are equivalent to $f$:\n\n$$\\text{I.} \\quad g(x) = a(2.7)^x + k \\qquad \\text{II.} \\quad h(x) = a(2.7^x + m)$$\n\nFor which of the following can the y-coordinate of the y-intercept be directly determined from the equation without additional calculation?',
+        choices: {
+          A: 'II only',
+          B: 'Neither',
+          C: 'Both I and II',
+          D: 'I only',
+        },
+        correctAnswer: 'B',
+        reason:
+          'I의 $g(x) = a(2.7)^x + k$에서 y절편은 $a + k$인데, 이 값은 두 상수의 합이라 식에서 곧장 읽히지 않습니다. II의 $h(x) = a(2.7^x + m)$에서 y절편은 $a(1+m)$으로 역시 두 상수를 계산해야 합니다. 둘 다 y절편을 단일 상수나 계수로 표시하지 않으므로 정답은 B입니다.',
+      },
+    ],
+  },
+  {
+    id: 'laura',
+    name: 'Laura',
+    tagline: '학생 맞춤 마인드셋과 문제 패턴 분석 전략을 제공하는 SAT 전문가',
+    profileUrl: '/coaches/laura',
+    problems: [
+      {
+        id: 'laura-1',
+        coach: 'Laura',
+        index: 1,
+        section: 'RW',
+        title: 'Consumer revolution argument + sampling bias',
+        skill: 'Inferences',
+        difficulty: 'Hard',
+        isGridIn: false,
+        passage: {
+          type: 'text',
+          paragraphs: [
+            'Support for the argument that a "consumer revolution"—in which possession of consumer goods among an increasingly wide range of socioeconomic groups surged despite only marginal wage growth—occurred in England between 1600 and 1750 has largely hinged on scholars\' analyses of probate inventories (detailed legal records of deceased persons\' possessions). Reexamining these data, Gregory Clark notes that while inventories from the period appear consistent with the consumer-revolution argument, the proportion of the population whose wills included such documentation decreased considerably between 1600 and 1750, with this documentation increasingly representing more affluent individuals. Clark\'s findings thus directly raise the possibility that _____',
+          ],
+        },
+        question: 'Which choice most logically completes the text?',
+        choices: {
+          A: 'probate inventories from 1600 to 1750 that have been analyzed by scholars exaggerated the number of consumer goods that relatively prosperous individuals possessed.',
+          B: 'scholars\' previous conclusions based on analysis of probate inventories from 1600 to 1750 overstated broader demographic shifts in the possession of consumer goods.',
+          C: 'advocates of the consumer-revolution argument may have failed to account for the possibility that the increased acquisition of consumer goods in England between 1600 and 1750 was attributable to an increase in the proportion of wealthy individuals.',
+          D: 'wage increases in England between 1600 and 1750 did not account for the widespread acquisition of consumer goods among less-wealthy individuals.',
+        },
+        correctAnswer: 'B',
+        reason:
+          'Clark의 발견: 유언장에 기록된 사람들이 점점 더 부유층만 대표하게 됐다. 그렇다면 기존 학자들이 그 기록을 근거로 내린 "광범위한 계층에 걸친 소비 증가" 결론은 과장됐을 수 있다. A는 부유층의 재산을 기록이 과장했다고 말하는데, Clark은 그런 말을 하지 않았다. B가 핵심: 표본이 점점 부유층만 반영하게 됐으므로, 그 표본으로 내린 "모든 계층" 결론이 과장됐다.',
+      },
+      {
+        id: 'laura-2',
+        coach: 'Laura',
+        index: 2,
+        section: 'RW',
+        title: 'Granted followed by a result, not a contrast',
+        skill: 'Transitions',
+        difficulty: 'Hard',
+        isGridIn: false,
+        passage: {
+          type: 'text',
+          paragraphs: [
+            'Photogrammetry, used by digital artists to develop 3D assets for video games, yields objects with precise mathematical proportions. Granted, as they are formed from perfect geometric shapes, such 3D elements lack organic realism; _____ post-modeling processes such as UV surface mapping are needed to add the appearance of imperfect organic properties.',
+          ],
+        },
+        question: 'Which choice completes the text with the most logical transition?',
+        choices: {
+          A: 'however,',
+          B: 'similarly,',
+          C: 'in sum,',
+          D: 'consequently,',
+        },
+        correctAnswer: 'D',
+        reason:
+          '"Granted, [문제점]" 뒤에는 보통 "but" 또는 "however"가 온다는 패턴 때문에 A를 고르기 쉽습니다. 그러나 세미콜론 앞뒤를 정확히 보면: lack organic realism → post-modeling processes are needed. 이것은 대조가 아니라 인과 관계입니다. "Granted" 양보절이 이미 대조를 처리했고, 세미콜론 이후는 그 결과가 됩니다.',
+      },
+      {
+        id: 'laura-3',
+        coach: 'Laura',
+        index: 3,
+        section: 'RW',
+        title: 'What the word describes — motivations, not people',
+        skill: 'Words in Context',
+        difficulty: 'Hard',
+        isGridIn: false,
+        passage: {
+          type: 'text',
+          paragraphs: [
+            'While some of the Mediterranean islands inhabited by prehistoric peoples were rich in resources and easily accessible from the mainland, others were resource-poor and could only be reached by grueling, hazardous, multiday voyages in rowboats. The motivations of the people who settled the latter are thus, from our modern perspective, _____.',
+          ],
+        },
+        question: 'Which choice most logically completes the text?',
+        choices: {
+          A: 'pragmatic',
+          B: 'ambivalent',
+          C: 'enigmatic',
+          D: 'impulsive',
+        },
+        correctAnswer: 'C',
+        reason:
+          '빈칸이 묘사하는 것은 정착민의 성격이 아니라 우리 현대인의 관점에서 본 그들의 동기입니다. 자원도 부족하고 목숨을 걸어야 하는 섬에 왜 갔는지 — 우리 눈에는 이유가 전혀 이해되지 않습니다. A(pragmatic = 실용적)를 고르는 학생은 정착민의 성격을 묘사한다고 읽습니다. "from our modern perspective"를 놓치면 A로 가게 됩니다.',
+      },
+      {
+        id: 'laura-4',
+        coach: 'Laura',
+        index: 4,
+        section: 'Math',
+        title: 'Isosceles triangle — exterior angle',
+        skill: 'Lines, angles, and triangles',
+        difficulty: 'Hard',
+        isGridIn: true,
+        question:
+          'In triangle $PQR$, the measure of angle $P$ is $(4x + 17)°$, the measure of angle $Q$ is $(5x + 16)°$, $PQ = 6$, and $QR = 6$. Side $\\overline{PR}$ is extended through point $R$ to point $S$. The measure of angle $QRS$ is $y°$. What is the value of $y$?',
+        correctAnswer: '123',
+        reason:
+          '각 P와 Q의 식이 있고 삼각형 내각 합이 180°이면 방정식을 세울 수 있다 — 처럼 보이지만 미지수가 $x$와 각 R, 두 개입니다. $PQ = QR = 6$이라는 조건이 열쇠입니다. $PQ = QR$이면 두 변에 인접하지 않는 꼭짓점의 대각이 같으므로 각 R = 각 P = $(4x + 17)°$. 이렇게 세 각을 모두 $x$로 표현하면 풀립니다. 외각 $y$ = 각 P + 각 Q.',
+      },
+      {
+        id: 'laura-5',
+        coach: 'Laura',
+        index: 5,
+        section: 'Math',
+        title: 'Reflection + vertical shift — direction of x-intercept',
+        skill: 'Nonlinear functions',
+        difficulty: 'Hard',
+        isGridIn: false,
+        question:
+          'The function $f$ is defined by $f(x) = 11x^3$. The graph of $y = f(-x) + c$ in the $xy$-plane, where $c$ is a positive integer constant, has an x-intercept at $(r, 0)$ and a y-intercept at $(0, t)$, where $r$ and $t$ are constants. Which of the following must be true about $r$ and $t$?',
+        choices: {
+          A: '$r < 0$ and $t < 0$',
+          B: '$r < 0$ and $t > 0$',
+          C: '$r > 0$ and $t > 0$',
+          D: '$r > 0$ and $t < 0$',
+        },
+        correctAnswer: 'C',
+        reason:
+          '$f(-x) = -11x^3$. 여기에 양의 정수 $c$를 더하면 $y = -11x^3 + c$. x절편: $r^3 = c/11 > 0$이므로 $r > 0$. y절편: $t = c > 0$. 학생들이 틀리는 지점: $f(-x)$는 y축 기준 반사이므로 x절편이 왼쪽으로 이동한다고 착각합니다. 그러나 $f(x) = 11x^3$의 x절편은 이미 원점이고, 수직이동 $c$가 더해져 x절편이 양의 방향으로 생깁니다.',
+      },
+      {
+        id: 'laura-6',
+        coach: 'Laura',
+        index: 6,
+        section: 'Math',
+        title: 'Two equations, one line — infinitely many solutions',
+        skill: 'Systems of two linear equations',
+        difficulty: 'Hard',
+        isGridIn: false,
+        question:
+          'For each real number $r$, which of the following points lies on the graph of each equation in the $xy$-plane?\n\n$$5x + 8y = 9$$\n$$15x + 24y = 27$$',
+        choices: {
+          A: '$\\left(r,\\ -\\dfrac{5r}{8}+\\dfrac{9}{8}\\right)$',
+          B: '$\\left(-\\dfrac{5r}{8}+\\dfrac{9}{8},\\ r\\right)$',
+          C: '$\\left(-\\dfrac{5r}{8}+9,\\ \\dfrac{5r}{8}+27\\right)$',
+          D: '$\\left(\\dfrac{r}{3}+9,\\ -\\dfrac{r}{3}+27\\right)$',
+        },
+        correctAnswer: 'A',
+        reason:
+          '두 식이 있으면 대입법이나 소거법을 쓰는 것이 학생의 반응입니다. 그런데 $15x + 24y = 27$은 $5x + 8y = 9$에 정확히 3을 곱한 식입니다. 두 식은 같은 직선이고, 해는 그 직선 위의 모든 점입니다. "for each real number $r$"가 해가 무한히 존재함을 암시합니다. $5x + 8y = 9$를 $y$에 대해 풀면 $y = -\\frac{5}{8}x + \\frac{9}{8}$이고, $x = r$로 놓으면 A가 됩니다.',
+      },
+    ],
+  },
+  {
+    id: 'kimys',
+    name: '김예슬',
+    tagline: '12년, 15000시간 수업 경력의 SAT 전문가',
+    profileUrl: '/coaches/kimys',
+    problems: [
+      {
+        id: 'kimys-1',
+        coach: '김예슬',
+        index: 1,
+        section: 'Math',
+        title: 'Similar triangles without a figure',
+        skill: 'Lines, angles, and triangles',
+        difficulty: '35%',
+        isGridIn: false,
+        question:
+          'In isosceles triangle $ABC$, $AB = AC$. Point $D$ lies on segment $\\overline{BC}$ such that $BD = \\frac{3}{4}BC$. Points $E$ and $F$ lie on segments $\\overline{AB}$ and $\\overline{AC}$, respectively. If $\\angle BED \\cong \\angle CFD$ and $BE = 12$, what is the length of $CF$?',
+        choices: { A: '4', B: '16', C: '72', D: '96' },
+        correctAnswer: 'B',
+        reason:
+          '그림을 주지 않는 기하 문항입니다. 조건만 글로 주고 도형은 학생이 직접 그려야 합니다. 그려 놓으면 이등변삼각형 밑각과 AA 닮음으로 풀리지만, $BD = \\frac{3}{4}BC$를 닮음비로 그대로 쓰면 틀립니다. 닮음비는 $BD : CD = 3 : 1$이라는 것을 그림 없이 잡아야 합니다. 이 방식의 기하 문항이 9월에 여럿 나왔고 10월에도 이어질 가능성이 높습니다.',
+      },
+      {
+        id: 'kimys-2',
+        coach: '김예슬',
+        index: 2,
+        section: 'Math',
+        title: 'Quadratic model after outlier removal',
+        skill: 'Two-variable data: Models and scatterplots',
+        difficulty: '27%',
+        isGridIn: false,
+        question:
+          'A scatterplot shows 9 data points and the quadratic model $y = 0.19x^2 - 1.24x + 7.57$. The data point at $x = 0$ was identified as a recording error and removed. If the new best-fit quadratic model for the remaining data is $y = ax^2 + bx + c$, which of the following must be true?',
+        statements: ['$a > 0.19$', '$c < 7.57$'],
+        choices: { A: 'I only', B: 'II only', C: 'Both I and II', D: 'Neither' },
+        correctAnswer: 'B',
+        reason:
+          '9월 수학에서 예상 정답률이 가장 낮은 축에 속한 문항입니다. 계산이 아니라 계수가 어느 방향으로 움직이는지 추론해야 합니다. $c$가 $x = 0$에서의 모델 값이라는 것을 떠올리면 II는 빠르게 판단됩니다. 점 하나를 빼면 곡선이 더 많이 휜다고 착각해 I까지 참으로 고르는 C 함정이 설계되어 있습니다.',
+      },
+      {
+        id: 'kimys-3',
+        coach: '김예슬',
+        index: 3,
+        section: 'Math',
+        title: 'Similar cylinders — surface area to volume',
+        skill: 'Area and volume',
+        difficulty: '30%',
+        isGridIn: true,
+        question:
+          "Cylinders $A$ and $B$ are similar right circular cylinders. The total surface area of cylinder $A$ is $486\\pi$ cm² and its height equals its diameter. The ratio of the diameter of $A$ to the diameter of $B$ is 3 to 4. If the volume of cylinder $B$ is $k\\pi$ cm³, what is the value of $k$?",
+        correctAnswer: '3456',
+        reason:
+          '겉넓이 → 반지름 → 닮음비 → 부피까지 세 단계를 이어가야 합니다. 각 단계에 실수 포인트가 하나씩 있습니다. 밑면 두 개를 빠뜨리거나, 닮음비를 부피에 세제곱하지 않으면 틀립니다. 단답형이라 보기로 검산도 할 수 없습니다.',
+      },
+      {
+        id: 'kimys-4',
+        coach: '김예슬',
+        index: 4,
+        section: 'RW',
+        title: 'Table + hypothesis support (new question type)',
+        skill: 'Command of Evidence (Quantitative)',
+        difficulty: 'Hard',
+        isGridIn: false,
+        passage: {
+          type: 'table',
+          headers: ['Species', 'Family', 'Habitat', 'Preferred substrate', 'Frontation angle (°)'],
+          rows: [
+            ['Vulpes macrotis', 'Canidae', 'open', 'terrestrial', '54.14'],
+            ['Nyctereutes procyonoides', 'Canidae', 'closed', 'arboreal', '56.51'],
+            ['Leptailurus serval', 'Felidae', 'open', 'terrestrial', '65.80'],
+            ['Leopardus wiedii', 'Felidae', 'closed', 'arboreal', '67.61'],
+            ['Leopardus guigna', 'Felidae', 'closed', 'terrestrial', '67.90'],
+          ],
+        },
+        question:
+          'By examining trait distributions across phylogenetic lineages, evolutionary biologists can determine whether trait similarities result from shared ancestry, leading to consistent presence of the trait among closely related species, or from convergent evolution under similar selective pressures, leading to the independent appearance of the trait in more distantly related species occupying similar ecological niches. Hypothesizing that orbit (eye socket) orientation in the families Canidae and Felidae (both within the order Carnivora) is primarily driven by the latter mechanism, a researcher measured frontation angles—the extent to which orbits face downward or upward—in felid and canid species occupying various habitats and preferring different substrates.\n\nAssuming the data in the table are broadly representative, do the data support the researcher\'s hypothesis as presented in the text?',
+        choices: {
+          A: 'Yes, because frontation angles show a moderately strong relationship with ecological niches, with two out of the three species with the highest frontation angles either inhabiting closed habitats or preferring terrestrial substrates.',
+          B: 'No, because frontation angles cluster by taxonomic family rather than by ecological categories, with similar values measured for species from the same family despite their occupation of different ecological niches.',
+          C: 'No, because frontation angles are relatively consistent across ecological categories, with values for species inhabiting closed arboreal habitats and species inhabiting open terrestrial habitats ranging from 56.51 to 67.61 and from 54.14 to 65.80, respectively.',
+          D: 'Yes, because frontation angles are lower for canid species than for felid species regardless of habitat or preferred substrate, with values for species from the same taxonomic family clustering in a relatively narrow range.',
+        },
+        correctAnswer: 'B',
+        reason:
+          '9월에 처음 등장한 유형입니다. 긴 과학 지문 + 5열 표 + 가설 지지 여부 판정을 한 문항에 묶었습니다. 가설이 "the latter mechanism"으로만 표현되어 앞 문장에서 수렴 진화라는 것을 직접 찾아야 합니다. D는 관찰은 맞지만 결론이 틀렸고, C는 결론은 맞지만 핵심 근거를 비껴갑니다.',
+      },
+      {
+        id: 'kimys-5',
+        coach: '김예슬',
+        index: 5,
+        section: 'RW',
+        title: 'Long scientific passage — inference',
+        skill: 'Inferences',
+        difficulty: '38%',
+        isGridIn: false,
+        passage: {
+          type: 'text',
+          paragraphs: [
+            'As observed in a 2011 study by Emilio García-Robledo and Alfonso Corzo, macroalgal proliferation may have a suppressive effect on the abundance of chlorophytes and other microphytobenthos (MPB)—chlorophyll-producing microbes inhabiting marine sediment—in part by reducing the amount of sunlight available to MPB. Examining benthic chlorophyll concentrations (a widely used proxy for MPB biomass) in mudflats near Cobb Island and other coastal sites in Virginia, Alice F. Besterman and Michael L. Pace found that those concentrations did not negatively correlate with macroalgal proliferation. However, they noted that MPB may respond to low-light conditions by producing higher-than-normal concentrations of chlorophyll, and they thus concluded that _____',
+          ],
+        },
+        question: 'Which choice most logically completes the text?',
+        choices: {
+          A: 'although elevated levels of macroalgae do not always correspond to increased levels of benthic chlorophyll, there is likely a larger trend in MPB biomass that is related to macroalgal presence but unrelated to light conditions.',
+          B: 'although their finding was inconsistent with that of García-Robledo and Corzo, this discrepancy was not attributable to the ability of MPB to accelerate chlorophyll production to mitigate the negative impact of macroalgal accumulations.',
+          C: 'the effect of macroalgal concentrations on MPB abundance that García-Robledo and Corzo reported was not observed near Cobb Island and other Virginia sites because low-light conditions likely are not generalizable across the sites in the studies.',
+          D: 'researchers ought to account for the possibility that because MPB have the capacity to compensate for reduced sunlight availability, benthic chlorophyll concentrations may not always be a reliable indicator of MPB biomass.',
+        },
+        correctAnswer: 'D',
+        reason:
+          '"엽록소 농도 = MPB 생물량의 대용치"라는 전제를 끝까지 붙잡아야 결론이 보입니다. 두 연구를 대비하고 However로 한 번 뒤집은 뒤 결론을 추론하는 구조입니다. B는 지문의 인과를 정반대로 말하는데 표현이 비슷해 헷갈립니다.',
+      },
+      {
+        id: 'kimys-6',
+        coach: '김예슬',
+        index: 6,
+        section: 'RW',
+        title: 'Philosophy argument — which quote best challenges it (new question type)',
+        skill: 'Command of Evidence (Textual)',
+        difficulty: 'Hard',
+        isGridIn: false,
+        passage: {
+          type: 'text',
+          paragraphs: [
+            'Elizabeth Gaskell, who was born in 1810, is the author of North and South. In a commonsense view, "Elizabeth Gaskell was born in 1810" and "the author of North and South was born in 1810" are identical in meaning and thus—because "was born in 1810" is constant—"Elizabeth Gaskell" is identical to "the author of North and South." But this conclusion conflicts with the principle, foundational to logic and mathematics, that identical entities are necessarily substitutable in any possible world (i.e., if A = B, then B can always be substituted for A), since it was possible for Gaskell to exist but to not write North and South. This situation suggests that there may be something wrong with our principle about the substitutability of identical entities.',
+          ],
+        },
+        question:
+          'In a paper for a philosophy class, a student wants to challenge the line of reasoning presented in the text. Which quotation from a work of philosophy would be most effective for the student to include?',
+        choices: {
+          A: '"In everyday speech, we tend to talk about circumstantial characteristics of individuals (e.g., a person behaves shyly at a party) as though they are inherent characteristics of those individuals (we say the person is shy) though unfair; this tendency is more efficient than spelling out all the contingent circumstances every time we want to communicate about individuals."',
+          B: '"A proper name is a mere tag that refers to an individual but lacks any content; although it and a description of an attribute of a person may happen to evoke the same person in our minds, equating them is a mistake, since a name communicates no properties of the person, while a description does."',
+          C: '"Although the principle that two entities that are identical are necessarily substitutable sounds plausible and is useful in everyday life, it is very hard to demonstrate the validity of this principle through a logical proof without making some highly debatable assumptions."',
+          D: '"When scholars write about an author, they typically use the author\'s full name or last name, whereas acquaintances would typically have referred to that author by first name alone; though different parts of the same proper name are used in different contexts, it would be incorrect to think that different people are therefore being referenced."',
+        },
+        correctAnswer: 'B',
+        reason:
+          '9월에 처음 등장한 유형입니다. 논증을 challenge하라는 말은 결론이 아니라 전제를 공격하라는 뜻입니다. 논증의 약점은 첫 전제—이름과 서술을 동일시한 것—입니다. B는 고유명사와 서술 표현의 차이를 지적해 첫 전제를 무너뜨립니다.',
       },
     ],
   },
