@@ -18,6 +18,8 @@ export interface MetaLeadData {
 export interface ParsedLeadFields {
   name: string | null;
   phone: string | null;
+  grade: string | null;
+  targetScore: number | null;
 }
 
 const GRAPH_BASE = 'https://graph.facebook.com/v22.0';
@@ -367,7 +369,7 @@ export async function sendSlackLeadMessage({
 const NAME_FIELDS = ['full_name', 'name', '이름', 'first_name'];
 const PHONE_FIELDS = ['phone_number', 'phone', '전화번호', '연락처'];
 
-/** field_data 배열에서 이름·전화번호 추출 */
+/** field_data 배열에서 이름·전화번호·학년·목표점수 추출 */
 export function parseLeadFields(fieldData: MetaLeadField[]): ParsedLeadFields {
   const get = (keys: string[]) => {
     for (const key of keys) {
@@ -376,5 +378,20 @@ export function parseLeadFields(fieldData: MetaLeadField[]): ParsedLeadFields {
     }
     return null;
   };
-  return { name: get(NAME_FIELDS), phone: get(PHONE_FIELDS) };
+
+  const getByKeyword = (test: (k: string) => boolean) => {
+    const field = fieldData.find(f => test(f.name));
+    return field?.values?.[0] ?? null;
+  };
+
+  const gradeRaw = getByKeyword(k => k.includes('학년'));
+  const scoreRaw = getByKeyword(k => k.includes('목표') || (k.includes('점수') && !k.includes('이름')));
+  const targetScore = scoreRaw ? (parseInt(scoreRaw, 10) || null) : null;
+
+  return {
+    name: get(NAME_FIELDS),
+    phone: get(PHONE_FIELDS),
+    grade: gradeRaw,
+    targetScore,
+  };
 }

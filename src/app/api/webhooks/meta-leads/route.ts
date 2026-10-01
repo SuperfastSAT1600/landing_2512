@@ -194,7 +194,7 @@ async function processLeadEntry(
     : new Map<string, string>();
 
   // REQ-PHONE-01: 전화번호 기반 기존 리드 중복 체크
-  const { name: formName, phone } = parseLeadFields(leadData.field_data);
+  const { name: formName, phone, grade: formGrade, targetScore } = parseLeadFields(leadData.field_data);
 
   let existingStudentId: string | null = null;
   if (phone) {
@@ -248,7 +248,7 @@ async function processLeadEntry(
     .from('students')
     .insert([{
       name,
-      grade: '기타',
+      grade: formGrade ?? '기타',
       school_type: '한국 학제',
       parent_phone: phone ?? '',
       inquiry_date: kst.toISOString().slice(0, 16) + ':00',
@@ -263,6 +263,7 @@ async function processLeadEntry(
       meta_lead_id: leadgenId,
       ad_name: leadData.ad_name ?? null,
       adset_name: adsetName,
+      ...(targetScore !== null && { target_score: targetScore }),
     }]);
 
   if (dbError) {
