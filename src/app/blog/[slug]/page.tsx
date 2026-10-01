@@ -7,6 +7,7 @@ import { PostContent } from './PostContent';
 import { HighlightObserver } from './HighlightObserver';
 import { MathActivator } from './MathActivator';
 import { ReadCompletePopup } from './ReadCompletePopup';
+import { GatedCoachPicks } from '../2026-10-01-all-coaches-oct-sat-36picks/GatedCoachPicks';
 import { Calendar, ArrowLeft, Tag } from 'lucide-react';
 import styles from './post.module.css';
 
@@ -198,9 +199,10 @@ export default async function Post({ params }: Props) {
                         {postData.title}
                     </h1>
 
-                    {/* Content: server-rendered for non-gated (avoids RSC large-string serialization bug),
-                        client PostContent only for gated posts (GateWall unlock flow) */}
-                    {postData.isGated ? (
+                    {/* Content */}
+                    {postData.id === '2026-10-01-all-coaches-oct-sat-36picks' ? (
+                        <GatedCoachPicks postData={postData} />
+                    ) : postData.isGated ? (
                         <PostContent postData={postData} />
                     ) : (
                         <>
