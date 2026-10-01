@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
 import { FUNNEL_STAGE_LABELS } from '@/types/crm';
+import { appendStageHistory } from '@/lib/stage-history';
 
 /**
  * GET /api/crm/students/[id]
@@ -70,15 +71,11 @@ export async function PATCH(
       .single();
 
     const newStage = updateFields.funnel_stage as string;
-    const history: Array<{ stage: string; label: string; entered_at: string }> =
-      Array.isArray(current?.stage_history) ? current.stage_history : [];
+    const label = FUNNEL_STAGE_LABELS[newStage as keyof typeof FUNNEL_STAGE_LABELS] ?? newStage;
+    const history = appendStageHistory(current?.stage_history, newStage, label, new Date().toISOString());
 
-    history.push({
-      stage: newStage,
-      label: FUNNEL_STAGE_LABELS[newStage as keyof typeof FUNNEL_STAGE_LABELS] ?? newStage,
-      entered_at: new Date().toISOString(),
-    });
-    updateFields.stage_history = history;
+    // 직전과 같은 단계면 이력이 그대로 돌아온다 — 불필요하게 덮어쓰지 않는다.
+    if (history !== current?.stage_history) updateFields.stage_history = history;
   }
 
   // maybeSingle: 삭제된 리드를 수정하면 0행이 돌아온다. single()이면 PostgREST가
