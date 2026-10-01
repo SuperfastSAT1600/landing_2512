@@ -18,22 +18,7 @@ function isSyncAuthenticated(request: NextRequest): boolean {
  * Google Apps Script에서 META 인스턴트폼 리드 데이터를 수신해 CRM에 등록한다.
  * 동일 전화번호가 존재하면 campaign_tags만 병합(merge)한다.
  */
-/**
- * Meta 웹훅이 CRM 카드를 직접 만들므로 시트싱크는 기본 비활성화다.
- * 되살릴 때는 SHEETS_SYNC_ENABLED=true 만 세팅하면 된다(재배포 불필요).
- *
- * 무조건 return으로 막으면 이후 코드가 도달 불가가 되어 TS 흐름 분석이 꺼지고
- * `existing` narrowing이 사라져 빌드가 깨진다 — 분기로 둔다.
- */
-function isSheetsSyncDisabled(): boolean {
-  return process.env.SHEETS_SYNC_ENABLED !== 'true';
-}
-
 export async function POST(request: NextRequest) {
-  if (isSheetsSyncDisabled()) {
-    return NextResponse.json({ ok: true, skipped: 'disabled' });
-  }
-
   if (!isSyncAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -92,19 +77,13 @@ export async function POST(request: NextRequest) {
 
   // ── 신규 등록 ─────────────────────────────────────────────────────────────
 
-  // META 리드는 날짜 대신 순번(1, 2, 3…)을 이름에 붙인다
+  // META 리드는 Meta 웹훅이 직접 처리하므로 sheets-sync에서 신규 등록 제외
   const isMetaLead =
     payload.source_tab === 'META리드_인스턴트폼' ||
     payload.source_tab === 'META리드_인스턴트폼_목표시험';
 
-  if (isMetaLead && !payload.student_name?.trim()) {
-    const { count } = await supabaseAdmin
-      .from('students')
-      .select('id', { count: 'exact', head: true })
-      .contains('campaign_tags', ['META 리드']);
-
-    const seq = (count ?? 0) + 1;
-    crmPayload.name = `META리드_${seq}`;
+  if (isMetaLead) {
+    return NextResponse.json({ ok: true, skipped: 'meta_lead_handled_by_webhook' });
   }
 
   const { data, error: insertError } = await supabaseAdmin
