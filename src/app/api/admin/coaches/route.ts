@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getCoaches, addCoach, updateCoach, deleteCoach, CoachData, ProfileStatus } from '@/lib/coaches-data';
 import { isAuthenticated } from '@/lib/server-auth';
 import { isValidInstagramUrl } from '@/lib/instagram-url';
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
             expires_at,
         });
 
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+        const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000').toLowerCase();
         const onboardingUrl = `${baseUrl}/coach-onboarding/${token}`;
 
         return NextResponse.json({ success: true, coach: newCoach, onboarding_url: onboardingUrl }, { status: 201 });
@@ -124,8 +125,10 @@ export async function PATCH(request: NextRequest) {
         }
         const ok = await updateCoach(slug, safeUpdates);
         if (!ok) {
-            return NextResponse.json({ success: false, error: 'Coach not found or DB error' }, { status: 404 });
+            return NextResponse.json({ success: false, error: `slug "${slug}"에 해당하는 코치를 찾을 수 없습니다.` }, { status: 404 });
         }
+        revalidatePath(`/coaches/${slug}`);
+        revalidatePath('/coaches');
         return NextResponse.json({ success: true });
     } catch {
         return NextResponse.json({ success: false, error: 'Failed to update coach' }, { status: 500 });

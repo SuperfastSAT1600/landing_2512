@@ -41,7 +41,7 @@ export default function BlogList({ posts, currentCategory = '' }: BlogListProps)
             </div>
 
             {posts.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
                     {posts.map((post) => (
                         <div
                             key={post.id}
@@ -78,7 +78,7 @@ export default function BlogList({ posts, currentCategory = '' }: BlogListProps)
                             </div>
 
                             {/* Content */}
-                            <div className="p-6 flex-1 flex flex-col">
+                            <div className="p-4 sm:p-6 flex-1 flex flex-col">
                                 <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 font-medium relative z-10">
                                     <Tag size={12} />
                                     {post.tags?.filter(t => t !== 'vip')[0] ? (

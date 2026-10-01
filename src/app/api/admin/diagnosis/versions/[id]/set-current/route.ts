@@ -4,8 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 /**
  * PATCH /api/admin/diagnosis/versions/[id]/set-current
- * Set a version as the current (default) version for new tokens.
- * Clears is_current on all others first, then sets this one.
+ * 전역 기본 문제 세트를 변경. 모든 문제 세트에서 is_current를 해제 후 지정.
  */
 export async function PATCH(
   request: NextRequest,
@@ -18,21 +17,11 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    // Fetch this version's test_id to scope the clear
-    const { data: target } = await supabaseAdmin
-      .from('diagnostic_test_versions')
-      .select('test_id')
-      .eq('id', id)
-      .single();
-
-    const scopedTestId = target?.test_id ?? 'diagnostic-test-1';
-
-    // Clear current flag only within the same test_id scope
+    // Clear is_current globally
     const { error: clearError } = await supabaseAdmin
       .from('diagnostic_test_versions')
       .update({ is_current: false })
-      .eq('is_current', true)
-      .eq('test_id', scopedTestId);
+      .eq('is_current', true);
 
     if (clearError) throw clearError;
 
@@ -41,7 +30,7 @@ export async function PATCH(
       .from('diagnostic_test_versions')
       .update({ is_current: true })
       .eq('id', id)
-      .select('id, version_number, is_current')
+      .select('id, set_number, version_number, is_current')
       .single();
 
     if (setError || !data) {

@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
-import type { BusinessTargetCurrency, BusinessTargetSegment } from '@/lib/business-targets';
+import type { BusinessTargetCurrency, BusinessTargetSegment, BusinessTargetPaymentType } from '@/lib/business-targets';
 
-// Business 페이지 "목표 대비 실적" 그래프용 월별 목표. 튜터링/글로벌은 완전히 분리된
-// segment지만 통화는 둘 다 원화(KRW)로 통일한다 — 글로벌 실적(달러 매출)은 집계 시점에
-// 1$=1,400원으로 환산해서 비교하므로 목표 자체를 USD로 들고 있을 이유가 없다.
 export interface BusinessMonthlyTarget {
   id: string;
   month: string; // YYYY-MM-01
   segment: BusinessTargetSegment;
+  payment_type: BusinessTargetPaymentType;
   target_amount: number;
   currency: BusinessTargetCurrency;
   created_at: string;
@@ -17,6 +15,7 @@ export interface BusinessMonthlyTarget {
 }
 
 const VALID_SEGMENTS: BusinessTargetSegment[] = ['tutoring', 'global'];
+const VALID_PAYMENT_TYPES: BusinessTargetPaymentType[] = ['all', 'first', 're'];
 const MONTH_RE = /^\d{4}-\d{2}$/;
 
 function currencyOf(_segment: BusinessTargetSegment): BusinessTargetCurrency {
@@ -33,11 +32,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'segment은 tutoring|global 중 하나여야 합니다.' }, { status: 400 });
   }
 
-  const { data, error } = await supabaseAdmin
+  const paymentTypeParam = request.nextUrl.searchParams.get('payment_type');
+
+  let query = supabaseAdmin
     .from('business_monthly_targets')
     .select('*')
     .eq('segment', segment)
     .order('month', { ascending: true });
+
+  if (paymentTypeParam && VALID_PAYMENT_TYPES.includes(paymentTypeParam as BusinessTargetPaymentType)) {
+    query = query.eq('payment_type', paymentTypeParam);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('[monthly-targets GET]', error);
@@ -52,7 +59,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { segment?: string; month?: string; target_amount?: number };
+  let body: { segment?: string; month?: string; target_amount?: number; payment_type?: string };
   try {
     body = await request.json();
   } catch {
@@ -69,6 +76,11 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: '목표 금액은 0보다 큰 숫자여야 합니다.' }, { status: 400 });
   }
 
+  const paymentType: BusinessTargetPaymentType =
+    body.payment_type && VALID_PAYMENT_TYPES.includes(body.payment_type as BusinessTargetPaymentType)
+      ? (body.payment_type as BusinessTargetPaymentType)
+      : 'all';
+
   const segment = body.segment as BusinessTargetSegment;
   const { data, error } = await supabaseAdmin
     .from('business_monthly_targets')
@@ -76,11 +88,12 @@ export async function PUT(request: NextRequest) {
       {
         month: `${body.month}-01`,
         segment,
+        payment_type: paymentType,
         target_amount: body.target_amount,
         currency: currencyOf(segment),
         updated_at: new Date().toISOString(),
       },
-      { onConflict: 'month,segment' },
+      { onConflict: 'month,segment,payment_type' },
     )
     .select()
     .single();

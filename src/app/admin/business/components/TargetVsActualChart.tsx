@@ -1,6 +1,6 @@
 'use client';
 
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, LabelList, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { TargetVsActualRow } from '@/lib/business-targets';
 
 // 월별 목표 vs 실적 막대그래프 — recharts를 지연 로딩 청크로 분리하기 위한 전용 컴포넌트.
@@ -24,7 +24,7 @@ export default function TargetVsActualChart({
   const tooltipFormat = formatTooltip ?? formatValue;
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={data} barCategoryGap="35%" barGap={4} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="35%" barGap={4} margin={{ top: 24, right: 4, left: 4, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
         <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(m: string) => m.slice(2)} tickLine={false} axisLine={false} />
         <YAxis
@@ -39,7 +39,9 @@ export default function TargetVsActualChart({
         <Tooltip formatter={(value) => tooltipFormat(Number(value))} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} />
         <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
         <Bar dataKey="target" name="목표" fill="#e5e7eb" radius={[3, 3, 0, 0]} maxBarSize={32} />
-        <Bar dataKey="actual" name="실적" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={32} />
+        <Bar dataKey="actual" name="실적" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={32}>
+          <LabelList dataKey="actual" position="top" formatter={(v: unknown) => typeof v === 'number' && v > 0 ? formatValue(v) : ''} style={{ fontSize: 10, fill: '#3b82f6', fontWeight: 600 }} />
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );

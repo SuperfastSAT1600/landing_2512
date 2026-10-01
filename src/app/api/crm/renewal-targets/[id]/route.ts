@@ -18,6 +18,9 @@ const STUDENT_FIELDS = 'id, name, grade, parent_phone, is_vip, needs_attention, 
 /** 카드 메모는 한 줄 상태 노트다. 상담 기록 전체는 학생 패널 타임라인이 담당한다. */
 const MEMO_MAX_LENGTH = 1000;
 
+/** 컨택 예정일은 KST 기준 달력 날짜다 — 시각은 담지 않는다. */
+const CONTACT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 /** 품질을 기록할 수 있는 터미널 단계. */
 const QUALITY_STAGES: RenewalStage[] = ['4', '5'];
 
@@ -40,6 +43,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     outcome_reason_tag?: unknown;
     outcome_reason_note?: unknown;
     memo?: unknown;
+    next_contact_date?: unknown;
     author?: unknown;
   };
   try {
@@ -101,7 +105,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     );
   }
 
-  if (!hasStage && !hasQuality && !hasReason && !hasMemo) {
+  const hasContactDate = 'next_contact_date' in body;
+  const contactDate = body.next_contact_date;
+  if (
+    hasContactDate &&
+    contactDate !== null &&
+    (typeof contactDate !== 'string' ||
+      (contactDate !== '' && !CONTACT_DATE_PATTERN.test(contactDate)))
+  ) {
+    return NextResponse.json(
+      { error: { code: 'INVALID_CONTACT_DATE', message: '컨택 예정일 형식이 올바르지 않습니다.' } },
+      { status: 400 }
+    );
+  }
+
+  if (!hasStage && !hasQuality && !hasReason && !hasMemo && !hasContactDate) {
     return NextResponse.json(
       { error: { code: 'NO_UPDATABLE_FIELDS', message: '변경할 필드가 없습니다.' } },
       { status: 400 }
@@ -117,6 +135,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   // 카드의 '단계 D+N' 이 리셋된다.
   if (hasMemo) {
     update.memo = memoText === '' ? null : memoText;
+  }
+
+  // 예정일도 단계와 독립이다 — 날짜만 고칠 때 stage_updated_at 이 바뀌면 '단계 D+N' 이 리셋된다.
+  if (hasContactDate) {
+    update.next_contact_date = contactDate ? (contactDate as string) : null;
   }
 
   if (hasStage) {
@@ -165,6 +188,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     update.outcome_quality = null;
     update.outcome_reason_tag = null;
     update.outcome_reason_note = null;
+  }
+  // 결과가 확정된 행에 '다음에 언제 연락' 이 남아 있으면 보드에서 죽은 약속으로 보인다.
+  if (hasStage && QUALITY_STAGES.includes(stage as RenewalStage)) {
+    update.next_contact_date = null;
   }
 
   // 사유는 품질에 종속된다 — 품질을 지우면 사유도 없어지고, 품질을 지정하면 사유가 필수다.

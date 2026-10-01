@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
+import diagnosticTest2 from '@/app/diagnosis/data/diagnostic-test-2';
 
 /**
  * GET /api/diagnosis/test-content?versionId=<uuid>
@@ -8,9 +9,16 @@ import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
  * Falls back to the hardcoded test when versionId is absent or not found in DB.
  * Public endpoint — no auth required (versionId is obtained from validated token).
  */
+const HARDCODED_TESTS: Record<string, typeof diagnosticTest1> = {
+  'diagnostic-test-1': diagnosticTest1,
+  'diagnostic-test-2': diagnosticTest2,
+};
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const versionId = searchParams.get('versionId');
+  const testId = searchParams.get('testId') ?? 'diagnostic-test-1';
+  const fallbackTest = HARDCODED_TESTS[testId] ?? diagnosticTest1;
 
   if (versionId) {
     try {
@@ -30,7 +38,7 @@ export async function GET(request: NextRequest) {
           timeLimit: data.time_limit_minutes,
           directions: data.directions,
           // DB version이 RW 문제 없으면 하드코딩 전체 세트로 폴백
-          questions: hasRW ? data.questions : diagnosticTest1.questions,
+          questions: hasRW ? data.questions : fallbackTest.questions,
         }, { status: 200 });
       }
     } catch (err) {
@@ -40,11 +48,11 @@ export async function GET(request: NextRequest) {
 
   // Fallback: return hardcoded test data
   return NextResponse.json({
-    id: diagnosticTest1.id,
+    id: fallbackTest.id,
     versionNumber: 1,
-    title: diagnosticTest1.title,
-    timeLimit: diagnosticTest1.timeLimit,
-    directions: diagnosticTest1.directions,
-    questions: diagnosticTest1.questions,
+    title: fallbackTest.title,
+    timeLimit: fallbackTest.timeLimit,
+    directions: fallbackTest.directions,
+    questions: fallbackTest.questions,
   }, { status: 200 });
 }

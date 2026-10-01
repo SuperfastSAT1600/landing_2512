@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { isValidExamMonth, isValidSectionScore } from '@/lib/exam-score';
+import { syncLatestExamScore } from '@/app/api/crm/_lib/syncLatestExamScore';
 
 const SCORE_MESSAGE = '점수는 200~800 사이 10점 단위여야 합니다.';
 
@@ -75,6 +76,8 @@ export async function PATCH(
     return NextResponse.json({ error: '시험 성적을 찾을 수 없습니다.' }, { status: 404 });
   }
 
+  await syncLatestExamScore(data.student_id);
+
   return NextResponse.json({ data });
 }
 
@@ -88,11 +91,27 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { data: existing, error: fetchError } = await supabaseAdmin
+    .from('student_exam_scores')
+    .select('student_id')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error('[crm/exam-scores DELETE fetch]', fetchError);
+    return NextResponse.json({ error: '시험 성적 삭제에 실패했습니다.' }, { status: 500 });
+  }
+  if (!existing) {
+    return NextResponse.json({ error: '시험 성적을 찾을 수 없습니다.' }, { status: 404 });
+  }
+
   const { error } = await supabaseAdmin.from('student_exam_scores').delete().eq('id', id);
   if (error) {
     console.error('[crm/exam-scores DELETE]', error);
     return NextResponse.json({ error: '시험 성적 삭제에 실패했습니다.' }, { status: 500 });
   }
+
+  await syncLatestExamScore(existing.student_id);
 
   return NextResponse.json({ data: null });
 }

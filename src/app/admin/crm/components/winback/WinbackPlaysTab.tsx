@@ -33,6 +33,7 @@ export function WinbackPlaysTab({ adminKey, userName, winback, onStudentClick }:
           addTargets={winback.addTargets}
           bulkTargets={winback.bulkTargets}
           deletePlay={winback.deletePlay}
+          updatePlay={winback.updatePlay}
           onStudentClick={onStudentClick}
         />
       ) : (

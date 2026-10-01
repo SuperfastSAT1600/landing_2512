@@ -62,6 +62,9 @@ export function contactRate(contacted: number, leads: number): number {
   return Math.round((contacted / leads) * 10000) / 100;
 }
 
+/** 일반 비율(%) — contactRate 와 같은 반올림 규칙을 쓴다(지표 간 표기 일관성). */
+export const ratePct = contactRate;
+
 export function toMonthKey(dateStr: string): string {
   return dateStr.slice(0, 7); // "2026-05"
 }
@@ -206,4 +209,86 @@ export interface PaidCohortRow {
   student_id: string | null;
   student_name: string;
   students?: RelatedCompanyRef;
+}
+
+// ─── 환불 귀속 ────────────────────────────────────────────────────────────────
+
+export interface AttributablePayment {
+  student_id?: string | null;
+  student_name?: string | null;
+  amount: number;
+  payment_type: string | null;
+  paid_at: string;
+}
+
+/** 학생을 식별하는 키 — student_id 우선, 없으면 이름. */
+function attributionKey(p: AttributablePayment): string {
+  return p.student_id ?? p.student_name ?? '__unknown__';
+}
+
+/**
+ * 환불을 "직전 양수 결제"의 유형(최초결제/재결제)에 귀속시켜 유형별 순매출을 계산한다.
+ *
+ * 환불은 payment_type='환불'로 따로 저장돼 자기 유형을 모른다. 학생별 paid_at 오름차순으로
+ * 훑으며 마지막 양수 결제 유형을 기억했다가 거기서 차감한다.
+ *
+ * `priorTypeByStudent` 는 **조회 기간 시작 이전** 마지막 양수 결제 유형이다.
+ * 이게 없으면 "작년 결제 → 올해 환불" 이 어느 유형에도 안 잡혀(unattributedRefund)
+ * 최초결제 % + 재결제 % 합이 100%를 넘는다.
+ *
+ * 불변식: netFirst + netRepayment + unattributedRefund === Σ amount
+ */
+export function attributeRevenueByType(
+  payments: AttributablePayment[],
+  priorTypeByStudent: Map<string, 'first' | 're'> = new Map()
+): { netFirst: number; netRepayment: number; unattributedRefund: number } {
+  const byStudent = new Map<string, AttributablePayment[]>();
+  for (const p of payments) {
+    const key = attributionKey(p);
+    const bucket = byStudent.get(key);
+    if (bucket) bucket.push(p);
+    else byStudent.set(key, [p]);
+  }
+
+  let netFirst = 0;
+  let netRepayment = 0;
+  let unattributedRefund = 0;
+
+  for (const [key, rows] of byStudent) {
+    rows.sort((a, b) => a.paid_at.localeCompare(b.paid_at));
+    // 기간 내 결제가 아직 없는 동안에는 기간 밖 마지막 유형을 이어받는다.
+    let lastType: 'first' | 're' | null = priorTypeByStudent.get(key) ?? null;
+    for (const p of rows) {
+      if (p.amount >= 0) {
+        if (p.payment_type === '최초결제') {
+          netFirst += p.amount;
+          lastType = 'first';
+        } else if (p.payment_type === '재결제') {
+          netRepayment += p.amount;
+          lastType = 're';
+        }
+      } else if (lastType === 'first') netFirst += p.amount;
+      else if (lastType === 're') netRepayment += p.amount;
+      else unattributedRefund += p.amount;
+    }
+  }
+
+  return { netFirst, netRepayment, unattributedRefund };
+}
+
+/**
+ * 조회 기간 이전 결제들로부터 학생별 마지막 결제 유형 맵을 만든다.
+ * `attributeRevenueByType` 의 `priorTypeByStudent` 인자로 넘긴다.
+ */
+export function buildPriorTypeMap(
+  priorPayments: AttributablePayment[]
+): Map<string, 'first' | 're'> {
+  const sorted = [...priorPayments].sort((a, b) => a.paid_at.localeCompare(b.paid_at));
+  const map = new Map<string, 'first' | 're'>();
+  for (const p of sorted) {
+    if (p.amount < 0) continue;
+    if (p.payment_type === '최초결제') map.set(attributionKey(p), 'first');
+    else if (p.payment_type === '재결제') map.set(attributionKey(p), 're');
+  }
+  return map;
 }

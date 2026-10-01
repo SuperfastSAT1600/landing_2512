@@ -23,7 +23,14 @@ function updateReturns(row: unknown, error: unknown = null) {
   return update;
 }
 
-function deleteReturns(error: unknown = null) {
+/**
+ * DELETE 는 지우기 전에 student_id 를 먼저 조회한다(삭제 후 최신 점수 재동기화용).
+ * 조회 → 삭제 순서로 두 번의 from() 을 모킹한다.
+ */
+function deleteReturns(error: unknown = null, existing: unknown = { student_id: 's1' }) {
+  mockFrom.mockReturnValueOnce({
+    select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: existing, error: null }) }) }),
+  });
   const del = vi.fn(() => ({ eq: () => Promise.resolve({ error }) }));
   mockFrom.mockReturnValueOnce({ delete: del });
   return del;
@@ -105,5 +112,16 @@ describe('DELETE /api/crm/exam-scores/[id]', () => {
     deleteReturns({ message: 'boom' });
     const { DELETE } = await import('../route');
     expect((await DELETE(req('DELETE'), { params })).status).toBe(500);
+  });
+});
+
+describe('DELETE /api/crm/exam-scores/[id] — 삭제 전 조회', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('없는 기록이면 404 이고 삭제를 시도하지 않는다', async () => {
+    const del = deleteReturns(null, null);
+    const { DELETE } = await import('../route');
+    expect((await DELETE(req('DELETE'), { params })).status).toBe(404);
+    expect(del).not.toHaveBeenCalled();
   });
 });

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
 import { FUNNEL_STAGE_LABELS } from '@/types/crm';
+import { appendStageHistory } from '@/lib/stage-history';
 
 /**
  * GET /api/crm/students/[id]
@@ -70,23 +71,22 @@ export async function PATCH(
       .single();
 
     const newStage = updateFields.funnel_stage as string;
-    const history: Array<{ stage: string; label: string; entered_at: string }> =
-      Array.isArray(current?.stage_history) ? current.stage_history : [];
+    const label = FUNNEL_STAGE_LABELS[newStage as keyof typeof FUNNEL_STAGE_LABELS] ?? newStage;
+    const history = appendStageHistory(current?.stage_history, newStage, label, new Date().toISOString());
 
-    history.push({
-      stage: newStage,
-      label: FUNNEL_STAGE_LABELS[newStage as keyof typeof FUNNEL_STAGE_LABELS] ?? newStage,
-      entered_at: new Date().toISOString(),
-    });
-    updateFields.stage_history = history;
+    // 직전과 같은 단계면 이력이 그대로 돌아온다 — 불필요하게 덮어쓰지 않는다.
+    if (history !== current?.stage_history) updateFields.stage_history = history;
   }
 
+  // maybeSingle: 삭제된 리드를 수정하면 0행이 돌아온다. single()이면 PostgREST가
+  // PGRST116("Cannot coerce the result to a single JSON object")를 DB 오류로 올려보내
+  // 그 원문이 그대로 사용자 alert에 노출된다.
   const { data, error } = await supabaseAdmin
     .from('students')
     .update(updateFields)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('[crm/students PATCH]', error);
@@ -97,7 +97,15 @@ export async function PATCH(
   }
 
   if (!data) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return NextResponse.json(
+      {
+        error: {
+          code: 'STUDENT_NOT_FOUND',
+          message: '이미 삭제된 리드입니다. 목록을 새로고침해 주세요.',
+        },
+      },
+      { status: 404 }
+    );
   }
 
   // 상담 기록 변경 시 임베딩 백그라운드 갱신

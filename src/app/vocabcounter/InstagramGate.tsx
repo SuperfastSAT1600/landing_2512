@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback, useSyncExternalStore } from 'react';
+import { useState, useRef, useCallback, useSyncExternalStore, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const STORAGE_KEY = 'vocab_search_v2';
 const CODE_LENGTH = 6;
@@ -12,7 +13,21 @@ function subscribe(callback: () => void) {
 function getSnapshot() { return localStorage.getItem(STORAGE_KEY) ?? null; }
 function getServerSnapshot() { return null; }
 
+function InstagramGateInner({ children }: { children: React.ReactNode }) {
+  const searchParams = useSearchParams();
+  const isLeadMode = searchParams.get('mode') === 'lead';
+  return <InstagramGateContent isLeadMode={isLeadMode}>{children}</InstagramGateContent>;
+}
+
 export function InstagramGate({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <InstagramGateInner>{children}</InstagramGateInner>
+    </Suspense>
+  );
+}
+
+function InstagramGateContent({ children, isLeadMode }: { children: React.ReactNode; isLeadMode: boolean }) {
   const stored = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [instagramId, setInstagramId] = useState('');
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
@@ -50,17 +65,21 @@ export function InstagramGate({ children }: { children: React.ReactNode }) {
     focusInput(Math.min(pasted.length, CODE_LENGTH - 1));
   };
 
-  const isFilled = instagramId.trim().length > 0 && code.every(d => d !== '');
+  const isFilled = isLeadMode
+    ? code.every(d => d !== '')
+    : instagramId.trim().length > 0 && code.every(d => d !== '');
 
   const handleSubmit = async () => {
     if (!isFilled || status === 'loading') return;
     setStatus('loading');
     setErrorMsg('');
     try {
+      const body: Record<string, string> = { code: code.join('') };
+      if (!isLeadMode) body.instagram_id = instagramId.trim();
       const res = await fetch('/api/vocab-access/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instagram_id: instagramId.trim(), code: code.join('') }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -84,25 +103,29 @@ export function InstagramGate({ children }: { children: React.ReactNode }) {
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6085FF] via-[#071be9] to-[#6085FF] bg-[length:200%_auto] bg-clip-text text-transparent">
           Vocab Counter
         </h1>
-        <p className="text-xl text-gray-400">인스타그램 ID와 발급받은 코드를 입력해주세요.</p>
+        <p className="text-xl text-gray-400">
+          {isLeadMode ? '발급받은 코드를 입력해주세요.' : '인스타그램 ID와 발급받은 코드를 입력해주세요.'}
+        </p>
       </header>
 
       <div className="w-full max-w-md bg-[#09090b] rounded-2xl border border-white/5 shadow-2xl p-6 md:p-8">
 
-        {/* Instagram ID */}
-        <div className="mb-6">
-          <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
-            Instagram ID
-          </label>
-          <input
-            type="text"
-            value={instagramId}
-            onChange={(e) => { setInstagramId(e.target.value.replace(/^@/, '')); setErrorMsg(''); }}
-            placeholder="@ 제외하고 입력"
-            autoComplete="off"
-            className="w-full px-4 py-3 bg-[#000000] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20 text-base"
-          />
-        </div>
+        {/* Instagram ID — lead 모드에서는 숨김 */}
+        {!isLeadMode && (
+          <div className="mb-6">
+            <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+              Instagram ID
+            </label>
+            <input
+              type="text"
+              value={instagramId}
+              onChange={(e) => { setInstagramId(e.target.value.replace(/^@/, '')); setErrorMsg(''); }}
+              placeholder="@ 제외하고 입력"
+              autoComplete="off"
+              className="w-full px-4 py-3 bg-[#000000] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#071be9] focus:ring-2 focus:ring-[#071be9]/20 text-base"
+            />
+          </div>
+        )}
 
         {/* 6-digit code boxes */}
         <div className="mb-2">

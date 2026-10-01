@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
+import type { VocabAnswer, RWSequentialAnswer } from '@/types/diagnosis';
 
 /**
  * GET /api/admin/diagnosis/results
@@ -65,19 +66,62 @@ export async function GET(request: NextRequest) {
     }
 
     const questions = diagnosticTest1.questions;
-    const results = (data || []).map((item) => {
-      const answersMap = (item.answers as Record<string, string>) ?? {};
-      const correctCount = questions.reduce((count, q) => {
-        const sa = answersMap[q.id];
+    const mathQuestions = questions.filter(q => q.section === 'Math');
+
+    const calcMathCorrect = (math: Record<string, string>) =>
+      mathQuestions.reduce((count, q) => {
+        const sa = math[q.id];
         if (!sa) return count;
         const ca = q.type === 'multiple-choice'
           ? (q.options?.find(o => o.type === 'correct')?.id ?? '')
           : (q.answers?.[0] ?? '');
-        const isCorrect = q.type === 'multiple-choice'
+        const correct = q.type === 'multiple-choice'
           ? sa === ca
           : sa.trim().toLowerCase() === ca.trim().toLowerCase();
-        return isCorrect ? count + 1 : count;
+        return correct ? count + 1 : count;
       }, 0);
+
+    const results = (data || []).map((item) => {
+      const rawAnswers = (item.answers as Record<string, unknown>) ?? {};
+      const isV2 = rawAnswers.__v2__ === true;
+
+      let answeredCount: number;
+      let correctCount: number;
+
+      let vocabAnsweredCount: number | undefined;
+      let vocabCorrectCount: number | undefined;
+
+      if (isV2) {
+        const vocab = (rawAnswers.vocab as VocabAnswer[]) ?? [];
+        const rw = (rawAnswers.rw as RWSequentialAnswer[]) ?? [];
+        const math = (rawAnswers.math as Record<string, string>) ?? {};
+        vocabAnsweredCount = vocab.length;
+        vocabCorrectCount = vocab.filter(v => v.isCorrect).length;
+        const mathAnsweredCount = mathQuestions.filter(q => math[q.id] !== undefined).length;
+        answeredCount = rw.length + mathAnsweredCount;
+        correctCount =
+          rw.filter(r => r.isCorrect).length +
+          calcMathCorrect(math);
+      } else {
+        const answersMap = rawAnswers as Record<string, string>;
+        answeredCount = Object.keys(answersMap).length;
+        correctCount = questions.reduce((count, q) => {
+          const sa = answersMap[q.id];
+          if (!sa) return count;
+          const ca = q.type === 'multiple-choice'
+            ? (q.options?.find(o => o.type === 'correct')?.id ?? '')
+            : (q.answers?.[0] ?? '');
+          const correct = q.type === 'multiple-choice'
+            ? sa === ca
+            : sa.trim().toLowerCase() === ca.trim().toLowerCase();
+          return correct ? count + 1 : count;
+        }, 0);
+      }
+
+      const allQuestionTimeKeys = Object.keys((item.question_times as Record<string, number>) ?? {});
+      const totalQuestions = isV2
+        ? allQuestionTimeKeys.filter(k => !k.match(/^v\d+$/)).length
+        : allQuestionTimeKeys.length;
 
       return {
         id: item.id,
@@ -86,9 +130,11 @@ export async function GET(request: NextRequest) {
         submitted_at: item.submitted_at,
         total_time_seconds: item.total_time_seconds,
         test_id: item.test_id,
-        answeredCount: Object.keys(answersMap).length,
-        totalQuestions: Object.keys((item.question_times as Record<string, number>) ?? {}).length,
+        answeredCount,
+        totalQuestions,
         correctCount,
+        vocabAnsweredCount,
+        vocabCorrectCount,
         slack_sent_at: item.slack_sent_at ?? null,
         slack_error: item.slack_error ?? null,
       };

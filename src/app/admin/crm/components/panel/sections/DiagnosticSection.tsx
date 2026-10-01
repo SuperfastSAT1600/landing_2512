@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Link, ChevronDown, Check, ExternalLink } from 'lucide-react';
+import { Link, ChevronDown, Check, ExternalLink, History } from 'lucide-react';
 import type { Student } from '@/types/crm';
 import { DIAGNOSTIC_FUNNEL_LABELS, DIAGNOSTIC_FUNNEL_STAGES } from '@/types/crm';
-import type { DiagCandidate } from '../hooks/useDiagnostic';
+import type { DiagCandidate, LegacyDiag } from '../hooks/useDiagnostic';
+import { isUnscoredLegacy } from '@/lib/legacy-diagnostic-normalize';
 import { SectionCard } from './SectionCard';
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
   onDiagFunnelChange: (stage: number) => void;
   // 진단테스트 연결 (useDiagnostic)
   diagLinked: DiagCandidate | null;
+  /** 2025 구 진단 응시 이력 — 현행 결과와 별도 테이블이라 연결이 아니라 '사실 표시'로만 보여준다. */
+  diagLegacy: LegacyDiag[];
   diagCandidates: DiagCandidate[];
   showDiagPicker: boolean;
   setShowDiagPicker: (v: boolean) => void;
@@ -23,7 +26,7 @@ interface Props {
 
 export function DiagnosticSection({
   localStudent, onDiagFunnelChange,
-  diagLinked, diagCandidates, showDiagPicker, setShowDiagPicker,
+  diagLinked, diagLegacy, diagCandidates, showDiagPicker, setShowDiagPicker,
   diagLoading, diagSearchQuery, setDiagSearchQuery, onDiagLink,
 }: Props) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
@@ -174,6 +177,39 @@ export function DiagnosticSection({
             </div>
           )}
         </div>
+
+        {/* 2025 구 진단테스트 응시 이력 — 현행 리포트가 없으므로 링크 없이 사실만 표시한다 */}
+        {diagLegacy.length > 0 && (
+          <div className="space-y-1.5 pt-1">
+            <p className="text-[11px] font-medium text-gray-400">2025 구 진단테스트</p>
+            {diagLegacy.map(l => (
+              <div
+                key={l.id}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-200 bg-amber-50"
+              >
+                <History size={13} className="shrink-0 text-amber-600" />
+                <span className="text-[12px] text-amber-800 min-w-0 truncate">
+                  {(l.taken_at ?? '').slice(0, 10) || '날짜 미상'} 응시
+                  {isUnscoredLegacy(l) ? (
+                    <span className="text-amber-600"> · 점수 기록 없음</span>
+                  ) : (
+                    <>
+                      {` · ${l.score}점`}
+                      {l.rw_score != null &&
+                        l.math_score != null &&
+                        ` (RW ${l.rw_score} / Math ${l.math_score})`}
+                    </>
+                  )}
+                </span>
+                {l.match_confidence !== 'high' && (
+                  <span className="ml-auto shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                    확인 필요
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </SectionCard>
   );

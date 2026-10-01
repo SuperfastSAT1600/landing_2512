@@ -37,7 +37,7 @@ describe('MonthlyTargetEditor', () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('/api/business/monthly-targets');
     expect(init.method).toBe('PUT');
-    expect(JSON.parse(init.body)).toEqual({ segment: 'tutoring', month: '2026-12', target_amount: 350000000 });
+    expect(JSON.parse(init.body)).toEqual({ segment: 'tutoring', month: '2026-12', target_amount: 350000000, payment_type: 'all' });
     expect(screen.queryByLabelText(/월/)).toBeNull();
   });
 
@@ -55,7 +55,7 @@ describe('MonthlyTargetEditor', () => {
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     const [, init] = fetchMock.mock.calls[0];
-    expect(JSON.parse(init.body)).toEqual({ segment: 'global', month: '2026-08', target_amount: 980000 });
+    expect(JSON.parse(init.body)).toEqual({ segment: 'global', month: '2026-08', target_amount: 980000, payment_type: 'all' });
   });
 
   it('실패하면 alert를 띄우고 폼을 닫지 않는다', async () => {

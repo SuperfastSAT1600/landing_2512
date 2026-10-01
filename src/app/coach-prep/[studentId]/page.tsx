@@ -13,9 +13,11 @@ export default async function CoachPrepPage({ params }: Props) {
 
   type StudentRow = {
     id: string; name: string; grade: string; school_type: string | null;
-    desired_subjects: string | null; previous_rw_score: number | null;
+    desired_subjects: string | null; preferred_language: string | null;
+    previous_rw_score: number | null;
     previous_math_score: number | null; target_score: number | null;
-    target_test_date: string | null; ot_datetime: string | null;
+    target_test_date: string | null; target_score_2: number | null;
+    target_test_date_2: string | null; ot_datetime: string | null;
     weekly_schedule: unknown; parent_timezone: string | null;
     consultation_timeline: unknown;
   };
@@ -23,8 +25,8 @@ export default async function CoachPrepPage({ params }: Props) {
   const { data: raw, error } = await supabaseAdmin
     .from('students')
     .select(
-      'id, name, grade, school_type, desired_subjects, ' +
-      'previous_rw_score, previous_math_score, target_score, target_test_date, ' +
+      'id, name, grade, school_type, desired_subjects, preferred_language, ' +
+      'previous_rw_score, previous_math_score, target_score, target_test_date, target_score_2, target_test_date_2, ' +
       'ot_datetime, weekly_schedule, parent_timezone, consultation_timeline'
     )
     .eq('id', studentId)
@@ -38,7 +40,10 @@ export default async function CoachPrepPage({ params }: Props) {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
   const coachHistoryEntries = sorted
-    .filter((e) => e.ai_coach_history?.trim() || e.raw_memo?.trim())
+    .filter((e) =>
+      e.coach_visible === true ||
+      (e.coach_visible === undefined && e.ai_coach_history?.trim())
+    )
     .map((e) => ({
       id: e.id,
       created_at: e.created_at,
@@ -61,10 +66,13 @@ export default async function CoachPrepPage({ params }: Props) {
     grade: student.grade,
     school_type: student.school_type ?? null,
     desired_subjects: student.desired_subjects ?? null,
+    preferred_language: student.preferred_language ?? null,
     previous_rw_score: student.previous_rw_score ?? null,
     previous_math_score: student.previous_math_score ?? null,
     target_score: student.target_score ?? null,
     target_test_date: student.target_test_date ?? null,
+    target_score_2: student.target_score_2 ?? null,
+    target_test_date_2: student.target_test_date_2 ?? null,
     ot_datetime: student.ot_datetime ?? null,
     weekly_schedule: (student.weekly_schedule ?? null) as WeeklySlot[] | null,
     parent_timezone: student.parent_timezone ?? null,

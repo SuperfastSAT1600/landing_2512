@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
  * Returns whether the student portal exists and if a passcode has been set.
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;

@@ -10,6 +10,7 @@ interface QuestionManagementTabProps {
 
 interface TestVersion {
   id: string;
+  set_number: number;
   version_number: number;
   is_current: boolean;
 }
@@ -140,7 +141,7 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
           >
             {versions.map((v) => (
               <option key={v.id} value={v.id}>
-                v{v.version_number}{v.is_current ? ' (현재)' : ''}
+                문제 세트 {v.set_number}{v.is_current ? ' (기본)' : ''}
               </option>
             ))}
           </select>

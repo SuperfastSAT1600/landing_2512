@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import OpenAI from 'openai';
+import { toFile } from 'openai';
+
+export const maxDuration = 300;
 
 type Params = { params: Promise<{ id: string }> };
 
-const DOODLE_STYLE = `Style rules (strictly follow):
+const DOODLE_PROMPT = `Convert this photo into a rough hand-drawn doodle / caricature portrait.
+
+Style rules (strictly follow):
 - Rough hand-drawn doodle / caricature style.
 - Only black lines (#000000) on a pure white (#FFFFFF) background. No gray, no color fill, no shading, no gradient.
 - Lines look quickly sketched — like a black marker doodle.
@@ -13,105 +19,31 @@ const DOODLE_STYLE = `Style rules (strictly follow):
 - Pose: casual standing or half-body portrait, facing slightly toward the viewer.
 - Clean white background with generous empty space around the figure.
 - Absolutely no text, letters, words, or numbers anywhere in the image.
-- Overall mood: approachable, professional, warm.`;
+- Overall mood: approachable, professional, warm.
+- The doodle MUST resemble the actual person in the photo.`;
 
-async function analyzePhotoWithGPT4o(imageUrl: string): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
-
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: 'Describe this person\'s appearance for a caricature artist. Include: gender, approximate age, hair style and color, face shape, notable features (glasses, beard, etc.), skin tone, and overall expression. Be specific and concise. English only. 3-5 sentences max.',
-          },
-          { type: 'image_url', image_url: { url: imageUrl, detail: 'low' } },
-        ],
-      }],
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`GPT-4o Vision 오류: ${res.status} ${err.slice(0, 200)}`);
-  }
-
-  const data = await res.json() as { choices?: { message?: { content?: string } }[] };
-  return data.choices?.[0]?.message?.content ?? 'A person with a friendly expression';
-}
-
-async function generateQwenDoodle(prompt: string): Promise<Uint8Array> {
-  const apiKey = process.env.DASHSCOPE_API_KEY;
-  if (!apiKey) throw new Error('DASHSCOPE_API_KEY not configured');
-
-  const createRes = await fetch(
-    'https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/image-generation/generation',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'X-DashScope-Async': 'enable',
-      },
-      body: JSON.stringify({
-        model: 'wan2.7-image-pro',
-        input: {
-          messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
-        },
-        parameters: { size: '768*1024', n: 1 },
-      }),
-    }
-  );
-
-  if (!createRes.ok) {
-    const err = await createRes.text();
-    throw new Error(`Qwen 태스크 생성 실패: ${createRes.status} ${err.slice(0, 200)}`);
-  }
-
-  const createData = await createRes.json() as { output?: { task_id?: string } };
-  const taskId = createData.output?.task_id;
-  if (!taskId) throw new Error('Qwen task_id를 받지 못했습니다.');
-
-  let imageUrl: string | null = null;
-  for (let i = 0; i < 30; i++) {
-    await new Promise(r => setTimeout(r, 4000));
-    const pollRes = await fetch(
-      `https://dashscope-intl.aliyuncs.com/api/v1/tasks/${taskId}`,
-      { headers: { Authorization: `Bearer ${apiKey}` } }
-    );
-    const pollData = await pollRes.json() as {
-      output?: {
-        task_status?: string;
-        choices?: { message?: { content?: { type?: string; image?: string }[] } }[];
-        results?: { url?: string }[];
-      }
-    };
-    const status = pollData.output?.task_status;
-    if (status === 'SUCCEEDED') {
-      const content = pollData.output?.choices?.[0]?.message?.content;
-      imageUrl = content?.find(c => c.type === 'image')?.image
-        ?? pollData.output?.results?.[0]?.url
-        ?? null;
-      break;
-    }
-    if (status === 'FAILED') throw new Error('Qwen 이미지 생성 실패: ' + JSON.stringify(pollData));
-  }
-
-  if (!imageUrl) throw new Error('Qwen 이미지 URL을 받지 못했습니다 (타임아웃).');
+async function generateDoodle(imageUrl: string): Promise<Uint8Array> {
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const imgRes = await fetch(imageUrl);
-  if (!imgRes.ok) throw new Error(`이미지 다운로드 실패: ${imgRes.status}`);
-  return new Uint8Array(await imgRes.arrayBuffer());
+  if (!imgRes.ok) throw new Error(`원본 이미지 다운로드 실패: ${imgRes.status}`);
+  const imgBuffer = await imgRes.arrayBuffer();
+  const mimeType = (imgRes.headers.get('content-type') ?? 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp';
+
+  const imageFile = await toFile(Buffer.from(imgBuffer), 'profile.png', { type: mimeType });
+
+  const response = await client.images.edit({
+    model: 'gpt-image-1',
+    image: imageFile,
+    prompt: DOODLE_PROMPT,
+    n: 1,
+    size: '1024x1024',
+  });
+
+  const b64 = response.data?.[0]?.b64_json;
+  if (!b64) throw new Error('OpenAI 응답에 이미지 데이터가 없습니다.');
+
+  return new Uint8Array(Buffer.from(b64, 'base64'));
 }
 
 async function uploadToSupabase(buffer: Uint8Array, slug: string): Promise<string> {
@@ -164,34 +96,28 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const coachName = (submission as { name?: string }).name ?? 'coach';
-  const slug = coachName.toLowerCase().replace(/\s+/g, '-') + '-' + id.slice(0, 6);
+  const slug = coachName.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    || id.slice(0, 8);
+  const safeSlug = slug + '-' + id.slice(0, 6);
 
-  // Step 1: Analyze photo with GPT-4o
-  let appearanceDescription: string;
+  let buffer: Uint8Array;
   try {
-    appearanceDescription = await analyzePhotoWithGPT4o(profileImageUrl);
-  } catch (err) {
-    appearanceDescription = 'A friendly-looking person with a warm smile';
-    console.warn('[generate-doodle] GPT-4o 분석 실패, 기본값 사용:', err);
+    buffer = await generateDoodle(profileImageUrl);
+  } catch (e) {
+    console.error('[generate-doodle] 생성 실패', e);
+    return NextResponse.json({ error: `두들 이미지 생성에 실패했습니다: ${(e as Error).message}` }, { status: 500 });
   }
 
-  // Step 2: Build doodle prompt
-  const doodlePrompt = `A hand-drawn doodle caricature portrait of a person.
-
-Appearance: ${appearanceDescription}
-
-Composition:
-- Single figure centered in the frame, roughly half-body or 3/4 view.
-- The figure occupies about 50% of the canvas height; the rest is white space.
-- Simple white background with no shadows or patterns.
-
-${DOODLE_STYLE}`;
-
-  // Step 3: Generate with Qwen
-  const buffer = await generateQwenDoodle(doodlePrompt);
-
-  // Step 4: Upload to Supabase
-  const url = await uploadToSupabase(buffer, slug);
+  let url: string;
+  try {
+    url = await uploadToSupabase(buffer, safeSlug);
+  } catch (e) {
+    console.error('[generate-doodle] Supabase 업로드 실패', e);
+    return NextResponse.json({ error: `이미지 업로드에 실패했습니다: ${(e as Error).message}` }, { status: 500 });
+  }
 
   return NextResponse.json({ data: { url } });
 }

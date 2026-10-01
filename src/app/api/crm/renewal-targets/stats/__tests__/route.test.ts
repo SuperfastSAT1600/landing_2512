@@ -463,3 +463,64 @@ describe('GET /api/crm/renewal-targets/stats — 주차별 재결제 금액', ()
     expect(json.data[0].amount_missing).toBe(1);
   });
 });
+
+describe('GET /api/crm/renewal-targets/stats — 기간(from/to) 조회', () => {
+  /** from() 호출을 테이블명별로 기록해 renewal_targets 쿼리에 직접 단언한다. */
+  function captureBuilders(renewalRows: unknown[]) {
+    const byTable: Record<string, Record<string, ReturnType<typeof vi.fn>>> = {};
+    mockFrom.mockImplementation((table: string) => {
+      const b = makeBuilder({ data: table === 'renewal_targets' ? renewalRows : [], error: null });
+      byTable[table] = lastBuilder;
+      return b;
+    });
+    return byTable;
+  }
+
+  it('from/to 를 주면 week_start 범위로 DB에서 필터한다', async () => {
+    const byTable = captureBuilders([row('2026-08-10', '4')]);
+    const { GET } = await import('../route');
+    const req = new NextRequest(
+      'http://localhost/api/crm/renewal-targets/stats?from=2026-01-01&to=2026-12-31',
+      { headers: { 'x-admin-key': 'admin-key' } }
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    expect(byTable.renewal_targets.gte).toHaveBeenCalledWith('week_start', '2026-01-01');
+    expect(byTable.renewal_targets.lte).toHaveBeenCalledWith('week_start', '2026-12-31');
+  });
+
+  it('기간 조회는 weeks 상한으로 잘리지 않는다 — 범위 내 주차를 모두 반환한다', async () => {
+    // weeks 기본값(8)보다 많은 10개 주차. 기간 조회에서는 전부 나와야 한다.
+    const rows = [
+      '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26', '2026-02-02',
+      '2026-02-09', '2026-02-16', '2026-02-23', '2026-03-02', '2026-03-09',
+    ].map((w) => row(w, '4'));
+    captureBuilders(rows);
+    const { GET } = await import('../route');
+    const req = new NextRequest(
+      'http://localhost/api/crm/renewal-targets/stats?from=2026-01-01&to=2026-12-31',
+      { headers: { 'x-admin-key': 'admin-key' } }
+    );
+    const json = await (await GET(req)).json();
+    expect(json.data).toHaveLength(10);
+  });
+
+  it('from/to 가 없으면 기존처럼 오늘 기준 최근 weeks 창을 쓴다', async () => {
+    const byTable = captureBuilders([row('2026-08-10', '4')]);
+    const { GET } = await import('../route');
+    await GET(makeReq('8'));
+    // 기간 조회가 아니면 상한(lte)은 걸지 않는다 — 시작 컷오프만 있다.
+    expect(byTable.renewal_targets.lte).not.toHaveBeenCalled();
+    expect(byTable.renewal_targets.gte).toHaveBeenCalled();
+  });
+
+  it('from 만 있고 to 가 없으면 기간 조회로 보지 않는다', async () => {
+    const byTable = captureBuilders([row('2026-08-10', '4')]);
+    const { GET } = await import('../route');
+    const req = new NextRequest('http://localhost/api/crm/renewal-targets/stats?from=2026-01-01', {
+      headers: { 'x-admin-key': 'admin-key' },
+    });
+    expect((await GET(req)).status).toBe(200);
+    expect(byTable.renewal_targets.lte).not.toHaveBeenCalled();
+  });
+});

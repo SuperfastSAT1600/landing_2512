@@ -5,25 +5,33 @@ export async function POST(req: NextRequest) {
   const requestId = crypto.randomUUID();
   const { instagram_id, code } = await req.json() as { instagram_id?: string; code?: string };
 
-  if (!instagram_id?.trim() || !code?.trim()) {
+  if (!code?.trim()) {
     return NextResponse.json(
-      { error: { code: 'INVALID_PARAM', message: '인스타 ID와 코드를 모두 입력해주세요.' } },
+      { error: { code: 'INVALID_PARAM', message: '코드를 입력해주세요.' } },
       { status: 400 },
     );
   }
 
-  const normalized = instagram_id.trim().replace(/^@/, '').toLowerCase();
-
-  const { data, error } = await supabaseAdmin
+  const codeStr = code.trim();
+  let query = supabaseAdmin
     .from('vocab_access_codes')
-    .select('id, is_active, first_used_at')
-    .eq('instagram_id', normalized)
-    .eq('code', code.trim())
-    .single();
+    .select('id, is_active, first_used_at, instagram_id')
+    .eq('code', codeStr);
+
+  if (instagram_id?.trim()) {
+    // 직접 입력 모드: instagram_id + code 일치 확인
+    const normalized = instagram_id.trim().replace(/^@/, '').toLowerCase();
+    query = query.eq('instagram_id', normalized);
+  } else {
+    // 코드 전용 모드: instagram_id IS NULL인 리드 코드
+    query = query.is('instagram_id', null);
+  }
+
+  const { data, error } = await query.single();
 
   if (error || !data) {
     return NextResponse.json(
-      { error: { code: 'INVALID_CODE', message: '인스타 ID 또는 코드가 올바르지 않아요.' } },
+      { error: { code: 'INVALID_CODE', message: '코드가 올바르지 않아요.' } },
       { status: 401 },
     );
   }
@@ -42,5 +50,6 @@ export async function POST(req: NextRequest) {
       .eq('id', data.id);
   }
 
-  return NextResponse.json({ data: { ok: true, instagram_id: normalized }, meta: { requestId } });
+  const identifier = data.instagram_id ?? codeStr;
+  return NextResponse.json({ data: { ok: true, instagram_id: identifier }, meta: { requestId } });
 }

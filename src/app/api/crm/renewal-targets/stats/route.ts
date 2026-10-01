@@ -5,6 +5,13 @@ import { getRecentWeeks, getWeekLabel, getKstDateString } from '@/lib/week-defin
 import { resolveWeeklyAmounts, type RenewalPaymentRow } from '@/lib/renewal-amount';
 import type { RenewalWeeklyStat, RenewalOutcomeQuality } from '@/types/crm';
 
+/** YYYY-MM-DD 에 일수를 더한다(UTC 기준 — 날짜 문자열 산술이라 타임존 무관). */
+function addDays(day: string, n: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json(
@@ -17,16 +24,36 @@ export async function GET(request: NextRequest) {
   const weeksParam = sp.get('weeks');
   const weeks = Math.max(1, Math.min(52, Number(weeksParam) || 8));
 
-  // 조회 범위를 주차 정의로 좁힌다 — 예전에는 테이블 전체를 읽고 JS에서 잘랐다.
-  const recentWeeks = getRecentWeeks(weeks, getKstDateString());
-  const cutoff = recentWeeks[recentWeeks.length - 1]?.start;
+  // 기간 조회(from+to 둘 다 있을 때) — 임의 과거 구간을 그대로 집계한다.
+  // weeks 모드는 "오늘 기준 최근 N주" 창이라, 작년 같은 과거 기간을 조회하면
+  // 데이터가 있어도 창 밖이라 조용히 빈 결과가 나온다.
+  const from = sp.get('from');
+  const to = sp.get('to');
+  const rangeMode = Boolean(from && to);
 
   let query = supabaseAdmin
     .from('renewal_targets')
     .select(
       'week_start, stage, outcome_quality, carried_to_week, carried_from_week, converted_payment_id, student_id'
     );
-  if (cutoff) query = query.gte('week_start', cutoff);
+  // 재결제 결제(payments) 조회에도 같은 창을 쓴다.
+  let paidFrom: string | undefined;
+  let paidTo: string | undefined;
+  if (rangeMode) {
+    query = query.gte('week_start', from!).lte('week_start', to!);
+    paidFrom = from!;
+    // week_start <= to 인 주차는 최대 to+6일에 끝난다.
+    paidTo = addDays(to!, 6);
+  } else {
+    // 조회 범위를 주차 정의로 좁힌다 — 예전에는 테이블 전체를 읽고 JS에서 잘랐다.
+    const recentWeeks = getRecentWeeks(weeks, getKstDateString());
+    const cutoff = recentWeeks[recentWeeks.length - 1]?.start;
+    if (cutoff) {
+      query = query.gte('week_start', cutoff);
+      paidFrom = cutoff;
+      paidTo = recentWeeks[0].end;
+    }
+  }
 
   const { data, error } = await query;
 
@@ -70,13 +97,13 @@ export async function GET(request: NextRequest) {
   // 2) 조회 범위의 재결제 결제. 링크 없는 건을 되짚고, 남은 건은 '보드 외'로 드러낸다.
   // 결제 완료가 하나도 없는 주차에도 보드 외 재결제는 있을 수 있으니 항상 읽는다.
   let renewalPayments: RenewalPaymentRow[] = [];
-  if (rows.length > 0 && cutoff) {
+  if (rows.length > 0 && paidFrom && paidTo) {
     const { data: paid, error: paidError } = await supabaseAdmin
       .from('payments')
       .select('id, student_id, amount, paid_at')
       .eq('payment_type', '재결제')
-      .gte('paid_at', `${cutoff}T00:00:00+09:00`)
-      .lte('paid_at', `${recentWeeks[0].end}T23:59:59.999+09:00`);
+      .gte('paid_at', `${paidFrom}T00:00:00+09:00`)
+      .lte('paid_at', `${paidTo}T23:59:59.999+09:00`);
     if (paidError) console.error('[renewal-targets/stats GET renewal payments]', paidError);
     renewalPayments = (paid ?? []) as RenewalPaymentRow[];
   }
@@ -131,7 +158,8 @@ export async function GET(request: NextRequest) {
   // 전환율 분모는 '선정 인원' 전체 — 미전환(5)도 남겨야 분모가 줄지 않는다.
   const weekly: RenewalWeeklyStat[] = Array.from(weekMap.entries())
     .sort(([a], [b]) => b.localeCompare(a))
-    .slice(0, weeks)
+    // 기간 조회는 범위 안 주차를 전부 돌려준다 — weeks 상한으로 자르면 합계가 조용히 줄어든다.
+    .slice(0, rangeMode ? undefined : weeks)
     .map(([week_start, counts]) => ({
       week_start,
       week_label: getWeekLabel(week_start) ?? week_start,

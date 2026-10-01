@@ -115,10 +115,9 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
   const [listLoading, setListLoading] = useState(false);
   const [versions, setVersions] = useState<TestVersion[]>([]);
 
-  const fetchVersions = async (format?: string) => {
+  const fetchVersions = async (_format?: string) => {
     try {
-      const testId = format ?? testFormat;
-      const res = await fetch(`/api/admin/diagnosis/versions?testId=${testId}`, {
+      const res = await fetch('/api/admin/diagnosis/versions', {
         headers: { 'x-admin-key': adminKey },
       });
       if (res.ok) {
@@ -276,7 +275,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => { setTestFormat('diagnostic-test-1'); setVersions([]); setSelectedVersionId(''); fetchVersions('diagnostic-test-1'); }}
+                onClick={() => setTestFormat('diagnostic-test-1')}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold border transition-colors ${
                   testFormat === 'diagnostic-test-1'
                     ? 'bg-blue-600 border-blue-500 text-white'
@@ -288,7 +287,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
               </button>
               <button
                 type="button"
-                onClick={() => { setTestFormat('diagnostic-test-2'); setVersions([]); setSelectedVersionId(''); fetchVersions('diagnostic-test-2'); }}
+                onClick={() => setTestFormat('diagnostic-test-2')}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold border transition-colors ${
                   testFormat === 'diagnostic-test-2'
                     ? 'bg-purple-600 border-purple-500 text-white'
@@ -306,7 +305,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
 
           {versions.length > 0 && (
             <div>
-              <label className="block text-sm font-semibold mb-2">진단테스트 버전 <span className="text-gray-400 font-normal">(RW/Math 문제 세트)</span></label>
+              <label className="block text-sm font-semibold mb-2">문제 세트</label>
               <select
                 value={selectedVersionId}
                 onChange={(e) => setSelectedVersionId(e.target.value)}
@@ -315,7 +314,7 @@ export function GenerateTokenTab({ adminKey, prefillName, prefillPhone, onPrefil
               >
                 {versions.map((v) => (
                   <option key={v.id} value={v.id}>
-                    문제 세트 {v.version_number}{v.is_current ? ' (현재)' : ''}
+                    문제 세트 {v.set_number} — {v.title}{v.is_current ? ' (기본)' : ''}
                   </option>
                 ))}
               </select>

@@ -3,7 +3,6 @@
 import { EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import { ImageIcon, UploadCloud } from 'lucide-react';
-import { TableBubbleMenu } from '@/components/editor/TableBubbleMenu';
 import { TextBubbleMenu } from '@/components/editor/TextBubbleMenu';
 import React from 'react';
 
@@ -18,6 +17,7 @@ interface EditorCanvasProps {
     editor: Editor | null;
     viewMode: 'edit' | 'split' | 'preview';
     showSettings: boolean;
+    mobileView: boolean;
     title: string; setTitle: (v: string) => void;
     date: string; category: string;
     featuredImage: string;
@@ -65,7 +65,6 @@ function EditorArea({ editor, onPaste, onDrop, onKeyDown }: {
     return (
         <div onPaste={onPaste} onDrop={onDrop} onDragOver={(e) => e.preventDefault()} onKeyDown={onKeyDown}>
             <EditorContent editor={editor} className="text-gray-200" />
-            <TableBubbleMenu editor={editor} />
             <TextBubbleMenu editor={editor} />
         </div>
     );
@@ -82,12 +81,13 @@ function MetaHeader({ category, date }: { category: string; date: string }) {
 }
 
 export function EditorCanvas({
-    editor, viewMode, showSettings,
+    editor, viewMode, showSettings, mobileView,
     title, setTitle, date, category,
     featuredImage, uploading, onTriggerUpload,
     onEditorPaste, onEditorDrop, onEditorKeyDown,
 }: EditorCanvasProps) {
     const editorHtml = editor?.getHTML() ?? '';
+    const contentWidth = mobileView ? 'max-w-[390px] mx-auto px-5' : 'max-w-4xl mx-auto px-4 md:px-6';
 
     if (viewMode === 'split') {
         return (
@@ -123,7 +123,7 @@ export function EditorCanvas({
 
     return (
         <main className={`pt-44 pb-32 transition-all duration-300 ${showSettings ? 'mr-[320px]' : ''}`}>
-            <div className="max-w-4xl mx-auto px-4 md:px-6">
+            <div className={contentWidth}>
                 {viewMode === 'edit' ? (
                     <>
                         <MetaHeader category={category} date={date} />

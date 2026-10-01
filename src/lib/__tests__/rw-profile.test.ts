@@ -71,17 +71,16 @@ describe('classifyRWStudent', () => {
     expect(result.profileType).toBe('master');
   });
 
-  it('profile contains headline, evidence, and prescription', () => {
+  it('profile contains headline and evidence', () => {
     const result = classifyRWStudent(['sniper', 'doubt', 'hasty', 'avoider']);
     expect(result.headline).toBeTruthy();
     expect(result.evidence).toContain('4문제');
-    expect(result.prescription).toBeTruthy();
   });
 
   it('evidence includes all non-zero type counts', () => {
     const result = classifyRWStudent(['sniper', 'sniper', 'hasty', 'avoider', 'avoider', 'avoider']);
-    expect(result.evidence).toContain('직격수 2문제');
-    expect(result.evidence).toContain('성급한 선점 1문제');
-    expect(result.evidence).toContain('정답 회피 3문제');
+    expect(result.evidence).toContain('확신 정답 2문제');
+    expect(result.evidence).toContain('성급한 선택 1문제');
+    expect(result.evidence).toContain('논리 부재 3문제');
   });
 });

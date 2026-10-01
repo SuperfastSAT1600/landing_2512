@@ -52,12 +52,13 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
             ref={menuRef}
             editor={editor}
             options={{
-                placement: 'bottom',
+                placement: 'top',
                 offset: 8,
+                flip: { padding: { top: 116 } },
+                shift: { padding: { top: 116 } },
             }}
             shouldShow={({ state }) => {
                 const { selection } = state;
-                if (!selection.empty) return false;
                 const $from = selection.$from;
                 for (let d = $from.depth; d > 0; d--) {
                     const name = $from.node(d).type.name;

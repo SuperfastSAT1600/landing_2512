@@ -1,4 +1,8 @@
 {
+  "installCommand": "npm install --legacy-peer-deps",
+  "env": {
+    "npm_config_legacy_peer_deps": "true"
+  },
   "crons": [
     {
       "path": "/api/cron/diagnosis-expiry",
@@ -19,6 +23,10 @@
     {
       "path": "/api/cron/fb-ad-spend-sync",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/cron/ig-content-spend-sync",
+      "schedule": "30 17 * * *"
     },
     {
       "path": "/api/cron/weekly-visitor-report",

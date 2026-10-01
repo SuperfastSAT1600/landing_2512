@@ -7,6 +7,8 @@ import { TestResult } from '@/types/diagnosis';
 import { QuestionStat } from '@/lib/diagnosis-analysis';
 import QuestionStatCard from './QuestionStatCard';
 import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
+import { diagnosticTest2Vocab } from '@/app/diagnosis/data/diagnostic-test-2-vocab';
+import type { VocabAnswer, RWSequentialAnswer } from '@/types/diagnosis';
 
 export default function AdminDiagnosisDetailPage() {
   const params = useParams();
@@ -143,7 +145,51 @@ export default function AdminDiagnosisDetailPage() {
     );
   }
 
-  const answers = (result.answers || {}) as Record<string, string>;
+  const rawAnswers = (result.answers || {}) as Record<string, unknown>;
+  const isV2 = rawAnswers.__v2__ === true;
+
+  interface VocabItem {
+    wordId: string;
+    word: string;
+    selectedOptionId: string | null;
+    correctOptionId: string;
+    selectedText: string;
+    correctText: string;
+    isCorrect: boolean;
+    timeTaken: number;
+  }
+
+  let answers: Record<string, string>;
+  let vocabItems: VocabItem[] = [];
+
+  if (isV2) {
+    const vocabArr = (rawAnswers.vocab as VocabAnswer[]) ?? [];
+    const rw = (rawAnswers.rw as RWSequentialAnswer[]) ?? [];
+    const math = (rawAnswers.math as Record<string, string>) ?? {};
+    answers = {
+      ...math,
+      ...Object.fromEntries(rw.map(r => [r.questionId, r.finalAnswer])),
+    };
+    const vocabWordMap = new Map(diagnosticTest2Vocab.map(v => [v.id, v]));
+    vocabItems = vocabArr.map(v => {
+      const def = vocabWordMap.get(v.wordId);
+      const correctOpt = def?.options.find(o => o.type === 'correct');
+      const selectedOpt = def?.options.find(o => o.id === v.selectedOptionId);
+      return {
+        wordId: v.wordId,
+        word: def?.word ?? v.wordId,
+        selectedOptionId: v.selectedOptionId,
+        correctOptionId: correctOpt?.id ?? '',
+        selectedText: selectedOpt ? `${selectedOpt.id}. ${selectedOpt.text}` : '미답변',
+        correctText: correctOpt ? `${correctOpt.id}. ${correctOpt.text}` : '',
+        isCorrect: v.isCorrect,
+        timeTaken: v.timeTaken,
+      };
+    });
+  } else {
+    answers = rawAnswers as Record<string, string>;
+  }
+
   const confidenceLevels = (result.confidenceLevels || {}) as Record<string, number>;
   const questionTimes = (result.questionTimes || {}) as Record<string, number>;
   const flaggedQuestions = (result.flaggedQuestions || []) as string[];
@@ -153,6 +199,12 @@ export default function AdminDiagnosisDetailPage() {
     correctAnswersMap[q.id] = q.type === 'multiple-choice'
       ? (q.options?.find(o => o.type === 'correct')?.id ?? '')
       : (q.answers?.[0] ?? '');
+  }
+  if (isV2) {
+    for (const v of diagnosticTest2Vocab) {
+      const correctOption = v.options.find(o => o.type === 'correct');
+      if (correctOption) correctAnswersMap[v.id] = correctOption.id;
+    }
   }
 
   return (
@@ -274,9 +326,55 @@ export default function AdminDiagnosisDetailPage() {
             <div>
               <span className="text-gray-400 block mb-1">응답 / 총 문제</span>
               <span className="font-semibold">{Object.keys(answers).length} / {Object.keys(questionTimes).length}</span>
+              {isV2 && vocabItems.length > 0 && (
+                <span className="text-purple-300 text-sm ml-2">+{vocabItems.length}단어</span>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Vocab Section (v2 only) — comes first, matching actual test order */}
+        {isV2 && vocabItems.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">단어 답변 <span className="text-purple-300 text-base font-normal">({vocabItems.filter(v => v.isCorrect).length}/{vocabItems.length} 정답)</span></h2>
+            {vocabItems.map((item) => (
+              <div key={item.wordId} className="bg-gray-800 rounded-lg p-5 flex items-start justify-between gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold">{item.word}</span>
+                    <span
+                      className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                      style={item.isCorrect
+                        ? { background: '#03B26C20', color: '#03B26C' }
+                        : { background: '#F0445220', color: '#F04452' }
+                      }
+                    >
+                      {item.isCorrect ? '정답' : '오답'}
+                    </span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-gray-400">선택: </span>
+                    <span className={item.isCorrect ? 'text-green-400' : 'text-red-400'}>{item.selectedText}</span>
+                  </div>
+                  {!item.isCorrect && (
+                    <div className="text-sm">
+                      <span className="text-gray-400">정답: </span>
+                      <span className="text-green-400">{item.correctText}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-right text-sm shrink-0">
+                  <div className="text-gray-400 mb-0.5">소요 시간</div>
+                  <div className="font-semibold">
+                    {item.timeTaken < 60
+                      ? `${item.timeTaken}초`
+                      : `${Math.floor(item.timeTaken / 60)}분 ${item.timeTaken % 60}초`}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Questions */}
         <div className="space-y-6">

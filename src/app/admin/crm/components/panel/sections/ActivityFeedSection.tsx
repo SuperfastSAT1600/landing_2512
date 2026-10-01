@@ -45,6 +45,10 @@ function fmtWhen(iso: string): string {
 
 export function ActivityFeedSection({ student, adminKey }: Props) {
   const [payments, setPayments] = useState<FeedPayment[]>([]);
+  const [strategyNames, setStrategyNames] = useState<Map<string, string>>(new Map());
+
+  // 전략 세그먼트 분리(097): B2B 학생은 B2B 전략, 그 외는 B2C 전략 (StrategyHistorySection.tsx와 동일)
+  const segment = student.lead_type === 'B2B' ? 'b2b' : 'b2c';
 
   const fetchPayments = useCallback(async () => {
     try {
@@ -59,12 +63,26 @@ export function ActivityFeedSection({ student, adminKey }: Props) {
     }
   }, [student.id, student.name, adminKey]);
 
+  const fetchStrategyNames = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/crm/retry-strategies?segment=${segment}`, { headers: { 'x-admin-key': adminKey } });
+      const json = await res.json();
+      setStrategyNames(new Map((json.data ?? []).map((s: { id: string; name: string }) => [s.id, s.name])));
+    } catch {
+      setStrategyNames(new Map());
+    }
+  }, [segment, adminKey]);
+
   useEffect(() => {
     fetchPayments();
+    fetchStrategyNames();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [student.id, student.name, adminKey]);
+  }, [student.id, student.name, adminKey, segment]);
 
-  const feed: ActivityItem[] = useMemo(() => buildActivityFeed(student, payments), [student, payments]);
+  const feed: ActivityItem[] = useMemo(
+    () => buildActivityFeed(student, payments, strategyNames),
+    [student, payments, strategyNames]
+  );
 
   return (
     <SectionCard title="활동 타임라인" count={feed.length} defaultOpen={false}>

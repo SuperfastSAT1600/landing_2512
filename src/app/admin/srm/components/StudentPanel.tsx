@@ -98,13 +98,15 @@ function sessionStatusColor(status: string): string {
   }
 }
 
-type TutoringStatus = 'active' | 'paused' | 'sales' | 'ended';
+type TutoringStatus = 'onboarding' | 'active' | 'paused' | 'sales' | 'ended' | 'unclassified';
 
 const TUTORING_STATUS_META: Record<TutoringStatus, { label: string; color: string }> = {
-  active:       { label: '수업중',      color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+  onboarding:   { label: '온보딩',      color: 'bg-purple-50 text-purple-600 border-purple-200' },
+  active:       { label: '재원',        color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
   paused:       { label: '휴원',        color: 'bg-orange-50 text-orange-500 border-orange-200' },
   sales:        { label: '재결제세일즈', color: 'bg-blue-50 text-blue-600 border-blue-200' },
   ended:        { label: '종료',        color: 'bg-red-50 text-red-500 border-red-200' },
+  unclassified: { label: '미분류',      color: 'bg-gray-50 text-gray-400 border-gray-200' },
 };
 
 interface Props {

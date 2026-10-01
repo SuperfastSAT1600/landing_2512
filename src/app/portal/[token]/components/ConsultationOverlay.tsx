@@ -59,9 +59,19 @@ interface AdminPortalPost {
   id: string;
   title: string;
   content: string;
+  buttons?: Array<{ text: string; url: string }>;
+  toolId?: string;
 }
 
-function AdminPostCard({ post }: { post: AdminPortalPost }) {
+function AdminPostCard({ post, token }: { post: AdminPortalPost; token: string }) {
+  function trackClick(buttonLabel: string) {
+    fetch(`/api/portal/${token}/button-click`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ buttonLabel }),
+    }).catch(() => {});
+  }
+
   return (
     <div
       className="rounded-2xl px-5 py-5"
@@ -72,6 +82,23 @@ function AdminPostCard({ post }: { post: AdminPortalPost }) {
         <div className="min-w-0 w-full">
           <p className="font-bold text-sm mb-1.5" style={{ color: '#09090b' }}>{post.title}</p>
           <p className="text-xs leading-relaxed" style={{ color: '#64748b', whiteSpace: 'pre-wrap' }}>{post.content}</p>
+          {post.buttons && post.buttons.length > 0 && (
+            <div className="flex flex-col gap-2 mt-3">
+              {post.buttons.map((btn, i) => (
+                <a
+                  key={i}
+                  href={btn.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackClick(btn.text)}
+                  className="w-full text-center rounded-xl py-2.5 text-sm font-bold transition-opacity hover:opacity-80"
+                  style={{ background: '#6085FF', color: '#fff' }}
+                >
+                  {btn.text}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -264,11 +291,11 @@ export default function ConsultationOverlay({ token, memos, studentName, student
 
   useEffect(() => {
     if (isEnrolled) return;
-    fetch('/api/portal/portal-posts')
+    fetch(`/api/portal/portal-posts?token=${encodeURIComponent(token)}`)
       .then(r => r.json())
       .then((d: AdminPortalPost[]) => setAdminPosts(d))
       .catch(() => {});
-  }, [isEnrolled]);
+  }, [isEnrolled, token]);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto pt-12" style={{ background: '#F4F5F9' }}>
@@ -321,28 +348,32 @@ export default function ConsultationOverlay({ token, memos, studentName, student
       <div style={{ background: '#F4F5F9' }}>
         <div className="max-w-5xl mx-auto px-[6%] py-8 pb-44">
           {(() => {
-            const adminPostCards = adminPosts.map(post => (
-              <AdminPostCard key={post.id} post={post} />
-            ));
+            const TOOL_ICONS: Record<string, string> = {
+              'vocab-counter': '📊',
+              'math-web': '🕸️',
+              'supertest': '🎯',
+            };
 
             const promoCards = (
               <>
-                {adminPostCards}
-                {!isEnrolled && <SuperTestCard token={token} />}
-                <SecretPageCard
-                  title="Vocab Counter를 소개합니다!"
-                  description="SAT에서 자주 나오는 단어부터 전략적으로 공부할 수 있는 도구입니다. College Board가 공개한 실전 문제 전체를 분석해, 특정 단어가 시험에 몇 번 출제됐는지 즉시 확인할 수 있습니다. 예문과 문맥도 함께 제공되어 단순 암기가 아닌 실전 감각으로 어휘를 익힐 수 있습니다."
-                  icon="📊"
-                  token={token}
-                  toolId="vocab-counter"
-                />
-                <SecretPageCard
-                  title="Math Web을 소개합니다!"
-                  description="개념별로 실전 문제를 바로 찾아볼 수 있는 수학 학습 도구입니다. QB Math 문제 전체에 개념이 태깅되어 있어, 자녀가 취약한 개념의 실전 문제만 골라 집중 연습하는 것이 가능합니다. 개념 이해에서 실전 적용까지 빈틈 없이 대비할 수 있습니다."
-                  icon="🕸️"
-                  token={token}
-                  toolId="math-web"
-                />
+                {adminPosts.map(post => {
+                  if (post.toolId === 'supertest') {
+                    return <SuperTestCard key={post.id} token={token} />;
+                  }
+                  if (post.toolId) {
+                    return (
+                      <SecretPageCard
+                        key={post.id}
+                        title={post.title}
+                        description={post.content}
+                        icon={TOOL_ICONS[post.toolId] ?? '🔧'}
+                        token={token}
+                        toolId={post.toolId}
+                      />
+                    );
+                  }
+                  return <AdminPostCard key={post.id} post={post} token={token} />;
+                })}
               </>
             );
 

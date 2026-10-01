@@ -32,6 +32,11 @@ export interface VocabResult {
   missedTerms: string[];
 }
 
+export interface CoachRoomResult {
+  sessionCount: number;
+  durationMinutes: number;
+}
+
 export interface StudentDayResult {
   name: string;
   crmStudentId: string;
@@ -50,6 +55,152 @@ export interface DailyLearningResponse {
 
 export interface CumulativeResponse {
   students: StudentDayResult[];
+}
+
+// ── Schedule Batch ────────────────────────────────────────────────────────────
+
+export async function fetchScheduleBatch(
+  profileIds: string[],
+  start: string,
+  end: string,
+): Promise<Map<string, { coachRoom: boolean; studyHall: boolean; vocab: boolean }>> {
+  const empty = { coachRoom: false, studyHall: false, vocab: false };
+  if (!profileIds.length) return new Map();
+
+  const PAGE_SIZE = 1000;
+
+  const allEvents: { id: string; category: string }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('scheduled_events')
+      .select('id, category')
+      .in('category', ['coach_room', 'study_hall', 'vocab'])
+      .neq('status', 'cancelled')
+      .gte('starts_at', start)
+      .lte('starts_at', end)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allEvents.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+
+  if (!allEvents.length) return new Map(profileIds.map(id => [id, { ...empty }]));
+
+  const eventIds = allEvents.map(e => e.id);
+  const categoryById = new Map(allEvents.map(e => [e.id, e.category as string]));
+
+  const CHUNK = 100;
+  const chunks: string[][] = [];
+  for (let i = 0; i < eventIds.length; i += CHUNK) chunks.push(eventIds.slice(i, i + CHUNK));
+
+  const chunkResults = await Promise.all(chunks.map(async chunk => {
+    const rows: { event_id: string; user_id: string }[] = [];
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+      const { data: page } = await supabaseSFv2
+        .from('scheduled_event_participants')
+        .select('event_id, user_id')
+        .in('event_id', chunk)
+        .in('user_id', profileIds)
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (!page?.length) break;
+      rows.push(...page);
+      if (page.length < PAGE_SIZE) break;
+    }
+    return rows;
+  }));
+  const allParticipants = chunkResults.flat();
+
+  if (!allParticipants.length) return new Map(profileIds.map(id => [id, { ...empty }]));
+
+  const byUser = new Map<string, { coachRoom: boolean; studyHall: boolean; vocab: boolean }>();
+  for (const p of allParticipants) {
+    if (!byUser.has(p.user_id)) byUser.set(p.user_id, { ...empty });
+    const entry = byUser.get(p.user_id)!;
+    const cat = categoryById.get(p.event_id);
+    if (cat === 'coach_room') entry.coachRoom = true;
+    else if (cat === 'study_hall') entry.studyHall = true;
+    else if (cat === 'vocab') entry.vocab = true;
+  }
+
+  return new Map(profileIds.map(id => [id, byUser.get(id) ?? { ...empty }]));
+}
+
+// ── Coach Room Batch ──────────────────────────────────────────────────────────
+
+export async function fetchCoachRoomBatch(profileIds: string[], start: string, end: string): Promise<Map<string, CoachRoomResult | null>> {
+  if (!profileIds.length) return new Map();
+
+  const PAGE_SIZE = 1000;
+
+  // Step 1: 날짜 범위로 먼저 좁히기 → in(event_ids) URL 한도 문제 방지
+  const allEvents: { id: string; starts_at: string; ends_at: string | null; status: string }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page } = await supabaseSFv2
+      .from('scheduled_events')
+      .select('id, starts_at, ends_at, status')
+      .eq('category', 'coach_room')
+      .gte('starts_at', start)
+      .lte('starts_at', end)
+      .in('status', ['completed', 'approved', 'awaiting_confirmation'])
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (!page?.length) break;
+    allEvents.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+
+  if (!allEvents.length) return new Map(profileIds.map(id => [id, null]));
+
+  const eventIds = allEvents.map(e => e.id);
+  const eventById = new Map(allEvents.map(e => [e.id, e]));
+
+  // Step 2: 청크 분리 → eventIds가 많아도 URL 한도 초과 방지 (100개씩 병렬)
+  const CHUNK = 100;
+  const chunks: string[][] = [];
+  for (let i = 0; i < eventIds.length; i += CHUNK) chunks.push(eventIds.slice(i, i + CHUNK));
+
+  const chunkResults = await Promise.all(chunks.map(async chunk => {
+    const rows: { event_id: string; user_id: string }[] = [];
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+      const { data: page } = await supabaseSFv2
+        .from('scheduled_event_participants')
+        .select('event_id, user_id')
+        .in('event_id', chunk)
+        .in('user_id', profileIds)
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (!page?.length) break;
+      rows.push(...page);
+      if (page.length < PAGE_SIZE) break;
+    }
+    return rows;
+  }));
+  const allParticipants = chunkResults.flat();
+
+  if (!allParticipants.length) return new Map(profileIds.map(id => [id, null]));
+
+  const eventIdsByUser = new Map<string, string[]>();
+  for (const p of allParticipants) {
+    if (!eventIdsByUser.has(p.user_id)) eventIdsByUser.set(p.user_id, []);
+    eventIdsByUser.get(p.user_id)!.push(p.event_id);
+  }
+
+  const result = new Map<string, CoachRoomResult | null>();
+  for (const profileId of profileIds) {
+    const ids = eventIdsByUser.get(profileId);
+    if (!ids?.length) { result.set(profileId, null); continue; }
+
+    let durationMinutes = 0;
+    for (const eid of ids) {
+      const ev = eventById.get(eid);
+      if (ev?.ends_at && ev.starts_at) {
+        durationMinutes += Math.round(
+          (new Date(ev.ends_at).getTime() - new Date(ev.starts_at).getTime()) / 60000
+        );
+      }
+    }
+    result.set(profileId, { sessionCount: ids.length, durationMinutes });
+  }
+
+  return result;
 }
 
 // ── Per-student helpers (public API, kept for direct use) ─────────────────────
@@ -71,7 +222,7 @@ export async function fetchVocab(profileId: string, start: string, end: string):
 
 // ── Batch helpers (N students → fixed number of queries) ─────────────────────
 
-async function fetchStudyHallBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, StudyHallResult | null>> {
+export async function fetchStudyHallBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, StudyHallResult | null>> {
   if (!profileIds.length) return new Map();
 
   const PAGE_SIZE = 1000;
@@ -175,7 +326,7 @@ async function fetchStudyHallBatch(profileIds: string[], start: string, end: str
   return result;
 }
 
-async function fetchTestCenterBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, TestCenterResult[]>> {
+export async function fetchTestCenterBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, TestCenterResult[]>> {
   if (!profileIds.length) return new Map();
 
   const PAGE_SIZE = 1000;
@@ -261,7 +412,7 @@ async function fetchTestCenterBatch(profileIds: string[], start: string, end: st
   return result;
 }
 
-async function fetchVocabBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, VocabResult | null>> {
+export async function fetchVocabBatch(profileIds: string[], start: string, end: string, rowLimit = 1000): Promise<Map<string, VocabResult | null>> {
   const VOCAB_MASTER_BOX = 5;
   const VOCAB_MAX_MISSED = 6;
 

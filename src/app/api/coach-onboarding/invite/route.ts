@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000').toLowerCase();
   return NextResponse.json({ data: { ...data, url: `${baseUrl}/coach-onboarding/${token}` } });
 }
 

@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { X, CreditCard, ChevronLeft, Crown, CheckCircle2, Copy, Check } from 'lucide-react';
-import { Student, ProductCategory, ProductSubcategory, B2B_PARTNER_OPTIONS } from '@/types/crm';
+import { Student, ProductCategory, ProductSubcategory, B2B_PARTNER_OPTIONS, PAYMENT_METHODS } from '@/types/crm';
+import type { PaymentMethod } from '@/types/crm';
 import { useCompanies } from '@/hooks/useCompanies';
 import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
 import { getAdminUserName } from '@/lib/admin-user';
+import { PaymentRecordedError, retryEnrollment, submitPayment } from './payment/paymentApi';
+import { netAmount } from '@/lib/payment-utils';
 
 type ClassType = '1:1' | '1:2' | '그룹' | '콘텐츠';
 type Subject = 'SAT' | 'AP';
@@ -24,6 +27,7 @@ const PRODUCT_TREE: Record<ClassType, Partial<Record<Subject | '_', Product[]>>>
       { id: 'sat_1on1_managed',  label: 'SAT 정규 1:1 수업 (관리형)',  requiresHours: true,  category: 'SAT 정규 1:1 수업', subcategory: '관리형 수업' },
       { id: 'sat_1on1_onepoint', label: 'SAT 정규 1:1 수업 (원포인트)', requiresHours: true,  category: 'SAT 정규 1:1 수업', subcategory: '원포인트' },
       { id: 'sat_1on1_lead',     label: 'SAT 정규 1:1 수업 (대표코치)', requiresHours: true,  category: 'SAT 정규 1:1 수업', subcategory: '대표코치' },
+      { id: 'sat_1on1_selfled',  label: 'SAT 정규 1:1 수업 (자기주도형)', requiresHours: true,  category: 'SAT 정규 1:1 수업', subcategory: '자기주도형' },
       { id: 'sat_trial',         label: 'SAT 체험 1:1 수업',            requiresHours: false, category: 'SAT 체험 1:1 수업', subcategory: '체험수업' },
     ],
     AP: [
@@ -87,10 +91,14 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
   const [hours, setHours] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [taxType, setTaxType] = useState<'면세' | '과세'>('면세');
+  // 선택 입력 — 안 고르면 보내지 않아 NULL("기록되지 않음")로 남는다.
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [detectedReasons, setDetectedReasons] = useState<VipReason[]>([]);
   const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 결제는 저장됐지만 수업 중 전환만 실패한 상태 — 이후엔 결제를 다시 보내지 않고 전환만 재시도한다.
+  const [recorded, setRecorded] = useState<{ paymentId: string | undefined } | null>(null);
   // Step 4 — post-payment tutoring signup link.
   const [signupUrl, setSignupUrl] = useState<string | null>(null);
   const [completedStudent, setCompletedStudent] = useState<Student | null>(null);
@@ -166,28 +174,25 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/crm/students/${student.id}/payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({
-          product: selectedProduct.label,
-          product_category: selectedProduct.category,
-          product_subcategory: selectedProduct.subcategory,
-          hours: selectedProduct.requiresHours ? Number(hours) : null,
-          amount: Number(amount),
-          tax_type: taxType,
-          payment_type: paymentType ?? '최초결제',
-          is_vip: isVip,
-          created_by: getAdminUserName(),
-          b2b_partner: selectedPartner ?? undefined,
-        }),
-      });
-      const responseBody = await res.json();
-      if (!res.ok) {
-        throw new Error(responseBody.error ?? '결제 처리 실패');
-      }
-      const updated: Student = responseBody.data.student;
-      const paymentId: string | undefined = responseBody.data.payment?.id;
+      const extra = {
+        is_vip: isVip,
+        ...(selectedPartner ? { b2b_partner: selectedPartner } : {}),
+      };
+      const { student: updated, paymentId } = recorded
+        ? { student: await retryEnrollment(student, adminKey, extra), paymentId: recorded.paymentId }
+        : await submitPayment(student.id, adminKey, {
+            product: selectedProduct.label,
+            product_category: selectedProduct.category,
+            product_subcategory: selectedProduct.subcategory,
+            hours: selectedProduct.requiresHours ? Number(hours) : null,
+            amount: Number(amount),
+            tax_type: taxType,
+            ...(paymentMethod ? { payment_method: paymentMethod } : {}),
+            payment_type: paymentType ?? '최초결제',
+            created_by: getAdminUserName(),
+            ...extra,
+          });
+      setRecorded(null);
       setCompletedStudent(updated);
       setCompletedPaymentId(paymentId ?? null);
 
@@ -213,6 +218,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
         setError(err instanceof Error ? err.message : '가입 링크 생성에 실패했습니다.');
       }
     } catch (err) {
+      if (err instanceof PaymentRecordedError) setRecorded({ paymentId: err.paymentId });
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -481,13 +487,37 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
                   <p className="text-[11px] text-gray-400">
                     수익:{' '}
                     <span className="font-medium text-gray-700">
-                      {taxType === '면세'
-                        ? amountValue.toLocaleString('ko-KR')
-                        : Math.round(amountValue * 0.9).toLocaleString('ko-KR')}원
+                      {netAmount({ amount: amountValue, tax_type: taxType }).toLocaleString('ko-KR')}원
                     </span>
                     {taxType === '과세' && <span className="ml-1 text-gray-400">(부가세 10% 제외)</span>}
                   </p>
                 )}
+              </div>
+
+              {/* 결제수단 — 선택 사항. 모르면 비워두는 게 낫다(예전 기본값 '계좌이체'가
+                  실제 계좌이체인지 미입력인지 구분이 안 돼 574건이 무의미해졌다). */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-500">
+                  결제수단 <span className="text-gray-300">(선택)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {PAYMENT_METHODS.map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setPaymentMethod((prev) => (prev === m ? null : m))}
+                      className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                        paymentMethod === m
+                          ? 'bg-blue-50 border-blue-400 text-blue-700'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400">
+                  모르면 비워두세요 — 추측해서 고르면 집계가 틀어집니다.
+                </p>
               </div>
 
               {/* VIP 여부 */}
@@ -577,7 +607,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
               disabled={!isValid || loading}
               className="flex-1 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? '처리 중...' : '결제 완료'}
+              {loading ? '처리 중...' : recorded ? '수업 중 전환 다시 시도' : '결제 완료'}
             </button>
           </div>
         )}

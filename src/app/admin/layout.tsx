@@ -29,13 +29,20 @@ const NAV_ITEMS: NavItem[] = [
             { href: '/admin/vocab-access', label: '시크릿페이지' },
             { href: '/admin/fulltest', label: 'Test Contents' },
             { href: '/admin/mathweb', label: 'Math Web' },
+            { href: '/admin/mission', label: '미션 챌린지' },
+            { href: '/admin/ssat-math', label: 'SSAT Math' },
         ]
     },
     { href: '/admin/popup-settings', label: '팝업 설정', icon: '🔔' },
     { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
-    { href: '/admin/business', label: 'Business', icon: '💼' },
-    { href: '/admin/marketing', label: '마케팅', icon: '📣' },
-    { href: '/admin/crm', label: 'CRM', icon: '👥' },
+    {
+        label: 'Superfastsat', icon: '⚡', children: [
+            { href: '/admin/business', label: 'Business' },
+            { href: '/admin/marketing', label: '마케팅' },
+            { href: '/admin/crm', label: 'CRM' },
+            { href: '/admin/srm/service', label: '학습현황' },
+        ]
+    },
 ];
 
 

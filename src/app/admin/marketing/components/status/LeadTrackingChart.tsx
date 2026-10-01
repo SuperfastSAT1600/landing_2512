@@ -19,7 +19,7 @@ interface Props {
 
 export default function LeadTrackingChart({ rows, unit, selectedChannels }: Props) {
   if (rows.length === 0) {
-    return <p className="text-gray-600 text-sm text-center py-8">데이터 없음</p>;
+    return <p className="text-gray-400 text-sm text-center py-8">데이터 없음</p>;
   }
 
   const visible = ALL_CHANNELS.filter((ch) => selectedChannels.includes(ch));
@@ -42,7 +42,7 @@ export default function LeadTrackingChart({ rows, unit, selectedChannels }: Prop
             </linearGradient>
           ))}
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis
           dataKey="name"
           tick={{ fill: '#6b7280', fontSize: 10 }}
@@ -51,11 +51,11 @@ export default function LeadTrackingChart({ rows, unit, selectedChannels }: Prop
         />
         <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} tickLine={false} axisLine={false} />
         <Tooltip
-          contentStyle={{ background: '#1e2023', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
-          labelStyle={{ color: '#e0e0e0', fontSize: 12 }}
+          contentStyle={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+          labelStyle={{ color: '#111827', fontSize: 12 }}
           itemStyle={{ fontSize: 11 }}
         />
-        <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: '#9ca3af' }} />
+        <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: '#6b7280' }} />
         {visible.map((ch) => (
           <Area
             key={ch}

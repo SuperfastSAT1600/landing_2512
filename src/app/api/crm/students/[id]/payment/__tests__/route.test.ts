@@ -131,3 +131,87 @@ describe('POST /api/crm/students/[id]/payment', () => {
     expect(mockInsert).not.toHaveBeenCalled();
   });
 });
+
+describe('POST /api/crm/students/[id]/payment — 결제수단 (REQ-002, REQ-003)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('고른 결제수단을 그대로 저장한다', async () => {
+    happyPath();
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ ...VALID, payment_method: '신용카드' }), { params });
+
+    expect(res.status).toBe(201);
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ payment_method: '신용카드' })
+    );
+  });
+
+  it('결제수단을 안 보내면 null로 남긴다 — 기본값 계좌이체를 박지 않는다', async () => {
+    happyPath();
+    const { POST } = await import('../route');
+    const res = await POST(makeReq(VALID), { params });
+
+    expect(res.status).toBe(201);
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ payment_method: null })
+    );
+  });
+
+  it('허용하지 않는 결제수단은 400', async () => {
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ ...VALID, payment_method: '비트코인' }), { params });
+
+    expect(res.status).toBe(400);
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/crm/students/[id]/payment — 결제 저장 후 전환 실패', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  /** 결제 insert는 성공, enrollStudentOnPayment만 null(실패). */
+  function enrollFails() {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValueOnce({ single: vi.fn().mockResolvedValueOnce({ data: { name: '정예준' } }) }),
+    });
+    mockInsert.mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        single: vi.fn().mockResolvedValueOnce({ data: { id: 'pay-1' }, error: null }),
+      }),
+    });
+    mockEnroll.mockResolvedValueOnce(null);
+  }
+
+  // REQ-001
+  it('전환이 실패하면 ENROLL_FAILED와 저장된 결제를 돌려준다', async () => {
+    enrollFails();
+    const { POST } = await import('../route');
+    const res = await POST(makeReq(VALID), { params });
+
+    expect(res.status).toBe(500);
+    const json = await res.json();
+    expect(json.code).toBe('ENROLL_FAILED');
+    expect(json.data.payment.id).toBe('pay-1');
+    expect(typeof json.error).toBe('string'); // 기존 클라이언트 호환: error는 문자열
+    expect(json.error).toContain('결제는 기록');
+  });
+
+  // REQ-001
+  it('결제 insert 자체가 실패하면 ENROLL_FAILED를 쓰지 않는다', async () => {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValueOnce({ single: vi.fn().mockResolvedValueOnce({ data: { name: '정예준' } }) }),
+    });
+    mockInsert.mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        single: vi.fn().mockResolvedValueOnce({ data: null, error: { message: 'insert failed' } }),
+      }),
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeReq(VALID), { params });
+
+    expect(res.status).toBe(500);
+    const json = await res.json();
+    expect(json.code).toBeUndefined();
+    expect(mockEnroll).not.toHaveBeenCalled();
+  });
+});

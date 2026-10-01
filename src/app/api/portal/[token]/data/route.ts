@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { cookies } from 'next/headers';
 import type { ConsultationEntry } from '@/types/crm';
+import { notifyPortalPageView } from '@/lib/slack';
 
 /**
  * GET /api/portal/[token]/data
@@ -67,6 +68,16 @@ export async function GET(
         question_count: answerCount,
       };
     }
+  }
+
+  const isAdminPreview = request.nextUrl.searchParams.get('preview') === 'admin';
+  if (!isAdminPreview) {
+    const page = student.sfv2_profile_id ? '학습 리포트' : '상담 기록';
+    notifyPortalPageView({
+      studentName: student.portal_name || student.name,
+      studentId: student.id,
+      page,
+    }).catch((err) => console.error('[portal] Slack notify failed:', err));
   }
 
   return NextResponse.json({

@@ -25,8 +25,8 @@ function getLeads(groups: MarketingGroupStats[], channel: MarketingGroup): numbe
 function DeltaCell({ current, previous }: { current: number; previous: number }) {
   const rate = calcDeltaRate(current, previous);
   const delta = current - previous;
-  if (rate === null) return <td className="text-right py-2.5 px-3 text-gray-600 text-xs">—</td>;
-  const color = delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-gray-500';
+  if (rate === null) return <td className="text-right py-2.5 px-3 text-gray-400 text-xs">—</td>;
+  const color = delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-500';
   return (
     <td className={`text-right py-2.5 px-3 text-xs font-medium ${color}`}>
       {delta > 0 ? '▲' : delta < 0 ? '▼' : ''}{Math.abs(rate).toFixed(1)}%
@@ -46,10 +46,10 @@ function CompareTable({ data }: TableProps) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/5">
+          <tr className="border-b border-gray-100">
             <th className="text-left py-2.5 pr-4 text-xs text-gray-500 font-medium">채널</th>
-            <th className="text-right py-2.5 px-3 text-xs text-gray-400 font-medium">{data.previousLabel}</th>
-            <th className="text-right py-2.5 px-3 text-xs text-gray-400 font-medium">{data.currentLabel}</th>
+            <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">{data.previousLabel}</th>
+            <th className="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">{data.currentLabel}</th>
             <th className="text-right py-2.5 pl-3 text-xs text-gray-500 font-medium">증감</th>
           </tr>
         </thead>
@@ -58,20 +58,20 @@ function CompareTable({ data }: TableProps) {
             const cur = getLeads(data.currentGroups, ch);
             const prev = getLeads(data.previousGroups, ch);
             return (
-              <tr key={ch} className="border-b border-white/5 last:border-0">
+              <tr key={ch} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
                 <td className="py-2.5 pr-4">
                   <span className="text-xs font-medium" style={{ color: GROUP_COLORS[ch] }}>{ch}</span>
                 </td>
-                <td className="text-right py-2.5 px-3 text-gray-400">{prev}</td>
-                <td className="text-right py-2.5 px-3 text-white font-semibold">{cur}</td>
+                <td className="text-right py-2.5 px-3 text-gray-500">{prev}</td>
+                <td className="text-right py-2.5 px-3 text-gray-900 font-semibold">{cur}</td>
                 <DeltaCell current={cur} previous={prev} />
               </tr>
             );
           })}
-          <tr className="border-t border-white/10">
-            <td className="py-2.5 pr-4 text-gray-400 text-xs font-semibold">합계</td>
-            <td className="text-right py-2.5 px-3 text-gray-300 font-semibold">{totalPrevious}</td>
-            <td className="text-right py-2.5 px-3 text-white font-bold">{totalCurrent}</td>
+          <tr className="border-t border-gray-200">
+            <td className="py-2.5 pr-4 text-gray-500 text-xs font-semibold">합계</td>
+            <td className="text-right py-2.5 px-3 text-gray-600 font-semibold">{totalPrevious}</td>
+            <td className="text-right py-2.5 px-3 text-gray-900 font-bold">{totalCurrent}</td>
             <DeltaCell current={totalCurrent} previous={totalPrevious} />
           </tr>
         </tbody>
@@ -101,9 +101,9 @@ export default function ComparePanel({ momData, qoqData, yoyMonthData, yoyQuarte
   const current = dataMap[mode];
 
   return (
-    <div className="bg-[#1e2023] border border-white/5 rounded-xl p-5 space-y-4">
+    <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h3 className="text-white font-semibold">비교 분석</h3>
+        <h3 className="text-gray-900 font-semibold">비교 분석</h3>
         <div className="flex gap-1.5 flex-wrap">
           {MODES.map(({ key, label }) => (
             <button
@@ -112,7 +112,7 @@ export default function ComparePanel({ momData, qoqData, yoyMonthData, yoyQuarte
               className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
                 mode === key
                   ? 'bg-blue-600 text-white'
-                  : 'bg-[#151719] text-gray-400 hover:text-white hover:bg-white/10'
+                  : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
               }`}
             >
               {label}
@@ -124,13 +124,13 @@ export default function ComparePanel({ momData, qoqData, yoyMonthData, yoyQuarte
       {loading ? (
         <div className="space-y-2 animate-pulse">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-8 bg-white/5 rounded" />
+            <div key={i} className="h-8 bg-gray-100 rounded" />
           ))}
         </div>
       ) : current ? (
         <CompareTable data={current} />
       ) : (
-        <p className="text-gray-600 text-sm text-center py-6">데이터 없음</p>
+        <p className="text-gray-400 text-sm text-center py-6">데이터 없음</p>
       )}
     </div>
   );

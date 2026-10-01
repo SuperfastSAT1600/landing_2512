@@ -1,4 +1,5 @@
 import { hasReachedStage } from '@/lib/funnel-stats';
+import { netAmount } from '@/lib/payment-utils';
 
 export type StatsDetailMetric =
   | 'leads'
@@ -75,10 +76,6 @@ type PaymentRow = {
   paid_at: string;
   created_by?: string | null;
 };
-
-function netAmount(p: { amount: number; tax_type?: string | null }): number {
-  return p.tax_type === '과세' ? Math.round(p.amount * 0.9) : p.amount;
-}
 
 /** consultation_timeline 중 가장 이른 created_at(ISO). 기록 없으면 null. */
 function firstMemoAt(s: StudentRow): string | null {

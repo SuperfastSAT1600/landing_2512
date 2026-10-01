@@ -133,7 +133,7 @@ export function useRenewalBoard(adminKey: string, scope: RenewalScope) {
         const enrolledIds = new Set(enrolled.map((s) => s.id));
         setMissingFromEnrolled(
           linked.filter(
-            (u) => u.status !== 'ended' && u.crmStudentId && !enrolledIds.has(u.crmStudentId)
+            (u) => u.status !== 'ended' && u.status !== 'unclassified' && u.crmStudentId && !enrolledIds.has(u.crmStudentId)
           ).length
         );
         setCandidatesError(null);

@@ -154,7 +154,7 @@ describe('buildStatsDetail — source 필터 (채널 드릴다운)', () => {
 
 describe('buildStatsDetail — payments 계열', () => {
   const payments = [
-    pay({ student_name: 'A', amount: 1000000, tax_type: '과세' }), // net 900000
+    pay({ student_name: 'A', amount: 1000000, tax_type: '과세' }), // net 909091 (공급가액)
     pay({ student_name: 'B', amount: 500000, tax_type: '면세' }), // net 500000
     pay({ student_name: 'C', amount: -200000, payment_type: '환불' }),
   ];
@@ -176,11 +176,11 @@ describe('buildStatsDetail — payments 계열', () => {
     expect(r.count).toBe(3);
   });
 
-  it('과세 행은 net_amount = amount*0.9, 면세는 동일', () => {
+  it('과세 행은 net_amount = 공급가액(amount / 1.1), 면세는 동일', () => {
     const r = buildStatsDetail('revenue', [], payments);
     const a = r.kind === 'payments' ? r.items.find((i) => i.student_name === 'A') : undefined;
     const b = r.kind === 'payments' ? r.items.find((i) => i.student_name === 'B') : undefined;
-    expect(a?.net_amount).toBe(900000);
+    expect(a?.net_amount).toBe(909091); // 1,000,000 / 1.1 — ×0.9(900,000)가 아니다
     expect(b?.net_amount).toBe(500000);
   });
 });
