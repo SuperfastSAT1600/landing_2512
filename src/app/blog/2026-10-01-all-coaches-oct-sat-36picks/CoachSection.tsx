@@ -184,22 +184,22 @@ export function CoachSection({ coach, answers, onAnswer }: Props) {
     setCurrentIndex(Math.max(0, Math.min(idx, coach.problems.length - 1)));
   }, [coach.problems.length]);
 
-  const coachColors: Record<string, string> = {
-    brandon: 'border-blue-500',
-    ben: 'border-emerald-500',
-    park: 'border-purple-500',
-    laura: 'border-rose-500',
-    julie: 'border-amber-500',
-    dana: 'border-teal-500',
-  };
-  const borderColor = coachColors[coach.id] || 'border-gray-400';
+  const borderColor = 'border-blue-600';
   const currentProblem = coach.problems[currentIndex];
 
   return (
     <section className="mb-20">
       {/* Coach header */}
       <div className={`border-l-4 ${borderColor} pl-5 mb-6`}>
-        <h2 className="text-3xl font-bold text-gray-900">{coach.name}</h2>
+        <h2 className="text-3xl font-bold text-gray-900">
+          {coach.profileUrl ? (
+            <a href={coach.profileUrl} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+              {coach.name}
+            </a>
+          ) : (
+            coach.name
+          )}
+        </h2>
         <p className="text-gray-500 mt-1 text-sm leading-relaxed">{coach.tagline}</p>
       </div>
 
