@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { appendStageHistory } from '@/lib/stage-history';
 import { verifySlackRequest } from '@/app/api/slack/events/slack-utils';
 import { generateLeadName } from '@/app/api/slack/lead-intake/route';
 import { buildLeadSuccessBlocks } from './lead-blocks';
-import type { InquiryChannel, TrafficSource, LeadType } from '@/types/crm';
+import { FUNNEL_STAGE_LABELS, type InquiryChannel, type TrafficSource, type LeadType } from '@/types/crm';
 
 export const runtime = 'nodejs';
 
@@ -82,12 +83,26 @@ export async function POST(request: NextRequest) {
     const studentId = action.value ?? '';
     const now = new Date();
     const kst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+
+    // 리드 인입(0) 복귀를 단계 이력에도 남긴다. 이력을 못 읽으면 덮어쓰지 않도록 업데이트하지 않는다.
+    const { data: current, error: readError } = await supabaseAdmin
+      .from('students')
+      .select('stage_history')
+      .eq('id', studentId)
+      .maybeSingle();
+    if (readError) {
+      console.error('[slack/interactions] reinquiry_restore 이력 조회 실패:', readError);
+      return NextResponse.json({ ok: true });
+    }
+    const history = appendStageHistory(current?.stage_history, '0', FUNNEL_STAGE_LABELS['0'], now.toISOString());
+
     const { error } = await supabaseAdmin
       .from('students')
       .update({
         funnel_stage: '0',
         lead_status: 'active',
         inquiry_date: kst.toISOString().slice(0, 16) + ':00',
+        ...(history !== current?.stage_history ? { stage_history: history } : {}),
       })
       .eq('id', studentId);
 

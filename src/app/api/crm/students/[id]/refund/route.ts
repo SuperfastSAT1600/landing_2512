@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
-import type { ChurnType } from '@/types/crm';
+import { FUNNEL_STAGE_LABELS, type ChurnType } from '@/types/crm';
+import { appendStageHistory } from '@/lib/stage-history';
 
 export async function POST(
   request: NextRequest,
@@ -27,7 +28,7 @@ export async function POST(
   // 학생 정보 조회
   const { data: student, error: fetchErr } = await supabaseAdmin
     .from('students')
-    .select('id, name, lead_status')
+    .select('id, name, lead_status, stage_history')
     .eq('id', id)
     .single();
 
@@ -56,7 +57,13 @@ export async function POST(
     return NextResponse.json({ error: paymentErr.message }, { status: 500 });
   }
 
-  // 2. 학생 이탈 처리
+  // 2. 학생 이탈 처리 — 이탈 진입을 단계 이력에도 남긴다(직전이 이미 이탈이면 그대로).
+  const history = appendStageHistory(
+    student.stage_history,
+    'churned',
+    FUNNEL_STAGE_LABELS.churned,
+    new Date().toISOString()
+  );
   const { data: updatedStudent, error: updateErr } = await supabaseAdmin
     .from('students')
     .update({
@@ -64,6 +71,7 @@ export async function POST(
       lead_status: 'inactive',
       churn_tag: `환불: ${refund_reason}`,
       churn_type,
+      ...(history !== student.stage_history ? { stage_history: history } : {}),
     })
     .eq('id', id)
     .select()
