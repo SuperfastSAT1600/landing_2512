@@ -222,7 +222,7 @@ export function buildLeadSlackText({ leadData, localTz, labels }: SlackLeadMessa
 
   const fieldLines = (leadData.field_data ?? []).map(f => {
     const { label, isPhone } = resolveFieldLabel(f.name, labels);
-    const value = f.values.join(', ');
+    const value = (f.values ?? []).join(', ');
     const display = isPhone ? `p:${value}` : value;
     return `${label}:${display}`;
   }).join('\n');
@@ -254,7 +254,7 @@ export function buildLeadSlackBlocks({ leadData, localTz, labels, adsetName, exi
 
   const fieldLines = (leadData.field_data ?? []).map(f => {
     const { label, isPhone } = resolveFieldLabel(f.name, labels);
-    const value = f.values.join(', ');
+    const value = (f.values ?? []).join(', ');
     const display = isPhone ? `p:${value}` : value;
     return `${label}: ${display}`;
   }).join('\n');
