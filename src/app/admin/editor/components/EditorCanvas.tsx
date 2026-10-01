@@ -87,7 +87,7 @@ export function EditorCanvas({
     onEditorPaste, onEditorDrop, onEditorKeyDown,
 }: EditorCanvasProps) {
     const editorHtml = editor?.getHTML() ?? '';
-    const contentWidth = mobileView ? 'max-w-[430px] mx-auto px-5' : 'max-w-4xl mx-auto px-4 md:px-6';
+    const contentWidth = mobileView ? 'max-w-[390px] mx-auto px-5' : 'max-w-4xl mx-auto px-4 md:px-6';
 
     if (viewMode === 'split') {
         return (
