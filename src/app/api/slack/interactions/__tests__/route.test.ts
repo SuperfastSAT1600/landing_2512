@@ -7,6 +7,8 @@ import crypto from 'crypto';
 const mockSingle = vi.hoisted(() => vi.fn());
 const mockEq = vi.hoisted(() => vi.fn().mockResolvedValue({ error: null }));
 const mockUpdate = vi.hoisted(() => vi.fn().mockReturnValue({ eq: mockEq }));
+const mockMaybeSingle = vi.hoisted(() => vi.fn());
+const mockSelect = vi.hoisted(() => vi.fn().mockReturnValue({ eq: () => ({ maybeSingle: mockMaybeSingle }) }));
 
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
@@ -15,6 +17,7 @@ vi.mock('@/lib/supabase-admin', () => ({
         select: vi.fn().mockReturnValue({ single: mockSingle }),
       }),
       update: mockUpdate,
+      select: mockSelect,
     }),
   },
 }));
@@ -76,6 +79,7 @@ describe('POST /api/slack/interactions', () => {
     });
     mockUpdate.mockReturnValue({ eq: mockEq });
     mockEq.mockResolvedValue({ error: null });
+    mockMaybeSingle.mockResolvedValue({ data: { stage_history: [] }, error: null });
   });
 
   // REQ-003: 서명 검증
@@ -197,6 +201,30 @@ describe('POST /api/slack/interactions', () => {
         'https://slack.com/api/chat.update',
         expect.objectContaining({ method: 'POST' }),
       );
+    });
+
+    // REQ-002
+    it('리드 인입(0) 진입을 단계 이력에 추가한다', async () => {
+      mockMaybeSingle.mockResolvedValueOnce({
+        data: { stage_history: [{ stage: 'churned', label: '이탈', entered_at: '2026-09-01T00:00:00Z' }] },
+        error: null,
+      });
+      const { POST } = await import('../route');
+      await POST(makeSlackRequest(makeReinquiryPayload()));
+
+      const history = mockUpdate.mock.calls[0][0].stage_history;
+      expect(history.map((h: { stage: string }) => h.stage)).toEqual(['churned', '0']);
+      expect(history[1].label).toBe('리드 인입');
+    });
+
+    // REQ-002
+    it('이력 조회가 실패하면 업데이트하지 않고 200만 반환한다', async () => {
+      mockMaybeSingle.mockResolvedValueOnce({ data: null, error: { message: 'read failed' } });
+      const { POST } = await import('../route');
+      const res = await POST(makeSlackRequest(makeReinquiryPayload()));
+
+      expect(res.status).toBe(200);
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
 
     it('DB 실패 시 200 반환 (메시지 갱신 없음)', async () => {
