@@ -84,7 +84,15 @@ export async function POST(
   if (b2b_partner) extra.b2b_partner = b2b_partner;
   const student = await enrollStudentOnPayment(id, undefined, Object.keys(extra).length ? extra : undefined);
   if (!student) {
-    return NextResponse.json({ error: '학생 상태 업데이트 실패' }, { status: 500 });
+    // 결제 행은 이미 저장됐다. 클라이언트가 같은 결제를 다시 보내지 않고 전환만 재시도하도록 구분해서 알린다.
+    return NextResponse.json(
+      {
+        error: '결제는 기록됐지만 학생을 "수업 중"으로 바꾸지 못했습니다. 결제를 다시 입력하지 말고 전환만 다시 시도해 주세요.',
+        code: 'ENROLL_FAILED',
+        data: { payment },
+      },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ data: { payment, student } }, { status: 201 });
