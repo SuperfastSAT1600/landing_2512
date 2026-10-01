@@ -155,6 +155,13 @@ export async function runBackfill(
       continue;
     }
 
+    // 완화된 매칭은 흔적을 남긴다 — 조용히 붙이면 잘못 붙은 전사를 아무도 못 찾는다.
+    if (match.renamedFrom) {
+      deps.log(
+        `[renamed] ${c.studentId} / ${c.entryId}: 메모 "${match.renamedFrom}" → Plaud "${match.recording.name}" (${match.recording.id})`
+      );
+    }
+
     if (options.dryRun) {
       report.wouldInsert++;
       deps.log(`[dry-run] ${c.studentId} / ${c.entryId} ← ${match.recording.id}`);
