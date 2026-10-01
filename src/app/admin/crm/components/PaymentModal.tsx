@@ -7,6 +7,7 @@ import type { PaymentMethod } from '@/types/crm';
 import { useCompanies } from '@/hooks/useCompanies';
 import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason } from '@/lib/vip-utils';
 import { getAdminUserName } from '@/lib/admin-user';
+import { PaymentRecordedError, retryEnrollment, submitPayment } from './payment/paymentApi';
 import { netAmount } from '@/lib/payment-utils';
 
 type ClassType = '1:1' | '1:2' | '그룹' | '콘텐츠';
@@ -96,6 +97,8 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
   const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 결제는 저장됐지만 수업 중 전환만 실패한 상태 — 이후엔 결제를 다시 보내지 않고 전환만 재시도한다.
+  const [recorded, setRecorded] = useState<{ paymentId: string | undefined } | null>(null);
   // Step 4 — post-payment tutoring signup link.
   const [signupUrl, setSignupUrl] = useState<string | null>(null);
   const [completedStudent, setCompletedStudent] = useState<Student | null>(null);
@@ -171,29 +174,25 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/crm/students/${student.id}/payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({
-          product: selectedProduct.label,
-          product_category: selectedProduct.category,
-          product_subcategory: selectedProduct.subcategory,
-          hours: selectedProduct.requiresHours ? Number(hours) : null,
-          amount: Number(amount),
-          tax_type: taxType,
-          ...(paymentMethod ? { payment_method: paymentMethod } : {}),
-          payment_type: paymentType ?? '최초결제',
-          is_vip: isVip,
-          created_by: getAdminUserName(),
-          b2b_partner: selectedPartner ?? undefined,
-        }),
-      });
-      const responseBody = await res.json();
-      if (!res.ok) {
-        throw new Error(responseBody.error ?? '결제 처리 실패');
-      }
-      const updated: Student = responseBody.data.student;
-      const paymentId: string | undefined = responseBody.data.payment?.id;
+      const extra = {
+        is_vip: isVip,
+        ...(selectedPartner ? { b2b_partner: selectedPartner } : {}),
+      };
+      const { student: updated, paymentId } = recorded
+        ? { student: await retryEnrollment(student, adminKey, extra), paymentId: recorded.paymentId }
+        : await submitPayment(student.id, adminKey, {
+            product: selectedProduct.label,
+            product_category: selectedProduct.category,
+            product_subcategory: selectedProduct.subcategory,
+            hours: selectedProduct.requiresHours ? Number(hours) : null,
+            amount: Number(amount),
+            tax_type: taxType,
+            ...(paymentMethod ? { payment_method: paymentMethod } : {}),
+            payment_type: paymentType ?? '최초결제',
+            created_by: getAdminUserName(),
+            ...extra,
+          });
+      setRecorded(null);
       setCompletedStudent(updated);
       setCompletedPaymentId(paymentId ?? null);
 
@@ -219,6 +218,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
         setError(err instanceof Error ? err.message : '가입 링크 생성에 실패했습니다.');
       }
     } catch (err) {
+      if (err instanceof PaymentRecordedError) setRecorded({ paymentId: err.paymentId });
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -607,7 +607,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
               disabled={!isValid || loading}
               className="flex-1 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? '처리 중...' : '결제 완료'}
+              {loading ? '처리 중...' : recorded ? '수업 중 전환 다시 시도' : '결제 완료'}
             </button>
           </div>
         )}
