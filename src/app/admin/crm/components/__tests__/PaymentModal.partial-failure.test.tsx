@@ -23,7 +23,10 @@ interface Reply { ok: boolean; status: number; body: unknown }
 const ENROLL_FAILED: Reply = {
   ok: false,
   status: 500,
-  body: { error: '결제는 기록됐지만 학생을 "수업 중"으로 바꾸지 못했습니다.', code: 'ENROLL_FAILED', data: { payment: { id: 'pay-1' } } },
+  body: {
+    error: { code: 'ENROLL_FAILED', message: '결제는 기록됐지만 학생을 "수업 중"으로 바꾸지 못했습니다.' },
+    data: { payment: { id: 'pay-1' } },
+  },
 };
 const PATCH_OK: Reply = { ok: true, status: 200, body: { data: ENROLLED } };
 const PATCH_FAIL: Reply = { ok: false, status: 500, body: { error: { message: '전환 실패' } } };

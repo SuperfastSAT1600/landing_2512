@@ -4,6 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
 import { FUNNEL_STAGE_LABELS } from '@/types/crm';
 import { appendStageHistory } from '@/lib/stage-history';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * GET /api/crm/students/[id]
@@ -15,9 +16,7 @@ export async function GET(
   { params: _pid }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await _pid;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { data, error } = await supabaseAdmin
     .from('students')
@@ -26,7 +25,7 @@ export async function GET(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'Student not found', 404);
   }
 
   return NextResponse.json({ data });
@@ -44,22 +43,20 @@ export async function PATCH(
   { params: _pid }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await _pid;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   // Strip undefined values and id field to avoid unintended overwrites
   const { id: _id, created_at: _ca, updated_at: _ua, ...updateFields } = body;
 
   if (Object.keys(updateFields).length === 0) {
-    return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'No fields to update', 400);
   }
 
   // funnel_stage 변경 시 stage_history에 이동 이력 자동 기록
@@ -90,22 +87,15 @@ export async function PATCH(
 
   if (error) {
     console.error('[crm/students PATCH]', error);
+    // Postgres 코드(예: 42501)를 그대로 넘긴다 — 권한·제약 위반을 구분하는 데 쓴다.
     return NextResponse.json(
-      { error: { message: error.message, code: error.code, details: error.details } },
+      { error: { code: error.code, message: error.message, details: error.details } },
       { status: 500 }
     );
   }
 
   if (!data) {
-    return NextResponse.json(
-      {
-        error: {
-          code: 'STUDENT_NOT_FOUND',
-          message: '이미 삭제된 리드입니다. 목록을 새로고침해 주세요.',
-        },
-      },
-      { status: 404 }
-    );
+    return apiError('STUDENT_NOT_FOUND', '이미 삭제된 리드입니다. 목록을 새로고침해 주세요.', 404);
   }
 
   // 상담 기록 변경 시 임베딩 백그라운드 갱신
@@ -128,9 +118,7 @@ export async function DELETE(
   { params: _pid }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await _pid;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { error } = await supabaseAdmin
     .from('students')
@@ -139,7 +127,7 @@ export async function DELETE(
 
   if (error) {
     console.error('[crm/students DELETE]', error);
-    return NextResponse.json({ error: 'Failed to delete student' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Failed to delete student', 500);
   }
 
   return NextResponse.json({ data: null }, { status: 200 });

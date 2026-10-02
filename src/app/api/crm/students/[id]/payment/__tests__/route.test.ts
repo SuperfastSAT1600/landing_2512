@@ -47,6 +47,7 @@ describe('POST /api/crm/students/[id]/payment', () => {
     const { POST } = await import('../route');
     const res = await POST(makeReq(VALID, 'nope'), { params });
     expect(res.status).toBe(401);
+    expect((await res.json()).error.code).toBe('UNAUTHORIZED');
   });
 
   it('accepts a 0원 가결제 → 201', async () => {
@@ -204,10 +205,9 @@ describe('POST /api/crm/students/[id]/payment — 결제 저장 후 전환 실�
 
     expect(res.status).toBe(500);
     const json = await res.json();
-    expect(json.code).toBe('ENROLL_FAILED');
+    expect(json.error.code).toBe('ENROLL_FAILED');
     expect(json.data.payment.id).toBe('pay-1');
-    expect(typeof json.error).toBe('string'); // 기존 클라이언트 호환: error는 문자열
-    expect(json.error).toContain('결제는 기록');
+    expect(json.error.message).toContain('결제는 기록');
   });
 
   // REQ-001
@@ -225,7 +225,7 @@ describe('POST /api/crm/students/[id]/payment — 결제 저장 후 전환 실�
 
     expect(res.status).toBe(500);
     const json = await res.json();
-    expect(json.code).toBeUndefined();
+    expect(json.error.code).toBe('INTERNAL_ERROR');
     expect(mockEnroll).not.toHaveBeenCalled();
   });
 });

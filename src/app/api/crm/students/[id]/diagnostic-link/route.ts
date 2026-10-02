@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * GET  — 현재 연결된 결과 + 연결 가능한 후보 목록 + 2025 구 진단 응시 이력 반환
@@ -15,7 +16,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { data: student } = await supabaseAdmin
     .from('students')
@@ -23,7 +24,7 @@ export async function GET(
     .eq('id', id)
     .single();
 
-  if (!student) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!student) return apiError('NOT_FOUND', 'Not found', 404);
 
   // 현재 연결된 결과
   let linked = null;
@@ -66,7 +67,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isAuthenticated(request)) return unauthorized();
 
   const body = await request.json().catch(() => null);
   const resultId: string | null = body?.resultId ?? null;
@@ -77,7 +78,7 @@ export async function POST(
       .from('students')
       .update({ diagnostic_result_id: null })
       .eq('id', id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return apiError('INTERNAL_ERROR', error.message, 500);
 
     return NextResponse.json({ success: true });
   }
@@ -89,7 +90,7 @@ export async function POST(
     .eq('id', resultId)
     .single();
 
-  if (!result) return NextResponse.json({ error: 'Result not found' }, { status: 404 });
+  if (!result) return apiError('NOT_FOUND', 'Result not found', 404);
 
   // 이전 결과의 student_id는 유지 (한 번 연결된 결과는 후보에서 영구 제외)
   // 양방향 연결
@@ -98,7 +99,7 @@ export async function POST(
     supabaseAdmin.from('diagnostic_test_results').update({ student_id: id }).eq('id', resultId),
   ]);
   const writeError = writes.find((w) => w.error)?.error;
-  if (writeError) return NextResponse.json({ error: writeError.message }, { status: 500 });
+  if (writeError) return apiError('INTERNAL_ERROR', writeError.message, 500);
 
   return NextResponse.json({ success: true });
 }

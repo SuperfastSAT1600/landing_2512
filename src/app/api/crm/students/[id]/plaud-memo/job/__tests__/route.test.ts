@@ -95,7 +95,7 @@ describe('POST /api/crm/students/[id]/plaud-memo/job — 제출 (REQ-002)', () =
     const res = await POST(req('POST', { file_id: 'f1', account_key: 'me' }), { params });
 
     expect(res.status).toBe(502);
-    expect((await res.json()).error).toContain('429');
+    expect((await res.json()).error.message).toContain('429');
   });
 });
 
@@ -156,7 +156,7 @@ describe('PUT /api/crm/students/[id]/plaud-memo/job — 확인·마무리 (REQ-0
     const res = await PUT(req('PUT', { task_id: 'task-1' }), { params });
 
     expect(res.status).toBe(502);
-    expect((await res.json()).error).toContain('bad audio');
+    expect((await res.json()).error.message).toContain('bad audio');
   });
 
   it('task_id가 없으면 400', async () => {

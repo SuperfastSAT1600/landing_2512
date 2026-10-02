@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { buildSrmReport } from '@/lib/build-srm-report';
 import type { LearningReport } from '@/types/srm-portal';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // GET /api/crm/students/[id]/srm-report
 // CRM 학생 id로 연결된 v2 프로필(sfv2_profile_id)의 학습 리포트(SRM 데이터)를 조회한다.
@@ -11,9 +12,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAuthenticated(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(req)) return unauthorized();
   const { id } = await params;
 
   const { data: student, error } = await supabaseAdmin
@@ -23,15 +22,12 @@ export async function GET(
     .single();
 
   if (error || !student) {
-    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'not_found', 404);
   }
 
   const profileId = (student as { sfv2_profile_id?: string | null }).sfv2_profile_id;
   if (!profileId) {
-    return NextResponse.json(
-      { error: { code: 'no_v2_profile', message: 'SRM 프로필이 연결되지 않았습니다.' } },
-      { status: 404 }
-    );
+    return apiError('no_v2_profile', 'SRM 프로필이 연결되지 않았습니다.', 404);
   }
 
   // 빠른 운영 확인용: 캐시된 AI 내러티브는 쓰되 미캐시 생성은 생략(지표는 그대로).

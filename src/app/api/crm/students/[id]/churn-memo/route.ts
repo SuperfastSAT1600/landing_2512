@@ -4,6 +4,7 @@ import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultatio
 import { notifyMemoToSlack, CHURN_HEADING } from '@/lib/slack-memo';
 import { buildChurnMemo } from '@/lib/churn-memo';
 import type { ChurnType } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * POST /api/crm/students/[id]/churn-memo
@@ -16,20 +17,18 @@ export async function POST(
   { params: _pid }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await _pid;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { churn_tag?: string; reason?: string; churn_type?: ChurnType; author?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const churnTag = typeof body.churn_tag === 'string' ? body.churn_tag.trim() : '';
   if (!churnTag) {
-    return NextResponse.json({ error: 'churn_tag is required' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'churn_tag is required', 400);
   }
 
   const memo = buildChurnMemo({
@@ -52,9 +51,9 @@ export async function POST(
     return NextResponse.json({ data: entry }, { status: 201 });
   } catch (e) {
     if (e instanceof StudentNotFoundError) {
-      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+      return apiError('NOT_FOUND', 'Student not found', 404);
     }
     console.error('[crm/churn-memo POST]', e);
-    return NextResponse.json({ error: 'Failed to append churn memo' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Failed to append churn memo', 500);
   }
 }

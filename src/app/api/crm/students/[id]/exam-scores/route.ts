@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { isValidExamMonth, isValidSectionScore } from '@/lib/exam-score';
 import { syncLatestExamScore } from '@/app/api/crm/_lib/syncLatestExamScore';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 const SCORE_MESSAGE = '점수는 200~800 사이 10점 단위여야 합니다.';
 
@@ -18,9 +19,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { data, error } = await supabaseAdmin
     .from('student_exam_scores')
@@ -30,7 +29,7 @@ export async function GET(
 
   if (error) {
     console.error('[crm/exam-scores GET]', error);
-    return NextResponse.json({ error: '시험 성적을 불러오지 못했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '시험 성적을 불러오지 못했습니다.', 500);
   }
 
   return NextResponse.json({ data: data ?? [] });
@@ -42,29 +41,27 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const examMonth = typeof body.exam_month === 'string' ? body.exam_month.trim() : '';
   if (!isValidExamMonth(examMonth)) {
-    return NextResponse.json({ error: '시험월은 YYYY-MM 형식이어야 합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '시험월은 YYYY-MM 형식이어야 합니다.', 400);
   }
 
   const rw = readScore(body.rw_score);
   const math = readScore(body.math_score);
   if (rw === 'invalid' || math === 'invalid') {
-    return NextResponse.json({ error: SCORE_MESSAGE }, { status: 400 });
+    return apiError('BAD_REQUEST', SCORE_MESSAGE, 400);
   }
   if (rw === null && math === null) {
-    return NextResponse.json({ error: 'RW 또는 Math 점수 중 하나는 필요합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'RW 또는 Math 점수 중 하나는 필요합니다.', 400);
   }
 
   const { data, error } = await supabaseAdmin
@@ -82,13 +79,10 @@ export async function POST(
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json(
-        { error: `${examMonth} 시험 성적이 이미 기록돼 있습니다.` },
-        { status: 409 }
-      );
+      return apiError('CONFLICT', `${examMonth} 시험 성적이 이미 기록돼 있습니다.`, 409);
     }
     console.error('[crm/exam-scores POST]', error);
-    return NextResponse.json({ error: '시험 성적 저장에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '시험 성적 저장에 실패했습니다.', 500);
   }
 
   await syncLatestExamScore(id);

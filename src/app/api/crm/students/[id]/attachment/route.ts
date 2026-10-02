@@ -7,11 +7,9 @@ import {
 } from '@/lib/crm-attachment';
 import { ensureAttachmentBucket } from '@/lib/crm-attachment-store';
 import { randomUUID } from 'crypto';
+import { apiError } from '@/lib/api-response';
 
 export const runtime = 'nodejs';
-
-const err = (code: string, message: string, status: number) =>
-  NextResponse.json({ error: { code, message } }, { status });
 
 /**
  * POST /api/crm/students/[id]/attachment
@@ -23,7 +21,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) return err('UNAUTHORIZED', '인증이 필요합니다.', 401);
+  if (!isAuthenticated(request)) return apiError('UNAUTHORIZED', '인증이 필요합니다.', 401);
 
   let file: File | null = null;
   try {
@@ -31,20 +29,20 @@ export async function POST(
     const f = form.get('file');
     file = f instanceof File ? f : null;
   } catch {
-    return err('INVALID_FORM', '잘못된 요청 형식입니다.', 400);
+    return apiError('INVALID_FORM', '잘못된 요청 형식입니다.', 400);
   }
 
-  if (!file) return err('NO_FILE', '파일이 없습니다.', 400);
+  if (!file) return apiError('NO_FILE', '파일이 없습니다.', 400);
   if (!isAllowedAttachmentMime(file.type)) {
-    return err('BAD_MIME', `지원하지 않는 형식입니다: ${file.type || '알 수 없음'}`, 400);
+    return apiError('BAD_MIME', `지원하지 않는 형식입니다: ${file.type || '알 수 없음'}`, 400);
   }
   if (file.size > MAX_ATTACHMENT_BYTES) {
-    return err('TOO_LARGE', '파일이 너무 큽니다(최대 10MB).', 400);
+    return apiError('TOO_LARGE', '파일이 너무 큽니다(최대 10MB).', 400);
   }
 
   const { data: student, error: studentErr } = await supabaseAdmin
     .from('students').select('id').eq('id', id).single();
-  if (studentErr || !student) return err('STUDENT_NOT_FOUND', '학생을 찾을 수 없습니다.', 404);
+  if (studentErr || !student) return apiError('STUDENT_NOT_FOUND', '학생을 찾을 수 없습니다.', 404);
 
   const baseMime = file.type.split(';')[0].trim();
   const safeName = (file.name || 'file').replace(/[^a-zA-Z0-9.\-_]/g, '_').slice(0, 80);
@@ -58,7 +56,7 @@ export async function POST(
     if (upErr) throw new Error(upErr.message);
   } catch (e) {
     console.error('[crm/attachment POST]', e);
-    return err('UPLOAD_FAILED', '첨부 저장에 실패했습니다.', 500);
+    return apiError('UPLOAD_FAILED', '첨부 저장에 실패했습니다.', 500);
   }
 
   return NextResponse.json(
@@ -77,17 +75,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) return err('UNAUTHORIZED', '인증이 필요합니다.', 401);
+  if (!isAuthenticated(request)) return apiError('UNAUTHORIZED', '인증이 필요합니다.', 401);
 
   const path = request.nextUrl.searchParams.get('path') ?? '';
   if (!isWithinStudentFolder(path, id)) {
-    return err('FORBIDDEN', '잘못된 첨부 경로입니다.', 403);
+    return apiError('FORBIDDEN', '잘못된 첨부 경로입니다.', 403);
   }
 
   const { data, error } = await supabaseAdmin.storage
     .from(ATTACHMENT_BUCKET).createSignedUrl(path, SIGNED_URL_TTL_SEC);
   if (error || !data?.signedUrl) {
-    return err('SIGN_FAILED', '첨부를 불러오지 못했습니다.', 404);
+    return apiError('SIGN_FAILED', '첨부를 불러오지 못했습니다.', 404);
   }
 
   return NextResponse.json({ data: { url: data.signedUrl } });

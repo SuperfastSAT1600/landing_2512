@@ -4,6 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import type { CreateStudentInput } from '@/types/crm';
 import { isActionDoneToday, todaysMemos } from '@/types/crm';
 import { toKSTNaive } from '@/lib/sheets-sync-utils';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * GET /api/crm/students
@@ -11,9 +12,7 @@ import { toKSTNaive } from '@/lib/sheets-sync-utils';
  * Requires admin authentication.
  */
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { searchParams } = new URL(request.url);
   const stage = searchParams.get('stage');
@@ -33,7 +32,7 @@ export async function GET(request: NextRequest) {
       .ilike('name', `%${nameSearch}%`)
       .order('name', { ascending: true })
       .limit(10);
-    if (error) return NextResponse.json({ error: 'Failed to search' }, { status: 500 });
+    if (error) return apiError('INTERNAL_ERROR', 'Failed to search', 500);
     return NextResponse.json({ data: data ?? [] });
   }
 
@@ -82,7 +81,7 @@ export async function GET(request: NextRequest) {
     const scanFailed = scans.find((r) => r.error);
     if (scanFailed?.error) {
       console.error('[crm/students GET today_actions scan]', scanFailed.error);
-      return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
+      return apiError('INTERNAL_ERROR', 'Failed to fetch students', 500);
     }
     const ids = scans
       .flatMap((r) => r.data ?? [])
@@ -93,7 +92,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabaseAdmin.from('students').select('*').in('id', ids);
     if (error) {
       console.error('[crm/students GET today_actions full]', error);
-      return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
+      return apiError('INTERNAL_ERROR', 'Failed to fetch students', 500);
     }
     return NextResponse.json({ data });
   }
@@ -132,7 +131,7 @@ export async function GET(request: NextRequest) {
     const failed = results.find((r) => r.error);
     if (failed?.error) {
       console.error('[crm/students GET pool batch]', failed.error);
-      return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
+      return apiError('INTERNAL_ERROR', 'Failed to fetch students', 500);
     }
     return NextResponse.json({ data: results.flatMap((r) => r.data ?? []) });
   }
@@ -141,7 +140,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('[crm/students GET]', error);
-    return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Failed to fetch students', 500);
   }
 
   return NextResponse.json({ data });
@@ -154,15 +153,13 @@ export async function GET(request: NextRequest) {
  * Requires admin authentication.
  */
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: CreateStudentInput;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const {
@@ -191,7 +188,7 @@ export async function POST(request: NextRequest) {
   } = body;
 
   if (!name) {
-    return NextResponse.json({ error: '이름은 필수입니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '이름은 필수입니다.', 400);
   }
 
   const { data, error } = await supabaseAdmin
@@ -230,7 +227,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     console.error('[crm/students POST]', error);
-    return NextResponse.json({ error: 'Failed to create student' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Failed to create student', 500);
   }
 
   return NextResponse.json({ data }, { status: 201 });

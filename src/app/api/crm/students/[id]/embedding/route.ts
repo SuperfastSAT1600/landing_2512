@@ -2,15 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { data: student, error } = await supabaseAdmin
     .from('students')
@@ -19,7 +18,7 @@ export async function POST(
     .single();
 
   if (error || !student) {
-    return NextResponse.json({ error: '학생을 찾을 수 없습니다.' }, { status: 404 });
+    return apiError('NOT_FOUND', '학생을 찾을 수 없습니다.', 404);
   }
 
   const text = buildEmbeddingText(student);
@@ -32,7 +31,7 @@ export async function POST(
 
   if (updateError) {
     console.error('[embedding POST]', updateError);
-    return NextResponse.json({ error: '임베딩 저장 실패' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '임베딩 저장 실패', 500);
   }
 
   return NextResponse.json({ data: { id, dims: embedding.length } });
