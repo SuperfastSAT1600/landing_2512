@@ -25,6 +25,7 @@ export interface TestQuestion {
   domain: SATDomain;
   skill: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
+  desmosRecommended?: boolean;
   passage?: string | null;
   question: string;
   options?: TestOption[];
@@ -495,6 +496,7 @@ const diagnosticTest1: DiagnosticTestData = {
       "domain": "Advanced Math",
       "skill": "Nonlinear functions",
       "difficulty": "Hard",
+      "desmosRecommended": true,
       "passage": null,
       "question": "Function \\(f\\) is a quadratic function. The graph of \\(y = f(x)\\) in the \\(xy\\)-plane has a vertex at \\((-5, -8)\\), contains the point \\((-6, -10)\\), and has \\(y\\)-intercept at \\((0, a)\\). The graph of \\(y = 6 \\cdot f(x)\\) has a \\(y\\)-intercept at \\((0, b)\\). What is the positive difference between \\(a\\) and \\(b\\)?",
       "options": [],
@@ -542,6 +544,7 @@ const diagnosticTest1: DiagnosticTestData = {
       "domain": "Geometry and Trigonometry",
       "skill": "Circles",
       "difficulty": "Hard",
+      "desmosRecommended": true,
       "passage": null,
       "question": "A circle has the equation \\(x^2 + y^2 = 25\\). A line has the equation \\(y = mx + 10\\). For what value(s) of \\(m\\) does the line intersect the circle at exactly one point?",
       "options": [
@@ -608,6 +611,7 @@ const diagnosticTest1: DiagnosticTestData = {
       "domain": "Algebra",
       "skill": "Systems of two linear equations in two variables",
       "difficulty": "Medium",
+      "desmosRecommended": true,
       "passage": null,
       "question": "\\[\\tfrac{1}{2}y = 2x + 1\\]\\[y - a = a^2x&nbsp;\\]In the given system of equations above, \\(a\\) is a constant. If the system has no solutions, what is the value of \\(a\\)?",
       "options": [
@@ -770,6 +774,7 @@ const diagnosticTest1: DiagnosticTestData = {
       "domain": "Advanced Math",
       "skill": "Nonlinear equations in one variable",
       "difficulty": "Hard",
+      "desmosRecommended": true,
       "passage": null,
       "question": "\\[f(x)=(x-a)(x-b)\\]The function \\(f\\) is defined by the given equation, where \\(a\\) and \\(b\\) are integer constants. If \\(f(32)>0\\), \\(f(35)<0\\) and \\(f(38)>0\\), which of the following could be the value of \\(a+b\\)?",
       "options": [

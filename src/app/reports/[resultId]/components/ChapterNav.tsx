@@ -15,6 +15,8 @@ const CHAPTERS_V2_EXTRA = [
   { id: 'section-05', label: '단어 진단' },
 ];
 
+const DESMOS_CHAPTER = { id: 'section-desmos', label: 'Desmos 전략' };
+
 function useScrollProgress() {
   const [progress, setProgress] = useState(0);
 
@@ -34,14 +36,23 @@ function useScrollProgress() {
 
 interface ChapterNavProps {
   isV2?: boolean;
+  hasDesmosAnalysis?: boolean;
 }
 
-export function ChapterNav({ isV2 = false }: ChapterNavProps) {
+export function ChapterNav({ isV2 = false, hasDesmosAnalysis = false }: ChapterNavProps) {
   const [activeSection, setActiveSection] = useState<string>('section-01');
   const progress = useScrollProgress();
-  const CHAPTERS = isV2
+  const baseChapters = isV2
     ? [CHAPTERS_V1[0], CHAPTERS_V1[1], CHAPTERS_V1[2], ...CHAPTERS_V2_EXTRA]
     : CHAPTERS_V1;
+  const vocabIdx = baseChapters.findIndex(c => c.id === 'section-05');
+  const CHAPTERS = hasDesmosAnalysis
+    ? [
+        ...baseChapters.slice(0, vocabIdx),
+        DESMOS_CHAPTER,
+        ...baseChapters.slice(vocabIdx),
+      ]
+    : baseChapters;
 
   useEffect(() => {
     const sections = CHAPTERS.map((c) => document.getElementById(c.id)).filter(Boolean) as HTMLElement[];
