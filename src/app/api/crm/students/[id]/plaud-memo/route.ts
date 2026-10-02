@@ -8,6 +8,7 @@ import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultatio
 import { notifyMemoToSlack, PLAUD_MEMO_HEADING } from '@/lib/slack-memo';
 import { PLAUD_MEMO_MARKER, toKstDisplay } from '@/lib/plaud-backfill';
 import { insertCallTranscript } from '@/lib/call-transcripts';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // 전사 작업 폴링(상한 240s)에 시간이 걸릴 수 있어 서버리스 실행 한도를 늘린다.
 export const maxDuration = 300;
@@ -28,9 +29,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: {
     audio_url?: unknown;
@@ -42,7 +41,7 @@ export async function POST(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   let audioUrl = typeof body.audio_url === 'string' ? body.audio_url.trim() : '';
@@ -56,7 +55,7 @@ export async function POST(
   if (!audioUrl && fileId) {
     // 어느 계정 녹음인지 알아야 올바른 토큰으로 조회 가능 — file_id 경로에선 account_key 필수.
     if (!accountKey) {
-      return NextResponse.json({ error: 'file_id 사용 시 account_key가 필요합니다.' }, { status: 400 });
+      return apiError('BAD_REQUEST', 'file_id 사용 시 account_key가 필요합니다.', 400);
     }
     try {
       const file = await getPlaudFile(fileId, accountKey);
@@ -66,12 +65,12 @@ export async function POST(
       durationMs = typeof file.duration === 'number' ? file.duration : undefined;
     } catch (e) {
       console.error('[crm/plaud-memo get_file]', e);
-      return NextResponse.json({ error: 'Plaud 녹음을 가져오지 못했습니다.' }, { status: 502 });
+      return apiError('UPSTREAM_ERROR', 'Plaud 녹음을 가져오지 못했습니다.', 502);
     }
   }
 
   if (!audioUrl) {
-    return NextResponse.json({ error: 'file_id 또는 audio_url이 필요합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'file_id 또는 audio_url이 필요합니다.', 400);
   }
 
   try {
@@ -119,16 +118,16 @@ export async function POST(
   } catch (e) {
     // 전사 실패(작업 실패·타임아웃) — 원인을 그대로 노출해 재시도 여부를 판단하게 한다.
     if (e instanceof AsrFailedError) {
-      return NextResponse.json({ error: e.message }, { status: 502 });
+      return apiError('UPSTREAM_ERROR', e.message, 502);
     }
     // 크레딧 소진 — 재시도해도 안 되니 원인을 그대로 알려준다.
     if (e instanceof QuotaExhaustedError) {
-      return NextResponse.json({ error: e.message }, { status: 402 });
+      return apiError('QUOTA_EXHAUSTED', e.message, 402);
     }
     if (e instanceof StudentNotFoundError) {
-      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+      return apiError('NOT_FOUND', 'Student not found', 404);
     }
     console.error('[crm/plaud-memo POST]', e);
-    return NextResponse.json({ error: 'Failed to create memo from recording' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Failed to create memo from recording', 500);
   }
 }

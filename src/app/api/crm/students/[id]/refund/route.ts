@@ -3,26 +3,25 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { FUNNEL_STAGE_LABELS, type ChurnType } from '@/types/crm';
 import { appendStageHistory } from '@/lib/stage-history';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { refund_amount: number; refund_reason: string; churn_type: ChurnType; created_by?: string | null };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON', 400);
   }
 
   const { refund_amount, refund_reason, churn_type, created_by } = body;
   if (!refund_amount || refund_amount <= 0 || !refund_reason?.trim()) {
-    return NextResponse.json({ error: '환불 금액과 사유가 필요합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '환불 금액과 사유가 필요합니다.', 400);
   }
 
   // 학생 정보 조회
@@ -33,7 +32,7 @@ export async function POST(
     .single();
 
   if (fetchErr || !student) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'Student not found', 404);
   }
 
   // 1. 환불 결제 기록 추가 (음수 금액)
@@ -56,7 +55,7 @@ export async function POST(
     .single();
 
   if (paymentErr || !refundRow) {
-    return NextResponse.json({ error: paymentErr?.message ?? 'Refund insert failed' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', paymentErr?.message ?? 'Refund insert failed', 500);
   }
 
   // 2. 학생 이탈 처리 — 이탈 진입을 단계 이력에도 남긴다(직전이 이미 이탈이면 그대로).
@@ -86,7 +85,7 @@ export async function POST(
     if (rollbackErr) {
       console.error(`[refund] 보상 삭제 실패 payment=${refundRow.id}:`, rollbackErr.message);
     }
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    return apiError('INTERNAL_ERROR', updateErr.message, 500);
   }
 
   return NextResponse.json({ data: updatedStudent });

@@ -9,6 +9,7 @@ import { detectVipReasons, VIP_REASON_LABELS, VIP_REASON_COLORS, type VipReason 
 import { getAdminUserName } from '@/lib/admin-user';
 import { PaymentRecordedError, retryEnrollment, submitPayment } from './payment/paymentApi';
 import { netAmount } from '@/lib/payment-utils';
+import { apiErrorMessage } from '@/lib/api-error';
 
 type ClassType = '1:1' | '1:2' | '그룹' | '콘텐츠';
 type Subject = 'SAT' | 'AP';
@@ -209,7 +210,7 @@ export function PaymentModal({ student, adminKey, onConfirm, onClose, defaultPay
           headers: { 'x-admin-key': adminKey },
         });
         const linkBody = await linkRes.json();
-        if (!linkRes.ok) throw new Error(linkBody.error ?? '가입 링크 생성 실패');
+        if (!linkRes.ok) throw new Error(apiErrorMessage(linkBody, '가입 링크 생성 실패'));
         setSignupUrl(linkBody.signup_url);
         setStep(4);
       } catch (err) {

@@ -6,6 +6,7 @@ import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen'
 import { FUNNEL_STAGE_LABELS, FUNNEL_NEXT_ACTION, STRATEGY_PHASE_LABELS, type FunnelStage } from '@/types/crm';
 import { effectivePhase } from '@/lib/strategy-history';
 import type { ConsultationEntry, StrategyHistoryEntry } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 export const maxDuration = 30;
 
@@ -95,12 +96,10 @@ function parseResult(text: string): { summary: string; recommended_action: strin
 // POST /api/crm/students/:id/next-action → { data: {summary, recommended_action, draft_message} }
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   if (!isQwenConfigured()) {
-    return NextResponse.json({ error: { message: 'AI가 설정되지 않았습니다.' } }, { status: 503 });
+    return apiError('SERVICE_UNAVAILABLE', 'AI가 설정되지 않았습니다.', 503);
   }
 
   const { data: student, error } = await supabaseAdmin
@@ -109,7 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .eq('id', id)
     .single();
   if (error || !student) {
-    return NextResponse.json({ error: { message: '리드를 찾을 수 없습니다.' } }, { status: 404 });
+    return apiError('NOT_FOUND', '리드를 찾을 수 없습니다.', 404);
   }
 
   const recentStrategyIds = [...new Set(
@@ -135,11 +134,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const text = resp.content.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('');
     const result = parseResult(text);
     if (!result) {
-      return NextResponse.json({ error: { message: 'AI 응답을 해석하지 못했습니다.' } }, { status: 502 });
+      return apiError('UPSTREAM_ERROR', 'AI 응답을 해석하지 못했습니다.', 502);
     }
     return NextResponse.json({ data: result });
   } catch (err) {
     console.error('[next-action]', err);
-    return NextResponse.json({ error: { message: anthropicErrorMessage(err) } }, { status: 502 });
+    return apiError('UPSTREAM_ERROR', anthropicErrorMessage(err), 502);
   }
 }

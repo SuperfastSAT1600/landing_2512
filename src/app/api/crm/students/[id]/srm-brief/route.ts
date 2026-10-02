@@ -6,6 +6,7 @@ import { anthropicErrorMessage } from '@/lib/anthropic-error';
 import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen';
 import { buildSrmReport } from '@/lib/build-srm-report';
 import type { LearningReport, DayItem } from '@/types/srm-portal';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 export const maxDuration = 60;
 
@@ -160,11 +161,9 @@ function parseBrief(text: string): SrmBriefData | null {
 // POST /api/crm/students/:id/srm-brief[?refresh=1] → { data: { brief, cached } }
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
   if (!isQwenConfigured()) {
-    return NextResponse.json({ error: { message: 'AI가 설정되지 않았습니다.' } }, { status: 503 });
+    return apiError('SERVICE_UNAVAILABLE', 'AI가 설정되지 않았습니다.', 503);
   }
   const refresh = new URL(request.url).searchParams.get('refresh') === '1';
 
@@ -174,17 +173,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .eq('id', id)
     .single();
   if (error || !student) {
-    return NextResponse.json({ error: { message: '학생을 찾을 수 없습니다.' } }, { status: 404 });
+    return apiError('NOT_FOUND', '학생을 찾을 수 없습니다.', 404);
   }
   const profileId = (student as { sfv2_profile_id?: string | null }).sfv2_profile_id;
   if (!profileId) {
-    return NextResponse.json({ error: { code: 'no_v2_profile', message: 'SRM 프로필이 연결되지 않았습니다.' } }, { status: 404 });
+    return apiError('no_v2_profile', 'SRM 프로필이 연결되지 않았습니다.', 404);
   }
 
   try {
     const report = await buildSrmReport(profileId, { skipNarratives: true });
     if (report.days.length === 0) {
-      return NextResponse.json({ error: { message: '학습 기록이 없어 브리핑을 만들 수 없습니다.' } }, { status: 422 });
+      return apiError('UNPROCESSABLE', '학습 기록이 없어 브리핑을 만들 수 없습니다.', 422);
     }
     const context = summarize(report, (student as { name: string }).name);
     const inputHash = createHash('sha256').update(context).digest('hex').slice(0, 16);
@@ -216,7 +215,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const text = resp.content.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('');
     const brief = parseBrief(text);
     if (!brief || !brief.headline) {
-      return NextResponse.json({ error: { message: 'AI 응답을 해석하지 못했습니다.' } }, { status: 502 });
+      return apiError('UPSTREAM_ERROR', 'AI 응답을 해석하지 못했습니다.', 502);
     }
 
     // 캐시 저장 (best-effort)
@@ -228,6 +227,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ data: { brief, cached: false } });
   } catch (err) {
     console.error('[srm-brief]', err);
-    return NextResponse.json({ error: { message: anthropicErrorMessage(err) } }, { status: 502 });
+    return apiError('UPSTREAM_ERROR', anthropicErrorMessage(err), 502);
   }
 }

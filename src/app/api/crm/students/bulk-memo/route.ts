@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import type { ConsultationEntry } from '@/types/crm';
 import { randomUUID } from 'crypto';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * POST /api/crm/students/bulk-memo
@@ -11,37 +12,23 @@ import { randomUUID } from 'crypto';
  * Body: { student_ids: string[], raw_memo: string }
  */
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } },
-      { status: 401 }
-    );
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { student_ids?: string[]; raw_memo?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: { code: 'INVALID_JSON', message: '잘못된 요청 형식입니다.' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_JSON', '잘못된 요청 형식입니다.', 400);
   }
 
   const { student_ids, raw_memo } = body;
 
   if (!student_ids || !Array.isArray(student_ids) || student_ids.length === 0) {
-    return NextResponse.json(
-      { error: { code: 'MISSING_STUDENT_IDS', message: 'student_ids는 1개 이상이어야 합니다.' } },
-      { status: 400 }
-    );
+    return apiError('MISSING_STUDENT_IDS', 'student_ids는 1개 이상이어야 합니다.', 400);
   }
 
   if (!raw_memo || typeof raw_memo !== 'string' || raw_memo.trim().length === 0) {
-    return NextResponse.json(
-      { error: { code: 'MISSING_MEMO', message: '메모 내용을 입력해주세요.' } },
-      { status: 400 }
-    );
+    return apiError('MISSING_MEMO', '메모 내용을 입력해주세요.', 400);
   }
 
   const { data: students, error: fetchError } = await supabaseAdmin
@@ -50,10 +37,7 @@ export async function POST(request: NextRequest) {
     .in('id', student_ids);
 
   if (fetchError) {
-    return NextResponse.json(
-      { error: { code: 'FETCH_FAILED', message: '학생 조회에 실패했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('FETCH_FAILED', '학생 조회에 실패했습니다.', 500);
   }
 
   const now = new Date().toISOString();

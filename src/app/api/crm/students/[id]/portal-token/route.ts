@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { randomBytes } from 'crypto';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * POST /api/crm/students/[id]/portal-token
@@ -14,9 +15,7 @@ export async function POST(
 ) {
   const { id } = await params;
 
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { data: student, error: fetchError } = await supabaseAdmin
     .from('students')
@@ -25,7 +24,7 @@ export async function POST(
     .single();
 
   if (fetchError || !student) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'Student not found', 404);
   }
 
   if (student.portal_token) {
@@ -41,7 +40,7 @@ export async function POST(
 
   if (updateError) {
     console.error('[portal-token POST]', updateError);
-    return NextResponse.json({ error: 'Failed to generate token' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Failed to generate token', 500);
   }
 
   return NextResponse.json({ portal_token: token }, { status: 201 });

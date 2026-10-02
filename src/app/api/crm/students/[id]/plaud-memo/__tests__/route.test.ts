@@ -153,7 +153,7 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     const res = await POST(makeReq({ audio_url: 'https://x/a.mp3' }), { params });
     const body = await res.json();
     expect(res.status).toBe(502);
-    expect(body.error).toContain('전사');
+    expect(body.error.message).toContain('전사');
     expect(appendConsultationEntry).not.toHaveBeenCalled();
   });
 
@@ -163,7 +163,7 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     const res = await POST(makeReq({ audio_url: 'https://x/long.mp3' }), { params });
     const body = await res.json();
     expect(res.status).toBe(502);
-    expect(body.error).toContain('다시 시도');
+    expect(body.error.message).toContain('다시 시도');
     expect(appendConsultationEntry).not.toHaveBeenCalled();
   });
 
@@ -206,7 +206,7 @@ describe('POST /api/crm/students/[id]/plaud-memo', () => {
     const res = await POST(makeReq({ audio_url: 'https://x/a.mp3' }), { params });
     const body = await res.json();
     expect(res.status).toBe(402);
-    expect(body.error).toContain('크레딧');
+    expect(body.error.message).toContain('크레딧');
     expect(appendConsultationEntry).not.toHaveBeenCalled();
   });
 

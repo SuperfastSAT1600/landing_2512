@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import type { ConsultationEntry } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 interface PublishMemoBody {
   entry_id: string;
@@ -22,21 +23,19 @@ export async function POST(
   { params: _pid }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await _pid;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: PublishMemoBody;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const { entry_id, ai_purified, ai_deleted_items, ai_coach_history } = body;
 
   if (!entry_id || !ai_purified) {
-    return NextResponse.json({ error: 'entry_id and ai_purified are required' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'entry_id and ai_purified are required', 400);
   }
 
   // Fetch existing timeline
@@ -47,7 +46,7 @@ export async function POST(
     .single();
 
   if (fetchError || !student) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'Student not found', 404);
   }
 
   const timeline: ConsultationEntry[] = Array.isArray(student.consultation_timeline)
@@ -56,7 +55,7 @@ export async function POST(
 
   const entryIndex = timeline.findIndex((e) => e.id === entry_id);
   if (entryIndex === -1) {
-    return NextResponse.json({ error: 'Memo entry not found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'Memo entry not found', 404);
   }
 
   const updatedEntry: ConsultationEntry = {
@@ -80,7 +79,7 @@ export async function POST(
 
   if (error) {
     console.error('[crm/publish-memo POST]', error);
-    return NextResponse.json({ error: 'Failed to publish memo' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Failed to publish memo', 500);
   }
 
   return NextResponse.json({ data: updatedEntry });
@@ -103,25 +102,23 @@ export async function PATCH(
   { params: _pid }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await _pid;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: PatchMemoBody;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const { entry_id, action } = body;
 
   if (!entry_id || !action) {
-    return NextResponse.json({ error: 'entry_id and action are required' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'entry_id and action are required', 400);
   }
 
   if (action !== 'unpublish' && action !== 'delete_ai') {
-    return NextResponse.json({ error: 'action must be "unpublish" or "delete_ai"' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'action must be "unpublish" or "delete_ai"', 400);
   }
 
   // Fetch existing timeline
@@ -132,7 +129,7 @@ export async function PATCH(
     .single();
 
   if (fetchError || !student) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'Student not found', 404);
   }
 
   const timeline: ConsultationEntry[] = Array.isArray(student.consultation_timeline)
@@ -141,7 +138,7 @@ export async function PATCH(
 
   const entryIndex = timeline.findIndex((e) => e.id === entry_id);
   if (entryIndex === -1) {
-    return NextResponse.json({ error: 'Memo entry not found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'Memo entry not found', 404);
   }
 
   const base = timeline[entryIndex];
@@ -173,7 +170,7 @@ export async function PATCH(
 
   if (error) {
     console.error('[crm/publish-memo PATCH]', error);
-    return NextResponse.json({ error: 'Failed to update memo' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Failed to update memo', 500);
   }
 
   return NextResponse.json({ data: updatedEntry });

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { buildSignupUrl } from '@/lib/signup-bridge';
 import { randomBytes } from 'crypto';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * POST /api/crm/students/[id]/signup-token
@@ -16,14 +17,12 @@ export async function POST(
 ) {
   const { id } = await params;
 
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const base = process.env.SUPERFASTSAT_PLATFORM_URL;
   if (!base) {
     console.error('[signup-token] SUPERFASTSAT_PLATFORM_URL not configured');
-    return NextResponse.json({ error: 'Signup link not configured' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Signup link not configured', 500);
   }
 
   // regenerate: true → 기존 토큰을 새로 발급하고 signup_done_at을 리셋(링크 재사용 가능하게).
@@ -38,7 +37,7 @@ export async function POST(
     .single();
 
   if (fetchError || !student) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'Student not found', 404);
   }
 
   if (student.signup_token && !regenerate) {
@@ -62,7 +61,7 @@ export async function POST(
 
   if (updateError) {
     console.error('[signup-token POST]', updateError);
-    return NextResponse.json({ error: 'Failed to generate token' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'Failed to generate token', 500);
   }
 
   return NextResponse.json(

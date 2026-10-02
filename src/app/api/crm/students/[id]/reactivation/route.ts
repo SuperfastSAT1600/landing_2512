@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { ReactivationEntry } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * POST /api/crm/students/[id]/reactivation
@@ -14,29 +15,18 @@ export async function POST(
   { params: _pid }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await _pid;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } },
-      { status: 401 }
-    );
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { strategy?: string; notes?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: { code: 'INVALID_JSON', message: '잘못된 요청 형식입니다.' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_JSON', '잘못된 요청 형식입니다.', 400);
   }
 
   const { strategy, notes } = body;
   if (!strategy || strategy.trim() === '') {
-    return NextResponse.json(
-      { error: { code: 'MISSING_STRATEGY', message: '전략 메모는 필수입니다.' } },
-      { status: 400 }
-    );
+    return apiError('MISSING_STRATEGY', '전략 메모는 필수입니다.', 400);
   }
 
   // 현재 reactivation_log 조회
@@ -47,10 +37,7 @@ export async function POST(
     .single();
 
   if (fetchError || !student) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '학생을 찾을 수 없습니다.' } },
-      { status: 404 }
-    );
+    return apiError('NOT_FOUND', '학생을 찾을 수 없습니다.', 404);
   }
 
   const newEntry: ReactivationEntry = {
@@ -72,10 +59,7 @@ export async function POST(
 
   if (updateError) {
     console.error('[reactivation POST]', updateError);
-    return NextResponse.json(
-      { error: { code: 'UPDATE_FAILED', message: '로그 저장에 실패했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('UPDATE_FAILED', '로그 저장에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data: newEntry }, { status: 201 });
@@ -93,45 +77,26 @@ export async function PATCH(
   { params: _pid }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await _pid;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } },
-      { status: 401 }
-    );
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { entry_id?: string; outcome?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: { code: 'INVALID_JSON', message: '잘못된 요청 형식입니다.' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_JSON', '잘못된 요청 형식입니다.', 400);
   }
 
   const { entry_id, outcome } = body;
 
   if (!entry_id) {
-    return NextResponse.json(
-      { error: { code: 'MISSING_ENTRY_ID', message: 'entry_id는 필수입니다.' } },
-      { status: 400 }
-    );
+    return apiError('MISSING_ENTRY_ID', 'entry_id는 필수입니다.', 400);
   }
 
   const validOutcomes = ['no_response', 'reactivated', 'rejected'] as const;
   type ValidOutcome = (typeof validOutcomes)[number];
 
   if (!outcome || !validOutcomes.includes(outcome as ValidOutcome)) {
-    return NextResponse.json(
-      {
-        error: {
-          code: 'INVALID_OUTCOME',
-          message: 'outcome은 no_response | reactivated | rejected 중 하나여야 합니다.',
-        },
-      },
-      { status: 400 }
-    );
+    return apiError('INVALID_OUTCOME', 'outcome은 no_response | reactivated | rejected 중 하나여야 합니다.', 400);
   }
 
   // 현재 학생 데이터 조회
@@ -142,10 +107,7 @@ export async function PATCH(
     .single();
 
   if (fetchError || !student) {
-    return NextResponse.json(
-      { error: { code: 'NOT_FOUND', message: '학생을 찾을 수 없습니다.' } },
-      { status: 404 }
-    );
+    return apiError('NOT_FOUND', '학생을 찾을 수 없습니다.', 404);
   }
 
   const existingLog: ReactivationEntry[] = Array.isArray(student.reactivation_log)
@@ -154,10 +116,7 @@ export async function PATCH(
 
   const entryIndex = existingLog.findIndex((e) => e.id === entry_id);
   if (entryIndex === -1) {
-    return NextResponse.json(
-      { error: { code: 'ENTRY_NOT_FOUND', message: '해당 로그 항목을 찾을 수 없습니다.' } },
-      { status: 404 }
-    );
+    return apiError('ENTRY_NOT_FOUND', '해당 로그 항목을 찾을 수 없습니다.', 404);
   }
 
   const updatedLog = existingLog.map((e) =>
@@ -184,10 +143,7 @@ export async function PATCH(
 
   if (saveError || !savedData) {
     console.error('[reactivation PATCH]', saveError);
-    return NextResponse.json(
-      { error: { code: 'UPDATE_FAILED', message: '업데이트에 실패했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('UPDATE_FAILED', '업데이트에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data: updatedLog[entryIndex] });

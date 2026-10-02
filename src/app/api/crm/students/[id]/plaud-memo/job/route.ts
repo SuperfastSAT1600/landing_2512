@@ -7,6 +7,7 @@ import { appendConsultationEntry, StudentNotFoundError } from '@/lib/consultatio
 import { notifyMemoToSlack, PLAUD_MEMO_HEADING } from '@/lib/slack-memo';
 import { PLAUD_MEMO_MARKER, toKstDisplay } from '@/lib/plaud-backfill';
 import { insertCallTranscript } from '@/lib/call-transcripts';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // 요약(PUT)이 긴 전사문에서 수십 초 걸릴 수 있다. 전사 대기는 더 이상 여기서 하지 않는다.
 export const maxDuration = 300;
@@ -14,16 +15,16 @@ export const maxDuration = 300;
 /** 에러 → 응답 매핑. 동기 경로(../route.ts)와 같은 규칙을 쓴다. */
 function errorResponse(e: unknown): NextResponse {
   if (e instanceof AsrFailedError) {
-    return NextResponse.json({ error: e.message }, { status: 502 });
+    return apiError('UPSTREAM_ERROR', e.message, 502);
   }
   if (e instanceof QuotaExhaustedError) {
-    return NextResponse.json({ error: e.message }, { status: 402 });
+    return apiError('QUOTA_EXHAUSTED', e.message, 402);
   }
   if (e instanceof StudentNotFoundError) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return apiError('NOT_FOUND', 'Student not found', 404);
   }
   console.error('[crm/plaud-memo job]', e);
-  return NextResponse.json({ error: 'Failed to process recording' }, { status: 500 });
+  return apiError('INTERNAL_ERROR', 'Failed to process recording', 500);
 }
 
 function str(v: unknown): string {
@@ -46,15 +47,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   let audioUrl = str(body.audio_url);
@@ -66,7 +65,7 @@ export async function POST(
 
   if (!audioUrl && fileId) {
     if (!accountKey) {
-      return NextResponse.json({ error: 'file_id 사용 시 account_key가 필요합니다.' }, { status: 400 });
+      return apiError('BAD_REQUEST', 'file_id 사용 시 account_key가 필요합니다.', 400);
     }
     try {
       const file = await getPlaudFile(fileId, accountKey);
@@ -76,12 +75,12 @@ export async function POST(
       if (typeof file.duration === 'number') durationSec = Math.round(file.duration / 1000);
     } catch (e) {
       console.error('[crm/plaud-memo job get_file]', e);
-      return NextResponse.json({ error: 'Plaud 녹음을 가져오지 못했습니다.' }, { status: 502 });
+      return apiError('UPSTREAM_ERROR', 'Plaud 녹음을 가져오지 못했습니다.', 502);
     }
   }
 
   if (!audioUrl) {
-    return NextResponse.json({ error: 'file_id 또는 audio_url이 필요합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'file_id 또는 audio_url이 필요합니다.', 400);
   }
 
   try {
@@ -115,20 +114,18 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const taskId = str(body.task_id);
   if (!taskId) {
-    return NextResponse.json({ error: 'task_id가 필요합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'task_id가 필요합니다.', 400);
   }
 
   const recordingName = str(body.recording_name);

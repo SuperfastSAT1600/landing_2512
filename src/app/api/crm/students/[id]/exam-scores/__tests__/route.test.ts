@@ -110,6 +110,6 @@ describe('POST /api/crm/students/[id]/exam-scores', () => {
     const { POST } = await import('../route');
     const res = await POST(req('POST', VALID), { params });
     expect(res.status).toBe(409);
-    expect((await res.json()).error).toMatch(/이미/);
+    expect((await res.json()).error.message).toMatch(/이미/);
   });
 });
