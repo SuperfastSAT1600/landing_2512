@@ -4,6 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { appendConsultationEntry } from '@/lib/consultation-timeline';
 import { buildMirrorMemo, playLabel } from '@/lib/winback/mirror';
 import { notifyWinbackSendsToSlack } from '@/lib/slack-memo';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 const TARGET_SELECT = `*, play:winback_plays(title), variant:winback_play_variants(name), student:students(name)`;
 
@@ -44,16 +45,14 @@ function withDerivedTimestamps(body: Record<string, unknown>): Record<string, un
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
   const { id } = await params;
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const timelineMessage = typeof body.sent_message === 'string' ? body.sent_message.trim() : null;
@@ -70,7 +69,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .eq('id', id)
     .single();
   if (targetError || !target) {
-    return NextResponse.json({ error: '타겟을 찾을 수 없습니다.' }, { status: 404 });
+    return apiError('NOT_FOUND', '타겟을 찾을 수 없습니다.', 404);
   }
 
   if (timelineMessage !== null) {
@@ -109,21 +108,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   if (error) {
     console.error('[winback-targets/[id] PATCH]', error);
-    return NextResponse.json({ error: `수정에 실패했습니다: ${error.message}` }, { status: 500 });
+    return apiError('INTERNAL_ERROR', `수정에 실패했습니다: ${error.message}`, 500);
   }
   return NextResponse.json({ data });
 } // only explicit per-target timeline updates use sent_message; normal patches remain unchanged.
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
   const { id } = await params;
 
   const { error } = await supabaseAdmin.from('winback_targets').delete().eq('id', id);
   if (error) {
     console.error('[winback-targets/[id] DELETE]', error);
-    return NextResponse.json({ error: `삭제에 실패했습니다: ${error.message}` }, { status: 500 });
+    return apiError('INTERNAL_ERROR', `삭제에 실패했습니다: ${error.message}`, 500);
   }
   return NextResponse.json({ data: { id } });
 }

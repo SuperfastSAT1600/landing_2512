@@ -3,17 +3,13 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { getCurrentWeekDef } from '@/lib/week-definitions';
 import { RENEWAL_OPEN_STAGES } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // RenewalTargetStudent(types/crm.ts)와 동일한 집합을 유지한다.
 const STUDENT_FIELDS = 'id, name, grade, parent_phone, is_vip, needs_attention, traffic_source, lead_type';
 
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      { status: 401 }
-    );
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const sp = new URL(request.url).searchParams;
   const weekStart = sp.get('week_start');
@@ -37,48 +33,31 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('[renewal-targets GET]', error);
-    return NextResponse.json(
-      { error: { code: 'FETCH_FAILED', message: '목록을 불러오지 못했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('FETCH_FAILED', '목록을 불러오지 못했습니다.', 500);
   }
 
   return NextResponse.json({ data: data ?? [] });
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      { status: 401 }
-    );
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { student_id?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: { code: 'INVALID_JSON', message: 'Invalid JSON body' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_JSON', 'Invalid JSON body', 400);
   }
 
   const studentId = body.student_id?.trim();
   if (!studentId) {
-    return NextResponse.json(
-      { error: { code: 'MISSING_FIELDS', message: 'student_id is required' } },
-      { status: 400 }
-    );
+    return apiError('MISSING_FIELDS', 'student_id is required', 400);
   }
 
   // KST 기준 — UTC 로 자르면 월요일 00:00~09:00 에 지난 주차 행이 생겨 보드에 안 보인다.
   const weekDef = getCurrentWeekDef();
   if (!weekDef) {
-    return NextResponse.json(
-      { error: { code: 'WEEK_OUT_OF_RANGE', message: '현재 날짜에 대한 주차 정의가 없습니다.' } },
-      { status: 500 }
-    );
+    return apiError('WEEK_OUT_OF_RANGE', '현재 날짜에 대한 주차 정의가 없습니다.', 500);
   }
 
   const { data: existing, error: existingError } = await supabaseAdmin
@@ -89,17 +68,11 @@ export async function POST(request: NextRequest) {
 
   if (existingError) {
     console.error('[renewal-targets POST] existing check', existingError);
-    return NextResponse.json(
-      { error: { code: 'FETCH_FAILED', message: '중복 여부 확인에 실패했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('FETCH_FAILED', '중복 여부 확인에 실패했습니다.', 500);
   }
 
   if ((existing ?? []).length > 0) {
-    return NextResponse.json(
-      { error: { code: 'ALREADY_OPEN', message: '이미 재결제 파이프라인에 있습니다' } },
-      { status: 409 }
-    );
+    return apiError('ALREADY_OPEN', '이미 재결제 파이프라인에 있습니다', 409);
   }
 
   const { data, error } = await supabaseAdmin
@@ -118,15 +91,9 @@ export async function POST(request: NextRequest) {
     // 위 가드는 열린 행만 본다 — 이번 주차에 이미 결과가 확정된(4·5) 행이 있으면
     // 가드를 통과한 뒤 UNIQUE(student_id, week_start) 에 걸린다. 500 이 아니라 409 다.
     if (error.code === '23505') {
-      return NextResponse.json(
-        { error: { code: 'ALREADY_IN_WEEK', message: '이번 주차에 이미 등록된 학생입니다' } },
-        { status: 409 }
-      );
+      return apiError('ALREADY_IN_WEEK', '이번 주차에 이미 등록된 학생입니다', 409);
     }
-    return NextResponse.json(
-      { error: { code: 'INSERT_FAILED', message: '생성에 실패했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('INSERT_FAILED', '생성에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data }, { status: 201 });

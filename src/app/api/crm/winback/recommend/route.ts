@@ -15,6 +15,7 @@ import {
   splitIntoChunks,
 } from '@/lib/winback/rank';
 import { churnedDaysOf } from '@/lib/winback/recency';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // 후보 조회 + 임베딩 + LLM 재랭킹을 한 요청에서 처리한다.
 export const maxDuration = 60;
@@ -144,20 +145,18 @@ async function rerank(
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: RecommendBody;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: '잘못된 요청 형식입니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '잘못된 요청 형식입니다.', 400);
   }
 
   const briefText = body.brief?.brief?.trim();
   if (!briefText) {
-    return NextResponse.json({ error: '상품 브리프를 입력해주세요.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '상품 브리프를 입력해주세요.', 400);
   }
 
   const now = Date.now();
@@ -173,7 +172,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error('[winback/recommend] candidate load failed', err);
-    return NextResponse.json({ error: (err as Error).message }, { status: 502 });
+    return apiError('UPSTREAM_ERROR', (err as Error).message, 502);
   }
 
   if (pool.rows.length === 0) {

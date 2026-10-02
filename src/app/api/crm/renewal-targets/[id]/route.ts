@@ -11,6 +11,7 @@ import {
 import { appendConsultationEntry } from '@/lib/consultation-timeline';
 import { notifyMemoToSlack, RENEWAL_OUTCOME_HEADING } from '@/lib/slack-memo';
 import { buildRenewalOutcomeMemo } from '@/lib/renewal/mirror';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // GET/POST와 응답 shape을 맞춘다 (route.ts의 STUDENT_FIELDS와 동일 집합).
 const STUDENT_FIELDS = 'id, name, grade, parent_phone, is_vip, needs_attention, traffic_source, lead_type';
@@ -25,12 +26,7 @@ const CONTACT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const QUALITY_STAGES: RenewalStage[] = ['4', '5'];
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      { status: 401 }
-    );
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { id } = await params;
 
@@ -49,10 +45,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: { code: 'INVALID_JSON', message: 'Invalid JSON body' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_JSON', 'Invalid JSON body', 400);
   }
 
   // stage 는 선택이다 — 결과 품질만 소급 지정할 때 stage_updated_at 을 재기록하면
@@ -60,10 +53,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const hasStage = body.stage !== undefined;
   const stage = body.stage;
   if (hasStage && (typeof stage !== 'string' || !RENEWAL_STAGES.includes(stage as RenewalStage))) {
-    return NextResponse.json(
-      { error: { code: 'INVALID_STAGE', message: '유효하지 않은 stage입니다.' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_STAGE', '유효하지 않은 stage입니다.', 400);
   }
 
   const hasQuality = 'outcome_quality' in body;
@@ -73,36 +63,24 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     quality !== null &&
     (typeof quality !== 'string' || !RENEWAL_OUTCOME_QUALITIES.includes(quality as RenewalOutcomeQuality))
   ) {
-    return NextResponse.json(
-      { error: { code: 'INVALID_OUTCOME_QUALITY', message: '유효하지 않은 결과 품질입니다.' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_OUTCOME_QUALITY', '유효하지 않은 결과 품질입니다.', 400);
   }
 
   const hasReason = 'outcome_reason_tag' in body;
   const reasonTag = body.outcome_reason_tag;
   if (hasReason && reasonTag !== null && typeof reasonTag !== 'string') {
-    return NextResponse.json(
-      { error: { code: 'INVALID_OUTCOME_REASON', message: '유효하지 않은 사유입니다.' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_OUTCOME_REASON', '유효하지 않은 사유입니다.', 400);
   }
   const reasonNote =
     typeof body.outcome_reason_note === 'string' ? body.outcome_reason_note.trim() : '';
 
   const hasMemo = 'memo' in body;
   if (hasMemo && body.memo !== null && typeof body.memo !== 'string') {
-    return NextResponse.json(
-      { error: { code: 'INVALID_MEMO', message: '메모 형식이 올바르지 않습니다.' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_MEMO', '메모 형식이 올바르지 않습니다.', 400);
   }
   const memoText = typeof body.memo === 'string' ? body.memo.trim() : '';
   if (memoText.length > MEMO_MAX_LENGTH) {
-    return NextResponse.json(
-      { error: { code: 'MEMO_TOO_LONG', message: `메모는 ${MEMO_MAX_LENGTH}자까지 가능합니다.` } },
-      { status: 400 }
-    );
+    return apiError('MEMO_TOO_LONG', `메모는 ${MEMO_MAX_LENGTH}자까지 가능합니다.`, 400);
   }
 
   const hasContactDate = 'next_contact_date' in body;
@@ -113,17 +91,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     (typeof contactDate !== 'string' ||
       (contactDate !== '' && !CONTACT_DATE_PATTERN.test(contactDate)))
   ) {
-    return NextResponse.json(
-      { error: { code: 'INVALID_CONTACT_DATE', message: '컨택 예정일 형식이 올바르지 않습니다.' } },
-      { status: 400 }
-    );
+    return apiError('INVALID_CONTACT_DATE', '컨택 예정일 형식이 올바르지 않습니다.', 400);
   }
 
   if (!hasStage && !hasQuality && !hasReason && !hasMemo && !hasContactDate) {
-    return NextResponse.json(
-      { error: { code: 'NO_UPDATABLE_FIELDS', message: '변경할 필드가 없습니다.' } },
-      { status: 400 }
-    );
+    return apiError('NO_UPDATABLE_FIELDS', '변경할 필드가 없습니다.', 400);
   }
 
   const now = new Date().toISOString();
@@ -154,16 +126,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .single();
 
     if (currentError || !current) {
-      return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: '대상을 찾을 수 없습니다.' } },
-        { status: 404 }
-      );
+      return apiError('NOT_FOUND', '대상을 찾을 수 없습니다.', 404);
     }
     if (!QUALITY_STAGES.includes(current.stage as RenewalStage)) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_OUTCOME_QUALITY', message: '결제 완료·미전환 단계에서만 지정할 수 있습니다.' } },
-        { status: 400 }
-      );
+      return apiError('INVALID_OUTCOME_QUALITY', '결제 완료·미전환 단계에서만 지정할 수 있습니다.', 400);
     }
     effectiveStage = current.stage as RenewalStage;
   }
@@ -206,23 +172,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   } else if (isTerminal && (hasQuality || hasReason)) {
     const tag = typeof reasonTag === 'string' ? reasonTag.trim() : '';
     if (!tag) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_OUTCOME_REASON', message: '사유를 선택해 주세요.' } },
-        { status: 400 }
-      );
+      return apiError('INVALID_OUTCOME_REASON', '사유를 선택해 주세요.', 400);
     }
     // 품질을 함께 안 보냈으면 이미 저장된 품질 기준으로 목록을 고를 수 없다.
     if (!effectiveQuality) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_OUTCOME_REASON', message: '사유는 품질과 함께 보내야 합니다.' } },
-        { status: 400 }
-      );
+      return apiError('INVALID_OUTCOME_REASON', '사유는 품질과 함께 보내야 합니다.', 400);
     }
     if (!getRenewalOutcomeReasons(effectiveStage!, effectiveQuality).includes(tag)) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_OUTCOME_REASON', message: '해당 결과에 없는 사유입니다.' } },
-        { status: 400 }
-      );
+      return apiError('INVALID_OUTCOME_REASON', '해당 결과에 없는 사유입니다.', 400);
     }
     update.outcome_reason_tag = tag;
     update.outcome_reason_note = reasonNote || null;
@@ -242,20 +199,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     console.error('[renewal-targets/[id] PATCH]', error);
     // 0행 매칭 — 이월됐거나 삭제된 대상.
     if (error.code === 'PGRST116') {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'ALREADY_CARRIED',
-            message: '이미 다음 주차로 이월된 대상입니다. 새로고침 후 다시 시도해 주세요.',
-          },
-        },
-        { status: 409 }
-      );
+      return apiError('ALREADY_CARRIED', '이미 다음 주차로 이월된 대상입니다. 새로고침 후 다시 시도해 주세요.', 409);
     }
-    return NextResponse.json(
-      { error: { code: 'UPDATE_FAILED', message: '수정에 실패했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('UPDATE_FAILED', '수정에 실패했습니다.', 500);
   }
 
   // 정본은 renewal_targets — 타임라인과 슬랙은 사람이 읽는 미러다(윈백 발송과 같은 구조).
@@ -292,12 +238,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      { status: 401 }
-    );
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { id } = await params;
 
@@ -305,10 +246,7 @@ export async function DELETE(
 
   if (error) {
     console.error('[renewal-targets/[id] DELETE]', error);
-    return NextResponse.json(
-      { error: { code: 'DELETE_FAILED', message: '삭제에 실패했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('DELETE_FAILED', '삭제에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data: { id } });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // PATCH 허용 필드 화이트리스트 (experiments/[id] 관례).
 const EDITABLE = [
@@ -21,9 +22,7 @@ const EDITABLE = [
 const STUDENT_COLUMNS = 'id, name, grade, parent_phone, lead_status, churn_tag';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
   const { id } = await params;
 
   const [playRes, variantRes, targetRes] = await Promise.all([
@@ -38,14 +37,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   ]);
 
   if (playRes.error || !playRes.data) {
-    return NextResponse.json({ error: '플레이를 찾을 수 없습니다.' }, { status: 404 });
+    return apiError('NOT_FOUND', '플레이를 찾을 수 없습니다.', 404);
   }
   if (targetRes.error) {
     console.error('[winback-plays/[id] GET targets]', targetRes.error);
-    return NextResponse.json(
-      { error: `타겟을 불러오지 못했습니다: ${targetRes.error.message}` },
-      { status: 500 }
-    );
+    return apiError('INTERNAL_ERROR', `타겟을 불러오지 못했습니다: ${targetRes.error.message}`, 500);
   }
 
   return NextResponse.json({
@@ -54,16 +50,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
   const { id } = await params;
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -80,22 +74,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   if (error) {
     console.error('[winback-plays/[id] PATCH]', error);
-    return NextResponse.json({ error: `수정에 실패했습니다: ${error.message}` }, { status: 500 });
+    return apiError('INTERNAL_ERROR', `수정에 실패했습니다: ${error.message}`, 500);
   }
   return NextResponse.json({ data });
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
   const { id } = await params;
 
   // 타겟·변형은 ON DELETE CASCADE로 함께 지워진다. 학생 쪽 미러 기록(상담메모)은 남는다 — 발송 사실이므로.
   const { error } = await supabaseAdmin.from('winback_plays').delete().eq('id', id);
   if (error) {
     console.error('[winback-plays/[id] DELETE]', error);
-    return NextResponse.json({ error: `삭제에 실패했습니다: ${error.message}` }, { status: 500 });
+    return apiError('INTERNAL_ERROR', `삭제에 실패했습니다: ${error.message}`, 500);
   }
   return NextResponse.json({ data: { id } });
 }

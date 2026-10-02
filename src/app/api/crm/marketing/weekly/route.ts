@@ -17,6 +17,7 @@ import {
   recentWeekStarts,
   weekEndOf,
 } from '@/lib/marketing-week';
+import { unauthorized } from '@/lib/api-response';
 
 // 주간 목표는 marketing_weekly_goals 에서 온다. 하드코딩 상수는 없다 —
 // 목표 미설정 주차는 weekly_target 이 null 이고 UI 가 "목표 미설정"으로 렌더한다.
@@ -50,9 +51,7 @@ function rate(part: number, whole: number): number {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   // 서버는 UTC 로 돌기 때문에 날짜 경계는 KST 로 계산한다 (월요일 오전에 지난주로 밀리는 문제 방지).
   const todayStr = kstDateStr(new Date());
