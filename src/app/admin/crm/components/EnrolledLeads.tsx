@@ -16,6 +16,7 @@ import {
   type TutoringSubTab,
 } from './TutoringStudentRow';
 import type { TutoringUser, CrmUnlinkedStudent } from '@/app/api/admin/srm/tutoring-users/route';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface EnrolledLeadsProps {
   adminKey: string;
@@ -40,9 +41,12 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
       setLoading(true);
       setError(null);
       const headers = { 'x-admin-key': adminKey };
-      const tutoringRes = await fetch('/api/admin/srm/tutoring-users', { headers }).then(r => r.json());
-      const linked: TutoringUser[] = tutoringRes.linked ?? [];
-      const unlinked: CrmUnlinkedStudent[] = tutoringRes.crmUnlinked ?? [];
+      const res = await fetch('/api/admin/srm/tutoring-users', { headers });
+      // 플랫폼 타임아웃(504) 등은 JSON이 아니다 — 파싱 실패해도 기본 안내 문구로 보여준다.
+      const tutoringRes = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(apiErrorMessage(tutoringRes, '튜터링 학생 목록을 불러오지 못했습니다.'));
+      const linked: TutoringUser[] = tutoringRes?.linked ?? [];
+      const unlinked: CrmUnlinkedStudent[] = tutoringRes?.crmUnlinked ?? [];
 
       const allEntries = classifyTutoringEntries([], linked);
       // SFv2 연결 완료 학생 → 상태 탭
