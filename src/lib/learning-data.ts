@@ -1,9 +1,10 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
+import { kstDayStart, kstDayEnd } from '@/lib/kst-day';
 
 export function kstDayRange(date: string): { start: string; end: string } {
-  const start = new Date(`${date}T00:00:00+09:00`).toISOString();
-  const end   = new Date(`${date}T23:59:59.999+09:00`).toISOString();
+  const start = new Date(kstDayStart(date)).toISOString();
+  const end   = new Date(kstDayEnd(date)).toISOString();
   return { start, end };
 }
 

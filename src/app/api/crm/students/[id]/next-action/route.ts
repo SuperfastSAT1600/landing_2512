@@ -7,6 +7,7 @@ import { FUNNEL_STAGE_LABELS, FUNNEL_NEXT_ACTION, STRATEGY_PHASE_LABELS, type Fu
 import { effectivePhase } from '@/lib/strategy-history';
 import type { ConsultationEntry, StrategyHistoryEntry } from '@/types/crm';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { parseJsonObject } from '@/lib/model-json';
 
 export const maxDuration = 30;
 
@@ -78,19 +79,13 @@ function buildContext(s: StudentRow, strategyNames: Map<string, string> = new Ma
 }
 
 function parseResult(text: string): { summary: string; recommended_action: string; draft_message: string } | null {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start < 0 || end <= start) return null;
-  try {
-    const o = JSON.parse(text.slice(start, end + 1));
-    return {
-      summary: String(o.summary ?? ''),
-      recommended_action: String(o.recommended_action ?? ''),
-      draft_message: String(o.draft_message ?? ''),
-    };
-  } catch {
-    return null;
-  }
+  const o = parseJsonObject(text);
+  if (!o) return null;
+  return {
+    summary: String(o.summary ?? ''),
+    recommended_action: String(o.recommended_action ?? ''),
+    draft_message: String(o.draft_message ?? ''),
+  };
 }
 
 // POST /api/crm/students/:id/next-action → { data: {summary, recommended_action, draft_message} }

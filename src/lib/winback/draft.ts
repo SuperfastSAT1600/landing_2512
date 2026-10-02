@@ -1,4 +1,5 @@
 import type { WinbackPlay, WinbackPlayVariant, WinbackTarget } from '@/types/crm';
+import { parseJsonObject } from '@/lib/model-json';
 
 export interface WinbackDraftStudent {
   name: string;
@@ -44,14 +45,7 @@ export function buildDraftContext(context: WinbackDraftContext): string {
 }
 
 export function parseDraftResult(text: string): WinbackDraftResult | null {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start < 0 || end <= start) return null;
-  try {
-    const parsed = JSON.parse(text.slice(start, end + 1)) as { message_draft?: unknown };
-    const message = typeof parsed.message_draft === 'string' ? parsed.message_draft.trim() : '';
-    return message ? { message_draft: message } : null;
-  } catch {
-    return null;
-  }
+  const parsed = parseJsonObject(text);
+  const message = typeof parsed?.message_draft === 'string' ? parsed.message_draft.trim() : '';
+  return message ? { message_draft: message } : null;
 }

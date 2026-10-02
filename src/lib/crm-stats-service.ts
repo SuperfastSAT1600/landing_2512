@@ -30,6 +30,7 @@ import {
   type RelatedCompanyRef,
 } from '@/lib/crm-stats-core';
 import { isDiagnosticDone } from '@/lib/diagnostic-status';
+import { kstDayStart, kstDayEnd } from '@/lib/kst-day';
 
 export interface StatsBySource {
   source: string;
@@ -140,14 +141,14 @@ export async function computeCrmStats({
       .select(
         'student_id, student_name, amount, payment_type, paid_at, tax_type, students:student_id(company_id)'
       )
-      .gte('paid_at', `${from}T00:00:00+09:00`)
-      .lte('paid_at', `${to}T23:59:59.999+09:00`),
+      .gte('paid_at', kstDayStart(from))
+      .lte('paid_at', kstDayEnd(to)),
     // 기간 이전 양수 결제 — 환불을 유형별로 귀속시킬 때 "직전 결제 유형"의 출발점이 된다.
     // 이게 없으면 작년 결제에 대한 올해 환불이 어느 유형에도 안 잡혀 비중 합이 100%를 넘는다.
     supabaseAdmin
       .from('payments')
       .select('student_id, student_name, amount, payment_type, paid_at, students:student_id(company_id)')
-      .lt('paid_at', `${from}T00:00:00+09:00`)
+      .lt('paid_at', kstDayStart(from))
       .gte('amount', 0),
     paidCohortQuery(supabaseAdmin),
     // 업체 로스터 — 센터형 파트너 컨택 판정용 company_id → name 맵

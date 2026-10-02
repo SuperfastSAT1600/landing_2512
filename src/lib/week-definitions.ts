@@ -1,4 +1,6 @@
 // Auto-generated from allwork_superfastsat - 주차DB.csv
+import { kstDateOf } from '@/lib/kst-day';
+
 export const WEEK_DEFINITIONS: { label: string; start: string; end: string }[] = [
   { label: "24년 11월 02주차", start: "2024-11-11", end: "2024-11-17" },
   { label: "24년 11월 03주차", start: "2024-11-18", end: "2024-11-24" },
@@ -135,12 +137,7 @@ export function getWeekDef(dateStr: string): WeekDef | null {
  * 서버 코드는 전부 이걸 거쳐야 한다.
  */
 export function getKstDateString(now: Date = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(now);
+  return kstDateOf(now.getTime());
 }
 
 /** 지금(한국 시간) 이 속한 주차 정의. 범위 밖이면 null. */

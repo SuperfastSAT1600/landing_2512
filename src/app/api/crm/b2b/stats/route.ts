@@ -5,6 +5,7 @@ import { computeStageFlow, type StageFlowRow, type StageHistoryEntry } from '@/l
 import { netAmount } from '@/lib/payment-utils';
 import { MAX_LEAD_ROWS, contactRate, toMonthKey, isContactedWithImpliedPartner } from '@/lib/crm-stats-core';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { kstDayStart, kstDayEnd } from '@/lib/kst-day';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -137,8 +138,8 @@ export async function GET(request: NextRequest) {
   const { data: periodPay } = await supabaseAdmin
     .from('payments')
     .select('student_id,student_name,amount,payment_type,tax_type,paid_at')
-    .gte('paid_at', `${from}T00:00:00+09:00`)
-    .lte('paid_at', `${to}T23:59:59.999+09:00`);
+    .gte('paid_at', kstDayStart(from))
+    .lte('paid_at', kstDayEnd(to));
 
   const inPeriod = (d: string | null) => {
     if (!d) return false;

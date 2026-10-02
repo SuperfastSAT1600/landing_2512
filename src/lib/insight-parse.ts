@@ -5,6 +5,7 @@
 const MAX_AREAS = 10; // 에이전트가 개수를 정하되, UI 보호용 완만한 안전 상한
 import type { Signal } from '@/lib/strategy-health';
 import type { InsightBriefArea as BriefArea, InsightBriefMode as BriefMode } from '@/types/crm';
+import { parseJsonObject } from '@/lib/model-json';
 
 const sev = (v: unknown): 'critical' | 'warn' => (v === 'critical' ? 'critical' : 'warn');
 const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v : undefined);
@@ -32,11 +33,8 @@ export function fallbackAreas(weakest: Signal[], mode: BriefMode): BriefArea[] {
 /** LLM JSON 응답에서 areas 추출·검증. 실패 시 fallbackAreas. */
 export function parseAreas(text: string, weakest: Signal[], mode: BriefMode): BriefArea[] {
   try {
-    const cleaned = text.replace(/```json\s*|\s*```/g, '').trim();
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start === -1 || end === -1) throw new Error('no json');
-    const parsed = JSON.parse(cleaned.slice(start, end + 1));
+    const parsed = parseJsonObject(text);
+    if (!parsed) throw new Error('no json');
     const areas: unknown[] = Array.isArray(parsed.areas) ? parsed.areas : [];
     const valid = areas
       .filter((a): a is Record<string, unknown> => {

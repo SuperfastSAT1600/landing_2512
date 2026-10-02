@@ -6,6 +6,7 @@ import { getQwenAnthropicClient, isQwenConfigured, qwenModel } from '@/lib/qwen'
 import { anthropicErrorMessage } from '@/lib/anthropic-error';
 import type { AiCareResult } from '@/types/crm';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { parseJsonObject } from '@/lib/model-json';
 
 const AiCareResultSchema = z.object({
   purified: z.string(),
@@ -102,13 +103,9 @@ export async function POST(request: NextRequest) {
     return apiError('UPSTREAM_ERROR', isQwenConfigured() ? anthropicErrorMessage(err) : 'AI processing failed', 502);
   }
 
-  let parsed: unknown;
-  try {
-    const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON found in response');
-    parsed = JSON.parse(jsonMatch[0]);
-  } catch (err) {
-    console.error('[ai-care] JSON parse error:', err, 'raw:', rawContent);
+  const parsed = parseJsonObject(rawContent);
+  if (!parsed) {
+    console.error('[ai-care] JSON parse error, raw:', rawContent);
     return apiError('UPSTREAM_ERROR', 'AI returned invalid format', 502);
   }
 

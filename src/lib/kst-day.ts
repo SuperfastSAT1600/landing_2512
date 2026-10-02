@@ -2,6 +2,11 @@
 // CRM 집계는 모두 한국 달력 기준이며, DB에는 Z가 붙은 인스턴트와 naive 벽시계 문자열이
 // 섞여 있다(시트 동기화 유산). naive는 KST 벽시계로 간주한다.
 
+/** 절대시각(ms)의 KST 달력 날짜(YYYY-MM-DD). KST는 UTC+9 고정(DST 없음)이라 오프셋 덧셈으로 충분하다. */
+export function kstDateOf(ms: number): string {
+  return new Date(ms + 9 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
 /** ISO/naive 문자열 → KST 달력 날짜(YYYY-MM-DD). 판정 불가면 null. */
 export function toKstDay(ts: string | null | undefined): string | null {
   if (!ts) return null;
@@ -9,7 +14,7 @@ export function toKstDay(ts: string | null | undefined): string | null {
   if (!hasZone) return ts.slice(0, 10); // naive = KST 벽시계
   const ms = new Date(ts).getTime();
   if (!Number.isFinite(ms)) return null;
-  return new Date(ms + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  return kstDateOf(ms);
 }
 
 /** 비교용 절대시각(ms). naive는 KST 벽시계로 해석. 판정 불가면 null. */
@@ -25,4 +30,14 @@ export function toMs(ts: string | null | undefined): number | null {
   const [H = 0, Mi = 0, Se = 0] = t.split(':').map(Number);
   if (!Y || !Mo || !D) return null;
   return Date.UTC(Y, Mo - 1, D, H, Mi, Se) - 9 * 3600 * 1000; // KST 벽시계 → UTC instant
+}
+
+/** KST 달력 날짜의 시작 시각 — timestamptz 범위 필터(gte)용. */
+export function kstDayStart(day: string): string {
+  return `${day}T00:00:00+09:00`;
+}
+
+/** KST 달력 날짜의 마지막 시각 — timestamptz 범위 필터(lte)용. */
+export function kstDayEnd(day: string): string {
+  return `${day}T23:59:59.999+09:00`;
 }

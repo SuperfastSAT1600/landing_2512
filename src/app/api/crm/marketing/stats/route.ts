@@ -12,6 +12,7 @@ import type {
 } from '@/types/marketing';
 import { netAmount } from '@/lib/payment-utils';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { kstDayStart, kstDayEnd } from '@/lib/kst-day';
 
 type StudentRow = {
   id: string;
@@ -68,8 +69,8 @@ export async function GET(request: NextRequest) {
   const { data: payments, error: pErr } = await supabaseAdmin
     .from('payments')
     .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
-    .gte('paid_at', `${from}T00:00:00+09:00`)
-    .lte('paid_at', `${to}T23:59:59.999+09:00`);
+    .gte('paid_at', kstDayStart(from))
+    .lte('paid_at', kstDayEnd(to));
 
   const paymentList: PaymentRow[] = pErr ? [] : (payments ?? []);
   const leadList: StudentRow[] = students ?? [];

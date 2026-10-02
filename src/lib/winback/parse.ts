@@ -3,6 +3,7 @@
  * 라우트에 인라인하지 않고 순수 함수로 둔 이유: 이 부분이 실제로 깨지는 지점이라 테스트가 필요하다.
  */
 import { z } from 'zod';
+import { parseJsonObject } from '@/lib/model-json';
 
 /** 파싱·스키마 위반. 라우트에서 502로 매핑한다. */
 export class AiResponseError extends Error {
@@ -41,14 +42,9 @@ function extractJsonObject(raw: string): unknown {
   const start = raw.indexOf('{');
   if (start < 0) throw new AiResponseError('AI 응답에서 JSON을 찾지 못했습니다.');
 
-  const end = raw.lastIndexOf('}');
-  if (end > start) {
-    try {
-      return JSON.parse(raw.slice(start, end + 1));
-    } catch {
-      /* 아래 절단 복구로 넘어간다 */
-    }
-  }
+  const whole = parseJsonObject(raw);
+  if (whole) return whole;
+  // 완결 객체가 없으면 아래 절단 복구로 넘어간다.
 
   const recovered = recoverTruncatedPicks(raw.slice(start));
   if (recovered) return recovered;

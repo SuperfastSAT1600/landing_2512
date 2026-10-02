@@ -5,6 +5,7 @@ import { getRecentWeeks, getWeekLabel, getKstDateString } from '@/lib/week-defin
 import { resolveWeeklyAmounts, type RenewalPaymentRow } from '@/lib/renewal-amount';
 import type { RenewalWeeklyStat, RenewalOutcomeQuality } from '@/types/crm';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { kstDayStart, kstDayEnd } from '@/lib/kst-day';
 
 /** YYYY-MM-DD 에 일수를 더한다(UTC 기준 — 날짜 문자열 산술이라 타임존 무관). */
 function addDays(day: string, n: number): string {
@@ -95,8 +96,8 @@ export async function GET(request: NextRequest) {
       .from('payments')
       .select('id, student_id, amount, paid_at')
       .eq('payment_type', '재결제')
-      .gte('paid_at', `${paidFrom}T00:00:00+09:00`)
-      .lte('paid_at', `${paidTo}T23:59:59.999+09:00`);
+      .gte('paid_at', kstDayStart(paidFrom))
+      .lte('paid_at', kstDayEnd(paidTo));
     if (paidError) console.error('[renewal-targets/stats GET renewal payments]', paidError);
     renewalPayments = (paid ?? []) as RenewalPaymentRow[];
   }
