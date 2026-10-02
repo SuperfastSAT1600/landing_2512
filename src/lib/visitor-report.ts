@@ -3,6 +3,8 @@
  * I/O 없음(PostHog API 호출은 크론 라우트에서 담당).
  */
 
+import { kstDateOf } from '@/lib/kst-day';
+
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -20,7 +22,7 @@ export interface DailySource {
 
 /** 크론 실행 시각 기준 KST 날짜 문자열. */
 export function kstDate(at: Date): string {
-  return new Date(at.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
+  return kstDateOf(at.getTime());
 }
 
 /** 리포트 날짜 범위: end = 어제(KST), start = 7일 전. */

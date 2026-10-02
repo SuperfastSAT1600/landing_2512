@@ -50,7 +50,7 @@ function runCarryOverOnce(adminKey: string, weekStart: string): Promise<void> {
         if (res.ok) carriedWeek = weekStart;
       })
       // 이월이 실패해도 보드는 떠야 한다 — 지난 주차 인원이 안 넘어올 뿐이다.
-      .catch(() => {})
+      .catch((e) => console.error('[renewal carry-over]', e))
       .finally(() => {
         carryPromise = null;
       });

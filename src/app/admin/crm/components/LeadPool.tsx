@@ -19,6 +19,7 @@ import { useWinbackPlays } from './winback/hooks/useWinbackPlays';
 import { WinbackPlayBar } from './winback/WinbackPlayBar';
 import { WinbackPlaysTab } from './winback/WinbackPlaysTab';
 import { WinbackPlayModal } from './winback/WinbackPlayModal';
+import { daysSince } from '../lib/format';
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
 
@@ -46,10 +47,6 @@ const DEFAULT_FILTERS: LeadPoolFilters = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function daysSince(isoDate: string): number {
-  return Math.floor((Date.now() - new Date(isoDate).getTime()) / (1000 * 60 * 60 * 24));
-}
 
 // updated_at이 lead_status 변경 시 갱신되므로 이탈 경과일 기준으로 사용
 function churnedDaysAgo(student: Student): number {

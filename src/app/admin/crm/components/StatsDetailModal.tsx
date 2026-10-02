@@ -5,8 +5,9 @@ import { X, Loader2 } from 'lucide-react';
 import type { StatsDetailMetric, StatsDetailResult } from '@/lib/crm-stats-detail';
 import { CRM_MEMBER_NAMES } from '@/lib/admin-user';
 import { netAmount } from '@/lib/payment-utils';
-import { LeadDetailTable, kstDate } from './LeadDetailTable';
+import { LeadDetailTable } from './LeadDetailTable';
 import { apiErrorMessage } from '@/lib/api-error';
+import { won, kstShortDate } from '../lib/format';
 
 // 리드 상태 판정·뱃지는 LeadDetailTable로 이전 — 기존 import 경로 호환을 위해 재노출한다.
 export { leadStatus, STATUS_BADGE, type LeadDisplayStatus } from './LeadDetailTable';
@@ -24,7 +25,7 @@ interface Props {
   onClose: () => void;
 }
 
-const won = (n: number) => `${n.toLocaleString()}원`;
+type PaymentItem = Extract<StatsDetailResult, { kind: 'payments' }>['items'][number];
 
 export function StatsDetailModal({ adminKey, metric, label, from, to, source, endpoint = '/api/crm/stats/detail', extraParams, onSelectStudent, onClose }: Props) {
   const [result, setResult] = useState<StatsDetailResult | null>(null);
@@ -64,77 +65,42 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, en
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metric, from, to, source, endpoint, JSON.stringify(extraParams ?? {}), adminKey]);
 
-  // 결제 담당자(created_by) 수동 수정 — 과거 결제 보정용
-  async function updateCreatedBy(paymentId: string, value: string) {
+  // 결제 행 수동 보정(담당자·결제 유형·세금 유형) — 화면을 먼저 바꾸고, 저장이 실패하면 되돌린 뒤 알린다.
+  async function patchPayment(
+    paymentId: string,
+    patch: Record<string, unknown>,
+    apply: (it: PaymentItem) => PaymentItem
+  ) {
+    let previous: typeof result = null;
+    setResult((prev) => {
+      previous = prev;
+      return prev && prev.kind === 'payments'
+        ? { ...prev, items: prev.items.map((it) => (it.id === paymentId ? apply(it) : it)) }
+        : prev;
+    });
+    try {
+      const res = await fetch(`/api/crm/payments/${paymentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (e) {
+      console.error('[StatsDetailModal patchPayment]', e);
+      setResult(previous);
+      alert('결제 수정을 저장하지 못해 되돌렸습니다.');
+    }
+  }
+
+  const updateCreatedBy = (paymentId: string, value: string) => {
     const created_by = value || null;
-    // 이전 값 저장
-    let previous: typeof result = null;
-    setResult((prev) => {
-      previous = prev;
-      return prev && prev.kind === 'payments'
-        ? { ...prev, items: prev.items.map((it) => (it.id === paymentId ? { ...it, created_by } : it)) }
-        : prev;
-    });
-    try {
-      const res = await fetch(`/api/crm/payments/${paymentId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ created_by }),
-      });
-      if (!res.ok) throw new Error('failed');
-    } catch {
-      setResult(previous);
-    }
-  }
-
-  // 결제 유형(최초/재결제) 수동 수정 — 통계가 쓰는 저장값(payment_type) 갱신
-  async function updatePaymentType(paymentId: string, payment_type: string) {
-    let previous: typeof result = null;
-    setResult((prev) => {
-      previous = prev;
-      return prev && prev.kind === 'payments'
-        ? { ...prev, items: prev.items.map((it) => (it.id === paymentId ? { ...it, payment_type } : it)) }
-        : prev;
-    });
-    try {
-      const res = await fetch(`/api/crm/payments/${paymentId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ payment_type }),
-      });
-      if (!res.ok) throw new Error('failed');
-    } catch {
-      setResult(previous);
-    }
-  }
-
-  // 세금 유형(면세/과세) 수동 수정 — 실수익(net_amount = 과세면 공급가액) 함께 재계산
-  async function updateTaxType(paymentId: string, tax_type: string) {
-    let previous: typeof result = null;
-    setResult((prev) => {
-      previous = prev;
-      return prev && prev.kind === 'payments'
-        ? {
-            ...prev,
-            items: prev.items.map((it) =>
-              it.id === paymentId
-                ? { ...it, tax_type, net_amount: netAmount({ amount: it.amount, tax_type }) }
-                : it
-            ),
-          }
-        : prev;
-    });
-    try {
-      const res = await fetch(`/api/crm/payments/${paymentId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ tax_type }),
-      });
-      if (!res.ok) throw new Error('failed');
-    } catch {
-      setResult(previous);
-    }
-  }
+    return patchPayment(paymentId, { created_by }, (it) => ({ ...it, created_by }));
+  };
+  const updatePaymentType = (paymentId: string, payment_type: string) =>
+    patchPayment(paymentId, { payment_type }, (it) => ({ ...it, payment_type }));
+  // 세금 유형 변경 시 실수익(net_amount = 과세면 공급가액)도 함께 재계산
+  const updateTaxType = (paymentId: string, tax_type: string) =>
+    patchPayment(paymentId, { tax_type }, (it) => ({ ...it, tax_type, net_amount: netAmount({ amount: it.amount, tax_type }) }));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -183,7 +149,7 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, en
               <tbody>
                 {result.items.map((it, i) => (
                   <tr key={`${it.student_name}-${it.paid_at}-${i}`} className="border-b border-gray-50">
-                    <td className="py-2 pr-3 text-gray-500 tabular-nums whitespace-nowrap">{kstDate(it.paid_at)}</td>
+                    <td className="py-2 pr-3 text-gray-500 tabular-nums whitespace-nowrap">{kstShortDate(it.paid_at)}</td>
                     <td className="py-2 px-3 text-gray-800 font-medium whitespace-nowrap">{it.student_name}</td>
                     <td className="py-2 px-3 text-gray-600">{it.product ?? '-'}</td>
                     <td className={`py-2 px-3 text-right tabular-nums whitespace-nowrap ${it.amount < 0 ? 'text-red-500' : 'text-gray-800'}`}>{won(it.amount)}</td>

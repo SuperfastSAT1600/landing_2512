@@ -4,6 +4,7 @@
  * Slack·Supabase 의존성 없음.
  */
 import { getWeekDef, weekByOffset, type WeekDef } from '@/lib/week-definitions';
+import { kstDateOf } from '@/lib/kst-day';
 
 /** 리포트에 필요한 stats overview 필드(전체 응답의 부분집합). */
 export interface ReportOverview {
@@ -51,12 +52,11 @@ export interface GlobalReportSummary {
 /** Business 페이지와 동일한 고정 환율 — 전체(한국비즈니스+글로벌) 합산에 쓴다. */
 export const REPORT_USD_TO_KRW_RATE = 1400;
 
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** 주어진 순간의 KST 날짜(YYYY-MM-DD). */
 function kstDate(at: Date): string {
-  return new Date(at.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
+  return kstDateOf(at.getTime());
 }
 
 /**

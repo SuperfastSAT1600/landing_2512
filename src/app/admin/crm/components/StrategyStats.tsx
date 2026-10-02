@@ -17,9 +17,7 @@ import { useStrategyCategories } from './strategies/useStrategyCategories';
 import { TransitionPanel } from './strategy-stats/TransitionPanel';
 import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
 import { apiErrorMessage } from '@/lib/api-error';
-
-const won = (n: number) => `${n.toLocaleString()}원`;
-const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
+import { won, manwon } from '../lib/format';
 
 interface Props {
   adminKey: string;
