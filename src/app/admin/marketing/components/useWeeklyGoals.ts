@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { WeeklyGoalRow } from '@/lib/marketing-goals';
+import { apiErrorMessage } from '@/lib/api-error';
 
 /**
  * 한 주차의 총합 목표와 소스별 실적을 읽고, 목표만 저장하는 훅.
@@ -65,7 +66,7 @@ export function useWeeklyGoals(weekStart: string, adminKey: string) {
 
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        alert(json.error ?? '목표 저장에 실패했습니다.');
+        alert(apiErrorMessage(json, '목표 저장에 실패했습니다.'));
         return false;
       }
       await load();

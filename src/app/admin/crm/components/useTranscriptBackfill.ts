@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { apiErrorMessage } from '@/lib/api-error';
 
 /**
  * 전사 백필 배치 루프.
@@ -94,7 +95,7 @@ async function postBatch(adminKey: string): Promise<BackfillBatchReport> {
   if (!res.ok) {
     // 504/408은 실행 한도 초과다 — 다시 실행하면 이어지므로 서버 장애와 구분해 안내한다.
     if (res.status === 504 || res.status === 408) throw new BatchRequestError('timeout', TIMEOUT_MESSAGE);
-    const detail = typeof body?.error === 'string' ? body.error : `HTTP ${res.status}`;
+    const detail = apiErrorMessage(body, `HTTP ${res.status}`);
     throw new BatchRequestError('server', `서버 오류: ${detail}`);
   }
 

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import type { ActiveLearnerRow } from '@/app/api/admin/active-learners/route';
+import { apiErrorMessage } from '@/lib/api-error';
 
 const BarChart = dynamic(() => import('recharts').then((m) => m.BarChart), { ssr: false });
 const Bar = dynamic(() => import('recharts').then((m) => m.Bar), { ssr: false });
@@ -76,7 +77,7 @@ export function ActiveLearnersPanel({ adminKey }: Props) {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error?.message ?? '조회 실패');
+        setError(apiErrorMessage(json, '조회 실패'));
         return;
       }
       setRows(json.data as ActiveLearnerRow[]);

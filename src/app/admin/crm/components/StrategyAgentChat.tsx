@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, Loader2, Globe, RotateCcw, Activity } from 'lucide-react';
 import type { InsightPeriod } from '@/types/crm';
 import { PeriodPicker, defaultPeriod } from './PeriodPicker';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Props {
   adminKey: string;
@@ -117,7 +118,7 @@ export function StrategyAgentChat({ adminKey, period: initialPeriod, seed }: Pro
 
       if (!res.ok || !res.body) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error?.message ?? 'AI 응답을 받지 못했습니다.');
+        throw new Error(apiErrorMessage(j, 'AI 응답을 받지 못했습니다.'));
       }
 
       const reader = res.body.getReader();

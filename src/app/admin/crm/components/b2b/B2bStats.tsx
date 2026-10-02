@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { apiErrorMessage } from '@/lib/api-error';
 
 // recharts는 트렌드 차트에서만 필요 — 지연 로딩해 첫 진입 번들에서 제외한다.
 const B2bTrendChart = dynamic(() => import('./B2bTrendChart'), {
@@ -80,7 +81,7 @@ export function B2bStats({ adminKey, onSelectStudentById }: Props) {
       const res = await fetch(`/api/crm/b2b/stats?${qs.toString()}`, { headers: { 'x-admin-key': adminKey } });
       const json = await res.json();
       if (res.ok && json.data) setData(json.data as B2bStatsData);
-      else setError(json.error ?? '조회에 실패했습니다.');
+      else setError(apiErrorMessage(json, '조회에 실패했습니다.'));
     } catch {
       setError('네트워크 오류가 발생했습니다.');
     } finally {

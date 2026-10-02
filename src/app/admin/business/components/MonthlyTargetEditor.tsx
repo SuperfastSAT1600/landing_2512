@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Loader2, Settings2 } from 'lucide-react';
 import { USD_TO_KRW_RATE, type BusinessTargetSegment, type BusinessTargetPaymentType } from '@/lib/business-targets';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Props {
   segment: BusinessTargetSegment;
@@ -54,7 +55,7 @@ export function MonthlyTargetEditor({ segment, adminKey, onSaved }: Props) {
         setEditing(false);
         onSaved();
       } else {
-        alert(json.error ?? '목표 저장에 실패했습니다.');
+        alert(apiErrorMessage(json, '목표 저장에 실패했습니다.'));
       }
     } finally {
       setSubmitting(false);

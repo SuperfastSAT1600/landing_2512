@@ -10,6 +10,7 @@ import { B2cWorkspace } from './components/B2cWorkspace';
 import { B2bWorkspace } from './components/B2bWorkspace';
 import { TranscriptBackfillModal } from './components/TranscriptBackfillModal';
 import { IntfuncImportModal } from './components/IntfuncImportModal';
+import { apiErrorMessage } from '@/lib/api-error';
 
 type CrmMode = 'b2c' | 'b2b';
 
@@ -185,7 +186,7 @@ export default function CrmPage() {
         setStudents(prevStudents);
         if (prevSelected) setSelectedStudent(prevSelected);
         const data = await res.json().catch(() => ({}));
-        alert(data.error?.message ?? '업데이트에 실패했습니다.');
+        alert(apiErrorMessage(data, '업데이트에 실패했습니다.'));
       } else if (updates.daily_action_done_at !== undefined || updates.churn_tag !== undefined) {
         // 완료 체크/해제와 이탈 처리는 "오늘 취한 액션" 명단을 바꾸므로 재조회한다.
         // (이탈 모달이 상담 타임라인에 사유 메모를 남긴다 — churn-memo 라우트)

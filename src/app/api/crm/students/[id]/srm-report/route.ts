@@ -28,7 +28,10 @@ export async function GET(
 
   const profileId = (student as { sfv2_profile_id?: string | null }).sfv2_profile_id;
   if (!profileId) {
-    return NextResponse.json({ error: 'no_v2_profile' }, { status: 404 });
+    return NextResponse.json(
+      { error: { code: 'no_v2_profile', message: 'SRM 프로필이 연결되지 않았습니다.' } },
+      { status: 404 }
+    );
   }
 
   // 빠른 운영 확인용: 캐시된 AI 내러티브는 쓰되 미캐시 생성은 생략(지표는 그대로).

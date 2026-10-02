@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Student, FunnelStage, LeadStatus, ChurnType } from '@/types/crm';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Params {
   studentId: string;
@@ -82,7 +83,7 @@ export function useFunnel({ studentId, adminKey, setLocalStudent, onUpdate }: Pa
         setReactivateStrategy('');
       } else {
         const json = await res.json();
-        alert(json.error?.message ?? '재활성화 시작에 실패했습니다.');
+        alert(apiErrorMessage(json, '재활성화 시작에 실패했습니다.'));
       }
     } catch {
       alert('네트워크 오류가 발생했습니다.');

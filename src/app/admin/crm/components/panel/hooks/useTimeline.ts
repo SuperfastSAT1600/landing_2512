@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ConsultationEntry } from '@/types/crm';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface PendingEdit { purified: string; coachHistory: string; deletedItems: string[] }
 
@@ -43,7 +44,7 @@ export function useTimeline({ studentId, adminKey, timeline, setTimeline, setPen
         });
       } else {
         const json = await res.json();
-        setPublishError(json.error?.message ?? '게시에 실패했습니다.');
+        setPublishError(apiErrorMessage(json, '게시에 실패했습니다.'));
       }
     } catch {
       setPublishError('네트워크 오류가 발생했습니다.');

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Sparkles, Loader2, RefreshCw, TrendingUp, AlertTriangle, Target } from 'lucide-react';
 import type { SrmBriefData } from '@/app/api/crm/students/[id]/srm-brief/route';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Props {
   studentId: string;
@@ -29,7 +30,7 @@ export function SrmBrief({ studentId, adminKey }: Props) {
         setBrief(json.data.brief as SrmBriefData);
         setCached(!!json.data.cached);
       } else {
-        setError(json.error?.message ?? '브리핑 생성에 실패했습니다.');
+        setError(apiErrorMessage(json, '브리핑 생성에 실패했습니다.'));
       }
     } catch {
       setError('네트워크 오류가 발생했습니다.');

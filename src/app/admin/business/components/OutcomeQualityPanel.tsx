@@ -8,6 +8,7 @@ import {
   PRESETS,
 } from '../../crm/components/stats-primitives';
 import type { OutcomeSummary } from '@/app/api/crm/renewal-targets/outcomes/route';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Props {
   adminKey: string;
@@ -90,7 +91,7 @@ export function OutcomeQualityPanel({ adminKey }: Props) {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error?.message ?? '조회 실패');
+        setError(apiErrorMessage(json, '조회 실패'));
         return;
       }
       setData(json.data as OutcomeSummary);

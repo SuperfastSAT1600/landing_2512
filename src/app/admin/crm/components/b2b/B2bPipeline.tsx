@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bPipelineData, B2bPipelineCompany } from '@/app/api/crm/b2b/pipeline/route';
 import { OverviewCard, StageFlowTable } from '../stats-primitives';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Props {
   adminKey: string;
@@ -25,7 +26,7 @@ export function B2bPipeline({ adminKey }: Props) {
       const res = await fetch('/api/crm/b2b/pipeline', { headers: { 'x-admin-key': adminKey } });
       const json = await res.json();
       if (res.ok && json.data) setData(json.data as B2bPipelineData);
-      else setError(json.error ?? '조회에 실패했습니다.');
+      else setError(apiErrorMessage(json, '조회에 실패했습니다.'));
     } catch {
       setError('네트워크 오류가 발생했습니다.');
     } finally {

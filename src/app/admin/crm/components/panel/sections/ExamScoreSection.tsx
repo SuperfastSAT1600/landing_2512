@@ -7,6 +7,7 @@ import { getAdminUserName } from '@/lib/admin-user';
 import { examTotal, isValidExamMonth, isValidSectionScore } from '@/lib/exam-score';
 import { SectionCard } from './SectionCard';
 import { ExamScoreRow } from './ExamScoreRow';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Props {
   student: Student;
@@ -46,7 +47,7 @@ export function ExamScoreSection({ student, adminKey }: Props) {
         headers: { 'x-admin-key': adminKey },
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? '시험 성적을 불러오지 못했습니다.');
+      if (!res.ok) throw new Error(apiErrorMessage(json, '시험 성적을 불러오지 못했습니다.'));
       setScores(json.data ?? []);
     } catch (err) {
       setError((err as Error).message);
@@ -90,7 +91,7 @@ export function ExamScoreSection({ student, adminKey }: Props) {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? '시험 성적 저장에 실패했습니다.');
+      if (!res.ok) throw new Error(apiErrorMessage(json, '시험 성적 저장에 실패했습니다.'));
       resetDraft();
       await fetchScores();
     } catch (err) {
@@ -109,7 +110,7 @@ export function ExamScoreSection({ student, adminKey }: Props) {
         body: JSON.stringify(patch),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? '시험 성적 수정에 실패했습니다.');
+      if (!res.ok) throw new Error(apiErrorMessage(json, '시험 성적 수정에 실패했습니다.'));
       await fetchScores();
       return true;
     } catch (err) {

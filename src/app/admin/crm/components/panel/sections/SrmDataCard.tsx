@@ -9,6 +9,7 @@ import { SrmBrief } from './SrmBrief';
 import { SrmTestCenterTrend } from './SrmTestCenterTrend';
 import { SectionCard } from './SectionCard';
 import { stripNameSuffix } from './srm-name';
+import { apiErrorCode } from '@/lib/api-error';
 
 interface Props {
   studentId: string;
@@ -134,7 +135,7 @@ export function SrmDataCard({ studentId, studentName, adminKey, autoLoad, classN
       const res = await fetch(`/api/crm/students/${studentId}/srm-report`, { headers });
       if (res.status === 404) {
         const j = await res.json().catch(() => ({}));
-        setStatus(j.error === 'no_v2_profile' ? 'unlinked' : 'error');
+        setStatus(apiErrorCode(j) === 'no_v2_profile' ? 'unlinked' : 'error');
         return;
       }
       if (!res.ok) { setStatus('error'); return; }

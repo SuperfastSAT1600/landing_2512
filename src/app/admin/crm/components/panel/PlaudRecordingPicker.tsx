@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, X, Search, Mic, CheckCircle2, ChevronLeft, User } from 'lucide-react';
 import type { ConsultationEntry } from '@/types/crm';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface PlaudAccount {
   key: string;
@@ -115,7 +116,7 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
         const json = await res.json();
         if (cancelled) return;
         if (!res.ok) {
-          setAccountsError(json.error ?? '직원 계정을 불러오지 못했습니다.');
+          setAccountsError(apiErrorMessage(json, '직원 계정을 불러오지 못했습니다.'));
           return;
         }
         const list: PlaudAccount[] = json.data ?? [];
@@ -145,7 +146,7 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
         });
         const json = await res.json();
         if (res.ok) setRecordings(json.data ?? []);
-        else setListError(json.error ?? '녹음 목록을 불러오지 못했습니다.');
+        else setListError(apiErrorMessage(json, '녹음 목록을 불러오지 못했습니다.'));
       } catch {
         setListError('네트워크 오류가 발생했습니다.');
       } finally {
@@ -194,7 +195,7 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
         setWaitedSec(0);
         setJob(next);
       } else {
-        setRunError(json.error ?? '전사 작업을 시작하지 못했습니다.');
+        setRunError(apiErrorMessage(json, '전사 작업을 시작하지 못했습니다.'));
       }
     } catch {
       setRunError('네트워크 오류가 발생했습니다.');
@@ -248,7 +249,7 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
           return;
         }
         if (!res.ok) {
-          finish(json.error ?? '요약 생성에 실패했습니다.');
+          finish(apiErrorMessage(json, '요약 생성에 실패했습니다.'));
           return;
         }
         if (Date.now() - startedAt > MAX_WAIT_MS) {

@@ -11,6 +11,7 @@ import {
   PRESETS,
   getPresetRange,
 } from '../../crm/components/stats-primitives';
+import { apiErrorMessage } from '@/lib/api-error';
 
 const LtvTrendChart = dynamic(() => import('./LtvTrendChart'), {
   ssr: false,
@@ -104,7 +105,7 @@ export function CustomerMetricsPanel({ adminKey }: Props) {
         headers: { 'x-admin-key': adminKey },
       });
       const json = await res.json();
-      if (!res.ok) { setError(json.error?.message ?? '조회 실패'); return; }
+      if (!res.ok) { setError(apiErrorMessage(json, '조회 실패')); return; }
       setMetrics(json.data as CustomerMetrics);
     } catch {
       setError('네트워크 오류');

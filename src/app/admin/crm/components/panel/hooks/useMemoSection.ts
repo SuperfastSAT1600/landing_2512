@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ConsultationEntry, Attachment } from '@/types/crm';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface PendingEdit {
   purified: string;
@@ -111,7 +112,7 @@ export function useMemoSection({
         // AI 변환 기능 숨김(2026-08-07): UI 제거에 맞춰 메모 저장 시 자동 AI 변환도 중단(불필요한 API 비용 방지).
         // 되살리려면 아래 한 줄을 복원: if (newEntry.raw_memo.trim()) triggerAiCare(newEntry);
       } else {
-        setMemoError(json.error?.message ?? '메모 저장에 실패했습니다.');
+        setMemoError(apiErrorMessage(json, '메모 저장에 실패했습니다.'));
       }
     } catch {
       setMemoError('네트워크 오류가 발생했습니다.');
