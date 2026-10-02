@@ -119,7 +119,7 @@ describe('POST /api/crm/intfunc/import — REQ-205', () => {
     const body = await res.json();
 
     expect(res.status).toBe(500);
-    expect(body.code).toBe('unknown');
+    expect(body.error.code).toBe('unknown');
     expect(JSON.stringify(body)).not.toContain('김민준');
   });
 
@@ -130,8 +130,8 @@ describe('POST /api/crm/intfunc/import — REQ-205', () => {
     const body = await res.json();
 
     expect(res.status).toBe(502);
-    expect(body.code).toBe('intfunc.auth');
-    expect(body.error).toContain('INTFUNC_API_KEY');
+    expect(body.error.code).toBe('intfunc.auth');
+    expect(body.error.message).toContain('INTFUNC_API_KEY');
   });
 
   it('보내기 전 거절은 400이고 어느 행인지 돌려준다 — REQ-208', async () => {
@@ -143,7 +143,7 @@ describe('POST /api/crm/intfunc/import — REQ-205', () => {
     const body = await res.json();
 
     expect(res.status).toBe(400);
-    expect(body.code).toBe('dataset.rows_invalid');
+    expect(body.error.code).toBe('dataset.rows_invalid');
     expect(body.rows).toEqual([2]);
   });
 
@@ -153,7 +153,7 @@ describe('POST /api/crm/intfunc/import — REQ-205', () => {
     const res = await POST(makeReq({}));
 
     expect(res.status).toBe(502);
-    expect((await res.json()).code).toBe('intfunc.auth');
+    expect((await res.json()).error.code).toBe('intfunc.auth');
   });
 
   it('응답에 전사 본문이 실리지 않는다', async () => {

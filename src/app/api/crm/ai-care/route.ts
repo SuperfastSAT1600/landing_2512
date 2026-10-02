@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { getQwenAnthropicClient, isQwenConfigured, qwenModel } from '@/lib/qwen';
 import { anthropicErrorMessage } from '@/lib/anthropic-error';
 import type { AiCareResult } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 const AiCareResultSchema = z.object({
   purified: z.string(),
@@ -53,20 +54,18 @@ const SYSTEM_PROMPT = `상담 메모를 바탕으로 학부모님께 전달할 �
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { raw_memo: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const { raw_memo } = body;
   if (!raw_memo || typeof raw_memo !== 'string' || raw_memo.trim().length === 0) {
-    return NextResponse.json({ error: 'raw_memo is required' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'raw_memo is required', 400);
   }
 
   let rawContent: string;
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
     } else {
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey)
-        return NextResponse.json({ error: 'AI service not configured' }, { status: 503 });
+        return apiError('SERVICE_UNAVAILABLE', 'AI service not configured', 503);
       const response = await new OpenAI({ apiKey }).chat.completions.create({
         model: 'gpt-4o-mini',
         max_tokens: 1024,
@@ -100,10 +99,7 @@ export async function POST(request: NextRequest) {
     if (!rawContent) throw new Error('Empty AI response');
   } catch (err) {
     console.error('[ai-care] provider error:', err);
-    return NextResponse.json(
-      { error: isQwenConfigured() ? anthropicErrorMessage(err) : 'AI processing failed' },
-      { status: 502 }
-    );
+    return apiError('UPSTREAM_ERROR', isQwenConfigured() ? anthropicErrorMessage(err) : 'AI processing failed', 502);
   }
 
   let parsed: unknown;
@@ -113,13 +109,13 @@ export async function POST(request: NextRequest) {
     parsed = JSON.parse(jsonMatch[0]);
   } catch (err) {
     console.error('[ai-care] JSON parse error:', err, 'raw:', rawContent);
-    return NextResponse.json({ error: 'AI returned invalid format' }, { status: 502 });
+    return apiError('UPSTREAM_ERROR', 'AI returned invalid format', 502);
   }
 
   const validation = AiCareResultSchema.safeParse(parsed);
   if (!validation.success) {
     console.error('[ai-care] Zod validation failed:', validation.error.flatten());
-    return NextResponse.json({ error: 'AI response schema mismatch' }, { status: 502 });
+    return apiError('UPSTREAM_ERROR', 'AI response schema mismatch', 502);
   }
 
   const result: AiCareResult = validation.data;

@@ -96,7 +96,7 @@ describe('GET /api/crm/plaud/recordings', () => {
     const body = await res.json();
 
     expect(res.status).toBe(502);
-    expect(body.error).toContain('Plaud 토큰 갱신 실패: 401');
+    expect(body.error.message).toContain('Plaud 토큰 갱신 실패: 401');
   });
 
   it('query/페이지 파라미터를 모든 계정에 전달', async () => {

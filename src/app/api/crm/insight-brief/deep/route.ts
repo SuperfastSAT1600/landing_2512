@@ -13,6 +13,7 @@ import { fallbackAreas, parseAreas } from '@/lib/insight-parse';
 import { DEEP_DIAGNOSIS_SYSTEM, DEEP_WEEKLY_SYSTEM } from '@/lib/insight-deep';
 import { STRATEGY_GURU_PROMPT } from '@/lib/strategy-guru';
 import { kstDateStr, type InsightBriefArea as BriefArea, type InsightBriefMode as BriefMode, type InsightPeriod } from '@/types/crm';
+import { unauthorized } from '@/lib/api-response';
 
 export const maxDuration = 60;
 
@@ -45,9 +46,7 @@ async function writeCache(dateKst: string, mode: BriefMode, areas: BriefArea[]):
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let mode: BriefMode = 'diagnosis';
   let period: InsightPeriod | undefined;

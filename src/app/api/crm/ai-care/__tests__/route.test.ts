@@ -65,6 +65,6 @@ describe('POST /api/crm/ai-care', () => {
     const { POST } = await import('../route');
     const res = await POST(req({ raw_memo: '내부' }));
     expect(res.status).toBe(502);
-    expect((await res.json()).error).toBe('qwen error');
+    expect((await res.json()).error.message).toBe('qwen error');
   });
 });

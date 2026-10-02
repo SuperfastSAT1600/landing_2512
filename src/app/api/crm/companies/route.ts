@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import type { CreateCompanyInput } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // GET /api/crm/companies?active=true
 // B2B 업체(파트너) 목록. active=true면 is_active만.
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const activeOnly = new URL(request.url).searchParams.get('active') === 'true';
 
@@ -23,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('[companies GET]', error);
-    return NextResponse.json({ error: '업체 목록을 불러오지 못했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '업체 목록을 불러오지 못했습니다.', 500);
   }
 
   return NextResponse.json({ data });
@@ -31,19 +30,17 @@ export async function GET(request: NextRequest) {
 
 // POST /api/crm/companies
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: CreateCompanyInput;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   if (!body.name?.trim()) {
-    return NextResponse.json({ error: '업체명을 입력해주세요.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '업체명을 입력해주세요.', 400);
   }
 
   const { data, error } = await supabaseAdmin
@@ -63,10 +60,10 @@ export async function POST(request: NextRequest) {
   if (error) {
     // 23505 = unique_violation (동일 업체명 존재)
     if (error.code === '23505') {
-      return NextResponse.json({ error: '이미 등록된 업체명입니다.' }, { status: 409 });
+      return apiError('CONFLICT', '이미 등록된 업체명입니다.', 409);
     }
     console.error('[companies POST]', error);
-    return NextResponse.json({ error: '업체 생성에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '업체 생성에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data }, { status: 201 });

@@ -6,6 +6,7 @@ import {
   getAccountLabel,
   type PlaudRecording,
 } from '@/lib/plaud-client';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * GET /api/crm/plaud/recordings
@@ -16,9 +17,7 @@ import {
  * Query: account_key(직원 계정), q(이름검색), date_from, date_to (YYYY-MM-DD), page, page_size.
  */
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q')?.trim() || undefined;
@@ -56,10 +55,7 @@ export async function GET(request: NextRequest) {
     const reason = errors.length
       ? errors.join('; ')
       : '설정된 Plaud 계정이 없습니다(seed env 미설정).';
-    return NextResponse.json(
-      { error: `Plaud 녹음 목록을 불러오지 못했습니다: ${reason}` },
-      { status: 502 }
-    );
+    return apiError('UPSTREAM_ERROR', `Plaud 녹음 목록을 불러오지 못했습니다: ${reason}`, 502);
   }
 
   // start_at(없으면 created_at) 기준 내림차순 병합. ISO/naive 문자열은 사전식 비교로 시간순 정렬됨.

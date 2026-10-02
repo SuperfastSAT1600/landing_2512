@@ -7,6 +7,7 @@ import { transcribeAudioUrl } from '@/lib/plaud-transcribe';
 import { insertCallTranscript, findTranscriptByExternalId } from '@/lib/call-transcripts';
 import { ASR_MODEL } from '@/lib/qwen-asr';
 import { BACKFILL_BUDGET_MS, BACKFILL_MAX_POLLS } from '@/lib/plaud-backfill-limits';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // 전사 폴링 때문에 한 건만으로도 오래 걸린다.
 // 리터럴로 둔다 — Next가 이 값을 정적으로 읽는다. BACKFILL_MAX_DURATION_S와 같아야 하고,
@@ -71,9 +72,7 @@ async function fetchAllRecordings(accountKey: string) {
  * Body: { account_key?: string, limit?: number }
  */
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { account_key?: unknown; limit?: unknown } = {};
   try {
@@ -84,7 +83,7 @@ export async function POST(request: NextRequest) {
 
   const accountKey = typeof body.account_key === 'string' ? body.account_key.trim() : '';
   if (accountKey && !PLAUD_ACCOUNTS.some((a) => a.key === accountKey)) {
-    return NextResponse.json({ error: `알 수 없는 계정: ${accountKey}` }, { status: 400 });
+    return apiError('BAD_REQUEST', `알 수 없는 계정: ${accountKey}`, 400);
   }
   const limit = typeof body.limit === 'number' && body.limit > 0 ? Math.floor(body.limit) : undefined;
 
@@ -113,6 +112,6 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     // 목록 조회 자체가 실패한 경우 — 부분 성공을 성공으로 위장하지 않는다.
     console.error('[crm/plaud-backfill POST]', e);
-    return NextResponse.json({ error: '전사 일괄 처리에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '전사 일괄 처리에 실패했습니다.', 500);
   }
 }

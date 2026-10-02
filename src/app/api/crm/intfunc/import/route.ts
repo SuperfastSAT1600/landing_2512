@@ -15,14 +15,13 @@ import { intfuncClient } from '@/lib/intfunc/client';
 import { exportCorpus } from '@/lib/intfunc/export-corpus';
 import { ensureDataset, importCorpus } from '@/lib/intfunc/import-corpus';
 import { describeSendFailure } from '@/lib/intfunc/send-failure';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // 전량 조회 + 청크 단위 import. 청크는 순차로 나가므로 행이 많으면 오래 걸린다.
 export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { limit?: unknown; dry_run?: unknown } = {};
   try {
@@ -37,7 +36,7 @@ export async function POST(request: NextRequest) {
     const { rows, stats } = await exportCorpus(supabaseAdmin, limit);
     if (dryRun) return NextResponse.json({ data: { dryRun: true, stats } });
     if (rows.length === 0) {
-      return NextResponse.json({ error: '내보낼 행이 없습니다.' }, { status: 400 });
+      return apiError('BAD_REQUEST', '내보낼 행이 없습니다.', 400);
     }
 
     const client = intfuncClient();
@@ -49,9 +48,6 @@ export async function POST(request: NextRequest) {
     // 전문은 여기 남는다. 화면으로는 우리가 쓴 문장과 code만 나간다 (REQ-208).
     console.error('[crm/intfunc/import POST]', e);
     const failure = describeSendFailure(e);
-    return NextResponse.json(
-      { error: failure.message, code: failure.code, rows: failure.rows },
-      { status: failure.status }
-    );
+    return apiError(failure.code ?? 'INTFUNC_FAILED', failure.message, failure.status, { rows: failure.rows });
   }
 }

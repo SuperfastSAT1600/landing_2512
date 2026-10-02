@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: { name?: string; description?: string; category_id?: string };
   try { body = await request.json(); } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const updates: { name?: string; description?: string; category_id?: string } = {};
@@ -30,7 +29,7 @@ export async function PATCH(
 
   if (error) {
     console.error('[retry-strategies PATCH]', error);
-    return NextResponse.json({ error: '전략 수정에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '전략 수정에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data });
@@ -41,9 +40,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   // 해당 전략에 속한 학생들을 전략에서 해제 (ON DELETE SET NULL이 처리하지만 명시적으로)
   const { error: unassignError } = await supabaseAdmin
@@ -53,7 +50,7 @@ export async function DELETE(
 
   if (unassignError) {
     console.error('[retry-strategies DELETE unassign]', unassignError);
-    return NextResponse.json({ error: '전략에 배정된 학생 해제에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '전략에 배정된 학생 해제에 실패했습니다.', 500);
   }
 
   const { error } = await supabaseAdmin
@@ -63,7 +60,7 @@ export async function DELETE(
 
   if (error) {
     console.error('[retry-strategies DELETE]', error);
-    return NextResponse.json({ error: '전략 삭제에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '전략 삭제에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data: { id } });

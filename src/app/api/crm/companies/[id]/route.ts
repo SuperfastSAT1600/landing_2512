@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 const EDITABLE_FIELDS = [
   'name',
@@ -18,9 +19,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { data, error } = await supabaseAdmin
     .from('companies')
@@ -29,7 +28,7 @@ export async function GET(
     .single();
 
   if (error) {
-    return NextResponse.json({ error: '업체를 찾을 수 없습니다.' }, { status: 404 });
+    return apiError('NOT_FOUND', '업체를 찾을 수 없습니다.', 404);
   }
 
   return NextResponse.json({ data });
@@ -41,13 +40,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: Record<string, unknown>;
   try { body = await request.json(); } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const update: Record<string, unknown> = {};
@@ -55,10 +52,10 @@ export async function PATCH(
     if (key in body) update[key] = body[key];
   }
   if ('name' in update && !String(update.name ?? '').trim()) {
-    return NextResponse.json({ error: '업체명은 비울 수 없습니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '업체명은 비울 수 없습니다.', 400);
   }
   if (Object.keys(update).length === 0) {
-    return NextResponse.json({ error: '수정할 필드가 없습니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '수정할 필드가 없습니다.', 400);
   }
   update.updated_at = new Date().toISOString();
 
@@ -71,10 +68,10 @@ export async function PATCH(
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json({ error: '이미 등록된 업체명입니다.' }, { status: 409 });
+      return apiError('CONFLICT', '이미 등록된 업체명입니다.', 409);
     }
     console.error('[companies PATCH]', error);
-    return NextResponse.json({ error: '업체 수정에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '업체 수정에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data });
@@ -88,9 +85,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const hard = new URL(request.url).searchParams.get('hard') === 'true';
 
@@ -101,7 +96,7 @@ export async function DELETE(
       .eq('id', id);
     if (error) {
       console.error('[companies DELETE soft]', error);
-      return NextResponse.json({ error: '업체 비활성화에 실패했습니다.' }, { status: 500 });
+      return apiError('INTERNAL_ERROR', '업체 비활성화에 실패했습니다.', 500);
     }
     return NextResponse.json({ data: { id, is_active: false } });
   }
@@ -113,19 +108,16 @@ export async function DELETE(
     .eq('company_id', id);
   if (countErr) {
     console.error('[companies DELETE count]', countErr);
-    return NextResponse.json({ error: '업체 삭제 확인에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '업체 삭제 확인에 실패했습니다.', 500);
   }
   if ((count ?? 0) > 0) {
-    return NextResponse.json(
-      { error: `연결된 리드 ${count}건이 있어 삭제할 수 없습니다. 비활성화를 사용하세요.` },
-      { status: 409 }
-    );
+    return apiError('CONFLICT', `연결된 리드 ${count}건이 있어 삭제할 수 없습니다. 비활성화를 사용하세요.`, 409);
   }
 
   const { error } = await supabaseAdmin.from('companies').delete().eq('id', id);
   if (error) {
     console.error('[companies DELETE hard]', error);
-    return NextResponse.json({ error: '업체 삭제에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '업체 삭제에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data: { id } });

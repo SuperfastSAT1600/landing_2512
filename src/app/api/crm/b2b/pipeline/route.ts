@@ -9,6 +9,7 @@ import {
 } from '@/lib/funnel-stats';
 import { FUNNEL_STAGE_LABELS, type FunnelStage } from '@/types/crm';
 import { MAX_LEAD_ROWS } from '@/lib/crm-stats-core';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // 영업 진행중 = 세일즈 단계(수업중 '8' 제외). churned는 FUNNEL_FLOW_ORDER에 없음.
 const ACTIVE_SALES_STAGES = FUNNEL_FLOW_ORDER.filter((s) => s !== '8');
@@ -61,9 +62,7 @@ const emptyStageCounts = (): B2bPipelineStageCount[] =>
  * 현재 영업 진행중인 업체 스냅샷(기간 없음). 활성 리드가 세일즈 단계(0~7)에 있는 업체만.
  */
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { data: companies, error: cErr } = await supabaseAdmin
     .from('companies')
@@ -71,7 +70,7 @@ export async function GET(request: NextRequest) {
     .order('name');
   if (cErr) {
     console.error('[b2b/pipeline companies]', cErr);
-    return NextResponse.json({ error: '업체 목록을 불러오지 못했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '업체 목록을 불러오지 못했습니다.', 500);
   }
   const companyName = new Map<string, string>((companies ?? []).map((c) => [c.id, c.name]));
 
@@ -82,7 +81,7 @@ export async function GET(request: NextRequest) {
     .limit(MAX_LEAD_ROWS);
   if (sErr) {
     console.error('[b2b/pipeline students]', sErr);
-    return NextResponse.json({ error: 'B2B 리드를 불러오지 못했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'B2B 리드를 불러오지 못했습니다.', 500);
   }
   const rows = (students ?? []) as PipeStudent[];
 
