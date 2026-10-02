@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { isValidExamMonth, isValidSectionScore } from '@/lib/exam-score';
 import { syncLatestExamScore } from '@/app/api/crm/_lib/syncLatestExamScore';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 const SCORE_MESSAGE = '점수는 200~800 사이 10점 단위여야 합니다.';
 
@@ -12,15 +13,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const updates: Record<string, unknown> = {};
@@ -28,7 +27,7 @@ export async function PATCH(
   if ('exam_month' in body) {
     const month = typeof body.exam_month === 'string' ? body.exam_month.trim() : '';
     if (!isValidExamMonth(month)) {
-      return NextResponse.json({ error: '시험월은 YYYY-MM 형식이어야 합니다.' }, { status: 400 });
+      return apiError('BAD_REQUEST', '시험월은 YYYY-MM 형식이어야 합니다.', 400);
     }
     updates.exam_month = month;
   }
@@ -41,7 +40,7 @@ export async function PATCH(
       continue;
     }
     if (typeof value !== 'number' || !isValidSectionScore(value)) {
-      return NextResponse.json({ error: SCORE_MESSAGE }, { status: 400 });
+      return apiError('BAD_REQUEST', SCORE_MESSAGE, 400);
     }
     updates[field] = value;
   }
@@ -51,7 +50,7 @@ export async function PATCH(
   }
 
   if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: '변경할 내용이 없습니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '변경할 내용이 없습니다.', 400);
   }
   updates.updated_at = new Date().toISOString();
 
@@ -64,16 +63,16 @@ export async function PATCH(
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json({ error: '해당 시험월 성적이 이미 기록돼 있습니다.' }, { status: 409 });
+      return apiError('CONFLICT', '해당 시험월 성적이 이미 기록돼 있습니다.', 409);
     }
     if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: '시험 성적을 찾을 수 없습니다.' }, { status: 404 });
+      return apiError('NOT_FOUND', '시험 성적을 찾을 수 없습니다.', 404);
     }
     console.error('[crm/exam-scores PATCH]', error);
-    return NextResponse.json({ error: '시험 성적 수정에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '시험 성적 수정에 실패했습니다.', 500);
   }
   if (!data) {
-    return NextResponse.json({ error: '시험 성적을 찾을 수 없습니다.' }, { status: 404 });
+    return apiError('NOT_FOUND', '시험 성적을 찾을 수 없습니다.', 404);
   }
 
   await syncLatestExamScore(data.student_id);
@@ -87,9 +86,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { data: existing, error: fetchError } = await supabaseAdmin
     .from('student_exam_scores')
@@ -99,16 +96,16 @@ export async function DELETE(
 
   if (fetchError) {
     console.error('[crm/exam-scores DELETE fetch]', fetchError);
-    return NextResponse.json({ error: '시험 성적 삭제에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '시험 성적 삭제에 실패했습니다.', 500);
   }
   if (!existing) {
-    return NextResponse.json({ error: '시험 성적을 찾을 수 없습니다.' }, { status: 404 });
+    return apiError('NOT_FOUND', '시험 성적을 찾을 수 없습니다.', 404);
   }
 
   const { error } = await supabaseAdmin.from('student_exam_scores').delete().eq('id', id);
   if (error) {
     console.error('[crm/exam-scores DELETE]', error);
-    return NextResponse.json({ error: '시험 성적 삭제에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '시험 성적 삭제에 실패했습니다.', 500);
   }
 
   await syncLatestExamScore(existing.student_id);

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import Anthropic from '@anthropic-ai/sdk';
@@ -13,6 +13,7 @@ import {
 } from '@/lib/strategy-agent-context';
 import { STRATEGY_GURU_PROMPT } from '@/lib/strategy-guru';
 import { buildBriefHealth, parsePeriod } from '@/lib/strategy-brief';
+import { apiError } from '@/lib/api-response';
 
 // 선제 진단 모드에서 합성하는 사용자 지시(클라이언트가 보내지 않음)
 const PROACTIVE_SEED = `방금 **이번 달 인입한 리드 코호트**의 퍼널 추이를 점검했다. 위 [KPI 건강 진단]을 1차 근거로, 이 리드들이 인입→컨택→상담→진단→결제로 가는 길에서 **어디서 가장 많이 막히고 빠지는지(드롭오프)**를 중심으로, 지금 가장 시급한 5개 영역을 골라 보고하라.
@@ -35,10 +36,6 @@ export const maxDuration = 60;
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
-}
-
-function errorJson(code: string, message: string, status: number) {
-  return NextResponse.json({ error: { code, message } }, { status });
 }
 
 // 이탈 판정 공통 필터 (funnel_stage='churned' 또는 lead_status='inactive')
@@ -122,14 +119,14 @@ async function fetchRelevantCases(queryText: string): Promise<PastCase[]> {
 
 export async function POST(request: NextRequest) {
   if (!isAuthenticated(request)) {
-    return errorJson('UNAUTHORIZED', '인증이 필요합니다.', 401);
+    return apiError('UNAUTHORIZED', '인증이 필요합니다.', 401);
   }
 
   let body: { messages?: ChatMessage[]; mode?: 'chat' | 'proactive'; from?: string; to?: string };
   try {
     body = await request.json();
   } catch {
-    return errorJson('INVALID_JSON', '잘못된 요청 형식입니다.', 400);
+    return apiError('INVALID_JSON', '잘못된 요청 형식입니다.', 400);
   }
 
   const period = parsePeriod(body);
@@ -152,11 +149,11 @@ export async function POST(request: NextRequest) {
   } else {
     const msgs = body.messages;
     if (!Array.isArray(msgs) || msgs.length === 0) {
-      return errorJson('INVALID_INPUT', 'messages가 필요합니다.', 400);
+      return apiError('INVALID_INPUT', 'messages가 필요합니다.', 400);
     }
     const lastMessage = msgs[msgs.length - 1];
     if (lastMessage.role !== 'user' || !lastMessage.content?.trim()) {
-      return errorJson('INVALID_INPUT', '마지막 메시지는 사용자 입력이어야 합니다.', 400);
+      return apiError('INVALID_INPUT', '마지막 메시지는 사용자 입력이어야 합니다.', 400);
     }
     messages = msgs;
     caseQuery = lastMessage.content;
@@ -165,7 +162,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.error('[strategy-agent] ANTHROPIC_API_KEY is not set');
-    return errorJson('AI_NOT_CONFIGURED', 'AI 서비스가 설정되지 않았습니다.', 503);
+    return apiError('AI_NOT_CONFIGURED', 'AI 서비스가 설정되지 않았습니다.', 503);
   }
 
   // 내부 데이터 컨텍스트 구성 (전환 지표 + 관련 과거 사례 + 선제 모드면 KPI 진단)

@@ -4,6 +4,7 @@ import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen'
 import { buildBriefHealth, parsePeriod } from '@/lib/strategy-brief';
 import { fallbackAreas, parseAreas } from '@/lib/insight-parse';
 import type { InsightBriefMode as BriefMode, InsightPeriod } from '@/types/crm';
+import { unauthorized } from '@/lib/api-response';
 
 export const maxDuration = 30;
 
@@ -22,9 +23,7 @@ const WEEKLY_SYSTEM = `너는 SuperfastSAT 대표 이민재의 날카로운 성�
 areas는 정확히 5개(신호가 적으면 절대 수준이 낮은 단계·채널을 사각지대로 끌어와 5개를 채운다). JSON 외 다른 텍스트·코드펜스 금지.`;
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let mode: BriefMode = 'diagnosis';
   let period: InsightPeriod | undefined;

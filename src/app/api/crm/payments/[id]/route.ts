@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { error } = await supabaseAdmin.from('payments').delete().eq('id', id);
 
   if (error) {
     console.error('[payments DELETE]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError('INTERNAL_ERROR', error.message, 500);
   }
 
   return new NextResponse(null, { status: 204 });
@@ -32,9 +31,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: {
     created_by?: string | null;
@@ -46,7 +43,7 @@ export async function PATCH(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON', 400);
   }
 
   const updates: Record<string, string | number | null> = {};
@@ -54,13 +51,13 @@ export async function PATCH(
   if ('payment_type' in body) {
     // 환불은 변경 불가(금액 부호와 연동). 최초/재결제/원포인트만 허용.
     if (!['최초결제', '재결제', '원포인트'].includes(body.payment_type ?? '')) {
-      return NextResponse.json({ error: '허용되지 않는 결제 유형입니다.' }, { status: 400 });
+      return apiError('BAD_REQUEST', '허용되지 않는 결제 유형입니다.', 400);
     }
     updates.payment_type = body.payment_type!;
   }
   if ('tax_type' in body) {
     if (!['면세', '과세'].includes(body.tax_type ?? '')) {
-      return NextResponse.json({ error: '허용되지 않는 세금 유형입니다.' }, { status: 400 });
+      return apiError('BAD_REQUEST', '허용되지 않는 세금 유형입니다.', 400);
     }
     updates.tax_type = body.tax_type!;
   }
@@ -68,13 +65,13 @@ export async function PATCH(
     const hours = body.hours;
     // 시간은 소수 허용(예: 41.5). 금액과 달리 정수 제약을 두지 않는다.
     if (hours !== null && (typeof hours !== 'number' || !Number.isFinite(hours) || hours <= 0)) {
-      return NextResponse.json({ error: '시간은 0보다 큰 숫자여야 합니다.' }, { status: 400 });
+      return apiError('BAD_REQUEST', '시간은 0보다 큰 숫자여야 합니다.', 400);
     }
     updates.hours = hours ?? null;
   }
   if ('amount' in body) {
     if (!Number.isInteger(body.amount)) {
-      return NextResponse.json({ error: '금액은 정수여야 합니다.' }, { status: 400 });
+      return apiError('BAD_REQUEST', '금액은 정수여야 합니다.', 400);
     }
     // 부호 규칙은 결과 결제 유형 기준. 요청에 유형이 없으면 현재 값을 읽는다.
     let effectiveType = updates.payment_type as string | undefined;
@@ -85,21 +82,18 @@ export async function PATCH(
         .eq('id', id)
         .single();
       if (!current) {
-        return NextResponse.json({ error: '결제 기록을 찾을 수 없습니다.' }, { status: 404 });
+        return apiError('NOT_FOUND', '결제 기록을 찾을 수 없습니다.', 404);
       }
       effectiveType = current.payment_type;
     }
     const amount = body.amount!;
     if (effectiveType === '환불' ? amount >= 0 : amount < 0) {
-      return NextResponse.json(
-        { error: effectiveType === '환불' ? '환불 금액은 음수여야 합니다.' : '금액은 0 이상이어야 합니다.' },
-        { status: 400 }
-      );
+      return apiError('BAD_REQUEST', effectiveType === '환불' ? '환불 금액은 음수여야 합니다.' : '금액은 0 이상이어야 합니다.', 400);
     }
     updates.amount = amount;
   }
   if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: '수정할 항목이 없습니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '수정할 항목이 없습니다.', 400);
   }
 
   const { data, error } = await supabaseAdmin
@@ -111,7 +105,7 @@ export async function PATCH(
 
   if (error) {
     console.error('[payments PATCH]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError('INTERNAL_ERROR', error.message, 500);
   }
 
   return NextResponse.json({ data });

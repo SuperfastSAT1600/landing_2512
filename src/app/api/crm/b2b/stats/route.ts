@@ -4,6 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { computeStageFlow, type StageFlowRow, type StageHistoryEntry } from '@/lib/funnel-stats';
 import { netAmount } from '@/lib/payment-utils';
 import { MAX_LEAD_ROWS, contactRate, toMonthKey, isContactedWithImpliedPartner } from '@/lib/crm-stats-core';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -73,15 +74,13 @@ interface B2bStudent {
  * 코호트 = company_id 있는 리드, inquiry_date ∈ [from,to]. 전환=최초결제 anytime, 매출=기간 결제.
  */
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const sp = new URL(request.url).searchParams;
   const from = sp.get('from');
   const to = sp.get('to');
   if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to)) {
-    return NextResponse.json({ error: 'from/to는 YYYY-MM-DD 형식이어야 합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'from/to는 YYYY-MM-DD 형식이어야 합니다.', 400);
   }
 
   // 업체 로스터(0-리드 업체 포함)
@@ -91,7 +90,7 @@ export async function GET(request: NextRequest) {
     .order('name');
   if (cErr) {
     console.error('[b2b/stats companies]', cErr);
-    return NextResponse.json({ error: '업체 목록을 불러오지 못했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '업체 목록을 불러오지 못했습니다.', 500);
   }
   const companyRows = companies ?? [];
   const companyName = new Map<string, string>(companyRows.map((c) => [c.id, c.name]));
@@ -108,7 +107,7 @@ export async function GET(request: NextRequest) {
     .limit(MAX_LEAD_ROWS);
   if (sErr) {
     console.error('[b2b/stats students]', sErr);
-    return NextResponse.json({ error: 'B2B 리드를 불러오지 못했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', 'B2B 리드를 불러오지 못했습니다.', 500);
   }
   const b2bStudents = (students ?? []) as B2bStudent[];
   const companyOfStudentId = new Map<string, string>();

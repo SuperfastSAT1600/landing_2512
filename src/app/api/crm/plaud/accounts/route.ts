@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { listPlaudAccounts } from '@/lib/plaud-client';
+import { unauthorized } from '@/lib/api-response';
 
 /**
  * GET /api/crm/plaud/accounts
@@ -8,8 +9,6 @@ import { listPlaudAccounts } from '@/lib/plaud-client';
  * 상담메모 피커의 1단계(직원 선택)에서 사용한다.
  */
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
   return NextResponse.json({ data: await listPlaudAccounts() });
 }
