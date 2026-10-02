@@ -5,42 +5,28 @@
 //  - 진행 중 전체(기본): 코호트 무관 1~3단계 — 일상 운영 화면
 //  - 특정 주차: 그 코호트의 5단계 전부 — 주차별 표의 한 행과 정확히 일치
 // 4(결제 완료)·5(미전환)는 터미널. 진입은 버튼으로만, 드래그로는 오갈 수 없다.
+// 데이터·변경 로직은 use-renewal-board / renewal-board/ 훅, 화면 조각은 renewal-board/ 컴포넌트.
 
-import { useCallback, useMemo, useState } from 'react';
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  pointerWithin,
-  closestCenter,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  RENEWAL_OPEN_STAGES,
-  RENEWAL_STAGES,
-  isRenewalCarried,
-  type RenewalOutcomeQuality,
-  type RenewalStage,
-  type RenewalTarget,
-  type Student,
-} from '@/types/crm';
-import { UserPlus } from 'lucide-react';
-import { getCurrentWeekDef, getWeekLabel } from '@/lib/week-definitions';
-import { PaymentModal } from './PaymentModal';
+import { useMemo, useState } from 'react';
+import type { RenewalOutcomeQuality, RenewalTarget, Student } from '@/types/crm';
+import { getWeekLabel } from '@/lib/week-definitions';
 import { RenewalCandidateAdd } from './RenewalCandidateAdd';
 import { getRenewalCandidates } from './renewal-candidate-source';
-import { RenewalCard, type RenewalCardTutoring } from './RenewalCard';
-import { RenewalDropModal } from './RenewalDropModal';
-import { RenewalOutcomeModal } from './RenewalOutcomeModal';
-import { RenewalKanbanColumn } from './RenewalKanbanColumn';
-import { sortByNextContact } from './renewal-sort';
 import { RenewalStatsStrip } from './RenewalStatsStrip';
 import { RenewalWeeklyStats } from './RenewalWeeklyStats';
 import { defaultRenewalScope, useRenewalBoard, type RenewalScope } from './use-renewal-board';
-import { apiErrorMessage } from '@/lib/api-error';
+import { RenewalBoardColumns } from './renewal-board/RenewalBoardColumns';
+import { RenewalErrorBanner } from './renewal-board/RenewalErrorBanner';
+import { RenewalModals } from './renewal-board/RenewalModals';
+import { RenewalToolbar } from './renewal-board/RenewalToolbar';
+import {
+  buildTutoringByStudentId,
+  buildWeekOptions,
+  groupTargetsByStage,
+} from './renewal-board/renewal-board-utils';
+import { useRenewalDrag } from './renewal-board/use-renewal-drag';
+import { useRenewalMutations } from './renewal-board/use-renewal-mutations';
+import { useRenewalPayment } from './renewal-board/use-renewal-payment';
 
 interface RenewalKanbanProps {
   adminKey: string;
@@ -51,13 +37,6 @@ interface RenewalKanbanProps {
   onStudentUpdate: (id: string, updates: Partial<Student>) => void;
 }
 
-/** 결제는 성공했는데 단계 전환 PATCH가 실패한 상태 — 재시도 대상. */
-interface PendingConversion {
-  targetId: string;
-  paymentId?: string;
-  studentName: string;
-}
-
 export function RenewalKanban({
   adminKey,
   userName,
@@ -66,52 +45,22 @@ export function RenewalKanban({
 }: RenewalKanbanProps) {
   const [nowMs] = useState(() => Date.now());
   const [scope, setScope] = useState<RenewalScope>(() => defaultRenewalScope());
-  const [activeId, setActiveId] = useState<string | null>(null);
-  // PaymentModal은 B2B 파트너·가입 여부까지 보므로 조인된 부분 학생으로는 열 수 없다.
-  // 결제 버튼을 누른 순간 전체 학생을 받아온다.
-  const [payment, setPayment] = useState<{ target: RenewalTarget; student: Student } | null>(null);
   const [dropTarget, setDropTarget] = useState<RenewalTarget | null>(null);
   const [qualityTarget, setQualityTarget] = useState<{
     target: RenewalTarget;
     quality: RenewalOutcomeQuality;
   } | null>(null);
-  const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
-  const [pendingConversion, setPendingConversion] = useState<PendingConversion | null>(null);
   const [candidatesOpen, setCandidatesOpen] = useState(false);
 
   const board = useRenewalBoard(adminKey, scope);
   const { targets, setTargets, entries, weekly, error, setError, refresh } = board;
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
-  const patchTarget = useCallback(
-    async (id: string, body: Record<string, unknown>) => {
-      const res = await fetch(`/api/crm/renewal-targets/${id}`, {
-        method: 'PATCH',
-        headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        // 사유 검증 400 같은 건 사용자가 이유를 알아야 고칠 수 있다.
-        const json = await res.json().catch(() => null);
-        throw new Error(apiErrorMessage(json, '단계 변경에 실패했습니다.'));
-      }
-    },
-    [adminKey]
-  );
+  const mutations = useRenewalMutations({ adminKey, userName, setTargets, setError, refresh });
+  const { patchTarget } = mutations;
+  const drag = useRenewalDrag({ targets, setTargets, setError, refresh, patchTarget });
+  const pay = useRenewalPayment({ adminKey, patchTarget, setError, refresh, onStudentUpdate });
 
-  const tutoringByStudentId = useMemo(() => {
-    const map = new Map<string, RenewalCardTutoring>();
-    for (const e of entries) {
-      map.set(e.student.id, {
-        displayStatus: e.displayStatus,
-        // 카드는 0으로 깎지 않은 값을 쓴다 — 초과 사용(-3h)이 재결제 시급도의 핵심 신호다.
-        remainingHours: e.hours ? e.hours.remaining : null,
-        scheduledHours: e.hours?.scheduled ?? null,
-        overscheduledHours: e.hours?.overscheduled ?? null,
-      });
-    }
-    return map;
-  }, [entries]);
+  const tutoringByStudentId = useMemo(() => buildTutoringByStudentId(entries), [entries]);
 
   // 후보 = 튜터링 중 목록 − 이미 열린 타깃(주차 무관), 급한 순
   const candidates = useMemo(
@@ -119,292 +68,49 @@ export function RenewalKanban({
     [entries, board.openTargets]
   );
 
-  const targetsByStage = useMemo(() => {
-    const map = new Map<RenewalStage, RenewalTarget[]>();
-    for (const stage of RENEWAL_STAGES) map.set(stage, []);
-    for (const target of targets) map.get(target.stage)?.push(target);
-    // 진행 단계만 임박순으로 다시 세운다 — 터미널(4·5)은 결과 기록이라 서버 정렬
-    // (stage_updated_at DESC, 최근 확정순)이 그대로 맞다.
-    for (const stage of RENEWAL_OPEN_STAGES) {
-      map.set(stage, sortByNextContact(map.get(stage) ?? []));
-    }
-    return map;
-  }, [targets]);
-
-  // 주차 셀렉터 후보 — 이번 주차 + 데이터가 있는 최근 주차
-  const weekOptions = useMemo(() => {
-    const thisWeek = getCurrentWeekDef(new Date(nowMs))?.start;
-    const starts = new Set(weekly.map((w) => w.week_start));
-    if (thisWeek) starts.add(thisWeek);
-    return [...starts].sort((a, b) => b.localeCompare(a));
-  }, [weekly, nowMs]);
+  const targetsByStage = useMemo(() => groupTargetsByStage(targets), [targets]);
+  const weekOptions = useMemo(() => buildWeekOptions(weekly, nowMs), [weekly, nowMs]);
 
   const scopeLabel =
     scope.kind === 'open'
       ? '진행 중 전체'
       : (getWeekLabel(scope.weekStart) ?? scope.weekStart);
 
-  // ── 액션 ────────────────────────────────────────────────────────────────────
-
-  const handleDragEnd = async ({ active, over }: DragEndEvent) => {
-    setActiveId(null);
-    if (!over) return;
-    const target = targets.find((t) => t.id === active.id);
-    if (!target) return;
-    // 이월된 행은 다음 주차로 넘어가 종결됐다 — 되살리지 않는다.
-    if (isRenewalCarried(target)) return;
-
-    const overStage = RENEWAL_STAGES.includes(over.id as RenewalStage)
-      ? (over.id as RenewalStage)
-      : targets.find((t) => t.id === over.id)?.stage;
-    if (!overStage || overStage === target.stage) return;
-    // 터미널 단계는 드래그로 오갈 수 없다 — 결제/미전환 버튼만이 진입 경로다.
-    if (!RENEWAL_OPEN_STAGES.includes(overStage) || !RENEWAL_OPEN_STAGES.includes(target.stage)) {
-      return;
-    }
-
-    const previous = target;
-    setTargets((current) =>
-      current.map((t) =>
-        t.id === target.id
-          ? { ...t, stage: overStage, stage_updated_at: new Date().toISOString() }
-          : t
-      )
-    );
-    try {
-      await patchTarget(target.id, { stage: overStage });
-      await refresh();
-    } catch (e) {
-      setTargets((current) => current.map((t) => (t.id === previous.id ? previous : t)));
-      setError(e instanceof Error ? e.message : '이동에 실패했습니다.');
-    }
-  };
-
-  const handleAdd = async (studentId: string) => {
-    setPendingStudentId(studentId);
-    try {
-      const res = await fetch('/api/crm/renewal-targets', {
-        method: 'POST',
-        headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_id: studentId }),
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(apiErrorMessage(json, '추가에 실패했습니다.'));
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '추가에 실패했습니다.');
-    } finally {
-      setPendingStudentId(null);
-    }
-  };
-
-  const runPatch = async (target: RenewalTarget, body: Record<string, unknown>, failMsg: string) => {
-    try {
-      await patchTarget(target.id, body);
-      await refresh();
-    } catch {
-      setError(failMsg);
-    }
-  };
-
-  /** 메모는 카드에서 바로 저장한다 — 낙관적 반영 후 실패 시에만 되돌린다. */
-  const handleMemoSave = async (target: RenewalTarget, memo: string) => {
-    const previous = target.memo ?? null;
-    const next = memo.trim() === '' ? null : memo.trim();
-    if (next === previous) return;
-
-    setTargets((current) =>
-      current.map((t) => (t.id === target.id ? { ...t, memo: next } : t))
-    );
-    try {
-      await patchTarget(target.id, { memo: next });
-    } catch {
-      setTargets((current) =>
-        current.map((t) => (t.id === target.id ? { ...t, memo: previous } : t))
-      );
-      setError('메모 저장에 실패했습니다.');
-    }
-  };
-
-  /** 컨택 예정일 — 메모와 같이 단계와 독립이며 낙관적으로 반영한다. 정렬이 즉시 따라온다. */
-  const handleContactDateSave = async (target: RenewalTarget, date: string | null) => {
-    const previous = target.next_contact_date ?? null;
-    if (date === previous) return;
-
-    setTargets((current) =>
-      current.map((t) => (t.id === target.id ? { ...t, next_contact_date: date } : t))
-    );
-    try {
-      await patchTarget(target.id, { next_contact_date: date });
-    } catch {
-      setTargets((current) =>
-        current.map((t) => (t.id === target.id ? { ...t, next_contact_date: previous } : t))
-      );
-      setError('컨택 예정일 저장에 실패했습니다.');
-    }
-  };
-
-  /**
-   * 결과 품질·사유 저장. 즉각 반응이 필요하므로 드래그와 같은 낙관적 업데이트를 쓴다.
-   * quality 가 null 이면 사유까지 함께 비운다(미분류로 되돌리기).
-   */
-  const saveOutcome = async (
-    target: RenewalTarget,
-    next: { quality: RenewalOutcomeQuality; reasonTag: string; reasonNote: string } | null
-  ) => {
-    const previous = target;
-    setTargets((current) =>
-      current.map((t) =>
-        t.id === target.id
-          ? {
-              ...t,
-              outcome_quality: next?.quality ?? null,
-              outcome_reason_tag: next?.reasonTag ?? null,
-              outcome_reason_note: next?.reasonNote || null,
-            }
-          : t
-      )
-    );
-    try {
-      await patchTarget(target.id, {
-        outcome_quality: next?.quality ?? null,
-        outcome_reason_tag: next?.reasonTag ?? null,
-        outcome_reason_note: next?.reasonNote ?? null,
-        author: userName,
-      });
-      await refresh();
-    } catch (e) {
-      setTargets((current) => current.map((t) => (t.id === previous.id ? previous : t)));
-      setError(e instanceof Error ? e.message : '결과 저장에 실패했습니다.');
-    }
-  };
-
-  const handleRemove = async (target: RenewalTarget) => {
-    try {
-      const res = await fetch(`/api/crm/renewal-targets/${target.id}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-key': adminKey },
-      });
-      if (!res.ok) throw new Error();
-      await refresh();
-    } catch {
-      setError('삭제에 실패했습니다.');
-    }
-  };
-
-  /** 결제는 이미 기록됐다. 단계 전환만 실패하면 재시도로 복구한다(PATCH는 멱등). */
-  const convertToPaid = async (targetId: string, paymentId: string | undefined, name: string) => {
-    try {
-      await patchTarget(targetId, { stage: '4', converted_payment_id: paymentId ?? null });
-      setPendingConversion(null);
-      await refresh();
-    } catch {
-      setPendingConversion({ targetId, paymentId, studentName: name });
-      setError(`${name} 결제는 기록됐지만 '결제 완료' 단계 이동이 실패했습니다.`);
-    }
-  };
-
-  /** 결제 모달 진입 — 전체 학생을 받아온 뒤 연다. */
-  const openPayment = async (target: RenewalTarget) => {
-    try {
-      const res = await fetch(`/api/crm/students/${target.student_id}`, {
-        headers: { 'x-admin-key': adminKey },
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok || !json?.data) throw new Error();
-      setPayment({ target, student: json.data as Student });
-    } catch {
-      setError('학생 정보를 불러오지 못해 결제 창을 열 수 없습니다.');
-    }
-  };
-
-  const handlePaymentConfirm = async (updatedStudent: Student, paymentId?: string) => {
-    if (!payment) return;
-    const { target } = payment;
-    setPayment(null);
-    onStudentUpdate(updatedStudent.id, updatedStudent);
-    await convertToPaid(target.id, paymentId, updatedStudent.name);
-  };
-
   // ── 렌더 ────────────────────────────────────────────────────────────────────
 
   if (board.loading) return <p className="py-12 text-center text-sm text-gray-400">불러오는 중...</p>;
 
-  const activeTarget = activeId ? targets.find((t) => t.id === activeId) : null;
-  const showWeekBadge = scope.kind === 'open';
+  const activeTarget = drag.activeId ? targets.find((t) => t.id === drag.activeId) : null;
 
   return (
     <div className="space-y-4">
       {error && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
-          <span>{error}</span>
-          <div className="flex shrink-0 items-center gap-2">
-            {pendingConversion && (
-              <button
-                type="button"
-                onClick={() =>
-                  convertToPaid(
-                    pendingConversion.targetId,
-                    pendingConversion.paymentId,
-                    pendingConversion.studentName
-                  )
-                }
-                className="px-2 py-1 rounded-md font-semibold text-white bg-red-500 hover:bg-red-400 transition-colors"
-              >
-                결제 완료로 이동 재시도
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-600"
-              aria-label="오류 닫기"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
+        <RenewalErrorBanner
+          error={error}
+          pendingConversion={pay.pendingConversion}
+          onRetryConversion={(c) => pay.convertToPaid(c.targetId, c.paymentId, c.studentName)}
+          onClose={() => setError(null)}
+        />
       )}
 
-      {/* 스코프 셀렉터 + 대상 추가 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={scope.kind === 'open' ? 'open' : scope.weekStart}
-          onChange={(e) =>
-            setScope(e.target.value === 'open' ? { kind: 'open' } : { kind: 'week', weekStart: e.target.value })
-          }
-          className="px-2.5 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg bg-white text-gray-800 outline-none focus:border-gray-400"
-        >
-          <option value="open">진행 중 전체</option>
-          {weekOptions.map((start) => (
-            <option key={start} value={start}>
-              {getWeekLabel(start) ?? start}
-            </option>
-          ))}
-        </select>
-        {!candidatesOpen && (
-          <button
-            type="button"
-            onClick={() => setCandidatesOpen(true)}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
-          >
-            <UserPlus size={13} />
-            재결제 대상 추가
-            {!board.candidatesLoading && (
-              <span className="text-blue-400 font-medium">{candidates.length}명</span>
-            )}
-          </button>
-        )}
-      </div>
+      <RenewalToolbar
+        scope={scope}
+        weekOptions={weekOptions}
+        candidatesOpen={candidatesOpen}
+        candidatesLoading={board.candidatesLoading}
+        candidateCount={candidates.length}
+        onScopeChange={setScope}
+        onOpenCandidates={() => setCandidatesOpen(true)}
+      />
 
       {candidatesOpen && (
         <RenewalCandidateAdd
           candidates={candidates}
           loading={board.candidatesLoading}
           error={board.candidatesError}
-          onAdd={handleAdd}
+          onAdd={mutations.handleAdd}
           onClose={() => setCandidatesOpen(false)}
-          pendingStudentId={pendingStudentId}
+          pendingStudentId={mutations.pendingStudentId}
           missingFromEnrolled={board.missingFromEnrolled}
           onSelectStudent={onSelectStudentById}
         />
@@ -416,68 +122,25 @@ export function RenewalKanban({
         mode={scope.kind === 'open' ? 'open' : 'cohort'}
       />
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={(args) => {
-          const hits = pointerWithin(args);
-          return hits.length > 0 ? hits : closestCenter(args);
-        }}
-        onDragStart={(e: DragStartEvent) => setActiveId(e.active.id as string)}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="w-full overflow-x-auto pt-2" style={{ transform: 'rotateX(180deg)' }}>
-          <div
-            className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden w-max min-w-full"
-            style={{ transform: 'rotateX(180deg)' }}
-          >
-            {RENEWAL_STAGES.map((stage, index) => (
-              <div
-                key={stage}
-                className={`flex flex-1 min-w-0 ${index < RENEWAL_STAGES.length - 1 ? 'border-r border-gray-200' : ''}`}
-              >
-                <RenewalKanbanColumn
-                  stage={stage}
-                  targets={targetsByStage.get(stage) ?? []}
-                  nowMs={nowMs}
-                  tutoringByStudentId={tutoringByStudentId}
-                  showWeekBadge={showWeekBadge}
-                  onCardClick={(t) => onSelectStudentById(t.student_id)}
-                  onPayment={stage === '3' ? openPayment : undefined}
-                  onDrop={RENEWAL_OPEN_STAGES.includes(stage) ? setDropTarget : undefined}
-                  onRemove={RENEWAL_OPEN_STAGES.includes(stage) ? handleRemove : undefined}
-                  onReopen={
-                    stage === '5'
-                      ? (t) => runPatch(t, { stage: '2', clear_drop_reason: true }, '되돌리기에 실패했습니다.')
-                      : undefined
-                  }
-                  onMemoSave={handleMemoSave}
-                  onContactDateSave={
-                    RENEWAL_OPEN_STAGES.includes(stage) ? handleContactDateSave : undefined
-                  }
-                  onEditQuality={
-                    stage === '4' || stage === '5'
-                      ? (t, q) => setQualityTarget({ target: t, quality: q })
-                      : undefined
-                  }
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-        <DragOverlay>
-          {activeTarget && (
-            <div className="w-[200px]">
-              <RenewalCard
-                target={activeTarget}
-                tutoring={tutoringByStudentId.get(activeTarget.student_id) ?? null}
-                nowMs={nowMs}
-                onClick={() => {}}
-                overlay
-              />
-            </div>
-          )}
-        </DragOverlay>
-      </DndContext>
+      <RenewalBoardColumns
+        targetsByStage={targetsByStage}
+        activeTarget={activeTarget}
+        nowMs={nowMs}
+        tutoringByStudentId={tutoringByStudentId}
+        showWeekBadge={scope.kind === 'open'}
+        onDragStart={drag.handleDragStart}
+        onDragEnd={drag.handleDragEnd}
+        onCardClick={(t) => onSelectStudentById(t.student_id)}
+        onPayment={pay.openPayment}
+        onDrop={setDropTarget}
+        onRemove={mutations.handleRemove}
+        onReopen={(t) =>
+          mutations.runPatch(t, { stage: '2', clear_drop_reason: true }, '되돌리기에 실패했습니다.')
+        }
+        onMemoSave={mutations.handleMemoSave}
+        onContactDateSave={mutations.handleContactDateSave}
+        onEditQuality={(t, q) => setQualityTarget({ target: t, quality: q })}
+      />
 
       <RenewalWeeklyStats
         rows={weekly}
@@ -493,55 +156,19 @@ export function RenewalKanban({
         }
       />
 
-      {payment && (
-        <PaymentModal
-          student={payment.student}
-          adminKey={adminKey}
-          onConfirm={handlePaymentConfirm}
-          onClose={() => setPayment(null)}
-          defaultPaymentType="재결제"
-        />
-      )}
-
-      {dropTarget && (
-        <RenewalDropModal
-          target={dropTarget}
-          onConfirm={({ quality, reasonTag, reasonNote }) => {
-            const target = dropTarget;
-            setDropTarget(null);
-            runPatch(
-              target,
-              {
-                stage: '5',
-                outcome_quality: quality,
-                outcome_reason_tag: reasonTag,
-                outcome_reason_note: reasonNote,
-                author: userName,
-              },
-              '미전환 처리에 실패했습니다.'
-            );
-          }}
-          onClose={() => setDropTarget(null)}
-        />
-      )}
-
-      {qualityTarget && (
-        <RenewalOutcomeModal
-          target={qualityTarget.target}
-          initialQuality={qualityTarget.quality}
-          onConfirm={(input) => {
-            const { target } = qualityTarget;
-            setQualityTarget(null);
-            saveOutcome(target, input);
-          }}
-          onClear={() => {
-            const { target } = qualityTarget;
-            setQualityTarget(null);
-            saveOutcome(target, null);
-          }}
-          onClose={() => setQualityTarget(null)}
-        />
-      )}
+      <RenewalModals
+        adminKey={adminKey}
+        userName={userName}
+        payment={pay.payment}
+        onPaymentConfirm={pay.handlePaymentConfirm}
+        onPaymentClose={pay.closePayment}
+        dropTarget={dropTarget}
+        onDropClose={() => setDropTarget(null)}
+        onDropConfirm={mutations.runPatch}
+        qualityTarget={qualityTarget}
+        onQualityClose={() => setQualityTarget(null)}
+        onSaveOutcome={mutations.saveOutcome}
+      />
     </div>
   );
 }
