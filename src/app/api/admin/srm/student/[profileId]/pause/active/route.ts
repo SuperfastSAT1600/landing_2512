@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { getKstDateString } from '@/lib/week-definitions';
 
 // DELETE: 현재 활성 휴원 조기 해제
 export async function DELETE(
@@ -9,7 +10,7 @@ export async function DELETE(
 ) {
   if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { profileId } = await params;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getKstDateString();
 
   const { data: linked } = await supabaseAdmin
     .from('students')

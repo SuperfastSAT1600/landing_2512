@@ -17,6 +17,7 @@ import { Plus, Trash2, Search, X, ArrowUpRight } from 'lucide-react';
 import { Student, RetryStage, RETRY_STAGES, RetryStrategy } from '@/types/crm';
 import { StudentCard } from './StudentCard';
 import { resolveDefaultCategoryId } from './strategies/resolveDefaultCategoryId';
+import { optimisticUpdate } from '../lib/optimistic';
 
 interface RetryKanbanProps {
   adminKey: string;
@@ -248,13 +249,20 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     const student = students.find(s => s.id === active.id);
     if (!student || student.retry_stage === stage) return;
 
-    setStudents(prev => prev.map(s => s.id === active.id ? { ...s, retry_stage: stage } : s));
-    await fetch(`/api/crm/students/${active.id}`, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({ retry_stage: stage }),
+    const prevStage = student.retry_stage;
+    const setStage = (st: typeof prevStage) =>
+      setStudents(prev => prev.map(s => s.id === active.id ? { ...s, retry_stage: st } : s));
+    const saved = await optimisticUpdate({
+      apply: () => setStage(stage),
+      revert: () => setStage(prevStage),
+      request: () => fetch(`/api/crm/students/${active.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ retry_stage: stage }),
+      }),
+      failMessage: '단계 이동 저장에 실패했습니다.',
     });
-    onStudentUpdate(active.id as string, { retry_stage: stage });
+    if (saved) onStudentUpdate(active.id as string, { retry_stage: stage });
   };
 
   // 스테이지별 그룹핑을 렌더당 1회만 계산 (기존: 컬럼마다 전체 filter).

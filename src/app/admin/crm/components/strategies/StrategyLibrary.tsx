@@ -8,6 +8,7 @@ import { useStrategyLibraryDnd } from './useStrategyLibraryDnd';
 import { StrategyCategoryColumn } from './StrategyCategoryColumn';
 import { AddCategoryButton } from './AddCategoryButton';
 import { StrategyCard } from './StrategyCard';
+import { optimisticUpdate } from '../../lib/optimistic';
 
 interface Props {
   adminKey: string;
@@ -43,11 +44,19 @@ export function StrategyLibrary({ adminKey, segment }: Props) {
   }
 
   async function handleMove(strategyId: string, targetCategoryId: string) {
-    setStrategies((prev) => prev.map((s) => (s.id === strategyId ? { ...s, category_id: targetCategoryId } : s)));
-    await fetch(`/api/crm/retry-strategies/${strategyId}`, {
-      method: 'PATCH',
-      headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category_id: targetCategoryId }),
+    const prevCategoryId = strategies.find((s) => s.id === strategyId)?.category_id;
+    if (prevCategoryId === undefined) return;
+    const setCategory = (categoryId: string) =>
+      setStrategies((prev) => prev.map((s) => (s.id === strategyId ? { ...s, category_id: categoryId } : s)));
+    await optimisticUpdate({
+      apply: () => setCategory(targetCategoryId),
+      revert: () => setCategory(prevCategoryId),
+      request: () => fetch(`/api/crm/retry-strategies/${strategyId}`, {
+        method: 'PATCH',
+        headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category_id: targetCategoryId }),
+      }),
+      failMessage: '카테고리 이동 저장에 실패했습니다.',
     });
   }
 

@@ -37,7 +37,7 @@ export async function POST(
   }
 
   // 1. 환불 결제 기록 추가 (음수 금액)
-  const { error: paymentErr } = await supabaseAdmin
+  const { data: refundRow, error: paymentErr } = await supabaseAdmin
     .from('payments')
     .insert({
       student_id: id,
@@ -51,10 +51,12 @@ export async function POST(
       tax_type: '면세',
       paid_at: new Date().toISOString(),
       created_by: created_by ?? null,
-    });
+    })
+    .select('id')
+    .single();
 
-  if (paymentErr) {
-    return NextResponse.json({ error: paymentErr.message }, { status: 500 });
+  if (paymentErr || !refundRow) {
+    return NextResponse.json({ error: paymentErr?.message ?? 'Refund insert failed' }, { status: 500 });
   }
 
   // 2. 학생 이탈 처리 — 이탈 진입을 단계 이력에도 남긴다(직전이 이미 이탈이면 그대로).
@@ -78,8 +80,12 @@ export async function POST(
     .single();
 
   if (updateErr) {
-    // 부분 실패 보상: payments에서 방금 추가한 환불 기록 삭제
-    await supabaseAdmin.from('payments').delete().eq('student_id', id).eq('payment_type', '환불').order('paid_at', { ascending: false }).limit(1);
+    // 부분 실패 보상: 방금 추가한 환불 기록만 id로 삭제한다.
+    // (delete()에는 order/limit이 적용되지 않아 조건 삭제는 그 학생의 환불 기록을 전부 지운다)
+    const { error: rollbackErr } = await supabaseAdmin.from('payments').delete().eq('id', refundRow.id);
+    if (rollbackErr) {
+      console.error(`[refund] 보상 삭제 실패 payment=${refundRow.id}:`, rollbackErr.message);
+    }
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
   }
 
