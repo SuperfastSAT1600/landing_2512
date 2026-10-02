@@ -61,7 +61,6 @@ src/app/admin/crm/
 ├── page.tsx                   # CRM 메인 페이지
 └── components/
     ├── SalesKanban.tsx        # 세일즈 칸반
-    ├── MatchingKanban.tsx     # 매칭 칸반
     ├── RetryKanban.tsx        # 재시도 칸반
     ├── EnrolledLeads.tsx      # 수업 중 리드
     ├── LeadPool.tsx           # 리드풀
