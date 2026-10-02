@@ -7,6 +7,7 @@ import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen'
 import { buildSrmReport } from '@/lib/build-srm-report';
 import type { LearningReport, DayItem } from '@/types/srm-portal';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { parseJsonObject } from '@/lib/model-json';
 
 export const maxDuration = 60;
 
@@ -140,22 +141,16 @@ function summarize(r: LearningReport, name: string): string {
 }
 
 function parseBrief(text: string): SrmBriefData | null {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start < 0 || end <= start) return null;
-  try {
-    const o = JSON.parse(text.slice(start, end + 1));
-    const arr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String).filter(Boolean) : []);
-    return {
-      headline: String(o.headline ?? ''),
-      strengths: arr(o.strengths),
-      weaknesses: arr(o.weaknesses),
-      risks: arr(o.risks),
-      recommendation: String(o.recommendation ?? ''),
-    };
-  } catch {
-    return null;
-  }
+  const o = parseJsonObject(text);
+  if (!o) return null;
+  const arr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String).filter(Boolean) : []);
+  return {
+    headline: String(o.headline ?? ''),
+    strengths: arr(o.strengths),
+    weaknesses: arr(o.weaknesses),
+    risks: arr(o.risks),
+    recommendation: String(o.recommendation ?? ''),
+  };
 }
 
 // POST /api/crm/students/:id/srm-brief[?refresh=1] → { data: { brief, cached } }

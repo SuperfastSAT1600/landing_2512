@@ -8,6 +8,7 @@
  */
 import type { WinbackSignal } from '@/types/crm';
 import type { WinbackPick } from '@/lib/winback/parse';
+import { chunk } from '@/lib/chunk';
 
 /** LLM 판정을 못 받은 후보(정원 밖·응답 누락)의 적합도. 미판정을 하단으로 밀지 않기 위한 값. */
 export const NEUTRAL_FIT = 3;
@@ -70,9 +71,7 @@ export function buildRankedCandidates<T extends RankInput>(
  * 작게 쪼개 병렬 호출하면 누락이 줄고 지연도 거의 늘지 않는다(묶음이 동시에 돌기 때문).
  */
 export function splitIntoChunks<T>(items: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
-  return chunks;
+  return chunk(items, size);
 }
 
 /** 묶음별 결과를 합친다. 한 묶음이 실패해도 나머지 판정은 살린다(그 후보들은 규칙 점수로 backfill). */

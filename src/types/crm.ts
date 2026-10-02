@@ -1,3 +1,5 @@
+import { kstDateOf } from '@/lib/kst-day';
+
 /**
  * CRM 공유 타입 정의
  * students, student_coach_assignments, 상담 타임라인, AI 케어 메시지
@@ -606,8 +608,7 @@ export function isStageStalled(
 
 /** 주어진 epoch ms를 KST 기준 'YYYY-MM-DD' 문자열로 변환. */
 export function kstDateStr(ms: number): string {
-  // KST = UTC+9, DST 없음. ms에 9시간 더한 뒤 UTC 날짜를 읽으면 KST 날짜가 된다.
-  return new Date(ms + 9 * 3600000).toISOString().slice(0, 10);
+  return kstDateOf(ms);
 }
 
 /** daily_action_done_at이 KST 기준 오늘이면 true (오늘 액션 완료 처리됨). */

@@ -18,6 +18,7 @@ import {
   weekEndOf,
 } from '@/lib/marketing-week';
 import { unauthorized } from '@/lib/api-response';
+import { kstDayStart, kstDayEnd } from '@/lib/kst-day';
 
 // 주간 목표는 marketing_weekly_goals 에서 온다. 하드코딩 상수는 없다 —
 // 목표 미설정 주차는 weekly_target 이 null 이고 UI 가 "목표 미설정"으로 렌더한다.
@@ -76,8 +77,8 @@ export async function GET(request: NextRequest) {
     supabaseAdmin
       .from('payments')
       .select('student_id, student_name, amount, payment_type, paid_at, tax_type')
-      .gte('paid_at', `${weekStart}T00:00:00+09:00`)
-      .lte('paid_at', `${todayStr}T23:59:59.999+09:00`)
+      .gte('paid_at', kstDayStart(weekStart))
+      .lte('paid_at', kstDayEnd(todayStr))
       .then(({ data }) => data ?? []),
 
     supabaseAdmin

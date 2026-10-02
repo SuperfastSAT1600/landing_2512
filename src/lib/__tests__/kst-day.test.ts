@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toKstDay, toMs } from '@/lib/kst-day';
+import { toKstDay, toMs, kstDayStart, kstDayEnd, kstDateOf } from '@/lib/kst-day';
 
 describe('toKstDay', () => {
   it('naive 문자열은 KST 벽시계로 간주해 날짜만 자른다', () => {
@@ -39,5 +39,28 @@ describe('toMs', () => {
   it('빈 값·잘못된 값은 null', () => {
     expect(toMs(null)).toBeNull();
     expect(toMs('2026-13')).toBeNull();
+  });
+});
+
+describe('kstDayStart / kstDayEnd', () => {
+  // REQ-006 (crm-quality-cleanup): paid_at 범위 필터 경계
+  it('KST 하루의 시작·끝 시각 문자열', () => {
+    expect(kstDayStart('2026-10-02')).toBe('2026-10-02T00:00:00+09:00');
+    expect(kstDayEnd('2026-10-02')).toBe('2026-10-02T23:59:59.999+09:00');
+  });
+
+  it('KST 자정 경계가 UTC 전날 15시와 같다', () => {
+    expect(new Date(kstDayStart('2026-10-02')).toISOString()).toBe('2026-10-01T15:00:00.000Z');
+  });
+});
+
+describe('kstDateOf', () => {
+  it('UTC 15시부터 KST 다음 날', () => {
+    expect(kstDateOf(Date.parse('2026-10-02T14:59:59Z'))).toBe('2026-10-02');
+    expect(kstDateOf(Date.parse('2026-10-02T15:00:00Z'))).toBe('2026-10-03');
+  });
+
+  it('연말 경계에서 KST 새해로 넘어간다', () => {
+    expect(kstDateOf(Date.parse('2026-12-31T15:00:00Z'))).toBe('2027-01-01');
   });
 });

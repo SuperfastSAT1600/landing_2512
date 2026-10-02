@@ -12,6 +12,7 @@ import {
   type RelatedCompanyRef,
 } from '@/lib/crm-stats-core';
 import { apiError } from '@/lib/api-response';
+import { kstDayStart, kstDayEnd } from '@/lib/kst-day';
 
 /**
  * GET /api/crm/stats/detail?metric=<m>&from=YYYY-MM-DD&to=YYYY-MM-DD
@@ -59,8 +60,8 @@ export async function GET(request: NextRequest) {
       .select(
         'id, student_id, student_name, product, amount, payment_type, tax_type, paid_at, created_by, students:student_id(company_id)'
       )
-      .gte('paid_at', `${from}T00:00:00+09:00`)
-      .lte('paid_at', `${to}T23:59:59.999+09:00`)
+      .gte('paid_at', kstDayStart(from))
+      .lte('paid_at', kstDayEnd(to))
       .order('paid_at', { ascending: true }),
     // paid/is_paid 판정용 '언제든 최초결제' 코호트 — overview의 paid 분자와 같은 집합.
     paidCohortQuery(supabaseAdmin),

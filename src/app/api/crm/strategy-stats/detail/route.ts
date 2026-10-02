@@ -6,6 +6,7 @@ import { buildStatsDetail, isStatsDetailMetric } from '@/lib/crm-stats-detail';
 import { assignedStrategyOf, type StrategyStatsStudent } from '@/lib/strategy-stats';
 import { resolveRequestCategoryId } from '../resolve-category';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { chunk } from '@/lib/chunk';
 
 const VALID_SEGMENTS = ['b2b', 'b2c'] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -13,12 +14,6 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // buildStatsDetail가 요구하는 컬럼 + 귀속 판정 컬럼 + segment 필터용 company_id
 const COLS =
   'id,name,funnel_stage,stage_history,lead_status,churn_tag,traffic_source,inquiry_date,created_at,strategy_history,retry_strategy_id,retry_assigned_at,company_id,consultation_timeline';
-
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
 
 /**
  * GET /api/crm/strategy-stats/detail?type=&strategy_id=&metric=&from=&to=

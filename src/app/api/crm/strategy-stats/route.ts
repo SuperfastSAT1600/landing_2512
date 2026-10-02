@@ -10,6 +10,7 @@ import {
   type StrategyTypeStats,
 } from '@/lib/strategy-stats';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { chunk } from '@/lib/chunk';
 export type { StrategyTypeStats };
 
 const VALID_SEGMENTS = ['b2b', 'b2c'] as const;
@@ -23,12 +24,6 @@ function filterSegment<T extends { company_id?: string | null }>(rows: T[], segm
   if (segment === 'b2b') return rows.filter((r) => r.company_id != null);
   if (segment === 'b2c') return rows.filter((r) => r.company_id == null);
   return rows;
-}
-
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
 }
 
 /**

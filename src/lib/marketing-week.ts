@@ -8,8 +8,9 @@
  * src/lib/week-definitions.ts 의 고정 주차 테이블(2026-12-27 종료)에는 의존하지 않는다.
  */
 
+import { kstDateOf } from '@/lib/kst-day';
+
 const DAY_MS = 86400000;
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 /** 주차 키/날짜 문자열은 YYYY-MM-DD 만 쓴다. timestamp 가 와도 날짜만 취한다. */
 function dateOnly(value: string): string {
@@ -31,7 +32,7 @@ function isoDayOfWeek(d: Date): number {
 
 /** 현재 시각의 KST 날짜. */
 export function kstDateStr(now: Date): string {
-  return new Date(now.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
+  return kstDateOf(now.getTime());
 }
 
 /** ISO 주차. year 는 달력 연도가 아니라 ISO 주차 연도(그 주 목요일의 연도)다. */
