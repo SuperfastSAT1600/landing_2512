@@ -8,7 +8,7 @@
 // 데이터·변경 로직은 use-renewal-board / renewal-board/ 훅, 화면 조각은 renewal-board/ 컴포넌트.
 
 import { useMemo, useState } from 'react';
-import type { RenewalOutcomeQuality, RenewalTarget, Student } from '@/types/crm';
+import type { RenewalTarget, Student } from '@/types/crm';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { RenewalCandidateAdd } from './RenewalCandidateAdd';
 import { getRenewalCandidates } from './renewal-candidate-source';
@@ -17,7 +17,7 @@ import { RenewalWeeklyStats } from './RenewalWeeklyStats';
 import { defaultRenewalScope, useRenewalBoard, type RenewalScope } from './use-renewal-board';
 import { RenewalBoardColumns } from './renewal-board/RenewalBoardColumns';
 import { RenewalErrorBanner } from './renewal-board/RenewalErrorBanner';
-import { RenewalModals } from './renewal-board/RenewalModals';
+import { RenewalModals, type QualityTarget } from './renewal-board/RenewalModals';
 import { RenewalToolbar } from './renewal-board/RenewalToolbar';
 import {
   buildTutoringByStudentId,
@@ -46,10 +46,7 @@ export function RenewalKanban({
   const [nowMs] = useState(() => Date.now());
   const [scope, setScope] = useState<RenewalScope>(() => defaultRenewalScope());
   const [dropTarget, setDropTarget] = useState<RenewalTarget | null>(null);
-  const [qualityTarget, setQualityTarget] = useState<{
-    target: RenewalTarget;
-    quality: RenewalOutcomeQuality;
-  } | null>(null);
+  const [qualityTarget, setQualityTarget] = useState<QualityTarget | null>(null);
   const [candidatesOpen, setCandidatesOpen] = useState(false);
 
   const board = useRenewalBoard(adminKey, scope);

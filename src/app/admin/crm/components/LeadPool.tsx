@@ -119,7 +119,7 @@ export function LeadPool({
 
   // 필터/검색/탭이 바뀌면 1페이지로
   useEffect(() => {
-    // 기존 동작 유지(분할 전과 동일한 effect 기반 리셋)
+    // 페이지는 파생값이 아니라 사용자가 넘기는 상태라, 조건이 바뀔 때 effect로 초기화한다.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [filters, nameSearch, poolTab]);
