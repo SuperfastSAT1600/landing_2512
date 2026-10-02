@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Student } from '@/types/crm';
 import type { EditForm } from '../types';
 import { studentToEditForm, fromDatetimeLocal } from '../types';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Params {
   studentId: string;
@@ -51,7 +52,7 @@ export function useEditForm({ studentId, adminKey, localStudent, setLocalStudent
         setIsEditing(false);
       } else {
         const json = await res.json();
-        alert(json.error?.message ?? '저장에 실패했습니다.');
+        alert(apiErrorMessage(json, '저장에 실패했습니다.'));
       }
     } finally {
       setSavingEdit(false);
@@ -89,7 +90,7 @@ export function useEditForm({ studentId, adminKey, localStudent, setLocalStudent
         setIsEditingInquiry(false);
       } else {
         const json = await res.json();
-        alert(json.error?.message ?? '저장에 실패했습니다.');
+        alert(apiErrorMessage(json, '저장에 실패했습니다.'));
       }
     } finally {
       setSavingInquiry(false);

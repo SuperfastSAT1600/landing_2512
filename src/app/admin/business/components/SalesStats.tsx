@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import dynamic from 'next/dynamic';
 import { TrendingUp, TrendingDown, Minus, Users, Phone, CreditCard, RefreshCw, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { apiErrorMessage } from '@/lib/api-error';
 
 // recharts는 통계 탭을 열 때만 필요 — 지연 로딩해 CRM 첫 진입 번들에서 제외한다.
 const SalesRevenueChart = dynamic(() => import('./SalesRevenueChart'), {
@@ -329,7 +330,7 @@ export function SalesStats({ adminKey, onSelectStudent }: SalesStatsProps) {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error?.message ?? '조회 실패');
+        setError(apiErrorMessage(json, '조회 실패'));
         return;
       }
       setData(json.data as CrmStatsData);

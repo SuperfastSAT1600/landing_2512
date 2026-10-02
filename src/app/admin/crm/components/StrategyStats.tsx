@@ -16,6 +16,7 @@ import { LeadDetailTable } from './LeadDetailTable';
 import { useStrategyCategories } from './strategies/useStrategyCategories';
 import { TransitionPanel } from './strategy-stats/TransitionPanel';
 import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
+import { apiErrorMessage } from '@/lib/api-error';
 
 const won = (n: number) => `${n.toLocaleString()}원`;
 const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
@@ -67,7 +68,7 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
       });
       const json = await res.json();
       if (res.ok && json.data) setData(json.data as StrategyTypeStats);
-      else setError(json.error ?? '조회에 실패했습니다.');
+      else setError(apiErrorMessage(json, '조회에 실패했습니다.'));
     } catch {
       setError('네트워크 오류가 발생했습니다.');
     } finally {
@@ -249,7 +250,7 @@ function StrategyDetailPane({
         if (res.ok && json.data && (json.data as StatsDetailResult).kind === 'leads') {
           setLeads((json.data as StatsDetailResult).items as LeadDetailItem[]);
         } else {
-          setLeadsError(json.error?.message ?? json.error ?? '리드를 불러오지 못했습니다.');
+          setLeadsError(apiErrorMessage(json, '리드를 불러오지 못했습니다.'));
         }
       } catch {
         if (!cancelled) setLeadsError('네트워크 오류가 발생했습니다.');

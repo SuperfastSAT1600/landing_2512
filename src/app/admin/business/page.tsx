@@ -5,6 +5,7 @@ import { useAdminAuth } from '@/lib/useAdminAuth';
 import type { Student } from '@/types/crm';
 import { SalesStats } from './components/SalesStats';
 import { StudentDetailPanel } from '../crm/components/StudentDetailPanel';
+import { apiErrorMessage } from '@/lib/api-error';
 
 // CRM 리드 현황·통계의 '통계' 서브탭을 분리한 최상위 페이지.
 // SalesStats는 adminKey 외 어떤 CRM 페이지 상태에도 의존하지 않으므로 그대로 마운트한다.
@@ -35,7 +36,7 @@ export default function BusinessPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        alert(data.error?.message ?? '업데이트에 실패했습니다.');
+        alert(apiErrorMessage(data, '업데이트에 실패했습니다.'));
       }
     } catch {
       /* 무시: 낙관적 반영 유지, 다음 새로고침에서 정정됨 */

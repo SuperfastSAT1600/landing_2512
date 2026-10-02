@@ -40,6 +40,7 @@ import { sortByNextContact } from './renewal-sort';
 import { RenewalStatsStrip } from './RenewalStatsStrip';
 import { RenewalWeeklyStats } from './RenewalWeeklyStats';
 import { defaultRenewalScope, useRenewalBoard, type RenewalScope } from './use-renewal-board';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface RenewalKanbanProps {
   adminKey: string;
@@ -92,7 +93,7 @@ export function RenewalKanban({
       if (!res.ok) {
         // 사유 검증 400 같은 건 사용자가 이유를 알아야 고칠 수 있다.
         const json = await res.json().catch(() => null);
-        throw new Error(json?.error?.message ?? '단계 변경에 실패했습니다.');
+        throw new Error(apiErrorMessage(json, '단계 변경에 실패했습니다.'));
       }
     },
     [adminKey]
@@ -188,7 +189,7 @@ export function RenewalKanban({
         body: JSON.stringify({ student_id: studentId }),
       });
       const json = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(json?.error?.message ?? '추가에 실패했습니다.');
+      if (!res.ok) throw new Error(apiErrorMessage(json, '추가에 실패했습니다.'));
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : '추가에 실패했습니다.');

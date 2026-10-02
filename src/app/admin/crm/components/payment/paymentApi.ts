@@ -1,5 +1,6 @@
 import type { Student } from '@/types/crm';
 import { buildEnrollmentUpdate } from '@/lib/enrollment-state';
+import { apiErrorCode, apiErrorMessage } from '@/lib/api-error';
 
 /**
  * 결제 행은 저장됐지만 "수업 중" 전환만 실패한 상태.
@@ -25,8 +26,10 @@ export async function submitPayment(
   });
   const body = await res.json();
   if (!res.ok) {
-    if (body.code === 'ENROLL_FAILED') throw new PaymentRecordedError(body.error, body.data?.payment?.id);
-    throw new Error(body.error ?? '결제 처리 실패');
+    if (apiErrorCode(body) === 'ENROLL_FAILED') {
+      throw new PaymentRecordedError(apiErrorMessage(body, '수업 중 전환에 실패했습니다.'), body.data?.payment?.id);
+    }
+    throw new Error(apiErrorMessage(body, '결제 처리 실패'));
   }
   return { student: body.data.student, paymentId: body.data.payment?.id };
 }
@@ -50,6 +53,6 @@ export async function retryEnrollment(
     body: JSON.stringify({ ...fields, ...extra }),
   });
   const body = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(body?.error?.message ?? '수업 중 전환 재시도에 실패했습니다.');
+  if (!res.ok) throw new Error(apiErrorMessage(body, '수업 중 전환 재시도에 실패했습니다.'));
   return body.data;
 }

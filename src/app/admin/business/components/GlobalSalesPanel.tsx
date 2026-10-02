@@ -11,6 +11,7 @@ import { MonthlyTargetEditor } from './MonthlyTargetEditor';
 import { RevenueBreakdownBars } from './RevenueBreakdownBars';
 import { GlobalSalesTable } from './GlobalSalesTable';
 import { GlobalSaleAddForm, type NewGlobalSale } from './GlobalSaleAddForm';
+import { apiErrorMessage } from '@/lib/api-error';
 
 // recharts는 이 패널을 열 때만 필요 — 지연 로딩해 첫 진입 번들에서 제외한다.
 const TargetVsActualChart = dynamic(() => import('./TargetVsActualChart'), {
@@ -58,7 +59,7 @@ export function GlobalSalesPanel({ adminKey }: Props) {
         const res = await fetch('/api/business/global-sales', { headers: { 'x-admin-key': adminKey } });
         const json = await res.json();
         if (res.ok) setEntries(json.data ?? []);
-        else setError(json.error ?? '조회에 실패했습니다.');
+        else setError(apiErrorMessage(json, '조회에 실패했습니다.'));
       } catch {
         setError('네트워크 오류가 발생했습니다.');
       } finally {
@@ -80,7 +81,7 @@ export function GlobalSalesPanel({ adminKey }: Props) {
         setEntries((prev) => [json.data as GlobalSaleEntry, ...prev]);
         setAdding(false);
       } else {
-        alert(json.error ?? '기록에 실패했습니다.');
+        alert(apiErrorMessage(json, '기록에 실패했습니다.'));
       }
     } finally {
       setSubmitting(false);

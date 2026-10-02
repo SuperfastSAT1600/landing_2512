@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Search, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import type { CrmUnlinkedStudent, TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Props {
   crmStudent: CrmUnlinkedStudent;
@@ -40,7 +41,7 @@ export function SrmLinkModal({ crmStudent, sfv2Unlinked, adminKey, onLinked, onC
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        throw new Error(json.error ?? '연결 실패');
+        throw new Error(apiErrorMessage(json, '연결 실패'));
       }
       onLinked();
     } catch (e) {

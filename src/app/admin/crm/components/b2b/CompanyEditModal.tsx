@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { Company } from '@/types/crm';
 import { Field, inputCls } from '../form-primitives';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Props {
   adminKey: string;
@@ -45,7 +46,7 @@ export function CompanyEditModal({ adminKey, company, onClose, onSaved }: Props)
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!res.ok) { setError(json.error ?? '저장에 실패했습니다.'); setSaving(false); return; }
+      if (!res.ok) { setError(apiErrorMessage(json, '저장에 실패했습니다.')); setSaving(false); return; }
       onSaved(json.data as Company);
     } catch {
       setError('네트워크 오류가 발생했습니다.');

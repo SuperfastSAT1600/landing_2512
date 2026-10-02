@@ -6,6 +6,7 @@ import type { StatsDetailMetric, StatsDetailResult } from '@/lib/crm-stats-detai
 import { CRM_MEMBER_NAMES } from '@/lib/admin-user';
 import { netAmount } from '@/lib/payment-utils';
 import { LeadDetailTable, kstDate } from './LeadDetailTable';
+import { apiErrorMessage } from '@/lib/api-error';
 
 // 리드 상태 판정·뱃지는 LeadDetailTable로 이전 — 기존 import 경로 호환을 위해 재노출한다.
 export { leadStatus, STATUS_BADGE, type LeadDisplayStatus } from './LeadDetailTable';
@@ -51,7 +52,7 @@ export function StatsDetailModal({ adminKey, metric, label, from, to, source, en
         const json = await res.json();
         if (cancelled) return;
         if (res.ok && json.data) setResult(json.data as StatsDetailResult);
-        else setError(json.error?.message ?? '조회에 실패했습니다.');
+        else setError(apiErrorMessage(json, '조회에 실패했습니다.'));
       } catch {
         if (!cancelled) setError('네트워크 오류가 발생했습니다.');
       } finally {

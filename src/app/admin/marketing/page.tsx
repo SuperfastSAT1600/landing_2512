@@ -11,6 +11,7 @@ import ChannelHealthTable from './components/ChannelHealthTable';
 import WeeklyGoalEditor from './components/WeeklyGoalEditor';
 import MarketingTabs from './components/MarketingTabs';
 import { fmt, fmtRate, toDateStr } from './components/format';
+import { apiErrorMessage } from '@/lib/api-error';
 
 function defaultRange() {
   const to = new Date();
@@ -50,7 +51,7 @@ function AdSpendModal({
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: JSON.stringify({ date, channel_group: group, amount: parsed, note: note || null }),
       });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error?.message ?? '저장 실패'); }
+      if (!res.ok) { const d = await res.json(); throw new Error(apiErrorMessage(d, '저장 실패')); }
       onSaved(); onClose();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '저장 중 오류');

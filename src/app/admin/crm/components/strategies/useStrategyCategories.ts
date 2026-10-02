@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { StrategyCategory } from '@/types/crm';
+import { apiErrorMessage } from '@/lib/api-error';
 
 /** 세그먼트별 전략 라이브러리 카테고리 CRUD (146). */
 export function useStrategyCategories(segment: 'b2c' | 'b2b', adminKey: string) {
@@ -49,7 +50,7 @@ export function useStrategyCategories(segment: 'b2c' | 'b2b', adminKey: string) 
     const res = await fetch(`/api/crm/strategy-categories/${id}`, { method: 'DELETE', headers });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      alert(json?.error ?? '카테고리 삭제에 실패했습니다.');
+      alert(apiErrorMessage(json, '카테고리 삭제에 실패했습니다.'));
       return false;
     }
     setCategories((prev) => prev.filter((c) => c.id !== id));

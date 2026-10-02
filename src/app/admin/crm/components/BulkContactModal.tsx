@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, MessageSquarePlus } from 'lucide-react';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface BulkContactModalProps {
   studentCount: number;
@@ -44,7 +45,7 @@ export function BulkContactModal({
       const json = await res.json();
 
       if (!res.ok && res.status !== 207) {
-        setError(json.error?.message ?? '저장에 실패했습니다.');
+        setError(apiErrorMessage(json, '저장에 실패했습니다.'));
         return;
       }
 

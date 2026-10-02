@@ -6,6 +6,7 @@ import type { Payment, Student } from '@/types/crm';
 import { SectionCard } from './SectionCard';
 import { PaymentModal } from '../../PaymentModal';
 import { PaymentHistoryRow, type PaymentEdits } from './PaymentHistoryRow';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface Props {
   student: Student;
@@ -69,7 +70,7 @@ export function PaymentHistorySection({ student, adminKey, onStudentUpdate }: Pr
     if (!res.ok) {
       setPayments(prev); // 롤백
       const json = await res.json().catch(() => null);
-      alert(json?.error ?? '결제 수정에 실패했습니다.');
+      alert(apiErrorMessage(json, '결제 수정에 실패했습니다.'));
       return false;
     }
     return true;

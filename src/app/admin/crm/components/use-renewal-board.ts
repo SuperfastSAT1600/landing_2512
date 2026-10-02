@@ -10,6 +10,7 @@ import { getCurrentWeekDef } from '@/lib/week-definitions';
 import type { RenewalTarget, RenewalWeeklyStat, Student } from '@/types/crm';
 import { classifyTutoringEntries, type TutoringEntry } from './TutoringStudentRow';
 import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
+import { apiErrorMessage } from '@/lib/api-error';
 
 /** 보드가 보고 있는 범위. open = 코호트 무관 진행 중 전체(일상 운영 화면). */
 export type RenewalScope = { kind: 'open' } | { kind: 'week'; weekStart: string };
@@ -60,7 +61,7 @@ function runCarryOverOnce(adminKey: string, weekStart: string): Promise<void> {
 async function getJson(url: string, adminKey: string) {
   const res = await fetch(url, { headers: { 'x-admin-key': adminKey } });
   const json = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(json?.error?.message ?? '요청이 실패했습니다.');
+  if (!res.ok) throw new Error(apiErrorMessage(json, '요청이 실패했습니다.'));
   return json;
 }
 

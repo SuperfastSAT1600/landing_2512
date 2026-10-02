@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Company } from '@/types/crm';
+import { apiErrorMessage } from '@/lib/api-error';
 
 /**
  * B2B 업체 목록 로더. 기본은 활성 업체만(드롭다운용). all=true면 비활성 포함(관리 화면용).
@@ -22,7 +23,7 @@ export function useCompanies(adminKey: string, opts?: { all?: boolean }) {
       const res = await fetch(`/api/crm/companies${qs}`, { headers: { 'x-admin-key': adminKey } });
       const json = await res.json();
       if (res.ok) setCompanies(json.data ?? []);
-      else setError(json.error ?? '업체 목록을 불러오지 못했습니다.');
+      else setError(apiErrorMessage(json, '업체 목록을 불러오지 못했습니다.'));
     } catch {
       setError('네트워크 오류가 발생했습니다.');
     } finally {

@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import type { Attachment } from '@/types/crm';
+import { apiErrorMessage } from '@/lib/api-error';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -51,7 +52,7 @@ export function useMemoAttachments({ studentId, adminKey }: Params) {
           ));
         } else {
           setStaged(prev => prev.map(s =>
-            s.localId === localId ? { ...s, uploading: false, error: json.error?.message ?? '업로드 실패' } : s
+            s.localId === localId ? { ...s, uploading: false, error: apiErrorMessage(json, '업로드 실패') } : s
           ));
         }
       } catch {

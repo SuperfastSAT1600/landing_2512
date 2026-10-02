@@ -11,6 +11,7 @@ import {
 import { Field, inputCls, selectCls } from './form-primitives';
 import { TimezoneCombobox } from './TimezoneCombobox';
 import { useCompanies } from '@/hooks/useCompanies';
+import { apiErrorMessage } from '@/lib/api-error';
 
 interface StudentCreateModalProps {
   onClose: () => void;
@@ -170,7 +171,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
         onCreate(data.data as Student);
         onClose();
       } else {
-        alert(typeof data.error === 'string' ? data.error : (data.error?.message ?? '학생 추가에 실패했습니다.'));
+        alert(apiErrorMessage(data, '학생 추가에 실패했습니다.'));
       }
     } catch {
       alert('오류가 발생했습니다.');

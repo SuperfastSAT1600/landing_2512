@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Student, ReactivationEntry } from '@/types/crm';
+import { apiErrorMessage } from '@/lib/api-error';
 
 type Outcome = 'pending' | 'no_response' | 'reactivated' | 'rejected';
 
@@ -84,7 +85,7 @@ export function ReactivationModal(props: ReactivationModalProps) {
 
         const json = await res.json();
         if (!res.ok) {
-          setError(json.error?.message ?? '저장에 실패했습니다.');
+          setError(apiErrorMessage(json, '저장에 실패했습니다.'));
           return;
         }
 
@@ -107,7 +108,7 @@ export function ReactivationModal(props: ReactivationModalProps) {
 
         const json = await res.json();
         if (!res.ok) {
-          setError(json.error?.message ?? '업데이트에 실패했습니다.');
+          setError(apiErrorMessage(json, '업데이트에 실패했습니다.'));
           return;
         }
 
@@ -136,7 +137,7 @@ export function ReactivationModal(props: ReactivationModalProps) {
 
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error?.message ?? '저장에 실패했습니다.');
+        setError(apiErrorMessage(json, '저장에 실패했습니다.'));
         return;
       }
 

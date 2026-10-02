@@ -9,6 +9,7 @@ import type {
   WinbackTarget,
 } from '@/types/crm';
 import type { WinbackDashboard } from '@/lib/winback/dashboard';
+import { apiErrorMessage } from '@/lib/api-error';
 
 export interface PlayRollup {
   targeted: number;
@@ -42,7 +43,7 @@ export function useWinbackPlays(adminKey: string) {
     async <T,>(url: string, init?: RequestInit): Promise<T> => {
       const res = await fetch(url, { ...init, headers: { ...headers, ...(init?.headers ?? {}) } });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? '요청에 실패했습니다.');
+      if (!res.ok) throw new Error(apiErrorMessage(json, '요청에 실패했습니다.'));
       return json.data as T;
     },
     // headers는 adminKey에서만 파생된다.

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, UploadCloud, AlertTriangle, XCircle } from 'lucide-react';
+import { apiErrorCode, apiErrorMessage } from '@/lib/api-error';
 
 interface Stats {
   students: number;
@@ -88,7 +89,7 @@ export function IntfuncImportModal({ adminKey, onClose }: IntfuncImportModalProp
     setFailure(null);
     try {
       const { ok, json } = await post({ dry_run: true });
-      if (!ok) setFailure({ message: json.error ?? '미리보기에 실패했습니다.', code: json.code });
+      if (!ok) setFailure({ message: apiErrorMessage(json, '미리보기에 실패했습니다.'), code: apiErrorCode(json) ?? undefined });
       else setStats(json.data.stats);
     } catch {
       setFailure({ message: '네트워크 오류가 발생했습니다. 연결을 확인하고 다시 시도하세요.' });
@@ -105,8 +106,8 @@ export function IntfuncImportModal({ adminKey, onClose }: IntfuncImportModalProp
       if (!ok) {
         // 실패했으면 아무것도 들어가지 않았다 — summary를 세우지 않으므로 버튼은 열려 있다.
         setFailure({
-          message: json.error ?? '전송에 실패했습니다.',
-          code: json.code,
+          message: apiErrorMessage(json, '전송에 실패했습니다.'),
+          code: apiErrorCode(json) ?? undefined,
           rows: json.rows,
         });
         return;
