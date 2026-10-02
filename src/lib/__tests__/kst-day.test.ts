@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toKstDay, toMs, kstDayStart, kstDayEnd } from '@/lib/kst-day';
+import { toKstDay, toMs, kstDayStart, kstDayEnd, kstDateOf } from '@/lib/kst-day';
 
 describe('toKstDay', () => {
   it('naive 문자열은 KST 벽시계로 간주해 날짜만 자른다', () => {
@@ -51,5 +51,16 @@ describe('kstDayStart / kstDayEnd', () => {
 
   it('KST 자정 경계가 UTC 전날 15시와 같다', () => {
     expect(new Date(kstDayStart('2026-10-02')).toISOString()).toBe('2026-10-01T15:00:00.000Z');
+  });
+});
+
+describe('kstDateOf', () => {
+  it('UTC 15시부터 KST 다음 날', () => {
+    expect(kstDateOf(Date.parse('2026-10-02T14:59:59Z'))).toBe('2026-10-02');
+    expect(kstDateOf(Date.parse('2026-10-02T15:00:00Z'))).toBe('2026-10-03');
+  });
+
+  it('연말 경계에서 KST 새해로 넘어간다', () => {
+    expect(kstDateOf(Date.parse('2026-12-31T15:00:00Z'))).toBe('2027-01-01');
   });
 });

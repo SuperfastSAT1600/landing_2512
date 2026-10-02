@@ -8,10 +8,8 @@ export function parseJsonObject(text: string): Record<string, unknown> | null {
   const end = text.lastIndexOf('}');
   if (start < 0 || end <= start) return null;
   try {
-    const parsed: unknown = JSON.parse(text.slice(start, end + 1));
-    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : null;
+    // '{'로 시작하는 구간만 파싱하므로 결과는 항상 객체다.
+    return JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
   } catch {
     return null;
   }

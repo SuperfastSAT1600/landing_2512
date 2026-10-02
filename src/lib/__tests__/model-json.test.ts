@@ -12,7 +12,7 @@ describe('parseJsonObject', () => {
     expect(parseJsonObject('} 거꾸로 {')).toBeNull();
   });
 
-  it('배열로 감싼 응답도 안쪽 객체를 꺼내고, 빈 객체도 객체다', () => {
+  it('첫 { 부터 자르므로 배열로 감싼 응답에서도 안쪽 객체를 꺼낸다', () => {
     expect(parseJsonObject('[{"a":1}]')).toEqual({ a: 1 });
     expect(parseJsonObject('{} ')).toEqual({});
   });
