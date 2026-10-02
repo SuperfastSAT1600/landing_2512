@@ -205,5 +205,3 @@ export function usePaymentForm({ student, adminKey, onConfirm, onClose, defaultP
     handleBack, handleConfirm, finish, handleCopy,
   };
 }
-
-export type PaymentForm = ReturnType<typeof usePaymentForm>;

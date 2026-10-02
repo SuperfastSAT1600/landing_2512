@@ -47,7 +47,7 @@ export interface CrmStatsData {
     // 진단테스트 완료 — 현행(퍼널 4·5 또는 결과 연결) + 2025 구 진단 응시를 함께 센다.
     diagnostic_done: number;
     diagnostic_rate: number; // 코호트 리드 중 진단 완료 비율(%)
-    conversion_rate: number; // paid / contacted. 정의상 100%를 넘을 수 있다(아래 주석 참고)
+    conversion_rate: number; // paid / contacted. 정의상 100%를 넘을 수 있다(crm-stats-totals.ts computeLeadCounts 주석 참고)
 
     total_revenue: number; // 순매출(결제 − 환불)
     total_net_revenue: number; // 부가세 제외 실수익
