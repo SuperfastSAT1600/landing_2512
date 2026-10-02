@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // ─── Supabase Admin Mock ──────────────────────────────────────────────────────
@@ -44,17 +44,22 @@ const validPayload = {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe('POST /api/crm/leads/sheets-sync — 비활성화 기본값', () => {
+describe('POST /api/crm/leads/sheets-sync — META 탭 신규 리드', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.SHEETS_SYNC_ENABLED;
+    mockSelect.mockReset();
+    mockInsert.mockReset();
+    mockUpdate.mockReset();
   });
 
-  it('SHEETS_SYNC_ENABLED 미설정이면 아무것도 하지 않고 skipped를 반환한다', async () => {
+  it('META 탭의 새 번호는 Meta 웹훅이 등록하므로 건너뛴다', async () => {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValueOnce({ data: [], error: null }),
+    });
     const { POST } = await import('../route');
     const res = await POST(makeRequest(validPayload));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, skipped: 'disabled' });
+    expect(await res.json()).toEqual({ ok: true, skipped: 'meta_lead_handled_by_webhook' });
     expect(mockInsert).not.toHaveBeenCalled();
     expect(mockUpdate).not.toHaveBeenCalled();
   });
@@ -63,12 +68,10 @@ describe('POST /api/crm/leads/sheets-sync — 비활성화 기본값', () => {
 describe('POST /api/crm/leads/sheets-sync', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // 아래 스위트는 시트싱크를 되살렸을 때의 동작을 검증한다.
-    process.env.SHEETS_SYNC_ENABLED = 'true';
-  });
-
-  afterEach(() => {
-    delete process.env.SHEETS_SYNC_ENABLED;
+    // clearAllMocks는 mockReturnValueOnce 대기열을 비우지 않는다 — 쓰이지 않은 응답이 다음 테스트로 새지 않게 리셋한다.
+    mockSelect.mockReset();
+    mockInsert.mockReset();
+    mockUpdate.mockReset();
   });
 
   // REQ-001: 인증
@@ -106,27 +109,23 @@ describe('POST /api/crm/leads/sheets-sync', () => {
 
   // REQ-003: 신규 생성
 
-  it('신규 번호 → 201 + action: created', async () => {
-    // 1차 조회 → 중복 없음 (parent_phone eq 체크)
+  it('비META 탭의 새 번호 → 201 + action: created', async () => {
+    // 조회 → 중복 없음 (parent_phone eq 체크)
     mockSelect.mockReturnValueOnce({
       eq: vi.fn().mockReturnValueOnce({ data: [], error: null }),
-    });
-    // 2차 조회 → META 리드 순번 카운트 (count: 5 → 신규는 META리드_6)
-    mockSelect.mockReturnValueOnce({
-      contains: vi.fn().mockResolvedValueOnce({ count: 5, error: null }),
     });
     // insert → 성공
     mockInsert.mockReturnValueOnce({
       select: vi.fn().mockReturnValueOnce({
         single: vi.fn().mockResolvedValueOnce({
-          data: { id: 'abc-123', name: 'META리드_6' },
+          data: { id: 'abc-123', name: '랜딩 문의' },
           error: null,
         }),
       }),
     });
 
     const { POST } = await import('../route');
-    const res = await POST(makeRequest(validPayload));
+    const res = await POST(makeRequest({ ...validPayload, source_tab: 'landing', student_name: '김학생' }));
     const body = await res.json();
 
     expect(res.status).toBe(201);
