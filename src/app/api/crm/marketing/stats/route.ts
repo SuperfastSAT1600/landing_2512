@@ -11,6 +11,7 @@ import type {
   MarketingStatsResponse,
 } from '@/types/marketing';
 import { netAmount } from '@/lib/payment-utils';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 type StudentRow = {
   id: string;
@@ -42,19 +43,14 @@ function contactRate(contacted: number, leads: number): number {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const { searchParams } = new URL(request.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
 
   if (!from || !to) {
-    return NextResponse.json(
-      { error: { code: 'MISSING_PARAMS', message: 'from, to 파라미터가 필요합니다.' } },
-      { status: 400 }
-    );
+    return apiError('MISSING_PARAMS', 'from, to 파라미터가 필요합니다.', 400);
   }
 
   const { data: students, error: sErr } = await supabaseAdmin
@@ -66,7 +62,7 @@ export async function GET(request: NextRequest) {
     .lte('inquiry_date', `${to}T23:59:59`);
 
   if (sErr) {
-    return NextResponse.json({ error: { code: 'FETCH_FAILED', message: sErr.message } }, { status: 500 });
+    return apiError('FETCH_FAILED', sErr.message, 500);
   }
 
   const { data: payments, error: pErr } = await supabaseAdmin

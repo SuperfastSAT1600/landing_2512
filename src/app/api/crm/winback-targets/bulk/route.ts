@@ -5,6 +5,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { appendConsultationEntry } from '@/lib/consultation-timeline';
 import { buildMirrorMemo, playLabel, reactivationStrategyLabel } from '@/lib/winback/mirror';
 import { notifyWinbackSendsToSlack, type WinbackSend } from '@/lib/slack-memo';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 const TARGET_SELECT = `*, student:students(id, name, grade, parent_phone, lead_status, churn_tag)`;
 const ACTIONS = ['mark_sent', 'mark_no_response', 'assign_variant', 'skip'] as const;
@@ -135,24 +136,22 @@ async function simpleUpdate(targetIds: string[], patch: Record<string, unknown>)
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: BulkBody;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const targetIds = body.target_ids ?? [];
   const action = body.action;
   if (targetIds.length === 0) {
-    return NextResponse.json({ error: '대상을 선택해주세요.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '대상을 선택해주세요.', 400);
   }
   if (!action || !ACTIONS.includes(action)) {
-    return NextResponse.json({ error: '지원하지 않는 작업입니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '지원하지 않는 작업입니다.', 400);
   }
 
   try {
@@ -173,7 +172,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.error('[winback-targets/bulk]', err);
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    return apiError('INTERNAL_ERROR', (err as Error).message, 500);
   }
 
   // mark_sent — 학생 JSONB를 read-modify-write하므로 순차 처리(같은 학생 경합 방지) + 실패 격리.

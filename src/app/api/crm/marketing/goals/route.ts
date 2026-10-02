@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { mondayOf } from '@/lib/marketing-week';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 // 마케팅 주차별 리드 목표 — 주차당 총합 1건. 소스별 목표는 없다(소스는 자동 집계 현황).
 // 행이 없으면 "목표 미설정", target_count 0 은 "의도한 0개 목표"로 서로 다른 상태다.
@@ -15,14 +16,6 @@ export interface MarketingWeeklyGoal {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const COLUMNS = 'id, week_start, target_count, created_at, updated_at';
-
-function unauthorized() {
-  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-}
-
-function badRequest(message: string) {
-  return NextResponse.json({ error: message }, { status: 400 });
-}
 
 /** 주차 키가 오염되면 조회가 조용히 빈 결과를 내므로 경계에서 막는다. */
 function invalidWeekStart(value: string | null | undefined): string | null {
@@ -42,13 +35,13 @@ export async function GET(request: NextRequest) {
   // DB 를 건드리기 전에 검증한다.
   if (weekStart) {
     const error = invalidWeekStart(weekStart);
-    if (error) return badRequest(error);
+    if (error) return apiError('BAD_REQUEST', error, 400);
   } else if (from && to) {
     if (!DATE_RE.test(from) || !DATE_RE.test(to)) {
-      return badRequest('from/to 는 YYYY-MM-DD 형식이어야 합니다.');
+      return apiError('BAD_REQUEST', 'from/to 는 YYYY-MM-DD 형식이어야 합니다.', 400);
     }
   } else {
-    return badRequest('week_start 또는 from/to 가 필요합니다.');
+    return apiError('BAD_REQUEST', 'week_start 또는 from/to 가 필요합니다.', 400);
   }
 
   const base = supabaseAdmin.from('marketing_weekly_goals').select(COLUMNS);
@@ -60,7 +53,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('[marketing/goals GET]', error);
-    return NextResponse.json({ error: '목표를 불러오지 못했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '목표를 불러오지 못했습니다.', 500);
   }
 
   return NextResponse.json({ data: data as MarketingWeeklyGoal[] });
@@ -73,15 +66,15 @@ export async function PUT(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return badRequest('Invalid JSON body');
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const weekError = invalidWeekStart(body.week_start);
-  if (weekError) return badRequest(weekError);
+  if (weekError) return apiError('BAD_REQUEST', weekError, 400);
 
   const target = body.target_count;
   if (typeof target !== 'number' || !Number.isInteger(target) || target < 0) {
-    return badRequest('target_count 는 0 이상의 정수여야 합니다.');
+    return apiError('BAD_REQUEST', 'target_count 는 0 이상의 정수여야 합니다.', 400);
   }
 
   const { data, error } = await supabaseAdmin
@@ -99,7 +92,7 @@ export async function PUT(request: NextRequest) {
 
   if (error) {
     console.error('[marketing/goals PUT]', error);
-    return NextResponse.json({ error: '목표 저장에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '목표 저장에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data: data as MarketingWeeklyGoal });
@@ -111,7 +104,7 @@ export async function DELETE(request: NextRequest) {
 
   const weekStart = request.nextUrl.searchParams.get('week_start');
   const weekError = invalidWeekStart(weekStart);
-  if (weekError) return badRequest(weekError);
+  if (weekError) return apiError('BAD_REQUEST', weekError, 400);
 
   const { error } = await supabaseAdmin
     .from('marketing_weekly_goals')
@@ -120,7 +113,7 @@ export async function DELETE(request: NextRequest) {
 
   if (error) {
     console.error('[marketing/goals DELETE]', error);
-    return NextResponse.json({ error: '목표 삭제에 실패했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '목표 삭제에 실패했습니다.', 500);
   }
 
   return NextResponse.json({ data: { week_start: weekStart } });

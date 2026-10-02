@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import type { WinbackPlayStatus } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 const STATUSES: WinbackPlayStatus[] = ['draft', 'running', 'done', 'archived'];
 
@@ -33,9 +34,7 @@ async function rollupByPlay(playIds: string[]) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const status = new URL(request.url).searchParams.get('status');
   let query = supabaseAdmin
@@ -47,7 +46,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
   if (error) {
     console.error('[winback-plays GET]', error);
-    return NextResponse.json({ error: `플레이 목록을 불러오지 못했습니다: ${error.message}` }, { status: 500 });
+    return apiError('INTERNAL_ERROR', `플레이 목록을 불러오지 못했습니다: ${error.message}`, 500);
   }
 
   const plays = data ?? [];
@@ -61,22 +60,20 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   const productBrief = typeof body.product_brief === 'string' ? body.product_brief.trim() : '';
-  if (!title) return NextResponse.json({ error: '플레이 제목을 입력해주세요.' }, { status: 400 });
+  if (!title) return apiError('BAD_REQUEST', '플레이 제목을 입력해주세요.', 400);
   if (!productBrief) {
-    return NextResponse.json({ error: '판매할 상품 설명(브리프)을 입력해주세요.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '판매할 상품 설명(브리프)을 입력해주세요.', 400);
   }
 
   const insert = {
@@ -102,7 +99,7 @@ export async function POST(request: NextRequest) {
 
   if (error || !play) {
     console.error('[winback-plays POST]', error);
-    return NextResponse.json({ error: `플레이 생성에 실패했습니다: ${error?.message}` }, { status: 500 });
+    return apiError('INTERNAL_ERROR', `플레이 생성에 실패했습니다: ${error?.message}`, 500);
   }
 
   // 전략 변형(A/B) — 없으면 "기본" 하나를 만들어 이후 집계가 항상 변형 단위로 떨어지게 한다.
@@ -122,10 +119,7 @@ export async function POST(request: NextRequest) {
 
   if (variantError) {
     console.error('[winback-plays POST variants]', variantError);
-    return NextResponse.json(
-      { error: `전략 변형 생성에 실패했습니다: ${variantError.message}` },
-      { status: 500 }
-    );
+    return apiError('INTERNAL_ERROR', `전략 변형 생성에 실패했습니다: ${variantError.message}`, 500);
   }
 
   return NextResponse.json({ data: { ...play, variants: variants ?? [] } }, { status: 201 });

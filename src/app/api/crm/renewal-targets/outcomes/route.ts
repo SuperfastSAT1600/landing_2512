@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 export interface OutcomeSummary {
   good_completed: number;
@@ -12,12 +13,7 @@ export interface OutcomeSummary {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      { status: 401 }
-    );
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const sp = new URL(request.url).searchParams;
   const from = sp.get('from');
@@ -35,10 +31,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('[renewal-targets/outcomes GET]', error);
-    return NextResponse.json(
-      { error: { code: 'FETCH_FAILED', message: '데이터를 불러오지 못했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('FETCH_FAILED', '데이터를 불러오지 못했습니다.', 500);
   }
 
   const summary: OutcomeSummary = {

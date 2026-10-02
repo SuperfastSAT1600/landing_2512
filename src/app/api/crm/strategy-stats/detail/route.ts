@@ -5,6 +5,7 @@ import { MAX_LEAD_ROWS } from '@/lib/crm-stats-core';
 import { buildStatsDetail, isStatsDetailMetric } from '@/lib/crm-stats-detail';
 import { assignedStrategyOf, type StrategyStatsStudent } from '@/lib/strategy-stats';
 import { resolveRequestCategoryId } from '../resolve-category';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 const VALID_SEGMENTS = ['b2b', 'b2c'] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -24,9 +25,7 @@ function chunk<T>(arr: T[], size: number): T[][] {
  * 특정 전략 코호트에 대한 metric별 원본 리드/결제 목록.
  */
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const sp = new URL(request.url).searchParams;
   const strategyId = sp.get('strategy_id');
@@ -36,21 +35,21 @@ export async function GET(request: NextRequest) {
   const segment = sp.get('segment');
 
   if (segment && !(VALID_SEGMENTS as readonly string[]).includes(segment)) {
-    return NextResponse.json({ error: 'segment이 올바르지 않습니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'segment이 올바르지 않습니다.', 400);
   }
   if (!strategyId) {
-    return NextResponse.json({ error: 'strategy_id가 필요합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'strategy_id가 필요합니다.', 400);
   }
   if (!isStatsDetailMetric(metric)) {
-    return NextResponse.json({ error: 'metric이 올바르지 않습니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'metric이 올바르지 않습니다.', 400);
   }
   if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to)) {
-    return NextResponse.json({ error: 'from/to는 YYYY-MM-DD 형식이어야 합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'from/to는 YYYY-MM-DD 형식이어야 합니다.', 400);
   }
 
   const categoryId = await resolveRequestCategoryId(sp.get('category_id'), segment);
   if (!categoryId) {
-    return NextResponse.json({ error: '전략 카테고리가 없습니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '전략 카테고리가 없습니다.', 400);
   }
 
   const { data: students, error: sErr } = await supabaseAdmin
@@ -60,7 +59,7 @@ export async function GET(request: NextRequest) {
     .limit(MAX_LEAD_ROWS);
   if (sErr) {
     console.error('[strategy-stats/detail students]', sErr);
-    return NextResponse.json({ error: '리드 데이터를 불러오지 못했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '리드 데이터를 불러오지 못했습니다.', 500);
   }
 
   // 집계(strategy-stats)와 같은 축으로 범위를 잡아야 카드 숫자와 드릴다운 명단이 일치한다.

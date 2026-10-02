@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { assignVariants } from '@/lib/winback/mirror';
 import type { WinbackCandidate } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /**
  * POST /api/crm/winback-plays/[id]/targets
@@ -10,16 +11,14 @@ import type { WinbackCandidate } from '@/types/crm';
  * 전략 변형은 라운드로빈 균등 배정(A/B 비교의 표본 쏠림 방지), 이미 담긴 학생은 조용히 skip.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
   const { id: playId } = await params;
 
   let body: { candidates?: WinbackCandidate[]; student_ids?: string[] };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'Invalid JSON body', 400);
   }
 
   // 추천 결과(근거 포함) 또는 학생 id만(리드풀에서 손으로 추가) 둘 다 받는다.
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }));
 
   if (candidates.length === 0) {
-    return NextResponse.json({ error: '추가할 리드를 선택해주세요.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '추가할 리드를 선택해주세요.', 400);
   }
 
   const { data: play, error: playError } = await supabaseAdmin
@@ -51,7 +50,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .eq('id', playId)
     .single();
   if (playError || !play) {
-    return NextResponse.json({ error: '플레이를 찾을 수 없습니다.' }, { status: 404 });
+    return apiError('NOT_FOUND', '플레이를 찾을 수 없습니다.', 404);
   }
 
   const [{ data: variants }, { data: existing }] = await Promise.all([
@@ -94,7 +93,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (error) {
     console.error('[winback targets POST]', error);
-    return NextResponse.json({ error: `타겟 추가에 실패했습니다: ${error.message}` }, { status: 500 });
+    return apiError('INTERNAL_ERROR', `타겟 추가에 실패했습니다: ${error.message}`, 500);
   }
 
   return NextResponse.json(

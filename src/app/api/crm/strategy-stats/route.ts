@@ -9,6 +9,7 @@ import {
   type StrategyStatsPayment,
   type StrategyTypeStats,
 } from '@/lib/strategy-stats';
+import { apiError, unauthorized } from '@/lib/api-response';
 export type { StrategyTypeStats };
 
 const VALID_SEGMENTS = ['b2b', 'b2c'] as const;
@@ -35,9 +36,7 @@ function chunk<T>(arr: T[], size: number): T[][] {
  * 전략 라이브러리 카테고리별 롤업 + 개별 전략 통계. 코호트 기준일 = strategy_history.applied_at.
  */
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const sp = new URL(request.url).searchParams;
   const from = sp.get('from');
@@ -45,15 +44,15 @@ export async function GET(request: NextRequest) {
   const segment = sp.get('segment');
 
   if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to)) {
-    return NextResponse.json({ error: 'from/to는 YYYY-MM-DD 형식이어야 합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'from/to는 YYYY-MM-DD 형식이어야 합니다.', 400);
   }
   if (segment && !(VALID_SEGMENTS as readonly string[]).includes(segment)) {
-    return NextResponse.json({ error: 'segment은 b2b|b2c 중 하나여야 합니다.' }, { status: 400 });
+    return apiError('BAD_REQUEST', 'segment은 b2b|b2c 중 하나여야 합니다.', 400);
   }
 
   const categoryId = await resolveRequestCategoryId(sp.get('category_id'), segment);
   if (!categoryId) {
-    return NextResponse.json({ error: '전략 카테고리가 없습니다. 전략 라이브러리에서 먼저 만들어주세요.' }, { status: 400 });
+    return apiError('BAD_REQUEST', '전략 카테고리가 없습니다. 전략 라이브러리에서 먼저 만들어주세요.', 400);
   }
 
   const PAY_COLS = 'id,student_id,student_name,amount,payment_type,tax_type,paid_at';
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest) {
   const { data: students, error: sErr } = studentsRes;
   if (sErr) {
     console.error('[strategy-stats students]', sErr);
-    return NextResponse.json({ error: '리드 데이터를 불러오지 못했습니다.' }, { status: 500 });
+    return apiError('INTERNAL_ERROR', '리드 데이터를 불러오지 못했습니다.', 500);
   }
   // segment(b2b/b2c) 코호트 pre-filter — computeStrategyStats lib은 무변경
   const candidates = filterSegment(

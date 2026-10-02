@@ -4,17 +4,16 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { anthropicErrorMessage } from '@/lib/anthropic-error';
 import { getQwenAnthropicClient, isQwenConfigured, qwenModel } from '@/lib/qwen';
 import { buildDraftContext, parseDraftResult, WINBACK_DRAFT_SYSTEM } from '@/lib/winback/draft';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 export const maxDuration = 30;
 
 const STUDENT_FIELDS = 'id,name,grade,parent_phone,lead_status,churn_tag';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다.' } }, { status: 401 });
-  }
+  if (!isAuthenticated(request)) return unauthorized();
   if (!isQwenConfigured()) {
-    return NextResponse.json({ error: { message: 'AI가 설정되지 않았습니다.' } }, { status: 503 });
+    return apiError('SERVICE_UNAVAILABLE', 'AI가 설정되지 않았습니다.', 503);
   }
 
   const { id } = await params;
@@ -24,10 +23,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .eq('id', id)
     .single();
   if (error || !target?.play || !target.student) {
-    return NextResponse.json({ error: { message: '윈백 타겟을 찾을 수 없습니다.' } }, { status: 404 });
+    return apiError('NOT_FOUND', '윈백 타겟을 찾을 수 없습니다.', 404);
   }
   if (target.sent_at) {
-    return NextResponse.json({ error: { message: '이미 발송한 타겟의 문구는 다시 생성할 수 없습니다.' } }, { status: 409 });
+    return apiError('CONFLICT', '이미 발송한 타겟의 문구는 다시 생성할 수 없습니다.', 409);
   }
 
   try {
@@ -40,7 +39,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     });
     const text = response.content.filter((block) => block.type === 'text').map((block) => (block as { text: string }).text).join('');
     const result = parseDraftResult(text);
-    if (!result) return NextResponse.json({ error: { message: 'AI 응답을 해석하지 못했습니다.' } }, { status: 502 });
+    if (!result) return apiError('UPSTREAM_ERROR', 'AI 응답을 해석하지 못했습니다.', 502);
 
     const { data, error: updateError } = await supabaseAdmin
       .from('winback_targets')
@@ -52,6 +51,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ data });
   } catch (err) {
     console.error('[winback-targets/[id]/draft]', err);
-    return NextResponse.json({ error: { message: anthropicErrorMessage(err) } }, { status: 502 });
+    return apiError('UPSTREAM_ERROR', anthropicErrorMessage(err), 502);
   }
 }

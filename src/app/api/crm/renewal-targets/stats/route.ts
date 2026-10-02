@@ -4,6 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { getRecentWeeks, getWeekLabel, getKstDateString } from '@/lib/week-definitions';
 import { resolveWeeklyAmounts, type RenewalPaymentRow } from '@/lib/renewal-amount';
 import type { RenewalWeeklyStat, RenewalOutcomeQuality } from '@/types/crm';
+import { apiError, unauthorized } from '@/lib/api-response';
 
 /** YYYY-MM-DD 에 일수를 더한다(UTC 기준 — 날짜 문자열 산술이라 타임존 무관). */
 function addDays(day: string, n: number): string {
@@ -13,12 +14,7 @@ function addDays(day: string, n: number): string {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-      { status: 401 }
-    );
-  }
+  if (!isAuthenticated(request)) return unauthorized();
 
   const sp = new URL(request.url).searchParams;
   const weeksParam = sp.get('weeks');
@@ -59,10 +55,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('[renewal-targets/stats GET]', error);
-    return NextResponse.json(
-      { error: { code: 'FETCH_FAILED', message: '통계를 불러오지 못했습니다.' } },
-      { status: 500 }
-    );
+    return apiError('FETCH_FAILED', '통계를 불러오지 못했습니다.', 500);
   }
 
   const rows = (data ?? []) as {
