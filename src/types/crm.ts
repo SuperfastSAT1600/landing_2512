@@ -327,12 +327,6 @@ export const STRATEGY_PHASE_LABELS: Record<StrategyPhase, string> = {
   applied: '진행 후',
 };
 
-/** 목록·배지처럼 좁은 자리에서 쓰는 짧은 라벨. */
-export const STRATEGY_PHASE_SHORT_LABELS: Record<StrategyPhase, string> = {
-  planned: '계획',
-  applied: '실제',
-};
-
 export const STRATEGY_PHASES: StrategyPhase[] = ['planned', 'applied'];
 
 export interface StrategyHistoryEntry {
@@ -392,60 +386,6 @@ export interface CreateCompanyInput {
   contract_terms?: string | null;
   notes?: string | null;
   is_active?: boolean;
-}
-
-// ─── 성장 실험 (전략/실행/회고) ──────────────────────────────────────────────
-
-// 자동 측정 지표는 /api/crm/stats by_source / overview 필드와 1:1 매핑. custom은 수동 입력.
-export type ExperimentMetricKey =
-  | 'contact_rate'
-  | 'conversion_rate'
-  | 'avg_first_response_seconds'
-  | 'custom';
-export type ExperimentStatus = 'planned' | 'running' | 'done';
-export type ExperimentVerdict = 'success' | 'fail' | 'inconclusive';
-
-export const EXPERIMENT_METRIC_LABELS: Record<ExperimentMetricKey, string> = {
-  contact_rate: '컨택 성공률',
-  conversion_rate: '결제 전환율',
-  avg_first_response_seconds: '평균 첫 응답시간',
-  custom: '커스텀 지표',
-};
-
-export const EXPERIMENT_STATUS_LABELS: Record<ExperimentStatus, string> = {
-  planned: '계획',
-  running: '진행중',
-  done: '완료',
-};
-
-export const EXPERIMENT_VERDICT_LABELS: Record<ExperimentVerdict, string> = {
-  success: '성공',
-  fail: '실패',
-  inconclusive: '판단 보류',
-};
-
-export interface GrowthExperiment {
-  id: string;
-  title: string;
-  hypothesis: string | null;
-  execution_plan: string | null;
-  segment_source: string | null; // traffic_source 값, null=전체
-  segment: 'b2c' | 'b2b'; // B2B/B2C 전략 분리 (097)
-  metric_key: ExperimentMetricKey;
-  custom_metric_label: string | null;
-  baseline_from: string | null;
-  baseline_to: string | null;
-  baseline_value: number | null;
-  test_from: string | null;
-  test_to: string | null;
-  result_value: number | null;
-  target_value: number | null;
-  status: ExperimentStatus;
-  verdict: ExperimentVerdict | null;
-  retrospective: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export type CreateStudentInput = Pick<
@@ -519,29 +459,6 @@ export interface Payment {
   created_at: string;
 }
 
-// ─── Assignment ──────────────────────────────────────────────────────────────
-
-export interface CoachAssignment {
-  id: string;
-  student_id: string;
-  coach_slug: string;
-  status: AssignmentStatus;
-  is_confirmed: boolean;
-  offer_token: string;
-  response_deadline: string; // ISO timestamp
-  coach_timezone: string | null;
-  reject_reason: string | null;
-  closed_reason: string | null;
-  closed_at: string | null;
-  assigned_by: string;
-  assigned_at: string;
-  responded_at: string | null;
-
-  // 조인 데이터 (API 응답 시 포함 가능)
-  coach_name?: string;
-  coach_photo?: string;
-}
-
 // ─── Coach Offer View ────────────────────────────────────────────────────────
 
 export interface CoachOfferPayload {
@@ -580,10 +497,6 @@ export interface DiagnosticSummary {
 }
 
 // ─── AI 케어 메시지 ───────────────────────────────────────────────────────────
-
-export interface AiCareRequest {
-  raw_memo: string;
-}
 
 export interface AiCareResult {
   purified: string; // 학부모에게 보여줄 순화본
@@ -722,14 +635,6 @@ export function todaysMemos(
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
-export const MATCHING_STAGE_LABELS: Record<MatchingStage, string> = {
-  schedule_pending: '스케줄 입력 대기',
-  schedule_done: '스케줄 입력 완료',
-  offer_sent: '코치 제안 발송',
-  awaiting_response: '코치 응답 대기',
-  matched: '매칭 확정',
-};
-
 export const INQUIRY_CHANNEL_OPTIONS: InquiryChannel[] = [
   '카톡',
   '네이버 상담시트',
@@ -781,8 +686,6 @@ export const B2B_PARTNER_OPTIONS: B2BPartner[] = [
   '옹글리쉬',
 ];
 
-export const CAMPAIGN_TAG_PRESETS = ['기존DB 재활성화', '여름특강'] as const;
-
 export const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
   phone: '핸드폰',
   kakao: '카카오톡',
@@ -810,13 +713,6 @@ export const TIMEZONE_OPTIONS = [
   { label: '사이판 (ChST)', value: 'Pacific/Saipan' },
 ] as const;
 
-export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
-  active: '활성',
-  inactive: '비활성',
-  reactivating: '재활성화 시도 중',
-  enrolled: '수강 중',
-};
-
 /** 학생이 실제 응시한 SAT 회차별 성적 (student_exam_scores). 총점은 저장하지 않고 조회 측에서 합산한다. */
 export interface ExamScore {
   id: string;
@@ -842,8 +738,6 @@ export const GRADE_OPTIONS_BY_SCHOOL_TYPE: Record<string, string[]> = {
   AP: ['7th', '8th', '9th', '10th', '11th', '12th', '졸업', '기타'],
   IB: ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', '졸업', '기타'],
 };
-
-export type ChurnTag = (typeof CHURN_TAG_OPTIONS)[number];
 
 // 선제 진단 인사이트 브리핑 API 계약 — insight-brief 라우트와 CrmInsightBanner가 공유.
 export type InsightBriefMode = 'diagnosis' | 'weekly';
@@ -960,11 +854,6 @@ export interface WinbackTarget {
   notes: string | null;
   created_at: string;
   updated_at: string;
-}
-
-/** 타겟 + 화면 표시에 필요한 학생 요약(조인 결과). */
-export interface WinbackTargetWithStudent extends WinbackTarget {
-  student: Pick<Student, 'id' | 'name' | 'grade' | 'parent_phone' | 'lead_status' | 'churn_tag'>;
 }
 
 // 재결제 세일즈 관리 대상 — 주차별 코호트 1행. 재결제는 생애주기 동안 반복되므로

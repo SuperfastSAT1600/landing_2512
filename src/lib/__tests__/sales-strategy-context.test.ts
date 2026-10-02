@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   outcomeOf,
-  buildCurrentStudentBlock,
   buildPastCasesBlock,
-  SALES_STRATEGY_SYSTEM_PROMPT,
   type StrategyStudent,
   type PastCase,
 } from '../sales-strategy-context';
@@ -52,44 +50,6 @@ describe('outcomeOf', () => {
   });
 });
 
-describe('buildCurrentStudentBlock', () => {
-  it('includes name, grade, scores, and target', () => {
-    const block = buildCurrentStudentBlock(makeStudent());
-    expect(block).toContain('홍길동');
-    expect(block).toContain('11학년');
-    expect(block).toContain('RW 600');
-    expect(block).toContain('Math 700');
-    expect(block).toContain('1500');
-  });
-
-  it('renders churn info when present', () => {
-    const block = buildCurrentStudentBlock(
-      makeStudent({ churn_type: 'closed', churn_tag: '가격 부담' }),
-    );
-    expect(block).toContain('가격 부담');
-  });
-
-  it('renders consultation memos (prefers raw_memo for internal strategy)', () => {
-    const block = buildCurrentStudentBlock(
-      makeStudent({
-        consultation_timeline: [
-          { created_at: '2026-05-01T00:00:00.000Z', raw_memo: '어머니가 가격에 민감함' },
-        ],
-      }),
-    );
-    expect(block).toContain('어머니가 가격에 민감함');
-    expect(block).toContain('2026-05-01');
-  });
-
-  it('handles a student with no scores and no memos without throwing', () => {
-    const block = buildCurrentStudentBlock(
-      makeStudent({ previous_rw_score: null, previous_math_score: null, target_score: null }),
-    );
-    expect(typeof block).toBe('string');
-    expect(block).toContain('홍길동');
-  });
-});
-
 describe('buildPastCasesBlock', () => {
   const converted: PastCase = {
     student: makeStudent({
@@ -132,12 +92,5 @@ describe('buildPastCasesBlock', () => {
   it('returns a clear empty marker when no cases', () => {
     const block = buildPastCasesBlock([]);
     expect(block).toMatch(/없|N\/A|찾지/);
-  });
-});
-
-describe('SALES_STRATEGY_SYSTEM_PROMPT', () => {
-  it('frames the agent as a SAT sales strategist focused on conversion', () => {
-    expect(SALES_STRATEGY_SYSTEM_PROMPT).toMatch(/세일즈|전략/);
-    expect(SALES_STRATEGY_SYSTEM_PROMPT.length).toBeGreaterThan(100);
   });
 });

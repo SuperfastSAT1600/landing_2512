@@ -22,7 +22,6 @@ import { ExamScoreSection } from './sections/ExamScoreSection';
 import { MemoSection } from './sections/MemoSection';
 import { TimelineSection } from './sections/TimelineSection';
 import { StrategyHistorySection } from './sections/StrategyHistorySection';
-// import { SalesStrategySection } from './sections/SalesStrategySection'; // 미사용으로 숨김 (2026-07-14)
 import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import { ActivityFeedSection } from './sections/ActivityFeedSection';
 import { SrmDataCard } from './sections/SrmDataCard';
@@ -349,12 +348,6 @@ export function StudentDetailPanel({
                 onUpdate(id, updates);
               }}
             />
-
-            {/* 세일즈 전략 AI — 미사용으로 숨김 (2026-07-14) */}
-            {/* <SalesStrategySection
-              student={localStudent}
-              adminKey={adminKey}
-            /> */}
 
             <MemoSection
               memoText={memoHook.memoText}

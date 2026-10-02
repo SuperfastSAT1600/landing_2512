@@ -4,7 +4,6 @@
 // B2B 대시보드/세일즈 로직 통계가 동일 UI를 재사용한다. 순수 표현 컴포넌트.
 
 import type { StageFlowRow } from '@/lib/funnel-stats';
-import type { CrmStatsSegment } from '@/lib/crm-stats-core';
 
 // ─── Period helpers ────────────────────────────────────────────────────────────
 
