@@ -27,7 +27,7 @@ export function ChurnModal({ student, adminKey, onConfirm, onClose }: ChurnModal
     // 사유를 상담 타임라인에 남겨야 "오늘 취한 액션"에 잡히고 상담내역 슬랙에도 올라간다.
     // 전송 실패가 이탈 처리 자체를 막지는 않는다.
     try {
-      await fetch(`/api/crm/students/${student.id}/churn-memo`, {
+      const res = await fetch(`/api/crm/students/${student.id}/churn-memo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: JSON.stringify({
@@ -37,6 +37,7 @@ export function ChurnModal({ student, adminKey, onConfirm, onClose }: ChurnModal
           author: getAdminUserName(),
         }),
       });
+      if (!res.ok) console.error('[ChurnModal churn-memo] status', res.status);
     } catch (e) {
       console.error('[ChurnModal churn-memo]', e);
     }

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { getKstDateString } from '@/lib/week-definitions';
 
 async function getActivePauseByCrm(crmStudentId: string) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getKstDateString();
 
   const { data } = await supabaseAdmin
     .from('student_pauses')
@@ -48,7 +49,7 @@ export async function POST(
     .insert({
       student_id: crmStudentId,
       sfv2_profile_id: (student as { sfv2_profile_id?: string } | null)?.sfv2_profile_id ?? null,
-      pause_start: new Date().toISOString().slice(0, 10),
+      pause_start: getKstDateString(),
       pause_until: body.pause_until ?? null,
       reason: body.reason ?? null,
       created_by: body.created_by ?? null,

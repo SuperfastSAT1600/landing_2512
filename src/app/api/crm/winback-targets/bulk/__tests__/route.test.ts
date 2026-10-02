@@ -138,3 +138,32 @@ describe('POST /api/crm/winback-targets/bulk — mark_sent 슬랙 알림', () =>
     expect(notifyWinbackSendsToSlack).not.toHaveBeenCalled();
   });
 });
+
+describe('POST /api/crm/winback-targets/bulk — mark_sent DB 오류', () => {
+  // REQ-004 (crm-quality-cleanup)
+  it('학생 조회가 실패하면 메모를 남기지 않고 실패로 집계한다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: target('t-1'), error: null }));
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: null, error: { message: 'read failed' } }));
+
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ target_ids: ['t-1'], action: 'mark_sent' }));
+
+    expect(res.status).toBe(500);
+    expect(appendConsultationEntry).not.toHaveBeenCalled();
+  });
+
+  it('학생 reactivation_log 갱신이 실패하면 타겟을 sent로 바꾸지 않는다', async () => {
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: target('t-1'), error: null }));
+    mockFrom.mockReturnValueOnce(
+      makeBuilder({ data: { name: '홍길동', lead_status: 'churned', reactivation_log: [] }, error: null })
+    );
+    mockFrom.mockReturnValueOnce(makeBuilder({ data: null, error: { message: 'update failed' } }));
+
+    const { POST } = await import('../route');
+    const res = await POST(makeReq({ target_ids: ['t-1'], action: 'mark_sent' }));
+
+    expect(res.status).toBe(500);
+    // 타겟 조회 → 학생 조회 → 학생 갱신에서 멈춘다 — winback_targets 갱신(4번째 호출)은 없다.
+    expect(mockFrom.mock.calls.map((c) => c[0])).toEqual(['winback_targets', 'students', 'students']);
+  });
+});

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { getKstDateString } from '@/lib/week-definitions';
 
 type PauseRow = {
   id: string;
@@ -15,7 +16,7 @@ type PauseRow = {
 };
 
 async function getActivePauseBySfv2(profileId: string): Promise<PauseRow | null> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getKstDateString();
 
   // 먼저 CRM student_id로 조회 (sfv2_profile_id 연결 경유)
   const { data: linked } = await supabaseAdmin
@@ -76,7 +77,7 @@ export async function POST(
     .insert({
       student_id: linked?.id ?? null,
       sfv2_profile_id: profileId,
-      pause_start: new Date().toISOString().slice(0, 10),
+      pause_start: getKstDateString(),
       pause_until: body.pause_until ?? null,
       reason: body.reason ?? null,
       created_by: body.created_by ?? null,

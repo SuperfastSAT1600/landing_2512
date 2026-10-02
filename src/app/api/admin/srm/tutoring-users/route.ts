@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import { isAuthenticated } from '@/lib/server-auth';
+import { getKstDateString } from '@/lib/week-definitions';
 import {
   buildSubjectBreakdown,
   type PaymentManagementStatus,
@@ -276,7 +277,7 @@ export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getKstDateString();
 
     // payments는 학생×과목 단위라 1000행 cap을 넘을 수 있다 → scanAll 필요.
     // SRM v2 카운트와 동일한 소스: payments 먼저 수집 → profile_id 기준 집계.

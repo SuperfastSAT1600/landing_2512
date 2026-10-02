@@ -46,10 +46,15 @@ export async function DELETE(
   }
 
   // 해당 전략에 속한 학생들을 전략에서 해제 (ON DELETE SET NULL이 처리하지만 명시적으로)
-  await supabaseAdmin
+  const { error: unassignError } = await supabaseAdmin
     .from('students')
     .update({ retry_strategy_id: null, retry_stage: null, retry_assigned_at: null })
     .eq('retry_strategy_id', id);
+
+  if (unassignError) {
+    console.error('[retry-strategies DELETE unassign]', unassignError);
+    return NextResponse.json({ error: '전략에 배정된 학생 해제에 실패했습니다.' }, { status: 500 });
+  }
 
   const { error } = await supabaseAdmin
     .from('retry_strategies')

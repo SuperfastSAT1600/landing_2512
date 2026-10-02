@@ -4,10 +4,11 @@ import { NextRequest } from 'next/server';
 const mockSelect = vi.fn();
 const mockInsert = vi.fn();
 const mockUpdate = vi.fn();
+const mockDelete = vi.fn();
 
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
-    from: vi.fn(() => ({ select: mockSelect, insert: mockInsert, update: mockUpdate, delete: vi.fn() })),
+    from: vi.fn(() => ({ select: mockSelect, insert: mockInsert, update: mockUpdate, delete: mockDelete })),
   },
 }));
 
@@ -27,7 +28,7 @@ function makeReq(body: Record<string, unknown> = BODY) {
 const prior = (stage: string) => ({ stage, label: `단계 ${stage}`, entered_at: '2026-09-01T00:00:00Z' });
 
 /** 학생 조회 → 환불 insert → 학생 update 순서로 응답을 세팅한다. */
-function arrange(stageHistory: unknown) {
+function arrange(stageHistory: unknown, updateError: { message: string } | null = null) {
   mockSelect.mockReturnValueOnce({
     eq: vi.fn().mockReturnValueOnce({
       single: vi.fn().mockResolvedValueOnce({
@@ -36,11 +37,17 @@ function arrange(stageHistory: unknown) {
       }),
     }),
   });
-  mockInsert.mockResolvedValueOnce({ error: null });
+  mockInsert.mockReturnValueOnce({
+    select: vi.fn().mockReturnValueOnce({
+      single: vi.fn().mockResolvedValueOnce({ data: { id: 'pay-9' }, error: null }),
+    }),
+  });
   mockUpdate.mockReturnValueOnce({
     eq: vi.fn().mockReturnValueOnce({
       select: vi.fn().mockReturnValueOnce({
-        single: vi.fn().mockResolvedValueOnce({ data: { id: 'stu-1' }, error: null }),
+        single: vi.fn().mockResolvedValueOnce(
+          updateError ? { data: null, error: updateError } : { data: { id: 'stu-1' }, error: null }
+        ),
       }),
     }),
   });
@@ -87,5 +94,23 @@ describe('POST /api/crm/students/[id]/refund — stage_history', () => {
 
     expect(res.status).toBe(400);
     expect(mockSelect).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/crm/students/[id]/refund — 부분 실패 보상', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  // REQ-001 (crm-quality-cleanup)
+  it('학생 업데이트가 실패하면 방금 넣은 환불 행만 id로 삭제한다', async () => {
+    arrange([prior('8')], { message: 'update failed' });
+    const eqDelete = vi.fn().mockResolvedValueOnce({ error: null });
+    mockDelete.mockReturnValueOnce({ eq: eqDelete });
+
+    const { POST } = await import('../route');
+    const res = await POST(makeReq(), { params });
+
+    expect(res.status).toBe(500);
+    expect(eqDelete).toHaveBeenCalledTimes(1);
+    expect(eqDelete).toHaveBeenCalledWith('id', 'pay-9');
   });
 });

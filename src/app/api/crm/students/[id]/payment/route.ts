@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { getKstDateString } from '@/lib/week-definitions';
 import { enrollStudentOnPayment } from '@/lib/enroll-on-payment';
 import { isPaymentMethod, PAYMENT_METHODS } from '@/types/crm';
 
@@ -67,7 +68,7 @@ export async function POST(
       tax_type: tax_type ?? '면세',
       payment_type: resolvedPaymentType,
       payment_method: isPaymentMethod(payment_method) ? payment_method : null,
-      paid_at: paid_at ?? new Date().toISOString().slice(0, 10),
+      paid_at: paid_at ?? getKstDateString(),
       created_by: created_by ?? null,
     })
     .select()

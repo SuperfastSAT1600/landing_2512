@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
+import { getKstDateString } from '@/lib/week-definitions';
 
 export async function DELETE(
   request: NextRequest,
@@ -8,7 +9,7 @@ export async function DELETE(
 ) {
   if (!isAuthenticated(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { crmStudentId } = await params;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getKstDateString();
 
   const { error } = await supabaseAdmin
     .from('student_pauses')

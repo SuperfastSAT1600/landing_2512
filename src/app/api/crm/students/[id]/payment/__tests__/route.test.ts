@@ -58,6 +58,20 @@ describe('POST /api/crm/students/[id]/payment', () => {
     expect(mockEnroll).toHaveBeenCalled();
   });
 
+  // REQ-002 (crm-quality-cleanup): KST 오전(=UTC 전날)에도 오늘 날짜는 KST 기준
+  it('paid_at 미지정 시 KST 오늘 날짜로 기록한다', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-02T22:30:00Z')); // KST 10-03 07:30
+    try {
+      happyPath();
+      const { POST } = await import('../route');
+      await POST(makeReq(VALID), { params });
+      expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ paid_at: '2026-10-03' }));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('accepts a normal positive amount → 201', async () => {
     happyPath();
     const { POST } = await import('../route');

@@ -73,10 +73,11 @@ export async function POST(
 
   // resultId=null → 연결 해제 (student_id는 유지 — 한 번 연결된 결과는 후보에서 영구 제외)
   if (resultId === null) {
-    await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('students')
       .update({ diagnostic_result_id: null })
       .eq('id', id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     return NextResponse.json({ success: true });
   }
@@ -92,10 +93,12 @@ export async function POST(
 
   // 이전 결과의 student_id는 유지 (한 번 연결된 결과는 후보에서 영구 제외)
   // 양방향 연결
-  await Promise.all([
+  const writes = await Promise.all([
     supabaseAdmin.from('students').update({ diagnostic_result_id: resultId }).eq('id', id),
     supabaseAdmin.from('diagnostic_test_results').update({ student_id: id }).eq('id', resultId),
   ]);
+  const writeError = writes.find((w) => w.error)?.error;
+  if (writeError) return NextResponse.json({ error: writeError.message }, { status: 500 });
 
   return NextResponse.json({ success: true });
 }

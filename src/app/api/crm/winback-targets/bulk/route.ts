@@ -44,6 +44,14 @@ async function markSent(
   const now = new Date().toISOString();
   const entryId = randomUUID();
 
+  // 학생을 먼저 읽는다 — 읽기가 실패하면 상담 메모를 남기기 전에 멈춘다.
+  const { data: student, error: studentError } = await supabaseAdmin
+    .from('students')
+    .select('name, lead_status, reactivation_log')
+    .eq('id', target.student_id)
+    .single();
+  if (studentError || !student) throw new Error(studentError?.message ?? '학생을 찾을 수 없습니다.');
+
   const sentMessage = customMessage ?? target.message_draft;
   await appendConsultationEntry(target.student_id, {
     raw_memo: buildMirrorMemo({ playTitle, variantName, message: sentMessage }),
@@ -51,18 +59,12 @@ async function markSent(
     published: false,
   });
 
-  const { data: student } = await supabaseAdmin
-    .from('students')
-    .select('name, lead_status, reactivation_log')
-    .eq('id', target.student_id)
-    .single();
-
-  const log = Array.isArray(student?.reactivation_log) ? student.reactivation_log : [];
-  await supabaseAdmin
+  const log = Array.isArray(student.reactivation_log) ? student.reactivation_log : [];
+  const { error: studentUpdateError } = await supabaseAdmin
     .from('students')
     .update({
       // 이미 등록(enrolled)된 학생을 되돌리지 않는다 — 업셀 발송일 수 있다.
-      lead_status: student?.lead_status === 'enrolled' ? student.lead_status : 'reactivating',
+      lead_status: student.lead_status === 'enrolled' ? student.lead_status : 'reactivating',
       reactivation_log: [
         ...log,
         {
@@ -74,6 +76,7 @@ async function markSent(
       ],
     })
     .eq('id', target.student_id);
+  if (studentUpdateError) throw new Error(studentUpdateError.message);
 
   const updatePayload = {
     status: 'sent',
@@ -113,7 +116,7 @@ async function markSent(
   return {
     target: updated,
     send: {
-      studentName: student?.name ?? target.student_id,
+      studentName: student.name ?? target.student_id,
       playLabel: playLabel(playTitle, variantName),
       message: sentMessage,
     },
