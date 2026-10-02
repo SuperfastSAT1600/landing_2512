@@ -5,13 +5,11 @@ import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import type { B2bPipelineData, B2bPipelineCompany } from '@/app/api/crm/b2b/pipeline/route';
 import { OverviewCard, StageFlowTable } from '../stats-primitives';
 import { apiErrorMessage } from '@/lib/api-error';
+import { kstShortDate } from '../../lib/format';
 
 interface Props {
   adminKey: string;
 }
-
-const kstDate = (s: string | null) =>
-  s ? new Date(s).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit' }) : '-';
 
 export function B2bPipeline({ adminKey }: Props) {
   const [data, setData] = useState<B2bPipelineData | null>(null);
@@ -120,7 +118,7 @@ function PipelineRow({ row, expanded, onToggle }: { row: B2bPipelineCompany; exp
           </div>
         </td>
         <td className="text-right py-2.5 px-2 tabular-nums text-gray-400">{row.enrolled_count}</td>
-        <td className="text-right py-2.5 px-2 tabular-nums text-gray-500">{kstDate(row.latest_activity_at)}</td>
+        <td className="text-right py-2.5 px-2 tabular-nums text-gray-500">{kstShortDate(row.latest_activity_at)}</td>
       </tr>
       {expanded && (
         <tr>

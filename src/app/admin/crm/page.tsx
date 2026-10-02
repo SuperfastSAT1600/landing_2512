@@ -212,8 +212,9 @@ export default function CrmPage() {
       });
       const json = await res.json();
       if (res.ok && json.data) setSelectedStudent(json.data as Student);
-    } catch {
-      /* 무시: 패널이 열리지 않을 뿐 */
+    } catch (e) {
+      // 패널이 열리지 않을 뿐이라 화면은 막지 않는다.
+      console.error('[crm openStudentById]', e);
     }
   }, [students]);
 

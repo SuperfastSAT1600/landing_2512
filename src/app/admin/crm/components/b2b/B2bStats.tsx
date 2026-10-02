@@ -19,9 +19,7 @@ import {
   OverviewCard,
   RateBar,
 } from '../stats-primitives';
-
-const won = (n: number) => `${n.toLocaleString()}원`;
-const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
+import { won, manwon, kstShortDate } from '../../lib/format';
 
 const TREND_METRICS = [
   { key: 'revenue', label: '매출' },
@@ -31,8 +29,6 @@ const TREND_METRICS = [
 type TrendMetric = (typeof TREND_METRICS)[number]['key'];
 // 비교 차트 한 행: month + 업체 id별 지표값
 type CmpRow = { month: string; [companyId: string]: number | string };
-const kstDate = (s: string | null) =>
-  s ? new Date(s).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit' }) : '-';
 
 interface Props {
   adminKey: string;
@@ -311,7 +307,7 @@ function CompanyRow({ row, onSelectStudentById, expanded, onToggle }: { row: B2b
                       <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${enrolled ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
                         {enrolled ? '수업 중' : '이탈'}
                       </span>
-                      <span className="text-xs text-gray-400 tabular-nums ml-auto shrink-0">{kstDate(s.inquiry_date ?? s.created_at)}</span>
+                      <span className="text-xs text-gray-400 tabular-nums ml-auto shrink-0">{kstShortDate(s.inquiry_date ?? s.created_at)}</span>
                     </button>
                   );
                 })}

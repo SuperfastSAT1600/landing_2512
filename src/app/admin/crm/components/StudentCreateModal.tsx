@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import {
   Student, DesiredSubjects, PreviousScoreStatus, SchoolType, ContactType,
@@ -12,6 +12,7 @@ import { Field, inputCls, selectCls } from './form-primitives';
 import { TimezoneCombobox } from './TimezoneCombobox';
 import { useCompanies } from '@/hooks/useCompanies';
 import { apiErrorMessage } from '@/lib/api-error';
+import { useNameSuggest } from '../lib/use-name-suggest';
 
 interface StudentCreateModalProps {
   onClose: () => void;
@@ -76,8 +77,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [showSecondDate, setShowSecondDate] = useState(false);
-  const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
-  const nameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { suggestions: nameSuggestions, search: searchNames } = useNameSuggest(adminKey);
 
   const set = (key: keyof FormState) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -86,26 +86,7 @@ export function StudentCreateModal({ onClose, onCreate, adminKey, userName }: St
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setForm(prev => ({ ...prev, name: value }));
-
-    if (nameTimer.current) clearTimeout(nameTimer.current);
-    if (value.trim().length < 2) {
-      setNameSuggestions([]);
-      return;
-    }
-
-    nameTimer.current = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `/api/crm/students?name_search=${encodeURIComponent(value.trim())}`,
-          { headers: { 'x-admin-key': adminKey } }
-        );
-        const json = await res.json();
-        const names: string[] = (json.data ?? []).map((s: { name: string }) => s.name);
-        setNameSuggestions(names);
-      } catch {
-        // ignore
-      }
-    }, 300);
+    searchNames(value);
   };
 
   const validate = (): boolean => {

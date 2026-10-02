@@ -5,6 +5,7 @@
 // 조용히 빠진다. 금액의 출처는 언제나 payments 이고, 링크는 정확도를 높이는 힌트로만 쓴다.
 
 import { getWeekDef, getWeekDefByStart } from './week-definitions';
+import { kstDateOf } from '@/lib/kst-day';
 
 export interface CompletedTargetRow {
   week_start: string;
@@ -33,7 +34,7 @@ export interface WeekAmount {
 
 /** paid_at(timestamptz) → KST 날짜. 주차 경계는 KST 기준이라 UTC 로 자르면 하루 밀린다. */
 export function kstDate(paidAt: string): string {
-  return new Date(new Date(paidAt).getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return kstDateOf(new Date(paidAt).getTime());
 }
 
 /**

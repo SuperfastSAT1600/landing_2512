@@ -4,15 +4,13 @@ import { useMemo, useState } from 'react';
 import type { Student } from '@/types/crm';
 import { FUNNEL_STAGE_LABELS, type FunnelStage } from '@/types/crm';
 import { useCompanies } from '@/hooks/useCompanies';
+import { kstShortDate } from '../../lib/format';
 
 interface Props {
   adminKey: string;
   students: Student[];
   onStudentClick: (student: Student) => void;
 }
-
-const kstDate = (s: string | null) =>
-  s ? new Date(s).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit' }) : '-';
 
 export function B2bLeads({ adminKey, students, onStudentClick }: Props) {
   const { companies } = useCompanies(adminKey, { all: true });
@@ -52,7 +50,7 @@ export function B2bLeads({ adminKey, students, onStudentClick }: Props) {
                 <td className="py-2.5 px-3 text-gray-600">{(s.company_id && companyName.get(s.company_id)) ?? s.b2b_partner ?? '-'}</td>
                 <td className="py-2.5 px-3 text-gray-600">{FUNNEL_STAGE_LABELS[s.funnel_stage as FunnelStage] ?? s.funnel_stage}</td>
                 <td className="py-2.5 px-3 text-gray-600">{s.lead_status}</td>
-                <td className="py-2.5 px-2 text-right text-gray-500 tabular-nums">{kstDate(s.inquiry_date ?? s.created_at)}</td>
+                <td className="py-2.5 px-2 text-right text-gray-500 tabular-nums">{kstShortDate(s.inquiry_date ?? s.created_at)}</td>
               </tr>
             ))}
             {leads.length === 0 && (

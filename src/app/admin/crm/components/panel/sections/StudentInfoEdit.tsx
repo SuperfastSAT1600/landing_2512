@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   GRADE_OPTIONS_BY_SCHOOL_TYPE,
 } from '@/types/crm';
@@ -10,6 +10,7 @@ import {
 import { TimezoneCombobox } from '../../TimezoneCombobox';
 import { getSatTestDates, getSatPastMonths, formatSatDate } from '../constants';
 import type { EditForm } from '../types';
+import { useNameSuggest } from '../../../lib/use-name-suggest';
 
 const inputCls = 'w-full bg-gray-50 border border-gray-200 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all';
 const selectCls = 'w-full bg-gray-50 border border-gray-200 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 outline-none transition-all';
@@ -31,8 +32,7 @@ interface Props {
 }
 
 export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) {
-  const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
-  const nameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { suggestions: nameSuggestions, search: searchNames, clear: clearNameSuggestions } = useNameSuggest(adminKey ?? '', studentId);
   // 현재 날짜 기준 과거 응시 월 / 미래 목표 시험일 (실시간)
   const satPastMonths = useMemo(() => getSatPastMonths(), []);
   const satTestDates = useMemo(() => getSatTestDates(), []);
@@ -52,28 +52,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     onChange({ ...form, name: value });
-
-    if (nameTimer.current) clearTimeout(nameTimer.current);
-    if (!adminKey || value.trim().length < 2) {
-      setNameSuggestions([]);
-      return;
-    }
-
-    nameTimer.current = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `/api/crm/students?name_search=${encodeURIComponent(value.trim())}`,
-          { headers: { 'x-admin-key': adminKey } }
-        );
-        const json = await res.json();
-        const others = (json.data ?? [])
-          .filter((s: { id: string }) => s.id !== studentId)
-          .map((s: { name: string }) => s.name);
-        setNameSuggestions(others);
-      } catch {
-        // ignore
-      }
-    }, 300);
+    searchNames(value);
   };
 
   return (
@@ -96,7 +75,7 @@ export function StudentInfoEdit({ form, onChange, adminKey, studentId }: Props) 
               <button
                 key={i}
                 type="button"
-                onClick={() => { onChange({ ...form, name }); setNameSuggestions([]); }}
+                onClick={() => { onChange({ ...form, name }); clearNameSuggestions(); }}
                 className="w-full text-left px-2.5 py-1.5 text-xs text-gray-700 hover:bg-amber-100 transition-colors border-b border-amber-100 last:border-0"
               >
                 {name}

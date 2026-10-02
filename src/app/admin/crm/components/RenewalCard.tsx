@@ -18,6 +18,7 @@ import {
 } from '@/types/crm';
 import { getKstDateString, getWeekLabel } from '@/lib/week-definitions';
 import { TUTORING_STATUS_META, type TutoringDisplayStatus } from './TutoringStudentRow';
+import { daysSince } from '../lib/format';
 
 export interface RenewalCardTutoring {
   displayStatus: TutoringDisplayStatus;
@@ -47,10 +48,6 @@ interface RenewalCardProps {
   /** '진행 중 전체' 스코프에서는 어느 주차 코호트인지 배지로 보여준다. */
   showWeekBadge?: boolean;
   overlay?: boolean;
-}
-
-function daysSince(dateStr: string, nowMs: number): number {
-  return Math.floor((nowMs - new Date(dateStr).getTime()) / 86400000);
 }
 
 function stageAgeTone(days: number): string {

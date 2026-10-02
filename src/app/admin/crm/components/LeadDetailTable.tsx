@@ -2,6 +2,7 @@
 
 import type { LeadDetailItem } from '@/lib/crm-stats-detail';
 import { FUNNEL_STAGE_LABELS, type FunnelStage } from '@/types/crm';
+import { kstShortDate } from '../lib/format';
 
 export const stageLabel = (stage: string) =>
   FUNNEL_STAGE_LABELS[stage as FunnelStage] ?? stage;
@@ -30,9 +31,6 @@ export const byInquiryDateAsc = (a: LeadDetailItem, b: LeadDetailItem) => {
   if (!b.date) return -1;
   return a.date.localeCompare(b.date);
 };
-
-export const kstDate = (s: string) =>
-  new Date(s).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit' });
 
 interface Props {
   items: LeadDetailItem[];
@@ -82,8 +80,8 @@ export function LeadDetailTable({ items, onSelectStudent, onRowClick }: Props) {
                   </span>
                 </td>
                 <td className="py-2 px-3 text-gray-600">{it.churn_tag ?? '-'}</td>
-                <td className="py-2 px-3 text-right text-gray-500 tabular-nums whitespace-nowrap">{it.date ? kstDate(it.date) : '-'}</td>
-                <td className="py-2 pl-3 text-right text-gray-500 tabular-nums whitespace-nowrap">{it.first_memo_at ? kstDate(it.first_memo_at) : '-'}</td>
+                <td className="py-2 px-3 text-right text-gray-500 tabular-nums whitespace-nowrap">{kstShortDate(it.date)}</td>
+                <td className="py-2 pl-3 text-right text-gray-500 tabular-nums whitespace-nowrap">{kstShortDate(it.first_memo_at)}</td>
               </tr>
             );
           })}
