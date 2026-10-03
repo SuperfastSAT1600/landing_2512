@@ -25,6 +25,21 @@ export interface VocabDiagnosisItem {
   timeTaken: number;
 }
 
+export type DesmosFlag = 'SLOW_WITH_DESMOS' | 'UNNECESSARY_DESMOS' | 'MISSING_DESMOS';
+
+export interface DesmosAnalysisItem {
+  questionId: string;
+  questionNumber: number;
+  skill: string;
+  domain: import('@/app/diagnosis/data/diagnostic-test-1').SATDomain;
+  difficulty: string;
+  desmosUsed: boolean;
+  desmosRecommended: boolean;
+  timeSeconds: number;
+  isCorrect: boolean;
+  flags: DesmosFlag[];
+}
+
 export interface RWCognitionItem {
   questionId: string;
   questionNumber: number;
@@ -77,6 +92,7 @@ export interface ReportData {
   vocabResults?: VocabDiagnosisItem[];
   rwCognitionData?: RWCognitionItem[];
   rwStudentProfile?: RWStudentProfile;
+  desmosAnalysis?: DesmosAnalysisItem[];
 }
 
 /**
@@ -119,7 +135,6 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
     questions = diagnosticTest1.questions as TestQuestion[];
   }
 
-  // REQ-003: JSONB values are cast but may be any type at runtime
   const rawAnswers: Record<string, unknown> = result.answers ?? {};
   const confidenceLevels: Record<string, number> = result.confidence_levels ?? {};
   const questionTimes: Record<string, number> = result.question_times ?? {};
@@ -136,6 +151,9 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
   type RawVocabResult = { wordId: string; selectedOptionId: string | null; isCorrect: boolean; timeTaken: number };
   const rwResultsRaw: RawRWResult[] = isV2 ? (rawAnswers.rw as RawRWResult[] ?? []) : [];
   const vocabResultsRaw: RawVocabResult[] = isV2 ? (rawAnswers.vocab as RawVocabResult[] ?? []) : [];
+
+  const desmosUsageRaw = rawAnswers.desmos_usage;
+  const desmosUsedSet = new Set<string>(Array.isArray(desmosUsageRaw) ? (desmosUsageRaw as string[]) : []);
 
   const domainStats: Record<string, { correct: number; total: number }> = {};
   const sectionStats: Record<string, { correct: number; total: number }> = {};
@@ -206,6 +224,35 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
     };
   });
 
+  // Desmos usage analysis — Math questions only
+  const DESMOS_SLOW_THRESHOLD_SECONDS = 120;
+  const desmosAnalysis: DesmosAnalysisItem[] = questions
+    .flatMap((q, idx) => {
+      if (q.section !== 'Math') return [];
+      const desmosUsed = desmosUsedSet.has(q.id);
+      const desmosRecommended = q.desmosRecommended === true;
+      const detail = questionDetails[idx];
+      const timeSeconds = detail.timeSeconds;
+      const isCorrect = detail.isCorrect;
+      const flags: DesmosFlag[] = [];
+      if (desmosUsed && timeSeconds > DESMOS_SLOW_THRESHOLD_SECONDS) flags.push('SLOW_WITH_DESMOS');
+      if (desmosUsed && !desmosRecommended) flags.push('UNNECESSARY_DESMOS');
+      if (!desmosUsed && desmosRecommended) flags.push('MISSING_DESMOS');
+      const item: DesmosAnalysisItem = {
+        questionId: q.id,
+        questionNumber: idx + 1,
+        skill: q.skill,
+        domain: q.domain,
+        difficulty: q.difficulty,
+        desmosUsed,
+        desmosRecommended,
+        timeSeconds,
+        isCorrect,
+        flags,
+      };
+      return [item];
+    });
+
   // v2 vocab results — cross-reference with word list for display text
   const vocabWordMap = new Map(diagnosticTest2Vocab.map(v => [v.id, v.word]));
   const vocabResults: VocabDiagnosisItem[] = vocabResultsRaw.map(v => ({
@@ -274,5 +321,6 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
     rwStudentProfile: isV2 && rwCognitionItems.length > 0
       ? classifyRWStudent(rwCognitionItems.map(i => i.questionType))
       : undefined,
+    desmosAnalysis: desmosAnalysis.length > 0 ? desmosAnalysis : undefined,
   };
 }

@@ -117,6 +117,7 @@ export interface SubmitTestRequest {
   // v2-only fields
   vocabAnswers?: VocabAnswer[];
   rwSequentialData?: RWSequentialAnswer[];
+  desmosUsage?: string[];
 }
 
 /**

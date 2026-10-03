@@ -30,13 +30,14 @@ export async function POST(request: NextRequest) {
       previousMathScore,
       vocabAnswers,
       rwSequentialData,
+      desmosUsage,
     } = body;
 
     // For v2, merge vocab + rw sequential + math answers into the answers JSONB
     const isV2 = testId === 'diagnostic-test-2';
     const storedAnswers = isV2
-      ? { __v2__: true, vocab: vocabAnswers ?? [], rw: rwSequentialData ?? [], math: answers }
-      : answers;
+      ? { __v2__: true, vocab: vocabAnswers ?? [], rw: rwSequentialData ?? [], math: answers, desmos_usage: desmosUsage ?? [] }
+      : { ...answers, desmos_usage: desmosUsage ?? [] };
 
     // Validate required fields (studentEmail is optional — student may skip)
     if (!studentName || !testId) {
