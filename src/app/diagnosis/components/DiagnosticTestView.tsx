@@ -58,8 +58,10 @@ export function DiagnosticTestView({
   const [questionTimes, setQuestionTimes] = useState<Record<string, number>>({});
   const [showNav, setShowNav] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [desmosUsedQuestions, setDesmosUsedQuestions] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
   const [resultId, setResultId] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [elapsedAtConfirm, setElapsedAtConfirm] = useState(0);
@@ -178,6 +180,7 @@ export function DiagnosticTestView({
     setSubmitting(true);
 
     // Always save results to Supabase
+    let succeeded = false;
     try {
       const submitData: SubmitTestRequest = {
         tokenId,
@@ -198,6 +201,7 @@ export function DiagnosticTestView({
         previousRwScore,
         previousMathScore,
         ...(isV2 && { vocabAnswers, rwSequentialData }),
+        desmosUsage: Array.from(desmosUsedQuestions),
       };
 
       const response = await fetch('/api/diagnosis/submit', {
@@ -209,6 +213,7 @@ export function DiagnosticTestView({
       if (response.ok) {
         const data = await response.json();
         if (data.resultId) setResultId(data.resultId);
+        succeeded = true;
       } else {
         console.error('Failed to save test results:', await response.text());
       }
@@ -217,6 +222,7 @@ export function DiagnosticTestView({
     }
 
     setTimeout(() => {
+      if (!succeeded) setSubmitFailed(true);
       setSubmitted(true);
       setSubmitting(false);
       isSubmittingRef.current = false;
@@ -238,6 +244,40 @@ export function DiagnosticTestView({
       handleSubmitRef.current();
     }
   }, [timer.remaining, startTime, submitting, submitted, hasAnswers]);
+
+  if (submitted && submitFailed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#F4F5F9' }}>
+        <div className="text-center" style={{ maxWidth: 420 }}>
+          <div className="mb-6 flex justify-center">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+              <circle cx="40" cy="40" r="38" stroke="#EF4444" strokeWidth="3" />
+              <path d="M28 28l24 24M52 28L28 52" stroke="#EF4444" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 mb-3">제출에 실패했습니다</h2>
+          <p className="text-gray-500 leading-relaxed mb-6" style={{ fontSize: 15 }}>
+            네트워크 오류로 답안이 저장되지 않았습니다.<br />
+            답안은 그대로 있으니 다시 제출해주세요.
+          </p>
+          <button
+            onClick={() => {
+              setSubmitted(false);
+              setSubmitFailed(false);
+              isSubmittingRef.current = false;
+            }}
+            className="w-full py-4 rounded-xl font-bold text-white text-lg transition-all"
+            style={{ background: '#071be9' }}
+          >
+            다시 제출하기
+          </button>
+          <p className="mt-4 text-xs text-gray-400">
+            문제가 계속되면 선생님께 문의해주세요.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (submitted) return <TestSubmittedScreen resultId={resultId} />;
 
@@ -341,7 +381,12 @@ export function DiagnosticTestView({
         <div className="bluebook-header-right">
           <button
             type="button"
-            onClick={() => setCalculatorOpen(true)}
+            onClick={() => {
+              setCalculatorOpen(true);
+              if (currentQuestion) {
+                setDesmosUsedQuestions(prev => new Set(prev).add(currentQuestion.id));
+              }
+            }}
             className="bluebook-icon-btn"
           >
             <Icon icon="fluent:calculator-24-regular" width={20} height={20} />

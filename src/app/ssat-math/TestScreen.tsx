@@ -42,12 +42,16 @@ function pad(n: number) {
   return n.toString().padStart(2, '0');
 }
 
+const TIME_UP_COUNTDOWN = 10;
+
 export function TestScreen({ setNumber, questions, studentId, onComplete }: Props) {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState(TOTAL_SECONDS);
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [timeUpVisible, setTimeUpVisible] = useState(false);
+  const [timeUpCountdown, setTimeUpCountdown] = useState(TIME_UP_COUNTDOWN);
   const startTime = useRef(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answersRef = useRef<Record<string, string>>({});
@@ -80,7 +84,7 @@ export function TestScreen({ setNumber, questions, studentId, onComplete }: Prop
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          submitRef.current(answersRef.current);
+          setTimeUpVisible(true);
           return 0;
         }
         return prev - 1;
@@ -89,6 +93,17 @@ export function TestScreen({ setNumber, questions, studentId, onComplete }: Prop
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 타이머 만료 모달 카운트다운
+  useEffect(() => {
+    if (!timeUpVisible) return;
+    if (timeUpCountdown <= 0) {
+      submitRef.current(answersRef.current);
+      return;
+    }
+    const id = setTimeout(() => setTimeUpCountdown(c => c - 1), 1000);
+    return () => clearTimeout(id);
+  }, [timeUpVisible, timeUpCountdown]);
 
   const q = questions[current];
   const choiceMap = {
@@ -236,6 +251,35 @@ export function TestScreen({ setNumber, questions, studentId, onComplete }: Prop
                 제출
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Time-up modal */}
+      {timeUpVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
+          <div className="bg-[#09090b] border border-white/10 rounded-2xl p-6 max-w-sm w-full text-center">
+            <div className="text-4xl font-bold tabular-nums text-red-400 mb-3">{timeUpCountdown}</div>
+            <h3 className="text-lg font-bold mb-2">시간이 종료됐어요</h3>
+            <p className="text-gray-400 text-sm mb-1">
+              {answeredCount > 0
+                ? <>{answeredCount}개 답변을 제출합니다.</>
+                : <>답변한 문제가 없습니다.</>
+              }
+            </p>
+            {answeredCount < questions.length && (
+              <p className="text-gray-600 text-xs mb-6">
+                미응답 {questions.length - answeredCount}개는 오답 처리됩니다.
+              </p>
+            )}
+            {answeredCount >= questions.length && <div className="mb-6" />}
+            <button
+              onClick={() => { setTimeUpVisible(false); submit(answersRef.current); }}
+              disabled={submitting}
+              className="w-full py-3 rounded-xl bg-[#071be9] hover:bg-[#1a31f0] font-bold transition-all disabled:opacity-40"
+            >
+              {submitting ? '채점 중...' : '지금 제출하기'}
+            </button>
           </div>
         </div>
       )}
