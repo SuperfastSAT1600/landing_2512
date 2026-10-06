@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
 import { SectionCard } from './SectionCard';
-import { buildStrategyHistoryEntry, upsertPhaseEntry } from '@/lib/strategy-history';
+import { buildStrategyHistoryEntry, upsertPhaseEntry, withAppliedDate } from '@/lib/strategy-history';
+import { toKstDay } from '@/lib/kst-day';
+import { getKstDateString } from '@/lib/week-definitions';
+import { notifyStrategyHistoryChanged } from '../../../lib/strategy-events';
 import { useStrategyCategories } from '../../strategies/useStrategyCategories';
 import { groupHistoryByCategory } from '../../strategies/groupByCategory';
 import type { Student, RetryStrategy, StrategyHistoryEntry, StrategyPhase } from '@/types/crm';
@@ -94,32 +97,51 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
   const strategyNameById = new Map(strategies.map(s => [s.id, s.name]));
   const displayName = (e: StrategyHistoryEntry) => strategyNameById.get(e.strategy_id) ?? e.strategy_name;
 
+  /** strategy_history 전체를 저장한다. 성공하면 패널 상태를 갱신하고 세일즈 전략 통계에 알린다. */
+  // 기록 전체를 덮어쓰는 저장이라, 저장 중에 다른 수정이 들어가면 서로 되돌린다 — 저장 중엔 잠근다.
+  async function persist(updated: StrategyHistoryEntry[]): Promise<boolean> {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/crm/students/${student.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ strategy_history: updated }),
+      });
+      if (!res.ok) return false;
+      onUpdate(student.id, { strategy_history: updated });
+      notifyStrategyHistoryChanged(student.id);
+      return true;
+    } catch (e) {
+      console.error('[StrategyHistorySection persist]', e);
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDateChange(entryId: string, kstDay: string) {
+    let updated: StrategyHistoryEntry[];
+    try {
+      updated = withAppliedDate(history, entryId, kstDay);
+    } catch {
+      alert('날짜 형식이 올바르지 않습니다.');
+      return;
+    }
+    if (!(await persist(updated))) alert('진행 날짜를 저장하지 못했습니다.');
+  }
+
   async function handleSave(entry: Omit<StrategyHistoryEntry, 'id' | 'applied_at'>) {
     setSaving(true);
     // 엔트리 shape은 주차 계획의 '전략 적용 기록'과 공유한다(집계가 이 shape에 의존).
     // 카테고리 × 진행 전/후 = 슬롯 1개. 같은 슬롯에 다시 고르면 갈아끼운다.
     const categoryOfStrategy = new Map(strategies.map((s) => [s.id, s.category_id]));
     const updated = upsertPhaseEntry(history, buildStrategyHistoryEntry(entry), categoryOfStrategy);
-    const res = await fetch(`/api/crm/students/${student.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-      body: JSON.stringify({ strategy_history: updated }),
-    });
-    if (res.ok) {
-      onUpdate(student.id, { strategy_history: updated });
-    }
+    await persist(updated);
     setAddingFor(null);
-    setSaving(false);
   }
 
   async function handleDelete(entryId: string) {
-    const updated = history.filter(e => e.id !== entryId);
-    const res = await fetch(`/api/crm/students/${student.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-      body: JSON.stringify({ strategy_history: updated }),
-    });
-    if (res.ok) onUpdate(student.id, { strategy_history: updated });
+    await persist(history.filter(e => e.id !== entryId));
   }
 
   const totalCount = history.length;
@@ -169,7 +191,7 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
                           <div key={phase} className="space-y-1">
                             <p className="text-[10px] font-semibold text-gray-400">{STRATEGY_PHASE_LABELS[phase]}</p>
                             {slot ? (
-                              <EntryRow entry={slot} name={displayName(slot)} onDelete={() => handleDelete(slot.id)} />
+                              <EntryRow entry={slot} name={displayName(slot)} disabled={saving} onDelete={() => handleDelete(slot.id)} onDateChange={(d) => handleDateChange(slot.id, d)} />
                             ) : addingFor !== slotKey ? (
                               <button
                                 disabled={saving}
@@ -206,7 +228,7 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
                           <p className="text-[11px] text-gray-400 py-1">적용된 전략이 없습니다.</p>
                         )}
                         {entries.map((e) => (
-                          <EntryRow key={e.id} entry={e} name={displayName(e)} onDelete={() => handleDelete(e.id)} />
+                          <EntryRow key={e.id} entry={e} name={displayName(e)} disabled={saving} onDelete={() => handleDelete(e.id)} onDateChange={(d) => handleDateChange(e.id, d)} />
                         ))}
                       </>
                     )}
@@ -223,19 +245,59 @@ export function StrategyHistorySection({ student, adminKey, onUpdate }: Props) {
 function EntryRow({
   entry,
   name,
+  disabled,
   onDelete,
+  onDateChange,
 }: {
   entry: StrategyHistoryEntry;
   name: string;
+  /** 저장 중 — 다른 수정이 겹쳐 서로 덮어쓰지 않게 잠근다. */
+  disabled: boolean;
   onDelete: () => void;
+  /** 진행 날짜(KST YYYY-MM-DD) 변경 — 기록한 날과 실제 진행한 날이 다를 때. */
+  onDateChange: (kstDay: string) => void;
 }) {
+  const [editingDate, setEditingDate] = useState(false);
+  const day = toKstDay(entry.applied_at) ?? entry.applied_at.slice(0, 10);
+  function commitDate(next: string) {
+    setEditingDate(false);
+    if (!next || next === day || next < '2020-01-01' || next > getKstDateString()) return;
+    onDateChange(next);
+  }
   return (
     <div className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 space-y-1">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold text-gray-700 min-w-0 truncate">{name}</span>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[10px] text-gray-400">{entry.applied_at.slice(0, 10)}</span>
-          <button onClick={onDelete} className="text-gray-300 hover:text-red-400 transition-colors">
+          {editingDate ? (
+            <input
+              type="date"
+              aria-label="진행 날짜"
+              autoFocus
+              defaultValue={day}
+              min="2020-01-01"
+              max={getKstDateString()}
+              // 연도를 손으로 치는 동안에도 change가 발생한다(0002-… 같은 중간값) — 입력을 마칠 때만 저장한다.
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitDate(e.currentTarget.value);
+                if (e.key === 'Escape') setEditingDate(false);
+              }}
+              onBlur={(e) => commitDate(e.currentTarget.value)}
+              className="text-[10px] text-gray-600 border border-gray-200 rounded px-1 py-0.5 bg-white"
+            />
+          ) : (
+            <button
+              type="button"
+              aria-label={`진행 날짜 수정: ${day}`}
+              title="진행 날짜 수정"
+              disabled={disabled}
+              onClick={() => setEditingDate(true)}
+              className="text-[10px] text-gray-400 hover:text-blue-500 hover:underline transition-colors"
+            >
+              {day}
+            </button>
+          )}
+          <button onClick={onDelete} disabled={disabled} className="text-gray-300 hover:text-red-400 disabled:opacity-40 transition-colors">
             <X size={11} />
           </button>
         </div>

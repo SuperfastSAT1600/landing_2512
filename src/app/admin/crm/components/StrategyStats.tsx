@@ -18,6 +18,7 @@ import { TransitionPanel } from './strategy-stats/TransitionPanel';
 import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
 import { apiErrorMessage } from '@/lib/api-error';
 import { won, manwon } from '../lib/format';
+import { useOnStrategyHistoryChanged } from '../lib/strategy-events';
 
 interface Props {
   adminKey: string;
@@ -75,6 +76,8 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
   }, [categoryId, range.from, range.to, segment, adminKey]);
 
   useEffect(() => { if (categoryId) fetchStats(); }, [fetchStats, categoryId]);
+  // 학생 패널에서 전략 기록(진행 날짜·추가·삭제)을 바꾸면 집계를 다시 불러온다 — 서버가 strategy_history로 매번 계산한다.
+  useOnStrategyHistoryChanged(() => { if (categoryId) fetchStats(); });
 
   // 배정 많은 전략부터 — 배정 0 전략은 뒤로.
   const rows = [...(data?.by_strategy ?? [])].sort((a, b) => b.assigned - a.assigned);

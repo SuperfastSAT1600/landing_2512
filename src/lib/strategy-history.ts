@@ -1,4 +1,5 @@
 import type { StrategyHistoryEntry, StrategyPhase } from '@/types/crm';
+import { kstDateOf } from '@/lib/kst-day';
 
 // students.strategy_history(045) 엔트리 생성·추가 — 학생 패널(전략 히스토리)이
 // 쓰는 shape을 여기 한 곳에 모은다.
@@ -77,4 +78,24 @@ export function hasAnyStrategy(student: { strategy_history: StrategyHistoryEntry
 /** 현재 활성 최초 세일즈 트랙 리드인지 — 재시도 트랙(retry_strategy_id 있음)은 제외. */
 export function isActiveInitialSalesLead(student: { lead_status: string; retry_strategy_id: string | null }): boolean {
   return student.lead_status === 'active' && !student.retry_strategy_id;
+}
+
+const KST_DAY = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+/**
+ * 엔트리의 진행 날짜(applied_at)를 KST 달력 날짜로 바꾼다 — 기록한 날과 실제 진행한 날이 다를 때.
+ * 시각은 그 날 정오(KST)로 둔다. 자정 근처로 두면 UTC/KST 변환에서 하루가 밀릴 수 있다.
+ * 전략 통계 코호트가 applied_at 기준이라, 바꾼 날짜는 통계에도 그대로 반영된다.
+ */
+export function withAppliedDate(
+  history: StrategyHistoryEntry[],
+  entryId: string,
+  kstDay: string,
+): StrategyHistoryEntry[] {
+  const at = new Date(`${kstDay}T12:00:00+09:00`);
+  // 2026-02-31 같은 값은 Date가 다음 달로 넘겨버린다 — 되돌려 같은 날짜인지 확인한다.
+  if (!KST_DAY.test(kstDay) || Number.isNaN(at.getTime()) || kstDateOf(at.getTime()) !== kstDay) {
+    throw new Error(`진행 날짜 형식이 올바르지 않습니다: ${kstDay}`);
+  }
+  return history.map((e) => (e.id === entryId ? { ...e, applied_at: at.toISOString() } : e));
 }
