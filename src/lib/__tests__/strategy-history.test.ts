@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   appendStrategyHistoryEntry,
+  withAppliedDate,
   buildStrategyHistoryEntry,
   hasAnyStrategy,
   effectivePhase,
@@ -155,5 +156,29 @@ describe('phase — 진행 전/후 구분', () => {
     const unknown = buildStrategyHistoryEntry({ strategy_id: 's-zzz', strategy_name: 'Z', phase: 'planned' });
     const out = upsertPhaseEntry([known], unknown, CAT_OF);
     expect(out).toHaveLength(2);
+  });
+});
+
+describe('withAppliedDate', () => {
+  const base = [
+    { id: 'a', strategy_id: 's1', strategy_name: 'A', memo: 'm', applied_at: '2026-10-06T01:00:00.000Z', phase: 'planned' as const },
+    { id: 'b', strategy_id: 's2', strategy_name: 'B', memo: '', applied_at: '2026-10-06T02:00:00.000Z' },
+  ];
+
+  // REQ-001 (strategy-history-date-edit)
+  it('해당 엔트리의 applied_at을 그 KST 날짜 정오로 바꾸고 나머지는 그대로 둔다', () => {
+    const next = withAppliedDate(base, 'a', '2026-10-03');
+    expect(next[0]).toEqual({ ...base[0], applied_at: '2026-10-03T03:00:00.000Z' });
+    expect(next[1]).toBe(base[1]);
+  });
+
+  it('없는 id면 원본 그대로', () => {
+    expect(withAppliedDate(base, 'zzz', '2026-10-03')).toEqual(base);
+  });
+
+  it('형식이 잘못된 날짜는 거부한다', () => {
+    expect(() => withAppliedDate(base, 'a', '2026/10/03')).toThrow();
+    expect(() => withAppliedDate(base, 'a', '2026-13-40')).toThrow();
+    expect(() => withAppliedDate(base, 'a', '2026-02-31')).toThrow(); // Date가 03-03으로 넘기는 값
   });
 });

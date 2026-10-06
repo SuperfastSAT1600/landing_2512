@@ -185,4 +185,81 @@ describe('StrategyHistorySection — 전략이 없는 카테고리', () => {
 
     expect(await screen.findByText(/B2C 전략 라이브러리/)).toBeTruthy();
   });
+
+  describe('진행 날짜 수정', () => {
+    const DATED: StrategyHistoryEntry = { ...ENTRY, applied_at: '2026-10-05T16:00:00Z' }; // KST 10-06 01:00
+    const DATED_STUDENT = { id: 'stu-1', lead_type: null, strategy_history: [DATED] } as unknown as Student;
+
+    function mockFetchWithPatch(patchOk: boolean) {
+      const calls: Array<{ url: string; init?: RequestInit }> = [];
+      global.fetch = vi.fn((url: string, init?: RequestInit) => {
+        calls.push({ url: String(url), init });
+        if (init?.method === 'PATCH') return Promise.resolve({ ok: patchOk, json: () => Promise.resolve({}) });
+        const data = String(url).includes('/strategy-categories')
+          ? [{ id: 'cat-1', name: '컨택 전략', sort_order: 0 }]
+          : [{ id: 's-live', name: '개인화 메시지', category_id: 'cat-1' }];
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) });
+      }) as unknown as typeof fetch;
+      return calls;
+    }
+
+    // REQ-003 (strategy-history-date-edit)
+    it('날짜는 KST로 보여준다 — UTC 16시는 KST 다음 날', async () => {
+      mockFetchWithPatch(true);
+      render(<StrategyHistorySection student={DATED_STUDENT} adminKey="k" onUpdate={vi.fn()} />);
+      await openSection('컨택 전략');
+      expect(await screen.findByText('2026-10-06')).toBeTruthy();
+    });
+
+    // REQ-002
+    it('날짜를 눌러 바꾸면 그 날짜로 저장하고 onUpdate를 부른다', async () => {
+      const calls = mockFetchWithPatch(true);
+      const onUpdate = vi.fn();
+      render(<StrategyHistorySection student={DATED_STUDENT} adminKey="k" onUpdate={onUpdate} />);
+      await openSection('컨택 전략');
+      fireEvent.click(await screen.findByRole('button', { name: '진행 날짜 수정: 2026-10-06' }));
+      const input = screen.getByLabelText('진행 날짜');
+      fireEvent.change(input, { target: { value: '2026-10-02' } });
+      // 입력 중(값만 바뀐 상태)에는 저장하지 않는다
+      expect(calls.some((c) => c.init?.method === 'PATCH')).toBe(false);
+      await act(async () => { fireEvent.blur(input); });
+
+      const patch = calls.find((c) => c.init?.method === 'PATCH');
+      expect(patch?.url).toBe('/api/crm/students/stu-1');
+      const body = JSON.parse(String(patch?.init?.body));
+      expect(body.strategy_history[0].applied_at).toBe('2026-10-02T03:00:00.000Z');
+      expect(onUpdate).toHaveBeenCalledWith('stu-1', { strategy_history: body.strategy_history });
+    });
+
+    it('저장이 실패하면 onUpdate를 부르지 않고 알린다', async () => {
+      mockFetchWithPatch(false);
+      const onUpdate = vi.fn();
+      const alertSpy = vi.fn();
+      vi.stubGlobal('alert', alertSpy);
+      render(<StrategyHistorySection student={DATED_STUDENT} adminKey="k" onUpdate={onUpdate} />);
+      await openSection('컨택 전략');
+      fireEvent.click(await screen.findByRole('button', { name: '진행 날짜 수정: 2026-10-06' }));
+      const input = screen.getByLabelText('진행 날짜');
+      fireEvent.change(input, { target: { value: '2026-10-02' } });
+      await act(async () => { fireEvent.keyDown(input, { key: 'Enter' }); });
+      expect(onUpdate).not.toHaveBeenCalled();
+      expect(alertSpy).toHaveBeenCalled();
+      vi.unstubAllGlobals();
+    });
+
+    it('미래 날짜나 Esc는 저장하지 않는다', async () => {
+      const calls = mockFetchWithPatch(true);
+      render(<StrategyHistorySection student={DATED_STUDENT} adminKey="k" onUpdate={vi.fn()} />);
+      await openSection('컨택 전략');
+      fireEvent.click(await screen.findByRole('button', { name: '진행 날짜 수정: 2026-10-06' }));
+      const input = screen.getByLabelText('진행 날짜');
+      fireEvent.change(input, { target: { value: '2999-01-01' } });
+      await act(async () => { fireEvent.blur(input); });
+      fireEvent.click(await screen.findByRole('button', { name: '진행 날짜 수정: 2026-10-06' }));
+      const again = screen.getByLabelText('진행 날짜');
+      fireEvent.change(again, { target: { value: '2026-10-01' } });
+      fireEvent.keyDown(again, { key: 'Escape' });
+      expect(calls.some((c) => c.init?.method === 'PATCH')).toBe(false);
+    });
+  });
 });

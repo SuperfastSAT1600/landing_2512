@@ -27,6 +27,9 @@ export interface VocabDiagnosisItem {
 
 export type DesmosFlag = 'SLOW_WITH_DESMOS' | 'UNNECESSARY_DESMOS' | 'MISSING_DESMOS';
 
+/** Desmos를 쓰고도 이 시간(초)을 넘기면 SLOW_WITH_DESMOS. */
+export const DESMOS_SLOW_THRESHOLD_SECONDS = 120;
+
 export interface DesmosAnalysisItem {
   questionId: string;
   questionNumber: number;
@@ -225,7 +228,6 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
   });
 
   // Desmos usage analysis — Math questions only
-  const DESMOS_SLOW_THRESHOLD_SECONDS = 120;
   const desmosAnalysis: DesmosAnalysisItem[] = questions
     .flatMap((q, idx) => {
       if (q.section !== 'Math') return [];
