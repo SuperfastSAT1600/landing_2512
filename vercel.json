@@ -9,6 +9,10 @@
       "schedule": "0 0 * * *"
     },
     {
+      "path": "/api/cron/schedule-input-status",
+      "schedule": "0 0 * * *"
+    },
+    {
       "path": "/api/cron/blog-topics",
       "schedule": "0 0 * * *"
     },
