@@ -1,3 +1,4 @@
+import { effectivePhase } from './strategy-history';
 import type { Student, FunnelStage } from '@/types/crm';
 import { FUNNEL_STAGE_LABELS } from '@/types/crm';
 
@@ -40,7 +41,11 @@ function toMs(ts: string | null | undefined): number {
   return new Date(ts).getTime();
 }
 
-export function buildActivityFeed(student: FeedStudent, payments: FeedPayment[] = []): ActivityItem[] {
+export function buildActivityFeed(
+  student: FeedStudent,
+  payments: FeedPayment[] = [],
+  strategyNames?: Map<string, string>
+): ActivityItem[] {
   const items: ActivityItem[] = [];
 
   // 상담 메모
@@ -63,14 +68,14 @@ export function buildActivityFeed(student: FeedStudent, payments: FeedPayment[] 
     items.push({ kind: 'stage', at: e.entered_at, title: '단계 이동', detail: label });
   }
 
-  // 전략 배정
+  // 전략 기록 — 콜 전에 준비한 것과 실제로 쓴 것을 구분해 보여준다.
   for (const e of student.strategy_history ?? []) {
     if (!e.applied_at) continue;
     items.push({
       kind: 'strategy',
       at: e.applied_at,
-      title: '전략 배정',
-      detail: e.strategy_name,
+      title: effectivePhase(e) === 'planned' ? '전략 계획' : '전략 적용',
+      detail: strategyNames?.get(e.strategy_id) ?? e.strategy_name,
       meta: e.memo || undefined,
     });
   }

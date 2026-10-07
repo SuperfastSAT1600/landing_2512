@@ -5,7 +5,6 @@
 
 import type { RenewalWeeklyStat } from '@/types/crm';
 import { formatRate } from './RenewalStatsStrip';
-import { manwon } from './weekly/format';
 
 interface RenewalWeeklyStatsProps {
   rows: RenewalWeeklyStat[];
@@ -27,6 +26,9 @@ function QualityBreakdown({ total, good, bad }: { total: number; good: number; b
     </span>
   );
 }
+
+/** 원화 → 만원 단위 축약. 0은 '0'. */
+const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
 
 export function RenewalWeeklyStats({
   rows,

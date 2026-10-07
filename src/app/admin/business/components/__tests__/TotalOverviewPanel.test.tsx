@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { TotalOverviewPanel } from '../TotalOverviewPanel';
 
-// 패널 하단의 OutcomeQualityPanel도 같은 기간 프리셋과 빈 상태 문구를 쓴다.
-// 전역 쿼리는 둘을 구분하지 못하므로 '월별 추이 (합산)' 섹션 안으로 범위를 좁힌다.
-const trendSection = () => within(screen.getByText('월별 추이 (합산)').closest('div')!);
+// 패널 하단의 ActiveLearnersPanel·OutcomeQualityPanel도 같은 기간 프리셋·빈 상태
+// 문구를 쓴다. '월별 추이 (합산)' 제목은 <section> 바로 아래에 있고 그 사이에
+// <div>가 없어 closest('div')는 루트까지 올라가 버리므로, closest('section')으로
+// '매출 현황' 섹션 안으로 범위를 좁힌다.
+const trendSection = () => within(screen.getByText('월별 추이 (합산)').closest('section')!);
 
 // 패널은 글로벌 매출을 "이번 달"로 필터하므로 픽스처 날짜도 실행 시점의 이번 달로 잡는다.
 const THIS_MONTH_DAY = `${new Date().toISOString().slice(0, 8)}11`;
@@ -28,6 +30,8 @@ function routedFetch(overview: Record<string, number>) {
   return vi.fn((url: string) => {
     if (url.includes('/api/crm/stats')) return Promise.resolve(crmStatsResponse(overview));
     if (url.includes('/api/business/global-sales')) return Promise.resolve(ok(GLOBAL_ENTRIES));
+    // ActiveLearnersPanel(실 API는 항상 배열)이 이 하단 패널 안에서 함께 렌더된다.
+    if (url.includes('/api/admin/active-learners')) return Promise.resolve(ok([]));
     return Promise.resolve(ok(null));
   });
 }
@@ -109,6 +113,7 @@ describe('TotalOverviewPanel', () => {
     const fetchMock = vi.fn((url: string) => {
       if (url.includes('/api/crm/stats')) return Promise.resolve(crmStatsResponse({ gross_revenue: 0, total_revenue: 0, total_net_revenue: 0 }, []));
       if (url.includes('/api/business/global-sales')) return Promise.resolve(ok([]));
+      if (url.includes('/api/admin/active-learners')) return Promise.resolve(ok([]));
       return Promise.resolve(ok(null));
     });
     vi.stubGlobal('fetch', fetchMock);

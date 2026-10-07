@@ -138,6 +138,7 @@ export interface ConsultationEntry {
   ai_purified?: string; // 학부모 공개본 (AI 초안 또는 직접 작성)
   ai_deleted_items?: string[]; // AI가 삭제한 항목 목록 (매니저 확인용)
   ai_coach_history?: string; // AI가 분리한 교육 이력 (코치 노출)
+  coach_visible?: boolean; // true면 코치 준비 자료에 노출
   attachments?: Attachment[]; // 첨부 파일 (운영자 내부 전용, 학부모 비노출)
   published: boolean; // true면 학부모 타임라인에 노출
   manager_id?: string;
@@ -304,25 +305,67 @@ export function getRenewalOutcomeQualityLabel(
   return stage === '5' ? RENEWAL_DROP_QUALITY_LABELS[quality] : RENEWAL_PAID_QUALITY_LABELS[quality];
 }
 
-export type StrategyHistoryType = 'initial_contact' | 'initial_sales' | 'retry';
+/**
+ * 전략을 콜 **전에 준비한 것**인지, 콜을 하며 **실제로 쓴 것**인지.
+ * 준비한 전략대로 흘러가지 않는 경우를 기록하려고 둔다.
+ */
+export type StrategyPhase = 'planned' | 'applied';
+
+/**
+ * 결제수단. 값이 없으면(NULL) "기록되지 않음"이다 —
+ * 예전에는 스키마 기본값 '계좌이체'가 박혀서 "계좌이체"와 "미입력"을 구분할 수 없었다.
+ */
+export const PAYMENT_METHODS = ['계좌이체', '신용카드', '토스결제', 'Stripe', '기타'] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export function isPaymentMethod(v: unknown): v is PaymentMethod {
+  return typeof v === 'string' && (PAYMENT_METHODS as readonly string[]).includes(v);
+}
+
+export const STRATEGY_PHASE_LABELS: Record<StrategyPhase, string> = {
+  planned: '진행 전',
+  applied: '진행 후',
+};
+
+/** 목록·배지처럼 좁은 자리에서 쓰는 짧은 라벨. */
+export const STRATEGY_PHASE_SHORT_LABELS: Record<StrategyPhase, string> = {
+  planned: '계획',
+  applied: '실제',
+};
+
+export const STRATEGY_PHASES: StrategyPhase[] = ['planned', 'applied'];
 
 export interface StrategyHistoryEntry {
   id: string;
-  type: StrategyHistoryType;
   strategy_id: string;
   strategy_name: string;
   memo: string;
   applied_at: string;
   manager_id?: string;
+  /**
+   * 없으면 'applied'. 이 필드가 생기기 전 기록(261건)은 전부 "실제로 쓴 전략"이라
+   * 그렇게 읽는다. 판정은 항상 lib/strategy-history 의 effectivePhase 를 거친다.
+   */
+  phase?: StrategyPhase;
 }
 
 export interface RetryStrategy {
   id: string;
   name: string;
   description: string | null;
-  type: 'initial_contact' | 'initial_sales' | 'retry';
+  category_id: string; // 전략 라이브러리 진열 카테고리 (146) — kind와 독립, 자유 이동 가능
   segment: 'b2c' | 'b2b'; // B2B/B2C 전략 분리 (097)
   created_at: string;
+}
+
+/** 전략 라이브러리 진열 카테고리 — segment별 독립, 자유 생성/이름변경/삭제/순서변경 (146) */
+export interface StrategyCategory {
+  id: string;
+  segment: 'b2c' | 'b2b';
+  name: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // ─── B2B 업체 (파트너) ───────────────────────────────────────────────────────
@@ -349,187 +392,6 @@ export interface CreateCompanyInput {
   contract_terms?: string | null;
   notes?: string | null;
   is_active?: boolean;
-}
-
-// ─── 주차별 계획 (목표 수치 + 실행 체크리스트) ───────────────────────────────
-
-export type WeeklyPlanSegment = 'b2c' | 'b2b';
-
-/** 목표 설정 가능한 지표 — b2c/b2b stats overview 교집합. */
-export type WeeklyPlanMetricKey = 'leads' | 'contacted' | 'paid' | 'revenue' | 'net_revenue';
-
-export const WEEKLY_PLAN_METRIC_LABELS: Record<WeeklyPlanMetricKey, string> = {
-  leads: '신규 리드',
-  contacted: '컨택',
-  paid: '결제',
-  revenue: '매출',
-  net_revenue: '실수익',
-};
-
-/** 원화(정수) 지표 — 표시 포맷 분기용. 나머지는 건수. */
-export const WEEKLY_PLAN_CURRENCY_METRICS: WeeklyPlanMetricKey[] = ['revenue', 'net_revenue'];
-
-export const WEEKLY_PLAN_METRIC_KEYS: WeeklyPlanMetricKey[] = [
-  'leads',
-  'contacted',
-  'paid',
-  'revenue',
-  'net_revenue',
-];
-
-export interface WeeklyPlanTarget {
-  key: WeeklyPlanMetricKey;
-  label: string; // 스냅샷(라벨 변경돼도 과거 주차 보존)
-  target_value: number;
-}
-
-export interface WeeklyPlanAction {
-  id: string; // crypto.randomUUID() (클라이언트 생성)
-  text: string;
-  done: boolean;
-  done_at: string | null;
-  owner?: string | null;
-}
-
-/** 이번 주 밀어보는 전략 1건. 전략명·타입은 스냅샷(전략 삭제·개명 후에도 과거 주차 보존). */
-export interface WeeklyFocusStrategy {
-  id: string; // crypto.randomUUID() (클라이언트 생성)
-  strategy_id: string;
-  strategy_name: string;
-  type: StrategyHistoryType;
-  goal: string; // "결제 3건" 같은 자유 텍스트 목표
-  memo: string; // 왜 이 전략인가
-  carried_from_week?: string | null; // 회고 이어받기 출처 week_start
-}
-
-export interface WeeklyRetroNextAction {
-  id: string;
-  text: string;
-  carried_to?: string | null; // 이어받은 주차 week_start (미이관이면 null)
-}
-
-export interface WeeklyRetrospective {
-  went_well: string;
-  went_wrong: string;
-  next_actions: WeeklyRetroNextAction[];
-  updated_at: string | null;
-}
-
-export const EMPTY_RETROSPECTIVE: WeeklyRetrospective = {
-  went_well: '',
-  went_wrong: '',
-  next_actions: [],
-  updated_at: null,
-};
-
-/** 회고가 실질적으로 작성됐는지 — 배너 노출 판정 */
-export function isRetroFilled(retro: WeeklyRetrospective | null | undefined): boolean {
-  if (!retro) return false;
-  return (
-    retro.went_well.trim().length > 0 ||
-    retro.went_wrong.trim().length > 0 ||
-    (retro.next_actions ?? []).some((a) => a.text.trim().length > 0)
-  );
-}
-
-/** 자동 집계 밖 활동 기록 1건 */
-export interface WeeklyExecutionNote {
-  id: string;
-  text: string;
-  created_at: string;
-}
-
-/** 주간 실행 집계 — 전략을 적용받은 리드 1명 */
-export interface WeeklyExecutionLead {
-  student_id: string;
-  name: string;
-  applied_at: string;
-  memo: string;
-  contacted: boolean;
-  paid: boolean;
-  revenue: number;
-}
-
-/** 주간 실행 집계 — 전략 1건 (그 주에 적용된 모든 이력 기준) */
-export interface WeeklyExecutionRow {
-  strategy_id: string;
-  strategy_name: string;
-  type: StrategyHistoryType;
-  planned: boolean; // 트랙에 연결돼 있었는지 (false면 '계획 외 실행')
-  applied_count: number;
-  contacted_count: number;
-  paid_count: number;
-  revenue: number;
-  leads: WeeklyExecutionLead[];
-}
-
-// ─── 주간 실행 트랙 (목표 하나 + 그 목표를 위한 실행 항목들) ─────────────────
-// 주차 계획 문서의 위계("세그먼트 → 목표를 가진 트랙 → 실행 항목 a·b·c")를 그대로 담는다.
-
-/** 트랙 진행률을 자동 계산할 지표 — 트랙에 연결된 전략의 적용 리드 기준(주 전체 실적이 아니다). */
-export type WeeklyTrackMetric = 'applied' | 'contacted' | 'paid' | 'revenue';
-
-export const WEEKLY_TRACK_METRIC_KEYS: WeeklyTrackMetric[] = [
-  'applied',
-  'contacted',
-  'paid',
-  'revenue',
-];
-
-export const WEEKLY_TRACK_METRIC_LABELS: Record<WeeklyTrackMetric, string> = {
-  applied: '적용 리드',
-  contacted: '컨택',
-  paid: '결제',
-  revenue: '매출',
-};
-
-/** 트랙 안의 실행 항목 1건. 전략을 연결하면 그 전략의 주간 집계가 트랙 진행률에 반영된다. */
-export interface WeeklyTrackItem {
-  id: string; // crypto.randomUUID() (클라이언트 생성)
-  text: string;
-  done: boolean;
-  done_at: string | null;
-  strategy_id: string | null; // 전략 라이브러리 연결 (선택)
-  strategy_name: string | null; // 스냅샷(전략 삭제·개명 후에도 과거 주차 보존)
-  strategy_type: StrategyHistoryType | null; // 스냅샷
-}
-
-/** 목표 하나 + 그 목표를 위한 실행 항목들. */
-export interface WeeklyTrack {
-  id: string; // crypto.randomUUID() (클라이언트 생성)
-  name: string; // "신규리드", "이탈 리드 캠페인", "소프트웨어 판매"
-  goal_text: string; // "인스타리드 2건 결제" — 문서에 쓰던 문장 그대로
-  metric: WeeklyTrackMetric | null; // null이면 수동 달성 체크로만 판정
-  target_value: number; // metric이 있을 때만 의미
-  achieved: boolean; // metric === null 인 목표의 수동 달성 체크
-  items: WeeklyTrackItem[];
-  carried_from_week?: string | null; // 회고 이어받기 출처 week_start
-}
-
-export interface WeeklyPlan {
-  id: string;
-  segment: WeeklyPlanSegment;
-  week_start: string; // YYYY-MM-DD
-  tracks: WeeklyTrack[]; // 현행 계획 단위. 레거시 주차는 focus_strategies+actions에서 파생된다.
-  /** @deprecated 트랙 파생 소스로만 남는다(과거 주차 보존). 새 UI는 쓰지 않는다. */
-  targets: WeeklyPlanTarget[];
-  /** @deprecated 트랙 파생 소스로만 남는다. */
-  actions: WeeklyPlanAction[];
-  /** @deprecated 트랙 파생 소스로만 남는다. */
-  focus_strategies: WeeklyFocusStrategy[];
-  retrospective: WeeklyRetrospective;
-  execution_notes: WeeklyExecutionNote[];
-  created_at: string;
-  updated_at: string;
-}
-
-/** GET /api/crm/weekly-plan 응답 */
-export interface WeeklyPlanResponse {
-  plan: WeeklyPlan | null; // 아직 미작성 주차면 null
-  actuals: Partial<Record<WeeklyPlanMetricKey, number>>;
-  week: { start: string; end: string; label: string };
-  execution: WeeklyExecutionRow[]; // 그 주에 적용된 전략 실행 집계 (계획 먼저)
-  prev: { week_start: string; week_label: string; retro_filled: boolean } | null;
 }
 
 // ─── 성장 실험 (전략/실행/회고) ──────────────────────────────────────────────
@@ -632,6 +494,7 @@ export type ProductSubcategory =
   | '관리형 수업'
   | '원포인트'
   | '대표코치'
+  | '자기주도형'
   | '여름방학 특강'
   | '추석특강'
   | '단어학습'

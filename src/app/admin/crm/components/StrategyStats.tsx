@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { StrategyHistoryType } from '@/types/crm';
 import type { StatsDetailMetric, LeadDetailItem, StatsDetailResult } from '@/lib/crm-stats-detail';
 import type { StrategyTypeStats, PerStrategyRow } from '@/lib/strategy-stats';
 import {
@@ -14,12 +13,9 @@ import {
 } from './stats-primitives';
 import { StatsDetailModal } from './StatsDetailModal';
 import { LeadDetailTable } from './LeadDetailTable';
-
-const TYPE_TABS: { key: StrategyHistoryType; label: string }[] = [
-  { key: 'initial_contact', label: '최초 컨텍' },
-  { key: 'initial_sales', label: '최초 세일즈' },
-  { key: 'retry', label: '재시도' },
-];
+import { useStrategyCategories } from './strategies/useStrategyCategories';
+import { TransitionPanel } from './strategy-stats/TransitionPanel';
+import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
 
 const won = (n: number) => `${n.toLocaleString()}원`;
 const manwon = (n: number) => (n === 0 ? '0' : `${Math.round(n / 10000).toLocaleString()}만`);
@@ -38,7 +34,9 @@ interface DetailTarget {
 }
 
 export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
-  const [type, setType] = useState<StrategyHistoryType>('initial_sales');
+  // 탭 = 전략 라이브러리 카테고리. 라이브러리에서 추가·개명하면 그대로 반영된다 (146).
+  const { categories } = useStrategyCategories(segment ?? 'b2c', adminKey);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [preset, setPreset] = useState<Preset>('last_6m');
   const [range, setRange] = useState(() => getPresetRange('last_6m'));
   const [data, setData] = useState<StrategyTypeStats | null>(null);
@@ -46,6 +44,12 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
   const [error, setError] = useState('');
   const [detail, setDetail] = useState<DetailTarget | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // 카테고리 목록이 오면 첫 탭을 고르고, 보고 있던 카테고리가 사라지면 다시 첫 탭으로.
+  useEffect(() => {
+    if (!categories.length) { setCategoryId(null); return; }
+    setCategoryId((cur) => (cur && categories.some((c) => c.id === cur) ? cur : categories[0].id));
+  }, [categories]);
 
   const applyPreset = (p: Preset) => {
     setPreset(p);
@@ -56,7 +60,7 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
     setLoading(true);
     setError('');
     try {
-      const qs = new URLSearchParams({ type, from: range.from, to: range.to });
+      const qs = new URLSearchParams({ category_id: categoryId!, from: range.from, to: range.to });
       if (segment) qs.set('segment', segment);
       const res = await fetch(`/api/crm/strategy-stats?${qs.toString()}`, {
         headers: { 'x-admin-key': adminKey },
@@ -69,9 +73,9 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [type, range.from, range.to, segment, adminKey]);
+  }, [categoryId, range.from, range.to, segment, adminKey]);
 
-  useEffect(() => { fetchStats(); }, [fetchStats]);
+  useEffect(() => { if (categoryId) fetchStats(); }, [fetchStats, categoryId]);
 
   // 배정 많은 전략부터 — 배정 0 전략은 뒤로.
   const rows = [...(data?.by_strategy ?? [])].sort((a, b) => b.assigned - a.assigned);
@@ -87,6 +91,10 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows.map((r) => r.strategy_id).join(','), rows.length]);
 
+  // 삭제한 전략에 이력이 있으면 '삭제됨' 행으로 남는다(집계 기준이 strategy_history라 정상).
+  // 어느 쪽인지는 서버만 아니까 낙관적 제거 대신 재조회한다.
+  const handleDeleted = useCallback(() => { fetchStats(); }, [fetchStats]);
+
   const selected = rows.find((r) => r.strategy_id === selectedId) ?? null;
 
   return (
@@ -94,15 +102,15 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
       {/* 타입 탭 + 기간 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
-          {TYPE_TABS.map(({ key, label }) => (
+          {categories.map((c) => (
             <button
-              key={key}
-              onClick={() => setType(key)}
+              key={c.id}
+              onClick={() => setCategoryId(c.id)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                type === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                categoryId === c.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {label}
+              {c.name}
             </button>
           ))}
         </div>
@@ -144,15 +152,21 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
       )}
 
       {!loading && !error && rows.length > 0 && (
+        <TransitionPanel transitions={data?.transitions ?? []} />
+      )}
+
+      {!loading && !error && rows.length > 0 && (
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           {/* 좌: 전략 목록 */}
           <div className="md:w-64 md:shrink-0 space-y-1.5">
             {rows.map((r) => (
-              <StrategyListItem
+              <StrategyStatsListItem
                 key={r.strategy_id}
                 row={r}
                 active={r.strategy_id === selectedId}
+                adminKey={adminKey}
                 onClick={() => setSelectedId(r.strategy_id)}
+                onDeleted={handleDeleted}
               />
             ))}
           </div>
@@ -161,10 +175,10 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
           <div className="flex-1 min-w-0">
             {selected ? (
               <StrategyDetailPane
-                key={`${selected.strategy_id}:${type}:${range.from}:${range.to}`}
+                key={`${selected.strategy_id}:${categoryId}:${range.from}:${range.to}`}
                 row={selected}
                 adminKey={adminKey}
-                type={type}
+                categoryId={categoryId!}
                 from={range.from}
                 to={range.to}
                 segment={segment}
@@ -186,7 +200,7 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
           from={range.from}
           to={range.to}
           endpoint="/api/crm/strategy-stats/detail"
-          extraParams={{ type, strategy_id: detail.strategyId, ...(segment ? { segment } : {}) }}
+          extraParams={{ category_id: categoryId!, strategy_id: detail.strategyId, ...(segment ? { segment } : {}) }}
           onSelectStudent={onSelectStudent}
           onClose={() => setDetail(null)}
         />
@@ -195,43 +209,10 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
   );
 }
 
-function StrategyListItem({
-  row,
-  active,
-  onClick,
-}: {
-  row: PerStrategyRow;
-  active: boolean;
-  onClick: () => void;
-}) {
-  const zero = row.assigned === 0;
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left rounded-lg border px-3 py-2.5 transition-colors ${
-        active
-          ? 'border-gray-900 bg-gray-900/[0.03] ring-1 ring-gray-900'
-          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-      }`}
-    >
-      <p className={`text-sm font-semibold truncate ${zero ? 'text-gray-400' : 'text-gray-900'}`}>
-        {row.strategy_name}
-      </p>
-      {zero ? (
-        <p className="mt-0.5 text-[11px] text-gray-400">이 기간 배정 없음</p>
-      ) : (
-        <p className="mt-0.5 text-[11px] text-gray-500 tabular-nums">
-          전환율 {row.conversion_rate}% · 결제 {row.paid} · 배정 {row.assigned}
-        </p>
-      )}
-    </button>
-  );
-}
-
 function StrategyDetailPane({
   row,
   adminKey,
-  type,
+  categoryId,
   from,
   to,
   segment,
@@ -240,7 +221,7 @@ function StrategyDetailPane({
 }: {
   row: PerStrategyRow;
   adminKey: string;
-  type: StrategyHistoryType;
+  categoryId: string;
   from: string;
   to: string;
   segment?: 'b2b' | 'b2c';
@@ -258,7 +239,7 @@ function StrategyDetailPane({
       setLeadsLoading(true);
       setLeadsError('');
       try {
-        const qs = new URLSearchParams({ metric: 'leads', type, strategy_id: row.strategy_id, from, to });
+        const qs = new URLSearchParams({ metric: 'leads', category_id: categoryId, strategy_id: row.strategy_id, from, to });
         if (segment) qs.set('segment', segment);
         const res = await fetch(`/api/crm/strategy-stats/detail?${qs.toString()}`, {
           headers: { 'x-admin-key': adminKey },
@@ -277,7 +258,7 @@ function StrategyDetailPane({
       }
     })();
     return () => { cancelled = true; };
-  }, [row.strategy_id, row.assigned, type, from, to, segment, adminKey]);
+  }, [row.strategy_id, row.assigned, categoryId, from, to, segment, adminKey]);
 
   return (
     <div className="border border-gray-200 rounded-xl p-4 bg-white">

@@ -428,6 +428,65 @@ Ghost 버전 대비 추가 요소 (분량 추가 아닌 밀도 강화):
 
 ## 랜딩 페이지 전용 마크업
 
+### 이미지 가로폭 설정
+
+본문 이미지의 가로폭을 직접 지정할 수 있다. 기본값은 컨테이너 전체폭(100%).
+
+#### 방법 1: CSS 클래스 (권장)
+
+```markdown
+<!-- 45% 폭, 중앙 정렬 -->
+<figure class="img-narrow">
+  <img src="..." alt="설명" />
+</figure>
+
+<!-- 50% 폭, 중앙 정렬 -->
+<figure class="img-half">
+  <img src="..." alt="설명" />
+</figure>
+
+<!-- 75% 폭, 중앙 정렬 -->
+<figure class="img-wide">
+  <img src="..." alt="설명" />
+</figure>
+```
+
+캡션이 필요하면 `<figcaption>` 추가:
+
+```markdown
+<figure class="img-half">
+  <img src="..." alt="설명" />
+  <figcaption>출처: College Board</figcaption>
+</figure>
+```
+
+#### 방법 2: 정확한 픽셀 지정 (inline style)
+
+```markdown
+<!-- figure 래퍼로 폭 지정 (캡션 포함 가능) -->
+<figure style="max-width: 400px; margin: 0 auto;">
+  <img src="..." alt="설명" />
+  <figcaption>캡션</figcaption>
+</figure>
+
+<!-- img 단독으로 폭 지정 (캡션 불필요할 때) -->
+<img src="..." alt="설명" style="max-width: 400px; display: block; margin: 0 auto;" />
+```
+
+**클래스 참조:**
+| 클래스 | 가로폭 | 용도 |
+|--------|--------|------|
+| `img-narrow` | 45% | 아이콘, 작은 도표 |
+| `img-half` | 50% | 비교 이미지, 예시 |
+| `img-wide` | 75% | 차트, 다이어그램 |
+| `style="max-width: Xpx"` | 지정값 | 정확한 픽셀 제어 |
+
+**규칙:**
+- 모바일에서는 항상 컨테이너폭에 맞게 자동 축소된다 (`max-width` 적용).
+- Ghost·네이버 버전에서는 동일한 HTML을 그대로 사용한다.
+
+---
+
 ### 이미지 캡션 표준 (`<figcaption>`)
 
 본문 이미지 아래에 출처·설명이 필요할 때 `<figure>` + `<figcaption>` 구조를 사용한다.

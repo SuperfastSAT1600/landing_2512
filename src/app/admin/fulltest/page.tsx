@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { PracticeDetailPanel } from './PracticeDetailPanel';
 
 interface FulltestSubmission {
   id: string;
@@ -53,6 +54,19 @@ interface CodeRow {
   is_active: boolean;
   created_at: string;
   usedCount: number;
+  mode: string;
+}
+
+const MODE_LABELS: Record<string, string> = {
+  timed: '⏱ 제한시간',
+  untimed: '무제한',
+  per_question: '문제별',
+};
+
+function nextMode(current: string): string {
+  const modes = ['untimed', 'timed', 'per_question'];
+  const idx = modes.indexOf(current);
+  return modes[(idx + 1) % modes.length];
 }
 
 const TESTS: TestDef[] = [
@@ -98,6 +112,13 @@ const TESTS: TestDef[] = [
     apiType: 'practice',
     publicUrl: '/practice/september-rw',
   },
+  {
+    id: 'sep26-grammar-100',
+    label: '9월 SAT 신유형 문법 100문제',
+    description: 'FSS·Boundaries — 이전 시험 미등장 유형 위주',
+    apiType: 'practice',
+    publicUrl: '/practice/sep26-grammar',
+  },
 ];
 
 function formatDate(iso: string) {
@@ -120,8 +141,9 @@ export default function TestContentsPage() {
   const [rightView, setRightView] = useState<RightView>('submissions');
   const [codes, setCodes] = useState<CodeRow[]>([]);
   const [codesLoading, setCodesLoading] = useState(false);
-  const [newCodeForm, setNewCodeForm] = useState({ code: '', label: '', maxUses: 50 });
+  const [newCodeForm, setNewCodeForm] = useState({ code: '', label: '', maxUses: 50, mode: 'untimed' as string });
   const [creatingCode, setCreatingCode] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<SubmissionRow | null>(null);
 
   const adminKey = typeof window !== 'undefined' ? localStorage.getItem('admin_key') ?? '' : '';
 
@@ -204,6 +226,7 @@ export default function TestContentsPage() {
   const selectedTest = TESTS.find((t) => t.id === selectedTestId) ?? TESTS[0];
 
   return (
+    <>
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#e4e4e7' }}>
       {/* Header */}
       <div style={{ padding: '32px 32px 24px', borderBottom: '1px solid #27272a' }}>
@@ -371,6 +394,23 @@ export default function TestContentsPage() {
                     onChange={(e) => setNewCodeForm(p => ({ ...p, maxUses: parseInt(e.target.value) || 50 }))}
                     style={{ width: 90, padding: '8px 12px', background: '#09090b', border: '1px solid #27272a', borderRadius: 6, color: '#e4e4e7', fontSize: 13 }}
                   />
+                  <select
+                    value={newCodeForm.mode}
+                    onChange={(e) => setNewCodeForm(p => ({ ...p, mode: e.target.value }))}
+                    style={{
+                      width: 160,
+                      padding: '8px 12px',
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      borderRadius: 6,
+                      color: '#e4e4e7',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option value="untimed">제한시간 없음 + 최종결과</option>
+                    <option value="timed">제한시간 있음 + 최종결과</option>
+                    <option value="per_question">문제별 정답률 표시</option>
+                  </select>
                   <button
                     onClick={async () => {
                       if (!newCodeForm.code.trim()) return;
@@ -379,10 +419,10 @@ export default function TestContentsPage() {
                         const res = await fetch('/api/admin/test-codes', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-                          body: JSON.stringify({ code: newCodeForm.code, testId: selectedTestId, label: newCodeForm.label, maxUses: newCodeForm.maxUses }),
+                          body: JSON.stringify({ code: newCodeForm.code, testId: selectedTestId, label: newCodeForm.label, maxUses: newCodeForm.maxUses, mode: newCodeForm.mode }),
                         });
                         if (res.ok) {
-                          setNewCodeForm({ code: '', label: '', maxUses: 50 });
+                          setNewCodeForm({ code: '', label: '', maxUses: 50, mode: 'untimed' });
                           fetchCodes(selectedTestId);
                         } else {
                           const err = await res.json();
@@ -415,6 +455,16 @@ export default function TestContentsPage() {
                           <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: c.is_active ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: c.is_active ? '#22c55e' : '#ef4444', border: `1px solid ${c.is_active ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
                             {c.is_active ? 'active' : 'inactive'}
                           </span>
+                          <span style={{
+                            fontSize: 11,
+                            padding: '2px 7px',
+                            borderRadius: 4,
+                            background: 'rgba(96,133,255,0.1)',
+                            color: '#6085FF',
+                            border: '1px solid rgba(96,133,255,0.2)',
+                          }}>
+                            {MODE_LABELS[c.mode] ?? c.mode}
+                          </span>
                         </div>
                         {c.label && <div style={{ fontSize: 12, color: '#71717a', marginTop: 3 }}>{c.label}</div>}
                       </div>
@@ -434,6 +484,19 @@ export default function TestContentsPage() {
                         style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #27272a', borderRadius: 6, color: '#a1a1aa', fontSize: 11, cursor: 'pointer' }}
                       >
                         {c.is_active ? '비활성화' : '활성화'}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await fetch(`/api/admin/test-codes/${c.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+                            body: JSON.stringify({ mode: nextMode(c.mode) }),
+                          });
+                          fetchCodes(selectedTestId);
+                        }}
+                        style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #27272a', borderRadius: 6, color: '#a1a1aa', fontSize: 11, cursor: 'pointer' }}
+                      >
+                        모드 변경
                       </button>
                       <button
                         onClick={async () => {
@@ -496,10 +559,20 @@ export default function TestContentsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {submissions.map((row) => (
+                    {submissions.map((row) => {
+                      const isPractice = selectedTest.apiType === 'practice';
+                      return (
                       <tr
                         key={row.id}
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                        onClick={isPractice ? () => setSelectedRow(row) : undefined}
+                        style={{
+                          borderBottom: '1px solid rgba(255,255,255,0.04)',
+                          cursor: isPractice ? 'pointer' : 'default',
+                          background: selectedRow?.id === row.id ? 'rgba(96,133,255,0.07)' : 'transparent',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={(e) => { if (isPractice) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                        onMouseLeave={(e) => { if (isPractice) e.currentTarget.style.background = selectedRow?.id === row.id ? 'rgba(96,133,255,0.07)' : 'transparent'; }}
                       >
                         <td style={{ padding: '12px 12px', fontWeight: 500 }}>
                           {row.instagram_id ? (() => {
@@ -538,7 +611,8 @@ export default function TestContentsPage() {
                           <ScoreBadge score={row.score} />
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -547,6 +621,16 @@ export default function TestContentsPage() {
         </div>
       </div>
     </div>
+
+    {selectedRow && selectedTest.apiType === 'practice' && (
+      <PracticeDetailPanel
+        submissionId={selectedRow.id}
+        testId={selectedTest.id}
+        adminKey={adminKey}
+        onClose={() => setSelectedRow(null)}
+      />
+    )}
+    </>
   );
 }
 

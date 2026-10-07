@@ -57,6 +57,16 @@ describe('PaymentModal — 상품 목록', () => {
     vi.unstubAllGlobals();
   });
 
+  it('1:1 SAT에 자기주도형 상품을 노출하고 시간 입력을 요구한다', () => {
+    openProductStep('1:1 수업');
+
+    const option = screen.getByText('SAT 정규 1:1 수업 (자기주도형)');
+    expect(option).toBeTruthy();
+
+    fireEvent.click(option);
+    expect(screen.getByPlaceholderText('시간 수')).toBeTruthy();
+  });
+
   it('그룹 SAT에 추석특강 상품을 여름방학 특강과 함께 노출한다', () => {
     openProductStep('그룹 수업');
 

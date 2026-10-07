@@ -23,10 +23,12 @@ interface StudentCardProps {
   enrollmentMode?: boolean;
   onToggleSignup?: () => void;
   onKakaoCreate?: () => void;
+  /** 최초 세일즈 전략 미입력 리드 표시 — 최초 세일즈 칸반에서만 전달(다른 칸반은 미전달로 배지 없음). */
+  strategyMissing?: boolean;
 }
 
 
-export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null, enrollmentMode = false, onToggleSignup, onKakaoCreate }: StudentCardProps) {
+export function StudentCard({ student, onChurn, onClick, onPayment, overlay = false, stalledDays = null, enrollmentMode = false, onToggleSignup, onKakaoCreate, strategyMissing = false }: StudentCardProps) {
   const {
     attributes,
     listeners,
@@ -100,6 +102,17 @@ export function StudentCard({ student, onChurn, onClick, onPayment, overlay = fa
             {[student.inquiry_channel, student.traffic_source].filter(Boolean).join(' · ')}
           </span>
         </div>
+      )}
+
+      {/* 전략 없음 배지 — 결제 전환율을 위해 전략 입력 전에는 칸반 이동·상담메모 입력이 막힌다 */}
+      {strategyMissing && (
+        <span
+          title="이 리드는 아직 전략이 없어요. 먼저 전략을 입력해주세요."
+          className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-amber-700 bg-amber-100 border border-amber-200"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          전략 없음
+        </span>
       )}
 
       {/* Stage-stall badge — SLA 초과 시 다음 단계로 진행 촉구 */}

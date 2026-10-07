@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     // Find code by (code, test_id)
     const { data: codeRow, error: codeError } = await supabaseAdmin
       .from('test_codes')
-      .select('id, is_active, expires_at, max_uses')
+      .select('id, is_active, expires_at, max_uses, mode')
       .eq('code', normalizedCode)
       .eq('test_id', testId)
       .single();
@@ -50,6 +50,12 @@ export async function POST(req: NextRequest) {
       return errorResponse('code_expired');
     }
 
+    // Count current registrations (needed for both returning and new user paths)
+    const { count } = await supabaseAdmin
+      .from('test_code_registrations')
+      .select('id', { count: 'exact', head: true })
+      .eq('code_id', codeRow.id);
+
     // Check if returning user
     const { data: existingReg } = await supabaseAdmin
       .from('test_code_registrations')
@@ -59,14 +65,13 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existingReg) {
-      return NextResponse.json({ valid: true, isReturning: true });
+      return NextResponse.json({
+        valid: true,
+        isReturning: true,
+        mode: codeRow.mode,
+        remaining: Math.max(0, codeRow.max_uses - (count ?? 0)),
+      });
     }
-
-    // Count current registrations
-    const { count } = await supabaseAdmin
-      .from('test_code_registrations')
-      .select('id', { count: 'exact', head: true })
-      .eq('code_id', codeRow.id);
 
     if ((count ?? 0) >= codeRow.max_uses) {
       return errorResponse('capacity_exceeded');
@@ -80,12 +85,22 @@ export async function POST(req: NextRequest) {
     if (insertError) {
       if (insertError.code === '23505') {
         // Race condition: another request registered this user concurrently
-        return NextResponse.json({ valid: true, isReturning: true });
+        return NextResponse.json({
+          valid: true,
+          isReturning: true,
+          mode: codeRow.mode,
+          remaining: Math.max(0, codeRow.max_uses - (count ?? 0)),
+        });
       }
       return errorResponse('server_error', 500);
     }
 
-    return NextResponse.json({ valid: true, isReturning: false });
+    return NextResponse.json({
+      valid: true,
+      isReturning: false,
+      mode: codeRow.mode,
+      remaining: Math.max(0, codeRow.max_uses - (count ?? 0) - 1),
+    });
   } catch {
     return errorResponse('server_error', 500);
   }

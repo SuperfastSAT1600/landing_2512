@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNIT 20 : THE GRAND REVIEW — 19 Units, Everything We Learned · 러너스 LRS</title>
+<meta property="og:title" content="UNIT 20 : THE GRAND REVIEW" />
+<meta property="og:description" content="강원 영어 인터뷰 수업 · 19개 유닛 완전 정복 · 5개 테마, 66개 핵심 표현" />
+<meta property="og:image" content="/partners/lrs-logo.png" />
+<meta property="og:type" content="website" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --night:     #000000;
+  --night-s:   #0a0a0a;
+  --night-2:   #111111;
+  --white:     #ffffff;
+  --mute:      #cccccc;
+  --muted:     #aaaaaa;
+  --line:      #2a2a2f;
+  --line-l:    #e0e0e8;
+  --bg-l:      #f4f7fa;
+  --gold:      #c8a850;
+  --max:       1080px;
+  --pad:       clamp(24px, 5vw, 80px);
+  /* theme colors */
+  --t-join:    #4a7fcb;
+  --t-match:   #cb6a4a;
+  --t-goals:   #5a9e5a;
+  --t-injury:  #9a5acb;
+  --t-special: #c8a850;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--night); color: var(--white); font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+/* ── Sticky nav ── */
+#topnav { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.88); backdrop-filter: blur(12px); border-bottom: 0.5px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--pad); height: 48px; }
+.brand { font-size: 11px; font-weight: 700; letter-spacing: 0.4em; color: var(--white); text-transform: uppercase; }
+.nav-dropdown { position: relative; }
+.nav-trigger { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--white); cursor: pointer; display: flex; align-items: center; gap: 7px; user-select: none; transition: color 0.15s; }
+.nav-trigger:hover { color: var(--white); opacity: 0.75; }
+.nav-trigger-arrow { font-size: 7px; transition: transform 0.2s; }
+.nav-dropdown.open .nav-trigger-arrow { transform: rotate(180deg); }
+.nav-menu { display: none; position: absolute; top: calc(100% + 14px); right: 0; background: rgba(8,8,8,0.98); border: 0.5px solid var(--line); backdrop-filter: blur(16px); min-width: 260px; z-index: 200; max-height: 80vh; overflow-y: auto; }
+.nav-dropdown.open .nav-menu { display: block; }
+.nav-right { display: flex; align-items: center; gap: 24px; }
+.nav-unit-hd { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; border-bottom: 0.5px solid var(--line); transition: background 0.12s; user-select: none; }
+.nav-unit-hd:hover { background: rgba(255,255,255,0.03); }
+.nav-unit-label { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--white); font-weight: 700; }
+.nav-unit-sub { font-size: 9px; letter-spacing: 0.05em; text-transform: none; color: var(--mute); margin-top: 3px; font-weight: 400; }
+.nav-unit-arrow { font-size: 7px; color: var(--mute); transition: transform 0.2s; flex-shrink: 0; margin-left: 12px; }
+.nav-unit.open .nav-unit-arrow { transform: rotate(90deg); }
+.nav-sections { display: none; }
+.nav-unit.open .nav-sections { display: block; }
+.nav-sec-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px 9px 24px; font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); cursor: pointer; border-bottom: 0.5px solid rgba(42,42,47,0.6); transition: color 0.12s, background 0.12s; white-space: nowrap; }
+.nav-sections .nav-sec-item:last-child { border-bottom: none; }
+.nav-sec-item:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+.nav-sec-item.active { color: var(--white); }
+.nav-sec-num { font-size: 7px; color: var(--line); min-width: 14px; flex-shrink: 0; }
+
+/* ── Layout ── */
+.section { max-width: var(--max); margin: 0 auto; padding: 80px var(--pad); border-bottom: 0.5px solid var(--line); }
+.section:last-child { border-bottom: none; }
+.eyebrow { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--mute); font-weight: 400; display: block; margin-bottom: 16px; }
+.hl { height: 0.5px; background: var(--line); margin: 24px 0; }
+
+/* ── Typography ── */
+.display { font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; line-height: 0.94; color: var(--white); }
+.d-xxl { font-size: clamp(40px, 6.2vw, 86px); }
+.d-xl  { font-size: clamp(36px, 5.5vw, 64px); }
+.d-lg  { font-size: clamp(28px, 4vw, 48px); }
+.d-md  { font-size: clamp(22px, 3vw, 34px); }
+
+/* ── Hero ── */
+#hero { min-height: 88vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 var(--pad) 80px; position: relative; overflow: hidden; }
+#hero-vbg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+#hero-vbg iframe { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: max(100%, calc(100vh * 16 / 9)); height: max(100%, calc(100vw * 9 / 16)); pointer-events: none; opacity: 0.28; }
+#hero-vbg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.88) 100%); z-index: 1; }
+.hero-content { position: relative; z-index: 2; display: flex; flex-direction: column; }
+.hero-unit-tag { font-size: 9px; letter-spacing: 0.4em; color: var(--mute); text-transform: uppercase; margin-bottom: 28px; display: block; }
+.hero-h1 { margin-bottom: 0; }
+.hero-sub { margin-top: 24px; font-size: 14px; color: var(--mute); letter-spacing: 0.04em; line-height: 1.6; max-width: 540px; }
+.scroll-hint { margin-top: 48px; font-size: 9px; letter-spacing: 0.28em; color: var(--line); text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
+.scroll-hint::after { content: ''; display: block; width: 40px; height: 0.5px; background: var(--line); }
+
+/* ── Hero stats bar ── */
+.hero-stats { display: flex; gap: 40px; margin-top: 48px; padding-top: 40px; border-top: 0.5px solid var(--line); flex-wrap: wrap; }
+.hero-stat { display: flex; flex-direction: column; gap: 6px; }
+.hero-stat-num { font-size: clamp(28px, 4vw, 42px); font-weight: 700; color: var(--white); letter-spacing: 0.03em; }
+.hero-stat-label { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--mute); }
+
+/* ── Theme cards ── */
+.theme-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; margin-top: 40px; background: var(--line); border: 0.5px solid var(--line); }
+@media (max-width: 860px) { .theme-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .theme-grid { grid-template-columns: repeat(2, 1fr); } }
+.theme-card { background: var(--night-s); padding: 28px 20px; cursor: pointer; transition: background 0.15s; display: flex; flex-direction: column; gap: 10px; }
+.theme-card:hover { background: rgba(255,255,255,0.04); }
+.theme-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.theme-card-name { font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--white); }
+.theme-card-sub { font-size: 11px; color: var(--mute); line-height: 1.5; }
+.theme-card-count { font-size: 9px; letter-spacing: 0.2em; color: var(--line); text-transform: uppercase; margin-top: 4px; }
+
+/* ── Master list ── */
+.theme-tabs { display: flex; gap: 0; border-bottom: 0.5px solid var(--line); margin-bottom: 40px; overflow-x: auto; }
+.theme-tab { padding: 12px 20px; font-size: 9px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--mute); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
+.theme-tab:hover { color: var(--white); }
+.theme-tab.active { color: var(--white); }
+.theme-tab[data-theme="join"].active  { border-bottom-color: var(--t-join); }
+.theme-tab[data-theme="match"].active { border-bottom-color: var(--t-match); }
+.theme-tab[data-theme="goals"].active { border-bottom-color: var(--t-goals); }
+.theme-tab[data-theme="injury"].active{ border-bottom-color: var(--t-injury); }
+.theme-tab[data-theme="special"].active{ border-bottom-color: var(--t-special); }
+.theme-panel { display: none; }
+.theme-panel.active { display: block; }
+
+.master-phrase-list { display: flex; flex-direction: column; gap: 0; }
+.master-phrase { border-top: 0.5px solid var(--line); padding: 22px 0; display: grid; grid-template-columns: 36px 1fr; gap: 20px; align-items: start; }
+.master-phrase:last-child { border-bottom: 0.5px solid var(--line); }
+.mphrase-num { font-size: 10px; letter-spacing: 0.2em; color: var(--line); font-weight: 700; padding-top: 3px; }
+.mphrase-body {}
+.mphrase-en { font-size: clamp(15px, 2vw, 20px); color: var(--white); line-height: 1.5; font-weight: 500; margin-bottom: 6px; }
+.mphrase-ko { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.mphrase-source { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; display: inline-block; }
+.mphrase-source.join   { background: rgba(74,127,203,0.15); color: var(--t-join); }
+.mphrase-source.match  { background: rgba(203,106,74,0.15); color: var(--t-match); }
+.mphrase-source.goals  { background: rgba(90,158,90,0.15); color: var(--t-goals); }
+.mphrase-source.injury { background: rgba(154,90,203,0.15); color: var(--t-injury); }
+.mphrase-source.special{ background: rgba(200,168,80,0.15); color: var(--t-special); }
+
+/* ── Flashcard drill ── */
+.fc-progress { display: flex; gap: 4px; margin-bottom: 20px; }
+.fc-pip { height: 2px; flex: 1; background: var(--line); transition: background 0.3s; }
+.fc-pip.done { background: var(--white); }
+.fc-area { perspective: 1000px; height: 200px; position: relative; margin-bottom: 20px; }
+.fc-card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.45s cubic-bezier(0.4,0,0.2,1); cursor: pointer; }
+.fc-card.flipped { transform: rotateY(180deg); }
+.fc-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border: 0.5px solid var(--line); border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 28px; }
+.fc-back { transform: rotateY(180deg); background: var(--night-2); }
+.fc-hint { font-size: 9px; letter-spacing: 0.28em; color: var(--mute); text-transform: uppercase; }
+.fc-en { font-size: clamp(16px, 2.2vw, 22px); font-weight: 600; color: var(--white); text-align: center; line-height: 1.4; }
+.fc-ko { font-size: 16px; font-weight: 500; color: var(--white); text-align: center; }
+.fc-ko-sub { font-size: 12px; color: var(--mute); text-align: center; }
+.fc-theme-tag { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; padding: 2px 8px; border-radius: 2px; }
+.fc-nav { display: flex; gap: 12px; }
+.fc-btn { flex: 1; padding: 12px; border-radius: 2px; font-family: Arial; font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; border: 0.5px solid var(--line); background: none; color: var(--mute); }
+.fc-btn-know { background: var(--white); color: #000; border-color: var(--white); }
+.fc-btn-know:hover { background: var(--muted); }
+.fc-btn-retry:hover { border-color: var(--muted); color: var(--muted); }
+.fc-done-state { display: none; text-align: center; padding: 36px 0; border: 0.5px solid var(--line); border-radius: 4px; }
+.fc-done-mark { font-size: 32px; margin-bottom: 10px; }
+.fc-done-text { font-size: 10px; letter-spacing: 0.28em; color: var(--muted); text-transform: uppercase; }
+.fc-reset-btn { background: none; border: none; color: var(--mute); font-family: Arial; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; margin-top: 12px; text-decoration: underline; }
+
+/* ── Quiz ── */
+.quiz-wrap { display: flex; flex-direction: column; gap: 0; }
+.quiz-item { border-top: 0.5px solid var(--line); padding: 32px 0; }
+.quiz-item:last-child { border-bottom: 0.5px solid var(--line); }
+.quiz-q-num { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--mute); margin-bottom: 12px; }
+.quiz-q-text { font-size: 16px; color: var(--white); font-weight: 500; line-height: 1.5; margin-bottom: 20px; }
+.quiz-q-context { font-size: 13px; color: var(--muted); font-style: italic; margin-bottom: 20px; line-height: 1.55; border-left: 2px solid var(--line); padding-left: 14px; }
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt { padding: 14px 18px; border: 0.5px solid var(--line); border-radius: 3px; font-size: 14px; color: var(--muted); cursor: pointer; transition: all 0.15s; text-align: left; background: none; font-family: Arial; line-height: 1.5; }
+.quiz-opt:hover:not(:disabled) { border-color: var(--muted); color: var(--white); }
+.quiz-opt.correct { border-color: #5a9e5a; color: #5a9e5a; background: rgba(90,158,90,0.1); }
+.quiz-opt.wrong   { border-color: #cb4a4a; color: #cb4a4a; background: rgba(203,74,74,0.1); }
+.quiz-opt:disabled { cursor: default; }
+.quiz-feedback { display: none; margin-top: 14px; padding: 14px 18px; background: rgba(255,255,255,0.03); border-left: 2px solid var(--line); }
+.quiz-feedback.visible { display: block; }
+.quiz-feedback-text { font-size: 13px; color: var(--muted); line-height: 1.65; }
+.quiz-feedback-correct { border-left-color: #5a9e5a; }
+.quiz-feedback-wrong   { border-left-color: #cb4a4a; }
+.quiz-score { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mute); margin-top: 8px; }
+.quiz-summary { display: none; text-align: center; padding: 40px 0; border-top: 0.5px solid var(--line); }
+.quiz-summary.visible { display: block; }
+.quiz-summary-score { font-size: clamp(40px, 6vw, 72px); font-weight: 700; color: var(--white); margin-bottom: 12px; }
+.quiz-summary-label { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--mute); }
+.quiz-restart-btn { margin-top: 28px; padding: 12px 32px; background: var(--white); color: #000; border: none; border-radius: 2px; font-family: Arial; font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; cursor: pointer; transition: background 0.15s; }
+.quiz-restart-btn:hover { background: var(--muted); }
+
+/* ── Final Interview ── */
+.interview-scenes { display: flex; flex-direction: column; gap: 0; }
+.interview-scene { border-top: 0.5px solid var(--line); padding: 36px 0; }
+.interview-scene:last-child { border-bottom: 0.5px solid var(--line); }
+.scene-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.scene-num { font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 700; }
+.scene-title { font-size: 14px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--white); }
+.scene-context { font-size: 13px; color: var(--muted); line-height: 1.65; border-left: 2px solid var(--line); padding-left: 14px; margin-bottom: 24px; }
+.scene-q { display: flex; flex-direction: column; gap: 0; }
+.scene-q-item { padding: 18px 0; border-top: 0.5px solid rgba(42,42,47,0.6); }
+.scene-q-label { font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--mute); margin-bottom: 8px; }
+.scene-q-text { font-size: 15px; color: var(--white); font-weight: 500; margin-bottom: 12px; line-height: 1.4; }
+.scene-hint { font-size: 12px; color: var(--t-goals); line-height: 1.5; margin-top: 8px; display: none; }
+.scene-hint-btn { background: none; border: none; font-family: Arial; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--line); cursor: pointer; transition: color 0.15s; padding: 0; }
+.scene-hint-btn:hover { color: var(--muted); }
+.scene-hint-btn.shown { color: var(--muted); }
+
+/* ── Hall of Fame ── */
+.hof-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 0.5px solid var(--line); margin-top: 40px; }
+@media (max-width: 640px) { .hof-grid { grid-template-columns: 1fr; } }
+.hof-card { background: var(--night-s); padding: 28px 24px; display: flex; flex-direction: column; gap: 10px; }
+.hof-rank { font-size: 28px; font-weight: 700; color: var(--line); letter-spacing: 0.04em; }
+.hof-en { font-size: clamp(14px, 1.8vw, 18px); color: var(--white); font-weight: 500; line-height: 1.4; }
+.hof-ko { font-size: 12px; color: var(--muted); }
+.hof-theme { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; }
+
+/* ── Footer / Nav ── */
+#footer { border-top: 0.5px solid var(--line); padding: 32px var(--pad); display: flex; justify-content: space-between; align-items: center; max-width: 100%; }
+.footer-brand { font-size: 10px; letter-spacing: 0.32em; color: var(--mute); text-transform: uppercase; }
+.footer-note { font-size: 10px; color: var(--line); letter-spacing: 0.1em; }
+#yt-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.93); display: none; align-items: center; justify-content: center; z-index: 999; backdrop-filter: blur(8px); }
+#yt-modal.open { display: flex; }
+#yt-wrap { position: relative; width: min(960px, 92vw); aspect-ratio: 16/9; background: #000; border: 0.5px solid #3a3a3f; }
+#yt-frame { width: 100%; height: 100%; border: none; }
+#yt-close { position: absolute; top: -38px; right: 0; background: none; border: none; cursor: pointer; font-size: 10px; letter-spacing: 0.22em; color: var(--white); font-family: Arial; text-transform: uppercase; }
+#yt-close:hover { color: var(--mute); }
+#instructor-bar { position: fixed; top: 48px; left: 0; right: 0; height: 44px; background: rgba(10,10,10,0.97); border-bottom: 0.5px solid #2a2a2f; backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--pad); z-index: 99; transition: opacity 0.2s; }
+#instructor-bar.hidden { opacity: 0; pointer-events: none; }
+.ibar-left { display: flex; align-items: center; gap: 14px; }
+.ibar-label { font-size: 9px; letter-spacing: 0.28em; color: var(--mute); text-transform: uppercase; }
+.ibar-section-name { font-size: 11px; font-weight: 700; color: var(--white); letter-spacing: 0.04em; min-width: 220px; }
+.ibar-right { display: flex; align-items: center; gap: 8px; }
+.ibar-btn { background: none; border: 0.5px solid #3a3a3f; color: var(--muted); font-family: Arial; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.ibar-btn:hover:not(:disabled) { border-color: var(--white); color: var(--white); }
+.ibar-btn:disabled { opacity: 0.25; cursor: default; }
+.ibar-btn.primary { border-color: var(--white); color: var(--white); }
+.ibar-btn.primary:hover { background: var(--white); color: #000; }
+.ibar-progress { display: flex; align-items: center; gap: 6px; }
+.ibar-dot { width: 4px; height: 4px; border-radius: 50%; background: #3a3a3f; cursor: pointer; transition: background 0.2s, transform 0.15s; flex-shrink: 0; }
+.ibar-dot.active { background: var(--white); transform: scale(1.5); }
+.ibar-dot:hover { background: var(--muted); }
+.ibar-toggle { font-size: 9px; letter-spacing: 0.2em; color: var(--mute); text-transform: uppercase; background: none; border: none; cursor: pointer; padding: 4px 0; transition: color 0.15s; }
+.ibar-toggle:hover { color: var(--white); }
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── Gold accent ── */
+.gold { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- ── Top Nav ── -->
+<nav id="topnav">
+  <span class="brand">Runners LRS</span>
+  <div class="nav-right">
+    <div class="nav-dropdown" id="nav-dropdown">
+      <div class="nav-trigger" id="nav-trigger">
+        Units <span class="nav-trigger-arrow">▾</span>
+      </div>
+      <div class="nav-menu" id="nav-menu"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Instructor Bar ── -->
+<div id="instructor-bar">
+  <div class="ibar-left">
+    <span class="ibar-label">강원 FC</span>
+    <span class="ibar-section-name" id="ibar-name">Journey Overview</span>
+  </div>
+  <div class="ibar-right">
+    <div class="ibar-progress" id="ibar-dots"></div>
+    <button class="ibar-btn" id="ibar-prev" disabled>Prev</button>
+    <button class="ibar-btn primary" id="ibar-next">Next</button>
+    <button class="ibar-toggle" id="ibar-toggle">Hide</button>
+  </div>
+</div>
+
+<!-- ── Hero ── -->
+<section id="hero">
+  <div id="hero-vbg">
+    <iframe src="https://www.youtube.com/embed/-U6DSOmeM3s?autoplay=1&mute=1&loop=1&playlist=-U6DSOmeM3s&controls=0&showinfo=0&rel=0&modestbranding=1" allow="autoplay" title="bg"></iframe>
+  </div>
+  <div class="hero-content">
+    <span class="hero-unit-tag">Unit 20 · The Grand Review</span>
+    <h1 class="display d-xxl hero-h1">THE<br>FINAL<br><span class="gold">20.</span></h1>
+    <p class="hero-sub">Units 1–19에서 배운 모든 것 — 5개 테마, 66개 핵심 표현, 그리고 지금까지의 여정을 총정리합니다.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num gold">19</span>
+        <span class="hero-stat-label">Units Completed</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">66</span>
+        <span class="hero-stat-label">Core Phrases</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">5</span>
+        <span class="hero-stat-label">Themes Mastered</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">20</span>
+        <span class="hero-stat-label">Flashcards</span>
+      </div>
+    </div>
+    <p class="scroll-hint">Scroll</p>
+  </div>
+</section>
+
+<!-- ── Section 1: Journey Overview ── -->
+<section class="section reveal" id="s-journey">
+  <span class="eyebrow">Section 01 · Journey</span>
+  <h2 class="display d-lg">5개 테마로<br>배운 진짜 영어</h2>
+  <p style="margin-top:20px; font-size:14px; color:var(--muted); line-height:1.75; max-width:600px;">
+    강원 영어 인터뷰 수업은 실제 선수들의 인터뷰에서 추출한 5개 핵심 테마로 구성됩니다.
+    각 테마는 3라운드에 걸쳐 점점 더 고급 표현으로 발전했습니다.
+  </p>
+
+  <div class="theme-grid" style="margin-top:40px;">
+    <div class="theme-card" onclick="document.getElementById('s-master').scrollIntoView({behavior:'smooth'}); activateTab('join');">
+      <div class="theme-dot" style="background:var(--t-join);"></div>
+      <div class="theme-card-name">Joining</div>
+      <div class="theme-card-sub">새 팀 합류, 국가 대표, 자기소개</div>
+      <div class="theme-card-count">Units 1 · 6 · 11</div>
+    </div>
+    <div class="theme-card" onclick="document.getElementById('s-master').scrollIntoView({behavior:'smooth'}); activateTab('match');">
+      <div class="theme-dot" style="background:var(--t-match);"></div>
+      <div class="theme-card-name">Post-Match</div>
+      <div class="theme-card-sub">경기 후 인터뷰, 승리와 패배</div>
+      <div class="theme-card-count">Units 2 · 7 · 12</div>
+    </div>
+    <div class="theme-card" onclick="document.getElementById('s-master').scrollIntoView({behavior:'smooth'}); activateTab('goals');">
+      <div class="theme-dot" style="background:var(--t-goals);"></div>
+      <div class="theme-card-name">Goals</div>
+      <div class="theme-card-sub">꿈, 야망, 동기, 목표 선언</div>
+      <div class="theme-card-count">Units 3 · 8 · 13</div>
+    </div>
+    <div class="theme-card" onclick="document.getElementById('s-master').scrollIntoView({behavior:'smooth'}); activateTab('injury');">
+      <div class="theme-dot" style="background:var(--t-injury);"></div>
+      <div class="theme-card-name">Injury</div>
+      <div class="theme-card-sub">부상, 극복, 복귀, 멘탈 회복력</div>
+      <div class="theme-card-count">Units 4 · 9 · 14</div>
+    </div>
+    <div class="theme-card" onclick="document.getElementById('s-master').scrollIntoView({behavior:'smooth'}); activateTab('special');">
+      <div class="theme-dot" style="background:var(--t-special);"></div>
+      <div class="theme-card-name">Special</div>
+      <div class="theme-card-sub">일상 대화, 팀 정신, 압박, 골 세리머니</div>
+      <div class="theme-card-count">Units 15–19</div>
+    </div>
+  </div>
+
+  <!-- Round progression -->
+  <div style="margin-top:56px;">
+    <span class="eyebrow">학습 구조</span>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:0.5px solid var(--line); margin-top:20px;">
+      <div style="background:var(--night-s); padding:20px 16px;">
+        <div style="font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--mute); margin-bottom:10px;">Round 1</div>
+        <div style="font-size:13px; font-weight:700; color:var(--white); margin-bottom:6px;">Units 1–4</div>
+        <div style="font-size:12px; color:var(--muted); line-height:1.5;">기초 표현 — 실제 선수 인터뷰로 처음 만나는 살아있는 영어</div>
+      </div>
+      <div style="background:var(--night-s); padding:20px 16px;">
+        <div style="font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--mute); margin-bottom:10px;">Round 2</div>
+        <div style="font-size:13px; font-weight:700; color:var(--white); margin-bottom:6px;">Units 6–9</div>
+        <div style="font-size:12px; color:var(--muted); line-height:1.5;">심화 표현 — 같은 테마, 새 선수, 더 고급스러운 언어</div>
+      </div>
+      <div style="background:var(--night-s); padding:20px 16px;">
+        <div style="font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--mute); margin-bottom:10px;">Round 3</div>
+        <div style="font-size:13px; font-weight:700; color:var(--white); margin-bottom:6px;">Units 11–14</div>
+        <div style="font-size:12px; color:var(--muted); line-height:1.5;">월드컵급 표현 — 가장 큰 무대, 가장 강렬한 언어</div>
+      </div>
+      <div style="background:var(--night-s); padding:20px 16px;">
+        <div style="font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--mute); margin-bottom:10px;">Special</div>
+        <div style="font-size:13px; font-weight:700; color:var(--white); margin-bottom:6px;">Units 15–19</div>
+        <div style="font-size:12px; color:var(--muted); line-height:1.5;">확장 — 일상 대화, 팀 스피릿, 압박, 골 세레모니</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 2: Master Phrase List ── -->
+<section class="section reveal" id="s-master">
+  <span class="eyebrow">Section 02 · Master List</span>
+  <h2 class="display d-lg">66개 핵심 표현<br>완전 정복</h2>
+  <p style="margin-top:20px; font-size:14px; color:var(--muted); line-height:1.75; max-width:600px;">
+    5개 테마별로 정리한 핵심 표현. 탭을 클릭해 테마를 선택하세요.
+  </p>
+
+  <div class="theme-tabs" style="margin-top:36px;">
+    <div class="theme-tab active" data-theme="join" onclick="activateTab('join')">Joining</div>
+    <div class="theme-tab" data-theme="match" onclick="activateTab('match')">Post-Match</div>
+    <div class="theme-tab" data-theme="goals" onclick="activateTab('goals')">Goals</div>
+    <div class="theme-tab" data-theme="injury" onclick="activateTab('injury')">Injury</div>
+    <div class="theme-tab" data-theme="special" onclick="activateTab('special')">Special</div>
+  </div>
+
+  <!-- JOINING -->
+  <div class="theme-panel active" id="panel-join">
+    <div class="master-phrase-list">
+      <div class="master-phrase"><span class="mphrase-num">01</span><div class="mphrase-body"><div class="mphrase-en">"I'm incredibly proud to be joining ~."</div><div class="mphrase-ko">~ 팀에 합류하게 되어 정말 자랑스럽습니다.</div><span class="mphrase-source join">Unit 1</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">02</span><div class="mphrase-body"><div class="mphrase-en">"I cannot wait to get started."</div><div class="mphrase-ko">빨리 시작하고 싶어 견딜 수가 없습니다.</div><span class="mphrase-source join">Unit 1</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">03</span><div class="mphrase-body"><div class="mphrase-en">"I have come here to give everything."</div><div class="mphrase-ko">저는 모든 것을 바치기 위해 여기 왔습니다.</div><span class="mphrase-source join">Unit 1</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">04</span><div class="mphrase-body"><div class="mphrase-en">"It's a new chapter for me."</div><div class="mphrase-ko">저에게는 새로운 챕터입니다.</div><span class="mphrase-source join">Unit 1</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">05</span><div class="mphrase-body"><div class="mphrase-en">"It was a dream come true."</div><div class="mphrase-ko">꿈이 현실이 된 순간이었습니다.</div><span class="mphrase-source join">Unit 1</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">06</span><div class="mphrase-body"><div class="mphrase-en">"I'm looking forward to working with the team."</div><div class="mphrase-ko">팀과 함께하는 것이 정말 기대됩니다.</div><span class="mphrase-source join">Unit 1</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">07</span><div class="mphrase-body"><div class="mphrase-en">"It means everything to me to be here."</div><div class="mphrase-ko">이 자리에 있다는 것이 저에게는 전부입니다.</div><span class="mphrase-source join">Unit 6</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">08</span><div class="mphrase-body"><div class="mphrase-en">"I want to make the fans proud."</div><div class="mphrase-ko">팬들을 자랑스럽게 만들고 싶습니다.</div><span class="mphrase-source join">Unit 6</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">09</span><div class="mphrase-body"><div class="mphrase-en">"I'm here to work hard and earn my place."</div><div class="mphrase-ko">저는 열심히 노력해서 자리를 얻기 위해 여기 있습니다.</div><span class="mphrase-source join">Unit 6</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">10</span><div class="mphrase-body"><div class="mphrase-en">"I feel at home already."</div><div class="mphrase-ko">벌써 집처럼 편안합니다.</div><span class="mphrase-source join">Unit 6</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">11</span><div class="mphrase-body"><div class="mphrase-en">"Every training session, I will give 100 percent."</div><div class="mphrase-ko">모든 훈련 세션에서 100%를 바치겠습니다.</div><span class="mphrase-source join">Unit 6</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">12</span><div class="mphrase-body"><div class="mphrase-en">"It means everything to represent my country on this stage."</div><div class="mphrase-ko">이 무대에서 국가를 대표한다는 것이 저에게는 전부입니다.</div><span class="mphrase-source join">Unit 11</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">13</span><div class="mphrase-body"><div class="mphrase-en">"The pressure only motivates me — I thrive in big moments."</div><div class="mphrase-ko">압박감은 저를 더 강하게 만들 뿐입니다 — 저는 큰 순간에 빛납니다.</div><span class="mphrase-source join">Unit 11</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">14</span><div class="mphrase-body"><div class="mphrase-en">"We're a tight unit — that's what makes us dangerous."</div><div class="mphrase-ko">우리는 똘똘 뭉친 팀입니다 — 그게 우리를 위험하게 만드는 이유입니다.</div><span class="mphrase-source join">Unit 11</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">15</span><div class="mphrase-body"><div class="mphrase-en">"We came here to make history."</div><div class="mphrase-ko">우리는 역사를 만들기 위해 여기 왔습니다.</div><span class="mphrase-source join">Unit 11</span></div></div>
+    </div>
+  </div>
+
+  <!-- POST-MATCH -->
+  <div class="theme-panel" id="panel-match">
+    <div class="master-phrase-list">
+      <div class="master-phrase"><span class="mphrase-num">01</span><div class="mphrase-body"><div class="mphrase-en">"We worked really hard for this."</div><div class="mphrase-ko">우리는 이것을 위해 정말 열심히 했습니다.</div><span class="mphrase-source match">Unit 2</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">02</span><div class="mphrase-body"><div class="mphrase-en">"Credit to the whole team."</div><div class="mphrase-ko">팀 전체의 공입니다.</div><span class="mphrase-source match">Unit 2</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">03</span><div class="mphrase-body"><div class="mphrase-en">"It was a tough game but we kept going."</div><div class="mphrase-ko">힘든 경기였지만 우리는 계속했습니다.</div><span class="mphrase-source match">Unit 2</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">04</span><div class="mphrase-body"><div class="mphrase-en">"I'm gutted, but we'll bounce back."</div><div class="mphrase-ko">너무 속상하지만, 우리는 다시 일어날 것입니다.</div><span class="mphrase-source match">Unit 2</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">05</span><div class="mphrase-body"><div class="mphrase-en">"The manager set us up perfectly."</div><div class="mphrase-ko">감독님이 완벽하게 준비시켜 주셨습니다.</div><span class="mphrase-source match">Unit 2</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">06</span><div class="mphrase-body"><div class="mphrase-en">"We showed real character out there today."</div><div class="mphrase-ko">오늘 경기에서 진짜 팀의 면모를 보여줬습니다.</div><span class="mphrase-source match">Unit 7</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">07</span><div class="mphrase-body"><div class="mphrase-en">"Every player on the pitch gave absolutely everything."</div><div class="mphrase-ko">그라운드의 모든 선수가 완전히 다 쏟아냈습니다.</div><span class="mphrase-source match">Unit 7</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">08</span><div class="mphrase-body"><div class="mphrase-en">"We don't celebrate too long — we focus on the next game."</div><div class="mphrase-ko">너무 오래 축하하지 않습니다 — 다음 경기에 집중합니다.</div><span class="mphrase-source match">Unit 7</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">09</span><div class="mphrase-body"><div class="mphrase-en">"We have to take this on the chin and move on."</div><div class="mphrase-ko">이것을 담담히 받아들이고 나아가야 합니다.</div><span class="mphrase-source match">Unit 7</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">10</span><div class="mphrase-body"><div class="mphrase-en">"We never stopped believing — not for a single second."</div><div class="mphrase-ko">단 한 순간도 믿음을 잃지 않았습니다.</div><span class="mphrase-source match">Unit 12</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">11</span><div class="mphrase-body"><div class="mphrase-en">"We executed our game plan to absolute perfection."</div><div class="mphrase-ko">우리의 게임 플랜을 완벽하게 실행했습니다.</div><span class="mphrase-source match">Unit 12</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">12</span><div class="mphrase-body"><div class="mphrase-en">"It hurts deeply, but I'm proud of what this team showed."</div><div class="mphrase-ko">너무 아프지만, 이 팀이 보여준 것에 자랑스럽습니다.</div><span class="mphrase-source match">Unit 12</span></div></div>
+    </div>
+  </div>
+
+  <!-- GOALS -->
+  <div class="theme-panel" id="panel-goals">
+    <div class="master-phrase-list">
+      <div class="master-phrase"><span class="mphrase-num">01</span><div class="mphrase-body"><div class="mphrase-en">"My focus should be on helping the team get three points."</div><div class="mphrase-ko">제 집중은 팀이 3점을 얻도록 돕는 것에 있어야 합니다.</div><span class="mphrase-source goals">Unit 3</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">02</span><div class="mphrase-body"><div class="mphrase-en">"Am I the best? No, I'm one of them."</div><div class="mphrase-ko">내가 최고인가? 아니, 나는 그 중 하나입니다.</div><span class="mphrase-source goals">Unit 3</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">03</span><div class="mphrase-body"><div class="mphrase-en">"First, it was a dream and then a goal."</div><div class="mphrase-ko">처음에는 꿈이었고, 그 다음에는 목표가 되었습니다.</div><span class="mphrase-source goals">Unit 3</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">04</span><div class="mphrase-body"><div class="mphrase-en">"I want to give my life for this shirt and this club."</div><div class="mphrase-ko">이 유니폼과 이 클럽을 위해 모든 것을 바치고 싶습니다.</div><span class="mphrase-source goals">Unit 3</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">05</span><div class="mphrase-body"><div class="mphrase-en">"I want to be the best version of myself every single day."</div><div class="mphrase-ko">매일매일 최고의 내 모습이 되고 싶습니다.</div><span class="mphrase-source goals">Unit 8</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">06</span><div class="mphrase-body"><div class="mphrase-en">"I'm always hungry for more — trophies, goals, records."</div><div class="mphrase-ko">저는 항상 더 많은 것을 원합니다 — 트로피, 골, 기록.</div><span class="mphrase-source goals">Unit 8</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">07</span><div class="mphrase-body"><div class="mphrase-en">"Whatever I achieve, I always want to push for the next level."</div><div class="mphrase-ko">무엇을 이루든, 저는 항상 다음 단계를 향해 나아가고 싶습니다.</div><span class="mphrase-source goals">Unit 8</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">08</span><div class="mphrase-body"><div class="mphrase-en">"My family is the reason I work so hard every day."</div><div class="mphrase-ko">가족이 제가 매일 이렇게 열심히 하는 이유입니다.</div><span class="mphrase-source goals">Unit 8</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">09</span><div class="mphrase-body"><div class="mphrase-en">"I set the bar high for myself every single day."</div><div class="mphrase-ko">저는 매일 스스로에게 높은 기준을 세웁니다.</div><span class="mphrase-source goals">Unit 13</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">10</span><div class="mphrase-body"><div class="mphrase-en">"I don't just want to participate — I want to dominate."</div><div class="mphrase-ko">그냥 참가하는 것이 아닙니다 — 지배하고 싶습니다.</div><span class="mphrase-source goals">Unit 13</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">11</span><div class="mphrase-body"><div class="mphrase-en">"Every sacrifice I've made has been worth it for this moment."</div><div class="mphrase-ko">제가 한 모든 희생은 이 순간을 위해 가치 있었습니다.</div><span class="mphrase-source goals">Unit 13</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">12</span><div class="mphrase-body"><div class="mphrase-en">"The hunger to win never goes away — it only gets stronger."</div><div class="mphrase-ko">이기고자 하는 갈망은 절대 사라지지 않습니다 — 더 강해질 뿐입니다.</div><span class="mphrase-source goals">Unit 13</span></div></div>
+    </div>
+  </div>
+
+  <!-- INJURY -->
+  <div class="theme-panel" id="panel-injury">
+    <div class="master-phrase-list">
+      <div class="master-phrase"><span class="mphrase-num">01</span><div class="mphrase-body"><div class="mphrase-en">"I came back stronger than I was before."</div><div class="mphrase-ko">이전보다 더 강해져서 돌아왔습니다.</div><span class="mphrase-source injury">Unit 4</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">02</span><div class="mphrase-body"><div class="mphrase-en">"It was a tough period, but I never lost faith."</div><div class="mphrase-ko">힘든 시간이었지만, 믿음을 잃지 않았습니다.</div><span class="mphrase-source injury">Unit 4</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">03</span><div class="mphrase-body"><div class="mphrase-en">"I never thought about giving up — I just believed in myself."</div><div class="mphrase-ko">포기는 한 번도 생각하지 않았습니다 — 그저 스스로를 믿었습니다.</div><span class="mphrase-source injury">Unit 4</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">04</span><div class="mphrase-body"><div class="mphrase-en">"I had to be patient and trust the process."</div><div class="mphrase-ko">인내하고 과정을 믿어야 했습니다.</div><span class="mphrase-source injury">Unit 4</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">05</span><div class="mphrase-body"><div class="mphrase-en">"It was the hardest period of my career."</div><div class="mphrase-ko">커리어에서 가장 힘든 시기였습니다.</div><span class="mphrase-source injury">Unit 9</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">06</span><div class="mphrase-body"><div class="mphrase-en">"I had to dig really deep mentally."</div><div class="mphrase-ko">정신적으로 정말 깊이 파고들어야 했습니다.</div><span class="mphrase-source injury">Unit 9</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">07</span><div class="mphrase-body"><div class="mphrase-en">"Every setback makes you appreciate the game more."</div><div class="mphrase-ko">모든 역경은 축구를 더 소중하게 만듭니다.</div><span class="mphrase-source injury">Unit 9</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">08</span><div class="mphrase-body"><div class="mphrase-en">"I focused only on what I could control."</div><div class="mphrase-ko">제가 통제할 수 있는 것에만 집중했습니다.</div><span class="mphrase-source injury">Unit 9</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">09</span><div class="mphrase-body"><div class="mphrase-en">"I told myself — this challenge will make me better."</div><div class="mphrase-ko">스스로에게 말했습니다 — 이 도전이 나를 더 강하게 만들 것이라고.</div><span class="mphrase-source injury">Unit 9</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">10</span><div class="mphrase-body"><div class="mphrase-en">"There were moments when I didn't know if I'd ever make it back."</div><div class="mphrase-ko">다시 돌아올 수 있을지 몰랐던 순간들이 있었습니다.</div><span class="mphrase-source injury">Unit 14</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">11</span><div class="mphrase-body"><div class="mphrase-en">"I refused to accept that my story was over."</div><div class="mphrase-ko">내 이야기가 끝났다는 것을 받아들이기를 거부했습니다.</div><span class="mphrase-source injury">Unit 14</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">12</span><div class="mphrase-body"><div class="mphrase-en">"I came back with a completely different perspective on the game."</div><div class="mphrase-ko">경기에 대해 완전히 다른 시각을 가지고 돌아왔습니다.</div><span class="mphrase-source injury">Unit 14</span></div></div>
+    </div>
+  </div>
+
+  <!-- SPECIAL -->
+  <div class="theme-panel" id="panel-special">
+    <div class="master-phrase-list">
+      <div class="master-phrase"><span class="mphrase-num">01</span><div class="mphrase-body"><div class="mphrase-en">"You looked sharp out there today."</div><div class="mphrase-ko">오늘 경기에서 정말 날카롭게 보였어.</div><span class="mphrase-source special">Unit 15 · 일상 대화</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">02</span><div class="mphrase-body"><div class="mphrase-en">"Long week, but worth it."</div><div class="mphrase-ko">긴 한 주였지만, 보람 있었어.</div><span class="mphrase-source special">Unit 15 · 일상 대화</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">03</span><div class="mphrase-body"><div class="mphrase-en">"Game day can't come soon enough."</div><div class="mphrase-ko">경기 날이 빨리 왔으면 좋겠어.</div><span class="mphrase-source special">Unit 15 · 일상 대화</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">04</span><div class="mphrase-body"><div class="mphrase-en">"What do you do to switch off after a tough week?"</div><div class="mphrase-ko">힘든 한 주 뒤에 어떻게 머릿속을 비워?</div><span class="mphrase-source special">Unit 15 · 일상 대화</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">05</span><div class="mphrase-body"><div class="mphrase-en">"He's the best I've ever played with."</div><div class="mphrase-ko">그는 내가 함께 뛴 선수 중 최고야.</div><span class="mphrase-source special">Unit 16 · 팀 스피릿</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">06</span><div class="mphrase-body"><div class="mphrase-en">"I'd go to war for that guy."</div><div class="mphrase-ko">그 사람을 위해서라면 전쟁도 나가겠어.</div><span class="mphrase-source special">Unit 16 · 팀 스피릿</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">07</span><div class="mphrase-body"><div class="mphrase-en">"We've got each other's backs."</div><div class="mphrase-ko">우리는 서로의 등을 봐줍니다.</div><span class="mphrase-source special">Unit 16 · 팀 스피릿</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">08</span><div class="mphrase-body"><div class="mphrase-en">"The group chat went absolutely mad."</div><div class="mphrase-ko">단체 채팅방이 완전히 난리 났어.</div><span class="mphrase-source special">Unit 17 · 빅 모먼트</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">09</span><div class="mphrase-body"><div class="mphrase-en">"It still hasn't sunk in yet."</div><div class="mphrase-ko">아직도 실감이 나지 않아요.</div><span class="mphrase-source special">Unit 17 · 빅 모먼트</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">10</span><div class="mphrase-body"><div class="mphrase-en">"Dreams do come true if you keep believing."</div><div class="mphrase-ko">계속 믿으면 꿈은 정말 이루어집니다.</div><span class="mphrase-source special">Unit 17 · 빅 모먼트</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">11</span><div class="mphrase-body"><div class="mphrase-en">"You've just got to trust your preparation."</div><div class="mphrase-ko">그냥 자신의 준비를 믿어야 합니다.</div><span class="mphrase-source special">Unit 18 · 압박</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">12</span><div class="mphrase-body"><div class="mphrase-en">"Pressure is a privilege."</div><div class="mphrase-ko">압박감은 특권입니다.</div><span class="mphrase-source special">Unit 18 · 압박</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">13</span><div class="mphrase-body"><div class="mphrase-en">"I just let my emotions take over."</div><div class="mphrase-ko">그냥 감정이 넘치도록 내버려 뒀습니다.</div><span class="mphrase-source special">Unit 19 · 세리머니</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">14</span><div class="mphrase-body"><div class="mphrase-en">"That's the moment you play football for."</div><div class="mphrase-ko">그게 바로 축구를 하는 이유인 그 순간입니다.</div><span class="mphrase-source special">Unit 19 · 세리머니</span></div></div>
+      <div class="master-phrase"><span class="mphrase-num">15</span><div class="mphrase-body"><div class="mphrase-en">"Nothing beats scoring in front of your own fans."</div><div class="mphrase-ko">홈 팬들 앞에서 골을 넣는 것만한 건 없습니다.</div><span class="mphrase-source special">Unit 19 · 세리머니</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 3: Flashcard Drill ── -->
+<section class="section reveal" id="s-flash">
+  <span class="eyebrow">Section 03 · Flashcard Drill</span>
+  <h2 class="display d-lg">20개 핵심 표현<br>플래시카드</h2>
+  <p style="margin-top:20px; font-size:14px; color:var(--muted); line-height:1.75; max-width:580px;">
+    5개 테마에서 선별한 20개 표현. 카드를 클릭하면 한국어 번역이 나타납니다. 알면 "Know it", 더 연습이 필요하면 "Again"을 눌러 셔플하세요.
+  </p>
+
+  <div style="margin-top:40px; max-width:640px;">
+    <div class="fc-progress" id="fc-progress"></div>
+    <div class="fc-area" id="fc-area">
+      <div class="fc-card" id="fc-card" onclick="flipCard()">
+        <div class="fc-face" id="fc-front">
+          <span class="fc-hint">Click to reveal</span>
+          <div class="fc-en" id="fc-en-text"></div>
+          <span class="fc-theme-tag" id="fc-front-theme"></span>
+        </div>
+        <div class="fc-face fc-back" id="fc-back">
+          <div class="fc-ko" id="fc-ko-text"></div>
+          <div class="fc-ko-sub" id="fc-ko-sub-text"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-done-state" id="fc-done">
+      <div class="fc-done-mark">★</div>
+      <div class="fc-done-text">All 20 Phrases Completed</div>
+      <button class="fc-reset-btn" onclick="resetDeck()">Reset &amp; Shuffle Again</button>
+    </div>
+    <div class="fc-nav" id="fc-nav">
+      <button class="fc-btn fc-btn-retry" onclick="markCard(false)">Again</button>
+      <button class="fc-btn fc-btn-know" onclick="markCard(true)">Know it</button>
+    </div>
+    <div id="fc-count" style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--line); margin-top:12px; text-align:right;"></div>
+  </div>
+</section>
+
+<!-- ── Section 4: Scenario Quiz ── -->
+<section class="section reveal" id="s-quiz">
+  <span class="eyebrow">Section 04 · Scenario Quiz</span>
+  <h2 class="display d-lg">상황 퀴즈<br>어떤 표현?</h2>
+  <p style="margin-top:20px; font-size:14px; color:var(--muted); line-height:1.75; max-width:580px;">
+    주어진 상황에 가장 적합한 표현을 고르세요. 10문항.
+  </p>
+
+  <div id="quiz-container" style="margin-top:40px;"></div>
+  <div class="quiz-summary" id="quiz-summary">
+    <div class="quiz-summary-score" id="quiz-final-score"></div>
+    <div class="quiz-summary-label">/ 10 Correct</div>
+    <button class="quiz-restart-btn" onclick="restartQuiz()">Try Again</button>
+  </div>
+</section>
+
+<!-- ── Section 5: Final Interview Challenge ── -->
+<section class="section reveal" id="s-final">
+  <span class="eyebrow">Section 05 · Final Interview Challenge</span>
+  <h2 class="display d-lg">5가지 상황<br>완전 롤플레이</h2>
+  <p style="margin-top:20px; font-size:14px; color:var(--muted); line-height:1.75; max-width:600px;">
+    지금까지 배운 모든 표현을 활용해 실제 인터뷰 상황을 롤플레이합니다. 각 상황에서 자연스럽게 영어로 답변해 보세요. 힌트 버튼을 눌러 사용할 표현을 확인할 수 있습니다.
+  </p>
+
+  <div class="interview-scenes" style="margin-top:40px;">
+    <!-- Scene 1 -->
+    <div class="interview-scene">
+      <div class="scene-header">
+        <span class="scene-num" style="color:var(--t-join);">Scene 01</span>
+        <span class="scene-title">새 팀 합류 인터뷰</span>
+      </div>
+      <div class="scene-context">강원 FC에 새로 합류한 당신. 입단 기자회견에서 기자들이 질문합니다. Units 1, 6, 11의 표현을 활용하세요.</div>
+      <div class="scene-q">
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"How do you feel about joining Gangwon FC?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"I'm incredibly proud to be joining ~." / "It was a dream come true." / "I cannot wait to get started."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"What are your goals for this season?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"I'm here to work hard and earn my place." / "Every training session, I will give 100 percent." / "I want to make the fans proud."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"How did it feel walking into the training ground for the first time?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"I feel at home already." / "It's a new chapter for me." / "I'm looking forward to working with the team."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 2 -->
+    <div class="interview-scene">
+      <div class="scene-header">
+        <span class="scene-num" style="color:var(--t-match);">Scene 02</span>
+        <span class="scene-title">경기 후 인터뷰</span>
+      </div>
+      <div class="scene-context">힘든 원정 경기에서 1-0 승리를 거뒀습니다. 경기 직후 플래시 인터뷰. Units 2, 7, 12의 표현을 활용하세요.</div>
+      <div class="scene-q">
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"Tough game today — how are you feeling?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"It was a tough game but we kept going." / "We showed real character out there today." / "Every player on the pitch gave absolutely everything."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"The manager made some bold tactical decisions. What do you think?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"The manager set us up perfectly." / "Credit to the whole team." / "We worked really hard for this."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"The fans were incredible tonight. Any message for them?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"We never stopped believing — not for a single second." / "We don't celebrate too long — we focus on the next game."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 3 -->
+    <div class="interview-scene">
+      <div class="scene-header">
+        <span class="scene-num" style="color:var(--t-goals);">Scene 03</span>
+        <span class="scene-title">목표와 야망 인터뷰</span>
+      </div>
+      <div class="scene-context">시즌 시작 전 단독 인터뷰. 기자가 당신의 꿈과 목표에 대해 깊이 있는 질문을 합니다. Units 3, 8, 13의 표현을 활용하세요.</div>
+      <div class="scene-q">
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"What drives you? What is it that makes you push so hard every day?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"My family is the reason I work so hard every day." / "First, it was a dream and then a goal." / "The hunger to win never goes away — it only gets stronger."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"Some say you're already one of the best. Do you agree?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"Am I the best? No, I'm one of them." / "I want to be the best version of myself every single day." / "I set the bar high for myself every single day."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"What's your ultimate ambition in football?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"I don't just want to participate — I want to dominate." / "I want to give my life for this shirt and this club." / "Every sacrifice I've made has been worth it for this moment."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 4 -->
+    <div class="interview-scene">
+      <div class="scene-header">
+        <span class="scene-num" style="color:var(--t-injury);">Scene 04</span>
+        <span class="scene-title">부상 복귀 인터뷰</span>
+      </div>
+      <div class="scene-context">6개월의 부상을 이겨내고 첫 복귀전을 치렀습니다. 기자들이 당신의 긴 재활 여정에 대해 묻습니다. Units 4, 9, 14의 표현을 활용하세요.</div>
+      <div class="scene-q">
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"Six months is a long time. What was going through your mind?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"There were moments when I didn't know if I'd ever make it back." / "I had to dig really deep mentally." / "It was the hardest period of my career."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"How did you keep yourself going through the rehabilitation?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"I refused to accept that my story was over." / "I focused only on what I could control." / "I had to be patient and trust the process." / "I told myself — this challenge will make me better."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"Do you feel you're back to your best?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"I came back stronger than I was before." / "I came back with a completely different perspective on the game." / "Every setback makes you appreciate the game more."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 5 -->
+    <div class="interview-scene">
+      <div class="scene-header">
+        <span class="scene-num" style="color:var(--t-special);">Scene 05</span>
+        <span class="scene-title">우승 직후 인터뷰</span>
+      </div>
+      <div class="scene-context">결승전 90+5분, 당신의 골로 우승했습니다. 경기 후 인터뷰에서 감정, 팀원, 세리머니, 압박감까지 모든 것을 표현하세요. Units 15–19의 표현을 활용하세요.</div>
+      <div class="scene-q">
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"That winning goal — what was going through your mind as you scored?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"I just let my emotions take over." / "That's the moment you play football for." / "I can't even put it into words." / "Nothing beats scoring in front of your own fans."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"The pressure of being in that final — how did you handle it?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"Pressure is a privilege." / "You've just got to trust your preparation." / "I try to stay in the moment." / "I feed off the energy of the crowd."</div>
+        </div>
+        <div class="scene-q-item">
+          <div class="scene-q-label">Reporter</div>
+          <div class="scene-q-text">"A message for your teammates?"</div>
+          <button class="scene-hint-btn" onclick="toggleHint(this)">Show Hint ▸</button>
+          <div class="scene-hint">"He's the best I've ever played with." / "We've got each other's backs." / "I couldn't be more proud of this squad." / "Dreams do come true if you keep believing."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 6: Hall of Fame ── -->
+<section class="section reveal" id="s-hof">
+  <span class="eyebrow">Section 06 · Hall of Fame</span>
+  <h2 class="display d-lg">Top 10<br>명예의 표현</h2>
+  <p style="margin-top:20px; font-size:14px; color:var(--muted); line-height:1.75; max-width:580px;">
+    19개 유닛에서 가장 강력하고 활용도 높은 10개 표현. 이것만 완벽히 익혀도 어느 인터뷰에서든 통한다.
+  </p>
+
+  <div class="hof-grid">
+    <div class="hof-card">
+      <div class="hof-rank" style="color:var(--gold);">01</div>
+      <div class="hof-en">"Pressure is a privilege."</div>
+      <div class="hof-ko">압박감은 특권입니다.</div>
+      <div class="hof-theme" style="color:var(--t-special);">Unit 18 · 압박</div>
+    </div>
+    <div class="hof-card">
+      <div class="hof-rank" style="color:var(--gold);">02</div>
+      <div class="hof-en">"I came back stronger than I was before."</div>
+      <div class="hof-ko">이전보다 더 강해져서 돌아왔습니다.</div>
+      <div class="hof-theme" style="color:var(--t-injury);">Unit 4 · 부상 & 회복</div>
+    </div>
+    <div class="hof-card">
+      <div class="hof-rank">03</div>
+      <div class="hof-en">"I refused to accept that my story was over."</div>
+      <div class="hof-ko">내 이야기가 끝났다는 것을 받아들이기를 거부했습니다.</div>
+      <div class="hof-theme" style="color:var(--t-injury);">Unit 14 · 부상 & 회복</div>
+    </div>
+    <div class="hof-card">
+      <div class="hof-rank">04</div>
+      <div class="hof-en">"Dreams do come true if you keep believing."</div>
+      <div class="hof-ko">계속 믿으면 꿈은 정말 이루어집니다.</div>
+      <div class="hof-theme" style="color:var(--t-special);">Unit 17 · 빅 모먼트</div>
+    </div>
+    <div class="hof-card">
+      <div class="hof-rank">05</div>
+      <div class="hof-en">"The hunger to win never goes away — it only gets stronger."</div>
+      <div class="hof-ko">이기고자 하는 갈망은 절대 사라지지 않습니다.</div>
+      <div class="hof-theme" style="color:var(--t-goals);">Unit 13 · 목표 & 야망</div>
+    </div>
+    <div class="hof-card">
+      <div class="hof-rank">06</div>
+      <div class="hof-en">"Credit to the whole team."</div>
+      <div class="hof-ko">팀 전체의 공입니다.</div>
+      <div class="hof-theme" style="color:var(--t-match);">Unit 2 · 경기 후</div>
+    </div>
+    <div class="hof-card">
+      <div class="hof-rank">07</div>
+      <div class="hof-en">"That's the moment you play football for."</div>
+      <div class="hof-ko">그게 바로 축구를 하는 이유인 그 순간입니다.</div>
+      <div class="hof-theme" style="color:var(--t-special);">Unit 19 · 세리머니</div>
+    </div>
+    <div class="hof-card">
+      <div class="hof-rank">08</div>
+      <div class="hof-en">"We came here to make history."</div>
+      <div class="hof-ko">우리는 역사를 만들기 위해 여기 왔습니다.</div>
+      <div class="hof-theme" style="color:var(--t-join);">Unit 11 · 합류</div>
+    </div>
+    <div class="hof-card">
+      <div class="hof-rank">09</div>
+      <div class="hof-en">"First, it was a dream and then a goal."</div>
+      <div class="hof-ko">처음에는 꿈이었고, 그 다음에는 목표가 되었습니다.</div>
+      <div class="hof-theme" style="color:var(--t-goals);">Unit 3 · 목표 & 야망</div>
+    </div>
+    <div class="hof-card">
+      <div class="hof-rank">10</div>
+      <div class="hof-en">"Every setback makes you appreciate the game more."</div>
+      <div class="hof-ko">모든 역경은 축구를 더 소중하게 만듭니다.</div>
+      <div class="hof-theme" style="color:var(--t-injury);">Unit 9 · 부상 & 회복</div>
+    </div>
+  </div>
+
+  <!-- Closing message -->
+  <div style="margin-top:64px; padding:40px; border:0.5px solid var(--line); text-align:center;">
+    <span class="eyebrow" style="margin-bottom:20px;">수업 완료</span>
+    <h3 class="display d-md" style="margin-bottom:20px;">19 Units.<br><span class="gold">One voice.</span></h3>
+    <p style="font-size:14px; color:var(--muted); line-height:1.85; max-width:480px; margin:0 auto;">
+      강원 FC 영어 인터뷰 수업을 완주했습니다. 이제 카메라 앞에서도, 팀원들과의 대화에서도, 큰 무대에서도 — 선수처럼 생각하고 선수처럼 말할 수 있습니다.
+    </p>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer id="footer">
+  <span class="footer-brand">러너스 LRS</span>
+  <span class="footer-note">Unit 20 · The Grand Review · 2026</span>
+</footer>
+
+<!-- ── YT Modal ── -->
+<div id="yt-modal">
+  <div id="yt-wrap">
+    <button id="yt-close" onclick="closeYT()">Close ✕</button>
+    <iframe id="yt-frame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  </div>
+</div>
+
+<script>
+// ── Units nav data ──
+const SECTIONS = [
+  { id: 's-journey', label: 'Journey Overview' },
+  { id: 's-master',  label: 'Master Phrase List' },
+  { id: 's-flash',   label: 'Flashcard Drill' },
+  { id: 's-quiz',    label: 'Scenario Quiz' },
+  { id: 's-final',   label: 'Final Interview Challenge' },
+  { id: 's-hof',     label: 'Hall of Fame' },
+];
+const UNITS = [
+  { id: 'unit1',  label: 'Unit 1',  subtitle: 'Self-Introduction & Joining the Team',           url: 'unit1.html' },
+  { id: 'unit2',  label: 'Unit 2',  subtitle: 'Post-Match Flash Interview',                     url: 'unit2.html' },
+  { id: 'unit3',  label: 'Unit 3',  subtitle: 'Goals, Motivation & Ambition',                   url: 'unit3.html' },
+  { id: 'unit4',  label: 'Unit 4',  subtitle: 'Injury, Recovery & Resilience',                  url: 'unit4.html' },
+  { id: 'unit5',  label: 'Unit 5',  subtitle: 'Review — 4 Units, 28 Phrases',                   url: 'unit5.html' },
+  { id: 'unit6',  label: 'Unit 6',  subtitle: 'Self-Introduction Round 2',                      url: 'unit6.html' },
+  { id: 'unit7',  label: 'Unit 7',  subtitle: 'Post-Match Flash Interview — Round 2',           url: 'unit7.html' },
+  { id: 'unit8',  label: 'Unit 8',  subtitle: 'Goals, Motivation & Ambition — Round 2',         url: 'unit8.html' },
+  { id: 'unit9',  label: 'Unit 9',  subtitle: 'Injury, Recovery & Resilience — Round 2',        url: 'unit9.html' },
+  { id: 'unit10', label: 'Unit 10', subtitle: 'Round 2 Review — 4 Units, 40 Phrases',           url: 'unit10.html' },
+  { id: 'unit11', label: 'Unit 11', subtitle: 'Self-Introduction & Joining the Team — Round 3', url: 'unit11.html' },
+  { id: 'unit12', label: 'Unit 12', subtitle: 'Post-Match Flash Interview — Round 3',           url: 'unit12.html' },
+  { id: 'unit13', label: 'Unit 13', subtitle: 'Goals, Motivation & Ambition — Round 3',         url: 'unit13.html' },
+  { id: 'unit14', label: 'Unit 14', subtitle: 'Injury, Recovery & Resilience — Round 3',        url: 'unit14.html' },
+  { id: 'unit15', label: 'Unit 15', subtitle: 'Small Talk — Everyday Conversations',            url: 'unit15.html' },
+  { id: 'unit16', label: 'Unit 16', subtitle: "Team Spirit — Who's Your Best Teammate?",        url: 'unit16.html' },
+  { id: 'unit17', label: 'Unit 17', subtitle: 'Big Moments — Group Chat & Glory',               url: 'unit17.html' },
+  { id: 'unit18', label: 'Unit 18', subtitle: 'Pressure — How Do You Handle the Big Games?',    url: 'unit18.html' },
+  { id: 'unit19', label: 'Unit 19', subtitle: "Celebration — What's Your Best Goal?",           url: 'unit19.html' },
+  { id: 'unit20', label: 'Unit 20', subtitle: 'The Grand Review — 19 Units Complete',           url: 'unit20.html', current: true, sections: SECTIONS },
+];
+
+// Build nav
+const navMenuEl = document.getElementById('nav-menu');
+UNITS.forEach(u => {
+  const div = document.createElement('div');
+  div.className = 'nav-unit' + (u.current ? ' open' : '');
+  const hd = document.createElement('div');
+  hd.className = 'nav-unit-hd';
+  hd.innerHTML = `<div><div class="nav-unit-label">${u.label}</div><div class="nav-unit-sub">${u.subtitle}</div></div><span class="nav-unit-arrow">▶</span>`;
+  div.appendChild(hd);
+  if (u.sections) {
+    const secs = document.createElement('div');
+    secs.className = 'nav-sections';
+    u.sections.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'nav-sec-item';
+      item.dataset.target = s.id;
+      item.innerHTML = `<span class="nav-sec-num">${String(i+1).padStart(2,'0')}</span>${s.label}`;
+      item.addEventListener('click', () => {
+        document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('nav-dropdown').classList.remove('open');
+      });
+      secs.appendChild(item);
+    });
+    div.appendChild(secs);
+    hd.addEventListener('click', () => div.classList.toggle('open'));
+  } else {
+    hd.style.cursor = 'pointer';
+    hd.addEventListener('click', () => { window.location.href = u.url; });
+  }
+  navMenuEl.appendChild(div);
+});
+
+// Nav dropdown toggle
+document.getElementById('nav-trigger').addEventListener('click', () => {
+  document.getElementById('nav-dropdown').classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if (!document.getElementById('nav-dropdown').contains(e.target)) {
+    document.getElementById('nav-dropdown').classList.remove('open');
+  }
+});
+
+// ── Instructor Bar ──
+let ibarVisible = true;
+const ibarSections = SECTIONS.map(s => s.id);
+let currentSection = 0;
+
+function buildIbarDots() {
+  const dotsEl = document.getElementById('ibar-dots');
+  dotsEl.innerHTML = '';
+  ibarSections.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'ibar-dot' + (i === currentSection ? ' active' : '');
+    dot.addEventListener('click', () => jumpToSection(i));
+    dotsEl.appendChild(dot);
+  });
+}
+function jumpToSection(idx) {
+  currentSection = idx;
+  document.getElementById(ibarSections[idx])?.scrollIntoView({ behavior: 'smooth' });
+  updateIbar();
+}
+function updateIbar() {
+  document.getElementById('ibar-name').textContent = SECTIONS[currentSection].label;
+  document.getElementById('ibar-prev').disabled = currentSection === 0;
+  document.getElementById('ibar-next').disabled = currentSection === SECTIONS.length - 1;
+  document.querySelectorAll('.ibar-dot').forEach((d, i) => d.classList.toggle('active', i === currentSection));
+}
+document.getElementById('ibar-prev').addEventListener('click', () => { if (currentSection > 0) jumpToSection(currentSection - 1); });
+document.getElementById('ibar-next').addEventListener('click', () => { if (currentSection < SECTIONS.length - 1) jumpToSection(currentSection + 1); });
+document.getElementById('ibar-toggle').addEventListener('click', function() {
+  ibarVisible = !ibarVisible;
+  document.getElementById('instructor-bar').classList.toggle('hidden', !ibarVisible);
+  this.textContent = ibarVisible ? 'Hide' : 'Show';
+});
+
+// Track scroll to update current section
+const sectionEls = ibarSections.map(id => document.getElementById(id));
+window.addEventListener('scroll', () => {
+  const mid = window.scrollY + window.innerHeight / 2;
+  let active = 0;
+  sectionEls.forEach((el, i) => {
+    if (el && el.offsetTop <= mid) active = i;
+  });
+  if (active !== currentSection) {
+    currentSection = active;
+    updateIbar();
+  }
+});
+buildIbarDots();
+updateIbar();
+
+// ── Reveal on scroll ──
+const revealEls = document.querySelectorAll('.reveal');
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+revealEls.forEach(el => revealObs.observe(el));
+
+// ── Theme Tabs ──
+function activateTab(theme) {
+  document.querySelectorAll('.theme-tab').forEach(t => t.classList.toggle('active', t.dataset.theme === theme));
+  document.querySelectorAll('.theme-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + theme));
+}
+
+// ── YT Modal ──
+function openYT(id) {
+  document.getElementById('yt-frame').src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+  document.getElementById('yt-modal').classList.add('open');
+}
+function closeYT() {
+  document.getElementById('yt-frame').src = '';
+  document.getElementById('yt-modal').classList.remove('open');
+}
+document.getElementById('yt-modal').addEventListener('click', e => { if (e.target === document.getElementById('yt-modal')) closeYT(); });
+
+// ── Flashcard Drill ──
+const FLASHCARDS = [
+  { en: '"I\'m incredibly proud to be joining ~."',       ko: '~ 팀에 합류하게 되어 정말 자랑스럽습니다.',         theme: 'Joining',   color: 'var(--t-join)' },
+  { en: '"I cannot wait to get started."',                ko: '빨리 시작하고 싶어 견딜 수가 없습니다.',            theme: 'Joining',   color: 'var(--t-join)' },
+  { en: '"It was a dream come true."',                    ko: '꿈이 현실이 된 순간이었습니다.',                   theme: 'Joining',   color: 'var(--t-join)' },
+  { en: '"We came here to make history."',                ko: '우리는 역사를 만들기 위해 여기 왔습니다.',          theme: 'Joining',   color: 'var(--t-join)' },
+  { en: '"Credit to the whole team."',                    ko: '팀 전체의 공입니다.',                              theme: 'Post-Match',color: 'var(--t-match)' },
+  { en: '"I\'m gutted, but we\'ll bounce back."',         ko: '너무 속상하지만, 우리는 다시 일어날 것입니다.',     theme: 'Post-Match',color: 'var(--t-match)' },
+  { en: '"We never stopped believing."',                  ko: '단 한 순간도 믿음을 잃지 않았습니다.',              theme: 'Post-Match',color: 'var(--t-match)' },
+  { en: '"We have to take this on the chin and move on."',ko: '이것을 담담히 받아들이고 나아가야 합니다.',         theme: 'Post-Match',color: 'var(--t-match)' },
+  { en: '"First, it was a dream and then a goal."',       ko: '처음에는 꿈이었고, 그 다음에는 목표가 되었습니다.', theme: 'Goals',     color: 'var(--t-goals)' },
+  { en: '"I don\'t just want to participate — I want to dominate."', ko: '그냥 참가하는 것이 아닙니다 — 지배하고 싶습니다.', theme: 'Goals', color: 'var(--t-goals)' },
+  { en: '"The hunger to win never goes away."',           ko: '이기고자 하는 갈망은 절대 사라지지 않습니다.',      theme: 'Goals',     color: 'var(--t-goals)' },
+  { en: '"I want to give my life for this shirt."',       ko: '이 유니폼을 위해 모든 것을 바치고 싶습니다.',       theme: 'Goals',     color: 'var(--t-goals)' },
+  { en: '"I came back stronger than I was before."',      ko: '이전보다 더 강해져서 돌아왔습니다.',               theme: 'Injury',    color: 'var(--t-injury)' },
+  { en: '"I refused to accept that my story was over."',  ko: '내 이야기가 끝났다는 것을 받아들이기를 거부했습니다.', theme: 'Injury', color: 'var(--t-injury)' },
+  { en: '"Every setback makes you appreciate the game more."', ko: '모든 역경은 축구를 더 소중하게 만듭니다.',  theme: 'Injury',    color: 'var(--t-injury)' },
+  { en: '"I focused only on what I could control."',      ko: '제가 통제할 수 있는 것에만 집중했습니다.',         theme: 'Injury',    color: 'var(--t-injury)' },
+  { en: '"Pressure is a privilege."',                     ko: '압박감은 특권입니다.',                             theme: 'Special',   color: 'var(--t-special)' },
+  { en: '"We\'ve got each other\'s backs."',              ko: '우리는 서로의 등을 봐줍니다.',                     theme: 'Special',   color: 'var(--t-special)' },
+  { en: '"That\'s the moment you play football for."',    ko: '그게 바로 축구를 하는 이유인 그 순간입니다.',       theme: 'Special',   color: 'var(--t-special)' },
+  { en: '"Dreams do come true if you keep believing."',   ko: '계속 믿으면 꿈은 정말 이루어집니다.',              theme: 'Special',   color: 'var(--t-special)' },
+];
+
+let fcDeck = [], fcKnown = new Set(), fcCurrent = 0, fcFlipped = false;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function resetDeck() {
+  fcDeck = shuffle(FLASHCARDS.map((c, i) => ({ ...c, idx: i })));
+  fcKnown = new Set();
+  fcCurrent = 0;
+  fcFlipped = false;
+  document.getElementById('fc-done').style.display = 'none';
+  document.getElementById('fc-area').style.display = '';
+  document.getElementById('fc-nav').style.display = '';
+  renderCard();
+}
+function renderCard() {
+  if (fcDeck.length === 0) {
+    document.getElementById('fc-done').style.display = 'block';
+    document.getElementById('fc-area').style.display = 'none';
+    document.getElementById('fc-nav').style.display = 'none';
+    document.getElementById('fc-count').textContent = '';
+    return;
+  }
+  const card = fcDeck[fcCurrent % fcDeck.length];
+  document.getElementById('fc-en-text').textContent = card.en;
+  document.getElementById('fc-ko-text').textContent = card.ko;
+  document.getElementById('fc-ko-sub-text').textContent = '';
+  const themeTag = document.getElementById('fc-front-theme');
+  themeTag.textContent = card.theme;
+  themeTag.style.background = card.color + '22';
+  themeTag.style.color = card.color;
+  document.getElementById('fc-card').classList.remove('flipped');
+  fcFlipped = false;
+  document.getElementById('fc-count').textContent = `${FLASHCARDS.length - fcDeck.length + 1} / ${FLASHCARDS.length}`;
+  updateFcPips();
+}
+function updateFcPips() {
+  const prog = document.getElementById('fc-progress');
+  prog.innerHTML = '';
+  FLASHCARDS.forEach((_, i) => {
+    const pip = document.createElement('div');
+    pip.className = 'fc-pip' + (fcKnown.has(i) ? ' done' : '');
+    prog.appendChild(pip);
+  });
+}
+function flipCard() {
+  fcFlipped = !fcFlipped;
+  document.getElementById('fc-card').classList.toggle('flipped', fcFlipped);
+}
+function markCard(know) {
+  if (fcDeck.length === 0) return;
+  const card = fcDeck.splice(fcCurrent % fcDeck.length, 1)[0];
+  if (know) fcKnown.add(card.idx);
+  else fcDeck.push(card);
+  if (fcCurrent >= fcDeck.length && fcDeck.length > 0) fcCurrent = 0;
+  renderCard();
+}
+resetDeck();
+
+// ── Quiz ──
+const QUIZ_DATA = [
+  {
+    q: '강원 FC에 처음 합류하는 날, 기자들이 소감을 물어봤습니다.',
+    context: '"How does it feel to be here today?"',
+    opts: [
+      '"I\'m incredibly proud to be joining Gangwon FC."',
+      '"It hurts deeply, but I\'m proud of this team."',
+      '"I had to dig really deep mentally."',
+      '"The group chat went absolutely mad."',
+    ],
+    answer: 0,
+    explain: '"I\'m incredibly proud to be joining ~" — 새 팀 합류 시 가장 자연스러운 표현입니다. (Unit 1)',
+  },
+  {
+    q: '힘든 경기에서 승리를 거뒀습니다. 팀원들에 대한 공을 어떻게 돌립니까?',
+    context: '"The team played brilliantly today."',
+    opts: [
+      '"I focused only on what I could control."',
+      '"Credit to the whole team."',
+      '"I came back with a different perspective."',
+      '"Pressure is a privilege."',
+    ],
+    answer: 1,
+    explain: '"Credit to the whole team" — 팀 전체의 공이라고 말할 때 쓰는 가장 자연스러운 표현입니다. (Unit 2)',
+  },
+  {
+    q: '패배 후 인터뷰에서 실망감을 표현하면서도 다음을 기약하고 싶습니다.',
+    context: '"How are you feeling after the loss?"',
+    opts: [
+      '"We came here to make history."',
+      '"I\'m gutted, but we\'ll bounce back."',
+      '"Game day can\'t come soon enough."',
+      '"He\'s the best I\'ve ever played with."',
+    ],
+    answer: 1,
+    explain: '"I\'m gutted, but we\'ll bounce back" — 패배 후 실망과 의지를 동시에 표현하는 핵심 구문입니다. (Unit 2)',
+  },
+  {
+    q: '어린 시절부터의 꿈이 목표로 변해온 과정을 묻는 질문에 답합니다.',
+    context: '"When did you know you wanted to be a professional footballer?"',
+    opts: [
+      '"I never stopped believing — not for a single second."',
+      '"The manager set us up perfectly."',
+      '"First, it was a dream and then a goal."',
+      '"I refused to accept that my story was over."',
+    ],
+    answer: 2,
+    explain: '"First, it was a dream and then a goal" — 꿈이 목표가 된 과정을 완벽하게 표현합니다. (Unit 3)',
+  },
+  {
+    q: '6개월 부상에서 복귀했습니다. 어떤 마음가짐으로 재활을 버텼는지 묻습니다.',
+    context: '"How did you keep going through such a long injury?"',
+    opts: [
+      '"I came back stronger than I was before."',
+      '"Long week, but worth it."',
+      '"We executed our game plan to perfection."',
+      '"I\'d go to war for that guy."',
+    ],
+    answer: 0,
+    explain: '"I came back stronger than I was before" — 부상 복귀를 표현하는 가장 강력한 문장입니다. (Unit 4)',
+  },
+  {
+    q: '빅 게임의 압박감에 대해 질문 받았습니다. 압박감을 즐긴다는 것을 한 마디로 표현합니다.',
+    context: '"Doesn\'t all this pressure get to you?"',
+    opts: [
+      '"You\'ve just got to trust your preparation."',
+      '"Pressure is a privilege."',
+      '"It still hasn\'t sunk in yet."',
+      '"We have to take this on the chin and move on."',
+    ],
+    answer: 1,
+    explain: '"Pressure is a privilege" — 세 단어로 압박감을 특권으로 바꾸는 최강의 표현입니다. (Unit 18)',
+  },
+  {
+    q: '팀 동료에 대한 신뢰를 표현합니다. 그 친구가 절대 실망시키지 않는다고 말하고 싶습니다.',
+    context: '"What makes your team so strong?"',
+    opts: [
+      '"He never lets you down."',
+      '"He makes everyone around him better."',
+      '"We\'ve got each other\'s backs."',
+      '"I couldn\'t be more proud of this squad."',
+    ],
+    answer: 0,
+    explain: '"He never lets you down" — 동료에 대한 절대적 신뢰를 표현하는 가장 직접적인 문장입니다. (Unit 16)',
+  },
+  {
+    q: '우승 직후 단체 채팅방 반응을 묻는 질문에 답합니다.',
+    context: '"What happened when the final whistle went?"',
+    opts: [
+      '"Dreams do come true if you keep believing."',
+      '"The group chat went absolutely mad."',
+      '"That\'s the moment you play football for."',
+      '"I can\'t even put it into words."',
+    ],
+    answer: 1,
+    explain: '"The group chat went absolutely mad" — 우승 후 단체 채팅 상황을 묘사하는 생생한 표현입니다. (Unit 17)',
+  },
+  {
+    q: '본인이 최고의 선수인지 묻는 도발적인 질문에 겸손하게 답합니다.',
+    context: '"Are you the best player in the world right now?"',
+    opts: [
+      '"I set the bar high for myself every single day."',
+      '"Am I the best? No, I\'m one of them."',
+      '"I don\'t just want to participate — I want to dominate."',
+      '"I\'m always hungry for more — trophies, goals, records."',
+    ],
+    answer: 1,
+    explain: '"Am I the best? No, I\'m one of them" — 겸손하면서도 자신감 있는 황금 표현입니다. (Unit 3)',
+  },
+  {
+    q: '골을 넣은 순간의 감정을 묻는 질문에 답합니다.',
+    context: '"What went through your mind when you scored that goal?"',
+    opts: [
+      '"Every setback makes you appreciate the game more."',
+      '"I focused only on what I could control."',
+      '"That\'s the moment you play football for."',
+      '"I want to be the best version of myself."',
+    ],
+    answer: 2,
+    explain: '"That\'s the moment you play football for" — 골을 넣은 순간의 감동을 완벽하게 표현하는 문장입니다. (Unit 19)',
+  },
+];
+
+let quizScore = 0, quizAnswered = 0;
+
+function buildQuiz() {
+  quizScore = 0; quizAnswered = 0;
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  document.getElementById('quiz-summary').classList.remove('visible');
+  QUIZ_DATA.forEach((q, qi) => {
+    const item = document.createElement('div');
+    item.className = 'quiz-item';
+    item.id = `quiz-item-${qi}`;
+    const opts = q.opts.map((opt, oi) => `<button class="quiz-opt" onclick="selectOpt(${qi},${oi})">${opt}</button>`).join('');
+    item.innerHTML = `
+      <div class="quiz-q-num">Q${String(qi+1).padStart(2,'0')}</div>
+      <div class="quiz-q-text">${q.q}</div>
+      <div class="quiz-q-context">${q.context}</div>
+      <div class="quiz-options" id="quiz-opts-${qi}">${opts}</div>
+      <div class="quiz-feedback" id="quiz-fb-${qi}"><div class="quiz-feedback-text"></div></div>
+    `;
+    container.appendChild(item);
+  });
+}
+function selectOpt(qi, oi) {
+  const optsEl = document.getElementById(`quiz-opts-${qi}`);
+  if (optsEl.querySelector('.correct') || optsEl.querySelector('.wrong')) return;
+  const opts = optsEl.querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.disabled = true);
+  const correct = QUIZ_DATA[qi].answer;
+  opts[correct].classList.add('correct');
+  if (oi !== correct) opts[oi].classList.add('wrong');
+  const fb = document.getElementById(`quiz-fb-${qi}`);
+  fb.classList.add('visible');
+  fb.classList.add(oi === correct ? 'quiz-feedback-correct' : 'quiz-feedback-wrong');
+  fb.querySelector('.quiz-feedback-text').textContent = QUIZ_DATA[qi].explain;
+  if (oi === correct) quizScore++;
+  quizAnswered++;
+  if (quizAnswered === QUIZ_DATA.length) {
+    setTimeout(() => {
+      document.getElementById('quiz-final-score').textContent = quizScore;
+      document.getElementById('quiz-summary').classList.add('visible');
+      document.getElementById('quiz-summary').scrollIntoView({ behavior: 'smooth' });
+    }, 600);
+  }
+}
+function restartQuiz() { buildQuiz(); }
+buildQuiz();
+
+// ── Hint toggle ──
+function toggleHint(btn) {
+  const hint = btn.nextElementSibling;
+  const show = hint.style.display !== 'block';
+  hint.style.display = show ? 'block' : 'none';
+  btn.textContent = show ? 'Hide Hint ▴' : 'Show Hint ▸';
+  btn.classList.toggle('shown', show);
+}
+</script>
+</body>
+</html>

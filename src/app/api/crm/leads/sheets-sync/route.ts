@@ -77,19 +77,13 @@ export async function POST(request: NextRequest) {
 
   // ── 신규 등록 ─────────────────────────────────────────────────────────────
 
-  // META 리드는 날짜 대신 순번(1, 2, 3…)을 이름에 붙인다
+  // META 리드는 Meta 웹훅이 직접 처리하므로 sheets-sync에서 신규 등록 제외
   const isMetaLead =
     payload.source_tab === 'META리드_인스턴트폼' ||
     payload.source_tab === 'META리드_인스턴트폼_목표시험';
 
-  if (isMetaLead && !payload.student_name?.trim()) {
-    const { count } = await supabaseAdmin
-      .from('students')
-      .select('id', { count: 'exact', head: true })
-      .contains('campaign_tags', ['META 리드']);
-
-    const seq = (count ?? 0) + 1;
-    crmPayload.name = `META리드_${seq}`;
+  if (isMetaLead) {
+    return NextResponse.json({ ok: true, skipped: 'meta_lead_handled_by_webhook' });
   }
 
   const { data, error: insertError } = await supabaseAdmin

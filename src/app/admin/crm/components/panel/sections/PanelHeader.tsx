@@ -1,6 +1,6 @@
 'use client';
 
-import { X, ChevronDown, Check } from 'lucide-react';
+import { X, ChevronDown, Check, BookOpen, Copy } from 'lucide-react';
 import { PortalAccessToggle } from '@/app/admin/components/PortalAccessToggle';
 import { SignupLinkToggle } from '@/app/admin/components/SignupLinkToggle';
 import type { Student, FunnelStage } from '@/types/crm';
@@ -20,6 +20,7 @@ interface Props {
   signupConsumed: boolean;
   signupCopied: boolean;
   signupLoading: boolean;
+  coachPrepCopied: boolean;
   deleting: boolean;
   funnelChanging: boolean;
   showFunnelMenu: boolean;
@@ -32,6 +33,7 @@ interface Props {
   onPreviewPortal: () => void;
   onCopySignupLink: () => void;
   onRegenerateSignup: () => void;
+  onCopyCoachPrepLink: () => void;
   onDelete: () => void;
   onToggleFunnelMenu: () => void;
   onFunnelChange: (stage: FunnelStage) => void;
@@ -46,10 +48,10 @@ interface Props {
 
 export function PanelHeader({
   localStudent, duplicateNames = [], isPaused, pauseUntil, hasPortal, portalCopied, portalLoading,
-  hasSignup, signupConsumed, signupCopied, signupLoading, deleting, funnelChanging,
+  hasSignup, signupConsumed, signupCopied, signupLoading, coachPrepCopied, deleting, funnelChanging,
   showFunnelMenu, showReactivateForm, reactivateStrategy, reactivating,
   onClose, onIssuePortal, onCopyPortalLink, onPreviewPortal, onCopySignupLink, onRegenerateSignup,
-  onDelete, onToggleFunnelMenu, onFunnelChange,
+  onCopyCoachPrepLink, onDelete, onToggleFunnelMenu, onFunnelChange,
   onShowPayment, onShowChurn, onShowReactivate, onHideReactivate,
   onReactivateStrategyChange, onStartReactivation, onLeadStatusChange,
 }: Props) {
@@ -116,6 +118,15 @@ export function PanelHeader({
           onCopy={onCopySignupLink}
           onRegenerate={onRegenerateSignup}
         />
+        <button
+          onClick={onCopyCoachPrepLink}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-full border transition-all bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100"
+          title="코치 준비 자료 링크 복사"
+        >
+          {coachPrepCopied ? <Check size={11} className="text-emerald-500" /> : <BookOpen size={11} />}
+          {coachPrepCopied ? '복사됨' : '코치 준비'}
+          {!coachPrepCopied && <Copy size={10} className="opacity-50" />}
+        </button>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">

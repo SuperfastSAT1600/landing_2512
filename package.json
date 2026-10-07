@@ -95,6 +95,7 @@
     "eslint-config-next": "16.0.7",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.0",
+    "googleapis": "^178.0.0",
     "jsdom": "^27.3.0",
     "license-checker": "^25.0.1",
     "pg": "^8.22.0",

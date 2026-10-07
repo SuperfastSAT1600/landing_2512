@@ -1,0 +1,237 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+import crypto from 'crypto';
+
+// ── Mocks ────────────────────────────────────────────────────────────────────
+
+const mockSingle = vi.hoisted(() => vi.fn());
+const mockEq = vi.hoisted(() => vi.fn().mockResolvedValue({ error: null }));
+const mockUpdate = vi.hoisted(() => vi.fn().mockReturnValue({ eq: mockEq }));
+const mockMaybeSingle = vi.hoisted(() => vi.fn());
+const mockSelect = vi.hoisted(() => vi.fn().mockReturnValue({ eq: () => ({ maybeSingle: mockMaybeSingle }) }));
+
+vi.mock('@/lib/supabase-admin', () => ({
+  supabaseAdmin: {
+    from: () => ({
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({ single: mockSingle }),
+      }),
+      update: mockUpdate,
+      select: mockSelect,
+    }),
+  },
+}));
+
+global.fetch = vi.fn().mockResolvedValue({
+  json: () => Promise.resolve({ ok: true }),
+}) as unknown as typeof fetch;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const SECRET = 'test-signing-secret';
+
+function makeSlackRequest(body: string): NextRequest {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const sig = 'v0=' + crypto
+    .createHmac('sha256', SECRET)
+    .update(`v0:${timestamp}:${body}`)
+    .digest('hex');
+  return new NextRequest('http://localhost/api/slack/interactions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'x-slack-request-timestamp': timestamp,
+      'x-slack-signature': sig,
+    },
+    body,
+  });
+}
+
+function makePayload(overrides: Record<string, unknown> = {}): string {
+  const payload = {
+    type: 'block_actions',
+    actions: [{ action_id: 'submit_lead', value: 'submit' }],
+    channel: { id: 'C07FK85V9PD' },
+    message: { ts: '1234567890.123456', blocks: [] },
+    response_url: 'https://hooks.slack.com/actions/test',
+    state: {
+      values: {
+        b_channel: { inquiry_channel: { selected_option: { value: '카톡' } } },
+        b_source: { traffic_source: { selected_option: { value: '소개' } } },
+        b_type: { lead_type: { selected_option: { value: 'B2C' } } },
+      },
+    },
+    ...overrides,
+  };
+  return `payload=${encodeURIComponent(JSON.stringify(payload))}`;
+}
+
+// ── Tests ────────────────────────────────────────────────────────────────────
+
+describe('POST /api/slack/interactions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.SLACK_SIGNING_SECRET = SECRET;
+    process.env.SLACK_BOT_TOKEN = 'xoxb-test';
+    mockSingle.mockResolvedValue({
+      data: { id: 'student-1', name: '카톡_20260921_143022' },
+      error: null,
+    });
+    mockUpdate.mockReturnValue({ eq: mockEq });
+    mockEq.mockResolvedValue({ error: null });
+    mockMaybeSingle.mockResolvedValue({ data: { stage_history: [] }, error: null });
+  });
+
+  // REQ-003: 서명 검증
+  describe('signature verification (REQ-003)', () => {
+    it('returns 401 for missing signature', async () => {
+      const { POST } = await import('../route');
+      const req = new NextRequest('http://localhost/api/slack/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: makePayload(),
+      });
+      const res = await POST(req);
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 401 for wrong signature', async () => {
+      const { POST } = await import('../route');
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const req = new NextRequest('http://localhost/api/slack/interactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'x-slack-request-timestamp': timestamp,
+          'x-slack-signature': 'v0=wrongsignature',
+        },
+        body: makePayload(),
+      });
+      const res = await POST(req);
+      expect(res.status).toBe(401);
+    });
+  });
+
+  // REQ-004: 리드 등록 버튼
+  describe('submit_lead action (REQ-004)', () => {
+    it('returns 200 and creates student on valid payload', async () => {
+      const { POST } = await import('../route');
+      const body = makePayload();
+      const res = await POST(makeSlackRequest(body));
+      expect(res.status).toBe(200);
+      expect(mockSingle).toHaveBeenCalledOnce();
+    });
+
+    it('ignores non-submit actions (dropdown changes)', async () => {
+      const { POST } = await import('../route');
+      const body = makePayload({ actions: [{ action_id: 'inquiry_channel' }] });
+      const res = await POST(makeSlackRequest(body));
+      expect(res.status).toBe(200);
+      expect(mockSingle).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 when DB insert fails', async () => {
+      mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'db error' } });
+      const { POST } = await import('../route');
+      const res = await POST(makeSlackRequest(makePayload()));
+      expect(res.status).toBe(500);
+    });
+  });
+
+  // REQ-006: 미선택 방어
+  describe('missing selection guard (REQ-006)', () => {
+    it('returns 400 when inquiry_channel not selected', async () => {
+      const { POST } = await import('../route');
+      const body = makePayload({
+        state: {
+          values: {
+            b_channel: { inquiry_channel: { selected_option: null } },
+            b_source: { traffic_source: { selected_option: { value: '소개' } } },
+            b_type: { lead_type: { selected_option: { value: 'B2C' } } },
+          },
+        },
+      });
+      const res = await POST(makeSlackRequest(body));
+      expect(res.status).toBe(400);
+      expect(mockSingle).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when traffic_source not selected', async () => {
+      const { POST } = await import('../route');
+      const body = makePayload({
+        state: {
+          values: {
+            b_channel: { inquiry_channel: { selected_option: { value: '카톡' } } },
+            b_source: { traffic_source: { selected_option: null } },
+            b_type: { lead_type: { selected_option: { value: 'B2C' } } },
+          },
+        },
+      });
+      const res = await POST(makeSlackRequest(body));
+      expect(res.status).toBe(400);
+    });
+  });
+
+  // REQ-BTN-03~04: 재문의 리드 인입 복귀
+  describe('reinquiry_restore action (REQ-BTN-03~04)', () => {
+    const STUDENT_ID = 'student-abc-123';
+
+    function makeReinquiryPayload() {
+      return makePayload({
+        actions: [{ action_id: 'reinquiry_restore', value: STUDENT_ID }],
+        message: { ts: '1234567890.123456', blocks: [{ type: 'section', text: { type: 'mrkdwn', text: '⚠️ 재문의' } }] },
+        user: { name: 'test_user' },
+      });
+    }
+
+    it('REQ-BTN-03: DB funnel_stage "0"으로 업데이트', async () => {
+      const { POST } = await import('../route');
+      const res = await POST(makeSlackRequest(makeReinquiryPayload()));
+      expect(res.status).toBe(200);
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ funnel_stage: '0', lead_status: 'active' }),
+      );
+      expect(mockEq).toHaveBeenCalledWith('id', STUDENT_ID);
+    });
+
+    it('REQ-BTN-04: chat.update 호출', async () => {
+      const { POST } = await import('../route');
+      await POST(makeSlackRequest(makeReinquiryPayload()));
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://slack.com/api/chat.update',
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    // REQ-002
+    it('리드 인입(0) 진입을 단계 이력에 추가한다', async () => {
+      mockMaybeSingle.mockResolvedValueOnce({
+        data: { stage_history: [{ stage: 'churned', label: '이탈', entered_at: '2026-09-01T00:00:00Z' }] },
+        error: null,
+      });
+      const { POST } = await import('../route');
+      await POST(makeSlackRequest(makeReinquiryPayload()));
+
+      const history = mockUpdate.mock.calls[0][0].stage_history;
+      expect(history.map((h: { stage: string }) => h.stage)).toEqual(['churned', '0']);
+      expect(history[1].label).toBe('리드 인입');
+    });
+
+    // REQ-002
+    it('이력 조회가 실패하면 업데이트하지 않고 200만 반환한다', async () => {
+      mockMaybeSingle.mockResolvedValueOnce({ data: null, error: { message: 'read failed' } });
+      const { POST } = await import('../route');
+      const res = await POST(makeSlackRequest(makeReinquiryPayload()));
+
+      expect(res.status).toBe(200);
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('DB 실패 시 200 반환 (메시지 갱신 없음)', async () => {
+      mockEq.mockResolvedValueOnce({ error: { message: 'db error' } });
+      const { POST } = await import('../route');
+      const res = await POST(makeSlackRequest(makeReinquiryPayload()));
+      expect(res.status).toBe(200);
+    });
+  });
+});

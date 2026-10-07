@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // ─── Supabase Admin Mock ──────────────────────────────────────────────────────
@@ -44,9 +44,31 @@ const validPayload = {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
+describe('POST /api/crm/leads/sheets-sync — 비활성화 기본값', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    delete process.env.SHEETS_SYNC_ENABLED;
+  });
+
+  it('SHEETS_SYNC_ENABLED 미설정이면 아무것도 하지 않고 skipped를 반환한다', async () => {
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest(validPayload));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, skipped: 'disabled' });
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+});
+
 describe('POST /api/crm/leads/sheets-sync', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // 아래 스위트는 시트싱크를 되살렸을 때의 동작을 검증한다.
+    process.env.SHEETS_SYNC_ENABLED = 'true';
+  });
+
+  afterEach(() => {
+    delete process.env.SHEETS_SYNC_ENABLED;
   });
 
   // REQ-001: 인증

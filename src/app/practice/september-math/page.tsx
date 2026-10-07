@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 import { TestCalculator } from '@/app/diagnosis/components/TestCalculator';
 import { useTestTimer } from '@/app/diagnosis/hooks/useTestTimer';
+import { BluebookPageShell } from '@/components/shared/BluebookPageShell';
+import { BluebookQuestionUnit } from '@/components/shared/BluebookQuestionUnit';
 
 const TEST_ID = 'september-math-final-14';
 const TEST_LABEL = '9월 SAT MATH 파이널 연습';
@@ -613,11 +615,27 @@ export default function SeptemberMathPage() {
       );
     }
 
+    const reviewNavStrip = (
+      <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
+        <div className="test-nav-grid" style={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
+          {wrongQuestions.map((q, i) => (
+            <button key={q.id} onClick={() => setCurrentIndex(i)}
+              className={`test-nav-dot ${i === reviewIndex ? 'current' : 'answered'}`}>
+              {QUESTIONS.indexOf(q) + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+
+    const reviewPassage = rq?.passage && rq.passage.trim() ? (
+      <div className="test-passage-content"><ContentRenderer content={rq.passage} /></div>
+    ) : undefined;
+
     return (
-      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
-        {/* Header — 테스트 헤더와 동일 스타일 */}
-        <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
-          <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>Review — 틀린 문제</span>
+      <BluebookPageShell
+        sectionTitle="Review — 틀린 문제"
+        headerRight={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ color: '#94a3b8', fontSize: 12 }}>{reviewIndex + 1} / {wrongQuestions.length}</span>
             <button onClick={() => setPhase('result')}
@@ -625,136 +643,40 @@ export default function SeptemberMathPage() {
               ← Results
             </button>
           </div>
-        </div>
-
-        {/* 문제 번호 네비게이터 — 틀린 문제만 표시 */}
-        <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
-          <div className="test-nav-grid" style={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
-            {wrongQuestions.map((q, i) => {
-              const isCurrent = i === reviewIndex;
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => setCurrentIndex(i)}
-                  className={`test-nav-dot ${isCurrent ? 'current' : 'answered'}`}
-                >
-                  {QUESTIONS.indexOf(q) + 1}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Question area — 테스트와 동일한 레이아웃 */}
-        {rq && (
-          <div className="test-layout" style={{ flex: 1, overflow: 'hidden' }}>
-            {rq.passage && rq.passage.trim() ? (
-              <>
-                <div className="test-passage-panel">
-                  <div style={{ padding: '24px 28px 24px 24px' }}>
-                    <div className="test-passage-content">
-                      <ContentRenderer content={rq.passage} />
-                    </div>
-                  </div>
-                </div>
-                <div className="test-resizer" />
-              </>
-            ) : null}
-
-            <div className="test-question-panel" style={rq.passage && rq.passage.trim() ? {} : { flex: 1 }}>
-              <div style={{ padding: '24px', maxWidth: 680, margin: '0 auto' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <span style={{ width: 32, height: 32, borderRadius: 8, background: '#1e293b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: 14, flexShrink: 0 }}>
-                    {QUESTIONS.indexOf(rq) + 1}
-                  </span>
-                  <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 'auto', background: '#f1f5f9', padding: '2px 8px', borderRadius: 4 }}>
-                    {rq.type === 'mcq' ? 'MCQ' : 'Free Response'}
-                  </span>
-                </div>
-
-                <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}>
-                  <ContentRenderer content={rq.question} />
-                </div>
-
-                {rq.type === 'mcq' && rq.options && (
-                  <div className="space-y-3" style={{ marginBottom: 16 }}>
-                    {rq.options.map(opt => {
-                      const isThisCorrect = opt.label === rq.correctOption;
-                      const isThisWrong = opt.label === rAnswer && !isThisCorrect;
-                      return (
-                        <div key={opt.label} className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            disabled
-                            className="bluebook-option"
-                            style={
-                              isThisCorrect ? { borderColor: '#22c55e', background: '#f0fdf4' } :
-                              isThisWrong ? { borderColor: '#ef4444', background: '#fef2f2' } : {}
-                            }
-                          >
-                            <span
-                              className="bluebook-option-label"
-                              style={
-                                isThisCorrect ? { background: '#22c55e', borderColor: '#22c55e', color: '#fff' } :
-                                isThisWrong ? { background: '#ef4444', borderColor: '#ef4444', color: '#fff' } : {}
-                              }
-                            >
-                              {opt.label}
-                            </span>
-                            <span className="bluebook-option-text">
-                              <ContentRenderer content={opt.text} />
-                            </span>
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {rq.type === 'spr' && (
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-                    <input
-                      type="text"
-                      value={rAnswer}
-                      readOnly
-                      className="toss-input"
-                      style={{ flex: 1, border: `1px solid ${rIsWrong ? '#ef4444' : '#e5e7eb'}`, background: rIsWrong ? '#fef2f2' : undefined }}
-                    />
-                  </div>
-                )}
-
-                {/* Feedback — 항상 표시 */}
-                <div style={{ padding: '14px 16px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, marginTop: 8 }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', marginBottom: 4 }}>✗ Incorrect</p>
-                  <p style={{ fontSize: 13, color: '#374151', margin: 0 }}>
-                    Answer: <strong>{rCorrectDisplay}</strong>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Footer nav — 테스트와 동일 스타일 */}
-        <div className="bluebook-footer" style={{ flexShrink: 0 }}>
-          <button
-            onClick={() => setCurrentIndex(reviewIndex - 1)}
-            disabled={rIsFirst}
-            style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: rIsFirst ? 'not-allowed' : 'pointer', opacity: rIsFirst ? 0.4 : 1, color: '#374151' }}
-          >
-            Back
-          </button>
+        }
+        navStrip={reviewNavStrip}
+        passage={reviewPassage}
+        onPrev={() => setCurrentIndex(reviewIndex - 1)}
+        prevHidden={rIsFirst}
+        onNext={() => setCurrentIndex(reviewIndex + 1)}
+        nextDisabled={rIsLast}
+        footerCenter={
           <span style={{ fontSize: 12, color: '#94a3b8' }}>{reviewIndex + 1} / {wrongQuestions.length}</span>
-          <button
-            className="bluebook-next-btn btn-press"
-            onClick={() => setCurrentIndex(reviewIndex + 1)}
-            disabled={rIsLast}
-            style={{ opacity: rIsLast ? 0.4 : 1, cursor: rIsLast ? 'not-allowed' : 'pointer' }}
+        }
+      >
+        {rq && (
+          <BluebookQuestionUnit
+            questionNumber={QUESTIONS.indexOf(rq) + 1}
+            question={<ContentRenderer content={rq.question} />}
+            options={rq.type === 'mcq' && rq.options ? rq.options.map(opt => ({
+              label: opt.label,
+              text: <ContentRenderer content={opt.text} />,
+            })) : undefined}
+            selectedAnswer={rAnswer}
+            disabled
+            feedback={rq.type === 'mcq' && rq.correctOption ? { selectedLabel: rAnswer, correctLabel: rq.correctOption } : null}
+            shortAnswer={rq.type === 'spr' ? rAnswer : undefined}
+            shortAnswerFeedback={rq.type === 'spr' ? { isCorrect: false } : null}
           >
-            Next
-          </button>
-        </div>
-      </div>
+            <div style={{ marginTop: 8, padding: '14px 16px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', marginBottom: 4 }}>✗ Incorrect</p>
+              <p style={{ fontSize: 13, color: '#374151', margin: 0 }}>
+                Answer: <strong>{rCorrectDisplay}</strong>
+              </p>
+            </div>
+          </BluebookQuestionUnit>
+        )}
+      </BluebookPageShell>
     );
   }
 
@@ -772,216 +694,117 @@ export default function SeptemberMathPage() {
     ? `(${currentQuestion.correctOption}) ${currentQuestion.options?.find(o => o.label === currentQuestion.correctOption)?.text ?? ''}`
     : (currentQuestion?.answers?.[0] ?? '');
 
+  const timerNode = timer.remaining !== null ? (
+    <span className={`bluebook-timer ${timer.isWarning ? 'warning' : ''} ${timer.isDanger ? 'danger' : ''}`}>
+      {timer.format(timer.remaining)}
+    </span>
+  ) : undefined;
+
+  const navStrip = (
+    <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
+      <div className="test-nav-grid" style={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
+        {QUESTIONS.map((q, idx) => {
+          const isAnswered = !!answers[q.id];
+          const isCurrent = idx === currentIndex;
+          return (
+            <button key={q.id} onClick={() => setCurrentIndex(idx)}
+              className={`test-nav-dot ${isCurrent ? 'current' : isAnswered ? 'answered' : ''}`}>
+              {idx + 1}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const headerRight = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {QUESTIONS.length}</span>
+      <button
+        onClick={() => setCalculatorOpen(o => !o)}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: calculatorOpen ? '#3b82f6' : 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/>
+        </svg>
+        Calculator
+      </button>
+    </div>
+  );
+
+  const passageNode = currentQuestion?.passage && currentQuestion.passage.trim() ? (
+    <div className="test-passage-content"><ContentRenderer content={currentQuestion.passage} /></div>
+  ) : undefined;
+
+  const isSubmitMode = isLast && answeredCount === QUESTIONS.length && !submitted;
+  const nextLabel = isSubmitMode ? (submitting ? 'Submitting...' : 'Submit Results') : 'Next';
+  const nextDisabled = isSubmitMode ? submitting : isLast;
+
   return (
-    <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
+    <>
       {toast && (
         <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#1e293b', color: '#fff', padding: '12px 24px', borderRadius: 8, fontSize: 14, fontWeight: 600, zIndex: 200, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}>
           {toast}
         </div>
       )}
-
-      {/* Desmos Calculator */}
       <TestCalculator isOpen={calculatorOpen} onClose={() => setCalculatorOpen(false)} />
-
-      {/* Test header — 진단테스트 스타일 */}
-      <div style={{ height: 52, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
-        <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{TEST_LABEL}</span>
-        {/* 타이머 — 진단테스트와 동일 */}
-        <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-          {timer.remaining !== null && (
-            <span className={`bluebook-timer ${timer.isWarning ? 'warning' : ''} ${timer.isDanger ? 'danger' : ''}`}>
-              {timer.format(timer.remaining)}
-            </span>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {QUESTIONS.length}</span>
-          {/* Calculator button */}
-          <button
-            onClick={() => setCalculatorOpen(o => !o)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: calculatorOpen ? '#3b82f6' : 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+      <BluebookPageShell
+        sectionTitle={TEST_LABEL}
+        timer={timerNode}
+        headerRight={headerRight}
+        navStrip={navStrip}
+        passage={passageNode}
+        onPrev={() => setCurrentIndex(i => i - 1)}
+        prevHidden={isFirst}
+        onNext={() => { if (isSubmitMode) { handleSubmit(); } else { setCurrentIndex(i => i + 1); } }}
+        nextLabel={nextLabel}
+        nextDisabled={nextDisabled}
+        footerCenter={
+          <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {QUESTIONS.length}</span>
+        }
+      >
+        {currentQuestion && (
+          <BluebookQuestionUnit
+            questionNumber={currentIndex + 1}
+            question={<ContentRenderer content={currentQuestion.question} />}
+            options={currentQuestion.type === 'mcq' && currentQuestion.options ? currentQuestion.options.map(opt => ({
+              label: opt.label,
+              text: <ContentRenderer content={opt.text} />,
+            })) : undefined}
+            selectedAnswer={currentQuestion.type === 'mcq' ? userAnswer : undefined}
+            onSelect={currentQuestion.type === 'mcq' ? (label) => handleAnswer(currentQuestion.id, label) : undefined}
+            disabled={isRevealed}
+            feedback={isRevealed && currentQuestion.type === 'mcq' && currentQuestion.correctOption
+              ? { selectedLabel: userAnswer, correctLabel: currentQuestion.correctOption }
+              : null}
+            crossedOut={currentQuestion.type === 'mcq' ? crossedOut[currentQuestion.id] : undefined}
+            onCrossOut={currentQuestion.type === 'mcq' && !isRevealed
+              ? (label) => toggleCrossOut(currentQuestion.id, label)
+              : undefined}
+            shortAnswer={currentQuestion.type === 'spr' ? userAnswer : undefined}
+            onShortAnswer={currentQuestion.type === 'spr' && !submitted
+              ? (val) => handleAnswer(currentQuestion.id, val)
+              : undefined}
+            shortAnswerPlaceholder="Enter answer"
+            shortAnswerFeedback={isRevealed && currentQuestion.type === 'spr'
+              ? { isCorrect, correctAnswer: isWrong ? correctAnswerDisplay : undefined }
+              : null}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/>
-            </svg>
-            Calculator
-          </button>
-        </div>
-      </div>
-
-      {/* Question number navigator — test-nav-dot 클래스 */}
-      <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
-        <div className="test-nav-grid" style={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
-          {QUESTIONS.map((q, idx) => {
-            const isAnswered = !!answers[q.id];
-            const isCurrent = idx === currentIndex;
-            return (
-              <button
-                key={q.id}
-                onClick={() => setCurrentIndex(idx)}
-                className={`test-nav-dot ${isCurrent ? 'current' : isAnswered ? 'answered' : ''}`}
-              >
-                {idx + 1}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Question area */}
-      {currentQuestion && (
-        <div className="test-layout" style={{ flex: 1, overflow: 'hidden' }}>
-          {currentQuestion.passage && currentQuestion.passage.trim() ? (
-            <>
-              <div className="test-passage-panel">
-                <div style={{ padding: '24px 28px 24px 24px' }}>
-                  <div className="test-passage-content">
-                    <ContentRenderer content={currentQuestion.passage} />
-                  </div>
-                </div>
-              </div>
-              <div className="test-resizer" />
-            </>
-          ) : null}
-
-          <div className="test-question-panel" style={currentQuestion.passage && currentQuestion.passage.trim() ? {} : { flex: 1 }}>
-            <div style={{ padding: '24px', maxWidth: 680, margin: '0 auto' }}>
-              {/* 문제 번호 + 난이도 — 진단테스트 스타일 (32×32, r8) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <span
-                  className="inline-flex items-center justify-center font-bold text-white text-sm flex-shrink-0"
-                  style={{ width: 32, height: 32, borderRadius: 8, background: '#1e293b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: 14 }}
-                >
-                  {currentIndex + 1}
-                </span>
-                <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 'auto', background: '#f1f5f9', padding: '2px 8px', borderRadius: 4 }}>
-                  {currentQuestion.type === 'mcq' ? 'MCQ' : 'Free Response'}
-                </span>
-              </div>
-
-              {/* Question text */}
-              <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, marginBottom: 20, color: '#1e293b' }}>
-                <ContentRenderer content={currentQuestion.question} />
-              </div>
-
-              {/* MCQ options — bluebook-option 클래스 + 크로스아웃 */}
-              {currentQuestion.type === 'mcq' && currentQuestion.options && (
-                <div className="space-y-3" style={{ marginBottom: 16 }}>
-                  {currentQuestion.options.map(opt => {
-                    const isSelected = userAnswer === opt.label;
-                    const isCrossed = crossedOut[currentQuestion.id]?.has(opt.label);
-                    const isThisCorrect = isRevealed && opt.label === currentQuestion.correctOption;
-                    const isThisWrong = isRevealed && isSelected && opt.label !== currentQuestion.correctOption;
-                    return (
-                      <div key={opt.label} className="flex items-center gap-2">
-                        {/* 크로스아웃 토글 — 정답 확인 전만 표시 */}
-                        {!isRevealed && (
-                          <button
-                            type="button"
-                            onClick={() => toggleCrossOut(currentQuestion.id, opt.label)}
-                            className={`bluebook-option-crossout btn-press ${isCrossed ? 'active' : ''}`}
-                            title="Cross out"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                              <path d="M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                            </svg>
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => !isRevealed && handleAnswer(currentQuestion.id, opt.label)}
-                          className={`bluebook-option btn-press ${isSelected && !isRevealed ? 'selected' : ''} ${isCrossed && !isSelected ? 'crossedout' : ''}`}
-                          style={
-                            isThisCorrect ? { borderColor: '#22c55e', background: '#f0fdf4' } :
-                            isThisWrong ? { borderColor: '#ef4444', background: '#fef2f2' } : {}
-                          }
-                        >
-                          <span
-                            className="bluebook-option-label"
-                            style={
-                              isThisCorrect ? { background: '#22c55e', borderColor: '#22c55e', color: '#fff' } :
-                              isThisWrong ? { background: '#ef4444', borderColor: '#ef4444', color: '#fff' } : {}
-                            }
-                          >
-                            {opt.label}
-                          </span>
-                          <span className="bluebook-option-text">
-                            <ContentRenderer content={opt.text} />
-                          </span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* SPR input */}
-              {currentQuestion.type === 'spr' && (
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-                  <input
-                    type="text"
-                    value={userAnswer}
-                    onChange={e => handleAnswer(currentQuestion.id, e.target.value)}
-                    placeholder="Enter answer"
-                    disabled={submitted}
-                    className="toss-input"
-                    style={{
-                      flex: 1,
-                      border: `1px solid ${isCorrect ? '#22c55e' : isWrong ? '#ef4444' : '#e5e7eb'}`,
-                      background: isCorrect ? '#f0fdf4' : isWrong ? '#fef2f2' : undefined,
-                    }}
-                    onKeyDown={e => { if (e.key === 'Enter' && userAnswer && !submitted) handleAnswer(currentQuestion.id, userAnswer); }}
-                  />
-                </div>
-              )}
-
-              {/* Feedback */}
-              {isRevealed && (
-                <div style={{ padding: '14px 16px', background: isCorrect ? '#f0fdf4' : '#fef2f2', border: `1px solid ${isCorrect ? '#86efac' : '#fca5a5'}`, borderRadius: 10, marginTop: 8 }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? '#15803d' : '#dc2626', marginBottom: isWrong ? 4 : 0 }}>
-                    {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+            {isRevealed && currentQuestion.type === 'mcq' && (
+              <div style={{ marginTop: 8, padding: '14px 16px', background: isCorrect ? '#f0fdf4' : '#fef2f2', border: `1px solid ${isCorrect ? '#86efac' : '#fca5a5'}`, borderRadius: 10 }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? '#15803d' : '#dc2626', marginBottom: isWrong ? 4 : 0 }}>
+                  {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                </p>
+                {isWrong && (
+                  <p style={{ fontSize: 13, color: '#374151', margin: 0 }}>
+                    Answer: <strong>{correctAnswerDisplay}</strong>
                   </p>
-                  {isWrong && (
-                    <p style={{ fontSize: 13, color: '#374151', margin: 0 }}>
-                      Answer: <strong>{correctAnswerDisplay}</strong>
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer nav */}
-      <div className="bluebook-footer" style={{ flexShrink: 0 }}>
-        <button
-          onClick={() => !isFirst && setCurrentIndex(i => i - 1)}
-          disabled={isFirst}
-          style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.4 : 1, color: '#374151' }}
-        >
-          Back
-        </button>
-        <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {QUESTIONS.length}</span>
-        {isLast && answeredCount === QUESTIONS.length && !submitted ? (
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.6 : 1 }}
-          >
-            {submitting ? 'Submitting...' : 'Submit Results'}
-          </button>
-        ) : (
-          <button
-            className="bluebook-next-btn btn-press"
-            onClick={() => !isLast && setCurrentIndex(i => i + 1)}
-            disabled={isLast}
-            style={{ opacity: isLast ? 0.4 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}
-          >
-            Next
-          </button>
+                )}
+              </div>
+            )}
+          </BluebookQuestionUnit>
         )}
-      </div>
-    </div>
+      </BluebookPageShell>
+    </>
   );
 }

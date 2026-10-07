@@ -16,6 +16,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { Plus, Trash2, Search, X, ArrowUpRight } from 'lucide-react';
 import { Student, RetryStage, RETRY_STAGES, RetryStrategy } from '@/types/crm';
 import { StudentCard } from './StudentCard';
+import { resolveDefaultCategoryId } from './strategies/resolveDefaultCategoryId';
 
 interface RetryKanbanProps {
   adminKey: string;
@@ -103,15 +104,30 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
     [adminKey]
   );
 
+  const [categories, setCategories] = useState<{ id: string; name: string; sort_order: number }[]>([]);
+  const [retryCategoryId, setRetryCategoryId] = useState<string | null>(null);
+
+  // kind 축이 없어졌으므로 세그먼트 전체 전략을 불러와 카테고리로 묶어 보여준다.
   const fetchStrategies = useCallback(async () => {
-    const res = await fetch('/api/crm/retry-strategies?type=retry', { headers: { 'x-admin-key': adminKey } });
+    const res = await fetch('/api/crm/retry-strategies?segment=b2c', { headers: { 'x-admin-key': adminKey } });
     const json = await res.json();
     setStrategies(json.data ?? []);
   }, [adminKey]);
 
+  // 새 전략 생성 시 넣을 기본 카테고리를 조회해둔다. 이름 매칭이 아니라
+  // sort_order가 가장 낮은 카테고리를 쓴다 — 카테고리 이름이 바뀌거나 특정
+  // 카테고리가 삭제돼도 깨지지 않는다 (146).
+  const fetchRetryCategoryId = useCallback(async () => {
+    const res = await fetch('/api/crm/strategy-categories?segment=b2c', { headers: { 'x-admin-key': adminKey } });
+    const json = await res.json();
+    setCategories(json.data ?? []);
+    setRetryCategoryId(resolveDefaultCategoryId(json.data ?? []));
+  }, [adminKey]);
+
   useEffect(() => {
     fetchStrategies();
-  }, [fetchStrategies]);
+    fetchRetryCategoryId();
+  }, [fetchStrategies, fetchRetryCategoryId]);
 
   const fetchStudents = useCallback(async (strategyId: string) => {
     setLoadingStudents(true);
@@ -141,11 +157,11 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
   }, [selectedId, strategies, onStrategyChange]);
 
   const handleCreateStrategy = async () => {
-    if (!newStrategyName.trim()) return;
+    if (!newStrategyName.trim() || !retryCategoryId) return;
     const res = await fetch('/api/crm/retry-strategies', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ name: newStrategyName.trim() }),
+      body: JSON.stringify({ name: newStrategyName.trim(), category_id: retryCategoryId, segment: 'b2c' }),
     });
     if (res.ok) {
       const json = await res.json();
@@ -250,6 +266,21 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
   }, [students]);
   const getStudentsByStage = (stage: RetryStage) => studentsByStage.get(stage) ?? [];
 
+  // 전략 목록을 라이브러리 카테고리 순서대로 묶는다. 카테고리를 찾을 수 없는 전략도
+  // 목록에서 빠지지 않도록 마지막 '분류 없음' 묶음에 남긴다.
+  const strategyGroups = useMemo(() => {
+    const ordered = [...categories].sort((a, b) => a.sort_order - b.sort_order);
+    const groups = ordered.map((c) => ({
+      id: c.id,
+      name: c.name,
+      items: strategies.filter((s) => s.category_id === c.id),
+    }));
+    const known = new Set(ordered.map((c) => c.id));
+    const rest = strategies.filter((s) => !known.has(s.category_id));
+    if (rest.length) groups.push({ id: '__none__', name: '분류 없음', items: rest });
+    return groups.filter((g) => g.items.length > 0);
+  }, [categories, strategies]);
+
   return (
     <div className="flex gap-4 h-full">
       {/* Strategy sidebar */}
@@ -281,18 +312,27 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
             />
             <button
               onClick={handleCreateStrategy}
-              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-500"
+              disabled={!retryCategoryId}
+              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-40"
             >
               추가
             </button>
           </div>
+        )}
+        {creatingStrategy && !retryCategoryId && (
+          <p className="text-[11px] text-amber-600 mb-2">전략 라이브러리에서 카테고리를 먼저 만드세요.</p>
         )}
 
         <div className="flex flex-col gap-1">
           {strategies.length === 0 && !creatingStrategy && (
             <p className="text-[11px] text-gray-400 py-2">전략이 없습니다. + 버튼으로 추가하세요.</p>
           )}
-          {strategies.map(s => (
+          {strategyGroups.map(group => (
+            <div key={group.id} className="mb-1">
+              <p className="px-2 pt-1.5 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                {group.name}
+              </p>
+              {group.items.map(s => (
             <div
               key={s.id}
               onClick={() => setSelectedId(s.id)}
@@ -311,6 +351,8 @@ export function RetryKanban({ adminKey, onStudentClick, onStudentUpdate, onStrat
               >
                 <Trash2 size={11} />
               </button>
+            </div>
+              ))}
             </div>
           ))}
         </div>

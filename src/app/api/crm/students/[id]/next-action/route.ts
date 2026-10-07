@@ -3,7 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { anthropicErrorMessage } from '@/lib/anthropic-error';
 import { getQwenAnthropicClient, qwenModel, isQwenConfigured } from '@/lib/qwen';
-import { FUNNEL_STAGE_LABELS, FUNNEL_NEXT_ACTION, type FunnelStage } from '@/types/crm';
+import { FUNNEL_STAGE_LABELS, FUNNEL_NEXT_ACTION, STRATEGY_PHASE_LABELS, type FunnelStage } from '@/types/crm';
+import { effectivePhase } from '@/lib/strategy-history';
 import type { ConsultationEntry, StrategyHistoryEntry } from '@/types/crm';
 
 export const maxDuration = 30;
@@ -37,7 +38,7 @@ interface StudentRow {
   strategy_history: StrategyHistoryEntry[] | null;
 }
 
-function buildContext(s: StudentRow): string {
+function buildContext(s: StudentRow, strategyNames: Map<string, string> = new Map()): string {
   const lines: string[] = [];
   lines.push(`이름: ${s.name}`);
   lines.push(`학년/학제: ${s.grade ?? '-'} / ${s.school_type ?? '-'} · 희망: ${s.desired_subjects ?? '-'}`);
@@ -63,8 +64,14 @@ function buildContext(s: StudentRow): string {
     .filter((l) => l.length > 6);
   if (memos.length) lines.push(`\n최근 상담 메모:\n${memos.join('\n')}`);
 
-  const strat = (s.strategy_history ?? []).slice(-3).map((e) => `- ${e.strategy_name}${e.memo ? ` (${e.memo})` : ''}`);
-  if (strat.length) lines.push(`\n적용 전략:\n${strat.join('\n')}`);
+  // 준비만 한 전략과 실제로 쓴 전략을 구분해 준다 — 뭉뚱그리면 AI 제안이 어긋난다.
+  const strat = (s.strategy_history ?? [])
+    .slice(-3)
+    .map(
+      (e) =>
+        `- [${STRATEGY_PHASE_LABELS[effectivePhase(e)]}] ${strategyNames.get(e.strategy_id) ?? e.strategy_name}${e.memo ? ` (${e.memo})` : ''}`,
+    );
+  if (strat.length) lines.push(`\n전략 기록:\n${strat.join('\n')}`);
 
   return lines.join('\n');
 }
@@ -105,13 +112,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: { message: '리드를 찾을 수 없습니다.' } }, { status: 404 });
   }
 
+  const recentStrategyIds = [...new Set(
+    ((student as unknown as StudentRow).strategy_history ?? []).slice(-3).map((e) => e.strategy_id)
+  )];
+  let strategyNames = new Map<string, string>();
+  if (recentStrategyIds.length > 0) {
+    const { data: strategies } = await supabaseAdmin
+      .from('retry_strategies')
+      .select('id,name')
+      .in('id', recentStrategyIds);
+    strategyNames = new Map((strategies ?? []).map((s) => [s.id, s.name]));
+  }
+
   try {
     const client = getQwenAnthropicClient();
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 800,
       system: [{ type: 'text', text: SYSTEM }],
-      messages: [{ role: 'user', content: `아래 리드에 대해 다음 액션을 JSON으로만 답하라.\n\n${buildContext(student as unknown as StudentRow)}` }],
+      messages: [{ role: 'user', content: `아래 리드에 대해 다음 액션을 JSON으로만 답하라.\n\n${buildContext(student as unknown as StudentRow, strategyNames)}` }],
     });
     const text = resp.content.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('');
     const result = parseResult(text);

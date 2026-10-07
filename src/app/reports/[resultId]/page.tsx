@@ -7,6 +7,7 @@ import { ReportBehavioralMatrix } from './components/ReportBehavioralMatrix';
 import { ReportVocabularyGap } from './components/ReportVocabularyGap';
 import { ReportVocabDiagnosis } from './components/ReportVocabDiagnosis';
 import { ReportRWCognition } from './components/ReportRWCognition';
+import { ReportDesmosAnalysis } from './components/ReportDesmosAnalysis';
 import { SectionHeader } from './components/SectionHeader';
 import { ChapterNav } from './components/ChapterNav';
 import { InsightBlock, GenericInsightBlock } from './components/InsightBlock';
@@ -98,7 +99,10 @@ export default async function ReportPage({ params }: PageProps) {
       />
 
       {/* Chapter navigation — sticky at the very top */}
-      <ChapterNav isV2={data.testId === 'diagnostic-test-2'} />
+      <ChapterNav
+        isV2={data.testId === 'diagnostic-test-2'}
+        hasDesmosAnalysis={!!(data.desmosAnalysis && data.desmosAnalysis.length > 0)}
+      />
 
       {/* Single-column main content — sm:pt-14 offsets the fixed top nav */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:pt-14 print:py-6">
@@ -215,10 +219,29 @@ export default async function ReportPage({ params }: PageProps) {
             </>
           )}
 
-          {/* ── SECTION 05: 단어 진단 (단어 점수 + 문제에서 모르는 단어) ── */}
+          {/* ── SECTION 04/05: Desmos Strategy ── */}
+          {data.desmosAnalysis && data.desmosAnalysis.length > 0 && (
+            <>
+              <section id="section-desmos" className="report-section">
+                <SectionHeader
+                  number={data.testId === 'diagnostic-test-2' ? '05' : '04'}
+                  title="Desmos 전략"
+                  titleEn="Desmos Strategy"
+                  subtitle="Desmos를 올바르게 활용했나요?"
+                />
+                <ReportDesmosAnalysis desmosAnalysis={data.desmosAnalysis} />
+              </section>
+              <Divider />
+            </>
+          )}
+
+          {/* ── SECTION 05/06: 단어 진단 (단어 점수 + 문제에서 모르는 단어) ── */}
           <section id="section-05" className="report-section">
             <SectionHeader
-              number={data.testId === 'diagnostic-test-2' ? '05' : '04'}
+              number={data.testId === 'diagnostic-test-2'
+                ? (data.desmosAnalysis && data.desmosAnalysis.length > 0 ? '06' : '05')
+                : (data.desmosAnalysis && data.desmosAnalysis.length > 0 ? '05' : '04')
+              }
               title="단어 진단"
               titleEn="Vocabulary Check"
               subtitle="단어를 얼마나 알고 있었나요?"
