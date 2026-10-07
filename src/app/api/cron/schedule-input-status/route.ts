@@ -155,8 +155,8 @@ async function fetchTestCenter(windowStart: Date, windowEnd: Date): Promise<Sche
     const { data: page, error } = await supabaseSFv2
       .from('test_center_session')
       .select('user_id, started_at')
-      .gte('created_at', windowStart.toISOString())
-      .lt('created_at', windowEnd.toISOString())
+      .gte('started_at', windowStart.toISOString())
+      .lt('started_at', windowEnd.toISOString())
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (error) { console.error('[schedule-input-status] test_center_session error:', error.message); break; }
@@ -214,11 +214,11 @@ async function fetchStudentNames(userIds: string[]): Promise<Map<string, string>
   for (let i = 0; i < userIds.length; i += 100) {
     const chunk = userIds.slice(i, i + 100);
     const { data } = await supabaseSFv2
-      .from('student')
-      .select('id, name')
+      .from('profiles')
+      .select('id, full_name')
       .in('id', chunk);
     for (const row of data ?? []) {
-      if (row.id && row.name) nameMap.set(row.id as string, row.name as string);
+      if (row.id && row.full_name) nameMap.set(row.id as string, row.full_name as string);
     }
   }
   return nameMap;
