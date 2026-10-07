@@ -189,7 +189,7 @@ async function fetchAllActiveStudents(): Promise<string[]> {
     const { data: page, error } = await supabaseSFv2
       .from('payments')
       .select('student_id')
-      .in('management_status', ['active', 'onboarding', 'paused'])
+      .in('management_status', ['active', 'onboarding'])
       .not('student_id', 'is', null)
       .range(offset, offset + PAGE_SIZE - 1);
 
