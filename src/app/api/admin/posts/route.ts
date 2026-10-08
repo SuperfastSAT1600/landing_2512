@@ -167,6 +167,17 @@ export async function POST(request: NextRequest) {
 
         const tagsArray = tags ? tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [];
 
+        // featuredImage가 비어있으면 기존 DB 값을 유지 (외부 스크립트로 설정된 썸네일 보호)
+        let resolvedFeaturedImage: string | null | undefined = featuredImage || null;
+        if (!featuredImage && originalId) {
+            const { data: existing } = await supabaseAdmin
+                .from('posts')
+                .select('featured_image')
+                .eq('id', finalSlug)
+                .single();
+            resolvedFeaturedImage = existing?.featured_image ?? null;
+        }
+
         const { error } = await supabaseAdmin
             .from('posts')
             .upsert({
@@ -176,7 +187,7 @@ export async function POST(request: NextRequest) {
                 category,
                 excerpt: excerpt || null,
                 description: description || null,
-                featured_image: featuredImage || null,
+                featured_image: resolvedFeaturedImage,
                 featured_image_alt: featuredImageAlt || null,
                 feature_image: featureImage || null,
                 focus_keyword: focusKeyword || null,

@@ -3,15 +3,20 @@ name: superfastsat-blog
 description: "SuperfastSAT 네이버/구글/랜딩페이지 블로그 포스팅을 작성할 때 반드시 사용하는 스킬입니다. \"블로그 써줘\", \"포스팅 작성해줘\", \"네이버 블로그\", \"랜딩 페이지 블로그\", \"공식 블로그\", \"SAT 글 써줘\", \"입시 포스팅\" 등의 표현이 나오면 즉시 이 스킬을 트리거하세요."
 ---
 
-# SuperfastSAT 블로그 포스팅 스킬 v6
+# SuperfastSAT 블로그 포스팅 스킬 v7
 
-## 선행 필독
+## 선행 필독 (4가지 문서 — 모두 읽기 전 산문 생성 금지)
 
-포스팅 작성 전 아래 두 파일을 반드시 읽는다.
+포스팅 작성 전 아래 파일들을 반드시 읽는다. Slack 파이프라인(`write-and-publish.js`)과 동일한 4가지 소스다.
 
-- `/workspace/.claude/skills/superfastsat-persona.md` — 화자 페르소나, 목소리 원칙, 설득 전제 조건
-- `/workspace/.claude/skills/superfastsat-blog/voice-guide.md` — 실제 교정 사례. 같은 실수를 반복하지 않기 위한 문서.
-- `/workspace/.claude/skills/superfastsat-blog/teaching-content.md` — SuperfastSAT 수업 내용 데이터베이스. 포스팅 주제에 따라 꺼내 쓴다. 처방형/선호형 분류 확인 후 서술 방식 결정.
+| # | 문서 | 용도 |
+|---|------|------|
+| 1 | `/workspace/.claude/skills/superfastsat-persona.md` | 화자 페르소나, 목소리 원칙, 설득 전제 조건 |
+| 2 | `/workspace/.claude/skills/superfastsat-blog/voice-guide.md` | 실제 교정 사례. 같은 실수 반복 방지. |
+| 3 | `/workspace/.claude/skills/superfastsat-blog/teaching-content.md` | 수업 내용 DB. 처방형/선호형 분류 확인 후 서술 방식 결정. |
+| 4 | 주제 관련 소스 데이터 | 원고 파일, 분석 자료, 또는 schema 집계 — 가상 수치 금지 |
+
+**문서 4 수집 규칙**: 스킬 분석 포스팅이면 `schema/questions/master_sat_ontology_v3.jsonl`을 직접 grep/jq로 집계한다. 외부 원고가 있으면 해당 파일을 읽는다. 데이터 없이 산문 생성 금지.
 
 ---
 
@@ -93,26 +98,46 @@ H2 섹션을 먼저 정하지 않는다. 흐름이 자연스러우면 헤딩이 
 
 ## STEP 1: 본문 작성
 
+### SAT 용어 규칙 (절대 준수)
+
+SAT 영역명·스킬명은 영어 원문 그대로 사용한다. 한국어 번역 금지.
+
+- 영역: Reading and Writing (RW), Math
+- 스킬: Inferences, Words in Context, Central Ideas and Details, Command of Evidence, Cross-Text Connections, Rhetorical Synthesis, Transitions, Boundaries, Form Structure and Sense, Nonlinear Functions, Linear Equations, Geometry, Trigonometry 등
+- 틀린 예: "읽기쓰기 영역", "추론", "고급 수학" → 올바른 예: "RW", "Inferences", "Advanced Math"
+
+### 독자 수준 전제 (절대 준수)
+
+이 블로그의 독자는 SAT를 이미 알고 있는 학생·학부모다. 아래 내용은 본문에 쓰지 않는다.
+
+- SAT가 무엇인지, 총점이 몇 점인지, 영역이 몇 개인지 등 기초 설명 금지
+- "RW와 Math 두 영역의 점수를 합산해…" 같은 뻔한 점수 체계 설명 금지
+- 기초 안내가 필요하면 본문이 아닌 `## 함께 읽기` 링크로 대체
+
 ### 포스팅 구조 (SEO/GEO 고정 요소)
 
 모든 포스팅은 아래 구조를 따른다.
 
 ```
-[도입부 요약]  — 2~3문장, 산문으로 작성. 이 글이 무엇을 다루고 어떤 결론에 도달하는지.
-[본문]         — 인식 흐름을 따라
-[함께 읽기]   — 관련 포스팅 2~3개 링크 (## 함께 읽기)
-[레퍼런스]    — 본문 인용 출처 (## 레퍼런스)
+[도입부]       — 아래 순서 고정: discovery_reason → reader_position → single_claim
+[본문]         — 인식 흐름을 따라. H2 섹션 기반.
+[## 이것 기억하세요] — 끝맺음 섹션
+[함께 읽기]   — 관련 포스팅 링크 (실제 존재하는 것만)
+[레퍼런스]    — 본문 인용 출처
 ```
 
-**도입부 요약 작성 규칙**:
-- 스타일 박스(TL;DR, 요약 블록)가 아닌 자연스러운 산문 단락
-- 글의 핵심 발견 또는 주장을 한 문장으로, 이 글을 읽어야 할 이유를 한 문장으로
-- 이 두 문장이 오프닝 장면 바로 뒤에 이어져서 독자를 본문으로 끌어들인다
-- AI가 이 단락만 읽고도 글의 핵심을 인용할 수 있을 만큼 명확해야 한다
+**도입부 순서 (고정):**
+
+```
+1. discovery_reason — "저희가 언제, 무엇을 보고 이것을 알았는가" (발견의 근거·수치 포함)
+2. reader_position  — 독자가 지금 갖고 있는 구체적 오해 또는 믿음 한 문장
+3. single_claim     — 독자의 인식을 A→B로 옮기는 핵심 주장 한 문장
+```
+
+이 순서가 바뀌거나 하나라도 빠지면 도입부 다시 작성.
 
 **함께 읽기 작성 규칙**:
-- 이 글의 독자가 자연스럽게 다음으로 궁금해할 주제의 포스팅
-- 실제로 존재하는 포스팅만 링크한다. 아직 없으면 생략한다.
+- 실제로 존재하는 포스팅만 링크한다. 아직 없으면 섹션 전체 생략.
 
 ---
 
@@ -124,22 +149,67 @@ H2 섹션을 먼저 정하지 않는다. 흐름이 자연스러우면 헤딩이 
 ✗ ## 목차 / 1. 2. 3. 형태의 번호 목차
 ✗ "여기서 반전", "핵심은 이것" 구조 신호 레이블
 ✗ 표 — 데이터를 실제로 비교할 때만 허용
+✗ [UNIQUE INSIGHT], [ORIGINAL DATA] 등 대괄호 마커
 ```
 
 이것들은 글 뒤 `_meta` 블록에서 처리한다.
 
+---
+
+### 섹션 깊이 규칙 — 랜딩 페이지 전용 (절대 준수)
+
+**랜딩 포스팅의 각 H2 섹션은 최소 3개 문단을 작성한다.** 섹션을 꺼내자마자 다음 H2로 넘어가는 것은 금지다.
+
+```
+문단 1: 핵심 주장 또는 현상 제시
+문단 2: 구체적인 예시 또는 데이터로 뒷받침
+문단 3: 독자가 실제로 적용할 수 있는 행동 또는 판단 기준
+문단 4: (선택) 반례, 주의사항, 심화 설명
+```
+
+섹션을 빨리 끝내고 다음으로 넘어가는 것보다, 한 섹션을 독자가 충분히 이해하고 넘어가는 것이 더 중요하다.
+
+**고스트 포스팅**은 이 규칙을 적용하지 않는다 (섹션당 1~2문단 허용).
+
+---
+
+### 글자 수 기준
+
+| 플랫폼 | 최소 글자 수 | 섹션당 최소 |
+|--------|------------|------------|
+| 랜딩 페이지 | **6,000자 이상** | 600자 |
+| 고스트 | 3,000~6,000자 | 제한 없음 |
+| 네이버 | 2,000자 이상 | 제한 없음 |
+
+---
+
 ### 문체 규칙
 
-- **합니다/입니다 체** 전체. ~다/~이다 금지.
+- **합니다/입니다 체** 전체. ~다/~이다 종결 금지.
 - 한 문단 2~4줄. 강조 문장은 단독 줄 + 앞뒤 빈 줄. 3문장 이상 이어지는 단락 금지.
 - 1인칭 고백형 금지: "저도 처음엔 그랬습니다"
 - 독자 호칭: "학생" (학부모 포함 시 "학생, 학부모님")
 - 오프닝 패턴: 작성 전 최근 발행 포스팅의 첫 문장을 확인한다. 같은 장면 구조(상담 장면 등)가 이미 쓰였다면 독자 상황을 직접 서술하는 방식으로 대체한다.
+- **랜딩 전환 언어 허용**: "지금 바로", "오늘 풀 때", "실전에서 바로 적용" (고스트·네이버는 금지)
+
+### 금지 표현 (있으면 다시 작성)
+
+```
+"살펴보겠습니다" / "중요합니다" / "~해야 합니다" 반복 /
+"이번 섹션에서는 X에 대해 알아보겠습니다" /
+"~인 것입니다" / "~라고 할 수 있습니다" /
+"이를 통해" / "따라서" 연속 사용 /
+"본 포스팅에서는" / "정리하면" / "결론적으로" / "이처럼" 반복
+```
 
 ### 근거 규칙
 
 핵심 주장에는 데이터(수치·비율) 또는 메커니즘(인과 설명) 중 하나가 있어야 한다.
 사례 단독으로는 주장이 되지 않는다. 주장 추적표에 없는 사실은 쓰지 않는다.
+
+### 현상형 메커니즘 주어
+
+현상형 포스팅의 "왜 그런가" 섹션 주어는 반드시 **College Board / 출제 설계 / 문법 규칙**이어야 한다. 학생 주어 금지.
 
 ### CTA
 
@@ -147,13 +217,38 @@ H2 섹션을 먼저 정하지 않는다. 흐름이 자연스러우면 헤딩이 
 - 고스트: 완전 금지 (이부작 1편이면 랜딩 연결 1회 허용)
 - 랜딩 페이지: 독자가 글을 읽고 나서 자연스럽게 다음 행동으로 이어지는 포스팅에서만 마지막 문단 1회 허용.
   전략형·비교형·오류수정형 — 허용.
-  뉴스 단순 보도형(현상형) — 생략.
+  현상형 — 생략.
 
 ---
 
 ## STEP 2: 메타데이터 역산 (본문 완성 후)
 
-본문을 다 쓴 후, 아래를 본문에서 **추출**하여 `_meta` 블록으로 분리한다.
+**플랫폼별 frontmatter 위치:**
+
+| 플랫폼 | frontmatter 형식 |
+|--------|----------------|
+| 고스트 | YAML frontmatter (`---` 블록)를 파일 **맨 위**에 삽입 |
+| 랜딩 | YAML frontmatter **없음**. H1 제목으로 시작. 메타는 파일 끝 `_meta` 블록에 |
+| 네이버 | YAML frontmatter **없음**. H1 제목으로 시작. 메타는 파일 끝 `_meta` 블록에 |
+
+**고스트 frontmatter 형식 (파일 맨 위):**
+
+```yaml
+---
+title: "(60자 이내, 핵심 키워드 앞 배치)"
+description: "(155자 이내, 수치 포함)"
+slug: "(소문자 영어, 하이픈, 날짜 없음, 15자 이내)"
+date: "YYYY-MM-DD"
+author: "SuperfastSAT"
+category: "SAT RW|SAT Math|학습코치|입시뉴스"
+tags: ["SAT RW 자료"]   # 아래 4개 중에서만 선택
+focus_keyword: "(핵심 SEO 키워드)"
+---
+```
+
+고스트 태그 허용값: `SAT Math 자료` / `SAT RW 자료` / `미국 입시 뉴스` / `커리큘럼 소개`
+
+**랜딩·네이버는 본문을 다 쓴 후**, 아래를 본문에서 **추출**하여 `_meta` 블록으로 분리한다.
 글 본문에 삽입하지 않는다.
 
 ```yaml
@@ -266,37 +361,48 @@ node preview-blog.js → http://localhost:3333
 
 루브릭 8점 이상 통과 후, 발행 전에 썸네일을 만든다.
 
-### 스타일 원칙
+Slack 파이프라인(`write-blog-cli.js`)과 동일한 방식: **Qwen AI 이미지 생성 → Supabase Storage 업로드 → posts 테이블 `featured_image` 자동 업데이트**.
 
-- 흰색 배경 (`#ffffff`)
-- 검은색 라인 드로잉 (`stroke="#000000"`, `fill="none"`)
-- 텍스트 없음 — 그림만
-- 크기: `1200 × 630` (16:9)
-- 선 굵기: `stroke-width="3"` ~ `"5"` (일관성 유지)
+SVG를 직접 만들지 않는다. 아래 2단계 워크플로우를 따른다.
 
-### 주제별 그림 가이드
+### 2단계 워크플로우
 
-| 포스팅 주제 | 추천 그림 |
-|------------|----------|
-| 대학 정책 변화 (의무화, 요건 추가) | 공문서 + 도장, 또는 체크리스트 |
-| SAT/ACT 점수 전략 | 점수표, 상승 그래프, 시험지 |
-| 슈퍼스코어, 멀티 응시 | 여러 시험지 → 하나로 합쳐지는 화살표 |
-| 수학 과목 / 선수과목 | 수식이 담긴 칠판, 방정식 |
-| 입시 뉴스 일반 | 돋보기, 신문, 캘린더 |
-
-### 파일 저장 위치
-
-`public/thumbnails/{slug}.svg`
-
-### 업로드 명령어
+**1단계: 미리보기 (소재 확인)**
 
 ```bash
-node scripts/upload-thumbnail.js {slug} public/thumbnails/{slug}.svg
+node scripts/generate-thumbnail.js {slug} "{제목}" --preview
 ```
 
-예시:
+- AI가 추출한 `primary` (인물 소재)와 `supporting` (배경 소재)를 콘솔에 출력
+- 이미지 생성 없이 종료 — 소재가 맞는지 먼저 확인한다
+
+**2단계: 이미지 생성**
+
+소재가 적절하면:
 ```bash
-node scripts/upload-thumbnail.js upenn-math-prerequisites-sat-math-signal public/thumbnails/upenn-math-prerequisites-sat-math-signal.svg
+node scripts/generate-thumbnail.js {slug} "{제목}"
 ```
 
-업로드 성공 시 `featured_image`가 자동으로 Supabase posts 테이블에 반영된다.
+소재가 맞지 않으면 `--primary`/`--supporting`으로 직접 지정:
+```bash
+node scripts/generate-thumbnail.js {slug} "{제목}" \
+  --primary "a student looking at a score report with a confident smile" \
+  --supporting "upward bar chart, calendar page with a date circled"
+```
+
+### 소재 수정 가이드
+
+결과물이 어색할 때 아래 기준으로 supporting 소재를 바꾼다.
+
+| 포스팅 유형 | 좋은 supporting 소재 | 피해야 할 것 |
+|------------|---------------------|------------|
+| 시험 분석 (`분석`, `결과`) | score report paper, upward bar chart, calendar with date | 수식, M=?, equations |
+| 전략형 | pencil and notebook, checklist clipboard | 추상 기호 |
+| 입시 뉴스 | newspaper, announcement board, calendar | 수식, 그래프 |
+| 수학 전략 | math worksheet (not equations), timer | 텍스트 수식 |
+
+### 필요 환경변수
+
+`DASHSCOPE_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (`.env.local`에 설정됨)
+
+성공 시 `featured_image` URL이 콘솔에 출력되고 posts 테이블에 자동 반영된다.
