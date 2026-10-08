@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import { notifyScheduleInputStatus } from '@/lib/slack-sfv2';
 
+// 테스트 계정 — 알림 대상에서 제외
+const EXCLUDED_STUDENTS = new Set(['박윤재']);
+
 /**
  * GET /api/cron/schedule-input-status
  * Vercel Cron — 매일 00:00 UTC (= 09:00 KST)
@@ -34,6 +37,7 @@ export async function GET(request: NextRequest) {
     const noScheduleIds: string[] = [];
 
     for (const [userId, name] of allActiveMap) {
+      if (EXCLUDED_STUDENTS.has(name)) continue;
       const last = futureInfo.get(userId);
       if (!last) {
         noScheduleIds.push(userId);
