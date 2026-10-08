@@ -10,8 +10,10 @@ const EXCLUDED_STUDENTS = new Set(['박윤재']);
  * Vercel Cron — 매일 00:00 UTC (= 09:00 KST)
  *
  * - 신규 입력: 전날 00:00 KST ~ 당일 09:00 KST 사이에 추가된 스케줄 (칭찬용)
- * - 종료 임박: 미래 일정이 있으나 내일(+48h)까지 끝나는 학생 (선제 관리용)
- * - 예정 없음: 지금 이후 예정된 스케줄이 없는 학생 → 잔여 시간별 그룹핑 (관리용)
+ * - 종료 임박: 미래 스터디홀/보캡 일정이 있으나 내일(+48h)까지 끝나는 학생 (선제 관리용)
+ * - 즉시 연락: 코치룸 + 스터디홀/보캡 모두 미예약 학생
+ * - 코치룸 미예약: 코치룸은 없으나 스터디홀/보캡은 입력된 학생
+ * - 스터디홀 미입력: 코치룸은 있으나 스터디홀/보캡이 없는 학생
  */
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -24,42 +26,58 @@ export async function GET(request: NextRequest) {
     const { windowStart, windowEnd, windowLabel } = getWindow();
     console.log(`[cron/schedule-input-status] window: [${windowStart.toISOString()}, ${windowEnd.toISOString()}]`);
 
-    const [rawEntries, allActiveMap, futureInfo] = await Promise.all([
+    const [rawEntries, allActiveMap, futureInfo, coachRoomUserIds] = await Promise.all([
       fetchNewScheduled(windowStart, windowEnd),
       fetchAllActiveStudentsMap(),
       fetchFutureScheduleInfo(windowEnd),
+      fetchFutureCoachRoomUserIds(windowEnd),
     ]);
 
     const summaries = aggregateByStudent(rawEntries);
 
     const soonThreshold = new Date(windowEnd.getTime() + 2 * 24 * 60 * 60 * 1000);
     const endingSoon: EndingSoon[] = [];
-    const noScheduleIds: string[] = [];
+    const noStudyHallIds: string[] = [];
+    const noCoachRoomIds: string[] = [];
 
     for (const [userId, name] of allActiveMap) {
       if (EXCLUDED_STUDENTS.has(name)) continue;
       const last = futureInfo.get(userId);
       if (!last) {
-        noScheduleIds.push(userId);
+        noStudyHallIds.push(userId);
       } else if (last < soonThreshold) {
         endingSoon.push({ studentName: name, lastDate: toKSTDisplay(last.toISOString()).slice(0, 5) });
       }
+      if (!coachRoomUserIds.has(userId)) noCoachRoomIds.push(userId);
     }
     endingSoon.sort((a, b) => a.studentName.localeCompare(b.studentName, 'ko'));
 
-    // 잔여 시간 조회 후 그룹핑
-    const remainingMap = await fetchRemainingHoursMap(noScheduleIds);
-    const noScheduleGroups = groupByRemainingHours(noScheduleIds, allActiveMap, remainingMap);
+    // 3단계 우선순위 분류
+    const noStudyHallSet = new Set(noStudyHallIds);
+    const noCoachSet = new Set(noCoachRoomIds);
+    const noBothIds = noCoachRoomIds.filter(id => noStudyHallSet.has(id));
+    const noCoachOnlyIds = noCoachRoomIds.filter(id => !noStudyHallSet.has(id));
+    const noStudyHallOnlyIds = noStudyHallIds.filter(id => !noCoachSet.has(id));
 
-    console.log(`[cron/schedule-input-status] new=${summaries.length} | ending-soon=${endingSoon.length} | no-schedule=${noScheduleIds.length}`);
+    // 잔여 시간 조회 (3그룹 합산)
+    const allNeedRemaining = [...new Set([...noBothIds, ...noCoachOnlyIds, ...noStudyHallOnlyIds])];
+    const remainingMap = await fetchRemainingHoursMap(allNeedRemaining);
 
-    await notifyScheduleInputStatus({ summaries, endingSoon, noScheduleGroups, windowLabel });
+    const urgentGroups = groupByRemainingHours(noBothIds, allActiveMap, remainingMap);
+    const noCoachGroups = groupByRemainingHours(noCoachOnlyIds, allActiveMap, remainingMap);
+    const noStudyHallGroups = groupByRemainingHours(noStudyHallOnlyIds, allActiveMap, remainingMap);
+
+    console.log(`[cron/schedule-input-status] new=${summaries.length} | ending-soon=${endingSoon.length} | urgent=${noBothIds.length} | no-coach=${noCoachOnlyIds.length} | no-studyhall=${noStudyHallOnlyIds.length}`);
+
+    await notifyScheduleInputStatus({ summaries, endingSoon, urgentGroups, noCoachGroups, noStudyHallGroups, windowLabel });
 
     return NextResponse.json({
       ok: true,
       newStudents: summaries.length,
       endingSoon: endingSoon.length,
-      noSchedule: noScheduleIds.length,
+      urgent: noBothIds.length,
+      noCoach: noCoachOnlyIds.length,
+      noStudyHall: noStudyHallOnlyIds.length,
       window: { start: windowStart.toISOString(), end: windowEnd.toISOString() },
     });
   } catch (error) {
@@ -117,6 +135,12 @@ export interface EndingSoon {
 export interface NoScheduleGroup {
   label: string;   // e.g. "0시간", "1~10시간"
   students: string[];
+}
+
+export interface UrgencyGroups {
+  urgentGroups: NoScheduleGroup[];    // 코치룸 + 스터디홀 모두 없음
+  noCoachGroups: NoScheduleGroup[];   // 코치룸만 없음 (스터디홀은 있음)
+  noStudyHallGroups: NoScheduleGroup[]; // 스터디홀만 없음 (코치룸은 있음)
 }
 
 // ─── 잔여 시간 그룹핑 ─────────────────────────────────────────────────────────
@@ -405,6 +429,38 @@ async function fetchFutureScheduleInfo(now: Date): Promise<Map<string, Date>> {
   }
 
   return lastDateByUser;
+}
+
+// ─── 미래 코치룸 예약 학생 ID 집합 ────────────────────────────────────────────
+
+async function fetchFutureCoachRoomUserIds(now: Date): Promise<Set<string>> {
+  const hasCoachRoom = new Set<string>();
+  const PAGE_SIZE = 1000;
+
+  const futureEventIds: string[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page, error } = await supabaseSFv2
+      .from('scheduled_events')
+      .select('id')
+      .eq('category', 'coach_room')
+      .neq('status', 'cancelled')
+      .gte('starts_at', now.toISOString())
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (error) { console.error('[schedule-input-status] coach_room events error:', error.message); break; }
+    if (!page?.length) break;
+    futureEventIds.push(...page.map(e => e.id));
+    if (page.length < PAGE_SIZE) break;
+  }
+
+  for (let i = 0; i < futureEventIds.length; i += 100) {
+    const { data } = await supabaseSFv2
+      .from('scheduled_event_participants')
+      .select('user_id')
+      .in('event_id', futureEventIds.slice(i, i + 100));
+    for (const p of data ?? []) if (p.user_id) hasCoachRoom.add(p.user_id);
+  }
+
+  return hasCoachRoom;
 }
 
 // ─── 전체 활성 학생 (userId → name) ──────────────────────────────────────────

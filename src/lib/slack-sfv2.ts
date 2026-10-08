@@ -30,17 +30,38 @@ async function post(channel: string, text: string, blocks: object[]): Promise<vo
 export async function notifyScheduleInputStatus(params: {
   summaries: StudentSummary[];
   endingSoon: EndingSoon[];
-  noScheduleGroups: NoScheduleGroup[];
+  urgentGroups: NoScheduleGroup[];
+  noCoachGroups: NoScheduleGroup[];
+  noStudyHallGroups: NoScheduleGroup[];
   windowLabel: string;
 }): Promise<void> {
-  const { summaries, endingSoon, noScheduleGroups, windowLabel } = params;
+  const { summaries, endingSoon, urgentGroups, noCoachGroups, noStudyHallGroups, windowLabel } = params;
 
   const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000)
     .toISOString().slice(5, 16).replace('T', ' ');
 
-  const totalNoSchedule = noScheduleGroups.reduce((s, g) => s + g.students.length, 0);
+  const totalUrgent = urgentGroups.reduce((s, g) => s + g.students.length, 0);
+  const totalNoCoach = noCoachGroups.reduce((s, g) => s + g.students.length, 0);
+  const totalNoStudyHall = noStudyHallGroups.reduce((s, g) => s + g.students.length, 0);
 
-  const legendText = `📋 *스케줄 입력 현황* — ${nowKST} KST\n기간: ${windowLabel}\n\n📚 Study Hall　　📝 Vocab　　🎯 Test Center`;
+  const GROUP_EMOJI: Record<string, string> = {
+    '0시간':     '🔴',
+    '1~10시간':  '🟠',
+    '11~20시간': '🟡',
+    '21시간+':   '🟢',
+  };
+
+  function buildGroupText(header: string, groups: NoScheduleGroup[], emptyMsg: string): string {
+    if (groups.length === 0) return `${header}\n${emptyMsg}`;
+    const lines = [header];
+    for (const g of groups) {
+      const emoji = GROUP_EMOJI[g.label] ?? '⚪';
+      lines.push(`${emoji} *${g.label} (${g.students.length}명)*\n${g.students.join(', ')}`);
+    }
+    return lines.join('\n');
+  }
+
+  const legendText = `📋 *스케줄 현황 브리핑* — ${nowKST} KST\n기간: ${windowLabel}\n\n📚 Study Hall　　📝 Vocab　　🎯 Test Center　　🏫 Coach Room`;
 
   // ── 신규 입력 (칭찬용) ──
   let scheduledText: string;
@@ -60,37 +81,36 @@ export async function notifyScheduleInputStatus(params: {
     scheduledText = lines.join('\n');
   }
 
-  // ── 종료 임박 ──
+  // ── 종료 임박 (스터디홀/보캡) ──
   let endingSoonText: string;
   if (endingSoon.length === 0) {
-    endingSoonText = '🟠 *종료 임박: 0명*';
+    endingSoonText = '🟠 *스터디홀 종료 임박: 0명*';
   } else {
-    const lines = [`🟠 *종료 임박: ${endingSoon.length}명* _(마지막 일정이 내일까지인 학생)_`];
+    const lines = [`🟠 *스터디홀 종료 임박: ${endingSoon.length}명* _(마지막 일정이 내일까지인 학생)_`];
     for (const s of endingSoon) {
       lines.push(`• *${s.studentName}* — 마지막 일정 ${s.lastDate}`);
     }
     endingSoonText = lines.join('\n');
   }
 
-  // ── 예정 일정 없음 (잔여 시간별 그룹핑) ──
-  const GROUP_EMOJI: Record<string, string> = {
-    '0시간':     '🔴',
-    '1~10시간':  '🟠',
-    '11~20시간': '🟡',
-    '21시간+':   '🟢',
-  };
+  // ── 3단계 우선순위 ──
+  const urgentText = buildGroupText(
+    `🚨 *즉시 연락: ${totalUrgent}명* _(코치룸 + 스터디홀/보캡 모두 없음)_`,
+    urgentGroups,
+    '없음',
+  );
 
-  let noScheduleText: string;
-  if (totalNoSchedule === 0) {
-    noScheduleText = '⚠️ *예정 일정 없음: 0명*\n전원 일정 입력 완료!';
-  } else {
-    const lines = [`⚠️ *예정 일정 없음: ${totalNoSchedule}명*`];
-    for (const g of noScheduleGroups) {
-      const emoji = GROUP_EMOJI[g.label] ?? '⚪';
-      lines.push(`\n${emoji} *${g.label} (${g.students.length}명)*\n${g.students.join(', ')}`);
-    }
-    noScheduleText = lines.join('\n');
-  }
+  const noCoachText = buildGroupText(
+    `⚠️ *코치룸 미예약: ${totalNoCoach}명* _(스터디홀/보캡은 입력됨)_`,
+    noCoachGroups,
+    '없음',
+  );
+
+  const noStudyHallText = buildGroupText(
+    `📝 *스터디홀/보캡 미입력: ${totalNoStudyHall}명* _(코치룸은 있음)_`,
+    noStudyHallGroups,
+    '없음',
+  );
 
   const blocks = [
     { type: 'section', text: { type: 'mrkdwn', text: legendText } },
@@ -99,9 +119,13 @@ export async function notifyScheduleInputStatus(params: {
     { type: 'divider' },
     { type: 'section', text: { type: 'mrkdwn', text: endingSoonText } },
     { type: 'divider' },
-    { type: 'section', text: { type: 'mrkdwn', text: noScheduleText } },
+    { type: 'section', text: { type: 'mrkdwn', text: urgentText } },
+    { type: 'divider' },
+    { type: 'section', text: { type: 'mrkdwn', text: noCoachText } },
+    { type: 'divider' },
+    { type: 'section', text: { type: 'mrkdwn', text: noStudyHallText } },
   ];
 
-  const fallbackText = `📋 스케줄 입력 현황 — 신규 ${summaries.length}명 / 종료임박 ${endingSoon.length}명 / 예정없음 ${totalNoSchedule}명`;
+  const fallbackText = `📋 스케줄 현황 — 신규 ${summaries.length}명 / 즉시연락 ${totalUrgent}명 / 코치룸미예약 ${totalNoCoach}명 / 스터디홀미입력 ${totalNoStudyHall}명`;
   await post(SCHEDULE_STATUS_CHANNEL, fallbackText, blocks);
 }
