@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Loader2, X, Search, Mic, CheckCircle2, ChevronLeft, User } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Loader2, X, Search, Mic, CheckCircle2, ChevronLeft, User, RefreshCw } from 'lucide-react';
 import type { ConsultationEntry } from '@/types/crm';
 import { apiErrorMessage } from '@/lib/api-error';
 
@@ -33,6 +33,8 @@ interface AsrJob {
 /** 전사 진행 확인 간격. DashScope 큐 지연 편차가 커서 상한은 넉넉히 둔다. */
 const POLL_MS = 3000;
 const MAX_WAIT_MS = 20 * 60 * 1000;
+/** 녹음 목록 한 번에 받는 개수 — 넘으면 "더 보기"로 다음 페이지를 붙인다. */
+const PAGE_SIZE = 20;
 
 function jobKey(studentId: string): string {
   return `plaud-asr-job:${studentId}`;
@@ -95,6 +97,14 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
   // 2단계: 선택한 직원의 녹음 목록
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(false);
+  // 목록은 PAGE_SIZE씩 받는다. 마지막으로 받은 페이지가 꽉 찼으면 다음 페이지가 있을 수 있다.
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // 가장 최근 요청만 반영한다 — 더 보기 응답이 새 검색·직원 전환 뒤에 도착해 엉뚱한 목록에 붙지 않게.
+  const requestSeq = useRef(0);
+  // 지금 목록을 만든 검색어 — 더 보기·새로고침은 입력칸이 아니라 이 값으로 요청한다(검색 안 누른 입력과 섞이지 않게).
+  const [activeQuery, setActiveQuery] = useState<string | undefined>(undefined);
   const [listError, setListError] = useState('');
   const [q, setQ] = useState('');
   const [job, setJob] = useState<AsrJob | null>(null);
@@ -135,22 +145,46 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
   }, [adminKey]);
 
   const load = useCallback(
-    async (accountKey: string, query?: string) => {
-      setLoading(true);
+    async (accountKey: string, query?: string, nextPage = 1) => {
+      const more = nextPage > 1;
+      const seq = ++requestSeq.current;
+      if (more) setLoadingMore(true);
+      else {
+        setLoading(true);
+        setLoadingMore(false); // 무효화된 더 보기 요청의 로딩 표시를 남기지 않는다
+      }
       setListError('');
       try {
-        const params = new URLSearchParams({ account_key: accountKey });
+        const params = new URLSearchParams({
+          account_key: accountKey,
+          page: String(nextPage),
+          page_size: String(PAGE_SIZE),
+        });
         if (query) params.set('q', query);
         const res = await fetch(`/api/crm/plaud/recordings?${params.toString()}`, {
           headers: { 'x-admin-key': adminKey },
         });
         const json = await res.json();
-        if (res.ok) setRecordings(json.data ?? []);
-        else setListError(apiErrorMessage(json, '녹음 목록을 불러오지 못했습니다.'));
+        if (seq !== requestSeq.current) return;
+        if (res.ok) {
+          setActiveQuery(query);
+          const list: Recording[] = json.data ?? [];
+          // 페이지 사이에 새 녹음이 들어오면 앞 페이지 끝 항목이 다음 페이지에 다시 온다 — id로 거른다.
+          setRecordings((prev) => {
+            if (!more) return list;
+            const seen = new Set(prev.map((r) => r.id));
+            return [...prev, ...list.filter((r) => !seen.has(r.id))];
+          });
+          setPage(nextPage);
+          setHasMore(list.length >= PAGE_SIZE);
+        } else setListError(apiErrorMessage(json, '녹음 목록을 불러오지 못했습니다.'));
       } catch {
         setListError('네트워크 오류가 발생했습니다.');
       } finally {
-        setLoading(false);
+        if (seq === requestSeq.current) {
+          if (more) setLoadingMore(false);
+          else setLoading(false);
+        }
       }
     },
     [adminKey]
@@ -162,8 +196,14 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
   }, [selected, load]);
 
   function backToAccounts() {
+    requestSeq.current++; // 진행 중인 목록 요청 무효화
     setSelected(null);
     setRecordings([]);
+    setPage(1);
+    setHasMore(false);
+    setLoading(false);
+    setLoadingMore(false);
+    setActiveQuery(undefined);
     setQ('');
     setListError('');
     setRunError('');
@@ -395,6 +435,15 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
                 >
                   검색
                 </button>
+                <button
+                  onClick={() => load(selected.key, activeQuery)}
+                  disabled={loading || busy}
+                  aria-label="새로고침"
+                  title="새로고침"
+                  className="px-2.5 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+                >
+                  <RefreshCw size={14} />
+                </button>
               </div>
             </div>
 
@@ -434,6 +483,17 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
                       </button>
                     </li>
                   ))}
+                  {hasMore && (
+                    <li className="pt-2 pb-1 text-center">
+                      <button
+                        onClick={() => load(selected.key, activeQuery, page + 1)}
+                        disabled={loadingMore || busy}
+                        className="px-4 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+                      >
+                        {loadingMore ? '불러오는 중…' : '더 보기'}
+                      </button>
+                    </li>
+                  )}
                 </ul>
               )}
             </div>
@@ -443,6 +503,9 @@ export function PlaudRecordingPicker({ studentId, studentName, adminKey, onClose
               {runError && <p className="text-xs text-red-500 mb-2">{runError}</p>}
               <p className="text-[11px] text-gray-400">
                 선택한 녹음을 전사·요약해 <b>미공개 초안</b>으로 상담메모에 추가합니다. 전사에 수십 초 걸릴 수 있습니다.
+              </p>
+              <p className="text-[11px] text-gray-400 mt-1">
+                방금 녹음한 파일이 안 보이면 Plaud 앱에서 업로드가 끝났는지 확인한 뒤 새로고침하세요.
               </p>
             </div>
           </>

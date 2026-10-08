@@ -210,3 +210,124 @@ describe('PlaudRecordingPicker — 제출/폴링 분리 (REQ-004)', () => {
     expect(store.getItem('plaud-asr-job:s1')).toBeNull();
   });
 });
+
+describe('PlaudRecordingPicker — 더 보기·새로고침 (plaud-recordings-paging)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const rec = (i: number) => ({ id: `r${i}`, name: `녹음${i}`, start_at: `2026-10-08T0${Math.floor(i / 10)}:${String(i % 60).padStart(2, '0')}:00` });
+
+  /** 한 계정, 녹음 25개(1페이지 20 + 2페이지 5). page 파라미터대로 잘라 준다. */
+  function mockPaged(total = 25) {
+    const all = Array.from({ length: total }, (_, i) => rec(i));
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/plaud/accounts')) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({ data: [{ key: 'me', label: '이민재' }] }) });
+      }
+      const sp = new URL(url, 'http://localhost').searchParams;
+      const page = Number(sp.get('page') ?? '1');
+      const size = Number(sp.get('page_size') ?? '20');
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ data: all.slice((page - 1) * size, page * size) }) });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  it('20개를 넘으면 "더 보기"로 다음 페이지를 이어 붙인다', async () => {
+    const fetchMock = mockPaged(25);
+    renderPicker();
+    await waitFor(() => expect(screen.getByText('녹음0')).toBeTruthy());
+    expect(screen.queryByText('녹음20')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '더 보기' }));
+    await waitFor(() => expect(screen.getByText('녹음24')).toBeTruthy());
+    expect(screen.getByText('녹음0')).toBeTruthy(); // 앞 페이지 유지
+    const page2 = fetchMock.mock.calls.map((c) => String(c[0])).find((u) => u.includes('page=2'));
+    expect(page2).toContain('account_key=me');
+    // 마지막 페이지(5개)를 받은 뒤에는 더 보기가 없다
+    expect(screen.queryByRole('button', { name: '더 보기' })).toBeNull();
+  });
+
+  it('20개 이하면 "더 보기"가 없다', async () => {
+    mockPaged(7);
+    renderPicker();
+    await waitFor(() => expect(screen.getByText('녹음6')).toBeTruthy());
+    expect(screen.queryByRole('button', { name: '더 보기' })).toBeNull();
+  });
+
+  it('새로고침은 첫 페이지부터 다시 불러온다', async () => {
+    const fetchMock = mockPaged(25);
+    renderPicker();
+    await waitFor(() => expect(screen.getByText('녹음0')).toBeTruthy());
+    const before = fetchMock.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: '새로고침' }));
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(before));
+    expect(String(fetchMock.mock.calls.at(-1)?.[0])).toContain('page=1');
+  });
+});
+
+describe('PlaudRecordingPicker — 늦게 도착한 응답·중복', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('페이지 사이에 새 녹음이 들어와 겹친 항목은 한 번만 보인다', async () => {
+    const page1 = Array.from({ length: 20 }, (_, i) => ({ id: `r${i}`, name: `녹음${i}`, start_at: '2026-10-08T01:00:00' }));
+    // 새 녹음 1개가 앞에 끼어 2페이지 첫 항목이 1페이지 마지막(r19)과 겹친다
+    const page2 = [{ id: 'r19', name: '녹음19', start_at: '2026-10-08T01:00:00' }, { id: 'r20', name: '녹음20', start_at: '2026-10-08T01:00:00' }];
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('/plaud/accounts')) return Promise.resolve({ ok: true, status: 200, json: async () => ({ data: [{ key: 'me', label: '이민재' }] }) });
+      const p = new URL(url, 'http://localhost').searchParams.get('page');
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ data: p === '2' ? page2 : page1 }) });
+    }));
+    renderPicker();
+    await waitFor(() => expect(screen.getByText('녹음0')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: '더 보기' }));
+    await waitFor(() => expect(screen.getByText('녹음20')).toBeTruthy());
+    expect(screen.getAllByText('녹음19')).toHaveLength(1);
+  });
+
+  it('더 보기 응답이 새로고침 뒤에 늦게 와도 새 목록에 붙지 않는다', async () => {
+    const full = Array.from({ length: 20 }, (_, i) => ({ id: `r${i}`, name: `녹음${i}`, start_at: '2026-10-08T01:00:00' }));
+    let releasePage2: () => void = () => {};
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('/plaud/accounts')) return Promise.resolve({ ok: true, status: 200, json: async () => ({ data: [{ key: 'me', label: '이민재' }] }) });
+      const p = new URL(url, 'http://localhost').searchParams.get('page');
+      if (p === '2') {
+        return new Promise((resolve) => {
+          releasePage2 = () => resolve({ ok: true, status: 200, json: async () => ({ data: [{ id: 'old', name: '늦은항목', start_at: '' }] }) });
+        });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ data: full }) });
+    }));
+    renderPicker();
+    await waitFor(() => expect(screen.getByText('녹음0')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: '더 보기' }));
+    fireEvent.click(screen.getByRole('button', { name: '새로고침' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: '더 보기' })).toBeTruthy());
+    releasePage2();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText('늦은항목')).toBeNull();
+    expect(screen.getByRole('button', { name: '더 보기' }).textContent).toBe('더 보기');
+  });
+});
+
+describe('PlaudRecordingPicker — 더 보기는 실제로 검색한 검색어로', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('검색 후 입력칸만 바꾸고 더 보기를 누르면 원래 검색어의 다음 페이지를 붙인다', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/plaud/accounts')) return Promise.resolve({ ok: true, status: 200, json: async () => ({ data: [{ key: 'me', label: '이민재' }] }) });
+      const sp = new URL(url, 'http://localhost').searchParams;
+      const tag = `${sp.get('q') ?? 'all'}-p${sp.get('page')}`;
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ data: Array.from({ length: 20 }, (_, i) => ({ id: `${tag}-${i}`, name: `${tag}-${i}`, start_at: '' })) }) });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderPicker();
+    await waitFor(() => expect(screen.getByText('all-p1-0')).toBeTruthy());
+    const input = screen.getByPlaceholderText('녹음 이름 검색 후 Enter');
+    fireEvent.change(input, { target: { value: '홍서준' } });
+    fireEvent.click(screen.getByRole('button', { name: '검색' }));
+    await waitFor(() => expect(screen.getByText('홍서준-p1-0')).toBeTruthy());
+    fireEvent.change(input, { target: { value: '다른이름' } }); // 검색은 누르지 않음
+    fireEvent.click(screen.getByRole('button', { name: '더 보기' }));
+    await waitFor(() => expect(screen.getByText('홍서준-p2-0')).toBeTruthy());
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes(encodeURIComponent('다른이름')))).toBe(false);
+  });
+});
