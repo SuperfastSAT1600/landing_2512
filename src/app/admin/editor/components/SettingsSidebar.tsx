@@ -108,6 +108,15 @@ export function SettingsSidebar({
                                     <UploadCloud size={12} /> Upload
                                 </button>
                             </div>
+                            {featuredImage && (
+                                <div className="relative w-full rounded-lg overflow-hidden border border-white/10" style={{ aspectRatio: '16/9' }}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={featuredImage} alt="Blog thumbnail" className="w-full h-full object-cover" />
+                                    <button onClick={() => onFeaturedImageChange('')} className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 transition-colors">
+                                        <X size={12} />
+                                    </button>
+                                </div>
+                            )}
                             <SidebarInput value={featuredImage} onChange={onFeaturedImageChange} placeholder="https://..." />
                             {featuredImage && <SidebarInput value={featuredImageAlt} onChange={onFeaturedImageAltChange} placeholder="이미지 설명 (비워두면 제목 사용)" />}
                         </div>
