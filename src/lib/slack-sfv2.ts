@@ -3,7 +3,7 @@
  * 채널: #006_학습현황_출석률 (C0BNF23DQ5R)
  */
 
-import type { StudentSummary, EndingSoon } from '@/app/api/cron/schedule-input-status/route';
+import type { StudentSummary, EndingSoon, NoScheduleGroup } from '@/app/api/cron/schedule-input-status/route';
 
 const SCHEDULE_STATUS_CHANNEL = 'C0BNF23DQ5R';
 
@@ -30,15 +30,17 @@ async function post(channel: string, text: string, blocks: object[]): Promise<vo
 export async function notifyScheduleInputStatus(params: {
   summaries: StudentSummary[];
   endingSoon: EndingSoon[];
-  noSchedule: string[];
+  noScheduleGroups: NoScheduleGroup[];
   windowLabel: string;
 }): Promise<void> {
-  const { summaries, endingSoon, noSchedule, windowLabel } = params;
+  const { summaries, endingSoon, noScheduleGroups, windowLabel } = params;
 
   const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000)
     .toISOString().slice(5, 16).replace('T', ' ');
 
-  const legendText = `📅 *학습 일정 현황* — ${nowKST} KST\n기간: ${windowLabel}\n\n📚 Study Hall　　📝 Vocab　　🎯 Test Center`;
+  const totalNoSchedule = noScheduleGroups.reduce((s, g) => s + g.students.length, 0);
+
+  const legendText = `📋 *스케줄 입력 현황* — ${nowKST} KST\n기간: ${windowLabel}\n\n📚 Study Hall　　📝 Vocab　　🎯 Test Center`;
 
   // ── 신규 입력 (칭찬용) ──
   let scheduledText: string;
@@ -58,7 +60,7 @@ export async function notifyScheduleInputStatus(params: {
     scheduledText = lines.join('\n');
   }
 
-  // ── 종료 임박 (내일까지 일정 종료) ──
+  // ── 종료 임박 ──
   let endingSoonText: string;
   if (endingSoon.length === 0) {
     endingSoonText = '🟠 *종료 임박: 0명*';
@@ -70,12 +72,24 @@ export async function notifyScheduleInputStatus(params: {
     endingSoonText = lines.join('\n');
   }
 
-  // ── 예정 일정 없음 (관리용) ──
+  // ── 예정 일정 없음 (잔여 시간별 그룹핑) ──
+  const GROUP_EMOJI: Record<string, string> = {
+    '0시간':     '🔴',
+    '1~10시간':  '🟠',
+    '11~20시간': '🟡',
+    '21시간+':   '🟢',
+  };
+
   let noScheduleText: string;
-  if (noSchedule.length === 0) {
+  if (totalNoSchedule === 0) {
     noScheduleText = '⚠️ *예정 일정 없음: 0명*\n전원 일정 입력 완료!';
   } else {
-    noScheduleText = `⚠️ *예정 일정 없음: ${noSchedule.length}명*\n${noSchedule.join(', ')}`;
+    const lines = [`⚠️ *예정 일정 없음: ${totalNoSchedule}명*`];
+    for (const g of noScheduleGroups) {
+      const emoji = GROUP_EMOJI[g.label] ?? '⚪';
+      lines.push(`\n${emoji} *${g.label} (${g.students.length}명)*\n${g.students.join(', ')}`);
+    }
+    noScheduleText = lines.join('\n');
   }
 
   const blocks = [
@@ -88,6 +102,6 @@ export async function notifyScheduleInputStatus(params: {
     { type: 'section', text: { type: 'mrkdwn', text: noScheduleText } },
   ];
 
-  const fallbackText = `📅 학습 일정 현황 — 신규 ${summaries.length}명 / 종료임박 ${endingSoon.length}명 / 예정없음 ${noSchedule.length}명`;
+  const fallbackText = `📋 스케줄 입력 현황 — 신규 ${summaries.length}명 / 종료임박 ${endingSoon.length}명 / 예정없음 ${totalNoSchedule}명`;
   await post(SCHEDULE_STATUS_CHANNEL, fallbackText, blocks);
 }

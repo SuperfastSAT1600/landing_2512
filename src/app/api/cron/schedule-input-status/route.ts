@@ -8,7 +8,7 @@ import { notifyScheduleInputStatus } from '@/lib/slack-sfv2';
  *
  * - 신규 입력: 전날 00:00 KST ~ 당일 09:00 KST 사이에 추가된 스케줄 (칭찬용)
  * - 종료 임박: 미래 일정이 있으나 내일(+48h)까지 끝나는 학생 (선제 관리용)
- * - 예정 없음: 지금 이후 예정된 스케줄이 하나도 없는 학생 (관리용)
+ * - 예정 없음: 지금 이후 예정된 스케줄이 없는 학생 → 잔여 시간별 그룹핑 (관리용)
  */
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -29,31 +29,33 @@ export async function GET(request: NextRequest) {
 
     const summaries = aggregateByStudent(rawEntries);
 
-    // 종료 임박: 미래 일정 있으나 48h 이내에 끝남
     const soonThreshold = new Date(windowEnd.getTime() + 2 * 24 * 60 * 60 * 1000);
     const endingSoon: EndingSoon[] = [];
-    const noSchedule: string[] = [];
+    const noScheduleIds: string[] = [];
 
     for (const [userId, name] of allActiveMap) {
       const last = futureInfo.get(userId);
       if (!last) {
-        noSchedule.push(name);
+        noScheduleIds.push(userId);
       } else if (last < soonThreshold) {
         endingSoon.push({ studentName: name, lastDate: toKSTDisplay(last.toISOString()).slice(0, 5) });
       }
     }
-    noSchedule.sort((a, b) => a.localeCompare(b, 'ko'));
     endingSoon.sort((a, b) => a.studentName.localeCompare(b.studentName, 'ko'));
 
-    console.log(`[cron/schedule-input-status] new=${summaries.length} | ending-soon=${endingSoon.length} | no-schedule=${noSchedule.length}`);
+    // 잔여 시간 조회 후 그룹핑
+    const remainingMap = await fetchRemainingHoursMap(noScheduleIds);
+    const noScheduleGroups = groupByRemainingHours(noScheduleIds, allActiveMap, remainingMap);
 
-    await notifyScheduleInputStatus({ summaries, endingSoon, noSchedule, windowLabel });
+    console.log(`[cron/schedule-input-status] new=${summaries.length} | ending-soon=${endingSoon.length} | no-schedule=${noScheduleIds.length}`);
+
+    await notifyScheduleInputStatus({ summaries, endingSoon, noScheduleGroups, windowLabel });
 
     return NextResponse.json({
       ok: true,
       newStudents: summaries.length,
       endingSoon: endingSoon.length,
-      noSchedule: noSchedule.length,
+      noSchedule: noScheduleIds.length,
       window: { start: windowStart.toISOString(), end: windowEnd.toISOString() },
     });
   } catch (error) {
@@ -106,6 +108,119 @@ export interface StudentSummary {
 export interface EndingSoon {
   studentName: string;
   lastDate: string; // KST "MM/DD" — 마지막 예정 일정
+}
+
+export interface NoScheduleGroup {
+  label: string;   // e.g. "0시간", "1~10시간"
+  students: string[];
+}
+
+// ─── 잔여 시간 그룹핑 ─────────────────────────────────────────────────────────
+
+function groupByRemainingHours(
+  userIds: string[],
+  nameMap: Map<string, string>,
+  remainingMap: Map<string, number>,
+): NoScheduleGroup[] {
+  const buckets: { label: string; min: number; max: number; students: string[] }[] = [
+    { label: '0시간',      min: 0,  max: 0,   students: [] },
+    { label: '1~10시간',   min: 1,  max: 10,  students: [] },
+    { label: '11~20시간',  min: 11, max: 20,  students: [] },
+    { label: '21시간+',    min: 21, max: Infinity, students: [] },
+  ];
+
+  for (const userId of userIds) {
+    const name = nameMap.get(userId);
+    if (!name) continue;
+    const hours = remainingMap.get(userId) ?? 0;
+    const bucket = buckets.find(b => hours >= b.min && hours <= b.max);
+    if (bucket) bucket.students.push(name);
+  }
+
+  for (const b of buckets) b.students.sort((a, z) => a.localeCompare(z, 'ko'));
+
+  return buckets
+    .filter(b => b.students.length > 0)
+    .map(({ label, students }) => ({ label, students }));
+}
+
+// ─── 잔여 수업 시간 계산 (구매 − 환불 − 완료) ─────────────────────────────────
+
+async function fetchRemainingHoursMap(userIds: string[]): Promise<Map<string, number>> {
+  const remaining = new Map<string, number>();
+  if (!userIds.length) return remaining;
+
+  // 1. 구매 시간
+  const purchased = new Map<string, number>();
+  for (let i = 0; i < userIds.length; i += 100) {
+    const { data } = await supabaseSFv2
+      .from('payment_transactions')
+      .select('student_id, hours')
+      .in('student_id', userIds.slice(i, i + 100))
+      .gt('hours', 0);
+    for (const r of data ?? [])
+      if (r.student_id) purchased.set(r.student_id, (purchased.get(r.student_id) ?? 0) + (r.hours ?? 0));
+  }
+
+  // 2. 환불 시간
+  const refunded = new Map<string, number>();
+  const paymentIds: string[] = [];
+  const payToStudent = new Map<string, string>();
+  for (let i = 0; i < userIds.length; i += 100) {
+    const { data } = await supabaseSFv2
+      .from('payments')
+      .select('id, student_id')
+      .in('student_id', userIds.slice(i, i + 100));
+    for (const r of data ?? [])
+      if (r.id && r.student_id) { paymentIds.push(r.id); payToStudent.set(r.id, r.student_id); }
+  }
+  for (let i = 0; i < paymentIds.length; i += 100) {
+    const { data } = await supabaseSFv2
+      .from('payment_refunds')
+      .select('payment_id, hours_refunded')
+      .in('payment_id', paymentIds.slice(i, i + 100));
+    for (const r of data ?? []) {
+      const sid = payToStudent.get(r.payment_id);
+      if (sid) refunded.set(sid, (refunded.get(sid) ?? 0) + (r.hours_refunded ?? 0));
+    }
+  }
+
+  // 3. 완료된 coach_room 시간
+  const used = new Map<string, number>();
+  const participantPairs: { event_id: string; user_id: string }[] = [];
+  for (let i = 0; i < userIds.length; i += 100) {
+    const { data } = await supabaseSFv2
+      .from('scheduled_event_participants')
+      .select('event_id, user_id')
+      .in('user_id', userIds.slice(i, i + 100));
+    if (data?.length) participantPairs.push(...data);
+  }
+  const allEventIds = [...new Set(participantPairs.map(p => p.event_id))];
+  const completedMeta = new Map<string, { starts_at: string; ends_at: string }>();
+  for (let i = 0; i < allEventIds.length; i += 100) {
+    const { data } = await supabaseSFv2
+      .from('scheduled_events')
+      .select('id, starts_at, ends_at')
+      .in('id', allEventIds.slice(i, i + 100))
+      .eq('category', 'coach_room')
+      .eq('status', 'completed');
+    for (const e of data ?? []) completedMeta.set(e.id, { starts_at: e.starts_at, ends_at: e.ends_at });
+  }
+  for (const p of participantPairs) {
+    const meta = completedMeta.get(p.event_id);
+    if (!meta) continue;
+    const dur = (new Date(meta.ends_at).getTime() - new Date(meta.starts_at).getTime()) / (1000 * 60 * 60);
+    if (dur > 0) used.set(p.user_id, (used.get(p.user_id) ?? 0) + dur);
+  }
+
+  // 4. 잔여 = max(0, 구매 − 환불 − 완료)
+  for (const userId of userIds) {
+    const p = purchased.get(userId) ?? 0;
+    const r = refunded.get(userId) ?? 0;
+    const u = used.get(userId) ?? 0;
+    remaining.set(userId, Math.round(Math.max(0, p - r - u) * 10) / 10);
+  }
+  return remaining;
 }
 
 // ─── 신규 스케줄 집계 ─────────────────────────────────────────────────────────
@@ -237,7 +352,6 @@ async function fetchFutureScheduleInfo(now: Date): Promise<Map<string, Date>> {
   const lastDateByUser = new Map<string, Date>();
   const PAGE_SIZE = 1000;
 
-  // Study Hall / Vocab
   const futureEvents: { id: string; starts_at: string }[] = [];
   for (let offset = 0; ; offset += PAGE_SIZE) {
     const { data: page, error } = await supabaseSFv2
@@ -270,7 +384,6 @@ async function fetchFutureScheduleInfo(now: Date): Promise<Map<string, Date>> {
     }
   }
 
-  // Test Center
   for (let offset = 0; ; offset += PAGE_SIZE) {
     const { data: page, error } = await supabaseSFv2
       .from('test_center_session')
