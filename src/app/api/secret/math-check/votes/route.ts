@@ -5,7 +5,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('sat_problem_votes')
-    .select('problem_id, vote_type');
+    .select('problem_id, vote_type')
+    .limit(20000);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
