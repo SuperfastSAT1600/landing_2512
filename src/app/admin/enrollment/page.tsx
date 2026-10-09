@@ -26,6 +26,12 @@ const PAGES: EnrollmentPage[] = [
         url: '/enrollment2026',
         description: '신규 수업권 신청 페이지 — 2026년 버전',
     },
+    {
+        slug: 'enrollment-v3',
+        label: 'enrollment-v3 (v3)',
+        url: '/enrollment-v3',
+        description: '관리형 10시간 · 대표코치 10/20/40시간 · 1:4 특강 (비관리형·콘텐츠 제외)',
+    },
 ];
 
 export default function AdminEnrollmentPage() {

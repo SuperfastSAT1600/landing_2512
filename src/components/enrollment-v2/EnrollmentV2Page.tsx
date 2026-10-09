@@ -15,6 +15,7 @@ import {
   CONTENT_ITEMS_V2,
 } from '@/lib/enrollment/data/pricing-v2';
 import type { CategoryIdV2, OptionSelectionV2 } from '@/types/enrollment-v2';
+import { ENROLLMENT_V2, directorSavings, type EnrollmentVariant } from './variants';
 
 /* ── 타입 ─────────────────────────────────────────────────────────── */
 type ManagementType = 'managed' | 'unmanaged';
@@ -256,22 +257,7 @@ function ClassFormatPicker({
 /* ════════════════════════════════════════════════════════════════════
    STEP 3: 관리형 1:1 패키지 선택 (전용 UI)
    ════════════════════════════════════════════════════════════════════ */
-const BASE_PRICE_PER_HOUR = 165000;
-
-const MANAGED_PKGS = [
-  { id: '1on1-10h',  hours: 10, totalPrice: 1650000, pricePerHour: 165000, discountRate: null as null | number },
-  { id: '1on1-20h',  hours: 20, totalPrice: 2990000, pricePerHour: 149500, discountRate: 9  },
-  { id: '1on1-40h',  hours: 40, totalPrice: 5390000, pricePerHour: 134750, discountRate: 18 },
-];
-
-/* 대표코치 수업권 — 할인 없는 정액 (시간당 21만원), 10시간권만 판매 */
-const DIRECTOR_PRICE_PER_HOUR = 210000;
-
-const DIRECTOR_PKGS = [10].map(hours => ({
-  id: `1on1-director-${hours}h`,
-  hours,
-  totalPrice: hours * DIRECTOR_PRICE_PER_HOUR,
-}));
+/* 관리형·대표코치 시간권은 판매 구성(variant)에서 받는다 — v2와 V3가 화면은 같고 상품만 다르다. */
 
 const SECTION_HEADING_STYLE: React.CSSProperties = {
   fontSize: 'clamp(1.75rem, 5vw, 2.5rem)',
@@ -290,10 +276,11 @@ interface HeadCoach {
 }
 
 
-function ManagedPackagePicker({ selectedOption, onSelect, lang }: {
+function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
   selectedOption: OptionSelectionV2 | null;
   onSelect: (o: OptionSelectionV2) => void;
   lang: Lang;
+  variant: EnrollmentVariant;
 }) {
   const [coaches, setCoaches] = useState<HeadCoach[]>([]);
   const [loadingCoaches, setLoadingCoaches] = useState(false);
@@ -334,10 +321,10 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang }: {
 
         <div className="flex flex-col gap-3">
           {/* 일반 3개 패키지 */}
-          {MANAGED_PKGS.map(pkg => {
+          {variant.managedPkgs.map(pkg => {
             const isSelected = selectedId === pkg.id;
             const savings = pkg.discountRate
-              ? BASE_PRICE_PER_HOUR * pkg.hours - pkg.totalPrice
+              ? variant.basePricePerHour * pkg.hours - pkg.totalPrice
               : 0;
 
             return (
@@ -429,17 +416,26 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang }: {
               </div>
 
               <div className="flex-1 text-right space-y-0.5">
-                {DIRECTOR_PKGS.map(pkg => (
-                  <div key={pkg.id} className="flex items-baseline justify-end gap-2">
-                    <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">
-                      {lang === 'en' ? `${pkg.hours} ${hourUnit}` : `${pkg.hours}${hourUnit}`}
-                    </span>
-                    <span
-                      className="text-sm font-semibold text-amber-200"
-                      style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
-                    >
-                      {formatWon(pkg.totalPrice)}
-                    </span>
+                {variant.directorPkgs.map(pkg => (
+                  <div key={pkg.id} className="flex flex-col items-end">
+                    <div className="flex items-baseline justify-end gap-2 whitespace-nowrap">
+                      <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">
+                        {lang === 'en' ? `${pkg.hours} ${hourUnit}` : `${pkg.hours}${hourUnit}`}
+                      </span>
+                      <span
+                        className="text-sm font-semibold text-amber-200"
+                        style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
+                      >
+                        {formatWon(pkg.totalPrice)}
+                      </span>
+                    </div>
+                    {directorSavings(pkg) > 0 && (
+                      <span className="text-[11px] font-light text-red-300 leading-tight whitespace-nowrap">
+                        {lang === 'en'
+                          ? `(${formatWon(directorSavings(pkg))} off)`
+                          : `(${formatWon(directorSavings(pkg))} 할인)`}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -775,9 +771,10 @@ function PackagePicker({
 /* ════════════════════════════════════════════════════════════════════
    MAIN PAGE
    ════════════════════════════════════════════════════════════════════ */
-export function EnrollmentV2Page({ lang = 'ko' }: { lang?: Lang } = {}) {
+export function EnrollmentV2Page({ lang = 'ko', variant = ENROLLMENT_V2 }: { lang?: Lang; variant?: EnrollmentVariant } = {}) {
   const [exam, setExam] = useState<'SAT' | 'AP' | null>(null);
-  const [managementType, setManagementType] = useState<ManagementType | null>(null);
+  // 자기주도 상품을 팔지 않는 구성(V3)은 관리형으로 고정하고 관리 방식 선택 단계를 건너뛴다.
+  const [managementType, setManagementType] = useState<ManagementType | null>(variant.selfDirected ? null : 'managed');
   const [classFormat, setClassFormat] = useState<CategoryIdV2 | null>(null);
   const [selectedOption, setSelectedOption] = useState<OptionSelectionV2 | null>(null);
   const [showcaseOpen, setShowcaseOpen] = useState(false);
@@ -919,22 +916,28 @@ export function EnrollmentV2Page({ lang = 'ko' }: { lang?: Lang } = {}) {
         ) : (
           /* ── SAT 플로우 ─────────────────────────────────────────── */
           <>
-            {/* Step 1: 관리형 / 자기주도 수업 선택 */}
-            <div id="v2-selection" ref={selectionRef} className="min-h-svh flex flex-col justify-center md:min-h-0 md:block">
-              <ManagementFitSection
-                managementType={managementType}
-                showcaseOpen={showcaseOpen}
-                onSelect={handleManagement}
-                onThumbnailClick={handleThumbnailClick}
-                sectionNumber={1}
-                hideHeading
-                lang={lang}
-              />
-            </div>
+            {/* Step 1: 관리형 / 자기주도 수업 선택 — 자기주도 상품이 없는 구성은 생략 */}
+            {variant.selfDirected && (
+              <div id="v2-selection" ref={selectionRef} className="min-h-svh flex flex-col justify-center md:min-h-0 md:block">
+                <ManagementFitSection
+                  managementType={managementType}
+                  showcaseOpen={showcaseOpen}
+                  onSelect={handleManagement}
+                  onThumbnailClick={handleThumbnailClick}
+                  sectionNumber={1}
+                  hideHeading
+                  lang={lang}
+                />
+              </div>
+            )}
 
             {/* 서비스 쇼케이스 (관리형 6가지 / 자기주도 3가지) */}
             {managementType === 'managed' && (
-              <div ref={showcaseRef} id="v2-showcase" className="border-t border-white/[0.06]">
+              <div
+                ref={variant.selfDirected ? showcaseRef : selectionRef}
+                id={variant.selfDirected ? 'v2-showcase' : 'v2-selection'}
+                className="border-t border-white/[0.06]"
+              >
                 <ManagedShowcase lang={lang} />
               </div>
             )}
@@ -964,6 +967,7 @@ export function EnrollmentV2Page({ lang = 'ko' }: { lang?: Lang } = {}) {
                     selectedOption={selectedOption}
                     onSelect={handleOption}
                     lang={lang}
+                    variant={variant}
                   />
                 </div>
               )}
