@@ -580,8 +580,41 @@ a {
 .mathweb-html p:last-child { margin-bottom: 0; }
 .mathweb-html em { font-style: italic; }
 .mathweb-html strong { font-weight: 600; }
-.mathweb-html mjx-container { vertical-align: middle; }
-.mathweb-html mjx-container[display="true"] { display: block; margin: 0.5em auto; text-align: center; }
+/* Tailwind preflight sets svg { display: block } — override for MathJax SVGs */
+mjx-container { display: inline-block !important; vertical-align: middle; }
+mjx-container[display="true"] { display: block !important; margin: 0.5em auto; text-align: center; }
+mjx-container svg { display: inline !important; vertical-align: middle; overflow: visible; }
+
+.mathweb-html { line-height: 1.65; }
+.mathweb-html p { margin-bottom: 0.6em; }
+.mathweb-html p:last-child { margin-bottom: 0; }
+
+/* ── math-problem: dark-theme figure / table / SVG 처리 ─────────────── */
+.math-problem p { margin-bottom: 0.6em; line-height: 1.7; }
+.math-problem p:last-child { margin-bottom: 0; }
+.math-problem figure.q-figure { margin: 0.75em 0; overflow-x: auto; }
+.math-problem figure.q-figure img { filter: invert(1) brightness(0.9); border-radius: 4px; }
+.math-problem figure.q-figure table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85em;
+  color: #d1d5db;
+}
+.math-problem figure.q-figure th,
+.math-problem figure.q-figure td {
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 0.4em 0.75em;
+  text-align: center;
+}
+.math-problem figure.q-figure th {
+  background: rgba(255,255,255,0.08);
+  font-weight: 600;
+  color: #f3f4f6;
+}
+.math-problem figure.q-figure tr:last-child td {
+  border-top: 1px solid rgba(255,255,255,0.25);
+  font-weight: 600;
+}
 
 /* ── enrollment-v2: header fade when exam selected ─────────────────── */
 .enrollment-v2 header {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { MathProblem, VoteType } from '@/data/october-math-problems';
 import { CommentSection } from './CommentSection';
+import { MathHtmlBlock } from '@/app/mathweb/MathHtmlBlock';
 
 interface Props {
   problem: MathProblem;
@@ -21,10 +22,9 @@ const VOTE_OPTIONS: { type: VoteType; label: string; emoji: string; color: strin
   { type: 'no', label: '안 나왔어요', emoji: '❌', color: 'border-white/10 hover:border-gray-500/50 hover:bg-gray-500/5', activeColor: 'border-gray-500 bg-gray-500/10 text-gray-300' },
 ];
 
-export function ProblemCard({ problem, index, total, counts, userVote, username, onVote, onNext }: Props) {
+export function ProblemCard({ problem, index, total, counts, userVote, onVote, onNext }: Props) {
   const [voting, setVoting] = useState(false);
 
-  // 문제 바뀌면 초기화
   useEffect(() => { setVoting(false); }, [problem.id]);
 
   async function handleVote(type: VoteType) {
@@ -37,39 +37,18 @@ export function ProblemCard({ problem, index, total, counts, userVote, username,
 
   return (
     <div className="space-y-6">
-      {/* 문제 번호 + 타입 뱃지 */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500 font-mono">{index + 1} / {total}</span>
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-          problem.type === 'new'
-            ? 'bg-indigo-500/20 text-indigo-300'
-            : 'bg-orange-500/20 text-orange-300'
-        }`}>
-          {problem.type === 'new' ? '신유형' : '어려워진 변형'}
-        </span>
-      </div>
-
-      {/* 스킬 */}
-      <p className="text-[11px] text-gray-500 font-mono">{problem.skill}</p>
-
-      {/* 제목 */}
-      <h2 className="text-lg font-bold leading-snug">{problem.title}</h2>
+      {/* 문제 번호 */}
+      <span className="text-xs text-gray-500 font-mono">{index + 1} / {total}</span>
 
       {/* 문제 설명 */}
-      <div className="bg-white/5 rounded-xl p-4 text-sm text-gray-300 leading-relaxed">
-        {problem.description}
-      </div>
-
-      {/* 무엇이 새로운가 */}
-      <div className="border-l-2 border-indigo-500/40 pl-3">
-        <p className="text-[11px] text-indigo-400 font-semibold mb-1 uppercase tracking-wide">기존 문항과의 차이</p>
-        <p className="text-xs text-gray-400 leading-relaxed">{problem.what_changed}</p>
+      <div className="bg-white/5 rounded-xl p-4 text-sm text-gray-200 leading-relaxed math-problem">
+        <MathHtmlBlock html={problem.description} className="mathweb-html" />
       </div>
 
       {/* 투표 버튼 */}
       <div className="space-y-2">
         <p className="text-xs text-gray-500">
-          이 유형의 문제가 내 시험에 나왔나요?
+          시험에 나왔나요?
           {totalVotes > 0 && <span className="ml-1 text-gray-600">({totalVotes}명 응답)</span>}
         </p>
         {VOTE_OPTIONS.map(opt => {
