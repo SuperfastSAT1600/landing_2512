@@ -6,7 +6,8 @@ export async function GET() {
     supabaseAdmin
       .from('sat_problem_votes')
       .select('problem_id, instagram_username, vote_type, created_at')
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(20000),
     supabaseAdmin
       .from('sat_problem_comments')
       .select('problem_id, comment, created_at')
