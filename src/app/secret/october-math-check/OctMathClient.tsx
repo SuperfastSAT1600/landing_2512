@@ -82,7 +82,7 @@ export function OctMathClient({ initialCounts }: Props) {
   const total = ALL_PROBLEMS.length;
 
   return (
-    <div className="min-h-screen bg-[#0f1117] text-white flex flex-col">
+    <div className="min-h-screen bg-[#0f1117] text-white flex flex-col pt-14">
       {/* 헤더 */}
       <header className="border-b border-white/10 px-4 py-3 flex items-center justify-between">
         <span className="text-xs text-gray-500 font-mono">@{username}</span>

@@ -3,7 +3,7 @@
  * 채널: #006_학습현황_출석률 (C0BNF23DQ5R)
  */
 
-import type { StudentSummary, EndingSoon, NoScheduleGroup } from '@/app/api/cron/schedule-input-status/route';
+import type { EndingSoon, HoursBucket } from '@/app/api/cron/schedule-input-status/route';
 
 const SCHEDULE_STATUS_CHANNEL = 'C0BNF23DQ5R';
 
@@ -28,104 +28,61 @@ async function post(channel: string, text: string, blocks: object[]): Promise<vo
 }
 
 export async function notifyScheduleInputStatus(params: {
-  summaries: StudentSummary[];
   endingSoon: EndingSoon[];
-  urgentGroups: NoScheduleGroup[];
-  noCoachGroups: NoScheduleGroup[];
-  noStudyHallGroups: NoScheduleGroup[];
+  hoursBuckets: HoursBucket[];
+  recentlyScheduledNames: Set<string>;
   windowLabel: string;
 }): Promise<void> {
-  const { summaries, endingSoon, urgentGroups, noCoachGroups, noStudyHallGroups, windowLabel } = params;
+  const { endingSoon, hoursBuckets, recentlyScheduledNames, windowLabel } = params;
 
   const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000)
     .toISOString().slice(5, 16).replace('T', ' ');
 
-  const totalUrgent = urgentGroups.reduce((s, g) => s + g.students.length, 0);
-  const totalNoCoach = noCoachGroups.reduce((s, g) => s + g.students.length, 0);
-  const totalNoStudyHall = noStudyHallGroups.reduce((s, g) => s + g.students.length, 0);
+  const totalNeedingAttention = hoursBuckets.reduce((s, b) => s + b.entries.reduce((s2, e) => s2 + e.students.length, 0), 0);
 
-  const GROUP_EMOJI: Record<string, string> = {
-    '0시간':     '🔴',
-    '1~10시간':  '🟠',
-    '11~20시간': '🟡',
-    '21시간+':   '🟢',
-  };
+  // ── 레전드 ──
+  const legendText = `📋 *스케줄 현황 브리핑* — ${nowKST} KST\n기간: ${windowLabel}\n\n🏫 수업(코치룸)　　📚 스터디홀　　📝 보캡　　🔔 오늘 신규 입력`;
 
-  function buildGroupText(header: string, groups: NoScheduleGroup[], emptyMsg: string): string {
-    if (groups.length === 0) return `${header}\n${emptyMsg}`;
-    const lines = [header];
-    for (const g of groups) {
-      const emoji = GROUP_EMOJI[g.label] ?? '⚪';
-      lines.push(`${emoji} *${g.label} (${g.students.length}명)*\n${g.students.join(', ')}`);
-    }
-    return lines.join('\n');
-  }
-
-  const legendText = `📋 *스케줄 현황 브리핑* — ${nowKST} KST\n기간: ${windowLabel}\n\n📚 Study Hall　　📝 Vocab　　🎯 Test Center　　🏫 Coach Room`;
-
-  // ── 신규 입력 (칭찬용) ──
-  let scheduledText: string;
-  if (summaries.length === 0) {
-    scheduledText = '✅ *신규 입력: 0명*\n없음';
-  } else {
-    const lines = [`✅ *신규 입력: ${summaries.length}명*`];
-    for (const s of summaries) {
-      const icons = [
-        s.studyHall > 0 ? `📚×${s.studyHall}` : '',
-        s.vocab > 0 ? `📝×${s.vocab}` : '',
-        s.testCenter > 0 ? `🎯×${s.testCenter}` : '',
-      ].filter(Boolean).join('  ');
-      const dateRange = s.firstDate === s.lastDate ? s.firstDate : `${s.firstDate}~${s.lastDate}`;
-      lines.push(`• *${s.studentName}* — ${icons}  _${dateRange}_`);
-    }
-    scheduledText = lines.join('\n');
-  }
-
-  // ── 종료 임박 (스터디홀/보캡) ──
+  // ── 종료 임박 ──
   let endingSoonText: string;
   if (endingSoon.length === 0) {
-    endingSoonText = '🟠 *스터디홀 종료 임박: 0명*';
+    endingSoonText = '🟠 *종료 임박: 0명*';
   } else {
-    const lines = [`🟠 *스터디홀 종료 임박: ${endingSoon.length}명* _(마지막 일정이 내일까지인 학생)_`];
+    const lines = [`🟠 *종료 임박: ${endingSoon.length}명* _(마지막 스터디홀/보캡이 내일까지인 학생)_`];
     for (const s of endingSoon) {
       lines.push(`• *${s.studentName}* — 마지막 일정 ${s.lastDate}`);
     }
     endingSoonText = lines.join('\n');
   }
 
-  // ── 3단계 우선순위 ──
-  const urgentText = buildGroupText(
-    `🚨 *즉시 연락: ${totalUrgent}명* _(코치룸 + 스터디홀/보캡 모두 없음)_`,
-    urgentGroups,
-    '없음',
-  );
+  // ── 잔여 시간별 현황 ──
+  function comboLabel(hasCoach: boolean, hasStudyHall: boolean, hasVocab: boolean): string {
+    return `🏫${hasCoach ? '✓' : '✗'} 📚${hasStudyHall ? '✓' : '✗'} 📝${hasVocab ? '✓' : '✗'}`;
+  }
 
-  const noCoachText = buildGroupText(
-    `⚠️ *코치룸 미예약: ${totalNoCoach}명* _(스터디홀/보캡은 입력됨)_`,
-    noCoachGroups,
-    '없음',
-  );
-
-  const noStudyHallText = buildGroupText(
-    `📝 *스터디홀/보캡 미입력: ${totalNoStudyHall}명* _(코치룸은 있음)_`,
-    noStudyHallGroups,
-    '없음',
-  );
-
-  const blocks = [
+  const blocks: object[] = [
     { type: 'section', text: { type: 'mrkdwn', text: legendText } },
-    { type: 'divider' },
-    { type: 'section', text: { type: 'mrkdwn', text: scheduledText } },
     { type: 'divider' },
     { type: 'section', text: { type: 'mrkdwn', text: endingSoonText } },
     { type: 'divider' },
-    { type: 'section', text: { type: 'mrkdwn', text: urgentText } },
-    { type: 'divider' },
-    { type: 'section', text: { type: 'mrkdwn', text: noCoachText } },
-    { type: 'divider' },
-    { type: 'section', text: { type: 'mrkdwn', text: noStudyHallText } },
   ];
 
-  const fallbackText = `📋 스케줄 현황 — 신규 ${summaries.length}명 / 즉시연락 ${totalUrgent}명 / 코치룸미예약 ${totalNoCoach}명 / 스터디홀미입력 ${totalNoStudyHall}명`;
+  if (hoursBuckets.length === 0) {
+    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: '✅ *모든 학생 스케줄 완비* — 조치 필요 없음' } });
+  } else {
+    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: `*잔여 수업 시간별 현황 — 조치 필요 ${totalNeedingAttention}명*` } });
+
+    for (const bucket of hoursBuckets) {
+      const totalInBucket = bucket.entries.reduce((s, e) => s + e.students.length, 0);
+      const lines = [`${bucket.emoji} *잔여 ${bucket.label} (${totalInBucket}명)*`];
+      for (const entry of bucket.entries) {
+        const names = entry.students.map(n => recentlyScheduledNames.has(n) ? `${n} 🔔` : n).join(', ');
+        lines.push(`${comboLabel(entry.hasCoach, entry.hasStudyHall, entry.hasVocab)}　${names}`);
+      }
+      blocks.push({ type: 'section', text: { type: 'mrkdwn', text: lines.join('\n') } });
+    }
+  }
+
+  const fallbackText = `📋 스케줄 현황 — 조치 필요 ${totalNeedingAttention}명`;
   await post(SCHEDULE_STATUS_CHANNEL, fallbackText, blocks);
 }
