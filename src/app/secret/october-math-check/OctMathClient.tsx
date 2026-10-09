@@ -98,7 +98,7 @@ export function OctMathClient({ initialCounts }: Props) {
         />
       </div>
 
-      <main className="flex-1 max-w-xl mx-auto w-full px-4 py-8">
+      <main className="flex-1 max-w-xl mx-auto w-full px-4 py-8 pb-32">
         <ProblemCard
           problem={problem}
           index={currentIdx}
