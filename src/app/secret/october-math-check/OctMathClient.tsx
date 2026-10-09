@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { OCTOBER_MATH_PROBLEMS, VoteType } from '@/data/october-math-problems';
 import { NOVEMBER_MATH_PROBLEMS } from '@/data/november-math-problems';
+import { OCTOBER_MOCK_MATH_PROBLEMS } from '@/data/october-mock-math-problems';
 
-const ALL_PROBLEMS = [...OCTOBER_MATH_PROBLEMS, ...NOVEMBER_MATH_PROBLEMS];
+const ALL_PROBLEMS = [...OCTOBER_MATH_PROBLEMS, ...NOVEMBER_MATH_PROBLEMS, ...OCTOBER_MOCK_MATH_PROBLEMS];
 import { LoginScreen } from './LoginScreen';
 import { ProblemCard } from './ProblemCard';
 
