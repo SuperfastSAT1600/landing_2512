@@ -580,14 +580,16 @@ a {
 .mathweb-html p:last-child { margin-bottom: 0; }
 .mathweb-html em { font-style: italic; }
 .mathweb-html strong { font-weight: 600; }
-.mathweb-html mjx-container { display: inline !important; vertical-align: middle; }
-.mathweb-html mjx-container[display="true"] { display: block !important; margin: 0.5em auto; text-align: center; }
-.mathweb-html mjx-container svg { vertical-align: middle; overflow: visible; }
+/* Tailwind preflight sets svg { display: block } — override for MathJax SVGs */
+mjx-container { display: inline-block !important; vertical-align: middle; }
+mjx-container[display="true"] { display: block !important; margin: 0.5em auto; text-align: center; }
+mjx-container svg { display: inline !important; vertical-align: middle; overflow: visible; }
+
+.mathweb-html { line-height: 1.65; }
+.mathweb-html p { margin-bottom: 0.6em; }
+.mathweb-html p:last-child { margin-bottom: 0; }
 
 /* ── math-problem: dark-theme figure / table / SVG 처리 ─────────────── */
-.math-problem mjx-container { display: inline !important; vertical-align: middle; }
-.math-problem mjx-container[display="true"] { display: block !important; margin: 0.5em auto; text-align: center; }
-.math-problem mjx-container svg { vertical-align: middle; overflow: visible; }
 .math-problem p { margin-bottom: 0.6em; line-height: 1.7; }
 .math-problem p:last-child { margin-bottom: 0; }
 .math-problem figure.q-figure { margin: 0.75em 0; overflow-x: auto; }
