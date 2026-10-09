@@ -75,14 +75,17 @@ export function ProblemCard({ problem, index, total, counts, userVote, onVote, o
 
       {/* 이전 / 다음 버튼 */}
       <div className="flex gap-2">
-        {onPrev && (
-          <button
-            onClick={onPrev}
-            className="flex-1 py-3 text-sm font-semibold text-gray-500 border border-white/10 rounded-xl hover:bg-white/5 transition-colors"
-          >
-            ← 이전 문제
-          </button>
-        )}
+        <button
+          onClick={onPrev}
+          disabled={!onPrev}
+          className={`flex-1 py-3 text-sm font-semibold border rounded-xl transition-colors ${
+            onPrev
+              ? 'text-gray-500 border-white/10 hover:bg-white/5'
+              : 'text-gray-700 border-white/5 cursor-not-allowed opacity-30'
+          }`}
+        >
+          ← 이전 문제
+        </button>
         {userVote && onNext && (
           <button
             onClick={onNext}
