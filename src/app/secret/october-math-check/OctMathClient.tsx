@@ -60,17 +60,6 @@ export function OctMathClient({ initialCounts }: Props) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ problem_id: problemId, instagram_username: username, vote_type: voteType }),
     });
-
-    // 다음 미투표 문제로 이동
-    const nextIdx = ALL_PROBLEMS.findIndex((p, i) => i > currentIdx && !newVoted[p.id]);
-    if (nextIdx === -1) {
-      // 뒤에 없으면 앞에서 찾기
-      const anyUnvoted = ALL_PROBLEMS.findIndex(p => !newVoted[p.id]);
-      if (anyUnvoted === -1) setDone(true);
-      else setCurrentIdx(anyUnvoted);
-    } else {
-      setCurrentIdx(nextIdx);
-    }
   }
 
   function handleNext() {
