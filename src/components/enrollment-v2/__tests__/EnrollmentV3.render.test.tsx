@@ -29,18 +29,41 @@ describe('수업권 V3 화면', () => {
     expect(screen.queryByText('콘텐츠 학습')).toBeNull();
   });
 
-  it('1:1을 고르면 관리형은 10시간 165만원 하나, 대표코치는 10·20·40시간과 할인액', () => {
+  it('1:1을 고르면 묶음 제목 2개와 시간권 카드 4개(관리형 1 + 대표코치 3)', () => {
     render(<EnrollmentV2Page variant={ENROLLMENT_V3} />);
     pickOneOnOne();
-    expect(screen.getByText('165만원')).toBeTruthy();
+    expect(screen.getByText('관리형 1:1 수업')).toBeTruthy();
+    expect(screen.getByText('프리미엄 · SuperfastSAT 대표코치 1:1')).toBeTruthy();
+    for (const price of ['165만원', '210만원', '380만원', '686만원']) {
+      expect(screen.getByText(price).closest('button')).toBeTruthy();
+    }
     expect(screen.queryByText('299만원')).toBeNull();
-    expect(screen.queryByText('539만원')).toBeNull();
-    const director = screen.getByText('SuperfastSAT 대표코치의 1:1 수업').closest('button')!;
-    expect(within(director).getByText('210만원')).toBeTruthy();
-    expect(within(director).getByText('380만원')).toBeTruthy();
-    expect(within(director).getByText('686만원')).toBeTruthy();
-    expect(within(director).getByText('(40만원 할인)')).toBeTruthy();
-    expect(within(director).getByText('(154만원 할인)')).toBeTruthy();
+  });
+
+  it('대표코치 20·40시간 카드에 할인율·할인액, 40시간에 최대 할인 배지', () => {
+    render(<EnrollmentV2Page variant={ENROLLMENT_V3} />);
+    pickOneOnOne();
+    const card20 = screen.getByText('380만원').closest('button')!;
+    expect(within(card20).getByText(/9% 할인/)).toBeTruthy();
+    expect(within(card20).getByText(/40만원 더 저렴합니다/)).toBeTruthy();
+    const card40 = screen.getByText('686만원').closest('button')!;
+    expect(within(card40).getByText(/18% 할인/)).toBeTruthy();
+    expect(within(card40).getByText(/154만원 더 저렴합니다/)).toBeTruthy();
+    expect(within(card40).getByText('최대 할인')).toBeTruthy();
+    expect(within(card20).queryByText('최대 할인')).toBeNull();
+    const card10 = screen.getByText('210만원').closest('button')!;
+    expect(within(card10).queryByText(/할인/)).toBeNull();
+  });
+
+  it('대표코치 20시간 카드를 고르면 그 카드만 선택되고 대표코치 라인업이 열린다', () => {
+    render(<EnrollmentV2Page variant={ENROLLMENT_V3} />);
+    pickOneOnOne();
+    expect(screen.queryByText('대표코치 라인업')).toBeNull();
+    const card20 = screen.getByText('380만원').closest('button')!;
+    fireEvent.click(card20);
+    expect(card20.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('686만원').closest('button')!.getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByText('대표코치 라인업')).toBeTruthy();
   });
 
   it('v2는 그대로 — 자기주도 선택지와 관리형 3개 시간권', () => {

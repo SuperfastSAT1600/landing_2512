@@ -25,6 +25,8 @@ export interface EnrollmentVariant {
   directorPkgs: DirectorPkg[];
   /** false면 관리형만 판매 — 관리형/자기주도 선택 단계와 비관리형·콘텐츠를 숨긴다. */
   selfDirected: boolean;
+  /** true면 시간권마다 카드 1개 + '관리형 1:1'/'프리미엄 · 대표코치' 묶음 제목(V3). false면 대표코치를 카드 1개로 합친다(v2). */
+  groupedCards: boolean;
 }
 
 /** 대표코치 시간권의 정가 대비 할인액(원). 정가 그대로면 0. */
@@ -42,6 +44,7 @@ export const ENROLLMENT_V2: EnrollmentVariant = {
   // 대표코치 수업권 — 할인 없는 정액, 10시간권만 판매
   directorPkgs: [{ id: '1on1-director-10h', hours: 10, totalPrice: 2100000 }],
   selfDirected: true,
+  groupedCards: false,
 };
 
 // V3(2026-10): 비관리형·콘텐츠 판매 중단, 관리형은 10시간권만, 대표코치 20·40시간권 할인 판매.
@@ -56,4 +59,12 @@ export const ENROLLMENT_V3: EnrollmentVariant = {
     { id: '1on1-director-40h', hours: 40, totalPrice: 6860000 },
   ],
   selfDirected: false,
+  groupedCards: true,
 };
+
+/** 대표코치 시간권의 정가 대비 할인율(%) — v2 관리형 할인 문구와 같은 방식으로 내림. 할인 없으면 null. */
+export function directorDiscountRate(pkg: DirectorPkg): number | null {
+  const savings = directorSavings(pkg);
+  if (savings <= 0) return null;
+  return Math.floor((savings / (pkg.hours * DIRECTOR_PRICE_PER_HOUR)) * 100);
+}
