@@ -12,7 +12,7 @@ interface StatsData {
   participants: number;
   voteCounts: Record<string, { yes: number; similar: number; no: number }>;
   commentsByProblem: Record<string, { comment: string; created_at: string }[]>;
-  recentUsers: { username: string; created_at: string }[];
+  realUsers: { username: string; created_at: string }[];
 }
 
 export default function OctMathCheckAdminPage() {
@@ -84,22 +84,50 @@ export default function OctMathCheckAdminPage() {
         <StatCard label="총 코멘트" value={totalComments} icon={<MessageCircle size={16} />} color="purple" />
       </div>
 
-      {/* 참여자 목록 토글 */}
+      {/* 실제 참여자 목록 */}
       <div className="mb-8 bg-[#1e2023] rounded-xl border border-white/5 overflow-hidden">
         <button
           onClick={() => setShowUsers(v => !v)}
           className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium text-gray-300 hover:text-white transition-colors"
         >
-          <span>최근 참여자 ({data.recentUsers.length}명 표시)</span>
+          <div className="flex items-center gap-2">
+            <span>실제 참여자</span>
+            <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-mono">
+              {data.realUsers.length}명
+            </span>
+            <span className="text-xs text-gray-600">(가짜 데이터 53명 제외)</span>
+          </div>
           {showUsers ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
         {showUsers && (
-          <div className="border-t border-white/5 px-5 py-3 flex flex-wrap gap-2">
-            {data.recentUsers.map(u => (
-              <span key={u.username} className="text-xs bg-white/5 text-gray-400 px-2 py-1 rounded-full font-mono">
-                @{u.username}
-              </span>
-            ))}
+          <div className="border-t border-white/5 px-5 py-4">
+            {data.realUsers.length === 0 ? (
+              <p className="text-xs text-gray-600 text-center py-2">아직 실제 참여자가 없습니다.</p>
+            ) : (
+              <div className="space-y-2">
+                {data.realUsers.map((u, i) => (
+                  <div key={u.username} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-600 font-mono w-5">{i + 1}</span>
+                      <a
+                        href={`https://instagram.com/${u.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-mono text-indigo-400 hover:text-indigo-300 transition-colors"
+                      >
+                        @{u.username}
+                      </a>
+                    </div>
+                    <span className="text-xs text-gray-600">
+                      {new Date(u.created_at).toLocaleString('ko-KR', {
+                        month: 'numeric', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

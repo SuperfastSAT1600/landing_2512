@@ -1,0 +1,16 @@
+export const SEED_USERNAMES = new Set([
+  'soo_study2026', 'math_king_jiho', 'sat_prep_minjun', 'yerin_studies',
+  'hyunwoo_sat', 'eunji_mathpro', 'jisoo_tutoringhub', 'sunho_sat2026',
+  'dayeon_prep', 'woojin_mathstudy', 'nara_sat_prep', 'haejun_studylog',
+  'minji_2026sat', 'taehyun_mathking', 'seoyeon_studytime', 'junho_prep2026',
+  'chaewon_sat', 'jungwoo_studies', 'yujin_mathnerd', 'soohyun_sat',
+  'minhee_studygram', 'donghyun_prep', 'areum_sat2026', 'sungmin_mathstudy',
+  'hayeon_preplife', 'jaewon_sat', 'yoona_study2026', 'kyungmin_math',
+  'jieun_satprep', 'hyunjae_studies', 'sooyeon_2026', 'taejun_mathking',
+  'bomi_sat_prep', 'youngwoo_studies', 'jinyoung_sat', 'seojun_preplife',
+  'naeun_math2026', 'minhyuk_studylog', 'dahee_sat', 'jisung_prep2026',
+  'yeonhee_studies', 'sehun_satmath', 'jiwon_prepgram', 'hyunseok_sat',
+  'chaeyeon_study', 'sungjun_math2026', 'dohyun_prep', 'yujin_sat_2026',
+  'jeonghyun_math', 'sojeong_studies', 'minjae_satprep', 'hayeon_math2026',
+  'seungwoo_sat',
+]);
