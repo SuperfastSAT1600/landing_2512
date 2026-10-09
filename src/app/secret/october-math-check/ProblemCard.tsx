@@ -14,6 +14,7 @@ interface Props {
   username: string;
   onVote: (problemId: string, voteType: VoteType) => void;
   onNext?: () => void;
+  onPrev?: () => void;
 }
 
 const VOTE_OPTIONS: { type: VoteType; label: string; emoji: string; color: string; activeColor: string }[] = [
@@ -22,7 +23,7 @@ const VOTE_OPTIONS: { type: VoteType; label: string; emoji: string; color: strin
   { type: 'no', label: '안 나왔어요', emoji: '❌', color: 'border-white/10 hover:border-gray-500/50 hover:bg-gray-500/5', activeColor: 'border-gray-500 bg-gray-500/10 text-gray-300' },
 ];
 
-export function ProblemCard({ problem, index, total, counts, userVote, onVote, onNext }: Props) {
+export function ProblemCard({ problem, index, total, counts, userVote, onVote, onNext, onPrev }: Props) {
   const [voting, setVoting] = useState(false);
 
   useEffect(() => { setVoting(false); }, [problem.id]);
@@ -72,15 +73,25 @@ export function ProblemCard({ problem, index, total, counts, userVote, onVote, o
         })}
       </div>
 
-      {/* 투표 후 다음 버튼 */}
-      {userVote && onNext && (
-        <button
-          onClick={onNext}
-          className="w-full py-3 text-sm font-semibold text-indigo-400 border border-indigo-500/30 rounded-xl hover:bg-indigo-500/10 transition-colors"
-        >
-          다음 문제 →
-        </button>
-      )}
+      {/* 이전 / 다음 버튼 */}
+      <div className="flex gap-2">
+        {onPrev && (
+          <button
+            onClick={onPrev}
+            className="flex-1 py-3 text-sm font-semibold text-gray-500 border border-white/10 rounded-xl hover:bg-white/5 transition-colors"
+          >
+            ← 이전 문제
+          </button>
+        )}
+        {userVote && onNext && (
+          <button
+            onClick={onNext}
+            className="flex-1 py-3 text-sm font-semibold text-indigo-400 border border-indigo-500/30 rounded-xl hover:bg-indigo-500/10 transition-colors"
+          >
+            다음 문제 →
+          </button>
+        )}
+      </div>
 
       {/* 코멘트 섹션 */}
       <CommentSection problemId={problem.id} />

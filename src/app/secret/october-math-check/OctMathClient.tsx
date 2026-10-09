@@ -74,6 +74,10 @@ export function OctMathClient({ initialCounts }: Props) {
     }
   }
 
+  function handlePrev() {
+    if (currentIdx > 0) setCurrentIdx(currentIdx - 1);
+  }
+
   if (!username) return <LoginScreen onLogin={handleLogin} />;
 
   if (done) return <DoneScreen counts={counts} username={username} onReview={() => { setCurrentIdx(0); setDone(false); }} />;
@@ -108,6 +112,7 @@ export function OctMathClient({ initialCounts }: Props) {
           username={username}
           onVote={handleVote}
           onNext={voted[problem.id] ? handleNext : undefined}
+          onPrev={currentIdx > 0 ? handlePrev : undefined}
         />
       </main>
     </div>
