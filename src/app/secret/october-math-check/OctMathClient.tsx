@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { OCTOBER_MATH_PROBLEMS, VoteType } from '@/data/october-math-problems';
+import { NOVEMBER_MATH_PROBLEMS } from '@/data/november-math-problems';
+
+const ALL_PROBLEMS = [...OCTOBER_MATH_PROBLEMS, ...NOVEMBER_MATH_PROBLEMS];
 import { LoginScreen } from './LoginScreen';
 import { ProblemCard } from './ProblemCard';
 
@@ -26,7 +29,7 @@ export function OctMathClient({ initialCounts }: Props) {
       const saved = JSON.parse(localStorage.getItem(VOTED_KEY) ?? '{}');
       setVoted(saved);
       // 첫 미투표 문제로 이동
-      const firstUnvoted = OCTOBER_MATH_PROBLEMS.findIndex(p => !saved[p.id]);
+      const firstUnvoted = ALL_PROBLEMS.findIndex(p => !saved[p.id]);
       if (firstUnvoted === -1) setDone(true);
       else setCurrentIdx(firstUnvoted);
     } catch {}
@@ -59,10 +62,10 @@ export function OctMathClient({ initialCounts }: Props) {
     });
 
     // 다음 미투표 문제로 이동
-    const nextIdx = OCTOBER_MATH_PROBLEMS.findIndex((p, i) => i > currentIdx && !newVoted[p.id]);
+    const nextIdx = ALL_PROBLEMS.findIndex((p, i) => i > currentIdx && !newVoted[p.id]);
     if (nextIdx === -1) {
       // 뒤에 없으면 앞에서 찾기
-      const anyUnvoted = OCTOBER_MATH_PROBLEMS.findIndex(p => !newVoted[p.id]);
+      const anyUnvoted = ALL_PROBLEMS.findIndex(p => !newVoted[p.id]);
       if (anyUnvoted === -1) setDone(true);
       else setCurrentIdx(anyUnvoted);
     } else {
@@ -71,9 +74,9 @@ export function OctMathClient({ initialCounts }: Props) {
   }
 
   function handleNext() {
-    const nextIdx = OCTOBER_MATH_PROBLEMS.findIndex((p, i) => i > currentIdx && !voted[p.id]);
+    const nextIdx = ALL_PROBLEMS.findIndex((p, i) => i > currentIdx && !voted[p.id]);
     if (nextIdx === -1) {
-      const anyUnvoted = OCTOBER_MATH_PROBLEMS.findIndex(p => !voted[p.id]);
+      const anyUnvoted = ALL_PROBLEMS.findIndex(p => !voted[p.id]);
       if (anyUnvoted === -1) setDone(true);
       else setCurrentIdx(anyUnvoted);
     } else {
@@ -85,9 +88,9 @@ export function OctMathClient({ initialCounts }: Props) {
 
   if (done) return <DoneScreen counts={counts} username={username} onReview={() => { setCurrentIdx(0); setDone(false); }} />;
 
-  const problem = OCTOBER_MATH_PROBLEMS[currentIdx];
+  const problem = ALL_PROBLEMS[currentIdx];
   const votedCount = Object.keys(voted).length;
-  const total = OCTOBER_MATH_PROBLEMS.length;
+  const total = ALL_PROBLEMS.length;
 
   return (
     <div className="min-h-screen bg-[#0f1117] text-white flex flex-col">
@@ -130,10 +133,10 @@ function DoneScreen({
   username: string;
   onReview: () => void;
 }) {
-  const total = OCTOBER_MATH_PROBLEMS.length;
-  const totalYes = OCTOBER_MATH_PROBLEMS.reduce((s, p) => s + (counts[p.id]?.yes ?? 0), 0);
-  const totalSimilar = OCTOBER_MATH_PROBLEMS.reduce((s, p) => s + (counts[p.id]?.similar ?? 0), 0);
-  const totalNo = OCTOBER_MATH_PROBLEMS.reduce((s, p) => s + (counts[p.id]?.no ?? 0), 0);
+  const total = ALL_PROBLEMS.length;
+  const totalYes = ALL_PROBLEMS.reduce((s, p) => s + (counts[p.id]?.yes ?? 0), 0);
+  const totalSimilar = ALL_PROBLEMS.reduce((s, p) => s + (counts[p.id]?.similar ?? 0), 0);
+  const totalNo = ALL_PROBLEMS.reduce((s, p) => s + (counts[p.id]?.no ?? 0), 0);
 
   return (
     <div className="min-h-screen bg-[#0f1117] text-white flex flex-col items-center justify-center px-4">

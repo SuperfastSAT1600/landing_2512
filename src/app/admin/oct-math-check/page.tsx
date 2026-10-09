@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { OCTOBER_MATH_PROBLEMS, type MathProblem } from '@/data/october-math-problems';
+import { NOVEMBER_MATH_PROBLEMS } from '@/data/november-math-problems';
 import { RefreshCw, Users, MessageCircle, ChevronDown, ChevronUp, Eye, X } from 'lucide-react';
+import { MathHtmlBlock } from '@/app/mathweb/MathHtmlBlock';
+
+const ALL_PROBLEMS = [...OCTOBER_MATH_PROBLEMS, ...NOVEMBER_MATH_PROBLEMS];
 
 interface StatsData {
   participants: number;
@@ -102,7 +106,7 @@ export default function OctMathCheckAdminPage() {
 
       {/* 문제별 현황 */}
       <div className="space-y-4">
-        {OCTOBER_MATH_PROBLEMS.map((problem) => {
+        {ALL_PROBLEMS.map((problem) => {
           const counts = data.voteCounts[problem.id] ?? { yes: 0, similar: 0, no: 0 };
           const total = counts.yes + counts.similar + counts.no;
           const comments = data.commentsByProblem[problem.id] ?? [];
@@ -180,8 +184,8 @@ export default function OctMathCheckAdminPage() {
       {previewProblem && (
         <ProblemPreviewModal
           problem={previewProblem}
-          index={OCTOBER_MATH_PROBLEMS.findIndex(p => p.id === previewProblem.id)}
-          total={OCTOBER_MATH_PROBLEMS.length}
+          index={ALL_PROBLEMS.findIndex(p => p.id === previewProblem.id)}
+          total={ALL_PROBLEMS.length}
           onClose={() => setPreviewProblem(null)}
         />
       )}
@@ -220,8 +224,8 @@ function ProblemPreviewModal({
           <span className="text-xs text-gray-500 font-mono">{index + 1} / {total}</span>
 
           {/* 문제 설명 — 복기 기반, 보기 없음 */}
-          <div className="bg-white/5 rounded-xl p-4 text-sm text-gray-200 leading-relaxed">
-            {problem.description}
+          <div className="bg-white/5 rounded-xl p-4 text-sm text-gray-200 leading-relaxed math-problem">
+            <MathHtmlBlock html={problem.description} />
           </div>
 
           {/* 투표 버튼 (비활성 미리보기) */}
