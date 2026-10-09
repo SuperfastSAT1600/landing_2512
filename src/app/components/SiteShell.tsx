@@ -12,8 +12,11 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const isEnrollment = pathname?.startsWith('/enrollment') && !pathname?.startsWith('/enrollment-v2') && !pathname?.startsWith('/enrollment2026');
   const isCoachOnboarding = pathname?.startsWith('/coach-onboarding');
   const isSsatMath = pathname?.startsWith('/ssat-math');
+  const isOnboardingSession = pathname?.startsWith('/onboarding');
+  const isSecret = pathname?.startsWith('/secret/');
 
-  if (isPortal || isCoachPrep || isPartner || isEnrollment || isCoachOnboarding || isSsatMath) return <>{children}</>;
+  if (isPortal || isCoachPrep || isPartner || isEnrollment || isCoachOnboarding || isSsatMath || isOnboardingSession || isSecret)
+    return <>{children}</>;
 
   return (
     <>
