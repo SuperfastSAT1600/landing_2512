@@ -117,16 +117,7 @@ export default function OctMathCheckAdminPage() {
               <div className="px-5 py-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                        problem.type === 'new'
-                          ? 'bg-indigo-500/20 text-indigo-400'
-                          : 'bg-orange-500/20 text-orange-400'
-                      }`}>
-                        {problem.type === 'new' ? '신유형' : '어려워진 변형'}
-                      </span>
-                      <span className="text-[10px] text-gray-600 font-mono">{problem.skill}</span>
-                    </div>
+                    <p className="text-[10px] text-gray-600 font-mono mb-1">{problem.skill}</p>
                     <p className="text-sm font-semibold text-white">{problem.title}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -225,7 +216,7 @@ function ProblemPreviewModal({
 
           {/* 문제 설명 — 복기 기반, 보기 없음 */}
           <div className="bg-white/5 rounded-xl p-4 text-sm text-gray-200 leading-relaxed math-problem">
-            <MathHtmlBlock html={problem.description} />
+            <MathHtmlBlock html={problem.description} className="mathweb-html" />
           </div>
 
           {/* 투표 버튼 (비활성 미리보기) */}

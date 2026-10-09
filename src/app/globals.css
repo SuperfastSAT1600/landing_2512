@@ -580,10 +580,16 @@ a {
 .mathweb-html p:last-child { margin-bottom: 0; }
 .mathweb-html em { font-style: italic; }
 .mathweb-html strong { font-weight: 600; }
-.mathweb-html mjx-container { vertical-align: middle; }
-.mathweb-html mjx-container[display="true"] { display: block; margin: 0.5em auto; text-align: center; }
+.mathweb-html mjx-container { display: inline !important; vertical-align: middle; }
+.mathweb-html mjx-container[display="true"] { display: block !important; margin: 0.5em auto; text-align: center; }
+.mathweb-html mjx-container svg { vertical-align: middle; overflow: visible; }
 
 /* ── math-problem: dark-theme figure / table / SVG 처리 ─────────────── */
+.math-problem mjx-container { display: inline !important; vertical-align: middle; }
+.math-problem mjx-container[display="true"] { display: block !important; margin: 0.5em auto; text-align: center; }
+.math-problem mjx-container svg { vertical-align: middle; overflow: visible; }
+.math-problem p { margin-bottom: 0.6em; line-height: 1.7; }
+.math-problem p:last-child { margin-bottom: 0; }
 .math-problem figure.q-figure { margin: 0.75em 0; overflow-x: auto; }
 .math-problem figure.q-figure img { filter: invert(1) brightness(0.9); border-radius: 4px; }
 .math-problem figure.q-figure table {

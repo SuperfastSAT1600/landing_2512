@@ -42,7 +42,7 @@ export function ProblemCard({ problem, index, total, counts, userVote, onVote, o
 
       {/* 문제 설명 */}
       <div className="bg-white/5 rounded-xl p-4 text-sm text-gray-200 leading-relaxed math-problem">
-        <MathHtmlBlock html={problem.description} />
+        <MathHtmlBlock html={problem.description} className="mathweb-html" />
       </div>
 
       {/* 투표 버튼 */}
