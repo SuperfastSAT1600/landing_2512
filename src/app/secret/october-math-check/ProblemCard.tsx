@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { MathProblem, VoteType } from '@/data/october-math-problems';
 import { CommentSection } from './CommentSection';
+import { MathHtmlBlock } from '@/app/mathweb/MathHtmlBlock';
 
 interface Props {
   problem: MathProblem;
@@ -40,8 +41,8 @@ export function ProblemCard({ problem, index, total, counts, userVote, onVote, o
       <span className="text-xs text-gray-500 font-mono">{index + 1} / {total}</span>
 
       {/* 문제 설명 */}
-      <div className="bg-white/5 rounded-xl p-4 text-sm text-gray-200 leading-relaxed">
-        {problem.description}
+      <div className="bg-white/5 rounded-xl p-4 text-sm text-gray-200 leading-relaxed math-problem">
+        <MathHtmlBlock html={problem.description} />
       </div>
 
       {/* 투표 버튼 */}
