@@ -159,30 +159,50 @@ export function ReportRWCognition({ rwCognitionData, rwStudentProfile }: Props) 
           </div>
         </div>
 
-        {/* Question numbers by type */}
-        <div className="px-5 py-4 space-y-3">
+        {/* Question detail rows by type */}
+        <div className="px-5 py-4 space-y-4">
           {TYPE_ORDER.map((type) => {
             const items = grouped[type];
             if (items.length === 0) return null;
             const cfg = TYPE_CONFIG[type];
             return (
-              <div key={type} className="flex items-center gap-3 flex-wrap">
-                <span
-                  className="text-[10px] font-bold flex-shrink-0 w-24"
-                  style={{ color: cfg.dot }}
-                >
+              <div key={type}>
+                <p className="text-[10px] font-bold mb-2" style={{ color: cfg.dot }}>
                   {cfg.labelKo} <span className="text-slate-300 font-normal">({items.length})</span>
-                </span>
-                <div className="flex flex-wrap gap-1.5">
+                </p>
+                <div className="space-y-1.5">
                   {items.map((item) => (
-                    <span
+                    <div
                       key={item.questionId}
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-                      style={{ background: cfg.dot }}
-                      title={`Q${item.questionNumber} · ${item.skill} · ${item.difficulty}`}
+                      className="flex items-center justify-between gap-3 rounded-lg px-3 py-2"
+                      style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
                     >
-                      {item.questionNumber}
-                    </span>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className="text-[11px] font-bold rounded px-1.5 py-0.5 flex-shrink-0"
+                          style={{ background: cfg.border, color: cfg.text }}
+                        >
+                          Q{item.questionNumber}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-[12px] font-semibold text-slate-700 truncate leading-tight">
+                            {item.skill}
+                          </p>
+                          <p className="text-[10px] text-slate-400 leading-tight mt-0.5">
+                            {item.domain} · {item.difficulty}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className="text-[11px] font-semibold flex-shrink-0 rounded px-1.5 py-0.5"
+                        style={{
+                          color: item.isCorrect ? '#15803D' : '#BE123C',
+                          background: item.isCorrect ? '#F0FDF4' : '#FFF1F2',
+                        }}
+                      >
+                        {item.isCorrect ? '정답' : '오답'}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>
