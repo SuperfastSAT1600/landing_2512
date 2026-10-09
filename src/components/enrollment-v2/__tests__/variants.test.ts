@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ENROLLMENT_V2, ENROLLMENT_V3, directorSavings } from '../variants';
+import { ENROLLMENT_V2, ENROLLMENT_V3, directorSavings, directorDiscountRate } from '../variants';
 
 describe('수업권 판매 구성(variant)', () => {
   // REQ-001 (enrollment-v3): v2는 기존 값 그대로
@@ -22,5 +22,15 @@ describe('수업권 판매 구성(variant)', () => {
       [20, 3800000, 400000],
       [40, 6860000, 1540000],
     ]);
+  });
+});
+
+describe('directorDiscountRate', () => {
+  // v2 관리형 할인 문구와 같은 방식 — 정가 대비 내림 %
+  it('정가 그대로면 null, 20시간 9%, 40시간 18%', () => {
+    const [d10, d20, d40] = ENROLLMENT_V3.directorPkgs;
+    expect(directorDiscountRate(d10)).toBeNull();
+    expect(directorDiscountRate(d20)).toBe(9);
+    expect(directorDiscountRate(d40)).toBe(18);
   });
 });

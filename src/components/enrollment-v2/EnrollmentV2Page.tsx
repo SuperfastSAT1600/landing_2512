@@ -13,9 +13,10 @@ import {
   GROUP_PACKAGES_V2,
   UNMANAGED_PACKAGES_V2,
   CONTENT_ITEMS_V2,
+  SALES_LABELS_V2,
 } from '@/lib/enrollment/data/pricing-v2';
 import type { CategoryIdV2, OptionSelectionV2 } from '@/types/enrollment-v2';
-import { ENROLLMENT_V2, directorSavings, type EnrollmentVariant } from './variants';
+import { ENROLLMENT_V2, directorSavings, directorDiscountRate, type EnrollmentVariant } from './variants';
 
 /* ── 타입 ─────────────────────────────────────────────────────────── */
 type ManagementType = 'managed' | 'unmanaged';
@@ -276,6 +277,105 @@ interface HeadCoach {
 }
 
 
+/* 시간권 카드 — 시간 숫자 + 오른쪽 할인 문구/가격. premium은 대표코치(금색) 톤. */
+function PackageCard({ hours, totalPrice, savings, discountRate, badge, tone, selected, onClick, lang }: {
+  hours: number;
+  totalPrice: number;
+  savings: number;
+  discountRate: number | null;
+  badge?: string;
+  tone: 'standard' | 'premium';
+  selected: boolean;
+  onClick: () => void;
+  lang: Lang;
+}) {
+  const premium = tone === 'premium';
+  const hourUnit = lang === 'en' ? 'hrs' : '시간';
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={`relative overflow-hidden w-full text-left rounded-2xl border p-5 transition-colors touch-manipulation active:scale-[0.98]
+        ${premium
+          ? (selected ? 'border-amber-400/70' : 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-400/50')
+          : (selected ? 'border-[#6085ff]/60' : 'border-white/[0.08] bg-white/[0.03] hover:border-white/15')
+        }`}
+    >
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            key="fill"
+            className="absolute inset-0"
+            style={{
+              background: premium
+                ? 'linear-gradient(105deg, rgba(180,120,20,0.45) 0%, rgba(251,191,36,0.18) 100%)'
+                : 'linear-gradient(105deg, rgba(7,27,233,0.5) 0%, rgba(96,133,255,0.22) 100%)',
+            }}
+            initial={{ clipPath: 'inset(0 100% 0 0 round 1rem)' }}
+            animate={{ clipPath: 'inset(0 0% 0 0 round 1rem)' }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
+          />
+        )}
+      </AnimatePresence>
+
+      <div
+        className="relative z-10 flex items-center justify-between gap-4"
+        style={premium ? { fontFamily: "'BookkMyungjo', serif" } : undefined}
+      >
+        <div className="flex items-baseline gap-1.5 flex-shrink-0">
+          <span className={`text-3xl font-black leading-none ${premium ? 'text-amber-100' : 'text-white'}`}>{hours}</span>
+          <span className={`text-sm font-medium ${premium ? 'text-amber-100/60' : 'text-white/55'}`}>{hourUnit}</span>
+        </div>
+
+        <div className="flex-1 text-right flex flex-col justify-center min-h-[5rem]">
+          {discountRate ? (
+            <div className="space-y-1.5">
+              {badge && (
+                <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-400/15 text-red-300 border border-red-400/30">
+                  {badge}
+                </span>
+              )}
+              {/* v2 관리형 문구는 한 줄로 보여 왔다 — 줄바꿈은 대표코치(좁은 금색 카드)에만 */}
+              <p className={`text-[12px] font-light text-red-400 leading-snug ${premium ? 'whitespace-pre-line' : ''}`}>
+                {lang === 'en'
+                  ? `vs. 10 hrs (${discountRate}% off)\n${formatWon(savings)} cheaper.`
+                  : `~10시간 수업보다 (${discountRate}% 할인)\n${formatWon(savings)} 더 저렴합니다.`}
+              </p>
+              <p className={`text-base tracking-tight whitespace-nowrap ${premium ? 'font-semibold text-amber-200' : 'font-light text-white'}`}>
+                {formatWon(totalPrice)}
+              </p>
+            </div>
+          ) : (
+            <p className={`text-base tracking-tight whitespace-nowrap ${premium ? 'font-semibold text-amber-200' : 'font-light text-white'}`}>
+              {formatWon(totalPrice)}
+            </p>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/* 시간권 묶음 제목 — V3처럼 관리형/대표코치를 나눠 보여줄 때. */
+function GroupHeading({ tone, children }: { tone: 'standard' | 'premium'; children: React.ReactNode }) {
+  return tone === 'premium' ? (
+    <p
+      className="pt-4 text-sm font-semibold text-amber-200 flex items-center gap-2"
+      style={{ fontFamily: "'BookkMyungjo', serif" }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+      {children}
+    </p>
+  ) : (
+    <p className="text-sm font-semibold text-white/70 flex items-center gap-2">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#6085ff]" />
+      {children}
+    </p>
+  );
+}
+
 function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
   selectedOption: OptionSelectionV2 | null;
   onSelect: (o: OptionSelectionV2) => void;
@@ -286,7 +386,9 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
   const [loadingCoaches, setLoadingCoaches] = useState(false);
   const coachesRef = useRef<HTMLDivElement>(null);
   const selectedId = selectedOption?.type === 'hour-package' ? selectedOption.packageId : null;
-  const isDirector = selectedId === '1on1-director';
+  // v2는 대표코치 카드 하나('1on1-director'), V3는 시간권별 카드('1on1-director-20h' 등).
+  const isDirector = selectedId?.startsWith('1on1-director') ?? false;
+  const grouped = variant.groupedCards;
   const hourUnit = lang === 'en' ? 'hrs' : '시간';
 
   function handlePkgClick(pkgId: string) {
@@ -308,7 +410,8 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
 
   return (
     <section className="px-4 py-10 border-t border-white/[0.06] min-h-svh flex flex-col justify-start md:min-h-0 md:block">
-      <div className="max-w-xl mx-auto">
+      {/* 모바일에선 부모가 flex-col이라 mx-auto 상자가 내용 폭으로 줄어든다. 묶음 구성(V3)은 문구가 짧아 눈에 띄게 좁아지므로 폭을 채운다. */}
+      <div className={`max-w-xl mx-auto ${grouped ? 'w-full' : ''}`}>
         <div className="text-center mb-8">
           <h2 style={SECTION_HEADING_STYLE} className="text-white">
             {lang === 'en' ? (
@@ -320,30 +423,69 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
         </div>
 
         <div className="flex flex-col gap-3">
-          {/* 일반 3개 패키지 */}
-          {variant.managedPkgs.map(pkg => {
-            const isSelected = selectedId === pkg.id;
-            const savings = pkg.discountRate
-              ? variant.basePricePerHour * pkg.hours - pkg.totalPrice
-              : 0;
+          {grouped && (
+            <GroupHeading tone="standard">
+              {lang === 'en' ? 'Managed 1-on-1' : '관리형 1:1 수업'}
+            </GroupHeading>
+          )}
 
-            return (
+          {/* 관리형 시간권 */}
+          {variant.managedPkgs.map(pkg => (
+            <PackageCard
+              key={pkg.id}
+              hours={pkg.hours}
+              totalPrice={pkg.totalPrice}
+              savings={pkg.discountRate ? variant.basePricePerHour * pkg.hours - pkg.totalPrice : 0}
+              discountRate={pkg.discountRate}
+              tone="standard"
+              selected={selectedId === pkg.id}
+              onClick={() => handlePkgClick(pkg.id)}
+              lang={lang}
+            />
+          ))}
+
+          {grouped ? (
+            <>
+              <GroupHeading tone="premium">
+                {lang === 'en' ? 'Premium · 1-on-1 with a SuperfastSAT Lead Coach' : '프리미엄 · SuperfastSAT 대표코치 1:1'}
+              </GroupHeading>
+              {variant.directorPkgs.map((pkg, i) => {
+                const rate = directorDiscountRate(pkg);
+                const isLast = i === variant.directorPkgs.length - 1;
+                return (
+                  <PackageCard
+                    key={pkg.id}
+                    hours={pkg.hours}
+                    totalPrice={pkg.totalPrice}
+                    savings={directorSavings(pkg)}
+                    discountRate={rate}
+                    badge={isLast && rate ? (lang === 'en' ? 'Best value' : SALES_LABELS_V2.bestValue.text) : undefined}
+                    tone="premium"
+                    selected={selectedId === pkg.id}
+                    onClick={() => handlePkgClick(pkg.id)}
+                    lang={lang}
+                  />
+                );
+              })}
+            </>
+          ) : (
+            <>
+              {/* 프리미엄 대표코치 패키지 */}
               <button
-                key={pkg.id}
                 type="button"
-                onClick={() => handlePkgClick(pkg.id)}
+                onClick={() => handlePkgClick('1on1-director')}
                 className={`relative overflow-hidden w-full text-left rounded-2xl border p-5 transition-colors touch-manipulation active:scale-[0.98]
-                  ${isSelected
-                    ? 'border-[#6085ff]/60'
-                    : 'border-white/[0.08] bg-white/[0.03] hover:border-white/15'
+                  ${isDirector
+                    ? 'border-amber-400/70'
+                    : 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-400/50'
                   }`}
               >
                 <AnimatePresence>
-                  {isSelected && (
+                  {isDirector && (
                     <motion.div
-                      key="fill"
+                      key="fill-director"
                       className="absolute inset-0"
-                      style={{ background: 'linear-gradient(105deg, rgba(7,27,233,0.5) 0%, rgba(96,133,255,0.22) 100%)' }}
+                      style={{ background: 'linear-gradient(105deg, rgba(180,120,20,0.45) 0%, rgba(251,191,36,0.18) 100%)' }}
                       initial={{ clipPath: 'inset(0 100% 0 0 round 1rem)' }}
                       animate={{ clipPath: 'inset(0 0% 0 0 round 1rem)' }}
                       exit={{ opacity: 0 }}
@@ -352,95 +494,44 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
                   )}
                 </AnimatePresence>
 
-                <div className="relative z-10 flex items-center justify-between gap-4">
-                  <div className="flex items-baseline gap-1.5 flex-shrink-0">
-                    <span className="text-3xl font-black text-white leading-none">{pkg.hours}</span>
-                    <span className="text-sm text-white/55 font-medium">{hourUnit}</span>
+                <div className="relative z-10 flex items-center justify-between gap-4" style={{ fontFamily: "'BookkMyungjo', serif" }}>
+                  <div className="flex-shrink-0 flex flex-col gap-1.5">
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wide self-start">
+                      {lang === 'en' ? 'Premium' : '프리미엄'}
+                    </span>
+                    <p className="text-sm font-semibold text-amber-200 leading-snug">
+                      {lang === 'en' ? '1-on-1 with a SuperfastSAT Lead Coach' : 'SuperfastSAT 대표코치의 1:1 수업'}
+                    </p>
                   </div>
 
-                  <div className="flex-1 text-right flex flex-col justify-center min-h-[5rem]">
-                    {pkg.discountRate ? (
-                      <div className="space-y-1.5">
-                        <p className="text-[12px] font-light text-red-400 leading-snug">
-                          {lang === 'en'
-                            ? `vs. 10 hrs (${pkg.discountRate}% off)\n${formatWon(savings)} cheaper.`
-                            : `~10시간 수업보다 (${pkg.discountRate}% 할인)\n${formatWon(savings)} 더 저렴합니다.`}
-                        </p>
-                        <p className="text-base font-light text-white tracking-tight">
-                          {formatWon(pkg.totalPrice)}
-                        </p>
+                  <div className="flex-1 text-right space-y-0.5">
+                    {variant.directorPkgs.map(pkg => (
+                      <div key={pkg.id} className="flex flex-col items-end">
+                        <div className="flex items-baseline justify-end gap-2 whitespace-nowrap">
+                          <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">
+                            {lang === 'en' ? `${pkg.hours} ${hourUnit}` : `${pkg.hours}${hourUnit}`}
+                          </span>
+                          <span
+                            className="text-sm font-semibold text-amber-200"
+                            style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
+                          >
+                            {formatWon(pkg.totalPrice)}
+                          </span>
+                        </div>
+                        {directorSavings(pkg) > 0 && (
+                          <span className="text-[11px] font-light text-red-300 leading-tight whitespace-nowrap">
+                            {lang === 'en'
+                              ? `(${formatWon(directorSavings(pkg))} off)`
+                              : `(${formatWon(directorSavings(pkg))} 할인)`}
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-base font-light text-white tracking-tight">
-                        {formatWon(pkg.totalPrice)}
-                      </p>
-                    )}
+                    ))}
                   </div>
                 </div>
               </button>
-            );
-          })}
-
-          {/* 프리미엄 대표코치 패키지 */}
-          <button
-            type="button"
-            onClick={() => handlePkgClick('1on1-director')}
-            className={`relative overflow-hidden w-full text-left rounded-2xl border p-5 transition-colors touch-manipulation active:scale-[0.98]
-              ${isDirector
-                ? 'border-amber-400/70'
-                : 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-400/50'
-              }`}
-          >
-            <AnimatePresence>
-              {isDirector && (
-                <motion.div
-                  key="fill-director"
-                  className="absolute inset-0"
-                  style={{ background: 'linear-gradient(105deg, rgba(180,120,20,0.45) 0%, rgba(251,191,36,0.18) 100%)' }}
-                  initial={{ clipPath: 'inset(0 100% 0 0 round 1rem)' }}
-                  animate={{ clipPath: 'inset(0 0% 0 0 round 1rem)' }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
-                />
-              )}
-            </AnimatePresence>
-
-            <div className="relative z-10 flex items-center justify-between gap-4" style={{ fontFamily: "'BookkMyungjo', serif" }}>
-              <div className="flex-shrink-0 flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wide self-start">
-                  {lang === 'en' ? 'Premium' : '프리미엄'}
-                </span>
-                <p className="text-sm font-semibold text-amber-200 leading-snug">
-                  {lang === 'en' ? '1-on-1 with a SuperfastSAT Lead Coach' : 'SuperfastSAT 대표코치의 1:1 수업'}
-                </p>
-              </div>
-
-              <div className="flex-1 text-right space-y-0.5">
-                {variant.directorPkgs.map(pkg => (
-                  <div key={pkg.id} className="flex flex-col items-end">
-                    <div className="flex items-baseline justify-end gap-2 whitespace-nowrap">
-                      <span className="text-[11px] font-bold text-amber-100/70 leading-none tracking-tight">
-                        {lang === 'en' ? `${pkg.hours} ${hourUnit}` : `${pkg.hours}${hourUnit}`}
-                      </span>
-                      <span
-                        className="text-sm font-semibold text-amber-200"
-                        style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.04em' }}
-                      >
-                        {formatWon(pkg.totalPrice)}
-                      </span>
-                    </div>
-                    {directorSavings(pkg) > 0 && (
-                      <span className="text-[11px] font-light text-red-300 leading-tight whitespace-nowrap">
-                        {lang === 'en'
-                          ? `(${formatWon(directorSavings(pkg))} off)`
-                          : `(${formatWon(directorSavings(pkg))} 할인)`}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </button>
+            </>
+          )}
 
           {/* 대표코치 라인업 */}
           <div ref={coachesRef}>
