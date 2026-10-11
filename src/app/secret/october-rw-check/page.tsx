@@ -3,18 +3,19 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const revalidate = 60;
 
-async function getInitialCounts(): Promise<Record<string, { knew: number; didnt_know: number }>> {
+async function getInitialCounts(): Promise<Record<string, { yes: number; no: number }>> {
   const { data } = await supabaseAdmin
     .from('sat_problem_votes')
     .select('problem_id, vote_type')
     .like('problem_id', 'rw-%')
     .limit(20000);
 
-  const counts: Record<string, { knew: number; didnt_know: number }> = {};
+  const counts: Record<string, { yes: number; no: number }> = {};
   for (const row of data ?? []) {
-    if (!counts[row.problem_id]) counts[row.problem_id] = { knew: 0, didnt_know: 0 };
-    const t = row.vote_type as 'knew' | 'didnt_know';
-    if (t === 'knew' || t === 'didnt_know') counts[row.problem_id][t]++;
+    if (!counts[row.problem_id]) counts[row.problem_id] = { yes: 0, no: 0 };
+    const t = row.vote_type as string;
+    if (t === 'yes') counts[row.problem_id].yes++;
+    else if (t === 'no') counts[row.problem_id].no++;
   }
   return counts;
 }
