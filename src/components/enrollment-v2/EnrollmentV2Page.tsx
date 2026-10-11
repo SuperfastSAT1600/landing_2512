@@ -277,7 +277,7 @@ interface HeadCoach {
 }
 
 
-/* 시간권 카드 — 시간 숫자 + 오른쪽 할인 문구/가격. premium은 대표코치(금색) 톤. */
+/* 시간권 카드 — 시간 숫자 + 오른쪽 할인 문구/가격. premium은 대표코치(금색) 톤 — 글꼴은 관리형과 같다. */
 function PackageCard({ hours, totalPrice, savings, discountRate, badge, tone, selected, onClick, lang }: {
   hours: number;
   totalPrice: number;
@@ -320,10 +320,7 @@ function PackageCard({ hours, totalPrice, savings, discountRate, badge, tone, se
         )}
       </AnimatePresence>
 
-      <div
-        className="relative z-10 flex items-center justify-between gap-4"
-        style={premium ? { fontFamily: "'BookkMyungjo', serif" } : undefined}
-      >
+      <div className="relative z-10 flex items-center justify-between gap-4">
         <div className="flex items-baseline gap-1.5 flex-shrink-0">
           <span className={`text-3xl font-black leading-none ${premium ? 'text-amber-100' : 'text-white'}`}>{hours}</span>
           <span className={`text-sm font-medium ${premium ? 'text-amber-100/60' : 'text-white/55'}`}>{hourUnit}</span>
@@ -343,12 +340,12 @@ function PackageCard({ hours, totalPrice, savings, discountRate, badge, tone, se
                   ? `vs. 10 hrs (${discountRate}% off)\n${formatWon(savings)} cheaper.`
                   : `~10시간 수업보다 (${discountRate}% 할인)\n${formatWon(savings)} 더 저렴합니다.`}
               </p>
-              <p className={`text-base tracking-tight whitespace-nowrap ${premium ? 'font-semibold text-amber-200' : 'font-light text-white'}`}>
+              <p className={`text-base tracking-tight whitespace-nowrap font-light ${premium ? 'text-amber-200' : 'text-white'}`}>
                 {formatWon(totalPrice)}
               </p>
             </div>
           ) : (
-            <p className={`text-base tracking-tight whitespace-nowrap ${premium ? 'font-semibold text-amber-200' : 'font-light text-white'}`}>
+            <p className={`text-base tracking-tight whitespace-nowrap font-light ${premium ? 'text-amber-200' : 'text-white'}`}>
               {formatWon(totalPrice)}
             </p>
           )}
@@ -361,10 +358,7 @@ function PackageCard({ hours, totalPrice, savings, discountRate, badge, tone, se
 /* 시간권 묶음 제목 — V3처럼 관리형/대표코치를 나눠 보여줄 때. */
 function GroupHeading({ tone, children }: { tone: 'standard' | 'premium'; children: React.ReactNode }) {
   return tone === 'premium' ? (
-    <p
-      className="pt-4 text-sm font-semibold text-amber-200 flex items-center gap-2"
-      style={{ fontFamily: "'BookkMyungjo', serif" }}
-    >
+    <p className="pt-4 text-sm font-semibold text-amber-200 flex items-center gap-2">
       <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
       {children}
     </p>
