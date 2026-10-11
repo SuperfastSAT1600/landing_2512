@@ -4,9 +4,11 @@ import { useState } from 'react';
 
 interface Props {
   onLogin: (username: string) => void;
+  title?: string;
+  subtitle?: string;
 }
 
-export function LoginScreen({ onLogin }: Props) {
+export function LoginScreen({ onLogin, title = '10월 SAT 수학 체크', subtitle = '인스타그램 아이디로 참여하세요' }: Props) {
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
 
@@ -30,8 +32,8 @@ export function LoginScreen({ onLogin }: Props) {
               <circle cx="17.5" cy="6.5" r="1.5" fill="white" stroke="none" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold">10월 SAT 수학 체크</h1>
-          <p className="text-gray-400 text-sm mt-1">인스타그램 아이디로 참여하세요</p>
+          <h1 className="text-xl font-bold">{title}</h1>
+          <p className="text-gray-400 text-sm mt-1">{subtitle}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
