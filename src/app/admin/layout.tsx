@@ -32,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
             { href: '/admin/mission', label: '미션 챌린지' },
             { href: '/admin/ssat-math', label: 'SSAT Math' },
             { href: '/admin/oct-math-check', label: '10월 수학 체크' },
+            { href: '/admin/oct-rw-check', label: '10월 RW 단어 체크' },
         ]
     },
     { href: '/admin/popup-settings', label: '팝업 설정', icon: '🔔' },
