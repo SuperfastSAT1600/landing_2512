@@ -19,6 +19,7 @@ const POS_LABEL: Record<string, string> = {
   verb: 'v.',
   adjective: 'adj.',
   adverb: 'adv.',
+  prefix: 'prefix',
 };
 
 export function WordCard({ word, index, total, counts, userVote, onVote, onNext, onPrev }: Props) {
@@ -46,6 +47,9 @@ export function WordCard({ word, index, total, counts, userVote, onVote, onNext,
           {POS_LABEL[word.pos] ?? word.pos}
         </p>
         <h2 className="text-4xl font-bold text-white tracking-tight">{word.word}</h2>
+        {word.forms && (
+          <p className="text-xs text-gray-600 font-mono">→ {word.forms}</p>
+        )}
         <p className="text-gray-300 text-base leading-relaxed">{word.definition_en}</p>
         <p className="text-indigo-300 text-sm font-medium">{word.definition_ko}</p>
 
