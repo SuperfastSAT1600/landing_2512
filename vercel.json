@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/weekly-visitor-report",
       "schedule": "0 19 * * 2"
+    },
+    {
+      "path": "/api/cron/schedule-nudge",
+      "schedule": "0 */3 * * *"
     }
   ]
 }
