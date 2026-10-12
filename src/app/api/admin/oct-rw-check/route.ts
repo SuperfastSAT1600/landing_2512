@@ -23,11 +23,11 @@ export async function GET() {
 
   const participants = new Set(votes.map(v => v.instagram_username)).size;
 
-  const voteCounts: Record<string, { knew: number; didnt_know: number }> = {};
+  const voteCounts: Record<string, { yes: number; no: number }> = {};
   for (const v of votes) {
-    if (!voteCounts[v.problem_id]) voteCounts[v.problem_id] = { knew: 0, didnt_know: 0 };
-    const t = v.vote_type as 'knew' | 'didnt_know';
-    if (t === 'knew' || t === 'didnt_know') voteCounts[v.problem_id][t]++;
+    if (!voteCounts[v.problem_id]) voteCounts[v.problem_id] = { yes: 0, no: 0 };
+    const t = v.vote_type as 'yes' | 'no';
+    if (t === 'yes' || t === 'no') voteCounts[v.problem_id][t]++;
   }
 
   const seen = new Set<string>();

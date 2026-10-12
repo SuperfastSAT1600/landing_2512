@@ -13,7 +13,7 @@ export async function GET() {
 
   const counts: Record<string, Record<string, number>> = {};
   for (const row of data ?? []) {
-    if (!counts[row.problem_id]) counts[row.problem_id] = { knew: 0, didnt_know: 0 };
+    if (!counts[row.problem_id]) counts[row.problem_id] = { yes: 0, no: 0 };
     counts[row.problem_id][row.vote_type] = (counts[row.problem_id][row.vote_type] ?? 0) + 1;
   }
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { word_id, instagram_username, vote_type } = body;
 
-  if (!word_id || !instagram_username || !['knew', 'didnt_know'].includes(vote_type)) {
+  if (!word_id || !instagram_username || !['yes', 'no'].includes(vote_type)) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 

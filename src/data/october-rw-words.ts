@@ -7,7 +7,9 @@ export interface RwWord {
   definition_ko: string;
 }
 
-export type WordVoteType = 'knew' | 'didnt_know';
+// sat_problem_votes 테이블 check 제약 때문에 'yes'/'no' 사용
+// yes = 알고 있었어, no = 몰랐어
+export type WordVoteType = 'yes' | 'no';
 
 export const OCTOBER_RW_WORDS: RwWord[] = [
   {

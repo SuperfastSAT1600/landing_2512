@@ -6,7 +6,7 @@ import { RefreshCw, Users, ChevronDown, ChevronUp, Eye, MessageCircle } from 'lu
 
 interface StatsData {
   participants: number;
-  voteCounts: Record<string, { knew: number; didnt_know: number }>;
+  voteCounts: Record<string, { yes: number; no: number }>;
   realUsers: { username: string; created_at: string }[];
   customWords: { id: string; comment: string; created_at: string }[];
 }
@@ -31,8 +31,8 @@ export default function OctRwCheckAdminPage() {
   if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
   if (!data) return <div className="p-8 text-red-400">데이터를 불러오지 못했습니다.</div>;
 
-  const totalKnew = Object.values(data.voteCounts).reduce((s, c) => s + c.knew, 0);
-  const totalDidntKnow = Object.values(data.voteCounts).reduce((s, c) => s + c.didnt_know, 0);
+  const totalKnew = Object.values(data.voteCounts).reduce((s, c) => s + c.yes, 0);
+  const totalDidntKnow = Object.values(data.voteCounts).reduce((s, c) => s + c.no, 0);
 
   return (
     <div className="p-8 max-w-4xl">
@@ -155,19 +155,19 @@ export default function OctRwCheckAdminPage() {
         </p>
         {[...OCTOBER_RW_WORDS]
           .sort((a, b) => {
-            const ca = data.voteCounts[a.id] ?? { knew: 0, didnt_know: 0 };
-            const cb = data.voteCounts[b.id] ?? { knew: 0, didnt_know: 0 };
-            const ta = ca.knew + ca.didnt_know;
-            const tb = cb.knew + cb.didnt_know;
-            const pa = ta > 0 ? ca.didnt_know / ta : 0;
-            const pb = tb > 0 ? cb.didnt_know / tb : 0;
+            const ca = data.voteCounts[a.id] ?? { yes: 0, no: 0 };
+            const cb = data.voteCounts[b.id] ?? { yes: 0, no: 0 };
+            const ta = ca.yes + ca.no;
+            const tb = cb.yes + cb.no;
+            const pa = ta > 0 ? ca.no / ta : 0;
+            const pb = tb > 0 ? cb.no / tb : 0;
             return pb - pa;
           })
           .map(word => {
-            const c = data.voteCounts[word.id] ?? { knew: 0, didnt_know: 0 };
-            const total = c.knew + c.didnt_know;
-            const knewPct = total > 0 ? Math.round((c.knew / total) * 100) : 0;
-            const didntPct = 100 - knewPct;
+            const c = data.voteCounts[word.id] ?? { yes: 0, no: 0 };
+            const total = c.yes + c.no;
+            const yesPct = total > 0 ? Math.round((c.yes / total) * 100) : 0;
+            const didntPct = 100 - yesPct;
 
             return (
               <div key={word.id} className="bg-[#1e2023] rounded-xl border border-white/5 px-5 py-4">
@@ -181,11 +181,11 @@ export default function OctRwCheckAdminPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden flex">
-                    <div className="bg-green-500 h-full transition-all duration-500" style={{ width: `${knewPct}%` }} />
+                    <div className="bg-green-500 h-full transition-all duration-500" style={{ width: `${yesPct}%` }} />
                     <div className="bg-red-500/60 h-full" style={{ width: `${didntPct}%` }} />
                   </div>
                   <span className="text-[11px] text-gray-400 font-mono w-28 text-right shrink-0">
-                    ✓ {knewPct}% · ✗ {didntPct}%
+                    ✓ {yesPct}% · ✗ {didntPct}%
                   </span>
                 </div>
               </div>
