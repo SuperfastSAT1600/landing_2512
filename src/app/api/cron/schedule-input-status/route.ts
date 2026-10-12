@@ -124,7 +124,6 @@ export interface EndingSoon {
 }
 
 export interface ScheduleStatusEntry {
-  hasCoach: boolean;
   hasStudyHall: boolean;
   hasVocab: boolean;
   students: string[];
@@ -133,7 +132,8 @@ export interface ScheduleStatusEntry {
 export interface HoursBucket {
   label: string;
   emoji: string;
-  entries: ScheduleStatusEntry[];
+  noCoach: ScheduleStatusEntry[];
+  hasCoach: ScheduleStatusEntry[];
 }
 
 // ─── 잔여 시간 버킷 정의 ─────────────────────────────────────────────────────
@@ -147,11 +147,9 @@ const HOUR_BUCKETS_DEF = [
   { label: '21시간+',   emoji: '⚪', min: 21, max: Infinity },
 ] as const;
 
-// 조합 키: hasCoach|hasStudyHall|hasVocab → 우선순위 (낮을수록 urgent)
-const COMBO_PRIORITY: Record<string, number> = {
-  '000': 0,
-  '100': 1, '010': 2, '001': 3,
-  '110': 4, '101': 5, '011': 6,
+// SH/보캡 조합 → 서브 정렬 순서 (낮을수록 urgent)
+const SH_VOCAB_PRIORITY: Record<string, number> = {
+  '00': 0, '01': 1, '10': 2, '11': 3,
 };
 
 function buildHoursBuckets(
@@ -159,7 +157,8 @@ function buildHoursBuckets(
   nameMap: Map<string, string>,
   remainingMap: Map<string, number>,
 ): HoursBucket[] {
-  const bucketData = new Map<string, Map<string, ScheduleStatusEntry & { key: string }>>();
+  type EntryMap = Map<string, ScheduleStatusEntry & { key: string }>;
+  const bucketData = new Map<string, { noCoach: EntryMap; hasCoach: EntryMap }>();
 
   for (const { userId, hasCoach, hasStudyHall, hasVocab } of students) {
     const name = nameMap.get(userId);
@@ -168,26 +167,33 @@ function buildHoursBuckets(
     const bucketDef = HOUR_BUCKETS_DEF.find(b => hours >= b.min && hours <= b.max);
     if (!bucketDef) continue;
 
-    const comboKey = `${hasCoach ? 1 : 0}${hasStudyHall ? 1 : 0}${hasVocab ? 1 : 0}`;
-    if (!bucketData.has(bucketDef.label)) bucketData.set(bucketDef.label, new Map());
-    const comboMap = bucketData.get(bucketDef.label)!;
-    if (!comboMap.has(comboKey)) comboMap.set(comboKey, { hasCoach, hasStudyHall, hasVocab, students: [], key: comboKey });
-    comboMap.get(comboKey)!.students.push(name);
+    if (!bucketData.has(bucketDef.label)) {
+      bucketData.set(bucketDef.label, { noCoach: new Map(), hasCoach: new Map() });
+    }
+    const { noCoach, hasCoach: hasCoachMap } = bucketData.get(bucketDef.label)!;
+    const subKey = `${hasStudyHall ? 1 : 0}${hasVocab ? 1 : 0}`;
+    const target = hasCoach ? hasCoachMap : noCoach;
+    if (!target.has(subKey)) target.set(subKey, { hasStudyHall, hasVocab, students: [], key: subKey });
+    target.get(subKey)!.students.push(name);
+  }
+
+  function sortEntries(map: EntryMap): ScheduleStatusEntry[] {
+    return [...map.values()]
+      .sort((a, b) => (SH_VOCAB_PRIORITY[a.key] ?? 9) - (SH_VOCAB_PRIORITY[b.key] ?? 9))
+      .map(({ hasStudyHall, hasVocab, students }) => {
+        students.sort((a, z) => a.localeCompare(z, 'ko'));
+        return { hasStudyHall, hasVocab, students };
+      });
   }
 
   const result: HoursBucket[] = [];
   for (const bucketDef of HOUR_BUCKETS_DEF) {
-    const comboMap = bucketData.get(bucketDef.label);
-    if (!comboMap?.size) continue;
-
-    const entries = [...comboMap.values()]
-      .sort((a, b) => (COMBO_PRIORITY[a.key] ?? 7) - (COMBO_PRIORITY[b.key] ?? 7))
-      .map(({ hasCoach, hasStudyHall, hasVocab, students }) => {
-        students.sort((a, z) => a.localeCompare(z, 'ko'));
-        return { hasCoach, hasStudyHall, hasVocab, students };
-      });
-
-    result.push({ label: bucketDef.label, emoji: bucketDef.emoji, entries });
+    const data = bucketData.get(bucketDef.label);
+    if (!data) continue;
+    const noCoach = sortEntries(data.noCoach);
+    const hasCoach = sortEntries(data.hasCoach);
+    if (!noCoach.length && !hasCoach.length) continue;
+    result.push({ label: bucketDef.label, emoji: bucketDef.emoji, noCoach, hasCoach });
   }
   return result;
 }

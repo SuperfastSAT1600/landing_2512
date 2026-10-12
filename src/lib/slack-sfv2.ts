@@ -38,7 +38,10 @@ export async function notifyScheduleInputStatus(params: {
   const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000)
     .toISOString().slice(5, 16).replace('T', ' ');
 
-  const totalNeedingAttention = hoursBuckets.reduce((s, b) => s + b.entries.reduce((s2, e) => s2 + e.students.length, 0), 0);
+  const totalNeedingAttention = hoursBuckets.reduce((s, b) =>
+    s +
+    b.noCoach.reduce((s2, e) => s2 + e.students.length, 0) +
+    b.hasCoach.reduce((s2, e) => s2 + e.students.length, 0), 0);
 
   // ── 레전드 ──
   const legendText = `📋 *스케줄 현황 브리핑* — ${nowKST} KST\n기간: ${windowLabel}\n\n🏫 수업(코치룸)　　📚 스터디홀　　📝 보캡　　🔔 오늘 신규 입력`;
@@ -56,8 +59,15 @@ export async function notifyScheduleInputStatus(params: {
   }
 
   // ── 잔여 시간별 현황 ──
-  function comboLabel(hasCoach: boolean, hasStudyHall: boolean, hasVocab: boolean): string {
-    return `🏫${hasCoach ? '✓' : '✗'} 📚${hasStudyHall ? '✓' : '✗'} 📝${hasVocab ? '✓' : '✗'}`;
+  function subLabel(hasStudyHall: boolean, hasVocab: boolean): string {
+    return `📚${hasStudyHall ? '✓' : '✗'} 📝${hasVocab ? '✓' : '✗'}`;
+  }
+
+  function renderEntries(entries: import('@/app/api/cron/schedule-input-status/route').ScheduleStatusEntry[]): string[] {
+    return entries.map(entry => {
+      const names = entry.students.map(n => recentlyScheduledNames.has(n) ? `${n} 🔔` : n).join(', ');
+      return `　　${subLabel(entry.hasStudyHall, entry.hasVocab)}　${names}`;
+    });
   }
 
   const blocks: object[] = [
@@ -73,12 +83,22 @@ export async function notifyScheduleInputStatus(params: {
     blocks.push({ type: 'section', text: { type: 'mrkdwn', text: `*잔여 수업 시간별 현황 — 조치 필요 ${totalNeedingAttention}명*` } });
 
     for (const bucket of hoursBuckets) {
-      const totalInBucket = bucket.entries.reduce((s, e) => s + e.students.length, 0);
+      const totalInBucket =
+        bucket.noCoach.reduce((s, e) => s + e.students.length, 0) +
+        bucket.hasCoach.reduce((s, e) => s + e.students.length, 0);
       const lines = [`${bucket.emoji} *잔여 ${bucket.label} (${totalInBucket}명)*`];
-      for (const entry of bucket.entries) {
-        const names = entry.students.map(n => recentlyScheduledNames.has(n) ? `${n} 🔔` : n).join(', ');
-        lines.push(`${comboLabel(entry.hasCoach, entry.hasStudyHall, entry.hasVocab)}　${names}`);
+
+      if (bucket.noCoach.length > 0) {
+        const count = bucket.noCoach.reduce((s, e) => s + e.students.length, 0);
+        lines.push(`🏫✗ 코치룸 없음 (${count}명)`);
+        lines.push(...renderEntries(bucket.noCoach));
       }
+      if (bucket.hasCoach.length > 0) {
+        const count = bucket.hasCoach.reduce((s, e) => s + e.students.length, 0);
+        lines.push(`🏫✓ 코치룸 있음 (${count}명)`);
+        lines.push(...renderEntries(bucket.hasCoach));
+      }
+
       blocks.push({ type: 'section', text: { type: 'mrkdwn', text: lines.join('\n') } });
     }
   }
