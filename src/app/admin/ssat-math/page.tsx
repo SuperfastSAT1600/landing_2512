@@ -336,7 +336,7 @@ export default function SSATMathAdminPage() {
 
         {/* Set tabs */}
         <div className="flex flex-wrap gap-1 mb-6">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+          {Array.from({ length: 20 }, (_, i) => i + 1).map(n => (
             <button
               key={n}
               onClick={() => setActiveSet(n)}
