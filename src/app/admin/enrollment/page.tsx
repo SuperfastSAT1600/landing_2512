@@ -11,6 +11,8 @@ interface EnrollmentPage {
     label: string;
     url: string;
     description: string;
+    /** 판매 종료 — 고객은 미들웨어가 V3로 보낸다(src/lib/retired-enrollment.ts). 관리자는 열어볼 수 있다. */
+    retired?: boolean;
 }
 
 const PAGES: EnrollmentPage[] = [
@@ -19,12 +21,28 @@ const PAGES: EnrollmentPage[] = [
         label: 'enrollment (v1)',
         url: '/enrollment',
         description: '기존 수업권 신청 페이지',
+        retired: true,
     },
     {
         slug: 'enrollment2026',
         label: 'enrollment2026 (v2)',
         url: '/enrollment2026',
         description: '신규 수업권 신청 페이지 — 2026년 버전',
+        retired: true,
+    },
+    {
+        slug: 'enrollment2026-en',
+        label: 'enrollment2026/en (v2 영문)',
+        url: '/enrollment2026/en',
+        description: 'v2 영문판',
+        retired: true,
+    },
+    {
+        slug: 'enrollment-v2',
+        label: 'enrollment-v2 (v2 사본)',
+        url: '/enrollment-v2',
+        description: 'v2와 같은 화면의 다른 주소',
+        retired: true,
     },
     {
         slug: 'enrollment-v3',
@@ -78,7 +96,7 @@ export default function AdminEnrollmentPage() {
             <div className="space-y-3">
                 {PAGES.map(page => {
                     const status = statuses[page.slug] ?? 'active';
-                    const isActive = status === 'active';
+                    const isActive = !page.retired && status === 'active';
                     const isToggling = toggling === page.slug;
 
                     return (
@@ -99,7 +117,7 @@ export default function AdminEnrollmentPage() {
                                     ? 'bg-emerald-500/10 text-emerald-400'
                                     : 'bg-gray-700 text-gray-400'
                             }`}>
-                                {isActive ? '배포 중' : '중지됨'}
+                                {page.retired ? '종료 · V3로 이동' : isActive ? '배포 중' : '중지됨'}
                             </span>
 
                             <Link
@@ -111,7 +129,7 @@ export default function AdminEnrollmentPage() {
                                 <ExternalLink size={15} />
                             </Link>
 
-                            <button
+                            {!page.retired && <button
                                 onClick={() => toggle(page.slug)}
                                 disabled={isToggling}
                                 className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md transition-colors flex-shrink-0 ${
@@ -128,14 +146,14 @@ export default function AdminEnrollmentPage() {
                                     <Power size={13} />
                                 )}
                                 {isActive ? '배포 중지' : '배포 재개'}
-                            </button>
+                            </button>}
                         </div>
                     );
                 })}
             </div>
 
             <p className="mt-6 text-xs text-gray-600">
-                배포 중지 시 해당 페이지 접근 시 메인으로 리디렉션됩니다.
+                배포 중지 시 해당 페이지 접근 시 메인으로 리디렉션됩니다. 종료된 v1·v2는 고객이 들어오면 V3로 이동합니다. 내부에서는 이 화면의 열기 링크로 볼 수 있습니다(관리자 로그인 후 24시간).
             </p>
         </div>
     );
