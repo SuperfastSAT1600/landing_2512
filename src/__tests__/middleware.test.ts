@@ -7,16 +7,16 @@ function req(url: string, cookie?: string) {
   return new NextRequest(url, { headers: cookie ? { cookie } : {} });
 }
 
-describe('middleware — 종료된 수업권 V1·V2 (REQ-002)', () => {
-  it('고객은 쿼리를 유지한 채 V3로 307', () => {
+describe('middleware — 종료된 수업권 V1·V2 (REQ-002, REQ-004)', () => {
+  it('고객은 쿼리를 유지한 채 블로그로 307', () => {
     const res = middleware(req('https://tutoring.superfastsat.com/enrollment2026/en?utm_source=kakao'));
     expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('https://tutoring.superfastsat.com/enrollment-v3/en?utm_source=kakao');
+    expect(res.headers.get('location')).toBe('https://tutoring.superfastsat.com/blog?utm_source=kakao');
   });
 
-  it('V1도 V3로', () => {
+  it('V1도 블로그로', () => {
     const res = middleware(req('https://tutoring.superfastsat.com/enrollment'));
-    expect(res.headers.get('location')).toBe('https://tutoring.superfastsat.com/enrollment-v3');
+    expect(res.headers.get('location')).toBe('https://tutoring.superfastsat.com/blog');
   });
 
   it('관리자 쿠키가 있으면 통과', () => {

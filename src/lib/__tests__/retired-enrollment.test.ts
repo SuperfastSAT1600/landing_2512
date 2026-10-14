@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { retiredEnrollmentTarget } from '../retired-enrollment';
 
-describe('retiredEnrollmentTarget (REQ-001)', () => {
+describe('retiredEnrollmentTarget (REQ-001, REQ-004)', () => {
   it.each([
-    ['/enrollment', '/enrollment-v3'],
-    ['/enrollment/', '/enrollment-v3'],
-    ['/enrollment2026', '/enrollment-v3'],
-    ['/enrollment2026/en', '/enrollment-v3/en'],
-    ['/enrollment2026/en/', '/enrollment-v3/en'],
-    ['/enrollment-v2', '/enrollment-v3'],
+    ['/enrollment', '/blog'],
+    ['/enrollment/', '/blog'],
+    ['/enrollment2026', '/blog'],
+    ['/enrollment2026/en', '/blog'],
+    ['/enrollment2026/en/', '/blog'],
+    ['/enrollment-v2', '/blog'],
   ])('%s → %s', (from, to) => {
     expect(retiredEnrollmentTarget(from)).toBe(to);
   });
