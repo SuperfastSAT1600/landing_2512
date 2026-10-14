@@ -153,6 +153,7 @@ export default function NovemberQB22Page() {
   const [confidence, setConfidence] = useState<Record<string, number>>({});
   const [correctCount, setCorrectCount] = useState(0);
   const [showQuestionNav, setShowQuestionNav] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(true);
 
   useEffect(() => {
     // MathJax 선제 로드 — 테이블 내 LaTeX 렌더링에 필요
@@ -408,6 +409,63 @@ export default function NovemberQB22Page() {
           {toast}
         </div>
       )}
+      {showTutorial && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 20px' }}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: '32px 28px', maxWidth: 380, width: '100%', boxShadow: '0 8px 48px rgba(0,0,0,0.22)' }}>
+            <div style={{ fontSize: 22, marginBottom: 6, textAlign: 'center' }}>📝</div>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', textAlign: 'center', margin: '0 0 6px', letterSpacing: '-0.02em' }}>이렇게 풀어요</h2>
+            <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', margin: '0 0 28px', lineHeight: 1.6 }}>답을 고르고 Confidence Level을 선택하면<br />바로 정오답을 확인할 수 있어요</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+              {/* Step 1 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f8fafc', borderRadius: 12, padding: '14px 16px' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>1</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>답 선택</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {['A', 'B', 'C', 'D'].map(l => (
+                      <span key={l} style={{ width: 28, height: 28, borderRadius: 6, border: l === 'B' ? '2px solid #3b82f6' : '1.5px solid #e5e7eb', background: l === 'B' ? '#eff6ff' : '#fff', color: l === 'B' ? '#3b82f6' : '#94a3b8', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{l}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <div style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 18, lineHeight: 1 }}>↓</div>
+
+              {/* Step 2 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f8fafc', borderRadius: 12, padding: '14px 16px' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>2</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Confidence Level 선택</div>
+                  <div style={{ display: 'flex', gap: 5 }}>
+                    {[{ v: 0, c: '#ef4444' }, { v: 25, c: '#f97316' }, { v: 50, c: '#f59e0b' }, { v: 75, c: '#3b82f6' }, { v: 100, c: '#22c55e' }].map(({ v, c }) => (
+                      <span key={v} style={{ padding: '3px 8px', borderRadius: 12, background: v === 75 ? c : '#fff', border: `1.5px solid ${c}`, color: v === 75 ? '#fff' : c, fontSize: 11, fontWeight: 700 }}>{v}%</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <div style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 18, lineHeight: 1 }}>↓</div>
+
+              {/* Result */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f0fdf4', borderRadius: 12, padding: '14px 16px', border: '1.5px solid #bbf7d0' }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>✅</span>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#15803d' }}>정오답 결과 공개!</div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowTutorial(false)}
+              style={{ width: '100%', padding: '14px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.01em' }}
+            >
+              시작하기 →
+            </button>
+          </div>
+        </div>
+      )}
+
       {showQuestionNav && (
         <div
           style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
