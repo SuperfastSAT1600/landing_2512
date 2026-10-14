@@ -16,7 +16,7 @@ import {
   SALES_LABELS_V2,
 } from '@/lib/enrollment/data/pricing-v2';
 import type { CategoryIdV2, OptionSelectionV2 } from '@/types/enrollment-v2';
-import { ENROLLMENT_V2, directorSavings, directorDiscountRate, type EnrollmentVariant } from './variants';
+import { ENROLLMENT_V2, directorSavings, directorDiscountRate, type DirectorPkg, type EnrollmentVariant } from './variants';
 
 /* ── 타입 ─────────────────────────────────────────────────────────── */
 type ManagementType = 'managed' | 'unmanaged';
@@ -371,26 +371,18 @@ function GroupHeading({ tone, children }: { tone: 'standard' | 'premium'; childr
   );
 }
 
-/* 대표코치 묶음 제목 겸 펼침 버튼 — 금색 테두리 상자. 접혀 있어도 눈에 띄도록 카드처럼 그린다(V3). */
-function DirectorGroupToggle({ open, onToggle, hours, lang }: { open: boolean; onToggle: () => void; hours: number[]; lang: Lang }) {
+/* 대표코치 '더 보기' 버튼 — 처음부터 보이는 시간권 아래에서 나머지(V3의 20·40시간)를 펼치고 접는다. */
+function DirectorMoreToggle({ open, onToggle, hours, lang }: { open: boolean; onToggle: () => void; hours: number[]; lang: Lang }) {
   const label = hours.join('·');
   return (
     <button
       type="button"
       aria-expanded={open}
       onClick={onToggle}
-      className="mt-4 w-full rounded-2xl border border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-400/50 px-5 py-4 flex items-center gap-3 text-left transition-colors touch-manipulation"
+      className="w-full rounded-2xl border border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-400/50 px-5 py-3.5 flex items-center justify-center gap-1.5 text-sm font-semibold text-amber-200 transition-colors touch-manipulation"
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-      <span className="flex-1 min-w-0">
-        <span className="block text-sm font-semibold text-amber-200">
-          {lang === 'en' ? 'Premium · 1-on-1 with a SuperfastSAT Lead Coach' : '프리미엄 · SuperfastSAT 대표코치 1:1'}
-        </span>
-        <span className="block mt-0.5 text-xs font-medium text-amber-200/60">
-          {lang === 'en' ? `${open ? 'Hide' : 'See'} ${label} hrs` : `${label}시간 ${open ? '접기' : '보기'}`}
-        </span>
-      </span>
-      <ChevronDown className={`w-5 h-5 flex-shrink-0 text-amber-200/70 transition-transform ${open ? 'rotate-180' : ''}`} />
+      {lang === 'en' ? `${open ? 'Hide' : 'See'} ${label} hrs` : `${label}시간 ${open ? '접기' : '보기'}`}
+      <ChevronDown className={`w-4 h-4 text-amber-200/70 transition-transform ${open ? 'rotate-180' : ''}`} />
     </button>
   );
 }
@@ -409,10 +401,32 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
   const isDirector = selectedId?.startsWith('1on1-director') ?? false;
   const grouped = variant.groupedCards;
   const [directorOpen, setDirectorOpen] = useState(false);
+  const directorShown = variant.directorPkgs.slice(0, variant.directorShownCount);
+  const directorMore = variant.directorPkgs.slice(variant.directorShownCount);
   const hourUnit = lang === 'en' ? 'hrs' : '시간';
 
   function handlePkgClick(pkgId: string) {
     onSelect({ type: 'hour-package', packageId: pkgId });
+  }
+
+  function renderDirectorCard(pkg: DirectorPkg) {
+    const rate = directorDiscountRate(pkg);
+    const isLast = pkg === variant.directorPkgs[variant.directorPkgs.length - 1];
+    return (
+      <PackageCard
+        key={pkg.id}
+        hours={pkg.hours}
+        totalPrice={pkg.totalPrice}
+        savings={directorSavings(pkg)}
+        discountRate={rate}
+        badge={isLast && rate ? (lang === 'en' ? 'Best value' : SALES_LABELS_V2.bestValue.text) : undefined}
+        tone="premium"
+        twoLine
+        selected={selectedId === pkg.id}
+        onClick={() => handlePkgClick(pkg.id)}
+        lang={lang}
+      />
+    );
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -467,50 +481,32 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
 
           {grouped ? (
             <>
-              {variant.directorCollapsible ? (
-                <DirectorGroupToggle
-                  open={directorOpen}
-                  onToggle={() => setDirectorOpen(o => !o)}
-                  hours={variant.directorPkgs.map(p => p.hours)}
-                  lang={lang}
-                />
-              ) : (
-                <GroupHeading tone="premium">
-                  {lang === 'en' ? 'Premium · 1-on-1 with a SuperfastSAT Lead Coach' : '프리미엄 · SuperfastSAT 대표코치 1:1'}
-                </GroupHeading>
-              )}
+              <GroupHeading tone="premium">
+                {lang === 'en' ? 'Premium · 1-on-1 with a SuperfastSAT Lead Coach' : '프리미엄 · SuperfastSAT 대표코치 1:1'}
+              </GroupHeading>
+              {directorShown.map(renderDirectorCard)}
               <AnimatePresence initial={false}>
-                {(!variant.directorCollapsible || directorOpen) && (
+                {directorOpen && (
                   <motion.div
-                    key="director-cards"
+                    key="director-more"
                     className="flex flex-col gap-3 overflow-hidden"
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                   >
-                    {variant.directorPkgs.map((pkg, i) => {
-                      const rate = directorDiscountRate(pkg);
-                      const isLast = i === variant.directorPkgs.length - 1;
-                      return (
-                        <PackageCard
-                          key={pkg.id}
-                          hours={pkg.hours}
-                          totalPrice={pkg.totalPrice}
-                          savings={directorSavings(pkg)}
-                          discountRate={rate}
-                          badge={isLast && rate ? (lang === 'en' ? 'Best value' : SALES_LABELS_V2.bestValue.text) : undefined}
-                          tone="premium"
-                          twoLine
-                          selected={selectedId === pkg.id}
-                          onClick={() => handlePkgClick(pkg.id)}
-                          lang={lang}
-                        />
-                      );
-                    })}
+                    {directorMore.map(renderDirectorCard)}
                   </motion.div>
                 )}
               </AnimatePresence>
+              {directorMore.length > 0 && (
+                <DirectorMoreToggle
+                  open={directorOpen}
+                  onToggle={() => setDirectorOpen(o => !o)}
+                  hours={directorMore.map(p => p.hours)}
+                  lang={lang}
+                />
+              )}
             </>
           ) : (
             <>
