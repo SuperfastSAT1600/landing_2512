@@ -58,10 +58,10 @@ const CARDS_TABLE = `<table style="border-collapse:collapse;width:100%;font-size
     <th style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Number of cards</th>
   </tr></thead>
   <tbody>
-    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Square</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">\\(5\\)</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Circle</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">\\(9\\)</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Triangle</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">\\(14\\)</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Star</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">\\(12\\)</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Square</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">5</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Circle</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">9</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Triangle</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">14</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Star</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">12</td></tr>
   </tbody>
 </table>`;
 
@@ -72,9 +72,9 @@ const DATA_Q_TABLE = `<p style="font-weight:600;margin-bottom:6px;">Data Set Q</
     <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Frequency</th>
   </tr></thead>
   <tbody>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(a\\)</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(110\\)</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(b\\)</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(30\\)</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(c\\)</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(0\\)</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">a</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">110</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">b</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">30</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">c</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">0</td></tr>
   </tbody>
 </table>
 <p style="font-weight:600;margin-bottom:6px;">Data Set R</p>
@@ -84,9 +84,9 @@ const DATA_Q_TABLE = `<p style="font-weight:600;margin-bottom:6px;">Data Set Q</
     <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Frequency</th>
   </tr></thead>
   <tbody>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(a\\)</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(0\\)</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(b\\)</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(3\\)</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(c\\)</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">\\(11\\)</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">a</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">0</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">b</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">3</td></tr>
+    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">c</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">11</td></tr>
   </tbody>
 </table>`;
 
@@ -542,33 +542,33 @@ export default function NovemberQB22Page() {
   /* ── Leaderboard ── */
   if (phase === 'leaderboard') {
     const lb = stats?.leaderboard ?? [];
-    const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#a1a1aa' : i === 2 ? '#71717a' : '#3f3f46';
-    const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#a1a1aa' : '#52525b';
+    const rankColor = (i: number) => i === 0 ? '#1e293b' : i === 1 ? '#475569' : i === 2 ? '#64748b' : '#94a3b8';
+    const scoreColor = (i: number) => i === 0 ? '#3b82f6' : i < 3 ? '#64748b' : '#94a3b8';
     return (
-      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#09090b', overflow: 'hidden' }}>
-        <div style={{ width: '100%', maxWidth: 400, padding: '36px 24px 20px', textAlign: 'center', flexShrink: 0 }}>
-          <div style={{ fontSize: 10, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 4px', letterSpacing: '-0.03em' }}>Leaderboard</h2>
-          <p style={{ fontSize: 13, color: '#52525b', margin: '0 0 4px' }}>{TEST_LABEL}</p>
-          <p style={{ fontSize: 12, color: '#3f3f46', margin: 0 }}>
+      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff', overflow: 'hidden' }}>
+        <div style={{ width: '100%', maxWidth: 480, padding: '36px 24px 20px', textAlign: 'center', flexShrink: 0, borderBottom: '1px solid #f1f5f9' }}>
+          <div style={{ fontSize: 10, color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1e293b', margin: '0 0 4px', letterSpacing: '-0.03em' }}>Leaderboard</h2>
+          <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 4px' }}>{TEST_LABEL}</p>
+          <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>
             {lb.length > 0 ? `${lb.length} students completed this set` : 'No submissions yet. Be the first.'}
           </p>
         </div>
-        <div style={{ width: '100%', maxWidth: 400, flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+        <div style={{ width: '100%', maxWidth: 480, flex: 1, overflowY: 'auto', padding: '0 24px' }}>
           {lb.map((entry, i) => (
-            <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '11px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: 12 }}>
-              <span style={{ width: 22, fontSize: 11, fontWeight: 700, color: rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
-              <span style={{ flex: 1, fontSize: 13, color: i < 3 ? '#e4e4e7' : '#52525b', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.maskedId}</span>
-              <span style={{ fontSize: 11, color: '#3f3f46', flexShrink: 0, marginRight: 8 }}>{entry.correctCount}/{entry.totalCount}</span>
+            <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9', gap: 12 }}>
+              <span style={{ width: 22, fontSize: 12, fontWeight: 700, color: rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
+              <span style={{ flex: 1, fontSize: 13, color: i < 3 ? '#1e293b' : '#64748b', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.maskedId}</span>
+              <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0, marginRight: 8 }}>{entry.correctCount}/{entry.totalCount}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: scoreColor(i), flexShrink: 0, minWidth: 36, textAlign: 'right' }}>{entry.score}%</span>
             </div>
           ))}
-          {lb.length === 0 && <div style={{ textAlign: 'center', color: '#3f3f46', paddingTop: 60, fontSize: 13 }}>No data</div>}
+          {lb.length === 0 && <div style={{ textAlign: 'center', color: '#94a3b8', paddingTop: 60, fontSize: 13 }}>No data</div>}
         </div>
-        <div style={{ width: '100%', maxWidth: 400, padding: '20px 24px 32px', flexShrink: 0 }}>
-          <p style={{ textAlign: 'center', fontSize: 11, color: '#3f3f46', margin: '0 0 14px', letterSpacing: '0.02em' }}>Can you break into the top 3?</p>
+        <div style={{ width: '100%', maxWidth: 480, padding: '20px 24px 32px', flexShrink: 0, borderTop: '1px solid #f1f5f9' }}>
+          <p style={{ textAlign: 'center', fontSize: 11, color: '#94a3b8', margin: '0 0 14px', letterSpacing: '0.02em' }}>Can you break into the top 3?</p>
           <button onClick={() => setPhase('test')}
-            style={{ width: '100%', padding: '14px 0', background: '#071be9', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: 'pointer', letterSpacing: '-0.01em' }}>
+            style={{ width: '100%', padding: '14px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: 'pointer', letterSpacing: '-0.01em' }}>
             Start →
           </button>
         </div>
@@ -581,49 +581,49 @@ export default function NovemberQB22Page() {
     const lb = stats?.leaderboard ?? [];
     const myMasked = '@' + instagramId.replace(/^@/, '')[0] + '***';
     const myEntry = lb.find(e => e.maskedId === myMasked);
-    const rankColor = (i: number) => i === 0 ? '#ffffff' : i === 1 ? '#a1a1aa' : i === 2 ? '#71717a' : '#3f3f46';
-    const scoreColor = (i: number) => i === 0 ? '#6085FF' : i < 3 ? '#a1a1aa' : '#52525b';
+    const rankColor = (i: number) => i === 0 ? '#1e293b' : i === 1 ? '#475569' : i === 2 ? '#64748b' : '#94a3b8';
+    const scoreColor = (i: number) => i === 0 ? '#3b82f6' : i < 3 ? '#64748b' : '#94a3b8';
     return (
-      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#09090b', overflow: 'hidden' }}>
-        <div style={{ width: '100%', maxWidth: 400, padding: '28px 24px 16px', textAlign: 'center', flexShrink: 0 }}>
-          <div style={{ fontSize: 10, color: '#6085FF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.03em' }}>Your Result</h2>
+      <div style={{ height: 'calc(100vh - 56px)', marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff', overflow: 'hidden' }}>
+        <div style={{ width: '100%', maxWidth: 480, padding: '28px 24px 16px', textAlign: 'center', flexShrink: 0, borderBottom: '1px solid #f1f5f9' }}>
+          <div style={{ fontSize: 10, color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14 }}>SuperfastSAT</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1e293b', margin: '0 0 6px', letterSpacing: '-0.03em' }}>Your Result</h2>
           {myEntry ? (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
-              <span style={{ fontSize: 13, color: '#a1a1aa' }}>Rank</span>
-              <span style={{ fontSize: 26, fontWeight: 800, color: '#6085FF', letterSpacing: '-0.03em' }}>#{myEntry.rank}</span>
-              <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
-              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{myEntry.score}%</span>
-              <span style={{ fontSize: 12, color: '#52525b' }}>{myEntry.correctCount}/{myEntry.totalCount}</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
+              <span style={{ fontSize: 13, color: '#64748b' }}>Rank</span>
+              <span style={{ fontSize: 26, fontWeight: 800, color: '#3b82f6', letterSpacing: '-0.03em' }}>#{myEntry.rank}</span>
+              <span style={{ width: 1, height: 24, background: '#e2e8f0' }} />
+              <span style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', letterSpacing: '-0.03em' }}>{myEntry.score}%</span>
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>{myEntry.correctCount}/{myEntry.totalCount}</span>
             </div>
           ) : (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(96,133,255,0.12)', border: '1px solid rgba(96,133,255,0.3)', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{correctCount} / {QUESTIONS.length}</span>
-              <span style={{ fontSize: 14, color: '#a1a1aa' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
+              <span style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{correctCount} / {QUESTIONS.length}</span>
+              <span style={{ fontSize: 14, color: '#64748b' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</span>
             </div>
           )}
         </div>
-        <div style={{ width: '100%', maxWidth: 400, padding: '4px 24px 8px', flexShrink: 0 }}>
-          <div style={{ fontSize: 10, color: '#27272a', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' }}>— {lb.length} students —</div>
+        <div style={{ width: '100%', maxWidth: 480, padding: '4px 24px 8px', flexShrink: 0 }}>
+          <div style={{ fontSize: 10, color: '#cbd5e1', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' }}>— {lb.length} students —</div>
         </div>
-        <div style={{ width: '100%', maxWidth: 400, flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+        <div style={{ width: '100%', maxWidth: 480, flex: 1, overflowY: 'auto', padding: '0 24px' }}>
           {lb.map((entry, i) => {
             const isMe = entry.maskedId === myMasked;
             return (
-              <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '11px 8px', borderRadius: isMe ? 8 : 0, marginBottom: isMe ? 2 : 0, borderBottom: isMe ? 'none' : '1px solid rgba(255,255,255,0.05)', gap: 12, background: isMe ? 'rgba(96,133,255,0.1)' : 'transparent', border: isMe ? '1px solid rgba(96,133,255,0.25)' : undefined }}>
-                <span style={{ width: 22, fontSize: 11, fontWeight: 700, color: isMe ? '#6085FF' : rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
-                <span style={{ flex: 1, fontSize: 13, color: isMe ? '#c7d2fe' : i < 3 ? '#e4e4e7' : '#52525b', fontFamily: 'monospace', fontWeight: isMe ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {entry.maskedId}{isMe && <span style={{ fontSize: 10, color: '#6085FF', marginLeft: 6 }}>← you</span>}
+              <div key={entry.rank} style={{ display: 'flex', alignItems: 'center', padding: '11px 8px', borderRadius: isMe ? 8 : 0, marginBottom: isMe ? 2 : 0, borderBottom: isMe ? 'none' : '1px solid #f1f5f9', gap: 12, background: isMe ? '#eff6ff' : 'transparent', border: isMe ? '1px solid #bfdbfe' : undefined }}>
+                <span style={{ width: 22, fontSize: 11, fontWeight: 700, color: isMe ? '#3b82f6' : rankColor(i), textAlign: 'right', flexShrink: 0 }}>{entry.rank}</span>
+                <span style={{ flex: 1, fontSize: 13, color: isMe ? '#1e40af' : i < 3 ? '#1e293b' : '#64748b', fontFamily: 'monospace', fontWeight: isMe ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {entry.maskedId}{isMe && <span style={{ fontSize: 10, color: '#3b82f6', marginLeft: 6 }}>← you</span>}
                 </span>
-                <span style={{ fontSize: 11, color: '#3f3f46', flexShrink: 0, marginRight: 8 }}>{entry.correctCount}/{entry.totalCount}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: isMe ? '#6085FF' : scoreColor(i), flexShrink: 0, minWidth: 36, textAlign: 'right' }}>{entry.score}%</span>
+                <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0, marginRight: 8 }}>{entry.correctCount}/{entry.totalCount}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: isMe ? '#3b82f6' : scoreColor(i), flexShrink: 0, minWidth: 36, textAlign: 'right' }}>{entry.score}%</span>
               </div>
             );
           })}
         </div>
-        <div style={{ width: '100%', maxWidth: 400, padding: '16px 24px 28px', flexShrink: 0 }}>
+        <div style={{ width: '100%', maxWidth: 480, padding: '16px 24px 28px', flexShrink: 0, borderTop: '1px solid #f1f5f9' }}>
           <button onClick={() => setPhase('test')}
-            style={{ width: '100%', padding: '13px 0', background: 'transparent', color: '#52525b', border: '1px solid #27272a', borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+            style={{ width: '100%', padding: '13px 0', background: '#fff', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
             Back to Practice
           </button>
         </div>
@@ -716,7 +716,10 @@ export default function NovemberQB22Page() {
               shortAnswerPlaceholder: 'Enter answer',
               shortAnswerFeedback: isRevealed ? { isCorrect, correctAnswer: isWrong ? (currentQ.answers?.[0] ?? '') : undefined } : null,
             } : {
-              options: currentQ.options,
+              options: currentQ.options?.map(opt => ({
+                label: opt.label,
+                text: <ContentRenderer content={opt.text} />,
+              })),
               selectedAnswer: userAnswer,
               onSelect: (val: string) => {
                 handleAnswer(currentQ.id, val);
