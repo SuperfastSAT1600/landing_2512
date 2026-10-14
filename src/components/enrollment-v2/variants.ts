@@ -27,7 +27,8 @@ export interface EnrollmentVariant {
   selfDirected: boolean;
   /** true면 시간권마다 카드 1개 + '관리형 1:1'/'프리미엄 · 대표코치' 묶음 제목(V3). false면 대표코치를 카드 1개로 합친다(v2). */
   groupedCards: boolean;
-  /** 대표코치 시간권 중 처음부터 보이는 개수. 나머지는 '…시간 보기' 버튼 아래 접어 둔다(V3). 전부면 아코디언 없음. */
+  /** 관리형·대표코치 시간권 중 처음부터 보이는 개수. 나머지는 '…시간 보기' 버튼 아래 접어 둔다(V3). 전부면 아코디언 없음. */
+  managedShownCount: number;
   directorShownCount: number;
 }
 
@@ -49,10 +50,11 @@ export const ENROLLMENT_V2: EnrollmentVariant = {
   directorPkgs: [{ id: '1on1-director-10h', hours: 10, totalPrice: 2100000 }],
   selfDirected: true,
   groupedCards: false,
+  managedShownCount: 3,
   directorShownCount: 1,
 };
 
-// V3(2026-10): 비관리형·콘텐츠 판매 중단, 관리형 10·20·40시간권은 펼쳐 두고 대표코치는 10시간권만 보이고 20·40시간권(할인)은 접어 둔다.
+// V3(2026-10): 비관리형·콘텐츠 판매 중단, 대표코치 10·20·40시간권(할인)은 펼쳐 두고 관리형은 10시간권만 보이고 20·40시간권은 접어 둔다.
 export const ENROLLMENT_V3: EnrollmentVariant = {
   basePricePerHour: 165000,
   managedPkgs: [MANAGED_10H, ...MANAGED_20H_40H],
@@ -63,7 +65,8 @@ export const ENROLLMENT_V3: EnrollmentVariant = {
   ],
   selfDirected: false,
   groupedCards: true,
-  directorShownCount: 1,
+  managedShownCount: 1,
+  directorShownCount: 3,
 };
 
 /** 대표코치 시간권의 정가 대비 할인율(%) — v2 관리형 할인 문구와 같은 방식으로 내림. 할인 없으면 null. */
