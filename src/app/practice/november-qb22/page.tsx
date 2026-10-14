@@ -31,7 +31,8 @@ interface Question {
 }
 
 interface DBRow {
-  id: number;
+  id: string;
+  passage: string | null;
   question: string;
   options: MCQOption[] | null;
   correct_answer: string;
@@ -42,8 +43,8 @@ interface DBRow {
 }
 
 function mapRow(row: DBRow): Question {
-  const type: QuestionType = row.type === 'Grid-in' ? 'spr' : 'mcq';
-  const domain = row.section === 'Reading and Writing' ? 'RW' : (row.section ?? 'Math');
+  const type: QuestionType = row.type === 'short_answer' ? 'spr' : 'mcq';
+  const domain = row.section === 'reading_and_writing' ? 'RW' : 'Math';
   let answers: string[] | undefined;
   let correctOption: string | undefined;
   if (type === 'spr') {
@@ -61,7 +62,7 @@ function mapRow(row: DBRow): Question {
     skill: row.skill ?? '',
     difficulty: row.difficulty ?? 'Medium',
     domain,
-    passage: '',
+    passage: row.passage ?? '',
     question: row.question ?? '',
     type,
     options: row.options ?? undefined,
