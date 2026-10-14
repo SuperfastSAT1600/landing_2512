@@ -71,6 +71,12 @@ Skills now use directories for bundled resources:
 |-------|----------|-----------|-----------|
 | **remotion/** | Programmatic video creation with React (Remotion). Core mechanics + motion design (charts, typography, springs, social-media) + educational extras (KaTeX math, code highlighting, pedagogical structure for K-12/SAT/undergrad). | Building/editing Remotion videos, especially educational content | rules/ (44 topics) |
 
+## SuperfastSAT 도메인
+
+| Skill | Coverage | Load When | Resources |
+|-------|----------|-----------|-----------|
+| **practice-page-builder/** | SAT 문제 풀이 연습 페이지 생성: gate→leaderboard→test→result 4단계 흐름, SMS Supabase units 테이블 연동, MCQ/Grid-in 정답 처리, 테이블+LaTeX 렌더링 (MathHTMLContent), 알려진 버그 목록 | `/practice/` 경로 연습 페이지 신규 제작 | - |
+
 ## Project Utilities
 
 | Skill | Coverage | Load When | Resources |
