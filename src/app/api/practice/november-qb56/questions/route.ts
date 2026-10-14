@@ -4,7 +4,7 @@ import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 export async function GET() {
   const { data, error } = await supabaseSFv2
     .from('units')
-    .select('id, question, options, correct_answer, domain, question_type, figure, skill, difficulty')
+    .select('id, question, options, correct_answer, section, type, skill, difficulty')
     .eq('source', 'collegeboard')
     .gte('created_at', '2026-10-12')
     .lt('created_at', '2026-10-13')
