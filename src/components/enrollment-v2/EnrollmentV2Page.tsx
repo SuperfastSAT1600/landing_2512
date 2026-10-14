@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { ManagedShowcase, UnmanagedShowcase } from '@/components/enrollment/enrollment/ManagedShowcase';
 import { APSectionV2 } from './APSectionV2';
 import { ManagementFitSection } from '@/components/enrollment/enrollment/ManagementFitSection';
@@ -278,13 +278,15 @@ interface HeadCoach {
 
 
 /* 시간권 카드 — 시간 숫자 + 오른쪽 할인 문구/가격. premium은 대표코치(금색) 톤 — 글꼴은 관리형과 같다. */
-function PackageCard({ hours, totalPrice, savings, discountRate, badge, tone, selected, onClick, lang }: {
+function PackageCard({ hours, totalPrice, savings, discountRate, badge, tone, twoLine, selected, onClick, lang }: {
   hours: number;
   totalPrice: number;
   savings: number;
   discountRate: number | null;
   badge?: string;
   tone: 'standard' | 'premium';
+  /** 할인 문구를 두 줄로(묶음 구성·대표코치). v2 관리형은 한 줄. */
+  twoLine: boolean;
   selected: boolean;
   onClick: () => void;
   lang: Lang;
@@ -334,8 +336,7 @@ function PackageCard({ hours, totalPrice, savings, discountRate, badge, tone, se
                   {badge}
                 </span>
               )}
-              {/* v2 관리형 문구는 한 줄로 보여 왔다 — 줄바꿈은 대표코치(좁은 금색 카드)에만 */}
-              <p className={`text-[12px] font-light text-red-400 leading-snug ${premium ? 'whitespace-pre-line' : ''}`}>
+              <p className={`text-[12px] font-light text-red-400 leading-snug ${twoLine ? 'whitespace-pre-line' : ''}`}>
                 {lang === 'en'
                   ? `vs. 10 hrs (${discountRate}% off)\n${formatWon(savings)} cheaper.`
                   : `~10시간 수업보다 (${discountRate}% 할인)\n${formatWon(savings)} 더 저렴합니다.`}
@@ -370,6 +371,26 @@ function GroupHeading({ tone, children }: { tone: 'standard' | 'premium'; childr
   );
 }
 
+/* 관리형 묶음 제목 겸 펼침 버튼 — 접어 둔 시간권(V3의 20·40시간)이 있을 때. */
+function ManagedGroupToggle({ open, onToggle, hours, lang }: { open: boolean; onToggle: () => void; hours: number[]; lang: Lang }) {
+  const label = hours.join('·');
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      onClick={onToggle}
+      className="w-full text-sm font-semibold text-white/70 flex items-center gap-2 touch-manipulation"
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-[#6085ff]" />
+      {lang === 'en' ? 'Managed 1-on-1' : '관리형 1:1 수업'}
+      <span className="ml-auto flex items-center gap-1 text-xs font-medium text-white/45">
+        {lang === 'en' ? `${open ? 'Hide' : 'See'} ${label} hrs` : `${label}시간 ${open ? '접기' : '보기'}`}
+        <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </span>
+    </button>
+  );
+}
+
 function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
   selectedOption: OptionSelectionV2 | null;
   onSelect: (o: OptionSelectionV2) => void;
@@ -383,6 +404,8 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
   // v2는 대표코치 카드 하나('1on1-director'), V3는 시간권별 카드('1on1-director-20h' 등).
   const isDirector = selectedId?.startsWith('1on1-director') ?? false;
   const grouped = variant.groupedCards;
+  const hasMore = variant.managedMorePkgs.length > 0;
+  const [managedOpen, setManagedOpen] = useState(false);
   const hourUnit = lang === 'en' ? 'hrs' : '시간';
 
   function handlePkgClick(pkgId: string) {
@@ -417,13 +440,15 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
         </div>
 
         <div className="flex flex-col gap-3">
-          {grouped && (
+          {grouped && (hasMore ? (
+            <ManagedGroupToggle open={managedOpen} onToggle={() => setManagedOpen(o => !o)} hours={variant.managedMorePkgs.map(p => p.hours)} lang={lang} />
+          ) : (
             <GroupHeading tone="standard">
               {lang === 'en' ? 'Managed 1-on-1' : '관리형 1:1 수업'}
             </GroupHeading>
-          )}
+          ))}
 
-          {/* 관리형 시간권 */}
+          {/* 관리형 시간권 — 앞세운 카드를 고르면 접어 둔 시간권도 펼친다 */}
           {variant.managedPkgs.map(pkg => (
             <PackageCard
               key={pkg.id}
@@ -432,11 +457,40 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
               savings={pkg.discountRate ? variant.basePricePerHour * pkg.hours - pkg.totalPrice : 0}
               discountRate={pkg.discountRate}
               tone="standard"
+              twoLine={grouped}
               selected={selectedId === pkg.id}
-              onClick={() => handlePkgClick(pkg.id)}
+              onClick={() => { handlePkgClick(pkg.id); if (hasMore) setManagedOpen(true); }}
               lang={lang}
             />
           ))}
+
+          <AnimatePresence initial={false}>
+            {hasMore && managedOpen && (
+              <motion.div
+                key="managed-more"
+                className="flex flex-col gap-3 overflow-hidden"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                {variant.managedMorePkgs.map(pkg => (
+                  <PackageCard
+                    key={pkg.id}
+                    hours={pkg.hours}
+                    totalPrice={pkg.totalPrice}
+                    savings={pkg.discountRate ? variant.basePricePerHour * pkg.hours - pkg.totalPrice : 0}
+                    discountRate={pkg.discountRate}
+                    tone="standard"
+                    twoLine={grouped}
+                    selected={selectedId === pkg.id}
+                    onClick={() => handlePkgClick(pkg.id)}
+                    lang={lang}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {grouped ? (
             <>
@@ -455,6 +509,7 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
                     discountRate={rate}
                     badge={isLast && rate ? (lang === 'en' ? 'Best value' : SALES_LABELS_V2.bestValue.text) : undefined}
                     tone="premium"
+                    twoLine
                     selected={selectedId === pkg.id}
                     onClick={() => handlePkgClick(pkg.id)}
                     lang={lang}
